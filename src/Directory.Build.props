@@ -21,8 +21,8 @@
     <Product>GstSharp.Net</Product>
     <Description>NativeAOT-first .NET bindings for GStreamer 1.28.</Description>
     <PackageLicenseExpression>LGPL-2.1-or-later</PackageLicenseExpression>
-    <PackageProjectUrl>https://github.com/OWNER/GstSharp.Net</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/OWNER/GstSharp.Net.git</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/masa-iwm/GstSharp.Net</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/masa-iwm/GstSharp.Net.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>gstreamer;multimedia;native;aot;interop</PackageTags>
     <Copyright>Copyright (c) GstSharp.Net contributors</Copyright>
