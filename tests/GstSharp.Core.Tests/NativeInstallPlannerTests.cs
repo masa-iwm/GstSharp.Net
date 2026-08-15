@@ -46,13 +46,13 @@ public class NativeInstallPlannerTests
     [Fact]
     public void RegistryEntryIsEnough()
     {
-        string bin = Path.Combine(LocalAppData, @"Programs\gstreamer\1.0\mingw_x86_64\bin");
+        string bin = LocalAppData + @"\Programs\gstreamer\1.0\mingw_x86_64\bin";
 
         FakePlatformProbe probe = new FakePlatformProbe()
             .WithEnvironment("LOCALAPPDATA", LocalAppData)
             .WithRegistryEntry(
                 "GStreamer 1.0 (MinGW x86_64) version 1.28.6",
-                Path.Combine(LocalAppData, @"Programs\gstreamer\1.0\mingw_x86_64\"))
+                LocalAppData + @"\Programs\gstreamer\1.0\mingw_x86_64\")
             .WithInstallation(bin, GstFlavor.MinGW);
 
         IReadOnlyList<NativeInstall> candidates = NativeInstallPlanner.EnumerateWindows(probe, null, null);
@@ -190,12 +190,12 @@ public class NativeInstallPlannerTests
     {
         FakePlatformProbe probe = new FakePlatformProbe()
             .WithEnvironment("LOCALAPPDATA", LocalAppData)
-            .WithInstallation(Path.Combine(LocalAppData, @"Programs\gstreamer\1.0\msvc_x86_64\bin"), GstFlavor.Msvc);
+            .WithInstallation(LocalAppData + @"\Programs\gstreamer\1.0\msvc_x86_64\bin", GstFlavor.Msvc);
 
         IReadOnlyList<NativeInstall> candidates = NativeInstallPlanner.EnumerateWindows(probe, null, null);
 
         Assert.Equal(
-            Path.Combine(LocalAppData, @"Programs\gstreamer\1.0\msvc_x86_64\bin"),
+            LocalAppData + @"\Programs\gstreamer\1.0\msvc_x86_64\bin",
             candidates[0].Directory);
     }
 
