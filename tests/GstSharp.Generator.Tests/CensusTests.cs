@@ -113,7 +113,7 @@ public sealed class CensusTests
     public void GstTypeKindCensusIsStable()
     {
         Repository repository = GirFixture.Repository;
-        Classifier classifier = new(repository, new DiagnosticBag());
+        Classifier classifier = new(repository, Overlays.Empty, new DiagnosticBag());
         GirNamespace gst = GirFixture.Namespace("Gst");
 
         Dictionary<TypeKind, int> counts = [];

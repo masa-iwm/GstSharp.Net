@@ -241,7 +241,7 @@ internal sealed class SurfaceBuilder
         // The methods and the properties claim their names first, so that a
         // signal never renames a member that is already bound.
         List<SignalEmission> signals = includeSignals
-            ? BuildSignals(declaration, context, used, hidden)
+            ? BuildSignals(declaration, context, used, hidden, methodForm)
             : [];
 
         return new TypeSurface(members, properties, signals);
@@ -262,6 +262,18 @@ internal sealed class SurfaceBuilder
                 if (form == methodForm && VisibleCount(plan) == 0 && plan.Return.Kind == ArgumentKind.Utf8)
                 {
                     plan.IsOverride = true;
+                    members.Add(plan);
+                    _census.Emitted(module, "method");
+                    return;
+                }
+
+                // A static one cannot override anything. It only hides
+                // object.ToString when it takes no argument either; a static
+                // ToString(value), which is what gst_video_format_to_string is,
+                // has a signature of its own and binds under its natural name.
+                if (form == CallableForm.StaticMethod && used.Add(plan.Name))
+                {
+                    plan.IsNew = VisibleCount(plan) == 0;
                     members.Add(plan);
                     _census.Emitted(module, "method");
                     return;
@@ -295,6 +307,14 @@ internal sealed class SurfaceBuilder
     /// <summary>Returns the key a method is remembered under.</summary>
     /// <param name="plan">The method to key.</param>
     /// <returns>The key, which is the C# signature without the return type.</returns>
+    /// <remarks>
+    /// The nullable annotation of a parameter is dropped, because C# hiding
+    /// ignores it: <c>gst_app_src_set_caps</c> takes a nullable
+    /// <c>GstCaps</c> while <c>gst_base_src_set_caps</c> does not, and
+    /// <c>AppSrc.SetCaps</c> still hides <c>BaseSrc.SetCaps</c>. Only reference
+    /// types are ever annotated here, so nothing that is a distinct type is
+    /// merged by this.
+    /// </remarks>
     internal static string MethodKey(MarshalPlan plan)
     {
         List<string> parameters = [];
@@ -312,7 +332,8 @@ internal sealed class SurfaceBuilder
                 _ => string.Empty,
             };
 
-            parameters.Add(prefix + argument.PublicType);
+            string type = argument.PublicType;
+            parameters.Add(prefix + (type.EndsWith('?') ? type[..^1] : type));
         }
 
         return "M:" + plan.Name + "(" + string.Join(",", parameters) + ")";
@@ -365,9 +386,15 @@ internal sealed class SurfaceBuilder
         GirTypeDeclaration declaration,
         PlanningContext context,
         HashSet<string> used,
-        HiddenMembers hidden)
+        HiddenMembers hidden,
+        CallableForm methodForm)
     {
         string module = context.Module.GirNamespace;
+
+        // The signal of a gir interface is emitted as a pair of extension
+        // methods rather than as an event, so a different set of names has to
+        // be free for it.
+        bool asExtension = methodForm == CallableForm.ExtensionMethod;
         List<SignalEmission> signals = [];
 
         foreach (GirSignal signal in declaration.Signals)
@@ -382,7 +409,9 @@ internal sealed class SurfaceBuilder
             // The event, its arguments class and its handler delegate are three
             // members of the declaring type, so all three names have to be free
             // before any of them is taken.
-            List<string> names = [plan.Name];
+            List<string> names = asExtension
+                ? [SignalEmitter.AddMethodName(plan), SignalEmitter.RemoveMethodName(plan)]
+                : [plan.Name];
             if (plan.ArgsName is { } argsName)
             {
                 names.Add(argsName);

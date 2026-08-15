@@ -64,13 +64,17 @@ internal sealed class Classifier
     /// <summary>
     /// Mini objects that carry no fields in the gir, so that the first field
     /// rule cannot see them. They are opaque records with a <c>glib:get-type</c>
-    /// and would otherwise be classified as boxed types.
+    /// and would otherwise be classified as boxed types, which would hand a
+    /// mini object to <c>g_boxed_copy</c> and corrupt its reference count.
+    /// The names are namespace qualified, because every module can declare one.
     /// </summary>
     private static readonly HashSet<string> OpaqueMiniObjects = new(StringComparer.Ordinal)
     {
-        "BufferList",
-        "Context",
-        "Sample",
+        "Gst.BufferList",
+        "Gst.Context",
+        "Gst.Sample",
+        "GstVideo.VideoOverlayComposition",
+        "GstVideo.VideoOverlayRectangle",
     };
 
     private static readonly HashSet<string> NonBlittablePrimitives = new(StringComparer.Ordinal)
@@ -83,15 +87,18 @@ internal sealed class Classifier
     };
 
     private readonly Repository _repository;
+    private readonly Overlays _overlays;
     private readonly DiagnosticBag _diagnostics;
     private readonly Dictionary<GirNode, TypeKind> _cache = new(ReferenceEqualityComparer.Instance);
 
     /// <summary>Initializes a new instance of the <see cref="Classifier"/> class.</summary>
     /// <param name="repository">The loaded gir repository.</param>
+    /// <param name="overlays">The overlay configuration holding the forced projections.</param>
     /// <param name="diagnostics">The diagnostic sink.</param>
-    internal Classifier(Repository repository, DiagnosticBag diagnostics)
+    internal Classifier(Repository repository, Overlays overlays, DiagnosticBag diagnostics)
     {
         _repository = repository;
+        _overlays = overlays;
         _diagnostics = diagnostics;
     }
 
@@ -161,6 +168,15 @@ internal sealed class Classifier
             return TypeKind.GTypeStruct;
         }
 
+        // A record the overlays force behind a pointer never becomes a value
+        // type, however blittable its fields are. GstDebugCategory is the
+        // example: copying one by value snapshots its threshold, so a copy
+        // stops seeing the level changes that the category is consulted for.
+        if (QualifiedNameOf(record) is { } forced && _overlays.IsForcedOpaque(forced))
+        {
+            return TypeKind.OpaqueRecord;
+        }
+
         if (IsMiniObject(record))
         {
             return TypeKind.MiniObject;
@@ -187,9 +203,9 @@ internal sealed class Classifier
             return false;
         }
 
-        if (string.Equals(ns.Name, GstNamespace, StringComparison.Ordinal)
-            && (string.Equals(record.Name, MiniObjectName, StringComparison.Ordinal)
-                || OpaqueMiniObjects.Contains(record.Name)))
+        if ((string.Equals(ns.Name, GstNamespace, StringComparison.Ordinal)
+                && string.Equals(record.Name, MiniObjectName, StringComparison.Ordinal))
+            || OpaqueMiniObjects.Contains(ns.Name + "." + record.Name))
         {
             return true;
         }
@@ -293,8 +309,43 @@ internal sealed class Classifier
         {
             null => false,
             { Kind: GirSymbolKind.Enumeration } => true,
-            { Kind: GirSymbolKind.Record, Declaration: GirRecord nested } => IsBlittableRecord(nested, visiting),
+            { Kind: GirSymbolKind.Record, Declaration: GirRecord nested } => IsPlainStruct(nested, visiting),
             _ => false,
         };
     }
+
+    /// <summary>
+    /// Tests whether an embedded record is projected as a value type, which is
+    /// the only projection that another value type can hold by value. The test
+    /// repeats the decision of <see cref="ClassifyRecord"/> instead of calling
+    /// it, so that the cycle guard of the caller stays in effect.
+    /// </summary>
+    /// <param name="record">The embedded record.</param>
+    /// <param name="visiting">The records the layout is already inside of.</param>
+    /// <returns><see langword="true"/> when the record is a plain struct.</returns>
+    private bool IsPlainStruct(GirRecord record, HashSet<GirNode> visiting)
+    {
+        if (record.GlibIsGTypeStructFor is not null
+            || record.GlibGetType is not null
+            || record.IsPointer
+            || IsMiniObject(record))
+        {
+            // A boxed record and a mini object are wrapped by a class, and a
+            // record forced behind a pointer has no value projection either.
+            return false;
+        }
+
+        if (QualifiedNameOf(record) is { } qualified && _overlays.IsForcedOpaque(qualified))
+        {
+            return false;
+        }
+
+        return IsBlittableRecord(record, visiting);
+    }
+
+    /// <summary>Returns the namespace qualified gir name of a record.</summary>
+    /// <param name="record">The record to name.</param>
+    /// <returns>The qualified name, or <see langword="null"/> when the namespace is unknown.</returns>
+    private string? QualifiedNameOf(GirRecord record) =>
+        _repository.GetNamespaceOf(record) is { } ns ? ns.Name + "." + record.Name : null;
 }

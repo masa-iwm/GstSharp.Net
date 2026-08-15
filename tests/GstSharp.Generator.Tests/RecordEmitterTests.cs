@@ -528,32 +528,88 @@ public sealed class RecordEmitterTests
         Assert.Contains(files, static f => f.RelativePath == "GstSharp.Net/Generated/Buffer.cs");
     }
 
+    [Theory]
+    [InlineData("GstSharp.Net", 133)]
+    [InlineData("GstSharp.Net.Base", 32)]
+    [InlineData("GstSharp.Net.App", 10)]
+    [InlineData("GstSharp.Net.Audio", 46)]
+    [InlineData("GstSharp.Net.Video", 78)]
+    [InlineData("GstSharp.Net.Pbutils", 21)]
+    public void EveryModuleEmitsItsOwnFiles(string projectDirectory, int count)
+    {
+        string prefix = projectDirectory + "/Generated/";
+        int emitted = 0;
+        foreach (GeneratedFile file in Generated.Files)
+        {
+            if (file.RelativePath.StartsWith(prefix, StringComparison.Ordinal))
+            {
+                emitted++;
+            }
+        }
+
+        Assert.Equal(count, emitted);
+    }
+
     [Fact]
     public void TheRecordCensusIsStable()
     {
-        IReadOnlyList<GeneratedFile> files = Generated.Files;
+        List<GeneratedFile> files = [];
+        foreach (GeneratedFile file in Generated.Files)
+        {
+            if (file.RelativePath.StartsWith("GstSharp.Net/Generated/", StringComparison.Ordinal))
+            {
+                files.Add(file);
+            }
+        }
 
         // One file per emitted record and per emitted class, plus the
-        // enumerations, the interfaces, the global functions, the callbacks,
-        // the holder of the connected signal handlers and the type table.
-        // GstVecDeque is introspectable="0", which is why 34 opaque records
-        // emit 33 files.
-        Assert.Equal(115, files.Count);
+        // enumerations, the holders of the functions of an enumeration, the
+        // interfaces, the global functions, the callbacks, the holder of the
+        // connected signal handlers and the type table. GstVecDeque is
+        // introspectable="0", which is why 34 opaque records emit 33 files.
+        Assert.Equal(133, files.Count);
         Assert.Equal(11, Count(files, " : Gst.MiniObject\n"));
         Assert.Equal(12, Count(files, " : Gst.GObject.Boxed\n"));
-        Assert.Equal(14, Count(files, "\npublic partial struct "));
-        Assert.Equal(9, Count(files, "\ninternal unsafe struct "));
 
-        foreach (GeneratedFile file in files)
-        {
-            Assert.StartsWith("GstSharp.Net/Generated/", file.RelativePath, StringComparison.Ordinal);
-        }
+        // GstDebugCategory is forced behind a pointer by fixups.json, so the
+        // module carries one plain struct fewer than the gir would give.
+        Assert.Equal(13, Count(files, "\npublic partial struct "));
+        Assert.Equal(9, Count(files, "\ninternal unsafe struct "));
 
         foreach (Diagnostic diagnostic in Generated.Diagnostics)
         {
             Assert.NotEqual("GEN0006", diagnostic.Code);
             Assert.NotEqual("GEN0007", diagnostic.Code);
+            Assert.NotEqual("GEN0008", diagnostic.Code);
         }
+    }
+
+    [Fact]
+    public void ARecordForcedOpaqueIsWrappedBehindAPointer()
+    {
+        string source = SourceOf("GstSharp.Net/Generated/DebugCategory.cs");
+
+        // Copying a category by value would snapshot its threshold, so the copy
+        // would stop seeing the level changes it is consulted for.
+        Assert.Contains("public sealed unsafe partial class DebugCategory\n", source, StringComparison.Ordinal);
+        Assert.Contains("internal DebugCategory(nint handle) => Handle = handle;", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("public partial struct DebugCategory", source, StringComparison.Ordinal);
+
+        // Its callers hand the pointer over instead of the address of a copy.
+        Assert.Contains(
+            "GstDebugLogDefault(category.Handle, ",
+            SourceOf("GstSharp.Net/Generated/Global.cs"),
+            StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("GstSharp.Net.Video/Generated/VideoOverlayComposition.cs")]
+    [InlineData("GstSharp.Net.Video/Generated/VideoOverlayRectangle.cs")]
+    public void AMiniObjectOfAnotherModuleIsNotMistakenForABoxedType(string path)
+    {
+        // Both are GstMiniObject subtypes whose gir carries no field at all, so
+        // only the hard list of the classifier tells them from a boxed type.
+        Assert.Contains(" : Gst.MiniObject\n", SourceOf(path), StringComparison.Ordinal);
     }
 
     [Fact]
@@ -581,7 +637,7 @@ public sealed class RecordEmitterTests
         }
     }
 
-    private static int Count(IReadOnlyList<GeneratedFile> files, string needle)
+    private static int Count(IEnumerable<GeneratedFile> files, string needle)
     {
         int count = 0;
         foreach (GeneratedFile file in files)
@@ -603,9 +659,11 @@ public sealed class RecordEmitterTests
     private static string Snapshot(string snapshot) =>
         snapshot.Replace("\r\n", "\n", StringComparison.Ordinal) + "\n";
 
-    private static string Source(string typeName)
+    private static string Source(string typeName) =>
+        SourceOf("GstSharp.Net/Generated/" + typeName + ".cs");
+
+    private static string SourceOf(string path)
     {
-        string path = "GstSharp.Net/Generated/" + typeName + ".cs";
         foreach (GeneratedFile file in Generated.Files)
         {
             if (string.Equals(file.RelativePath, path, StringComparison.Ordinal))
@@ -614,7 +672,7 @@ public sealed class RecordEmitterTests
             }
         }
 
-        throw new InvalidOperationException($"No file was generated for '{typeName}'.");
+        throw new InvalidOperationException($"No file was generated for '{path}'.");
     }
 
     /// <summary>Returns the field declarations of a generated mirror, in order.</summary>
@@ -684,7 +742,7 @@ public sealed class RecordEmitterTests
             ?? throw new InvalidOperationException("The fixture declares no Gst namespace.");
         DiagnosticBag diagnostics = new();
         NameMapper names = new(Overlays.Empty);
-        Classifier classifier = new(repository, diagnostics);
+        Classifier classifier = new(repository, Overlays.Empty, diagnostics);
         TypeMap types = new(repository, classifier, names, diagnostics);
         EmissionCensus census = new();
         SkipRules skipRules = new(Overlays.Empty);

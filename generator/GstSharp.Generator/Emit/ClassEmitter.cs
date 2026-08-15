@@ -32,6 +32,9 @@ internal sealed class ClassEmitter
     /// <summary>The name of the holder of the functions that belong to no type.</summary>
     internal const string GlobalName = "Global";
 
+    /// <summary>The suffix of the holder of the functions an enumeration declares.</summary>
+    internal const string EnumHolderSuffix = "Extensions";
+
     private readonly Repository _repository;
     private readonly Classifier _classifier;
     private readonly NameMapper _names;
@@ -40,7 +43,7 @@ internal sealed class ClassEmitter
     private readonly EmissionCensus _census;
     private readonly DiagnosticBag _diagnostics;
     private readonly List<string> _registry;
-    private readonly Dictionary<string, List<string>> _inherited = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, List<string>> _inherited;
 
     /// <summary>Initializes a new instance of the <see cref="ClassEmitter"/> class.</summary>
     /// <param name="repository">The loaded gir repository.</param>
@@ -51,6 +54,11 @@ internal sealed class ClassEmitter
     /// <param name="census">The census of the run.</param>
     /// <param name="diagnostics">The diagnostic sink.</param>
     /// <param name="registry">Receives the types that the module registers.</param>
+    /// <param name="inherited">
+    /// The members of every class the run has emitted so far, keyed by
+    /// qualified gir name. The table is shared by every module, because a class
+    /// of one module derives from a class of another one.
+    /// </param>
     internal ClassEmitter(
         Repository repository,
         Classifier classifier,
@@ -59,7 +67,8 @@ internal sealed class ClassEmitter
         Overlays overlays,
         EmissionCensus census,
         DiagnosticBag diagnostics,
-        List<string> registry)
+        List<string> registry,
+        Dictionary<string, List<string>> inherited)
     {
         _repository = repository;
         _classifier = classifier;
@@ -69,6 +78,7 @@ internal sealed class ClassEmitter
         _census = census;
         _diagnostics = diagnostics;
         _registry = registry;
+        _inherited = inherited;
     }
 
     /// <summary>Emits every generated class of one module.</summary>
@@ -90,6 +100,37 @@ internal sealed class ClassEmitter
             }
 
             if (Emit(module, ns, declaration) is { } file)
+            {
+                files.Add(file);
+            }
+        }
+
+        files.Sort(static (left, right) => string.CompareOrdinal(left.RelativePath, right.RelativePath));
+        return files;
+    }
+
+    /// <summary>
+    /// Emits the functions that a gir declares inside an enumeration, for
+    /// example <c>gst_state_get_name</c> inside <c>&lt;enumeration
+    /// name="State"&gt;</c>.
+    /// </summary>
+    /// <param name="module">The module to emit.</param>
+    /// <param name="ns">The gir namespace of the module.</param>
+    /// <returns>The generated files, ordered by relative path.</returns>
+    /// <remarks>
+    /// An enumeration is a C# <c>enum</c> and carries no members of its own, so
+    /// the functions become static methods of a holder named after it. They are
+    /// plain static methods rather than extension methods on the enumeration:
+    /// several of them take no value of the enumeration at all
+    /// (<c>gst_format_get_by_nick</c> returns one), so a <c>this</c> receiver
+    /// would only fit some of them.
+    /// </remarks>
+    internal IReadOnlyList<GeneratedFile> EmitEnumFunctions(ModuleInfo module, GirNamespace ns)
+    {
+        List<GeneratedFile> files = [];
+        foreach (GirEnumeration enumeration in ns.AllEnumerations)
+        {
+            if (EmitEnumFunctions(module, ns, enumeration) is { } file)
             {
                 files.Add(file);
             }
@@ -134,6 +175,50 @@ internal sealed class ClassEmitter
         return new GeneratedFile(module.ProjectDirectory + "/Generated/" + GlobalName + ".cs", writer.ToSource());
     }
 
+    private GeneratedFile? EmitEnumFunctions(ModuleInfo module, GirNamespace ns, GirEnumeration enumeration)
+    {
+        if (enumeration.Functions.Count == 0
+            || !enumeration.IsIntrospectable
+            || _overlays.IsSkipped(ns.Name + "." + enumeration.Name))
+        {
+            return null;
+        }
+
+        GirSymbol symbol = new(ns, enumeration.Name, GirSymbolKind.Enumeration, enumeration);
+        string typeName = _names.TypeName(symbol);
+        string holderName = typeName + EnumHolderSuffix;
+
+        // The functions belong to no instance, so the holder is only a
+        // namespace for them: nothing of the enumeration is in scope.
+        PlanningContext context = new(module, ns, TypeKind.Unknown, OwnerType: null);
+        GirRecord holder = new() { Name = holderName, Functions = enumeration.Functions };
+        TypeSurface surface = _surfaces.Build(
+            holder,
+            context,
+            CallableForm.StaticMethod,
+            [holderName],
+            [],
+            includeProperties: false);
+
+        if (surface.IsEmpty)
+        {
+            return null;
+        }
+
+        CodeWriter writer = new();
+        WriteHeader(writer, module, ns);
+        writer.WriteLine();
+        writer.WriteLine(
+            "/// <summary>The functions the gir declares inside <c>" + CTypeOf(enumeration) + "</c>.</summary>");
+        writer.WriteLine("public static unsafe partial class " + holderName);
+        writer.OpenBlock();
+        WriteMembers(writer, surface, module, first: true);
+        writer.CloseBlock();
+
+        _census.Emitted(module.GirNamespace, "enum holder");
+        return new GeneratedFile(module.ProjectDirectory + "/Generated/" + holderName + ".cs", writer.ToSource());
+    }
+
     /// <summary>Writes the header every generated file of a module starts with.</summary>
     /// <param name="writer">The target writer.</param>
     /// <param name="module">The module being emitted.</param>
@@ -157,12 +242,18 @@ internal sealed class ClassEmitter
     /// <param name="module">The module being emitted.</param>
     /// <param name="first">Whether the first member opens the type body.</param>
     /// <param name="cType">The C type of the declaring type, for the documentation of its signals.</param>
+    /// <param name="interfaceType">
+    /// The C# interface the members extend, when they are emitted into the
+    /// extension class of a gir interface. Its signals become a pair of
+    /// extension methods instead of an event.
+    /// </param>
     internal static void WriteMembers(
         CodeWriter writer,
         TypeSurface surface,
         ModuleInfo module,
         bool first,
-        string cType = "")
+        string cType = "",
+        string? interfaceType = null)
     {
         bool leading = first;
         foreach (MarshalPlan member in surface.Members)
@@ -197,7 +288,14 @@ internal sealed class ClassEmitter
             }
 
             leading = false;
-            SignalEmitter.WriteSignal(writer, signal, module, cType);
+            if (interfaceType is null)
+            {
+                SignalEmitter.WriteSignal(writer, signal, module, cType);
+            }
+            else
+            {
+                SignalEmitter.WriteInterfaceSignal(writer, signal, module, cType, interfaceType);
+            }
         }
 
         foreach (MarshalPlan member in surface.Members)
@@ -230,6 +328,9 @@ internal sealed class ClassEmitter
     }
 
     private static string CTypeOf(GirClass declaration) =>
+        declaration.CType is { Length: > 0 } cType ? cType : declaration.Name;
+
+    private static string CTypeOf(GirEnumeration declaration) =>
         declaration.CType is { Length: > 0 } cType ? cType : declaration.Name;
 
     private GeneratedFile? Emit(ModuleInfo module, GirNamespace ns, GirClass declaration)
@@ -270,16 +371,19 @@ internal sealed class ClassEmitter
 
         List<string> members = [.. inherited];
         members.AddRange(surface.MemberKeys);
-        _inherited[declaration.Name] = members;
+        _inherited[qualifiedName] = members;
 
         List<string> interfaces = [];
         foreach (string implemented in declaration.Implements)
         {
-            if (_repository.Resolve(implemented, ns) is { Kind: GirSymbolKind.Interface } implementedSymbol
-                && string.Equals(implementedSymbol.Namespace.Name, ns.Name, StringComparison.Ordinal)
+            // An interface of another generated module counts too:
+            // GstAppSink implements GstURIHandler, which lives in Gst.
+            if (_repository.Resolve(implemented, ns) is
+                    { Kind: GirSymbolKind.Interface, Declaration: GirInterface { IsIntrospectable: true } } implementedSymbol
+                && ModuleMap.Find(implementedSymbol.Namespace.Name) is { IsGenerated: true } implementedModule
                 && !_overlays.IsSkipped(implementedSymbol.QualifiedName))
             {
-                interfaces.Add(module.ClrNamespace + "." + _names.TypeName(implementedSymbol));
+                interfaces.Add(implementedModule.ClrNamespace + "." + _names.TypeName(implementedSymbol));
             }
         }
 
@@ -445,25 +549,34 @@ internal sealed class ClassEmitter
             return null;
         }
 
-        if (string.Equals(symbol.Namespace.Name, ns.Name, StringComparison.Ordinal))
+        // The two roots of the hierarchy are hand written in the runtime
+        // library and carry no generated members.
+        switch (symbol.QualifiedName)
         {
-            return _classifier.Classify(symbol.Declaration) == TypeKind.GObjectClass
-                ? new BaseType(
-                    ModuleMap.ClrNamespaceOf(ns.Name) + "." + _names.TypeName(symbol),
-                    symbol.Name)
-                : null;
+            case "GObject.InitiallyUnowned":
+                return new BaseType("Gst.GObject.InitiallyUnowned", null);
+
+            case "GObject.Object":
+                return new BaseType("Gst.GObject.Object", null);
         }
 
-        return symbol.QualifiedName switch
+        // Everything else has to be a class this run already emitted, whether
+        // it belongs to this module or to one that was generated before it:
+        // GstAppSink derives from GstBaseSink, which lives in GstBase.
+        if (ModuleMap.Find(symbol.Namespace.Name) is not { IsGenerated: true }
+            || _classifier.Classify(symbol.Declaration) != TypeKind.GObjectClass
+            || !_inherited.ContainsKey(symbol.QualifiedName))
         {
-            "GObject.InitiallyUnowned" => new BaseType("Gst.GObject.InitiallyUnowned", null),
-            "GObject.Object" => new BaseType("Gst.GObject.Object", null),
-            _ => null,
-        };
+            return null;
+        }
+
+        return new BaseType(
+            ModuleMap.ClrNamespaceOf(symbol.Namespace.Name) + "." + _names.TypeName(symbol),
+            symbol.QualifiedName);
     }
 
     /// <summary>The base class of a generated class.</summary>
     /// <param name="Name">The C# type name.</param>
-    /// <param name="InModule">The gir name when the base class is generated too.</param>
+    /// <param name="InModule">The qualified gir name when the base class is generated too.</param>
     private readonly record struct BaseType(string Name, string? InModule);
 }

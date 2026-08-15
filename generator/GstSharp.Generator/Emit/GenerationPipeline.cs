@@ -54,7 +54,7 @@ internal static class GenerationPipeline
     {
         DiagnosticBag diagnostics = new();
         NameMapper names = new(overlays);
-        Classifier classifier = new(repository, diagnostics);
+        Classifier classifier = new(repository, overlays, diagnostics);
 
         // Classify everything once so that the diagnostics of a run do not
         // depend on which emitters happen to touch which type.
@@ -70,6 +70,7 @@ internal static class GenerationPipeline
         SkipRules skipRules = new(overlays);
         EmissionCensus census = new();
         EnumEmitter enumEmitter = new(names, overlays, diagnostics);
+        Dictionary<string, List<string>> inherited = new(StringComparer.Ordinal);
 
         List<GeneratedFile> files = [];
         foreach (ModuleInfo module in ModuleMap.Modules)
@@ -88,15 +89,18 @@ internal static class GenerationPipeline
                 continue;
             }
 
-            // M1 emits the Gst module only. Further modules follow once their
-            // runtime support exists.
-            if (!IsEmittedModule(module))
-            {
-                continue;
-            }
-
             files.AddRange(EmitModule(
-                new ModuleEmitters(repository, classifier, names, types, overlays, skipRules, census, diagnostics, enumEmitter),
+                new ModuleEmitters(
+                    repository,
+                    classifier,
+                    names,
+                    types,
+                    overlays,
+                    skipRules,
+                    census,
+                    diagnostics,
+                    enumEmitter,
+                    inherited),
                 module,
                 ns));
         }
@@ -104,15 +108,6 @@ internal static class GenerationPipeline
         files.Sort(static (left, right) => string.CompareOrdinal(left.RelativePath, right.RelativePath));
         return new GenerationResult(files, diagnostics.Items, census);
     }
-
-    /// <summary>
-    /// Gets a value indicating whether sources are emitted for the module. The
-    /// remaining modules follow once their runtime support exists.
-    /// </summary>
-    /// <param name="module">The module to test.</param>
-    /// <returns><see langword="true"/> when the module is emitted.</returns>
-    private static bool IsEmittedModule(ModuleInfo module) =>
-        string.Equals(module.GirNamespace, "Gst", StringComparison.Ordinal);
 
     /// <summary>Emits one module.</summary>
     /// <param name="shared">The analysis that every module shares.</param>
@@ -152,7 +147,8 @@ internal static class GenerationPipeline
             shared.Overlays,
             shared.Census,
             shared.Diagnostics,
-            registry);
+            registry,
+            shared.Inherited);
 
         InterfaceEmitter interfaceEmitter = new(shared.Names, surfaces, shared.Overlays, shared.Census);
         CallbackEmitter callbackEmitter = new(planner, shared.Census);
@@ -167,6 +163,7 @@ internal static class GenerationPipeline
         files.AddRange(recordEmitter.Emit(module, ns));
         files.AddRange(classEmitter.Emit(module, ns));
         files.AddRange(interfaceEmitter.Emit(module, ns));
+        files.AddRange(classEmitter.EmitEnumFunctions(module, ns));
 
         if (classEmitter.EmitGlobal(module, ns) is { } globalFile)
         {
@@ -202,6 +199,10 @@ internal static class GenerationPipeline
     /// <param name="Census">The census of the run.</param>
     /// <param name="Diagnostics">The diagnostic sink.</param>
     /// <param name="Enums">The enumeration emitter.</param>
+    /// <param name="Inherited">
+    /// The members of every class the run has emitted so far, keyed by
+    /// qualified gir name and shared by every module.
+    /// </param>
     private sealed record ModuleEmitters(
         Repository Repository,
         Classifier Classifier,
@@ -211,5 +212,6 @@ internal static class GenerationPipeline
         SkipRules SkipRules,
         EmissionCensus Census,
         DiagnosticBag Diagnostics,
-        EnumEmitter Enums);
+        EnumEmitter Enums,
+        Dictionary<string, List<string>> Inherited);
 }

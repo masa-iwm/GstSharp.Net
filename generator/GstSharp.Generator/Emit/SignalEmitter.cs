@@ -83,6 +83,58 @@ internal static class SignalEmitter
     }
 
     /// <summary>
+    /// Writes the members one signal of a gir interface contributes to the
+    /// extension class of that interface.
+    /// </summary>
+    /// <param name="writer">The target writer.</param>
+    /// <param name="signal">The signal to write.</param>
+    /// <param name="module">The module being emitted.</param>
+    /// <param name="cType">The C type of the declaring interface, for the documentation.</param>
+    /// <param name="interfaceType">The C# interface the accessors extend.</param>
+    /// <remarks>
+    /// A C# interface cannot declare an event that its implementors do not
+    /// implement, and an extension member cannot be an event, so the signal
+    /// becomes a pair of extension methods instead. They connect and disconnect
+    /// through the same holder that an event of a class uses, so a handler that
+    /// was added on an interface is disconnected when the instance is disposed
+    /// just like any other.
+    /// </remarks>
+    internal static void WriteInterfaceSignal(
+        CodeWriter writer,
+        SignalEmission signal,
+        ModuleInfo module,
+        string cType,
+        string interfaceType)
+    {
+        SignalPlan plan = signal.Plan;
+        if (plan.ArgsName is not null)
+        {
+            WriteArgs(writer, plan, isNew: false, cType);
+            writer.WriteLine();
+        }
+
+        if (plan.HandlerName is not null)
+        {
+            WriteHandlerDelegate(writer, plan, cType);
+            writer.WriteLine();
+        }
+
+        WriteAccessors(writer, plan, module, cType, interfaceType);
+        writer.WriteLine();
+        WriteTrampoline(writer, plan, cType);
+    }
+
+    /// <summary>Returns the name of the method that connects a handler of an interface signal.</summary>
+    /// <param name="plan">The signal.</param>
+    /// <returns>The C# method name, for example <c>AddChildAddedHandler</c>.</returns>
+    internal static string AddMethodName(SignalPlan plan) => "Add" + plan.Name + "Handler";
+
+    /// <summary>Returns the name of the method that disconnects a handler of an interface signal.</summary>
+    /// <param name="plan">The signal.</param>
+    /// <returns>The C# method name, for example <c>RemoveChildAddedHandler</c>.</returns>
+    internal static string RemoveMethodName(SignalPlan plan) => "Remove" + plan.Name + "Handler";
+
+    /// <summary>
     /// Emits the holder that remembers which handler was connected under which
     /// identifier, so that removing an event handler disconnects exactly the
     /// one that was added.
@@ -319,6 +371,47 @@ internal static class SignalEmitter
         writer.WriteLine(
             "remove => " + connections + ".Remove(this, \"" + plan.SignalName + "\", value);");
         writer.CloseBlock();
+    }
+
+    private static void WriteAccessors(
+        CodeWriter writer,
+        SignalPlan plan,
+        ModuleInfo module,
+        string cType,
+        string interfaceType)
+    {
+        string connections = module.ClrNamespace + "." + ConnectionsName;
+
+        XmlDocWriter.Write(writer, plan.Signal.Doc, "Connects a handler of " + Describe(plan, cType) + ".");
+        writer.WriteLine("/// <param name=\"self\">The instance to connect the handler to.</param>");
+        writer.WriteLine("/// <param name=\"handler\">The handler to connect.</param>");
+        if (plan.IsDetailed)
+        {
+            writer.WriteLine("/// <remarks>");
+            writer.WriteLine("/// The signal is detailed. The handler is connected to <c>" + plan.SignalName + "</c>");
+            writer.WriteLine("/// without a detail, so it runs for every detail of the signal.");
+            writer.WriteLine("/// </remarks>");
+        }
+
+        XmlDocWriter.WriteObsolete(writer, plan.Signal);
+        writer.WriteLine(
+            "public static void " + AddMethodName(plan) + "(this " + interfaceType + " self, "
+            + plan.EventType + " handler) =>");
+        writer.WriteLine(
+            "    " + connections + ".Add((Gst.GObject.Object)self, \"" + plan.SignalName + "\", (nint)("
+            + PointerType(plan) + ")&" + plan.TrampolineName + ", handler);");
+        writer.WriteLine();
+        writer.WriteLine(
+            "/// <summary>Disconnects the handler that was connected last for a delegate of "
+            + Describe(plan, cType) + ".</summary>");
+        writer.WriteLine("/// <param name=\"self\">The instance the handler was connected to.</param>");
+        writer.WriteLine("/// <param name=\"handler\">The handler to disconnect.</param>");
+        XmlDocWriter.WriteObsolete(writer, plan.Signal);
+        writer.WriteLine(
+            "public static void " + RemoveMethodName(plan) + "(this " + interfaceType + " self, "
+            + plan.EventType + " handler) =>");
+        writer.WriteLine(
+            "    " + connections + ".Remove((Gst.GObject.Object)self, \"" + plan.SignalName + "\", handler);");
     }
 
     /// <summary>Returns the function pointer type of the trampoline of a signal.</summary>

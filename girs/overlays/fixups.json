@@ -1,6 +1,14 @@
 {
-  "$comment": "Corrections applied on top of the reference gir files. 'skip' removes symbols from generation, 'rename' overrides the derived C# name, 'annotationOverrides' patches wrong or missing transfer/nullable/array annotations.",
+  "$comment": "Corrections applied on top of the reference gir files. 'skip' removes symbols from generation, 'forceOpaque' keeps a record behind a pointer instead of copying it by value, 'rename' overrides the derived C# name, 'annotationOverrides' patches wrong or missing transfer/nullable/array annotations.",
   "skip": [],
-  "rename": {},
+  "forceOpaque": [
+    "Gst.DebugCategory"
+  ],
+  "rename": {
+    "Gst.Element::no-more-pads": "NoMorePadsSignal",
+    "Gst.PadTemplate::pad-created": "PadCreatedSignal",
+    "GstApp.AppSrc::end-of-stream": "EndOfStreamSignal",
+    "GstApp.AppSrc::push-sample": "PushSampleSignal"
+  },
   "annotationOverrides": {}
 }

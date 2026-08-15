@@ -22,6 +22,13 @@ namespace GstSharp.Generator.Emit;
 /// interface from C# needs subclassing support, which this milestone does not
 /// have.
 /// </para>
+/// <para>
+/// A signal of an interface lands in the extension class too, as the
+/// <c>AddXHandler</c> and <c>RemoveXHandler</c> pair that
+/// <see cref="SignalEmitter.WriteInterfaceSignal"/> writes: an event needs
+/// accessors on the instance, which an interface cannot declare for its
+/// implementors.
+/// </para>
 /// </remarks>
 internal sealed class InterfaceEmitter
 {
@@ -76,14 +83,20 @@ internal sealed class InterfaceEmitter
         GirSymbol symbol = new(ns, declaration.Name, GirSymbolKind.Interface, declaration);
         string typeName = _names.TypeName(symbol);
         string extensionsName = typeName[1..] + "Extensions";
-        PlanningContext context = new(module, ns, TypeKind.Interface, module.ClrNamespace + "." + typeName);
+        PlanningContext context = new(
+            module,
+            ns,
+            TypeKind.Interface,
+            module.ClrNamespace + "." + typeName,
+            module.ClrNamespace + "." + extensionsName);
         TypeSurface surface = _surfaces.Build(
             declaration,
             context,
             CallableForm.ExtensionMethod,
             [typeName, extensionsName, .. SurfaceBuilder.WrapperNames],
             [],
-            includeProperties: false);
+            includeProperties: false,
+            includeSignals: true);
 
         CodeWriter writer = new();
         ClassEmitter.WriteHeader(writer, module, ns);
@@ -103,16 +116,14 @@ internal sealed class InterfaceEmitter
                 "/// <summary>The methods of <c>" + CTypeOf(declaration) + "</c>.</summary>");
             writer.WriteLine("public static unsafe partial class " + extensionsName);
             writer.OpenBlock();
-            ClassEmitter.WriteMembers(writer, surface, module, first: true);
+            ClassEmitter.WriteMembers(
+                writer,
+                surface,
+                module,
+                first: true,
+                CTypeOf(declaration),
+                module.ClrNamespace + "." + typeName);
             writer.CloseBlock();
-        }
-
-        // A signal of an interface is not emitted by this milestone: an event
-        // needs accessors on the instance, and the members of an interface are
-        // emitted as extension methods of a static class.
-        for (int i = 0; i < declaration.Signals.Count; i++)
-        {
-            _census.Skipped(module.GirNamespace, SkipReason.InterfaceSignal);
         }
 
         _census.Emitted(module.GirNamespace, "interface");

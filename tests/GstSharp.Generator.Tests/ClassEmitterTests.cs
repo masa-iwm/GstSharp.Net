@@ -108,34 +108,104 @@ public sealed class ClassEmitterTests
             StringComparison.Ordinal);
     }
 
-    [Fact]
-    public void TheEmissionCensusIsStable()
+    [Theory]
+    [InlineData("Gst", 35, 71, 5, 18, 18, 1236, 19, 23)]
+    [InlineData("GstBase", 11, 17, 0, 5, 0, 173, 13, 2)]
+    [InlineData("GstApp", 2, 4, 0, 8, 0, 65, 23, 12)]
+    [InlineData("GstAudio", 14, 26, 1, 2, 2, 196, 15, 0)]
+    [InlineData("GstVideo", 12, 49, 5, 0, 9, 312, 2, 2)]
+    [InlineData("GstPbutils", 14, 3, 0, 0, 1, 159, 1, 3)]
+    public void TheEmissionCensusIsStable(
+        string module,
+        int classes,
+        int records,
+        int interfaces,
+        int callbacks,
+        int enumHolders,
+        int methods,
+        int properties,
+        int signals)
     {
         EmissionCensus census = Generated.Census;
 
-        Assert.Equal(35, census.EmittedCount("Gst", "class"));
-        Assert.Equal(71, census.EmittedCount("Gst", "record"));
-        Assert.Equal(5, census.EmittedCount("Gst", "interface"));
-        Assert.Equal(18, census.EmittedCount("Gst", "callback"));
-        Assert.Equal(1201, census.EmittedCount("Gst", "method"));
-        Assert.Equal(19, census.EmittedCount("Gst", "property"));
-        Assert.Equal(19, census.EmittedCount("Gst", "signal"));
+        Assert.Equal(classes, census.EmittedCount(module, "class"));
+        Assert.Equal(records, census.EmittedCount(module, "record"));
+        Assert.Equal(interfaces, census.EmittedCount(module, "interface"));
+        Assert.Equal(callbacks, census.EmittedCount(module, "callback"));
+        Assert.Equal(enumHolders, census.EmittedCount(module, "enum holder"));
+        Assert.Equal(methods, census.EmittedCount(module, "method"));
+        Assert.Equal(properties, census.EmittedCount(module, "property"));
+        Assert.Equal(signals, census.EmittedCount(module, "signal"));
     }
 
-    [Fact]
-    public void TheSkipCensusIsStable()
+    [Theory]
+    [InlineData("Gst", 1, 94, 53, 118, 349, 10)]
+    [InlineData("GstBase", 1, 11, 0, 19, 183, 0)]
+    [InlineData("GstApp", 0, 0, 0, 2, 28, 0)]
+    [InlineData("GstAudio", 1, 27, 0, 7, 51, 0)]
+    [InlineData("GstVideo", 0, 102, 1, 6, 108, 0)]
+    [InlineData("GstPbutils", 0, 1, 0, 0, 33, 0)]
+    public void TheSkipCensusIsStable(
+        string module,
+        int shadowed,
+        int movedTo,
+        int varArgs,
+        int notIntrospectable,
+        int unsupported,
+        int collisions)
     {
         EmissionCensus census = Generated.Census;
 
-        Assert.Equal(1, census.SkippedCount("Gst", SkipReason.ShadowedBy));
-        Assert.Equal(94, census.SkippedCount("Gst", SkipReason.MovedTo));
-        Assert.Equal(53, census.SkippedCount("Gst", SkipReason.VarArgs));
-        Assert.Equal(118, census.SkippedCount("Gst", SkipReason.NotIntrospectable));
-        Assert.Equal(355, census.SkippedCount("Gst", SkipReason.UnsupportedSignature));
-        // Ten methods, plus the two signals whose C# name a method already took.
-        Assert.Equal(12, census.SkippedCount("Gst", SkipReason.NameCollision));
-        Assert.Equal(0, census.SkippedCount("Gst", SkipReason.NoCIdentifier));
-        Assert.Equal(2, census.SkippedCount("Gst", SkipReason.InterfaceSignal));
+        Assert.Equal(shadowed, census.SkippedCount(module, SkipReason.ShadowedBy));
+        Assert.Equal(movedTo, census.SkippedCount(module, SkipReason.MovedTo));
+        Assert.Equal(varArgs, census.SkippedCount(module, SkipReason.VarArgs));
+        Assert.Equal(notIntrospectable, census.SkippedCount(module, SkipReason.NotIntrospectable));
+        Assert.Equal(unsupported, census.SkippedCount(module, SkipReason.UnsupportedSignature));
+        Assert.Equal(collisions, census.SkippedCount(module, SkipReason.NameCollision));
+        Assert.Equal(0, census.SkippedCount(module, SkipReason.NoCIdentifier));
+        Assert.Equal(0, census.SkippedCount(module, SkipReason.FieldSlotCallback));
+    }
+
+    [Theory]
+    [InlineData("GstSharp.Net.Base/Generated/BaseSink.cs", "public abstract unsafe partial class BaseSink : Gst.Element")]
+    [InlineData("GstSharp.Net.Base/Generated/PushSrc.cs", "public unsafe partial class PushSrc : Gst.Base.BaseSrc")]
+    [InlineData("GstSharp.Net.App/Generated/AppSink.cs", "public unsafe partial class AppSink : Gst.Base.BaseSink, Gst.IURIHandler")]
+    [InlineData("GstSharp.Net.App/Generated/AppSrc.cs", "public unsafe partial class AppSrc : Gst.Base.BaseSrc, Gst.IURIHandler")]
+    [InlineData("GstSharp.Net.Video/Generated/VideoSink.cs", "public unsafe partial class VideoSink : Gst.Base.BaseSink")]
+    [InlineData("GstSharp.Net.Audio/Generated/AudioClock.cs", "public unsafe partial class AudioClock : Gst.SystemClock")]
+    [InlineData("GstSharp.Net.Pbutils/Generated/AudioVisualizer.cs", "public abstract unsafe partial class AudioVisualizer : Gst.Element")]
+    public void AClassDerivesAcrossModuleBoundaries(string path, string declaration)
+    {
+        Assert.Contains(declaration + "\n", SourceOf(path), StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("Gst", "GstSharp.Net")]
+    [InlineData("GstBase", "GstSharp.Net.Base")]
+    [InlineData("GstApp", "GstSharp.Net.App")]
+    [InlineData("GstAudio", "GstSharp.Net.Audio")]
+    [InlineData("GstVideo", "GstSharp.Net.Video")]
+    [InlineData("GstPbutils", "GstSharp.Net.Pbutils")]
+    public void EveryModuleEmitsItsOwnTypeTable(string module, string projectDirectory)
+    {
+        string source = SourceOf(projectDirectory + "/Generated/_Module.cs");
+
+        Assert.Contains(
+            "internal static unsafe partial class " + module + "Module\n",
+            source,
+            StringComparison.Ordinal);
+        Assert.Contains("internal static Gst.Interop.ModuleTypeEntry[] CreateEntries() =>", source, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("GstSharp.Net/Generated/StateExtensions.cs", "public static string GetName(Gst.State state)")]
+    [InlineData("GstSharp.Net/Generated/EventTypeExtensions.cs", "public static string GetName(Gst.EventType type)")]
+    [InlineData("GstSharp.Net.Video/Generated/VideoFormatExtensions.cs", "public static string ToString(Gst.Video.VideoFormat format)")]
+    [InlineData("GstSharp.Net.Audio/Generated/AudioFormatExtensions.cs", "public static string ToString(Gst.Audio.AudioFormat format)")]
+    [InlineData("GstSharp.Net.Pbutils/Generated/InstallPluginsReturnExtensions.cs", "public static string GetName(Gst.Pbutils.InstallPluginsReturn ret)")]
+    public void TheFunctionsOfAnEnumerationLandOnAHolderNamedAfterIt(string path, string signature)
+    {
+        Assert.Contains(signature + "\n", SourceOf(path), StringComparison.Ordinal);
     }
 
     [Fact]
@@ -175,6 +245,19 @@ public sealed class ClassEmitterTests
 
     private static bool HasFile(string fileName) =>
         Generated.Files.Any(file => file.RelativePath.EndsWith("/" + fileName, StringComparison.Ordinal));
+
+    private static string SourceOf(string path)
+    {
+        foreach (GeneratedFile file in Generated.Files)
+        {
+            if (string.Equals(file.RelativePath, path, StringComparison.Ordinal))
+            {
+                return file.Content;
+            }
+        }
+
+        throw new InvalidOperationException("The run produced no '" + path + "'.");
+    }
 
     private static string Source(string fileName)
     {

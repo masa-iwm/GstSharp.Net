@@ -10,11 +10,19 @@ namespace GstSharp.Generator.Planning;
 /// <param name="Namespace">The gir namespace of the module.</param>
 /// <param name="OwnerKind">The classification of the declaring type.</param>
 /// <param name="OwnerType">The C# type of the declaring type, if any.</param>
+/// <param name="SignalHost">
+/// The C# type that carries the support declarations of the signals of the
+/// declaring type: the arguments classes, the handler delegates and the
+/// trampolines. It is the declaring type itself for a class, and the extension
+/// class for a gir interface, which cannot carry them. Defaults to
+/// <paramref name="OwnerType"/>.
+/// </param>
 internal readonly record struct PlanningContext(
     ModuleInfo Module,
     GirNamespace Namespace,
     TypeKind OwnerKind,
-    string? OwnerType);
+    string? OwnerType,
+    string? SignalHost = null);
 
 /// <summary>
 /// The trampoline of one <c>&lt;callback&gt;</c>.
@@ -296,6 +304,7 @@ internal sealed class MarshalPlanner
             return null;
         }
 
+        string host = context.SignalHost ?? ownerType;
         string name = _names.SignalName(context.Namespace, owner, signal);
         string? argsName = signal.Parameters.Count > 0 ? name + "SignalArgs" : null;
         HashSet<string> taken = new(ArgsMemberNames, StringComparer.Ordinal);
@@ -333,11 +342,11 @@ internal sealed class MarshalPlanner
         }
 
         string? handlerName = returnPlan.IsVoid ? null : name + "Handler";
-        string argsType = argsName is null ? "System.EventArgs" : ownerType + "." + argsName;
+        string argsType = argsName is null ? "System.EventArgs" : host + "." + argsName;
         string trampolineName = name + "Trampoline";
 
         // A member cannot be named after the type that declares it.
-        string simpleName = ownerType[(ownerType.LastIndexOf('.') + 1)..];
+        string simpleName = host[(host.LastIndexOf('.') + 1)..];
         foreach (string? member in new[] { name, argsName, handlerName, trampolineName })
         {
             if (string.Equals(member, simpleName, StringComparison.Ordinal))
@@ -357,7 +366,7 @@ internal sealed class MarshalPlanner
             TrampolineName = trampolineName,
             HandlerName = handlerName,
             EventType = handlerName is not null
-                ? ownerType + "." + handlerName
+                ? host + "." + handlerName
                 : argsName is null ? "System.EventHandler" : "System.EventHandler<" + argsType + ">",
             Arguments = arguments,
             Return = returnPlan,
@@ -518,11 +527,13 @@ internal sealed class MarshalPlanner
     /// name it.
     /// </summary>
     /// <param name="symbol">The symbol to test.</param>
-    /// <param name="context">The module that is being emitted.</param>
     /// <returns><see langword="true"/> when the type exists in the output.</returns>
-    private bool IsEmitted(GirSymbol symbol, PlanningContext context)
+    private bool IsEmitted(GirSymbol symbol)
     {
-        if (!string.Equals(symbol.Namespace.Name, context.Module.GirNamespace, StringComparison.Ordinal)
+        // Any module of the run may declare the type: GstAppSink returns a
+        // Gst.FlowReturn and takes a Gst.Caps, and both are generated. Only the
+        // GLib stack, whose runtime layer is hand written, is out of reach.
+        if (ModuleMap.Find(symbol.Namespace.Name) is not { IsGenerated: true }
             || _overlays.IsSkipped(symbol.QualifiedName)
             || !symbol.Declaration.IsIntrospectable)
         {
@@ -686,7 +697,7 @@ internal sealed class MarshalPlanner
 
             case MarshalKind.Enum:
             case MarshalKind.Flags:
-                if (mapped.Symbol is not { } enumeration || !IsEmitted(enumeration, context))
+                if (mapped.Symbol is not { } enumeration || !IsEmitted(enumeration))
                 {
                     return null;
                 }
@@ -739,7 +750,7 @@ internal sealed class MarshalPlanner
                 return PlanHandle(mapped, name, direction, transfer, nullable, context, isReturn);
 
             case MarshalKind.PlainStruct:
-                if (mapped.Symbol is not { } record || !IsEmitted(record, context))
+                if (mapped.Symbol is not { } record || !IsEmitted(record))
                 {
                     return null;
                 }
@@ -796,7 +807,7 @@ internal sealed class MarshalPlanner
             flavor = HandleFlavor.GObject;
             publicType = runtimeType;
         }
-        else if (!IsEmitted(symbol, context))
+        else if (!IsEmitted(symbol))
         {
             return null;
         }
@@ -952,7 +963,7 @@ internal sealed class MarshalPlanner
         }
 
         GirSymbol? symbol = _repository.Resolve(parameter.Type.Name, context.Namespace);
-        if (symbol is not { Declaration: GirCallback callback } || !IsEmitted(symbol, context))
+        if (symbol is not { Declaration: GirCallback callback } || !IsEmitted(symbol))
         {
             return null;
         }
@@ -1097,7 +1108,7 @@ internal sealed class MarshalPlanner
         }
 
         GirSymbol? symbol = _repository.Resolve(callback.Name, context.Namespace);
-        if (symbol is null || symbol.Declaration != callback || !IsEmitted(symbol, context))
+        if (symbol is null || symbol.Declaration != callback || !IsEmitted(symbol))
         {
             return null;
         }

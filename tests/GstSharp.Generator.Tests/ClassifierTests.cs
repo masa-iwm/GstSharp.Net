@@ -9,7 +9,7 @@ namespace GstSharp.Generator.Tests;
 /// </summary>
 public sealed class ClassifierTests
 {
-    private static readonly Classifier Subject = new(GirFixture.Repository, new DiagnosticBag());
+    private static readonly Classifier Subject = new(GirFixture.Repository, Overlays.Empty, new DiagnosticBag());
 
     [Theory]
     [InlineData("Gst.Buffer")]

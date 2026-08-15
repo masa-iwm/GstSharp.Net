@@ -431,53 +431,123 @@ public sealed class SignalEmitterTests
             StringComparison.Ordinal);
     }
 
-    [Fact]
-    public void TheSignalCensusIsStable()
+    [Theory]
+    [InlineData("Gst", 23)]
+    [InlineData("GstBase", 2)]
+    [InlineData("GstApp", 12)]
+    [InlineData("GstAudio", 0)]
+    [InlineData("GstVideo", 2)]
+    [InlineData("GstPbutils", 3)]
+    public void TheSignalCensusIsStable(string module, int signals)
     {
-        // The gir of Gst declares 23 signals. Nineteen are emitted; the four
-        // that are not are the two signals of the GstChildProxy interface,
-        // which needs event accessors that a C# interface cannot carry, and the
-        // two whose C# name a method of the same class already took
-        // (GstElement::no-more-pads and GstPadTemplate::pad-created).
-        Assert.Equal(19, Generated.Census.EmittedCount("Gst", "signal"));
-        Assert.Equal(2, Generated.Census.SkippedCount("Gst", SkipReason.InterfaceSignal));
-
-        string[] collided =
-        [
-            "The 'no-more-pads' signal of 'Element'",
-            "The 'pad-created' signal of 'PadTemplate'",
-        ];
-
-        foreach (string message in collided)
-        {
-            Assert.Contains(
-                Generated.Diagnostics,
-                diagnostic => diagnostic.Code == "GEN0011"
-                    && diagnostic.Message.StartsWith(message, StringComparison.Ordinal));
-        }
+        // The two signals whose C# name a method of the same class had taken
+        // (GstElement::no-more-pads and GstPadTemplate::pad-created) are bound
+        // through the renames of fixups.json, so nothing collides any more.
+        Assert.Equal(signals, Generated.Census.EmittedCount(module, "signal"));
+        Assert.DoesNotContain(Generated.Diagnostics, diagnostic => diagnostic.Code == "GEN0011");
     }
 
     [Fact]
-    public void EveryEmittedEventIsBackedByATrampolineAndAConnection()
+    public void EveryEmittedSignalIsBackedByATrampolineAndAConnection()
     {
         int events = 0;
         int trampolines = 0;
+        int adders = 0;
+        int removers = 0;
         foreach (GeneratedFile file in Generated.Files)
         {
             events += file.Content.Split("    public event ").Length - 1;
             trampolines += file.Content.Split("Trampoline(nint instance").Length - 1;
+            adders += file.Content.Split("    public static void Add").Length - 1;
+            removers += file.Content.Split("    public static void Remove").Length - 1;
         }
 
-        Assert.Equal(19, events);
-        Assert.Equal(19, trampolines);
-        Assert.Contains(
+        // Forty two signals are emitted over the six modules. Thirty nine are
+        // events of a class; the remaining three belong to a gir interface and
+        // are a pair of extension methods instead.
+        Assert.Equal(39, events);
+        Assert.Equal(3, adders);
+        Assert.Equal(3, removers);
+        Assert.Equal(42, trampolines);
+
+        string[] withSignals =
+        [
+            "GstSharp.Net", "GstSharp.Net.Base", "GstSharp.Net.App", "GstSharp.Net.Video", "GstSharp.Net.Pbutils",
+        ];
+
+        foreach (string module in withSignals)
+        {
+            Assert.Contains(
+                Generated.Files,
+                file => file.RelativePath == module + "/Generated/SignalConnections.cs");
+        }
+
+        // A module without signals does not carry the holder at all.
+        Assert.DoesNotContain(
             Generated.Files,
-            file => file.RelativePath.EndsWith("/SignalConnections.cs", StringComparison.Ordinal));
+            file => file.RelativePath == "GstSharp.Net.Audio/Generated/SignalConnections.cs");
     }
 
-    private static string Source(string fileName)
+    [Fact]
+    public void ASignalOfAnInterfaceBecomesAPairOfExtensionMethods()
     {
-        string path = "GstSharp.Net/Generated/" + fileName;
+        string source = Source("IChildProxy.cs");
+
+        Assert.Contains(
+            "public static void AddChildAddedHandler(this Gst.IChildProxy self, "
+            + "System.EventHandler<Gst.ChildProxyExtensions.ChildAddedSignalArgs> handler) =>\n"
+            + "        Gst.SignalConnections.Add((Gst.GObject.Object)self, \"child-added\", ",
+            source,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "public static void RemoveChildAddedHandler(this Gst.IChildProxy self, "
+            + "System.EventHandler<Gst.ChildProxyExtensions.ChildAddedSignalArgs> handler) =>\n"
+            + "        Gst.SignalConnections.Remove((Gst.GObject.Object)self, \"child-added\", handler);",
+            source,
+            StringComparison.Ordinal);
+
+        // The arguments carrier is nested in the extension class, because the
+        // interface itself only exposes the native handle.
+        Assert.Contains("public sealed class ChildAddedSignalArgs", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("public event", source, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void TheRenamedSignalsOfTheRealGirAreEmitted()
+    {
+        Assert.Contains(
+            "public event System.EventHandler NoMorePadsSignal\n",
+            Source("Element.cs"),
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "public event System.EventHandler<Gst.PadTemplate.PadCreatedSignalSignalArgs> PadCreatedSignal\n",
+            Source("PadTemplate.cs"),
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AReturnValuedSignalWithoutArgumentsIsEmittedForAppSink()
+    {
+        string source = SourceOf("GstSharp.Net.App/Generated/AppSink.cs");
+
+        Assert.Contains(
+            "public delegate Gst.FlowReturn NewSampleHandler(object? sender, System.EventArgs args);",
+            source,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "public event Gst.App.AppSink.NewSampleHandler NewSample\n",
+            source,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "add => Gst.App.SignalConnections.Add(this, \"new-sample\", ",
+            source,
+            StringComparison.Ordinal);
+    }
+
+    private static string Source(string fileName) => SourceOf("GstSharp.Net/Generated/" + fileName);
+
+    private static string SourceOf(string path)
+    {
         foreach (GeneratedFile file in Generated.Files)
         {
             if (string.Equals(file.RelativePath, path, StringComparison.Ordinal))

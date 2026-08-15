@@ -55,6 +55,9 @@ internal sealed class PlatformSupport
 /// (<c>Gst.MessageType.state_changed</c>) or a <c>c:identifier</c>.</description></item>
 /// <item><description><c>annotationOverrides</c>: <c>c:identifier</c>, optionally
 /// suffixed with <c>#parameter-name</c> or <c>#return</c>.</description></item>
+/// <item><description><c>forceOpaque</c>: qualified gir name of a record
+/// (<c>Gst.DebugCategory</c>) that must be wrapped behind a pointer rather
+/// than copied by value.</description></item>
 /// </list>
 /// </remarks>
 internal sealed class Overlays
@@ -67,17 +70,20 @@ internal sealed class Overlays
     };
 
     private readonly HashSet<string> _skip;
+    private readonly HashSet<string> _forceOpaque;
     private readonly Dictionary<string, string> _rename;
     private readonly Dictionary<string, AnnotationOverride> _annotations;
     private readonly Dictionary<string, PlatformSupport> _platforms;
 
     private Overlays(
         HashSet<string> skip,
+        HashSet<string> forceOpaque,
         Dictionary<string, string> rename,
         Dictionary<string, AnnotationOverride> annotations,
         Dictionary<string, PlatformSupport> platforms)
     {
         _skip = skip;
+        _forceOpaque = forceOpaque;
         _rename = rename;
         _annotations = annotations;
         _platforms = platforms;
@@ -85,6 +91,7 @@ internal sealed class Overlays
 
     /// <summary>Gets an overlay set without any correction.</summary>
     internal static Overlays Empty { get; } = new(
+        new HashSet<string>(StringComparer.Ordinal),
         new HashSet<string>(StringComparer.Ordinal),
         new Dictionary<string, string>(StringComparer.Ordinal),
         new Dictionary<string, AnnotationOverride>(StringComparer.Ordinal),
@@ -112,6 +119,12 @@ internal sealed class Overlays
             skip.Add(identifier);
         }
 
+        HashSet<string> forceOpaque = new(StringComparer.Ordinal);
+        foreach (string identifier in fixups.ForceOpaque ?? [])
+        {
+            forceOpaque.Add(identifier);
+        }
+
         Dictionary<string, string> rename = new(StringComparer.Ordinal);
         foreach (KeyValuePair<string, string> entry in fixups.Rename ?? [])
         {
@@ -130,13 +143,21 @@ internal sealed class Overlays
             symbols[entry.Key] = entry.Value;
         }
 
-        return new Overlays(skip, rename, annotations, symbols);
+        return new Overlays(skip, forceOpaque, rename, annotations, symbols);
     }
 
     /// <summary>Tests whether a symbol is skipped by the overlays.</summary>
     /// <param name="key">A <c>c:identifier</c> or a qualified gir name.</param>
     /// <returns><see langword="true"/> when the symbol must not be generated.</returns>
     internal bool IsSkipped(string? key) => key is not null && _skip.Contains(key);
+
+    /// <summary>
+    /// Tests whether a record must be wrapped behind a pointer instead of being
+    /// projected as a value type.
+    /// </summary>
+    /// <param name="qualifiedName">The qualified gir name of the record.</param>
+    /// <returns><see langword="true"/> when the record is forced opaque.</returns>
+    internal bool IsForcedOpaque(string qualifiedName) => _forceOpaque.Contains(qualifiedName);
 
     /// <summary>Looks up a name override.</summary>
     /// <param name="key">A qualified gir name or a <c>c:identifier</c>.</param>
@@ -172,6 +193,8 @@ internal sealed class Overlays
     private sealed class FixupsFile
     {
         public List<string>? Skip { get; set; }
+
+        public List<string>? ForceOpaque { get; set; }
 
         public Dictionary<string, string>? Rename { get; set; }
 

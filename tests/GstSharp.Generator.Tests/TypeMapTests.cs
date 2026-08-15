@@ -14,7 +14,7 @@ public sealed class TypeMapTests
 
     private static readonly TypeMap Subject = new(
         GirFixture.Repository,
-        new Classifier(GirFixture.Repository, Diagnostics),
+        new Classifier(GirFixture.Repository, Overlays.Empty, Diagnostics),
         new NameMapper(Overlays.Empty),
         Diagnostics);
 
@@ -180,7 +180,7 @@ public sealed class TypeMapTests
         DiagnosticBag diagnostics = new();
         TypeMap map = new(
             GirFixture.Repository,
-            new Classifier(GirFixture.Repository, diagnostics),
+            new Classifier(GirFixture.Repository, Overlays.Empty, diagnostics),
             new NameMapper(Overlays.Empty),
             diagnostics);
 
