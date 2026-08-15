@@ -72,6 +72,7 @@ public sealed unsafe partial class VideoMeta
         nint dataNative = default;
         int strideNative = default;
         int nativeResult = GstVideoMetaMap(Handle, plane, &infoNative, &dataNative, &strideNative, (int)flags);
+        System.GC.KeepAlive(this);
         data = dataNative;
         stride = strideNative;
         return nativeResult != 0;
@@ -88,6 +89,7 @@ public sealed unsafe partial class VideoMeta
     public bool SetAlignment(Gst.Video.VideoAlignment alignment)
     {
         int nativeResult = GstVideoMetaSetAlignment(Handle, alignment);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -102,6 +104,7 @@ public sealed unsafe partial class VideoMeta
     {
         Gst.Video.VideoAlignment alignmentNative = alignment;
         int nativeResult = GstVideoMetaSetAlignmentFull(Handle, &alignmentNative);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -113,6 +116,7 @@ public sealed unsafe partial class VideoMeta
     {
         Gst.MapInfo infoNative = info;
         int nativeResult = GstVideoMetaUnmap(Handle, plane, &infoNative);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 

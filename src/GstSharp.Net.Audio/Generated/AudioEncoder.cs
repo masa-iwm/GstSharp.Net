@@ -127,33 +127,22 @@ public abstract unsafe partial class AudioEncoder : Gst.Element, Gst.IPreset
     public Gst.Buffer AllocateOutputBuffer(nuint size)
     {
         nint nativeResult = GstAudioEncoderAllocateOutputBuffer(Handle, size);
+        System.GC.KeepAlive(this);
         return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_audio_encoder_allocate_output_buffer returned no value.");
     }
 
-    /// <summary>
-    /// Lets #GstAudioEncoder sub-classes to know the memory @allocator
-    /// used by the base class and its @params.
-    /// </summary>
-    /// <remarks>
-    /// <para>Unref the @allocator after use it.</para>
-    /// </remarks>
-    /// <param name="allocator">The <c>allocator</c> argument.</param>
-    /// <param name="params">The <c>@params</c> argument.</param>
-    public void GetAllocator(out Gst.Allocator? allocator, out Gst.AllocationParams? @params)
-    {
-        nint allocatorNative = default;
-        nint @paramsNative = default;
-        GstAudioEncoderGetAllocator(Handle, &allocatorNative, &@paramsNative);
-        allocator = Gst.GObject.Object.FromNative<Gst.Allocator>(allocatorNative, Gst.Interop.Transfer.Full);
-        @params = Gst.AllocationParams.FromNative(@paramsNative, Gst.Interop.Transfer.Full);
-    }
-
     /// <summary>The <c>gst_audio_encoder_get_audio_info</c> function.</summary>
-    /// <returns>a #GstAudioInfo describing the input audio format</returns>
+    /// <returns>
+    /// a #GstAudioInfo describing the input audio format
+    /// The wrapper owns a reference of its own, which is a copy for a boxed type:
+    /// dispose it when you are done, and note that changes made to a copy of a
+    /// boxed value are not written back.
+    /// </returns>
     public Gst.Audio.AudioInfo GetAudioInfo()
     {
         nint nativeResult = GstAudioEncoderGetAudioInfo(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Audio.AudioInfo.FromNative(nativeResult, Gst.Interop.Transfer.None)
             ?? throw new InvalidOperationException("gst_audio_encoder_get_audio_info returned no value.");
     }
@@ -163,6 +152,7 @@ public abstract unsafe partial class AudioEncoder : Gst.Element, Gst.IPreset
     public bool GetDrainable()
     {
         int nativeResult = GstAudioEncoderGetDrainable(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -171,6 +161,7 @@ public abstract unsafe partial class AudioEncoder : Gst.Element, Gst.IPreset
     public int GetFrameMax()
     {
         int nativeResult = GstAudioEncoderGetFrameMax(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -179,6 +170,7 @@ public abstract unsafe partial class AudioEncoder : Gst.Element, Gst.IPreset
     public int GetFrameSamplesMax()
     {
         int nativeResult = GstAudioEncoderGetFrameSamplesMax(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -187,6 +179,7 @@ public abstract unsafe partial class AudioEncoder : Gst.Element, Gst.IPreset
     public int GetFrameSamplesMin()
     {
         int nativeResult = GstAudioEncoderGetFrameSamplesMin(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -195,6 +188,7 @@ public abstract unsafe partial class AudioEncoder : Gst.Element, Gst.IPreset
     public bool GetHardMin()
     {
         int nativeResult = GstAudioEncoderGetHardMin(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -203,6 +197,7 @@ public abstract unsafe partial class AudioEncoder : Gst.Element, Gst.IPreset
     public bool GetHardResync()
     {
         int nativeResult = GstAudioEncoderGetHardResync(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -217,6 +212,7 @@ public abstract unsafe partial class AudioEncoder : Gst.Element, Gst.IPreset
         ulong minNative = default;
         ulong maxNative = default;
         GstAudioEncoderGetLatency(Handle, &minNative, &maxNative);
+        System.GC.KeepAlive(this);
         min = new Gst.ClockTime(minNative);
         max = new Gst.ClockTime(maxNative);
     }
@@ -226,6 +222,7 @@ public abstract unsafe partial class AudioEncoder : Gst.Element, Gst.IPreset
     public int GetLookahead()
     {
         int nativeResult = GstAudioEncoderGetLookahead(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -234,6 +231,7 @@ public abstract unsafe partial class AudioEncoder : Gst.Element, Gst.IPreset
     public bool GetMarkGranule()
     {
         int nativeResult = GstAudioEncoderGetMarkGranule(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -242,6 +240,7 @@ public abstract unsafe partial class AudioEncoder : Gst.Element, Gst.IPreset
     public bool GetPerfectTimestamp()
     {
         int nativeResult = GstAudioEncoderGetPerfectTimestamp(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -250,6 +249,7 @@ public abstract unsafe partial class AudioEncoder : Gst.Element, Gst.IPreset
     public Gst.ClockTime GetTolerance()
     {
         ulong nativeResult = GstAudioEncoderGetTolerance(Handle);
+        System.GC.KeepAlive(this);
         return new Gst.ClockTime(nativeResult);
     }
 
@@ -270,6 +270,7 @@ public abstract unsafe partial class AudioEncoder : Gst.Element, Gst.IPreset
     public void MergeTags(Gst.TagList? tags, Gst.TagMergeMode mode)
     {
         GstAudioEncoderMergeTags(Handle, tags is null ? 0 : tags.Handle, (int)mode);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -281,6 +282,7 @@ public abstract unsafe partial class AudioEncoder : Gst.Element, Gst.IPreset
     public bool Negotiate()
     {
         int nativeResult = GstAudioEncoderNegotiate(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -295,6 +297,7 @@ public abstract unsafe partial class AudioEncoder : Gst.Element, Gst.IPreset
     public Gst.Caps ProxyGetcaps(Gst.Caps? caps, Gst.Caps? filter)
     {
         nint nativeResult = GstAudioEncoderProxyGetcaps(Handle, caps is null ? 0 : caps.Handle, filter is null ? 0 : filter.Handle);
+        System.GC.KeepAlive(this);
         return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_audio_encoder_proxy_getcaps returned no value.");
     }
@@ -309,6 +312,7 @@ public abstract unsafe partial class AudioEncoder : Gst.Element, Gst.IPreset
     public void SetAllocationCaps(Gst.Caps? allocationCaps)
     {
         GstAudioEncoderSetAllocationCaps(Handle, allocationCaps is null ? 0 : allocationCaps.Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -324,6 +328,7 @@ public abstract unsafe partial class AudioEncoder : Gst.Element, Gst.IPreset
     public void SetDrainable(bool enabled)
     {
         GstAudioEncoderSetDrainable(Handle, enabled ? 1 : 0);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -340,6 +345,7 @@ public abstract unsafe partial class AudioEncoder : Gst.Element, Gst.IPreset
     public void SetFrameMax(int num)
     {
         GstAudioEncoderSetFrameMax(Handle, num);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -360,6 +366,7 @@ public abstract unsafe partial class AudioEncoder : Gst.Element, Gst.IPreset
     public void SetFrameSamplesMax(int num)
     {
         GstAudioEncoderSetFrameSamplesMax(Handle, num);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -380,6 +387,7 @@ public abstract unsafe partial class AudioEncoder : Gst.Element, Gst.IPreset
     public void SetFrameSamplesMin(int num)
     {
         GstAudioEncoderSetFrameSamplesMin(Handle, num);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -395,6 +403,7 @@ public abstract unsafe partial class AudioEncoder : Gst.Element, Gst.IPreset
     public void SetHardMin(bool enabled)
     {
         GstAudioEncoderSetHardMin(Handle, enabled ? 1 : 0);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>The <c>gst_audio_encoder_set_hard_resync</c> function.</summary>
@@ -402,6 +411,7 @@ public abstract unsafe partial class AudioEncoder : Gst.Element, Gst.IPreset
     public void SetHardResync(bool enabled)
     {
         GstAudioEncoderSetHardResync(Handle, enabled ? 1 : 0);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -414,6 +424,7 @@ public abstract unsafe partial class AudioEncoder : Gst.Element, Gst.IPreset
     public void SetLatency(Gst.ClockTime min, Gst.ClockTime max)
     {
         GstAudioEncoderSetLatency(Handle, min.Nanoseconds, max.Nanoseconds);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Sets encoder lookahead (in units of input rate samples)</summary>
@@ -427,6 +438,7 @@ public abstract unsafe partial class AudioEncoder : Gst.Element, Gst.IPreset
     public void SetLookahead(int num)
     {
         GstAudioEncoderSetLookahead(Handle, num);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Enable or disable encoder granule handling.</summary>
@@ -437,6 +449,7 @@ public abstract unsafe partial class AudioEncoder : Gst.Element, Gst.IPreset
     public void SetMarkGranule(bool enabled)
     {
         GstAudioEncoderSetMarkGranule(Handle, enabled ? 1 : 0);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Configure output caps on the srcpad of @enc.</summary>
@@ -446,6 +459,7 @@ public abstract unsafe partial class AudioEncoder : Gst.Element, Gst.IPreset
     {
         ArgumentNullException.ThrowIfNull(caps);
         int nativeResult = GstAudioEncoderSetOutputFormat(Handle, caps.Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -457,6 +471,7 @@ public abstract unsafe partial class AudioEncoder : Gst.Element, Gst.IPreset
     public void SetPerfectTimestamp(bool enabled)
     {
         GstAudioEncoderSetPerfectTimestamp(Handle, enabled ? 1 : 0);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Configures encoder audio jitter tolerance threshold.</summary>
@@ -467,6 +482,7 @@ public abstract unsafe partial class AudioEncoder : Gst.Element, Gst.IPreset
     public void SetTolerance(Gst.ClockTime tolerance)
     {
         GstAudioEncoderSetTolerance(Handle, tolerance.Nanoseconds);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>The <c>hard-resync</c> property.</summary>
@@ -496,10 +512,6 @@ public abstract unsafe partial class AudioEncoder : Gst.Element, Gst.IPreset
     /// <summary>The <c>gst_audio_encoder_allocate_output_buffer</c> entry point.</summary>
     [LibraryImport("GstAudio", EntryPoint = "gst_audio_encoder_allocate_output_buffer")]
     private static partial nint GstAudioEncoderAllocateOutputBuffer(nint enc, nuint size);
-
-    /// <summary>The <c>gst_audio_encoder_get_allocator</c> entry point.</summary>
-    [LibraryImport("GstAudio", EntryPoint = "gst_audio_encoder_get_allocator")]
-    private static partial void GstAudioEncoderGetAllocator(nint enc, nint* allocator, nint* @params);
 
     /// <summary>The <c>gst_audio_encoder_get_audio_info</c> entry point.</summary>
     [LibraryImport("GstAudio", EntryPoint = "gst_audio_encoder_get_audio_info")]

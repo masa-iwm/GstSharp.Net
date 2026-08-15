@@ -3,7 +3,6 @@
 
 #nullable enable
 
-using System;
 using System.Runtime.InteropServices;
 
 namespace Gst.Video;
@@ -23,7 +22,7 @@ namespace Gst.Video;
 /// gst_video_encoder_set_output_state() methods.
 /// </para>
 /// </remarks>
-public sealed unsafe partial class VideoCodecState : Gst.GObject.Boxed
+public sealed partial class VideoCodecState : Gst.GObject.Boxed
 {
     /// <summary>Wraps a native <c>GstVideoCodecState</c>.</summary>
     /// <param name="handle">The native instance.</param>
@@ -39,32 +38,6 @@ public sealed unsafe partial class VideoCodecState : Gst.GObject.Boxed
     /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>
     internal static VideoCodecState? FromNative(nint handle, Gst.Interop.Transfer transfer) =>
         handle == 0 ? null : new(handle, transfer);
-
-    /// <summary>Increases the refcount of the given state by one.</summary>
-    /// <returns>@buf</returns>
-    public Gst.Video.VideoCodecState Ref()
-    {
-        nint nativeResult = GstVideoCodecStateRef(Handle);
-        return Gst.Video.VideoCodecState.FromNative(nativeResult, Gst.Interop.Transfer.Full)
-            ?? throw new InvalidOperationException("gst_video_codec_state_ref returned no value.");
-    }
-
-    /// <summary>
-    /// Decreases the refcount of the state. If the refcount reaches 0, the state
-    /// will be freed.
-    /// </summary>
-    public void Unref()
-    {
-        GstVideoCodecStateUnref(Handle);
-    }
-
-    /// <summary>The <c>gst_video_codec_state_ref</c> entry point.</summary>
-    [LibraryImport("GstVideo", EntryPoint = "gst_video_codec_state_ref")]
-    private static partial nint GstVideoCodecStateRef(nint state);
-
-    /// <summary>The <c>gst_video_codec_state_unref</c> entry point.</summary>
-    [LibraryImport("GstVideo", EntryPoint = "gst_video_codec_state_unref")]
-    private static partial void GstVideoCodecStateUnref(nint state);
 
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstVideoCodecState</c> under.</summary>
     /// <returns>The type of the instances of this wrapper.</returns>

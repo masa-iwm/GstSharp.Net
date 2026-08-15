@@ -120,16 +120,23 @@ public sealed unsafe partial class Promise : Gst.MiniObject
     public void Expire()
     {
         GstPromiseExpire(Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
     /// Retrieve the reply set on @promise.  @promise must be in
     /// %GST_PROMISE_RESULT_REPLIED and the returned structure is owned by @promise
     /// </summary>
-    /// <returns>The reply set on @promise</returns>
+    /// <returns>
+    /// The reply set on @promise
+    /// The wrapper owns a reference of its own, which is a copy for a boxed type:
+    /// dispose it when you are done, and note that changes made to a copy of a
+    /// boxed value are not written back.
+    /// </returns>
     public Gst.Structure? GetReply()
     {
         nint nativeResult = GstPromiseGetReply(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.None);
     }
 
@@ -141,24 +148,7 @@ public sealed unsafe partial class Promise : Gst.MiniObject
     public void Interrupt()
     {
         GstPromiseInterrupt(Handle);
-    }
-
-    /// <summary>Increases the refcount of the given @promise by one.</summary>
-    /// <returns>@promise</returns>
-    public Gst.Promise Ref()
-    {
-        nint nativeResult = GstPromiseRef(Handle);
-        return Gst.Promise.FromNative(nativeResult, Gst.Interop.Transfer.Full)
-            ?? throw new InvalidOperationException("gst_promise_ref returned no value.");
-    }
-
-    /// <summary>
-    /// Decreases the refcount of the promise. If the refcount reaches 0, the
-    /// promise will be freed.
-    /// </summary>
-    public void Unref()
-    {
-        GstPromiseUnref(Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -170,6 +160,7 @@ public sealed unsafe partial class Promise : Gst.MiniObject
     public Gst.PromiseResult Wait()
     {
         int nativeResult = GstPromiseWait(Handle);
+        System.GC.KeepAlive(this);
         return (Gst.PromiseResult)nativeResult;
     }
 
@@ -192,14 +183,6 @@ public sealed unsafe partial class Promise : Gst.MiniObject
     /// <summary>The <c>gst_promise_interrupt</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_promise_interrupt")]
     private static partial void GstPromiseInterrupt(nint promise);
-
-    /// <summary>The <c>gst_promise_ref</c> entry point.</summary>
-    [LibraryImport("Gst", EntryPoint = "gst_promise_ref")]
-    private static partial nint GstPromiseRef(nint promise);
-
-    /// <summary>The <c>gst_promise_unref</c> entry point.</summary>
-    [LibraryImport("Gst", EntryPoint = "gst_promise_unref")]
-    private static partial void GstPromiseUnref(nint promise);
 
     /// <summary>The <c>gst_promise_wait</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_promise_wait")]

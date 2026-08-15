@@ -29,6 +29,7 @@ public abstract unsafe partial class ControlBinding : Gst.Object
     public bool IsDisabled()
     {
         int nativeResult = GstControlBindingIsDisabled(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -40,6 +41,7 @@ public abstract unsafe partial class ControlBinding : Gst.Object
     public void SetDisabled(bool disabled)
     {
         GstControlBindingSetDisabled(Handle, disabled ? 1 : 0);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -63,6 +65,7 @@ public abstract unsafe partial class ControlBinding : Gst.Object
     {
         ArgumentNullException.ThrowIfNull(@object);
         int nativeResult = GstControlBindingSyncValues(Handle, @object.Handle, timestamp.Nanoseconds, lastSync.Nanoseconds);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 

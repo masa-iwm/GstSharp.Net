@@ -109,6 +109,7 @@ public unsafe partial class AppSrc : Gst.Base.BaseSrc, Gst.IURIHandler
     public Gst.FlowReturn EndOfStream()
     {
         int nativeResult = GstAppSrcEndOfStream(Handle);
+        System.GC.KeepAlive(this);
         return (Gst.FlowReturn)nativeResult;
     }
 
@@ -117,6 +118,7 @@ public unsafe partial class AppSrc : Gst.Base.BaseSrc, Gst.IURIHandler
     public Gst.Caps? GetCaps()
     {
         nint nativeResult = GstAppSrcGetCaps(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -125,6 +127,7 @@ public unsafe partial class AppSrc : Gst.Base.BaseSrc, Gst.IURIHandler
     public ulong GetCurrentLevelBuffers()
     {
         ulong nativeResult = GstAppSrcGetCurrentLevelBuffers(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -133,6 +136,7 @@ public unsafe partial class AppSrc : Gst.Base.BaseSrc, Gst.IURIHandler
     public ulong GetCurrentLevelBytes()
     {
         ulong nativeResult = GstAppSrcGetCurrentLevelBytes(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -141,6 +145,7 @@ public unsafe partial class AppSrc : Gst.Base.BaseSrc, Gst.IURIHandler
     public Gst.ClockTime GetCurrentLevelTime()
     {
         ulong nativeResult = GstAppSrcGetCurrentLevelTime(Handle);
+        System.GC.KeepAlive(this);
         return new Gst.ClockTime(nativeResult);
     }
 
@@ -152,6 +157,7 @@ public unsafe partial class AppSrc : Gst.Base.BaseSrc, Gst.IURIHandler
     public Gst.ClockTime GetDuration()
     {
         ulong nativeResult = GstAppSrcGetDuration(Handle);
+        System.GC.KeepAlive(this);
         return new Gst.ClockTime(nativeResult);
     }
 
@@ -163,6 +169,7 @@ public unsafe partial class AppSrc : Gst.Base.BaseSrc, Gst.IURIHandler
     public bool GetEmitSignals()
     {
         int nativeResult = GstAppSrcGetEmitSignals(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -174,6 +181,7 @@ public unsafe partial class AppSrc : Gst.Base.BaseSrc, Gst.IURIHandler
         ulong minNative = default;
         ulong maxNative = default;
         GstAppSrcGetLatency(Handle, &minNative, &maxNative);
+        System.GC.KeepAlive(this);
         min = minNative;
         max = maxNative;
     }
@@ -186,6 +194,7 @@ public unsafe partial class AppSrc : Gst.Base.BaseSrc, Gst.IURIHandler
     public Gst.App.AppLeakyType GetLeakyType()
     {
         int nativeResult = GstAppSrcGetLeakyType(Handle);
+        System.GC.KeepAlive(this);
         return (Gst.App.AppLeakyType)nativeResult;
     }
 
@@ -194,6 +203,7 @@ public unsafe partial class AppSrc : Gst.Base.BaseSrc, Gst.IURIHandler
     public ulong GetMaxBuffers()
     {
         ulong nativeResult = GstAppSrcGetMaxBuffers(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -202,6 +212,7 @@ public unsafe partial class AppSrc : Gst.Base.BaseSrc, Gst.IURIHandler
     public ulong GetMaxBytes()
     {
         ulong nativeResult = GstAppSrcGetMaxBytes(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -210,6 +221,7 @@ public unsafe partial class AppSrc : Gst.Base.BaseSrc, Gst.IURIHandler
     public Gst.ClockTime GetMaxTime()
     {
         ulong nativeResult = GstAppSrcGetMaxTime(Handle);
+        System.GC.KeepAlive(this);
         return new Gst.ClockTime(nativeResult);
     }
 
@@ -221,6 +233,7 @@ public unsafe partial class AppSrc : Gst.Base.BaseSrc, Gst.IURIHandler
     public long GetSize()
     {
         long nativeResult = GstAppSrcGetSize(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -232,6 +245,7 @@ public unsafe partial class AppSrc : Gst.Base.BaseSrc, Gst.IURIHandler
     public Gst.App.AppStreamType GetStreamType()
     {
         int nativeResult = GstAppSrcGetStreamType(Handle);
+        System.GC.KeepAlive(this);
         return (Gst.App.AppStreamType)nativeResult;
     }
 
@@ -261,6 +275,7 @@ public unsafe partial class AppSrc : Gst.Base.BaseSrc, Gst.IURIHandler
     {
         ArgumentNullException.ThrowIfNull(sample);
         int nativeResult = GstAppSrcPushSample(Handle, sample.Handle);
+        System.GC.KeepAlive(this);
         return (Gst.FlowReturn)nativeResult;
     }
 
@@ -274,6 +289,7 @@ public unsafe partial class AppSrc : Gst.Base.BaseSrc, Gst.IURIHandler
     public new void SetCaps(Gst.Caps? caps)
     {
         GstAppSrcSetCaps(Handle, caps is null ? 0 : caps.Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -284,6 +300,7 @@ public unsafe partial class AppSrc : Gst.Base.BaseSrc, Gst.IURIHandler
     public void SetDuration(Gst.ClockTime duration)
     {
         GstAppSrcSetDuration(Handle, duration.Nanoseconds);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -295,6 +312,7 @@ public unsafe partial class AppSrc : Gst.Base.BaseSrc, Gst.IURIHandler
     public void SetEmitSignals(bool emit)
     {
         GstAppSrcSetEmitSignals(Handle, emit ? 1 : 0);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -306,6 +324,7 @@ public unsafe partial class AppSrc : Gst.Base.BaseSrc, Gst.IURIHandler
     public void SetLatency(ulong min, ulong max)
     {
         GstAppSrcSetLatency(Handle, min, max);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -318,6 +337,7 @@ public unsafe partial class AppSrc : Gst.Base.BaseSrc, Gst.IURIHandler
     public void SetLeakyType(Gst.App.AppLeakyType leaky)
     {
         GstAppSrcSetLeakyType(Handle, (int)leaky);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -329,6 +349,7 @@ public unsafe partial class AppSrc : Gst.Base.BaseSrc, Gst.IURIHandler
     public void SetMaxBuffers(ulong max)
     {
         GstAppSrcSetMaxBuffers(Handle, max);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -340,6 +361,7 @@ public unsafe partial class AppSrc : Gst.Base.BaseSrc, Gst.IURIHandler
     public void SetMaxBytes(ulong max)
     {
         GstAppSrcSetMaxBytes(Handle, max);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -351,6 +373,7 @@ public unsafe partial class AppSrc : Gst.Base.BaseSrc, Gst.IURIHandler
     public void SetMaxTime(Gst.ClockTime max)
     {
         GstAppSrcSetMaxTime(Handle, max.Nanoseconds);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -361,6 +384,7 @@ public unsafe partial class AppSrc : Gst.Base.BaseSrc, Gst.IURIHandler
     public void SetSize(long size)
     {
         GstAppSrcSetSize(Handle, size);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -374,6 +398,7 @@ public unsafe partial class AppSrc : Gst.Base.BaseSrc, Gst.IURIHandler
     public void SetStreamType(Gst.App.AppStreamType type)
     {
         GstAppSrcSetStreamType(Handle, (int)type);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -481,42 +506,6 @@ public unsafe partial class AppSrc : Gst.Base.BaseSrc, Gst.IURIHandler
         set => SetStreamType(value);
     }
 
-    /// <summary>The handler of the <c>end-of-stream</c> signal of <c>GstAppSrc</c>.</summary>
-    /// <param name="sender">The instance that emitted the signal.</param>
-    /// <param name="args">The arguments of the signal.</param>
-    /// <returns>The result the emission collects.</returns>
-    public delegate Gst.FlowReturn EndOfStreamSignalHandler(object? sender, System.EventArgs args);
-
-    /// <summary>Notify @appsrc that no more buffer are available.</summary>
-    public event Gst.App.AppSrc.EndOfStreamSignalHandler EndOfStreamSignal
-    {
-        add => Gst.App.SignalConnections.Add(this, "end-of-stream", (nint)(delegate* unmanaged[Cdecl]<nint, nint, int>)&EndOfStreamSignalTrampoline, value);
-        remove => Gst.App.SignalConnections.Remove(this, "end-of-stream", value);
-    }
-
-    /// <summary>The native handler of the <c>end-of-stream</c> signal of <c>GstAppSrc</c>.</summary>
-    [UnmanagedCallersOnly(CallConvs = new[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
-    private static int EndOfStreamSignalTrampoline(nint instance, nint userData)
-    {
-        try
-        {
-            if (Gst.Interop.CallbackHandle.GetState<Gst.App.AppSrc.EndOfStreamSignalHandler>(userData) is not { } handler)
-            {
-                return default;
-            }
-
-            Gst.FlowReturn result = handler(
-                Gst.GObject.Object.FromNative(instance, Gst.Interop.Transfer.None),
-                System.EventArgs.Empty);
-            return (int)result;
-        }
-        catch (Exception exception)
-        {
-            Gst.Interop.ExceptionTrap.Report(exception);
-            return default;
-        }
-    }
-
     /// <summary>
     /// Signal that the source has enough data. It is recommended that the
     /// application stops calling push-buffer until the need-data signal is
@@ -602,220 +591,6 @@ public unsafe partial class AppSrc : Gst.Base.BaseSrc, Gst.IURIHandler
         catch (Exception exception)
         {
             Gst.Interop.ExceptionTrap.Report(exception);
-        }
-    }
-
-    /// <summary>The arguments of the <c>push-buffer</c> signal of <c>GstAppSrc</c>.</summary>
-    public sealed class PushBufferSignalArgs
-    {
-        /// <summary>Initializes a new instance of the <see cref="PushBufferSignalArgs"/> class.</summary>
-        /// <param name="buffer">a buffer to push</param>
-        internal PushBufferSignalArgs(Gst.Buffer buffer)
-        {
-            Buffer = buffer;
-        }
-
-        /// <summary>a buffer to push</summary>
-        /// <remarks>
-        /// The value is only valid while the handler runs. Keep what you need of
-        /// it, or take a reference of your own before the handler returns.
-        /// </remarks>
-        public Gst.Buffer Buffer { get; }
-    }
-
-    /// <summary>The handler of the <c>push-buffer</c> signal of <c>GstAppSrc</c>.</summary>
-    /// <param name="sender">The instance that emitted the signal.</param>
-    /// <param name="args">The arguments of the signal.</param>
-    /// <returns>The result the emission collects.</returns>
-    public delegate Gst.FlowReturn PushBufferHandler(object? sender, Gst.App.AppSrc.PushBufferSignalArgs args);
-
-    /// <summary>
-    /// Adds a buffer to the queue of buffers that the appsrc element will
-    /// push to its source pad.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// This function does not take ownership of the buffer, but it takes a
-    /// reference so the buffer can be unreffed at any time after calling this
-    /// function.
-    /// </para>
-    /// <para>
-    /// When the block property is TRUE, this function can block until free space
-    /// becomes available in the queue.
-    /// </para>
-    /// </remarks>
-    public event Gst.App.AppSrc.PushBufferHandler PushBuffer
-    {
-        add => Gst.App.SignalConnections.Add(this, "push-buffer", (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, int>)&PushBufferTrampoline, value);
-        remove => Gst.App.SignalConnections.Remove(this, "push-buffer", value);
-    }
-
-    /// <summary>The native handler of the <c>push-buffer</c> signal of <c>GstAppSrc</c>.</summary>
-    [UnmanagedCallersOnly(CallConvs = new[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
-    private static int PushBufferTrampoline(nint instance, nint buffer, nint userData)
-    {
-        try
-        {
-            if (Gst.Interop.CallbackHandle.GetState<Gst.App.AppSrc.PushBufferHandler>(userData) is not { } handler)
-            {
-                return default;
-            }
-
-            using Gst.Buffer bufferValue = Gst.Buffer.FromNative(buffer, Gst.Interop.Transfer.None)
-                ?? throw new InvalidOperationException("The push-buffer signal of GstAppSrc passed no buffer.");
-            Gst.FlowReturn result = handler(
-                Gst.GObject.Object.FromNative(instance, Gst.Interop.Transfer.None),
-                new Gst.App.AppSrc.PushBufferSignalArgs(bufferValue));
-            return (int)result;
-        }
-        catch (Exception exception)
-        {
-            Gst.Interop.ExceptionTrap.Report(exception);
-            return default;
-        }
-    }
-
-    /// <summary>The arguments of the <c>push-buffer-list</c> signal of <c>GstAppSrc</c>.</summary>
-    public sealed class PushBufferListSignalArgs
-    {
-        /// <summary>Initializes a new instance of the <see cref="PushBufferListSignalArgs"/> class.</summary>
-        /// <param name="bufferList">a buffer list to push</param>
-        internal PushBufferListSignalArgs(Gst.BufferList bufferList)
-        {
-            BufferList = bufferList;
-        }
-
-        /// <summary>a buffer list to push</summary>
-        /// <remarks>
-        /// The value is only valid while the handler runs. Keep what you need of
-        /// it, or take a reference of your own before the handler returns.
-        /// </remarks>
-        public Gst.BufferList BufferList { get; }
-    }
-
-    /// <summary>The handler of the <c>push-buffer-list</c> signal of <c>GstAppSrc</c>.</summary>
-    /// <param name="sender">The instance that emitted the signal.</param>
-    /// <param name="args">The arguments of the signal.</param>
-    /// <returns>The result the emission collects.</returns>
-    public delegate Gst.FlowReturn PushBufferListHandler(object? sender, Gst.App.AppSrc.PushBufferListSignalArgs args);
-
-    /// <summary>
-    /// Adds a buffer list to the queue of buffers and buffer lists that the
-    /// appsrc element will push to its source pad.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// This function does not take ownership of the buffer list, but it takes a
-    /// reference so the buffer list can be unreffed at any time after calling
-    /// this function.
-    /// </para>
-    /// <para>
-    /// When the block property is TRUE, this function can block until free space
-    /// becomes available in the queue.
-    /// </para>
-    /// </remarks>
-    public event Gst.App.AppSrc.PushBufferListHandler PushBufferList
-    {
-        add => Gst.App.SignalConnections.Add(this, "push-buffer-list", (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, int>)&PushBufferListTrampoline, value);
-        remove => Gst.App.SignalConnections.Remove(this, "push-buffer-list", value);
-    }
-
-    /// <summary>The native handler of the <c>push-buffer-list</c> signal of <c>GstAppSrc</c>.</summary>
-    [UnmanagedCallersOnly(CallConvs = new[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
-    private static int PushBufferListTrampoline(nint instance, nint bufferList, nint userData)
-    {
-        try
-        {
-            if (Gst.Interop.CallbackHandle.GetState<Gst.App.AppSrc.PushBufferListHandler>(userData) is not { } handler)
-            {
-                return default;
-            }
-
-            using Gst.BufferList bufferListValue = Gst.BufferList.FromNative(bufferList, Gst.Interop.Transfer.None)
-                ?? throw new InvalidOperationException("The push-buffer-list signal of GstAppSrc passed no buffer_list.");
-            Gst.FlowReturn result = handler(
-                Gst.GObject.Object.FromNative(instance, Gst.Interop.Transfer.None),
-                new Gst.App.AppSrc.PushBufferListSignalArgs(bufferListValue));
-            return (int)result;
-        }
-        catch (Exception exception)
-        {
-            Gst.Interop.ExceptionTrap.Report(exception);
-            return default;
-        }
-    }
-
-    /// <summary>The arguments of the <c>push-sample</c> signal of <c>GstAppSrc</c>.</summary>
-    public sealed class PushSampleSignalSignalArgs
-    {
-        /// <summary>Initializes a new instance of the <see cref="PushSampleSignalSignalArgs"/> class.</summary>
-        /// <param name="sample">a sample from which extract buffer to push</param>
-        internal PushSampleSignalSignalArgs(Gst.Sample sample)
-        {
-            Sample = sample;
-        }
-
-        /// <summary>a sample from which extract buffer to push</summary>
-        /// <remarks>
-        /// The value is only valid while the handler runs. Keep what you need of
-        /// it, or take a reference of your own before the handler returns.
-        /// </remarks>
-        public Gst.Sample Sample { get; }
-    }
-
-    /// <summary>The handler of the <c>push-sample</c> signal of <c>GstAppSrc</c>.</summary>
-    /// <param name="sender">The instance that emitted the signal.</param>
-    /// <param name="args">The arguments of the signal.</param>
-    /// <returns>The result the emission collects.</returns>
-    public delegate Gst.FlowReturn PushSampleSignalHandler(object? sender, Gst.App.AppSrc.PushSampleSignalSignalArgs args);
-
-    /// <summary>
-    /// Extract a buffer from the provided sample and adds the extracted buffer
-    /// to the queue of buffers that the appsrc element will
-    /// push to its source pad. This function set the appsrc caps based on the caps
-    /// in the sample and reset the caps if they change.
-    /// Only the caps and the buffer of the provided sample are used and not
-    /// for example the segment in the sample.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// This function does not take ownership of the sample, but it takes a
-    /// reference so the sample can be unreffed at any time after calling this
-    /// function.
-    /// </para>
-    /// <para>
-    /// When the block property is TRUE, this function can block until free space
-    /// becomes available in the queue.
-    /// </para>
-    /// </remarks>
-    public event Gst.App.AppSrc.PushSampleSignalHandler PushSampleSignal
-    {
-        add => Gst.App.SignalConnections.Add(this, "push-sample", (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, int>)&PushSampleSignalTrampoline, value);
-        remove => Gst.App.SignalConnections.Remove(this, "push-sample", value);
-    }
-
-    /// <summary>The native handler of the <c>push-sample</c> signal of <c>GstAppSrc</c>.</summary>
-    [UnmanagedCallersOnly(CallConvs = new[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
-    private static int PushSampleSignalTrampoline(nint instance, nint sample, nint userData)
-    {
-        try
-        {
-            if (Gst.Interop.CallbackHandle.GetState<Gst.App.AppSrc.PushSampleSignalHandler>(userData) is not { } handler)
-            {
-                return default;
-            }
-
-            using Gst.Sample sampleValue = Gst.Sample.FromNative(sample, Gst.Interop.Transfer.None)
-                ?? throw new InvalidOperationException("The push-sample signal of GstAppSrc passed no sample.");
-            Gst.FlowReturn result = handler(
-                Gst.GObject.Object.FromNative(instance, Gst.Interop.Transfer.None),
-                new Gst.App.AppSrc.PushSampleSignalSignalArgs(sampleValue));
-            return (int)result;
-        }
-        catch (Exception exception)
-        {
-            Gst.Interop.ExceptionTrap.Report(exception);
-            return default;
         }
     }
 

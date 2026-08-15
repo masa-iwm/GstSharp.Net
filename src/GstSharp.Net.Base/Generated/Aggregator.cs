@@ -92,24 +92,6 @@ public abstract unsafe partial class Aggregator : Gst.Element
     {
     }
 
-    /// <summary>
-    /// Lets #GstAggregator sub-classes get the memory @allocator
-    /// acquired by the base class and its @params.
-    /// </summary>
-    /// <remarks>
-    /// <para>Unref the @allocator after use it.</para>
-    /// </remarks>
-    /// <param name="allocator">The <c>allocator</c> argument.</param>
-    /// <param name="params">The <c>@params</c> argument.</param>
-    public void GetAllocator(out Gst.Allocator? allocator, out Gst.AllocationParams? @params)
-    {
-        nint allocatorNative = default;
-        nint @paramsNative = default;
-        GstAggregatorGetAllocator(Handle, &allocatorNative, &@paramsNative);
-        allocator = Gst.GObject.Object.FromNative<Gst.Allocator>(allocatorNative, Gst.Interop.Transfer.Full);
-        @params = Gst.AllocationParams.FromNative(@paramsNative, Gst.Interop.Transfer.None);
-    }
-
     /// <summary>The <c>gst_aggregator_get_buffer_pool</c> function.</summary>
     /// <returns>
     /// the instance of the #GstBufferPool used
@@ -118,6 +100,7 @@ public abstract unsafe partial class Aggregator : Gst.Element
     public Gst.BufferPool? GetBufferPool()
     {
         nint nativeResult = GstAggregatorGetBufferPool(Handle);
+        System.GC.KeepAlive(this);
         return Gst.GObject.Object.FromNative<Gst.BufferPool>(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -129,6 +112,7 @@ public abstract unsafe partial class Aggregator : Gst.Element
     public bool GetForceLive()
     {
         int nativeResult = GstAggregatorGetForceLive(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -137,6 +121,7 @@ public abstract unsafe partial class Aggregator : Gst.Element
     public bool GetIgnoreInactivePads()
     {
         int nativeResult = GstAggregatorGetIgnoreInactivePads(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -152,6 +137,7 @@ public abstract unsafe partial class Aggregator : Gst.Element
     public Gst.ClockTime GetLatency()
     {
         ulong nativeResult = GstAggregatorGetLatency(Handle);
+        System.GC.KeepAlive(this);
         return new Gst.ClockTime(nativeResult);
     }
 
@@ -164,6 +150,7 @@ public abstract unsafe partial class Aggregator : Gst.Element
     public bool Negotiate()
     {
         int nativeResult = GstAggregatorNegotiate(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -184,6 +171,7 @@ public abstract unsafe partial class Aggregator : Gst.Element
     {
         ArgumentNullException.ThrowIfNull(pad);
         nint nativeResult = GstAggregatorPeekNextSample(Handle, pad.Handle);
+        System.GC.KeepAlive(this);
         return Gst.Sample.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -211,6 +199,7 @@ public abstract unsafe partial class Aggregator : Gst.Element
     public void SelectedSamples(Gst.ClockTime pts, Gst.ClockTime dts, Gst.ClockTime duration, Gst.Structure? info)
     {
         GstAggregatorSelectedSamples(Handle, pts.Nanoseconds, dts.Nanoseconds, duration.Nanoseconds, info is null ? 0 : info.Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -221,6 +210,7 @@ public abstract unsafe partial class Aggregator : Gst.Element
     public void SetForceLive(bool forceLive)
     {
         GstAggregatorSetForceLive(Handle, forceLive ? 1 : 0);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -238,6 +228,7 @@ public abstract unsafe partial class Aggregator : Gst.Element
     public void SetIgnoreInactivePads(bool ignore)
     {
         GstAggregatorSetIgnoreInactivePads(Handle, ignore ? 1 : 0);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -250,6 +241,7 @@ public abstract unsafe partial class Aggregator : Gst.Element
     public void SetLatency(Gst.ClockTime minLatency, Gst.ClockTime maxLatency)
     {
         GstAggregatorSetLatency(Handle, minLatency.Nanoseconds, maxLatency.Nanoseconds);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Sets the caps to be used on the src pad.</summary>
@@ -258,6 +250,7 @@ public abstract unsafe partial class Aggregator : Gst.Element
     {
         ArgumentNullException.ThrowIfNull(caps);
         GstAggregatorSetSrcCaps(Handle, caps.Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -275,6 +268,7 @@ public abstract unsafe partial class Aggregator : Gst.Element
     public Gst.ClockTime SimpleGetNextTime()
     {
         ulong nativeResult = GstAggregatorSimpleGetNextTime(Handle);
+        System.GC.KeepAlive(this);
         return new Gst.ClockTime(nativeResult);
     }
 
@@ -294,6 +288,7 @@ public abstract unsafe partial class Aggregator : Gst.Element
     {
         ArgumentNullException.ThrowIfNull(segment);
         GstAggregatorUpdateSegment(Handle, segment.Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>The <c>latency</c> property.</summary>
@@ -378,10 +373,6 @@ public abstract unsafe partial class Aggregator : Gst.Element
             Gst.Interop.ExceptionTrap.Report(exception);
         }
     }
-
-    /// <summary>The <c>gst_aggregator_get_allocator</c> entry point.</summary>
-    [LibraryImport("GstBase", EntryPoint = "gst_aggregator_get_allocator")]
-    private static partial void GstAggregatorGetAllocator(nint self, nint* allocator, nint* @params);
 
     /// <summary>The <c>gst_aggregator_get_buffer_pool</c> entry point.</summary>
     [LibraryImport("GstBase", EntryPoint = "gst_aggregator_get_buffer_pool")]

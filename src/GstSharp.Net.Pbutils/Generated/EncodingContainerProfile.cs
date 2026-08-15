@@ -52,6 +52,7 @@ public unsafe partial class EncodingContainerProfile : Gst.Pbutils.EncodingProfi
     {
         ArgumentNullException.ThrowIfNull(profile);
         int nativeResult = GstEncodingContainerProfileContainsProfile(Handle, profile.Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 

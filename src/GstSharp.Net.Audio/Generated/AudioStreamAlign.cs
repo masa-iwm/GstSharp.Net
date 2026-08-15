@@ -68,17 +68,9 @@ public sealed unsafe partial class AudioStreamAlign : Gst.GObject.Boxed
     public Gst.Audio.AudioStreamAlign Copy()
     {
         nint nativeResult = GstAudioStreamAlignCopy(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Audio.AudioStreamAlign.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_audio_stream_align_copy returned no value.");
-    }
-
-    /// <summary>
-    /// Free a GstAudioStreamAlign structure previously allocated with gst_audio_stream_align_new()
-    /// or gst_audio_stream_align_copy().
-    /// </summary>
-    public void Free()
-    {
-        GstAudioStreamAlignFree(Handle);
     }
 
     /// <summary>Gets the currently configured alignment threshold.</summary>
@@ -86,6 +78,7 @@ public sealed unsafe partial class AudioStreamAlign : Gst.GObject.Boxed
     public Gst.ClockTime GetAlignmentThreshold()
     {
         ulong nativeResult = GstAudioStreamAlignGetAlignmentThreshold(Handle);
+        System.GC.KeepAlive(this);
         return new Gst.ClockTime(nativeResult);
     }
 
@@ -94,6 +87,7 @@ public sealed unsafe partial class AudioStreamAlign : Gst.GObject.Boxed
     public Gst.ClockTime GetDiscontWait()
     {
         ulong nativeResult = GstAudioStreamAlignGetDiscontWait(Handle);
+        System.GC.KeepAlive(this);
         return new Gst.ClockTime(nativeResult);
     }
 
@@ -102,6 +96,7 @@ public sealed unsafe partial class AudioStreamAlign : Gst.GObject.Boxed
     public int GetRate()
     {
         int nativeResult = GstAudioStreamAlignGetRate(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -113,6 +108,7 @@ public sealed unsafe partial class AudioStreamAlign : Gst.GObject.Boxed
     public ulong GetSamplesSinceDiscont()
     {
         ulong nativeResult = GstAudioStreamAlignGetSamplesSinceDiscont(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -124,6 +120,7 @@ public sealed unsafe partial class AudioStreamAlign : Gst.GObject.Boxed
     public Gst.ClockTime GetTimestampAtDiscont()
     {
         ulong nativeResult = GstAudioStreamAlignGetTimestampAtDiscont(Handle);
+        System.GC.KeepAlive(this);
         return new Gst.ClockTime(nativeResult);
     }
 
@@ -131,6 +128,7 @@ public sealed unsafe partial class AudioStreamAlign : Gst.GObject.Boxed
     public void MarkDiscont()
     {
         GstAudioStreamAlignMarkDiscont(Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -168,6 +166,7 @@ public sealed unsafe partial class AudioStreamAlign : Gst.GObject.Boxed
         ulong outDurationNative = default;
         ulong outSamplePositionNative = default;
         int nativeResult = GstAudioStreamAlignProcess(Handle, discont ? 1 : 0, timestamp.Nanoseconds, nSamples, &outTimestampNative, &outDurationNative, &outSamplePositionNative);
+        System.GC.KeepAlive(this);
         outTimestamp = new Gst.ClockTime(outTimestampNative);
         outDuration = new Gst.ClockTime(outDurationNative);
         outSamplePosition = outSamplePositionNative;
@@ -179,6 +178,7 @@ public sealed unsafe partial class AudioStreamAlign : Gst.GObject.Boxed
     public void SetAlignmentThreshold(Gst.ClockTime alignmentThreshold)
     {
         GstAudioStreamAlignSetAlignmentThreshold(Handle, alignmentThreshold.Nanoseconds);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Sets @alignment_treshold as new discont wait for the following processing.</summary>
@@ -186,6 +186,7 @@ public sealed unsafe partial class AudioStreamAlign : Gst.GObject.Boxed
     public void SetDiscontWait(Gst.ClockTime discontWait)
     {
         GstAudioStreamAlignSetDiscontWait(Handle, discontWait.Nanoseconds);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -196,6 +197,7 @@ public sealed unsafe partial class AudioStreamAlign : Gst.GObject.Boxed
     public void SetRate(int rate)
     {
         GstAudioStreamAlignSetRate(Handle, rate);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>The <c>gst_audio_stream_align_new</c> entry point.</summary>
@@ -205,10 +207,6 @@ public sealed unsafe partial class AudioStreamAlign : Gst.GObject.Boxed
     /// <summary>The <c>gst_audio_stream_align_copy</c> entry point.</summary>
     [LibraryImport("GstAudio", EntryPoint = "gst_audio_stream_align_copy")]
     private static partial nint GstAudioStreamAlignCopy(nint align);
-
-    /// <summary>The <c>gst_audio_stream_align_free</c> entry point.</summary>
-    [LibraryImport("GstAudio", EntryPoint = "gst_audio_stream_align_free")]
-    private static partial void GstAudioStreamAlignFree(nint align);
 
     /// <summary>The <c>gst_audio_stream_align_get_alignment_threshold</c> entry point.</summary>
     [LibraryImport("GstAudio", EntryPoint = "gst_audio_stream_align_get_alignment_threshold")]

@@ -41,15 +41,6 @@ public sealed unsafe partial class AppSrcSimpleCallbacks : Gst.GObject.Boxed
             ?? throw new InvalidOperationException("gst_app_src_simple_callbacks_new returned no value.");
     }
 
-    /// <summary>Increases the reference count of @cb.</summary>
-    /// <returns>the callbacks</returns>
-    public Gst.App.AppSrcSimpleCallbacks Ref()
-    {
-        nint nativeResult = GstAppSrcSimpleCallbacksRef(Handle);
-        return Gst.App.AppSrcSimpleCallbacks.FromNative(nativeResult, Gst.Interop.Transfer.Full)
-            ?? throw new InvalidOperationException("gst_app_src_simple_callbacks_ref returned no value.");
-    }
-
     /// <summary>Sets the enough data callback on @cb.</summary>
     /// <remarks>
     /// <para>
@@ -63,6 +54,7 @@ public sealed unsafe partial class AppSrcSimpleCallbacks : Gst.GObject.Boxed
         ArgumentNullException.ThrowIfNull(enoughDataCb);
         Gst.Interop.CallbackHandle enoughDataCbState = Gst.Interop.CallbackHandle.Alloc(enoughDataCb);
         GstAppSrcSimpleCallbacksSetEnoughData(Handle, Gst.App.AppSrcEnoughDataCallbackTrampoline.Pointer, enoughDataCbState.UserData, (nint)Gst.Interop.CallbackHandle.DestroyNotify);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Sets the need data callback on @cb.</summary>
@@ -78,6 +70,7 @@ public sealed unsafe partial class AppSrcSimpleCallbacks : Gst.GObject.Boxed
         ArgumentNullException.ThrowIfNull(needDataCb);
         Gst.Interop.CallbackHandle needDataCbState = Gst.Interop.CallbackHandle.Alloc(needDataCb);
         GstAppSrcSimpleCallbacksSetNeedData(Handle, Gst.App.AppSrcNeedDataCallbackTrampoline.Pointer, needDataCbState.UserData, (nint)Gst.Interop.CallbackHandle.DestroyNotify);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Sets the seek data callback on @cb.</summary>
@@ -93,24 +86,12 @@ public sealed unsafe partial class AppSrcSimpleCallbacks : Gst.GObject.Boxed
         ArgumentNullException.ThrowIfNull(seekDataCb);
         Gst.Interop.CallbackHandle seekDataCbState = Gst.Interop.CallbackHandle.Alloc(seekDataCb);
         GstAppSrcSimpleCallbacksSetSeekData(Handle, Gst.App.AppSrcSeekDataCallbackTrampoline.Pointer, seekDataCbState.UserData, (nint)Gst.Interop.CallbackHandle.DestroyNotify);
-    }
-
-    /// <summary>
-    /// Decreases the reference count of @cb and frees it after the
-    /// last reference is dropped.
-    /// </summary>
-    public void Unref()
-    {
-        GstAppSrcSimpleCallbacksUnref(Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>The <c>gst_app_src_simple_callbacks_new</c> entry point.</summary>
     [LibraryImport("GstApp", EntryPoint = "gst_app_src_simple_callbacks_new")]
     private static partial nint GstAppSrcSimpleCallbacksNew();
-
-    /// <summary>The <c>gst_app_src_simple_callbacks_ref</c> entry point.</summary>
-    [LibraryImport("GstApp", EntryPoint = "gst_app_src_simple_callbacks_ref")]
-    private static partial nint GstAppSrcSimpleCallbacksRef(nint cb);
 
     /// <summary>The <c>gst_app_src_simple_callbacks_set_enough_data</c> entry point.</summary>
     [LibraryImport("GstApp", EntryPoint = "gst_app_src_simple_callbacks_set_enough_data")]
@@ -123,10 +104,6 @@ public sealed unsafe partial class AppSrcSimpleCallbacks : Gst.GObject.Boxed
     /// <summary>The <c>gst_app_src_simple_callbacks_set_seek_data</c> entry point.</summary>
     [LibraryImport("GstApp", EntryPoint = "gst_app_src_simple_callbacks_set_seek_data")]
     private static partial void GstAppSrcSimpleCallbacksSetSeekData(nint cb, nint seekDataCb, nint userData, nint destroyNotify);
-
-    /// <summary>The <c>gst_app_src_simple_callbacks_unref</c> entry point.</summary>
-    [LibraryImport("GstApp", EntryPoint = "gst_app_src_simple_callbacks_unref")]
-    private static partial void GstAppSrcSimpleCallbacksUnref(nint cb);
 
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstAppSrcSimpleCallbacks</c> under.</summary>
     /// <returns>The type of the instances of this wrapper.</returns>

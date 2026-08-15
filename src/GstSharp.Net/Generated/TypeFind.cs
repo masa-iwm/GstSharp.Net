@@ -37,32 +37,8 @@ public sealed unsafe partial class TypeFind
     public ulong GetLength()
     {
         ulong nativeResult = GstTypeFindGetLength(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
-    }
-
-    /// <summary>
-    /// Returns the @size bytes of the stream to identify beginning at offset. If
-    /// offset is a positive number, the offset is relative to the beginning of the
-    /// stream, if offset is a negative number the offset is relative to the end of
-    /// the stream. The returned memory is valid until the typefinding function
-    /// returns and must not be freed.
-    /// </summary>
-    /// <param name="offset">The <c>offset</c> argument.</param>
-    /// <returns>
-    /// the
-    ///     requested data, or %NULL if that data is not available.
-    /// </returns>
-    public byte[]? Peek(long offset)
-    {
-        uint sizeNative = default;
-        nint nativeResult = GstTypeFindPeek(Handle, offset, &sizeNative);
-        byte[]? result = null;
-        if (nativeResult != 0)
-        {
-            result = new byte[(int)sizeNative];
-            new System.ReadOnlySpan<byte>((void*)nativeResult, (int)sizeNative).CopyTo(result);
-        }
-        return result;
     }
 
     /// <summary>
@@ -77,6 +53,7 @@ public sealed unsafe partial class TypeFind
     {
         ArgumentNullException.ThrowIfNull(caps);
         GstTypeFindSuggest(Handle, probability, caps.Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -97,6 +74,7 @@ public sealed unsafe partial class TypeFind
         System.Span<byte> mediaTypeBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope mediaTypeScope = Gst.Interop.GMarshal.StackUtf8(mediaType, mediaTypeBuffer);
         GstTypeFindSuggestEmptySimple(Handle, probability, mediaTypeScope.Pointer);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -127,10 +105,6 @@ public sealed unsafe partial class TypeFind
     /// <summary>The <c>gst_type_find_get_length</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_type_find_get_length")]
     private static partial ulong GstTypeFindGetLength(nint find);
-
-    /// <summary>The <c>gst_type_find_peek</c> entry point.</summary>
-    [LibraryImport("Gst", EntryPoint = "gst_type_find_peek")]
-    private static partial nint GstTypeFindPeek(nint find, long offset, uint* size);
 
     /// <summary>The <c>gst_type_find_suggest</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_type_find_suggest")]

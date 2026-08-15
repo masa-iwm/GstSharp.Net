@@ -9,7 +9,7 @@ using System.Runtime.InteropServices;
 namespace Gst.Base;
 
 /// <summary>The functions of the <c>GstBase</c> namespace that belong to no type.</summary>
-public static unsafe partial class Global
+public static unsafe partial class BaseGlobal
 {
     /// <summary>Tries to find what type of data is flowing from the given source #GstPad.</summary>
     /// <remarks>

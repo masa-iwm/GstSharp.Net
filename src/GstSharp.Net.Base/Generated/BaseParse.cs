@@ -186,6 +186,7 @@ public abstract unsafe partial class BaseParse : Gst.Element
     public bool AddIndexEntry(ulong offset, Gst.ClockTime ts, bool key, bool force)
     {
         int nativeResult = GstBaseParseAddIndexEntry(Handle, offset, ts.Nanoseconds, key ? 1 : 0, force ? 1 : 0);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -199,6 +200,7 @@ public abstract unsafe partial class BaseParse : Gst.Element
     {
         long destValueNative = default;
         int nativeResult = GstBaseParseConvertDefault(Handle, (int)srcFormat, srcValue, (int)destFormat, &destValueNative);
+        System.GC.KeepAlive(this);
         destValue = destValueNative;
         return nativeResult != 0;
     }
@@ -211,6 +213,7 @@ public abstract unsafe partial class BaseParse : Gst.Element
     public void Drain()
     {
         GstBaseParseDrain(Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -241,6 +244,7 @@ public abstract unsafe partial class BaseParse : Gst.Element
     {
         ArgumentNullException.ThrowIfNull(frame);
         int nativeResult = GstBaseParseFinishFrame(Handle, frame.Handle, size);
+        System.GC.KeepAlive(this);
         return (Gst.FlowReturn)nativeResult;
     }
 
@@ -260,6 +264,7 @@ public abstract unsafe partial class BaseParse : Gst.Element
     public void MergeTags(Gst.TagList? tags, Gst.TagMergeMode mode)
     {
         GstBaseParseMergeTags(Handle, tags is null ? 0 : tags.Handle, (int)mode);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -276,6 +281,7 @@ public abstract unsafe partial class BaseParse : Gst.Element
     {
         ArgumentNullException.ThrowIfNull(frame);
         int nativeResult = GstBaseParsePushFrame(Handle, frame.Handle);
+        System.GC.KeepAlive(this);
         return (Gst.FlowReturn)nativeResult;
     }
 
@@ -299,6 +305,7 @@ public abstract unsafe partial class BaseParse : Gst.Element
     public void SetAverageBitrate(uint bitrate)
     {
         GstBaseParseSetAverageBitrate(Handle, bitrate);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -320,6 +327,7 @@ public abstract unsafe partial class BaseParse : Gst.Element
     public void SetDuration(Gst.Format fmt, long duration, int interval)
     {
         GstBaseParseSetDuration(Handle, (int)fmt, duration, interval);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -342,6 +350,7 @@ public abstract unsafe partial class BaseParse : Gst.Element
     public void SetFrameRate(uint fpsNum, uint fpsDen, uint leadIn, uint leadOut)
     {
         GstBaseParseSetFrameRate(Handle, fpsNum, fpsDen, leadIn, leadOut);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -359,6 +368,7 @@ public abstract unsafe partial class BaseParse : Gst.Element
     public void SetHasTimingInfo(bool hasTiming)
     {
         GstBaseParseSetHasTimingInfo(Handle, hasTiming ? 1 : 0);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -377,6 +387,7 @@ public abstract unsafe partial class BaseParse : Gst.Element
     public void SetInferTs(bool inferTs)
     {
         GstBaseParseSetInferTs(Handle, inferTs ? 1 : 0);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -400,6 +411,7 @@ public abstract unsafe partial class BaseParse : Gst.Element
     public void SetLatency(Gst.ClockTime minLatency, Gst.ClockTime maxLatency)
     {
         GstBaseParseSetLatency(Handle, minLatency.Nanoseconds, maxLatency.Nanoseconds);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -416,6 +428,7 @@ public abstract unsafe partial class BaseParse : Gst.Element
     public void SetMinFrameSize(uint minSize)
     {
         GstBaseParseSetMinFrameSize(Handle, minSize);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -437,6 +450,7 @@ public abstract unsafe partial class BaseParse : Gst.Element
     public void SetPassthrough(bool passthrough)
     {
         GstBaseParseSetPassthrough(Handle, passthrough ? 1 : 0);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -455,6 +469,7 @@ public abstract unsafe partial class BaseParse : Gst.Element
     public void SetPtsInterpolation(bool ptsInterpolate)
     {
         GstBaseParseSetPtsInterpolation(Handle, ptsInterpolate ? 1 : 0);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -472,6 +487,7 @@ public abstract unsafe partial class BaseParse : Gst.Element
     public void SetSyncable(bool syncable)
     {
         GstBaseParseSetSyncable(Handle, syncable ? 1 : 0);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>This function should only be called from a @handle_frame implementation.</summary>
@@ -489,6 +505,7 @@ public abstract unsafe partial class BaseParse : Gst.Element
     public void SetTsAtOffset(nuint offset)
     {
         GstBaseParseSetTsAtOffset(Handle, offset);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>The <c>gst_base_parse_add_index_entry</c> entry point.</summary>

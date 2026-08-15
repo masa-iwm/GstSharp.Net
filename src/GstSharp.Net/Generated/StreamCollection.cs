@@ -55,6 +55,7 @@ public unsafe partial class StreamCollection : Gst.Object
     public uint GetSize()
     {
         uint nativeResult = GstStreamCollectionGetSize(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -67,6 +68,7 @@ public unsafe partial class StreamCollection : Gst.Object
     public Gst.Stream? GetStream(uint index)
     {
         nint nativeResult = GstStreamCollectionGetStream(Handle, index);
+        System.GC.KeepAlive(this);
         return Gst.GObject.Object.FromNative<Gst.Stream>(nativeResult, Gst.Interop.Transfer.None);
     }
 
@@ -75,6 +77,7 @@ public unsafe partial class StreamCollection : Gst.Object
     public string? GetUpstreamId()
     {
         nint nativeResult = GstStreamCollectionGetUpstreamId(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
     }
 

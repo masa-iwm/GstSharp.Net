@@ -49,6 +49,7 @@ public static unsafe partial class TocSetterExtensions
     {
         ArgumentNullException.ThrowIfNull(setter);
         nint nativeResult = GstTocSetterGetToc(setter.Handle);
+        System.GC.KeepAlive(setter);
         return Gst.Toc.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -61,6 +62,7 @@ public static unsafe partial class TocSetterExtensions
     {
         ArgumentNullException.ThrowIfNull(setter);
         GstTocSetterReset(setter.Handle);
+        System.GC.KeepAlive(setter);
     }
 
     /// <summary>
@@ -73,6 +75,7 @@ public static unsafe partial class TocSetterExtensions
     {
         ArgumentNullException.ThrowIfNull(setter);
         GstTocSetterSetToc(setter.Handle, toc is null ? 0 : toc.Handle);
+        System.GC.KeepAlive(setter);
     }
 
     /// <summary>The <c>gst_toc_setter_get_toc</c> entry point.</summary>

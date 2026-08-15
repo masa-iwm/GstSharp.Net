@@ -41,15 +41,6 @@ public sealed unsafe partial class AppSinkSimpleCallbacks : Gst.GObject.Boxed
             ?? throw new InvalidOperationException("gst_app_sink_simple_callbacks_new returned no value.");
     }
 
-    /// <summary>Increases the reference count of @cb.</summary>
-    /// <returns>the callbacks</returns>
-    public Gst.App.AppSinkSimpleCallbacks Ref()
-    {
-        nint nativeResult = GstAppSinkSimpleCallbacksRef(Handle);
-        return Gst.App.AppSinkSimpleCallbacks.FromNative(nativeResult, Gst.Interop.Transfer.Full)
-            ?? throw new InvalidOperationException("gst_app_sink_simple_callbacks_ref returned no value.");
-    }
-
     /// <summary>Sets the EOS callback on @cb.</summary>
     /// <remarks>
     /// <para>
@@ -63,6 +54,7 @@ public sealed unsafe partial class AppSinkSimpleCallbacks : Gst.GObject.Boxed
         ArgumentNullException.ThrowIfNull(eosCb);
         Gst.Interop.CallbackHandle eosCbState = Gst.Interop.CallbackHandle.Alloc(eosCb);
         GstAppSinkSimpleCallbacksSetEos(Handle, Gst.App.AppSinkEosCallbackTrampoline.Pointer, eosCbState.UserData, (nint)Gst.Interop.CallbackHandle.DestroyNotify);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Sets the new event callback on @cb.</summary>
@@ -78,6 +70,7 @@ public sealed unsafe partial class AppSinkSimpleCallbacks : Gst.GObject.Boxed
         ArgumentNullException.ThrowIfNull(newEventCb);
         Gst.Interop.CallbackHandle newEventCbState = Gst.Interop.CallbackHandle.Alloc(newEventCb);
         GstAppSinkSimpleCallbacksSetNewEvent(Handle, Gst.App.AppSinkNewEventCallbackTrampoline.Pointer, newEventCbState.UserData, (nint)Gst.Interop.CallbackHandle.DestroyNotify);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Sets the new preroll callback on @cb.</summary>
@@ -93,6 +86,7 @@ public sealed unsafe partial class AppSinkSimpleCallbacks : Gst.GObject.Boxed
         ArgumentNullException.ThrowIfNull(newPrerollCb);
         Gst.Interop.CallbackHandle newPrerollCbState = Gst.Interop.CallbackHandle.Alloc(newPrerollCb);
         GstAppSinkSimpleCallbacksSetNewPreroll(Handle, Gst.App.AppSinkNewPrerollCallbackTrampoline.Pointer, newPrerollCbState.UserData, (nint)Gst.Interop.CallbackHandle.DestroyNotify);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Sets the new sample callback on @cb.</summary>
@@ -108,6 +102,7 @@ public sealed unsafe partial class AppSinkSimpleCallbacks : Gst.GObject.Boxed
         ArgumentNullException.ThrowIfNull(newSampleCb);
         Gst.Interop.CallbackHandle newSampleCbState = Gst.Interop.CallbackHandle.Alloc(newSampleCb);
         GstAppSinkSimpleCallbacksSetNewSample(Handle, Gst.App.AppSinkNewSampleCallbackTrampoline.Pointer, newSampleCbState.UserData, (nint)Gst.Interop.CallbackHandle.DestroyNotify);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Sets the new event callback on @cb.</summary>
@@ -123,24 +118,12 @@ public sealed unsafe partial class AppSinkSimpleCallbacks : Gst.GObject.Boxed
         ArgumentNullException.ThrowIfNull(proposeAllocationCb);
         Gst.Interop.CallbackHandle proposeAllocationCbState = Gst.Interop.CallbackHandle.Alloc(proposeAllocationCb);
         GstAppSinkSimpleCallbacksSetProposeAllocation(Handle, Gst.App.AppSinkProposeAllocationCallbackTrampoline.Pointer, proposeAllocationCbState.UserData, (nint)Gst.Interop.CallbackHandle.DestroyNotify);
-    }
-
-    /// <summary>
-    /// Decreases the reference count of @cb and frees it after the
-    /// last reference is dropped.
-    /// </summary>
-    public void Unref()
-    {
-        GstAppSinkSimpleCallbacksUnref(Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>The <c>gst_app_sink_simple_callbacks_new</c> entry point.</summary>
     [LibraryImport("GstApp", EntryPoint = "gst_app_sink_simple_callbacks_new")]
     private static partial nint GstAppSinkSimpleCallbacksNew();
-
-    /// <summary>The <c>gst_app_sink_simple_callbacks_ref</c> entry point.</summary>
-    [LibraryImport("GstApp", EntryPoint = "gst_app_sink_simple_callbacks_ref")]
-    private static partial nint GstAppSinkSimpleCallbacksRef(nint cb);
 
     /// <summary>The <c>gst_app_sink_simple_callbacks_set_eos</c> entry point.</summary>
     [LibraryImport("GstApp", EntryPoint = "gst_app_sink_simple_callbacks_set_eos")]
@@ -161,10 +144,6 @@ public sealed unsafe partial class AppSinkSimpleCallbacks : Gst.GObject.Boxed
     /// <summary>The <c>gst_app_sink_simple_callbacks_set_propose_allocation</c> entry point.</summary>
     [LibraryImport("GstApp", EntryPoint = "gst_app_sink_simple_callbacks_set_propose_allocation")]
     private static partial void GstAppSinkSimpleCallbacksSetProposeAllocation(nint cb, nint proposeAllocationCb, nint userData, nint destroyNotify);
-
-    /// <summary>The <c>gst_app_sink_simple_callbacks_unref</c> entry point.</summary>
-    [LibraryImport("GstApp", EntryPoint = "gst_app_sink_simple_callbacks_unref")]
-    private static partial void GstAppSinkSimpleCallbacksUnref(nint cb);
 
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstAppSinkSimpleCallbacks</c> under.</summary>
     /// <returns>The type of the instances of this wrapper.</returns>

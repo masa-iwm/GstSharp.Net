@@ -63,15 +63,6 @@ public sealed unsafe partial class VideoInfoDmaDrm : Gst.GObject.Boxed
     }
 
     /// <summary>
-    /// Free a #GstVideoInfoDmaDrm structure previously allocated with
-    /// gst_video_info_dma_drm_new()
-    /// </summary>
-    public void Free()
-    {
-        GstVideoInfoDmaDrmFree(Handle);
-    }
-
-    /// <summary>
     /// Convert the values of @drm_info into a #GstCaps. Please note that the
     /// @caps returned will be a dma drm caps which sets format field to DMA_DRM,
     /// and contains a new drm-format field. The value of drm-format field is
@@ -84,67 +75,8 @@ public sealed unsafe partial class VideoInfoDmaDrm : Gst.GObject.Boxed
     public Gst.Caps? ToCaps()
     {
         nint nativeResult = GstVideoInfoDmaDrmToCaps(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full);
-    }
-
-    /// <summary>
-    /// Convert the #GstVideoInfoDmaDrm into a traditional #GstVideoInfo with
-    /// recognized video format. For DMA kind memory, the non linear DMA format
-    /// should be recognized as #GST_VIDEO_FORMAT_DMA_DRM. This helper function
-    /// sets @info's video format into the default value according to @drm_info's
-    /// drm_fourcc field.
-    /// </summary>
-    /// <param name="info">The <c>info</c> argument.</param>
-    /// <returns>%TRUE if @info is converted correctly.</returns>
-    public bool ToVideoInfo(out Gst.Video.VideoInfo? info)
-    {
-        nint infoNative = default;
-        int nativeResult = GstVideoInfoDmaDrmToVideoInfo(Handle, &infoNative);
-        info = Gst.Video.VideoInfo.FromNative(infoNative, Gst.Interop.Transfer.None);
-        return nativeResult != 0;
-    }
-
-    /// <summary>
-    /// Parse @caps and update @info. Please note that the @caps should be
-    /// a dma drm caps. The gst_video_is_dma_drm_caps() can be used to verify
-    /// it before calling this function.
-    /// </summary>
-    /// <param name="drmInfo">The <c>drmInfo</c> argument.</param>
-    /// <param name="caps">The <c>caps</c> argument.</param>
-    /// <returns>TRUE if @caps could be parsed</returns>
-    public static bool FromCaps(out Gst.Video.VideoInfoDmaDrm? drmInfo, Gst.Caps caps)
-    {
-        nint drmInfoNative = default;
-        ArgumentNullException.ThrowIfNull(caps);
-        int nativeResult = GstVideoInfoDmaDrmFromCaps(&drmInfoNative, caps.Handle);
-        drmInfo = Gst.Video.VideoInfoDmaDrm.FromNative(drmInfoNative, Gst.Interop.Transfer.None);
-        return nativeResult != 0;
-    }
-
-    /// <summary>
-    /// Fills @drm_info if @info's format has a valid drm format and @modifier is also
-    /// valid
-    /// </summary>
-    /// <param name="drmInfo">The <c>drmInfo</c> argument.</param>
-    /// <param name="info">The <c>info</c> argument.</param>
-    /// <param name="modifier">The <c>modifier</c> argument.</param>
-    /// <returns>%TRUE if @drm_info is filled correctly.</returns>
-    public static bool FromVideoInfo(out Gst.Video.VideoInfoDmaDrm? drmInfo, Gst.Video.VideoInfo info, ulong modifier)
-    {
-        nint drmInfoNative = default;
-        ArgumentNullException.ThrowIfNull(info);
-        int nativeResult = GstVideoInfoDmaDrmFromVideoInfo(&drmInfoNative, info.Handle, modifier);
-        drmInfo = Gst.Video.VideoInfoDmaDrm.FromNative(drmInfoNative, Gst.Interop.Transfer.None);
-        return nativeResult != 0;
-    }
-
-    /// <summary>Initialize @drm_info with default values.</summary>
-    /// <param name="drmInfo">The <c>drmInfo</c> argument.</param>
-    public static void Init(out Gst.Video.VideoInfoDmaDrm? drmInfo)
-    {
-        nint drmInfoNative = default;
-        GstVideoInfoDmaDrmInit(&drmInfoNative);
-        drmInfo = Gst.Video.VideoInfoDmaDrm.FromNative(drmInfoNative, Gst.Interop.Transfer.None);
     }
 
     /// <summary>The <c>gst_video_info_dma_drm_new</c> entry point.</summary>
@@ -155,29 +87,9 @@ public sealed unsafe partial class VideoInfoDmaDrm : Gst.GObject.Boxed
     [LibraryImport("GstVideo", EntryPoint = "gst_video_info_dma_drm_new_from_caps")]
     private static partial nint GstVideoInfoDmaDrmNewFromCaps(nint caps);
 
-    /// <summary>The <c>gst_video_info_dma_drm_free</c> entry point.</summary>
-    [LibraryImport("GstVideo", EntryPoint = "gst_video_info_dma_drm_free")]
-    private static partial void GstVideoInfoDmaDrmFree(nint drmInfo);
-
     /// <summary>The <c>gst_video_info_dma_drm_to_caps</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_info_dma_drm_to_caps")]
     private static partial nint GstVideoInfoDmaDrmToCaps(nint drmInfo);
-
-    /// <summary>The <c>gst_video_info_dma_drm_to_video_info</c> entry point.</summary>
-    [LibraryImport("GstVideo", EntryPoint = "gst_video_info_dma_drm_to_video_info")]
-    private static partial int GstVideoInfoDmaDrmToVideoInfo(nint drmInfo, nint* info);
-
-    /// <summary>The <c>gst_video_info_dma_drm_from_caps</c> entry point.</summary>
-    [LibraryImport("GstVideo", EntryPoint = "gst_video_info_dma_drm_from_caps")]
-    private static partial int GstVideoInfoDmaDrmFromCaps(nint* drmInfo, nint caps);
-
-    /// <summary>The <c>gst_video_info_dma_drm_from_video_info</c> entry point.</summary>
-    [LibraryImport("GstVideo", EntryPoint = "gst_video_info_dma_drm_from_video_info")]
-    private static partial int GstVideoInfoDmaDrmFromVideoInfo(nint* drmInfo, nint info, ulong modifier);
-
-    /// <summary>The <c>gst_video_info_dma_drm_init</c> entry point.</summary>
-    [LibraryImport("GstVideo", EntryPoint = "gst_video_info_dma_drm_init")]
-    private static partial void GstVideoInfoDmaDrmInit(nint* drmInfo);
 
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstVideoInfoDmaDrm</c> under.</summary>
     /// <returns>The type of the instances of this wrapper.</returns>

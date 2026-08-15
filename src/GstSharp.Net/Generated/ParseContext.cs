@@ -48,13 +48,8 @@ public sealed unsafe partial class ParseContext : Gst.GObject.Boxed
     public Gst.ParseContext? Copy()
     {
         nint nativeResult = GstParseContextCopy(Handle);
+        System.GC.KeepAlive(this);
         return Gst.ParseContext.FromNative(nativeResult, Gst.Interop.Transfer.Full);
-    }
-
-    /// <summary>Frees a parse context previously allocated with gst_parse_context_new().</summary>
-    public void Free()
-    {
-        GstParseContextFree(Handle);
     }
 
     /// <summary>The <c>gst_parse_context_new</c> entry point.</summary>
@@ -64,10 +59,6 @@ public sealed unsafe partial class ParseContext : Gst.GObject.Boxed
     /// <summary>The <c>gst_parse_context_copy</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_parse_context_copy")]
     private static partial nint GstParseContextCopy(nint context);
-
-    /// <summary>The <c>gst_parse_context_free</c> entry point.</summary>
-    [LibraryImport("Gst", EntryPoint = "gst_parse_context_free")]
-    private static partial void GstParseContextFree(nint context);
 
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstParseContext</c> under.</summary>
     /// <returns>The type of the instances of this wrapper.</returns>

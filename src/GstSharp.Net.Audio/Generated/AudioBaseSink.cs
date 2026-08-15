@@ -32,6 +32,7 @@ public unsafe partial class AudioBaseSink : Gst.Base.BaseSink
     public Gst.Audio.AudioRingBuffer? CreateRingbuffer()
     {
         nint nativeResult = GstAudioBaseSinkCreateRingbuffer(Handle);
+        System.GC.KeepAlive(this);
         return Gst.GObject.Object.FromNative<Gst.Audio.AudioRingBuffer>(nativeResult, Gst.Interop.Transfer.None);
     }
 
@@ -40,6 +41,7 @@ public unsafe partial class AudioBaseSink : Gst.Base.BaseSink
     public Gst.ClockTime GetAlignmentThreshold()
     {
         ulong nativeResult = GstAudioBaseSinkGetAlignmentThreshold(Handle);
+        System.GC.KeepAlive(this);
         return new Gst.ClockTime(nativeResult);
     }
 
@@ -48,6 +50,7 @@ public unsafe partial class AudioBaseSink : Gst.Base.BaseSink
     public Gst.ClockTime GetDiscontWait()
     {
         ulong nativeResult = GstAudioBaseSinkGetDiscontWait(Handle);
+        System.GC.KeepAlive(this);
         return new Gst.ClockTime(nativeResult);
     }
 
@@ -56,6 +59,7 @@ public unsafe partial class AudioBaseSink : Gst.Base.BaseSink
     public long GetDriftTolerance()
     {
         long nativeResult = GstAudioBaseSinkGetDriftTolerance(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -67,6 +71,7 @@ public unsafe partial class AudioBaseSink : Gst.Base.BaseSink
     public bool GetProvideClock()
     {
         int nativeResult = GstAudioBaseSinkGetProvideClock(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -75,6 +80,7 @@ public unsafe partial class AudioBaseSink : Gst.Base.BaseSink
     public Gst.Audio.AudioBaseSinkSlaveMethod GetSlaveMethod()
     {
         int nativeResult = GstAudioBaseSinkGetSlaveMethod(Handle);
+        System.GC.KeepAlive(this);
         return (Gst.Audio.AudioBaseSinkSlaveMethod)nativeResult;
     }
 
@@ -88,6 +94,7 @@ public unsafe partial class AudioBaseSink : Gst.Base.BaseSink
     public void ReportDeviceFailure()
     {
         GstAudioBaseSinkReportDeviceFailure(Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Controls the sink's alignment threshold.</summary>
@@ -95,6 +102,7 @@ public unsafe partial class AudioBaseSink : Gst.Base.BaseSink
     public void SetAlignmentThreshold(Gst.ClockTime alignmentThreshold)
     {
         GstAudioBaseSinkSetAlignmentThreshold(Handle, alignmentThreshold.Nanoseconds);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -116,6 +124,7 @@ public unsafe partial class AudioBaseSink : Gst.Base.BaseSink
         ArgumentNullException.ThrowIfNull(callback);
         Gst.Interop.CallbackHandle callbackState = Gst.Interop.CallbackHandle.Alloc(callback);
         GstAudioBaseSinkSetCustomSlavingCallback(Handle, Gst.Audio.AudioBaseSinkCustomSlavingCallbackTrampoline.Pointer, callbackState.UserData, (nint)Gst.Interop.CallbackHandle.DestroyNotify);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Controls how long the sink will wait before creating a discontinuity.</summary>
@@ -123,6 +132,7 @@ public unsafe partial class AudioBaseSink : Gst.Base.BaseSink
     public void SetDiscontWait(Gst.ClockTime discontWait)
     {
         GstAudioBaseSinkSetDiscontWait(Handle, discontWait.Nanoseconds);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Controls the sink's drift tolerance.</summary>
@@ -130,6 +140,7 @@ public unsafe partial class AudioBaseSink : Gst.Base.BaseSink
     public void SetDriftTolerance(long driftTolerance)
     {
         GstAudioBaseSinkSetDriftTolerance(Handle, driftTolerance);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -142,6 +153,7 @@ public unsafe partial class AudioBaseSink : Gst.Base.BaseSink
     public void SetProvideClock(bool provide)
     {
         GstAudioBaseSinkSetProvideClock(Handle, provide ? 1 : 0);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Controls how clock slaving will be performed in @sink.</summary>
@@ -149,6 +161,7 @@ public unsafe partial class AudioBaseSink : Gst.Base.BaseSink
     public void SetSlaveMethod(Gst.Audio.AudioBaseSinkSlaveMethod method)
     {
         GstAudioBaseSinkSetSlaveMethod(Handle, (int)method);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>The <c>alignment-threshold</c> property.</summary>

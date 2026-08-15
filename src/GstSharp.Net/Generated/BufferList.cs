@@ -67,6 +67,7 @@ public sealed unsafe partial class BufferList : Gst.MiniObject
     public nuint CalculateSize()
     {
         nuint nativeResult = GstBufferListCalculateSize(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -78,6 +79,7 @@ public sealed unsafe partial class BufferList : Gst.MiniObject
     public Gst.BufferList CopyDeep()
     {
         nint nativeResult = GstBufferListCopyDeep(Handle);
+        System.GC.KeepAlive(this);
         return Gst.BufferList.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_buffer_list_copy_deep returned no value.");
     }
@@ -94,10 +96,14 @@ public sealed unsafe partial class BufferList : Gst.MiniObject
     /// the buffer at @idx in @group.
     ///     The returned buffer remains valid as long as @list is valid and
     ///     buffer is not removed from the list.
+    /// The wrapper owns a reference of its own, which is a copy for a boxed type:
+    /// dispose it when you are done, and note that changes made to a copy of a
+    /// boxed value are not written back.
     /// </returns>
     public Gst.Buffer Get(uint idx)
     {
         nint nativeResult = GstBufferListGet(Handle, idx);
+        System.GC.KeepAlive(this);
         return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.None)
             ?? throw new InvalidOperationException("gst_buffer_list_get returned no value.");
     }
@@ -114,10 +120,14 @@ public sealed unsafe partial class BufferList : Gst.MiniObject
     /// the buffer at @idx in @group.
     ///     The returned buffer remains valid as long as @list is valid and
     ///     the buffer is not removed from the list.
+    /// The wrapper owns a reference of its own, which is a copy for a boxed type:
+    /// dispose it when you are done, and note that changes made to a copy of a
+    /// boxed value are not written back.
     /// </returns>
     public Gst.Buffer GetWritable(uint idx)
     {
         nint nativeResult = GstBufferListGetWritable(Handle, idx);
+        System.GC.KeepAlive(this);
         return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.None)
             ?? throw new InvalidOperationException("gst_buffer_list_get_writable returned no value.");
     }
@@ -127,33 +137,8 @@ public sealed unsafe partial class BufferList : Gst.MiniObject
     public uint Length()
     {
         uint nativeResult = GstBufferListLength(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
-    }
-
-    /// <summary>Returns a writable copy of @list.</summary>
-    /// <remarks>
-    /// <para>
-    /// If there is only one reference count on @list, the caller must be the owner,
-    /// and so this function will return the buffer list object unchanged. If on the other
-    /// hand there is more than one reference on the object, a new buffer list object will
-    /// be returned. The caller's reference on @list will be removed, and instead the
-    /// caller will own a reference to the returned object.
-    /// </para>
-    /// <para>
-    /// In short, this function unrefs the buffer_list in the argument and refs the buffer list
-    /// that it returns. Don't access the argument after calling this function. See
-    /// also: gst_buffer_list_ref().
-    /// </para>
-    /// </remarks>
-    /// <returns>
-    /// a writable buffer list which may or may not be the
-    ///     same as @buffer list
-    /// </returns>
-    public Gst.BufferList MakeWritable()
-    {
-        nint nativeResult = GstBufferListMakeWritable(Handle);
-        return Gst.BufferList.FromNative(nativeResult, Gst.Interop.Transfer.Full)
-            ?? throw new InvalidOperationException("gst_buffer_list_make_writable returned no value.");
     }
 
     /// <summary>
@@ -165,6 +150,7 @@ public sealed unsafe partial class BufferList : Gst.MiniObject
     public void Remove(uint idx, uint length)
     {
         GstBufferListRemove(Handle, idx, length);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>The <c>gst_buffer_list_new</c> entry point.</summary>
@@ -194,10 +180,6 @@ public sealed unsafe partial class BufferList : Gst.MiniObject
     /// <summary>The <c>gst_buffer_list_length</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_buffer_list_length")]
     private static partial uint GstBufferListLength(nint list);
-
-    /// <summary>The <c>gst_buffer_list_make_writable</c> entry point.</summary>
-    [LibraryImport("Gst", EntryPoint = "gst_buffer_list_make_writable")]
-    private static partial nint GstBufferListMakeWritable(nint list);
 
     /// <summary>The <c>gst_buffer_list_remove</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_buffer_list_remove")]

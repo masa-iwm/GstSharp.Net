@@ -97,6 +97,7 @@ public sealed unsafe partial class Toc : Gst.GObject.Boxed
     public void Dump()
     {
         GstTocDump(Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Find #GstTocEntry with given @uid in the @toc.</summary>
@@ -104,6 +105,9 @@ public sealed unsafe partial class Toc : Gst.GObject.Boxed
     /// <returns>
     /// #GstTocEntry with specified
     /// @uid from the @toc, or %NULL if not found.
+    /// The wrapper owns a reference of its own, which is a copy for a boxed type:
+    /// dispose it when you are done, and note that changes made to a copy of a
+    /// boxed value are not written back.
     /// </returns>
     public Gst.TocEntry? FindEntry(string uid)
     {
@@ -111,6 +115,7 @@ public sealed unsafe partial class Toc : Gst.GObject.Boxed
         System.Span<byte> uidBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope uidScope = Gst.Interop.GMarshal.StackUtf8(uid, uidBuffer);
         nint nativeResult = GstTocFindEntry(Handle, uidScope.Pointer);
+        System.GC.KeepAlive(this);
         return Gst.TocEntry.FromNative(nativeResult, Gst.Interop.Transfer.None);
     }
 
@@ -119,14 +124,21 @@ public sealed unsafe partial class Toc : Gst.GObject.Boxed
     public Gst.TocScope GetScope()
     {
         int nativeResult = GstTocGetScope(Handle);
+        System.GC.KeepAlive(this);
         return (Gst.TocScope)nativeResult;
     }
 
     /// <summary>Gets the tags for @toc.</summary>
-    /// <returns>A #GstTagList for @entry</returns>
+    /// <returns>
+    /// A #GstTagList for @entry
+    /// The wrapper owns a reference of its own, which is a copy for a boxed type:
+    /// dispose it when you are done, and note that changes made to a copy of a
+    /// boxed value are not written back.
+    /// </returns>
     public Gst.TagList? GetTags()
     {
         nint nativeResult = GstTocGetTags(Handle);
+        System.GC.KeepAlive(this);
         return Gst.TagList.FromNative(nativeResult, Gst.Interop.Transfer.None);
     }
 
@@ -136,6 +148,7 @@ public sealed unsafe partial class Toc : Gst.GObject.Boxed
     public void MergeTags(Gst.TagList? tags, Gst.TagMergeMode mode)
     {
         GstTocMergeTags(Handle, tags is null ? 0 : tags.Handle, (int)mode);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>The <c>gst_toc_new</c> entry point.</summary>

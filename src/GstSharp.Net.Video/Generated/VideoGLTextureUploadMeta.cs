@@ -40,6 +40,7 @@ public sealed unsafe partial class VideoGLTextureUploadMeta
     public bool Upload(uint textureId)
     {
         int nativeResult = GstVideoGlTextureUploadMetaUpload(Handle, textureId);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 

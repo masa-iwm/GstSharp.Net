@@ -107,7 +107,7 @@ internal static unsafe class AppSinkNewPrerollCallbackTrampoline
         {
             if (Gst.Interop.CallbackHandle.GetState<Gst.App.AppSinkNewPrerollCallback>(userData) is not { } callback)
             {
-                return default;
+                return (int)Gst.FlowReturn.Error;
             }
 
             Gst.App.AppSink? appsinkValue = Gst.GObject.Object.FromNative<Gst.App.AppSink>(appsink, Gst.Interop.Transfer.None);
@@ -116,7 +116,7 @@ internal static unsafe class AppSinkNewPrerollCallbackTrampoline
         catch (Exception exception)
         {
             Gst.Interop.ExceptionTrap.Report(exception);
-            return default;
+            return (int)Gst.FlowReturn.Error;
         }
     }
 }
@@ -144,7 +144,7 @@ internal static unsafe class AppSinkNewSampleCallbackTrampoline
         {
             if (Gst.Interop.CallbackHandle.GetState<Gst.App.AppSinkNewSampleCallback>(userData) is not { } callback)
             {
-                return default;
+                return (int)Gst.FlowReturn.Error;
             }
 
             Gst.App.AppSink? appsinkValue = Gst.GObject.Object.FromNative<Gst.App.AppSink>(appsink, Gst.Interop.Transfer.None);
@@ -153,7 +153,7 @@ internal static unsafe class AppSinkNewSampleCallbackTrampoline
         catch (Exception exception)
         {
             Gst.Interop.ExceptionTrap.Report(exception);
-            return default;
+            return (int)Gst.FlowReturn.Error;
         }
     }
 }

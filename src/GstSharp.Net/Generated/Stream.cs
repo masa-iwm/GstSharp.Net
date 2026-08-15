@@ -60,6 +60,7 @@ public unsafe partial class Stream : Gst.Object
     public Gst.Caps? GetCaps()
     {
         nint nativeResult = GstStreamGetCaps(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -68,6 +69,7 @@ public unsafe partial class Stream : Gst.Object
     public Gst.StreamFlags GetStreamFlags()
     {
         int nativeResult = GstStreamGetStreamFlags(Handle);
+        System.GC.KeepAlive(this);
         return (Gst.StreamFlags)nativeResult;
     }
 
@@ -79,6 +81,7 @@ public unsafe partial class Stream : Gst.Object
     public string? GetStreamId()
     {
         nint nativeResult = GstStreamGetStreamId(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
     }
 
@@ -87,6 +90,7 @@ public unsafe partial class Stream : Gst.Object
     public Gst.StreamType GetStreamType()
     {
         int nativeResult = GstStreamGetStreamType(Handle);
+        System.GC.KeepAlive(this);
         return (Gst.StreamType)nativeResult;
     }
 
@@ -95,6 +99,7 @@ public unsafe partial class Stream : Gst.Object
     public Gst.TagList? GetTags()
     {
         nint nativeResult = GstStreamGetTags(Handle);
+        System.GC.KeepAlive(this);
         return Gst.TagList.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -103,6 +108,7 @@ public unsafe partial class Stream : Gst.Object
     public void SetCaps(Gst.Caps? caps)
     {
         GstStreamSetCaps(Handle, caps is null ? 0 : caps.Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Set the @flags for the @stream.</summary>
@@ -110,6 +116,7 @@ public unsafe partial class Stream : Gst.Object
     public void SetStreamFlags(Gst.StreamFlags flags)
     {
         GstStreamSetStreamFlags(Handle, (int)flags);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Set the stream type of @stream</summary>
@@ -117,6 +124,7 @@ public unsafe partial class Stream : Gst.Object
     public void SetStreamType(Gst.StreamType streamType)
     {
         GstStreamSetStreamType(Handle, (int)streamType);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Set the tags for the #GstStream</summary>
@@ -124,6 +132,7 @@ public unsafe partial class Stream : Gst.Object
     public void SetTags(Gst.TagList? tags)
     {
         GstStreamSetTags(Handle, tags is null ? 0 : tags.Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>The #GstCaps of the #GstStream.</summary>

@@ -154,6 +154,7 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     public void AddToFrame(int nBytes)
     {
         GstVideoDecoderAddToFrame(Handle, nBytes);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -173,6 +174,7 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     public Gst.Buffer? AllocateOutputBuffer()
     {
         nint nativeResult = GstVideoDecoderAllocateOutputBuffer(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -193,6 +195,7 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     {
         ArgumentNullException.ThrowIfNull(frame);
         int nativeResult = GstVideoDecoderAllocateOutputFrame(Handle, frame.Handle);
+        System.GC.KeepAlive(this);
         return (Gst.FlowReturn)nativeResult;
     }
 
@@ -208,25 +211,8 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
         ArgumentNullException.ThrowIfNull(frame);
         Gst.BufferPoolAcquireParams @paramsNative = @params;
         int nativeResult = GstVideoDecoderAllocateOutputFrameWithParams(Handle, frame.Handle, &@paramsNative);
+        System.GC.KeepAlive(this);
         return (Gst.FlowReturn)nativeResult;
-    }
-
-    /// <summary>
-    /// Lets #GstVideoDecoder sub-classes to know the memory @allocator
-    /// used by the base class and its @params.
-    /// </summary>
-    /// <remarks>
-    /// <para>Unref the @allocator after use it.</para>
-    /// </remarks>
-    /// <param name="allocator">The <c>allocator</c> argument.</param>
-    /// <param name="params">The <c>@params</c> argument.</param>
-    public void GetAllocator(out Gst.Allocator? allocator, out Gst.AllocationParams? @params)
-    {
-        nint allocatorNative = default;
-        nint @paramsNative = default;
-        GstVideoDecoderGetAllocator(Handle, &allocatorNative, &@paramsNative);
-        allocator = Gst.GObject.Object.FromNative<Gst.Allocator>(allocatorNative, Gst.Interop.Transfer.Full);
-        @params = Gst.AllocationParams.FromNative(@paramsNative, Gst.Interop.Transfer.Full);
     }
 
     /// <summary>The <c>gst_video_decoder_get_buffer_pool</c> function.</summary>
@@ -237,6 +223,7 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     public Gst.BufferPool? GetBufferPool()
     {
         nint nativeResult = GstVideoDecoderGetBufferPool(Handle);
+        System.GC.KeepAlive(this);
         return Gst.GObject.Object.FromNative<Gst.BufferPool>(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -245,6 +232,7 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     public int GetEstimateRate()
     {
         int nativeResult = GstVideoDecoderGetEstimateRate(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -254,6 +242,7 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     public Gst.Video.VideoCodecFrame? GetFrame(int frameNumber)
     {
         nint nativeResult = GstVideoDecoderGetFrame(Handle, frameNumber);
+        System.GC.KeepAlive(this);
         return Gst.Video.VideoCodecFrame.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -267,6 +256,7 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     {
         ArgumentNullException.ThrowIfNull(frame);
         uint nativeResult = GstVideoDecoderGetInputSubframeIndex(Handle, frame.Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -281,6 +271,7 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
         ulong minLatencyNative = default;
         ulong maxLatencyNative = default;
         GstVideoDecoderGetLatency(Handle, &minLatencyNative, &maxLatencyNative);
+        System.GC.KeepAlive(this);
         minLatency = new Gst.ClockTime(minLatencyNative);
         maxLatency = new Gst.ClockTime(maxLatencyNative);
     }
@@ -297,6 +288,7 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     {
         ArgumentNullException.ThrowIfNull(frame);
         long nativeResult = GstVideoDecoderGetMaxDecodeTime(Handle, frame.Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -305,6 +297,7 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     public int GetMaxErrors()
     {
         int nativeResult = GstVideoDecoderGetMaxErrors(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -313,6 +306,7 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     public bool GetNeedsFormat()
     {
         int nativeResult = GstVideoDecoderGetNeedsFormat(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -324,6 +318,7 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     public bool GetNeedsSyncPoint()
     {
         int nativeResult = GstVideoDecoderGetNeedsSyncPoint(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -332,6 +327,7 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     public Gst.Video.VideoCodecFrame? GetOldestFrame()
     {
         nint nativeResult = GstVideoDecoderGetOldestFrame(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Video.VideoCodecFrame.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -340,6 +336,7 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     public Gst.Video.VideoCodecState? GetOutputState()
     {
         nint nativeResult = GstVideoDecoderGetOutputState(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Video.VideoCodecState.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -351,6 +348,7 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     public bool GetPacketized()
     {
         int nativeResult = GstVideoDecoderGetPacketized(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -362,6 +360,7 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     public nuint GetPendingFrameSize()
     {
         nuint nativeResult = GstVideoDecoderGetPendingFrameSize(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -375,6 +374,7 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     {
         ArgumentNullException.ThrowIfNull(frame);
         uint nativeResult = GstVideoDecoderGetProcessedSubframeIndex(Handle, frame.Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -383,6 +383,7 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     public double GetQosProportion()
     {
         double nativeResult = GstVideoDecoderGetQosProportion(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -395,6 +396,7 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     public bool GetSubframeMode()
     {
         int nativeResult = GstVideoDecoderGetSubframeMode(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -406,6 +408,7 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     public Gst.FlowReturn HaveFrame()
     {
         int nativeResult = GstVideoDecoderHaveFrame(Handle);
+        System.GC.KeepAlive(this);
         return (Gst.FlowReturn)nativeResult;
     }
 
@@ -421,6 +424,7 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     {
         ArgumentNullException.ThrowIfNull(frame);
         int nativeResult = GstVideoDecoderHaveLastSubframe(Handle, frame.Handle);
+        System.GC.KeepAlive(this);
         return (Gst.FlowReturn)nativeResult;
     }
 
@@ -441,6 +445,7 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     public void MergeTags(Gst.TagList? tags, Gst.TagMergeMode mode)
     {
         GstVideoDecoderMergeTags(Handle, tags is null ? 0 : tags.Handle, (int)mode);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -452,6 +457,7 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     public bool Negotiate()
     {
         int nativeResult = GstVideoDecoderNegotiate(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -466,6 +472,7 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     public Gst.Caps ProxyGetcaps(Gst.Caps? caps, Gst.Caps? filter)
     {
         nint nativeResult = GstVideoDecoderProxyGetcaps(Handle, caps is null ? 0 : caps.Handle, filter is null ? 0 : filter.Handle);
+        System.GC.KeepAlive(this);
         return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_video_decoder_proxy_getcaps returned no value.");
     }
@@ -506,6 +513,7 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     {
         ArgumentNullException.ThrowIfNull(frame);
         GstVideoDecoderRequestSyncPoint(Handle, frame.Handle, (int)flags);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Allows baseclass to perform byte to time estimated conversion.</summary>
@@ -513,6 +521,7 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     public void SetEstimateRate(bool enabled)
     {
         GstVideoDecoderSetEstimateRate(Handle, enabled ? 1 : 0);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -528,6 +537,7 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     public Gst.Video.VideoCodecState? SetInterlacedOutputState(Gst.Video.VideoFormat fmt, Gst.Video.VideoInterlaceMode interlaceMode, uint width, uint height, Gst.Video.VideoCodecState? reference)
     {
         nint nativeResult = GstVideoDecoderSetInterlacedOutputState(Handle, (int)fmt, (int)interlaceMode, width, height, reference is null ? 0 : reference.Handle);
+        System.GC.KeepAlive(this);
         return Gst.Video.VideoCodecState.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -542,6 +552,7 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     public void SetLatency(Gst.ClockTime minLatency, Gst.ClockTime maxLatency)
     {
         GstVideoDecoderSetLatency(Handle, minLatency.Nanoseconds, maxLatency.Nanoseconds);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -557,6 +568,7 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     public void SetMaxErrors(int num)
     {
         GstVideoDecoderSetMaxErrors(Handle, num);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -571,6 +583,7 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     public void SetNeedsFormat(bool enabled)
     {
         GstVideoDecoderSetNeedsFormat(Handle, enabled ? 1 : 0);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -589,6 +602,7 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     public void SetNeedsSyncPoint(bool enabled)
     {
         GstVideoDecoderSetNeedsSyncPoint(Handle, enabled ? 1 : 0);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -620,6 +634,7 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     public Gst.Video.VideoCodecState? SetOutputState(Gst.Video.VideoFormat fmt, uint width, uint height, Gst.Video.VideoCodecState? reference)
     {
         nint nativeResult = GstVideoDecoderSetOutputState(Handle, (int)fmt, width, height, reference is null ? 0 : reference.Handle);
+        System.GC.KeepAlive(this);
         return Gst.Video.VideoCodecState.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -631,6 +646,7 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     public void SetPacketized(bool packetized)
     {
         GstVideoDecoderSetPacketized(Handle, packetized ? 1 : 0);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -658,6 +674,7 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     public void SetSubframeMode(bool subframeMode)
     {
         GstVideoDecoderSetSubframeMode(Handle, subframeMode ? 1 : 0);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -675,6 +692,7 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     public void SetUseDefaultPadAcceptcaps(bool use)
     {
         GstVideoDecoderSetUseDefaultPadAcceptcaps(Handle, use ? 1 : 0);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -702,10 +720,6 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     /// <summary>The <c>gst_video_decoder_allocate_output_frame_with_params</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_decoder_allocate_output_frame_with_params")]
     private static partial int GstVideoDecoderAllocateOutputFrameWithParams(nint decoder, nint frame, Gst.BufferPoolAcquireParams* @params);
-
-    /// <summary>The <c>gst_video_decoder_get_allocator</c> entry point.</summary>
-    [LibraryImport("GstVideo", EntryPoint = "gst_video_decoder_get_allocator")]
-    private static partial void GstVideoDecoderGetAllocator(nint decoder, nint* allocator, nint* @params);
 
     /// <summary>The <c>gst_video_decoder_get_buffer_pool</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_decoder_get_buffer_pool")]

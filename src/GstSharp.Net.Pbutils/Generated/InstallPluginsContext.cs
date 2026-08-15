@@ -46,14 +46,9 @@ public sealed unsafe partial class InstallPluginsContext : Gst.GObject.Boxed
     public Gst.Pbutils.InstallPluginsContext Copy()
     {
         nint nativeResult = GstInstallPluginsContextCopy(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Pbutils.InstallPluginsContext.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_install_plugins_context_copy returned no value.");
-    }
-
-    /// <summary>Frees a #GstInstallPluginsContext.</summary>
-    public void Free()
-    {
-        GstInstallPluginsContextFree(Handle);
     }
 
     /// <summary>
@@ -70,6 +65,7 @@ public sealed unsafe partial class InstallPluginsContext : Gst.GObject.Boxed
     public void SetConfirmSearch(bool confirmSearch)
     {
         GstInstallPluginsContextSetConfirmSearch(Handle, confirmSearch ? 1 : 0);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -93,6 +89,7 @@ public sealed unsafe partial class InstallPluginsContext : Gst.GObject.Boxed
         System.Span<byte> desktopIdBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope desktopIdScope = Gst.Interop.GMarshal.StackUtf8(desktopId, desktopIdBuffer);
         GstInstallPluginsContextSetDesktopId(Handle, desktopIdScope.Pointer);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Sets the startup notification ID for the launched process.</summary>
@@ -126,6 +123,7 @@ public sealed unsafe partial class InstallPluginsContext : Gst.GObject.Boxed
         System.Span<byte> startupIdBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope startupIdScope = Gst.Interop.GMarshal.StackUtf8(startupId, startupIdBuffer);
         GstInstallPluginsContextSetStartupNotificationId(Handle, startupIdScope.Pointer);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -160,6 +158,7 @@ public sealed unsafe partial class InstallPluginsContext : Gst.GObject.Boxed
     public void SetXid(uint xid)
     {
         GstInstallPluginsContextSetXid(Handle, xid);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>The <c>gst_install_plugins_context_new</c> entry point.</summary>
@@ -169,10 +168,6 @@ public sealed unsafe partial class InstallPluginsContext : Gst.GObject.Boxed
     /// <summary>The <c>gst_install_plugins_context_copy</c> entry point.</summary>
     [LibraryImport("GstPbutils", EntryPoint = "gst_install_plugins_context_copy")]
     private static partial nint GstInstallPluginsContextCopy(nint ctx);
-
-    /// <summary>The <c>gst_install_plugins_context_free</c> entry point.</summary>
-    [LibraryImport("GstPbutils", EntryPoint = "gst_install_plugins_context_free")]
-    private static partial void GstInstallPluginsContextFree(nint ctx);
 
     /// <summary>The <c>gst_install_plugins_context_set_confirm_search</c> entry point.</summary>
     [LibraryImport("GstPbutils", EntryPoint = "gst_install_plugins_context_set_confirm_search")]

@@ -48,6 +48,7 @@ public static unsafe partial class ChildProxyExtensions
         System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
         GstChildProxyChildAdded(parent.Handle, child.Handle, nameScope.Pointer);
+        System.GC.KeepAlive(parent);
     }
 
     /// <summary>Emits the #GstChildProxy::child-removed signal.</summary>
@@ -62,6 +63,7 @@ public static unsafe partial class ChildProxyExtensions
         System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
         GstChildProxyChildRemoved(parent.Handle, child.Handle, nameScope.Pointer);
+        System.GC.KeepAlive(parent);
     }
 
     /// <summary>Fetches a child by its number.</summary>
@@ -75,6 +77,7 @@ public static unsafe partial class ChildProxyExtensions
     {
         ArgumentNullException.ThrowIfNull(parent);
         nint nativeResult = GstChildProxyGetChildByIndex(parent.Handle, index);
+        System.GC.KeepAlive(parent);
         return Gst.GObject.Object.FromNative<Gst.GObject.Object>(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -99,6 +102,7 @@ public static unsafe partial class ChildProxyExtensions
         System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
         nint nativeResult = GstChildProxyGetChildByName(parent.Handle, nameScope.Pointer);
+        System.GC.KeepAlive(parent);
         return Gst.GObject.Object.FromNative<Gst.GObject.Object>(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -126,6 +130,7 @@ public static unsafe partial class ChildProxyExtensions
         System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
         nint nativeResult = GstChildProxyGetChildByNameRecurse(childProxy.Handle, nameScope.Pointer);
+        System.GC.KeepAlive(childProxy);
         return Gst.GObject.Object.FromNative<Gst.GObject.Object>(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -136,6 +141,7 @@ public static unsafe partial class ChildProxyExtensions
     {
         ArgumentNullException.ThrowIfNull(parent);
         uint nativeResult = GstChildProxyGetChildrenCount(parent.Handle);
+        System.GC.KeepAlive(parent);
         return nativeResult;
     }
 

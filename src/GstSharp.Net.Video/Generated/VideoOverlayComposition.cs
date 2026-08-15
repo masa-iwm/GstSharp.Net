@@ -80,6 +80,7 @@ public sealed unsafe partial class VideoOverlayComposition : Gst.MiniObject
     {
         ArgumentNullException.ThrowIfNull(rectangle);
         GstVideoOverlayCompositionAddRectangle(Handle, rectangle.Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -99,6 +100,7 @@ public sealed unsafe partial class VideoOverlayComposition : Gst.MiniObject
     {
         ArgumentNullException.ThrowIfNull(videoBuf);
         int nativeResult = GstVideoOverlayCompositionBlend(Handle, videoBuf.Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -124,6 +126,7 @@ public sealed unsafe partial class VideoOverlayComposition : Gst.MiniObject
     public Gst.Video.VideoOverlayComposition Copy()
     {
         nint nativeResult = GstVideoOverlayCompositionCopy(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Video.VideoOverlayComposition.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_video_overlay_composition_copy returned no value.");
     }
@@ -135,10 +138,14 @@ public sealed unsafe partial class VideoOverlayComposition : Gst.MiniObject
     ///     bounds. Will not return a new reference, the caller will need to
     ///     obtain her own reference using gst_video_overlay_rectangle_ref()
     ///     if needed.
+    /// The wrapper owns a reference of its own, which is a copy for a boxed type:
+    /// dispose it when you are done, and note that changes made to a copy of a
+    /// boxed value are not written back.
     /// </returns>
     public Gst.Video.VideoOverlayRectangle? GetRectangle(uint n)
     {
         nint nativeResult = GstVideoOverlayCompositionGetRectangle(Handle, n);
+        System.GC.KeepAlive(this);
         return Gst.Video.VideoOverlayRectangle.FromNative(nativeResult, Gst.Interop.Transfer.None);
     }
 
@@ -152,33 +159,8 @@ public sealed unsafe partial class VideoOverlayComposition : Gst.MiniObject
     public uint GetSeqnum()
     {
         uint nativeResult = GstVideoOverlayCompositionGetSeqnum(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
-    }
-
-    /// <summary>
-    /// Takes ownership of @comp and returns a version of @comp that is writable
-    /// (i.e. can be modified). Will either return @comp right away, or create a
-    /// new writable copy of @comp and unref @comp itself. All the contained
-    /// rectangles will also be copied, but the actual overlay pixel data buffers
-    /// contained in the rectangles are not copied.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// This should be avoided unless rectangles need to be modified because it
-    /// invalidates caching in sinks and compositor elements. To add extra rectangles
-    /// it is rather recommended to add an extra composition meta using
-    /// gst_buffer_add_video_overlay_composition_meta().
-    /// </para>
-    /// </remarks>
-    /// <returns>
-    /// a writable #GstVideoOverlayComposition
-    ///     equivalent to @comp.
-    /// </returns>
-    public Gst.Video.VideoOverlayComposition MakeWritable()
-    {
-        nint nativeResult = GstVideoOverlayCompositionMakeWritable(Handle);
-        return Gst.Video.VideoOverlayComposition.FromNative(nativeResult, Gst.Interop.Transfer.Full)
-            ?? throw new InvalidOperationException("gst_video_overlay_composition_make_writable returned no value.");
     }
 
     /// <summary>Returns the number of #GstVideoOverlayRectangle&lt;!-- --&gt;s contained in @comp.</summary>
@@ -186,6 +168,7 @@ public sealed unsafe partial class VideoOverlayComposition : Gst.MiniObject
     public uint NRectangles()
     {
         uint nativeResult = GstVideoOverlayCompositionNRectangles(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -212,10 +195,6 @@ public sealed unsafe partial class VideoOverlayComposition : Gst.MiniObject
     /// <summary>The <c>gst_video_overlay_composition_get_seqnum</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_overlay_composition_get_seqnum")]
     private static partial uint GstVideoOverlayCompositionGetSeqnum(nint comp);
-
-    /// <summary>The <c>gst_video_overlay_composition_make_writable</c> entry point.</summary>
-    [LibraryImport("GstVideo", EntryPoint = "gst_video_overlay_composition_make_writable")]
-    private static partial nint GstVideoOverlayCompositionMakeWritable(nint comp);
 
     /// <summary>The <c>gst_video_overlay_composition_n_rectangles</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_overlay_composition_n_rectangles")]

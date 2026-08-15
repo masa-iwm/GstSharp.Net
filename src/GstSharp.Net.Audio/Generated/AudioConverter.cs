@@ -53,6 +53,7 @@ public sealed unsafe partial class AudioConverter : Gst.GObject.Boxed
         fixed (byte* @inPointer = @in)
         {
             int nativeResult = GstAudioConverterConvert(Handle, (int)flags, @inPointer, (nuint)@in.Length, &@outNative, &outSizeNative);
+            System.GC.KeepAlive(this);
             @out = null;
             if (@outNative != 0)
             {
@@ -64,24 +65,22 @@ public sealed unsafe partial class AudioConverter : Gst.GObject.Boxed
         }
     }
 
-    /// <summary>Free a previously allocated @convert instance.</summary>
-    public void Free()
-    {
-        GstAudioConverterFree(Handle);
-    }
-
     /// <summary>Get the current configuration of @convert.</summary>
     /// <param name="inRate">The <c>inRate</c> argument.</param>
     /// <param name="outRate">The <c>outRate</c> argument.</param>
     /// <returns>
     ///   a #GstStructure that remains valid for as long as @convert is valid
     ///   or until gst_audio_converter_update_config() is called.
+    /// The wrapper owns a reference of its own, which is a copy for a boxed type:
+    /// dispose it when you are done, and note that changes made to a copy of a
+    /// boxed value are not written back.
     /// </returns>
     public Gst.Structure GetConfig(out int inRate, out int outRate)
     {
         int inRateNative = default;
         int outRateNative = default;
         nint nativeResult = GstAudioConverterGetConfig(Handle, &inRateNative, &outRateNative);
+        System.GC.KeepAlive(this);
         inRate = inRateNative;
         outRate = outRateNative;
         return Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.None)
@@ -97,6 +96,7 @@ public sealed unsafe partial class AudioConverter : Gst.GObject.Boxed
     public nuint GetInFrames(nuint outFrames)
     {
         nuint nativeResult = GstAudioConverterGetInFrames(Handle, outFrames);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -111,6 +111,7 @@ public sealed unsafe partial class AudioConverter : Gst.GObject.Boxed
     public nuint GetMaxLatency()
     {
         nuint nativeResult = GstAudioConverterGetMaxLatency(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -123,6 +124,7 @@ public sealed unsafe partial class AudioConverter : Gst.GObject.Boxed
     public nuint GetOutFrames(nuint inFrames)
     {
         nuint nativeResult = GstAudioConverterGetOutFrames(Handle, inFrames);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -134,6 +136,7 @@ public sealed unsafe partial class AudioConverter : Gst.GObject.Boxed
     public bool IsPassthrough()
     {
         int nativeResult = GstAudioConverterIsPassthrough(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -144,6 +147,7 @@ public sealed unsafe partial class AudioConverter : Gst.GObject.Boxed
     public void Reset()
     {
         GstAudioConverterReset(Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -154,16 +158,13 @@ public sealed unsafe partial class AudioConverter : Gst.GObject.Boxed
     public bool SupportsInplace()
     {
         int nativeResult = GstAudioConverterSupportsInplace(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
     /// <summary>The <c>gst_audio_converter_convert</c> entry point.</summary>
     [LibraryImport("GstAudio", EntryPoint = "gst_audio_converter_convert")]
     private static partial int GstAudioConverterConvert(nint convert, int flags, byte* @in, nuint inSize, nint* @out, nuint* outSize);
-
-    /// <summary>The <c>gst_audio_converter_free</c> entry point.</summary>
-    [LibraryImport("GstAudio", EntryPoint = "gst_audio_converter_free")]
-    private static partial void GstAudioConverterFree(nint convert);
 
     /// <summary>The <c>gst_audio_converter_get_config</c> entry point.</summary>
     [LibraryImport("GstAudio", EntryPoint = "gst_audio_converter_get_config")]

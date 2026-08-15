@@ -47,14 +47,9 @@ public sealed unsafe partial class VideoVBIParser : Gst.GObject.Boxed
     public Gst.Video.VideoVBIParser Copy()
     {
         nint nativeResult = GstVideoVbiParserCopy(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Video.VideoVBIParser.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_video_vbi_parser_copy returned no value.");
-    }
-
-    /// <summary>Frees the @parser.</summary>
-    public void Free()
-    {
-        GstVideoVbiParserFree(Handle);
     }
 
     /// <summary>Parse the line provided previously by gst_video_vbi_parser_add_line().</summary>
@@ -68,6 +63,7 @@ public sealed unsafe partial class VideoVBIParser : Gst.GObject.Boxed
     {
         Gst.Video.VideoAncillary ancNative = default;
         int nativeResult = GstVideoVbiParserGetAncillary(Handle, &ancNative);
+        System.GC.KeepAlive(this);
         anc = ancNative;
         return (Gst.Video.VideoVBIParserResult)nativeResult;
     }
@@ -79,10 +75,6 @@ public sealed unsafe partial class VideoVBIParser : Gst.GObject.Boxed
     /// <summary>The <c>gst_video_vbi_parser_copy</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_vbi_parser_copy")]
     private static partial nint GstVideoVbiParserCopy(nint parser);
-
-    /// <summary>The <c>gst_video_vbi_parser_free</c> entry point.</summary>
-    [LibraryImport("GstVideo", EntryPoint = "gst_video_vbi_parser_free")]
-    private static partial void GstVideoVbiParserFree(nint parser);
 
     /// <summary>The <c>gst_video_vbi_parser_get_ancillary</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_vbi_parser_get_ancillary")]

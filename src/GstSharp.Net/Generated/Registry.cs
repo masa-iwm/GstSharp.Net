@@ -99,6 +99,7 @@ public unsafe partial class Registry : Gst.Object
     {
         ArgumentNullException.ThrowIfNull(feature);
         int nativeResult = GstRegistryAddFeature(Handle, feature.Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -115,6 +116,7 @@ public unsafe partial class Registry : Gst.Object
     {
         ArgumentNullException.ThrowIfNull(plugin);
         int nativeResult = GstRegistryAddPlugin(Handle, plugin.Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -137,6 +139,7 @@ public unsafe partial class Registry : Gst.Object
         System.Span<byte> featureNameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope featureNameScope = Gst.Interop.GMarshal.StackUtf8(featureName, featureNameBuffer);
         int nativeResult = GstRegistryCheckFeatureVersion(Handle, featureNameScope.Pointer, minMajor, minMinor, minMicro);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -154,6 +157,7 @@ public unsafe partial class Registry : Gst.Object
         System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
         nint nativeResult = GstRegistryFindFeature(Handle, nameScope.Pointer, type.Value);
+        System.GC.KeepAlive(this);
         return Gst.GObject.Object.FromNative<Gst.PluginFeature>(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -173,6 +177,7 @@ public unsafe partial class Registry : Gst.Object
         System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
         nint nativeResult = GstRegistryFindPlugin(Handle, nameScope.Pointer);
+        System.GC.KeepAlive(this);
         return Gst.GObject.Object.FromNative<Gst.Plugin>(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -184,6 +189,7 @@ public unsafe partial class Registry : Gst.Object
     public uint GetFeatureListCookie()
     {
         uint nativeResult = GstRegistryGetFeatureListCookie(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -202,6 +208,7 @@ public unsafe partial class Registry : Gst.Object
         System.Span<byte> filenameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope filenameScope = Gst.Interop.GMarshal.StackUtf8(filename, filenameBuffer);
         nint nativeResult = GstRegistryLookup(Handle, filenameScope.Pointer);
+        System.GC.KeepAlive(this);
         return Gst.GObject.Object.FromNative<Gst.Plugin>(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -217,6 +224,7 @@ public unsafe partial class Registry : Gst.Object
         System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
         nint nativeResult = GstRegistryLookupFeature(Handle, nameScope.Pointer);
+        System.GC.KeepAlive(this);
         return Gst.GObject.Object.FromNative<Gst.PluginFeature>(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -229,6 +237,7 @@ public unsafe partial class Registry : Gst.Object
     {
         ArgumentNullException.ThrowIfNull(feature);
         GstRegistryRemoveFeature(Handle, feature.Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Remove the plugin from the registry.</summary>
@@ -240,6 +249,7 @@ public unsafe partial class Registry : Gst.Object
     {
         ArgumentNullException.ThrowIfNull(plugin);
         GstRegistryRemovePlugin(Handle, plugin.Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -254,6 +264,7 @@ public unsafe partial class Registry : Gst.Object
         System.Span<byte> pathBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope pathScope = Gst.Interop.GMarshal.StackUtf8(path, pathBuffer);
         int nativeResult = GstRegistryScanPath(Handle, pathScope.Pointer);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 

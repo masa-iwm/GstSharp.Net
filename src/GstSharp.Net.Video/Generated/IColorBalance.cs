@@ -32,6 +32,7 @@ public static unsafe partial class ColorBalanceExtensions
     {
         ArgumentNullException.ThrowIfNull(balance);
         int nativeResult = GstColorBalanceGetBalanceType(balance.Handle);
+        System.GC.KeepAlive(balance);
         return (Gst.Video.ColorBalanceType)nativeResult;
     }
 
@@ -54,6 +55,7 @@ public static unsafe partial class ColorBalanceExtensions
         ArgumentNullException.ThrowIfNull(balance);
         ArgumentNullException.ThrowIfNull(channel);
         int nativeResult = GstColorBalanceGetValue(balance.Handle, channel.Handle);
+        System.GC.KeepAlive(balance);
         return nativeResult;
     }
 
@@ -76,6 +78,7 @@ public static unsafe partial class ColorBalanceExtensions
         ArgumentNullException.ThrowIfNull(balance);
         ArgumentNullException.ThrowIfNull(channel);
         GstColorBalanceSetValue(balance.Handle, channel.Handle, value);
+        System.GC.KeepAlive(balance);
     }
 
     /// <summary>
@@ -92,6 +95,7 @@ public static unsafe partial class ColorBalanceExtensions
         ArgumentNullException.ThrowIfNull(balance);
         ArgumentNullException.ThrowIfNull(channel);
         GstColorBalanceValueChanged(balance.Handle, channel.Handle, value);
+        System.GC.KeepAlive(balance);
     }
 
     /// <summary>The arguments of the <c>value-changed</c> signal of <c>GstColorBalance</c>.</summary>

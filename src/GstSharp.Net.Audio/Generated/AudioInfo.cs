@@ -69,6 +69,7 @@ public sealed unsafe partial class AudioInfo : Gst.GObject.Boxed
     {
         long destValNative = default;
         int nativeResult = GstAudioInfoConvert(Handle, (int)srcFmt, srcVal, (int)destFmt, &destValNative);
+        System.GC.KeepAlive(this);
         destVal = destValNative;
         return nativeResult != 0;
     }
@@ -78,17 +79,9 @@ public sealed unsafe partial class AudioInfo : Gst.GObject.Boxed
     public Gst.Audio.AudioInfo Copy()
     {
         nint nativeResult = GstAudioInfoCopy(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Audio.AudioInfo.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_audio_info_copy returned no value.");
-    }
-
-    /// <summary>
-    /// Free a GstAudioInfo structure previously allocated with gst_audio_info_new()
-    /// or gst_audio_info_copy().
-    /// </summary>
-    public void Free()
-    {
-        GstAudioInfoFree(Handle);
     }
 
     /// <summary>Compares two #GstAudioInfo and returns whether they are equal or not</summary>
@@ -98,6 +91,7 @@ public sealed unsafe partial class AudioInfo : Gst.GObject.Boxed
     {
         ArgumentNullException.ThrowIfNull(other);
         int nativeResult = GstAudioInfoIsEqual(Handle, other.Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -109,30 +103,9 @@ public sealed unsafe partial class AudioInfo : Gst.GObject.Boxed
     public Gst.Caps ToCaps()
     {
         nint nativeResult = GstAudioInfoToCaps(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_audio_info_to_caps returned no value.");
-    }
-
-    /// <summary>Parse @caps and update @info.</summary>
-    /// <param name="info">The <c>info</c> argument.</param>
-    /// <param name="caps">The <c>caps</c> argument.</param>
-    /// <returns>TRUE if @caps could be parsed</returns>
-    public static bool FromCaps(out Gst.Audio.AudioInfo? info, Gst.Caps caps)
-    {
-        nint infoNative = default;
-        ArgumentNullException.ThrowIfNull(caps);
-        int nativeResult = GstAudioInfoFromCaps(&infoNative, caps.Handle);
-        info = Gst.Audio.AudioInfo.FromNative(infoNative, Gst.Interop.Transfer.None);
-        return nativeResult != 0;
-    }
-
-    /// <summary>Initialize @info with default values.</summary>
-    /// <param name="info">The <c>info</c> argument.</param>
-    public static void Init(out Gst.Audio.AudioInfo? info)
-    {
-        nint infoNative = default;
-        GstAudioInfoInit(&infoNative);
-        info = Gst.Audio.AudioInfo.FromNative(infoNative, Gst.Interop.Transfer.None);
     }
 
     /// <summary>The <c>gst_audio_info_new</c> entry point.</summary>
@@ -151,10 +124,6 @@ public sealed unsafe partial class AudioInfo : Gst.GObject.Boxed
     [LibraryImport("GstAudio", EntryPoint = "gst_audio_info_copy")]
     private static partial nint GstAudioInfoCopy(nint info);
 
-    /// <summary>The <c>gst_audio_info_free</c> entry point.</summary>
-    [LibraryImport("GstAudio", EntryPoint = "gst_audio_info_free")]
-    private static partial void GstAudioInfoFree(nint info);
-
     /// <summary>The <c>gst_audio_info_is_equal</c> entry point.</summary>
     [LibraryImport("GstAudio", EntryPoint = "gst_audio_info_is_equal")]
     private static partial int GstAudioInfoIsEqual(nint info, nint other);
@@ -162,14 +131,6 @@ public sealed unsafe partial class AudioInfo : Gst.GObject.Boxed
     /// <summary>The <c>gst_audio_info_to_caps</c> entry point.</summary>
     [LibraryImport("GstAudio", EntryPoint = "gst_audio_info_to_caps")]
     private static partial nint GstAudioInfoToCaps(nint info);
-
-    /// <summary>The <c>gst_audio_info_from_caps</c> entry point.</summary>
-    [LibraryImport("GstAudio", EntryPoint = "gst_audio_info_from_caps")]
-    private static partial int GstAudioInfoFromCaps(nint* info, nint caps);
-
-    /// <summary>The <c>gst_audio_info_init</c> entry point.</summary>
-    [LibraryImport("GstAudio", EntryPoint = "gst_audio_info_init")]
-    private static partial void GstAudioInfoInit(nint* info);
 
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstAudioInfo</c> under.</summary>
     /// <returns>The type of the instances of this wrapper.</returns>

@@ -81,12 +81,12 @@ public unsafe partial class Pipeline : Gst.Bin, Gst.IChildProxy
     /// <summary>Create a new pipeline with the given name.</summary>
     /// <param name="name">The <c>name</c> argument.</param>
     /// <returns>newly created GstPipeline</returns>
-    public static new Gst.Element New(string? name)
+    public static new Gst.Pipeline New(string? name)
     {
         System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
         nint nativeResult = GstPipelineNew(nameScope.Pointer);
-        return Gst.GObject.Object.FromNative<Gst.Element>(nativeResult, Gst.Interop.Transfer.None)
+        return Gst.GObject.Object.FromNative<Gst.Pipeline>(nativeResult, Gst.Interop.Transfer.None)
             ?? throw new InvalidOperationException("gst_pipeline_new returned no value.");
     }
 
@@ -105,6 +105,7 @@ public unsafe partial class Pipeline : Gst.Bin, Gst.IChildProxy
     public void AutoClock()
     {
         GstPipelineAutoClock(Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -118,6 +119,7 @@ public unsafe partial class Pipeline : Gst.Bin, Gst.IChildProxy
     public bool GetAutoFlushBus()
     {
         int nativeResult = GstPipelineGetAutoFlushBus(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -129,6 +131,7 @@ public unsafe partial class Pipeline : Gst.Bin, Gst.IChildProxy
     public new Gst.Bus GetBus()
     {
         nint nativeResult = GstPipelineGetBus(Handle);
+        System.GC.KeepAlive(this);
         return Gst.GObject.Object.FromNative<Gst.Bus>(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_pipeline_get_bus returned no value.");
     }
@@ -141,6 +144,7 @@ public unsafe partial class Pipeline : Gst.Bin, Gst.IChildProxy
     public Gst.ClockTime GetConfiguredLatency()
     {
         ulong nativeResult = GstPipelineGetConfiguredLatency(Handle);
+        System.GC.KeepAlive(this);
         return new Gst.ClockTime(nativeResult);
     }
 
@@ -149,6 +153,7 @@ public unsafe partial class Pipeline : Gst.Bin, Gst.IChildProxy
     public Gst.ClockTime GetDelay()
     {
         ulong nativeResult = GstPipelineGetDelay(Handle);
+        System.GC.KeepAlive(this);
         return new Gst.ClockTime(nativeResult);
     }
 
@@ -160,6 +165,7 @@ public unsafe partial class Pipeline : Gst.Bin, Gst.IChildProxy
     public Gst.ClockTime GetLatency()
     {
         ulong nativeResult = GstPipelineGetLatency(Handle);
+        System.GC.KeepAlive(this);
         return new Gst.ClockTime(nativeResult);
     }
 
@@ -174,6 +180,7 @@ public unsafe partial class Pipeline : Gst.Bin, Gst.IChildProxy
     public Gst.Clock GetPipelineClock()
     {
         nint nativeResult = GstPipelineGetPipelineClock(Handle);
+        System.GC.KeepAlive(this);
         return Gst.GObject.Object.FromNative<Gst.Clock>(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_pipeline_get_pipeline_clock returned no value.");
     }
@@ -183,6 +190,7 @@ public unsafe partial class Pipeline : Gst.Bin, Gst.IChildProxy
     public bool IsLive()
     {
         int nativeResult = GstPipelineIsLive(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -209,6 +217,7 @@ public unsafe partial class Pipeline : Gst.Bin, Gst.IChildProxy
     public void SetAutoFlushBus(bool autoFlush)
     {
         GstPipelineSetAutoFlushBus(Handle, autoFlush ? 1 : 0);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -229,6 +238,7 @@ public unsafe partial class Pipeline : Gst.Bin, Gst.IChildProxy
     public void SetDelay(Gst.ClockTime delay)
     {
         GstPipelineSetDelay(Handle, delay.Nanoseconds);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -247,6 +257,7 @@ public unsafe partial class Pipeline : Gst.Bin, Gst.IChildProxy
     public void SetLatency(Gst.ClockTime latency)
     {
         GstPipelineSetLatency(Handle, latency.Nanoseconds);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -265,6 +276,7 @@ public unsafe partial class Pipeline : Gst.Bin, Gst.IChildProxy
     public void UseClock(Gst.Clock? clock)
     {
         GstPipelineUseClock(Handle, clock is null ? 0 : clock.Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>

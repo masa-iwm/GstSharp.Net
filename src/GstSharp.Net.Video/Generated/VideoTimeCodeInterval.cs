@@ -61,6 +61,7 @@ public sealed unsafe partial class VideoTimeCodeInterval : Gst.GObject.Boxed
     public void Clear()
     {
         GstVideoTimeCodeIntervalClear(Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>The <c>gst_video_time_code_interval_copy</c> function.</summary>
@@ -68,14 +69,9 @@ public sealed unsafe partial class VideoTimeCodeInterval : Gst.GObject.Boxed
     public Gst.Video.VideoTimeCodeInterval Copy()
     {
         nint nativeResult = GstVideoTimeCodeIntervalCopy(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Video.VideoTimeCodeInterval.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_video_time_code_interval_copy returned no value.");
-    }
-
-    /// <summary>Frees @tc.</summary>
-    public void Free()
-    {
-        GstVideoTimeCodeIntervalFree(Handle);
     }
 
     /// <summary>Initializes @tc with the given values.</summary>
@@ -86,6 +82,7 @@ public sealed unsafe partial class VideoTimeCodeInterval : Gst.GObject.Boxed
     public void Init(uint hours, uint minutes, uint seconds, uint frames)
     {
         GstVideoTimeCodeIntervalInit(Handle, hours, minutes, seconds, frames);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>The <c>gst_video_time_code_interval_new</c> entry point.</summary>
@@ -103,10 +100,6 @@ public sealed unsafe partial class VideoTimeCodeInterval : Gst.GObject.Boxed
     /// <summary>The <c>gst_video_time_code_interval_copy</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_time_code_interval_copy")]
     private static partial nint GstVideoTimeCodeIntervalCopy(nint tc);
-
-    /// <summary>The <c>gst_video_time_code_interval_free</c> entry point.</summary>
-    [LibraryImport("GstVideo", EntryPoint = "gst_video_time_code_interval_free")]
-    private static partial void GstVideoTimeCodeIntervalFree(nint tc);
 
     /// <summary>The <c>gst_video_time_code_interval_init</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_time_code_interval_init")]

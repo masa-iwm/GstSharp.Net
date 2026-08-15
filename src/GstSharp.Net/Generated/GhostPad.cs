@@ -136,6 +136,7 @@ public unsafe partial class GhostPad : Gst.ProxyPad
     public bool Construct()
     {
         int nativeResult = GstGhostPadConstruct(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -148,6 +149,7 @@ public unsafe partial class GhostPad : Gst.ProxyPad
     public Gst.Pad? GetTarget()
     {
         nint nativeResult = GstGhostPadGetTarget(Handle);
+        System.GC.KeepAlive(this);
         return Gst.GObject.Object.FromNative<Gst.Pad>(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -164,6 +166,7 @@ public unsafe partial class GhostPad : Gst.ProxyPad
     public bool SetTarget(Gst.Pad? newtarget)
     {
         int nativeResult = GstGhostPadSetTarget(Handle, newtarget is null ? 0 : newtarget.Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 

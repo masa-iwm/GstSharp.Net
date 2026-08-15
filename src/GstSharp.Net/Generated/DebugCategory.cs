@@ -37,6 +37,7 @@ public sealed unsafe partial class DebugCategory
     public void Free()
     {
         GstDebugCategoryFree(Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -47,6 +48,7 @@ public sealed unsafe partial class DebugCategory
     public uint GetColor()
     {
         uint nativeResult = GstDebugCategoryGetColor(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -55,6 +57,7 @@ public sealed unsafe partial class DebugCategory
     public string GetDescription()
     {
         nint nativeResult = GstDebugCategoryGetDescription(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
             ?? throw new InvalidOperationException("gst_debug_category_get_description returned no value.");
     }
@@ -64,6 +67,7 @@ public sealed unsafe partial class DebugCategory
     public string GetName()
     {
         nint nativeResult = GstDebugCategoryGetName(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
             ?? throw new InvalidOperationException("gst_debug_category_get_name returned no value.");
     }
@@ -73,6 +77,7 @@ public sealed unsafe partial class DebugCategory
     public Gst.DebugLevel GetThreshold()
     {
         int nativeResult = GstDebugCategoryGetThreshold(Handle);
+        System.GC.KeepAlive(this);
         return (Gst.DebugLevel)nativeResult;
     }
 
@@ -86,6 +91,7 @@ public sealed unsafe partial class DebugCategory
     public void ResetThreshold()
     {
         GstDebugCategoryResetThreshold(Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -100,6 +106,7 @@ public sealed unsafe partial class DebugCategory
     public void SetThreshold(Gst.DebugLevel level)
     {
         GstDebugCategorySetThreshold(Handle, (int)level);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>The <c>gst_debug_category_free</c> entry point.</summary>

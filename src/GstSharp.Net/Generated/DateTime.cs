@@ -297,6 +297,7 @@ public sealed unsafe partial class DateTime : Gst.GObject.Boxed
     public int GetDay()
     {
         int nativeResult = GstDateTimeGetDay(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -308,6 +309,7 @@ public sealed unsafe partial class DateTime : Gst.GObject.Boxed
     public int GetHour()
     {
         int nativeResult = GstDateTimeGetHour(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -319,6 +321,7 @@ public sealed unsafe partial class DateTime : Gst.GObject.Boxed
     public int GetMicrosecond()
     {
         int nativeResult = GstDateTimeGetMicrosecond(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -330,6 +333,7 @@ public sealed unsafe partial class DateTime : Gst.GObject.Boxed
     public int GetMinute()
     {
         int nativeResult = GstDateTimeGetMinute(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -338,6 +342,7 @@ public sealed unsafe partial class DateTime : Gst.GObject.Boxed
     public int GetMonth()
     {
         int nativeResult = GstDateTimeGetMonth(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -349,6 +354,7 @@ public sealed unsafe partial class DateTime : Gst.GObject.Boxed
     public int GetSecond()
     {
         int nativeResult = GstDateTimeGetSecond(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -362,6 +368,7 @@ public sealed unsafe partial class DateTime : Gst.GObject.Boxed
     public float GetTimeZoneOffset()
     {
         float nativeResult = GstDateTimeGetTimeZoneOffset(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -373,6 +380,7 @@ public sealed unsafe partial class DateTime : Gst.GObject.Boxed
     public int GetYear()
     {
         int nativeResult = GstDateTimeGetYear(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -381,6 +389,7 @@ public sealed unsafe partial class DateTime : Gst.GObject.Boxed
     public bool HasDay()
     {
         int nativeResult = GstDateTimeHasDay(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -389,6 +398,7 @@ public sealed unsafe partial class DateTime : Gst.GObject.Boxed
     public bool HasMonth()
     {
         int nativeResult = GstDateTimeHasMonth(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -397,6 +407,7 @@ public sealed unsafe partial class DateTime : Gst.GObject.Boxed
     public bool HasSecond()
     {
         int nativeResult = GstDateTimeHasSecond(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -408,6 +419,7 @@ public sealed unsafe partial class DateTime : Gst.GObject.Boxed
     public bool HasTime()
     {
         int nativeResult = GstDateTimeHasTime(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -419,16 +431,8 @@ public sealed unsafe partial class DateTime : Gst.GObject.Boxed
     public bool HasYear()
     {
         int nativeResult = GstDateTimeHasYear(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
-    }
-
-    /// <summary>Atomically increments the reference count of @datetime by one.</summary>
-    /// <returns>the reference @datetime</returns>
-    public Gst.DateTime Ref()
-    {
-        nint nativeResult = GstDateTimeRef(Handle);
-        return Gst.DateTime.FromNative(nativeResult, Gst.Interop.Transfer.Full)
-            ?? throw new InvalidOperationException("gst_date_time_ref returned no value.");
     }
 
     /// <summary>
@@ -444,16 +448,8 @@ public sealed unsafe partial class DateTime : Gst.GObject.Boxed
     public string? ToIso8601String()
     {
         nint nativeResult = GstDateTimeToIso8601String(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
-    }
-
-    /// <summary>
-    /// Atomically decrements the reference count of @datetime by one.  When the
-    /// reference count reaches zero, the structure is freed.
-    /// </summary>
-    public void Unref()
-    {
-        GstDateTimeUnref(Handle);
     }
 
     /// <summary>The <c>gst_date_time_new</c> entry point.</summary>
@@ -556,17 +552,9 @@ public sealed unsafe partial class DateTime : Gst.GObject.Boxed
     [LibraryImport("Gst", EntryPoint = "gst_date_time_has_year")]
     private static partial int GstDateTimeHasYear(nint datetime);
 
-    /// <summary>The <c>gst_date_time_ref</c> entry point.</summary>
-    [LibraryImport("Gst", EntryPoint = "gst_date_time_ref")]
-    private static partial nint GstDateTimeRef(nint datetime);
-
     /// <summary>The <c>gst_date_time_to_iso8601_string</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_date_time_to_iso8601_string")]
     private static partial nint GstDateTimeToIso8601String(nint datetime);
-
-    /// <summary>The <c>gst_date_time_unref</c> entry point.</summary>
-    [LibraryImport("Gst", EntryPoint = "gst_date_time_unref")]
-    private static partial void GstDateTimeUnref(nint datetime);
 
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstDateTime</c> under.</summary>
     /// <returns>The type of the instances of this wrapper.</returns>

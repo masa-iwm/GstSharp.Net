@@ -66,16 +66,48 @@ public sealed unsafe partial class Memory : Gst.MiniObject
     }
 
     /// <summary>the maximum size allocated</summary>
-    public nuint Maxsize => ((MemoryRaw*)Handle)->Maxsize;
+    public nuint Maxsize
+    {
+        get
+        {
+            nuint value = ((MemoryRaw*)Handle)->Maxsize;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
 
     /// <summary>the alignment of the memory</summary>
-    public nuint Align => ((MemoryRaw*)Handle)->Align;
+    public nuint Align
+    {
+        get
+        {
+            nuint value = ((MemoryRaw*)Handle)->Align;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
 
     /// <summary>the offset where valid data starts</summary>
-    public nuint Offset => ((MemoryRaw*)Handle)->Offset;
+    public nuint Offset
+    {
+        get
+        {
+            nuint value = ((MemoryRaw*)Handle)->Offset;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
 
     /// <summary>the size of valid data</summary>
-    public nuint Size => ((MemoryRaw*)Handle)->Size;
+    public nuint Size
+    {
+        get
+        {
+            nuint value = ((MemoryRaw*)Handle)->Size;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
 
     /// <summary>Wraps a native <c>GstMemory</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
@@ -95,6 +127,7 @@ public sealed unsafe partial class Memory : Gst.MiniObject
     public Gst.Memory? Copy(nint offset, nint size)
     {
         nint nativeResult = GstMemoryCopy(Handle, offset, size);
+        System.GC.KeepAlive(this);
         return Gst.Memory.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -107,6 +140,7 @@ public sealed unsafe partial class Memory : Gst.MiniObject
         nuint offsetNative = default;
         nuint maxsizeNative = default;
         nuint nativeResult = GstMemoryGetSizes(Handle, &offsetNative, &maxsizeNative);
+        System.GC.KeepAlive(this);
         offset = offsetNative;
         maxsize = maxsizeNative;
         return nativeResult;
@@ -131,6 +165,7 @@ public sealed unsafe partial class Memory : Gst.MiniObject
         ArgumentNullException.ThrowIfNull(mem2);
         nuint offsetNative = default;
         int nativeResult = GstMemoryIsSpan(Handle, mem2.Handle, &offsetNative);
+        System.GC.KeepAlive(this);
         offset = offsetNative;
         return nativeResult != 0;
     }
@@ -144,58 +179,8 @@ public sealed unsafe partial class Memory : Gst.MiniObject
         System.Span<byte> memTypeBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope memTypeScope = Gst.Interop.GMarshal.StackUtf8(memType, memTypeBuffer);
         int nativeResult = GstMemoryIsType(Handle, memTypeScope.Pointer);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
-    }
-
-    /// <summary>
-    /// Create a #GstMemory object that is mapped with @flags. If @mem is mappable
-    /// with @flags, this function returns the mapped @mem directly. Otherwise a
-    /// mapped copy of @mem is returned.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// This function takes ownership of old @mem and returns a reference to a new
-    /// #GstMemory.
-    /// </para>
-    /// </remarks>
-    /// <param name="info">The <c>info</c> argument.</param>
-    /// <param name="flags">The <c>flags</c> argument.</param>
-    /// <returns>
-    /// a #GstMemory object mapped
-    /// with @flags or %NULL when a mapping is not possible.
-    /// </returns>
-    public Gst.Memory? MakeMapped(out Gst.MapInfo info, Gst.MapFlags flags)
-    {
-        Gst.MapInfo infoNative = default;
-        nint nativeResult = GstMemoryMakeMapped(Handle, &infoNative, (int)flags);
-        info = infoNative;
-        return Gst.Memory.FromNative(nativeResult, Gst.Interop.Transfer.Full);
-    }
-
-    /// <summary>Returns a writable copy of @memory.</summary>
-    /// <remarks>
-    /// <para>
-    /// If there is only one reference count on @memory, the caller must be the owner,
-    /// and so this function will return the memory object unchanged. If on the other
-    /// hand there is more than one reference on the object, a new memory object will
-    /// be returned. The caller's reference on @memory will be removed, and instead the
-    /// caller will own a reference to the returned object.
-    /// </para>
-    /// <para>
-    /// In short, this function unrefs the memory in the argument and refs the memory
-    /// that it returns. Don't access the argument after calling this function. See
-    /// also: gst_memory_ref().
-    /// </para>
-    /// </remarks>
-    /// <returns>
-    /// a writable memory which may or may not be the
-    ///     same as @memory
-    /// </returns>
-    public Gst.Memory MakeWritable()
-    {
-        nint nativeResult = GstMemoryMakeWritable(Handle);
-        return Gst.Memory.FromNative(nativeResult, Gst.Interop.Transfer.Full)
-            ?? throw new InvalidOperationException("gst_memory_make_writable returned no value.");
     }
 
     /// <summary>
@@ -224,6 +209,7 @@ public sealed unsafe partial class Memory : Gst.MiniObject
     {
         Gst.MapInfo infoNative = default;
         int nativeResult = GstMemoryMap(Handle, &infoNative, (int)flags);
+        System.GC.KeepAlive(this);
         info = infoNative;
         return nativeResult != 0;
     }
@@ -243,6 +229,7 @@ public sealed unsafe partial class Memory : Gst.MiniObject
     public void Resize(nint offset, nuint size)
     {
         GstMemoryResize(Handle, offset, size);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -257,6 +244,7 @@ public sealed unsafe partial class Memory : Gst.MiniObject
     public Gst.Memory Share(nint offset, nint size)
     {
         nint nativeResult = GstMemoryShare(Handle, offset, size);
+        System.GC.KeepAlive(this);
         return Gst.Memory.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_memory_share returned no value.");
     }
@@ -267,6 +255,7 @@ public sealed unsafe partial class Memory : Gst.MiniObject
     {
         Gst.MapInfo infoNative = info;
         GstMemoryUnmap(Handle, &infoNative);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>The <c>gst_memory_copy</c> entry point.</summary>
@@ -284,14 +273,6 @@ public sealed unsafe partial class Memory : Gst.MiniObject
     /// <summary>The <c>gst_memory_is_type</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_memory_is_type")]
     private static partial int GstMemoryIsType(nint mem, byte* memType);
-
-    /// <summary>The <c>gst_memory_make_mapped</c> entry point.</summary>
-    [LibraryImport("Gst", EntryPoint = "gst_memory_make_mapped")]
-    private static partial nint GstMemoryMakeMapped(nint mem, Gst.MapInfo* info, int flags);
-
-    /// <summary>The <c>gst_memory_make_writable</c> entry point.</summary>
-    [LibraryImport("Gst", EntryPoint = "gst_memory_make_writable")]
-    private static partial nint GstMemoryMakeWritable(nint memory);
 
     /// <summary>The <c>gst_memory_map</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_memory_map")]

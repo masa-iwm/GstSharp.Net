@@ -36,6 +36,7 @@ public sealed unsafe partial class VideoDither
     public void Free()
     {
         GstVideoDitherFree(Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Dither @width pixels starting from offset @x in @line using @dither.</summary>
@@ -49,6 +50,7 @@ public sealed unsafe partial class VideoDither
     public void Line(nint line, uint x, uint y, uint width)
     {
         GstVideoDitherLine(Handle, line, x, y, width);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>The <c>gst_video_dither_free</c> entry point.</summary>

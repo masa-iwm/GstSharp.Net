@@ -299,6 +299,7 @@ public static unsafe partial class VideoOverlayExtensions
     {
         ArgumentNullException.ThrowIfNull(overlay);
         GstVideoOverlayExpose(overlay.Handle);
+        System.GC.KeepAlive(overlay);
     }
 
     /// <summary>This will post a "have-window-handle" element message on the bus.</summary>
@@ -311,6 +312,7 @@ public static unsafe partial class VideoOverlayExtensions
     {
         ArgumentNullException.ThrowIfNull(overlay);
         GstVideoOverlayGotWindowHandle(overlay.Handle, handle);
+        System.GC.KeepAlive(overlay);
     }
 
     /// <summary>
@@ -326,6 +328,7 @@ public static unsafe partial class VideoOverlayExtensions
     {
         ArgumentNullException.ThrowIfNull(overlay);
         GstVideoOverlayHandleEvents(overlay.Handle, handleEvents ? 1 : 0);
+        System.GC.KeepAlive(overlay);
     }
 
     /// <summary>
@@ -342,6 +345,7 @@ public static unsafe partial class VideoOverlayExtensions
     {
         ArgumentNullException.ThrowIfNull(overlay);
         GstVideoOverlayPrepareWindowHandle(overlay.Handle);
+        System.GC.KeepAlive(overlay);
     }
 
     /// <summary>
@@ -369,6 +373,7 @@ public static unsafe partial class VideoOverlayExtensions
     {
         ArgumentNullException.ThrowIfNull(overlay);
         int nativeResult = GstVideoOverlaySetRenderRectangle(overlay.Handle, x, y, width, height);
+        System.GC.KeepAlive(overlay);
         return nativeResult != 0;
     }
 
@@ -384,6 +389,7 @@ public static unsafe partial class VideoOverlayExtensions
     {
         ArgumentNullException.ThrowIfNull(overlay);
         GstVideoOverlaySetWindowHandle(overlay.Handle, handle);
+        System.GC.KeepAlive(overlay);
     }
 
     /// <summary>The <c>gst_video_overlay_expose</c> entry point.</summary>

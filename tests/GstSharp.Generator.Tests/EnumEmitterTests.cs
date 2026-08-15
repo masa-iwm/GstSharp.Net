@@ -203,7 +203,7 @@ public sealed class EnumEmitterTests
     // stop being emitted, the global holder of an extension module is renamed
     // and every instance member gains its GC.KeepAlive. Remove the Skip
     // together with that regeneration.
-    [Fact(Skip = "The committed sources are regenerated when this milestone is integrated.")]
+    [Fact]
     public void TheCommittedFilesMatchTheEmitter()
     {
         IReadOnlyList<GeneratedFile> files = GenerationPipeline.Run(GirFixture.GirDirectory).Files;

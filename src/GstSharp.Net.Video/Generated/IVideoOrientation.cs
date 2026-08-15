@@ -30,6 +30,7 @@ public static unsafe partial class VideoOrientationExtensions
         ArgumentNullException.ThrowIfNull(videoOrientation);
         int centerNative = default;
         int nativeResult = GstVideoOrientationGetHcenter(videoOrientation.Handle, &centerNative);
+        System.GC.KeepAlive(videoOrientation);
         center = centerNative;
         return nativeResult != 0;
     }
@@ -43,6 +44,7 @@ public static unsafe partial class VideoOrientationExtensions
         ArgumentNullException.ThrowIfNull(videoOrientation);
         int flipNative = default;
         int nativeResult = GstVideoOrientationGetHflip(videoOrientation.Handle, &flipNative);
+        System.GC.KeepAlive(videoOrientation);
         flip = flipNative != 0;
         return nativeResult != 0;
     }
@@ -56,6 +58,7 @@ public static unsafe partial class VideoOrientationExtensions
         ArgumentNullException.ThrowIfNull(videoOrientation);
         int centerNative = default;
         int nativeResult = GstVideoOrientationGetVcenter(videoOrientation.Handle, &centerNative);
+        System.GC.KeepAlive(videoOrientation);
         center = centerNative;
         return nativeResult != 0;
     }
@@ -69,6 +72,7 @@ public static unsafe partial class VideoOrientationExtensions
         ArgumentNullException.ThrowIfNull(videoOrientation);
         int flipNative = default;
         int nativeResult = GstVideoOrientationGetVflip(videoOrientation.Handle, &flipNative);
+        System.GC.KeepAlive(videoOrientation);
         flip = flipNative != 0;
         return nativeResult != 0;
     }
@@ -81,6 +85,7 @@ public static unsafe partial class VideoOrientationExtensions
     {
         ArgumentNullException.ThrowIfNull(videoOrientation);
         int nativeResult = GstVideoOrientationSetHcenter(videoOrientation.Handle, center);
+        System.GC.KeepAlive(videoOrientation);
         return nativeResult != 0;
     }
 
@@ -92,6 +97,7 @@ public static unsafe partial class VideoOrientationExtensions
     {
         ArgumentNullException.ThrowIfNull(videoOrientation);
         int nativeResult = GstVideoOrientationSetHflip(videoOrientation.Handle, flip ? 1 : 0);
+        System.GC.KeepAlive(videoOrientation);
         return nativeResult != 0;
     }
 
@@ -103,6 +109,7 @@ public static unsafe partial class VideoOrientationExtensions
     {
         ArgumentNullException.ThrowIfNull(videoOrientation);
         int nativeResult = GstVideoOrientationSetVcenter(videoOrientation.Handle, center);
+        System.GC.KeepAlive(videoOrientation);
         return nativeResult != 0;
     }
 
@@ -114,6 +121,7 @@ public static unsafe partial class VideoOrientationExtensions
     {
         ArgumentNullException.ThrowIfNull(videoOrientation);
         int nativeResult = GstVideoOrientationSetVflip(videoOrientation.Handle, flip ? 1 : 0);
+        System.GC.KeepAlive(videoOrientation);
         return nativeResult != 0;
     }
 

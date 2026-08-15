@@ -34,6 +34,7 @@ public unsafe partial class TracerFactory : Gst.PluginFeature
     public Gst.GObject.GType GetTracerType()
     {
         nuint nativeResult = GstTracerFactoryGetTracerType(Handle);
+        System.GC.KeepAlive(this);
         return new Gst.GObject.GType(nativeResult);
     }
 

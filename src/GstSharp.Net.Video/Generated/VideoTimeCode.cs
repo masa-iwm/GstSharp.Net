@@ -67,6 +67,7 @@ public sealed unsafe partial class VideoTimeCode : Gst.GObject.Boxed
     public void AddFrames(long frames)
     {
         GstVideoTimeCodeAddFrames(Handle, frames);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -87,6 +88,7 @@ public sealed unsafe partial class VideoTimeCode : Gst.GObject.Boxed
     {
         ArgumentNullException.ThrowIfNull(tcInter);
         nint nativeResult = GstVideoTimeCodeAddInterval(Handle, tcInter.Handle);
+        System.GC.KeepAlive(this);
         return Gst.Video.VideoTimeCode.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -97,6 +99,7 @@ public sealed unsafe partial class VideoTimeCode : Gst.GObject.Boxed
     public void Clear()
     {
         GstVideoTimeCodeClear(Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -110,6 +113,7 @@ public sealed unsafe partial class VideoTimeCode : Gst.GObject.Boxed
     {
         ArgumentNullException.ThrowIfNull(tc2);
         int nativeResult = GstVideoTimeCodeCompare(Handle, tc2.Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -118,6 +122,7 @@ public sealed unsafe partial class VideoTimeCode : Gst.GObject.Boxed
     public Gst.Video.VideoTimeCode Copy()
     {
         nint nativeResult = GstVideoTimeCodeCopy(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Video.VideoTimeCode.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_video_time_code_copy returned no value.");
     }
@@ -127,19 +132,15 @@ public sealed unsafe partial class VideoTimeCode : Gst.GObject.Boxed
     public ulong FramesSinceDailyJam()
     {
         ulong nativeResult = GstVideoTimeCodeFramesSinceDailyJam(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
-    }
-
-    /// <summary>Frees @tc.</summary>
-    public void Free()
-    {
-        GstVideoTimeCodeFree(Handle);
     }
 
     /// <summary>Adds one frame to @tc.</summary>
     public void IncrementFrame()
     {
         GstVideoTimeCodeIncrementFrame(Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>The <c>gst_video_time_code_is_valid</c> function.</summary>
@@ -150,6 +151,7 @@ public sealed unsafe partial class VideoTimeCode : Gst.GObject.Boxed
     public bool IsValid()
     {
         int nativeResult = GstVideoTimeCodeIsValid(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -158,6 +160,7 @@ public sealed unsafe partial class VideoTimeCode : Gst.GObject.Boxed
     public ulong NsecSinceDailyJam()
     {
         ulong nativeResult = GstVideoTimeCodeNsecSinceDailyJam(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -170,6 +173,7 @@ public sealed unsafe partial class VideoTimeCode : Gst.GObject.Boxed
     public override string ToString()
     {
         nint nativeResult = GstVideoTimeCodeToString(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
             ?? throw new InvalidOperationException("gst_video_time_code_to_string returned no value.");
     }
@@ -205,10 +209,6 @@ public sealed unsafe partial class VideoTimeCode : Gst.GObject.Boxed
     /// <summary>The <c>gst_video_time_code_frames_since_daily_jam</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_time_code_frames_since_daily_jam")]
     private static partial ulong GstVideoTimeCodeFramesSinceDailyJam(nint tc);
-
-    /// <summary>The <c>gst_video_time_code_free</c> entry point.</summary>
-    [LibraryImport("GstVideo", EntryPoint = "gst_video_time_code_free")]
-    private static partial void GstVideoTimeCodeFree(nint tc);
 
     /// <summary>The <c>gst_video_time_code_increment_frame</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_time_code_increment_frame")]

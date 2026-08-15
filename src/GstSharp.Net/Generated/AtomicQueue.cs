@@ -47,6 +47,7 @@ public sealed unsafe partial class AtomicQueue : Gst.GObject.Boxed
     public uint Length()
     {
         uint nativeResult = GstAtomicQueueLength(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -58,6 +59,7 @@ public sealed unsafe partial class AtomicQueue : Gst.GObject.Boxed
     public nint Peek()
     {
         nint nativeResult = GstAtomicQueuePeek(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -69,6 +71,7 @@ public sealed unsafe partial class AtomicQueue : Gst.GObject.Boxed
     public nint Pop()
     {
         nint nativeResult = GstAtomicQueuePop(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -77,18 +80,7 @@ public sealed unsafe partial class AtomicQueue : Gst.GObject.Boxed
     public void Push(nint data)
     {
         GstAtomicQueuePush(Handle, data);
-    }
-
-    /// <summary>Increase the refcount of @queue.</summary>
-    public void Ref()
-    {
-        GstAtomicQueueRef(Handle);
-    }
-
-    /// <summary>Unref @queue and free the memory when the refcount reaches 0.</summary>
-    public void Unref()
-    {
-        GstAtomicQueueUnref(Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>The <c>gst_atomic_queue_new</c> entry point.</summary>
@@ -110,14 +102,6 @@ public sealed unsafe partial class AtomicQueue : Gst.GObject.Boxed
     /// <summary>The <c>gst_atomic_queue_push</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_atomic_queue_push")]
     private static partial void GstAtomicQueuePush(nint queue, nint data);
-
-    /// <summary>The <c>gst_atomic_queue_ref</c> entry point.</summary>
-    [LibraryImport("Gst", EntryPoint = "gst_atomic_queue_ref")]
-    private static partial void GstAtomicQueueRef(nint queue);
-
-    /// <summary>The <c>gst_atomic_queue_unref</c> entry point.</summary>
-    [LibraryImport("Gst", EntryPoint = "gst_atomic_queue_unref")]
-    private static partial void GstAtomicQueueUnref(nint queue);
 
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstAtomicQueue</c> under.</summary>
     /// <returns>The type of the instances of this wrapper.</returns>

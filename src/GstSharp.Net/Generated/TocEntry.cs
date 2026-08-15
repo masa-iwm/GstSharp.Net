@@ -45,6 +45,7 @@ public sealed unsafe partial class TocEntry : Gst.GObject.Boxed
     public Gst.TocEntryType GetEntryType()
     {
         int nativeResult = GstTocEntryGetEntryType(Handle);
+        System.GC.KeepAlive(this);
         return (Gst.TocEntryType)nativeResult;
     }
 
@@ -65,16 +66,23 @@ public sealed unsafe partial class TocEntry : Gst.GObject.Boxed
         int loopTypeNative = default;
         int repeatCountNative = default;
         int nativeResult = GstTocEntryGetLoop(Handle, &loopTypeNative, &repeatCountNative);
+        System.GC.KeepAlive(this);
         loopType = (Gst.TocLoopType)loopTypeNative;
         repeatCount = repeatCountNative;
         return nativeResult != 0;
     }
 
     /// <summary>Gets the parent #GstTocEntry of @entry.</summary>
-    /// <returns>The parent #GstTocEntry of @entry</returns>
+    /// <returns>
+    /// The parent #GstTocEntry of @entry
+    /// The wrapper owns a reference of its own, which is a copy for a boxed type:
+    /// dispose it when you are done, and note that changes made to a copy of a
+    /// boxed value are not written back.
+    /// </returns>
     public Gst.TocEntry? GetParent()
     {
         nint nativeResult = GstTocEntryGetParent(Handle);
+        System.GC.KeepAlive(this);
         return Gst.TocEntry.FromNative(nativeResult, Gst.Interop.Transfer.None);
     }
 
@@ -93,24 +101,37 @@ public sealed unsafe partial class TocEntry : Gst.GObject.Boxed
         long startNative = default;
         long stopNative = default;
         int nativeResult = GstTocEntryGetStartStopTimes(Handle, &startNative, &stopNative);
+        System.GC.KeepAlive(this);
         start = startNative;
         stop = stopNative;
         return nativeResult != 0;
     }
 
     /// <summary>Gets the tags for @entry.</summary>
-    /// <returns>A #GstTagList for @entry</returns>
+    /// <returns>
+    /// A #GstTagList for @entry
+    /// The wrapper owns a reference of its own, which is a copy for a boxed type:
+    /// dispose it when you are done, and note that changes made to a copy of a
+    /// boxed value are not written back.
+    /// </returns>
     public Gst.TagList? GetTags()
     {
         nint nativeResult = GstTocEntryGetTags(Handle);
+        System.GC.KeepAlive(this);
         return Gst.TagList.FromNative(nativeResult, Gst.Interop.Transfer.None);
     }
 
     /// <summary>Gets the parent #GstToc of @entry.</summary>
-    /// <returns>The parent #GstToc of @entry</returns>
+    /// <returns>
+    /// The parent #GstToc of @entry
+    /// The wrapper owns a reference of its own, which is a copy for a boxed type:
+    /// dispose it when you are done, and note that changes made to a copy of a
+    /// boxed value are not written back.
+    /// </returns>
     public Gst.Toc? GetToc()
     {
         nint nativeResult = GstTocEntryGetToc(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Toc.FromNative(nativeResult, Gst.Interop.Transfer.None);
     }
 
@@ -119,6 +140,7 @@ public sealed unsafe partial class TocEntry : Gst.GObject.Boxed
     public string GetUid()
     {
         nint nativeResult = GstTocEntryGetUid(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
             ?? throw new InvalidOperationException("gst_toc_entry_get_uid returned no value.");
     }
@@ -128,6 +150,7 @@ public sealed unsafe partial class TocEntry : Gst.GObject.Boxed
     public bool IsAlternative()
     {
         int nativeResult = GstTocEntryIsAlternative(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -136,6 +159,7 @@ public sealed unsafe partial class TocEntry : Gst.GObject.Boxed
     public bool IsSequence()
     {
         int nativeResult = GstTocEntryIsSequence(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -145,6 +169,7 @@ public sealed unsafe partial class TocEntry : Gst.GObject.Boxed
     public void MergeTags(Gst.TagList? tags, Gst.TagMergeMode mode)
     {
         GstTocEntryMergeTags(Handle, tags is null ? 0 : tags.Handle, (int)mode);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Set @loop_type and @repeat_count values for the @entry.</summary>
@@ -153,6 +178,7 @@ public sealed unsafe partial class TocEntry : Gst.GObject.Boxed
     public void SetLoop(Gst.TocLoopType loopType, int repeatCount)
     {
         GstTocEntrySetLoop(Handle, (int)loopType, repeatCount);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Set @start and @stop values for the @entry.</summary>
@@ -161,6 +187,7 @@ public sealed unsafe partial class TocEntry : Gst.GObject.Boxed
     public void SetStartStopTimes(long start, long stop)
     {
         GstTocEntrySetStartStopTimes(Handle, start, stop);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>The <c>gst_toc_entry_new</c> entry point.</summary>

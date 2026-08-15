@@ -29,6 +29,7 @@ public unsafe partial class VideoAggregatorConvertPad : Gst.Video.VideoAggregato
     public void UpdateConversionInfo()
     {
         GstVideoAggregatorConvertPadUpdateConversionInfo(Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>The <c>gst_video_aggregator_convert_pad_update_conversion_info</c> entry point.</summary>

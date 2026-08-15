@@ -82,6 +82,7 @@ public sealed unsafe partial class Context : Gst.MiniObject
     public Gst.Context Copy()
     {
         nint nativeResult = GstContextCopy(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Context.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_context_copy returned no value.");
     }
@@ -91,6 +92,7 @@ public sealed unsafe partial class Context : Gst.MiniObject
     public string GetContextType()
     {
         nint nativeResult = GstContextGetContextType(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
             ?? throw new InvalidOperationException("gst_context_get_context_type returned no value.");
     }
@@ -100,10 +102,14 @@ public sealed unsafe partial class Context : Gst.MiniObject
     /// The structure of the context. The structure is
     /// still owned by the context, which means that you should not modify it,
     /// free it and that the pointer becomes invalid when you free the context.
+    /// The wrapper owns a reference of its own, which is a copy for a boxed type:
+    /// dispose it when you are done, and note that changes made to a copy of a
+    /// boxed value are not written back.
     /// </returns>
     public Gst.Structure GetStructure()
     {
         nint nativeResult = GstContextGetStructure(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.None)
             ?? throw new InvalidOperationException("gst_context_get_structure returned no value.");
     }
@@ -115,6 +121,7 @@ public sealed unsafe partial class Context : Gst.MiniObject
     {
         nint poolNative = default;
         int nativeResult = GstContextGetTaskPool(Handle, &poolNative);
+        System.GC.KeepAlive(this);
         pool = Gst.GObject.Object.FromNative<Gst.TaskPool>(poolNative, Gst.Interop.Transfer.Full);
         return nativeResult != 0;
     }
@@ -128,6 +135,7 @@ public sealed unsafe partial class Context : Gst.MiniObject
         System.Span<byte> contextTypeBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope contextTypeScope = Gst.Interop.GMarshal.StackUtf8(contextType, contextTypeBuffer);
         int nativeResult = GstContextHasContextType(Handle, contextTypeScope.Pointer);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -136,42 +144,8 @@ public sealed unsafe partial class Context : Gst.MiniObject
     public bool IsPersistent()
     {
         int nativeResult = GstContextIsPersistent(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
-    }
-
-    /// <summary>Returns a writable copy of @context.</summary>
-    /// <remarks>
-    /// <para>
-    /// If there is only one reference count on @context, the caller must be the owner,
-    /// and so this function will return the context object unchanged. If on the other
-    /// hand there is more than one reference on the object, a new context object will
-    /// be returned. The caller's reference on @context will be removed, and instead the
-    /// caller will own a reference to the returned object.
-    /// </para>
-    /// <para>
-    /// In short, this function unrefs the context in the argument and refs the context
-    /// that it returns. Don't access the argument after calling this function. See
-    /// also: gst_context_ref().
-    /// </para>
-    /// </remarks>
-    /// <returns>
-    /// a writable context which may or may not be the
-    ///     same as @context
-    /// </returns>
-    public Gst.Context MakeWritable()
-    {
-        nint nativeResult = GstContextMakeWritable(Handle);
-        return Gst.Context.FromNative(nativeResult, Gst.Interop.Transfer.Full)
-            ?? throw new InvalidOperationException("gst_context_make_writable returned no value.");
-    }
-
-    /// <summary>Convenience macro to increase the reference count of the context.</summary>
-    /// <returns>@context (for convenience when doing assignments)</returns>
-    public Gst.Context Ref()
-    {
-        nint nativeResult = GstContextRef(Handle);
-        return Gst.Context.FromNative(nativeResult, Gst.Interop.Transfer.Full)
-            ?? throw new InvalidOperationException("gst_context_ref returned no value.");
     }
 
     /// <summary>
@@ -183,15 +157,7 @@ public sealed unsafe partial class Context : Gst.MiniObject
     public void SetTaskPool(Gst.TaskPool? pool)
     {
         GstContextSetTaskPool(Handle, pool is null ? 0 : pool.Handle);
-    }
-
-    /// <summary>
-    /// Convenience macro to decrease the reference count of the context, possibly
-    /// freeing it.
-    /// </summary>
-    public void Unref()
-    {
-        GstContextUnref(Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Gets a writable version of the structure.</summary>
@@ -200,10 +166,14 @@ public sealed unsafe partial class Context : Gst.MiniObject
     /// owned by the context, which means that you should not free it and
     /// that the pointer becomes invalid when you free the context.
     /// This function checks if @context is writable.
+    /// The wrapper owns a reference of its own, which is a copy for a boxed type:
+    /// dispose it when you are done, and note that changes made to a copy of a
+    /// boxed value are not written back.
     /// </returns>
     public Gst.Structure WritableStructure()
     {
         nint nativeResult = GstContextWritableStructure(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.None)
             ?? throw new InvalidOperationException("gst_context_writable_structure returned no value.");
     }
@@ -236,21 +206,9 @@ public sealed unsafe partial class Context : Gst.MiniObject
     [LibraryImport("Gst", EntryPoint = "gst_context_is_persistent")]
     private static partial int GstContextIsPersistent(nint context);
 
-    /// <summary>The <c>gst_context_make_writable</c> entry point.</summary>
-    [LibraryImport("Gst", EntryPoint = "gst_context_make_writable")]
-    private static partial nint GstContextMakeWritable(nint context);
-
-    /// <summary>The <c>gst_context_ref</c> entry point.</summary>
-    [LibraryImport("Gst", EntryPoint = "gst_context_ref")]
-    private static partial nint GstContextRef(nint context);
-
     /// <summary>The <c>gst_context_set_task_pool</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_context_set_task_pool")]
     private static partial void GstContextSetTaskPool(nint context, nint pool);
-
-    /// <summary>The <c>gst_context_unref</c> entry point.</summary>
-    [LibraryImport("Gst", EntryPoint = "gst_context_unref")]
-    private static partial void GstContextUnref(nint context);
 
     /// <summary>The <c>gst_context_writable_structure</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_context_writable_structure")]

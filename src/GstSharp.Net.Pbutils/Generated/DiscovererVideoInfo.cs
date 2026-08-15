@@ -24,6 +24,7 @@ public unsafe partial class DiscovererVideoInfo : Gst.Pbutils.DiscovererStreamIn
     public uint GetBitrate()
     {
         uint nativeResult = GstDiscovererVideoInfoGetBitrate(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -32,6 +33,7 @@ public unsafe partial class DiscovererVideoInfo : Gst.Pbutils.DiscovererStreamIn
     public uint GetDepth()
     {
         uint nativeResult = GstDiscovererVideoInfoGetDepth(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -40,6 +42,7 @@ public unsafe partial class DiscovererVideoInfo : Gst.Pbutils.DiscovererStreamIn
     public uint GetFramerateDenom()
     {
         uint nativeResult = GstDiscovererVideoInfoGetFramerateDenom(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -48,6 +51,7 @@ public unsafe partial class DiscovererVideoInfo : Gst.Pbutils.DiscovererStreamIn
     public uint GetFramerateNum()
     {
         uint nativeResult = GstDiscovererVideoInfoGetFramerateNum(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -56,6 +60,7 @@ public unsafe partial class DiscovererVideoInfo : Gst.Pbutils.DiscovererStreamIn
     public uint GetHeight()
     {
         uint nativeResult = GstDiscovererVideoInfoGetHeight(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -64,6 +69,7 @@ public unsafe partial class DiscovererVideoInfo : Gst.Pbutils.DiscovererStreamIn
     public uint GetMaxBitrate()
     {
         uint nativeResult = GstDiscovererVideoInfoGetMaxBitrate(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -72,6 +78,7 @@ public unsafe partial class DiscovererVideoInfo : Gst.Pbutils.DiscovererStreamIn
     public uint GetParDenom()
     {
         uint nativeResult = GstDiscovererVideoInfoGetParDenom(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -80,6 +87,7 @@ public unsafe partial class DiscovererVideoInfo : Gst.Pbutils.DiscovererStreamIn
     public uint GetParNum()
     {
         uint nativeResult = GstDiscovererVideoInfoGetParNum(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -88,6 +96,7 @@ public unsafe partial class DiscovererVideoInfo : Gst.Pbutils.DiscovererStreamIn
     public uint GetWidth()
     {
         uint nativeResult = GstDiscovererVideoInfoGetWidth(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -99,6 +108,7 @@ public unsafe partial class DiscovererVideoInfo : Gst.Pbutils.DiscovererStreamIn
     public bool IsImage()
     {
         int nativeResult = GstDiscovererVideoInfoIsImage(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -107,6 +117,7 @@ public unsafe partial class DiscovererVideoInfo : Gst.Pbutils.DiscovererStreamIn
     public bool IsInterlaced()
     {
         int nativeResult = GstDiscovererVideoInfoIsInterlaced(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 

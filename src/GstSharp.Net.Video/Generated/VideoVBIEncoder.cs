@@ -65,6 +65,7 @@ public sealed unsafe partial class VideoVBIEncoder : Gst.GObject.Boxed
         fixed (byte* dataPointer = data)
         {
             int nativeResult = GstVideoVbiEncoderAddAncillary(Handle, composite ? 1 : 0, dID, sDIDBlockNumber, dataPointer, (uint)data.Length);
+            System.GC.KeepAlive(this);
             return nativeResult != 0;
         }
     }
@@ -74,14 +75,9 @@ public sealed unsafe partial class VideoVBIEncoder : Gst.GObject.Boxed
     public Gst.Video.VideoVBIEncoder Copy()
     {
         nint nativeResult = GstVideoVbiEncoderCopy(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Video.VideoVBIEncoder.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_video_vbi_encoder_copy returned no value.");
-    }
-
-    /// <summary>Frees the @encoder.</summary>
-    public void Free()
-    {
-        GstVideoVbiEncoderFree(Handle);
     }
 
     /// <summary>The <c>gst_video_vbi_encoder_new</c> entry point.</summary>
@@ -95,10 +91,6 @@ public sealed unsafe partial class VideoVBIEncoder : Gst.GObject.Boxed
     /// <summary>The <c>gst_video_vbi_encoder_copy</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_vbi_encoder_copy")]
     private static partial nint GstVideoVbiEncoderCopy(nint encoder);
-
-    /// <summary>The <c>gst_video_vbi_encoder_free</c> entry point.</summary>
-    [LibraryImport("GstVideo", EntryPoint = "gst_video_vbi_encoder_free")]
-    private static partial void GstVideoVbiEncoderFree(nint encoder);
 
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstVideoVBIEncoder</c> under.</summary>
     /// <returns>The type of the instances of this wrapper.</returns>

@@ -42,6 +42,7 @@ public abstract unsafe partial class AudioRingBuffer : Gst.Object
     {
         ArgumentNullException.ThrowIfNull(spec);
         int nativeResult = GstAudioRingBufferAcquire(Handle, spec.Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -57,6 +58,7 @@ public abstract unsafe partial class AudioRingBuffer : Gst.Object
     public bool Activate(bool active)
     {
         int nativeResult = GstAudioRingBufferActivate(Handle, active ? 1 : 0);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -71,6 +73,7 @@ public abstract unsafe partial class AudioRingBuffer : Gst.Object
     public void Advance(uint advance)
     {
         GstAudioRingBufferAdvance(Handle, advance);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -84,6 +87,7 @@ public abstract unsafe partial class AudioRingBuffer : Gst.Object
     public void Clear(int segment)
     {
         GstAudioRingBufferClear(Handle, segment);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Clear all samples from the ringbuffer.</summary>
@@ -93,6 +97,7 @@ public abstract unsafe partial class AudioRingBuffer : Gst.Object
     public void ClearAll()
     {
         GstAudioRingBufferClearAll(Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -103,53 +108,8 @@ public abstract unsafe partial class AudioRingBuffer : Gst.Object
     public bool CloseDevice()
     {
         int nativeResult = GstAudioRingBufferCloseDevice(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
-    }
-
-    /// <summary>Commit @in_samples samples pointed to by @data to the ringbuffer @buf.</summary>
-    /// <remarks>
-    /// <para>
-    /// @in_samples and @out_samples define the rate conversion to perform on the
-    /// samples in @data. For negative rates, @out_samples must be negative and
-    /// @in_samples positive.
-    /// </para>
-    /// <para>
-    /// When @out_samples is positive, the first sample will be written at position @sample
-    /// in the ringbuffer. When @out_samples is negative, the last sample will be written to
-    /// @sample in reverse order.
-    /// </para>
-    /// <para>
-    /// @out_samples does not need to be a multiple of the segment size of the ringbuffer
-    /// although it is recommended for optimal performance.
-    /// </para>
-    /// <para>
-    /// @accum will hold a temporary accumulator used in rate conversion and should be
-    /// set to 0 when this function is first called. In case the commit operation is
-    /// interrupted, one can resume the processing by passing the previously returned
-    /// @accum value back to this function.
-    /// </para>
-    /// <para>MT safe.</para>
-    /// </remarks>
-    /// <param name="sample">The <c>sample</c> argument.</param>
-    /// <param name="data">the data to commit</param>
-    /// <param name="outSamples">The <c>outSamples</c> argument.</param>
-    /// <param name="accum">The <c>accum</c> argument.</param>
-    /// <returns>
-    /// The number of samples written to the ringbuffer or -1 on error. The
-    /// number of samples written can be less than @out_samples when @buf was interrupted
-    /// with a flush or stop.
-    /// </returns>
-    public uint Commit(ref ulong sample, System.Span<byte> data, int outSamples, ref int accum)
-    {
-        ulong sampleNative = sample;
-        int accumNative = accum;
-        fixed (byte* dataPointer = data)
-        {
-            uint nativeResult = GstAudioRingBufferCommit(Handle, &sampleNative, dataPointer, (int)data.Length, outSamples, &accumNative);
-            sample = sampleNative;
-            accum = accumNative;
-            return nativeResult;
-        }
     }
 
     /// <summary>
@@ -165,6 +125,7 @@ public abstract unsafe partial class AudioRingBuffer : Gst.Object
     {
         long destValNative = default;
         int nativeResult = GstAudioRingBufferConvert(Handle, (int)srcFmt, srcVal, (int)destFmt, &destValNative);
+        System.GC.KeepAlive(this);
         destVal = destValNative;
         return nativeResult != 0;
     }
@@ -189,6 +150,7 @@ public abstract unsafe partial class AudioRingBuffer : Gst.Object
     public uint Delay()
     {
         uint nativeResult = GstAudioRingBufferDelay(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -197,6 +159,7 @@ public abstract unsafe partial class AudioRingBuffer : Gst.Object
     public bool DeviceIsOpen()
     {
         int nativeResult = GstAudioRingBufferDeviceIsOpen(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -208,6 +171,7 @@ public abstract unsafe partial class AudioRingBuffer : Gst.Object
     public ulong GetSegbase()
     {
         ulong nativeResult = GstAudioRingBufferGetSegbase(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -219,6 +183,7 @@ public abstract unsafe partial class AudioRingBuffer : Gst.Object
     public ulong GetSegdone()
     {
         ulong nativeResult = GstAudioRingBufferGetSegdone(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -227,6 +192,7 @@ public abstract unsafe partial class AudioRingBuffer : Gst.Object
     public bool IsAcquired()
     {
         int nativeResult = GstAudioRingBufferIsAcquired(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -238,6 +204,7 @@ public abstract unsafe partial class AudioRingBuffer : Gst.Object
     public bool IsActive()
     {
         int nativeResult = GstAudioRingBufferIsActive(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -249,6 +216,7 @@ public abstract unsafe partial class AudioRingBuffer : Gst.Object
     public bool IsFlushing()
     {
         int nativeResult = GstAudioRingBufferIsFlushing(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -263,6 +231,7 @@ public abstract unsafe partial class AudioRingBuffer : Gst.Object
     public void MayStart(bool allowed)
     {
         GstAudioRingBufferMayStart(Handle, allowed ? 1 : 0);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -274,6 +243,7 @@ public abstract unsafe partial class AudioRingBuffer : Gst.Object
     public bool OpenDevice()
     {
         int nativeResult = GstAudioRingBufferOpenDevice(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -282,6 +252,7 @@ public abstract unsafe partial class AudioRingBuffer : Gst.Object
     public bool Pause()
     {
         int nativeResult = GstAudioRingBufferPause(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -298,6 +269,7 @@ public abstract unsafe partial class AudioRingBuffer : Gst.Object
         nint readptrNative = default;
         int lenNative = default;
         int nativeResult = GstAudioRingBufferPrepareRead(Handle, &segmentNative, &readptrNative, &lenNative);
+        System.GC.KeepAlive(this);
         segment = segmentNative;
         readptr = null;
         if (readptrNative != 0)
@@ -335,6 +307,7 @@ public abstract unsafe partial class AudioRingBuffer : Gst.Object
         fixed (byte* dataPointer = data)
         {
             uint nativeResult = GstAudioRingBufferRead(Handle, sample, dataPointer, (uint)data.Length, &timestampNative);
+            System.GC.KeepAlive(this);
             timestamp = new Gst.ClockTime(timestampNative);
             return nativeResult;
         }
@@ -345,6 +318,7 @@ public abstract unsafe partial class AudioRingBuffer : Gst.Object
     public bool Release()
     {
         int nativeResult = GstAudioRingBufferRelease(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -357,6 +331,7 @@ public abstract unsafe partial class AudioRingBuffer : Gst.Object
     public ulong SamplesDone()
     {
         ulong nativeResult = GstAudioRingBufferSamplesDone(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -367,6 +342,7 @@ public abstract unsafe partial class AudioRingBuffer : Gst.Object
     public void SetErrored()
     {
         GstAudioRingBufferSetErrored(Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Set the ringbuffer to flushing mode or normal mode.</summary>
@@ -377,6 +353,7 @@ public abstract unsafe partial class AudioRingBuffer : Gst.Object
     public void SetFlushing(bool flushing)
     {
         GstAudioRingBufferSetFlushing(Handle, flushing ? 1 : 0);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -393,6 +370,7 @@ public abstract unsafe partial class AudioRingBuffer : Gst.Object
     public void SetSample(ulong sample)
     {
         GstAudioRingBufferSetSample(Handle, sample);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Sets the current segment number of the ringbuffer.</summary>
@@ -403,6 +381,7 @@ public abstract unsafe partial class AudioRingBuffer : Gst.Object
     public void SetSegdone(ulong segdone)
     {
         GstAudioRingBufferSetSegdone(Handle, segdone);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>The <c>gst_audio_ring_buffer_set_timestamp</c> function.</summary>
@@ -411,6 +390,7 @@ public abstract unsafe partial class AudioRingBuffer : Gst.Object
     public void SetTimestamp(int readseg, Gst.ClockTime timestamp)
     {
         GstAudioRingBufferSetTimestamp(Handle, readseg, timestamp.Nanoseconds);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Start processing samples from the ringbuffer.</summary>
@@ -418,6 +398,7 @@ public abstract unsafe partial class AudioRingBuffer : Gst.Object
     public bool Start()
     {
         int nativeResult = GstAudioRingBufferStart(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -426,6 +407,7 @@ public abstract unsafe partial class AudioRingBuffer : Gst.Object
     public bool Stop()
     {
         int nativeResult = GstAudioRingBufferStop(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -480,10 +462,6 @@ public abstract unsafe partial class AudioRingBuffer : Gst.Object
     /// <summary>The <c>gst_audio_ring_buffer_close_device</c> entry point.</summary>
     [LibraryImport("GstAudio", EntryPoint = "gst_audio_ring_buffer_close_device")]
     private static partial int GstAudioRingBufferCloseDevice(nint buf);
-
-    /// <summary>The <c>gst_audio_ring_buffer_commit</c> entry point.</summary>
-    [LibraryImport("GstAudio", EntryPoint = "gst_audio_ring_buffer_commit")]
-    private static partial uint GstAudioRingBufferCommit(nint buf, ulong* sample, byte* data, int inSamples, int outSamples, int* accum);
 
     /// <summary>The <c>gst_audio_ring_buffer_convert</c> entry point.</summary>
     [LibraryImport("GstAudio", EntryPoint = "gst_audio_ring_buffer_convert")]

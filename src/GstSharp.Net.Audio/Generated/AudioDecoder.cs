@@ -127,33 +127,22 @@ public abstract unsafe partial class AudioDecoder : Gst.Element
     public Gst.Buffer AllocateOutputBuffer(nuint size)
     {
         nint nativeResult = GstAudioDecoderAllocateOutputBuffer(Handle, size);
+        System.GC.KeepAlive(this);
         return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_audio_decoder_allocate_output_buffer returned no value.");
     }
 
-    /// <summary>
-    /// Lets #GstAudioDecoder sub-classes to know the memory @allocator
-    /// used by the base class and its @params.
-    /// </summary>
-    /// <remarks>
-    /// <para>Unref the @allocator after use it.</para>
-    /// </remarks>
-    /// <param name="allocator">The <c>allocator</c> argument.</param>
-    /// <param name="params">The <c>@params</c> argument.</param>
-    public void GetAllocator(out Gst.Allocator? allocator, out Gst.AllocationParams? @params)
-    {
-        nint allocatorNative = default;
-        nint @paramsNative = default;
-        GstAudioDecoderGetAllocator(Handle, &allocatorNative, &@paramsNative);
-        allocator = Gst.GObject.Object.FromNative<Gst.Allocator>(allocatorNative, Gst.Interop.Transfer.Full);
-        @params = Gst.AllocationParams.FromNative(@paramsNative, Gst.Interop.Transfer.Full);
-    }
-
     /// <summary>The <c>gst_audio_decoder_get_audio_info</c> function.</summary>
-    /// <returns>a #GstAudioInfo describing the input audio format</returns>
+    /// <returns>
+    /// a #GstAudioInfo describing the input audio format
+    /// The wrapper owns a reference of its own, which is a copy for a boxed type:
+    /// dispose it when you are done, and note that changes made to a copy of a
+    /// boxed value are not written back.
+    /// </returns>
     public Gst.Audio.AudioInfo GetAudioInfo()
     {
         nint nativeResult = GstAudioDecoderGetAudioInfo(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Audio.AudioInfo.FromNative(nativeResult, Gst.Interop.Transfer.None)
             ?? throw new InvalidOperationException("gst_audio_decoder_get_audio_info returned no value.");
     }
@@ -163,6 +152,7 @@ public abstract unsafe partial class AudioDecoder : Gst.Element
     public int GetDelay()
     {
         int nativeResult = GstAudioDecoderGetDelay(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -171,6 +161,7 @@ public abstract unsafe partial class AudioDecoder : Gst.Element
     public bool GetDrainable()
     {
         int nativeResult = GstAudioDecoderGetDrainable(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -179,6 +170,7 @@ public abstract unsafe partial class AudioDecoder : Gst.Element
     public int GetEstimateRate()
     {
         int nativeResult = GstAudioDecoderGetEstimateRate(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -193,6 +185,7 @@ public abstract unsafe partial class AudioDecoder : Gst.Element
         ulong minNative = default;
         ulong maxNative = default;
         GstAudioDecoderGetLatency(Handle, &minNative, &maxNative);
+        System.GC.KeepAlive(this);
         min = new Gst.ClockTime(minNative);
         max = new Gst.ClockTime(maxNative);
     }
@@ -202,6 +195,7 @@ public abstract unsafe partial class AudioDecoder : Gst.Element
     public int GetMaxErrors()
     {
         int nativeResult = GstAudioDecoderGetMaxErrors(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -210,6 +204,7 @@ public abstract unsafe partial class AudioDecoder : Gst.Element
     public Gst.ClockTime GetMinLatency()
     {
         ulong nativeResult = GstAudioDecoderGetMinLatency(Handle);
+        System.GC.KeepAlive(this);
         return new Gst.ClockTime(nativeResult);
     }
 
@@ -218,6 +213,7 @@ public abstract unsafe partial class AudioDecoder : Gst.Element
     public bool GetNeedsFormat()
     {
         int nativeResult = GstAudioDecoderGetNeedsFormat(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -229,6 +225,7 @@ public abstract unsafe partial class AudioDecoder : Gst.Element
         int syncNative = default;
         int eosNative = default;
         GstAudioDecoderGetParseState(Handle, &syncNative, &eosNative);
+        System.GC.KeepAlive(this);
         sync = syncNative != 0;
         eos = eosNative != 0;
     }
@@ -238,6 +235,7 @@ public abstract unsafe partial class AudioDecoder : Gst.Element
     public bool GetPlc()
     {
         int nativeResult = GstAudioDecoderGetPlc(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -246,6 +244,7 @@ public abstract unsafe partial class AudioDecoder : Gst.Element
     public int GetPlcAware()
     {
         int nativeResult = GstAudioDecoderGetPlcAware(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -254,6 +253,7 @@ public abstract unsafe partial class AudioDecoder : Gst.Element
     public Gst.ClockTime GetTolerance()
     {
         ulong nativeResult = GstAudioDecoderGetTolerance(Handle);
+        System.GC.KeepAlive(this);
         return new Gst.ClockTime(nativeResult);
     }
 
@@ -273,6 +273,7 @@ public abstract unsafe partial class AudioDecoder : Gst.Element
     public void MergeTags(Gst.TagList? tags, Gst.TagMergeMode mode)
     {
         GstAudioDecoderMergeTags(Handle, tags is null ? 0 : tags.Handle, (int)mode);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -284,6 +285,7 @@ public abstract unsafe partial class AudioDecoder : Gst.Element
     public bool Negotiate()
     {
         int nativeResult = GstAudioDecoderNegotiate(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -298,6 +300,7 @@ public abstract unsafe partial class AudioDecoder : Gst.Element
     public Gst.Caps ProxyGetcaps(Gst.Caps? caps, Gst.Caps? filter)
     {
         nint nativeResult = GstAudioDecoderProxyGetcaps(Handle, caps is null ? 0 : caps.Handle, filter is null ? 0 : filter.Handle);
+        System.GC.KeepAlive(this);
         return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_audio_decoder_proxy_getcaps returned no value.");
     }
@@ -312,6 +315,7 @@ public abstract unsafe partial class AudioDecoder : Gst.Element
     public void SetAllocationCaps(Gst.Caps? allocationCaps)
     {
         GstAudioDecoderSetAllocationCaps(Handle, allocationCaps is null ? 0 : allocationCaps.Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -327,6 +331,7 @@ public abstract unsafe partial class AudioDecoder : Gst.Element
     public void SetDrainable(bool enabled)
     {
         GstAudioDecoderSetDrainable(Handle, enabled ? 1 : 0);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Allows baseclass to perform byte to time estimated conversion.</summary>
@@ -334,6 +339,7 @@ public abstract unsafe partial class AudioDecoder : Gst.Element
     public void SetEstimateRate(bool enabled)
     {
         GstAudioDecoderSetEstimateRate(Handle, enabled ? 1 : 0);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -346,6 +352,7 @@ public abstract unsafe partial class AudioDecoder : Gst.Element
     public void SetLatency(Gst.ClockTime min, Gst.ClockTime max)
     {
         GstAudioDecoderSetLatency(Handle, min.Nanoseconds, max.Nanoseconds);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -358,6 +365,7 @@ public abstract unsafe partial class AudioDecoder : Gst.Element
     public void SetMaxErrors(int num)
     {
         GstAudioDecoderSetMaxErrors(Handle, num);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Sets decoder minimum aggregation latency.</summary>
@@ -368,6 +376,7 @@ public abstract unsafe partial class AudioDecoder : Gst.Element
     public void SetMinLatency(Gst.ClockTime num)
     {
         GstAudioDecoderSetMinLatency(Handle, num.Nanoseconds);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -385,6 +394,7 @@ public abstract unsafe partial class AudioDecoder : Gst.Element
     public void SetNeedsFormat(bool enabled)
     {
         GstAudioDecoderSetNeedsFormat(Handle, enabled ? 1 : 0);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -399,6 +409,7 @@ public abstract unsafe partial class AudioDecoder : Gst.Element
     {
         ArgumentNullException.ThrowIfNull(caps);
         int nativeResult = GstAudioDecoderSetOutputCaps(Handle, caps.Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -409,6 +420,7 @@ public abstract unsafe partial class AudioDecoder : Gst.Element
     {
         ArgumentNullException.ThrowIfNull(info);
         int nativeResult = GstAudioDecoderSetOutputFormat(Handle, info.Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -423,6 +435,7 @@ public abstract unsafe partial class AudioDecoder : Gst.Element
     public void SetPlc(bool enabled)
     {
         GstAudioDecoderSetPlc(Handle, enabled ? 1 : 0);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Indicates whether or not subclass handles packet loss concealment (plc).</summary>
@@ -430,6 +443,7 @@ public abstract unsafe partial class AudioDecoder : Gst.Element
     public void SetPlcAware(bool plc)
     {
         GstAudioDecoderSetPlcAware(Handle, plc ? 1 : 0);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Configures decoder audio jitter tolerance threshold.</summary>
@@ -440,6 +454,7 @@ public abstract unsafe partial class AudioDecoder : Gst.Element
     public void SetTolerance(Gst.ClockTime tolerance)
     {
         GstAudioDecoderSetTolerance(Handle, tolerance.Nanoseconds);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -457,6 +472,7 @@ public abstract unsafe partial class AudioDecoder : Gst.Element
     public void SetUseDefaultPadAcceptcaps(bool use)
     {
         GstAudioDecoderSetUseDefaultPadAcceptcaps(Handle, use ? 1 : 0);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -493,10 +509,6 @@ public abstract unsafe partial class AudioDecoder : Gst.Element
     /// <summary>The <c>gst_audio_decoder_allocate_output_buffer</c> entry point.</summary>
     [LibraryImport("GstAudio", EntryPoint = "gst_audio_decoder_allocate_output_buffer")]
     private static partial nint GstAudioDecoderAllocateOutputBuffer(nint dec, nuint size);
-
-    /// <summary>The <c>gst_audio_decoder_get_allocator</c> entry point.</summary>
-    [LibraryImport("GstAudio", EntryPoint = "gst_audio_decoder_get_allocator")]
-    private static partial void GstAudioDecoderGetAllocator(nint dec, nint* allocator, nint* @params);
 
     /// <summary>The <c>gst_audio_decoder_get_audio_info</c> entry point.</summary>
     [LibraryImport("GstAudio", EntryPoint = "gst_audio_decoder_get_audio_info")]

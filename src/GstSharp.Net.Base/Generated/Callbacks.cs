@@ -148,7 +148,7 @@ internal static unsafe class CollectPadsFunctionTrampoline
         {
             if (Gst.Interop.CallbackHandle.GetState<Gst.Base.CollectPadsFunction>(userData) is not { } callback)
             {
-                return default;
+                return (int)Gst.FlowReturn.Error;
             }
 
             Gst.Base.CollectPads? padsValue = Gst.GObject.Object.FromNative<Gst.Base.CollectPads>(pads, Gst.Interop.Transfer.None);
@@ -157,7 +157,7 @@ internal static unsafe class CollectPadsFunctionTrampoline
         catch (Exception exception)
         {
             Gst.Interop.ExceptionTrap.Report(exception);
-            return default;
+            return (int)Gst.FlowReturn.Error;
         }
     }
 }

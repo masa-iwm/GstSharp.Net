@@ -97,6 +97,7 @@ public unsafe partial class Bus : Gst.Object
     public void AddSignalWatch()
     {
         GstBusAddSignalWatch(Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -125,6 +126,7 @@ public unsafe partial class Bus : Gst.Object
     public void AddSignalWatchFull(int priority)
     {
         GstBusAddSignalWatchFull(Handle, priority);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -163,6 +165,7 @@ public unsafe partial class Bus : Gst.Object
         ArgumentNullException.ThrowIfNull(func);
         Gst.Interop.CallbackHandle funcState = Gst.Interop.CallbackHandle.Alloc(func);
         uint nativeResult = GstBusAddWatchFull(Handle, priority, Gst.BusFuncTrampoline.Pointer, funcState.UserData, (nint)Gst.Interop.CallbackHandle.DestroyNotify);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -177,6 +180,7 @@ public unsafe partial class Bus : Gst.Object
     {
         ArgumentNullException.ThrowIfNull(message);
         int nativeResult = GstBusAsyncSignalFunc(Handle, message.Handle, data);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -197,6 +201,7 @@ public unsafe partial class Bus : Gst.Object
     public void DisableSyncMessageEmission()
     {
         GstBusDisableSyncMessageEmission(Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -223,6 +228,7 @@ public unsafe partial class Bus : Gst.Object
     public void EnableSyncMessageEmission()
     {
         GstBusEnableSyncMessageEmission(Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -236,6 +242,7 @@ public unsafe partial class Bus : Gst.Object
     public bool HavePending()
     {
         int nativeResult = GstBusHavePending(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -250,6 +257,7 @@ public unsafe partial class Bus : Gst.Object
     public Gst.Message? Peek()
     {
         nint nativeResult = GstBusPeek(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -304,6 +312,7 @@ public unsafe partial class Bus : Gst.Object
     public Gst.Message? Poll(Gst.MessageType events, Gst.ClockTime timeout)
     {
         nint nativeResult = GstBusPoll(Handle, (uint)events, timeout.Nanoseconds);
+        System.GC.KeepAlive(this);
         return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -315,6 +324,7 @@ public unsafe partial class Bus : Gst.Object
     public Gst.Message? Pop()
     {
         nint nativeResult = GstBusPop(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -334,6 +344,7 @@ public unsafe partial class Bus : Gst.Object
     public Gst.Message? PopFiltered(Gst.MessageType types)
     {
         nint nativeResult = GstBusPopFiltered(Handle, (uint)types);
+        System.GC.KeepAlive(this);
         return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -341,6 +352,7 @@ public unsafe partial class Bus : Gst.Object
     public void RemoveSignalWatch()
     {
         GstBusRemoveSignalWatch(Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Removes an installed bus watch from @bus.</summary>
@@ -348,6 +360,7 @@ public unsafe partial class Bus : Gst.Object
     public bool RemoveWatch()
     {
         int nativeResult = GstBusRemoveWatch(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -360,6 +373,7 @@ public unsafe partial class Bus : Gst.Object
     public void SetFlushing(bool flushing)
     {
         GstBusSetFlushing(Handle, flushing ? 1 : 0);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -382,6 +396,7 @@ public unsafe partial class Bus : Gst.Object
         ArgumentNullException.ThrowIfNull(func);
         Gst.Interop.CallbackHandle funcState = Gst.Interop.CallbackHandle.Alloc(func);
         GstBusSetSyncHandler(Handle, Gst.BusSyncHandlerTrampoline.Pointer, funcState.UserData, (nint)Gst.Interop.CallbackHandle.DestroyNotify);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -395,6 +410,7 @@ public unsafe partial class Bus : Gst.Object
     {
         ArgumentNullException.ThrowIfNull(message);
         int nativeResult = GstBusSyncSignalHandler(Handle, message.Handle, data);
+        System.GC.KeepAlive(this);
         return (Gst.BusSyncReply)nativeResult;
     }
 
@@ -415,6 +431,7 @@ public unsafe partial class Bus : Gst.Object
     public Gst.Message? TimedPop(Gst.ClockTime timeout)
     {
         nint nativeResult = GstBusTimedPop(Handle, timeout.Nanoseconds);
+        System.GC.KeepAlive(this);
         return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -440,6 +457,7 @@ public unsafe partial class Bus : Gst.Object
     public Gst.Message? TimedPopFiltered(Gst.ClockTime timeout, Gst.MessageType types)
     {
         nint nativeResult = GstBusTimedPopFiltered(Handle, timeout.Nanoseconds, (uint)types);
+        System.GC.KeepAlive(this);
         return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
 

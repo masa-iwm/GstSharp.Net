@@ -24,6 +24,7 @@ public unsafe partial class DiscovererAudioInfo : Gst.Pbutils.DiscovererStreamIn
     public uint GetBitrate()
     {
         uint nativeResult = GstDiscovererAudioInfoGetBitrate(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -36,6 +37,7 @@ public unsafe partial class DiscovererAudioInfo : Gst.Pbutils.DiscovererStreamIn
     public ulong GetChannelMask()
     {
         ulong nativeResult = GstDiscovererAudioInfoGetChannelMask(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -44,6 +46,7 @@ public unsafe partial class DiscovererAudioInfo : Gst.Pbutils.DiscovererStreamIn
     public uint GetChannels()
     {
         uint nativeResult = GstDiscovererAudioInfoGetChannels(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -52,6 +55,7 @@ public unsafe partial class DiscovererAudioInfo : Gst.Pbutils.DiscovererStreamIn
     public uint GetDepth()
     {
         uint nativeResult = GstDiscovererAudioInfoGetDepth(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -60,6 +64,7 @@ public unsafe partial class DiscovererAudioInfo : Gst.Pbutils.DiscovererStreamIn
     public string? GetLanguage()
     {
         nint nativeResult = GstDiscovererAudioInfoGetLanguage(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
     }
 
@@ -68,6 +73,7 @@ public unsafe partial class DiscovererAudioInfo : Gst.Pbutils.DiscovererStreamIn
     public uint GetMaxBitrate()
     {
         uint nativeResult = GstDiscovererAudioInfoGetMaxBitrate(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -76,6 +82,7 @@ public unsafe partial class DiscovererAudioInfo : Gst.Pbutils.DiscovererStreamIn
     public uint GetSampleRate()
     {
         uint nativeResult = GstDiscovererAudioInfoGetSampleRate(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 

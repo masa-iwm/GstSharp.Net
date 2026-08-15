@@ -37,6 +37,7 @@ public sealed unsafe partial class DebugMessage
     public string? Get()
     {
         nint nativeResult = GstDebugMessageGet(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
     }
 
@@ -48,6 +49,7 @@ public sealed unsafe partial class DebugMessage
     public string? GetId()
     {
         nint nativeResult = GstDebugMessageGetId(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
     }
 

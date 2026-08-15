@@ -80,6 +80,7 @@ public unsafe partial class AudioCdSrc : Gst.Base.PushSrc, Gst.IURIHandler
     {
         Gst.Audio.AudioCdSrcTrack trackNative = track;
         int nativeResult = GstAudioCdSrcAddTrack(Handle, &trackNative);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 

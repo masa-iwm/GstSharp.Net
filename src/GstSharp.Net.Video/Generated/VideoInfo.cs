@@ -75,6 +75,7 @@ public sealed unsafe partial class VideoInfo : Gst.GObject.Boxed
     {
         Gst.Video.VideoAlignment alignNative = align;
         int nativeResult = GstVideoInfoAlign(Handle, &alignNative);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -104,6 +105,7 @@ public sealed unsafe partial class VideoInfo : Gst.GObject.Boxed
         Gst.Video.VideoAlignment alignNative = align;
         nuint planeSizeNative = default;
         int nativeResult = GstVideoInfoAlignFull(Handle, &alignNative, &planeSizeNative);
+        System.GC.KeepAlive(this);
         planeSize = planeSizeNative;
         return nativeResult != 0;
     }
@@ -123,6 +125,7 @@ public sealed unsafe partial class VideoInfo : Gst.GObject.Boxed
     {
         long destValueNative = default;
         int nativeResult = GstVideoInfoConvert(Handle, (int)srcFormat, srcValue, (int)destFormat, &destValueNative);
+        System.GC.KeepAlive(this);
         destValue = destValueNative;
         return nativeResult != 0;
     }
@@ -132,17 +135,9 @@ public sealed unsafe partial class VideoInfo : Gst.GObject.Boxed
     public Gst.Video.VideoInfo Copy()
     {
         nint nativeResult = GstVideoInfoCopy(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Video.VideoInfo.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_video_info_copy returned no value.");
-    }
-
-    /// <summary>
-    /// Free a GstVideoInfo structure previously allocated with gst_video_info_new()
-    /// or gst_video_info_copy().
-    /// </summary>
-    public void Free()
-    {
-        GstVideoInfoFree(Handle);
     }
 
     /// <summary>Compares two #GstVideoInfo and returns whether they are equal or not</summary>
@@ -152,6 +147,7 @@ public sealed unsafe partial class VideoInfo : Gst.GObject.Boxed
     {
         ArgumentNullException.ThrowIfNull(other);
         int nativeResult = GstVideoInfoIsEqual(Handle, other.Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -173,6 +169,7 @@ public sealed unsafe partial class VideoInfo : Gst.GObject.Boxed
     public bool SetFormat(Gst.Video.VideoFormat format, uint width, uint height)
     {
         int nativeResult = GstVideoInfoSetFormat(Handle, (int)format, width, height);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -191,6 +188,7 @@ public sealed unsafe partial class VideoInfo : Gst.GObject.Boxed
     public bool SetInterlacedFormat(Gst.Video.VideoFormat format, Gst.Video.VideoInterlaceMode mode, uint width, uint height)
     {
         int nativeResult = GstVideoInfoSetInterlacedFormat(Handle, (int)format, (int)mode, width, height);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -199,30 +197,9 @@ public sealed unsafe partial class VideoInfo : Gst.GObject.Boxed
     public Gst.Caps ToCaps()
     {
         nint nativeResult = GstVideoInfoToCaps(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_video_info_to_caps returned no value.");
-    }
-
-    /// <summary>Parse @caps and update @info.</summary>
-    /// <param name="info">The <c>info</c> argument.</param>
-    /// <param name="caps">The <c>caps</c> argument.</param>
-    /// <returns>TRUE if @caps could be parsed</returns>
-    public static bool FromCaps(out Gst.Video.VideoInfo? info, Gst.Caps caps)
-    {
-        nint infoNative = default;
-        ArgumentNullException.ThrowIfNull(caps);
-        int nativeResult = GstVideoInfoFromCaps(&infoNative, caps.Handle);
-        info = Gst.Video.VideoInfo.FromNative(infoNative, Gst.Interop.Transfer.None);
-        return nativeResult != 0;
-    }
-
-    /// <summary>Initialize @info with default values.</summary>
-    /// <param name="info">The <c>info</c> argument.</param>
-    public static void Init(out Gst.Video.VideoInfo? info)
-    {
-        nint infoNative = default;
-        GstVideoInfoInit(&infoNative);
-        info = Gst.Video.VideoInfo.FromNative(infoNative, Gst.Interop.Transfer.None);
     }
 
     /// <summary>The <c>gst_video_info_new</c> entry point.</summary>
@@ -249,10 +226,6 @@ public sealed unsafe partial class VideoInfo : Gst.GObject.Boxed
     [LibraryImport("GstVideo", EntryPoint = "gst_video_info_copy")]
     private static partial nint GstVideoInfoCopy(nint info);
 
-    /// <summary>The <c>gst_video_info_free</c> entry point.</summary>
-    [LibraryImport("GstVideo", EntryPoint = "gst_video_info_free")]
-    private static partial void GstVideoInfoFree(nint info);
-
     /// <summary>The <c>gst_video_info_is_equal</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_info_is_equal")]
     private static partial int GstVideoInfoIsEqual(nint info, nint other);
@@ -268,14 +241,6 @@ public sealed unsafe partial class VideoInfo : Gst.GObject.Boxed
     /// <summary>The <c>gst_video_info_to_caps</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_info_to_caps")]
     private static partial nint GstVideoInfoToCaps(nint info);
-
-    /// <summary>The <c>gst_video_info_from_caps</c> entry point.</summary>
-    [LibraryImport("GstVideo", EntryPoint = "gst_video_info_from_caps")]
-    private static partial int GstVideoInfoFromCaps(nint* info, nint caps);
-
-    /// <summary>The <c>gst_video_info_init</c> entry point.</summary>
-    [LibraryImport("GstVideo", EntryPoint = "gst_video_info_init")]
-    private static partial void GstVideoInfoInit(nint* info);
 
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstVideoInfo</c> under.</summary>
     /// <returns>The type of the instances of this wrapper.</returns>

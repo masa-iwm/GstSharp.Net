@@ -61,6 +61,7 @@ public sealed unsafe partial class IdStr : Gst.GObject.Boxed
     public string AsStr()
     {
         nint nativeResult = GstIdStrAsStr(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
             ?? throw new InvalidOperationException("gst_id_str_as_str returned no value.");
     }
@@ -69,6 +70,7 @@ public sealed unsafe partial class IdStr : Gst.GObject.Boxed
     public void Clear()
     {
         GstIdStrClear(Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Copies @s into newly allocated heap memory.</summary>
@@ -76,6 +78,7 @@ public sealed unsafe partial class IdStr : Gst.GObject.Boxed
     public Gst.IdStr Copy()
     {
         nint nativeResult = GstIdStrCopy(Handle);
+        System.GC.KeepAlive(this);
         return Gst.IdStr.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_id_str_copy returned no value.");
     }
@@ -86,12 +89,7 @@ public sealed unsafe partial class IdStr : Gst.GObject.Boxed
     {
         ArgumentNullException.ThrowIfNull(s);
         GstIdStrCopyInto(Handle, s.Handle);
-    }
-
-    /// <summary>Frees @s. This should only be called for heap-allocated #GstIdStr.</summary>
-    public void Free()
-    {
-        GstIdStrFree(Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -102,6 +100,7 @@ public sealed unsafe partial class IdStr : Gst.GObject.Boxed
     public nuint GetLen()
     {
         nuint nativeResult = GstIdStrGetLen(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -112,6 +111,7 @@ public sealed unsafe partial class IdStr : Gst.GObject.Boxed
     public void Init()
     {
         GstIdStrInit(Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Compares @s1 and @s2 for equality.</summary>
@@ -121,6 +121,7 @@ public sealed unsafe partial class IdStr : Gst.GObject.Boxed
     {
         ArgumentNullException.ThrowIfNull(s2);
         int nativeResult = GstIdStrIsEqual(Handle, s2.Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -133,6 +134,7 @@ public sealed unsafe partial class IdStr : Gst.GObject.Boxed
         System.Span<byte> s2Buffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope s2Scope = Gst.Interop.GMarshal.StackUtf8(s2, s2Buffer);
         int nativeResult = GstIdStrIsEqualToStr(Handle, s2Scope.Pointer);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -155,6 +157,7 @@ public sealed unsafe partial class IdStr : Gst.GObject.Boxed
         System.Span<byte> s2Buffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope s2Scope = Gst.Interop.GMarshal.StackUtf8(s2, s2Buffer);
         int nativeResult = GstIdStrIsEqualToStrWithLen(Handle, s2Scope.Pointer, len);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -164,6 +167,7 @@ public sealed unsafe partial class IdStr : Gst.GObject.Boxed
     {
         ArgumentNullException.ThrowIfNull(s);
         GstIdStrMove(Handle, s.Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Sets @s to the string @value.</summary>
@@ -174,39 +178,7 @@ public sealed unsafe partial class IdStr : Gst.GObject.Boxed
         System.Span<byte> valueBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope valueScope = Gst.Interop.GMarshal.StackUtf8(value, valueBuffer);
         GstIdStrSet(Handle, valueScope.Pointer);
-    }
-
-    /// <summary>
-    /// Sets @s to the string @value. @value needs to be valid for the remaining
-    /// lifetime of the process, e.g. has to be a static string.
-    /// </summary>
-    /// <param name="value">The <c>value</c> argument.</param>
-    public void SetStaticStr(string value)
-    {
-        ArgumentNullException.ThrowIfNull(value);
-        System.Span<byte> valueBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
-        using Gst.Interop.Utf8Scope valueScope = Gst.Interop.GMarshal.StackUtf8(value, valueBuffer);
-        GstIdStrSetStaticStr(Handle, valueScope.Pointer);
-    }
-
-    /// <summary>
-    /// Sets @s to the string @value of length @len. @value needs to be valid for the
-    /// remaining lifetime of the process, e.g. has to be a static string.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// @value must be NUL-terminated and @len should not include the
-    /// NUL-terminator.
-    /// </para>
-    /// </remarks>
-    /// <param name="value">The <c>value</c> argument.</param>
-    /// <param name="len">The <c>len</c> argument.</param>
-    public void SetStaticStrWithLen(string value, nuint len)
-    {
-        ArgumentNullException.ThrowIfNull(value);
-        System.Span<byte> valueBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
-        using Gst.Interop.Utf8Scope valueScope = Gst.Interop.GMarshal.StackUtf8(value, valueBuffer);
-        GstIdStrSetStaticStrWithLen(Handle, valueScope.Pointer, len);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -221,6 +193,7 @@ public sealed unsafe partial class IdStr : Gst.GObject.Boxed
         System.Span<byte> valueBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope valueScope = Gst.Interop.GMarshal.StackUtf8(value, valueBuffer);
         GstIdStrSetWithLen(Handle, valueScope.Pointer, len);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>The <c>gst_id_str_new</c> entry point.</summary>
@@ -242,10 +215,6 @@ public sealed unsafe partial class IdStr : Gst.GObject.Boxed
     /// <summary>The <c>gst_id_str_copy_into</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_id_str_copy_into")]
     private static partial void GstIdStrCopyInto(nint d, nint s);
-
-    /// <summary>The <c>gst_id_str_free</c> entry point.</summary>
-    [LibraryImport("Gst", EntryPoint = "gst_id_str_free")]
-    private static partial void GstIdStrFree(nint s);
 
     /// <summary>The <c>gst_id_str_get_len</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_id_str_get_len")]
@@ -274,14 +243,6 @@ public sealed unsafe partial class IdStr : Gst.GObject.Boxed
     /// <summary>The <c>gst_id_str_set</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_id_str_set")]
     private static partial void GstIdStrSet(nint s, byte* value);
-
-    /// <summary>The <c>gst_id_str_set_static_str</c> entry point.</summary>
-    [LibraryImport("Gst", EntryPoint = "gst_id_str_set_static_str")]
-    private static partial void GstIdStrSetStaticStr(nint s, byte* value);
-
-    /// <summary>The <c>gst_id_str_set_static_str_with_len</c> entry point.</summary>
-    [LibraryImport("Gst", EntryPoint = "gst_id_str_set_static_str_with_len")]
-    private static partial void GstIdStrSetStaticStrWithLen(nint s, byte* value, nuint len);
 
     /// <summary>The <c>gst_id_str_set_with_len</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_id_str_set_with_len")]

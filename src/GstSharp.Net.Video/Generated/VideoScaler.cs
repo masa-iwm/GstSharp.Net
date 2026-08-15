@@ -58,12 +58,14 @@ public sealed unsafe partial class VideoScaler
     {
         ArgumentNullException.ThrowIfNull(vscale);
         GstVideoScaler2d(Handle, vscale.Handle, (int)format, src, srcStride, dest, destStride, x, y, width, height);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Free a previously allocated #GstVideoScaler @scale.</summary>
     public void Free()
     {
         GstVideoScalerFree(Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -84,6 +86,7 @@ public sealed unsafe partial class VideoScaler
         uint inOffsetNative = default;
         uint nTapsNative = default;
         nint nativeResult = GstVideoScalerGetCoeff(Handle, outOffset, &inOffsetNative, &nTapsNative);
+        System.GC.KeepAlive(this);
         inOffset = inOffsetNative;
         double[]? result = null;
         if (nativeResult != 0)
@@ -99,6 +102,7 @@ public sealed unsafe partial class VideoScaler
     public uint GetMaxTaps()
     {
         uint nativeResult = GstVideoScalerGetMaxTaps(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -114,6 +118,7 @@ public sealed unsafe partial class VideoScaler
     public void Horizontal(Gst.Video.VideoFormat format, nint src, nint dest, uint destOffset, uint width)
     {
         GstVideoScalerHorizontal(Handle, (int)format, src, dest, destOffset, width);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -129,6 +134,7 @@ public sealed unsafe partial class VideoScaler
     public void Vertical(Gst.Video.VideoFormat format, nint srcLines, nint dest, uint destOffset, uint width)
     {
         GstVideoScalerVertical(Handle, (int)format, srcLines, dest, destOffset, width);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>The <c>gst_video_scaler_2d</c> entry point.</summary>

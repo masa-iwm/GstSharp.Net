@@ -92,6 +92,7 @@ public abstract unsafe partial class VideoEncoder : Gst.Element, Gst.IPreset
     public Gst.Buffer AllocateOutputBuffer(nuint size)
     {
         nint nativeResult = GstVideoEncoderAllocateOutputBuffer(Handle, size);
+        System.GC.KeepAlive(this);
         return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_video_encoder_allocate_output_buffer returned no value.");
     }
@@ -114,6 +115,7 @@ public abstract unsafe partial class VideoEncoder : Gst.Element, Gst.IPreset
     {
         ArgumentNullException.ThrowIfNull(frame);
         int nativeResult = GstVideoEncoderAllocateOutputFrame(Handle, frame.Handle, size);
+        System.GC.KeepAlive(this);
         return (Gst.FlowReturn)nativeResult;
     }
 
@@ -138,25 +140,8 @@ public abstract unsafe partial class VideoEncoder : Gst.Element, Gst.IPreset
     {
         ArgumentNullException.ThrowIfNull(frame);
         int nativeResult = GstVideoEncoderFinishSubframe(Handle, frame.Handle);
+        System.GC.KeepAlive(this);
         return (Gst.FlowReturn)nativeResult;
-    }
-
-    /// <summary>
-    /// Lets #GstVideoEncoder sub-classes to know the memory @allocator
-    /// used by the base class and its @params.
-    /// </summary>
-    /// <remarks>
-    /// <para>Unref the @allocator after use it.</para>
-    /// </remarks>
-    /// <param name="allocator">The <c>allocator</c> argument.</param>
-    /// <param name="params">The <c>@params</c> argument.</param>
-    public void GetAllocator(out Gst.Allocator? allocator, out Gst.AllocationParams? @params)
-    {
-        nint allocatorNative = default;
-        nint @paramsNative = default;
-        GstVideoEncoderGetAllocator(Handle, &allocatorNative, &@paramsNative);
-        allocator = Gst.GObject.Object.FromNative<Gst.Allocator>(allocatorNative, Gst.Interop.Transfer.Full);
-        @params = Gst.AllocationParams.FromNative(@paramsNative, Gst.Interop.Transfer.Full);
     }
 
     /// <summary>Get a pending unfinished #GstVideoCodecFrame</summary>
@@ -165,6 +150,7 @@ public abstract unsafe partial class VideoEncoder : Gst.Element, Gst.IPreset
     public Gst.Video.VideoCodecFrame? GetFrame(int frameNumber)
     {
         nint nativeResult = GstVideoEncoderGetFrame(Handle, frameNumber);
+        System.GC.KeepAlive(this);
         return Gst.Video.VideoCodecFrame.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -179,6 +165,7 @@ public abstract unsafe partial class VideoEncoder : Gst.Element, Gst.IPreset
         ulong minLatencyNative = default;
         ulong maxLatencyNative = default;
         GstVideoEncoderGetLatency(Handle, &minLatencyNative, &maxLatencyNative);
+        System.GC.KeepAlive(this);
         minLatency = new Gst.ClockTime(minLatencyNative);
         maxLatency = new Gst.ClockTime(maxLatencyNative);
     }
@@ -201,6 +188,7 @@ public abstract unsafe partial class VideoEncoder : Gst.Element, Gst.IPreset
     {
         ArgumentNullException.ThrowIfNull(frame);
         long nativeResult = GstVideoEncoderGetMaxEncodeTime(Handle, frame.Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -212,6 +200,7 @@ public abstract unsafe partial class VideoEncoder : Gst.Element, Gst.IPreset
     public Gst.ClockTime GetMinForceKeyUnitInterval()
     {
         ulong nativeResult = GstVideoEncoderGetMinForceKeyUnitInterval(Handle);
+        System.GC.KeepAlive(this);
         return new Gst.ClockTime(nativeResult);
     }
 
@@ -220,6 +209,7 @@ public abstract unsafe partial class VideoEncoder : Gst.Element, Gst.IPreset
     public Gst.Video.VideoCodecFrame? GetOldestFrame()
     {
         nint nativeResult = GstVideoEncoderGetOldestFrame(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Video.VideoCodecFrame.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -228,6 +218,7 @@ public abstract unsafe partial class VideoEncoder : Gst.Element, Gst.IPreset
     public Gst.Video.VideoCodecState? GetOutputState()
     {
         nint nativeResult = GstVideoEncoderGetOutputState(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Video.VideoCodecState.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -239,6 +230,7 @@ public abstract unsafe partial class VideoEncoder : Gst.Element, Gst.IPreset
     public bool IsQosEnabled()
     {
         int nativeResult = GstVideoEncoderIsQosEnabled(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -259,6 +251,7 @@ public abstract unsafe partial class VideoEncoder : Gst.Element, Gst.IPreset
     public void MergeTags(Gst.TagList? tags, Gst.TagMergeMode mode)
     {
         GstVideoEncoderMergeTags(Handle, tags is null ? 0 : tags.Handle, (int)mode);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -270,6 +263,7 @@ public abstract unsafe partial class VideoEncoder : Gst.Element, Gst.IPreset
     public bool Negotiate()
     {
         int nativeResult = GstVideoEncoderNegotiate(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -284,6 +278,7 @@ public abstract unsafe partial class VideoEncoder : Gst.Element, Gst.IPreset
     public Gst.Caps ProxyGetcaps(Gst.Caps? caps, Gst.Caps? filter)
     {
         nint nativeResult = GstVideoEncoderProxyGetcaps(Handle, caps is null ? 0 : caps.Handle, filter is null ? 0 : filter.Handle);
+        System.GC.KeepAlive(this);
         return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_video_encoder_proxy_getcaps returned no value.");
     }
@@ -298,6 +293,7 @@ public abstract unsafe partial class VideoEncoder : Gst.Element, Gst.IPreset
     public void SetLatency(Gst.ClockTime minLatency, Gst.ClockTime maxLatency)
     {
         GstVideoEncoderSetLatency(Handle, minLatency.Nanoseconds, maxLatency.Nanoseconds);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -309,6 +305,7 @@ public abstract unsafe partial class VideoEncoder : Gst.Element, Gst.IPreset
     public void SetMinForceKeyUnitInterval(Gst.ClockTime interval)
     {
         GstVideoEncoderSetMinForceKeyUnitInterval(Handle, interval.Nanoseconds);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Request minimal value for PTS passed to handle_frame.</summary>
@@ -322,6 +319,7 @@ public abstract unsafe partial class VideoEncoder : Gst.Element, Gst.IPreset
     public void SetMinPts(Gst.ClockTime minPts)
     {
         GstVideoEncoderSetMinPts(Handle, minPts.Nanoseconds);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Configures @encoder to handle Quality-of-Service events from downstream.</summary>
@@ -329,6 +327,7 @@ public abstract unsafe partial class VideoEncoder : Gst.Element, Gst.IPreset
     public void SetQosEnabled(bool enabled)
     {
         GstVideoEncoderSetQosEnabled(Handle, enabled ? 1 : 0);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -352,10 +351,6 @@ public abstract unsafe partial class VideoEncoder : Gst.Element, Gst.IPreset
     /// <summary>The <c>gst_video_encoder_finish_subframe</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_encoder_finish_subframe")]
     private static partial int GstVideoEncoderFinishSubframe(nint encoder, nint frame);
-
-    /// <summary>The <c>gst_video_encoder_get_allocator</c> entry point.</summary>
-    [LibraryImport("GstVideo", EntryPoint = "gst_video_encoder_get_allocator")]
-    private static partial void GstVideoEncoderGetAllocator(nint encoder, nint* allocator, nint* @params);
 
     /// <summary>The <c>gst_video_encoder_get_frame</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_encoder_get_frame")]

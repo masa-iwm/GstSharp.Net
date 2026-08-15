@@ -125,6 +125,7 @@ public unsafe partial class DeviceMonitor : Gst.Object
         System.Span<byte> classesBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope classesScope = Gst.Interop.GMarshal.StackUtf8(classes, classesBuffer);
         uint nativeResult = GstDeviceMonitorAddFilter(Handle, classesScope.Pointer, caps is null ? 0 : caps.Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -133,6 +134,7 @@ public unsafe partial class DeviceMonitor : Gst.Object
     public Gst.Bus GetBus()
     {
         nint nativeResult = GstDeviceMonitorGetBus(Handle);
+        System.GC.KeepAlive(this);
         return Gst.GObject.Object.FromNative<Gst.Bus>(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_device_monitor_get_bus returned no value.");
     }
@@ -145,6 +147,7 @@ public unsafe partial class DeviceMonitor : Gst.Object
     public bool GetShowAllDevices()
     {
         int nativeResult = GstDeviceMonitorGetShowAllDevices(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -157,6 +160,7 @@ public unsafe partial class DeviceMonitor : Gst.Object
     public bool RemoveFilter(uint filterId)
     {
         int nativeResult = GstDeviceMonitorRemoveFilter(Handle, filterId);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -168,6 +172,7 @@ public unsafe partial class DeviceMonitor : Gst.Object
     public void SetShowAllDevices(bool showAll)
     {
         GstDeviceMonitorSetShowAllDevices(Handle, showAll ? 1 : 0);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -195,6 +200,7 @@ public unsafe partial class DeviceMonitor : Gst.Object
     public bool Start()
     {
         int nativeResult = GstDeviceMonitorStart(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -202,6 +208,7 @@ public unsafe partial class DeviceMonitor : Gst.Object
     public void Stop()
     {
         GstDeviceMonitorStop(Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>The <c>gst_device_monitor_new</c> entry point.</summary>

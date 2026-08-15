@@ -148,6 +148,7 @@ public unsafe partial class PadTemplate : Gst.Object
     public Gst.Caps GetCaps()
     {
         nint nativeResult = GstPadTemplateGetCaps(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_pad_template_get_caps returned no value.");
     }
@@ -160,6 +161,7 @@ public unsafe partial class PadTemplate : Gst.Object
     public Gst.Caps GetDocumentationCaps()
     {
         nint nativeResult = GstPadTemplateGetDocumentationCaps(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_pad_template_get_documentation_caps returned no value.");
     }
@@ -170,6 +172,7 @@ public unsafe partial class PadTemplate : Gst.Object
     {
         ArgumentNullException.ThrowIfNull(pad);
         GstPadTemplatePadCreated(Handle, pad.Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -183,17 +186,18 @@ public unsafe partial class PadTemplate : Gst.Object
     {
         ArgumentNullException.ThrowIfNull(caps);
         GstPadTemplateSetDocumentationCaps(Handle, caps.Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>The capabilities of the pad described by the pad template.</summary>
     public Gst.Caps Caps => GetCaps();
 
     /// <summary>The arguments of the <c>pad-created</c> signal of <c>GstPadTemplate</c>.</summary>
-    public sealed class PadCreatedSignalSignalArgs
+    public sealed class PadCreatedSignalArgs
     {
-        /// <summary>Initializes a new instance of the <see cref="PadCreatedSignalSignalArgs"/> class.</summary>
+        /// <summary>Initializes a new instance of the <see cref="PadCreatedSignalArgs"/> class.</summary>
         /// <param name="pad">the pad that was created.</param>
-        internal PadCreatedSignalSignalArgs(Gst.Pad pad)
+        internal PadCreatedSignalArgs(Gst.Pad pad)
         {
             Pad = pad;
         }
@@ -203,7 +207,7 @@ public unsafe partial class PadTemplate : Gst.Object
     }
 
     /// <summary>This signal is fired when an element creates a pad from this template.</summary>
-    public event System.EventHandler<Gst.PadTemplate.PadCreatedSignalSignalArgs> PadCreatedSignal
+    public event System.EventHandler<Gst.PadTemplate.PadCreatedSignalArgs> PadCreatedSignal
     {
         add => Gst.SignalConnections.Add(this, "pad-created", (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, void>)&PadCreatedSignalTrampoline, value);
         remove => Gst.SignalConnections.Remove(this, "pad-created", value);
@@ -215,7 +219,7 @@ public unsafe partial class PadTemplate : Gst.Object
     {
         try
         {
-            if (Gst.Interop.CallbackHandle.GetState<System.EventHandler<Gst.PadTemplate.PadCreatedSignalSignalArgs>>(userData) is not { } handler)
+            if (Gst.Interop.CallbackHandle.GetState<System.EventHandler<Gst.PadTemplate.PadCreatedSignalArgs>>(userData) is not { } handler)
             {
                 return;
             }
@@ -224,7 +228,7 @@ public unsafe partial class PadTemplate : Gst.Object
                 ?? throw new InvalidOperationException("The pad-created signal of GstPadTemplate passed no pad.");
             handler(
                 Gst.GObject.Object.FromNative(instance, Gst.Interop.Transfer.None),
-                new Gst.PadTemplate.PadCreatedSignalSignalArgs(padValue));
+                new Gst.PadTemplate.PadCreatedSignalArgs(padValue));
         }
         catch (Exception exception)
         {

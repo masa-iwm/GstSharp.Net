@@ -57,6 +57,7 @@ public unsafe partial class EncodingVideoProfile : Gst.Pbutils.EncodingProfile
     public uint GetPass()
     {
         uint nativeResult = GstEncodingVideoProfileGetPass(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -68,6 +69,7 @@ public unsafe partial class EncodingVideoProfile : Gst.Pbutils.EncodingProfile
     public bool GetVariableframerate()
     {
         int nativeResult = GstEncodingVideoProfileGetVariableframerate(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -80,6 +82,7 @@ public unsafe partial class EncodingVideoProfile : Gst.Pbutils.EncodingProfile
     public void SetPass(uint pass)
     {
         GstEncodingVideoProfileSetPass(Handle, pass);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -92,6 +95,7 @@ public unsafe partial class EncodingVideoProfile : Gst.Pbutils.EncodingProfile
     public void SetVariableframerate(bool variableframerate)
     {
         GstEncodingVideoProfileSetVariableframerate(Handle, variableframerate ? 1 : 0);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>The <c>gst_encoding_video_profile_new</c> entry point.</summary>

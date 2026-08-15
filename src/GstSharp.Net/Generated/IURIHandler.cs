@@ -41,6 +41,7 @@ public static unsafe partial class URIHandlerExtensions
     {
         ArgumentNullException.ThrowIfNull(handler);
         nint nativeResult = GstUriHandlerGetUri(handler.Handle);
+        System.GC.KeepAlive(handler);
         return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
     }
 
@@ -54,6 +55,7 @@ public static unsafe partial class URIHandlerExtensions
     {
         ArgumentNullException.ThrowIfNull(handler);
         int nativeResult = GstUriHandlerGetUriType(handler.Handle);
+        System.GC.KeepAlive(handler);
         return (Gst.URIType)nativeResult;
     }
 
@@ -70,6 +72,7 @@ public static unsafe partial class URIHandlerExtensions
         using Gst.Interop.Utf8Scope uriScope = Gst.Interop.GMarshal.StackUtf8(uri, uriBuffer);
         nint errorNative = 0;
         int nativeResult = GstUriHandlerSetUri(handler.Handle, uriScope.Pointer, &errorNative);
+        System.GC.KeepAlive(handler);
         Gst.GLib.GException.ThrowIfSet(ref errorNative);
         return nativeResult != 0;
     }

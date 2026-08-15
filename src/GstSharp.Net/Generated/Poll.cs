@@ -65,6 +65,7 @@ public sealed unsafe partial class Poll
     {
         Gst.PollFD fdNative = fd;
         int nativeResult = GstPollAddFd(Handle, &fdNative);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -75,6 +76,7 @@ public sealed unsafe partial class Poll
     {
         Gst.PollFD fdNative = fd;
         int nativeResult = GstPollFdCanRead(Handle, &fdNative);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -85,6 +87,7 @@ public sealed unsafe partial class Poll
     {
         Gst.PollFD fdNative = fd;
         int nativeResult = GstPollFdCanWrite(Handle, &fdNative);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -102,6 +105,7 @@ public sealed unsafe partial class Poll
     {
         Gst.PollFD fdNative = fd;
         int nativeResult = GstPollFdCtlPri(Handle, &fdNative, active ? 1 : 0);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -116,6 +120,7 @@ public sealed unsafe partial class Poll
     {
         Gst.PollFD fdNative = fd;
         int nativeResult = GstPollFdCtlRead(Handle, &fdNative, active ? 1 : 0);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -130,6 +135,7 @@ public sealed unsafe partial class Poll
     {
         Gst.PollFD fdNative = fd;
         int nativeResult = GstPollFdCtlWrite(Handle, &fdNative, active ? 1 : 0);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -140,6 +146,7 @@ public sealed unsafe partial class Poll
     {
         Gst.PollFD fdNative = fd;
         int nativeResult = GstPollFdHasClosed(Handle, &fdNative);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -150,6 +157,7 @@ public sealed unsafe partial class Poll
     {
         Gst.PollFD fdNative = fd;
         int nativeResult = GstPollFdHasError(Handle, &fdNative);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -163,6 +171,7 @@ public sealed unsafe partial class Poll
     {
         Gst.PollFD fdNative = fd;
         int nativeResult = GstPollFdHasPri(Handle, &fdNative);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -184,12 +193,14 @@ public sealed unsafe partial class Poll
     {
         Gst.PollFD fdNative = fd;
         GstPollFdIgnored(Handle, &fdNative);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Free a file descriptor set.</summary>
     public void Free()
     {
         GstPollFree(Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Read a byte from the control socket of the controllable @set.</summary>
@@ -208,6 +219,7 @@ public sealed unsafe partial class Poll
     public bool ReadControl()
     {
         int nativeResult = GstPollReadControl(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -218,6 +230,7 @@ public sealed unsafe partial class Poll
     {
         Gst.PollFD fdNative = fd;
         int nativeResult = GstPollRemoveFd(Handle, &fdNative);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -235,6 +248,7 @@ public sealed unsafe partial class Poll
     public void Restart()
     {
         GstPollRestart(Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -253,6 +267,7 @@ public sealed unsafe partial class Poll
     public bool SetControllable(bool controllable)
     {
         int nativeResult = GstPollSetControllable(Handle, controllable ? 1 : 0);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -271,6 +286,7 @@ public sealed unsafe partial class Poll
     public void SetFlushing(bool flushing)
     {
         GstPollSetFlushing(Handle, flushing ? 1 : 0);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -298,6 +314,7 @@ public sealed unsafe partial class Poll
     public int Wait(Gst.ClockTime timeout)
     {
         int nativeResult = GstPollWait(Handle, timeout.Nanoseconds);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -326,6 +343,7 @@ public sealed unsafe partial class Poll
     public bool WriteControl()
     {
         int nativeResult = GstPollWriteControl(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 

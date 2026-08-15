@@ -136,24 +136,6 @@ public abstract unsafe partial class BaseTransform : Gst.Element
     {
     }
 
-    /// <summary>
-    /// Lets #GstBaseTransform sub-classes know the memory @allocator
-    /// used by the base class and its @params.
-    /// </summary>
-    /// <remarks>
-    /// <para>Unref the @allocator after use.</para>
-    /// </remarks>
-    /// <param name="allocator">The <c>allocator</c> argument.</param>
-    /// <param name="params">The <c>@params</c> argument.</param>
-    public void GetAllocator(out Gst.Allocator? allocator, out Gst.AllocationParams? @params)
-    {
-        nint allocatorNative = default;
-        nint @paramsNative = default;
-        GstBaseTransformGetAllocator(Handle, &allocatorNative, &@paramsNative);
-        allocator = Gst.GObject.Object.FromNative<Gst.Allocator>(allocatorNative, Gst.Interop.Transfer.Full);
-        @params = Gst.AllocationParams.FromNative(@paramsNative, Gst.Interop.Transfer.None);
-    }
-
     /// <summary>The <c>gst_base_transform_get_buffer_pool</c> function.</summary>
     /// <returns>
     /// the instance of the #GstBufferPool used
@@ -162,6 +144,7 @@ public abstract unsafe partial class BaseTransform : Gst.Element
     public Gst.BufferPool? GetBufferPool()
     {
         nint nativeResult = GstBaseTransformGetBufferPool(Handle);
+        System.GC.KeepAlive(this);
         return Gst.GObject.Object.FromNative<Gst.BufferPool>(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -170,6 +153,7 @@ public abstract unsafe partial class BaseTransform : Gst.Element
     public bool IsInPlace()
     {
         int nativeResult = GstBaseTransformIsInPlace(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -178,6 +162,7 @@ public abstract unsafe partial class BaseTransform : Gst.Element
     public bool IsPassthrough()
     {
         int nativeResult = GstBaseTransformIsPassthrough(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -186,6 +171,7 @@ public abstract unsafe partial class BaseTransform : Gst.Element
     public bool IsQosEnabled()
     {
         int nativeResult = GstBaseTransformIsQosEnabled(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -213,6 +199,7 @@ public abstract unsafe partial class BaseTransform : Gst.Element
     public bool Reconfigure()
     {
         int nativeResult = GstBaseTransformReconfigure(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -224,6 +211,7 @@ public abstract unsafe partial class BaseTransform : Gst.Element
     public void ReconfigureSink()
     {
         GstBaseTransformReconfigureSink(Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -234,6 +222,7 @@ public abstract unsafe partial class BaseTransform : Gst.Element
     public void ReconfigureSrc()
     {
         GstBaseTransformReconfigureSrc(Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -252,6 +241,7 @@ public abstract unsafe partial class BaseTransform : Gst.Element
     public void SetGapAware(bool gapAware)
     {
         GstBaseTransformSetGapAware(Handle, gapAware ? 1 : 0);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -269,6 +259,7 @@ public abstract unsafe partial class BaseTransform : Gst.Element
     public void SetInPlace(bool inPlace)
     {
         GstBaseTransformSetInPlace(Handle, inPlace ? 1 : 0);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -286,6 +277,7 @@ public abstract unsafe partial class BaseTransform : Gst.Element
     public void SetPassthrough(bool passthrough)
     {
         GstBaseTransformSetPassthrough(Handle, passthrough ? 1 : 0);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -307,6 +299,7 @@ public abstract unsafe partial class BaseTransform : Gst.Element
     public void SetPreferPassthrough(bool preferPassthrough)
     {
         GstBaseTransformSetPreferPassthrough(Handle, preferPassthrough ? 1 : 0);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Enable or disable QoS handling in the transform.</summary>
@@ -317,6 +310,7 @@ public abstract unsafe partial class BaseTransform : Gst.Element
     public void SetQosEnabled(bool enabled)
     {
         GstBaseTransformSetQosEnabled(Handle, enabled ? 1 : 0);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -333,6 +327,7 @@ public abstract unsafe partial class BaseTransform : Gst.Element
     public void UpdateQos(double proportion, long diff, Gst.ClockTime timestamp)
     {
         GstBaseTransformUpdateQos(Handle, proportion, diff, timestamp.Nanoseconds);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -348,12 +343,9 @@ public abstract unsafe partial class BaseTransform : Gst.Element
     {
         ArgumentNullException.ThrowIfNull(updatedCaps);
         int nativeResult = GstBaseTransformUpdateSrcCaps(Handle, updatedCaps.Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
-
-    /// <summary>The <c>gst_base_transform_get_allocator</c> entry point.</summary>
-    [LibraryImport("GstBase", EntryPoint = "gst_base_transform_get_allocator")]
-    private static partial void GstBaseTransformGetAllocator(nint trans, nint* allocator, nint* @params);
 
     /// <summary>The <c>gst_base_transform_get_buffer_pool</c> entry point.</summary>
     [LibraryImport("GstBase", EntryPoint = "gst_base_transform_get_buffer_pool")]

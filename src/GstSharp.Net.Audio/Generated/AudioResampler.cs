@@ -36,6 +36,7 @@ public sealed unsafe partial class AudioResampler
     public void Free()
     {
         GstAudioResamplerFree(Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -50,6 +51,7 @@ public sealed unsafe partial class AudioResampler
     public nuint GetInFrames(nuint outFrames)
     {
         nuint nativeResult = GstAudioResamplerGetInFrames(Handle, outFrames);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -64,6 +66,7 @@ public sealed unsafe partial class AudioResampler
     public nuint GetMaxLatency()
     {
         nuint nativeResult = GstAudioResamplerGetMaxLatency(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -79,6 +82,7 @@ public sealed unsafe partial class AudioResampler
     public nuint GetOutFrames(nuint inFrames)
     {
         nuint nativeResult = GstAudioResamplerGetOutFrames(Handle, inFrames);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -110,6 +114,7 @@ public sealed unsafe partial class AudioResampler
     public void Resample(nint @in, nuint inFrames, nint @out, nuint outFrames)
     {
         GstAudioResamplerResample(Handle, @in, inFrames, @out, outFrames);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -119,6 +124,7 @@ public sealed unsafe partial class AudioResampler
     public void Reset()
     {
         GstAudioResamplerReset(Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -137,6 +143,7 @@ public sealed unsafe partial class AudioResampler
     {
         ArgumentNullException.ThrowIfNull(options);
         int nativeResult = GstAudioResamplerUpdate(Handle, inRate, outRate, options.Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 

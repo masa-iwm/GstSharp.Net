@@ -44,6 +44,7 @@ public sealed unsafe partial class VideoConverter
         ArgumentNullException.ThrowIfNull(src);
         ArgumentNullException.ThrowIfNull(dest);
         GstVideoConverterFrame(Handle, src.Handle, dest.Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -53,40 +54,58 @@ public sealed unsafe partial class VideoConverter
     public void FrameFinish()
     {
         GstVideoConverterFrameFinish(Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Free @convert</summary>
     public void Free()
     {
         GstVideoConverterFree(Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Get the current configuration of @convert.</summary>
     /// <returns>
     /// a #GstStructure that remains valid for as long as @convert is valid
     ///   or until gst_video_converter_set_config() is called.
+    /// The wrapper owns a reference of its own, which is a copy for a boxed type:
+    /// dispose it when you are done, and note that changes made to a copy of a
+    /// boxed value are not written back.
     /// </returns>
     public Gst.Structure GetConfig()
     {
         nint nativeResult = GstVideoConverterGetConfig(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.None)
             ?? throw new InvalidOperationException("gst_video_converter_get_config returned no value.");
     }
 
     /// <summary>Retrieve the input format of @convert.</summary>
-    /// <returns>a #GstVideoInfo</returns>
+    /// <returns>
+    /// a #GstVideoInfo
+    /// The wrapper owns a reference of its own, which is a copy for a boxed type:
+    /// dispose it when you are done, and note that changes made to a copy of a
+    /// boxed value are not written back.
+    /// </returns>
     public Gst.Video.VideoInfo GetInInfo()
     {
         nint nativeResult = GstVideoConverterGetInInfo(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Video.VideoInfo.FromNative(nativeResult, Gst.Interop.Transfer.None)
             ?? throw new InvalidOperationException("gst_video_converter_get_in_info returned no value.");
     }
 
     /// <summary>Retrieve the output format of @convert.</summary>
-    /// <returns>a #GstVideoInfo</returns>
+    /// <returns>
+    /// a #GstVideoInfo
+    /// The wrapper owns a reference of its own, which is a copy for a boxed type:
+    /// dispose it when you are done, and note that changes made to a copy of a
+    /// boxed value are not written back.
+    /// </returns>
     public Gst.Video.VideoInfo GetOutInfo()
     {
         nint nativeResult = GstVideoConverterGetOutInfo(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Video.VideoInfo.FromNative(nativeResult, Gst.Interop.Transfer.None)
             ?? throw new InvalidOperationException("gst_video_converter_get_out_info returned no value.");
     }
@@ -100,6 +119,7 @@ public sealed unsafe partial class VideoConverter
         ArgumentNullException.ThrowIfNull(src);
         ArgumentNullException.ThrowIfNull(dest);
         int nativeResult = GstVideoConverterTransformMetas(Handle, src.Handle, dest.Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 

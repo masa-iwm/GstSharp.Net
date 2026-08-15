@@ -42,6 +42,7 @@ public unsafe partial class DeviceProviderFactory : Gst.PluginFeature
     public Gst.DeviceProvider? Get()
     {
         nint nativeResult = GstDeviceProviderFactoryGet(Handle);
+        System.GC.KeepAlive(this);
         return Gst.GObject.Object.FromNative<Gst.DeviceProvider>(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -54,6 +55,7 @@ public unsafe partial class DeviceProviderFactory : Gst.PluginFeature
     public Gst.GObject.GType GetDeviceProviderType()
     {
         nuint nativeResult = GstDeviceProviderFactoryGetDeviceProviderType(Handle);
+        System.GC.KeepAlive(this);
         return new Gst.GObject.GType(nativeResult);
     }
 
@@ -69,6 +71,7 @@ public unsafe partial class DeviceProviderFactory : Gst.PluginFeature
         System.Span<byte> keyBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope keyScope = Gst.Interop.GMarshal.StackUtf8(key, keyBuffer);
         nint nativeResult = GstDeviceProviderFactoryGetMetadata(Handle, keyScope.Pointer);
+        System.GC.KeepAlive(this);
         return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
     }
 
@@ -80,6 +83,7 @@ public unsafe partial class DeviceProviderFactory : Gst.PluginFeature
         System.Span<byte> classesBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope classesScope = Gst.Interop.GMarshal.StackUtf8(classes, classesBuffer);
         int nativeResult = GstDeviceProviderFactoryHasClasses(Handle, classesScope.Pointer);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 

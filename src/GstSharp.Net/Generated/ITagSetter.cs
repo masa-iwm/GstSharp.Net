@@ -75,11 +75,15 @@ public static unsafe partial class TagSetterExtensions
     /// <returns>
     /// a current snapshot of the
     ///          taglist used in the setter or %NULL if none is used.
+    /// The wrapper owns a reference of its own, which is a copy for a boxed type:
+    /// dispose it when you are done, and note that changes made to a copy of a
+    /// boxed value are not written back.
     /// </returns>
     public static Gst.TagList? GetTagList(this Gst.ITagSetter setter)
     {
         ArgumentNullException.ThrowIfNull(setter);
         nint nativeResult = GstTagSetterGetTagList(setter.Handle);
+        System.GC.KeepAlive(setter);
         return Gst.TagList.FromNative(nativeResult, Gst.Interop.Transfer.None);
     }
 
@@ -93,6 +97,7 @@ public static unsafe partial class TagSetterExtensions
     {
         ArgumentNullException.ThrowIfNull(setter);
         int nativeResult = GstTagSetterGetTagMergeMode(setter.Handle);
+        System.GC.KeepAlive(setter);
         return (Gst.TagMergeMode)nativeResult;
     }
 
@@ -105,6 +110,7 @@ public static unsafe partial class TagSetterExtensions
         ArgumentNullException.ThrowIfNull(setter);
         ArgumentNullException.ThrowIfNull(list);
         GstTagSetterMergeTags(setter.Handle, list.Handle, (int)mode);
+        System.GC.KeepAlive(setter);
     }
 
     /// <summary>
@@ -116,6 +122,7 @@ public static unsafe partial class TagSetterExtensions
     {
         ArgumentNullException.ThrowIfNull(setter);
         GstTagSetterResetTags(setter.Handle);
+        System.GC.KeepAlive(setter);
     }
 
     /// <summary>
@@ -129,6 +136,7 @@ public static unsafe partial class TagSetterExtensions
     {
         ArgumentNullException.ThrowIfNull(setter);
         GstTagSetterSetTagMergeMode(setter.Handle, (int)mode);
+        System.GC.KeepAlive(setter);
     }
 
     /// <summary>The <c>gst_tag_setter_get_tag_list</c> entry point.</summary>

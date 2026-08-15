@@ -69,13 +69,37 @@ public sealed unsafe partial class Event : Gst.MiniObject
     }
 
     /// <summary>the #GstEventType of the event</summary>
-    public Gst.EventType Type => ((EventRaw*)Handle)->Type;
+    public Gst.EventType Type
+    {
+        get
+        {
+            Gst.EventType value = ((EventRaw*)Handle)->Type;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
 
     /// <summary>the timestamp of the event</summary>
-    public ulong Timestamp => ((EventRaw*)Handle)->Timestamp;
+    public ulong Timestamp
+    {
+        get
+        {
+            ulong value = ((EventRaw*)Handle)->Timestamp;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
 
     /// <summary>the sequence number of the event</summary>
-    public uint Seqnum => ((EventRaw*)Handle)->Seqnum;
+    public uint Seqnum
+    {
+        get
+        {
+            uint value = ((EventRaw*)Handle)->Seqnum;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
 
     /// <summary>Wraps a native <c>GstEvent</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
@@ -717,6 +741,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
     {
         ArgumentNullException.ThrowIfNull(segment);
         GstEventCopySegment(Handle, segment.Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Retrieve the accumulated running time offset of the event.</summary>
@@ -736,6 +761,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
     public long GetRunningTimeOffset()
     {
         long nativeResult = GstEventGetRunningTimeOffset(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -759,6 +785,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
     public uint GetSeqnum()
     {
         uint nativeResult = GstEventGetSeqnum(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -767,10 +794,14 @@ public sealed unsafe partial class Event : Gst.MiniObject
     /// The structure of the event. The
     /// structure is still owned by the event, which means that you should not free
     /// it and that the pointer becomes invalid when you free the event.
+    /// The wrapper owns a reference of its own, which is a copy for a boxed type:
+    /// dispose it when you are done, and note that changes made to a copy of a
+    /// boxed value are not written back.
     /// </returns>
     public Gst.Structure? GetStructure()
     {
         nint nativeResult = GstEventGetStructure(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.None);
     }
 
@@ -786,6 +817,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
         System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
         int nativeResult = GstEventHasName(Handle, nameScope.Pointer);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -799,33 +831,8 @@ public sealed unsafe partial class Event : Gst.MiniObject
     public bool HasNameId(Gst.GLib.Quark name)
     {
         int nativeResult = GstEventHasNameId(Handle, name.Value);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
-    }
-
-    /// <summary>Returns a writable copy of @event.</summary>
-    /// <remarks>
-    /// <para>
-    /// If there is only one reference count on @event, the caller must be the owner,
-    /// and so this function will return the event object unchanged. If on the other
-    /// hand there is more than one reference on the object, a new event object will
-    /// be returned. The caller's reference on @event will be removed, and instead the
-    /// caller will own a reference to the returned object.
-    /// </para>
-    /// <para>
-    /// In short, this function unrefs the event in the argument and refs the event
-    /// that it returns. Don't access the argument after calling this function. See
-    /// also: gst_event_ref().
-    /// </para>
-    /// </remarks>
-    /// <returns>
-    /// a writable event which may or may not be the
-    ///     same as @event
-    /// </returns>
-    public Gst.Event MakeWritable()
-    {
-        nint nativeResult = GstEventMakeWritable(Handle);
-        return Gst.Event.FromNative(nativeResult, Gst.Interop.Transfer.Full)
-            ?? throw new InvalidOperationException("gst_event_make_writable returned no value.");
     }
 
     /// <summary>Get the format, minsize, maxsize and async-flag in the buffersize event.</summary>
@@ -840,6 +847,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
         long maxsizeNative = default;
         int asyncNative = default;
         GstEventParseBufferSize(Handle, &formatNative, &minsizeNative, &maxsizeNative, &asyncNative);
+        System.GC.KeepAlive(this);
         format = (Gst.Format)formatNative;
         minsize = minsizeNative;
         maxsize = maxsizeNative;
@@ -855,6 +863,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
     {
         nint capsNative = default;
         GstEventParseCaps(Handle, &capsNative);
+        System.GC.KeepAlive(this);
         caps = Gst.Caps.FromNative(capsNative, Gst.Interop.Transfer.None);
     }
 
@@ -864,6 +873,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
     {
         int resetTimeNative = default;
         GstEventParseFlushStop(Handle, &resetTimeNative);
+        System.GC.KeepAlive(this);
         resetTime = resetTimeNative != 0;
     }
 
@@ -875,6 +885,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
         ulong timestampNative = default;
         ulong durationNative = default;
         GstEventParseGap(Handle, &timestampNative, &durationNative);
+        System.GC.KeepAlive(this);
         timestamp = new Gst.ClockTime(timestampNative);
         duration = new Gst.ClockTime(durationNative);
     }
@@ -888,6 +899,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
     {
         int flagsNative = default;
         GstEventParseGapFlags(Handle, &flagsNative);
+        System.GC.KeepAlive(this);
         flags = (Gst.GapFlags)flagsNative;
     }
 
@@ -901,6 +913,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
     {
         uint groupIdNative = default;
         int nativeResult = GstEventParseGroupId(Handle, &groupIdNative);
+        System.GC.KeepAlive(this);
         groupId = groupIdNative;
         return nativeResult != 0;
     }
@@ -913,6 +926,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
         double rateMultiplierNative = default;
         int newFlagsNative = default;
         GstEventParseInstantRateChange(Handle, &rateMultiplierNative, &newFlagsNative);
+        System.GC.KeepAlive(this);
         rateMultiplier = rateMultiplierNative;
         newFlags = (Gst.SegmentFlags)newFlagsNative;
     }
@@ -927,6 +941,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
         ulong runningTimeNative = default;
         ulong upstreamRunningTimeNative = default;
         GstEventParseInstantRateSyncTime(Handle, &rateMultiplierNative, &runningTimeNative, &upstreamRunningTimeNative);
+        System.GC.KeepAlive(this);
         rateMultiplier = rateMultiplierNative;
         runningTime = new Gst.ClockTime(runningTimeNative);
         upstreamRunningTime = new Gst.ClockTime(upstreamRunningTimeNative);
@@ -938,6 +953,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
     {
         ulong latencyNative = default;
         GstEventParseLatency(Handle, &latencyNative);
+        System.GC.KeepAlive(this);
         latency = new Gst.ClockTime(latencyNative);
     }
 
@@ -955,6 +971,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
         nint dataNative = default;
         nint originNative = default;
         GstEventParseProtection(Handle, &systemIdNative, &dataNative, &originNative);
+        System.GC.KeepAlive(this);
         systemId = Gst.Interop.GMarshal.PtrToStringUtf8(systemIdNative);
         data = Gst.Buffer.FromNative(dataNative, Gst.Interop.Transfer.None);
         origin = Gst.Interop.GMarshal.PtrToStringUtf8(originNative);
@@ -978,6 +995,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
         long diffNative = default;
         ulong timestampNative = default;
         GstEventParseQos(Handle, &typeNative, &proportionNative, &diffNative, &timestampNative);
+        System.GC.KeepAlive(this);
         type = (Gst.QOSType)typeNative;
         proportion = proportionNative;
         diff = diffNative;
@@ -1002,6 +1020,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
         int stopTypeNative = default;
         long stopNative = default;
         GstEventParseSeek(Handle, &rateNative, &formatNative, &flagsNative, &startTypeNative, &startNative, &stopTypeNative, &stopNative);
+        System.GC.KeepAlive(this);
         rate = rateNative;
         format = (Gst.Format)formatNative;
         flags = (Gst.SeekFlags)flagsNative;
@@ -1020,6 +1039,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
     {
         ulong intervalNative = default;
         GstEventParseSeekTrickmodeInterval(Handle, &intervalNative);
+        System.GC.KeepAlive(this);
         interval = new Gst.ClockTime(intervalNative);
     }
 
@@ -1033,6 +1053,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
     {
         nint segmentNative = default;
         GstEventParseSegment(Handle, &segmentNative);
+        System.GC.KeepAlive(this);
         segment = Gst.Segment.FromNative(segmentNative, Gst.Interop.Transfer.None);
     }
 
@@ -1044,6 +1065,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
         int formatNative = default;
         long positionNative = default;
         GstEventParseSegmentDone(Handle, &formatNative, &positionNative);
+        System.GC.KeepAlive(this);
         format = (Gst.Format)formatNative;
         position = positionNative;
     }
@@ -1054,6 +1076,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
     {
         nint msgNative = default;
         GstEventParseSinkMessage(Handle, &msgNative);
+        System.GC.KeepAlive(this);
         msg = Gst.Message.FromNative(msgNative, Gst.Interop.Transfer.Full);
     }
 
@@ -1071,6 +1094,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
         int flushNative = default;
         int intermediateNative = default;
         GstEventParseStep(Handle, &formatNative, &amountNative, &rateNative, &flushNative, &intermediateNative);
+        System.GC.KeepAlive(this);
         format = (Gst.Format)formatNative;
         amount = amountNative;
         rate = rateNative;
@@ -1084,6 +1108,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
     {
         nint streamNative = default;
         GstEventParseStream(Handle, &streamNative);
+        System.GC.KeepAlive(this);
         stream = Gst.GObject.Object.FromNative<Gst.Stream>(streamNative, Gst.Interop.Transfer.Full);
     }
 
@@ -1093,6 +1118,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
     {
         nint collectionNative = default;
         GstEventParseStreamCollection(Handle, &collectionNative);
+        System.GC.KeepAlive(this);
         collection = Gst.GObject.Object.FromNative<Gst.StreamCollection>(collectionNative, Gst.Interop.Transfer.Full);
     }
 
@@ -1102,6 +1128,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
     {
         int flagsNative = default;
         GstEventParseStreamFlags(Handle, &flagsNative);
+        System.GC.KeepAlive(this);
         flags = (Gst.StreamFlags)flagsNative;
     }
 
@@ -1114,6 +1141,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
     {
         uint groupIdNative = default;
         GstEventParseStreamGroupDone(Handle, &groupIdNative);
+        System.GC.KeepAlive(this);
         groupId = groupIdNative;
     }
 
@@ -1128,6 +1156,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
     {
         nint streamIdNative = default;
         GstEventParseStreamStart(Handle, &streamIdNative);
+        System.GC.KeepAlive(this);
         streamId = Gst.Interop.GMarshal.PtrToStringUtf8(streamIdNative);
     }
 
@@ -1142,6 +1171,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
     {
         nint taglistNative = default;
         GstEventParseTag(Handle, &taglistNative);
+        System.GC.KeepAlive(this);
         taglist = Gst.TagList.FromNative(taglistNative, Gst.Interop.Transfer.None);
     }
 
@@ -1153,6 +1183,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
         nint tocNative = default;
         int updatedNative = default;
         GstEventParseToc(Handle, &tocNative, &updatedNative);
+        System.GC.KeepAlive(this);
         toc = Gst.Toc.FromNative(tocNative, Gst.Interop.Transfer.Full);
         updated = updatedNative != 0;
     }
@@ -1163,6 +1194,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
     {
         nint uidNative = default;
         GstEventParseTocSelect(Handle, &uidNative);
+        System.GC.KeepAlive(this);
         uid = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(uidNative);
     }
 
@@ -1174,6 +1206,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
     public void SetGapFlags(Gst.GapFlags flags)
     {
         GstEventSetGapFlags(Handle, (int)flags);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -1190,6 +1223,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
     public void SetGroupId(uint groupId)
     {
         GstEventSetGroupId(Handle, groupId);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -1203,6 +1237,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
     public void SetRunningTimeOffset(long offset)
     {
         GstEventSetRunningTimeOffset(Handle, offset);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -1214,6 +1249,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
     public void SetSeekTrickmodeInterval(Gst.ClockTime interval)
     {
         GstEventSetSeekTrickmodeInterval(Handle, interval.Nanoseconds);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Set the sequence number of a event.</summary>
@@ -1229,6 +1265,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
     public void SetSeqnum(uint seqnum)
     {
         GstEventSetSeqnum(Handle, seqnum);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Set the @stream on the stream-start @event</summary>
@@ -1237,6 +1274,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
     {
         ArgumentNullException.ThrowIfNull(stream);
         GstEventSetStream(Handle, stream.Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>The <c>gst_event_set_stream_flags</c> function.</summary>
@@ -1244,6 +1282,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
     public void SetStreamFlags(Gst.StreamFlags flags)
     {
         GstEventSetStreamFlags(Handle, (int)flags);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Get a writable version of the structure.</summary>
@@ -1253,10 +1292,14 @@ public sealed unsafe partial class Event : Gst.MiniObject
     /// it and that the pointer becomes invalid when you free the event.
     /// This function ensures that @event is writable, and if so, will
     /// never return %NULL.
+    /// The wrapper owns a reference of its own, which is a copy for a boxed type:
+    /// dispose it when you are done, and note that changes made to a copy of a
+    /// boxed value are not written back.
     /// </returns>
     public Gst.Structure WritableStructure()
     {
         nint nativeResult = GstEventWritableStructure(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.None)
             ?? throw new InvalidOperationException("gst_event_writable_structure returned no value.");
     }
@@ -1372,10 +1415,6 @@ public sealed unsafe partial class Event : Gst.MiniObject
     /// <summary>The <c>gst_event_has_name_id</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_event_has_name_id")]
     private static partial int GstEventHasNameId(nint @event, uint name);
-
-    /// <summary>The <c>gst_event_make_writable</c> entry point.</summary>
-    [LibraryImport("Gst", EntryPoint = "gst_event_make_writable")]
-    private static partial nint GstEventMakeWritable(nint @event);
 
     /// <summary>The <c>gst_event_parse_buffer_size</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_event_parse_buffer_size")]

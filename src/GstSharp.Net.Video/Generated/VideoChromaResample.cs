@@ -33,6 +33,7 @@ public sealed unsafe partial class VideoChromaResample
     public void Free()
     {
         GstVideoChromaResampleFree(Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -46,6 +47,7 @@ public sealed unsafe partial class VideoChromaResample
         uint nLinesNative = default;
         int offsetNative = default;
         GstVideoChromaResampleGetInfo(Handle, &nLinesNative, &offsetNative);
+        System.GC.KeepAlive(this);
         nLines = nLinesNative;
         offset = offsetNative;
     }

@@ -33,10 +33,16 @@ public unsafe partial class VideoAggregatorPad : Gst.Base.AggregatorPad
     /// returns.
     /// </para>
     /// </remarks>
-    /// <returns>The currently queued buffer</returns>
+    /// <returns>
+    /// The currently queued buffer
+    /// The wrapper owns a reference of its own, which is a copy for a boxed type:
+    /// dispose it when you are done, and note that changes made to a copy of a
+    /// boxed value are not written back.
+    /// </returns>
     public Gst.Buffer GetCurrentBuffer()
     {
         nint nativeResult = GstVideoAggregatorPadGetCurrentBuffer(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.None)
             ?? throw new InvalidOperationException("gst_video_aggregator_pad_get_current_buffer returned no value.");
     }
@@ -59,6 +65,7 @@ public unsafe partial class VideoAggregatorPad : Gst.Base.AggregatorPad
     public Gst.Video.VideoFrame GetPreparedFrame()
     {
         nint nativeResult = GstVideoAggregatorPadGetPreparedFrame(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Video.VideoFrame.FromNative(nativeResult)
             ?? throw new InvalidOperationException("gst_video_aggregator_pad_get_prepared_frame returned no value.");
     }
@@ -77,6 +84,7 @@ public unsafe partial class VideoAggregatorPad : Gst.Base.AggregatorPad
     public bool HasCurrentBuffer()
     {
         int nativeResult = GstVideoAggregatorPadHasCurrentBuffer(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -85,6 +93,7 @@ public unsafe partial class VideoAggregatorPad : Gst.Base.AggregatorPad
     public void SetNeedsAlpha(bool needsAlpha)
     {
         GstVideoAggregatorPadSetNeedsAlpha(Handle, needsAlpha ? 1 : 0);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>The <c>gst_video_aggregator_pad_get_current_buffer</c> entry point.</summary>

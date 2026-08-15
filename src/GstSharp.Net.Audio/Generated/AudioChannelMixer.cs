@@ -33,6 +33,7 @@ public sealed unsafe partial class AudioChannelMixer
     public void Free()
     {
         GstAudioChannelMixerFree(Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Check if @mix is in passthrough.</summary>
@@ -54,6 +55,7 @@ public sealed unsafe partial class AudioChannelMixer
     public bool IsPassthrough()
     {
         int nativeResult = GstAudioChannelMixerIsPassthrough(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 

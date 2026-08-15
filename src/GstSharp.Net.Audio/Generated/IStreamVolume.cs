@@ -47,6 +47,7 @@ public static unsafe partial class StreamVolumeExtensions
     {
         ArgumentNullException.ThrowIfNull(volume);
         int nativeResult = GstStreamVolumeGetMute(volume.Handle);
+        System.GC.KeepAlive(volume);
         return nativeResult != 0;
     }
 
@@ -58,6 +59,7 @@ public static unsafe partial class StreamVolumeExtensions
     {
         ArgumentNullException.ThrowIfNull(volume);
         double nativeResult = GstStreamVolumeGetVolume(volume.Handle, (int)format);
+        System.GC.KeepAlive(volume);
         return nativeResult;
     }
 
@@ -68,6 +70,7 @@ public static unsafe partial class StreamVolumeExtensions
     {
         ArgumentNullException.ThrowIfNull(volume);
         GstStreamVolumeSetMute(volume.Handle, mute ? 1 : 0);
+        System.GC.KeepAlive(volume);
     }
 
     /// <summary>The <c>gst_stream_volume_set_volume</c> function.</summary>
@@ -78,6 +81,7 @@ public static unsafe partial class StreamVolumeExtensions
     {
         ArgumentNullException.ThrowIfNull(volume);
         GstStreamVolumeSetVolume(volume.Handle, (int)format, val);
+        System.GC.KeepAlive(volume);
     }
 
     /// <summary>The <c>gst_stream_volume_convert_volume</c> function.</summary>

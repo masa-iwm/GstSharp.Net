@@ -9,7 +9,7 @@ using System.Runtime.InteropServices;
 namespace Gst.Audio;
 
 /// <summary>The functions of the <c>GstAudio</c> namespace that belong to no type.</summary>
-public static unsafe partial class Global
+public static unsafe partial class AudioGlobal
 {
     /// <summary>Get the fallback channel-mask for the given number of channels.</summary>
     /// <remarks>

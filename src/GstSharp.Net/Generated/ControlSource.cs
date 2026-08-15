@@ -45,6 +45,7 @@ public abstract unsafe partial class ControlSource : Gst.Object
     {
         double valueNative = default;
         int nativeResult = GstControlSourceGetValue(Handle, timestamp.Nanoseconds, &valueNative);
+        System.GC.KeepAlive(this);
         value = valueNative;
         return nativeResult != 0;
     }
@@ -62,6 +63,7 @@ public abstract unsafe partial class ControlSource : Gst.Object
         fixed (double* valuesPointer = values)
         {
             int nativeResult = GstControlSourceGetValueArray(Handle, timestamp.Nanoseconds, interval.Nanoseconds, (uint)values.Length, valuesPointer);
+            System.GC.KeepAlive(this);
             return nativeResult != 0;
         }
     }

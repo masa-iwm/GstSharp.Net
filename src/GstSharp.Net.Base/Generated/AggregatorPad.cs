@@ -27,6 +27,7 @@ public unsafe partial class AggregatorPad : Gst.Pad
     public bool DropBuffer()
     {
         int nativeResult = GstAggregatorPadDropBuffer(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -39,6 +40,7 @@ public unsafe partial class AggregatorPad : Gst.Pad
     public bool HasBuffer()
     {
         int nativeResult = GstAggregatorPadHasBuffer(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -47,6 +49,7 @@ public unsafe partial class AggregatorPad : Gst.Pad
     public bool IsEos()
     {
         int nativeResult = GstAggregatorPadIsEos(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -58,6 +61,7 @@ public unsafe partial class AggregatorPad : Gst.Pad
     public bool IsInactive()
     {
         int nativeResult = GstAggregatorPadIsInactive(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -70,6 +74,7 @@ public unsafe partial class AggregatorPad : Gst.Pad
     public Gst.Buffer? PeekBuffer()
     {
         nint nativeResult = GstAggregatorPadPeekBuffer(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -81,6 +86,7 @@ public unsafe partial class AggregatorPad : Gst.Pad
     public Gst.Buffer? PopBuffer()
     {
         nint nativeResult = GstAggregatorPadPopBuffer(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
 

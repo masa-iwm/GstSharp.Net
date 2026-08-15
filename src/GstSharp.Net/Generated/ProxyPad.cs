@@ -33,6 +33,7 @@ public unsafe partial class ProxyPad : Gst.Pad
     public Gst.ProxyPad? GetInternal()
     {
         nint nativeResult = GstProxyPadGetInternal(Handle);
+        System.GC.KeepAlive(this);
         return Gst.GObject.Object.FromNative<Gst.ProxyPad>(nativeResult, Gst.Interop.Transfer.Full);
     }
 

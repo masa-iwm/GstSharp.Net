@@ -43,6 +43,7 @@ public unsafe partial class SharedTaskPool : Gst.TaskPool
     public uint GetMaxThreads()
     {
         uint nativeResult = GstSharedTaskPoolGetMaxThreads(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -58,6 +59,7 @@ public unsafe partial class SharedTaskPool : Gst.TaskPool
     public void SetMaxThreads(uint maxThreads)
     {
         GstSharedTaskPoolSetMaxThreads(Handle, maxThreads);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>The <c>gst_shared_task_pool_new</c> entry point.</summary>

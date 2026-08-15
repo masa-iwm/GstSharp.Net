@@ -27,6 +27,7 @@ public unsafe partial class EncodingProfile : Gst.GObject.Object
     public Gst.Pbutils.EncodingProfile Copy()
     {
         nint nativeResult = GstEncodingProfileCopy(Handle);
+        System.GC.KeepAlive(this);
         return Gst.GObject.Object.FromNative<Gst.Pbutils.EncodingProfile>(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_encoding_profile_copy returned no value.");
     }
@@ -39,6 +40,7 @@ public unsafe partial class EncodingProfile : Gst.GObject.Object
     public bool GetAllowDynamicOutput()
     {
         int nativeResult = GstEncodingProfileGetAllowDynamicOutput(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -47,6 +49,7 @@ public unsafe partial class EncodingProfile : Gst.GObject.Object
     public string? GetDescription()
     {
         nint nativeResult = GstEncodingProfileGetDescription(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
     }
 
@@ -55,6 +58,7 @@ public unsafe partial class EncodingProfile : Gst.GObject.Object
     public Gst.Structure? GetElementProperties()
     {
         nint nativeResult = GstEncodingProfileGetElementProperties(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -63,6 +67,7 @@ public unsafe partial class EncodingProfile : Gst.GObject.Object
     public string? GetFileExtension()
     {
         nint nativeResult = GstEncodingProfileGetFileExtension(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
     }
 
@@ -74,6 +79,7 @@ public unsafe partial class EncodingProfile : Gst.GObject.Object
     public Gst.Caps GetFormat()
     {
         nint nativeResult = GstEncodingProfileGetFormat(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_encoding_profile_get_format returned no value.");
     }
@@ -86,6 +92,7 @@ public unsafe partial class EncodingProfile : Gst.GObject.Object
     public Gst.Caps GetInputCaps()
     {
         nint nativeResult = GstEncodingProfileGetInputCaps(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_encoding_profile_get_input_caps returned no value.");
     }
@@ -95,6 +102,7 @@ public unsafe partial class EncodingProfile : Gst.GObject.Object
     public string? GetName()
     {
         nint nativeResult = GstEncodingProfileGetName(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
     }
 
@@ -106,6 +114,7 @@ public unsafe partial class EncodingProfile : Gst.GObject.Object
     public uint GetPresence()
     {
         uint nativeResult = GstEncodingProfileGetPresence(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -117,6 +126,7 @@ public unsafe partial class EncodingProfile : Gst.GObject.Object
     public string? GetPreset()
     {
         nint nativeResult = GstEncodingProfileGetPreset(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
     }
 
@@ -125,6 +135,7 @@ public unsafe partial class EncodingProfile : Gst.GObject.Object
     public string? GetPresetName()
     {
         nint nativeResult = GstEncodingProfileGetPresetName(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
     }
 
@@ -140,6 +151,7 @@ public unsafe partial class EncodingProfile : Gst.GObject.Object
     public Gst.Caps? GetRestriction()
     {
         nint nativeResult = GstEncodingProfileGetRestriction(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -152,6 +164,7 @@ public unsafe partial class EncodingProfile : Gst.GObject.Object
     public bool GetSingleSegment()
     {
         int nativeResult = GstEncodingProfileGetSingleSegment(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -160,6 +173,7 @@ public unsafe partial class EncodingProfile : Gst.GObject.Object
     public string GetTypeNick()
     {
         nint nativeResult = GstEncodingProfileGetTypeNick(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
             ?? throw new InvalidOperationException("gst_encoding_profile_get_type_nick returned no value.");
     }
@@ -169,6 +183,7 @@ public unsafe partial class EncodingProfile : Gst.GObject.Object
     public bool IsEnabled()
     {
         int nativeResult = GstEncodingProfileIsEnabled(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -179,6 +194,7 @@ public unsafe partial class EncodingProfile : Gst.GObject.Object
     {
         ArgumentNullException.ThrowIfNull(b);
         int nativeResult = GstEncodingProfileIsEqual(Handle, b.Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -190,6 +206,7 @@ public unsafe partial class EncodingProfile : Gst.GObject.Object
     public void SetAllowDynamicOutput(bool allowDynamicOutput)
     {
         GstEncodingProfileSetAllowDynamicOutput(Handle, allowDynamicOutput ? 1 : 0);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -202,6 +219,7 @@ public unsafe partial class EncodingProfile : Gst.GObject.Object
         System.Span<byte> descriptionBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope descriptionScope = Gst.Interop.GMarshal.StackUtf8(description, descriptionBuffer);
         GstEncodingProfileSetDescription(Handle, descriptionScope.Pointer);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Set whether the profile should be used or not.</summary>
@@ -209,6 +227,7 @@ public unsafe partial class EncodingProfile : Gst.GObject.Object
     public void SetEnabled(bool enabled)
     {
         GstEncodingProfileSetEnabled(Handle, enabled ? 1 : 0);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Sets the media format used in the profile.</summary>
@@ -217,6 +236,7 @@ public unsafe partial class EncodingProfile : Gst.GObject.Object
     {
         ArgumentNullException.ThrowIfNull(format);
         GstEncodingProfileSetFormat(Handle, format.Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -229,6 +249,7 @@ public unsafe partial class EncodingProfile : Gst.GObject.Object
         System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
         GstEncodingProfileSetName(Handle, nameScope.Pointer);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -239,6 +260,7 @@ public unsafe partial class EncodingProfile : Gst.GObject.Object
     public void SetPresence(uint presence)
     {
         GstEncodingProfileSetPresence(Handle, presence);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -272,6 +294,7 @@ public unsafe partial class EncodingProfile : Gst.GObject.Object
         System.Span<byte> presetBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope presetScope = Gst.Interop.GMarshal.StackUtf8(preset, presetBuffer);
         GstEncodingProfileSetPreset(Handle, presetScope.Pointer);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -285,6 +308,7 @@ public unsafe partial class EncodingProfile : Gst.GObject.Object
         System.Span<byte> presetNameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope presetNameScope = Gst.Interop.GMarshal.StackUtf8(presetName, presetNameBuffer);
         GstEncodingProfileSetPresetName(Handle, presetNameScope.Pointer);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -301,6 +325,7 @@ public unsafe partial class EncodingProfile : Gst.GObject.Object
     public void SetSingleSegment(bool singleSegment)
     {
         GstEncodingProfileSetSingleSegment(Handle, singleSegment ? 1 : 0);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -311,6 +336,7 @@ public unsafe partial class EncodingProfile : Gst.GObject.Object
     public override string ToString()
     {
         nint nativeResult = GstEncodingProfileToString(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
             ?? throw new InvalidOperationException("gst_encoding_profile_to_string returned no value.");
     }

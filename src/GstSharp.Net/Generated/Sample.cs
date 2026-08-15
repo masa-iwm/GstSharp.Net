@@ -35,10 +35,14 @@ public sealed unsafe partial class Sample : Gst.MiniObject
     ///  when there is no buffer. The buffer remains valid as long as
     ///  @sample is valid.  If you need to hold on to it for longer than
     ///  that, take a ref to the buffer with gst_buffer_ref().
+    /// The wrapper owns a reference of its own, which is a copy for a boxed type:
+    /// dispose it when you are done, and note that changes made to a copy of a
+    /// boxed value are not written back.
     /// </returns>
     public Gst.Buffer? GetBuffer()
     {
         nint nativeResult = GstSampleGetBuffer(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.None);
     }
 
@@ -48,10 +52,14 @@ public sealed unsafe partial class Sample : Gst.MiniObject
     ///  when there is no buffer list. The buffer list remains valid as long as
     ///  @sample is valid.  If you need to hold on to it for longer than
     ///  that, take a ref to the buffer list with gst_mini_object_ref ().
+    /// The wrapper owns a reference of its own, which is a copy for a boxed type:
+    /// dispose it when you are done, and note that changes made to a copy of a
+    /// boxed value are not written back.
     /// </returns>
     public Gst.BufferList? GetBufferList()
     {
         nint nativeResult = GstSampleGetBufferList(Handle);
+        System.GC.KeepAlive(this);
         return Gst.BufferList.FromNative(nativeResult, Gst.Interop.Transfer.None);
     }
 
@@ -61,10 +69,14 @@ public sealed unsafe partial class Sample : Gst.MiniObject
     ///  when there is no caps. The caps remain valid as long as @sample is
     ///  valid.  If you need to hold on to the caps for longer than that,
     ///  take a ref to the caps with gst_caps_ref().
+    /// The wrapper owns a reference of its own, which is a copy for a boxed type:
+    /// dispose it when you are done, and note that changes made to a copy of a
+    /// boxed value are not written back.
     /// </returns>
     public Gst.Caps? GetCaps()
     {
         nint nativeResult = GstSampleGetCaps(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.None);
     }
 
@@ -72,10 +84,14 @@ public sealed unsafe partial class Sample : Gst.MiniObject
     /// <returns>
     /// the extra info of @sample.
     ///  The info remains valid as long as @sample is valid.
+    /// The wrapper owns a reference of its own, which is a copy for a boxed type:
+    /// dispose it when you are done, and note that changes made to a copy of a
+    /// boxed value are not written back.
     /// </returns>
     public Gst.Structure? GetInfo()
     {
         nint nativeResult = GstSampleGetInfo(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.None);
     }
 
@@ -83,47 +99,16 @@ public sealed unsafe partial class Sample : Gst.MiniObject
     /// <returns>
     /// the segment of @sample.
     ///  The segment remains valid as long as @sample is valid.
+    /// The wrapper owns a reference of its own, which is a copy for a boxed type:
+    /// dispose it when you are done, and note that changes made to a copy of a
+    /// boxed value are not written back.
     /// </returns>
     public Gst.Segment GetSegment()
     {
         nint nativeResult = GstSampleGetSegment(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Segment.FromNative(nativeResult, Gst.Interop.Transfer.None)
             ?? throw new InvalidOperationException("gst_sample_get_segment returned no value.");
-    }
-
-    /// <summary>
-    /// Returns a writable copy of @sample. If the source sample is
-    /// already writable, this will simply return the same sample.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// Use this function to ensure that a sample can be safely modified before
-    /// making changes to it, for example before calling gst_sample_set_buffer()
-    /// </para>
-    /// <para>
-    /// If the reference count of the source sample @sample is exactly one, the caller
-    /// is the sole owner and this function will return the sample object unchanged.
-    /// </para>
-    /// <para>
-    /// If there is more than one reference on the object, a copy will be made using
-    /// gst_sample_copy(). The passed-in @sample will be unreffed in that case, and the
-    /// caller will now own a reference to the new returned sample object.
-    /// </para>
-    /// <para>
-    /// In short, this function unrefs the sample in the argument and refs the sample
-    /// that it returns. Don't access the argument after calling this function unless
-    /// you have an additional reference to it.
-    /// </para>
-    /// </remarks>
-    /// <returns>
-    /// a writable sample which may or may not be the
-    ///     same as @sample
-    /// </returns>
-    public Gst.Sample MakeWritable()
-    {
-        nint nativeResult = GstSampleMakeWritable(Handle);
-        return Gst.Sample.FromNative(nativeResult, Gst.Interop.Transfer.Full)
-            ?? throw new InvalidOperationException("gst_sample_make_writable returned no value.");
     }
 
     /// <summary>Set the buffer associated with @sample. @sample must be writable.</summary>
@@ -132,6 +117,7 @@ public sealed unsafe partial class Sample : Gst.MiniObject
     {
         ArgumentNullException.ThrowIfNull(buffer);
         GstSampleSetBuffer(Handle, buffer.Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Set the buffer list associated with @sample. @sample must be writable.</summary>
@@ -140,6 +126,7 @@ public sealed unsafe partial class Sample : Gst.MiniObject
     {
         ArgumentNullException.ThrowIfNull(bufferList);
         GstSampleSetBufferList(Handle, bufferList.Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Set the caps associated with @sample. @sample must be writable.</summary>
@@ -148,6 +135,7 @@ public sealed unsafe partial class Sample : Gst.MiniObject
     {
         ArgumentNullException.ThrowIfNull(caps);
         GstSampleSetCaps(Handle, caps.Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Set the segment associated with @sample. @sample must be writable.</summary>
@@ -156,6 +144,7 @@ public sealed unsafe partial class Sample : Gst.MiniObject
     {
         ArgumentNullException.ThrowIfNull(segment);
         GstSampleSetSegment(Handle, segment.Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>The <c>gst_sample_get_buffer</c> entry point.</summary>
@@ -177,10 +166,6 @@ public sealed unsafe partial class Sample : Gst.MiniObject
     /// <summary>The <c>gst_sample_get_segment</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_sample_get_segment")]
     private static partial nint GstSampleGetSegment(nint sample);
-
-    /// <summary>The <c>gst_sample_make_writable</c> entry point.</summary>
-    [LibraryImport("Gst", EntryPoint = "gst_sample_make_writable")]
-    private static partial nint GstSampleMakeWritable(nint sample);
 
     /// <summary>The <c>gst_sample_set_buffer</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_sample_set_buffer")]

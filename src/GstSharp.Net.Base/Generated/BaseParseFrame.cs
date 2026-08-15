@@ -59,14 +59,9 @@ public sealed unsafe partial class BaseParseFrame : Gst.GObject.Boxed
     public Gst.Base.BaseParseFrame Copy()
     {
         nint nativeResult = GstBaseParseFrameCopy(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Base.BaseParseFrame.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_base_parse_frame_copy returned no value.");
-    }
-
-    /// <summary>Frees the provided @frame.</summary>
-    public void Free()
-    {
-        GstBaseParseFrameFree(Handle);
     }
 
     /// <summary>
@@ -79,6 +74,7 @@ public sealed unsafe partial class BaseParseFrame : Gst.GObject.Boxed
     public void Init()
     {
         GstBaseParseFrameInit(Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>The <c>gst_base_parse_frame_new</c> entry point.</summary>
@@ -88,10 +84,6 @@ public sealed unsafe partial class BaseParseFrame : Gst.GObject.Boxed
     /// <summary>The <c>gst_base_parse_frame_copy</c> entry point.</summary>
     [LibraryImport("GstBase", EntryPoint = "gst_base_parse_frame_copy")]
     private static partial nint GstBaseParseFrameCopy(nint frame);
-
-    /// <summary>The <c>gst_base_parse_frame_free</c> entry point.</summary>
-    [LibraryImport("GstBase", EntryPoint = "gst_base_parse_frame_free")]
-    private static partial void GstBaseParseFrameFree(nint frame);
 
     /// <summary>The <c>gst_base_parse_frame_init</c> entry point.</summary>
     [LibraryImport("GstBase", EntryPoint = "gst_base_parse_frame_init")]

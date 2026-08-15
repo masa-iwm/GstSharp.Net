@@ -9,7 +9,7 @@ using System.Runtime.InteropServices;
 namespace Gst.Video;
 
 /// <summary>The functions of the <c>GstVideo</c> namespace that belong to no type.</summary>
-public static unsafe partial class Global
+public static unsafe partial class VideoGlobal
 {
     /// <summary>The <c>gst_ancillary_meta_api_get_type</c> function.</summary>
     /// <returns>The result of <c>gst_ancillary_meta_api_get_type</c>.</returns>
@@ -178,29 +178,6 @@ public static unsafe partial class Global
         ArgumentNullException.ThrowIfNull(src);
         int nativeResult = GstVideoBlend(dest.Handle, src.Handle, x, y, globalAlpha);
         return nativeResult != 0;
-    }
-
-    /// <summary>
-    /// Scales a buffer containing RGBA (or AYUV) video. This is an internal
-    /// helper function which is used to scale subtitle overlays, and may be
-    /// deprecated in the near future. Use #GstVideoScaler to scale video buffers
-    /// instead.
-    /// </summary>
-    /// <param name="src">The <c>src</c> argument.</param>
-    /// <param name="srcBuffer">The <c>srcBuffer</c> argument.</param>
-    /// <param name="destHeight">The <c>destHeight</c> argument.</param>
-    /// <param name="destWidth">The <c>destWidth</c> argument.</param>
-    /// <param name="dest">The <c>dest</c> argument.</param>
-    /// <param name="destBuffer">The <c>destBuffer</c> argument.</param>
-    public static void VideoBlendScaleLinearRGBA(Gst.Video.VideoInfo src, Gst.Buffer srcBuffer, int destHeight, int destWidth, out Gst.Video.VideoInfo? dest, out Gst.Buffer? destBuffer)
-    {
-        ArgumentNullException.ThrowIfNull(src);
-        ArgumentNullException.ThrowIfNull(srcBuffer);
-        nint destNative = default;
-        nint destBufferNative = default;
-        GstVideoBlendScaleLinearRGBA(src.Handle, srcBuffer.Handle, destHeight, destWidth, &destNative, &destBufferNative);
-        dest = Gst.Video.VideoInfo.FromNative(destNative, Gst.Interop.Transfer.None);
-        destBuffer = Gst.Buffer.FromNative(destBufferNative, Gst.Interop.Transfer.Full);
     }
 
     /// <summary>
@@ -844,10 +821,6 @@ public static unsafe partial class Global
     /// <summary>The <c>gst_video_blend</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_blend")]
     private static partial int GstVideoBlend(nint dest, nint src, int x, int y, float globalAlpha);
-
-    /// <summary>The <c>gst_video_blend_scale_linear_RGBA</c> entry point.</summary>
-    [LibraryImport("GstVideo", EntryPoint = "gst_video_blend_scale_linear_RGBA")]
-    private static partial void GstVideoBlendScaleLinearRGBA(nint src, nint srcBuffer, int destHeight, int destWidth, nint* dest, nint* destBuffer);
 
     /// <summary>The <c>gst_video_calculate_display_ratio</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_calculate_display_ratio")]

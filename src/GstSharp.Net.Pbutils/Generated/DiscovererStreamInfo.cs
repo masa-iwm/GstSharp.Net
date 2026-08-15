@@ -47,6 +47,7 @@ public unsafe partial class DiscovererStreamInfo : Gst.GObject.Object
     public Gst.Caps? GetCaps()
     {
         nint nativeResult = GstDiscovererStreamInfoGetCaps(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -55,11 +56,15 @@ public unsafe partial class DiscovererStreamInfo : Gst.GObject.Object
     /// additional information regarding the stream (for
     /// example codec version, profile, etc..). If you wish to use the #GstStructure
     /// after the life-time of @info you will need to copy it.
+    /// The wrapper owns a reference of its own, which is a copy for a boxed type:
+    /// dispose it when you are done, and note that changes made to a copy of a
+    /// boxed value are not written back.
     /// </returns>
     [Obsolete("This functions is deprecated since version 1.4, use #gst_discoverer_info_get_missing_elements_installer_details")]
     public Gst.Structure? GetMisc()
     {
         nint nativeResult = GstDiscovererStreamInfoGetMisc(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.None);
     }
 
@@ -72,6 +77,7 @@ public unsafe partial class DiscovererStreamInfo : Gst.GObject.Object
     public Gst.Pbutils.DiscovererStreamInfo? GetNext()
     {
         nint nativeResult = GstDiscovererStreamInfoGetNext(Handle);
+        System.GC.KeepAlive(this);
         return Gst.GObject.Object.FromNative<Gst.Pbutils.DiscovererStreamInfo>(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -84,6 +90,7 @@ public unsafe partial class DiscovererStreamInfo : Gst.GObject.Object
     public Gst.Pbutils.DiscovererStreamInfo? GetPrevious()
     {
         nint nativeResult = GstDiscovererStreamInfoGetPrevious(Handle);
+        System.GC.KeepAlive(this);
         return Gst.GObject.Object.FromNative<Gst.Pbutils.DiscovererStreamInfo>(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -95,6 +102,7 @@ public unsafe partial class DiscovererStreamInfo : Gst.GObject.Object
     public string? GetStreamId()
     {
         nint nativeResult = GstDiscovererStreamInfoGetStreamId(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
     }
 
@@ -106,6 +114,7 @@ public unsafe partial class DiscovererStreamInfo : Gst.GObject.Object
     public int GetStreamNumber()
     {
         int nativeResult = GstDiscovererStreamInfoGetStreamNumber(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -117,6 +126,7 @@ public unsafe partial class DiscovererStreamInfo : Gst.GObject.Object
     public string GetStreamTypeNick()
     {
         nint nativeResult = GstDiscovererStreamInfoGetStreamTypeNick(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
             ?? throw new InvalidOperationException("gst_discoverer_stream_info_get_stream_type_nick returned no value.");
     }
@@ -125,10 +135,14 @@ public unsafe partial class DiscovererStreamInfo : Gst.GObject.Object
     /// <returns>
     /// the tags contained in this stream. If you wish to
     /// use the tags after the life-time of @info you will need to copy them.
+    /// The wrapper owns a reference of its own, which is a copy for a boxed type:
+    /// dispose it when you are done, and note that changes made to a copy of a
+    /// boxed value are not written back.
     /// </returns>
     public Gst.TagList? GetTags()
     {
         nint nativeResult = GstDiscovererStreamInfoGetTags(Handle);
+        System.GC.KeepAlive(this);
         return Gst.TagList.FromNative(nativeResult, Gst.Interop.Transfer.None);
     }
 
@@ -136,10 +150,14 @@ public unsafe partial class DiscovererStreamInfo : Gst.GObject.Object
     /// <returns>
     /// the TOC contained in this stream. If you wish to
     /// use the TOC after the life-time of @info you will need to copy it.
+    /// The wrapper owns a reference of its own, which is a copy for a boxed type:
+    /// dispose it when you are done, and note that changes made to a copy of a
+    /// boxed value are not written back.
     /// </returns>
     public Gst.Toc? GetToc()
     {
         nint nativeResult = GstDiscovererStreamInfoGetToc(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Toc.FromNative(nativeResult, Gst.Interop.Transfer.None);
     }
 

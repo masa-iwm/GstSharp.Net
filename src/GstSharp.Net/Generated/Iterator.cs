@@ -75,17 +75,9 @@ public sealed unsafe partial class Iterator : Gst.GObject.Boxed
     public Gst.Iterator Copy()
     {
         nint nativeResult = GstIteratorCopy(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Iterator.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_iterator_copy returned no value.");
-    }
-
-    /// <summary>Free the iterator.</summary>
-    /// <remarks>
-    /// <para>MT safe.</para>
-    /// </remarks>
-    public void Free()
-    {
-        GstIteratorFree(Handle);
     }
 
     /// <summary>
@@ -109,6 +101,7 @@ public sealed unsafe partial class Iterator : Gst.GObject.Boxed
     {
         ArgumentNullException.ThrowIfNull(other);
         GstIteratorPush(Handle, other.Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -125,15 +118,12 @@ public sealed unsafe partial class Iterator : Gst.GObject.Boxed
     public void Resync()
     {
         GstIteratorResync(Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>The <c>gst_iterator_copy</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_iterator_copy")]
     private static partial nint GstIteratorCopy(nint it);
-
-    /// <summary>The <c>gst_iterator_free</c> entry point.</summary>
-    [LibraryImport("Gst", EntryPoint = "gst_iterator_free")]
-    private static partial void GstIteratorFree(nint it);
 
     /// <summary>The <c>gst_iterator_push</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_iterator_push")]

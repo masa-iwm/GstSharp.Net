@@ -79,27 +79,14 @@ public sealed unsafe partial class FlowCombiner : Gst.GObject.Boxed
     {
         ArgumentNullException.ThrowIfNull(pad);
         GstFlowCombinerAddPad(Handle, pad.Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Removes all pads from a #GstFlowCombiner and resets it to its initial state.</summary>
     public void Clear()
     {
         GstFlowCombinerClear(Handle);
-    }
-
-    /// <summary>Frees a #GstFlowCombiner struct and all its internal data.</summary>
-    public void Free()
-    {
-        GstFlowCombinerFree(Handle);
-    }
-
-    /// <summary>Increments the reference count on the #GstFlowCombiner.</summary>
-    /// <returns>the #GstFlowCombiner.</returns>
-    public Gst.Base.FlowCombiner Ref()
-    {
-        nint nativeResult = GstFlowCombinerRef(Handle);
-        return Gst.Base.FlowCombiner.FromNative(nativeResult, Gst.Interop.Transfer.Full)
-            ?? throw new InvalidOperationException("gst_flow_combiner_ref returned no value.");
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Removes a #GstPad from the #GstFlowCombiner.</summary>
@@ -108,18 +95,14 @@ public sealed unsafe partial class FlowCombiner : Gst.GObject.Boxed
     {
         ArgumentNullException.ThrowIfNull(pad);
         GstFlowCombinerRemovePad(Handle, pad.Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Reset flow combiner and all pads to their initial state without removing pads.</summary>
     public void Reset()
     {
         GstFlowCombinerReset(Handle);
-    }
-
-    /// <summary>Decrements the reference count on the #GstFlowCombiner.</summary>
-    public void Unref()
-    {
-        GstFlowCombinerUnref(Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Computes the combined flow return for the pads in it.</summary>
@@ -136,6 +119,7 @@ public sealed unsafe partial class FlowCombiner : Gst.GObject.Boxed
     public Gst.FlowReturn UpdateFlow(Gst.FlowReturn fret)
     {
         int nativeResult = GstFlowCombinerUpdateFlow(Handle, (int)fret);
+        System.GC.KeepAlive(this);
         return (Gst.FlowReturn)nativeResult;
     }
 
@@ -158,6 +142,7 @@ public sealed unsafe partial class FlowCombiner : Gst.GObject.Boxed
     {
         ArgumentNullException.ThrowIfNull(pad);
         int nativeResult = GstFlowCombinerUpdatePadFlow(Handle, pad.Handle, (int)fret);
+        System.GC.KeepAlive(this);
         return (Gst.FlowReturn)nativeResult;
     }
 
@@ -173,14 +158,6 @@ public sealed unsafe partial class FlowCombiner : Gst.GObject.Boxed
     [LibraryImport("GstBase", EntryPoint = "gst_flow_combiner_clear")]
     private static partial void GstFlowCombinerClear(nint combiner);
 
-    /// <summary>The <c>gst_flow_combiner_free</c> entry point.</summary>
-    [LibraryImport("GstBase", EntryPoint = "gst_flow_combiner_free")]
-    private static partial void GstFlowCombinerFree(nint combiner);
-
-    /// <summary>The <c>gst_flow_combiner_ref</c> entry point.</summary>
-    [LibraryImport("GstBase", EntryPoint = "gst_flow_combiner_ref")]
-    private static partial nint GstFlowCombinerRef(nint combiner);
-
     /// <summary>The <c>gst_flow_combiner_remove_pad</c> entry point.</summary>
     [LibraryImport("GstBase", EntryPoint = "gst_flow_combiner_remove_pad")]
     private static partial void GstFlowCombinerRemovePad(nint combiner, nint pad);
@@ -188,10 +165,6 @@ public sealed unsafe partial class FlowCombiner : Gst.GObject.Boxed
     /// <summary>The <c>gst_flow_combiner_reset</c> entry point.</summary>
     [LibraryImport("GstBase", EntryPoint = "gst_flow_combiner_reset")]
     private static partial void GstFlowCombinerReset(nint combiner);
-
-    /// <summary>The <c>gst_flow_combiner_unref</c> entry point.</summary>
-    [LibraryImport("GstBase", EntryPoint = "gst_flow_combiner_unref")]
-    private static partial void GstFlowCombinerUnref(nint combiner);
 
     /// <summary>The <c>gst_flow_combiner_update_flow</c> entry point.</summary>
     [LibraryImport("GstBase", EntryPoint = "gst_flow_combiner_update_flow")]

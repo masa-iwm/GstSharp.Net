@@ -53,6 +53,7 @@ public static unsafe partial class NavigationExtensions
     {
         ArgumentNullException.ThrowIfNull(navigation);
         GstNavigationSendCommand(navigation.Handle, (int)command);
+        System.GC.KeepAlive(navigation);
     }
 
     /// <summary>The <c>gst_navigation_send_event</c> function.</summary>
@@ -63,6 +64,7 @@ public static unsafe partial class NavigationExtensions
         ArgumentNullException.ThrowIfNull(navigation);
         ArgumentNullException.ThrowIfNull(structure);
         GstNavigationSendEvent(navigation.Handle, structure.Handle);
+        System.GC.KeepAlive(navigation);
     }
 
     /// <summary>The <c>gst_navigation_send_key_event</c> function.</summary>
@@ -79,6 +81,7 @@ public static unsafe partial class NavigationExtensions
         System.Span<byte> keyBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope keyScope = Gst.Interop.GMarshal.StackUtf8(key, keyBuffer);
         GstNavigationSendKeyEvent(navigation.Handle, @eventScope.Pointer, keyScope.Pointer);
+        System.GC.KeepAlive(navigation);
     }
 
     /// <summary>
@@ -99,6 +102,7 @@ public static unsafe partial class NavigationExtensions
         System.Span<byte> @eventBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope @eventScope = Gst.Interop.GMarshal.StackUtf8(@event, @eventBuffer);
         GstNavigationSendMouseEvent(navigation.Handle, @eventScope.Pointer, button, x, y);
+        System.GC.KeepAlive(navigation);
     }
 
     /// <summary>
@@ -116,6 +120,7 @@ public static unsafe partial class NavigationExtensions
     {
         ArgumentNullException.ThrowIfNull(navigation);
         GstNavigationSendMouseScrollEvent(navigation.Handle, x, y, deltaX, deltaY);
+        System.GC.KeepAlive(navigation);
     }
 
     /// <summary>Try to retrieve x and y coordinates of a #GstNavigation event.</summary>

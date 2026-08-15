@@ -61,7 +61,7 @@ public sealed class AppSrcTransferTests
 
         Assert.Equal(1, Refcount(handle));
 
-        Assert.Equal(FlowReturn.Ok, source.Push(buffer));
+        Assert.Equal(FlowReturn.Ok, source.PushBuffer(buffer));
 
         int queued = Refcount(handle);
         _output.WriteLine($"references after the push: {queued}, queued buffers: {source.CurrentLevelBuffers}");
@@ -167,7 +167,7 @@ public sealed class AppSrcTransferTests
                 map.Span[3] = 4;
             }
 
-            Assert.Equal(FlowReturn.Ok, source.Push(buffer));
+            Assert.Equal(FlowReturn.Ok, source.PushBuffer(buffer));
             Assert.True(buffer.IsDisposed);
 
             Assert.Equal(FlowReturn.Ok, source.EndOfStream());

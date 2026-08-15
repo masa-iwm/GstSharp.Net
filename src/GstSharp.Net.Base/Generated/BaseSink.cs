@@ -161,6 +161,7 @@ public abstract unsafe partial class BaseSink : Gst.Element
     public uint GetBlocksize()
     {
         uint nativeResult = GstBaseSinkGetBlocksize(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -175,6 +176,7 @@ public abstract unsafe partial class BaseSink : Gst.Element
     public bool GetDropOutOfSegment()
     {
         int nativeResult = GstBaseSinkGetDropOutOfSegment(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -194,6 +196,7 @@ public abstract unsafe partial class BaseSink : Gst.Element
     public Gst.Sample? GetLastSample()
     {
         nint nativeResult = GstBaseSinkGetLastSample(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Sample.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -202,6 +205,7 @@ public abstract unsafe partial class BaseSink : Gst.Element
     public Gst.ClockTime GetLatency()
     {
         ulong nativeResult = GstBaseSinkGetLatency(Handle);
+        System.GC.KeepAlive(this);
         return new Gst.ClockTime(nativeResult);
     }
 
@@ -210,6 +214,7 @@ public abstract unsafe partial class BaseSink : Gst.Element
     public ulong GetMaxBitrate()
     {
         ulong nativeResult = GstBaseSinkGetMaxBitrate(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -225,6 +230,7 @@ public abstract unsafe partial class BaseSink : Gst.Element
     public long GetMaxLateness()
     {
         long nativeResult = GstBaseSinkGetMaxLateness(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -237,6 +243,7 @@ public abstract unsafe partial class BaseSink : Gst.Element
     public Gst.ClockTime GetProcessingDeadline()
     {
         ulong nativeResult = GstBaseSinkGetProcessingDeadline(Handle);
+        System.GC.KeepAlive(this);
         return new Gst.ClockTime(nativeResult);
     }
 
@@ -248,6 +255,7 @@ public abstract unsafe partial class BaseSink : Gst.Element
     public Gst.ClockTime GetRenderDelay()
     {
         ulong nativeResult = GstBaseSinkGetRenderDelay(Handle);
+        System.GC.KeepAlive(this);
         return new Gst.ClockTime(nativeResult);
     }
 
@@ -266,6 +274,7 @@ public abstract unsafe partial class BaseSink : Gst.Element
     public Gst.Structure GetStats()
     {
         nint nativeResult = GstBaseSinkGetStats(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_base_sink_get_stats returned no value.");
     }
@@ -278,6 +287,7 @@ public abstract unsafe partial class BaseSink : Gst.Element
     public bool GetSync()
     {
         int nativeResult = GstBaseSinkGetSync(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -289,6 +299,7 @@ public abstract unsafe partial class BaseSink : Gst.Element
     public ulong GetThrottleTime()
     {
         ulong nativeResult = GstBaseSinkGetThrottleTime(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -297,6 +308,7 @@ public abstract unsafe partial class BaseSink : Gst.Element
     public long GetTsOffset()
     {
         long nativeResult = GstBaseSinkGetTsOffset(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -311,6 +323,7 @@ public abstract unsafe partial class BaseSink : Gst.Element
     public bool IsAsyncEnabled()
     {
         int nativeResult = GstBaseSinkIsAsyncEnabled(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -322,6 +335,7 @@ public abstract unsafe partial class BaseSink : Gst.Element
     public bool IsLastSampleEnabled()
     {
         int nativeResult = GstBaseSinkIsLastSampleEnabled(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -333,6 +347,7 @@ public abstract unsafe partial class BaseSink : Gst.Element
     public bool IsQosEnabled()
     {
         int nativeResult = GstBaseSinkIsQosEnabled(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -362,6 +377,7 @@ public abstract unsafe partial class BaseSink : Gst.Element
         ulong minLatencyNative = default;
         ulong maxLatencyNative = default;
         int nativeResult = GstBaseSinkQueryLatency(Handle, &liveNative, &upstreamLiveNative, &minLatencyNative, &maxLatencyNative);
+        System.GC.KeepAlive(this);
         live = liveNative != 0;
         upstreamLive = upstreamLiveNative != 0;
         minLatency = new Gst.ClockTime(minLatencyNative);
@@ -379,6 +395,7 @@ public abstract unsafe partial class BaseSink : Gst.Element
     public void SetAsyncEnabled(bool enabled)
     {
         GstBaseSinkSetAsyncEnabled(Handle, enabled ? 1 : 0);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -389,6 +406,7 @@ public abstract unsafe partial class BaseSink : Gst.Element
     public void SetBlocksize(uint blocksize)
     {
         GstBaseSinkSetBlocksize(Handle, blocksize);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Configure @sink to drop buffers which are outside the current segment</summary>
@@ -396,6 +414,7 @@ public abstract unsafe partial class BaseSink : Gst.Element
     public void SetDropOutOfSegment(bool dropOutOfSegment)
     {
         GstBaseSinkSetDropOutOfSegment(Handle, dropOutOfSegment ? 1 : 0);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -406,6 +425,7 @@ public abstract unsafe partial class BaseSink : Gst.Element
     public void SetLastSampleEnabled(bool enabled)
     {
         GstBaseSinkSetLastSampleEnabled(Handle, enabled ? 1 : 0);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Set the maximum amount of bits per second that the sink will render.</summary>
@@ -413,6 +433,7 @@ public abstract unsafe partial class BaseSink : Gst.Element
     public void SetMaxBitrate(ulong maxBitrate)
     {
         GstBaseSinkSetMaxBitrate(Handle, maxBitrate);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -425,6 +446,7 @@ public abstract unsafe partial class BaseSink : Gst.Element
     public void SetMaxLateness(long maxLateness)
     {
         GstBaseSinkSetMaxLateness(Handle, maxLateness);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -439,6 +461,7 @@ public abstract unsafe partial class BaseSink : Gst.Element
     public void SetProcessingDeadline(Gst.ClockTime processingDeadline)
     {
         GstBaseSinkSetProcessingDeadline(Handle, processingDeadline.Nanoseconds);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Configures @sink to send Quality-of-Service events upstream.</summary>
@@ -446,6 +469,7 @@ public abstract unsafe partial class BaseSink : Gst.Element
     public void SetQosEnabled(bool enabled)
     {
         GstBaseSinkSetQosEnabled(Handle, enabled ? 1 : 0);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -465,6 +489,7 @@ public abstract unsafe partial class BaseSink : Gst.Element
     public void SetRenderDelay(Gst.ClockTime delay)
     {
         GstBaseSinkSetRenderDelay(Handle, delay.Nanoseconds);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -478,6 +503,7 @@ public abstract unsafe partial class BaseSink : Gst.Element
     public void SetSync(bool sync)
     {
         GstBaseSinkSetSync(Handle, sync ? 1 : 0);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -489,6 +515,7 @@ public abstract unsafe partial class BaseSink : Gst.Element
     public void SetThrottleTime(ulong throttle)
     {
         GstBaseSinkSetThrottleTime(Handle, throttle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -501,6 +528,7 @@ public abstract unsafe partial class BaseSink : Gst.Element
     public void SetTsOffset(long offset)
     {
         GstBaseSinkSetTsOffset(Handle, offset);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -527,6 +555,7 @@ public abstract unsafe partial class BaseSink : Gst.Element
     {
         long jitterNative = default;
         int nativeResult = GstBaseSinkWait(Handle, time.Nanoseconds, &jitterNative);
+        System.GC.KeepAlive(this);
         jitter = jitterNative;
         return (Gst.FlowReturn)nativeResult;
     }
@@ -560,6 +589,7 @@ public abstract unsafe partial class BaseSink : Gst.Element
     {
         long jitterNative = default;
         int nativeResult = GstBaseSinkWaitClock(Handle, time.Nanoseconds, &jitterNative);
+        System.GC.KeepAlive(this);
         jitter = jitterNative;
         return (Gst.ClockReturn)nativeResult;
     }
@@ -596,6 +626,7 @@ public abstract unsafe partial class BaseSink : Gst.Element
     public Gst.FlowReturn WaitPreroll()
     {
         int nativeResult = GstBaseSinkWaitPreroll(Handle);
+        System.GC.KeepAlive(this);
         return (Gst.FlowReturn)nativeResult;
     }
 

@@ -33,6 +33,7 @@ public unsafe partial class EncodingTarget : Gst.GObject.Object
     public string GetCategory()
     {
         nint nativeResult = GstEncodingTargetGetCategory(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
             ?? throw new InvalidOperationException("gst_encoding_target_get_category returned no value.");
     }
@@ -42,6 +43,7 @@ public unsafe partial class EncodingTarget : Gst.GObject.Object
     public string GetDescription()
     {
         nint nativeResult = GstEncodingTargetGetDescription(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
             ?? throw new InvalidOperationException("gst_encoding_target_get_description returned no value.");
     }
@@ -51,6 +53,7 @@ public unsafe partial class EncodingTarget : Gst.GObject.Object
     public string GetName()
     {
         nint nativeResult = GstEncodingTargetGetName(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
             ?? throw new InvalidOperationException("gst_encoding_target_get_name returned no value.");
     }
@@ -60,6 +63,7 @@ public unsafe partial class EncodingTarget : Gst.GObject.Object
     public string? GetPath()
     {
         nint nativeResult = GstEncodingTargetGetPath(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
     }
 
@@ -72,6 +76,7 @@ public unsafe partial class EncodingTarget : Gst.GObject.Object
         System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
         nint nativeResult = GstEncodingTargetGetProfile(Handle, nameScope.Pointer);
+        System.GC.KeepAlive(this);
         return Gst.GObject.Object.FromNative<Gst.Pbutils.EncodingProfile>(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -82,6 +87,7 @@ public unsafe partial class EncodingTarget : Gst.GObject.Object
     {
         nint errorNative = 0;
         int nativeResult = GstEncodingTargetSave(Handle, &errorNative);
+        System.GC.KeepAlive(this);
         Gst.GLib.GException.ThrowIfSet(ref errorNative);
         return nativeResult != 0;
     }
@@ -97,6 +103,7 @@ public unsafe partial class EncodingTarget : Gst.GObject.Object
         using Gst.Interop.Utf8Scope filepathScope = Gst.Interop.GMarshal.StackUtf8(filepath, filepathBuffer);
         nint errorNative = 0;
         int nativeResult = GstEncodingTargetSaveToFile(Handle, filepathScope.Pointer, &errorNative);
+        System.GC.KeepAlive(this);
         Gst.GLib.GException.ThrowIfSet(ref errorNative);
         return nativeResult != 0;
     }

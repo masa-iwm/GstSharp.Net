@@ -85,12 +85,14 @@ public sealed unsafe partial class LogContext
     public void Free()
     {
         GstLogContextFree(Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Resets the logging context, clearing all tracked messages.</summary>
     public void Reset()
     {
         GstLogContextReset(Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>The <c>gst_log_context_free</c> entry point.</summary>

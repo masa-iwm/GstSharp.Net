@@ -76,6 +76,7 @@ public unsafe partial class Discoverer : Gst.GObject.Object
         using Gst.Interop.Utf8Scope uriScope = Gst.Interop.GMarshal.StackUtf8(uri, uriBuffer);
         nint errorNative = 0;
         nint nativeResult = GstDiscovererDiscoverUri(Handle, uriScope.Pointer, &errorNative);
+        System.GC.KeepAlive(this);
         Gst.GLib.GException.ThrowIfSet(ref errorNative);
         return Gst.GObject.Object.FromNative<Gst.Pbutils.DiscovererInfo>(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_discoverer_discover_uri returned no value.");
@@ -103,6 +104,7 @@ public unsafe partial class Discoverer : Gst.GObject.Object
         System.Span<byte> uriBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope uriScope = Gst.Interop.GMarshal.StackUtf8(uri, uriBuffer);
         int nativeResult = GstDiscovererDiscoverUriAsync(Handle, uriScope.Pointer);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -114,6 +116,7 @@ public unsafe partial class Discoverer : Gst.GObject.Object
     public void Start()
     {
         GstDiscovererStart(Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -123,6 +126,7 @@ public unsafe partial class Discoverer : Gst.GObject.Object
     public void Stop()
     {
         GstDiscovererStop(Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Will be emitted in async mode when all pending URIs have been processed.</summary>

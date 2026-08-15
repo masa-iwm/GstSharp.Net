@@ -42,6 +42,7 @@ public sealed unsafe partial class VideoFrame
     {
         ArgumentNullException.ThrowIfNull(src);
         int nativeResult = GstVideoFrameCopy(Handle, src.Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -59,6 +60,7 @@ public sealed unsafe partial class VideoFrame
     {
         ArgumentNullException.ThrowIfNull(src);
         int nativeResult = GstVideoFrameCopyPlane(Handle, src.Handle, plane);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -66,104 +68,7 @@ public sealed unsafe partial class VideoFrame
     public void Unmap()
     {
         GstVideoFrameUnmap(Handle);
-    }
-
-    /// <summary>
-    /// Use @info and @buffer to fill in the values of @frame. @frame is usually
-    /// allocated on the stack, and you will pass the address to the #GstVideoFrame
-    /// structure allocated on the stack; gst_video_frame_map() will then fill in
-    /// the structures with the various video-specific information you need to access
-    /// the pixels of the video buffer. You can then use accessor macros such as
-    /// GST_VIDEO_FRAME_COMP_DATA(), GST_VIDEO_FRAME_PLANE_DATA(),
-    /// GST_VIDEO_FRAME_COMP_STRIDE(), GST_VIDEO_FRAME_PLANE_STRIDE() etc.
-    /// to get to the pixels.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// |[&lt;!-- language="C" --&gt;
-    ///   GstVideoFrame vframe;
-    ///   ...
-    ///   // set RGB pixels to black one at a time
-    ///   if (gst_video_frame_map (&amp;vframe, video_info, video_buffer, GST_MAP_WRITE)) {
-    ///     guint8 *pixels = GST_VIDEO_FRAME_PLANE_DATA (vframe, 0);
-    ///     guint stride = GST_VIDEO_FRAME_PLANE_STRIDE (vframe, 0);
-    ///     guint pixel_stride = GST_VIDEO_FRAME_COMP_PSTRIDE (vframe, 0);
-    /// </para>
-    /// <para>
-    ///     for (h = 0; h &lt; height; ++h) {
-    ///       for (w = 0; w &lt; width; ++w) {
-    ///         guint8 *pixel = pixels + h * stride + w * pixel_stride;
-    /// </para>
-    /// <para>
-    ///         memset (pixel, 0, pixel_stride);
-    ///       }
-    ///     }
-    /// </para>
-    /// <para>
-    ///     gst_video_frame_unmap (&amp;vframe);
-    ///   }
-    ///   ...
-    /// ]|
-    /// </para>
-    /// <para>
-    /// All video planes of @buffer will be mapped and the pointers will be set in
-    /// @frame-&gt;data.
-    /// </para>
-    /// <para>
-    /// The purpose of this function is to make it easy for you to get to the video
-    /// pixels in a generic way, without you having to worry too much about details
-    /// such as whether the video data is allocated in one contiguous memory chunk
-    /// or multiple memory chunks (e.g. one for each plane); or if custom strides
-    /// and custom plane offsets are used or not (as signalled by GstVideoMeta on
-    /// each buffer). This function will just fill the #GstVideoFrame structure
-    /// with the right values and if you use the accessor macros everything will
-    /// just work and you can access the data easily. It also maps the underlying
-    /// memory chunks for you.
-    /// </para>
-    /// </remarks>
-    /// <param name="frame">The <c>frame</c> argument.</param>
-    /// <param name="info">The <c>info</c> argument.</param>
-    /// <param name="buffer">The <c>buffer</c> argument.</param>
-    /// <param name="flags">The <c>flags</c> argument.</param>
-    /// <returns>%TRUE on success.</returns>
-    public static bool Map(out Gst.Video.VideoFrame? frame, Gst.Video.VideoInfo info, Gst.Buffer buffer, Gst.MapFlags flags)
-    {
-        nint frameNative = default;
-        ArgumentNullException.ThrowIfNull(info);
-        ArgumentNullException.ThrowIfNull(buffer);
-        int nativeResult = GstVideoFrameMap(&frameNative, info.Handle, buffer.Handle, (int)flags);
-        frame = Gst.Video.VideoFrame.FromNative(frameNative);
-        return nativeResult != 0;
-    }
-
-    /// <summary>
-    /// Use @info and @buffer to fill in the values of @frame with the video frame
-    /// information of frame @id.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// When @id is -1, the default frame is mapped. When @id != -1, this function
-    /// will return %FALSE when there is no GstVideoMeta with that id.
-    /// </para>
-    /// <para>
-    /// All video planes of @buffer will be mapped and the pointers will be set in
-    /// @frame-&gt;data.
-    /// </para>
-    /// </remarks>
-    /// <param name="frame">The <c>frame</c> argument.</param>
-    /// <param name="info">The <c>info</c> argument.</param>
-    /// <param name="buffer">The <c>buffer</c> argument.</param>
-    /// <param name="id">The <c>id</c> argument.</param>
-    /// <param name="flags">The <c>flags</c> argument.</param>
-    /// <returns>%TRUE on success.</returns>
-    public static bool MapId(out Gst.Video.VideoFrame? frame, Gst.Video.VideoInfo info, Gst.Buffer buffer, int id, Gst.MapFlags flags)
-    {
-        nint frameNative = default;
-        ArgumentNullException.ThrowIfNull(info);
-        ArgumentNullException.ThrowIfNull(buffer);
-        int nativeResult = GstVideoFrameMapId(&frameNative, info.Handle, buffer.Handle, id, (int)flags);
-        frame = Gst.Video.VideoFrame.FromNative(frameNative);
-        return nativeResult != 0;
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>The <c>gst_video_frame_copy</c> entry point.</summary>
@@ -177,12 +82,4 @@ public sealed unsafe partial class VideoFrame
     /// <summary>The <c>gst_video_frame_unmap</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_frame_unmap")]
     private static partial void GstVideoFrameUnmap(nint frame);
-
-    /// <summary>The <c>gst_video_frame_map</c> entry point.</summary>
-    [LibraryImport("GstVideo", EntryPoint = "gst_video_frame_map")]
-    private static partial int GstVideoFrameMap(nint* frame, nint info, nint buffer, int flags);
-
-    /// <summary>The <c>gst_video_frame_map_id</c> entry point.</summary>
-    [LibraryImport("GstVideo", EntryPoint = "gst_video_frame_map_id")]
-    private static partial int GstVideoFrameMapId(nint* frame, nint info, nint buffer, int id, int flags);
 }

@@ -152,12 +152,12 @@ public unsafe partial class Bin : Gst.Element, Gst.IChildProxy
     /// <summary>Creates a new bin with the given name.</summary>
     /// <param name="name">The <c>name</c> argument.</param>
     /// <returns>a new #GstBin</returns>
-    public static Gst.Element New(string? name)
+    public static Gst.Bin New(string? name)
     {
         System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
         nint nativeResult = GstBinNew(nameScope.Pointer);
-        return Gst.GObject.Object.FromNative<Gst.Element>(nativeResult, Gst.Interop.Transfer.None)
+        return Gst.GObject.Object.FromNative<Gst.Bin>(nativeResult, Gst.Interop.Transfer.None)
             ?? throw new InvalidOperationException("gst_bin_new returned no value.");
     }
 
@@ -187,6 +187,7 @@ public unsafe partial class Bin : Gst.Element, Gst.IChildProxy
     {
         ArgumentNullException.ThrowIfNull(element);
         int nativeResult = GstBinAdd(Handle, element.Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -205,6 +206,7 @@ public unsafe partial class Bin : Gst.Element, Gst.IChildProxy
     public Gst.Pad? FindUnlinkedPad(Gst.PadDirection direction)
     {
         nint nativeResult = GstBinFindUnlinkedPad(Handle, (int)direction);
+        System.GC.KeepAlive(this);
         return Gst.GObject.Object.FromNative<Gst.Pad>(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -223,6 +225,7 @@ public unsafe partial class Bin : Gst.Element, Gst.IChildProxy
     public Gst.Element? GetByInterface(Gst.GObject.GType iface)
     {
         nint nativeResult = GstBinGetByInterface(Handle, iface.Value);
+        System.GC.KeepAlive(this);
         return Gst.GObject.Object.FromNative<Gst.Element>(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -241,6 +244,7 @@ public unsafe partial class Bin : Gst.Element, Gst.IChildProxy
         System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
         nint nativeResult = GstBinGetByName(Handle, nameScope.Pointer);
+        System.GC.KeepAlive(this);
         return Gst.GObject.Object.FromNative<Gst.Element>(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -259,6 +263,7 @@ public unsafe partial class Bin : Gst.Element, Gst.IChildProxy
         System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
         nint nativeResult = GstBinGetByNameRecurseUp(Handle, nameScope.Pointer);
+        System.GC.KeepAlive(this);
         return Gst.GObject.Object.FromNative<Gst.Element>(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -267,6 +272,7 @@ public unsafe partial class Bin : Gst.Element, Gst.IChildProxy
     public Gst.ElementFlags GetSuppressedFlags()
     {
         int nativeResult = GstBinGetSuppressedFlags(Handle);
+        System.GC.KeepAlive(this);
         return (Gst.ElementFlags)nativeResult;
     }
 
@@ -286,6 +292,7 @@ public unsafe partial class Bin : Gst.Element, Gst.IChildProxy
         System.Span<byte> factoryNameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope factoryNameScope = Gst.Interop.GMarshal.StackUtf8(factoryName, factoryNameBuffer);
         nint nativeResult = GstBinIterateAllByElementFactoryName(Handle, factoryNameScope.Pointer);
+        System.GC.KeepAlive(this);
         return Gst.Iterator.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_bin_iterate_all_by_element_factory_name returned no value.");
     }
@@ -304,6 +311,7 @@ public unsafe partial class Bin : Gst.Element, Gst.IChildProxy
     public Gst.Iterator IterateAllByInterface(Gst.GObject.GType iface)
     {
         nint nativeResult = GstBinIterateAllByInterface(Handle, iface.Value);
+        System.GC.KeepAlive(this);
         return Gst.Iterator.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_bin_iterate_all_by_interface returned no value.");
     }
@@ -313,6 +321,7 @@ public unsafe partial class Bin : Gst.Element, Gst.IChildProxy
     public Gst.Iterator IterateElements()
     {
         nint nativeResult = GstBinIterateElements(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Iterator.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_bin_iterate_elements returned no value.");
     }
@@ -325,6 +334,7 @@ public unsafe partial class Bin : Gst.Element, Gst.IChildProxy
     public Gst.Iterator IterateRecurse()
     {
         nint nativeResult = GstBinIterateRecurse(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Iterator.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_bin_iterate_recurse returned no value.");
     }
@@ -337,6 +347,7 @@ public unsafe partial class Bin : Gst.Element, Gst.IChildProxy
     public Gst.Iterator IterateSinks()
     {
         nint nativeResult = GstBinIterateSinks(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Iterator.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_bin_iterate_sinks returned no value.");
     }
@@ -356,6 +367,7 @@ public unsafe partial class Bin : Gst.Element, Gst.IChildProxy
     public Gst.Iterator IterateSorted()
     {
         nint nativeResult = GstBinIterateSorted(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Iterator.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_bin_iterate_sorted returned no value.");
     }
@@ -368,6 +380,7 @@ public unsafe partial class Bin : Gst.Element, Gst.IChildProxy
     public Gst.Iterator IterateSources()
     {
         nint nativeResult = GstBinIterateSources(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Iterator.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_bin_iterate_sources returned no value.");
     }
@@ -390,6 +403,7 @@ public unsafe partial class Bin : Gst.Element, Gst.IChildProxy
     public bool RecalculateLatency()
     {
         int nativeResult = GstBinRecalculateLatency(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -416,6 +430,7 @@ public unsafe partial class Bin : Gst.Element, Gst.IChildProxy
     {
         ArgumentNullException.ThrowIfNull(element);
         int nativeResult = GstBinRemove(Handle, element.Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -429,6 +444,7 @@ public unsafe partial class Bin : Gst.Element, Gst.IChildProxy
     public void SetSuppressedFlags(Gst.ElementFlags flags)
     {
         GstBinSetSuppressedFlags(Handle, (int)flags);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -442,6 +458,7 @@ public unsafe partial class Bin : Gst.Element, Gst.IChildProxy
     public bool SyncChildrenStates()
     {
         int nativeResult = GstBinSyncChildrenStates(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 

@@ -37,38 +37,13 @@ public sealed unsafe partial class VideoCodecFrame : Gst.GObject.Boxed
     public nint GetUserData()
     {
         nint nativeResult = GstVideoCodecFrameGetUserData(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
-    }
-
-    /// <summary>Increases the refcount of the given frame by one.</summary>
-    /// <returns>@buf</returns>
-    public Gst.Video.VideoCodecFrame Ref()
-    {
-        nint nativeResult = GstVideoCodecFrameRef(Handle);
-        return Gst.Video.VideoCodecFrame.FromNative(nativeResult, Gst.Interop.Transfer.Full)
-            ?? throw new InvalidOperationException("gst_video_codec_frame_ref returned no value.");
-    }
-
-    /// <summary>
-    /// Decreases the refcount of the frame. If the refcount reaches 0, the frame
-    /// will be freed.
-    /// </summary>
-    public void Unref()
-    {
-        GstVideoCodecFrameUnref(Handle);
     }
 
     /// <summary>The <c>gst_video_codec_frame_get_user_data</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_codec_frame_get_user_data")]
     private static partial nint GstVideoCodecFrameGetUserData(nint frame);
-
-    /// <summary>The <c>gst_video_codec_frame_ref</c> entry point.</summary>
-    [LibraryImport("GstVideo", EntryPoint = "gst_video_codec_frame_ref")]
-    private static partial nint GstVideoCodecFrameRef(nint frame);
-
-    /// <summary>The <c>gst_video_codec_frame_unref</c> entry point.</summary>
-    [LibraryImport("GstVideo", EntryPoint = "gst_video_codec_frame_unref")]
-    private static partial void GstVideoCodecFrameUnref(nint frame);
 
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstVideoCodecFrame</c> under.</summary>
     /// <returns>The type of the instances of this wrapper.</returns>

@@ -73,6 +73,7 @@ public sealed unsafe partial class VideoOverlayRectangle : Gst.MiniObject
     public Gst.Video.VideoOverlayRectangle Copy()
     {
         nint nativeResult = GstVideoOverlayRectangleCopy(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Video.VideoOverlayRectangle.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_video_overlay_rectangle_copy returned no value.");
     }
@@ -88,6 +89,7 @@ public sealed unsafe partial class VideoOverlayRectangle : Gst.MiniObject
     public Gst.Video.VideoOverlayFormatFlags GetFlags()
     {
         int nativeResult = GstVideoOverlayRectangleGetFlags(Handle);
+        System.GC.KeepAlive(this);
         return (Gst.Video.VideoOverlayFormatFlags)nativeResult;
     }
 
@@ -96,6 +98,7 @@ public sealed unsafe partial class VideoOverlayRectangle : Gst.MiniObject
     public float GetGlobalAlpha()
     {
         float nativeResult = GstVideoOverlayRectangleGetGlobalAlpha(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -107,10 +110,14 @@ public sealed unsafe partial class VideoOverlayRectangle : Gst.MiniObject
     ///    gst_video_overlay_rectangle_get_render_rectangle(). This function does
     ///    not return a reference, the caller should obtain a reference of her own
     ///    with gst_buffer_ref() if needed.
+    /// The wrapper owns a reference of its own, which is a copy for a boxed type:
+    /// dispose it when you are done, and note that changes made to a copy of a
+    /// boxed value are not written back.
     /// </returns>
     public Gst.Buffer GetPixelsArgb(Gst.Video.VideoOverlayFormatFlags flags)
     {
         nint nativeResult = GstVideoOverlayRectangleGetPixelsArgb(Handle, (int)flags);
+        System.GC.KeepAlive(this);
         return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.None)
             ?? throw new InvalidOperationException("gst_video_overlay_rectangle_get_pixels_argb returned no value.");
     }
@@ -123,10 +130,14 @@ public sealed unsafe partial class VideoOverlayRectangle : Gst.MiniObject
     ///    gst_video_overlay_rectangle_get_render_rectangle(). This function does
     ///    not return a reference, the caller should obtain a reference of her own
     ///    with gst_buffer_ref() if needed.
+    /// The wrapper owns a reference of its own, which is a copy for a boxed type:
+    /// dispose it when you are done, and note that changes made to a copy of a
+    /// boxed value are not written back.
     /// </returns>
     public Gst.Buffer GetPixelsAyuv(Gst.Video.VideoOverlayFormatFlags flags)
     {
         nint nativeResult = GstVideoOverlayRectangleGetPixelsAyuv(Handle, (int)flags);
+        System.GC.KeepAlive(this);
         return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.None)
             ?? throw new InvalidOperationException("gst_video_overlay_rectangle_get_pixels_ayuv returned no value.");
     }
@@ -140,10 +151,14 @@ public sealed unsafe partial class VideoOverlayRectangle : Gst.MiniObject
     ///    gst_video_overlay_rectangle_get_render_rectangle(). This function does
     ///    not return a reference, the caller should obtain a reference of her own
     ///    with gst_buffer_ref() if needed.
+    /// The wrapper owns a reference of its own, which is a copy for a boxed type:
+    /// dispose it when you are done, and note that changes made to a copy of a
+    /// boxed value are not written back.
     /// </returns>
     public Gst.Buffer GetPixelsRaw(Gst.Video.VideoOverlayFormatFlags flags)
     {
         nint nativeResult = GstVideoOverlayRectangleGetPixelsRaw(Handle, (int)flags);
+        System.GC.KeepAlive(this);
         return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.None)
             ?? throw new InvalidOperationException("gst_video_overlay_rectangle_get_pixels_raw returned no value.");
     }
@@ -159,10 +174,14 @@ public sealed unsafe partial class VideoOverlayRectangle : Gst.MiniObject
     /// a #GstBuffer holding the ARGB pixel data with
     ///    #GstVideoMeta set. This function does not return a reference, the caller
     ///    should obtain a reference of her own with gst_buffer_ref() if needed.
+    /// The wrapper owns a reference of its own, which is a copy for a boxed type:
+    /// dispose it when you are done, and note that changes made to a copy of a
+    /// boxed value are not written back.
     /// </returns>
     public Gst.Buffer GetPixelsUnscaledArgb(Gst.Video.VideoOverlayFormatFlags flags)
     {
         nint nativeResult = GstVideoOverlayRectangleGetPixelsUnscaledArgb(Handle, (int)flags);
+        System.GC.KeepAlive(this);
         return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.None)
             ?? throw new InvalidOperationException("gst_video_overlay_rectangle_get_pixels_unscaled_argb returned no value.");
     }
@@ -178,10 +197,14 @@ public sealed unsafe partial class VideoOverlayRectangle : Gst.MiniObject
     /// a #GstBuffer holding the AYUV pixel data with
     ///    #GstVideoMeta set. This function does not return a reference, the caller
     ///    should obtain a reference of her own with gst_buffer_ref() if needed.
+    /// The wrapper owns a reference of its own, which is a copy for a boxed type:
+    /// dispose it when you are done, and note that changes made to a copy of a
+    /// boxed value are not written back.
     /// </returns>
     public Gst.Buffer GetPixelsUnscaledAyuv(Gst.Video.VideoOverlayFormatFlags flags)
     {
         nint nativeResult = GstVideoOverlayRectangleGetPixelsUnscaledAyuv(Handle, (int)flags);
+        System.GC.KeepAlive(this);
         return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.None)
             ?? throw new InvalidOperationException("gst_video_overlay_rectangle_get_pixels_unscaled_ayuv returned no value.");
     }
@@ -197,10 +220,14 @@ public sealed unsafe partial class VideoOverlayRectangle : Gst.MiniObject
     /// a #GstBuffer holding the pixel data with
     ///    #GstVideoMeta set. This function does not return a reference, the caller
     ///    should obtain a reference of her own with gst_buffer_ref() if needed.
+    /// The wrapper owns a reference of its own, which is a copy for a boxed type:
+    /// dispose it when you are done, and note that changes made to a copy of a
+    /// boxed value are not written back.
     /// </returns>
     public Gst.Buffer GetPixelsUnscaledRaw(Gst.Video.VideoOverlayFormatFlags flags)
     {
         nint nativeResult = GstVideoOverlayRectangleGetPixelsUnscaledRaw(Handle, (int)flags);
+        System.GC.KeepAlive(this);
         return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.None)
             ?? throw new InvalidOperationException("gst_video_overlay_rectangle_get_pixels_unscaled_raw returned no value.");
     }
@@ -221,6 +248,7 @@ public sealed unsafe partial class VideoOverlayRectangle : Gst.MiniObject
         uint renderWidthNative = default;
         uint renderHeightNative = default;
         int nativeResult = GstVideoOverlayRectangleGetRenderRectangle(Handle, &renderXNative, &renderYNative, &renderWidthNative, &renderHeightNative);
+        System.GC.KeepAlive(this);
         renderX = renderXNative;
         renderY = renderYNative;
         renderWidth = renderWidthNative;
@@ -251,6 +279,7 @@ public sealed unsafe partial class VideoOverlayRectangle : Gst.MiniObject
     public uint GetSeqnum()
     {
         uint nativeResult = GstVideoOverlayRectangleGetSeqnum(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -271,6 +300,7 @@ public sealed unsafe partial class VideoOverlayRectangle : Gst.MiniObject
     public void SetGlobalAlpha(float globalAlpha)
     {
         GstVideoOverlayRectangleSetGlobalAlpha(Handle, globalAlpha);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -294,6 +324,7 @@ public sealed unsafe partial class VideoOverlayRectangle : Gst.MiniObject
     public void SetRenderRectangle(int renderX, int renderY, uint renderWidth, uint renderHeight)
     {
         GstVideoOverlayRectangleSetRenderRectangle(Handle, renderX, renderY, renderWidth, renderHeight);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>The <c>gst_video_overlay_rectangle_new_raw</c> entry point.</summary>

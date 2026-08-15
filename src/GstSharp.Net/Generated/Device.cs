@@ -43,6 +43,7 @@ public abstract unsafe partial class Device : Gst.Object
         System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
         nint nativeResult = GstDeviceCreateElement(Handle, nameScope.Pointer);
+        System.GC.KeepAlive(this);
         return Gst.GObject.Object.FromNative<Gst.Element>(nativeResult, Gst.Interop.Transfer.None);
     }
 
@@ -54,6 +55,7 @@ public abstract unsafe partial class Device : Gst.Object
     public Gst.Caps? GetCaps()
     {
         nint nativeResult = GstDeviceGetCaps(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -66,6 +68,7 @@ public abstract unsafe partial class Device : Gst.Object
     public string GetDeviceClass()
     {
         nint nativeResult = GstDeviceGetDeviceClass(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
             ?? throw new InvalidOperationException("gst_device_get_device_class returned no value.");
     }
@@ -75,6 +78,7 @@ public abstract unsafe partial class Device : Gst.Object
     public string GetDisplayName()
     {
         nint nativeResult = GstDeviceGetDisplayName(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
             ?? throw new InvalidOperationException("gst_device_get_display_name returned no value.");
     }
@@ -87,6 +91,7 @@ public abstract unsafe partial class Device : Gst.Object
     public Gst.Structure? GetProperties()
     {
         nint nativeResult = GstDeviceGetProperties(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -99,6 +104,7 @@ public abstract unsafe partial class Device : Gst.Object
         System.Span<byte> classesBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope classesScope = Gst.Interop.GMarshal.StackUtf8(classes, classesBuffer);
         int nativeResult = GstDeviceHasClasses(Handle, classesScope.Pointer);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -122,6 +128,7 @@ public abstract unsafe partial class Device : Gst.Object
     {
         ArgumentNullException.ThrowIfNull(element);
         int nativeResult = GstDeviceReconfigureElement(Handle, element.Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 

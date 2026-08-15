@@ -39,6 +39,7 @@ public abstract unsafe partial class PluginFeature : Gst.Object
     public bool CheckVersion(uint minMajor, uint minMinor, uint minMicro)
     {
         int nativeResult = GstPluginFeatureCheckVersion(Handle, minMajor, minMinor, minMicro);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -51,6 +52,7 @@ public abstract unsafe partial class PluginFeature : Gst.Object
     public Gst.Plugin? GetPlugin()
     {
         nint nativeResult = GstPluginFeatureGetPlugin(Handle);
+        System.GC.KeepAlive(this);
         return Gst.GObject.Object.FromNative<Gst.Plugin>(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -63,6 +65,7 @@ public abstract unsafe partial class PluginFeature : Gst.Object
     public string? GetPluginName()
     {
         nint nativeResult = GstPluginFeatureGetPluginName(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
     }
 
@@ -71,6 +74,7 @@ public abstract unsafe partial class PluginFeature : Gst.Object
     public uint GetRank()
     {
         uint nativeResult = GstPluginFeatureGetRank(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -99,6 +103,7 @@ public abstract unsafe partial class PluginFeature : Gst.Object
     public Gst.PluginFeature? Load()
     {
         nint nativeResult = GstPluginFeatureLoad(Handle);
+        System.GC.KeepAlive(this);
         return Gst.GObject.Object.FromNative<Gst.PluginFeature>(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -110,6 +115,7 @@ public abstract unsafe partial class PluginFeature : Gst.Object
     public void SetRank(uint rank)
     {
         GstPluginFeatureSetRank(Handle, rank);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>

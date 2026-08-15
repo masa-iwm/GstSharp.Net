@@ -24,6 +24,7 @@ public unsafe partial class DiscovererInfo : Gst.GObject.Object
     public Gst.Pbutils.DiscovererInfo Copy()
     {
         nint nativeResult = GstDiscovererInfoCopy(Handle);
+        System.GC.KeepAlive(this);
         return Gst.GObject.Object.FromNative<Gst.Pbutils.DiscovererInfo>(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_discoverer_info_copy returned no value.");
     }
@@ -33,6 +34,7 @@ public unsafe partial class DiscovererInfo : Gst.GObject.Object
     public Gst.ClockTime GetDuration()
     {
         ulong nativeResult = GstDiscovererInfoGetDuration(Handle);
+        System.GC.KeepAlive(this);
         return new Gst.ClockTime(nativeResult);
     }
 
@@ -41,6 +43,7 @@ public unsafe partial class DiscovererInfo : Gst.GObject.Object
     public bool GetLive()
     {
         int nativeResult = GstDiscovererInfoGetLive(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -49,11 +52,15 @@ public unsafe partial class DiscovererInfo : Gst.GObject.Object
     /// Miscellaneous information stored as a #GstStructure
     /// (for example: information about missing plugins). If you wish to use the
     /// #GstStructure after the life-time of @info, you will need to copy it.
+    /// The wrapper owns a reference of its own, which is a copy for a boxed type:
+    /// dispose it when you are done, and note that changes made to a copy of a
+    /// boxed value are not written back.
     /// </returns>
     [Obsolete("This functions is deprecated since version 1.4, use #gst_discoverer_info_get_missing_elements_installer_details")]
     public Gst.Structure? GetMisc()
     {
         nint nativeResult = GstDiscovererInfoGetMisc(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.None);
     }
 
@@ -62,6 +69,7 @@ public unsafe partial class DiscovererInfo : Gst.GObject.Object
     public Gst.Pbutils.DiscovererResult GetResult()
     {
         int nativeResult = GstDiscovererInfoGetResult(Handle);
+        System.GC.KeepAlive(this);
         return (Gst.Pbutils.DiscovererResult)nativeResult;
     }
 
@@ -70,6 +78,7 @@ public unsafe partial class DiscovererInfo : Gst.GObject.Object
     public bool GetSeekable()
     {
         int nativeResult = GstDiscovererInfoGetSeekable(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -83,6 +92,7 @@ public unsafe partial class DiscovererInfo : Gst.GObject.Object
     public Gst.Pbutils.DiscovererStreamInfo? GetStreamInfo()
     {
         nint nativeResult = GstDiscovererInfoGetStreamInfo(Handle);
+        System.GC.KeepAlive(this);
         return Gst.GObject.Object.FromNative<Gst.Pbutils.DiscovererStreamInfo>(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -90,11 +100,15 @@ public unsafe partial class DiscovererInfo : Gst.GObject.Object
     /// <returns>
     /// all tags contained in the URI. If you wish to use
     /// the tags after the life-time of @info, you will need to copy them.
+    /// The wrapper owns a reference of its own, which is a copy for a boxed type:
+    /// dispose it when you are done, and note that changes made to a copy of a
+    /// boxed value are not written back.
     /// </returns>
     [Obsolete("Use gst_discoverer_{container,stream}_info_get_tags() instead. (deprecated since 1.20)")]
     public Gst.TagList? GetTags()
     {
         nint nativeResult = GstDiscovererInfoGetTags(Handle);
+        System.GC.KeepAlive(this);
         return Gst.TagList.FromNative(nativeResult, Gst.Interop.Transfer.None);
     }
 
@@ -102,10 +116,14 @@ public unsafe partial class DiscovererInfo : Gst.GObject.Object
     /// <returns>
     /// TOC contained in the URI. If you wish to use
     /// the TOC after the life-time of @info, you will need to copy it.
+    /// The wrapper owns a reference of its own, which is a copy for a boxed type:
+    /// dispose it when you are done, and note that changes made to a copy of a
+    /// boxed value are not written back.
     /// </returns>
     public Gst.Toc? GetToc()
     {
         nint nativeResult = GstDiscovererInfoGetToc(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Toc.FromNative(nativeResult, Gst.Interop.Transfer.None);
     }
 
@@ -117,6 +135,7 @@ public unsafe partial class DiscovererInfo : Gst.GObject.Object
     public string GetUri()
     {
         nint nativeResult = GstDiscovererInfoGetUri(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
             ?? throw new InvalidOperationException("gst_discoverer_info_get_uri returned no value.");
     }

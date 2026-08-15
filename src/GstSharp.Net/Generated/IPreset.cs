@@ -57,6 +57,7 @@ public static unsafe partial class PresetExtensions
         System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
         int nativeResult = GstPresetDeletePreset(preset.Handle, nameScope.Pointer);
+        System.GC.KeepAlive(preset);
         return nativeResult != 0;
     }
 
@@ -83,6 +84,7 @@ public static unsafe partial class PresetExtensions
         using Gst.Interop.Utf8Scope tagScope = Gst.Interop.GMarshal.StackUtf8(tag, tagBuffer);
         nint valueNative = default;
         int nativeResult = GstPresetGetMeta(preset.Handle, nameScope.Pointer, tagScope.Pointer, &valueNative);
+        System.GC.KeepAlive(preset);
         value = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(valueNative);
         return nativeResult != 0;
     }
@@ -94,6 +96,7 @@ public static unsafe partial class PresetExtensions
     {
         ArgumentNullException.ThrowIfNull(preset);
         int nativeResult = GstPresetIsEditable(preset.Handle);
+        System.GC.KeepAlive(preset);
         return nativeResult != 0;
     }
 
@@ -108,6 +111,7 @@ public static unsafe partial class PresetExtensions
         System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
         int nativeResult = GstPresetLoadPreset(preset.Handle, nameScope.Pointer);
+        System.GC.KeepAlive(preset);
         return nativeResult != 0;
     }
 
@@ -129,6 +133,7 @@ public static unsafe partial class PresetExtensions
         System.Span<byte> newNameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope newNameScope = Gst.Interop.GMarshal.StackUtf8(newName, newNameBuffer);
         int nativeResult = GstPresetRenamePreset(preset.Handle, oldNameScope.Pointer, newNameScope.Pointer);
+        System.GC.KeepAlive(preset);
         return nativeResult != 0;
     }
 
@@ -146,6 +151,7 @@ public static unsafe partial class PresetExtensions
         System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
         int nativeResult = GstPresetSavePreset(preset.Handle, nameScope.Pointer);
+        System.GC.KeepAlive(preset);
         return nativeResult != 0;
     }
 
@@ -171,6 +177,7 @@ public static unsafe partial class PresetExtensions
         System.Span<byte> valueBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope valueScope = Gst.Interop.GMarshal.StackUtf8(value, valueBuffer);
         int nativeResult = GstPresetSetMeta(preset.Handle, nameScope.Pointer, tagScope.Pointer, valueScope.Pointer);
+        System.GC.KeepAlive(preset);
         return nativeResult != 0;
     }
 

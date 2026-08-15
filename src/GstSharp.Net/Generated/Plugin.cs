@@ -76,6 +76,7 @@ public unsafe partial class Plugin : Gst.Object
         System.Span<byte> namesBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope namesScope = Gst.Interop.GMarshal.StackUtf8(names, namesBuffer);
         GstPluginAddDependencySimple(Handle, envVarsScope.Pointer, pathsScope.Pointer, namesScope.Pointer, (int)flags);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>The <c>gst_plugin_add_status_error</c> function.</summary>
@@ -86,6 +87,7 @@ public unsafe partial class Plugin : Gst.Object
         System.Span<byte> messageBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope messageScope = Gst.Interop.GMarshal.StackUtf8(message, messageBuffer);
         GstPluginAddStatusError(Handle, messageScope.Pointer);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>The <c>gst_plugin_add_status_info</c> function.</summary>
@@ -96,6 +98,7 @@ public unsafe partial class Plugin : Gst.Object
         System.Span<byte> messageBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope messageScope = Gst.Interop.GMarshal.StackUtf8(message, messageBuffer);
         GstPluginAddStatusInfo(Handle, messageScope.Pointer);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>The <c>gst_plugin_add_status_warning</c> function.</summary>
@@ -106,6 +109,7 @@ public unsafe partial class Plugin : Gst.Object
         System.Span<byte> messageBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope messageScope = Gst.Interop.GMarshal.StackUtf8(message, messageBuffer);
         GstPluginAddStatusWarning(Handle, messageScope.Pointer);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -115,10 +119,14 @@ public unsafe partial class Plugin : Gst.Object
     /// <returns>
     /// The cached data as a
     /// #GstStructure or %NULL.
+    /// The wrapper owns a reference of its own, which is a copy for a boxed type:
+    /// dispose it when you are done, and note that changes made to a copy of a
+    /// boxed value are not written back.
     /// </returns>
     public Gst.Structure? GetCacheData()
     {
         nint nativeResult = GstPluginGetCacheData(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.None);
     }
 
@@ -127,6 +135,7 @@ public unsafe partial class Plugin : Gst.Object
     public string GetDescription()
     {
         nint nativeResult = GstPluginGetDescription(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
             ?? throw new InvalidOperationException("gst_plugin_get_description returned no value.");
     }
@@ -136,6 +145,7 @@ public unsafe partial class Plugin : Gst.Object
     public string? GetFilename()
     {
         nint nativeResult = GstPluginGetFilename(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
     }
 
@@ -144,6 +154,7 @@ public unsafe partial class Plugin : Gst.Object
     public string GetLicense()
     {
         nint nativeResult = GstPluginGetLicense(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
             ?? throw new InvalidOperationException("gst_plugin_get_license returned no value.");
     }
@@ -153,6 +164,7 @@ public unsafe partial class Plugin : Gst.Object
     public new string GetName()
     {
         nint nativeResult = GstPluginGetName(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
             ?? throw new InvalidOperationException("gst_plugin_get_name returned no value.");
     }
@@ -162,6 +174,7 @@ public unsafe partial class Plugin : Gst.Object
     public string GetOrigin()
     {
         nint nativeResult = GstPluginGetOrigin(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
             ?? throw new InvalidOperationException("gst_plugin_get_origin returned no value.");
     }
@@ -171,6 +184,7 @@ public unsafe partial class Plugin : Gst.Object
     public string GetPackage()
     {
         nint nativeResult = GstPluginGetPackage(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
             ?? throw new InvalidOperationException("gst_plugin_get_package returned no value.");
     }
@@ -192,6 +206,7 @@ public unsafe partial class Plugin : Gst.Object
     public string? GetReleaseDateString()
     {
         nint nativeResult = GstPluginGetReleaseDateString(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
     }
 
@@ -200,6 +215,7 @@ public unsafe partial class Plugin : Gst.Object
     public string GetSource()
     {
         nint nativeResult = GstPluginGetSource(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
             ?? throw new InvalidOperationException("gst_plugin_get_source returned no value.");
     }
@@ -209,6 +225,7 @@ public unsafe partial class Plugin : Gst.Object
     public string GetVersion()
     {
         nint nativeResult = GstPluginGetVersion(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
             ?? throw new InvalidOperationException("gst_plugin_get_version returned no value.");
     }
@@ -218,6 +235,7 @@ public unsafe partial class Plugin : Gst.Object
     public bool IsLoaded()
     {
         int nativeResult = GstPluginIsLoaded(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -243,6 +261,7 @@ public unsafe partial class Plugin : Gst.Object
     public Gst.Plugin? Load()
     {
         nint nativeResult = GstPluginLoad(Handle);
+        System.GC.KeepAlive(this);
         return Gst.GObject.Object.FromNative<Gst.Plugin>(nativeResult, Gst.Interop.Transfer.Full);
     }
 

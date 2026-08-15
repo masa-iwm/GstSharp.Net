@@ -39,6 +39,7 @@ public sealed unsafe partial class AudioFormatInfo
         fixed (byte* destPointer = dest)
         {
             GstAudioFormatInfoFillSilence(Handle, destPointer, (nuint)dest.Length);
+            System.GC.KeepAlive(this);
         }
     }
 

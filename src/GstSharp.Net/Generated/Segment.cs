@@ -134,6 +134,7 @@ public sealed unsafe partial class Segment : Gst.GObject.Boxed
         ulong clipStartNative = default;
         ulong clipStopNative = default;
         int nativeResult = GstSegmentClip(Handle, (int)format, start, stop, &clipStartNative, &clipStopNative);
+        System.GC.KeepAlive(this);
         clipStart = clipStartNative;
         clipStop = clipStopNative;
         return nativeResult != 0;
@@ -147,6 +148,7 @@ public sealed unsafe partial class Segment : Gst.GObject.Boxed
     public Gst.Segment Copy()
     {
         nint nativeResult = GstSegmentCopy(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Segment.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_segment_copy returned no value.");
     }
@@ -157,6 +159,7 @@ public sealed unsafe partial class Segment : Gst.GObject.Boxed
     {
         ArgumentNullException.ThrowIfNull(dest);
         GstSegmentCopyInto(Handle, dest.Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -208,14 +211,9 @@ public sealed unsafe partial class Segment : Gst.GObject.Boxed
     {
         int updateNative = default;
         int nativeResult = GstSegmentDoSeek(Handle, rate, (int)format, (int)flags, (int)startType, start, (int)stopType, stop, &updateNative);
+        System.GC.KeepAlive(this);
         update = updateNative != 0;
         return nativeResult != 0;
-    }
-
-    /// <summary>Free the allocated segment @segment.</summary>
-    public void Free()
-    {
-        GstSegmentFree(Handle);
     }
 
     /// <summary>
@@ -230,6 +228,7 @@ public sealed unsafe partial class Segment : Gst.GObject.Boxed
     public void Init(Gst.Format format)
     {
         GstSegmentInit(Handle, (int)format);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -242,6 +241,7 @@ public sealed unsafe partial class Segment : Gst.GObject.Boxed
     {
         ArgumentNullException.ThrowIfNull(s1);
         int nativeResult = GstSegmentIsEqual(Handle, s1.Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -258,6 +258,7 @@ public sealed unsafe partial class Segment : Gst.GObject.Boxed
     public bool OffsetRunningTime(Gst.Format format, long offset)
     {
         int nativeResult = GstSegmentOffsetRunningTime(Handle, (int)format, offset);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -274,6 +275,7 @@ public sealed unsafe partial class Segment : Gst.GObject.Boxed
     public ulong PositionFromRunningTime(Gst.Format format, ulong runningTime)
     {
         ulong nativeResult = GstSegmentPositionFromRunningTime(Handle, (int)format, runningTime);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -309,6 +311,7 @@ public sealed unsafe partial class Segment : Gst.GObject.Boxed
     {
         ulong positionNative = default;
         int nativeResult = GstSegmentPositionFromRunningTimeFull(Handle, (int)format, runningTime, &positionNative);
+        System.GC.KeepAlive(this);
         position = positionNative;
         return nativeResult;
     }
@@ -326,6 +329,7 @@ public sealed unsafe partial class Segment : Gst.GObject.Boxed
     public ulong PositionFromStreamTime(Gst.Format format, ulong streamTime)
     {
         ulong nativeResult = GstSegmentPositionFromStreamTime(Handle, (int)format, streamTime);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -360,6 +364,7 @@ public sealed unsafe partial class Segment : Gst.GObject.Boxed
     {
         ulong positionNative = default;
         int nativeResult = GstSegmentPositionFromStreamTimeFull(Handle, (int)format, streamTime, &positionNative);
+        System.GC.KeepAlive(this);
         position = positionNative;
         return nativeResult;
     }
@@ -377,6 +382,7 @@ public sealed unsafe partial class Segment : Gst.GObject.Boxed
     public bool SetRunningTime(Gst.Format format, ulong runningTime)
     {
         int nativeResult = GstSegmentSetRunningTime(Handle, (int)format, runningTime);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -394,6 +400,7 @@ public sealed unsafe partial class Segment : Gst.GObject.Boxed
     public ulong ToPosition(Gst.Format format, ulong runningTime)
     {
         ulong nativeResult = GstSegmentToPosition(Handle, (int)format, runningTime);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -419,6 +426,7 @@ public sealed unsafe partial class Segment : Gst.GObject.Boxed
     public ulong ToRunningTime(Gst.Format format, ulong position)
     {
         ulong nativeResult = GstSegmentToRunningTime(Handle, (int)format, position);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -453,6 +461,7 @@ public sealed unsafe partial class Segment : Gst.GObject.Boxed
     {
         ulong runningTimeNative = default;
         int nativeResult = GstSegmentToRunningTimeFull(Handle, (int)format, position, &runningTimeNative);
+        System.GC.KeepAlive(this);
         runningTime = runningTimeNative;
         return nativeResult;
     }
@@ -481,6 +490,7 @@ public sealed unsafe partial class Segment : Gst.GObject.Boxed
     public ulong ToStreamTime(Gst.Format format, ulong position)
     {
         ulong nativeResult = GstSegmentToStreamTime(Handle, (int)format, position);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -515,6 +525,7 @@ public sealed unsafe partial class Segment : Gst.GObject.Boxed
     {
         ulong streamTimeNative = default;
         int nativeResult = GstSegmentToStreamTimeFull(Handle, (int)format, position, &streamTimeNative);
+        System.GC.KeepAlive(this);
         streamTime = streamTimeNative;
         return nativeResult;
     }
@@ -538,10 +549,6 @@ public sealed unsafe partial class Segment : Gst.GObject.Boxed
     /// <summary>The <c>gst_segment_do_seek</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_segment_do_seek")]
     private static partial int GstSegmentDoSeek(nint segment, double rate, int format, int flags, int startType, ulong start, int stopType, ulong stop, int* update);
-
-    /// <summary>The <c>gst_segment_free</c> entry point.</summary>
-    [LibraryImport("Gst", EntryPoint = "gst_segment_free")]
-    private static partial void GstSegmentFree(nint segment);
 
     /// <summary>The <c>gst_segment_init</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_segment_init")]

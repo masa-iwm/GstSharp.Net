@@ -91,6 +91,7 @@ public unsafe partial class BufferPool : Gst.Object
         nint bufferNative = default;
         Gst.BufferPoolAcquireParams @paramsNative = @params;
         int nativeResult = GstBufferPoolAcquireBuffer(Handle, &bufferNative, &@paramsNative);
+        System.GC.KeepAlive(this);
         buffer = Gst.Buffer.FromNative(bufferNative, Gst.Interop.Transfer.Full);
         return (Gst.FlowReturn)nativeResult;
     }
@@ -103,6 +104,7 @@ public unsafe partial class BufferPool : Gst.Object
     public Gst.Structure GetConfig()
     {
         nint nativeResult = GstBufferPoolGetConfig(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_buffer_pool_get_config returned no value.");
     }
@@ -116,6 +118,7 @@ public unsafe partial class BufferPool : Gst.Object
         System.Span<byte> optionBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope optionScope = Gst.Interop.GMarshal.StackUtf8(option, optionBuffer);
         int nativeResult = GstBufferPoolHasOption(Handle, optionScope.Pointer);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -127,6 +130,7 @@ public unsafe partial class BufferPool : Gst.Object
     public bool IsActive()
     {
         int nativeResult = GstBufferPoolIsActive(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -153,6 +157,7 @@ public unsafe partial class BufferPool : Gst.Object
     public bool SetActive(bool active)
     {
         int nativeResult = GstBufferPoolSetActive(Handle, active ? 1 : 0);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -164,6 +169,7 @@ public unsafe partial class BufferPool : Gst.Object
     public void SetFlushing(bool flushing)
     {
         GstBufferPoolSetFlushing(Handle, flushing ? 1 : 0);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -182,22 +188,6 @@ public unsafe partial class BufferPool : Gst.Object
         System.Span<byte> optionBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope optionScope = Gst.Interop.GMarshal.StackUtf8(option, optionBuffer);
         GstBufferPoolConfigAddOption(config.Handle, optionScope.Pointer);
-    }
-
-    /// <summary>Gets the @allocator and @params from @config.</summary>
-    /// <param name="config">The <c>config</c> argument.</param>
-    /// <param name="allocator">The <c>allocator</c> argument.</param>
-    /// <param name="params">The <c>@params</c> argument.</param>
-    /// <returns>%TRUE, if the values are set.</returns>
-    public static bool ConfigGetAllocator(Gst.Structure config, out Gst.Allocator? allocator, out Gst.AllocationParams? @params)
-    {
-        ArgumentNullException.ThrowIfNull(config);
-        nint allocatorNative = default;
-        nint @paramsNative = default;
-        int nativeResult = GstBufferPoolConfigGetAllocator(config.Handle, &allocatorNative, &@paramsNative);
-        allocator = Gst.GObject.Object.FromNative<Gst.Allocator>(allocatorNative, Gst.Interop.Transfer.None);
-        @params = Gst.AllocationParams.FromNative(@paramsNative, Gst.Interop.Transfer.None);
-        return nativeResult != 0;
     }
 
     /// <summary>
@@ -354,10 +344,6 @@ public unsafe partial class BufferPool : Gst.Object
     /// <summary>The <c>gst_buffer_pool_config_add_option</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_buffer_pool_config_add_option")]
     private static partial void GstBufferPoolConfigAddOption(nint config, byte* option);
-
-    /// <summary>The <c>gst_buffer_pool_config_get_allocator</c> entry point.</summary>
-    [LibraryImport("Gst", EntryPoint = "gst_buffer_pool_config_get_allocator")]
-    private static partial int GstBufferPoolConfigGetAllocator(nint config, nint* allocator, nint* @params);
 
     /// <summary>The <c>gst_buffer_pool_config_get_option</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_buffer_pool_config_get_option")]

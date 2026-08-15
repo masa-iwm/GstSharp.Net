@@ -97,6 +97,7 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
     {
         ArgumentNullException.ThrowIfNull(binding);
         int nativeResult = GstObjectAddControlBinding(Handle, binding.Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -115,6 +116,7 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
         System.Span<byte> propertyNameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope propertyNameScope = Gst.Interop.GMarshal.StackUtf8(propertyName, propertyNameBuffer);
         nint nativeResult = GstObjectGetControlBinding(Handle, propertyNameScope.Pointer);
+        System.GC.KeepAlive(this);
         return Gst.GObject.Object.FromNative<Gst.ControlBinding>(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -138,6 +140,7 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
     public Gst.ClockTime GetControlRate()
     {
         ulong nativeResult = GstObjectGetControlRate(Handle);
+        System.GC.KeepAlive(this);
         return new Gst.ClockTime(nativeResult);
     }
 
@@ -157,6 +160,7 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
     public string? GetName()
     {
         nint nativeResult = GstObjectGetName(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
     }
 
@@ -171,6 +175,7 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
     public Gst.Object? GetParent()
     {
         nint nativeResult = GstObjectGetParent(Handle);
+        System.GC.KeepAlive(this);
         return Gst.GObject.Object.FromNative<Gst.Object>(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -188,6 +193,7 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
     public string GetPathString()
     {
         nint nativeResult = GstObjectGetPathString(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
             ?? throw new InvalidOperationException("gst_object_get_path_string returned no value.");
     }
@@ -203,6 +209,7 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
     public Gst.Object GetToplevel()
     {
         nint nativeResult = GstObjectGetToplevel(Handle);
+        System.GC.KeepAlive(this);
         return Gst.GObject.Object.FromNative<Gst.Object>(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_object_get_toplevel returned no value.");
     }
@@ -212,6 +219,7 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
     public bool HasActiveControlBindings()
     {
         int nativeResult = GstObjectHasActiveControlBindings(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -226,6 +234,7 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
     {
         ArgumentNullException.ThrowIfNull(ancestor);
         int nativeResult = GstObjectHasAncestor(Handle, ancestor.Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -239,6 +248,7 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
     {
         ArgumentNullException.ThrowIfNull(ancestor);
         int nativeResult = GstObjectHasAsAncestor(Handle, ancestor.Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -255,27 +265,8 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
     {
         ArgumentNullException.ThrowIfNull(parent);
         int nativeResult = GstObjectHasAsParent(Handle, parent.Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
-    }
-
-    /// <summary>
-    /// Increments the reference count on @object. This function
-    /// does not take the lock on @object because it relies on
-    /// atomic refcounting.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// This object returns the input parameter to ease writing
-    /// constructs like :
-    ///  result = gst_object_ref (object-&gt;parent);
-    /// </para>
-    /// </remarks>
-    /// <returns>A pointer to @object</returns>
-    public Gst.Object Ref()
-    {
-        nint nativeResult = GstObjectRef(Handle);
-        return Gst.GObject.Object.FromNative<Gst.Object>(nativeResult, Gst.Interop.Transfer.Full)
-            ?? throw new InvalidOperationException("gst_object_ref returned no value.");
     }
 
     /// <summary>
@@ -288,6 +279,7 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
     {
         ArgumentNullException.ThrowIfNull(binding);
         int nativeResult = GstObjectRemoveControlBinding(Handle, binding.Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -304,6 +296,7 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
         System.Span<byte> propertyNameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope propertyNameScope = Gst.Interop.GMarshal.StackUtf8(propertyName, propertyNameBuffer);
         GstObjectSetControlBindingDisabled(Handle, propertyNameScope.Pointer, disabled ? 1 : 0);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -314,6 +307,7 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
     public void SetControlBindingsDisabled(bool disabled)
     {
         GstObjectSetControlBindingsDisabled(Handle, disabled ? 1 : 0);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -332,6 +326,7 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
     public void SetControlRate(Gst.ClockTime controlRate)
     {
         GstObjectSetControlRate(Handle, controlRate.Nanoseconds);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -351,6 +346,7 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
         System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
         int nativeResult = GstObjectSetName(Handle, nameScope.Pointer);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -367,6 +363,7 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
     {
         ArgumentNullException.ThrowIfNull(parent);
         int nativeResult = GstObjectSetParent(Handle, parent.Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -381,6 +378,7 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
     public Gst.ClockTime SuggestNextSync()
     {
         ulong nativeResult = GstObjectSuggestNextSync(Handle);
+        System.GC.KeepAlive(this);
         return new Gst.ClockTime(nativeResult);
     }
 
@@ -402,6 +400,7 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
     public bool SyncValues(Gst.ClockTime timestamp)
     {
         int nativeResult = GstObjectSyncValues(Handle, timestamp.Nanoseconds);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -415,22 +414,7 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
     public void Unparent()
     {
         GstObjectUnparent(Handle);
-    }
-
-    /// <summary>
-    /// Decrements the reference count on @object.  If reference count hits
-    /// zero, destroy @object. This function does not take the lock
-    /// on @object as it relies on atomic refcounting.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// The unref method should never be called with the LOCK held since
-    /// this might deadlock the dispose function.
-    /// </para>
-    /// </remarks>
-    public void Unref()
-    {
-        GstObjectUnref(Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>The <c>name</c> property.</summary>
@@ -551,10 +535,6 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
     [LibraryImport("Gst", EntryPoint = "gst_object_has_as_parent")]
     private static partial int GstObjectHasAsParent(nint @object, nint parent);
 
-    /// <summary>The <c>gst_object_ref</c> entry point.</summary>
-    [LibraryImport("Gst", EntryPoint = "gst_object_ref")]
-    private static partial nint GstObjectRef(nint @object);
-
     /// <summary>The <c>gst_object_remove_control_binding</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_object_remove_control_binding")]
     private static partial int GstObjectRemoveControlBinding(nint @object, nint binding);
@@ -590,10 +570,6 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
     /// <summary>The <c>gst_object_unparent</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_object_unparent")]
     private static partial void GstObjectUnparent(nint @object);
-
-    /// <summary>The <c>gst_object_unref</c> entry point.</summary>
-    [LibraryImport("Gst", EntryPoint = "gst_object_unref")]
-    private static partial void GstObjectUnref(nint @object);
 
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstObject</c> under.</summary>
     /// <returns>The type of the instances of this wrapper.</returns>

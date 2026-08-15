@@ -90,6 +90,7 @@ public abstract unsafe partial class Element : Gst.Object
     public void AbortState()
     {
         GstElementAbortState(Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -114,6 +115,7 @@ public abstract unsafe partial class Element : Gst.Object
     {
         ArgumentNullException.ThrowIfNull(pad);
         int nativeResult = GstElementAddPad(Handle, pad.Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -129,6 +131,7 @@ public abstract unsafe partial class Element : Gst.Object
         System.Span<byte> propertyNameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope propertyNameScope = Gst.Interop.GMarshal.StackUtf8(propertyName, propertyNameBuffer);
         System.Runtime.InteropServices.CULong nativeResult = GstElementAddPropertyDeepNotifyWatch(Handle, propertyNameScope.Pointer, includeValue ? 1 : 0);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -144,6 +147,7 @@ public abstract unsafe partial class Element : Gst.Object
         System.Span<byte> propertyNameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope propertyNameScope = Gst.Interop.GMarshal.StackUtf8(propertyName, propertyNameBuffer);
         System.Runtime.InteropServices.CULong nativeResult = GstElementAddPropertyNotifyWatch(Handle, propertyNameScope.Pointer, includeValue ? 1 : 0);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -168,6 +172,7 @@ public abstract unsafe partial class Element : Gst.Object
         ArgumentNullException.ThrowIfNull(func);
         Gst.Interop.CallbackHandle funcState = Gst.Interop.CallbackHandle.Alloc(func);
         GstElementCallAsync(Handle, Gst.ElementCallAsyncFuncTrampoline.Pointer, funcState.UserData, (nint)Gst.Interop.CallbackHandle.DestroyNotify);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Perform @transition on @element.</summary>
@@ -182,6 +187,7 @@ public abstract unsafe partial class Element : Gst.Object
     public Gst.StateChangeReturn ChangeState(Gst.StateChange transition)
     {
         int nativeResult = GstElementChangeState(Handle, (int)transition);
+        System.GC.KeepAlive(this);
         return (Gst.StateChangeReturn)nativeResult;
     }
 
@@ -208,6 +214,7 @@ public abstract unsafe partial class Element : Gst.Object
     public Gst.StateChangeReturn ContinueState(Gst.StateChangeReturn ret)
     {
         int nativeResult = GstElementContinueState(Handle, (int)ret);
+        System.GC.KeepAlive(this);
         return (Gst.StateChangeReturn)nativeResult;
     }
 
@@ -219,6 +226,7 @@ public abstract unsafe partial class Element : Gst.Object
     public void CreateAllPads()
     {
         GstElementCreateAllPads(Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -248,6 +256,7 @@ public abstract unsafe partial class Element : Gst.Object
         System.Span<byte> streamIdBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope streamIdScope = Gst.Interop.GMarshal.StackUtf8(streamId, streamIdBuffer);
         nint nativeResult = GstElementDecorateStreamId(Handle, streamIdScope.Pointer);
+        System.GC.KeepAlive(this);
         return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
             ?? throw new InvalidOperationException("gst_element_decorate_stream_id returned no value.");
     }
@@ -272,6 +281,7 @@ public abstract unsafe partial class Element : Gst.Object
         try
         {
             int nativeResult = GstElementForeachPad(Handle, Gst.ElementForeachPadFuncTrampoline.Pointer, funcState.UserData);
+            System.GC.KeepAlive(this);
             return nativeResult != 0;
         }
         finally
@@ -300,6 +310,7 @@ public abstract unsafe partial class Element : Gst.Object
         try
         {
             int nativeResult = GstElementForeachSinkPad(Handle, Gst.ElementForeachPadFuncTrampoline.Pointer, funcState.UserData);
+            System.GC.KeepAlive(this);
             return nativeResult != 0;
         }
         finally
@@ -328,6 +339,7 @@ public abstract unsafe partial class Element : Gst.Object
         try
         {
             int nativeResult = GstElementForeachSrcPad(Handle, Gst.ElementForeachPadFuncTrampoline.Pointer, funcState.UserData);
+            System.GC.KeepAlive(this);
             return nativeResult != 0;
         }
         finally
@@ -346,6 +358,7 @@ public abstract unsafe partial class Element : Gst.Object
     public Gst.ClockTime GetBaseTime()
     {
         ulong nativeResult = GstElementGetBaseTime(Handle);
+        System.GC.KeepAlive(this);
         return new Gst.ClockTime(nativeResult);
     }
 
@@ -360,6 +373,7 @@ public abstract unsafe partial class Element : Gst.Object
     public Gst.Bus? GetBus()
     {
         nint nativeResult = GstElementGetBus(Handle);
+        System.GC.KeepAlive(this);
         return Gst.GObject.Object.FromNative<Gst.Bus>(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -377,6 +391,7 @@ public abstract unsafe partial class Element : Gst.Object
     public Gst.Clock? GetClock()
     {
         nint nativeResult = GstElementGetClock(Handle);
+        System.GC.KeepAlive(this);
         return Gst.GObject.Object.FromNative<Gst.Clock>(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -403,6 +418,7 @@ public abstract unsafe partial class Element : Gst.Object
     {
         ArgumentNullException.ThrowIfNull(pad);
         nint nativeResult = GstElementGetCompatiblePad(Handle, pad.Handle, caps is null ? 0 : caps.Handle);
+        System.GC.KeepAlive(this);
         return Gst.GObject.Object.FromNative<Gst.Pad>(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -419,6 +435,7 @@ public abstract unsafe partial class Element : Gst.Object
     {
         ArgumentNullException.ThrowIfNull(compattempl);
         nint nativeResult = GstElementGetCompatiblePadTemplate(Handle, compattempl.Handle);
+        System.GC.KeepAlive(this);
         return Gst.GObject.Object.FromNative<Gst.PadTemplate>(nativeResult, Gst.Interop.Transfer.None);
     }
 
@@ -434,6 +451,7 @@ public abstract unsafe partial class Element : Gst.Object
         System.Span<byte> contextTypeBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope contextTypeScope = Gst.Interop.GMarshal.StackUtf8(contextType, contextTypeBuffer);
         nint nativeResult = GstElementGetContext(Handle, contextTypeScope.Pointer);
+        System.GC.KeepAlive(this);
         return Gst.Context.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -446,6 +464,7 @@ public abstract unsafe partial class Element : Gst.Object
         System.Span<byte> contextTypeBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope contextTypeScope = Gst.Interop.GMarshal.StackUtf8(contextType, contextTypeBuffer);
         nint nativeResult = GstElementGetContextUnlocked(Handle, contextTypeScope.Pointer);
+        System.GC.KeepAlive(this);
         return Gst.Context.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -460,6 +479,7 @@ public abstract unsafe partial class Element : Gst.Object
     public Gst.ClockTime GetCurrentClockTime()
     {
         ulong nativeResult = GstElementGetCurrentClockTime(Handle);
+        System.GC.KeepAlive(this);
         return new Gst.ClockTime(nativeResult);
     }
 
@@ -475,6 +495,7 @@ public abstract unsafe partial class Element : Gst.Object
     public Gst.ClockTime GetCurrentRunningTime()
     {
         ulong nativeResult = GstElementGetCurrentRunningTime(Handle);
+        System.GC.KeepAlive(this);
         return new Gst.ClockTime(nativeResult);
     }
 
@@ -486,6 +507,7 @@ public abstract unsafe partial class Element : Gst.Object
     public Gst.ElementFactory? GetFactory()
     {
         nint nativeResult = GstElementGetFactory(Handle);
+        System.GC.KeepAlive(this);
         return Gst.GObject.Object.FromNative<Gst.ElementFactory>(nativeResult, Gst.Interop.Transfer.None);
     }
 
@@ -498,6 +520,7 @@ public abstract unsafe partial class Element : Gst.Object
         System.Span<byte> keyBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope keyScope = Gst.Interop.GMarshal.StackUtf8(key, keyBuffer);
         nint nativeResult = GstElementGetMetadata(Handle, keyScope.Pointer);
+        System.GC.KeepAlive(this);
         return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
             ?? throw new InvalidOperationException("gst_element_get_metadata returned no value.");
     }
@@ -515,6 +538,7 @@ public abstract unsafe partial class Element : Gst.Object
         System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
         nint nativeResult = GstElementGetPadTemplate(Handle, nameScope.Pointer);
+        System.GC.KeepAlive(this);
         return Gst.GObject.Object.FromNative<Gst.PadTemplate>(nativeResult, Gst.Interop.Transfer.None);
     }
 
@@ -535,6 +559,7 @@ public abstract unsafe partial class Element : Gst.Object
         System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
         nint nativeResult = GstElementGetRequestPad(Handle, nameScope.Pointer);
+        System.GC.KeepAlive(this);
         return Gst.GObject.Object.FromNative<Gst.Pad>(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -553,6 +578,7 @@ public abstract unsafe partial class Element : Gst.Object
     public Gst.ClockTime GetStartTime()
     {
         ulong nativeResult = GstElementGetStartTime(Handle);
+        System.GC.KeepAlive(this);
         return new Gst.ClockTime(nativeResult);
     }
 
@@ -595,6 +621,7 @@ public abstract unsafe partial class Element : Gst.Object
         int stateNative = default;
         int pendingNative = default;
         int nativeResult = GstElementGetState(Handle, &stateNative, &pendingNative, timeout.Nanoseconds);
+        System.GC.KeepAlive(this);
         state = (Gst.State)stateNative;
         pending = (Gst.State)pendingNative;
         return (Gst.StateChangeReturn)nativeResult;
@@ -615,6 +642,7 @@ public abstract unsafe partial class Element : Gst.Object
         System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
         nint nativeResult = GstElementGetStaticPad(Handle, nameScope.Pointer);
+        System.GC.KeepAlive(this);
         return Gst.GObject.Object.FromNative<Gst.Pad>(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -632,6 +660,7 @@ public abstract unsafe partial class Element : Gst.Object
     public bool IsLockedState()
     {
         int nativeResult = GstElementIsLockedState(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -650,6 +679,7 @@ public abstract unsafe partial class Element : Gst.Object
     public Gst.Iterator IteratePads()
     {
         nint nativeResult = GstElementIteratePads(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Iterator.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_element_iterate_pads returned no value.");
     }
@@ -665,6 +695,7 @@ public abstract unsafe partial class Element : Gst.Object
     public Gst.Iterator IterateSinkPads()
     {
         nint nativeResult = GstElementIterateSinkPads(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Iterator.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_element_iterate_sink_pads returned no value.");
     }
@@ -680,6 +711,7 @@ public abstract unsafe partial class Element : Gst.Object
     public Gst.Iterator IterateSrcPads()
     {
         nint nativeResult = GstElementIterateSrcPads(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Iterator.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_element_iterate_src_pads returned no value.");
     }
@@ -703,6 +735,7 @@ public abstract unsafe partial class Element : Gst.Object
     {
         ArgumentNullException.ThrowIfNull(dest);
         int nativeResult = GstElementLink(Handle, dest.Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -726,6 +759,7 @@ public abstract unsafe partial class Element : Gst.Object
     {
         ArgumentNullException.ThrowIfNull(dest);
         int nativeResult = GstElementLinkFiltered(Handle, dest.Handle, filter is null ? 0 : filter.Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -747,6 +781,7 @@ public abstract unsafe partial class Element : Gst.Object
         System.Span<byte> destpadnameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope destpadnameScope = Gst.Interop.GMarshal.StackUtf8(destpadname, destpadnameBuffer);
         int nativeResult = GstElementLinkPads(Handle, srcpadnameScope.Pointer, dest.Handle, destpadnameScope.Pointer);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -769,6 +804,7 @@ public abstract unsafe partial class Element : Gst.Object
         System.Span<byte> destpadnameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope destpadnameScope = Gst.Interop.GMarshal.StackUtf8(destpadname, destpadnameBuffer);
         int nativeResult = GstElementLinkPadsFiltered(Handle, srcpadnameScope.Pointer, dest.Handle, destpadnameScope.Pointer, filter is null ? 0 : filter.Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -799,6 +835,7 @@ public abstract unsafe partial class Element : Gst.Object
         System.Span<byte> destpadnameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope destpadnameScope = Gst.Interop.GMarshal.StackUtf8(destpadname, destpadnameBuffer);
         int nativeResult = GstElementLinkPadsFull(Handle, srcpadnameScope.Pointer, dest.Handle, destpadnameScope.Pointer, (int)flags);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -828,6 +865,7 @@ public abstract unsafe partial class Element : Gst.Object
     public void LostState()
     {
         GstElementLostState(Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Post an error, warning or info message on the bus from inside an element.</summary>
@@ -857,6 +895,7 @@ public abstract unsafe partial class Element : Gst.Object
         System.Span<byte> functionBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope functionScope = Gst.Interop.GMarshal.StackUtf8(function, functionBuffer);
         GstElementMessageFull(Handle, (uint)type, domain.Value, code, textNative, debugNative, fileScope.Pointer, functionScope.Pointer, line);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -873,6 +912,7 @@ public abstract unsafe partial class Element : Gst.Object
     public void NoMorePads()
     {
         GstElementNoMorePads(Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -887,6 +927,7 @@ public abstract unsafe partial class Element : Gst.Object
     public Gst.Clock? ProvideClock()
     {
         nint nativeResult = GstElementProvideClock(Handle);
+        System.GC.KeepAlive(this);
         return Gst.GObject.Object.FromNative<Gst.Clock>(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -905,6 +946,7 @@ public abstract unsafe partial class Element : Gst.Object
     {
         ArgumentNullException.ThrowIfNull(query);
         int nativeResult = GstElementQuery(Handle, query.Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -918,6 +960,7 @@ public abstract unsafe partial class Element : Gst.Object
     {
         long destValNative = default;
         int nativeResult = GstElementQueryConvert(Handle, (int)srcFormat, srcVal, (int)destFormat, &destValNative);
+        System.GC.KeepAlive(this);
         destVal = destValNative;
         return nativeResult != 0;
     }
@@ -942,6 +985,7 @@ public abstract unsafe partial class Element : Gst.Object
     {
         long durationNative = default;
         int nativeResult = GstElementQueryDuration(Handle, (int)format, &durationNative);
+        System.GC.KeepAlive(this);
         duration = durationNative;
         return nativeResult != 0;
     }
@@ -967,6 +1011,7 @@ public abstract unsafe partial class Element : Gst.Object
     {
         long curNative = default;
         int nativeResult = GstElementQueryPosition(Handle, (int)format, &curNative);
+        System.GC.KeepAlive(this);
         cur = curNative;
         return nativeResult != 0;
     }
@@ -988,6 +1033,7 @@ public abstract unsafe partial class Element : Gst.Object
     {
         ArgumentNullException.ThrowIfNull(pad);
         GstElementReleaseRequestPad(Handle, pad.Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -1019,6 +1065,7 @@ public abstract unsafe partial class Element : Gst.Object
     {
         ArgumentNullException.ThrowIfNull(pad);
         int nativeResult = GstElementRemovePad(Handle, pad.Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -1027,6 +1074,7 @@ public abstract unsafe partial class Element : Gst.Object
     public void RemovePropertyNotifyWatch(System.Runtime.InteropServices.CULong watchId)
     {
         GstElementRemovePropertyNotifyWatch(Handle, watchId);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -1050,6 +1098,7 @@ public abstract unsafe partial class Element : Gst.Object
         System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
         nint nativeResult = GstElementRequestPad(Handle, templ.Handle, nameScope.Pointer, caps is null ? 0 : caps.Handle);
+        System.GC.KeepAlive(this);
         return Gst.GObject.Object.FromNative<Gst.Pad>(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -1082,6 +1131,7 @@ public abstract unsafe partial class Element : Gst.Object
         System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
         nint nativeResult = GstElementRequestPadSimple(Handle, nameScope.Pointer);
+        System.GC.KeepAlive(this);
         return Gst.GObject.Object.FromNative<Gst.Pad>(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -1107,6 +1157,7 @@ public abstract unsafe partial class Element : Gst.Object
     public bool Seek(double rate, Gst.Format format, Gst.SeekFlags flags, Gst.SeekType startType, long start, Gst.SeekType stopType, long stop)
     {
         int nativeResult = GstElementSeek(Handle, rate, (int)format, (int)flags, (int)startType, start, (int)stopType, stop);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -1140,6 +1191,7 @@ public abstract unsafe partial class Element : Gst.Object
     public bool SeekSimple(Gst.Format format, Gst.SeekFlags seekFlags, long seekPos)
     {
         int nativeResult = GstElementSeekSimple(Handle, (int)format, (int)seekFlags, seekPos);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -1151,6 +1203,7 @@ public abstract unsafe partial class Element : Gst.Object
     public void SetBaseTime(Gst.ClockTime time)
     {
         GstElementSetBaseTime(Handle, time.Nanoseconds);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -1164,6 +1217,7 @@ public abstract unsafe partial class Element : Gst.Object
     public void SetBus(Gst.Bus? bus)
     {
         GstElementSetBus(Handle, bus is null ? 0 : bus.Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -1180,6 +1234,7 @@ public abstract unsafe partial class Element : Gst.Object
     public bool SetClock(Gst.Clock? clock)
     {
         int nativeResult = GstElementSetClock(Handle, clock is null ? 0 : clock.Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -1192,6 +1247,7 @@ public abstract unsafe partial class Element : Gst.Object
     {
         ArgumentNullException.ThrowIfNull(context);
         GstElementSetContext(Handle, context.Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -1214,6 +1270,7 @@ public abstract unsafe partial class Element : Gst.Object
     public bool SetLockedState(bool lockedState)
     {
         int nativeResult = GstElementSetLockedState(Handle, lockedState ? 1 : 0);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -1237,6 +1294,7 @@ public abstract unsafe partial class Element : Gst.Object
     public void SetStartTime(Gst.ClockTime time)
     {
         GstElementSetStartTime(Handle, time.Nanoseconds);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -1263,6 +1321,7 @@ public abstract unsafe partial class Element : Gst.Object
     public Gst.StateChangeReturn SetState(Gst.State state)
     {
         int nativeResult = GstElementSetState(Handle, (int)state);
+        System.GC.KeepAlive(this);
         return (Gst.StateChangeReturn)nativeResult;
     }
 
@@ -1274,6 +1333,7 @@ public abstract unsafe partial class Element : Gst.Object
     public bool SyncStateWithParent()
     {
         int nativeResult = GstElementSyncStateWithParent(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -1292,6 +1352,7 @@ public abstract unsafe partial class Element : Gst.Object
     {
         ArgumentNullException.ThrowIfNull(dest);
         GstElementUnlink(Handle, dest.Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Unlinks the two named pads of the source and destination elements.</summary>
@@ -1311,6 +1372,7 @@ public abstract unsafe partial class Element : Gst.Object
         System.Span<byte> destpadnameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope destpadnameScope = Gst.Interop.GMarshal.StackUtf8(destpadname, destpadnameBuffer);
         GstElementUnlinkPads(Handle, srcpadnameScope.Pointer, dest.Handle, destpadnameScope.Pointer);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Creates an element for handling the given URI.</summary>

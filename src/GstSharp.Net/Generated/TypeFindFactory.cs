@@ -78,13 +78,20 @@ public unsafe partial class TypeFindFactory : Gst.PluginFeature
     {
         ArgumentNullException.ThrowIfNull(find);
         GstTypeFindFactoryCallFunction(Handle, find.Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Gets the #GstCaps associated with a typefind factory.</summary>
-    /// <returns>the #GstCaps associated with this factory</returns>
+    /// <returns>
+    /// the #GstCaps associated with this factory
+    /// The wrapper owns a reference of its own, which is a copy for a boxed type:
+    /// dispose it when you are done, and note that changes made to a copy of a
+    /// boxed value are not written back.
+    /// </returns>
     public Gst.Caps? GetCaps()
     {
         nint nativeResult = GstTypeFindFactoryGetCaps(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.None);
     }
 
@@ -97,6 +104,7 @@ public unsafe partial class TypeFindFactory : Gst.PluginFeature
     public bool HasFunction()
     {
         int nativeResult = GstTypeFindFactoryHasFunction(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 

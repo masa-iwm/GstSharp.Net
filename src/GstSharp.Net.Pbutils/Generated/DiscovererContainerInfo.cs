@@ -23,10 +23,14 @@ public unsafe partial class DiscovererContainerInfo : Gst.Pbutils.DiscovererStre
     /// <returns>
     /// tags specific to the given container. If you wish to use
     /// the tags after the life-time of @info, you will need to copy them.
+    /// The wrapper owns a reference of its own, which is a copy for a boxed type:
+    /// dispose it when you are done, and note that changes made to a copy of a
+    /// boxed value are not written back.
     /// </returns>
     public new Gst.TagList? GetTags()
     {
         nint nativeResult = GstDiscovererContainerInfoGetTags(Handle);
+        System.GC.KeepAlive(this);
         return Gst.TagList.FromNative(nativeResult, Gst.Interop.Transfer.None);
     }
 

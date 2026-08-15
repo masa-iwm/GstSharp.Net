@@ -33,6 +33,7 @@ public sealed unsafe partial class AudioQuantize
     public void Free()
     {
         GstAudioQuantizeFree(Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -42,6 +43,7 @@ public sealed unsafe partial class AudioQuantize
     public void Reset()
     {
         GstAudioQuantizeReset(Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>The <c>gst_audio_quantize_free</c> entry point.</summary>

@@ -84,25 +84,6 @@ public sealed unsafe partial class CapsFeatures : Gst.GObject.Boxed
             ?? throw new InvalidOperationException("gst_caps_features_new_single returned no value.");
     }
 
-    /// <summary>Creates a new #GstCapsFeatures with a single feature.</summary>
-    /// <remarks>
-    /// <para>
-    /// @feature needs to be valid for the remaining lifetime of the process, e.g. has
-    /// to be a static string.
-    /// </para>
-    /// </remarks>
-    /// <param name="feature">The <c>feature</c> argument.</param>
-    /// <returns>a new #GstCapsFeatures</returns>
-    public static Gst.CapsFeatures NewSingleStaticStr(string feature)
-    {
-        ArgumentNullException.ThrowIfNull(feature);
-        System.Span<byte> featureBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
-        using Gst.Interop.Utf8Scope featureScope = Gst.Interop.GMarshal.StackUtf8(feature, featureBuffer);
-        nint nativeResult = GstCapsFeaturesNewSingleStaticStr(featureScope.Pointer);
-        return Gst.CapsFeatures.FromNative(nativeResult, Gst.Interop.Transfer.Full)
-            ?? throw new InvalidOperationException("gst_caps_features_new_single_static_str returned no value.");
-    }
-
     /// <summary>Adds @feature to @features.</summary>
     /// <param name="feature">The <c>feature</c> argument.</param>
     public void Add(string feature)
@@ -111,6 +92,7 @@ public sealed unsafe partial class CapsFeatures : Gst.GObject.Boxed
         System.Span<byte> featureBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope featureScope = Gst.Interop.GMarshal.StackUtf8(feature, featureBuffer);
         GstCapsFeaturesAdd(Handle, featureScope.Pointer);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Adds @feature to @features.</summary>
@@ -119,6 +101,7 @@ public sealed unsafe partial class CapsFeatures : Gst.GObject.Boxed
     public void AddId(Gst.GLib.Quark feature)
     {
         GstCapsFeaturesAddId(Handle, feature.Value);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Adds @feature to @features.</summary>
@@ -127,22 +110,7 @@ public sealed unsafe partial class CapsFeatures : Gst.GObject.Boxed
     {
         ArgumentNullException.ThrowIfNull(feature);
         GstCapsFeaturesAddIdStr(Handle, feature.Handle);
-    }
-
-    /// <summary>Adds @feature to @features.</summary>
-    /// <remarks>
-    /// <para>
-    /// @feature needs to be valid for the remaining lifetime of the process, e.g. has
-    /// to be a static string.
-    /// </para>
-    /// </remarks>
-    /// <param name="feature">The <c>feature</c> argument.</param>
-    public void AddStaticStr(string feature)
-    {
-        ArgumentNullException.ThrowIfNull(feature);
-        System.Span<byte> featureBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
-        using Gst.Interop.Utf8Scope featureScope = Gst.Interop.GMarshal.StackUtf8(feature, featureBuffer);
-        GstCapsFeaturesAddStaticStr(Handle, featureScope.Pointer);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Checks if @features contains @feature.</summary>
@@ -154,6 +122,7 @@ public sealed unsafe partial class CapsFeatures : Gst.GObject.Boxed
         System.Span<byte> featureBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope featureScope = Gst.Interop.GMarshal.StackUtf8(feature, featureBuffer);
         int nativeResult = GstCapsFeaturesContains(Handle, featureScope.Pointer);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -164,6 +133,7 @@ public sealed unsafe partial class CapsFeatures : Gst.GObject.Boxed
     public bool ContainsId(Gst.GLib.Quark feature)
     {
         int nativeResult = GstCapsFeaturesContainsId(Handle, feature.Value);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -174,6 +144,7 @@ public sealed unsafe partial class CapsFeatures : Gst.GObject.Boxed
     {
         ArgumentNullException.ThrowIfNull(feature);
         int nativeResult = GstCapsFeaturesContainsIdStr(Handle, feature.Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -182,17 +153,9 @@ public sealed unsafe partial class CapsFeatures : Gst.GObject.Boxed
     public Gst.CapsFeatures Copy()
     {
         nint nativeResult = GstCapsFeaturesCopy(Handle);
+        System.GC.KeepAlive(this);
         return Gst.CapsFeatures.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_caps_features_copy returned no value.");
-    }
-
-    /// <summary>
-    /// Frees a #GstCapsFeatures and all its values. The caps features must not
-    /// have a parent when this function is called.
-    /// </summary>
-    public void Free()
-    {
-        GstCapsFeaturesFree(Handle);
     }
 
     /// <summary>Returns the @i-th feature of @features.</summary>
@@ -201,6 +164,7 @@ public sealed unsafe partial class CapsFeatures : Gst.GObject.Boxed
     public string? GetNth(uint i)
     {
         nint nativeResult = GstCapsFeaturesGetNth(Handle, i);
+        System.GC.KeepAlive(this);
         return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
     }
 
@@ -211,15 +175,22 @@ public sealed unsafe partial class CapsFeatures : Gst.GObject.Boxed
     public Gst.GLib.Quark GetNthId(uint i)
     {
         uint nativeResult = GstCapsFeaturesGetNthId(Handle, i);
+        System.GC.KeepAlive(this);
         return new Gst.GLib.Quark(nativeResult);
     }
 
     /// <summary>Returns the @i-th feature of @features.</summary>
     /// <param name="i">The <c>i</c> argument.</param>
-    /// <returns>The @i-th feature of @features.</returns>
+    /// <returns>
+    /// The @i-th feature of @features.
+    /// The wrapper owns a reference of its own, which is a copy for a boxed type:
+    /// dispose it when you are done, and note that changes made to a copy of a
+    /// boxed value are not written back.
+    /// </returns>
     public Gst.IdStr GetNthIdStr(uint i)
     {
         nint nativeResult = GstCapsFeaturesGetNthIdStr(Handle, i);
+        System.GC.KeepAlive(this);
         return Gst.IdStr.FromNative(nativeResult, Gst.Interop.Transfer.None)
             ?? throw new InvalidOperationException("gst_caps_features_get_nth_id_str returned no value.");
     }
@@ -229,6 +200,7 @@ public sealed unsafe partial class CapsFeatures : Gst.GObject.Boxed
     public uint GetSize()
     {
         uint nativeResult = GstCapsFeaturesGetSize(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -237,6 +209,7 @@ public sealed unsafe partial class CapsFeatures : Gst.GObject.Boxed
     public bool IsAny()
     {
         int nativeResult = GstCapsFeaturesIsAny(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -247,6 +220,7 @@ public sealed unsafe partial class CapsFeatures : Gst.GObject.Boxed
     {
         ArgumentNullException.ThrowIfNull(features2);
         int nativeResult = GstCapsFeaturesIsEqual(Handle, features2.Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -258,6 +232,7 @@ public sealed unsafe partial class CapsFeatures : Gst.GObject.Boxed
         System.Span<byte> featureBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope featureScope = Gst.Interop.GMarshal.StackUtf8(feature, featureBuffer);
         GstCapsFeaturesRemove(Handle, featureScope.Pointer);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Removes @feature from @features.</summary>
@@ -266,6 +241,7 @@ public sealed unsafe partial class CapsFeatures : Gst.GObject.Boxed
     public void RemoveId(Gst.GLib.Quark feature)
     {
         GstCapsFeaturesRemoveId(Handle, feature.Value);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Removes @feature from @features.</summary>
@@ -274,6 +250,7 @@ public sealed unsafe partial class CapsFeatures : Gst.GObject.Boxed
     {
         ArgumentNullException.ThrowIfNull(feature);
         GstCapsFeaturesRemoveIdStr(Handle, feature.Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Converts @features to a human-readable string representation.</summary>
@@ -290,6 +267,7 @@ public sealed unsafe partial class CapsFeatures : Gst.GObject.Boxed
     public override string ToString()
     {
         nint nativeResult = GstCapsFeaturesToString(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
             ?? throw new InvalidOperationException("gst_caps_features_to_string returned no value.");
     }
@@ -321,10 +299,6 @@ public sealed unsafe partial class CapsFeatures : Gst.GObject.Boxed
     [LibraryImport("Gst", EntryPoint = "gst_caps_features_new_single")]
     private static partial nint GstCapsFeaturesNewSingle(byte* feature);
 
-    /// <summary>The <c>gst_caps_features_new_single_static_str</c> entry point.</summary>
-    [LibraryImport("Gst", EntryPoint = "gst_caps_features_new_single_static_str")]
-    private static partial nint GstCapsFeaturesNewSingleStaticStr(byte* feature);
-
     /// <summary>The <c>gst_caps_features_add</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_caps_features_add")]
     private static partial void GstCapsFeaturesAdd(nint features, byte* feature);
@@ -336,10 +310,6 @@ public sealed unsafe partial class CapsFeatures : Gst.GObject.Boxed
     /// <summary>The <c>gst_caps_features_add_id_str</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_caps_features_add_id_str")]
     private static partial void GstCapsFeaturesAddIdStr(nint features, nint feature);
-
-    /// <summary>The <c>gst_caps_features_add_static_str</c> entry point.</summary>
-    [LibraryImport("Gst", EntryPoint = "gst_caps_features_add_static_str")]
-    private static partial void GstCapsFeaturesAddStaticStr(nint features, byte* feature);
 
     /// <summary>The <c>gst_caps_features_contains</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_caps_features_contains")]
@@ -356,10 +326,6 @@ public sealed unsafe partial class CapsFeatures : Gst.GObject.Boxed
     /// <summary>The <c>gst_caps_features_copy</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_caps_features_copy")]
     private static partial nint GstCapsFeaturesCopy(nint features);
-
-    /// <summary>The <c>gst_caps_features_free</c> entry point.</summary>
-    [LibraryImport("Gst", EntryPoint = "gst_caps_features_free")]
-    private static partial void GstCapsFeaturesFree(nint features);
 
     /// <summary>The <c>gst_caps_features_get_nth</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_caps_features_get_nth")]

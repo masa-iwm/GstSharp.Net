@@ -40,30 +40,11 @@ public sealed unsafe partial class MetaInfo
     public bool IsCustom()
     {
         int nativeResult = GstMetaInfoIsCustom(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
-    }
-
-    /// <summary>Registers a new meta.</summary>
-    /// <remarks>
-    /// <para>
-    /// Use the structure returned by gst_meta_info_new(), it consumes it and the
-    /// structure shouldnt be used after. The one returned by the function can be
-    /// kept.
-    /// </para>
-    /// </remarks>
-    /// <returns>the registered meta</returns>
-    public Gst.MetaInfo Register()
-    {
-        nint nativeResult = GstMetaInfoRegister(Handle);
-        return Gst.MetaInfo.FromNative(nativeResult)
-            ?? throw new InvalidOperationException("gst_meta_info_register returned no value.");
     }
 
     /// <summary>The <c>gst_meta_info_is_custom</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_meta_info_is_custom")]
     private static partial int GstMetaInfoIsCustom(nint info);
-
-    /// <summary>The <c>gst_meta_info_register</c> entry point.</summary>
-    [LibraryImport("Gst", EntryPoint = "gst_meta_info_register")]
-    private static partial nint GstMetaInfoRegister(nint info);
 }

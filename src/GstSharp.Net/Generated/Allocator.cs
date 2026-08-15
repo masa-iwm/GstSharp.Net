@@ -62,13 +62,8 @@ public abstract unsafe partial class Allocator : Gst.Object
     public Gst.Memory? Alloc(nuint size, Gst.AllocationParams? @params)
     {
         nint nativeResult = GstAllocatorAlloc(Handle, size, @params is null ? 0 : @params.Handle);
+        System.GC.KeepAlive(this);
         return Gst.Memory.FromNative(nativeResult, Gst.Interop.Transfer.Full);
-    }
-
-    /// <summary>Set the default allocator.</summary>
-    public void SetDefault()
-    {
-        GstAllocatorSetDefault(Handle);
     }
 
     /// <summary>
@@ -91,10 +86,6 @@ public abstract unsafe partial class Allocator : Gst.Object
     /// <summary>The <c>gst_allocator_alloc</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_allocator_alloc")]
     private static partial nint GstAllocatorAlloc(nint allocator, nuint size, nint @params);
-
-    /// <summary>The <c>gst_allocator_set_default</c> entry point.</summary>
-    [LibraryImport("Gst", EntryPoint = "gst_allocator_set_default")]
-    private static partial void GstAllocatorSetDefault(nint allocator);
 
     /// <summary>The <c>gst_allocator_find</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_allocator_find")]

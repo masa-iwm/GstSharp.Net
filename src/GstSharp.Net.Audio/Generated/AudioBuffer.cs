@@ -46,60 +46,10 @@ public sealed unsafe partial class AudioBuffer
     public void Unmap()
     {
         GstAudioBufferUnmap(Handle);
-    }
-
-    /// <summary>
-    /// Maps an audio @gstbuffer so that it can be read or written and stores the
-    /// result of the map operation in @buffer.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// This is especially useful when the @gstbuffer is in non-interleaved (planar)
-    /// layout, in which case this function will use the information in the
-    /// @gstbuffer's attached #GstAudioMeta in order to map each channel in a
-    /// separate "plane" in #GstAudioBuffer. If a #GstAudioMeta is not attached
-    /// on the @gstbuffer, then it must be in interleaved layout.
-    /// </para>
-    /// <para>
-    /// If a #GstAudioMeta is attached, then the #GstAudioInfo on the meta is checked
-    /// against @info. Normally, they should be equal, but in case they are not,
-    /// a g_critical will be printed and the #GstAudioInfo from the meta will be
-    /// used.
-    /// </para>
-    /// <para>
-    /// In non-interleaved buffers, it is possible to have each channel on a separate
-    /// #GstMemory. In this case, each memory will be mapped separately to avoid
-    /// copying their contents in a larger memory area. Do note though that it is
-    /// not supported to have a single channel spanning over two or more different
-    /// #GstMemory objects. Although the map operation will likely succeed in this
-    /// case, it will be highly sub-optimal and it is recommended to merge all the
-    /// memories in the buffer before calling this function.
-    /// </para>
-    /// <para>
-    /// Note: The actual #GstBuffer is not ref'ed, but it is required to stay valid
-    /// as long as it's mapped.
-    /// </para>
-    /// </remarks>
-    /// <param name="buffer">The <c>buffer</c> argument.</param>
-    /// <param name="info">The <c>info</c> argument.</param>
-    /// <param name="gstbuffer">The <c>gstbuffer</c> argument.</param>
-    /// <param name="flags">The <c>flags</c> argument.</param>
-    /// <returns>%TRUE if the map operation succeeded or %FALSE on failure</returns>
-    public static bool Map(out Gst.Audio.AudioBuffer? buffer, Gst.Audio.AudioInfo info, Gst.Buffer gstbuffer, Gst.MapFlags flags)
-    {
-        nint bufferNative = default;
-        ArgumentNullException.ThrowIfNull(info);
-        ArgumentNullException.ThrowIfNull(gstbuffer);
-        int nativeResult = GstAudioBufferMap(&bufferNative, info.Handle, gstbuffer.Handle, (int)flags);
-        buffer = Gst.Audio.AudioBuffer.FromNative(bufferNative);
-        return nativeResult != 0;
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>The <c>gst_audio_buffer_unmap</c> entry point.</summary>
     [LibraryImport("GstAudio", EntryPoint = "gst_audio_buffer_unmap")]
     private static partial void GstAudioBufferUnmap(nint buffer);
-
-    /// <summary>The <c>gst_audio_buffer_map</c> entry point.</summary>
-    [LibraryImport("GstAudio", EntryPoint = "gst_audio_buffer_map")]
-    private static partial int GstAudioBufferMap(nint* buffer, nint info, nint gstbuffer, int flags);
 }

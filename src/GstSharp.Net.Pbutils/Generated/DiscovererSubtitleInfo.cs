@@ -27,6 +27,7 @@ public unsafe partial class DiscovererSubtitleInfo : Gst.Pbutils.DiscovererStrea
     public string? GetLanguage()
     {
         nint nativeResult = GstDiscovererSubtitleInfoGetLanguage(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
     }
 

@@ -256,27 +256,6 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
             ?? throw new InvalidOperationException("gst_structure_new_id_str_empty returned no value.");
     }
 
-    /// <summary>Creates a new, empty #GstStructure with the given @name.</summary>
-    /// <remarks>
-    /// <para>See gst_structure_set_name() for constraints on the @name parameter.</para>
-    /// <para>
-    /// @name needs to be valid for the remaining lifetime of the process, e.g. has
-    /// to be a static string.
-    /// </para>
-    /// <para>Free-function: gst_structure_free</para>
-    /// </remarks>
-    /// <param name="name">The <c>name</c> argument.</param>
-    /// <returns>a new, empty #GstStructure</returns>
-    public static Gst.Structure NewStaticStrEmpty(string name)
-    {
-        ArgumentNullException.ThrowIfNull(name);
-        System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
-        using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
-        nint nativeResult = GstStructureNewStaticStrEmpty(nameScope.Pointer);
-        return Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.Full)
-            ?? throw new InvalidOperationException("gst_structure_new_static_str_empty returned no value.");
-    }
-
     /// <summary>
     /// Tries intersecting @struct1 and @struct2 and reports whether the result
     /// would not be empty.
@@ -287,6 +266,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     {
         ArgumentNullException.ThrowIfNull(struct2);
         int nativeResult = GstStructureCanIntersect(Handle, struct2.Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -298,6 +278,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     public Gst.Structure Copy()
     {
         nint nativeResult = GstStructureCopy(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_structure_copy returned no value.");
     }
@@ -309,6 +290,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     public void Fixate()
     {
         GstStructureFixate(Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Fixates a #GstStructure by changing the given field with its fixated value.</summary>
@@ -320,6 +302,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
         System.Span<byte> fieldNameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope fieldNameScope = Gst.Interop.GMarshal.StackUtf8(fieldName, fieldNameBuffer);
         int nativeResult = GstStructureFixateField(Handle, fieldNameScope.Pointer);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -336,6 +319,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
         System.Span<byte> fieldNameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope fieldNameScope = Gst.Interop.GMarshal.StackUtf8(fieldName, fieldNameBuffer);
         int nativeResult = GstStructureFixateFieldBoolean(Handle, fieldNameScope.Pointer, target ? 1 : 0);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -352,6 +336,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
         System.Span<byte> fieldNameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope fieldNameScope = Gst.Interop.GMarshal.StackUtf8(fieldName, fieldNameBuffer);
         int nativeResult = GstStructureFixateFieldNearestDouble(Handle, fieldNameScope.Pointer, target);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -370,6 +355,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
         System.Span<byte> fieldNameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope fieldNameScope = Gst.Interop.GMarshal.StackUtf8(fieldName, fieldNameBuffer);
         int nativeResult = GstStructureFixateFieldNearestFraction(Handle, fieldNameScope.Pointer, targetNumerator, targetDenominator);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -386,6 +372,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
         System.Span<byte> fieldNameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope fieldNameScope = Gst.Interop.GMarshal.StackUtf8(fieldName, fieldNameBuffer);
         int nativeResult = GstStructureFixateFieldNearestInt(Handle, fieldNameScope.Pointer, target);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -405,16 +392,8 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
         System.Span<byte> targetBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope targetScope = Gst.Interop.GMarshal.StackUtf8(target, targetBuffer);
         int nativeResult = GstStructureFixateFieldString(Handle, fieldNameScope.Pointer, targetScope.Pointer);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
-    }
-
-    /// <summary>
-    /// Frees a #GstStructure and all its fields and values. The structure must not
-    /// have a parent when this function is called.
-    /// </summary>
-    public void Free()
-    {
-        GstStructureFree(Handle);
     }
 
     /// <summary>
@@ -436,6 +415,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
         using Gst.Interop.Utf8Scope fieldnameScope = Gst.Interop.GMarshal.StackUtf8(fieldname, fieldnameBuffer);
         int valueNative = default;
         int nativeResult = GstStructureGetBoolean(Handle, fieldnameScope.Pointer, &valueNative);
+        System.GC.KeepAlive(this);
         value = valueNative != 0;
         return nativeResult != 0;
     }
@@ -459,6 +439,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
         using Gst.Interop.Utf8Scope fieldnameScope = Gst.Interop.GMarshal.StackUtf8(fieldname, fieldnameBuffer);
         nint capsNative = default;
         int nativeResult = GstStructureGetCaps(Handle, fieldnameScope.Pointer, &capsNative);
+        System.GC.KeepAlive(this);
         caps = Gst.Caps.FromNative(capsNative, Gst.Interop.Transfer.None);
         return nativeResult != 0;
     }
@@ -482,6 +463,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
         using Gst.Interop.Utf8Scope fieldnameScope = Gst.Interop.GMarshal.StackUtf8(fieldname, fieldnameBuffer);
         ulong valueNative = default;
         int nativeResult = GstStructureGetClockTime(Handle, fieldnameScope.Pointer, &valueNative);
+        System.GC.KeepAlive(this);
         value = new Gst.ClockTime(valueNative);
         return nativeResult != 0;
     }
@@ -513,6 +495,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
         using Gst.Interop.Utf8Scope fieldnameScope = Gst.Interop.GMarshal.StackUtf8(fieldname, fieldnameBuffer);
         nint valueNative = default;
         int nativeResult = GstStructureGetDateTime(Handle, fieldnameScope.Pointer, &valueNative);
+        System.GC.KeepAlive(this);
         value = Gst.DateTime.FromNative(valueNative, Gst.Interop.Transfer.Full);
         return nativeResult != 0;
     }
@@ -536,6 +519,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
         using Gst.Interop.Utf8Scope fieldnameScope = Gst.Interop.GMarshal.StackUtf8(fieldname, fieldnameBuffer);
         double valueNative = default;
         int nativeResult = GstStructureGetDouble(Handle, fieldnameScope.Pointer, &valueNative);
+        System.GC.KeepAlive(this);
         value = valueNative;
         return nativeResult != 0;
     }
@@ -560,6 +544,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
         using Gst.Interop.Utf8Scope fieldnameScope = Gst.Interop.GMarshal.StackUtf8(fieldname, fieldnameBuffer);
         int valueNative = default;
         int nativeResult = GstStructureGetEnum(Handle, fieldnameScope.Pointer, enumtype.Value, &valueNative);
+        System.GC.KeepAlive(this);
         value = valueNative;
         return nativeResult != 0;
     }
@@ -577,6 +562,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
         System.Span<byte> fieldnameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope fieldnameScope = Gst.Interop.GMarshal.StackUtf8(fieldname, fieldnameBuffer);
         nuint nativeResult = GstStructureGetFieldType(Handle, fieldnameScope.Pointer);
+        System.GC.KeepAlive(this);
         return new Gst.GObject.GType(nativeResult);
     }
 
@@ -600,6 +586,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
         using Gst.Interop.Utf8Scope fieldnameScope = Gst.Interop.GMarshal.StackUtf8(fieldname, fieldnameBuffer);
         uint valueNative = default;
         int nativeResult = GstStructureGetFlags(Handle, fieldnameScope.Pointer, flagsType.Value, &valueNative);
+        System.GC.KeepAlive(this);
         value = valueNative;
         return nativeResult != 0;
     }
@@ -624,6 +611,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
         uint valueFlagsNative = default;
         uint valueMaskNative = default;
         int nativeResult = GstStructureGetFlagset(Handle, fieldnameScope.Pointer, &valueFlagsNative, &valueMaskNative);
+        System.GC.KeepAlive(this);
         valueFlags = valueFlagsNative;
         valueMask = valueMaskNative;
         return nativeResult != 0;
@@ -650,6 +638,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
         int valueNumeratorNative = default;
         int valueDenominatorNative = default;
         int nativeResult = GstStructureGetFraction(Handle, fieldnameScope.Pointer, &valueNumeratorNative, &valueDenominatorNative);
+        System.GC.KeepAlive(this);
         valueNumerator = valueNumeratorNative;
         valueDenominator = valueDenominatorNative;
         return nativeResult != 0;
@@ -674,6 +663,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
         using Gst.Interop.Utf8Scope fieldnameScope = Gst.Interop.GMarshal.StackUtf8(fieldname, fieldnameBuffer);
         int valueNative = default;
         int nativeResult = GstStructureGetInt(Handle, fieldnameScope.Pointer, &valueNative);
+        System.GC.KeepAlive(this);
         value = valueNative;
         return nativeResult != 0;
     }
@@ -697,6 +687,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
         using Gst.Interop.Utf8Scope fieldnameScope = Gst.Interop.GMarshal.StackUtf8(fieldname, fieldnameBuffer);
         long valueNative = default;
         int nativeResult = GstStructureGetInt64(Handle, fieldnameScope.Pointer, &valueNative);
+        System.GC.KeepAlive(this);
         value = valueNative;
         return nativeResult != 0;
     }
@@ -706,6 +697,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     public string GetName()
     {
         nint nativeResult = GstStructureGetName(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
             ?? throw new InvalidOperationException("gst_structure_get_name returned no value.");
     }
@@ -716,14 +708,21 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     public Gst.GLib.Quark GetNameId()
     {
         uint nativeResult = GstStructureGetNameId(Handle);
+        System.GC.KeepAlive(this);
         return new Gst.GLib.Quark(nativeResult);
     }
 
     /// <summary>Get the name of @structure as a GstIdStr.</summary>
-    /// <returns>the name of the structure.</returns>
+    /// <returns>
+    /// the name of the structure.
+    /// The wrapper owns a reference of its own, which is a copy for a boxed type:
+    /// dispose it when you are done, and note that changes made to a copy of a
+    /// boxed value are not written back.
+    /// </returns>
     public Gst.IdStr GetNameIdStr()
     {
         nint nativeResult = GstStructureGetNameIdStr(Handle);
+        System.GC.KeepAlive(this);
         return Gst.IdStr.FromNative(nativeResult, Gst.Interop.Transfer.None)
             ?? throw new InvalidOperationException("gst_structure_get_name_id_str returned no value.");
     }
@@ -750,6 +749,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
         System.Span<byte> fieldnameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope fieldnameScope = Gst.Interop.GMarshal.StackUtf8(fieldname, fieldnameBuffer);
         nint nativeResult = GstStructureGetString(Handle, fieldnameScope.Pointer);
+        System.GC.KeepAlive(this);
         return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
     }
 
@@ -772,6 +772,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
         using Gst.Interop.Utf8Scope fieldnameScope = Gst.Interop.GMarshal.StackUtf8(fieldname, fieldnameBuffer);
         uint valueNative = default;
         int nativeResult = GstStructureGetUint(Handle, fieldnameScope.Pointer, &valueNative);
+        System.GC.KeepAlive(this);
         value = valueNative;
         return nativeResult != 0;
     }
@@ -795,6 +796,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
         using Gst.Interop.Utf8Scope fieldnameScope = Gst.Interop.GMarshal.StackUtf8(fieldname, fieldnameBuffer);
         ulong valueNative = default;
         int nativeResult = GstStructureGetUint64(Handle, fieldnameScope.Pointer, &valueNative);
+        System.GC.KeepAlive(this);
         value = valueNative;
         return nativeResult != 0;
     }
@@ -808,6 +810,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
         System.Span<byte> fieldnameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope fieldnameScope = Gst.Interop.GMarshal.StackUtf8(fieldname, fieldnameBuffer);
         int nativeResult = GstStructureHasField(Handle, fieldnameScope.Pointer);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -821,6 +824,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
         System.Span<byte> fieldnameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope fieldnameScope = Gst.Interop.GMarshal.StackUtf8(fieldname, fieldnameBuffer);
         int nativeResult = GstStructureHasFieldTyped(Handle, fieldnameScope.Pointer, type.Value);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -833,6 +837,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
         System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
         int nativeResult = GstStructureHasName(Handle, nameScope.Pointer);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -843,6 +848,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     public bool IdHasField(Gst.GLib.Quark field)
     {
         int nativeResult = GstStructureIdHasField(Handle, field.Value);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -854,6 +860,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     public bool IdHasFieldTyped(Gst.GLib.Quark field, Gst.GObject.GType type)
     {
         int nativeResult = GstStructureIdHasFieldTyped(Handle, field.Value, type.Value);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -868,6 +875,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     {
         ArgumentNullException.ThrowIfNull(fieldname);
         nuint nativeResult = GstStructureIdStrGetFieldType(Handle, fieldname.Handle);
+        System.GC.KeepAlive(this);
         return new Gst.GObject.GType(nativeResult);
     }
 
@@ -878,6 +886,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     {
         ArgumentNullException.ThrowIfNull(fieldname);
         int nativeResult = GstStructureIdStrHasField(Handle, fieldname.Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -889,6 +898,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     {
         ArgumentNullException.ThrowIfNull(fieldname);
         int nativeResult = GstStructureIdStrHasFieldTyped(Handle, fieldname.Handle, type.Value);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -897,10 +907,16 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     /// counting from 0 onwards.
     /// </summary>
     /// <param name="index">The <c>index</c> argument.</param>
-    /// <returns>the name of the given field number</returns>
+    /// <returns>
+    /// the name of the given field number
+    /// The wrapper owns a reference of its own, which is a copy for a boxed type:
+    /// dispose it when you are done, and note that changes made to a copy of a
+    /// boxed value are not written back.
+    /// </returns>
     public Gst.IdStr IdStrNthFieldName(uint index)
     {
         nint nativeResult = GstStructureIdStrNthFieldName(Handle, index);
+        System.GC.KeepAlive(this);
         return Gst.IdStr.FromNative(nativeResult, Gst.Interop.Transfer.None)
             ?? throw new InvalidOperationException("gst_structure_id_str_nth_field_name returned no value.");
     }
@@ -914,6 +930,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     {
         ArgumentNullException.ThrowIfNull(fieldname);
         GstStructureIdStrRemoveField(Handle, fieldname.Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Intersects @struct1 and @struct2 and returns the intersection.</summary>
@@ -923,6 +940,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     {
         ArgumentNullException.ThrowIfNull(struct2);
         nint nativeResult = GstStructureIntersect(Handle, struct2.Handle);
+        System.GC.KeepAlive(this);
         return Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -933,6 +951,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     {
         ArgumentNullException.ThrowIfNull(structure2);
         int nativeResult = GstStructureIsEqual(Handle, structure2.Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -947,6 +966,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     {
         ArgumentNullException.ThrowIfNull(superset);
         int nativeResult = GstStructureIsSubset(Handle, superset.Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -958,6 +978,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     public bool IsWritable()
     {
         int nativeResult = GstStructureIsWritable(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -966,6 +987,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     public int NFields()
     {
         int nativeResult = GstStructureNFields(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -975,6 +997,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     public string NthFieldName(uint index)
     {
         nint nativeResult = GstStructureNthFieldName(Handle, index);
+        System.GC.KeepAlive(this);
         return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
             ?? throw new InvalidOperationException("gst_structure_nth_field_name returned no value.");
     }
@@ -983,6 +1006,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     public void RemoveAllFields()
     {
         GstStructureRemoveAllFields(Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -996,6 +1020,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
         System.Span<byte> fieldnameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope fieldnameScope = Gst.Interop.GMarshal.StackUtf8(fieldname, fieldnameBuffer);
         GstStructureRemoveField(Handle, fieldnameScope.Pointer);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Converts @structure to a human-readable string representation.</summary>
@@ -1022,6 +1047,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     public string Serialize(Gst.SerializeFlags flags)
     {
         nint nativeResult = GstStructureSerialize(Handle, (int)flags);
+        System.GC.KeepAlive(this);
         return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
             ?? throw new InvalidOperationException("gst_structure_serialize returned no value.");
     }
@@ -1038,6 +1064,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     public string? SerializeFull(Gst.SerializeFlags flags)
     {
         nint nativeResult = GstStructureSerializeFull(Handle, (int)flags);
+        System.GC.KeepAlive(this);
         return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
     }
 
@@ -1053,6 +1080,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
         System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
         GstStructureSetName(Handle, nameScope.Pointer);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -1065,26 +1093,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     {
         ArgumentNullException.ThrowIfNull(name);
         GstStructureSetNameIdStr(Handle, name.Handle);
-    }
-
-    /// <summary>
-    /// Sets the name of the structure to the given @name.  The string
-    /// provided is copied before being used. It must not be empty, start with a
-    /// letter and can be followed by letters, numbers and any of "/-_.:".
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// @name needs to be valid for the remaining lifetime of the process, e.g. has
-    /// to be a static string.
-    /// </para>
-    /// </remarks>
-    /// <param name="name">The <c>name</c> argument.</param>
-    public void SetNameStaticStr(string name)
-    {
-        ArgumentNullException.ThrowIfNull(name);
-        System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
-        using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
-        GstStructureSetNameStaticStr(Handle, nameScope.Pointer);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Converts @structure to a human-readable string representation.</summary>
@@ -1109,6 +1118,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     public override string ToString()
     {
         nint nativeResult = GstStructureToString(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
             ?? throw new InvalidOperationException("gst_structure_to_string returned no value.");
     }
@@ -1132,10 +1142,6 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     /// <summary>The <c>gst_structure_new_id_str_empty</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_structure_new_id_str_empty")]
     private static partial nint GstStructureNewIdStrEmpty(nint name);
-
-    /// <summary>The <c>gst_structure_new_static_str_empty</c> entry point.</summary>
-    [LibraryImport("Gst", EntryPoint = "gst_structure_new_static_str_empty")]
-    private static partial nint GstStructureNewStaticStrEmpty(byte* name);
 
     /// <summary>The <c>gst_structure_can_intersect</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_structure_can_intersect")]
@@ -1172,10 +1178,6 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     /// <summary>The <c>gst_structure_fixate_field_string</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_structure_fixate_field_string")]
     private static partial int GstStructureFixateFieldString(nint structure, byte* fieldName, byte* target);
-
-    /// <summary>The <c>gst_structure_free</c> entry point.</summary>
-    [LibraryImport("Gst", EntryPoint = "gst_structure_free")]
-    private static partial void GstStructureFree(nint structure);
 
     /// <summary>The <c>gst_structure_get_boolean</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_structure_get_boolean")]
@@ -1336,10 +1338,6 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     /// <summary>The <c>gst_structure_set_name_id_str</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_structure_set_name_id_str")]
     private static partial void GstStructureSetNameIdStr(nint structure, nint name);
-
-    /// <summary>The <c>gst_structure_set_name_static_str</c> entry point.</summary>
-    [LibraryImport("Gst", EntryPoint = "gst_structure_set_name_static_str")]
-    private static partial void GstStructureSetNameStaticStr(nint structure, byte* name);
 
     /// <summary>The <c>gst_structure_to_string</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_structure_to_string")]

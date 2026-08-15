@@ -30,26 +30,44 @@ public sealed unsafe partial class PadProbeInfo
         handle == 0 ? null : new(handle);
 
     /// <summary>The <c>gst_pad_probe_info_get_buffer</c> function.</summary>
-    /// <returns>The #GstBuffer from the probe</returns>
+    /// <returns>
+    /// The #GstBuffer from the probe
+    /// The wrapper owns a reference of its own, which is a copy for a boxed type:
+    /// dispose it when you are done, and note that changes made to a copy of a
+    /// boxed value are not written back.
+    /// </returns>
     public Gst.Buffer? GetBuffer()
     {
         nint nativeResult = GstPadProbeInfoGetBuffer(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.None);
     }
 
     /// <summary>The <c>gst_pad_probe_info_get_buffer_list</c> function.</summary>
-    /// <returns>The #GstBufferList from the probe</returns>
+    /// <returns>
+    /// The #GstBufferList from the probe
+    /// The wrapper owns a reference of its own, which is a copy for a boxed type:
+    /// dispose it when you are done, and note that changes made to a copy of a
+    /// boxed value are not written back.
+    /// </returns>
     public Gst.BufferList? GetBufferList()
     {
         nint nativeResult = GstPadProbeInfoGetBufferList(Handle);
+        System.GC.KeepAlive(this);
         return Gst.BufferList.FromNative(nativeResult, Gst.Interop.Transfer.None);
     }
 
     /// <summary>The <c>gst_pad_probe_info_get_event</c> function.</summary>
-    /// <returns>The #GstEvent from the probe</returns>
+    /// <returns>
+    /// The #GstEvent from the probe
+    /// The wrapper owns a reference of its own, which is a copy for a boxed type:
+    /// dispose it when you are done, and note that changes made to a copy of a
+    /// boxed value are not written back.
+    /// </returns>
     public Gst.Event? GetEvent()
     {
         nint nativeResult = GstPadProbeInfoGetEvent(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Event.FromNative(nativeResult, Gst.Interop.Transfer.None);
     }
 
@@ -58,6 +76,7 @@ public sealed unsafe partial class PadProbeInfo
     public Gst.FlowReturn GetFlowReturn()
     {
         int nativeResult = GstPadProbeInfoGetFlowReturn(Handle);
+        System.GC.KeepAlive(this);
         return (Gst.FlowReturn)nativeResult;
     }
 
@@ -66,6 +85,7 @@ public sealed unsafe partial class PadProbeInfo
     public System.Runtime.InteropServices.CULong GetId()
     {
         System.Runtime.InteropServices.CULong nativeResult = GstPadProbeInfoGetId(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -74,14 +94,21 @@ public sealed unsafe partial class PadProbeInfo
     public ulong GetOffset()
     {
         ulong nativeResult = GstPadProbeInfoGetOffset(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
     /// <summary>The <c>gst_pad_probe_info_get_query</c> function.</summary>
-    /// <returns>The #GstQuery from the probe</returns>
+    /// <returns>
+    /// The #GstQuery from the probe
+    /// The wrapper owns a reference of its own, which is a copy for a boxed type:
+    /// dispose it when you are done, and note that changes made to a copy of a
+    /// boxed value are not written back.
+    /// </returns>
     public Gst.Query? GetQuery()
     {
         nint nativeResult = GstPadProbeInfoGetQuery(Handle);
+        System.GC.KeepAlive(this);
         return Gst.Query.FromNative(nativeResult, Gst.Interop.Transfer.None);
     }
 
@@ -90,6 +117,7 @@ public sealed unsafe partial class PadProbeInfo
     public nuint GetSize()
     {
         nuint nativeResult = GstPadProbeInfoGetSize(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -98,6 +126,7 @@ public sealed unsafe partial class PadProbeInfo
     public void SetFlowReturn(Gst.FlowReturn flowRet)
     {
         GstPadProbeInfoSetFlowReturn(Handle, (int)flowRet);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>The <c>gst_pad_probe_info_get_buffer</c> entry point.</summary>

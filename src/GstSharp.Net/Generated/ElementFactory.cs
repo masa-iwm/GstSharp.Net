@@ -56,6 +56,7 @@ public unsafe partial class ElementFactory : Gst.PluginFeature
     {
         ArgumentNullException.ThrowIfNull(caps);
         int nativeResult = GstElementFactoryCanSinkAllCaps(Handle, caps.Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -66,6 +67,7 @@ public unsafe partial class ElementFactory : Gst.PluginFeature
     {
         ArgumentNullException.ThrowIfNull(caps);
         int nativeResult = GstElementFactoryCanSinkAnyCaps(Handle, caps.Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -76,6 +78,7 @@ public unsafe partial class ElementFactory : Gst.PluginFeature
     {
         ArgumentNullException.ThrowIfNull(caps);
         int nativeResult = GstElementFactoryCanSrcAllCaps(Handle, caps.Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -86,6 +89,7 @@ public unsafe partial class ElementFactory : Gst.PluginFeature
     {
         ArgumentNullException.ThrowIfNull(caps);
         int nativeResult = GstElementFactoryCanSrcAnyCaps(Handle, caps.Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -104,6 +108,7 @@ public unsafe partial class ElementFactory : Gst.PluginFeature
         System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
         nint nativeResult = GstElementFactoryCreate(Handle, nameScope.Pointer);
+        System.GC.KeepAlive(this);
         return Gst.GObject.Object.FromNative<Gst.Element>(nativeResult, Gst.Interop.Transfer.None);
     }
 
@@ -119,6 +124,7 @@ public unsafe partial class ElementFactory : Gst.PluginFeature
     public Gst.GObject.GType GetElementType()
     {
         nuint nativeResult = GstElementFactoryGetElementType(Handle);
+        System.GC.KeepAlive(this);
         return new Gst.GObject.GType(nativeResult);
     }
 
@@ -134,6 +140,7 @@ public unsafe partial class ElementFactory : Gst.PluginFeature
         System.Span<byte> keyBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope keyScope = Gst.Interop.GMarshal.StackUtf8(key, keyBuffer);
         nint nativeResult = GstElementFactoryGetMetadata(Handle, keyScope.Pointer);
+        System.GC.KeepAlive(this);
         return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
     }
 
@@ -142,6 +149,7 @@ public unsafe partial class ElementFactory : Gst.PluginFeature
     public uint GetNumPadTemplates()
     {
         uint nativeResult = GstElementFactoryGetNumPadTemplates(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -153,6 +161,7 @@ public unsafe partial class ElementFactory : Gst.PluginFeature
     public bool GetSkipDocumentation()
     {
         int nativeResult = GstElementFactoryGetSkipDocumentation(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -161,6 +170,7 @@ public unsafe partial class ElementFactory : Gst.PluginFeature
     public Gst.URIType GetUriType()
     {
         int nativeResult = GstElementFactoryGetUriType(Handle);
+        System.GC.KeepAlive(this);
         return (Gst.URIType)nativeResult;
     }
 
@@ -173,6 +183,7 @@ public unsafe partial class ElementFactory : Gst.PluginFeature
         System.Span<byte> interfacenameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope interfacenameScope = Gst.Interop.GMarshal.StackUtf8(interfacename, interfacenameBuffer);
         int nativeResult = GstElementFactoryHasInterface(Handle, interfacenameScope.Pointer);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -182,6 +193,7 @@ public unsafe partial class ElementFactory : Gst.PluginFeature
     public bool ListIsType(ulong type)
     {
         int nativeResult = GstElementFactoryListIsType(Handle, type);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 

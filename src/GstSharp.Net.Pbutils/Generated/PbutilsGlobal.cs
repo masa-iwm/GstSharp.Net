@@ -9,7 +9,7 @@ using System.Runtime.InteropServices;
 namespace Gst.Pbutils;
 
 /// <summary>The functions of the <c>GstPbutils</c> namespace that belong to no type.</summary>
-public static unsafe partial class Global
+public static unsafe partial class PbutilsGlobal
 {
     /// <summary>
     /// Sets the level and profile on @caps if it can be determined from

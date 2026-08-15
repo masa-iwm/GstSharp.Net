@@ -151,29 +151,12 @@ public abstract unsafe partial class BaseSrc : Gst.Element
     {
     }
 
-    /// <summary>
-    /// Lets #GstBaseSrc sub-classes to know the memory @allocator
-    /// used by the base class and its @params.
-    /// </summary>
-    /// <remarks>
-    /// <para>Unref the @allocator after usage.</para>
-    /// </remarks>
-    /// <param name="allocator">The <c>allocator</c> argument.</param>
-    /// <param name="params">The <c>@params</c> argument.</param>
-    public void GetAllocator(out Gst.Allocator? allocator, out Gst.AllocationParams? @params)
-    {
-        nint allocatorNative = default;
-        nint @paramsNative = default;
-        GstBaseSrcGetAllocator(Handle, &allocatorNative, &@paramsNative);
-        allocator = Gst.GObject.Object.FromNative<Gst.Allocator>(allocatorNative, Gst.Interop.Transfer.Full);
-        @params = Gst.AllocationParams.FromNative(@paramsNative, Gst.Interop.Transfer.None);
-    }
-
     /// <summary>Get the number of bytes that @src will push out with each buffer.</summary>
     /// <returns>the number of bytes pushed with each buffer.</returns>
     public uint GetBlocksize()
     {
         uint nativeResult = GstBaseSrcGetBlocksize(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -185,6 +168,7 @@ public abstract unsafe partial class BaseSrc : Gst.Element
     public Gst.BufferPool? GetBufferPool()
     {
         nint nativeResult = GstBaseSrcGetBufferPool(Handle);
+        System.GC.KeepAlive(this);
         return Gst.GObject.Object.FromNative<Gst.BufferPool>(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -193,6 +177,7 @@ public abstract unsafe partial class BaseSrc : Gst.Element
     public bool GetDoTimestamp()
     {
         int nativeResult = GstBaseSrcGetDoTimestamp(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -201,6 +186,7 @@ public abstract unsafe partial class BaseSrc : Gst.Element
     public bool IsAsync()
     {
         int nativeResult = GstBaseSrcIsAsync(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -209,6 +195,7 @@ public abstract unsafe partial class BaseSrc : Gst.Element
     public bool IsLive()
     {
         int nativeResult = GstBaseSrcIsLive(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -228,6 +215,7 @@ public abstract unsafe partial class BaseSrc : Gst.Element
     public bool Negotiate()
     {
         int nativeResult = GstBaseSrcNegotiate(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -250,6 +238,7 @@ public abstract unsafe partial class BaseSrc : Gst.Element
     public bool NewSeamlessSegment(long start, long stop, long time)
     {
         int nativeResult = GstBaseSrcNewSeamlessSegment(Handle, start, stop, time);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -274,6 +263,7 @@ public abstract unsafe partial class BaseSrc : Gst.Element
     {
         ArgumentNullException.ThrowIfNull(segment);
         int nativeResult = GstBaseSrcNewSegment(Handle, segment.Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -304,6 +294,7 @@ public abstract unsafe partial class BaseSrc : Gst.Element
     {
         ArgumentNullException.ThrowIfNull(segment);
         int nativeResult = GstBaseSrcPushSegment(Handle, segment.Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -326,6 +317,7 @@ public abstract unsafe partial class BaseSrc : Gst.Element
         ulong minLatencyNative = default;
         ulong maxLatencyNative = default;
         int nativeResult = GstBaseSrcQueryLatency(Handle, &liveNative, &minLatencyNative, &maxLatencyNative);
+        System.GC.KeepAlive(this);
         live = liveNative != 0;
         minLatency = new Gst.ClockTime(minLatencyNative);
         maxLatency = new Gst.ClockTime(maxLatencyNative);
@@ -342,6 +334,7 @@ public abstract unsafe partial class BaseSrc : Gst.Element
     public void SetAsync(bool async)
     {
         GstBaseSrcSetAsync(Handle, async ? 1 : 0);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -363,6 +356,7 @@ public abstract unsafe partial class BaseSrc : Gst.Element
     public void SetAutomaticEos(bool automaticEos)
     {
         GstBaseSrcSetAutomaticEos(Handle, automaticEos ? 1 : 0);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -373,6 +367,7 @@ public abstract unsafe partial class BaseSrc : Gst.Element
     public void SetBlocksize(uint blocksize)
     {
         GstBaseSrcSetBlocksize(Handle, blocksize);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Set new caps on the basesrc source pad.</summary>
@@ -382,6 +377,7 @@ public abstract unsafe partial class BaseSrc : Gst.Element
     {
         ArgumentNullException.ThrowIfNull(caps);
         int nativeResult = GstBaseSrcSetCaps(Handle, caps.Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -394,6 +390,7 @@ public abstract unsafe partial class BaseSrc : Gst.Element
     public void SetDoTimestamp(bool timestamp)
     {
         GstBaseSrcSetDoTimestamp(Handle, timestamp ? 1 : 0);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -405,6 +402,7 @@ public abstract unsafe partial class BaseSrc : Gst.Element
     public void SetDynamicSize(bool dynamic)
     {
         GstBaseSrcSetDynamicSize(Handle, dynamic ? 1 : 0);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -422,6 +420,7 @@ public abstract unsafe partial class BaseSrc : Gst.Element
     public void SetFormat(Gst.Format format)
     {
         GstBaseSrcSetFormat(Handle, (int)format);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -441,6 +440,7 @@ public abstract unsafe partial class BaseSrc : Gst.Element
     public void SetLive(bool live)
     {
         GstBaseSrcSetLive(Handle, live ? 1 : 0);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -453,6 +453,7 @@ public abstract unsafe partial class BaseSrc : Gst.Element
     public void StartComplete(Gst.FlowReturn ret)
     {
         GstBaseSrcStartComplete(Handle, (int)ret);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Wait until the start operation completes.</summary>
@@ -460,6 +461,7 @@ public abstract unsafe partial class BaseSrc : Gst.Element
     public Gst.FlowReturn StartWait()
     {
         int nativeResult = GstBaseSrcStartWait(Handle);
+        System.GC.KeepAlive(this);
         return (Gst.FlowReturn)nativeResult;
     }
 
@@ -483,6 +485,7 @@ public abstract unsafe partial class BaseSrc : Gst.Element
     public Gst.FlowReturn WaitPlaying()
     {
         int nativeResult = GstBaseSrcWaitPlaying(Handle);
+        System.GC.KeepAlive(this);
         return (Gst.FlowReturn)nativeResult;
     }
 
@@ -499,10 +502,6 @@ public abstract unsafe partial class BaseSrc : Gst.Element
         get => GetDoTimestamp();
         set => SetDoTimestamp(value);
     }
-
-    /// <summary>The <c>gst_base_src_get_allocator</c> entry point.</summary>
-    [LibraryImport("GstBase", EntryPoint = "gst_base_src_get_allocator")]
-    private static partial void GstBaseSrcGetAllocator(nint src, nint* allocator, nint* @params);
 
     /// <summary>The <c>gst_base_src_get_blocksize</c> entry point.</summary>
     [LibraryImport("GstBase", EntryPoint = "gst_base_src_get_blocksize")]

@@ -32,6 +32,7 @@ public unsafe partial class AudioBaseSrc : Gst.Base.PushSrc
     public Gst.Audio.AudioRingBuffer? CreateRingbuffer()
     {
         nint nativeResult = GstAudioBaseSrcCreateRingbuffer(Handle);
+        System.GC.KeepAlive(this);
         return Gst.GObject.Object.FromNative<Gst.Audio.AudioRingBuffer>(nativeResult, Gst.Interop.Transfer.None);
     }
 
@@ -43,6 +44,7 @@ public unsafe partial class AudioBaseSrc : Gst.Base.PushSrc
     public bool GetProvideClock()
     {
         int nativeResult = GstAudioBaseSrcGetProvideClock(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
 
@@ -51,6 +53,7 @@ public unsafe partial class AudioBaseSrc : Gst.Base.PushSrc
     public Gst.Audio.AudioBaseSrcSlaveMethod GetSlaveMethod()
     {
         int nativeResult = GstAudioBaseSrcGetSlaveMethod(Handle);
+        System.GC.KeepAlive(this);
         return (Gst.Audio.AudioBaseSrcSlaveMethod)nativeResult;
     }
 
@@ -63,6 +66,7 @@ public unsafe partial class AudioBaseSrc : Gst.Base.PushSrc
     public void SetProvideClock(bool provide)
     {
         GstAudioBaseSrcSetProvideClock(Handle, provide ? 1 : 0);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Controls how clock slaving will be performed in @src.</summary>
@@ -70,6 +74,7 @@ public unsafe partial class AudioBaseSrc : Gst.Base.PushSrc
     public void SetSlaveMethod(Gst.Audio.AudioBaseSrcSlaveMethod method)
     {
         GstAudioBaseSrcSetSlaveMethod(Handle, (int)method);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>The <c>provide-clock</c> property.</summary>

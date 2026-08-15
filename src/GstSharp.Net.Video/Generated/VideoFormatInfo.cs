@@ -40,6 +40,7 @@ public sealed unsafe partial class VideoFormatInfo
     {
         int componentsNative = default;
         GstVideoFormatInfoComponent(Handle, plane, &componentsNative);
+        System.GC.KeepAlive(this);
         components = componentsNative;
     }
 
@@ -53,6 +54,7 @@ public sealed unsafe partial class VideoFormatInfo
     public int ExtrapolateStride(int plane, int stride)
     {
         int nativeResult = GstVideoFormatInfoExtrapolateStride(Handle, plane, stride);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 

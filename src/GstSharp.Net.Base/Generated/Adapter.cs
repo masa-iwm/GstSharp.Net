@@ -159,6 +159,7 @@ public unsafe partial class Adapter : Gst.GObject.Object
     public nuint Available()
     {
         nuint nativeResult = GstAdapterAvailable(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -180,6 +181,7 @@ public unsafe partial class Adapter : Gst.GObject.Object
     public nuint AvailableFast()
     {
         nuint nativeResult = GstAdapterAvailableFast(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -187,6 +189,7 @@ public unsafe partial class Adapter : Gst.GObject.Object
     public void Clear()
     {
         GstAdapterClear(Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -204,6 +207,7 @@ public unsafe partial class Adapter : Gst.GObject.Object
     public ulong DistanceFromDiscont()
     {
         ulong nativeResult = GstAdapterDistanceFromDiscont(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -215,6 +219,7 @@ public unsafe partial class Adapter : Gst.GObject.Object
     public Gst.ClockTime DtsAtDiscont()
     {
         ulong nativeResult = GstAdapterDtsAtDiscont(Handle);
+        System.GC.KeepAlive(this);
         return new Gst.ClockTime(nativeResult);
     }
 
@@ -229,6 +234,7 @@ public unsafe partial class Adapter : Gst.GObject.Object
     public void Flush(nuint flush)
     {
         GstAdapterFlush(Handle, flush);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -252,6 +258,7 @@ public unsafe partial class Adapter : Gst.GObject.Object
     public Gst.Buffer? GetBuffer(nuint nbytes)
     {
         nint nativeResult = GstAdapterGetBuffer(Handle, nbytes);
+        System.GC.KeepAlive(this);
         return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -276,6 +283,7 @@ public unsafe partial class Adapter : Gst.GObject.Object
     public Gst.Buffer? GetBufferFast(nuint nbytes)
     {
         nint nativeResult = GstAdapterGetBufferFast(Handle, nbytes);
+        System.GC.KeepAlive(this);
         return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -299,38 +307,8 @@ public unsafe partial class Adapter : Gst.GObject.Object
     public Gst.BufferList? GetBufferList(nuint nbytes)
     {
         nint nativeResult = GstAdapterGetBufferList(Handle, nbytes);
+        System.GC.KeepAlive(this);
         return Gst.BufferList.FromNative(nativeResult, Gst.Interop.Transfer.Full);
-    }
-
-    /// <summary>
-    /// Gets the first @size bytes stored in the @adapter. The returned pointer is
-    /// valid until the next function is called on the adapter.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// Note that setting the returned pointer as the data of a #GstBuffer is
-    /// incorrect for general-purpose plugins. The reason is that if a downstream
-    /// element stores the buffer so that it has access to it outside of the bounds
-    /// of its chain function, the buffer will have an invalid data pointer after
-    /// your element flushes the bytes. In that case you should use
-    /// gst_adapter_take(), which returns a freshly-allocated buffer that you can set
-    /// as #GstBuffer memory or the potentially more performant
-    /// gst_adapter_take_buffer().
-    /// </para>
-    /// <para>Returns %NULL if @size bytes are not available.</para>
-    /// </remarks>
-    /// <returns>    a pointer to the first @size bytes of data, or %NULL</returns>
-    public byte[]? Map()
-    {
-        nuint sizeNative = default;
-        nint nativeResult = GstAdapterMap(Handle, &sizeNative);
-        byte[]? result = null;
-        if (nativeResult != 0)
-        {
-            result = new byte[(int)sizeNative];
-            new System.ReadOnlySpan<byte>((void*)nativeResult, (int)sizeNative).CopyTo(result);
-        }
-        return result;
     }
 
     /// <summary>
@@ -360,6 +338,7 @@ public unsafe partial class Adapter : Gst.GObject.Object
     public nint MaskedScanUint32(uint mask, uint pattern, nuint offset, nuint size)
     {
         nint nativeResult = GstAdapterMaskedScanUint32(Handle, mask, pattern, offset, size);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -389,6 +368,7 @@ public unsafe partial class Adapter : Gst.GObject.Object
     {
         uint valueNative = default;
         nint nativeResult = GstAdapterMaskedScanUint32Peek(Handle, mask, pattern, offset, size, &valueNative);
+        System.GC.KeepAlive(this);
         value = valueNative;
         return nativeResult;
     }
@@ -401,6 +381,7 @@ public unsafe partial class Adapter : Gst.GObject.Object
     public ulong OffsetAtDiscont()
     {
         ulong nativeResult = GstAdapterOffsetAtDiscont(Handle);
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -423,6 +404,7 @@ public unsafe partial class Adapter : Gst.GObject.Object
     {
         ulong distanceNative = default;
         ulong nativeResult = GstAdapterPrevDts(Handle, &distanceNative);
+        System.GC.KeepAlive(this);
         distance = distanceNative;
         return new Gst.ClockTime(nativeResult);
     }
@@ -447,6 +429,7 @@ public unsafe partial class Adapter : Gst.GObject.Object
     {
         ulong distanceNative = default;
         ulong nativeResult = GstAdapterPrevDtsAtOffset(Handle, offset, &distanceNative);
+        System.GC.KeepAlive(this);
         distance = distanceNative;
         return new Gst.ClockTime(nativeResult);
     }
@@ -470,6 +453,7 @@ public unsafe partial class Adapter : Gst.GObject.Object
     {
         ulong distanceNative = default;
         ulong nativeResult = GstAdapterPrevOffset(Handle, &distanceNative);
+        System.GC.KeepAlive(this);
         distance = distanceNative;
         return nativeResult;
     }
@@ -493,6 +477,7 @@ public unsafe partial class Adapter : Gst.GObject.Object
     {
         ulong distanceNative = default;
         ulong nativeResult = GstAdapterPrevPts(Handle, &distanceNative);
+        System.GC.KeepAlive(this);
         distance = distanceNative;
         return new Gst.ClockTime(nativeResult);
     }
@@ -517,6 +502,7 @@ public unsafe partial class Adapter : Gst.GObject.Object
     {
         ulong distanceNative = default;
         ulong nativeResult = GstAdapterPrevPtsAtOffset(Handle, offset, &distanceNative);
+        System.GC.KeepAlive(this);
         distance = distanceNative;
         return new Gst.ClockTime(nativeResult);
     }
@@ -529,30 +515,8 @@ public unsafe partial class Adapter : Gst.GObject.Object
     public Gst.ClockTime PtsAtDiscont()
     {
         ulong nativeResult = GstAdapterPtsAtDiscont(Handle);
+        System.GC.KeepAlive(this);
         return new Gst.ClockTime(nativeResult);
-    }
-
-    /// <summary>
-    /// Returns a freshly allocated buffer containing the first @nbytes bytes of the
-    /// @adapter. The returned bytes will be flushed from the adapter.
-    /// </summary>
-    /// <remarks>
-    /// <para>Caller owns returned value. g_free after usage.</para>
-    /// <para>Free-function: g_free</para>
-    /// </remarks>
-    /// <returns>    oven-fresh hot data, or %NULL if @nbytes bytes are not available</returns>
-    public byte[]? Take()
-    {
-        nuint nbytesNative = default;
-        nint nativeResult = GstAdapterTake(Handle, &nbytesNative);
-        byte[]? result = null;
-        if (nativeResult != 0)
-        {
-            result = new byte[(int)nbytesNative];
-            new System.ReadOnlySpan<byte>((void*)nativeResult, (int)nbytesNative).CopyTo(result);
-            Gst.Interop.GMarshal.Free(nativeResult);
-        }
-        return result;
     }
 
     /// <summary>
@@ -599,6 +563,7 @@ public unsafe partial class Adapter : Gst.GObject.Object
     public Gst.Buffer? TakeBuffer(nuint nbytes)
     {
         nint nativeResult = GstAdapterTakeBuffer(Handle, nbytes);
+        System.GC.KeepAlive(this);
         return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -641,6 +606,7 @@ public unsafe partial class Adapter : Gst.GObject.Object
     public Gst.Buffer? TakeBufferFast(nuint nbytes)
     {
         nint nativeResult = GstAdapterTakeBufferFast(Handle, nbytes);
+        System.GC.KeepAlive(this);
         return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -665,6 +631,7 @@ public unsafe partial class Adapter : Gst.GObject.Object
     public Gst.BufferList? TakeBufferList(nuint nbytes)
     {
         nint nativeResult = GstAdapterTakeBufferList(Handle, nbytes);
+        System.GC.KeepAlive(this);
         return Gst.BufferList.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -672,6 +639,7 @@ public unsafe partial class Adapter : Gst.GObject.Object
     public void Unmap()
     {
         GstAdapterUnmap(Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>The <c>gst_adapter_new</c> entry point.</summary>
@@ -714,10 +682,6 @@ public unsafe partial class Adapter : Gst.GObject.Object
     [LibraryImport("GstBase", EntryPoint = "gst_adapter_get_buffer_list")]
     private static partial nint GstAdapterGetBufferList(nint adapter, nuint nbytes);
 
-    /// <summary>The <c>gst_adapter_map</c> entry point.</summary>
-    [LibraryImport("GstBase", EntryPoint = "gst_adapter_map")]
-    private static partial nint GstAdapterMap(nint adapter, nuint* size);
-
     /// <summary>The <c>gst_adapter_masked_scan_uint32</c> entry point.</summary>
     [LibraryImport("GstBase", EntryPoint = "gst_adapter_masked_scan_uint32")]
     private static partial nint GstAdapterMaskedScanUint32(nint adapter, uint mask, uint pattern, nuint offset, nuint size);
@@ -753,10 +717,6 @@ public unsafe partial class Adapter : Gst.GObject.Object
     /// <summary>The <c>gst_adapter_pts_at_discont</c> entry point.</summary>
     [LibraryImport("GstBase", EntryPoint = "gst_adapter_pts_at_discont")]
     private static partial ulong GstAdapterPtsAtDiscont(nint adapter);
-
-    /// <summary>The <c>gst_adapter_take</c> entry point.</summary>
-    [LibraryImport("GstBase", EntryPoint = "gst_adapter_take")]
-    private static partial nint GstAdapterTake(nint adapter, nuint* nbytes);
 
     /// <summary>The <c>gst_adapter_take_buffer</c> entry point.</summary>
     [LibraryImport("GstBase", EntryPoint = "gst_adapter_take_buffer")]

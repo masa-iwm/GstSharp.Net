@@ -51,19 +51,15 @@ public sealed unsafe partial class AllocationParams : Gst.GObject.Boxed
     public Gst.AllocationParams? Copy()
     {
         nint nativeResult = GstAllocationParamsCopy(Handle);
+        System.GC.KeepAlive(this);
         return Gst.AllocationParams.FromNative(nativeResult, Gst.Interop.Transfer.Full);
-    }
-
-    /// <summary>Free @params</summary>
-    public void Free()
-    {
-        GstAllocationParamsFree(Handle);
     }
 
     /// <summary>Initialize @params to its default values</summary>
     public void Init()
     {
         GstAllocationParamsInit(Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>The <c>gst_allocation_params_new</c> entry point.</summary>
@@ -73,10 +69,6 @@ public sealed unsafe partial class AllocationParams : Gst.GObject.Boxed
     /// <summary>The <c>gst_allocation_params_copy</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_allocation_params_copy")]
     private static partial nint GstAllocationParamsCopy(nint @params);
-
-    /// <summary>The <c>gst_allocation_params_free</c> entry point.</summary>
-    [LibraryImport("Gst", EntryPoint = "gst_allocation_params_free")]
-    private static partial void GstAllocationParamsFree(nint @params);
 
     /// <summary>The <c>gst_allocation_params_init</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_allocation_params_init")]

@@ -47,6 +47,7 @@ public unsafe partial class TaskPool : Gst.Object
     public void Cleanup()
     {
         GstTaskPoolCleanup(Handle);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -67,6 +68,7 @@ public unsafe partial class TaskPool : Gst.Object
     public void DisposeHandle(nint id)
     {
         GstTaskPoolDisposeHandle(Handle, id);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -84,6 +86,7 @@ public unsafe partial class TaskPool : Gst.Object
     public void Join(nint id)
     {
         GstTaskPoolJoin(Handle, id);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Prepare the taskpool for accepting gst_task_pool_push() operations.</summary>
@@ -95,6 +98,7 @@ public unsafe partial class TaskPool : Gst.Object
     {
         nint errorNative = 0;
         GstTaskPoolPrepare(Handle, &errorNative);
+        System.GC.KeepAlive(this);
         Gst.GLib.GException.ThrowIfSet(ref errorNative);
     }
 

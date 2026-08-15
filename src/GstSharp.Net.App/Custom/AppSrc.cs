@@ -60,7 +60,7 @@ public unsafe partial class AppSrc
     /// <exception cref="ObjectDisposedException">
     /// This wrapper or <paramref name="buffer"/> was disposed.
     /// </exception>
-    public Gst.FlowReturn Push(Gst.Buffer buffer)
+    public Gst.FlowReturn PushBuffer(Gst.Buffer buffer)
     {
         ArgumentNullException.ThrowIfNull(buffer);
 
