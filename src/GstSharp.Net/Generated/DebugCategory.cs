@@ -3,6 +3,7 @@
 
 #nullable enable
 
+using System;
 using System.Runtime.InteropServices;
 
 namespace Gst;
@@ -11,18 +12,121 @@ namespace Gst;
 /// This is the struct that describes the categories. Once initialized with
 /// #GST_DEBUG_CATEGORY_INIT, its values can't be changed anymore.
 /// </summary>
-[StructLayout(LayoutKind.Sequential)]
-public partial struct DebugCategory
+public sealed unsafe partial class DebugCategory
 {
-    /// <summary>The <c>threshold</c> field of <c>GstDebugCategory</c>.</summary>
-    private int _threshold;
+    /// <summary>The native instance.</summary>
+    internal nint Handle;
 
-    /// <summary>The <c>color</c> field of <c>GstDebugCategory</c>.</summary>
-    private uint _color;
+    /// <summary>Wraps a native <c>GstDebugCategory</c>.</summary>
+    /// <param name="handle">The native instance.</param>
+    internal DebugCategory(nint handle) => Handle = handle;
 
-    /// <summary>The <c>name</c> field of <c>GstDebugCategory</c>.</summary>
-    private nint _name;
+    /// <summary>Wraps a native <c>GstDebugCategory</c>, mapping the null pointer onto <see langword="null"/>.</summary>
+    /// <param name="handle">The native instance, or <c>0</c>.</param>
+    /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>
+    /// <remarks>
+    /// The wrapper of an opaque record is a bare pointer holder: the gir
+    /// describes no way of releasing one, so it does not take part in the
+    /// ownership of what it points at.
+    /// </remarks>
+    internal static DebugCategory? FromNative(nint handle) =>
+        handle == 0 ? null : new(handle);
 
-    /// <summary>The <c>description</c> field of <c>GstDebugCategory</c>.</summary>
-    private nint _description;
+    /// <summary>Removes and frees the category and all associated resources.</summary>
+    [Obsolete("This function can easily cause memory corruption, don't use it.")]
+    public void Free()
+    {
+        GstDebugCategoryFree(Handle);
+    }
+
+    /// <summary>
+    /// Returns the color of a debug category used when printing output in this
+    /// category.
+    /// </summary>
+    /// <returns>the color of the category.</returns>
+    public uint GetColor()
+    {
+        uint nativeResult = GstDebugCategoryGetColor(Handle);
+        return nativeResult;
+    }
+
+    /// <summary>Returns the description of a debug category.</summary>
+    /// <returns>the description of the category.</returns>
+    public string GetDescription()
+    {
+        nint nativeResult = GstDebugCategoryGetDescription(Handle);
+        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
+            ?? throw new InvalidOperationException("gst_debug_category_get_description returned no value.");
+    }
+
+    /// <summary>Returns the name of a debug category.</summary>
+    /// <returns>the name of the category.</returns>
+    public string GetName()
+    {
+        nint nativeResult = GstDebugCategoryGetName(Handle);
+        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
+            ?? throw new InvalidOperationException("gst_debug_category_get_name returned no value.");
+    }
+
+    /// <summary>Returns the threshold of a #GstDebugCategory.</summary>
+    /// <returns>the #GstDebugLevel that is used as threshold.</returns>
+    public Gst.DebugLevel GetThreshold()
+    {
+        int nativeResult = GstDebugCategoryGetThreshold(Handle);
+        return (Gst.DebugLevel)nativeResult;
+    }
+
+    /// <summary>
+    /// Resets the threshold of the category to the default level. Debug information
+    /// will only be output if the threshold is lower or equal to the level of the
+    /// debugging message.
+    /// Use this function to set the threshold back to where it was after using
+    /// gst_debug_category_set_threshold().
+    /// </summary>
+    public void ResetThreshold()
+    {
+        GstDebugCategoryResetThreshold(Handle);
+    }
+
+    /// <summary>
+    /// Sets the threshold of the category to the given level. Debug information will
+    /// only be output if the threshold is lower or equal to the level of the
+    /// debugging message.
+    /// &gt; Do not use this function in production code, because other functions may
+    /// &gt; change the threshold of categories as side effect. It is however a nice
+    /// &gt; function to use when debugging (even from gdb).
+    /// </summary>
+    /// <param name="level">The <c>level</c> argument.</param>
+    public void SetThreshold(Gst.DebugLevel level)
+    {
+        GstDebugCategorySetThreshold(Handle, (int)level);
+    }
+
+    /// <summary>The <c>gst_debug_category_free</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_debug_category_free")]
+    private static partial void GstDebugCategoryFree(nint category);
+
+    /// <summary>The <c>gst_debug_category_get_color</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_debug_category_get_color")]
+    private static partial uint GstDebugCategoryGetColor(nint category);
+
+    /// <summary>The <c>gst_debug_category_get_description</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_debug_category_get_description")]
+    private static partial nint GstDebugCategoryGetDescription(nint category);
+
+    /// <summary>The <c>gst_debug_category_get_name</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_debug_category_get_name")]
+    private static partial nint GstDebugCategoryGetName(nint category);
+
+    /// <summary>The <c>gst_debug_category_get_threshold</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_debug_category_get_threshold")]
+    private static partial int GstDebugCategoryGetThreshold(nint category);
+
+    /// <summary>The <c>gst_debug_category_reset_threshold</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_debug_category_reset_threshold")]
+    private static partial void GstDebugCategoryResetThreshold(nint category);
+
+    /// <summary>The <c>gst_debug_category_set_threshold</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_debug_category_set_threshold")]
+    private static partial void GstDebugCategorySetThreshold(nint category, int level);
 }

@@ -139,6 +139,118 @@ public static unsafe partial class ChildProxyExtensions
         return nativeResult;
     }
 
+    /// <summary>The arguments of the <c>child-added</c> signal of <c>GstChildProxy</c>.</summary>
+    public sealed class ChildAddedSignalArgs
+    {
+        /// <summary>Initializes a new instance of the <see cref="ChildAddedSignalArgs"/> class.</summary>
+        /// <param name="object">the #GObject that was added</param>
+        /// <param name="name">the name of the new child</param>
+        internal ChildAddedSignalArgs(Gst.GObject.Object @object, string name)
+        {
+            Object = @object;
+            Name = name;
+        }
+
+        /// <summary>the #GObject that was added</summary>
+        public Gst.GObject.Object Object { get; }
+
+        /// <summary>the name of the new child</summary>
+        public string Name { get; }
+    }
+
+    /// <summary>Will be emitted after the @object was added to the @child_proxy.</summary>
+    /// <param name="self">The instance to connect the handler to.</param>
+    /// <param name="handler">The handler to connect.</param>
+    public static void AddChildAddedHandler(this Gst.IChildProxy self, System.EventHandler<Gst.ChildProxyExtensions.ChildAddedSignalArgs> handler) =>
+        Gst.SignalConnections.Add((Gst.GObject.Object)self, "child-added", (nint)(delegate* unmanaged[Cdecl]<nint, nint, byte*, nint, void>)&ChildAddedTrampoline, handler);
+
+    /// <summary>Disconnects the handler that was connected last for a delegate of the <c>child-added</c> signal of <c>GstChildProxy</c>.</summary>
+    /// <param name="self">The instance the handler was connected to.</param>
+    /// <param name="handler">The handler to disconnect.</param>
+    public static void RemoveChildAddedHandler(this Gst.IChildProxy self, System.EventHandler<Gst.ChildProxyExtensions.ChildAddedSignalArgs> handler) =>
+        Gst.SignalConnections.Remove((Gst.GObject.Object)self, "child-added", handler);
+
+    /// <summary>The native handler of the <c>child-added</c> signal of <c>GstChildProxy</c>.</summary>
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
+    private static void ChildAddedTrampoline(nint instance, nint @object, byte* name, nint userData)
+    {
+        try
+        {
+            if (Gst.Interop.CallbackHandle.GetState<System.EventHandler<Gst.ChildProxyExtensions.ChildAddedSignalArgs>>(userData) is not { } handler)
+            {
+                return;
+            }
+
+            Gst.GObject.Object objectValue = Gst.GObject.Object.FromNative<Gst.GObject.Object>(@object, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("The child-added signal of GstChildProxy passed no object.");
+            string nameValue = Gst.Interop.GMarshal.PtrToStringUtf8((nint)name)
+                ?? throw new InvalidOperationException("The child-added signal of GstChildProxy passed no name.");
+            handler(
+                Gst.GObject.Object.FromNative(instance, Gst.Interop.Transfer.None),
+                new Gst.ChildProxyExtensions.ChildAddedSignalArgs(objectValue, nameValue));
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+        }
+    }
+
+    /// <summary>The arguments of the <c>child-removed</c> signal of <c>GstChildProxy</c>.</summary>
+    public sealed class ChildRemovedSignalArgs
+    {
+        /// <summary>Initializes a new instance of the <see cref="ChildRemovedSignalArgs"/> class.</summary>
+        /// <param name="object">the #GObject that was removed</param>
+        /// <param name="name">the name of the old child</param>
+        internal ChildRemovedSignalArgs(Gst.GObject.Object @object, string name)
+        {
+            Object = @object;
+            Name = name;
+        }
+
+        /// <summary>the #GObject that was removed</summary>
+        public Gst.GObject.Object Object { get; }
+
+        /// <summary>the name of the old child</summary>
+        public string Name { get; }
+    }
+
+    /// <summary>Will be emitted after the @object was removed from the @child_proxy.</summary>
+    /// <param name="self">The instance to connect the handler to.</param>
+    /// <param name="handler">The handler to connect.</param>
+    public static void AddChildRemovedHandler(this Gst.IChildProxy self, System.EventHandler<Gst.ChildProxyExtensions.ChildRemovedSignalArgs> handler) =>
+        Gst.SignalConnections.Add((Gst.GObject.Object)self, "child-removed", (nint)(delegate* unmanaged[Cdecl]<nint, nint, byte*, nint, void>)&ChildRemovedTrampoline, handler);
+
+    /// <summary>Disconnects the handler that was connected last for a delegate of the <c>child-removed</c> signal of <c>GstChildProxy</c>.</summary>
+    /// <param name="self">The instance the handler was connected to.</param>
+    /// <param name="handler">The handler to disconnect.</param>
+    public static void RemoveChildRemovedHandler(this Gst.IChildProxy self, System.EventHandler<Gst.ChildProxyExtensions.ChildRemovedSignalArgs> handler) =>
+        Gst.SignalConnections.Remove((Gst.GObject.Object)self, "child-removed", handler);
+
+    /// <summary>The native handler of the <c>child-removed</c> signal of <c>GstChildProxy</c>.</summary>
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
+    private static void ChildRemovedTrampoline(nint instance, nint @object, byte* name, nint userData)
+    {
+        try
+        {
+            if (Gst.Interop.CallbackHandle.GetState<System.EventHandler<Gst.ChildProxyExtensions.ChildRemovedSignalArgs>>(userData) is not { } handler)
+            {
+                return;
+            }
+
+            Gst.GObject.Object objectValue = Gst.GObject.Object.FromNative<Gst.GObject.Object>(@object, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("The child-removed signal of GstChildProxy passed no object.");
+            string nameValue = Gst.Interop.GMarshal.PtrToStringUtf8((nint)name)
+                ?? throw new InvalidOperationException("The child-removed signal of GstChildProxy passed no name.");
+            handler(
+                Gst.GObject.Object.FromNative(instance, Gst.Interop.Transfer.None),
+                new Gst.ChildProxyExtensions.ChildRemovedSignalArgs(objectValue, nameValue));
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+        }
+    }
+
     /// <summary>The <c>gst_child_proxy_child_added</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_child_proxy_child_added")]
     private static partial void GstChildProxyChildAdded(nint parent, nint child, byte* name);

@@ -9,4 +9,11 @@
     <ProjectReference Include="../GstSharp.Net/GstSharp.Net.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="GstSharp.Net.App" />
+    <InternalsVisibleTo Include="GstSharp.Net.Audio" />
+    <InternalsVisibleTo Include="GstSharp.Net.Video" />
+    <InternalsVisibleTo Include="GstSharp.Net.Pbutils" />
+  </ItemGroup>
+
 </Project>

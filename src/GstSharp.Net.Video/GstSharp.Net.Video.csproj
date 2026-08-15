@@ -7,6 +7,7 @@
   <ItemGroup>
     <ProjectReference Include="../GstSharp.Net.Core/GstSharp.Net.Core.csproj" />
     <ProjectReference Include="../GstSharp.Net/GstSharp.Net.csproj" />
+    <ProjectReference Include="../GstSharp.Net.Base/GstSharp.Net.Base.csproj" />
   </ItemGroup>
 
 </Project>

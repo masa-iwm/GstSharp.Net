@@ -317,7 +317,7 @@ public static unsafe partial class Global
     /// <param name="userData">The <c>userData</c> argument.</param>
     public static void DebugLogDefault(Gst.DebugCategory category, Gst.DebugLevel level, string file, string function, int line, Gst.GObject.Object? @object, Gst.DebugMessage message, nint userData)
     {
-        Gst.DebugCategory categoryNative = category;
+        ArgumentNullException.ThrowIfNull(category);
         ArgumentNullException.ThrowIfNull(file);
         System.Span<byte> fileBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope fileScope = Gst.Interop.GMarshal.StackUtf8(file, fileBuffer);
@@ -325,7 +325,7 @@ public static unsafe partial class Global
         System.Span<byte> functionBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope functionScope = Gst.Interop.GMarshal.StackUtf8(function, functionBuffer);
         ArgumentNullException.ThrowIfNull(message);
-        GstDebugLogDefault(&categoryNative, (int)level, fileScope.Pointer, functionScope.Pointer, line, @object is null ? 0 : @object.Handle, message.Handle, userData);
+        GstDebugLogDefault(category.Handle, (int)level, fileScope.Pointer, functionScope.Pointer, line, @object is null ? 0 : @object.Handle, message.Handle, userData);
     }
 
     /// <summary>
@@ -345,7 +345,7 @@ public static unsafe partial class Global
     /// <returns>The result of <c>gst_debug_log_get_line</c>.</returns>
     public static string DebugLogGetLine(Gst.DebugCategory category, Gst.DebugLevel level, string file, string function, int line, Gst.GObject.Object? @object, Gst.DebugMessage message)
     {
-        Gst.DebugCategory categoryNative = category;
+        ArgumentNullException.ThrowIfNull(category);
         ArgumentNullException.ThrowIfNull(file);
         System.Span<byte> fileBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope fileScope = Gst.Interop.GMarshal.StackUtf8(file, fileBuffer);
@@ -353,7 +353,7 @@ public static unsafe partial class Global
         System.Span<byte> functionBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope functionScope = Gst.Interop.GMarshal.StackUtf8(function, functionBuffer);
         ArgumentNullException.ThrowIfNull(message);
-        nint nativeResult = GstDebugLogGetLine(&categoryNative, (int)level, fileScope.Pointer, functionScope.Pointer, line, @object is null ? 0 : @object.Handle, message.Handle);
+        nint nativeResult = GstDebugLogGetLine(category.Handle, (int)level, fileScope.Pointer, functionScope.Pointer, line, @object is null ? 0 : @object.Handle, message.Handle);
         return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
             ?? throw new InvalidOperationException("gst_debug_log_get_line returned no value.");
     }
@@ -368,7 +368,7 @@ public static unsafe partial class Global
     /// <param name="messageString">The <c>messageString</c> argument.</param>
     public static void DebugLogIdLiteral(Gst.DebugCategory category, Gst.DebugLevel level, string file, string function, int line, string? id, string messageString)
     {
-        Gst.DebugCategory categoryNative = category;
+        ArgumentNullException.ThrowIfNull(category);
         ArgumentNullException.ThrowIfNull(file);
         System.Span<byte> fileBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope fileScope = Gst.Interop.GMarshal.StackUtf8(file, fileBuffer);
@@ -380,7 +380,7 @@ public static unsafe partial class Global
         ArgumentNullException.ThrowIfNull(messageString);
         System.Span<byte> messageStringBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope messageStringScope = Gst.Interop.GMarshal.StackUtf8(messageString, messageStringBuffer);
-        GstDebugLogIdLiteral(&categoryNative, (int)level, fileScope.Pointer, functionScope.Pointer, line, idScope.Pointer, messageStringScope.Pointer);
+        GstDebugLogIdLiteral(category.Handle, (int)level, fileScope.Pointer, functionScope.Pointer, line, idScope.Pointer, messageStringScope.Pointer);
     }
 
     /// <summary>
@@ -425,7 +425,7 @@ public static unsafe partial class Global
     /// <param name="messageString">The <c>messageString</c> argument.</param>
     public static void DebugLogLiteral(Gst.DebugCategory category, Gst.DebugLevel level, string file, string function, int line, Gst.GObject.Object? @object, string messageString)
     {
-        Gst.DebugCategory categoryNative = category;
+        ArgumentNullException.ThrowIfNull(category);
         ArgumentNullException.ThrowIfNull(file);
         System.Span<byte> fileBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope fileScope = Gst.Interop.GMarshal.StackUtf8(file, fileBuffer);
@@ -435,7 +435,7 @@ public static unsafe partial class Global
         ArgumentNullException.ThrowIfNull(messageString);
         System.Span<byte> messageStringBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope messageStringScope = Gst.Interop.GMarshal.StackUtf8(messageString, messageStringBuffer);
-        GstDebugLogLiteral(&categoryNative, (int)level, fileScope.Pointer, functionScope.Pointer, line, @object is null ? 0 : @object.Handle, messageStringScope.Pointer);
+        GstDebugLogLiteral(category.Handle, (int)level, fileScope.Pointer, functionScope.Pointer, line, @object is null ? 0 : @object.Handle, messageStringScope.Pointer);
     }
 
     /// <summary>
@@ -1745,15 +1745,15 @@ public static unsafe partial class Global
 
     /// <summary>The <c>gst_debug_log_default</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_debug_log_default")]
-    private static partial void GstDebugLogDefault(Gst.DebugCategory* category, int level, byte* file, byte* function, int line, nint @object, nint message, nint userData);
+    private static partial void GstDebugLogDefault(nint category, int level, byte* file, byte* function, int line, nint @object, nint message, nint userData);
 
     /// <summary>The <c>gst_debug_log_get_line</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_debug_log_get_line")]
-    private static partial nint GstDebugLogGetLine(Gst.DebugCategory* category, int level, byte* file, byte* function, int line, nint @object, nint message);
+    private static partial nint GstDebugLogGetLine(nint category, int level, byte* file, byte* function, int line, nint @object, nint message);
 
     /// <summary>The <c>gst_debug_log_id_literal</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_debug_log_id_literal")]
-    private static partial void GstDebugLogIdLiteral(Gst.DebugCategory* category, int level, byte* file, byte* function, int line, byte* id, byte* messageString);
+    private static partial void GstDebugLogIdLiteral(nint category, int level, byte* file, byte* function, int line, byte* id, byte* messageString);
 
     /// <summary>The <c>gst_debug_log_id_literal_with_context</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_debug_log_id_literal_with_context")]
@@ -1761,7 +1761,7 @@ public static unsafe partial class Global
 
     /// <summary>The <c>gst_debug_log_literal</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_debug_log_literal")]
-    private static partial void GstDebugLogLiteral(Gst.DebugCategory* category, int level, byte* file, byte* function, int line, nint @object, byte* messageString);
+    private static partial void GstDebugLogLiteral(nint category, int level, byte* file, byte* function, int line, nint @object, byte* messageString);
 
     /// <summary>The <c>gst_debug_log_literal_with_context</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_debug_log_literal_with_context")]

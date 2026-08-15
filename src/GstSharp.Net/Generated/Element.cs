@@ -1409,6 +1409,38 @@ public abstract unsafe partial class Element : Gst.Object
         GstElementTypeSetSkipDocumentation(type.Value);
     }
 
+    /// <summary>
+    /// This signals that the element will not generate more dynamic pads.
+    /// Note that this signal will usually be emitted from the context of
+    /// the streaming thread.
+    /// </summary>
+    public event System.EventHandler NoMorePadsSignal
+    {
+        add => Gst.SignalConnections.Add(this, "no-more-pads", (nint)(delegate* unmanaged[Cdecl]<nint, nint, void>)&NoMorePadsSignalTrampoline, value);
+        remove => Gst.SignalConnections.Remove(this, "no-more-pads", value);
+    }
+
+    /// <summary>The native handler of the <c>no-more-pads</c> signal of <c>GstElement</c>.</summary>
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
+    private static void NoMorePadsSignalTrampoline(nint instance, nint userData)
+    {
+        try
+        {
+            if (Gst.Interop.CallbackHandle.GetState<System.EventHandler>(userData) is not { } handler)
+            {
+                return;
+            }
+
+            handler(
+                Gst.GObject.Object.FromNative(instance, Gst.Interop.Transfer.None),
+                System.EventArgs.Empty);
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+        }
+    }
+
     /// <summary>The arguments of the <c>pad-added</c> signal of <c>GstElement</c>.</summary>
     public sealed class PadAddedSignalArgs
     {

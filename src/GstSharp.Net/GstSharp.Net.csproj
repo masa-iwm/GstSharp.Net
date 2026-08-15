@@ -13,6 +13,11 @@
          through the internal constructors, which is what they are there to
          validate. -->
     <InternalsVisibleTo Include="GstSharp.IntegrationTests" />
+    <InternalsVisibleTo Include="GstSharp.Net.Base" />
+    <InternalsVisibleTo Include="GstSharp.Net.App" />
+    <InternalsVisibleTo Include="GstSharp.Net.Audio" />
+    <InternalsVisibleTo Include="GstSharp.Net.Video" />
+    <InternalsVisibleTo Include="GstSharp.Net.Pbutils" />
   </ItemGroup>
 
 </Project>

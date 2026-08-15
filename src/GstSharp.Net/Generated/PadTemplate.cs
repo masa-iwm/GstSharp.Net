@@ -188,6 +188,50 @@ public unsafe partial class PadTemplate : Gst.Object
     /// <summary>The capabilities of the pad described by the pad template.</summary>
     public Gst.Caps Caps => GetCaps();
 
+    /// <summary>The arguments of the <c>pad-created</c> signal of <c>GstPadTemplate</c>.</summary>
+    public sealed class PadCreatedSignalSignalArgs
+    {
+        /// <summary>Initializes a new instance of the <see cref="PadCreatedSignalSignalArgs"/> class.</summary>
+        /// <param name="pad">the pad that was created.</param>
+        internal PadCreatedSignalSignalArgs(Gst.Pad pad)
+        {
+            Pad = pad;
+        }
+
+        /// <summary>the pad that was created.</summary>
+        public Gst.Pad Pad { get; }
+    }
+
+    /// <summary>This signal is fired when an element creates a pad from this template.</summary>
+    public event System.EventHandler<Gst.PadTemplate.PadCreatedSignalSignalArgs> PadCreatedSignal
+    {
+        add => Gst.SignalConnections.Add(this, "pad-created", (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, void>)&PadCreatedSignalTrampoline, value);
+        remove => Gst.SignalConnections.Remove(this, "pad-created", value);
+    }
+
+    /// <summary>The native handler of the <c>pad-created</c> signal of <c>GstPadTemplate</c>.</summary>
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
+    private static void PadCreatedSignalTrampoline(nint instance, nint pad, nint userData)
+    {
+        try
+        {
+            if (Gst.Interop.CallbackHandle.GetState<System.EventHandler<Gst.PadTemplate.PadCreatedSignalSignalArgs>>(userData) is not { } handler)
+            {
+                return;
+            }
+
+            Gst.Pad padValue = Gst.GObject.Object.FromNative<Gst.Pad>(pad, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("The pad-created signal of GstPadTemplate passed no pad.");
+            handler(
+                Gst.GObject.Object.FromNative(instance, Gst.Interop.Transfer.None),
+                new Gst.PadTemplate.PadCreatedSignalSignalArgs(padValue));
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+        }
+    }
+
     /// <summary>The <c>gst_pad_template_new</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_pad_template_new")]
     private static partial nint GstPadTemplateNew(byte* nameTemplate, int direction, int presence, nint caps);

@@ -337,16 +337,16 @@ internal static unsafe class ElementForeachPadFuncTrampoline
 /// <param name="line">line number</param>
 /// <param name="object">a #GObject</param>
 /// <param name="message">the message</param>
-public delegate void LogFunction(ref Gst.DebugCategory category, Gst.DebugLevel level, string? file, string? function, int line, Gst.GObject.Object? @object, Gst.DebugMessage? message);
+public delegate void LogFunction(Gst.DebugCategory? category, Gst.DebugLevel level, string? file, string? function, int line, Gst.GObject.Object? @object, Gst.DebugMessage? message);
 
 /// <summary>The native entry point of <see cref="Gst.LogFunction"/>.</summary>
 internal static unsafe class LogFunctionTrampoline
 {
     /// <summary>Gets the address that is handed to native code.</summary>
-    internal static nint Pointer => (nint)(delegate* unmanaged[Cdecl]<Gst.DebugCategory*, int, byte*, byte*, int, nint, nint, nint, void>)&Invoke;
+    internal static nint Pointer => (nint)(delegate* unmanaged[Cdecl]<nint, int, byte*, byte*, int, nint, nint, nint, void>)&Invoke;
 
     [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
-    private static void Invoke(Gst.DebugCategory* category, int level, byte* file, byte* function, int line, nint @object, nint message, nint userData)
+    private static void Invoke(nint category, int level, byte* file, byte* function, int line, nint @object, nint message, nint userData)
     {
         try
         {
@@ -355,11 +355,12 @@ internal static unsafe class LogFunctionTrampoline
                 return;
             }
 
+            Gst.DebugCategory? categoryValue = Gst.DebugCategory.FromNative(category);
             string? fileValue = Gst.Interop.GMarshal.PtrToStringUtf8((nint)file);
             string? functionValue = Gst.Interop.GMarshal.PtrToStringUtf8((nint)function);
             Gst.GObject.Object? @objectValue = Gst.GObject.Object.FromNative<Gst.GObject.Object>(@object, Gst.Interop.Transfer.None);
             Gst.DebugMessage? messageValue = Gst.DebugMessage.FromNative(message);
-            callback(ref *(Gst.DebugCategory*)category, (Gst.DebugLevel)level, fileValue, functionValue, line, @objectValue, messageValue);
+            callback(categoryValue, (Gst.DebugLevel)level, fileValue, functionValue, line, @objectValue, messageValue);
         }
         catch (Exception exception)
         {
