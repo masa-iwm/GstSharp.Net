@@ -22,12 +22,11 @@ internal sealed class GeneratorOptions
     internal const string DefaultGirDirectory = "girs";
     internal const string DefaultOutputDirectory = "src";
 
-    private GeneratorOptions(GeneratorVerb verb, string girDirectory, string outputDirectory, bool emitRecords)
+    private GeneratorOptions(GeneratorVerb verb, string girDirectory, string outputDirectory)
     {
         Verb = verb;
         GirDirectory = girDirectory;
         OutputDirectory = outputDirectory;
-        EmitRecords = emitRecords;
     }
 
     /// <summary>Gets the requested verb.</summary>
@@ -38,13 +37,6 @@ internal sealed class GeneratorOptions
 
     /// <summary>Gets the directory that holds the binding projects.</summary>
     internal string OutputDirectory { get; }
-
-    /// <summary>
-    /// Gets a value indicating whether the record types are emitted as well.
-    /// They are off by default while the runtime layer they bind against is
-    /// being written.
-    /// </summary>
-    internal bool EmitRecords { get; }
 
     /// <summary>
     /// Parses <paramref name="args"/> into a <see cref="GeneratorOptions"/> instance.
@@ -73,7 +65,6 @@ internal sealed class GeneratorOptions
 
         string girDirectory = DefaultGirDirectory;
         string outputDirectory = DefaultOutputDirectory;
-        bool emitRecords = false;
 
         for (int i = 1; i < args.Length; i++)
         {
@@ -93,16 +84,13 @@ internal sealed class GeneratorOptions
                     }
 
                     break;
-                case "--emit-records":
-                    emitRecords = true;
-                    break;
                 default:
                     error = $"Unknown option '{args[i]}'.";
                     return false;
             }
         }
 
-        options = new GeneratorOptions(verb, girDirectory, outputDirectory, emitRecords);
+        options = new GeneratorOptions(verb, girDirectory, outputDirectory);
         return true;
     }
 

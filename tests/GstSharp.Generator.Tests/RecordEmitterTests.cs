@@ -109,7 +109,7 @@ public sealed class RecordEmitterTests
     private static readonly ModuleInfo GstModule = ModuleMap.Find("Gst")!;
 
     private static readonly Lazy<GenerationResult> LazyGenerated = new(
-        static () => GenerationPipeline.Run(GirFixture.GirDirectory, emitRecords: true),
+        static () => GenerationPipeline.Run(GirFixture.GirDirectory),
         isThreadSafe: true);
 
     private static GenerationResult Generated => LazyGenerated.Value;
@@ -490,11 +490,12 @@ public sealed class RecordEmitterTests
     }
 
     [Fact]
-    public void RecordsAreOffByDefault()
+    public void RecordsAreEmittedByDefault()
     {
-        GeneratedFile file = Assert.Single(GenerationPipeline.Run(GirFixture.GirDirectory).Files);
+        IReadOnlyList<GeneratedFile> files = GenerationPipeline.Run(GirFixture.GirDirectory).Files;
 
-        Assert.Equal("GstSharp.Net/Generated/Enums.cs", file.RelativePath);
+        Assert.Contains(files, static f => f.RelativePath == "GstSharp.Net/Generated/Enums.cs");
+        Assert.Contains(files, static f => f.RelativePath == "GstSharp.Net/Generated/Buffer.cs");
     }
 
     [Fact]
@@ -525,8 +526,8 @@ public sealed class RecordEmitterTests
     [Fact]
     public void EmittingTwiceProducesIdenticalOutput()
     {
-        IReadOnlyList<GeneratedFile> first = GenerationPipeline.Run(GirFixture.GirDirectory, emitRecords: true).Files;
-        IReadOnlyList<GeneratedFile> second = GenerationPipeline.Run(GirFixture.GirDirectory, emitRecords: true).Files;
+        IReadOnlyList<GeneratedFile> first = GenerationPipeline.Run(GirFixture.GirDirectory).Files;
+        IReadOnlyList<GeneratedFile> second = GenerationPipeline.Run(GirFixture.GirDirectory).Files;
 
         Assert.Equal(
             first.Select(static file => file.RelativePath).ToArray(),

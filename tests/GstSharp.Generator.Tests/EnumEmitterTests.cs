@@ -196,14 +196,18 @@ public sealed class EnumEmitterTests
     }
 
     [Fact]
-    public void TheCommittedFileMatchesTheEmitter()
+    public void TheCommittedFilesMatchTheEmitter()
     {
-        GeneratedFile file = Assert.Single(GenerationPipeline.Run(GirFixture.GirDirectory).Files);
-        string committed = File.ReadAllText(
-            Path.Combine(GirFixture.RepositoryRoot, "src", "GstSharp.Net", "Generated", "Enums.cs"));
+        IReadOnlyList<GeneratedFile> files = GenerationPipeline.Run(GirFixture.GirDirectory).Files;
 
-        Assert.Equal("GstSharp.Net/Generated/Enums.cs", file.RelativePath);
-        Assert.Equal(file.Content, committed.Replace("\r\n", "\n", StringComparison.Ordinal), StringComparer.Ordinal);
+        Assert.NotEmpty(files);
+        foreach (GeneratedFile file in files)
+        {
+            string committed = File.ReadAllText(
+                Path.Combine(GirFixture.RepositoryRoot, "src", file.RelativePath.Replace('/', Path.DirectorySeparatorChar)));
+
+            Assert.Equal(file.Content, committed.Replace("\r\n", "\n", StringComparison.Ordinal), StringComparer.Ordinal);
+        }
     }
 
     private static string Emit(GirNamespace ns)

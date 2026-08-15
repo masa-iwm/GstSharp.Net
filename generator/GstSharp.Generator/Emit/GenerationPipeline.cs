@@ -23,13 +23,8 @@ internal static class GenerationPipeline
 
     /// <summary>Parses, analyses and emits every generated module.</summary>
     /// <param name="girDirectory">Directory holding <c>reference/</c> and <c>overlays/</c>.</param>
-    /// <param name="emitRecords">
-    /// Whether the record types are emitted as well. They are off by default
-    /// while the runtime layer they bind against is being written, so that the
-    /// committed tree stays enumerations only.
-    /// </param>
     /// <returns>The generated files and the diagnostics of the run.</returns>
-    internal static GenerationResult Run(string girDirectory, bool emitRecords = false)
+    internal static GenerationResult Run(string girDirectory)
     {
         string referenceDirectory = Path.Combine(girDirectory, ReferenceDirectoryName);
         if (!Directory.Exists(referenceDirectory))
@@ -88,10 +83,7 @@ internal static class GenerationPipeline
                 files.Add(file);
             }
 
-            if (emitRecords)
-            {
-                files.AddRange(recordEmitter.Emit(module, ns));
-            }
+            files.AddRange(recordEmitter.Emit(module, ns));
         }
 
         files.Sort(static (left, right) => string.CompareOrdinal(left.RelativePath, right.RelativePath));
