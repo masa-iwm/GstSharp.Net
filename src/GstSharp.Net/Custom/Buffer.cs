@@ -114,6 +114,45 @@ public sealed partial class Buffer
     }
 
     /// <summary>
+    /// Makes the buffer writable, copying it when somebody else holds a
+    /// reference to it, and returns the wrapper to keep using.
+    /// </summary>
+    /// <returns>
+    /// This wrapper. The return value exists so that the call can be chained;
+    /// it is never a second wrapper.
+    /// </returns>
+    /// <remarks>
+    /// <para>
+    /// This is <c>gst_buffer_make_writable</c>. That function consumes the
+    /// reference it is given and returns one that is either the same buffer,
+    /// when the caller held the only reference, or a fresh copy of it. The
+    /// wrapper adopts whatever comes back, so the buffer this wrapper stands
+    /// for can change identity across the call, and it is the same wrapper
+    /// either way — the C idiom <c>buf = gst_buffer_make_writable (buf)</c>
+    /// becomes a plain <c>buffer.MakeWritable()</c>.
+    /// </para>
+    /// <para>
+    /// <b>Any handle read before the call is stale afterwards.</b>
+    /// <see cref="MiniObject.Handle"/> has to be read again, and a native
+    /// pointer, a mapping or a raw field address that was taken from the old
+    /// buffer must not be used any more.
+    /// </para>
+    /// <para>
+    /// This is single owner surgery. It is only correct while no other wrapper
+    /// and no other thread uses this wrapper, which is the rule the C API
+    /// imposes on <c>gst_buffer_make_writable</c> as well: a buffer belongs to
+    /// one owner until it is handed on. Nothing here locks, and a reference
+    /// another thread takes while the call runs is simply lost work.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="ObjectDisposedException">The wrapper was disposed.</exception>
+    public Gst.Buffer MakeWritable()
+    {
+        _ = MakeWritableHandle();
+        return this;
+    }
+
+    /// <summary>
     /// Returns the handle of the buffer, provided that its fields may be
     /// written.
     /// </summary>

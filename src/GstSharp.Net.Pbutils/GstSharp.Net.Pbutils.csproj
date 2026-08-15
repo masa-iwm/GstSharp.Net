@@ -5,7 +5,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../GstSharp.Net.Core/GstSharp.Net.Core.csproj" />
     <ProjectReference Include="../GstSharp.Net/GstSharp.Net.csproj" />
   </ItemGroup>
 

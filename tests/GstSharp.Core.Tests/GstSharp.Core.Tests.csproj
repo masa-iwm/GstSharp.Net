@@ -13,7 +13,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../../src/GstSharp.Net.Core/GstSharp.Net.Core.csproj" />
+    <!-- The runtime layer these tests exercise is part of the binding assembly;
+         the project keeps its name because the layer is still the core. -->
+    <ProjectReference Include="../../src/GstSharp.Net/GstSharp.Net.csproj" />
   </ItemGroup>
 
 </Project>

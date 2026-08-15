@@ -1,14 +1,25 @@
-<Project Sdk="Microsoft.NET.Sdk">
+<!-- TreatAsLocalProperty lets this project answer "no" to a PublishAot that was
+     set on the command line. The analyzer is reachable through the project
+     reference of GstSharp.Net, so `dotnet publish -p:PublishAot=true` of a
+     sample or an application walks into it, and a netstandard2.0 project cannot
+     be compiled ahead of time: without this the publish fails with NETSDK1207
+     in a project that produces no publish output at all. -->
+<Project Sdk="Microsoft.NET.Sdk" TreatAsLocalProperty="PublishAot">
 
   <PropertyGroup>
     <!-- Roslyn analyzers have to target netstandard2.0 so that they load in
          every host, which also means IsAotCompatible does not apply here. -->
     <TargetFramework>netstandard2.0</TargetFramework>
     <IsAotCompatible>false</IsAotCompatible>
+    <PublishAot>false</PublishAot>
     <RootNamespace>Gst.Analyzers</RootNamespace>
     <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
     <IncludeBuildOutput>false</IncludeBuildOutput>
     <DevelopmentDependency>true</DevelopmentDependency>
+    <!-- Not published on its own: the analyzer travels inside the GstSharp.Net
+         package, so that the rules cannot get out of step with the binding and
+         no second package reports the same diagnostic. -->
+    <IsPackable>false</IsPackable>
     <Description>Roslyn analyzers for GstSharp.Net ownership and lifetime rules.</Description>
   </PropertyGroup>
 

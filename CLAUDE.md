@@ -21,8 +21,9 @@ language used when talking to the user.
   * `girs/overlays/platform-symbols.json` (per-platform availability),
   * the generator itself.
 * Hand-written code belongs in `src/<Project>/Custom/` (per-module glue, as
-  `partial` extensions of the generated types) or in `GstSharp.Net.Core` (the
-  runtime: loader, marshalling, GObject/GLib layer).
+  `partial` extensions of the generated types) or in `src/GstSharp.Net/Core/`
+  (the runtime: loader, marshalling, GObject/GLib layer). The runtime is part
+  of the `GstSharp.Net` assembly; there is no separate core package.
 
 ## Commands
 

@@ -20,15 +20,37 @@ designed for NativeAOT from the start.
 Initial module set: `Gst`, `GstBase`, `GstApp`, `GstVideo`, `GstAudio`,
 `GstPbutils`.
 
+## Packages
+
+One version for the whole set, and every identifier starts with `GstSharp.Net`,
+so a single `packageSourceMapping` pattern covers all of them.
+
+| Package | Contents |
+| --- | --- |
+| `GstSharp.Net` | `Gst` core, the hand-written runtime (native loader, marshalling, GObject/GLib layer) and the Roslyn analyzers. Every other package depends on it. |
+| `GstSharp.Net.Base` | `GstBase`. |
+| `GstSharp.Net.App` | `GstApp`: `appsrc` and `appsink`. |
+| `GstSharp.Net.Video` | `GstVideo`. |
+| `GstSharp.Net.Audio` | `GstAudio`. |
+| `GstSharp.Net.Pbutils` | `GstPbutils`. |
+
+The analyzers ship inside `GstSharp.Net` rather than as a package of their own:
+they cannot get out of step with the binding that way, and no second package
+reports the same diagnostic twice. They are `GST0001` (a wrapper that owns a
+reference and never releases it) and `GST0002` (a buffer mapping that is never
+released); see [`docs/analyzers.md`](https://github.com/masa-iwm/GstSharp.Net/blob/main/docs/analyzers.md).
+NuGet never passes analyzers along a package dependency, so they reach the
+projects that reference `GstSharp.Net` themselves.
+
+The packages target plain `net10.0` and carry managed code only. GStreamer
+itself is not bundled: install it separately and let `NativeLoader` find it.
+
 ## Status
 
-Early development. Nothing is usable yet: the repository currently contains the
-project scaffold and the vendored `.gir` inputs. APIs will change without
-notice until the first preview package.
+Preview. The generated surface covers the module set above, and the API may
+still change until 1.28.0 final.
 
 ## Usage sketch
-
-The intended shape of the API, once the generator lands:
 
 ```csharp
 GstSharp.Initialize();
@@ -48,7 +70,7 @@ pipeline.SetState(Gst.State.Null);
 | --- | --- |
 | `girs/` | Vendored `.gir` inputs and overlay files. See `girs/README.md`. |
 | `generator/` | The `.gir` to C# generator (console application, no NuGet dependencies). |
-| `src/` | Shipping libraries: hand-written runtime (`GstSharp.Net.Core`), generated bindings, and the Roslyn analyzers. |
+| `src/` | Shipping libraries: the bindings, the hand-written runtime under `src/GstSharp.Net/Core/`, and the Roslyn analyzers. |
 | `samples/` | Runnable samples, including the NativeAOT smoke test. |
 | `tests/` | Generator unit tests, analyzer tests, and integration tests that need a native GStreamer. |
 
@@ -64,7 +86,7 @@ samples.
 
 ## License
 
-LGPL-2.1-or-later. See [`LICENSE`](LICENSE).
+LGPL-2.1-or-later. See [`LICENSE`](https://github.com/masa-iwm/GstSharp.Net/blob/main/LICENSE).
 
 The bindings are generated from GStreamer's `.gir` files and embed their
 documentation text, which is LGPL licensed; the same license therefore applies

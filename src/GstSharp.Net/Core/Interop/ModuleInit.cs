@@ -4,8 +4,15 @@ using System.Runtime.CompilerServices;
 namespace Gst.Interop;
 
 /// <summary>
-/// Registers the native library resolver of the runtime assembly.
+/// Registers the native library resolver of the runtime layer.
 /// </summary>
+/// <remarks>
+/// The runtime layer ships inside the <c>GstSharp.Net</c> assembly, whose
+/// generated bindings register the same resolver from <c>GstModule</c>. Both
+/// initialisers run, in an order the runtime does not define, and
+/// <see cref="NativeLoader.EnsureRegistered"/> is idempotent, so the layer keeps
+/// its own registration rather than depending on the one next to it.
+/// </remarks>
 internal static class ModuleInit
 {
     /// <summary>

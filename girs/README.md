@@ -11,7 +11,7 @@ generator.
 | File | Source |
 | --- | --- |
 | `Gst-1.0.gir`, `GstBase-1.0.gir`, `GstApp-1.0.gir`, `GstVideo-1.0.gir`, `GstAudio-1.0.gir`, `GstPbutils-1.0.gir` | GStreamer monorepo, `girs/` directory, commit `2d3e05cbdad68e47d645f548899b432dc9fb4473` ("Release 1.28.6", 2026-08-05). Linux flavor. |
-| `GLib-2.0.gir`, `GObject-2.0.gir`, `GModule-2.0.gir` | GStreamer 1.28.6 MSVC installer (`share/gir-1.0`). Used only for cross-namespace type resolution; the GLib/GObject runtime layer is hand-written in `GstSharp.Net.Core` and is never generated from these files. |
+| `GLib-2.0.gir`, `GObject-2.0.gir`, `GModule-2.0.gir` | GStreamer 1.28.6 MSVC installer (`share/gir-1.0`). Used only for cross-namespace type resolution; the GLib/GObject runtime layer is hand-written in `src/GstSharp.Net/Core/` and is never generated from these files. |
 
 The GStreamer girs are the canonical API source. The Linux flavor is used
 because it is the one tracked in the monorepo, so it can be refreshed
@@ -57,13 +57,13 @@ The reference girs describe a single platform, which is sufficient because the
 measured differences between flavors are tiny:
 
 * **Linux vs. Windows/MinGW**: only the `shared-library` attribute differs. The
-  runtime library name is resolved by `NativeLoader` in `GstSharp.Net.Core`, so
-  the attribute is ignored by the generator.
+  runtime library name is resolved by `NativeLoader` in `src/GstSharp.Net/Core/`,
+  so the attribute is ignored by the generator.
 * **Windows MSVC vs. MinGW**: only the library file naming differs
   (`gstreamer-1.0-0.dll` vs. `libgstreamer-1.0-0.dll`); the exported signatures
   are identical. This is likewise handled by `NativeLoader`.
 * **macOS**: adds the `gst_macos_main` / `gst_macos_main_simple` family plus two
-  callback types. These are hand-bound in `GstSharp.Net.Core` behind
+  callback types. These are hand-bound in `src/GstSharp.Net/Core/` behind
   `[SupportedOSPlatform("macos")]` instead of being generated.
 
 Symbols that genuinely exist on only some platforms are listed in

@@ -3,6 +3,10 @@ using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using Microsoft.Win32;
 
+// Gst.Registry is GStreamer's plugin registry, and this file lives in the
+// assembly that declares it, so the unqualified name belongs to that type here.
+using WindowsRegistry = Microsoft.Win32.Registry;
+
 namespace Gst.Interop;
 
 /// <summary>
@@ -103,8 +107,8 @@ internal sealed class SystemPlatformProbe : IPlatformProbe
     {
         foreach (string subKey in UninstallKeys)
         {
-            Collect(Registry.CurrentUser, subKey, result);
-            Collect(Registry.LocalMachine, subKey, result);
+            Collect(WindowsRegistry.CurrentUser, subKey, result);
+            Collect(WindowsRegistry.LocalMachine, subKey, result);
         }
     }
 

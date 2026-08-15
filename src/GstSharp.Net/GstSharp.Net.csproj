@@ -4,14 +4,32 @@
     <RootNamespace>Gst</RootNamespace>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <!-- The analyzer ships inside this package only. Every consumer of any
+         other module reaches Gst core through it, so one copy delivers the
+         rules everywhere without a second package reporting the same
+         diagnostic twice. -->
+    <TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);PackGstSharpAnalyzer</TargetsForTfmSpecificContentInPackage>
+  </PropertyGroup>
+
   <ItemGroup>
-    <ProjectReference Include="../GstSharp.Net.Core/GstSharp.Net.Core.csproj" />
+
+    <!-- Built and applied to this project, never referenced by it:
+         ReferenceOutputAssembly keeps the analyzer out of the compilation
+         references, OutputItemType makes the build run the rules over the
+         binding itself, and PrivateAssets keeps it out of the package
+         dependencies. -->
+    <ProjectReference Include="../GstSharp.Net.Analyzers/GstSharp.Net.Analyzers.csproj" ReferenceOutputAssembly="false" OutputItemType="Analyzer" PrivateAssets="all" />
   </ItemGroup>
 
   <ItemGroup>
     <!-- The ABI probes read the raw struct mirrors and wrap native handles
          through the internal constructors, which is what they are there to
          validate. -->
+    <!-- The native loader is split into a thin probe and pure ordering rules,
+         and the rules are internal. The tests exercise them against a fake
+         machine, so that no GStreamer installation is needed. -->
+    <InternalsVisibleTo Include="GstSharp.Core.Tests" />
     <InternalsVisibleTo Include="GstSharp.IntegrationTests" />
     <InternalsVisibleTo Include="GstSharp.Net.Base" />
     <InternalsVisibleTo Include="GstSharp.Net.App" />
@@ -19,5 +37,14 @@
     <InternalsVisibleTo Include="GstSharp.Net.Video" />
     <InternalsVisibleTo Include="GstSharp.Net.Pbutils" />
   </ItemGroup>
+
+  <!-- The analyzer assembly is resolved as an @(Analyzer) item by the project
+       reference above; the filter keeps the transitively resolved analyzers of
+       other references out of the package. -->
+  <Target Name="PackGstSharpAnalyzer" DependsOnTargets="ResolveProjectReferences">
+    <ItemGroup>
+      <TfmSpecificPackageFile Include="@(Analyzer)" Condition="'%(Filename)' == 'GstSharp.Net.Analyzers'" PackagePath="analyzers/dotnet/cs" />
+    </ItemGroup>
+  </Target>
 
 </Project>
