@@ -23,8 +23,13 @@ internal static class GenerationPipeline
 
     /// <summary>Parses, analyses and emits every generated module.</summary>
     /// <param name="girDirectory">Directory holding <c>reference/</c> and <c>overlays/</c>.</param>
+    /// <param name="emitRecords">
+    /// Whether the record types are emitted as well. They are off by default
+    /// while the runtime layer they bind against is being written, so that the
+    /// committed tree stays enumerations only.
+    /// </param>
     /// <returns>The generated files and the diagnostics of the run.</returns>
-    internal static GenerationResult Run(string girDirectory)
+    internal static GenerationResult Run(string girDirectory, bool emitRecords = false)
     {
         string referenceDirectory = Path.Combine(girDirectory, ReferenceDirectoryName);
         if (!Directory.Exists(referenceDirectory))
@@ -49,7 +54,9 @@ internal static class GenerationPipeline
             }
         }
 
+        TypeMap types = new(repository, classifier, names, diagnostics);
         EnumEmitter enumEmitter = new(names, overlays, diagnostics);
+        RecordEmitter recordEmitter = new(repository, classifier, names, types, overlays, diagnostics);
 
         List<GeneratedFile> files = [];
         foreach (ModuleInfo module in ModuleMap.Modules)
@@ -68,9 +75,9 @@ internal static class GenerationPipeline
                 continue;
             }
 
-            // M1 emits enumerations only. Further emitters are appended here and
-            // contribute additional files per module.
-            if (!IsEnumModule(module))
+            // M1 emits the Gst module only. Further emitters are appended here
+            // and contribute additional files per module.
+            if (!IsEmittedModule(module))
             {
                 continue;
             }
@@ -80,6 +87,11 @@ internal static class GenerationPipeline
             {
                 files.Add(file);
             }
+
+            if (emitRecords)
+            {
+                files.AddRange(recordEmitter.Emit(module, ns));
+            }
         }
 
         files.Sort(static (left, right) => string.CompareOrdinal(left.RelativePath, right.RelativePath));
@@ -87,11 +99,11 @@ internal static class GenerationPipeline
     }
 
     /// <summary>
-    /// Gets a value indicating whether enumerations are emitted for the module.
-    /// The remaining modules follow once their runtime support exists.
+    /// Gets a value indicating whether sources are emitted for the module. The
+    /// remaining modules follow once their runtime support exists.
     /// </summary>
     /// <param name="module">The module to test.</param>
     /// <returns><see langword="true"/> when the module is emitted.</returns>
-    private static bool IsEnumModule(ModuleInfo module) =>
+    private static bool IsEmittedModule(ModuleInfo module) =>
         string.Equals(module.GirNamespace, "Gst", StringComparison.Ordinal);
 }

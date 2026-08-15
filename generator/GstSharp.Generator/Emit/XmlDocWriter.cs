@@ -1,4 +1,6 @@
+using System.Globalization;
 using System.Text;
+using GstSharp.Generator.GirParsing.Model;
 
 namespace GstSharp.Generator.Emit;
 
@@ -45,6 +47,31 @@ internal static class XmlDocWriter
 
             writer.WriteLine("/// </remarks>");
         }
+    }
+
+    /// <summary>
+    /// Writes an <c>[Obsolete]</c> attribute when the gir marks the element as
+    /// deprecated.
+    /// </summary>
+    /// <param name="writer">The target writer.</param>
+    /// <param name="node">The gir element to inspect.</param>
+    internal static void WriteObsolete(CodeWriter writer, GirNode node)
+    {
+        if (!node.IsDeprecated)
+        {
+            return;
+        }
+
+        string message = node.DocDeprecated is { Length: > 0 } text
+            ? CollapseToSingleLine(text)
+            : "Deprecated in the native API.";
+        if (node.DeprecatedVersion is { Length: > 0 } version)
+        {
+            message = string.Create(CultureInfo.InvariantCulture, $"{message} (deprecated since {version})");
+        }
+
+        writer.WriteLine("[Obsolete(\"" + message.Replace("\\", "\\\\", StringComparison.Ordinal)
+            .Replace("\"", "\\\"", StringComparison.Ordinal) + "\")]");
     }
 
     /// <summary>Escapes the characters that are special in XML.</summary>

@@ -109,6 +109,27 @@ internal sealed class NameMapper
             ? renamed
             : EscapeIdentifier(ToPascalCase(symbol.Name));
 
+    /// <summary>Maps the C# name of a field that is part of the API.</summary>
+    /// <param name="fieldNamespace">The gir namespace of the declaring type.</param>
+    /// <param name="owner">The declaring type.</param>
+    /// <param name="field">The field to name.</param>
+    /// <returns>The C# field name.</returns>
+    internal string FieldName(GirNamespace fieldNamespace, GirTypeDeclaration owner, GirField field) =>
+        _overlays.TryGetRename(fieldNamespace.Name + "." + owner.Name + "." + field.Name, out string? renamed)
+            ? renamed
+            : EscapeIdentifier(ToPascalCase(field.Name));
+
+    /// <summary>
+    /// Maps the C# name of a field that is private to the C implementation.
+    /// Such a field only exists because it takes up space in the layout.
+    /// </summary>
+    /// <param name="fieldNamespace">The gir namespace of the declaring type.</param>
+    /// <param name="owner">The declaring type.</param>
+    /// <param name="field">The field to name.</param>
+    /// <returns>The C# field name.</returns>
+    internal string PrivateFieldName(GirNamespace fieldNamespace, GirTypeDeclaration owner, GirField field) =>
+        "_" + ToCamelCase(FieldName(fieldNamespace, owner, field));
+
     /// <summary>Maps the C# name of an enumeration or bitfield member.</summary>
     /// <param name="enumeration">The declaring enumeration.</param>
     /// <param name="enumerationNamespace">The gir namespace of the enumeration.</param>

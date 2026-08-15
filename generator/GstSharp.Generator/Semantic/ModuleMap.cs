@@ -7,11 +7,17 @@ namespace GstSharp.Generator.Semantic;
 /// <param name="GirNamespace">The gir namespace name, for example <c>GstBase</c>.</param>
 /// <param name="ClrNamespace">The C# namespace, for example <c>Gst.Base</c>.</param>
 /// <param name="ProjectDirectory">The project directory below the output root.</param>
+/// <param name="NativeLibrary">
+/// The logical library name used in <c>LibraryImport</c>. It has to be one of
+/// the names that <c>Gst.Interop.NativeNames</c> resolves in the runtime
+/// library, which is what maps it onto a file name per platform.
+/// </param>
 /// <param name="IsGenerated">Whether sources are emitted for the module.</param>
 internal sealed record ModuleInfo(
     string GirNamespace,
     string ClrNamespace,
     string ProjectDirectory,
+    string NativeLibrary,
     bool IsGenerated);
 
 /// <summary>
@@ -26,15 +32,15 @@ internal static class ModuleMap
     /// </summary>
     internal static IReadOnlyList<ModuleInfo> Modules { get; } =
     [
-        new ModuleInfo("Gst", "Gst", "GstSharp.Net", IsGenerated: true),
-        new ModuleInfo("GstBase", "Gst.Base", "GstSharp.Net.Base", IsGenerated: true),
-        new ModuleInfo("GstApp", "Gst.App", "GstSharp.Net.App", IsGenerated: true),
-        new ModuleInfo("GstAudio", "Gst.Audio", "GstSharp.Net.Audio", IsGenerated: true),
-        new ModuleInfo("GstVideo", "Gst.Video", "GstSharp.Net.Video", IsGenerated: true),
-        new ModuleInfo("GstPbutils", "Gst.Pbutils", "GstSharp.Net.Pbutils", IsGenerated: true),
-        new ModuleInfo("GLib", "Gst.GLib", "GstSharp.Net.Core", IsGenerated: false),
-        new ModuleInfo("GObject", "Gst.GObject", "GstSharp.Net.Core", IsGenerated: false),
-        new ModuleInfo("GModule", "Gst.GLib", "GstSharp.Net.Core", IsGenerated: false),
+        new ModuleInfo("Gst", "Gst", "GstSharp.Net", "Gst", IsGenerated: true),
+        new ModuleInfo("GstBase", "Gst.Base", "GstSharp.Net.Base", "GstBase", IsGenerated: true),
+        new ModuleInfo("GstApp", "Gst.App", "GstSharp.Net.App", "GstApp", IsGenerated: true),
+        new ModuleInfo("GstAudio", "Gst.Audio", "GstSharp.Net.Audio", "GstAudio", IsGenerated: true),
+        new ModuleInfo("GstVideo", "Gst.Video", "GstSharp.Net.Video", "GstVideo", IsGenerated: true),
+        new ModuleInfo("GstPbutils", "Gst.Pbutils", "GstSharp.Net.Pbutils", "GstPbutils", IsGenerated: true),
+        new ModuleInfo("GLib", "Gst.GLib", "GstSharp.Net.Core", "GLib", IsGenerated: false),
+        new ModuleInfo("GObject", "Gst.GObject", "GstSharp.Net.Core", "GObject", IsGenerated: false),
+        new ModuleInfo("GModule", "Gst.GLib", "GstSharp.Net.Core", "GModule", IsGenerated: false),
     ];
 
     /// <summary>Looks a module up by gir namespace name.</summary>

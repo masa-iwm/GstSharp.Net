@@ -105,32 +105,13 @@ internal sealed class EnumEmitter
         return "0x" + ((uint)value).ToString("X8", CultureInfo.InvariantCulture);
     }
 
-    private static void WriteObsolete(CodeWriter writer, GirNode node)
-    {
-        if (!node.IsDeprecated)
-        {
-            return;
-        }
-
-        string message = node.DocDeprecated is { Length: > 0 } text
-            ? XmlDocWriter.CollapseToSingleLine(text)
-            : "Deprecated in the native API.";
-        if (node.DeprecatedVersion is { Length: > 0 } version)
-        {
-            message = string.Create(CultureInfo.InvariantCulture, $"{message} (deprecated since {version})");
-        }
-
-        writer.WriteLine("[Obsolete(\"" + message.Replace("\\", "\\\\", StringComparison.Ordinal)
-            .Replace("\"", "\\\"", StringComparison.Ordinal) + "\")]");
-    }
-
     private string TypeNameOf(GirNamespace ns, GirEnumeration enumeration) =>
         _names.TypeName(new GirSymbol(ns, enumeration.Name, GirSymbolKind.Enumeration, enumeration));
 
     private void WriteEnumeration(CodeWriter writer, GirNamespace ns, GirEnumeration enumeration)
     {
         XmlDocWriter.Write(writer, enumeration.Doc, FallbackSummary(enumeration));
-        WriteObsolete(writer, enumeration);
+        XmlDocWriter.WriteObsolete(writer, enumeration);
         if (enumeration.IsBitfield)
         {
             writer.WriteLine("[Flags]");
@@ -179,7 +160,7 @@ internal sealed class EnumEmitter
 
             first = false;
             XmlDocWriter.Write(writer, member.Doc, FallbackSummary(enumeration, member));
-            WriteObsolete(writer, member);
+            XmlDocWriter.WriteObsolete(writer, member);
             writer.WriteLine(name + " = " + literal + ",");
         }
 

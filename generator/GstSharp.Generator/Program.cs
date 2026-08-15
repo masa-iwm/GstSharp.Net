@@ -31,7 +31,7 @@ internal static class Program
 
         try
         {
-            GenerationResult result = GenerationPipeline.Run(options.GirDirectory);
+            GenerationResult result = GenerationPipeline.Run(options.GirDirectory, options.EmitRecords);
             ReportDiagnostics(result);
             if (HasErrors(result))
             {
@@ -143,6 +143,7 @@ internal static class Program
         writer.WriteLine("Options:");
         writer.WriteLine($"  --gir-dir <path>   Directory holding reference/ and overlays/ (default: '{GeneratorOptions.DefaultGirDirectory}').");
         writer.WriteLine($"  --out-dir <path>   Directory holding the binding projects (default: '{GeneratorOptions.DefaultOutputDirectory}').");
+        writer.WriteLine("  --emit-records     Emit the record types as well (off by default).");
         writer.WriteLine("  -h, --help         Show this help text.");
     }
 }
