@@ -25,6 +25,26 @@ internal readonly record struct NativeInstall(GstFlavor Flavor, string? Director
 /// </remarks>
 internal static partial class NativeInstallPlanner
 {
+    /// <summary>
+    /// Joins path segments with the Windows separator. The planner models
+    /// Windows installations, so its output must use backslashes even when
+    /// the planner itself runs on another OS (the pure-logic tests do).
+    /// </summary>
+    private static string JoinWindows(params string[] segments)
+    {
+        var parts = new List<string>(segments.Length);
+        foreach (string segment in segments)
+        {
+            string trimmed = segment.TrimEnd('\\', '/');
+            if (trimmed.Length > 0)
+            {
+                parts.Add(trimmed);
+            }
+        }
+
+        return string.Join('\\', parts);
+    }
+
     private static readonly string[] Msys2Prefixes = ["ucrt64", "mingw64", "clang64"];
     private static readonly string[] Msys2RootNames = ["msys64", "msys32"];
 
@@ -80,7 +100,7 @@ internal static partial class NativeInstallPlanner
             string? root = probe.GetEnvironmentVariable(variable);
             if (!string.IsNullOrEmpty(root))
             {
-                Add(flavor, Path.Combine(root, "bin"), $"the {variable} environment variable");
+                Add(flavor, JoinWindows(root, "bin"), $"the {variable} environment variable");
             }
         }
 
@@ -97,14 +117,14 @@ internal static partial class NativeInstallPlanner
 
             if (!string.IsNullOrEmpty(localAppData))
             {
-                string candidate = Path.Combine(localAppData, "Programs", "gstreamer", "1.0", directoryName, "bin");
+                string candidate = JoinWindows(localAppData, "Programs", "gstreamer", "1.0", directoryName, "bin");
                 if (HasAnchor(probe, candidate, flavor))
                 {
                     Add(flavor, candidate, "the default per user installation directory");
                 }
             }
 
-            string machineWide = Path.Combine(@"C:\gstreamer", "1.0", directoryName, "bin");
+            string machineWide = JoinWindows(@"C:\gstreamer", "1.0", directoryName, "bin");
             if (HasAnchor(probe, machineWide, flavor))
             {
                 Add(flavor, machineWide, "the default machine wide installation directory");
@@ -171,7 +191,7 @@ internal static partial class NativeInstallPlanner
     {
         foreach (string anchor in NativeNames.WindowsAnchors(flavor))
         {
-            if (probe.FileExists(Path.Combine(directory, anchor)))
+            if (probe.FileExists(JoinWindows(directory, anchor)))
             {
                 return true;
             }
@@ -189,7 +209,7 @@ internal static partial class NativeInstallPlanner
     /// <param name="directory">The directory to test.</param>
     /// <returns><see langword="true"/> when the GStreamer library is there.</returns>
     internal static bool HasGStreamer(IPlatformProbe probe, string directory) =>
-        probe.FileExists(Path.Combine(directory, NativeNames.WindowsAnchor(GstFlavor.MinGW)));
+        probe.FileExists(JoinWindows(directory, NativeNames.WindowsAnchor(GstFlavor.MinGW)));
 
     /// <summary>
     /// Gets the token that the installers use for an architecture.
@@ -276,7 +296,7 @@ internal static partial class NativeInstallPlanner
                 ? GstFlavor.Msvc
                 : GstFlavor.MinGW;
 
-            string directory = Path.Combine(install.InstallLocation, "bin");
+            string directory = JoinWindows(install.InstallLocation, "bin");
             if (!probe.DirectoryExists(directory))
             {
                 continue;
@@ -298,7 +318,7 @@ internal static partial class NativeInstallPlanner
         string? prefix = probe.GetEnvironmentVariable("MSYSTEM_PREFIX");
         if (!string.IsNullOrEmpty(prefix))
         {
-            string directory = Path.Combine(prefix, "bin");
+            string directory = JoinWindows(prefix, "bin");
             if (HasGStreamer(probe, directory))
             {
                 candidates.Add(new NativeInstall(
@@ -322,7 +342,7 @@ internal static partial class NativeInstallPlanner
         AddRoot(@"C:\msys32");
         if (!string.IsNullOrEmpty(localAppData))
         {
-            AddRoot(Path.Combine(localAppData, "msys64"));
+            AddRoot(JoinWindows(localAppData, "msys64"));
         }
 
         foreach (string entry in probe.GetPathEntries())
@@ -346,7 +366,7 @@ internal static partial class NativeInstallPlanner
         {
             foreach (string prefixName in Msys2Prefixes)
             {
-                string directory = Path.Combine(root, prefixName, "bin");
+                string directory = JoinWindows(root, prefixName, "bin");
                 if (HasGStreamer(probe, directory))
                 {
                     candidates.Add(new NativeInstall(
