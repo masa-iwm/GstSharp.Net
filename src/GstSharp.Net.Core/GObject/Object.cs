@@ -25,7 +25,7 @@ namespace Gst.GObject;
 /// <see cref="EnableIdleDrain"/>), and whenever the application asks for it.
 /// </para>
 /// </remarks>
-public class Object : IDisposable
+public partial class Object : IDisposable
 {
     private static readonly ConcurrentDictionary<nint, ToggleRef> Wrappers = new();
     private static readonly ConcurrentQueue<PendingRelease> PendingReleases = new();

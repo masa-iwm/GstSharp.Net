@@ -40,6 +40,17 @@ internal static unsafe partial class TestNatives
     [LibraryImport("Gst", EntryPoint = "gst_parse_launch")]
     internal static partial nint ParseLaunch(byte* description, nint* error);
 
+    /// <summary>Pulls a sample out of an <c>appsink</c>, or gives up after a timeout.</summary>
+    /// <param name="appsink">The sink to pull from.</param>
+    /// <param name="timeout">How long to wait, in nanoseconds.</param>
+    /// <returns>The sample, owned by the caller, or <c>0</c>.</returns>
+    /// <remarks>
+    /// The C call is the yardstick the emission of the action signal of the
+    /// same name is compared against, ownership included.
+    /// </remarks>
+    [LibraryImport("GstApp", EntryPoint = "gst_app_sink_try_pull_sample")]
+    internal static partial nint AppSinkTryPullSample(nint appsink, ulong timeout);
+
     /// <summary>Releases a reference of a <c>GstObject</c>.</summary>
     /// <param name="obj">The object to release.</param>
     [LibraryImport("Gst", EntryPoint = "gst_object_unref")]

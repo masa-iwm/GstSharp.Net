@@ -188,6 +188,15 @@ internal static unsafe partial class GObjectNative
     [LibraryImport("GObject", EntryPoint = "g_value_get_boxed")]
     internal static partial nint ValueGetBoxed(ref GValueNative value);
 
+    [LibraryImport("GObject", EntryPoint = "g_value_dup_boxed")]
+    internal static partial nint ValueDupBoxed(ref GValueNative value);
+
+    [LibraryImport("GObject", EntryPoint = "g_value_dup_param")]
+    internal static partial nint ValueDupParam(ref GValueNative value);
+
+    [LibraryImport("GObject", EntryPoint = "g_value_dup_variant")]
+    internal static partial nint ValueDupVariant(ref GValueNative value);
+
     [LibraryImport("GObject", EntryPoint = "g_value_set_enum")]
     internal static partial void ValueSetEnum(ref GValueNative value, int content);
 
@@ -217,4 +226,72 @@ internal static unsafe partial class GObjectNative
 
     [LibraryImport("GObject", EntryPoint = "g_value_get_variant")]
     internal static partial nint ValueGetVariant(ref GValueNative value);
+
+    [LibraryImport("GObject", EntryPoint = "g_value_set_schar")]
+    internal static partial void ValueSetSChar(ref GValueNative value, sbyte content);
+
+    [LibraryImport("GObject", EntryPoint = "g_value_get_schar")]
+    internal static partial sbyte ValueGetSChar(ref GValueNative value);
+
+    [LibraryImport("GObject", EntryPoint = "g_value_set_uchar")]
+    internal static partial void ValueSetUChar(ref GValueNative value, byte content);
+
+    [LibraryImport("GObject", EntryPoint = "g_value_get_uchar")]
+    internal static partial byte ValueGetUChar(ref GValueNative value);
+
+    [LibraryImport("GObject", EntryPoint = "g_value_set_instance")]
+    internal static partial void ValueSetInstance(ref GValueNative value, nint instance);
+
+    [LibraryImport("GObject", EntryPoint = "g_type_interfaces")]
+    internal static partial nint TypeInterfaces(nuint type, uint* count);
+
+    [LibraryImport("GObject", EntryPoint = "g_signal_lookup")]
+    internal static partial uint SignalLookup(byte* name, nuint itype);
+
+    [LibraryImport("GObject", EntryPoint = "g_signal_query")]
+    internal static partial void SignalQueryById(uint signalId, out GSignalQuery query);
+
+    [LibraryImport("GObject", EntryPoint = "g_signal_parse_name")]
+    internal static partial int SignalParseName(
+        byte* detailedSignal,
+        nuint itype,
+        uint* signalId,
+        uint* detail,
+        int forceDetailQuark);
+
+    [LibraryImport("GObject", EntryPoint = "g_signal_list_ids")]
+    internal static partial nint SignalListIds(nuint itype, uint* count);
+
+    [LibraryImport("GObject", EntryPoint = "g_signal_emitv")]
+    internal static partial void SignalEmitV(
+        GValueNative* instanceAndParams,
+        uint signalId,
+        uint detail,
+        GValueNative* returnValue);
+
+    [LibraryImport("GObject", EntryPoint = "g_signal_connect_closure_by_id")]
+    internal static partial CULong SignalConnectClosureById(
+        nint instance,
+        uint signalId,
+        uint detail,
+        nint closure,
+        int after);
+
+    [LibraryImport("GObject", EntryPoint = "g_closure_new_simple")]
+    internal static partial nint ClosureNewSimple(uint sizeOfClosure, nint data);
+
+    [LibraryImport("GObject", EntryPoint = "g_closure_set_meta_marshal")]
+    internal static partial void ClosureSetMetaMarshal(
+        nint closure,
+        nint marshalData,
+        delegate* unmanaged[Cdecl]<nint, GValueNative*, uint, GValueNative*, nint, nint, void> metaMarshal);
+
+    [LibraryImport("GObject", EntryPoint = "g_closure_add_finalize_notifier")]
+    internal static partial void ClosureAddFinalizeNotifier(
+        nint closure,
+        nint notifyData,
+        delegate* unmanaged[Cdecl]<nint, nint, void> notifyFunc);
+
+    [LibraryImport("GObject", EntryPoint = "g_closure_sink")]
+    internal static partial void ClosureSink(nint closure);
 }
