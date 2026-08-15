@@ -8,4 +8,11 @@
     <ProjectReference Include="../GstSharp.Net.Core/GstSharp.Net.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- The ABI probes read the raw struct mirrors and wrap native handles
+         through the internal constructors, which is what they are there to
+         validate. -->
+    <InternalsVisibleTo Include="GstSharp.IntegrationTests" />
+  </ItemGroup>
+
 </Project>

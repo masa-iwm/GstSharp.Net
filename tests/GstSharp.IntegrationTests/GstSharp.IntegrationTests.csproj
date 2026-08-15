@@ -13,7 +13,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../../src/GstSharp.Net/GstSharp.Net.csproj" />
+    <!-- The entry point of the binding is the type GstSharp in the global
+         namespace, and this assembly declares a namespace of the same name, so
+         the type is only reachable through an alias. The reference stays in the
+         global alias as well, so that every other type is used unqualified. -->
+    <ProjectReference Include="../../src/GstSharp.Net/GstSharp.Net.csproj" Aliases="global,gstsharp" />
   </ItemGroup>
 
 </Project>
