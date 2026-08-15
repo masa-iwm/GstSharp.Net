@@ -60,13 +60,3 @@ All of these must pass before a change is committed:
 
 Imperative mood, concise, English, one logical change per commit. Commit once
 the change has passed review.
-
-## Native GStreamer on this development machine
-
-* User-side MinGW install, GStreamer 1.28.6:
-  `%LOCALAPPDATA%\Programs\gstreamer\1.0\mingw_x86_64\`. It is registered in
-  `HKCU` Uninstall only and sets **no** environment variables, so it is found
-  through the registry probe.
-* MSYS2 UCRT64: `C:\src\msys64\ucrt64\bin` (MinGW flavor). This root is not
-  registered anywhere, so it is picked up from `PATH` or has to be passed via
-  `GstSharpOptions.NativeSearchPath`.
