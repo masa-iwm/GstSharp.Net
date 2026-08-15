@@ -3,6 +3,9 @@
 
 #nullable enable
 
+using System;
+using System.Runtime.InteropServices;
+
 namespace Gst;
 
 /// <summary>
@@ -35,7 +38,7 @@ namespace Gst;
 /// write to it.
 /// </para>
 /// </remarks>
-public sealed partial class Poll
+public sealed unsafe partial class Poll
 {
     /// <summary>The native instance.</summary>
     internal nint Handle;
@@ -43,4 +46,358 @@ public sealed partial class Poll
     /// <summary>Wraps a native <c>GstPoll</c>.</summary>
     /// <param name="handle">The native instance.</param>
     internal Poll(nint handle) => Handle = handle;
+
+    /// <summary>Wraps a native <c>GstPoll</c>, mapping the null pointer onto <see langword="null"/>.</summary>
+    /// <param name="handle">The native instance, or <c>0</c>.</param>
+    /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>
+    /// <remarks>
+    /// The wrapper of an opaque record is a bare pointer holder: the gir
+    /// describes no way of releasing one, so it does not take part in the
+    /// ownership of what it points at.
+    /// </remarks>
+    internal static Poll? FromNative(nint handle) =>
+        handle == 0 ? null : new(handle);
+
+    /// <summary>Add a file descriptor to the file descriptor set.</summary>
+    /// <param name="fd">The <c>fd</c> argument.</param>
+    /// <returns>%TRUE if the file descriptor was successfully added to the set.</returns>
+    public bool AddFd(Gst.PollFD fd)
+    {
+        Gst.PollFD fdNative = fd;
+        int nativeResult = GstPollAddFd(Handle, &fdNative);
+        return nativeResult != 0;
+    }
+
+    /// <summary>Check if @fd in @set has data to be read.</summary>
+    /// <param name="fd">The <c>fd</c> argument.</param>
+    /// <returns>%TRUE if the descriptor has data to be read.</returns>
+    public bool FdCanRead(Gst.PollFD fd)
+    {
+        Gst.PollFD fdNative = fd;
+        int nativeResult = GstPollFdCanRead(Handle, &fdNative);
+        return nativeResult != 0;
+    }
+
+    /// <summary>Check if @fd in @set can be used for writing.</summary>
+    /// <param name="fd">The <c>fd</c> argument.</param>
+    /// <returns>%TRUE if the descriptor can be used for writing.</returns>
+    public bool FdCanWrite(Gst.PollFD fd)
+    {
+        Gst.PollFD fdNative = fd;
+        int nativeResult = GstPollFdCanWrite(Handle, &fdNative);
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Control whether the descriptor @fd in @set will be monitored for
+    /// exceptional conditions (POLLPRI).
+    /// </summary>
+    /// <remarks>
+    /// <para>Not implemented on Windows (will just return %FALSE there).</para>
+    /// </remarks>
+    /// <param name="fd">The <c>fd</c> argument.</param>
+    /// <param name="active">The <c>active</c> argument.</param>
+    /// <returns>%TRUE if the descriptor was successfully updated.</returns>
+    public bool FdCtlPri(Gst.PollFD fd, bool active)
+    {
+        Gst.PollFD fdNative = fd;
+        int nativeResult = GstPollFdCtlPri(Handle, &fdNative, active ? 1 : 0);
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Control whether the descriptor @fd in @set will be monitored for
+    /// readability.
+    /// </summary>
+    /// <param name="fd">The <c>fd</c> argument.</param>
+    /// <param name="active">The <c>active</c> argument.</param>
+    /// <returns>%TRUE if the descriptor was successfully updated.</returns>
+    public bool FdCtlRead(Gst.PollFD fd, bool active)
+    {
+        Gst.PollFD fdNative = fd;
+        int nativeResult = GstPollFdCtlRead(Handle, &fdNative, active ? 1 : 0);
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Control whether the descriptor @fd in @set will be monitored for
+    /// writability.
+    /// </summary>
+    /// <param name="fd">The <c>fd</c> argument.</param>
+    /// <param name="active">The <c>active</c> argument.</param>
+    /// <returns>%TRUE if the descriptor was successfully updated.</returns>
+    public bool FdCtlWrite(Gst.PollFD fd, bool active)
+    {
+        Gst.PollFD fdNative = fd;
+        int nativeResult = GstPollFdCtlWrite(Handle, &fdNative, active ? 1 : 0);
+        return nativeResult != 0;
+    }
+
+    /// <summary>Check if @fd in @set has closed the connection.</summary>
+    /// <param name="fd">The <c>fd</c> argument.</param>
+    /// <returns>%TRUE if the connection was closed.</returns>
+    public bool FdHasClosed(Gst.PollFD fd)
+    {
+        Gst.PollFD fdNative = fd;
+        int nativeResult = GstPollFdHasClosed(Handle, &fdNative);
+        return nativeResult != 0;
+    }
+
+    /// <summary>Check if @fd in @set has an error.</summary>
+    /// <param name="fd">The <c>fd</c> argument.</param>
+    /// <returns>%TRUE if the descriptor has an error.</returns>
+    public bool FdHasError(Gst.PollFD fd)
+    {
+        Gst.PollFD fdNative = fd;
+        int nativeResult = GstPollFdHasError(Handle, &fdNative);
+        return nativeResult != 0;
+    }
+
+    /// <summary>Check if @fd in @set has an exceptional condition (POLLPRI).</summary>
+    /// <remarks>
+    /// <para>Not implemented on Windows (will just return %FALSE there).</para>
+    /// </remarks>
+    /// <param name="fd">The <c>fd</c> argument.</param>
+    /// <returns>%TRUE if the descriptor has an exceptional condition.</returns>
+    public bool FdHasPri(Gst.PollFD fd)
+    {
+        Gst.PollFD fdNative = fd;
+        int nativeResult = GstPollFdHasPri(Handle, &fdNative);
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Mark @fd as ignored so that the next call to gst_poll_wait() will yield
+    /// the same result for @fd as last time. This function must be called if no
+    /// operation (read/write/recv/send/etc.) will be performed on @fd before
+    /// the next call to gst_poll_wait().
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The reason why this is needed is because the underlying implementation
+    /// might not allow querying the fd more than once between calls to one of
+    /// the re-enabling operations.
+    /// </para>
+    /// </remarks>
+    /// <param name="fd">The <c>fd</c> argument.</param>
+    public void FdIgnored(Gst.PollFD fd)
+    {
+        Gst.PollFD fdNative = fd;
+        GstPollFdIgnored(Handle, &fdNative);
+    }
+
+    /// <summary>Free a file descriptor set.</summary>
+    public void Free()
+    {
+        GstPollFree(Handle);
+    }
+
+    /// <summary>Read a byte from the control socket of the controllable @set.</summary>
+    /// <remarks>
+    /// <para>
+    /// This function only works for timer #GstPoll objects created with
+    /// gst_poll_new_timer().
+    /// </para>
+    /// </remarks>
+    /// <returns>
+    /// %TRUE on success. %FALSE when when there was no byte to read or
+    /// reading the byte failed. If there was no byte to read, and only then, errno
+    /// will contain EWOULDBLOCK or EAGAIN. For all other values of errno this always signals a
+    /// critical error.
+    /// </returns>
+    public bool ReadControl()
+    {
+        int nativeResult = GstPollReadControl(Handle);
+        return nativeResult != 0;
+    }
+
+    /// <summary>Remove a file descriptor from the file descriptor set.</summary>
+    /// <param name="fd">The <c>fd</c> argument.</param>
+    /// <returns>%TRUE if the file descriptor was successfully removed from the set.</returns>
+    public bool RemoveFd(Gst.PollFD fd)
+    {
+        Gst.PollFD fdNative = fd;
+        int nativeResult = GstPollRemoveFd(Handle, &fdNative);
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Restart any gst_poll_wait() that is in progress. This function is typically
+    /// used after adding or removing descriptors to @set.
+    /// </summary>
+    /// <remarks>
+    /// <para>If @set is not controllable, then this call will have no effect.</para>
+    /// <para>
+    /// This function only works for non-timer #GstPoll objects created with
+    /// gst_poll_new().
+    /// </para>
+    /// </remarks>
+    public void Restart()
+    {
+        GstPollRestart(Handle);
+    }
+
+    /// <summary>
+    /// When @controllable is %TRUE, this function ensures that future calls to
+    /// gst_poll_wait() will be affected by gst_poll_restart() and
+    /// gst_poll_set_flushing().
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This function only works for non-timer #GstPoll objects created with
+    /// gst_poll_new().
+    /// </para>
+    /// </remarks>
+    /// <param name="controllable">The <c>controllable</c> argument.</param>
+    /// <returns>%TRUE if the controllability of @set could be updated.</returns>
+    public bool SetControllable(bool controllable)
+    {
+        int nativeResult = GstPollSetControllable(Handle, controllable ? 1 : 0);
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// When @flushing is %TRUE, this function ensures that current and future calls
+    /// to gst_poll_wait() will return -1, with errno set to EBUSY.
+    /// </summary>
+    /// <remarks>
+    /// <para>Unsetting the flushing state will restore normal operation of @set.</para>
+    /// <para>
+    /// This function only works for non-timer #GstPoll objects created with
+    /// gst_poll_new().
+    /// </para>
+    /// </remarks>
+    /// <param name="flushing">The <c>flushing</c> argument.</param>
+    public void SetFlushing(bool flushing)
+    {
+        GstPollSetFlushing(Handle, flushing ? 1 : 0);
+    }
+
+    /// <summary>
+    /// Wait for activity on the file descriptors in @set. This function waits up to
+    /// the specified @timeout.  A timeout of #GST_CLOCK_TIME_NONE waits forever.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// For #GstPoll objects created with gst_poll_new(), this function can only be
+    /// called from a single thread at a time.  If called from multiple threads,
+    /// -1 will be returned with errno set to EPERM.
+    /// </para>
+    /// <para>
+    /// This is not true for timer #GstPoll objects created with
+    /// gst_poll_new_timer(), where it is allowed to have multiple threads waiting
+    /// simultaneously.
+    /// </para>
+    /// </remarks>
+    /// <param name="timeout">The <c>timeout</c> argument.</param>
+    /// <returns>
+    /// The number of #GstPollFD in @set that have activity or 0 when no
+    /// activity was detected after @timeout. If an error occurs, -1 is returned
+    /// and errno is set.
+    /// </returns>
+    public int Wait(Gst.ClockTime timeout)
+    {
+        int nativeResult = GstPollWait(Handle, timeout.Nanoseconds);
+        return nativeResult;
+    }
+
+    /// <summary>
+    /// Write a byte to the control socket of the controllable @set.
+    /// This function is mostly useful for timer #GstPoll objects created with
+    /// gst_poll_new_timer().
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// It will make any current and future gst_poll_wait() function return with
+    /// 1, meaning the control socket is set. After an equal amount of calls to
+    /// gst_poll_read_control() have been performed, calls to gst_poll_wait() will
+    /// block again until their timeout expired.
+    /// </para>
+    /// <para>
+    /// This function only works for timer #GstPoll objects created with
+    /// gst_poll_new_timer().
+    /// </para>
+    /// </remarks>
+    /// <returns>
+    /// %TRUE on success. %FALSE when when the byte could not be written.
+    /// errno contains the detailed error code but will never be EAGAIN, EINTR or
+    /// EWOULDBLOCK. %FALSE always signals a critical error.
+    /// </returns>
+    public bool WriteControl()
+    {
+        int nativeResult = GstPollWriteControl(Handle);
+        return nativeResult != 0;
+    }
+
+    /// <summary>The <c>gst_poll_add_fd</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_poll_add_fd")]
+    private static partial int GstPollAddFd(nint set, Gst.PollFD* fd);
+
+    /// <summary>The <c>gst_poll_fd_can_read</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_poll_fd_can_read")]
+    private static partial int GstPollFdCanRead(nint set, Gst.PollFD* fd);
+
+    /// <summary>The <c>gst_poll_fd_can_write</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_poll_fd_can_write")]
+    private static partial int GstPollFdCanWrite(nint set, Gst.PollFD* fd);
+
+    /// <summary>The <c>gst_poll_fd_ctl_pri</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_poll_fd_ctl_pri")]
+    private static partial int GstPollFdCtlPri(nint set, Gst.PollFD* fd, int active);
+
+    /// <summary>The <c>gst_poll_fd_ctl_read</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_poll_fd_ctl_read")]
+    private static partial int GstPollFdCtlRead(nint set, Gst.PollFD* fd, int active);
+
+    /// <summary>The <c>gst_poll_fd_ctl_write</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_poll_fd_ctl_write")]
+    private static partial int GstPollFdCtlWrite(nint set, Gst.PollFD* fd, int active);
+
+    /// <summary>The <c>gst_poll_fd_has_closed</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_poll_fd_has_closed")]
+    private static partial int GstPollFdHasClosed(nint set, Gst.PollFD* fd);
+
+    /// <summary>The <c>gst_poll_fd_has_error</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_poll_fd_has_error")]
+    private static partial int GstPollFdHasError(nint set, Gst.PollFD* fd);
+
+    /// <summary>The <c>gst_poll_fd_has_pri</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_poll_fd_has_pri")]
+    private static partial int GstPollFdHasPri(nint set, Gst.PollFD* fd);
+
+    /// <summary>The <c>gst_poll_fd_ignored</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_poll_fd_ignored")]
+    private static partial void GstPollFdIgnored(nint set, Gst.PollFD* fd);
+
+    /// <summary>The <c>gst_poll_free</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_poll_free")]
+    private static partial void GstPollFree(nint set);
+
+    /// <summary>The <c>gst_poll_read_control</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_poll_read_control")]
+    private static partial int GstPollReadControl(nint set);
+
+    /// <summary>The <c>gst_poll_remove_fd</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_poll_remove_fd")]
+    private static partial int GstPollRemoveFd(nint set, Gst.PollFD* fd);
+
+    /// <summary>The <c>gst_poll_restart</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_poll_restart")]
+    private static partial void GstPollRestart(nint set);
+
+    /// <summary>The <c>gst_poll_set_controllable</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_poll_set_controllable")]
+    private static partial int GstPollSetControllable(nint set, int controllable);
+
+    /// <summary>The <c>gst_poll_set_flushing</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_poll_set_flushing")]
+    private static partial void GstPollSetFlushing(nint set, int flushing);
+
+    /// <summary>The <c>gst_poll_wait</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_poll_wait")]
+    private static partial int GstPollWait(nint set, ulong timeout);
+
+    /// <summary>The <c>gst_poll_write_control</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_poll_write_control")]
+    private static partial int GstPollWriteControl(nint set);
 }

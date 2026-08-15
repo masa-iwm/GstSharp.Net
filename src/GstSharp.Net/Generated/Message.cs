@@ -3,6 +3,7 @@
 
 #nullable enable
 
+using System;
 using System.Runtime.InteropServices;
 
 namespace Gst;
@@ -54,6 +55,1785 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>
     internal static Message? FromNative(nint handle, Gst.Interop.Transfer transfer) =>
         handle == 0 ? null : new(handle, transfer);
+
+    /// <summary>
+    /// The message is posted when elements completed an ASYNC state change.
+    /// @running_time contains the time of the desired running_time when this
+    /// elements goes to PLAYING. A value of #GST_CLOCK_TIME_NONE for @running_time
+    /// means that the element has no clock interaction and thus doesn't care about
+    /// the running_time of the pipeline.
+    /// </summary>
+    /// <param name="src">The <c>src</c> argument.</param>
+    /// <param name="runningTime">The <c>runningTime</c> argument.</param>
+    /// <returns>The new async_done message.</returns>
+    public static Gst.Message NewAsyncDone(Gst.Object? src, Gst.ClockTime runningTime)
+    {
+        nint nativeResult = GstMessageNewAsyncDone(src is null ? 0 : src.Handle, runningTime.Nanoseconds);
+        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_message_new_async_done returned no value.");
+    }
+
+    /// <summary>This message is posted by elements when they start an ASYNC state change.</summary>
+    /// <param name="src">The <c>src</c> argument.</param>
+    /// <returns>The new async_start message.</returns>
+    public static Gst.Message NewAsyncStart(Gst.Object? src)
+    {
+        nint nativeResult = GstMessageNewAsyncStart(src is null ? 0 : src.Handle);
+        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_message_new_async_start returned no value.");
+    }
+
+    /// <summary>
+    /// Create a new buffering message. This message can be posted by an element that
+    /// needs to buffer data before it can continue processing. @percent should be a
+    /// value between 0 and 100. A value of 100 means that the buffering completed.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// When @percent is &lt; 100 the application should PAUSE a PLAYING pipeline. When
+    /// @percent is 100, the application can set the pipeline (back) to PLAYING.
+    /// The application must be prepared to receive BUFFERING messages in the
+    /// PREROLLING state and may only set the pipeline to PLAYING after receiving a
+    /// message with @percent set to 100, which can happen after the pipeline
+    /// completed prerolling.
+    /// </para>
+    /// <para>MT safe.</para>
+    /// </remarks>
+    /// <param name="src">The <c>src</c> argument.</param>
+    /// <param name="percent">The <c>percent</c> argument.</param>
+    /// <returns>The new buffering message.</returns>
+    public static Gst.Message NewBuffering(Gst.Object? src, int percent)
+    {
+        nint nativeResult = GstMessageNewBuffering(src is null ? 0 : src.Handle, percent);
+        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_message_new_buffering returned no value.");
+    }
+
+    /// <summary>
+    /// Create a clock lost message. This message is posted whenever the
+    /// clock is not valid anymore.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// If this message is posted by the pipeline, the pipeline will
+    /// select a new clock again when it goes to PLAYING. It might therefore
+    /// be needed to set the pipeline to PAUSED and PLAYING again.
+    /// </para>
+    /// </remarks>
+    /// <param name="src">The <c>src</c> argument.</param>
+    /// <param name="clock">The <c>clock</c> argument.</param>
+    /// <returns>The new clock lost message.</returns>
+    public static Gst.Message NewClockLost(Gst.Object? src, Gst.Clock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        nint nativeResult = GstMessageNewClockLost(src is null ? 0 : src.Handle, clock.Handle);
+        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_message_new_clock_lost returned no value.");
+    }
+
+    /// <summary>
+    /// Create a clock provide message. This message is posted whenever an
+    /// element is ready to provide a clock or lost its ability to provide
+    /// a clock (maybe because it paused or became EOS).
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This message is mainly used internally to manage the clock
+    /// selection.
+    /// </para>
+    /// </remarks>
+    /// <param name="src">The <c>src</c> argument.</param>
+    /// <param name="clock">The <c>clock</c> argument.</param>
+    /// <param name="ready">The <c>ready</c> argument.</param>
+    /// <returns>the new provide clock message.</returns>
+    public static Gst.Message NewClockProvide(Gst.Object? src, Gst.Clock clock, bool ready)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        nint nativeResult = GstMessageNewClockProvide(src is null ? 0 : src.Handle, clock.Handle, ready ? 1 : 0);
+        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_message_new_clock_provide returned no value.");
+    }
+
+    /// <summary>
+    /// Creates a new device-added message. The device-added message is produced by
+    /// #GstDeviceProvider or a #GstDeviceMonitor. They announce the appearance
+    /// of monitored devices.
+    /// </summary>
+    /// <param name="src">The <c>src</c> argument.</param>
+    /// <param name="device">The <c>device</c> argument.</param>
+    /// <returns>a newly allocated #GstMessage</returns>
+    public static Gst.Message NewDeviceAdded(Gst.Object? src, Gst.Device device)
+    {
+        ArgumentNullException.ThrowIfNull(device);
+        nint nativeResult = GstMessageNewDeviceAdded(src is null ? 0 : src.Handle, device.Handle);
+        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_message_new_device_added returned no value.");
+    }
+
+    /// <summary>
+    /// Creates a new device-changed message. The device-changed message is produced
+    /// by #GstDeviceProvider or a #GstDeviceMonitor. They announce that a device
+    /// properties has changed and @device represent the new modified version of @changed_device.
+    /// </summary>
+    /// <param name="src">The <c>src</c> argument.</param>
+    /// <param name="device">The <c>device</c> argument.</param>
+    /// <param name="changedDevice">The <c>changedDevice</c> argument.</param>
+    /// <returns>a newly allocated #GstMessage</returns>
+    public static Gst.Message NewDeviceChanged(Gst.Object? src, Gst.Device device, Gst.Device changedDevice)
+    {
+        ArgumentNullException.ThrowIfNull(device);
+        ArgumentNullException.ThrowIfNull(changedDevice);
+        nint nativeResult = GstMessageNewDeviceChanged(src is null ? 0 : src.Handle, device.Handle, changedDevice.Handle);
+        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_message_new_device_changed returned no value.");
+    }
+
+    /// <summary>
+    /// Creates a new device-monitor-started message. The device-monitor-started
+    /// message is produced by a #GstDeviceMonitor once it has started probing
+    /// devices. It does not indicate whether any #GstDeviceProvider instances
+    /// support monitoring at all, only whether at least one was able to start
+    /// probing.
+    /// </summary>
+    /// <param name="src">The <c>src</c> argument.</param>
+    /// <param name="success">The <c>success</c> argument.</param>
+    /// <returns>a newly allocated #GstMessage</returns>
+    public static Gst.Message NewDeviceMonitorStarted(Gst.Object? src, bool success)
+    {
+        nint nativeResult = GstMessageNewDeviceMonitorStarted(src is null ? 0 : src.Handle, success ? 1 : 0);
+        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_message_new_device_monitor_started returned no value.");
+    }
+
+    /// <summary>
+    /// Creates a new device-removed message. The device-removed message is produced
+    /// by #GstDeviceProvider or a #GstDeviceMonitor. They announce the
+    /// disappearance of monitored devices.
+    /// </summary>
+    /// <param name="src">The <c>src</c> argument.</param>
+    /// <param name="device">The <c>device</c> argument.</param>
+    /// <returns>a newly allocated #GstMessage</returns>
+    public static Gst.Message NewDeviceRemoved(Gst.Object? src, Gst.Device device)
+    {
+        ArgumentNullException.ThrowIfNull(device);
+        nint nativeResult = GstMessageNewDeviceRemoved(src is null ? 0 : src.Handle, device.Handle);
+        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_message_new_device_removed returned no value.");
+    }
+
+    /// <summary>
+    /// Create a new duration changed message. This message is posted by elements
+    /// that know the duration of a stream when the duration changes. This message
+    /// is received by bins and is used to calculate the total duration of a
+    /// pipeline.
+    /// </summary>
+    /// <param name="src">The <c>src</c> argument.</param>
+    /// <returns>The new duration-changed message.</returns>
+    public static Gst.Message NewDurationChanged(Gst.Object? src)
+    {
+        nint nativeResult = GstMessageNewDurationChanged(src is null ? 0 : src.Handle);
+        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_message_new_duration_changed returned no value.");
+    }
+
+    /// <summary>
+    /// Create a new eos message. This message is generated and posted in
+    /// the sink elements of a GstBin. The bin will only forward the EOS
+    /// message to the application if all sinks have posted an EOS message.
+    /// </summary>
+    /// <param name="src">The <c>src</c> argument.</param>
+    /// <returns>The new eos message.</returns>
+    public static Gst.Message NewEos(Gst.Object? src)
+    {
+        nint nativeResult = GstMessageNewEos(src is null ? 0 : src.Handle);
+        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_message_new_eos returned no value.");
+    }
+
+    /// <summary>
+    /// Creates a new instant-rate-request message. Elements handling the
+    /// instant-rate-change event must post this message. The message is
+    /// handled at the pipeline, and allows the pipeline to select the
+    /// running time when the rate change should happen and to send an
+    /// @GST_EVENT_INSTANT_RATE_SYNC_TIME event to notify the elements
+    /// in the pipeline.
+    /// </summary>
+    /// <param name="src">The <c>src</c> argument.</param>
+    /// <param name="rateMultiplier">The <c>rateMultiplier</c> argument.</param>
+    /// <returns>a newly allocated #GstMessage</returns>
+    public static Gst.Message NewInstantRateRequest(Gst.Object? src, double rateMultiplier)
+    {
+        nint nativeResult = GstMessageNewInstantRateRequest(src is null ? 0 : src.Handle, rateMultiplier);
+        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_message_new_instant_rate_request returned no value.");
+    }
+
+    /// <summary>
+    /// This message can be posted by elements when their latency requirements have
+    /// changed.
+    /// </summary>
+    /// <param name="src">The <c>src</c> argument.</param>
+    /// <returns>The new latency message.</returns>
+    public static Gst.Message NewLatency(Gst.Object? src)
+    {
+        nint nativeResult = GstMessageNewLatency(src is null ? 0 : src.Handle);
+        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_message_new_latency returned no value.");
+    }
+
+    /// <summary>This message is posted when an element needs a specific #GstContext.</summary>
+    /// <param name="src">The <c>src</c> argument.</param>
+    /// <param name="contextType">The <c>contextType</c> argument.</param>
+    /// <returns>The new need-context message.</returns>
+    public static Gst.Message NewNeedContext(Gst.Object? src, string contextType)
+    {
+        ArgumentNullException.ThrowIfNull(contextType);
+        System.Span<byte> contextTypeBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope contextTypeScope = Gst.Interop.GMarshal.StackUtf8(contextType, contextTypeBuffer);
+        nint nativeResult = GstMessageNewNeedContext(src is null ? 0 : src.Handle, contextTypeScope.Pointer);
+        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_message_new_need_context returned no value.");
+    }
+
+    /// <summary>
+    /// Create a new clock message. This message is posted whenever the
+    /// pipeline selects a new clock for the pipeline.
+    /// </summary>
+    /// <param name="src">The <c>src</c> argument.</param>
+    /// <param name="clock">The <c>clock</c> argument.</param>
+    /// <returns>The new new clock message.</returns>
+    public static Gst.Message NewNewClock(Gst.Object? src, Gst.Clock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        nint nativeResult = GstMessageNewNewClock(src is null ? 0 : src.Handle, clock.Handle);
+        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_message_new_new_clock returned no value.");
+    }
+
+    /// <summary>
+    /// Progress messages are posted by elements when they use an asynchronous task
+    /// to perform actions triggered by a state change.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// @code contains a well defined string describing the action.
+    /// @text should contain a user visible string detailing the current action.
+    /// </para>
+    /// </remarks>
+    /// <param name="src">The <c>src</c> argument.</param>
+    /// <param name="type">The <c>type</c> argument.</param>
+    /// <param name="code">The <c>code</c> argument.</param>
+    /// <param name="text">The <c>text</c> argument.</param>
+    /// <returns>The new qos message.</returns>
+    public static Gst.Message NewProgress(Gst.Object? src, Gst.ProgressType type, string code, string text)
+    {
+        ArgumentNullException.ThrowIfNull(code);
+        System.Span<byte> codeBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope codeScope = Gst.Interop.GMarshal.StackUtf8(code, codeBuffer);
+        ArgumentNullException.ThrowIfNull(text);
+        System.Span<byte> textBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope textScope = Gst.Interop.GMarshal.StackUtf8(text, textBuffer);
+        nint nativeResult = GstMessageNewProgress(src is null ? 0 : src.Handle, (int)type, codeScope.Pointer, textScope.Pointer);
+        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_message_new_progress returned no value.");
+    }
+
+    /// <summary>
+    /// A QOS message is posted on the bus whenever an element decides to drop a
+    /// buffer because of QoS reasons or whenever it changes its processing strategy
+    /// because of QoS reasons (quality adjustments such as processing at lower
+    /// accuracy).
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This message can be posted by an element that performs synchronisation against the
+    /// clock (live) or it could be dropped by an element that performs QoS because of QOS
+    /// events received from a downstream element (!live).
+    /// </para>
+    /// <para>
+    /// @running_time, @stream_time, @timestamp, @duration should be set to the
+    /// respective running-time, stream-time, timestamp and duration of the (dropped)
+    /// buffer that generated the QoS event. Values can be left to
+    /// GST_CLOCK_TIME_NONE when unknown.
+    /// </para>
+    /// </remarks>
+    /// <param name="src">The <c>src</c> argument.</param>
+    /// <param name="live">The <c>live</c> argument.</param>
+    /// <param name="runningTime">The <c>runningTime</c> argument.</param>
+    /// <param name="streamTime">The <c>streamTime</c> argument.</param>
+    /// <param name="timestamp">The <c>timestamp</c> argument.</param>
+    /// <param name="duration">The <c>duration</c> argument.</param>
+    /// <returns>The new qos message.</returns>
+    public static Gst.Message NewQos(Gst.Object? src, bool live, ulong runningTime, ulong streamTime, ulong timestamp, ulong duration)
+    {
+        nint nativeResult = GstMessageNewQos(src is null ? 0 : src.Handle, live ? 1 : 0, runningTime, streamTime, timestamp, duration);
+        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_message_new_qos returned no value.");
+    }
+
+    /// <summary>
+    /// This message can be posted by elements when they want to have their state
+    /// changed. A typical use case would be an audio server that wants to pause the
+    /// pipeline because a higher priority stream is being played.
+    /// </summary>
+    /// <param name="src">The <c>src</c> argument.</param>
+    /// <param name="state">The <c>state</c> argument.</param>
+    /// <returns>the new request state message.</returns>
+    public static Gst.Message NewRequestState(Gst.Object? src, Gst.State state)
+    {
+        nint nativeResult = GstMessageNewRequestState(src is null ? 0 : src.Handle, (int)state);
+        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_message_new_request_state returned no value.");
+    }
+
+    /// <summary>
+    /// This message is posted when the pipeline running-time should be reset to
+    /// @running_time, like after a flushing seek.
+    /// </summary>
+    /// <param name="src">The <c>src</c> argument.</param>
+    /// <param name="runningTime">The <c>runningTime</c> argument.</param>
+    /// <returns>The new reset_time message.</returns>
+    public static Gst.Message NewResetTime(Gst.Object? src, Gst.ClockTime runningTime)
+    {
+        nint nativeResult = GstMessageNewResetTime(src is null ? 0 : src.Handle, runningTime.Nanoseconds);
+        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_message_new_reset_time returned no value.");
+    }
+
+    /// <summary>
+    /// Create a new segment done message. This message is posted by elements that
+    /// finish playback of a segment as a result of a segment seek. This message
+    /// is received by the application after all elements that posted a segment_start
+    /// have posted the segment_done.
+    /// </summary>
+    /// <param name="src">The <c>src</c> argument.</param>
+    /// <param name="format">The <c>format</c> argument.</param>
+    /// <param name="position">The <c>position</c> argument.</param>
+    /// <returns>the new segment done message.</returns>
+    public static Gst.Message NewSegmentDone(Gst.Object? src, Gst.Format format, long position)
+    {
+        nint nativeResult = GstMessageNewSegmentDone(src is null ? 0 : src.Handle, (int)format, position);
+        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_message_new_segment_done returned no value.");
+    }
+
+    /// <summary>
+    /// Create a new segment message. This message is posted by elements that
+    /// start playback of a segment as a result of a segment seek. This message
+    /// is not received by the application but is used for maintenance reasons in
+    /// container elements.
+    /// </summary>
+    /// <param name="src">The <c>src</c> argument.</param>
+    /// <param name="format">The <c>format</c> argument.</param>
+    /// <param name="position">The <c>position</c> argument.</param>
+    /// <returns>the new segment start message.</returns>
+    public static Gst.Message NewSegmentStart(Gst.Object? src, Gst.Format format, long position)
+    {
+        nint nativeResult = GstMessageNewSegmentStart(src is null ? 0 : src.Handle, (int)format, position);
+        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_message_new_segment_start returned no value.");
+    }
+
+    /// <summary>
+    /// Create a state change message. This message is posted whenever an element
+    /// changed its state.
+    /// </summary>
+    /// <param name="src">The <c>src</c> argument.</param>
+    /// <param name="oldstate">The <c>oldstate</c> argument.</param>
+    /// <param name="newstate">The <c>newstate</c> argument.</param>
+    /// <param name="pending">The <c>pending</c> argument.</param>
+    /// <returns>the new state change message.</returns>
+    public static Gst.Message NewStateChanged(Gst.Object? src, Gst.State oldstate, Gst.State newstate, Gst.State pending)
+    {
+        nint nativeResult = GstMessageNewStateChanged(src is null ? 0 : src.Handle, (int)oldstate, (int)newstate, (int)pending);
+        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_message_new_state_changed returned no value.");
+    }
+
+    /// <summary>
+    /// Create a state dirty message. This message is posted whenever an element
+    /// changed its state asynchronously and is used internally to update the
+    /// states of container objects.
+    /// </summary>
+    /// <param name="src">The <c>src</c> argument.</param>
+    /// <returns>the new state dirty message.</returns>
+    public static Gst.Message NewStateDirty(Gst.Object? src)
+    {
+        nint nativeResult = GstMessageNewStateDirty(src is null ? 0 : src.Handle);
+        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_message_new_state_dirty returned no value.");
+    }
+
+    /// <summary>
+    /// This message is posted by elements when they complete a part, when @intermediate set
+    /// to %TRUE, or a complete step operation.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// @duration will contain the amount of time (in GST_FORMAT_TIME) of the stepped
+    /// @amount of media in format @format.
+    /// </para>
+    /// </remarks>
+    /// <param name="src">The <c>src</c> argument.</param>
+    /// <param name="format">The <c>format</c> argument.</param>
+    /// <param name="amount">The <c>amount</c> argument.</param>
+    /// <param name="rate">The <c>rate</c> argument.</param>
+    /// <param name="flush">The <c>flush</c> argument.</param>
+    /// <param name="intermediate">The <c>intermediate</c> argument.</param>
+    /// <param name="duration">The <c>duration</c> argument.</param>
+    /// <param name="eos">The <c>eos</c> argument.</param>
+    /// <returns>the new step_done message.</returns>
+    public static Gst.Message NewStepDone(Gst.Object? src, Gst.Format format, ulong amount, double rate, bool flush, bool intermediate, ulong duration, bool eos)
+    {
+        nint nativeResult = GstMessageNewStepDone(src is null ? 0 : src.Handle, (int)format, amount, rate, flush ? 1 : 0, intermediate ? 1 : 0, duration, eos ? 1 : 0);
+        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_message_new_step_done returned no value.");
+    }
+
+    /// <summary>
+    /// This message is posted by elements when they accept or activate a new step
+    /// event for @amount in @format.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// @active is set to %FALSE when the element accepted the new step event and has
+    /// queued it for execution in the streaming threads.
+    /// </para>
+    /// <para>
+    /// @active is set to %TRUE when the element has activated the step operation and
+    /// is now ready to start executing the step in the streaming thread. After this
+    /// message is emitted, the application can queue a new step operation in the
+    /// element.
+    /// </para>
+    /// </remarks>
+    /// <param name="src">The <c>src</c> argument.</param>
+    /// <param name="active">The <c>active</c> argument.</param>
+    /// <param name="format">The <c>format</c> argument.</param>
+    /// <param name="amount">The <c>amount</c> argument.</param>
+    /// <param name="rate">The <c>rate</c> argument.</param>
+    /// <param name="flush">The <c>flush</c> argument.</param>
+    /// <param name="intermediate">The <c>intermediate</c> argument.</param>
+    /// <returns>The new step_start message.</returns>
+    public static Gst.Message NewStepStart(Gst.Object? src, bool active, Gst.Format format, ulong amount, double rate, bool flush, bool intermediate)
+    {
+        nint nativeResult = GstMessageNewStepStart(src is null ? 0 : src.Handle, active ? 1 : 0, (int)format, amount, rate, flush ? 1 : 0, intermediate ? 1 : 0);
+        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_message_new_step_start returned no value.");
+    }
+
+    /// <summary>
+    /// Creates a new stream-collection message. The message is used to announce new
+    /// #GstStreamCollection
+    /// </summary>
+    /// <param name="src">The <c>src</c> argument.</param>
+    /// <param name="collection">The <c>collection</c> argument.</param>
+    /// <returns>a newly allocated #GstMessage</returns>
+    public static Gst.Message NewStreamCollection(Gst.Object? src, Gst.StreamCollection collection)
+    {
+        ArgumentNullException.ThrowIfNull(collection);
+        nint nativeResult = GstMessageNewStreamCollection(src is null ? 0 : src.Handle, collection.Handle);
+        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_message_new_stream_collection returned no value.");
+    }
+
+    /// <summary>
+    /// Create a new stream_start message. This message is generated and posted in
+    /// the sink elements of a GstBin. The bin will only forward the STREAM_START
+    /// message to the application if all sinks have posted an STREAM_START message.
+    /// </summary>
+    /// <param name="src">The <c>src</c> argument.</param>
+    /// <returns>The new stream_start message.</returns>
+    public static Gst.Message NewStreamStart(Gst.Object? src)
+    {
+        nint nativeResult = GstMessageNewStreamStart(src is null ? 0 : src.Handle);
+        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_message_new_stream_start returned no value.");
+    }
+
+    /// <summary>
+    /// Create a new stream status message. This message is posted when a streaming
+    /// thread is created/destroyed or when the state changed.
+    /// </summary>
+    /// <param name="src">The <c>src</c> argument.</param>
+    /// <param name="type">The <c>type</c> argument.</param>
+    /// <param name="owner">The <c>owner</c> argument.</param>
+    /// <returns>the new stream status message.</returns>
+    public static Gst.Message NewStreamStatus(Gst.Object? src, Gst.StreamStatusType type, Gst.Element owner)
+    {
+        ArgumentNullException.ThrowIfNull(owner);
+        nint nativeResult = GstMessageNewStreamStatus(src is null ? 0 : src.Handle, (int)type, owner.Handle);
+        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_message_new_stream_status returned no value.");
+    }
+
+    /// <summary>
+    /// Creates a new steams-selected message. The message is used to announce
+    /// that an array of streams has been selected. This is generally in response
+    /// to a #GST_EVENT_SELECT_STREAMS event, or when an element (such as decodebin3)
+    /// makes an initial selection of streams.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The message also contains the #GstStreamCollection to which the various streams
+    /// belong to.
+    /// </para>
+    /// <para>
+    /// Users of gst_message_new_streams_selected() can add the selected streams with
+    /// gst_message_streams_selected_add().
+    /// </para>
+    /// </remarks>
+    /// <param name="src">The <c>src</c> argument.</param>
+    /// <param name="collection">The <c>collection</c> argument.</param>
+    /// <returns>a newly allocated #GstMessage</returns>
+    public static Gst.Message NewStreamsSelected(Gst.Object? src, Gst.StreamCollection collection)
+    {
+        ArgumentNullException.ThrowIfNull(collection);
+        nint nativeResult = GstMessageNewStreamsSelected(src is null ? 0 : src.Handle, collection.Handle);
+        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_message_new_streams_selected returned no value.");
+    }
+
+    /// <summary>
+    /// Create a new structure change message. This message is posted when the
+    /// structure of a pipeline is in the process of being changed, for example
+    /// when pads are linked or unlinked.
+    /// </summary>
+    /// <remarks>
+    /// <para>@src should be the sinkpad that unlinked or linked.</para>
+    /// </remarks>
+    /// <param name="src">The <c>src</c> argument.</param>
+    /// <param name="type">The <c>type</c> argument.</param>
+    /// <param name="owner">The <c>owner</c> argument.</param>
+    /// <param name="busy">The <c>busy</c> argument.</param>
+    /// <returns>the new structure change message.</returns>
+    public static Gst.Message NewStructureChange(Gst.Object? src, Gst.StructureChangeType type, Gst.Element owner, bool busy)
+    {
+        ArgumentNullException.ThrowIfNull(owner);
+        nint nativeResult = GstMessageNewStructureChange(src is null ? 0 : src.Handle, (int)type, owner.Handle, busy ? 1 : 0);
+        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_message_new_structure_change returned no value.");
+    }
+
+    /// <summary>
+    /// Create a new TOC message. The message is posted by elements
+    /// that discovered or updated a TOC.
+    /// </summary>
+    /// <param name="src">The <c>src</c> argument.</param>
+    /// <param name="toc">The <c>toc</c> argument.</param>
+    /// <param name="updated">The <c>updated</c> argument.</param>
+    /// <returns>a new TOC message.</returns>
+    public static Gst.Message NewToc(Gst.Object? src, Gst.Toc toc, bool updated)
+    {
+        ArgumentNullException.ThrowIfNull(toc);
+        nint nativeResult = GstMessageNewToc(src is null ? 0 : src.Handle, toc.Handle, updated ? 1 : 0);
+        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_message_new_toc returned no value.");
+    }
+
+    /// <summary>Returns the optional details structure of the message. May be NULL if none.</summary>
+    /// <remarks>
+    /// <para>The returned structure must not be freed.</para>
+    /// </remarks>
+    /// <returns>The details, or NULL if none.</returns>
+    public Gst.Structure? GetDetails()
+    {
+        nint nativeResult = GstMessageGetDetails(Handle);
+        return Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.None);
+    }
+
+    /// <summary>The <c>gst_message_get_num_redirect_entries</c> function.</summary>
+    /// <returns>the number of entries stored in the message</returns>
+    public nuint GetNumRedirectEntries()
+    {
+        nuint nativeResult = GstMessageGetNumRedirectEntries(Handle);
+        return nativeResult;
+    }
+
+    /// <summary>Retrieve the sequence number of a message.</summary>
+    /// <remarks>
+    /// <para>
+    /// Messages have ever-incrementing sequence numbers, which may also be set
+    /// explicitly via gst_message_set_seqnum(). Sequence numbers are typically used
+    /// to indicate that a message corresponds to some other set of messages or
+    /// events, for example a SEGMENT_DONE message corresponding to a SEEK event. It
+    /// is considered good practice to make this correspondence when possible, though
+    /// it is not required.
+    /// </para>
+    /// <para>
+    /// Note that events and messages share the same sequence number incrementor;
+    /// two events or messages will never have the same sequence number unless
+    /// that correspondence was made explicitly.
+    /// </para>
+    /// </remarks>
+    /// <returns>The message's sequence number.</returns>
+    public uint GetSeqnum()
+    {
+        uint nativeResult = GstMessageGetSeqnum(Handle);
+        return nativeResult;
+    }
+
+    /// <summary>Access the structure of the message.</summary>
+    /// <returns>
+    /// The structure of the message. The
+    /// structure is still owned by the message, which means that you should not
+    /// free it and that the pointer becomes invalid when you free the message.
+    /// </returns>
+    public Gst.Structure? GetStructure()
+    {
+        nint nativeResult = GstMessageGetStructure(Handle);
+        return Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.None);
+    }
+
+    /// <summary>
+    /// Checks if @message has the given @name. This function is usually used to
+    /// check the name of a custom message.
+    /// </summary>
+    /// <param name="name">The <c>name</c> argument.</param>
+    /// <returns>%TRUE if @name matches the name of the message structure.</returns>
+    public bool HasName(string name)
+    {
+        ArgumentNullException.ThrowIfNull(name);
+        System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
+        int nativeResult = GstMessageHasName(Handle, nameScope.Pointer);
+        return nativeResult != 0;
+    }
+
+    /// <summary>Returns a writable copy of @message.</summary>
+    /// <remarks>
+    /// <para>
+    /// If there is only one reference count on @message, the caller must be the owner,
+    /// and so this function will return the message object unchanged. If on the other
+    /// hand there is more than one reference on the object, a new message object will
+    /// be returned. The caller's reference on @message will be removed, and instead the
+    /// caller will own a reference to the returned object.
+    /// </para>
+    /// <para>
+    /// In short, this function unrefs the message in the argument and refs the message
+    /// that it returns. Don't access the argument after calling this function. See
+    /// also: gst_message_ref().
+    /// </para>
+    /// </remarks>
+    /// <returns>
+    /// a writable message which may or may not be the
+    ///     same as @message
+    /// </returns>
+    public Gst.Message MakeWritable()
+    {
+        nint nativeResult = GstMessageMakeWritable(Handle);
+        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_message_make_writable returned no value.");
+    }
+
+    /// <summary>Extract the running_time from the async_done message.</summary>
+    /// <remarks>
+    /// <para>MT safe.</para>
+    /// </remarks>
+    /// <param name="runningTime">The <c>runningTime</c> argument.</param>
+    public void ParseAsyncDone(out Gst.ClockTime runningTime)
+    {
+        ulong runningTimeNative = default;
+        GstMessageParseAsyncDone(Handle, &runningTimeNative);
+        runningTime = new Gst.ClockTime(runningTimeNative);
+    }
+
+    /// <summary>
+    /// Extracts the buffering percent from the GstMessage. see also
+    /// gst_message_new_buffering().
+    /// </summary>
+    /// <remarks>
+    /// <para>MT safe.</para>
+    /// </remarks>
+    /// <param name="percent">The <c>percent</c> argument.</param>
+    public void ParseBuffering(out int percent)
+    {
+        int percentNative = default;
+        GstMessageParseBuffering(Handle, &percentNative);
+        percent = percentNative;
+    }
+
+    /// <summary>Extracts the buffering stats values from @message.</summary>
+    /// <param name="mode">The <c>mode</c> argument.</param>
+    /// <param name="avgIn">The <c>avgIn</c> argument.</param>
+    /// <param name="avgOut">The <c>avgOut</c> argument.</param>
+    /// <param name="bufferingLeft">The <c>bufferingLeft</c> argument.</param>
+    public void ParseBufferingStats(out Gst.BufferingMode mode, out int avgIn, out int avgOut, out long bufferingLeft)
+    {
+        int modeNative = default;
+        int avgInNative = default;
+        int avgOutNative = default;
+        long bufferingLeftNative = default;
+        GstMessageParseBufferingStats(Handle, &modeNative, &avgInNative, &avgOutNative, &bufferingLeftNative);
+        mode = (Gst.BufferingMode)modeNative;
+        avgIn = avgInNative;
+        avgOut = avgOutNative;
+        bufferingLeft = bufferingLeftNative;
+    }
+
+    /// <summary>
+    /// Extracts the lost clock from the GstMessage.
+    /// The clock object returned remains valid until the message is freed.
+    /// </summary>
+    /// <remarks>
+    /// <para>MT safe.</para>
+    /// </remarks>
+    /// <param name="clock">The <c>clock</c> argument.</param>
+    public void ParseClockLost(out Gst.Clock? clock)
+    {
+        nint clockNative = default;
+        GstMessageParseClockLost(Handle, &clockNative);
+        clock = Gst.GObject.Object.FromNative<Gst.Clock>(clockNative, Gst.Interop.Transfer.None);
+    }
+
+    /// <summary>
+    /// Extracts the clock and ready flag from the GstMessage.
+    /// The clock object returned remains valid until the message is freed.
+    /// </summary>
+    /// <remarks>
+    /// <para>MT safe.</para>
+    /// </remarks>
+    /// <param name="clock">The <c>clock</c> argument.</param>
+    /// <param name="ready">The <c>ready</c> argument.</param>
+    public void ParseClockProvide(out Gst.Clock? clock, out bool ready)
+    {
+        nint clockNative = default;
+        int readyNative = default;
+        GstMessageParseClockProvide(Handle, &clockNative, &readyNative);
+        clock = Gst.GObject.Object.FromNative<Gst.Clock>(clockNative, Gst.Interop.Transfer.None);
+        ready = readyNative != 0;
+    }
+
+    /// <summary>Parse a context type from an existing GST_MESSAGE_NEED_CONTEXT message.</summary>
+    /// <param name="contextType">The <c>contextType</c> argument.</param>
+    /// <returns>a #gboolean indicating if the parsing succeeded.</returns>
+    public bool ParseContextType(out string? contextType)
+    {
+        nint contextTypeNative = default;
+        int nativeResult = GstMessageParseContextType(Handle, &contextTypeNative);
+        contextType = Gst.Interop.GMarshal.PtrToStringUtf8(contextTypeNative);
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Parses a device-added message. The device-added message is produced by
+    /// #GstDeviceProvider or a #GstDeviceMonitor. It announces the appearance
+    /// of monitored devices.
+    /// </summary>
+    /// <param name="device">The <c>device</c> argument.</param>
+    public void ParseDeviceAdded(out Gst.Device? device)
+    {
+        nint deviceNative = default;
+        GstMessageParseDeviceAdded(Handle, &deviceNative);
+        device = Gst.GObject.Object.FromNative<Gst.Device>(deviceNative, Gst.Interop.Transfer.Full);
+    }
+
+    /// <summary>
+    /// Parses a device-changed message. The device-changed message is produced by
+    /// #GstDeviceProvider or a #GstDeviceMonitor. It announces the
+    /// disappearance of monitored devices. * It announce that a device properties has
+    /// changed and @device represents the new modified version of @changed_device.
+    /// </summary>
+    /// <param name="device">The <c>device</c> argument.</param>
+    /// <param name="changedDevice">The <c>changedDevice</c> argument.</param>
+    public void ParseDeviceChanged(out Gst.Device? device, out Gst.Device? changedDevice)
+    {
+        nint deviceNative = default;
+        nint changedDeviceNative = default;
+        GstMessageParseDeviceChanged(Handle, &deviceNative, &changedDeviceNative);
+        device = Gst.GObject.Object.FromNative<Gst.Device>(deviceNative, Gst.Interop.Transfer.Full);
+        changedDevice = Gst.GObject.Object.FromNative<Gst.Device>(changedDeviceNative, Gst.Interop.Transfer.Full);
+    }
+
+    /// <summary>
+    /// Parses a device-monitor-started message. The device-monitor-started message
+    /// is produced by a #GstDeviceMonitor once at least one #GstDeviceProvider
+    /// successfully starts probing.
+    /// </summary>
+    /// <param name="success">The <c>success</c> argument.</param>
+    public void ParseDeviceMonitorStarted(out bool success)
+    {
+        int successNative = default;
+        GstMessageParseDeviceMonitorStarted(Handle, &successNative);
+        success = successNative != 0;
+    }
+
+    /// <summary>
+    /// Parses a device-removed message. The device-removed message is produced by
+    /// #GstDeviceProvider or a #GstDeviceMonitor. It announces the
+    /// disappearance of monitored devices.
+    /// </summary>
+    /// <param name="device">The <c>device</c> argument.</param>
+    public void ParseDeviceRemoved(out Gst.Device? device)
+    {
+        nint deviceNative = default;
+        GstMessageParseDeviceRemoved(Handle, &deviceNative);
+        device = Gst.GObject.Object.FromNative<Gst.Device>(deviceNative, Gst.Interop.Transfer.Full);
+    }
+
+    /// <summary>
+    /// Returns the optional details structure, may be NULL if none.
+    /// The returned structure must not be freed.
+    /// </summary>
+    /// <param name="structure">The <c>structure</c> argument.</param>
+    public void ParseErrorDetails(out Gst.Structure? structure)
+    {
+        nint structureNative = default;
+        GstMessageParseErrorDetails(Handle, &structureNative);
+        structure = Gst.Structure.FromNative(structureNative, Gst.Interop.Transfer.None);
+    }
+
+    /// <summary>
+    /// Returns the details structure if present or will create one if not present.
+    /// The returned structure must not be freed.
+    /// </summary>
+    /// <param name="structure">The <c>structure</c> argument.</param>
+    public void ParseErrorWritableDetails(out Gst.Structure? structure)
+    {
+        nint structureNative = default;
+        GstMessageParseErrorWritableDetails(Handle, &structureNative);
+        structure = Gst.Structure.FromNative(structureNative, Gst.Interop.Transfer.None);
+    }
+
+    /// <summary>Extract the group from the STREAM_START message.</summary>
+    /// <param name="groupId">The <c>groupId</c> argument.</param>
+    /// <returns>%TRUE if the message had a group id set, %FALSE otherwise</returns>
+    public bool ParseGroupId(out uint groupId)
+    {
+        uint groupIdNative = default;
+        int nativeResult = GstMessageParseGroupId(Handle, &groupIdNative);
+        groupId = groupIdNative;
+        return nativeResult != 0;
+    }
+
+    /// <summary>Extract the context from the HAVE_CONTEXT message.</summary>
+    /// <remarks>
+    /// <para>MT safe.</para>
+    /// </remarks>
+    /// <param name="context">The <c>context</c> argument.</param>
+    public void ParseHaveContext(out Gst.Context? context)
+    {
+        nint contextNative = default;
+        GstMessageParseHaveContext(Handle, &contextNative);
+        context = Gst.Context.FromNative(contextNative, Gst.Interop.Transfer.Full);
+    }
+
+    /// <summary>
+    /// Returns the optional details structure, may be NULL if none
+    /// The returned structure must not be freed.
+    /// </summary>
+    /// <param name="structure">The <c>structure</c> argument.</param>
+    public void ParseInfoDetails(out Gst.Structure? structure)
+    {
+        nint structureNative = default;
+        GstMessageParseInfoDetails(Handle, &structureNative);
+        structure = Gst.Structure.FromNative(structureNative, Gst.Interop.Transfer.None);
+    }
+
+    /// <summary>
+    /// Returns the details structure if present or will create one if not present.
+    /// The returned structure must not be freed.
+    /// </summary>
+    /// <param name="structure">The <c>structure</c> argument.</param>
+    public void ParseInfoWritableDetails(out Gst.Structure? structure)
+    {
+        nint structureNative = default;
+        GstMessageParseInfoWritableDetails(Handle, &structureNative);
+        structure = Gst.Structure.FromNative(structureNative, Gst.Interop.Transfer.None);
+    }
+
+    /// <summary>Parses the rate_multiplier from the instant-rate-request message.</summary>
+    /// <param name="rateMultiplier">The <c>rateMultiplier</c> argument.</param>
+    public void ParseInstantRateRequest(out double rateMultiplier)
+    {
+        double rateMultiplierNative = default;
+        GstMessageParseInstantRateRequest(Handle, &rateMultiplierNative);
+        rateMultiplier = rateMultiplierNative;
+    }
+
+    /// <summary>
+    /// Extracts the new clock from the GstMessage.
+    /// The clock object returned remains valid until the message is freed.
+    /// </summary>
+    /// <remarks>
+    /// <para>MT safe.</para>
+    /// </remarks>
+    /// <param name="clock">The <c>clock</c> argument.</param>
+    public void ParseNewClock(out Gst.Clock? clock)
+    {
+        nint clockNative = default;
+        GstMessageParseNewClock(Handle, &clockNative);
+        clock = Gst.GObject.Object.FromNative<Gst.Clock>(clockNative, Gst.Interop.Transfer.None);
+    }
+
+    /// <summary>Parses the progress @type, @code and @text.</summary>
+    /// <param name="type">The <c>type</c> argument.</param>
+    /// <param name="code">The <c>code</c> argument.</param>
+    /// <param name="text">The <c>text</c> argument.</param>
+    public void ParseProgress(out Gst.ProgressType type, out string? code, out string? text)
+    {
+        int typeNative = default;
+        nint codeNative = default;
+        nint textNative = default;
+        GstMessageParseProgress(Handle, &typeNative, &codeNative, &textNative);
+        type = (Gst.ProgressType)typeNative;
+        code = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(codeNative);
+        text = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(textNative);
+    }
+
+    /// <summary>Extract the timestamps and live status from the QoS message.</summary>
+    /// <remarks>
+    /// <para>
+    /// The returned values give the running_time, stream_time, timestamp and
+    /// duration of the dropped buffer. Values of GST_CLOCK_TIME_NONE mean unknown
+    /// values.
+    /// </para>
+    /// <para>MT safe.</para>
+    /// </remarks>
+    /// <param name="live">The <c>live</c> argument.</param>
+    /// <param name="runningTime">The <c>runningTime</c> argument.</param>
+    /// <param name="streamTime">The <c>streamTime</c> argument.</param>
+    /// <param name="timestamp">The <c>timestamp</c> argument.</param>
+    /// <param name="duration">The <c>duration</c> argument.</param>
+    public void ParseQos(out bool live, out ulong runningTime, out ulong streamTime, out ulong timestamp, out ulong duration)
+    {
+        int liveNative = default;
+        ulong runningTimeNative = default;
+        ulong streamTimeNative = default;
+        ulong timestampNative = default;
+        ulong durationNative = default;
+        GstMessageParseQos(Handle, &liveNative, &runningTimeNative, &streamTimeNative, &timestampNative, &durationNative);
+        live = liveNative != 0;
+        runningTime = runningTimeNative;
+        streamTime = streamTimeNative;
+        timestamp = timestampNative;
+        duration = durationNative;
+    }
+
+    /// <summary>
+    /// Extract the QoS stats representing the history of the current continuous
+    /// pipeline playback period.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// When @format is @GST_FORMAT_UNDEFINED both @dropped and @processed are
+    /// invalid. Values of -1 for either @processed or @dropped mean unknown values.
+    /// </para>
+    /// <para>MT safe.</para>
+    /// </remarks>
+    /// <param name="format">The <c>format</c> argument.</param>
+    /// <param name="processed">The <c>processed</c> argument.</param>
+    /// <param name="dropped">The <c>dropped</c> argument.</param>
+    public void ParseQosStats(out Gst.Format format, out ulong processed, out ulong dropped)
+    {
+        int formatNative = default;
+        ulong processedNative = default;
+        ulong droppedNative = default;
+        GstMessageParseQosStats(Handle, &formatNative, &processedNative, &droppedNative);
+        format = (Gst.Format)formatNative;
+        processed = processedNative;
+        dropped = droppedNative;
+    }
+
+    /// <summary>Extract the QoS values that have been calculated/analysed from the QoS data</summary>
+    /// <remarks>
+    /// <para>MT safe.</para>
+    /// </remarks>
+    /// <param name="jitter">The <c>jitter</c> argument.</param>
+    /// <param name="proportion">The <c>proportion</c> argument.</param>
+    /// <param name="quality">The <c>quality</c> argument.</param>
+    public void ParseQosValues(out long jitter, out double proportion, out int quality)
+    {
+        long jitterNative = default;
+        double proportionNative = default;
+        int qualityNative = default;
+        GstMessageParseQosValues(Handle, &jitterNative, &proportionNative, &qualityNative);
+        jitter = jitterNative;
+        proportion = proportionNative;
+        quality = qualityNative;
+    }
+
+    /// <summary>
+    /// Parses the location and/or structure from the entry with the given index.
+    /// The index must be between 0 and gst_message_get_num_redirect_entries() - 1.
+    /// Returned pointers are valid for as long as this message exists.
+    /// </summary>
+    /// <param name="entryIndex">The <c>entryIndex</c> argument.</param>
+    /// <param name="location">The <c>location</c> argument.</param>
+    /// <param name="tagList">The <c>tagList</c> argument.</param>
+    /// <param name="entryStruct">The <c>entryStruct</c> argument.</param>
+    public void ParseRedirectEntry(nuint entryIndex, out string? location, out Gst.TagList? tagList, out Gst.Structure? entryStruct)
+    {
+        nint locationNative = default;
+        nint tagListNative = default;
+        nint entryStructNative = default;
+        GstMessageParseRedirectEntry(Handle, entryIndex, &locationNative, &tagListNative, &entryStructNative);
+        location = Gst.Interop.GMarshal.PtrToStringUtf8(locationNative);
+        tagList = Gst.TagList.FromNative(tagListNative, Gst.Interop.Transfer.None);
+        entryStruct = Gst.Structure.FromNative(entryStructNative, Gst.Interop.Transfer.None);
+    }
+
+    /// <summary>Extract the requested state from the request_state message.</summary>
+    /// <remarks>
+    /// <para>MT safe.</para>
+    /// </remarks>
+    /// <param name="state">The <c>state</c> argument.</param>
+    public void ParseRequestState(out Gst.State state)
+    {
+        int stateNative = default;
+        GstMessageParseRequestState(Handle, &stateNative);
+        state = (Gst.State)stateNative;
+    }
+
+    /// <summary>Extract the running-time from the RESET_TIME message.</summary>
+    /// <remarks>
+    /// <para>MT safe.</para>
+    /// </remarks>
+    /// <param name="runningTime">The <c>runningTime</c> argument.</param>
+    public void ParseResetTime(out Gst.ClockTime runningTime)
+    {
+        ulong runningTimeNative = default;
+        GstMessageParseResetTime(Handle, &runningTimeNative);
+        runningTime = new Gst.ClockTime(runningTimeNative);
+    }
+
+    /// <summary>Extracts the position and format from the segment done message.</summary>
+    /// <remarks>
+    /// <para>MT safe.</para>
+    /// </remarks>
+    /// <param name="format">The <c>format</c> argument.</param>
+    /// <param name="position">The <c>position</c> argument.</param>
+    public void ParseSegmentDone(out Gst.Format format, out long position)
+    {
+        int formatNative = default;
+        long positionNative = default;
+        GstMessageParseSegmentDone(Handle, &formatNative, &positionNative);
+        format = (Gst.Format)formatNative;
+        position = positionNative;
+    }
+
+    /// <summary>Extracts the position and format from the segment start message.</summary>
+    /// <remarks>
+    /// <para>MT safe.</para>
+    /// </remarks>
+    /// <param name="format">The <c>format</c> argument.</param>
+    /// <param name="position">The <c>position</c> argument.</param>
+    public void ParseSegmentStart(out Gst.Format format, out long position)
+    {
+        int formatNative = default;
+        long positionNative = default;
+        GstMessageParseSegmentStart(Handle, &formatNative, &positionNative);
+        format = (Gst.Format)formatNative;
+        position = positionNative;
+    }
+
+    /// <summary>Extracts the old and new states from the GstMessage.</summary>
+    /// <remarks>
+    /// <para>
+    /// Typical usage of this function might be:
+    /// |[&lt;!-- language="C" --&gt;
+    ///   ...
+    ///   switch (GST_MESSAGE_TYPE (msg)) {
+    ///     case GST_MESSAGE_STATE_CHANGED: {
+    ///       GstState old_state, new_state;
+    /// </para>
+    /// <para>
+    ///       gst_message_parse_state_changed (msg, &amp;old_state, &amp;new_state, NULL);
+    ///       g_print ("Element %s changed state from %s to %s.\n",
+    ///           GST_OBJECT_NAME (msg-&gt;src),
+    ///           gst_state_get_name (old_state),
+    ///           gst_state_get_name (new_state));
+    ///       break;
+    ///     }
+    ///     ...
+    ///   }
+    ///   ...
+    /// ]|
+    /// </para>
+    /// <para>MT safe.</para>
+    /// </remarks>
+    /// <param name="oldstate">The <c>oldstate</c> argument.</param>
+    /// <param name="newstate">The <c>newstate</c> argument.</param>
+    /// <param name="pending">The <c>pending</c> argument.</param>
+    public void ParseStateChanged(out Gst.State oldstate, out Gst.State newstate, out Gst.State pending)
+    {
+        int oldstateNative = default;
+        int newstateNative = default;
+        int pendingNative = default;
+        GstMessageParseStateChanged(Handle, &oldstateNative, &newstateNative, &pendingNative);
+        oldstate = (Gst.State)oldstateNative;
+        newstate = (Gst.State)newstateNative;
+        pending = (Gst.State)pendingNative;
+    }
+
+    /// <summary>Extract the values the step_done message.</summary>
+    /// <remarks>
+    /// <para>MT safe.</para>
+    /// </remarks>
+    /// <param name="format">The <c>format</c> argument.</param>
+    /// <param name="amount">The <c>amount</c> argument.</param>
+    /// <param name="rate">The <c>rate</c> argument.</param>
+    /// <param name="flush">The <c>flush</c> argument.</param>
+    /// <param name="intermediate">The <c>intermediate</c> argument.</param>
+    /// <param name="duration">The <c>duration</c> argument.</param>
+    /// <param name="eos">The <c>eos</c> argument.</param>
+    public void ParseStepDone(out Gst.Format format, out ulong amount, out double rate, out bool flush, out bool intermediate, out ulong duration, out bool eos)
+    {
+        int formatNative = default;
+        ulong amountNative = default;
+        double rateNative = default;
+        int flushNative = default;
+        int intermediateNative = default;
+        ulong durationNative = default;
+        int eosNative = default;
+        GstMessageParseStepDone(Handle, &formatNative, &amountNative, &rateNative, &flushNative, &intermediateNative, &durationNative, &eosNative);
+        format = (Gst.Format)formatNative;
+        amount = amountNative;
+        rate = rateNative;
+        flush = flushNative != 0;
+        intermediate = intermediateNative != 0;
+        duration = durationNative;
+        eos = eosNative != 0;
+    }
+
+    /// <summary>Extract the values from step_start message.</summary>
+    /// <remarks>
+    /// <para>MT safe.</para>
+    /// </remarks>
+    /// <param name="active">The <c>active</c> argument.</param>
+    /// <param name="format">The <c>format</c> argument.</param>
+    /// <param name="amount">The <c>amount</c> argument.</param>
+    /// <param name="rate">The <c>rate</c> argument.</param>
+    /// <param name="flush">The <c>flush</c> argument.</param>
+    /// <param name="intermediate">The <c>intermediate</c> argument.</param>
+    public void ParseStepStart(out bool active, out Gst.Format format, out ulong amount, out double rate, out bool flush, out bool intermediate)
+    {
+        int activeNative = default;
+        int formatNative = default;
+        ulong amountNative = default;
+        double rateNative = default;
+        int flushNative = default;
+        int intermediateNative = default;
+        GstMessageParseStepStart(Handle, &activeNative, &formatNative, &amountNative, &rateNative, &flushNative, &intermediateNative);
+        active = activeNative != 0;
+        format = (Gst.Format)formatNative;
+        amount = amountNative;
+        rate = rateNative;
+        flush = flushNative != 0;
+        intermediate = intermediateNative != 0;
+    }
+
+    /// <summary>Parses a stream-collection message.</summary>
+    /// <param name="collection">The <c>collection</c> argument.</param>
+    public void ParseStreamCollection(out Gst.StreamCollection? collection)
+    {
+        nint collectionNative = default;
+        GstMessageParseStreamCollection(Handle, &collectionNative);
+        collection = Gst.GObject.Object.FromNative<Gst.StreamCollection>(collectionNative, Gst.Interop.Transfer.Full);
+    }
+
+    /// <summary>
+    /// Extracts the stream status type and owner the GstMessage. The returned
+    /// owner remains valid for as long as the reference to @message is valid and
+    /// should thus not be unreffed.
+    /// </summary>
+    /// <remarks>
+    /// <para>MT safe.</para>
+    /// </remarks>
+    /// <param name="type">The <c>type</c> argument.</param>
+    /// <param name="owner">The <c>owner</c> argument.</param>
+    public void ParseStreamStatus(out Gst.StreamStatusType type, out Gst.Element? owner)
+    {
+        int typeNative = default;
+        nint ownerNative = default;
+        GstMessageParseStreamStatus(Handle, &typeNative, &ownerNative);
+        type = (Gst.StreamStatusType)typeNative;
+        owner = Gst.GObject.Object.FromNative<Gst.Element>(ownerNative, Gst.Interop.Transfer.None);
+    }
+
+    /// <summary>Parses a streams-selected message.</summary>
+    /// <param name="collection">The <c>collection</c> argument.</param>
+    public void ParseStreamsSelected(out Gst.StreamCollection? collection)
+    {
+        nint collectionNative = default;
+        GstMessageParseStreamsSelected(Handle, &collectionNative);
+        collection = Gst.GObject.Object.FromNative<Gst.StreamCollection>(collectionNative, Gst.Interop.Transfer.Full);
+    }
+
+    /// <summary>Extracts the change type and completion status from the GstMessage.</summary>
+    /// <remarks>
+    /// <para>MT safe.</para>
+    /// </remarks>
+    /// <param name="type">The <c>type</c> argument.</param>
+    /// <param name="owner">The <c>owner</c> argument.</param>
+    /// <param name="busy">The <c>busy</c> argument.</param>
+    public void ParseStructureChange(out Gst.StructureChangeType type, out Gst.Element? owner, out bool busy)
+    {
+        int typeNative = default;
+        nint ownerNative = default;
+        int busyNative = default;
+        GstMessageParseStructureChange(Handle, &typeNative, &ownerNative, &busyNative);
+        type = (Gst.StructureChangeType)typeNative;
+        owner = Gst.GObject.Object.FromNative<Gst.Element>(ownerNative, Gst.Interop.Transfer.None);
+        busy = busyNative != 0;
+    }
+
+    /// <summary>
+    /// Extracts the tag list from the GstMessage. The tag list returned in the
+    /// output argument is a copy; the caller must free it when done.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Typical usage of this function might be:
+    /// |[&lt;!-- language="C" --&gt;
+    ///   ...
+    ///   switch (GST_MESSAGE_TYPE (msg)) {
+    ///     case GST_MESSAGE_TAG: {
+    ///       GstTagList *tags = NULL;
+    /// </para>
+    /// <para>
+    ///       gst_message_parse_tag (msg, &amp;tags);
+    ///       g_print ("Got tags from element %s\n", GST_OBJECT_NAME (msg-&gt;src));
+    ///       handle_tags (tags);
+    ///       gst_tag_list_unref (tags);
+    ///       break;
+    ///     }
+    ///     ...
+    ///   }
+    ///   ...
+    /// ]|
+    /// </para>
+    /// <para>MT safe.</para>
+    /// </remarks>
+    /// <param name="tagList">The <c>tagList</c> argument.</param>
+    public void ParseTag(out Gst.TagList? tagList)
+    {
+        nint tagListNative = default;
+        GstMessageParseTag(Handle, &tagListNative);
+        tagList = Gst.TagList.FromNative(tagListNative, Gst.Interop.Transfer.Full);
+    }
+
+    /// <summary>
+    /// Extract the TOC from the #GstMessage. The TOC returned in the
+    /// output argument is a copy; the caller must free it with
+    /// gst_toc_unref() when done.
+    /// </summary>
+    /// <remarks>
+    /// <para>MT safe.</para>
+    /// </remarks>
+    /// <param name="toc">The <c>toc</c> argument.</param>
+    /// <param name="updated">The <c>updated</c> argument.</param>
+    public void ParseToc(out Gst.Toc? toc, out bool updated)
+    {
+        nint tocNative = default;
+        int updatedNative = default;
+        GstMessageParseToc(Handle, &tocNative, &updatedNative);
+        toc = Gst.Toc.FromNative(tocNative, Gst.Interop.Transfer.Full);
+        updated = updatedNative != 0;
+    }
+
+    /// <summary>
+    /// Returns the optional details structure, may be NULL if none
+    /// The returned structure must not be freed.
+    /// </summary>
+    /// <param name="structure">The <c>structure</c> argument.</param>
+    public void ParseWarningDetails(out Gst.Structure? structure)
+    {
+        nint structureNative = default;
+        GstMessageParseWarningDetails(Handle, &structureNative);
+        structure = Gst.Structure.FromNative(structureNative, Gst.Interop.Transfer.None);
+    }
+
+    /// <summary>
+    /// Returns the details structure if present or will create one if not present.
+    /// The returned structure must not be freed.
+    /// </summary>
+    /// <param name="structure">The <c>structure</c> argument.</param>
+    public void ParseWarningWritableDetails(out Gst.Structure? structure)
+    {
+        nint structureNative = default;
+        GstMessageParseWarningWritableDetails(Handle, &structureNative);
+        structure = Gst.Structure.FromNative(structureNative, Gst.Interop.Transfer.None);
+    }
+
+    /// <summary>Configures the buffering stats values in @message.</summary>
+    /// <param name="mode">The <c>mode</c> argument.</param>
+    /// <param name="avgIn">The <c>avgIn</c> argument.</param>
+    /// <param name="avgOut">The <c>avgOut</c> argument.</param>
+    /// <param name="bufferingLeft">The <c>bufferingLeft</c> argument.</param>
+    public void SetBufferingStats(Gst.BufferingMode mode, int avgIn, int avgOut, long bufferingLeft)
+    {
+        GstMessageSetBufferingStats(Handle, (int)mode, avgIn, avgOut, bufferingLeft);
+    }
+
+    /// <summary>Sets the group id on the stream-start message.</summary>
+    /// <remarks>
+    /// <para>
+    /// All streams that have the same group id are supposed to be played
+    /// together, i.e. all streams inside a container file should have the
+    /// same group id but different stream ids. The group id should change
+    /// each time the stream is started, resulting in different group ids
+    /// each time a file is played for example.
+    /// </para>
+    /// <para>MT safe.</para>
+    /// </remarks>
+    /// <param name="groupId">The <c>groupId</c> argument.</param>
+    public void SetGroupId(uint groupId)
+    {
+        GstMessageSetGroupId(Handle, groupId);
+    }
+
+    /// <summary>
+    /// Set the QoS stats representing the history of the current continuous pipeline
+    /// playback period.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// When @format is @GST_FORMAT_UNDEFINED both @dropped and @processed are
+    /// invalid. Values of -1 for either @processed or @dropped mean unknown values.
+    /// </para>
+    /// <para>MT safe.</para>
+    /// </remarks>
+    /// <param name="format">The <c>format</c> argument.</param>
+    /// <param name="processed">The <c>processed</c> argument.</param>
+    /// <param name="dropped">The <c>dropped</c> argument.</param>
+    public void SetQosStats(Gst.Format format, ulong processed, ulong dropped)
+    {
+        GstMessageSetQosStats(Handle, (int)format, processed, dropped);
+    }
+
+    /// <summary>Set the QoS values that have been calculated/analysed from the QoS data</summary>
+    /// <remarks>
+    /// <para>MT safe.</para>
+    /// </remarks>
+    /// <param name="jitter">The <c>jitter</c> argument.</param>
+    /// <param name="proportion">The <c>proportion</c> argument.</param>
+    /// <param name="quality">The <c>quality</c> argument.</param>
+    public void SetQosValues(long jitter, double proportion, int quality)
+    {
+        GstMessageSetQosValues(Handle, jitter, proportion, quality);
+    }
+
+    /// <summary>Set the sequence number of a message.</summary>
+    /// <remarks>
+    /// <para>
+    /// This function might be called by the creator of a message to indicate that
+    /// the message relates to other messages or events. See gst_message_get_seqnum()
+    /// for more information.
+    /// </para>
+    /// <para>MT safe.</para>
+    /// </remarks>
+    /// <param name="seqnum">The <c>seqnum</c> argument.</param>
+    public void SetSeqnum(uint seqnum)
+    {
+        GstMessageSetSeqnum(Handle, seqnum);
+    }
+
+    /// <summary>Adds the @stream to the @message.</summary>
+    /// <param name="stream">The <c>stream</c> argument.</param>
+    public void StreamsSelectedAdd(Gst.Stream stream)
+    {
+        ArgumentNullException.ThrowIfNull(stream);
+        GstMessageStreamsSelectedAdd(Handle, stream.Handle);
+    }
+
+    /// <summary>Returns the number of streams contained in the @message.</summary>
+    /// <returns>The number of streams contained within.</returns>
+    public uint StreamsSelectedGetSize()
+    {
+        uint nativeResult = GstMessageStreamsSelectedGetSize(Handle);
+        return nativeResult;
+    }
+
+    /// <summary>Retrieves the #GstStream with index @index from the @message.</summary>
+    /// <param name="idx">The <c>idx</c> argument.</param>
+    /// <returns>A #GstStream</returns>
+    public Gst.Stream? StreamsSelectedGetStream(uint idx)
+    {
+        nint nativeResult = GstMessageStreamsSelectedGetStream(Handle, idx);
+        return Gst.GObject.Object.FromNative<Gst.Stream>(nativeResult, Gst.Interop.Transfer.Full);
+    }
+
+    /// <summary>
+    /// Returns the details structure of the @message. If not present it will be
+    /// created. Use this function (instead of gst_message_get_details()) if you
+    /// want to write to the @details structure.
+    /// </summary>
+    /// <remarks>
+    /// <para>The returned structure must not be freed.</para>
+    /// </remarks>
+    /// <returns>The details</returns>
+    public Gst.Structure WritableDetails()
+    {
+        nint nativeResult = GstMessageWritableDetails(Handle);
+        return Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.None)
+            ?? throw new InvalidOperationException("gst_message_writable_details returned no value.");
+    }
+
+    /// <summary>Get a writable version of the structure.</summary>
+    /// <returns>
+    /// The structure of the message. The structure
+    /// is still owned by the message, which means that you should not free
+    /// it and that the pointer becomes invalid when you free the message.
+    /// This function ensures that @message is writable, and if so, will
+    /// never return %NULL.
+    /// </returns>
+    public Gst.Structure WritableStructure()
+    {
+        nint nativeResult = GstMessageWritableStructure(Handle);
+        return Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.None)
+            ?? throw new InvalidOperationException("gst_message_writable_structure returned no value.");
+    }
+
+    /// <summary>The <c>gst_message_new_async_done</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_new_async_done")]
+    private static partial nint GstMessageNewAsyncDone(nint src, ulong runningTime);
+
+    /// <summary>The <c>gst_message_new_async_start</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_new_async_start")]
+    private static partial nint GstMessageNewAsyncStart(nint src);
+
+    /// <summary>The <c>gst_message_new_buffering</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_new_buffering")]
+    private static partial nint GstMessageNewBuffering(nint src, int percent);
+
+    /// <summary>The <c>gst_message_new_clock_lost</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_new_clock_lost")]
+    private static partial nint GstMessageNewClockLost(nint src, nint clock);
+
+    /// <summary>The <c>gst_message_new_clock_provide</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_new_clock_provide")]
+    private static partial nint GstMessageNewClockProvide(nint src, nint clock, int ready);
+
+    /// <summary>The <c>gst_message_new_device_added</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_new_device_added")]
+    private static partial nint GstMessageNewDeviceAdded(nint src, nint device);
+
+    /// <summary>The <c>gst_message_new_device_changed</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_new_device_changed")]
+    private static partial nint GstMessageNewDeviceChanged(nint src, nint device, nint changedDevice);
+
+    /// <summary>The <c>gst_message_new_device_monitor_started</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_new_device_monitor_started")]
+    private static partial nint GstMessageNewDeviceMonitorStarted(nint src, int success);
+
+    /// <summary>The <c>gst_message_new_device_removed</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_new_device_removed")]
+    private static partial nint GstMessageNewDeviceRemoved(nint src, nint device);
+
+    /// <summary>The <c>gst_message_new_duration_changed</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_new_duration_changed")]
+    private static partial nint GstMessageNewDurationChanged(nint src);
+
+    /// <summary>The <c>gst_message_new_eos</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_new_eos")]
+    private static partial nint GstMessageNewEos(nint src);
+
+    /// <summary>The <c>gst_message_new_instant_rate_request</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_new_instant_rate_request")]
+    private static partial nint GstMessageNewInstantRateRequest(nint src, double rateMultiplier);
+
+    /// <summary>The <c>gst_message_new_latency</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_new_latency")]
+    private static partial nint GstMessageNewLatency(nint src);
+
+    /// <summary>The <c>gst_message_new_need_context</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_new_need_context")]
+    private static partial nint GstMessageNewNeedContext(nint src, byte* contextType);
+
+    /// <summary>The <c>gst_message_new_new_clock</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_new_new_clock")]
+    private static partial nint GstMessageNewNewClock(nint src, nint clock);
+
+    /// <summary>The <c>gst_message_new_progress</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_new_progress")]
+    private static partial nint GstMessageNewProgress(nint src, int type, byte* code, byte* text);
+
+    /// <summary>The <c>gst_message_new_qos</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_new_qos")]
+    private static partial nint GstMessageNewQos(nint src, int live, ulong runningTime, ulong streamTime, ulong timestamp, ulong duration);
+
+    /// <summary>The <c>gst_message_new_request_state</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_new_request_state")]
+    private static partial nint GstMessageNewRequestState(nint src, int state);
+
+    /// <summary>The <c>gst_message_new_reset_time</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_new_reset_time")]
+    private static partial nint GstMessageNewResetTime(nint src, ulong runningTime);
+
+    /// <summary>The <c>gst_message_new_segment_done</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_new_segment_done")]
+    private static partial nint GstMessageNewSegmentDone(nint src, int format, long position);
+
+    /// <summary>The <c>gst_message_new_segment_start</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_new_segment_start")]
+    private static partial nint GstMessageNewSegmentStart(nint src, int format, long position);
+
+    /// <summary>The <c>gst_message_new_state_changed</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_new_state_changed")]
+    private static partial nint GstMessageNewStateChanged(nint src, int oldstate, int newstate, int pending);
+
+    /// <summary>The <c>gst_message_new_state_dirty</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_new_state_dirty")]
+    private static partial nint GstMessageNewStateDirty(nint src);
+
+    /// <summary>The <c>gst_message_new_step_done</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_new_step_done")]
+    private static partial nint GstMessageNewStepDone(nint src, int format, ulong amount, double rate, int flush, int intermediate, ulong duration, int eos);
+
+    /// <summary>The <c>gst_message_new_step_start</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_new_step_start")]
+    private static partial nint GstMessageNewStepStart(nint src, int active, int format, ulong amount, double rate, int flush, int intermediate);
+
+    /// <summary>The <c>gst_message_new_stream_collection</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_new_stream_collection")]
+    private static partial nint GstMessageNewStreamCollection(nint src, nint collection);
+
+    /// <summary>The <c>gst_message_new_stream_start</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_new_stream_start")]
+    private static partial nint GstMessageNewStreamStart(nint src);
+
+    /// <summary>The <c>gst_message_new_stream_status</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_new_stream_status")]
+    private static partial nint GstMessageNewStreamStatus(nint src, int type, nint owner);
+
+    /// <summary>The <c>gst_message_new_streams_selected</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_new_streams_selected")]
+    private static partial nint GstMessageNewStreamsSelected(nint src, nint collection);
+
+    /// <summary>The <c>gst_message_new_structure_change</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_new_structure_change")]
+    private static partial nint GstMessageNewStructureChange(nint src, int type, nint owner, int busy);
+
+    /// <summary>The <c>gst_message_new_toc</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_new_toc")]
+    private static partial nint GstMessageNewToc(nint src, nint toc, int updated);
+
+    /// <summary>The <c>gst_message_get_details</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_get_details")]
+    private static partial nint GstMessageGetDetails(nint message);
+
+    /// <summary>The <c>gst_message_get_num_redirect_entries</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_get_num_redirect_entries")]
+    private static partial nuint GstMessageGetNumRedirectEntries(nint message);
+
+    /// <summary>The <c>gst_message_get_seqnum</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_get_seqnum")]
+    private static partial uint GstMessageGetSeqnum(nint message);
+
+    /// <summary>The <c>gst_message_get_structure</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_get_structure")]
+    private static partial nint GstMessageGetStructure(nint message);
+
+    /// <summary>The <c>gst_message_has_name</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_has_name")]
+    private static partial int GstMessageHasName(nint message, byte* name);
+
+    /// <summary>The <c>gst_message_make_writable</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_make_writable")]
+    private static partial nint GstMessageMakeWritable(nint message);
+
+    /// <summary>The <c>gst_message_parse_async_done</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_parse_async_done")]
+    private static partial void GstMessageParseAsyncDone(nint message, ulong* runningTime);
+
+    /// <summary>The <c>gst_message_parse_buffering</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_parse_buffering")]
+    private static partial void GstMessageParseBuffering(nint message, int* percent);
+
+    /// <summary>The <c>gst_message_parse_buffering_stats</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_parse_buffering_stats")]
+    private static partial void GstMessageParseBufferingStats(nint message, int* mode, int* avgIn, int* avgOut, long* bufferingLeft);
+
+    /// <summary>The <c>gst_message_parse_clock_lost</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_parse_clock_lost")]
+    private static partial void GstMessageParseClockLost(nint message, nint* clock);
+
+    /// <summary>The <c>gst_message_parse_clock_provide</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_parse_clock_provide")]
+    private static partial void GstMessageParseClockProvide(nint message, nint* clock, int* ready);
+
+    /// <summary>The <c>gst_message_parse_context_type</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_parse_context_type")]
+    private static partial int GstMessageParseContextType(nint message, nint* contextType);
+
+    /// <summary>The <c>gst_message_parse_device_added</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_parse_device_added")]
+    private static partial void GstMessageParseDeviceAdded(nint message, nint* device);
+
+    /// <summary>The <c>gst_message_parse_device_changed</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_parse_device_changed")]
+    private static partial void GstMessageParseDeviceChanged(nint message, nint* device, nint* changedDevice);
+
+    /// <summary>The <c>gst_message_parse_device_monitor_started</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_parse_device_monitor_started")]
+    private static partial void GstMessageParseDeviceMonitorStarted(nint message, int* success);
+
+    /// <summary>The <c>gst_message_parse_device_removed</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_parse_device_removed")]
+    private static partial void GstMessageParseDeviceRemoved(nint message, nint* device);
+
+    /// <summary>The <c>gst_message_parse_error_details</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_parse_error_details")]
+    private static partial void GstMessageParseErrorDetails(nint message, nint* structure);
+
+    /// <summary>The <c>gst_message_parse_error_writable_details</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_parse_error_writable_details")]
+    private static partial void GstMessageParseErrorWritableDetails(nint message, nint* structure);
+
+    /// <summary>The <c>gst_message_parse_group_id</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_parse_group_id")]
+    private static partial int GstMessageParseGroupId(nint message, uint* groupId);
+
+    /// <summary>The <c>gst_message_parse_have_context</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_parse_have_context")]
+    private static partial void GstMessageParseHaveContext(nint message, nint* context);
+
+    /// <summary>The <c>gst_message_parse_info_details</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_parse_info_details")]
+    private static partial void GstMessageParseInfoDetails(nint message, nint* structure);
+
+    /// <summary>The <c>gst_message_parse_info_writable_details</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_parse_info_writable_details")]
+    private static partial void GstMessageParseInfoWritableDetails(nint message, nint* structure);
+
+    /// <summary>The <c>gst_message_parse_instant_rate_request</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_parse_instant_rate_request")]
+    private static partial void GstMessageParseInstantRateRequest(nint message, double* rateMultiplier);
+
+    /// <summary>The <c>gst_message_parse_new_clock</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_parse_new_clock")]
+    private static partial void GstMessageParseNewClock(nint message, nint* clock);
+
+    /// <summary>The <c>gst_message_parse_progress</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_parse_progress")]
+    private static partial void GstMessageParseProgress(nint message, int* type, nint* code, nint* text);
+
+    /// <summary>The <c>gst_message_parse_qos</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_parse_qos")]
+    private static partial void GstMessageParseQos(nint message, int* live, ulong* runningTime, ulong* streamTime, ulong* timestamp, ulong* duration);
+
+    /// <summary>The <c>gst_message_parse_qos_stats</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_parse_qos_stats")]
+    private static partial void GstMessageParseQosStats(nint message, int* format, ulong* processed, ulong* dropped);
+
+    /// <summary>The <c>gst_message_parse_qos_values</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_parse_qos_values")]
+    private static partial void GstMessageParseQosValues(nint message, long* jitter, double* proportion, int* quality);
+
+    /// <summary>The <c>gst_message_parse_redirect_entry</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_parse_redirect_entry")]
+    private static partial void GstMessageParseRedirectEntry(nint message, nuint entryIndex, nint* location, nint* tagList, nint* entryStruct);
+
+    /// <summary>The <c>gst_message_parse_request_state</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_parse_request_state")]
+    private static partial void GstMessageParseRequestState(nint message, int* state);
+
+    /// <summary>The <c>gst_message_parse_reset_time</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_parse_reset_time")]
+    private static partial void GstMessageParseResetTime(nint message, ulong* runningTime);
+
+    /// <summary>The <c>gst_message_parse_segment_done</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_parse_segment_done")]
+    private static partial void GstMessageParseSegmentDone(nint message, int* format, long* position);
+
+    /// <summary>The <c>gst_message_parse_segment_start</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_parse_segment_start")]
+    private static partial void GstMessageParseSegmentStart(nint message, int* format, long* position);
+
+    /// <summary>The <c>gst_message_parse_state_changed</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_parse_state_changed")]
+    private static partial void GstMessageParseStateChanged(nint message, int* oldstate, int* newstate, int* pending);
+
+    /// <summary>The <c>gst_message_parse_step_done</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_parse_step_done")]
+    private static partial void GstMessageParseStepDone(nint message, int* format, ulong* amount, double* rate, int* flush, int* intermediate, ulong* duration, int* eos);
+
+    /// <summary>The <c>gst_message_parse_step_start</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_parse_step_start")]
+    private static partial void GstMessageParseStepStart(nint message, int* active, int* format, ulong* amount, double* rate, int* flush, int* intermediate);
+
+    /// <summary>The <c>gst_message_parse_stream_collection</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_parse_stream_collection")]
+    private static partial void GstMessageParseStreamCollection(nint message, nint* collection);
+
+    /// <summary>The <c>gst_message_parse_stream_status</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_parse_stream_status")]
+    private static partial void GstMessageParseStreamStatus(nint message, int* type, nint* owner);
+
+    /// <summary>The <c>gst_message_parse_streams_selected</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_parse_streams_selected")]
+    private static partial void GstMessageParseStreamsSelected(nint message, nint* collection);
+
+    /// <summary>The <c>gst_message_parse_structure_change</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_parse_structure_change")]
+    private static partial void GstMessageParseStructureChange(nint message, int* type, nint* owner, int* busy);
+
+    /// <summary>The <c>gst_message_parse_tag</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_parse_tag")]
+    private static partial void GstMessageParseTag(nint message, nint* tagList);
+
+    /// <summary>The <c>gst_message_parse_toc</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_parse_toc")]
+    private static partial void GstMessageParseToc(nint message, nint* toc, int* updated);
+
+    /// <summary>The <c>gst_message_parse_warning_details</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_parse_warning_details")]
+    private static partial void GstMessageParseWarningDetails(nint message, nint* structure);
+
+    /// <summary>The <c>gst_message_parse_warning_writable_details</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_parse_warning_writable_details")]
+    private static partial void GstMessageParseWarningWritableDetails(nint message, nint* structure);
+
+    /// <summary>The <c>gst_message_set_buffering_stats</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_set_buffering_stats")]
+    private static partial void GstMessageSetBufferingStats(nint message, int mode, int avgIn, int avgOut, long bufferingLeft);
+
+    /// <summary>The <c>gst_message_set_group_id</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_set_group_id")]
+    private static partial void GstMessageSetGroupId(nint message, uint groupId);
+
+    /// <summary>The <c>gst_message_set_qos_stats</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_set_qos_stats")]
+    private static partial void GstMessageSetQosStats(nint message, int format, ulong processed, ulong dropped);
+
+    /// <summary>The <c>gst_message_set_qos_values</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_set_qos_values")]
+    private static partial void GstMessageSetQosValues(nint message, long jitter, double proportion, int quality);
+
+    /// <summary>The <c>gst_message_set_seqnum</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_set_seqnum")]
+    private static partial void GstMessageSetSeqnum(nint message, uint seqnum);
+
+    /// <summary>The <c>gst_message_streams_selected_add</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_streams_selected_add")]
+    private static partial void GstMessageStreamsSelectedAdd(nint message, nint stream);
+
+    /// <summary>The <c>gst_message_streams_selected_get_size</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_streams_selected_get_size")]
+    private static partial uint GstMessageStreamsSelectedGetSize(nint message);
+
+    /// <summary>The <c>gst_message_streams_selected_get_stream</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_streams_selected_get_stream")]
+    private static partial nint GstMessageStreamsSelectedGetStream(nint message, uint idx);
+
+    /// <summary>The <c>gst_message_writable_details</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_writable_details")]
+    private static partial nint GstMessageWritableDetails(nint message);
+
+    /// <summary>The <c>gst_message_writable_structure</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_writable_structure")]
+    private static partial nint GstMessageWritableStructure(nint message);
+
+    /// <summary>Returns the <c>GType</c> that GObject registered <c>GstMessage</c> under.</summary>
+    /// <returns>The type of the instances of this wrapper.</returns>
+    [LibraryImport("Gst", EntryPoint = "gst_message_get_type")]
+    internal static partial nuint GetGType();
+
+    /// <summary>Creates the wrapper of a native instance, for the type registry.</summary>
+    /// <param name="handle">The native instance.</param>
+    /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
+    /// <returns>The new wrapper.</returns>
+    internal static object CreateWrapper(nint handle, Gst.Interop.Transfer transfer) => new Message(handle, transfer);
 }
 
 /// <summary>The native layout of <c>GstMessage</c>.</summary>

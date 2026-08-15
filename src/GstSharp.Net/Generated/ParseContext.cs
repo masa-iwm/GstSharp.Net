@@ -3,18 +3,19 @@
 
 #nullable enable
 
+using System;
 using System.Runtime.InteropServices;
 
 namespace Gst;
 
 /// <summary>Opaque structure.</summary>
-public sealed partial class ParseContext : Gst.GObject.Boxed
+public sealed unsafe partial class ParseContext : Gst.GObject.Boxed
 {
     /// <summary>Wraps a native <c>GstParseContext</c>.</summary>
     /// <param name="handle">The native instance.</param>
     /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
     internal ParseContext(nint handle, Gst.Interop.Transfer transfer)
-        : base(handle, new Gst.GObject.GType(ParseContextGetType()), transfer)
+        : base(handle, new Gst.GObject.GType(GetGType()), transfer)
     {
     }
 
@@ -25,8 +26,57 @@ public sealed partial class ParseContext : Gst.GObject.Boxed
     internal static ParseContext? FromNative(nint handle, Gst.Interop.Transfer transfer) =>
         handle == 0 ? null : new(handle, transfer);
 
+    /// <summary>
+    /// Allocates a parse context for use with gst_parse_launch_full() or
+    /// gst_parse_launchv_full().
+    /// </summary>
+    /// <remarks>
+    /// <para>Free-function: gst_parse_context_free</para>
+    /// </remarks>
+    /// <returns>
+    /// a newly-allocated parse context. Free
+    ///     with gst_parse_context_free() when no longer needed.
+    /// </returns>
+    public static Gst.ParseContext? New()
+    {
+        nint nativeResult = GstParseContextNew();
+        return Gst.ParseContext.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+    }
+
+    /// <summary>Copies the @context.</summary>
+    /// <returns>A copied #GstParseContext</returns>
+    public Gst.ParseContext? Copy()
+    {
+        nint nativeResult = GstParseContextCopy(Handle);
+        return Gst.ParseContext.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+    }
+
+    /// <summary>Frees a parse context previously allocated with gst_parse_context_new().</summary>
+    public void Free()
+    {
+        GstParseContextFree(Handle);
+    }
+
+    /// <summary>The <c>gst_parse_context_new</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_parse_context_new")]
+    private static partial nint GstParseContextNew();
+
+    /// <summary>The <c>gst_parse_context_copy</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_parse_context_copy")]
+    private static partial nint GstParseContextCopy(nint context);
+
+    /// <summary>The <c>gst_parse_context_free</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_parse_context_free")]
+    private static partial void GstParseContextFree(nint context);
+
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstParseContext</c> under.</summary>
-    /// <returns>The boxed type.</returns>
+    /// <returns>The type of the instances of this wrapper.</returns>
     [LibraryImport("Gst", EntryPoint = "gst_parse_context_get_type")]
-    private static partial nuint ParseContextGetType();
+    internal static partial nuint GetGType();
+
+    /// <summary>Creates the wrapper of a native instance, for the type registry.</summary>
+    /// <param name="handle">The native instance.</param>
+    /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
+    /// <returns>The new wrapper.</returns>
+    internal static object CreateWrapper(nint handle, Gst.Interop.Transfer transfer) => new ParseContext(handle, transfer);
 }

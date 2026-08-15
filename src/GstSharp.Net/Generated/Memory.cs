@@ -3,6 +3,7 @@
 
 #nullable enable
 
+using System;
 using System.Runtime.InteropServices;
 
 namespace Gst;
@@ -82,6 +83,242 @@ public sealed unsafe partial class Memory : Gst.MiniObject
     /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>
     internal static Memory? FromNative(nint handle, Gst.Interop.Transfer transfer) =>
         handle == 0 ? null : new(handle, transfer);
+
+    /// <summary>
+    /// Return a copy of @size bytes from @mem starting from @offset. This copy is
+    /// guaranteed to be writable. @size can be set to -1 to return a copy
+    /// from @offset to the end of the memory region.
+    /// </summary>
+    /// <param name="offset">The <c>offset</c> argument.</param>
+    /// <param name="size">The <c>size</c> argument.</param>
+    /// <returns>a new copy of @mem if the copy succeeded, %NULL otherwise.</returns>
+    public Gst.Memory? Copy(nint offset, nint size)
+    {
+        nint nativeResult = GstMemoryCopy(Handle, offset, size);
+        return Gst.Memory.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+    }
+
+    /// <summary>Get the current @size, @offset and @maxsize of @mem.</summary>
+    /// <param name="offset">The <c>offset</c> argument.</param>
+    /// <param name="maxsize">The <c>maxsize</c> argument.</param>
+    /// <returns>the current size of @mem</returns>
+    public nuint GetSizes(out nuint offset, out nuint maxsize)
+    {
+        nuint offsetNative = default;
+        nuint maxsizeNative = default;
+        nuint nativeResult = GstMemoryGetSizes(Handle, &offsetNative, &maxsizeNative);
+        offset = offsetNative;
+        maxsize = maxsizeNative;
+        return nativeResult;
+    }
+
+    /// <summary>
+    /// Check if @mem1 and mem2 share the memory with a common parent memory object
+    /// and that the memory is contiguous.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// If this is the case, the memory of @mem1 and @mem2 can be merged
+    /// efficiently by performing gst_memory_share() on the parent object from
+    /// the returned @offset.
+    /// </para>
+    /// </remarks>
+    /// <param name="mem2">The <c>mem2</c> argument.</param>
+    /// <param name="offset">The <c>offset</c> argument.</param>
+    /// <returns>%TRUE if the memory is contiguous and of a common parent.</returns>
+    public bool IsSpan(Gst.Memory mem2, out nuint offset)
+    {
+        ArgumentNullException.ThrowIfNull(mem2);
+        nuint offsetNative = default;
+        int nativeResult = GstMemoryIsSpan(Handle, mem2.Handle, &offsetNative);
+        offset = offsetNative;
+        return nativeResult != 0;
+    }
+
+    /// <summary>Check if @mem if allocated with an allocator for @mem_type.</summary>
+    /// <param name="memType">The <c>memType</c> argument.</param>
+    /// <returns>%TRUE if @mem was allocated from an allocator for @mem_type.</returns>
+    public bool IsType(string memType)
+    {
+        ArgumentNullException.ThrowIfNull(memType);
+        System.Span<byte> memTypeBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope memTypeScope = Gst.Interop.GMarshal.StackUtf8(memType, memTypeBuffer);
+        int nativeResult = GstMemoryIsType(Handle, memTypeScope.Pointer);
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Create a #GstMemory object that is mapped with @flags. If @mem is mappable
+    /// with @flags, this function returns the mapped @mem directly. Otherwise a
+    /// mapped copy of @mem is returned.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This function takes ownership of old @mem and returns a reference to a new
+    /// #GstMemory.
+    /// </para>
+    /// </remarks>
+    /// <param name="info">The <c>info</c> argument.</param>
+    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <returns>
+    /// a #GstMemory object mapped
+    /// with @flags or %NULL when a mapping is not possible.
+    /// </returns>
+    public Gst.Memory? MakeMapped(out Gst.MapInfo info, Gst.MapFlags flags)
+    {
+        Gst.MapInfo infoNative = default;
+        nint nativeResult = GstMemoryMakeMapped(Handle, &infoNative, (int)flags);
+        info = infoNative;
+        return Gst.Memory.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+    }
+
+    /// <summary>Returns a writable copy of @memory.</summary>
+    /// <remarks>
+    /// <para>
+    /// If there is only one reference count on @memory, the caller must be the owner,
+    /// and so this function will return the memory object unchanged. If on the other
+    /// hand there is more than one reference on the object, a new memory object will
+    /// be returned. The caller's reference on @memory will be removed, and instead the
+    /// caller will own a reference to the returned object.
+    /// </para>
+    /// <para>
+    /// In short, this function unrefs the memory in the argument and refs the memory
+    /// that it returns. Don't access the argument after calling this function. See
+    /// also: gst_memory_ref().
+    /// </para>
+    /// </remarks>
+    /// <returns>
+    /// a writable memory which may or may not be the
+    ///     same as @memory
+    /// </returns>
+    public Gst.Memory MakeWritable()
+    {
+        nint nativeResult = GstMemoryMakeWritable(Handle);
+        return Gst.Memory.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_memory_make_writable returned no value.");
+    }
+
+    /// <summary>
+    /// Fill @info with the pointer and sizes of the memory in @mem that can be
+    /// accessed according to @flags.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This function can return %FALSE for various reasons:
+    /// - the memory backed by @mem is not accessible with the given @flags.
+    /// - the memory was already mapped with a different mapping.
+    /// </para>
+    /// <para>
+    /// @info and its contents remain valid for as long as @mem is valid and
+    /// until gst_memory_unmap() is called.
+    /// </para>
+    /// <para>
+    /// For each gst_memory_map() call, a corresponding gst_memory_unmap() call
+    /// should be done.
+    /// </para>
+    /// </remarks>
+    /// <param name="info">The <c>info</c> argument.</param>
+    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <returns>%TRUE if the map operation was successful.</returns>
+    public bool Map(out Gst.MapInfo info, Gst.MapFlags flags)
+    {
+        Gst.MapInfo infoNative = default;
+        int nativeResult = GstMemoryMap(Handle, &infoNative, (int)flags);
+        info = infoNative;
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Resize the memory region. @mem should be writable and offset + size should be
+    /// less than the maxsize of @mem.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// #GST_MEMORY_FLAG_ZERO_PREFIXED and #GST_MEMORY_FLAG_ZERO_PADDED will be
+    /// cleared when offset or padding is increased respectively.
+    /// </para>
+    /// </remarks>
+    /// <param name="offset">The <c>offset</c> argument.</param>
+    /// <param name="size">The <c>size</c> argument.</param>
+    public void Resize(nint offset, nuint size)
+    {
+        GstMemoryResize(Handle, offset, size);
+    }
+
+    /// <summary>
+    /// Return a shared copy of @size bytes from @mem starting from @offset. No
+    /// memory copy is performed and the memory region is simply shared. The result
+    /// is guaranteed to be non-writable. @size can be set to -1 to return a shared
+    /// copy from @offset to the end of the memory region.
+    /// </summary>
+    /// <param name="offset">The <c>offset</c> argument.</param>
+    /// <param name="size">The <c>size</c> argument.</param>
+    /// <returns>a new #GstMemory.</returns>
+    public Gst.Memory Share(nint offset, nint size)
+    {
+        nint nativeResult = GstMemoryShare(Handle, offset, size);
+        return Gst.Memory.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_memory_share returned no value.");
+    }
+
+    /// <summary>Release the memory obtained with gst_memory_map()</summary>
+    /// <param name="info">The <c>info</c> argument.</param>
+    public void Unmap(Gst.MapInfo info)
+    {
+        Gst.MapInfo infoNative = info;
+        GstMemoryUnmap(Handle, &infoNative);
+    }
+
+    /// <summary>The <c>gst_memory_copy</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_memory_copy")]
+    private static partial nint GstMemoryCopy(nint mem, nint offset, nint size);
+
+    /// <summary>The <c>gst_memory_get_sizes</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_memory_get_sizes")]
+    private static partial nuint GstMemoryGetSizes(nint mem, nuint* offset, nuint* maxsize);
+
+    /// <summary>The <c>gst_memory_is_span</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_memory_is_span")]
+    private static partial int GstMemoryIsSpan(nint mem1, nint mem2, nuint* offset);
+
+    /// <summary>The <c>gst_memory_is_type</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_memory_is_type")]
+    private static partial int GstMemoryIsType(nint mem, byte* memType);
+
+    /// <summary>The <c>gst_memory_make_mapped</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_memory_make_mapped")]
+    private static partial nint GstMemoryMakeMapped(nint mem, Gst.MapInfo* info, int flags);
+
+    /// <summary>The <c>gst_memory_make_writable</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_memory_make_writable")]
+    private static partial nint GstMemoryMakeWritable(nint memory);
+
+    /// <summary>The <c>gst_memory_map</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_memory_map")]
+    private static partial int GstMemoryMap(nint mem, Gst.MapInfo* info, int flags);
+
+    /// <summary>The <c>gst_memory_resize</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_memory_resize")]
+    private static partial void GstMemoryResize(nint mem, nint offset, nuint size);
+
+    /// <summary>The <c>gst_memory_share</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_memory_share")]
+    private static partial nint GstMemoryShare(nint mem, nint offset, nint size);
+
+    /// <summary>The <c>gst_memory_unmap</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_memory_unmap")]
+    private static partial void GstMemoryUnmap(nint mem, Gst.MapInfo* info);
+
+    /// <summary>Returns the <c>GType</c> that GObject registered <c>GstMemory</c> under.</summary>
+    /// <returns>The type of the instances of this wrapper.</returns>
+    [LibraryImport("Gst", EntryPoint = "gst_memory_get_type")]
+    internal static partial nuint GetGType();
+
+    /// <summary>Creates the wrapper of a native instance, for the type registry.</summary>
+    /// <param name="handle">The native instance.</param>
+    /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
+    /// <returns>The new wrapper.</returns>
+    internal static object CreateWrapper(nint handle, Gst.Interop.Transfer transfer) => new Memory(handle, transfer);
 }
 
 /// <summary>The native layout of <c>GstMemory</c>.</summary>

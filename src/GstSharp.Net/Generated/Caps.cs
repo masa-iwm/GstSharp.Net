@@ -3,6 +3,7 @@
 
 #nullable enable
 
+using System;
 using System.Runtime.InteropServices;
 
 namespace Gst;
@@ -51,7 +52,7 @@ namespace Gst;
 /// gst_value_serialize() and their counterparts.
 /// </para>
 /// </remarks>
-public sealed partial class Caps : Gst.MiniObject
+public sealed unsafe partial class Caps : Gst.MiniObject
 {
     /// <summary>Wraps a native <c>GstCaps</c>.</summary>
     /// <param name="handle">The native instance.</param>
@@ -67,6 +68,781 @@ public sealed partial class Caps : Gst.MiniObject
     /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>
     internal static Caps? FromNative(nint handle, Gst.Interop.Transfer transfer) =>
         handle == 0 ? null : new(handle, transfer);
+
+    /// <summary>
+    /// Creates a new #GstCaps that indicates that it is compatible with
+    /// any media format.
+    /// </summary>
+    /// <returns>the new #GstCaps</returns>
+    public static Gst.Caps NewAny()
+    {
+        nint nativeResult = GstCapsNewAny();
+        return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_caps_new_any returned no value.");
+    }
+
+    /// <summary>
+    /// Creates a new #GstCaps that is empty.  That is, the returned
+    /// #GstCaps contains no media formats.
+    /// The #GstCaps is guaranteed to be writable.
+    /// </summary>
+    /// <returns>the new #GstCaps</returns>
+    public static Gst.Caps NewEmpty()
+    {
+        nint nativeResult = GstCapsNewEmpty();
+        return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_caps_new_empty returned no value.");
+    }
+
+    /// <summary>
+    /// Creates a new #GstCaps that contains one #GstStructure with name
+    /// @media_type.
+    /// </summary>
+    /// <param name="mediaType">The <c>mediaType</c> argument.</param>
+    /// <returns>the new #GstCaps</returns>
+    public static Gst.Caps NewEmptySimple(string mediaType)
+    {
+        ArgumentNullException.ThrowIfNull(mediaType);
+        System.Span<byte> mediaTypeBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope mediaTypeScope = Gst.Interop.GMarshal.StackUtf8(mediaType, mediaTypeBuffer);
+        nint nativeResult = GstCapsNewEmptySimple(mediaTypeScope.Pointer);
+        return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_caps_new_empty_simple returned no value.");
+    }
+
+    /// <summary>
+    /// Creates a new #GstCaps that contains one #GstStructure with name
+    /// @media_type.
+    /// </summary>
+    /// <param name="mediaType">The <c>mediaType</c> argument.</param>
+    /// <returns>the new #GstCaps</returns>
+    public static Gst.Caps NewIdStrEmptySimple(Gst.IdStr mediaType)
+    {
+        ArgumentNullException.ThrowIfNull(mediaType);
+        nint nativeResult = GstCapsNewIdStrEmptySimple(mediaType.Handle);
+        return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_caps_new_id_str_empty_simple returned no value.");
+    }
+
+    /// <summary>
+    /// Creates a new #GstCaps that contains one #GstStructure with name
+    /// @media_type.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// @media_type needs to be valid for the remaining lifetime of the process, e.g.
+    /// has to be a static string.
+    /// </para>
+    /// </remarks>
+    /// <param name="mediaType">The <c>mediaType</c> argument.</param>
+    /// <returns>the new #GstCaps</returns>
+    public static Gst.Caps NewStaticStrEmptySimple(string mediaType)
+    {
+        ArgumentNullException.ThrowIfNull(mediaType);
+        System.Span<byte> mediaTypeBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope mediaTypeScope = Gst.Interop.GMarshal.StackUtf8(mediaType, mediaTypeBuffer);
+        nint nativeResult = GstCapsNewStaticStrEmptySimple(mediaTypeScope.Pointer);
+        return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_caps_new_static_str_empty_simple returned no value.");
+    }
+
+    /// <summary>
+    /// Tries intersecting @caps1 and @caps2 and reports whether the result would not
+    /// be empty
+    /// </summary>
+    /// <param name="caps2">The <c>caps2</c> argument.</param>
+    /// <returns>%TRUE if intersection would be not empty</returns>
+    public bool CanIntersect(Gst.Caps caps2)
+    {
+        ArgumentNullException.ThrowIfNull(caps2);
+        int nativeResult = GstCapsCanIntersect(Handle, caps2.Handle);
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Creates a new #GstCaps as a copy of the old @caps. The new caps will have a
+    /// refcount of 1, owned by the caller. The structures are copied as well.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Note that this function is the semantic equivalent of a gst_caps_ref()
+    /// followed by a gst_caps_make_writable(). If you only want to hold on to a
+    /// reference to the data, you should use gst_caps_ref().
+    /// </para>
+    /// </remarks>
+    /// <returns>the new #GstCaps</returns>
+    public Gst.Caps Copy()
+    {
+        nint nativeResult = GstCapsCopy(Handle);
+        return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_caps_copy returned no value.");
+    }
+
+    /// <summary>
+    /// Creates a new #GstCaps and appends a copy of the nth structure
+    /// contained in @caps.
+    /// </summary>
+    /// <param name="nth">The <c>nth</c> argument.</param>
+    /// <returns>the new #GstCaps</returns>
+    public Gst.Caps CopyNth(uint nth)
+    {
+        nint nativeResult = GstCapsCopyNth(Handle, nth);
+        return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_caps_copy_nth returned no value.");
+    }
+
+    /// <summary>
+    /// Calls the provided function once for each structure and caps feature in the
+    /// #GstCaps. In contrast to gst_caps_foreach(), the function may modify the
+    /// structure and features. In contrast to gst_caps_map_in_place(), the structure
+    /// and features are removed from the caps if %FALSE is returned from the
+    /// function. The caps must be mutable.
+    /// </summary>
+    /// <param name="func">a function to call for each field</param>
+    public void FilterAndMapInPlace(Gst.CapsFilterMapFunc func)
+    {
+        ArgumentNullException.ThrowIfNull(func);
+        Gst.Interop.CallbackHandle funcState = Gst.Interop.CallbackHandle.Alloc(func);
+        try
+        {
+            GstCapsFilterAndMapInPlace(Handle, Gst.CapsFilterMapFuncTrampoline.Pointer, funcState.UserData);
+        }
+        finally
+        {
+            funcState.Free();
+        }
+    }
+
+    /// <summary>
+    /// Modifies the given @caps into a representation with only fixed
+    /// values. First the caps will be truncated and then the first structure will be
+    /// fixated with gst_structure_fixate().
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This function takes ownership of @caps and will call gst_caps_make_writable()
+    /// on it so you must not use @caps afterwards unless you keep an additional
+    /// reference to it with gst_caps_ref().
+    /// </para>
+    /// <para>
+    /// Note that it is not guaranteed that the returned caps have exactly one
+    /// structure. If @caps are empty caps then the returned caps will be
+    /// the empty too and contain no structure at all.
+    /// </para>
+    /// <para>Calling this function with ANY caps is not allowed.</para>
+    /// </remarks>
+    /// <returns>the fixated caps</returns>
+    public Gst.Caps Fixate()
+    {
+        nint nativeResult = GstCapsFixate(Handle);
+        return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_caps_fixate returned no value.");
+    }
+
+    /// <summary>
+    /// Calls the provided function once for each structure and caps feature in the
+    /// #GstCaps. The function must not modify the fields.
+    /// Also see gst_caps_map_in_place() and gst_caps_filter_and_map_in_place().
+    /// </summary>
+    /// <param name="func">a function to call for each field</param>
+    /// <returns>
+    /// %TRUE if the supplied function returns %TRUE for each call,
+    /// %FALSE otherwise.
+    /// </returns>
+    public bool Foreach(Gst.CapsForeachFunc func)
+    {
+        ArgumentNullException.ThrowIfNull(func);
+        Gst.Interop.CallbackHandle funcState = Gst.Interop.CallbackHandle.Alloc(func);
+        try
+        {
+            int nativeResult = GstCapsForeach(Handle, Gst.CapsForeachFuncTrampoline.Pointer, funcState.UserData);
+            return nativeResult != 0;
+        }
+        finally
+        {
+            funcState.Free();
+        }
+    }
+
+    /// <summary>Finds the features in @caps at @index, and returns it.</summary>
+    /// <remarks>
+    /// <para>
+    /// WARNING: This function takes a `const GstCaps *`, but returns a
+    /// non-const `GstCapsFeatures *`.  This is for programming convenience --
+    /// the caller should be aware that features inside a constant
+    /// #GstCaps should not be modified. However, if you know the caps
+    /// are writable, either because you have just copied them or made
+    /// them writable with gst_caps_make_writable(), you may modify the
+    /// features returned in the usual way, e.g. with functions like
+    /// gst_caps_features_add().
+    /// </para>
+    /// </remarks>
+    /// <param name="index">The <c>index</c> argument.</param>
+    /// <returns>
+    /// a pointer to the #GstCapsFeatures
+    ///     corresponding to @index
+    /// </returns>
+    public Gst.CapsFeatures? GetFeatures(uint index)
+    {
+        nint nativeResult = GstCapsGetFeatures(Handle, index);
+        return Gst.CapsFeatures.FromNative(nativeResult, Gst.Interop.Transfer.None);
+    }
+
+    /// <summary>Gets the number of structures contained in @caps.</summary>
+    /// <returns>the number of structures that @caps contains</returns>
+    public uint GetSize()
+    {
+        uint nativeResult = GstCapsGetSize(Handle);
+        return nativeResult;
+    }
+
+    /// <summary>Finds the structure in @caps at @index, and returns it.</summary>
+    /// <remarks>
+    /// <para>
+    /// WARNING: This function takes a `const GstCaps *`, but returns a
+    /// non-const `GstStructure *`.  This is for programming convenience --
+    /// the caller should be aware that structures inside a constant
+    /// #GstCaps should not be modified. However, if you know the caps
+    /// are writable, either because you have just copied them or made
+    /// them writable with gst_caps_make_writable(), you may modify the
+    /// structure returned in the usual way, e.g. with functions like
+    /// gst_structure_set().
+    /// </para>
+    /// </remarks>
+    /// <param name="index">The <c>index</c> argument.</param>
+    /// <returns>
+    /// a pointer to the #GstStructure corresponding
+    ///     to @index
+    /// </returns>
+    public Gst.Structure GetStructure(uint index)
+    {
+        nint nativeResult = GstCapsGetStructure(Handle, index);
+        return Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.None)
+            ?? throw new InvalidOperationException("gst_caps_get_structure returned no value.");
+    }
+
+    /// <summary>
+    /// Creates a new #GstCaps that contains all the formats that are common
+    /// to both @caps1 and @caps2. Defaults to %GST_CAPS_INTERSECT_ZIG_ZAG mode.
+    /// </summary>
+    /// <param name="caps2">The <c>caps2</c> argument.</param>
+    /// <returns>the new #GstCaps</returns>
+    public Gst.Caps Intersect(Gst.Caps caps2)
+    {
+        ArgumentNullException.ThrowIfNull(caps2);
+        nint nativeResult = GstCapsIntersect(Handle, caps2.Handle);
+        return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_caps_intersect returned no value.");
+    }
+
+    /// <summary>
+    /// Creates a new #GstCaps that contains all the formats that are common
+    /// to both @caps1 and @caps2, the order is defined by the #GstCapsIntersectMode
+    /// used.
+    /// </summary>
+    /// <param name="caps2">The <c>caps2</c> argument.</param>
+    /// <param name="mode">The <c>mode</c> argument.</param>
+    /// <returns>the new #GstCaps</returns>
+    public Gst.Caps IntersectFull(Gst.Caps caps2, Gst.CapsIntersectMode mode)
+    {
+        ArgumentNullException.ThrowIfNull(caps2);
+        nint nativeResult = GstCapsIntersectFull(Handle, caps2.Handle, (int)mode);
+        return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_caps_intersect_full returned no value.");
+    }
+
+    /// <summary>
+    /// A given #GstCaps structure is always compatible with another if
+    /// every media format that is in the first is also contained in the
+    /// second.  That is, @caps1 is a subset of @caps2.
+    /// </summary>
+    /// <param name="caps2">The <c>caps2</c> argument.</param>
+    /// <returns>%TRUE if @caps1 is a subset of @caps2.</returns>
+    public bool IsAlwaysCompatible(Gst.Caps caps2)
+    {
+        ArgumentNullException.ThrowIfNull(caps2);
+        int nativeResult = GstCapsIsAlwaysCompatible(Handle, caps2.Handle);
+        return nativeResult != 0;
+    }
+
+    /// <summary>Determines if @caps represents any media format.</summary>
+    /// <returns>%TRUE if @caps represents any format.</returns>
+    public bool IsAny()
+    {
+        int nativeResult = GstCapsIsAny(Handle);
+        return nativeResult != 0;
+    }
+
+    /// <summary>Determines if @caps represents no media formats.</summary>
+    /// <returns>%TRUE if @caps represents no formats.</returns>
+    public bool IsEmpty()
+    {
+        int nativeResult = GstCapsIsEmpty(Handle);
+        return nativeResult != 0;
+    }
+
+    /// <summary>Checks if the given caps represent the same set of caps.</summary>
+    /// <param name="caps2">The <c>caps2</c> argument.</param>
+    /// <returns>%TRUE if both caps are equal.</returns>
+    public bool IsEqual(Gst.Caps caps2)
+    {
+        ArgumentNullException.ThrowIfNull(caps2);
+        int nativeResult = GstCapsIsEqual(Handle, caps2.Handle);
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Tests if two #GstCaps are equal.  This function only works on fixed
+    /// #GstCaps.
+    /// </summary>
+    /// <param name="caps2">The <c>caps2</c> argument.</param>
+    /// <returns>%TRUE if the arguments represent the same format</returns>
+    public bool IsEqualFixed(Gst.Caps caps2)
+    {
+        ArgumentNullException.ThrowIfNull(caps2);
+        int nativeResult = GstCapsIsEqualFixed(Handle, caps2.Handle);
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Fixed #GstCaps describe exactly one format, that is, they have exactly
+    /// one structure, and each field in the structure describes a fixed type.
+    /// Examples of non-fixed types are GST_TYPE_INT_RANGE and GST_TYPE_LIST.
+    /// </summary>
+    /// <returns>%TRUE if @caps is fixed</returns>
+    public bool IsFixed()
+    {
+        int nativeResult = GstCapsIsFixed(Handle);
+        return nativeResult != 0;
+    }
+
+    /// <summary>Checks if the given caps are exactly the same set of caps.</summary>
+    /// <param name="caps2">The <c>caps2</c> argument.</param>
+    /// <returns>%TRUE if both caps are strictly equal.</returns>
+    public bool IsStrictlyEqual(Gst.Caps caps2)
+    {
+        ArgumentNullException.ThrowIfNull(caps2);
+        int nativeResult = GstCapsIsStrictlyEqual(Handle, caps2.Handle);
+        return nativeResult != 0;
+    }
+
+    /// <summary>Checks if all caps represented by @subset are also represented by @superset.</summary>
+    /// <param name="superset">The <c>superset</c> argument.</param>
+    /// <returns>%TRUE if @subset is a subset of @superset</returns>
+    public bool IsSubset(Gst.Caps superset)
+    {
+        ArgumentNullException.ThrowIfNull(superset);
+        int nativeResult = GstCapsIsSubset(Handle, superset.Handle);
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Checks if @structure is a subset of @caps. See gst_caps_is_subset()
+    /// for more information.
+    /// </summary>
+    /// <param name="structure">The <c>structure</c> argument.</param>
+    /// <returns>%TRUE if @structure is a subset of @caps</returns>
+    public bool IsSubsetStructure(Gst.Structure structure)
+    {
+        ArgumentNullException.ThrowIfNull(structure);
+        int nativeResult = GstCapsIsSubsetStructure(Handle, structure.Handle);
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Checks if @structure is a subset of @caps. See gst_caps_is_subset()
+    /// for more information.
+    /// </summary>
+    /// <param name="structure">The <c>structure</c> argument.</param>
+    /// <param name="features">The <c>features</c> argument.</param>
+    /// <returns>%TRUE if @structure is a subset of @caps</returns>
+    public bool IsSubsetStructureFull(Gst.Structure structure, Gst.CapsFeatures? features)
+    {
+        ArgumentNullException.ThrowIfNull(structure);
+        int nativeResult = GstCapsIsSubsetStructureFull(Handle, structure.Handle, features is null ? 0 : features.Handle);
+        return nativeResult != 0;
+    }
+
+    /// <summary>Returns a writable copy of @caps.</summary>
+    /// <remarks>
+    /// <para>
+    /// If there is only one reference count on @caps, the caller must be the owner,
+    /// and so this function will return the caps object unchanged. If on the other
+    /// hand there is more than one reference on the object, a new caps object will
+    /// be returned. The caller's reference on @caps will be removed, and instead the
+    /// caller will own a reference to the returned object.
+    /// </para>
+    /// <para>
+    /// In short, this function unrefs the caps in the argument and refs the caps
+    /// that it returns. Don't access the argument after calling this function. See
+    /// also: gst_caps_ref().
+    /// </para>
+    /// </remarks>
+    /// <returns>
+    /// a writable caps which may or may not be the
+    ///     same as @caps
+    /// </returns>
+    public Gst.Caps MakeWritable()
+    {
+        nint nativeResult = GstCapsMakeWritable(Handle);
+        return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_caps_make_writable returned no value.");
+    }
+
+    /// <summary>
+    /// Calls the provided function once for each structure and caps feature in the
+    /// #GstCaps. In contrast to gst_caps_foreach(), the function may modify but not
+    /// delete the structures and features. The caps must be mutable.
+    /// </summary>
+    /// <param name="func">a function to call for each field</param>
+    /// <returns>
+    /// %TRUE if the supplied function returns %TRUE for each call,
+    /// %FALSE otherwise.
+    /// </returns>
+    public bool MapInPlace(Gst.CapsMapFunc func)
+    {
+        ArgumentNullException.ThrowIfNull(func);
+        Gst.Interop.CallbackHandle funcState = Gst.Interop.CallbackHandle.Alloc(func);
+        try
+        {
+            int nativeResult = GstCapsMapInPlace(Handle, Gst.CapsMapFuncTrampoline.Pointer, funcState.UserData);
+            return nativeResult != 0;
+        }
+        finally
+        {
+            funcState.Free();
+        }
+    }
+
+    /// <summary>
+    /// Returns a #GstCaps that represents the same set of formats as
+    /// @caps, but contains no lists.  Each list is expanded into separate
+    /// #GstStructure.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This function takes ownership of @caps and will call gst_caps_make_writable()
+    /// on it so you must not use @caps afterwards unless you keep an additional
+    /// reference to it with gst_caps_ref().
+    /// </para>
+    /// </remarks>
+    /// <returns>the normalized #GstCaps</returns>
+    public Gst.Caps Normalize()
+    {
+        nint nativeResult = GstCapsNormalize(Handle);
+        return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_caps_normalize returned no value.");
+    }
+
+    /// <summary>
+    /// Removes the structure with the given index from the list of structures
+    /// contained in @caps.
+    /// </summary>
+    /// <param name="idx">The <c>idx</c> argument.</param>
+    public void RemoveStructure(uint idx)
+    {
+        GstCapsRemoveStructure(Handle, idx);
+    }
+
+    /// <summary>
+    /// Converts @caps to a string representation.  This string representation can be
+    /// converted back to a #GstCaps by gst_caps_from_string().
+    /// </summary>
+    /// <remarks>
+    /// <para>This prints the caps in human readable form.</para>
+    /// <para>
+    /// This version of the caps serialization function introduces support for nested
+    /// structures and caps but the resulting strings won't be parsable with
+    /// GStreamer prior to 1.20 unless #GST_SERIALIZE_FLAG_BACKWARD_COMPAT is passed
+    /// as @flag.
+    /// </para>
+    /// </remarks>
+    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <returns>a newly allocated string representing @caps.</returns>
+    public string Serialize(Gst.SerializeFlags flags)
+    {
+        nint nativeResult = GstCapsSerialize(Handle, (int)flags);
+        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
+            ?? throw new InvalidOperationException("gst_caps_serialize returned no value.");
+    }
+
+    /// <summary>
+    /// Converts the given @caps into a representation that represents the
+    /// same set of formats, but in a simpler form.  Component structures that are
+    /// identical are merged.  Component structures that have values that can be
+    /// merged are also merged.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This function takes ownership of @caps and will call gst_caps_make_writable()
+    /// on it if necessary, so you must not use @caps afterwards unless you keep an
+    /// additional reference to it with gst_caps_ref().
+    /// </para>
+    /// <para>This method does not preserve the original order of @caps.</para>
+    /// </remarks>
+    /// <returns>The simplified caps.</returns>
+    public Gst.Caps Simplify()
+    {
+        nint nativeResult = GstCapsSimplify(Handle);
+        return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_caps_simplify returned no value.");
+    }
+
+    /// <summary>
+    /// Retrieves the structure with the given index from the list of structures
+    /// contained in @caps. The caller becomes the owner of the returned structure.
+    /// </summary>
+    /// <param name="index">The <c>index</c> argument.</param>
+    /// <returns>
+    /// a pointer to the #GstStructure
+    ///     corresponding to @index.
+    /// </returns>
+    public Gst.Structure? StealStructure(uint index)
+    {
+        nint nativeResult = GstCapsStealStructure(Handle, index);
+        return Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+    }
+
+    /// <summary>
+    /// Subtracts the @subtrahend from the @minuend.
+    /// &gt; This function does not work reliably if optional properties for caps
+    /// &gt; are included on one caps and omitted on the other.
+    /// </summary>
+    /// <param name="subtrahend">The <c>subtrahend</c> argument.</param>
+    /// <returns>the resulting caps</returns>
+    public Gst.Caps Subtract(Gst.Caps subtrahend)
+    {
+        ArgumentNullException.ThrowIfNull(subtrahend);
+        nint nativeResult = GstCapsSubtract(Handle, subtrahend.Handle);
+        return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_caps_subtract returned no value.");
+    }
+
+    /// <summary>
+    /// Converts @caps to a string representation.  This string representation
+    /// can be converted back to a #GstCaps by gst_caps_from_string().
+    /// </summary>
+    /// <remarks>
+    /// <para>For debugging purposes its easier to do something like this:</para>
+    /// <para>
+    /// ``` C
+    /// GST_LOG ("caps are %" GST_PTR_FORMAT, caps);
+    /// ```
+    /// </para>
+    /// <para>This prints the caps in human readable form.</para>
+    /// <para>
+    /// The implementation of serialization up to 1.20 would lead to unexpected results
+    /// when there were nested #GstCaps / #GstStructure deeper than one level.
+    /// </para>
+    /// </remarks>
+    /// <returns>a newly allocated string representing @caps.</returns>
+    public override string ToString()
+    {
+        nint nativeResult = GstCapsToString(Handle);
+        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
+            ?? throw new InvalidOperationException("gst_caps_to_string returned no value.");
+    }
+
+    /// <summary>
+    /// Discards all but the first structure from @caps. Useful when
+    /// fixating.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This function takes ownership of @caps and will call gst_caps_make_writable()
+    /// on it if necessary, so you must not use @caps afterwards unless you keep an
+    /// additional reference to it with gst_caps_ref().
+    /// </para>
+    /// <para>
+    /// Note that it is not guaranteed that the returned caps have exactly one
+    /// structure. If @caps is any or empty caps then the returned caps will be
+    /// the same and contain no structure at all.
+    /// </para>
+    /// </remarks>
+    /// <returns>truncated caps</returns>
+    public Gst.Caps Truncate()
+    {
+        nint nativeResult = GstCapsTruncate(Handle);
+        return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_caps_truncate returned no value.");
+    }
+
+    /// <summary>Converts @caps from a string representation.</summary>
+    /// <remarks>
+    /// <para>
+    /// The implementation of serialization up to 1.20 would lead to unexpected results
+    /// when there were nested #GstCaps / #GstStructure deeper than one level.
+    /// </para>
+    /// </remarks>
+    /// <param name="string">The <c>@string</c> argument.</param>
+    /// <returns>a newly allocated #GstCaps</returns>
+    public static Gst.Caps? FromString(string @string)
+    {
+        ArgumentNullException.ThrowIfNull(@string);
+        System.Span<byte> @stringBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope @stringScope = Gst.Interop.GMarshal.StackUtf8(@string, @stringBuffer);
+        nint nativeResult = GstCapsFromString(@stringScope.Pointer);
+        return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+    }
+
+    /// <summary>The <c>gst_caps_new_any</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_new_any")]
+    private static partial nint GstCapsNewAny();
+
+    /// <summary>The <c>gst_caps_new_empty</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_new_empty")]
+    private static partial nint GstCapsNewEmpty();
+
+    /// <summary>The <c>gst_caps_new_empty_simple</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_new_empty_simple")]
+    private static partial nint GstCapsNewEmptySimple(byte* mediaType);
+
+    /// <summary>The <c>gst_caps_new_id_str_empty_simple</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_new_id_str_empty_simple")]
+    private static partial nint GstCapsNewIdStrEmptySimple(nint mediaType);
+
+    /// <summary>The <c>gst_caps_new_static_str_empty_simple</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_new_static_str_empty_simple")]
+    private static partial nint GstCapsNewStaticStrEmptySimple(byte* mediaType);
+
+    /// <summary>The <c>gst_caps_can_intersect</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_can_intersect")]
+    private static partial int GstCapsCanIntersect(nint caps1, nint caps2);
+
+    /// <summary>The <c>gst_caps_copy</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_copy")]
+    private static partial nint GstCapsCopy(nint caps);
+
+    /// <summary>The <c>gst_caps_copy_nth</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_copy_nth")]
+    private static partial nint GstCapsCopyNth(nint caps, uint nth);
+
+    /// <summary>The <c>gst_caps_filter_and_map_in_place</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_filter_and_map_in_place")]
+    private static partial void GstCapsFilterAndMapInPlace(nint caps, nint func, nint userData);
+
+    /// <summary>The <c>gst_caps_fixate</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_fixate")]
+    private static partial nint GstCapsFixate(nint caps);
+
+    /// <summary>The <c>gst_caps_foreach</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_foreach")]
+    private static partial int GstCapsForeach(nint caps, nint func, nint userData);
+
+    /// <summary>The <c>gst_caps_get_features</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_get_features")]
+    private static partial nint GstCapsGetFeatures(nint caps, uint index);
+
+    /// <summary>The <c>gst_caps_get_size</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_get_size")]
+    private static partial uint GstCapsGetSize(nint caps);
+
+    /// <summary>The <c>gst_caps_get_structure</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_get_structure")]
+    private static partial nint GstCapsGetStructure(nint caps, uint index);
+
+    /// <summary>The <c>gst_caps_intersect</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_intersect")]
+    private static partial nint GstCapsIntersect(nint caps1, nint caps2);
+
+    /// <summary>The <c>gst_caps_intersect_full</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_intersect_full")]
+    private static partial nint GstCapsIntersectFull(nint caps1, nint caps2, int mode);
+
+    /// <summary>The <c>gst_caps_is_always_compatible</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_is_always_compatible")]
+    private static partial int GstCapsIsAlwaysCompatible(nint caps1, nint caps2);
+
+    /// <summary>The <c>gst_caps_is_any</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_is_any")]
+    private static partial int GstCapsIsAny(nint caps);
+
+    /// <summary>The <c>gst_caps_is_empty</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_is_empty")]
+    private static partial int GstCapsIsEmpty(nint caps);
+
+    /// <summary>The <c>gst_caps_is_equal</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_is_equal")]
+    private static partial int GstCapsIsEqual(nint caps1, nint caps2);
+
+    /// <summary>The <c>gst_caps_is_equal_fixed</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_is_equal_fixed")]
+    private static partial int GstCapsIsEqualFixed(nint caps1, nint caps2);
+
+    /// <summary>The <c>gst_caps_is_fixed</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_is_fixed")]
+    private static partial int GstCapsIsFixed(nint caps);
+
+    /// <summary>The <c>gst_caps_is_strictly_equal</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_is_strictly_equal")]
+    private static partial int GstCapsIsStrictlyEqual(nint caps1, nint caps2);
+
+    /// <summary>The <c>gst_caps_is_subset</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_is_subset")]
+    private static partial int GstCapsIsSubset(nint subset, nint superset);
+
+    /// <summary>The <c>gst_caps_is_subset_structure</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_is_subset_structure")]
+    private static partial int GstCapsIsSubsetStructure(nint caps, nint structure);
+
+    /// <summary>The <c>gst_caps_is_subset_structure_full</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_is_subset_structure_full")]
+    private static partial int GstCapsIsSubsetStructureFull(nint caps, nint structure, nint features);
+
+    /// <summary>The <c>gst_caps_make_writable</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_make_writable")]
+    private static partial nint GstCapsMakeWritable(nint caps);
+
+    /// <summary>The <c>gst_caps_map_in_place</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_map_in_place")]
+    private static partial int GstCapsMapInPlace(nint caps, nint func, nint userData);
+
+    /// <summary>The <c>gst_caps_normalize</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_normalize")]
+    private static partial nint GstCapsNormalize(nint caps);
+
+    /// <summary>The <c>gst_caps_remove_structure</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_remove_structure")]
+    private static partial void GstCapsRemoveStructure(nint caps, uint idx);
+
+    /// <summary>The <c>gst_caps_serialize</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_serialize")]
+    private static partial nint GstCapsSerialize(nint caps, int flags);
+
+    /// <summary>The <c>gst_caps_simplify</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_simplify")]
+    private static partial nint GstCapsSimplify(nint caps);
+
+    /// <summary>The <c>gst_caps_steal_structure</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_steal_structure")]
+    private static partial nint GstCapsStealStructure(nint caps, uint index);
+
+    /// <summary>The <c>gst_caps_subtract</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_subtract")]
+    private static partial nint GstCapsSubtract(nint minuend, nint subtrahend);
+
+    /// <summary>The <c>gst_caps_to_string</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_to_string")]
+    private static partial nint GstCapsToString(nint caps);
+
+    /// <summary>The <c>gst_caps_truncate</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_truncate")]
+    private static partial nint GstCapsTruncate(nint caps);
+
+    /// <summary>The <c>gst_caps_from_string</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_from_string")]
+    private static partial nint GstCapsFromString(byte* @string);
+
+    /// <summary>Returns the <c>GType</c> that GObject registered <c>GstCaps</c> under.</summary>
+    /// <returns>The type of the instances of this wrapper.</returns>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_get_type")]
+    internal static partial nuint GetGType();
+
+    /// <summary>Creates the wrapper of a native instance, for the type registry.</summary>
+    /// <param name="handle">The native instance.</param>
+    /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
+    /// <returns>The new wrapper.</returns>
+    internal static object CreateWrapper(nint handle, Gst.Interop.Transfer transfer) => new Caps(handle, transfer);
 }
 
 /// <summary>The native layout of <c>GstCaps</c>.</summary>

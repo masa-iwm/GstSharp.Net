@@ -3,6 +3,9 @@
 
 #nullable enable
 
+using System;
+using System.Runtime.InteropServices;
+
 namespace Gst;
 
 /// <summary>
@@ -43,7 +46,7 @@ namespace Gst;
 /// context set to an element.
 /// </para>
 /// </remarks>
-public sealed partial class Context : Gst.MiniObject
+public sealed unsafe partial class Context : Gst.MiniObject
 {
     /// <summary>Wraps a native <c>GstContext</c>.</summary>
     /// <param name="handle">The native instance.</param>
@@ -59,4 +62,208 @@ public sealed partial class Context : Gst.MiniObject
     /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>
     internal static Context? FromNative(nint handle, Gst.Interop.Transfer transfer) =>
         handle == 0 ? null : new(handle, transfer);
+
+    /// <summary>Creates a new context.</summary>
+    /// <param name="contextType">The <c>contextType</c> argument.</param>
+    /// <param name="persistent">The <c>persistent</c> argument.</param>
+    /// <returns>The new context.</returns>
+    public static Gst.Context New(string contextType, bool persistent)
+    {
+        ArgumentNullException.ThrowIfNull(contextType);
+        System.Span<byte> contextTypeBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope contextTypeScope = Gst.Interop.GMarshal.StackUtf8(contextType, contextTypeBuffer);
+        nint nativeResult = GstContextNew(contextTypeScope.Pointer, persistent ? 1 : 0);
+        return Gst.Context.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_context_new returned no value.");
+    }
+
+    /// <summary>Creates a copy of the context. Returns a copy of the context.</summary>
+    /// <returns>a new copy of @context.</returns>
+    public Gst.Context Copy()
+    {
+        nint nativeResult = GstContextCopy(Handle);
+        return Gst.Context.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_context_copy returned no value.");
+    }
+
+    /// <summary>Gets the type of @context.</summary>
+    /// <returns>The type of the context.</returns>
+    public string GetContextType()
+    {
+        nint nativeResult = GstContextGetContextType(Handle);
+        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
+            ?? throw new InvalidOperationException("gst_context_get_context_type returned no value.");
+    }
+
+    /// <summary>Accesses the structure of the context.</summary>
+    /// <returns>
+    /// The structure of the context. The structure is
+    /// still owned by the context, which means that you should not modify it,
+    /// free it and that the pointer becomes invalid when you free the context.
+    /// </returns>
+    public Gst.Structure GetStructure()
+    {
+        nint nativeResult = GstContextGetStructure(Handle);
+        return Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.None)
+            ?? throw new InvalidOperationException("gst_context_get_structure returned no value.");
+    }
+
+    /// <summary>Gets the task pool from @context.</summary>
+    /// <param name="pool">The <c>pool</c> argument.</param>
+    /// <returns>%TRUE if a task pool was set on @context</returns>
+    public bool GetTaskPool(out Gst.TaskPool? pool)
+    {
+        nint poolNative = default;
+        int nativeResult = GstContextGetTaskPool(Handle, &poolNative);
+        pool = Gst.GObject.Object.FromNative<Gst.TaskPool>(poolNative, Gst.Interop.Transfer.Full);
+        return nativeResult != 0;
+    }
+
+    /// <summary>Checks if @context has @context_type.</summary>
+    /// <param name="contextType">The <c>contextType</c> argument.</param>
+    /// <returns>%TRUE if @context has @context_type.</returns>
+    public bool HasContextType(string contextType)
+    {
+        ArgumentNullException.ThrowIfNull(contextType);
+        System.Span<byte> contextTypeBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope contextTypeScope = Gst.Interop.GMarshal.StackUtf8(contextType, contextTypeBuffer);
+        int nativeResult = GstContextHasContextType(Handle, contextTypeScope.Pointer);
+        return nativeResult != 0;
+    }
+
+    /// <summary>Checks if @context is persistent.</summary>
+    /// <returns>%TRUE if the context is persistent.</returns>
+    public bool IsPersistent()
+    {
+        int nativeResult = GstContextIsPersistent(Handle);
+        return nativeResult != 0;
+    }
+
+    /// <summary>Returns a writable copy of @context.</summary>
+    /// <remarks>
+    /// <para>
+    /// If there is only one reference count on @context, the caller must be the owner,
+    /// and so this function will return the context object unchanged. If on the other
+    /// hand there is more than one reference on the object, a new context object will
+    /// be returned. The caller's reference on @context will be removed, and instead the
+    /// caller will own a reference to the returned object.
+    /// </para>
+    /// <para>
+    /// In short, this function unrefs the context in the argument and refs the context
+    /// that it returns. Don't access the argument after calling this function. See
+    /// also: gst_context_ref().
+    /// </para>
+    /// </remarks>
+    /// <returns>
+    /// a writable context which may or may not be the
+    ///     same as @context
+    /// </returns>
+    public Gst.Context MakeWritable()
+    {
+        nint nativeResult = GstContextMakeWritable(Handle);
+        return Gst.Context.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_context_make_writable returned no value.");
+    }
+
+    /// <summary>Convenience macro to increase the reference count of the context.</summary>
+    /// <returns>@context (for convenience when doing assignments)</returns>
+    public Gst.Context Ref()
+    {
+        nint nativeResult = GstContextRef(Handle);
+        return Gst.Context.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_context_ref returned no value.");
+    }
+
+    /// <summary>
+    /// Sets @pool on @context as the task pool to be shared between elements.
+    /// If @pool is %NULL, any previously set task pool will be removed from
+    /// the context.
+    /// </summary>
+    /// <param name="pool">The <c>pool</c> argument.</param>
+    public void SetTaskPool(Gst.TaskPool? pool)
+    {
+        GstContextSetTaskPool(Handle, pool is null ? 0 : pool.Handle);
+    }
+
+    /// <summary>
+    /// Convenience macro to decrease the reference count of the context, possibly
+    /// freeing it.
+    /// </summary>
+    public void Unref()
+    {
+        GstContextUnref(Handle);
+    }
+
+    /// <summary>Gets a writable version of the structure.</summary>
+    /// <returns>
+    /// The structure of the context. The structure is still
+    /// owned by the context, which means that you should not free it and
+    /// that the pointer becomes invalid when you free the context.
+    /// This function checks if @context is writable.
+    /// </returns>
+    public Gst.Structure WritableStructure()
+    {
+        nint nativeResult = GstContextWritableStructure(Handle);
+        return Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.None)
+            ?? throw new InvalidOperationException("gst_context_writable_structure returned no value.");
+    }
+
+    /// <summary>The <c>gst_context_new</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_context_new")]
+    private static partial nint GstContextNew(byte* contextType, int persistent);
+
+    /// <summary>The <c>gst_context_copy</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_context_copy")]
+    private static partial nint GstContextCopy(nint context);
+
+    /// <summary>The <c>gst_context_get_context_type</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_context_get_context_type")]
+    private static partial nint GstContextGetContextType(nint context);
+
+    /// <summary>The <c>gst_context_get_structure</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_context_get_structure")]
+    private static partial nint GstContextGetStructure(nint context);
+
+    /// <summary>The <c>gst_context_get_task_pool</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_context_get_task_pool")]
+    private static partial int GstContextGetTaskPool(nint context, nint* pool);
+
+    /// <summary>The <c>gst_context_has_context_type</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_context_has_context_type")]
+    private static partial int GstContextHasContextType(nint context, byte* contextType);
+
+    /// <summary>The <c>gst_context_is_persistent</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_context_is_persistent")]
+    private static partial int GstContextIsPersistent(nint context);
+
+    /// <summary>The <c>gst_context_make_writable</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_context_make_writable")]
+    private static partial nint GstContextMakeWritable(nint context);
+
+    /// <summary>The <c>gst_context_ref</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_context_ref")]
+    private static partial nint GstContextRef(nint context);
+
+    /// <summary>The <c>gst_context_set_task_pool</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_context_set_task_pool")]
+    private static partial void GstContextSetTaskPool(nint context, nint pool);
+
+    /// <summary>The <c>gst_context_unref</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_context_unref")]
+    private static partial void GstContextUnref(nint context);
+
+    /// <summary>The <c>gst_context_writable_structure</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_context_writable_structure")]
+    private static partial nint GstContextWritableStructure(nint context);
+
+    /// <summary>Returns the <c>GType</c> that GObject registered <c>GstContext</c> under.</summary>
+    /// <returns>The type of the instances of this wrapper.</returns>
+    [LibraryImport("Gst", EntryPoint = "gst_context_get_type")]
+    internal static partial nuint GetGType();
+
+    /// <summary>Creates the wrapper of a native instance, for the type registry.</summary>
+    /// <param name="handle">The native instance.</param>
+    /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
+    /// <returns>The new wrapper.</returns>
+    internal static object CreateWrapper(nint handle, Gst.Interop.Transfer transfer) => new Context(handle, transfer);
 }

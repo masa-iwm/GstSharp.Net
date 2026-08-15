@@ -200,7 +200,7 @@ public sealed class EnumEmitterTests
     //   dotnet run --project generator/GstSharp.Generator -- generate --gir-dir girs --out-dir src
     // which is the step that integrates the class, callback, interface and
     // registry emitters. Remove the Skip together with that regeneration.
-    [Fact(Skip = "The committed sources predate the class emitter; regenerate src/ to turn this back on.")]
+    [Fact]
     public void TheCommittedFilesMatchTheEmitter()
     {
         IReadOnlyList<GeneratedFile> files = GenerationPipeline.Run(GirFixture.GirDirectory).Files;

@@ -3,18 +3,19 @@
 
 #nullable enable
 
+using System;
 using System.Runtime.InteropServices;
 
 namespace Gst;
 
 /// <summary>The <c>GstTocEntry</c> boxed type.</summary>
-public sealed partial class TocEntry : Gst.GObject.Boxed
+public sealed unsafe partial class TocEntry : Gst.GObject.Boxed
 {
     /// <summary>Wraps a native <c>GstTocEntry</c>.</summary>
     /// <param name="handle">The native instance.</param>
     /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
     internal TocEntry(nint handle, Gst.Interop.Transfer transfer)
-        : base(handle, new Gst.GObject.GType(TocEntryGetType()), transfer)
+        : base(handle, new Gst.GObject.GType(GetGType()), transfer)
     {
     }
 
@@ -25,8 +26,203 @@ public sealed partial class TocEntry : Gst.GObject.Boxed
     internal static TocEntry? FromNative(nint handle, Gst.Interop.Transfer transfer) =>
         handle == 0 ? null : new(handle, transfer);
 
+    /// <summary>Create new #GstTocEntry structure.</summary>
+    /// <param name="type">The <c>type</c> argument.</param>
+    /// <param name="uid">The <c>uid</c> argument.</param>
+    /// <returns>newly allocated #GstTocEntry structure, free it with gst_toc_entry_unref().</returns>
+    public static Gst.TocEntry New(Gst.TocEntryType type, string uid)
+    {
+        ArgumentNullException.ThrowIfNull(uid);
+        System.Span<byte> uidBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope uidScope = Gst.Interop.GMarshal.StackUtf8(uid, uidBuffer);
+        nint nativeResult = GstTocEntryNew((int)type, uidScope.Pointer);
+        return Gst.TocEntry.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_toc_entry_new returned no value.");
+    }
+
+    /// <summary>The <c>gst_toc_entry_get_entry_type</c> function.</summary>
+    /// <returns>@entry's entry type</returns>
+    public Gst.TocEntryType GetEntryType()
+    {
+        int nativeResult = GstTocEntryGetEntryType(Handle);
+        return (Gst.TocEntryType)nativeResult;
+    }
+
+    /// <summary>
+    /// Get @loop_type and @repeat_count values from the @entry and write them into
+    /// appropriate storages. Loops are e.g. used by sampled instruments. GStreamer
+    /// is not automatically applying the loop. The application can process this
+    /// meta data and use it e.g. to send a seek-event to loop a section.
+    /// </summary>
+    /// <param name="loopType">The <c>loopType</c> argument.</param>
+    /// <param name="repeatCount">The <c>repeatCount</c> argument.</param>
+    /// <returns>
+    /// %TRUE if all non-%NULL storage pointers were filled with appropriate
+    /// values, %FALSE otherwise.
+    /// </returns>
+    public bool GetLoop(out Gst.TocLoopType loopType, out int repeatCount)
+    {
+        int loopTypeNative = default;
+        int repeatCountNative = default;
+        int nativeResult = GstTocEntryGetLoop(Handle, &loopTypeNative, &repeatCountNative);
+        loopType = (Gst.TocLoopType)loopTypeNative;
+        repeatCount = repeatCountNative;
+        return nativeResult != 0;
+    }
+
+    /// <summary>Gets the parent #GstTocEntry of @entry.</summary>
+    /// <returns>The parent #GstTocEntry of @entry</returns>
+    public Gst.TocEntry? GetParent()
+    {
+        nint nativeResult = GstTocEntryGetParent(Handle);
+        return Gst.TocEntry.FromNative(nativeResult, Gst.Interop.Transfer.None);
+    }
+
+    /// <summary>
+    /// Get @start and @stop values from the @entry and write them into appropriate
+    /// storages.
+    /// </summary>
+    /// <param name="start">The <c>start</c> argument.</param>
+    /// <param name="stop">The <c>stop</c> argument.</param>
+    /// <returns>
+    /// %TRUE if all non-%NULL storage pointers were filled with appropriate
+    /// values, %FALSE otherwise.
+    /// </returns>
+    public bool GetStartStopTimes(out long start, out long stop)
+    {
+        long startNative = default;
+        long stopNative = default;
+        int nativeResult = GstTocEntryGetStartStopTimes(Handle, &startNative, &stopNative);
+        start = startNative;
+        stop = stopNative;
+        return nativeResult != 0;
+    }
+
+    /// <summary>Gets the tags for @entry.</summary>
+    /// <returns>A #GstTagList for @entry</returns>
+    public Gst.TagList? GetTags()
+    {
+        nint nativeResult = GstTocEntryGetTags(Handle);
+        return Gst.TagList.FromNative(nativeResult, Gst.Interop.Transfer.None);
+    }
+
+    /// <summary>Gets the parent #GstToc of @entry.</summary>
+    /// <returns>The parent #GstToc of @entry</returns>
+    public Gst.Toc? GetToc()
+    {
+        nint nativeResult = GstTocEntryGetToc(Handle);
+        return Gst.Toc.FromNative(nativeResult, Gst.Interop.Transfer.None);
+    }
+
+    /// <summary>Gets the UID of @entry.</summary>
+    /// <returns>The UID of @entry</returns>
+    public string GetUid()
+    {
+        nint nativeResult = GstTocEntryGetUid(Handle);
+        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
+            ?? throw new InvalidOperationException("gst_toc_entry_get_uid returned no value.");
+    }
+
+    /// <summary>The <c>gst_toc_entry_is_alternative</c> function.</summary>
+    /// <returns>%TRUE if @entry's type is an alternative type, otherwise %FALSE</returns>
+    public bool IsAlternative()
+    {
+        int nativeResult = GstTocEntryIsAlternative(Handle);
+        return nativeResult != 0;
+    }
+
+    /// <summary>The <c>gst_toc_entry_is_sequence</c> function.</summary>
+    /// <returns>%TRUE if @entry's type is a sequence type, otherwise %FALSE</returns>
+    public bool IsSequence()
+    {
+        int nativeResult = GstTocEntryIsSequence(Handle);
+        return nativeResult != 0;
+    }
+
+    /// <summary>Merge @tags into the existing tags of @entry using @mode.</summary>
+    /// <param name="tags">The <c>tags</c> argument.</param>
+    /// <param name="mode">The <c>mode</c> argument.</param>
+    public void MergeTags(Gst.TagList? tags, Gst.TagMergeMode mode)
+    {
+        GstTocEntryMergeTags(Handle, tags is null ? 0 : tags.Handle, (int)mode);
+    }
+
+    /// <summary>Set @loop_type and @repeat_count values for the @entry.</summary>
+    /// <param name="loopType">The <c>loopType</c> argument.</param>
+    /// <param name="repeatCount">The <c>repeatCount</c> argument.</param>
+    public void SetLoop(Gst.TocLoopType loopType, int repeatCount)
+    {
+        GstTocEntrySetLoop(Handle, (int)loopType, repeatCount);
+    }
+
+    /// <summary>Set @start and @stop values for the @entry.</summary>
+    /// <param name="start">The <c>start</c> argument.</param>
+    /// <param name="stop">The <c>stop</c> argument.</param>
+    public void SetStartStopTimes(long start, long stop)
+    {
+        GstTocEntrySetStartStopTimes(Handle, start, stop);
+    }
+
+    /// <summary>The <c>gst_toc_entry_new</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_toc_entry_new")]
+    private static partial nint GstTocEntryNew(int type, byte* uid);
+
+    /// <summary>The <c>gst_toc_entry_get_entry_type</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_toc_entry_get_entry_type")]
+    private static partial int GstTocEntryGetEntryType(nint entry);
+
+    /// <summary>The <c>gst_toc_entry_get_loop</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_toc_entry_get_loop")]
+    private static partial int GstTocEntryGetLoop(nint entry, int* loopType, int* repeatCount);
+
+    /// <summary>The <c>gst_toc_entry_get_parent</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_toc_entry_get_parent")]
+    private static partial nint GstTocEntryGetParent(nint entry);
+
+    /// <summary>The <c>gst_toc_entry_get_start_stop_times</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_toc_entry_get_start_stop_times")]
+    private static partial int GstTocEntryGetStartStopTimes(nint entry, long* start, long* stop);
+
+    /// <summary>The <c>gst_toc_entry_get_tags</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_toc_entry_get_tags")]
+    private static partial nint GstTocEntryGetTags(nint entry);
+
+    /// <summary>The <c>gst_toc_entry_get_toc</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_toc_entry_get_toc")]
+    private static partial nint GstTocEntryGetToc(nint entry);
+
+    /// <summary>The <c>gst_toc_entry_get_uid</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_toc_entry_get_uid")]
+    private static partial nint GstTocEntryGetUid(nint entry);
+
+    /// <summary>The <c>gst_toc_entry_is_alternative</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_toc_entry_is_alternative")]
+    private static partial int GstTocEntryIsAlternative(nint entry);
+
+    /// <summary>The <c>gst_toc_entry_is_sequence</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_toc_entry_is_sequence")]
+    private static partial int GstTocEntryIsSequence(nint entry);
+
+    /// <summary>The <c>gst_toc_entry_merge_tags</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_toc_entry_merge_tags")]
+    private static partial void GstTocEntryMergeTags(nint entry, nint tags, int mode);
+
+    /// <summary>The <c>gst_toc_entry_set_loop</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_toc_entry_set_loop")]
+    private static partial void GstTocEntrySetLoop(nint entry, int loopType, int repeatCount);
+
+    /// <summary>The <c>gst_toc_entry_set_start_stop_times</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_toc_entry_set_start_stop_times")]
+    private static partial void GstTocEntrySetStartStopTimes(nint entry, long start, long stop);
+
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstTocEntry</c> under.</summary>
-    /// <returns>The boxed type.</returns>
+    /// <returns>The type of the instances of this wrapper.</returns>
     [LibraryImport("Gst", EntryPoint = "gst_toc_entry_get_type")]
-    private static partial nuint TocEntryGetType();
+    internal static partial nuint GetGType();
+
+    /// <summary>Creates the wrapper of a native instance, for the type registry.</summary>
+    /// <param name="handle">The native instance.</param>
+    /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
+    /// <returns>The new wrapper.</returns>
+    internal static object CreateWrapper(nint handle, Gst.Interop.Transfer transfer) => new TocEntry(handle, transfer);
 }

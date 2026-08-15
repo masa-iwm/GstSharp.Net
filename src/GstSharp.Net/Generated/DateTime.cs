@@ -3,6 +3,7 @@
 
 #nullable enable
 
+using System;
 using System.Runtime.InteropServices;
 
 namespace Gst;
@@ -18,13 +19,13 @@ namespace Gst;
 /// [proleptic Gregorian calendar]: https://en.wikipedia.org/wiki/Proleptic_Gregorian_calendar
 /// </para>
 /// </remarks>
-public sealed partial class DateTime : Gst.GObject.Boxed
+public sealed unsafe partial class DateTime : Gst.GObject.Boxed
 {
     /// <summary>Wraps a native <c>GstDateTime</c>.</summary>
     /// <param name="handle">The native instance.</param>
     /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
     internal DateTime(nint handle, Gst.Interop.Transfer transfer)
-        : base(handle, new Gst.GObject.GType(DateTimeGetType()), transfer)
+        : base(handle, new Gst.GObject.GType(GetGType()), transfer)
     {
     }
 
@@ -35,8 +36,546 @@ public sealed partial class DateTime : Gst.GObject.Boxed
     internal static DateTime? FromNative(nint handle, Gst.Interop.Transfer transfer) =>
         handle == 0 ? null : new(handle, transfer);
 
+    /// <summary>
+    /// Creates a new #GstDateTime using the date and times in the gregorian calendar
+    /// in the supplied timezone.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// @year should be from 1 to 9999, @month should be from 1 to 12, @day from
+    /// 1 to 31, @hour from 0 to 23, @minutes and @seconds from 0 to 59.
+    /// </para>
+    /// <para>
+    /// Note that @tzoffset is a float and was chosen so for being able to handle
+    /// some fractional timezones, while it still keeps the readability of
+    /// representing it in hours for most timezones.
+    /// </para>
+    /// <para>
+    /// If value is -1 then all over value will be ignored. For example
+    /// if @month == -1, then #GstDateTime will be created only for @year. If
+    /// @day == -1, then #GstDateTime will be created for @year and @month and
+    /// so on.
+    /// </para>
+    /// </remarks>
+    /// <param name="tzoffset">The <c>tzoffset</c> argument.</param>
+    /// <param name="year">The <c>year</c> argument.</param>
+    /// <param name="month">The <c>month</c> argument.</param>
+    /// <param name="day">The <c>day</c> argument.</param>
+    /// <param name="hour">The <c>hour</c> argument.</param>
+    /// <param name="minute">The <c>minute</c> argument.</param>
+    /// <param name="seconds">The <c>seconds</c> argument.</param>
+    /// <returns>
+    /// the newly created #GstDateTime,
+    /// or %NULL on error.
+    /// </returns>
+    public static Gst.DateTime? New(float tzoffset, int year, int month, int day, int hour, int minute, double seconds)
+    {
+        nint nativeResult = GstDateTimeNew(tzoffset, year, month, day, hour, minute, seconds);
+        return Gst.DateTime.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+    }
+
+    /// <summary>
+    /// Tries to parse common variants of ISO-8601 datetime strings into a
+    /// #GstDateTime. Possible input formats are (for example):
+    /// `2012-06-30T22:46:43Z`, `2012`, `2012-06`, `2012-06-30`, `2012-06-30T22:46:43-0430`,
+    /// `2012-06-30T22:46Z`, `2012-06-30T22:46-0430`, `2012-06-30 22:46`,
+    /// `2012-06-30 22:46:43`, `2012-06-00`, `2012-00-00`, `2012-00-30`, `22:46:43Z`, `22:46Z`,
+    /// `22:46:43-0430`, `22:46-0430`, `22:46:30`, `22:46`
+    /// If no date is provided, it is assumed to be "today" in the timezone
+    /// provided (if any), otherwise UTC.
+    /// </summary>
+    /// <param name="string">The <c>@string</c> argument.</param>
+    /// <returns>
+    /// a newly created #GstDateTime,
+    /// or %NULL on error
+    /// </returns>
+    public static Gst.DateTime? NewFromIso8601String(string @string)
+    {
+        ArgumentNullException.ThrowIfNull(@string);
+        System.Span<byte> @stringBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope @stringScope = Gst.Interop.GMarshal.StackUtf8(@string, @stringBuffer);
+        nint nativeResult = GstDateTimeNewFromIso8601String(@stringScope.Pointer);
+        return Gst.DateTime.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+    }
+
+    /// <summary>
+    /// Creates a new #GstDateTime using the time since Jan 1, 1970 specified by
+    /// @secs. The #GstDateTime is in the local timezone.
+    /// </summary>
+    /// <param name="secs">The <c>secs</c> argument.</param>
+    /// <returns>
+    /// the newly created #GstDateTime,
+    /// or %NULL on error.
+    /// </returns>
+    public static Gst.DateTime? NewFromUnixEpochLocalTime(long secs)
+    {
+        nint nativeResult = GstDateTimeNewFromUnixEpochLocalTime(secs);
+        return Gst.DateTime.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+    }
+
+    /// <summary>
+    /// Creates a new #GstDateTime using the time since Jan 1, 1970 specified by
+    /// @usecs. The #GstDateTime is in the local timezone.
+    /// </summary>
+    /// <param name="usecs">The <c>usecs</c> argument.</param>
+    /// <returns>
+    /// a newly created #GstDateTime, or %NULL
+    /// on error.
+    /// </returns>
+    public static Gst.DateTime? NewFromUnixEpochLocalTimeUsecs(long usecs)
+    {
+        nint nativeResult = GstDateTimeNewFromUnixEpochLocalTimeUsecs(usecs);
+        return Gst.DateTime.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+    }
+
+    /// <summary>
+    /// Creates a new #GstDateTime using the time since Jan 1, 1970 specified by
+    /// @secs. The #GstDateTime is in the UTC timezone.
+    /// </summary>
+    /// <param name="secs">The <c>secs</c> argument.</param>
+    /// <returns>
+    /// the newly created #GstDateTime,
+    /// or %NULL on error.
+    /// </returns>
+    public static Gst.DateTime? NewFromUnixEpochUtc(long secs)
+    {
+        nint nativeResult = GstDateTimeNewFromUnixEpochUtc(secs);
+        return Gst.DateTime.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+    }
+
+    /// <summary>
+    /// Creates a new #GstDateTime using the time since Jan 1, 1970 specified by
+    /// @usecs. The #GstDateTime is in UTC.
+    /// </summary>
+    /// <param name="usecs">The <c>usecs</c> argument.</param>
+    /// <returns>
+    /// a newly created #GstDateTime, or %NULL
+    /// on error.
+    /// </returns>
+    public static Gst.DateTime? NewFromUnixEpochUtcUsecs(long usecs)
+    {
+        nint nativeResult = GstDateTimeNewFromUnixEpochUtcUsecs(usecs);
+        return Gst.DateTime.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+    }
+
+    /// <summary>
+    /// Creates a new #GstDateTime using the date and times in the gregorian calendar
+    /// in the local timezone.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// @year should be from 1 to 9999, @month should be from 1 to 12, @day from
+    /// 1 to 31, @hour from 0 to 23, @minutes and @seconds from 0 to 59.
+    /// </para>
+    /// <para>
+    /// If @month is -1, then the #GstDateTime created will only contain @year,
+    /// and all other fields will be considered not set.
+    /// </para>
+    /// <para>
+    /// If @day is -1, then the #GstDateTime created will only contain @year and
+    /// @month and all other fields will be considered not set.
+    /// </para>
+    /// <para>
+    /// If @hour is -1, then the #GstDateTime created will only contain @year and
+    /// @month and @day, and the time fields will be considered not set. In this
+    /// case @minute and @seconds should also be -1.
+    /// </para>
+    /// </remarks>
+    /// <param name="year">The <c>year</c> argument.</param>
+    /// <param name="month">The <c>month</c> argument.</param>
+    /// <param name="day">The <c>day</c> argument.</param>
+    /// <param name="hour">The <c>hour</c> argument.</param>
+    /// <param name="minute">The <c>minute</c> argument.</param>
+    /// <param name="seconds">The <c>seconds</c> argument.</param>
+    /// <returns>
+    /// the newly created #GstDateTime,
+    /// or %NULL on error.
+    /// </returns>
+    public static Gst.DateTime? NewLocalTime(int year, int month, int day, int hour, int minute, double seconds)
+    {
+        nint nativeResult = GstDateTimeNewLocalTime(year, month, day, hour, minute, seconds);
+        return Gst.DateTime.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+    }
+
+    /// <summary>Creates a new #GstDateTime representing the current date and time.</summary>
+    /// <returns>
+    /// the newly created #GstDateTime which should
+    ///     be freed with gst_date_time_unref(), or %NULL on error.
+    /// </returns>
+    public static Gst.DateTime? NewNowLocalTime()
+    {
+        nint nativeResult = GstDateTimeNewNowLocalTime();
+        return Gst.DateTime.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+    }
+
+    /// <summary>
+    /// Creates a new #GstDateTime that represents the current instant at Universal
+    /// coordinated time.
+    /// </summary>
+    /// <returns>
+    /// the newly created #GstDateTime which should
+    ///   be freed with gst_date_time_unref(), or %NULL on error.
+    /// </returns>
+    public static Gst.DateTime? NewNowUtc()
+    {
+        nint nativeResult = GstDateTimeNewNowUtc();
+        return Gst.DateTime.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+    }
+
+    /// <summary>
+    /// Creates a new #GstDateTime using the date and times in the gregorian calendar
+    /// in the local timezone.
+    /// </summary>
+    /// <remarks>
+    /// <para>@year should be from 1 to 9999.</para>
+    /// </remarks>
+    /// <param name="year">The <c>year</c> argument.</param>
+    /// <returns>
+    /// the newly created #GstDateTime,
+    /// or %NULL on error.
+    /// </returns>
+    public static Gst.DateTime? NewY(int year)
+    {
+        nint nativeResult = GstDateTimeNewY(year);
+        return Gst.DateTime.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+    }
+
+    /// <summary>
+    /// Creates a new #GstDateTime using the date and times in the gregorian calendar
+    /// in the local timezone.
+    /// </summary>
+    /// <remarks>
+    /// <para>@year should be from 1 to 9999, @month should be from 1 to 12.</para>
+    /// <para>
+    /// If value is -1 then all over value will be ignored. For example
+    /// if @month == -1, then #GstDateTime will created only for @year.
+    /// </para>
+    /// </remarks>
+    /// <param name="year">The <c>year</c> argument.</param>
+    /// <param name="month">The <c>month</c> argument.</param>
+    /// <returns>
+    /// the newly created #GstDateTime,
+    /// or %NULL on error.
+    /// </returns>
+    public static Gst.DateTime? NewYm(int year, int month)
+    {
+        nint nativeResult = GstDateTimeNewYm(year, month);
+        return Gst.DateTime.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+    }
+
+    /// <summary>
+    /// Creates a new #GstDateTime using the date and times in the gregorian calendar
+    /// in the local timezone.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// @year should be from 1 to 9999, @month should be from 1 to 12, @day from
+    /// 1 to 31.
+    /// </para>
+    /// <para>
+    /// If value is -1 then all over value will be ignored. For example
+    /// if @month == -1, then #GstDateTime will created only for @year. If
+    /// @day == -1, then #GstDateTime will created for @year and @month and
+    /// so on.
+    /// </para>
+    /// </remarks>
+    /// <param name="year">The <c>year</c> argument.</param>
+    /// <param name="month">The <c>month</c> argument.</param>
+    /// <param name="day">The <c>day</c> argument.</param>
+    /// <returns>
+    /// the newly created #GstDateTime,
+    /// or %NULL on error.
+    /// </returns>
+    public static Gst.DateTime? NewYmd(int year, int month, int day)
+    {
+        nint nativeResult = GstDateTimeNewYmd(year, month, day);
+        return Gst.DateTime.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+    }
+
+    /// <summary>Returns the day of the month of this #GstDateTime.</summary>
+    /// <returns>The day of this #GstDateTime, or -1 if none is set.</returns>
+    public int GetDay()
+    {
+        int nativeResult = GstDateTimeGetDay(Handle);
+        return nativeResult;
+    }
+
+    /// <summary>
+    /// Retrieves the hour of the day represented by @datetime in the gregorian
+    /// calendar. The return is in the range of 0 to 23.
+    /// </summary>
+    /// <returns>the hour of the day, or -1 if none is set.</returns>
+    public int GetHour()
+    {
+        int nativeResult = GstDateTimeGetHour(Handle);
+        return nativeResult;
+    }
+
+    /// <summary>
+    /// Retrieves the fractional part of the seconds in microseconds represented by
+    /// @datetime in the gregorian calendar.
+    /// </summary>
+    /// <returns>the microsecond of the second, or -1 if none is set.</returns>
+    public int GetMicrosecond()
+    {
+        int nativeResult = GstDateTimeGetMicrosecond(Handle);
+        return nativeResult;
+    }
+
+    /// <summary>
+    /// Retrieves the minute of the hour represented by @datetime in the gregorian
+    /// calendar.
+    /// </summary>
+    /// <returns>the minute of the hour, or -1 if none is set.</returns>
+    public int GetMinute()
+    {
+        int nativeResult = GstDateTimeGetMinute(Handle);
+        return nativeResult;
+    }
+
+    /// <summary>Returns the month of this #GstDateTime. January is 1, February is 2, etc..</summary>
+    /// <returns>The month of this #GstDateTime, or -1 if none is set.</returns>
+    public int GetMonth()
+    {
+        int nativeResult = GstDateTimeGetMonth(Handle);
+        return nativeResult;
+    }
+
+    /// <summary>
+    /// Retrieves the second of the minute represented by @datetime in the gregorian
+    /// calendar.
+    /// </summary>
+    /// <returns>the second represented by @datetime, or -1 if none is set.</returns>
+    public int GetSecond()
+    {
+        int nativeResult = GstDateTimeGetSecond(Handle);
+        return nativeResult;
+    }
+
+    /// <summary>
+    /// Retrieves the offset from UTC in hours that the timezone specified
+    /// by @datetime represents. Timezones ahead (to the east) of UTC have positive
+    /// values, timezones before (to the west) of UTC have negative values.
+    /// If @datetime represents UTC time, then the offset is zero.
+    /// </summary>
+    /// <returns>the offset from UTC in hours, or %G_MAXFLOAT if none is set.</returns>
+    public float GetTimeZoneOffset()
+    {
+        float nativeResult = GstDateTimeGetTimeZoneOffset(Handle);
+        return nativeResult;
+    }
+
+    /// <summary>
+    /// Returns the year of this #GstDateTime.
+    /// Call gst_date_time_has_year() before, to avoid warnings.
+    /// </summary>
+    /// <returns>The year of this #GstDateTime</returns>
+    public int GetYear()
+    {
+        int nativeResult = GstDateTimeGetYear(Handle);
+        return nativeResult;
+    }
+
+    /// <summary>The <c>gst_date_time_has_day</c> function.</summary>
+    /// <returns>%TRUE if @datetime&lt;!-- --&gt;'s day field is set, otherwise %FALSE</returns>
+    public bool HasDay()
+    {
+        int nativeResult = GstDateTimeHasDay(Handle);
+        return nativeResult != 0;
+    }
+
+    /// <summary>The <c>gst_date_time_has_month</c> function.</summary>
+    /// <returns>%TRUE if @datetime&lt;!-- --&gt;'s month field is set, otherwise %FALSE</returns>
+    public bool HasMonth()
+    {
+        int nativeResult = GstDateTimeHasMonth(Handle);
+        return nativeResult != 0;
+    }
+
+    /// <summary>The <c>gst_date_time_has_second</c> function.</summary>
+    /// <returns>%TRUE if @datetime&lt;!-- --&gt;'s second field is set, otherwise %FALSE</returns>
+    public bool HasSecond()
+    {
+        int nativeResult = GstDateTimeHasSecond(Handle);
+        return nativeResult != 0;
+    }
+
+    /// <summary>The <c>gst_date_time_has_time</c> function.</summary>
+    /// <returns>
+    /// %TRUE if @datetime&lt;!-- --&gt;'s hour and minute fields are set,
+    ///     otherwise %FALSE
+    /// </returns>
+    public bool HasTime()
+    {
+        int nativeResult = GstDateTimeHasTime(Handle);
+        return nativeResult != 0;
+    }
+
+    /// <summary>The <c>gst_date_time_has_year</c> function.</summary>
+    /// <returns>
+    /// %TRUE if @datetime&lt;!-- --&gt;'s year field is set (which should always
+    ///     be the case), otherwise %FALSE
+    /// </returns>
+    public bool HasYear()
+    {
+        int nativeResult = GstDateTimeHasYear(Handle);
+        return nativeResult != 0;
+    }
+
+    /// <summary>Atomically increments the reference count of @datetime by one.</summary>
+    /// <returns>the reference @datetime</returns>
+    public Gst.DateTime Ref()
+    {
+        nint nativeResult = GstDateTimeRef(Handle);
+        return Gst.DateTime.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_date_time_ref returned no value.");
+    }
+
+    /// <summary>
+    /// Create a minimal string compatible with ISO-8601. Possible output formats
+    /// are (for example): `2012`, `2012-06`, `2012-06-23`, `2012-06-23T23:30Z`,
+    /// `2012-06-23T23:30+0100`, `2012-06-23T23:30:59Z`, `2012-06-23T23:30:59+0100`
+    /// </summary>
+    /// <returns>
+    /// a newly allocated string formatted according
+    ///     to ISO 8601 and only including the datetime fields that are
+    ///     valid, or %NULL in case there was an error.
+    /// </returns>
+    public string? ToIso8601String()
+    {
+        nint nativeResult = GstDateTimeToIso8601String(Handle);
+        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
+    }
+
+    /// <summary>
+    /// Atomically decrements the reference count of @datetime by one.  When the
+    /// reference count reaches zero, the structure is freed.
+    /// </summary>
+    public void Unref()
+    {
+        GstDateTimeUnref(Handle);
+    }
+
+    /// <summary>The <c>gst_date_time_new</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_date_time_new")]
+    private static partial nint GstDateTimeNew(float tzoffset, int year, int month, int day, int hour, int minute, double seconds);
+
+    /// <summary>The <c>gst_date_time_new_from_iso8601_string</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_date_time_new_from_iso8601_string")]
+    private static partial nint GstDateTimeNewFromIso8601String(byte* @string);
+
+    /// <summary>The <c>gst_date_time_new_from_unix_epoch_local_time</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_date_time_new_from_unix_epoch_local_time")]
+    private static partial nint GstDateTimeNewFromUnixEpochLocalTime(long secs);
+
+    /// <summary>The <c>gst_date_time_new_from_unix_epoch_local_time_usecs</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_date_time_new_from_unix_epoch_local_time_usecs")]
+    private static partial nint GstDateTimeNewFromUnixEpochLocalTimeUsecs(long usecs);
+
+    /// <summary>The <c>gst_date_time_new_from_unix_epoch_utc</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_date_time_new_from_unix_epoch_utc")]
+    private static partial nint GstDateTimeNewFromUnixEpochUtc(long secs);
+
+    /// <summary>The <c>gst_date_time_new_from_unix_epoch_utc_usecs</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_date_time_new_from_unix_epoch_utc_usecs")]
+    private static partial nint GstDateTimeNewFromUnixEpochUtcUsecs(long usecs);
+
+    /// <summary>The <c>gst_date_time_new_local_time</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_date_time_new_local_time")]
+    private static partial nint GstDateTimeNewLocalTime(int year, int month, int day, int hour, int minute, double seconds);
+
+    /// <summary>The <c>gst_date_time_new_now_local_time</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_date_time_new_now_local_time")]
+    private static partial nint GstDateTimeNewNowLocalTime();
+
+    /// <summary>The <c>gst_date_time_new_now_utc</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_date_time_new_now_utc")]
+    private static partial nint GstDateTimeNewNowUtc();
+
+    /// <summary>The <c>gst_date_time_new_y</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_date_time_new_y")]
+    private static partial nint GstDateTimeNewY(int year);
+
+    /// <summary>The <c>gst_date_time_new_ym</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_date_time_new_ym")]
+    private static partial nint GstDateTimeNewYm(int year, int month);
+
+    /// <summary>The <c>gst_date_time_new_ymd</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_date_time_new_ymd")]
+    private static partial nint GstDateTimeNewYmd(int year, int month, int day);
+
+    /// <summary>The <c>gst_date_time_get_day</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_date_time_get_day")]
+    private static partial int GstDateTimeGetDay(nint datetime);
+
+    /// <summary>The <c>gst_date_time_get_hour</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_date_time_get_hour")]
+    private static partial int GstDateTimeGetHour(nint datetime);
+
+    /// <summary>The <c>gst_date_time_get_microsecond</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_date_time_get_microsecond")]
+    private static partial int GstDateTimeGetMicrosecond(nint datetime);
+
+    /// <summary>The <c>gst_date_time_get_minute</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_date_time_get_minute")]
+    private static partial int GstDateTimeGetMinute(nint datetime);
+
+    /// <summary>The <c>gst_date_time_get_month</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_date_time_get_month")]
+    private static partial int GstDateTimeGetMonth(nint datetime);
+
+    /// <summary>The <c>gst_date_time_get_second</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_date_time_get_second")]
+    private static partial int GstDateTimeGetSecond(nint datetime);
+
+    /// <summary>The <c>gst_date_time_get_time_zone_offset</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_date_time_get_time_zone_offset")]
+    private static partial float GstDateTimeGetTimeZoneOffset(nint datetime);
+
+    /// <summary>The <c>gst_date_time_get_year</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_date_time_get_year")]
+    private static partial int GstDateTimeGetYear(nint datetime);
+
+    /// <summary>The <c>gst_date_time_has_day</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_date_time_has_day")]
+    private static partial int GstDateTimeHasDay(nint datetime);
+
+    /// <summary>The <c>gst_date_time_has_month</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_date_time_has_month")]
+    private static partial int GstDateTimeHasMonth(nint datetime);
+
+    /// <summary>The <c>gst_date_time_has_second</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_date_time_has_second")]
+    private static partial int GstDateTimeHasSecond(nint datetime);
+
+    /// <summary>The <c>gst_date_time_has_time</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_date_time_has_time")]
+    private static partial int GstDateTimeHasTime(nint datetime);
+
+    /// <summary>The <c>gst_date_time_has_year</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_date_time_has_year")]
+    private static partial int GstDateTimeHasYear(nint datetime);
+
+    /// <summary>The <c>gst_date_time_ref</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_date_time_ref")]
+    private static partial nint GstDateTimeRef(nint datetime);
+
+    /// <summary>The <c>gst_date_time_to_iso8601_string</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_date_time_to_iso8601_string")]
+    private static partial nint GstDateTimeToIso8601String(nint datetime);
+
+    /// <summary>The <c>gst_date_time_unref</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_date_time_unref")]
+    private static partial void GstDateTimeUnref(nint datetime);
+
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstDateTime</c> under.</summary>
-    /// <returns>The boxed type.</returns>
+    /// <returns>The type of the instances of this wrapper.</returns>
     [LibraryImport("Gst", EntryPoint = "gst_date_time_get_type")]
-    private static partial nuint DateTimeGetType();
+    internal static partial nuint GetGType();
+
+    /// <summary>Creates the wrapper of a native instance, for the type registry.</summary>
+    /// <param name="handle">The native instance.</param>
+    /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
+    /// <returns>The new wrapper.</returns>
+    internal static object CreateWrapper(nint handle, Gst.Interop.Transfer transfer) => new DateTime(handle, transfer);
 }

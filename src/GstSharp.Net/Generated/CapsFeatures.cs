@@ -3,6 +3,7 @@
 
 #nullable enable
 
+using System;
 using System.Runtime.InteropServices;
 
 namespace Gst;
@@ -31,13 +32,13 @@ namespace Gst;
 /// `meta:GstMetaAPIName`.
 /// </para>
 /// </remarks>
-public sealed partial class CapsFeatures : Gst.GObject.Boxed
+public sealed unsafe partial class CapsFeatures : Gst.GObject.Boxed
 {
     /// <summary>Wraps a native <c>GstCapsFeatures</c>.</summary>
     /// <param name="handle">The native instance.</param>
     /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
     internal CapsFeatures(nint handle, Gst.Interop.Transfer transfer)
-        : base(handle, new Gst.GObject.GType(CapsFeaturesGetType()), transfer)
+        : base(handle, new Gst.GObject.GType(GetGType()), transfer)
     {
     }
 
@@ -48,8 +49,370 @@ public sealed partial class CapsFeatures : Gst.GObject.Boxed
     internal static CapsFeatures? FromNative(nint handle, Gst.Interop.Transfer transfer) =>
         handle == 0 ? null : new(handle, transfer);
 
+    /// <summary>
+    /// Creates a new, ANY #GstCapsFeatures. This will be equal
+    /// to any other #GstCapsFeatures but caps with these are
+    /// unfixed.
+    /// </summary>
+    /// <returns>a new, ANY #GstCapsFeatures</returns>
+    public static Gst.CapsFeatures NewAny()
+    {
+        nint nativeResult = GstCapsFeaturesNewAny();
+        return Gst.CapsFeatures.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_caps_features_new_any returned no value.");
+    }
+
+    /// <summary>Creates a new, empty #GstCapsFeatures.</summary>
+    /// <returns>a new, empty #GstCapsFeatures</returns>
+    public static Gst.CapsFeatures NewEmpty()
+    {
+        nint nativeResult = GstCapsFeaturesNewEmpty();
+        return Gst.CapsFeatures.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_caps_features_new_empty returned no value.");
+    }
+
+    /// <summary>Creates a new #GstCapsFeatures with a single feature.</summary>
+    /// <param name="feature">The <c>feature</c> argument.</param>
+    /// <returns>a new #GstCapsFeatures</returns>
+    public static Gst.CapsFeatures NewSingle(string feature)
+    {
+        ArgumentNullException.ThrowIfNull(feature);
+        System.Span<byte> featureBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope featureScope = Gst.Interop.GMarshal.StackUtf8(feature, featureBuffer);
+        nint nativeResult = GstCapsFeaturesNewSingle(featureScope.Pointer);
+        return Gst.CapsFeatures.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_caps_features_new_single returned no value.");
+    }
+
+    /// <summary>Creates a new #GstCapsFeatures with a single feature.</summary>
+    /// <remarks>
+    /// <para>
+    /// @feature needs to be valid for the remaining lifetime of the process, e.g. has
+    /// to be a static string.
+    /// </para>
+    /// </remarks>
+    /// <param name="feature">The <c>feature</c> argument.</param>
+    /// <returns>a new #GstCapsFeatures</returns>
+    public static Gst.CapsFeatures NewSingleStaticStr(string feature)
+    {
+        ArgumentNullException.ThrowIfNull(feature);
+        System.Span<byte> featureBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope featureScope = Gst.Interop.GMarshal.StackUtf8(feature, featureBuffer);
+        nint nativeResult = GstCapsFeaturesNewSingleStaticStr(featureScope.Pointer);
+        return Gst.CapsFeatures.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_caps_features_new_single_static_str returned no value.");
+    }
+
+    /// <summary>Adds @feature to @features.</summary>
+    /// <param name="feature">The <c>feature</c> argument.</param>
+    public void Add(string feature)
+    {
+        ArgumentNullException.ThrowIfNull(feature);
+        System.Span<byte> featureBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope featureScope = Gst.Interop.GMarshal.StackUtf8(feature, featureBuffer);
+        GstCapsFeaturesAdd(Handle, featureScope.Pointer);
+    }
+
+    /// <summary>Adds @feature to @features.</summary>
+    /// <param name="feature">The <c>feature</c> argument.</param>
+    [Obsolete("Use gst_caps_features_add_id_str(). (deprecated since 1.26)")]
+    public void AddId(Gst.GLib.Quark feature)
+    {
+        GstCapsFeaturesAddId(Handle, feature.Value);
+    }
+
+    /// <summary>Adds @feature to @features.</summary>
+    /// <param name="feature">The <c>feature</c> argument.</param>
+    public void AddIdStr(Gst.IdStr feature)
+    {
+        ArgumentNullException.ThrowIfNull(feature);
+        GstCapsFeaturesAddIdStr(Handle, feature.Handle);
+    }
+
+    /// <summary>Adds @feature to @features.</summary>
+    /// <remarks>
+    /// <para>
+    /// @feature needs to be valid for the remaining lifetime of the process, e.g. has
+    /// to be a static string.
+    /// </para>
+    /// </remarks>
+    /// <param name="feature">The <c>feature</c> argument.</param>
+    public void AddStaticStr(string feature)
+    {
+        ArgumentNullException.ThrowIfNull(feature);
+        System.Span<byte> featureBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope featureScope = Gst.Interop.GMarshal.StackUtf8(feature, featureBuffer);
+        GstCapsFeaturesAddStaticStr(Handle, featureScope.Pointer);
+    }
+
+    /// <summary>Checks if @features contains @feature.</summary>
+    /// <param name="feature">The <c>feature</c> argument.</param>
+    /// <returns>%TRUE if @features contains @feature.</returns>
+    public bool Contains(string feature)
+    {
+        ArgumentNullException.ThrowIfNull(feature);
+        System.Span<byte> featureBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope featureScope = Gst.Interop.GMarshal.StackUtf8(feature, featureBuffer);
+        int nativeResult = GstCapsFeaturesContains(Handle, featureScope.Pointer);
+        return nativeResult != 0;
+    }
+
+    /// <summary>Checks if @features contains @feature.</summary>
+    /// <param name="feature">The <c>feature</c> argument.</param>
+    /// <returns>%TRUE if @features contains @feature.</returns>
+    [Obsolete("Use gst_caps_features_contains_id_str(). (deprecated since 1.26)")]
+    public bool ContainsId(Gst.GLib.Quark feature)
+    {
+        int nativeResult = GstCapsFeaturesContainsId(Handle, feature.Value);
+        return nativeResult != 0;
+    }
+
+    /// <summary>Checks if @features contains @feature.</summary>
+    /// <param name="feature">The <c>feature</c> argument.</param>
+    /// <returns>%TRUE if @features contains @feature.</returns>
+    public bool ContainsIdStr(Gst.IdStr feature)
+    {
+        ArgumentNullException.ThrowIfNull(feature);
+        int nativeResult = GstCapsFeaturesContainsIdStr(Handle, feature.Handle);
+        return nativeResult != 0;
+    }
+
+    /// <summary>Duplicates a #GstCapsFeatures and all its values.</summary>
+    /// <returns>a new #GstCapsFeatures.</returns>
+    public Gst.CapsFeatures Copy()
+    {
+        nint nativeResult = GstCapsFeaturesCopy(Handle);
+        return Gst.CapsFeatures.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_caps_features_copy returned no value.");
+    }
+
+    /// <summary>
+    /// Frees a #GstCapsFeatures and all its values. The caps features must not
+    /// have a parent when this function is called.
+    /// </summary>
+    public void Free()
+    {
+        GstCapsFeaturesFree(Handle);
+    }
+
+    /// <summary>Returns the @i-th feature of @features.</summary>
+    /// <param name="i">The <c>i</c> argument.</param>
+    /// <returns>The @i-th feature of @features.</returns>
+    public string? GetNth(uint i)
+    {
+        nint nativeResult = GstCapsFeaturesGetNth(Handle, i);
+        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
+    }
+
+    /// <summary>Returns the @i-th feature of @features.</summary>
+    /// <param name="i">The <c>i</c> argument.</param>
+    /// <returns>The @i-th feature of @features.</returns>
+    [Obsolete("Use gst_caps_features_get_nth_id_str(). (deprecated since 1.26)")]
+    public Gst.GLib.Quark GetNthId(uint i)
+    {
+        uint nativeResult = GstCapsFeaturesGetNthId(Handle, i);
+        return new Gst.GLib.Quark(nativeResult);
+    }
+
+    /// <summary>Returns the @i-th feature of @features.</summary>
+    /// <param name="i">The <c>i</c> argument.</param>
+    /// <returns>The @i-th feature of @features.</returns>
+    public Gst.IdStr GetNthIdStr(uint i)
+    {
+        nint nativeResult = GstCapsFeaturesGetNthIdStr(Handle, i);
+        return Gst.IdStr.FromNative(nativeResult, Gst.Interop.Transfer.None)
+            ?? throw new InvalidOperationException("gst_caps_features_get_nth_id_str returned no value.");
+    }
+
+    /// <summary>Returns the number of features in @features.</summary>
+    /// <returns>The number of features in @features.</returns>
+    public uint GetSize()
+    {
+        uint nativeResult = GstCapsFeaturesGetSize(Handle);
+        return nativeResult;
+    }
+
+    /// <summary>Checks if @features is %GST_CAPS_FEATURES_ANY.</summary>
+    /// <returns>%TRUE if @features is %GST_CAPS_FEATURES_ANY.</returns>
+    public bool IsAny()
+    {
+        int nativeResult = GstCapsFeaturesIsAny(Handle);
+        return nativeResult != 0;
+    }
+
+    /// <summary>Checks if @features1 and @features2 are equal.</summary>
+    /// <param name="features2">The <c>features2</c> argument.</param>
+    /// <returns>%TRUE if @features1 and @features2 are equal.</returns>
+    public bool IsEqual(Gst.CapsFeatures features2)
+    {
+        ArgumentNullException.ThrowIfNull(features2);
+        int nativeResult = GstCapsFeaturesIsEqual(Handle, features2.Handle);
+        return nativeResult != 0;
+    }
+
+    /// <summary>Removes @feature from @features.</summary>
+    /// <param name="feature">The <c>feature</c> argument.</param>
+    public void Remove(string feature)
+    {
+        ArgumentNullException.ThrowIfNull(feature);
+        System.Span<byte> featureBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope featureScope = Gst.Interop.GMarshal.StackUtf8(feature, featureBuffer);
+        GstCapsFeaturesRemove(Handle, featureScope.Pointer);
+    }
+
+    /// <summary>Removes @feature from @features.</summary>
+    /// <param name="feature">The <c>feature</c> argument.</param>
+    [Obsolete("Use gst_caps_features_remove_id_str(). (deprecated since 1.26)")]
+    public void RemoveId(Gst.GLib.Quark feature)
+    {
+        GstCapsFeaturesRemoveId(Handle, feature.Value);
+    }
+
+    /// <summary>Removes @feature from @features.</summary>
+    /// <param name="feature">The <c>feature</c> argument.</param>
+    public void RemoveIdStr(Gst.IdStr feature)
+    {
+        ArgumentNullException.ThrowIfNull(feature);
+        GstCapsFeaturesRemoveIdStr(Handle, feature.Handle);
+    }
+
+    /// <summary>Converts @features to a human-readable string representation.</summary>
+    /// <remarks>
+    /// <para>For debugging purposes its easier to do something like this:</para>
+    /// <para>
+    /// ``` C
+    /// GST_LOG ("features is %" GST_PTR_FORMAT, features);
+    /// ```
+    /// </para>
+    /// <para>This prints the features in human readable form.</para>
+    /// </remarks>
+    /// <returns>a pointer to string allocated by g_malloc().</returns>
+    public override string ToString()
+    {
+        nint nativeResult = GstCapsFeaturesToString(Handle);
+        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
+            ?? throw new InvalidOperationException("gst_caps_features_to_string returned no value.");
+    }
+
+    /// <summary>Creates a #GstCapsFeatures from a string representation.</summary>
+    /// <param name="features">The <c>features</c> argument.</param>
+    /// <returns>
+    /// a new #GstCapsFeatures or
+    ///     %NULL when the string could not be parsed.
+    /// </returns>
+    public static Gst.CapsFeatures? FromString(string features)
+    {
+        ArgumentNullException.ThrowIfNull(features);
+        System.Span<byte> featuresBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope featuresScope = Gst.Interop.GMarshal.StackUtf8(features, featuresBuffer);
+        nint nativeResult = GstCapsFeaturesFromString(featuresScope.Pointer);
+        return Gst.CapsFeatures.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+    }
+
+    /// <summary>The <c>gst_caps_features_new_any</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_features_new_any")]
+    private static partial nint GstCapsFeaturesNewAny();
+
+    /// <summary>The <c>gst_caps_features_new_empty</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_features_new_empty")]
+    private static partial nint GstCapsFeaturesNewEmpty();
+
+    /// <summary>The <c>gst_caps_features_new_single</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_features_new_single")]
+    private static partial nint GstCapsFeaturesNewSingle(byte* feature);
+
+    /// <summary>The <c>gst_caps_features_new_single_static_str</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_features_new_single_static_str")]
+    private static partial nint GstCapsFeaturesNewSingleStaticStr(byte* feature);
+
+    /// <summary>The <c>gst_caps_features_add</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_features_add")]
+    private static partial void GstCapsFeaturesAdd(nint features, byte* feature);
+
+    /// <summary>The <c>gst_caps_features_add_id</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_features_add_id")]
+    private static partial void GstCapsFeaturesAddId(nint features, uint feature);
+
+    /// <summary>The <c>gst_caps_features_add_id_str</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_features_add_id_str")]
+    private static partial void GstCapsFeaturesAddIdStr(nint features, nint feature);
+
+    /// <summary>The <c>gst_caps_features_add_static_str</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_features_add_static_str")]
+    private static partial void GstCapsFeaturesAddStaticStr(nint features, byte* feature);
+
+    /// <summary>The <c>gst_caps_features_contains</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_features_contains")]
+    private static partial int GstCapsFeaturesContains(nint features, byte* feature);
+
+    /// <summary>The <c>gst_caps_features_contains_id</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_features_contains_id")]
+    private static partial int GstCapsFeaturesContainsId(nint features, uint feature);
+
+    /// <summary>The <c>gst_caps_features_contains_id_str</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_features_contains_id_str")]
+    private static partial int GstCapsFeaturesContainsIdStr(nint features, nint feature);
+
+    /// <summary>The <c>gst_caps_features_copy</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_features_copy")]
+    private static partial nint GstCapsFeaturesCopy(nint features);
+
+    /// <summary>The <c>gst_caps_features_free</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_features_free")]
+    private static partial void GstCapsFeaturesFree(nint features);
+
+    /// <summary>The <c>gst_caps_features_get_nth</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_features_get_nth")]
+    private static partial nint GstCapsFeaturesGetNth(nint features, uint i);
+
+    /// <summary>The <c>gst_caps_features_get_nth_id</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_features_get_nth_id")]
+    private static partial uint GstCapsFeaturesGetNthId(nint features, uint i);
+
+    /// <summary>The <c>gst_caps_features_get_nth_id_str</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_features_get_nth_id_str")]
+    private static partial nint GstCapsFeaturesGetNthIdStr(nint features, uint i);
+
+    /// <summary>The <c>gst_caps_features_get_size</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_features_get_size")]
+    private static partial uint GstCapsFeaturesGetSize(nint features);
+
+    /// <summary>The <c>gst_caps_features_is_any</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_features_is_any")]
+    private static partial int GstCapsFeaturesIsAny(nint features);
+
+    /// <summary>The <c>gst_caps_features_is_equal</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_features_is_equal")]
+    private static partial int GstCapsFeaturesIsEqual(nint features1, nint features2);
+
+    /// <summary>The <c>gst_caps_features_remove</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_features_remove")]
+    private static partial void GstCapsFeaturesRemove(nint features, byte* feature);
+
+    /// <summary>The <c>gst_caps_features_remove_id</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_features_remove_id")]
+    private static partial void GstCapsFeaturesRemoveId(nint features, uint feature);
+
+    /// <summary>The <c>gst_caps_features_remove_id_str</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_features_remove_id_str")]
+    private static partial void GstCapsFeaturesRemoveIdStr(nint features, nint feature);
+
+    /// <summary>The <c>gst_caps_features_to_string</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_features_to_string")]
+    private static partial nint GstCapsFeaturesToString(nint features);
+
+    /// <summary>The <c>gst_caps_features_from_string</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_features_from_string")]
+    private static partial nint GstCapsFeaturesFromString(byte* features);
+
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstCapsFeatures</c> under.</summary>
-    /// <returns>The boxed type.</returns>
+    /// <returns>The type of the instances of this wrapper.</returns>
     [LibraryImport("Gst", EntryPoint = "gst_caps_features_get_type")]
-    private static partial nuint CapsFeaturesGetType();
+    internal static partial nuint GetGType();
+
+    /// <summary>Creates the wrapper of a native instance, for the type registry.</summary>
+    /// <param name="handle">The native instance.</param>
+    /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
+    /// <returns>The new wrapper.</returns>
+    internal static object CreateWrapper(nint handle, Gst.Interop.Transfer transfer) => new CapsFeatures(handle, transfer);
 }

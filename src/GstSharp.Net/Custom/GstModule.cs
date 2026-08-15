@@ -8,7 +8,7 @@ namespace Gst;
 /// <summary>
 /// Registers this assembly with the native loader and the type registry.
 /// </summary>
-internal static class GstModule
+internal static partial class GstModule
 {
     /// <summary>
     /// Runs before any code of this assembly: it hooks
@@ -34,6 +34,6 @@ internal static class GstModule
         // The generated type table of the module replaces the empty one as soon
         // as the class emitter lands; registering an empty module keeps the
         // registration path exercised until then.
-        TypeRegistry.RegisterModule(new NativeModule("Gst", []));
+        TypeRegistry.RegisterModule(new NativeModule("Gst", CreateEntries()));
     }
 }

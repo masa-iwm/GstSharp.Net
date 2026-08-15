@@ -3,6 +3,7 @@
 
 #nullable enable
 
+using System;
 using System.Runtime.InteropServices;
 
 namespace Gst;
@@ -168,6 +169,714 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>
     internal static Buffer? FromNative(nint handle, Gst.Interop.Transfer transfer) =>
         handle == 0 ? null : new(handle, transfer);
+
+    /// <summary>Creates a newly allocated buffer without any data.</summary>
+    /// <returns>the new #GstBuffer.</returns>
+    public static Gst.Buffer New()
+    {
+        nint nativeResult = GstBufferNew();
+        return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_buffer_new returned no value.");
+    }
+
+    /// <summary>
+    /// Tries to create a newly allocated buffer with data of the given size and
+    /// extra parameters from @allocator. If the requested amount of memory can't be
+    /// allocated, %NULL will be returned. The allocated buffer memory is not cleared.
+    /// </summary>
+    /// <remarks>
+    /// <para>When @allocator is %NULL, the default memory allocator will be used.</para>
+    /// <para>Note that when @size == 0, the buffer will not have memory associated with it.</para>
+    /// </remarks>
+    /// <param name="allocator">The <c>allocator</c> argument.</param>
+    /// <param name="size">The <c>size</c> argument.</param>
+    /// <param name="params">The <c>@params</c> argument.</param>
+    /// <returns>a new #GstBuffer</returns>
+    public static Gst.Buffer? NewAllocate(Gst.Allocator? allocator, nuint size, Gst.AllocationParams? @params)
+    {
+        nint nativeResult = GstBufferNewAllocate(allocator is null ? 0 : allocator.Handle, size, @params is null ? 0 : @params.Handle);
+        return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+    }
+
+    /// <summary>Creates a new buffer of size @size and fills it with a copy of @data.</summary>
+    /// <param name="data">data to copy into new buffer</param>
+    /// <returns>a new #GstBuffer</returns>
+    public static Gst.Buffer NewMemdup(System.ReadOnlySpan<byte> data)
+    {
+        fixed (byte* dataPointer = data)
+        {
+            nint nativeResult = GstBufferNewMemdup(dataPointer, (nuint)data.Length);
+            return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+                ?? throw new InvalidOperationException("gst_buffer_new_memdup returned no value.");
+        }
+    }
+
+    /// <summary>
+    /// Creates a copy of the given buffer. This will make a newly allocated
+    /// copy of the data the source buffer contains.
+    /// </summary>
+    /// <returns>a new copy of @buf if the copy succeeded, %NULL otherwise.</returns>
+    public Gst.Buffer? CopyDeep()
+    {
+        nint nativeResult = GstBufferCopyDeep(Handle);
+        return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+    }
+
+    /// <summary>Copies the information from @src into @dest.</summary>
+    /// <remarks>
+    /// <para>
+    /// If @dest already contains memory and @flags contains GST_BUFFER_COPY_MEMORY,
+    /// the memory from @src will be appended to @dest.
+    /// </para>
+    /// <para>@flags indicate which fields will be copied.</para>
+    /// </remarks>
+    /// <param name="src">The <c>src</c> argument.</param>
+    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <param name="offset">The <c>offset</c> argument.</param>
+    /// <param name="size">The <c>size</c> argument.</param>
+    /// <returns>%TRUE if the copying succeeded, %FALSE otherwise.</returns>
+    public bool CopyInto(Gst.Buffer src, Gst.BufferCopyFlags flags, nuint offset, nuint size)
+    {
+        ArgumentNullException.ThrowIfNull(src);
+        int nativeResult = GstBufferCopyInto(Handle, src.Handle, (int)flags, offset, size);
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Creates a sub-buffer from @parent at @offset and @size.
+    /// This sub-buffer uses the actual memory space of the parent buffer.
+    /// This function will copy the offset and timestamp fields when the
+    /// offset is 0. If not, they will be set to #GST_CLOCK_TIME_NONE and
+    /// #GST_BUFFER_OFFSET_NONE.
+    /// If @offset equals 0 and @size equals the total size of @buffer, the
+    /// duration and offset end fields are also copied. If not they will be set
+    /// to #GST_CLOCK_TIME_NONE and #GST_BUFFER_OFFSET_NONE.
+    /// </summary>
+    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <param name="offset">The <c>offset</c> argument.</param>
+    /// <param name="size">The <c>size</c> argument.</param>
+    /// <returns>
+    /// the new #GstBuffer or %NULL if copying
+    ///     failed.
+    /// </returns>
+    public Gst.Buffer? CopyRegion(Gst.BufferCopyFlags flags, nuint offset, nuint size)
+    {
+        nint nativeResult = GstBufferCopyRegion(Handle, (int)flags, offset, size);
+        return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+    }
+
+    /// <summary>
+    /// Extracts a copy of at most @size bytes the data at @offset into
+    /// newly-allocated memory. @dest must be freed using g_free() when done.
+    /// </summary>
+    /// <param name="offset">The <c>offset</c> argument.</param>
+    /// <param name="size">The <c>size</c> argument.</param>
+    /// <param name="dest">
+    /// A pointer where
+    ///  the destination array will be written. Might be %NULL if the size is 0.
+    /// </param>
+    public void ExtractDup(nuint offset, nuint size, out byte[]? dest)
+    {
+        nint destNative = default;
+        nuint destSizeNative = default;
+        GstBufferExtractDup(Handle, offset, size, &destNative, &destSizeNative);
+        dest = null;
+        if (destNative != 0)
+        {
+            dest = new byte[(int)destSizeNative];
+            new System.ReadOnlySpan<byte>((void*)destNative, (int)destSizeNative).CopyTo(dest);
+            Gst.Interop.GMarshal.Free(destNative);
+        }
+    }
+
+    /// <summary>Copies @size bytes from @src to @buffer at @offset.</summary>
+    /// <param name="offset">The <c>offset</c> argument.</param>
+    /// <param name="src">the source address</param>
+    /// <returns>
+    /// The amount of bytes copied. This value can be lower than @size
+    ///    when @buffer did not contain enough data.
+    /// </returns>
+    public nuint Fill(nuint offset, System.ReadOnlySpan<byte> src)
+    {
+        fixed (byte* srcPointer = src)
+        {
+            nuint nativeResult = GstBufferFill(Handle, offset, srcPointer, (nuint)src.Length);
+            return nativeResult;
+        }
+    }
+
+    /// <summary>
+    /// Finds the memory blocks that span @size bytes starting from @offset
+    /// in @buffer.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// When this function returns %TRUE, @idx will contain the index of the first
+    /// memory block where the byte for @offset can be found and @length contains the
+    /// number of memory blocks containing the @size remaining bytes. @skip contains
+    /// the number of bytes to skip in the memory block at @idx to get to the byte
+    /// for @offset.
+    /// </para>
+    /// <para>@size can be -1 to get all the memory blocks after @idx.</para>
+    /// </remarks>
+    /// <param name="offset">The <c>offset</c> argument.</param>
+    /// <param name="size">The <c>size</c> argument.</param>
+    /// <param name="idx">The <c>idx</c> argument.</param>
+    /// <param name="length">The <c>length</c> argument.</param>
+    /// <param name="skip">The <c>skip</c> argument.</param>
+    /// <returns>
+    /// %TRUE when @size bytes starting from @offset could be found in
+    /// @buffer and @idx, @length and @skip will be filled.
+    /// </returns>
+    public bool FindMemory(nuint offset, nuint size, out uint idx, out uint length, out nuint skip)
+    {
+        uint idxNative = default;
+        uint lengthNative = default;
+        nuint skipNative = default;
+        int nativeResult = GstBufferFindMemory(Handle, offset, size, &idxNative, &lengthNative, &skipNative);
+        idx = idxNative;
+        length = lengthNative;
+        skip = skipNative;
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Gets all the memory blocks in @buffer. The memory blocks will be merged
+    /// into one large #GstMemory.
+    /// </summary>
+    /// <returns>a #GstMemory that contains the merged memory.</returns>
+    public Gst.Memory? GetAllMemory()
+    {
+        nint nativeResult = GstBufferGetAllMemory(Handle);
+        return Gst.Memory.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+    }
+
+    /// <summary>Gets the #GstBufferFlags flags set on this buffer.</summary>
+    /// <returns>the flags set on this buffer.</returns>
+    public Gst.BufferFlags GetFlags()
+    {
+        int nativeResult = GstBufferGetFlags(Handle);
+        return (Gst.BufferFlags)nativeResult;
+    }
+
+    /// <summary>Gets the memory block at index @idx in @buffer.</summary>
+    /// <param name="idx">The <c>idx</c> argument.</param>
+    /// <returns>
+    /// a #GstMemory that contains the data of the
+    /// memory block at @idx.
+    /// </returns>
+    public Gst.Memory? GetMemory(uint idx)
+    {
+        nint nativeResult = GstBufferGetMemory(Handle, idx);
+        return Gst.Memory.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+    }
+
+    /// <summary>
+    /// Gets @length memory blocks in @buffer starting at @idx. The memory blocks will
+    /// be merged into one large #GstMemory.
+    /// </summary>
+    /// <remarks>
+    /// <para>If @length is -1, all memory starting from @idx is merged.</para>
+    /// </remarks>
+    /// <param name="idx">The <c>idx</c> argument.</param>
+    /// <param name="length">The <c>length</c> argument.</param>
+    /// <returns>
+    /// a #GstMemory that contains the merged data of @length
+    ///    blocks starting at @idx.
+    /// </returns>
+    public Gst.Memory? GetMemoryRange(uint idx, int length)
+    {
+        nint nativeResult = GstBufferGetMemoryRange(Handle, idx, length);
+        return Gst.Memory.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+    }
+
+    /// <summary>The <c>gst_buffer_get_n_meta</c> function.</summary>
+    /// <param name="apiType">The <c>apiType</c> argument.</param>
+    /// <returns>number of metas of type @api_type on @buffer.</returns>
+    public uint GetNMeta(Gst.GObject.GType apiType)
+    {
+        uint nativeResult = GstBufferGetNMeta(Handle, apiType.Value);
+        return nativeResult;
+    }
+
+    /// <summary>Gets the total size of the memory blocks in @buffer.</summary>
+    /// <returns>total size of the memory blocks in @buffer.</returns>
+    public nuint GetSize()
+    {
+        nuint nativeResult = GstBufferGetSize(Handle);
+        return nativeResult;
+    }
+
+    /// <summary>Gets the total size of the memory blocks in @buffer.</summary>
+    /// <remarks>
+    /// <para>
+    /// When not %NULL, @offset will contain the offset of the data in the
+    /// first memory block in @buffer and @maxsize will contain the sum of
+    /// the size and @offset and the amount of extra padding on the last
+    /// memory block.  @offset and @maxsize can be used to resize the
+    /// buffer memory blocks with gst_buffer_resize().
+    /// </para>
+    /// </remarks>
+    /// <param name="offset">The <c>offset</c> argument.</param>
+    /// <param name="maxsize">The <c>maxsize</c> argument.</param>
+    /// <returns>total size of the memory blocks in @buffer.</returns>
+    public nuint GetSizes(out nuint offset, out nuint maxsize)
+    {
+        nuint offsetNative = default;
+        nuint maxsizeNative = default;
+        nuint nativeResult = GstBufferGetSizes(Handle, &offsetNative, &maxsizeNative);
+        offset = offsetNative;
+        maxsize = maxsizeNative;
+        return nativeResult;
+    }
+
+    /// <summary>Gets the total size of @length memory blocks stating from @idx in @buffer.</summary>
+    /// <remarks>
+    /// <para>
+    /// When not %NULL, @offset will contain the offset of the data in the
+    /// memory block in @buffer at @idx and @maxsize will contain the sum of the size
+    /// and @offset and the amount of extra padding on the memory block at @idx +
+    /// @length -1.
+    /// @offset and @maxsize can be used to resize the buffer memory blocks with
+    /// gst_buffer_resize_range().
+    /// </para>
+    /// </remarks>
+    /// <param name="idx">The <c>idx</c> argument.</param>
+    /// <param name="length">The <c>length</c> argument.</param>
+    /// <param name="offset">The <c>offset</c> argument.</param>
+    /// <param name="maxsize">The <c>maxsize</c> argument.</param>
+    /// <returns>total size of @length memory blocks starting at @idx in @buffer.</returns>
+    public nuint GetSizesRange(uint idx, int length, out nuint offset, out nuint maxsize)
+    {
+        nuint offsetNative = default;
+        nuint maxsizeNative = default;
+        nuint nativeResult = GstBufferGetSizesRange(Handle, idx, length, &offsetNative, &maxsizeNative);
+        offset = offsetNative;
+        maxsize = maxsizeNative;
+        return nativeResult;
+    }
+
+    /// <summary>Gives the status of a specific flag on a buffer.</summary>
+    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <returns>%TRUE if all flags in @flags are found on @buffer.</returns>
+    public bool HasFlags(Gst.BufferFlags flags)
+    {
+        int nativeResult = GstBufferHasFlags(Handle, (int)flags);
+        return nativeResult != 0;
+    }
+
+    /// <summary>Checks if all memory blocks in @buffer are writable.</summary>
+    /// <remarks>
+    /// <para>
+    /// Note that this function does not check if @buffer is writable, use
+    /// gst_buffer_is_writable() to check that if needed.
+    /// </para>
+    /// </remarks>
+    /// <returns>%TRUE if all memory blocks in @buffer are writable</returns>
+    public bool IsAllMemoryWritable()
+    {
+        int nativeResult = GstBufferIsAllMemoryWritable(Handle);
+        return nativeResult != 0;
+    }
+
+    /// <summary>Checks if @length memory blocks in @buffer starting from @idx are writable.</summary>
+    /// <remarks>
+    /// <para>@length can be -1 to check all the memory blocks after @idx.</para>
+    /// <para>
+    /// Note that this function does not check if @buffer is writable, use
+    /// gst_buffer_is_writable() to check that if needed.
+    /// </para>
+    /// </remarks>
+    /// <param name="idx">The <c>idx</c> argument.</param>
+    /// <param name="length">The <c>length</c> argument.</param>
+    /// <returns>%TRUE if the memory range is writable</returns>
+    public bool IsMemoryRangeWritable(uint idx, int length)
+    {
+        int nativeResult = GstBufferIsMemoryRangeWritable(Handle, idx, length);
+        return nativeResult != 0;
+    }
+
+    /// <summary>Fills @info with the #GstMapInfo of all merged memory blocks in @buffer.</summary>
+    /// <remarks>
+    /// <para>
+    /// @flags describe the desired access of the memory. When @flags is
+    /// #GST_MAP_WRITE, @buffer should be writable (as returned from
+    /// gst_buffer_is_writable()).
+    /// </para>
+    /// <para>
+    /// When @buffer is writable but the memory isn't, a writable copy will
+    /// automatically be created and returned. The readonly copy of the
+    /// buffer memory will then also be replaced with this writable copy.
+    /// </para>
+    /// <para>
+    /// The memory in @info should be unmapped with gst_buffer_unmap() after
+    /// usage.
+    /// </para>
+    /// </remarks>
+    /// <param name="info">The <c>info</c> argument.</param>
+    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <returns>%TRUE if the map succeeded and @info contains valid data.</returns>
+    public bool Map(out Gst.MapInfo info, Gst.MapFlags flags)
+    {
+        Gst.MapInfo infoNative = default;
+        int nativeResult = GstBufferMap(Handle, &infoNative, (int)flags);
+        info = infoNative;
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Fills @info with the #GstMapInfo of @length merged memory blocks
+    /// starting at @idx in @buffer. When @length is -1, all memory blocks starting
+    /// from @idx are merged and mapped.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// @flags describe the desired access of the memory. When @flags is
+    /// #GST_MAP_WRITE, @buffer should be writable (as returned from
+    /// gst_buffer_is_writable()).
+    /// </para>
+    /// <para>
+    /// When @buffer is writable but the memory isn't, a writable copy will
+    /// automatically be created and returned. The readonly copy of the buffer memory
+    /// will then also be replaced with this writable copy.
+    /// </para>
+    /// <para>The memory in @info should be unmapped with gst_buffer_unmap() after usage.</para>
+    /// </remarks>
+    /// <param name="idx">The <c>idx</c> argument.</param>
+    /// <param name="length">The <c>length</c> argument.</param>
+    /// <param name="info">The <c>info</c> argument.</param>
+    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <returns>
+    /// %TRUE if the map succeeded and @info contains valid
+    /// data.
+    /// </returns>
+    public bool MapRange(uint idx, int length, out Gst.MapInfo info, Gst.MapFlags flags)
+    {
+        Gst.MapInfo infoNative = default;
+        int nativeResult = GstBufferMapRange(Handle, idx, length, &infoNative, (int)flags);
+        info = infoNative;
+        return nativeResult != 0;
+    }
+
+    /// <summary>Compares @size bytes starting from @offset in @buffer with the memory in @mem.</summary>
+    /// <param name="offset">The <c>offset</c> argument.</param>
+    /// <param name="mem">the memory to compare</param>
+    /// <returns>0 if the memory is equal.</returns>
+    public int Memcmp(nuint offset, System.ReadOnlySpan<byte> mem)
+    {
+        fixed (byte* memPointer = mem)
+        {
+            int nativeResult = GstBufferMemcmp(Handle, offset, memPointer, (nuint)mem.Length);
+            return nativeResult;
+        }
+    }
+
+    /// <summary>Fills @buf with @size bytes with @val starting from @offset.</summary>
+    /// <param name="offset">The <c>offset</c> argument.</param>
+    /// <param name="val">The <c>val</c> argument.</param>
+    /// <param name="size">The <c>size</c> argument.</param>
+    /// <returns>
+    /// The amount of bytes filled. This value can be lower than @size
+    ///    when @buffer did not contain enough data.
+    /// </returns>
+    public nuint Memset(nuint offset, byte val, nuint size)
+    {
+        nuint nativeResult = GstBufferMemset(Handle, offset, val, size);
+        return nativeResult;
+    }
+
+    /// <summary>
+    /// Gets the amount of memory blocks that this buffer has. This amount is never
+    /// larger than what gst_buffer_get_max_memory() returns.
+    /// </summary>
+    /// <returns>the number of memory blocks this buffer is made of.</returns>
+    public uint NMemory()
+    {
+        uint nativeResult = GstBufferNMemory(Handle);
+        return nativeResult;
+    }
+
+    /// <summary>
+    /// Gets the memory block at @idx in @buffer. The memory block stays valid until
+    /// the memory block in @buffer is removed, replaced or merged, typically with
+    /// any call that modifies the memory in @buffer.
+    /// </summary>
+    /// <param name="idx">The <c>idx</c> argument.</param>
+    /// <returns>the #GstMemory at @idx.</returns>
+    public Gst.Memory? PeekMemory(uint idx)
+    {
+        nint nativeResult = GstBufferPeekMemory(Handle, idx);
+        return Gst.Memory.FromNative(nativeResult, Gst.Interop.Transfer.None);
+    }
+
+    /// <summary>Removes all the memory blocks in @buffer.</summary>
+    public void RemoveAllMemory()
+    {
+        GstBufferRemoveAllMemory(Handle);
+    }
+
+    /// <summary>Removes the memory block in @b at index @i.</summary>
+    /// <param name="idx">The <c>idx</c> argument.</param>
+    public void RemoveMemory(uint idx)
+    {
+        GstBufferRemoveMemory(Handle, idx);
+    }
+
+    /// <summary>Removes @length memory blocks in @buffer starting from @idx.</summary>
+    /// <remarks>
+    /// <para>@length can be -1, in which case all memory starting from @idx is removed.</para>
+    /// </remarks>
+    /// <param name="idx">The <c>idx</c> argument.</param>
+    /// <param name="length">The <c>length</c> argument.</param>
+    public void RemoveMemoryRange(uint idx, int length)
+    {
+        GstBufferRemoveMemoryRange(Handle, idx, length);
+    }
+
+    /// <summary>Removes the metadata for @meta on @buffer.</summary>
+    /// <param name="meta">The <c>meta</c> argument.</param>
+    /// <returns>
+    /// %TRUE if the metadata existed and was removed, %FALSE if no such
+    /// metadata was on @buffer.
+    /// </returns>
+    public bool RemoveMeta(Gst.Meta meta)
+    {
+        Gst.Meta metaNative = meta;
+        int nativeResult = GstBufferRemoveMeta(Handle, &metaNative);
+        return nativeResult != 0;
+    }
+
+    /// <summary>Sets the offset and total size of the memory blocks in @buffer.</summary>
+    /// <param name="offset">The <c>offset</c> argument.</param>
+    /// <param name="size">The <c>size</c> argument.</param>
+    public void Resize(nint offset, nint size)
+    {
+        GstBufferResize(Handle, offset, size);
+    }
+
+    /// <summary>
+    /// Sets the total size of the @length memory blocks starting at @idx in
+    /// @buffer
+    /// </summary>
+    /// <param name="idx">The <c>idx</c> argument.</param>
+    /// <param name="length">The <c>length</c> argument.</param>
+    /// <param name="offset">The <c>offset</c> argument.</param>
+    /// <param name="size">The <c>size</c> argument.</param>
+    /// <returns>%TRUE if resizing succeeded, %FALSE otherwise.</returns>
+    public bool ResizeRange(uint idx, int length, nint offset, nint size)
+    {
+        int nativeResult = GstBufferResizeRange(Handle, idx, length, offset, size);
+        return nativeResult != 0;
+    }
+
+    /// <summary>Sets one or more buffer flags on a buffer.</summary>
+    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <returns>%TRUE if @flags were successfully set on buffer.</returns>
+    public bool SetFlags(Gst.BufferFlags flags)
+    {
+        int nativeResult = GstBufferSetFlags(Handle, (int)flags);
+        return nativeResult != 0;
+    }
+
+    /// <summary>Sets the total size of the memory blocks in @buffer.</summary>
+    /// <param name="size">The <c>size</c> argument.</param>
+    public void SetSize(nint size)
+    {
+        GstBufferSetSize(Handle, size);
+    }
+
+    /// <summary>Releases the memory previously mapped with gst_buffer_map().</summary>
+    /// <param name="info">The <c>info</c> argument.</param>
+    public void Unmap(Gst.MapInfo info)
+    {
+        Gst.MapInfo infoNative = info;
+        GstBufferUnmap(Handle, &infoNative);
+    }
+
+    /// <summary>Clears one or more buffer flags.</summary>
+    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <returns>true if @flags is successfully cleared from buffer.</returns>
+    public bool UnsetFlags(Gst.BufferFlags flags)
+    {
+        int nativeResult = GstBufferUnsetFlags(Handle, (int)flags);
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Gets the maximum amount of memory blocks that a buffer can hold. This is a
+    /// compile time constant that can be queried with the function.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// When more memory blocks are added, existing memory blocks will be merged
+    /// together to make room for the new block.
+    /// </para>
+    /// </remarks>
+    /// <returns>the maximum amount of memory blocks that a buffer can hold.</returns>
+    public static uint GetMaxMemory()
+    {
+        uint nativeResult = GstBufferGetMaxMemory();
+        return nativeResult;
+    }
+
+    /// <summary>The <c>gst_buffer_new</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_buffer_new")]
+    private static partial nint GstBufferNew();
+
+    /// <summary>The <c>gst_buffer_new_allocate</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_buffer_new_allocate")]
+    private static partial nint GstBufferNewAllocate(nint allocator, nuint size, nint @params);
+
+    /// <summary>The <c>gst_buffer_new_memdup</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_buffer_new_memdup")]
+    private static partial nint GstBufferNewMemdup(byte* data, nuint size);
+
+    /// <summary>The <c>gst_buffer_copy_deep</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_buffer_copy_deep")]
+    private static partial nint GstBufferCopyDeep(nint buf);
+
+    /// <summary>The <c>gst_buffer_copy_into</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_buffer_copy_into")]
+    private static partial int GstBufferCopyInto(nint dest, nint src, int flags, nuint offset, nuint size);
+
+    /// <summary>The <c>gst_buffer_copy_region</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_buffer_copy_region")]
+    private static partial nint GstBufferCopyRegion(nint parent, int flags, nuint offset, nuint size);
+
+    /// <summary>The <c>gst_buffer_extract_dup</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_buffer_extract_dup")]
+    private static partial void GstBufferExtractDup(nint buffer, nuint offset, nuint size, nint* dest, nuint* destSize);
+
+    /// <summary>The <c>gst_buffer_fill</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_buffer_fill")]
+    private static partial nuint GstBufferFill(nint buffer, nuint offset, byte* src, nuint size);
+
+    /// <summary>The <c>gst_buffer_find_memory</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_buffer_find_memory")]
+    private static partial int GstBufferFindMemory(nint buffer, nuint offset, nuint size, uint* idx, uint* length, nuint* skip);
+
+    /// <summary>The <c>gst_buffer_get_all_memory</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_buffer_get_all_memory")]
+    private static partial nint GstBufferGetAllMemory(nint buffer);
+
+    /// <summary>The <c>gst_buffer_get_flags</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_buffer_get_flags")]
+    private static partial int GstBufferGetFlags(nint buffer);
+
+    /// <summary>The <c>gst_buffer_get_memory</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_buffer_get_memory")]
+    private static partial nint GstBufferGetMemory(nint buffer, uint idx);
+
+    /// <summary>The <c>gst_buffer_get_memory_range</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_buffer_get_memory_range")]
+    private static partial nint GstBufferGetMemoryRange(nint buffer, uint idx, int length);
+
+    /// <summary>The <c>gst_buffer_get_n_meta</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_buffer_get_n_meta")]
+    private static partial uint GstBufferGetNMeta(nint buffer, nuint apiType);
+
+    /// <summary>The <c>gst_buffer_get_size</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_buffer_get_size")]
+    private static partial nuint GstBufferGetSize(nint buffer);
+
+    /// <summary>The <c>gst_buffer_get_sizes</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_buffer_get_sizes")]
+    private static partial nuint GstBufferGetSizes(nint buffer, nuint* offset, nuint* maxsize);
+
+    /// <summary>The <c>gst_buffer_get_sizes_range</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_buffer_get_sizes_range")]
+    private static partial nuint GstBufferGetSizesRange(nint buffer, uint idx, int length, nuint* offset, nuint* maxsize);
+
+    /// <summary>The <c>gst_buffer_has_flags</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_buffer_has_flags")]
+    private static partial int GstBufferHasFlags(nint buffer, int flags);
+
+    /// <summary>The <c>gst_buffer_is_all_memory_writable</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_buffer_is_all_memory_writable")]
+    private static partial int GstBufferIsAllMemoryWritable(nint buffer);
+
+    /// <summary>The <c>gst_buffer_is_memory_range_writable</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_buffer_is_memory_range_writable")]
+    private static partial int GstBufferIsMemoryRangeWritable(nint buffer, uint idx, int length);
+
+    /// <summary>The <c>gst_buffer_map</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_buffer_map")]
+    private static partial int GstBufferMap(nint buffer, Gst.MapInfo* info, int flags);
+
+    /// <summary>The <c>gst_buffer_map_range</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_buffer_map_range")]
+    private static partial int GstBufferMapRange(nint buffer, uint idx, int length, Gst.MapInfo* info, int flags);
+
+    /// <summary>The <c>gst_buffer_memcmp</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_buffer_memcmp")]
+    private static partial int GstBufferMemcmp(nint buffer, nuint offset, byte* mem, nuint size);
+
+    /// <summary>The <c>gst_buffer_memset</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_buffer_memset")]
+    private static partial nuint GstBufferMemset(nint buffer, nuint offset, byte val, nuint size);
+
+    /// <summary>The <c>gst_buffer_n_memory</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_buffer_n_memory")]
+    private static partial uint GstBufferNMemory(nint buffer);
+
+    /// <summary>The <c>gst_buffer_peek_memory</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_buffer_peek_memory")]
+    private static partial nint GstBufferPeekMemory(nint buffer, uint idx);
+
+    /// <summary>The <c>gst_buffer_remove_all_memory</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_buffer_remove_all_memory")]
+    private static partial void GstBufferRemoveAllMemory(nint buffer);
+
+    /// <summary>The <c>gst_buffer_remove_memory</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_buffer_remove_memory")]
+    private static partial void GstBufferRemoveMemory(nint buffer, uint idx);
+
+    /// <summary>The <c>gst_buffer_remove_memory_range</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_buffer_remove_memory_range")]
+    private static partial void GstBufferRemoveMemoryRange(nint buffer, uint idx, int length);
+
+    /// <summary>The <c>gst_buffer_remove_meta</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_buffer_remove_meta")]
+    private static partial int GstBufferRemoveMeta(nint buffer, Gst.Meta* meta);
+
+    /// <summary>The <c>gst_buffer_resize</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_buffer_resize")]
+    private static partial void GstBufferResize(nint buffer, nint offset, nint size);
+
+    /// <summary>The <c>gst_buffer_resize_range</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_buffer_resize_range")]
+    private static partial int GstBufferResizeRange(nint buffer, uint idx, int length, nint offset, nint size);
+
+    /// <summary>The <c>gst_buffer_set_flags</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_buffer_set_flags")]
+    private static partial int GstBufferSetFlags(nint buffer, int flags);
+
+    /// <summary>The <c>gst_buffer_set_size</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_buffer_set_size")]
+    private static partial void GstBufferSetSize(nint buffer, nint size);
+
+    /// <summary>The <c>gst_buffer_unmap</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_buffer_unmap")]
+    private static partial void GstBufferUnmap(nint buffer, Gst.MapInfo* info);
+
+    /// <summary>The <c>gst_buffer_unset_flags</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_buffer_unset_flags")]
+    private static partial int GstBufferUnsetFlags(nint buffer, int flags);
+
+    /// <summary>The <c>gst_buffer_get_max_memory</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_buffer_get_max_memory")]
+    private static partial uint GstBufferGetMaxMemory();
+
+    /// <summary>Returns the <c>GType</c> that GObject registered <c>GstBuffer</c> under.</summary>
+    /// <returns>The type of the instances of this wrapper.</returns>
+    [LibraryImport("Gst", EntryPoint = "gst_buffer_get_type")]
+    internal static partial nuint GetGType();
+
+    /// <summary>Creates the wrapper of a native instance, for the type registry.</summary>
+    /// <param name="handle">The native instance.</param>
+    /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
+    /// <returns>The new wrapper.</returns>
+    internal static object CreateWrapper(nint handle, Gst.Interop.Transfer transfer) => new Buffer(handle, transfer);
 }
 
 /// <summary>The native layout of <c>GstBuffer</c>.</summary>

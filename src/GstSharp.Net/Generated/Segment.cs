@@ -3,6 +3,7 @@
 
 #nullable enable
 
+using System;
 using System.Runtime.InteropServices;
 
 namespace Gst;
@@ -66,13 +67,13 @@ namespace Gst;
 /// info to stream time (which is always between 0 and the duration of the stream).
 /// </para>
 /// </remarks>
-public sealed partial class Segment : Gst.GObject.Boxed
+public sealed unsafe partial class Segment : Gst.GObject.Boxed
 {
     /// <summary>Wraps a native <c>GstSegment</c>.</summary>
     /// <param name="handle">The native instance.</param>
     /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
     internal Segment(nint handle, Gst.Interop.Transfer transfer)
-        : base(handle, new Gst.GObject.GType(SegmentGetType()), transfer)
+        : base(handle, new Gst.GObject.GType(GetGType()), transfer)
     {
     }
 
@@ -83,8 +84,525 @@ public sealed partial class Segment : Gst.GObject.Boxed
     internal static Segment? FromNative(nint handle, Gst.Interop.Transfer transfer) =>
         handle == 0 ? null : new(handle, transfer);
 
+    /// <summary>
+    /// Allocate a new #GstSegment structure and initialize it using
+    /// gst_segment_init().
+    /// </summary>
+    /// <remarks>
+    /// <para>Free-function: gst_segment_free</para>
+    /// </remarks>
+    /// <returns>a new #GstSegment, free with gst_segment_free().</returns>
+    public static Gst.Segment New()
+    {
+        nint nativeResult = GstSegmentNew();
+        return Gst.Segment.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_segment_new returned no value.");
+    }
+
+    /// <summary>
+    /// Clip the given @start and @stop values to the segment boundaries given
+    /// in @segment. @start and @stop are compared and clipped to @segment
+    /// start and stop values.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// If the function returns %FALSE, @start and @stop are known to fall
+    /// outside of @segment and @clip_start and @clip_stop are not updated.
+    /// </para>
+    /// <para>
+    /// When the function returns %TRUE, @clip_start and @clip_stop will be
+    /// updated. If @clip_start or @clip_stop are different from @start or @stop
+    /// respectively, the region fell partially in the segment.
+    /// </para>
+    /// <para>
+    /// Note that when @stop is -1, @clip_stop will be set to the end of the
+    /// segment. Depending on the use case, this may or may not be what you want.
+    /// </para>
+    /// </remarks>
+    /// <param name="format">The <c>format</c> argument.</param>
+    /// <param name="start">The <c>start</c> argument.</param>
+    /// <param name="stop">The <c>stop</c> argument.</param>
+    /// <param name="clipStart">The <c>clipStart</c> argument.</param>
+    /// <param name="clipStop">The <c>clipStop</c> argument.</param>
+    /// <returns>
+    /// %TRUE if the given @start and @stop times fall partially or
+    ///     completely in @segment, %FALSE if the values are completely outside
+    ///     of the segment.
+    /// </returns>
+    public bool Clip(Gst.Format format, ulong start, ulong stop, out ulong clipStart, out ulong clipStop)
+    {
+        ulong clipStartNative = default;
+        ulong clipStopNative = default;
+        int nativeResult = GstSegmentClip(Handle, (int)format, start, stop, &clipStartNative, &clipStopNative);
+        clipStart = clipStartNative;
+        clipStop = clipStopNative;
+        return nativeResult != 0;
+    }
+
+    /// <summary>Create a copy of given @segment.</summary>
+    /// <remarks>
+    /// <para>Free-function: gst_segment_free</para>
+    /// </remarks>
+    /// <returns>a new #GstSegment, free with gst_segment_free().</returns>
+    public Gst.Segment Copy()
+    {
+        nint nativeResult = GstSegmentCopy(Handle);
+        return Gst.Segment.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_segment_copy returned no value.");
+    }
+
+    /// <summary>Copy the contents of @src into @dest.</summary>
+    /// <param name="dest">The <c>dest</c> argument.</param>
+    public void CopyInto(Gst.Segment dest)
+    {
+        ArgumentNullException.ThrowIfNull(dest);
+        GstSegmentCopyInto(Handle, dest.Handle);
+    }
+
+    /// <summary>
+    /// Update the segment structure with the field values of a seek event (see
+    /// gst_event_new_seek()).
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// After calling this method, the segment field position and time will
+    /// contain the requested new position in the segment. The new requested
+    /// position in the segment depends on @rate and @start_type and @stop_type.
+    /// </para>
+    /// <para>
+    /// For positive @rate, the new position in the segment is the new @segment
+    /// start field when it was updated with a @start_type different from
+    /// #GST_SEEK_TYPE_NONE. If no update was performed on @segment start position
+    /// (#GST_SEEK_TYPE_NONE), @start is ignored and @segment position is
+    /// unmodified.
+    /// </para>
+    /// <para>
+    /// For negative @rate, the new position in the segment is the new @segment
+    /// stop field when it was updated with a @stop_type different from
+    /// #GST_SEEK_TYPE_NONE. If no stop was previously configured in the segment, the
+    /// duration of the segment will be used to update the stop position.
+    /// If no update was performed on @segment stop position (#GST_SEEK_TYPE_NONE),
+    /// @stop is ignored and @segment position is unmodified.
+    /// </para>
+    /// <para>
+    /// The applied rate of the segment will be set to 1.0 by default.
+    /// If the caller can apply a rate change, it should update @segment
+    /// rate and applied_rate after calling this function.
+    /// </para>
+    /// <para>
+    /// @update will be set to %TRUE if a seek should be performed to the segment
+    /// position field. This field can be %FALSE if, for example, only the @rate
+    /// has been changed but not the playback position.
+    /// </para>
+    /// </remarks>
+    /// <param name="rate">The <c>rate</c> argument.</param>
+    /// <param name="format">The <c>format</c> argument.</param>
+    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <param name="startType">The <c>startType</c> argument.</param>
+    /// <param name="start">The <c>start</c> argument.</param>
+    /// <param name="stopType">The <c>stopType</c> argument.</param>
+    /// <param name="stop">The <c>stop</c> argument.</param>
+    /// <param name="update">The <c>update</c> argument.</param>
+    /// <returns>%TRUE if the seek could be performed.</returns>
+    public bool DoSeek(double rate, Gst.Format format, Gst.SeekFlags flags, Gst.SeekType startType, ulong start, Gst.SeekType stopType, ulong stop, out bool update)
+    {
+        int updateNative = default;
+        int nativeResult = GstSegmentDoSeek(Handle, rate, (int)format, (int)flags, (int)startType, start, (int)stopType, stop, &updateNative);
+        update = updateNative != 0;
+        return nativeResult != 0;
+    }
+
+    /// <summary>Free the allocated segment @segment.</summary>
+    public void Free()
+    {
+        GstSegmentFree(Handle);
+    }
+
+    /// <summary>
+    /// The start/position fields are set to 0 and the stop/duration
+    /// fields are set to -1 (unknown). The default rate of 1.0 and no
+    /// flags are set.
+    /// </summary>
+    /// <remarks>
+    /// <para>Initialize @segment to its default values.</para>
+    /// </remarks>
+    /// <param name="format">The <c>format</c> argument.</param>
+    public void Init(Gst.Format format)
+    {
+        GstSegmentInit(Handle, (int)format);
+    }
+
+    /// <summary>
+    /// Checks for two segments being equal. Equality here is defined
+    /// as perfect equality, including floating point values.
+    /// </summary>
+    /// <param name="s1">The <c>s1</c> argument.</param>
+    /// <returns>%TRUE if the segments are equal, %FALSE otherwise.</returns>
+    public bool IsEqual(Gst.Segment s1)
+    {
+        ArgumentNullException.ThrowIfNull(s1);
+        int nativeResult = GstSegmentIsEqual(Handle, s1.Handle);
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Adjust the values in @segment so that @offset is applied to all
+    /// future running-time calculations.
+    /// </summary>
+    /// <param name="format">The <c>format</c> argument.</param>
+    /// <param name="offset">The <c>offset</c> argument.</param>
+    /// <returns>
+    /// %TRUE if the segment could be updated successfully. If %FALSE is
+    /// returned, @offset is not in @segment.
+    /// </returns>
+    public bool OffsetRunningTime(Gst.Format format, long offset)
+    {
+        int nativeResult = GstSegmentOffsetRunningTime(Handle, (int)format, offset);
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Convert @running_time into a position in the segment so that
+    /// gst_segment_to_running_time() with that position returns @running_time.
+    /// </summary>
+    /// <param name="format">The <c>format</c> argument.</param>
+    /// <param name="runningTime">The <c>runningTime</c> argument.</param>
+    /// <returns>
+    /// the position in the segment for @running_time. This function returns
+    /// -1 when @running_time is -1 or when it is not inside @segment.
+    /// </returns>
+    public ulong PositionFromRunningTime(Gst.Format format, ulong runningTime)
+    {
+        ulong nativeResult = GstSegmentPositionFromRunningTime(Handle, (int)format, runningTime);
+        return nativeResult;
+    }
+
+    /// <summary>
+    /// Translate @running_time to the segment position using the currently configured
+    /// segment. Compared to gst_segment_position_from_running_time() this function can
+    /// return negative segment position.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This function is typically used by elements that need to synchronize buffers
+    /// against the clock or each other.
+    /// </para>
+    /// <para>
+    /// @running_time can be any value and the result of this function for values
+    /// outside of the segment is extrapolated.
+    /// </para>
+    /// <para>
+    /// When 1 is returned, @running_time resulted in a positive position returned
+    /// in @position.
+    /// </para>
+    /// <para>
+    /// When this function returns -1, the returned @position was &lt; 0, and the value
+    /// in the position variable should be negated to get the real negative segment
+    /// position.
+    /// </para>
+    /// </remarks>
+    /// <param name="format">The <c>format</c> argument.</param>
+    /// <param name="runningTime">The <c>runningTime</c> argument.</param>
+    /// <param name="position">The <c>position</c> argument.</param>
+    /// <returns>a 1 or -1 on success, 0 on failure.</returns>
+    public int PositionFromRunningTimeFull(Gst.Format format, ulong runningTime, out ulong position)
+    {
+        ulong positionNative = default;
+        int nativeResult = GstSegmentPositionFromRunningTimeFull(Handle, (int)format, runningTime, &positionNative);
+        position = positionNative;
+        return nativeResult;
+    }
+
+    /// <summary>
+    /// Convert @stream_time into a position in the segment so that
+    /// gst_segment_to_stream_time() with that position returns @stream_time.
+    /// </summary>
+    /// <param name="format">The <c>format</c> argument.</param>
+    /// <param name="streamTime">The <c>streamTime</c> argument.</param>
+    /// <returns>
+    /// the position in the segment for @stream_time. This function returns
+    /// -1 when @stream_time is -1 or when it is not inside @segment.
+    /// </returns>
+    public ulong PositionFromStreamTime(Gst.Format format, ulong streamTime)
+    {
+        ulong nativeResult = GstSegmentPositionFromStreamTime(Handle, (int)format, streamTime);
+        return nativeResult;
+    }
+
+    /// <summary>
+    /// Translate @stream_time to the segment position using the currently configured
+    /// segment. Compared to gst_segment_position_from_stream_time() this function can
+    /// return negative segment position.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This function is typically used by elements that need to synchronize buffers
+    /// against the clock or each other.
+    /// </para>
+    /// <para>
+    /// @stream_time can be any value and the result of this function for values outside
+    /// of the segment is extrapolated.
+    /// </para>
+    /// <para>
+    /// When 1 is returned, @stream_time resulted in a positive position returned
+    /// in @position.
+    /// </para>
+    /// <para>
+    /// When this function returns -1, the returned @position should be negated
+    /// to get the real negative segment position.
+    /// </para>
+    /// </remarks>
+    /// <param name="format">The <c>format</c> argument.</param>
+    /// <param name="streamTime">The <c>streamTime</c> argument.</param>
+    /// <param name="position">The <c>position</c> argument.</param>
+    /// <returns>a 1 or -1 on success, 0 on failure.</returns>
+    public int PositionFromStreamTimeFull(Gst.Format format, ulong streamTime, out ulong position)
+    {
+        ulong positionNative = default;
+        int nativeResult = GstSegmentPositionFromStreamTimeFull(Handle, (int)format, streamTime, &positionNative);
+        position = positionNative;
+        return nativeResult;
+    }
+
+    /// <summary>
+    /// Adjust the start/stop and base values of @segment such that the next valid
+    /// buffer will be one with @running_time.
+    /// </summary>
+    /// <param name="format">The <c>format</c> argument.</param>
+    /// <param name="runningTime">The <c>runningTime</c> argument.</param>
+    /// <returns>
+    /// %TRUE if the segment could be updated successfully. If %FALSE is
+    /// returned, @running_time is -1 or not in @segment.
+    /// </returns>
+    public bool SetRunningTime(Gst.Format format, ulong runningTime)
+    {
+        int nativeResult = GstSegmentSetRunningTime(Handle, (int)format, runningTime);
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Convert @running_time into a position in the segment so that
+    /// gst_segment_to_running_time() with that position returns @running_time.
+    /// </summary>
+    /// <param name="format">The <c>format</c> argument.</param>
+    /// <param name="runningTime">The <c>runningTime</c> argument.</param>
+    /// <returns>
+    /// the position in the segment for @running_time. This function returns
+    /// -1 when @running_time is -1 or when it is not inside @segment.
+    /// </returns>
+    [Obsolete("Use gst_segment_position_from_running_time() instead.")]
+    public ulong ToPosition(Gst.Format format, ulong runningTime)
+    {
+        ulong nativeResult = GstSegmentToPosition(Handle, (int)format, runningTime);
+        return nativeResult;
+    }
+
+    /// <summary>
+    /// Translate @position to the total running time using the currently configured
+    /// segment. Position is a value between @segment start and stop time.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This function is typically used by elements that need to synchronize to the
+    /// global clock in a pipeline. The running time is a constantly increasing value
+    /// starting from 0. When gst_segment_init() is called, this value will reset to
+    /// 0.
+    /// </para>
+    /// <para>This function returns -1 if the position is outside of @segment start and stop.</para>
+    /// </remarks>
+    /// <param name="format">The <c>format</c> argument.</param>
+    /// <param name="position">The <c>position</c> argument.</param>
+    /// <returns>
+    /// the position as the total running time or -1 when an invalid position
+    /// was given.
+    /// </returns>
+    public ulong ToRunningTime(Gst.Format format, ulong position)
+    {
+        ulong nativeResult = GstSegmentToRunningTime(Handle, (int)format, position);
+        return nativeResult;
+    }
+
+    /// <summary>
+    /// Translate @position to the total running time using the currently configured
+    /// segment. Compared to gst_segment_to_running_time() this function can return
+    /// negative running-time.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This function is typically used by elements that need to synchronize buffers
+    /// against the clock or each other.
+    /// </para>
+    /// <para>
+    /// @position can be any value and the result of this function for values outside
+    /// of the segment is extrapolated.
+    /// </para>
+    /// <para>
+    /// When 1 is returned, @position resulted in a positive running-time returned
+    /// in @running_time.
+    /// </para>
+    /// <para>
+    /// When this function returns -1, the returned @running_time should be negated
+    /// to get the real negative running time.
+    /// </para>
+    /// </remarks>
+    /// <param name="format">The <c>format</c> argument.</param>
+    /// <param name="position">The <c>position</c> argument.</param>
+    /// <param name="runningTime">The <c>runningTime</c> argument.</param>
+    /// <returns>a 1 or -1 on success, 0 on failure.</returns>
+    public int ToRunningTimeFull(Gst.Format format, ulong position, out ulong runningTime)
+    {
+        ulong runningTimeNative = default;
+        int nativeResult = GstSegmentToRunningTimeFull(Handle, (int)format, position, &runningTimeNative);
+        runningTime = runningTimeNative;
+        return nativeResult;
+    }
+
+    /// <summary>
+    /// Translate @position to stream time using the currently configured
+    /// segment. The @position value must be between @segment start and
+    /// stop value.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This function is typically used by elements that need to operate on
+    /// the stream time of the buffers it receives, such as effect plugins.
+    /// In those use cases, @position is typically the buffer timestamp or
+    /// clock time that one wants to convert to the stream time.
+    /// The stream time is always between 0 and the total duration of the
+    /// media stream.
+    /// </para>
+    /// </remarks>
+    /// <param name="format">The <c>format</c> argument.</param>
+    /// <param name="position">The <c>position</c> argument.</param>
+    /// <returns>
+    /// the position in stream_time or -1 when an invalid position
+    /// was given.
+    /// </returns>
+    public ulong ToStreamTime(Gst.Format format, ulong position)
+    {
+        ulong nativeResult = GstSegmentToStreamTime(Handle, (int)format, position);
+        return nativeResult;
+    }
+
+    /// <summary>
+    /// Translate @position to the total stream time using the currently configured
+    /// segment. Compared to gst_segment_to_stream_time() this function can return
+    /// negative stream-time.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This function is typically used by elements that need to synchronize buffers
+    /// against the clock or each other.
+    /// </para>
+    /// <para>
+    /// @position can be any value and the result of this function for values outside
+    /// of the segment is extrapolated.
+    /// </para>
+    /// <para>
+    /// When 1 is returned, @position resulted in a positive stream-time returned
+    /// in @stream_time.
+    /// </para>
+    /// <para>
+    /// When this function returns -1, the returned @stream_time should be negated
+    /// to get the real negative stream time.
+    /// </para>
+    /// </remarks>
+    /// <param name="format">The <c>format</c> argument.</param>
+    /// <param name="position">The <c>position</c> argument.</param>
+    /// <param name="streamTime">The <c>streamTime</c> argument.</param>
+    /// <returns>a 1 or -1 on success, 0 on failure.</returns>
+    public int ToStreamTimeFull(Gst.Format format, ulong position, out ulong streamTime)
+    {
+        ulong streamTimeNative = default;
+        int nativeResult = GstSegmentToStreamTimeFull(Handle, (int)format, position, &streamTimeNative);
+        streamTime = streamTimeNative;
+        return nativeResult;
+    }
+
+    /// <summary>The <c>gst_segment_new</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_segment_new")]
+    private static partial nint GstSegmentNew();
+
+    /// <summary>The <c>gst_segment_clip</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_segment_clip")]
+    private static partial int GstSegmentClip(nint segment, int format, ulong start, ulong stop, ulong* clipStart, ulong* clipStop);
+
+    /// <summary>The <c>gst_segment_copy</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_segment_copy")]
+    private static partial nint GstSegmentCopy(nint segment);
+
+    /// <summary>The <c>gst_segment_copy_into</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_segment_copy_into")]
+    private static partial void GstSegmentCopyInto(nint src, nint dest);
+
+    /// <summary>The <c>gst_segment_do_seek</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_segment_do_seek")]
+    private static partial int GstSegmentDoSeek(nint segment, double rate, int format, int flags, int startType, ulong start, int stopType, ulong stop, int* update);
+
+    /// <summary>The <c>gst_segment_free</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_segment_free")]
+    private static partial void GstSegmentFree(nint segment);
+
+    /// <summary>The <c>gst_segment_init</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_segment_init")]
+    private static partial void GstSegmentInit(nint segment, int format);
+
+    /// <summary>The <c>gst_segment_is_equal</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_segment_is_equal")]
+    private static partial int GstSegmentIsEqual(nint s0, nint s1);
+
+    /// <summary>The <c>gst_segment_offset_running_time</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_segment_offset_running_time")]
+    private static partial int GstSegmentOffsetRunningTime(nint segment, int format, long offset);
+
+    /// <summary>The <c>gst_segment_position_from_running_time</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_segment_position_from_running_time")]
+    private static partial ulong GstSegmentPositionFromRunningTime(nint segment, int format, ulong runningTime);
+
+    /// <summary>The <c>gst_segment_position_from_running_time_full</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_segment_position_from_running_time_full")]
+    private static partial int GstSegmentPositionFromRunningTimeFull(nint segment, int format, ulong runningTime, ulong* position);
+
+    /// <summary>The <c>gst_segment_position_from_stream_time</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_segment_position_from_stream_time")]
+    private static partial ulong GstSegmentPositionFromStreamTime(nint segment, int format, ulong streamTime);
+
+    /// <summary>The <c>gst_segment_position_from_stream_time_full</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_segment_position_from_stream_time_full")]
+    private static partial int GstSegmentPositionFromStreamTimeFull(nint segment, int format, ulong streamTime, ulong* position);
+
+    /// <summary>The <c>gst_segment_set_running_time</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_segment_set_running_time")]
+    private static partial int GstSegmentSetRunningTime(nint segment, int format, ulong runningTime);
+
+    /// <summary>The <c>gst_segment_to_position</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_segment_to_position")]
+    private static partial ulong GstSegmentToPosition(nint segment, int format, ulong runningTime);
+
+    /// <summary>The <c>gst_segment_to_running_time</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_segment_to_running_time")]
+    private static partial ulong GstSegmentToRunningTime(nint segment, int format, ulong position);
+
+    /// <summary>The <c>gst_segment_to_running_time_full</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_segment_to_running_time_full")]
+    private static partial int GstSegmentToRunningTimeFull(nint segment, int format, ulong position, ulong* runningTime);
+
+    /// <summary>The <c>gst_segment_to_stream_time</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_segment_to_stream_time")]
+    private static partial ulong GstSegmentToStreamTime(nint segment, int format, ulong position);
+
+    /// <summary>The <c>gst_segment_to_stream_time_full</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_segment_to_stream_time_full")]
+    private static partial int GstSegmentToStreamTimeFull(nint segment, int format, ulong position, ulong* streamTime);
+
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstSegment</c> under.</summary>
-    /// <returns>The boxed type.</returns>
+    /// <returns>The type of the instances of this wrapper.</returns>
     [LibraryImport("Gst", EntryPoint = "gst_segment_get_type")]
-    private static partial nuint SegmentGetType();
+    internal static partial nuint GetGType();
+
+    /// <summary>Creates the wrapper of a native instance, for the type registry.</summary>
+    /// <param name="handle">The native instance.</param>
+    /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
+    /// <returns>The new wrapper.</returns>
+    internal static object CreateWrapper(nint handle, Gst.Interop.Transfer transfer) => new Segment(handle, transfer);
 }

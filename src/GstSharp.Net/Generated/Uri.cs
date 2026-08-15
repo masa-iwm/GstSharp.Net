@@ -3,6 +3,7 @@
 
 #nullable enable
 
+using System;
 using System.Runtime.InteropServices;
 
 namespace Gst;
@@ -12,13 +13,13 @@ namespace Gst;
 /// constituent parts. Two #GstUri objects can be joined to make a new #GstUri
 /// using the algorithm described in RFC3986.
 /// </summary>
-public sealed partial class Uri : Gst.GObject.Boxed
+public sealed unsafe partial class Uri : Gst.GObject.Boxed
 {
     /// <summary>Wraps a native <c>GstUri</c>.</summary>
     /// <param name="handle">The native instance.</param>
     /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
     internal Uri(nint handle, Gst.Interop.Transfer transfer)
-        : base(handle, new Gst.GObject.GType(UriGetType()), transfer)
+        : base(handle, new Gst.GObject.GType(GetGType()), transfer)
     {
     }
 
@@ -29,8 +30,870 @@ public sealed partial class Uri : Gst.GObject.Boxed
     internal static Uri? FromNative(nint handle, Gst.Interop.Transfer transfer) =>
         handle == 0 ? null : new(handle, transfer);
 
+    /// <summary>
+    /// Creates a new #GstUri object with the given URI parts. The path and query
+    /// strings will be broken down into their elements. All strings should not be
+    /// escaped except where indicated.
+    /// </summary>
+    /// <param name="scheme">The <c>scheme</c> argument.</param>
+    /// <param name="userinfo">The <c>userinfo</c> argument.</param>
+    /// <param name="host">The <c>host</c> argument.</param>
+    /// <param name="port">The <c>port</c> argument.</param>
+    /// <param name="path">The <c>path</c> argument.</param>
+    /// <param name="query">The <c>query</c> argument.</param>
+    /// <param name="fragment">The <c>fragment</c> argument.</param>
+    /// <returns>A new #GstUri object.</returns>
+    public static Gst.Uri New(string? scheme, string? userinfo, string? host, uint port, string? path, string? query, string? fragment)
+    {
+        System.Span<byte> schemeBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope schemeScope = Gst.Interop.GMarshal.StackUtf8(scheme, schemeBuffer);
+        System.Span<byte> userinfoBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope userinfoScope = Gst.Interop.GMarshal.StackUtf8(userinfo, userinfoBuffer);
+        System.Span<byte> hostBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope hostScope = Gst.Interop.GMarshal.StackUtf8(host, hostBuffer);
+        System.Span<byte> pathBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope pathScope = Gst.Interop.GMarshal.StackUtf8(path, pathBuffer);
+        System.Span<byte> queryBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope queryScope = Gst.Interop.GMarshal.StackUtf8(query, queryBuffer);
+        System.Span<byte> fragmentBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope fragmentScope = Gst.Interop.GMarshal.StackUtf8(fragment, fragmentBuffer);
+        nint nativeResult = GstUriNew(schemeScope.Pointer, userinfoScope.Pointer, hostScope.Pointer, port, pathScope.Pointer, queryScope.Pointer, fragmentScope.Pointer);
+        return Gst.Uri.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_uri_new returned no value.");
+    }
+
+    /// <summary>
+    /// Append a path onto the end of the path in the URI. The path is not
+    /// normalized, call #gst_uri_normalize() to normalize the path.
+    /// </summary>
+    /// <param name="relativePath">The <c>relativePath</c> argument.</param>
+    /// <returns>%TRUE if the path was appended successfully.</returns>
+    public bool AppendPath(string? relativePath)
+    {
+        System.Span<byte> relativePathBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope relativePathScope = Gst.Interop.GMarshal.StackUtf8(relativePath, relativePathBuffer);
+        int nativeResult = GstUriAppendPath(Handle, relativePathScope.Pointer);
+        return nativeResult != 0;
+    }
+
+    /// <summary>Append a single path segment onto the end of the URI path.</summary>
+    /// <param name="pathSegment">The <c>pathSegment</c> argument.</param>
+    /// <returns>%TRUE if the path was appended successfully.</returns>
+    public bool AppendPathSegment(string? pathSegment)
+    {
+        System.Span<byte> pathSegmentBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope pathSegmentScope = Gst.Interop.GMarshal.StackUtf8(pathSegment, pathSegmentBuffer);
+        int nativeResult = GstUriAppendPathSegment(Handle, pathSegmentScope.Pointer);
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Create a new #GstUri object with the same data as this #GstUri object.
+    /// If @uri is %NULL then returns %NULL.
+    /// </summary>
+    /// <returns>
+    /// A new #GstUri object which is a copy of this
+    ///          #GstUri or %NULL.
+    /// </returns>
+    public Gst.Uri Copy()
+    {
+        nint nativeResult = GstUriCopy(Handle);
+        return Gst.Uri.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_uri_copy returned no value.");
+    }
+
+    /// <summary>
+    /// Compares two #GstUri objects to see if they represent the same normalized
+    /// URI.
+    /// </summary>
+    /// <param name="second">The <c>second</c> argument.</param>
+    /// <returns>%TRUE if the normalized versions of the two URI's would be equal.</returns>
+    public bool Equal(Gst.Uri second)
+    {
+        ArgumentNullException.ThrowIfNull(second);
+        int nativeResult = GstUriEqual(Handle, second.Handle);
+        return nativeResult != 0;
+    }
+
+    /// <summary>Like gst_uri_from_string() but also joins with a base URI.</summary>
+    /// <param name="uri">The <c>uri</c> argument.</param>
+    /// <returns>A new #GstUri object.</returns>
+    public Gst.Uri? FromStringWithBase(string uri)
+    {
+        ArgumentNullException.ThrowIfNull(uri);
+        System.Span<byte> uriBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope uriScope = Gst.Interop.GMarshal.StackUtf8(uri, uriBuffer);
+        nint nativeResult = GstUriFromStringWithBase(Handle, uriScope.Pointer);
+        return Gst.Uri.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+    }
+
+    /// <summary>
+    /// Get the fragment name from the URI or %NULL if it doesn't exist.
+    /// If @uri is %NULL then returns %NULL.
+    /// </summary>
+    /// <returns>The host name from the #GstUri object or %NULL.</returns>
+    public string? GetFragment()
+    {
+        nint nativeResult = GstUriGetFragment(Handle);
+        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
+    }
+
+    /// <summary>
+    /// Get the host name from the URI or %NULL if it doesn't exist.
+    /// If @uri is %NULL then returns %NULL.
+    /// </summary>
+    /// <returns>The host name from the #GstUri object or %NULL.</returns>
+    public string? GetHost()
+    {
+        nint nativeResult = GstUriGetHost(Handle);
+        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
+    }
+
+    /// <summary>Extract the path string from the URI object.</summary>
+    /// <returns>
+    /// The path from the URI. Once finished
+    ///                                      with the string should be g_free()'d.
+    /// </returns>
+    public string? GetPath()
+    {
+        nint nativeResult = GstUriGetPath(Handle);
+        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
+    }
+
+    /// <summary>Extract the path string from the URI object as a percent encoded URI path.</summary>
+    /// <returns>
+    /// The path from the URI. Once finished
+    ///                                      with the string should be g_free()'d.
+    /// </returns>
+    public string? GetPathString()
+    {
+        nint nativeResult = GstUriGetPathString(Handle);
+        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
+    }
+
+    /// <summary>
+    /// Get the port number from the URI or %GST_URI_NO_PORT if it doesn't exist.
+    /// If @uri is %NULL then returns %GST_URI_NO_PORT.
+    /// </summary>
+    /// <returns>The port number from the #GstUri object or %GST_URI_NO_PORT.</returns>
+    public uint GetPort()
+    {
+        uint nativeResult = GstUriGetPort(Handle);
+        return nativeResult;
+    }
+
+    /// <summary>Get a percent encoded URI query string from the @uri.</summary>
+    /// <returns>
+    /// A percent encoded query string. Use
+    ///                                      g_free() when no longer needed.
+    /// </returns>
+    public string? GetQueryString()
+    {
+        nint nativeResult = GstUriGetQueryString(Handle);
+        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
+    }
+
+    /// <summary>
+    /// Get the value associated with the @query_key key. Will return %NULL if the
+    /// key has no value or if the key does not exist in the URI query table. Because
+    /// %NULL is returned for both missing keys and keys with no value, you should
+    /// use gst_uri_query_has_key() to determine if a key is present in the URI
+    /// query.
+    /// </summary>
+    /// <param name="queryKey">The <c>queryKey</c> argument.</param>
+    /// <returns>The value for the given key, or %NULL if not found.</returns>
+    public string? GetQueryValue(string queryKey)
+    {
+        ArgumentNullException.ThrowIfNull(queryKey);
+        System.Span<byte> queryKeyBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope queryKeyScope = Gst.Interop.GMarshal.StackUtf8(queryKey, queryKeyBuffer);
+        nint nativeResult = GstUriGetQueryValue(Handle, queryKeyScope.Pointer);
+        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
+    }
+
+    /// <summary>
+    /// Get the scheme name from the URI or %NULL if it doesn't exist.
+    /// If @uri is %NULL then returns %NULL.
+    /// </summary>
+    /// <returns>The scheme from the #GstUri object or %NULL.</returns>
+    public string? GetScheme()
+    {
+        nint nativeResult = GstUriGetScheme(Handle);
+        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
+    }
+
+    /// <summary>
+    /// Get the userinfo (usually in the form "username:password") from the URI
+    /// or %NULL if it doesn't exist. If @uri is %NULL then returns %NULL.
+    /// </summary>
+    /// <returns>The userinfo from the #GstUri object or %NULL.</returns>
+    public string? GetUserinfo()
+    {
+        nint nativeResult = GstUriGetUserinfo(Handle);
+        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
+    }
+
+    /// <summary>
+    /// Tests the @uri to see if it is normalized. A %NULL @uri is considered to be
+    /// normalized.
+    /// </summary>
+    /// <returns>TRUE if the URI is normalized or is %NULL.</returns>
+    public bool IsNormalized()
+    {
+        int nativeResult = GstUriIsNormalized(Handle);
+        return nativeResult != 0;
+    }
+
+    /// <summary>Check if it is safe to write to this #GstUri.</summary>
+    /// <remarks>
+    /// <para>
+    /// Check if the refcount of @uri is exactly 1, meaning that no other
+    /// reference exists to the #GstUri and that the #GstUri is therefore writable.
+    /// </para>
+    /// <para>
+    /// Modification of a #GstUri should only be done after verifying that it is
+    /// writable.
+    /// </para>
+    /// </remarks>
+    /// <returns>%TRUE if it is safe to write to the object.</returns>
+    public bool IsWritable()
+    {
+        int nativeResult = GstUriIsWritable(Handle);
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Join a reference URI onto a base URI using the method from RFC 3986.
+    /// If either URI is %NULL then the other URI will be returned with the ref count
+    /// increased.
+    /// </summary>
+    /// <param name="refUri">The <c>refUri</c> argument.</param>
+    /// <returns>
+    /// A #GstUri which represents the base
+    ///                                      with the reference URI joined on.
+    /// </returns>
+    public Gst.Uri? Join(Gst.Uri? refUri)
+    {
+        nint nativeResult = GstUriJoin(Handle, refUri is null ? 0 : refUri.Handle);
+        return Gst.Uri.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+    }
+
+    /// <summary>Make the #GstUri writable.</summary>
+    /// <remarks>
+    /// <para>
+    /// Checks if @uri is writable, and if so the original object is returned. If
+    /// not, then a writable copy is made and returned. This gives away the
+    /// reference to @uri and returns a reference to the new #GstUri.
+    /// If @uri is %NULL then %NULL is returned.
+    /// </para>
+    /// </remarks>
+    /// <returns>A writable version of @uri.</returns>
+    public Gst.Uri MakeWritable()
+    {
+        nint nativeResult = GstUriMakeWritable(Handle);
+        return Gst.Uri.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_uri_make_writable returned no value.");
+    }
+
+    /// <summary>Like gst_uri_new(), but joins the new URI onto a base URI.</summary>
+    /// <param name="scheme">The <c>scheme</c> argument.</param>
+    /// <param name="userinfo">The <c>userinfo</c> argument.</param>
+    /// <param name="host">The <c>host</c> argument.</param>
+    /// <param name="port">The <c>port</c> argument.</param>
+    /// <param name="path">The <c>path</c> argument.</param>
+    /// <param name="query">The <c>query</c> argument.</param>
+    /// <param name="fragment">The <c>fragment</c> argument.</param>
+    /// <returns>The new URI joined onto @base.</returns>
+    public Gst.Uri NewWithBase(string? scheme, string? userinfo, string? host, uint port, string? path, string? query, string? fragment)
+    {
+        System.Span<byte> schemeBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope schemeScope = Gst.Interop.GMarshal.StackUtf8(scheme, schemeBuffer);
+        System.Span<byte> userinfoBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope userinfoScope = Gst.Interop.GMarshal.StackUtf8(userinfo, userinfoBuffer);
+        System.Span<byte> hostBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope hostScope = Gst.Interop.GMarshal.StackUtf8(host, hostBuffer);
+        System.Span<byte> pathBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope pathScope = Gst.Interop.GMarshal.StackUtf8(path, pathBuffer);
+        System.Span<byte> queryBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope queryScope = Gst.Interop.GMarshal.StackUtf8(query, queryBuffer);
+        System.Span<byte> fragmentBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope fragmentScope = Gst.Interop.GMarshal.StackUtf8(fragment, fragmentBuffer);
+        nint nativeResult = GstUriNewWithBase(Handle, schemeScope.Pointer, userinfoScope.Pointer, hostScope.Pointer, port, pathScope.Pointer, queryScope.Pointer, fragmentScope.Pointer);
+        return Gst.Uri.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_uri_new_with_base returned no value.");
+    }
+
+    /// <summary>
+    /// Normalization will remove extra path segments ("." and "..") from the URI. It
+    /// will also convert the scheme and host name to lower case and any
+    /// percent-encoded values to uppercase.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The #GstUri object must be writable. Check with gst_uri_is_writable() or use
+    /// gst_uri_make_writable() first.
+    /// </para>
+    /// </remarks>
+    /// <returns>TRUE if the URI was modified.</returns>
+    public bool Normalize()
+    {
+        int nativeResult = GstUriNormalize(Handle);
+        return nativeResult != 0;
+    }
+
+    /// <summary>Check if there is a query table entry for the @query_key key.</summary>
+    /// <param name="queryKey">The <c>queryKey</c> argument.</param>
+    /// <returns>%TRUE if @query_key exists in the URI query table.</returns>
+    public bool QueryHasKey(string queryKey)
+    {
+        ArgumentNullException.ThrowIfNull(queryKey);
+        System.Span<byte> queryKeyBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope queryKeyScope = Gst.Interop.GMarshal.StackUtf8(queryKey, queryKeyBuffer);
+        int nativeResult = GstUriQueryHasKey(Handle, queryKeyScope.Pointer);
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Add a reference to this #GstUri object. See gst_mini_object_ref() for further
+    /// info.
+    /// </summary>
+    /// <returns>This object with the reference count incremented.</returns>
+    public Gst.Uri Ref()
+    {
+        nint nativeResult = GstUriRef(Handle);
+        return Gst.Uri.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_uri_ref returned no value.");
+    }
+
+    /// <summary>Remove an entry from the query table by key.</summary>
+    /// <param name="queryKey">The <c>queryKey</c> argument.</param>
+    /// <returns>%TRUE if the key existed in the table and was removed.</returns>
+    public bool RemoveQueryKey(string queryKey)
+    {
+        ArgumentNullException.ThrowIfNull(queryKey);
+        System.Span<byte> queryKeyBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope queryKeyScope = Gst.Interop.GMarshal.StackUtf8(queryKey, queryKeyBuffer);
+        int nativeResult = GstUriRemoveQueryKey(Handle, queryKeyScope.Pointer);
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Sets the fragment string in the URI. Use a value of %NULL in @fragment to
+    /// unset the fragment string.
+    /// </summary>
+    /// <param name="fragment">The <c>fragment</c> argument.</param>
+    /// <returns>%TRUE if the fragment was set/unset successfully.</returns>
+    public bool SetFragment(string? fragment)
+    {
+        System.Span<byte> fragmentBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope fragmentScope = Gst.Interop.GMarshal.StackUtf8(fragment, fragmentBuffer);
+        int nativeResult = GstUriSetFragment(Handle, fragmentScope.Pointer);
+        return nativeResult != 0;
+    }
+
+    /// <summary>Set or unset the host for the URI.</summary>
+    /// <param name="host">The <c>host</c> argument.</param>
+    /// <returns>%TRUE if the host was set/unset successfully.</returns>
+    public bool SetHost(string host)
+    {
+        ArgumentNullException.ThrowIfNull(host);
+        System.Span<byte> hostBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope hostScope = Gst.Interop.GMarshal.StackUtf8(host, hostBuffer);
+        int nativeResult = GstUriSetHost(Handle, hostScope.Pointer);
+        return nativeResult != 0;
+    }
+
+    /// <summary>Sets or unsets the path in the URI.</summary>
+    /// <param name="path">The <c>path</c> argument.</param>
+    /// <returns>%TRUE if the path was set successfully.</returns>
+    public bool SetPath(string? path)
+    {
+        System.Span<byte> pathBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope pathScope = Gst.Interop.GMarshal.StackUtf8(path, pathBuffer);
+        int nativeResult = GstUriSetPath(Handle, pathScope.Pointer);
+        return nativeResult != 0;
+    }
+
+    /// <summary>Sets or unsets the path in the URI.</summary>
+    /// <param name="path">The <c>path</c> argument.</param>
+    /// <returns>%TRUE if the path was set successfully.</returns>
+    public bool SetPathString(string path)
+    {
+        ArgumentNullException.ThrowIfNull(path);
+        System.Span<byte> pathBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope pathScope = Gst.Interop.GMarshal.StackUtf8(path, pathBuffer);
+        int nativeResult = GstUriSetPathString(Handle, pathScope.Pointer);
+        return nativeResult != 0;
+    }
+
+    /// <summary>Set or unset the port number for the URI.</summary>
+    /// <param name="port">The <c>port</c> argument.</param>
+    /// <returns>%TRUE if the port number was set/unset successfully.</returns>
+    public bool SetPort(uint port)
+    {
+        int nativeResult = GstUriSetPort(Handle, port);
+        return nativeResult != 0;
+    }
+
+    /// <summary>Sets or unsets the query table in the URI.</summary>
+    /// <param name="query">The <c>query</c> argument.</param>
+    /// <returns>%TRUE if the query table was set successfully.</returns>
+    public bool SetQueryString(string? query)
+    {
+        System.Span<byte> queryBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope queryScope = Gst.Interop.GMarshal.StackUtf8(query, queryBuffer);
+        int nativeResult = GstUriSetQueryString(Handle, queryScope.Pointer);
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// This inserts or replaces a key in the query table. A @query_value of %NULL
+    /// indicates that the key has no associated value, but will still be present in
+    /// the query string.
+    /// </summary>
+    /// <param name="queryKey">The <c>queryKey</c> argument.</param>
+    /// <param name="queryValue">The <c>queryValue</c> argument.</param>
+    /// <returns>%TRUE if the query table was successfully updated.</returns>
+    public bool SetQueryValue(string queryKey, string? queryValue)
+    {
+        ArgumentNullException.ThrowIfNull(queryKey);
+        System.Span<byte> queryKeyBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope queryKeyScope = Gst.Interop.GMarshal.StackUtf8(queryKey, queryKeyBuffer);
+        System.Span<byte> queryValueBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope queryValueScope = Gst.Interop.GMarshal.StackUtf8(queryValue, queryValueBuffer);
+        int nativeResult = GstUriSetQueryValue(Handle, queryKeyScope.Pointer, queryValueScope.Pointer);
+        return nativeResult != 0;
+    }
+
+    /// <summary>Set or unset the scheme for the URI.</summary>
+    /// <param name="scheme">The <c>scheme</c> argument.</param>
+    /// <returns>%TRUE if the scheme was set/unset successfully.</returns>
+    public bool SetScheme(string scheme)
+    {
+        ArgumentNullException.ThrowIfNull(scheme);
+        System.Span<byte> schemeBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope schemeScope = Gst.Interop.GMarshal.StackUtf8(scheme, schemeBuffer);
+        int nativeResult = GstUriSetScheme(Handle, schemeScope.Pointer);
+        return nativeResult != 0;
+    }
+
+    /// <summary>Set or unset the user information for the URI.</summary>
+    /// <param name="userinfo">The <c>userinfo</c> argument.</param>
+    /// <returns>%TRUE if the user information was set/unset successfully.</returns>
+    public bool SetUserinfo(string userinfo)
+    {
+        ArgumentNullException.ThrowIfNull(userinfo);
+        System.Span<byte> userinfoBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope userinfoScope = Gst.Interop.GMarshal.StackUtf8(userinfo, userinfoBuffer);
+        int nativeResult = GstUriSetUserinfo(Handle, userinfoScope.Pointer);
+        return nativeResult != 0;
+    }
+
+    /// <summary>Convert the URI to a string.</summary>
+    /// <remarks>
+    /// <para>
+    /// Returns the URI as held in this object as a #gchar* nul-terminated string.
+    /// The caller should g_free() the string once they are finished with it.
+    /// The string is put together as described in RFC 3986.
+    /// </para>
+    /// </remarks>
+    /// <returns>The string version of the URI.</returns>
+    public override string ToString()
+    {
+        nint nativeResult = GstUriToString(Handle);
+        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
+            ?? throw new InvalidOperationException("gst_uri_to_string returned no value.");
+    }
+
+    /// <summary>Decrement the reference count to this #GstUri object.</summary>
+    /// <remarks>
+    /// <para>If the reference count drops to 0 then finalize this object.</para>
+    /// <para>See gst_mini_object_unref() for further info.</para>
+    /// </remarks>
+    public void Unref()
+    {
+        GstUriUnref(Handle);
+    }
+
+    /// <summary>Constructs a URI for a given valid protocol and location.</summary>
+    /// <remarks>
+    /// <para>Free-function: g_free</para>
+    /// </remarks>
+    /// <param name="protocol">The <c>protocol</c> argument.</param>
+    /// <param name="location">The <c>location</c> argument.</param>
+    /// <returns>a new string for this URI.</returns>
+    [Obsolete("Use GstURI instead.")]
+    public static string Construct(string protocol, string location)
+    {
+        ArgumentNullException.ThrowIfNull(protocol);
+        System.Span<byte> protocolBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope protocolScope = Gst.Interop.GMarshal.StackUtf8(protocol, protocolBuffer);
+        ArgumentNullException.ThrowIfNull(location);
+        System.Span<byte> locationBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope locationScope = Gst.Interop.GMarshal.StackUtf8(location, locationBuffer);
+        nint nativeResult = GstUriConstruct(protocolScope.Pointer, locationScope.Pointer);
+        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
+            ?? throw new InvalidOperationException("gst_uri_construct returned no value.");
+    }
+
+    /// <summary>
+    /// Parses a URI string into a new #GstUri object. Will return NULL if the URI
+    /// cannot be parsed.
+    /// </summary>
+    /// <param name="uri">The <c>uri</c> argument.</param>
+    /// <returns>A new #GstUri object, or NULL.</returns>
+    public static Gst.Uri? FromString(string uri)
+    {
+        ArgumentNullException.ThrowIfNull(uri);
+        System.Span<byte> uriBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope uriScope = Gst.Interop.GMarshal.StackUtf8(uri, uriBuffer);
+        nint nativeResult = GstUriFromString(uriScope.Pointer);
+        return Gst.Uri.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+    }
+
+    /// <summary>
+    /// Parses a URI string into a new #GstUri object. Will return NULL if the URI
+    /// cannot be parsed. This is identical to gst_uri_from_string() except that
+    /// the userinfo and fragment components of the URI will not be unescaped while
+    /// parsing.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Use this when you need to extract a username and password from the userinfo
+    /// such as https://user:password@example.com since either may contain
+    /// a URI-escaped ':' character. gst_uri_from_string() will unescape the entire
+    /// userinfo component, which will make it impossible to know which ':'
+    /// delineates the username and password.
+    /// </para>
+    /// <para>
+    /// The same applies to the fragment component of the URI, such as
+    /// https://example.com/path#fragment which may contain a URI-escaped '#'.
+    /// </para>
+    /// </remarks>
+    /// <param name="uri">The <c>uri</c> argument.</param>
+    /// <returns>A new #GstUri object, or NULL.</returns>
+    public static Gst.Uri? FromStringEscaped(string uri)
+    {
+        ArgumentNullException.ThrowIfNull(uri);
+        System.Span<byte> uriBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope uriScope = Gst.Interop.GMarshal.StackUtf8(uri, uriBuffer);
+        nint nativeResult = GstUriFromStringEscaped(uriScope.Pointer);
+        return Gst.Uri.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+    }
+
+    /// <summary>
+    /// Extracts the location out of a given valid URI, ie. the protocol and "://"
+    /// are stripped from the URI, which means that the location returned includes
+    /// the hostname if one is specified. The returned string must be freed using
+    /// g_free().
+    /// </summary>
+    /// <remarks>
+    /// <para>Free-function: g_free</para>
+    /// </remarks>
+    /// <param name="uri">The <c>uri</c> argument.</param>
+    /// <returns>
+    /// the location for this URI. Returns
+    ///     %NULL if the URI isn't valid. If the URI does not contain a location, an
+    ///     empty string is returned.
+    /// </returns>
+    public static string? GetLocation(string uri)
+    {
+        ArgumentNullException.ThrowIfNull(uri);
+        System.Span<byte> uriBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope uriScope = Gst.Interop.GMarshal.StackUtf8(uri, uriBuffer);
+        nint nativeResult = GstUriGetLocation(uriScope.Pointer);
+        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
+    }
+
+    /// <summary>
+    /// Extracts the protocol out of a given valid URI. The returned string must be
+    /// freed using g_free().
+    /// </summary>
+    /// <param name="uri">The <c>uri</c> argument.</param>
+    /// <returns>The protocol for this URI.</returns>
+    public static string? GetProtocol(string uri)
+    {
+        ArgumentNullException.ThrowIfNull(uri);
+        System.Span<byte> uriBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope uriScope = Gst.Interop.GMarshal.StackUtf8(uri, uriBuffer);
+        nint nativeResult = GstUriGetProtocol(uriScope.Pointer);
+        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
+    }
+
+    /// <summary>Checks if the protocol of a given valid URI matches @protocol.</summary>
+    /// <param name="uri">The <c>uri</c> argument.</param>
+    /// <param name="protocol">The <c>protocol</c> argument.</param>
+    /// <returns>%TRUE if the protocol matches.</returns>
+    public static bool HasProtocol(string uri, string protocol)
+    {
+        ArgumentNullException.ThrowIfNull(uri);
+        System.Span<byte> uriBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope uriScope = Gst.Interop.GMarshal.StackUtf8(uri, uriBuffer);
+        ArgumentNullException.ThrowIfNull(protocol);
+        System.Span<byte> protocolBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope protocolScope = Gst.Interop.GMarshal.StackUtf8(protocol, protocolBuffer);
+        int nativeResult = GstUriHasProtocol(uriScope.Pointer, protocolScope.Pointer);
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Tests if the given string is a valid URI identifier. URIs start with a valid
+    /// scheme followed by ":" and maybe a string identifying the location.
+    /// </summary>
+    /// <param name="uri">The <c>uri</c> argument.</param>
+    /// <returns>%TRUE if the string is a valid URI</returns>
+    public static bool IsValid(string uri)
+    {
+        ArgumentNullException.ThrowIfNull(uri);
+        System.Span<byte> uriBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope uriScope = Gst.Interop.GMarshal.StackUtf8(uri, uriBuffer);
+        int nativeResult = GstUriIsValid(uriScope.Pointer);
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// This is a convenience function to join two URI strings and return the result.
+    /// The returned string should be g_free()'d after use.
+    /// </summary>
+    /// <param name="baseUri">The <c>baseUri</c> argument.</param>
+    /// <param name="refUri">The <c>refUri</c> argument.</param>
+    /// <returns>
+    /// A string representing the percent-encoded join of
+    ///          the two URIs.
+    /// </returns>
+    public static string? JoinStrings(string baseUri, string refUri)
+    {
+        ArgumentNullException.ThrowIfNull(baseUri);
+        System.Span<byte> baseUriBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope baseUriScope = Gst.Interop.GMarshal.StackUtf8(baseUri, baseUriBuffer);
+        ArgumentNullException.ThrowIfNull(refUri);
+        System.Span<byte> refUriBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope refUriScope = Gst.Interop.GMarshal.StackUtf8(refUri, refUriBuffer);
+        nint nativeResult = GstUriJoinStrings(baseUriScope.Pointer, refUriScope.Pointer);
+        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
+    }
+
+    /// <summary>
+    /// Checks if an element exists that supports the given URI protocol. Note
+    /// that a positive return value does not imply that a subsequent call to
+    /// gst_element_make_from_uri() is guaranteed to work.
+    /// </summary>
+    /// <param name="type">The <c>type</c> argument.</param>
+    /// <param name="protocol">The <c>protocol</c> argument.</param>
+    /// <returns>%TRUE</returns>
+    public static bool ProtocolIsSupported(Gst.URIType type, string protocol)
+    {
+        ArgumentNullException.ThrowIfNull(protocol);
+        System.Span<byte> protocolBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope protocolScope = Gst.Interop.GMarshal.StackUtf8(protocol, protocolBuffer);
+        int nativeResult = GstUriProtocolIsSupported((int)type, protocolScope.Pointer);
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Tests if the given string is a valid protocol identifier. Protocols
+    /// must consist of alphanumeric characters, '+', '-' and '.' and must
+    /// start with a alphabetic character. See RFC 3986 Section 3.1.
+    /// </summary>
+    /// <param name="protocol">The <c>protocol</c> argument.</param>
+    /// <returns>%TRUE if the string is a valid protocol identifier, %FALSE otherwise.</returns>
+    public static bool ProtocolIsValid(string protocol)
+    {
+        ArgumentNullException.ThrowIfNull(protocol);
+        System.Span<byte> protocolBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope protocolScope = Gst.Interop.GMarshal.StackUtf8(protocol, protocolBuffer);
+        int nativeResult = GstUriProtocolIsValid(protocolScope.Pointer);
+        return nativeResult != 0;
+    }
+
+    /// <summary>The <c>gst_uri_new</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_uri_new")]
+    private static partial nint GstUriNew(byte* scheme, byte* userinfo, byte* host, uint port, byte* path, byte* query, byte* fragment);
+
+    /// <summary>The <c>gst_uri_append_path</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_uri_append_path")]
+    private static partial int GstUriAppendPath(nint uri, byte* relativePath);
+
+    /// <summary>The <c>gst_uri_append_path_segment</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_uri_append_path_segment")]
+    private static partial int GstUriAppendPathSegment(nint uri, byte* pathSegment);
+
+    /// <summary>The <c>gst_uri_copy</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_uri_copy")]
+    private static partial nint GstUriCopy(nint uri);
+
+    /// <summary>The <c>gst_uri_equal</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_uri_equal")]
+    private static partial int GstUriEqual(nint first, nint second);
+
+    /// <summary>The <c>gst_uri_from_string_with_base</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_uri_from_string_with_base")]
+    private static partial nint GstUriFromStringWithBase(nint @base, byte* uri);
+
+    /// <summary>The <c>gst_uri_get_fragment</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_uri_get_fragment")]
+    private static partial nint GstUriGetFragment(nint uri);
+
+    /// <summary>The <c>gst_uri_get_host</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_uri_get_host")]
+    private static partial nint GstUriGetHost(nint uri);
+
+    /// <summary>The <c>gst_uri_get_path</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_uri_get_path")]
+    private static partial nint GstUriGetPath(nint uri);
+
+    /// <summary>The <c>gst_uri_get_path_string</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_uri_get_path_string")]
+    private static partial nint GstUriGetPathString(nint uri);
+
+    /// <summary>The <c>gst_uri_get_port</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_uri_get_port")]
+    private static partial uint GstUriGetPort(nint uri);
+
+    /// <summary>The <c>gst_uri_get_query_string</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_uri_get_query_string")]
+    private static partial nint GstUriGetQueryString(nint uri);
+
+    /// <summary>The <c>gst_uri_get_query_value</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_uri_get_query_value")]
+    private static partial nint GstUriGetQueryValue(nint uri, byte* queryKey);
+
+    /// <summary>The <c>gst_uri_get_scheme</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_uri_get_scheme")]
+    private static partial nint GstUriGetScheme(nint uri);
+
+    /// <summary>The <c>gst_uri_get_userinfo</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_uri_get_userinfo")]
+    private static partial nint GstUriGetUserinfo(nint uri);
+
+    /// <summary>The <c>gst_uri_is_normalized</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_uri_is_normalized")]
+    private static partial int GstUriIsNormalized(nint uri);
+
+    /// <summary>The <c>gst_uri_is_writable</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_uri_is_writable")]
+    private static partial int GstUriIsWritable(nint uri);
+
+    /// <summary>The <c>gst_uri_join</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_uri_join")]
+    private static partial nint GstUriJoin(nint baseUri, nint refUri);
+
+    /// <summary>The <c>gst_uri_make_writable</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_uri_make_writable")]
+    private static partial nint GstUriMakeWritable(nint uri);
+
+    /// <summary>The <c>gst_uri_new_with_base</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_uri_new_with_base")]
+    private static partial nint GstUriNewWithBase(nint @base, byte* scheme, byte* userinfo, byte* host, uint port, byte* path, byte* query, byte* fragment);
+
+    /// <summary>The <c>gst_uri_normalize</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_uri_normalize")]
+    private static partial int GstUriNormalize(nint uri);
+
+    /// <summary>The <c>gst_uri_query_has_key</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_uri_query_has_key")]
+    private static partial int GstUriQueryHasKey(nint uri, byte* queryKey);
+
+    /// <summary>The <c>gst_uri_ref</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_uri_ref")]
+    private static partial nint GstUriRef(nint uri);
+
+    /// <summary>The <c>gst_uri_remove_query_key</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_uri_remove_query_key")]
+    private static partial int GstUriRemoveQueryKey(nint uri, byte* queryKey);
+
+    /// <summary>The <c>gst_uri_set_fragment</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_uri_set_fragment")]
+    private static partial int GstUriSetFragment(nint uri, byte* fragment);
+
+    /// <summary>The <c>gst_uri_set_host</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_uri_set_host")]
+    private static partial int GstUriSetHost(nint uri, byte* host);
+
+    /// <summary>The <c>gst_uri_set_path</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_uri_set_path")]
+    private static partial int GstUriSetPath(nint uri, byte* path);
+
+    /// <summary>The <c>gst_uri_set_path_string</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_uri_set_path_string")]
+    private static partial int GstUriSetPathString(nint uri, byte* path);
+
+    /// <summary>The <c>gst_uri_set_port</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_uri_set_port")]
+    private static partial int GstUriSetPort(nint uri, uint port);
+
+    /// <summary>The <c>gst_uri_set_query_string</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_uri_set_query_string")]
+    private static partial int GstUriSetQueryString(nint uri, byte* query);
+
+    /// <summary>The <c>gst_uri_set_query_value</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_uri_set_query_value")]
+    private static partial int GstUriSetQueryValue(nint uri, byte* queryKey, byte* queryValue);
+
+    /// <summary>The <c>gst_uri_set_scheme</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_uri_set_scheme")]
+    private static partial int GstUriSetScheme(nint uri, byte* scheme);
+
+    /// <summary>The <c>gst_uri_set_userinfo</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_uri_set_userinfo")]
+    private static partial int GstUriSetUserinfo(nint uri, byte* userinfo);
+
+    /// <summary>The <c>gst_uri_to_string</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_uri_to_string")]
+    private static partial nint GstUriToString(nint uri);
+
+    /// <summary>The <c>gst_uri_unref</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_uri_unref")]
+    private static partial void GstUriUnref(nint uri);
+
+    /// <summary>The <c>gst_uri_construct</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_uri_construct")]
+    private static partial nint GstUriConstruct(byte* protocol, byte* location);
+
+    /// <summary>The <c>gst_uri_from_string</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_uri_from_string")]
+    private static partial nint GstUriFromString(byte* uri);
+
+    /// <summary>The <c>gst_uri_from_string_escaped</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_uri_from_string_escaped")]
+    private static partial nint GstUriFromStringEscaped(byte* uri);
+
+    /// <summary>The <c>gst_uri_get_location</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_uri_get_location")]
+    private static partial nint GstUriGetLocation(byte* uri);
+
+    /// <summary>The <c>gst_uri_get_protocol</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_uri_get_protocol")]
+    private static partial nint GstUriGetProtocol(byte* uri);
+
+    /// <summary>The <c>gst_uri_has_protocol</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_uri_has_protocol")]
+    private static partial int GstUriHasProtocol(byte* uri, byte* protocol);
+
+    /// <summary>The <c>gst_uri_is_valid</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_uri_is_valid")]
+    private static partial int GstUriIsValid(byte* uri);
+
+    /// <summary>The <c>gst_uri_join_strings</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_uri_join_strings")]
+    private static partial nint GstUriJoinStrings(byte* baseUri, byte* refUri);
+
+    /// <summary>The <c>gst_uri_protocol_is_supported</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_uri_protocol_is_supported")]
+    private static partial int GstUriProtocolIsSupported(int type, byte* protocol);
+
+    /// <summary>The <c>gst_uri_protocol_is_valid</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_uri_protocol_is_valid")]
+    private static partial int GstUriProtocolIsValid(byte* protocol);
+
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstUri</c> under.</summary>
-    /// <returns>The boxed type.</returns>
+    /// <returns>The type of the instances of this wrapper.</returns>
     [LibraryImport("Gst", EntryPoint = "gst_uri_get_type")]
-    private static partial nuint UriGetType();
+    internal static partial nuint GetGType();
+
+    /// <summary>Creates the wrapper of a native instance, for the type registry.</summary>
+    /// <param name="handle">The native instance.</param>
+    /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
+    /// <returns>The new wrapper.</returns>
+    internal static object CreateWrapper(nint handle, Gst.Interop.Transfer transfer) => new Uri(handle, transfer);
 }

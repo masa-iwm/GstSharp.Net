@@ -3,6 +3,7 @@
 
 #nullable enable
 
+using System;
 using System.Runtime.InteropServices;
 
 namespace Gst;
@@ -11,13 +12,13 @@ namespace Gst;
 /// The #GstAtomicQueue object implements a queue that can be used from multiple
 /// threads without performing any blocking operations.
 /// </summary>
-public sealed partial class AtomicQueue : Gst.GObject.Boxed
+public sealed unsafe partial class AtomicQueue : Gst.GObject.Boxed
 {
     /// <summary>Wraps a native <c>GstAtomicQueue</c>.</summary>
     /// <param name="handle">The native instance.</param>
     /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
     internal AtomicQueue(nint handle, Gst.Interop.Transfer transfer)
-        : base(handle, new Gst.GObject.GType(AtomicQueueGetType()), transfer)
+        : base(handle, new Gst.GObject.GType(GetGType()), transfer)
     {
     }
 
@@ -28,8 +29,104 @@ public sealed partial class AtomicQueue : Gst.GObject.Boxed
     internal static AtomicQueue? FromNative(nint handle, Gst.Interop.Transfer transfer) =>
         handle == 0 ? null : new(handle, transfer);
 
+    /// <summary>
+    /// Create a new atomic queue instance. @initial_size will be rounded up to the
+    /// nearest power of 2 and used as the initial size of the queue.
+    /// </summary>
+    /// <param name="initialSize">The <c>initialSize</c> argument.</param>
+    /// <returns>a new #GstAtomicQueue</returns>
+    public static Gst.AtomicQueue New(uint initialSize)
+    {
+        nint nativeResult = GstAtomicQueueNew(initialSize);
+        return Gst.AtomicQueue.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_atomic_queue_new returned no value.");
+    }
+
+    /// <summary>Get the amount of items in the queue.</summary>
+    /// <returns>the number of elements in the queue.</returns>
+    public uint Length()
+    {
+        uint nativeResult = GstAtomicQueueLength(Handle);
+        return nativeResult;
+    }
+
+    /// <summary>Peek the head element of the queue without removing it from the queue.</summary>
+    /// <returns>
+    /// the head element of @queue or
+    /// %NULL when the queue is empty.
+    /// </returns>
+    public nint Peek()
+    {
+        nint nativeResult = GstAtomicQueuePeek(Handle);
+        return nativeResult;
+    }
+
+    /// <summary>Get the head element of the queue.</summary>
+    /// <returns>
+    /// the head element of @queue or %NULL when
+    /// the queue is empty.
+    /// </returns>
+    public nint Pop()
+    {
+        nint nativeResult = GstAtomicQueuePop(Handle);
+        return nativeResult;
+    }
+
+    /// <summary>Append @data to the tail of the queue.</summary>
+    /// <param name="data">The <c>data</c> argument.</param>
+    public void Push(nint data)
+    {
+        GstAtomicQueuePush(Handle, data);
+    }
+
+    /// <summary>Increase the refcount of @queue.</summary>
+    public void Ref()
+    {
+        GstAtomicQueueRef(Handle);
+    }
+
+    /// <summary>Unref @queue and free the memory when the refcount reaches 0.</summary>
+    public void Unref()
+    {
+        GstAtomicQueueUnref(Handle);
+    }
+
+    /// <summary>The <c>gst_atomic_queue_new</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_atomic_queue_new")]
+    private static partial nint GstAtomicQueueNew(uint initialSize);
+
+    /// <summary>The <c>gst_atomic_queue_length</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_atomic_queue_length")]
+    private static partial uint GstAtomicQueueLength(nint queue);
+
+    /// <summary>The <c>gst_atomic_queue_peek</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_atomic_queue_peek")]
+    private static partial nint GstAtomicQueuePeek(nint queue);
+
+    /// <summary>The <c>gst_atomic_queue_pop</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_atomic_queue_pop")]
+    private static partial nint GstAtomicQueuePop(nint queue);
+
+    /// <summary>The <c>gst_atomic_queue_push</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_atomic_queue_push")]
+    private static partial void GstAtomicQueuePush(nint queue, nint data);
+
+    /// <summary>The <c>gst_atomic_queue_ref</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_atomic_queue_ref")]
+    private static partial void GstAtomicQueueRef(nint queue);
+
+    /// <summary>The <c>gst_atomic_queue_unref</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_atomic_queue_unref")]
+    private static partial void GstAtomicQueueUnref(nint queue);
+
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstAtomicQueue</c> under.</summary>
-    /// <returns>The boxed type.</returns>
+    /// <returns>The type of the instances of this wrapper.</returns>
     [LibraryImport("Gst", EntryPoint = "gst_atomic_queue_get_type")]
-    private static partial nuint AtomicQueueGetType();
+    internal static partial nuint GetGType();
+
+    /// <summary>Creates the wrapper of a native instance, for the type registry.</summary>
+    /// <param name="handle">The native instance.</param>
+    /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
+    /// <returns>The new wrapper.</returns>
+    internal static object CreateWrapper(nint handle, Gst.Interop.Transfer transfer) => new AtomicQueue(handle, transfer);
 }

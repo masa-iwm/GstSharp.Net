@@ -3,6 +3,9 @@
 
 #nullable enable
 
+using System;
+using System.Runtime.InteropServices;
+
 namespace Gst;
 
 /// <summary>Buffer lists are an object containing a list of buffers.</summary>
@@ -17,7 +20,7 @@ namespace Gst;
 /// can reduce the amount of overhead for pushing each buffer individually.
 /// </para>
 /// </remarks>
-public sealed partial class BufferList : Gst.MiniObject
+public sealed unsafe partial class BufferList : Gst.MiniObject
 {
     /// <summary>Wraps a native <c>GstBufferList</c>.</summary>
     /// <param name="handle">The native instance.</param>
@@ -33,4 +36,181 @@ public sealed partial class BufferList : Gst.MiniObject
     /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>
     internal static BufferList? FromNative(nint handle, Gst.Interop.Transfer transfer) =>
         handle == 0 ? null : new(handle, transfer);
+
+    /// <summary>Creates a new, empty #GstBufferList.</summary>
+    /// <returns>the new #GstBufferList.</returns>
+    public static Gst.BufferList New()
+    {
+        nint nativeResult = GstBufferListNew();
+        return Gst.BufferList.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_buffer_list_new returned no value.");
+    }
+
+    /// <summary>
+    /// Creates a new, empty #GstBufferList. The list will have @size space
+    /// preallocated so that memory reallocations can be avoided.
+    /// </summary>
+    /// <param name="size">The <c>size</c> argument.</param>
+    /// <returns>the new #GstBufferList.</returns>
+    public static Gst.BufferList NewSized(uint size)
+    {
+        nint nativeResult = GstBufferListNewSized(size);
+        return Gst.BufferList.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_buffer_list_new_sized returned no value.");
+    }
+
+    /// <summary>
+    /// Calculates the size of the data contained in @list by adding the
+    /// size of all buffers.
+    /// </summary>
+    /// <returns>the size of the data contained in @list in bytes.</returns>
+    public nuint CalculateSize()
+    {
+        nuint nativeResult = GstBufferListCalculateSize(Handle);
+        return nativeResult;
+    }
+
+    /// <summary>
+    /// Creates a copy of the given buffer list. This will make a newly allocated
+    /// copy of the buffers that the source buffer list contains.
+    /// </summary>
+    /// <returns>a new copy of @list.</returns>
+    public Gst.BufferList CopyDeep()
+    {
+        nint nativeResult = GstBufferListCopyDeep(Handle);
+        return Gst.BufferList.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_buffer_list_copy_deep returned no value.");
+    }
+
+    /// <summary>Gets the buffer at @idx.</summary>
+    /// <remarks>
+    /// <para>
+    /// You must make sure that @idx does not exceed the number of
+    /// buffers available.
+    /// </para>
+    /// </remarks>
+    /// <param name="idx">The <c>idx</c> argument.</param>
+    /// <returns>
+    /// the buffer at @idx in @group.
+    ///     The returned buffer remains valid as long as @list is valid and
+    ///     buffer is not removed from the list.
+    /// </returns>
+    public Gst.Buffer Get(uint idx)
+    {
+        nint nativeResult = GstBufferListGet(Handle, idx);
+        return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.None)
+            ?? throw new InvalidOperationException("gst_buffer_list_get returned no value.");
+    }
+
+    /// <summary>Gets the buffer at @idx, ensuring it is a writable buffer.</summary>
+    /// <remarks>
+    /// <para>
+    /// You must make sure that @idx does not exceed the number of
+    /// buffers available.
+    /// </para>
+    /// </remarks>
+    /// <param name="idx">The <c>idx</c> argument.</param>
+    /// <returns>
+    /// the buffer at @idx in @group.
+    ///     The returned buffer remains valid as long as @list is valid and
+    ///     the buffer is not removed from the list.
+    /// </returns>
+    public Gst.Buffer GetWritable(uint idx)
+    {
+        nint nativeResult = GstBufferListGetWritable(Handle, idx);
+        return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.None)
+            ?? throw new InvalidOperationException("gst_buffer_list_get_writable returned no value.");
+    }
+
+    /// <summary>Returns the number of buffers in @list.</summary>
+    /// <returns>the number of buffers in the buffer list</returns>
+    public uint Length()
+    {
+        uint nativeResult = GstBufferListLength(Handle);
+        return nativeResult;
+    }
+
+    /// <summary>Returns a writable copy of @list.</summary>
+    /// <remarks>
+    /// <para>
+    /// If there is only one reference count on @list, the caller must be the owner,
+    /// and so this function will return the buffer list object unchanged. If on the other
+    /// hand there is more than one reference on the object, a new buffer list object will
+    /// be returned. The caller's reference on @list will be removed, and instead the
+    /// caller will own a reference to the returned object.
+    /// </para>
+    /// <para>
+    /// In short, this function unrefs the buffer_list in the argument and refs the buffer list
+    /// that it returns. Don't access the argument after calling this function. See
+    /// also: gst_buffer_list_ref().
+    /// </para>
+    /// </remarks>
+    /// <returns>
+    /// a writable buffer list which may or may not be the
+    ///     same as @buffer list
+    /// </returns>
+    public Gst.BufferList MakeWritable()
+    {
+        nint nativeResult = GstBufferListMakeWritable(Handle);
+        return Gst.BufferList.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_buffer_list_make_writable returned no value.");
+    }
+
+    /// <summary>
+    /// Removes @length buffers starting from @idx in @list. The following buffers
+    /// are moved to close the gap.
+    /// </summary>
+    /// <param name="idx">The <c>idx</c> argument.</param>
+    /// <param name="length">The <c>length</c> argument.</param>
+    public void Remove(uint idx, uint length)
+    {
+        GstBufferListRemove(Handle, idx, length);
+    }
+
+    /// <summary>The <c>gst_buffer_list_new</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_buffer_list_new")]
+    private static partial nint GstBufferListNew();
+
+    /// <summary>The <c>gst_buffer_list_new_sized</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_buffer_list_new_sized")]
+    private static partial nint GstBufferListNewSized(uint size);
+
+    /// <summary>The <c>gst_buffer_list_calculate_size</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_buffer_list_calculate_size")]
+    private static partial nuint GstBufferListCalculateSize(nint list);
+
+    /// <summary>The <c>gst_buffer_list_copy_deep</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_buffer_list_copy_deep")]
+    private static partial nint GstBufferListCopyDeep(nint list);
+
+    /// <summary>The <c>gst_buffer_list_get</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_buffer_list_get")]
+    private static partial nint GstBufferListGet(nint list, uint idx);
+
+    /// <summary>The <c>gst_buffer_list_get_writable</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_buffer_list_get_writable")]
+    private static partial nint GstBufferListGetWritable(nint list, uint idx);
+
+    /// <summary>The <c>gst_buffer_list_length</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_buffer_list_length")]
+    private static partial uint GstBufferListLength(nint list);
+
+    /// <summary>The <c>gst_buffer_list_make_writable</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_buffer_list_make_writable")]
+    private static partial nint GstBufferListMakeWritable(nint list);
+
+    /// <summary>The <c>gst_buffer_list_remove</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_buffer_list_remove")]
+    private static partial void GstBufferListRemove(nint list, uint idx, uint length);
+
+    /// <summary>Returns the <c>GType</c> that GObject registered <c>GstBufferList</c> under.</summary>
+    /// <returns>The type of the instances of this wrapper.</returns>
+    [LibraryImport("Gst", EntryPoint = "gst_buffer_list_get_type")]
+    internal static partial nuint GetGType();
+
+    /// <summary>Creates the wrapper of a native instance, for the type registry.</summary>
+    /// <param name="handle">The native instance.</param>
+    /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
+    /// <returns>The new wrapper.</returns>
+    internal static object CreateWrapper(nint handle, Gst.Interop.Transfer transfer) => new BufferList(handle, transfer);
 }

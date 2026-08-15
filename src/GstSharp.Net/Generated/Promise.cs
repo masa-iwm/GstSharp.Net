@@ -3,6 +3,7 @@
 
 #nullable enable
 
+using System;
 using System.Runtime.InteropServices;
 
 namespace Gst;
@@ -69,7 +70,7 @@ namespace Gst;
 /// that uses #GstPromise.
 /// </para>
 /// </remarks>
-public sealed partial class Promise : Gst.MiniObject
+public sealed unsafe partial class Promise : Gst.MiniObject
 {
     /// <summary>Wraps a native <c>GstPromise</c>.</summary>
     /// <param name="handle">The native instance.</param>
@@ -85,6 +86,135 @@ public sealed partial class Promise : Gst.MiniObject
     /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>
     internal static Promise? FromNative(nint handle, Gst.Interop.Transfer transfer) =>
         handle == 0 ? null : new(handle, transfer);
+
+    /// <summary>The <c>gst_promise_new</c> function.</summary>
+    /// <returns>a new #GstPromise</returns>
+    public static Gst.Promise New()
+    {
+        nint nativeResult = GstPromiseNew();
+        return Gst.Promise.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_promise_new returned no value.");
+    }
+
+    /// <summary>
+    /// @func will be called exactly once when transitioning out of
+    /// %GST_PROMISE_RESULT_PENDING into any of the other #GstPromiseResult
+    /// states.
+    /// </summary>
+    /// <param name="func">a #GstPromiseChangeFunc to call</param>
+    /// <returns>a new #GstPromise</returns>
+    public static Gst.Promise NewWithChangeFunc(Gst.PromiseChangeFunc func)
+    {
+        ArgumentNullException.ThrowIfNull(func);
+        Gst.Interop.CallbackHandle funcState = Gst.Interop.CallbackHandle.Alloc(func);
+        nint nativeResult = GstPromiseNewWithChangeFunc(Gst.PromiseChangeFuncTrampoline.Pointer, funcState.UserData, (nint)Gst.Interop.CallbackHandle.DestroyNotify);
+        return Gst.Promise.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_promise_new_with_change_func returned no value.");
+    }
+
+    /// <summary>
+    /// Expire a @promise.  This will wake up any waiters with
+    /// %GST_PROMISE_RESULT_EXPIRED.  Called by a message loop when the parent
+    /// message is handled and/or destroyed (possibly unanswered).
+    /// </summary>
+    public void Expire()
+    {
+        GstPromiseExpire(Handle);
+    }
+
+    /// <summary>
+    /// Retrieve the reply set on @promise.  @promise must be in
+    /// %GST_PROMISE_RESULT_REPLIED and the returned structure is owned by @promise
+    /// </summary>
+    /// <returns>The reply set on @promise</returns>
+    public Gst.Structure? GetReply()
+    {
+        nint nativeResult = GstPromiseGetReply(Handle);
+        return Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.None);
+    }
+
+    /// <summary>
+    /// Interrupt waiting for a @promise.  This will wake up any waiters with
+    /// %GST_PROMISE_RESULT_INTERRUPTED.  Called when the consumer does not want
+    /// the value produced anymore.
+    /// </summary>
+    public void Interrupt()
+    {
+        GstPromiseInterrupt(Handle);
+    }
+
+    /// <summary>Increases the refcount of the given @promise by one.</summary>
+    /// <returns>@promise</returns>
+    public Gst.Promise Ref()
+    {
+        nint nativeResult = GstPromiseRef(Handle);
+        return Gst.Promise.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_promise_ref returned no value.");
+    }
+
+    /// <summary>
+    /// Decreases the refcount of the promise. If the refcount reaches 0, the
+    /// promise will be freed.
+    /// </summary>
+    public void Unref()
+    {
+        GstPromiseUnref(Handle);
+    }
+
+    /// <summary>
+    /// Wait for @promise to move out of the %GST_PROMISE_RESULT_PENDING state.
+    /// If @promise is not in %GST_PROMISE_RESULT_PENDING then it will return
+    /// immediately with the current result.
+    /// </summary>
+    /// <returns>the result of the promise</returns>
+    public Gst.PromiseResult Wait()
+    {
+        int nativeResult = GstPromiseWait(Handle);
+        return (Gst.PromiseResult)nativeResult;
+    }
+
+    /// <summary>The <c>gst_promise_new</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_promise_new")]
+    private static partial nint GstPromiseNew();
+
+    /// <summary>The <c>gst_promise_new_with_change_func</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_promise_new_with_change_func")]
+    private static partial nint GstPromiseNewWithChangeFunc(nint func, nint userData, nint notify);
+
+    /// <summary>The <c>gst_promise_expire</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_promise_expire")]
+    private static partial void GstPromiseExpire(nint promise);
+
+    /// <summary>The <c>gst_promise_get_reply</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_promise_get_reply")]
+    private static partial nint GstPromiseGetReply(nint promise);
+
+    /// <summary>The <c>gst_promise_interrupt</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_promise_interrupt")]
+    private static partial void GstPromiseInterrupt(nint promise);
+
+    /// <summary>The <c>gst_promise_ref</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_promise_ref")]
+    private static partial nint GstPromiseRef(nint promise);
+
+    /// <summary>The <c>gst_promise_unref</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_promise_unref")]
+    private static partial void GstPromiseUnref(nint promise);
+
+    /// <summary>The <c>gst_promise_wait</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_promise_wait")]
+    private static partial int GstPromiseWait(nint promise);
+
+    /// <summary>Returns the <c>GType</c> that GObject registered <c>GstPromise</c> under.</summary>
+    /// <returns>The type of the instances of this wrapper.</returns>
+    [LibraryImport("Gst", EntryPoint = "gst_promise_get_type")]
+    internal static partial nuint GetGType();
+
+    /// <summary>Creates the wrapper of a native instance, for the type registry.</summary>
+    /// <param name="handle">The native instance.</param>
+    /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
+    /// <returns>The new wrapper.</returns>
+    internal static object CreateWrapper(nint handle, Gst.Interop.Transfer transfer) => new Promise(handle, transfer);
 }
 
 /// <summary>The native layout of <c>GstPromise</c>.</summary>

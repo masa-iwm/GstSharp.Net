@@ -3,6 +3,7 @@
 
 #nullable enable
 
+using System;
 using System.Runtime.InteropServices;
 
 namespace Gst;
@@ -62,13 +63,13 @@ namespace Gst;
 /// a track listing from different sources).
 /// </para>
 /// </remarks>
-public sealed partial class Toc : Gst.GObject.Boxed
+public sealed unsafe partial class Toc : Gst.GObject.Boxed
 {
     /// <summary>Wraps a native <c>GstToc</c>.</summary>
     /// <param name="handle">The native instance.</param>
     /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
     internal Toc(nint handle, Gst.Interop.Transfer transfer)
-        : base(handle, new Gst.GObject.GType(TocGetType()), transfer)
+        : base(handle, new Gst.GObject.GType(GetGType()), transfer)
     {
     }
 
@@ -79,8 +80,96 @@ public sealed partial class Toc : Gst.GObject.Boxed
     internal static Toc? FromNative(nint handle, Gst.Interop.Transfer transfer) =>
         handle == 0 ? null : new(handle, transfer);
 
+    /// <summary>Create a new #GstToc structure.</summary>
+    /// <param name="scope">The <c>scope</c> argument.</param>
+    /// <returns>
+    /// newly allocated #GstToc structure, free it
+    ///     with gst_toc_unref().
+    /// </returns>
+    public static Gst.Toc New(Gst.TocScope scope)
+    {
+        nint nativeResult = GstTocNew((int)scope);
+        return Gst.Toc.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_toc_new returned no value.");
+    }
+
+    /// <summary>The <c>gst_toc_dump</c> function.</summary>
+    public void Dump()
+    {
+        GstTocDump(Handle);
+    }
+
+    /// <summary>Find #GstTocEntry with given @uid in the @toc.</summary>
+    /// <param name="uid">The <c>uid</c> argument.</param>
+    /// <returns>
+    /// #GstTocEntry with specified
+    /// @uid from the @toc, or %NULL if not found.
+    /// </returns>
+    public Gst.TocEntry? FindEntry(string uid)
+    {
+        ArgumentNullException.ThrowIfNull(uid);
+        System.Span<byte> uidBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope uidScope = Gst.Interop.GMarshal.StackUtf8(uid, uidBuffer);
+        nint nativeResult = GstTocFindEntry(Handle, uidScope.Pointer);
+        return Gst.TocEntry.FromNative(nativeResult, Gst.Interop.Transfer.None);
+    }
+
+    /// <summary>The <c>gst_toc_get_scope</c> function.</summary>
+    /// <returns>scope of @toc</returns>
+    public Gst.TocScope GetScope()
+    {
+        int nativeResult = GstTocGetScope(Handle);
+        return (Gst.TocScope)nativeResult;
+    }
+
+    /// <summary>Gets the tags for @toc.</summary>
+    /// <returns>A #GstTagList for @entry</returns>
+    public Gst.TagList? GetTags()
+    {
+        nint nativeResult = GstTocGetTags(Handle);
+        return Gst.TagList.FromNative(nativeResult, Gst.Interop.Transfer.None);
+    }
+
+    /// <summary>Merge @tags into the existing tags of @toc using @mode.</summary>
+    /// <param name="tags">The <c>tags</c> argument.</param>
+    /// <param name="mode">The <c>mode</c> argument.</param>
+    public void MergeTags(Gst.TagList? tags, Gst.TagMergeMode mode)
+    {
+        GstTocMergeTags(Handle, tags is null ? 0 : tags.Handle, (int)mode);
+    }
+
+    /// <summary>The <c>gst_toc_new</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_toc_new")]
+    private static partial nint GstTocNew(int scope);
+
+    /// <summary>The <c>gst_toc_dump</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_toc_dump")]
+    private static partial void GstTocDump(nint toc);
+
+    /// <summary>The <c>gst_toc_find_entry</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_toc_find_entry")]
+    private static partial nint GstTocFindEntry(nint toc, byte* uid);
+
+    /// <summary>The <c>gst_toc_get_scope</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_toc_get_scope")]
+    private static partial int GstTocGetScope(nint toc);
+
+    /// <summary>The <c>gst_toc_get_tags</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_toc_get_tags")]
+    private static partial nint GstTocGetTags(nint toc);
+
+    /// <summary>The <c>gst_toc_merge_tags</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_toc_merge_tags")]
+    private static partial void GstTocMergeTags(nint toc, nint tags, int mode);
+
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstToc</c> under.</summary>
-    /// <returns>The boxed type.</returns>
+    /// <returns>The type of the instances of this wrapper.</returns>
     [LibraryImport("Gst", EntryPoint = "gst_toc_get_type")]
-    private static partial nuint TocGetType();
+    internal static partial nuint GetGType();
+
+    /// <summary>Creates the wrapper of a native instance, for the type registry.</summary>
+    /// <param name="handle">The native instance.</param>
+    /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
+    /// <returns>The new wrapper.</returns>
+    internal static object CreateWrapper(nint handle, Gst.Interop.Transfer transfer) => new Toc(handle, transfer);
 }

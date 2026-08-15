@@ -3,13 +3,16 @@
 
 #nullable enable
 
+using System;
+using System.Runtime.InteropServices;
+
 namespace Gst;
 
 /// <summary>
 /// A #GstSample is a small object containing data, a type, timing and
 /// extra arbitrary information.
 /// </summary>
-public sealed partial class Sample : Gst.MiniObject
+public sealed unsafe partial class Sample : Gst.MiniObject
 {
     /// <summary>Wraps a native <c>GstSample</c>.</summary>
     /// <param name="handle">The native instance.</param>
@@ -25,4 +28,184 @@ public sealed partial class Sample : Gst.MiniObject
     /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>
     internal static Sample? FromNative(nint handle, Gst.Interop.Transfer transfer) =>
         handle == 0 ? null : new(handle, transfer);
+
+    /// <summary>Get the buffer associated with @sample</summary>
+    /// <returns>
+    /// the buffer of @sample or %NULL
+    ///  when there is no buffer. The buffer remains valid as long as
+    ///  @sample is valid.  If you need to hold on to it for longer than
+    ///  that, take a ref to the buffer with gst_buffer_ref().
+    /// </returns>
+    public Gst.Buffer? GetBuffer()
+    {
+        nint nativeResult = GstSampleGetBuffer(Handle);
+        return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.None);
+    }
+
+    /// <summary>Get the buffer list associated with @sample</summary>
+    /// <returns>
+    /// the buffer list of @sample or %NULL
+    ///  when there is no buffer list. The buffer list remains valid as long as
+    ///  @sample is valid.  If you need to hold on to it for longer than
+    ///  that, take a ref to the buffer list with gst_mini_object_ref ().
+    /// </returns>
+    public Gst.BufferList? GetBufferList()
+    {
+        nint nativeResult = GstSampleGetBufferList(Handle);
+        return Gst.BufferList.FromNative(nativeResult, Gst.Interop.Transfer.None);
+    }
+
+    /// <summary>Get the caps associated with @sample</summary>
+    /// <returns>
+    /// the caps of @sample or %NULL
+    ///  when there is no caps. The caps remain valid as long as @sample is
+    ///  valid.  If you need to hold on to the caps for longer than that,
+    ///  take a ref to the caps with gst_caps_ref().
+    /// </returns>
+    public Gst.Caps? GetCaps()
+    {
+        nint nativeResult = GstSampleGetCaps(Handle);
+        return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.None);
+    }
+
+    /// <summary>Get extra information associated with @sample.</summary>
+    /// <returns>
+    /// the extra info of @sample.
+    ///  The info remains valid as long as @sample is valid.
+    /// </returns>
+    public Gst.Structure? GetInfo()
+    {
+        nint nativeResult = GstSampleGetInfo(Handle);
+        return Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.None);
+    }
+
+    /// <summary>Get the segment associated with @sample</summary>
+    /// <returns>
+    /// the segment of @sample.
+    ///  The segment remains valid as long as @sample is valid.
+    /// </returns>
+    public Gst.Segment GetSegment()
+    {
+        nint nativeResult = GstSampleGetSegment(Handle);
+        return Gst.Segment.FromNative(nativeResult, Gst.Interop.Transfer.None)
+            ?? throw new InvalidOperationException("gst_sample_get_segment returned no value.");
+    }
+
+    /// <summary>
+    /// Returns a writable copy of @sample. If the source sample is
+    /// already writable, this will simply return the same sample.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Use this function to ensure that a sample can be safely modified before
+    /// making changes to it, for example before calling gst_sample_set_buffer()
+    /// </para>
+    /// <para>
+    /// If the reference count of the source sample @sample is exactly one, the caller
+    /// is the sole owner and this function will return the sample object unchanged.
+    /// </para>
+    /// <para>
+    /// If there is more than one reference on the object, a copy will be made using
+    /// gst_sample_copy(). The passed-in @sample will be unreffed in that case, and the
+    /// caller will now own a reference to the new returned sample object.
+    /// </para>
+    /// <para>
+    /// In short, this function unrefs the sample in the argument and refs the sample
+    /// that it returns. Don't access the argument after calling this function unless
+    /// you have an additional reference to it.
+    /// </para>
+    /// </remarks>
+    /// <returns>
+    /// a writable sample which may or may not be the
+    ///     same as @sample
+    /// </returns>
+    public Gst.Sample MakeWritable()
+    {
+        nint nativeResult = GstSampleMakeWritable(Handle);
+        return Gst.Sample.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_sample_make_writable returned no value.");
+    }
+
+    /// <summary>Set the buffer associated with @sample. @sample must be writable.</summary>
+    /// <param name="buffer">The <c>buffer</c> argument.</param>
+    public void SetBuffer(Gst.Buffer buffer)
+    {
+        ArgumentNullException.ThrowIfNull(buffer);
+        GstSampleSetBuffer(Handle, buffer.Handle);
+    }
+
+    /// <summary>Set the buffer list associated with @sample. @sample must be writable.</summary>
+    /// <param name="bufferList">The <c>bufferList</c> argument.</param>
+    public void SetBufferList(Gst.BufferList bufferList)
+    {
+        ArgumentNullException.ThrowIfNull(bufferList);
+        GstSampleSetBufferList(Handle, bufferList.Handle);
+    }
+
+    /// <summary>Set the caps associated with @sample. @sample must be writable.</summary>
+    /// <param name="caps">The <c>caps</c> argument.</param>
+    public void SetCaps(Gst.Caps caps)
+    {
+        ArgumentNullException.ThrowIfNull(caps);
+        GstSampleSetCaps(Handle, caps.Handle);
+    }
+
+    /// <summary>Set the segment associated with @sample. @sample must be writable.</summary>
+    /// <param name="segment">The <c>segment</c> argument.</param>
+    public void SetSegment(Gst.Segment segment)
+    {
+        ArgumentNullException.ThrowIfNull(segment);
+        GstSampleSetSegment(Handle, segment.Handle);
+    }
+
+    /// <summary>The <c>gst_sample_get_buffer</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_sample_get_buffer")]
+    private static partial nint GstSampleGetBuffer(nint sample);
+
+    /// <summary>The <c>gst_sample_get_buffer_list</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_sample_get_buffer_list")]
+    private static partial nint GstSampleGetBufferList(nint sample);
+
+    /// <summary>The <c>gst_sample_get_caps</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_sample_get_caps")]
+    private static partial nint GstSampleGetCaps(nint sample);
+
+    /// <summary>The <c>gst_sample_get_info</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_sample_get_info")]
+    private static partial nint GstSampleGetInfo(nint sample);
+
+    /// <summary>The <c>gst_sample_get_segment</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_sample_get_segment")]
+    private static partial nint GstSampleGetSegment(nint sample);
+
+    /// <summary>The <c>gst_sample_make_writable</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_sample_make_writable")]
+    private static partial nint GstSampleMakeWritable(nint sample);
+
+    /// <summary>The <c>gst_sample_set_buffer</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_sample_set_buffer")]
+    private static partial void GstSampleSetBuffer(nint sample, nint buffer);
+
+    /// <summary>The <c>gst_sample_set_buffer_list</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_sample_set_buffer_list")]
+    private static partial void GstSampleSetBufferList(nint sample, nint bufferList);
+
+    /// <summary>The <c>gst_sample_set_caps</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_sample_set_caps")]
+    private static partial void GstSampleSetCaps(nint sample, nint caps);
+
+    /// <summary>The <c>gst_sample_set_segment</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_sample_set_segment")]
+    private static partial void GstSampleSetSegment(nint sample, nint segment);
+
+    /// <summary>Returns the <c>GType</c> that GObject registered <c>GstSample</c> under.</summary>
+    /// <returns>The type of the instances of this wrapper.</returns>
+    [LibraryImport("Gst", EntryPoint = "gst_sample_get_type")]
+    internal static partial nuint GetGType();
+
+    /// <summary>Creates the wrapper of a native instance, for the type registry.</summary>
+    /// <param name="handle">The native instance.</param>
+    /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
+    /// <returns>The new wrapper.</returns>
+    internal static object CreateWrapper(nint handle, Gst.Interop.Transfer transfer) => new Sample(handle, transfer);
 }

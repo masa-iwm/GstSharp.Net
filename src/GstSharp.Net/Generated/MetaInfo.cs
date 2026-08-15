@@ -3,13 +3,16 @@
 
 #nullable enable
 
+using System;
+using System.Runtime.InteropServices;
+
 namespace Gst;
 
 /// <summary>
 /// The #GstMetaInfo provides information about a specific metadata
 /// structure.
 /// </summary>
-public sealed partial class MetaInfo
+public sealed unsafe partial class MetaInfo
 {
     /// <summary>The native instance.</summary>
     internal nint Handle;
@@ -17,4 +20,50 @@ public sealed partial class MetaInfo
     /// <summary>Wraps a native <c>GstMetaInfo</c>.</summary>
     /// <param name="handle">The native instance.</param>
     internal MetaInfo(nint handle) => Handle = handle;
+
+    /// <summary>Wraps a native <c>GstMetaInfo</c>, mapping the null pointer onto <see langword="null"/>.</summary>
+    /// <param name="handle">The native instance, or <c>0</c>.</param>
+    /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>
+    /// <remarks>
+    /// The wrapper of an opaque record is a bare pointer holder: the gir
+    /// describes no way of releasing one, so it does not take part in the
+    /// ownership of what it points at.
+    /// </remarks>
+    internal static MetaInfo? FromNative(nint handle) =>
+        handle == 0 ? null : new(handle);
+
+    /// <summary>The <c>gst_meta_info_is_custom</c> function.</summary>
+    /// <returns>
+    /// whether @info was registered as a #GstCustomMeta with
+    ///   gst_meta_register_custom()
+    /// </returns>
+    public bool IsCustom()
+    {
+        int nativeResult = GstMetaInfoIsCustom(Handle);
+        return nativeResult != 0;
+    }
+
+    /// <summary>Registers a new meta.</summary>
+    /// <remarks>
+    /// <para>
+    /// Use the structure returned by gst_meta_info_new(), it consumes it and the
+    /// structure shouldnt be used after. The one returned by the function can be
+    /// kept.
+    /// </para>
+    /// </remarks>
+    /// <returns>the registered meta</returns>
+    public Gst.MetaInfo Register()
+    {
+        nint nativeResult = GstMetaInfoRegister(Handle);
+        return Gst.MetaInfo.FromNative(nativeResult)
+            ?? throw new InvalidOperationException("gst_meta_info_register returned no value.");
+    }
+
+    /// <summary>The <c>gst_meta_info_is_custom</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_meta_info_is_custom")]
+    private static partial int GstMetaInfoIsCustom(nint info);
+
+    /// <summary>The <c>gst_meta_info_register</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_meta_info_register")]
+    private static partial nint GstMetaInfoRegister(nint info);
 }

@@ -3,6 +3,9 @@
 
 #nullable enable
 
+using System;
+using System.Runtime.InteropServices;
+
 namespace Gst;
 
 /// <summary>
@@ -58,7 +61,7 @@ namespace Gst;
 /// ```
 /// </para>
 /// </remarks>
-public sealed partial class LogContext
+public sealed unsafe partial class LogContext
 {
     /// <summary>The native instance.</summary>
     internal nint Handle;
@@ -66,4 +69,35 @@ public sealed partial class LogContext
     /// <summary>Wraps a native <c>GstLogContext</c>.</summary>
     /// <param name="handle">The native instance.</param>
     internal LogContext(nint handle) => Handle = handle;
+
+    /// <summary>Wraps a native <c>GstLogContext</c>, mapping the null pointer onto <see langword="null"/>.</summary>
+    /// <param name="handle">The native instance, or <c>0</c>.</param>
+    /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>
+    /// <remarks>
+    /// The wrapper of an opaque record is a bare pointer holder: the gir
+    /// describes no way of releasing one, so it does not take part in the
+    /// ownership of what it points at.
+    /// </remarks>
+    internal static LogContext? FromNative(nint handle) =>
+        handle == 0 ? null : new(handle);
+
+    /// <summary>Free the logging context, clearing all tracked messages.</summary>
+    public void Free()
+    {
+        GstLogContextFree(Handle);
+    }
+
+    /// <summary>Resets the logging context, clearing all tracked messages.</summary>
+    public void Reset()
+    {
+        GstLogContextReset(Handle);
+    }
+
+    /// <summary>The <c>gst_log_context_free</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_log_context_free")]
+    private static partial void GstLogContextFree(nint ctx);
+
+    /// <summary>The <c>gst_log_context_reset</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_log_context_reset")]
+    private static partial void GstLogContextReset(nint ctx);
 }

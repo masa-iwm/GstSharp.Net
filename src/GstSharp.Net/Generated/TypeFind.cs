@@ -3,13 +3,16 @@
 
 #nullable enable
 
+using System;
+using System.Runtime.InteropServices;
+
 namespace Gst;
 
 /// <summary>
 /// The following functions allow you to detect the media type of an unknown
 /// stream.
 /// </summary>
-public sealed partial class TypeFind
+public sealed unsafe partial class TypeFind
 {
     /// <summary>The native instance.</summary>
     internal nint Handle;
@@ -17,4 +20,127 @@ public sealed partial class TypeFind
     /// <summary>Wraps a native <c>GstTypeFind</c>.</summary>
     /// <param name="handle">The native instance.</param>
     internal TypeFind(nint handle) => Handle = handle;
+
+    /// <summary>Wraps a native <c>GstTypeFind</c>, mapping the null pointer onto <see langword="null"/>.</summary>
+    /// <param name="handle">The native instance, or <c>0</c>.</param>
+    /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>
+    /// <remarks>
+    /// The wrapper of an opaque record is a bare pointer holder: the gir
+    /// describes no way of releasing one, so it does not take part in the
+    /// ownership of what it points at.
+    /// </remarks>
+    internal static TypeFind? FromNative(nint handle) =>
+        handle == 0 ? null : new(handle);
+
+    /// <summary>Get the length of the data stream.</summary>
+    /// <returns>The length of the data stream, or 0 if it is not available.</returns>
+    public ulong GetLength()
+    {
+        ulong nativeResult = GstTypeFindGetLength(Handle);
+        return nativeResult;
+    }
+
+    /// <summary>
+    /// Returns the @size bytes of the stream to identify beginning at offset. If
+    /// offset is a positive number, the offset is relative to the beginning of the
+    /// stream, if offset is a negative number the offset is relative to the end of
+    /// the stream. The returned memory is valid until the typefinding function
+    /// returns and must not be freed.
+    /// </summary>
+    /// <param name="offset">The <c>offset</c> argument.</param>
+    /// <returns>
+    /// the
+    ///     requested data, or %NULL if that data is not available.
+    /// </returns>
+    public byte[]? Peek(long offset)
+    {
+        uint sizeNative = default;
+        nint nativeResult = GstTypeFindPeek(Handle, offset, &sizeNative);
+        byte[]? result = null;
+        if (nativeResult != 0)
+        {
+            result = new byte[(int)sizeNative];
+            new System.ReadOnlySpan<byte>((void*)nativeResult, (int)sizeNative).CopyTo(result);
+        }
+        return result;
+    }
+
+    /// <summary>
+    /// If a #GstTypeFindFunction calls this function it suggests the caps with the
+    /// given probability. A #GstTypeFindFunction may supply different suggestions
+    /// in one call.
+    /// It is up to the caller of the #GstTypeFindFunction to interpret these values.
+    /// </summary>
+    /// <param name="probability">The <c>probability</c> argument.</param>
+    /// <param name="caps">The <c>caps</c> argument.</param>
+    public void Suggest(uint probability, Gst.Caps caps)
+    {
+        ArgumentNullException.ThrowIfNull(caps);
+        GstTypeFindSuggest(Handle, probability, caps.Handle);
+    }
+
+    /// <summary>
+    /// If a #GstTypeFindFunction calls this function it suggests caps of the
+    /// given @media_type with the given @probability.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This function is similar to gst_type_find_suggest_simple(), but uses
+    /// a #GstCaps with no fields.
+    /// </para>
+    /// </remarks>
+    /// <param name="probability">The <c>probability</c> argument.</param>
+    /// <param name="mediaType">The <c>mediaType</c> argument.</param>
+    public void SuggestEmptySimple(uint probability, string mediaType)
+    {
+        ArgumentNullException.ThrowIfNull(mediaType);
+        System.Span<byte> mediaTypeBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope mediaTypeScope = Gst.Interop.GMarshal.StackUtf8(mediaType, mediaTypeBuffer);
+        GstTypeFindSuggestEmptySimple(Handle, probability, mediaTypeScope.Pointer);
+    }
+
+    /// <summary>
+    /// Registers a new typefind function to be used for typefinding. After
+    /// registering this function will be available for typefinding.
+    /// This function is typically called during an element's plugin initialization.
+    /// </summary>
+    /// <param name="plugin">The <c>plugin</c> argument.</param>
+    /// <param name="name">The <c>name</c> argument.</param>
+    /// <param name="rank">The <c>rank</c> argument.</param>
+    /// <param name="func">The #GstTypeFindFunction to use</param>
+    /// <param name="extensions">The <c>extensions</c> argument.</param>
+    /// <param name="possibleCaps">The <c>possibleCaps</c> argument.</param>
+    /// <returns>%TRUE on success, %FALSE otherwise</returns>
+    public static bool Register(Gst.Plugin? plugin, string name, uint rank, Gst.TypeFindFunction func, string? extensions, Gst.Caps? possibleCaps)
+    {
+        ArgumentNullException.ThrowIfNull(name);
+        System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
+        ArgumentNullException.ThrowIfNull(func);
+        Gst.Interop.CallbackHandle funcState = Gst.Interop.CallbackHandle.Alloc(func);
+        System.Span<byte> extensionsBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope extensionsScope = Gst.Interop.GMarshal.StackUtf8(extensions, extensionsBuffer);
+        int nativeResult = GstTypeFindRegister(plugin is null ? 0 : plugin.Handle, nameScope.Pointer, rank, Gst.TypeFindFunctionTrampoline.Pointer, extensionsScope.Pointer, possibleCaps is null ? 0 : possibleCaps.Handle, funcState.UserData, (nint)Gst.Interop.CallbackHandle.DestroyNotify);
+        return nativeResult != 0;
+    }
+
+    /// <summary>The <c>gst_type_find_get_length</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_type_find_get_length")]
+    private static partial ulong GstTypeFindGetLength(nint find);
+
+    /// <summary>The <c>gst_type_find_peek</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_type_find_peek")]
+    private static partial nint GstTypeFindPeek(nint find, long offset, uint* size);
+
+    /// <summary>The <c>gst_type_find_suggest</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_type_find_suggest")]
+    private static partial void GstTypeFindSuggest(nint find, uint probability, nint caps);
+
+    /// <summary>The <c>gst_type_find_suggest_empty_simple</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_type_find_suggest_empty_simple")]
+    private static partial void GstTypeFindSuggestEmptySimple(nint find, uint probability, byte* mediaType);
+
+    /// <summary>The <c>gst_type_find_register</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_type_find_register")]
+    private static partial int GstTypeFindRegister(nint plugin, byte* name, uint rank, nint func, byte* extensions, nint possibleCaps, nint data, nint dataNotify);
 }

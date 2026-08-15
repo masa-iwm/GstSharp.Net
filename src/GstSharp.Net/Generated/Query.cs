@@ -3,6 +3,7 @@
 
 #nullable enable
 
+using System;
 using System.Runtime.InteropServices;
 
 namespace Gst;
@@ -55,6 +56,1523 @@ public sealed unsafe partial class Query : Gst.MiniObject
     /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>
     internal static Query? FromNative(nint handle, Gst.Interop.Transfer transfer) =>
         handle == 0 ? null : new(handle, transfer);
+
+    /// <summary>Constructs a new query object for querying if @caps are accepted.</summary>
+    /// <remarks>
+    /// <para>Free-function: gst_query_unref()</para>
+    /// </remarks>
+    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <returns>a new #GstQuery</returns>
+    public static Gst.Query NewAcceptCaps(Gst.Caps caps)
+    {
+        ArgumentNullException.ThrowIfNull(caps);
+        nint nativeResult = GstQueryNewAcceptCaps(caps.Handle);
+        return Gst.Query.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_query_new_accept_caps returned no value.");
+    }
+
+    /// <summary>Constructs a new query object for querying the allocation properties.</summary>
+    /// <remarks>
+    /// <para>Free-function: gst_query_unref()</para>
+    /// </remarks>
+    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <param name="needPool">The <c>needPool</c> argument.</param>
+    /// <returns>a new #GstQuery</returns>
+    public static Gst.Query NewAllocation(Gst.Caps? caps, bool needPool)
+    {
+        nint nativeResult = GstQueryNewAllocation(caps is null ? 0 : caps.Handle, needPool ? 1 : 0);
+        return Gst.Query.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_query_new_allocation returned no value.");
+    }
+
+    /// <summary>Constructs a new query object for querying the bitrate.</summary>
+    /// <remarks>
+    /// <para>Free-function: gst_query_unref()</para>
+    /// </remarks>
+    /// <returns>a new #GstQuery</returns>
+    public static Gst.Query NewBitrate()
+    {
+        nint nativeResult = GstQueryNewBitrate();
+        return Gst.Query.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_query_new_bitrate returned no value.");
+    }
+
+    /// <summary>
+    /// Constructs a new query object for querying the buffering status of
+    /// a stream.
+    /// </summary>
+    /// <remarks>
+    /// <para>Free-function: gst_query_unref()</para>
+    /// </remarks>
+    /// <param name="format">The <c>format</c> argument.</param>
+    /// <returns>a new #GstQuery</returns>
+    public static Gst.Query NewBuffering(Gst.Format format)
+    {
+        nint nativeResult = GstQueryNewBuffering((int)format);
+        return Gst.Query.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_query_new_buffering returned no value.");
+    }
+
+    /// <summary>Constructs a new query object for querying the caps.</summary>
+    /// <remarks>
+    /// <para>
+    /// The CAPS query should return the allowable caps for a pad in the context
+    /// of the element's state, its link to other elements, and the devices or files
+    /// it has opened. These caps must be a subset of the pad template caps. In the
+    /// NULL state with no links, the CAPS query should ideally return the same caps
+    /// as the pad template. In rare circumstances, an object property can affect
+    /// the caps returned by the CAPS query, but this is discouraged.
+    /// </para>
+    /// <para>
+    /// For most filters, the caps returned by CAPS query is directly affected by the
+    /// allowed caps on other pads. For demuxers and decoders, the caps returned by
+    /// the srcpad's getcaps function is directly related to the stream data. Again,
+    /// the CAPS query should return the most specific caps it reasonably can, since this
+    /// helps with autoplugging.
+    /// </para>
+    /// <para>
+    /// The @filter is used to restrict the result caps, only the caps matching
+    /// @filter should be returned from the CAPS query. Specifying a filter might
+    /// greatly reduce the amount of processing an element needs to do.
+    /// </para>
+    /// <para>Free-function: gst_query_unref()</para>
+    /// </remarks>
+    /// <param name="filter">The <c>filter</c> argument.</param>
+    /// <returns>a new #GstQuery</returns>
+    public static Gst.Query NewCaps(Gst.Caps filter)
+    {
+        ArgumentNullException.ThrowIfNull(filter);
+        nint nativeResult = GstQueryNewCaps(filter.Handle);
+        return Gst.Query.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_query_new_caps returned no value.");
+    }
+
+    /// <summary>Constructs a new query object for querying the pipeline-local context.</summary>
+    /// <remarks>
+    /// <para>Free-function: gst_query_unref()</para>
+    /// </remarks>
+    /// <param name="contextType">The <c>contextType</c> argument.</param>
+    /// <returns>a new #GstQuery</returns>
+    public static Gst.Query NewContext(string contextType)
+    {
+        ArgumentNullException.ThrowIfNull(contextType);
+        System.Span<byte> contextTypeBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope contextTypeScope = Gst.Interop.GMarshal.StackUtf8(contextType, contextTypeBuffer);
+        nint nativeResult = GstQueryNewContext(contextTypeScope.Pointer);
+        return Gst.Query.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_query_new_context returned no value.");
+    }
+
+    /// <summary>
+    /// Constructs a new convert query object. Use gst_query_unref()
+    /// when done with it. A convert query is used to ask for a conversion between
+    /// one format and another.
+    /// </summary>
+    /// <remarks>
+    /// <para>Free-function: gst_query_unref()</para>
+    /// </remarks>
+    /// <param name="srcFormat">The <c>srcFormat</c> argument.</param>
+    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="destFormat">The <c>destFormat</c> argument.</param>
+    /// <returns>a #GstQuery</returns>
+    public static Gst.Query NewConvert(Gst.Format srcFormat, long value, Gst.Format destFormat)
+    {
+        nint nativeResult = GstQueryNewConvert((int)srcFormat, value, (int)destFormat);
+        return Gst.Query.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_query_new_convert returned no value.");
+    }
+
+    /// <summary>Constructs a new query object for querying the drain state.</summary>
+    /// <remarks>
+    /// <para>Free-function: gst_query_unref()</para>
+    /// </remarks>
+    /// <returns>a new #GstQuery</returns>
+    public static Gst.Query NewDrain()
+    {
+        nint nativeResult = GstQueryNewDrain();
+        return Gst.Query.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_query_new_drain returned no value.");
+    }
+
+    /// <summary>
+    /// Constructs a new stream duration query object to query in the given format.
+    /// Use gst_query_unref() when done with it. A duration query will give the
+    /// total length of the stream.
+    /// </summary>
+    /// <remarks>
+    /// <para>Free-function: gst_query_unref()</para>
+    /// </remarks>
+    /// <param name="format">The <c>format</c> argument.</param>
+    /// <returns>a new #GstQuery</returns>
+    public static Gst.Query NewDuration(Gst.Format format)
+    {
+        nint nativeResult = GstQueryNewDuration((int)format);
+        return Gst.Query.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_query_new_duration returned no value.");
+    }
+
+    /// <summary>
+    /// Constructs a new query object for querying formats of
+    /// the stream.
+    /// </summary>
+    /// <remarks>
+    /// <para>Free-function: gst_query_unref()</para>
+    /// </remarks>
+    /// <returns>a new #GstQuery</returns>
+    public static Gst.Query NewFormats()
+    {
+        nint nativeResult = GstQueryNewFormats();
+        return Gst.Query.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_query_new_formats returned no value.");
+    }
+
+    /// <summary>
+    /// Constructs a new latency query object.
+    /// Use gst_query_unref() when done with it. A latency query is usually performed
+    /// by sinks to compensate for additional latency introduced by elements in the
+    /// pipeline.
+    /// </summary>
+    /// <remarks>
+    /// <para>Free-function: gst_query_unref()</para>
+    /// </remarks>
+    /// <returns>a #GstQuery</returns>
+    public static Gst.Query NewLatency()
+    {
+        nint nativeResult = GstQueryNewLatency();
+        return Gst.Query.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_query_new_latency returned no value.");
+    }
+
+    /// <summary>
+    /// Constructs a new query stream position query object. Use gst_query_unref()
+    /// when done with it. A position query is used to query the current position
+    /// of playback in the streams, in some format.
+    /// </summary>
+    /// <remarks>
+    /// <para>Free-function: gst_query_unref()</para>
+    /// </remarks>
+    /// <param name="format">The <c>format</c> argument.</param>
+    /// <returns>a new #GstQuery</returns>
+    public static Gst.Query NewPosition(Gst.Format format)
+    {
+        nint nativeResult = GstQueryNewPosition((int)format);
+        return Gst.Query.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_query_new_position returned no value.");
+    }
+
+    /// <summary>Constructs a new query object for querying the scheduling properties.</summary>
+    /// <remarks>
+    /// <para>Free-function: gst_query_unref()</para>
+    /// </remarks>
+    /// <returns>a new #GstQuery</returns>
+    public static Gst.Query NewScheduling()
+    {
+        nint nativeResult = GstQueryNewScheduling();
+        return Gst.Query.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_query_new_scheduling returned no value.");
+    }
+
+    /// <summary>
+    /// Constructs a new query object for querying seeking properties of
+    /// the stream.
+    /// </summary>
+    /// <remarks>
+    /// <para>Free-function: gst_query_unref()</para>
+    /// </remarks>
+    /// <param name="format">The <c>format</c> argument.</param>
+    /// <returns>a new #GstQuery</returns>
+    public static Gst.Query NewSeeking(Gst.Format format)
+    {
+        nint nativeResult = GstQueryNewSeeking((int)format);
+        return Gst.Query.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_query_new_seeking returned no value.");
+    }
+
+    /// <summary>
+    /// Constructs a new segment query object. Use gst_query_unref()
+    /// when done with it. A segment query is used to discover information about the
+    /// currently configured segment for playback.
+    /// </summary>
+    /// <remarks>
+    /// <para>Free-function: gst_query_unref()</para>
+    /// </remarks>
+    /// <param name="format">The <c>format</c> argument.</param>
+    /// <returns>a new #GstQuery</returns>
+    public static Gst.Query NewSegment(Gst.Format format)
+    {
+        nint nativeResult = GstQueryNewSegment((int)format);
+        return Gst.Query.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_query_new_segment returned no value.");
+    }
+
+    /// <summary>Constructs a new query object for querying the stream selection capability.</summary>
+    /// <remarks>
+    /// <para>Free-function: gst_query_unref()</para>
+    /// </remarks>
+    /// <returns>a new #GstQuery</returns>
+    public static Gst.Query NewSelectable()
+    {
+        nint nativeResult = GstQueryNewSelectable();
+        return Gst.Query.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_query_new_selectable returned no value.");
+    }
+
+    /// <summary>
+    /// Constructs a new query URI query object. Use gst_query_unref()
+    /// when done with it. An URI query is used to query the current URI
+    /// that is used by the source or sink.
+    /// </summary>
+    /// <remarks>
+    /// <para>Free-function: gst_query_unref()</para>
+    /// </remarks>
+    /// <returns>a new #GstQuery</returns>
+    public static Gst.Query NewUri()
+    {
+        nint nativeResult = GstQueryNewUri();
+        return Gst.Query.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_query_new_uri returned no value.");
+    }
+
+    /// <summary>Add @api with @params as one of the supported metadata API to @query.</summary>
+    /// <param name="api">The <c>api</c> argument.</param>
+    /// <param name="params">The <c>@params</c> argument.</param>
+    public void AddAllocationMeta(Gst.GObject.GType api, Gst.Structure? @params)
+    {
+        GstQueryAddAllocationMeta(Handle, api.Value, @params is null ? 0 : @params.Handle);
+    }
+
+    /// <summary>Add @allocator and its @params as a supported memory allocator.</summary>
+    /// <param name="allocator">The <c>allocator</c> argument.</param>
+    /// <param name="params">The <c>@params</c> argument.</param>
+    public void AddAllocationParam(Gst.Allocator? allocator, Gst.AllocationParams? @params)
+    {
+        GstQueryAddAllocationParam(Handle, allocator is null ? 0 : allocator.Handle, @params is null ? 0 : @params.Handle);
+    }
+
+    /// <summary>Set the pool parameters in @query.</summary>
+    /// <param name="pool">The <c>pool</c> argument.</param>
+    /// <param name="size">The <c>size</c> argument.</param>
+    /// <param name="minBuffers">The <c>minBuffers</c> argument.</param>
+    /// <param name="maxBuffers">The <c>maxBuffers</c> argument.</param>
+    public void AddAllocationPool(Gst.BufferPool? pool, uint size, uint minBuffers, uint maxBuffers)
+    {
+        GstQueryAddAllocationPool(Handle, pool is null ? 0 : pool.Handle, size, minBuffers, maxBuffers);
+    }
+
+    /// <summary>
+    /// Set the buffering-ranges array field in @query. The current last
+    /// start position of the array should be inferior to @start.
+    /// </summary>
+    /// <param name="start">The <c>start</c> argument.</param>
+    /// <param name="stop">The <c>stop</c> argument.</param>
+    /// <returns>a #gboolean indicating if the range was added or not.</returns>
+    public bool AddBufferingRange(long start, long stop)
+    {
+        int nativeResult = GstQueryAddBufferingRange(Handle, start, stop);
+        return nativeResult != 0;
+    }
+
+    /// <summary>Add @mode as one of the supported scheduling modes to @query.</summary>
+    /// <param name="mode">The <c>mode</c> argument.</param>
+    public void AddSchedulingMode(Gst.PadMode mode)
+    {
+        GstQueryAddSchedulingMode(Handle, (int)mode);
+    }
+
+    /// <summary>
+    /// Check if @query has metadata @api set. When this function returns %TRUE,
+    /// @index will contain the index where the requested API and the parameters
+    /// can be found.
+    /// </summary>
+    /// <param name="api">The <c>api</c> argument.</param>
+    /// <param name="index">The <c>index</c> argument.</param>
+    /// <returns>%TRUE when @api is in the list of metadata.</returns>
+    public bool FindAllocationMeta(Gst.GObject.GType api, out uint index)
+    {
+        uint indexNative = default;
+        int nativeResult = GstQueryFindAllocationMeta(Handle, api.Value, &indexNative);
+        index = indexNative;
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Retrieve the number of values currently stored in the
+    /// meta API array of the query's structure.
+    /// </summary>
+    /// <returns>the metadata API array size as a #guint.</returns>
+    public uint GetNAllocationMetas()
+    {
+        uint nativeResult = GstQueryGetNAllocationMetas(Handle);
+        return nativeResult;
+    }
+
+    /// <summary>
+    /// Retrieve the number of values currently stored in the
+    /// allocator params array of the query's structure.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// If no memory allocator is specified, the downstream element can handle
+    /// the default memory allocator. The first memory allocator in the query
+    /// should be generic and allow mapping to system memory, all following
+    /// allocators should be ordered by preference with the preferred one first.
+    /// </para>
+    /// </remarks>
+    /// <returns>the allocator array size as a #guint.</returns>
+    public uint GetNAllocationParams()
+    {
+        uint nativeResult = GstQueryGetNAllocationParams(Handle);
+        return nativeResult;
+    }
+
+    /// <summary>
+    /// Retrieve the number of values currently stored in the
+    /// pool array of the query's structure.
+    /// </summary>
+    /// <returns>the pool array size as a #guint.</returns>
+    public uint GetNAllocationPools()
+    {
+        uint nativeResult = GstQueryGetNAllocationPools(Handle);
+        return nativeResult;
+    }
+
+    /// <summary>
+    /// Retrieve the number of values currently stored in the
+    /// buffered-ranges array of the query's structure.
+    /// </summary>
+    /// <returns>the range array size as a #guint.</returns>
+    public uint GetNBufferingRanges()
+    {
+        uint nativeResult = GstQueryGetNBufferingRanges(Handle);
+        return nativeResult;
+    }
+
+    /// <summary>
+    /// Retrieve the number of values currently stored in the
+    /// scheduling mode array of the query's structure.
+    /// </summary>
+    /// <returns>the scheduling mode array size as a #guint.</returns>
+    public uint GetNSchedulingModes()
+    {
+        uint nativeResult = GstQueryGetNSchedulingModes(Handle);
+        return nativeResult;
+    }
+
+    /// <summary>Get the structure of a query.</summary>
+    /// <returns>
+    /// the #GstStructure of the query. The
+    ///     structure is still owned by the query and will therefore be freed when the
+    ///     query is unreffed.
+    /// </returns>
+    public Gst.Structure? GetStructure()
+    {
+        nint nativeResult = GstQueryGetStructure(Handle);
+        return Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.None);
+    }
+
+    /// <summary>Check if @query has scheduling mode set.</summary>
+    /// <remarks>
+    /// <para>
+    /// &gt; When checking if upstream supports pull mode, it is usually not
+    /// &gt; enough to just check for GST_PAD_MODE_PULL with this function, you
+    /// &gt; also want to check whether the scheduling flags returned by
+    /// &gt; gst_query_parse_scheduling() have the seeking flag set (meaning
+    /// &gt; random access is supported, not only sequential pulls).
+    /// </para>
+    /// </remarks>
+    /// <param name="mode">The <c>mode</c> argument.</param>
+    /// <returns>%TRUE when @mode is in the list of scheduling modes.</returns>
+    public bool HasSchedulingMode(Gst.PadMode mode)
+    {
+        int nativeResult = GstQueryHasSchedulingMode(Handle, (int)mode);
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Check if @query has scheduling mode set and @flags is set in
+    /// query scheduling flags.
+    /// </summary>
+    /// <param name="mode">The <c>mode</c> argument.</param>
+    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <returns>
+    /// %TRUE when @mode is in the list of scheduling modes
+    ///    and @flags are compatible with query flags.
+    /// </returns>
+    public bool HasSchedulingModeWithFlags(Gst.PadMode mode, Gst.SchedulingFlags flags)
+    {
+        int nativeResult = GstQueryHasSchedulingModeWithFlags(Handle, (int)mode, (int)flags);
+        return nativeResult != 0;
+    }
+
+    /// <summary>Returns a writable copy of @query.</summary>
+    /// <remarks>
+    /// <para>
+    /// If there is only one reference count on @query, the caller must be the owner,
+    /// and so this function will return the query object unchanged. If on the other
+    /// hand there is more than one reference on the object, a new query object will
+    /// be returned. The caller's reference on @query will be removed, and instead the
+    /// caller will own a reference to the returned object.
+    /// </para>
+    /// <para>
+    /// In short, this function unrefs the query in the argument and refs the query
+    /// that it returns. Don't access the argument after calling this function. See
+    /// also: gst_query_ref().
+    /// </para>
+    /// </remarks>
+    /// <returns>
+    /// a writable query which may or may not be the
+    ///     same as @query
+    /// </returns>
+    public Gst.Query MakeWritable()
+    {
+        nint nativeResult = GstQueryMakeWritable(Handle);
+        return Gst.Query.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_query_make_writable returned no value.");
+    }
+
+    /// <summary>
+    /// Get the caps from @query. The caps remains valid as long as @query remains
+    /// valid.
+    /// </summary>
+    /// <param name="caps">The <c>caps</c> argument.</param>
+    public void ParseAcceptCaps(out Gst.Caps? caps)
+    {
+        nint capsNative = default;
+        GstQueryParseAcceptCaps(Handle, &capsNative);
+        caps = Gst.Caps.FromNative(capsNative, Gst.Interop.Transfer.None);
+    }
+
+    /// <summary>Parse the result from @query and store in @result.</summary>
+    /// <param name="result">The <c>result</c> argument.</param>
+    public void ParseAcceptCapsResult(out bool result)
+    {
+        int resultNative = default;
+        GstQueryParseAcceptCapsResult(Handle, &resultNative);
+        result = resultNative != 0;
+    }
+
+    /// <summary>
+    /// Parse an allocation query, writing the requested caps in @caps and
+    /// whether a pool is needed in @need_pool, if the respective parameters
+    /// are non-%NULL.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Pool details can be retrieved using gst_query_get_n_allocation_pools() and
+    /// gst_query_parse_nth_allocation_pool().
+    /// </para>
+    /// </remarks>
+    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <param name="needPool">The <c>needPool</c> argument.</param>
+    public void ParseAllocation(out Gst.Caps? caps, out bool needPool)
+    {
+        nint capsNative = default;
+        int needPoolNative = default;
+        GstQueryParseAllocation(Handle, &capsNative, &needPoolNative);
+        caps = Gst.Caps.FromNative(capsNative, Gst.Interop.Transfer.None);
+        needPool = needPoolNative != 0;
+    }
+
+    /// <summary>Get the results of a bitrate query. See also gst_query_set_bitrate().</summary>
+    /// <param name="nominalBitrate">The <c>nominalBitrate</c> argument.</param>
+    public void ParseBitrate(out uint nominalBitrate)
+    {
+        uint nominalBitrateNative = default;
+        GstQueryParseBitrate(Handle, &nominalBitrateNative);
+        nominalBitrate = nominalBitrateNative;
+    }
+
+    /// <summary>
+    /// Get the percentage of buffered data. This is a value between 0 and 100.
+    /// The @busy indicator is %TRUE when the buffering is in progress.
+    /// </summary>
+    /// <param name="busy">The <c>busy</c> argument.</param>
+    /// <param name="percent">The <c>percent</c> argument.</param>
+    public void ParseBufferingPercent(out bool busy, out int percent)
+    {
+        int busyNative = default;
+        int percentNative = default;
+        GstQueryParseBufferingPercent(Handle, &busyNative, &percentNative);
+        busy = busyNative != 0;
+        percent = percentNative;
+    }
+
+    /// <summary>
+    /// Parse an available query, writing the format into @format, and
+    /// other results into the passed parameters, if the respective parameters
+    /// are non-%NULL
+    /// </summary>
+    /// <param name="format">The <c>format</c> argument.</param>
+    /// <param name="start">The <c>start</c> argument.</param>
+    /// <param name="stop">The <c>stop</c> argument.</param>
+    /// <param name="estimatedTotal">The <c>estimatedTotal</c> argument.</param>
+    public void ParseBufferingRange(out Gst.Format format, out long start, out long stop, out long estimatedTotal)
+    {
+        int formatNative = default;
+        long startNative = default;
+        long stopNative = default;
+        long estimatedTotalNative = default;
+        GstQueryParseBufferingRange(Handle, &formatNative, &startNative, &stopNative, &estimatedTotalNative);
+        format = (Gst.Format)formatNative;
+        start = startNative;
+        stop = stopNative;
+        estimatedTotal = estimatedTotalNative;
+    }
+
+    /// <summary>Extracts the buffering stats values from @query.</summary>
+    /// <param name="mode">The <c>mode</c> argument.</param>
+    /// <param name="avgIn">The <c>avgIn</c> argument.</param>
+    /// <param name="avgOut">The <c>avgOut</c> argument.</param>
+    /// <param name="bufferingLeft">The <c>bufferingLeft</c> argument.</param>
+    public void ParseBufferingStats(out Gst.BufferingMode mode, out int avgIn, out int avgOut, out long bufferingLeft)
+    {
+        int modeNative = default;
+        int avgInNative = default;
+        int avgOutNative = default;
+        long bufferingLeftNative = default;
+        GstQueryParseBufferingStats(Handle, &modeNative, &avgInNative, &avgOutNative, &bufferingLeftNative);
+        mode = (Gst.BufferingMode)modeNative;
+        avgIn = avgInNative;
+        avgOut = avgOutNative;
+        bufferingLeft = bufferingLeftNative;
+    }
+
+    /// <summary>
+    /// Get the filter from the caps @query. The caps remains valid as long as
+    /// @query remains valid.
+    /// </summary>
+    /// <param name="filter">The <c>filter</c> argument.</param>
+    public void ParseCaps(out Gst.Caps? filter)
+    {
+        nint filterNative = default;
+        GstQueryParseCaps(Handle, &filterNative);
+        filter = Gst.Caps.FromNative(filterNative, Gst.Interop.Transfer.None);
+    }
+
+    /// <summary>
+    /// Get the caps result from @query. The caps remains valid as long as
+    /// @query remains valid.
+    /// </summary>
+    /// <param name="caps">The <c>caps</c> argument.</param>
+    public void ParseCapsResult(out Gst.Caps? caps)
+    {
+        nint capsNative = default;
+        GstQueryParseCapsResult(Handle, &capsNative);
+        caps = Gst.Caps.FromNative(capsNative, Gst.Interop.Transfer.None);
+    }
+
+    /// <summary>
+    /// Get the context from the context @query. The context remains valid as long as
+    /// @query remains valid.
+    /// </summary>
+    /// <param name="context">The <c>context</c> argument.</param>
+    public void ParseContext(out Gst.Context? context)
+    {
+        nint contextNative = default;
+        GstQueryParseContext(Handle, &contextNative);
+        context = Gst.Context.FromNative(contextNative, Gst.Interop.Transfer.None);
+    }
+
+    /// <summary>Parse a context type from an existing GST_QUERY_CONTEXT query.</summary>
+    /// <param name="contextType">The <c>contextType</c> argument.</param>
+    /// <returns>a #gboolean indicating if the parsing succeeded.</returns>
+    public bool ParseContextType(out string? contextType)
+    {
+        nint contextTypeNative = default;
+        int nativeResult = GstQueryParseContextType(Handle, &contextTypeNative);
+        contextType = Gst.Interop.GMarshal.PtrToStringUtf8(contextTypeNative);
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Parse a convert query answer. Any of @src_format, @src_value, @dest_format,
+    /// and @dest_value may be %NULL, in which case that value is omitted.
+    /// </summary>
+    /// <param name="srcFormat">The <c>srcFormat</c> argument.</param>
+    /// <param name="srcValue">The <c>srcValue</c> argument.</param>
+    /// <param name="destFormat">The <c>destFormat</c> argument.</param>
+    /// <param name="destValue">The <c>destValue</c> argument.</param>
+    public void ParseConvert(out Gst.Format srcFormat, out long srcValue, out Gst.Format destFormat, out long destValue)
+    {
+        int srcFormatNative = default;
+        long srcValueNative = default;
+        int destFormatNative = default;
+        long destValueNative = default;
+        GstQueryParseConvert(Handle, &srcFormatNative, &srcValueNative, &destFormatNative, &destValueNative);
+        srcFormat = (Gst.Format)srcFormatNative;
+        srcValue = srcValueNative;
+        destFormat = (Gst.Format)destFormatNative;
+        destValue = destValueNative;
+    }
+
+    /// <summary>
+    /// Parse a duration query answer. Write the format of the duration into @format,
+    /// and the value into @duration, if the respective variables are non-%NULL.
+    /// </summary>
+    /// <param name="format">The <c>format</c> argument.</param>
+    /// <param name="duration">The <c>duration</c> argument.</param>
+    public void ParseDuration(out Gst.Format format, out long duration)
+    {
+        int formatNative = default;
+        long durationNative = default;
+        GstQueryParseDuration(Handle, &formatNative, &durationNative);
+        format = (Gst.Format)formatNative;
+        duration = durationNative;
+    }
+
+    /// <summary>Parse a latency query answer.</summary>
+    /// <param name="live">The <c>live</c> argument.</param>
+    /// <param name="minLatency">The <c>minLatency</c> argument.</param>
+    /// <param name="maxLatency">The <c>maxLatency</c> argument.</param>
+    public void ParseLatency(out bool live, out Gst.ClockTime minLatency, out Gst.ClockTime maxLatency)
+    {
+        int liveNative = default;
+        ulong minLatencyNative = default;
+        ulong maxLatencyNative = default;
+        GstQueryParseLatency(Handle, &liveNative, &minLatencyNative, &maxLatencyNative);
+        live = liveNative != 0;
+        minLatency = new Gst.ClockTime(minLatencyNative);
+        maxLatency = new Gst.ClockTime(maxLatencyNative);
+    }
+
+    /// <summary>Parse the number of formats in the formats @query.</summary>
+    /// <param name="nFormats">The <c>nFormats</c> argument.</param>
+    public void ParseNFormats(out uint nFormats)
+    {
+        uint nFormatsNative = default;
+        GstQueryParseNFormats(Handle, &nFormatsNative);
+        nFormats = nFormatsNative;
+    }
+
+    /// <summary>
+    /// Parse an available query and get the metadata API
+    /// at @index of the metadata API array.
+    /// </summary>
+    /// <param name="index">The <c>index</c> argument.</param>
+    /// <param name="params">The <c>@params</c> argument.</param>
+    /// <returns>a #GType of the metadata API at @index.</returns>
+    public Gst.GObject.GType ParseNthAllocationMeta(uint index, out Gst.Structure? @params)
+    {
+        nint @paramsNative = default;
+        nuint nativeResult = GstQueryParseNthAllocationMeta(Handle, index, &@paramsNative);
+        @params = Gst.Structure.FromNative(@paramsNative, Gst.Interop.Transfer.None);
+        return new Gst.GObject.GType(nativeResult);
+    }
+
+    /// <summary>
+    /// Parse an available query and get the allocator and its params
+    /// at @index of the allocator array.
+    /// </summary>
+    /// <param name="index">The <c>index</c> argument.</param>
+    /// <param name="allocator">The <c>allocator</c> argument.</param>
+    /// <param name="params">The <c>@params</c> argument.</param>
+    public void ParseNthAllocationParam(uint index, out Gst.Allocator? allocator, out Gst.AllocationParams? @params)
+    {
+        nint allocatorNative = default;
+        nint @paramsNative = default;
+        GstQueryParseNthAllocationParam(Handle, index, &allocatorNative, &@paramsNative);
+        allocator = Gst.GObject.Object.FromNative<Gst.Allocator>(allocatorNative, Gst.Interop.Transfer.Full);
+        @params = Gst.AllocationParams.FromNative(@paramsNative, Gst.Interop.Transfer.None);
+    }
+
+    /// <summary>Get the pool parameters in @query.</summary>
+    /// <remarks>
+    /// <para>Unref @pool with gst_object_unref() when it's not needed any more.</para>
+    /// </remarks>
+    /// <param name="index">The <c>index</c> argument.</param>
+    /// <param name="pool">The <c>pool</c> argument.</param>
+    /// <param name="size">The <c>size</c> argument.</param>
+    /// <param name="minBuffers">The <c>minBuffers</c> argument.</param>
+    /// <param name="maxBuffers">The <c>maxBuffers</c> argument.</param>
+    public void ParseNthAllocationPool(uint index, out Gst.BufferPool? pool, out uint size, out uint minBuffers, out uint maxBuffers)
+    {
+        nint poolNative = default;
+        uint sizeNative = default;
+        uint minBuffersNative = default;
+        uint maxBuffersNative = default;
+        GstQueryParseNthAllocationPool(Handle, index, &poolNative, &sizeNative, &minBuffersNative, &maxBuffersNative);
+        pool = Gst.GObject.Object.FromNative<Gst.BufferPool>(poolNative, Gst.Interop.Transfer.Full);
+        size = sizeNative;
+        minBuffers = minBuffersNative;
+        maxBuffers = maxBuffersNative;
+    }
+
+    /// <summary>
+    /// Parse an available query and get the start and stop values stored
+    /// at the @index of the buffered ranges array.
+    /// </summary>
+    /// <param name="index">The <c>index</c> argument.</param>
+    /// <param name="start">The <c>start</c> argument.</param>
+    /// <param name="stop">The <c>stop</c> argument.</param>
+    /// <returns>a #gboolean indicating if the parsing succeeded.</returns>
+    public bool ParseNthBufferingRange(uint index, out long start, out long stop)
+    {
+        long startNative = default;
+        long stopNative = default;
+        int nativeResult = GstQueryParseNthBufferingRange(Handle, index, &startNative, &stopNative);
+        start = startNative;
+        stop = stopNative;
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Parse the format query and retrieve the @nth format from it into
+    /// @format. If the list contains less elements than @nth, @format will be
+    /// set to GST_FORMAT_UNDEFINED.
+    /// </summary>
+    /// <param name="nth">The <c>nth</c> argument.</param>
+    /// <param name="format">The <c>format</c> argument.</param>
+    public void ParseNthFormat(uint nth, out Gst.Format format)
+    {
+        int formatNative = default;
+        GstQueryParseNthFormat(Handle, nth, &formatNative);
+        format = (Gst.Format)formatNative;
+    }
+
+    /// <summary>
+    /// Parse an available query and get the scheduling mode
+    /// at @index of the scheduling modes array.
+    /// </summary>
+    /// <param name="index">The <c>index</c> argument.</param>
+    /// <returns>a #GstPadMode of the scheduling mode at @index.</returns>
+    public Gst.PadMode ParseNthSchedulingMode(uint index)
+    {
+        int nativeResult = GstQueryParseNthSchedulingMode(Handle, index);
+        return (Gst.PadMode)nativeResult;
+    }
+
+    /// <summary>
+    /// Parse a position query, writing the format into @format, and the position
+    /// into @cur, if the respective parameters are non-%NULL.
+    /// </summary>
+    /// <param name="format">The <c>format</c> argument.</param>
+    /// <param name="cur">The <c>cur</c> argument.</param>
+    public void ParsePosition(out Gst.Format format, out long cur)
+    {
+        int formatNative = default;
+        long curNative = default;
+        GstQueryParsePosition(Handle, &formatNative, &curNative);
+        format = (Gst.Format)formatNative;
+        cur = curNative;
+    }
+
+    /// <summary>Set the scheduling properties.</summary>
+    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <param name="minsize">The <c>minsize</c> argument.</param>
+    /// <param name="maxsize">The <c>maxsize</c> argument.</param>
+    /// <param name="align">The <c>align</c> argument.</param>
+    public void ParseScheduling(out Gst.SchedulingFlags flags, out int minsize, out int maxsize, out int align)
+    {
+        int flagsNative = default;
+        int minsizeNative = default;
+        int maxsizeNative = default;
+        int alignNative = default;
+        GstQueryParseScheduling(Handle, &flagsNative, &minsizeNative, &maxsizeNative, &alignNative);
+        flags = (Gst.SchedulingFlags)flagsNative;
+        minsize = minsizeNative;
+        maxsize = maxsizeNative;
+        align = alignNative;
+    }
+
+    /// <summary>
+    /// Parse a seeking query, writing the format into @format, and
+    /// other results into the passed parameters, if the respective parameters
+    /// are non-%NULL
+    /// </summary>
+    /// <param name="format">The <c>format</c> argument.</param>
+    /// <param name="seekable">The <c>seekable</c> argument.</param>
+    /// <param name="segmentStart">The <c>segmentStart</c> argument.</param>
+    /// <param name="segmentEnd">The <c>segmentEnd</c> argument.</param>
+    public void ParseSeeking(out Gst.Format format, out bool seekable, out long segmentStart, out long segmentEnd)
+    {
+        int formatNative = default;
+        int seekableNative = default;
+        long segmentStartNative = default;
+        long segmentEndNative = default;
+        GstQueryParseSeeking(Handle, &formatNative, &seekableNative, &segmentStartNative, &segmentEndNative);
+        format = (Gst.Format)formatNative;
+        seekable = seekableNative != 0;
+        segmentStart = segmentStartNative;
+        segmentEnd = segmentEndNative;
+    }
+
+    /// <summary>
+    /// Parse a segment query answer. Any of @rate, @format, @start_value, and
+    /// @stop_value may be %NULL, which will cause this value to be omitted.
+    /// </summary>
+    /// <remarks>
+    /// <para>See gst_query_set_segment() for an explanation of the function arguments.</para>
+    /// </remarks>
+    /// <param name="rate">The <c>rate</c> argument.</param>
+    /// <param name="format">The <c>format</c> argument.</param>
+    /// <param name="startValue">The <c>startValue</c> argument.</param>
+    /// <param name="stopValue">The <c>stopValue</c> argument.</param>
+    public void ParseSegment(out double rate, out Gst.Format format, out long startValue, out long stopValue)
+    {
+        double rateNative = default;
+        int formatNative = default;
+        long startValueNative = default;
+        long stopValueNative = default;
+        GstQueryParseSegment(Handle, &rateNative, &formatNative, &startValueNative, &stopValueNative);
+        rate = rateNative;
+        format = (Gst.Format)formatNative;
+        startValue = startValueNative;
+        stopValue = stopValueNative;
+    }
+
+    /// <summary>Get the results of a selectable query. See also gst_query_set_selectable().</summary>
+    /// <param name="selectable">The <c>selectable</c> argument.</param>
+    public void ParseSelectable(out bool selectable)
+    {
+        int selectableNative = default;
+        GstQueryParseSelectable(Handle, &selectableNative);
+        selectable = selectableNative != 0;
+    }
+
+    /// <summary>
+    /// Parse an URI query, writing the URI into @uri as a newly
+    /// allocated string, if the respective parameters are non-%NULL.
+    /// Free the string with g_free() after usage.
+    /// </summary>
+    /// <param name="uri">The <c>uri</c> argument.</param>
+    public void ParseUri(out string? uri)
+    {
+        nint uriNative = default;
+        GstQueryParseUri(Handle, &uriNative);
+        uri = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(uriNative);
+    }
+
+    /// <summary>
+    /// Parse an URI query, writing the URI into @uri as a newly
+    /// allocated string, if the respective parameters are non-%NULL.
+    /// Free the string with g_free() after usage.
+    /// </summary>
+    /// <param name="uri">The <c>uri</c> argument.</param>
+    public void ParseUriRedirection(out string? uri)
+    {
+        nint uriNative = default;
+        GstQueryParseUriRedirection(Handle, &uriNative);
+        uri = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(uriNative);
+    }
+
+    /// <summary>
+    /// Parse an URI query, and set @permanent to %TRUE if there is a redirection
+    /// and it should be considered permanent. If a redirection is permanent,
+    /// applications should update their internal storage of the URI, otherwise
+    /// they should make all future requests to the original URI.
+    /// </summary>
+    /// <param name="permanent">The <c>permanent</c> argument.</param>
+    public void ParseUriRedirectionPermanent(out bool permanent)
+    {
+        int permanentNative = default;
+        GstQueryParseUriRedirectionPermanent(Handle, &permanentNative);
+        permanent = permanentNative != 0;
+    }
+
+    /// <summary>Increases the refcount of the given query by one.</summary>
+    /// <returns>@q</returns>
+    public Gst.Query Ref()
+    {
+        nint nativeResult = GstQueryRef(Handle);
+        return Gst.Query.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_query_ref returned no value.");
+    }
+
+    /// <summary>Remove the metadata API at @index of the metadata API array.</summary>
+    /// <param name="index">The <c>index</c> argument.</param>
+    public void RemoveNthAllocationMeta(uint index)
+    {
+        GstQueryRemoveNthAllocationMeta(Handle, index);
+    }
+
+    /// <summary>Remove the allocation param at @index of the allocation param array.</summary>
+    /// <param name="index">The <c>index</c> argument.</param>
+    public void RemoveNthAllocationParam(uint index)
+    {
+        GstQueryRemoveNthAllocationParam(Handle, index);
+    }
+
+    /// <summary>Remove the allocation pool at @index of the allocation pool array.</summary>
+    /// <param name="index">The <c>index</c> argument.</param>
+    public void RemoveNthAllocationPool(uint index)
+    {
+        GstQueryRemoveNthAllocationPool(Handle, index);
+    }
+
+    /// <summary>Set @result as the result for the @query.</summary>
+    /// <param name="result">The <c>result</c> argument.</param>
+    public void SetAcceptCapsResult(bool result)
+    {
+        GstQuerySetAcceptCapsResult(Handle, result ? 1 : 0);
+    }
+
+    /// <summary>
+    /// Set the results of a bitrate query.  The nominal bitrate is the average
+    /// bitrate expected over the length of the stream as advertised in file
+    /// headers (or similar).
+    /// </summary>
+    /// <param name="nominalBitrate">The <c>nominalBitrate</c> argument.</param>
+    public void SetBitrate(uint nominalBitrate)
+    {
+        GstQuerySetBitrate(Handle, nominalBitrate);
+    }
+
+    /// <summary>
+    /// Set the percentage of buffered data. This is a value between 0 and 100.
+    /// The @busy indicator is %TRUE when the buffering is in progress.
+    /// </summary>
+    /// <param name="busy">The <c>busy</c> argument.</param>
+    /// <param name="percent">The <c>percent</c> argument.</param>
+    public void SetBufferingPercent(bool busy, int percent)
+    {
+        GstQuerySetBufferingPercent(Handle, busy ? 1 : 0, percent);
+    }
+
+    /// <summary>Set the available query result fields in @query.</summary>
+    /// <param name="format">The <c>format</c> argument.</param>
+    /// <param name="start">The <c>start</c> argument.</param>
+    /// <param name="stop">The <c>stop</c> argument.</param>
+    /// <param name="estimatedTotal">The <c>estimatedTotal</c> argument.</param>
+    public void SetBufferingRange(Gst.Format format, long start, long stop, long estimatedTotal)
+    {
+        GstQuerySetBufferingRange(Handle, (int)format, start, stop, estimatedTotal);
+    }
+
+    /// <summary>Configures the buffering stats values in @query.</summary>
+    /// <param name="mode">The <c>mode</c> argument.</param>
+    /// <param name="avgIn">The <c>avgIn</c> argument.</param>
+    /// <param name="avgOut">The <c>avgOut</c> argument.</param>
+    /// <param name="bufferingLeft">The <c>bufferingLeft</c> argument.</param>
+    public void SetBufferingStats(Gst.BufferingMode mode, int avgIn, int avgOut, long bufferingLeft)
+    {
+        GstQuerySetBufferingStats(Handle, (int)mode, avgIn, avgOut, bufferingLeft);
+    }
+
+    /// <summary>Set the @caps result in @query.</summary>
+    /// <param name="caps">The <c>caps</c> argument.</param>
+    public void SetCapsResult(Gst.Caps? caps)
+    {
+        GstQuerySetCapsResult(Handle, caps is null ? 0 : caps.Handle);
+    }
+
+    /// <summary>Answer a context query by setting the requested context.</summary>
+    /// <param name="context">The <c>context</c> argument.</param>
+    public void SetContext(Gst.Context? context)
+    {
+        GstQuerySetContext(Handle, context is null ? 0 : context.Handle);
+    }
+
+    /// <summary>Answer a convert query by setting the requested values.</summary>
+    /// <param name="srcFormat">The <c>srcFormat</c> argument.</param>
+    /// <param name="srcValue">The <c>srcValue</c> argument.</param>
+    /// <param name="destFormat">The <c>destFormat</c> argument.</param>
+    /// <param name="destValue">The <c>destValue</c> argument.</param>
+    public void SetConvert(Gst.Format srcFormat, long srcValue, Gst.Format destFormat, long destValue)
+    {
+        GstQuerySetConvert(Handle, (int)srcFormat, srcValue, (int)destFormat, destValue);
+    }
+
+    /// <summary>Answer a duration query by setting the requested value in the given format.</summary>
+    /// <param name="format">The <c>format</c> argument.</param>
+    /// <param name="duration">The <c>duration</c> argument.</param>
+    public void SetDuration(Gst.Format format, long duration)
+    {
+        GstQuerySetDuration(Handle, (int)format, duration);
+    }
+
+    /// <summary>Answer a latency query by setting the requested values in the given format.</summary>
+    /// <param name="live">The <c>live</c> argument.</param>
+    /// <param name="minLatency">The <c>minLatency</c> argument.</param>
+    /// <param name="maxLatency">The <c>maxLatency</c> argument.</param>
+    public void SetLatency(bool live, Gst.ClockTime minLatency, Gst.ClockTime maxLatency)
+    {
+        GstQuerySetLatency(Handle, live ? 1 : 0, minLatency.Nanoseconds, maxLatency.Nanoseconds);
+    }
+
+    /// <summary>
+    /// Parse an available query and get the allocator and its params
+    /// at @index of the allocator array.
+    /// </summary>
+    /// <param name="index">The <c>index</c> argument.</param>
+    /// <param name="allocator">The <c>allocator</c> argument.</param>
+    /// <param name="params">The <c>@params</c> argument.</param>
+    public void SetNthAllocationParam(uint index, Gst.Allocator? allocator, Gst.AllocationParams? @params)
+    {
+        GstQuerySetNthAllocationParam(Handle, index, allocator is null ? 0 : allocator.Handle, @params is null ? 0 : @params.Handle);
+    }
+
+    /// <summary>Set the pool parameters in @query.</summary>
+    /// <param name="index">The <c>index</c> argument.</param>
+    /// <param name="pool">The <c>pool</c> argument.</param>
+    /// <param name="size">The <c>size</c> argument.</param>
+    /// <param name="minBuffers">The <c>minBuffers</c> argument.</param>
+    /// <param name="maxBuffers">The <c>maxBuffers</c> argument.</param>
+    public void SetNthAllocationPool(uint index, Gst.BufferPool? pool, uint size, uint minBuffers, uint maxBuffers)
+    {
+        GstQuerySetNthAllocationPool(Handle, index, pool is null ? 0 : pool.Handle, size, minBuffers, maxBuffers);
+    }
+
+    /// <summary>Answer a position query by setting the requested value in the given format.</summary>
+    /// <param name="format">The <c>format</c> argument.</param>
+    /// <param name="cur">The <c>cur</c> argument.</param>
+    public void SetPosition(Gst.Format format, long cur)
+    {
+        GstQuerySetPosition(Handle, (int)format, cur);
+    }
+
+    /// <summary>Set the scheduling properties.</summary>
+    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <param name="minsize">The <c>minsize</c> argument.</param>
+    /// <param name="maxsize">The <c>maxsize</c> argument.</param>
+    /// <param name="align">The <c>align</c> argument.</param>
+    public void SetScheduling(Gst.SchedulingFlags flags, int minsize, int maxsize, int align)
+    {
+        GstQuerySetScheduling(Handle, (int)flags, minsize, maxsize, align);
+    }
+
+    /// <summary>Set the seeking query result fields in @query.</summary>
+    /// <param name="format">The <c>format</c> argument.</param>
+    /// <param name="seekable">The <c>seekable</c> argument.</param>
+    /// <param name="segmentStart">The <c>segmentStart</c> argument.</param>
+    /// <param name="segmentEnd">The <c>segmentEnd</c> argument.</param>
+    public void SetSeeking(Gst.Format format, bool seekable, long segmentStart, long segmentEnd)
+    {
+        GstQuerySetSeeking(Handle, (int)format, seekable ? 1 : 0, segmentStart, segmentEnd);
+    }
+
+    /// <summary>
+    /// Answer a segment query by setting the requested values. The normal
+    /// playback segment of a pipeline is 0 to duration at the default rate of
+    /// 1.0. If a seek was performed on the pipeline to play a different
+    /// segment, this query will return the range specified in the last seek.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// @start_value and @stop_value will respectively contain the configured
+    /// playback range start and stop values expressed in @format.
+    /// The values are always between 0 and the duration of the media and
+    /// @start_value &lt;= @stop_value. @rate will contain the playback rate. For
+    /// negative rates, playback will actually happen from @stop_value to
+    /// @start_value.
+    /// </para>
+    /// </remarks>
+    /// <param name="rate">The <c>rate</c> argument.</param>
+    /// <param name="format">The <c>format</c> argument.</param>
+    /// <param name="startValue">The <c>startValue</c> argument.</param>
+    /// <param name="stopValue">The <c>stopValue</c> argument.</param>
+    public void SetSegment(double rate, Gst.Format format, long startValue, long stopValue)
+    {
+        GstQuerySetSegment(Handle, rate, (int)format, startValue, stopValue);
+    }
+
+    /// <summary>
+    /// Set the results of a selectable query. If the element answering the query can
+    /// handle stream selection, @selectable should be set to %TRUE.
+    /// </summary>
+    /// <param name="selectable">The <c>selectable</c> argument.</param>
+    public void SetSelectable(bool selectable)
+    {
+        GstQuerySetSelectable(Handle, selectable ? 1 : 0);
+    }
+
+    /// <summary>Answer a URI query by setting the requested URI.</summary>
+    /// <param name="uri">The <c>uri</c> argument.</param>
+    public void SetUri(string? uri)
+    {
+        System.Span<byte> uriBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope uriScope = Gst.Interop.GMarshal.StackUtf8(uri, uriBuffer);
+        GstQuerySetUri(Handle, uriScope.Pointer);
+    }
+
+    /// <summary>Answer a URI query by setting the requested URI redirection.</summary>
+    /// <param name="uri">The <c>uri</c> argument.</param>
+    public void SetUriRedirection(string? uri)
+    {
+        System.Span<byte> uriBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope uriScope = Gst.Interop.GMarshal.StackUtf8(uri, uriBuffer);
+        GstQuerySetUriRedirection(Handle, uriScope.Pointer);
+    }
+
+    /// <summary>
+    /// Answer a URI query by setting the requested URI redirection
+    /// to permanent or not.
+    /// </summary>
+    /// <param name="permanent">The <c>permanent</c> argument.</param>
+    public void SetUriRedirectionPermanent(bool permanent)
+    {
+        GstQuerySetUriRedirectionPermanent(Handle, permanent ? 1 : 0);
+    }
+
+    /// <summary>
+    /// Get the structure of a query. This method should be called with a writable
+    /// @query so that the returned structure is guaranteed to be writable.
+    /// </summary>
+    /// <returns>
+    /// the #GstStructure of the query. The structure is
+    ///     still owned by the query and will therefore be freed when the query
+    ///     is unreffed.
+    /// </returns>
+    public Gst.Structure WritableStructure()
+    {
+        nint nativeResult = GstQueryWritableStructure(Handle);
+        return Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.None)
+            ?? throw new InvalidOperationException("gst_query_writable_structure returned no value.");
+    }
+
+    /// <summary>The <c>gst_query_new_accept_caps</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_new_accept_caps")]
+    private static partial nint GstQueryNewAcceptCaps(nint caps);
+
+    /// <summary>The <c>gst_query_new_allocation</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_new_allocation")]
+    private static partial nint GstQueryNewAllocation(nint caps, int needPool);
+
+    /// <summary>The <c>gst_query_new_bitrate</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_new_bitrate")]
+    private static partial nint GstQueryNewBitrate();
+
+    /// <summary>The <c>gst_query_new_buffering</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_new_buffering")]
+    private static partial nint GstQueryNewBuffering(int format);
+
+    /// <summary>The <c>gst_query_new_caps</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_new_caps")]
+    private static partial nint GstQueryNewCaps(nint filter);
+
+    /// <summary>The <c>gst_query_new_context</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_new_context")]
+    private static partial nint GstQueryNewContext(byte* contextType);
+
+    /// <summary>The <c>gst_query_new_convert</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_new_convert")]
+    private static partial nint GstQueryNewConvert(int srcFormat, long value, int destFormat);
+
+    /// <summary>The <c>gst_query_new_drain</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_new_drain")]
+    private static partial nint GstQueryNewDrain();
+
+    /// <summary>The <c>gst_query_new_duration</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_new_duration")]
+    private static partial nint GstQueryNewDuration(int format);
+
+    /// <summary>The <c>gst_query_new_formats</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_new_formats")]
+    private static partial nint GstQueryNewFormats();
+
+    /// <summary>The <c>gst_query_new_latency</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_new_latency")]
+    private static partial nint GstQueryNewLatency();
+
+    /// <summary>The <c>gst_query_new_position</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_new_position")]
+    private static partial nint GstQueryNewPosition(int format);
+
+    /// <summary>The <c>gst_query_new_scheduling</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_new_scheduling")]
+    private static partial nint GstQueryNewScheduling();
+
+    /// <summary>The <c>gst_query_new_seeking</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_new_seeking")]
+    private static partial nint GstQueryNewSeeking(int format);
+
+    /// <summary>The <c>gst_query_new_segment</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_new_segment")]
+    private static partial nint GstQueryNewSegment(int format);
+
+    /// <summary>The <c>gst_query_new_selectable</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_new_selectable")]
+    private static partial nint GstQueryNewSelectable();
+
+    /// <summary>The <c>gst_query_new_uri</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_new_uri")]
+    private static partial nint GstQueryNewUri();
+
+    /// <summary>The <c>gst_query_add_allocation_meta</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_add_allocation_meta")]
+    private static partial void GstQueryAddAllocationMeta(nint query, nuint api, nint @params);
+
+    /// <summary>The <c>gst_query_add_allocation_param</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_add_allocation_param")]
+    private static partial void GstQueryAddAllocationParam(nint query, nint allocator, nint @params);
+
+    /// <summary>The <c>gst_query_add_allocation_pool</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_add_allocation_pool")]
+    private static partial void GstQueryAddAllocationPool(nint query, nint pool, uint size, uint minBuffers, uint maxBuffers);
+
+    /// <summary>The <c>gst_query_add_buffering_range</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_add_buffering_range")]
+    private static partial int GstQueryAddBufferingRange(nint query, long start, long stop);
+
+    /// <summary>The <c>gst_query_add_scheduling_mode</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_add_scheduling_mode")]
+    private static partial void GstQueryAddSchedulingMode(nint query, int mode);
+
+    /// <summary>The <c>gst_query_find_allocation_meta</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_find_allocation_meta")]
+    private static partial int GstQueryFindAllocationMeta(nint query, nuint api, uint* index);
+
+    /// <summary>The <c>gst_query_get_n_allocation_metas</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_get_n_allocation_metas")]
+    private static partial uint GstQueryGetNAllocationMetas(nint query);
+
+    /// <summary>The <c>gst_query_get_n_allocation_params</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_get_n_allocation_params")]
+    private static partial uint GstQueryGetNAllocationParams(nint query);
+
+    /// <summary>The <c>gst_query_get_n_allocation_pools</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_get_n_allocation_pools")]
+    private static partial uint GstQueryGetNAllocationPools(nint query);
+
+    /// <summary>The <c>gst_query_get_n_buffering_ranges</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_get_n_buffering_ranges")]
+    private static partial uint GstQueryGetNBufferingRanges(nint query);
+
+    /// <summary>The <c>gst_query_get_n_scheduling_modes</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_get_n_scheduling_modes")]
+    private static partial uint GstQueryGetNSchedulingModes(nint query);
+
+    /// <summary>The <c>gst_query_get_structure</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_get_structure")]
+    private static partial nint GstQueryGetStructure(nint query);
+
+    /// <summary>The <c>gst_query_has_scheduling_mode</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_has_scheduling_mode")]
+    private static partial int GstQueryHasSchedulingMode(nint query, int mode);
+
+    /// <summary>The <c>gst_query_has_scheduling_mode_with_flags</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_has_scheduling_mode_with_flags")]
+    private static partial int GstQueryHasSchedulingModeWithFlags(nint query, int mode, int flags);
+
+    /// <summary>The <c>gst_query_make_writable</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_make_writable")]
+    private static partial nint GstQueryMakeWritable(nint query);
+
+    /// <summary>The <c>gst_query_parse_accept_caps</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_parse_accept_caps")]
+    private static partial void GstQueryParseAcceptCaps(nint query, nint* caps);
+
+    /// <summary>The <c>gst_query_parse_accept_caps_result</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_parse_accept_caps_result")]
+    private static partial void GstQueryParseAcceptCapsResult(nint query, int* result);
+
+    /// <summary>The <c>gst_query_parse_allocation</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_parse_allocation")]
+    private static partial void GstQueryParseAllocation(nint query, nint* caps, int* needPool);
+
+    /// <summary>The <c>gst_query_parse_bitrate</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_parse_bitrate")]
+    private static partial void GstQueryParseBitrate(nint query, uint* nominalBitrate);
+
+    /// <summary>The <c>gst_query_parse_buffering_percent</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_parse_buffering_percent")]
+    private static partial void GstQueryParseBufferingPercent(nint query, int* busy, int* percent);
+
+    /// <summary>The <c>gst_query_parse_buffering_range</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_parse_buffering_range")]
+    private static partial void GstQueryParseBufferingRange(nint query, int* format, long* start, long* stop, long* estimatedTotal);
+
+    /// <summary>The <c>gst_query_parse_buffering_stats</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_parse_buffering_stats")]
+    private static partial void GstQueryParseBufferingStats(nint query, int* mode, int* avgIn, int* avgOut, long* bufferingLeft);
+
+    /// <summary>The <c>gst_query_parse_caps</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_parse_caps")]
+    private static partial void GstQueryParseCaps(nint query, nint* filter);
+
+    /// <summary>The <c>gst_query_parse_caps_result</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_parse_caps_result")]
+    private static partial void GstQueryParseCapsResult(nint query, nint* caps);
+
+    /// <summary>The <c>gst_query_parse_context</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_parse_context")]
+    private static partial void GstQueryParseContext(nint query, nint* context);
+
+    /// <summary>The <c>gst_query_parse_context_type</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_parse_context_type")]
+    private static partial int GstQueryParseContextType(nint query, nint* contextType);
+
+    /// <summary>The <c>gst_query_parse_convert</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_parse_convert")]
+    private static partial void GstQueryParseConvert(nint query, int* srcFormat, long* srcValue, int* destFormat, long* destValue);
+
+    /// <summary>The <c>gst_query_parse_duration</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_parse_duration")]
+    private static partial void GstQueryParseDuration(nint query, int* format, long* duration);
+
+    /// <summary>The <c>gst_query_parse_latency</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_parse_latency")]
+    private static partial void GstQueryParseLatency(nint query, int* live, ulong* minLatency, ulong* maxLatency);
+
+    /// <summary>The <c>gst_query_parse_n_formats</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_parse_n_formats")]
+    private static partial void GstQueryParseNFormats(nint query, uint* nFormats);
+
+    /// <summary>The <c>gst_query_parse_nth_allocation_meta</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_parse_nth_allocation_meta")]
+    private static partial nuint GstQueryParseNthAllocationMeta(nint query, uint index, nint* @params);
+
+    /// <summary>The <c>gst_query_parse_nth_allocation_param</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_parse_nth_allocation_param")]
+    private static partial void GstQueryParseNthAllocationParam(nint query, uint index, nint* allocator, nint* @params);
+
+    /// <summary>The <c>gst_query_parse_nth_allocation_pool</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_parse_nth_allocation_pool")]
+    private static partial void GstQueryParseNthAllocationPool(nint query, uint index, nint* pool, uint* size, uint* minBuffers, uint* maxBuffers);
+
+    /// <summary>The <c>gst_query_parse_nth_buffering_range</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_parse_nth_buffering_range")]
+    private static partial int GstQueryParseNthBufferingRange(nint query, uint index, long* start, long* stop);
+
+    /// <summary>The <c>gst_query_parse_nth_format</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_parse_nth_format")]
+    private static partial void GstQueryParseNthFormat(nint query, uint nth, int* format);
+
+    /// <summary>The <c>gst_query_parse_nth_scheduling_mode</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_parse_nth_scheduling_mode")]
+    private static partial int GstQueryParseNthSchedulingMode(nint query, uint index);
+
+    /// <summary>The <c>gst_query_parse_position</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_parse_position")]
+    private static partial void GstQueryParsePosition(nint query, int* format, long* cur);
+
+    /// <summary>The <c>gst_query_parse_scheduling</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_parse_scheduling")]
+    private static partial void GstQueryParseScheduling(nint query, int* flags, int* minsize, int* maxsize, int* align);
+
+    /// <summary>The <c>gst_query_parse_seeking</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_parse_seeking")]
+    private static partial void GstQueryParseSeeking(nint query, int* format, int* seekable, long* segmentStart, long* segmentEnd);
+
+    /// <summary>The <c>gst_query_parse_segment</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_parse_segment")]
+    private static partial void GstQueryParseSegment(nint query, double* rate, int* format, long* startValue, long* stopValue);
+
+    /// <summary>The <c>gst_query_parse_selectable</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_parse_selectable")]
+    private static partial void GstQueryParseSelectable(nint query, int* selectable);
+
+    /// <summary>The <c>gst_query_parse_uri</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_parse_uri")]
+    private static partial void GstQueryParseUri(nint query, nint* uri);
+
+    /// <summary>The <c>gst_query_parse_uri_redirection</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_parse_uri_redirection")]
+    private static partial void GstQueryParseUriRedirection(nint query, nint* uri);
+
+    /// <summary>The <c>gst_query_parse_uri_redirection_permanent</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_parse_uri_redirection_permanent")]
+    private static partial void GstQueryParseUriRedirectionPermanent(nint query, int* permanent);
+
+    /// <summary>The <c>gst_query_ref</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_ref")]
+    private static partial nint GstQueryRef(nint q);
+
+    /// <summary>The <c>gst_query_remove_nth_allocation_meta</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_remove_nth_allocation_meta")]
+    private static partial void GstQueryRemoveNthAllocationMeta(nint query, uint index);
+
+    /// <summary>The <c>gst_query_remove_nth_allocation_param</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_remove_nth_allocation_param")]
+    private static partial void GstQueryRemoveNthAllocationParam(nint query, uint index);
+
+    /// <summary>The <c>gst_query_remove_nth_allocation_pool</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_remove_nth_allocation_pool")]
+    private static partial void GstQueryRemoveNthAllocationPool(nint query, uint index);
+
+    /// <summary>The <c>gst_query_set_accept_caps_result</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_set_accept_caps_result")]
+    private static partial void GstQuerySetAcceptCapsResult(nint query, int result);
+
+    /// <summary>The <c>gst_query_set_bitrate</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_set_bitrate")]
+    private static partial void GstQuerySetBitrate(nint query, uint nominalBitrate);
+
+    /// <summary>The <c>gst_query_set_buffering_percent</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_set_buffering_percent")]
+    private static partial void GstQuerySetBufferingPercent(nint query, int busy, int percent);
+
+    /// <summary>The <c>gst_query_set_buffering_range</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_set_buffering_range")]
+    private static partial void GstQuerySetBufferingRange(nint query, int format, long start, long stop, long estimatedTotal);
+
+    /// <summary>The <c>gst_query_set_buffering_stats</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_set_buffering_stats")]
+    private static partial void GstQuerySetBufferingStats(nint query, int mode, int avgIn, int avgOut, long bufferingLeft);
+
+    /// <summary>The <c>gst_query_set_caps_result</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_set_caps_result")]
+    private static partial void GstQuerySetCapsResult(nint query, nint caps);
+
+    /// <summary>The <c>gst_query_set_context</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_set_context")]
+    private static partial void GstQuerySetContext(nint query, nint context);
+
+    /// <summary>The <c>gst_query_set_convert</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_set_convert")]
+    private static partial void GstQuerySetConvert(nint query, int srcFormat, long srcValue, int destFormat, long destValue);
+
+    /// <summary>The <c>gst_query_set_duration</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_set_duration")]
+    private static partial void GstQuerySetDuration(nint query, int format, long duration);
+
+    /// <summary>The <c>gst_query_set_latency</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_set_latency")]
+    private static partial void GstQuerySetLatency(nint query, int live, ulong minLatency, ulong maxLatency);
+
+    /// <summary>The <c>gst_query_set_nth_allocation_param</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_set_nth_allocation_param")]
+    private static partial void GstQuerySetNthAllocationParam(nint query, uint index, nint allocator, nint @params);
+
+    /// <summary>The <c>gst_query_set_nth_allocation_pool</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_set_nth_allocation_pool")]
+    private static partial void GstQuerySetNthAllocationPool(nint query, uint index, nint pool, uint size, uint minBuffers, uint maxBuffers);
+
+    /// <summary>The <c>gst_query_set_position</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_set_position")]
+    private static partial void GstQuerySetPosition(nint query, int format, long cur);
+
+    /// <summary>The <c>gst_query_set_scheduling</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_set_scheduling")]
+    private static partial void GstQuerySetScheduling(nint query, int flags, int minsize, int maxsize, int align);
+
+    /// <summary>The <c>gst_query_set_seeking</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_set_seeking")]
+    private static partial void GstQuerySetSeeking(nint query, int format, int seekable, long segmentStart, long segmentEnd);
+
+    /// <summary>The <c>gst_query_set_segment</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_set_segment")]
+    private static partial void GstQuerySetSegment(nint query, double rate, int format, long startValue, long stopValue);
+
+    /// <summary>The <c>gst_query_set_selectable</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_set_selectable")]
+    private static partial void GstQuerySetSelectable(nint query, int selectable);
+
+    /// <summary>The <c>gst_query_set_uri</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_set_uri")]
+    private static partial void GstQuerySetUri(nint query, byte* uri);
+
+    /// <summary>The <c>gst_query_set_uri_redirection</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_set_uri_redirection")]
+    private static partial void GstQuerySetUriRedirection(nint query, byte* uri);
+
+    /// <summary>The <c>gst_query_set_uri_redirection_permanent</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_set_uri_redirection_permanent")]
+    private static partial void GstQuerySetUriRedirectionPermanent(nint query, int permanent);
+
+    /// <summary>The <c>gst_query_writable_structure</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_writable_structure")]
+    private static partial nint GstQueryWritableStructure(nint query);
+
+    /// <summary>Returns the <c>GType</c> that GObject registered <c>GstQuery</c> under.</summary>
+    /// <returns>The type of the instances of this wrapper.</returns>
+    [LibraryImport("Gst", EntryPoint = "gst_query_get_type")]
+    internal static partial nuint GetGType();
+
+    /// <summary>Creates the wrapper of a native instance, for the type registry.</summary>
+    /// <param name="handle">The native instance.</param>
+    /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
+    /// <returns>The new wrapper.</returns>
+    internal static object CreateWrapper(nint handle, Gst.Interop.Transfer transfer) => new Query(handle, transfer);
 }
 
 /// <summary>The native layout of <c>GstQuery</c>.</summary>

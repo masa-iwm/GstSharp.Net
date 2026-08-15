@@ -3,6 +3,7 @@
 
 #nullable enable
 
+using System;
 using System.Runtime.InteropServices;
 
 namespace Gst;
@@ -138,13 +139,13 @@ namespace Gst;
 /// &gt; that purpose.
 /// </para>
 /// </remarks>
-public sealed partial class Structure : Gst.GObject.Boxed
+public sealed unsafe partial class Structure : Gst.GObject.Boxed
 {
     /// <summary>Wraps a native <c>GstStructure</c>.</summary>
     /// <param name="handle">The native instance.</param>
     /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
     internal Structure(nint handle, Gst.Interop.Transfer transfer)
-        : base(handle, new Gst.GObject.GType(StructureGetType()), transfer)
+        : base(handle, new Gst.GObject.GType(GetGType()), transfer)
     {
     }
 
@@ -155,8 +156,1203 @@ public sealed partial class Structure : Gst.GObject.Boxed
     internal static Structure? FromNative(nint handle, Gst.Interop.Transfer transfer) =>
         handle == 0 ? null : new(handle, transfer);
 
+    /// <summary>
+    /// Creates a #GstStructure from a string representation.
+    /// If end is not %NULL, a pointer to the place inside the given string
+    /// where parsing ended will be returned.
+    /// </summary>
+    /// <remarks>
+    /// <para>Free-function: gst_structure_free</para>
+    /// </remarks>
+    /// <param name="string">The <c>@string</c> argument.</param>
+    /// <param name="end">The <c>end</c> argument.</param>
+    /// <returns>
+    /// a new #GstStructure or %NULL
+    ///     when the string could not be parsed. Free with
+    ///     gst_structure_free() after use.
+    /// </returns>
+    public static Gst.Structure? FromString(string @string, out string? end)
+    {
+        ArgumentNullException.ThrowIfNull(@string);
+        System.Span<byte> @stringBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope @stringScope = Gst.Interop.GMarshal.StackUtf8(@string, @stringBuffer);
+        nint endNative = default;
+        nint nativeResult = GstStructureFromString(@stringScope.Pointer, &endNative);
+        end = Gst.Interop.GMarshal.PtrToStringUtf8(endNative);
+        return Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+    }
+
+    /// <summary>Creates a new, empty #GstStructure with the given @name.</summary>
+    /// <remarks>
+    /// <para>See gst_structure_set_name() for constraints on the @name parameter.</para>
+    /// <para>Free-function: gst_structure_free</para>
+    /// </remarks>
+    /// <param name="name">The <c>name</c> argument.</param>
+    /// <returns>a new, empty #GstStructure</returns>
+    public static Gst.Structure NewEmpty(string name)
+    {
+        ArgumentNullException.ThrowIfNull(name);
+        System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
+        nint nativeResult = GstStructureNewEmpty(nameScope.Pointer);
+        return Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_structure_new_empty returned no value.");
+    }
+
+    /// <summary>
+    /// Creates a #GstStructure from a string representation.
+    /// If end is not %NULL, a pointer to the place inside the given string
+    /// where parsing ended will be returned.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The current implementation of serialization will lead to unexpected results
+    /// when there are nested #GstCaps / #GstStructure deeper than one level unless
+    /// the gst_structure_serialize() function is used (without
+    /// #GST_SERIALIZE_FLAG_BACKWARD_COMPAT)
+    /// </para>
+    /// <para>Free-function: gst_structure_free</para>
+    /// </remarks>
+    /// <param name="string">The <c>@string</c> argument.</param>
+    /// <returns>
+    /// a new #GstStructure or %NULL
+    ///     when the string could not be parsed. Free with
+    ///     gst_structure_free() after use.
+    /// </returns>
+    public static Gst.Structure? NewFromString(string @string)
+    {
+        ArgumentNullException.ThrowIfNull(@string);
+        System.Span<byte> @stringBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope @stringScope = Gst.Interop.GMarshal.StackUtf8(@string, @stringBuffer);
+        nint nativeResult = GstStructureNewFromString(@stringScope.Pointer);
+        return Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+    }
+
+    /// <summary>Creates a new, empty #GstStructure with the given name as a GQuark.</summary>
+    /// <remarks>
+    /// <para>Free-function: gst_structure_free</para>
+    /// </remarks>
+    /// <param name="quark">The <c>quark</c> argument.</param>
+    /// <returns>a new, empty #GstStructure</returns>
+    [Obsolete("Use gst_structure_new_id_str_empty(). (deprecated since 1.26)")]
+    public static Gst.Structure NewIdEmpty(Gst.GLib.Quark quark)
+    {
+        nint nativeResult = GstStructureNewIdEmpty(quark.Value);
+        return Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_structure_new_id_empty returned no value.");
+    }
+
+    /// <summary>Creates a new, empty #GstStructure with the given name.</summary>
+    /// <remarks>
+    /// <para>Free-function: gst_structure_free</para>
+    /// </remarks>
+    /// <param name="name">The <c>name</c> argument.</param>
+    /// <returns>a new, empty #GstStructure</returns>
+    public static Gst.Structure NewIdStrEmpty(Gst.IdStr name)
+    {
+        ArgumentNullException.ThrowIfNull(name);
+        nint nativeResult = GstStructureNewIdStrEmpty(name.Handle);
+        return Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_structure_new_id_str_empty returned no value.");
+    }
+
+    /// <summary>Creates a new, empty #GstStructure with the given @name.</summary>
+    /// <remarks>
+    /// <para>See gst_structure_set_name() for constraints on the @name parameter.</para>
+    /// <para>
+    /// @name needs to be valid for the remaining lifetime of the process, e.g. has
+    /// to be a static string.
+    /// </para>
+    /// <para>Free-function: gst_structure_free</para>
+    /// </remarks>
+    /// <param name="name">The <c>name</c> argument.</param>
+    /// <returns>a new, empty #GstStructure</returns>
+    public static Gst.Structure NewStaticStrEmpty(string name)
+    {
+        ArgumentNullException.ThrowIfNull(name);
+        System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
+        nint nativeResult = GstStructureNewStaticStrEmpty(nameScope.Pointer);
+        return Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_structure_new_static_str_empty returned no value.");
+    }
+
+    /// <summary>
+    /// Tries intersecting @struct1 and @struct2 and reports whether the result
+    /// would not be empty.
+    /// </summary>
+    /// <param name="struct2">The <c>struct2</c> argument.</param>
+    /// <returns>%TRUE if intersection would not be empty</returns>
+    public bool CanIntersect(Gst.Structure struct2)
+    {
+        ArgumentNullException.ThrowIfNull(struct2);
+        int nativeResult = GstStructureCanIntersect(Handle, struct2.Handle);
+        return nativeResult != 0;
+    }
+
+    /// <summary>Duplicates a #GstStructure and all its fields and values.</summary>
+    /// <remarks>
+    /// <para>Free-function: gst_structure_free</para>
+    /// </remarks>
+    /// <returns>a new #GstStructure.</returns>
+    public Gst.Structure Copy()
+    {
+        nint nativeResult = GstStructureCopy(Handle);
+        return Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_structure_copy returned no value.");
+    }
+
+    /// <summary>
+    /// Fixate all values in @structure using gst_value_fixate().
+    /// @structure will be modified in-place and should be writable.
+    /// </summary>
+    public void Fixate()
+    {
+        GstStructureFixate(Handle);
+    }
+
+    /// <summary>Fixates a #GstStructure by changing the given field with its fixated value.</summary>
+    /// <param name="fieldName">The <c>fieldName</c> argument.</param>
+    /// <returns>%TRUE if the structure field could be fixated</returns>
+    public bool FixateField(string fieldName)
+    {
+        ArgumentNullException.ThrowIfNull(fieldName);
+        System.Span<byte> fieldNameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope fieldNameScope = Gst.Interop.GMarshal.StackUtf8(fieldName, fieldNameBuffer);
+        int nativeResult = GstStructureFixateField(Handle, fieldNameScope.Pointer);
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Fixates a #GstStructure by changing the given @field_name field to the given
+    /// @target boolean if that field is not fixed yet.
+    /// </summary>
+    /// <param name="fieldName">The <c>fieldName</c> argument.</param>
+    /// <param name="target">The <c>target</c> argument.</param>
+    /// <returns>%TRUE if the structure could be fixated</returns>
+    public bool FixateFieldBoolean(string fieldName, bool target)
+    {
+        ArgumentNullException.ThrowIfNull(fieldName);
+        System.Span<byte> fieldNameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope fieldNameScope = Gst.Interop.GMarshal.StackUtf8(fieldName, fieldNameBuffer);
+        int nativeResult = GstStructureFixateFieldBoolean(Handle, fieldNameScope.Pointer, target ? 1 : 0);
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Fixates a #GstStructure by changing the given field to the nearest
+    /// double to @target that is a subset of the existing field.
+    /// </summary>
+    /// <param name="fieldName">The <c>fieldName</c> argument.</param>
+    /// <param name="target">The <c>target</c> argument.</param>
+    /// <returns>%TRUE if the structure could be fixated</returns>
+    public bool FixateFieldNearestDouble(string fieldName, double target)
+    {
+        ArgumentNullException.ThrowIfNull(fieldName);
+        System.Span<byte> fieldNameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope fieldNameScope = Gst.Interop.GMarshal.StackUtf8(fieldName, fieldNameBuffer);
+        int nativeResult = GstStructureFixateFieldNearestDouble(Handle, fieldNameScope.Pointer, target);
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Fixates a #GstStructure by changing the given field to the nearest
+    /// fraction to @target_numerator/@target_denominator that is a subset
+    /// of the existing field.
+    /// </summary>
+    /// <param name="fieldName">The <c>fieldName</c> argument.</param>
+    /// <param name="targetNumerator">The <c>targetNumerator</c> argument.</param>
+    /// <param name="targetDenominator">The <c>targetDenominator</c> argument.</param>
+    /// <returns>%TRUE if the structure could be fixated</returns>
+    public bool FixateFieldNearestFraction(string fieldName, int targetNumerator, int targetDenominator)
+    {
+        ArgumentNullException.ThrowIfNull(fieldName);
+        System.Span<byte> fieldNameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope fieldNameScope = Gst.Interop.GMarshal.StackUtf8(fieldName, fieldNameBuffer);
+        int nativeResult = GstStructureFixateFieldNearestFraction(Handle, fieldNameScope.Pointer, targetNumerator, targetDenominator);
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Fixates a #GstStructure by changing the given field to the nearest
+    /// integer to @target that is a subset of the existing field.
+    /// </summary>
+    /// <param name="fieldName">The <c>fieldName</c> argument.</param>
+    /// <param name="target">The <c>target</c> argument.</param>
+    /// <returns>%TRUE if the structure could be fixated</returns>
+    public bool FixateFieldNearestInt(string fieldName, int target)
+    {
+        ArgumentNullException.ThrowIfNull(fieldName);
+        System.Span<byte> fieldNameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope fieldNameScope = Gst.Interop.GMarshal.StackUtf8(fieldName, fieldNameBuffer);
+        int nativeResult = GstStructureFixateFieldNearestInt(Handle, fieldNameScope.Pointer, target);
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Fixates a #GstStructure by changing the given @field_name field to the given
+    /// @target string if that field is not fixed yet.
+    /// </summary>
+    /// <param name="fieldName">The <c>fieldName</c> argument.</param>
+    /// <param name="target">The <c>target</c> argument.</param>
+    /// <returns>%TRUE if the structure could be fixated</returns>
+    public bool FixateFieldString(string fieldName, string target)
+    {
+        ArgumentNullException.ThrowIfNull(fieldName);
+        System.Span<byte> fieldNameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope fieldNameScope = Gst.Interop.GMarshal.StackUtf8(fieldName, fieldNameBuffer);
+        ArgumentNullException.ThrowIfNull(target);
+        System.Span<byte> targetBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope targetScope = Gst.Interop.GMarshal.StackUtf8(target, targetBuffer);
+        int nativeResult = GstStructureFixateFieldString(Handle, fieldNameScope.Pointer, targetScope.Pointer);
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Frees a #GstStructure and all its fields and values. The structure must not
+    /// have a parent when this function is called.
+    /// </summary>
+    public void Free()
+    {
+        GstStructureFree(Handle);
+    }
+
+    /// <summary>
+    /// Sets the boolean pointed to by @value corresponding to the value of the
+    /// given field.  Caller is responsible for making sure the field exists
+    /// and has the correct type.
+    /// </summary>
+    /// <param name="fieldname">The <c>fieldname</c> argument.</param>
+    /// <param name="value">The <c>value</c> argument.</param>
+    /// <returns>
+    /// %TRUE if the value could be set correctly. If there was no field
+    /// with @fieldname or the existing field did not contain a boolean, this
+    /// function returns %FALSE.
+    /// </returns>
+    public bool GetBoolean(string fieldname, out bool value)
+    {
+        ArgumentNullException.ThrowIfNull(fieldname);
+        System.Span<byte> fieldnameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope fieldnameScope = Gst.Interop.GMarshal.StackUtf8(fieldname, fieldnameBuffer);
+        int valueNative = default;
+        int nativeResult = GstStructureGetBoolean(Handle, fieldnameScope.Pointer, &valueNative);
+        value = valueNative != 0;
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Set pointer pointed by @caps to the address of the value of type caps
+    /// correspondind to field with fieldname @fieldname. Caller is responsible
+    /// for making sure the field exists and has the correct type.
+    /// </summary>
+    /// <param name="fieldname">The <c>fieldname</c> argument.</param>
+    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <returns>
+    /// %TRUE if could be set correctly. If there was no field with
+    /// @fieldname or the existing field did not contain a caps, this function return
+    /// %FALSE.
+    /// </returns>
+    public bool GetCaps(string fieldname, out Gst.Caps? caps)
+    {
+        ArgumentNullException.ThrowIfNull(fieldname);
+        System.Span<byte> fieldnameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope fieldnameScope = Gst.Interop.GMarshal.StackUtf8(fieldname, fieldnameBuffer);
+        nint capsNative = default;
+        int nativeResult = GstStructureGetCaps(Handle, fieldnameScope.Pointer, &capsNative);
+        caps = Gst.Caps.FromNative(capsNative, Gst.Interop.Transfer.None);
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Sets the clock time pointed to by @value corresponding to the clock time
+    /// of the given field.  Caller is responsible for making sure the field exists
+    /// and has the correct type.
+    /// </summary>
+    /// <param name="fieldname">The <c>fieldname</c> argument.</param>
+    /// <param name="value">The <c>value</c> argument.</param>
+    /// <returns>
+    /// %TRUE if the value could be set correctly. If there was no field
+    /// with @fieldname or the existing field did not contain a #GstClockTime, this
+    /// function returns %FALSE.
+    /// </returns>
+    public bool GetClockTime(string fieldname, out Gst.ClockTime value)
+    {
+        ArgumentNullException.ThrowIfNull(fieldname);
+        System.Span<byte> fieldnameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope fieldnameScope = Gst.Interop.GMarshal.StackUtf8(fieldname, fieldnameBuffer);
+        ulong valueNative = default;
+        int nativeResult = GstStructureGetClockTime(Handle, fieldnameScope.Pointer, &valueNative);
+        value = new Gst.ClockTime(valueNative);
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Sets the datetime pointed to by @value corresponding to the datetime of the
+    /// given field. Caller is responsible for making sure the field exists
+    /// and has the correct type.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// On success @value will point to a reference of the datetime which
+    /// should be unreffed with gst_date_time_unref() when no longer needed
+    /// (note: this is inconsistent with e.g. gst_structure_get_string()
+    /// which doesn't return a copy of the string).
+    /// </para>
+    /// </remarks>
+    /// <param name="fieldname">The <c>fieldname</c> argument.</param>
+    /// <param name="value">The <c>value</c> argument.</param>
+    /// <returns>
+    /// %TRUE if the value could be set correctly. If there was no field
+    /// with @fieldname or the existing field did not contain a data, this function
+    /// returns %FALSE.
+    /// </returns>
+    public bool GetDateTime(string fieldname, out Gst.DateTime? value)
+    {
+        ArgumentNullException.ThrowIfNull(fieldname);
+        System.Span<byte> fieldnameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope fieldnameScope = Gst.Interop.GMarshal.StackUtf8(fieldname, fieldnameBuffer);
+        nint valueNative = default;
+        int nativeResult = GstStructureGetDateTime(Handle, fieldnameScope.Pointer, &valueNative);
+        value = Gst.DateTime.FromNative(valueNative, Gst.Interop.Transfer.Full);
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Sets the double pointed to by @value corresponding to the value of the
+    /// given field.  Caller is responsible for making sure the field exists
+    /// and has the correct type.
+    /// </summary>
+    /// <param name="fieldname">The <c>fieldname</c> argument.</param>
+    /// <param name="value">The <c>value</c> argument.</param>
+    /// <returns>
+    /// %TRUE if the value could be set correctly. If there was no field
+    /// with @fieldname or the existing field did not contain a double, this
+    /// function returns %FALSE.
+    /// </returns>
+    public bool GetDouble(string fieldname, out double value)
+    {
+        ArgumentNullException.ThrowIfNull(fieldname);
+        System.Span<byte> fieldnameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope fieldnameScope = Gst.Interop.GMarshal.StackUtf8(fieldname, fieldnameBuffer);
+        double valueNative = default;
+        int nativeResult = GstStructureGetDouble(Handle, fieldnameScope.Pointer, &valueNative);
+        value = valueNative;
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Sets the int pointed to by @value corresponding to the value of the
+    /// given field.  Caller is responsible for making sure the field exists,
+    /// has the correct type and that the enumtype is correct.
+    /// </summary>
+    /// <param name="fieldname">The <c>fieldname</c> argument.</param>
+    /// <param name="enumtype">The <c>enumtype</c> argument.</param>
+    /// <param name="value">The <c>value</c> argument.</param>
+    /// <returns>
+    /// %TRUE if the value could be set correctly. If there was no field
+    /// with @fieldname or the existing field did not contain an enum of the given
+    /// type, this function returns %FALSE.
+    /// </returns>
+    public bool GetEnum(string fieldname, Gst.GObject.GType enumtype, out int value)
+    {
+        ArgumentNullException.ThrowIfNull(fieldname);
+        System.Span<byte> fieldnameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope fieldnameScope = Gst.Interop.GMarshal.StackUtf8(fieldname, fieldnameBuffer);
+        int valueNative = default;
+        int nativeResult = GstStructureGetEnum(Handle, fieldnameScope.Pointer, enumtype.Value, &valueNative);
+        value = valueNative;
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Finds the field with the given name, and returns the type of the
+    /// value it contains.  If the field is not found, G_TYPE_INVALID is
+    /// returned.
+    /// </summary>
+    /// <param name="fieldname">The <c>fieldname</c> argument.</param>
+    /// <returns>the #GValue of the field</returns>
+    public Gst.GObject.GType GetFieldType(string fieldname)
+    {
+        ArgumentNullException.ThrowIfNull(fieldname);
+        System.Span<byte> fieldnameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope fieldnameScope = Gst.Interop.GMarshal.StackUtf8(fieldname, fieldnameBuffer);
+        nuint nativeResult = GstStructureGetFieldType(Handle, fieldnameScope.Pointer);
+        return new Gst.GObject.GType(nativeResult);
+    }
+
+    /// <summary>
+    /// Sets the unsigned int pointed to by @value corresponding to the value of the
+    /// given field. Caller is responsible for making sure the field exists,
+    /// has the correct type and that the flagstype is correct.
+    /// </summary>
+    /// <param name="fieldname">The <c>fieldname</c> argument.</param>
+    /// <param name="flagsType">The <c>flagsType</c> argument.</param>
+    /// <param name="value">The <c>value</c> argument.</param>
+    /// <returns>
+    /// %TRUE if the value could be set correctly. If there was no field
+    /// with @fieldname or the existing field did not contain flags or
+    /// did not contain flags of the given type, this function returns %FALSE.
+    /// </returns>
+    public bool GetFlags(string fieldname, Gst.GObject.GType flagsType, out uint value)
+    {
+        ArgumentNullException.ThrowIfNull(fieldname);
+        System.Span<byte> fieldnameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope fieldnameScope = Gst.Interop.GMarshal.StackUtf8(fieldname, fieldnameBuffer);
+        uint valueNative = default;
+        int nativeResult = GstStructureGetFlags(Handle, fieldnameScope.Pointer, flagsType.Value, &valueNative);
+        value = valueNative;
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Read the GstFlagSet flags and mask out of the structure into the
+    /// provided pointers.
+    /// </summary>
+    /// <param name="fieldname">The <c>fieldname</c> argument.</param>
+    /// <param name="valueFlags">The <c>valueFlags</c> argument.</param>
+    /// <param name="valueMask">The <c>valueMask</c> argument.</param>
+    /// <returns>
+    /// %TRUE if the values could be set correctly. If there was no field
+    /// with @fieldname or the existing field did not contain a GstFlagSet, this
+    /// function returns %FALSE.
+    /// </returns>
+    public bool GetFlagset(string fieldname, out uint valueFlags, out uint valueMask)
+    {
+        ArgumentNullException.ThrowIfNull(fieldname);
+        System.Span<byte> fieldnameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope fieldnameScope = Gst.Interop.GMarshal.StackUtf8(fieldname, fieldnameBuffer);
+        uint valueFlagsNative = default;
+        uint valueMaskNative = default;
+        int nativeResult = GstStructureGetFlagset(Handle, fieldnameScope.Pointer, &valueFlagsNative, &valueMaskNative);
+        valueFlags = valueFlagsNative;
+        valueMask = valueMaskNative;
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Sets the integers pointed to by @value_numerator and @value_denominator
+    /// corresponding to the value of the given field.  Caller is responsible
+    /// for making sure the field exists and has the correct type.
+    /// </summary>
+    /// <param name="fieldname">The <c>fieldname</c> argument.</param>
+    /// <param name="valueNumerator">The <c>valueNumerator</c> argument.</param>
+    /// <param name="valueDenominator">The <c>valueDenominator</c> argument.</param>
+    /// <returns>
+    /// %TRUE if the values could be set correctly. If there was no field
+    /// with @fieldname or the existing field did not contain a GstFraction, this
+    /// function returns %FALSE.
+    /// </returns>
+    public bool GetFraction(string fieldname, out int valueNumerator, out int valueDenominator)
+    {
+        ArgumentNullException.ThrowIfNull(fieldname);
+        System.Span<byte> fieldnameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope fieldnameScope = Gst.Interop.GMarshal.StackUtf8(fieldname, fieldnameBuffer);
+        int valueNumeratorNative = default;
+        int valueDenominatorNative = default;
+        int nativeResult = GstStructureGetFraction(Handle, fieldnameScope.Pointer, &valueNumeratorNative, &valueDenominatorNative);
+        valueNumerator = valueNumeratorNative;
+        valueDenominator = valueDenominatorNative;
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Sets the int pointed to by @value corresponding to the value of the
+    /// given field.  Caller is responsible for making sure the field exists
+    /// and has the correct type.
+    /// </summary>
+    /// <param name="fieldname">The <c>fieldname</c> argument.</param>
+    /// <param name="value">The <c>value</c> argument.</param>
+    /// <returns>
+    /// %TRUE if the value could be set correctly. If there was no field
+    /// with @fieldname or the existing field did not contain an int, this function
+    /// returns %FALSE.
+    /// </returns>
+    public bool GetInt(string fieldname, out int value)
+    {
+        ArgumentNullException.ThrowIfNull(fieldname);
+        System.Span<byte> fieldnameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope fieldnameScope = Gst.Interop.GMarshal.StackUtf8(fieldname, fieldnameBuffer);
+        int valueNative = default;
+        int nativeResult = GstStructureGetInt(Handle, fieldnameScope.Pointer, &valueNative);
+        value = valueNative;
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Sets the #gint64 pointed to by @value corresponding to the value of the
+    /// given field. Caller is responsible for making sure the field exists
+    /// and has the correct type.
+    /// </summary>
+    /// <param name="fieldname">The <c>fieldname</c> argument.</param>
+    /// <param name="value">The <c>value</c> argument.</param>
+    /// <returns>
+    /// %TRUE if the value could be set correctly. If there was no field
+    /// with @fieldname or the existing field did not contain a #gint64, this function
+    /// returns %FALSE.
+    /// </returns>
+    public bool GetInt64(string fieldname, out long value)
+    {
+        ArgumentNullException.ThrowIfNull(fieldname);
+        System.Span<byte> fieldnameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope fieldnameScope = Gst.Interop.GMarshal.StackUtf8(fieldname, fieldnameBuffer);
+        long valueNative = default;
+        int nativeResult = GstStructureGetInt64(Handle, fieldnameScope.Pointer, &valueNative);
+        value = valueNative;
+        return nativeResult != 0;
+    }
+
+    /// <summary>Get the name of @structure as a string.</summary>
+    /// <returns>the name of the structure.</returns>
+    public string GetName()
+    {
+        nint nativeResult = GstStructureGetName(Handle);
+        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
+            ?? throw new InvalidOperationException("gst_structure_get_name returned no value.");
+    }
+
+    /// <summary>Get the name of @structure as a GQuark.</summary>
+    /// <returns>the quark representing the name of the structure.</returns>
+    [Obsolete("Use gst_structure_get_name_id_str(). (deprecated since 1.26)")]
+    public Gst.GLib.Quark GetNameId()
+    {
+        uint nativeResult = GstStructureGetNameId(Handle);
+        return new Gst.GLib.Quark(nativeResult);
+    }
+
+    /// <summary>Get the name of @structure as a GstIdStr.</summary>
+    /// <returns>the name of the structure.</returns>
+    public Gst.IdStr GetNameIdStr()
+    {
+        nint nativeResult = GstStructureGetNameIdStr(Handle);
+        return Gst.IdStr.FromNative(nativeResult, Gst.Interop.Transfer.None)
+            ?? throw new InvalidOperationException("gst_structure_get_name_id_str returned no value.");
+    }
+
+    /// <summary>
+    /// Finds the field corresponding to @fieldname, and returns the string
+    /// contained in the field's value.  Caller is responsible for making
+    /// sure the field exists and has the correct type.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The string should not be modified, and remains valid until the next
+    /// call to a gst_structure_*() function with the given structure.
+    /// </para>
+    /// </remarks>
+    /// <param name="fieldname">The <c>fieldname</c> argument.</param>
+    /// <returns>
+    /// a pointer to the string or %NULL when the
+    /// field did not exist or did not contain a string.
+    /// </returns>
+    public string? GetString(string fieldname)
+    {
+        ArgumentNullException.ThrowIfNull(fieldname);
+        System.Span<byte> fieldnameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope fieldnameScope = Gst.Interop.GMarshal.StackUtf8(fieldname, fieldnameBuffer);
+        nint nativeResult = GstStructureGetString(Handle, fieldnameScope.Pointer);
+        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
+    }
+
+    /// <summary>
+    /// Sets the uint pointed to by @value corresponding to the value of the
+    /// given field.  Caller is responsible for making sure the field exists
+    /// and has the correct type.
+    /// </summary>
+    /// <param name="fieldname">The <c>fieldname</c> argument.</param>
+    /// <param name="value">The <c>value</c> argument.</param>
+    /// <returns>
+    /// %TRUE if the value could be set correctly. If there was no field
+    /// with @fieldname or the existing field did not contain a uint, this function
+    /// returns %FALSE.
+    /// </returns>
+    public bool GetUint(string fieldname, out uint value)
+    {
+        ArgumentNullException.ThrowIfNull(fieldname);
+        System.Span<byte> fieldnameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope fieldnameScope = Gst.Interop.GMarshal.StackUtf8(fieldname, fieldnameBuffer);
+        uint valueNative = default;
+        int nativeResult = GstStructureGetUint(Handle, fieldnameScope.Pointer, &valueNative);
+        value = valueNative;
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Sets the #guint64 pointed to by @value corresponding to the value of the
+    /// given field. Caller is responsible for making sure the field exists
+    /// and has the correct type.
+    /// </summary>
+    /// <param name="fieldname">The <c>fieldname</c> argument.</param>
+    /// <param name="value">The <c>value</c> argument.</param>
+    /// <returns>
+    /// %TRUE if the value could be set correctly. If there was no field
+    /// with @fieldname or the existing field did not contain a #guint64, this function
+    /// returns %FALSE.
+    /// </returns>
+    public bool GetUint64(string fieldname, out ulong value)
+    {
+        ArgumentNullException.ThrowIfNull(fieldname);
+        System.Span<byte> fieldnameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope fieldnameScope = Gst.Interop.GMarshal.StackUtf8(fieldname, fieldnameBuffer);
+        ulong valueNative = default;
+        int nativeResult = GstStructureGetUint64(Handle, fieldnameScope.Pointer, &valueNative);
+        value = valueNative;
+        return nativeResult != 0;
+    }
+
+    /// <summary>Check if @structure contains a field named @fieldname.</summary>
+    /// <param name="fieldname">The <c>fieldname</c> argument.</param>
+    /// <returns>%TRUE if the structure contains a field with the given name</returns>
+    public bool HasField(string fieldname)
+    {
+        ArgumentNullException.ThrowIfNull(fieldname);
+        System.Span<byte> fieldnameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope fieldnameScope = Gst.Interop.GMarshal.StackUtf8(fieldname, fieldnameBuffer);
+        int nativeResult = GstStructureHasField(Handle, fieldnameScope.Pointer);
+        return nativeResult != 0;
+    }
+
+    /// <summary>Check if @structure contains a field named @fieldname and with GType @type.</summary>
+    /// <param name="fieldname">The <c>fieldname</c> argument.</param>
+    /// <param name="type">The <c>type</c> argument.</param>
+    /// <returns>%TRUE if the structure contains a field with the given name and type</returns>
+    public bool HasFieldTyped(string fieldname, Gst.GObject.GType type)
+    {
+        ArgumentNullException.ThrowIfNull(fieldname);
+        System.Span<byte> fieldnameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope fieldnameScope = Gst.Interop.GMarshal.StackUtf8(fieldname, fieldnameBuffer);
+        int nativeResult = GstStructureHasFieldTyped(Handle, fieldnameScope.Pointer, type.Value);
+        return nativeResult != 0;
+    }
+
+    /// <summary>Checks if the structure has the given name</summary>
+    /// <param name="name">The <c>name</c> argument.</param>
+    /// <returns>%TRUE if @name matches the name of the structure.</returns>
+    public bool HasName(string name)
+    {
+        ArgumentNullException.ThrowIfNull(name);
+        System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
+        int nativeResult = GstStructureHasName(Handle, nameScope.Pointer);
+        return nativeResult != 0;
+    }
+
+    /// <summary>Check if @structure contains a field named @field.</summary>
+    /// <param name="field">The <c>field</c> argument.</param>
+    /// <returns>%TRUE if the structure contains a field with the given name</returns>
+    [Obsolete("Use gst_structure_id_str_has_field(). (deprecated since 1.26)")]
+    public bool IdHasField(Gst.GLib.Quark field)
+    {
+        int nativeResult = GstStructureIdHasField(Handle, field.Value);
+        return nativeResult != 0;
+    }
+
+    /// <summary>Check if @structure contains a field named @field and with GType @type.</summary>
+    /// <param name="field">The <c>field</c> argument.</param>
+    /// <param name="type">The <c>type</c> argument.</param>
+    /// <returns>%TRUE if the structure contains a field with the given name and type</returns>
+    [Obsolete("Use gst_structure_id_str_has_field_typed(). (deprecated since 1.26)")]
+    public bool IdHasFieldTyped(Gst.GLib.Quark field, Gst.GObject.GType type)
+    {
+        int nativeResult = GstStructureIdHasFieldTyped(Handle, field.Value, type.Value);
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Finds the field with the given name, and returns the type of the
+    /// value it contains.  If the field is not found, G_TYPE_INVALID is
+    /// returned.
+    /// </summary>
+    /// <param name="fieldname">The <c>fieldname</c> argument.</param>
+    /// <returns>the #GValue of the field</returns>
+    public Gst.GObject.GType IdStrGetFieldType(Gst.IdStr fieldname)
+    {
+        ArgumentNullException.ThrowIfNull(fieldname);
+        nuint nativeResult = GstStructureIdStrGetFieldType(Handle, fieldname.Handle);
+        return new Gst.GObject.GType(nativeResult);
+    }
+
+    /// <summary>Check if @structure contains a field named @fieldname.</summary>
+    /// <param name="fieldname">The <c>fieldname</c> argument.</param>
+    /// <returns>%TRUE if the structure contains a field with the given name</returns>
+    public bool IdStrHasField(Gst.IdStr fieldname)
+    {
+        ArgumentNullException.ThrowIfNull(fieldname);
+        int nativeResult = GstStructureIdStrHasField(Handle, fieldname.Handle);
+        return nativeResult != 0;
+    }
+
+    /// <summary>Check if @structure contains a field named @fieldname and with GType @type.</summary>
+    /// <param name="fieldname">The <c>fieldname</c> argument.</param>
+    /// <param name="type">The <c>type</c> argument.</param>
+    /// <returns>%TRUE if the structure contains a field with the given name and type</returns>
+    public bool IdStrHasFieldTyped(Gst.IdStr fieldname, Gst.GObject.GType type)
+    {
+        ArgumentNullException.ThrowIfNull(fieldname);
+        int nativeResult = GstStructureIdStrHasFieldTyped(Handle, fieldname.Handle, type.Value);
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Get the name (as a GstIdStr) of the given field number,
+    /// counting from 0 onwards.
+    /// </summary>
+    /// <param name="index">The <c>index</c> argument.</param>
+    /// <returns>the name of the given field number</returns>
+    public Gst.IdStr IdStrNthFieldName(uint index)
+    {
+        nint nativeResult = GstStructureIdStrNthFieldName(Handle, index);
+        return Gst.IdStr.FromNative(nativeResult, Gst.Interop.Transfer.None)
+            ?? throw new InvalidOperationException("gst_structure_id_str_nth_field_name returned no value.");
+    }
+
+    /// <summary>
+    /// Removes the field with the given name.  If the field with the given
+    /// name does not exist, the structure is unchanged.
+    /// </summary>
+    /// <param name="fieldname">The <c>fieldname</c> argument.</param>
+    public void IdStrRemoveField(Gst.IdStr fieldname)
+    {
+        ArgumentNullException.ThrowIfNull(fieldname);
+        GstStructureIdStrRemoveField(Handle, fieldname.Handle);
+    }
+
+    /// <summary>Intersects @struct1 and @struct2 and returns the intersection.</summary>
+    /// <param name="struct2">The <c>struct2</c> argument.</param>
+    /// <returns>Intersection of @struct1 and @struct2</returns>
+    public Gst.Structure? Intersect(Gst.Structure struct2)
+    {
+        ArgumentNullException.ThrowIfNull(struct2);
+        nint nativeResult = GstStructureIntersect(Handle, struct2.Handle);
+        return Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+    }
+
+    /// <summary>Tests if the two #GstStructure are equal.</summary>
+    /// <param name="structure2">The <c>structure2</c> argument.</param>
+    /// <returns>%TRUE if the two structures have the same name and field.</returns>
+    public bool IsEqual(Gst.Structure structure2)
+    {
+        ArgumentNullException.ThrowIfNull(structure2);
+        int nativeResult = GstStructureIsEqual(Handle, structure2.Handle);
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Checks if @subset is a subset of @superset, i.e. has the same
+    /// structure name and for all fields that are existing in @superset,
+    /// @subset has a value that is a subset of the value in @superset.
+    /// </summary>
+    /// <param name="superset">The <c>superset</c> argument.</param>
+    /// <returns>%TRUE if @subset is a subset of @superset</returns>
+    public bool IsSubset(Gst.Structure superset)
+    {
+        ArgumentNullException.ThrowIfNull(superset);
+        int nativeResult = GstStructureIsSubset(Handle, superset.Handle);
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Checks if the structure is writable. %TRUE if parent
+    /// is not set or its refcount is 1, %FALSE otherwise.
+    /// </summary>
+    /// <returns>%TRUE if the structure is writable.</returns>
+    public bool IsWritable()
+    {
+        int nativeResult = GstStructureIsWritable(Handle);
+        return nativeResult != 0;
+    }
+
+    /// <summary>Get the number of fields in the structure.</summary>
+    /// <returns>the number of fields in the structure</returns>
+    public int NFields()
+    {
+        int nativeResult = GstStructureNFields(Handle);
+        return nativeResult;
+    }
+
+    /// <summary>Get the name of the given field number, counting from 0 onwards.</summary>
+    /// <param name="index">The <c>index</c> argument.</param>
+    /// <returns>the name of the given field number</returns>
+    public string NthFieldName(uint index)
+    {
+        nint nativeResult = GstStructureNthFieldName(Handle, index);
+        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
+            ?? throw new InvalidOperationException("gst_structure_nth_field_name returned no value.");
+    }
+
+    /// <summary>Removes all fields in a GstStructure.</summary>
+    public void RemoveAllFields()
+    {
+        GstStructureRemoveAllFields(Handle);
+    }
+
+    /// <summary>
+    /// Removes the field with the given name.  If the field with the given
+    /// name does not exist, the structure is unchanged.
+    /// </summary>
+    /// <param name="fieldname">The <c>fieldname</c> argument.</param>
+    public void RemoveField(string fieldname)
+    {
+        ArgumentNullException.ThrowIfNull(fieldname);
+        System.Span<byte> fieldnameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope fieldnameScope = Gst.Interop.GMarshal.StackUtf8(fieldname, fieldnameBuffer);
+        GstStructureRemoveField(Handle, fieldnameScope.Pointer);
+    }
+
+    /// <summary>Converts @structure to a human-readable string representation.</summary>
+    /// <remarks>
+    /// <para>
+    /// This version of the caps serialization function introduces support for nested
+    /// structures and caps but the resulting strings won't be parsable with
+    /// GStreamer prior to 1.20 unless #GST_SERIALIZE_FLAG_BACKWARD_COMPAT is passed
+    /// as @flag.
+    /// </para>
+    /// <para>
+    /// %GST_SERIALIZE_FLAG_STRICT flags is not allowed because it would make this
+    /// function nullable which is an API break for bindings.
+    /// Use gst_structure_serialize_full() instead.
+    /// </para>
+    /// <para>Free-function: g_free</para>
+    /// </remarks>
+    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <returns>
+    /// a pointer to string allocated by g_malloc().
+    ///     g_free() after usage.
+    /// </returns>
+    [Obsolete("Use gst_structure_serialize_full() instead.")]
+    public string Serialize(Gst.SerializeFlags flags)
+    {
+        nint nativeResult = GstStructureSerialize(Handle, (int)flags);
+        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
+            ?? throw new InvalidOperationException("gst_structure_serialize returned no value.");
+    }
+
+    /// <summary>
+    /// Alias for gst_structure_serialize() but with nullable annotation because it
+    /// can return %NULL when %GST_SERIALIZE_FLAG_STRICT flag is set.
+    /// </summary>
+    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <returns>
+    /// a pointer to string allocated by g_malloc().
+    ///     g_free() after usage.
+    /// </returns>
+    public string? SerializeFull(Gst.SerializeFlags flags)
+    {
+        nint nativeResult = GstStructureSerializeFull(Handle, (int)flags);
+        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
+    }
+
+    /// <summary>
+    /// Sets the name of the structure to the given @name.  The string
+    /// provided is copied before being used. It must not be empty, start with a
+    /// letter and can be followed by letters, numbers and any of "/-_.:".
+    /// </summary>
+    /// <param name="name">The <c>name</c> argument.</param>
+    public void SetName(string name)
+    {
+        ArgumentNullException.ThrowIfNull(name);
+        System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
+        GstStructureSetName(Handle, nameScope.Pointer);
+    }
+
+    /// <summary>
+    /// Sets the name of the structure to the given @name.  The string
+    /// provided is copied before being used. It must not be empty, start with a
+    /// letter and can be followed by letters, numbers and any of "/-_.:".
+    /// </summary>
+    /// <param name="name">The <c>name</c> argument.</param>
+    public void SetNameIdStr(Gst.IdStr name)
+    {
+        ArgumentNullException.ThrowIfNull(name);
+        GstStructureSetNameIdStr(Handle, name.Handle);
+    }
+
+    /// <summary>
+    /// Sets the name of the structure to the given @name.  The string
+    /// provided is copied before being used. It must not be empty, start with a
+    /// letter and can be followed by letters, numbers and any of "/-_.:".
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// @name needs to be valid for the remaining lifetime of the process, e.g. has
+    /// to be a static string.
+    /// </para>
+    /// </remarks>
+    /// <param name="name">The <c>name</c> argument.</param>
+    public void SetNameStaticStr(string name)
+    {
+        ArgumentNullException.ThrowIfNull(name);
+        System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
+        GstStructureSetNameStaticStr(Handle, nameScope.Pointer);
+    }
+
+    /// <summary>Converts @structure to a human-readable string representation.</summary>
+    /// <remarks>
+    /// <para>
+    /// For debugging purposes its easier to do something like this: |[&lt;!--
+    /// language="C" --&gt; GST_LOG ("structure is %" GST_PTR_FORMAT, structure);
+    /// ]|
+    /// This prints the structure in human readable form.
+    /// </para>
+    /// <para>
+    /// This function will lead to unexpected results when there are nested #GstCaps
+    /// / #GstStructure deeper than one level, you should user
+    /// gst_structure_serialize_full() instead for those cases.
+    /// </para>
+    /// <para>Free-function: g_free</para>
+    /// </remarks>
+    /// <returns>
+    /// a pointer to string allocated by g_malloc().
+    ///     g_free() after usage.
+    /// </returns>
+    public override string ToString()
+    {
+        nint nativeResult = GstStructureToString(Handle);
+        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
+            ?? throw new InvalidOperationException("gst_structure_to_string returned no value.");
+    }
+
+    /// <summary>The <c>gst_structure_from_string</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_structure_from_string")]
+    private static partial nint GstStructureFromString(byte* @string, nint* end);
+
+    /// <summary>The <c>gst_structure_new_empty</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_structure_new_empty")]
+    private static partial nint GstStructureNewEmpty(byte* name);
+
+    /// <summary>The <c>gst_structure_new_from_string</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_structure_new_from_string")]
+    private static partial nint GstStructureNewFromString(byte* @string);
+
+    /// <summary>The <c>gst_structure_new_id_empty</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_structure_new_id_empty")]
+    private static partial nint GstStructureNewIdEmpty(uint quark);
+
+    /// <summary>The <c>gst_structure_new_id_str_empty</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_structure_new_id_str_empty")]
+    private static partial nint GstStructureNewIdStrEmpty(nint name);
+
+    /// <summary>The <c>gst_structure_new_static_str_empty</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_structure_new_static_str_empty")]
+    private static partial nint GstStructureNewStaticStrEmpty(byte* name);
+
+    /// <summary>The <c>gst_structure_can_intersect</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_structure_can_intersect")]
+    private static partial int GstStructureCanIntersect(nint struct1, nint struct2);
+
+    /// <summary>The <c>gst_structure_copy</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_structure_copy")]
+    private static partial nint GstStructureCopy(nint structure);
+
+    /// <summary>The <c>gst_structure_fixate</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_structure_fixate")]
+    private static partial void GstStructureFixate(nint structure);
+
+    /// <summary>The <c>gst_structure_fixate_field</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_structure_fixate_field")]
+    private static partial int GstStructureFixateField(nint structure, byte* fieldName);
+
+    /// <summary>The <c>gst_structure_fixate_field_boolean</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_structure_fixate_field_boolean")]
+    private static partial int GstStructureFixateFieldBoolean(nint structure, byte* fieldName, int target);
+
+    /// <summary>The <c>gst_structure_fixate_field_nearest_double</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_structure_fixate_field_nearest_double")]
+    private static partial int GstStructureFixateFieldNearestDouble(nint structure, byte* fieldName, double target);
+
+    /// <summary>The <c>gst_structure_fixate_field_nearest_fraction</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_structure_fixate_field_nearest_fraction")]
+    private static partial int GstStructureFixateFieldNearestFraction(nint structure, byte* fieldName, int targetNumerator, int targetDenominator);
+
+    /// <summary>The <c>gst_structure_fixate_field_nearest_int</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_structure_fixate_field_nearest_int")]
+    private static partial int GstStructureFixateFieldNearestInt(nint structure, byte* fieldName, int target);
+
+    /// <summary>The <c>gst_structure_fixate_field_string</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_structure_fixate_field_string")]
+    private static partial int GstStructureFixateFieldString(nint structure, byte* fieldName, byte* target);
+
+    /// <summary>The <c>gst_structure_free</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_structure_free")]
+    private static partial void GstStructureFree(nint structure);
+
+    /// <summary>The <c>gst_structure_get_boolean</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_structure_get_boolean")]
+    private static partial int GstStructureGetBoolean(nint structure, byte* fieldname, int* value);
+
+    /// <summary>The <c>gst_structure_get_caps</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_structure_get_caps")]
+    private static partial int GstStructureGetCaps(nint structure, byte* fieldname, nint* caps);
+
+    /// <summary>The <c>gst_structure_get_clock_time</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_structure_get_clock_time")]
+    private static partial int GstStructureGetClockTime(nint structure, byte* fieldname, ulong* value);
+
+    /// <summary>The <c>gst_structure_get_date_time</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_structure_get_date_time")]
+    private static partial int GstStructureGetDateTime(nint structure, byte* fieldname, nint* value);
+
+    /// <summary>The <c>gst_structure_get_double</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_structure_get_double")]
+    private static partial int GstStructureGetDouble(nint structure, byte* fieldname, double* value);
+
+    /// <summary>The <c>gst_structure_get_enum</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_structure_get_enum")]
+    private static partial int GstStructureGetEnum(nint structure, byte* fieldname, nuint enumtype, int* value);
+
+    /// <summary>The <c>gst_structure_get_field_type</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_structure_get_field_type")]
+    private static partial nuint GstStructureGetFieldType(nint structure, byte* fieldname);
+
+    /// <summary>The <c>gst_structure_get_flags</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_structure_get_flags")]
+    private static partial int GstStructureGetFlags(nint structure, byte* fieldname, nuint flagsType, uint* value);
+
+    /// <summary>The <c>gst_structure_get_flagset</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_structure_get_flagset")]
+    private static partial int GstStructureGetFlagset(nint structure, byte* fieldname, uint* valueFlags, uint* valueMask);
+
+    /// <summary>The <c>gst_structure_get_fraction</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_structure_get_fraction")]
+    private static partial int GstStructureGetFraction(nint structure, byte* fieldname, int* valueNumerator, int* valueDenominator);
+
+    /// <summary>The <c>gst_structure_get_int</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_structure_get_int")]
+    private static partial int GstStructureGetInt(nint structure, byte* fieldname, int* value);
+
+    /// <summary>The <c>gst_structure_get_int64</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_structure_get_int64")]
+    private static partial int GstStructureGetInt64(nint structure, byte* fieldname, long* value);
+
+    /// <summary>The <c>gst_structure_get_name</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_structure_get_name")]
+    private static partial nint GstStructureGetName(nint structure);
+
+    /// <summary>The <c>gst_structure_get_name_id</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_structure_get_name_id")]
+    private static partial uint GstStructureGetNameId(nint structure);
+
+    /// <summary>The <c>gst_structure_get_name_id_str</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_structure_get_name_id_str")]
+    private static partial nint GstStructureGetNameIdStr(nint structure);
+
+    /// <summary>The <c>gst_structure_get_string</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_structure_get_string")]
+    private static partial nint GstStructureGetString(nint structure, byte* fieldname);
+
+    /// <summary>The <c>gst_structure_get_uint</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_structure_get_uint")]
+    private static partial int GstStructureGetUint(nint structure, byte* fieldname, uint* value);
+
+    /// <summary>The <c>gst_structure_get_uint64</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_structure_get_uint64")]
+    private static partial int GstStructureGetUint64(nint structure, byte* fieldname, ulong* value);
+
+    /// <summary>The <c>gst_structure_has_field</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_structure_has_field")]
+    private static partial int GstStructureHasField(nint structure, byte* fieldname);
+
+    /// <summary>The <c>gst_structure_has_field_typed</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_structure_has_field_typed")]
+    private static partial int GstStructureHasFieldTyped(nint structure, byte* fieldname, nuint type);
+
+    /// <summary>The <c>gst_structure_has_name</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_structure_has_name")]
+    private static partial int GstStructureHasName(nint structure, byte* name);
+
+    /// <summary>The <c>gst_structure_id_has_field</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_structure_id_has_field")]
+    private static partial int GstStructureIdHasField(nint structure, uint field);
+
+    /// <summary>The <c>gst_structure_id_has_field_typed</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_structure_id_has_field_typed")]
+    private static partial int GstStructureIdHasFieldTyped(nint structure, uint field, nuint type);
+
+    /// <summary>The <c>gst_structure_id_str_get_field_type</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_structure_id_str_get_field_type")]
+    private static partial nuint GstStructureIdStrGetFieldType(nint structure, nint fieldname);
+
+    /// <summary>The <c>gst_structure_id_str_has_field</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_structure_id_str_has_field")]
+    private static partial int GstStructureIdStrHasField(nint structure, nint fieldname);
+
+    /// <summary>The <c>gst_structure_id_str_has_field_typed</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_structure_id_str_has_field_typed")]
+    private static partial int GstStructureIdStrHasFieldTyped(nint structure, nint fieldname, nuint type);
+
+    /// <summary>The <c>gst_structure_id_str_nth_field_name</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_structure_id_str_nth_field_name")]
+    private static partial nint GstStructureIdStrNthFieldName(nint structure, uint index);
+
+    /// <summary>The <c>gst_structure_id_str_remove_field</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_structure_id_str_remove_field")]
+    private static partial void GstStructureIdStrRemoveField(nint structure, nint fieldname);
+
+    /// <summary>The <c>gst_structure_intersect</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_structure_intersect")]
+    private static partial nint GstStructureIntersect(nint struct1, nint struct2);
+
+    /// <summary>The <c>gst_structure_is_equal</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_structure_is_equal")]
+    private static partial int GstStructureIsEqual(nint structure1, nint structure2);
+
+    /// <summary>The <c>gst_structure_is_subset</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_structure_is_subset")]
+    private static partial int GstStructureIsSubset(nint subset, nint superset);
+
+    /// <summary>The <c>gst_structure_is_writable</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_structure_is_writable")]
+    private static partial int GstStructureIsWritable(nint structure);
+
+    /// <summary>The <c>gst_structure_n_fields</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_structure_n_fields")]
+    private static partial int GstStructureNFields(nint structure);
+
+    /// <summary>The <c>gst_structure_nth_field_name</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_structure_nth_field_name")]
+    private static partial nint GstStructureNthFieldName(nint structure, uint index);
+
+    /// <summary>The <c>gst_structure_remove_all_fields</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_structure_remove_all_fields")]
+    private static partial void GstStructureRemoveAllFields(nint structure);
+
+    /// <summary>The <c>gst_structure_remove_field</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_structure_remove_field")]
+    private static partial void GstStructureRemoveField(nint structure, byte* fieldname);
+
+    /// <summary>The <c>gst_structure_serialize</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_structure_serialize")]
+    private static partial nint GstStructureSerialize(nint structure, int flags);
+
+    /// <summary>The <c>gst_structure_serialize_full</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_structure_serialize_full")]
+    private static partial nint GstStructureSerializeFull(nint structure, int flags);
+
+    /// <summary>The <c>gst_structure_set_name</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_structure_set_name")]
+    private static partial void GstStructureSetName(nint structure, byte* name);
+
+    /// <summary>The <c>gst_structure_set_name_id_str</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_structure_set_name_id_str")]
+    private static partial void GstStructureSetNameIdStr(nint structure, nint name);
+
+    /// <summary>The <c>gst_structure_set_name_static_str</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_structure_set_name_static_str")]
+    private static partial void GstStructureSetNameStaticStr(nint structure, byte* name);
+
+    /// <summary>The <c>gst_structure_to_string</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_structure_to_string")]
+    private static partial nint GstStructureToString(nint structure);
+
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstStructure</c> under.</summary>
-    /// <returns>The boxed type.</returns>
+    /// <returns>The type of the instances of this wrapper.</returns>
     [LibraryImport("Gst", EntryPoint = "gst_structure_get_type")]
-    private static partial nuint StructureGetType();
+    internal static partial nuint GetGType();
+
+    /// <summary>Creates the wrapper of a native instance, for the type registry.</summary>
+    /// <param name="handle">The native instance.</param>
+    /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
+    /// <returns>The new wrapper.</returns>
+    internal static object CreateWrapper(nint handle, Gst.Interop.Transfer transfer) => new Structure(handle, transfer);
 }

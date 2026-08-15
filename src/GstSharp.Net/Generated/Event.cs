@@ -3,6 +3,7 @@
 
 #nullable enable
 
+using System;
 using System.Runtime.InteropServices;
 
 namespace Gst;
@@ -82,6 +83,1442 @@ public sealed unsafe partial class Event : Gst.MiniObject
     /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>
     internal static Event? FromNative(nint handle, Gst.Interop.Transfer transfer) =>
         handle == 0 ? null : new(handle, transfer);
+
+    /// <summary>
+    /// Create a new buffersize event. The event is sent downstream and notifies
+    /// elements that they should provide a buffer of the specified dimensions.
+    /// </summary>
+    /// <remarks>
+    /// <para>When the @async flag is set, a thread boundary is preferred.</para>
+    /// </remarks>
+    /// <param name="format">The <c>format</c> argument.</param>
+    /// <param name="minsize">The <c>minsize</c> argument.</param>
+    /// <param name="maxsize">The <c>maxsize</c> argument.</param>
+    /// <param name="async">The <c>async</c> argument.</param>
+    /// <returns>a new #GstEvent</returns>
+    public static Gst.Event NewBufferSize(Gst.Format format, long minsize, long maxsize, bool async)
+    {
+        nint nativeResult = GstEventNewBufferSize((int)format, minsize, maxsize, async ? 1 : 0);
+        return Gst.Event.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_event_new_buffer_size returned no value.");
+    }
+
+    /// <summary>
+    /// Create a new CAPS event for @caps. The caps event can only travel downstream
+    /// synchronized with the buffer flow and contains the format of the buffers
+    /// that will follow after the event.
+    /// </summary>
+    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <returns>the new CAPS event.</returns>
+    public static Gst.Event NewCaps(Gst.Caps caps)
+    {
+        ArgumentNullException.ThrowIfNull(caps);
+        nint nativeResult = GstEventNewCaps(caps.Handle);
+        return Gst.Event.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_event_new_caps returned no value.");
+    }
+
+    /// <summary>
+    /// Create a new EOS event. The eos event can only travel downstream
+    /// synchronized with the buffer flow. Elements that receive the EOS
+    /// event on a pad can return #GST_FLOW_EOS as a #GstFlowReturn
+    /// when data after the EOS event arrives.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The EOS event will travel down to the sink elements in the pipeline
+    /// which will then post the #GST_MESSAGE_EOS on the bus after they have
+    /// finished playing any buffered data.
+    /// </para>
+    /// <para>
+    /// When all sinks have posted an EOS message, an EOS message is
+    /// forwarded to the application.
+    /// </para>
+    /// <para>The EOS event itself will not cause any state transitions of the pipeline.</para>
+    /// </remarks>
+    /// <returns>the new EOS event.</returns>
+    public static Gst.Event NewEos()
+    {
+        nint nativeResult = GstEventNewEos();
+        return Gst.Event.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_event_new_eos returned no value.");
+    }
+
+    /// <summary>
+    /// Allocate a new flush start event. The flush start event can be sent
+    /// upstream and downstream and travels out-of-bounds with the dataflow.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// It marks pads as being flushing and will make them return
+    /// #GST_FLOW_FLUSHING when used for data flow with gst_pad_push(),
+    /// gst_pad_chain(), gst_pad_get_range() and gst_pad_pull_range().
+    /// Any event (except a #GST_EVENT_FLUSH_STOP) received
+    /// on a flushing pad will return %FALSE immediately.
+    /// </para>
+    /// <para>
+    /// Elements should unlock any blocking functions and exit their streaming
+    /// functions as fast as possible when this event is received.
+    /// </para>
+    /// <para>
+    /// This event is typically generated after a seek to flush out all queued data
+    /// in the pipeline so that the new media is played as soon as possible.
+    /// </para>
+    /// </remarks>
+    /// <returns>a new flush start event.</returns>
+    public static Gst.Event NewFlushStart()
+    {
+        nint nativeResult = GstEventNewFlushStart();
+        return Gst.Event.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_event_new_flush_start returned no value.");
+    }
+
+    /// <summary>
+    /// Allocate a new flush stop event. The flush stop event can be sent
+    /// upstream and downstream and travels serialized with the dataflow.
+    /// It is typically sent after sending a FLUSH_START event to make the
+    /// pads accept data again.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Elements can process this event synchronized with the dataflow since
+    /// the preceding FLUSH_START event stopped the dataflow.
+    /// </para>
+    /// <para>
+    /// This event is typically generated to complete a seek and to resume
+    /// dataflow.
+    /// </para>
+    /// </remarks>
+    /// <param name="resetTime">The <c>resetTime</c> argument.</param>
+    /// <returns>a new flush stop event.</returns>
+    public static Gst.Event NewFlushStop(bool resetTime)
+    {
+        nint nativeResult = GstEventNewFlushStop(resetTime ? 1 : 0);
+        return Gst.Event.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_event_new_flush_stop returned no value.");
+    }
+
+    /// <summary>
+    /// Create a new GAP event. A gap event can be thought of as conceptually
+    /// equivalent to a buffer to signal that there is no data for a certain
+    /// amount of time. This is useful to signal a gap to downstream elements
+    /// which may wait for data, such as muxers or mixers or overlays, especially
+    /// for sparse streams such as subtitle streams.
+    /// </summary>
+    /// <param name="timestamp">The <c>timestamp</c> argument.</param>
+    /// <param name="duration">The <c>duration</c> argument.</param>
+    /// <returns>the new GAP event.</returns>
+    public static Gst.Event NewGap(Gst.ClockTime timestamp, Gst.ClockTime duration)
+    {
+        nint nativeResult = GstEventNewGap(timestamp.Nanoseconds, duration.Nanoseconds);
+        return Gst.Event.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_event_new_gap returned no value.");
+    }
+
+    /// <summary>
+    /// Create a new instant-rate-change event. This event is sent by seek
+    /// handlers (e.g. demuxers) when receiving a seek with the
+    /// %GST_SEEK_FLAG_INSTANT_RATE_CHANGE and signals to downstream elements that
+    /// the playback rate in the existing segment should be immediately multiplied
+    /// by the @rate_multiplier factor.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The flags provided replace any flags in the existing segment, for the
+    /// flags within the %GST_SEGMENT_INSTANT_FLAGS set. Other GstSegmentFlags
+    /// are ignored and not transferred in the event.
+    /// </para>
+    /// </remarks>
+    /// <param name="rateMultiplier">The <c>rateMultiplier</c> argument.</param>
+    /// <param name="newFlags">The <c>newFlags</c> argument.</param>
+    /// <returns>the new instant-rate-change event.</returns>
+    public static Gst.Event NewInstantRateChange(double rateMultiplier, Gst.SegmentFlags newFlags)
+    {
+        nint nativeResult = GstEventNewInstantRateChange(rateMultiplier, (int)newFlags);
+        return Gst.Event.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_event_new_instant_rate_change returned no value.");
+    }
+
+    /// <summary>
+    /// Create a new instant-rate-sync-time event. This event is sent by the
+    /// pipeline to notify elements handling the instant-rate-change event about
+    /// the running-time when the new rate should be applied. The running time
+    /// may be in the past when elements handle this event, which can lead to
+    /// switching artifacts. The magnitude of those depends on the exact timing
+    /// of event delivery to each element and the magnitude of the change in
+    /// playback rate being applied.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The @running_time and @upstream_running_time are the same if this
+    /// is the first instant-rate adjustment, but will differ for later ones
+    /// to compensate for the accumulated offset due to playing at a rate
+    /// different to the one indicated in the playback segments.
+    /// </para>
+    /// </remarks>
+    /// <param name="rateMultiplier">The <c>rateMultiplier</c> argument.</param>
+    /// <param name="runningTime">The <c>runningTime</c> argument.</param>
+    /// <param name="upstreamRunningTime">The <c>upstreamRunningTime</c> argument.</param>
+    /// <returns>the new instant-rate-sync-time event.</returns>
+    public static Gst.Event NewInstantRateSyncTime(double rateMultiplier, Gst.ClockTime runningTime, Gst.ClockTime upstreamRunningTime)
+    {
+        nint nativeResult = GstEventNewInstantRateSyncTime(rateMultiplier, runningTime.Nanoseconds, upstreamRunningTime.Nanoseconds);
+        return Gst.Event.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_event_new_instant_rate_sync_time returned no value.");
+    }
+
+    /// <summary>
+    /// Create a new latency event. The event is sent upstream from the sinks and
+    /// notifies elements that they should add an additional @latency to the
+    /// running time before synchronising against the clock.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The latency is mostly used in live sinks and is always expressed in
+    /// the time format.
+    /// </para>
+    /// </remarks>
+    /// <param name="latency">The <c>latency</c> argument.</param>
+    /// <returns>a new #GstEvent</returns>
+    public static Gst.Event NewLatency(Gst.ClockTime latency)
+    {
+        nint nativeResult = GstEventNewLatency(latency.Nanoseconds);
+        return Gst.Event.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_event_new_latency returned no value.");
+    }
+
+    /// <summary>
+    /// Creates a new event containing information specific to a particular
+    /// protection system (uniquely identified by @system_id), by which that
+    /// protection system can acquire key(s) to decrypt a protected stream.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// In order for a decryption element to decrypt media
+    /// protected using a specific system, it first needs all the
+    /// protection system specific information necessary to acquire the decryption
+    /// key(s) for that stream. The functions defined here enable this information
+    /// to be passed in events from elements that extract it
+    /// (e.g., ISOBMFF demuxers, MPEG DASH demuxers) to protection decrypter
+    /// elements that use it.
+    /// </para>
+    /// <para>
+    /// Events containing protection system specific information are created using
+    /// #gst_event_new_protection, and they can be parsed by downstream elements
+    /// using #gst_event_parse_protection.
+    /// </para>
+    /// <para>
+    /// In Common Encryption, protection system specific information may be located
+    /// within ISOBMFF files, both in movie (moov) boxes and movie fragment (moof)
+    /// boxes; it may also be contained in ContentProtection elements within MPEG
+    /// DASH MPDs. The events created by #gst_event_new_protection contain data
+    /// identifying from which of these locations the encapsulated protection system
+    /// specific information originated. This origin information is required as
+    /// some protection systems use different encodings depending upon where the
+    /// information originates.
+    /// </para>
+    /// <para>
+    /// The events returned by gst_event_new_protection() are implemented
+    /// in such a way as to ensure that the most recently-pushed protection info
+    /// event of a particular @origin and @system_id will
+    /// be stuck to the output pad of the sending element.
+    /// </para>
+    /// </remarks>
+    /// <param name="systemId">The <c>systemId</c> argument.</param>
+    /// <param name="data">The <c>data</c> argument.</param>
+    /// <param name="origin">The <c>origin</c> argument.</param>
+    /// <returns>a #GST_EVENT_PROTECTION event.</returns>
+    public static Gst.Event NewProtection(string systemId, Gst.Buffer data, string origin)
+    {
+        ArgumentNullException.ThrowIfNull(systemId);
+        System.Span<byte> systemIdBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope systemIdScope = Gst.Interop.GMarshal.StackUtf8(systemId, systemIdBuffer);
+        ArgumentNullException.ThrowIfNull(data);
+        ArgumentNullException.ThrowIfNull(origin);
+        System.Span<byte> originBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope originScope = Gst.Interop.GMarshal.StackUtf8(origin, originBuffer);
+        nint nativeResult = GstEventNewProtection(systemIdScope.Pointer, data.Handle, originScope.Pointer);
+        return Gst.Event.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_event_new_protection returned no value.");
+    }
+
+    /// <summary>
+    /// Allocate a new qos event with the given values.
+    /// The QOS event is generated in an element that wants an upstream
+    /// element to either reduce or increase its rate because of
+    /// high/low CPU load or other resource usage such as network performance or
+    /// throttling. Typically sinks generate these events for each buffer
+    /// they receive.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// @type indicates the reason for the QoS event. #GST_QOS_TYPE_OVERFLOW is
+    /// used when a buffer arrived in time or when the sink cannot keep up with
+    /// the upstream datarate. #GST_QOS_TYPE_UNDERFLOW is when the sink is not
+    /// receiving buffers fast enough and thus has to drop late buffers.
+    /// #GST_QOS_TYPE_THROTTLE is used when the datarate is artificially limited
+    /// by the application, for example to reduce power consumption.
+    /// </para>
+    /// <para>
+    /// @proportion indicates the real-time performance of the streaming in the
+    /// element that generated the QoS event (usually the sink). The value is
+    /// generally computed based on more long term statistics about the streams
+    /// timestamps compared to the clock.
+    /// A value &lt; 1.0 indicates that the upstream element is producing data faster
+    /// than real-time. A value &gt; 1.0 indicates that the upstream element is not
+    /// producing data fast enough. 1.0 is the ideal @proportion value. The
+    /// proportion value can safely be used to lower or increase the quality of
+    /// the element.
+    /// </para>
+    /// <para>
+    /// @diff is the difference against the clock in running time of the last
+    /// buffer that caused the element to generate the QOS event. A negative value
+    /// means that the buffer with @timestamp arrived in time. A positive value
+    /// indicates how late the buffer with @timestamp was. When throttling is
+    /// enabled, @diff will be set to the requested throttling interval.
+    /// </para>
+    /// <para>
+    /// @timestamp is the timestamp of the last buffer that cause the element
+    /// to generate the QOS event. It is expressed in running time and thus an ever
+    /// increasing value.
+    /// </para>
+    /// <para>
+    /// The upstream element can use the @diff and @timestamp values to decide
+    /// whether to process more buffers. For positive @diff, all buffers with
+    /// timestamp &lt;= @timestamp + @diff will certainly arrive late in the sink
+    /// as well. A (negative) @diff value so that @timestamp + @diff would yield a
+    /// result smaller than 0 is not allowed.
+    /// </para>
+    /// <para>
+    /// The application can use general event probes to intercept the QoS
+    /// event and implement custom application specific QoS handling.
+    /// </para>
+    /// </remarks>
+    /// <param name="type">The <c>type</c> argument.</param>
+    /// <param name="proportion">The <c>proportion</c> argument.</param>
+    /// <param name="diff">The <c>diff</c> argument.</param>
+    /// <param name="timestamp">The <c>timestamp</c> argument.</param>
+    /// <returns>a new QOS event.</returns>
+    public static Gst.Event NewQos(Gst.QOSType type, double proportion, long diff, Gst.ClockTime timestamp)
+    {
+        nint nativeResult = GstEventNewQos((int)type, proportion, diff, timestamp.Nanoseconds);
+        return Gst.Event.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_event_new_qos returned no value.");
+    }
+
+    /// <summary>
+    /// Create a new reconfigure event. The purpose of the reconfigure event is
+    /// to travel upstream and make elements renegotiate their caps or reconfigure
+    /// their buffer pools. This is useful when changing properties on elements
+    /// or changing the topology of the pipeline.
+    /// </summary>
+    /// <returns>a new #GstEvent</returns>
+    public static Gst.Event NewReconfigure()
+    {
+        nint nativeResult = GstEventNewReconfigure();
+        return Gst.Event.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_event_new_reconfigure returned no value.");
+    }
+
+    /// <summary>Allocate a new seek event with the given parameters.</summary>
+    /// <remarks>
+    /// <para>
+    /// The seek event configures playback of the pipeline between @start to @stop
+    /// at the speed given in @rate, also called a playback segment.
+    /// The @start and @stop values are expressed in @format.
+    /// </para>
+    /// <para>
+    /// A @rate of 1.0 means normal playback rate, 2.0 means double speed.
+    /// Negatives values means backwards playback. A value of 0.0 for the
+    /// rate is not allowed and should be accomplished instead by PAUSING the
+    /// pipeline.
+    /// </para>
+    /// <para>
+    /// A pipeline has a default playback segment configured with a start
+    /// position of 0, a stop position of -1 and a rate of 1.0. The currently
+    /// configured playback segment can be queried with #GST_QUERY_SEGMENT.
+    /// </para>
+    /// <para>
+    /// @start_type and @stop_type specify how to adjust the currently configured
+    /// start and stop fields in playback segment. Adjustments can be made relative
+    /// or absolute to the last configured values. A type of #GST_SEEK_TYPE_NONE
+    /// means that the position should not be updated.
+    /// </para>
+    /// <para>
+    /// When the rate is positive and @start has been updated, playback will start
+    /// from the newly configured start position.
+    /// </para>
+    /// <para>
+    /// For negative rates, playback will start from the newly configured stop
+    /// position (if any). If the stop position is updated, it must be different from
+    /// -1 (#GST_CLOCK_TIME_NONE) for negative rates.
+    /// </para>
+    /// <para>
+    /// It is not possible to seek relative to the current playback position, to do
+    /// this, PAUSE the pipeline, query the current playback position with
+    /// #GST_QUERY_POSITION and update the playback segment current position with a
+    /// #GST_SEEK_TYPE_SET to the desired position.
+    /// </para>
+    /// </remarks>
+    /// <param name="rate">The <c>rate</c> argument.</param>
+    /// <param name="format">The <c>format</c> argument.</param>
+    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <param name="startType">The <c>startType</c> argument.</param>
+    /// <param name="start">The <c>start</c> argument.</param>
+    /// <param name="stopType">The <c>stopType</c> argument.</param>
+    /// <param name="stop">The <c>stop</c> argument.</param>
+    /// <returns>a new seek event.</returns>
+    public static Gst.Event NewSeek(double rate, Gst.Format format, Gst.SeekFlags flags, Gst.SeekType startType, long start, Gst.SeekType stopType, long stop)
+    {
+        nint nativeResult = GstEventNewSeek(rate, (int)format, (int)flags, (int)startType, start, (int)stopType, stop);
+        return Gst.Event.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_event_new_seek returned no value.");
+    }
+
+    /// <summary>
+    /// Create a new SEGMENT event for @segment. The segment event can only travel
+    /// downstream synchronized with the buffer flow and contains timing information
+    /// and playback properties for the buffers that will follow.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The segment event marks the range of buffers to be processed. All
+    /// data not within the segment range is not to be processed. This can be
+    /// used intelligently by plugins to apply more efficient methods of skipping
+    /// unneeded data. The valid range is expressed with the @start and @stop
+    /// values.
+    /// </para>
+    /// <para>
+    /// The time value of the segment is used in conjunction with the start
+    /// value to convert the buffer timestamps into the stream time. This is
+    /// usually done in sinks to report the current stream_time.
+    /// @time represents the stream_time of a buffer carrying a timestamp of
+    /// @start. @time cannot be -1.
+    /// </para>
+    /// <para>
+    /// @start cannot be -1, @stop can be -1. If there
+    /// is a valid @stop given, it must be greater or equal the @start, including
+    /// when the indicated playback @rate is &lt; 0.
+    /// </para>
+    /// <para>
+    /// The @applied_rate value provides information about any rate adjustment that
+    /// has already been made to the timestamps and content on the buffers of the
+    /// stream. (@rate * @applied_rate) should always equal the rate that has been
+    /// requested for playback. For example, if an element has an input segment
+    /// with intended playback @rate of 2.0 and applied_rate of 1.0, it can adjust
+    /// incoming timestamps and buffer content by half and output a segment event
+    /// with @rate of 1.0 and @applied_rate of 2.0
+    /// </para>
+    /// <para>After a segment event, the buffer stream time is calculated with:</para>
+    /// <para>  time + (TIMESTAMP(buf) - start) * ABS (rate * applied_rate)</para>
+    /// </remarks>
+    /// <param name="segment">The <c>segment</c> argument.</param>
+    /// <returns>the new SEGMENT event.</returns>
+    public static Gst.Event NewSegment(Gst.Segment segment)
+    {
+        ArgumentNullException.ThrowIfNull(segment);
+        nint nativeResult = GstEventNewSegment(segment.Handle);
+        return Gst.Event.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_event_new_segment returned no value.");
+    }
+
+    /// <summary>
+    /// Create a new segment-done event. This event is sent by elements that
+    /// finish playback of a segment as a result of a segment seek.
+    /// </summary>
+    /// <param name="format">The <c>format</c> argument.</param>
+    /// <param name="position">The <c>position</c> argument.</param>
+    /// <returns>a new #GstEvent</returns>
+    public static Gst.Event NewSegmentDone(Gst.Format format, long position)
+    {
+        nint nativeResult = GstEventNewSegmentDone((int)format, position);
+        return Gst.Event.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_event_new_segment_done returned no value.");
+    }
+
+    /// <summary>
+    /// Create a new sink-message event. The purpose of the sink-message event is
+    /// to instruct a sink to post the message contained in the event synchronized
+    /// with the stream.
+    /// </summary>
+    /// <remarks>
+    /// <para>@name is used to store multiple sticky events on one pad.</para>
+    /// </remarks>
+    /// <param name="name">The <c>name</c> argument.</param>
+    /// <param name="msg">The <c>msg</c> argument.</param>
+    /// <returns>a new #GstEvent</returns>
+    public static Gst.Event NewSinkMessage(string name, Gst.Message msg)
+    {
+        ArgumentNullException.ThrowIfNull(name);
+        System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
+        ArgumentNullException.ThrowIfNull(msg);
+        nint nativeResult = GstEventNewSinkMessage(nameScope.Pointer, msg.Handle);
+        return Gst.Event.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_event_new_sink_message returned no value.");
+    }
+
+    /// <summary>
+    /// Create a new step event. The purpose of the step event is to instruct a sink
+    /// to skip @amount (expressed in @format) of media. It can be used to implement
+    /// stepping through the video frame by frame or for doing fast trick modes.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// A rate of &lt;= 0.0 is not allowed. Pause the pipeline, for the effect of rate
+    /// = 0.0 or first reverse the direction of playback using a seek event to get
+    /// the same effect as rate &lt; 0.0.
+    /// </para>
+    /// <para>
+    /// The @flush flag will clear any pending data in the pipeline before starting
+    /// the step operation.
+    /// </para>
+    /// <para>
+    /// The @intermediate flag instructs the pipeline that this step operation is
+    /// part of a larger step operation.
+    /// </para>
+    /// </remarks>
+    /// <param name="format">The <c>format</c> argument.</param>
+    /// <param name="amount">The <c>amount</c> argument.</param>
+    /// <param name="rate">The <c>rate</c> argument.</param>
+    /// <param name="flush">The <c>flush</c> argument.</param>
+    /// <param name="intermediate">The <c>intermediate</c> argument.</param>
+    /// <returns>a new #GstEvent</returns>
+    public static Gst.Event NewStep(Gst.Format format, ulong amount, double rate, bool flush, bool intermediate)
+    {
+        nint nativeResult = GstEventNewStep((int)format, amount, rate, flush ? 1 : 0, intermediate ? 1 : 0);
+        return Gst.Event.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_event_new_step returned no value.");
+    }
+
+    /// <summary>
+    /// Create a new STREAM_COLLECTION event. The stream collection event can only
+    /// travel downstream synchronized with the buffer flow.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Source elements, demuxers and other elements that manage collections
+    /// of streams and post #GstStreamCollection messages on the bus also send
+    /// this event downstream on each pad involved in the collection, so that
+    /// activation of a new collection can be tracked through the downstream
+    /// data flow.
+    /// </para>
+    /// </remarks>
+    /// <param name="collection">The <c>collection</c> argument.</param>
+    /// <returns>the new STREAM_COLLECTION event.</returns>
+    public static Gst.Event NewStreamCollection(Gst.StreamCollection collection)
+    {
+        ArgumentNullException.ThrowIfNull(collection);
+        nint nativeResult = GstEventNewStreamCollection(collection.Handle);
+        return Gst.Event.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_event_new_stream_collection returned no value.");
+    }
+
+    /// <summary>
+    /// Create a new Stream Group Done event. The stream-group-done event can
+    /// only travel downstream synchronized with the buffer flow. Elements
+    /// that receive the event on a pad should handle it mostly like EOS,
+    /// and emit any data or pending buffers that would depend on more data
+    /// arriving and unblock, since there won't be any more data.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This event is followed by EOS at some point in the future, and is
+    /// generally used when switching pads - to unblock downstream so that
+    /// new pads can be exposed before sending EOS on the existing pads.
+    /// </para>
+    /// </remarks>
+    /// <param name="groupId">The <c>groupId</c> argument.</param>
+    /// <returns>the new stream-group-done event.</returns>
+    public static Gst.Event NewStreamGroupDone(uint groupId)
+    {
+        nint nativeResult = GstEventNewStreamGroupDone(groupId);
+        return Gst.Event.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_event_new_stream_group_done returned no value.");
+    }
+
+    /// <summary>
+    /// Create a new STREAM_START event. The stream start event can only
+    /// travel downstream synchronized with the buffer flow. It is expected
+    /// to be the first event that is sent for a new stream.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Source elements, demuxers and other elements that create new streams
+    /// are supposed to send this event as the first event of a new stream. It
+    /// should not be sent after a flushing seek or in similar situations
+    /// and is used to mark the beginning of a new logical stream. Elements
+    /// combining multiple streams must ensure that this event is only forwarded
+    /// downstream once and not for every single input stream.
+    /// </para>
+    /// <para>
+    /// The @stream_id should be a unique string that consists of the upstream
+    /// stream-id, / as separator and a unique stream-id for this specific
+    /// stream. A new stream-id should only be created for a stream if the upstream
+    /// stream is split into (potentially) multiple new streams, e.g. in a demuxer,
+    /// but not for every single element in the pipeline.
+    /// gst_pad_create_stream_id() or gst_pad_create_stream_id_printf() can be
+    /// used to create a stream-id.  There are no particular semantics for the
+    /// stream-id, though it should be deterministic (to support stream matching)
+    /// and it might be used to order streams (besides any information conveyed by
+    /// stream flags).
+    /// </para>
+    /// </remarks>
+    /// <param name="streamId">The <c>streamId</c> argument.</param>
+    /// <returns>the new STREAM_START event.</returns>
+    public static Gst.Event NewStreamStart(string streamId)
+    {
+        ArgumentNullException.ThrowIfNull(streamId);
+        System.Span<byte> streamIdBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope streamIdScope = Gst.Interop.GMarshal.StackUtf8(streamId, streamIdBuffer);
+        nint nativeResult = GstEventNewStreamStart(streamIdScope.Pointer);
+        return Gst.Event.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_event_new_stream_start returned no value.");
+    }
+
+    /// <summary>
+    /// Generate a TOC event from the given @toc. The purpose of the TOC event is to
+    /// inform elements that some kind of the TOC was found.
+    /// </summary>
+    /// <param name="toc">The <c>toc</c> argument.</param>
+    /// <param name="updated">The <c>updated</c> argument.</param>
+    /// <returns>a new #GstEvent.</returns>
+    public static Gst.Event NewToc(Gst.Toc toc, bool updated)
+    {
+        ArgumentNullException.ThrowIfNull(toc);
+        nint nativeResult = GstEventNewToc(toc.Handle, updated ? 1 : 0);
+        return Gst.Event.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_event_new_toc returned no value.");
+    }
+
+    /// <summary>
+    /// Generate a TOC select event with the given @uid. The purpose of the
+    /// TOC select event is to start playback based on the TOC's entry with the
+    /// given @uid.
+    /// </summary>
+    /// <param name="uid">The <c>uid</c> argument.</param>
+    /// <returns>a new #GstEvent.</returns>
+    public static Gst.Event NewTocSelect(string uid)
+    {
+        ArgumentNullException.ThrowIfNull(uid);
+        System.Span<byte> uidBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope uidScope = Gst.Interop.GMarshal.StackUtf8(uid, uidBuffer);
+        nint nativeResult = GstEventNewTocSelect(uidScope.Pointer);
+        return Gst.Event.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_event_new_toc_select returned no value.");
+    }
+
+    /// <summary>
+    /// Parses a segment @event and copies the #GstSegment into the location
+    /// given by @segment.
+    /// </summary>
+    /// <param name="segment">The <c>segment</c> argument.</param>
+    public void CopySegment(Gst.Segment segment)
+    {
+        ArgumentNullException.ThrowIfNull(segment);
+        GstEventCopySegment(Handle, segment.Handle);
+    }
+
+    /// <summary>Retrieve the accumulated running time offset of the event.</summary>
+    /// <remarks>
+    /// <para>
+    /// Events passing through #GstPads that have a running time
+    /// offset set via gst_pad_set_offset() will get their offset
+    /// adjusted according to the pad's offset.
+    /// </para>
+    /// <para>
+    /// If the event contains any information that related to the
+    /// running time, this information will need to be updated
+    /// before usage with this offset.
+    /// </para>
+    /// </remarks>
+    /// <returns>The event's running time offset</returns>
+    public long GetRunningTimeOffset()
+    {
+        long nativeResult = GstEventGetRunningTimeOffset(Handle);
+        return nativeResult;
+    }
+
+    /// <summary>Retrieve the sequence number of a event.</summary>
+    /// <remarks>
+    /// <para>
+    /// Events have ever-incrementing sequence numbers, which may also be set
+    /// explicitly via gst_event_set_seqnum(). Sequence numbers are typically used to
+    /// indicate that a event corresponds to some other set of events or messages,
+    /// for example an EOS event corresponding to a SEEK event. It is considered good
+    /// practice to make this correspondence when possible, though it is not
+    /// required.
+    /// </para>
+    /// <para>
+    /// Note that events and messages share the same sequence number incrementor;
+    /// two events or messages will never have the same sequence number unless
+    /// that correspondence was made explicitly.
+    /// </para>
+    /// </remarks>
+    /// <returns>The event's sequence number.</returns>
+    public uint GetSeqnum()
+    {
+        uint nativeResult = GstEventGetSeqnum(Handle);
+        return nativeResult;
+    }
+
+    /// <summary>Access the structure of the event.</summary>
+    /// <returns>
+    /// The structure of the event. The
+    /// structure is still owned by the event, which means that you should not free
+    /// it and that the pointer becomes invalid when you free the event.
+    /// </returns>
+    public Gst.Structure? GetStructure()
+    {
+        nint nativeResult = GstEventGetStructure(Handle);
+        return Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.None);
+    }
+
+    /// <summary>
+    /// Checks if @event has the given @name. This function is usually used to
+    /// check the name of a custom event.
+    /// </summary>
+    /// <param name="name">The <c>name</c> argument.</param>
+    /// <returns>%TRUE if @name matches the name of the event structure.</returns>
+    public bool HasName(string name)
+    {
+        ArgumentNullException.ThrowIfNull(name);
+        System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
+        int nativeResult = GstEventHasName(Handle, nameScope.Pointer);
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Checks if @event has the given @name. This function is usually used to
+    /// check the name of a custom event.
+    /// </summary>
+    /// <param name="name">The <c>name</c> argument.</param>
+    /// <returns>%TRUE if @name matches the name of the event structure.</returns>
+    [Obsolete("Use gst_event_has_name(). (deprecated since 1.26)")]
+    public bool HasNameId(Gst.GLib.Quark name)
+    {
+        int nativeResult = GstEventHasNameId(Handle, name.Value);
+        return nativeResult != 0;
+    }
+
+    /// <summary>Returns a writable copy of @event.</summary>
+    /// <remarks>
+    /// <para>
+    /// If there is only one reference count on @event, the caller must be the owner,
+    /// and so this function will return the event object unchanged. If on the other
+    /// hand there is more than one reference on the object, a new event object will
+    /// be returned. The caller's reference on @event will be removed, and instead the
+    /// caller will own a reference to the returned object.
+    /// </para>
+    /// <para>
+    /// In short, this function unrefs the event in the argument and refs the event
+    /// that it returns. Don't access the argument after calling this function. See
+    /// also: gst_event_ref().
+    /// </para>
+    /// </remarks>
+    /// <returns>
+    /// a writable event which may or may not be the
+    ///     same as @event
+    /// </returns>
+    public Gst.Event MakeWritable()
+    {
+        nint nativeResult = GstEventMakeWritable(Handle);
+        return Gst.Event.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_event_make_writable returned no value.");
+    }
+
+    /// <summary>Get the format, minsize, maxsize and async-flag in the buffersize event.</summary>
+    /// <param name="format">The <c>format</c> argument.</param>
+    /// <param name="minsize">The <c>minsize</c> argument.</param>
+    /// <param name="maxsize">The <c>maxsize</c> argument.</param>
+    /// <param name="async">The <c>async</c> argument.</param>
+    public void ParseBufferSize(out Gst.Format format, out long minsize, out long maxsize, out bool async)
+    {
+        int formatNative = default;
+        long minsizeNative = default;
+        long maxsizeNative = default;
+        int asyncNative = default;
+        GstEventParseBufferSize(Handle, &formatNative, &minsizeNative, &maxsizeNative, &asyncNative);
+        format = (Gst.Format)formatNative;
+        minsize = minsizeNative;
+        maxsize = maxsizeNative;
+        async = asyncNative != 0;
+    }
+
+    /// <summary>
+    /// Get the caps from @event. The caps remains valid as long as @event remains
+    /// valid.
+    /// </summary>
+    /// <param name="caps">The <c>caps</c> argument.</param>
+    public void ParseCaps(out Gst.Caps? caps)
+    {
+        nint capsNative = default;
+        GstEventParseCaps(Handle, &capsNative);
+        caps = Gst.Caps.FromNative(capsNative, Gst.Interop.Transfer.None);
+    }
+
+    /// <summary>Parse the FLUSH_STOP event and retrieve the @reset_time member.</summary>
+    /// <param name="resetTime">The <c>resetTime</c> argument.</param>
+    public void ParseFlushStop(out bool resetTime)
+    {
+        int resetTimeNative = default;
+        GstEventParseFlushStop(Handle, &resetTimeNative);
+        resetTime = resetTimeNative != 0;
+    }
+
+    /// <summary>Extract timestamp and duration from a new GAP event.</summary>
+    /// <param name="timestamp">The <c>timestamp</c> argument.</param>
+    /// <param name="duration">The <c>duration</c> argument.</param>
+    public void ParseGap(out Gst.ClockTime timestamp, out Gst.ClockTime duration)
+    {
+        ulong timestampNative = default;
+        ulong durationNative = default;
+        GstEventParseGap(Handle, &timestampNative, &durationNative);
+        timestamp = new Gst.ClockTime(timestampNative);
+        duration = new Gst.ClockTime(durationNative);
+    }
+
+    /// <summary>
+    /// Retrieve the gap flags that may have been set on a gap event with
+    /// gst_event_set_gap_flags().
+    /// </summary>
+    /// <param name="flags">The <c>flags</c> argument.</param>
+    public void ParseGapFlags(out Gst.GapFlags flags)
+    {
+        int flagsNative = default;
+        GstEventParseGapFlags(Handle, &flagsNative);
+        flags = (Gst.GapFlags)flagsNative;
+    }
+
+    /// <summary>The <c>gst_event_parse_group_id</c> function.</summary>
+    /// <param name="groupId">The <c>groupId</c> argument.</param>
+    /// <returns>
+    /// %TRUE if a group id was set on the event and could be parsed,
+    ///   %FALSE otherwise.
+    /// </returns>
+    public bool ParseGroupId(out uint groupId)
+    {
+        uint groupIdNative = default;
+        int nativeResult = GstEventParseGroupId(Handle, &groupIdNative);
+        groupId = groupIdNative;
+        return nativeResult != 0;
+    }
+
+    /// <summary>Extract rate and flags from an instant-rate-change event.</summary>
+    /// <param name="rateMultiplier">The <c>rateMultiplier</c> argument.</param>
+    /// <param name="newFlags">The <c>newFlags</c> argument.</param>
+    public void ParseInstantRateChange(out double rateMultiplier, out Gst.SegmentFlags newFlags)
+    {
+        double rateMultiplierNative = default;
+        int newFlagsNative = default;
+        GstEventParseInstantRateChange(Handle, &rateMultiplierNative, &newFlagsNative);
+        rateMultiplier = rateMultiplierNative;
+        newFlags = (Gst.SegmentFlags)newFlagsNative;
+    }
+
+    /// <summary>Extract the rate multiplier and running times from an instant-rate-sync-time event.</summary>
+    /// <param name="rateMultiplier">The <c>rateMultiplier</c> argument.</param>
+    /// <param name="runningTime">The <c>runningTime</c> argument.</param>
+    /// <param name="upstreamRunningTime">The <c>upstreamRunningTime</c> argument.</param>
+    public void ParseInstantRateSyncTime(out double rateMultiplier, out Gst.ClockTime runningTime, out Gst.ClockTime upstreamRunningTime)
+    {
+        double rateMultiplierNative = default;
+        ulong runningTimeNative = default;
+        ulong upstreamRunningTimeNative = default;
+        GstEventParseInstantRateSyncTime(Handle, &rateMultiplierNative, &runningTimeNative, &upstreamRunningTimeNative);
+        rateMultiplier = rateMultiplierNative;
+        runningTime = new Gst.ClockTime(runningTimeNative);
+        upstreamRunningTime = new Gst.ClockTime(upstreamRunningTimeNative);
+    }
+
+    /// <summary>Get the latency in the latency event.</summary>
+    /// <param name="latency">The <c>latency</c> argument.</param>
+    public void ParseLatency(out Gst.ClockTime latency)
+    {
+        ulong latencyNative = default;
+        GstEventParseLatency(Handle, &latencyNative);
+        latency = new Gst.ClockTime(latencyNative);
+    }
+
+    /// <summary>
+    /// Parses an event containing protection system specific information and stores
+    /// the results in @system_id, @data and @origin. The data stored in @system_id,
+    /// @origin and @data are valid until @event is released.
+    /// </summary>
+    /// <param name="systemId">The <c>systemId</c> argument.</param>
+    /// <param name="data">The <c>data</c> argument.</param>
+    /// <param name="origin">The <c>origin</c> argument.</param>
+    public void ParseProtection(out string? systemId, out Gst.Buffer? data, out string? origin)
+    {
+        nint systemIdNative = default;
+        nint dataNative = default;
+        nint originNative = default;
+        GstEventParseProtection(Handle, &systemIdNative, &dataNative, &originNative);
+        systemId = Gst.Interop.GMarshal.PtrToStringUtf8(systemIdNative);
+        data = Gst.Buffer.FromNative(dataNative, Gst.Interop.Transfer.None);
+        origin = Gst.Interop.GMarshal.PtrToStringUtf8(originNative);
+    }
+
+    /// <summary>
+    /// Get the type, proportion, diff and timestamp in the qos event. See
+    /// gst_event_new_qos() for more information about the different QoS values.
+    /// </summary>
+    /// <remarks>
+    /// <para>@timestamp will be adjusted for any pad offsets of pads it was passing through.</para>
+    /// </remarks>
+    /// <param name="type">The <c>type</c> argument.</param>
+    /// <param name="proportion">The <c>proportion</c> argument.</param>
+    /// <param name="diff">The <c>diff</c> argument.</param>
+    /// <param name="timestamp">The <c>timestamp</c> argument.</param>
+    public void ParseQos(out Gst.QOSType type, out double proportion, out long diff, out Gst.ClockTime timestamp)
+    {
+        int typeNative = default;
+        double proportionNative = default;
+        long diffNative = default;
+        ulong timestampNative = default;
+        GstEventParseQos(Handle, &typeNative, &proportionNative, &diffNative, &timestampNative);
+        type = (Gst.QOSType)typeNative;
+        proportion = proportionNative;
+        diff = diffNative;
+        timestamp = new Gst.ClockTime(timestampNative);
+    }
+
+    /// <summary>Parses a seek @event and stores the results in the given result locations.</summary>
+    /// <param name="rate">The <c>rate</c> argument.</param>
+    /// <param name="format">The <c>format</c> argument.</param>
+    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <param name="startType">The <c>startType</c> argument.</param>
+    /// <param name="start">The <c>start</c> argument.</param>
+    /// <param name="stopType">The <c>stopType</c> argument.</param>
+    /// <param name="stop">The <c>stop</c> argument.</param>
+    public void ParseSeek(out double rate, out Gst.Format format, out Gst.SeekFlags flags, out Gst.SeekType startType, out long start, out Gst.SeekType stopType, out long stop)
+    {
+        double rateNative = default;
+        int formatNative = default;
+        int flagsNative = default;
+        int startTypeNative = default;
+        long startNative = default;
+        int stopTypeNative = default;
+        long stopNative = default;
+        GstEventParseSeek(Handle, &rateNative, &formatNative, &flagsNative, &startTypeNative, &startNative, &stopTypeNative, &stopNative);
+        rate = rateNative;
+        format = (Gst.Format)formatNative;
+        flags = (Gst.SeekFlags)flagsNative;
+        startType = (Gst.SeekType)startTypeNative;
+        start = startNative;
+        stopType = (Gst.SeekType)stopTypeNative;
+        stop = stopNative;
+    }
+
+    /// <summary>
+    /// Retrieve the trickmode interval that may have been set on a
+    /// seek event with gst_event_set_seek_trickmode_interval().
+    /// </summary>
+    /// <param name="interval">The <c>interval</c> argument.</param>
+    public void ParseSeekTrickmodeInterval(out Gst.ClockTime interval)
+    {
+        ulong intervalNative = default;
+        GstEventParseSeekTrickmodeInterval(Handle, &intervalNative);
+        interval = new Gst.ClockTime(intervalNative);
+    }
+
+    /// <summary>
+    /// Parses a segment @event and stores the result in the given @segment location.
+    /// @segment remains valid only until the @event is freed. Don't modify the segment
+    /// and make a copy if you want to modify it or store it for later use.
+    /// </summary>
+    /// <param name="segment">The <c>segment</c> argument.</param>
+    public void ParseSegment(out Gst.Segment? segment)
+    {
+        nint segmentNative = default;
+        GstEventParseSegment(Handle, &segmentNative);
+        segment = Gst.Segment.FromNative(segmentNative, Gst.Interop.Transfer.None);
+    }
+
+    /// <summary>Extracts the position and format from the segment done message.</summary>
+    /// <param name="format">The <c>format</c> argument.</param>
+    /// <param name="position">The <c>position</c> argument.</param>
+    public void ParseSegmentDone(out Gst.Format format, out long position)
+    {
+        int formatNative = default;
+        long positionNative = default;
+        GstEventParseSegmentDone(Handle, &formatNative, &positionNative);
+        format = (Gst.Format)formatNative;
+        position = positionNative;
+    }
+
+    /// <summary>Parse the sink-message event. Unref @msg after usage.</summary>
+    /// <param name="msg">The <c>msg</c> argument.</param>
+    public void ParseSinkMessage(out Gst.Message? msg)
+    {
+        nint msgNative = default;
+        GstEventParseSinkMessage(Handle, &msgNative);
+        msg = Gst.Message.FromNative(msgNative, Gst.Interop.Transfer.Full);
+    }
+
+    /// <summary>Parse the step event.</summary>
+    /// <param name="format">The <c>format</c> argument.</param>
+    /// <param name="amount">The <c>amount</c> argument.</param>
+    /// <param name="rate">The <c>rate</c> argument.</param>
+    /// <param name="flush">The <c>flush</c> argument.</param>
+    /// <param name="intermediate">The <c>intermediate</c> argument.</param>
+    public void ParseStep(out Gst.Format format, out ulong amount, out double rate, out bool flush, out bool intermediate)
+    {
+        int formatNative = default;
+        ulong amountNative = default;
+        double rateNative = default;
+        int flushNative = default;
+        int intermediateNative = default;
+        GstEventParseStep(Handle, &formatNative, &amountNative, &rateNative, &flushNative, &intermediateNative);
+        format = (Gst.Format)formatNative;
+        amount = amountNative;
+        rate = rateNative;
+        flush = flushNative != 0;
+        intermediate = intermediateNative != 0;
+    }
+
+    /// <summary>Parse a stream-start @event and extract the #GstStream from it.</summary>
+    /// <param name="stream">The <c>stream</c> argument.</param>
+    public void ParseStream(out Gst.Stream? stream)
+    {
+        nint streamNative = default;
+        GstEventParseStream(Handle, &streamNative);
+        stream = Gst.GObject.Object.FromNative<Gst.Stream>(streamNative, Gst.Interop.Transfer.Full);
+    }
+
+    /// <summary>Retrieve new #GstStreamCollection from STREAM_COLLECTION event @event.</summary>
+    /// <param name="collection">The <c>collection</c> argument.</param>
+    public void ParseStreamCollection(out Gst.StreamCollection? collection)
+    {
+        nint collectionNative = default;
+        GstEventParseStreamCollection(Handle, &collectionNative);
+        collection = Gst.GObject.Object.FromNative<Gst.StreamCollection>(collectionNative, Gst.Interop.Transfer.Full);
+    }
+
+    /// <summary>The <c>gst_event_parse_stream_flags</c> function.</summary>
+    /// <param name="flags">The <c>flags</c> argument.</param>
+    public void ParseStreamFlags(out Gst.StreamFlags flags)
+    {
+        int flagsNative = default;
+        GstEventParseStreamFlags(Handle, &flagsNative);
+        flags = (Gst.StreamFlags)flagsNative;
+    }
+
+    /// <summary>
+    /// Parse a stream-group-done @event and store the result in the given
+    /// @group_id location.
+    /// </summary>
+    /// <param name="groupId">The <c>groupId</c> argument.</param>
+    public void ParseStreamGroupDone(out uint groupId)
+    {
+        uint groupIdNative = default;
+        GstEventParseStreamGroupDone(Handle, &groupIdNative);
+        groupId = groupIdNative;
+    }
+
+    /// <summary>
+    /// Parse a stream-id @event and store the result in the given @stream_id
+    /// location. The string stored in @stream_id must not be modified and will
+    /// remain valid only until @event gets freed. Make a copy if you want to
+    /// modify it or store it for later use.
+    /// </summary>
+    /// <param name="streamId">The <c>streamId</c> argument.</param>
+    public void ParseStreamStart(out string? streamId)
+    {
+        nint streamIdNative = default;
+        GstEventParseStreamStart(Handle, &streamIdNative);
+        streamId = Gst.Interop.GMarshal.PtrToStringUtf8(streamIdNative);
+    }
+
+    /// <summary>
+    /// Parses a tag @event and stores the results in the given @taglist location.
+    /// No reference to the taglist will be returned, it remains valid only until
+    /// the @event is freed. Don't modify or free the taglist, make a copy if you
+    /// want to modify it or store it for later use.
+    /// </summary>
+    /// <param name="taglist">The <c>taglist</c> argument.</param>
+    public void ParseTag(out Gst.TagList? taglist)
+    {
+        nint taglistNative = default;
+        GstEventParseTag(Handle, &taglistNative);
+        taglist = Gst.TagList.FromNative(taglistNative, Gst.Interop.Transfer.None);
+    }
+
+    /// <summary>Parse a TOC @event and store the results in the given @toc and @updated locations.</summary>
+    /// <param name="toc">The <c>toc</c> argument.</param>
+    /// <param name="updated">The <c>updated</c> argument.</param>
+    public void ParseToc(out Gst.Toc? toc, out bool updated)
+    {
+        nint tocNative = default;
+        int updatedNative = default;
+        GstEventParseToc(Handle, &tocNative, &updatedNative);
+        toc = Gst.Toc.FromNative(tocNative, Gst.Interop.Transfer.Full);
+        updated = updatedNative != 0;
+    }
+
+    /// <summary>Parse a TOC select @event and store the results in the given @uid location.</summary>
+    /// <param name="uid">The <c>uid</c> argument.</param>
+    public void ParseTocSelect(out string? uid)
+    {
+        nint uidNative = default;
+        GstEventParseTocSelect(Handle, &uidNative);
+        uid = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(uidNative);
+    }
+
+    /// <summary>
+    /// Sets @flags on @event to give additional information about the reason for
+    /// the #GST_EVENT_GAP.
+    /// </summary>
+    /// <param name="flags">The <c>flags</c> argument.</param>
+    public void SetGapFlags(Gst.GapFlags flags)
+    {
+        GstEventSetGapFlags(Handle, (int)flags);
+    }
+
+    /// <summary>
+    /// All streams that have the same group id are supposed to be played
+    /// together, i.e. all streams inside a container file should have the
+    /// same group id but different stream ids. The group id should change
+    /// each time the stream is started, resulting in different group ids
+    /// each time a file is played for example.
+    /// </summary>
+    /// <remarks>
+    /// <para>Use gst_util_group_id_next() to get a new group id.</para>
+    /// </remarks>
+    /// <param name="groupId">The <c>groupId</c> argument.</param>
+    public void SetGroupId(uint groupId)
+    {
+        GstEventSetGroupId(Handle, groupId);
+    }
+
+    /// <summary>
+    /// Set the running time offset of a event. See
+    /// gst_event_get_running_time_offset() for more information.
+    /// </summary>
+    /// <remarks>
+    /// <para>MT safe.</para>
+    /// </remarks>
+    /// <param name="offset">The <c>offset</c> argument.</param>
+    public void SetRunningTimeOffset(long offset)
+    {
+        GstEventSetRunningTimeOffset(Handle, offset);
+    }
+
+    /// <summary>
+    /// Sets a trickmode interval on a (writable) seek event. Elements
+    /// that support TRICKMODE_KEY_UNITS seeks SHOULD use this as the minimal
+    /// interval between each frame they may output.
+    /// </summary>
+    /// <param name="interval">The <c>interval</c> argument.</param>
+    public void SetSeekTrickmodeInterval(Gst.ClockTime interval)
+    {
+        GstEventSetSeekTrickmodeInterval(Handle, interval.Nanoseconds);
+    }
+
+    /// <summary>Set the sequence number of a event.</summary>
+    /// <remarks>
+    /// <para>
+    /// This function might be called by the creator of a event to indicate that the
+    /// event relates to other events or messages. See gst_event_get_seqnum() for
+    /// more information.
+    /// </para>
+    /// <para>MT safe.</para>
+    /// </remarks>
+    /// <param name="seqnum">The <c>seqnum</c> argument.</param>
+    public void SetSeqnum(uint seqnum)
+    {
+        GstEventSetSeqnum(Handle, seqnum);
+    }
+
+    /// <summary>Set the @stream on the stream-start @event</summary>
+    /// <param name="stream">The <c>stream</c> argument.</param>
+    public void SetStream(Gst.Stream stream)
+    {
+        ArgumentNullException.ThrowIfNull(stream);
+        GstEventSetStream(Handle, stream.Handle);
+    }
+
+    /// <summary>The <c>gst_event_set_stream_flags</c> function.</summary>
+    /// <param name="flags">The <c>flags</c> argument.</param>
+    public void SetStreamFlags(Gst.StreamFlags flags)
+    {
+        GstEventSetStreamFlags(Handle, (int)flags);
+    }
+
+    /// <summary>Get a writable version of the structure.</summary>
+    /// <returns>
+    /// The structure of the event. The structure
+    /// is still owned by the event, which means that you should not free
+    /// it and that the pointer becomes invalid when you free the event.
+    /// This function ensures that @event is writable, and if so, will
+    /// never return %NULL.
+    /// </returns>
+    public Gst.Structure WritableStructure()
+    {
+        nint nativeResult = GstEventWritableStructure(Handle);
+        return Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.None)
+            ?? throw new InvalidOperationException("gst_event_writable_structure returned no value.");
+    }
+
+    /// <summary>The <c>gst_event_new_buffer_size</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_event_new_buffer_size")]
+    private static partial nint GstEventNewBufferSize(int format, long minsize, long maxsize, int async);
+
+    /// <summary>The <c>gst_event_new_caps</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_event_new_caps")]
+    private static partial nint GstEventNewCaps(nint caps);
+
+    /// <summary>The <c>gst_event_new_eos</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_event_new_eos")]
+    private static partial nint GstEventNewEos();
+
+    /// <summary>The <c>gst_event_new_flush_start</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_event_new_flush_start")]
+    private static partial nint GstEventNewFlushStart();
+
+    /// <summary>The <c>gst_event_new_flush_stop</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_event_new_flush_stop")]
+    private static partial nint GstEventNewFlushStop(int resetTime);
+
+    /// <summary>The <c>gst_event_new_gap</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_event_new_gap")]
+    private static partial nint GstEventNewGap(ulong timestamp, ulong duration);
+
+    /// <summary>The <c>gst_event_new_instant_rate_change</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_event_new_instant_rate_change")]
+    private static partial nint GstEventNewInstantRateChange(double rateMultiplier, int newFlags);
+
+    /// <summary>The <c>gst_event_new_instant_rate_sync_time</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_event_new_instant_rate_sync_time")]
+    private static partial nint GstEventNewInstantRateSyncTime(double rateMultiplier, ulong runningTime, ulong upstreamRunningTime);
+
+    /// <summary>The <c>gst_event_new_latency</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_event_new_latency")]
+    private static partial nint GstEventNewLatency(ulong latency);
+
+    /// <summary>The <c>gst_event_new_protection</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_event_new_protection")]
+    private static partial nint GstEventNewProtection(byte* systemId, nint data, byte* origin);
+
+    /// <summary>The <c>gst_event_new_qos</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_event_new_qos")]
+    private static partial nint GstEventNewQos(int type, double proportion, long diff, ulong timestamp);
+
+    /// <summary>The <c>gst_event_new_reconfigure</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_event_new_reconfigure")]
+    private static partial nint GstEventNewReconfigure();
+
+    /// <summary>The <c>gst_event_new_seek</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_event_new_seek")]
+    private static partial nint GstEventNewSeek(double rate, int format, int flags, int startType, long start, int stopType, long stop);
+
+    /// <summary>The <c>gst_event_new_segment</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_event_new_segment")]
+    private static partial nint GstEventNewSegment(nint segment);
+
+    /// <summary>The <c>gst_event_new_segment_done</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_event_new_segment_done")]
+    private static partial nint GstEventNewSegmentDone(int format, long position);
+
+    /// <summary>The <c>gst_event_new_sink_message</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_event_new_sink_message")]
+    private static partial nint GstEventNewSinkMessage(byte* name, nint msg);
+
+    /// <summary>The <c>gst_event_new_step</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_event_new_step")]
+    private static partial nint GstEventNewStep(int format, ulong amount, double rate, int flush, int intermediate);
+
+    /// <summary>The <c>gst_event_new_stream_collection</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_event_new_stream_collection")]
+    private static partial nint GstEventNewStreamCollection(nint collection);
+
+    /// <summary>The <c>gst_event_new_stream_group_done</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_event_new_stream_group_done")]
+    private static partial nint GstEventNewStreamGroupDone(uint groupId);
+
+    /// <summary>The <c>gst_event_new_stream_start</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_event_new_stream_start")]
+    private static partial nint GstEventNewStreamStart(byte* streamId);
+
+    /// <summary>The <c>gst_event_new_toc</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_event_new_toc")]
+    private static partial nint GstEventNewToc(nint toc, int updated);
+
+    /// <summary>The <c>gst_event_new_toc_select</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_event_new_toc_select")]
+    private static partial nint GstEventNewTocSelect(byte* uid);
+
+    /// <summary>The <c>gst_event_copy_segment</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_event_copy_segment")]
+    private static partial void GstEventCopySegment(nint @event, nint segment);
+
+    /// <summary>The <c>gst_event_get_running_time_offset</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_event_get_running_time_offset")]
+    private static partial long GstEventGetRunningTimeOffset(nint @event);
+
+    /// <summary>The <c>gst_event_get_seqnum</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_event_get_seqnum")]
+    private static partial uint GstEventGetSeqnum(nint @event);
+
+    /// <summary>The <c>gst_event_get_structure</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_event_get_structure")]
+    private static partial nint GstEventGetStructure(nint @event);
+
+    /// <summary>The <c>gst_event_has_name</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_event_has_name")]
+    private static partial int GstEventHasName(nint @event, byte* name);
+
+    /// <summary>The <c>gst_event_has_name_id</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_event_has_name_id")]
+    private static partial int GstEventHasNameId(nint @event, uint name);
+
+    /// <summary>The <c>gst_event_make_writable</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_event_make_writable")]
+    private static partial nint GstEventMakeWritable(nint @event);
+
+    /// <summary>The <c>gst_event_parse_buffer_size</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_event_parse_buffer_size")]
+    private static partial void GstEventParseBufferSize(nint @event, int* format, long* minsize, long* maxsize, int* async);
+
+    /// <summary>The <c>gst_event_parse_caps</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_event_parse_caps")]
+    private static partial void GstEventParseCaps(nint @event, nint* caps);
+
+    /// <summary>The <c>gst_event_parse_flush_stop</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_event_parse_flush_stop")]
+    private static partial void GstEventParseFlushStop(nint @event, int* resetTime);
+
+    /// <summary>The <c>gst_event_parse_gap</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_event_parse_gap")]
+    private static partial void GstEventParseGap(nint @event, ulong* timestamp, ulong* duration);
+
+    /// <summary>The <c>gst_event_parse_gap_flags</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_event_parse_gap_flags")]
+    private static partial void GstEventParseGapFlags(nint @event, int* flags);
+
+    /// <summary>The <c>gst_event_parse_group_id</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_event_parse_group_id")]
+    private static partial int GstEventParseGroupId(nint @event, uint* groupId);
+
+    /// <summary>The <c>gst_event_parse_instant_rate_change</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_event_parse_instant_rate_change")]
+    private static partial void GstEventParseInstantRateChange(nint @event, double* rateMultiplier, int* newFlags);
+
+    /// <summary>The <c>gst_event_parse_instant_rate_sync_time</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_event_parse_instant_rate_sync_time")]
+    private static partial void GstEventParseInstantRateSyncTime(nint @event, double* rateMultiplier, ulong* runningTime, ulong* upstreamRunningTime);
+
+    /// <summary>The <c>gst_event_parse_latency</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_event_parse_latency")]
+    private static partial void GstEventParseLatency(nint @event, ulong* latency);
+
+    /// <summary>The <c>gst_event_parse_protection</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_event_parse_protection")]
+    private static partial void GstEventParseProtection(nint @event, nint* systemId, nint* data, nint* origin);
+
+    /// <summary>The <c>gst_event_parse_qos</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_event_parse_qos")]
+    private static partial void GstEventParseQos(nint @event, int* type, double* proportion, long* diff, ulong* timestamp);
+
+    /// <summary>The <c>gst_event_parse_seek</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_event_parse_seek")]
+    private static partial void GstEventParseSeek(nint @event, double* rate, int* format, int* flags, int* startType, long* start, int* stopType, long* stop);
+
+    /// <summary>The <c>gst_event_parse_seek_trickmode_interval</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_event_parse_seek_trickmode_interval")]
+    private static partial void GstEventParseSeekTrickmodeInterval(nint @event, ulong* interval);
+
+    /// <summary>The <c>gst_event_parse_segment</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_event_parse_segment")]
+    private static partial void GstEventParseSegment(nint @event, nint* segment);
+
+    /// <summary>The <c>gst_event_parse_segment_done</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_event_parse_segment_done")]
+    private static partial void GstEventParseSegmentDone(nint @event, int* format, long* position);
+
+    /// <summary>The <c>gst_event_parse_sink_message</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_event_parse_sink_message")]
+    private static partial void GstEventParseSinkMessage(nint @event, nint* msg);
+
+    /// <summary>The <c>gst_event_parse_step</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_event_parse_step")]
+    private static partial void GstEventParseStep(nint @event, int* format, ulong* amount, double* rate, int* flush, int* intermediate);
+
+    /// <summary>The <c>gst_event_parse_stream</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_event_parse_stream")]
+    private static partial void GstEventParseStream(nint @event, nint* stream);
+
+    /// <summary>The <c>gst_event_parse_stream_collection</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_event_parse_stream_collection")]
+    private static partial void GstEventParseStreamCollection(nint @event, nint* collection);
+
+    /// <summary>The <c>gst_event_parse_stream_flags</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_event_parse_stream_flags")]
+    private static partial void GstEventParseStreamFlags(nint @event, int* flags);
+
+    /// <summary>The <c>gst_event_parse_stream_group_done</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_event_parse_stream_group_done")]
+    private static partial void GstEventParseStreamGroupDone(nint @event, uint* groupId);
+
+    /// <summary>The <c>gst_event_parse_stream_start</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_event_parse_stream_start")]
+    private static partial void GstEventParseStreamStart(nint @event, nint* streamId);
+
+    /// <summary>The <c>gst_event_parse_tag</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_event_parse_tag")]
+    private static partial void GstEventParseTag(nint @event, nint* taglist);
+
+    /// <summary>The <c>gst_event_parse_toc</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_event_parse_toc")]
+    private static partial void GstEventParseToc(nint @event, nint* toc, int* updated);
+
+    /// <summary>The <c>gst_event_parse_toc_select</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_event_parse_toc_select")]
+    private static partial void GstEventParseTocSelect(nint @event, nint* uid);
+
+    /// <summary>The <c>gst_event_set_gap_flags</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_event_set_gap_flags")]
+    private static partial void GstEventSetGapFlags(nint @event, int flags);
+
+    /// <summary>The <c>gst_event_set_group_id</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_event_set_group_id")]
+    private static partial void GstEventSetGroupId(nint @event, uint groupId);
+
+    /// <summary>The <c>gst_event_set_running_time_offset</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_event_set_running_time_offset")]
+    private static partial void GstEventSetRunningTimeOffset(nint @event, long offset);
+
+    /// <summary>The <c>gst_event_set_seek_trickmode_interval</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_event_set_seek_trickmode_interval")]
+    private static partial void GstEventSetSeekTrickmodeInterval(nint @event, ulong interval);
+
+    /// <summary>The <c>gst_event_set_seqnum</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_event_set_seqnum")]
+    private static partial void GstEventSetSeqnum(nint @event, uint seqnum);
+
+    /// <summary>The <c>gst_event_set_stream</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_event_set_stream")]
+    private static partial void GstEventSetStream(nint @event, nint stream);
+
+    /// <summary>The <c>gst_event_set_stream_flags</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_event_set_stream_flags")]
+    private static partial void GstEventSetStreamFlags(nint @event, int flags);
+
+    /// <summary>The <c>gst_event_writable_structure</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_event_writable_structure")]
+    private static partial nint GstEventWritableStructure(nint @event);
+
+    /// <summary>Returns the <c>GType</c> that GObject registered <c>GstEvent</c> under.</summary>
+    /// <returns>The type of the instances of this wrapper.</returns>
+    [LibraryImport("Gst", EntryPoint = "gst_event_get_type")]
+    internal static partial nuint GetGType();
+
+    /// <summary>Creates the wrapper of a native instance, for the type registry.</summary>
+    /// <param name="handle">The native instance.</param>
+    /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
+    /// <returns>The new wrapper.</returns>
+    internal static object CreateWrapper(nint handle, Gst.Interop.Transfer transfer) => new Event(handle, transfer);
 }
 
 /// <summary>The native layout of <c>GstEvent</c>.</summary>

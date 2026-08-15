@@ -42,7 +42,7 @@ public sealed partial class Buffer
     /// </summary>
     /// <remarks>
     /// <para>
-    /// See <see cref="Buffer.Map"/> for how long the mapping lives and which
+    /// See <see cref="Buffer.Map(Gst.MapFlags)"/> for how long the mapping lives and which
     /// thread owns it. The scope owns the mapping, so it must not be copied:
     /// the copy would release the same mapping a second time.
     /// </para>
@@ -50,7 +50,7 @@ public sealed partial class Buffer
     /// It also holds on to the wrapper it was created from. The memory belongs
     /// to the buffer, so the buffer has to outlive the mapping, and without
     /// that reference nothing would stop the collector from finalizing a
-    /// wrapper whose last use was the call to <see cref="Buffer.Map"/>.
+    /// wrapper whose last use was the call to <see cref="Buffer.Map(Gst.MapFlags)"/>.
     /// </para>
     /// </remarks>
     public unsafe ref struct MapScope : IDisposable

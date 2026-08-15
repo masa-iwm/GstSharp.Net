@@ -3,10 +3,13 @@
 
 #nullable enable
 
+using System;
+using System.Runtime.InteropServices;
+
 namespace Gst;
 
 /// <summary>Info passed in the #GstPadProbeCallback.</summary>
-public sealed partial class PadProbeInfo
+public sealed unsafe partial class PadProbeInfo
 {
     /// <summary>The native instance.</summary>
     internal nint Handle;
@@ -14,4 +17,122 @@ public sealed partial class PadProbeInfo
     /// <summary>Wraps a native <c>GstPadProbeInfo</c>.</summary>
     /// <param name="handle">The native instance.</param>
     internal PadProbeInfo(nint handle) => Handle = handle;
+
+    /// <summary>Wraps a native <c>GstPadProbeInfo</c>, mapping the null pointer onto <see langword="null"/>.</summary>
+    /// <param name="handle">The native instance, or <c>0</c>.</param>
+    /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>
+    /// <remarks>
+    /// The wrapper of an opaque record is a bare pointer holder: the gir
+    /// describes no way of releasing one, so it does not take part in the
+    /// ownership of what it points at.
+    /// </remarks>
+    internal static PadProbeInfo? FromNative(nint handle) =>
+        handle == 0 ? null : new(handle);
+
+    /// <summary>The <c>gst_pad_probe_info_get_buffer</c> function.</summary>
+    /// <returns>The #GstBuffer from the probe</returns>
+    public Gst.Buffer? GetBuffer()
+    {
+        nint nativeResult = GstPadProbeInfoGetBuffer(Handle);
+        return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.None);
+    }
+
+    /// <summary>The <c>gst_pad_probe_info_get_buffer_list</c> function.</summary>
+    /// <returns>The #GstBufferList from the probe</returns>
+    public Gst.BufferList? GetBufferList()
+    {
+        nint nativeResult = GstPadProbeInfoGetBufferList(Handle);
+        return Gst.BufferList.FromNative(nativeResult, Gst.Interop.Transfer.None);
+    }
+
+    /// <summary>The <c>gst_pad_probe_info_get_event</c> function.</summary>
+    /// <returns>The #GstEvent from the probe</returns>
+    public Gst.Event? GetEvent()
+    {
+        nint nativeResult = GstPadProbeInfoGetEvent(Handle);
+        return Gst.Event.FromNative(nativeResult, Gst.Interop.Transfer.None);
+    }
+
+    /// <summary>The <c>gst_pad_probe_info_get_flow_return</c> function.</summary>
+    /// <returns>The #GstFlowReturn from the probe</returns>
+    public Gst.FlowReturn GetFlowReturn()
+    {
+        int nativeResult = GstPadProbeInfoGetFlowReturn(Handle);
+        return (Gst.FlowReturn)nativeResult;
+    }
+
+    /// <summary>The <c>gst_pad_probe_info_get_id</c> function.</summary>
+    /// <returns>The probe ID from the probe</returns>
+    public System.Runtime.InteropServices.CULong GetId()
+    {
+        System.Runtime.InteropServices.CULong nativeResult = GstPadProbeInfoGetId(Handle);
+        return nativeResult;
+    }
+
+    /// <summary>The <c>gst_pad_probe_info_get_offset</c> function.</summary>
+    /// <returns>The offset from the probe</returns>
+    public ulong GetOffset()
+    {
+        ulong nativeResult = GstPadProbeInfoGetOffset(Handle);
+        return nativeResult;
+    }
+
+    /// <summary>The <c>gst_pad_probe_info_get_query</c> function.</summary>
+    /// <returns>The #GstQuery from the probe</returns>
+    public Gst.Query? GetQuery()
+    {
+        nint nativeResult = GstPadProbeInfoGetQuery(Handle);
+        return Gst.Query.FromNative(nativeResult, Gst.Interop.Transfer.None);
+    }
+
+    /// <summary>The <c>gst_pad_probe_info_get_size</c> function.</summary>
+    /// <returns>The size from the probe</returns>
+    public nuint GetSize()
+    {
+        nuint nativeResult = GstPadProbeInfoGetSize(Handle);
+        return nativeResult;
+    }
+
+    /// <summary>Updates @info with @flow_ret.</summary>
+    /// <param name="flowRet">The <c>flowRet</c> argument.</param>
+    public void SetFlowReturn(Gst.FlowReturn flowRet)
+    {
+        GstPadProbeInfoSetFlowReturn(Handle, (int)flowRet);
+    }
+
+    /// <summary>The <c>gst_pad_probe_info_get_buffer</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_pad_probe_info_get_buffer")]
+    private static partial nint GstPadProbeInfoGetBuffer(nint info);
+
+    /// <summary>The <c>gst_pad_probe_info_get_buffer_list</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_pad_probe_info_get_buffer_list")]
+    private static partial nint GstPadProbeInfoGetBufferList(nint info);
+
+    /// <summary>The <c>gst_pad_probe_info_get_event</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_pad_probe_info_get_event")]
+    private static partial nint GstPadProbeInfoGetEvent(nint info);
+
+    /// <summary>The <c>gst_pad_probe_info_get_flow_return</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_pad_probe_info_get_flow_return")]
+    private static partial int GstPadProbeInfoGetFlowReturn(nint info);
+
+    /// <summary>The <c>gst_pad_probe_info_get_id</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_pad_probe_info_get_id")]
+    private static partial System.Runtime.InteropServices.CULong GstPadProbeInfoGetId(nint info);
+
+    /// <summary>The <c>gst_pad_probe_info_get_offset</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_pad_probe_info_get_offset")]
+    private static partial ulong GstPadProbeInfoGetOffset(nint info);
+
+    /// <summary>The <c>gst_pad_probe_info_get_query</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_pad_probe_info_get_query")]
+    private static partial nint GstPadProbeInfoGetQuery(nint info);
+
+    /// <summary>The <c>gst_pad_probe_info_get_size</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_pad_probe_info_get_size")]
+    private static partial nuint GstPadProbeInfoGetSize(nint info);
+
+    /// <summary>The <c>gst_pad_probe_info_set_flow_return</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_pad_probe_info_set_flow_return")]
+    private static partial void GstPadProbeInfoSetFlowReturn(nint info, int flowRet);
 }

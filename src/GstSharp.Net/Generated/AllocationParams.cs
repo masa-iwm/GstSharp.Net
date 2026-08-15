@@ -3,18 +3,19 @@
 
 #nullable enable
 
+using System;
 using System.Runtime.InteropServices;
 
 namespace Gst;
 
 /// <summary>Parameters to control the allocation of memory</summary>
-public sealed partial class AllocationParams : Gst.GObject.Boxed
+public sealed unsafe partial class AllocationParams : Gst.GObject.Boxed
 {
     /// <summary>Wraps a native <c>GstAllocationParams</c>.</summary>
     /// <param name="handle">The native instance.</param>
     /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
     internal AllocationParams(nint handle, Gst.Interop.Transfer transfer)
-        : base(handle, new Gst.GObject.GType(AllocationParamsGetType()), transfer)
+        : base(handle, new Gst.GObject.GType(GetGType()), transfer)
     {
     }
 
@@ -25,8 +26,70 @@ public sealed partial class AllocationParams : Gst.GObject.Boxed
     internal static AllocationParams? FromNative(nint handle, Gst.Interop.Transfer transfer) =>
         handle == 0 ? null : new(handle, transfer);
 
+    /// <summary>
+    /// Create a new #GstAllocationParams on the heap.  This function is for
+    /// use in GStreamer language bindings.  In your own code, you can just
+    /// declare a #GstAllocationParams on the stack or in a struct, and
+    /// call gst_allocation_params_init() to initialize it.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// You do not need to call gst_allocation_params_init() on the instance
+    /// returned by this function.
+    /// </para>
+    /// </remarks>
+    /// <returns>a new #GstAllocationParams</returns>
+    public static Gst.AllocationParams New()
+    {
+        nint nativeResult = GstAllocationParamsNew();
+        return Gst.AllocationParams.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_allocation_params_new returned no value.");
+    }
+
+    /// <summary>Create a copy of @params.</summary>
+    /// <returns>a new #GstAllocationParams.</returns>
+    public Gst.AllocationParams? Copy()
+    {
+        nint nativeResult = GstAllocationParamsCopy(Handle);
+        return Gst.AllocationParams.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+    }
+
+    /// <summary>Free @params</summary>
+    public void Free()
+    {
+        GstAllocationParamsFree(Handle);
+    }
+
+    /// <summary>Initialize @params to its default values</summary>
+    public void Init()
+    {
+        GstAllocationParamsInit(Handle);
+    }
+
+    /// <summary>The <c>gst_allocation_params_new</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_allocation_params_new")]
+    private static partial nint GstAllocationParamsNew();
+
+    /// <summary>The <c>gst_allocation_params_copy</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_allocation_params_copy")]
+    private static partial nint GstAllocationParamsCopy(nint @params);
+
+    /// <summary>The <c>gst_allocation_params_free</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_allocation_params_free")]
+    private static partial void GstAllocationParamsFree(nint @params);
+
+    /// <summary>The <c>gst_allocation_params_init</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_allocation_params_init")]
+    private static partial void GstAllocationParamsInit(nint @params);
+
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstAllocationParams</c> under.</summary>
-    /// <returns>The boxed type.</returns>
+    /// <returns>The type of the instances of this wrapper.</returns>
     [LibraryImport("Gst", EntryPoint = "gst_allocation_params_get_type")]
-    private static partial nuint AllocationParamsGetType();
+    internal static partial nuint GetGType();
+
+    /// <summary>Creates the wrapper of a native instance, for the type registry.</summary>
+    /// <param name="handle">The native instance.</param>
+    /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
+    /// <returns>The new wrapper.</returns>
+    internal static object CreateWrapper(nint handle, Gst.Interop.Transfer transfer) => new AllocationParams(handle, transfer);
 }

@@ -3,6 +3,7 @@
 
 #nullable enable
 
+using System;
 using System.Runtime.InteropServices;
 
 namespace Gst;
@@ -52,13 +53,13 @@ namespace Gst;
 /// ]|
 /// </para>
 /// </remarks>
-public sealed partial class Iterator : Gst.GObject.Boxed
+public sealed unsafe partial class Iterator : Gst.GObject.Boxed
 {
     /// <summary>Wraps a native <c>GstIterator</c>.</summary>
     /// <param name="handle">The native instance.</param>
     /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
     internal Iterator(nint handle, Gst.Interop.Transfer transfer)
-        : base(handle, new Gst.GObject.GType(IteratorGetType()), transfer)
+        : base(handle, new Gst.GObject.GType(GetGType()), transfer)
     {
     }
 
@@ -69,8 +70,87 @@ public sealed partial class Iterator : Gst.GObject.Boxed
     internal static Iterator? FromNative(nint handle, Gst.Interop.Transfer transfer) =>
         handle == 0 ? null : new(handle, transfer);
 
+    /// <summary>Copy the iterator and its state.</summary>
+    /// <returns>a new copy of @it.</returns>
+    public Gst.Iterator Copy()
+    {
+        nint nativeResult = GstIteratorCopy(Handle);
+        return Gst.Iterator.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_iterator_copy returned no value.");
+    }
+
+    /// <summary>Free the iterator.</summary>
+    /// <remarks>
+    /// <para>MT safe.</para>
+    /// </remarks>
+    public void Free()
+    {
+        GstIteratorFree(Handle);
+    }
+
+    /// <summary>
+    /// Pushes @other iterator onto @it. All calls performed on @it are
+    /// forwarded to @other. If @other returns %GST_ITERATOR_DONE, it is
+    /// popped again and calls are handled by @it again.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This function is mainly used by objects implementing the iterator
+    /// next function to recurse into substructures.
+    /// </para>
+    /// <para>
+    /// When gst_iterator_resync() is called on @it, @other will automatically be
+    /// popped.
+    /// </para>
+    /// <para>MT safe.</para>
+    /// </remarks>
+    /// <param name="other">The <c>other</c> argument.</param>
+    public void Push(Gst.Iterator other)
+    {
+        ArgumentNullException.ThrowIfNull(other);
+        GstIteratorPush(Handle, other.Handle);
+    }
+
+    /// <summary>
+    /// Resync the iterator. this function is mostly called
+    /// after gst_iterator_next() returned %GST_ITERATOR_RESYNC.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// When an iterator was pushed on @it, it will automatically be popped again
+    /// with this function.
+    /// </para>
+    /// <para>MT safe.</para>
+    /// </remarks>
+    public void Resync()
+    {
+        GstIteratorResync(Handle);
+    }
+
+    /// <summary>The <c>gst_iterator_copy</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_iterator_copy")]
+    private static partial nint GstIteratorCopy(nint it);
+
+    /// <summary>The <c>gst_iterator_free</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_iterator_free")]
+    private static partial void GstIteratorFree(nint it);
+
+    /// <summary>The <c>gst_iterator_push</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_iterator_push")]
+    private static partial void GstIteratorPush(nint it, nint other);
+
+    /// <summary>The <c>gst_iterator_resync</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_iterator_resync")]
+    private static partial void GstIteratorResync(nint it);
+
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstIterator</c> under.</summary>
-    /// <returns>The boxed type.</returns>
+    /// <returns>The type of the instances of this wrapper.</returns>
     [LibraryImport("Gst", EntryPoint = "gst_iterator_get_type")]
-    private static partial nuint IteratorGetType();
+    internal static partial nuint GetGType();
+
+    /// <summary>Creates the wrapper of a native instance, for the type registry.</summary>
+    /// <param name="handle">The native instance.</param>
+    /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
+    /// <returns>The new wrapper.</returns>
+    internal static object CreateWrapper(nint handle, Gst.Interop.Transfer transfer) => new Iterator(handle, transfer);
 }

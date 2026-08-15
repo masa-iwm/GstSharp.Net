@@ -3,6 +3,7 @@
 
 #nullable enable
 
+using System;
 using System.Runtime.InteropServices;
 
 namespace Gst;
@@ -29,13 +30,13 @@ namespace Gst;
 /// ```
 /// </para>
 /// </remarks>
-public sealed partial class IdStr : Gst.GObject.Boxed
+public sealed unsafe partial class IdStr : Gst.GObject.Boxed
 {
     /// <summary>Wraps a native <c>GstIdStr</c>.</summary>
     /// <param name="handle">The native instance.</param>
     /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
     internal IdStr(nint handle, Gst.Interop.Transfer transfer)
-        : base(handle, new Gst.GObject.GType(IdStrGetType()), transfer)
+        : base(handle, new Gst.GObject.GType(GetGType()), transfer)
     {
     }
 
@@ -46,8 +47,254 @@ public sealed partial class IdStr : Gst.GObject.Boxed
     internal static IdStr? FromNative(nint handle, Gst.Interop.Transfer transfer) =>
         handle == 0 ? null : new(handle, transfer);
 
+    /// <summary>Returns a newly heap allocated empty string.</summary>
+    /// <returns>A heap-allocated string.</returns>
+    public static Gst.IdStr New()
+    {
+        nint nativeResult = GstIdStrNew();
+        return Gst.IdStr.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_id_str_new returned no value.");
+    }
+
+    /// <summary>The <c>gst_id_str_as_str</c> function.</summary>
+    /// <returns>the NUL-terminated string representation of @s.</returns>
+    public string AsStr()
+    {
+        nint nativeResult = GstIdStrAsStr(Handle);
+        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
+            ?? throw new InvalidOperationException("gst_id_str_as_str returned no value.");
+    }
+
+    /// <summary>Clears @s and sets it to the empty string.</summary>
+    public void Clear()
+    {
+        GstIdStrClear(Handle);
+    }
+
+    /// <summary>Copies @s into newly allocated heap memory.</summary>
+    /// <returns>A heap-allocated copy of @s.</returns>
+    public Gst.IdStr Copy()
+    {
+        nint nativeResult = GstIdStrCopy(Handle);
+        return Gst.IdStr.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_id_str_copy returned no value.");
+    }
+
+    /// <summary>Copies @s into @d.</summary>
+    /// <param name="s">The <c>s</c> argument.</param>
+    public void CopyInto(Gst.IdStr s)
+    {
+        ArgumentNullException.ThrowIfNull(s);
+        GstIdStrCopyInto(Handle, s.Handle);
+    }
+
+    /// <summary>Frees @s. This should only be called for heap-allocated #GstIdStr.</summary>
+    public void Free()
+    {
+        GstIdStrFree(Handle);
+    }
+
+    /// <summary>
+    /// Returns the length of @s, exluding the NUL-terminator. This is equivalent to
+    /// calling `strcmp()` but potentially faster.
+    /// </summary>
+    /// <returns>The result of <c>gst_id_str_get_len</c>.</returns>
+    public nuint GetLen()
+    {
+        nuint nativeResult = GstIdStrGetLen(Handle);
+        return nativeResult;
+    }
+
+    /// <summary>
+    /// Initializes a (usually stack-allocated) id string @s. The newly-initialized
+    /// id string will contain an empty string by default as value.
+    /// </summary>
+    public void Init()
+    {
+        GstIdStrInit(Handle);
+    }
+
+    /// <summary>Compares @s1 and @s2 for equality.</summary>
+    /// <param name="s2">The <c>s2</c> argument.</param>
+    /// <returns>%TRUE if @s1 and @s2 are equal.</returns>
+    public bool IsEqual(Gst.IdStr s2)
+    {
+        ArgumentNullException.ThrowIfNull(s2);
+        int nativeResult = GstIdStrIsEqual(Handle, s2.Handle);
+        return nativeResult != 0;
+    }
+
+    /// <summary>Compares @s1 and @s2 for equality.</summary>
+    /// <param name="s2">The <c>s2</c> argument.</param>
+    /// <returns>%TRUE if @s1 and @s2 are equal.</returns>
+    public bool IsEqualToStr(string s2)
+    {
+        ArgumentNullException.ThrowIfNull(s2);
+        System.Span<byte> s2Buffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope s2Scope = Gst.Interop.GMarshal.StackUtf8(s2, s2Buffer);
+        int nativeResult = GstIdStrIsEqualToStr(Handle, s2Scope.Pointer);
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Compares @s1 and @s2 with length @len for equality. @s2 does not have to be
+    /// NUL-terminated and @len should not include the NUL-terminator.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This is generally faster than gst_id_str_is_equal_to_str() if the length is
+    /// already known.
+    /// </para>
+    /// </remarks>
+    /// <param name="s2">The <c>s2</c> argument.</param>
+    /// <param name="len">The <c>len</c> argument.</param>
+    /// <returns>%TRUE if @s1 and @s2 are equal.</returns>
+    public bool IsEqualToStrWithLen(string s2, nuint len)
+    {
+        ArgumentNullException.ThrowIfNull(s2);
+        System.Span<byte> s2Buffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope s2Scope = Gst.Interop.GMarshal.StackUtf8(s2, s2Buffer);
+        int nativeResult = GstIdStrIsEqualToStrWithLen(Handle, s2Scope.Pointer, len);
+        return nativeResult != 0;
+    }
+
+    /// <summary>Moves @s into @d and resets @s.</summary>
+    /// <param name="s">The <c>s</c> argument.</param>
+    public void Move(Gst.IdStr s)
+    {
+        ArgumentNullException.ThrowIfNull(s);
+        GstIdStrMove(Handle, s.Handle);
+    }
+
+    /// <summary>Sets @s to the string @value.</summary>
+    /// <param name="value">The <c>value</c> argument.</param>
+    public void Set(string value)
+    {
+        ArgumentNullException.ThrowIfNull(value);
+        System.Span<byte> valueBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope valueScope = Gst.Interop.GMarshal.StackUtf8(value, valueBuffer);
+        GstIdStrSet(Handle, valueScope.Pointer);
+    }
+
+    /// <summary>
+    /// Sets @s to the string @value. @value needs to be valid for the remaining
+    /// lifetime of the process, e.g. has to be a static string.
+    /// </summary>
+    /// <param name="value">The <c>value</c> argument.</param>
+    public void SetStaticStr(string value)
+    {
+        ArgumentNullException.ThrowIfNull(value);
+        System.Span<byte> valueBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope valueScope = Gst.Interop.GMarshal.StackUtf8(value, valueBuffer);
+        GstIdStrSetStaticStr(Handle, valueScope.Pointer);
+    }
+
+    /// <summary>
+    /// Sets @s to the string @value of length @len. @value needs to be valid for the
+    /// remaining lifetime of the process, e.g. has to be a static string.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// @value must be NUL-terminated and @len should not include the
+    /// NUL-terminator.
+    /// </para>
+    /// </remarks>
+    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="len">The <c>len</c> argument.</param>
+    public void SetStaticStrWithLen(string value, nuint len)
+    {
+        ArgumentNullException.ThrowIfNull(value);
+        System.Span<byte> valueBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope valueScope = Gst.Interop.GMarshal.StackUtf8(value, valueBuffer);
+        GstIdStrSetStaticStrWithLen(Handle, valueScope.Pointer, len);
+    }
+
+    /// <summary>
+    /// Sets @s to the string @value of length @len. @value does not have to be
+    /// NUL-terminated and @len should not include the NUL-terminator.
+    /// </summary>
+    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="len">The <c>len</c> argument.</param>
+    public void SetWithLen(string value, nuint len)
+    {
+        ArgumentNullException.ThrowIfNull(value);
+        System.Span<byte> valueBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope valueScope = Gst.Interop.GMarshal.StackUtf8(value, valueBuffer);
+        GstIdStrSetWithLen(Handle, valueScope.Pointer, len);
+    }
+
+    /// <summary>The <c>gst_id_str_new</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_id_str_new")]
+    private static partial nint GstIdStrNew();
+
+    /// <summary>The <c>gst_id_str_as_str</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_id_str_as_str")]
+    private static partial nint GstIdStrAsStr(nint s);
+
+    /// <summary>The <c>gst_id_str_clear</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_id_str_clear")]
+    private static partial void GstIdStrClear(nint s);
+
+    /// <summary>The <c>gst_id_str_copy</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_id_str_copy")]
+    private static partial nint GstIdStrCopy(nint s);
+
+    /// <summary>The <c>gst_id_str_copy_into</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_id_str_copy_into")]
+    private static partial void GstIdStrCopyInto(nint d, nint s);
+
+    /// <summary>The <c>gst_id_str_free</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_id_str_free")]
+    private static partial void GstIdStrFree(nint s);
+
+    /// <summary>The <c>gst_id_str_get_len</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_id_str_get_len")]
+    private static partial nuint GstIdStrGetLen(nint s);
+
+    /// <summary>The <c>gst_id_str_init</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_id_str_init")]
+    private static partial void GstIdStrInit(nint s);
+
+    /// <summary>The <c>gst_id_str_is_equal</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_id_str_is_equal")]
+    private static partial int GstIdStrIsEqual(nint s1, nint s2);
+
+    /// <summary>The <c>gst_id_str_is_equal_to_str</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_id_str_is_equal_to_str")]
+    private static partial int GstIdStrIsEqualToStr(nint s1, byte* s2);
+
+    /// <summary>The <c>gst_id_str_is_equal_to_str_with_len</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_id_str_is_equal_to_str_with_len")]
+    private static partial int GstIdStrIsEqualToStrWithLen(nint s1, byte* s2, nuint len);
+
+    /// <summary>The <c>gst_id_str_move</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_id_str_move")]
+    private static partial void GstIdStrMove(nint d, nint s);
+
+    /// <summary>The <c>gst_id_str_set</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_id_str_set")]
+    private static partial void GstIdStrSet(nint s, byte* value);
+
+    /// <summary>The <c>gst_id_str_set_static_str</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_id_str_set_static_str")]
+    private static partial void GstIdStrSetStaticStr(nint s, byte* value);
+
+    /// <summary>The <c>gst_id_str_set_static_str_with_len</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_id_str_set_static_str_with_len")]
+    private static partial void GstIdStrSetStaticStrWithLen(nint s, byte* value, nuint len);
+
+    /// <summary>The <c>gst_id_str_set_with_len</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_id_str_set_with_len")]
+    private static partial void GstIdStrSetWithLen(nint s, byte* value, nuint len);
+
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstIdStr</c> under.</summary>
-    /// <returns>The boxed type.</returns>
+    /// <returns>The type of the instances of this wrapper.</returns>
     [LibraryImport("Gst", EntryPoint = "gst_id_str_get_type")]
-    private static partial nuint IdStrGetType();
+    internal static partial nuint GetGType();
+
+    /// <summary>Creates the wrapper of a native instance, for the type registry.</summary>
+    /// <param name="handle">The native instance.</param>
+    /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
+    /// <returns>The new wrapper.</returns>
+    internal static object CreateWrapper(nint handle, Gst.Interop.Transfer transfer) => new IdStr(handle, transfer);
 }

@@ -14,4 +14,15 @@ public sealed partial class PadPrivate
     /// <summary>Wraps a native <c>GstPadPrivate</c>.</summary>
     /// <param name="handle">The native instance.</param>
     internal PadPrivate(nint handle) => Handle = handle;
+
+    /// <summary>Wraps a native <c>GstPadPrivate</c>, mapping the null pointer onto <see langword="null"/>.</summary>
+    /// <param name="handle">The native instance, or <c>0</c>.</param>
+    /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>
+    /// <remarks>
+    /// The wrapper of an opaque record is a bare pointer holder: the gir
+    /// describes no way of releasing one, so it does not take part in the
+    /// ownership of what it points at.
+    /// </remarks>
+    internal static PadPrivate? FromNative(nint handle) =>
+        handle == 0 ? null : new(handle);
 }

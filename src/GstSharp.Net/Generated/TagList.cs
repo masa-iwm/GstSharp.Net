@@ -3,6 +3,7 @@
 
 #nullable enable
 
+using System;
 using System.Runtime.InteropServices;
 
 namespace Gst;
@@ -14,7 +15,7 @@ namespace Gst;
 /// not allowed. Strings must not be empty or %NULL.
 /// </para>
 /// </remarks>
-public sealed partial class TagList : Gst.MiniObject
+public sealed unsafe partial class TagList : Gst.MiniObject
 {
     /// <summary>Wraps a native <c>GstTagList</c>.</summary>
     /// <param name="handle">The native instance.</param>
@@ -30,6 +31,922 @@ public sealed partial class TagList : Gst.MiniObject
     /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>
     internal static TagList? FromNative(nint handle, Gst.Interop.Transfer transfer) =>
         handle == 0 ? null : new(handle, transfer);
+
+    /// <summary>Creates a new empty GstTagList.</summary>
+    /// <remarks>
+    /// <para>Free-function: gst_tag_list_unref</para>
+    /// </remarks>
+    /// <returns>An empty tag list</returns>
+    public static Gst.TagList NewEmpty()
+    {
+        nint nativeResult = GstTagListNewEmpty();
+        return Gst.TagList.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_tag_list_new_empty returned no value.");
+    }
+
+    /// <summary>Deserializes a tag list.</summary>
+    /// <param name="str">The <c>str</c> argument.</param>
+    /// <returns>
+    /// a new #GstTagList, or %NULL in case of an
+    /// error.
+    /// </returns>
+    public static Gst.TagList? NewFromString(string str)
+    {
+        ArgumentNullException.ThrowIfNull(str);
+        System.Span<byte> strBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope strScope = Gst.Interop.GMarshal.StackUtf8(str, strBuffer);
+        nint nativeResult = GstTagListNewFromString(strScope.Pointer);
+        return Gst.TagList.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+    }
+
+    /// <summary>
+    /// Creates a new #GstTagList as a copy of the old @taglist. The new taglist
+    /// will have a refcount of 1, owned by the caller, and will be writable as
+    /// a result.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Note that this function is the semantic equivalent of a gst_tag_list_ref()
+    /// followed by a gst_tag_list_make_writable(). If you only want to hold on to a
+    /// reference to the data, you should use gst_tag_list_ref().
+    /// </para>
+    /// <para>When you are finished with the taglist, call gst_tag_list_unref() on it.</para>
+    /// </remarks>
+    /// <returns>the new #GstTagList</returns>
+    public Gst.TagList Copy()
+    {
+        nint nativeResult = GstTagListCopy(Handle);
+        return Gst.TagList.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_tag_list_copy returned no value.");
+    }
+
+    /// <summary>
+    /// Calls the given function for each tag inside the tag list. Note that if there
+    /// is no tag, the function won't be called at all.
+    /// </summary>
+    /// <param name="func">function to be called for each tag</param>
+    public void Foreach(Gst.TagForeachFunc func)
+    {
+        ArgumentNullException.ThrowIfNull(func);
+        Gst.Interop.CallbackHandle funcState = Gst.Interop.CallbackHandle.Alloc(func);
+        try
+        {
+            GstTagListForeach(Handle, Gst.TagForeachFuncTrampoline.Pointer, funcState.UserData);
+        }
+        finally
+        {
+            funcState.Free();
+        }
+    }
+
+    /// <summary>
+    /// Copies the contents for the given tag into the value, merging multiple values
+    /// into one if multiple values are associated with the tag.
+    /// </summary>
+    /// <param name="tag">The <c>tag</c> argument.</param>
+    /// <param name="value">The <c>value</c> argument.</param>
+    /// <returns>
+    /// %TRUE, if a value was copied, %FALSE if the tag didn't exist in the
+    ///              given list.
+    /// </returns>
+    public bool GetBoolean(string tag, out bool value)
+    {
+        ArgumentNullException.ThrowIfNull(tag);
+        System.Span<byte> tagBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope tagScope = Gst.Interop.GMarshal.StackUtf8(tag, tagBuffer);
+        int valueNative = default;
+        int nativeResult = GstTagListGetBoolean(Handle, tagScope.Pointer, &valueNative);
+        value = valueNative != 0;
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Gets the value that is at the given index for the given tag in the given
+    /// list.
+    /// </summary>
+    /// <param name="tag">The <c>tag</c> argument.</param>
+    /// <param name="index">The <c>index</c> argument.</param>
+    /// <param name="value">The <c>value</c> argument.</param>
+    /// <returns>
+    /// %TRUE, if a value was copied, %FALSE if the tag didn't exist in the
+    ///              given list.
+    /// </returns>
+    public bool GetBooleanIndex(string tag, uint index, out bool value)
+    {
+        ArgumentNullException.ThrowIfNull(tag);
+        System.Span<byte> tagBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope tagScope = Gst.Interop.GMarshal.StackUtf8(tag, tagBuffer);
+        int valueNative = default;
+        int nativeResult = GstTagListGetBooleanIndex(Handle, tagScope.Pointer, index, &valueNative);
+        value = valueNative != 0;
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Copies the first datetime for the given tag in the taglist into the variable
+    /// pointed to by @value. Unref the date with gst_date_time_unref() when
+    /// it is no longer needed.
+    /// </summary>
+    /// <remarks>
+    /// <para>Free-function: gst_date_time_unref</para>
+    /// </remarks>
+    /// <param name="tag">The <c>tag</c> argument.</param>
+    /// <param name="value">The <c>value</c> argument.</param>
+    /// <returns>
+    /// %TRUE, if a datetime was copied, %FALSE if the tag didn't exist in
+    ///              the given list or if it was %NULL.
+    /// </returns>
+    public bool GetDateTime(string tag, out Gst.DateTime? value)
+    {
+        ArgumentNullException.ThrowIfNull(tag);
+        System.Span<byte> tagBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope tagScope = Gst.Interop.GMarshal.StackUtf8(tag, tagBuffer);
+        nint valueNative = default;
+        int nativeResult = GstTagListGetDateTime(Handle, tagScope.Pointer, &valueNative);
+        value = Gst.DateTime.FromNative(valueNative, Gst.Interop.Transfer.Full);
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Gets the datetime that is at the given index for the given tag in the given
+    /// list and copies it into the variable pointed to by @value. Unref the datetime
+    /// with gst_date_time_unref() when it is no longer needed.
+    /// </summary>
+    /// <remarks>
+    /// <para>Free-function: gst_date_time_unref</para>
+    /// </remarks>
+    /// <param name="tag">The <c>tag</c> argument.</param>
+    /// <param name="index">The <c>index</c> argument.</param>
+    /// <param name="value">The <c>value</c> argument.</param>
+    /// <returns>
+    /// %TRUE, if a value was copied, %FALSE if the tag didn't exist in the
+    ///              given list or if it was %NULL.
+    /// </returns>
+    public bool GetDateTimeIndex(string tag, uint index, out Gst.DateTime? value)
+    {
+        ArgumentNullException.ThrowIfNull(tag);
+        System.Span<byte> tagBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope tagScope = Gst.Interop.GMarshal.StackUtf8(tag, tagBuffer);
+        nint valueNative = default;
+        int nativeResult = GstTagListGetDateTimeIndex(Handle, tagScope.Pointer, index, &valueNative);
+        value = Gst.DateTime.FromNative(valueNative, Gst.Interop.Transfer.Full);
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Copies the contents for the given tag into the value, merging multiple values
+    /// into one if multiple values are associated with the tag.
+    /// </summary>
+    /// <param name="tag">The <c>tag</c> argument.</param>
+    /// <param name="value">The <c>value</c> argument.</param>
+    /// <returns>
+    /// %TRUE, if a value was copied, %FALSE if the tag didn't exist in the
+    ///              given list.
+    /// </returns>
+    public bool GetDouble(string tag, out double value)
+    {
+        ArgumentNullException.ThrowIfNull(tag);
+        System.Span<byte> tagBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope tagScope = Gst.Interop.GMarshal.StackUtf8(tag, tagBuffer);
+        double valueNative = default;
+        int nativeResult = GstTagListGetDouble(Handle, tagScope.Pointer, &valueNative);
+        value = valueNative;
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Gets the value that is at the given index for the given tag in the given
+    /// list.
+    /// </summary>
+    /// <param name="tag">The <c>tag</c> argument.</param>
+    /// <param name="index">The <c>index</c> argument.</param>
+    /// <param name="value">The <c>value</c> argument.</param>
+    /// <returns>
+    /// %TRUE, if a value was copied, %FALSE if the tag didn't exist in the
+    ///              given list.
+    /// </returns>
+    public bool GetDoubleIndex(string tag, uint index, out double value)
+    {
+        ArgumentNullException.ThrowIfNull(tag);
+        System.Span<byte> tagBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope tagScope = Gst.Interop.GMarshal.StackUtf8(tag, tagBuffer);
+        double valueNative = default;
+        int nativeResult = GstTagListGetDoubleIndex(Handle, tagScope.Pointer, index, &valueNative);
+        value = valueNative;
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Copies the contents for the given tag into the value, merging multiple values
+    /// into one if multiple values are associated with the tag.
+    /// </summary>
+    /// <param name="tag">The <c>tag</c> argument.</param>
+    /// <param name="value">The <c>value</c> argument.</param>
+    /// <returns>
+    /// %TRUE, if a value was copied, %FALSE if the tag didn't exist in the
+    ///              given list.
+    /// </returns>
+    public bool GetFloat(string tag, out float value)
+    {
+        ArgumentNullException.ThrowIfNull(tag);
+        System.Span<byte> tagBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope tagScope = Gst.Interop.GMarshal.StackUtf8(tag, tagBuffer);
+        float valueNative = default;
+        int nativeResult = GstTagListGetFloat(Handle, tagScope.Pointer, &valueNative);
+        value = valueNative;
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Gets the value that is at the given index for the given tag in the given
+    /// list.
+    /// </summary>
+    /// <param name="tag">The <c>tag</c> argument.</param>
+    /// <param name="index">The <c>index</c> argument.</param>
+    /// <param name="value">The <c>value</c> argument.</param>
+    /// <returns>
+    /// %TRUE, if a value was copied, %FALSE if the tag didn't exist in the
+    ///              given list.
+    /// </returns>
+    public bool GetFloatIndex(string tag, uint index, out float value)
+    {
+        ArgumentNullException.ThrowIfNull(tag);
+        System.Span<byte> tagBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope tagScope = Gst.Interop.GMarshal.StackUtf8(tag, tagBuffer);
+        float valueNative = default;
+        int nativeResult = GstTagListGetFloatIndex(Handle, tagScope.Pointer, index, &valueNative);
+        value = valueNative;
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Copies the contents for the given tag into the value, merging multiple values
+    /// into one if multiple values are associated with the tag.
+    /// </summary>
+    /// <param name="tag">The <c>tag</c> argument.</param>
+    /// <param name="value">The <c>value</c> argument.</param>
+    /// <returns>
+    /// %TRUE, if a value was copied, %FALSE if the tag didn't exist in the
+    ///              given list.
+    /// </returns>
+    public bool GetInt(string tag, out int value)
+    {
+        ArgumentNullException.ThrowIfNull(tag);
+        System.Span<byte> tagBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope tagScope = Gst.Interop.GMarshal.StackUtf8(tag, tagBuffer);
+        int valueNative = default;
+        int nativeResult = GstTagListGetInt(Handle, tagScope.Pointer, &valueNative);
+        value = valueNative;
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Copies the contents for the given tag into the value, merging multiple values
+    /// into one if multiple values are associated with the tag.
+    /// </summary>
+    /// <param name="tag">The <c>tag</c> argument.</param>
+    /// <param name="value">The <c>value</c> argument.</param>
+    /// <returns>
+    /// %TRUE, if a value was copied, %FALSE if the tag didn't exist in the
+    ///              given list.
+    /// </returns>
+    public bool GetInt64(string tag, out long value)
+    {
+        ArgumentNullException.ThrowIfNull(tag);
+        System.Span<byte> tagBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope tagScope = Gst.Interop.GMarshal.StackUtf8(tag, tagBuffer);
+        long valueNative = default;
+        int nativeResult = GstTagListGetInt64(Handle, tagScope.Pointer, &valueNative);
+        value = valueNative;
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Gets the value that is at the given index for the given tag in the given
+    /// list.
+    /// </summary>
+    /// <param name="tag">The <c>tag</c> argument.</param>
+    /// <param name="index">The <c>index</c> argument.</param>
+    /// <param name="value">The <c>value</c> argument.</param>
+    /// <returns>
+    /// %TRUE, if a value was copied, %FALSE if the tag didn't exist in the
+    ///              given list.
+    /// </returns>
+    public bool GetInt64Index(string tag, uint index, out long value)
+    {
+        ArgumentNullException.ThrowIfNull(tag);
+        System.Span<byte> tagBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope tagScope = Gst.Interop.GMarshal.StackUtf8(tag, tagBuffer);
+        long valueNative = default;
+        int nativeResult = GstTagListGetInt64Index(Handle, tagScope.Pointer, index, &valueNative);
+        value = valueNative;
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Gets the value that is at the given index for the given tag in the given
+    /// list.
+    /// </summary>
+    /// <param name="tag">The <c>tag</c> argument.</param>
+    /// <param name="index">The <c>index</c> argument.</param>
+    /// <param name="value">The <c>value</c> argument.</param>
+    /// <returns>
+    /// %TRUE, if a value was copied, %FALSE if the tag didn't exist in the
+    ///              given list.
+    /// </returns>
+    public bool GetIntIndex(string tag, uint index, out int value)
+    {
+        ArgumentNullException.ThrowIfNull(tag);
+        System.Span<byte> tagBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope tagScope = Gst.Interop.GMarshal.StackUtf8(tag, tagBuffer);
+        int valueNative = default;
+        int nativeResult = GstTagListGetIntIndex(Handle, tagScope.Pointer, index, &valueNative);
+        value = valueNative;
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Copies the contents for the given tag into the value, merging multiple values
+    /// into one if multiple values are associated with the tag.
+    /// </summary>
+    /// <param name="tag">The <c>tag</c> argument.</param>
+    /// <param name="value">The <c>value</c> argument.</param>
+    /// <returns>
+    /// %TRUE, if a value was copied, %FALSE if the tag didn't exist in the
+    ///              given list.
+    /// </returns>
+    public bool GetPointer(string tag, out nint value)
+    {
+        ArgumentNullException.ThrowIfNull(tag);
+        System.Span<byte> tagBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope tagScope = Gst.Interop.GMarshal.StackUtf8(tag, tagBuffer);
+        nint valueNative = default;
+        int nativeResult = GstTagListGetPointer(Handle, tagScope.Pointer, &valueNative);
+        value = valueNative;
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Gets the value that is at the given index for the given tag in the given
+    /// list.
+    /// </summary>
+    /// <param name="tag">The <c>tag</c> argument.</param>
+    /// <param name="index">The <c>index</c> argument.</param>
+    /// <param name="value">The <c>value</c> argument.</param>
+    /// <returns>
+    /// %TRUE, if a value was copied, %FALSE if the tag didn't exist in the
+    ///              given list.
+    /// </returns>
+    public bool GetPointerIndex(string tag, uint index, out nint value)
+    {
+        ArgumentNullException.ThrowIfNull(tag);
+        System.Span<byte> tagBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope tagScope = Gst.Interop.GMarshal.StackUtf8(tag, tagBuffer);
+        nint valueNative = default;
+        int nativeResult = GstTagListGetPointerIndex(Handle, tagScope.Pointer, index, &valueNative);
+        value = valueNative;
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Copies the first sample for the given tag in the taglist into the variable
+    /// pointed to by @sample. Free the sample with gst_sample_unref() when it is
+    /// no longer needed. You can retrieve the buffer from the sample using
+    /// gst_sample_get_buffer() and the associated caps (if any) with
+    /// gst_sample_get_caps().
+    /// </summary>
+    /// <remarks>
+    /// <para>Free-function: gst_sample_unref</para>
+    /// </remarks>
+    /// <param name="tag">The <c>tag</c> argument.</param>
+    /// <param name="sample">The <c>sample</c> argument.</param>
+    /// <returns>
+    /// %TRUE, if a sample was returned, %FALSE if the tag didn't exist in
+    ///              the given list or if it was %NULL.
+    /// </returns>
+    public bool GetSample(string tag, out Gst.Sample? sample)
+    {
+        ArgumentNullException.ThrowIfNull(tag);
+        System.Span<byte> tagBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope tagScope = Gst.Interop.GMarshal.StackUtf8(tag, tagBuffer);
+        nint sampleNative = default;
+        int nativeResult = GstTagListGetSample(Handle, tagScope.Pointer, &sampleNative);
+        sample = Gst.Sample.FromNative(sampleNative, Gst.Interop.Transfer.Full);
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Gets the sample that is at the given index for the given tag in the given
+    /// list and copies it into the variable pointed to by @sample. Free the sample
+    /// with gst_sample_unref() when it is no longer needed. You can retrieve the
+    /// buffer from the sample using gst_sample_get_buffer() and the associated
+    /// caps (if any) with gst_sample_get_caps().
+    /// </summary>
+    /// <remarks>
+    /// <para>Free-function: gst_sample_unref</para>
+    /// </remarks>
+    /// <param name="tag">The <c>tag</c> argument.</param>
+    /// <param name="index">The <c>index</c> argument.</param>
+    /// <param name="sample">The <c>sample</c> argument.</param>
+    /// <returns>
+    /// %TRUE, if a sample was copied, %FALSE if the tag didn't exist in the
+    ///              given list or if it was %NULL.
+    /// </returns>
+    public bool GetSampleIndex(string tag, uint index, out Gst.Sample? sample)
+    {
+        ArgumentNullException.ThrowIfNull(tag);
+        System.Span<byte> tagBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope tagScope = Gst.Interop.GMarshal.StackUtf8(tag, tagBuffer);
+        nint sampleNative = default;
+        int nativeResult = GstTagListGetSampleIndex(Handle, tagScope.Pointer, index, &sampleNative);
+        sample = Gst.Sample.FromNative(sampleNative, Gst.Interop.Transfer.Full);
+        return nativeResult != 0;
+    }
+
+    /// <summary>Gets the scope of @list.</summary>
+    /// <returns>The scope of @list</returns>
+    public Gst.TagScope GetScope()
+    {
+        int nativeResult = GstTagListGetScope(Handle);
+        return (Gst.TagScope)nativeResult;
+    }
+
+    /// <summary>
+    /// Copies the contents for the given tag into the value, possibly merging
+    /// multiple values into one if multiple values are associated with the tag.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Use gst_tag_list_get_string_index (list, tag, 0, value) if you want
+    /// to retrieve the first string associated with this tag unmodified.
+    /// </para>
+    /// <para>
+    /// The resulting string in @value will be in UTF-8 encoding and should be
+    /// freed by the caller using g_free when no longer needed. The
+    /// returned string is also guaranteed to be non-%NULL and non-empty.
+    /// </para>
+    /// <para>Free-function: g_free</para>
+    /// </remarks>
+    /// <param name="tag">The <c>tag</c> argument.</param>
+    /// <param name="value">The <c>value</c> argument.</param>
+    /// <returns>
+    /// %TRUE, if a value was copied, %FALSE if the tag didn't exist in the
+    ///              given list.
+    /// </returns>
+    public bool GetString(string tag, out string? value)
+    {
+        ArgumentNullException.ThrowIfNull(tag);
+        System.Span<byte> tagBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope tagScope = Gst.Interop.GMarshal.StackUtf8(tag, tagBuffer);
+        nint valueNative = default;
+        int nativeResult = GstTagListGetString(Handle, tagScope.Pointer, &valueNative);
+        value = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(valueNative);
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Gets the value that is at the given index for the given tag in the given
+    /// list.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The resulting string in @value will be in UTF-8 encoding and should be
+    /// freed by the caller using g_free when no longer needed. The
+    /// returned string is also guaranteed to be non-%NULL and non-empty.
+    /// </para>
+    /// <para>Free-function: g_free</para>
+    /// </remarks>
+    /// <param name="tag">The <c>tag</c> argument.</param>
+    /// <param name="index">The <c>index</c> argument.</param>
+    /// <param name="value">The <c>value</c> argument.</param>
+    /// <returns>
+    /// %TRUE, if a value was copied, %FALSE if the tag didn't exist in the
+    ///              given list.
+    /// </returns>
+    public bool GetStringIndex(string tag, uint index, out string? value)
+    {
+        ArgumentNullException.ThrowIfNull(tag);
+        System.Span<byte> tagBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope tagScope = Gst.Interop.GMarshal.StackUtf8(tag, tagBuffer);
+        nint valueNative = default;
+        int nativeResult = GstTagListGetStringIndex(Handle, tagScope.Pointer, index, &valueNative);
+        value = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(valueNative);
+        return nativeResult != 0;
+    }
+
+    /// <summary>Checks how many value are stored in this tag list for the given tag.</summary>
+    /// <param name="tag">The <c>tag</c> argument.</param>
+    /// <returns>The number of tags stored</returns>
+    public uint GetTagSize(string tag)
+    {
+        ArgumentNullException.ThrowIfNull(tag);
+        System.Span<byte> tagBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope tagScope = Gst.Interop.GMarshal.StackUtf8(tag, tagBuffer);
+        uint nativeResult = GstTagListGetTagSize(Handle, tagScope.Pointer);
+        return nativeResult;
+    }
+
+    /// <summary>
+    /// Copies the contents for the given tag into the value, merging multiple values
+    /// into one if multiple values are associated with the tag.
+    /// </summary>
+    /// <param name="tag">The <c>tag</c> argument.</param>
+    /// <param name="value">The <c>value</c> argument.</param>
+    /// <returns>
+    /// %TRUE, if a value was copied, %FALSE if the tag didn't exist in the
+    ///              given list.
+    /// </returns>
+    public bool GetUint(string tag, out uint value)
+    {
+        ArgumentNullException.ThrowIfNull(tag);
+        System.Span<byte> tagBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope tagScope = Gst.Interop.GMarshal.StackUtf8(tag, tagBuffer);
+        uint valueNative = default;
+        int nativeResult = GstTagListGetUint(Handle, tagScope.Pointer, &valueNative);
+        value = valueNative;
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Copies the contents for the given tag into the value, merging multiple values
+    /// into one if multiple values are associated with the tag.
+    /// </summary>
+    /// <param name="tag">The <c>tag</c> argument.</param>
+    /// <param name="value">The <c>value</c> argument.</param>
+    /// <returns>
+    /// %TRUE, if a value was copied, %FALSE if the tag didn't exist in the
+    ///              given list.
+    /// </returns>
+    public bool GetUint64(string tag, out ulong value)
+    {
+        ArgumentNullException.ThrowIfNull(tag);
+        System.Span<byte> tagBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope tagScope = Gst.Interop.GMarshal.StackUtf8(tag, tagBuffer);
+        ulong valueNative = default;
+        int nativeResult = GstTagListGetUint64(Handle, tagScope.Pointer, &valueNative);
+        value = valueNative;
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Gets the value that is at the given index for the given tag in the given
+    /// list.
+    /// </summary>
+    /// <param name="tag">The <c>tag</c> argument.</param>
+    /// <param name="index">The <c>index</c> argument.</param>
+    /// <param name="value">The <c>value</c> argument.</param>
+    /// <returns>
+    /// %TRUE, if a value was copied, %FALSE if the tag didn't exist in the
+    ///              given list.
+    /// </returns>
+    public bool GetUint64Index(string tag, uint index, out ulong value)
+    {
+        ArgumentNullException.ThrowIfNull(tag);
+        System.Span<byte> tagBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope tagScope = Gst.Interop.GMarshal.StackUtf8(tag, tagBuffer);
+        ulong valueNative = default;
+        int nativeResult = GstTagListGetUint64Index(Handle, tagScope.Pointer, index, &valueNative);
+        value = valueNative;
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Gets the value that is at the given index for the given tag in the given
+    /// list.
+    /// </summary>
+    /// <param name="tag">The <c>tag</c> argument.</param>
+    /// <param name="index">The <c>index</c> argument.</param>
+    /// <param name="value">The <c>value</c> argument.</param>
+    /// <returns>
+    /// %TRUE, if a value was copied, %FALSE if the tag didn't exist in the
+    ///              given list.
+    /// </returns>
+    public bool GetUintIndex(string tag, uint index, out uint value)
+    {
+        ArgumentNullException.ThrowIfNull(tag);
+        System.Span<byte> tagBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope tagScope = Gst.Interop.GMarshal.StackUtf8(tag, tagBuffer);
+        uint valueNative = default;
+        int nativeResult = GstTagListGetUintIndex(Handle, tagScope.Pointer, index, &valueNative);
+        value = valueNative;
+        return nativeResult != 0;
+    }
+
+    /// <summary>Inserts the tags of the @from list into the first list using the given mode.</summary>
+    /// <param name="from">The <c>from</c> argument.</param>
+    /// <param name="mode">The <c>mode</c> argument.</param>
+    public void Insert(Gst.TagList from, Gst.TagMergeMode mode)
+    {
+        ArgumentNullException.ThrowIfNull(from);
+        GstTagListInsert(Handle, from.Handle, (int)mode);
+    }
+
+    /// <summary>Checks if the given taglist is empty.</summary>
+    /// <returns>%TRUE if the taglist is empty, otherwise %FALSE.</returns>
+    public bool IsEmpty()
+    {
+        int nativeResult = GstTagListIsEmpty(Handle);
+        return nativeResult != 0;
+    }
+
+    /// <summary>Checks if the two given taglists are equal.</summary>
+    /// <param name="list2">The <c>list2</c> argument.</param>
+    /// <returns>%TRUE if the taglists are equal, otherwise %FALSE</returns>
+    public bool IsEqual(Gst.TagList list2)
+    {
+        ArgumentNullException.ThrowIfNull(list2);
+        int nativeResult = GstTagListIsEqual(Handle, list2.Handle);
+        return nativeResult != 0;
+    }
+
+    /// <summary>Returns a writable copy of @taglist.</summary>
+    /// <remarks>
+    /// <para>
+    /// If there is only one reference count on @taglist, the caller must be the owner,
+    /// and so this function will return the taglist object unchanged. If on the other
+    /// hand there is more than one reference on the object, a new taglist object will
+    /// be returned. The caller's reference on @taglist will be removed, and instead the
+    /// caller will own a reference to the returned object.
+    /// </para>
+    /// <para>
+    /// In short, this function unrefs the taglist in the argument and refs the taglist
+    /// that it returns. Don't access the argument after calling this function. See
+    /// also: gst_tag_list_ref().
+    /// </para>
+    /// </remarks>
+    /// <returns>
+    /// a writable taglist which may or may not be the
+    ///     same as @taglist
+    /// </returns>
+    public Gst.TagList MakeWritable()
+    {
+        nint nativeResult = GstTagListMakeWritable(Handle);
+        return Gst.TagList.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_tag_list_make_writable returned no value.");
+    }
+
+    /// <summary>
+    /// Merges the two given lists into a new list. If one of the lists is %NULL, a
+    /// copy of the other is returned. If both lists are %NULL, %NULL is returned.
+    /// </summary>
+    /// <remarks>
+    /// <para>Free-function: gst_tag_list_unref</para>
+    /// </remarks>
+    /// <param name="list2">The <c>list2</c> argument.</param>
+    /// <param name="mode">The <c>mode</c> argument.</param>
+    /// <returns>the new list</returns>
+    public Gst.TagList? Merge(Gst.TagList? list2, Gst.TagMergeMode mode)
+    {
+        nint nativeResult = GstTagListMerge(Handle, list2 is null ? 0 : list2.Handle, (int)mode);
+        return Gst.TagList.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+    }
+
+    /// <summary>Get the number of tags in @list.</summary>
+    /// <returns>The number of tags in @list.</returns>
+    public int NTags()
+    {
+        int nativeResult = GstTagListNTags(Handle);
+        return nativeResult;
+    }
+
+    /// <summary>Get the name of the tag in @list at @index.</summary>
+    /// <param name="index">The <c>index</c> argument.</param>
+    /// <returns>The name of the tag at @index.</returns>
+    public string NthTagName(uint index)
+    {
+        nint nativeResult = GstTagListNthTagName(Handle, index);
+        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
+            ?? throw new InvalidOperationException("gst_tag_list_nth_tag_name returned no value.");
+    }
+
+    /// <summary>
+    /// Peeks at the value that is at the given index for the given tag in the given
+    /// list.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The resulting string in @value will be in UTF-8 encoding and doesn't need
+    /// to be freed by the caller. The returned string is also guaranteed to
+    /// be non-%NULL and non-empty.
+    /// </para>
+    /// </remarks>
+    /// <param name="tag">The <c>tag</c> argument.</param>
+    /// <param name="index">The <c>index</c> argument.</param>
+    /// <param name="value">The <c>value</c> argument.</param>
+    /// <returns>
+    /// %TRUE, if a value was set, %FALSE if the tag didn't exist in the
+    ///              given list.
+    /// </returns>
+    public bool PeekStringIndex(string tag, uint index, out string? value)
+    {
+        ArgumentNullException.ThrowIfNull(tag);
+        System.Span<byte> tagBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope tagScope = Gst.Interop.GMarshal.StackUtf8(tag, tagBuffer);
+        nint valueNative = default;
+        int nativeResult = GstTagListPeekStringIndex(Handle, tagScope.Pointer, index, &valueNative);
+        value = Gst.Interop.GMarshal.PtrToStringUtf8(valueNative);
+        return nativeResult != 0;
+    }
+
+    /// <summary>Removes the given tag from the taglist.</summary>
+    /// <param name="tag">The <c>tag</c> argument.</param>
+    public void RemoveTag(string tag)
+    {
+        ArgumentNullException.ThrowIfNull(tag);
+        System.Span<byte> tagBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope tagScope = Gst.Interop.GMarshal.StackUtf8(tag, tagBuffer);
+        GstTagListRemoveTag(Handle, tagScope.Pointer);
+    }
+
+    /// <summary>
+    /// Sets the scope of @list to @scope. By default the scope
+    /// of a taglist is stream scope.
+    /// </summary>
+    /// <param name="scope">The <c>scope</c> argument.</param>
+    public void SetScope(Gst.TagScope scope)
+    {
+        GstTagListSetScope(Handle, (int)scope);
+    }
+
+    /// <summary>Serializes a tag list to a string.</summary>
+    /// <returns>
+    /// a newly-allocated string.
+    ///     The string must be freed with g_free() when no longer
+    ///     needed.
+    /// </returns>
+    public override string ToString()
+    {
+        nint nativeResult = GstTagListToString(Handle);
+        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
+            ?? throw new InvalidOperationException("gst_tag_list_to_string returned no value.");
+    }
+
+    /// <summary>The <c>gst_tag_list_new_empty</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_tag_list_new_empty")]
+    private static partial nint GstTagListNewEmpty();
+
+    /// <summary>The <c>gst_tag_list_new_from_string</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_tag_list_new_from_string")]
+    private static partial nint GstTagListNewFromString(byte* str);
+
+    /// <summary>The <c>gst_tag_list_copy</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_tag_list_copy")]
+    private static partial nint GstTagListCopy(nint taglist);
+
+    /// <summary>The <c>gst_tag_list_foreach</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_tag_list_foreach")]
+    private static partial void GstTagListForeach(nint list, nint func, nint userData);
+
+    /// <summary>The <c>gst_tag_list_get_boolean</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_tag_list_get_boolean")]
+    private static partial int GstTagListGetBoolean(nint list, byte* tag, int* value);
+
+    /// <summary>The <c>gst_tag_list_get_boolean_index</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_tag_list_get_boolean_index")]
+    private static partial int GstTagListGetBooleanIndex(nint list, byte* tag, uint index, int* value);
+
+    /// <summary>The <c>gst_tag_list_get_date_time</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_tag_list_get_date_time")]
+    private static partial int GstTagListGetDateTime(nint list, byte* tag, nint* value);
+
+    /// <summary>The <c>gst_tag_list_get_date_time_index</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_tag_list_get_date_time_index")]
+    private static partial int GstTagListGetDateTimeIndex(nint list, byte* tag, uint index, nint* value);
+
+    /// <summary>The <c>gst_tag_list_get_double</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_tag_list_get_double")]
+    private static partial int GstTagListGetDouble(nint list, byte* tag, double* value);
+
+    /// <summary>The <c>gst_tag_list_get_double_index</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_tag_list_get_double_index")]
+    private static partial int GstTagListGetDoubleIndex(nint list, byte* tag, uint index, double* value);
+
+    /// <summary>The <c>gst_tag_list_get_float</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_tag_list_get_float")]
+    private static partial int GstTagListGetFloat(nint list, byte* tag, float* value);
+
+    /// <summary>The <c>gst_tag_list_get_float_index</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_tag_list_get_float_index")]
+    private static partial int GstTagListGetFloatIndex(nint list, byte* tag, uint index, float* value);
+
+    /// <summary>The <c>gst_tag_list_get_int</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_tag_list_get_int")]
+    private static partial int GstTagListGetInt(nint list, byte* tag, int* value);
+
+    /// <summary>The <c>gst_tag_list_get_int64</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_tag_list_get_int64")]
+    private static partial int GstTagListGetInt64(nint list, byte* tag, long* value);
+
+    /// <summary>The <c>gst_tag_list_get_int64_index</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_tag_list_get_int64_index")]
+    private static partial int GstTagListGetInt64Index(nint list, byte* tag, uint index, long* value);
+
+    /// <summary>The <c>gst_tag_list_get_int_index</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_tag_list_get_int_index")]
+    private static partial int GstTagListGetIntIndex(nint list, byte* tag, uint index, int* value);
+
+    /// <summary>The <c>gst_tag_list_get_pointer</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_tag_list_get_pointer")]
+    private static partial int GstTagListGetPointer(nint list, byte* tag, nint* value);
+
+    /// <summary>The <c>gst_tag_list_get_pointer_index</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_tag_list_get_pointer_index")]
+    private static partial int GstTagListGetPointerIndex(nint list, byte* tag, uint index, nint* value);
+
+    /// <summary>The <c>gst_tag_list_get_sample</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_tag_list_get_sample")]
+    private static partial int GstTagListGetSample(nint list, byte* tag, nint* sample);
+
+    /// <summary>The <c>gst_tag_list_get_sample_index</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_tag_list_get_sample_index")]
+    private static partial int GstTagListGetSampleIndex(nint list, byte* tag, uint index, nint* sample);
+
+    /// <summary>The <c>gst_tag_list_get_scope</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_tag_list_get_scope")]
+    private static partial int GstTagListGetScope(nint list);
+
+    /// <summary>The <c>gst_tag_list_get_string</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_tag_list_get_string")]
+    private static partial int GstTagListGetString(nint list, byte* tag, nint* value);
+
+    /// <summary>The <c>gst_tag_list_get_string_index</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_tag_list_get_string_index")]
+    private static partial int GstTagListGetStringIndex(nint list, byte* tag, uint index, nint* value);
+
+    /// <summary>The <c>gst_tag_list_get_tag_size</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_tag_list_get_tag_size")]
+    private static partial uint GstTagListGetTagSize(nint list, byte* tag);
+
+    /// <summary>The <c>gst_tag_list_get_uint</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_tag_list_get_uint")]
+    private static partial int GstTagListGetUint(nint list, byte* tag, uint* value);
+
+    /// <summary>The <c>gst_tag_list_get_uint64</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_tag_list_get_uint64")]
+    private static partial int GstTagListGetUint64(nint list, byte* tag, ulong* value);
+
+    /// <summary>The <c>gst_tag_list_get_uint64_index</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_tag_list_get_uint64_index")]
+    private static partial int GstTagListGetUint64Index(nint list, byte* tag, uint index, ulong* value);
+
+    /// <summary>The <c>gst_tag_list_get_uint_index</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_tag_list_get_uint_index")]
+    private static partial int GstTagListGetUintIndex(nint list, byte* tag, uint index, uint* value);
+
+    /// <summary>The <c>gst_tag_list_insert</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_tag_list_insert")]
+    private static partial void GstTagListInsert(nint into, nint from, int mode);
+
+    /// <summary>The <c>gst_tag_list_is_empty</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_tag_list_is_empty")]
+    private static partial int GstTagListIsEmpty(nint list);
+
+    /// <summary>The <c>gst_tag_list_is_equal</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_tag_list_is_equal")]
+    private static partial int GstTagListIsEqual(nint list1, nint list2);
+
+    /// <summary>The <c>gst_tag_list_make_writable</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_tag_list_make_writable")]
+    private static partial nint GstTagListMakeWritable(nint taglist);
+
+    /// <summary>The <c>gst_tag_list_merge</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_tag_list_merge")]
+    private static partial nint GstTagListMerge(nint list1, nint list2, int mode);
+
+    /// <summary>The <c>gst_tag_list_n_tags</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_tag_list_n_tags")]
+    private static partial int GstTagListNTags(nint list);
+
+    /// <summary>The <c>gst_tag_list_nth_tag_name</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_tag_list_nth_tag_name")]
+    private static partial nint GstTagListNthTagName(nint list, uint index);
+
+    /// <summary>The <c>gst_tag_list_peek_string_index</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_tag_list_peek_string_index")]
+    private static partial int GstTagListPeekStringIndex(nint list, byte* tag, uint index, nint* value);
+
+    /// <summary>The <c>gst_tag_list_remove_tag</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_tag_list_remove_tag")]
+    private static partial void GstTagListRemoveTag(nint list, byte* tag);
+
+    /// <summary>The <c>gst_tag_list_set_scope</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_tag_list_set_scope")]
+    private static partial void GstTagListSetScope(nint list, int scope);
+
+    /// <summary>The <c>gst_tag_list_to_string</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_tag_list_to_string")]
+    private static partial nint GstTagListToString(nint list);
+
+    /// <summary>Returns the <c>GType</c> that GObject registered <c>GstTagList</c> under.</summary>
+    /// <returns>The type of the instances of this wrapper.</returns>
+    [LibraryImport("Gst", EntryPoint = "gst_tag_list_get_type")]
+    internal static partial nuint GetGType();
+
+    /// <summary>Creates the wrapper of a native instance, for the type registry.</summary>
+    /// <param name="handle">The native instance.</param>
+    /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
+    /// <returns>The new wrapper.</returns>
+    internal static object CreateWrapper(nint handle, Gst.Interop.Transfer transfer) => new TagList(handle, transfer);
 }
 
 /// <summary>The native layout of <c>GstTagList</c>.</summary>
