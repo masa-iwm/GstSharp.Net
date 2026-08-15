@@ -56,6 +56,15 @@ public abstract class MiniObject : IDisposable
         }
 
         _handle = handle;
+
+        // Adopting a mini object is the other thing an application does often
+        // on a thread that is allowed to call native code, so it is the second
+        // place where the releases that GObject finalizers queued are
+        // performed. An application that pulls samples in a loop and never
+        // looks a GObject wrapper up would otherwise let that queue grow
+        // without bound. The call costs two volatile reads when the queue is
+        // empty, which it normally is.
+        Gst.GObject.Object.DrainPendingReleases();
     }
 
     /// <summary>
@@ -86,7 +95,19 @@ public abstract class MiniObject : IDisposable
     /// object, so that it may be modified in place.
     /// </summary>
     /// <exception cref="ObjectDisposedException">The wrapper was disposed.</exception>
-    public bool IsWritable => GstNative.MiniObjectIsWritable(Handle) != 0;
+    public bool IsWritable
+    {
+        get
+        {
+            int writable = GstNative.MiniObjectIsWritable(Handle);
+
+            // Reading Handle is the last use of this wrapper, so without this
+            // the collector may finalize it while the call is still running,
+            // which unrefs the object the call is reading.
+            GC.KeepAlive(this);
+            return writable != 0;
+        }
+    }
 
     /// <summary>
     /// Releases the reference of the wrapper.
@@ -130,6 +151,10 @@ public abstract class MiniObject : IDisposable
             Interlocked.Exchange(ref _handle, writable);
         }
 
+        // On the path where the object was writable already, nothing touches
+        // this wrapper after the handle is read, so the collector would be free
+        // to finalize it while the native call runs.
+        GC.KeepAlive(this);
         return writable;
     }
 

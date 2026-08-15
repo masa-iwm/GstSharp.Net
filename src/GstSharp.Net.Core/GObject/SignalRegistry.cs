@@ -31,6 +31,20 @@ public static class SignalRegistry
     /// <see langword="true"/> to run the handler after the default one.
     /// </param>
     /// <returns>The identifier of the handler, which is never zero.</returns>
+    /// <remarks>
+    /// GObject takes <paramref name="state"/> over and releases it through the
+    /// closure notification, but only once the connection has been made. When
+    /// this throws, nothing took the state over and the caller has to release
+    /// it with <see cref="CallbackHandle.Free"/>. The state is deliberately not
+    /// released here: every caller already frees it on its way out, and freeing
+    /// a <see cref="System.Runtime.InteropServices.GCHandle"/> twice is worse
+    /// than leaking one, because the slot of a freed handle is reused by the
+    /// next allocation.
+    /// </remarks>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="detailedSignal"/> is empty, or the object has no signal
+    /// of that name.
+    /// </exception>
     public static unsafe ulong Connect(
         nint instance,
         string detailedSignal,
@@ -60,6 +74,20 @@ public static class SignalRegistry
             state.UserData,
             CallbackHandle.ClosureNotify,
             after ? GObjectNative.ConnectAfter : 0);
+
+        if (id.Value == 0)
+        {
+            // g_signal_connect_data logs a g_warning and returns zero when the
+            // instance has no such signal, when the detail is unknown, or when
+            // the signal cannot be connected to. It does not run the closure
+            // notification in that case, so the state of the handler would be
+            // leaked and a zero identifier would be tracked as if it were a
+            // handler. The caller releases the state; see the remarks.
+            throw new ArgumentException(
+                $"\"{detailedSignal}\" could not be connected. The object has no signal of that name, " +
+                "or the detail is not one it knows.",
+                nameof(detailedSignal));
+        }
 
         return id.Value;
     }

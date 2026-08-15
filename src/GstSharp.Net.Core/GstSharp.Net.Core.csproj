@@ -9,6 +9,11 @@
          and the rules are internal. The tests exercise them against a fake
          machine, so that no GStreamer installation is needed. -->
     <InternalsVisibleTo Include="GstSharp.Core.Tests" />
+
+    <!-- The lifetime of a GObject wrapper can only be pinned down against a
+         real object, so the tests that reach the seams of Gst.GObject.Object
+         live in the integration suite. -->
+    <InternalsVisibleTo Include="GstSharp.IntegrationTests" />
   </ItemGroup>
 
 </Project>

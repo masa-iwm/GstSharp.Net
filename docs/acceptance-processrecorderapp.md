@@ -25,7 +25,9 @@ Gst core:
 - `Message.Type` / `Message.Src` (borrow that stays valid while the message
   wrapper lives) / `ParseError` / `ParseWarning` — the `debug` out-string is
   transfer-full and MUST be freed with `g_free`
-- `Buffer`: Pts/Dts get+set, `HasFlags`, `Size`, metadata-only copy
+- `Buffer`: Pts/Dts get (properties) + set (`SetPts`/`SetDts`, and
+  `SetDuration`/`SetOffset`/`SetOffsetEnd`, which throw when the buffer is
+  not writable), `HasFlags`, `Size`, metadata-only copy
   (`CopyRegion` with an `All`-style composite of `BufferCopyFlags`),
   first-class `MakeWritable`
 - `Sample.Buffer` / `Sample.Caps`; `Caps.GetStructure`; `Structure.Name` /
@@ -52,15 +54,55 @@ GstBase:
    `TrimMode=full` this must work with no `TrimmerRootAssembly` entry
    (the GirCore/gstreamer-sharp variants both failed here; the app carries
    a trimmer root workaround today).
-2. **Uniform ownership policy for transfer-none getters.** GirCore returns
-   borrows (app double-freed); the gstreamer-sharp fork returns owned copies
-   (app leaked ~150 MB/min until it added `using`). GstSharp.Net policy:
-   every wrapper handed to user code owns a reference (adoption with
-   `Transfer.None` takes a ref — cheap ref, not a deep copy) and is released
-   by `Dispose`. One discipline everywhere; document on each getter.
-3. **Deterministic release.** `Dispose` unrefs synchronously; finalizers
-   unref directly. Never defer an unref through a GLib timeout/idle — this
-   app has no main loop, and gtk-sharp's deferred path leaks permanently.
+   Each binding assembly fills the registry from a `[ModuleInitializer]`,
+   which CoreCLR runs before the first *call* into that assembly and not
+   before one of its types is named in a cast. `GstSharp.Initialize()`
+   therefore runs the module initializer of every loaded `GstSharp.Net*`
+   assembly and subscribes to `AppDomain.AssemblyLoad` to do the same for
+   assemblies loaded later; under NativeAOT they have all run at startup and
+   the sweep finds nothing to do. `Gst.Base.GstBase.Initialize()` and the
+   per-module forwarders next to it are the deterministic way to say the same
+   thing. A wrapper keeps the type it was created with, so an object wrapped
+   before its module registered stays the base type it was built as —
+   initialize first; `GstSharp.TypeFallback` reports (once per GType) when an
+   object is wrapped as an ancestor, which is how the otherwise silent case
+   becomes visible.
+2. **Ownership policy for transfer-none getters.** GirCore returns borrows
+   (app double-freed); the gstreamer-sharp fork returns owned copies (app
+   leaked ~150 MB/min until it added `using`). GstSharp.Net has one rule per
+   object model, and which one applies follows from the base type:
+   - **`MiniObject` and `Boxed`** (Buffer, Caps, Sample, Message, Event,
+     Structure, ...): every wrapper handed to user code owns a reference of
+     its own — a mini object is reffed, a boxed value is copied — and **must
+     be disposed**. Wrappers are not interned: two lookups of the same object
+     give two wrappers holding two references. `GST0001` flags a local that is
+     never disposed.
+   - **`GObject`** (Element, Pad, Bus, Pipeline, ...): the wrapper is
+     interned. Every lookup of the same object hands out the *same* instance,
+     and that instance owns one reference for the whole process, held through
+     a toggle reference. `Dispose` therefore does not mean "release my
+     reference", it means "this process is done with the object": it
+     disconnects the handlers the wrapper connected and gives up its part in
+     the lifetime, for every holder at once. Normally do not call it — let the
+     collector take the wrapper and the runtime release the object. Dispose a
+     GObject wrapper only for something this code created and is done with,
+     for example a pipeline that has been set to `NULL`.
+3. **Deterministic release.**
+   - Mini objects and boxed values release synchronously: `Dispose` unrefs on
+     the calling thread and the finalizer unrefs directly. Nothing is ever
+     deferred through a GLib timeout or idle — this app has no main loop, and
+     gtk-sharp's deferred path leaks permanently.
+   - A GObject finalizer must not unref: removing the toggle reference races
+     with the toggle notification and would call into GStreamer from the
+     finalizer thread. It enqueues the release instead, and the queue is
+     drained on a thread that may call native code — on every GObject wrapper
+     lookup, on every mini object that is adopted, from the idle callback of a
+     running main loop, and from `GstSharp.DrainPendingReleases()`. An
+     application that pulls samples in a loop drains it constantly and needs
+     nothing; **an application with no main loop that also goes long stretches
+     without touching a wrapper should call `GstSharp.DrainPendingReleases()`
+     periodically**, for example once per poll of the bus. The queue holds one
+     small record per pending object, never a copy of the media.
 4. **DebugCategory must be wrapped by pointer**, not as a by-value struct:
    a value copy snapshots the threshold and runtime `GST_DEBUG` changes are
    lost. (Currently classified PlainStruct — needs a fixup before the debug

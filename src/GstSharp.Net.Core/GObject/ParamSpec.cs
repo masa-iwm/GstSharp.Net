@@ -42,12 +42,33 @@ public sealed class ParamSpec : IDisposable
     /// <summary>
     /// Gets the name of the property, for example <c>uri</c>.
     /// </summary>
-    public string Name => GMarshal.PtrToStringUtf8(GObjectNative.ParamSpecGetName(Handle)) ?? string.Empty;
+    public string Name
+    {
+        get
+        {
+            string? name = GMarshal.PtrToStringUtf8(GObjectNative.ParamSpecGetName(Handle));
+
+            // The string belongs to the specification, so it is only there for
+            // as long as this wrapper holds its reference: reading Handle is
+            // the last use of the wrapper, and the collector is free to
+            // finalize it from there on.
+            GC.KeepAlive(this);
+            return name ?? string.Empty;
+        }
+    }
 
     /// <summary>
     /// Gets the type of the values of the property.
     /// </summary>
-    public GType ValueType => ValueTypeOf(Handle);
+    public GType ValueType
+    {
+        get
+        {
+            GType type = ValueTypeOf(Handle);
+            GC.KeepAlive(this);
+            return type;
+        }
+    }
 
     /// <summary>
     /// Reads the value type out of a native <c>GParamSpec</c>.

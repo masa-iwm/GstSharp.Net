@@ -25,8 +25,23 @@ public sealed unsafe partial class Message
     /// </para>
     /// </remarks>
     /// <exception cref="ObjectDisposedException">The wrapper was disposed.</exception>
-    public Gst.Object? Src =>
-        Gst.GObject.Object.FromNative<Gst.Object>(((MessageRaw*)Handle)->Src, Gst.Interop.Transfer.None);
+    public Gst.Object? Src
+    {
+        get
+        {
+            Gst.Object? source = Gst.GObject.Object.FromNative<Gst.Object>(
+                ((MessageRaw*)Handle)->Src,
+                Gst.Interop.Transfer.None);
+
+            // The source is read out of the message and referenced through it,
+            // so the message has to outlive the lookup. Reading Handle is the
+            // last use of this wrapper, and without this the collector may
+            // finalize it — releasing the message, and with it the source —
+            // while the wrapper of the source is still being built.
+            GC.KeepAlive(this);
+            return source;
+        }
+    }
 
     /// <summary>
     /// Gets the name of the object that posted the message, or

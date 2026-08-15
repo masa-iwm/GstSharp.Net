@@ -3,6 +3,138 @@ namespace Gst;
 public sealed partial class Buffer
 {
     /// <summary>
+    /// Sets the presentation timestamp of the buffer.
+    /// </summary>
+    /// <param name="pts">
+    /// The time the media should be presented at, or
+    /// <see cref="ClockTime.None"/> when it is not known or not relevant.
+    /// </param>
+    /// <remarks>See <see cref="SetOffsetEnd"/> for the writability rule.</remarks>
+    /// <exception cref="ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="InvalidOperationException">The buffer is not writable.</exception>
+    public unsafe void SetPts(ClockTime pts)
+    {
+        nint handle = WritableHandle();
+        ((BufferRaw*)handle)->Pts = pts.Nanoseconds;
+        GC.KeepAlive(this);
+    }
+
+    /// <summary>
+    /// Sets the decoding timestamp of the buffer.
+    /// </summary>
+    /// <param name="dts">
+    /// The time the media should be processed at, or
+    /// <see cref="ClockTime.None"/> when it is not known or not relevant.
+    /// </param>
+    /// <remarks>See <see cref="SetOffsetEnd"/> for the writability rule.</remarks>
+    /// <exception cref="ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="InvalidOperationException">The buffer is not writable.</exception>
+    public unsafe void SetDts(ClockTime dts)
+    {
+        nint handle = WritableHandle();
+        ((BufferRaw*)handle)->Dts = dts.Nanoseconds;
+        GC.KeepAlive(this);
+    }
+
+    /// <summary>
+    /// Sets how long the data of the buffer lasts.
+    /// </summary>
+    /// <param name="duration">
+    /// The duration, or <see cref="ClockTime.None"/> when it is not known or
+    /// not relevant.
+    /// </param>
+    /// <remarks>See <see cref="SetOffsetEnd"/> for the writability rule.</remarks>
+    /// <exception cref="ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="InvalidOperationException">The buffer is not writable.</exception>
+    public unsafe void SetDuration(ClockTime duration)
+    {
+        nint handle = WritableHandle();
+        ((BufferRaw*)handle)->Duration = duration.Nanoseconds;
+        GC.KeepAlive(this);
+    }
+
+    /// <summary>
+    /// Sets the media specific offset of the buffer: the frame number for
+    /// video, the index of the first sample for audio, the byte offset for
+    /// plain data.
+    /// </summary>
+    /// <param name="offset">
+    /// The offset, or <c>GST_BUFFER_OFFSET_NONE</c> (<see cref="ulong.MaxValue"/>)
+    /// when it is not known.
+    /// </param>
+    /// <remarks>See <see cref="SetOffsetEnd"/> for the writability rule.</remarks>
+    /// <exception cref="ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="InvalidOperationException">The buffer is not writable.</exception>
+    public unsafe void SetOffset(ulong offset)
+    {
+        nint handle = WritableHandle();
+        ((BufferRaw*)handle)->Offset = offset;
+        GC.KeepAlive(this);
+    }
+
+    /// <summary>
+    /// Sets the last offset the buffer contains, in the same unit as
+    /// <see cref="SetOffset"/>.
+    /// </summary>
+    /// <param name="offsetEnd">
+    /// The offset, or <c>GST_BUFFER_OFFSET_NONE</c> (<see cref="ulong.MaxValue"/>)
+    /// when it is not known.
+    /// </param>
+    /// <remarks>
+    /// <para>
+    /// The five timestamp and offset fields of <c>GstBuffer</c> are written
+    /// directly, which is what the <c>GST_BUFFER_PTS</c> family of macros does
+    /// in C. They are methods rather than setters on the generated properties
+    /// because the properties are emitted read only today; a later generator
+    /// change may add setters next to them, and these methods stay valid when
+    /// it does.
+    /// </para>
+    /// <para>
+    /// Writing a field of a buffer that somebody else also holds a reference to
+    /// corrupts what that other holder sees, so this refuses to write unless
+    /// the buffer is writable, exactly as <c>gst_buffer_is_writable</c> defines
+    /// it. A buffer that was just allocated, or one that came back from a
+    /// make-writable call, is the one to write to.
+    /// </para>
+    /// <para>
+    /// The check and the write are two steps, and nothing can make them one:
+    /// another thread that takes a reference in between makes the buffer shared
+    /// after the check said it was not. That is the same rule the C API
+    /// imposes — a buffer belongs to one owner until it is handed on — and it
+    /// is why this is a guard against a mistake rather than a lock.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="InvalidOperationException">The buffer is not writable.</exception>
+    public unsafe void SetOffsetEnd(ulong offsetEnd)
+    {
+        nint handle = WritableHandle();
+        ((BufferRaw*)handle)->OffsetEnd = offsetEnd;
+        GC.KeepAlive(this);
+    }
+
+    /// <summary>
+    /// Returns the handle of the buffer, provided that its fields may be
+    /// written.
+    /// </summary>
+    /// <returns>The buffer to write to.</returns>
+    /// <exception cref="ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="InvalidOperationException">The buffer is not writable.</exception>
+    private nint WritableHandle()
+    {
+        nint handle = Handle;
+
+        if (GstNative.MiniObjectIsWritable(handle) == 0)
+        {
+            throw new InvalidOperationException(
+                "The buffer is not writable: somebody else holds a reference to it, and writing a field " +
+                "would change what they see. Make it writable first.");
+        }
+
+        return handle;
+    }
+
+    /// <summary>
     /// Maps the memory of the buffer into the address space of the process for
     /// as long as the returned scope lives.
     /// </summary>

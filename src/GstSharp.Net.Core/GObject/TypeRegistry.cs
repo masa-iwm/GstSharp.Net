@@ -1,7 +1,19 @@
+using System.Collections.Concurrent;
 using System.Collections.Frozen;
 using Gst.Interop;
 
 namespace Gst.GObject;
+
+/// <summary>
+/// One wrapper that was created for a base type of the object it wraps, because
+/// the exact type of the object is not registered.
+/// </summary>
+/// <param name="InstanceType">The type of the native instance.</param>
+/// <param name="WrapperType">
+/// The registered type the wrapper was built from, an ancestor of
+/// <paramref name="InstanceType"/>.
+/// </param>
+public readonly record struct TypeFallback(GType InstanceType, GType WrapperType);
 
 /// <summary>
 /// Maps native types to the factories that create their managed wrappers.
@@ -15,6 +27,14 @@ namespace Gst.GObject;
 /// therefore after the native libraries have been loaded.
 /// </para>
 /// <para>
+/// Registering a module after the registry was frozen unfreezes it, and the
+/// next lookup builds the table again with the new entries. Wrappers that were
+/// created before that keep the type they were created with: a wrapper is
+/// interned for as long as the application holds it, and retyping a live object
+/// is not something a binding can do behind the application's back. Initialise
+/// the modules first — see <c>GstSharp.Initialize</c>.
+/// </para>
+/// <para>
 /// The lookup is a frozen dictionary of function pointers, so no reflection is
 /// involved at any point.
 /// </para>
@@ -23,9 +43,60 @@ public static class TypeRegistry
 {
     private static readonly object Sync = new();
     private static readonly List<NativeModule> Modules = [];
+    private static readonly ConcurrentDictionary<nuint, byte> ReportedFallbacks = new();
 
     private static FrozenDictionary<nuint, TypeEntry> _types = FrozenDictionary<nuint, TypeEntry>.Empty;
-    private static bool _frozen;
+    private static volatile bool _frozen;
+
+    /// <summary>
+    /// Raised the first time a wrapper is created for a base type of the object
+    /// it wraps, once per exact native type.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Wrapping an object as one of its base types is the normal case and not
+    /// an error: every element a plugin implements has a type of its own that
+    /// no binding assembly wraps, so <c>filesrc</c> arrives as the closest type
+    /// that is registered. Nothing is written anywhere without a handler, and
+    /// applications do not need one.
+    /// </para>
+    /// <para>
+    /// It is a diagnostic for the one case where the fallback is a bug: a type
+    /// that a binding assembly does wrap, seen as its base type because the
+    /// module of that assembly had not registered yet. That failure is
+    /// otherwise silent — the cast to the concrete wrapper is simply
+    /// <see langword="null"/> — and this is how to see it. Handlers must not
+    /// throw.
+    /// </para>
+    /// </remarks>
+    public static event Action<TypeFallback>? Fallback;
+
+    /// <summary>
+    /// Gets the logical names of the modules that have been registered.
+    /// </summary>
+    /// <remarks>
+    /// Which binding assemblies have handed their types over is otherwise only
+    /// observable by wrapping an object of a type one of them covers, and
+    /// naming such a type is itself enough to make the assembly register. This
+    /// is how the tests of the module sweep ask the question without answering
+    /// it on the way.
+    /// </remarks>
+    internal static string[] RegisteredModules
+    {
+        get
+        {
+            lock (Sync)
+            {
+                string[] names = new string[Modules.Count];
+                for (int i = 0; i < names.Length; i++)
+                {
+                    names[i] = Modules[i].LogicalName;
+                }
+
+                return names;
+            }
+        }
+    }
 
     /// <summary>
     /// Adds the types of one binding assembly.
@@ -48,6 +119,12 @@ public static class TypeRegistry
     /// Resolves the <c>get_type</c> function of every registered entry and
     /// builds the lookup table. This loads the native libraries.
     /// </summary>
+    /// <remarks>
+    /// Freezing again is allowed and rebuilds the table from scratch, which is
+    /// what a module that registers late needs. A lookup does it on its own, so
+    /// the only reason to call this is to pay the cost at a moment of the
+    /// application's choosing.
+    /// </remarks>
     public static unsafe void Freeze()
     {
         lock (Sync)
@@ -117,12 +194,18 @@ public static class TypeRegistry
         }
 
         FrozenDictionary<nuint, TypeEntry> types = EnsureFrozen();
-        nuint type = GetInstanceType(handle).Value;
+        nuint instanceType = GetInstanceType(handle).Value;
+        nuint type = instanceType;
 
         while (type != GType.InvalidValue)
         {
             if (types.TryGetValue(type, out TypeEntry entry))
             {
+                if (type != instanceType)
+                {
+                    ReportFallback(instanceType, type);
+                }
+
                 wrapper = entry.Factory(handle, transfer);
                 return wrapper is not null;
             }
@@ -133,8 +216,49 @@ public static class TypeRegistry
         return false;
     }
 
+    /// <summary>
+    /// Raises <see cref="Fallback"/>, once per exact native type.
+    /// </summary>
+    /// <param name="instanceType">The type of the native instance.</param>
+    /// <param name="wrapperType">The registered ancestor that was used.</param>
+    private static void ReportFallback(nuint instanceType, nuint wrapperType)
+    {
+        Action<TypeFallback>? handler = Fallback;
+        if (handler is null)
+        {
+            // Nothing is remembered while nobody listens, so a handler that is
+            // attached later still sees every type once.
+            return;
+        }
+
+        if (!ReportedFallbacks.TryAdd(instanceType, 0))
+        {
+            return;
+        }
+
+        try
+        {
+            handler(new TypeFallback(new GType(instanceType), new GType(wrapperType)));
+        }
+        catch (Exception exception)
+        {
+            // A diagnostic must not break the lookup it reports on, and this
+            // runs on whichever thread happened to wrap an object, which is
+            // often a streaming thread of GStreamer.
+            ExceptionTrap.Report(exception);
+        }
+    }
+
     private static FrozenDictionary<nuint, TypeEntry> EnsureFrozen()
     {
+        // The table is rebuilt only when a module was registered after the last
+        // freeze, so the lookup that every wrapper goes through reads one
+        // volatile flag and one reference on the common path.
+        if (_frozen)
+        {
+            return _types;
+        }
+
         lock (Sync)
         {
             if (!_frozen)

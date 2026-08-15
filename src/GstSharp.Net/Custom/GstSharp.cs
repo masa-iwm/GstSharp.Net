@@ -1,3 +1,5 @@
+using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Gst;
 using Gst.GLib;
@@ -20,6 +22,7 @@ public static class GstSharp
     private static readonly object Sync = new();
 
     private static bool _initialized;
+    private static bool _moduleSweepInstalled;
     private static bool _appliedSkipNativeInit;
     private static string[]? _appliedInitArgs;
     private static Gst.Version _version;
@@ -39,6 +42,26 @@ public static class GstSharp
     {
         add => ExceptionTrap.UnhandledException += value;
         remove => ExceptionTrap.UnhandledException -= value;
+    }
+
+    /// <summary>
+    /// Raised the first time an object is wrapped as one of its base types
+    /// because its exact type is not in the type registry, once per native
+    /// type. Handlers must not throw.
+    /// </summary>
+    /// <remarks>
+    /// This forwards <see cref="TypeRegistry.Fallback"/>. Wrapping an object as
+    /// a base type is normal — no binding wraps the type of every element a
+    /// plugin implements — so nothing is reported anywhere without a handler.
+    /// It is a diagnostic for the one case where the fallback is a bug: a type
+    /// that a binding assembly does wrap, seen as its base type because the
+    /// module of that assembly had not registered yet, which is otherwise
+    /// silent.
+    /// </remarks>
+    public static event Action<TypeFallback>? TypeFallback
+    {
+        add => TypeRegistry.Fallback += value;
+        remove => TypeRegistry.Fallback -= value;
     }
 
     /// <summary>
@@ -104,6 +127,26 @@ public static class GstSharp
     /// The <c>GError</c> of a failed <c>gst_init_check</c> is raised as a
     /// <see cref="GException"/>.
     /// </para>
+    /// <para>
+    /// Every binding assembly puts its types into the type registry from a
+    /// module initialiser, and the runtime runs a module initialiser before the
+    /// first <em>call</em> into that assembly, not before one of its types is
+    /// merely named in a cast. This call therefore runs the module initialiser
+    /// of every <c>GstSharp.Net</c> assembly that is loaded, and of every one
+    /// that is loaded later, so that <c>GetByName("sink") as AppSink</c> works
+    /// without the application having called into <c>GstSharp.Net.App</c>
+    /// first. Under ahead of time compilation the initialisers have all run at
+    /// startup and the sweep finds nothing to do.
+    /// </para>
+    /// <para>
+    /// A wrapper keeps the type it was created with. If an object is wrapped
+    /// before the module that knows its type has registered, the wrapper stays
+    /// the base type it was built as for as long as the application holds it —
+    /// retyping a live object is not something a binding can do behind the
+    /// application's back. Initialising before anything else touches GStreamer
+    /// is what avoids that; <see cref="TypeFallback"/> makes it visible when it
+    /// happens anyway.
+    /// </para>
     /// </remarks>
     /// <exception cref="InvalidOperationException">
     /// The options conflict with the ones of the first call.
@@ -127,20 +170,25 @@ public static class GstSharp
             // 1. Where to load the native libraries from. Nothing is loaded yet.
             NativeLoader.Configure(applied.NativeSearchPath, applied.WindowsFlavor);
 
-            // 2. Resolve the get_type function of every type that the binding
+            // 2. Make sure the module initialiser of every binding assembly has
+            //    run, so that the registry knows the types of all of them and
+            //    not only of the ones the application happened to call into.
+            RunBindingModuleInitializers();
+
+            // 3. Resolve the get_type function of every type that the binding
             //    assemblies registered from their module initialisers. This is
-            //    what loads the native libraries. The order relative to step 3
-            //    is worth revisiting once the generated modules bring real
-            //    entries: today every module is still empty.
+            //    what loads the native libraries. A module that registers after
+            //    this point unfreezes the registry again, and the next lookup
+            //    rebuilds it.
             TypeRegistry.Freeze();
 
-            // 3. Initialise GStreamer itself.
+            // 4. Initialise GStreamer itself.
             if (!applied.SkipNativeInit)
             {
                 NativeInit(applied.InitArgs);
             }
 
-            // 4. Remember what the library reports about itself.
+            // 5. Remember what the library reports about itself.
             _version = Gst.Version.FromNative();
 
             _appliedSkipNativeInit = applied.SkipNativeInit;
@@ -160,6 +208,92 @@ public static class GstSharp
     /// drain it here.
     /// </remarks>
     public static void DrainPendingReleases() => Gst.GObject.Object.DrainPendingReleases();
+
+    /// <summary>
+    /// Runs the module initialiser of every binding assembly that is loaded,
+    /// and arranges for the ones that are loaded later to be run as well.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// A module initialiser of a library is lazy on CoreCLR: it runs before the
+    /// first call into the assembly, and a cast to one of its types is not a
+    /// call. That is the whole of the silent failure in §2.1 of the acceptance
+    /// requirements, because the initialiser is what registers the types.
+    /// Running it here is the durable fix, and running it twice is harmless —
+    /// the runtime runs a module initialiser at most once.
+    /// </para>
+    /// <para>
+    /// The handler is subscribed before the sweep, so that an assembly that is
+    /// loaded while the sweep runs is covered by one or the other. It does not
+    /// freeze the registry: registering a module unfreezes it and the next
+    /// lookup rebuilds it, which keeps native <c>get_type</c> calls out of an
+    /// assembly load callback.
+    /// </para>
+    /// <para>
+    /// Ahead of time compilation has no lazy module initialisers: they have all
+    /// run by the time the entry point does, and no assembly is ever loaded
+    /// afterwards. <see cref="RuntimeFeature.IsDynamicCodeSupported"/>
+    /// distinguishes the two runtimes, and the sweep is skipped where it has
+    /// nothing to do.
+    /// </para>
+    /// </remarks>
+    private static void RunBindingModuleInitializers()
+    {
+        if (!RuntimeFeature.IsDynamicCodeSupported)
+        {
+            return;
+        }
+
+        if (!_moduleSweepInstalled)
+        {
+            _moduleSweepInstalled = true;
+            AppDomain.CurrentDomain.AssemblyLoad += OnAssemblyLoad;
+        }
+
+        foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
+        {
+            RunModuleInitializer(assembly);
+        }
+    }
+
+    /// <summary>
+    /// Runs the module initialiser of a binding assembly that was loaded after
+    /// <see cref="Initialize"/>.
+    /// </summary>
+    /// <param name="sender">The application domain.</param>
+    /// <param name="args">The assembly that was loaded.</param>
+    private static void OnAssemblyLoad(object? sender, AssemblyLoadEventArgs args)
+    {
+        _ = sender;
+        RunModuleInitializer(args.LoadedAssembly);
+    }
+
+    /// <summary>
+    /// Runs the module initialiser of one assembly, if it is a binding
+    /// assembly.
+    /// </summary>
+    /// <param name="assembly">The assembly to consider.</param>
+    private static void RunModuleInitializer(Assembly assembly)
+    {
+        if (assembly.IsDynamic ||
+            assembly.GetName().Name is not string name ||
+            !name.StartsWith("GstSharp.Net", StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        try
+        {
+            RuntimeHelpers.RunModuleConstructor(assembly.ManifestModule.ModuleHandle);
+        }
+        catch (Exception exception)
+        {
+            // An assembly that only shares the prefix of the name, or one whose
+            // initialiser throws, must not take the initialisation of the
+            // binding down with it.
+            ExceptionTrap.Report(exception);
+        }
+    }
 
     private static void EnsureCompatible(GstSharpOptions? options)
     {

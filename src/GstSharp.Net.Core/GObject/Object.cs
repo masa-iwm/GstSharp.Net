@@ -21,23 +21,54 @@ namespace Gst.GObject;
 /// Finalizers therefore never touch the toggle reference themselves: they
 /// enqueue the release, and <see cref="DrainPendingReleases"/> performs it on a
 /// thread that is allowed to run native code. The queue is drained whenever a
-/// wrapper is looked up, from an idle callback of a running main loop (see
-/// <see cref="EnableIdleDrain"/>), and whenever the application asks for it.
+/// wrapper is looked up, whenever a mini object is adopted, from an idle
+/// callback of a running main loop (see <see cref="EnableIdleDrain"/>), and
+/// whenever the application asks for it.
+/// </para>
+/// <para>
+/// An application that runs its own main context, or none at all, should call
+/// <c>GstSharp.DrainPendingReleases</c> periodically. The idle source of
+/// <see cref="EnableIdleDrain"/> is attached to the default main context, so it
+/// only runs when something iterates that context; attaching the source to the
+/// context the application actually runs is a design change that is still
+/// pending. Draining is cheap when the queue is empty and it is the wrapper
+/// lookups that keep it short in practice, so most applications never notice.
 /// </para>
 /// </remarks>
 public partial class Object : IDisposable
 {
     private static readonly ConcurrentDictionary<nint, ToggleRef> Wrappers = new();
+
+    /// <summary>
+    /// The toggle references that are installed, keyed by the identifier that
+    /// native code carries as the <c>data</c> pointer of the toggle
+    /// notification.
+    /// </summary>
+    /// <remarks>
+    /// GObject documents that a toggle notification may still be in flight when
+    /// <c>g_object_remove_toggle_ref</c> returns, and that its <c>data</c>
+    /// pointer is dangling from then on. A <see cref="GCHandle"/> must
+    /// therefore never be the <c>data</c> pointer of a toggle reference: the
+    /// slot of a freed handle is reused by the next allocation, so a late
+    /// notification would resolve to an unrelated object rather than to
+    /// nothing. The pointer is an identifier from a counter instead, and this
+    /// table turns it back into the <see cref="ToggleRef"/>. The entry is
+    /// removed before the toggle reference is, so a late notification finds
+    /// nothing and returns.
+    /// </remarks>
+    private static readonly ConcurrentDictionary<nint, ToggleRef> ToggleRefs = new();
+
     private static readonly ConcurrentQueue<PendingRelease> PendingReleases = new();
     private static readonly object Sync = new();
 
+    private static long _nextToggleId;
     private static int _idleScheduled;
     private static bool _idleDrainEnabled;
 
     private readonly nint _handle;
     private ToggleRef? _toggleRef;
     private List<ulong>? _handlers;
-    private bool _disposed;
+    private int _disposed;
 
     /// <summary>
     /// Wraps a native <c>GObject</c> and takes part in its lifetime.
@@ -49,6 +80,15 @@ public partial class Object : IDisposable
     /// floating reference is sunk in both cases, because the wrapper always
     /// ends up owning a real reference.
     /// </param>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// <paramref name="handle"/> is <see cref="nint.Zero"/>.
+    /// </exception>
+    /// <exception cref="InvalidOperationException">
+    /// A live wrapper of <paramref name="handle"/> exists already. GObject
+    /// wrappers are interned, so there is exactly one of them per object;
+    /// <see cref="FromNative(nint, Transfer)"/> hands out the existing one and
+    /// is the only supported way to wrap a handle that came out of native code.
+    /// </exception>
     protected unsafe Object(nint handle, Transfer transfer)
     {
         if (handle == nint.Zero)
@@ -60,6 +100,22 @@ public partial class Object : IDisposable
 
         lock (Sync)
         {
+            // Constructing a second wrapper for the same object would install a
+            // second toggle reference on it, which suspends the toggling of
+            // both until one of them is removed again, and would leave the
+            // interning table pointing at whichever wrapper was built last. A
+            // wrapper that is merely disposed, or whose release is still
+            // queued, does not count: it is on its way out and the fresh
+            // wrapper is exactly what FromNative asks for in that case.
+            if (Wrappers.TryGetValue(handle, out ToggleRef? known) &&
+                known.TryGetTarget(out Object? live) &&
+                !live.IsDisposed)
+            {
+                throw new InvalidOperationException(
+                    "A wrapper of this object exists already. Use Gst.GObject.Object.FromNative to get it: " +
+                    "GObject wrappers are interned and a second one would install a second toggle reference.");
+            }
+
             if (IsFloating(handle))
             {
                 // Turns the floating reference into one that we own, whether it
@@ -71,7 +127,19 @@ public partial class Object : IDisposable
                 GObjectNative.ObjectRef(handle);
             }
 
-            ToggleRef toggleRef = new(this);
+            // The identifier has to resolve before the toggle reference is
+            // installed: the unref below drops the object back to the single
+            // reference the toggle reference holds, which notifies straight
+            // away.
+            ToggleRef toggleRef = new(this, NextToggleId());
+            while (!ToggleRefs.TryAdd(toggleRef.UserData, toggleRef))
+            {
+                // The counter wrapped around, which needs four billion live
+                // wrappers on a 32 bit process to happen at all, and landed on
+                // an identifier that is still in use. Take the next one.
+                toggleRef = new ToggleRef(this, NextToggleId());
+            }
+
             _toggleRef = toggleRef;
             Wrappers[handle] = toggleRef;
 
@@ -94,10 +162,22 @@ public partial class Object : IDisposable
     {
         get
         {
-            ObjectDisposedException.ThrowIf(_disposed, this);
+            ObjectDisposedException.ThrowIf(IsDisposed, this);
             return _handle;
         }
     }
+
+    /// <summary>
+    /// Gets a value indicating whether this wrapper has given up its part in
+    /// the lifetime of the object.
+    /// </summary>
+    /// <remarks>
+    /// The flag is set by <see cref="Dispose()"/> and by the finalizer, and the
+    /// release of the native object follows it: a wrapper can be disposed while
+    /// its release is still queued. <see cref="FromNative(nint, Transfer)"/>
+    /// therefore never hands a disposed wrapper out, it builds a fresh one.
+    /// </remarks>
+    public bool IsDisposed => Volatile.Read(ref _disposed) != 0;
 
     /// <summary>
     /// Gets the type of the wrapped instance.
@@ -122,7 +202,16 @@ public partial class Object : IDisposable
 
         lock (Sync)
         {
-            if (Wrappers.TryGetValue(handle, out ToggleRef? known) && known.TryGetTarget(out Object? existing))
+            // A disposed wrapper is deliberately not handed out: it has given
+            // up its part in the lifetime of the object, its Handle throws, and
+            // its release may still be sitting in the queue. Falling through
+            // builds a fresh wrapper, which takes a toggle reference of its own
+            // and replaces the entry of the old one; the queued release removes
+            // its own entry by key and value, so it cannot take the new one
+            // away with it.
+            if (Wrappers.TryGetValue(handle, out ToggleRef? known) &&
+                known.TryGetTarget(out Object? existing) &&
+                !existing.IsDisposed)
             {
                 if (transfer == Transfer.Full)
                 {
@@ -166,19 +255,26 @@ public partial class Object : IDisposable
     /// </summary>
     /// <remarks>
     /// Applications rarely need to call this: it runs whenever a wrapper is
-    /// looked up and from the idle callback of a running main loop.
+    /// looked up, whenever a mini object is adopted, and from the idle callback
+    /// of a running main loop. An application that has no main loop and that
+    /// goes for long stretches without looking a wrapper up — a batch job, or
+    /// one that runs its own main context — should call it periodically.
     /// </remarks>
     public static void DrainPendingReleases()
     {
+        // Two volatile reads on the common path, so that the callers who drain
+        // opportunistically — every wrapper lookup, every mini object that is
+        // adopted — pay next to nothing for it.
+        if (PendingReleases.IsEmpty)
+        {
+            return;
+        }
+
         while (PendingReleases.TryDequeue(out PendingRelease pending))
         {
             try
             {
-                ToggleRef? toggleRef = CallbackHandle.GetState<ToggleRef>(pending.UserData);
-                if (toggleRef is not null)
-                {
-                    Release(pending.Handle, toggleRef);
-                }
+                Release(pending.Handle, pending.ToggleRef);
             }
             catch (Exception exception)
             {
@@ -192,6 +288,11 @@ public partial class Object : IDisposable
     /// default main context. <see cref="Gst.GLib.MainLoop.Run"/> does this on
     /// its own.
     /// </summary>
+    /// <remarks>
+    /// The source is attached to the default main context. An application that
+    /// iterates a main context of its own has to call
+    /// <see cref="DrainPendingReleases"/> instead, or in addition.
+    /// </remarks>
     public static void EnableIdleDrain()
     {
         Volatile.Write(ref _idleDrainEnabled, true);
@@ -211,7 +312,18 @@ public partial class Object : IDisposable
     /// <param name="after">
     /// <see langword="true"/> to run the handler after the default one.
     /// </param>
-    /// <returns>The identifier of the handler.</returns>
+    /// <returns>The identifier of the handler, which is never zero.</returns>
+    /// <remarks>
+    /// <paramref name="state"/> is taken over by GObject and released through
+    /// its closure notification, but only once the connection has been made.
+    /// When this throws, nothing took the state over and the caller has to
+    /// release it with <see cref="CallbackHandle.Free"/>.
+    /// </remarks>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="detailedSignal"/> is empty, or the object has no such
+    /// signal.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">The wrapper was disposed.</exception>
     public ulong ConnectSignal(string detailedSignal, nint callback, CallbackHandle state, bool after = false)
     {
         ulong id = SignalRegistry.Connect(Handle, detailedSignal, callback, state, after);
@@ -252,6 +364,10 @@ public partial class Object : IDisposable
     /// Disconnects a handler that was connected through this wrapper.
     /// </summary>
     /// <param name="handlerId">The identifier of the handler.</param>
+    /// <remarks>
+    /// Removing a handler from a wrapper that is already disposed does nothing:
+    /// disposing disconnects every handler the wrapper connected.
+    /// </remarks>
     public void RemoveHandler(ulong handlerId)
     {
         if (handlerId == 0)
@@ -259,14 +375,23 @@ public partial class Object : IDisposable
             return;
         }
 
+        // The disposed check and the disconnection have to be one step. The
+        // flag is set before the disposer takes this lock, and the release of
+        // the object does its bookkeeping under this lock as well, so a
+        // handler that is seen as connected here cannot have its object freed
+        // underneath it before this block is over. Holding the lock across the
+        // disconnection is fine: it destroys our own closure, which frees a
+        // GCHandle, and it never unrefs the instance — unlike the removal of
+        // the toggle reference, which Release deliberately performs outside
+        // the lock.
         lock (Sync)
         {
             _handlers?.Remove(handlerId);
-        }
 
-        if (!_disposed)
-        {
-            SignalRegistry.Disconnect(_handle, handlerId);
+            if (!IsDisposed)
+            {
+                SignalRegistry.Disconnect(_handle, handlerId);
+            }
         }
     }
 
@@ -292,6 +417,12 @@ public partial class Object : IDisposable
 
         Value value = Value.New(ParamSpec.ValueTypeOf(pspec));
         GObjectNative.ObjectGetProperty(handle, scope.Pointer, ref value.NativeValue);
+
+        // Handle was the last use of this wrapper. A wrapper that native code
+        // does not hold besides us is weakly held, so the collector may take it
+        // while the calls above are still running, and the release that its
+        // finalizer queues may be drained by another thread before they return.
+        GC.KeepAlive(this);
         return value;
     }
 
@@ -308,6 +439,9 @@ public partial class Object : IDisposable
         Span<byte> buffer = stackalloc byte[GMarshal.StackBufferSize];
         using Utf8Scope scope = GMarshal.StackUtf8(name, buffer);
         GObjectNative.ObjectSetProperty(handle, scope.Pointer, ref Unsafe.AsRef(in value).NativeValue);
+
+        // See GetProperty: Handle was the last use of this wrapper.
+        GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -329,15 +463,16 @@ public partial class Object : IDisposable
     /// </param>
     protected virtual void Dispose(bool disposing)
     {
-        if (_disposed)
+        // The flag is set first, and atomically, so that only one caller ever
+        // gets past here and so that every reader of IsDisposed — the wrapper
+        // lookup, RemoveHandler, Handle — sees the wrapper leave before its
+        // object is released.
+        if (Interlocked.Exchange(ref _disposed, 1) != 0)
         {
             return;
         }
 
-        _disposed = true;
-
-        ToggleRef? toggleRef = _toggleRef;
-        _toggleRef = null;
+        ToggleRef? toggleRef = Interlocked.Exchange(ref _toggleRef, null);
 
         if (toggleRef is null || _handle == nint.Zero)
         {
@@ -354,14 +489,68 @@ public partial class Object : IDisposable
         // A finalizer must not remove the toggle reference itself: the notify
         // can run concurrently, and native code must not be called from the
         // finalizer thread while another thread holds the object.
-        PendingReleases.Enqueue(new PendingRelease(_handle, toggleRef.UserData));
+        PendingReleases.Enqueue(new PendingRelease(_handle, toggleRef));
         ScheduleIdleDrain();
+    }
+
+    /// <summary>
+    /// Stops this wrapper halfway through <see cref="Dispose()"/>: the flag is
+    /// set, and the toggle reference is still installed and still interned.
+    /// </summary>
+    /// <remarks>
+    /// This is the state another thread can observe while a wrapper is being
+    /// disposed, and it is what a lookup used to hand out. It cannot be reached
+    /// from a test by disposing or collecting a wrapper, because both of those
+    /// go on to release it; the seam exists so that the lookup can be pinned
+    /// down on one thread. Pair it with
+    /// <see cref="CompleteInterruptedDispose"/>, which finishes what this
+    /// started.
+    /// </remarks>
+    internal void SimulateInterruptedDispose() => Interlocked.Exchange(ref _disposed, 1);
+
+    /// <summary>
+    /// Finishes the dispose that <see cref="SimulateInterruptedDispose"/> left
+    /// half done.
+    /// </summary>
+    internal void CompleteInterruptedDispose()
+    {
+        ToggleRef? toggleRef = Interlocked.Exchange(ref _toggleRef, null);
+        if (toggleRef is not null)
+        {
+            DisconnectAll();
+            Release(_handle, toggleRef);
+        }
+
+        GC.SuppressFinalize(this);
     }
 
     private static bool IsFloating(nint handle) =>
         InitiallyUnowned.IsInitiallyUnownedType(TypeRegistry.GetInstanceType(handle)) &&
         GObjectNative.ObjectIsFloating(handle) != 0;
 
+    /// <summary>
+    /// Removes the toggle reference of one wrapper, at most once.
+    /// </summary>
+    /// <param name="handle">The object the toggle reference is on.</param>
+    /// <param name="toggleRef">The toggle reference to remove.</param>
+    /// <remarks>
+    /// <para>
+    /// The bookkeeping runs under <see cref="Sync"/> and the native call does
+    /// not. Removing the last toggle reference drops the object to zero, which
+    /// runs its dispose and finalize chain: arbitrary native code, which may
+    /// take locks of its own, may post to a bus, and may come back into managed
+    /// code through a weak notification or a signal handler. Holding the one
+    /// lock that every wrapper lookup needs across all of that is a deadlock
+    /// waiting for a second thread.
+    /// </para>
+    /// <para>
+    /// Nothing is left to protect once the bookkeeping is done:
+    /// <see cref="ToggleRef.MarkReleased"/> has already made this the only
+    /// caller that reaches the native call, the interning entry is gone, so no
+    /// lookup can find the wrapper any more, and the identifier is gone, so a
+    /// toggle notification that is still in flight resolves to nothing.
+    /// </para>
+    /// </remarks>
     private static unsafe void Release(nint handle, ToggleRef toggleRef)
     {
         lock (Sync)
@@ -371,12 +560,31 @@ public partial class Object : IDisposable
                 return;
             }
 
+            // Both removals are by key and value: a fresh wrapper of the same
+            // object may have taken the entry over already, and it has to keep
+            // it.
             Wrappers.TryRemove(new KeyValuePair<nint, ToggleRef>(handle, toggleRef));
-
-            nint userData = toggleRef.UserData;
-            GObjectNative.ObjectRemoveToggleRef(handle, &ToggleNotify, userData);
-            toggleRef.Free();
+            ToggleRefs.TryRemove(new KeyValuePair<nint, ToggleRef>(toggleRef.UserData, toggleRef));
         }
+
+        GObjectNative.ObjectRemoveToggleRef(handle, &ToggleNotify, toggleRef.UserData);
+    }
+
+    /// <summary>
+    /// Hands out the next identifier of a toggle reference.
+    /// </summary>
+    /// <returns>The identifier, which is never zero.</returns>
+    private static nint NextToggleId()
+    {
+        nint id;
+
+        do
+        {
+            id = (nint)Interlocked.Increment(ref _nextToggleId);
+        }
+        while (id == nint.Zero);
+
+        return id;
     }
 
     private static unsafe void ScheduleIdleDrain()
@@ -434,7 +642,13 @@ public partial class Object : IDisposable
 
         try
         {
-            CallbackHandle.GetState<ToggleRef>(userData)?.SetStrong(isLastRef == 0);
+            // A notification that arrives after the toggle reference was
+            // removed finds nothing here, which is the whole point of the
+            // indirection: see the remarks on ToggleRefs.
+            if (ToggleRefs.TryGetValue(userData, out ToggleRef? toggleRef))
+            {
+                toggleRef.SetStrong(isLastRef == 0);
+            }
         }
         catch (Exception exception)
         {
@@ -496,37 +710,45 @@ public partial class Object : IDisposable
         }
     }
 
-    private readonly record struct PendingRelease(nint Handle, nint UserData);
+    private readonly record struct PendingRelease(nint Handle, ToggleRef ToggleRef);
 
     /// <summary>
     /// The state behind the toggle reference of one wrapper.
     /// </summary>
     /// <remarks>
-    /// The <see cref="GCHandle"/> of this object is the <c>data</c> pointer of
-    /// the toggle notification, so it has to stay valid and unchanged for as
-    /// long as the toggle reference exists. Whether the wrapper is held
-    /// strongly or weakly is therefore switched inside this object rather than
-    /// by swapping the handle itself.
+    /// <para>
+    /// The identifier of this object is the <c>data</c> pointer of the toggle
+    /// notification, so it has to stay valid and unchanged for as long as the
+    /// toggle reference exists. Whether the wrapper is held strongly or weakly
+    /// is therefore switched inside this object rather than by swapping the
+    /// pointer itself.
+    /// </para>
+    /// <para>
+    /// The object stays alive because the tables that key it — the interning
+    /// table and <see cref="ToggleRefs"/> — hold it, and because the release
+    /// queue carries it. No <see cref="GCHandle"/> is involved: see the remarks
+    /// on <see cref="ToggleRefs"/> for why one must not be.
+    /// </para>
     /// </remarks>
     private sealed class ToggleRef
     {
         private readonly object _sync = new();
         private readonly WeakReference<Object> _weak;
-        private GCHandle _self;
+        private readonly nint _id;
         private Object? _strong;
         private bool _released;
 
-        internal ToggleRef(Object owner)
+        internal ToggleRef(Object owner, nint id)
         {
             _weak = new WeakReference<Object>(owner);
+            _id = id;
 
             // Starts strong: the toggle notification demotes it as soon as the
             // toggle reference is the only one left.
             _strong = owner;
-            _self = GCHandle.Alloc(this);
         }
 
-        internal nint UserData => GCHandle.ToIntPtr(_self);
+        internal nint UserData => _id;
 
         internal bool TryGetTarget(out Object target)
         {
@@ -565,14 +787,6 @@ public partial class Object : IDisposable
                 _released = true;
                 _strong = null;
                 return true;
-            }
-        }
-
-        internal void Free()
-        {
-            if (_self.IsAllocated)
-            {
-                _self.Free();
             }
         }
     }

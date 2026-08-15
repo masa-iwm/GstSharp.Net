@@ -69,4 +69,20 @@ internal static unsafe partial class TestNatives
     /// <param name="obj">The object to release.</param>
     [LibraryImport("Gst", EntryPoint = "gst_object_unref")]
     internal static partial void ObjectUnref(nint obj);
+
+    /// <summary>Takes a reference of a mini object.</summary>
+    /// <param name="miniObject">The mini object to reference.</param>
+    /// <returns>The mini object.</returns>
+    /// <remarks>
+    /// A second reference is what makes a mini object unwritable, which is the
+    /// state the field setters of <c>Gst.Buffer</c> have to refuse. The binding
+    /// keeps its own import of this internal to the module, on purpose.
+    /// </remarks>
+    [LibraryImport("Gst", EntryPoint = "gst_mini_object_ref")]
+    internal static partial nint MiniObjectRef(nint miniObject);
+
+    /// <summary>Releases a reference of a mini object.</summary>
+    /// <param name="miniObject">The mini object to release.</param>
+    [LibraryImport("Gst", EntryPoint = "gst_mini_object_unref")]
+    internal static partial void MiniObjectUnref(nint miniObject);
 }

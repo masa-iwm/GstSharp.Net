@@ -2,8 +2,11 @@
 
 The `GstSharp.Net.Analyzers` assembly ships as an analyzer asset inside the
 binding packages and flags the two leak classes that GStreamer applications
-hit most often. Both rules follow the binding's ownership policy: every
-wrapper handed to user code owns a reference and must be disposed.
+hit most often. Both rules follow the mini object half of the binding's
+ownership policy: every `MiniObject` or `Boxed` wrapper handed to user code
+owns a reference of its own and must be disposed. GObject wrappers are
+interned and shared, are not covered by these rules, and are normally left to
+the collector — see §2.2 of `acceptance-processrecorderapp.md`.
 
 ## GST0001 — undisposed GstSharp wrapper
 

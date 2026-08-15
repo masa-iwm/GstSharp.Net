@@ -1,7 +1,7 @@
-namespace Gst.App;
+namespace Gst.Video;
 
 /// <summary>
-/// The entry point of the <c>GstApp</c> binding: it initialises GstSharp.Net
+/// The entry point of the <c>GstVideo</c> binding: it initialises GstSharp.Net
 /// and makes sure that the types of this assembly are in the type registry.
 /// </summary>
 /// <remarks>
@@ -9,12 +9,13 @@ namespace Gst.App;
 /// Every binding assembly registers its types from a module initialiser, and
 /// the runtime runs a module initialiser before the first <em>call</em> into
 /// that assembly, not before the first type of it is merely named. An
-/// application that reaches for <c>Gst.App</c> only in a cast, which is exactly
-/// what <c>GetByName("sink") as AppSink</c> is, therefore never executes a line
-/// of this assembly: the registry has no entry for <c>GstAppSink</c>, the
-/// wrapper is created as the plain <see cref="Gst.Element"/> that the registry
-/// does know, and the cast is silently <see langword="null"/> — the failure
-/// mode §2.1 of the acceptance requirements is about.
+/// application that reaches for <c>Gst.Video</c> only in a cast or a type test,
+/// which is exactly what <c>GetByName("sink") as VideoSink</c> is,
+/// therefore never executes a line
+/// of this assembly: the registry has no entry for the native type, the
+/// wrapper is created as the closest base type the registry does know, and the
+/// cast is silently <see langword="null"/> — the failure mode §2.1 of the
+/// acceptance requirements is about.
 /// </para>
 /// <para>
 /// Calling <see cref="Initialize"/> instead of <c>GstSharp.Initialize</c> is a
@@ -29,7 +30,7 @@ namespace Gst.App;
 /// as well. Calling this one is the deterministic way to say it.
 /// </para>
 /// </remarks>
-public static class GstApp
+public static class GstVideo
 {
     /// <summary>
     /// Loads the native libraries, initialises GStreamer and puts the types of

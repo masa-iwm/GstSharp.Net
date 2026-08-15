@@ -399,6 +399,7 @@ public struct Value : IDisposable
     /// </returns>
     public readonly object? GetContent()
     {
+        GType type = Type;
         nuint fundamental = GObjectNative.TypeFundamental(NativeValue.TypeValue);
 
         return fundamental switch
@@ -426,11 +427,23 @@ public struct Value : IDisposable
             GType.ParamValue => GetParam(),
             GType.VariantValue => GetVariant(),
 
-            // An interface with GObject among its prerequisites holds an object,
-            // and anything else that far off the beaten track is a pointer.
-            GType.InterfaceValue => Type.IsA(GType.Object) ? GetObject() : GetPointer(),
-            _ => GetPointer(),
+            // An interface with GObject among its prerequisites holds an
+            // object. One without is not something a value can be read as: it
+            // has no accessor of its own and g_value_get_pointer on it is an
+            // assertion failure in GLib rather than a cast.
+            GType.InterfaceValue => Type.IsA(GType.Object) ? GetObject() : throw Unreadable(type, fundamental),
+            GType.PointerValue => GetPointer(),
+
+            // A fundamental type that GLib itself does not define. Reading it
+            // as a pointer would be a guess about a layout nothing here knows,
+            // and a wrong guess is a crash rather than a wrong answer.
+            _ => throw Unreadable(type, fundamental),
         };
+
+        static NotSupportedException Unreadable(GType type, nuint fundamental) => new(
+            $"A value of type {type.Name} cannot be read as a managed object: " +
+            $"its fundamental type {new GType(fundamental).Name} has no accessor here. " +
+            "Read the value with the accessor of its own type.");
     }
 
     /// <summary>
