@@ -445,6 +445,68 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
     /// </summary>
     public Gst.Object? Parent => GetParent();
 
+    /// <summary>The arguments of the <c>deep-notify</c> signal of <c>GstObject</c>.</summary>
+    public sealed class DeepNotifySignalArgs
+    {
+        /// <summary>Initializes a new instance of the <see cref="DeepNotifySignalArgs"/> class.</summary>
+        /// <param name="propObject">the object that originated the signal</param>
+        /// <param name="prop">the property that changed</param>
+        internal DeepNotifySignalArgs(Gst.Object propObject, Gst.GObject.ParamSpec prop)
+        {
+            PropObject = propObject;
+            Prop = prop;
+        }
+
+        /// <summary>the object that originated the signal</summary>
+        public Gst.Object PropObject { get; }
+
+        /// <summary>the property that changed</summary>
+        /// <remarks>
+        /// The value is only valid while the handler runs. Keep what you need of
+        /// it, or take a reference of your own before the handler returns.
+        /// </remarks>
+        public Gst.GObject.ParamSpec Prop { get; }
+    }
+
+    /// <summary>
+    /// The deep notify signal is used to be notified of property changes. It is
+    /// typically attached to the toplevel bin to receive notifications from all
+    /// the elements contained in that bin.
+    /// </summary>
+    /// <remarks>
+    /// The signal is detailed. The handler is connected to <c>deep-notify</c>
+    /// without a detail, so it runs for every detail of the signal.
+    /// </remarks>
+    public event System.EventHandler<Gst.Object.DeepNotifySignalArgs> DeepNotify
+    {
+        add => Gst.SignalConnections.Add(this, "deep-notify", (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, nint, void>)&DeepNotifyTrampoline, value);
+        remove => Gst.SignalConnections.Remove(this, "deep-notify", value);
+    }
+
+    /// <summary>The native handler of the <c>deep-notify</c> signal of <c>GstObject</c>.</summary>
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
+    private static void DeepNotifyTrampoline(nint instance, nint propObject, nint prop, nint userData)
+    {
+        try
+        {
+            if (Gst.Interop.CallbackHandle.GetState<System.EventHandler<Gst.Object.DeepNotifySignalArgs>>(userData) is not { } handler)
+            {
+                return;
+            }
+
+            Gst.Object propObjectValue = Gst.GObject.Object.FromNative<Gst.Object>(propObject, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("The deep-notify signal of GstObject passed no prop_object.");
+            using Gst.GObject.ParamSpec propValue = new Gst.GObject.ParamSpec(prop, Gst.Interop.Transfer.None);
+            handler(
+                Gst.GObject.Object.FromNative(instance, Gst.Interop.Transfer.None),
+                new Gst.Object.DeepNotifySignalArgs(propObjectValue, propValue));
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+        }
+    }
+
     /// <summary>The <c>gst_object_add_control_binding</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_object_add_control_binding")]
     private static partial int GstObjectAddControlBinding(nint @object, nint binding);

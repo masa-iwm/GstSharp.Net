@@ -445,6 +445,248 @@ public unsafe partial class Bin : Gst.Element, Gst.IChildProxy
         return nativeResult != 0;
     }
 
+    /// <summary>The arguments of the <c>deep-element-added</c> signal of <c>GstBin</c>.</summary>
+    public sealed class DeepElementAddedSignalArgs
+    {
+        /// <summary>Initializes a new instance of the <see cref="DeepElementAddedSignalArgs"/> class.</summary>
+        /// <param name="subBin">the #GstBin the element was added to</param>
+        /// <param name="element">the #GstElement that was added to @sub_bin</param>
+        internal DeepElementAddedSignalArgs(Gst.Bin subBin, Gst.Element element)
+        {
+            SubBin = subBin;
+            Element = element;
+        }
+
+        /// <summary>the #GstBin the element was added to</summary>
+        public Gst.Bin SubBin { get; }
+
+        /// <summary>the #GstElement that was added to @sub_bin</summary>
+        public Gst.Element Element { get; }
+    }
+
+    /// <summary>Will be emitted after the element was added to @sub_bin.</summary>
+    public event System.EventHandler<Gst.Bin.DeepElementAddedSignalArgs> DeepElementAdded
+    {
+        add => Gst.SignalConnections.Add(this, "deep-element-added", (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, nint, void>)&DeepElementAddedTrampoline, value);
+        remove => Gst.SignalConnections.Remove(this, "deep-element-added", value);
+    }
+
+    /// <summary>The native handler of the <c>deep-element-added</c> signal of <c>GstBin</c>.</summary>
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
+    private static void DeepElementAddedTrampoline(nint instance, nint subBin, nint element, nint userData)
+    {
+        try
+        {
+            if (Gst.Interop.CallbackHandle.GetState<System.EventHandler<Gst.Bin.DeepElementAddedSignalArgs>>(userData) is not { } handler)
+            {
+                return;
+            }
+
+            Gst.Bin subBinValue = Gst.GObject.Object.FromNative<Gst.Bin>(subBin, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("The deep-element-added signal of GstBin passed no sub_bin.");
+            Gst.Element elementValue = Gst.GObject.Object.FromNative<Gst.Element>(element, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("The deep-element-added signal of GstBin passed no element.");
+            handler(
+                Gst.GObject.Object.FromNative(instance, Gst.Interop.Transfer.None),
+                new Gst.Bin.DeepElementAddedSignalArgs(subBinValue, elementValue));
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+        }
+    }
+
+    /// <summary>The arguments of the <c>deep-element-removed</c> signal of <c>GstBin</c>.</summary>
+    public sealed class DeepElementRemovedSignalArgs
+    {
+        /// <summary>Initializes a new instance of the <see cref="DeepElementRemovedSignalArgs"/> class.</summary>
+        /// <param name="subBin">the #GstBin the element was removed from</param>
+        /// <param name="element">the #GstElement that was removed from @sub_bin</param>
+        internal DeepElementRemovedSignalArgs(Gst.Bin subBin, Gst.Element element)
+        {
+            SubBin = subBin;
+            Element = element;
+        }
+
+        /// <summary>the #GstBin the element was removed from</summary>
+        public Gst.Bin SubBin { get; }
+
+        /// <summary>the #GstElement that was removed from @sub_bin</summary>
+        public Gst.Element Element { get; }
+    }
+
+    /// <summary>Will be emitted after the element was removed from @sub_bin.</summary>
+    public event System.EventHandler<Gst.Bin.DeepElementRemovedSignalArgs> DeepElementRemoved
+    {
+        add => Gst.SignalConnections.Add(this, "deep-element-removed", (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, nint, void>)&DeepElementRemovedTrampoline, value);
+        remove => Gst.SignalConnections.Remove(this, "deep-element-removed", value);
+    }
+
+    /// <summary>The native handler of the <c>deep-element-removed</c> signal of <c>GstBin</c>.</summary>
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
+    private static void DeepElementRemovedTrampoline(nint instance, nint subBin, nint element, nint userData)
+    {
+        try
+        {
+            if (Gst.Interop.CallbackHandle.GetState<System.EventHandler<Gst.Bin.DeepElementRemovedSignalArgs>>(userData) is not { } handler)
+            {
+                return;
+            }
+
+            Gst.Bin subBinValue = Gst.GObject.Object.FromNative<Gst.Bin>(subBin, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("The deep-element-removed signal of GstBin passed no sub_bin.");
+            Gst.Element elementValue = Gst.GObject.Object.FromNative<Gst.Element>(element, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("The deep-element-removed signal of GstBin passed no element.");
+            handler(
+                Gst.GObject.Object.FromNative(instance, Gst.Interop.Transfer.None),
+                new Gst.Bin.DeepElementRemovedSignalArgs(subBinValue, elementValue));
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+        }
+    }
+
+    /// <summary>The handler of the <c>do-latency</c> signal of <c>GstBin</c>.</summary>
+    /// <param name="sender">The instance that emitted the signal.</param>
+    /// <param name="args">The arguments of the signal.</param>
+    /// <returns>The result the emission collects.</returns>
+    public delegate bool DoLatencyHandler(object? sender, System.EventArgs args);
+
+    /// <summary>
+    /// Will be emitted when the bin needs to perform latency calculations. This
+    /// signal is only emitted for toplevel bins or when #GstBin:async-handling is
+    /// enabled.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Only one signal handler is invoked. If no signals are connected, the
+    /// default handler is invoked, which will query and distribute the lowest
+    /// possible latency to all sinks.
+    /// </para>
+    /// <para>
+    /// Connect to this signal if the default latency calculations are not
+    /// sufficient, like when you need different latencies for different sinks in
+    /// the same pipeline.
+    /// </para>
+    /// </remarks>
+    public event Gst.Bin.DoLatencyHandler DoLatency
+    {
+        add => Gst.SignalConnections.Add(this, "do-latency", (nint)(delegate* unmanaged[Cdecl]<nint, nint, int>)&DoLatencyTrampoline, value);
+        remove => Gst.SignalConnections.Remove(this, "do-latency", value);
+    }
+
+    /// <summary>The native handler of the <c>do-latency</c> signal of <c>GstBin</c>.</summary>
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
+    private static int DoLatencyTrampoline(nint instance, nint userData)
+    {
+        try
+        {
+            if (Gst.Interop.CallbackHandle.GetState<Gst.Bin.DoLatencyHandler>(userData) is not { } handler)
+            {
+                return default;
+            }
+
+            bool result = handler(
+                Gst.GObject.Object.FromNative(instance, Gst.Interop.Transfer.None),
+                System.EventArgs.Empty);
+            return result ? 1 : 0;
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+            return default;
+        }
+    }
+
+    /// <summary>The arguments of the <c>element-added</c> signal of <c>GstBin</c>.</summary>
+    public sealed class ElementAddedSignalArgs
+    {
+        /// <summary>Initializes a new instance of the <see cref="ElementAddedSignalArgs"/> class.</summary>
+        /// <param name="element">the #GstElement that was added to the bin</param>
+        internal ElementAddedSignalArgs(Gst.Element element)
+        {
+            Element = element;
+        }
+
+        /// <summary>the #GstElement that was added to the bin</summary>
+        public Gst.Element Element { get; }
+    }
+
+    /// <summary>Will be emitted after the element was added to the bin.</summary>
+    public event System.EventHandler<Gst.Bin.ElementAddedSignalArgs> ElementAdded
+    {
+        add => Gst.SignalConnections.Add(this, "element-added", (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, void>)&ElementAddedTrampoline, value);
+        remove => Gst.SignalConnections.Remove(this, "element-added", value);
+    }
+
+    /// <summary>The native handler of the <c>element-added</c> signal of <c>GstBin</c>.</summary>
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
+    private static void ElementAddedTrampoline(nint instance, nint element, nint userData)
+    {
+        try
+        {
+            if (Gst.Interop.CallbackHandle.GetState<System.EventHandler<Gst.Bin.ElementAddedSignalArgs>>(userData) is not { } handler)
+            {
+                return;
+            }
+
+            Gst.Element elementValue = Gst.GObject.Object.FromNative<Gst.Element>(element, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("The element-added signal of GstBin passed no element.");
+            handler(
+                Gst.GObject.Object.FromNative(instance, Gst.Interop.Transfer.None),
+                new Gst.Bin.ElementAddedSignalArgs(elementValue));
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+        }
+    }
+
+    /// <summary>The arguments of the <c>element-removed</c> signal of <c>GstBin</c>.</summary>
+    public sealed class ElementRemovedSignalArgs
+    {
+        /// <summary>Initializes a new instance of the <see cref="ElementRemovedSignalArgs"/> class.</summary>
+        /// <param name="element">the #GstElement that was removed from the bin</param>
+        internal ElementRemovedSignalArgs(Gst.Element element)
+        {
+            Element = element;
+        }
+
+        /// <summary>the #GstElement that was removed from the bin</summary>
+        public Gst.Element Element { get; }
+    }
+
+    /// <summary>Will be emitted after the element was removed from the bin.</summary>
+    public event System.EventHandler<Gst.Bin.ElementRemovedSignalArgs> ElementRemoved
+    {
+        add => Gst.SignalConnections.Add(this, "element-removed", (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, void>)&ElementRemovedTrampoline, value);
+        remove => Gst.SignalConnections.Remove(this, "element-removed", value);
+    }
+
+    /// <summary>The native handler of the <c>element-removed</c> signal of <c>GstBin</c>.</summary>
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
+    private static void ElementRemovedTrampoline(nint instance, nint element, nint userData)
+    {
+        try
+        {
+            if (Gst.Interop.CallbackHandle.GetState<System.EventHandler<Gst.Bin.ElementRemovedSignalArgs>>(userData) is not { } handler)
+            {
+                return;
+            }
+
+            Gst.Element elementValue = Gst.GObject.Object.FromNative<Gst.Element>(element, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("The element-removed signal of GstBin passed no element.");
+            handler(
+                Gst.GObject.Object.FromNative(instance, Gst.Interop.Transfer.None),
+                new Gst.Bin.ElementRemovedSignalArgs(elementValue));
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+        }
+    }
+
     /// <summary>The <c>gst_bin_new</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_bin_new")]
     private static partial nint GstBinNew(byte* name);

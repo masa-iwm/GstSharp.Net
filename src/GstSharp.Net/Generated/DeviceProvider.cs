@@ -218,6 +218,94 @@ public abstract unsafe partial class DeviceProvider : Gst.Object
         return nativeResult != 0;
     }
 
+    /// <summary>The arguments of the <c>provider-hidden</c> signal of <c>GstDeviceProvider</c>.</summary>
+    public sealed class ProviderHiddenSignalArgs
+    {
+        /// <summary>Initializes a new instance of the <see cref="ProviderHiddenSignalArgs"/> class.</summary>
+        /// <param name="object">The <c>object</c> argument.</param>
+        internal ProviderHiddenSignalArgs(string @object)
+        {
+            Object = @object;
+        }
+
+        /// <summary>The <c>object</c> argument.</summary>
+        public string Object { get; }
+    }
+
+    /// <summary>Raised for the <c>provider-hidden</c> signal of <c>GstDeviceProvider</c>.</summary>
+    public event System.EventHandler<Gst.DeviceProvider.ProviderHiddenSignalArgs> ProviderHidden
+    {
+        add => Gst.SignalConnections.Add(this, "provider-hidden", (nint)(delegate* unmanaged[Cdecl]<nint, byte*, nint, void>)&ProviderHiddenTrampoline, value);
+        remove => Gst.SignalConnections.Remove(this, "provider-hidden", value);
+    }
+
+    /// <summary>The native handler of the <c>provider-hidden</c> signal of <c>GstDeviceProvider</c>.</summary>
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
+    private static void ProviderHiddenTrampoline(nint instance, byte* @object, nint userData)
+    {
+        try
+        {
+            if (Gst.Interop.CallbackHandle.GetState<System.EventHandler<Gst.DeviceProvider.ProviderHiddenSignalArgs>>(userData) is not { } handler)
+            {
+                return;
+            }
+
+            string objectValue = Gst.Interop.GMarshal.PtrToStringUtf8((nint)@object)
+                ?? throw new InvalidOperationException("The provider-hidden signal of GstDeviceProvider passed no object.");
+            handler(
+                Gst.GObject.Object.FromNative(instance, Gst.Interop.Transfer.None),
+                new Gst.DeviceProvider.ProviderHiddenSignalArgs(objectValue));
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+        }
+    }
+
+    /// <summary>The arguments of the <c>provider-unhidden</c> signal of <c>GstDeviceProvider</c>.</summary>
+    public sealed class ProviderUnhiddenSignalArgs
+    {
+        /// <summary>Initializes a new instance of the <see cref="ProviderUnhiddenSignalArgs"/> class.</summary>
+        /// <param name="object">The <c>object</c> argument.</param>
+        internal ProviderUnhiddenSignalArgs(string @object)
+        {
+            Object = @object;
+        }
+
+        /// <summary>The <c>object</c> argument.</summary>
+        public string Object { get; }
+    }
+
+    /// <summary>Raised for the <c>provider-unhidden</c> signal of <c>GstDeviceProvider</c>.</summary>
+    public event System.EventHandler<Gst.DeviceProvider.ProviderUnhiddenSignalArgs> ProviderUnhidden
+    {
+        add => Gst.SignalConnections.Add(this, "provider-unhidden", (nint)(delegate* unmanaged[Cdecl]<nint, byte*, nint, void>)&ProviderUnhiddenTrampoline, value);
+        remove => Gst.SignalConnections.Remove(this, "provider-unhidden", value);
+    }
+
+    /// <summary>The native handler of the <c>provider-unhidden</c> signal of <c>GstDeviceProvider</c>.</summary>
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
+    private static void ProviderUnhiddenTrampoline(nint instance, byte* @object, nint userData)
+    {
+        try
+        {
+            if (Gst.Interop.CallbackHandle.GetState<System.EventHandler<Gst.DeviceProvider.ProviderUnhiddenSignalArgs>>(userData) is not { } handler)
+            {
+                return;
+            }
+
+            string objectValue = Gst.Interop.GMarshal.PtrToStringUtf8((nint)@object)
+                ?? throw new InvalidOperationException("The provider-unhidden signal of GstDeviceProvider passed no object.");
+            handler(
+                Gst.GObject.Object.FromNative(instance, Gst.Interop.Transfer.None),
+                new Gst.DeviceProvider.ProviderUnhiddenSignalArgs(objectValue));
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+        }
+    }
+
     /// <summary>The <c>gst_device_provider_can_monitor</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_device_provider_can_monitor")]
     private static partial int GstDeviceProviderCanMonitor(nint provider);

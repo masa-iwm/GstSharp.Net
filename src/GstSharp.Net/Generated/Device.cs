@@ -137,6 +137,34 @@ public abstract unsafe partial class Device : Gst.Object
     /// <summary>The <c>properties</c> property.</summary>
     public Gst.Structure? Properties => GetProperties();
 
+    /// <summary>Raised for the <c>removed</c> signal of <c>GstDevice</c>.</summary>
+    public event System.EventHandler Removed
+    {
+        add => Gst.SignalConnections.Add(this, "removed", (nint)(delegate* unmanaged[Cdecl]<nint, nint, void>)&RemovedTrampoline, value);
+        remove => Gst.SignalConnections.Remove(this, "removed", value);
+    }
+
+    /// <summary>The native handler of the <c>removed</c> signal of <c>GstDevice</c>.</summary>
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
+    private static void RemovedTrampoline(nint instance, nint userData)
+    {
+        try
+        {
+            if (Gst.Interop.CallbackHandle.GetState<System.EventHandler>(userData) is not { } handler)
+            {
+                return;
+            }
+
+            handler(
+                Gst.GObject.Object.FromNative(instance, Gst.Interop.Transfer.None),
+                System.EventArgs.Empty);
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+        }
+    }
+
     /// <summary>The <c>gst_device_create_element</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_device_create_element")]
     private static partial nint GstDeviceCreateElement(nint device, byte* name);

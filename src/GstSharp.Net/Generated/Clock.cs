@@ -705,6 +705,59 @@ public abstract unsafe partial class Clock : Gst.Object
         set => SetTimeout(value);
     }
 
+    /// <summary>The arguments of the <c>synced</c> signal of <c>GstClock</c>.</summary>
+    public sealed class SyncedSignalArgs
+    {
+        /// <summary>Initializes a new instance of the <see cref="SyncedSignalArgs"/> class.</summary>
+        /// <param name="synced">if the clock is synced now</param>
+        internal SyncedSignalArgs(bool synced)
+        {
+            Synced = synced;
+        }
+
+        /// <summary>if the clock is synced now</summary>
+        public bool Synced { get; }
+    }
+
+    /// <summary>
+    /// Signaled on clocks with %GST_CLOCK_FLAG_NEEDS_STARTUP_SYNC set once
+    /// the clock is synchronized, or when it completely lost synchronization.
+    /// This signal will not be emitted on clocks without the flag.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This signal will be emitted from an arbitrary thread, most likely not
+    /// the application's main thread.
+    /// </para>
+    /// </remarks>
+    public event System.EventHandler<Gst.Clock.SyncedSignalArgs> Synced
+    {
+        add => Gst.SignalConnections.Add(this, "synced", (nint)(delegate* unmanaged[Cdecl]<nint, int, nint, void>)&SyncedTrampoline, value);
+        remove => Gst.SignalConnections.Remove(this, "synced", value);
+    }
+
+    /// <summary>The native handler of the <c>synced</c> signal of <c>GstClock</c>.</summary>
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
+    private static void SyncedTrampoline(nint instance, int synced, nint userData)
+    {
+        try
+        {
+            if (Gst.Interop.CallbackHandle.GetState<System.EventHandler<Gst.Clock.SyncedSignalArgs>>(userData) is not { } handler)
+            {
+                return;
+            }
+
+            bool syncedValue = synced != 0;
+            handler(
+                Gst.GObject.Object.FromNative(instance, Gst.Interop.Transfer.None),
+                new Gst.Clock.SyncedSignalArgs(syncedValue));
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+        }
+    }
+
     /// <summary>The <c>gst_clock_add_observation</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_clock_add_observation")]
     private static partial int GstClockAddObservation(nint clock, ulong observationInternal, ulong observationExternal, double* rSquared);

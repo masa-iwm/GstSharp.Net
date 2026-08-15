@@ -81,6 +81,67 @@ public unsafe partial class StreamCollection : Gst.Object
     /// <summary>stream-id</summary>
     public string? UpstreamId => GetUpstreamId();
 
+    /// <summary>The arguments of the <c>stream-notify</c> signal of <c>GstStreamCollection</c>.</summary>
+    public sealed class StreamNotifySignalArgs
+    {
+        /// <summary>Initializes a new instance of the <see cref="StreamNotifySignalArgs"/> class.</summary>
+        /// <param name="propStream">the #GstStream that originated the signal</param>
+        /// <param name="prop">the property that changed</param>
+        internal StreamNotifySignalArgs(Gst.Stream propStream, Gst.GObject.ParamSpec prop)
+        {
+            PropStream = propStream;
+            Prop = prop;
+        }
+
+        /// <summary>the #GstStream that originated the signal</summary>
+        public Gst.Stream PropStream { get; }
+
+        /// <summary>the property that changed</summary>
+        /// <remarks>
+        /// The value is only valid while the handler runs. Keep what you need of
+        /// it, or take a reference of your own before the handler returns.
+        /// </remarks>
+        public Gst.GObject.ParamSpec Prop { get; }
+    }
+
+    /// <summary>
+    /// The stream notify signal is used to be notified of property changes to
+    /// streams within the collection.
+    /// </summary>
+    /// <remarks>
+    /// The signal is detailed. The handler is connected to <c>stream-notify</c>
+    /// without a detail, so it runs for every detail of the signal.
+    /// </remarks>
+    public event System.EventHandler<Gst.StreamCollection.StreamNotifySignalArgs> StreamNotify
+    {
+        add => Gst.SignalConnections.Add(this, "stream-notify", (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, nint, void>)&StreamNotifyTrampoline, value);
+        remove => Gst.SignalConnections.Remove(this, "stream-notify", value);
+    }
+
+    /// <summary>The native handler of the <c>stream-notify</c> signal of <c>GstStreamCollection</c>.</summary>
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
+    private static void StreamNotifyTrampoline(nint instance, nint propStream, nint prop, nint userData)
+    {
+        try
+        {
+            if (Gst.Interop.CallbackHandle.GetState<System.EventHandler<Gst.StreamCollection.StreamNotifySignalArgs>>(userData) is not { } handler)
+            {
+                return;
+            }
+
+            Gst.Stream propStreamValue = Gst.GObject.Object.FromNative<Gst.Stream>(propStream, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("The stream-notify signal of GstStreamCollection passed no prop_stream.");
+            using Gst.GObject.ParamSpec propValue = new Gst.GObject.ParamSpec(prop, Gst.Interop.Transfer.None);
+            handler(
+                Gst.GObject.Object.FromNative(instance, Gst.Interop.Transfer.None),
+                new Gst.StreamCollection.StreamNotifySignalArgs(propStreamValue, propValue));
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+        }
+    }
+
     /// <summary>The <c>gst_stream_collection_new</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_stream_collection_new")]
     private static partial nint GstStreamCollectionNew(byte* upstreamId);

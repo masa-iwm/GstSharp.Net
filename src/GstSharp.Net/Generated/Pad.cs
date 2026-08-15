@@ -1213,6 +1213,94 @@ public unsafe partial class Pad : Gst.Object
         set => SetOffset(value);
     }
 
+    /// <summary>The arguments of the <c>linked</c> signal of <c>GstPad</c>.</summary>
+    public sealed class LinkedSignalArgs
+    {
+        /// <summary>Initializes a new instance of the <see cref="LinkedSignalArgs"/> class.</summary>
+        /// <param name="peer">the peer pad that has been connected</param>
+        internal LinkedSignalArgs(Gst.Pad peer)
+        {
+            Peer = peer;
+        }
+
+        /// <summary>the peer pad that has been connected</summary>
+        public Gst.Pad Peer { get; }
+    }
+
+    /// <summary>Signals that a pad has been linked to the peer pad.</summary>
+    public event System.EventHandler<Gst.Pad.LinkedSignalArgs> Linked
+    {
+        add => Gst.SignalConnections.Add(this, "linked", (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, void>)&LinkedTrampoline, value);
+        remove => Gst.SignalConnections.Remove(this, "linked", value);
+    }
+
+    /// <summary>The native handler of the <c>linked</c> signal of <c>GstPad</c>.</summary>
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
+    private static void LinkedTrampoline(nint instance, nint peer, nint userData)
+    {
+        try
+        {
+            if (Gst.Interop.CallbackHandle.GetState<System.EventHandler<Gst.Pad.LinkedSignalArgs>>(userData) is not { } handler)
+            {
+                return;
+            }
+
+            Gst.Pad peerValue = Gst.GObject.Object.FromNative<Gst.Pad>(peer, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("The linked signal of GstPad passed no peer.");
+            handler(
+                Gst.GObject.Object.FromNative(instance, Gst.Interop.Transfer.None),
+                new Gst.Pad.LinkedSignalArgs(peerValue));
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+        }
+    }
+
+    /// <summary>The arguments of the <c>unlinked</c> signal of <c>GstPad</c>.</summary>
+    public sealed class UnlinkedSignalArgs
+    {
+        /// <summary>Initializes a new instance of the <see cref="UnlinkedSignalArgs"/> class.</summary>
+        /// <param name="peer">the peer pad that has been disconnected</param>
+        internal UnlinkedSignalArgs(Gst.Pad peer)
+        {
+            Peer = peer;
+        }
+
+        /// <summary>the peer pad that has been disconnected</summary>
+        public Gst.Pad Peer { get; }
+    }
+
+    /// <summary>Signals that a pad has been unlinked from the peer pad.</summary>
+    public event System.EventHandler<Gst.Pad.UnlinkedSignalArgs> Unlinked
+    {
+        add => Gst.SignalConnections.Add(this, "unlinked", (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, void>)&UnlinkedTrampoline, value);
+        remove => Gst.SignalConnections.Remove(this, "unlinked", value);
+    }
+
+    /// <summary>The native handler of the <c>unlinked</c> signal of <c>GstPad</c>.</summary>
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
+    private static void UnlinkedTrampoline(nint instance, nint peer, nint userData)
+    {
+        try
+        {
+            if (Gst.Interop.CallbackHandle.GetState<System.EventHandler<Gst.Pad.UnlinkedSignalArgs>>(userData) is not { } handler)
+            {
+                return;
+            }
+
+            Gst.Pad peerValue = Gst.GObject.Object.FromNative<Gst.Pad>(peer, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("The unlinked signal of GstPad passed no peer.");
+            handler(
+                Gst.GObject.Object.FromNative(instance, Gst.Interop.Transfer.None),
+                new Gst.Pad.UnlinkedSignalArgs(peerValue));
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+        }
+    }
+
     /// <summary>The <c>gst_pad_new</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_pad_new")]
     private static partial nint GstPadNew(byte* name, int direction);

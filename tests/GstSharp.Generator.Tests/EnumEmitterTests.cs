@@ -202,7 +202,7 @@ public sealed class EnumEmitterTests
     // class that declares a signal gains one, and the module gains
     // Generated/SignalConnections.cs. Remove the Skip together with that
     // regeneration.
-    [Fact(Skip = "The signal emitter is not integrated into src/GstSharp.Net/Generated yet.")]
+    [Fact]
     public void TheCommittedFilesMatchTheEmitter()
     {
         IReadOnlyList<GeneratedFile> files = GenerationPipeline.Run(GirFixture.GirDirectory).Files;

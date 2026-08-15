@@ -443,6 +443,123 @@ public unsafe partial class Bus : Gst.Object
         return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
 
+    /// <summary>The arguments of the <c>message</c> signal of <c>GstBus</c>.</summary>
+    public sealed class MessageSignalArgs
+    {
+        /// <summary>Initializes a new instance of the <see cref="MessageSignalArgs"/> class.</summary>
+        /// <param name="message">the message that has been posted asynchronously</param>
+        internal MessageSignalArgs(Gst.Message message)
+        {
+            Message = message;
+        }
+
+        /// <summary>the message that has been posted asynchronously</summary>
+        /// <remarks>
+        /// The value is only valid while the handler runs. Keep what you need of
+        /// it, or take a reference of your own before the handler returns.
+        /// </remarks>
+        public Gst.Message Message { get; }
+    }
+
+    /// <summary>
+    /// A message has been posted on the bus. This signal is emitted from a
+    /// #GSource added to the mainloop. this signal will only be emitted when
+    /// there is a #GMainLoop running.
+    /// </summary>
+    /// <remarks>
+    /// The signal is detailed. The handler is connected to <c>message</c>
+    /// without a detail, so it runs for every detail of the signal.
+    /// </remarks>
+    public event System.EventHandler<Gst.Bus.MessageSignalArgs> Message
+    {
+        add => Gst.SignalConnections.Add(this, "message", (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, void>)&MessageTrampoline, value);
+        remove => Gst.SignalConnections.Remove(this, "message", value);
+    }
+
+    /// <summary>The native handler of the <c>message</c> signal of <c>GstBus</c>.</summary>
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
+    private static void MessageTrampoline(nint instance, nint message, nint userData)
+    {
+        try
+        {
+            if (Gst.Interop.CallbackHandle.GetState<System.EventHandler<Gst.Bus.MessageSignalArgs>>(userData) is not { } handler)
+            {
+                return;
+            }
+
+            using Gst.Message messageValue = Gst.Message.FromNative(message, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("The message signal of GstBus passed no message.");
+            handler(
+                Gst.GObject.Object.FromNative(instance, Gst.Interop.Transfer.None),
+                new Gst.Bus.MessageSignalArgs(messageValue));
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+        }
+    }
+
+    /// <summary>The arguments of the <c>sync-message</c> signal of <c>GstBus</c>.</summary>
+    public sealed class SyncMessageSignalArgs
+    {
+        /// <summary>Initializes a new instance of the <see cref="SyncMessageSignalArgs"/> class.</summary>
+        /// <param name="message">the message that has been posted synchronously</param>
+        internal SyncMessageSignalArgs(Gst.Message message)
+        {
+            Message = message;
+        }
+
+        /// <summary>the message that has been posted synchronously</summary>
+        /// <remarks>
+        /// The value is only valid while the handler runs. Keep what you need of
+        /// it, or take a reference of your own before the handler returns.
+        /// </remarks>
+        public Gst.Message Message { get; }
+    }
+
+    /// <summary>
+    /// A message has been posted on the bus. This signal is emitted from the
+    /// thread that posted the message so one has to be careful with locking.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This signal will not be emitted by default, you have to call
+    /// gst_bus_enable_sync_message_emission() before.
+    /// </para>
+    /// </remarks>
+    /// <remarks>
+    /// The signal is detailed. The handler is connected to <c>sync-message</c>
+    /// without a detail, so it runs for every detail of the signal.
+    /// </remarks>
+    public event System.EventHandler<Gst.Bus.SyncMessageSignalArgs> SyncMessage
+    {
+        add => Gst.SignalConnections.Add(this, "sync-message", (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, void>)&SyncMessageTrampoline, value);
+        remove => Gst.SignalConnections.Remove(this, "sync-message", value);
+    }
+
+    /// <summary>The native handler of the <c>sync-message</c> signal of <c>GstBus</c>.</summary>
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
+    private static void SyncMessageTrampoline(nint instance, nint message, nint userData)
+    {
+        try
+        {
+            if (Gst.Interop.CallbackHandle.GetState<System.EventHandler<Gst.Bus.SyncMessageSignalArgs>>(userData) is not { } handler)
+            {
+                return;
+            }
+
+            using Gst.Message messageValue = Gst.Message.FromNative(message, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("The sync-message signal of GstBus passed no message.");
+            handler(
+                Gst.GObject.Object.FromNative(instance, Gst.Interop.Transfer.None),
+                new Gst.Bus.SyncMessageSignalArgs(messageValue));
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+        }
+    }
+
     /// <summary>The <c>gst_bus_new</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_bus_new")]
     private static partial nint GstBusNew();

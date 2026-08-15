@@ -1409,6 +1409,100 @@ public abstract unsafe partial class Element : Gst.Object
         GstElementTypeSetSkipDocumentation(type.Value);
     }
 
+    /// <summary>The arguments of the <c>pad-added</c> signal of <c>GstElement</c>.</summary>
+    public sealed class PadAddedSignalArgs
+    {
+        /// <summary>Initializes a new instance of the <see cref="PadAddedSignalArgs"/> class.</summary>
+        /// <param name="newPad">the pad that has been added</param>
+        internal PadAddedSignalArgs(Gst.Pad newPad)
+        {
+            NewPad = newPad;
+        }
+
+        /// <summary>the pad that has been added</summary>
+        public Gst.Pad NewPad { get; }
+    }
+
+    /// <summary>
+    /// a new #GstPad has been added to the element. Note that this signal will
+    /// usually be emitted from the context of the streaming thread. Also keep in
+    /// mind that if you add new elements to the pipeline in the signal handler
+    /// you will need to set them to the desired target state with
+    /// gst_element_set_state() or gst_element_sync_state_with_parent().
+    /// </summary>
+    public event System.EventHandler<Gst.Element.PadAddedSignalArgs> PadAdded
+    {
+        add => Gst.SignalConnections.Add(this, "pad-added", (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, void>)&PadAddedTrampoline, value);
+        remove => Gst.SignalConnections.Remove(this, "pad-added", value);
+    }
+
+    /// <summary>The native handler of the <c>pad-added</c> signal of <c>GstElement</c>.</summary>
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
+    private static void PadAddedTrampoline(nint instance, nint newPad, nint userData)
+    {
+        try
+        {
+            if (Gst.Interop.CallbackHandle.GetState<System.EventHandler<Gst.Element.PadAddedSignalArgs>>(userData) is not { } handler)
+            {
+                return;
+            }
+
+            Gst.Pad newPadValue = Gst.GObject.Object.FromNative<Gst.Pad>(newPad, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("The pad-added signal of GstElement passed no new_pad.");
+            handler(
+                Gst.GObject.Object.FromNative(instance, Gst.Interop.Transfer.None),
+                new Gst.Element.PadAddedSignalArgs(newPadValue));
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+        }
+    }
+
+    /// <summary>The arguments of the <c>pad-removed</c> signal of <c>GstElement</c>.</summary>
+    public sealed class PadRemovedSignalArgs
+    {
+        /// <summary>Initializes a new instance of the <see cref="PadRemovedSignalArgs"/> class.</summary>
+        /// <param name="oldPad">the pad that has been removed</param>
+        internal PadRemovedSignalArgs(Gst.Pad oldPad)
+        {
+            OldPad = oldPad;
+        }
+
+        /// <summary>the pad that has been removed</summary>
+        public Gst.Pad OldPad { get; }
+    }
+
+    /// <summary>a #GstPad has been removed from the element</summary>
+    public event System.EventHandler<Gst.Element.PadRemovedSignalArgs> PadRemoved
+    {
+        add => Gst.SignalConnections.Add(this, "pad-removed", (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, void>)&PadRemovedTrampoline, value);
+        remove => Gst.SignalConnections.Remove(this, "pad-removed", value);
+    }
+
+    /// <summary>The native handler of the <c>pad-removed</c> signal of <c>GstElement</c>.</summary>
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
+    private static void PadRemovedTrampoline(nint instance, nint oldPad, nint userData)
+    {
+        try
+        {
+            if (Gst.Interop.CallbackHandle.GetState<System.EventHandler<Gst.Element.PadRemovedSignalArgs>>(userData) is not { } handler)
+            {
+                return;
+            }
+
+            Gst.Pad oldPadValue = Gst.GObject.Object.FromNative<Gst.Pad>(oldPad, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("The pad-removed signal of GstElement passed no old_pad.");
+            handler(
+                Gst.GObject.Object.FromNative(instance, Gst.Interop.Transfer.None),
+                new Gst.Element.PadRemovedSignalArgs(oldPadValue));
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+        }
+    }
+
     /// <summary>The <c>gst_element_abort_state</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_element_abort_state")]
     private static partial void GstElementAbortState(nint element);

@@ -302,6 +302,100 @@ public unsafe partial class Registry : Gst.Object
             ?? throw new InvalidOperationException("gst_registry_get returned no value.");
     }
 
+    /// <summary>The arguments of the <c>feature-added</c> signal of <c>GstRegistry</c>.</summary>
+    public sealed class FeatureAddedSignalArgs
+    {
+        /// <summary>Initializes a new instance of the <see cref="FeatureAddedSignalArgs"/> class.</summary>
+        /// <param name="feature">the feature that has been added</param>
+        internal FeatureAddedSignalArgs(Gst.PluginFeature feature)
+        {
+            Feature = feature;
+        }
+
+        /// <summary>the feature that has been added</summary>
+        public Gst.PluginFeature Feature { get; }
+    }
+
+    /// <summary>
+    /// Signals that a feature has been added to the registry (possibly
+    /// replacing a previously-added one by the same name)
+    /// </summary>
+    public event System.EventHandler<Gst.Registry.FeatureAddedSignalArgs> FeatureAdded
+    {
+        add => Gst.SignalConnections.Add(this, "feature-added", (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, void>)&FeatureAddedTrampoline, value);
+        remove => Gst.SignalConnections.Remove(this, "feature-added", value);
+    }
+
+    /// <summary>The native handler of the <c>feature-added</c> signal of <c>GstRegistry</c>.</summary>
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
+    private static void FeatureAddedTrampoline(nint instance, nint feature, nint userData)
+    {
+        try
+        {
+            if (Gst.Interop.CallbackHandle.GetState<System.EventHandler<Gst.Registry.FeatureAddedSignalArgs>>(userData) is not { } handler)
+            {
+                return;
+            }
+
+            Gst.PluginFeature featureValue = Gst.GObject.Object.FromNative<Gst.PluginFeature>(feature, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("The feature-added signal of GstRegistry passed no feature.");
+            handler(
+                Gst.GObject.Object.FromNative(instance, Gst.Interop.Transfer.None),
+                new Gst.Registry.FeatureAddedSignalArgs(featureValue));
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+        }
+    }
+
+    /// <summary>The arguments of the <c>plugin-added</c> signal of <c>GstRegistry</c>.</summary>
+    public sealed class PluginAddedSignalArgs
+    {
+        /// <summary>Initializes a new instance of the <see cref="PluginAddedSignalArgs"/> class.</summary>
+        /// <param name="plugin">the plugin that has been added</param>
+        internal PluginAddedSignalArgs(Gst.Plugin plugin)
+        {
+            Plugin = plugin;
+        }
+
+        /// <summary>the plugin that has been added</summary>
+        public Gst.Plugin Plugin { get; }
+    }
+
+    /// <summary>
+    /// Signals that a plugin has been added to the registry (possibly
+    /// replacing a previously-added one by the same name)
+    /// </summary>
+    public event System.EventHandler<Gst.Registry.PluginAddedSignalArgs> PluginAdded
+    {
+        add => Gst.SignalConnections.Add(this, "plugin-added", (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, void>)&PluginAddedTrampoline, value);
+        remove => Gst.SignalConnections.Remove(this, "plugin-added", value);
+    }
+
+    /// <summary>The native handler of the <c>plugin-added</c> signal of <c>GstRegistry</c>.</summary>
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
+    private static void PluginAddedTrampoline(nint instance, nint plugin, nint userData)
+    {
+        try
+        {
+            if (Gst.Interop.CallbackHandle.GetState<System.EventHandler<Gst.Registry.PluginAddedSignalArgs>>(userData) is not { } handler)
+            {
+                return;
+            }
+
+            Gst.Plugin pluginValue = Gst.GObject.Object.FromNative<Gst.Plugin>(plugin, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("The plugin-added signal of GstRegistry passed no plugin.");
+            handler(
+                Gst.GObject.Object.FromNative(instance, Gst.Interop.Transfer.None),
+                new Gst.Registry.PluginAddedSignalArgs(pluginValue));
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+        }
+    }
+
     /// <summary>The <c>gst_registry_add_feature</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_registry_add_feature")]
     private static partial int GstRegistryAddFeature(nint registry, nint feature);
