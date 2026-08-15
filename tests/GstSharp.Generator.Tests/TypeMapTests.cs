@@ -102,7 +102,7 @@ public sealed class TypeMapTests
     [InlineData("Element", "Gst.Element", nameof(MarshalKind.GObject))]
     [InlineData("Buffer", "Gst.Buffer", nameof(MarshalKind.MiniObject))]
     [InlineData("Structure", "Gst.Structure", nameof(MarshalKind.Boxed))]
-    [InlineData("ChildProxy", "Gst.ChildProxy", nameof(MarshalKind.Interface))]
+    [InlineData("ChildProxy", "Gst.IChildProxy", nameof(MarshalKind.Interface))]
     [InlineData("PadProbeCallback", "Gst.PadProbeCallback", nameof(MarshalKind.Callback))]
     [InlineData("Poll", "Gst.Poll", nameof(MarshalKind.OpaqueRecord))]
     public void HandleTypesMarshalAsPointers(string girName, string publicType, string kind)

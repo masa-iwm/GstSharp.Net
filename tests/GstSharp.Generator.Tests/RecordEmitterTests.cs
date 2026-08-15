@@ -1,5 +1,6 @@
 using GstSharp.Generator.Emit;
 using GstSharp.Generator.GirParsing;
+using GstSharp.Generator.Planning;
 using GstSharp.Generator.GirParsing.Model;
 using GstSharp.Generator.Semantic;
 using Xunit;
@@ -214,6 +215,17 @@ public sealed class RecordEmitterTests
                     /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>
                     internal static Buffer? FromNative(nint handle, Gst.Interop.Transfer transfer) =>
                         handle == 0 ? null : new(handle, transfer);
+
+                    /// <summary>Returns the <c>GType</c> that GObject registered <c>GstBuffer</c> under.</summary>
+                    /// <returns>The type of the instances of this wrapper.</returns>
+                    [LibraryImport("Gst", EntryPoint = "gst_buffer_get_type")]
+                    internal static partial nuint GetGType();
+
+                    /// <summary>Creates the wrapper of a native instance, for the type registry.</summary>
+                    /// <param name="handle">The native instance.</param>
+                    /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
+                    /// <returns>The new wrapper.</returns>
+                    internal static object CreateWrapper(nint handle, Gst.Interop.Transfer transfer) => new Buffer(handle, transfer);
                 }
 
                 /// <summary>The native layout of <c>GstBuffer</c>.</summary>
@@ -264,7 +276,7 @@ public sealed class RecordEmitterTests
                     /// <param name="handle">The native instance.</param>
                     /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
                     internal Segment(nint handle, Gst.Interop.Transfer transfer)
-                        : base(handle, new Gst.GObject.GType(SegmentGetType()), transfer)
+                        : base(handle, new Gst.GObject.GType(GetGType()), transfer)
                     {
                     }
 
@@ -276,9 +288,15 @@ public sealed class RecordEmitterTests
                         handle == 0 ? null : new(handle, transfer);
 
                     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstSegment</c> under.</summary>
-                    /// <returns>The boxed type.</returns>
+                    /// <returns>The type of the instances of this wrapper.</returns>
                     [LibraryImport("Gst", EntryPoint = "gst_segment_get_type")]
-                    private static partial nuint SegmentGetType();
+                    internal static partial nuint GetGType();
+
+                    /// <summary>Creates the wrapper of a native instance, for the type registry.</summary>
+                    /// <param name="handle">The native instance.</param>
+                    /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
+                    /// <returns>The new wrapper.</returns>
+                    internal static object CreateWrapper(nint handle, Gst.Interop.Transfer transfer) => new Segment(handle, transfer);
                 }
                 """),
             source,
@@ -309,6 +327,17 @@ public sealed class RecordEmitterTests
                     /// <summary>Wraps a native <c>GstDebugMessage</c>.</summary>
                     /// <param name="handle">The native instance.</param>
                     internal DebugMessage(nint handle) => Handle = handle;
+
+                    /// <summary>Wraps a native <c>GstDebugMessage</c>, mapping the null pointer onto <see langword="null"/>.</summary>
+                    /// <param name="handle">The native instance, or <c>0</c>.</param>
+                    /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>
+                    /// <remarks>
+                    /// The wrapper of an opaque record is a bare pointer holder: the gir
+                    /// describes no way of releasing one, so it does not take part in the
+                    /// ownership of what it points at.
+                    /// </remarks>
+                    internal static DebugMessage? FromNative(nint handle) =>
+                        handle == 0 ? null : new(handle);
                 }
                 """),
             source,
@@ -435,9 +464,10 @@ public sealed class RecordEmitterTests
     {
         string source = Source("Sample");
 
-        Assert.Contains("public sealed partial class Sample : Gst.MiniObject\n", source, StringComparison.Ordinal);
+        // The wrapper is unsafe because its methods pass pointers, but nothing
+        // reads the fields of a GstSample: the gir declares none.
+        Assert.Contains("public sealed unsafe partial class Sample : Gst.MiniObject\n", source, StringComparison.Ordinal);
         Assert.DoesNotContain("struct SampleRaw", source, StringComparison.Ordinal);
-        Assert.DoesNotContain("unsafe", source, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -445,13 +475,13 @@ public sealed class RecordEmitterTests
     {
         string source = Source("Segment");
 
-        Assert.Contains("public sealed partial class Segment : Gst.GObject.Boxed\n", source, StringComparison.Ordinal);
+        Assert.Contains("public sealed unsafe partial class Segment : Gst.GObject.Boxed\n", source, StringComparison.Ordinal);
         Assert.Contains(
-            "[LibraryImport(\"Gst\", EntryPoint = \"gst_segment_get_type\")]\n    private static partial nuint SegmentGetType();",
+            "[LibraryImport(\"Gst\", EntryPoint = \"gst_segment_get_type\")]\n    internal static partial nuint GetGType();",
             source,
             StringComparison.Ordinal);
         Assert.Contains(
-            ": base(handle, new Gst.GObject.GType(SegmentGetType()), transfer)",
+            ": base(handle, new Gst.GObject.GType(GetGType()), transfer)",
             source,
             StringComparison.Ordinal);
     }
@@ -503,9 +533,11 @@ public sealed class RecordEmitterTests
     {
         IReadOnlyList<GeneratedFile> files = Generated.Files;
 
-        // One file per emitted record, next to the enumerations. GstVecDeque is
-        // introspectable="0", which is why 34 opaque records emit 33 files.
-        Assert.Equal(72, files.Count);
+        // One file per emitted record and per emitted class, plus the
+        // enumerations, the interfaces, the global functions, the callbacks and
+        // the type table. GstVecDeque is introspectable="0", which is why 34
+        // opaque records emit 33 files.
+        Assert.Equal(114, files.Count);
         Assert.Equal(11, Count(files, " : Gst.MiniObject\n"));
         Assert.Equal(12, Count(files, " : Gst.GObject.Boxed\n"));
         Assert.Equal(14, Count(files, "\npublic partial struct "));
@@ -653,7 +685,21 @@ public sealed class RecordEmitterTests
         NameMapper names = new(Overlays.Empty);
         Classifier classifier = new(repository, diagnostics);
         TypeMap types = new(repository, classifier, names, diagnostics);
-        RecordEmitter emitter = new(repository, classifier, names, types, Overlays.Empty, diagnostics);
+        EmissionCensus census = new();
+        SkipRules skipRules = new(Overlays.Empty);
+        MarshalPlanner planner = new(repository, classifier, names, types, Overlays.Empty, skipRules);
+        SurfaceBuilder surfaces = new(planner, names, census, diagnostics);
+        List<string> registry = [];
+        RecordEmitter emitter = new(
+            repository,
+            classifier,
+            names,
+            types,
+            Overlays.Empty,
+            diagnostics,
+            surfaces,
+            census,
+            registry);
 
         GirRecord record = ns.Records.Single(
             candidate => string.Equals(candidate.Name, recordName, StringComparison.Ordinal));

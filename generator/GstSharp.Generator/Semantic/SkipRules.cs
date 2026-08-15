@@ -30,6 +30,19 @@ internal enum SkipReason
 
     /// <summary>Has no <c>c:identifier</c>, so it cannot be bound.</summary>
     NoCIdentifier,
+
+    /// <summary>
+    /// Uses a type or an annotation that the marshalling of this milestone does
+    /// not cover, for example a <c>GList</c>, a <c>GValue</c> or a callback
+    /// without user data.
+    /// </summary>
+    UnsupportedSignature,
+
+    /// <summary>
+    /// The C# name of the member is already taken by another member of the same
+    /// type, or by a member of its base class that cannot be overridden.
+    /// </summary>
+    NameCollision,
 }
 
 /// <summary>

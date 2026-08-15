@@ -104,10 +104,56 @@ internal sealed class NameMapper
     /// <summary>Maps the C# name of a type declaration.</summary>
     /// <param name="symbol">The declared type.</param>
     /// <returns>The C# type name.</returns>
-    internal string TypeName(GirSymbol symbol) =>
-        _overlays.TryGetRename(symbol.QualifiedName, out string? renamed)
+    /// <remarks>
+    /// A <c>&lt;interface&gt;</c> is emitted as a C# interface and therefore
+    /// carries the conventional <c>I</c> prefix. Every consumer of the name
+    /// goes through this method, so the type map and the interface emitter
+    /// cannot disagree about it.
+    /// </remarks>
+    internal string TypeName(GirSymbol symbol)
+    {
+        if (_overlays.TryGetRename(symbol.QualifiedName, out string? renamed))
+        {
+            return renamed;
+        }
+
+        string name = EscapeIdentifier(ToPascalCase(symbol.Name));
+        return symbol.Kind == GirSymbolKind.Interface ? "I" + name : name;
+    }
+
+    /// <summary>Maps the C# name of a callable.</summary>
+    /// <param name="callable">The callable to name.</param>
+    /// <returns>The C# member name.</returns>
+    /// <remarks>
+    /// A callable that <c>shadows</c> another one takes the shadowed name, so
+    /// that <c>gst_bus_add_watch_full</c> is emitted as <c>AddWatch</c>.
+    /// </remarks>
+    internal string CallableName(GirCallable callable)
+    {
+        if (callable.CIdentifier is { } identifier && _overlays.TryGetRename(identifier, out string? renamed))
+        {
+            return renamed;
+        }
+
+        return EscapeIdentifier(ToPascalCase(SkipRules.EffectiveGirName(callable)));
+    }
+
+    /// <summary>Maps the C# name of a property.</summary>
+    /// <param name="declarationNamespace">The gir namespace of the declaring type.</param>
+    /// <param name="owner">The declaring type.</param>
+    /// <param name="property">The property to name.</param>
+    /// <returns>The C# property name.</returns>
+    internal string PropertyName(GirNamespace declarationNamespace, GirTypeDeclaration owner, GirProperty property) =>
+        _overlays.TryGetRename(
+            declarationNamespace.Name + "." + owner.Name + ":" + property.Name,
+            out string? renamed)
             ? renamed
-            : EscapeIdentifier(ToPascalCase(symbol.Name));
+            : EscapeIdentifier(ToPascalCase(property.Name));
+
+    /// <summary>Maps the C# name of a parameter or a local.</summary>
+    /// <param name="girName">The verbatim gir name.</param>
+    /// <returns>The C# identifier.</returns>
+    internal static string ParameterName(string girName) => EscapeIdentifier(ToCamelCase(girName));
 
     /// <summary>Maps the C# name of a field that is part of the API.</summary>
     /// <param name="fieldNamespace">The gir namespace of the declaring type.</param>

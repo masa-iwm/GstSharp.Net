@@ -58,6 +58,12 @@ internal static class Program
         Console.Out.WriteLine(string.Create(
             CultureInfo.InvariantCulture,
             $"Generated {result.Files.Count} file(s) below '{options.OutputDirectory}'."));
+
+        foreach (string line in result.Census.Report())
+        {
+            Console.Out.WriteLine(line);
+        }
+
         return ExitSuccess;
     }
 

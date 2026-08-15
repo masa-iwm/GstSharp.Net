@@ -50,6 +50,31 @@ internal static class XmlDocWriter
     }
 
     /// <summary>
+    /// Writes a <c>&lt;param&gt;</c> element for one parameter of a member.
+    /// </summary>
+    /// <param name="writer">The target writer.</param>
+    /// <param name="name">The C# name of the parameter.</param>
+    /// <param name="doc">The gir documentation, if any.</param>
+    /// <param name="fallback">
+    /// The description used when there is no documentation. It is generator
+    /// authored XML documentation markup and is emitted verbatim.
+    /// </param>
+    internal static void WriteParam(CodeWriter writer, string name, string? doc, string fallback) =>
+        WriteElement(writer, "param name=\"" + name + "\"", "param", doc, fallback);
+
+    /// <summary>
+    /// Writes a <c>&lt;returns&gt;</c> element.
+    /// </summary>
+    /// <param name="writer">The target writer.</param>
+    /// <param name="doc">The gir documentation, if any.</param>
+    /// <param name="fallback">
+    /// The description used when there is no documentation. It is generator
+    /// authored XML documentation markup and is emitted verbatim.
+    /// </param>
+    internal static void WriteReturns(CodeWriter writer, string? doc, string fallback) =>
+        WriteElement(writer, "returns", "returns", doc, fallback);
+
+    /// <summary>
     /// Writes an <c>[Obsolete]</c> attribute when the gir marks the element as
     /// deprecated.
     /// </summary>
@@ -127,6 +152,47 @@ internal static class XmlDocWriter
         }
 
         return builder.ToString();
+    }
+
+    /// <summary>
+    /// Writes one documentation element, inline when the text is a single short
+    /// line and as a block otherwise.
+    /// </summary>
+    /// <param name="writer">The target writer.</param>
+    /// <param name="openTag">The opening tag, without the angle brackets.</param>
+    /// <param name="closeTag">The closing tag name.</param>
+    /// <param name="doc">The gir documentation, if any.</param>
+    /// <param name="fallback">The verbatim markup used when there is none.</param>
+    private static void WriteElement(
+        CodeWriter writer,
+        string openTag,
+        string closeTag,
+        string? doc,
+        string fallback)
+    {
+        IReadOnlyList<IReadOnlyList<string>> paragraphs = SplitParagraphs(doc);
+        if (paragraphs.Count == 0)
+        {
+            writer.WriteLine("/// <" + openTag + ">" + fallback + "</" + closeTag + ">");
+            return;
+        }
+
+        // Only the first paragraph is kept: a parameter description has no
+        // place for the <para> elements that the summary uses.
+        IReadOnlyList<string> first = paragraphs[0];
+        if (first.Count == 1 && first[0].Length <= InlineLimit)
+        {
+            writer.WriteLine("/// <" + openTag + ">" + Escape(first[0]) + "</" + closeTag + ">");
+            return;
+        }
+
+        writer.WriteLine("/// <" + openTag + ">");
+        foreach (string line in first)
+        {
+            WriteTextLine(writer, line);
+        }
+
+        writer.WriteLine("/// </" + closeTag + ">");
     }
 
     private static void WriteSummary(CodeWriter writer, IReadOnlyList<string> paragraph)
