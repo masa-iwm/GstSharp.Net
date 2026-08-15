@@ -58,6 +58,11 @@ internal sealed class PlatformSupport
 /// <item><description><c>forceOpaque</c>: qualified gir name of a record
 /// (<c>Gst.DebugCategory</c>) that must be wrapped behind a pointer rather
 /// than copied by value.</description></item>
+/// <item><description><c>returnTypeOverrides</c>: <c>c:identifier</c> mapped
+/// onto the C# type the member returns. It only narrows a returned handle onto
+/// the type that declares the member, which is what turns
+/// <c>gst_pipeline_new</c> from a factory of <c>Gst.Element</c> into one of
+/// <c>Gst.Pipeline</c>.</description></item>
 /// </list>
 /// </remarks>
 internal sealed class Overlays
@@ -74,19 +79,22 @@ internal sealed class Overlays
     private readonly Dictionary<string, string> _rename;
     private readonly Dictionary<string, AnnotationOverride> _annotations;
     private readonly Dictionary<string, PlatformSupport> _platforms;
+    private readonly Dictionary<string, string> _returnTypes;
 
     private Overlays(
         HashSet<string> skip,
         HashSet<string> forceOpaque,
         Dictionary<string, string> rename,
         Dictionary<string, AnnotationOverride> annotations,
-        Dictionary<string, PlatformSupport> platforms)
+        Dictionary<string, PlatformSupport> platforms,
+        Dictionary<string, string> returnTypes)
     {
         _skip = skip;
         _forceOpaque = forceOpaque;
         _rename = rename;
         _annotations = annotations;
         _platforms = platforms;
+        _returnTypes = returnTypes;
     }
 
     /// <summary>Gets an overlay set without any correction.</summary>
@@ -95,7 +103,8 @@ internal sealed class Overlays
         new HashSet<string>(StringComparer.Ordinal),
         new Dictionary<string, string>(StringComparer.Ordinal),
         new Dictionary<string, AnnotationOverride>(StringComparer.Ordinal),
-        new Dictionary<string, PlatformSupport>(StringComparer.Ordinal));
+        new Dictionary<string, PlatformSupport>(StringComparer.Ordinal),
+        new Dictionary<string, string>(StringComparer.Ordinal));
 
     /// <summary>Gets the skipped identifiers, ordered for reporting.</summary>
     internal IReadOnlyCollection<string> SkippedIdentifiers => _skip;
@@ -143,7 +152,13 @@ internal sealed class Overlays
             symbols[entry.Key] = entry.Value;
         }
 
-        return new Overlays(skip, forceOpaque, rename, annotations, symbols);
+        Dictionary<string, string> returnTypes = new(StringComparer.Ordinal);
+        foreach (KeyValuePair<string, string> entry in fixups.ReturnTypeOverrides ?? [])
+        {
+            returnTypes[entry.Key] = entry.Value;
+        }
+
+        return new Overlays(skip, forceOpaque, rename, annotations, symbols, returnTypes);
     }
 
     /// <summary>Tests whether a symbol is skipped by the overlays.</summary>
@@ -165,6 +180,13 @@ internal sealed class Overlays
     /// <returns><see langword="true"/> when an override exists.</returns>
     internal bool TryGetRename(string key, [NotNullWhen(true)] out string? name) =>
         _rename.TryGetValue(key, out name);
+
+    /// <summary>Looks up the C# type a member returns instead of the mapped one.</summary>
+    /// <param name="cIdentifier">The <c>c:identifier</c> of the callable.</param>
+    /// <param name="type">The overriding C# type.</param>
+    /// <returns><see langword="true"/> when an override exists.</returns>
+    internal bool TryGetReturnTypeOverride(string cIdentifier, [NotNullWhen(true)] out string? type) =>
+        _returnTypes.TryGetValue(cIdentifier, out type);
 
     /// <summary>Looks up an annotation correction.</summary>
     /// <param name="key">A <c>c:identifier</c>, optionally suffixed with <c>#parameter</c>.</param>
@@ -199,6 +221,8 @@ internal sealed class Overlays
         public Dictionary<string, string>? Rename { get; set; }
 
         public Dictionary<string, AnnotationOverride>? AnnotationOverrides { get; set; }
+
+        public Dictionary<string, string>? ReturnTypeOverrides { get; set; }
     }
 
     private sealed class PlatformSymbolsFile

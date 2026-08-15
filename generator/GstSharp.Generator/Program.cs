@@ -55,6 +55,12 @@ internal static class Program
             CodeWriter.WriteFile(ToAbsolutePath(options.OutputDirectory, file.RelativePath), file.Content);
         }
 
+        // The listing of what was left out belongs next to the gir files it was
+        // derived from, not into the binding projects: it is review
+        // documentation rather than source. It is committed, so that a member
+        // that stops being generated shows up as a line of its diff.
+        CodeWriter.WriteFile(SkipReportPath(options), result.SkipReport);
+
         Console.Out.WriteLine(string.Create(
             CultureInfo.InvariantCulture,
             $"Generated {result.Files.Count} file(s) below '{options.OutputDirectory}'."));
@@ -94,6 +100,11 @@ internal static class Program
             }
         }
 
+        if (!IsUpToDate(SkipReportPath(options), result.SkipReport))
+        {
+            differences.Add(GenerationPipeline.SkipReportFileName);
+        }
+
         if (differences.Count == 0)
         {
             Console.Out.WriteLine(string.Create(
@@ -113,6 +124,35 @@ internal static class Program
 
     private static string ToAbsolutePath(string root, string relativePath) =>
         Path.Combine(root, relativePath.Replace('/', Path.DirectorySeparatorChar));
+
+    private static string SkipReportPath(GeneratorOptions options) =>
+        Path.Combine(options.GirDirectory, GenerationPipeline.SkipReportFileName);
+
+    /// <summary>Tests whether a file already holds exactly the given text.</summary>
+    /// <param name="path">The file to compare.</param>
+    /// <param name="content">The expected content.</param>
+    /// <returns><see langword="true"/> when the bytes agree.</returns>
+    private static bool IsUpToDate(string path, string content)
+    {
+        if (!File.Exists(path))
+        {
+            return false;
+        }
+
+        string scratch = Path.Combine(Path.GetTempPath(), "GstSharp.Generator", Path.GetRandomFileName());
+        try
+        {
+            CodeWriter.WriteFile(scratch, content);
+            return File.ReadAllBytes(path).AsSpan().SequenceEqual(File.ReadAllBytes(scratch));
+        }
+        finally
+        {
+            if (File.Exists(scratch))
+            {
+                File.Delete(scratch);
+            }
+        }
+    }
 
     private static bool HasErrors(GenerationResult result)
     {

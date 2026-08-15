@@ -249,9 +249,22 @@ internal sealed class SurfaceBuilder
         void Add(GirFunction callable, CallableForm form)
         {
             MarshalPlan? plan = _planner.TryPlan(callable, form, context, out SkipReason reason);
+
+            // The gir pairs a function that language bindings cannot use with
+            // the one it shadows: gst_adapter_copy is shadowed by
+            // gst_adapter_copy_bytes, which returns a GBytes that this
+            // milestone cannot marshal. Skipping both leaves neither, so the
+            // shadowed declaration is retried under the clean name once the
+            // shadowing one is known not to bind. Every other rule still
+            // applies to it, so one that is introspectable="0" stays out.
+            if (plan is null && reason == SkipReason.ShadowedBy && !ShadowingBinds(callable, form))
+            {
+                plan = _planner.TryPlan(callable, form, context, out reason, ignoreShadowedBy: true);
+            }
+
             if (plan is null)
             {
-                _census.Skipped(module, reason);
+                _census.Skipped(module, reason, SymbolOf(declaration, callable));
                 return;
             }
 
@@ -294,15 +307,59 @@ internal sealed class SurfaceBuilder
             _census.Emitted(module, "method");
         }
 
+        // Plans the callable that shadows this one, only to find out whether it
+        // binds. Nothing is emitted from the answer, so the census stays quiet.
+        bool ShadowingBinds(GirFunction callable, CallableForm form)
+        {
+            if (callable.ShadowedBy is not { } shadowing)
+            {
+                return true;
+            }
+
+            foreach (GirFunction sibling in Siblings(declaration, form))
+            {
+                if (string.Equals(sibling.Name, shadowing, StringComparison.Ordinal))
+                {
+                    return _planner.TryPlan(sibling, form, context, out _) is not null;
+                }
+            }
+
+            return true;
+        }
+
         void Collide(MarshalPlan plan)
         {
-            _census.Skipped(module, SkipReason.NameCollision);
+            _census.Skipped(module, SkipReason.NameCollision, plan.EntryPoint);
             _diagnostics.Warn(
                 "GEN0009",
                 $"'{plan.EntryPoint}' would be emitted as '{declaration.Name}.{plan.Name}', which is already taken; "
                 + "the member is skipped. Add a rename to fixups.json to bind it.");
         }
     }
+
+    /// <summary>
+    /// Returns the callables of a declaration that are emitted in one shape, so
+    /// that a shadowed callable can find the one that shadows it.
+    /// </summary>
+    /// <param name="declaration">The declaring type.</param>
+    /// <param name="form">The shape the callable is emitted in.</param>
+    /// <returns>The candidates, in gir order.</returns>
+    private static IReadOnlyList<GirFunction> Siblings(GirTypeDeclaration declaration, CallableForm form) =>
+        form switch
+        {
+            CallableForm.Constructor => declaration.Constructors,
+            CallableForm.StaticMethod => declaration.Functions,
+            _ => declaration.Methods,
+        };
+
+    /// <summary>Returns the name a skipped callable is reported under.</summary>
+    /// <param name="declaration">The declaring type.</param>
+    /// <param name="callable">The callable that was not emitted.</param>
+    /// <returns>The <c>c:identifier</c>, or the gir path when there is none.</returns>
+    private static string SymbolOf(GirTypeDeclaration declaration, GirCallable callable) =>
+        callable.CIdentifier is { Length: > 0 } identifier
+            ? identifier
+            : declaration.Name + "." + callable.Name;
 
     /// <summary>Returns the key a method is remembered under.</summary>
     /// <param name="plan">The method to key.</param>
@@ -399,10 +456,11 @@ internal sealed class SurfaceBuilder
 
         foreach (GirSignal signal in declaration.Signals)
         {
+            string symbol = context.Namespace.Name + "." + declaration.Name + "::" + signal.Name;
             SignalPlan? plan = _planner.TryPlanSignal(signal, declaration, context, out SkipReason reason);
             if (plan is null)
             {
-                _census.Skipped(module, reason);
+                _census.Skipped(module, reason, symbol);
                 continue;
             }
 
@@ -432,7 +490,7 @@ internal sealed class SurfaceBuilder
 
             if (!free)
             {
-                _census.Skipped(module, SkipReason.NameCollision);
+                _census.Skipped(module, SkipReason.NameCollision, symbol);
                 _diagnostics.Warn(
                     "GEN0011",
                     $"The '{signal.Name}' signal of '{declaration.Name}' would be emitted as '{plan.Name}', which is "
@@ -467,6 +525,7 @@ internal sealed class SurfaceBuilder
 
         foreach (GirProperty property in declaration.Properties)
         {
+            string symbol = context.Namespace.Name + "." + declaration.Name + ":" + property.Name;
             MarshalPlan? getter = FindAccessor(members, property.Getter);
             if (getter is null
                 || getter.Form != CallableForm.InstanceMethod
@@ -476,7 +535,7 @@ internal sealed class SurfaceBuilder
                 // Without a generated getter there is nothing to delegate to;
                 // properties that only exist on the GObject property system are
                 // reached through GetProperty and SetProperty.
-                _census.Skipped(module, SkipReason.UnsupportedSignature);
+                _census.Skipped(module, SkipReason.UnsupportedSignature, symbol);
                 continue;
             }
 
@@ -493,7 +552,7 @@ internal sealed class SurfaceBuilder
             string name = _names.PropertyName(context.Namespace, declaration, property);
             if (!used.Add(name))
             {
-                _census.Skipped(module, SkipReason.NameCollision);
+                _census.Skipped(module, SkipReason.NameCollision, symbol);
                 _diagnostics.Warn(
                     "GEN0010",
                     $"The '{property.Name}' property of '{declaration.Name}' would be emitted as '{name}', which is "

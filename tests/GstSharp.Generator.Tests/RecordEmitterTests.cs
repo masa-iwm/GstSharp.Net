@@ -207,7 +207,15 @@ public sealed class RecordEmitterTests
                     }
 
                     /// <summary>presentation timestamp of the buffer</summary>
-                    public Gst.ClockTime Pts => new(((BufferRaw*)Handle)->Pts);
+                    public Gst.ClockTime Pts
+                    {
+                        get
+                        {
+                            Gst.ClockTime value = new(((BufferRaw*)Handle)->Pts);
+                            System.GC.KeepAlive(this);
+                            return value;
+                        }
+                    }
 
                     /// <summary>Wraps a native <c>GstBuffer</c>, mapping the null pointer onto <see langword="null"/>.</summary>
                     /// <param name="handle">The native instance, or <c>0</c>.</param>
@@ -422,14 +430,27 @@ public sealed class RecordEmitterTests
         string source = Source("Buffer");
 
         Assert.Contains("public sealed unsafe partial class Buffer : Gst.MiniObject\n", source, StringComparison.Ordinal);
-        Assert.Contains("public Gst.ClockTime Pts => new(((BufferRaw*)Handle)->Pts);", source, StringComparison.Ordinal);
-        Assert.Contains("public Gst.ClockTime Dts => new(((BufferRaw*)Handle)->Dts);", source, StringComparison.Ordinal);
+        // Every accessor reads through the raw pointer of the wrapper, so it
+        // keeps the wrapper alive until the read is done instead of being an
+        // expression bodied member.
         Assert.Contains(
-            "public Gst.ClockTime Duration => new(((BufferRaw*)Handle)->Duration);",
+            """
+                public Gst.ClockTime Pts
+                {
+                    get
+                    {
+                        Gst.ClockTime value = new(((BufferRaw*)Handle)->Pts);
+                        System.GC.KeepAlive(this);
+                        return value;
+                    }
+                }
+            """,
             source,
             StringComparison.Ordinal);
-        Assert.Contains("public ulong Offset => ((BufferRaw*)Handle)->Offset;", source, StringComparison.Ordinal);
-        Assert.Contains("public ulong OffsetEnd => ((BufferRaw*)Handle)->OffsetEnd;", source, StringComparison.Ordinal);
+        Assert.Contains("Gst.ClockTime value = new(((BufferRaw*)Handle)->Dts);", source, StringComparison.Ordinal);
+        Assert.Contains("Gst.ClockTime value = new(((BufferRaw*)Handle)->Duration);", source, StringComparison.Ordinal);
+        Assert.Contains("ulong value = ((BufferRaw*)Handle)->Offset;", source, StringComparison.Ordinal);
+        Assert.Contains("ulong value = ((BufferRaw*)Handle)->OffsetEnd;", source, StringComparison.Ordinal);
 
         // The embedded header and the pool pointer stay behind the mirror.
         Assert.DoesNotContain("Pool =>", source, StringComparison.Ordinal);
@@ -503,7 +524,22 @@ public sealed class RecordEmitterTests
             ],
             MirrorFields(source, "MessageRaw"));
         Assert.Contains("It stops at the first field that has no portable C# spelling.", source, StringComparison.Ordinal);
-        Assert.Contains("public Gst.MessageType Type => ((MessageRaw*)Handle)->Type;", source, StringComparison.Ordinal);
+        Assert.Contains("Gst.MessageType value = ((MessageRaw*)Handle)->Type;", source, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void NoPrivateStateShellIsEmitted()
+    {
+        // The gir declares one opaque *Private record next to every class that
+        // keeps its state out of the public structure. Each is only named by a
+        // pointer field, which the mirror spells as a native integer, so a
+        // wrapper for it would be a public pointer holder with nothing on it.
+        foreach (GeneratedFile file in Generated.Files)
+        {
+            Assert.False(
+                file.RelativePath.EndsWith("Private.cs", StringComparison.Ordinal),
+                file.RelativePath + " is the private state shell of a class.");
+        }
     }
 
     [Fact]
@@ -529,12 +565,12 @@ public sealed class RecordEmitterTests
     }
 
     [Theory]
-    [InlineData("GstSharp.Net", 133)]
-    [InlineData("GstSharp.Net.Base", 32)]
-    [InlineData("GstSharp.Net.App", 10)]
-    [InlineData("GstSharp.Net.Audio", 46)]
-    [InlineData("GstSharp.Net.Video", 78)]
-    [InlineData("GstSharp.Net.Pbutils", 21)]
+    [InlineData("GstSharp.Net", 113)]
+    [InlineData("GstSharp.Net.Base", 23)]
+    [InlineData("GstSharp.Net.App", 8)]
+    [InlineData("GstSharp.Net.Audio", 37)]
+    [InlineData("GstSharp.Net.Video", 71)]
+    [InlineData("GstSharp.Net.Pbutils", 19)]
     public void EveryModuleEmitsItsOwnFiles(string projectDirectory, int count)
     {
         string prefix = projectDirectory + "/Generated/";
@@ -566,8 +602,9 @@ public sealed class RecordEmitterTests
         // enumerations, the holders of the functions of an enumeration, the
         // interfaces, the global functions, the callbacks, the holder of the
         // connected signal handlers and the type table. GstVecDeque is
-        // introspectable="0", which is why 34 opaque records emit 33 files.
-        Assert.Equal(133, files.Count);
+        // introspectable="0" and twenty records are the private state shell of
+        // a class, which is why 54 opaque records emit 33 files.
+        Assert.Equal(113, files.Count);
         Assert.Equal(11, Count(files, " : Gst.MiniObject\n"));
         Assert.Equal(12, Count(files, " : Gst.GObject.Boxed\n"));
 
@@ -746,7 +783,7 @@ public sealed class RecordEmitterTests
         TypeMap types = new(repository, classifier, names, diagnostics);
         EmissionCensus census = new();
         SkipRules skipRules = new(Overlays.Empty);
-        MarshalPlanner planner = new(repository, classifier, names, types, Overlays.Empty, skipRules);
+        MarshalPlanner planner = new(repository, classifier, names, types, Overlays.Empty, skipRules, diagnostics);
         SurfaceBuilder surfaces = new(planner, names, census, diagnostics);
         List<string> registry = [];
         RecordEmitter emitter = new(

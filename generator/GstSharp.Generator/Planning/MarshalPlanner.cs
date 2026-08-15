@@ -78,6 +78,17 @@ internal sealed class CallbackPlan
 /// cannot be trusted for them. The arguments a callback receives are nullable
 /// for the same reason: <c>gst_caps_foreach</c> passes a <c>NULL</c>
 /// <c>GstCapsFeatures</c> for every structure that carries none.</description></item>
+/// <item><description>A <c>caller-allocates</c> out parameter is only bound
+/// when the storage the callee writes into has a C# spelling of the same size,
+/// which is a plain struct. A record that is bound behind a handle is one
+/// pointer wide in C# and several hundred bytes in C, so the call would write
+/// past the end of the local it is given.</description></item>
+/// <item><description>An instance the callable takes ownership of
+/// (<c>transfer-ownership="full"</c> on the instance parameter), and a method
+/// named <c>ref</c>, <c>unref</c> or <c>free</c>, are only bound on a wrapper
+/// that owns nothing. Every other wrapper releases its reference when it is
+/// disposed, so a second release path can only corrupt the reference
+/// count.</description></item>
 /// <item><description>Only the <c>call</c> and <c>notified</c> callback scopes
 /// are supported. A <c>async</c> callback would have to release its state from
 /// the trampoline, but the same delegate type is used at notified and async call
@@ -119,14 +130,36 @@ internal sealed class MarshalPlanner
         "Equals", "GetHashCode", "GetType", "MemberwiseClone", "ReferenceEquals", "ToString",
     };
 
+    /// <summary>
+    /// The gir names of the methods that are a lifetime primitive of their
+    /// declaring type rather than API. The gir annotates the instance of some
+    /// of them <c>transfer-ownership="full"</c> and of others <c>none</c>
+    /// (<c>gst_video_info_free</c> is one of the latter), so the annotation
+    /// alone does not find them.
+    /// </summary>
+    private static readonly HashSet<string> LifetimePrimitives = new(StringComparer.Ordinal)
+    {
+        "free", "ref", "unref",
+    };
+
     private readonly Repository _repository;
     private readonly Classifier _classifier;
     private readonly NameMapper _names;
     private readonly TypeMap _types;
     private readonly Overlays _overlays;
     private readonly SkipRules _skipRules;
+    private readonly DiagnosticBag _diagnostics;
     private readonly SortedDictionary<string, CallbackPlan> _callbacks = new(StringComparer.Ordinal);
     private readonly Dictionary<GirCallback, CallbackPlan?> _callbackCache = new(ReferenceEqualityComparer.Instance);
+
+    /// <summary>
+    /// Why the callable that is being planned was rejected, when a rule has a
+    /// more precise answer than <see cref="SkipReason.UnsupportedSignature"/>.
+    /// The rules run deep inside the projection of a single argument, so the
+    /// reason travels back to <see cref="TryPlan"/> through this field rather
+    /// than through every return value on the way.
+    /// </summary>
+    private SkipReason? _rejection;
 
     /// <summary>Initializes a new instance of the <see cref="MarshalPlanner"/> class.</summary>
     /// <param name="repository">The loaded gir repository.</param>
@@ -135,13 +168,15 @@ internal sealed class MarshalPlanner
     /// <param name="types">The type map.</param>
     /// <param name="overlays">The overlay configuration.</param>
     /// <param name="skipRules">The skip rules.</param>
+    /// <param name="diagnostics">The diagnostic sink.</param>
     internal MarshalPlanner(
         Repository repository,
         Classifier classifier,
         NameMapper names,
         TypeMap types,
         Overlays overlays,
-        SkipRules skipRules)
+        SkipRules skipRules,
+        DiagnosticBag diagnostics)
     {
         _repository = repository;
         _classifier = classifier;
@@ -149,6 +184,7 @@ internal sealed class MarshalPlanner
         _types = types;
         _overlays = overlays;
         _skipRules = skipRules;
+        _diagnostics = diagnostics;
     }
 
     /// <summary>
@@ -162,14 +198,38 @@ internal sealed class MarshalPlanner
     /// <param name="form">The C# shape it is emitted in.</param>
     /// <param name="context">The type it is emitted into.</param>
     /// <param name="reason">Why the callable is skipped, if it is.</param>
+    /// <param name="ignoreShadowedBy">
+    /// <see langword="true"/> to plan a callable that another one shadows. The
+    /// caller passes this once it knows that the shadowing callable cannot be
+    /// bound.
+    /// </param>
     /// <returns>The plan, or <see langword="null"/> when the callable is skipped.</returns>
     internal MarshalPlan? TryPlan(
         GirCallable callable,
         CallableForm form,
         PlanningContext context,
-        out SkipReason reason)
+        out SkipReason reason,
+        bool ignoreShadowedBy = false)
     {
-        reason = _skipRules.GetSkipReason(callable);
+        _rejection = null;
+        MarshalPlan? plan = TryPlanCore(callable, form, context, out reason, ignoreShadowedBy);
+        if (plan is null && _rejection is { } rejected)
+        {
+            reason = rejected;
+            ReportRejection(callable, rejected);
+        }
+
+        return plan;
+    }
+
+    private MarshalPlan? TryPlanCore(
+        GirCallable callable,
+        CallableForm form,
+        PlanningContext context,
+        out SkipReason reason,
+        bool ignoreShadowedBy)
+    {
+        reason = _skipRules.GetSkipReason(callable, ignoreShadowedBy);
         if (reason != SkipReason.None)
         {
             return null;
@@ -178,6 +238,11 @@ internal sealed class MarshalPlanner
         if (callable.CIdentifier is not { Length: > 0 } entryPoint)
         {
             reason = SkipReason.NoCIdentifier;
+            return null;
+        }
+
+        if (RejectsLifetime(callable, form, context))
+        {
             return null;
         }
 
@@ -264,6 +329,142 @@ internal sealed class MarshalPlanner
         };
     }
 
+    /// <summary>
+    /// Records why the callable that is being planned is rejected. The rules
+    /// that find out are several calls deep, so the answer travels back to
+    /// <see cref="TryPlan"/> through a field. The first rule to speak wins,
+    /// which keeps the reason of a run independent of the order the arguments
+    /// happen to be projected in.
+    /// </summary>
+    /// <param name="reason">Why the callable cannot be bound.</param>
+    /// <returns>Always <see langword="null"/>, so that a rule can write <c>return Reject(...)</c>.</returns>
+    private ArgumentPlan? Reject(SkipReason reason)
+    {
+        _rejection ??= reason;
+        return null;
+    }
+
+    /// <summary>Reports a rejected callable, once per callable and reason.</summary>
+    /// <param name="callable">The callable that is not bound.</param>
+    /// <param name="reason">Why it is not bound.</param>
+    private void ReportRejection(GirCallable callable, SkipReason reason)
+    {
+        string name = callable.CIdentifier ?? callable.Name;
+        switch (reason)
+        {
+            case SkipReason.CallerAllocates:
+                _diagnostics.Warn(
+                    "GEN0012",
+                    $"'{name}' has a caller-allocates out parameter whose storage has no C# spelling of the size "
+                    + "of the C type; the callee would write past the end of the local. The member is skipped.");
+                return;
+
+            case SkipReason.InstanceTransferFull:
+                _diagnostics.Warn(
+                    "GEN0013",
+                    $"'{name}' consumes the instance and returns a replacement of the same type; binding it needs "
+                    + "the wrapper to reference the instance before the call. The member is skipped.");
+                return;
+
+            case SkipReason.LifetimePrimitive:
+                _diagnostics.Warn(
+                    "GEN0014",
+                    $"'{name}' releases or references the instance, which the wrapper already does when it is "
+                    + "disposed. The member is skipped.");
+                return;
+
+            default:
+                return;
+        }
+    }
+
+    /// <summary>
+    /// Tests whether a callable takes part in the lifetime of its instance in a
+    /// way the wrapper cannot allow.
+    /// </summary>
+    /// <param name="callable">The callable to inspect.</param>
+    /// <param name="form">The C# shape it would be emitted in.</param>
+    /// <param name="context">The type it is emitted into.</param>
+    /// <returns><see langword="true"/> when the callable is rejected.</returns>
+    /// <remarks>
+    /// <para>
+    /// Two shapes are told apart. <c>gst_caps_make_writable</c> and its
+    /// relatives consume the instance and hand a replacement of the same type
+    /// back; binding one needs the wrapper to add a reference before the call
+    /// and to adopt the returned handle afterwards, so that the instance the
+    /// caller holds stays valid whichever of the two the call returns. That is
+    /// a change of the ownership model rather than of one signature, so they
+    /// are rejected until it lands.
+    /// </para>
+    /// <para>
+    /// Everything else that consumes the instance releases it, and so does
+    /// every <c>ref</c>, <c>unref</c> and <c>free</c>. A wrapper that owns a
+    /// reference releases it when it is disposed, so a second release path can
+    /// only corrupt the reference count. A wrapper that owns nothing, which is
+    /// what an opaque record gets, keeps them: <c>gst_poll_free</c> is the only
+    /// way of releasing a <c>GstPoll</c>.
+    /// </para>
+    /// </remarks>
+    private bool RejectsLifetime(GirCallable callable, CallableForm form, PlanningContext context)
+    {
+        if (form is not (CallableForm.InstanceMethod or CallableForm.ExtensionMethod)
+            || callable.InstanceParameter is not { } instance)
+        {
+            return false;
+        }
+
+        bool consumes = instance.Transfer is GirTransfer.Full;
+        if (consumes && ReturnsInstanceType(callable, instance, context))
+        {
+            _rejection ??= SkipReason.InstanceTransferFull;
+            return true;
+        }
+
+        // The name alone is not enough: gst_allocator_free releases the memory
+        // it is handed rather than the allocator it is called on. A lifetime
+        // primitive takes nothing besides its instance.
+        bool primitive = callable.Kind == GirCallableKind.Method
+            && callable.Parameters.Count == 0
+            && LifetimePrimitives.Contains(callable.Name);
+        if ((consumes || primitive) && OwnsAReference(context.OwnerKind))
+        {
+            _rejection ??= SkipReason.LifetimePrimitive;
+            return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>Tests whether a wrapper of a kind owns the reference it holds.</summary>
+    /// <param name="kind">The classification of the declaring type.</param>
+    /// <returns><see langword="true"/> when the wrapper releases its instance when it is disposed.</returns>
+    private static bool OwnsAReference(TypeKind kind) =>
+        kind is TypeKind.GObjectClass or TypeKind.Interface or TypeKind.MiniObject or TypeKind.Boxed;
+
+    /// <summary>
+    /// Tests whether a callable hands back an owned handle of the type of its
+    /// instance, which is what the <c>make_writable</c> family does.
+    /// </summary>
+    /// <param name="callable">The callable to inspect.</param>
+    /// <param name="instance">Its instance parameter.</param>
+    /// <param name="context">The type it is emitted into.</param>
+    /// <returns><see langword="true"/> when the returned type is the type of the instance.</returns>
+    private bool ReturnsInstanceType(GirCallable callable, GirInstanceParameter instance, PlanningContext context)
+    {
+        if (TransferOf(callable) is not GirTransfer.Full
+            || instance.Type.Name is not { } instanceName
+            || callable.ReturnValue.Type.Name is not { } returnName)
+        {
+            return false;
+        }
+
+        GirSymbol? instanceSymbol = _repository.Resolve(instanceName, context.Namespace);
+        GirSymbol? returnSymbol = _repository.Resolve(returnName, context.Namespace);
+        return instanceSymbol is not null
+            && returnSymbol is not null
+            && string.Equals(instanceSymbol.QualifiedName, returnSymbol.QualifiedName, StringComparison.Ordinal);
+    }
+
     /// <summary>Plans the trampoline of a callback, caching the result.</summary>
     /// <param name="callback">The callback declaration.</param>
     /// <param name="context">The module that is being emitted.</param>
@@ -292,9 +493,21 @@ internal sealed class MarshalPlanner
         PlanningContext context,
         out SkipReason reason)
     {
+        _rejection = null;
         reason = _skipRules.GetSkipReason(signal);
         if (reason != SkipReason.None)
         {
+            return null;
+        }
+
+        // An action signal is a call API: g_signal_emit is how the C API of
+        // GstAppSrc spells gst_app_src_push_buffer for language bindings that
+        // have nothing better. The method it stands for is already bound, and
+        // subscribing to it would connect a handler that native code never
+        // raises.
+        if (signal.IsAction)
+        {
+            reason = SkipReason.ActionSignal;
             return null;
         }
 
@@ -306,7 +519,7 @@ internal sealed class MarshalPlanner
 
         string host = context.SignalHost ?? ownerType;
         string name = _names.SignalName(context.Namespace, owner, signal);
-        string? argsName = signal.Parameters.Count > 0 ? name + "SignalArgs" : null;
+        string? argsName = signal.Parameters.Count > 0 ? ArgsClassName(name) : null;
         HashSet<string> taken = new(ArgsMemberNames, StringComparer.Ordinal);
         if (argsName is not null)
         {
@@ -373,6 +586,25 @@ internal sealed class MarshalPlanner
             IsDetailed = signal.IsDetailed,
         };
     }
+
+    /// <summary>Returns the name of the class that carries the arguments of an event.</summary>
+    /// <param name="eventName">The C# name of the event.</param>
+    /// <returns>The name of the arguments class.</returns>
+    /// <remarks>
+    /// The name is derived from the resolved event name, which a rename in
+    /// <c>fixups.json</c> may already have given a <c>Signal</c> suffix to
+    /// (<c>Gst.Element::no-more-pads</c> becomes <c>NoMorePadsSignal</c>,
+    /// because <c>NoMorePads</c> is taken). Appending <c>SignalArgs</c> to that
+    /// would spell <c>NoMorePadsSignalSignalArgs</c>, so a trailing
+    /// <c>Signal</c> is dropped first and the suffix is written exactly once.
+    /// A collision that this creates is caught where every other one is, in the
+    /// name check of the surface builder.
+    /// </remarks>
+    internal static string ArgsClassName(string eventName) =>
+        (eventName.EndsWith("Signal", StringComparison.Ordinal)
+            ? eventName[..^"Signal".Length]
+            : eventName)
+        + "SignalArgs";
 
     private static bool IsIntegral(MappedType mapped) =>
         mapped.Kind == MarshalKind.Blittable
@@ -504,6 +736,15 @@ internal sealed class MarshalPlanner
         return overlay?.Nullable ?? parameter.IsNullable;
     }
 
+    private bool CallerAllocatesOf(GirCallable callable, GirParameter parameter)
+    {
+        AnnotationOverride? overlay = callable.CIdentifier is { } identifier
+            ? _overlays.GetAnnotationOverride(identifier + "#" + parameter.Name)
+            : null;
+
+        return overlay?.CallerAllocates ?? parameter.IsCallerAllocates;
+    }
+
     private bool NullableOf(GirCallable callable)
     {
         AnnotationOverride? overlay = callable.CIdentifier is { } identifier
@@ -535,7 +776,8 @@ internal sealed class MarshalPlanner
         // GLib stack, whose runtime layer is hand written, is out of reach.
         if (ModuleMap.Find(symbol.Namespace.Name) is not { IsGenerated: true }
             || _overlays.IsSkipped(symbol.QualifiedName)
-            || !symbol.Declaration.IsIntrospectable)
+            || !symbol.Declaration.IsIntrospectable
+            || (symbol.Declaration is GirRecord record && Classifier.IsPrivateShell(record)))
         {
             return false;
         }
@@ -608,16 +850,28 @@ internal sealed class MarshalPlanner
 
         if (parameter.Type is GirArrayRef array)
         {
-            return PlanArrayArgument(parameter, array, mapped, name, direction, transfer, index, context, offset);
+            return PlanArrayArgument(
+                parameter,
+                array,
+                mapped,
+                name,
+                direction,
+                transfer,
+                index,
+                context,
+                offset,
+                CallerAllocatesOf(callable, parameter));
         }
 
-        ArgumentPlan? plan = PlanScalar(parameter.Type, mapped, name, direction, transfer, nullable, context);
-        if (plan is null)
-        {
-            return null;
-        }
-
-        return plan;
+        return PlanScalar(
+            parameter.Type,
+            mapped,
+            name,
+            direction,
+            transfer,
+            nullable,
+            context,
+            callerAllocates: CallerAllocatesOf(callable, parameter));
     }
 
     /// <summary>
@@ -632,6 +886,11 @@ internal sealed class MarshalPlanner
     /// <param name="transfer">The ownership transfer.</param>
     /// <param name="nullable">Whether the value may be null.</param>
     /// <param name="context">The module that is being emitted.</param>
+    /// <param name="isReturn">Whether the value is the return value of the callable.</param>
+    /// <param name="callerAllocates">
+    /// Whether the caller provides the storage of an out parameter, which only
+    /// a plain struct can do.
+    /// </param>
     /// <returns>The plan, or <see langword="null"/> when the type is not supported.</returns>
     private ArgumentPlan? PlanScalar(
         GirTypeRef type,
@@ -641,7 +900,8 @@ internal sealed class MarshalPlanner
         GirTransfer transfer,
         bool nullable,
         PlanningContext context,
-        bool isReturn = false)
+        bool isReturn = false,
+        bool callerAllocates = false)
     {
         bool byPointer = direction != ArgumentDirection.In;
         string pointerSuffix = byPointer ? "*" : string.Empty;
@@ -747,7 +1007,7 @@ internal sealed class MarshalPlanner
             case MarshalKind.MiniObject:
             case MarshalKind.Boxed:
             case MarshalKind.OpaqueRecord:
-                return PlanHandle(mapped, name, direction, transfer, nullable, context, isReturn);
+                return PlanHandle(mapped, name, direction, transfer, nullable, isReturn, callerAllocates);
 
             case MarshalKind.PlainStruct:
                 if (mapped.Symbol is not { } record || !IsEmitted(record))
@@ -792,8 +1052,8 @@ internal sealed class MarshalPlanner
         ArgumentDirection direction,
         GirTransfer transfer,
         bool nullable,
-        PlanningContext context,
-        bool isReturn)
+        bool isReturn,
+        bool callerAllocates)
     {
         if (mapped.Symbol is not { } symbol || UnusableTypes.Contains(mapped.PublicType))
         {
@@ -829,6 +1089,16 @@ internal sealed class MarshalPlanner
 
         if (direction == ArgumentDirection.Out)
         {
+            // The callee writes a whole C structure into storage the caller
+            // provides. A handle is one pointer wide in C#, and a GstVideoFrame
+            // is some six hundred bytes, so the call would run off the end of
+            // the local it is handed. Only a plain struct, which C# spells with
+            // the size of the C type, can carry that contract.
+            if (callerAllocates)
+            {
+                return Reject(SkipReason.CallerAllocates);
+            }
+
             return new ArgumentPlan
             {
                 Kind = ArgumentKind.Handle,
@@ -873,13 +1143,22 @@ internal sealed class MarshalPlanner
         GirTransfer transfer,
         int index,
         PlanningContext context,
-        int offset)
+        int offset,
+        bool callerAllocates)
     {
         _ = index;
 
         if (mapped.Kind != MarshalKind.Array || array.FixedSize is not null || mapped.ElementType is not { } element)
         {
             return null;
+        }
+
+        // An out array the caller allocates is written into storage the caller
+        // provides; there is no pointer coming back that a managed array could
+        // be copied out of, so reading one would read the storage as a pointer.
+        if (callerAllocates && direction != ArgumentDirection.In)
+        {
+            return Reject(SkipReason.CallerAllocates);
         }
 
         // A NULL terminated array of strings is the one container that the
@@ -1091,13 +1370,56 @@ internal sealed class MarshalPlanner
         return new ReturnPlan
         {
             Kind = scalar.Kind,
-            PublicType = scalar.PublicType,
+            PublicType = OverriddenReturnType(callable, context, scalar),
             RawType = scalar.RawType,
             Transfer = transfer,
             IsNullable = nullable,
             Flavor = scalar.Flavor,
             Doc = value.Doc,
         };
+    }
+
+    /// <summary>
+    /// Narrows the C# type of a returned handle onto the type the overlays name.
+    /// </summary>
+    /// <param name="callable">The callable being planned.</param>
+    /// <param name="context">The type it is emitted into.</param>
+    /// <param name="scalar">The projection of the returned value.</param>
+    /// <returns>The C# type of the return value.</returns>
+    /// <remarks>
+    /// The gir spells the factory of a subclass with the return type of its
+    /// base: <c>gst_pipeline_new</c> returns a <c>GstElement*</c>, although it
+    /// only ever returns a <c>GstPipeline</c>. The override only narrows the
+    /// type onto the one that declares the member, because that is the one the
+    /// C implementation is known to construct; anything else would be a claim
+    /// the generator cannot check.
+    /// </remarks>
+    private string OverriddenReturnType(GirCallable callable, PlanningContext context, ArgumentPlan scalar)
+    {
+        if (callable.CIdentifier is not { } identifier
+            || !_overlays.TryGetReturnTypeOverride(identifier, out string? overridden))
+        {
+            return scalar.PublicType;
+        }
+
+        if (scalar.Kind != ArgumentKind.Handle || scalar.Flavor != HandleFlavor.GObject)
+        {
+            _diagnostics.Warn(
+                "GEN0015",
+                $"The return type override of '{identifier}' is ignored: only a returned GObject can be narrowed.");
+            return scalar.PublicType;
+        }
+
+        if (!string.Equals(overridden, context.OwnerType, StringComparison.Ordinal))
+        {
+            _diagnostics.Warn(
+                "GEN0015",
+                $"The return type override of '{identifier}' names '{overridden}', which is not the declaring type "
+                + $"'{context.OwnerType}'; the override is ignored.");
+            return scalar.PublicType;
+        }
+
+        return scalar.PublicType.EndsWith('?') ? overridden + "?" : overridden;
     }
 
     private CallbackPlan? PlanCallbackCore(GirCallback callback, PlanningContext context)

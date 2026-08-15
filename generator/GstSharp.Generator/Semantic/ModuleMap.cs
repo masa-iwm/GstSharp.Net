@@ -18,7 +18,24 @@ internal sealed record ModuleInfo(
     string ClrNamespace,
     string ProjectDirectory,
     string NativeLibrary,
-    bool IsGenerated);
+    bool IsGenerated)
+{
+    /// <summary>
+    /// Gets the name of the holder of the functions that belong to no type.
+    /// </summary>
+    /// <remarks>
+    /// Every module used to call it <c>Global</c>, which reads as five
+    /// unrelated types of one name once several modules are referenced
+    /// together: <c>Gst.Global</c>, <c>Gst.Base.Global</c> and so on. The core
+    /// module keeps the plain name, and every extension module prefixes it with
+    /// the last segment of its C# namespace, so a using directive of
+    /// <c>Gst.Base</c> brings in <c>BaseGlobal</c>.
+    /// </remarks>
+    internal string GlobalTypeName =>
+        string.Equals(ClrNamespace, "Gst", StringComparison.Ordinal)
+            ? "Global"
+            : ClrNamespace[(ClrNamespace.LastIndexOf('.') + 1)..] + "Global";
+}
 
 /// <summary>
 /// Maps gir namespaces onto binding projects.

@@ -71,10 +71,15 @@ public sealed class ClassEmitterTests
     public void AFactoryThatABaseClassAlsoCarriesHidesItOnPurpose()
     {
         // gst_pipeline_new and gst_bin_new have the same signature, so the
-        // derived one has to say that it hides the inherited one.
+        // derived one has to say that it hides the inherited one. Both are
+        // narrowed onto the type that declares them by fixups.json.
         Assert.Contains(
-            "public static new Gst.Element New(string? name)",
+            "public static new Gst.Pipeline New(string? name)",
             Source("Pipeline.cs"),
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "public static Gst.Bin New(string? name)",
+            Source("Bin.cs"),
             StringComparison.Ordinal);
     }
 
@@ -109,12 +114,12 @@ public sealed class ClassEmitterTests
     }
 
     [Theory]
-    [InlineData("Gst", 35, 71, 5, 18, 18, 1236, 19, 23)]
-    [InlineData("GstBase", 11, 17, 0, 5, 0, 173, 13, 2)]
-    [InlineData("GstApp", 2, 4, 0, 8, 0, 65, 23, 12)]
-    [InlineData("GstAudio", 14, 26, 1, 2, 2, 196, 15, 0)]
-    [InlineData("GstVideo", 12, 49, 5, 0, 9, 312, 2, 2)]
-    [InlineData("GstPbutils", 14, 3, 0, 0, 1, 159, 1, 3)]
+    [InlineData("Gst", 35, 51, 5, 18, 18, 1188, 19, 23)]
+    [InlineData("GstBase", 11, 8, 0, 5, 0, 164, 13, 2)]
+    [InlineData("GstApp", 2, 2, 0, 8, 0, 61, 23, 8)]
+    [InlineData("GstAudio", 14, 17, 1, 2, 2, 184, 15, 0)]
+    [InlineData("GstVideo", 12, 42, 5, 0, 9, 290, 2, 2)]
+    [InlineData("GstPbutils", 14, 1, 0, 0, 1, 158, 1, 3)]
     public void TheEmissionCensusIsStable(
         string module,
         int classes,
@@ -139,10 +144,10 @@ public sealed class ClassEmitterTests
     }
 
     [Theory]
-    [InlineData("Gst", 1, 94, 53, 118, 349, 10)]
-    [InlineData("GstBase", 1, 11, 0, 19, 183, 0)]
-    [InlineData("GstApp", 0, 0, 0, 2, 28, 0)]
-    [InlineData("GstAudio", 1, 27, 0, 7, 51, 0)]
+    [InlineData("Gst", 1, 94, 53, 118, 343, 10)]
+    [InlineData("GstBase", 0, 11, 0, 20, 183, 0)]
+    [InlineData("GstApp", 0, 0, 0, 2, 23, 0)]
+    [InlineData("GstAudio", 0, 27, 0, 8, 51, 0)]
     [InlineData("GstVideo", 0, 102, 1, 6, 108, 0)]
     [InlineData("GstPbutils", 0, 1, 0, 0, 33, 0)]
     public void TheSkipCensusIsStable(
@@ -164,6 +169,41 @@ public sealed class ClassEmitterTests
         Assert.Equal(collisions, census.SkippedCount(module, SkipReason.NameCollision));
         Assert.Equal(0, census.SkippedCount(module, SkipReason.NoCIdentifier));
         Assert.Equal(0, census.SkippedCount(module, SkipReason.FieldSlotCallback));
+    }
+
+    /// <summary>
+    /// The counts of the rules that this milestone added. They are frozen
+    /// separately from the older ones, because each of them stands for a
+    /// binding that used to be emitted and corrupt memory.
+    /// </summary>
+    /// <param name="module">The gir namespace to read.</param>
+    /// <param name="overlaySkip">Callables that fixups.json lists.</param>
+    /// <param name="callerAllocates">Callables with unusable caller allocated storage.</param>
+    /// <param name="lifetime">Callables that release or reference their instance.</param>
+    /// <param name="instanceTransfer">Callables that consume their instance and replace it.</param>
+    /// <param name="actionSignals">Signals that are a call API rather than a notification.</param>
+    [Theory]
+    [InlineData("Gst", 10, 3, 21, 20, 0)]
+    [InlineData("GstBase", 2, 3, 4, 0, 0)]
+    [InlineData("GstApp", 0, 0, 4, 0, 9)]
+    [InlineData("GstAudio", 1, 7, 4, 0, 0)]
+    [InlineData("GstVideo", 0, 11, 10, 1, 0)]
+    [InlineData("GstPbutils", 0, 0, 1, 0, 0)]
+    public void TheRejectionCensusIsStable(
+        string module,
+        int overlaySkip,
+        int callerAllocates,
+        int lifetime,
+        int instanceTransfer,
+        int actionSignals)
+    {
+        EmissionCensus census = Generated.Census;
+
+        Assert.Equal(overlaySkip, census.SkippedCount(module, SkipReason.OverlaySkip));
+        Assert.Equal(callerAllocates, census.SkippedCount(module, SkipReason.CallerAllocates));
+        Assert.Equal(lifetime, census.SkippedCount(module, SkipReason.LifetimePrimitive));
+        Assert.Equal(instanceTransfer, census.SkippedCount(module, SkipReason.InstanceTransferFull));
+        Assert.Equal(actionSignals, census.SkippedCount(module, SkipReason.ActionSignal));
     }
 
     [Theory]
@@ -206,6 +246,84 @@ public sealed class ClassEmitterTests
     public void TheFunctionsOfAnEnumerationLandOnAHolderNamedAfterIt(string path, string signature)
     {
         Assert.Contains(signature + "\n", SourceOf(path), StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("GstSharp.Net/Generated/Global.cs", "public static unsafe partial class Global")]
+    [InlineData("GstSharp.Net.Base/Generated/BaseGlobal.cs", "public static unsafe partial class BaseGlobal")]
+    [InlineData("GstSharp.Net.Audio/Generated/AudioGlobal.cs", "public static unsafe partial class AudioGlobal")]
+    [InlineData("GstSharp.Net.Video/Generated/VideoGlobal.cs", "public static unsafe partial class VideoGlobal")]
+    [InlineData("GstSharp.Net.Pbutils/Generated/PbutilsGlobal.cs", "public static unsafe partial class PbutilsGlobal")]
+    public void TheGlobalHolderOfAnExtensionModuleCarriesItsModuleName(string path, string declaration)
+    {
+        // Five types named Global, one per module, read as one type that keeps
+        // changing shape once several modules are referenced together. Only the
+        // core module keeps the plain name.
+        Assert.Contains(declaration + "\n", SourceOf(path), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void EveryInstanceMemberKeepsItsWrapperAliveAcrossTheCall()
+    {
+        // The call takes the raw handle out of the wrapper and nothing mentions
+        // the wrapper afterwards, so without the barrier the finalizer may
+        // release the instance while the call is still running.
+        int calls = 0;
+        int barriers = 0;
+        foreach (GeneratedFile file in Generated.Files)
+        {
+            calls += file.Content.Split("(Handle, ").Length - 1;
+            calls += file.Content.Split("(Handle)").Length - 1;
+            barriers += file.Content.Split("System.GC.KeepAlive(").Length - 1;
+        }
+
+        Assert.True(calls > 0);
+        Assert.True(
+            barriers >= calls,
+            $"{calls} call(s) take the raw handle of an instance but only {barriers} barrier(s) are emitted.");
+    }
+
+    [Fact]
+    public void AnAdoptedWrapperSaysWhoOwnsIt()
+    {
+        // The gir documents the borrowed pointer the C function returns. The
+        // wrapper is not borrowed: it references a mini object and it copies a
+        // boxed value, so the caller has to dispose it.
+        Assert.Contains(
+            """
+                /// The wrapper owns a reference of its own, which is a copy for a boxed type:
+                /// dispose it when you are done, and note that changes made to a copy of a
+                /// boxed value are not written back.
+            """,
+            Source("Buffer.cs"),
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void TheSkipReportListsEverySkippedSymbolAndIsDeterministic()
+    {
+        string report = Generated.SkipReport;
+
+        Assert.StartsWith("<!-- Generated by GstSharp.Generator. Do not edit. -->\n", report, StringComparison.Ordinal);
+        Assert.DoesNotContain("\r", report, StringComparison.Ordinal);
+        Assert.Contains("## Gst\n", report, StringComparison.Ordinal);
+        Assert.Contains("### CallerAllocates (3)\n", report, StringComparison.Ordinal);
+        Assert.Contains("- `gst_video_frame_map`\n", GenerationPipeline.Run(GirFixture.GirDirectory).SkipReport, StringComparison.Ordinal);
+        Assert.Contains("- `GstApp.AppSrc::push-buffer`\n", report, StringComparison.Ordinal);
+
+        Assert.Equal(report, GenerationPipeline.Run(GirFixture.GirDirectory).SkipReport, StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public void TheCommittedSkipReportIsUpToDate()
+    {
+        string committed = File.ReadAllText(
+            Path.Combine(GirFixture.GirDirectory, GenerationPipeline.SkipReportFileName));
+
+        Assert.Equal(
+            Generated.SkipReport,
+            committed.Replace("\r\n", "\n", StringComparison.Ordinal),
+            StringComparer.Ordinal);
     }
 
     [Fact]

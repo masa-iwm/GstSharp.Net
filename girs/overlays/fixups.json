@@ -1,14 +1,35 @@
 {
-  "$comment": "Corrections applied on top of the reference gir files. 'skip' removes symbols from generation, 'forceOpaque' keeps a record behind a pointer instead of copying it by value, 'rename' overrides the derived C# name, 'annotationOverrides' patches wrong or missing transfer/nullable/array annotations.",
-  "skip": [],
+  "$comment": "Corrections applied on top of the reference gir files. 'skip' removes symbols from generation, 'forceOpaque' keeps a record behind a pointer instead of copying it by value, 'rename' overrides the derived C# name, 'annotationOverrides' patches wrong or missing transfer/nullable/array annotations, 'returnTypeOverrides' narrows a returned handle onto the type that declares the member.",
+  "$comment-skip-static-str": "The *_static_str family stores the string the caller passes by pointer and never copies it, so the string has to outlive every use of the object it was stored in. The generated marshalling hands native code a stack or heap buffer that is released when the call returns, which leaves the library holding a dangling pointer for every string that does not fit the short string optimisation. The gir carries no annotation that says a string must be static, so there is nothing for the planner to key on and the symbols are listed here. Binding them needs hand written glue that hands over an interned copy.",
+  "$comment-skip-identity": "gst_buffer_remove_meta compares the GstMeta the caller passes by pointer identity against the metas of the buffer. The generated marshalling copies the structure into a local and passes the address of the copy, so the comparison never matches and the call silently removes nothing. Pointer identity is not something the gir states, so the symbol is listed here until hand written glue keeps the original address.",
+  "$comment-skip-annotations": "These four functions carry annotations that do not describe what the C function does, and following them produces wrong lengths or wrong ownership: gst_adapter_map returns a pointer whose length is the size argument rather than an annotated array, gst_adapter_take returns freshly allocated memory of the size argument, gst_type_find_peek returns a borrowed pointer of the size argument, and gst_audio_ring_buffer_commit both reads and writes its sample count while its data pointer carries no length at all. An annotation override cannot add a missing array length, so they are skipped.",
+  "$comment-skip-consumed": "gst_meta_info_register consumes the GstMetaInfo it is given and returns the registered one. The wrapper of an opaque record owns nothing and is never disposed, so nothing is freed twice, but the instance the caller still holds points at released memory the moment the call returns.",
+  "skip": [
+    "gst_adapter_map",
+    "gst_adapter_take",
+    "gst_audio_ring_buffer_commit",
+    "gst_buffer_remove_meta",
+    "gst_caps_features_add_static_str",
+    "gst_caps_features_new_single_static_str",
+    "gst_caps_new_static_str_empty_simple",
+    "gst_id_str_set_static_str",
+    "gst_id_str_set_static_str_with_len",
+    "gst_meta_info_register",
+    "gst_structure_new_static_str_empty",
+    "gst_structure_set_name_static_str",
+    "gst_type_find_peek"
+  ],
   "forceOpaque": [
     "Gst.DebugCategory"
   ],
   "rename": {
     "Gst.Element::no-more-pads": "NoMorePadsSignal",
-    "Gst.PadTemplate::pad-created": "PadCreatedSignal",
-    "GstApp.AppSrc::end-of-stream": "EndOfStreamSignal",
-    "GstApp.AppSrc::push-sample": "PushSampleSignal"
+    "Gst.PadTemplate::pad-created": "PadCreatedSignal"
   },
-  "annotationOverrides": {}
+  "annotationOverrides": {},
+  "$comment-return-types": "The gir spells the factory of a subclass with the return type of its base, so gst_pipeline_new returns a GstElement even though it only ever constructs a GstPipeline. The override narrows the wrapper onto the declaring type, which is the one the C implementation is known to build.",
+  "returnTypeOverrides": {
+    "gst_bin_new": "Gst.Bin",
+    "gst_pipeline_new": "Gst.Pipeline"
+  }
 }

@@ -13,7 +13,11 @@ namespace GstSharp.Generator.Emit;
 internal sealed record GenerationResult(
     IReadOnlyList<GeneratedFile> Files,
     IReadOnlyList<Diagnostic> Diagnostics,
-    EmissionCensus Census);
+    EmissionCensus Census)
+{
+    /// <summary>Gets the Markdown listing of every symbol the run left out.</summary>
+    internal string SkipReport => Census.SkipReport();
+}
 
 /// <summary>
 /// Runs the whole generator: gir parsing, semantic analysis and emission.
@@ -25,6 +29,12 @@ internal static class GenerationPipeline
 
     /// <summary>Name of the sub directory holding the overlays.</summary>
     internal const string OverlayDirectoryName = "overlays";
+
+    /// <summary>
+    /// Name of the listing of the symbols a run left out, written next to the
+    /// gir files it was derived from.
+    /// </summary>
+    internal const string SkipReportFileName = "skip-report.md";
 
     /// <summary>Parses, analyses and emits every generated module.</summary>
     /// <param name="girDirectory">Directory holding <c>reference/</c> and <c>overlays/</c>.</param>
@@ -124,7 +134,8 @@ internal static class GenerationPipeline
             shared.Names,
             shared.Types,
             shared.Overlays,
-            shared.SkipRules);
+            shared.SkipRules,
+            shared.Diagnostics);
 
         SurfaceBuilder surfaces = new(planner, shared.Names, shared.Census, shared.Diagnostics);
         List<string> registry = [];

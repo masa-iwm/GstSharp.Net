@@ -71,8 +71,16 @@ internal static class XmlDocWriter
     /// The description used when there is no documentation. It is generator
     /// authored XML documentation markup and is emitted verbatim.
     /// </param>
-    internal static void WriteReturns(CodeWriter writer, string? doc, string fallback) =>
-        WriteElement(writer, "returns", "returns", doc, fallback);
+    /// <param name="note">
+    /// Generator authored lines appended to the description, for the parts of
+    /// the contract that the gir does not state. They are emitted verbatim.
+    /// </param>
+    internal static void WriteReturns(
+        CodeWriter writer,
+        string? doc,
+        string fallback,
+        IReadOnlyList<string>? note = null) =>
+        WriteElement(writer, "returns", "returns", doc, fallback, note);
 
     /// <summary>
     /// Writes an <c>[Obsolete]</c> attribute when the gir marks the element as
@@ -163,24 +171,35 @@ internal static class XmlDocWriter
     /// <param name="closeTag">The closing tag name.</param>
     /// <param name="doc">The gir documentation, if any.</param>
     /// <param name="fallback">The verbatim markup used when there is none.</param>
+    /// <param name="note">Generator authored lines appended to the description.</param>
     private static void WriteElement(
         CodeWriter writer,
         string openTag,
         string closeTag,
         string? doc,
-        string fallback)
+        string fallback,
+        IReadOnlyList<string>? note = null)
     {
         IReadOnlyList<IReadOnlyList<string>> paragraphs = SplitParagraphs(doc);
         if (paragraphs.Count == 0)
         {
-            writer.WriteLine("/// <" + openTag + ">" + fallback + "</" + closeTag + ">");
+            if (note is null)
+            {
+                writer.WriteLine("/// <" + openTag + ">" + fallback + "</" + closeTag + ">");
+                return;
+            }
+
+            writer.WriteLine("/// <" + openTag + ">");
+            writer.WriteLine("/// " + fallback);
+            WriteNote(writer, note);
+            writer.WriteLine("/// </" + closeTag + ">");
             return;
         }
 
         // Only the first paragraph is kept: a parameter description has no
         // place for the <para> elements that the summary uses.
         IReadOnlyList<string> first = paragraphs[0];
-        if (first.Count == 1 && first[0].Length <= InlineLimit)
+        if (note is null && first.Count == 1 && first[0].Length <= InlineLimit)
         {
             writer.WriteLine("/// <" + openTag + ">" + Escape(first[0]) + "</" + closeTag + ">");
             return;
@@ -192,7 +211,20 @@ internal static class XmlDocWriter
             WriteTextLine(writer, line);
         }
 
+        if (note is not null)
+        {
+            WriteNote(writer, note);
+        }
+
         writer.WriteLine("/// </" + closeTag + ">");
+    }
+
+    private static void WriteNote(CodeWriter writer, IReadOnlyList<string> note)
+    {
+        foreach (string line in note)
+        {
+            writer.WriteLine("/// " + line);
+        }
     }
 
     private static void WriteSummary(CodeWriter writer, IReadOnlyList<string> paragraph)

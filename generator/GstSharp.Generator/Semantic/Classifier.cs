@@ -108,6 +108,28 @@ internal sealed class Classifier
     internal static bool IsSkipped(TypeKind kind) =>
         kind is TypeKind.GTypeStruct or TypeKind.Fundamental or TypeKind.Unknown;
 
+    /// <summary>
+    /// Tests whether a record is the opaque shell of the private state of a
+    /// class, as <c>GstAllocatorPrivate</c> is.
+    /// </summary>
+    /// <param name="record">The record to inspect.</param>
+    /// <returns><see langword="true"/> when nothing is emitted for the record.</returns>
+    /// <remarks>
+    /// The gir declares one of these next to every class that keeps its state
+    /// out of the public structure. It carries no field, no method and no type
+    /// function, and it is only ever named by the pointer field that holds it,
+    /// which the generator spells as a native integer. A wrapper for it would
+    /// be a public pointer holder with nothing on it, so none is emitted.
+    /// </remarks>
+    internal static bool IsPrivateShell(GirRecord record) =>
+        record.Name.EndsWith("Private", StringComparison.Ordinal)
+        && (record.IsDisguised || record.IsOpaque)
+        && record.GlibGetType is null
+        && record.Fields.Count == 0
+        && record.Constructors.Count == 0
+        && record.Methods.Count == 0
+        && record.Functions.Count == 0;
+
     /// <summary>Classifies a symbol.</summary>
     /// <param name="symbol">The symbol to classify.</param>
     /// <returns>The classification.</returns>

@@ -29,6 +29,17 @@ internal static class CallableRenderer
     /// <summary>The local that holds the converted return value.</summary>
     private const string ConvertedLocal = "result";
 
+    /// <summary>
+    /// What the documentation of a returned wrapper says about its ownership,
+    /// which the gir does not describe.
+    /// </summary>
+    private static readonly string[] AdoptedWrapperNote =
+    [
+        "The wrapper owns a reference of its own, which is a copy for a boxed type:",
+        "dispose it when you are done, and note that changes made to a copy of a",
+        "boxed value are not written back.",
+    ];
+
     /// <summary>Writes the public member of a plan.</summary>
     /// <param name="writer">The target writer.</param>
     /// <param name="plan">The plan to write.</param>
@@ -192,7 +203,11 @@ internal static class CallableRenderer
 
         if (!plan.Return.IsVoid)
         {
-            XmlDocWriter.WriteReturns(writer, plan.Return.Doc, "The result of <c>" + cType + "</c>.");
+            XmlDocWriter.WriteReturns(
+                writer,
+                plan.Return.Doc,
+                "The result of <c>" + cType + "</c>.",
+                AdoptsWrapper(plan.Return) ? AdoptedWrapperNote : null);
         }
 
         if (plan.Throws)
@@ -200,6 +215,45 @@ internal static class CallableRenderer
             writer.WriteLine("/// <exception cref=\"Gst.GLib.GException\">The native call failed.</exception>");
         }
     }
+
+    /// <summary>
+    /// Tests whether the returned value is a mini object or a boxed record that
+    /// the call does not transfer.
+    /// </summary>
+    /// <param name="value">The return value.</param>
+    /// <returns><see langword="true"/> when the wrapper takes a reference of its own.</returns>
+    /// <remarks>
+    /// The gir documents what the C function returns, which is a borrowed
+    /// pointer. The wrapper is not borrowed: it references a mini object and it
+    /// copies a boxed value, so it has to be disposed and a boxed copy is not
+    /// the instance the getter was called on. Saying so on every such member is
+    /// the only place a caller reads it.
+    /// </remarks>
+    private static bool AdoptsWrapper(ReturnPlan value) =>
+        value.Kind == ArgumentKind.Handle
+        && value.Flavor == HandleFlavor.Wrapper
+        && value.Transfer == GirTransfer.None;
+
+    /// <summary>
+    /// Returns the value a trampoline hands back when the managed handler could
+    /// not run, either because it threw or because its state was already
+    /// released.
+    /// </summary>
+    /// <param name="value">The return value of the trampoline.</param>
+    /// <returns>The expression to return.</returns>
+    /// <remarks>
+    /// The default of an enumeration is its zero member, and the zero member of
+    /// <c>GstFlowReturn</c> is <c>GST_FLOW_OK</c>: reporting that after the
+    /// handler threw tells the pipeline that a buffer it never got was
+    /// accepted. The rule is to use the error member of the enumeration when it
+    /// has one; <c>GstFlowReturn</c> is the only enumeration this milestone
+    /// returns from a trampoline, so it is the only one spelled out.
+    /// </remarks>
+    internal static string FailureLiteral(ReturnPlan value) =>
+        value.Kind == ArgumentKind.Enumeration
+        && string.Equals(value.PublicType, "Gst.FlowReturn", StringComparison.Ordinal)
+            ? "(" + value.RawType + ")Gst.FlowReturn.Error"
+            : "default";
 
     private static void WriteBody(CodeWriter writer, MarshalPlan plan)
     {
@@ -230,6 +284,7 @@ internal static class CallableRenderer
         }
 
         WriteCall(writer, plan);
+        WriteKeepAlive(writer, plan);
 
         if (plan.Throws)
         {
@@ -255,6 +310,34 @@ internal static class CallableRenderer
             writer.OpenBlock();
             writer.WriteLine(scopes[i].Name + "State.Free();");
             writer.CloseBlock();
+        }
+    }
+
+    /// <summary>
+    /// Keeps the instance of a member reachable until the native call returned.
+    /// </summary>
+    /// <param name="writer">The target writer.</param>
+    /// <param name="plan">The member being written.</param>
+    /// <remarks>
+    /// The call takes the raw handle out of the wrapper, and nothing mentions
+    /// the wrapper afterwards, so the collector is free to finalize it while
+    /// the call is still running. The finalizer releases the instance, and the
+    /// call is then working on freed memory. The barrier is emitted right after
+    /// the call, because that is the last use of the handle.
+    /// </remarks>
+    private static void WriteKeepAlive(CodeWriter writer, MarshalPlan plan)
+    {
+        foreach (ArgumentPlan argument in plan.Arguments)
+        {
+            if (argument.Kind != ArgumentKind.Instance)
+            {
+                continue;
+            }
+
+            writer.WriteLine(
+                "System.GC.KeepAlive("
+                + (plan.Form == CallableForm.ExtensionMethod ? argument.Name : "this") + ");");
+            return;
         }
     }
 
@@ -624,7 +707,7 @@ internal static class CallableRenderer
             "if (Gst.Interop.CallbackHandle.GetState<" + plan.DelegateType + ">(" + userData
             + ") is not { } callback)");
         writer.OpenBlock();
-        writer.WriteLine(plan.Return.IsVoid ? "return;" : "return default;");
+        writer.WriteLine(plan.Return.IsVoid ? "return;" : "return " + FailureLiteral(plan.Return) + ";");
         writer.CloseBlock();
         writer.WriteLine();
 
@@ -694,7 +777,7 @@ internal static class CallableRenderer
         writer.WriteLine("Gst.Interop.ExceptionTrap.Report(exception);");
         if (!plan.Return.IsVoid)
         {
-            writer.WriteLine("return default;");
+            writer.WriteLine("return " + FailureLiteral(plan.Return) + ";");
         }
 
         writer.CloseBlock();

@@ -434,7 +434,7 @@ public sealed class SignalEmitterTests
     [Theory]
     [InlineData("Gst", 23)]
     [InlineData("GstBase", 2)]
-    [InlineData("GstApp", 12)]
+    [InlineData("GstApp", 8)]
     [InlineData("GstAudio", 0)]
     [InlineData("GstVideo", 2)]
     [InlineData("GstPbutils", 3)]
@@ -443,6 +443,8 @@ public sealed class SignalEmitterTests
         // The two signals whose C# name a method of the same class had taken
         // (GstElement::no-more-pads and GstPadTemplate::pad-created) are bound
         // through the renames of fixups.json, so nothing collides any more.
+        // The nine action signals of GstApp are not events: they are the call
+        // API of GstAppSrc and GstAppSink, which is already bound as methods.
         Assert.Equal(signals, Generated.Census.EmittedCount(module, "signal"));
         Assert.DoesNotContain(Generated.Diagnostics, diagnostic => diagnostic.Code == "GEN0011");
     }
@@ -462,13 +464,13 @@ public sealed class SignalEmitterTests
             removers += file.Content.Split("    public static void Remove").Length - 1;
         }
 
-        // Forty two signals are emitted over the six modules. Thirty nine are
-        // events of a class; the remaining three belong to a gir interface and
-        // are a pair of extension methods instead.
-        Assert.Equal(39, events);
+        // Thirty eight signals are emitted over the six modules. Thirty five
+        // are events of a class; the remaining three belong to a gir interface
+        // and are a pair of extension methods instead.
+        Assert.Equal(35, events);
         Assert.Equal(3, adders);
         Assert.Equal(3, removers);
-        Assert.Equal(42, trampolines);
+        Assert.Equal(38, trampolines);
 
         string[] withSignals =
         [
@@ -519,10 +521,53 @@ public sealed class SignalEmitterTests
             "public event System.EventHandler NoMorePadsSignal\n",
             Source("Element.cs"),
             StringComparison.Ordinal);
+        // The arguments class is named after the resolved event name with a
+        // single Signal suffix, so the rename does not spell it twice.
         Assert.Contains(
-            "public event System.EventHandler<Gst.PadTemplate.PadCreatedSignalSignalArgs> PadCreatedSignal\n",
+            "public event System.EventHandler<Gst.PadTemplate.PadCreatedSignalArgs> PadCreatedSignal\n",
             Source("PadTemplate.cs"),
             StringComparison.Ordinal);
+        Assert.DoesNotContain("SignalSignalArgs", Source("PadTemplate.cs"), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AFlowReturningTrampolineReportsAnErrorWhenTheHandlerCannotRun()
+    {
+        // The default of GstFlowReturn is GST_FLOW_OK. Reporting that after the
+        // handler threw tells the pipeline that a buffer it never got was
+        // accepted, so a flow returning trampoline reports an error instead,
+        // both when the handler throws and when its state is already gone.
+        string source = SourceOf("GstSharp.Net.App/Generated/AppSink.cs");
+
+        Assert.Contains(
+            """
+                        if (Gst.Interop.CallbackHandle.GetState<Gst.App.AppSink.NewSampleHandler>(userData) is not { } handler)
+                        {
+                            return (int)Gst.FlowReturn.Error;
+                        }
+            """,
+            source,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            """
+                    catch (Exception exception)
+                    {
+                        Gst.Interop.ExceptionTrap.Report(exception);
+                        return (int)Gst.FlowReturn.Error;
+                    }
+            """,
+            source,
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AFlowReturningCallbackTrampolineReportsAnErrorToo()
+    {
+        // The same rule reaches the callbacks the emitters hand to native code,
+        // GstBaseParse and the simple callbacks of GstAppSink among them.
+        string source = SourceOf("GstSharp.Net.App/Generated/Callbacks.cs");
+
+        Assert.Contains("return (int)Gst.FlowReturn.Error;", source, StringComparison.Ordinal);
     }
 
     [Fact]

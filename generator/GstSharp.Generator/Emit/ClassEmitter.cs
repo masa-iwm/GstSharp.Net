@@ -29,9 +29,6 @@ internal sealed class ClassEmitter
     /// <summary>The name of the concrete subclass of an abstract wrapper.</summary>
     internal const string ConcreteName = "Concrete";
 
-    /// <summary>The name of the holder of the functions that belong to no type.</summary>
-    internal const string GlobalName = "Global";
-
     /// <summary>The suffix of the holder of the functions an enumeration declares.</summary>
     internal const string EnumHolderSuffix = "Extensions";
 
@@ -146,13 +143,14 @@ internal sealed class ClassEmitter
     /// <returns>The generated file, or <see langword="null"/> when there is nothing to emit.</returns>
     internal GeneratedFile? EmitGlobal(ModuleInfo module, GirNamespace ns)
     {
+        string globalName = module.GlobalTypeName;
         PlanningContext context = new(module, ns, TypeKind.Unknown, OwnerType: null);
-        GirRecord holder = new() { Name = GlobalName, Functions = ns.Functions };
+        GirRecord holder = new() { Name = globalName, Functions = ns.Functions };
         TypeSurface surface = _surfaces.Build(
             holder,
             context,
             CallableForm.StaticMethod,
-            [GlobalName],
+            [globalName],
             [],
             includeProperties: false);
 
@@ -166,13 +164,13 @@ internal sealed class ClassEmitter
         writer.WriteLine();
         writer.WriteLine(
             "/// <summary>The functions of the <c>" + ns.Name + "</c> namespace that belong to no type.</summary>");
-        writer.WriteLine("public static unsafe partial class " + GlobalName);
+        writer.WriteLine("public static unsafe partial class " + globalName);
         writer.OpenBlock();
         WriteMembers(writer, surface, module, first: true);
         writer.CloseBlock();
 
         _census.Emitted(module.GirNamespace, "class");
-        return new GeneratedFile(module.ProjectDirectory + "/Generated/" + GlobalName + ".cs", writer.ToSource());
+        return new GeneratedFile(module.ProjectDirectory + "/Generated/" + globalName + ".cs", writer.ToSource());
     }
 
     private GeneratedFile? EmitEnumFunctions(ModuleInfo module, GirNamespace ns, GirEnumeration enumeration)

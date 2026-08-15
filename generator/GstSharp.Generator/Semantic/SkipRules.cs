@@ -43,6 +43,36 @@ internal enum SkipReason
     /// type, or by a member of its base class that cannot be overridden.
     /// </summary>
     NameCollision,
+
+    /// <summary>
+    /// Has a <c>caller-allocates</c> out parameter whose storage the generator
+    /// cannot provide. The callee writes into memory the caller supplies, and
+    /// only a plain struct is spelled in C# with the size of the C type: a
+    /// record that is bound behind a handle is one pointer wide, so the call
+    /// would write past the end of the local it is given.
+    /// </summary>
+    CallerAllocates,
+
+    /// <summary>
+    /// Releases or references the instance: the wrapper already owns exactly
+    /// one reference and releases it when it is disposed, so a second release
+    /// path can only corrupt the reference count.
+    /// </summary>
+    LifetimePrimitive,
+
+    /// <summary>
+    /// Consumes the instance and hands a replacement back, as
+    /// <c>gst_caps_make_writable</c> does. Binding it needs reference counting
+    /// semantics that the generator does not have yet.
+    /// </summary>
+    InstanceTransferFull,
+
+    /// <summary>
+    /// An action signal. It is a call API that GObject exposes through the
+    /// signal machinery, not a notification, and the methods it stands for are
+    /// already bound.
+    /// </summary>
+    ActionSignal,
 }
 
 /// <summary>
@@ -72,8 +102,16 @@ internal sealed class SkipRules
 
     /// <summary>Computes why a callable is skipped.</summary>
     /// <param name="callable">The callable to inspect.</param>
+    /// <param name="ignoreShadowedBy">
+    /// <see langword="true"/> to keep going when the callable is shadowed by
+    /// another one. The caller passes this once it has established that the
+    /// shadowing callable cannot be bound: the clean name is free again, and
+    /// the shadowed declaration is the only chance of binding the function at
+    /// all. Every other rule still applies, so a shadowed callable that is
+    /// <c>introspectable="0"</c> stays out.
+    /// </param>
     /// <returns>The reason, or <see cref="SkipReason.None"/>.</returns>
-    internal SkipReason GetSkipReason(GirCallable callable)
+    internal SkipReason GetSkipReason(GirCallable callable, bool ignoreShadowedBy = false)
     {
         if (_overlays.IsSkipped(callable.CIdentifier))
         {
@@ -85,7 +123,7 @@ internal sealed class SkipRules
             return SkipReason.FieldSlotCallback;
         }
 
-        if (callable.ShadowedBy is not null)
+        if (callable.ShadowedBy is not null && !ignoreShadowedBy)
         {
             return SkipReason.ShadowedBy;
         }

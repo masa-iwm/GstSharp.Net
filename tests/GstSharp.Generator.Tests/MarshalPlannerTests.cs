@@ -234,6 +234,7 @@ public sealed class MarshalPlannerTests
                 System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
                 using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
                 int nativeResult = GstWidgetIsNamed(Handle, nameScope.Pointer);
+                System.GC.KeepAlive(this);
                 return nativeResult != 0;
             }
             """,
@@ -249,6 +250,7 @@ public sealed class MarshalPlannerTests
             public string? GetName()
             {
                 nint nativeResult = GstWidgetGetName(Handle);
+                System.GC.KeepAlive(this);
                 return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
             }
             """,
@@ -264,6 +266,7 @@ public sealed class MarshalPlannerTests
             public Gst.State SetState(Gst.State state)
             {
                 int nativeResult = GstWidgetSetState(Handle, (int)state);
+                System.GC.KeepAlive(this);
                 return (Gst.State)nativeResult;
             }
             """,
@@ -281,6 +284,7 @@ public sealed class MarshalPlannerTests
                 int widthNative = default;
                 nint capsNative = default;
                 int nativeResult = GstWidgetGetExtents(Handle, &widthNative, &capsNative);
+                System.GC.KeepAlive(this);
                 width = widthNative;
                 caps = Gst.Caps.FromNative(capsNative, Gst.Interop.Transfer.Full);
                 return nativeResult != 0;
@@ -301,6 +305,7 @@ public sealed class MarshalPlannerTests
                 fixed (byte* dataPointer = data)
                 {
                     int nativeResult = GstWidgetWrite(Handle, dataPointer, (nuint)data.Length, &errorNative);
+                    System.GC.KeepAlive(this);
                     Gst.GLib.GException.ThrowIfSet(ref errorNative);
                     return nativeResult != 0;
                 }
@@ -320,6 +325,7 @@ public sealed class MarshalPlannerTests
                 ArgumentNullException.ThrowIfNull(func);
                 Gst.Interop.CallbackHandle funcState = Gst.Interop.CallbackHandle.Alloc(func);
                 GstWidgetWatch(Handle, Gst.WidgetFuncTrampoline.Pointer, funcState.UserData, (nint)Gst.Interop.CallbackHandle.DestroyNotify);
+                System.GC.KeepAlive(this);
             }
             """,
             Run.Member("Widget.cs", "public void Watch("),
@@ -338,6 +344,7 @@ public sealed class MarshalPlannerTests
                 try
                 {
                     GstWidgetVisit(Handle, Gst.WidgetFuncTrampoline.Pointer, funcState.UserData);
+                    System.GC.KeepAlive(this);
                 }
                 finally
                 {
@@ -396,6 +403,7 @@ public sealed class MarshalPlannerTests
             {
                 ArgumentNullException.ThrowIfNull(sizer);
                 int nativeResult = GstSizerGetSize(sizer.Handle);
+                System.GC.KeepAlive(sizer);
                 return nativeResult;
             }
             """,

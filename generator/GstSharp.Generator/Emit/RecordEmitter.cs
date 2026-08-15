@@ -122,7 +122,7 @@ internal sealed class RecordEmitter
     internal GeneratedFile? Emit(ModuleInfo module, GirNamespace ns, GirRecord record)
     {
         string qualifiedName = ns.Name + "." + record.Name;
-        if (!record.IsIntrospectable || _overlays.IsSkipped(qualifiedName))
+        if (!record.IsIntrospectable || _overlays.IsSkipped(qualifiedName) || Classifier.IsPrivateShell(record))
         {
             return null;
         }
@@ -567,10 +567,15 @@ internal sealed class RecordEmitter
     {
         if (handWritten || kind == TypeKind.PlainStruct)
         {
-            int skipped = record.Constructors.Count + record.Methods.Count + record.Functions.Count;
-            for (int i = 0; i < skipped; i++)
+            foreach (GirFunction callable in
+                record.Constructors.Concat(record.Methods).Concat(record.Functions))
             {
-                _census.Skipped(module.GirNamespace, SkipReason.UnsupportedSignature);
+                _census.Skipped(
+                    module.GirNamespace,
+                    SkipReason.UnsupportedSignature,
+                    callable.CIdentifier is { Length: > 0 } identifier
+                        ? identifier
+                        : record.Name + "." + callable.Name);
             }
 
             return new TypeSurface([], [], []);
@@ -608,7 +613,7 @@ internal sealed class RecordEmitter
             writer.WriteLine();
             XmlDocWriter.Write(writer, accessor.Field.Doc, FallbackSummary(record, accessor.Field));
             XmlDocWriter.WriteObsolete(writer, accessor.Field);
-            writer.WriteLine("public " + accessor.TypeName + " " + accessor.Name + " => " + accessor.Expression + ";");
+            WriteAccessor(writer, accessor);
         }
 
         writer.WriteLine();
@@ -707,6 +712,29 @@ internal sealed class RecordEmitter
         ClassEmitter.WriteTypeFunction(writer, module, getType, CTypeOf(record), hidesBase: false);
         writer.WriteLine();
         ClassEmitter.WriteFactory(writer, typeName, isAbstract: false, hidesBase: false);
+    }
+
+    /// <summary>Writes one field accessor of a mini object wrapper.</summary>
+    /// <param name="writer">The target writer.</param>
+    /// <param name="accessor">The accessor to write.</param>
+    /// <remarks>
+    /// The body reads through the raw pointer of the wrapper, so the wrapper
+    /// has to stay reachable until the read is done. Without that, the last
+    /// statement that mentions the wrapper is the one that took its handle, and
+    /// the finalizer may release the instance while the pointer into it is
+    /// still being dereferenced.
+    /// </remarks>
+    private static void WriteAccessor(CodeWriter writer, Accessor accessor)
+    {
+        writer.WriteLine("public " + accessor.TypeName + " " + accessor.Name);
+        writer.OpenBlock();
+        writer.WriteLine("get");
+        writer.OpenBlock();
+        writer.WriteLine(accessor.TypeName + " value = " + accessor.Expression + ";");
+        writer.WriteLine("System.GC.KeepAlive(this);");
+        writer.WriteLine("return value;");
+        writer.CloseBlock();
+        writer.CloseBlock();
     }
 
     private List<Accessor> BuildAccessors(GirNamespace ns, string typeName, IReadOnlyList<LayoutField> layout)

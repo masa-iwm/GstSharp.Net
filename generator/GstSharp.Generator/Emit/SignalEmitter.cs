@@ -453,7 +453,8 @@ internal static class SignalEmitter
             "if (Gst.Interop.CallbackHandle.GetState<" + plan.EventType + ">(" + UserDataParameter
             + ") is not { } handler)");
         writer.OpenBlock();
-        writer.WriteLine(plan.Return.IsVoid ? "return;" : "return default;");
+        writer.WriteLine(
+            plan.Return.IsVoid ? "return;" : "return " + CallableRenderer.FailureLiteral(plan.Return) + ";");
         writer.CloseBlock();
         writer.WriteLine();
 
@@ -493,7 +494,7 @@ internal static class SignalEmitter
         writer.WriteLine("Gst.Interop.ExceptionTrap.Report(exception);");
         if (!plan.Return.IsVoid)
         {
-            writer.WriteLine("return default;");
+            writer.WriteLine("return " + CallableRenderer.FailureLiteral(plan.Return) + ";");
         }
 
         writer.CloseBlock();

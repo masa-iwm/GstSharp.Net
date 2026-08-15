@@ -123,8 +123,29 @@ public sealed class SkipRulesTests
     [Fact]
     public void CommittedOverlaysLoad()
     {
-        // The scaffold files carry only a "$comment" key today.
-        Assert.Empty(GirFixture.Overlays.SkippedIdentifiers);
+        // Every skip of the committed fixups is a symbol whose C contract the
+        // gir does not describe, so the list is asserted whole: a symbol that
+        // is added or dropped is a decision, not a detail.
+        Assert.Equal(
+            [
+                "gst_adapter_map",
+                "gst_adapter_take",
+                "gst_audio_ring_buffer_commit",
+                "gst_buffer_remove_meta",
+                "gst_caps_features_add_static_str",
+                "gst_caps_features_new_single_static_str",
+                "gst_caps_new_static_str_empty_simple",
+                "gst_id_str_set_static_str",
+                "gst_id_str_set_static_str_with_len",
+                "gst_meta_info_register",
+                "gst_structure_new_static_str_empty",
+                "gst_structure_set_name_static_str",
+                "gst_type_find_peek",
+            ],
+            GirFixture.Overlays.SkippedIdentifiers.Order(StringComparer.Ordinal).ToArray());
+
+        Assert.True(GirFixture.Overlays.TryGetReturnTypeOverride("gst_pipeline_new", out string? pipeline));
+        Assert.Equal("Gst.Pipeline", pipeline);
         Assert.Null(GirFixture.Overlays.GetPlatformSupport("gst_macos_main"));
     }
 
