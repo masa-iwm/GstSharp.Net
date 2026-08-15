@@ -99,6 +99,18 @@ internal sealed class MarshalPlanner
         "Gst.MiniObject",
     };
 
+    /// <summary>The names a signal trampoline uses for its own parameters and locals.</summary>
+    private static readonly HashSet<string> TrampolineLocals = new(StringComparer.Ordinal)
+    {
+        "instance", "userData", "handler", "sender", "exception",
+    };
+
+    /// <summary>The names every arguments class already carries from <c>object</c>.</summary>
+    private static readonly HashSet<string> ArgsMemberNames = new(StringComparer.Ordinal)
+    {
+        "Equals", "GetHashCode", "GetType", "MemberwiseClone", "ReferenceEquals", "ToString",
+    };
+
     private readonly Repository _repository;
     private readonly Classifier _classifier;
     private readonly NameMapper _names;
@@ -258,6 +270,99 @@ internal sealed class MarshalPlanner
         CallbackPlan? plan = PlanCallbackCore(callback, context);
         _callbackCache[callback] = plan;
         return plan;
+    }
+
+    /// <summary>Plans the event of one <c>&lt;glib:signal&gt;</c>.</summary>
+    /// <param name="signal">The signal declaration.</param>
+    /// <param name="owner">The type that declares the signal.</param>
+    /// <param name="context">The type the event is emitted into.</param>
+    /// <param name="reason">Why the signal is skipped, if it is.</param>
+    /// <returns>The plan, or <see langword="null"/> when the signal is skipped.</returns>
+    internal SignalPlan? TryPlanSignal(
+        GirSignal signal,
+        GirTypeDeclaration owner,
+        PlanningContext context,
+        out SkipReason reason)
+    {
+        reason = _skipRules.GetSkipReason(signal);
+        if (reason != SkipReason.None)
+        {
+            return null;
+        }
+
+        reason = SkipReason.UnsupportedSignature;
+        if (signal.Throws || context.OwnerType is not { } ownerType)
+        {
+            return null;
+        }
+
+        string name = _names.SignalName(context.Namespace, owner, signal);
+        string? argsName = signal.Parameters.Count > 0 ? name + "SignalArgs" : null;
+        HashSet<string> taken = new(ArgsMemberNames, StringComparer.Ordinal);
+        if (argsName is not null)
+        {
+            taken.Add(argsName);
+        }
+
+        List<SignalArgument> arguments = [];
+        foreach (GirParameter parameter in signal.Parameters)
+        {
+            ArgumentPlan? argument = PlanSignalArgument(parameter, context);
+
+            // The trampoline names its own locals, and the arguments class
+            // cannot carry two properties of one name or one that its own type
+            // name would shadow.
+            if (argument is null || TrampolineLocals.Contains(argument.Name))
+            {
+                return null;
+            }
+
+            string property = NameMapper.EscapeIdentifier(NameMapper.ToPascalCase(parameter.Name));
+            if (!taken.Add(property))
+            {
+                return null;
+            }
+
+            arguments.Add(new SignalArgument(argument, property));
+        }
+
+        ReturnPlan? returnPlan = PlanSignalReturn(signal, context);
+        if (returnPlan is null)
+        {
+            return null;
+        }
+
+        string? handlerName = returnPlan.IsVoid ? null : name + "Handler";
+        string argsType = argsName is null ? "System.EventArgs" : ownerType + "." + argsName;
+        string trampolineName = name + "Trampoline";
+
+        // A member cannot be named after the type that declares it.
+        string simpleName = ownerType[(ownerType.LastIndexOf('.') + 1)..];
+        foreach (string? member in new[] { name, argsName, handlerName, trampolineName })
+        {
+            if (string.Equals(member, simpleName, StringComparison.Ordinal))
+            {
+                return null;
+            }
+        }
+
+        reason = SkipReason.None;
+        return new SignalPlan
+        {
+            Signal = signal,
+            SignalName = signal.Name,
+            Name = name,
+            ArgsName = argsName,
+            ArgsType = argsType,
+            TrampolineName = trampolineName,
+            HandlerName = handlerName,
+            EventType = handlerName is not null
+                ? ownerType + "." + handlerName
+                : argsName is null ? "System.EventHandler" : "System.EventHandler<" + argsType + ">",
+            Arguments = arguments,
+            Return = returnPlan,
+            IsDetailed = signal.IsDetailed,
+        };
     }
 
     private static bool IsIntegral(MappedType mapped) =>
@@ -1142,6 +1247,127 @@ internal sealed class MarshalPlanner
             TrampolineType = context.Module.ClrNamespace + "." + name + "Trampoline",
             Arguments = arguments,
             Return = returnPlan,
+        };
+    }
+
+    /// <summary>
+    /// Plans one argument of a signal. Everything a handler receives is
+    /// borrowed for the duration of the emission, exactly like the arguments of
+    /// a callback, so an argument that transfers ownership is rejected instead
+    /// of guessed at.
+    /// </summary>
+    /// <param name="parameter">The gir parameter.</param>
+    /// <param name="context">The module that is being emitted.</param>
+    /// <returns>The plan, or <see langword="null"/> when the argument is not supported.</returns>
+    private ArgumentPlan? PlanSignalArgument(GirParameter parameter, PlanningContext context)
+    {
+        if (parameter.IsVarArgs
+            || parameter.Type.IsVarArgs
+            || parameter.Direction != GirDirection.In
+            || parameter.Type is GirArrayRef)
+        {
+            return null;
+        }
+
+        string name = NameMapper.ParameterName(parameter.Name);
+        MappedType mapped = _types.Map(parameter.Type, context.Namespace);
+
+        // A notify style signal hands the handler the GParamSpec of the
+        // property that changed. It is neither a GObject nor a generated
+        // record, but the runtime wraps it, so it is planned here rather than
+        // in the shared scalar projection, which would let it into every
+        // method signature too.
+        if (mapped.Symbol is { QualifiedName: "GObject.ParamSpec" } && parameter.Transfer == GirTransfer.None)
+        {
+            return new ArgumentPlan
+            {
+                Source = parameter,
+                Kind = ArgumentKind.Handle,
+                Name = name,
+                PublicType = "Gst.GObject.ParamSpec",
+                RawType = NativeInt,
+                Transfer = GirTransfer.None,
+                Flavor = HandleFlavor.ParamSpec,
+                Doc = parameter.Doc,
+            };
+        }
+
+        ArgumentPlan? argument = PlanScalar(
+            parameter.Type,
+            mapped,
+            name,
+            ArgumentDirection.In,
+            parameter.Transfer,
+            parameter.IsNullable,
+            context);
+
+        if (argument is null
+            || argument.Kind is not (ArgumentKind.Value or ArgumentKind.Boolean or ArgumentKind.Enumeration
+                or ArgumentKind.Wrapper or ArgumentKind.Pointer or ArgumentKind.Utf8 or ArgumentKind.Handle))
+        {
+            return null;
+        }
+
+        return new ArgumentPlan
+        {
+            Source = parameter,
+            Kind = argument.Kind,
+            Name = argument.Name,
+            PublicType = argument.PublicType,
+            RawType = argument.RawType,
+            Transfer = argument.Transfer,
+            Flavor = argument.Flavor,
+            IsNullable = argument.IsNullable,
+            Doc = parameter.Doc,
+        };
+    }
+
+    /// <summary>
+    /// Plans the value a signal handler returns. Only the values that are
+    /// blittable on their own are supported: handing a handle back would make
+    /// the handler transfer ownership into native code, which needs the
+    /// accumulator of the signal to be known.
+    /// </summary>
+    /// <param name="signal">The signal declaration.</param>
+    /// <param name="context">The module that is being emitted.</param>
+    /// <returns>The plan, or <see langword="null"/> when the value is not supported.</returns>
+    private ReturnPlan? PlanSignalReturn(GirSignal signal, PlanningContext context)
+    {
+        GirReturnValue value = signal.ReturnValue;
+        MappedType mapped = _types.Map(value.Type, context.Namespace);
+        if (mapped.Kind == MarshalKind.Void)
+        {
+            return new ReturnPlan
+            {
+                Kind = ArgumentKind.Void,
+                PublicType = "void",
+                RawType = "void",
+                Doc = value.Doc,
+            };
+        }
+
+        ArgumentPlan? scalar = PlanScalar(
+            value.Type,
+            mapped,
+            "result",
+            ArgumentDirection.In,
+            value.Transfer,
+            value.IsNullable,
+            context);
+
+        if (scalar is null
+            || scalar.Kind is not (ArgumentKind.Value or ArgumentKind.Boolean or ArgumentKind.Enumeration
+                or ArgumentKind.Wrapper or ArgumentKind.Pointer))
+        {
+            return null;
+        }
+
+        return new ReturnPlan
+        {
+            Kind = scalar.Kind,
+            PublicType = scalar.PublicType,
+            RawType = scalar.RawType,
+            Doc = value.Doc,
         };
     }
 }

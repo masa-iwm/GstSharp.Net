@@ -107,6 +107,14 @@ internal sealed class InterfaceEmitter
             writer.CloseBlock();
         }
 
+        // A signal of an interface is not emitted by this milestone: an event
+        // needs accessors on the instance, and the members of an interface are
+        // emitted as extension methods of a static class.
+        for (int i = 0; i < declaration.Signals.Count; i++)
+        {
+            _census.Skipped(module.GirNamespace, SkipReason.InterfaceSignal);
+        }
+
         _census.Emitted(module.GirNamespace, "interface");
         return new GeneratedFile(module.ProjectDirectory + "/Generated/" + typeName + ".cs", writer.ToSource());
     }

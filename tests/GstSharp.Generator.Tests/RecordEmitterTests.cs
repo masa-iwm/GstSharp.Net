@@ -534,10 +534,11 @@ public sealed class RecordEmitterTests
         IReadOnlyList<GeneratedFile> files = Generated.Files;
 
         // One file per emitted record and per emitted class, plus the
-        // enumerations, the interfaces, the global functions, the callbacks and
-        // the type table. GstVecDeque is introspectable="0", which is why 34
-        // opaque records emit 33 files.
-        Assert.Equal(114, files.Count);
+        // enumerations, the interfaces, the global functions, the callbacks,
+        // the holder of the connected signal handlers and the type table.
+        // GstVecDeque is introspectable="0", which is why 34 opaque records
+        // emit 33 files.
+        Assert.Equal(115, files.Count);
         Assert.Equal(11, Count(files, " : Gst.MiniObject\n"));
         Assert.Equal(12, Count(files, " : Gst.GObject.Boxed\n"));
         Assert.Equal(14, Count(files, "\npublic partial struct "));

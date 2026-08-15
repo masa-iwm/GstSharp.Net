@@ -114,6 +114,15 @@ internal enum HandleFlavor
 
     /// <summary>An opaque record, whose wrapper is a bare pointer holder.</summary>
     Opaque,
+
+    /// <summary>
+    /// A <c>GParamSpec</c>, wrapped by the hand written
+    /// <c>Gst.GObject.ParamSpec</c>. It is not a <c>GObject</c> and has no
+    /// generated wrapper, so it is constructed directly; the constructor takes
+    /// a reference of its own, which makes the wrapper owned by whoever created
+    /// it. Only the signal planner produces this flavour.
+    /// </summary>
+    ParamSpec,
 }
 
 /// <summary>

@@ -150,6 +150,23 @@ internal sealed class NameMapper
             ? renamed
             : EscapeIdentifier(ToPascalCase(property.Name));
 
+    /// <summary>Maps the C# name of the event of a signal.</summary>
+    /// <param name="declarationNamespace">The gir namespace of the declaring type.</param>
+    /// <param name="owner">The declaring type.</param>
+    /// <param name="signal">The signal to name.</param>
+    /// <returns>The C# event name, for example <c>PadAdded</c> for <c>pad-added</c>.</returns>
+    /// <remarks>
+    /// The rename key is the GObject spelling of a signal,
+    /// <c>Gst.Element::pad-added</c>, which can collide neither with the key of
+    /// a property (<c>Gst.Element:name</c>) nor with the one of a member.
+    /// </remarks>
+    internal string SignalName(GirNamespace declarationNamespace, GirTypeDeclaration owner, GirSignal signal) =>
+        _overlays.TryGetRename(
+            declarationNamespace.Name + "." + owner.Name + "::" + signal.Name,
+            out string? renamed)
+            ? renamed
+            : EscapeIdentifier(ToPascalCase(signal.Name));
+
     /// <summary>Maps the C# name of a parameter or a local.</summary>
     /// <param name="girName">The verbatim gir name.</param>
     /// <returns>The C# identifier.</returns>

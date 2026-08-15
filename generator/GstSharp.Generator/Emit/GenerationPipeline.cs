@@ -179,6 +179,13 @@ internal static class GenerationPipeline
             files.Add(callbackFile);
         }
 
+        // The events of the module share one holder of the connected handlers,
+        // which is only worth emitting when the module has events at all.
+        if (shared.Census.EmittedCount(module.GirNamespace, "signal") > 0)
+        {
+            files.Add(SignalEmitter.EmitConnections(module, ns));
+        }
+
         files.Add(registryEmitter.Emit(module, ns, registry));
         return files;
     }

@@ -156,7 +156,13 @@ internal sealed class ClassEmitter
     /// <param name="surface">The members to write.</param>
     /// <param name="module">The module being emitted.</param>
     /// <param name="first">Whether the first member opens the type body.</param>
-    internal static void WriteMembers(CodeWriter writer, TypeSurface surface, ModuleInfo module, bool first)
+    /// <param name="cType">The C type of the declaring type, for the documentation of its signals.</param>
+    internal static void WriteMembers(
+        CodeWriter writer,
+        TypeSurface surface,
+        ModuleInfo module,
+        bool first,
+        string cType = "")
     {
         bool leading = first;
         foreach (MarshalPlan member in surface.Members)
@@ -179,6 +185,19 @@ internal sealed class ClassEmitter
 
             leading = false;
             WriteProperty(writer, property);
+        }
+
+        // The events come after the members that are already bound, and before
+        // the imports, so that the public surface of a type stays together.
+        foreach (SignalEmission signal in surface.Signals)
+        {
+            if (!leading)
+            {
+                writer.WriteLine();
+            }
+
+            leading = false;
+            SignalEmitter.WriteSignal(writer, signal, module, cType);
         }
 
         foreach (MarshalPlan member in surface.Members)
@@ -246,7 +265,8 @@ internal sealed class ClassEmitter
             CallableForm.InstanceMethod,
             reserved,
             inherited,
-            includeProperties: true);
+            includeProperties: true,
+            includeSignals: true);
 
         List<string> members = [.. inherited];
         members.AddRange(surface.MemberKeys);
@@ -286,7 +306,7 @@ internal sealed class ClassEmitter
         writer.OpenBlock();
         writer.CloseBlock();
 
-        WriteMembers(writer, surface, module, first: false);
+        WriteMembers(writer, surface, module, first: false, CTypeOf(declaration));
 
         bool hidesBase = baseType.InModule is not null;
         writer.WriteLine();

@@ -43,6 +43,13 @@ internal enum SkipReason
     /// type, or by a member of its base class that cannot be overridden.
     /// </summary>
     NameCollision,
+
+    /// <summary>
+    /// A signal declared on a GObject interface. A C# interface cannot carry the
+    /// event accessors that a signal is emitted as, and the methods of an
+    /// interface are emitted as extension methods, which an event cannot be.
+    /// </summary>
+    InterfaceSignal,
 }
 
 /// <summary>

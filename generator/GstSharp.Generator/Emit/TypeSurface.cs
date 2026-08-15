@@ -22,20 +22,33 @@ internal sealed record PropertyEmission(
     bool IsNew);
 
 /// <summary>
+/// One generated event, built from a <c>&lt;glib:signal&gt;</c>.
+/// </summary>
+/// <param name="Plan">How the signal is marshalled and named.</param>
+/// <param name="IsNew">Whether the event hides an inherited generated member.</param>
+/// <param name="ArgsAreNew">Whether the arguments class hides an inherited generated member.</param>
+internal sealed record SignalEmission(SignalPlan Plan, bool IsNew, bool ArgsAreNew);
+
+/// <summary>
 /// The members one generated type carries.
 /// </summary>
 /// <param name="Members">The methods, in gir order.</param>
 /// <param name="Properties">The properties, in gir order.</param>
-internal sealed record TypeSurface(IReadOnlyList<MarshalPlan> Members, IReadOnlyList<PropertyEmission> Properties)
+/// <param name="Signals">The events, in gir order.</param>
+internal sealed record TypeSurface(
+    IReadOnlyList<MarshalPlan> Members,
+    IReadOnlyList<PropertyEmission> Properties,
+    IReadOnlyList<SignalEmission> Signals)
 {
     /// <summary>Gets a value indicating whether the type carries any generated member.</summary>
-    internal bool IsEmpty => Members.Count == 0 && Properties.Count == 0;
+    internal bool IsEmpty => Members.Count == 0 && Properties.Count == 0 && Signals.Count == 0;
 
     /// <summary>
     /// Gets a value indicating whether the declaring type has to be compiled in
-    /// an unsafe context, which every generated entry point needs.
+    /// an unsafe context, which every generated entry point and every signal
+    /// trampoline needs.
     /// </summary>
-    internal bool NeedsUnsafe => Members.Count > 0;
+    internal bool NeedsUnsafe => Members.Count > 0 || Signals.Count > 0;
 
     /// <summary>Gets the C# names of the emitted members.</summary>
     /// <returns>The names, for the reserved set of a derived type.</returns>
@@ -51,6 +64,11 @@ internal sealed record TypeSurface(IReadOnlyList<MarshalPlan> Members, IReadOnly
             foreach (PropertyEmission property in Properties)
             {
                 yield return property.Name;
+            }
+
+            foreach (SignalEmission signal in Signals)
+            {
+                yield return signal.Plan.Name;
             }
         }
     }
@@ -73,6 +91,23 @@ internal sealed record TypeSurface(IReadOnlyList<MarshalPlan> Members, IReadOnly
             foreach (PropertyEmission property in Properties)
             {
                 yield return SurfaceBuilder.PropertyKey(property.Name);
+            }
+
+            // An event and the types that belong to it hide an inherited member
+            // of their name whatever its signature, just like a property.
+            foreach (SignalEmission signal in Signals)
+            {
+                yield return SurfaceBuilder.PropertyKey(signal.Plan.Name);
+
+                if (signal.Plan.ArgsName is { } argsName)
+                {
+                    yield return SurfaceBuilder.PropertyKey(argsName);
+                }
+
+                if (signal.Plan.HandlerName is { } handlerName)
+                {
+                    yield return SurfaceBuilder.PropertyKey(handlerName);
+                }
             }
         }
     }
@@ -168,6 +203,7 @@ internal sealed class SurfaceBuilder
     /// <param name="reserved">The names that must not be used at all.</param>
     /// <param name="inherited">The names of the members of the generated base classes.</param>
     /// <param name="includeProperties">Whether gir properties become C# properties.</param>
+    /// <param name="includeSignals">Whether gir signals become C# events.</param>
     /// <returns>The members to emit.</returns>
     internal TypeSurface Build(
         GirTypeDeclaration declaration,
@@ -175,7 +211,8 @@ internal sealed class SurfaceBuilder
         CallableForm methodForm,
         IEnumerable<string> reserved,
         IEnumerable<string> inherited,
-        bool includeProperties)
+        bool includeProperties,
+        bool includeSignals = false)
     {
         string module = context.Module.GirNamespace;
         HashSet<string> used = new(reserved, StringComparer.Ordinal);
@@ -201,7 +238,13 @@ internal sealed class SurfaceBuilder
             ? BuildProperties(declaration, context, used, hidden, members)
             : [];
 
-        return new TypeSurface(members, properties);
+        // The methods and the properties claim their names first, so that a
+        // signal never renames a member that is already bound.
+        List<SignalEmission> signals = includeSignals
+            ? BuildSignals(declaration, context, used, hidden)
+            : [];
+
+        return new TypeSurface(members, properties, signals);
 
         void Add(GirFunction callable, CallableForm form)
         {
@@ -316,6 +359,71 @@ internal sealed class SurfaceBuilder
         }
 
         return null;
+    }
+
+    private List<SignalEmission> BuildSignals(
+        GirTypeDeclaration declaration,
+        PlanningContext context,
+        HashSet<string> used,
+        HiddenMembers hidden)
+    {
+        string module = context.Module.GirNamespace;
+        List<SignalEmission> signals = [];
+
+        foreach (GirSignal signal in declaration.Signals)
+        {
+            SignalPlan? plan = _planner.TryPlanSignal(signal, declaration, context, out SkipReason reason);
+            if (plan is null)
+            {
+                _census.Skipped(module, reason);
+                continue;
+            }
+
+            // The event, its arguments class and its handler delegate are three
+            // members of the declaring type, so all three names have to be free
+            // before any of them is taken.
+            List<string> names = [plan.Name];
+            if (plan.ArgsName is { } argsName)
+            {
+                names.Add(argsName);
+            }
+
+            if (plan.HandlerName is { } handlerName)
+            {
+                names.Add(handlerName);
+            }
+
+            names.Add(plan.TrampolineName);
+
+            bool free = true;
+            foreach (string name in names)
+            {
+                free &= !used.Contains(name);
+            }
+
+            if (!free)
+            {
+                _census.Skipped(module, SkipReason.NameCollision);
+                _diagnostics.Warn(
+                    "GEN0011",
+                    $"The '{signal.Name}' signal of '{declaration.Name}' would be emitted as '{plan.Name}', which is "
+                    + "already taken; the event is skipped. Add a rename to fixups.json to bind it.");
+                continue;
+            }
+
+            foreach (string name in names)
+            {
+                used.Add(name);
+            }
+
+            signals.Add(new SignalEmission(
+                plan,
+                hidden.HidesName(plan.Name),
+                plan.ArgsName is not null && hidden.HidesName(plan.ArgsName)));
+            _census.Emitted(module, "signal");
+        }
+
+        return signals;
     }
 
     private List<PropertyEmission> BuildProperties(

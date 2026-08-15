@@ -573,7 +573,7 @@ internal sealed class RecordEmitter
                 _census.Skipped(module.GirNamespace, SkipReason.UnsupportedSignature);
             }
 
-            return new TypeSurface([], []);
+            return new TypeSurface([], [], []);
         }
 
         List<string> reserved = [.. SurfaceBuilder.WrapperNames, typeName];

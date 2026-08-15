@@ -119,6 +119,7 @@ public sealed class ClassEmitterTests
         Assert.Equal(18, census.EmittedCount("Gst", "callback"));
         Assert.Equal(1201, census.EmittedCount("Gst", "method"));
         Assert.Equal(19, census.EmittedCount("Gst", "property"));
+        Assert.Equal(19, census.EmittedCount("Gst", "signal"));
     }
 
     [Fact]
@@ -131,8 +132,10 @@ public sealed class ClassEmitterTests
         Assert.Equal(53, census.SkippedCount("Gst", SkipReason.VarArgs));
         Assert.Equal(118, census.SkippedCount("Gst", SkipReason.NotIntrospectable));
         Assert.Equal(355, census.SkippedCount("Gst", SkipReason.UnsupportedSignature));
-        Assert.Equal(10, census.SkippedCount("Gst", SkipReason.NameCollision));
+        // Ten methods, plus the two signals whose C# name a method already took.
+        Assert.Equal(12, census.SkippedCount("Gst", SkipReason.NameCollision));
         Assert.Equal(0, census.SkippedCount("Gst", SkipReason.NoCIdentifier));
+        Assert.Equal(2, census.SkippedCount("Gst", SkipReason.InterfaceSignal));
     }
 
     [Fact]
