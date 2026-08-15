@@ -18,6 +18,7 @@
          the type is only reachable through an alias. The reference stays in the
          global alias as well, so that every other type is used unqualified. -->
     <ProjectReference Include="../../src/GstSharp.Net/GstSharp.Net.csproj" Aliases="global,gstsharp" />
+    <ProjectReference Include="../../src/GstSharp.Net.App/GstSharp.Net.App.csproj" />
   </ItemGroup>
 
 </Project>

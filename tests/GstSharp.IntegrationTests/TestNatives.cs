@@ -33,6 +33,20 @@ internal static unsafe partial class TestNatives
     [LibraryImport("Gst", EntryPoint = "gst_buffer_get_size")]
     internal static partial nuint BufferGetSize(nint buffer);
 
+    /// <summary>Creates a sample out of a buffer and its caps.</summary>
+    /// <param name="buffer">The buffer of the sample, or <c>0</c>.</param>
+    /// <param name="caps">The caps of the sample, or <c>0</c>.</param>
+    /// <param name="segment">The segment of the sample, or <c>0</c>.</param>
+    /// <param name="info">The info structure of the sample, or <c>0</c>.</param>
+    /// <returns>The new sample, owned by the caller.</returns>
+    /// <remarks>
+    /// The sample takes a reference of the buffer and copies the caps; the
+    /// generator does not emit constructors of mini objects yet, so the tests
+    /// that need one call the C function.
+    /// </remarks>
+    [LibraryImport("Gst", EntryPoint = "gst_sample_new")]
+    internal static partial nint SampleNew(nint buffer, nint caps, nint segment, nint info);
+
     /// <summary>Builds a pipeline from its textual description.</summary>
     /// <param name="description">The description, as UTF-8.</param>
     /// <param name="error">Receives the <c>GError</c> of a failed call.</param>
