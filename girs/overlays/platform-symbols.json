@@ -1,0 +1,4 @@
+{
+  "$comment": "c:identifier -> platform support overrides. The generator turns each entry into [SupportedOSPlatform]/[UnsupportedOSPlatform] attributes on the emitted member. Symbols absent from this file are assumed to exist on every platform.",
+  "symbols": {}
+}

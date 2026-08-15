@@ -1,0 +1,17 @@
+# LF everywhere, matching .editorconfig (end_of_line = lf).
+* text=auto eol=lf
+
+*.cs      text eol=lf
+*.gir     text eol=lf
+*.json    text eol=lf
+*.csproj  text eol=lf
+*.props   text eol=lf
+*.targets text eol=lf
+*.md      text eol=lf
+*.yml     text eol=lf
+
+# Visual Studio rewrites solution files with CRLF.
+*.sln     text eol=crlf
+
+*.png binary
+*.dll binary

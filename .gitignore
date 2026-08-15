@@ -1,0 +1,19 @@
+# Build output
+bin/
+obj/
+artifacts/
+
+# IDE
+.vs/
+.idea/
+*.user
+*.suo
+*.userprefs
+
+# Test / publish
+[Tt]est[Rr]esults/
+publish/
+
+# OS
+Thumbs.db
+.DS_Store

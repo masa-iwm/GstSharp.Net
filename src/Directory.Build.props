@@ -1,0 +1,31 @@
+<Project>
+
+  <!-- MSBuild only auto-imports the nearest Directory.Build.props, so the
+       repository-root file has to be imported explicitly from here. -->
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+
+  <PropertyGroup Label="Shipping libraries">
+    <!-- Every shipping library must stay NativeAOT friendly. The netstandard2.0
+         analyzer project turns this off again, because IsAotCompatible is only
+         understood from net8.0 onwards. -->
+    <IsAotCompatible>true</IsAotCompatible>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <Deterministic>true</Deterministic>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+
+  <PropertyGroup Label="Package metadata">
+    <VersionPrefix>1.28.0</VersionPrefix>
+    <Authors>GstSharp.Net contributors</Authors>
+    <Company>GstSharp.Net</Company>
+    <Product>GstSharp.Net</Product>
+    <Description>NativeAOT-first .NET bindings for GStreamer 1.28.</Description>
+    <PackageLicenseExpression>LGPL-2.1-or-later</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/OWNER/GstSharp.Net</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/OWNER/GstSharp.Net.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>gstreamer;multimedia;native;aot;interop</PackageTags>
+    <Copyright>Copyright (c) GstSharp.Net contributors</Copyright>
+  </PropertyGroup>
+
+</Project>

@@ -1,0 +1,6 @@
+{
+  "$comment": "Corrections applied on top of the reference gir files. 'skip' removes symbols from generation, 'rename' overrides the derived C# name, 'annotationOverrides' patches wrong or missing transfer/nullable/array annotations.",
+  "skip": [],
+  "rename": {},
+  "annotationOverrides": {}
+}
