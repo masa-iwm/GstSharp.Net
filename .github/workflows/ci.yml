@@ -1,0 +1,373 @@
+# Push and pull request gates.
+#
+# The jobs are split by what they need from the machine:
+#
+#   verify            no native GStreamer at all: generator drift, a
+#                     warning-free build, and every test suite that runs
+#                     against fakes rather than against the library.
+#   linux             the Linux SONAME path of the native loader.
+#   macos             the macOS dylib path of the native loader.
+#   windows-mingw     the MinGW flavor, found the way a developer with MSYS2
+#                     finds it: from the process search path, with no
+#                     environment variable to help it.
+#   windows-msvc-aot  the MSVC flavor plus the two NativeAOT gates.
+#
+# eng/ci-notes.md explains every installation strategy, the pinned versions and
+# how to run the same gate on a development machine.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  # Called by release.yml, so that a tag runs the same gates as a branch.
+  workflow_call:
+  workflow_dispatch:
+
+# Only the newest commit of a branch or pull request has to be green.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_NOLOGO: 'true'
+  DOTNET_CLI_TELEMETRY_OPTOUT: 'true'
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 'true'
+
+jobs:
+  # --------------------------------------------------------------------------
+  # Everything that holds without a GStreamer installation.
+  # --------------------------------------------------------------------------
+  verify:
+    name: verify (no native)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/Directory.Packages.props', '**/*.csproj', 'global.json') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      - name: Restore
+        run: dotnet restore GstSharp.Net.sln
+
+      # The generated sources are committed, so the gate is that regenerating
+      # them changes nothing: 271 files plus girs/skip-report.md, which the
+      # generator writes next to the gir files it was derived from.
+      - name: Generator drift
+        run: dotnet run --project generator/GstSharp.Generator --no-restore -- verify --gir-dir girs --out-dir src
+
+      # TreatWarningsAsErrors is already on in Directory.Build.props. The
+      # -warnaserror switch additionally promotes MSBuild and NuGet warnings,
+      # which this repository also keeps at zero.
+      - name: Build
+        run: dotnet build GstSharp.Net.sln --no-restore -warnaserror
+
+      - name: Test the generator
+        run: dotnet test tests/GstSharp.Generator.Tests --no-restore --logger "trx;LogFileName=generator.trx" --results-directory artifacts/test-results
+
+      - name: Test the analyzers
+        run: dotnet test tests/GstSharp.Analyzers.Tests --no-restore --logger "trx;LogFileName=analyzers.trx" --results-directory artifacts/test-results
+
+      # GstSharp.Core.Tests is native free by construction: the loader rules run
+      # against FakePlatformProbe and the marshalling tests stop before the
+      # first call into GLib. Running them on a machine without GStreamer is
+      # what keeps that true.
+      - name: Test the runtime (proves it needs no GStreamer)
+        run: dotnet test tests/GstSharp.Core.Tests --no-restore --logger "trx;LogFileName=core.trx" --results-directory artifacts/test-results
+
+      - name: Upload test results
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-verify
+          path: artifacts/test-results
+          if-no-files-found: ignore
+          retention-days: 7
+
+  # --------------------------------------------------------------------------
+  # Linux: the loader resolves libgstreamer-1.0.so.0 by SONAME through the
+  # dynamic linker, which no other job exercises. The runner is pinned to
+  # 24.04 because its GStreamer 1.24 is the floor the ABI probes assert
+  # against; ubuntu-latest would silently lift that floor.
+  # --------------------------------------------------------------------------
+  linux:
+    name: linux (GStreamer from apt)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/Directory.Packages.props', '**/*.csproj', 'global.json') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      # Runtime packages only: the binding loads versioned SONAMEs
+      # (libgstreamer-1.0.so.0, libgstapp-1.0.so.0), which the runtime packages
+      # provide. The -dev packages would only add headers and the unversioned
+      # symlinks, neither of which is used.
+      - name: Install GStreamer
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libgstreamer1.0-0 \
+            libgstreamer-plugins-base1.0-0 \
+            gstreamer1.0-plugins-base \
+            gstreamer1.0-plugins-good \
+            gstreamer1.0-tools
+          gst-inspect-1.0 --version
+
+      - name: Restore
+        run: dotnet restore GstSharp.Net.sln
+
+      - name: Build
+        run: dotnet build GstSharp.Net.sln --no-restore
+
+      - name: Test the runtime
+        run: dotnet test tests/GstSharp.Core.Tests --no-restore --logger "trx;LogFileName=core.trx" --results-directory artifacts/test-results
+
+      - name: Test against the installation
+        run: dotnet test tests/GstSharp.IntegrationTests --no-restore --logger "trx;LogFileName=integration.trx" --results-directory artifacts/test-results
+
+      # Acceptance 5.1 and 5.9 without AOT: parse a pipeline, cast the sink
+      # through the GType registry, read every frame through a span.
+      - name: AppSinkSpans
+        run: dotnet run --project samples/AppSinkSpans --no-restore -- --mode pull
+
+      - name: Upload test results
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-linux
+          path: artifacts/test-results
+          if-no-files-found: ignore
+          retention-days: 7
+
+  # --------------------------------------------------------------------------
+  # macOS: the dylib file names and the Homebrew directory of the unix planner.
+  # --------------------------------------------------------------------------
+  macos:
+    name: macos (GStreamer from Homebrew)
+    runs-on: macos-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/Directory.Packages.props', '**/*.csproj', 'global.json') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      # The formula bundles core, base, good, bad, ugly and libav, and installs
+      # into /opt/homebrew/lib on the arm64 runners, which is one of the
+      # directories NativeInstallPlanner.EnumerateUnixDirectories tries.
+      - name: Install GStreamer
+        run: |
+          brew install gstreamer
+          gst-inspect-1.0 --version
+
+      - name: Restore
+        run: dotnet restore GstSharp.Net.sln
+
+      - name: Build
+        run: dotnet build GstSharp.Net.sln --no-restore
+
+      - name: Test the runtime
+        run: dotnet test tests/GstSharp.Core.Tests --no-restore --logger "trx;LogFileName=core.trx" --results-directory artifacts/test-results
+
+      - name: Test against the installation
+        run: dotnet test tests/GstSharp.IntegrationTests --no-restore --logger "trx;LogFileName=integration.trx" --results-directory artifacts/test-results
+
+      - name: AppSinkSpans
+        run: dotnet run --project samples/AppSinkSpans --no-restore -- --mode pull
+
+      - name: Upload test results
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-macos
+          path: artifacts/test-results
+          if-no-files-found: ignore
+          retention-days: 7
+
+  # --------------------------------------------------------------------------
+  # Windows, MinGW flavor. MSYS2 is how the maintainer's machine is set up and
+  # the only way to get the "lib" prefixed Windows file names under test. The
+  # installation is deliberately not announced through an environment variable:
+  # putting mingw64\bin on PATH is exactly what the MSYS2 branch of
+  # NativeInstallPlanner has to recognize.
+  # --------------------------------------------------------------------------
+  windows-mingw:
+    name: windows (MinGW from MSYS2)
+    runs-on: windows-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/Directory.Packages.props', '**/*.csproj', 'global.json') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      - name: Install MSYS2 with GStreamer
+        id: msys2
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: false
+          path-type: minimal
+          install: >-
+            mingw-w64-x86_64-gstreamer
+            mingw-w64-x86_64-gst-plugins-base
+            mingw-w64-x86_64-gst-plugins-good
+
+      # The planner walks PATH, recognizes the msys64 root inside the entry and
+      # probes ucrt64\bin, mingw64\bin and clang64\bin below it. Prepending the
+      # directory also lets the plugins find their own dependencies.
+      - name: Put the MinGW installation on PATH
+        shell: pwsh
+        run: |
+          $bin = Join-Path '${{ steps.msys2.outputs.msys2-location }}' 'mingw64\bin'
+          if (-not (Test-Path (Join-Path $bin 'libgstreamer-1.0-0.dll'))) {
+            throw "No MinGW GStreamer below $bin."
+          }
+          Write-Host "MinGW GStreamer: $bin"
+          & (Join-Path $bin 'gst-inspect-1.0.exe') --version
+          $bin | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      - name: Restore
+        run: dotnet restore GstSharp.Net.sln
+
+      - name: Build
+        run: dotnet build GstSharp.Net.sln --no-restore
+
+      - name: Test the runtime
+        run: dotnet test tests/GstSharp.Core.Tests --no-restore --logger "trx;LogFileName=core.trx" --results-directory artifacts/test-results
+
+      - name: Test against the installation
+        run: dotnet test tests/GstSharp.IntegrationTests --no-restore --logger "trx;LogFileName=integration.trx" --results-directory artifacts/test-results
+
+      # Also the diagnostic of this job: the sample prints which flavor and
+      # which directory the loader pinned, so a detection change shows up in
+      # the log even while the tests still pass.
+      - name: AppSinkSpans
+        run: dotnet run --project samples/AppSinkSpans --no-restore -- --mode pull
+
+      - name: Upload test results
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-windows-mingw
+          path: artifacts/test-results
+          if-no-files-found: ignore
+          retention-days: 7
+
+  # --------------------------------------------------------------------------
+  # Windows, MSVC flavor: the official installer plus the two NativeAOT gates.
+  # --------------------------------------------------------------------------
+  windows-msvc-aot:
+    name: windows (MSVC installer, NativeAOT)
+    runs-on: windows-latest
+    timeout-minutes: 40
+
+    env:
+      GSTREAMER_VERSION: '1.28.6'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/Directory.Packages.props', '**/*.csproj', 'global.json') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      # The installer does not change for a pinned version, so downloading it
+      # once per week of cache lifetime is enough.
+      - name: Cache the GStreamer installer
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}\gstreamer-download
+          key: gstreamer-msvc-x86_64-${{ env.GSTREAMER_VERSION }}
+
+      - name: Install GStreamer (MSVC)
+        shell: pwsh
+        run: >
+          ./eng/install-gstreamer-windows.ps1
+          -Version $env:GSTREAMER_VERSION
+          -Flavor msvc
+          -DownloadDirectory "$env:RUNNER_TEMP\gstreamer-download"
+
+      - name: Restore
+        run: dotnet restore GstSharp.Net.sln
+
+      - name: Build
+        run: dotnet build GstSharp.Net.sln --no-restore
+
+      # Gate 1: nothing the runtime does may produce a trimming or an AOT
+      # warning, and the published executable has to reach the native library.
+      - name: NativeAOT smoke
+        shell: pwsh
+        run: ./eng/aot-gate.ps1 -Project samples/AotSmoke -Rid win-x64
+
+      # Gate 2, acceptance 5.9: ParseLaunch plus GetByName-as-AppSink under
+      # full trimming. A missing GType registration fails as a null cast at run
+      # time and not as a build warning, so the gate is the exit code of the
+      # published executable.
+      - name: NativeAOT type registry
+        shell: pwsh
+        run: >
+          ./eng/aot-gate.ps1
+          -Project samples/AppSinkSpans
+          -Rid win-x64
+          -Property InvariantGlobalization=true
+          -RunArguments '--mode','pull'
+
+      - name: Upload publish logs
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: publish-logs-windows-msvc
+          path: artifacts/logs
+          if-no-files-found: ignore
+          retention-days: 7

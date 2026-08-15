@@ -1,0 +1,111 @@
+# Tag -> pack -> GitHub Packages.
+#
+# Pushing a tag such as v1.28.0-preview.1 runs the whole CI matrix first and
+# then publishes every package of the set under the version the tag names.
+# Nothing is published from a branch: the tag is the only trigger.
+#
+# The push target is the feed the acceptance application consumes,
+# https://nuget.pkg.github.com/masa-iwm/index.json, which needs authentication
+# even for public packages. GITHUB_TOKEN of this repository is enough for the
+# push; consumers need a token with read:packages.
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+# Two tags must never publish at the same time, and a running publish is never
+# cancelled: a half pushed set is worse than a slow one.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  # The same gates a branch gets. A release is rare, so it pays for the full
+  # matrix rather than for a shortened copy of it.
+  ci:
+    uses: ./.github/workflows/ci.yml
+
+  pack:
+    name: pack and push
+    needs: ci
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/Directory.Packages.props', '**/*.csproj', 'global.json') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      # The tag is the single source of the version, so it has to be a version:
+      # v<major>.<minor>.<patch>[-prerelease].
+      - name: Read the version from the tag
+        id: version
+        run: |
+          tag="${GITHUB_REF_NAME}"
+          if [[ ! "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "::error::'$tag' is not a version tag (expected v1.2.3 or v1.2.3-preview.1)."
+            exit 1
+          fi
+          echo "version=${tag#v}" >> "$GITHUB_OUTPUT"
+          echo "Publishing version ${tag#v}."
+
+      # Every packable project of the solution, so that this workflow does not
+      # have to be edited when the package set changes. The samples and the
+      # test projects set IsPackable=false and produce nothing.
+      #
+      # RepositoryUrl is passed on the command line because GitHub Packages
+      # rejects a package it cannot link to a repository; when the project
+      # files already set it, this passes the same value again.
+      - name: Pack
+        run: >
+          dotnet pack GstSharp.Net.sln
+          --configuration Release
+          --output artifacts/dist
+          -p:Version=${{ steps.version.outputs.version }}
+          -p:ContinuousIntegrationBuild=true
+          -p:RepositoryUrl=https://github.com/${{ github.repository }}
+          -p:RepositoryType=git
+
+      - name: List the packages
+        run: ls -l artifacts/dist
+
+      # Keep the packages whatever the push does: a rejected push must not cost
+      # the artifacts of a green build. Symbol packages are collected here as
+      # well, because the feed does not take them (see below).
+      - name: Upload the packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: packages-${{ steps.version.outputs.version }}
+          path: |
+            artifacts/dist/*.nupkg
+            artifacts/dist/*.snupkg
+          if-no-files-found: error
+          retention-days: 30
+
+      # --no-symbols: GitHub Packages has no symbol server, and dotnet nuget
+      # push would otherwise upload the .snupkg next to each .nupkg and fail on
+      # it. Symbols travel as the build artifact above instead.
+      - name: Push to GitHub Packages
+        run: >
+          dotnet nuget push "artifacts/dist/*.nupkg"
+          --source https://nuget.pkg.github.com/masa-iwm/index.json
+          --api-key ${{ secrets.GITHUB_TOKEN }}
+          --skip-duplicate
+          --no-symbols
