@@ -140,7 +140,23 @@ public static class TypeRegistry
                         continue;
                     }
 
-                    nuint type = entry.GetNativeType();
+                    nuint type;
+                    try
+                    {
+                        type = entry.GetNativeType();
+                    }
+                    catch (EntryPointNotFoundException)
+                    {
+                        // The installed GStreamer predates this type (for
+                        // example GstIdStr needs 1.26 while Ubuntu 24.04
+                        // ships 1.24). Skip the registration: instances fall
+                        // back to an ancestor wrapper, and calling one of the
+                        // type's methods still surfaces the missing export at
+                        // call time, which is the documented contract for
+                        // older-than-recommended installations.
+                        continue;
+                    }
+
                     if (type != GType.InvalidValue)
                     {
                         map[type] = new TypeEntry(entry.Factory);
