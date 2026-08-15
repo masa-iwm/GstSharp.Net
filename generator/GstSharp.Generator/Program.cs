@@ -1,4 +1,6 @@
 using System.Globalization;
+using GstSharp.Generator.Emit;
+using GstSharp.Generator.Semantic;
 
 namespace GstSharp.Generator;
 
@@ -9,7 +11,8 @@ internal static class Program
 {
     private const int ExitSuccess = 0;
     private const int ExitUsage = 1;
-    private const int ExitNotImplemented = 2;
+    private const int ExitDifferences = 1;
+    private const int ExitFailed = 2;
 
     internal static int Main(string[] args)
     {
@@ -26,11 +29,104 @@ internal static class Program
             return ExitUsage;
         }
 
-        // The pipeline (GirParsing -> Semantic -> Planning -> Emit) is added in M1.
-        Console.Error.WriteLine(string.Create(
+        try
+        {
+            GenerationResult result = GenerationPipeline.Run(options.GirDirectory);
+            ReportDiagnostics(result);
+            if (HasErrors(result))
+            {
+                return ExitFailed;
+            }
+
+            return options.Verb == GeneratorVerb.Generate ? Generate(options, result) : Verify(options, result);
+        }
+        catch (Exception exception)
+            when (exception is IOException or UnauthorizedAccessException or InvalidDataException)
+        {
+            Console.Error.WriteLine(exception.Message);
+            return ExitFailed;
+        }
+    }
+
+    private static int Generate(GeneratorOptions options, GenerationResult result)
+    {
+        foreach (GeneratedFile file in result.Files)
+        {
+            CodeWriter.WriteFile(ToAbsolutePath(options.OutputDirectory, file.RelativePath), file.Content);
+        }
+
+        Console.Out.WriteLine(string.Create(
             CultureInfo.InvariantCulture,
-            $"'{options.Verb}' is not implemented yet (gir dir: '{options.GirDirectory}', out dir: '{options.OutputDirectory}')."));
-        return ExitNotImplemented;
+            $"Generated {result.Files.Count} file(s) below '{options.OutputDirectory}'."));
+        return ExitSuccess;
+    }
+
+    private static int Verify(GeneratorOptions options, GenerationResult result)
+    {
+        string scratch = Path.Combine(Path.GetTempPath(), "GstSharp.Generator", Path.GetRandomFileName());
+        List<string> differences = [];
+        try
+        {
+            foreach (GeneratedFile file in result.Files)
+            {
+                string scratchPath = ToAbsolutePath(scratch, file.RelativePath);
+                CodeWriter.WriteFile(scratchPath, file.Content);
+
+                string committedPath = ToAbsolutePath(options.OutputDirectory, file.RelativePath);
+                if (!File.Exists(committedPath)
+                    || !File.ReadAllBytes(committedPath).AsSpan().SequenceEqual(File.ReadAllBytes(scratchPath)))
+                {
+                    differences.Add(file.RelativePath);
+                }
+            }
+        }
+        finally
+        {
+            if (Directory.Exists(scratch))
+            {
+                Directory.Delete(scratch, recursive: true);
+            }
+        }
+
+        if (differences.Count == 0)
+        {
+            Console.Out.WriteLine(string.Create(
+                CultureInfo.InvariantCulture,
+                $"{result.Files.Count} generated file(s) are up to date."));
+            return ExitSuccess;
+        }
+
+        Console.Error.WriteLine("The committed sources differ from the generator output:");
+        foreach (string difference in differences)
+        {
+            Console.Error.WriteLine("  " + difference);
+        }
+
+        return ExitDifferences;
+    }
+
+    private static string ToAbsolutePath(string root, string relativePath) =>
+        Path.Combine(root, relativePath.Replace('/', Path.DirectorySeparatorChar));
+
+    private static bool HasErrors(GenerationResult result)
+    {
+        foreach (Diagnostic diagnostic in result.Diagnostics)
+        {
+            if (diagnostic.Severity == DiagnosticSeverity.Error)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static void ReportDiagnostics(GenerationResult result)
+    {
+        foreach (Diagnostic diagnostic in result.Diagnostics)
+        {
+            Console.Error.WriteLine(diagnostic.ToString());
+        }
     }
 
     private static bool IsHelp(string arg) =>

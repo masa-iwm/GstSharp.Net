@@ -7,4 +7,10 @@
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <!-- The generator is an executable; its types stay internal and the test
+         project reaches them through this. -->
+    <InternalsVisibleTo Include="GstSharp.Generator.Tests" />
+  </ItemGroup>
+
 </Project>
