@@ -4,4 +4,11 @@
     <RootNamespace>Gst</RootNamespace>
   </PropertyGroup>
 
+  <ItemGroup>
+    <!-- The native loader is split into a thin probe and pure ordering rules,
+         and the rules are internal. The tests exercise them against a fake
+         machine, so that no GStreamer installation is needed. -->
+    <InternalsVisibleTo Include="GstSharp.Core.Tests" />
+  </ItemGroup>
+
 </Project>
