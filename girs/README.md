@@ -10,8 +10,9 @@ generator.
 
 | File | Source |
 | --- | --- |
-| `Gst-1.0.gir`, `GstBase-1.0.gir`, `GstApp-1.0.gir`, `GstVideo-1.0.gir`, `GstAudio-1.0.gir`, `GstPbutils-1.0.gir` | GStreamer monorepo, `girs/` directory, commit `2d3e05cbdad68e47d645f548899b432dc9fb4473` ("Release 1.28.6", 2026-08-05). Linux flavor. |
+| `Gst-1.0.gir`, `GstBase-1.0.gir`, `GstApp-1.0.gir`, `GstVideo-1.0.gir`, `GstAudio-1.0.gir`, `GstPbutils-1.0.gir`, `GstNet-1.0.gir`, `GstSdp-1.0.gir`, `GstRtsp-1.0.gir`, `GstWebRTC-1.0.gir`, `GES-1.0.gir` | GStreamer monorepo, `girs/` directory, commit `2d3e05cbdad68e47d645f548899b432dc9fb4473` ("Release 1.28.6", 2026-08-05). Linux flavor. |
 | `GLib-2.0.gir`, `GObject-2.0.gir`, `GModule-2.0.gir` | GStreamer 1.28.6 MSVC installer (`share/gir-1.0`). Used only for cross-namespace type resolution; the GLib/GObject runtime layer is hand-written in `src/GstSharp.Net/Core/` and is never generated from these files. |
+| `Gio-2.0.gir` | GStreamer 1.28.6 MSVC installer (`gstreamer-1.0-msvc-x86_64-1.28.6.exe`, `share/gir-1.0`), unpacked with `innoextract` without running the installer, then normalized from CRLF to LF. Joins the GLib stack: cross-namespace type resolution only, never generated. |
 
 The GStreamer girs are the canonical API source. The Linux flavor is used
 because it is the one tracked in the monorepo, so it can be refreshed
@@ -26,15 +27,40 @@ PowerShell would re-encode the files):
 ```sh
 GST=/path/to/gstreamer            # monorepo checkout
 REV=2d3e05cbdad68e47d645f548899b432dc9fb4473
-for m in Gst-1.0 GstBase-1.0 GstApp-1.0 GstVideo-1.0 GstAudio-1.0 GstPbutils-1.0; do
+for m in Gst-1.0 GstBase-1.0 GstApp-1.0 GstVideo-1.0 GstAudio-1.0 GstPbutils-1.0 \
+         GstNet-1.0 GstSdp-1.0 GstRtsp-1.0 GstWebRTC-1.0 GES-1.0; do
     git -C "$GST" show "$REV:girs/$m.gir" > girs/reference/"$m".gir
 done
 ```
 
-The GLib stack is copied from an installed GStreamer 1.28.6 (MSVC flavor):
+The GLib stack — `GLib-2.0.gir`, `GObject-2.0.gir`, `GModule-2.0.gir` and
+`Gio-2.0.gir` — is *not* in the monorepo `girs/` directory. It ships in the
+`share/gir-1.0` payload of the Windows MSVC installer, which `innoextract`
+unpacks without running the installer:
 
 ```sh
-cp "$GST"/girs/{GLib-2.0.gir,GObject-2.0.gir,GModule-2.0.gir} girs/reference/
+INSTALLER=/path/to/gstreamer-1.0-msvc-x86_64-<version>.exe
+OUT=/path/to/scratch                # anywhere outside the repository
+innoextract --include GLib-2.0.gir --include GObject-2.0.gir \
+    --include GModule-2.0.gir --include Gio-2.0.gir \
+    --output-dir "$OUT" "$INSTALLER"
+```
+
+A single invocation matters: every run decompresses the installer's whole
+solid stream, so one pass with four `--include` filters is four times faster
+than four passes. Note that `--include` matches bare file names; full
+`app/share/...` paths match nothing. A name filter also cannot end the run
+early — after the last match the tool keeps scanning the rest of the stream
+for further files of the same names, which takes far longer than the
+extraction itself. The gir files appear within the first minutes, so it is
+safe to abort the run once all four are on disk.
+
+Those files use CRLF, so normalize them while copying them in:
+
+```sh
+for m in GLib-2.0 GObject-2.0 GModule-2.0 Gio-2.0; do
+    tr -d '\r' < "$OUT"/app/share/gir-1.0/"$m".gir > girs/reference/"$m".gir
+done
 ```
 
 After refreshing, update the commit hash in the table above, run
@@ -43,13 +69,19 @@ and commit the regenerated sources together with the gir change.
 
 ## Sanity checks
 
-* The GStreamer girs start with the `<!-- This file was automatically generated
-  from C sources -->` comment; unlike the GLib stack they carry no `<?xml ... ?>`
-  declaration.
+* Every one of the eleven GStreamer girs starts with the `<!-- This file was
+  automatically generated from C sources -->` comment and carries no
+  `<?xml ... ?>` declaration.
+* The four GLib stack girs, `Gio-2.0.gir` included, do carry the `<?xml ... ?>`
+  declaration. That is the one structural difference between the two families.
 * `Gst-1.0.gir` declares `VERSION_MAJOR=1`, `VERSION_MINOR=28`, `VERSION_MICRO=6`.
 * Each GStreamer gir carries the Linux `shared-library` attribute, for example
-  `shared-library="libgstreamer-1.0.so.0"`.
-* All files use LF line endings (`.gitattributes` enforces `*.gir text eol=lf`).
+  `shared-library="libgstreamer-1.0.so.0"`. `Gio-2.0.gir` carries the Windows
+  MSVC name, `shared-library="gio-2.0-0.dll"`, because it comes from the MSVC
+  installer; the attribute is ignored by the generator either way, exactly as it
+  is for the other girs.
+* No file has a byte order mark, and all of them use LF line endings
+  (`.gitattributes` enforces `*.gir text eol=lf`).
 
 ## Platform differences
 

@@ -23,9 +23,15 @@ public sealed class CensusTests
     [InlineData("GstAudio", 13, 40, 1, 16, 7, 5, 0, 39, 54)]
     [InlineData("GstVideo", 12, 65, 5, 34, 17, 5, 0, 79, 175)]
     [InlineData("GstPbutils", 13, 9, 0, 3, 2, 2, 7, 9, 70)]
+    [InlineData("GstNet", 4, 10, 0, 0, 0, 1, 0, 6, 16)]
+    [InlineData("GstSdp", 0, 21, 0, 13, 0, 0, 0, 7, 12)]
+    [InlineData("GstRtsp", 0, 13, 1, 10, 5, 1, 0, 1, 32)]
+    [InlineData("GstWebRTC", 9, 13, 0, 23, 0, 1, 0, 0, 2)]
+    [InlineData("GES", 55, 111, 2, 9, 4, 10, 1, 19, 19)]
     [InlineData("GLib", 0, 79, 0, 39, 22, 56, 14, 131, 689)]
     [InlineData("GObject", 30, 29, 1, 0, 8, 34, 3, 15, 185)]
     [InlineData("GModule", 0, 1, 0, 1, 1, 2, 0, 0, 4)]
+    [InlineData("Gio", 103, 213, 37, 43, 39, 30, 0, 129, 140)]
     public void NamespaceCensusIsStable(
         string name,
         int classes,
@@ -51,6 +57,9 @@ public sealed class CensusTests
         Assert.Equal(functions, ns.Functions.Count);
     }
 
+    // Only the GStreamer girs are listed. The GLib stack - GLib, GObject,
+    // GModule and Gio - is vendored for cross-namespace type resolution alone,
+    // so none of its signals is ever bound.
     [Theory]
     [InlineData("Gst", 23)]
     [InlineData("GstBase", 4)]
@@ -58,6 +67,11 @@ public sealed class CensusTests
     [InlineData("GstAudio", 0)]
     [InlineData("GstVideo", 2)]
     [InlineData("GstPbutils", 5)]
+    [InlineData("GstNet", 0)]
+    [InlineData("GstSdp", 0)]
+    [InlineData("GstRtsp", 1)]
+    [InlineData("GstWebRTC", 12)]
+    [InlineData("GES", 39)]
     public void SignalCensusIsStable(string name, int signals)
     {
         GirNamespace ns = GirFixture.Namespace(name);
@@ -79,9 +93,13 @@ public sealed class CensusTests
     [Fact]
     public void EveryReferenceGirIsLoaded()
     {
+        // Ordinal order, which is the order Repository.Load returns: "Gio"
+        // sorts after "GObject" and before "Gst" because the upper case
+        // letters come first.
         string[] expected =
         [
-            "GLib", "GModule", "GObject", "Gst", "GstApp", "GstAudio", "GstBase", "GstPbutils", "GstVideo",
+            "GES", "GLib", "GModule", "GObject", "Gio", "Gst", "GstApp", "GstAudio", "GstBase", "GstNet",
+            "GstPbutils", "GstRtsp", "GstSdp", "GstVideo", "GstWebRTC",
         ];
 
         Assert.Equal(expected, GirFixture.Repository.Namespaces.Select(static ns => ns.Name).ToArray());
