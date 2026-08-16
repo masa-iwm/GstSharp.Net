@@ -76,6 +76,7 @@ public static unsafe partial class TocSetterExtensions
         ArgumentNullException.ThrowIfNull(setter);
         GstTocSetterSetToc(setter.Handle, toc is null ? 0 : toc.Handle);
         System.GC.KeepAlive(setter);
+        System.GC.KeepAlive(toc);
     }
 
     /// <summary>The <c>gst_toc_setter_get_toc</c> entry point.</summary>

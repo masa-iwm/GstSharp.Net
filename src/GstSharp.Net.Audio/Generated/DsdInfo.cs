@@ -102,6 +102,7 @@ public sealed unsafe partial class DsdInfo : Gst.GObject.Boxed
     {
         ArgumentNullException.ThrowIfNull(caps);
         nint nativeResult = GstDsdInfoNewFromCaps(caps.Handle);
+        System.GC.KeepAlive(caps);
         return Gst.Audio.DsdInfo.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_dsd_info_new_from_caps returned no value.");
     }
@@ -124,6 +125,7 @@ public sealed unsafe partial class DsdInfo : Gst.GObject.Boxed
         ArgumentNullException.ThrowIfNull(other);
         int nativeResult = GstDsdInfoIsEqual(Handle, other.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(other);
         return nativeResult != 0;
     }
 

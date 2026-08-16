@@ -149,6 +149,7 @@ public sealed unsafe partial class Toc : Gst.GObject.Boxed
     {
         GstTocMergeTags(Handle, tags is null ? 0 : tags.Handle, (int)mode);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(tags);
     }
 
     /// <summary>The <c>gst_toc_new</c> entry point.</summary>

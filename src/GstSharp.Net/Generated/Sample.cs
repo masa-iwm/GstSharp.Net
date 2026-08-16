@@ -118,6 +118,7 @@ public sealed unsafe partial class Sample : Gst.MiniObject
         ArgumentNullException.ThrowIfNull(buffer);
         GstSampleSetBuffer(Handle, buffer.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(buffer);
     }
 
     /// <summary>Set the buffer list associated with @sample. @sample must be writable.</summary>
@@ -127,6 +128,7 @@ public sealed unsafe partial class Sample : Gst.MiniObject
         ArgumentNullException.ThrowIfNull(bufferList);
         GstSampleSetBufferList(Handle, bufferList.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(bufferList);
     }
 
     /// <summary>Set the caps associated with @sample. @sample must be writable.</summary>
@@ -136,6 +138,7 @@ public sealed unsafe partial class Sample : Gst.MiniObject
         ArgumentNullException.ThrowIfNull(caps);
         GstSampleSetCaps(Handle, caps.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(caps);
     }
 
     /// <summary>Set the segment associated with @sample. @sample must be writable.</summary>
@@ -145,6 +148,7 @@ public sealed unsafe partial class Sample : Gst.MiniObject
         ArgumentNullException.ThrowIfNull(segment);
         GstSampleSetSegment(Handle, segment.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(segment);
     }
 
     /// <summary>The <c>gst_sample_get_buffer</c> entry point.</summary>

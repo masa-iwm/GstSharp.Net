@@ -80,6 +80,7 @@ public sealed unsafe partial class FlowCombiner : Gst.GObject.Boxed
         ArgumentNullException.ThrowIfNull(pad);
         GstFlowCombinerAddPad(Handle, pad.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(pad);
     }
 
     /// <summary>Removes all pads from a #GstFlowCombiner and resets it to its initial state.</summary>
@@ -96,6 +97,7 @@ public sealed unsafe partial class FlowCombiner : Gst.GObject.Boxed
         ArgumentNullException.ThrowIfNull(pad);
         GstFlowCombinerRemovePad(Handle, pad.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(pad);
     }
 
     /// <summary>Reset flow combiner and all pads to their initial state without removing pads.</summary>
@@ -143,6 +145,7 @@ public sealed unsafe partial class FlowCombiner : Gst.GObject.Boxed
         ArgumentNullException.ThrowIfNull(pad);
         int nativeResult = GstFlowCombinerUpdatePadFlow(Handle, pad.Handle, (int)fret);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(pad);
         return (Gst.FlowReturn)nativeResult;
     }
 

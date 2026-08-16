@@ -301,6 +301,7 @@ public unsafe partial class AppSink : Gst.Base.BaseSink, Gst.IURIHandler
     {
         GstAppSinkSetCaps(Handle, caps is null ? 0 : caps.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(caps);
     }
 
     /// <summary>

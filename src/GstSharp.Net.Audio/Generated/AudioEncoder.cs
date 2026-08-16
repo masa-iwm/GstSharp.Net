@@ -271,6 +271,7 @@ public abstract unsafe partial class AudioEncoder : Gst.Element, Gst.IPreset
     {
         GstAudioEncoderMergeTags(Handle, tags is null ? 0 : tags.Handle, (int)mode);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(tags);
     }
 
     /// <summary>
@@ -298,6 +299,8 @@ public abstract unsafe partial class AudioEncoder : Gst.Element, Gst.IPreset
     {
         nint nativeResult = GstAudioEncoderProxyGetcaps(Handle, caps is null ? 0 : caps.Handle, filter is null ? 0 : filter.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(caps);
+        System.GC.KeepAlive(filter);
         return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_audio_encoder_proxy_getcaps returned no value.");
     }
@@ -313,6 +316,7 @@ public abstract unsafe partial class AudioEncoder : Gst.Element, Gst.IPreset
     {
         GstAudioEncoderSetAllocationCaps(Handle, allocationCaps is null ? 0 : allocationCaps.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(allocationCaps);
     }
 
     /// <summary>
@@ -460,6 +464,7 @@ public abstract unsafe partial class AudioEncoder : Gst.Element, Gst.IPreset
         ArgumentNullException.ThrowIfNull(caps);
         int nativeResult = GstAudioEncoderSetOutputFormat(Handle, caps.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(caps);
         return nativeResult != 0;
     }
 

@@ -12,10 +12,10 @@ public sealed class MarshalPlannerTests
 {
     /// <summary>
     /// A namespace that exercises every projection the planner knows: strings
-    /// in both directions, an enumeration, a handle, an out parameter, a span,
-    /// a callback with user data and a destroy notification, a callable that
-    /// throws, a property built from its accessors, and the two shapes that are
-    /// rejected on purpose.
+    /// in both directions, an enumeration, a handle in both directions and in
+    /// both nullabilities, an out parameter, a span, a callback with user data
+    /// and a destroy notification, a callable that throws, a property built
+    /// from its accessors, and the two shapes that are rejected on purpose.
     /// </summary>
     private const string Body =
         """
@@ -188,6 +188,22 @@ public sealed class MarshalPlannerTests
                   </parameter>
                 </parameters>
               </method>
+              <method name="attach" c:identifier="gst_widget_attach">
+                <return-value transfer-ownership="none">
+                  <type name="none" c:type="void"/>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="widget" transfer-ownership="none">
+                    <type name="Widget" c:type="GstWidget*"/>
+                  </instance-parameter>
+                  <parameter name="caps" transfer-ownership="none">
+                    <type name="Caps" c:type="GstCaps*"/>
+                  </parameter>
+                  <parameter name="peer" transfer-ownership="none" nullable="1">
+                    <type name="Widget" c:type="GstWidget*"/>
+                  </parameter>
+                </parameters>
+              </method>
               <method name="take_caps" c:identifier="gst_widget_take_caps">
                 <return-value transfer-ownership="none">
                   <type name="none" c:type="void"/>
@@ -312,6 +328,27 @@ public sealed class MarshalPlannerTests
             }
             """,
             Run.Member("Widget.cs", "public bool Write("),
+            StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public void EveryHandleArgumentIsKeptAliveAcrossTheCall()
+    {
+        // The call reads the raw handle out of each wrapper and nothing mentions
+        // the wrappers afterwards, so the arguments need the same barrier as the
+        // instance. A nullable argument needs no guard: GC.KeepAlive takes null.
+        Assert.Equal(
+            """
+            public void Attach(Gst.Caps caps, Gst.Widget? peer)
+            {
+                ArgumentNullException.ThrowIfNull(caps);
+                GstWidgetAttach(Handle, caps.Handle, peer is null ? 0 : peer.Handle);
+                System.GC.KeepAlive(this);
+                System.GC.KeepAlive(caps);
+                System.GC.KeepAlive(peer);
+            }
+            """,
+            Run.Member("Widget.cs", "public void Attach("),
             StringComparer.Ordinal);
     }
 

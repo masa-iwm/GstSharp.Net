@@ -59,6 +59,7 @@ public sealed unsafe partial class VideoScaler
         ArgumentNullException.ThrowIfNull(vscale);
         GstVideoScaler2d(Handle, vscale.Handle, (int)format, src, srcStride, dest, destStride, x, y, width, height);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(vscale);
     }
 
     /// <summary>Free a previously allocated #GstVideoScaler @scale.</summary>

@@ -276,6 +276,7 @@ public unsafe partial class AppSrc : Gst.Base.BaseSrc, Gst.IURIHandler
         ArgumentNullException.ThrowIfNull(sample);
         int nativeResult = GstAppSrcPushSample(Handle, sample.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(sample);
         return (Gst.FlowReturn)nativeResult;
     }
 
@@ -290,6 +291,7 @@ public unsafe partial class AppSrc : Gst.Base.BaseSrc, Gst.IURIHandler
     {
         GstAppSrcSetCaps(Handle, caps is null ? 0 : caps.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(caps);
     }
 
     /// <summary>

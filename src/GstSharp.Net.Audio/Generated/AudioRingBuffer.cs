@@ -43,6 +43,7 @@ public abstract unsafe partial class AudioRingBuffer : Gst.Object
         ArgumentNullException.ThrowIfNull(spec);
         int nativeResult = GstAudioRingBufferAcquire(Handle, spec.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(spec);
         return nativeResult != 0;
     }
 
@@ -417,6 +418,7 @@ public abstract unsafe partial class AudioRingBuffer : Gst.Object
     {
         ArgumentNullException.ThrowIfNull(spec);
         GstAudioRingBufferDebugSpecBuff(spec.Handle);
+        System.GC.KeepAlive(spec);
     }
 
     /// <summary>Print debug info about the parsed caps in @spec to the debug log.</summary>
@@ -425,6 +427,7 @@ public abstract unsafe partial class AudioRingBuffer : Gst.Object
     {
         ArgumentNullException.ThrowIfNull(spec);
         GstAudioRingBufferDebugSpecCaps(spec.Handle);
+        System.GC.KeepAlive(spec);
     }
 
     /// <summary>Parse @caps into @spec.</summary>
@@ -436,6 +439,8 @@ public abstract unsafe partial class AudioRingBuffer : Gst.Object
         ArgumentNullException.ThrowIfNull(spec);
         ArgumentNullException.ThrowIfNull(caps);
         int nativeResult = GstAudioRingBufferParseCaps(spec.Handle, caps.Handle);
+        System.GC.KeepAlive(spec);
+        System.GC.KeepAlive(caps);
         return nativeResult != 0;
     }
 

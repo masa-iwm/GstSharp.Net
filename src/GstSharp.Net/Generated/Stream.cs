@@ -51,6 +51,7 @@ public unsafe partial class Stream : Gst.Object
         System.Span<byte> streamIdBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope streamIdScope = Gst.Interop.GMarshal.StackUtf8(streamId, streamIdBuffer);
         nint nativeResult = GstStreamNew(streamIdScope.Pointer, caps is null ? 0 : caps.Handle, (int)type, (int)flags);
+        System.GC.KeepAlive(caps);
         return Gst.GObject.Object.FromNative<Gst.Stream>(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_stream_new returned no value.");
     }
@@ -109,6 +110,7 @@ public unsafe partial class Stream : Gst.Object
     {
         GstStreamSetCaps(Handle, caps is null ? 0 : caps.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(caps);
     }
 
     /// <summary>Set the @flags for the @stream.</summary>
@@ -133,6 +135,7 @@ public unsafe partial class Stream : Gst.Object
     {
         GstStreamSetTags(Handle, tags is null ? 0 : tags.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(tags);
     }
 
     /// <summary>The #GstCaps of the #GstStream.</summary>

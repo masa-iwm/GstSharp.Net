@@ -51,6 +51,7 @@ public sealed unsafe partial class AudioInfo : Gst.GObject.Boxed
     {
         ArgumentNullException.ThrowIfNull(caps);
         nint nativeResult = GstAudioInfoNewFromCaps(caps.Handle);
+        System.GC.KeepAlive(caps);
         return Gst.Audio.AudioInfo.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -92,6 +93,7 @@ public sealed unsafe partial class AudioInfo : Gst.GObject.Boxed
         ArgumentNullException.ThrowIfNull(other);
         int nativeResult = GstAudioInfoIsEqual(Handle, other.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(other);
         return nativeResult != 0;
     }
 

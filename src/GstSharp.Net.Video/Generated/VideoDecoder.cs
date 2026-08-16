@@ -196,6 +196,7 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
         ArgumentNullException.ThrowIfNull(frame);
         int nativeResult = GstVideoDecoderAllocateOutputFrame(Handle, frame.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(frame);
         return (Gst.FlowReturn)nativeResult;
     }
 
@@ -212,6 +213,7 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
         Gst.BufferPoolAcquireParams @paramsNative = @params;
         int nativeResult = GstVideoDecoderAllocateOutputFrameWithParams(Handle, frame.Handle, &@paramsNative);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(frame);
         return (Gst.FlowReturn)nativeResult;
     }
 
@@ -257,6 +259,7 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
         ArgumentNullException.ThrowIfNull(frame);
         uint nativeResult = GstVideoDecoderGetInputSubframeIndex(Handle, frame.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(frame);
         return nativeResult;
     }
 
@@ -289,6 +292,7 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
         ArgumentNullException.ThrowIfNull(frame);
         long nativeResult = GstVideoDecoderGetMaxDecodeTime(Handle, frame.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(frame);
         return nativeResult;
     }
 
@@ -375,6 +379,7 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
         ArgumentNullException.ThrowIfNull(frame);
         uint nativeResult = GstVideoDecoderGetProcessedSubframeIndex(Handle, frame.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(frame);
         return nativeResult;
     }
 
@@ -425,6 +430,7 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
         ArgumentNullException.ThrowIfNull(frame);
         int nativeResult = GstVideoDecoderHaveLastSubframe(Handle, frame.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(frame);
         return (Gst.FlowReturn)nativeResult;
     }
 
@@ -446,6 +452,7 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     {
         GstVideoDecoderMergeTags(Handle, tags is null ? 0 : tags.Handle, (int)mode);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(tags);
     }
 
     /// <summary>
@@ -473,6 +480,8 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     {
         nint nativeResult = GstVideoDecoderProxyGetcaps(Handle, caps is null ? 0 : caps.Handle, filter is null ? 0 : filter.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(caps);
+        System.GC.KeepAlive(filter);
         return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_video_decoder_proxy_getcaps returned no value.");
     }
@@ -514,6 +523,7 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
         ArgumentNullException.ThrowIfNull(frame);
         GstVideoDecoderRequestSyncPoint(Handle, frame.Handle, (int)flags);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(frame);
     }
 
     /// <summary>Allows baseclass to perform byte to time estimated conversion.</summary>
@@ -538,6 +548,7 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     {
         nint nativeResult = GstVideoDecoderSetInterlacedOutputState(Handle, (int)fmt, (int)interlaceMode, width, height, reference is null ? 0 : reference.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(reference);
         return Gst.Video.VideoCodecState.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -635,6 +646,7 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     {
         nint nativeResult = GstVideoDecoderSetOutputState(Handle, (int)fmt, width, height, reference is null ? 0 : reference.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(reference);
         return Gst.Video.VideoCodecState.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
 

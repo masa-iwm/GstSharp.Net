@@ -62,6 +62,8 @@ public unsafe partial class MetaFactory : Gst.PluginFeature
         ArgumentNullException.ThrowIfNull(plugin);
         ArgumentNullException.ThrowIfNull(metaInfo);
         int nativeResult = GstMetaFactoryRegister(plugin.Handle, metaInfo.Handle);
+        System.GC.KeepAlive(plugin);
+        System.GC.KeepAlive(metaInfo);
         return nativeResult != 0;
     }
 

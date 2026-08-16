@@ -81,6 +81,8 @@ public abstract unsafe partial class AudioAggregator : Gst.Base.Aggregator
         ArgumentNullException.ThrowIfNull(caps);
         GstAudioAggregatorSetSinkCaps(Handle, pad.Handle, caps.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(pad);
+        System.GC.KeepAlive(caps);
     }
 
     /// <summary>The <c>gst_audio_aggregator_set_sink_caps</c> entry point.</summary>

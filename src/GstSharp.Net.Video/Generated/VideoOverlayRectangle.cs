@@ -56,6 +56,7 @@ public sealed unsafe partial class VideoOverlayRectangle : Gst.MiniObject
     {
         ArgumentNullException.ThrowIfNull(pixels);
         nint nativeResult = GstVideoOverlayRectangleNewRaw(pixels.Handle, renderX, renderY, renderWidth, renderHeight, (int)flags);
+        System.GC.KeepAlive(pixels);
         return Gst.Video.VideoOverlayRectangle.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_video_overlay_rectangle_new_raw returned no value.");
     }

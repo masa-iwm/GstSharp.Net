@@ -79,6 +79,7 @@ public unsafe partial class TypeFindFactory : Gst.PluginFeature
         ArgumentNullException.ThrowIfNull(find);
         GstTypeFindFactoryCallFunction(Handle, find.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(find);
     }
 
     /// <summary>Gets the #GstCaps associated with a typefind factory.</summary>

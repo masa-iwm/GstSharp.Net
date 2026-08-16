@@ -172,6 +172,7 @@ public abstract unsafe partial class Aggregator : Gst.Element
         ArgumentNullException.ThrowIfNull(pad);
         nint nativeResult = GstAggregatorPeekNextSample(Handle, pad.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(pad);
         return Gst.Sample.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -200,6 +201,7 @@ public abstract unsafe partial class Aggregator : Gst.Element
     {
         GstAggregatorSelectedSamples(Handle, pts.Nanoseconds, dts.Nanoseconds, duration.Nanoseconds, info is null ? 0 : info.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(info);
     }
 
     /// <summary>
@@ -251,6 +253,7 @@ public abstract unsafe partial class Aggregator : Gst.Element
         ArgumentNullException.ThrowIfNull(caps);
         GstAggregatorSetSrcCaps(Handle, caps.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(caps);
     }
 
     /// <summary>
@@ -289,6 +292,7 @@ public abstract unsafe partial class Aggregator : Gst.Element
         ArgumentNullException.ThrowIfNull(segment);
         GstAggregatorUpdateSegment(Handle, segment.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(segment);
     }
 
     /// <summary>The <c>latency</c> property.</summary>

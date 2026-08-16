@@ -158,6 +158,7 @@ public sealed unsafe partial class Context : Gst.MiniObject
     {
         GstContextSetTaskPool(Handle, pool is null ? 0 : pool.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(pool);
     }
 
     /// <summary>Gets a writable version of the structure.</summary>

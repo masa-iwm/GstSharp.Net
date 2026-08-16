@@ -344,6 +344,7 @@ public abstract unsafe partial class BaseTransform : Gst.Element
         ArgumentNullException.ThrowIfNull(updatedCaps);
         int nativeResult = GstBaseTransformUpdateSrcCaps(Handle, updatedCaps.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(updatedCaps);
         return nativeResult != 0;
     }
 

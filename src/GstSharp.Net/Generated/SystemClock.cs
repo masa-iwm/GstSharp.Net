@@ -62,6 +62,7 @@ public unsafe partial class SystemClock : Gst.Clock
     public static void SetDefault(Gst.Clock? newClock)
     {
         GstSystemClockSetDefault(newClock is null ? 0 : newClock.Handle);
+        System.GC.KeepAlive(newClock);
     }
 
     /// <summary>The <c>gst_system_clock_obtain</c> entry point.</summary>

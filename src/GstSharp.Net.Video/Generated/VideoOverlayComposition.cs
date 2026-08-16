@@ -67,6 +67,7 @@ public sealed unsafe partial class VideoOverlayComposition : Gst.MiniObject
     public static Gst.Video.VideoOverlayComposition New(Gst.Video.VideoOverlayRectangle? rectangle)
     {
         nint nativeResult = GstVideoOverlayCompositionNew(rectangle is null ? 0 : rectangle.Handle);
+        System.GC.KeepAlive(rectangle);
         return Gst.Video.VideoOverlayComposition.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_video_overlay_composition_new returned no value.");
     }
@@ -81,6 +82,7 @@ public sealed unsafe partial class VideoOverlayComposition : Gst.MiniObject
         ArgumentNullException.ThrowIfNull(rectangle);
         GstVideoOverlayCompositionAddRectangle(Handle, rectangle.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(rectangle);
     }
 
     /// <summary>
@@ -101,6 +103,7 @@ public sealed unsafe partial class VideoOverlayComposition : Gst.MiniObject
         ArgumentNullException.ThrowIfNull(videoBuf);
         int nativeResult = GstVideoOverlayCompositionBlend(Handle, videoBuf.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(videoBuf);
         return nativeResult != 0;
     }
 

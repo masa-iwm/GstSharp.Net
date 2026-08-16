@@ -666,6 +666,7 @@ public sealed unsafe partial class TagList : Gst.MiniObject
         ArgumentNullException.ThrowIfNull(from);
         GstTagListInsert(Handle, from.Handle, (int)mode);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(from);
     }
 
     /// <summary>Checks if the given taglist is empty.</summary>
@@ -685,6 +686,7 @@ public sealed unsafe partial class TagList : Gst.MiniObject
         ArgumentNullException.ThrowIfNull(list2);
         int nativeResult = GstTagListIsEqual(Handle, list2.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(list2);
         return nativeResult != 0;
     }
 
@@ -702,6 +704,7 @@ public sealed unsafe partial class TagList : Gst.MiniObject
     {
         nint nativeResult = GstTagListMerge(Handle, list2 is null ? 0 : list2.Handle, (int)mode);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(list2);
         return Gst.TagList.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
 

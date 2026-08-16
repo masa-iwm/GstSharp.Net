@@ -57,6 +57,7 @@ public unsafe partial class ElementFactory : Gst.PluginFeature
         ArgumentNullException.ThrowIfNull(caps);
         int nativeResult = GstElementFactoryCanSinkAllCaps(Handle, caps.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(caps);
         return nativeResult != 0;
     }
 
@@ -68,6 +69,7 @@ public unsafe partial class ElementFactory : Gst.PluginFeature
         ArgumentNullException.ThrowIfNull(caps);
         int nativeResult = GstElementFactoryCanSinkAnyCaps(Handle, caps.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(caps);
         return nativeResult != 0;
     }
 
@@ -79,6 +81,7 @@ public unsafe partial class ElementFactory : Gst.PluginFeature
         ArgumentNullException.ThrowIfNull(caps);
         int nativeResult = GstElementFactoryCanSrcAllCaps(Handle, caps.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(caps);
         return nativeResult != 0;
     }
 
@@ -90,6 +93,7 @@ public unsafe partial class ElementFactory : Gst.PluginFeature
         ArgumentNullException.ThrowIfNull(caps);
         int nativeResult = GstElementFactoryCanSrcAnyCaps(Handle, caps.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(caps);
         return nativeResult != 0;
     }
 

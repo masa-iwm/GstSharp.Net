@@ -458,6 +458,7 @@ public abstract unsafe partial class Clock : Gst.Object
     {
         int nativeResult = GstClockSetMaster(Handle, master is null ? 0 : master.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(master);
         return nativeResult != 0;
     }
 
@@ -661,6 +662,7 @@ public abstract unsafe partial class Clock : Gst.Object
     {
         ArgumentNullException.ThrowIfNull(clock);
         int nativeResult = GstClockIdUsesClock(id, clock.Handle);
+        System.GC.KeepAlive(clock);
         return nativeResult != 0;
     }
 

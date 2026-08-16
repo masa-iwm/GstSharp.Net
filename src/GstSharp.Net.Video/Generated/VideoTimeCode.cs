@@ -89,6 +89,7 @@ public sealed unsafe partial class VideoTimeCode : Gst.GObject.Boxed
         ArgumentNullException.ThrowIfNull(tcInter);
         nint nativeResult = GstVideoTimeCodeAddInterval(Handle, tcInter.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(tcInter);
         return Gst.Video.VideoTimeCode.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -114,6 +115,7 @@ public sealed unsafe partial class VideoTimeCode : Gst.GObject.Boxed
         ArgumentNullException.ThrowIfNull(tc2);
         int nativeResult = GstVideoTimeCodeCompare(Handle, tc2.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(tc2);
         return nativeResult;
     }
 

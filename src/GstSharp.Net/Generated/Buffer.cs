@@ -235,6 +235,8 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     public static Gst.Buffer? NewAllocate(Gst.Allocator? allocator, nuint size, Gst.AllocationParams? @params)
     {
         nint nativeResult = GstBufferNewAllocate(allocator is null ? 0 : allocator.Handle, size, @params is null ? 0 : @params.Handle);
+        System.GC.KeepAlive(allocator);
+        System.GC.KeepAlive(@params);
         return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -281,6 +283,7 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
         ArgumentNullException.ThrowIfNull(src);
         int nativeResult = GstBufferCopyInto(Handle, src.Handle, (int)flags, offset, size);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(src);
         return nativeResult != 0;
     }
 

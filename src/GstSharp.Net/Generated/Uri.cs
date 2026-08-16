@@ -116,6 +116,7 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
         ArgumentNullException.ThrowIfNull(second);
         int nativeResult = GstUriEqual(Handle, second.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(second);
         return nativeResult != 0;
     }
 
@@ -292,6 +293,7 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
     {
         nint nativeResult = GstUriJoin(Handle, refUri is null ? 0 : refUri.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(refUri);
         return Gst.Uri.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
 

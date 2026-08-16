@@ -43,6 +43,7 @@ public sealed unsafe partial class VideoFrame
         ArgumentNullException.ThrowIfNull(src);
         int nativeResult = GstVideoFrameCopy(Handle, src.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(src);
         return nativeResult != 0;
     }
 
@@ -61,6 +62,7 @@ public sealed unsafe partial class VideoFrame
         ArgumentNullException.ThrowIfNull(src);
         int nativeResult = GstVideoFrameCopyPlane(Handle, src.Handle, plane);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(src);
         return nativeResult != 0;
     }
 

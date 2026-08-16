@@ -145,6 +145,7 @@ public unsafe partial class Pad : Gst.Object
         System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
         nint nativeResult = GstPadNewFromTemplate(templ.Handle, nameScope.Pointer);
+        System.GC.KeepAlive(templ);
         return Gst.GObject.Object.FromNative<Gst.Pad>(nativeResult, Gst.Interop.Transfer.None)
             ?? throw new InvalidOperationException("gst_pad_new_from_template returned no value.");
     }
@@ -211,6 +212,7 @@ public unsafe partial class Pad : Gst.Object
         ArgumentNullException.ThrowIfNull(sinkpad);
         int nativeResult = GstPadCanLink(Handle, sinkpad.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(sinkpad);
         return nativeResult != 0;
     }
 
@@ -259,6 +261,7 @@ public unsafe partial class Pad : Gst.Object
         using Gst.Interop.Utf8Scope streamIdScope = Gst.Interop.GMarshal.StackUtf8(streamId, streamIdBuffer);
         nint nativeResult = GstPadCreateStreamId(Handle, parent.Handle, streamIdScope.Pointer);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(parent);
         return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
             ?? throw new InvalidOperationException("gst_pad_create_stream_id returned no value.");
     }
@@ -660,6 +663,7 @@ public unsafe partial class Pad : Gst.Object
     {
         nint nativeResult = GstPadIterateInternalLinksDefault(Handle, parent is null ? 0 : parent.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(parent);
         return Gst.Iterator.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -674,6 +678,7 @@ public unsafe partial class Pad : Gst.Object
         ArgumentNullException.ThrowIfNull(sinkpad);
         int nativeResult = GstPadLink(Handle, sinkpad.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(sinkpad);
         return (Gst.PadLinkReturn)nativeResult;
     }
 
@@ -699,6 +704,7 @@ public unsafe partial class Pad : Gst.Object
         ArgumentNullException.ThrowIfNull(sinkpad);
         int nativeResult = GstPadLinkFull(Handle, sinkpad.Handle, (int)flags);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(sinkpad);
         return (Gst.PadLinkReturn)nativeResult;
     }
 
@@ -720,6 +726,7 @@ public unsafe partial class Pad : Gst.Object
         ArgumentNullException.ThrowIfNull(sink);
         int nativeResult = GstPadLinkMaybeGhosting(Handle, sink.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(sink);
         return nativeResult != 0;
     }
 
@@ -747,6 +754,7 @@ public unsafe partial class Pad : Gst.Object
         ArgumentNullException.ThrowIfNull(sink);
         int nativeResult = GstPadLinkMaybeGhostingFull(Handle, sink.Handle, (int)flags);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(sink);
         return nativeResult != 0;
     }
 
@@ -805,6 +813,7 @@ public unsafe partial class Pad : Gst.Object
         ArgumentNullException.ThrowIfNull(query);
         int nativeResult = GstPadPeerQuery(Handle, query.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(query);
         return nativeResult != 0;
     }
 
@@ -819,6 +828,7 @@ public unsafe partial class Pad : Gst.Object
         ArgumentNullException.ThrowIfNull(caps);
         int nativeResult = GstPadPeerQueryAcceptCaps(Handle, caps.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(caps);
         return nativeResult != 0;
     }
 
@@ -845,6 +855,7 @@ public unsafe partial class Pad : Gst.Object
     {
         nint nativeResult = GstPadPeerQueryCaps(Handle, filter is null ? 0 : filter.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(filter);
         return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_pad_peer_query_caps returned no value.");
     }
@@ -911,6 +922,7 @@ public unsafe partial class Pad : Gst.Object
         ArgumentNullException.ThrowIfNull(query);
         int nativeResult = GstPadProxyQueryAcceptCaps(Handle, query.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(query);
         return nativeResult != 0;
     }
 
@@ -932,6 +944,7 @@ public unsafe partial class Pad : Gst.Object
         ArgumentNullException.ThrowIfNull(query);
         int nativeResult = GstPadProxyQueryCaps(Handle, query.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(query);
         return nativeResult != 0;
     }
 
@@ -1001,6 +1014,7 @@ public unsafe partial class Pad : Gst.Object
         ArgumentNullException.ThrowIfNull(query);
         int nativeResult = GstPadQuery(Handle, query.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(query);
         return nativeResult != 0;
     }
 
@@ -1012,6 +1026,7 @@ public unsafe partial class Pad : Gst.Object
         ArgumentNullException.ThrowIfNull(caps);
         int nativeResult = GstPadQueryAcceptCaps(Handle, caps.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(caps);
         return nativeResult != 0;
     }
 
@@ -1042,6 +1057,7 @@ public unsafe partial class Pad : Gst.Object
     {
         nint nativeResult = GstPadQueryCaps(Handle, filter is null ? 0 : filter.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(filter);
         return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_pad_query_caps returned no value.");
     }
@@ -1076,6 +1092,8 @@ public unsafe partial class Pad : Gst.Object
         ArgumentNullException.ThrowIfNull(query);
         int nativeResult = GstPadQueryDefault(Handle, parent is null ? 0 : parent.Handle, query.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(parent);
+        System.GC.KeepAlive(query);
         return nativeResult != 0;
     }
 
@@ -1216,6 +1234,7 @@ public unsafe partial class Pad : Gst.Object
         ArgumentNullException.ThrowIfNull(@event);
         int nativeResult = GstPadStoreStickyEvent(Handle, @event.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(@event);
         return (Gst.FlowReturn)nativeResult;
     }
 
@@ -1233,6 +1252,7 @@ public unsafe partial class Pad : Gst.Object
         ArgumentNullException.ThrowIfNull(sinkpad);
         int nativeResult = GstPadUnlink(Handle, sinkpad.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(sinkpad);
         return nativeResult != 0;
     }
 

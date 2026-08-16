@@ -126,6 +126,7 @@ public unsafe partial class DeviceMonitor : Gst.Object
         using Gst.Interop.Utf8Scope classesScope = Gst.Interop.GMarshal.StackUtf8(classes, classesBuffer);
         uint nativeResult = GstDeviceMonitorAddFilter(Handle, classesScope.Pointer, caps is null ? 0 : caps.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(caps);
         return nativeResult;
     }
 

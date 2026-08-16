@@ -245,6 +245,7 @@ public abstract unsafe partial class BaseParse : Gst.Element
         ArgumentNullException.ThrowIfNull(frame);
         int nativeResult = GstBaseParseFinishFrame(Handle, frame.Handle, size);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(frame);
         return (Gst.FlowReturn)nativeResult;
     }
 
@@ -265,6 +266,7 @@ public abstract unsafe partial class BaseParse : Gst.Element
     {
         GstBaseParseMergeTags(Handle, tags is null ? 0 : tags.Handle, (int)mode);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(tags);
     }
 
     /// <summary>
@@ -282,6 +284,7 @@ public abstract unsafe partial class BaseParse : Gst.Element
         ArgumentNullException.ThrowIfNull(frame);
         int nativeResult = GstBaseParsePushFrame(Handle, frame.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(frame);
         return (Gst.FlowReturn)nativeResult;
     }
 

@@ -111,6 +111,7 @@ public sealed unsafe partial class CapsFeatures : Gst.GObject.Boxed
         ArgumentNullException.ThrowIfNull(feature);
         GstCapsFeaturesAddIdStr(Handle, feature.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(feature);
     }
 
     /// <summary>Checks if @features contains @feature.</summary>
@@ -145,6 +146,7 @@ public sealed unsafe partial class CapsFeatures : Gst.GObject.Boxed
         ArgumentNullException.ThrowIfNull(feature);
         int nativeResult = GstCapsFeaturesContainsIdStr(Handle, feature.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(feature);
         return nativeResult != 0;
     }
 
@@ -221,6 +223,7 @@ public sealed unsafe partial class CapsFeatures : Gst.GObject.Boxed
         ArgumentNullException.ThrowIfNull(features2);
         int nativeResult = GstCapsFeaturesIsEqual(Handle, features2.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(features2);
         return nativeResult != 0;
     }
 
@@ -251,6 +254,7 @@ public sealed unsafe partial class CapsFeatures : Gst.GObject.Boxed
         ArgumentNullException.ThrowIfNull(feature);
         GstCapsFeaturesRemoveIdStr(Handle, feature.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(feature);
     }
 
     /// <summary>Converts @features to a human-readable string representation.</summary>

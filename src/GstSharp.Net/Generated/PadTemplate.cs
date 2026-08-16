@@ -106,6 +106,7 @@ public unsafe partial class PadTemplate : Gst.Object
         using Gst.Interop.Utf8Scope nameTemplateScope = Gst.Interop.GMarshal.StackUtf8(nameTemplate, nameTemplateBuffer);
         ArgumentNullException.ThrowIfNull(caps);
         nint nativeResult = GstPadTemplateNew(nameTemplateScope.Pointer, (int)direction, (int)presence, caps.Handle);
+        System.GC.KeepAlive(caps);
         return Gst.GObject.Object.FromNative<Gst.PadTemplate>(nativeResult, Gst.Interop.Transfer.None);
     }
 
@@ -137,6 +138,7 @@ public unsafe partial class PadTemplate : Gst.Object
         using Gst.Interop.Utf8Scope nameTemplateScope = Gst.Interop.GMarshal.StackUtf8(nameTemplate, nameTemplateBuffer);
         ArgumentNullException.ThrowIfNull(caps);
         nint nativeResult = GstPadTemplateNewWithGtype(nameTemplateScope.Pointer, (int)direction, (int)presence, caps.Handle, padType.Value);
+        System.GC.KeepAlive(caps);
         return Gst.GObject.Object.FromNative<Gst.PadTemplate>(nativeResult, Gst.Interop.Transfer.None);
     }
 
@@ -173,6 +175,7 @@ public unsafe partial class PadTemplate : Gst.Object
         ArgumentNullException.ThrowIfNull(pad);
         GstPadTemplatePadCreated(Handle, pad.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(pad);
     }
 
     /// <summary>
@@ -187,6 +190,7 @@ public unsafe partial class PadTemplate : Gst.Object
         ArgumentNullException.ThrowIfNull(caps);
         GstPadTemplateSetDocumentationCaps(Handle, caps.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(caps);
     }
 
     /// <summary>The capabilities of the pad described by the pad template.</summary>

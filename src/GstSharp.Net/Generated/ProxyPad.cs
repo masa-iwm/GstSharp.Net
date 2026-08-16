@@ -50,6 +50,8 @@ public unsafe partial class ProxyPad : Gst.Pad
         ArgumentNullException.ThrowIfNull(parent);
         nint bufferNative = default;
         int nativeResult = GstProxyPadGetrangeDefault(pad.Handle, parent.Handle, offset, size, &bufferNative);
+        System.GC.KeepAlive(pad);
+        System.GC.KeepAlive(parent);
         buffer = Gst.Buffer.FromNative(bufferNative, Gst.Interop.Transfer.Full);
         return (Gst.FlowReturn)nativeResult;
     }
@@ -65,6 +67,8 @@ public unsafe partial class ProxyPad : Gst.Pad
     {
         ArgumentNullException.ThrowIfNull(pad);
         nint nativeResult = GstProxyPadIterateInternalLinksDefault(pad.Handle, parent is null ? 0 : parent.Handle);
+        System.GC.KeepAlive(pad);
+        System.GC.KeepAlive(parent);
         return Gst.Iterator.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
 

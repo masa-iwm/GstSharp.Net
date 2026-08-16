@@ -25,6 +25,7 @@ public static unsafe partial class BaseGlobal
     {
         ArgumentNullException.ThrowIfNull(src);
         nint nativeResult = GstTypeFindHelper(src.Handle, size);
+        System.GC.KeepAlive(src);
         return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -57,6 +58,8 @@ public static unsafe partial class BaseGlobal
         ArgumentNullException.ThrowIfNull(buf);
         int probNative = default;
         nint nativeResult = GstTypeFindHelperForBuffer(obj is null ? 0 : obj.Handle, buf.Handle, &probNative);
+        System.GC.KeepAlive(obj);
+        System.GC.KeepAlive(buf);
         prob = (Gst.TypeFindProbability)probNative;
         return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
@@ -94,6 +97,9 @@ public static unsafe partial class BaseGlobal
         ArgumentNullException.ThrowIfNull(caps);
         int probNative = default;
         nint nativeResult = GstTypeFindHelperForBufferWithCaps(obj is null ? 0 : obj.Handle, buf.Handle, caps.Handle, &probNative);
+        System.GC.KeepAlive(obj);
+        System.GC.KeepAlive(buf);
+        System.GC.KeepAlive(caps);
         prob = (Gst.TypeFindProbability)probNative;
         return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
@@ -135,6 +141,8 @@ public static unsafe partial class BaseGlobal
         using Gst.Interop.Utf8Scope extensionScope = Gst.Interop.GMarshal.StackUtf8(extension, extensionBuffer);
         int probNative = default;
         nint nativeResult = GstTypeFindHelperForBufferWithExtension(obj is null ? 0 : obj.Handle, buf.Handle, extensionScope.Pointer, &probNative);
+        System.GC.KeepAlive(obj);
+        System.GC.KeepAlive(buf);
         prob = (Gst.TypeFindProbability)probNative;
         return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
@@ -169,6 +177,7 @@ public static unsafe partial class BaseGlobal
         fixed (byte* dataPointer = data)
         {
             nint nativeResult = GstTypeFindHelperForData(obj is null ? 0 : obj.Handle, dataPointer, (nuint)data.Length, &probNative);
+            System.GC.KeepAlive(obj);
             prob = (Gst.TypeFindProbability)probNative;
             return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         }
@@ -203,6 +212,8 @@ public static unsafe partial class BaseGlobal
         fixed (byte* dataPointer = data)
         {
             nint nativeResult = GstTypeFindHelperForDataWithCaps(obj is null ? 0 : obj.Handle, dataPointer, (nuint)data.Length, caps.Handle, &probNative);
+            System.GC.KeepAlive(obj);
+            System.GC.KeepAlive(caps);
             prob = (Gst.TypeFindProbability)probNative;
             return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         }
@@ -246,6 +257,7 @@ public static unsafe partial class BaseGlobal
         fixed (byte* dataPointer = data)
         {
             nint nativeResult = GstTypeFindHelperForDataWithExtension(obj is null ? 0 : obj.Handle, dataPointer, (nuint)data.Length, extensionScope.Pointer, &probNative);
+            System.GC.KeepAlive(obj);
             prob = (Gst.TypeFindProbability)probNative;
             return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         }
@@ -273,6 +285,7 @@ public static unsafe partial class BaseGlobal
         System.Span<byte> extensionBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope extensionScope = Gst.Interop.GMarshal.StackUtf8(extension, extensionBuffer);
         nint nativeResult = GstTypeFindHelperForExtension(obj is null ? 0 : obj.Handle, extensionScope.Pointer);
+        System.GC.KeepAlive(obj);
         return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
 

@@ -160,6 +160,7 @@ public sealed unsafe partial class Segment : Gst.GObject.Boxed
         ArgumentNullException.ThrowIfNull(dest);
         GstSegmentCopyInto(Handle, dest.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(dest);
     }
 
     /// <summary>
@@ -242,6 +243,7 @@ public sealed unsafe partial class Segment : Gst.GObject.Boxed
         ArgumentNullException.ThrowIfNull(s1);
         int nativeResult = GstSegmentIsEqual(Handle, s1.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(s1);
         return nativeResult != 0;
     }
 

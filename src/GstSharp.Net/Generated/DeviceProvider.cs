@@ -59,6 +59,7 @@ public abstract unsafe partial class DeviceProvider : Gst.Object
         ArgumentNullException.ThrowIfNull(device);
         GstDeviceProviderDeviceAdd(Handle, device.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(device);
     }
 
     /// <summary>
@@ -76,6 +77,8 @@ public abstract unsafe partial class DeviceProvider : Gst.Object
         ArgumentNullException.ThrowIfNull(changedDevice);
         GstDeviceProviderDeviceChanged(Handle, device.Handle, changedDevice.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(device);
+        System.GC.KeepAlive(changedDevice);
     }
 
     /// <summary>
@@ -91,6 +94,7 @@ public abstract unsafe partial class DeviceProvider : Gst.Object
         ArgumentNullException.ThrowIfNull(device);
         GstDeviceProviderDeviceRemove(Handle, device.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(device);
     }
 
     /// <summary>Gets the #GstBus of this #GstDeviceProvider</summary>
@@ -227,6 +231,7 @@ public abstract unsafe partial class DeviceProvider : Gst.Object
         System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
         int nativeResult = GstDeviceProviderRegister(plugin is null ? 0 : plugin.Handle, nameScope.Pointer, rank, type.Value);
+        System.GC.KeepAlive(plugin);
         return nativeResult != 0;
     }
 

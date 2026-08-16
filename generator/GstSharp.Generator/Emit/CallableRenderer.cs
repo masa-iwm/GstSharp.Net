@@ -314,7 +314,8 @@ internal static class CallableRenderer
     }
 
     /// <summary>
-    /// Keeps the instance of a member reachable until the native call returned.
+    /// Keeps every wrapper a member hands to native code reachable until the
+    /// native call returned: the instance and each handle argument.
     /// </summary>
     /// <param name="writer">The target writer.</param>
     /// <param name="plan">The member being written.</param>
@@ -322,22 +323,31 @@ internal static class CallableRenderer
     /// The call takes the raw handle out of the wrapper, and nothing mentions
     /// the wrapper afterwards, so the collector is free to finalize it while
     /// the call is still running. The finalizer releases the instance, and the
-    /// call is then working on freed memory. The barrier is emitted right after
-    /// the call, because that is the last use of the handle.
+    /// call is then working on freed memory. That holds for an argument just as
+    /// much as for the instance, and a static function has nothing but its
+    /// arguments. The barriers are emitted right after the call, because that
+    /// is the last use of the handles, and in declaration order, which puts the
+    /// instance first. <c>GC.KeepAlive</c> accepts a null reference, so a
+    /// nullable argument needs no guard of its own.
     /// </remarks>
     private static void WriteKeepAlive(CodeWriter writer, MarshalPlan plan)
     {
         foreach (ArgumentPlan argument in plan.Arguments)
         {
-            if (argument.Kind != ArgumentKind.Instance)
+            // The instance is hidden on an instance method, where it is spelled
+            // "this", so it is never filtered on visibility.
+            if (argument.Kind == ArgumentKind.Instance)
             {
-                continue;
+                writer.WriteLine(
+                    "System.GC.KeepAlive("
+                    + (plan.Form == CallableForm.ExtensionMethod ? argument.Name : "this") + ");");
             }
-
-            writer.WriteLine(
-                "System.GC.KeepAlive("
-                + (plan.Form == CallableForm.ExtensionMethod ? argument.Name : "this") + ");");
-            return;
+            else if (argument.Kind == ArgumentKind.Handle
+                && argument.Direction == ArgumentDirection.In
+                && !argument.IsHidden)
+            {
+                writer.WriteLine("System.GC.KeepAlive(" + argument.Name + ");");
+            }
         }
     }
 

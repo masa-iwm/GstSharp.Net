@@ -116,6 +116,7 @@ public abstract unsafe partial class VideoEncoder : Gst.Element, Gst.IPreset
         ArgumentNullException.ThrowIfNull(frame);
         int nativeResult = GstVideoEncoderAllocateOutputFrame(Handle, frame.Handle, size);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(frame);
         return (Gst.FlowReturn)nativeResult;
     }
 
@@ -141,6 +142,7 @@ public abstract unsafe partial class VideoEncoder : Gst.Element, Gst.IPreset
         ArgumentNullException.ThrowIfNull(frame);
         int nativeResult = GstVideoEncoderFinishSubframe(Handle, frame.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(frame);
         return (Gst.FlowReturn)nativeResult;
     }
 
@@ -189,6 +191,7 @@ public abstract unsafe partial class VideoEncoder : Gst.Element, Gst.IPreset
         ArgumentNullException.ThrowIfNull(frame);
         long nativeResult = GstVideoEncoderGetMaxEncodeTime(Handle, frame.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(frame);
         return nativeResult;
     }
 
@@ -252,6 +255,7 @@ public abstract unsafe partial class VideoEncoder : Gst.Element, Gst.IPreset
     {
         GstVideoEncoderMergeTags(Handle, tags is null ? 0 : tags.Handle, (int)mode);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(tags);
     }
 
     /// <summary>
@@ -279,6 +283,8 @@ public abstract unsafe partial class VideoEncoder : Gst.Element, Gst.IPreset
     {
         nint nativeResult = GstVideoEncoderProxyGetcaps(Handle, caps is null ? 0 : caps.Handle, filter is null ? 0 : filter.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(caps);
+        System.GC.KeepAlive(filter);
         return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_video_encoder_proxy_getcaps returned no value.");
     }

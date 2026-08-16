@@ -66,6 +66,7 @@ public static unsafe partial class AudioGlobal
     {
         ArgumentNullException.ThrowIfNull(spec);
         uint nativeResult = GstAudioIec61937FrameSize(spec.Handle);
+        System.GC.KeepAlive(spec);
         return nativeResult;
     }
 
@@ -93,6 +94,7 @@ public static unsafe partial class AudioGlobal
             fixed (byte* dstPointer = dst)
             {
                 int nativeResult = GstAudioIec61937Payload(srcPointer, (uint)src.Length, dstPointer, (uint)dst.Length, spec.Handle, endianness);
+                System.GC.KeepAlive(spec);
                 return nativeResult != 0;
             }
         }

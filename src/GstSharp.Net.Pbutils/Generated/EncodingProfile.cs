@@ -195,6 +195,7 @@ public unsafe partial class EncodingProfile : Gst.GObject.Object
         ArgumentNullException.ThrowIfNull(b);
         int nativeResult = GstEncodingProfileIsEqual(Handle, b.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(b);
         return nativeResult != 0;
     }
 
@@ -237,6 +238,7 @@ public unsafe partial class EncodingProfile : Gst.GObject.Object
         ArgumentNullException.ThrowIfNull(format);
         GstEncodingProfileSetFormat(Handle, format.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(format);
     }
 
     /// <summary>
@@ -370,6 +372,7 @@ public unsafe partial class EncodingProfile : Gst.GObject.Object
     {
         ArgumentNullException.ThrowIfNull(info);
         nint nativeResult = GstEncodingProfileFromDiscoverer(info.Handle);
+        System.GC.KeepAlive(info);
         return Gst.GObject.Object.FromNative<Gst.Pbutils.EncodingProfile>(nativeResult, Gst.Interop.Transfer.Full);
     }
 

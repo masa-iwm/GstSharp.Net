@@ -170,6 +170,7 @@ public sealed unsafe partial class TocEntry : Gst.GObject.Boxed
     {
         GstTocEntryMergeTags(Handle, tags is null ? 0 : tags.Handle, (int)mode);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(tags);
     }
 
     /// <summary>Set @loop_type and @repeat_count values for the @entry.</summary>

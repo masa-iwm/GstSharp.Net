@@ -188,6 +188,7 @@ public unsafe partial class Task : Gst.Object
         ArgumentNullException.ThrowIfNull(pool);
         GstTaskSetPool(Handle, pool.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(pool);
     }
 
     /// <summary>Sets the state of @task to @state.</summary>

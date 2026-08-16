@@ -37,6 +37,8 @@ public unsafe partial class EncodingAudioProfile : Gst.Pbutils.EncodingProfile
         System.Span<byte> presetBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope presetScope = Gst.Interop.GMarshal.StackUtf8(preset, presetBuffer);
         nint nativeResult = GstEncodingAudioProfileNew(format.Handle, presetScope.Pointer, restriction is null ? 0 : restriction.Handle, presence);
+        System.GC.KeepAlive(format);
+        System.GC.KeepAlive(restriction);
         return Gst.GObject.Object.FromNative<Gst.Pbutils.EncodingAudioProfile>(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_encoding_audio_profile_new returned no value.");
     }

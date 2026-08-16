@@ -111,6 +111,7 @@ public static unsafe partial class TagSetterExtensions
         ArgumentNullException.ThrowIfNull(list);
         GstTagSetterMergeTags(setter.Handle, list.Handle, (int)mode);
         System.GC.KeepAlive(setter);
+        System.GC.KeepAlive(list);
     }
 
     /// <summary>

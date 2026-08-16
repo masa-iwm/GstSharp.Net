@@ -31,6 +31,7 @@ public static unsafe partial class PbutilsGlobal
         fixed (byte* audioConfigPointer = audioConfig)
         {
             int nativeResult = GstCodecUtilsAacCapsSetLevelAndProfile(caps.Handle, audioConfigPointer, (uint)audioConfig.Length);
+            System.GC.KeepAlive(caps);
             return nativeResult != 0;
         }
     }
@@ -164,6 +165,7 @@ public static unsafe partial class PbutilsGlobal
     {
         ArgumentNullException.ThrowIfNull(caps);
         nint nativeResult = GstCodecUtilsAv1CreateAv1cFromCaps(caps.Handle);
+        System.GC.KeepAlive(caps);
         return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -177,6 +179,7 @@ public static unsafe partial class PbutilsGlobal
     {
         ArgumentNullException.ThrowIfNull(av1c);
         nint nativeResult = GstCodecUtilsAv1CreateCapsFromAv1c(av1c.Handle);
+        System.GC.KeepAlive(av1c);
         return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -233,6 +236,7 @@ public static unsafe partial class PbutilsGlobal
     {
         ArgumentNullException.ThrowIfNull(caps);
         nint nativeResult = GstCodecUtilsCapsGetMimeCodec(caps.Handle);
+        System.GC.KeepAlive(caps);
         return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
     }
 
@@ -250,6 +254,7 @@ public static unsafe partial class PbutilsGlobal
         fixed (byte* spsPointer = sps)
         {
             int nativeResult = GstCodecUtilsH264CapsSetLevelAndProfile(caps.Handle, spsPointer, (uint)sps.Length);
+            System.GC.KeepAlive(caps);
             return nativeResult != 0;
         }
     }
@@ -362,6 +367,7 @@ public static unsafe partial class PbutilsGlobal
         fixed (byte* profileTierLevelPointer = profileTierLevel)
         {
             int nativeResult = GstCodecUtilsH265CapsSetLevelTierAndProfile(caps.Handle, profileTierLevelPointer, (uint)profileTierLevel.Length);
+            System.GC.KeepAlive(caps);
             return nativeResult != 0;
         }
     }
@@ -466,6 +472,7 @@ public static unsafe partial class PbutilsGlobal
         fixed (byte* decoderConfigurationPointer = decoderConfiguration)
         {
             int nativeResult = GstCodecUtilsH266CapsSetLevelTierAndProfile(caps.Handle, decoderConfigurationPointer, (uint)decoderConfiguration.Length);
+            System.GC.KeepAlive(caps);
             return nativeResult != 0;
         }
     }
@@ -545,6 +552,7 @@ public static unsafe partial class PbutilsGlobal
         fixed (byte* visObjSeqPointer = visObjSeq)
         {
             int nativeResult = GstCodecUtilsMpeg4videoCapsSetLevelAndProfile(caps.Handle, visObjSeqPointer, (uint)visObjSeq.Length);
+            System.GC.KeepAlive(caps);
             return nativeResult != 0;
         }
     }
@@ -600,6 +608,8 @@ public static unsafe partial class PbutilsGlobal
     {
         ArgumentNullException.ThrowIfNull(header);
         nint nativeResult = GstCodecUtilsOpusCreateCapsFromHeader(header.Handle, comments is null ? 0 : comments.Handle);
+        System.GC.KeepAlive(header);
+        System.GC.KeepAlive(comments);
         return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -634,6 +644,7 @@ public static unsafe partial class PbutilsGlobal
     {
         ArgumentNullException.ThrowIfNull(msg);
         int nativeResult = GstIsMissingPluginMessage(msg.Handle);
+        System.GC.KeepAlive(msg);
         return nativeResult != 0;
     }
 
@@ -659,6 +670,7 @@ public static unsafe partial class PbutilsGlobal
     {
         ArgumentNullException.ThrowIfNull(decodeCaps);
         nint nativeResult = GstMissingDecoderInstallerDetailNew(decodeCaps.Handle);
+        System.GC.KeepAlive(decodeCaps);
         return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
             ?? throw new InvalidOperationException("gst_missing_decoder_installer_detail_new returned no value.");
     }
@@ -676,6 +688,8 @@ public static unsafe partial class PbutilsGlobal
         ArgumentNullException.ThrowIfNull(element);
         ArgumentNullException.ThrowIfNull(decodeCaps);
         nint nativeResult = GstMissingDecoderMessageNew(element.Handle, decodeCaps.Handle);
+        System.GC.KeepAlive(element);
+        System.GC.KeepAlive(decodeCaps);
         return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_missing_decoder_message_new returned no value.");
     }
@@ -723,6 +737,7 @@ public static unsafe partial class PbutilsGlobal
         System.Span<byte> factoryNameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope factoryNameScope = Gst.Interop.GMarshal.StackUtf8(factoryName, factoryNameBuffer);
         nint nativeResult = GstMissingElementMessageNew(element.Handle, factoryNameScope.Pointer);
+        System.GC.KeepAlive(element);
         return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_missing_element_message_new returned no value.");
     }
@@ -749,6 +764,7 @@ public static unsafe partial class PbutilsGlobal
     {
         ArgumentNullException.ThrowIfNull(encodeCaps);
         nint nativeResult = GstMissingEncoderInstallerDetailNew(encodeCaps.Handle);
+        System.GC.KeepAlive(encodeCaps);
         return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
             ?? throw new InvalidOperationException("gst_missing_encoder_installer_detail_new returned no value.");
     }
@@ -766,6 +782,8 @@ public static unsafe partial class PbutilsGlobal
         ArgumentNullException.ThrowIfNull(element);
         ArgumentNullException.ThrowIfNull(encodeCaps);
         nint nativeResult = GstMissingEncoderMessageNew(element.Handle, encodeCaps.Handle);
+        System.GC.KeepAlive(element);
+        System.GC.KeepAlive(encodeCaps);
         return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_missing_encoder_message_new returned no value.");
     }
@@ -791,6 +809,7 @@ public static unsafe partial class PbutilsGlobal
     {
         ArgumentNullException.ThrowIfNull(msg);
         nint nativeResult = GstMissingPluginMessageGetDescription(msg.Handle);
+        System.GC.KeepAlive(msg);
         return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
             ?? throw new InvalidOperationException("gst_missing_plugin_message_get_description returned no value.");
     }
@@ -815,6 +834,7 @@ public static unsafe partial class PbutilsGlobal
     {
         ArgumentNullException.ThrowIfNull(msg);
         nint nativeResult = GstMissingPluginMessageGetInstallerDetail(msg.Handle);
+        System.GC.KeepAlive(msg);
         return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
     }
 
@@ -825,6 +845,7 @@ public static unsafe partial class PbutilsGlobal
     {
         ArgumentNullException.ThrowIfNull(msg);
         nint nativeResult = GstMissingPluginMessageGetStreamId(msg.Handle);
+        System.GC.KeepAlive(msg);
         return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
     }
 
@@ -838,6 +859,7 @@ public static unsafe partial class PbutilsGlobal
         System.Span<byte> streamIdBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope streamIdScope = Gst.Interop.GMarshal.StackUtf8(streamId, streamIdBuffer);
         GstMissingPluginMessageSetStreamId(msg.Handle, streamIdScope.Pointer);
+        System.GC.KeepAlive(msg);
     }
 
     /// <summary>
@@ -883,6 +905,7 @@ public static unsafe partial class PbutilsGlobal
         System.Span<byte> protocolBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope protocolScope = Gst.Interop.GMarshal.StackUtf8(protocol, protocolBuffer);
         nint nativeResult = GstMissingUriSinkMessageNew(element.Handle, protocolScope.Pointer);
+        System.GC.KeepAlive(element);
         return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_missing_uri_sink_message_new returned no value.");
     }
@@ -930,6 +953,7 @@ public static unsafe partial class PbutilsGlobal
         System.Span<byte> protocolBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope protocolScope = Gst.Interop.GMarshal.StackUtf8(protocol, protocolBuffer);
         nint nativeResult = GstMissingUriSourceMessageNew(element.Handle, protocolScope.Pointer);
+        System.GC.KeepAlive(element);
         return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_missing_uri_source_message_new returned no value.");
     }
@@ -946,6 +970,8 @@ public static unsafe partial class PbutilsGlobal
         using Gst.Interop.Utf8Scope codecTagScope = Gst.Interop.GMarshal.StackUtf8(codecTag, codecTagBuffer);
         ArgumentNullException.ThrowIfNull(caps);
         int nativeResult = GstPbUtilsAddCodecDescriptionToTagList(taglist.Handle, codecTagScope.Pointer, caps.Handle);
+        System.GC.KeepAlive(taglist);
+        System.GC.KeepAlive(caps);
         return nativeResult != 0;
     }
 
@@ -962,6 +988,7 @@ public static unsafe partial class PbutilsGlobal
     {
         ArgumentNullException.ThrowIfNull(caps);
         int nativeResult = GstPbUtilsGetCapsDescriptionFlags(caps.Handle);
+        System.GC.KeepAlive(caps);
         return (Gst.Pbutils.PbUtilsCapsDescriptionFlags)nativeResult;
     }
 
@@ -985,6 +1012,7 @@ public static unsafe partial class PbutilsGlobal
     {
         ArgumentNullException.ThrowIfNull(caps);
         nint nativeResult = GstPbUtilsGetCodecDescription(caps.Handle);
+        System.GC.KeepAlive(caps);
         return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
     }
 
@@ -1008,6 +1036,7 @@ public static unsafe partial class PbutilsGlobal
     {
         ArgumentNullException.ThrowIfNull(caps);
         nint nativeResult = GstPbUtilsGetDecoderDescription(caps.Handle);
+        System.GC.KeepAlive(caps);
         return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
             ?? throw new InvalidOperationException("gst_pb_utils_get_decoder_description returned no value.");
     }
@@ -1058,6 +1087,7 @@ public static unsafe partial class PbutilsGlobal
     {
         ArgumentNullException.ThrowIfNull(caps);
         nint nativeResult = GstPbUtilsGetEncoderDescription(caps.Handle);
+        System.GC.KeepAlive(caps);
         return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
             ?? throw new InvalidOperationException("gst_pb_utils_get_encoder_description returned no value.");
     }
@@ -1072,6 +1102,7 @@ public static unsafe partial class PbutilsGlobal
     {
         ArgumentNullException.ThrowIfNull(caps);
         nint nativeResult = GstPbUtilsGetFileExtensionFromCaps(caps.Handle);
+        System.GC.KeepAlive(caps);
         return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
     }
 

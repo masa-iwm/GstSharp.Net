@@ -129,6 +129,7 @@ public abstract unsafe partial class Device : Gst.Object
         ArgumentNullException.ThrowIfNull(element);
         int nativeResult = GstDeviceReconfigureElement(Handle, element.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(element);
         return nativeResult != 0;
     }
 

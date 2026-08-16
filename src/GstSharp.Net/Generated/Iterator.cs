@@ -102,6 +102,7 @@ public sealed unsafe partial class Iterator : Gst.GObject.Boxed
         ArgumentNullException.ThrowIfNull(other);
         GstIteratorPush(Handle, other.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(other);
     }
 
     /// <summary>

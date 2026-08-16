@@ -277,6 +277,7 @@ public unsafe partial class Pipeline : Gst.Bin, Gst.IChildProxy
     {
         GstPipelineUseClock(Handle, clock is null ? 0 : clock.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(clock);
     }
 
     /// <summary>

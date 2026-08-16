@@ -137,6 +137,7 @@ public static unsafe partial class VideoOrientationExtensions
         ArgumentNullException.ThrowIfNull(taglist);
         int methodNative = default;
         int nativeResult = GstVideoOrientationFromTag(taglist.Handle, &methodNative);
+        System.GC.KeepAlive(taglist);
         method = (Gst.Video.VideoOrientationMethod)methodNative;
         return nativeResult != 0;
     }

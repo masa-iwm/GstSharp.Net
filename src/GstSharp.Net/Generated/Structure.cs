@@ -252,6 +252,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     {
         ArgumentNullException.ThrowIfNull(name);
         nint nativeResult = GstStructureNewIdStrEmpty(name.Handle);
+        System.GC.KeepAlive(name);
         return Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_structure_new_id_str_empty returned no value.");
     }
@@ -267,6 +268,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
         ArgumentNullException.ThrowIfNull(struct2);
         int nativeResult = GstStructureCanIntersect(Handle, struct2.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(struct2);
         return nativeResult != 0;
     }
 
@@ -876,6 +878,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
         ArgumentNullException.ThrowIfNull(fieldname);
         nuint nativeResult = GstStructureIdStrGetFieldType(Handle, fieldname.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(fieldname);
         return new Gst.GObject.GType(nativeResult);
     }
 
@@ -887,6 +890,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
         ArgumentNullException.ThrowIfNull(fieldname);
         int nativeResult = GstStructureIdStrHasField(Handle, fieldname.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(fieldname);
         return nativeResult != 0;
     }
 
@@ -899,6 +903,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
         ArgumentNullException.ThrowIfNull(fieldname);
         int nativeResult = GstStructureIdStrHasFieldTyped(Handle, fieldname.Handle, type.Value);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(fieldname);
         return nativeResult != 0;
     }
 
@@ -931,6 +936,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
         ArgumentNullException.ThrowIfNull(fieldname);
         GstStructureIdStrRemoveField(Handle, fieldname.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(fieldname);
     }
 
     /// <summary>Intersects @struct1 and @struct2 and returns the intersection.</summary>
@@ -941,6 +947,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
         ArgumentNullException.ThrowIfNull(struct2);
         nint nativeResult = GstStructureIntersect(Handle, struct2.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(struct2);
         return Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -952,6 +959,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
         ArgumentNullException.ThrowIfNull(structure2);
         int nativeResult = GstStructureIsEqual(Handle, structure2.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(structure2);
         return nativeResult != 0;
     }
 
@@ -967,6 +975,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
         ArgumentNullException.ThrowIfNull(superset);
         int nativeResult = GstStructureIsSubset(Handle, superset.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(superset);
         return nativeResult != 0;
     }
 
@@ -1094,6 +1103,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
         ArgumentNullException.ThrowIfNull(name);
         GstStructureSetNameIdStr(Handle, name.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(name);
     }
 
     /// <summary>Converts @structure to a human-readable string representation.</summary>

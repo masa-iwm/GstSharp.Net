@@ -188,6 +188,7 @@ public unsafe partial class BufferPool : Gst.Object
         System.Span<byte> optionBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope optionScope = Gst.Interop.GMarshal.StackUtf8(option, optionBuffer);
         GstBufferPoolConfigAddOption(config.Handle, optionScope.Pointer);
+        System.GC.KeepAlive(config);
     }
 
     /// <summary>
@@ -201,6 +202,7 @@ public unsafe partial class BufferPool : Gst.Object
     {
         ArgumentNullException.ThrowIfNull(config);
         nint nativeResult = GstBufferPoolConfigGetOption(config.Handle, index);
+        System.GC.KeepAlive(config);
         return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
     }
 
@@ -219,6 +221,7 @@ public unsafe partial class BufferPool : Gst.Object
         uint minBuffersNative = default;
         uint maxBuffersNative = default;
         int nativeResult = GstBufferPoolConfigGetParams(config.Handle, &capsNative, &sizeNative, &minBuffersNative, &maxBuffersNative);
+        System.GC.KeepAlive(config);
         caps = Gst.Caps.FromNative(capsNative, Gst.Interop.Transfer.None);
         size = sizeNative;
         minBuffers = minBuffersNative;
@@ -237,6 +240,7 @@ public unsafe partial class BufferPool : Gst.Object
         System.Span<byte> optionBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope optionScope = Gst.Interop.GMarshal.StackUtf8(option, optionBuffer);
         int nativeResult = GstBufferPoolConfigHasOption(config.Handle, optionScope.Pointer);
+        System.GC.KeepAlive(config);
         return nativeResult != 0;
     }
 
@@ -250,6 +254,7 @@ public unsafe partial class BufferPool : Gst.Object
     {
         ArgumentNullException.ThrowIfNull(config);
         uint nativeResult = GstBufferPoolConfigNOptions(config.Handle);
+        System.GC.KeepAlive(config);
         return nativeResult;
     }
 
@@ -276,6 +281,9 @@ public unsafe partial class BufferPool : Gst.Object
     {
         ArgumentNullException.ThrowIfNull(config);
         GstBufferPoolConfigSetAllocator(config.Handle, allocator is null ? 0 : allocator.Handle, @params is null ? 0 : @params.Handle);
+        System.GC.KeepAlive(config);
+        System.GC.KeepAlive(allocator);
+        System.GC.KeepAlive(@params);
     }
 
     /// <summary>Configures @config with the given parameters.</summary>
@@ -288,6 +296,8 @@ public unsafe partial class BufferPool : Gst.Object
     {
         ArgumentNullException.ThrowIfNull(config);
         GstBufferPoolConfigSetParams(config.Handle, caps is null ? 0 : caps.Handle, size, minBuffers, maxBuffers);
+        System.GC.KeepAlive(config);
+        System.GC.KeepAlive(caps);
     }
 
     /// <summary>
@@ -310,6 +320,8 @@ public unsafe partial class BufferPool : Gst.Object
     {
         ArgumentNullException.ThrowIfNull(config);
         int nativeResult = GstBufferPoolConfigValidateParams(config.Handle, caps is null ? 0 : caps.Handle, size, minBuffers, maxBuffers);
+        System.GC.KeepAlive(config);
+        System.GC.KeepAlive(caps);
         return nativeResult != 0;
     }
 

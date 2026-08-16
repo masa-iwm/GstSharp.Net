@@ -264,6 +264,7 @@ public abstract unsafe partial class BaseSrc : Gst.Element
         ArgumentNullException.ThrowIfNull(segment);
         int nativeResult = GstBaseSrcNewSegment(Handle, segment.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(segment);
         return nativeResult != 0;
     }
 
@@ -295,6 +296,7 @@ public abstract unsafe partial class BaseSrc : Gst.Element
         ArgumentNullException.ThrowIfNull(segment);
         int nativeResult = GstBaseSrcPushSegment(Handle, segment.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(segment);
         return nativeResult != 0;
     }
 
@@ -378,6 +380,7 @@ public abstract unsafe partial class BaseSrc : Gst.Element
         ArgumentNullException.ThrowIfNull(caps);
         int nativeResult = GstBaseSrcSetCaps(Handle, caps.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(caps);
         return nativeResult != 0;
     }
 

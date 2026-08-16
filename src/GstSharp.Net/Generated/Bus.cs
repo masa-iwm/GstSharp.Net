@@ -181,6 +181,7 @@ public unsafe partial class Bus : Gst.Object
         ArgumentNullException.ThrowIfNull(message);
         int nativeResult = GstBusAsyncSignalFunc(Handle, message.Handle, data);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(message);
         return nativeResult != 0;
     }
 
@@ -411,6 +412,7 @@ public unsafe partial class Bus : Gst.Object
         ArgumentNullException.ThrowIfNull(message);
         int nativeResult = GstBusSyncSignalHandler(Handle, message.Handle, data);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(message);
         return (Gst.BusSyncReply)nativeResult;
     }
 

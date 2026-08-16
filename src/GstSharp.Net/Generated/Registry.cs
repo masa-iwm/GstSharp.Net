@@ -100,6 +100,7 @@ public unsafe partial class Registry : Gst.Object
         ArgumentNullException.ThrowIfNull(feature);
         int nativeResult = GstRegistryAddFeature(Handle, feature.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(feature);
         return nativeResult != 0;
     }
 
@@ -117,6 +118,7 @@ public unsafe partial class Registry : Gst.Object
         ArgumentNullException.ThrowIfNull(plugin);
         int nativeResult = GstRegistryAddPlugin(Handle, plugin.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(plugin);
         return nativeResult != 0;
     }
 
@@ -238,6 +240,7 @@ public unsafe partial class Registry : Gst.Object
         ArgumentNullException.ThrowIfNull(feature);
         GstRegistryRemoveFeature(Handle, feature.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(feature);
     }
 
     /// <summary>Remove the plugin from the registry.</summary>
@@ -250,6 +253,7 @@ public unsafe partial class Registry : Gst.Object
         ArgumentNullException.ThrowIfNull(plugin);
         GstRegistryRemovePlugin(Handle, plugin.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(plugin);
     }
 
     /// <summary>

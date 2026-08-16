@@ -98,6 +98,7 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
         ArgumentNullException.ThrowIfNull(binding);
         int nativeResult = GstObjectAddControlBinding(Handle, binding.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(binding);
         return nativeResult != 0;
     }
 
@@ -235,6 +236,7 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
         ArgumentNullException.ThrowIfNull(ancestor);
         int nativeResult = GstObjectHasAncestor(Handle, ancestor.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(ancestor);
         return nativeResult != 0;
     }
 
@@ -249,6 +251,7 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
         ArgumentNullException.ThrowIfNull(ancestor);
         int nativeResult = GstObjectHasAsAncestor(Handle, ancestor.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(ancestor);
         return nativeResult != 0;
     }
 
@@ -266,6 +269,7 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
         ArgumentNullException.ThrowIfNull(parent);
         int nativeResult = GstObjectHasAsParent(Handle, parent.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(parent);
         return nativeResult != 0;
     }
 
@@ -280,6 +284,7 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
         ArgumentNullException.ThrowIfNull(binding);
         int nativeResult = GstObjectRemoveControlBinding(Handle, binding.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(binding);
         return nativeResult != 0;
     }
 
@@ -364,6 +369,7 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
         ArgumentNullException.ThrowIfNull(parent);
         int nativeResult = GstObjectSetParent(Handle, parent.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(parent);
         return nativeResult != 0;
     }
 

@@ -54,6 +54,7 @@ public unsafe partial class GhostPad : Gst.ProxyPad
         using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
         ArgumentNullException.ThrowIfNull(target);
         nint nativeResult = GstGhostPadNew(nameScope.Pointer, target.Handle);
+        System.GC.KeepAlive(target);
         return Gst.GObject.Object.FromNative<Gst.Pad>(nativeResult, Gst.Interop.Transfer.None);
     }
 
@@ -78,6 +79,8 @@ public unsafe partial class GhostPad : Gst.ProxyPad
         ArgumentNullException.ThrowIfNull(target);
         ArgumentNullException.ThrowIfNull(templ);
         nint nativeResult = GstGhostPadNewFromTemplate(nameScope.Pointer, target.Handle, templ.Handle);
+        System.GC.KeepAlive(target);
+        System.GC.KeepAlive(templ);
         return Gst.GObject.Object.FromNative<Gst.Pad>(nativeResult, Gst.Interop.Transfer.None);
     }
 
@@ -119,6 +122,7 @@ public unsafe partial class GhostPad : Gst.ProxyPad
         using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
         ArgumentNullException.ThrowIfNull(templ);
         nint nativeResult = GstGhostPadNewNoTargetFromTemplate(nameScope.Pointer, templ.Handle);
+        System.GC.KeepAlive(templ);
         return Gst.GObject.Object.FromNative<Gst.Pad>(nativeResult, Gst.Interop.Transfer.None);
     }
 
@@ -167,6 +171,7 @@ public unsafe partial class GhostPad : Gst.ProxyPad
     {
         int nativeResult = GstGhostPadSetTarget(Handle, newtarget is null ? 0 : newtarget.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(newtarget);
         return nativeResult != 0;
     }
 
@@ -180,6 +185,8 @@ public unsafe partial class GhostPad : Gst.ProxyPad
     {
         ArgumentNullException.ThrowIfNull(pad);
         int nativeResult = GstGhostPadActivateModeDefault(pad.Handle, parent is null ? 0 : parent.Handle, (int)mode, active ? 1 : 0);
+        System.GC.KeepAlive(pad);
+        System.GC.KeepAlive(parent);
         return nativeResult != 0;
     }
 
@@ -196,6 +203,8 @@ public unsafe partial class GhostPad : Gst.ProxyPad
     {
         ArgumentNullException.ThrowIfNull(pad);
         int nativeResult = GstGhostPadInternalActivateModeDefault(pad.Handle, parent is null ? 0 : parent.Handle, (int)mode, active ? 1 : 0);
+        System.GC.KeepAlive(pad);
+        System.GC.KeepAlive(parent);
         return nativeResult != 0;
     }
 

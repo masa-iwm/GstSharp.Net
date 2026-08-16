@@ -45,6 +45,8 @@ public sealed unsafe partial class VideoConverter
         ArgumentNullException.ThrowIfNull(dest);
         GstVideoConverterFrame(Handle, src.Handle, dest.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(src);
+        System.GC.KeepAlive(dest);
     }
 
     /// <summary>
@@ -120,6 +122,8 @@ public sealed unsafe partial class VideoConverter
         ArgumentNullException.ThrowIfNull(dest);
         int nativeResult = GstVideoConverterTransformMetas(Handle, src.Handle, dest.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(src);
+        System.GC.KeepAlive(dest);
         return nativeResult != 0;
     }
 

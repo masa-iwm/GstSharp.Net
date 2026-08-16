@@ -59,6 +59,7 @@ public sealed unsafe partial class VideoInfoDmaDrm : Gst.GObject.Boxed
     {
         ArgumentNullException.ThrowIfNull(caps);
         nint nativeResult = GstVideoInfoDmaDrmNewFromCaps(caps.Handle);
+        System.GC.KeepAlive(caps);
         return Gst.Video.VideoInfoDmaDrm.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
 

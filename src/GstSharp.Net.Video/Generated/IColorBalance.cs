@@ -56,6 +56,7 @@ public static unsafe partial class ColorBalanceExtensions
         ArgumentNullException.ThrowIfNull(channel);
         int nativeResult = GstColorBalanceGetValue(balance.Handle, channel.Handle);
         System.GC.KeepAlive(balance);
+        System.GC.KeepAlive(channel);
         return nativeResult;
     }
 
@@ -79,6 +80,7 @@ public static unsafe partial class ColorBalanceExtensions
         ArgumentNullException.ThrowIfNull(channel);
         GstColorBalanceSetValue(balance.Handle, channel.Handle, value);
         System.GC.KeepAlive(balance);
+        System.GC.KeepAlive(channel);
     }
 
     /// <summary>
@@ -96,6 +98,7 @@ public static unsafe partial class ColorBalanceExtensions
         ArgumentNullException.ThrowIfNull(channel);
         GstColorBalanceValueChanged(balance.Handle, channel.Handle, value);
         System.GC.KeepAlive(balance);
+        System.GC.KeepAlive(channel);
     }
 
     /// <summary>The arguments of the <c>value-changed</c> signal of <c>GstColorBalance</c>.</summary>

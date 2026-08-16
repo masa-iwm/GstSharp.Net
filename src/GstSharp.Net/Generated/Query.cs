@@ -75,6 +75,7 @@ public sealed unsafe partial class Query : Gst.MiniObject
     {
         ArgumentNullException.ThrowIfNull(caps);
         nint nativeResult = GstQueryNewAcceptCaps(caps.Handle);
+        System.GC.KeepAlive(caps);
         return Gst.Query.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_query_new_accept_caps returned no value.");
     }
@@ -89,6 +90,7 @@ public sealed unsafe partial class Query : Gst.MiniObject
     public static Gst.Query NewAllocation(Gst.Caps? caps, bool needPool)
     {
         nint nativeResult = GstQueryNewAllocation(caps is null ? 0 : caps.Handle, needPool ? 1 : 0);
+        System.GC.KeepAlive(caps);
         return Gst.Query.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_query_new_allocation returned no value.");
     }
@@ -151,6 +153,7 @@ public sealed unsafe partial class Query : Gst.MiniObject
     {
         ArgumentNullException.ThrowIfNull(filter);
         nint nativeResult = GstQueryNewCaps(filter.Handle);
+        System.GC.KeepAlive(filter);
         return Gst.Query.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_query_new_caps returned no value.");
     }
@@ -348,6 +351,7 @@ public sealed unsafe partial class Query : Gst.MiniObject
     {
         GstQueryAddAllocationMeta(Handle, api.Value, @params is null ? 0 : @params.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(@params);
     }
 
     /// <summary>Add @allocator and its @params as a supported memory allocator.</summary>
@@ -357,6 +361,8 @@ public sealed unsafe partial class Query : Gst.MiniObject
     {
         GstQueryAddAllocationParam(Handle, allocator is null ? 0 : allocator.Handle, @params is null ? 0 : @params.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(allocator);
+        System.GC.KeepAlive(@params);
     }
 
     /// <summary>Set the pool parameters in @query.</summary>
@@ -368,6 +374,7 @@ public sealed unsafe partial class Query : Gst.MiniObject
     {
         GstQueryAddAllocationPool(Handle, pool is null ? 0 : pool.Handle, size, minBuffers, maxBuffers);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(pool);
     }
 
     /// <summary>
@@ -1064,6 +1071,7 @@ public sealed unsafe partial class Query : Gst.MiniObject
     {
         GstQuerySetCapsResult(Handle, caps is null ? 0 : caps.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(caps);
     }
 
     /// <summary>Answer a context query by setting the requested context.</summary>
@@ -1072,6 +1080,7 @@ public sealed unsafe partial class Query : Gst.MiniObject
     {
         GstQuerySetContext(Handle, context is null ? 0 : context.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(context);
     }
 
     /// <summary>Answer a convert query by setting the requested values.</summary>
@@ -1115,6 +1124,8 @@ public sealed unsafe partial class Query : Gst.MiniObject
     {
         GstQuerySetNthAllocationParam(Handle, index, allocator is null ? 0 : allocator.Handle, @params is null ? 0 : @params.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(allocator);
+        System.GC.KeepAlive(@params);
     }
 
     /// <summary>Set the pool parameters in @query.</summary>
@@ -1127,6 +1138,7 @@ public sealed unsafe partial class Query : Gst.MiniObject
     {
         GstQuerySetNthAllocationPool(Handle, index, pool is null ? 0 : pool.Handle, size, minBuffers, maxBuffers);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(pool);
     }
 
     /// <summary>Answer a position query by setting the requested value in the given format.</summary>

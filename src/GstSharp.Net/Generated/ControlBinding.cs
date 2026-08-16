@@ -66,6 +66,7 @@ public abstract unsafe partial class ControlBinding : Gst.Object
         ArgumentNullException.ThrowIfNull(@object);
         int nativeResult = GstControlBindingSyncValues(Handle, @object.Handle, timestamp.Nanoseconds, lastSync.Nanoseconds);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(@object);
         return nativeResult != 0;
     }
 

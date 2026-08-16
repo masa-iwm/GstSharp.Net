@@ -54,6 +54,7 @@ public sealed unsafe partial class TypeFind
         ArgumentNullException.ThrowIfNull(caps);
         GstTypeFindSuggest(Handle, probability, caps.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(caps);
     }
 
     /// <summary>
@@ -99,6 +100,8 @@ public sealed unsafe partial class TypeFind
         System.Span<byte> extensionsBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope extensionsScope = Gst.Interop.GMarshal.StackUtf8(extensions, extensionsBuffer);
         int nativeResult = GstTypeFindRegister(plugin is null ? 0 : plugin.Handle, nameScope.Pointer, rank, Gst.TypeFindFunctionTrampoline.Pointer, extensionsScope.Pointer, possibleCaps is null ? 0 : possibleCaps.Handle, funcState.UserData, (nint)Gst.Interop.CallbackHandle.DestroyNotify);
+        System.GC.KeepAlive(plugin);
+        System.GC.KeepAlive(possibleCaps);
         return nativeResult != 0;
     }
 

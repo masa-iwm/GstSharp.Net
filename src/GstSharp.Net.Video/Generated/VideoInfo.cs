@@ -53,6 +53,7 @@ public sealed unsafe partial class VideoInfo : Gst.GObject.Boxed
     {
         ArgumentNullException.ThrowIfNull(caps);
         nint nativeResult = GstVideoInfoNewFromCaps(caps.Handle);
+        System.GC.KeepAlive(caps);
         return Gst.Video.VideoInfo.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
 
@@ -148,6 +149,7 @@ public sealed unsafe partial class VideoInfo : Gst.GObject.Boxed
         ArgumentNullException.ThrowIfNull(other);
         int nativeResult = GstVideoInfoIsEqual(Handle, other.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(other);
         return nativeResult != 0;
     }
 

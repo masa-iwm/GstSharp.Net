@@ -49,6 +49,7 @@ public static unsafe partial class ChildProxyExtensions
         using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
         GstChildProxyChildAdded(parent.Handle, child.Handle, nameScope.Pointer);
         System.GC.KeepAlive(parent);
+        System.GC.KeepAlive(child);
     }
 
     /// <summary>Emits the #GstChildProxy::child-removed signal.</summary>
@@ -64,6 +65,7 @@ public static unsafe partial class ChildProxyExtensions
         using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
         GstChildProxyChildRemoved(parent.Handle, child.Handle, nameScope.Pointer);
         System.GC.KeepAlive(parent);
+        System.GC.KeepAlive(child);
     }
 
     /// <summary>Fetches a child by its number.</summary>

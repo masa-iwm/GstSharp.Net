@@ -39,6 +39,7 @@ public static unsafe partial class AudioFormatExtensions
         fixed (byte* destPointer = dest)
         {
             GstAudioFormatFillSilence(info.Handle, destPointer, (nuint)dest.Length);
+            System.GC.KeepAlive(info);
         }
     }
 

@@ -138,6 +138,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
     {
         ArgumentNullException.ThrowIfNull(caps);
         nint nativeResult = GstEventNewCaps(caps.Handle);
+        System.GC.KeepAlive(caps);
         return Gst.Event.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_event_new_caps returned no value.");
     }
@@ -362,6 +363,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
         System.Span<byte> originBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope originScope = Gst.Interop.GMarshal.StackUtf8(origin, originBuffer);
         nint nativeResult = GstEventNewProtection(systemIdScope.Pointer, data.Handle, originScope.Pointer);
+        System.GC.KeepAlive(data);
         return Gst.Event.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_event_new_protection returned no value.");
     }
@@ -542,6 +544,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
     {
         ArgumentNullException.ThrowIfNull(segment);
         nint nativeResult = GstEventNewSegment(segment.Handle);
+        System.GC.KeepAlive(segment);
         return Gst.Event.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_event_new_segment returned no value.");
     }
@@ -578,6 +581,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
         using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
         ArgumentNullException.ThrowIfNull(msg);
         nint nativeResult = GstEventNewSinkMessage(nameScope.Pointer, msg.Handle);
+        System.GC.KeepAlive(msg);
         return Gst.Event.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_event_new_sink_message returned no value.");
     }
@@ -634,6 +638,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
     {
         ArgumentNullException.ThrowIfNull(collection);
         nint nativeResult = GstEventNewStreamCollection(collection.Handle);
+        System.GC.KeepAlive(collection);
         return Gst.Event.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_event_new_stream_collection returned no value.");
     }
@@ -711,6 +716,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
     {
         ArgumentNullException.ThrowIfNull(toc);
         nint nativeResult = GstEventNewToc(toc.Handle, updated ? 1 : 0);
+        System.GC.KeepAlive(toc);
         return Gst.Event.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_event_new_toc returned no value.");
     }
@@ -742,6 +748,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
         ArgumentNullException.ThrowIfNull(segment);
         GstEventCopySegment(Handle, segment.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(segment);
     }
 
     /// <summary>Retrieve the accumulated running time offset of the event.</summary>
@@ -1275,6 +1282,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
         ArgumentNullException.ThrowIfNull(stream);
         GstEventSetStream(Handle, stream.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(stream);
     }
 
     /// <summary>The <c>gst_event_set_stream_flags</c> function.</summary>

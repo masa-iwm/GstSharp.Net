@@ -166,6 +166,7 @@ public sealed unsafe partial class Memory : Gst.MiniObject
         nuint offsetNative = default;
         int nativeResult = GstMemoryIsSpan(Handle, mem2.Handle, &offsetNative);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(mem2);
         offset = offsetNative;
         return nativeResult != 0;
     }

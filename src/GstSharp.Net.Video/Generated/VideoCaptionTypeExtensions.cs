@@ -21,6 +21,7 @@ public static unsafe partial class VideoCaptionTypeExtensions
     {
         ArgumentNullException.ThrowIfNull(caps);
         int nativeResult = GstVideoCaptionTypeFromCaps(caps.Handle);
+        System.GC.KeepAlive(caps);
         return (Gst.Video.VideoCaptionType)nativeResult;
     }
 

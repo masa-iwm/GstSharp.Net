@@ -188,6 +188,7 @@ public unsafe partial class Bin : Gst.Element, Gst.IChildProxy
         ArgumentNullException.ThrowIfNull(element);
         int nativeResult = GstBinAdd(Handle, element.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(element);
         return nativeResult != 0;
     }
 
@@ -431,6 +432,7 @@ public unsafe partial class Bin : Gst.Element, Gst.IChildProxy
         ArgumentNullException.ThrowIfNull(element);
         int nativeResult = GstBinRemove(Handle, element.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(element);
         return nativeResult != 0;
     }
 

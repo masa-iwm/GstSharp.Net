@@ -50,6 +50,7 @@ public sealed unsafe partial class BaseParseFrame : Gst.GObject.Boxed
     {
         ArgumentNullException.ThrowIfNull(buffer);
         nint nativeResult = GstBaseParseFrameNew(buffer.Handle, (int)flags, overhead);
+        System.GC.KeepAlive(buffer);
         return Gst.Base.BaseParseFrame.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_base_parse_frame_new returned no value.");
     }

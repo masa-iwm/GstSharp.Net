@@ -90,6 +90,7 @@ public sealed unsafe partial class IdStr : Gst.GObject.Boxed
         ArgumentNullException.ThrowIfNull(s);
         GstIdStrCopyInto(Handle, s.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(s);
     }
 
     /// <summary>
@@ -122,6 +123,7 @@ public sealed unsafe partial class IdStr : Gst.GObject.Boxed
         ArgumentNullException.ThrowIfNull(s2);
         int nativeResult = GstIdStrIsEqual(Handle, s2.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(s2);
         return nativeResult != 0;
     }
 
@@ -168,6 +170,7 @@ public sealed unsafe partial class IdStr : Gst.GObject.Boxed
         ArgumentNullException.ThrowIfNull(s);
         GstIdStrMove(Handle, s.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(s);
     }
 
     /// <summary>Sets @s to the string @value.</summary>

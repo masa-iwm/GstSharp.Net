@@ -35,6 +35,7 @@ public unsafe partial class EncodingContainerProfile : Gst.Pbutils.EncodingProfi
         System.Span<byte> presetBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope presetScope = Gst.Interop.GMarshal.StackUtf8(preset, presetBuffer);
         nint nativeResult = GstEncodingContainerProfileNew(nameScope.Pointer, descriptionScope.Pointer, format.Handle, presetScope.Pointer);
+        System.GC.KeepAlive(format);
         return Gst.GObject.Object.FromNative<Gst.Pbutils.EncodingContainerProfile>(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_encoding_container_profile_new returned no value.");
     }
@@ -53,6 +54,7 @@ public unsafe partial class EncodingContainerProfile : Gst.Pbutils.EncodingProfi
         ArgumentNullException.ThrowIfNull(profile);
         int nativeResult = GstEncodingContainerProfileContainsProfile(Handle, profile.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(profile);
         return nativeResult != 0;
     }
 
