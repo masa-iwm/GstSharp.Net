@@ -74,6 +74,23 @@ internal static class GstStubs
                     }
                 }
             }
+
+            namespace Base
+            {
+                public sealed class Adapter
+                {
+                    public MapScope Map(nuint size) => default;
+
+                    public ref struct MapScope
+                    {
+                        public nuint Size => 0;
+
+                        public void Dispose()
+                        {
+                        }
+                    }
+                }
+            }
         }
         """;
 }

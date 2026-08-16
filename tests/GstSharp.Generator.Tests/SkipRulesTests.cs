@@ -124,12 +124,14 @@ public sealed class SkipRulesTests
     public void CommittedOverlaysLoad()
     {
         // Every skip of the committed fixups is a symbol whose C contract the
-        // gir does not describe, so the list is asserted whole: a symbol that
-        // is added or dropped is a decision, not a detail.
+        // gir does not describe, or one that hand written glue has taken over,
+        // so the list is asserted whole: a symbol that is added or dropped is a
+        // decision, not a detail.
         Assert.Equal(
             [
                 "gst_adapter_map",
                 "gst_adapter_take",
+                "gst_adapter_unmap",
                 "gst_audio_ring_buffer_commit",
                 "gst_buffer_remove_meta",
                 "gst_caps_features_add_static_str",

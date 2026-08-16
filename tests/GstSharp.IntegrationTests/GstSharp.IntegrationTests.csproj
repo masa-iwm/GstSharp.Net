@@ -19,12 +19,15 @@
          global alias as well, so that every other type is used unqualified. -->
     <ProjectReference Include="../../src/GstSharp.Net/GstSharp.Net.csproj" Aliases="global,gstsharp" />
     <ProjectReference Include="../../src/GstSharp.Net.App/GstSharp.Net.App.csproj" />
+    <ProjectReference Include="../../src/GstSharp.Net.Base/GstSharp.Net.Base.csproj" />
 
     <!-- Referenced, but never called into: the module sweep of
          GstSharp.Initialize is what has to put their types into the registry,
          and a test that called one of them would register it by hand and prove
-         nothing. -->
-    <ProjectReference Include="../../src/GstSharp.Net.Base/GstSharp.Net.Base.csproj" />
+         nothing. ModuleRegistrationTests is the test that measures it, and it
+         names no type of any module for the same reason; the modules above are
+         called into by their own tests, which is why it has to be run on its
+         own to be discriminating. -->
     <ProjectReference Include="../../src/GstSharp.Net.Video/GstSharp.Net.Video.csproj" />
     <ProjectReference Include="../../src/GstSharp.Net.Audio/GstSharp.Net.Audio.csproj" />
     <ProjectReference Include="../../src/GstSharp.Net.Pbutils/GstSharp.Net.Pbutils.csproj" />

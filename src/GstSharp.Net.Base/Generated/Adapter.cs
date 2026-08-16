@@ -635,13 +635,6 @@ public unsafe partial class Adapter : Gst.GObject.Object
         return Gst.BufferList.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
 
-    /// <summary>Releases the memory obtained with the last gst_adapter_map().</summary>
-    public void Unmap()
-    {
-        GstAdapterUnmap(Handle);
-        System.GC.KeepAlive(this);
-    }
-
     /// <summary>The <c>gst_adapter_new</c> entry point.</summary>
     [LibraryImport("GstBase", EntryPoint = "gst_adapter_new")]
     private static partial nint GstAdapterNew();
@@ -729,10 +722,6 @@ public unsafe partial class Adapter : Gst.GObject.Object
     /// <summary>The <c>gst_adapter_take_buffer_list</c> entry point.</summary>
     [LibraryImport("GstBase", EntryPoint = "gst_adapter_take_buffer_list")]
     private static partial nint GstAdapterTakeBufferList(nint adapter, nuint nbytes);
-
-    /// <summary>The <c>gst_adapter_unmap</c> entry point.</summary>
-    [LibraryImport("GstBase", EntryPoint = "gst_adapter_unmap")]
-    private static partial void GstAdapterUnmap(nint adapter);
 
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstAdapter</c> under.</summary>
     /// <returns>The type of the instances of this wrapper.</returns>

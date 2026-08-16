@@ -124,6 +124,42 @@ public sealed class UnmappedMapScopeAnalyzerTests
         }
         """);
 
+    /// <summary>
+    /// The rule matches a scope of any module, not only the one of
+    /// <c>Gst.Buffer</c>: <c>Gst.Base.Adapter.MapScope</c> sits one namespace
+    /// deeper and is reported the same way.
+    /// </summary>
+    [Fact]
+    public Task ScopeInANestedGstNamespace_IsReported() => VerifyAsync("""
+        using Gst.Base;
+
+        public class Consumer
+        {
+            public void Map(Adapter adapter)
+            {
+                {|GST0002:adapter.Map(16)|};
+            }
+        }
+        """);
+
+    /// <summary>
+    /// And it stays silent for the same scope when it is disposed, so the
+    /// nested namespace does not turn the rule into a false positive either.
+    /// </summary>
+    [Fact]
+    public Task ScopeInANestedGstNamespaceWithUsing_IsNotReported() => VerifyAsync("""
+        using Gst.Base;
+
+        public class Consumer
+        {
+            public nuint Map(Adapter adapter)
+            {
+                using var map = adapter.Map(16);
+                return map.Size;
+            }
+        }
+        """);
+
     [Fact]
     public Task ScopeOutsideGst_IsNotReported() => VerifyAsync("""
         namespace Other

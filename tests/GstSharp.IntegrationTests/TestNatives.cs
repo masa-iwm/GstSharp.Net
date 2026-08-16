@@ -9,8 +9,10 @@ namespace GstSharp.IntegrationTests;
 /// <remarks>
 /// Everything that the binding does expose is used through the binding, so that
 /// the tests exercise the product code path. What is left here is buffer
-/// construction, which the function emitter does not cover yet, and
-/// <c>gst_parse_launch</c>, which is only used as a source of a <c>GError</c>.
+/// construction, which the function emitter does not cover yet,
+/// <c>gst_parse_launch</c>, which is only used as a source of a <c>GError</c>,
+/// and <c>gst_adapter_push</c>, whose transfer-full buffer argument the
+/// marshaller does not support.
 /// </remarks>
 internal static unsafe partial class TestNatives
 {
@@ -64,6 +66,17 @@ internal static unsafe partial class TestNatives
     /// </remarks>
     [LibraryImport("GstApp", EntryPoint = "gst_app_sink_try_pull_sample")]
     internal static partial nint AppSinkTryPullSample(nint appsink, ulong timeout);
+
+    /// <summary>Adds a buffer to the end of the queue of an adapter.</summary>
+    /// <param name="adapter">The adapter to push into.</param>
+    /// <param name="buffer">The buffer, whose reference the adapter takes over.</param>
+    /// <remarks>
+    /// The call is <c>transfer-ownership="full"</c> on the buffer, which is why
+    /// the generator refuses the signature: the marshaller has no way to hand a
+    /// wrapper over. The caller has to give it a reference of its own.
+    /// </remarks>
+    [LibraryImport("GstBase", EntryPoint = "gst_adapter_push")]
+    internal static partial void AdapterPush(nint adapter, nint buffer);
 
     /// <summary>Releases a reference of a <c>GstObject</c>.</summary>
     /// <param name="obj">The object to release.</param>

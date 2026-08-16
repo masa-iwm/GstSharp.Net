@@ -933,10 +933,11 @@ disappears shows up here as an added line.
 - `gst_type_find_data_get_typefind`
 - `gst_type_find_data_new`
 
-### OverlaySkip (2)
+### OverlaySkip (3)
 
 - `gst_adapter_map`
 - `gst_adapter_take`
+- `gst_adapter_unmap`
 
 ### UnsupportedSignature (183)
 
