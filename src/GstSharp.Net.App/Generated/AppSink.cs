@@ -458,13 +458,6 @@ public unsafe partial class AppSink : Gst.Base.BaseSink, Gst.IURIHandler
         return Gst.Sample.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
 
-    /// <summary>The <c>caps</c> property.</summary>
-    public Gst.Caps? Caps
-    {
-        get => GetCaps();
-        set => SetCaps(value);
-    }
-
     /// <summary>The number of currently queued buffers inside appsink.</summary>
     public ulong CurrentLevelBuffers => GetCurrentLevelBuffers();
 

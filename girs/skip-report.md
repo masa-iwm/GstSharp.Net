@@ -35,6 +35,11 @@ disappears shows up here as an added line.
 
 - `ges_deinit`
 
+### OwningProperty (2)
+
+- `GES.Track:caps`
+- `GES.Track:restriction-caps`
+
 ### UnsupportedSignature (83)
 
 - `GES.AudioUriSource:uri`
@@ -427,6 +432,14 @@ disappears shows up here as an added line.
 - `gst_structure_new_static_str_empty`
 - `gst_structure_set_name_static_str`
 - `gst_type_find_peek`
+
+### OwningProperty (5)
+
+- `Gst.Device:caps`
+- `Gst.Device:properties`
+- `Gst.PadTemplate:caps`
+- `Gst.Stream:caps`
+- `Gst.Stream:tags`
 
 ### ShadowedBy (1)
 
@@ -842,6 +855,11 @@ disappears shows up here as an added line.
 - `gst_app_sink_set_callbacks`
 - `gst_app_src_set_callbacks`
 
+### OwningProperty (2)
+
+- `GstApp.AppSink:caps`
+- `GstApp.AppSrc:caps`
+
 ### UnsupportedSignature (23)
 
 - `GstApp.AppSink:buffer-list`
@@ -1044,6 +1062,11 @@ disappears shows up here as an added line.
 - `gst_adapter_map`
 - `gst_adapter_take`
 - `gst_adapter_unmap`
+
+### OwningProperty (2)
+
+- `GstBase.BaseSink:last-sample`
+- `GstBase.BaseSink:stats`
 
 ### UnsupportedSignature (180)
 
@@ -1278,6 +1301,10 @@ disappears shows up here as an added line.
 
 - `gst_install_plugins_return_get_name`
 
+### OwningProperty (1)
+
+- `GstPbutils.EncodingProfile:element-properties`
+
 ### UnsupportedSignature (22)
 
 - `GstPbutils.AudioVisualizer:shade-amount`
@@ -1305,6 +1332,11 @@ disappears shows up here as an added line.
 
 ## GstRtsp
 
+### CallerAllocates (2)
+
+- `gst_rtsp_transport_init`
+- `gst_rtsp_transport_parse`
+
 ### LifetimePrimitive (3)
 
 - `gst_rtsp_auth_param_free`
@@ -1331,15 +1363,11 @@ disappears shows up here as an added line.
 - `gst_rtsp_version_as_text`
 - `gst_rtsp_watch_new`
 
-### NotIntrospectable (1)
-
-- `gst_rtsp_watch_new`
-
 ### OverlaySkip (1)
 
 - `gst_rtsp_auth_credentials_free`
 
-### UnsupportedSignature (32)
+### UnsupportedSignature (20)
 
 - `gst_rtsp_connection_connect`
 - `gst_rtsp_connection_connect_with_response`
@@ -1360,19 +1388,7 @@ disappears shows up here as an added line.
 - `gst_rtsp_range_get_times`
 - `gst_rtsp_range_parse`
 - `gst_rtsp_range_to_string`
-- `gst_rtsp_transport_as_text`
-- `gst_rtsp_transport_free`
-- `gst_rtsp_transport_get_manager`
-- `gst_rtsp_transport_get_media_type`
-- `gst_rtsp_transport_get_mime`
-- `gst_rtsp_transport_init`
-- `gst_rtsp_transport_new`
-- `gst_rtsp_transport_parse`
 - `gst_rtsp_url_decode_path_components`
-- `gst_rtsp_watch_attach`
-- `gst_rtsp_watch_send_messages`
-- `gst_rtsp_watch_wait_backlog`
-- `gst_rtsp_watch_write_data`
 
 ## GstSdp
 

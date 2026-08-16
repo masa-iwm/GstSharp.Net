@@ -282,30 +282,6 @@ public unsafe partial class Track : Gst.Bin, GES.IMetaContainer, Gst.IChildProxy
     }
 
     /// <summary>
-    /// The capabilities used to choose the output of the #GESTrack's
-    /// elements. Internally, this is used to select output streams when
-    /// several may be available, by determining whether its #GstPad is
-    /// compatible (see #NleObject:caps for #nlecomposition). As such,
-    /// this is used as a weaker indication of the desired output type of the
-    /// track, **before** the #GESTrack:restriction-caps is applied.
-    /// Therefore, this should be set to a *generic* superset of the
-    /// #GESTrack:restriction-caps, such as "video/x-raw(ANY)". In addition,
-    /// it should match with the track's #GESTrack:track-type.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// Note that when you set this property, the #GstCapsFeatures of all its
-    /// #GstStructure-s will be automatically set to #GST_CAPS_FEATURES_ANY.
-    /// </para>
-    /// <para>
-    /// Once a track has been added to a #GESTimeline, you should not change
-    /// this.
-    /// </para>
-    /// <para>Default value: #GST_CAPS_ANY.</para>
-    /// </remarks>
-    public Gst.Caps? Caps => GetCaps();
-
-    /// <summary>
     /// Whether the track should support the mixing of #GESLayer data, such
     /// as composing the video data of each layer (when part of the video
     /// data is transparent, the next layer will become visible) or adding
@@ -317,21 +293,6 @@ public unsafe partial class Track : Gst.Bin, GES.IMetaContainer, Gst.IChildProxy
         get => GetMixing();
         set => SetMixing(value);
     }
-
-    /// <summary>
-    /// The capabilities that specifies the final output format of the
-    /// #GESTrack. For example, for a video track, it would specify the
-    /// height, width, framerate and other properties of the stream.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// You may change this property after the track has been added to a
-    /// #GESTimeline, but it must remain compatible with the track's
-    /// #GESTrack:caps.
-    /// </para>
-    /// <para>Default value: #GST_CAPS_ANY.</para>
-    /// </remarks>
-    public Gst.Caps? RestrictionCaps => GetRestrictionCaps();
 
     /// <summary>
     /// This signal will be emitted once the changes initiated by

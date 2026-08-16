@@ -138,13 +138,6 @@ public unsafe partial class Stream : Gst.Object
         System.GC.KeepAlive(tags);
     }
 
-    /// <summary>The #GstCaps of the #GstStream.</summary>
-    public Gst.Caps? Caps
-    {
-        get => GetCaps();
-        set => SetCaps(value);
-    }
-
     /// <summary>The <c>stream-flags</c> property.</summary>
     public Gst.StreamFlags StreamFlags
     {
@@ -163,13 +156,6 @@ public unsafe partial class Stream : Gst.Object
     {
         get => GetStreamType();
         set => SetStreamType(value);
-    }
-
-    /// <summary>The #GstTagList of the #GstStream.</summary>
-    public Gst.TagList? Tags
-    {
-        get => GetTags();
-        set => SetTags(value);
     }
 
     /// <summary>The <c>gst_stream_new</c> entry point.</summary>

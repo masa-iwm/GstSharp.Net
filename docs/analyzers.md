@@ -26,6 +26,14 @@ var leaked = sink.TryPullSample(timeout);         // GST0001
 The analysis prefers false negatives over false positives: any escape and
 any `Dispose` call on some path suppresses the diagnostic.
 
+The rule looks at locals, not at property reads, and that is why the binding
+emits no property whose value is a `MiniObject` or a `Boxed` wrapper. Such a
+property would hand out an owned reference per evaluation, in the one place
+the rule cannot see it. The generator drops those properties and keeps the
+getter as a method — `appsrc.GetCaps()` rather than `appsrc.Caps` — so that
+the name says a resource is produced and the result lands in a local the rule
+does watch. The skip report lists them under `OwningProperty`.
+
 ## GST0002 — unmapped MapScope
 
 The result of `Buffer.Map(...)` must be disposed so that the underlying

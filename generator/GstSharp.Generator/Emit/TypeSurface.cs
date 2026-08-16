@@ -539,6 +539,21 @@ internal sealed class SurfaceBuilder
                 continue;
             }
 
+            if (getter.Return.Kind == ArgumentKind.Handle && getter.Return.Flavor == HandleFlavor.Wrapper)
+            {
+                // A mini object or a boxed value reaches managed code as a
+                // wrapper that owns a reference of its own and releases it when
+                // it is disposed, whatever the call transferred. A property is
+                // read, not acquired: nothing at the reading site says that a
+                // resource was produced, GST0001 does not look at property
+                // reads by design, and two reads of the same property are two
+                // wrappers holding two references. The getter is emitted as a
+                // method beside this, and Get* is where a caller sees that the
+                // result is theirs to dispose.
+                _census.Skipped(module, SkipReason.OwningProperty, symbol);
+                continue;
+            }
+
             MarshalPlan? setter = FindAccessor(members, property.Setter);
             if (setter is not null
                 && (setter.Form != CallableForm.InstanceMethod

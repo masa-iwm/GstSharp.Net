@@ -133,17 +133,11 @@ public abstract unsafe partial class Device : Gst.Object
         return nativeResult != 0;
     }
 
-    /// <summary>The <c>caps</c> property.</summary>
-    public Gst.Caps? Caps => GetCaps();
-
     /// <summary>The <c>device-class</c> property.</summary>
     public string DeviceClass => GetDeviceClass();
 
     /// <summary>The <c>display-name</c> property.</summary>
     public string DisplayName => GetDisplayName();
-
-    /// <summary>The <c>properties</c> property.</summary>
-    public Gst.Structure? Properties => GetProperties();
 
     /// <summary>Raised for the <c>removed</c> signal of <c>GstDevice</c>.</summary>
     /// <remarks>

@@ -638,13 +638,6 @@ public abstract unsafe partial class BaseSink : Gst.Element
     }
 
     /// <summary>
-    /// The last buffer that arrived in the sink and was used for preroll or for
-    /// rendering. This property can be used to generate thumbnails. This property
-    /// can be %NULL when the sink has not yet received a buffer.
-    /// </summary>
-    public Gst.Sample? LastSample => GetLastSample();
-
-    /// <summary>
     /// Control the maximum amount of bits that will be rendered per second.
     /// Setting this property to a value bigger than 0 will make the sink delay
     /// rendering of the buffers when it would exceed to max-bitrate.
@@ -683,19 +676,6 @@ public abstract unsafe partial class BaseSink : Gst.Element
         get => GetRenderDelay();
         set => SetRenderDelay(value);
     }
-
-    /// <summary>
-    /// Various #GstBaseSink statistics. This property returns a #GstStructure
-    /// with name `application/x-gst-base-sink-stats` with the following fields:
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// - "average-rate"  G_TYPE_DOUBLE   average frame rate
-    /// - "dropped" G_TYPE_UINT64   Number of dropped frames
-    /// - "rendered" G_TYPE_UINT64   Number of rendered frames
-    /// </para>
-    /// </remarks>
-    public Gst.Structure Stats => GetStats();
 
     /// <summary>The <c>sync</c> property.</summary>
     public bool Sync

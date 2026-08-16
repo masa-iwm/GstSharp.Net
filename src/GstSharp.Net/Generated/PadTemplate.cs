@@ -193,9 +193,6 @@ public unsafe partial class PadTemplate : Gst.Object
         System.GC.KeepAlive(caps);
     }
 
-    /// <summary>The capabilities of the pad described by the pad template.</summary>
-    public Gst.Caps Caps => GetCaps();
-
     /// <summary>The arguments of the <c>pad-created</c> signal of <c>GstPadTemplate</c>.</summary>
     public sealed class PadCreatedSignalArgs
     {

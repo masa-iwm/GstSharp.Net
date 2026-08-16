@@ -73,6 +73,15 @@ internal enum SkipReason
     /// already bound.
     /// </summary>
     ActionSignal,
+
+    /// <summary>
+    /// A property whose value is a mini object or a boxed record. Reading one
+    /// builds a wrapper that owns a reference and has to be disposed, and a
+    /// property is read as a value rather than acquired as a resource, so
+    /// every evaluation of it leaks. The getter stays as a method, where the
+    /// name says that something is produced.
+    /// </summary>
+    OwningProperty,
 }
 
 /// <summary>

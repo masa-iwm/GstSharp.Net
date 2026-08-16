@@ -403,16 +403,6 @@ public unsafe partial class AppSrc : Gst.Base.BaseSrc, Gst.IURIHandler
         System.GC.KeepAlive(this);
     }
 
-    /// <summary>
-    /// The GstCaps that will negotiated downstream and will be put
-    /// on outgoing buffers.
-    /// </summary>
-    public Gst.Caps? Caps
-    {
-        get => GetCaps();
-        set => SetCaps(value);
-    }
-
     /// <summary>The number of currently queued buffers inside appsrc.</summary>
     public ulong CurrentLevelBuffers => GetCurrentLevelBuffers();
 

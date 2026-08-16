@@ -130,7 +130,7 @@ public sealed class AppSrcTransferTests
 
         // And the caps of the sample were applied to the source, which is the
         // reason to push a sample rather than a buffer in the first place.
-        using Caps? applied = source.Caps;
+        using Caps? applied = source.GetCaps();
         Assert.NotNull(applied);
         Assert.True(applied.IsEqual(caps));
     }

@@ -56,6 +56,44 @@ public sealed class ClassEmitterTests
         Assert.Contains("public bool SetName(string? name)", source, StringComparison.Ordinal);
     }
 
+    [Theory]
+    [InlineData("GstSharp.Net/Generated/Stream.cs", "Caps", "public Gst.Caps? GetCaps()")]
+    [InlineData("GstSharp.Net/Generated/Stream.cs", "Tags", "public Gst.TagList? GetTags()")]
+    [InlineData("GstSharp.Net/Generated/Device.cs", "Caps", "public Gst.Caps? GetCaps()")]
+    [InlineData("GstSharp.Net/Generated/PadTemplate.cs", "Caps", "public Gst.Caps GetCaps()")]
+    [InlineData("GstSharp.Net.App/Generated/AppSrc.cs", "Caps", "public Gst.Caps? GetCaps()")]
+    [InlineData("GstSharp.Net.App/Generated/AppSink.cs", "Caps", "public Gst.Caps? GetCaps()")]
+    [InlineData("GstSharp.Net.Base/Generated/BaseSink.cs", "Stats", "public Gst.Structure GetStats()")]
+    [InlineData("GstSharp.Net.GES/Generated/Track.cs", "Caps", "public Gst.Caps? GetCaps()")]
+    public void AWrapperValuedPropertyIsAMethodInstead(string path, string propertyName, string getter)
+    {
+        // Reading one of these builds a mini object or a boxed wrapper that
+        // owns a reference and has to be disposed, so a property would leak one
+        // per evaluation, and GST0001 does not look at property reads. The
+        // getter stays, under a name that says something is produced.
+        string source = SourceOf(path);
+
+        Assert.DoesNotContain("    public Gst.Caps? " + propertyName + "\n", source, StringComparison.Ordinal);
+        Assert.DoesNotContain(" " + propertyName + " => Get" + propertyName + "();", source, StringComparison.Ordinal);
+        Assert.Contains("    " + getter + "\n", source, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void APropertyWhoseValueIsNotAWrapperStays()
+    {
+        // The rule keys on the wrapper flavour of the getter, not on the fact
+        // that a getter exists: a blittable value like GstClockTime and an
+        // interned GObject are still read as values.
+        Assert.Contains(
+            "    public Gst.ClockTime Delay\n",
+            Source("Pipeline.cs"),
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "    public Gst.Object? Parent => GetParent();\n",
+            Source("Object.cs"),
+            StringComparison.Ordinal);
+    }
+
     [Fact]
     public void ParseLaunchThrowsTheErrorItIsGiven()
     {
@@ -117,17 +155,17 @@ public sealed class ClassEmitterTests
     }
 
     [Theory]
-    [InlineData("Gst", 35, 51, 5, 17, 18, 1205, 19, 23)]
-    [InlineData("GstBase", 11, 8, 0, 5, 0, 166, 13, 2)]
-    [InlineData("GstApp", 2, 2, 0, 8, 0, 61, 23, 8)]
+    [InlineData("Gst", 35, 51, 5, 17, 18, 1205, 14, 23)]
+    [InlineData("GstBase", 11, 8, 0, 5, 0, 166, 11, 2)]
+    [InlineData("GstApp", 2, 2, 0, 8, 0, 61, 21, 8)]
     [InlineData("GstAudio", 14, 17, 1, 2, 2, 183, 15, 0)]
     [InlineData("GstVideo", 12, 42, 5, 0, 9, 292, 2, 2)]
-    [InlineData("GstPbutils", 14, 1, 0, 0, 1, 169, 1, 3)]
+    [InlineData("GstPbutils", 14, 1, 0, 0, 1, 169, 0, 3)]
     [InlineData("GstSdp", 1, 21, 0, 0, 0, 156, 0, 0)]
     [InlineData("GstWebRTC", 9, 4, 0, 1, 2, 37, 0, 6)]
     [InlineData("GstNet", 5, 3, 0, 1, 0, 17, 0, 0)]
-    [InlineData("GstRtsp", 1, 12, 1, 1, 2, 110, 0, 1)]
-    [InlineData("GES", 56, 2, 2, 0, 3, 361, 51, 29)]
+    [InlineData("GstRtsp", 1, 10, 1, 1, 2, 109, 0, 1)]
+    [InlineData("GES", 56, 2, 2, 0, 3, 361, 49, 29)]
     public void TheEmissionCensusIsStable(
         string module,
         int classes,
@@ -161,7 +199,7 @@ public sealed class ClassEmitterTests
     [InlineData("GstSdp", 0, 10, 0, 0, 12, 0)]
     [InlineData("GstWebRTC", 0, 2, 0, 0, 45, 0)]
     [InlineData("GstNet", 0, 3, 0, 0, 25, 0)]
-    [InlineData("GstRtsp", 0, 17, 0, 1, 32, 0)]
+    [InlineData("GstRtsp", 0, 17, 0, 0, 20, 0)]
     [InlineData("GES", 0, 3, 4, 10, 83, 0)]
     public void TheSkipCensusIsStable(
         string module,
@@ -303,25 +341,27 @@ public sealed class ClassEmitterTests
     /// <param name="lifetime">Callables that release or reference their instance.</param>
     /// <param name="instanceTransfer">Callables that consume their instance and replace it.</param>
     /// <param name="actionSignals">Signals that are a call API rather than a notification.</param>
+    /// <param name="owningProperties">Properties whose value is a wrapper the reader would have to dispose.</param>
     [Theory]
-    [InlineData("Gst", 11, 3, 21, 20, 0)]
-    [InlineData("GstBase", 3, 3, 4, 0, 0)]
-    [InlineData("GstApp", 0, 0, 4, 0, 9)]
-    [InlineData("GstAudio", 2, 7, 4, 0, 0)]
-    [InlineData("GstVideo", 1, 11, 10, 1, 0)]
-    [InlineData("GstPbutils", 0, 0, 1, 0, 0)]
-    [InlineData("GstSdp", 0, 4, 1, 0, 0)]
-    [InlineData("GstWebRTC", 0, 0, 4, 0, 4)]
-    [InlineData("GstNet", 0, 0, 1, 0, 0)]
-    [InlineData("GstRtsp", 1, 0, 3, 0, 0)]
-    [InlineData("GES", 1, 0, 1, 0, 0)]
+    [InlineData("Gst", 11, 3, 21, 20, 0, 5)]
+    [InlineData("GstBase", 3, 3, 4, 0, 0, 2)]
+    [InlineData("GstApp", 0, 0, 4, 0, 9, 2)]
+    [InlineData("GstAudio", 2, 7, 4, 0, 0, 0)]
+    [InlineData("GstVideo", 1, 11, 10, 1, 0, 0)]
+    [InlineData("GstPbutils", 0, 0, 1, 0, 0, 1)]
+    [InlineData("GstSdp", 0, 4, 1, 0, 0, 0)]
+    [InlineData("GstWebRTC", 0, 0, 4, 0, 4, 0)]
+    [InlineData("GstNet", 0, 0, 1, 0, 0, 0)]
+    [InlineData("GstRtsp", 1, 2, 3, 0, 0, 0)]
+    [InlineData("GES", 1, 0, 1, 0, 0, 2)]
     public void TheRejectionCensusIsStable(
         string module,
         int overlaySkip,
         int callerAllocates,
         int lifetime,
         int instanceTransfer,
-        int actionSignals)
+        int actionSignals,
+        int owningProperties)
     {
         EmissionCensus census = Generated.Census;
 
@@ -330,6 +370,7 @@ public sealed class ClassEmitterTests
         Assert.Equal(lifetime, census.SkippedCount(module, SkipReason.LifetimePrimitive));
         Assert.Equal(instanceTransfer, census.SkippedCount(module, SkipReason.InstanceTransferFull));
         Assert.Equal(actionSignals, census.SkippedCount(module, SkipReason.ActionSignal));
+        Assert.Equal(owningProperties, census.SkippedCount(module, SkipReason.OwningProperty));
     }
 
     [Theory]

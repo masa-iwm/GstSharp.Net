@@ -574,7 +574,7 @@ public sealed class RecordEmitterTests
     [InlineData("GstSharp.Net.Sdp", 24)]
     [InlineData("GstSharp.Net.WebRTC", 19)]
     [InlineData("GstSharp.Net.Net", 10)]
-    [InlineData("GstSharp.Net.Rtsp", 20)]
+    [InlineData("GstSharp.Net.Rtsp", 18)]
     [InlineData("GstSharp.Net.GES", 66)]
     public void EveryModuleEmitsItsOwnFiles(string projectDirectory, int count)
     {
@@ -667,6 +667,50 @@ public sealed class RecordEmitterTests
         {
             Assert.Equal(first[i].Content, second[i].Content, StringComparer.Ordinal);
         }
+    }
+
+    [Fact]
+    public void ForcingTheRtspTransportOpaqueBindsItsAccessors()
+    {
+        // A plain struct gets no members at all, so every accessor of
+        // GstRTSPTransport used to be dropped and its destination and source
+        // fields were handed out as bare pointers. Behind a pointer the record
+        // is constructible and readable, and the two callers-allocate entry
+        // points stay out because a wrapper is one pointer wide.
+        string source = SourceOf("GstSharp.Net.Rtsp/Generated/RTSPTransport.cs");
+
+        Assert.Contains("public sealed unsafe partial class RTSPTransport", source, StringComparison.Ordinal);
+        Assert.Contains(
+            "public static Gst.Rtsp.RTSPResult New(out Gst.Rtsp.RTSPTransport? transport)",
+            source,
+            StringComparison.Ordinal);
+        Assert.Contains("public string? AsText()", source, StringComparison.Ordinal);
+        Assert.Contains("public Gst.Rtsp.RTSPResult Free()", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("Parse(", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("public Gst.Rtsp.RTSPResult Init(", source, StringComparison.Ordinal);
+
+        // The ranges it embeds by value keep their value projection; forcing
+        // one of them behind a pointer would demote the transport again.
+        Assert.Contains(
+            "public partial struct RTSPRange",
+            SourceOf("GstSharp.Net.Rtsp/Generated/RTSPRange.cs"),
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "public partial struct RTSPTimeRange",
+            SourceOf("GstSharp.Net.Rtsp/Generated/RTSPTimeRange.cs"),
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void TheRtspWatchIsNotEmitted()
+    {
+        // gst_rtsp_watch_new is introspectable="0" and gst_rtsp_watch_attach
+        // takes a GLib main context, so nothing can produce a GstRTSPWatch and
+        // every method on it was unreachable. Its callback table has no member
+        // at all. Both are skipped rather than shipped dead.
+        Assert.DoesNotContain(
+            Generated.Files,
+            static file => file.RelativePath.Contains("RTSPWatch", StringComparison.Ordinal));
     }
 
     [Fact]

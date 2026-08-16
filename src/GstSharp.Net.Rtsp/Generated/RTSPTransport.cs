@@ -3,78 +3,145 @@
 
 #nullable enable
 
-using System.Runtime.CompilerServices;
+using System;
 using System.Runtime.InteropServices;
 
 namespace Gst.Rtsp;
 
 /// <summary>Provides helper functions to deal with RTSP transport strings.</summary>
-[StructLayout(LayoutKind.Sequential)]
-public partial struct RTSPTransport
+public sealed unsafe partial class RTSPTransport
 {
-    /// <summary>the transport mode</summary>
-    public Gst.Rtsp.RTSPTransMode Trans;
+    /// <summary>The native instance.</summary>
+    internal nint Handle;
 
-    /// <summary>the tansport profile</summary>
-    public Gst.Rtsp.RTSPProfile Profile;
+    /// <summary>Wraps a native <c>GstRTSPTransport</c>.</summary>
+    /// <param name="handle">The native instance.</param>
+    internal RTSPTransport(nint handle) => Handle = handle;
 
-    /// <summary>the lower transport</summary>
-    public Gst.Rtsp.RTSPLowerTrans LowerTransport;
-
-    /// <summary>the destination ip/hostname</summary>
-    public nint Destination;
-
-    /// <summary>the source ip/hostname</summary>
-    public nint Source;
-
-    /// <summary>the number of layers</summary>
-    public uint Layers;
-
-    // <c>gboolean</c> is a 32 bit integer; every non zero value is true.
-    /// <summary>if play mode was selected</summary>
-    public int ModePlay;
-
-    // <c>gboolean</c> is a 32 bit integer; every non zero value is true.
-    /// <summary>if record mode was selected</summary>
-    public int ModeRecord;
-
-    // <c>gboolean</c> is a 32 bit integer; every non zero value is true.
-    /// <summary>is append mode was selected</summary>
-    public int Append;
-
-    /// <summary>the interleave range</summary>
-    public Gst.Rtsp.RTSPRange Interleaved;
-
-    /// <summary>the time to live for multicast UDP</summary>
-    public uint Ttl;
-
-    /// <summary>the port pair for multicast sessions</summary>
-    public Gst.Rtsp.RTSPRange Port;
+    /// <summary>Wraps a native <c>GstRTSPTransport</c>, mapping the null pointer onto <see langword="null"/>.</summary>
+    /// <param name="handle">The native instance, or <c>0</c>.</param>
+    /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>
+    /// <remarks>
+    /// The wrapper of an opaque record is a bare pointer holder: the gir
+    /// describes no way of releasing one, so it does not take part in the
+    /// ownership of what it points at.
+    /// </remarks>
+    internal static RTSPTransport? FromNative(nint handle) =>
+        handle == 0 ? null : new(handle);
 
     /// <summary>
-    /// the client port pair for receiving data. For TCP
-    ///   based transports, applications can use this field to store the
-    ///   sender and receiver ports of the client.
+    /// Convert @transport into a string that can be used to signal the transport in
+    /// an RTSP SETUP response.
     /// </summary>
-    public Gst.Rtsp.RTSPRange ClientPort;
-
-    /// <summary>
-    /// the server port pair for receiving data. For TCP
-    ///   based transports, applications can use this field to store the
-    ///   sender and receiver ports of the server.
-    /// </summary>
-    public Gst.Rtsp.RTSPRange ServerPort;
-
-    /// <summary>the ssrc that the sender/receiver will use</summary>
-    public uint Ssrc;
-
-    /// <summary>The <c>_gst_reserved</c> field of <c>GstRTSPTransport</c>.</summary>
-    private GstReservedArray _gstReserved;
-
-    /// <summary>Inline storage of the 4 elements of the <c>_gst_reserved</c> field of <c>GstRTSPTransport</c>.</summary>
-    [InlineArray(4)]
-    private struct GstReservedArray
+    /// <returns>
+    /// a string describing the RTSP transport
+    /// or %NULL when the transport is invalid.
+    /// </returns>
+    public string? AsText()
     {
-        private nint _element0;
+        nint nativeResult = GstRtspTransportAsText(Handle);
+        System.GC.KeepAlive(this);
+        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
     }
+
+    /// <summary>Free the memory used by @transport.</summary>
+    /// <returns>#GST_RTSP_OK.</returns>
+    public Gst.Rtsp.RTSPResult Free()
+    {
+        int nativeResult = GstRtspTransportFree(Handle);
+        System.GC.KeepAlive(this);
+        return (Gst.Rtsp.RTSPResult)nativeResult;
+    }
+
+    /// <summary>
+    /// Get the media type of @transport. This media type is typically
+    /// used to generate #GstCaps events.
+    /// </summary>
+    /// <param name="mediaType">The <c>mediaType</c> argument.</param>
+    /// <returns>#GST_RTSP_OK.</returns>
+    public Gst.Rtsp.RTSPResult GetMediaType(out string? mediaType)
+    {
+        nint mediaTypeNative = default;
+        int nativeResult = GstRtspTransportGetMediaType(Handle, &mediaTypeNative);
+        System.GC.KeepAlive(this);
+        mediaType = Gst.Interop.GMarshal.PtrToStringUtf8(mediaTypeNative);
+        return (Gst.Rtsp.RTSPResult)nativeResult;
+    }
+
+    /// <summary>Get the #GstElement that can handle the buffers transported over @trans.</summary>
+    /// <remarks>
+    /// <para>
+    /// It is possible that there are several managers available, use @option to
+    /// selected one.
+    /// </para>
+    /// <para>
+    /// @manager will contain an element name or %NULL when no manager is
+    /// needed/available for @trans.
+    /// </para>
+    /// </remarks>
+    /// <param name="trans">The <c>trans</c> argument.</param>
+    /// <param name="manager">The <c>manager</c> argument.</param>
+    /// <param name="option">The <c>option</c> argument.</param>
+    /// <returns>#GST_RTSP_OK.</returns>
+    public static Gst.Rtsp.RTSPResult GetManager(Gst.Rtsp.RTSPTransMode trans, out string? manager, uint option)
+    {
+        nint managerNative = default;
+        int nativeResult = GstRtspTransportGetManager((int)trans, &managerNative, option);
+        manager = Gst.Interop.GMarshal.PtrToStringUtf8(managerNative);
+        return (Gst.Rtsp.RTSPResult)nativeResult;
+    }
+
+    /// <summary>
+    /// Get the mime type of the transport mode @trans. This mime type is typically
+    /// used to generate #GstCaps events.
+    /// </summary>
+    /// <param name="trans">The <c>trans</c> argument.</param>
+    /// <param name="mime">The <c>mime</c> argument.</param>
+    /// <returns>#GST_RTSP_OK.</returns>
+    [Obsolete("This functions only deals with the GstRTSPTransMode and only returns the mime type for #GST_RTSP_PROFILE_AVP. Use gst_rtsp_transport_get_media_type() instead.")]
+    public static Gst.Rtsp.RTSPResult GetMime(Gst.Rtsp.RTSPTransMode trans, out string? mime)
+    {
+        nint mimeNative = default;
+        int nativeResult = GstRtspTransportGetMime((int)trans, &mimeNative);
+        mime = Gst.Interop.GMarshal.PtrToStringUtf8(mimeNative);
+        return (Gst.Rtsp.RTSPResult)nativeResult;
+    }
+
+    /// <summary>
+    /// Allocate a new initialized #GstRTSPTransport. Use gst_rtsp_transport_free()
+    /// after usage.
+    /// </summary>
+    /// <param name="transport">The <c>transport</c> argument.</param>
+    /// <returns>a #GstRTSPResult.</returns>
+    public static Gst.Rtsp.RTSPResult New(out Gst.Rtsp.RTSPTransport? transport)
+    {
+        nint transportNative = default;
+        int nativeResult = GstRtspTransportNew(&transportNative);
+        transport = Gst.Rtsp.RTSPTransport.FromNative(transportNative);
+        return (Gst.Rtsp.RTSPResult)nativeResult;
+    }
+
+    /// <summary>The <c>gst_rtsp_transport_as_text</c> entry point.</summary>
+    [LibraryImport("GstRtsp", EntryPoint = "gst_rtsp_transport_as_text")]
+    private static partial nint GstRtspTransportAsText(nint transport);
+
+    /// <summary>The <c>gst_rtsp_transport_free</c> entry point.</summary>
+    [LibraryImport("GstRtsp", EntryPoint = "gst_rtsp_transport_free")]
+    private static partial int GstRtspTransportFree(nint transport);
+
+    /// <summary>The <c>gst_rtsp_transport_get_media_type</c> entry point.</summary>
+    [LibraryImport("GstRtsp", EntryPoint = "gst_rtsp_transport_get_media_type")]
+    private static partial int GstRtspTransportGetMediaType(nint transport, nint* mediaType);
+
+    /// <summary>The <c>gst_rtsp_transport_get_manager</c> entry point.</summary>
+    [LibraryImport("GstRtsp", EntryPoint = "gst_rtsp_transport_get_manager")]
+    private static partial int GstRtspTransportGetManager(int trans, nint* manager, uint option);
+
+    /// <summary>The <c>gst_rtsp_transport_get_mime</c> entry point.</summary>
+    [LibraryImport("GstRtsp", EntryPoint = "gst_rtsp_transport_get_mime")]
+    private static partial int GstRtspTransportGetMime(int trans, nint* mime);
+
+    /// <summary>The <c>gst_rtsp_transport_new</c> entry point.</summary>
+    [LibraryImport("GstRtsp", EntryPoint = "gst_rtsp_transport_new")]
+    private static partial int GstRtspTransportNew(nint* transport);
 }

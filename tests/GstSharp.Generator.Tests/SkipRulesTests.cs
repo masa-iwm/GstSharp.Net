@@ -129,6 +129,8 @@ public sealed class SkipRulesTests
         // decision, not a detail.
         Assert.Equal(
             [
+                "GstRtsp.RTSPWatch",
+                "GstRtsp.RTSPWatchFuncs",
                 "ges_deinit",
                 "gst_adapter_map",
                 "gst_adapter_take",

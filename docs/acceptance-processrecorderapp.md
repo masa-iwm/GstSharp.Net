@@ -58,8 +58,10 @@ Gst core:
 GstApp:
 - `AppSink.TryPullSample(ClockTime)` -> nullable owned `Sample`
 - `AppSrc.PushBuffer` (consumes, gir transfer=full) / `AppSrc.PushSample`
-  (does NOT consume, transfer=none) / `Caps` setter / `EndOfStream()` /
-  `CurrentLevelBuffers`
+  (does NOT consume, transfer=none) / `SetCaps` / `EndOfStream()` /
+  `CurrentLevelBuffers`. The caps accessors are methods, not a property:
+  `GetCaps()` hands out a `Caps` the caller owns and disposes, and a property
+  that produced one per read would leak one per read.
 
 GstBase:
 - `BaseSrc` recognizable via `Message.Src is BaseSrc` (GType map, not a cast

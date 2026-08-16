@@ -395,20 +395,6 @@ public unsafe partial class EncodingProfile : Gst.GObject.Object
         return Gst.GObject.Object.FromNative<Gst.Pbutils.EncodingProfile>(nativeResult, Gst.Interop.Transfer.Full);
     }
 
-    /// <summary>
-    /// A #GstStructure defining the properties to be set to the element
-    /// the profile represents.
-    /// </summary>
-    /// <remarks>
-    /// <para>For example for `av1enc`:</para>
-    /// <para>
-    /// ```
-    /// element-properties,row-mt=true, end-usage=vbr
-    /// ```
-    /// </para>
-    /// </remarks>
-    public Gst.Structure? ElementProperties => GetElementProperties();
-
     /// <summary>The <c>gst_encoding_profile_copy</c> entry point.</summary>
     [LibraryImport("GstPbutils", EntryPoint = "gst_encoding_profile_copy")]
     private static partial nint GstEncodingProfileCopy(nint self);
