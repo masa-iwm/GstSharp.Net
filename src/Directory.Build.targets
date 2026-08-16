@@ -1,0 +1,39 @@
+<Project>
+
+  <!--
+    Every module package depends on GstSharp.Net, and the analyzers ship inside
+    that package. `dotnet pack` writes a reference into the nuspec with the
+    default private assets of a project reference, which comes out as
+    <dependency id="GstSharp.Net" ... exclude="Build,Analyzers" />: the package
+    asks NuGet not to pass its analyzer assets on to whoever depends on a
+    module.
+
+    That is the opposite of what this repository wants. A consumer that
+    references only GstSharp.Net.Sdp is exactly the one that needs GST0001 and
+    GST0002, because a module surface is where the wrappers it forgets to
+    dispose come from. It gets them today only because the restore of the
+    current SDK does not act on the Analyzers token - measured, with a scratch
+    feed: an `exclude="All"` on that same dependency suppresses the compile
+    assets, while an `exclude="Analyzers"` suppresses nothing and the rules
+    still run. So the rules reach a module-only consumer by accident, not by
+    arrangement, and a NuGet that starts honouring the token would take them
+    away without anything here changing.
+
+    Clearing PrivateAssets drops the exclude, so the dependency entry says what
+    the project means and the outcome stops depending on which tokens the
+    restore of the day acts on. It is written here rather than on each of the
+    ten references so that a module added later cannot be the one that silently
+    loses the rules; the Update matches nothing in the projects that do not
+    reference GstSharp.Net.
+
+    This is Directory.Build.targets rather than Directory.Build.props because
+    Update only reaches items that already exist, and the props file is
+    imported before the project body declares them. The path is the one the
+    module projects write, and it is resolved against each of them rather than
+    against this file.
+  -->
+  <ItemGroup>
+    <ProjectReference Update="../GstSharp.Net/GstSharp.Net.csproj" PrivateAssets="none" />
+  </ItemGroup>
+
+</Project>

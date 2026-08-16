@@ -44,8 +44,11 @@ they cannot get out of step with the binding that way, and no second package
 reports the same diagnostic twice. They are `GST0001` (a wrapper that owns a
 reference and never releases it) and `GST0002` (a buffer mapping that is never
 released); see [`docs/analyzers.md`](https://github.com/masa-iwm/GstSharp.Net/blob/main/docs/analyzers.md).
-NuGet never passes analyzers along a package dependency, so they reach the
-projects that reference `GstSharp.Net` themselves.
+They travel along the package dependency, so a project that references only a
+module package — `GstSharp.Net.Sdp`, say — gets them too. Every module clears
+`PrivateAssets` on its reference to `GstSharp.Net` to say so, because the
+default would pack a dependency that asks for the analyzer assets to be left
+behind.
 
 The packages target plain `net10.0` and carry managed code only. GStreamer
 itself is not bundled: install it separately and let `NativeLoader` find it.
