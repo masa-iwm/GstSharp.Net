@@ -21,18 +21,28 @@ public sealed partial class Caps
     /// plain <c>caps.MakeWritable()</c>.
     /// </para>
     /// <para>
-    /// Rewriting caps is what this is for: every mutating call on
-    /// <see cref="Caps"/>, and every mutating call on a
-    /// <see cref="Structure"/> reached through
-    /// <see cref="Caps.GetStructure(uint)"/>, needs the caps to be writable
-    /// first. Caps that come out of a pad, a sample or a message are shared
-    /// with whoever produced them and are not.
+    /// Rewriting caps is what this is for: the calls that change the caps
+    /// themselves — <see cref="Caps.RemoveStructure(uint)"/>,
+    /// <see cref="Caps.StealStructure(uint)"/>,
+    /// <see cref="Caps.MapInPlace(Gst.CapsMapFunc)"/> and
+    /// <see cref="Caps.FilterAndMapInPlace(Gst.CapsFilterMapFunc)"/> — write
+    /// into the caps in place, and the library refuses them on caps that
+    /// somebody else holds. Caps that come out of a pad, a sample or a message
+    /// are shared with whoever produced them and are not writable.
+    /// </para>
+    /// <para>
+    /// A <see cref="Structure"/> taken from
+    /// <see cref="Caps.GetStructure(uint)"/> needs none of this and gains
+    /// nothing from it. <see cref="Structure"/> is a boxed type, so the binding
+    /// hands back a copy that the caller owns and disposes rather than a window
+    /// into the caps: changes made to that copy are not written back, whether
+    /// the caps are writable or not.
     /// </para>
     /// <para>
     /// <b>Any handle read before the call is stale afterwards.</b>
-    /// <see cref="MiniObject.Handle"/> has to be read again, and a
-    /// <see cref="Structure"/> that was borrowed from the old caps points into
-    /// the old caps and must not be used any more.
+    /// <see cref="MiniObject.Handle"/> has to be read again. A
+    /// <see cref="Structure"/> read earlier is unaffected, because it was a
+    /// copy of its own all along and never pointed into the old caps.
     /// </para>
     /// <para>
     /// This is single owner surgery. It is only correct while no other wrapper

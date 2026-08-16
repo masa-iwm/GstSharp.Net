@@ -41,19 +41,12 @@ public unsafe partial class AppSrc
     /// takes is <c>transfer-ownership="none"</c> and stays usable.
     /// </para>
     /// <para>
-    /// The name is <c>Push</c> rather than <c>PushBuffer</c> because the
-    /// generated class still carries the <c>push-buffer</c> action signal as an
-    /// event of that name, and a type cannot hold both. The renames of
-    /// <c>GstApp.AppSrc::push-sample</c> and <c>GstApp.AppSrc::end-of-stream</c>
-    /// in <c>girs/overlays/fixups.json</c> exist for exactly that reason;
-    /// <c>push-buffer</c> kept the bare name only because the method it collides
-    /// with was never emitted. Once the generator stops emitting events for
-    /// action signals — an action signal is a call, and calling it through an
-    /// event is nobody's idea of an API — the name is free and this method takes
-    /// it: rename it to <c>PushBuffer</c>, which is what
-    /// <c>gst_app_src_push_buffer</c> is called and what §1 of the acceptance
-    /// requirements asks for. It has never been published under either name, so
-    /// no compatibility forwarder is needed.
+    /// The name is the name of the C function: <c>gst_app_src_push_buffer</c>
+    /// becomes <c>PushBuffer</c>, and nothing on the generated class competes
+    /// for it. GStreamer also publishes the call as the <c>push-buffer</c>
+    /// action signal, but an action signal is a call dressed as a signal for
+    /// bindings that have nothing better, so the generator emits no event for
+    /// it and the name stays free for the method that does the work.
     /// </para>
     /// </remarks>
     /// <exception cref="ArgumentNullException"><paramref name="buffer"/> is <see langword="null"/>.</exception>
