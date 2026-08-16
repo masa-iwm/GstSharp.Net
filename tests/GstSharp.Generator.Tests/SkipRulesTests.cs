@@ -133,6 +133,7 @@ public sealed class SkipRulesTests
                 "gst_adapter_map",
                 "gst_adapter_take",
                 "gst_adapter_unmap",
+                "gst_audio_buffer_unmap",
                 "gst_audio_ring_buffer_commit",
                 "gst_buffer_remove_meta",
                 "gst_bus_set_sync_handler",
@@ -142,9 +143,11 @@ public sealed class SkipRulesTests
                 "gst_id_str_set_static_str",
                 "gst_id_str_set_static_str_with_len",
                 "gst_meta_info_register",
+                "gst_rtsp_auth_credentials_free",
                 "gst_structure_new_static_str_empty",
                 "gst_structure_set_name_static_str",
                 "gst_type_find_peek",
+                "gst_video_frame_unmap",
             ],
             GirFixture.Overlays.SkippedIdentifiers.Order(StringComparer.Ordinal).ToArray());
 

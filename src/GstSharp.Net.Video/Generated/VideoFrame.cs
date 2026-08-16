@@ -66,13 +66,6 @@ public sealed unsafe partial class VideoFrame
         return nativeResult != 0;
     }
 
-    /// <summary>Unmap the memory previously mapped with gst_video_frame_map.</summary>
-    public void Unmap()
-    {
-        GstVideoFrameUnmap(Handle);
-        System.GC.KeepAlive(this);
-    }
-
     /// <summary>The <c>gst_video_frame_copy</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_frame_copy")]
     private static partial int GstVideoFrameCopy(nint dest, nint src);
@@ -80,8 +73,4 @@ public sealed unsafe partial class VideoFrame
     /// <summary>The <c>gst_video_frame_copy_plane</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_frame_copy_plane")]
     private static partial int GstVideoFrameCopyPlane(nint dest, nint src, uint plane);
-
-    /// <summary>The <c>gst_video_frame_unmap</c> entry point.</summary>
-    [LibraryImport("GstVideo", EntryPoint = "gst_video_frame_unmap")]
-    private static partial void GstVideoFrameUnmap(nint frame);
 }

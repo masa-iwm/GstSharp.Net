@@ -928,8 +928,9 @@ disappears shows up here as an added line.
 - `gst_audio_ring_buffer_set_callback`
 - `gst_buffer_add_audio_downmix_meta`
 
-### OverlaySkip (1)
+### OverlaySkip (2)
 
+- `gst_audio_buffer_unmap`
 - `gst_audio_ring_buffer_commit`
 
 ### UnsupportedSignature (51)
@@ -1334,6 +1335,10 @@ disappears shows up here as an added line.
 
 - `gst_rtsp_watch_new`
 
+### OverlaySkip (1)
+
+- `gst_rtsp_auth_credentials_free`
+
 ### UnsupportedSignature (32)
 
 - `gst_rtsp_connection_connect`
@@ -1556,6 +1561,10 @@ disappears shows up here as an added line.
 - `gst_video_dither_new`
 - `gst_video_scaler_combine_packed_YUV`
 - `gst_video_scaler_new`
+
+### OverlaySkip (1)
+
+- `gst_video_frame_unmap`
 
 ### UnsupportedSignature (105)
 

@@ -11,18 +11,6 @@ namespace Gst.Rtsp;
 /// <summary>The functions of the <c>GstRtsp</c> namespace that belong to no type.</summary>
 public static unsafe partial class RtspGlobal
 {
-    /// <summary>
-    /// Free a %NULL-terminated array of credentials returned from
-    /// gst_rtsp_message_parse_auth_credentials().
-    /// </summary>
-    /// <param name="credentials">The <c>credentials</c> argument.</param>
-    public static void RtspAuthCredentialsFree(Gst.Rtsp.RTSPAuthCredential credentials)
-    {
-        ArgumentNullException.ThrowIfNull(credentials);
-        GstRtspAuthCredentialsFree(credentials.Handle);
-        System.GC.KeepAlive(credentials);
-    }
-
     /// <summary>Convert @header to a #GstRTSPHeaderField.</summary>
     /// <param name="header">The <c>header</c> argument.</param>
     /// <returns>
@@ -265,10 +253,6 @@ public static unsafe partial class RtspGlobal
         return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
             ?? throw new InvalidOperationException("gst_rtsp_strresult returned no value.");
     }
-
-    /// <summary>The <c>gst_rtsp_auth_credentials_free</c> entry point.</summary>
-    [LibraryImport("GstRtsp", EntryPoint = "gst_rtsp_auth_credentials_free")]
-    private static partial void GstRtspAuthCredentialsFree(nint credentials);
 
     /// <summary>The <c>gst_rtsp_find_header_field</c> entry point.</summary>
     [LibraryImport("GstRtsp", EntryPoint = "gst_rtsp_find_header_field")]

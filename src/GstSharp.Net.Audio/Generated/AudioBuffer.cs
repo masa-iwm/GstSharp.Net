@@ -3,9 +3,6 @@
 
 #nullable enable
 
-using System;
-using System.Runtime.InteropServices;
-
 namespace Gst.Audio;
 
 /// <summary>
@@ -19,7 +16,7 @@ namespace Gst.Audio;
 /// <remarks>
 /// <para>The different channels in @planes are always in the GStreamer channel order.</para>
 /// </remarks>
-public sealed unsafe partial class AudioBuffer
+public sealed partial class AudioBuffer
 {
     /// <summary>The native instance.</summary>
     internal nint Handle;
@@ -38,18 +35,4 @@ public sealed unsafe partial class AudioBuffer
     /// </remarks>
     internal static AudioBuffer? FromNative(nint handle) =>
         handle == 0 ? null : new(handle);
-
-    /// <summary>
-    /// Unmaps an audio buffer that was previously mapped with
-    /// gst_audio_buffer_map().
-    /// </summary>
-    public void Unmap()
-    {
-        GstAudioBufferUnmap(Handle);
-        System.GC.KeepAlive(this);
-    }
-
-    /// <summary>The <c>gst_audio_buffer_unmap</c> entry point.</summary>
-    [LibraryImport("GstAudio", EntryPoint = "gst_audio_buffer_unmap")]
-    private static partial void GstAudioBufferUnmap(nint buffer);
 }
