@@ -154,6 +154,11 @@ internal static class NativeNames
                 "libgstwebrtc-1.0.0.dylib",
                 "gstwebrtc-1.0-0.dll",
                 "libgstwebrtc-1.0-0.dll"),
+            ["GstNet"] = new(
+                "libgstnet-1.0.so.0",
+                "libgstnet-1.0.0.dylib",
+                "gstnet-1.0-0.dll",
+                "libgstnet-1.0-0.dll"),
             [AnchorLogicalName] = new(
                 "libgstreamer-1.0.so.0",
                 "libgstreamer-1.0.0.dylib",

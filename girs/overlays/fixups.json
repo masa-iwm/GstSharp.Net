@@ -38,9 +38,12 @@
     "Gst.PadTemplate::pad-created": "PadCreatedSignal"
   },
   "annotationOverrides": {},
-  "$comment-return-types": "The gir spells the factory of a subclass with the return type of its base, so gst_pipeline_new returns a GstElement even though it only ever constructs a GstPipeline. The override narrows the wrapper onto the declaring type, which is the one the C implementation is known to build.",
+  "$comment-return-types": "The gir spells the factory of a subclass with the return type of its base, so gst_pipeline_new returns a GstElement even though it only ever constructs a GstPipeline. The override narrows the wrapper onto the declaring type, which is the one the C implementation is known to build. The three network clock factories are the same shape with one wrinkle: gst_net_client_clock_new keeps a cache of clocks, which gst_net_client_clock_deinit is documented as clearing, so what it returns is not always freshly built. It is still an instance of the declaring type or of something below it, and the wrapper is created from the real type of the instance rather than from the declared one, so the narrowing holds either way.",
   "returnTypeOverrides": {
     "gst_bin_new": "Gst.Bin",
-    "gst_pipeline_new": "Gst.Pipeline"
+    "gst_net_client_clock_new": "Gst.Net.NetClientClock",
+    "gst_ntp_clock_new": "Gst.Net.NtpClock",
+    "gst_pipeline_new": "Gst.Pipeline",
+    "gst_ptp_clock_new": "Gst.Net.PtpClock"
   }
 }

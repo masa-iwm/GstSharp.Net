@@ -45,6 +45,7 @@ public sealed class ModuleRegistrationTests
         "GstSharp.Net.Pbutils",
         "GstSharp.Net.Sdp",
         "GstSharp.Net.WebRTC",
+        "GstSharp.Net.Net",
     ];
 
     /// <summary>The logical library name each of them registers.</summary>
@@ -58,6 +59,7 @@ public sealed class ModuleRegistrationTests
         "GstPbutils",
         "GstSdp",
         "GstWebRTC",
+        "GstNet",
     ];
 
     /// <summary>

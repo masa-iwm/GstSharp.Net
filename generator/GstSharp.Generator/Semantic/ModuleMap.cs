@@ -63,6 +63,7 @@ internal static class ModuleMap
         new ModuleInfo("GstPbutils", "Gst.Pbutils", "GstSharp.Net.Pbutils", "GstPbutils", IsGenerated: true),
         new ModuleInfo("GstSdp", "Gst.Sdp", "GstSharp.Net.Sdp", "GstSdp", IsGenerated: true),
         new ModuleInfo("GstWebRTC", "Gst.WebRTC", "GstSharp.Net.WebRTC", "GstWebRTC", IsGenerated: true),
+        new ModuleInfo("GstNet", "Gst.Net", "GstSharp.Net.Net", "GstNet", IsGenerated: true),
         new ModuleInfo("Gio", "Gst.Gio", "GstSharp.Net", "Gio", IsGenerated: false),
         new ModuleInfo("GLib", "Gst.GLib", "GstSharp.Net", "GLib", IsGenerated: false),
         new ModuleInfo("GObject", "Gst.GObject", "GstSharp.Net", "GObject", IsGenerated: false),

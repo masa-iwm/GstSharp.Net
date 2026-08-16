@@ -573,6 +573,7 @@ public sealed class RecordEmitterTests
     [InlineData("GstSharp.Net.Pbutils", 19)]
     [InlineData("GstSharp.Net.Sdp", 24)]
     [InlineData("GstSharp.Net.WebRTC", 19)]
+    [InlineData("GstSharp.Net.Net", 10)]
     public void EveryModuleEmitsItsOwnFiles(string projectDirectory, int count)
     {
         string prefix = projectDirectory + "/Generated/";

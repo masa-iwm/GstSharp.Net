@@ -1104,6 +1104,46 @@ disappears shows up here as an added line.
 - `gst_type_find_helper_get_range`
 - `gst_type_find_helper_get_range_full`
 
+## GstNet
+
+### LifetimePrimitive (1)
+
+- `gst_net_time_packet_free`
+
+### MovedTo (3)
+
+- `gst_net_address_meta_get_info`
+- `gst_net_control_message_meta_get_info`
+- `gst_net_time_packet_receive`
+
+### UnsupportedSignature (25)
+
+- `GstNet.NetClientClock:address`
+- `GstNet.NetClientClock:base-time`
+- `GstNet.NetClientClock:bus`
+- `GstNet.NetClientClock:internal-clock`
+- `GstNet.NetClientClock:minimum-update-interval`
+- `GstNet.NetClientClock:port`
+- `GstNet.NetClientClock:qos-dscp`
+- `GstNet.NetClientClock:round-trip-limit`
+- `GstNet.NetTimeProvider:active`
+- `GstNet.NetTimeProvider:address`
+- `GstNet.NetTimeProvider:clock`
+- `GstNet.NetTimeProvider:port`
+- `GstNet.NetTimeProvider:qos-dscp`
+- `GstNet.PtpClock:domain`
+- `GstNet.PtpClock:grandmaster-clock-id`
+- `GstNet.PtpClock:internal-clock`
+- `GstNet.PtpClock:master-clock-id`
+- `gst_buffer_add_net_address_meta`
+- `gst_buffer_add_net_control_message_meta`
+- `gst_buffer_get_net_address_meta`
+- `gst_net_address_meta_get_info`
+- `gst_net_control_message_meta_get_info`
+- `gst_net_time_packet_new`
+- `gst_net_time_packet_serialize`
+- `gst_ptp_init`
+
 ## GstPbutils
 
 ### LifetimePrimitive (1)

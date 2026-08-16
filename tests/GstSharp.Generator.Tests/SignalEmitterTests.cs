@@ -440,6 +440,7 @@ public sealed class SignalEmitterTests
     [InlineData("GstPbutils", 3)]
     [InlineData("GstSdp", 0)]
     [InlineData("GstWebRTC", 6)]
+    [InlineData("GstNet", 0)]
     public void TheSignalCensusIsStable(string module, int signals)
     {
         // The two signals whose C# name a method of the same class had taken
