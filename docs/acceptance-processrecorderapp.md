@@ -158,12 +158,20 @@ Priority order:
      no-op `Unref` in gstreamer-sharp's Opaque plus per-emission
      reflection);
    - `gst_app_sink_set_simple_callbacks` (GStreamer >= 1.28, introspectable,
-     standard `scope="notified"` + closure + destroy annotations — the
-     designed-for-bindings API; immutable once installed; boxed
-     `GstAppSinkSimpleCallbacks` builder with `set_new_sample` etc.).
-     preview1 already emits the `AppSinkSimpleCallbacks` /
+     the designed-for-bindings API; immutable once installed; boxed
+     `GstAppSinkSimpleCallbacks` builder with `set_new_sample` etc.). The
+     standard `scope="notified"` + closure + destroy annotations are on the
+     setters of the builder, not on the install, which carries none: its `cb`
+     parameter is `transfer-ownership="full"`, which is why the generator
+     skips it. preview1 already emits the `AppSinkSimpleCallbacks` /
      `AppSrcSimpleCallbacks` builder types; the missing piece is binding the
-     install method itself, which currently leaves the builders orphaned;
+     install method itself, which currently leaves the builders orphaned.
+     (Done: `Custom/AppSink.cs` and `Custom/AppSrc.cs` bind both installs by
+     hand along the lines of `PushBuffer` — the call takes the builder over,
+     which seals it the way the C API documents. A convenience overload takes
+     the delegates directly. `AppSinkSimpleCallbacksTests` pins the install,
+     the destroy notification of every slot, replacement and removal against
+     the installed library.)
    - `gst_app_sink_set_callbacks` is `introspectable="0"` (struct of
      function-pointer fields) — out of scope; simple callbacks supersede it.
 3. **Already shipped in preview1 — no work needed** (this entry predates the
