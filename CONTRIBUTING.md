@@ -1,0 +1,94 @@
+# Contributing to GstSharp.Net
+
+Thanks for looking. This page is the short version of how the repository works;
+`eng/ci-notes.md` explains the workflows themselves.
+
+Everything inside this repository is written in **English**: code, comments, XML
+documentation, Markdown, and commit messages.
+
+## Build and test
+
+```sh
+dotnet build
+dotnet test
+```
+
+`dotnet test` runs all four suites: `GstSharp.Generator.Tests`,
+`GstSharp.Analyzers.Tests`, `GstSharp.Core.Tests` and
+`GstSharp.IntegrationTests`. The first three are pure. The integration suite
+needs a native GStreamer installation that `NativeLoader` can find (see the
+installation section of the README), and so do the samples.
+
+## Regenerating the bindings
+
+The C# surface under `src/*/Generated/` is produced from the `.gir` files in
+`girs/reference/` and **is committed to the repository**. Never hand-edit it:
+the next generator run overwrites it and the CI diff gate fails.
+
+```sh
+# Regenerate.
+dotnet run --project generator/GstSharp.Generator -- generate --gir-dir girs --out-dir src
+
+# Regenerate into a scratch tree and fail when the committed output differs.
+dotnet run --project generator/GstSharp.Generator -- verify --gir-dir girs --out-dir src
+```
+
+To change generated output, change one of the inputs instead:
+
+* `girs/reference/*.gir` — refresh from upstream, see `girs/README.md`;
+* `girs/overlays/fixups.json` — skip, rename, annotation corrections;
+* `girs/overlays/platform-symbols.json` — per-platform availability;
+* the generator itself.
+
+## Where hand-written code goes
+
+| Kind | Location |
+| --- | --- |
+| Per-module glue, as `partial` extensions of the generated types | `src/<Project>/Custom/` |
+| The runtime: loader, marshalling, GObject/GLib/Gio layer | `src/GstSharp.Net/Core/` |
+| Roslyn analyzers | `src/GstSharp.Net.Analyzers/` |
+
+The runtime is part of the `GstSharp.Net` assembly; there is no separate core
+package.
+
+## Quality gates
+
+All of these must pass before a change is merged:
+
+1. **`dotnet build` is warning-free.** Warnings are errors here, so a warning is
+   a build failure by construction. Do not silence one with
+   `#pragma warning disable` or `NoWarn` without a comment explaining why.
+2. **Running the generator twice produces byte-identical output** — deterministic
+   ordering, LF line endings.
+3. **Census tests pass.** The generator asserts fixed counts of emitted classes,
+   records, enums and bitfields, so scope creep or accidental skipping shows up
+   immediately.
+4. **ABI probe tests pass** (`tests/GstSharp.IntegrationTests`). They validate
+   struct sizes and raw field offsets against the running library, so they need
+   a native GStreamer.
+5. **NativeAOT smoke:**
+   `dotnet publish samples/AotSmoke -r win-x64 -c Release /p:PublishAot=true`
+   completes with zero IL trimming or AOT warnings. `eng/aot-gate.ps1` runs this
+   the way CI does, for both AOT samples.
+
+## Line endings and determinism
+
+Everything is LF, enforced by `.gitattributes` and `.editorconfig`. The
+generator emits LF explicitly and orders its output deterministically, so two
+runs over the same inputs produce identical bytes; a change that makes the
+second run differ is a bug in the change.
+
+## Ownership doctrine
+
+New API has to fit the rules in
+[`docs/ownership.md`](https://github.com/masa-iwm/GstSharp.Net/blob/main/docs/ownership.md):
+mini objects and boxed values are owned and disposed, GObject wrappers are
+interned and are not. A call that consumes its argument is written by hand in
+`Custom/`, never generated, and documents the consumption on the parameter.
+
+## Commits and pull requests
+
+Imperative mood, concise, English, one logical change per commit. A pull request
+runs the whole CI matrix — Linux, macOS, Windows MSVC and Windows MinGW, plus
+both NativeAOT gates — so keep the change small enough that a red leg points at
+one thing.
