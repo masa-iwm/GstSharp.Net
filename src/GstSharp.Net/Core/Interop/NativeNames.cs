@@ -85,6 +85,16 @@ internal static class NativeNames
     /// <returns>The file name of the GStreamer library.</returns>
     internal static string WindowsAnchor(GstFlavor flavor) => Table[AnchorLogicalName].Windows(flavor);
 
+    /// <summary>
+    /// Gets the file name of the GStreamer library on the platforms that have
+    /// no flavors, which is what a directory has to contain to be a GStreamer
+    /// installation.
+    /// </summary>
+    /// <param name="isMacOs"><see langword="true"/> for macOS, <see langword="false"/> for Linux.</param>
+    /// <returns>The file name of the GStreamer library.</returns>
+    internal static string UnixAnchor(bool isMacOs) =>
+        isMacOs ? Table[AnchorLogicalName].MacOs : Table[AnchorLogicalName].Linux;
+
     private static FrozenDictionary<string, NativeNameEntry> Build()
     {
         Dictionary<string, NativeNameEntry> table = new(StringComparer.Ordinal)

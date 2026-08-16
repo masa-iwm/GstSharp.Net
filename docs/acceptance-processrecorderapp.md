@@ -117,7 +117,13 @@ GstBase:
    opaque pointer wrapper. Creating a category is still impossible from app
    code — that half remains §4.4.)
 5. **No flavor mixing.** One (flavor, directory) pinned for every module;
-   expose which root won so apps can log it.
+   expose which root won so apps can log it. (Done: `NativeLoader` exposes
+   `ResolvedDirectory`, `ResolvedFlavor`, `ResolvedOrigin`,
+   `ResolvedSourceDescription` and `GetLoadedModulePath`. The Windows search
+   also scans the PATH directories first among the implicit stages and probes
+   an application-bundled `runtimes/<rid>` tree — both flavors, MSVC
+   preferred — after every installed source, so an application no longer
+   needs its own locator.)
 
 ## 3. Packaging constraints
 
@@ -178,10 +184,11 @@ Priority order:
      app's only use was in dead code, but the parse-API family is incomplete.
    - `Buffer.Copy()` convenience is absent — consumers write
      `CopyRegion(BufferCopy.All, 0, nuint.MaxValue)` to get `gst_buffer_copy`.
-   - No public API reports the actually-loaded module file paths, and
-     `NativeLoader.ResolvedDirectory` is null when the pin came from the
-     process search path — apps fall back to `Process.Modules` scans for
-     their runtime log line.
+   - ~~No public API reports the actually-loaded module file paths~~ —
+     done: `NativeLoader.GetLoadedModulePath(logicalName)` answers from the
+     module handle (truthful even for bare-name loads), and
+     `ResolvedOrigin`/`ResolvedSourceDescription` name the winning search
+     stage.
    - `Custom/Caps.cs` doc/code mismatch: the `MakeWritable` remarks describe
      `GetStructure` results as borrows that write through on writable caps;
      the generated method returns an independent boxed copy (mutations are

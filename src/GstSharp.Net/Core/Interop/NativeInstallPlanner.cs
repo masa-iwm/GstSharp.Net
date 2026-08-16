@@ -12,8 +12,13 @@ namespace Gst.Interop;
 /// The directory that holds the DLLs, or <see langword="null"/> to load by
 /// plain file name and let the operating system search for it.
 /// </param>
+/// <param name="Origin">The stage of the search that produced the candidate.</param>
 /// <param name="Source">A human readable description of where the candidate came from.</param>
-internal readonly record struct NativeInstall(GstFlavor Flavor, string? Directory, string Source);
+internal readonly record struct NativeInstall(
+    GstFlavor Flavor,
+    string? Directory,
+    GstInstallOrigin Origin,
+    string Source);
 
 /// <summary>
 /// Decides in which order GStreamer installations are tried.
@@ -45,8 +50,43 @@ internal static partial class NativeInstallPlanner
         return string.Join('\\', parts);
     }
 
+    /// <summary>
+    /// Joins path segments with the separator of Linux and macOS. Only the
+    /// trailing separator of a segment is removed, so a rooted first segment
+    /// stays rooted.
+    /// </summary>
+    private static string JoinUnix(params string[] segments)
+    {
+        var parts = new List<string>(segments.Length);
+        foreach (string segment in segments)
+        {
+            string trimmed = segment.TrimEnd('/');
+            if (trimmed.Length > 0)
+            {
+                parts.Add(trimmed);
+            }
+        }
+
+        return string.Join('/', parts);
+    }
+
     private static readonly string[] Msys2Prefixes = ["ucrt64", "mingw64", "clang64"];
     private static readonly string[] Msys2RootNames = ["msys64", "msys32"];
+
+    /// <summary>
+    /// The subdirectories of a bundled runtime tree on Windows, in the order in
+    /// which they are probed: the layout of a GStreamer installation first, the
+    /// layout NuGet gives the native assets of a package second.
+    /// </summary>
+    private static readonly string[] WindowsBundleLayouts = ["bin", "native"];
+
+    /// <summary>
+    /// The subdirectories of a bundled runtime tree on Linux and macOS, in the
+    /// order in which they are probed: the library layout of the platform
+    /// first, the NuGet layout second, the Windows layout last so that a tree
+    /// which was laid out for all platforms at once is still found.
+    /// </summary>
+    private static readonly string[] UnixBundleLayouts = ["lib", "native", "bin"];
 
     /// <summary>
     /// Enumerates the Windows installations to try, best candidate first.
@@ -67,7 +107,7 @@ internal static partial class NativeInstallPlanner
         string architecture = ArchitectureToken(probe.OSArchitecture);
         string? localAppData = probe.GetEnvironmentVariable("LOCALAPPDATA");
 
-        void Add(GstFlavor flavor, string? directory, string source)
+        void Add(GstFlavor flavor, string? directory, GstInstallOrigin origin, string source)
         {
             if (configuredFlavor is GstFlavor requested && requested != flavor)
             {
@@ -80,7 +120,7 @@ internal static partial class NativeInstallPlanner
 
             if (seen.Add(key))
             {
-                result.Add(new NativeInstall(flavor, directory, source));
+                result.Add(new NativeInstall(flavor, directory, origin, source));
             }
         }
 
@@ -89,28 +129,59 @@ internal static partial class NativeInstallPlanner
         {
             foreach (GstFlavor flavor in FlavorsOf(probe, configuredPath, configuredFlavor))
             {
-                Add(flavor, configuredPath, "the configured native search path");
+                Add(flavor, configuredPath, GstInstallOrigin.ConfiguredSearchPath, "the configured native search path");
             }
         }
 
-        // 2. The environment variables of the official installers.
+        // 2. The directories of the PATH environment variable, in their own
+        //    order. Putting an installation in front of the search path is how
+        //    the Windows tooling of GStreamer itself is pointed at one, so an
+        //    explicit prepend is the strongest override the application did not
+        //    configure through the API. The position on the search path is the
+        //    priority the user expressed, so it outranks the flavor preference
+        //    between directories; the flavor only decides inside one directory
+        //    that holds both namings. Every candidate is a directory that is
+        //    pinned and loaded from by absolute path, so the no mixing
+        //    guarantee survives, which loading by plain file name would not.
+        foreach (string entry in probe.GetPathEntries())
+        {
+            foreach (GstFlavor flavor in PreferredFlavors(configuredFlavor))
+            {
+                // The GStreamer library alone decides it: dozens of unrelated
+                // packages put a copy of GLib on the search path.
+                if (probe.FileExists(JoinWindows(entry, NativeNames.WindowsAnchor(flavor))))
+                {
+                    Add(
+                        flavor,
+                        entry,
+                        GstInstallOrigin.PathDirectory,
+                        $"the directory {entry} on the process search path");
+                }
+            }
+        }
+
+        // 3. The environment variables of the official installers.
         foreach (GstFlavor flavor in PreferredFlavors(configuredFlavor))
         {
             string variable = $"GSTREAMER_1_0_ROOT_{FlavorToken(flavor).ToUpperInvariant()}_{architecture.ToUpperInvariant()}";
             string? root = probe.GetEnvironmentVariable(variable);
             if (!string.IsNullOrEmpty(root))
             {
-                Add(flavor, JoinWindows(root, "bin"), $"the {variable} environment variable");
+                Add(
+                    flavor,
+                    JoinWindows(root, "bin"),
+                    GstInstallOrigin.EnvironmentVariable,
+                    $"the {variable} environment variable");
             }
         }
 
-        // 3. The uninstall entries of the official installers.
+        // 4. The uninstall entries of the official installers.
         foreach (NativeInstall candidate in RegistryCandidates(probe, architecture))
         {
-            Add(candidate.Flavor, candidate.Directory, candidate.Source);
+            Add(candidate.Flavor, candidate.Directory, candidate.Origin, candidate.Source);
         }
 
-        // 4. The directories the official installers use by default.
+        // 5. The directories the official installers use by default.
         foreach (GstFlavor flavor in PreferredFlavors(configuredFlavor))
         {
             string directoryName = $"{FlavorToken(flavor).ToLowerInvariant()}_{architecture}";
@@ -120,27 +191,63 @@ internal static partial class NativeInstallPlanner
                 string candidate = JoinWindows(localAppData, "Programs", "gstreamer", "1.0", directoryName, "bin");
                 if (HasAnchor(probe, candidate, flavor))
                 {
-                    Add(flavor, candidate, "the default per user installation directory");
+                    Add(
+                        flavor,
+                        candidate,
+                        GstInstallOrigin.DefaultInstallDirectory,
+                        "the default per user installation directory");
                 }
             }
 
             string machineWide = JoinWindows(@"C:\gstreamer", "1.0", directoryName, "bin");
             if (HasAnchor(probe, machineWide, flavor))
             {
-                Add(flavor, machineWide, "the default machine wide installation directory");
+                Add(
+                    flavor,
+                    machineWide,
+                    GstInstallOrigin.DefaultInstallDirectory,
+                    "the default machine wide installation directory");
             }
         }
 
-        // 5. MSYS2, which ships the MinGW flavor.
+        // 6. MSYS2, which ships the MinGW flavor. A prefix that is on the
+        //    search path has already been found by stage 2; what is left here
+        //    is the roots that are not on it.
         foreach (NativeInstall candidate in Msys2Candidates(probe, localAppData))
         {
-            Add(candidate.Flavor, candidate.Directory, candidate.Source);
+            Add(candidate.Flavor, candidate.Directory, candidate.Origin, candidate.Source);
         }
 
-        // 6. Whatever the operating system finds on the search path.
+        // 7. The runtime tree that an application ships next to itself.
+        List<string> bundled = BundledDirectories(
+            probe,
+            WindowsBundleLayouts,
+            JoinWindows,
+            WindowsRuntimeIdentifier(probe.OSArchitecture));
+
         foreach (GstFlavor flavor in PreferredFlavors(configuredFlavor))
         {
-            Add(flavor, null, "the process search path");
+            foreach (string directory in bundled)
+            {
+                // The GStreamer library alone decides it, as for MSYS2: a
+                // bundle directory that only happens to hold a copy of GLib is
+                // not an installation and must not pin one.
+                if (probe.FileExists(JoinWindows(directory, NativeNames.WindowsAnchor(flavor))))
+                {
+                    Add(
+                        flavor,
+                        directory,
+                        GstInstallOrigin.BundledRuntime,
+                        "the bundled runtime next to the application");
+                }
+            }
+        }
+
+        // 8. Whatever the operating system finds on the search path, by plain
+        //    file name and without pinning a directory.
+        foreach (GstFlavor flavor in PreferredFlavors(configuredFlavor))
+        {
+            Add(flavor, null, GstInstallOrigin.ProcessSearchPath, "the process search path");
         }
 
         return result;
@@ -154,6 +261,11 @@ internal static partial class NativeInstallPlanner
     /// <param name="configuredPath">The directory that was passed to <see cref="NativeLoader.Configure"/>.</param>
     /// <param name="isMacOs"><see langword="true"/> on macOS.</param>
     /// <returns>The directories, in the order in which they should be tried.</returns>
+    /// <remarks>
+    /// The runtime tree an application ships next to itself comes last, as it
+    /// does on Windows: a copy that is installed on the machine is the one the
+    /// plugins and the helper processes of the system use, so it wins.
+    /// </remarks>
     internal static IReadOnlyList<string?> EnumerateUnixDirectories(
         IPlatformProbe probe,
         string? configuredPath,
@@ -175,6 +287,23 @@ internal static partial class NativeInstallPlanner
             result.Add("/Library/Frameworks/GStreamer.framework/Versions/1.0/lib");
             result.Add("/opt/homebrew/lib");
             result.Add("/usr/local/lib");
+        }
+
+        string anchor = NativeNames.UnixAnchor(isMacOs);
+        List<string> bundled = BundledDirectories(
+            probe,
+            UnixBundleLayouts,
+            JoinUnix,
+            UnixRuntimeIdentifier(probe.OSArchitecture, isMacOs));
+
+        foreach (string directory in bundled)
+        {
+            // The GStreamer library alone decides it: a bundle directory that
+            // only happens to hold a copy of GLib is not an installation.
+            if (probe.FileExists(JoinUnix(directory, anchor)))
+            {
+                result.Add(directory);
+            }
         }
 
         return result;
@@ -223,6 +352,98 @@ internal static partial class NativeInstallPlanner
         Architecture.X86 => "x86",
         _ => architecture.ToString().ToLowerInvariant(),
     };
+
+    /// <summary>
+    /// Gets the architecture part of a runtime identifier. These are the lower
+    /// case RID tokens of the SDK (<c>x64</c>), not the tokens the GStreamer
+    /// installers use (<c>x86_64</c>).
+    /// </summary>
+    /// <param name="architecture">The architecture of the operating system.</param>
+    /// <returns><c>x64</c>, <c>arm64</c> or <c>x86</c>.</returns>
+    private static string RuntimeIdentifierArchitecture(Architecture architecture) => architecture switch
+    {
+        Architecture.X64 => "x64",
+        Architecture.Arm64 => "arm64",
+        Architecture.X86 => "x86",
+        _ => architecture.ToString().ToLowerInvariant(),
+    };
+
+    /// <summary>
+    /// Gets the portable Windows runtime identifier of an architecture.
+    /// </summary>
+    /// <param name="architecture">The architecture of the operating system.</param>
+    /// <returns><c>win-x64</c>, <c>win-arm64</c> or <c>win-x86</c>.</returns>
+    internal static string WindowsRuntimeIdentifier(Architecture architecture) =>
+        $"win-{RuntimeIdentifierArchitecture(architecture)}";
+
+    /// <summary>
+    /// Gets the portable runtime identifier of Linux or macOS.
+    /// </summary>
+    /// <param name="architecture">The architecture of the operating system.</param>
+    /// <param name="isMacOs"><see langword="true"/> on macOS.</param>
+    /// <returns><c>linux-x64</c>, <c>osx-arm64</c> and so on.</returns>
+    internal static string UnixRuntimeIdentifier(Architecture architecture, bool isMacOs) =>
+        $"{(isMacOs ? "osx" : "linux")}-{RuntimeIdentifierArchitecture(architecture)}";
+
+    /// <summary>
+    /// Gets the directories a published application can carry its own copy of
+    /// GStreamer in, best candidate first.
+    /// </summary>
+    /// <param name="probe">The machine to look at.</param>
+    /// <param name="layouts">The subdirectories of one runtime tree to probe.</param>
+    /// <param name="join">Joins path segments with the separator of the platform.</param>
+    /// <param name="portableRuntimeIdentifier">
+    /// The runtime identifier derived from the operating system and the
+    /// architecture, which the published tree is usually named after.
+    /// </param>
+    /// <returns>
+    /// The <c>runtimes/{rid}/{layout}</c> directories to probe, without
+    /// duplicates.
+    /// </returns>
+    /// <remarks>
+    /// The runtime identifier of the process can be more specific than the one
+    /// the published tree is named after (<c>win10-x64</c> or
+    /// <c>ubuntu.22.04-x64</c> against <c>win-x64</c> or <c>linux-x64</c>), so
+    /// the portable form is probed as well.
+    /// </remarks>
+    private static List<string> BundledDirectories(
+        IPlatformProbe probe,
+        string[] layouts,
+        Func<string[], string> join,
+        string portableRuntimeIdentifier)
+    {
+        List<string> directories = [];
+        string baseDirectory = probe.ApplicationBaseDirectory;
+
+        if (string.IsNullOrEmpty(baseDirectory))
+        {
+            return directories;
+        }
+
+        List<string> runtimeIdentifiers = [];
+
+        void AddRuntimeIdentifier(string? runtimeIdentifier)
+        {
+            if (!string.IsNullOrEmpty(runtimeIdentifier) &&
+                !runtimeIdentifiers.Contains(runtimeIdentifier, StringComparer.OrdinalIgnoreCase))
+            {
+                runtimeIdentifiers.Add(runtimeIdentifier);
+            }
+        }
+
+        AddRuntimeIdentifier(probe.RuntimeIdentifier);
+        AddRuntimeIdentifier(portableRuntimeIdentifier);
+
+        foreach (string runtimeIdentifier in runtimeIdentifiers)
+        {
+            foreach (string layout in layouts)
+            {
+                directories.Add(join([baseDirectory, "runtimes", runtimeIdentifier, layout]));
+            }
+        }
+
+        return directories;
+    }
 
     [GeneratedRegex(
         @"^GStreamer 1\.0 \((MSVC|MinGW) (x86_64|arm64|x86)\)",
@@ -302,7 +523,11 @@ internal static partial class NativeInstallPlanner
                 continue;
             }
 
-            candidates.Add(new NativeInstall(flavor, directory, $"the registry entry \"{install.DisplayName}\""));
+            candidates.Add(new NativeInstall(
+                flavor,
+                directory,
+                GstInstallOrigin.Registry,
+                $"the registry entry \"{install.DisplayName}\""));
         }
 
         // Prefer MSVC when both flavors are installed. OrderBy is stable, so
@@ -324,6 +549,7 @@ internal static partial class NativeInstallPlanner
                 candidates.Add(new NativeInstall(
                     GstFlavor.MinGW,
                     directory,
+                    GstInstallOrigin.Msys2,
                     "the MSYSTEM_PREFIX environment variable"));
             }
         }
@@ -357,6 +583,7 @@ internal static partial class NativeInstallPlanner
                     candidates.Add(new NativeInstall(
                         GstFlavor.MinGW,
                         entry,
+                        GstInstallOrigin.Msys2,
                         "an MSYS2 directory on the process search path"));
                 }
             }
@@ -372,6 +599,7 @@ internal static partial class NativeInstallPlanner
                     candidates.Add(new NativeInstall(
                         GstFlavor.MinGW,
                         directory,
+                        GstInstallOrigin.Msys2,
                         $"the MSYS2 installation at {root}"));
                 }
             }

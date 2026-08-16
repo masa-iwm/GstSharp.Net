@@ -30,6 +30,22 @@ internal interface IPlatformProbe
     /// <summary>Gets the architecture of the operating system.</summary>
     Architecture OSArchitecture { get; }
 
+    /// <summary>
+    /// Gets the directory the application was started from, which is where a
+    /// bundled <c>runtimes</c> tree sits.
+    /// </summary>
+    string ApplicationBaseDirectory { get; }
+
+    /// <summary>
+    /// Gets the runtime identifier of the process, for example <c>win-x64</c>.
+    /// </summary>
+    /// <remarks>
+    /// It can be a more specific identifier than the one a
+    /// <c>runtimes/{rid}/</c> directory of a published application is named
+    /// after, so the planner probes the portable form as well.
+    /// </remarks>
+    string RuntimeIdentifier { get; }
+
     /// <summary>Reads an environment variable.</summary>
     /// <param name="name">The name of the variable.</param>
     /// <returns>The value, or <see langword="null"/> when it is not set.</returns>
@@ -67,6 +83,12 @@ internal sealed class SystemPlatformProbe : IPlatformProbe
 
     /// <inheritdoc/>
     public Architecture OSArchitecture => RuntimeInformation.OSArchitecture;
+
+    /// <inheritdoc/>
+    public string ApplicationBaseDirectory => AppContext.BaseDirectory;
+
+    /// <inheritdoc/>
+    public string RuntimeIdentifier => RuntimeInformation.RuntimeIdentifier;
 
     /// <inheritdoc/>
     public string? GetEnvironmentVariable(string name) => Environment.GetEnvironmentVariable(name);
