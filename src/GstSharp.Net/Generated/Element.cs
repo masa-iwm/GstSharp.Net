@@ -170,9 +170,10 @@ public abstract unsafe partial class Element : Gst.Object
     [Obsolete("Use gst_object_call_async() or gst_call_async() instead. (deprecated since 1.28)")]
     public void CallAsync(Gst.ElementCallAsyncFunc func)
     {
+        nint instanceHandle = Handle;
         ArgumentNullException.ThrowIfNull(func);
         Gst.Interop.CallbackHandle funcState = Gst.Interop.CallbackHandle.Alloc(func);
-        GstElementCallAsync(Handle, Gst.ElementCallAsyncFuncTrampoline.Pointer, funcState.UserData, (nint)Gst.Interop.CallbackHandle.DestroyNotify);
+        GstElementCallAsync(instanceHandle, Gst.ElementCallAsyncFuncTrampoline.Pointer, funcState.UserData, (nint)Gst.Interop.CallbackHandle.DestroyNotify);
         System.GC.KeepAlive(this);
     }
 
@@ -277,11 +278,12 @@ public abstract unsafe partial class Element : Gst.Object
     /// </returns>
     public bool ForeachPad(Gst.ElementForeachPadFunc func)
     {
+        nint instanceHandle = Handle;
         ArgumentNullException.ThrowIfNull(func);
         Gst.Interop.CallbackHandle funcState = Gst.Interop.CallbackHandle.Alloc(func);
         try
         {
-            int nativeResult = GstElementForeachPad(Handle, Gst.ElementForeachPadFuncTrampoline.Pointer, funcState.UserData);
+            int nativeResult = GstElementForeachPad(instanceHandle, Gst.ElementForeachPadFuncTrampoline.Pointer, funcState.UserData);
             System.GC.KeepAlive(this);
             return nativeResult != 0;
         }
@@ -306,11 +308,12 @@ public abstract unsafe partial class Element : Gst.Object
     /// </returns>
     public bool ForeachSinkPad(Gst.ElementForeachPadFunc func)
     {
+        nint instanceHandle = Handle;
         ArgumentNullException.ThrowIfNull(func);
         Gst.Interop.CallbackHandle funcState = Gst.Interop.CallbackHandle.Alloc(func);
         try
         {
-            int nativeResult = GstElementForeachSinkPad(Handle, Gst.ElementForeachPadFuncTrampoline.Pointer, funcState.UserData);
+            int nativeResult = GstElementForeachSinkPad(instanceHandle, Gst.ElementForeachPadFuncTrampoline.Pointer, funcState.UserData);
             System.GC.KeepAlive(this);
             return nativeResult != 0;
         }
@@ -335,11 +338,12 @@ public abstract unsafe partial class Element : Gst.Object
     /// </returns>
     public bool ForeachSrcPad(Gst.ElementForeachPadFunc func)
     {
+        nint instanceHandle = Handle;
         ArgumentNullException.ThrowIfNull(func);
         Gst.Interop.CallbackHandle funcState = Gst.Interop.CallbackHandle.Alloc(func);
         try
         {
-            int nativeResult = GstElementForeachSrcPad(Handle, Gst.ElementForeachPadFuncTrampoline.Pointer, funcState.UserData);
+            int nativeResult = GstElementForeachSrcPad(instanceHandle, Gst.ElementForeachPadFuncTrampoline.Pointer, funcState.UserData);
             System.GC.KeepAlive(this);
             return nativeResult != 0;
         }

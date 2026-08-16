@@ -26,6 +26,9 @@ internal static class CallableRenderer
     /// <summary>The local that holds the raw return value.</summary>
     private const string ResultLocal = "nativeResult";
 
+    /// <summary>The local that holds the raw handle of the instance.</summary>
+    private const string InstanceLocal = "instanceHandle";
+
     /// <summary>The local that holds the converted return value.</summary>
     private const string ConvertedLocal = "result";
 
@@ -360,6 +363,56 @@ internal static class CallableRenderer
         }
     }
 
+    /// <summary>
+    /// Tests whether a member hands native code a managed callback, which is
+    /// what makes the order of its prologue observable.
+    /// </summary>
+    /// <param name="plan">The member being written.</param>
+    /// <returns><see langword="true"/> when one of the arguments is a callback.</returns>
+    /// <remarks>
+    /// <para>
+    /// Allocating the state of a callback is the one step of a prologue that
+    /// takes a resource the collector cannot reclaim: a <c>GCHandle</c> that is
+    /// freed by the destroy notification of the native call, or by the
+    /// <c>finally</c> of a call scoped callback, and by nothing else. If
+    /// anything between the allocation and the call throws, that never happens
+    /// and the handle, the delegate and everything the closure captured are
+    /// pinned for the life of the process.
+    /// </para>
+    /// <para>
+    /// Reading <c>Handle</c> is exactly such a step, because a disposed wrapper
+    /// throws <see cref="ObjectDisposedException"/> from it, and it used to sit
+    /// after the allocation because the call site is where the handle is read.
+    /// So the read is hoisted into a local ahead of the allocation whenever a
+    /// callback is present, which is the order the hand written surfaces of the
+    /// binding follow. The local is emitted only for those members, because
+    /// hoisting it everywhere would rewrite every generated body for a
+    /// guarantee that nothing but a callback needs.
+    /// </para>
+    /// </remarks>
+    private static bool TakesCallback(MarshalPlan plan)
+    {
+        foreach (ArgumentPlan argument in plan.Arguments)
+        {
+            if (argument.Kind == ArgumentKind.Callback)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Returns the expression that reads the raw handle out of the instance a
+    /// member is called on.
+    /// </summary>
+    /// <param name="plan">The member being written.</param>
+    /// <param name="name">The name of the instance argument.</param>
+    /// <returns>The expression to read.</returns>
+    private static string InstanceHandle(MarshalPlan plan, string name) =>
+        plan.Form == CallableForm.ExtensionMethod ? name + ".Handle" : "Handle";
+
     private static void WritePrologue(CodeWriter writer, MarshalPlan plan, ArgumentPlan argument)
     {
         string name = argument.Name;
@@ -369,6 +422,11 @@ internal static class CallableRenderer
                 if (plan.Form == CallableForm.ExtensionMethod)
                 {
                     writer.WriteLine("ArgumentNullException.ThrowIfNull(" + name + ");");
+                }
+
+                if (TakesCallback(plan))
+                {
+                    writer.WriteLine("nint " + InstanceLocal + " = " + InstanceHandle(plan, name) + ";");
                 }
 
                 return;
@@ -474,7 +532,7 @@ internal static class CallableRenderer
         switch (argument.Kind)
         {
             case ArgumentKind.Instance:
-                return plan.Form == CallableForm.ExtensionMethod ? name + ".Handle" : "Handle";
+                return TakesCallback(plan) ? InstanceLocal : InstanceHandle(plan, name);
 
             case ArgumentKind.Error:
                 return "&errorNative";

@@ -162,9 +162,10 @@ public unsafe partial class Bus : Gst.Object
     /// <returns>The event source id or 0 if @bus already got an event source.</returns>
     public uint AddWatch(int priority, Gst.BusFunc func)
     {
+        nint instanceHandle = Handle;
         ArgumentNullException.ThrowIfNull(func);
         Gst.Interop.CallbackHandle funcState = Gst.Interop.CallbackHandle.Alloc(func);
-        uint nativeResult = GstBusAddWatchFull(Handle, priority, Gst.BusFuncTrampoline.Pointer, funcState.UserData, (nint)Gst.Interop.CallbackHandle.DestroyNotify);
+        uint nativeResult = GstBusAddWatchFull(instanceHandle, priority, Gst.BusFuncTrampoline.Pointer, funcState.UserData, (nint)Gst.Interop.CallbackHandle.DestroyNotify);
         System.GC.KeepAlive(this);
         return nativeResult;
     }

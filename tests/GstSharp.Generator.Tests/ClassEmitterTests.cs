@@ -291,4 +291,166 @@ public sealed class ClassEmitterTests
 
         throw new InvalidOperationException("The run produced no " + path + ".");
     }
+
+    /// <summary>
+    /// The counts of the rules that this milestone added. They are frozen
+    /// separately from the older ones, because each of them stands for a
+    /// binding that used to be emitted and corrupt memory.
+    /// </summary>
+    /// <param name="module">The gir namespace to read.</param>
+    /// <param name="overlaySkip">Callables that fixups.json lists.</param>
+    /// <param name="callerAllocates">Callables with unusable caller allocated storage.</param>
+    /// <param name="lifetime">Callables that release or reference their instance.</param>
+    /// <param name="instanceTransfer">Callables that consume their instance and replace it.</param>
+    /// <param name="actionSignals">Signals that are a call API rather than a notification.</param>
+    [Theory]
+    [InlineData("Gst", 11, 3, 21, 20, 0)]
+    [InlineData("GstBase", 3, 3, 4, 0, 0)]
+    [InlineData("GstApp", 0, 0, 4, 0, 9)]
+    [InlineData("GstAudio", 2, 7, 4, 0, 0)]
+    [InlineData("GstVideo", 1, 11, 10, 1, 0)]
+    [InlineData("GstPbutils", 0, 0, 1, 0, 0)]
+    [InlineData("GstSdp", 0, 4, 1, 0, 0)]
+    [InlineData("GstWebRTC", 0, 0, 4, 0, 4)]
+    [InlineData("GstNet", 0, 0, 1, 0, 0)]
+    [InlineData("GstRtsp", 1, 0, 3, 0, 0)]
+    [InlineData("GES", 1, 0, 1, 0, 0)]
+    public void TheRejectionCensusIsStable(
+        string module,
+        int overlaySkip,
+        int callerAllocates,
+        int lifetime,
+        int instanceTransfer,
+        int actionSignals)
+    {
+        EmissionCensus census = Generated.Census;
+
+        Assert.Equal(overlaySkip, census.SkippedCount(module, SkipReason.OverlaySkip));
+        Assert.Equal(callerAllocates, census.SkippedCount(module, SkipReason.CallerAllocates));
+        Assert.Equal(lifetime, census.SkippedCount(module, SkipReason.LifetimePrimitive));
+        Assert.Equal(instanceTransfer, census.SkippedCount(module, SkipReason.InstanceTransferFull));
+        Assert.Equal(actionSignals, census.SkippedCount(module, SkipReason.ActionSignal));
+    }
+
+    [Theory]
+    [InlineData("GstSharp.Net.Base/Generated/BaseSink.cs", "public abstract unsafe partial class BaseSink : Gst.Element")]
+    [InlineData("GstSharp.Net.Base/Generated/PushSrc.cs", "public unsafe partial class PushSrc : Gst.Base.BaseSrc")]
+    [InlineData("GstSharp.Net.App/Generated/AppSink.cs", "public unsafe partial class AppSink : Gst.Base.BaseSink, Gst.IURIHandler")]
+    [InlineData("GstSharp.Net.App/Generated/AppSrc.cs", "public unsafe partial class AppSrc : Gst.Base.BaseSrc, Gst.IURIHandler")]
+    [InlineData("GstSharp.Net.Video/Generated/VideoSink.cs", "public unsafe partial class VideoSink : Gst.Base.BaseSink")]
+    [InlineData("GstSharp.Net.Audio/Generated/AudioClock.cs", "public unsafe partial class AudioClock : Gst.SystemClock")]
+    [InlineData("GstSharp.Net.Pbutils/Generated/AudioVisualizer.cs", "public abstract unsafe partial class AudioVisualizer : Gst.Element")]
+    [InlineData("GstSharp.Net.GES/Generated/Timeline.cs", "public unsafe partial class Timeline : Gst.Bin, GES.IExtractable, GES.IMetaContainer, Gst.IChildProxy")]
+    [InlineData("GstSharp.Net.GES/Generated/Pipeline.cs", "public unsafe partial class Pipeline : Gst.Pipeline, Gst.IChildProxy, Gst.Video.IVideoOverlay")]
+    public void AClassDerivesAcrossModuleBoundaries(string path, string declaration)
+    {
+        Assert.Contains(declaration + "\n", SourceOf(path), StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("Gst", "GstSharp.Net")]
+    [InlineData("GstBase", "GstSharp.Net.Base")]
+    [InlineData("GstApp", "GstSharp.Net.App")]
+    [InlineData("GstAudio", "GstSharp.Net.Audio")]
+    [InlineData("GstVideo", "GstSharp.Net.Video")]
+    [InlineData("GstPbutils", "GstSharp.Net.Pbutils")]
+    [InlineData("GstSdp", "GstSharp.Net.Sdp")]
+    [InlineData("GstWebRTC", "GstSharp.Net.WebRTC")]
+    [InlineData("GstNet", "GstSharp.Net.Net")]
+    [InlineData("GstRtsp", "GstSharp.Net.Rtsp")]
+    [InlineData("GES", "GstSharp.Net.GES")]
+    public void EveryModuleEmitsItsOwnTypeTable(string module, string projectDirectory)
+    {
+        string source = SourceOf(projectDirectory + "/Generated/_Module.cs");
+
+        Assert.Contains(
+            "internal static unsafe partial class " + module + "Module\n",
+            source,
+            StringComparison.Ordinal);
+        Assert.Contains("internal static Gst.Interop.ModuleTypeEntry[] CreateEntries() =>", source, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("GstSharp.Net/Generated/StateExtensions.cs", "public static string GetName(Gst.State state)")]
+    [InlineData("GstSharp.Net/Generated/EventTypeExtensions.cs", "public static string GetName(Gst.EventType type)")]
+    [InlineData("GstSharp.Net.Video/Generated/VideoFormatExtensions.cs", "public static string ToString(Gst.Video.VideoFormat format)")]
+    [InlineData("GstSharp.Net.Audio/Generated/AudioFormatExtensions.cs", "public static string ToString(Gst.Audio.AudioFormat format)")]
+    [InlineData("GstSharp.Net.Pbutils/Generated/InstallPluginsReturnExtensions.cs", "public static string GetName(Gst.Pbutils.InstallPluginsReturn ret)")]
+    public void TheFunctionsOfAnEnumerationLandOnAHolderNamedAfterIt(string path, string signature)
+    {
+        Assert.Contains(signature + "\n", SourceOf(path), StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("GstSharp.Net/Generated/Global.cs", "public static unsafe partial class Global")]
+    [InlineData("GstSharp.Net.Base/Generated/BaseGlobal.cs", "public static unsafe partial class BaseGlobal")]
+    [InlineData("GstSharp.Net.Audio/Generated/AudioGlobal.cs", "public static unsafe partial class AudioGlobal")]
+    [InlineData("GstSharp.Net.Video/Generated/VideoGlobal.cs", "public static unsafe partial class VideoGlobal")]
+    [InlineData("GstSharp.Net.Pbutils/Generated/PbutilsGlobal.cs", "public static unsafe partial class PbutilsGlobal")]
+    [InlineData("GstSharp.Net.Sdp/Generated/SdpGlobal.cs", "public static unsafe partial class SdpGlobal")]
+    [InlineData("GstSharp.Net.Net/Generated/NetGlobal.cs", "public static unsafe partial class NetGlobal")]
+    [InlineData("GstSharp.Net.Rtsp/Generated/RtspGlobal.cs", "public static unsafe partial class RtspGlobal")]
+    [InlineData("GstSharp.Net.GES/Generated/GESGlobal.cs", "public static unsafe partial class GESGlobal")]
+    public void TheGlobalHolderOfAnExtensionModuleCarriesItsModuleName(string path, string declaration)
+    {
+        // Nine types named Global, one per module, read as one type that keeps
+        // changing shape once several modules are referenced together. Only the
+        // core module keeps the plain name. The editing services are the one
+        // module whose C# namespace has no dot in it, and the last segment of
+        // it is the whole of it, so the holder is GESGlobal.
+        Assert.Contains(declaration + "\n", SourceOf(path), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void EveryInstanceMemberKeepsItsWrapperAliveAcrossTheCall()
+    {
+        // The call takes the raw handle out of the wrapper and nothing mentions
+        // the wrapper afterwards, so without the barrier the finalizer may
+        // release the instance while the call is still running.
+        int calls = 0;
+        int barriers = 0;
+        foreach (GeneratedFile file in Generated.Files)
+        {
+            calls += file.Content.Split("(Handle, ").Length - 1;
+            calls += file.Content.Split("(Handle)").Length - 1;
+            barriers += file.Content.Split("System.GC.KeepAlive(").Length - 1;
+        }
+
+        Assert.True(calls > 0);
+        Assert.True(
+            barriers >= calls,
+            $"{calls} call(s) take the raw handle of an instance but only {barriers} barrier(s) are emitted.");
+    }
+
+    [Theory]
+    [InlineData(
+        "GstSharp.Net.App/Generated/AppSrcSimpleCallbacks.cs",
+        "    public void SetNeedData(Gst.App.AppSrcNeedDataCallback needDataCb)\n"
+        + "    {\n"
+        + "        nint instanceHandle = Handle;\n"
+        + "        ArgumentNullException.ThrowIfNull(needDataCb);\n"
+        + "        Gst.Interop.CallbackHandle needDataCbState = Gst.Interop.CallbackHandle.Alloc(needDataCb);\n")]
+    [InlineData(
+        "GstSharp.Net.App/Generated/AppSinkSimpleCallbacks.cs",
+        "    public void SetNewSample(Gst.App.AppSinkNewSampleCallback newSampleCb)\n"
+        + "    {\n"
+        + "        nint instanceHandle = Handle;\n"
+        + "        ArgumentNullException.ThrowIfNull(newSampleCb);\n"
+        + "        Gst.Interop.CallbackHandle newSampleCbState = Gst.Interop.CallbackHandle.Alloc(newSampleCb);\n")]
+    [InlineData(
+        "GstSharp.Net/Generated/Pad.cs",
+        "        nint instanceHandle = Handle;\n"
+        + "        ArgumentNullException.ThrowIfNull(callback);\n"
+        + "        Gst.Interop.CallbackHandle callbackState = Gst.Interop.CallbackHandle.Alloc(callback);\n"
+        + "        System.Runtime.InteropServices.CULong nativeResult = GstPadAddProbe(instanceHandle, ")]
+    public void AMemberThatTakesACallbackReadsItsHandleBeforeItAllocatesTheState(string path, string body)
+    {
+        // The GCHandle of a callback is freed by the destroy notification of
+        // the native call and by nothing else, so a read of Handle that throws
+        // ObjectDisposedException after the allocation would pin the delegate
+        // and everything its closure captured for the life of the process. The
+        // read is hoisted ahead of the allocation for exactly that reason, and
+        // the order is what this pins: the two lines are asserted adjacent.
+        Assert.Contains(body, SourceOf(path), StringComparison.Ordinal);
+    }
 }

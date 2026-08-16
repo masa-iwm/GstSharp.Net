@@ -428,9 +428,10 @@ public sealed class MarshalPlannerTests
             """
             public void Watch(Gst.WidgetFunc func)
             {
+                nint instanceHandle = Handle;
                 ArgumentNullException.ThrowIfNull(func);
                 Gst.Interop.CallbackHandle funcState = Gst.Interop.CallbackHandle.Alloc(func);
-                GstWidgetWatch(Handle, Gst.WidgetFuncTrampoline.Pointer, funcState.UserData, (nint)Gst.Interop.CallbackHandle.DestroyNotify);
+                GstWidgetWatch(instanceHandle, Gst.WidgetFuncTrampoline.Pointer, funcState.UserData, (nint)Gst.Interop.CallbackHandle.DestroyNotify);
                 System.GC.KeepAlive(this);
             }
             """,
@@ -445,11 +446,12 @@ public sealed class MarshalPlannerTests
             """
             public void Visit(Gst.WidgetFunc func)
             {
+                nint instanceHandle = Handle;
                 ArgumentNullException.ThrowIfNull(func);
                 Gst.Interop.CallbackHandle funcState = Gst.Interop.CallbackHandle.Alloc(func);
                 try
                 {
-                    GstWidgetVisit(Handle, Gst.WidgetFuncTrampoline.Pointer, funcState.UserData);
+                    GstWidgetVisit(instanceHandle, Gst.WidgetFuncTrampoline.Pointer, funcState.UserData);
                     System.GC.KeepAlive(this);
                 }
                 finally

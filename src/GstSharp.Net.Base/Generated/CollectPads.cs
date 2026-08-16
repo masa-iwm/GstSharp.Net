@@ -286,11 +286,12 @@ public unsafe partial class CollectPads : Gst.Object
     /// <param name="func">the function to set</param>
     public void SetCompareFunction(Gst.Base.CollectPadsCompareFunction func)
     {
+        nint instanceHandle = Handle;
         ArgumentNullException.ThrowIfNull(func);
         Gst.Interop.CallbackHandle funcState = Gst.Interop.CallbackHandle.Alloc(func);
         try
         {
-            GstCollectPadsSetCompareFunction(Handle, Gst.Base.CollectPadsCompareFunctionTrampoline.Pointer, funcState.UserData);
+            GstCollectPadsSetCompareFunction(instanceHandle, Gst.Base.CollectPadsCompareFunctionTrampoline.Pointer, funcState.UserData);
             System.GC.KeepAlive(this);
         }
         finally
@@ -313,11 +314,12 @@ public unsafe partial class CollectPads : Gst.Object
     /// <param name="func">the function to set</param>
     public void SetEventFunction(Gst.Base.CollectPadsEventFunction func)
     {
+        nint instanceHandle = Handle;
         ArgumentNullException.ThrowIfNull(func);
         Gst.Interop.CallbackHandle funcState = Gst.Interop.CallbackHandle.Alloc(func);
         try
         {
-            GstCollectPadsSetEventFunction(Handle, Gst.Base.CollectPadsEventFunctionTrampoline.Pointer, funcState.UserData);
+            GstCollectPadsSetEventFunction(instanceHandle, Gst.Base.CollectPadsEventFunctionTrampoline.Pointer, funcState.UserData);
             System.GC.KeepAlive(this);
         }
         finally
@@ -334,11 +336,12 @@ public unsafe partial class CollectPads : Gst.Object
     /// <param name="func">flush function to install</param>
     public void SetFlushFunction(Gst.Base.CollectPadsFlushFunction func)
     {
+        nint instanceHandle = Handle;
         ArgumentNullException.ThrowIfNull(func);
         Gst.Interop.CallbackHandle funcState = Gst.Interop.CallbackHandle.Alloc(func);
         try
         {
-            GstCollectPadsSetFlushFunction(Handle, Gst.Base.CollectPadsFlushFunctionTrampoline.Pointer, funcState.UserData);
+            GstCollectPadsSetFlushFunction(instanceHandle, Gst.Base.CollectPadsFlushFunctionTrampoline.Pointer, funcState.UserData);
             System.GC.KeepAlive(this);
         }
         finally
@@ -381,11 +384,12 @@ public unsafe partial class CollectPads : Gst.Object
     /// <param name="func">the function to set</param>
     public void SetFunction(Gst.Base.CollectPadsFunction func)
     {
+        nint instanceHandle = Handle;
         ArgumentNullException.ThrowIfNull(func);
         Gst.Interop.CallbackHandle funcState = Gst.Interop.CallbackHandle.Alloc(func);
         try
         {
-            GstCollectPadsSetFunction(Handle, Gst.Base.CollectPadsFunctionTrampoline.Pointer, funcState.UserData);
+            GstCollectPadsSetFunction(instanceHandle, Gst.Base.CollectPadsFunctionTrampoline.Pointer, funcState.UserData);
             System.GC.KeepAlive(this);
         }
         finally
@@ -408,11 +412,12 @@ public unsafe partial class CollectPads : Gst.Object
     /// <param name="func">the function to set</param>
     public void SetQueryFunction(Gst.Base.CollectPadsQueryFunction func)
     {
+        nint instanceHandle = Handle;
         ArgumentNullException.ThrowIfNull(func);
         Gst.Interop.CallbackHandle funcState = Gst.Interop.CallbackHandle.Alloc(func);
         try
         {
-            GstCollectPadsSetQueryFunction(Handle, Gst.Base.CollectPadsQueryFunctionTrampoline.Pointer, funcState.UserData);
+            GstCollectPadsSetQueryFunction(instanceHandle, Gst.Base.CollectPadsQueryFunctionTrampoline.Pointer, funcState.UserData);
             System.GC.KeepAlive(this);
         }
         finally

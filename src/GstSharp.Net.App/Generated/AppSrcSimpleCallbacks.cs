@@ -51,9 +51,10 @@ public sealed unsafe partial class AppSrcSimpleCallbacks : Gst.GObject.Boxed
     /// <param name="enoughDataCb">EOS callback</param>
     public void SetEnoughData(Gst.App.AppSrcEnoughDataCallback enoughDataCb)
     {
+        nint instanceHandle = Handle;
         ArgumentNullException.ThrowIfNull(enoughDataCb);
         Gst.Interop.CallbackHandle enoughDataCbState = Gst.Interop.CallbackHandle.Alloc(enoughDataCb);
-        GstAppSrcSimpleCallbacksSetEnoughData(Handle, Gst.App.AppSrcEnoughDataCallbackTrampoline.Pointer, enoughDataCbState.UserData, (nint)Gst.Interop.CallbackHandle.DestroyNotify);
+        GstAppSrcSimpleCallbacksSetEnoughData(instanceHandle, Gst.App.AppSrcEnoughDataCallbackTrampoline.Pointer, enoughDataCbState.UserData, (nint)Gst.Interop.CallbackHandle.DestroyNotify);
         System.GC.KeepAlive(this);
     }
 
@@ -67,9 +68,10 @@ public sealed unsafe partial class AppSrcSimpleCallbacks : Gst.GObject.Boxed
     /// <param name="needDataCb">EOS callback</param>
     public void SetNeedData(Gst.App.AppSrcNeedDataCallback needDataCb)
     {
+        nint instanceHandle = Handle;
         ArgumentNullException.ThrowIfNull(needDataCb);
         Gst.Interop.CallbackHandle needDataCbState = Gst.Interop.CallbackHandle.Alloc(needDataCb);
-        GstAppSrcSimpleCallbacksSetNeedData(Handle, Gst.App.AppSrcNeedDataCallbackTrampoline.Pointer, needDataCbState.UserData, (nint)Gst.Interop.CallbackHandle.DestroyNotify);
+        GstAppSrcSimpleCallbacksSetNeedData(instanceHandle, Gst.App.AppSrcNeedDataCallbackTrampoline.Pointer, needDataCbState.UserData, (nint)Gst.Interop.CallbackHandle.DestroyNotify);
         System.GC.KeepAlive(this);
     }
 
@@ -83,9 +85,10 @@ public sealed unsafe partial class AppSrcSimpleCallbacks : Gst.GObject.Boxed
     /// <param name="seekDataCb">EOS callback</param>
     public void SetSeekData(Gst.App.AppSrcSeekDataCallback seekDataCb)
     {
+        nint instanceHandle = Handle;
         ArgumentNullException.ThrowIfNull(seekDataCb);
         Gst.Interop.CallbackHandle seekDataCbState = Gst.Interop.CallbackHandle.Alloc(seekDataCb);
-        GstAppSrcSimpleCallbacksSetSeekData(Handle, Gst.App.AppSrcSeekDataCallbackTrampoline.Pointer, seekDataCbState.UserData, (nint)Gst.Interop.CallbackHandle.DestroyNotify);
+        GstAppSrcSimpleCallbacksSetSeekData(instanceHandle, Gst.App.AppSrcSeekDataCallbackTrampoline.Pointer, seekDataCbState.UserData, (nint)Gst.Interop.CallbackHandle.DestroyNotify);
         System.GC.KeepAlive(this);
     }
 

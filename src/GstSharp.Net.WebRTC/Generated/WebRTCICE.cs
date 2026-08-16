@@ -205,9 +205,10 @@ public abstract unsafe partial class WebRTCICE : Gst.Object
     /// <param name="func">The #GstWebRTCICEOnCandidateFunc callback function</param>
     public void SetOnIceCandidate(Gst.WebRTC.WebRTCICEOnCandidateFunc func)
     {
+        nint instanceHandle = Handle;
         ArgumentNullException.ThrowIfNull(func);
         Gst.Interop.CallbackHandle funcState = Gst.Interop.CallbackHandle.Alloc(func);
-        GstWebrtcIceSetOnIceCandidate(Handle, Gst.WebRTC.WebRTCICEOnCandidateFuncTrampoline.Pointer, funcState.UserData, (nint)Gst.Interop.CallbackHandle.DestroyNotify);
+        GstWebrtcIceSetOnIceCandidate(instanceHandle, Gst.WebRTC.WebRTCICEOnCandidateFuncTrampoline.Pointer, funcState.UserData, (nint)Gst.Interop.CallbackHandle.DestroyNotify);
         System.GC.KeepAlive(this);
     }
 

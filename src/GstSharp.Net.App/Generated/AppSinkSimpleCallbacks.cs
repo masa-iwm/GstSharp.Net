@@ -51,9 +51,10 @@ public sealed unsafe partial class AppSinkSimpleCallbacks : Gst.GObject.Boxed
     /// <param name="eosCb">EOS callback</param>
     public void SetEos(Gst.App.AppSinkEosCallback eosCb)
     {
+        nint instanceHandle = Handle;
         ArgumentNullException.ThrowIfNull(eosCb);
         Gst.Interop.CallbackHandle eosCbState = Gst.Interop.CallbackHandle.Alloc(eosCb);
-        GstAppSinkSimpleCallbacksSetEos(Handle, Gst.App.AppSinkEosCallbackTrampoline.Pointer, eosCbState.UserData, (nint)Gst.Interop.CallbackHandle.DestroyNotify);
+        GstAppSinkSimpleCallbacksSetEos(instanceHandle, Gst.App.AppSinkEosCallbackTrampoline.Pointer, eosCbState.UserData, (nint)Gst.Interop.CallbackHandle.DestroyNotify);
         System.GC.KeepAlive(this);
     }
 
@@ -67,9 +68,10 @@ public sealed unsafe partial class AppSinkSimpleCallbacks : Gst.GObject.Boxed
     /// <param name="newEventCb">new event callback</param>
     public void SetNewEvent(Gst.App.AppSinkNewEventCallback newEventCb)
     {
+        nint instanceHandle = Handle;
         ArgumentNullException.ThrowIfNull(newEventCb);
         Gst.Interop.CallbackHandle newEventCbState = Gst.Interop.CallbackHandle.Alloc(newEventCb);
-        GstAppSinkSimpleCallbacksSetNewEvent(Handle, Gst.App.AppSinkNewEventCallbackTrampoline.Pointer, newEventCbState.UserData, (nint)Gst.Interop.CallbackHandle.DestroyNotify);
+        GstAppSinkSimpleCallbacksSetNewEvent(instanceHandle, Gst.App.AppSinkNewEventCallbackTrampoline.Pointer, newEventCbState.UserData, (nint)Gst.Interop.CallbackHandle.DestroyNotify);
         System.GC.KeepAlive(this);
     }
 
@@ -83,9 +85,10 @@ public sealed unsafe partial class AppSinkSimpleCallbacks : Gst.GObject.Boxed
     /// <param name="newPrerollCb">new preroll callback</param>
     public void SetNewPreroll(Gst.App.AppSinkNewPrerollCallback newPrerollCb)
     {
+        nint instanceHandle = Handle;
         ArgumentNullException.ThrowIfNull(newPrerollCb);
         Gst.Interop.CallbackHandle newPrerollCbState = Gst.Interop.CallbackHandle.Alloc(newPrerollCb);
-        GstAppSinkSimpleCallbacksSetNewPreroll(Handle, Gst.App.AppSinkNewPrerollCallbackTrampoline.Pointer, newPrerollCbState.UserData, (nint)Gst.Interop.CallbackHandle.DestroyNotify);
+        GstAppSinkSimpleCallbacksSetNewPreroll(instanceHandle, Gst.App.AppSinkNewPrerollCallbackTrampoline.Pointer, newPrerollCbState.UserData, (nint)Gst.Interop.CallbackHandle.DestroyNotify);
         System.GC.KeepAlive(this);
     }
 
@@ -99,9 +102,10 @@ public sealed unsafe partial class AppSinkSimpleCallbacks : Gst.GObject.Boxed
     /// <param name="newSampleCb">new sample callback</param>
     public void SetNewSample(Gst.App.AppSinkNewSampleCallback newSampleCb)
     {
+        nint instanceHandle = Handle;
         ArgumentNullException.ThrowIfNull(newSampleCb);
         Gst.Interop.CallbackHandle newSampleCbState = Gst.Interop.CallbackHandle.Alloc(newSampleCb);
-        GstAppSinkSimpleCallbacksSetNewSample(Handle, Gst.App.AppSinkNewSampleCallbackTrampoline.Pointer, newSampleCbState.UserData, (nint)Gst.Interop.CallbackHandle.DestroyNotify);
+        GstAppSinkSimpleCallbacksSetNewSample(instanceHandle, Gst.App.AppSinkNewSampleCallbackTrampoline.Pointer, newSampleCbState.UserData, (nint)Gst.Interop.CallbackHandle.DestroyNotify);
         System.GC.KeepAlive(this);
     }
 
@@ -115,9 +119,10 @@ public sealed unsafe partial class AppSinkSimpleCallbacks : Gst.GObject.Boxed
     /// <param name="proposeAllocationCb">propose allocation callback</param>
     public void SetProposeAllocation(Gst.App.AppSinkProposeAllocationCallback proposeAllocationCb)
     {
+        nint instanceHandle = Handle;
         ArgumentNullException.ThrowIfNull(proposeAllocationCb);
         Gst.Interop.CallbackHandle proposeAllocationCbState = Gst.Interop.CallbackHandle.Alloc(proposeAllocationCb);
-        GstAppSinkSimpleCallbacksSetProposeAllocation(Handle, Gst.App.AppSinkProposeAllocationCallbackTrampoline.Pointer, proposeAllocationCbState.UserData, (nint)Gst.Interop.CallbackHandle.DestroyNotify);
+        GstAppSinkSimpleCallbacksSetProposeAllocation(instanceHandle, Gst.App.AppSinkProposeAllocationCallbackTrampoline.Pointer, proposeAllocationCbState.UserData, (nint)Gst.Interop.CallbackHandle.DestroyNotify);
         System.GC.KeepAlive(this);
     }
 

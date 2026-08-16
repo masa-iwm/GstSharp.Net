@@ -88,11 +88,12 @@ public sealed unsafe partial class TagList : Gst.MiniObject
     /// <param name="func">function to be called for each tag</param>
     public void Foreach(Gst.TagForeachFunc func)
     {
+        nint instanceHandle = Handle;
         ArgumentNullException.ThrowIfNull(func);
         Gst.Interop.CallbackHandle funcState = Gst.Interop.CallbackHandle.Alloc(func);
         try
         {
-            GstTagListForeach(Handle, Gst.TagForeachFuncTrampoline.Pointer, funcState.UserData);
+            GstTagListForeach(instanceHandle, Gst.TagForeachFuncTrampoline.Pointer, funcState.UserData);
             System.GC.KeepAlive(this);
         }
         finally

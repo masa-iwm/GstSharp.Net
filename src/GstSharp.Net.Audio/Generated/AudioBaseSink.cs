@@ -121,9 +121,10 @@ public unsafe partial class AudioBaseSink : Gst.Base.BaseSink
     /// <param name="callback">a #GstAudioBaseSinkCustomSlavingCallback</param>
     public void SetCustomSlavingCallback(Gst.Audio.AudioBaseSinkCustomSlavingCallback callback)
     {
+        nint instanceHandle = Handle;
         ArgumentNullException.ThrowIfNull(callback);
         Gst.Interop.CallbackHandle callbackState = Gst.Interop.CallbackHandle.Alloc(callback);
-        GstAudioBaseSinkSetCustomSlavingCallback(Handle, Gst.Audio.AudioBaseSinkCustomSlavingCallbackTrampoline.Pointer, callbackState.UserData, (nint)Gst.Interop.CallbackHandle.DestroyNotify);
+        GstAudioBaseSinkSetCustomSlavingCallback(instanceHandle, Gst.Audio.AudioBaseSinkCustomSlavingCallbackTrampoline.Pointer, callbackState.UserData, (nint)Gst.Interop.CallbackHandle.DestroyNotify);
         System.GC.KeepAlive(this);
     }
 

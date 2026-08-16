@@ -184,11 +184,12 @@ public sealed unsafe partial class Caps : Gst.MiniObject
     /// <param name="func">a function to call for each field</param>
     public void FilterAndMapInPlace(Gst.CapsFilterMapFunc func)
     {
+        nint instanceHandle = Handle;
         ArgumentNullException.ThrowIfNull(func);
         Gst.Interop.CallbackHandle funcState = Gst.Interop.CallbackHandle.Alloc(func);
         try
         {
-            GstCapsFilterAndMapInPlace(Handle, Gst.CapsFilterMapFuncTrampoline.Pointer, funcState.UserData);
+            GstCapsFilterAndMapInPlace(instanceHandle, Gst.CapsFilterMapFuncTrampoline.Pointer, funcState.UserData);
             System.GC.KeepAlive(this);
         }
         finally
@@ -209,11 +210,12 @@ public sealed unsafe partial class Caps : Gst.MiniObject
     /// </returns>
     public bool Foreach(Gst.CapsForeachFunc func)
     {
+        nint instanceHandle = Handle;
         ArgumentNullException.ThrowIfNull(func);
         Gst.Interop.CallbackHandle funcState = Gst.Interop.CallbackHandle.Alloc(func);
         try
         {
-            int nativeResult = GstCapsForeach(Handle, Gst.CapsForeachFuncTrampoline.Pointer, funcState.UserData);
+            int nativeResult = GstCapsForeach(instanceHandle, Gst.CapsForeachFuncTrampoline.Pointer, funcState.UserData);
             System.GC.KeepAlive(this);
             return nativeResult != 0;
         }
@@ -465,11 +467,12 @@ public sealed unsafe partial class Caps : Gst.MiniObject
     /// </returns>
     public bool MapInPlace(Gst.CapsMapFunc func)
     {
+        nint instanceHandle = Handle;
         ArgumentNullException.ThrowIfNull(func);
         Gst.Interop.CallbackHandle funcState = Gst.Interop.CallbackHandle.Alloc(func);
         try
         {
-            int nativeResult = GstCapsMapInPlace(Handle, Gst.CapsMapFuncTrampoline.Pointer, funcState.UserData);
+            int nativeResult = GstCapsMapInPlace(instanceHandle, Gst.CapsMapFuncTrampoline.Pointer, funcState.UserData);
             System.GC.KeepAlive(this);
             return nativeResult != 0;
         }

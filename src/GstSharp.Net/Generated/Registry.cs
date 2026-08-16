@@ -159,11 +159,12 @@ public unsafe partial class Registry : Gst.Object
     /// </returns>
     public System.Collections.Generic.IReadOnlyList<Gst.PluginFeature> FeatureFilter(Gst.PluginFeatureFilter filter, bool first)
     {
+        nint instanceHandle = Handle;
         ArgumentNullException.ThrowIfNull(filter);
         Gst.Interop.CallbackHandle filterState = Gst.Interop.CallbackHandle.Alloc(filter);
         try
         {
-            nint nativeResult = GstRegistryFeatureFilter(Handle, Gst.PluginFeatureFilterTrampoline.Pointer, first ? 1 : 0, filterState.UserData);
+            nint nativeResult = GstRegistryFeatureFilter(instanceHandle, Gst.PluginFeatureFilterTrampoline.Pointer, first ? 1 : 0, filterState.UserData);
             System.GC.KeepAlive(this);
             nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
             System.Collections.Generic.List<Gst.PluginFeature> result = new(nativeItems.Length);
@@ -357,11 +358,12 @@ public unsafe partial class Registry : Gst.Object
     /// </returns>
     public System.Collections.Generic.IReadOnlyList<Gst.Plugin> PluginFilter(Gst.PluginFilter filter, bool first)
     {
+        nint instanceHandle = Handle;
         ArgumentNullException.ThrowIfNull(filter);
         Gst.Interop.CallbackHandle filterState = Gst.Interop.CallbackHandle.Alloc(filter);
         try
         {
-            nint nativeResult = GstRegistryPluginFilter(Handle, Gst.PluginFilterTrampoline.Pointer, first ? 1 : 0, filterState.UserData);
+            nint nativeResult = GstRegistryPluginFilter(instanceHandle, Gst.PluginFilterTrampoline.Pointer, first ? 1 : 0, filterState.UserData);
             System.GC.KeepAlive(this);
             nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
             System.Collections.Generic.List<Gst.Plugin> result = new(nativeItems.Length);
