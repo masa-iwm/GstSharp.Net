@@ -11,9 +11,8 @@ using Object = Gst.GObject.Object;
 namespace GstSharp.IntegrationTests;
 
 /// <summary>
-/// §4.2 of the acceptance requirements: the simple callbacks of the
-/// <c>appsink</c> and the <c>appsrc</c>, installed against the library that is
-/// actually there.
+/// The simple callbacks of the <c>appsink</c> and the <c>appsrc</c>,
+/// installed against the library that is actually there.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -52,7 +51,7 @@ public sealed class AppSinkSimpleCallbacksTests
     }
 
     /// <summary>
-    /// The path the acceptance application wants: a delegate that pulls, handed
+    /// The path an application wants: a delegate that pulls, handed
     /// straight to the sink, with the signal machinery left switched off.
     /// </summary>
     [RequiresGStreamerFact(28)]

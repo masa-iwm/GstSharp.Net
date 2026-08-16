@@ -13,8 +13,8 @@ namespace Gst.Sdp;
 /// MIKEY mini objects, so an application that only names one of them and
 /// leaves every call to another binding assembly never executes a line of this
 /// one: the registry has no entry to build their wrappers from, and what
-/// arrives is the closest type it does know — the failure mode §2.1 of the
-/// acceptance requirements is about.
+/// arrives is the closest type it does know — the failure described under
+/// <see href="https://github.com/masa-iwm/GstSharp.Net/blob/main/docs/ownership.md#the-gtype-registry">The GType registry</see>.
 /// </para>
 /// <para>
 /// Calling <see cref="Initialize"/> instead of <c>GstSharp.Initialize</c> is a

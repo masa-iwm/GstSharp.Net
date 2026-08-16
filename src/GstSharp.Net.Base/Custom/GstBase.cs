@@ -14,7 +14,8 @@ namespace Gst.Base;
 /// line of this assembly: the registry has no entry for <c>GstBaseSrc</c>, the
 /// wrapper is created as the plain <see cref="Gst.Element"/> that the registry
 /// does know, and the test is silently <see langword="false"/> — the failure
-/// mode §2.1 of the acceptance requirements is about.
+/// described under
+/// <see href="https://github.com/masa-iwm/GstSharp.Net/blob/main/docs/ownership.md#the-gtype-registry">The GType registry</see>.
 /// </para>
 /// <para>
 /// Calling <see cref="Initialize"/> instead of <c>GstSharp.Initialize</c> is a

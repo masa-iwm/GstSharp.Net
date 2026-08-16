@@ -23,8 +23,8 @@ namespace Gst.WebRTC;
 /// that never calls a static of this one therefore never runs its module
 /// initialiser, the registry has no entry to build the wrappers from, and what
 /// arrives is the closest type it does know — a bare <c>Gst.Object</c> instead
-/// of a transceiver. This is the failure mode §2.1 of the acceptance
-/// requirements is about.
+/// of a transceiver. This is the failure described under
+/// <see href="https://github.com/masa-iwm/GstSharp.Net/blob/main/docs/ownership.md#the-gtype-registry">The GType registry</see>.
 /// </para>
 /// <para>
 /// Calling <see cref="Initialize"/> instead of <c>GstSharp.Initialize</c> is a

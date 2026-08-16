@@ -5,8 +5,8 @@ using Buffer = Gst.Buffer;
 namespace GstSharp.IntegrationTests;
 
 /// <summary>
-/// §1 of the acceptance requirements: the timestamps and offsets of a buffer
-/// can be written, and only while the buffer belongs to the caller alone.
+/// The timestamps and offsets of a buffer can be written, and only while the
+/// buffer belongs to the caller alone.
 /// </summary>
 /// <remarks>
 /// The five fields are written straight into the <c>GstBuffer</c>, which is

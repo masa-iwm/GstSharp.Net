@@ -46,17 +46,27 @@ public partial class Object
     /// The value the signal returned, converted the way
     /// <see cref="Value.GetContent"/> converts it, or <see langword="null"/>
     /// for a signal that returns nothing, and for a null pointer of any kind.
-    /// A boxed return value, which is what a mini object such as a
-    /// <c>GstSample</c> is, comes back as a raw handle that the caller owns: it
-    /// carries a reference of its own, so it has to be adopted by a wrapper
-    /// with <c>Transfer.Full</c> or released by hand.
     /// </returns>
     /// <remarks>
     /// <para>
+    /// <b>A boxed return value is opaque today.</b> A mini object such as a
+    /// <c>GstSample</c> is boxed in a <c>GValue</c>, and it comes back here as
+    /// a raw <see cref="nint"/> handle that already carries a reference of its
+    /// own. Nothing on the public surface can take that handle: the wrapper
+    /// constructors and the <c>FromNative</c> factories are internal, and the
+    /// matching release is <c>g_boxed_free</c> against the value's
+    /// <c>GType</c>, which is not exposed either. Emitting such a signal
+    /// therefore leaks one reference per emission. Use the generated binding of
+    /// the signal, or the generated method the action signal stands for, where
+    /// one exists — <c>appsink.TryPullSample(timeout)</c> rather than
+    /// <c>EmitSignal("try-pull-sample", timeout)</c>. Typed adoption of boxed
+    /// return values is planned and is not in this release.
+    /// </para>
+    /// <para>
     /// This is the way to call an action signal, for example
     /// <c>element.EmitSignal("resize", 1920, 1080)</c> on a sink that offers
-    /// one, or <c>element.EmitSignal("try-pull-sample", 0UL)</c> on an
-    /// <c>appsink</c>.
+    /// one, or <c>appsrc.EmitSignal("end-of-stream")</c>, whose
+    /// <c>GstFlowReturn</c> arrives as an <see cref="int"/>.
     /// </para>
     /// <para>
     /// Every argument is checked against the type the signal declares before

@@ -12,9 +12,8 @@ namespace GstSharp.IntegrationTests;
 /// </summary>
 /// <remarks>
 /// Both out parameters of <c>gst_message_parse_error</c> are copies that the
-/// caller owns. Section 5.5 of the acceptance requirements asks for a repeated
-/// parse of the same message, because a missing <c>g_free</c> or
-/// <c>g_error_free</c> shows up nowhere else.
+/// caller owns. The same message is parsed repeatedly here, because a missing
+/// <c>g_free</c> or <c>g_error_free</c> shows up nowhere else.
 /// </remarks>
 [Collection(GstCollection.Name)]
 public sealed class MessageErrorTests
@@ -46,8 +45,8 @@ public sealed class MessageErrorTests
         using Element sink = Assert.IsAssignableFrom<Element>(ElementFactory.Make("fakesink", "sink"));
         using Bus bus = pipeline.GetBus();
 
-        // A property set by name with a string value, as the acceptance
-        // application does it.
+        // A property set by name with a string value, which is how an
+        // application configures an element it parsed.
         Global.UtilSetObjectArg(source, "location", missing);
 
         Assert.True(pipeline.AddMany(source, sink));

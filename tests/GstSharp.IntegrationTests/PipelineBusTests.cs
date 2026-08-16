@@ -7,9 +7,8 @@ using Xunit.Abstractions;
 namespace GstSharp.IntegrationTests;
 
 /// <summary>
-/// Runs real pipelines and drives them from a polled bus, which is the shape
-/// the acceptance application uses: no main loop, no signal handler, every wait
-/// bounded.
+/// Runs real pipelines and drives them from a polled bus: no main loop, no
+/// signal handler, every wait bounded.
 /// </summary>
 [Collection(GstCollection.Name)]
 public sealed class PipelineBusTests
@@ -31,8 +30,8 @@ public sealed class PipelineBusTests
     public void ParsedPipelineReachesPlayingAndPostsEos()
     {
         // gst_parse_launch returns a GstPipeline; the cast is the type registry
-        // at work, and a null here is the silent failure mode of §2.1 of the
-        // acceptance requirements.
+        // at work, and a null here is the silent failure a missing registry
+        // entry produces.
         using Pipeline pipeline = Assert.IsAssignableFrom<Pipeline>(
             Global.ParseLaunch("fakesrc num-buffers=5 ! fakesink"));
         using Bus bus = pipeline.GetBus();

@@ -217,10 +217,11 @@ public static class GstSharp
     /// <para>
     /// A module initialiser of a library is lazy on CoreCLR: it runs before the
     /// first call into the assembly, and a cast to one of its types is not a
-    /// call. That is the whole of the silent failure in §2.1 of the acceptance
-    /// requirements, because the initialiser is what registers the types.
-    /// Running it here is the durable fix, and running it twice is harmless —
-    /// the runtime runs a module initialiser at most once.
+    /// call. That is the whole of the silent failure described under
+    /// <see href="https://github.com/masa-iwm/GstSharp.Net/blob/main/docs/ownership.md#the-gtype-registry">The GType registry</see>,
+    /// because the initialiser is what registers the types. Running it here is
+    /// the durable fix, and running it twice is harmless — the runtime runs a
+    /// module initialiser at most once.
     /// </para>
     /// <para>
     /// The handler is subscribed before the sweep, so that an assembly that is

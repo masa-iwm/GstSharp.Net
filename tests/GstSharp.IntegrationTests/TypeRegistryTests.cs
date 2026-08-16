@@ -6,9 +6,9 @@ using Xunit.Abstractions;
 namespace GstSharp.IntegrationTests;
 
 /// <summary>
-/// §2.1 of the acceptance requirements: the type registry has to know the types
-/// of every binding assembly after <c>GstSharp.Initialize</c>, whether or not
-/// the application ever called into them.
+/// The type registry has to know the types of every binding assembly after
+/// <c>GstSharp.Initialize</c>, whether or not the application ever called
+/// into them.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -19,7 +19,7 @@ namespace GstSharp.IntegrationTests;
 /// module by hand and prove nothing.
 /// </para>
 /// <para>
-/// They are acceptance tests rather than tests of the module sweep: naming a
+/// They are end to end tests rather than tests of the module sweep: naming a
 /// type in a cast makes the runtime prepare it, and preparing it runs the
 /// module initialiser of its assembly, so each of these would also pass on a
 /// runtime that leaves everything to that. What pins the sweep down is

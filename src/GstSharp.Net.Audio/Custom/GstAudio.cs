@@ -14,8 +14,8 @@ namespace Gst.Audio;
 /// executes a line
 /// of this assembly: the registry has no entry for the native type, the
 /// wrapper is created as the closest base type the registry does know, and the
-/// cast is silently <see langword="null"/> — the failure mode §2.1 of the
-/// acceptance requirements is about.
+/// cast is silently <see langword="null"/> — the failure described under
+/// <see href="https://github.com/masa-iwm/GstSharp.Net/blob/main/docs/ownership.md#the-gtype-registry">The GType registry</see>.
 /// </para>
 /// <para>
 /// Calling <see cref="Initialize"/> instead of <c>GstSharp.Initialize</c> is a

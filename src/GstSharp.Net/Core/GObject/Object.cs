@@ -29,10 +29,9 @@ namespace Gst.GObject;
 /// An application that runs its own main context, or none at all, should call
 /// <c>GstSharp.DrainPendingReleases</c> periodically. The idle source of
 /// <see cref="EnableIdleDrain"/> is attached to the default main context, so it
-/// only runs when something iterates that context; attaching the source to the
-/// context the application actually runs is a design change that is still
-/// pending. Draining is cheap when the queue is empty and it is the wrapper
-/// lookups that keep it short in practice, so most applications never notice.
+/// only runs when something iterates that context. Draining is cheap when the
+/// queue is empty and it is the wrapper lookups that keep it short in practice,
+/// so most applications never notice.
 /// </para>
 /// </remarks>
 public partial class Object : IDisposable

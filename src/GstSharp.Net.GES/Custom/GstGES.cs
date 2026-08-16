@@ -27,7 +27,8 @@ namespace GES;
 /// names one of them and leaves every call to another binding assembly never
 /// executes a line of this one: the registry has no entry to build their
 /// wrappers from, and what arrives is the closest type it does know — the
-/// failure mode §2.1 of the acceptance requirements is about.
+/// failure described under
+/// <see href="https://github.com/masa-iwm/GstSharp.Net/blob/main/docs/ownership.md#the-gtype-registry">The GType registry</see>.
 /// <c>GstSharp.Initialize</c> closes that hole on its own, by sweeping the
 /// assemblies that are loaded and running their module initialisers, and it
 /// keeps doing so for assemblies that are loaded later.

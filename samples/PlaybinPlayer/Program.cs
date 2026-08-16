@@ -1,6 +1,6 @@
 // The M1 exit criteria sample: it builds a pipeline from a description, runs
 // it, and drives it from a polled bus, without a main loop and without a single
-// signal handler. That is the shape the acceptance application uses.
+// signal handler.
 //
 // Usage: PlaybinPlayer [<uri>] [--native-path <directory>] [--flavor msvc|mingw]
 //                      [--timeout <seconds>]
@@ -56,8 +56,14 @@ internal static class Player
             }
 
             using (pipeline)
-            using (Bus bus = pipeline.GetBus())
             {
+                // The bus wrapper is an interned GObject wrapper, shared with
+                // every other lookup of the same bus, so it is not disposed
+                // here. The pipeline is the sanctioned exception: this code
+                // built it and sets it back to NULL before releasing it. See
+                // docs/ownership.md.
+                Bus bus = pipeline.GetBus();
+
                 return Play(pipeline, bus, options.Timeout);
             }
         }

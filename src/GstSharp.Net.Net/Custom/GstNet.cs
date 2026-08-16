@@ -21,8 +21,8 @@ namespace Gst.Net;
 /// <c>Gst.Net</c> that never executes a line of this assembly. The registry has
 /// no entry for the native type, the wrapper is created as the closest base
 /// type it does know — <see cref="Gst.SystemClock"/> — and the cast is silently
-/// <see langword="null"/>: the failure mode §2.1 of the acceptance requirements
-/// is about.
+/// <see langword="null"/>: the failure described under
+/// <see href="https://github.com/masa-iwm/GstSharp.Net/blob/main/docs/ownership.md#the-gtype-registry">The GType registry</see>.
 /// </para>
 /// <para>
 /// Calling <see cref="Initialize"/> instead of <c>GstSharp.Initialize</c> is a

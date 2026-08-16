@@ -8,9 +8,8 @@ using Buffer = Gst.Buffer;
 namespace GstSharp.IntegrationTests;
 
 /// <summary>
-/// §5.6 of the acceptance requirements: <c>push_buffer</c> takes the buffer
-/// over and <c>push_sample</c> does not, pinned with the reference counts the
-/// library itself keeps.
+/// <c>push_buffer</c> takes the buffer over and <c>push_sample</c> does not,
+/// pinned with the reference counts the library itself keeps.
 /// </summary>
 /// <remarks>
 /// <para>

@@ -13,7 +13,7 @@ namespace GstSharp.IntegrationTests;
 /// </summary>
 /// <remarks>
 /// <para>
-/// This is the path the acceptance application needs for the action signals
+/// This is the path an application needs for the action signals
 /// that no <c>.gir</c> file describes as a method, for example the
 /// <c>resize</c> of a Direct3D sink, and for the signals a plugin adds behind
 /// the back of introspection.
@@ -179,7 +179,7 @@ public sealed class DynamicSignalTests
     /// the caller is handed a reference of its own.
     /// </summary>
     /// <remarks>
-    /// This is the acceptance path in one test: a buffer is pushed into an
+    /// This is the whole path in one test: a buffer is pushed into an
     /// <c>appsrc</c> through the <c>push-buffer</c> action signal, which takes
     /// a mini object as an argument, and pulled out of the <c>appsink</c> at
     /// the other end through <c>try-pull-sample</c>, which returns one.

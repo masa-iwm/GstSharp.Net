@@ -13,7 +13,7 @@
     2. The published executable must run and exit with 0. The failure mode this
        catches - a GType that never made it into the managed type registry, so
        that a cast returns null - produces no build warning at all
-       (docs/acceptance-processrecorderapp.md, sections 2.1 and 5.9).
+       (docs/ownership.md, "The GType registry").
 
 .PARAMETER Project
     The project to publish, as a directory or a .csproj path, relative to the

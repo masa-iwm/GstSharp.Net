@@ -74,26 +74,28 @@ internal static class Spans
                 // The cast is the type registry at work: gst_bin_get_by_name
                 // returns a GstElement, and only the map from its GType to this
                 // wrapper turns it into an appsink. A null here is the silent
-                // failure the acceptance application ran into on other
-                // bindings.
+                // failure a missing registry entry produces.
                 if (pipeline.GetByName(SinkName) is not AppSink sink)
                 {
                     Console.Error.WriteLine($"AppSinkSpans: \"{SinkName}\" is not an appsink.");
                     return 1;
                 }
 
-                using (sink)
-                using (Bus bus = pipeline.GetBus())
-                {
-                    Totals totals = new();
+                // The sink and the bus are interned GObject wrappers, shared
+                // with every other lookup of the same object, so neither is
+                // disposed here. The pipeline is the sanctioned exception:
+                // this code built it and sets it back to NULL before releasing
+                // it. See docs/ownership.md.
+                Bus bus = pipeline.GetBus();
 
-                    int status = options.Mode == Mode.Pull
-                        ? RunPull(pipeline, bus, sink, totals, options.Timeout)
-                        : RunSignal(pipeline, bus, sink, totals, options.Timeout);
+                Totals totals = new();
 
-                    Print(totals);
-                    return status;
-                }
+                int status = options.Mode == Mode.Pull
+                    ? RunPull(pipeline, bus, sink, totals, options.Timeout)
+                    : RunSignal(pipeline, bus, sink, totals, options.Timeout);
+
+                Print(totals);
+                return status;
             }
         }
         catch (Exception exception)
@@ -118,9 +120,8 @@ internal static class Spans
     /// <param name="timeout">How long the run may take.</param>
     /// <returns>0 when the sink reached the end of the stream, 1 otherwise.</returns>
     /// <remarks>
-    /// This is the shape of the acceptance application: no main loop, no
-    /// callback, a bounded wait per sample and the bus polled for whatever went
-    /// wrong.
+    /// This is the polling shape: no main loop, no callback, a bounded wait per
+    /// sample and the bus polled for whatever went wrong.
     /// </remarks>
     private static int RunPull(Pipeline pipeline, Bus bus, AppSink sink, Totals totals, TimeSpan timeout)
     {

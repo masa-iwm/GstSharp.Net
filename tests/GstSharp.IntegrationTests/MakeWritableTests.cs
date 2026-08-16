@@ -6,9 +6,9 @@ using Buffer = Gst.Buffer;
 namespace GstSharp.IntegrationTests;
 
 /// <summary>
-/// §1 of the acceptance requirements: first class <c>MakeWritable</c> on
-/// buffers and caps, and the <c>All</c> composite of
-/// <see cref="BufferCopyFlags"/> that a metadata copy is built from.
+/// First class <c>MakeWritable</c> on buffers and caps, and the <c>All</c>
+/// composite of <see cref="BufferCopyFlags"/> that a metadata copy is built
+/// from.
 /// </summary>
 /// <remarks>
 /// <c>gst_mini_object_make_writable</c> consumes the reference it is given, so

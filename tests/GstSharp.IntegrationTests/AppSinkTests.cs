@@ -10,28 +10,26 @@ using Buffer = Gst.Buffer;
 namespace GstSharp.IntegrationTests;
 
 /// <summary>
-/// The <c>appsink</c> half of the acceptance requirements: the type registry
-/// across module boundaries, the two ways of getting a sample out of the sink
-/// and the ownership of everything that comes with one.
+/// The <c>appsink</c> half of the consumer contract: the type registry across
+/// module boundaries, the two ways of getting a sample out of the sink and the
+/// ownership of everything that comes with one.
 /// </summary>
 /// <remarks>
 /// <para>
-/// These are the items of §5 of <c>docs/acceptance-processrecorderapp.md</c>
-/// that a single machine can decide: §5.1 (the registry), §5.4 in the short
-/// form (a <c>new-sample</c> handler that pulls and releases) and the
-/// non blocking contract of <c>try_pull_sample</c> that the polling loop of the
-/// application depends on. The full §5.2 and §5.4 soak runs, which watch the
-/// resident set of a process for a minute, belong to the M3 pipeline and are
-/// not run here: this suite has to stay fast and has to fail for a reason, not
-/// for a machine that was busy.
+/// These are the parts a single machine can decide: the registry, a
+/// <c>new-sample</c> handler that pulls and releases, and the non blocking
+/// contract of <c>try_pull_sample</c> that a polling loop depends on. Soak
+/// runs that watch the resident set of a process for a minute belong to the M3
+/// pipeline and are not run here: this suite has to stay fast and has to fail
+/// for a reason, not for a machine that was busy.
 /// </para>
 /// <para>
 /// What the short form does instead is watch the reference counts themselves,
 /// which is deterministic. An <c>appsink</c> keeps one <c>GstSample</c> around
 /// and refills it for every frame, but only while it is writable, so a sample
 /// wrapper that fails to release its reference forces the sink to allocate a
-/// new one — the handle changes, and that is exactly the leak the acceptance
-/// application hit.
+/// new one — the handle changes, and that is exactly the leak an undisposed
+/// sample produces.
 /// </para>
 /// </remarks>
 [Collection(GstCollection.Name)]
@@ -55,10 +53,10 @@ public sealed class AppSinkTests
     }
 
     /// <summary>
-    /// §5.1: both sinks of a tee are found by name and both are appsinks. A
-    /// null here would be the silent failure of §2.1 of the acceptance
-    /// requirements, where the wrapper is created for the closest type the
-    /// registry does know and every appsink call is out of reach.
+    /// Both sinks of a tee are found by name and both are appsinks. A null
+    /// here would be the silent registry failure, where the wrapper is created
+    /// for the closest type the registry does know and every appsink call is
+    /// out of reach.
     /// </summary>
     [Fact]
     public void TeePipelineResolvesEveryAppSinkThroughTheTypeRegistry()
@@ -90,9 +88,9 @@ public sealed class AppSinkTests
     }
 
     /// <summary>
-    /// §5.4, short form: <c>emit-signals</c> and a handler that pulls the
-    /// sample the signal announced, releases it again and leaves the reference
-    /// counts of the sink exactly where they were.
+    /// <c>emit-signals</c> and a handler that pulls the sample the signal
+    /// announced, releases it again and leaves the reference counts of the
+    /// sink exactly where they were.
     /// </summary>
     [Fact]
     public unsafe void NewSampleHandlerPullsAndReleasesEveryFrame()
@@ -308,7 +306,7 @@ public sealed class AppSinkTests
     /// produced.
     /// </summary>
     /// <remarks>
-    /// The acceptance application needs this for the action signals that no
+    /// This is the path an application needs for the action signals that no
     /// <c>.gir</c> describes as a method. Here it is cross checked against the
     /// generated method, which calls the C function the signal stands for.
     /// </remarks>

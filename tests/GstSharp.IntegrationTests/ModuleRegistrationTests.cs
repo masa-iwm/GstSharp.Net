@@ -5,8 +5,8 @@ using Xunit;
 namespace GstSharp.IntegrationTests;
 
 /// <summary>
-/// The durable half of §2.1 of the acceptance requirements: a binding assembly
-/// that is loaded but never called into still hands its types to the registry.
+/// The durable half of the registry contract: a binding assembly that is
+/// loaded but never called into still hands its types to the registry.
 /// </summary>
 /// <remarks>
 /// <para>

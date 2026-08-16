@@ -5,9 +5,9 @@ using Xunit.Abstractions;
 namespace GstSharp.IntegrationTests;
 
 /// <summary>
-/// §4.4 of the acceptance requirements: an application can register a debug
-/// category of its own and log through it, so that its own output lands in the
-/// same stream, with the same filtering, as the output of GStreamer itself.
+/// An application can register a debug category of its own and log through it,
+/// so that its own output lands in the same stream, with the same filtering,
+/// as the output of GStreamer itself.
 /// </summary>
 /// <remarks>
 /// <para>
