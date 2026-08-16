@@ -1075,6 +1075,30 @@ public static unsafe partial class Global
         return nativeResult != 0;
     }
 
+    /// <summary>
+    /// Get a list of all active tracer objects owned by the tracing framework for
+    /// the entirety of the run-time of the process or till gst_deinit() is called.
+    /// </summary>
+    /// <returns>
+    /// A #GList of
+    /// #GstTracer objects
+    /// </returns>
+    public static System.Collections.Generic.IReadOnlyList<Gst.Tracer> TracingGetActiveTracers()
+    {
+        nint nativeResult = GstTracingGetActiveTracers();
+        nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
+        System.Collections.Generic.List<Gst.Tracer> result = new(nativeItems.Length);
+        foreach (nint nativeItem in nativeItems)
+        {
+            if (nativeItem != 0 && Gst.GObject.Object.FromNative<Gst.Tracer>(nativeItem, Gst.Interop.Transfer.Full) is { } adopted)
+            {
+                result.Add(adopted);
+            }
+        }
+
+        return result;
+    }
+
     /// <summary>The <c>gst_type_find_get_type</c> function.</summary>
     /// <returns>The result of <c>gst_type_find_get_type</c>.</returns>
     public static Gst.GObject.GType TypeFindGetType()
@@ -1944,6 +1968,10 @@ public static unsafe partial class Global
     /// <summary>The <c>gst_tag_is_fixed</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_tag_is_fixed")]
     private static partial int GstTagIsFixed(byte* tag);
+
+    /// <summary>The <c>gst_tracing_get_active_tracers</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_tracing_get_active_tracers")]
+    private static partial nint GstTracingGetActiveTracers();
 
     /// <summary>The <c>gst_type_find_get_type</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_type_find_get_type")]

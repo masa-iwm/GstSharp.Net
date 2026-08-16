@@ -109,6 +109,37 @@ public unsafe partial class TypeFindFactory : Gst.PluginFeature
         return nativeResult != 0;
     }
 
+    /// <summary>
+    /// Gets the list of all registered typefind factories. You must free the
+    /// list using gst_plugin_feature_list_free().
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The returned factories are sorted by highest rank first, and then by
+    /// factory name.
+    /// </para>
+    /// <para>Free-function: gst_plugin_feature_list_free</para>
+    /// </remarks>
+    /// <returns>
+    /// the list of all
+    ///     registered #GstTypeFindFactory.
+    /// </returns>
+    public static System.Collections.Generic.IReadOnlyList<Gst.TypeFindFactory> GetList()
+    {
+        nint nativeResult = GstTypeFindFactoryGetList();
+        nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
+        System.Collections.Generic.List<Gst.TypeFindFactory> result = new(nativeItems.Length);
+        foreach (nint nativeItem in nativeItems)
+        {
+            if (nativeItem != 0 && Gst.GObject.Object.FromNative<Gst.TypeFindFactory>(nativeItem, Gst.Interop.Transfer.Full) is { } adopted)
+            {
+                result.Add(adopted);
+            }
+        }
+
+        return result;
+    }
+
     /// <summary>The <c>gst_type_find_factory_call_function</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_type_find_factory_call_function")]
     private static partial void GstTypeFindFactoryCallFunction(nint factory, nint find);
@@ -120,6 +151,10 @@ public unsafe partial class TypeFindFactory : Gst.PluginFeature
     /// <summary>The <c>gst_type_find_factory_has_function</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_type_find_factory_has_function")]
     private static partial int GstTypeFindFactoryHasFunction(nint factory);
+
+    /// <summary>The <c>gst_type_find_factory_get_list</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_type_find_factory_get_list")]
+    private static partial nint GstTypeFindFactoryGetList();
 
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstTypeFindFactory</c> under.</summary>
     /// <returns>The type of the instances of this wrapper.</returns>

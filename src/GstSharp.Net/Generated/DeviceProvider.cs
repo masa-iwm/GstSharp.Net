@@ -107,6 +107,37 @@ public abstract unsafe partial class DeviceProvider : Gst.Object
             ?? throw new InvalidOperationException("gst_device_provider_get_bus returned no value.");
     }
 
+    /// <summary>
+    /// Gets a list of devices that this provider understands. This may actually
+    /// probe the hardware if the provider is not currently started.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// If the provider has been started, this will return the same #GstDevice
+    /// objects that have been returned by the #GST_MESSAGE_DEVICE_ADDED messages.
+    /// </para>
+    /// </remarks>
+    /// <returns>
+    /// a #GList of
+    ///   #GstDevice
+    /// </returns>
+    public System.Collections.Generic.IReadOnlyList<Gst.Device> GetDevices()
+    {
+        nint nativeResult = GstDeviceProviderGetDevices(Handle);
+        System.GC.KeepAlive(this);
+        nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
+        System.Collections.Generic.List<Gst.Device> result = new(nativeItems.Length);
+        foreach (nint nativeItem in nativeItems)
+        {
+            if (nativeItem != 0 && Gst.GObject.Object.FromNative<Gst.Device>(nativeItem, Gst.Interop.Transfer.Full) is { } adopted)
+            {
+                result.Add(adopted);
+            }
+        }
+
+        return result;
+    }
+
     /// <summary>Retrieves the factory that was used to create this device provider.</summary>
     /// <returns>
     /// the #GstDeviceProviderFactory used for
@@ -342,6 +373,10 @@ public abstract unsafe partial class DeviceProvider : Gst.Object
     /// <summary>The <c>gst_device_provider_get_bus</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_device_provider_get_bus")]
     private static partial nint GstDeviceProviderGetBus(nint provider);
+
+    /// <summary>The <c>gst_device_provider_get_devices</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_device_provider_get_devices")]
+    private static partial nint GstDeviceProviderGetDevices(nint provider);
 
     /// <summary>The <c>gst_device_provider_get_factory</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_device_provider_get_factory")]

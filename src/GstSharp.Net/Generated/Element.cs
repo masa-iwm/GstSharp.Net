@@ -472,6 +472,28 @@ public abstract unsafe partial class Element : Gst.Object
         return Gst.Context.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
 
+    /// <summary>Gets the contexts set on the element.</summary>
+    /// <remarks>
+    /// <para>MT safe.</para>
+    /// </remarks>
+    /// <returns>List of #GstContext</returns>
+    public System.Collections.Generic.IReadOnlyList<Gst.Context> GetContexts()
+    {
+        nint nativeResult = GstElementGetContexts(Handle);
+        System.GC.KeepAlive(this);
+        nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
+        System.Collections.Generic.List<Gst.Context> result = new(nativeItems.Length);
+        foreach (nint nativeItem in nativeItems)
+        {
+            if (nativeItem != 0 && Gst.Context.FromNative(nativeItem, Gst.Interop.Transfer.Full) is { } adopted)
+            {
+                result.Add(adopted);
+            }
+        }
+
+        return result;
+    }
+
     /// <summary>
     /// Returns the current clock time of the element, as in, the time of the
     /// element's clock, or GST_CLOCK_TIME_NONE if there is no clock.
@@ -544,6 +566,31 @@ public abstract unsafe partial class Element : Gst.Object
         nint nativeResult = GstElementGetPadTemplate(Handle, nameScope.Pointer);
         System.GC.KeepAlive(this);
         return Gst.GObject.Object.FromNative<Gst.PadTemplate>(nativeResult, Gst.Interop.Transfer.None);
+    }
+
+    /// <summary>
+    /// Retrieves a list of the pad templates associated with @element. The
+    /// list must not be modified by the calling code.
+    /// </summary>
+    /// <returns>
+    /// the #GList of
+    ///     pad templates.
+    /// </returns>
+    public System.Collections.Generic.IReadOnlyList<Gst.PadTemplate> GetPadTemplateList()
+    {
+        nint nativeResult = GstElementGetPadTemplateList(Handle);
+        System.GC.KeepAlive(this);
+        nint[] nativeItems = Gst.Interop.GListMarshal.Collect(nativeResult);
+        System.Collections.Generic.List<Gst.PadTemplate> result = new(nativeItems.Length);
+        foreach (nint nativeItem in nativeItems)
+        {
+            if (nativeItem != 0 && Gst.GObject.Object.FromNative<Gst.PadTemplate>(nativeItem, Gst.Interop.Transfer.None) is { } adopted)
+            {
+                result.Add(adopted);
+            }
+        }
+
+        return result;
     }
 
     /// <summary>
@@ -1695,6 +1742,10 @@ public abstract unsafe partial class Element : Gst.Object
     [LibraryImport("Gst", EntryPoint = "gst_element_get_context_unlocked")]
     private static partial nint GstElementGetContextUnlocked(nint element, byte* contextType);
 
+    /// <summary>The <c>gst_element_get_contexts</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_element_get_contexts")]
+    private static partial nint GstElementGetContexts(nint element);
+
     /// <summary>The <c>gst_element_get_current_clock_time</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_element_get_current_clock_time")]
     private static partial ulong GstElementGetCurrentClockTime(nint element);
@@ -1714,6 +1765,10 @@ public abstract unsafe partial class Element : Gst.Object
     /// <summary>The <c>gst_element_get_pad_template</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_element_get_pad_template")]
     private static partial nint GstElementGetPadTemplate(nint element, byte* name);
+
+    /// <summary>The <c>gst_element_get_pad_template_list</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_element_get_pad_template_list")]
+    private static partial nint GstElementGetPadTemplateList(nint element);
 
     /// <summary>The <c>gst_element_get_request_pad</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_element_get_request_pad")]

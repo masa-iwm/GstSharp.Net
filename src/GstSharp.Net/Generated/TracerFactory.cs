@@ -38,9 +38,41 @@ public unsafe partial class TracerFactory : Gst.PluginFeature
         return new Gst.GObject.GType(nativeResult);
     }
 
+    /// <summary>
+    /// Gets the list of all registered tracer factories. You must free the
+    /// list using gst_plugin_feature_list_free().
+    /// </summary>
+    /// <remarks>
+    /// <para>The returned factories are sorted by factory name.</para>
+    /// <para>Free-function: gst_plugin_feature_list_free</para>
+    /// </remarks>
+    /// <returns>
+    /// the list of all
+    ///     registered #GstTracerFactory.
+    /// </returns>
+    public static System.Collections.Generic.IReadOnlyList<Gst.TracerFactory> GetList()
+    {
+        nint nativeResult = GstTracerFactoryGetList();
+        nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
+        System.Collections.Generic.List<Gst.TracerFactory> result = new(nativeItems.Length);
+        foreach (nint nativeItem in nativeItems)
+        {
+            if (nativeItem != 0 && Gst.GObject.Object.FromNative<Gst.TracerFactory>(nativeItem, Gst.Interop.Transfer.Full) is { } adopted)
+            {
+                result.Add(adopted);
+            }
+        }
+
+        return result;
+    }
+
     /// <summary>The <c>gst_tracer_factory_get_tracer_type</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_tracer_factory_get_tracer_type")]
     private static partial nuint GstTracerFactoryGetTracerType(nint factory);
+
+    /// <summary>The <c>gst_tracer_factory_get_list</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_tracer_factory_get_list")]
+    private static partial nint GstTracerFactoryGetList();
 
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstTracerFactory</c> under.</summary>
     /// <returns>The type of the instances of this wrapper.</returns>

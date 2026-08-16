@@ -19,6 +19,29 @@ public unsafe partial class DiscovererContainerInfo : Gst.Pbutils.DiscovererStre
     {
     }
 
+    /// <summary>The <c>gst_discoverer_container_info_get_streams</c> function.</summary>
+    /// <returns>
+    /// the list of
+    /// #GstDiscovererStreamInfo this container stream offers.
+    /// Free with gst_discoverer_stream_info_list_free() after usage.
+    /// </returns>
+    public System.Collections.Generic.IReadOnlyList<Gst.Pbutils.DiscovererStreamInfo> GetStreams()
+    {
+        nint nativeResult = GstDiscovererContainerInfoGetStreams(Handle);
+        System.GC.KeepAlive(this);
+        nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
+        System.Collections.Generic.List<Gst.Pbutils.DiscovererStreamInfo> result = new(nativeItems.Length);
+        foreach (nint nativeItem in nativeItems)
+        {
+            if (nativeItem != 0 && Gst.GObject.Object.FromNative<Gst.Pbutils.DiscovererStreamInfo>(nativeItem, Gst.Interop.Transfer.Full) is { } adopted)
+            {
+                result.Add(adopted);
+            }
+        }
+
+        return result;
+    }
+
     /// <summary>The <c>gst_discoverer_container_info_get_tags</c> function.</summary>
     /// <returns>
     /// tags specific to the given container. If you wish to use
@@ -33,6 +56,10 @@ public unsafe partial class DiscovererContainerInfo : Gst.Pbutils.DiscovererStre
         System.GC.KeepAlive(this);
         return Gst.TagList.FromNative(nativeResult, Gst.Interop.Transfer.None);
     }
+
+    /// <summary>The <c>gst_discoverer_container_info_get_streams</c> entry point.</summary>
+    [LibraryImport("GstPbutils", EntryPoint = "gst_discoverer_container_info_get_streams")]
+    private static partial nint GstDiscovererContainerInfoGetStreams(nint info);
 
     /// <summary>The <c>gst_discoverer_container_info_get_tags</c> entry point.</summary>
     [LibraryImport("GstPbutils", EntryPoint = "gst_discoverer_container_info_get_tags")]

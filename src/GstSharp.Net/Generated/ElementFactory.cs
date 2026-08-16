@@ -220,6 +220,34 @@ public unsafe partial class ElementFactory : Gst.PluginFeature
     }
 
     /// <summary>
+    /// Get a list of factories that match the given @type. Only elements
+    /// with a rank greater or equal to @minrank will be returned.
+    /// The list of factories is returned by decreasing rank.
+    /// </summary>
+    /// <param name="type">The <c>type</c> argument.</param>
+    /// <param name="minrank">The <c>minrank</c> argument.</param>
+    /// <returns>
+    /// a #GList of
+    ///     #GstElementFactory elements. Use gst_plugin_feature_list_free() after
+    ///     usage.
+    /// </returns>
+    public static System.Collections.Generic.IReadOnlyList<Gst.ElementFactory> ListGetElements(ulong type, Gst.Rank minrank)
+    {
+        nint nativeResult = GstElementFactoryListGetElements(type, (int)minrank);
+        nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
+        System.Collections.Generic.List<Gst.ElementFactory> result = new(nativeItems.Length);
+        foreach (nint nativeItem in nativeItems)
+        {
+            if (nativeItem != 0 && Gst.GObject.Object.FromNative<Gst.ElementFactory>(nativeItem, Gst.Interop.Transfer.Full) is { } adopted)
+            {
+                result.Add(adopted);
+            }
+        }
+
+        return result;
+    }
+
+    /// <summary>
     /// Create a new element of the type defined by the given element factory.
     /// If name is %NULL, then the element will receive a guaranteed unique name,
     /// consisting of the element factory name and a number.
@@ -293,6 +321,10 @@ public unsafe partial class ElementFactory : Gst.PluginFeature
     /// <summary>The <c>gst_element_factory_find</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_element_factory_find")]
     private static partial nint GstElementFactoryFind(byte* name);
+
+    /// <summary>The <c>gst_element_factory_list_get_elements</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_element_factory_list_get_elements")]
+    private static partial nint GstElementFactoryListGetElements(ulong type, int minrank);
 
     /// <summary>The <c>gst_element_factory_make</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_element_factory_make")]

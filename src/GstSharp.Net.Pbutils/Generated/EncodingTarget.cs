@@ -80,6 +80,28 @@ public unsafe partial class EncodingTarget : Gst.GObject.Object
         return Gst.GObject.Object.FromNative<Gst.Pbutils.EncodingProfile>(nativeResult, Gst.Interop.Transfer.Full);
     }
 
+    /// <summary>The <c>gst_encoding_target_get_profiles</c> function.</summary>
+    /// <returns>
+    /// A list of
+    /// #GstEncodingProfile(s) this @target handles.
+    /// </returns>
+    public System.Collections.Generic.IReadOnlyList<Gst.Pbutils.EncodingProfile> GetProfiles()
+    {
+        nint nativeResult = GstEncodingTargetGetProfiles(Handle);
+        System.GC.KeepAlive(this);
+        nint[] nativeItems = Gst.Interop.GListMarshal.Collect(nativeResult);
+        System.Collections.Generic.List<Gst.Pbutils.EncodingProfile> result = new(nativeItems.Length);
+        foreach (nint nativeItem in nativeItems)
+        {
+            if (nativeItem != 0 && Gst.GObject.Object.FromNative<Gst.Pbutils.EncodingProfile>(nativeItem, Gst.Interop.Transfer.None) is { } adopted)
+            {
+                result.Add(adopted);
+            }
+        }
+
+        return result;
+    }
+
     /// <summary>Saves the @target to a default user-local directory.</summary>
     /// <returns>%TRUE if the target was correctly saved, else %FALSE.</returns>
     /// <exception cref="Gst.GLib.GException">The native call failed.</exception>
@@ -174,6 +196,10 @@ public unsafe partial class EncodingTarget : Gst.GObject.Object
     /// <summary>The <c>gst_encoding_target_get_profile</c> entry point.</summary>
     [LibraryImport("GstPbutils", EntryPoint = "gst_encoding_target_get_profile")]
     private static partial nint GstEncodingTargetGetProfile(nint target, byte* name);
+
+    /// <summary>The <c>gst_encoding_target_get_profiles</c> entry point.</summary>
+    [LibraryImport("GstPbutils", EntryPoint = "gst_encoding_target_get_profiles")]
+    private static partial nint GstEncodingTargetGetProfiles(nint target);
 
     /// <summary>The <c>gst_encoding_target_save</c> entry point.</summary>
     [LibraryImport("GstPbutils", EntryPoint = "gst_encoding_target_save")]

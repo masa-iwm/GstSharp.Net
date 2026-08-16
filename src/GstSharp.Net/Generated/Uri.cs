@@ -169,6 +169,29 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
         return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
     }
 
+    /// <summary>Get a list of path segments from the URI.</summary>
+    /// <returns>
+    /// A #GList of path segment
+    ///          strings or %NULL if no path segments are available. Free the list
+    ///          when no longer needed with g_list_free_full(list, g_free).
+    /// </returns>
+    public System.Collections.Generic.IReadOnlyList<string> GetPathSegments()
+    {
+        nint nativeResult = GstUriGetPathSegments(Handle);
+        System.GC.KeepAlive(this);
+        nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
+        System.Collections.Generic.List<string> result = new(nativeItems.Length);
+        foreach (nint nativeItem in nativeItems)
+        {
+            if (nativeItem != 0 && Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeItem) is { } adopted)
+            {
+                result.Add(adopted);
+            }
+        }
+
+        return result;
+    }
+
     /// <summary>Extract the path string from the URI object as a percent encoded URI path.</summary>
     /// <returns>
     /// The path from the URI. Once finished
@@ -191,6 +214,28 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
         uint nativeResult = GstUriGetPort(Handle);
         System.GC.KeepAlive(this);
         return nativeResult;
+    }
+
+    /// <summary>Get a list of the query keys from the URI.</summary>
+    /// <returns>
+    /// A list of keys from
+    ///          the URI query. Free the list with g_list_free().
+    /// </returns>
+    public System.Collections.Generic.IReadOnlyList<string> GetQueryKeys()
+    {
+        nint nativeResult = GstUriGetQueryKeys(Handle);
+        System.GC.KeepAlive(this);
+        nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
+        System.Collections.Generic.List<string> result = new(nativeItems.Length);
+        foreach (nint nativeItem in nativeItems)
+        {
+            if (nativeItem != 0 && Gst.Interop.GMarshal.PtrToStringUtf8(nativeItem) is { } adopted)
+            {
+                result.Add(adopted);
+            }
+        }
+
+        return result;
     }
 
     /// <summary>Get a percent encoded URI query string from the @uri.</summary>
@@ -736,6 +781,10 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
     [LibraryImport("Gst", EntryPoint = "gst_uri_get_path")]
     private static partial nint GstUriGetPath(nint uri);
 
+    /// <summary>The <c>gst_uri_get_path_segments</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_uri_get_path_segments")]
+    private static partial nint GstUriGetPathSegments(nint uri);
+
     /// <summary>The <c>gst_uri_get_path_string</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_uri_get_path_string")]
     private static partial nint GstUriGetPathString(nint uri);
@@ -743,6 +792,10 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
     /// <summary>The <c>gst_uri_get_port</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_uri_get_port")]
     private static partial uint GstUriGetPort(nint uri);
+
+    /// <summary>The <c>gst_uri_get_query_keys</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_uri_get_query_keys")]
+    private static partial nint GstUriGetQueryKeys(nint uri);
 
     /// <summary>The <c>gst_uri_get_query_string</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_uri_get_query_string")]

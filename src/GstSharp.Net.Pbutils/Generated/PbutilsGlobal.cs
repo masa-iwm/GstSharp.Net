@@ -614,6 +614,51 @@ public static unsafe partial class PbutilsGlobal
     }
 
     /// <summary>
+    /// List all available #GstEncodingTarget for the specified category, or all categories
+    /// if @categoryname is %NULL.
+    /// </summary>
+    /// <param name="categoryname">The <c>categoryname</c> argument.</param>
+    /// <returns>The list of #GstEncodingTarget</returns>
+    public static System.Collections.Generic.IReadOnlyList<Gst.Pbutils.EncodingTarget> EncodingListAllTargets(string? categoryname)
+    {
+        System.Span<byte> categorynameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope categorynameScope = Gst.Interop.GMarshal.StackUtf8(categoryname, categorynameBuffer);
+        nint nativeResult = GstEncodingListAllTargets(categorynameScope.Pointer);
+        nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
+        System.Collections.Generic.List<Gst.Pbutils.EncodingTarget> result = new(nativeItems.Length);
+        foreach (nint nativeItem in nativeItems)
+        {
+            if (nativeItem != 0 && Gst.GObject.Object.FromNative<Gst.Pbutils.EncodingTarget>(nativeItem, Gst.Interop.Transfer.Full) is { } adopted)
+            {
+                result.Add(adopted);
+            }
+        }
+
+        return result;
+    }
+
+    /// <summary>Lists all #GstEncodingTarget categories present on disk.</summary>
+    /// <returns>
+    /// A list
+    /// of #GstEncodingTarget categories.
+    /// </returns>
+    public static System.Collections.Generic.IReadOnlyList<string> EncodingListAvailableCategories()
+    {
+        nint nativeResult = GstEncodingListAvailableCategories();
+        nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
+        System.Collections.Generic.List<string> result = new(nativeItems.Length);
+        foreach (nint nativeItem in nativeItems)
+        {
+            if (nativeItem != 0 && Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeItem) is { } adopted)
+            {
+                result.Add(adopted);
+            }
+        }
+
+        return result;
+    }
+
+    /// <summary>
     /// Checks whether plugin installation (initiated by this application only)
     /// is currently in progress.
     /// </summary>
@@ -1334,6 +1379,14 @@ public static unsafe partial class PbutilsGlobal
     /// <summary>The <c>gst_codec_utils_opus_create_caps_from_header</c> entry point.</summary>
     [LibraryImport("GstPbutils", EntryPoint = "gst_codec_utils_opus_create_caps_from_header")]
     private static partial nint GstCodecUtilsOpusCreateCapsFromHeader(nint header, nint comments);
+
+    /// <summary>The <c>gst_encoding_list_all_targets</c> entry point.</summary>
+    [LibraryImport("GstPbutils", EntryPoint = "gst_encoding_list_all_targets")]
+    private static partial nint GstEncodingListAllTargets(byte* categoryname);
+
+    /// <summary>The <c>gst_encoding_list_available_categories</c> entry point.</summary>
+    [LibraryImport("GstPbutils", EntryPoint = "gst_encoding_list_available_categories")]
+    private static partial nint GstEncodingListAvailableCategories();
 
     /// <summary>The <c>gst_install_plugins_installation_in_progress</c> entry point.</summary>
     [LibraryImport("GstPbutils", EntryPoint = "gst_install_plugins_installation_in_progress")]

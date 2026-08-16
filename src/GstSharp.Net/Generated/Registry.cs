@@ -145,6 +145,44 @@ public unsafe partial class Registry : Gst.Object
         return nativeResult != 0;
     }
 
+    /// <summary>
+    /// Runs a filter against all features of the plugins in the registry
+    /// and returns a GList with the results.
+    /// If the first flag is set, only the first match is
+    /// returned (as a list with a single object).
+    /// </summary>
+    /// <param name="filter">the filter to use</param>
+    /// <param name="first">The <c>first</c> argument.</param>
+    /// <returns>
+    /// a #GList of
+    ///     #GstPluginFeature. Use gst_plugin_feature_list_free() after usage.
+    /// </returns>
+    public System.Collections.Generic.IReadOnlyList<Gst.PluginFeature> FeatureFilter(Gst.PluginFeatureFilter filter, bool first)
+    {
+        ArgumentNullException.ThrowIfNull(filter);
+        Gst.Interop.CallbackHandle filterState = Gst.Interop.CallbackHandle.Alloc(filter);
+        try
+        {
+            nint nativeResult = GstRegistryFeatureFilter(Handle, Gst.PluginFeatureFilterTrampoline.Pointer, first ? 1 : 0, filterState.UserData);
+            System.GC.KeepAlive(this);
+            nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
+            System.Collections.Generic.List<Gst.PluginFeature> result = new(nativeItems.Length);
+            foreach (nint nativeItem in nativeItems)
+            {
+                if (nativeItem != 0 && Gst.GObject.Object.FromNative<Gst.PluginFeature>(nativeItem, Gst.Interop.Transfer.Full) is { } adopted)
+                {
+                    result.Add(adopted);
+                }
+            }
+
+            return result;
+        }
+        finally
+        {
+            filterState.Free();
+        }
+    }
+
     /// <summary>Find the pluginfeature with the given name and type in the registry.</summary>
     /// <param name="name">The <c>name</c> argument.</param>
     /// <param name="type">The <c>type</c> argument.</param>
@@ -183,6 +221,55 @@ public unsafe partial class Registry : Gst.Object
         return Gst.GObject.Object.FromNative<Gst.Plugin>(nativeResult, Gst.Interop.Transfer.Full);
     }
 
+    /// <summary>Retrieves a #GList of #GstPluginFeature of @type.</summary>
+    /// <param name="type">The <c>type</c> argument.</param>
+    /// <returns>
+    /// a #GList of
+    ///     #GstPluginFeature of @type. Use gst_plugin_feature_list_free() after use
+    /// </returns>
+    public System.Collections.Generic.IReadOnlyList<Gst.PluginFeature> GetFeatureList(Gst.GObject.GType type)
+    {
+        nint nativeResult = GstRegistryGetFeatureList(Handle, type.Value);
+        System.GC.KeepAlive(this);
+        nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
+        System.Collections.Generic.List<Gst.PluginFeature> result = new(nativeItems.Length);
+        foreach (nint nativeItem in nativeItems)
+        {
+            if (nativeItem != 0 && Gst.GObject.Object.FromNative<Gst.PluginFeature>(nativeItem, Gst.Interop.Transfer.Full) is { } adopted)
+            {
+                result.Add(adopted);
+            }
+        }
+
+        return result;
+    }
+
+    /// <summary>Retrieves a #GList of features of the plugin with name @name.</summary>
+    /// <param name="name">The <c>name</c> argument.</param>
+    /// <returns>
+    /// a #GList of
+    ///     #GstPluginFeature. Use gst_plugin_feature_list_free() after usage.
+    /// </returns>
+    public System.Collections.Generic.IReadOnlyList<Gst.PluginFeature> GetFeatureListByPlugin(string name)
+    {
+        ArgumentNullException.ThrowIfNull(name);
+        System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
+        nint nativeResult = GstRegistryGetFeatureListByPlugin(Handle, nameScope.Pointer);
+        System.GC.KeepAlive(this);
+        nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
+        System.Collections.Generic.List<Gst.PluginFeature> result = new(nativeItems.Length);
+        foreach (nint nativeItem in nativeItems)
+        {
+            if (nativeItem != 0 && Gst.GObject.Object.FromNative<Gst.PluginFeature>(nativeItem, Gst.Interop.Transfer.Full) is { } adopted)
+            {
+                result.Add(adopted);
+            }
+        }
+
+        return result;
+    }
+
     /// <summary>
     /// Returns the registry's feature list cookie. This changes
     /// every time a feature is added or removed from the registry.
@@ -193,6 +280,31 @@ public unsafe partial class Registry : Gst.Object
         uint nativeResult = GstRegistryGetFeatureListCookie(Handle);
         System.GC.KeepAlive(this);
         return nativeResult;
+    }
+
+    /// <summary>
+    /// Get a copy of all plugins registered in the given registry. The refcount
+    /// of each element in the list in incremented.
+    /// </summary>
+    /// <returns>
+    /// a #GList of #GstPlugin.
+    ///     Use gst_plugin_list_free() after usage.
+    /// </returns>
+    public System.Collections.Generic.IReadOnlyList<Gst.Plugin> GetPluginList()
+    {
+        nint nativeResult = GstRegistryGetPluginList(Handle);
+        System.GC.KeepAlive(this);
+        nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
+        System.Collections.Generic.List<Gst.Plugin> result = new(nativeItems.Length);
+        foreach (nint nativeItem in nativeItems)
+        {
+            if (nativeItem != 0 && Gst.GObject.Object.FromNative<Gst.Plugin>(nativeItem, Gst.Interop.Transfer.Full) is { } adopted)
+            {
+                result.Add(adopted);
+            }
+        }
+
+        return result;
     }
 
     /// <summary>
@@ -228,6 +340,45 @@ public unsafe partial class Registry : Gst.Object
         nint nativeResult = GstRegistryLookupFeature(Handle, nameScope.Pointer);
         System.GC.KeepAlive(this);
         return Gst.GObject.Object.FromNative<Gst.PluginFeature>(nativeResult, Gst.Interop.Transfer.Full);
+    }
+
+    /// <summary>
+    /// Runs a filter against all plugins in the registry and returns a #GList with
+    /// the results. If the first flag is set, only the first match is
+    /// returned (as a list with a single object).
+    /// Every plugin is reffed; use gst_plugin_list_free() after use, which
+    /// will unref again.
+    /// </summary>
+    /// <param name="filter">the filter to use</param>
+    /// <param name="first">The <c>first</c> argument.</param>
+    /// <returns>
+    /// a #GList of #GstPlugin.
+    ///     Use gst_plugin_list_free() after usage.
+    /// </returns>
+    public System.Collections.Generic.IReadOnlyList<Gst.Plugin> PluginFilter(Gst.PluginFilter filter, bool first)
+    {
+        ArgumentNullException.ThrowIfNull(filter);
+        Gst.Interop.CallbackHandle filterState = Gst.Interop.CallbackHandle.Alloc(filter);
+        try
+        {
+            nint nativeResult = GstRegistryPluginFilter(Handle, Gst.PluginFilterTrampoline.Pointer, first ? 1 : 0, filterState.UserData);
+            System.GC.KeepAlive(this);
+            nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
+            System.Collections.Generic.List<Gst.Plugin> result = new(nativeItems.Length);
+            foreach (nint nativeItem in nativeItems)
+            {
+                if (nativeItem != 0 && Gst.GObject.Object.FromNative<Gst.Plugin>(nativeItem, Gst.Interop.Transfer.Full) is { } adopted)
+                {
+                    result.Add(adopted);
+                }
+            }
+
+            return result;
+        }
+        finally
+        {
+            filterState.Free();
+        }
     }
 
     /// <summary>Remove the feature from the registry.</summary>
@@ -423,6 +574,10 @@ public unsafe partial class Registry : Gst.Object
     [LibraryImport("Gst", EntryPoint = "gst_registry_check_feature_version")]
     private static partial int GstRegistryCheckFeatureVersion(nint registry, byte* featureName, uint minMajor, uint minMinor, uint minMicro);
 
+    /// <summary>The <c>gst_registry_feature_filter</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_registry_feature_filter")]
+    private static partial nint GstRegistryFeatureFilter(nint registry, nint filter, int first, nint userData);
+
     /// <summary>The <c>gst_registry_find_feature</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_registry_find_feature")]
     private static partial nint GstRegistryFindFeature(nint registry, byte* name, nuint type);
@@ -431,9 +586,21 @@ public unsafe partial class Registry : Gst.Object
     [LibraryImport("Gst", EntryPoint = "gst_registry_find_plugin")]
     private static partial nint GstRegistryFindPlugin(nint registry, byte* name);
 
+    /// <summary>The <c>gst_registry_get_feature_list</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_registry_get_feature_list")]
+    private static partial nint GstRegistryGetFeatureList(nint registry, nuint type);
+
+    /// <summary>The <c>gst_registry_get_feature_list_by_plugin</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_registry_get_feature_list_by_plugin")]
+    private static partial nint GstRegistryGetFeatureListByPlugin(nint registry, byte* name);
+
     /// <summary>The <c>gst_registry_get_feature_list_cookie</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_registry_get_feature_list_cookie")]
     private static partial uint GstRegistryGetFeatureListCookie(nint registry);
+
+    /// <summary>The <c>gst_registry_get_plugin_list</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_registry_get_plugin_list")]
+    private static partial nint GstRegistryGetPluginList(nint registry);
 
     /// <summary>The <c>gst_registry_lookup</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_registry_lookup")]
@@ -442,6 +609,10 @@ public unsafe partial class Registry : Gst.Object
     /// <summary>The <c>gst_registry_lookup_feature</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_registry_lookup_feature")]
     private static partial nint GstRegistryLookupFeature(nint registry, byte* name);
+
+    /// <summary>The <c>gst_registry_plugin_filter</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_registry_plugin_filter")]
+    private static partial nint GstRegistryPluginFilter(nint registry, nint filter, int first, nint userData);
 
     /// <summary>The <c>gst_registry_remove_feature</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_registry_remove_feature")]

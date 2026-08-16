@@ -58,6 +58,25 @@ public unsafe partial class EncodingContainerProfile : Gst.Pbutils.EncodingProfi
         return nativeResult != 0;
     }
 
+    /// <summary>The <c>gst_encoding_container_profile_get_profiles</c> function.</summary>
+    /// <returns>the list of contained #GstEncodingProfile.</returns>
+    public System.Collections.Generic.IReadOnlyList<Gst.Pbutils.EncodingProfile> GetProfiles()
+    {
+        nint nativeResult = GstEncodingContainerProfileGetProfiles(Handle);
+        System.GC.KeepAlive(this);
+        nint[] nativeItems = Gst.Interop.GListMarshal.Collect(nativeResult);
+        System.Collections.Generic.List<Gst.Pbutils.EncodingProfile> result = new(nativeItems.Length);
+        foreach (nint nativeItem in nativeItems)
+        {
+            if (nativeItem != 0 && Gst.GObject.Object.FromNative<Gst.Pbutils.EncodingProfile>(nativeItem, Gst.Interop.Transfer.None) is { } adopted)
+            {
+                result.Add(adopted);
+            }
+        }
+
+        return result;
+    }
+
     /// <summary>The <c>gst_encoding_container_profile_new</c> entry point.</summary>
     [LibraryImport("GstPbutils", EntryPoint = "gst_encoding_container_profile_new")]
     private static partial nint GstEncodingContainerProfileNew(byte* name, byte* description, nint format, byte* preset);
@@ -65,6 +84,10 @@ public unsafe partial class EncodingContainerProfile : Gst.Pbutils.EncodingProfi
     /// <summary>The <c>gst_encoding_container_profile_contains_profile</c> entry point.</summary>
     [LibraryImport("GstPbutils", EntryPoint = "gst_encoding_container_profile_contains_profile")]
     private static partial int GstEncodingContainerProfileContainsProfile(nint container, nint profile);
+
+    /// <summary>The <c>gst_encoding_container_profile_get_profiles</c> entry point.</summary>
+    [LibraryImport("GstPbutils", EntryPoint = "gst_encoding_container_profile_get_profiles")]
+    private static partial nint GstEncodingContainerProfileGetProfiles(nint profile);
 
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstEncodingContainerProfile</c> under.</summary>
     /// <returns>The type of the instances of this wrapper.</returns>

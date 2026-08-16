@@ -123,6 +123,31 @@ public unsafe partial class DeviceProviderFactory : Gst.PluginFeature
         return Gst.GObject.Object.FromNative<Gst.DeviceProvider>(nativeResult, Gst.Interop.Transfer.Full);
     }
 
+    /// <summary>
+    /// Get a list of factories with a rank greater or equal to @minrank.
+    /// The list of factories is returned by decreasing rank.
+    /// </summary>
+    /// <param name="minrank">The <c>minrank</c> argument.</param>
+    /// <returns>
+    /// a #GList of #GstDeviceProviderFactory device providers. Use
+    /// gst_plugin_feature_list_free() after usage.
+    /// </returns>
+    public static System.Collections.Generic.IReadOnlyList<Gst.DeviceProviderFactory> ListGetDeviceProviders(Gst.Rank minrank)
+    {
+        nint nativeResult = GstDeviceProviderFactoryListGetDeviceProviders((int)minrank);
+        nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
+        System.Collections.Generic.List<Gst.DeviceProviderFactory> result = new(nativeItems.Length);
+        foreach (nint nativeItem in nativeItems)
+        {
+            if (nativeItem != 0 && Gst.GObject.Object.FromNative<Gst.DeviceProviderFactory>(nativeItem, Gst.Interop.Transfer.Full) is { } adopted)
+            {
+                result.Add(adopted);
+            }
+        }
+
+        return result;
+    }
+
     /// <summary>The <c>gst_device_provider_factory_get</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_device_provider_factory_get")]
     private static partial nint GstDeviceProviderFactoryGet(nint factory);
@@ -146,6 +171,10 @@ public unsafe partial class DeviceProviderFactory : Gst.PluginFeature
     /// <summary>The <c>gst_device_provider_factory_get_by_name</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_device_provider_factory_get_by_name")]
     private static partial nint GstDeviceProviderFactoryGetByName(byte* factoryname);
+
+    /// <summary>The <c>gst_device_provider_factory_list_get_device_providers</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_device_provider_factory_list_get_device_providers")]
+    private static partial nint GstDeviceProviderFactoryListGetDeviceProviders(int minrank);
 
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstDeviceProviderFactory</c> under.</summary>
     /// <returns>The type of the instances of this wrapper.</returns>

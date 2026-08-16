@@ -141,6 +141,37 @@ public unsafe partial class DeviceMonitor : Gst.Object
     }
 
     /// <summary>
+    /// Gets a list of devices from all of the relevant monitors. This may actually
+    /// probe the hardware if the monitor is not currently started.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Since 1.28.3, this function will block until the monitor has finished
+    /// starting if gst_device_monitor_start() has been called.
+    /// </para>
+    /// </remarks>
+    /// <returns>
+    /// a #GList of
+    ///   #GstDevice
+    /// </returns>
+    public System.Collections.Generic.IReadOnlyList<Gst.Device> GetDevices()
+    {
+        nint nativeResult = GstDeviceMonitorGetDevices(Handle);
+        System.GC.KeepAlive(this);
+        nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
+        System.Collections.Generic.List<Gst.Device> result = new(nativeItems.Length);
+        foreach (nint nativeItem in nativeItems)
+        {
+            if (nativeItem != 0 && Gst.GObject.Object.FromNative<Gst.Device>(nativeItem, Gst.Interop.Transfer.Full) is { } adopted)
+            {
+                result.Add(adopted);
+            }
+        }
+
+        return result;
+    }
+
+    /// <summary>
     /// Get if @monitor is currently showing all devices, even those from hidden
     /// providers.
     /// </summary>
@@ -223,6 +254,10 @@ public unsafe partial class DeviceMonitor : Gst.Object
     /// <summary>The <c>gst_device_monitor_get_bus</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_device_monitor_get_bus")]
     private static partial nint GstDeviceMonitorGetBus(nint monitor);
+
+    /// <summary>The <c>gst_device_monitor_get_devices</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_device_monitor_get_devices")]
+    private static partial nint GstDeviceMonitorGetDevices(nint monitor);
 
     /// <summary>The <c>gst_device_monitor_get_show_all_devices</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_device_monitor_get_show_all_devices")]

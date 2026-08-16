@@ -37,6 +37,9 @@ public sealed class ClassEmitterTests
     [InlineData("ElementFactory.cs", "public static Gst.Element? Make(string factoryname, string? name)")]
     [InlineData("Caps.cs", "public static Gst.Caps NewEmpty()")]
     [InlineData("Pad.cs", "public Gst.PadLinkReturn Link(Gst.Pad sinkpad)")]
+    [InlineData("DeviceProvider.cs", "public System.Collections.Generic.IReadOnlyList<Gst.Device> GetDevices()")]
+    [InlineData("TypeFindFactory.cs", "public static System.Collections.Generic.IReadOnlyList<Gst.TypeFindFactory> GetList()")]
+    [InlineData("Uri.cs", "public System.Collections.Generic.IReadOnlyList<string> GetQueryKeys()")]
     public void TheExpectedMembersAreEmitted(string fileName, string signature)
     {
         Assert.Contains("    " + signature + "\n", Source(fileName), StringComparison.Ordinal);
@@ -114,12 +117,12 @@ public sealed class ClassEmitterTests
     }
 
     [Theory]
-    [InlineData("Gst", 35, 51, 5, 18, 18, 1188, 19, 23)]
-    [InlineData("GstBase", 11, 8, 0, 5, 0, 163, 13, 2)]
+    [InlineData("Gst", 35, 51, 5, 18, 18, 1206, 19, 23)]
+    [InlineData("GstBase", 11, 8, 0, 5, 0, 166, 13, 2)]
     [InlineData("GstApp", 2, 2, 0, 8, 0, 61, 23, 8)]
     [InlineData("GstAudio", 14, 17, 1, 2, 2, 184, 15, 0)]
-    [InlineData("GstVideo", 12, 42, 5, 0, 9, 290, 2, 2)]
-    [InlineData("GstPbutils", 14, 1, 0, 0, 1, 158, 1, 3)]
+    [InlineData("GstVideo", 12, 42, 5, 0, 9, 293, 2, 2)]
+    [InlineData("GstPbutils", 14, 1, 0, 0, 1, 169, 1, 3)]
     public void TheEmissionCensusIsStable(
         string module,
         int classes,
@@ -144,12 +147,12 @@ public sealed class ClassEmitterTests
     }
 
     [Theory]
-    [InlineData("Gst", 1, 94, 53, 118, 343, 10)]
-    [InlineData("GstBase", 0, 11, 0, 20, 183, 0)]
+    [InlineData("Gst", 1, 94, 53, 118, 325, 10)]
+    [InlineData("GstBase", 0, 11, 0, 20, 180, 0)]
     [InlineData("GstApp", 0, 0, 0, 2, 23, 0)]
     [InlineData("GstAudio", 0, 27, 0, 8, 51, 0)]
-    [InlineData("GstVideo", 0, 102, 1, 6, 108, 0)]
-    [InlineData("GstPbutils", 0, 1, 0, 0, 33, 0)]
+    [InlineData("GstVideo", 0, 102, 1, 6, 105, 0)]
+    [InlineData("GstPbutils", 0, 1, 0, 0, 22, 0)]
     public void TheSkipCensusIsStable(
         string module,
         int shadowed,

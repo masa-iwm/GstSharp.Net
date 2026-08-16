@@ -29,6 +29,52 @@ public unsafe partial class DiscovererInfo : Gst.GObject.Object
             ?? throw new InvalidOperationException("gst_discoverer_info_copy returned no value.");
     }
 
+    /// <summary>Finds all the #GstDiscovererAudioInfo contained in @info</summary>
+    /// <returns>
+    /// A #GList of
+    /// matching #GstDiscovererStreamInfo. The caller should free it with
+    /// gst_discoverer_stream_info_list_free().
+    /// </returns>
+    public System.Collections.Generic.IReadOnlyList<Gst.Pbutils.DiscovererAudioInfo> GetAudioStreams()
+    {
+        nint nativeResult = GstDiscovererInfoGetAudioStreams(Handle);
+        System.GC.KeepAlive(this);
+        nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
+        System.Collections.Generic.List<Gst.Pbutils.DiscovererAudioInfo> result = new(nativeItems.Length);
+        foreach (nint nativeItem in nativeItems)
+        {
+            if (nativeItem != 0 && Gst.GObject.Object.FromNative<Gst.Pbutils.DiscovererAudioInfo>(nativeItem, Gst.Interop.Transfer.Full) is { } adopted)
+            {
+                result.Add(adopted);
+            }
+        }
+
+        return result;
+    }
+
+    /// <summary>Finds all the #GstDiscovererContainerInfo contained in @info</summary>
+    /// <returns>
+    /// A #GList of
+    /// matching #GstDiscovererStreamInfo. The caller should free it with
+    /// gst_discoverer_stream_info_list_free().
+    /// </returns>
+    public System.Collections.Generic.IReadOnlyList<Gst.Pbutils.DiscovererContainerInfo> GetContainerStreams()
+    {
+        nint nativeResult = GstDiscovererInfoGetContainerStreams(Handle);
+        System.GC.KeepAlive(this);
+        nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
+        System.Collections.Generic.List<Gst.Pbutils.DiscovererContainerInfo> result = new(nativeItems.Length);
+        foreach (nint nativeItem in nativeItems)
+        {
+            if (nativeItem != 0 && Gst.GObject.Object.FromNative<Gst.Pbutils.DiscovererContainerInfo>(nativeItem, Gst.Interop.Transfer.Full) is { } adopted)
+            {
+                result.Add(adopted);
+            }
+        }
+
+        return result;
+    }
+
     /// <summary>The <c>gst_discoverer_info_get_duration</c> function.</summary>
     /// <returns>the duration of the URI in #GstClockTime (nanoseconds).</returns>
     public Gst.ClockTime GetDuration()
@@ -96,6 +142,79 @@ public unsafe partial class DiscovererInfo : Gst.GObject.Object
         return Gst.GObject.Object.FromNative<Gst.Pbutils.DiscovererStreamInfo>(nativeResult, Gst.Interop.Transfer.Full);
     }
 
+    /// <summary>The <c>gst_discoverer_info_get_stream_list</c> function.</summary>
+    /// <returns>
+    /// the list of
+    /// all streams contained in the #info. Free after usage
+    /// with gst_discoverer_stream_info_list_free().
+    /// </returns>
+    public System.Collections.Generic.IReadOnlyList<Gst.Pbutils.DiscovererStreamInfo> GetStreamList()
+    {
+        nint nativeResult = GstDiscovererInfoGetStreamList(Handle);
+        System.GC.KeepAlive(this);
+        nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
+        System.Collections.Generic.List<Gst.Pbutils.DiscovererStreamInfo> result = new(nativeItems.Length);
+        foreach (nint nativeItem in nativeItems)
+        {
+            if (nativeItem != 0 && Gst.GObject.Object.FromNative<Gst.Pbutils.DiscovererStreamInfo>(nativeItem, Gst.Interop.Transfer.Full) is { } adopted)
+            {
+                result.Add(adopted);
+            }
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Finds the #GstDiscovererStreamInfo contained in @info that match the
+    /// given @streamtype.
+    /// </summary>
+    /// <param name="streamtype">The <c>streamtype</c> argument.</param>
+    /// <returns>
+    /// A #GList of
+    /// matching #GstDiscovererStreamInfo. The caller should free it with
+    /// gst_discoverer_stream_info_list_free().
+    /// </returns>
+    public System.Collections.Generic.IReadOnlyList<Gst.Pbutils.DiscovererStreamInfo> GetStreams(Gst.GObject.GType streamtype)
+    {
+        nint nativeResult = GstDiscovererInfoGetStreams(Handle, streamtype.Value);
+        System.GC.KeepAlive(this);
+        nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
+        System.Collections.Generic.List<Gst.Pbutils.DiscovererStreamInfo> result = new(nativeItems.Length);
+        foreach (nint nativeItem in nativeItems)
+        {
+            if (nativeItem != 0 && Gst.GObject.Object.FromNative<Gst.Pbutils.DiscovererStreamInfo>(nativeItem, Gst.Interop.Transfer.Full) is { } adopted)
+            {
+                result.Add(adopted);
+            }
+        }
+
+        return result;
+    }
+
+    /// <summary>Finds all the #GstDiscovererSubtitleInfo contained in @info</summary>
+    /// <returns>
+    /// A #GList of
+    /// matching #GstDiscovererStreamInfo. The caller should free it with
+    /// gst_discoverer_stream_info_list_free().
+    /// </returns>
+    public System.Collections.Generic.IReadOnlyList<Gst.Pbutils.DiscovererSubtitleInfo> GetSubtitleStreams()
+    {
+        nint nativeResult = GstDiscovererInfoGetSubtitleStreams(Handle);
+        System.GC.KeepAlive(this);
+        nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
+        System.Collections.Generic.List<Gst.Pbutils.DiscovererSubtitleInfo> result = new(nativeItems.Length);
+        foreach (nint nativeItem in nativeItems)
+        {
+            if (nativeItem != 0 && Gst.GObject.Object.FromNative<Gst.Pbutils.DiscovererSubtitleInfo>(nativeItem, Gst.Interop.Transfer.Full) is { } adopted)
+            {
+                result.Add(adopted);
+            }
+        }
+
+        return result;
+    }
+
     /// <summary>The <c>gst_discoverer_info_get_tags</c> function.</summary>
     /// <returns>
     /// all tags contained in the URI. If you wish to use
@@ -140,9 +259,40 @@ public unsafe partial class DiscovererInfo : Gst.GObject.Object
             ?? throw new InvalidOperationException("gst_discoverer_info_get_uri returned no value.");
     }
 
+    /// <summary>Finds all the #GstDiscovererVideoInfo contained in @info</summary>
+    /// <returns>
+    /// A #GList of
+    /// matching #GstDiscovererStreamInfo. The caller should free it with
+    /// gst_discoverer_stream_info_list_free().
+    /// </returns>
+    public System.Collections.Generic.IReadOnlyList<Gst.Pbutils.DiscovererVideoInfo> GetVideoStreams()
+    {
+        nint nativeResult = GstDiscovererInfoGetVideoStreams(Handle);
+        System.GC.KeepAlive(this);
+        nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
+        System.Collections.Generic.List<Gst.Pbutils.DiscovererVideoInfo> result = new(nativeItems.Length);
+        foreach (nint nativeItem in nativeItems)
+        {
+            if (nativeItem != 0 && Gst.GObject.Object.FromNative<Gst.Pbutils.DiscovererVideoInfo>(nativeItem, Gst.Interop.Transfer.Full) is { } adopted)
+            {
+                result.Add(adopted);
+            }
+        }
+
+        return result;
+    }
+
     /// <summary>The <c>gst_discoverer_info_copy</c> entry point.</summary>
     [LibraryImport("GstPbutils", EntryPoint = "gst_discoverer_info_copy")]
     private static partial nint GstDiscovererInfoCopy(nint ptr);
+
+    /// <summary>The <c>gst_discoverer_info_get_audio_streams</c> entry point.</summary>
+    [LibraryImport("GstPbutils", EntryPoint = "gst_discoverer_info_get_audio_streams")]
+    private static partial nint GstDiscovererInfoGetAudioStreams(nint info);
+
+    /// <summary>The <c>gst_discoverer_info_get_container_streams</c> entry point.</summary>
+    [LibraryImport("GstPbutils", EntryPoint = "gst_discoverer_info_get_container_streams")]
+    private static partial nint GstDiscovererInfoGetContainerStreams(nint info);
 
     /// <summary>The <c>gst_discoverer_info_get_duration</c> entry point.</summary>
     [LibraryImport("GstPbutils", EntryPoint = "gst_discoverer_info_get_duration")]
@@ -168,6 +318,18 @@ public unsafe partial class DiscovererInfo : Gst.GObject.Object
     [LibraryImport("GstPbutils", EntryPoint = "gst_discoverer_info_get_stream_info")]
     private static partial nint GstDiscovererInfoGetStreamInfo(nint info);
 
+    /// <summary>The <c>gst_discoverer_info_get_stream_list</c> entry point.</summary>
+    [LibraryImport("GstPbutils", EntryPoint = "gst_discoverer_info_get_stream_list")]
+    private static partial nint GstDiscovererInfoGetStreamList(nint info);
+
+    /// <summary>The <c>gst_discoverer_info_get_streams</c> entry point.</summary>
+    [LibraryImport("GstPbutils", EntryPoint = "gst_discoverer_info_get_streams")]
+    private static partial nint GstDiscovererInfoGetStreams(nint info, nuint streamtype);
+
+    /// <summary>The <c>gst_discoverer_info_get_subtitle_streams</c> entry point.</summary>
+    [LibraryImport("GstPbutils", EntryPoint = "gst_discoverer_info_get_subtitle_streams")]
+    private static partial nint GstDiscovererInfoGetSubtitleStreams(nint info);
+
     /// <summary>The <c>gst_discoverer_info_get_tags</c> entry point.</summary>
     [LibraryImport("GstPbutils", EntryPoint = "gst_discoverer_info_get_tags")]
     private static partial nint GstDiscovererInfoGetTags(nint info);
@@ -179,6 +341,10 @@ public unsafe partial class DiscovererInfo : Gst.GObject.Object
     /// <summary>The <c>gst_discoverer_info_get_uri</c> entry point.</summary>
     [LibraryImport("GstPbutils", EntryPoint = "gst_discoverer_info_get_uri")]
     private static partial nint GstDiscovererInfoGetUri(nint info);
+
+    /// <summary>The <c>gst_discoverer_info_get_video_streams</c> entry point.</summary>
+    [LibraryImport("GstPbutils", EntryPoint = "gst_discoverer_info_get_video_streams")]
+    private static partial nint GstDiscovererInfoGetVideoStreams(nint info);
 
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstDiscovererInfo</c> under.</summary>
     /// <returns>The type of the instances of this wrapper.</returns>

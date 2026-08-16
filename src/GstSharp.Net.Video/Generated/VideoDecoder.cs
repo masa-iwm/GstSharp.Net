@@ -248,6 +248,25 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
         return Gst.Video.VideoCodecFrame.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
 
+    /// <summary>Get all pending unfinished #GstVideoCodecFrame</summary>
+    /// <returns>pending unfinished #GstVideoCodecFrame.</returns>
+    public System.Collections.Generic.IReadOnlyList<Gst.Video.VideoCodecFrame> GetFrames()
+    {
+        nint nativeResult = GstVideoDecoderGetFrames(Handle);
+        System.GC.KeepAlive(this);
+        nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
+        System.Collections.Generic.List<Gst.Video.VideoCodecFrame> result = new(nativeItems.Length);
+        foreach (nint nativeItem in nativeItems)
+        {
+            if (nativeItem != 0 && Gst.Video.VideoCodecFrame.FromNative(nativeItem, Gst.Interop.Transfer.Full) is { } adopted)
+            {
+                result.Add(adopted);
+            }
+        }
+
+        return result;
+    }
+
     /// <summary>
     /// Queries the number of the last subframe received by
     /// the decoder baseclass in the @frame.
@@ -744,6 +763,10 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     /// <summary>The <c>gst_video_decoder_get_frame</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_decoder_get_frame")]
     private static partial nint GstVideoDecoderGetFrame(nint decoder, int frameNumber);
+
+    /// <summary>The <c>gst_video_decoder_get_frames</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_video_decoder_get_frames")]
+    private static partial nint GstVideoDecoderGetFrames(nint decoder);
 
     /// <summary>The <c>gst_video_decoder_get_input_subframe_index</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_decoder_get_input_subframe_index")]

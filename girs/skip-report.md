@@ -309,7 +309,7 @@ disappears shows up here as an added line.
 
 - `gst_bus_add_watch`
 
-### UnsupportedSignature (343)
+### UnsupportedSignature (325)
 
 - `Gst.Bin:async-handling`
 - `Gst.Bin:message-forward`
@@ -380,22 +380,16 @@ disappears shows up here as an added line.
 - `gst_debug_remove_log_function`
 - `gst_debug_ring_buffer_logger_get_logs`
 - `gst_device_has_classesv`
-- `gst_device_monitor_get_devices`
 - `gst_device_monitor_get_providers`
 - `gst_device_provider_factory_get_metadata_keys`
 - `gst_device_provider_factory_has_classesv`
-- `gst_device_provider_factory_list_get_device_providers`
-- `gst_device_provider_get_devices`
 - `gst_device_provider_get_hidden_providers`
 - `gst_element_factory_create_with_properties`
 - `gst_element_factory_get_metadata_keys`
 - `gst_element_factory_get_static_pad_templates`
 - `gst_element_factory_get_uri_protocols`
 - `gst_element_factory_list_filter`
-- `gst_element_factory_list_get_elements`
 - `gst_element_factory_make_with_properties`
-- `gst_element_get_contexts`
-- `gst_element_get_pad_template_list`
 - `gst_element_message_full_with_details`
 - `gst_element_post_message`
 - `gst_element_send_event`
@@ -532,11 +526,6 @@ disappears shows up here as an added line.
 - `gst_query_set_formatsv`
 - `gst_query_take`
 - `gst_reference_timestamp_meta_get_info`
-- `gst_registry_feature_filter`
-- `gst_registry_get_feature_list`
-- `gst_registry_get_feature_list_by_plugin`
-- `gst_registry_get_plugin_list`
-- `gst_registry_plugin_filter`
 - `gst_sample_new`
 - `gst_sample_set_info`
 - `gst_static_caps_cleanup`
@@ -583,18 +572,11 @@ disappears shows up here as an added line.
 - `gst_task_set_lock`
 - `gst_toc_append_entry`
 - `gst_toc_entry_append_sub_entry`
-- `gst_toc_entry_get_sub_entries`
 - `gst_toc_entry_set_tags`
-- `gst_toc_get_entries`
 - `gst_toc_set_tags`
-- `gst_tracer_factory_get_list`
-- `gst_tracing_get_active_tracers`
 - `gst_tracing_register_hook`
 - `gst_type_find_factory_get_extensions`
-- `gst_type_find_factory_get_list`
 - `gst_uri_get_media_fragment_table`
-- `gst_uri_get_path_segments`
-- `gst_uri_get_query_keys`
 - `gst_uri_get_query_string_ordered`
 - `gst_uri_get_query_table`
 - `gst_uri_handler_get_protocols`
@@ -939,7 +921,7 @@ disappears shows up here as an added line.
 - `gst_adapter_take`
 - `gst_adapter_unmap`
 
-### UnsupportedSignature (183)
+### UnsupportedSignature (180)
 
 - `GstBase.Aggregator:emit-signals`
 - `GstBase.Aggregator:min-upstream-latency`
@@ -962,9 +944,7 @@ disappears shows up here as an added line.
 - `GstBase.DataQueue:current-level-time`
 - `GstBase.DataQueue:current-level-visible`
 - `gst_adapter_copy_bytes`
-- `gst_adapter_get_list`
 - `gst_adapter_push`
-- `gst_adapter_take_list`
 - `gst_aggregator_finish_buffer`
 - `gst_aggregator_finish_buffer_list`
 - `gst_aggregator_push_src_event`
@@ -1123,7 +1103,6 @@ disappears shows up here as an added line.
 - `gst_collect_pads_set_clip_function`
 - `gst_type_find_helper_get_range`
 - `gst_type_find_helper_get_range_full`
-- `gst_type_find_list_factories_for_caps`
 
 ## GstPbutils
 
@@ -1135,7 +1114,7 @@ disappears shows up here as an added line.
 
 - `gst_install_plugins_return_get_name`
 
-### UnsupportedSignature (33)
+### UnsupportedSignature (22)
 
 - `GstPbutils.AudioVisualizer:shade-amount`
 - `GstPbutils.AudioVisualizer:shader`
@@ -1148,25 +1127,14 @@ disappears shows up here as an added line.
 - `gst_codec_utils_opus_create_header`
 - `gst_codec_utils_opus_parse_caps`
 - `gst_codec_utils_opus_parse_header`
-- `gst_discoverer_container_info_get_streams`
 - `gst_discoverer_info_from_variant`
-- `gst_discoverer_info_get_audio_streams`
-- `gst_discoverer_info_get_container_streams`
 - `gst_discoverer_info_get_missing_elements_installer_details`
-- `gst_discoverer_info_get_stream_list`
-- `gst_discoverer_info_get_streams`
-- `gst_discoverer_info_get_subtitle_streams`
-- `gst_discoverer_info_get_video_streams`
 - `gst_discoverer_info_to_variant`
 - `gst_discoverer_stream_info_list_free`
 - `gst_encoding_container_profile_add_profile`
-- `gst_encoding_container_profile_get_profiles`
-- `gst_encoding_list_all_targets`
-- `gst_encoding_list_available_categories`
 - `gst_encoding_profile_set_element_properties`
 - `gst_encoding_profile_set_restriction`
 - `gst_encoding_target_add_profile`
-- `gst_encoding_target_get_profiles`
 - `gst_encoding_target_new`
 - `gst_install_plugins_async`
 - `gst_install_plugins_sync`
@@ -1318,7 +1286,7 @@ disappears shows up here as an added line.
 - `gst_video_scaler_combine_packed_YUV`
 - `gst_video_scaler_new`
 
-### UnsupportedSignature (108)
+### UnsupportedSignature (105)
 
 - `GstVideo.VideoAggregator:force-live`
 - `GstVideo.VideoAggregatorConvertPad:converter-config`
@@ -1347,7 +1315,6 @@ disappears shows up here as an added line.
 - `gst_buffer_add_video_sei_user_data_unregistered_meta`
 - `gst_buffer_add_video_time_code_meta_full`
 - `gst_buffer_get_video_region_of_interest_meta_id`
-- `gst_color_balance_list_channels`
 - `gst_navigation_query_set_commandsv`
 - `gst_navigation_send_event_simple`
 - `gst_video_afd_meta_get_info`
@@ -1378,11 +1345,9 @@ disappears shows up here as an added line.
 - `gst_video_decoder_drop_subframe`
 - `gst_video_decoder_finish_frame`
 - `gst_video_decoder_finish_subframe`
-- `gst_video_decoder_get_frames`
 - `gst_video_decoder_release_frame`
 - `gst_video_encoder_drop_frame`
 - `gst_video_encoder_finish_frame`
-- `gst_video_encoder_get_frames`
 - `gst_video_encoder_release_frame`
 - `gst_video_encoder_set_headers`
 - `gst_video_encoder_set_output_state`

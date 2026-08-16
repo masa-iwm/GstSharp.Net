@@ -29,6 +29,15 @@ internal static class CallableRenderer
     /// <summary>The local that holds the converted return value.</summary>
     private const string ConvertedLocal = "result";
 
+    /// <summary>The local that holds the element pointers of a returned list.</summary>
+    private const string ItemsLocal = "nativeItems";
+
+    /// <summary>The loop variable that walks the element pointers of a returned list.</summary>
+    private const string ItemLocal = "nativeItem";
+
+    /// <summary>The local that holds one adopted element of a returned list.</summary>
+    private const string ElementLocal = "adopted";
+
     /// <summary>
     /// What the documentation of a returned wrapper says about its ownership,
     /// which the gir does not describe.
@@ -598,6 +607,12 @@ internal static class CallableRenderer
             return;
         }
 
+        if (value.Kind == ArgumentKind.GListReturn)
+        {
+            WriteListConversion(writer, value);
+            return;
+        }
+
         ArgumentPlan projection = new()
         {
             Kind = value.Kind,
@@ -622,6 +637,58 @@ internal static class CallableRenderer
         writer.WriteLine("return " + expression);
         writer.WriteLine(
             "    ?? throw new InvalidOperationException(\"" + plan.EntryPoint + " returned no value.\");");
+    }
+
+    /// <summary>
+    /// Writes the materialization of a returned <c>GList</c>.
+    /// </summary>
+    /// <param name="writer">The target writer.</param>
+    /// <param name="value">The return value, whose element projection is read here.</param>
+    /// <remarks>
+    /// <para>
+    /// The three steps are in this order on purpose, and the barriers of the
+    /// call have already been written when this runs. The element pointers are
+    /// copied out of the spine first, the spine is released next, and the
+    /// elements are adopted last, so that an adoption that throws — every one
+    /// of them can — cannot leave a managed value pointing into freed nodes and
+    /// cannot free the same spine twice. No managed type ever holds the
+    /// <c>GList*</c>: it is gone before this method returns.
+    /// </para>
+    /// <para>
+    /// The two halves of the transfer are read separately. The spine is freed
+    /// unless the library keeps owning it (<c>transfer-ownership="none"</c>),
+    /// and the elements are adopted with the reference the call handed over
+    /// under <c>full</c> and with one of their own under <c>container</c> and
+    /// <c>none</c>. A <c>NULL</c> element is dropped rather than turned into a
+    /// null entry, and a <c>NULL</c> list is an empty list, which is why the
+    /// member never returns <see langword="null"/>.
+    /// </para>
+    /// </remarks>
+    private static void WriteListConversion(CodeWriter writer, ReturnPlan value)
+    {
+        string elementType = value.ElementType!;
+        GirTransfer elementTransfer = value.Transfer is GirTransfer.Full or GirTransfer.Floating
+            ? GirTransfer.Full
+            : GirTransfer.None;
+        string collect = value.Transfer == GirTransfer.None ? "Collect" : "CollectAndFreeSpine";
+        string conversion = value.ElementKind == ArgumentKind.Utf8
+            ? StringConversion(elementTransfer, ItemLocal)
+            : HandleConversion(value.Flavor, elementType, ItemLocal, elementTransfer);
+
+        writer.WriteLine(
+            "nint[] " + ItemsLocal + " = Gst.Interop.GListMarshal." + collect + "(" + ResultLocal + ");");
+        writer.WriteLine(
+            "System.Collections.Generic.List<" + elementType + "> " + ConvertedLocal
+            + " = new(" + ItemsLocal + ".Length);");
+        writer.WriteLine("foreach (nint " + ItemLocal + " in " + ItemsLocal + ")");
+        writer.OpenBlock();
+        writer.WriteLine("if (" + ItemLocal + " != 0 && " + conversion + " is { } " + ElementLocal + ")");
+        writer.OpenBlock();
+        writer.WriteLine(ConvertedLocal + ".Add(" + ElementLocal + ");");
+        writer.CloseBlock();
+        writer.CloseBlock();
+        writer.WriteLine();
+        writer.WriteLine("return " + ConvertedLocal + ";");
     }
 
     private static void WriteArrayConversion(

@@ -312,6 +312,40 @@ public unsafe partial class Adapter : Gst.GObject.Object
     }
 
     /// <summary>
+    /// Returns a #GList of buffers containing the first @nbytes bytes of the
+    /// @adapter, but does not flush them from the adapter. See
+    /// gst_adapter_take_list() for details.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Caller owns returned list and contained buffers. gst_buffer_unref() each
+    /// buffer in the list before freeing the list after usage.
+    /// </para>
+    /// </remarks>
+    /// <param name="nbytes">The <c>nbytes</c> argument.</param>
+    /// <returns>
+    /// a #GList of
+    ///     buffers containing the first @nbytes of the adapter, or %NULL if @nbytes
+    ///     bytes are not available
+    /// </returns>
+    public System.Collections.Generic.IReadOnlyList<Gst.Buffer> GetList(nuint nbytes)
+    {
+        nint nativeResult = GstAdapterGetList(Handle, nbytes);
+        System.GC.KeepAlive(this);
+        nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
+        System.Collections.Generic.List<Gst.Buffer> result = new(nativeItems.Length);
+        foreach (nint nativeItem in nativeItems)
+        {
+            if (nativeItem != 0 && Gst.Buffer.FromNative(nativeItem, Gst.Interop.Transfer.Full) is { } adopted)
+            {
+                result.Add(adopted);
+            }
+        }
+
+        return result;
+    }
+
+    /// <summary>
     /// Scan for pattern @pattern with applied mask @mask in the adapter data,
     /// starting from offset @offset.
     /// </summary>
@@ -635,6 +669,41 @@ public unsafe partial class Adapter : Gst.GObject.Object
         return Gst.BufferList.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
 
+    /// <summary>
+    /// Returns a #GList of buffers containing the first @nbytes bytes of the
+    /// @adapter. The returned bytes will be flushed from the adapter.
+    /// When the caller can deal with individual buffers, this function is more
+    /// performant because no memory should be copied.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Caller owns returned list and contained buffers. gst_buffer_unref() each
+    /// buffer in the list before freeing the list after usage.
+    /// </para>
+    /// </remarks>
+    /// <param name="nbytes">The <c>nbytes</c> argument.</param>
+    /// <returns>
+    /// a #GList of
+    ///     buffers containing the first @nbytes of the adapter, or %NULL if @nbytes
+    ///     bytes are not available
+    /// </returns>
+    public System.Collections.Generic.IReadOnlyList<Gst.Buffer> TakeList(nuint nbytes)
+    {
+        nint nativeResult = GstAdapterTakeList(Handle, nbytes);
+        System.GC.KeepAlive(this);
+        nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
+        System.Collections.Generic.List<Gst.Buffer> result = new(nativeItems.Length);
+        foreach (nint nativeItem in nativeItems)
+        {
+            if (nativeItem != 0 && Gst.Buffer.FromNative(nativeItem, Gst.Interop.Transfer.Full) is { } adopted)
+            {
+                result.Add(adopted);
+            }
+        }
+
+        return result;
+    }
+
     /// <summary>The <c>gst_adapter_new</c> entry point.</summary>
     [LibraryImport("GstBase", EntryPoint = "gst_adapter_new")]
     private static partial nint GstAdapterNew();
@@ -674,6 +743,10 @@ public unsafe partial class Adapter : Gst.GObject.Object
     /// <summary>The <c>gst_adapter_get_buffer_list</c> entry point.</summary>
     [LibraryImport("GstBase", EntryPoint = "gst_adapter_get_buffer_list")]
     private static partial nint GstAdapterGetBufferList(nint adapter, nuint nbytes);
+
+    /// <summary>The <c>gst_adapter_get_list</c> entry point.</summary>
+    [LibraryImport("GstBase", EntryPoint = "gst_adapter_get_list")]
+    private static partial nint GstAdapterGetList(nint adapter, nuint nbytes);
 
     /// <summary>The <c>gst_adapter_masked_scan_uint32</c> entry point.</summary>
     [LibraryImport("GstBase", EntryPoint = "gst_adapter_masked_scan_uint32")]
@@ -722,6 +795,10 @@ public unsafe partial class Adapter : Gst.GObject.Object
     /// <summary>The <c>gst_adapter_take_buffer_list</c> entry point.</summary>
     [LibraryImport("GstBase", EntryPoint = "gst_adapter_take_buffer_list")]
     private static partial nint GstAdapterTakeBufferList(nint adapter, nuint nbytes);
+
+    /// <summary>The <c>gst_adapter_take_list</c> entry point.</summary>
+    [LibraryImport("GstBase", EntryPoint = "gst_adapter_take_list")]
+    private static partial nint GstAdapterTakeList(nint adapter, nuint nbytes);
 
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstAdapter</c> under.</summary>
     /// <returns>The type of the instances of this wrapper.</returns>

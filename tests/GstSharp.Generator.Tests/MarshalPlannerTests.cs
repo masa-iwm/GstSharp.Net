@@ -15,7 +15,8 @@ public sealed class MarshalPlannerTests
     /// in both directions, an enumeration, a handle in both directions and in
     /// both nullabilities, an out parameter, a span, a callback with user data
     /// and a destroy notification, a callable that throws, a property built
-    /// from its accessors, and the two shapes that are rejected on purpose.
+    /// from its accessors, a returned <c>GList</c> in each of its three
+    /// ownership shapes, and the shapes that are rejected on purpose.
     /// </summary>
     private const string Body =
         """
@@ -31,6 +32,11 @@ public sealed class MarshalPlannerTests
             <record name="Caps" c:type="GstCaps" glib:type-name="GstCaps" glib:get-type="gst_caps_get_type">
               <field name="mini_object" writable="1">
                 <type name="MiniObject" c:type="GstMiniObject"/>
+              </field>
+            </record>
+            <record name="Extent" c:type="GstExtent">
+              <field name="width" writable="1">
+                <type name="gint" c:type="gint"/>
               </field>
             </record>
             <callback name="WidgetFunc" c:type="GstWidgetFunc">
@@ -227,6 +233,69 @@ public sealed class MarshalPlannerTests
                   <instance-parameter name="widget" transfer-ownership="none">
                     <type name="Widget" c:type="GstWidget*"/>
                   </instance-parameter>
+                </parameters>
+              </method>
+              <method name="list_peers" c:identifier="gst_widget_list_peers">
+                <return-value transfer-ownership="none">
+                  <type name="GLib.List" c:type="GList*">
+                    <type name="Widget"/>
+                  </type>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="widget" transfer-ownership="none">
+                    <type name="Widget" c:type="GstWidget*"/>
+                  </instance-parameter>
+                </parameters>
+              </method>
+              <method name="list_labels" c:identifier="gst_widget_list_labels">
+                <return-value transfer-ownership="container">
+                  <type name="GLib.List" c:type="GList*">
+                    <type name="utf8"/>
+                  </type>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="widget" transfer-ownership="none">
+                    <type name="Widget" c:type="GstWidget*"/>
+                  </instance-parameter>
+                </parameters>
+              </method>
+              <method name="list_extents" c:identifier="gst_widget_list_extents">
+                <return-value transfer-ownership="full">
+                  <type name="GLib.List" c:type="GList*">
+                    <type name="Extent"/>
+                  </type>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="widget" transfer-ownership="none">
+                    <type name="Widget" c:type="GstWidget*"/>
+                  </instance-parameter>
+                </parameters>
+              </method>
+              <method name="list_tags" c:identifier="gst_widget_list_tags">
+                <return-value transfer-ownership="full">
+                  <type name="GLib.SList" c:type="GSList*">
+                    <type name="utf8"/>
+                  </type>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="widget" transfer-ownership="none">
+                    <type name="Widget" c:type="GstWidget*"/>
+                  </instance-parameter>
+                </parameters>
+              </method>
+              <method name="add_children" c:identifier="gst_widget_add_children">
+                <return-value transfer-ownership="none">
+                  <type name="none" c:type="void"/>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="widget" transfer-ownership="none">
+                    <type name="Widget" c:type="GstWidget*"/>
+                  </instance-parameter>
+                  <parameter name="children" transfer-ownership="none">
+                    <type name="GLib.List" c:type="GList*">
+                      <type name="Widget"/>
+                    </type>
+                  </parameter>
                 </parameters>
               </method>
               <property name="name" writable="1" transfer-ownership="none" getter="get_name" setter="set_name">
@@ -479,15 +548,111 @@ public sealed class MarshalPlannerTests
     }
 
     [Fact]
-    public void OwnershipTakingParametersAndContainersAreSkipped()
+    public void AReturnedListIsMaterializedBeforeItsSpineIsFreed()
+    {
+        // The order is the whole design: the element pointers are copied out,
+        // the spine is freed, and only then is an element wrapped. An adoption
+        // that throws can therefore neither free the spine twice nor leave a
+        // wrapper pointing into a freed node. The list itself never reaches
+        // managed code, and a NULL list comes back as an empty one, because
+        // CollectAndFreeSpine answers a null head with an empty array.
+        Assert.Equal(
+            """
+            public System.Collections.Generic.IReadOnlyList<Gst.Widget> ListChildren()
+            {
+                nint nativeResult = GstWidgetListChildren(Handle);
+                System.GC.KeepAlive(this);
+                nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
+                System.Collections.Generic.List<Gst.Widget> result = new(nativeItems.Length);
+                foreach (nint nativeItem in nativeItems)
+                {
+                    if (nativeItem != 0 && Gst.GObject.Object.FromNative<Gst.Widget>(nativeItem, Gst.Interop.Transfer.Full) is { } adopted)
+                    {
+                        result.Add(adopted);
+                    }
+                }
+
+                return result;
+            }
+            """,
+            Run.Member("Widget.cs", "public System.Collections.Generic.IReadOnlyList<Gst.Widget> ListChildren("),
+            StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public void AListTheLibraryKeepsIsWalkedWithoutFreeingIt()
+    {
+        // transfer-ownership="none": the spine belongs to the library, so only
+        // the contents are read and each element is referenced by its own
+        // wrapper.
+        Assert.Equal(
+            """
+            public System.Collections.Generic.IReadOnlyList<Gst.Widget> ListPeers()
+            {
+                nint nativeResult = GstWidgetListPeers(Handle);
+                System.GC.KeepAlive(this);
+                nint[] nativeItems = Gst.Interop.GListMarshal.Collect(nativeResult);
+                System.Collections.Generic.List<Gst.Widget> result = new(nativeItems.Length);
+                foreach (nint nativeItem in nativeItems)
+                {
+                    if (nativeItem != 0 && Gst.GObject.Object.FromNative<Gst.Widget>(nativeItem, Gst.Interop.Transfer.None) is { } adopted)
+                    {
+                        result.Add(adopted);
+                    }
+                }
+
+                return result;
+            }
+            """,
+            Run.Member("Widget.cs", "public System.Collections.Generic.IReadOnlyList<Gst.Widget> ListPeers("),
+            StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public void AContainerTransferFreesTheSpineAndLeavesTheElementsAlone()
+    {
+        // transfer-ownership="container": the nodes are ours and the strings
+        // are not, so the spine is freed and the strings are copied without
+        // being freed.
+        Assert.Equal(
+            """
+            public System.Collections.Generic.IReadOnlyList<string> ListLabels()
+            {
+                nint nativeResult = GstWidgetListLabels(Handle);
+                System.GC.KeepAlive(this);
+                nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
+                System.Collections.Generic.List<string> result = new(nativeItems.Length);
+                foreach (nint nativeItem in nativeItems)
+                {
+                    if (nativeItem != 0 && Gst.Interop.GMarshal.PtrToStringUtf8(nativeItem) is { } adopted)
+                    {
+                        result.Add(adopted);
+                    }
+                }
+
+                return result;
+            }
+            """,
+            Run.Member("Widget.cs", "public System.Collections.Generic.IReadOnlyList<string> ListLabels("),
+            StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public void OwnershipTakingParametersAndUnsupportedContainersAreSkipped()
     {
         string source = Run.File("Widget.cs");
 
         // gst_widget_take_caps would hand the only reference of the wrapper to
-        // native code, and gst_widget_list_children returns a GList.
+        // native code. The three containers are refused for reasons of their
+        // own: a list of a plain record has no projection of its elements, a
+        // GSList is not bound at all, and a list that is passed in would have to
+        // be allocated here and handed over under an ownership rule that is the
+        // callee's to state.
         Assert.DoesNotContain("TakeCaps", source, StringComparison.Ordinal);
-        Assert.DoesNotContain("ListChildren", source, StringComparison.Ordinal);
-        Assert.Equal(2, Run.Result.Census.SkippedCount("Gst", SkipReason.UnsupportedSignature));
+        Assert.DoesNotContain("ListExtents", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("ListTags", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("AddChildren", source, StringComparison.Ordinal);
+        Assert.Equal(4, Run.Result.Census.SkippedCount("Gst", SkipReason.UnsupportedSignature));
     }
 
     [Fact]

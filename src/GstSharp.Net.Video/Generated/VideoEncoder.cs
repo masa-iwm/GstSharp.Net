@@ -156,6 +156,25 @@ public abstract unsafe partial class VideoEncoder : Gst.Element, Gst.IPreset
         return Gst.Video.VideoCodecFrame.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
 
+    /// <summary>Get all pending unfinished #GstVideoCodecFrame</summary>
+    /// <returns>pending unfinished #GstVideoCodecFrame.</returns>
+    public System.Collections.Generic.IReadOnlyList<Gst.Video.VideoCodecFrame> GetFrames()
+    {
+        nint nativeResult = GstVideoEncoderGetFrames(Handle);
+        System.GC.KeepAlive(this);
+        nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
+        System.Collections.Generic.List<Gst.Video.VideoCodecFrame> result = new(nativeItems.Length);
+        foreach (nint nativeItem in nativeItems)
+        {
+            if (nativeItem != 0 && Gst.Video.VideoCodecFrame.FromNative(nativeItem, Gst.Interop.Transfer.Full) is { } adopted)
+            {
+                result.Add(adopted);
+            }
+        }
+
+        return result;
+    }
+
     /// <summary>
     /// Query the configured encoding latency. Results will be returned via
     /// @min_latency and @max_latency.
@@ -361,6 +380,10 @@ public abstract unsafe partial class VideoEncoder : Gst.Element, Gst.IPreset
     /// <summary>The <c>gst_video_encoder_get_frame</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_encoder_get_frame")]
     private static partial nint GstVideoEncoderGetFrame(nint encoder, int frameNumber);
+
+    /// <summary>The <c>gst_video_encoder_get_frames</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_video_encoder_get_frames")]
+    private static partial nint GstVideoEncoderGetFrames(nint encoder);
 
     /// <summary>The <c>gst_video_encoder_get_latency</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_encoder_get_latency")]

@@ -107,6 +107,25 @@ public sealed unsafe partial class TocEntry : Gst.GObject.Boxed
         return nativeResult != 0;
     }
 
+    /// <summary>Gets the sub-entries of @entry.</summary>
+    /// <returns>A #GList of #GstTocEntry of @entry</returns>
+    public System.Collections.Generic.IReadOnlyList<Gst.TocEntry> GetSubEntries()
+    {
+        nint nativeResult = GstTocEntryGetSubEntries(Handle);
+        System.GC.KeepAlive(this);
+        nint[] nativeItems = Gst.Interop.GListMarshal.Collect(nativeResult);
+        System.Collections.Generic.List<Gst.TocEntry> result = new(nativeItems.Length);
+        foreach (nint nativeItem in nativeItems)
+        {
+            if (nativeItem != 0 && Gst.TocEntry.FromNative(nativeItem, Gst.Interop.Transfer.None) is { } adopted)
+            {
+                result.Add(adopted);
+            }
+        }
+
+        return result;
+    }
+
     /// <summary>Gets the tags for @entry.</summary>
     /// <returns>
     /// A #GstTagList for @entry
@@ -210,6 +229,10 @@ public sealed unsafe partial class TocEntry : Gst.GObject.Boxed
     /// <summary>The <c>gst_toc_entry_get_start_stop_times</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_toc_entry_get_start_stop_times")]
     private static partial int GstTocEntryGetStartStopTimes(nint entry, long* start, long* stop);
+
+    /// <summary>The <c>gst_toc_entry_get_sub_entries</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_toc_entry_get_sub_entries")]
+    private static partial nint GstTocEntryGetSubEntries(nint entry);
 
     /// <summary>The <c>gst_toc_entry_get_tags</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_toc_entry_get_tags")]

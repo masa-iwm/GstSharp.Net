@@ -60,6 +60,32 @@ public static unsafe partial class ColorBalanceExtensions
         return nativeResult;
     }
 
+    /// <summary>Retrieve a list of the available channels.</summary>
+    /// <param name="balance">A #GstColorBalance instance</param>
+    /// <returns>
+    /// A
+    ///          GList containing pointers to #GstColorBalanceChannel
+    ///          objects. The list is owned by the #GstColorBalance
+    ///          instance and must not be freed.
+    /// </returns>
+    public static System.Collections.Generic.IReadOnlyList<Gst.Video.ColorBalanceChannel> ListChannels(this Gst.Video.IColorBalance balance)
+    {
+        ArgumentNullException.ThrowIfNull(balance);
+        nint nativeResult = GstColorBalanceListChannels(balance.Handle);
+        System.GC.KeepAlive(balance);
+        nint[] nativeItems = Gst.Interop.GListMarshal.Collect(nativeResult);
+        System.Collections.Generic.List<Gst.Video.ColorBalanceChannel> result = new(nativeItems.Length);
+        foreach (nint nativeItem in nativeItems)
+        {
+            if (nativeItem != 0 && Gst.GObject.Object.FromNative<Gst.Video.ColorBalanceChannel>(nativeItem, Gst.Interop.Transfer.None) is { } adopted)
+            {
+                result.Add(adopted);
+            }
+        }
+
+        return result;
+    }
+
     /// <summary>
     /// Sets the current value of the channel to the passed value, which must
     /// be between min_value and max_value.
@@ -163,6 +189,10 @@ public static unsafe partial class ColorBalanceExtensions
     /// <summary>The <c>gst_color_balance_get_value</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_color_balance_get_value")]
     private static partial int GstColorBalanceGetValue(nint balance, nint channel);
+
+    /// <summary>The <c>gst_color_balance_list_channels</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_color_balance_list_channels")]
+    private static partial nint GstColorBalanceListChannels(nint balance);
 
     /// <summary>The <c>gst_color_balance_set_value</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_color_balance_set_value")]

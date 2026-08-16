@@ -64,6 +64,13 @@ internal enum ArgumentKind
     /// <summary>A <c>NULL</c> terminated array of strings.</summary>
     Strv,
 
+    /// <summary>
+    /// A <c>GList</c> that a call returned, materialized into a read only list.
+    /// The element projection is carried by <see cref="ReturnPlan.ElementKind"/>
+    /// and <see cref="ReturnPlan.Flavor"/>.
+    /// </summary>
+    GListReturn,
+
     /// <summary>A managed callback handed to native code.</summary>
     Callback,
 
@@ -211,6 +218,13 @@ internal sealed class ReturnPlan
 
     /// <summary>Gets the element type of an array, on the public surface.</summary>
     internal string? ElementType { get; init; }
+
+    /// <summary>
+    /// Gets how one element of a container is marshalled. Only
+    /// <see cref="ArgumentKind.GListReturn"/> sets it, to
+    /// <see cref="ArgumentKind.Handle"/> or <see cref="ArgumentKind.Utf8"/>.
+    /// </summary>
+    internal ArgumentKind ElementKind { get; init; }
 
     /// <summary>Gets the index of the argument that carries the length of the returned array.</summary>
     internal int? LengthArgument { get; init; }

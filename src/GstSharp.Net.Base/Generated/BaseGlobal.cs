@@ -289,6 +289,38 @@ public static unsafe partial class BaseGlobal
         return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
 
+    /// <summary>Tries to find the best #GstTypeFindFactory associated with @caps.</summary>
+    /// <remarks>
+    /// <para>The typefinder that can handle @caps will be returned.</para>
+    /// <para>Free-function: g_list_free</para>
+    /// </remarks>
+    /// <param name="obj">The <c>obj</c> argument.</param>
+    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <returns>
+    /// the list of #GstTypeFindFactory
+    ///          corresponding to @caps, or %NULL if no typefinder could be
+    ///          found. Caller should free the returned list with g_list_free()
+    ///          and list elements with gst_object_unref().
+    /// </returns>
+    public static System.Collections.Generic.IReadOnlyList<Gst.TypeFindFactory> TypeFindListFactoriesForCaps(Gst.Object? obj, Gst.Caps caps)
+    {
+        ArgumentNullException.ThrowIfNull(caps);
+        nint nativeResult = GstTypeFindListFactoriesForCaps(obj is null ? 0 : obj.Handle, caps.Handle);
+        System.GC.KeepAlive(obj);
+        System.GC.KeepAlive(caps);
+        nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
+        System.Collections.Generic.List<Gst.TypeFindFactory> result = new(nativeItems.Length);
+        foreach (nint nativeItem in nativeItems)
+        {
+            if (nativeItem != 0 && Gst.GObject.Object.FromNative<Gst.TypeFindFactory>(nativeItem, Gst.Interop.Transfer.Full) is { } adopted)
+            {
+                result.Add(adopted);
+            }
+        }
+
+        return result;
+    }
+
     /// <summary>The <c>gst_type_find_helper</c> entry point.</summary>
     [LibraryImport("GstBase", EntryPoint = "gst_type_find_helper")]
     private static partial nint GstTypeFindHelper(nint src, ulong size);
@@ -320,4 +352,8 @@ public static unsafe partial class BaseGlobal
     /// <summary>The <c>gst_type_find_helper_for_extension</c> entry point.</summary>
     [LibraryImport("GstBase", EntryPoint = "gst_type_find_helper_for_extension")]
     private static partial nint GstTypeFindHelperForExtension(nint obj, byte* extension);
+
+    /// <summary>The <c>gst_type_find_list_factories_for_caps</c> entry point.</summary>
+    [LibraryImport("GstBase", EntryPoint = "gst_type_find_list_factories_for_caps")]
+    private static partial nint GstTypeFindListFactoriesForCaps(nint obj, nint caps);
 }

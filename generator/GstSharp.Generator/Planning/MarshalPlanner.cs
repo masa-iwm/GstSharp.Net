@@ -57,9 +57,9 @@ internal sealed class CallbackPlan
 /// The planner is deliberately conservative: a callable is only planned when
 /// every parameter and the return value have a marshalling that is known to be
 /// correct. Everything else is reported as
-/// <see cref="SkipReason.UnsupportedSignature"/> and left for the milestone
-/// that brings container marshalling. Half emitted members would compile and
-/// then corrupt memory, which is much worse than a missing binding.
+/// <see cref="SkipReason.UnsupportedSignature"/> and left for a later
+/// milestone. Half emitted members would compile and then corrupt memory,
+/// which is much worse than a missing binding.
 /// </para>
 /// <para>
 /// The rules that are not obvious from the code:
@@ -89,6 +89,12 @@ internal sealed class CallbackPlan
 /// that owns nothing. Every other wrapper releases its reference when it is
 /// disposed, so a second release path can only corrupt the reference
 /// count.</description></item>
+/// <item><description>A <c>GList</c> is bound in the return position only, and
+/// only when its elements are wrappers the runtime knows how to adopt or
+/// strings. The list is materialized eagerly and its spine is released before
+/// the first element is adopted, so no managed value ever points into it. A
+/// <c>GList</c> parameter and every <c>GSList</c> stay
+/// unsupported.</description></item>
 /// <item><description>Only the <c>call</c> and <c>notified</c> callback scopes
 /// are supported. A <c>async</c> callback would have to release its state from
 /// the trampoline, but the same delegate type is used at notified and async call
@@ -1286,6 +1292,14 @@ internal sealed class MarshalPlanner
             };
         }
 
+        // Before the array branch: a gir may spell a GLib container as an
+        // <array name="GLib.List">, and reading that as a C array would take the
+        // head of a linked list for the first element of a block.
+        if (mapped.Kind == MarshalKind.GList)
+        {
+            return PlanListReturn(value, mapped, transfer);
+        }
+
         if (value.Type is GirArrayRef array)
         {
             if (mapped.ElementType is not { } element || array.FixedSize is not null)
@@ -1375,6 +1389,86 @@ internal sealed class MarshalPlanner
             Transfer = transfer,
             IsNullable = nullable,
             Flavor = scalar.Flavor,
+            Doc = value.Doc,
+        };
+    }
+
+    /// <summary>
+    /// Plans a <c>GList</c> that a call hands back.
+    /// </summary>
+    /// <param name="value">The gir return value.</param>
+    /// <param name="mapped">Its mapping, whose element type carries the payload.</param>
+    /// <param name="transfer">What the call transfers along with the list.</param>
+    /// <returns>The plan, or <see langword="null"/> when the element is not supported.</returns>
+    /// <remarks>
+    /// <para>
+    /// Only the return position is planned. A <c>GList</c> parameter would have
+    /// to be built in managed code and handed over, which needs an allocation
+    /// the callee agrees with and an ownership rule per callee, so
+    /// <c>gst_element_factory_list_filter</c> and its relatives stay skipped. A
+    /// <c>GSList</c> is skipped as well: the only one in a bound module carries
+    /// an element this projection would refuse anyway.
+    /// </para>
+    /// <para>
+    /// The element decides everything: a wrapper that the runtime can adopt
+    /// (a <c>GObject</c>, a mini object or a boxed record) or a string. Anything
+    /// else, a plain record above all, is refused, because there is no
+    /// projection of a bare pointer into it that the generator can check. The
+    /// list itself is never nullable on the public surface:
+    /// <c>NULL</c> is how C spells the empty list, so the member returns an
+    /// empty list rather than <see langword="null"/>.
+    /// </para>
+    /// <para>
+    /// <paramref name="transfer"/> is carried through unchanged and the emitter
+    /// reads both halves of it: <c>full</c> owns the spine and the elements,
+    /// <c>container</c> owns the spine alone, and <c>none</c> owns neither and
+    /// leaves the spine to the library.
+    /// </para>
+    /// </remarks>
+    private ReturnPlan? PlanListReturn(GirReturnValue value, MappedType mapped, GirTransfer transfer)
+    {
+        if (mapped.ElementType is not { } element)
+        {
+            return null;
+        }
+
+        ArgumentKind elementKind;
+        HandleFlavor flavor = HandleFlavor.None;
+
+        switch (element.Kind)
+        {
+            case MarshalKind.Utf8String:
+                elementKind = ArgumentKind.Utf8;
+                break;
+
+            case MarshalKind.GObject:
+            case MarshalKind.MiniObject:
+            case MarshalKind.Boxed:
+                if (element.Symbol is not { } symbol
+                    || !IsEmitted(symbol)
+                    || UnusableTypes.Contains(element.PublicType))
+                {
+                    return null;
+                }
+
+                elementKind = ArgumentKind.Handle;
+                flavor = element.Kind == MarshalKind.GObject ? HandleFlavor.GObject : HandleFlavor.Wrapper;
+                break;
+
+            default:
+                return null;
+        }
+
+        return new ReturnPlan
+        {
+            Kind = ArgumentKind.GListReturn,
+            PublicType = mapped.PublicType,
+            RawType = NativeInt,
+            Transfer = transfer,
+            ElementType = element.PublicType,
+            ElementKind = elementKind,
+            Flavor = flavor,
+            IsNullable = false,
             Doc = value.Doc,
         };
     }

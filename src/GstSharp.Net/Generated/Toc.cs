@@ -119,6 +119,25 @@ public sealed unsafe partial class Toc : Gst.GObject.Boxed
         return Gst.TocEntry.FromNative(nativeResult, Gst.Interop.Transfer.None);
     }
 
+    /// <summary>Gets the list of #GstTocEntry of @toc.</summary>
+    /// <returns>A #GList of #GstTocEntry for @entry</returns>
+    public System.Collections.Generic.IReadOnlyList<Gst.TocEntry> GetEntries()
+    {
+        nint nativeResult = GstTocGetEntries(Handle);
+        System.GC.KeepAlive(this);
+        nint[] nativeItems = Gst.Interop.GListMarshal.Collect(nativeResult);
+        System.Collections.Generic.List<Gst.TocEntry> result = new(nativeItems.Length);
+        foreach (nint nativeItem in nativeItems)
+        {
+            if (nativeItem != 0 && Gst.TocEntry.FromNative(nativeItem, Gst.Interop.Transfer.None) is { } adopted)
+            {
+                result.Add(adopted);
+            }
+        }
+
+        return result;
+    }
+
     /// <summary>The <c>gst_toc_get_scope</c> function.</summary>
     /// <returns>scope of @toc</returns>
     public Gst.TocScope GetScope()
@@ -163,6 +182,10 @@ public sealed unsafe partial class Toc : Gst.GObject.Boxed
     /// <summary>The <c>gst_toc_find_entry</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_toc_find_entry")]
     private static partial nint GstTocFindEntry(nint toc, byte* uid);
+
+    /// <summary>The <c>gst_toc_get_entries</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_toc_get_entries")]
+    private static partial nint GstTocGetEntries(nint toc);
 
     /// <summary>The <c>gst_toc_get_scope</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_toc_get_scope")]
