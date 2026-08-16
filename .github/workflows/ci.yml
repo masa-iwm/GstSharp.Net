@@ -126,13 +126,17 @@ jobs:
       # Runtime packages only: the binding loads versioned SONAMEs
       # (libgstreamer-1.0.so.0, libgstapp-1.0.so.0), which the runtime packages
       # provide. The -dev packages would only add headers and the unversioned
-      # symlinks, neither of which is used.
+      # symlinks, neither of which is used. libgstwebrtc-1.0.so.0 is what the
+      # bad plugins package is here for: the GstWebRTC binding registers its
+      # types from a module initialiser, so the library has to be resolvable
+      # even though no test builds a webrtcbin.
       - name: Install GStreamer
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
             libgstreamer1.0-0 \
             libgstreamer-plugins-base1.0-0 \
+            libgstreamer-plugins-bad1.0-0 \
             gstreamer1.0-plugins-base \
             gstreamer1.0-plugins-good \
             gstreamer1.0-tools
@@ -254,10 +258,14 @@ jobs:
           msystem: MINGW64
           update: false
           path-type: minimal
+          # The -libs half of the bad plugins carries libgstwebrtc-1.0-0.dll and
+          # little else; the plugins themselves are not under test and would
+          # pull in fifty more packages.
           install: >-
             mingw-w64-x86_64-gstreamer
             mingw-w64-x86_64-gst-plugins-base
             mingw-w64-x86_64-gst-plugins-good
+            mingw-w64-x86_64-gst-plugins-bad-libs
 
       # The planner walks PATH, recognizes the msys64 root inside the entry and
       # probes ucrt64\bin, mingw64\bin and clang64\bin below it. Prepending the

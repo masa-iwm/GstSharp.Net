@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>Gst.WebRTC</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../GstSharp.Net/GstSharp.Net.csproj" />
+
+    <!-- The generated sources of this module name no GstSdp type: the gir
+         mentions GstSDPMessage only in the field and the constructor parameter
+         of GstWebRTCSessionDescription, and neither is emitted. The reference
+         is here for the hand written session description glue, which takes and
+         hands out Gst.Sdp.SDPMessage. -->
+    <ProjectReference Include="../GstSharp.Net.Sdp/GstSharp.Net.Sdp.csproj" />
+  </ItemGroup>
+
+</Project>

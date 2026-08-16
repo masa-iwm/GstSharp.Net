@@ -8,4 +8,8 @@
     <ProjectReference Include="../GstSharp.Net/GstSharp.Net.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="GstSharp.Net.WebRTC" />
+  </ItemGroup>
+
 </Project>

@@ -439,6 +439,7 @@ public sealed class SignalEmitterTests
     [InlineData("GstVideo", 2)]
     [InlineData("GstPbutils", 3)]
     [InlineData("GstSdp", 0)]
+    [InlineData("GstWebRTC", 6)]
     public void TheSignalCensusIsStable(string module, int signals)
     {
         // The two signals whose C# name a method of the same class had taken
@@ -446,6 +447,9 @@ public sealed class SignalEmitterTests
         // through the renames of fixups.json, so nothing collides any more.
         // The nine action signals of GstApp are not events: they are the call
         // API of GstAppSrc and GstAppSink, which is already bound as methods.
+        // Four of the twelve signals of GstWebRTC are action signals as well,
+        // and the two that carry a GLib.Bytes or a GLib.Error are not bound at
+        // all, which leaves the six that are counted here.
         Assert.Equal(signals, Generated.Census.EmittedCount(module, "signal"));
         Assert.DoesNotContain(Generated.Diagnostics, diagnostic => diagnostic.Code == "GEN0011");
     }
@@ -465,17 +469,18 @@ public sealed class SignalEmitterTests
             removers += file.Content.Split("    public static void Remove").Length - 1;
         }
 
-        // Thirty eight signals are emitted over the seven modules. Thirty five
-        // are events of a class; the remaining three belong to a gir interface
-        // and are a pair of extension methods instead.
-        Assert.Equal(35, events);
+        // Forty four signals are emitted over the eight modules. Forty one are
+        // events of a class; the remaining three belong to a gir interface and
+        // are a pair of extension methods instead.
+        Assert.Equal(41, events);
         Assert.Equal(3, adders);
         Assert.Equal(3, removers);
-        Assert.Equal(38, trampolines);
+        Assert.Equal(44, trampolines);
 
         string[] withSignals =
         [
             "GstSharp.Net", "GstSharp.Net.Base", "GstSharp.Net.App", "GstSharp.Net.Video", "GstSharp.Net.Pbutils",
+            "GstSharp.Net.WebRTC",
         ];
 
         foreach (string module in withSignals)

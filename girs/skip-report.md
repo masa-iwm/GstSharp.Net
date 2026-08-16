@@ -1438,3 +1438,72 @@ disappears shows up here as an added line.
 ### VarArgs (1)
 
 - `gst_navigation_query_set_commands`
+
+## GstWebRTC
+
+### ActionSignal (4)
+
+- `GstWebRTC.WebRTCDataChannel::close`
+- `GstWebRTC.WebRTCDataChannel::send-data`
+- `GstWebRTC.WebRTCDataChannel::send-string`
+- `GstWebRTC.WebRTCICE::add-local-ip-address`
+
+### LifetimePrimitive (4)
+
+- `gst_webrtc_ice_candidate_free`
+- `gst_webrtc_ice_candidate_pair_free`
+- `gst_webrtc_ice_candidate_stats_free`
+- `gst_webrtc_session_description_free`
+
+### MovedTo (2)
+
+- `gst_webrtc_error_quark`
+- `gst_webrtc_sdp_type_to_string`
+
+### UnsupportedSignature (45)
+
+- `GstWebRTC.WebRTCDTLSTransport:certificate`
+- `GstWebRTC.WebRTCDTLSTransport:client`
+- `GstWebRTC.WebRTCDTLSTransport:remote-certificate`
+- `GstWebRTC.WebRTCDTLSTransport:session-id`
+- `GstWebRTC.WebRTCDTLSTransport:state`
+- `GstWebRTC.WebRTCDTLSTransport:transport`
+- `GstWebRTC.WebRTCDataChannel::on-error`
+- `GstWebRTC.WebRTCDataChannel::on-message-data`
+- `GstWebRTC.WebRTCDataChannel:buffered-amount`
+- `GstWebRTC.WebRTCDataChannel:buffered-amount-low-threshold`
+- `GstWebRTC.WebRTCDataChannel:id`
+- `GstWebRTC.WebRTCDataChannel:label`
+- `GstWebRTC.WebRTCDataChannel:max-packet-lifetime`
+- `GstWebRTC.WebRTCDataChannel:max-retransmits`
+- `GstWebRTC.WebRTCDataChannel:negotiated`
+- `GstWebRTC.WebRTCDataChannel:ordered`
+- `GstWebRTC.WebRTCDataChannel:priority`
+- `GstWebRTC.WebRTCDataChannel:protocol`
+- `GstWebRTC.WebRTCDataChannel:ready-state`
+- `GstWebRTC.WebRTCICE:max-rtp-port`
+- `GstWebRTC.WebRTCICE:min-rtp-port`
+- `GstWebRTC.WebRTCICEStream:stream-id`
+- `GstWebRTC.WebRTCICETransport:component`
+- `GstWebRTC.WebRTCICETransport:gathering-state`
+- `GstWebRTC.WebRTCICETransport:state`
+- `GstWebRTC.WebRTCRTPReceiver:transport`
+- `GstWebRTC.WebRTCRTPSender:priority`
+- `GstWebRTC.WebRTCRTPSender:transport`
+- `GstWebRTC.WebRTCRTPTransceiver:codec-preferences`
+- `GstWebRTC.WebRTCRTPTransceiver:current-direction`
+- `GstWebRTC.WebRTCRTPTransceiver:direction`
+- `GstWebRTC.WebRTCRTPTransceiver:kind`
+- `GstWebRTC.WebRTCRTPTransceiver:mid`
+- `GstWebRTC.WebRTCRTPTransceiver:mlineindex`
+- `GstWebRTC.WebRTCRTPTransceiver:receiver`
+- `GstWebRTC.WebRTCRTPTransceiver:sender`
+- `GstWebRTC.WebRTCSCTPTransport:max-channels`
+- `GstWebRTC.WebRTCSCTPTransport:max-message-size`
+- `GstWebRTC.WebRTCSCTPTransport:state`
+- `GstWebRTC.WebRTCSCTPTransport:transport`
+- `gst_webrtc_data_channel_send_data`
+- `gst_webrtc_data_channel_send_data_full`
+- `gst_webrtc_ice_get_local_candidates`
+- `gst_webrtc_ice_get_remote_candidates`
+- `gst_webrtc_session_description_new`

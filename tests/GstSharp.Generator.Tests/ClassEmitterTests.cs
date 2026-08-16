@@ -124,6 +124,7 @@ public sealed class ClassEmitterTests
     [InlineData("GstVideo", 12, 42, 5, 0, 9, 293, 2, 2)]
     [InlineData("GstPbutils", 14, 1, 0, 0, 1, 169, 1, 3)]
     [InlineData("GstSdp", 1, 21, 0, 0, 0, 156, 0, 0)]
+    [InlineData("GstWebRTC", 9, 4, 0, 1, 2, 37, 0, 6)]
     public void TheEmissionCensusIsStable(
         string module,
         int classes,
@@ -155,6 +156,7 @@ public sealed class ClassEmitterTests
     [InlineData("GstVideo", 0, 102, 1, 6, 105, 0)]
     [InlineData("GstPbutils", 0, 1, 0, 0, 22, 0)]
     [InlineData("GstSdp", 0, 10, 0, 0, 12, 0)]
+    [InlineData("GstWebRTC", 0, 2, 0, 0, 45, 0)]
     public void TheSkipCensusIsStable(
         string module,
         int shadowed,
@@ -195,6 +197,7 @@ public sealed class ClassEmitterTests
     [InlineData("GstVideo", 0, 11, 10, 1, 0)]
     [InlineData("GstPbutils", 0, 0, 1, 0, 0)]
     [InlineData("GstSdp", 0, 4, 1, 0, 0)]
+    [InlineData("GstWebRTC", 0, 0, 4, 0, 4)]
     public void TheRejectionCensusIsStable(
         string module,
         int overlaySkip,
@@ -233,6 +236,7 @@ public sealed class ClassEmitterTests
     [InlineData("GstVideo", "GstSharp.Net.Video")]
     [InlineData("GstPbutils", "GstSharp.Net.Pbutils")]
     [InlineData("GstSdp", "GstSharp.Net.Sdp")]
+    [InlineData("GstWebRTC", "GstSharp.Net.WebRTC")]
     public void EveryModuleEmitsItsOwnTypeTable(string module, string projectDirectory)
     {
         string source = SourceOf(projectDirectory + "/Generated/_Module.cs");
