@@ -39,7 +39,7 @@ internal sealed class ClassEmitter
     private readonly Overlays _overlays;
     private readonly EmissionCensus _census;
     private readonly DiagnosticBag _diagnostics;
-    private readonly List<string> _registry;
+    private readonly List<RegistryEntry> _registry;
     private readonly Dictionary<string, List<string>> _inherited;
 
     /// <summary>Initializes a new instance of the <see cref="ClassEmitter"/> class.</summary>
@@ -64,7 +64,7 @@ internal sealed class ClassEmitter
         Overlays overlays,
         EmissionCensus census,
         DiagnosticBag diagnostics,
-        List<string> registry,
+        List<RegistryEntry> registry,
         Dictionary<string, List<string>> inherited)
     {
         _repository = repository;
@@ -309,7 +309,7 @@ internal sealed class ClassEmitter
             writer,
             property.Property.Doc,
             "The <c>" + property.Property.Name + "</c> property.");
-        XmlDocWriter.WriteObsolete(writer, property.Property);
+        XmlDocWriter.WriteObsolete(writer, Deprecation(property));
 
         string modifiers = "public " + (property.IsNew ? "new " : string.Empty);
         if (property.Setter is null)
@@ -323,6 +323,39 @@ internal sealed class ClassEmitter
         writer.WriteLine("get => " + property.Getter.Name + "();");
         writer.WriteLine("set => " + property.Setter.Name + "(value);");
         writer.CloseBlock();
+    }
+
+    /// <summary>
+    /// Returns the gir element whose deprecation the property carries.
+    /// </summary>
+    /// <remarks>
+    /// A property is nothing but a call of its accessors, so a deprecated
+    /// accessor makes the property deprecated as well: without the attribute the
+    /// body would use an obsolete member and the generated file would not
+    /// compile under warnings as errors. Only the first deprecation found is
+    /// used, because a second <c>[Obsolete]</c> attribute is an error of its
+    /// own, and the gir property comes first when it carries one.
+    /// </remarks>
+    /// <param name="property">The property being written.</param>
+    /// <returns>The element to take the <c>[Obsolete]</c> attribute from.</returns>
+    private static GirNode Deprecation(PropertyEmission property)
+    {
+        if (property.Property.IsDeprecated)
+        {
+            return property.Property;
+        }
+
+        if (property.Getter.Callable.IsDeprecated)
+        {
+            return property.Getter.Callable;
+        }
+
+        if (property.Setter is { Callable.IsDeprecated: true })
+        {
+            return property.Setter.Callable;
+        }
+
+        return property.Property;
     }
 
     private static string CTypeOf(GirClass declaration) =>
@@ -427,7 +460,7 @@ internal sealed class ClassEmitter
 
         if (declaration.GlibGetType is { Length: > 0 })
         {
-            _registry.Add(module.ClrNamespace + "." + typeName);
+            _registry.Add(new RegistryEntry(module.ClrNamespace + "." + typeName, declaration.IsDeprecated));
         }
 
         _census.Emitted(module.GirNamespace, "class");

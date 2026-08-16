@@ -61,7 +61,7 @@ internal sealed class RecordEmitter
     private readonly DiagnosticBag _diagnostics;
     private readonly SurfaceBuilder _surfaces;
     private readonly EmissionCensus _census;
-    private readonly List<string> _registry;
+    private readonly List<RegistryEntry> _registry;
 
     /// <summary>Initializes a new instance of the <see cref="RecordEmitter"/> class.</summary>
     /// <param name="repository">The loaded gir repository.</param>
@@ -82,7 +82,7 @@ internal sealed class RecordEmitter
         DiagnosticBag diagnostics,
         SurfaceBuilder surfaces,
         EmissionCensus census,
-        List<string> registry)
+        List<RegistryEntry> registry)
     {
         _repository = repository;
         _classifier = classifier;
@@ -223,7 +223,7 @@ internal sealed class RecordEmitter
 
             if (record.GlibGetType is { Length: > 0 } && kind is TypeKind.MiniObject or TypeKind.Boxed)
             {
-                _registry.Add(module.ClrNamespace + "." + typeName);
+                _registry.Add(new RegistryEntry(module.ClrNamespace + "." + typeName, record.IsDeprecated));
             }
         }
 

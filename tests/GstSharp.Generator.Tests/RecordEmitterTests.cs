@@ -789,7 +789,7 @@ public sealed class RecordEmitterTests
         SkipRules skipRules = new(Overlays.Empty);
         MarshalPlanner planner = new(repository, classifier, names, types, Overlays.Empty, skipRules, diagnostics);
         SurfaceBuilder surfaces = new(planner, names, census, diagnostics);
-        List<string> registry = [];
+        List<RegistryEntry> registry = [];
         RecordEmitter emitter = new(
             repository,
             classifier,
