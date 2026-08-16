@@ -149,12 +149,24 @@ public static unsafe partial class ColorBalanceExtensions
     /// <summary>Fired when the value of the indicated channel has changed.</summary>
     /// <param name="self">The instance to connect the handler to.</param>
     /// <param name="handler">The handler to connect.</param>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
     public static void AddValueChangedHandler(this Gst.Video.IColorBalance self, System.EventHandler<Gst.Video.ColorBalanceExtensions.ValueChangedSignalArgs> handler) =>
         Gst.Video.SignalConnections.Add((Gst.GObject.Object)self, "value-changed", (nint)(delegate* unmanaged[Cdecl]<nint, nint, int, nint, void>)&ValueChangedTrampoline, handler);
 
     /// <summary>Disconnects the handler that was connected last for a delegate of the <c>value-changed</c> signal of <c>GstColorBalance</c>.</summary>
     /// <param name="self">The instance the handler was connected to.</param>
     /// <param name="handler">The handler to disconnect.</param>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
     public static void RemoveValueChangedHandler(this Gst.Video.IColorBalance self, System.EventHandler<Gst.Video.ColorBalanceExtensions.ValueChangedSignalArgs> handler) =>
         Gst.Video.SignalConnections.Remove((Gst.GObject.Object)self, "value-changed", handler);
 

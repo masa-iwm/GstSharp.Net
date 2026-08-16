@@ -133,6 +133,124 @@ public sealed class AppSinkSimpleCallbacksTests
     }
 
     /// <summary>
+    /// The other shape a <c>new-sample</c> callback is written in: one that
+    /// drains everything the sink has queued instead of pulling once.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>An empty pull is not the end of the stream.</b> The one-pull callback
+    /// above may answer <see cref="FlowReturn.Eos"/> when
+    /// <see cref="AppSink.PullSample"/> hands back nothing, because a
+    /// <c>new-sample</c> callback is only called when there is a sample and a
+    /// blocking pull that returns nothing has run out of stream. A drain loop
+    /// has no such guarantee: it pulls until the sink is empty, so the pull
+    /// that ends the loop normally returns nothing simply because everything
+    /// has been taken. Copying the <c>null</c>-means-EOS line into it stops the
+    /// pipeline at the first drained queue.
+    /// </para>
+    /// <para>
+    /// This test is therefore written as the template for that shape: the loop
+    /// uses <see cref="AppSink.TryPullSample(Gst.ClockTime)"/> with a zero
+    /// timeout so that it never blocks, and <see cref="AppSink.IsEos"/> is what
+    /// decides between <see cref="FlowReturn.Eos"/> and
+    /// <see cref="FlowReturn.Ok"/> when the pull comes back empty. Every buffer
+    /// still arrives exactly once, which is what the frame count asserts, and
+    /// the pipeline reaches its end of stream rather than being stopped by the
+    /// callback.
+    /// </para>
+    /// </remarks>
+    [RequiresGStreamerFact(28)]
+    public void ADrainingCallbackPullsUntilEmptyWithoutMistakingThatForEos()
+    {
+        const int Frames = 200;
+
+        using Pipeline pipeline = Assert.IsAssignableFrom<Pipeline>(Global.ParseLaunch(
+            "videotestsrc num-buffers=200 ! video/x-raw,format=GRAY8,width=16,height=16 ! " +
+            "appsink name=sink sync=false"));
+
+        using Element? element = pipeline.GetByName("sink");
+        AppSink sink = Assert.IsType<AppSink>(element);
+        using Bus bus = pipeline.GetBus();
+
+        int pulled = 0;
+        int emptyPulls = 0;
+        List<Exception> failures = [];
+        void OnFailure(Exception exception)
+        {
+            lock (failures)
+            {
+                failures.Add(exception);
+            }
+        }
+
+        ExceptionTrap.UnhandledException += OnFailure;
+
+        try
+        {
+            sink.SetSimpleCallbacks(onNewSample: appsink =>
+            {
+                if (appsink is null)
+                {
+                    return FlowReturn.Error;
+                }
+
+                // Take everything that is queued, not just the sample this call
+                // was made for. A zero timeout is what makes the loop a drain:
+                // it returns as soon as the sink has nothing left.
+                while (true)
+                {
+                    using Sample? sample = appsink.TryPullSample(ClockTime.Zero);
+
+                    if (sample is null)
+                    {
+                        Interlocked.Increment(ref emptyPulls);
+
+                        // The queue is empty. That is the end of the stream
+                        // only if the sink says so; otherwise it just means
+                        // this callback has caught up, and answering Eos here
+                        // would stop a pipeline that has more to send.
+                        return appsink.IsEos() ? FlowReturn.Eos : FlowReturn.Ok;
+                    }
+
+                    Interlocked.Increment(ref pulled);
+                }
+            });
+
+            Assert.NotEqual(StateChangeReturn.Failure, pipeline.SetState(State.Playing));
+
+            using Message? message = BusPump.WaitFor(bus, MessageType.Eos | MessageType.Error, RunTimeout);
+
+            Assert.NotNull(message);
+            Assert.Equal(MessageType.Eos, message.Type);
+        }
+        finally
+        {
+            pipeline.SetState(State.Null);
+            ExceptionTrap.UnhandledException -= OnFailure;
+        }
+
+        _output.WriteLine(
+            $"the draining callback pulled {Volatile.Read(ref pulled)} samples and " +
+            $"found the sink empty {Volatile.Read(ref emptyPulls)} times");
+
+        lock (failures)
+        {
+            Assert.Empty(failures);
+        }
+
+        // Every buffer arrived, and none of them twice: a drain loop that
+        // reported an empty pull as the end of the stream would have stopped
+        // the pipeline well short of this.
+        Assert.Equal(Frames, Volatile.Read(ref pulled));
+
+        // The loop did run dry, more than once, and the pipeline survived it.
+        // Without this the test would pass for a sink that never drained.
+        Assert.True(
+            Volatile.Read(ref emptyPulls) > 1,
+            "The callback never found the sink empty, so the drain loop was never exercised.");
+    }
+
+    /// <summary>
     /// The managed state of an installed callback is owned by native code, and
     /// tearing the sink down is what gives it back: the destroy notification of
     /// the slot runs, the <c>GCHandle</c> goes away and what the closure

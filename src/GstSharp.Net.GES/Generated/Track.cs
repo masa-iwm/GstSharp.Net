@@ -339,6 +339,12 @@ public unsafe partial class Track : Gst.Bin, GES.IMetaContainer, Gst.IChildProxy
     /// this will be emitted whenever the underlying #nlecomposition has been
     /// committed (see #nlecomposition::commited).
     /// </summary>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
     public event System.EventHandler Committed
     {
         add => GES.SignalConnections.Add(this, "commited", (nint)(delegate* unmanaged[Cdecl]<nint, nint, void>)&CommittedTrampoline, value);
@@ -381,6 +387,12 @@ public unsafe partial class Track : Gst.Bin, GES.IMetaContainer, Gst.IChildProxy
     }
 
     /// <summary>Will be emitted after a track element is added to the track.</summary>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
     public event System.EventHandler<GES.Track.TrackElementAddedSignalArgs> TrackElementAdded
     {
         add => GES.SignalConnections.Add(this, "track-element-added", (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, void>)&TrackElementAddedTrampoline, value);
@@ -425,6 +437,12 @@ public unsafe partial class Track : Gst.Bin, GES.IMetaContainer, Gst.IChildProxy
     }
 
     /// <summary>Will be emitted after a track element is removed from the track.</summary>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
     public event System.EventHandler<GES.Track.TrackElementRemovedSignalArgs> TrackElementRemoved
     {
         add => GES.SignalConnections.Add(this, "track-element-removed", (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, void>)&TrackElementRemovedTrampoline, value);

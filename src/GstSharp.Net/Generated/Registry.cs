@@ -486,6 +486,12 @@ public unsafe partial class Registry : Gst.Object
     /// Signals that a feature has been added to the registry (possibly
     /// replacing a previously-added one by the same name)
     /// </summary>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
     public event System.EventHandler<Gst.Registry.FeatureAddedSignalArgs> FeatureAdded
     {
         add => Gst.SignalConnections.Add(this, "feature-added", (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, void>)&FeatureAddedTrampoline, value);
@@ -533,6 +539,12 @@ public unsafe partial class Registry : Gst.Object
     /// Signals that a plugin has been added to the registry (possibly
     /// replacing a previously-added one by the same name)
     /// </summary>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
     public event System.EventHandler<Gst.Registry.PluginAddedSignalArgs> PluginAdded
     {
         add => Gst.SignalConnections.Add(this, "plugin-added", (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, void>)&PluginAddedTrampoline, value);

@@ -169,12 +169,24 @@ public static unsafe partial class ChildProxyExtensions
     /// <summary>Will be emitted after the @object was added to the @child_proxy.</summary>
     /// <param name="self">The instance to connect the handler to.</param>
     /// <param name="handler">The handler to connect.</param>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
     public static void AddChildAddedHandler(this Gst.IChildProxy self, System.EventHandler<Gst.ChildProxyExtensions.ChildAddedSignalArgs> handler) =>
         Gst.SignalConnections.Add((Gst.GObject.Object)self, "child-added", (nint)(delegate* unmanaged[Cdecl]<nint, nint, byte*, nint, void>)&ChildAddedTrampoline, handler);
 
     /// <summary>Disconnects the handler that was connected last for a delegate of the <c>child-added</c> signal of <c>GstChildProxy</c>.</summary>
     /// <param name="self">The instance the handler was connected to.</param>
     /// <param name="handler">The handler to disconnect.</param>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
     public static void RemoveChildAddedHandler(this Gst.IChildProxy self, System.EventHandler<Gst.ChildProxyExtensions.ChildAddedSignalArgs> handler) =>
         Gst.SignalConnections.Remove((Gst.GObject.Object)self, "child-added", handler);
 
@@ -225,12 +237,24 @@ public static unsafe partial class ChildProxyExtensions
     /// <summary>Will be emitted after the @object was removed from the @child_proxy.</summary>
     /// <param name="self">The instance to connect the handler to.</param>
     /// <param name="handler">The handler to connect.</param>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
     public static void AddChildRemovedHandler(this Gst.IChildProxy self, System.EventHandler<Gst.ChildProxyExtensions.ChildRemovedSignalArgs> handler) =>
         Gst.SignalConnections.Add((Gst.GObject.Object)self, "child-removed", (nint)(delegate* unmanaged[Cdecl]<nint, nint, byte*, nint, void>)&ChildRemovedTrampoline, handler);
 
     /// <summary>Disconnects the handler that was connected last for a delegate of the <c>child-removed</c> signal of <c>GstChildProxy</c>.</summary>
     /// <param name="self">The instance the handler was connected to.</param>
     /// <param name="handler">The handler to disconnect.</param>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
     public static void RemoveChildRemovedHandler(this Gst.IChildProxy self, System.EventHandler<Gst.ChildProxyExtensions.ChildRemovedSignalArgs> handler) =>
         Gst.SignalConnections.Remove((Gst.GObject.Object)self, "child-removed", handler);
 

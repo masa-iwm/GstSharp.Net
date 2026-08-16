@@ -756,6 +756,12 @@ public abstract unsafe partial class Clock : Gst.Object
     /// the application's main thread.
     /// </para>
     /// </remarks>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
     public event System.EventHandler<Gst.Clock.SyncedSignalArgs> Synced
     {
         add => Gst.SignalConnections.Add(this, "synced", (nint)(delegate* unmanaged[Cdecl]<nint, int, nint, void>)&SyncedTrampoline, value);

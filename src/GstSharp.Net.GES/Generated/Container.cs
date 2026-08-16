@@ -116,6 +116,12 @@ public abstract unsafe partial class Container : GES.TimelineElement, GES.IExtra
     /// you should connect with g_signal_connect_after() since the signal
     /// may be stopped internally.
     /// </summary>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
     public event System.EventHandler<GES.Container.ChildAddedSignalArgs> ChildAdded
     {
         add => GES.SignalConnections.Add(this, "child-added", (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, void>)&ChildAddedTrampoline, value);
@@ -160,6 +166,12 @@ public abstract unsafe partial class Container : GES.TimelineElement, GES.IExtra
     }
 
     /// <summary>Will be emitted after a child is removed from the container.</summary>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
     public event System.EventHandler<GES.Container.ChildRemovedSignalArgs> ChildRemoved
     {
         add => GES.SignalConnections.Add(this, "child-removed", (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, void>)&ChildRemovedTrampoline, value);

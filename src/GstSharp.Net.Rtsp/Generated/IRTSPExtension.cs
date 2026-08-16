@@ -200,12 +200,24 @@ public static unsafe partial class RTSPExtensionExtensions
     /// <summary>Connects a handler of the <c>send</c> signal of <c>GstRTSPExtension</c>.</summary>
     /// <param name="self">The instance to connect the handler to.</param>
     /// <param name="handler">The handler to connect.</param>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
     public static void AddSendHandler(this Gst.Rtsp.IRTSPExtension self, Gst.Rtsp.RTSPExtensionExtensions.SendHandler handler) =>
         Gst.Rtsp.SignalConnections.Add((Gst.GObject.Object)self, "send", (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, nint, int>)&SendTrampoline, handler);
 
     /// <summary>Disconnects the handler that was connected last for a delegate of the <c>send</c> signal of <c>GstRTSPExtension</c>.</summary>
     /// <param name="self">The instance the handler was connected to.</param>
     /// <param name="handler">The handler to disconnect.</param>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
     public static void RemoveSendHandler(this Gst.Rtsp.IRTSPExtension self, Gst.Rtsp.RTSPExtensionExtensions.SendHandler handler) =>
         Gst.Rtsp.SignalConnections.Remove((Gst.GObject.Object)self, "send", handler);
 

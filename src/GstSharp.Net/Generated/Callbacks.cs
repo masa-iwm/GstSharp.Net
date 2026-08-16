@@ -58,50 +58,6 @@ internal static unsafe class BusFuncTrampoline
 }
 
 /// <summary>
-/// Handler will be invoked synchronously, when a new message has been injected
-/// into the bus. This function is mostly used internally. Only one sync handler
-/// can be attached to a given bus.
-/// </summary>
-/// <remarks>
-/// <para>
-/// If the handler returns %GST_BUS_DROP, it should unref the message, else the
-/// message should not be unreffed by the sync handler.
-/// </para>
-/// </remarks>
-/// <param name="bus">the #GstBus that sent the message</param>
-/// <param name="message">the #GstMessage</param>
-/// <returns>#GstBusSyncReply stating what to do with the message</returns>
-public delegate Gst.BusSyncReply BusSyncHandler(Gst.Bus? bus, Gst.Message? message);
-
-/// <summary>The native entry point of <see cref="Gst.BusSyncHandler"/>.</summary>
-internal static unsafe class BusSyncHandlerTrampoline
-{
-    /// <summary>Gets the address that is handed to native code.</summary>
-    internal static nint Pointer => (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, int>)&Invoke;
-
-    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
-    private static int Invoke(nint bus, nint message, nint userData)
-    {
-        try
-        {
-            if (Gst.Interop.CallbackHandle.GetState<Gst.BusSyncHandler>(userData) is not { } callback)
-            {
-                return default;
-            }
-
-            Gst.Bus? busValue = Gst.GObject.Object.FromNative<Gst.Bus>(bus, Gst.Interop.Transfer.None);
-            Gst.Message? messageValue = Gst.Message.FromNative(message, Gst.Interop.Transfer.None);
-            return (int)callback(busValue, messageValue);
-        }
-        catch (Exception exception)
-        {
-            Gst.Interop.ExceptionTrap.Report(exception);
-            return default;
-        }
-    }
-}
-
-/// <summary>
 /// A function that will be called in gst_caps_filter_and_map_in_place().
 /// The function may modify @features and @structure, and both will be
 /// removed from the caps if %FALSE is returned.

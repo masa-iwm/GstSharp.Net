@@ -314,6 +314,12 @@ public unsafe partial class Project : GES.Asset, GES.IMetaContainer
     }
 
     /// <summary>Raised for the <c>asset-added</c> signal of <c>GESProject</c>.</summary>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
     public event System.EventHandler<GES.Project.AssetAddedSignalArgs> AssetAdded
     {
         add => GES.SignalConnections.Add(this, "asset-added", (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, void>)&AssetAddedTrampoline, value);
@@ -358,6 +364,12 @@ public unsafe partial class Project : GES.Asset, GES.IMetaContainer
     }
 
     /// <summary>Raised for the <c>asset-loading</c> signal of <c>GESProject</c>.</summary>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
     public event System.EventHandler<GES.Project.AssetLoadingSignalArgs> AssetLoading
     {
         add => GES.SignalConnections.Add(this, "asset-loading", (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, void>)&AssetLoadingTrampoline, value);
@@ -402,6 +414,12 @@ public unsafe partial class Project : GES.Asset, GES.IMetaContainer
     }
 
     /// <summary>Raised for the <c>asset-removed</c> signal of <c>GESProject</c>.</summary>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
     public event System.EventHandler<GES.Project.AssetRemovedSignalArgs> AssetRemoved
     {
         add => GES.SignalConnections.Add(this, "asset-removed", (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, void>)&AssetRemovedTrampoline, value);
@@ -446,6 +464,12 @@ public unsafe partial class Project : GES.Asset, GES.IMetaContainer
     }
 
     /// <summary>Raised for the <c>loaded</c> signal of <c>GESProject</c>.</summary>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
     public event System.EventHandler<GES.Project.LoadedSignalArgs> Loaded
     {
         add => GES.SignalConnections.Add(this, "loaded", (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, void>)&LoadedTrampoline, value);
@@ -490,6 +514,12 @@ public unsafe partial class Project : GES.Asset, GES.IMetaContainer
     }
 
     /// <summary>Raised for the <c>loading</c> signal of <c>GESProject</c>.</summary>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
     public event System.EventHandler<GES.Project.LoadingSignalArgs> Loading
     {
         add => GES.SignalConnections.Add(this, "loading", (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, void>)&LoadingTrampoline, value);

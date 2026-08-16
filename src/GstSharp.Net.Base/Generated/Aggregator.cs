@@ -318,8 +318,9 @@ public abstract unsafe partial class Aggregator : Gst.Element
 
         /// <summary>The #GstSegment the next output buffer is part of</summary>
         /// <remarks>
-        /// The value is only valid while the handler runs. Keep what you need of
-        /// it, or take a reference of your own before the handler returns.
+        /// The value is only valid while the handler runs: the wrapper is disposed
+        /// once it returns. Read out of it what is needed, or copy it where the
+        /// type offers a copy.
         /// </remarks>
         public Gst.Segment Segment { get; }
 
@@ -334,8 +335,9 @@ public abstract unsafe partial class Aggregator : Gst.Element
 
         /// <summary>a #GstStructure containing additional information</summary>
         /// <remarks>
-        /// The value is only valid while the handler runs. Keep what you need of
-        /// it, or take a reference of your own before the handler returns.
+        /// The value is only valid while the handler runs: the wrapper is disposed
+        /// once it returns. Read out of it what is needed, or copy it where the
+        /// type offers a copy.
         /// </remarks>
         public Gst.Structure? Info { get; }
     }
@@ -345,6 +347,12 @@ public abstract unsafe partial class Aggregator : Gst.Element
     /// of input samples it will aggregate. Handlers may call
     /// gst_aggregator_peek_next_sample() at that point.
     /// </summary>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
     public event System.EventHandler<Gst.Base.Aggregator.SamplesSelectedSignalArgs> SamplesSelected
     {
         add => Gst.Base.SignalConnections.Add(this, "samples-selected", (nint)(delegate* unmanaged[Cdecl]<nint, nint, ulong, ulong, ulong, nint, nint, void>)&SamplesSelectedTrampoline, value);

@@ -414,9 +414,10 @@ disappears shows up here as an added line.
 - `gst_tag_setter_add_tag_valist`
 - `gst_tag_setter_add_tag_valist_values`
 
-### OverlaySkip (10)
+### OverlaySkip (11)
 
 - `gst_buffer_remove_meta`
+- `gst_bus_set_sync_handler`
 - `gst_caps_features_add_static_str`
 - `gst_caps_features_new_single_static_str`
 - `gst_caps_new_static_str_empty_simple`

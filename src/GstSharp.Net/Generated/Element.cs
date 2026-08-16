@@ -1545,6 +1545,12 @@ public abstract unsafe partial class Element : Gst.Object
     /// Note that this signal will usually be emitted from the context of
     /// the streaming thread.
     /// </summary>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
     public event System.EventHandler NoMorePadsSignal
     {
         add => Gst.SignalConnections.Add(this, "no-more-pads", (nint)(delegate* unmanaged[Cdecl]<nint, nint, void>)&NoMorePadsSignalTrampoline, value);
@@ -1593,6 +1599,12 @@ public abstract unsafe partial class Element : Gst.Object
     /// you will need to set them to the desired target state with
     /// gst_element_set_state() or gst_element_sync_state_with_parent().
     /// </summary>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
     public event System.EventHandler<Gst.Element.PadAddedSignalArgs> PadAdded
     {
         add => Gst.SignalConnections.Add(this, "pad-added", (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, void>)&PadAddedTrampoline, value);
@@ -1637,6 +1649,12 @@ public abstract unsafe partial class Element : Gst.Object
     }
 
     /// <summary>a #GstPad has been removed from the element</summary>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
     public event System.EventHandler<Gst.Element.PadRemovedSignalArgs> PadRemoved
     {
         add => Gst.SignalConnections.Add(this, "pad-removed", (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, void>)&PadRemovedTrampoline, value);

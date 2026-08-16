@@ -733,6 +733,12 @@ public unsafe partial class Timeline : Gst.Bin, GES.IExtractable, GES.IMetaConta
     /// ges_timeline_commit_sync() if you do not want to have to connect
     /// to this signal.
     /// </summary>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
     public event System.EventHandler Committed
     {
         add => GES.SignalConnections.Add(this, "commited", (nint)(delegate* unmanaged[Cdecl]<nint, nint, void>)&CommittedTrampoline, value);
@@ -787,6 +793,12 @@ public unsafe partial class Timeline : Gst.Bin, GES.IExtractable, GES.IMetaConta
     /// were created for the timeline.
     /// </para>
     /// </remarks>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
     public event System.EventHandler<GES.Timeline.GroupAddedSignalArgs> GroupAdded
     {
         add => GES.SignalConnections.Add(this, "group-added", (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, void>)&GroupAddedTrampoline, value);
@@ -839,6 +851,12 @@ public unsafe partial class Timeline : Gst.Bin, GES.IExtractable, GES.IMetaConta
     /// layers were created for the timeline.
     /// </para>
     /// </remarks>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
     public event System.EventHandler<GES.Timeline.LayerAddedSignalArgs> LayerAdded
     {
         add => GES.SignalConnections.Add(this, "layer-added", (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, void>)&LayerAddedTrampoline, value);
@@ -883,6 +901,12 @@ public unsafe partial class Timeline : Gst.Bin, GES.IExtractable, GES.IMetaConta
     }
 
     /// <summary>Will be emitted after the layer is removed from the timeline.</summary>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
     public event System.EventHandler<GES.Timeline.LayerRemovedSignalArgs> LayerRemoved
     {
         add => GES.SignalConnections.Add(this, "layer-removed", (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, void>)&LayerRemovedTrampoline, value);
@@ -943,6 +967,12 @@ public unsafe partial class Timeline : Gst.Bin, GES.IExtractable, GES.IMetaConta
     /// not have created a new snapping event), or because the timeline has
     /// been committed.
     /// </summary>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
     public event System.EventHandler<GES.Timeline.SnappingEndedSignalArgs> SnappingEnded
     {
         add => GES.SignalConnections.Add(this, "snapping-ended", (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, ulong, nint, void>)&SnappingEndedTrampoline, value);
@@ -1012,6 +1042,12 @@ public unsafe partial class Timeline : Gst.Bin, GES.IExtractable, GES.IMetaConta
     /// element edit within a timeline.
     /// </para>
     /// </remarks>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
     public event System.EventHandler<GES.Timeline.SnappingStartedSignalArgs> SnappingStarted
     {
         add => GES.SignalConnections.Add(this, "snapping-started", (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, ulong, nint, void>)&SnappingStartedTrampoline, value);
@@ -1067,6 +1103,12 @@ public unsafe partial class Timeline : Gst.Bin, GES.IExtractable, GES.IMetaConta
     /// tracks were created for the timeline.
     /// </para>
     /// </remarks>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
     public event System.EventHandler<GES.Timeline.TrackAddedSignalArgs> TrackAdded
     {
         add => GES.SignalConnections.Add(this, "track-added", (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, void>)&TrackAddedTrampoline, value);
@@ -1111,6 +1153,12 @@ public unsafe partial class Timeline : Gst.Bin, GES.IExtractable, GES.IMetaConta
     }
 
     /// <summary>Will be emitted after the track is removed from the timeline.</summary>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
     public event System.EventHandler<GES.Timeline.TrackRemovedSignalArgs> TrackRemoved
     {
         add => GES.SignalConnections.Add(this, "track-removed", (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, void>)&TrackRemovedTrampoline, value);

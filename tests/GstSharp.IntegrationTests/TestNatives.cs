@@ -78,6 +78,21 @@ internal static unsafe partial class TestNatives
     [LibraryImport("GstBase", EntryPoint = "gst_adapter_push")]
     internal static partial void AdapterPush(nint adapter, nint buffer);
 
+    /// <summary>Posts a message on a bus, which takes the reference over.</summary>
+    /// <param name="bus">The bus to post on.</param>
+    /// <param name="message">The message, whose reference the bus takes over.</param>
+    /// <returns>Non zero when the message was posted, zero when the bus is flushing.</returns>
+    /// <remarks>
+    /// The call is <c>transfer-ownership="full"</c> on the message, which is
+    /// why the generator refuses the signature: the marshaller has no way to
+    /// hand a wrapper over. Posting by hand is what lets the sync handler tests
+    /// account for the reference of the poster on their own — that reference is
+    /// the one a handler that answers <c>Drop</c> is responsible for, and a test
+    /// that cannot see it cannot prove that it is released exactly once.
+    /// </remarks>
+    [LibraryImport("Gst", EntryPoint = "gst_bus_post")]
+    internal static partial int BusPost(nint bus, nint message);
+
     /// <summary>Releases a reference of a <c>GstObject</c>.</summary>
     /// <param name="obj">The object to release.</param>
     [LibraryImport("Gst", EntryPoint = "gst_object_unref")]
@@ -98,4 +113,24 @@ internal static unsafe partial class TestNatives
     /// <param name="miniObject">The mini object to release.</param>
     [LibraryImport("Gst", EntryPoint = "gst_mini_object_unref")]
     internal static partial void MiniObjectUnref(nint miniObject);
+
+    /// <summary>
+    /// Asks to be told when a mini object is destroyed, without holding a
+    /// reference of its own.
+    /// </summary>
+    /// <param name="miniObject">The mini object to watch.</param>
+    /// <param name="notify">
+    /// A <c>GstMiniObjectNotify</c>, called as <c>notify(userData, object)</c>
+    /// when the last reference of the object goes away.
+    /// </param>
+    /// <param name="userData">The state handed to the notification.</param>
+    /// <remarks>
+    /// This is how a test observes that something was freed rather than
+    /// inferring it from a reference count. A leaked object is one whose
+    /// notification never arrives, which no count read through the raw mirror
+    /// can show: reading the mirror of an object that was freed is undefined,
+    /// and reading the mirror of one that was not tells nothing about the rest.
+    /// </remarks>
+    [LibraryImport("Gst", EntryPoint = "gst_mini_object_weak_ref")]
+    internal static partial void MiniObjectWeakRef(nint miniObject, nint notify, nint userData);
 }

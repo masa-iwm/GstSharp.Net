@@ -181,11 +181,17 @@ public sealed class SignalEmitterTests
         string source = run.File("Element.cs");
 
         // The wrapper takes a reference of its own, which the trampoline gives
-        // back as soon as the handler returned; the property says as much.
+        // back as soon as the handler returned; the property says as much, and
+        // it says it in terms managed code can act on. Taking a reference is
+        // not one of them — no wrapper exposes the reference count — so the
+        // remark names reading and copying instead.
         Assert.Contains(
-            "/// The value is only valid while the handler runs.",
+            "/// The value is only valid while the handler runs: the wrapper is disposed\n"
+            + "        /// once it returns. Read out of it what is needed, or copy it where the\n"
+            + "        /// type offers a copy.",
             source,
             StringComparison.Ordinal);
+        Assert.DoesNotContain("take a reference of your own", source, StringComparison.Ordinal);
         Assert.Contains(
             "using Gst.Message messageValue = Gst.Message.FromNative(message, Gst.Interop.Transfer.None)\n"
             + "                ?? throw new InvalidOperationException(\"The posted signal of GstElement passed no message.\");",
@@ -205,6 +211,56 @@ public sealed class SignalEmitterTests
             StringComparison.Ordinal);
         Assert.Contains("Gst.SignalConnections.Add(this, \"posted\", ", source, StringComparison.Ordinal);
         Assert.DoesNotContain("\"posted::", source, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// Every event says which instance a handler has to be removed from. The
+    /// handlers are held in a table that is keyed by the wrapper, so add and
+    /// remove are only a pair when both see the same one, and the interning of
+    /// the wrappers that makes the usual code work is an implementation detail
+    /// rather than a promise of the surface.
+    /// </summary>
+    [Fact]
+    public void EveryEventSaysWhichInstanceAHandlerIsRemovedFrom()
+    {
+        FixtureRun run = Fixture.Run(SignalFixture);
+        string source = run.File("Element.cs");
+
+        const string Remark =
+            "    /// <remarks>\n"
+            + "    /// The handler is remembered on the wrapper it was added to and has to be\n"
+            + "    /// removed from that same instance. Looking the object up again normally\n"
+            + "    /// hands the same wrapper out, but one that was disposed in between is\n"
+            + "    /// replaced by a new one, which knows nothing of the handler.\n"
+            + "    /// </remarks>\n";
+
+        // Once per event, whatever the shape of the signal: no argument, an
+        // argument, a return value, a detail.
+        Assert.Equal(
+            source.Split("public event ").Length - 1,
+            source.Split(Remark).Length - 1);
+
+        Assert.Contains(Remark + "    public event System.EventHandler NoMorePads\n", source, StringComparison.Ordinal);
+        Assert.Contains(
+            Remark + "    public event Gst.Element.DoLatencyHandler DoLatency\n",
+            source,
+            StringComparison.Ordinal);
+
+        // The signal of an interface is reached through extension methods
+        // rather than an event, and the table behind them is keyed the same
+        // way, so both halves of the pair carry the same remark.
+        string childProxy = Source("IChildProxy.cs");
+
+        Assert.Contains(
+            Remark
+            + "    public static void AddChildAddedHandler(this Gst.IChildProxy self, ",
+            childProxy,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            Remark
+            + "    public static void RemoveChildAddedHandler(this Gst.IChildProxy self, ",
+            childProxy,
+            StringComparison.Ordinal);
     }
 
     [Fact]

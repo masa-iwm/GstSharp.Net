@@ -128,6 +128,12 @@ public unsafe partial class MarkerList : Gst.GObject.Object
     }
 
     /// <summary>Will be emitted after the marker was added to the marker-list.</summary>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
     public event System.EventHandler<GES.MarkerList.MarkerAddedSignalArgs> MarkerAdded
     {
         add => GES.SignalConnections.Add(this, "marker-added", (nint)(delegate* unmanaged[Cdecl]<nint, ulong, nint, nint, void>)&MarkerAddedTrampoline, value);
@@ -183,6 +189,12 @@ public unsafe partial class MarkerList : Gst.GObject.Object
     }
 
     /// <summary>Will be emitted after the marker was moved to.</summary>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
     public event System.EventHandler<GES.MarkerList.MarkerMovedSignalArgs> MarkerMoved
     {
         add => GES.SignalConnections.Add(this, "marker-moved", (nint)(delegate* unmanaged[Cdecl]<nint, ulong, ulong, nint, nint, void>)&MarkerMovedTrampoline, value);
@@ -229,6 +241,12 @@ public unsafe partial class MarkerList : Gst.GObject.Object
     }
 
     /// <summary>Will be emitted after the marker was removed the marker-list.</summary>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
     public event System.EventHandler<GES.MarkerList.MarkerRemovedSignalArgs> MarkerRemoved
     {
         add => GES.SignalConnections.Add(this, "marker-removed", (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, void>)&MarkerRemovedTrampoline, value);

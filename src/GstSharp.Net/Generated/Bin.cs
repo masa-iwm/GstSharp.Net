@@ -484,6 +484,12 @@ public unsafe partial class Bin : Gst.Element, Gst.IChildProxy
     }
 
     /// <summary>Will be emitted after the element was added to @sub_bin.</summary>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
     public event System.EventHandler<Gst.Bin.DeepElementAddedSignalArgs> DeepElementAdded
     {
         add => Gst.SignalConnections.Add(this, "deep-element-added", (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, nint, void>)&DeepElementAddedTrampoline, value);
@@ -535,6 +541,12 @@ public unsafe partial class Bin : Gst.Element, Gst.IChildProxy
     }
 
     /// <summary>Will be emitted after the element was removed from @sub_bin.</summary>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
     public event System.EventHandler<Gst.Bin.DeepElementRemovedSignalArgs> DeepElementRemoved
     {
         add => Gst.SignalConnections.Add(this, "deep-element-removed", (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, nint, void>)&DeepElementRemovedTrampoline, value);
@@ -589,6 +601,12 @@ public unsafe partial class Bin : Gst.Element, Gst.IChildProxy
     /// the same pipeline.
     /// </para>
     /// </remarks>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
     public event Gst.Bin.DoLatencyHandler DoLatency
     {
         add => Gst.SignalConnections.Add(this, "do-latency", (nint)(delegate* unmanaged[Cdecl]<nint, nint, int>)&DoLatencyTrampoline, value);
@@ -633,6 +651,12 @@ public unsafe partial class Bin : Gst.Element, Gst.IChildProxy
     }
 
     /// <summary>Will be emitted after the element was added to the bin.</summary>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
     public event System.EventHandler<Gst.Bin.ElementAddedSignalArgs> ElementAdded
     {
         add => Gst.SignalConnections.Add(this, "element-added", (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, void>)&ElementAddedTrampoline, value);
@@ -677,6 +701,12 @@ public unsafe partial class Bin : Gst.Element, Gst.IChildProxy
     }
 
     /// <summary>Will be emitted after the element was removed from the bin.</summary>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
     public event System.EventHandler<Gst.Bin.ElementRemovedSignalArgs> ElementRemoved
     {
         add => Gst.SignalConnections.Add(this, "element-removed", (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, void>)&ElementRemovedTrampoline, value);

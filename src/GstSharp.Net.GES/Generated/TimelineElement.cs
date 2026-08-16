@@ -709,8 +709,9 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
 
         /// <summary>The specification for the property that has been registered</summary>
         /// <remarks>
-        /// The value is only valid while the handler runs. Keep what you need of
-        /// it, or take a reference of your own before the handler returns.
+        /// The value is only valid while the handler runs: the wrapper is disposed
+        /// once it returns. Read out of it what is needed, or copy it where the
+        /// type offers a copy.
         /// </remarks>
         public Gst.GObject.ParamSpec Prop { get; }
     }
@@ -725,6 +726,12 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
     /// pre-registered children properties. You can use
     /// ges_timeline_element_list_children_properties() to list these.
     /// </para>
+    /// </remarks>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
     /// </remarks>
     public event System.EventHandler<GES.TimelineElement.ChildPropertyAddedSignalArgs> ChildPropertyAdded
     {
@@ -773,8 +780,9 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
 
         /// <summary>The specification for the property that has been unregistered</summary>
         /// <remarks>
-        /// The value is only valid while the handler runs. Keep what you need of
-        /// it, or take a reference of your own before the handler returns.
+        /// The value is only valid while the handler runs: the wrapper is disposed
+        /// once it returns. Read out of it what is needed, or copy it where the
+        /// type offers a copy.
         /// </remarks>
         public Gst.GObject.ParamSpec Prop { get; }
     }
@@ -783,6 +791,12 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
     /// Emitted when the element has a child property unregistered. See
     /// ges_timeline_element_remove_child_property().
     /// </summary>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
     public event System.EventHandler<GES.TimelineElement.ChildPropertyRemovedSignalArgs> ChildPropertyRemoved
     {
         add => GES.SignalConnections.Add(this, "child-property-removed", (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, nint, void>)&ChildPropertyRemovedTrampoline, value);
@@ -830,8 +844,9 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
 
         /// <summary>The specification for the property that been set</summary>
         /// <remarks>
-        /// The value is only valid while the handler runs. Keep what you need of
-        /// it, or take a reference of your own before the handler returns.
+        /// The value is only valid while the handler runs: the wrapper is disposed
+        /// once it returns. Read out of it what is needed, or copy it where the
+        /// type offers a copy.
         /// </remarks>
         public Gst.GObject.ParamSpec Prop { get; }
     }
@@ -845,6 +860,12 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
     /// <remarks>
     /// The signal is detailed. The handler is connected to <c>deep-notify</c>
     /// without a detail, so it runs for every detail of the signal.
+    /// </remarks>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
     /// </remarks>
     public event System.EventHandler<GES.TimelineElement.DeepNotifySignalArgs> DeepNotify
     {

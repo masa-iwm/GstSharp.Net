@@ -102,13 +102,20 @@ public unsafe partial class AggregatorPad : Gst.Pad
 
         /// <summary>The <c>object</c> argument.</summary>
         /// <remarks>
-        /// The value is only valid while the handler runs. Keep what you need of
-        /// it, or take a reference of your own before the handler returns.
+        /// The value is only valid while the handler runs: the wrapper is disposed
+        /// once it returns. Read out of it what is needed, or copy it where the
+        /// type offers a copy.
         /// </remarks>
         public Gst.Buffer Object { get; }
     }
 
     /// <summary>Raised for the <c>buffer-consumed</c> signal of <c>GstAggregatorPad</c>.</summary>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
     public event System.EventHandler<Gst.Base.AggregatorPad.BufferConsumedSignalArgs> BufferConsumed
     {
         add => Gst.Base.SignalConnections.Add(this, "buffer-consumed", (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, void>)&BufferConsumedTrampoline, value);

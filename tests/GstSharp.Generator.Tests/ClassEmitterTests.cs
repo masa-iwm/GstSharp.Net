@@ -117,7 +117,7 @@ public sealed class ClassEmitterTests
     }
 
     [Theory]
-    [InlineData("Gst", 35, 51, 5, 18, 18, 1206, 19, 23)]
+    [InlineData("Gst", 35, 51, 5, 17, 18, 1205, 19, 23)]
     [InlineData("GstBase", 11, 8, 0, 5, 0, 166, 13, 2)]
     [InlineData("GstApp", 2, 2, 0, 8, 0, 61, 23, 8)]
     [InlineData("GstAudio", 14, 17, 1, 2, 2, 184, 15, 0)]
@@ -196,7 +196,7 @@ public sealed class ClassEmitterTests
     /// <param name="instanceTransfer">Callables that consume their instance and replace it.</param>
     /// <param name="actionSignals">Signals that are a call API rather than a notification.</param>
     [Theory]
-    [InlineData("Gst", 10, 3, 21, 20, 0)]
+    [InlineData("Gst", 11, 3, 21, 20, 0)]
     [InlineData("GstBase", 3, 3, 4, 0, 0)]
     [InlineData("GstApp", 0, 0, 4, 0, 9)]
     [InlineData("GstAudio", 1, 7, 4, 0, 0)]

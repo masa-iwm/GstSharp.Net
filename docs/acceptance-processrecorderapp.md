@@ -201,8 +201,10 @@ Priority order:
 5. **Small gaps found during the preview1 port (2026-08-16):**
    - `gst_message_parse_info` has no binding (only `ParseInfoDetails`); the
      app's only use was in dead code, but the parse-API family is incomplete.
-   - `Buffer.Copy()` convenience is absent — consumers write
-     `CopyRegion(BufferCopy.All, 0, nuint.MaxValue)` to get `gst_buffer_copy`.
+   - ~~`Buffer.Copy()` convenience is absent~~ — done: `Custom/Buffer.cs`
+     binds `gst_buffer_copy` by hand (the gir marks it `introspectable="0"`,
+     but the library exports the inline as a real symbol).
+     `Custom/Message.cs` binds `gst_message_copy` the same way.
    - ~~No public API reports the actually-loaded module file paths~~ —
      done: `NativeLoader.GetLoadedModulePath(logicalName)` answers from the
      module handle (truthful even for bare-name loads), and
@@ -215,6 +217,42 @@ Priority order:
    - `Custom/AppSrc.cs` stale remark: claims the push method is named `Push`
      because of an action-signal collision; the method is `PushBuffer` and no
      collision exists.
+6. **Bus feedback (2026-08-17, found moving the app onto `SyncMessage` +
+   `AppSink.SetSimpleCallbacks` on 1.28.0-preview.2):**
+   - ~~`Bus.SetSyncHandler` cannot be cleared~~ — done. The generated call
+     rejected a null handler, so the documented C clear form was unreachable
+     and a consumer could replace the handler but never take it off at
+     teardown. `gst_bus_set_sync_handler` is now on the `skip` list and the
+     surface is hand written in `Custom/Bus.cs` as `SetSyncHandler` plus
+     `ClearSyncHandler`. Verified against the 1.28.6 source: since 1.16.3 the
+     C function replaces an installed handler unconditionally and clears
+     thread-safely, so neither call guards against the other.
+   - ~~A handler that answers `Drop` leaks the poster's message reference~~ —
+     done. `gst_bus_post` leaves that reference with the handler on
+     `GST_BUS_DROP` (`gstbus.c`), and managed code has no way to consume it:
+     a wrapper owns only the reference it took. The hand written trampoline
+     releases it, so a dropped message is freed exactly once and managed code
+     still only ever disposes its own wrapper. `BusSyncHandlerTests` pins it
+     twice over — the reference count round trip through the raw mirror, and
+     500 dropped messages all reported destroyed through
+     `gst_mini_object_weak_ref`. Both assertions fail on the old trampoline.
+   - The trampoline answers `Pass`, not the enumeration's zero, when the
+     handler throws or its state is gone: `GST_BUS_DROP` *is* that zero, so
+     the generated shape silently swallowed error and end-of-stream messages
+     an application blocks on.
+   - ~~`SyncMessageSignalArgs.Message` told the reader to take a reference of
+     its own~~ — done. There is no such API, so the generated remark on every
+     owned-wrapper signal argument now says to read out of the value or copy
+     it, and `Message.Copy()` makes that possible for the case that prompted
+     it.
+   - ~~Signal event add/remove identity is undocumented~~ — done. Removal is
+     keyed on the wrapper instance (a `ConditionalWeakTable`), and
+     `bus.SyncMessage -= handler` works across a fresh `GetBus()` only because
+     wrappers are interned — which does not survive a disposed wrapper. Every
+     emitted event and interface accessor now carries a remark saying so.
+   - **Open, for the user to decide:** a first-class `Bus.SubscribeSyncDrop`
+     API. Deliberately out of the wave above, which fixed the existing surface
+     rather than adding to it.
 
 ## 5. Acceptance tests (smallest set that catches every bug the app hit)
 

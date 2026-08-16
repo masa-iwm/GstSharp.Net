@@ -374,6 +374,12 @@ public abstract unsafe partial class TrackElement : GES.TimelineElement, GES.IEx
     /// This is emitted when a control binding is added to a child property
     /// of the track element.
     /// </summary>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
     public event System.EventHandler<GES.TrackElement.ControlBindingAddedSignalArgs> ControlBindingAdded
     {
         add => GES.SignalConnections.Add(this, "control-binding-added", (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, void>)&ControlBindingAddedTrampoline, value);
@@ -421,6 +427,12 @@ public abstract unsafe partial class TrackElement : GES.TimelineElement, GES.IEx
     /// This is emitted when a control binding is removed from a child
     /// property of the track element.
     /// </summary>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
     public event System.EventHandler<GES.TrackElement.ControlBindingRemovedSignalArgs> ControlBindingRemoved
     {
         add => GES.SignalConnections.Add(this, "control-binding-removed", (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, void>)&ControlBindingRemovedTrampoline, value);

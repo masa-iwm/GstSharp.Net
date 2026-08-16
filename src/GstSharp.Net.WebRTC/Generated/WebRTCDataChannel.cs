@@ -53,6 +53,12 @@ public abstract unsafe partial class WebRTCDataChannel : Gst.GObject.Object
     }
 
     /// <summary>Raised for the <c>on-buffered-amount-low</c> signal of <c>GstWebRTCDataChannel</c>.</summary>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
     public event System.EventHandler OnBufferedAmountLow
     {
         add => Gst.WebRTC.SignalConnections.Add(this, "on-buffered-amount-low", (nint)(delegate* unmanaged[Cdecl]<nint, nint, void>)&OnBufferedAmountLowTrampoline, value);
@@ -81,6 +87,12 @@ public abstract unsafe partial class WebRTCDataChannel : Gst.GObject.Object
     }
 
     /// <summary>Raised for the <c>on-close</c> signal of <c>GstWebRTCDataChannel</c>.</summary>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
     public event System.EventHandler OnClose
     {
         add => Gst.WebRTC.SignalConnections.Add(this, "on-close", (nint)(delegate* unmanaged[Cdecl]<nint, nint, void>)&OnCloseTrampoline, value);
@@ -123,6 +135,12 @@ public abstract unsafe partial class WebRTCDataChannel : Gst.GObject.Object
     }
 
     /// <summary>Raised for the <c>on-message-string</c> signal of <c>GstWebRTCDataChannel</c>.</summary>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
     public event System.EventHandler<Gst.WebRTC.WebRTCDataChannel.OnMessageStringSignalArgs> OnMessageString
     {
         add => Gst.WebRTC.SignalConnections.Add(this, "on-message-string", (nint)(delegate* unmanaged[Cdecl]<nint, byte*, nint, void>)&OnMessageStringTrampoline, value);
@@ -152,6 +170,12 @@ public abstract unsafe partial class WebRTCDataChannel : Gst.GObject.Object
     }
 
     /// <summary>Raised for the <c>on-open</c> signal of <c>GstWebRTCDataChannel</c>.</summary>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
     public event System.EventHandler OnOpen
     {
         add => Gst.WebRTC.SignalConnections.Add(this, "on-open", (nint)(delegate* unmanaged[Cdecl]<nint, nint, void>)&OnOpenTrampoline, value);

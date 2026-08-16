@@ -378,29 +378,6 @@ public unsafe partial class Bus : Gst.Object
     }
 
     /// <summary>
-    /// Sets the synchronous handler on the bus. The function will be called
-    /// every time a new message is posted on the bus. Note that the function
-    /// will be called in the same thread context as the posting object. This
-    /// function is usually only called by the creator of the bus. Applications
-    /// should handle messages asynchronously using the gst_bus watch and poll
-    /// functions.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// Before 1.16.3 it was not possible to replace an existing handler and
-    /// clearing an existing handler with %NULL was not thread-safe.
-    /// </para>
-    /// </remarks>
-    /// <param name="func">The handler function to install</param>
-    public void SetSyncHandler(Gst.BusSyncHandler func)
-    {
-        ArgumentNullException.ThrowIfNull(func);
-        Gst.Interop.CallbackHandle funcState = Gst.Interop.CallbackHandle.Alloc(func);
-        GstBusSetSyncHandler(Handle, Gst.BusSyncHandlerTrampoline.Pointer, funcState.UserData, (nint)Gst.Interop.CallbackHandle.DestroyNotify);
-        System.GC.KeepAlive(this);
-    }
-
-    /// <summary>
     /// A helper #GstBusSyncHandler that can be used to convert all synchronous
     /// messages into signals.
     /// </summary>
@@ -475,8 +452,9 @@ public unsafe partial class Bus : Gst.Object
 
         /// <summary>the message that has been posted asynchronously</summary>
         /// <remarks>
-        /// The value is only valid while the handler runs. Keep what you need of
-        /// it, or take a reference of your own before the handler returns.
+        /// The value is only valid while the handler runs: the wrapper is disposed
+        /// once it returns. Read out of it what is needed, or copy it where the
+        /// type offers a copy.
         /// </remarks>
         public Gst.Message Message { get; }
     }
@@ -489,6 +467,12 @@ public unsafe partial class Bus : Gst.Object
     /// <remarks>
     /// The signal is detailed. The handler is connected to <c>message</c>
     /// without a detail, so it runs for every detail of the signal.
+    /// </remarks>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
     /// </remarks>
     public event System.EventHandler<Gst.Bus.MessageSignalArgs> Message
     {
@@ -531,8 +515,9 @@ public unsafe partial class Bus : Gst.Object
 
         /// <summary>the message that has been posted synchronously</summary>
         /// <remarks>
-        /// The value is only valid while the handler runs. Keep what you need of
-        /// it, or take a reference of your own before the handler returns.
+        /// The value is only valid while the handler runs: the wrapper is disposed
+        /// once it returns. Read out of it what is needed, or copy it where the
+        /// type offers a copy.
         /// </remarks>
         public Gst.Message Message { get; }
     }
@@ -550,6 +535,12 @@ public unsafe partial class Bus : Gst.Object
     /// <remarks>
     /// The signal is detailed. The handler is connected to <c>sync-message</c>
     /// without a detail, so it runs for every detail of the signal.
+    /// </remarks>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
     /// </remarks>
     public event System.EventHandler<Gst.Bus.SyncMessageSignalArgs> SyncMessage
     {
@@ -639,10 +630,6 @@ public unsafe partial class Bus : Gst.Object
     /// <summary>The <c>gst_bus_set_flushing</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_bus_set_flushing")]
     private static partial void GstBusSetFlushing(nint bus, int flushing);
-
-    /// <summary>The <c>gst_bus_set_sync_handler</c> entry point.</summary>
-    [LibraryImport("Gst", EntryPoint = "gst_bus_set_sync_handler")]
-    private static partial void GstBusSetSyncHandler(nint bus, nint func, nint userData, nint notify);
 
     /// <summary>The <c>gst_bus_sync_signal_handler</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_bus_sync_signal_handler")]

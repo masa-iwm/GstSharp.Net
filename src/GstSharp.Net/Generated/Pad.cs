@@ -1309,6 +1309,12 @@ public unsafe partial class Pad : Gst.Object
     }
 
     /// <summary>Signals that a pad has been linked to the peer pad.</summary>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
     public event System.EventHandler<Gst.Pad.LinkedSignalArgs> Linked
     {
         add => Gst.SignalConnections.Add(this, "linked", (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, void>)&LinkedTrampoline, value);
@@ -1353,6 +1359,12 @@ public unsafe partial class Pad : Gst.Object
     }
 
     /// <summary>Signals that a pad has been unlinked from the peer pad.</summary>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
     public event System.EventHandler<Gst.Pad.UnlinkedSignalArgs> Unlinked
     {
         add => Gst.SignalConnections.Add(this, "unlinked", (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, void>)&UnlinkedTrampoline, value);

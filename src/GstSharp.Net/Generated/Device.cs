@@ -146,6 +146,12 @@ public abstract unsafe partial class Device : Gst.Object
     public Gst.Structure? Properties => GetProperties();
 
     /// <summary>Raised for the <c>removed</c> signal of <c>GstDevice</c>.</summary>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
     public event System.EventHandler Removed
     {
         add => Gst.SignalConnections.Add(this, "removed", (nint)(delegate* unmanaged[Cdecl]<nint, nint, void>)&RemovedTrampoline, value);

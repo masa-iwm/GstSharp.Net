@@ -38,6 +38,12 @@ public unsafe partial class ColorBalanceChannel : Gst.GObject.Object
     }
 
     /// <summary>Fired when the value of the indicated channel has changed.</summary>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
     public event System.EventHandler<Gst.Video.ColorBalanceChannel.ValueChangedSignalArgs> ValueChanged
     {
         add => Gst.Video.SignalConnections.Add(this, "value-changed", (nint)(delegate* unmanaged[Cdecl]<nint, int, nint, void>)&ValueChangedTrampoline, value);

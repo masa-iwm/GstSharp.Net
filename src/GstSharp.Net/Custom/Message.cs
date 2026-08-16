@@ -51,6 +51,47 @@ public sealed unsafe partial class Message
     public string? SourceName => Src?.Name;
 
     /// <summary>
+    /// Creates a copy of the message that carries the same type, source,
+    /// timestamp, sequence number and payload.
+    /// </summary>
+    /// <returns>
+    /// The copy, which the caller owns and has to dispose, or
+    /// <see langword="null"/> when the message could not be copied.
+    /// </returns>
+    /// <remarks>
+    /// <para>
+    /// This is <c>gst_message_copy</c>. It is hand written for the reason
+    /// <see cref="Gst.Buffer.Copy"/> is: the gir marks the function
+    /// <c>introspectable="0"</c>, so the generator skips it and no overlay can
+    /// bring it back. For C consumers it is a static inline function of
+    /// <c>gst/gstmessage.h</c> that forwards to <c>gst_mini_object_copy</c>,
+    /// and the library exports it as a real symbol nonetheless, which is what
+    /// makes it importable; see <c>MessageNative</c>.
+    /// </para>
+    /// <para>
+    /// <b>This is how a message outlives the handler it arrived in.</b> The
+    /// wrapper that a sync handler, a <c>message</c> event or a
+    /// <c>sync-message</c> event is handed is disposed when the handler
+    /// returns, so a message that has to be looked at later — queued for the
+    /// user interface thread, kept for a diagnostic — is copied here and the
+    /// copy is what is kept. The copy is a message of its own with a reference
+    /// count of one; the structure it carries is copied with it, and the source
+    /// object is referenced rather than duplicated.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="ObjectDisposedException">The wrapper was disposed.</exception>
+    public Gst.Message? Copy()
+    {
+        nint nativeResult = MessageNative.Copy(Handle);
+
+        // The message has to outlive the call that reads it: reading Handle is
+        // the last use of this wrapper, and a finalizer that runs in between
+        // would release the message being copied.
+        GC.KeepAlive(this);
+        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+    }
+
+    /// <summary>
     /// Reads the error and the debug string of a
     /// <see cref="MessageType.Error"/> message.
     /// </summary>

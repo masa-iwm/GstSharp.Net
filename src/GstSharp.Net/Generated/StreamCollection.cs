@@ -101,8 +101,9 @@ public unsafe partial class StreamCollection : Gst.Object
 
         /// <summary>the property that changed</summary>
         /// <remarks>
-        /// The value is only valid while the handler runs. Keep what you need of
-        /// it, or take a reference of your own before the handler returns.
+        /// The value is only valid while the handler runs: the wrapper is disposed
+        /// once it returns. Read out of it what is needed, or copy it where the
+        /// type offers a copy.
         /// </remarks>
         public Gst.GObject.ParamSpec Prop { get; }
     }
@@ -114,6 +115,12 @@ public unsafe partial class StreamCollection : Gst.Object
     /// <remarks>
     /// The signal is detailed. The handler is connected to <c>stream-notify</c>
     /// without a detail, so it runs for every detail of the signal.
+    /// </remarks>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
     /// </remarks>
     public event System.EventHandler<Gst.StreamCollection.StreamNotifySignalArgs> StreamNotify
     {

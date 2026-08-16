@@ -355,6 +355,12 @@ public unsafe partial class Layer : Gst.GObject.InitiallyUnowned, GES.IExtractab
     }
 
     /// <summary>Will be emitted after the clip is added to the layer.</summary>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
     public event System.EventHandler<GES.Layer.ClipAddedSignalArgs> ClipAdded
     {
         add => GES.SignalConnections.Add(this, "clip-added", (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, void>)&ClipAddedTrampoline, value);
@@ -399,6 +405,12 @@ public unsafe partial class Layer : Gst.GObject.InitiallyUnowned, GES.IExtractab
     }
 
     /// <summary>Will be emitted after the clip is removed from the layer.</summary>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
     public event System.EventHandler<GES.Layer.ClipRemovedSignalArgs> ClipRemoved
     {
         add => GES.SignalConnections.Add(this, "clip-removed", (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, void>)&ClipRemovedTrampoline, value);

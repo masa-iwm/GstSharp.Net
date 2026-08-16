@@ -323,10 +323,13 @@ internal static class SignalEmitter
             if (IsOwnedWrapper(argument.Argument))
             {
                 // The wrapper holds a reference that the trampoline releases
-                // again once the handler has returned.
+                // again once the handler has returned. Taking a reference of
+                // one's own is not something managed code can do, so the two
+                // ways out are reading the value or copying it.
                 writer.WriteLine("/// <remarks>");
-                writer.WriteLine("/// The value is only valid while the handler runs. Keep what you need of");
-                writer.WriteLine("/// it, or take a reference of your own before the handler returns.");
+                writer.WriteLine("/// The value is only valid while the handler runs: the wrapper is disposed");
+                writer.WriteLine("/// once it returns. Read out of it what is needed, or copy it where the");
+                writer.WriteLine("/// type offers a copy.");
                 writer.WriteLine("/// </remarks>");
             }
 
@@ -360,6 +363,7 @@ internal static class SignalEmitter
             writer.WriteLine("/// </remarks>");
         }
 
+        WriteRemovalIdentityRemark(writer);
         XmlDocWriter.WriteObsolete(writer, plan.Signal);
         writer.WriteLine(
             "public " + (signal.IsNew ? "new " : string.Empty) + "event " + plan.EventType + " " + plan.Name);
@@ -393,6 +397,7 @@ internal static class SignalEmitter
             writer.WriteLine("/// </remarks>");
         }
 
+        WriteRemovalIdentityRemark(writer);
         XmlDocWriter.WriteObsolete(writer, plan.Signal);
         writer.WriteLine(
             "public static void " + AddMethodName(plan) + "(this " + interfaceType + " self, "
@@ -406,12 +411,36 @@ internal static class SignalEmitter
             + Describe(plan, cType) + ".</summary>");
         writer.WriteLine("/// <param name=\"self\">The instance the handler was connected to.</param>");
         writer.WriteLine("/// <param name=\"handler\">The handler to disconnect.</param>");
+        WriteRemovalIdentityRemark(writer);
         XmlDocWriter.WriteObsolete(writer, plan.Signal);
         writer.WriteLine(
             "public static void " + RemoveMethodName(plan) + "(this " + interfaceType + " self, "
             + plan.EventType + " handler) =>");
         writer.WriteLine(
             "    " + connections + ".Remove((Gst.GObject.Object)self, \"" + plan.SignalName + "\", handler);");
+    }
+
+    /// <summary>
+    /// Writes the remark that says which instance a handler has to be removed
+    /// from.
+    /// </summary>
+    /// <param name="writer">The writer of the file being emitted.</param>
+    /// <remarks>
+    /// The connected handlers are held in a table that is keyed by the wrapper,
+    /// so adding and removing are only a pair when both see the same instance.
+    /// A lookup normally hands the same wrapper out again, which is what makes
+    /// the usual code work, but that is a property of the interning table
+    /// rather than of the object, and a wrapper that was disposed in between is
+    /// replaced by one that knows nothing of the handler.
+    /// </remarks>
+    private static void WriteRemovalIdentityRemark(CodeWriter writer)
+    {
+        writer.WriteLine("/// <remarks>");
+        writer.WriteLine("/// The handler is remembered on the wrapper it was added to and has to be");
+        writer.WriteLine("/// removed from that same instance. Looking the object up again normally");
+        writer.WriteLine("/// hands the same wrapper out, but one that was disposed in between is");
+        writer.WriteLine("/// replaced by a new one, which knows nothing of the handler.");
+        writer.WriteLine("/// </remarks>");
     }
 
     /// <summary>Returns the function pointer type of the trampoline of a signal.</summary>

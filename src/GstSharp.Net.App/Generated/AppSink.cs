@@ -539,6 +539,12 @@ public unsafe partial class AppSink : Gst.Base.BaseSink, Gst.IURIHandler
     /// Signal that the end-of-stream has been reached. This signal is emitted from
     /// the streaming thread.
     /// </summary>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
     public event System.EventHandler Eos
     {
         add => Gst.App.SignalConnections.Add(this, "eos", (nint)(delegate* unmanaged[Cdecl]<nint, nint, void>)&EosTrampoline, value);
@@ -587,6 +593,12 @@ public unsafe partial class AppSink : Gst.Base.BaseSink, Gst.IURIHandler
     /// Note that this signal is only emitted when the "emit-signals" property is
     /// set to %TRUE, which it is not by default for performance reasons.
     /// </para>
+    /// </remarks>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
     /// </remarks>
     public event Gst.App.AppSink.NewPrerollHandler NewPreroll
     {
@@ -638,6 +650,12 @@ public unsafe partial class AppSink : Gst.Base.BaseSink, Gst.IURIHandler
     /// Note that this signal is only emitted when the "emit-signals" property is
     /// set to %TRUE, which it is not by default for performance reasons.
     /// </para>
+    /// </remarks>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
     /// </remarks>
     public event Gst.App.AppSink.NewSampleHandler NewSample
     {
@@ -698,6 +716,12 @@ public unsafe partial class AppSink : Gst.Base.BaseSink, Gst.IURIHandler
     /// skip basesink handling of the event, %FALSE otherwise.
     /// </para>
     /// </remarks>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
     public event Gst.App.AppSink.NewSerializedEventHandler NewSerializedEvent
     {
         add => Gst.App.SignalConnections.Add(this, "new-serialized-event", (nint)(delegate* unmanaged[Cdecl]<nint, nint, int>)&NewSerializedEventTrampoline, value);
@@ -739,8 +763,9 @@ public unsafe partial class AppSink : Gst.Base.BaseSink, Gst.IURIHandler
 
         /// <summary>the allocation query</summary>
         /// <remarks>
-        /// The value is only valid while the handler runs. Keep what you need of
-        /// it, or take a reference of your own before the handler returns.
+        /// The value is only valid while the handler runs: the wrapper is disposed
+        /// once it returns. Read out of it what is needed, or copy it where the
+        /// type offers a copy.
         /// </remarks>
         public Gst.Query Query { get; }
     }
@@ -757,6 +782,12 @@ public unsafe partial class AppSink : Gst.Base.BaseSink, Gst.IURIHandler
     /// This signal is emitted from the streaming thread and only when the
     /// "emit-signals" property is %TRUE.
     /// </para>
+    /// </remarks>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
     /// </remarks>
     public event Gst.App.AppSink.ProposeAllocationHandler ProposeAllocation
     {

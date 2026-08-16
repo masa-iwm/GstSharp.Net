@@ -22,6 +22,17 @@ namespace Gst;
 /// calls is a copy that the caller owns, and the runtime library keeps its own
 /// import of it internal.
 /// </para>
+/// <para>
+/// <c>gst_message_copy</c> is imported for a different reason, the one
+/// <c>gst_buffer_copy</c> has: the gir marks it <c>introspectable="0"</c>, so
+/// the generator skips it and no overlay can bring it back. It is a static
+/// inline function of <c>gst/gstmessage.h</c> that forwards to
+/// <c>gst_mini_object_copy</c>, and the library is built with the inline
+/// functions disabled and exports it as a real symbol, which is what makes it
+/// importable at all. Should a build ever be met that does not export it,
+/// <c>gst_mini_object_copy</c> is the fallback entry point that the inline
+/// version calls.
+/// </para>
 /// </remarks>
 internal static unsafe partial class MessageNative
 {
@@ -54,6 +65,17 @@ internal static unsafe partial class MessageNative
     /// <param name="debug">Receives the debug string, owned by the caller.</param>
     [LibraryImport("Gst", EntryPoint = "gst_message_parse_info")]
     internal static partial void ParseInfo(nint message, nint* error, nint* debug);
+
+    /// <summary>
+    /// Creates a copy of a message: its type, source, timestamp, sequence
+    /// number and payload are copied.
+    /// </summary>
+    /// <param name="message">The message to copy.</param>
+    /// <returns>
+    /// The copy, which the caller owns, or <c>0</c> when the copy failed.
+    /// </returns>
+    [LibraryImport("Gst", EntryPoint = "gst_message_copy")]
+    internal static partial nint Copy(nint message);
 
     /// <summary>
     /// Releases a <c>GError</c> that the caller owns.
