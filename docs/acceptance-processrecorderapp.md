@@ -7,6 +7,14 @@ branches `main` = GirCore variant, `gstsharpbundle` = gstreamer-sharp fork
 variant) into requirements and tests. preview1 gates on sections 1-3;
 section 4 is the preview2 intake.
 
+**Status: preview1 acceptance PASSED (2026-08-16).** ProcessRecorderApp PR #1
+(branch `gstsharpnet`) ports the app to GstSharp.Net 1.28.0-preview.1: CI green
+with the full L2+L3 suite against both the CoreCLR and NativeAOT
+(`TrimMode=full`, no `TrimmerRootAssembly`) publishes, and real-GPU
+verification passes 9/9 encoder cases — including runs where the app loads the
+bundled runtime tree. Sections 1-3 are settled; section 4 below is the
+preview2 work order, refreshed with what the port actually found.
+
 The app is a pure consumer: no subclassing, no custom elements, no GMainLoop
 (bus is polled). Required modules: Gst core + GstApp + GstBase (only
 `BaseSrc` as a runtime-recognizable type). GstVideo/GstAudio/GstPbutils are
@@ -105,8 +113,9 @@ GstBase:
      small record per pending object, never a copy of the media.
 4. **DebugCategory must be wrapped by pointer**, not as a by-value struct:
    a value copy snapshots the threshold and runtime `GST_DEBUG` changes are
-   lost. (Currently classified PlainStruct — needs a fixup before the debug
-   API ships.)
+   lost. (Done: `forceOpaque` in `girs/overlays/fixups.json` emits it as an
+   opaque pointer wrapper. Creating a category is still impossible from app
+   code — that half remains §4.4.)
 5. **No flavor mixing.** One (flavor, directory) pinned for every module;
    expose which root won so apps can log it.
 
@@ -145,13 +154,41 @@ Priority order:
    - `gst_app_sink_set_simple_callbacks` (GStreamer >= 1.28, introspectable,
      standard `scope="notified"` + closure + destroy annotations — the
      designed-for-bindings API; immutable once installed; boxed
-     `GstAppSinkSimpleCallbacks` builder with `set_new_sample` etc.);
+     `GstAppSinkSimpleCallbacks` builder with `set_new_sample` etc.).
+     preview1 already emits the `AppSinkSimpleCallbacks` /
+     `AppSrcSimpleCallbacks` builder types; the missing piece is binding the
+     install method itself, which currently leaves the builders orphaned;
    - `gst_app_sink_set_callbacks` is `introspectable="0"` (struct of
      function-pointer fields) — out of scope; simple callbacks supersede it.
-3. **gpointer property read** (e.g. `d3d12swapchainsink` `swapchain`) and
-   **action-signal emit by name with arguments** (e.g. `resize`).
+3. **Already shipped in preview1 — no work needed** (this entry predates the
+   port): gpointer property read is `Object.GetProperty(name)` returning an
+   owned `Value` with `GetPointer()`, and action-signal emit is
+   `Object.EmitSignal("resize", w, h)` with pre-emission signature validation.
+   Both are verified in production by the app's preview path (swapchain
+   handle, resize).
 4. **DebugCategory.New + Log** (`GST_DEBUG_CATEGORY_INIT` is a macro,
-   absent from gir; needs hand binding, pointer-based per §2.4).
+   absent from gir; needs hand binding, pointer-based per §2.4). The public
+   `Gst.Global.DebugLogLiteral` exists but is unusable from app code because
+   `DebugCategory` cannot be created (ctors internal, `_gst_debug_category_new`
+   not in gir). The app keeps a raw P/Invoke pair
+   (`_gst_debug_category_new` — leading underscore is the real export — plus
+   `gst_debug_log_literal` with an `IntPtr` category) until this lands.
+5. **Small gaps found during the preview1 port (2026-08-16):**
+   - `gst_message_parse_info` has no binding (only `ParseInfoDetails`); the
+     app's only use was in dead code, but the parse-API family is incomplete.
+   - `Buffer.Copy()` convenience is absent — consumers write
+     `CopyRegion(BufferCopy.All, 0, nuint.MaxValue)` to get `gst_buffer_copy`.
+   - No public API reports the actually-loaded module file paths, and
+     `NativeLoader.ResolvedDirectory` is null when the pin came from the
+     process search path — apps fall back to `Process.Modules` scans for
+     their runtime log line.
+   - `Custom/Caps.cs` doc/code mismatch: the `MakeWritable` remarks describe
+     `GetStructure` results as borrows that write through on writable caps;
+     the generated method returns an independent boxed copy (mutations are
+     lost). Fix the docs, or provide a write-through mutation path.
+   - `Custom/AppSrc.cs` stale remark: claims the push method is named `Push`
+     because of an action-signal collision; the method is `PushBuffer` and no
+     collision exists.
 
 ## 5. Acceptance tests (smallest set that catches every bug the app hit)
 
