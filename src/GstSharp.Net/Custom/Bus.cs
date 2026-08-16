@@ -125,6 +125,124 @@ public unsafe partial class Bus
         GC.KeepAlive(this);
     }
 
+    /// <summary>
+    /// Delivers every message to a handler in the thread that posts it and
+    /// drops it afterwards, so that the queue of the bus never grows.
+    /// </summary>
+    /// <param name="handler">
+    /// The handler, which receives the bus and the message. The wrapper of the
+    /// message is disposed when the handler returns, whatever it does, so
+    /// nothing may keep it: read out of it what is needed, or take a copy with
+    /// <see cref="Gst.Message.Copy"/>.
+    /// </param>
+    /// <returns>
+    /// The subscription. Disposing it takes the handler off the bus again.
+    /// </returns>
+    /// <remarks>
+    /// <para>
+    /// This is the shape an application with no main loop needs. Messages a bus
+    /// nobody reads accumulates in its queue for the lifetime of the pipeline,
+    /// and a poll of the bus is the usual answer; an application that would
+    /// rather be told than ask installs a sync handler instead, and then has to
+    /// answer <see cref="Gst.BusSyncReply.Drop"/> from it or gain nothing —
+    /// passing puts the message on the queue after all. That reply is the one
+    /// with an ownership rule attached, and this call is that rule made
+    /// unnecessary: the handler here answers nothing, the binding drops for it,
+    /// and the queue stays empty.
+    /// </para>
+    /// <code>
+    /// using IDisposable subscription = pipeline.GetBus().SubscribeSyncDrop(
+    ///     (_, message) => Console.WriteLine(message?.Type));
+    /// </code>
+    /// <para>
+    /// The handler is an <see cref="Action{T1, T2}"/> rather than a
+    /// <see cref="Gst.BusSyncHandler"/> on purpose: a handler whose reply this
+    /// call would discard is a handler whose reply reads as if it decided
+    /// something. When the reply matters — a handler that passes some messages
+    /// and drops others, or one that answers
+    /// <see cref="Gst.BusSyncReply.Async"/> — use
+    /// <see cref="SetSyncHandler(Gst.BusSyncHandler)"/>, which this is built
+    /// on and which changes nothing about how such a handler behaves.
+    /// </para>
+    /// <para>
+    /// <b>There is one sync handler per bus, and this takes it.</b> The install
+    /// replaces whatever was on the bus, and disposing the subscription clears
+    /// whatever is on the bus at that moment rather than putting the previous
+    /// handler back — C offers no exchange, only a swap, and pretending
+    /// otherwise would be a guess about a handler this binding may not have
+    /// installed. Two live subscriptions on one bus are therefore a mistake:
+    /// the second one silences the first, and disposing either takes the
+    /// survivor off. The same caveat applies to
+    /// <see cref="EnableSyncMessageEmission"/>, whose handler is installed the
+    /// same way.
+    /// </para>
+    /// <para>
+    /// Disposing the subscription more than once is allowed and clears the bus
+    /// once. A subscription whose bus wrapper was disposed in the meantime
+    /// clears nothing: that wrapper has given up its part in the lifetime of
+    /// the bus already, and the handler goes away with the bus itself.
+    /// </para>
+    /// <para>
+    /// The handler runs on the thread of the poster, which for a running
+    /// pipeline is a streaming thread, and it runs while that thread is blocked
+    /// in the post. It has to be quick and it has to be safe there. An
+    /// exception that leaves it is reported through
+    /// <see cref="Gst.Interop.ExceptionTrap"/> and the message it failed on
+    /// reaches the queue after all, which is
+    /// <see cref="Gst.BusSyncHandler"/>'s rule and applies here unchanged: a
+    /// handler that failed has decided nothing.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="ArgumentNullException"><paramref name="handler"/> is <see langword="null"/>.</exception>
+    /// <exception cref="ObjectDisposedException">This wrapper was disposed.</exception>
+    public IDisposable SubscribeSyncDrop(Action<Gst.Bus?, Gst.Message?> handler)
+    {
+        ArgumentNullException.ThrowIfNull(handler);
+
+        // The ordinary install, with the reply supplied here. Everything that
+        // makes a dropping handler correct — the wrapper of the message, the
+        // trap around the call, and the release of the poster's reference that
+        // Drop makes the handler's job — is the trampoline's, unchanged.
+        SetSyncHandler((bus, message) =>
+        {
+            handler(bus, message);
+            return Gst.BusSyncReply.Drop;
+        });
+
+        return new SyncSubscription(this);
+    }
+
+    /// <summary>
+    /// The subscription of <see cref="SubscribeSyncDrop"/>: it holds the bus
+    /// and clears its sync handler once.
+    /// </summary>
+    /// <remarks>
+    /// Holding the wrapper strongly is deliberate. A subscription is the thing
+    /// an application keeps, and a bus whose only holder let go of it would
+    /// leave a subscription that clears an object it no longer knows.
+    /// </remarks>
+    private sealed class SyncSubscription : IDisposable
+    {
+        private Gst.Bus? _bus;
+
+        /// <summary>Initialises the subscription of one bus.</summary>
+        /// <param name="bus">The bus whose handler was installed.</param>
+        internal SyncSubscription(Gst.Bus bus) => _bus = bus;
+
+        /// <summary>Takes the sync handler off the bus, at most once.</summary>
+        public void Dispose()
+        {
+            Gst.Bus? bus = Interlocked.Exchange(ref _bus, null);
+
+            // A disposed wrapper has given up its part in the lifetime of the
+            // bus, and its Handle throws. The handler goes away with the bus.
+            if (bus is not null && !bus.IsDisposed)
+            {
+                bus.ClearSyncHandler();
+            }
+        }
+    }
+
     /// <summary>The native entry point of <see cref="Gst.BusSyncHandler"/>.</summary>
     /// <remarks>
     /// <para>

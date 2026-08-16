@@ -411,6 +411,167 @@ public sealed unsafe class BusSyncHandlerTests
     }
 
     /// <summary>
+    /// The subscription an application with no main loop wants: every message
+    /// is delivered in the thread that posted it and the queue stays empty.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This is the whole point of <see cref="Bus.SubscribeSyncDrop"/>. A bus
+    /// nobody reads accumulates messages for the lifetime of the pipeline, and
+    /// a sync handler only avoids that if it answers
+    /// <see cref="BusSyncReply.Drop"/> — which is the reply with an ownership
+    /// rule attached. The subscription answers it for the handler, so the
+    /// assertions here are the two halves of "nothing is left behind": every
+    /// message arrived, and none of them reached the queue.
+    /// </para>
+    /// <para>
+    /// The thread is asserted as well, because a handler that ran anywhere else
+    /// would mean the message had been queued and delivered later, which is the
+    /// behaviour this replaces.
+    /// </para>
+    /// </remarks>
+    [Fact]
+    public void ASyncDropSubscriptionDeliversOnThePostersThreadAndLeavesTheQueueEmpty()
+    {
+        const int Posts = 100;
+
+        using Bus bus = Bus.New();
+
+        int seen = 0;
+        int poster = Environment.CurrentManagedThreadId;
+        int elsewhere = 0;
+
+        IDisposable subscription = bus.SubscribeSyncDrop((_, message) =>
+        {
+            if (message?.Type == MessageType.Eos)
+            {
+                Interlocked.Increment(ref seen);
+            }
+
+            if (Environment.CurrentManagedThreadId != poster)
+            {
+                Interlocked.Increment(ref elsewhere);
+            }
+        });
+
+        try
+        {
+            for (int i = 0; i < Posts; i++)
+            {
+                Post(bus);
+            }
+
+            Assert.Equal(Posts, Volatile.Read(ref seen));
+            Assert.Equal(0, Volatile.Read(ref elsewhere));
+
+            // The queue never grew, which is what the subscription is for.
+            Assert.Null(bus.Pop());
+            Assert.False(bus.HavePending());
+        }
+        finally
+        {
+            subscription.Dispose();
+        }
+
+        // And with the subscription gone the bus is an ordinary bus again.
+        Post(bus);
+
+        Assert.Equal(Posts, Volatile.Read(ref seen));
+
+        using Message? popped = bus.Pop();
+        Assert.NotNull(popped);
+        Assert.Equal(MessageType.Eos, popped.Type);
+
+        // Disposing twice clears nothing a second time and throws nothing.
+        subscription.Dispose();
+
+        _output.WriteLine($"{Volatile.Read(ref seen)} of {Posts} posts were delivered synchronously");
+    }
+
+    /// <summary>
+    /// A subscription is the sync handler of the bus, so it replaces the one
+    /// that is installed and disposing it clears whatever is installed. This is
+    /// the caveat the documentation states, measured.
+    /// </summary>
+    [Fact]
+    public void ASyncDropSubscriptionTakesTheOneSyncHandlerOfTheBus()
+    {
+        using Bus bus = Bus.New();
+
+        int handler = 0;
+        bus.SetSyncHandler((_, _) =>
+        {
+            Interlocked.Increment(ref handler);
+            return BusSyncReply.Drop;
+        });
+
+        int subscribed = 0;
+        IDisposable subscription = bus.SubscribeSyncDrop((_, _) => Interlocked.Increment(ref subscribed));
+
+        Post(bus);
+
+        // The subscription won: there is one sync handler per bus.
+        Assert.Equal(0, Volatile.Read(ref handler));
+        Assert.Equal(1, Volatile.Read(ref subscribed));
+
+        subscription.Dispose();
+
+        Post(bus);
+
+        // And the clear did not put the first handler back, which C offers no
+        // way to do.
+        Assert.Equal(0, Volatile.Read(ref handler));
+        Assert.Equal(1, Volatile.Read(ref subscribed));
+
+        using Message? popped = bus.Pop();
+        Assert.NotNull(popped);
+    }
+
+    /// <summary>
+    /// A handler of a subscription that throws is trapped the way any sync
+    /// handler is, and the message it failed on takes the ordinary route.
+    /// </summary>
+    [Fact]
+    public void AFailingSubscriptionHandlerIsTrappedAndTheMessageStillArrives()
+    {
+        using Bus bus = Bus.New();
+
+        List<Exception> failures = [];
+        void OnFailure(Exception exception)
+        {
+            lock (failures)
+            {
+                failures.Add(exception);
+            }
+        }
+
+        Gst.Interop.ExceptionTrap.UnhandledException += OnFailure;
+
+        IDisposable subscription = bus.SubscribeSyncDrop((_, _) =>
+            throw new InvalidOperationException("The subscription of the test throws on purpose."));
+
+        try
+        {
+            Post(bus);
+
+            using Message? popped = bus.Pop();
+            Assert.NotNull(popped);
+            Assert.Equal(MessageType.Eos, popped.Type);
+        }
+        finally
+        {
+            subscription.Dispose();
+            Gst.Interop.ExceptionTrap.UnhandledException -= OnFailure;
+        }
+
+        lock (failures)
+        {
+            Assert.Single(failures);
+            Assert.IsType<InvalidOperationException>(failures[0]);
+        }
+    }
+
+    /// <summary>
     /// Counts one destroyed message, as a <c>GstMiniObjectNotify</c>.
     /// </summary>
     /// <param name="userData">Unused; the count is a static field.</param>

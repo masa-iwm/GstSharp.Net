@@ -407,7 +407,7 @@ public sealed class AppSinkSimpleCallbacksTests
             // is the only way back to the path the callbacks displaced. Nothing
             // is connected here that was not connected before the first
             // install; only the callbacks went away.
-            sink.SetSimpleCallbacks(null);
+            sink.ClearSimpleCallbacks();
 
             Push(source);
             Assert.True(
@@ -415,6 +415,22 @@ public sealed class AppSinkSimpleCallbacksTests
                 "The sink emitted no new-sample signal after the callbacks were removed.");
 
             Assert.Equal(1, Volatile.Read(ref signalled));
+
+            // The set the clear took off is released the way a replaced one is:
+            // the destroy notification of every slot runs and what the closures
+            // captured becomes collectible. This is the claim the documentation
+            // of ClearSimpleCallbacks makes, and it is measured rather than
+            // read out of a header.
+            for (int attempt = 0; attempt < 10 && secondProbe.IsAlive; attempt++)
+            {
+                Collect();
+            }
+
+            Assert.False(secondProbe.IsAlive, "Clearing the callbacks never released the state of the set.");
+
+            // Clearing a sink that has nothing installed does nothing, and the
+            // signals keep working.
+            sink.ClearSimpleCallbacks();
         }
         finally
         {
@@ -600,6 +616,101 @@ public sealed class AppSinkSimpleCallbacksTests
 
         Assert.Equal(Frames, frames);
         Assert.True(sink.IsEos());
+    }
+
+    /// <summary>
+    /// The clear on the source side: it releases the state of the set that was
+    /// installed and hands the source back to its signals.
+    /// </summary>
+    /// <remarks>
+    /// The two halves are the same two the sink makes, and neither of them is
+    /// something the header of <c>gst_app_src_set_simple_callbacks</c> states —
+    /// the documentation of <c>ClearSimpleCallbacks</c> is written from what
+    /// this measures.
+    /// </remarks>
+    [RequiresGStreamerFact(28)]
+    public void ClearingTheCallbacksOfASourceReleasesTheirStateAndRestoresTheSignals()
+    {
+        using Pipeline pipeline = Assert.IsAssignableFrom<Pipeline>(Global.ParseLaunch(
+            "appsrc name=source caps=video/x-raw,format=GRAY8,width=2,height=2,framerate=0/1 ! " +
+            "fakesink name=sink sync=false"));
+
+        using Element? sourceElement = pipeline.GetByName("source");
+        AppSrc source = Assert.IsType<AppSrc>(sourceElement);
+
+        int signalled = 0;
+        EventHandler<AppSrc.NeedDataSignalArgs> handler = (sender, args) => Interlocked.Increment(ref signalled);
+
+        try
+        {
+            // Asked for and connected before the install, and silent while a
+            // set is installed.
+            source.EmitSignals = true;
+            source.NeedData += handler;
+
+            WeakReference probe = InstallCountingNeedData(source);
+
+            Assert.NotEqual(StateChangeReturn.Failure, pipeline.SetState(State.Playing));
+
+            Assert.True(
+                WaitUntil(() => ReadProbeCount(probe) >= 1),
+                "The installed need-data callback never ran.");
+            Assert.Equal(0, Volatile.Read(ref signalled));
+
+            source.ClearSimpleCallbacks();
+
+            // The set is released, so the closure and what it captured go.
+            for (int attempt = 0; attempt < 10 && probe.IsAlive; attempt++)
+            {
+                Collect();
+            }
+
+            Assert.False(probe.IsAlive, "Clearing the callbacks never released the state of the set.");
+
+            // And the source asks through its signal again, which is the path
+            // the callbacks displaced. A source that already said it wants data
+            // waits for something to happen before it asks a second time, so it
+            // is given a buffer to consume first.
+            Push(source);
+
+            Assert.True(
+                WaitUntil(() => Volatile.Read(ref signalled) >= 1),
+                "The source emitted no need-data signal after the callbacks were removed.");
+
+            // Clearing a source that has nothing installed does nothing.
+            source.ClearSimpleCallbacks();
+        }
+        finally
+        {
+            pipeline.SetState(State.Null);
+            source.NeedData -= handler;
+        }
+
+        _output.WriteLine($"the source emitted need-data {Volatile.Read(ref signalled)} times after the clear");
+    }
+
+    /// <summary>
+    /// Installs a <c>need-data</c> callback that counts, and hands back a weak
+    /// reference to what its closure captured.
+    /// </summary>
+    /// <param name="source">The source to install the callback on.</param>
+    /// <returns>
+    /// A weak reference to the captured object, which stays alive for exactly
+    /// as long as the slot does.
+    /// </returns>
+    /// <remarks>
+    /// See <see cref="InstallCountingCallbacks"/>: the closure is built here
+    /// and this method is never inlined, so that no local of the frame of the
+    /// test roots what it captured.
+    /// </remarks>
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static WeakReference InstallCountingNeedData(AppSrc source)
+    {
+        Probe state = new();
+
+        source.SetSimpleCallbacks(onNeedData: (appsrc, length) => state.Increment());
+
+        return new WeakReference(state);
     }
 
     /// <summary>

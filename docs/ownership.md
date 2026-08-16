@@ -8,7 +8,7 @@ applies follows from the base type of the wrapper and from nothing else:
 
 | Base type | Examples | What the wrapper owns | Disposed by consumers |
 | --- | --- | --- | --- |
-| `Gst.MiniObject`, `Gst.GObject.Boxed` | `Buffer`, `Caps`, `Sample`, `Message`, `Event`, `Structure`, `SDPMessage` | a reference of its own | **always** |
+| `Gst.MiniObject`, `Gst.GObject.Boxed` | `Buffer`, `Caps`, `Sample`, `Message`, `Event`, `Structure`, `SDPMessage`, `GLib.Bytes` | a reference of its own | **always** |
 | `Gst.GObject.Object` | `Element`, `Pipeline`, `Bus`, `Pad`, `Clock`, `Device` | one reference shared by the whole process | **normally never** |
 
 ## Mini objects and boxed values
@@ -167,3 +167,23 @@ without touching a wrapper should call `GstSharp.DrainPendingReleases()`
 periodically** — once per poll of the bus is the natural place. The queue holds
 one small record per pending object, never a copy of the media, and draining an
 empty queue is cheap.
+
+The bus itself is the other thing such an application has to keep an eye on. A
+bus that nobody reads holds every message the pipeline posted for as long as the
+pipeline lives, and polling it is the usual answer. `Bus.SubscribeSyncDrop` is
+the answer for an application that would rather be told:
+
+```csharp
+using IDisposable subscription = pipeline.GetBus().SubscribeSyncDrop(
+    (_, message) => Handle(message));
+```
+
+Every message reaches the handler in the thread that posted it — a streaming
+thread, while that thread is blocked in the post, so the handler has to be quick
+and safe there — and the binding then drops it, so the queue stays empty.
+Disposing the subscription takes the handler off. There is one sync handler per
+bus and this takes it, so it replaces `EnableSyncMessageEmission` and any handler
+installed with `SetSyncHandler`, and disposing clears whatever is installed at
+that moment rather than putting the previous one back. The message wrapper the
+handler is given is released when the handler returns; `Message.Copy` is how to
+keep one.

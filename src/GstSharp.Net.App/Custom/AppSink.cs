@@ -5,15 +5,12 @@ namespace Gst.App;
 public unsafe partial class AppSink
 {
     /// <summary>
-    /// Installs a set of callbacks on this sink, taking the set over, or
-    /// removes the set that is installed.
+    /// Installs a set of callbacks on this sink, taking the set over.
     /// </summary>
     /// <param name="callbacks">
     /// The callbacks to install. The call consumes them:
     /// <paramref name="callbacks"/> is disposed when this method returns, and
-    /// using it afterwards throws <see cref="ObjectDisposedException"/>. Pass
-    /// <see langword="null"/> to remove the callbacks that are installed and to
-    /// let the sink emit its signals again.
+    /// using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// </param>
     /// <remarks>
     /// <para>
@@ -43,11 +40,22 @@ public unsafe partial class AppSink
     /// <see cref="Eos"/>, <see cref="NewSerializedEvent"/> or
     /// <see cref="ProposeAllocation"/>, whatever <see cref="EmitSignals"/> says,
     /// which is the point of the callbacks: they cost less per frame than a
-    /// signal emission. The two paths are alternatives, not layers. Removing
-    /// the callbacks with <see langword="null"/> puts the signal path back.
+    /// signal emission. The two paths are alternatives, not layers.
+    /// <see cref="ClearSimpleCallbacks"/> puts the signal path back.
     /// <c>gst_app_sink_set_callbacks</c>, the struct of function pointers this
     /// binding does not expose, is mutually exclusive with this call in the same
     /// way.
+    /// </para>
+    /// <para>
+    /// <see cref="ClearSimpleCallbacks"/> is the call that removes a set, and it
+    /// is separate for the reason <see cref="Gst.Bus.ClearSyncHandler"/> is:
+    /// a set of callbacks is not an optional argument of an install — removing
+    /// one is a different intention — and this class has a second
+    /// <c>SetSimpleCallbacks</c> whose parameters are all optional, so a bare
+    /// <c>SetSimpleCallbacks(null)</c> is a null that two overloads could take.
+    /// Which one wins is a tie-break of the language rather than a decision of
+    /// this binding, so the null is refused here and the intention is spelled
+    /// out instead.
     /// </para>
     /// <para>
     /// Every callback runs on a streaming thread of the pipeline, never on the
@@ -80,17 +88,16 @@ public unsafe partial class AppSink
     /// call throws <see cref="EntryPointNotFoundException"/>.
     /// </para>
     /// </remarks>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="callbacks"/> is <see langword="null"/>. Use
+    /// <see cref="ClearSimpleCallbacks"/> to remove the set that is installed.
+    /// </exception>
     /// <exception cref="ObjectDisposedException">
     /// This wrapper or <paramref name="callbacks"/> was disposed.
     /// </exception>
-    public void SetSimpleCallbacks(Gst.App.AppSinkSimpleCallbacks? callbacks)
+    public void SetSimpleCallbacks(Gst.App.AppSinkSimpleCallbacks callbacks)
     {
-        if (callbacks is null)
-        {
-            GstAppSinkSetSimpleCallbacks(Handle, nint.Zero);
-            GC.KeepAlive(this);
-            return;
-        }
+        ArgumentNullException.ThrowIfNull(callbacks);
 
         // Both handles are read before anything is referenced, so that a
         // disposed wrapper throws without leaking the reference of the other.
@@ -150,8 +157,8 @@ public unsafe partial class AppSink
     /// <para>
     /// A set with no callback in it would install nothing and silence the
     /// signals, which is never what a caller means, so it is rejected. Removing
-    /// the callbacks that are installed is <c>SetSimpleCallbacks(null)</c>,
-    /// which is the other overload.
+    /// the callbacks that are installed is
+    /// <see cref="ClearSimpleCallbacks"/>.
     /// </para>
     /// </remarks>
     /// <exception cref="ArgumentException">Every callback is <see langword="null"/>.</exception>
@@ -170,7 +177,7 @@ public unsafe partial class AppSink
             onProposeAllocation is null)
         {
             throw new ArgumentException(
-                "At least one callback is required. Use SetSimpleCallbacks(null) to remove the callbacks that are installed.");
+                "At least one callback is required. Use ClearSimpleCallbacks() to remove the callbacks that are installed.");
         }
 
         Gst.App.AppSinkSimpleCallbacks callbacks = Gst.App.AppSinkSimpleCallbacks.New();
@@ -211,6 +218,43 @@ public unsafe partial class AppSink
         }
 
         SetSimpleCallbacks(callbacks);
+    }
+
+    /// <summary>
+    /// Takes the set of callbacks off this sink, so that it emits its signals
+    /// again.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This is <c>gst_app_sink_set_simple_callbacks</c> with a null set. What
+    /// the library does with it is what the integration tests observe rather
+    /// than what a header promises: the set that was installed is released, the
+    /// destroy notification of every slot in it runs, and what those closures
+    /// captured becomes collectible — the same release that installing a second
+    /// set over the first performs. From then on the sink emits
+    /// <see cref="NewSample"/> and its neighbours again, subject to
+    /// <see cref="EmitSignals"/>, and nothing that was connected before the
+    /// install has to be connected again.
+    /// </para>
+    /// <para>
+    /// Clearing a sink that has no callbacks installed does nothing.
+    /// </para>
+    /// <para>
+    /// This is the counterpart of
+    /// <see cref="SetSimpleCallbacks(Gst.App.AppSinkSimpleCallbacks)"/> the way
+    /// <see cref="Gst.Bus.ClearSyncHandler"/> is the counterpart of
+    /// <see cref="Gst.Bus.SetSyncHandler(Gst.BusSyncHandler)"/>, and it exists
+    /// for the same two reasons: removing a set is a different intention from
+    /// installing one, and <c>SetSimpleCallbacks(null)</c> would be a null that
+    /// two overloads of this class could take, decided by a tie-break of the
+    /// language.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="ObjectDisposedException">This wrapper was disposed.</exception>
+    public void ClearSimpleCallbacks()
+    {
+        GstAppSinkSetSimpleCallbacks(Handle, nint.Zero);
+        GC.KeepAlive(this);
     }
 
     /// <summary>The <c>gst_app_sink_set_simple_callbacks</c> entry point.</summary>
