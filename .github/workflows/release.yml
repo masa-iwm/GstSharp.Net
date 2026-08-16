@@ -4,8 +4,8 @@
 # then publishes every package of the set under the version the tag names.
 # Nothing is published from a branch: the tag is the only trigger.
 #
-# The push target is the feed the acceptance application consumes,
-# https://nuget.pkg.github.com/masa-iwm/index.json, which needs authentication
+# The push target is https://nuget.pkg.github.com/masa-iwm/index.json, a feed
+# that needs authentication
 # even for public packages. GITHUB_TOKEN of this repository is enough for the
 # push; consumers need a token with read:packages.
 name: Release
@@ -75,7 +75,7 @@ jobs:
       # files already set it, this passes the same value again.
       - name: Pack
         run: >
-          dotnet pack GstSharp.Net.sln
+          dotnet pack GstSharp.Net.slnx
           --configuration Release
           --output artifacts/dist
           -p:Version=${{ steps.version.outputs.version }}

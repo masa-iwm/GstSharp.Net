@@ -12,7 +12,7 @@ workflow. Jobs are split by what they need from the machine:
 
 | Job | Runner | Needs GStreamer | What only this job covers |
 | --- | --- | --- | --- |
-| `verify` | `ubuntu-latest` | no | generator drift (271 files + `girs/skip-report.md`), warning-free build, generator/analyzer tests, and the proof that `GstSharp.Core.Tests` needs no installation |
+| `verify` | `ubuntu-latest` | no | generator drift (the whole generated tree plus `girs/skip-report.md`), warning-free build, generator/analyzer tests, and the proof that `GstSharp.Core.Tests` needs no installation |
 | `linux` | `ubuntu-24.04` | apt | the Linux SONAME path of `NativeLoader` |
 | `macos` | `macos-latest` | Homebrew | the macOS dylib path and the Homebrew directory of the planner |
 | `windows-mingw` | `windows-latest` | MSYS2 | the MinGW file names and the MSYS2 / search-path branch of `NativeInstallPlanner` |
@@ -139,8 +139,10 @@ the plain SONAME.
   makes the installation discoverable through the documented probes instead of
   through a test-only switch.
 
-`dotnet test` takes a single project, so each suite is its own step. That also
-keeps the failure attributable in the job log.
+Each suite is its own step rather than one solution-wide `dotnet test`. A
+solution-level run is what a development machine does; here the per-project
+steps keep a failure attributable in the job log, and they let a native job skip
+a suite that does not belong on it.
 
 ## The NativeAOT gates
 
@@ -152,8 +154,8 @@ keeps the failure attributable in the job log.
     -Property InvariantGlobalization=true -RunArguments '--mode','pull'
 ```
 
-* `-p:PublishAot=true -p:TrimMode=full` is the shape the acceptance
-  application ships with (`docs/acceptance-processrecorderapp.md`, section 3).
+* `-p:PublishAot=true -p:TrimMode=full` is the shape a consuming application
+  ships with, and the one the binding is expected to survive.
 * `-p:TrimmerSingleWarn=false` expands the per-assembly summary, so a warning
   names the member it came from.
 * The log is scanned for `warning IL####`. `TreatWarningsAsErrors` from
@@ -164,11 +166,11 @@ keeps the failure attributable in the job log.
   `samples/AppSinkSpans/AppSinkSpans.csproj`. The sample formats everything
   with `CultureInfo.InvariantCulture`, so it loses nothing, and the sample
   sources are out of scope for the CI change.
-* The second gate is the interesting one. It is acceptance section 5.9:
-  `Parse.Launch` plus `GetByName(...) as AppSink` under full trimming. A
-  missing GType registration shows up as a null cast at run time, never as a
-  build warning, so the assertion is the exit code of the published
-  executable.
+* The second gate is the interesting one: `Global.ParseLaunch` plus
+  `GetByName(...) as AppSink` under full trimming. A missing GType
+  registration shows up as a null cast at run time, never as a build warning
+  (see `docs/ownership.md`), so the assertion is the exit code of the
+  published executable.
 
 ## Release
 
@@ -179,7 +181,7 @@ then packs and pushes.
 * The version comes from the tag and only from the tag:
   `v1.28.0-preview.1` -> `-p:Version=1.28.0-preview.1`. A tag that is not a
   version fails the job before anything is built.
-* `dotnet pack GstSharp.Net.sln` packs every packable project, so the workflow
+* `dotnet pack GstSharp.Net.slnx` packs every packable project, so the workflow
   does not have to be edited when the package set changes. Samples and test
   projects set `IsPackable=false`.
 * **`RepositoryUrl` is required.** GitHub Packages refuses a NuGet package it
@@ -226,9 +228,9 @@ scripts avoid PowerShell 7-only syntax).
 
 ```sh
 # verify
-dotnet restore GstSharp.Net.sln
+dotnet restore GstSharp.Net.slnx
 dotnet run --project generator/GstSharp.Generator --no-restore -- verify --gir-dir girs --out-dir src
-dotnet build GstSharp.Net.sln --no-restore -warnaserror
+dotnet build GstSharp.Net.slnx --no-restore -warnaserror
 dotnet test tests/GstSharp.Generator.Tests --no-restore
 dotnet test tests/GstSharp.Analyzers.Tests --no-restore
 dotnet test tests/GstSharp.Core.Tests --no-restore
@@ -242,7 +244,7 @@ dotnet run --project samples/AppSinkSpans --no-restore -- --mode pull
 ./eng/aot-gate.ps1 -Project samples/AppSinkSpans -Rid win-x64 -Property InvariantGlobalization=true -RunArguments '--mode','pull'
 
 # what the release job packs (no push)
-dotnet pack GstSharp.Net.sln --configuration Release --output artifacts/dist -p:Version=1.28.0-preview.1
+dotnet pack GstSharp.Net.slnx --configuration Release --output artifacts/dist -p:Version=1.28.0-preview.1
 ```
 
 The installer script can also be used to reproduce the MSVC job's environment
@@ -261,7 +263,7 @@ Everything the scripts write goes below `artifacts/`, which is ignored by git.
 
 | Thing | Pin | Why |
 | --- | --- | --- |
-| `actions/checkout`, `actions/setup-dotnet`, `actions/cache`, `actions/upload-artifact` | `v4` | current major versions |
+| `actions/checkout` `v7`, `actions/upload-artifact` `v7`, `actions/setup-dotnet` `v6`, `actions/cache` `v6` | major version only | current major versions; a major bump is a deliberate edit |
 | `msys2/setup-msys2` | `v2` | the `msys2-location` output the MinGW job reads |
 | .NET SDK | `global.json` (`10.0.300`, `rollForward: latestFeature`) | one place for the SDK version |
 | GStreamer, Windows MSVC | `1.28.6` (`GSTREAMER_VERSION` in the job) | the version the binding is generated from |

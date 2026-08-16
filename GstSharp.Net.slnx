@@ -1,0 +1,35 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Folder Name="/generator/">
+    <Project Path="generator/GstSharp.Generator/GstSharp.Generator.csproj" />
+  </Folder>
+  <Folder Name="/samples/">
+    <Project Path="samples/AotSmoke/AotSmoke.csproj" />
+    <Project Path="samples/AppSinkSpans/AppSinkSpans.csproj" />
+    <Project Path="samples/PlaybinPlayer/PlaybinPlayer.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/GstSharp.Net.Analyzers/GstSharp.Net.Analyzers.csproj" />
+    <Project Path="src/GstSharp.Net.App/GstSharp.Net.App.csproj" />
+    <Project Path="src/GstSharp.Net.Audio/GstSharp.Net.Audio.csproj" />
+    <Project Path="src/GstSharp.Net.Base/GstSharp.Net.Base.csproj" />
+    <Project Path="src/GstSharp.Net.GES/GstSharp.Net.GES.csproj" />
+    <Project Path="src/GstSharp.Net.Net/GstSharp.Net.Net.csproj" />
+    <Project Path="src/GstSharp.Net.Pbutils/GstSharp.Net.Pbutils.csproj" />
+    <Project Path="src/GstSharp.Net.Rtsp/GstSharp.Net.Rtsp.csproj" />
+    <Project Path="src/GstSharp.Net.Sdp/GstSharp.Net.Sdp.csproj" />
+    <Project Path="src/GstSharp.Net.Video/GstSharp.Net.Video.csproj" />
+    <Project Path="src/GstSharp.Net.WebRTC/GstSharp.Net.WebRTC.csproj" />
+    <Project Path="src/GstSharp.Net/GstSharp.Net.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/GstSharp.Analyzers.Tests/GstSharp.Analyzers.Tests.csproj" />
+    <Project Path="tests/GstSharp.Core.Tests/GstSharp.Core.Tests.csproj" />
+    <Project Path="tests/GstSharp.Generator.Tests/GstSharp.Generator.Tests.csproj" />
+    <Project Path="tests/GstSharp.IntegrationTests/GstSharp.IntegrationTests.csproj" />
+  </Folder>
+</Solution>

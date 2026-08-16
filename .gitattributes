@@ -10,8 +10,9 @@
 *.md      text eol=lf
 *.yml     text eol=lf
 
-# Visual Studio rewrites solution files with CRLF.
-*.sln     text eol=crlf
+# The solution is .slnx; `dotnet sln migrate` writes it with CRLF, so the rule
+# is spelled out rather than left to the default.
+*.slnx    text eol=lf
 
 *.png binary
 *.dll binary
