@@ -15,6 +15,17 @@ verification passes 9/9 encoder cases — including runs where the app loads the
 bundled runtime tree. Sections 1-3 are settled; section 4 below is the
 preview2 work order, refreshed with what the port actually found.
 
+**Status: preview2 re-verification PASSED (2026-08-16).** ProcessRecorderApp
+PR #2 moves to 1.28.0-preview.2 and absorbs every self-implementation:
+resolution is fully delegated to the loader (the app's locator is deleted),
+the debug category, camera enumeration and monitor resolutions all go through
+the public API, and no raw GStreamer P/Invoke remains in the app. Real-GPU
+verification passes 9/9 encoder cases again, this time with the loader's
+bundled-runtime stage selecting the shipped `runtimes/<rid>` tree in
+production, and the multi-adapter device ordering, preview and camera checks
+all confirmed on real hardware. Section 4 items 1-4 are shipped; what remains
+before NuGet is release mechanics, not binding work.
+
 The app is a pure consumer: no subclassing, no custom elements, no GMainLoop
 (bus is polled). Required modules: Gst core + GstApp + GstBase (only
 `BaseSrc` as a runtime-recognizable type). GstVideo/GstAudio/GstPbutils are
