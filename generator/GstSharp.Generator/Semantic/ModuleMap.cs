@@ -43,15 +43,15 @@ internal sealed record ModuleInfo(
 internal static class ModuleMap
 {
     /// <summary>
-    /// Gets every known module, in generation order. The GLib stack is present
-    /// for type resolution only; its runtime layer is hand written in the
-    /// <c>GstSharp.Net</c> assembly, under <c>src/GstSharp.Net/Core</c>.
+    /// Gets every known module, in generation order. The GLib stack and Gio are
+    /// present for type resolution only; their runtime layer is hand written in
+    /// the <c>GstSharp.Net</c> assembly, under <c>src/GstSharp.Net/Core</c>.
     /// </summary>
     /// <remarks>
     /// The project directory of a module that emits nothing is never used: only
     /// the emitters read it, and they run for the generated modules alone. The
-    /// GLib rows therefore name the assembly their types belong to rather than a
-    /// directory sources would be written to.
+    /// Gio and GLib rows therefore name the assembly their types belong to
+    /// rather than a directory sources would be written to.
     /// </remarks>
     internal static IReadOnlyList<ModuleInfo> Modules { get; } =
     [
@@ -63,6 +63,7 @@ internal static class ModuleMap
         new ModuleInfo("GstPbutils", "Gst.Pbutils", "GstSharp.Net.Pbutils", "GstPbutils", IsGenerated: true),
         new ModuleInfo("GstSdp", "Gst.Sdp", "GstSharp.Net.Sdp", "GstSdp", IsGenerated: true),
         new ModuleInfo("GstWebRTC", "Gst.WebRTC", "GstSharp.Net.WebRTC", "GstWebRTC", IsGenerated: true),
+        new ModuleInfo("Gio", "Gst.Gio", "GstSharp.Net", "Gio", IsGenerated: false),
         new ModuleInfo("GLib", "Gst.GLib", "GstSharp.Net", "GLib", IsGenerated: false),
         new ModuleInfo("GObject", "Gst.GObject", "GstSharp.Net", "GObject", IsGenerated: false),
         new ModuleInfo("GModule", "Gst.GLib", "GstSharp.Net", "GModule", IsGenerated: false),

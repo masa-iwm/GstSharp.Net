@@ -109,6 +109,11 @@ internal static class NativeNames
                 "libgobject-2.0.0.dylib",
                 "gobject-2.0-0.dll",
                 "libgobject-2.0-0.dll"),
+            ["Gio"] = new(
+                "libgio-2.0.so.0",
+                "libgio-2.0.0.dylib",
+                "gio-2.0-0.dll",
+                "libgio-2.0-0.dll"),
             ["GModule"] = new(
                 "libgmodule-2.0.so.0",
                 "libgmodule-2.0.0.dylib",

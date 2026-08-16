@@ -106,8 +106,13 @@ internal static class Fixture
     /// <summary>Runs the generator over a hand written <c>Gst</c> namespace.</summary>
     /// <param name="body">The members of the <c>Gst</c> namespace.</param>
     /// <param name="overlays">The corrections to apply, if any.</param>
+    /// <param name="extraNamespaces">
+    /// Whole <c>namespace</c> elements to declare beside <c>Gst</c> and
+    /// <c>GObject</c>, for a fixture that has to resolve types of another
+    /// module.
+    /// </param>
     /// <returns>The run.</returns>
-    internal static FixtureRun Run(string body, Overlays? overlays = null)
+    internal static FixtureRun Run(string body, Overlays? overlays = null, string? extraNamespaces = null)
     {
         GirRepository file = GirReader.ReadXml(
             $"""
@@ -116,6 +121,7 @@ internal static class Fixture
             {body}
               </namespace>
             {GObjectNamespace}
+            {extraNamespaces}
             </repository>
             """,
             "fixture.gir");

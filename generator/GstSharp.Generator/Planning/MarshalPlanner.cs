@@ -109,10 +109,25 @@ internal sealed class MarshalPlanner
     /// Types of the hand written runtime that generated code may refer to even
     /// though their module is not generated.
     /// </summary>
+    /// <remarks>
+    /// The entries cover handles only, which is what <see cref="PlanHandle"/>
+    /// consults. An enumeration of such a module — <c>Gio.TlsCertificateFlags</c>
+    /// is the one the girs ask for — still fails <see cref="IsEmitted"/> and
+    /// skips, because the planner has no runtime-enumeration concept to hang the
+    /// underlying type off.
+    /// </remarks>
     private static readonly Dictionary<string, string> RuntimeTypes = new(StringComparer.Ordinal)
     {
         ["GObject.Object"] = "Gst.GObject.Object",
         ["GObject.InitiallyUnowned"] = "Gst.GObject.InitiallyUnowned",
+        ["Gio.Cancellable"] = "Gst.Gio.Cancellable",
+        ["Gio.Socket"] = "Gst.Gio.Socket",
+        ["Gio.SocketAddress"] = "Gst.Gio.SocketAddress",
+        ["Gio.SocketControlMessage"] = "Gst.Gio.SocketControlMessage",
+        ["Gio.TlsCertificate"] = "Gst.Gio.TlsCertificate",
+        ["Gio.TlsConnection"] = "Gst.Gio.TlsConnection",
+        ["Gio.TlsDatabase"] = "Gst.Gio.TlsDatabase",
+        ["Gio.TlsInteraction"] = "Gst.Gio.TlsInteraction",
     };
 
     /// <summary>
