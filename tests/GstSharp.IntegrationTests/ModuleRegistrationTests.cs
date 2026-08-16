@@ -34,7 +34,7 @@ namespace GstSharp.IntegrationTests;
 [Collection(GstCollection.Name)]
 public sealed class ModuleRegistrationTests
 {
-    /// <summary>The assemblies of the six modules of preview1.</summary>
+    /// <summary>The assembly of every binding module.</summary>
     private static readonly string[] BindingAssemblies =
     [
         "GstSharp.Net",
@@ -43,6 +43,7 @@ public sealed class ModuleRegistrationTests
         "GstSharp.Net.Video",
         "GstSharp.Net.Audio",
         "GstSharp.Net.Pbutils",
+        "GstSharp.Net.Sdp",
     ];
 
     /// <summary>The logical library name each of them registers.</summary>
@@ -54,6 +55,7 @@ public sealed class ModuleRegistrationTests
         "GstVideo",
         "GstAudio",
         "GstPbutils",
+        "GstSdp",
     ];
 
     /// <summary>

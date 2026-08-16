@@ -21,8 +21,17 @@
     "gst_structure_set_name_static_str",
     "gst_type_find_peek"
   ],
+  "$comment-force-opaque-sdp": "The payload structures of an SDP message are plain C structures that the library hands out by pointer, and every accessor of theirs takes or returns such a pointer. A plain structure is projected as a value type, which copies it, and the methods declared on it are dropped for exactly that reason, so the media, attribute, origin, connection, bandwidth, time, zone and key surface of the module is unreachable. Keeping the eight of them behind a pointer binds it: the wrapper addresses the storage the message owns, so a read sees the message and a write reaches it. As on every other opaque record, 'Free' and 'Uninit' are public on the wrappers; neither may be called on an instance that a message still owns.",
   "forceOpaque": [
-    "Gst.DebugCategory"
+    "Gst.DebugCategory",
+    "GstSdp.SDPAttribute",
+    "GstSdp.SDPBandwidth",
+    "GstSdp.SDPConnection",
+    "GstSdp.SDPKey",
+    "GstSdp.SDPMedia",
+    "GstSdp.SDPOrigin",
+    "GstSdp.SDPTime",
+    "GstSdp.SDPZone"
   ],
   "rename": {
     "Gst.Element::no-more-pads": "NoMorePadsSignal",

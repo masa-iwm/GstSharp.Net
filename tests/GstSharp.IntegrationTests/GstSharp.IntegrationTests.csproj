@@ -20,6 +20,7 @@
     <ProjectReference Include="../../src/GstSharp.Net/GstSharp.Net.csproj" Aliases="global,gstsharp" />
     <ProjectReference Include="../../src/GstSharp.Net.App/GstSharp.Net.App.csproj" />
     <ProjectReference Include="../../src/GstSharp.Net.Base/GstSharp.Net.Base.csproj" />
+    <ProjectReference Include="../../src/GstSharp.Net.Sdp/GstSharp.Net.Sdp.csproj" />
 
     <!-- Referenced, but never called into: the module sweep of
          GstSharp.Initialize is what has to put their types into the registry,

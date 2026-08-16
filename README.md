@@ -17,8 +17,8 @@ designed for NativeAOT from the start.
   located at startup by `NativeLoader`; no `dllmap`, no environment variables
   required.
 
-Initial module set: `Gst`, `GstBase`, `GstApp`, `GstVideo`, `GstAudio`,
-`GstPbutils`.
+Module set: `Gst`, `GstBase`, `GstApp`, `GstVideo`, `GstAudio`, `GstPbutils`,
+`GstSdp`.
 
 ## Packages
 
@@ -33,6 +33,7 @@ so a single `packageSourceMapping` pattern covers all of them.
 | `GstSharp.Net.Video` | `GstVideo`. |
 | `GstSharp.Net.Audio` | `GstAudio`. |
 | `GstSharp.Net.Pbutils` | `GstPbutils`. |
+| `GstSharp.Net.Sdp` | `GstSdp`: SDP session descriptions and MIKEY key management. |
 
 The analyzers ship inside `GstSharp.Net` rather than as a package of their own:
 they cannot get out of step with the binding that way, and no second package

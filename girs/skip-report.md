@@ -1139,6 +1139,47 @@ disappears shows up here as an added line.
 - `gst_install_plugins_async`
 - `gst_install_plugins_sync`
 
+## GstSdp
+
+### CallerAllocates (4)
+
+- `gst_sdp_media_add_media_from_structure`
+- `gst_sdp_media_init`
+- `gst_sdp_media_set_media_from_caps`
+- `gst_sdp_message_init`
+
+### LifetimePrimitive (1)
+
+- `gst_sdp_message_free`
+
+### MovedTo (10)
+
+- `gst_sdp_media_add_media_from_structure`
+- `gst_sdp_media_init`
+- `gst_sdp_media_new`
+- `gst_sdp_media_set_media_from_caps`
+- `gst_sdp_message_as_uri`
+- `gst_sdp_message_init`
+- `gst_sdp_message_new`
+- `gst_sdp_message_new_from_text`
+- `gst_sdp_message_parse_buffer`
+- `gst_sdp_message_parse_uri`
+
+### UnsupportedSignature (12)
+
+- `gst_mikey_message_add_payload`
+- `gst_mikey_message_add_t`
+- `gst_mikey_message_get_cs_srtp`
+- `gst_mikey_message_insert_payload`
+- `gst_mikey_message_new_from_bytes`
+- `gst_mikey_message_replace_payload`
+- `gst_mikey_message_to_bytes`
+- `gst_mikey_payload_kemac_add_sub`
+- `gst_mikey_payload_sp_get_param`
+- `gst_mikey_payload_t_set`
+- `gst_sdp_message_add_time`
+- `gst_sdp_time_set`
+
 ## GstVideo
 
 ### CallerAllocates (11)

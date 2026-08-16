@@ -36,6 +36,7 @@
     <InternalsVisibleTo Include="GstSharp.Net.Audio" />
     <InternalsVisibleTo Include="GstSharp.Net.Video" />
     <InternalsVisibleTo Include="GstSharp.Net.Pbutils" />
+    <InternalsVisibleTo Include="GstSharp.Net.Sdp" />
   </ItemGroup>
 
   <!-- The analyzer assembly is resolved as an @(Analyzer) item by the project

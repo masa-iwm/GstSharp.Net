@@ -123,6 +123,7 @@ public sealed class ClassEmitterTests
     [InlineData("GstAudio", 14, 17, 1, 2, 2, 184, 15, 0)]
     [InlineData("GstVideo", 12, 42, 5, 0, 9, 293, 2, 2)]
     [InlineData("GstPbutils", 14, 1, 0, 0, 1, 169, 1, 3)]
+    [InlineData("GstSdp", 1, 21, 0, 0, 0, 156, 0, 0)]
     public void TheEmissionCensusIsStable(
         string module,
         int classes,
@@ -153,6 +154,7 @@ public sealed class ClassEmitterTests
     [InlineData("GstAudio", 0, 27, 0, 8, 51, 0)]
     [InlineData("GstVideo", 0, 102, 1, 6, 105, 0)]
     [InlineData("GstPbutils", 0, 1, 0, 0, 22, 0)]
+    [InlineData("GstSdp", 0, 10, 0, 0, 12, 0)]
     public void TheSkipCensusIsStable(
         string module,
         int shadowed,
@@ -192,6 +194,7 @@ public sealed class ClassEmitterTests
     [InlineData("GstAudio", 1, 7, 4, 0, 0)]
     [InlineData("GstVideo", 0, 11, 10, 1, 0)]
     [InlineData("GstPbutils", 0, 0, 1, 0, 0)]
+    [InlineData("GstSdp", 0, 4, 1, 0, 0)]
     public void TheRejectionCensusIsStable(
         string module,
         int overlaySkip,
@@ -229,6 +232,7 @@ public sealed class ClassEmitterTests
     [InlineData("GstAudio", "GstSharp.Net.Audio")]
     [InlineData("GstVideo", "GstSharp.Net.Video")]
     [InlineData("GstPbutils", "GstSharp.Net.Pbutils")]
+    [InlineData("GstSdp", "GstSharp.Net.Sdp")]
     public void EveryModuleEmitsItsOwnTypeTable(string module, string projectDirectory)
     {
         string source = SourceOf(projectDirectory + "/Generated/_Module.cs");
@@ -257,9 +261,10 @@ public sealed class ClassEmitterTests
     [InlineData("GstSharp.Net.Audio/Generated/AudioGlobal.cs", "public static unsafe partial class AudioGlobal")]
     [InlineData("GstSharp.Net.Video/Generated/VideoGlobal.cs", "public static unsafe partial class VideoGlobal")]
     [InlineData("GstSharp.Net.Pbutils/Generated/PbutilsGlobal.cs", "public static unsafe partial class PbutilsGlobal")]
+    [InlineData("GstSharp.Net.Sdp/Generated/SdpGlobal.cs", "public static unsafe partial class SdpGlobal")]
     public void TheGlobalHolderOfAnExtensionModuleCarriesItsModuleName(string path, string declaration)
     {
-        // Five types named Global, one per module, read as one type that keeps
+        // Six types named Global, one per module, read as one type that keeps
         // changing shape once several modules are referenced together. Only the
         // core module keeps the plain name.
         Assert.Contains(declaration + "\n", SourceOf(path), StringComparison.Ordinal);

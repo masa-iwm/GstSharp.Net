@@ -438,6 +438,7 @@ public sealed class SignalEmitterTests
     [InlineData("GstAudio", 0)]
     [InlineData("GstVideo", 2)]
     [InlineData("GstPbutils", 3)]
+    [InlineData("GstSdp", 0)]
     public void TheSignalCensusIsStable(string module, int signals)
     {
         // The two signals whose C# name a method of the same class had taken
@@ -464,7 +465,7 @@ public sealed class SignalEmitterTests
             removers += file.Content.Split("    public static void Remove").Length - 1;
         }
 
-        // Thirty eight signals are emitted over the six modules. Thirty five
+        // Thirty eight signals are emitted over the seven modules. Thirty five
         // are events of a class; the remaining three belong to a gir interface
         // and are a pair of extension methods instead.
         Assert.Equal(35, events);
