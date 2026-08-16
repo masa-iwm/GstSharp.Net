@@ -55,7 +55,7 @@ public sealed class AppSinkSimpleCallbacksTests
     /// The path the acceptance application wants: a delegate that pulls, handed
     /// straight to the sink, with the signal machinery left switched off.
     /// </summary>
-    [Fact]
+    [RequiresGStreamerFact(28)]
     public void InstalledCallbackPullsEveryFrameWithTheSignalsOff()
     {
         const int Frames = 200;
@@ -144,7 +144,7 @@ public sealed class AppSinkSimpleCallbacksTests
     /// notification would leak one closure — and everything it captured — per
     /// installed set, and nothing but the collector can tell the difference.
     /// </remarks>
-    [Fact]
+    [RequiresGStreamerFact(28)]
     public void CallbackStateIsReleasedWhenTheSinkIsTornDown()
     {
         const int Frames = 10;
@@ -209,7 +209,7 @@ public sealed class AppSinkSimpleCallbacksTests
     /// can be replaced as a whole, and removing it hands the sink back to its
     /// signals.
     /// </summary>
-    [Fact]
+    [RequiresGStreamerFact(28)]
     public void InstalledSetIsSealedAndCanBeReplacedAndRemoved()
     {
         using Pipeline pipeline = Assert.IsAssignableFrom<Pipeline>(Global.ParseLaunch(
@@ -317,7 +317,7 @@ public sealed class AppSinkSimpleCallbacksTests
     /// reported once and answered with <see cref="FlowReturn.Error"/>, which
     /// stops the pipeline instead of the process.
     /// </summary>
-    [Fact]
+    [RequiresGStreamerFact(28)]
     public void ExceptionFromACallbackIsTrappedAndStopsThePipeline()
     {
         using Pipeline pipeline = Assert.IsAssignableFrom<Pipeline>(Global.ParseLaunch(
@@ -378,7 +378,7 @@ public sealed class AppSinkSimpleCallbacksTests
     /// The same install on the other side: a source that is fed from its
     /// <c>need-data</c> callback and ends its stream from there.
     /// </summary>
-    [Fact]
+    [RequiresGStreamerFact(28)]
     public void AppSrcCallbacksFeedThePipelineToTheEndOfTheStream()
     {
         const int Frames = 20;
