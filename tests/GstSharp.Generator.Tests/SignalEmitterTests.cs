@@ -441,6 +441,7 @@ public sealed class SignalEmitterTests
     [InlineData("GstSdp", 0)]
     [InlineData("GstWebRTC", 6)]
     [InlineData("GstNet", 0)]
+    [InlineData("GstRtsp", 1)]
     public void TheSignalCensusIsStable(string module, int signals)
     {
         // The two signals whose C# name a method of the same class had taken
@@ -470,18 +471,18 @@ public sealed class SignalEmitterTests
             removers += file.Content.Split("    public static void Remove").Length - 1;
         }
 
-        // Forty four signals are emitted over the eight modules. Forty one are
-        // events of a class; the remaining three belong to a gir interface and
+        // Forty five signals are emitted over the nine modules. Forty one are
+        // events of a class; the remaining four belong to a gir interface and
         // are a pair of extension methods instead.
         Assert.Equal(41, events);
-        Assert.Equal(3, adders);
-        Assert.Equal(3, removers);
-        Assert.Equal(44, trampolines);
+        Assert.Equal(4, adders);
+        Assert.Equal(4, removers);
+        Assert.Equal(45, trampolines);
 
         string[] withSignals =
         [
             "GstSharp.Net", "GstSharp.Net.Base", "GstSharp.Net.App", "GstSharp.Net.Video", "GstSharp.Net.Pbutils",
-            "GstSharp.Net.WebRTC",
+            "GstSharp.Net.WebRTC", "GstSharp.Net.Rtsp",
         ];
 
         foreach (string module in withSignals)

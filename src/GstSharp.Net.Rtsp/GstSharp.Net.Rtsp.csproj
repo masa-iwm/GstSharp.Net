@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>Gst.Rtsp</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../GstSharp.Net/GstSharp.Net.csproj" />
+
+    <!-- The RTSP extension interface parses a session description and sets a
+         media up, so its methods take Gst.Sdp.SDPMessage and Gst.Sdp.SDPMedia. -->
+    <ProjectReference Include="../GstSharp.Net.Sdp/GstSharp.Net.Sdp.csproj" />
+  </ItemGroup>
+
+</Project>

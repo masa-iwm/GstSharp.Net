@@ -1179,6 +1179,73 @@ disappears shows up here as an added line.
 - `gst_install_plugins_async`
 - `gst_install_plugins_sync`
 
+## GstRtsp
+
+### LifetimePrimitive (3)
+
+- `gst_rtsp_auth_param_free`
+- `gst_rtsp_message_free`
+- `gst_rtsp_url_free`
+
+### MovedTo (17)
+
+- `gst_rtsp_connection_accept`
+- `gst_rtsp_connection_create`
+- `gst_rtsp_connection_create_from_socket`
+- `gst_rtsp_method_as_text`
+- `gst_rtsp_range_convert_units`
+- `gst_rtsp_range_free`
+- `gst_rtsp_range_get_times`
+- `gst_rtsp_range_parse`
+- `gst_rtsp_range_to_string`
+- `gst_rtsp_transport_get_manager`
+- `gst_rtsp_transport_get_mime`
+- `gst_rtsp_transport_init`
+- `gst_rtsp_transport_new`
+- `gst_rtsp_transport_parse`
+- `gst_rtsp_url_parse`
+- `gst_rtsp_version_as_text`
+- `gst_rtsp_watch_new`
+
+### NotIntrospectable (1)
+
+- `gst_rtsp_watch_new`
+
+### UnsupportedSignature (32)
+
+- `gst_rtsp_connection_connect`
+- `gst_rtsp_connection_connect_with_response`
+- `gst_rtsp_connection_next_timeout`
+- `gst_rtsp_connection_poll`
+- `gst_rtsp_connection_read`
+- `gst_rtsp_connection_receive`
+- `gst_rtsp_connection_send`
+- `gst_rtsp_connection_send_messages`
+- `gst_rtsp_connection_send_messages_usec`
+- `gst_rtsp_connection_write`
+- `gst_rtsp_message_append_headers`
+- `gst_rtsp_message_parse_auth_credentials`
+- `gst_rtsp_message_take_body`
+- `gst_rtsp_message_take_body_buffer`
+- `gst_rtsp_range_convert_units`
+- `gst_rtsp_range_free`
+- `gst_rtsp_range_get_times`
+- `gst_rtsp_range_parse`
+- `gst_rtsp_range_to_string`
+- `gst_rtsp_transport_as_text`
+- `gst_rtsp_transport_free`
+- `gst_rtsp_transport_get_manager`
+- `gst_rtsp_transport_get_media_type`
+- `gst_rtsp_transport_get_mime`
+- `gst_rtsp_transport_init`
+- `gst_rtsp_transport_new`
+- `gst_rtsp_transport_parse`
+- `gst_rtsp_url_decode_path_components`
+- `gst_rtsp_watch_attach`
+- `gst_rtsp_watch_send_messages`
+- `gst_rtsp_watch_wait_backlog`
+- `gst_rtsp_watch_write_data`
+
 ## GstSdp
 
 ### CallerAllocates (4)

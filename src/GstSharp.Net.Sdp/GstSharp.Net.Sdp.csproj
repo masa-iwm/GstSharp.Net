@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="GstSharp.Net.WebRTC" />
+    <InternalsVisibleTo Include="GstSharp.Net.Rtsp" />
   </ItemGroup>
 
 </Project>

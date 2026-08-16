@@ -12,10 +12,12 @@ namespace Gst.Gio;
 /// as well.
 /// </para>
 /// <para>
-/// The wrapper exists ahead of the members that use it: nothing in the binding
-/// takes or returns this type yet, because the planner has no way of naming a
-/// hand written enumeration in generated code. It is the shape the
-/// <c>GstRtsp</c> TLS surface needs once that support lands.
+/// The generator names this enumeration in generated signatures through the
+/// runtime-enumeration map of the planner, and the <c>GstRtsp</c> TLS surface is
+/// what uses it: the validation flags of a connection are read and written with
+/// it, and the accept-certificate callback receives the flags that failed. The
+/// underlying type is part of that contract — the values the gir declares run to
+/// 127, so both sides are <see langword="int"/>.
 /// </para>
 /// </remarks>
 [Flags]

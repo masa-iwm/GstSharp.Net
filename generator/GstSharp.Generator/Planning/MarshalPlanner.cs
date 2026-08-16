@@ -106,15 +106,14 @@ internal sealed class MarshalPlanner
     private const string NativeInt = "nint";
 
     /// <summary>
-    /// Types of the hand written runtime that generated code may refer to even
+    /// Handles of the hand written runtime that generated code may refer to even
     /// though their module is not generated.
     /// </summary>
     /// <remarks>
     /// The entries cover handles only, which is what <see cref="PlanHandle"/>
-    /// consults. An enumeration of such a module — <c>Gio.TlsCertificateFlags</c>
-    /// is the one the girs ask for — still fails <see cref="IsEmitted"/> and
-    /// skips, because the planner has no runtime-enumeration concept to hang the
-    /// underlying type off.
+    /// consults. An enumeration of such a module is named by
+    /// <see cref="RuntimeEnums"/> instead: a handle crosses as a pointer, an
+    /// enumeration as its underlying integer, so the two need different plans.
     /// </remarks>
     private static readonly Dictionary<string, string> RuntimeTypes = new(StringComparer.Ordinal)
     {
@@ -128,6 +127,30 @@ internal sealed class MarshalPlanner
         ["Gio.TlsConnection"] = "Gst.Gio.TlsConnection",
         ["Gio.TlsDatabase"] = "Gst.Gio.TlsDatabase",
         ["Gio.TlsInteraction"] = "Gst.Gio.TlsInteraction",
+    };
+
+    /// <summary>
+    /// Enumerations of the hand written runtime that generated code may refer to
+    /// even though their module is not generated.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The plan an entry produces is the one a generated enumeration gets: the
+    /// public type is the hand written wrapper, and the value crosses as the
+    /// underlying integer the gir declares for it, so the call site casts exactly
+    /// as it would for an enumeration of a module that is emitted.
+    /// </para>
+    /// <para>
+    /// That makes the underlying type of the hand written enumeration part of the
+    /// contract of an entry: it has to be declared with the type
+    /// <see cref="EnumFacts.GetUnderlyingType"/> derives from the members of the
+    /// gir. <c>Gio.TlsCertificateFlags</c>, whose largest member is 127, is
+    /// <see langword="int"/> on both sides.
+    /// </para>
+    /// </remarks>
+    private static readonly Dictionary<string, string> RuntimeEnums = new(StringComparer.Ordinal)
+    {
+        ["Gio.TlsCertificateFlags"] = "Gst.Gio.TlsCertificateFlags",
     };
 
     /// <summary>
@@ -978,7 +1001,16 @@ internal sealed class MarshalPlanner
 
             case MarshalKind.Enum:
             case MarshalKind.Flags:
-                if (mapped.Symbol is not { } enumeration || !IsEmitted(enumeration))
+                if (mapped.Symbol is not { } enumeration)
+                {
+                    return null;
+                }
+
+                // The hand written enumerations come first, exactly as they do
+                // for a handle: their module emits nothing, so IsEmitted rejects
+                // them although the runtime declares them.
+                if (!RuntimeEnums.TryGetValue(enumeration.QualifiedName, out string? runtimeEnum)
+                    && !IsEmitted(enumeration))
                 {
                     return null;
                 }
@@ -987,7 +1019,7 @@ internal sealed class MarshalPlanner
                 {
                     Kind = ArgumentKind.Enumeration,
                     Name = name,
-                    PublicType = mapped.PublicType,
+                    PublicType = runtimeEnum ?? mapped.PublicType,
                     RawType = mapped.RawType + pointerSuffix,
                     Direction = direction,
                 };

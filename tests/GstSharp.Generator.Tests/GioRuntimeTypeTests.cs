@@ -5,25 +5,25 @@ using Xunit;
 namespace GstSharp.Generator.Tests;
 
 /// <summary>
-/// The <c>Gio</c> row of <c>MarshalPlanner.RuntimeTypes</c>: a type of a module
-/// that emits nothing still reaches generated signatures, as long as the
-/// runtime hand writes it.
+/// The <c>Gio</c> rows of <c>MarshalPlanner.RuntimeTypes</c> and
+/// <c>MarshalPlanner.RuntimeEnums</c>: a type of a module that emits nothing
+/// still reaches generated signatures, as long as the runtime hand writes it.
 /// </summary>
 /// <remarks>
 /// <para>
-/// No vendored gir exercises this yet — nothing in the modules that are
-/// generated today mentions Gio — so the feature has no coverage from the
-/// committed output and none from the verify gate either. These fixtures are
-/// what says that it works, and they are what the first module to reference Gio
-/// relies on.
+/// The vendored girs exercise this through <c>GstNet</c> and <c>GstRtsp</c>, but
+/// only for the shapes those two happen to declare. The fixtures here are the
+/// definition of the feature: they name the four positions a <c>Gio</c> type
+/// reaches — a handle in and out, an enumeration in and out — and they pin the
+/// emitted text of each, which the committed output of a module only pins for
+/// the members it has.
 /// </para>
 /// <para>
-/// The third fixture is the boundary: <c>Gio</c> handles are planned and
-/// <c>Gio</c> enumerations are not, because the planner has no way of learning
-/// the underlying type of an enumeration it does not emit. The member that
-/// takes one has to skip cleanly rather than come out as a raw
-/// <see langword="nint"/>, which would declare the wrong ABI for a call that
-/// passes a 32 bit enumeration.
+/// The enumeration fixtures are what says that the value crosses as the integer
+/// the gir declares for it and not as a raw <see langword="nint"/>, which is the
+/// ABI a call passing a 32 bit enumeration would be broken by. The two maps stay
+/// separate for that reason: a handle crosses as a pointer, an enumeration as
+/// its underlying integer.
 /// </para>
 /// </remarks>
 public sealed class GioRuntimeTypeTests
@@ -49,9 +49,10 @@ public sealed class GioRuntimeTypeTests
         """;
 
     /// <summary>
-    /// A class whose three members are the three shapes under test: a
+    /// A class whose four members are the four shapes under test: a
     /// <c>Gio</c> handle in, a <c>Gio</c> handle out under
-    /// <c>transfer-ownership="full"</c>, and a <c>Gio</c> enumeration in.
+    /// <c>transfer-ownership="full"</c>, a <c>Gio</c> enumeration in and a
+    /// <c>Gio</c> enumeration out.
     /// </summary>
     private const string Body =
         """
@@ -90,6 +91,16 @@ public sealed class GioRuntimeTypeTests
                   <parameter name="flags" transfer-ownership="none">
                     <type name="Gio.TlsCertificateFlags" c:type="GTlsCertificateFlags"/>
                   </parameter>
+                </parameters>
+              </method>
+              <method name="get_validation_flags" c:identifier="gst_connection_get_validation_flags">
+                <return-value transfer-ownership="none">
+                  <type name="Gio.TlsCertificateFlags" c:type="GTlsCertificateFlags"/>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="connection" transfer-ownership="none">
+                    <type name="Connection" c:type="GstConnection*"/>
+                  </instance-parameter>
                 </parameters>
               </method>
             </class>
@@ -152,17 +163,59 @@ public sealed class GioRuntimeTypeTests
     }
 
     /// <summary>
-    /// A <c>Gio</c> enumeration is not planned: the member skips, and it skips
-    /// rather than degrading to a raw pointer.
+    /// A <c>Gio</c> enumeration that is passed in is spelled as the hand written
+    /// enumeration and crosses as the integer its gir declares, which is the
+    /// same projection a generated enumeration gets.
     /// </summary>
     [Fact]
-    public void AGioEnumerationIsStillUnplannable()
+    public void AGioEnumerationParameterIsPassedAsTheUnderlyingIntegerOfItsGir()
     {
-        string source = Run.File("Connection.cs");
+        Assert.Equal(
+            """
+            public void SetValidationFlags(Gst.Gio.TlsCertificateFlags flags)
+            {
+                GstConnectionSetValidationFlags(Handle, (int)flags);
+                System.GC.KeepAlive(this);
+            }
+            """,
+            Run.Member("Connection.cs", "public void SetValidationFlags("),
+            StringComparer.Ordinal);
 
-        Assert.DoesNotContain("SetValidationFlags", source, StringComparison.Ordinal);
-        Assert.DoesNotContain("TlsCertificateFlags", source, StringComparison.Ordinal);
-        Assert.Equal(1, Run.Result.Census.SkippedCount("Gst", SkipReason.UnsupportedSignature));
+        // The import declares the 32 bit enumeration the C function takes. The
+        // members of GTlsCertificateFlags run to 127, so int is what
+        // EnumFacts derives and what Gst.Gio.TlsCertificateFlags is declared
+        // with; a raw nint here would be the wrong ABI.
+        Assert.Contains(
+            "private static partial void GstConnectionSetValidationFlags(nint connection, int flags);",
+            Run.File("Connection.cs"),
+            StringComparison.Ordinal);
+
+        Assert.Equal(0, Run.Result.Census.SkippedCount("Gst", SkipReason.UnsupportedSignature));
+    }
+
+    /// <summary>
+    /// A <c>Gio</c> enumeration that comes back is cast out of the same integer,
+    /// so the return position is bound as well as the parameter one.
+    /// </summary>
+    [Fact]
+    public void AGioEnumerationReturnIsCastOutOfTheUnderlyingInteger()
+    {
+        Assert.Equal(
+            """
+            public Gst.Gio.TlsCertificateFlags GetValidationFlags()
+            {
+                int nativeResult = GstConnectionGetValidationFlags(Handle);
+                System.GC.KeepAlive(this);
+                return (Gst.Gio.TlsCertificateFlags)nativeResult;
+            }
+            """,
+            Run.Member("Connection.cs", "public Gst.Gio.TlsCertificateFlags GetValidationFlags("),
+            StringComparer.Ordinal);
+
+        Assert.Contains(
+            "private static partial int GstConnectionGetValidationFlags(nint connection);",
+            Run.File("Connection.cs"),
+            StringComparison.Ordinal);
     }
 
     /// <summary>
@@ -192,6 +245,10 @@ public sealed class GioRuntimeTypeTests
     {
         Assert.False(Run.HasFile("Socket.cs"));
         Assert.False(Run.HasFile("Cancellable.cs"));
+
+        // Naming the enumeration in a signature does not emit it either: the
+        // declaration stays the hand written one in src/GstSharp.Net/Core/Gio.
+        Assert.False(Run.HasFile("Enums.cs"));
         Assert.DoesNotContain("Gst.Gio", Run.File("_Module.cs"), StringComparison.Ordinal);
     }
 }

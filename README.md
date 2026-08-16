@@ -18,7 +18,7 @@ designed for NativeAOT from the start.
   required.
 
 Module set: `Gst`, `GstBase`, `GstApp`, `GstVideo`, `GstAudio`, `GstPbutils`,
-`GstSdp`, `GstWebRTC`, `GstNet`.
+`GstSdp`, `GstWebRTC`, `GstNet`, `GstRtsp`.
 
 ## Packages
 
@@ -36,6 +36,7 @@ so a single `packageSourceMapping` pattern covers all of them.
 | `GstSharp.Net.Sdp` | `GstSdp`: SDP session descriptions and MIKEY key management. |
 | `GstSharp.Net.WebRTC` | `GstWebRTC`: session descriptions, ICE, transports and data channels for `webrtcbin`. |
 | `GstSharp.Net.Net` | `GstNet`: network clocks and time providers. |
+| `GstSharp.Net.Rtsp` | `GstRtsp`: RTSP connections, messages, URLs and transports. |
 
 The analyzers ship inside `GstSharp.Net` rather than as a package of their own:
 they cannot get out of step with the binding that way, and no second package
