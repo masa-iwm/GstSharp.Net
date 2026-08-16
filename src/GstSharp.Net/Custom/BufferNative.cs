@@ -17,6 +17,17 @@ namespace Gst;
 /// offer a second, unscoped way to map a buffer.
 /// </para>
 /// <para>
+/// <c>gst_buffer_copy</c> is imported by hand for a different reason: the gir
+/// marks it <c>introspectable="0"</c>, so the generator skips it and no
+/// overlay can bring it back. For C consumers it is a static inline function
+/// of <c>gst/gstbuffer.h</c> that forwards to <c>gst_mini_object_copy</c>, but
+/// the library itself is built with the inline functions disabled and exports
+/// it as a real symbol, which is what makes it importable at all. Should a
+/// build ever be met that does not export it,
+/// <c>gst_mini_object_copy</c> is the fallback entry point that the inline
+/// version calls.
+/// </para>
+/// <para>
 /// Every signature is blittable: <c>gboolean</c> is an <see cref="int"/> and
 /// the <c>GstMapInfo</c> of the caller is passed by address.
 /// </para>
@@ -41,4 +52,15 @@ internal static unsafe partial class BufferNative
     /// <param name="info">The mapping to release.</param>
     [LibraryImport("Gst", EntryPoint = "gst_buffer_unmap")]
     internal static partial void Unmap(nint buffer, MapInfo* info);
+
+    /// <summary>
+    /// Creates a copy of a buffer: its fields and its metadata are copied, its
+    /// memory is shared.
+    /// </summary>
+    /// <param name="buffer">The buffer to copy.</param>
+    /// <returns>
+    /// The copy, which the caller owns, or <c>0</c> when the copy failed.
+    /// </returns>
+    [LibraryImport("Gst", EntryPoint = "gst_buffer_copy")]
+    internal static partial nint Copy(nint buffer);
 }

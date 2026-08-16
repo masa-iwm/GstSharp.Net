@@ -105,6 +105,35 @@ public sealed unsafe partial class Message
     }
 
     /// <summary>
+    /// Reads the informational message and the debug string of a
+    /// <see cref="MessageType.Info"/> message.
+    /// </summary>
+    /// <returns>
+    /// The report, and the debug string of the element that posted it, which is
+    /// <see langword="null"/> when the element did not provide one.
+    /// </returns>
+    /// <remarks>
+    /// See <see cref="ParseError"/>: the report is returned rather than thrown,
+    /// and this call owns and releases both copies. An info message carries a
+    /// <c>GError</c> like an error message does, which is a quirk of the C API
+    /// rather than a sign that something went wrong — it is how an element says
+    /// something worth reporting in the shape the bus already has.
+    /// </remarks>
+    /// <exception cref="ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="InvalidOperationException">
+    /// The message is not a <see cref="MessageType.Info"/> message.
+    /// </exception>
+    public (GException Error, string? Debug) ParseInfo()
+    {
+        EnsureType(MessageType.Info, "gst_message_parse_info");
+
+        nint error = nint.Zero;
+        nint debug = nint.Zero;
+        MessageNative.ParseInfo(Handle, &error, &debug);
+        return Take(error, debug);
+    }
+
+    /// <summary>
     /// Converts the two out parameters of a parse call and releases them.
     /// </summary>
     /// <param name="error">The <c>GError</c> copy, or <c>0</c>.</param>

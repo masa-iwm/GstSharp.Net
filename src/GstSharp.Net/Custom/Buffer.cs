@@ -153,6 +153,49 @@ public sealed partial class Buffer
     }
 
     /// <summary>
+    /// Creates a copy of the buffer that carries the same flags, timestamps,
+    /// offsets, metadata and memory.
+    /// </summary>
+    /// <returns>
+    /// The copy, which the caller owns and has to dispose, or
+    /// <see langword="null"/> when the buffer could not be copied.
+    /// </returns>
+    /// <remarks>
+    /// <para>
+    /// This is <c>gst_buffer_copy</c>, which is
+    /// <see cref="CopyRegion(Gst.BufferCopyFlags, nuint, nuint)"/> over the
+    /// whole buffer with <see cref="BufferCopy.All"/>. It is hand written
+    /// because the introspection data marks the function as not
+    /// introspectable; see <c>BufferNative</c> for why it is importable
+    /// nonetheless.
+    /// </para>
+    /// <para>
+    /// <b>The bytes are shared, not duplicated.</b> Only the memory blocks are
+    /// referenced a second time, so this is cheap no matter how large the
+    /// buffer is, and it is the way to give a buffer its own timestamps without
+    /// touching the ones the original carries. It also means that the copy is
+    /// writable as a mini object — it holds the only reference to itself, so
+    /// <see cref="SetPts"/> and the other field setters work on it — while a
+    /// <see cref="MapFlags.Write"/> mapping of it can still fail: the memory
+    /// underneath belongs to both buffers, and neither may write it while the
+    /// other lives. Use
+    /// <see cref="CopyRegion(Gst.BufferCopyFlags, nuint, nuint)"/> with
+    /// <see cref="BufferCopyFlags.Deep"/> when the bytes have to be a copy too.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="ObjectDisposedException">The wrapper was disposed.</exception>
+    public Gst.Buffer? Copy()
+    {
+        nint nativeResult = BufferNative.Copy(Handle);
+
+        // The buffer has to outlive the call that reads it: reading Handle is
+        // the last use of this wrapper, and a finalizer that runs in between
+        // would release the buffer being copied.
+        GC.KeepAlive(this);
+        return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+    }
+
+    /// <summary>
     /// Returns the handle of the buffer, provided that its fields may be
     /// written.
     /// </summary>

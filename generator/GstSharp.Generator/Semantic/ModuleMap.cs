@@ -44,9 +44,15 @@ internal static class ModuleMap
 {
     /// <summary>
     /// Gets every known module, in generation order. The GLib stack is present
-    /// for type resolution only; its runtime layer is hand written in
-    /// <c>GstSharp.Net.Core</c>.
+    /// for type resolution only; its runtime layer is hand written in the
+    /// <c>GstSharp.Net</c> assembly, under <c>src/GstSharp.Net/Core</c>.
     /// </summary>
+    /// <remarks>
+    /// The project directory of a module that emits nothing is never used: only
+    /// the emitters read it, and they run for the generated modules alone. The
+    /// GLib rows therefore name the assembly their types belong to rather than a
+    /// directory sources would be written to.
+    /// </remarks>
     internal static IReadOnlyList<ModuleInfo> Modules { get; } =
     [
         new ModuleInfo("Gst", "Gst", "GstSharp.Net", "Gst", IsGenerated: true),
@@ -55,9 +61,9 @@ internal static class ModuleMap
         new ModuleInfo("GstAudio", "Gst.Audio", "GstSharp.Net.Audio", "GstAudio", IsGenerated: true),
         new ModuleInfo("GstVideo", "Gst.Video", "GstSharp.Net.Video", "GstVideo", IsGenerated: true),
         new ModuleInfo("GstPbutils", "Gst.Pbutils", "GstSharp.Net.Pbutils", "GstPbutils", IsGenerated: true),
-        new ModuleInfo("GLib", "Gst.GLib", "GstSharp.Net.Core", "GLib", IsGenerated: false),
-        new ModuleInfo("GObject", "Gst.GObject", "GstSharp.Net.Core", "GObject", IsGenerated: false),
-        new ModuleInfo("GModule", "Gst.GLib", "GstSharp.Net.Core", "GModule", IsGenerated: false),
+        new ModuleInfo("GLib", "Gst.GLib", "GstSharp.Net", "GLib", IsGenerated: false),
+        new ModuleInfo("GObject", "Gst.GObject", "GstSharp.Net", "GObject", IsGenerated: false),
+        new ModuleInfo("GModule", "Gst.GLib", "GstSharp.Net", "GModule", IsGenerated: false),
     ];
 
     /// <summary>Looks a module up by gir namespace name.</summary>

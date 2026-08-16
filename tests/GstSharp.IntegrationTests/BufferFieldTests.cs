@@ -18,6 +18,10 @@ namespace GstSharp.IntegrationTests;
 [Collection(GstCollection.Name)]
 public sealed class BufferFieldTests
 {
+    private const int PayloadSize = 16;
+
+    private const byte Pattern = 0x5A;
+
     /// <summary>
     /// A buffer that nobody else holds takes every field and reads it back.
     /// </summary>
@@ -82,6 +86,52 @@ public sealed class BufferFieldTests
         Assert.True(buffer.IsWritable);
         buffer.SetPts(new ClockTime(33));
         Assert.Equal(new ClockTime(33), buffer.Pts);
+    }
+
+    /// <summary>
+    /// A copy carries the fields, the metadata and the bytes of the original,
+    /// and it carries them as its own: writing a field of the copy leaves the
+    /// original alone.
+    /// </summary>
+    /// <remarks>
+    /// The bytes are shared rather than duplicated, which is why they are
+    /// written before the copy is made: a write mapping needs the only
+    /// reference to the memory, and after the copy neither buffer has it. The
+    /// fields are a different matter — they belong to the buffer, and the copy
+    /// holds the only reference to itself.
+    /// </remarks>
+    [Fact]
+    public void CopyCarriesTheFieldsAndTheBytes()
+    {
+        using Buffer original = Assert.IsType<Buffer>(Buffer.NewAllocate(null, PayloadSize, null));
+
+        using (Buffer.MapScope map = original.Map(MapFlags.Write))
+        {
+            map.Span.Fill(Pattern);
+        }
+
+        original.SetPts(new ClockTime(1234));
+        original.SetOffset(7);
+
+        using Buffer copy = Assert.IsType<Buffer>(original.Copy());
+
+        Assert.NotEqual(original.Handle, copy.Handle);
+        Assert.Equal(original.Pts, copy.Pts);
+        Assert.Equal(original.Offset, copy.Offset);
+
+        using (Buffer.MapScope map = copy.Map(MapFlags.Read))
+        {
+            Assert.Equal((nuint)PayloadSize, map.Size);
+            Assert.Equal(-1, map.Span.IndexOfAnyExcept(Pattern));
+        }
+
+        // The copy is a mini object of its own with a single reference, so its
+        // fields are writable even though its bytes are not.
+        Assert.True(copy.IsWritable);
+        copy.SetPts(new ClockTime(5678));
+
+        Assert.Equal(new ClockTime(5678), copy.Pts);
+        Assert.Equal(new ClockTime(1234), original.Pts);
     }
 
     /// <summary>

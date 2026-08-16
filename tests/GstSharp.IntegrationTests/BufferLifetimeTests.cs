@@ -17,6 +17,10 @@ public sealed class BufferLifetimeTests
 {
     private const int Iterations = 1000;
 
+    private const int PayloadSize = 16;
+
+    private const byte Pattern = 0x5A;
+
     private readonly ITestOutputHelper _output;
 
     /// <summary>Initialises one test.</summary>
@@ -79,6 +83,58 @@ public sealed class BufferLifetimeTests
         {
             GstNative.MiniObjectUnref(handle);
         }
+    }
+
+    /// <summary>
+    /// A copy and its original are two mini objects that happen to share their
+    /// memory. Releasing either of them leaves the other one readable, in both
+    /// orders: the memory belongs to whoever still holds a reference to it.
+    /// </summary>
+    [Fact]
+    public void ACopyAndItsOriginalOutliveEachOther()
+    {
+        // The copy goes first.
+        using (Buffer original = NewFilledBuffer())
+        {
+            Buffer copy = Assert.IsType<Buffer>(original.Copy());
+            copy.Dispose();
+
+            using Buffer.MapScope map = original.Map(MapFlags.Read);
+            Assert.Equal(-1, map.Span.IndexOfAnyExcept(Pattern));
+        }
+
+        // And the original goes first.
+        Buffer survivor;
+        {
+            Buffer original = NewFilledBuffer();
+            survivor = Assert.IsType<Buffer>(original.Copy());
+            original.Dispose();
+        }
+
+        using (survivor)
+        {
+            using Buffer.MapScope map = survivor.Map(MapFlags.Read);
+            Assert.Equal(-1, map.Span.IndexOfAnyExcept(Pattern));
+        }
+
+        _output.WriteLine("A copy and its original released their shared memory exactly once.");
+    }
+
+    /// <summary>
+    /// Allocates a buffer of <see cref="PayloadSize"/> bytes filled with
+    /// <see cref="Pattern"/>.
+    /// </summary>
+    /// <returns>The buffer, which the caller has to dispose.</returns>
+    private static Buffer NewFilledBuffer()
+    {
+        Buffer buffer = Assert.IsType<Buffer>(Buffer.NewAllocate(null, PayloadSize, null));
+
+        using (Buffer.MapScope map = buffer.Map(MapFlags.Write))
+        {
+            map.Span.Fill(Pattern);
+        }
+
+        return buffer;
     }
 
     /// <summary>
