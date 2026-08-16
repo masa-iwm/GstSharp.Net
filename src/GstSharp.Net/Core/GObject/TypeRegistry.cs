@@ -233,6 +233,53 @@ public static class TypeRegistry
     }
 
     /// <summary>
+    /// Creates the managed wrapper of a value whose type is known from
+    /// somewhere other than the value itself.
+    /// </summary>
+    /// <param name="type">The registered type of the value.</param>
+    /// <param name="handle">The value to wrap.</param>
+    /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
+    /// <param name="wrapper">The new wrapper.</param>
+    /// <returns>
+    /// <see langword="true"/> when <paramref name="type"/> is registered.
+    /// </returns>
+    /// <remarks>
+    /// <para>
+    /// <see cref="TryCreateWrapper(nint, Transfer, out object?)"/> reads the
+    /// type out of the instance, which only a <c>GTypeInstance</c> carries: a
+    /// boxed value is a plain structure, and the first word of one is a field
+    /// of the structure rather than a pointer to its class. The type of a boxed
+    /// value therefore has to come from whatever produced it — the
+    /// <c>GType</c> of the <c>GValue</c> it sits in, which is what
+    /// <see cref="Value.GetBoxed{T}"/> passes here.
+    /// </para>
+    /// <para>
+    /// The lookup is exact and raises no <see cref="Fallback"/>. Boxed types do
+    /// not derive from one another, so walking to the parent type would only
+    /// ever reach <c>G_TYPE_BOXED</c>, which nothing registers, and reporting a
+    /// fallback for a type that has no ancestry to fall back to would say
+    /// nothing.
+    /// </para>
+    /// </remarks>
+    internal static unsafe bool TryCreateWrapper(GType type, nint handle, Transfer transfer, out object? wrapper)
+    {
+        wrapper = null;
+
+        if (handle == nint.Zero || !type.IsValid)
+        {
+            return false;
+        }
+
+        if (!EnsureFrozen().TryGetValue(type.Value, out TypeEntry entry))
+        {
+            return false;
+        }
+
+        wrapper = entry.Factory(handle, transfer);
+        return wrapper is not null;
+    }
+
+    /// <summary>
     /// Raises <see cref="Fallback"/>, once per exact native type.
     /// </summary>
     /// <param name="instanceType">The type of the native instance.</param>

@@ -365,6 +365,97 @@ public struct Value : IDisposable
     public readonly nint GetBoxed() => GObjectNative.ValueGetBoxed(ref AsMutable());
 
     /// <summary>
+    /// Reads a boxed value as the wrapper of the binding, as a copy of the
+    /// caller's own.
+    /// </summary>
+    /// <typeparam name="T">
+    /// The wrapper type of the boxed value, for example
+    /// <c>Gst.WebRTC.WebRTCSessionDescription</c> or <see cref="Gst.Structure"/>.
+    /// </typeparam>
+    /// <returns>
+    /// The wrapper, which the caller has to dispose, or <see langword="null"/>
+    /// when the value holds no boxed value at all.
+    /// </returns>
+    /// <remarks>
+    /// <para>
+    /// <see cref="GetBoxed"/> hands out the raw pointer that the value owns,
+    /// and nothing on the public surface could turn one into a wrapper: the
+    /// <c>FromNative</c> factory of every generated boxed type is internal to
+    /// the assembly that generated it. This is the route that does not need
+    /// one. The <c>GType</c> of the value says what the pointer is, the type
+    /// registry already holds the factory of every generated wrapper — the
+    /// boxed ones among them — and the wrapper is built through that factory
+    /// with <see cref="Transfer.None"/>, so what comes back is a copy of the
+    /// caller's own and the value keeps what it owns.
+    /// </para>
+    /// <para>
+    /// The type registry is filled from the module initialiser of each binding
+    /// assembly, and naming a type of an assembly — as the type argument here
+    /// does — is not a call into it. An application that reads a
+    /// <c>GstWebRTCSessionDescription</c> out of a promise without ever calling
+    /// into <c>GstSharp.Net.WebRTC</c> otherwise has to say
+    /// <c>Gst.WebRTC.GstWebRTC.Initialize()</c> first; see
+    /// <see href="https://github.com/masa-iwm/GstSharp.Net/blob/main/docs/ownership.md#the-gtype-registry">The
+    /// GType registry</see>. An unregistered type is an
+    /// <see cref="InvalidOperationException"/> that says so, rather than a
+    /// silent <see langword="null"/>.
+    /// </para>
+    /// <para>
+    /// A mini object is a boxed type as far as GObject is concerned, but its
+    /// wrapper does not derive from <see cref="Boxed"/>, so this does not
+    /// reach one. Reading a <c>GstSample</c> or a <c>GstBuffer</c> out of a
+    /// value is still <see cref="GetBoxed"/> and a raw handle.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="InvalidCastException">
+    /// The value does not hold a boxed value, or the wrapper of its type is not
+    /// a <typeparamref name="T"/>.
+    /// </exception>
+    /// <exception cref="InvalidOperationException">
+    /// No wrapper is registered for the type of the value, which normally means
+    /// that the module that binds it has not been initialised.
+    /// </exception>
+    public readonly T? GetBoxed<T>()
+        where T : Boxed
+    {
+        GType type = Type;
+
+        // g_value_get_boxed on a value of another fundamental type is a GLib
+        // assertion failure rather than a cast, so the question is asked here.
+        if (GObjectNative.TypeFundamental(type.Value) != GType.BoxedValue)
+        {
+            throw new InvalidCastException(
+                $"A value of type {type.Name} does not hold a boxed value.");
+        }
+
+        nint boxed = GetBoxed();
+        if (boxed == nint.Zero)
+        {
+            return null;
+        }
+
+        if (!TypeRegistry.TryCreateWrapper(type, boxed, Transfer.None, out object? wrapper))
+        {
+            throw new InvalidOperationException(
+                $"No wrapper is registered for the boxed type {type.Name}. " +
+                "Initialise the binding module that covers it — for example " +
+                "Gst.WebRTC.GstWebRTC.Initialize() — before reading the value.");
+        }
+
+        if (wrapper is T typed)
+        {
+            return typed;
+        }
+
+        // The factory built a copy of its own, and nothing else holds it.
+        (wrapper as IDisposable)?.Dispose();
+
+        throw new InvalidCastException(
+            $"The value holds a {type.Name}, whose wrapper is " +
+            $"{wrapper?.GetType().ToString() ?? "nothing"} and not a {typeof(T)}.");
+    }
+
+    /// <summary>
     /// Stores a parameter specification. The value takes its own reference.
     /// </summary>
     /// <param name="content">The <c>GParamSpec</c> to store.</param>
