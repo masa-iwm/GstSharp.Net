@@ -24,6 +24,7 @@
     <ProjectReference Include="../../src/GstSharp.Net.WebRTC/GstSharp.Net.WebRTC.csproj" />
     <ProjectReference Include="../../src/GstSharp.Net.Net/GstSharp.Net.Net.csproj" />
     <ProjectReference Include="../../src/GstSharp.Net.Rtsp/GstSharp.Net.Rtsp.csproj" />
+    <ProjectReference Include="../../src/GstSharp.Net.GES/GstSharp.Net.GES.csproj" />
 
     <!-- Referenced, but never called into: the module sweep of
          GstSharp.Initialize is what has to put their types into the registry,

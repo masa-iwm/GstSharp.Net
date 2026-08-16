@@ -40,6 +40,7 @@
     <InternalsVisibleTo Include="GstSharp.Net.WebRTC" />
     <InternalsVisibleTo Include="GstSharp.Net.Net" />
     <InternalsVisibleTo Include="GstSharp.Net.Rtsp" />
+    <InternalsVisibleTo Include="GstSharp.Net.GES" />
   </ItemGroup>
 
   <!-- The analyzer assembly is resolved as an @(Analyzer) item by the project

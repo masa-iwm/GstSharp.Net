@@ -5,7 +5,9 @@
   "$comment-skip-annotations": "These four functions carry annotations that do not describe what the C function does, and following them produces wrong lengths or wrong ownership: gst_adapter_map returns a pointer whose length is the size argument rather than an annotated array, gst_adapter_take returns freshly allocated memory of the size argument, gst_type_find_peek returns a borrowed pointer of the size argument, and gst_audio_ring_buffer_commit both reads and writes its sample count while its data pointer carries no length at all. An annotation override cannot add a missing array length, so they are skipped.",
   "$comment-skip-consumed": "gst_meta_info_register consumes the GstMetaInfo it is given and returns the registered one. The wrapper of an opaque record owns nothing and is never disposed, so nothing is freed twice, but the instance the caller still holds points at released memory the moment the call returns.",
   "$comment-skip-superseded": "gst_adapter_unmap releases what gst_adapter_map handed out, and gst_adapter_map is skipped just above. Emitting the release on its own leaves a public Unmap() with no Map() to pair it with, which unmaps a mapping the caller never took and releases a second time the one that the hand written scope holds. The mapping surface of an adapter is Gst.Base.Adapter.Map and the scope it returns, so this entry point is bound there and nowhere else.",
+  "$comment-skip-deinit": "ges_deinit releases everything ges_init built, and the editing services are unusable until another ges_init. The binding runs ges_init from GstGES.Initialize, behind a latch that says it has run, and nothing in the library tells that latch when the resources are gone: a caller who takes the shut down of the process into their own hands leaves the entry point of the module reporting an initialised GES that no longer exists, and no call can bring it back. This is the shape gst_adapter_unmap has, a release with no acquisition of its own to pair with, and the same answer. Deinitialising GES is what ending the process does, which the documentation of the C function says as well.",
   "skip": [
+    "ges_deinit",
     "gst_adapter_map",
     "gst_adapter_take",
     "gst_adapter_unmap",
@@ -34,7 +36,10 @@
     "GstSdp.SDPZone"
   ],
   "$comment-rename-get-type": "gst_rtsp_message_get_type reads the message kind out of a GstRTSPMessage, and its derived C# name is GetType, which every object already declares. The generator refuses the collision and skips the member, so the kind of a message would be unreadable; GetMessageType is the name the C# surface gives it. The type of the record itself is registered under gst_rtsp_msg_get_type and is unaffected.",
+  "$comment-rename-commited": "GESTimeline and GESTrack both emit their commit signal under the name 'commited', with one 't'. The typo is the API, since connecting to 'committed' connects to nothing, so the gir is right and only the C# name is corrected here. The signal name the generated code passes to GObject is the one of the gir; the rename reaches the event alone.",
   "rename": {
+    "GES.Timeline::commited": "Committed",
+    "GES.Track::commited": "Committed",
     "Gst.Element::no-more-pads": "NoMorePadsSignal",
     "Gst.PadTemplate::pad-created": "PadCreatedSignal",
     "gst_rtsp_message_get_type": "GetMessageType"

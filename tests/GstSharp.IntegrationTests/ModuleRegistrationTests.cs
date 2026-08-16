@@ -47,6 +47,7 @@ public sealed class ModuleRegistrationTests
         "GstSharp.Net.WebRTC",
         "GstSharp.Net.Net",
         "GstSharp.Net.Rtsp",
+        "GstSharp.Net.GES",
     ];
 
     /// <summary>The logical library name each of them registers.</summary>
@@ -62,6 +63,7 @@ public sealed class ModuleRegistrationTests
         "GstWebRTC",
         "GstNet",
         "GstRtsp",
+        "GES",
     ];
 
     /// <summary>

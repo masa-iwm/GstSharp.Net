@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>GES</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../GstSharp.Net/GstSharp.Net.csproj" />
+
+    <!-- A discoverer runs over every URI asset the editing services load, so
+         the asset surface hands out Gst.Pbutils.DiscovererInfo and its stream
+         information, and rendering a timeline takes an encoding profile. -->
+    <ProjectReference Include="../GstSharp.Net.Pbutils/GstSharp.Net.Pbutils.csproj" />
+
+    <!-- GESPipeline previews a timeline in a window of the application, so it
+         implements Gst.Video.IVideoOverlay. -->
+    <ProjectReference Include="../GstSharp.Net.Video/GstSharp.Net.Video.csproj" />
+  </ItemGroup>
+
+</Project>

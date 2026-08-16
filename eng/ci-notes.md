@@ -64,7 +64,8 @@ AppSinkSpans gate.
 ### Windows, MinGW flavor — MSYS2
 
 `msys2/setup-msys2@v2` with `mingw-w64-x86_64-gstreamer`,
-`-gst-plugins-base` and `-gst-plugins-good`. It was chosen over the official
+`-gst-plugins-base`, `-gst-plugins-good`, `-gst-plugins-bad-libs` and
+`-gst-editing-services`. It was chosen over the official
 MinGW installer because the two Windows jobs then cover different code:
 
 * the MSVC job covers the environment-variable branch and the `gstreamer-1.0-0.dll`
@@ -90,7 +91,8 @@ and the preinstalled copy has no GStreamer packages.
 Runtime packages only:
 
 ```
-libgstreamer1.0-0 libgstreamer-plugins-base1.0-0
+libgstreamer1.0-0 libgstreamer-plugins-base1.0-0 libgstreamer-plugins-bad1.0-0
+libges-1.0-0
 gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-tools
 ```
 
@@ -98,6 +100,15 @@ The `-dev` packages are deliberately not installed. The binding loads versioned
 SONAMEs (`libgstreamer-1.0.so.0`, `libgstapp-1.0.so.0`, see `NativeNames`),
 which the runtime packages provide; `-dev` would only add headers and the
 unversioned `.so` symlinks, which nothing here uses.
+
+The last two are libraries rather than plugin sets. Every binding assembly
+registers its types from a module initialiser, and `TypeRegistry.Freeze`
+resolves them all, so a library a module names has to be there even when no
+test builds an element out of it: `libgstwebrtc-1.0.so.0` comes from the bad
+plugins package and `libges-1.0.so.0` from `libges-1.0-0`. The latter earns its
+place twice — it ships the `nle` and `ges` plugins beside the library, and
+`ges_init` fails outright when the non linear engine is not in the registry
+("The `nle` plugin is missing", which is the library's own wording).
 
 The runner is pinned to `ubuntu-24.04` rather than `ubuntu-latest`. Its
 GStreamer is 1.24, which is the floor `AbiProbeTests.NativeVersionIsSupported`

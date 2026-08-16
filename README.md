@@ -18,7 +18,7 @@ designed for NativeAOT from the start.
   required.
 
 Module set: `Gst`, `GstBase`, `GstApp`, `GstVideo`, `GstAudio`, `GstPbutils`,
-`GstSdp`, `GstWebRTC`, `GstNet`, `GstRtsp`.
+`GstSdp`, `GstWebRTC`, `GstNet`, `GstRtsp`, `GES`.
 
 ## Packages
 
@@ -37,6 +37,7 @@ so a single `packageSourceMapping` pattern covers all of them.
 | `GstSharp.Net.WebRTC` | `GstWebRTC`: session descriptions, ICE, transports and data channels for `webrtcbin`. |
 | `GstSharp.Net.Net` | `GstNet`: network clocks and time providers. |
 | `GstSharp.Net.Rtsp` | `GstRtsp`: RTSP connections, messages, URLs and transports. |
+| `GstSharp.Net.GES` | `GES`: the editing services — timelines, layers, clips and the assets behind them. Initialise through `GES.GstGES.Initialize()`, which runs `ges_init` on top of the usual startup. |
 
 The analyzers ship inside `GstSharp.Net` rather than as a package of their own:
 they cannot get out of step with the binding that way, and no second package

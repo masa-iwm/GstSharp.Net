@@ -164,6 +164,15 @@ internal static class NativeNames
                 "libgstrtsp-1.0.0.dylib",
                 "gstrtsp-1.0-0.dll",
                 "libgstrtsp-1.0-0.dll"),
+
+            // The editing services are the one module whose file name does not
+            // start with "gst": the library is libges, not libgstges, which is
+            // the name of the plugin that ships beside it.
+            ["GES"] = new(
+                "libges-1.0.so.0",
+                "libges-1.0.0.dylib",
+                "ges-1.0-0.dll",
+                "libges-1.0-0.dll"),
             [AnchorLogicalName] = new(
                 "libgstreamer-1.0.so.0",
                 "libgstreamer-1.0.0.dylib",

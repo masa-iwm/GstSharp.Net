@@ -129,6 +129,7 @@ public sealed class SkipRulesTests
         // decision, not a detail.
         Assert.Equal(
             [
+                "ges_deinit",
                 "gst_adapter_map",
                 "gst_adapter_take",
                 "gst_adapter_unmap",

@@ -442,11 +442,14 @@ public sealed class SignalEmitterTests
     [InlineData("GstWebRTC", 6)]
     [InlineData("GstNet", 0)]
     [InlineData("GstRtsp", 1)]
+    [InlineData("GES", 29)]
     public void TheSignalCensusIsStable(string module, int signals)
     {
         // The two signals whose C# name a method of the same class had taken
         // (GstElement::no-more-pads and GstPadTemplate::pad-created) are bound
         // through the renames of fixups.json, so nothing collides any more.
+        // Two more renames are cosmetic: GESTimeline and GESTrack spell their
+        // commit signal 'commited', and the event of both is Committed.
         // The nine action signals of GstApp are not events: they are the call
         // API of GstAppSrc and GstAppSink, which is already bound as methods.
         // Four of the twelve signals of GstWebRTC are action signals as well,
@@ -471,18 +474,21 @@ public sealed class SignalEmitterTests
             removers += file.Content.Split("    public static void Remove").Length - 1;
         }
 
-        // Forty five signals are emitted over the nine modules. Forty one are
+        // Seventy four signals are emitted over the eleven modules. Seventy are
         // events of a class; the remaining four belong to a gir interface and
-        // are a pair of extension methods instead.
-        Assert.Equal(41, events);
+        // are a pair of extension methods instead. The editing services are
+        // twenty nine of them, and all twenty nine are events: the one signal
+        // of a GES interface, GESMetaContainer::notify-meta, carries a GValue
+        // and is not bound.
+        Assert.Equal(70, events);
         Assert.Equal(4, adders);
         Assert.Equal(4, removers);
-        Assert.Equal(45, trampolines);
+        Assert.Equal(74, trampolines);
 
         string[] withSignals =
         [
             "GstSharp.Net", "GstSharp.Net.Base", "GstSharp.Net.App", "GstSharp.Net.Video", "GstSharp.Net.Pbutils",
-            "GstSharp.Net.WebRTC", "GstSharp.Net.Rtsp",
+            "GstSharp.Net.WebRTC", "GstSharp.Net.Rtsp", "GstSharp.Net.GES",
         ];
 
         foreach (string module in withSignals)
@@ -536,6 +542,22 @@ public sealed class SignalEmitterTests
             Source("PadTemplate.cs"),
             StringComparison.Ordinal);
         Assert.DoesNotContain("SignalSignalArgs", Source("PadTemplate.cs"), StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("GstSharp.Net.GES/Generated/Timeline.cs")]
+    [InlineData("GstSharp.Net.GES/Generated/Track.cs")]
+    public void ARenameCorrectsTheCSharpNameOfASignalAndNotTheOneOnTheWire(string path)
+    {
+        // GESTimeline and GESTrack emit 'commited', with one 't'. The typo is
+        // the API, so the name the generated code hands to GObject has to keep
+        // it while the event reads the way a C# member should.
+        string source = SourceOf(path);
+
+        Assert.Contains("public event System.EventHandler Committed\n", source, StringComparison.Ordinal);
+        Assert.Contains("GES.SignalConnections.Add(this, \"commited\", ", source, StringComparison.Ordinal);
+        Assert.Contains("GES.SignalConnections.Remove(this, \"commited\", value);", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("\"committed\"", source, StringComparison.Ordinal);
     }
 
     [Fact]

@@ -65,7 +65,7 @@ jobs:
         run: dotnet restore GstSharp.Net.sln
 
       # The generated sources are committed, so the gate is that regenerating
-      # them changes nothing: 271 files plus girs/skip-report.md, which the
+      # them changes nothing: 410 files plus girs/skip-report.md, which the
       # generator writes next to the gir files it was derived from.
       - name: Generator drift
         run: dotnet run --project generator/GstSharp.Generator --no-restore -- verify --gir-dir girs --out-dir src
@@ -129,7 +129,10 @@ jobs:
       # symlinks, neither of which is used. libgstwebrtc-1.0.so.0 is what the
       # bad plugins package is here for: the GstWebRTC binding registers its
       # types from a module initialiser, so the library has to be resolvable
-      # even though no test builds a webrtcbin.
+      # even though no test builds a webrtcbin. libges-1.0-0 is the same story
+      # twice: it carries libges-1.0.so.0 for the registry freeze, and the nle
+      # and ges plugins beside it, which ges_init needs before a timeline can
+      # be built at all.
       - name: Install GStreamer
         run: |
           sudo apt-get update
@@ -137,6 +140,7 @@ jobs:
             libgstreamer1.0-0 \
             libgstreamer-plugins-base1.0-0 \
             libgstreamer-plugins-bad1.0-0 \
+            libges-1.0-0 \
             gstreamer1.0-plugins-base \
             gstreamer1.0-plugins-good \
             gstreamer1.0-tools
@@ -195,7 +199,10 @@ jobs:
 
       # The formula bundles core, base, good, bad, ugly and libav, and installs
       # into /opt/homebrew/lib on the arm64 runners, which is one of the
-      # directories NativeInstallPlanner.EnumerateUnixDirectories tries.
+      # directories NativeInstallPlanner.EnumerateUnixDirectories tries. The
+      # editing services are part of it as well — the formula absorbed the
+      # former gst-editing-services one and links lib/libges* — so the GES job
+      # needs nothing of its own here.
       - name: Install GStreamer
         run: |
           brew install gstreamer
@@ -260,12 +267,15 @@ jobs:
           path-type: minimal
           # The -libs half of the bad plugins carries libgstwebrtc-1.0-0.dll and
           # little else; the plugins themselves are not under test and would
-          # pull in fifty more packages.
+          # pull in fifty more packages. The editing services have no such
+          # split: one package carries libges-1.0-0.dll together with the nle
+          # and ges plugins, and the GES tests need both halves.
           install: >-
             mingw-w64-x86_64-gstreamer
             mingw-w64-x86_64-gst-plugins-base
             mingw-w64-x86_64-gst-plugins-good
             mingw-w64-x86_64-gst-plugins-bad-libs
+            mingw-w64-x86_64-gst-editing-services
 
       # The planner walks PATH, recognizes the msys64 root inside the entry and
       # probes ucrt64\bin, mingw64\bin and clang64\bin below it. Prepending the
