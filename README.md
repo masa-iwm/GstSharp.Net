@@ -1,5 +1,9 @@
 # GstSharp.Net
 
+[![NuGet](https://img.shields.io/nuget/vpre/GstSharp.Net?logo=nuget)](https://www.nuget.org/packages/GstSharp.Net)
+[![CI](https://github.com/masa-iwm/GstSharp.Net/actions/workflows/ci.yml/badge.svg)](https://github.com/masa-iwm/GstSharp.Net/actions/workflows/ci.yml)
+[![License](https://img.shields.io/badge/license-LGPL--2.1--or--later-blue)](https://github.com/masa-iwm/GstSharp.Net/blob/main/LICENSE)
+
 Modern .NET bindings for [GStreamer](https://gstreamer.freedesktop.org/) 1.28,
 designed for NativeAOT from the start.
 
