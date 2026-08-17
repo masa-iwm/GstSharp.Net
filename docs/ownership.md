@@ -217,3 +217,51 @@ and drops the message anyway. That is the one deliberate difference from
 `SetSyncHandler`, whose handler is answered `Pass` when it throws: there the
 queue is still read by somebody, and swallowing an error or an end-of-stream
 message would hang the application waiting for it.
+
+## Finalizers and the garbage collector
+
+**An application that follows the rules above never asks the collector for
+anything.** `Dispose` on a mini object or a boxed value unrefs on the calling
+thread, so the native memory is freed — or handed back to its pool — at the
+closing brace of the `using`, whatever the collector happens to be doing at the
+time. What is left over is a managed wrapper of a few dozen bytes, and when
+that is collected is nobody's problem.
+
+The finalizer is the safety net, and it is worth knowing what the net costs. A
+wrapper that is dropped without being disposed is finalizable, so it takes
+**two collections** to go away: the first finds it unreachable and puts it on
+the finalizer queue, the finalizer thread unrefs, and only the second one takes
+the object. The native memory is alive for the whole of that. The arithmetic of
+the delay is the part that matters: a `Sample` and the `Buffer` pulled out of
+it are on the order of a hundred managed bytes together, so a pipeline at 30
+frames a second takes minutes to fill a gen0 budget — while every leaked 1080p
+frame it is holding on to is about three megabytes. The collector paces itself
+against the wrapper and not against what the wrapper owns.
+
+**The wrappers this happens to are the ones that escaped.** `GST0001` reports a
+local that is never disposed, and it deliberately stops reporting the moment
+the wrapper is returned, stored in a field, passed to a method or captured by a
+lambda — see [the analyzer rules](analyzers.md). A `Sample` put into a
+`List<Sample>` and forgotten is exactly the shape the analyzer cannot see, and
+exactly the shape that grows without bound. Dispose where the wrapper stops
+being needed, wherever that turns out to be; the analyzer covers the easy half
+of that and no more.
+
+A GObject wrapper is a different story, and its finalizer does not unref at
+all: it enqueues the release, which `GstSharp.DrainPendingReleases()` performs
+on a thread that may call into GStreamer. A collection on its own therefore
+releases nothing. The section above says where the queue is drained and when an
+application has to drain it itself.
+
+**The binding does not call `GC.AddMemoryPressure`, and that is deliberate.**
+Pressure is additive while references are shared, so several wrappers on one
+buffer — `sample.GetBuffer()` is a second wrapper on the same memory — would
+report that memory two or three times over on the hottest path there is.
+Pool-backed buffers break the model outright: their unref returns the buffer to
+its `GstBufferPool` rather than to the operating system, so a collection would
+free nothing the pressure could be taken back off, and the induced collections
+would repeat. And an induced gen2 collection is a blocking pause in the one
+kind of application that is built not to have them. An application that really
+does hold a large buffer for a long time — a stored snapshot, say — can say
+so for that buffer alone, with `buffer.GetSize()` and a matched
+`GC.AddMemoryPressure` / `GC.RemoveMemoryPressure` pair of its own.
