@@ -12,6 +12,15 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <Deterministic>true</Deterministic>
     <IsPackable>true</IsPackable>
+
+    <!-- The debugging symbols travel inside the assembly. The GitHub Packages
+         feed has no symbol server, so a symbol package would help nobody
+         there, and a consumer of the plain package would otherwise get stack
+         traces without lines. The SDK's built-in source link plus the
+         ContinuousIntegrationBuild switch the pack step passes make the
+         embedded symbols step into sources once the repository is public. -->
+    <DebugType>embedded</DebugType>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
   </PropertyGroup>
 
   <PropertyGroup Label="Package metadata">

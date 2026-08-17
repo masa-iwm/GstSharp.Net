@@ -89,21 +89,20 @@ jobs:
         run: ls -l artifacts/dist
 
       # Keep the packages whatever the push does: a rejected push must not cost
-      # the artifacts of a green build. Symbol packages are collected here as
-      # well, because the feed does not take them (see below).
+      # the artifacts of a green build. There are no symbol packages to
+      # collect: the debugging symbols are embedded in the assemblies
+      # (src/Directory.Build.props), which is the only form that helps on a
+      # feed without a symbol server.
       - name: Upload the packages
         uses: actions/upload-artifact@v7
         with:
           name: packages-${{ steps.version.outputs.version }}
-          path: |
-            artifacts/dist/*.nupkg
-            artifacts/dist/*.snupkg
+          path: artifacts/dist/*.nupkg
           if-no-files-found: error
           retention-days: 30
 
-      # --no-symbols: GitHub Packages has no symbol server, and dotnet nuget
-      # push would otherwise upload the .snupkg next to each .nupkg and fail on
-      # it. Symbols travel as the build artifact above instead.
+      # --no-symbols: defensive only - nothing produces a .snupkg, and the
+      # feed would reject one anyway.
       - name: Push to GitHub Packages
         run: >
           dotnet nuget push "artifacts/dist/*.nupkg"
@@ -115,10 +114,10 @@ jobs:
       # The release is where the packages can be downloaded without a token:
       # the GitHub Packages feed above needs authentication even when the
       # repository is public, so the attached .nupkg files are the no-auth
-      # path, and the .snupkg symbols ride along. A tag with a prerelease
-      # suffix is marked as a prerelease. Skipping an existing release keeps a
-      # re-run of a green publish from failing at its last step, the same
-      # stance --skip-duplicate takes for the feed.
+      # path; their assemblies carry the symbols embedded. A tag with a
+      # prerelease suffix is marked as a prerelease. Skipping an existing
+      # release keeps a re-run of a green publish from failing at its last
+      # step, the same stance --skip-duplicate takes for the feed.
       - name: Cut the GitHub release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -132,14 +131,10 @@ jobs:
           if [[ "$tag" == *-* ]]; then
             prerelease="--prerelease"
           fi
-          # nullglob: the projects produce no symbol packages today, and a
-          # glob that matches nothing must vanish rather than reach gh as a
-          # literal path it fails on.
-          shopt -s nullglob
           gh release create "$tag" \
             --repo "${{ github.repository }}" \
             --title "$tag" \
             --generate-notes \
             --verify-tag \
             $prerelease \
-            artifacts/dist/*.nupkg artifacts/dist/*.snupkg
+            artifacts/dist/*.nupkg
