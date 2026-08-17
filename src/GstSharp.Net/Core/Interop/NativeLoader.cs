@@ -1,3 +1,4 @@
+using System.Collections.Frozen;
 using System.Reflection;
 using System.Runtime.InteropServices;
 
@@ -17,6 +18,12 @@ namespace Gst.Interop;
 /// On Windows the first module that is loaded decides the installation: its
 /// flavor and directory are pinned and every other module is loaded from there,
 /// because the MSVC and the MinGW build cannot be mixed inside one process.
+/// </para>
+/// <para>
+/// A binding module outside this repository adds its own library to the name
+/// space with <see cref="RegisterLibrary"/> and is then resolved by the same
+/// rules; see
+/// <see href="https://github.com/masa-iwm/GstSharp.Net/blob/main/docs/modules.md">docs/modules.md</see>.
 /// </para>
 /// </remarks>
 public static partial class NativeLoader
@@ -41,6 +48,18 @@ public static partial class NativeLoader
     private static readonly Dictionary<string, nint> LoadedModules = new(StringComparer.Ordinal);
     private static readonly DllImportResolver Resolver = Resolve;
     private static readonly IPlatformProbe Probe = new SystemPlatformProbe();
+
+    /// <summary>
+    /// The libraries that <see cref="RegisterLibrary"/> added, on top of the
+    /// closed table of <see cref="NativeNames"/>.
+    /// </summary>
+    /// <remarks>
+    /// The table is replaced wholesale under <see cref="Sync"/> and read
+    /// without any lock, because <see cref="Resolve"/> runs on whichever thread
+    /// happens to make the first call through a stub of a registered assembly.
+    /// </remarks>
+    private static volatile FrozenDictionary<string, NativeNameEntry> _registeredLibraries =
+        FrozenDictionary<string, NativeNameEntry>.Empty;
 
     private static string? _configuredPath;
     private static GstFlavor? _configuredFlavor;
@@ -145,6 +164,101 @@ public static partial class NativeLoader
     }
 
     /// <summary>
+    /// Adds one native library to the name space of the loader, so that a
+    /// binding module outside this repository can import from it.
+    /// </summary>
+    /// <param name="logicalName">
+    /// The logical name the module uses in its
+    /// <see cref="LibraryImportAttribute"/> stubs and in its
+    /// <see cref="NativeModule"/>, for example <c>GstController</c>.
+    /// </param>
+    /// <param name="fileNames">The file name of the library on every platform.</param>
+    /// <remarks>
+    /// <para>
+    /// <b>The registered library is resolved from the pinned installation.</b>
+    /// It goes through exactly the same search as the libraries of this
+    /// repository, which on Windows means the directory and the flavor that the
+    /// first module pinned and nothing else, and on Linux and macOS the same
+    /// ordered walk of candidate directories that every other module takes. A
+    /// module therefore cannot pull a second copy of GLib into the process
+    /// through the back door.
+    /// </para>
+    /// <para>
+    /// <b>Register before the first call through the name.</b> The natural
+    /// place is the <c>[ModuleInitializer]</c> that already calls
+    /// <see cref="EnsureRegistered"/>, which by construction runs before any
+    /// other code of that assembly and therefore before any of its stubs can
+    /// resolve. A name that is still unknown when a stub resolves is left to
+    /// the default resolution of the runtime, which normally fails that call
+    /// with a <see cref="DllNotFoundException"/>; nothing negative is
+    /// remembered, so registering afterwards still works for the next call, but
+    /// the call that raced is lost.
+    /// </para>
+    /// <para>
+    /// <b>The built-in names cannot be shadowed.</b> <c>Gst</c>, <c>GLib</c>,
+    /// <c>GObject</c> and the other names this repository ships are refused, so
+    /// no module can redirect a core library somewhere else.
+    /// </para>
+    /// <para>
+    /// Registering the same name with the same four file names again does
+    /// nothing, which two assemblies that import from one library both need.
+    /// Registering it with different file names is a conflict and throws,
+    /// whether the library has been loaded already or not: the process resolves
+    /// one file per logical name and the second answer would be a lie for
+    /// whoever asked first.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="ArgumentNullException"><paramref name="fileNames"/> is <see langword="null"/>.</exception>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="logicalName"/> is empty or belongs to this repository,
+    /// or one of the file names is empty or is a path rather than a file name.
+    /// </exception>
+    /// <exception cref="InvalidOperationException">
+    /// The name is registered already, with different file names.
+    /// </exception>
+    public static void RegisterLibrary(string logicalName, NativeLibraryNames fileNames)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(logicalName);
+        ArgumentNullException.ThrowIfNull(fileNames);
+
+        if (NativeNames.TryGet(logicalName, out _))
+        {
+            throw new ArgumentException(
+                $"\"{logicalName}\" is one of the native modules that GstSharp.Net ships, and the built-in " +
+                "names cannot be redefined. Pick a name of your own.",
+                nameof(logicalName));
+        }
+
+        NativeNameEntry entry = new(
+            FileName(fileNames.Linux, nameof(NativeLibraryNames.Linux)),
+            FileName(fileNames.MacOs, nameof(NativeLibraryNames.MacOs)),
+            FileName(fileNames.WindowsMsvc, nameof(NativeLibraryNames.WindowsMsvc)),
+            FileName(fileNames.WindowsMinGW, nameof(NativeLibraryNames.WindowsMinGW)));
+
+        lock (Sync)
+        {
+            if (_registeredLibraries.TryGetValue(logicalName, out NativeNameEntry known))
+            {
+                if (known.Matches(entry))
+                {
+                    return;
+                }
+
+                throw new InvalidOperationException(
+                    $"\"{logicalName}\" is registered already, with different file names. One logical name " +
+                    "stands for one library in a process.");
+            }
+
+            Dictionary<string, NativeNameEntry> next = new(_registeredLibraries, StringComparer.Ordinal)
+            {
+                [logicalName] = entry,
+            };
+
+            _registeredLibraries = next.ToFrozenDictionary(StringComparer.Ordinal);
+        }
+    }
+
+    /// <summary>
     /// Tells the loader where the native libraries are, before the first one is
     /// loaded.
     /// </summary>
@@ -202,10 +316,12 @@ public static partial class NativeLoader
                 return cached;
             }
 
-            if (!NativeNames.TryGet(logicalName, out NativeNameEntry entry))
+            if (!TryGetFileNames(logicalName, out NativeNameEntry entry))
             {
                 throw new GstNativeLoadException(
-                    $"\"{logicalName}\" is not one of the native modules that GstSharp.Net knows about.");
+                    $"\"{logicalName}\" is not one of the native modules that GstSharp.Net knows about. " +
+                    "A binding module outside this repository adds its own library with " +
+                    "NativeLoader.RegisterLibrary.");
             }
 
             nint handle = OperatingSystem.IsWindows()
@@ -223,8 +339,10 @@ public static partial class NativeLoader
     /// <param name="logicalName">The logical name of the module, for example <c>Gst</c>.</param>
     /// <returns>
     /// The absolute path of the module file, or <see langword="null"/> when the
-    /// module has not been loaded yet, when the name is not one of the modules
-    /// of the bindings, or when the platform cannot answer the question.
+    /// module has not been loaded yet, when the name is neither one of the
+    /// modules of the bindings nor one a module added with
+    /// <see cref="RegisterLibrary"/>, or when the platform cannot answer the
+    /// question.
     /// </returns>
     /// <remarks>
     /// <para>
@@ -299,8 +417,56 @@ public static partial class NativeLoader
 
     private static nint Resolve(string libraryName, Assembly assembly, DllImportSearchPath? searchPath)
     {
-        // Names that are not ours have to fall back to the default resolution.
-        return NativeNames.TryGet(libraryName, out _) ? Load(libraryName) : nint.Zero;
+        // Names that are neither ours nor registered have to fall back to the
+        // default resolution.
+        return TryGetFileNames(libraryName, out _) ? Load(libraryName) : nint.Zero;
+    }
+
+    /// <summary>
+    /// Looks the file names of a logical name up, in the built-in table first
+    /// and in the registered libraries afterwards.
+    /// </summary>
+    /// <param name="logicalName">The logical name to resolve.</param>
+    /// <param name="entry">The file names of the library.</param>
+    /// <returns><see langword="true"/> when the name is known.</returns>
+    /// <remarks>
+    /// The order is what makes <see cref="RegisterLibrary"/> unable to shadow a
+    /// core library even if the refusal there were ever lifted.
+    /// </remarks>
+    private static bool TryGetFileNames(string logicalName, out NativeNameEntry entry) =>
+        NativeNames.TryGet(logicalName, out entry) ||
+        _registeredLibraries.TryGetValue(logicalName, out entry);
+
+    /// <summary>
+    /// Checks that one of the four names of a registration is a usable file
+    /// name.
+    /// </summary>
+    /// <param name="value">The name as the module gave it.</param>
+    /// <param name="platform">The property it came from, for the message.</param>
+    /// <returns>The name.</returns>
+    /// <remarks>
+    /// A name that carried a directory would be combined with the pinned
+    /// directory on Windows and would silently produce a path that resolves to
+    /// nothing, or worse to a library outside the installation in use.
+    /// </remarks>
+    private static string FileName(string value, string platform)
+    {
+        if (string.IsNullOrEmpty(value))
+        {
+            throw new ArgumentException(
+                $"The {platform} file name of a native library must not be empty.",
+                nameof(NativeLibraryNames));
+        }
+
+        if (value.AsSpan().IndexOfAny('/', '\\') >= 0 || Path.IsPathRooted(value))
+        {
+            throw new ArgumentException(
+                $"The {platform} file name of a native library must be a bare file name, not a path: " +
+                $"\"{value}\". The directory is the installation the loader pinned.",
+                nameof(NativeLibraryNames));
+        }
+
+        return value;
     }
 
     private static nint LoadWindows(string logicalName, NativeNameEntry entry)

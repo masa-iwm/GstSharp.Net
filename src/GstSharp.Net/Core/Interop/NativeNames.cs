@@ -33,6 +33,21 @@ internal readonly struct NativeNameEntry
     /// <param name="flavor">The flavor of the installation.</param>
     /// <returns>The file name to load.</returns>
     internal string Windows(GstFlavor flavor) => flavor == GstFlavor.Msvc ? WindowsMsvc : WindowsMinGW;
+
+    /// <summary>
+    /// Tests whether two entries name the same files on every platform.
+    /// </summary>
+    /// <param name="other">The entry to compare with.</param>
+    /// <returns><see langword="true"/> when all four names are equal.</returns>
+    /// <remarks>
+    /// This is what makes registering the same library twice a no-op rather
+    /// than a conflict, which two assemblies that both import from it need.
+    /// </remarks>
+    internal bool Matches(in NativeNameEntry other) =>
+        string.Equals(Linux, other.Linux, StringComparison.Ordinal) &&
+        string.Equals(MacOs, other.MacOs, StringComparison.Ordinal) &&
+        string.Equals(WindowsMsvc, other.WindowsMsvc, StringComparison.Ordinal) &&
+        string.Equals(WindowsMinGW, other.WindowsMinGW, StringComparison.Ordinal);
 }
 
 /// <summary>
