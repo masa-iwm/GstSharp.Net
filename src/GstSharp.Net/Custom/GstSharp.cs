@@ -175,18 +175,29 @@ public static class GstSharp
             //    not only of the ones the application happened to call into.
             RunBindingModuleInitializers();
 
-            // 3. Resolve the get_type function of every type that the binding
-            //    assemblies registered from their module initialisers. This is
-            //    what loads the native libraries. A module that registers after
-            //    this point unfreezes the registry again, and the next lookup
-            //    rebuilds it.
-            TypeRegistry.Freeze();
-
-            // 4. Initialise GStreamer itself.
+            // 3. Initialise GStreamer itself, before anything asks a type about
+            //    itself. A get_type function of a GStreamer library is entitled
+            //    to assume that gst_init has run — several of them build a
+            //    static table or touch a registry that gst_init creates, and
+            //    gst_encoding_audio_profile_get_type is the one that says so
+            //    out loud, with three GLib criticals — so the freeze below has
+            //    to come after this.
             if (!applied.SkipNativeInit)
             {
                 NativeInit(applied.InitArgs);
             }
+
+            // 4. Resolve the get_type function of every type that the binding
+            //    assemblies registered from their module initialisers. A module
+            //    that registers after this point unfreezes the registry again,
+            //    and the next lookup rebuilds it.
+            //
+            //    The native libraries are already loaded by the time this runs,
+            //    because the call above went through the loader. Under
+            //    SkipNativeInit this is instead the first native call the
+            //    binding makes, and initialising GStreamer before handing
+            //    control to the binding is the contract that option carries.
+            TypeRegistry.Freeze();
 
             // 5. Remember what the library reports about itself.
             _version = Gst.Version.FromNative();

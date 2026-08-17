@@ -156,6 +156,44 @@ internal static unsafe partial class TestNatives
     [LibraryImport("Gst", EntryPoint = "gst_mini_object_weak_ref")]
     internal static partial void MiniObjectWeakRef(nint miniObject, nint notify, nint userData);
 
+    /// <summary>Installs the one writer GLib hands every log message to.</summary>
+    /// <param name="func">The <c>GLogWriterFunc</c> to install.</param>
+    /// <param name="userData">The state handed to the writer.</param>
+    /// <param name="userDataFree">A <c>GDestroyNotify</c> for the state, or <c>0</c>.</param>
+    /// <remarks>
+    /// The binding does not bind the GLib log at all, and it should not: this
+    /// is a process-wide resource that GLib allows to be claimed once, so a
+    /// library that claimed it would be taking it away from the application.
+    /// A test assembly is the application. See <see cref="InitializeLogProbe"/>.
+    /// </remarks>
+    [LibraryImport("GLib", EntryPoint = "g_log_set_writer_func")]
+    internal static partial void LogSetWriterFunc(
+        delegate* unmanaged[Cdecl]<int, nint, nuint, nint, int> func,
+        nint userData,
+        nint userDataFree);
+
+    /// <summary>Writes a log message the way GLib would have written it.</summary>
+    /// <param name="logLevel">The <c>GLogLevelFlags</c> of the message.</param>
+    /// <param name="fields">The structured fields of the message.</param>
+    /// <param name="fieldCount">The number of fields.</param>
+    /// <param name="userData">The state of the writer.</param>
+    /// <returns>The <c>GLogWriterOutput</c> of the write.</returns>
+    [LibraryImport("GLib", EntryPoint = "g_log_writer_default")]
+    internal static partial int LogWriterDefault(int logLevel, nint fields, nuint fieldCount, nint userData);
+
+    /// <summary>Renders the fields of a log message as one line of text.</summary>
+    /// <param name="logLevel">The <c>GLogLevelFlags</c> of the message.</param>
+    /// <param name="fields">The structured fields of the message.</param>
+    /// <param name="fieldCount">The number of fields.</param>
+    /// <param name="useColor">Non zero to add terminal escapes.</param>
+    /// <returns>The text, which the caller frees with <c>g_free</c>.</returns>
+    /// <remarks>
+    /// Formatting through GLib is what keeps a mirror of <c>GLogField</c> out
+    /// of the tests: the writer never has to read the array it is given.
+    /// </remarks>
+    [LibraryImport("GLib", EntryPoint = "g_log_writer_format_fields")]
+    internal static partial nint LogWriterFormatFields(int logLevel, nint fields, nuint fieldCount, int useColor);
+
     /// <summary>The <c>GType</c> of a <c>GstCaps</c>.</summary>
     /// <returns><c>GST_TYPE_CAPS</c>.</returns>
     /// <remarks>

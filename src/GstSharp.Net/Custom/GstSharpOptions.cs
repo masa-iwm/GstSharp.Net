@@ -43,11 +43,20 @@ public sealed class GstSharpOptions
     /// skipped.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// This is for applications that initialise GStreamer themselves, for
     /// example because they already do it from native code in the same process.
     /// The rest of <c>GstSharp.Initialize</c> still runs: the loader is
     /// configured, the type registry is frozen, and the version of the library
     /// is read, which means that the native library is loaded either way.
+    /// </para>
+    /// <para>
+    /// <c>gst_init</c> has to have run by the time <c>GstSharp.Initialize</c>
+    /// is called, not merely somewhere later. Freezing the registry calls the
+    /// <c>get_type</c> function of every registered type, and those of some
+    /// GStreamer libraries expect an initialised library and complain to the
+    /// GLib log when they do not get one.
+    /// </para>
     /// </remarks>
     public bool SkipNativeInit { get; set; }
 
