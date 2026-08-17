@@ -299,11 +299,15 @@ reason in
 [`girs/skip-report.md`](https://github.com/masa-iwm/GstSharp.Net/blob/main/girs/skip-report.md).
 The gaps worth naming here:
 
-* **Subclassing is not available yet.** C# types cannot derive from
-  `Gst.Element` or `GstBase.BaseSrc` and be called back through the native
-  vtable. The design is written down in
-  [`docs/subclassing.md`](https://github.com/masa-iwm/GstSharp.Net/blob/main/docs/subclassing.md);
-  no stage of it has shipped.
+* **Subclassing is limited to a closed set of base classes.** A C# type can
+  derive from `Gst.Element`, `Gst.Bin`, `Gst.Base.BaseSrc`,
+  `Gst.Base.PushSrc`, `Gst.Base.BaseSink` or `Gst.Base.BaseTransform`, override
+  a curated set of vfuncs and be called back through the native vtable. What is
+  not there yet: the rest of the vfuncs, properties and signals on managed
+  types, and construction from native code — an element registered this way
+  cannot be built by `gst_element_factory_make` or named in a pipeline
+  description. See
+  [`docs/subclassing.md`](https://github.com/masa-iwm/GstSharp.Net/blob/main/docs/subclassing.md#11-using-it-stage-1).
 * **Writing GValue-typed structures is incomplete.** Reading is covered —
   `Value.GetBoxed<T>()` for a boxed value and `Value.GetMiniObject<T>()` for a
   caps, a tag list or a sample — and building a `GValue` for every fundamental
@@ -366,7 +370,7 @@ through the by-name property and signal surface above.
 | [`docs/ownership.md`](https://github.com/masa-iwm/GstSharp.Net/blob/main/docs/ownership.md) | Who owns a wrapper, who disposes it, and the GType registry. **Start here.** |
 | [`docs/analyzers.md`](https://github.com/masa-iwm/GstSharp.Net/blob/main/docs/analyzers.md) | `GST0001` and `GST0002`, what they catch and how to satisfy them. |
 | [`docs/gio-async.md`](https://github.com/masa-iwm/GstSharp.Net/blob/main/docs/gio-async.md) | How Gio's `*_async` / `*_finish` pairs become `Task`-returning methods. |
-| [`docs/subclassing.md`](https://github.com/masa-iwm/GstSharp.Net/blob/main/docs/subclassing.md) | The approved design for deriving from GObject classes in C#. Not implemented yet. |
+| [`docs/subclassing.md`](https://github.com/masa-iwm/GstSharp.Net/blob/main/docs/subclassing.md) | Deriving from `Element`, `Bin` and the `GstBase` classes in C#: the guide is §11, the design is the rest. |
 | [`girs/skip-report.md`](https://github.com/masa-iwm/GstSharp.Net/blob/main/girs/skip-report.md) | Every gir symbol the generator did not bind, grouped by reason. |
 | [`eng/ci-notes.md`](https://github.com/masa-iwm/GstSharp.Net/blob/main/eng/ci-notes.md) | Why the workflows look the way they do, and how to run each gate by hand. |
 | [`CONTRIBUTING.md`](https://github.com/masa-iwm/GstSharp.Net/blob/main/CONTRIBUTING.md) | Build, test, regenerate, and the quality gates a change has to pass. |
