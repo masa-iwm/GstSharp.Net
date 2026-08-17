@@ -65,36 +65,22 @@ dotnet add package GstSharp.Net.App     # and one per module you use
 
 ### Where the packages come from
 
-Until the set is published to nuget.org, the only feed is **GitHub Packages**,
-`https://nuget.pkg.github.com/masa-iwm/index.json`. That feed **requires
-authentication even for public packages**: a personal access token with the
-`read:packages` scope. A `nuget.config` next to the solution is the usual shape:
+The set is published to **nuget.org**. Previews carry a prerelease suffix,
+so until the first stable release, ask for them explicitly:
 
-```xml
-<configuration>
-  <packageSources>
-    <add key="gstsharp" value="https://nuget.pkg.github.com/masa-iwm/index.json" />
-  </packageSources>
-  <packageSourceCredentials>
-    <gstsharp>
-      <add key="Username" value="%GITHUB_USER%" />
-      <add key="ClearTextPassword" value="%GITHUB_TOKEN%" />
-    </gstsharp>
-  </packageSourceCredentials>
-  <packageSourceMapping>
-    <packageSource key="gstsharp">
-      <package pattern="GstSharp.Net*" />
-    </packageSource>
-    <packageSource key="nuget.org">
-      <package pattern="*" />
-    </packageSource>
-  </packageSourceMapping>
-</configuration>
+```sh
+dotnet add package GstSharp.Net --prerelease
 ```
 
-The `GstSharp.Net*` prefix is why every package identifier shares it: one
-mapping entry covers the whole set, and an identifier outside the pattern would
-silently fall back to nuget.org and fail to restore.
+The `.nupkg` files are also attached to every
+[GitHub release](https://github.com/masa-iwm/GstSharp.Net/releases) for
+offline use. The copies on GitHub Packages exist for the project's own
+release plumbing; that feed requires authentication and is not the intended
+way to consume the bindings.
+
+The `GstSharp.Net*` prefix is why every package identifier shares it: in a
+solution that pins feeds with `packageSourceMapping`, one pattern covers the
+whole set.
 
 ### The native GStreamer
 
@@ -341,10 +327,10 @@ surface hands out and nothing else.
 
 ## Status and versioning
 
-**Preview.** The packages are on GitHub Packages; nuget.org publication is
-pending. The public surface is settled enough to build on, and breaking changes
-before the first nuget.org release are possible where a shape turns out to be
-wrong.
+**Preview.** The packages are on nuget.org as prereleases; the first stable
+release is pending. The public surface is settled enough to build on, and
+breaking changes before the first stable release are possible where a shape
+turns out to be wrong.
 
 The version is `<gstreamer-major>.<gstreamer-minor>.<binding-patch>`:
 
