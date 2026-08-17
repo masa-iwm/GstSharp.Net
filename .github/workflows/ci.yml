@@ -176,6 +176,26 @@ jobs:
           dotnet run --project samples/GstLaunch --no-restore -- --no-position videotestsrc num-buffers=60 ! queue2 use-buffering=true max-size-buffers=0 max-size-bytes=0 max-size-time=1000000000 ! fakesink sync=true
           dotnet run --project samples/GstLaunch --no-restore -- -m -e --interrupt-after 1 videotestsrc ! fakesink
 
+      # The gst-typefind port. The media is made here rather than fetched: the
+      # first line writes a wav with the GstLaunch sample, the second identifies
+      # it. --fail-on-unknown is what turns this into a gate — the C tool exits
+      # 0 even for a file it could not identify, so without it the step would
+      # only prove that nothing crashed. The detected type is on the log line.
+      - name: GstTypefind
+        run: |
+          dotnet run --project samples/GstLaunch --no-restore -- -q audiotestsrc num-buffers=50 ! wavenc ! filesink location=typefind-sample.wav
+          dotnet run --project samples/GstTypefind --no-restore -- --fail-on-unknown typefind-sample.wav
+
+      # The gst-device-monitor port. A hosted runner has no capture or playback
+      # hardware, so finding zero devices is the expected outcome and is exit 0,
+      # exactly as it is for the C tool. What is being gated is that the monitor
+      # starts at all: gst_device_monitor_start returns FALSE, and the tool -1,
+      # when no device provider matches the filters, so this would catch a leg
+      # that lost its providers. gst-plugins-good carries one on every platform
+      # this workflow builds on — pulse and v4l2 here.
+      - name: GstDeviceMonitor
+        run: dotnet run --project samples/GstDeviceMonitor --no-restore
+
       - name: Upload test results
         if: ${{ failure() }}
         uses: actions/upload-artifact@v7
@@ -238,6 +258,17 @@ jobs:
 
       - name: GstLaunch
         run: dotnet run --project samples/GstLaunch --no-restore -- videotestsrc num-buffers=100 ! fakesink
+
+      # Same two ports as the Linux leg; see the comments there. The device
+      # provider that keeps the monitor startable here is osxaudio, out of
+      # gst-plugins-good, which the formula bundles.
+      - name: GstTypefind
+        run: |
+          dotnet run --project samples/GstLaunch --no-restore -- -q audiotestsrc num-buffers=50 ! wavenc ! filesink location=typefind-sample.wav
+          dotnet run --project samples/GstTypefind --no-restore -- --fail-on-unknown typefind-sample.wav
+
+      - name: GstDeviceMonitor
+        run: dotnet run --project samples/GstDeviceMonitor --no-restore
 
       - name: Upload test results
         if: ${{ failure() }}
@@ -330,6 +361,19 @@ jobs:
       # on its first line.
       - name: GstLaunch
         run: dotnet run --project samples/GstLaunch --no-restore -- videotestsrc num-buffers=100 ! fakesink
+
+      # Same two ports as the Linux leg; see the comments there. The relative
+      # location= path keeps the two lines identical across bash and pwsh, and
+      # dotnet run leaves the working directory at the repository root on both.
+      # The device provider that keeps the monitor startable here is
+      # directsound, out of gst-plugins-good.
+      - name: GstTypefind
+        run: |
+          dotnet run --project samples/GstLaunch --no-restore -- -q audiotestsrc num-buffers=50 ! wavenc ! filesink location=typefind-sample.wav
+          dotnet run --project samples/GstTypefind --no-restore -- --fail-on-unknown typefind-sample.wav
+
+      - name: GstDeviceMonitor
+        run: dotnet run --project samples/GstDeviceMonitor --no-restore
 
       - name: Upload test results
         if: ${{ failure() }}

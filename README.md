@@ -223,12 +223,19 @@ never end up with half an MSVC and half a MinGW GStreamer.
 | `samples/PlaybinPlayer` | A pipeline from a description, driven by a polled bus. No main loop, no signal handler. | `dotnet run --project samples/PlaybinPlayer` |
 | `samples/AppSinkSpans` | Raw video out of an `appsink`, read through a `Span<byte>` over the mapped GStreamer memory. Pull mode and signal mode produce the same checksum. | `dotnet run --project samples/AppSinkSpans -- --mode pull` |
 | `samples/GstLaunch` | A port of `gst-launch-1.0`: the whole bus loop, the preroll/buffering/progress state machine, `-t -c -v -q -m -e -X -f`, `--gst-*` passthrough and the exit codes of the C tool. One binary with per-OS behavior — Ctrl+C through a `GstLaunchInterrupt` application message everywhere, SIGHUP and SIGQUIT on POSIX, the multimedia timer on Windows. Its header comment lists what it cannot match. | `dotnet run --project samples/GstLaunch -- videotestsrc num-buffers=100 ! fakesink` |
+| `samples/GstTypefind` | A port of `gst-typefind-1.0`: `filesrc ! typefind ! fakesink` per file, PAUSED and a blocking `GetState`, directory recursion, and the `<file> - <caps>` line of the C tool. It is the sample that connects a signal **by name** — `have-type` on a plugin element no `.gir` describes — and its header comment records what that emission can and cannot hand over. | `dotnet run --project samples/GstTypefind -- <file-or-directory>` |
+| `samples/GstDeviceMonitor` | A port of `gst-device-monitor-1.0`: `DeviceMonitor` with the `DEVICE_CLASSES[:FILTER_CAPS]` filters, the device listing with caps and properties, and `--follow` for hotplug — all of it as messages on the monitor's bus, polled rather than watched from a main loop. Its header comment lists the shell-quoting and property-enumeration parts of the C tool that the binding cannot reach yet. | `dotnet run --project samples/GstDeviceMonitor` |
 | `samples/AotSmoke` | The NativeAOT gate: initialise, make an element, release it, with zero trimming warnings. | `dotnet publish samples/AotSmoke -r win-x64 -c Release /p:PublishAot=true` |
 
 `PlaybinPlayer` and `AppSinkSpans` also take `--native-path <directory>`,
-`--flavor msvc\|mingw` and `--timeout <seconds>`; `GstLaunch` takes the first
-two and `--interrupt-after <seconds>`, which drives its Ctrl+C path without a
-console signal.
+`--flavor msvc\|mingw` and `--timeout <seconds>`; `GstLaunch`, `GstTypefind`
+and `GstDeviceMonitor` take the first two. Each of the three ports adds one
+option of its own that the C tool does not have, so that a path which normally
+needs a console signal or a person can be run unattended:
+`GstLaunch --interrupt-after <seconds>` drives its Ctrl+C path,
+`GstDeviceMonitor --follow-for <seconds>` bounds a hotplug run, and
+`GstTypefind --fail-on-unknown` turns a file whose type was not found into a
+non-zero exit code.
 
 ## Properties and signals without a generated binding
 
