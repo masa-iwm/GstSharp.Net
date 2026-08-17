@@ -10,6 +10,7 @@
   <Folder Name="/samples/">
     <Project Path="samples/AotSmoke/AotSmoke.csproj" />
     <Project Path="samples/AppSinkSpans/AppSinkSpans.csproj" />
+    <Project Path="samples/GstLaunch/GstLaunch.csproj" />
     <Project Path="samples/PlaybinPlayer/PlaybinPlayer.csproj" />
   </Folder>
   <Folder Name="/src/">

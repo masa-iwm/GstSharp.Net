@@ -163,6 +163,19 @@ jobs:
       - name: AppSinkSpans
         run: dotnet run --project samples/AppSinkSpans --no-restore -- --mode pull
 
+      # The gst-launch port, run headless three ways: the plain end of stream,
+      # the buffering state machine, and the interrupt, which travels through a
+      # GstLaunchInterrupt application message and out again as an injected EOS.
+      # This is the leg that proves the POSIX side of the sample — the SIGHUP
+      # and SIGQUIT registrations are installed on every run here. Each line is
+      # an exit code gate; videotestsrc, queue2 and fakesink come from the core
+      # and base plugins this job already installs.
+      - name: GstLaunch
+        run: |
+          dotnet run --project samples/GstLaunch --no-restore -- videotestsrc num-buffers=100 ! fakesink
+          dotnet run --project samples/GstLaunch --no-restore -- --no-position videotestsrc num-buffers=60 ! queue2 use-buffering=true max-size-buffers=0 max-size-bytes=0 max-size-time=1000000000 ! fakesink sync=true
+          dotnet run --project samples/GstLaunch --no-restore -- -m -e --interrupt-after 1 videotestsrc ! fakesink
+
       - name: Upload test results
         if: ${{ failure() }}
         uses: actions/upload-artifact@v7
@@ -222,6 +235,9 @@ jobs:
 
       - name: AppSinkSpans
         run: dotnet run --project samples/AppSinkSpans --no-restore -- --mode pull
+
+      - name: GstLaunch
+        run: dotnet run --project samples/GstLaunch --no-restore -- videotestsrc num-buffers=100 ! fakesink
 
       - name: Upload test results
         if: ${{ failure() }}
@@ -308,6 +324,12 @@ jobs:
       # the log even while the tests still pass.
       - name: AppSinkSpans
         run: dotnet run --project samples/AppSinkSpans --no-restore -- --mode pull
+
+      # The Windows half of the gst-launch port: this is the only leg where the
+      # multimedia timer is raised, and the sample says which precision it got
+      # on its first line.
+      - name: GstLaunch
+        run: dotnet run --project samples/GstLaunch --no-restore -- videotestsrc num-buffers=100 ! fakesink
 
       - name: Upload test results
         if: ${{ failure() }}

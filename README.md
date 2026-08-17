@@ -222,10 +222,13 @@ never end up with half an MSVC and half a MinGW GStreamer.
 | --- | --- | --- |
 | `samples/PlaybinPlayer` | A pipeline from a description, driven by a polled bus. No main loop, no signal handler. | `dotnet run --project samples/PlaybinPlayer` |
 | `samples/AppSinkSpans` | Raw video out of an `appsink`, read through a `Span<byte>` over the mapped GStreamer memory. Pull mode and signal mode produce the same checksum. | `dotnet run --project samples/AppSinkSpans -- --mode pull` |
+| `samples/GstLaunch` | A port of `gst-launch-1.0`: the whole bus loop, the preroll/buffering/progress state machine, `-t -c -v -q -m -e -X -f`, `--gst-*` passthrough and the exit codes of the C tool. One binary with per-OS behavior — Ctrl+C through a `GstLaunchInterrupt` application message everywhere, SIGHUP and SIGQUIT on POSIX, the multimedia timer on Windows. Its header comment lists what it cannot match. | `dotnet run --project samples/GstLaunch -- videotestsrc num-buffers=100 ! fakesink` |
 | `samples/AotSmoke` | The NativeAOT gate: initialise, make an element, release it, with zero trimming warnings. | `dotnet publish samples/AotSmoke -r win-x64 -c Release /p:PublishAot=true` |
 
-Each of the first two also takes `--native-path <directory>`, `--flavor
-msvc\|mingw` and `--timeout <seconds>`.
+`PlaybinPlayer` and `AppSinkSpans` also take `--native-path <directory>`,
+`--flavor msvc\|mingw` and `--timeout <seconds>`; `GstLaunch` takes the first
+two and `--interrupt-after <seconds>`, which drives its Ctrl+C path without a
+console signal.
 
 ## Properties and signals without a generated binding
 
