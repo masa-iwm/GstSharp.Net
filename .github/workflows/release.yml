@@ -15,8 +15,9 @@ on:
   push:
     tags: ['v*']
 
-# Two tags must never publish at the same time, and a running publish is never
-# cancelled: a half pushed set is worse than a slow one.
+# A single tag never publishes twice at the same time, and a running publish
+# is never cancelled: a half pushed set is worse than a slow one. Distinct
+# tags may run in parallel; they publish distinct versions and share no state.
 concurrency:
   group: release-${{ github.ref }}
   cancel-in-progress: false
@@ -85,14 +86,27 @@ jobs:
           -p:RepositoryUrl=https://github.com/${{ github.repository }}
           -p:RepositoryType=git
 
-      - name: List the packages
-        run: ls -l artifacts/dist
+      # The count is frozen the same way the census tests freeze the generated
+      # surface: a package that silently falls out of the solution (or joins
+      # it) must fail the publish, not ship an unintended set.
+      - name: Check the package count
+        run: |
+          expected=12
+          actual=$(ls artifacts/dist/*.nupkg | wc -l)
+          if [[ "$actual" -ne "$expected" ]]; then
+            echo "::error::Expected $expected packages, found $actual:"
+            ls -l artifacts/dist
+            exit 1
+          fi
+          echo "All $expected packages are present."
+          ls -l artifacts/dist
 
       # Keep the packages whatever the push does: a rejected push must not cost
       # the artifacts of a green build. There are no symbol packages to
       # collect: the debugging symbols are embedded in the assemblies
       # (src/Directory.Build.props), which is the only form that helps on a
-      # feed without a symbol server.
+      # feed without a symbol server. overwrite lets a re-run of the job get
+      # past this step instead of dying on the artifact its first attempt left.
       - name: Upload the packages
         uses: actions/upload-artifact@v7
         with:
@@ -100,6 +114,7 @@ jobs:
           path: artifacts/dist/*.nupkg
           if-no-files-found: error
           retention-days: 30
+          overwrite: true
 
       # --no-symbols: defensive only - nothing produces a .snupkg, and the
       # feed would reject one anyway.
@@ -115,16 +130,19 @@ jobs:
       # the GitHub Packages feed above needs authentication even when the
       # repository is public, so the attached .nupkg files are the no-auth
       # path; their assemblies carry the symbols embedded. A tag with a
-      # prerelease suffix is marked as a prerelease. Skipping an existing
-      # release keeps a re-run of a green publish from failing at its last
-      # step, the same stance --skip-duplicate takes for the feed.
+      # prerelease suffix is marked as a prerelease. When the release already
+      # exists, a re-run re-uploads the assets instead of failing or stopping
+      # short: that repairs a release a broken upload left incomplete, the
+      # same stance --skip-duplicate takes for the feed.
       - name: Cut the GitHub release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           tag="${GITHUB_REF_NAME}"
           if gh release view "$tag" --repo "${{ github.repository }}" > /dev/null 2>&1; then
-            echo "Release $tag already exists; leaving it as it is."
+            echo "Release $tag already exists; refreshing its assets."
+            gh release upload "$tag" --repo "${{ github.repository }}" \
+              --clobber artifacts/dist/*.nupkg
             exit 0
           fi
           prerelease=""
