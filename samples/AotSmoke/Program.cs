@@ -8,6 +8,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Runtime.InteropServices;
 using Gst;
+using Gst.Base;
 using Gst.Interop;
 
 return Smoke.Run(args);
@@ -24,7 +25,10 @@ internal static partial class Smoke
         {
             GstSharpOptions options = ParseOptions(arguments);
 
-            GstSharp.Initialize(options);
+            // GstBase.Initialize is GstSharp.Initialize plus the deterministic
+            // registration of the GstBase types, which the managed source and
+            // sink below are built on.
+            GstBase.Initialize(options);
 
             // This assembly brings its own [LibraryImport] stubs, so it has to
             // resolve them through the loader as well. The libraries are loaded
@@ -52,7 +56,7 @@ internal static partial class Smoke
             ObjectRefSink(element);
             ObjectUnref(element);
 
-            if (!RunManagedSubclass())
+            if (!RunManagedSubclass() || !RunManagedPipeline())
             {
                 return 1;
             }
@@ -72,7 +76,7 @@ internal static partial class Smoke
     /// <summary>
     /// Registers a managed <c>GstElement</c> subclass, builds one and drives it
     /// through a state change, so that the ahead of time compiler has to keep
-    /// the whole subclassing path: the registration, the shared
+    /// the plainest subclassing path: the registration, the shared
     /// <c>class_init</c>, the unmanaged trampoline of the overridden slot and
     /// the chain-up through the class struct mirrors.
     /// </summary>
@@ -93,6 +97,96 @@ internal static partial class Smoke
         if (up != StateChangeReturn.Success || down != StateChangeReturn.Success || managed.Transitions != 2)
         {
             Console.Error.WriteLine("AotSmoke: the managed change_state override did not run as expected.");
+            return false;
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Runs a pipeline made of two managed elements: a <c>GstPushSrc</c>
+    /// subclass that produces buffers from C# and a <c>GstBaseSink</c> subclass
+    /// that consumes them, linked to each other and driven by GStreamer's own
+    /// streaming thread.
+    /// </summary>
+    /// <returns>
+    /// <see langword="true"/> when every buffer the source produced reached the
+    /// sink and the stream ended on the bus.
+    /// </returns>
+    /// <remarks>
+    /// This is the real demonstration of the surface, and the reason it is in
+    /// the smoke test: the class configuration, the buffer producing slot with
+    /// its ownership handover, the borrowed buffer of the render slot and the
+    /// negotiation are all only reachable from a running pipeline, so only a
+    /// running pipeline proves that ILC kept them.
+    /// </remarks>
+    private static bool RunManagedPipeline()
+    {
+        const int Buffers = 4;
+
+        using Pipeline pipeline = Pipeline.New("aot-smoke-managed");
+        ManagedSource source = new() { BufferCount = Buffers };
+        ManagedSink sink = new();
+
+        Console.WriteLine($"pipeline:    {ManagedSource.RegisteredType.Name} -> {ManagedSink.RegisteredType.Name}");
+
+        if (!pipeline.AddMany(source, sink) || !source.Link(sink))
+        {
+            Console.Error.WriteLine("AotSmoke: the managed elements could not be linked.");
+            return false;
+        }
+
+        Bus bus = pipeline.GetBus();
+        MessageType seen = MessageType.Unknown;
+
+        try
+        {
+            pipeline.SetState(State.Playing);
+
+            // No main loop here, so the bus is polled the way a batch
+            // application polls it.
+            for (int slice = 0; slice < 100 && seen == MessageType.Unknown; slice++)
+            {
+                using Message? message = bus.TimedPopFiltered(
+                    ClockTime.FromMilliseconds(100),
+                    MessageType.Eos | MessageType.Error);
+
+                seen = message?.Type ?? MessageType.Unknown;
+                GstSharp.DrainPendingReleases();
+            }
+        }
+        finally
+        {
+            pipeline.SetState(State.Null);
+        }
+
+        byte[] rendered = sink.Rendered;
+
+        Console.WriteLine(string.Create(
+            CultureInfo.InvariantCulture,
+            $"produced:    {source.Produced} buffers, rendered {rendered.Length}"));
+        Console.WriteLine($"bytes:       [{string.Join(", ", rendered)}]");
+        Console.WriteLine($"caps:        {sink.NegotiatedCaps}");
+        Console.WriteLine(string.Create(CultureInfo.InvariantCulture, $"bus:         {seen}"));
+
+        if (seen != MessageType.Eos || source.Produced != Buffers || rendered.Length != Buffers)
+        {
+            Console.Error.WriteLine("AotSmoke: the managed pipeline did not run to its end.");
+            return false;
+        }
+
+        for (int i = 0; i < rendered.Length; i++)
+        {
+            if (rendered[i] != i)
+            {
+                Console.Error.WriteLine("AotSmoke: the managed sink saw buffers the managed source did not send.");
+                return false;
+            }
+        }
+
+        if (!source.Cycled)
+        {
+            Console.Error.WriteLine("AotSmoke: the managed source was not started and stopped.");
             return false;
         }
 

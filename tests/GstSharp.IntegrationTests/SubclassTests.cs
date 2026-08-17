@@ -1,5 +1,6 @@
 using System.Runtime.CompilerServices;
 using Gst;
+using Gst.Base;
 using Gst.GObject;
 using Gst.Interop;
 using Xunit;
@@ -9,8 +10,8 @@ using GObjectObject = Gst.GObject.Object;
 namespace GstSharp.IntegrationTests;
 
 /// <summary>
-/// The end to end proof of stage 0 of <c>docs/subclassing.md</c>: a
-/// <c>GstElement</c> subclass that is registered from C#, whose
+/// Registration and dispatch: a <c>GstElement</c> subclass that is registered
+/// from C# through the public surface of <c>docs/subclassing.md</c>, whose
 /// <c>change_state</c> slot GStreamer calls into managed code, and whose
 /// managed state lives as long as the native object does.
 /// </summary>
@@ -60,12 +61,80 @@ public sealed unsafe class SubclassTests
         // Resolves the first registration, so that the name is taken.
         Assert.True(ProbeElement.RegisteredType.IsValid);
 
-        SubclassDescriptor duplicate = new(new GType(Element.GetGType()), ProbeElement.GTypeName, []);
-
-        InvalidOperationException error =
-            Assert.Throws<InvalidOperationException>(() => SubclassRegistry.Register(duplicate));
+        InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+            () => Element.DefineSubclass(ProbeElement.GTypeName, null));
 
         Assert.Contains(ProbeElement.GTypeName, error.Message, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// A slot of a class the parent does not derive from is refused. The value
+    /// carries the class that declared it, and its offset only means anything
+    /// inside that class struct: writing a <c>GstBaseSink</c> slot into a
+    /// <c>GstElement</c> class would land on whichever field sits there.
+    /// </summary>
+    [Fact]
+    public void ASlotOfAnUnrelatedClassIsRefused()
+    {
+        ArgumentException error = Assert.Throws<ArgumentException>(
+            () => Element.DefineSubclass("GstSharpTestForeignSlot", null, BaseSink.RenderOverride));
+
+        _output.WriteLine($"refused: {error.Message}");
+
+        Assert.Contains("GstBaseSink", error.Message, StringComparison.Ordinal);
+        Assert.False(GType.FromName("GstSharpTestForeignSlot").IsValid);
+    }
+
+    /// <summary>
+    /// Declaring the same slot twice is refused rather than written twice: a
+    /// declaration list with a repeat is a mistake, and the second write would
+    /// silently do nothing.
+    /// </summary>
+    [Fact]
+    public void DeclaringTheSameSlotTwiceIsRefused()
+    {
+        ArgumentException error = Assert.Throws<ArgumentException>(
+            () => Element.DefineSubclass(
+                "GstSharpTestRepeatedSlot",
+                null,
+                Element.ChangeStateOverride,
+                Element.ChangeStateOverride));
+
+        _output.WriteLine($"refused: {error.Message}");
+
+        Assert.False(GType.FromName("GstSharpTestRepeatedSlot").IsValid);
+    }
+
+    /// <summary>
+    /// A class initialiser that throws fails the registration loudly. Without
+    /// that, the type would be registered with no metadata and no pad
+    /// templates, and the first symptom would be a critical from inside
+    /// <c>g_object_new</c>.
+    /// </summary>
+    [Fact]
+    public void AFailingClassInitialiserFailsTheRegistration()
+    {
+        List<Exception> reported = [];
+        void Collect(Exception exception) => reported.Add(exception);
+
+        ExceptionTrap.UnhandledException += Collect;
+        try
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => Element.DefineSubclass(
+                    "GstSharpTestFailingClassInit",
+                    _ => throw new NotSupportedException("no class for you"),
+                    Element.ChangeStateOverride));
+
+            _output.WriteLine($"refused: {error.Message}");
+            Assert.IsType<NotSupportedException>(error.InnerException);
+        }
+        finally
+        {
+            ExceptionTrap.UnhandledException -= Collect;
+        }
+
+        Assert.Single(reported);
     }
 
     /// <summary>
@@ -74,6 +143,12 @@ public sealed unsafe class SubclassTests
     /// to a class whose slot is the shared trampoline and recurse for ever, so
     /// the restriction of §4.4 is enforced rather than documented.
     /// </summary>
+    /// <remarks>
+    /// The public surface cannot express this at all — <c>DefineSubclass</c>
+    /// always derives from the <c>GType</c> of the wrapped native class it is
+    /// called on — so the refusal is reached through the runtime the surface is
+    /// built on.
+    /// </remarks>
     [Fact]
     public void DerivingFromAManagedSubclassIsRefused()
     {
@@ -86,6 +161,25 @@ public sealed unsafe class SubclassTests
 
         // The refusal has to leave nothing behind: the name is still free.
         Assert.False(GType.FromName("GstSharpTestNestedProbeElement").IsValid);
+    }
+
+    /// <summary>
+    /// Handing the arguments of one registration to the constructor of an
+    /// unrelated wrapper is refused. The registration says which native class
+    /// to derive from and the wrapper says which managed class stands for it;
+    /// a mismatch would build a wrapper whose vfunc dispatch never matches, and
+    /// the failure would surface far from the mistake.
+    /// </summary>
+    [Fact]
+    public void ArgumentsOfAnUnrelatedRegistrationAreRefused()
+    {
+        ArgumentException error = Assert.Throws<ArgumentException>(
+            () => new MismatchedBin(ProbeElement.Registration));
+
+        _output.WriteLine($"refused: {error.Message}");
+
+        Assert.Contains(ProbeElement.GTypeName, error.Message, StringComparison.Ordinal);
+        Assert.Contains("GstBin", error.Message, StringComparison.Ordinal);
     }
 
     /// <summary>
@@ -325,6 +419,18 @@ public sealed unsafe class SubclassTests
     {
         element.GetState(out State state, out _, StateTimeout);
         return state;
+    }
+
+    /// <summary>
+    /// A bin wrapper built from the registration of something that is not a
+    /// bin, which is what the constructor guard exists to refuse.
+    /// </summary>
+    private sealed class MismatchedBin : Bin
+    {
+        internal MismatchedBin(SubclassType type)
+            : base(type.NewInstance())
+        {
+        }
     }
 
     /// <summary>Reads the settled state of an element that has no wrapper.</summary>

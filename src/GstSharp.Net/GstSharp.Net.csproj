@@ -31,12 +31,6 @@
          machine, so that no GStreamer installation is needed. -->
     <InternalsVisibleTo Include="GstSharp.Core.Tests" />
     <InternalsVisibleTo Include="GstSharp.IntegrationTests" />
-    <!-- Stage 0 of docs/subclassing.md keeps the whole subclassing runtime
-         internal, and the AOT gate has to compile a real managed subclass:
-         only code the published sample reaches is compiled by ILC, so the
-         UnmanagedCallersOnly trampolines of a test assembly would never be
-         seen. Remove this again once stage 1 makes the surface public. -->
-    <InternalsVisibleTo Include="AotSmoke" />
     <InternalsVisibleTo Include="GstSharp.Net.Base" />
     <InternalsVisibleTo Include="GstSharp.Net.App" />
     <InternalsVisibleTo Include="GstSharp.Net.Audio" />

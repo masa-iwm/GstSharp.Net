@@ -338,6 +338,352 @@ public sealed class AbiProbeTests
     }
 
     /// <summary>
+    /// <c>struct _GstBinClass</c> of <c>gstbin.h</c>: the 488 bytes of
+    /// <c>GstElementClass</c>, the data field <c>pool</c> at 488, the eight
+    /// slots <c>element_added</c> … <c>deep_element_removed</c> at 496 to 552,
+    /// and <c>_gst_reserved[GST_PADDING - 2]</c> at 560, for 576 bytes in
+    /// total. Two of the padding pointers were spent on the two
+    /// <c>deep_</c> slots.
+    /// </summary>
+    [Fact]
+    public unsafe void BinClassRawMatchesTheHeaderLayout()
+    {
+        BinClassRaw raw = default;
+
+        _output.WriteLine(Format("BinClassRaw", Unsafe.SizeOf<BinClassRaw>()));
+        Assert.Equal(576, Unsafe.SizeOf<BinClassRaw>());
+
+        Assert.Equal(0L, Offset(&raw, &raw.ParentClass));
+        Assert.Equal(488L, Offset(&raw, &raw.Pool));
+        Assert.Equal(496L, Offset(&raw, &raw.ElementAdded));
+        Assert.Equal(504L, Offset(&raw, &raw.ElementRemoved));
+        Assert.Equal(512L, Offset(&raw, &raw.AddElement));
+        Assert.Equal(520L, Offset(&raw, &raw.RemoveElement));
+        Assert.Equal(528L, Offset(&raw, &raw.HandleMessage));
+        Assert.Equal(536L, Offset(&raw, &raw.DoLatency));
+        Assert.Equal(544L, Offset(&raw, &raw.DeepElementAdded));
+        Assert.Equal(552L, Offset(&raw, &raw.DeepElementRemoved));
+
+        Assert.Equal(528, BinClassRaw.HandleMessageOffset);
+    }
+
+    /// <summary>
+    /// <c>struct _GstBaseSrcClass</c> and <c>struct _GstPushSrcClass</c> of
+    /// <c>gstbasesrc.h</c> and <c>gstpushsrc.h</c>: 488 bytes of
+    /// <c>GstElementClass</c>, nineteen slots from <c>get_caps</c> to
+    /// <c>fill</c> at 488 to 632 and a full <c>GST_PADDING_LARGE</c> at 640,
+    /// for 800; the push source adds its three slots at 800 and a plain
+    /// <c>GST_PADDING</c>, for 856.
+    /// </summary>
+    [Fact]
+    public unsafe void TheSourceClassStructsMatchTheHeaderLayout()
+    {
+        Gst.Base.BaseSrcClassRaw source = default;
+        Gst.Base.PushSrcClassRaw push = default;
+
+        _output.WriteLine(Format("BaseSrcClassRaw", Unsafe.SizeOf<Gst.Base.BaseSrcClassRaw>()));
+        _output.WriteLine(Format("PushSrcClassRaw", Unsafe.SizeOf<Gst.Base.PushSrcClassRaw>()));
+
+        Assert.Equal(800, Unsafe.SizeOf<Gst.Base.BaseSrcClassRaw>());
+        Assert.Equal(856, Unsafe.SizeOf<Gst.Base.PushSrcClassRaw>());
+
+        Assert.Equal(488L, Offset(&source, &source.GetCaps));
+        Assert.Equal(512L, Offset(&source, &source.SetCaps));
+        Assert.Equal(528L, Offset(&source, &source.Start));
+        Assert.Equal(536L, Offset(&source, &source.Stop));
+        Assert.Equal(560L, Offset(&source, &source.IsSeekable));
+        Assert.Equal(616L, Offset(&source, &source.Create));
+        Assert.Equal(632L, Offset(&source, &source.Fill));
+
+        Assert.Equal(800L, Offset(&push, &push.Create));
+        Assert.Equal(808L, Offset(&push, &push.Alloc));
+        Assert.Equal(816L, Offset(&push, &push.Fill));
+
+        // The offsets the subclass surface declares its overrides with are
+        // measured from the mirrors, so they cannot drift from the fields.
+        Assert.Equal(512, Gst.Base.BaseSrcClassRaw.SetCapsOffset);
+        Assert.Equal(528, Gst.Base.BaseSrcClassRaw.StartOffset);
+        Assert.Equal(536, Gst.Base.BaseSrcClassRaw.StopOffset);
+        Assert.Equal(560, Gst.Base.BaseSrcClassRaw.IsSeekableOffset);
+        Assert.Equal(800, Gst.Base.PushSrcClassRaw.CreateOffset);
+    }
+
+    /// <summary>
+    /// <c>struct _GstBaseSinkClass</c> of <c>gstbasesink.h</c>: 488 bytes of
+    /// <c>GstElementClass</c>, eighteen slots from <c>get_caps</c> to
+    /// <c>render_list</c> at 488 to 624 and a full <c>GST_PADDING_LARGE</c>,
+    /// for 792.
+    /// </summary>
+    [Fact]
+    public unsafe void TheSinkClassStructMatchesTheHeaderLayout()
+    {
+        Gst.Base.BaseSinkClassRaw raw = default;
+
+        _output.WriteLine(Format("BaseSinkClassRaw", Unsafe.SizeOf<Gst.Base.BaseSinkClassRaw>()));
+        Assert.Equal(792, Unsafe.SizeOf<Gst.Base.BaseSinkClassRaw>());
+
+        Assert.Equal(488L, Offset(&raw, &raw.GetCaps));
+        Assert.Equal(496L, Offset(&raw, &raw.SetCaps));
+        Assert.Equal(536L, Offset(&raw, &raw.Start));
+        Assert.Equal(544L, Offset(&raw, &raw.Stop));
+        Assert.Equal(608L, Offset(&raw, &raw.Preroll));
+        Assert.Equal(616L, Offset(&raw, &raw.Render));
+        Assert.Equal(624L, Offset(&raw, &raw.RenderList));
+
+        Assert.Equal(496, Gst.Base.BaseSinkClassRaw.SetCapsOffset);
+        Assert.Equal(536, Gst.Base.BaseSinkClassRaw.StartOffset);
+        Assert.Equal(544, Gst.Base.BaseSinkClassRaw.StopOffset);
+        Assert.Equal(608, Gst.Base.BaseSinkClassRaw.PrerollOffset);
+        Assert.Equal(616, Gst.Base.BaseSinkClassRaw.RenderOffset);
+    }
+
+    /// <summary>
+    /// <c>struct _GstBaseTransformClass</c> of <c>gstbasetransform.h</c>: 488
+    /// bytes of <c>GstElementClass</c>, then <b>two <c>gboolean</c> data
+    /// fields</b> at 488 and 492 — which is why a class struct is not a vfunc
+    /// table — then twenty two slots from <c>transform_caps</c> at 496 to
+    /// <c>generate_output</c> at 664, and <c>GST_PADDING_LARGE - 2</c> at 672,
+    /// for 816.
+    /// </summary>
+    [Fact]
+    public unsafe void TheTransformClassStructMatchesTheHeaderLayout()
+    {
+        Gst.Base.BaseTransformClassRaw raw = default;
+
+        _output.WriteLine(Format("BaseTransformClassRaw", Unsafe.SizeOf<Gst.Base.BaseTransformClassRaw>()));
+        Assert.Equal(816, Unsafe.SizeOf<Gst.Base.BaseTransformClassRaw>());
+
+        Assert.Equal(488L, Offset(&raw, &raw.PassthroughOnSameCaps));
+        Assert.Equal(492L, Offset(&raw, &raw.TransformIpOnPassthrough));
+        Assert.Equal(496L, Offset(&raw, &raw.TransformCaps));
+        Assert.Equal(520L, Offset(&raw, &raw.SetCaps));
+        Assert.Equal(576L, Offset(&raw, &raw.Start));
+        Assert.Equal(584L, Offset(&raw, &raw.Stop));
+        Assert.Equal(640L, Offset(&raw, &raw.Transform));
+        Assert.Equal(648L, Offset(&raw, &raw.TransformIp));
+        Assert.Equal(664L, Offset(&raw, &raw.GenerateOutput));
+
+        Assert.Equal(520, Gst.Base.BaseTransformClassRaw.SetCapsOffset);
+        Assert.Equal(576, Gst.Base.BaseTransformClassRaw.StartOffset);
+        Assert.Equal(584, Gst.Base.BaseTransformClassRaw.StopOffset);
+        Assert.Equal(648, Gst.Base.BaseTransformClassRaw.TransformIpOffset);
+    }
+
+    /// <summary>
+    /// The library is the ground truth for the total size of every class struct
+    /// a managed subclass derives from: <c>g_type_query</c> reports what
+    /// <c>g_type_register_static</c> allocates, and each mirror has to agree
+    /// with it exactly. A mirror that spelled the two <c>gboolean</c> data
+    /// fields of <c>GstBaseTransformClass</c> as pointers would be caught here
+    /// and nowhere else.
+    /// </summary>
+    [Fact]
+    public void TheSubclassableClassSizesMatchTheRunningLibrary()
+    {
+        AssertClassSize("GstBin", Unsafe.SizeOf<BinClassRaw>(), Bin.GetGType());
+        AssertClassSize("GstBaseSrc", Unsafe.SizeOf<Gst.Base.BaseSrcClassRaw>(), Gst.Base.BaseSrc.GetGType());
+        AssertClassSize("GstPushSrc", Unsafe.SizeOf<Gst.Base.PushSrcClassRaw>(), Gst.Base.PushSrc.GetGType());
+        AssertClassSize("GstBaseSink", Unsafe.SizeOf<Gst.Base.BaseSinkClassRaw>(), Gst.Base.BaseSink.GetGType());
+        AssertClassSize(
+            "GstBaseTransform",
+            Unsafe.SizeOf<Gst.Base.BaseTransformClassRaw>(),
+            Gst.Base.BaseTransform.GetGType());
+    }
+
+    /// <summary>
+    /// The <c>handle_message</c> slot is where the mirror says it is, proven
+    /// against two classes the library filled in itself: <c>GstPipeline</c>
+    /// overrides it and <c>GstBin</c> installs its own, so the two hold
+    /// different, non null addresses.
+    /// </summary>
+    [Fact]
+    public unsafe void TheHandleMessageSlotHoldsWhatTheLibraryPutThere()
+    {
+        nint bin = GObjectNative.TypeClassRef(Bin.GetGType());
+        nint pipeline = GObjectNative.TypeClassRef(Pipeline.GetGType());
+
+        try
+        {
+            nint binSlot = ((BinClassRaw*)bin)->HandleMessage;
+            nint pipelineSlot = ((BinClassRaw*)pipeline)->HandleMessage;
+
+            _output.WriteLine(FormattableString.Invariant(
+                $"handle_message: GstBin=0x{binSlot:x} GstPipeline=0x{pipelineSlot:x}"));
+
+            Assert.NotEqual(nint.Zero, binSlot);
+            Assert.NotEqual(nint.Zero, pipelineSlot);
+            Assert.NotEqual(binSlot, pipelineSlot);
+        }
+        finally
+        {
+            GObjectNative.TypeClassUnref(pipeline);
+            GObjectNative.TypeClassUnref(bin);
+        }
+    }
+
+    /// <summary>
+    /// The lifecycle slots of <c>GstBaseSrcClass</c> are where the mirror says
+    /// they are: <c>GstBaseSrc</c> installs none of them, and <c>filesrc</c>
+    /// installs all three. A wrong offset reads a slot the base class did fill
+    /// in, or a data field, and fails one of the two halves.
+    /// </summary>
+    [Fact]
+    public unsafe void TheBaseSrcLifecycleSlotsHoldWhatTheLibraryPutThere()
+    {
+        using Element source = ElementFactory.Make("filesrc", null)
+            ?? throw new InvalidOperationException("filesrc is part of coreelements and has to exist.");
+
+        Gst.Base.BaseSrcClassRaw* concrete = (Gst.Base.BaseSrcClassRaw*)ClassOf(source);
+        nint abstractClass = GObjectNative.TypeClassRef(Gst.Base.BaseSrc.GetGType());
+
+        try
+        {
+            Gst.Base.BaseSrcClassRaw* baseSrc = (Gst.Base.BaseSrcClassRaw*)abstractClass;
+
+            _output.WriteLine(FormattableString.Invariant(
+                $"filesrc: start=0x{concrete->Start:x} stop=0x{concrete->Stop:x} is_seekable=0x{concrete->IsSeekable:x}"));
+            _output.WriteLine(FormattableString.Invariant(
+                $"GstBaseSrc: create=0x{baseSrc->Create:x} fill=0x{baseSrc->Fill:x}"));
+
+            Assert.NotEqual(nint.Zero, concrete->Start);
+            Assert.NotEqual(nint.Zero, concrete->Stop);
+            Assert.NotEqual(nint.Zero, concrete->IsSeekable);
+
+            // GstBaseSrc leaves these to its subclasses, which is exactly why
+            // the chain-up helpers document a default for a null slot.
+            Assert.Equal(nint.Zero, baseSrc->Start);
+            Assert.Equal(nint.Zero, baseSrc->Stop);
+            Assert.Equal(nint.Zero, baseSrc->IsSeekable);
+
+            // And it does install the one that produces data.
+            Assert.NotEqual(nint.Zero, baseSrc->Create);
+        }
+        finally
+        {
+            GObjectNative.TypeClassUnref(abstractClass);
+        }
+    }
+
+    /// <summary>
+    /// The <c>create</c> slot of <c>GstPushSrcClass</c> — the one a managed
+    /// push source lives in — is where the mirror says it is: <c>GstPushSrc</c>
+    /// leaves it null and <c>fdsrc</c> fills it in.
+    /// </summary>
+    [RequiresElementFact("fdsrc")]
+    public unsafe void ThePushSrcCreateSlotHoldsWhatTheLibraryPutThere()
+    {
+        using Element source = ElementFactory.Make("fdsrc", null)
+            ?? throw new InvalidOperationException("The fact is gated on fdsrc being installed.");
+
+        Gst.Base.PushSrcClassRaw* concrete = (Gst.Base.PushSrcClassRaw*)ClassOf(source);
+        nint abstractClass = GObjectNative.TypeClassRef(Gst.Base.PushSrc.GetGType());
+
+        try
+        {
+            Gst.Base.PushSrcClassRaw* pushSrc = (Gst.Base.PushSrcClassRaw*)abstractClass;
+
+            _output.WriteLine(FormattableString.Invariant(
+                $"create: fdsrc=0x{concrete->Create:x} GstPushSrc=0x{pushSrc->Create:x}"));
+
+            Assert.NotEqual(nint.Zero, concrete->Create);
+            Assert.Equal(nint.Zero, pushSrc->Create);
+
+            // GstPushSrc's own contribution is one level up: it installs the
+            // GstBaseSrc create that dispatches to the three slots above.
+            Assert.NotEqual(nint.Zero, pushSrc->ParentClass.Create);
+            Assert.Equal(pushSrc->ParentClass.Create, concrete->ParentClass.Create);
+        }
+        finally
+        {
+            GObjectNative.TypeClassUnref(abstractClass);
+        }
+    }
+
+    /// <summary>
+    /// The two slots a managed sink lives in are where the mirror says they
+    /// are: <c>GstBaseSink</c> installs neither <c>preroll</c> nor
+    /// <c>render</c>, and <c>fakesink</c> installs both.
+    /// </summary>
+    [Fact]
+    public unsafe void TheBaseSinkRenderSlotsHoldWhatTheLibraryPutThere()
+    {
+        using Element sink = ElementFactory.Make("fakesink", null)
+            ?? throw new InvalidOperationException("fakesink is part of coreelements and has to exist.");
+
+        Gst.Base.BaseSinkClassRaw* concrete = (Gst.Base.BaseSinkClassRaw*)ClassOf(sink);
+        nint abstractClass = GObjectNative.TypeClassRef(Gst.Base.BaseSink.GetGType());
+
+        try
+        {
+            Gst.Base.BaseSinkClassRaw* baseSink = (Gst.Base.BaseSinkClassRaw*)abstractClass;
+
+            _output.WriteLine(FormattableString.Invariant(
+                $"fakesink: preroll=0x{concrete->Preroll:x} render=0x{concrete->Render:x}"));
+
+            Assert.NotEqual(nint.Zero, concrete->Preroll);
+            Assert.NotEqual(nint.Zero, concrete->Render);
+            Assert.Equal(nint.Zero, baseSink->Preroll);
+            Assert.Equal(nint.Zero, baseSink->Render);
+
+            // set_caps sits one word behind get_caps and the base class does
+            // install it, which pins the front of the struct as well.
+            Assert.NotEqual(nint.Zero, baseSink->SetCaps);
+        }
+        finally
+        {
+            GObjectNative.TypeClassUnref(abstractClass);
+        }
+    }
+
+    /// <summary>
+    /// The slots and the two data fields of <c>GstBaseTransformClass</c> hold
+    /// what the library put there: <c>identity</c> fills in
+    /// <c>transform_ip</c>, <c>start</c> and <c>stop</c>, and the two
+    /// <c>gboolean</c> fields in front of the slots read back as the defaults
+    /// <c>GstBaseTransform</c> sets — <c>FALSE</c> and <c>TRUE</c>. Mirroring
+    /// them as anything but two 32 bit integers would read a pointer here and
+    /// move every slot behind them.
+    /// </summary>
+    [Fact]
+    public unsafe void TheBaseTransformSlotsAndDataFieldsHoldWhatTheLibraryPutThere()
+    {
+        using Element filter = ElementFactory.Make("identity", null)
+            ?? throw new InvalidOperationException("identity is part of coreelements and has to exist.");
+
+        Gst.Base.BaseTransformClassRaw* concrete = (Gst.Base.BaseTransformClassRaw*)ClassOf(filter);
+        nint abstractClass = GObjectNative.TypeClassRef(Gst.Base.BaseTransform.GetGType());
+
+        try
+        {
+            Gst.Base.BaseTransformClassRaw* baseTransform = (Gst.Base.BaseTransformClassRaw*)abstractClass;
+
+            _output.WriteLine(FormattableString.Invariant(
+                $"identity: transform_ip=0x{concrete->TransformIp:x} transform=0x{concrete->Transform:x}"));
+            _output.WriteLine(FormattableString.Invariant(
+                $"identity: passthrough_on_same_caps={concrete->PassthroughOnSameCaps}"));
+            _output.WriteLine(FormattableString.Invariant(
+                $"identity: transform_ip_on_passthrough={concrete->TransformIpOnPassthrough}"));
+
+            Assert.NotEqual(nint.Zero, concrete->TransformIp);
+            Assert.NotEqual(nint.Zero, concrete->Start);
+            Assert.NotEqual(nint.Zero, concrete->Stop);
+            Assert.Equal(nint.Zero, baseTransform->TransformIp);
+
+            // The defaults of gst_base_transform_class_init, inherited by
+            // identity: it does not force passthrough on equal caps, and it
+            // does want transform_ip to run while passing through.
+            Assert.Equal(0, concrete->PassthroughOnSameCaps);
+            Assert.Equal(1, concrete->TransformIpOnPassthrough);
+            Assert.Equal(0, baseTransform->PassthroughOnSameCaps);
+            Assert.Equal(1, baseTransform->TransformIpOnPassthrough);
+        }
+        finally
+        {
+            GObjectNative.TypeClassUnref(abstractClass);
+        }
+    }
+
+    /// <summary>
     /// The binding is built against GStreamer 1.28, and the layouts these
     /// probes mirror have been stable since 1.24, which is the floor they are
     /// meaningful on.
@@ -368,6 +714,31 @@ public sealed class AbiProbeTests
         Buffer? buffer = Buffer.FromNative(handle, Transfer.Full);
         Assert.NotNull(buffer);
         return buffer;
+    }
+
+    /// <summary>
+    /// Reads the class of an instance, which is the first word of every
+    /// <c>GTypeInstance</c>.
+    /// </summary>
+    /// <param name="instance">The object to read.</param>
+    /// <returns>The class of the instance.</returns>
+    private static unsafe nint ClassOf(Gst.GObject.Object instance) => *(nint*)instance.Handle;
+
+    /// <summary>
+    /// Asserts that a mirror is exactly as large as the class the library
+    /// allocates.
+    /// </summary>
+    /// <param name="name">The name of the class, for the output.</param>
+    /// <param name="mirror">The size of the mirror.</param>
+    /// <param name="type">The type to query.</param>
+    private void AssertClassSize(string name, int mirror, nuint type)
+    {
+        GObjectNative.TypeQuery(type, out GTypeQuery query);
+
+        _output.WriteLine(FormattableString.Invariant(
+            $"g_type_query({name}): class_size={query.ClassSize} instance_size={query.InstanceSize}, mirror={mirror}"));
+
+        Assert.Equal((uint)mirror, query.ClassSize);
     }
 
     private static unsafe long Offset(void* start, void* field) => (byte*)field - (byte*)start;

@@ -9,6 +9,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- The ABI probes read the class struct mirrors of this module and assert
+         them against the running library, which is what they are there for. -->
+    <InternalsVisibleTo Include="GstSharp.IntegrationTests" />
     <InternalsVisibleTo Include="GstSharp.Net.App" />
     <InternalsVisibleTo Include="GstSharp.Net.Audio" />
     <InternalsVisibleTo Include="GstSharp.Net.Video" />

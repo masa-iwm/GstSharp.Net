@@ -9,6 +9,9 @@
 
   <ItemGroup>
     <ProjectReference Include="../../src/GstSharp.Net/GstSharp.Net.csproj" />
+    <!-- The managed source and sink of the sample derive from GstBaseSrc and
+         GstBaseSink, whose subclassing surface lives in this module. -->
+    <ProjectReference Include="../../src/GstSharp.Net.Base/GstSharp.Net.Base.csproj" />
   </ItemGroup>
 
 </Project>
