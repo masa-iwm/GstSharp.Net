@@ -10,11 +10,12 @@ extension surface — a **module SPI** — for exactly that, and this page is th
 contract that comes with it.
 
 `src/GstSharp.Net.Controller` is the worked example. It is a real shipping
-module, it binds the useful heart of `libgstcontroller-1.0`, and **it is built
-with no `InternalsVisibleTo` in either direction**: nothing grants it the
-internals of `GstSharp.Net`, and it grants nothing to anybody. That it compiles
-is what certifies that the surface below is complete; if a change to the runtime
-ever closes part of it, that project stops building.
+module, it binds the useful heart of `libgstcontroller-1.0`, its wrappers derive
+from the generated `Gst.ControlSource`, and **it is built with no
+`InternalsVisibleTo` in either direction**: nothing grants it the internals of
+`GstSharp.Net`, and it grants nothing to anybody. That it compiles is what
+certifies that the surface below is complete; if a change to the runtime or to
+the generator ever closes part of it, that project stops building.
 
 ## What a module is, and what it is not
 
@@ -114,8 +115,8 @@ installation whenever that installation provides it.
 
 **You may import from the built-in names too.** `[LibraryImport("Gst", …)]` in
 your assembly resolves like any other, once `EnsureRegistered` has run for it.
-That is how the example calls `gst_control_source_get_value`, which lives in the
-core library rather than in `libgstcontroller`.
+A module that binds a library built on top of GStreamer usually needs an entry
+point or two out of the core library, and nothing stops it.
 
 ### 2. The type table
 
@@ -186,6 +187,15 @@ Which one you pick follows from the C type and from nothing else, and it decides
 the ownership rule your users live under — see
 [`docs/ownership.md`](ownership.md), which applies to your wrappers unchanged.
 
+**Or from a generated class**, when the native type derives from one that this
+repository already binds. `Gst.Element`, `Gst.Object`, `Gst.ControlSource`,
+`Gst.Bin` and every other class under `src/*/Generated/` carries the same
+`protected (nint, Transfer)` constructor, and it is the only part of a generated
+class that is open. Deriving from the right one is what keeps your managed
+hierarchy shaped like the native one — see
+[Attaching to the generated hierarchy](#attaching-to-the-generated-hierarchy)
+below, which is the interesting half of this page.
+
 The obligations, which the XML documentation on each constructor states as well:
 
 * **`FromNative` is the supported wrap path for a `GObject`.** GObject wrappers
@@ -226,35 +236,45 @@ UTF-8 parameters, `GException.ThrowIfSet` for a `GError**` out parameter,
 `Gst.GObject.Value` and `GType` for properties and `GValue`s, `Transfer`,
 `GstNativeLoadException`.
 
-## Where a module cannot attach yet
+## Attaching to the generated hierarchy
 
-**The generated wrapper classes are closed.** `Gst.Element`, `Gst.Object`,
-`Gst.ControlSource`, `Gst.Bin` and every other class under
-`src/*/Generated/` has an `internal` constructor, so a class in your assembly
-cannot derive from one. A module attaches at the runtime bases in the table
-above, which means the managed hierarchy of your wrappers is **flat with respect
-to the generated one**: `Gst.Controller.InterpolationControlSource` is a
-`Gst.GObject.InitiallyUnowned`, and it is *not* a `Gst.Object` or a
-`Gst.ControlSource`, even though the native type derives from both.
+**Derive from the generated wrapper of the nearest native ancestor**, and the
+managed hierarchy of your module follows the native one.
+`Gst.Controller.TimedValueControlSource` derives from `Gst.ControlSource`, which
+is a `Gst.Object`, which is a `Gst.GObject.InitiallyUnowned` — the same chain
+`GstTimedValueControlSource` has in C. It costs no `InternalsVisibleTo`: the
+`(nint, Transfer)` constructor is `protected` and is the whole of what a
+generated class opens.
 
-What that costs, concretely:
+What that buys, concretely:
 
-* Methods of the generated ancestors are not inherited. Bind the ones you need
-  yourself — they are ordinary entry points, and the example does exactly that
-  for `gst_control_source_get_value`.
-* Generated API that *takes* one of those ancestor types cannot take your
-  wrapper. `GES.TrackElement.SetControlSource(Gst.ControlSource, …)` is the live
-  example: it cannot be handed a control source from this module.
-* Generated API that *returns* one of them still returns the generated wrapper,
-  which is usually what you want — and is why registering a `GType` whose
-  wrapper you did not write is a bad idea.
+* Methods of the generated ancestors are inherited. The example does not bind
+  `gst_control_source_get_value` any more; it calls the
+  `Gst.ControlSource.ControlSourceGetValue` it inherited, and `Name`, `Parent`
+  and `SyncValues` arrive from `Gst.Object` the same way.
+* Generated API that *takes* one of those ancestor types takes your wrapper.
+  `GES.TrackElement.SetControlSource(Gst.ControlSource, …)` is the live example
+  — a control source built by this module drives a property of a GES track
+  element, across three assemblies and no grant of internals, which
+  [`tests/GstSharp.IntegrationTests/GesControlSourceTests.cs`](../tests/GstSharp.IntegrationTests/GesControlSourceTests.cs)
+  asserts end to end.
+* Generated API that *returns* one of them still returns the generated wrapper
+  rather than yours, because the registry decides that and the registry answers
+  by `GType`. Register an entry for your own type when you want your wrapper
+  back — and do not register one for a `GType` whose wrapper you did not write.
 
-Opening the generated constructors is the next step of this work. Until it
-lands, prefer the shape the example uses where it fits: **bind a constructor
-function as a factory that returns the existing generated wrapper**, and write a
-wrapper class of your own only for types that carry methods you need.
+Two things to get right when you attach there:
 
-**Managed subclassing is separate and is also closed to modules.**
+* **Pick the ancestor the native type actually has.** Deriving from
+  `Gst.Element` a type that is not a `GstElement` compiles and then hands every
+  inherited method a handle of the wrong shape.
+* **The generated class may not be the one that carries the constructor
+  function.** Binding a constructor function as a factory that returns the
+  existing generated wrapper is still the right shape for a type that adds no
+  methods of its own — `DirectControlBinding` in the example does exactly that
+  and stays a `Gst.ControlBinding`.
+
+**Managed subclassing is separate and is closed to modules.**
 `DefineSubclass` — deriving a *new* `GType` from `Gst.Element` and friends in C#
 — is public and documented in [`docs/subclassing.md`](subclassing.md#11-using-it-stage-1),
 but its closed set of base classes is the one that ships in `GstSharp.Net` and
@@ -262,9 +282,12 @@ but its closed set of base classes is the one that ships in `GstSharp.Net` and
 
 ## What stays closed, and why
 
-* **The internals of the generated assemblies.** Constructors, `CreateWrapper`,
+* **The internals of the generated assemblies**, which is everything about a
+  generated class except its `(nint, Transfer)` constructor: `CreateWrapper`,
   `GetGType`, the class-struct mirrors. They are regenerated on every gir refresh
-  and are not a surface anybody can promise anything about yet.
+  and are not a surface anybody can promise anything about yet. The constructor
+  is the deliberate exception, because attaching to the hierarchy needs one
+  member and no more.
 * **The generator.** It is a tool, not a product; see above.
 * **The name table of the core libraries.** `RegisterLibrary` cannot shadow it,
   because one process holds one GStreamer installation and the loader is what
@@ -285,7 +308,7 @@ values drive a property of an element over stream time.
 | [`GstSharp.Net.Controller.csproj`](../src/GstSharp.Net.Controller/GstSharp.Net.Controller.csproj) | The proof: one `ProjectReference`, no `InternalsVisibleTo`. |
 | [`GstControllerModule.cs`](../src/GstSharp.Net.Controller/GstControllerModule.cs) | The three registration calls, in a module initialiser. |
 | [`GstController.cs`](../src/GstSharp.Net.Controller/GstController.cs) | The public `Initialize()` a module owes its users. |
-| [`TimedValueControlSource.cs`](../src/GstSharp.Net.Controller/TimedValueControlSource.cs) | A wrapper class: the protected constructor, `GetGType` and `CreateWrapper`, a `Concrete` for the abstract type, entry points against two logical names. |
+| [`TimedValueControlSource.cs`](../src/GstSharp.Net.Controller/TimedValueControlSource.cs) | A wrapper class deriving from the *generated* `Gst.ControlSource`: the protected constructor, `GetGType` and `CreateWrapper`, a `Concrete` for the abstract type. |
 | [`InterpolationControlSource.cs`](../src/GstSharp.Net.Controller/InterpolationControlSource.cs) | A factory through `FromNative`, and a `GValue` property round trip. |
 | [`DirectControlBinding.cs`](../src/GstSharp.Net.Controller/DirectControlBinding.cs) | Binding a constructor function as a factory that returns the *generated* wrapper. |
 
@@ -319,7 +342,10 @@ wrote the element; a binding to a property that is not marked so is built, logs
 a warning, and then does nothing.
 
 [`tests/GstSharp.IntegrationTests/ControllerModuleTests.cs`](../tests/GstSharp.IntegrationTests/ControllerModuleTests.cs)
-asserts all of it against the installed library.
+asserts all of it against the installed library, and
+[`GesControlSourceTests.cs`](../tests/GstSharp.IntegrationTests/GesControlSourceTests.cs)
+asserts the crossing the hierarchy makes possible: the same source handed to
+`GES.TrackElement.SetControlSource`, which takes a `Gst.ControlSource`.
 
 ## Checklist
 
@@ -329,7 +355,8 @@ asserts all of it against the installed library.
    `RegisterModule`.
 3. A public `Initialize()` that forwards to `GstSharp.Initialize`.
 4. One wrapper class per native type that carries methods, derived from the
-   right runtime base, with a `CreateWrapper` for the registry and public
+   generated wrapper of its nearest bound ancestor — or from the right runtime
+   base when it has none — with a `CreateWrapper` for the registry and public
    factories that go through `FromNative`.
 5. Ownership documented for anything that is a `MiniObject` or a `Boxed`, and no
    owning wrapper behind a property.

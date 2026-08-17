@@ -12,9 +12,12 @@ namespace GstSharp.Generator.Emit;
 /// <para>
 /// A generated class is <c>partial</c> and not sealed, so that hand written
 /// glue can extend it and so that the wrapper of a native subtype can derive
-/// from it. Its constructor is <c>internal</c>: instances always come from a
-/// generated factory or from the type registry, never from user code, because
-/// only those know what ownership the native call transferred.
+/// from it. Its <c>(nint, Transfer)</c> constructor is <c>protected</c>, which
+/// is what lets a binding module outside this repository attach its wrappers to
+/// the generated hierarchy; everything else about the class — the factory, the
+/// type function, the class-struct mirrors — stays internal. Instances still
+/// never come from application code: only a factory or the type registry knows
+/// what ownership the native call transferred.
 /// </para>
 /// <para>
 /// An abstract gir class stays abstract in C#, and carries a private concrete
@@ -462,14 +465,7 @@ internal sealed class ClassEmitter
             + string.Join(", ", new[] { baseType.Name }.Concat(interfaces)));
         writer.OpenBlock();
 
-        writer.WriteLine("/// <summary>Wraps a native <c>" + CTypeOf(declaration) + "</c>.</summary>");
-        writer.WriteLine("/// <param name=\"handle\">The native instance.</param>");
-        writer.WriteLine(
-            "/// <param name=\"transfer\">How ownership of <paramref name=\"handle\"/> is transferred.</param>");
-        writer.WriteLine("internal " + typeName + "(nint handle, Gst.Interop.Transfer transfer)");
-        writer.WriteLine("    : base(handle, transfer)");
-        writer.OpenBlock();
-        writer.CloseBlock();
+        WriteWrapperConstructor(writer, typeName, CTypeOf(declaration));
 
         WriteMembers(writer, surface, module, first: false, CTypeOf(declaration));
 
@@ -537,6 +533,65 @@ internal sealed class ClassEmitter
             "internal static " + (hidesBase ? "new " : string.Empty)
             + "object CreateWrapper(nint handle, Gst.Interop.Transfer transfer) => new "
             + (isAbstract ? ConcreteName : typeName) + "(handle, transfer);");
+    }
+
+    /// <summary>
+    /// Writes the constructor that attaches a wrapper of a derived native type
+    /// to this one.
+    /// </summary>
+    /// <param name="writer">The target writer.</param>
+    /// <param name="typeName">The C# name of the type.</param>
+    /// <param name="cType">The C name of the type.</param>
+    /// <remarks>
+    /// <para>
+    /// It is <c>protected</c> rather than <c>internal</c>, and that is
+    /// deliberate public surface: it is where a binding module written against
+    /// the package attaches its own wrappers, so that
+    /// <c>Gst.Controller.TimedValueControlSource</c> really is a
+    /// <c>Gst.ControlSource</c> and the generated members that take one accept
+    /// it. Nothing else about a generated class is open — the factory, the type
+    /// function and the class-struct mirrors stay internal — so the constructor
+    /// carries the whole of the contract, which is why the documentation on it
+    /// repeats what the runtime bases say and points at the module guide.
+    /// </para>
+    /// <para>
+    /// Every generated class is non-sealed, so <c>protected</c> is always
+    /// legal here. The records — mini objects, boxed values and opaque records
+    /// — are sealed and keep their <c>internal</c> constructors.
+    /// </para>
+    /// </remarks>
+    private static void WriteWrapperConstructor(CodeWriter writer, string typeName, string cType)
+    {
+        writer.WriteLine("/// <summary>Wraps a native <c>" + cType + "</c>.</summary>");
+        writer.WriteLine("/// <param name=\"handle\">The native instance.</param>");
+        writer.WriteLine(
+            "/// <param name=\"transfer\">How ownership of <paramref name=\"handle\"/> is transferred.</param>");
+        writer.WriteLine("/// <remarks>");
+        writer.WriteLine("/// <para>");
+        writer.WriteLine("/// This is where a binding module attaches its own wrappers: derive from");
+        writer.WriteLine("/// this class to wrap a native type that derives from");
+        writer.WriteLine("/// <c>" + cType + "</c> and has no binding of its own here. See");
+        writer.WriteLine(
+            "/// <see href=\"https://github.com/masa-iwm/GstSharp.Net/blob/main/docs/modules.md\">docs/modules.md</see>.");
+        writer.WriteLine("/// </para>");
+        writer.WriteLine("/// <para>");
+        writer.WriteLine("/// <b>Call it from a type-registry factory, never from application code.</b>");
+        writer.WriteLine("/// GObject wrappers are interned, and wrapping a handle that a live wrapper");
+        writer.WriteLine("/// already holds throws. Expose a <c>CreateWrapper</c> to");
+        writer.WriteLine("/// <see cref=\"Gst.Interop.ModuleTypeEntry\"/>, keep the constructor out of");
+        writer.WriteLine("/// your public surface, and write your own factories through");
+        writer.WriteLine("/// <see cref=\"Gst.GObject.Object.FromNative{T}(nint, Gst.Interop.Transfer)\"/>.");
+        writer.WriteLine("/// </para>");
+        writer.WriteLine("/// <para>");
+        writer.WriteLine("/// <b>Pass the transfer the C function documented.</b> The wrapper owns one");
+        writer.WriteLine("/// reference either way, so getting it wrong leaks the object or releases a");
+        writer.WriteLine("/// reference that was never handed over.");
+        writer.WriteLine("/// </para>");
+        writer.WriteLine("/// </remarks>");
+        writer.WriteLine("protected " + typeName + "(nint handle, Gst.Interop.Transfer transfer)");
+        writer.WriteLine("    : base(handle, transfer)");
+        writer.OpenBlock();
+        writer.CloseBlock();
     }
 
     private static void WriteConcrete(CodeWriter writer, string typeName, string cType)

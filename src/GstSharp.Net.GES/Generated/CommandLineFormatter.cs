@@ -14,7 +14,28 @@ public unsafe partial class CommandLineFormatter : GES.Formatter, GES.IExtractab
     /// <summary>Wraps a native <c>GESCommandLineFormatter</c>.</summary>
     /// <param name="handle">The native instance.</param>
     /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
-    internal CommandLineFormatter(nint handle, Gst.Interop.Transfer transfer)
+    /// <remarks>
+    /// <para>
+    /// This is where a binding module attaches its own wrappers: derive from
+    /// this class to wrap a native type that derives from
+    /// <c>GESCommandLineFormatter</c> and has no binding of its own here. See
+    /// <see href="https://github.com/masa-iwm/GstSharp.Net/blob/main/docs/modules.md">docs/modules.md</see>.
+    /// </para>
+    /// <para>
+    /// <b>Call it from a type-registry factory, never from application code.</b>
+    /// GObject wrappers are interned, and wrapping a handle that a live wrapper
+    /// already holds throws. Expose a <c>CreateWrapper</c> to
+    /// <see cref="Gst.Interop.ModuleTypeEntry"/>, keep the constructor out of
+    /// your public surface, and write your own factories through
+    /// <see cref="Gst.GObject.Object.FromNative{T}(nint, Gst.Interop.Transfer)"/>.
+    /// </para>
+    /// <para>
+    /// <b>Pass the transfer the C function documented.</b> The wrapper owns one
+    /// reference either way, so getting it wrong leaks the object or releases a
+    /// reference that was never handed over.
+    /// </para>
+    /// </remarks>
+    protected CommandLineFormatter(nint handle, Gst.Interop.Transfer transfer)
         : base(handle, transfer)
     {
     }

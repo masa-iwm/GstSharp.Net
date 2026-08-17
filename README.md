@@ -364,15 +364,25 @@ no `InternalsVisibleTo` from here. `GstSharp.Net.Controller` is that module
 written out: it binds `libgstcontroller-1.0`, it ships, and nothing grants it
 the internals of anything.
 
+**It attaches to the generated hierarchy too.** Every generated wrapper class —
+`Gst.Element`, `Gst.Object`, `Gst.ControlSource` and the rest — carries the same
+`protected` constructor, so a module's classes derive from the wrapper of the
+nearest native ancestor and are shaped like the C types they stand for. That
+means the members of the generated ancestors are inherited and that generated
+API taking one of them takes your wrapper:
+`Gst.Controller.InterpolationControlSource` really is a `Gst.ControlSource`, and
+`GES.TrackElement.SetControlSource` accepts it, across three assemblies and
+still with no grant of internals anywhere.
+
 **Generator-backed modules are not supported.** The generator is a tool of this
 repository, not a product, and the code it emits uses internals; a module is
 written by hand.
 
 **[`docs/modules.md`](https://github.com/masa-iwm/GstSharp.Net/blob/main/docs/modules.md)**
 is the guide: the three registration calls, the obligations that come with each
-wrapper base, what is still closed — deriving from a *generated* wrapper class,
-so a module's classes attach at the runtime bases and are flat with respect to
-the generated hierarchy — and the worked example, file by file.
+wrapper base, how to attach to the generated hierarchy and what is still closed
+— everything about a generated class except its constructor — and the worked
+example, file by file.
 
 ## Documentation
 

@@ -32,7 +32,8 @@
 //     gst_discoverer_discover_uri fills its GError *and* returns an information
 //     object whenever the run saw an error on the bus, whatever result it
 //     settled on; the binding raises the GError before it wraps the return
-//     value, so the object is out of reach. This prints the three lines the C
+//     value, releasing it rather than leaking it, so the object is out of
+//     reach of the caller either way. This prints the three lines the C
 //     tool prints for GST_DISCOVERER_ERROR -- "Done discovering <uri>", "An
 //     error was encountered while discovering the file", and the message.
 //

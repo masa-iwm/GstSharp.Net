@@ -26,8 +26,18 @@ namespace Gst.Controller;
 /// it is interned, it is the same instance on every lookup, and normally it is
 /// not disposed. A control binding holds the source for as long as it lives.
 /// </para>
+/// <para>
+/// <b>It derives from the generated <see cref="Gst.ControlSource"/></b>, whose
+/// <c>(nint, Transfer)</c> constructor is <c>protected</c> for exactly this. The
+/// managed hierarchy therefore follows the native one: this is a
+/// <see cref="Gst.ControlSource"/> and a <see cref="Gst.Object"/>, their members
+/// are inherited rather than bound again, and generated API that takes a control
+/// source — <c>GES.TrackElement.SetControlSource</c> is the one that matters —
+/// accepts a source from this module. It costs no
+/// <c>InternalsVisibleTo</c>: the constructor is the whole of what is open.
+/// </para>
 /// </remarks>
-public abstract unsafe partial class TimedValueControlSource : Gst.GObject.InitiallyUnowned
+public abstract unsafe partial class TimedValueControlSource : Gst.ControlSource
 {
     /// <summary>
     /// Wraps a native <c>GstTimedValueControlSource</c>.
@@ -35,7 +45,7 @@ public abstract unsafe partial class TimedValueControlSource : Gst.GObject.Initi
     /// <param name="handle">The native instance.</param>
     /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
     /// <remarks>
-    /// The obligations of <see cref="Gst.GObject.Object(nint, Transfer)"/> apply:
+    /// The obligations of <see cref="Gst.ControlSource(nint, Transfer)"/> apply:
     /// this is reached from the factory of the type registry and from
     /// <see cref="Gst.GObject.Object.FromNative(nint, Transfer)"/>, never from
     /// application code.
@@ -120,20 +130,16 @@ public abstract unsafe partial class TimedValueControlSource : Gst.GObject.Initi
     /// </returns>
     /// <remarks>
     /// This is <c>gst_control_source_get_value</c>, which lives in the core
-    /// GStreamer library rather than in <c>libgstcontroller</c>: a binding
-    /// module may import from the built-in logical names as well as from the one
-    /// it registered itself. The value is the raw one, before the control
+    /// GStreamer library rather than in <c>libgstcontroller</c>, and the module
+    /// does not bind it: it is inherited from
+    /// <see cref="Gst.ControlSource.ControlSourceGetValue"/>, which is what
+    /// deriving from the generated wrapper buys. The name here is the one this
+    /// module has always used. The value is the raw one, before the control
     /// binding maps it onto the range of a property.
     /// </remarks>
     /// <exception cref="ObjectDisposedException">The wrapper was disposed.</exception>
-    public bool TryGetValue(Gst.ClockTime timestamp, out double value)
-    {
-        double result = default;
-        int answered = GstControlSourceGetValue(Handle, timestamp.Nanoseconds, &result);
-        GC.KeepAlive(this);
-        value = result;
-        return answered != 0;
-    }
+    public bool TryGetValue(Gst.ClockTime timestamp, out double value) =>
+        ControlSourceGetValue(timestamp, out value);
 
     /// <summary>
     /// Returns the <c>GType</c> that GObject registered
@@ -162,9 +168,6 @@ public abstract unsafe partial class TimedValueControlSource : Gst.GObject.Initi
 
     [LibraryImport("GstController", EntryPoint = "gst_timed_value_control_source_get_count")]
     private static partial int GstTimedValueControlSourceGetCount(nint self);
-
-    [LibraryImport("Gst", EntryPoint = "gst_control_source_get_value")]
-    private static partial int GstControlSourceGetValue(nint self, ulong timestamp, double* value);
 
     /// <summary>
     /// The wrapper of a native type that derives from

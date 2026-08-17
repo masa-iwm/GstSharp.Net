@@ -112,11 +112,12 @@ What the design builds on, with the exact names:
   entirely, and `InterfaceEmitter` states "The virtual methods of an
   interface are not bound". So the data is parsed and deliberately unused —
   the postponement was in emission, not in parsing.
-* **Class surface** — generated classes are `partial`, non-sealed, with an
-  `internal (nint, Transfer)` constructor; abstract gir classes stay
+* **Class surface** — generated classes are `partial`, non-sealed, with a
+  `protected (nint, Transfer)` constructor; abstract gir classes stay
   `abstract` and carry a private `Concrete` subclass for the registry
-  (`ClassEmitter.ConcreteName`). **User assemblies cannot chain to the
-  internal constructor today** — a surface change is required (§5.3).
+  (`ClassEmitter.ConcreteName`). A user assembly can chain to that constructor
+  and wrap a native subtype (see [`docs/modules.md`](modules.md)); what it
+  cannot do is define a *new* `GType`, which is what §5.3 is about.
 * **ABI validation** — `AbiProbeTests` asserts constant sizes/offsets of
   `MiniObjectRaw` (64 bytes), `BufferRaw` (112), `MapInfo` (104) and probes
   dynamically against values the library wrote. This is the template for
@@ -476,14 +477,18 @@ C# virtual-call-in-constructor caveat, not a binding defect.
 
 ### 5.3 The constructor accessibility problem (repo-visible decision)
 
-Generated wrappers expose only `internal Element(nint handle, Transfer
-transfer)` — user assemblies cannot chain to it. Options:
+Generated wrappers now expose `protected Element(nint handle, Transfer
+transfer)`, which a user assembly can chain to — that is what
+[`docs/modules.md`](modules.md) is built on. It is not enough here: a managed
+subclass defines a *new* `GType` and its instances are created rather than
+wrapped, so what the base has to offer is a construction path, not a wrap
+path. Options:
 
-* **(a) Make the `(nint, Transfer)` constructor `protected`** on
-  subclassable classes. Simple, but it invites wrapping arbitrary handles
-  from user code, which the interning doctrine forbids (`FromNative` is
-  documented as the only supported wrap path, and the constructor throws on
-  double-wrap only at runtime).
+* **(a) The `(nint, Transfer)` constructor, which is now `protected`.** It is
+  the wrong door: it takes a handle that already exists, and it invites
+  wrapping arbitrary handles from user code, which the interning doctrine
+  discourages (`FromNative` is documented as the supported wrap path, and the
+  constructor throws on double-wrap only at runtime).
 * **(b) A dedicated construction type**: the base gains
   `protected Element(SubclassCtorArgs args)` where `SubclassCtorArgs` is a
   small struct only obtainable from the runtime's registration path
