@@ -29,6 +29,7 @@ so a single `packageSourceMapping` pattern covers all of them.
 | --- | --- |
 | `GstSharp.Net` | `Gst` core, the hand-written runtime (native loader, marshalling, GObject/GLib layer) and the Roslyn analyzers. Every other package depends on it. |
 | `GstSharp.Net.Base` | `GstBase`. |
+| `GstSharp.Net.Controller` | `GstController`: interpolated control sources and the direct control binding that drives a property from one. Hand written against the public module SPI — see [`docs/modules.md`](https://github.com/masa-iwm/GstSharp.Net/blob/main/docs/modules.md). |
 | `GstSharp.Net.App` | `GstApp`: `appsrc` and `appsink`. |
 | `GstSharp.Net.Video` | `GstVideo`. |
 | `GstSharp.Net.Audio` | `GstAudio`. |
@@ -349,19 +350,24 @@ The version is `<gstreamer-major>.<gstreamer-minor>.<binding-patch>`:
 
 ## Extending the binding
 
-**Third-party binding modules are not a supported extension point today.** The
-registration surface exists — `TypeRegistry.RegisterModule` takes a
-`NativeModule` of `GType`-to-factory entries — but the other half does not:
-wrapper construction is `internal`, so an assembly outside this repository
-cannot build a `Gst.Element`-derived wrapper for a handle, and therefore cannot
-supply a working factory. The modules in this repository work because they are
-named in `InternalsVisibleTo`.
+**A hand-written binding module can live outside this repository.** An assembly
+that references the `GstSharp.Net` package can register its own native library
+with the loader, hand its `GType`-to-wrapper table to `TypeRegistry`, and derive
+its wrappers through the `protected` constructors of `Gst.GObject.Object`,
+`Gst.GObject.InitiallyUnowned`, `Gst.MiniObject` and `Gst.GObject.Boxed` — with
+no `InternalsVisibleTo` from here. `GstSharp.Net.Controller` is that module
+written out: it binds `libgstcontroller-1.0`, it ships, and nothing grants it
+the internals of anything.
 
-Opening that seam — a public construction protocol for wrappers, so that a
-binding for a GStreamer library this repository does not cover can live
-elsewhere — is on the roadmap, alongside the subclassing work that needs the
-same protocol. Until then, a library that is not in the module set is reached
-through the by-name property and signal surface above.
+**Generator-backed modules are not supported.** The generator is a tool of this
+repository, not a product, and the code it emits uses internals; a module is
+written by hand.
+
+**[`docs/modules.md`](https://github.com/masa-iwm/GstSharp.Net/blob/main/docs/modules.md)**
+is the guide: the three registration calls, the obligations that come with each
+wrapper base, what is still closed — deriving from a *generated* wrapper class,
+so a module's classes attach at the runtime bases and are flat with respect to
+the generated hierarchy — and the worked example, file by file.
 
 ## Documentation
 
@@ -371,6 +377,7 @@ through the by-name property and signal surface above.
 | [`docs/analyzers.md`](https://github.com/masa-iwm/GstSharp.Net/blob/main/docs/analyzers.md) | `GST0001` and `GST0002`, what they catch and how to satisfy them. |
 | [`docs/gio-async.md`](https://github.com/masa-iwm/GstSharp.Net/blob/main/docs/gio-async.md) | How Gio's `*_async` / `*_finish` pairs become `Task`-returning methods. |
 | [`docs/subclassing.md`](https://github.com/masa-iwm/GstSharp.Net/blob/main/docs/subclassing.md) | Deriving from `Element`, `Bin` and the `GstBase` classes in C#: the guide is §11, the design is the rest. |
+| [`docs/modules.md`](https://github.com/masa-iwm/GstSharp.Net/blob/main/docs/modules.md) | Writing a binding module for a library this repository does not cover, from your own assembly. |
 | [`girs/skip-report.md`](https://github.com/masa-iwm/GstSharp.Net/blob/main/girs/skip-report.md) | Every gir symbol the generator did not bind, grouped by reason. |
 | [`eng/ci-notes.md`](https://github.com/masa-iwm/GstSharp.Net/blob/main/eng/ci-notes.md) | Why the workflows look the way they do, and how to run each gate by hand. |
 | [`CONTRIBUTING.md`](https://github.com/masa-iwm/GstSharp.Net/blob/main/CONTRIBUTING.md) | Build, test, regenerate, and the quality gates a change has to pass. |
