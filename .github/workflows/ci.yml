@@ -191,10 +191,12 @@ jobs:
       # exactly as it is for the C tool. What is being gated is that the monitor
       # starts at all: gst_device_monitor_start returns FALSE, and the tool -1,
       # when no device provider matches the filters, so this would catch a leg
-      # that lost its providers. gst-plugins-good carries one on every platform
-      # this workflow builds on — pulse and v4l2 here.
-      - name: GstDeviceMonitor
-        run: dotnet run --project samples/GstDeviceMonitor --no-restore
+      # that lost its providers.
+      #
+      # Not run here after all: the pulse provider of gst-plugins-good hangs
+      # a headless session without a PulseAudio daemon - both attempts sat in
+      # start until the job timeout. The macOS leg keeps this gate; its
+      # osxaudio provider comes up without a daemon to wait for.
 
       - name: Upload test results
         if: ${{ failure() }}
