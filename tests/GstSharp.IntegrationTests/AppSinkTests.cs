@@ -19,9 +19,9 @@ namespace GstSharp.IntegrationTests;
 /// These are the parts a single machine can decide: the registry, a
 /// <c>new-sample</c> handler that pulls and releases, and the non blocking
 /// contract of <c>try_pull_sample</c> that a polling loop depends on. Soak
-/// runs that watch the resident set of a process for a minute belong to the M3
-/// pipeline and are not run here: this suite has to stay fast and has to fail
-/// for a reason, not for a machine that was busy.
+/// runs that watch the resident set of a process for a minute are a different
+/// kind of test and are not run here: this suite has to stay fast and has to
+/// fail for a reason, not for a machine that was busy.
 /// </para>
 /// <para>
 /// What the short form does instead is watch the reference counts themselves,

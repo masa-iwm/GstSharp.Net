@@ -8,9 +8,9 @@ contract behind it: where the callback runs, how errors and cancellation are
 mapped, who owns what, and why the binding runs a thread of its own instead of
 telling applications to run a main loop.
 
-The shipped surface of this machinery in M4 is
-`GES.Asset.RequestAsync` and `GES.UriClipAsset.NewAsync`. The runtime half
-lives in `src/GstSharp.Net/Core/Gio/`, in `Gst.Gio`:
+The shipped surface of this machinery is `GES.Asset.RequestAsync` and
+`GES.UriClipAsset.NewAsync`. The runtime half lives in
+`src/GstSharp.Net/Core/Gio/`, in `Gst.Gio`:
 
 | File | Contents |
 | --- | --- |

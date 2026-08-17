@@ -1,5 +1,5 @@
-// The M2 exit criteria sample: it pulls raw video out of an appsink and reads
-// every frame through a Span<byte> that points straight at the mapped GStreamer
+// The zero copy sample: it pulls raw video out of an appsink and reads every
+// frame through a Span<byte> that points straight at the mapped GStreamer
 // memory, with no copy in between.
 //
 // Usage: AppSinkSpans [--mode pull|signal] [--native-path <directory>]

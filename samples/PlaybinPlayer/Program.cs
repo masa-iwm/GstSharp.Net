@@ -1,6 +1,7 @@
-// The M1 exit criteria sample: it builds a pipeline from a description, runs
-// it, and drives it from a polled bus, without a main loop and without a single
-// signal handler.
+// The sample that shows what an application on this binding looks like with
+// nothing else in it: it builds a pipeline from a description, runs it, and
+// drives it from a polled bus, without a main loop and without a single signal
+// handler.
 //
 // Usage: PlaybinPlayer [<uri>] [--native-path <directory>] [--flavor msvc|mingw]
 //                      [--timeout <seconds>]

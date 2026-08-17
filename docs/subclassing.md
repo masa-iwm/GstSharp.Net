@@ -62,7 +62,7 @@ design's stage 3 lands is instantiate a *managed* element by type name
   `gst_element_register` making the type constructible by factory name).
   Plugin-style registration becomes possible once native-initiated
   construction lands (stage 3), but shipping a loadable plugin is out of
-  scope for M4.
+  scope for this design.
 * **Installing properties and signals** on managed types
   (`g_object_class_install_property`, `g_signal_newv`) — stage 3+, not
   needed for the first usable sources/sinks.
