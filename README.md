@@ -17,8 +17,10 @@ designed for NativeAOT from the start.
   located at startup by `NativeLoader`; no `dllmap`, no environment variables
   required.
 
-Module set: `Gst`, `GstBase`, `GstApp`, `GstVideo`, `GstAudio`, `GstPbutils`,
-`GstSdp`, `GstWebRTC`, `GstNet`, `GstRtsp`, `GES`.
+Generated module set: `Gst`, `GstBase`, `GstApp`, `GstVideo`, `GstAudio`,
+`GstPbutils`, `GstSdp`, `GstWebRTC`, `GstNet`, `GstRtsp`, `GES`. A twelfth
+module, `GstController`, is written by hand against the public module SPI and
+ships alongside them.
 
 ## Packages
 
