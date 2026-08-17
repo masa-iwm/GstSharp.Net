@@ -82,8 +82,15 @@ public sealed class MiniObjectValueTests
         Assert.Equal(CapsText, caps.ToString());
 
         // The structure is a copy of its own and outlives the value that was
-        // written into it, so the wrapper is not a window into either.
-        Assert.Contains("payload=(caps)", structure.ToString(), StringComparison.Ordinal);
+        // written into it, so the wrapper is not a window into either. The
+        // serialized spelling of the type moved between releases - 1.24 writes
+        // (GstCaps) where 1.28 writes (caps) - so the assertion accepts the
+        // field with either.
+        string serialized = structure.ToString();
+        Assert.True(
+            serialized.Contains("payload=(caps)", StringComparison.Ordinal)
+                || serialized.Contains("payload=(GstCaps)", StringComparison.Ordinal),
+            $"the caps field is missing from: {serialized}");
     }
 
     /// <summary>
