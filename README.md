@@ -304,10 +304,11 @@ The gaps worth naming here:
   vtable. The design is written down in
   [`docs/subclassing.md`](https://github.com/masa-iwm/GstSharp.Net/blob/main/docs/subclassing.md);
   no stage of it has shipped.
-* **Writing GValue-typed structures is incomplete.** Reading is covered;
-  building a `GValue` for every fundamental type is in progress, and a boxed
-  value returned by `EmitSignal` comes back as an opaque handle rather than as
-  a typed wrapper.
+* **Writing GValue-typed structures is incomplete.** Reading is covered —
+  `Value.GetBoxed<T>()` for a boxed value and `Value.GetMiniObject<T>()` for a
+  caps, a tag list or a sample — and building a `GValue` for every fundamental
+  type is in progress. A boxed value that is not a mini object still comes back
+  from `EmitSignal` as an opaque handle rather than as a typed wrapper.
 * **`scope="async"` callbacks are not generated.** The Gio asynchronous pattern
   is exposed as `Task`-returning methods instead, hand written per operation;
   see

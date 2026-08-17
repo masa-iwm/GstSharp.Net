@@ -179,10 +179,18 @@ public sealed class DynamicSignalTests
     /// the caller is handed a reference of its own.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// This is the whole path in one test: a buffer is pushed into an
     /// <c>appsrc</c> through the <c>push-buffer</c> action signal, which takes
     /// a mini object as an argument, and pulled out of the <c>appsink</c> at
     /// the other end through <c>try-pull-sample</c>, which returns one.
+    /// </para>
+    /// <para>
+    /// The sample comes back as its wrapper rather than as a raw handle, and
+    /// the wrapper owns the reference the emission would otherwise have
+    /// released with the value that carried it. Comparing the reference count
+    /// against the one the C call leaves behind is what shows that.
+    /// </para>
     /// </remarks>
     [Fact]
     public unsafe void BoxedReturnValueIsOwnedByTheCaller()
@@ -223,22 +231,21 @@ public sealed class DynamicSignalTests
             int expected = ((MiniObjectRaw*)direct)->Refcount;
             GstNative.MiniObjectUnref(direct);
 
-            nint sample = Assert.IsType<nint>(sink.EmitSignal(SignalName, FiveSeconds));
-            Assert.NotEqual(nint.Zero, sample);
-
-            int emitted = ((MiniObjectRaw*)sample)->Refcount;
-            _output.WriteLine(FormattableString.Invariant(
-                $"refcount after the C call: {expected}, after the emission: {emitted}"));
-
-            // The value that carried the sample back was unset when the emission
-            // ended, so the reference the caller holds has to be one of its own.
-            // Without that, this count would be one short and the handle would be
-            // living on borrowed time.
-            Assert.Equal(expected, emitted);
-
-            // And it really is a usable sample rather than a freed one.
-            using (Sample wrapper = new(sample, Transfer.Full))
+            // A GstSample is a mini object, so the emission hands out the
+            // wrapper of the binding and not the handle it used to.
+            using (Sample wrapper = Assert.IsType<Sample>(sink.EmitSignal(SignalName, FiveSeconds)))
             {
+                int emitted = ((MiniObjectRaw*)wrapper.Handle)->Refcount;
+                _output.WriteLine(FormattableString.Invariant(
+                    $"refcount after the C call: {expected}, after the emission: {emitted}"));
+
+                // The value that carried the sample back was unset when the
+                // emission ended, so the reference the wrapper holds has to be
+                // one of its own. Without that, this count would be one short
+                // and the wrapper would be living on borrowed time.
+                Assert.Equal(expected, emitted);
+
+                // And it really is a usable sample rather than a freed one.
                 using Gst.Buffer? pulled = wrapper.GetBuffer();
                 Assert.NotNull(pulled);
                 Assert.Equal(4UL, (ulong)pulled.GetSize());

@@ -49,18 +49,24 @@ public partial class Object
     /// </returns>
     /// <remarks>
     /// <para>
-    /// <b>A boxed return value is opaque today.</b> A mini object such as a
-    /// <c>GstSample</c> is boxed in a <c>GValue</c>, and it comes back here as
-    /// a raw <see cref="nint"/> handle that already carries a reference of its
-    /// own. Nothing on the public surface can take that handle: the wrapper
-    /// constructors and the <c>FromNative</c> factories are internal, and the
-    /// matching release is <c>g_boxed_free</c> against the value's
-    /// <c>GType</c>, which is not exposed either. Emitting such a signal
-    /// therefore leaks one reference per emission. Use the generated binding of
-    /// the signal, or the generated method the action signal stands for, where
-    /// one exists — <c>appsink.TryPullSample(timeout)</c> rather than
-    /// <c>EmitSignal("try-pull-sample", timeout)</c>. Typed adoption of boxed
-    /// return values is planned and is not in this release.
+    /// <b>A mini object comes back as its wrapper, which the caller has to
+    /// dispose.</b> A <c>GstSample</c> or a <c>GstCaps</c> is boxed in a
+    /// <c>GValue</c>, and the reference the emission would otherwise release
+    /// with that value is the one the wrapper adopts, so
+    /// <c>EmitSignal("try-pull-sample", timeout)</c> hands out a
+    /// <c>Gst.Sample</c> that a <c>using</c> releases. Where a generated
+    /// binding of the signal exists it is still the better call —
+    /// <c>appsink.TryPullSample(timeout)</c> says what it returns in its
+    /// signature.
+    /// </para>
+    /// <para>
+    /// <b>Anything else boxed is still opaque.</b> A boxed value whose wrapper
+    /// is not a mini object comes back as a raw <see cref="nint"/> handle that
+    /// already carries a copy of its own, and nothing on the public surface can
+    /// take one: the matching release is <c>g_boxed_free</c> against the
+    /// value's <c>GType</c>, which is not exposed. Emitting such a signal leaks
+    /// one copy per emission. Mini objects are the return type that GStreamer
+    /// action signals actually use.
     /// </para>
     /// <para>
     /// This is the way to call an action signal, for example
@@ -187,11 +193,11 @@ public partial class Object
     /// The managed type of the return value:
     /// <see cref="bool"/>, <see cref="int"/>, <see cref="uint"/>,
     /// <see cref="long"/>, <see cref="ulong"/>, <see cref="float"/>,
-    /// <see cref="double"/>, <see cref="string"/>, an <see cref="Object"/>, or
-    /// <see cref="nint"/> for anything boxed. An enumeration comes back as its
-    /// numeric value, so a signal that returns one is read as an
-    /// <see cref="int"/> and converted by the caller, who knows the generated
-    /// enumeration.
+    /// <see cref="double"/>, <see cref="string"/>, an <see cref="Object"/>, the
+    /// wrapper of a mini object, or <see cref="nint"/> for anything else boxed.
+    /// An enumeration comes back as its numeric value, so a signal that returns
+    /// one is read as an <see cref="int"/> and converted by the caller, who
+    /// knows the generated enumeration.
     /// </typeparam>
     /// <param name="detailedSignal">The name of the signal, optionally with a detail.</param>
     /// <param name="args">The arguments of the signal, without the instance.</param>

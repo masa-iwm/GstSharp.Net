@@ -45,6 +45,12 @@ public static class TypeRegistry
     private static readonly List<NativeModule> Modules = [];
     private static readonly ConcurrentDictionary<nuint, byte> ReportedFallbacks = new();
 
+    /// <summary>
+    /// Whether the wrapper of a registered boxed type is a mini object, asked
+    /// once per type. See <see cref="TryCreateMiniObjectWrapper"/>.
+    /// </summary>
+    private static readonly ConcurrentDictionary<nuint, bool> MiniObjectTypes = new();
+
     private static FrozenDictionary<nuint, TypeEntry> _types = FrozenDictionary<nuint, TypeEntry>.Empty;
     private static volatile bool _frozen;
 
@@ -277,6 +283,73 @@ public static class TypeRegistry
 
         wrapper = entry.Factory(handle, transfer);
         return wrapper is not null;
+    }
+
+    /// <summary>
+    /// Creates the managed wrapper of a mini object that sits in a
+    /// <c>GValue</c> as a boxed value, and answers whether that is what the
+    /// value holds.
+    /// </summary>
+    /// <param name="type">The registered type of the value.</param>
+    /// <param name="handle">The mini object to wrap.</param>
+    /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
+    /// <param name="wrapper">The new wrapper.</param>
+    /// <returns>
+    /// <see langword="true"/> when <paramref name="type"/> is registered and
+    /// its wrapper is a <see cref="Gst.MiniObject"/>.
+    /// </returns>
+    /// <remarks>
+    /// <para>
+    /// A mini object is a boxed type as far as GObject is concerned, so
+    /// nothing about the <c>GType</c> of the value says which of the two
+    /// object models it belongs to. The registry answers the question the only
+    /// way it can — by building the wrapper and looking at it — and remembers
+    /// the answer, because which managed type a <c>GType</c> maps onto does
+    /// not change once a module has registered it.
+    /// </para>
+    /// <para>
+    /// The probe of a boxed type that turns out not to be a mini object costs
+    /// one <c>g_boxed_copy</c> and the <c>g_boxed_free</c> that releases it
+    /// again, once per type and never again. A type that is not registered at
+    /// all is not remembered: the module that binds it may register later, and
+    /// a cached "no" would outlive the reason for it.
+    /// </para>
+    /// </remarks>
+    internal static bool TryCreateMiniObjectWrapper(
+        GType type,
+        nint handle,
+        Transfer transfer,
+        out object? wrapper)
+    {
+        wrapper = null;
+
+        if (handle == nint.Zero || !type.IsValid)
+        {
+            return false;
+        }
+
+        if (MiniObjectTypes.TryGetValue(type.Value, out bool isMiniObject) && !isMiniObject)
+        {
+            return false;
+        }
+
+        if (!TryCreateWrapper(type, handle, transfer, out object? candidate))
+        {
+            return false;
+        }
+
+        if (candidate is MiniObject)
+        {
+            MiniObjectTypes[type.Value] = true;
+            wrapper = candidate;
+            return true;
+        }
+
+        MiniObjectTypes[type.Value] = false;
+
+        // The factory built a value of its own, and nothing else holds it.
+        (candidate as IDisposable)?.Dispose();
+        return false;
     }
 
     /// <summary>

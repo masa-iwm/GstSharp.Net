@@ -15,8 +15,9 @@ namespace Gst.GObject;
 /// <see cref="Value.GetContent"/> converts it: a primitive for the numeric
 /// types, a <see cref="string"/>, an <see cref="Object"/> wrapper, a
 /// <see cref="ParamSpec"/> for the parameter specification of a
-/// <c>notify</c>, and the raw handle of anything boxed, which includes the
-/// mini objects of GStreamer.
+/// <c>notify</c>, the wrapper of a mini object whose type is registered — the
+/// <c>GstCaps</c> of a <c>have-type</c> arrives as a <see cref="Gst.Caps"/> —
+/// and the raw handle of anything else boxed.
 /// </param>
 /// <returns>
 /// The value the signal returns, or <see langword="null"/> to leave it at its
@@ -28,9 +29,10 @@ namespace Gst.GObject;
 /// <para>
 /// The arguments are borrowed for the duration of the call: the wrappers that
 /// this delegate receives belong to the emission, and a
-/// <see cref="ParamSpec"/> among them is disposed as soon as the handler
-/// returns. A handler that wants to keep an argument has to take a reference
-/// of its own, for example by copying the value it needs out of it.
+/// <see cref="ParamSpec"/> or a mini object among them is disposed as soon as
+/// the handler returns. A handler that wants to keep an argument has to take a
+/// reference of its own — <c>Gst.Caps.Copy</c> for a caps — or copy the value
+/// it needs out of it.
 /// </para>
 /// <para>
 /// An <see cref="Object"/> argument is the shared wrapper of that object, so
@@ -151,7 +153,7 @@ internal static unsafe class DynamicSignalClosure
         _ = closure;
         _ = invocationHint;
 
-        List<ParamSpec>? borrowed = null;
+        List<IDisposable>? borrowed = null;
 
         try
         {
@@ -205,9 +207,9 @@ internal static unsafe class DynamicSignalClosure
         {
             if (borrowed is not null)
             {
-                foreach (ParamSpec specification in borrowed)
+                foreach (IDisposable wrapper in borrowed)
                 {
-                    specification.Dispose();
+                    wrapper.Dispose();
                 }
             }
         }
@@ -222,14 +224,16 @@ internal static unsafe class DynamicSignalClosure
     /// disposed once it returns.
     /// </param>
     /// <returns>The managed value of the argument.</returns>
-    private static object? Read(ref GValueNative native, ref List<ParamSpec>? borrowed)
+    private static object? Read(ref GValueNative native, ref List<IDisposable>? borrowed)
     {
         // A bitwise copy of the header: nothing is owned by it, and it is never
         // unset, so the emission keeps its arguments.
         Value value = default;
         value.NativeValue = native;
 
-        if (GObjectNative.TypeFundamental(native.TypeValue) == GType.ParamValue)
+        nuint fundamental = GObjectNative.TypeFundamental(native.TypeValue);
+
+        if (fundamental == GType.ParamValue)
         {
             nint specification = value.GetParam();
             if (specification == nint.Zero)
@@ -240,6 +244,23 @@ internal static unsafe class DynamicSignalClosure
             ParamSpec wrapper = new(specification, Transfer.None);
             (borrowed ??= []).Add(wrapper);
             return wrapper;
+        }
+
+        // A mini object argument is handed over as its wrapper rather than as
+        // a raw handle. The wrapper takes a reference of its own, which is what
+        // keeps the argument valid for the length of the call even if the
+        // emitter drops its own, and it is given back when the handler returns:
+        // the argument is borrowed, exactly as a ParamSpec is.
+        if (fundamental == GType.BoxedValue &&
+            TypeRegistry.TryCreateMiniObjectWrapper(
+                value.Type,
+                value.GetBoxed(),
+                Transfer.None,
+                out object? miniObject) &&
+            miniObject is IDisposable disposable)
+        {
+            (borrowed ??= []).Add(disposable);
+            return miniObject;
         }
 
         return value.GetDynamicContent();

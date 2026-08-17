@@ -155,4 +155,14 @@ internal static unsafe partial class TestNatives
     /// </remarks>
     [LibraryImport("Gst", EntryPoint = "gst_mini_object_weak_ref")]
     internal static partial void MiniObjectWeakRef(nint miniObject, nint notify, nint userData);
+
+    /// <summary>The <c>GType</c> of a <c>GstCaps</c>.</summary>
+    /// <returns><c>GST_TYPE_CAPS</c>.</returns>
+    /// <remarks>
+    /// The generated <c>Gst.Caps.GetGType</c> is internal to the binding, and a
+    /// test that wants to initialise a <c>GValue</c> to the type of a caps has
+    /// to ask the library itself.
+    /// </remarks>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_get_type")]
+    internal static partial nuint CapsGetType();
 }

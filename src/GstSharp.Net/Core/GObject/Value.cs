@@ -167,10 +167,9 @@ public struct Value : IDisposable
     /// <item><description>
     /// an object accepts an <see cref="Object"/> whose type derives from
     /// <paramref name="expected"/>, and a boxed value accepts a
-    /// <see cref="Boxed"/> wrapper or the raw handle of one. A mini object,
-    /// which is a boxed type as far as GObject is concerned, is passed as its
-    /// <c>Handle</c>: the value takes a reference of its own, so the wrapper
-    /// stays the owner of the one it holds.
+    /// <see cref="Boxed"/> wrapper, a <see cref="Gst.MiniObject"/> wrapper, or
+    /// the raw handle of either. The value takes a copy — a reference, for a
+    /// mini object — so the wrapper stays the owner of what it holds.
     /// </description></item>
     /// </list>
     /// </remarks>
@@ -403,8 +402,8 @@ public struct Value : IDisposable
     /// <para>
     /// A mini object is a boxed type as far as GObject is concerned, but its
     /// wrapper does not derive from <see cref="Boxed"/>, so this does not
-    /// reach one. Reading a <c>GstSample</c> or a <c>GstBuffer</c> out of a
-    /// value is still <see cref="GetBoxed"/> and a raw handle.
+    /// reach one. <see cref="GetMiniObject{T}"/> is the same route for a
+    /// <c>GstCaps</c>, a <c>GstSample</c> or a <c>GstBuffer</c>.
     /// </para>
     /// </remarks>
     /// <exception cref="InvalidCastException">
@@ -448,6 +447,99 @@ public struct Value : IDisposable
         }
 
         // The factory built a copy of its own, and nothing else holds it.
+        (wrapper as IDisposable)?.Dispose();
+
+        throw new InvalidCastException(
+            $"The value holds a {type.Name}, whose wrapper is " +
+            $"{wrapper?.GetType().ToString() ?? "nothing"} and not a {typeof(T)}.");
+    }
+
+    /// <summary>
+    /// Reads a mini object as the wrapper of the binding, as a reference of
+    /// the caller's own.
+    /// </summary>
+    /// <typeparam name="T">
+    /// The wrapper type of the mini object, for example <see cref="Gst.Caps"/>,
+    /// <c>Gst.TagList</c> or <c>Gst.Sample</c>.
+    /// </typeparam>
+    /// <returns>
+    /// The wrapper, which the caller has to dispose, or <see langword="null"/>
+    /// when the value holds nothing.
+    /// </returns>
+    /// <remarks>
+    /// <para>
+    /// This is <see cref="GetBoxed{T}"/> for the other object model. A mini
+    /// object is a boxed type as far as GObject is concerned, so a
+    /// <c>GstCaps</c> in a property, in a structure field or in a signal
+    /// argument travels in a <c>GValue</c> exactly as a boxed value does — and
+    /// its wrapper derives from <see cref="Gst.MiniObject"/> rather than from
+    /// <see cref="Boxed"/>, which is why the two calls are two calls. The
+    /// <c>GType</c> of the value says what the pointer is, and the type
+    /// registry holds the factory.
+    /// </para>
+    /// <para>
+    /// <b>The wrapper takes a reference of its own.</b>
+    /// <c>g_value_get_boxed</c> hands out what the value owns, borrowed, so
+    /// the wrapper is built with <see cref="Transfer.None"/> and the copy
+    /// function of a mini object type — <c>gst_mini_object_ref</c> — is what
+    /// makes it an owner. The value keeps what it held, and disposing the
+    /// wrapper is the caller's to do, as it is for every mini object; see
+    /// <see href="https://github.com/masa-iwm/GstSharp.Net/blob/main/docs/ownership.md">Ownership
+    /// and lifetime</see>.
+    /// </para>
+    /// <code>
+    /// using Gst.Caps? caps = value.GetMiniObject&lt;Gst.Caps&gt;();
+    /// Console.WriteLine(caps?.ToString());
+    /// </code>
+    /// <para>
+    /// The same registration rule applies as for <see cref="GetBoxed{T}"/>:
+    /// naming a type of another binding assembly is not a call into it, so an
+    /// application that has not otherwise touched that assembly initialises it
+    /// first. The mini objects of <c>Gst</c> itself are registered by any use
+    /// of the core assembly.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="InvalidCastException">
+    /// The value does not hold a boxed value at all, or the wrapper of its
+    /// type is not a <typeparamref name="T"/>.
+    /// </exception>
+    /// <exception cref="InvalidOperationException">
+    /// No wrapper is registered for the type of the value, which normally means
+    /// that the module that binds it has not been initialised.
+    /// </exception>
+    public readonly T? GetMiniObject<T>()
+        where T : Gst.MiniObject
+    {
+        GType type = Type;
+
+        // g_value_get_boxed on a value of another fundamental type is a GLib
+        // assertion failure rather than a cast, so the question is asked here.
+        if (GObjectNative.TypeFundamental(type.Value) != GType.BoxedValue)
+        {
+            throw new InvalidCastException(
+                $"A value of type {type.Name} does not hold a mini object.");
+        }
+
+        nint boxed = GetBoxed();
+        if (boxed == nint.Zero)
+        {
+            return null;
+        }
+
+        if (!TypeRegistry.TryCreateWrapper(type, boxed, Transfer.None, out object? wrapper))
+        {
+            throw new InvalidOperationException(
+                $"No wrapper is registered for the mini object type {type.Name}. " +
+                "Initialise the binding module that covers it — for example " +
+                "Gst.Video.GstVideo.Initialize() — before reading the value.");
+        }
+
+        if (wrapper is T typed)
+        {
+            return typed;
+        }
+
+        // The factory took a reference of its own, and nothing else holds it.
         (wrapper as IDisposable)?.Dispose();
 
         throw new InvalidCastException(
@@ -567,11 +659,20 @@ public struct Value : IDisposable
     /// </summary>
     /// <returns>The content.</returns>
     /// <remarks>
+    /// <para>
     /// The value that holds the result of an emission is unset as soon as the
     /// emission is over, which would release a boxed return value with it, so
     /// what is handed out is a reference of its own. For a mini object, whose
     /// boxed copy function is <c>gst_mini_object_ref</c>, that is the reference
     /// the wrapper of the caller adopts.
+    /// </para>
+    /// <para>
+    /// A mini object whose type is registered therefore comes back as its
+    /// wrapper — a <c>GstSample</c> as a <c>Gst.Sample</c> — which owns that
+    /// reference and releases it when the caller disposes it. Anything else
+    /// boxed still travels as the owned handle, which is the half of the gap
+    /// that is left.
+    /// </para>
     /// </remarks>
     internal readonly object? TakeDynamicContent()
     {
@@ -580,6 +681,19 @@ public struct Value : IDisposable
         switch (fundamental)
         {
             case GType.BoxedValue:
+                // The wrapper of a mini object takes a reference of its own
+                // from the borrowed pointer, and that is the same reference
+                // g_value_dup_boxed would hand over: the copy function of a
+                // mini object type is gst_mini_object_ref.
+                if (TypeRegistry.TryCreateMiniObjectWrapper(
+                        Type,
+                        GetBoxed(),
+                        Transfer.None,
+                        out object? miniObject))
+                {
+                    return miniObject;
+                }
+
                 return Owned(GObjectNative.ValueDupBoxed(ref AsMutable()));
             case GType.ParamValue:
                 return Owned(GObjectNative.ValueDupParam(ref AsMutable()));
@@ -605,6 +719,22 @@ public struct Value : IDisposable
     }
 
     private readonly ref GValueNative AsMutable() => ref Unsafe.AsRef(in NativeValue);
+
+    /// <summary>
+    /// Reads the type out of a native mini object.
+    /// </summary>
+    /// <param name="handle">The mini object to inspect.</param>
+    /// <returns>The type it was created as.</returns>
+    /// <remarks>
+    /// The first word of a <c>GstMiniObject</c> is its <c>GType</c> itself,
+    /// where the first word of a <c>GTypeInstance</c> is a pointer to the class
+    /// that carries it; that is the difference
+    /// <see cref="TypeRegistry.TryCreateWrapper(GType, nint, Transfer, out object?)"/>
+    /// documents from the other side. GStreamer offers the field through the
+    /// <c>GST_MINI_OBJECT_TYPE</c> macro only, so it is read here.
+    /// </remarks>
+    private static unsafe GType MiniObjectTypeOf(nint handle) =>
+        handle == nint.Zero ? GType.Invalid : new GType(*(nuint*)handle);
 
     /// <summary>
     /// Tells whether a C <c>long</c> is 32 bits wide here, which it is on
@@ -860,10 +990,20 @@ public struct Value : IDisposable
                 SetBoxed(boxed.Handle);
                 return;
 
-            // A mini object is a boxed type, and its wrapper lives in the Gst
-            // assembly rather than here, so it is passed as its handle. The
-            // value takes a reference of its own through the copy function of
-            // the boxed type, which for a mini object is gst_mini_object_ref.
+            // A mini object is a boxed type whose wrapper does not derive from
+            // Boxed, so it has a case of its own. The value takes a reference
+            // through the copy function of the boxed type, which for a mini
+            // object is gst_mini_object_ref, so the wrapper stays the owner of
+            // the one it holds. The type is checked as it is for a Boxed: a
+            // caps handed to a signal that declares a sample would otherwise
+            // travel as one.
+            case GType.BoxedValue when content is Gst.MiniObject miniObject &&
+                MiniObjectTypeOf(miniObject.Handle).IsA(expected):
+                SetBoxed(miniObject.Handle);
+                return;
+
+            // The raw handle of a boxed value or of a mini object, which is
+            // what a caller that never built a wrapper has.
             case GType.BoxedValue when content is nint boxed:
                 SetBoxed(boxed);
                 return;
