@@ -775,7 +775,11 @@ generated `*ClassRaw` mirrors (transitive parent chain), generated `OnX` /
 trampoline / chain-up members reusing `MarshalPlanner`, per-vfunc skip
 overlay, census categories, analyzer for declaration/override consistency.
 Stage-1 hand-written mirrors are deleted in the same change (the diff gate
-keeps the swap honest).
+keeps the swap honest). The stage-1 **public** surface is frozen: the
+sixteen curated `OnX`/`ChainUpX`/`XOverride` members keep their shipped
+signatures and their marshalling semantics (including the true-borrow
+amendment of §4.3) — the generator either emits them byte-identically or
+skips them through the per-vfunc overlay and generates only new slots.
 
 **Stage 3 — breadth.**
 Native-initiated construction via static abstract `CreateWrapper` factories
@@ -784,7 +788,10 @@ registered into `TypeRegistry` (needs the new
 `g_type_add_interface_static` with `GstURIHandler` first; property/signal
 installation; `gst_element_register` for by-name construction (prerequisite
 for GES custom sources and for plugin-style use); then the GES wave can
-rely on all of it.
+rely on all of it. The `CreateWrapper` constraint arrives as a new generic
+overload (or a separate entry point); the shipped non-generic
+`DefineSubclass` is never retrofitted with it, so stage-1 subclasses keep
+compiling unchanged.
 
 ---
 
