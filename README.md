@@ -69,14 +69,7 @@ dotnet add package GstSharp.Net.App     # and one per module you use
 
 ### Where the packages come from
 
-The set is published to **nuget.org**. Previews carry a prerelease suffix,
-so until the first stable release, ask for them explicitly:
-
-```sh
-dotnet add package GstSharp.Net --prerelease
-```
-
-The `.nupkg` files are also attached to every
+The set is published to **nuget.org**. The `.nupkg` files are also attached to every
 [GitHub release](https://github.com/masa-iwm/GstSharp.Net/releases) for
 offline use. The copies on GitHub Packages exist for the project's own
 release plumbing; that feed requires authentication and is not the intended
@@ -331,10 +324,11 @@ surface hands out and nothing else.
 
 ## Status and versioning
 
-**Preview.** The packages are on nuget.org as prereleases; the first stable
-release is pending. The public surface is settled enough to build on, and
-breaking changes before the first stable release are possible where a shape
-turns out to be wrong.
+**Stable.** Within a `1.28.x` series the public surface only grows: new
+members appear as the binding closes gaps, existing signatures stay. A
+behavioral bug — ownership, lifetime, a wrong contract — is fixed in a patch
+release and called out in the release notes. A change that would break
+compilation waits for the next GStreamer series.
 
 The version is `<gstreamer-major>.<gstreamer-minor>.<binding-patch>`:
 
