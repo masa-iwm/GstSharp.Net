@@ -14,7 +14,7 @@ namespace Gst.App;
 /// is called from the streaming thread.
 /// </summary>
 /// <param name="appsink">a #GstAppSink</param>
-public delegate void AppSinkEosCallback(Gst.App.AppSink? appsink);
+public delegate void AppSinkEosCallback(Gst.App.AppSink appsink);
 
 /// <summary>The native entry point of <see cref="Gst.App.AppSinkEosCallback"/>.</summary>
 internal static unsafe class AppSinkEosCallbackTrampoline
@@ -32,7 +32,8 @@ internal static unsafe class AppSinkEosCallbackTrampoline
                 return;
             }
 
-            Gst.App.AppSink? appsinkValue = Gst.GObject.Object.FromNative<Gst.App.AppSink>(appsink, Gst.Interop.Transfer.None);
+            Gst.App.AppSink appsinkValue = Gst.GObject.Object.FromNative<Gst.App.AppSink>(appsink, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("GstAppSinkEosCallback passed no appsink.");
             callback(appsinkValue);
         }
         catch (Exception exception)
@@ -55,7 +56,7 @@ internal static unsafe class AppSinkEosCallbackTrampoline
 /// </remarks>
 /// <param name="appsink">a #GstAppSink</param>
 /// <returns>%TRUE when the event has been handled.</returns>
-public delegate bool AppSinkNewEventCallback(Gst.App.AppSink? appsink);
+public delegate bool AppSinkNewEventCallback(Gst.App.AppSink appsink);
 
 /// <summary>The native entry point of <see cref="Gst.App.AppSinkNewEventCallback"/>.</summary>
 internal static unsafe class AppSinkNewEventCallbackTrampoline
@@ -73,7 +74,8 @@ internal static unsafe class AppSinkNewEventCallbackTrampoline
                 return default;
             }
 
-            Gst.App.AppSink? appsinkValue = Gst.GObject.Object.FromNative<Gst.App.AppSink>(appsink, Gst.Interop.Transfer.None);
+            Gst.App.AppSink appsinkValue = Gst.GObject.Object.FromNative<Gst.App.AppSink>(appsink, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("GstAppSinkNewEventCallback passed no appsink.");
             return callback(appsinkValue) ? 1 : 0;
         }
         catch (Exception exception)
@@ -92,7 +94,7 @@ internal static unsafe class AppSinkNewEventCallbackTrampoline
 /// </summary>
 /// <param name="appsink">a #GstAppSink</param>
 /// <returns>%GST_FLOW_OK on success.</returns>
-public delegate Gst.FlowReturn AppSinkNewPrerollCallback(Gst.App.AppSink? appsink);
+public delegate Gst.FlowReturn AppSinkNewPrerollCallback(Gst.App.AppSink appsink);
 
 /// <summary>The native entry point of <see cref="Gst.App.AppSinkNewPrerollCallback"/>.</summary>
 internal static unsafe class AppSinkNewPrerollCallbackTrampoline
@@ -110,7 +112,8 @@ internal static unsafe class AppSinkNewPrerollCallbackTrampoline
                 return (int)Gst.FlowReturn.Error;
             }
 
-            Gst.App.AppSink? appsinkValue = Gst.GObject.Object.FromNative<Gst.App.AppSink>(appsink, Gst.Interop.Transfer.None);
+            Gst.App.AppSink appsinkValue = Gst.GObject.Object.FromNative<Gst.App.AppSink>(appsink, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("GstAppSinkNewPrerollCallback passed no appsink.");
             return (int)callback(appsinkValue);
         }
         catch (Exception exception)
@@ -129,7 +132,7 @@ internal static unsafe class AppSinkNewPrerollCallbackTrampoline
 /// </summary>
 /// <param name="appsink">a #GstAppSink</param>
 /// <returns>%GST_FLOW_OK on success.</returns>
-public delegate Gst.FlowReturn AppSinkNewSampleCallback(Gst.App.AppSink? appsink);
+public delegate Gst.FlowReturn AppSinkNewSampleCallback(Gst.App.AppSink appsink);
 
 /// <summary>The native entry point of <see cref="Gst.App.AppSinkNewSampleCallback"/>.</summary>
 internal static unsafe class AppSinkNewSampleCallbackTrampoline
@@ -147,7 +150,8 @@ internal static unsafe class AppSinkNewSampleCallbackTrampoline
                 return (int)Gst.FlowReturn.Error;
             }
 
-            Gst.App.AppSink? appsinkValue = Gst.GObject.Object.FromNative<Gst.App.AppSink>(appsink, Gst.Interop.Transfer.None);
+            Gst.App.AppSink appsinkValue = Gst.GObject.Object.FromNative<Gst.App.AppSink>(appsink, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("GstAppSinkNewSampleCallback passed no appsink.");
             return (int)callback(appsinkValue);
         }
         catch (Exception exception)
@@ -165,7 +169,7 @@ internal static unsafe class AppSinkNewSampleCallbackTrampoline
 /// <param name="appsink">a #GstAppSink</param>
 /// <param name="query">An ALLOCATION query</param>
 /// <returns>%TRUE when the query has been handled.</returns>
-public delegate bool AppSinkProposeAllocationCallback(Gst.App.AppSink? appsink, Gst.Query? query);
+public delegate bool AppSinkProposeAllocationCallback(Gst.App.AppSink appsink, Gst.Query query);
 
 /// <summary>The native entry point of <see cref="Gst.App.AppSinkProposeAllocationCallback"/>.</summary>
 internal static unsafe class AppSinkProposeAllocationCallbackTrampoline
@@ -183,8 +187,10 @@ internal static unsafe class AppSinkProposeAllocationCallbackTrampoline
                 return default;
             }
 
-            Gst.App.AppSink? appsinkValue = Gst.GObject.Object.FromNative<Gst.App.AppSink>(appsink, Gst.Interop.Transfer.None);
-            Gst.Query? queryValue = Gst.Query.FromNative(query, Gst.Interop.Transfer.None);
+            Gst.App.AppSink appsinkValue = Gst.GObject.Object.FromNative<Gst.App.AppSink>(appsink, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("GstAppSinkProposeAllocationCallback passed no appsink.");
+            Gst.Query queryValue = Gst.Query.FromNative(query, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("GstAppSinkProposeAllocationCallback passed no query.");
             return callback(appsinkValue, queryValue) ? 1 : 0;
         }
         catch (Exception exception)
@@ -201,7 +207,7 @@ internal static unsafe class AppSinkProposeAllocationCallbackTrampoline
 /// avoid excessive buffer queueing.
 /// </summary>
 /// <param name="appsrc">a #GstAppSrc</param>
-public delegate void AppSrcEnoughDataCallback(Gst.App.AppSrc? appsrc);
+public delegate void AppSrcEnoughDataCallback(Gst.App.AppSrc appsrc);
 
 /// <summary>The native entry point of <see cref="Gst.App.AppSrcEnoughDataCallback"/>.</summary>
 internal static unsafe class AppSrcEnoughDataCallbackTrampoline
@@ -219,7 +225,8 @@ internal static unsafe class AppSrcEnoughDataCallbackTrampoline
                 return;
             }
 
-            Gst.App.AppSrc? appsrcValue = Gst.GObject.Object.FromNative<Gst.App.AppSrc>(appsrc, Gst.Interop.Transfer.None);
+            Gst.App.AppSrc appsrcValue = Gst.GObject.Object.FromNative<Gst.App.AppSrc>(appsrc, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("GstAppSrcEnoughDataCallback passed no appsrc.");
             callback(appsrcValue);
         }
         catch (Exception exception)
@@ -236,7 +243,7 @@ internal static unsafe class AppSrcEnoughDataCallbackTrampoline
 /// </summary>
 /// <param name="appsrc">a #GstAppSrc</param>
 /// <param name="length">Length hint</param>
-public delegate void AppSrcNeedDataCallback(Gst.App.AppSrc? appsrc, uint length);
+public delegate void AppSrcNeedDataCallback(Gst.App.AppSrc appsrc, uint length);
 
 /// <summary>The native entry point of <see cref="Gst.App.AppSrcNeedDataCallback"/>.</summary>
 internal static unsafe class AppSrcNeedDataCallbackTrampoline
@@ -254,7 +261,8 @@ internal static unsafe class AppSrcNeedDataCallbackTrampoline
                 return;
             }
 
-            Gst.App.AppSrc? appsrcValue = Gst.GObject.Object.FromNative<Gst.App.AppSrc>(appsrc, Gst.Interop.Transfer.None);
+            Gst.App.AppSrc appsrcValue = Gst.GObject.Object.FromNative<Gst.App.AppSrc>(appsrc, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("GstAppSrcNeedDataCallback passed no appsrc.");
             callback(appsrcValue, length);
         }
         catch (Exception exception)
@@ -272,7 +280,7 @@ internal static unsafe class AppSrcNeedDataCallbackTrampoline
 /// <param name="appsrc">a #GstAppSrc</param>
 /// <param name="offset">Offset to seek to.</param>
 /// <returns>%TRUE if the seek was successful.</returns>
-public delegate bool AppSrcSeekDataCallback(Gst.App.AppSrc? appsrc, ulong offset);
+public delegate bool AppSrcSeekDataCallback(Gst.App.AppSrc appsrc, ulong offset);
 
 /// <summary>The native entry point of <see cref="Gst.App.AppSrcSeekDataCallback"/>.</summary>
 internal static unsafe class AppSrcSeekDataCallbackTrampoline
@@ -290,7 +298,8 @@ internal static unsafe class AppSrcSeekDataCallbackTrampoline
                 return default;
             }
 
-            Gst.App.AppSrc? appsrcValue = Gst.GObject.Object.FromNative<Gst.App.AppSrc>(appsrc, Gst.Interop.Transfer.None);
+            Gst.App.AppSrc appsrcValue = Gst.GObject.Object.FromNative<Gst.App.AppSrc>(appsrc, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("GstAppSrcSeekDataCallback passed no appsrc.");
             return callback(appsrcValue, offset) ? 1 : 0;
         }
         catch (Exception exception)

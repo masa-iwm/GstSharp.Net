@@ -27,7 +27,7 @@ namespace Gst;
 /// <param name="bus">the #GstBus that sent the message</param>
 /// <param name="message">the #GstMessage</param>
 /// <returns>%FALSE if the event source should be removed.</returns>
-public delegate bool BusFunc(Gst.Bus? bus, Gst.Message? message);
+public delegate bool BusFunc(Gst.Bus bus, Gst.Message message);
 
 /// <summary>The native entry point of <see cref="Gst.BusFunc"/>.</summary>
 internal static unsafe class BusFuncTrampoline
@@ -45,8 +45,10 @@ internal static unsafe class BusFuncTrampoline
                 return default;
             }
 
-            Gst.Bus? busValue = Gst.GObject.Object.FromNative<Gst.Bus>(bus, Gst.Interop.Transfer.None);
-            Gst.Message? messageValue = Gst.Message.FromNative(message, Gst.Interop.Transfer.None);
+            Gst.Bus busValue = Gst.GObject.Object.FromNative<Gst.Bus>(bus, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("GstBusFunc passed no bus.");
+            Gst.Message messageValue = Gst.Message.FromNative(message, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("GstBusFunc passed no message.");
             return callback(busValue, messageValue) ? 1 : 0;
         }
         catch (Exception exception)
@@ -68,7 +70,7 @@ internal static unsafe class BusFuncTrampoline
 /// %TRUE if the features and structure should be preserved,
 /// %FALSE if it should be removed.
 /// </returns>
-public delegate bool CapsFilterMapFunc(Gst.CapsFeatures? features, Gst.Structure? structure);
+public delegate bool CapsFilterMapFunc(Gst.CapsFeatures? features, Gst.Structure structure);
 
 /// <summary>The native entry point of <see cref="Gst.CapsFilterMapFunc"/>.</summary>
 internal static unsafe class CapsFilterMapFuncTrampoline
@@ -87,7 +89,8 @@ internal static unsafe class CapsFilterMapFuncTrampoline
             }
 
             Gst.CapsFeatures? featuresValue = Gst.CapsFeatures.FromNative(features, Gst.Interop.Transfer.None);
-            Gst.Structure? structureValue = Gst.Structure.FromNative(structure, Gst.Interop.Transfer.None);
+            Gst.Structure structureValue = Gst.Structure.FromNative(structure, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("GstCapsFilterMapFunc passed no structure.");
             return callback(featuresValue, structureValue) ? 1 : 0;
         }
         catch (Exception exception)
@@ -108,7 +111,7 @@ internal static unsafe class CapsFilterMapFuncTrampoline
 /// %TRUE if the foreach operation should continue, %FALSE if
 /// the foreach operation should stop with %FALSE.
 /// </returns>
-public delegate bool CapsForeachFunc(Gst.CapsFeatures? features, Gst.Structure? structure);
+public delegate bool CapsForeachFunc(Gst.CapsFeatures? features, Gst.Structure structure);
 
 /// <summary>The native entry point of <see cref="Gst.CapsForeachFunc"/>.</summary>
 internal static unsafe class CapsForeachFuncTrampoline
@@ -127,7 +130,8 @@ internal static unsafe class CapsForeachFuncTrampoline
             }
 
             Gst.CapsFeatures? featuresValue = Gst.CapsFeatures.FromNative(features, Gst.Interop.Transfer.None);
-            Gst.Structure? structureValue = Gst.Structure.FromNative(structure, Gst.Interop.Transfer.None);
+            Gst.Structure structureValue = Gst.Structure.FromNative(structure, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("GstCapsForeachFunc passed no structure.");
             return callback(featuresValue, structureValue) ? 1 : 0;
         }
         catch (Exception exception)
@@ -148,7 +152,7 @@ internal static unsafe class CapsForeachFuncTrampoline
 /// %TRUE if the map operation should continue, %FALSE if
 /// the map operation should stop with %FALSE.
 /// </returns>
-public delegate bool CapsMapFunc(Gst.CapsFeatures? features, Gst.Structure? structure);
+public delegate bool CapsMapFunc(Gst.CapsFeatures? features, Gst.Structure structure);
 
 /// <summary>The native entry point of <see cref="Gst.CapsMapFunc"/>.</summary>
 internal static unsafe class CapsMapFuncTrampoline
@@ -167,7 +171,8 @@ internal static unsafe class CapsMapFuncTrampoline
             }
 
             Gst.CapsFeatures? featuresValue = Gst.CapsFeatures.FromNative(features, Gst.Interop.Transfer.None);
-            Gst.Structure? structureValue = Gst.Structure.FromNative(structure, Gst.Interop.Transfer.None);
+            Gst.Structure structureValue = Gst.Structure.FromNative(structure, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("GstCapsMapFunc passed no structure.");
             return callback(featuresValue, structureValue) ? 1 : 0;
         }
         catch (Exception exception)
@@ -183,7 +188,7 @@ internal static unsafe class CapsMapFuncTrampoline
 /// <param name="time">The time it was triggered</param>
 /// <param name="id">The #GstClockID that expired</param>
 /// <returns>%TRUE or %FALSE (currently unused)</returns>
-public delegate bool ClockCallback(Gst.Clock? clock, Gst.ClockTime time, nint id);
+public delegate bool ClockCallback(Gst.Clock clock, Gst.ClockTime time, nint id);
 
 /// <summary>The native entry point of <see cref="Gst.ClockCallback"/>.</summary>
 internal static unsafe class ClockCallbackTrampoline
@@ -201,7 +206,8 @@ internal static unsafe class ClockCallbackTrampoline
                 return default;
             }
 
-            Gst.Clock? clockValue = Gst.GObject.Object.FromNative<Gst.Clock>(clock, Gst.Interop.Transfer.None);
+            Gst.Clock clockValue = Gst.GObject.Object.FromNative<Gst.Clock>(clock, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("GstClockCallback passed no clock.");
             return callback(clockValue, new Gst.ClockTime(time), id) ? 1 : 0;
         }
         catch (Exception exception)
@@ -215,7 +221,7 @@ internal static unsafe class ClockCallbackTrampoline
 /// <summary>Callback prototype used in #gst_element_call_async</summary>
 /// <param name="element">The #GstElement this function has been called against</param>
 [Obsolete("Use #GstObjectCallAsyncFunc with gst_object_call_async() or #GstCallAsyncFunc with gst_call_async() instead. (deprecated since 1.28)")]
-public delegate void ElementCallAsyncFunc(Gst.Element? element);
+public delegate void ElementCallAsyncFunc(Gst.Element element);
 
 /// <summary>The native entry point of <see cref="Gst.ElementCallAsyncFunc"/>.</summary>
 [Obsolete("Use #GstObjectCallAsyncFunc with gst_object_call_async() or #GstCallAsyncFunc with gst_call_async() instead. (deprecated since 1.28)")]
@@ -234,7 +240,8 @@ internal static unsafe class ElementCallAsyncFuncTrampoline
                 return;
             }
 
-            Gst.Element? elementValue = Gst.GObject.Object.FromNative<Gst.Element>(element, Gst.Interop.Transfer.None);
+            Gst.Element elementValue = Gst.GObject.Object.FromNative<Gst.Element>(element, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("GstElementCallAsyncFunc passed no element.");
             callback(elementValue);
         }
         catch (Exception exception)
@@ -251,7 +258,7 @@ internal static unsafe class ElementCallAsyncFuncTrampoline
 /// <param name="element">the #GstElement</param>
 /// <param name="pad">a #GstPad</param>
 /// <returns>%FALSE to stop iterating pads, %TRUE to continue</returns>
-public delegate bool ElementForeachPadFunc(Gst.Element? element, Gst.Pad? pad);
+public delegate bool ElementForeachPadFunc(Gst.Element element, Gst.Pad pad);
 
 /// <summary>The native entry point of <see cref="Gst.ElementForeachPadFunc"/>.</summary>
 internal static unsafe class ElementForeachPadFuncTrampoline
@@ -269,8 +276,10 @@ internal static unsafe class ElementForeachPadFuncTrampoline
                 return default;
             }
 
-            Gst.Element? elementValue = Gst.GObject.Object.FromNative<Gst.Element>(element, Gst.Interop.Transfer.None);
-            Gst.Pad? padValue = Gst.GObject.Object.FromNative<Gst.Pad>(pad, Gst.Interop.Transfer.None);
+            Gst.Element elementValue = Gst.GObject.Object.FromNative<Gst.Element>(element, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("GstElementForeachPadFunc passed no element.");
+            Gst.Pad padValue = Gst.GObject.Object.FromNative<Gst.Pad>(pad, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("GstElementForeachPadFunc passed no pad.");
             return callback(elementValue, padValue) ? 1 : 0;
         }
         catch (Exception exception)
@@ -293,7 +302,7 @@ internal static unsafe class ElementForeachPadFuncTrampoline
 /// <param name="line">line number</param>
 /// <param name="object">a #GObject</param>
 /// <param name="message">the message</param>
-public delegate void LogFunction(Gst.DebugCategory? category, Gst.DebugLevel level, string? file, string? function, int line, Gst.GObject.Object? @object, Gst.DebugMessage? message);
+public delegate void LogFunction(Gst.DebugCategory category, Gst.DebugLevel level, string file, string function, int line, Gst.GObject.Object? @object, Gst.DebugMessage message);
 
 /// <summary>The native entry point of <see cref="Gst.LogFunction"/>.</summary>
 internal static unsafe class LogFunctionTrampoline
@@ -311,11 +320,15 @@ internal static unsafe class LogFunctionTrampoline
                 return;
             }
 
-            Gst.DebugCategory? categoryValue = Gst.DebugCategory.FromNative(category);
-            string? fileValue = Gst.Interop.GMarshal.PtrToStringUtf8((nint)file);
-            string? functionValue = Gst.Interop.GMarshal.PtrToStringUtf8((nint)function);
+            Gst.DebugCategory categoryValue = Gst.DebugCategory.FromNative(category)
+                ?? throw new InvalidOperationException("GstLogFunction passed no category.");
+            string fileValue = Gst.Interop.GMarshal.PtrToStringUtf8((nint)file)
+                ?? throw new InvalidOperationException("GstLogFunction passed no file.");
+            string functionValue = Gst.Interop.GMarshal.PtrToStringUtf8((nint)function)
+                ?? throw new InvalidOperationException("GstLogFunction passed no function.");
             Gst.GObject.Object? @objectValue = Gst.GObject.Object.FromNative<Gst.GObject.Object>(@object, Gst.Interop.Transfer.None);
-            Gst.DebugMessage? messageValue = Gst.DebugMessage.FromNative(message);
+            Gst.DebugMessage messageValue = Gst.DebugMessage.FromNative(message)
+                ?? throw new InvalidOperationException("GstLogFunction passed no message.");
             callback(categoryValue, (Gst.DebugLevel)level, fileValue, functionValue, line, @objectValue, messageValue);
         }
         catch (Exception exception)
@@ -331,7 +344,7 @@ internal static unsafe class LogFunctionTrampoline
 /// </summary>
 /// <param name="pad">the #GstPad that is forwarded.</param>
 /// <returns>%TRUE if the dispatching procedure has to be stopped.</returns>
-public delegate bool PadForwardFunction(Gst.Pad? pad);
+public delegate bool PadForwardFunction(Gst.Pad pad);
 
 /// <summary>The native entry point of <see cref="Gst.PadForwardFunction"/>.</summary>
 internal static unsafe class PadForwardFunctionTrampoline
@@ -349,7 +362,8 @@ internal static unsafe class PadForwardFunctionTrampoline
                 return default;
             }
 
-            Gst.Pad? padValue = Gst.GObject.Object.FromNative<Gst.Pad>(pad, Gst.Interop.Transfer.None);
+            Gst.Pad padValue = Gst.GObject.Object.FromNative<Gst.Pad>(pad, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("GstPadForwardFunction passed no pad.");
             return callback(padValue) ? 1 : 0;
         }
         catch (Exception exception)
@@ -370,7 +384,7 @@ internal static unsafe class PadForwardFunctionTrampoline
 /// <param name="pad">the #GstPad that is blocked</param>
 /// <param name="info">#GstPadProbeInfo</param>
 /// <returns>a #GstPadProbeReturn</returns>
-public delegate Gst.PadProbeReturn PadProbeCallback(Gst.Pad? pad, Gst.PadProbeInfo? info);
+public delegate Gst.PadProbeReturn PadProbeCallback(Gst.Pad pad, Gst.PadProbeInfo info);
 
 /// <summary>The native entry point of <see cref="Gst.PadProbeCallback"/>.</summary>
 internal static unsafe class PadProbeCallbackTrampoline
@@ -388,8 +402,10 @@ internal static unsafe class PadProbeCallbackTrampoline
                 return default;
             }
 
-            Gst.Pad? padValue = Gst.GObject.Object.FromNative<Gst.Pad>(pad, Gst.Interop.Transfer.None);
-            Gst.PadProbeInfo? infoValue = Gst.PadProbeInfo.FromNative(info);
+            Gst.Pad padValue = Gst.GObject.Object.FromNative<Gst.Pad>(pad, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("GstPadProbeCallback passed no pad.");
+            Gst.PadProbeInfo infoValue = Gst.PadProbeInfo.FromNative(info)
+                ?? throw new InvalidOperationException("GstPadProbeCallback passed no info.");
             return (int)callback(padValue, infoValue);
         }
         catch (Exception exception)
@@ -406,7 +422,7 @@ internal static unsafe class PadProbeCallbackTrampoline
 /// </summary>
 /// <param name="feature">the pluginfeature to check</param>
 /// <returns>%TRUE for a positive match, %FALSE otherwise</returns>
-public delegate bool PluginFeatureFilter(Gst.PluginFeature? feature);
+public delegate bool PluginFeatureFilter(Gst.PluginFeature feature);
 
 /// <summary>The native entry point of <see cref="Gst.PluginFeatureFilter"/>.</summary>
 internal static unsafe class PluginFeatureFilterTrampoline
@@ -424,7 +440,8 @@ internal static unsafe class PluginFeatureFilterTrampoline
                 return default;
             }
 
-            Gst.PluginFeature? featureValue = Gst.GObject.Object.FromNative<Gst.PluginFeature>(feature, Gst.Interop.Transfer.None);
+            Gst.PluginFeature featureValue = Gst.GObject.Object.FromNative<Gst.PluginFeature>(feature, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("GstPluginFeatureFilter passed no feature.");
             return callback(featureValue) ? 1 : 0;
         }
         catch (Exception exception)
@@ -441,7 +458,7 @@ internal static unsafe class PluginFeatureFilterTrampoline
 /// </summary>
 /// <param name="plugin">the plugin to check</param>
 /// <returns>%TRUE for a positive match, %FALSE otherwise</returns>
-public delegate bool PluginFilter(Gst.Plugin? plugin);
+public delegate bool PluginFilter(Gst.Plugin plugin);
 
 /// <summary>The native entry point of <see cref="Gst.PluginFilter"/>.</summary>
 internal static unsafe class PluginFilterTrampoline
@@ -459,7 +476,8 @@ internal static unsafe class PluginFilterTrampoline
                 return default;
             }
 
-            Gst.Plugin? pluginValue = Gst.GObject.Object.FromNative<Gst.Plugin>(plugin, Gst.Interop.Transfer.None);
+            Gst.Plugin pluginValue = Gst.GObject.Object.FromNative<Gst.Plugin>(plugin, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("GstPluginFilter passed no plugin.");
             return callback(pluginValue) ? 1 : 0;
         }
         catch (Exception exception)
@@ -479,7 +497,7 @@ internal static unsafe class PluginFilterTrampoline
 /// </summary>
 /// <param name="plugin">The plugin object</param>
 /// <returns>%TRUE if plugin initialised successfully</returns>
-public delegate bool PluginInitFullFunc(Gst.Plugin? plugin);
+public delegate bool PluginInitFullFunc(Gst.Plugin plugin);
 
 /// <summary>The native entry point of <see cref="Gst.PluginInitFullFunc"/>.</summary>
 internal static unsafe class PluginInitFullFuncTrampoline
@@ -497,7 +515,8 @@ internal static unsafe class PluginInitFullFuncTrampoline
                 return default;
             }
 
-            Gst.Plugin? pluginValue = Gst.GObject.Object.FromNative<Gst.Plugin>(plugin, Gst.Interop.Transfer.None);
+            Gst.Plugin pluginValue = Gst.GObject.Object.FromNative<Gst.Plugin>(plugin, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("GstPluginInitFullFunc passed no plugin.");
             return callback(pluginValue) ? 1 : 0;
         }
         catch (Exception exception)
@@ -510,7 +529,7 @@ internal static unsafe class PluginInitFullFuncTrampoline
 
 /// <summary>The <c>GstPromiseChangeFunc</c> callback.</summary>
 /// <param name="promise">a #GstPromise</param>
-public delegate void PromiseChangeFunc(Gst.Promise? promise);
+public delegate void PromiseChangeFunc(Gst.Promise promise);
 
 /// <summary>The native entry point of <see cref="Gst.PromiseChangeFunc"/>.</summary>
 internal static unsafe class PromiseChangeFuncTrampoline
@@ -528,7 +547,8 @@ internal static unsafe class PromiseChangeFuncTrampoline
                 return;
             }
 
-            Gst.Promise? promiseValue = Gst.Promise.FromNative(promise, Gst.Interop.Transfer.None);
+            Gst.Promise promiseValue = Gst.Promise.FromNative(promise, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("GstPromiseChangeFunc passed no promise.");
             callback(promiseValue);
         }
         catch (Exception exception)
@@ -544,7 +564,7 @@ internal static unsafe class PromiseChangeFuncTrampoline
 /// </summary>
 /// <param name="list">the #GstTagList</param>
 /// <param name="tag">a name of a tag in @list</param>
-public delegate void TagForeachFunc(Gst.TagList? list, string? tag);
+public delegate void TagForeachFunc(Gst.TagList list, string tag);
 
 /// <summary>The native entry point of <see cref="Gst.TagForeachFunc"/>.</summary>
 internal static unsafe class TagForeachFuncTrampoline
@@ -562,8 +582,10 @@ internal static unsafe class TagForeachFuncTrampoline
                 return;
             }
 
-            Gst.TagList? listValue = Gst.TagList.FromNative(list, Gst.Interop.Transfer.None);
-            string? tagValue = Gst.Interop.GMarshal.PtrToStringUtf8((nint)tag);
+            Gst.TagList listValue = Gst.TagList.FromNative(list, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("GstTagForeachFunc passed no list.");
+            string tagValue = Gst.Interop.GMarshal.PtrToStringUtf8((nint)tag)
+                ?? throw new InvalidOperationException("GstTagForeachFunc passed no tag.");
             callback(listValue, tagValue);
         }
         catch (Exception exception)
@@ -606,7 +628,7 @@ internal static unsafe class TaskFunctionTrampoline
 
 /// <summary>A function that will be called by typefinding.</summary>
 /// <param name="find">A #GstTypeFind structure</param>
-public delegate void TypeFindFunction(Gst.TypeFind? find);
+public delegate void TypeFindFunction(Gst.TypeFind find);
 
 /// <summary>The native entry point of <see cref="Gst.TypeFindFunction"/>.</summary>
 internal static unsafe class TypeFindFunctionTrampoline
@@ -624,7 +646,8 @@ internal static unsafe class TypeFindFunctionTrampoline
                 return;
             }
 
-            Gst.TypeFind? findValue = Gst.TypeFind.FromNative(find);
+            Gst.TypeFind findValue = Gst.TypeFind.FromNative(find)
+                ?? throw new InvalidOperationException("GstTypeFindFunction passed no find.");
             callback(findValue);
         }
         catch (Exception exception)

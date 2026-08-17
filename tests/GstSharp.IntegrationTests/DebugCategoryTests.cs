@@ -188,25 +188,34 @@ public sealed class DebugCategoryTests
     /// <param name="file">The file of the call site.</param>
     /// <param name="function">The function of the call site.</param>
     /// <param name="line">The line of the call site.</param>
-    /// <param name="object">The object the line is about.</param>
+    /// <param name="object">
+    /// The object the line is about, which is the one argument that really is
+    /// optional: most log lines are written without one. The gir omits the
+    /// annotation, so it is restored by an annotation override next to the
+    /// three caps callbacks.
+    /// </param>
     /// <param name="message">The text of the line.</param>
+    /// <remarks>
+    /// The signature is the one the gir states, so everything but the object is
+    /// a value the C contract promises and none of it has to be checked here.
+    /// </remarks>
     private static void Collect(
-        DebugCategory? category,
+        DebugCategory category,
         DebugLevel level,
-        string? file,
-        string? function,
+        string file,
+        string function,
         int line,
         Gst.GObject.Object? @object,
-        DebugMessage? message)
+        DebugMessage message)
     {
-        string? name = category?.GetName();
+        string? name = category.GetName();
         if (name is null || !name.StartsWith("gstsharp-test-", StringComparison.Ordinal))
         {
             // Every other category of the process logs through here as well.
             return;
         }
 
-        LogEntry entry = new(name, level, message?.Get(), file, function, line);
+        LogEntry entry = new(name, level, message.Get(), file, function, line);
 
         // A log function is called on whichever thread logged.
         lock (Sync)

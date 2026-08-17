@@ -165,15 +165,14 @@ internal static unsafe class DynamicSignalClosure
                 return;
             }
 
-            // The first value is the instance the signal was emitted on.
-            Object? sender = Object.FromNative(
-                GObjectNative.ValueGetObject(ref parameterValues[0]),
-                Transfer.None);
-
-            if (sender is null)
-            {
-                return;
-            }
+            // The first value is the instance the signal was emitted on. The
+            // handler takes it non-null, because an emission always has one, so
+            // nothing to wrap it with is a gap in the registry that the trap of
+            // this frame reports rather than a silent drop of the emission.
+            Object sender = Object.FromNative(
+                    GObjectNative.ValueGetObject(ref parameterValues[0]),
+                    Transfer.None)
+                ?? throw new InvalidOperationException("The signal emission passed no instance.");
 
             int count = (int)parameterCount - 1;
             object?[] args = count == 0 ? [] : new object?[count];

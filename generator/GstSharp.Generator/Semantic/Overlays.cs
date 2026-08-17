@@ -53,8 +53,10 @@ internal sealed class PlatformSupport
 /// <item><description><c>rename</c>: qualified gir name of a type
 /// (<c>Gst.MessageType</c>), of an enumeration member
 /// (<c>Gst.MessageType.state_changed</c>) or a <c>c:identifier</c>.</description></item>
-/// <item><description><c>annotationOverrides</c>: <c>c:identifier</c>, optionally
-/// suffixed with <c>#parameter-name</c> or <c>#return</c>.</description></item>
+/// <item><description><c>annotationOverrides</c>: <c>c:identifier</c> of a
+/// callable, or the <c>c:type</c> of a callback, which has no identifier of its
+/// own; optionally suffixed with <c>#parameter-name</c> or
+/// <c>#return</c>.</description></item>
 /// <item><description><c>forceOpaque</c>: qualified gir name of a record
 /// (<c>Gst.DebugCategory</c>) that must be wrapped behind a pointer rather
 /// than copied by value.</description></item>

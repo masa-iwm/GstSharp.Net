@@ -13,7 +13,7 @@ namespace Gst.WebRTC;
 /// <param name="ice">The #GstWebRTCICE</param>
 /// <param name="streamId">The stream id</param>
 /// <param name="candidate">The discovered candidate</param>
-public delegate void WebRTCICEOnCandidateFunc(Gst.WebRTC.WebRTCICE? ice, uint streamId, string? candidate);
+public delegate void WebRTCICEOnCandidateFunc(Gst.WebRTC.WebRTCICE ice, uint streamId, string candidate);
 
 /// <summary>The native entry point of <see cref="Gst.WebRTC.WebRTCICEOnCandidateFunc"/>.</summary>
 internal static unsafe class WebRTCICEOnCandidateFuncTrampoline
@@ -31,8 +31,10 @@ internal static unsafe class WebRTCICEOnCandidateFuncTrampoline
                 return;
             }
 
-            Gst.WebRTC.WebRTCICE? iceValue = Gst.GObject.Object.FromNative<Gst.WebRTC.WebRTCICE>(ice, Gst.Interop.Transfer.None);
-            string? candidateValue = Gst.Interop.GMarshal.PtrToStringUtf8((nint)candidate);
+            Gst.WebRTC.WebRTCICE iceValue = Gst.GObject.Object.FromNative<Gst.WebRTC.WebRTCICE>(ice, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("GstWebRTCICEOnCandidateFunc passed no ice.");
+            string candidateValue = Gst.Interop.GMarshal.PtrToStringUtf8((nint)candidate)
+                ?? throw new InvalidOperationException("GstWebRTCICEOnCandidateFunc passed no candidate.");
             callback(iceValue, streamId, candidateValue);
         }
         catch (Exception exception)

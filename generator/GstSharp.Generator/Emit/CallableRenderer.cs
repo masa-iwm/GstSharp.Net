@@ -775,6 +775,14 @@ internal static class CallableRenderer
         writer.CloseBlock();
     }
 
+    /// <summary>Returns the message of the exception a missing argument raises.</summary>
+    /// <param name="plan">The callback.</param>
+    /// <param name="argument">The argument that was null.</param>
+    /// <returns>The message text.</returns>
+    private static string NullMessage(CallbackPlan plan, ArgumentPlan argument) =>
+        (plan.Callback.CType ?? plan.DelegateName) + " passed no "
+        + (argument.Source?.Name ?? DocName(argument.Name)) + ".";
+
     /// <summary>
     /// Declares the managed value of one trampoline argument, throwing when the
     /// gir promises a value that native code did not deliver.
@@ -783,6 +791,14 @@ internal static class CallableRenderer
     /// <param name="argument">The argument to convert.</param>
     /// <param name="expression">The conversion expression.</param>
     /// <param name="message">The message of the exception.</param>
+    /// <remarks>
+    /// The exception is raised inside the <c>try</c> of the trampoline, so a
+    /// conversion that produced nothing is reported through
+    /// <c>Gst.Interop.ExceptionTrap</c> and answered with the failure value of
+    /// the callback. The managed handler is never entered: its signature
+    /// excludes the null, and null forgiving it into one would hand a consumer
+    /// a value its type says cannot be there.
+    /// </remarks>
     private static void WriteCallbackLocal(
         CodeWriter writer,
         ArgumentPlan argument,
@@ -869,7 +885,7 @@ internal static class CallableRenderer
                             TrimNullable(argument.PublicType),
                             argument.Name,
                             argument.Transfer),
-                        (plan.Callback.CType ?? plan.DelegateName) + " received a null instance.");
+                        NullMessage(plan, argument));
                     arguments.Add(argument.Name + "Value");
                     break;
 
@@ -878,7 +894,7 @@ internal static class CallableRenderer
                         writer,
                         argument,
                         "Gst.Interop.GMarshal.PtrToStringUtf8((nint)" + argument.Name + ")",
-                        (plan.Callback.CType ?? plan.DelegateName) + " received a null string.");
+                        NullMessage(plan, argument));
                     arguments.Add(argument.Name + "Value");
                     break;
 

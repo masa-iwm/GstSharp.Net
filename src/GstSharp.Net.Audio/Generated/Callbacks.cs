@@ -44,7 +44,7 @@ namespace Gst.Audio;
 /// <param name="itime">internal clock time</param>
 /// <param name="requestedSkew">skew amount requested by the callback</param>
 /// <param name="discontReason">reason for discontinuity (if any)</param>
-public delegate void AudioBaseSinkCustomSlavingCallback(Gst.Audio.AudioBaseSink? sink, Gst.ClockTime etime, Gst.ClockTime itime, long requestedSkew, Gst.Audio.AudioBaseSinkDiscontReason discontReason);
+public delegate void AudioBaseSinkCustomSlavingCallback(Gst.Audio.AudioBaseSink sink, Gst.ClockTime etime, Gst.ClockTime itime, long requestedSkew, Gst.Audio.AudioBaseSinkDiscontReason discontReason);
 
 /// <summary>The native entry point of <see cref="Gst.Audio.AudioBaseSinkCustomSlavingCallback"/>.</summary>
 internal static unsafe class AudioBaseSinkCustomSlavingCallbackTrampoline
@@ -62,7 +62,8 @@ internal static unsafe class AudioBaseSinkCustomSlavingCallbackTrampoline
                 return;
             }
 
-            Gst.Audio.AudioBaseSink? sinkValue = Gst.GObject.Object.FromNative<Gst.Audio.AudioBaseSink>(sink, Gst.Interop.Transfer.None);
+            Gst.Audio.AudioBaseSink sinkValue = Gst.GObject.Object.FromNative<Gst.Audio.AudioBaseSink>(sink, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("GstAudioBaseSinkCustomSlavingCallback passed no sink.");
             callback(sinkValue, new Gst.ClockTime(etime), new Gst.ClockTime(itime), requestedSkew, (Gst.Audio.AudioBaseSinkDiscontReason)discontReason);
         }
         catch (Exception exception)
@@ -82,7 +83,7 @@ internal static unsafe class AudioBaseSinkCustomSlavingCallbackTrampoline
 /// the current time or #GST_CLOCK_TIME_NONE if the previous time should
 /// be used.
 /// </returns>
-public delegate Gst.ClockTime AudioClockGetTimeFunc(Gst.Clock? clock);
+public delegate Gst.ClockTime AudioClockGetTimeFunc(Gst.Clock clock);
 
 /// <summary>The native entry point of <see cref="Gst.Audio.AudioClockGetTimeFunc"/>.</summary>
 internal static unsafe class AudioClockGetTimeFuncTrampoline
@@ -100,7 +101,8 @@ internal static unsafe class AudioClockGetTimeFuncTrampoline
                 return default;
             }
 
-            Gst.Clock? clockValue = Gst.GObject.Object.FromNative<Gst.Clock>(clock, Gst.Interop.Transfer.None);
+            Gst.Clock clockValue = Gst.GObject.Object.FromNative<Gst.Clock>(clock, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("GstAudioClockGetTimeFunc passed no clock.");
             return callback(clockValue).Nanoseconds;
         }
         catch (Exception exception)

@@ -86,11 +86,6 @@ public sealed class AppSinkSimpleCallbacksTests
         {
             sink.SetSimpleCallbacks(onNewSample: appsink =>
             {
-                if (appsink is null)
-                {
-                    return FlowReturn.Error;
-                }
-
                 using Sample? sample = appsink.PullSample();
 
                 if (sample is null)
@@ -188,11 +183,6 @@ public sealed class AppSinkSimpleCallbacksTests
         {
             sink.SetSimpleCallbacks(onNewSample: appsink =>
             {
-                if (appsink is null)
-                {
-                    return FlowReturn.Error;
-                }
-
                 // Take everything that is queued, not just the sample this call
                 // was made for. A zero timeout is what makes the loop a drain:
                 // it returns as soon as the sink has nothing left.
@@ -547,11 +537,6 @@ public sealed class AppSinkSimpleCallbacksTests
             source.SetSimpleCallbacks(
                 onNeedData: (appsrc, length) =>
                 {
-                    if (appsrc is null)
-                    {
-                        return;
-                    }
-
                     if (Interlocked.Increment(ref wanted) > Frames)
                     {
                         // Exactly once, however often the source asks again.
@@ -741,11 +726,6 @@ public sealed class AppSinkSimpleCallbacksTests
         AppSinkSimpleCallbacks callbacks = AppSinkSimpleCallbacks.New();
         callbacks.SetNewSample(appsink =>
         {
-            if (appsink is null)
-            {
-                return FlowReturn.Error;
-            }
-
             using Sample? sample = appsink.PullSample();
 
             if (sample is null)

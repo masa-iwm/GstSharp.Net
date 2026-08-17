@@ -707,11 +707,12 @@ public partial class Object : IDisposable
                 return;
             }
 
-            Object? sender = FromNative(instance, Transfer.None);
-            if (sender is null)
-            {
-                return;
-            }
+            // The handler takes an instance, because a notification always has
+            // one. Nothing to wrap it with is a gap in the registry rather than
+            // a case the handler has to answer, so it is reported through the
+            // trap of this frame instead of being dropped in silence.
+            Object sender = FromNative(instance, Transfer.None)
+                ?? throw new InvalidOperationException("The notify signal passed no instance.");
 
             using ParamSpec property = new(pspec, Transfer.None);
             handler(sender, property);

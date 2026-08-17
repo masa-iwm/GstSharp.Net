@@ -20,7 +20,7 @@ namespace Gst.Base;
 ///          Zero if the timestamps are deemed equally old.
 ///          Integer greater than zero when second timestamp is deemed older than the first one.
 /// </returns>
-public delegate int CollectPadsCompareFunction(Gst.Base.CollectPads? pads, Gst.Base.CollectData? data1, Gst.ClockTime timestamp1, Gst.Base.CollectData? data2, Gst.ClockTime timestamp2);
+public delegate int CollectPadsCompareFunction(Gst.Base.CollectPads pads, Gst.Base.CollectData data1, Gst.ClockTime timestamp1, Gst.Base.CollectData data2, Gst.ClockTime timestamp2);
 
 /// <summary>The native entry point of <see cref="Gst.Base.CollectPadsCompareFunction"/>.</summary>
 internal static unsafe class CollectPadsCompareFunctionTrampoline
@@ -38,9 +38,12 @@ internal static unsafe class CollectPadsCompareFunctionTrampoline
                 return default;
             }
 
-            Gst.Base.CollectPads? padsValue = Gst.GObject.Object.FromNative<Gst.Base.CollectPads>(pads, Gst.Interop.Transfer.None);
-            Gst.Base.CollectData? data1Value = Gst.Base.CollectData.FromNative(data1);
-            Gst.Base.CollectData? data2Value = Gst.Base.CollectData.FromNative(data2);
+            Gst.Base.CollectPads padsValue = Gst.GObject.Object.FromNative<Gst.Base.CollectPads>(pads, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("GstCollectPadsCompareFunction passed no pads.");
+            Gst.Base.CollectData data1Value = Gst.Base.CollectData.FromNative(data1)
+                ?? throw new InvalidOperationException("GstCollectPadsCompareFunction passed no data1.");
+            Gst.Base.CollectData data2Value = Gst.Base.CollectData.FromNative(data2)
+                ?? throw new InvalidOperationException("GstCollectPadsCompareFunction passed no data2.");
             return callback(padsValue, data1Value, new Gst.ClockTime(timestamp1), data2Value, new Gst.ClockTime(timestamp2));
         }
         catch (Exception exception)
@@ -61,7 +64,7 @@ internal static unsafe class CollectPadsCompareFunctionTrampoline
 /// <param name="pad">the #GstPad that received an event</param>
 /// <param name="event">the #GstEvent received</param>
 /// <returns>%TRUE if the pad could handle the event</returns>
-public delegate bool CollectPadsEventFunction(Gst.Base.CollectPads? pads, Gst.Base.CollectData? pad, Gst.Event? @event);
+public delegate bool CollectPadsEventFunction(Gst.Base.CollectPads pads, Gst.Base.CollectData pad, Gst.Event @event);
 
 /// <summary>The native entry point of <see cref="Gst.Base.CollectPadsEventFunction"/>.</summary>
 internal static unsafe class CollectPadsEventFunctionTrampoline
@@ -79,9 +82,12 @@ internal static unsafe class CollectPadsEventFunctionTrampoline
                 return default;
             }
 
-            Gst.Base.CollectPads? padsValue = Gst.GObject.Object.FromNative<Gst.Base.CollectPads>(pads, Gst.Interop.Transfer.None);
-            Gst.Base.CollectData? padValue = Gst.Base.CollectData.FromNative(pad);
-            Gst.Event? @eventValue = Gst.Event.FromNative(@event, Gst.Interop.Transfer.None);
+            Gst.Base.CollectPads padsValue = Gst.GObject.Object.FromNative<Gst.Base.CollectPads>(pads, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("GstCollectPadsEventFunction passed no pads.");
+            Gst.Base.CollectData padValue = Gst.Base.CollectData.FromNative(pad)
+                ?? throw new InvalidOperationException("GstCollectPadsEventFunction passed no pad.");
+            Gst.Event @eventValue = Gst.Event.FromNative(@event, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("GstCollectPadsEventFunction passed no event.");
             return callback(padsValue, padValue, @eventValue) ? 1 : 0;
         }
         catch (Exception exception)
@@ -102,7 +108,7 @@ internal static unsafe class CollectPadsEventFunctionTrampoline
 /// </para>
 /// </remarks>
 /// <param name="pads">a #GstCollectPads</param>
-public delegate void CollectPadsFlushFunction(Gst.Base.CollectPads? pads);
+public delegate void CollectPadsFlushFunction(Gst.Base.CollectPads pads);
 
 /// <summary>The native entry point of <see cref="Gst.Base.CollectPadsFlushFunction"/>.</summary>
 internal static unsafe class CollectPadsFlushFunctionTrampoline
@@ -120,7 +126,8 @@ internal static unsafe class CollectPadsFlushFunctionTrampoline
                 return;
             }
 
-            Gst.Base.CollectPads? padsValue = Gst.GObject.Object.FromNative<Gst.Base.CollectPads>(pads, Gst.Interop.Transfer.None);
+            Gst.Base.CollectPads padsValue = Gst.GObject.Object.FromNative<Gst.Base.CollectPads>(pads, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("GstCollectPadsFlushFunction passed no pads.");
             callback(padsValue);
         }
         catch (Exception exception)
@@ -133,7 +140,7 @@ internal static unsafe class CollectPadsFlushFunctionTrampoline
 /// <summary>A function that will be called when all pads have received data.</summary>
 /// <param name="pads">the #GstCollectPads that triggered the callback</param>
 /// <returns>%GST_FLOW_OK for success</returns>
-public delegate Gst.FlowReturn CollectPadsFunction(Gst.Base.CollectPads? pads);
+public delegate Gst.FlowReturn CollectPadsFunction(Gst.Base.CollectPads pads);
 
 /// <summary>The native entry point of <see cref="Gst.Base.CollectPadsFunction"/>.</summary>
 internal static unsafe class CollectPadsFunctionTrampoline
@@ -151,7 +158,8 @@ internal static unsafe class CollectPadsFunctionTrampoline
                 return (int)Gst.FlowReturn.Error;
             }
 
-            Gst.Base.CollectPads? padsValue = Gst.GObject.Object.FromNative<Gst.Base.CollectPads>(pads, Gst.Interop.Transfer.None);
+            Gst.Base.CollectPads padsValue = Gst.GObject.Object.FromNative<Gst.Base.CollectPads>(pads, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("GstCollectPadsFunction passed no pads.");
             return (int)callback(padsValue);
         }
         catch (Exception exception)
@@ -171,7 +179,7 @@ internal static unsafe class CollectPadsFunctionTrampoline
 /// <param name="pad">the #GstPad that received an event</param>
 /// <param name="query">the #GstEvent received</param>
 /// <returns>%TRUE if the pad could handle the event</returns>
-public delegate bool CollectPadsQueryFunction(Gst.Base.CollectPads? pads, Gst.Base.CollectData? pad, Gst.Query? query);
+public delegate bool CollectPadsQueryFunction(Gst.Base.CollectPads pads, Gst.Base.CollectData pad, Gst.Query query);
 
 /// <summary>The native entry point of <see cref="Gst.Base.CollectPadsQueryFunction"/>.</summary>
 internal static unsafe class CollectPadsQueryFunctionTrampoline
@@ -189,9 +197,12 @@ internal static unsafe class CollectPadsQueryFunctionTrampoline
                 return default;
             }
 
-            Gst.Base.CollectPads? padsValue = Gst.GObject.Object.FromNative<Gst.Base.CollectPads>(pads, Gst.Interop.Transfer.None);
-            Gst.Base.CollectData? padValue = Gst.Base.CollectData.FromNative(pad);
-            Gst.Query? queryValue = Gst.Query.FromNative(query, Gst.Interop.Transfer.None);
+            Gst.Base.CollectPads padsValue = Gst.GObject.Object.FromNative<Gst.Base.CollectPads>(pads, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("GstCollectPadsQueryFunction passed no pads.");
+            Gst.Base.CollectData padValue = Gst.Base.CollectData.FromNative(pad)
+                ?? throw new InvalidOperationException("GstCollectPadsQueryFunction passed no pad.");
+            Gst.Query queryValue = Gst.Query.FromNative(query, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("GstCollectPadsQueryFunction passed no query.");
             return callback(padsValue, padValue, queryValue) ? 1 : 0;
         }
         catch (Exception exception)

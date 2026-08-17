@@ -753,9 +753,27 @@ internal sealed class MarshalPlanner
         _ => ArgumentDirection.In,
     };
 
+    /// <summary>
+    /// Returns the name an annotation override of a callable is keyed by, or
+    /// <see langword="null"/> when the callable carries no name an overlay
+    /// could address.
+    /// </summary>
+    /// <param name="callable">The callable an annotation is read for.</param>
+    /// <returns>The key prefix, without the <c>#</c> and the member.</returns>
+    /// <remarks>
+    /// A function is named by its <c>c:identifier</c>. A callback has none —
+    /// the gir spells a <c>&lt;callback&gt;</c> with a <c>c:type</c> and
+    /// nothing else — so it is addressed by that type, which is the name of the
+    /// C typedef and is what a correction of the gir has to name. The two
+    /// cannot collide: an identifier is <c>snake_case</c> and a callback type
+    /// is <c>CamelCase</c>.
+    /// </remarks>
+    private static string? AnnotationKeyOf(GirCallable callable) =>
+        callable.CIdentifier ?? (callable as GirCallback)?.CType;
+
     private GirTransfer TransferOf(GirCallable callable, GirParameter parameter)
     {
-        AnnotationOverride? overlay = callable.CIdentifier is { } identifier
+        AnnotationOverride? overlay = AnnotationKeyOf(callable) is { } identifier
             ? _overlays.GetAnnotationOverride(identifier + "#" + parameter.Name)
             : null;
 
@@ -764,7 +782,7 @@ internal sealed class MarshalPlanner
 
     private GirTransfer TransferOf(GirCallable callable)
     {
-        AnnotationOverride? overlay = callable.CIdentifier is { } identifier
+        AnnotationOverride? overlay = AnnotationKeyOf(callable) is { } identifier
             ? _overlays.GetAnnotationOverride(identifier + "#return")
             : null;
 
@@ -773,7 +791,7 @@ internal sealed class MarshalPlanner
 
     private bool NullableOf(GirCallable callable, GirParameter parameter)
     {
-        AnnotationOverride? overlay = callable.CIdentifier is { } identifier
+        AnnotationOverride? overlay = AnnotationKeyOf(callable) is { } identifier
             ? _overlays.GetAnnotationOverride(identifier + "#" + parameter.Name)
             : null;
 
@@ -782,7 +800,7 @@ internal sealed class MarshalPlanner
 
     private bool CallerAllocatesOf(GirCallable callable, GirParameter parameter)
     {
-        AnnotationOverride? overlay = callable.CIdentifier is { } identifier
+        AnnotationOverride? overlay = AnnotationKeyOf(callable) is { } identifier
             ? _overlays.GetAnnotationOverride(identifier + "#" + parameter.Name)
             : null;
 
@@ -791,7 +809,7 @@ internal sealed class MarshalPlanner
 
     private bool NullableOf(GirCallable callable)
     {
-        AnnotationOverride? overlay = callable.CIdentifier is { } identifier
+        AnnotationOverride? overlay = AnnotationKeyOf(callable) is { } identifier
             ? _overlays.GetAnnotationOverride(identifier + "#return")
             : null;
 
@@ -1602,7 +1620,7 @@ internal sealed class MarshalPlanner
                 NameMapper.ParameterName(parameter.Name),
                 ArgumentDirection.In,
                 parameter.Transfer,
-                parameter.IsNullable,
+                NullableOf(callback, parameter),
                 context);
 
             if (argument is null || argument.Kind is ArgumentKind.Utf8Owned or ArgumentKind.Callback)
@@ -1632,29 +1650,31 @@ internal sealed class MarshalPlanner
             }
             else
             {
-                // What a callback receives is not what the gir promises:
-                // gst_caps_foreach hands the callback a NULL GstCapsFeatures for
-                // every structure that carries none, although the annotation
-                // says otherwise. A handle and a string therefore always reach
-                // the delegate as a nullable value, so that native code passing
-                // NULL is something the callback can handle instead of an
-                // exception that swallows the invocation.
-                bool nullable = argument.Kind is ArgumentKind.Handle or ArgumentKind.Utf8 || argument.IsNullable;
-                string publicType = nullable && !argument.PublicType.EndsWith('?')
-                    ? argument.PublicType + "?"
-                    : argument.PublicType;
-
+                // The nullability of the delegate is the one the gir states: a
+                // parameter without a nullable annotation is a value the C
+                // contract promises, and a handler that has to null check it
+                // anyway is a handler that cannot say what it means. Native
+                // code that passes NULL there all the same is caught by the
+                // trampoline, which reports it through the trap and answers the
+                // failure value without calling the handler at all, rather than
+                // handing a null to a signature that excludes it.
+                //
+                // Where the gir is known to be wrong the correction belongs in
+                // the annotation overrides, keyed by the c:type of the callback:
+                // gst_caps_foreach hands its callback a NULL GstCapsFeatures for
+                // every structure that carries none, and the three caps
+                // callbacks are marked nullable there for it.
                 argument = new ArgumentPlan
                 {
                     Source = parameter,
                     Kind = argument.Kind,
                     Name = argument.Name,
-                    PublicType = publicType,
+                    PublicType = argument.PublicType,
                     RawType = argument.RawType,
                     Direction = ArgumentDirection.In,
                     Transfer = argument.Transfer,
                     Flavor = argument.Flavor,
-                    IsNullable = nullable,
+                    IsNullable = argument.IsNullable,
                     Doc = parameter.Doc,
                 };
             }

@@ -14,7 +14,7 @@ namespace Gst.Rtsp;
 /// <param name="peerCert">The <c>peer_cert</c> argument.</param>
 /// <param name="errors">The <c>errors</c> argument.</param>
 /// <returns>The result of the callback.</returns>
-public delegate bool RTSPConnectionAcceptCertificateFunc(Gst.Gio.TlsConnection? conn, Gst.Gio.TlsCertificate? peerCert, Gst.Gio.TlsCertificateFlags errors);
+public delegate bool RTSPConnectionAcceptCertificateFunc(Gst.Gio.TlsConnection conn, Gst.Gio.TlsCertificate peerCert, Gst.Gio.TlsCertificateFlags errors);
 
 /// <summary>The native entry point of <see cref="Gst.Rtsp.RTSPConnectionAcceptCertificateFunc"/>.</summary>
 internal static unsafe class RTSPConnectionAcceptCertificateFuncTrampoline
@@ -32,8 +32,10 @@ internal static unsafe class RTSPConnectionAcceptCertificateFuncTrampoline
                 return default;
             }
 
-            Gst.Gio.TlsConnection? connValue = Gst.GObject.Object.FromNative<Gst.Gio.TlsConnection>(conn, Gst.Interop.Transfer.None);
-            Gst.Gio.TlsCertificate? peerCertValue = Gst.GObject.Object.FromNative<Gst.Gio.TlsCertificate>(peerCert, Gst.Interop.Transfer.None);
+            Gst.Gio.TlsConnection connValue = Gst.GObject.Object.FromNative<Gst.Gio.TlsConnection>(conn, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("GstRTSPConnectionAcceptCertificateFunc passed no conn.");
+            Gst.Gio.TlsCertificate peerCertValue = Gst.GObject.Object.FromNative<Gst.Gio.TlsCertificate>(peerCert, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("GstRTSPConnectionAcceptCertificateFunc passed no peer_cert.");
             return callback(connValue, peerCertValue, (Gst.Gio.TlsCertificateFlags)errors) ? 1 : 0;
         }
         catch (Exception exception)

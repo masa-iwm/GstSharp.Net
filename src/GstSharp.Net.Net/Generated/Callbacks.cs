@@ -53,7 +53,7 @@ namespace Gst.Net;
 /// <param name="domain">PTP domain identifier</param>
 /// <param name="stats">New statistics</param>
 /// <returns>The result of the callback.</returns>
-public delegate bool PtpStatisticsCallback(byte domain, Gst.Structure? stats);
+public delegate bool PtpStatisticsCallback(byte domain, Gst.Structure stats);
 
 /// <summary>The native entry point of <see cref="Gst.Net.PtpStatisticsCallback"/>.</summary>
 internal static unsafe class PtpStatisticsCallbackTrampoline
@@ -71,7 +71,8 @@ internal static unsafe class PtpStatisticsCallbackTrampoline
                 return default;
             }
 
-            Gst.Structure? statsValue = Gst.Structure.FromNative(stats, Gst.Interop.Transfer.None);
+            Gst.Structure statsValue = Gst.Structure.FromNative(stats, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("GstPtpStatisticsCallback passed no stats.");
             return callback(domain, statsValue) ? 1 : 0;
         }
         catch (Exception exception)

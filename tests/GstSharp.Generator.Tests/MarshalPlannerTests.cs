@@ -530,9 +530,21 @@ public sealed class MarshalPlannerTests
     {
         string source = Run.File("Callbacks.cs");
 
-        // A handle a callback receives is nullable: native code passes NULL
-        // where the gir promises an instance (gst_caps_foreach does).
-        Assert.Contains("public delegate bool WidgetFunc(Gst.Widget? widget);", source, StringComparison.Ordinal);
+        // The delegate carries the nullability the gir states, and the gir
+        // states none here, so the handler is handed an instance rather than
+        // something it has to check.
+        Assert.Contains("public delegate bool WidgetFunc(Gst.Widget widget);", source, StringComparison.Ordinal);
+
+        // Native code that passes NULL there all the same is a broken promise,
+        // not a case the handler has to answer: the conversion throws inside
+        // the try of the trampoline, so the trap reports it and the callback
+        // answers its failure value without the handler being entered.
+        Assert.Contains(
+            "Gst.Widget widgetValue = Gst.GObject.Object.FromNative<Gst.Widget>(widget, Gst.Interop.Transfer.None)\n"
+            + "                ?? throw new InvalidOperationException(\"GstWidgetFunc passed no widget.\");",
+            source,
+            StringComparison.Ordinal);
+
         Assert.Contains("internal static unsafe class WidgetFuncTrampoline\n", source, StringComparison.Ordinal);
         Assert.Contains(
             "internal static nint Pointer => (nint)(delegate* unmanaged[Cdecl]<nint, nint, int>)&Invoke;",
@@ -547,6 +559,51 @@ public sealed class MarshalPlannerTests
             source,
             StringComparison.Ordinal);
         Assert.Contains("Gst.Interop.ExceptionTrap.Report(exception);", source, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// A callback parameter the gir promises but the library does not always
+    /// deliver is corrected by an annotation override, keyed by the
+    /// <c>c:type</c> of the callback because a callback carries no
+    /// <c>c:identifier</c>. This is how <c>GstCapsForeachFunc</c> keeps the
+    /// nullable features that <c>gst_caps_foreach</c> really passes.
+    /// </summary>
+    [Fact]
+    public void AnOverrideKeyedByTheCallbackTypeRestoresNullability()
+    {
+        string directory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+        Directory.CreateDirectory(directory);
+
+        try
+        {
+            File.WriteAllText(
+                Path.Combine(directory, "fixups.json"),
+                """
+                {
+                  "annotationOverrides": { "GstWidgetFunc#widget": { "nullable": true } }
+                }
+                """);
+
+            string source = Fixture.Run(Body, Overlays.Load(directory)).File("Callbacks.cs");
+
+            Assert.Contains(
+                "public delegate bool WidgetFunc(Gst.Widget? widget);",
+                source,
+                StringComparison.Ordinal);
+
+            // A parameter that may be null is handed over as it arrives: there
+            // is nothing broken to report, so the handler decides.
+            Assert.Contains(
+                "Gst.Widget? widgetValue = Gst.GObject.Object.FromNative<Gst.Widget>"
+                + "(widget, Gst.Interop.Transfer.None);",
+                source,
+                StringComparison.Ordinal);
+            Assert.DoesNotContain("passed no widget", source, StringComparison.Ordinal);
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
     }
 
     [Fact]
