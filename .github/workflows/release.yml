@@ -132,6 +132,10 @@ jobs:
           if [[ "$tag" == *-* ]]; then
             prerelease="--prerelease"
           fi
+          # nullglob: the projects produce no symbol packages today, and a
+          # glob that matches nothing must vanish rather than reach gh as a
+          # literal path it fails on.
+          shopt -s nullglob
           gh release create "$tag" \
             --repo "${{ github.repository }}" \
             --title "$tag" \
