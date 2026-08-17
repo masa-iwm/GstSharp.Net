@@ -365,14 +365,14 @@ internal sealed partial class Launcher
     /// <param name="depth">How deep the entry sits.</param>
     /// <remarks>
     /// The C tool reads the tag with <c>gst_tag_list_copy_value</c>, which
-    /// merges the values of a tag that carries several; that call has no
-    /// binding, so this prints the first value. It also prints through
-    /// <c>gst_print</c> rather than <c>PRINT</c>, so <c>-q</c> does not silence
-    /// it — which is reproduced here.
+    /// merges the values of a tag that carries several rather than taking the
+    /// first, and that is what <see cref="TagList.CopyValue"/> is. It also
+    /// prints through <c>gst_print</c> rather than <c>PRINT</c>, so <c>-q</c>
+    /// does not silence it — which is reproduced here.
     /// </remarks>
     private static void PrintTocTag(TagList list, string tag, int depth)
     {
-        using Value value = list.GetValueIndex(tag, 0);
+        using Value value = list.CopyValue(tag);
 
         if (value.IsEmpty)
         {
@@ -420,13 +420,15 @@ internal sealed partial class Launcher
     /// <param name="value">The value to describe.</param>
     /// <returns>The description.</returns>
     /// <remarks>
-    /// The C tool has a special case for a caps, a tag list and a structure, so
-    /// that they print as themselves rather than as an escaped one line string.
-    /// A structure is a boxed value and its wrapper is reachable from a
-    /// <see cref="Value"/>; a caps and a tag list are mini objects, and nothing
-    /// on the public surface builds one of those wrappers from a value, so they
-    /// take the serialized form. That difference is visible on a <c>caps</c>
-    /// property, which is the one a verbose run reports most.
+    /// The C tool special cases a string, a caps, a tag list and a structure so
+    /// that they print as themselves rather than as an escaped one line string,
+    /// and falls back to <c>gst_value_serialize</c> for everything else. All
+    /// four cases are reachable here: a structure is a boxed value and
+    /// <see cref="Value.GetBoxed{T}"/> builds its wrapper, a caps and a tag
+    /// list are mini objects and <see cref="Value.GetMiniObject{T}"/> builds
+    /// theirs. <c>ToString</c> on each of those wrappers is the
+    /// <c>gst_*_to_string</c> the C tool calls, so the <c>caps</c> lines of a
+    /// verbose run match it character for character.
     /// </remarks>
     private static string DescribeValue(in Value value)
     {
@@ -435,14 +437,46 @@ internal sealed partial class Launcher
             return value.GetString() ?? string.Empty;
         }
 
-        if (value.Type.Name == "GstStructure")
+        switch (value.Type.Name)
         {
-            using Structure? structure = value.GetBoxed<Structure>();
-
-            if (structure is not null)
+            case "GstCaps":
             {
-                return structure.ToString();
+                using Caps? caps = value.GetMiniObject<Caps>();
+
+                if (caps is not null)
+                {
+                    return caps.ToString();
+                }
+
+                break;
             }
+
+            case "GstTagList":
+            {
+                using TagList? tags = value.GetMiniObject<TagList>();
+
+                if (tags is not null)
+                {
+                    return tags.ToString();
+                }
+
+                break;
+            }
+
+            case "GstStructure":
+            {
+                using Structure? structure = value.GetBoxed<Structure>();
+
+                if (structure is not null)
+                {
+                    return structure.ToString();
+                }
+
+                break;
+            }
+
+            default:
+                break;
         }
 
         return Global.ValueSerialize(value) ?? "(no value)";

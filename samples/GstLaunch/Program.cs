@@ -40,21 +40,11 @@
 //     (createdump), and a managed signal handler runs on a thread of its own,
 //     so stopping it would not stop the pipeline. See InstallFaultHandler.
 //
-//   * A --verbose property that holds a caps or a tag list prints in its
-//     serialized form — quoted and escaped — where the C tool prints the plain
-//     one line form. Both are mini objects, and nothing on the public surface
-//     turns a GValue that holds one into its wrapper; a structure, which is a
-//     boxed value, does print as itself. This is the one difference a user of
-//     -v sees on every run, and closing it needs binding surface rather than
-//     sample code.
-//
-//   * The generic tag value is printed with gst_value_serialize where the C
-//     tool uses g_strdup_value_contents, which is a GLib debug printer with no
-//     binding and a slightly different idea of quoting. Tag values inside a TOC
-//     entry are read with gst_tag_list_get_value_index rather than
-//     gst_tag_list_copy_value, which is not bound: the difference shows only
-//     for a tag that carries several values, where the C tool merges them and
-//     this prints the first.
+//   * The generic tag value of a GST_MESSAGE_TAG is printed with
+//     gst_value_serialize where the C tool uses g_strdup_value_contents, which
+//     is a GLib debug printer with no binding and a slightly different idea of
+//     quoting. The tags of a TOC entry are not affected: the C tool reads those
+//     with gst_tag_list_copy_value and so does this.
 //
 //   * --version prints the two version lines and not the third one: the origin
 //     of the package is a compile time constant of the C tool.

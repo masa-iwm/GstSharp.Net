@@ -231,7 +231,7 @@ internal sealed class TypeFinder
                     break;
 
                 case StateChangeReturn.Success:
-                    Report(typefind, watch, path);
+                    Report(watch, path);
                     break;
 
                 default:
@@ -252,6 +252,10 @@ internal sealed class TypeFinder
             // stopped. See docs/ownership.md.
             pipeline.SetState(State.Null);
             typefind.RemoveHandler(handler);
+
+            // The copy the emission left behind on a run that never reached
+            // Report — a failed state change, for example.
+            watch.TakeCaps()?.Dispose();
         }
     }
 
@@ -263,18 +267,16 @@ internal sealed class TypeFinder
     /// <param name="path">The file that was identified.</param>
     /// <remarks>
     /// The C handler keeps <c>gst_caps_copy</c> of the caps the emission
-    /// carried, and prints those. Here the emission carries an opaque handle,
-    /// so the caps are read back from the pad that <c>typefind</c> set them on:
-    /// <see cref="Pad.GetCurrentCaps"/> hands out a wrapper that owns a
-    /// reference of its own, which is the managed spelling of that copy, and
-    /// <see cref="Caps.ToString"/> is <c>gst_caps_to_string</c>, so the line is
-    /// the C tool's line.
+    /// carried and prints those, and that is what happens here:
+    /// <see cref="HaveTypeWatch"/> takes <see cref="Caps.Copy"/> of the wrapper
+    /// the emission lends it. <see cref="Caps.ToString"/> is
+    /// <c>gst_caps_to_string</c>, so the line is the C tool's line.
     /// </remarks>
-    private void Report(Element typefind, HaveTypeWatch watch, string path)
+    private void Report(HaveTypeWatch watch, string path)
     {
-        // Whether the signal fired is what tells a file that was identified
-        // from one that was not, which is the C tool's "if (caps)".
-        using Caps? caps = watch.Fired ? CurrentCaps(typefind) : null;
+        // Whether the emission left caps behind is what tells a file that was
+        // identified from one that was not, which is the C tool's "if (caps)".
+        using Caps? caps = watch.TakeCaps();
 
         if (caps is not null)
         {
@@ -284,30 +286,17 @@ internal sealed class TypeFinder
 
         if (watch.Fired)
         {
-            // The type was found and the caps still could not be read. That is
-            // not a case the C tool has, so it is reported rather than dressed
-            // up as one that it does.
+            // The signal fired and carried nothing, which the declaration of
+            // have-type does not allow. That is not a case the C tool has, so
+            // it is reported rather than dressed up as one that it does.
             Console.Error.WriteLine(string.Create(
                 CultureInfo.InvariantCulture,
                 $"{path} - have-type fired with probability {watch.Probability}, " +
-                $"but the src pad of typefind carries no caps"));
+                $"but the emission carried no caps"));
         }
 
         Console.WriteLine($"{path} - No type found");
         _anyUnknown = true;
-    }
-
-    /// <summary>
-    /// Reads the caps that <c>typefind</c> put on its source pad.
-    /// </summary>
-    /// <param name="typefind">The element to read from.</param>
-    /// <returns>The caps, which the caller disposes, or <see langword="null"/>.</returns>
-    private static Caps? CurrentCaps(Element typefind)
-    {
-        // The pad is an interned GObject wrapper and is not disposed here.
-        Pad? pad = typefind.GetStaticPad("src");
-
-        return pad?.GetCurrentCaps();
     }
 
     /// <summary>
@@ -367,6 +356,7 @@ internal sealed class TypeFinder
     {
         private int _fired;
         private uint _probability;
+        private Caps? _caps;
 
         /// <summary>Gets a value indicating whether the signal was emitted.</summary>
         internal bool Fired => Volatile.Read(ref _fired) != 0;
@@ -375,13 +365,19 @@ internal sealed class TypeFinder
         internal uint Probability => Volatile.Read(ref _probability);
 
         /// <summary>
+        /// Hands the copy of the caps over to the caller, who disposes it.
+        /// </summary>
+        /// <returns>The caps, or <see langword="null"/> when none arrived.</returns>
+        internal Caps? TakeCaps() => Interlocked.Exchange(ref _caps, null);
+
+        /// <summary>
         /// Records one emission.
         /// </summary>
         /// <param name="sender">The <c>typefind</c> element.</param>
         /// <param name="args">
         /// The arguments the signal declares: the probability as a
-        /// <see cref="uint"/>, and the caps, which arrive as the raw handle
-        /// Program.cs describes and are therefore left alone.
+        /// <see cref="uint"/> and the caps as a <see cref="Caps"/>, which the
+        /// emission lends to the handler and takes back when it returns.
         /// </param>
         /// <returns>
         /// <see langword="null"/>: <c>have-type</c> returns nothing.
@@ -393,6 +389,15 @@ internal sealed class TypeFinder
             if (args.Length > 0 && args[0] is uint probability)
             {
                 Volatile.Write(ref _probability, probability);
+            }
+
+            if (args.Length > 1 && args[1] is Caps caps)
+            {
+                // gst_caps_copy, for the reason the C handler calls it: the
+                // argument belongs to the emission and is released when this
+                // returns. A previous copy would be replaced, which typefind
+                // never does, so the old one is released rather than dropped.
+                Interlocked.Exchange(ref _caps, caps.Copy())?.Dispose();
             }
 
             Volatile.Write(ref _fired, 1);

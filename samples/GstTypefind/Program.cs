@@ -19,43 +19,33 @@
 //   the emission through a single closure. That path is what this sample
 //   exercises, and it is the first sample that does.
 //
-//   "have-type" is declared as (guint probability, GstCaps caps). The guint
-//   arrives typed, as a uint in args[0]. The caps do not:
+//   "have-type" is declared as (guint probability, GstCaps caps), and both
+//   arguments arrive typed: the probability as a uint in args[0], the caps as a
+//   Gst.Caps in args[1].
 //
-//     * A GstCaps is a mini object, which GObject sees as a boxed type, so it
-//       travels in the emission as a GValue holding a boxed pointer.
-//     * The dynamic layer reads such a value with Value.GetContent, which maps
-//       a boxed value onto Value.GetBoxed() -- the raw nint. See the argument
-//       documentation of DynamicSignalHandler, which says so.
-//     * Value.GetBoxed<T>() is constrained to Gst.GObject.Boxed and states in
-//       its own remarks that a mini object is out of reach: "Reading a
-//       GstSample or a GstBuffer out of a value is still GetBoxed and a raw
-//       handle."
-//     * Nothing public turns that handle into a Gst.Caps. The
-//       Caps(nint, Transfer) constructor is internal, MiniObject's is
-//       protected on a sealed type, and the public
-//       TypeRegistry.TryCreateWrapper(nint, ...) reads the class pointer of a
-//       GTypeInstance, which a mini object does not have.
+//   The caps are the interesting half. A GstCaps is a mini object, which
+//   GObject sees as a boxed type, so it travels in the emission as a GValue
+//   holding a boxed pointer -- and a mini object wrapper does not derive from
+//   Gst.GObject.Boxed, so Value.GetBoxed<T>() cannot build one. The dynamic
+//   layer therefore looks the GType of the value up in the type registry, which
+//   holds the factory of every generated wrapper, and hands the handler the
+//   wrapper rather than the raw handle. Value.GetMiniObject<T>() is the same
+//   route for code that holds the value itself, for example a property or a
+//   structure field.
 //
-//   So args[1] reaches the handler as an opaque nint and there it stops. The
-//   binding knows: Object.EmitSignal says "Typed adoption of boxed return
-//   values is planned and is not in this release", and the same hole is what
-//   this argument falls into. That is the audit result, and it is the reason
-//   this file says it out loud rather than quietly printing something else.
+//   The argument is lent to the handler, exactly as the const GstCaps * of the
+//   C signature is: the wrapper is released when the handler returns. Keeping
+//   the caps therefore means copying them, which is what the C handler does
+//   with gst_caps_copy and what HaveTypeWatch does with Caps.Copy(). See
+//   docs/ownership.md.
 //
-//   What the sample does instead, and why it is not a workaround: the caps are
-//   read back from the src pad of the typefind element with GetCurrentCaps()
-//   once the pipeline has reached PAUSED. Caps.ToString() is
-//   gst_caps_to_string, so the printed line is character for character the
-//   line of the C tool -- which the alternative route, serializing the "caps"
-//   property with gst_value_serialize, would not be: that one wraps and
-//   escapes the string. The wrapper GetCurrentCaps hands out owns a reference
-//   of its own and is disposed here, which is the managed spelling of the
-//   gst_caps_copy the C handler does. See docs/ownership.md.
-//
-//   The signal is still load bearing: whether it fired is what decides between
-//   the caps line and "No type found", exactly as the C tool's "if (caps)"
-//   does, and it is the reason the handler exists at all.
+//   Caps.ToString() is gst_caps_to_string, so the printed line is character for
+//   character the line of the C tool -- which the alternative route,
+//   serializing the "caps" property with gst_value_serialize, would not be:
+//   that one wraps and escapes the string. Reading the caps back from the src
+//   pad of typefind with GetCurrentCaps() after PAUSED is a second route that
+//   prints the same line; the emission is the one the C tool takes, and it is
+//   the one that says whether a type was found at all.
 //
 // What is deliberately different:
 //
