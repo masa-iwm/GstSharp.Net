@@ -498,7 +498,7 @@ internal sealed partial class Launcher
             case MessageType.RequestState:
             {
                 message.ParseRequestState(out State state);
-                Print($"Setting state to {StateExtensions.GetName(state)} as requested by {PathOf(message)}...");
+                Print($"Setting state to {StateName(state)} as requested by {PathOf(message)}...");
                 _pipeline.SetState(state);
                 break;
             }
@@ -610,7 +610,7 @@ internal sealed partial class Launcher
         Global.DebugBinToDotFileWithTs(
             _pipeline,
             DebugGraphDetails.All,
-            $"gst-launch.{StateExtensions.GetName(old)}_{StateExtensions.GetName(current)}");
+            $"gst-launch.{StateName(old)}_{StateName(current)}");
 
         if (_targetState != State.Paused || current != _targetState)
         {
@@ -778,4 +778,27 @@ internal sealed partial class Launcher
             }
         }
     }
+    /// <summary>
+    /// Names a state the way the C tool prints it.
+    /// </summary>
+    /// <param name="state">The state to name.</param>
+    /// <returns>The upper-case name of the state.</returns>
+    /// <remarks>
+    /// The library has two functions for this: <c>gst_element_state_get_name</c>
+    /// since 1.0, deprecated in 1.28, and <c>gst_state_get_name</c> since 1.28.
+    /// The binding therefore offers a member that warns and a member that does
+    /// not exist on the 1.24 floor the sample runs on in CI. The five names have
+    /// been frozen for the whole life of GStreamer 1.x, so the sample spells
+    /// them itself instead of choosing which trap to step into.
+    /// </remarks>
+    private static string StateName(State state) => state switch
+    {
+        State.VoidPending => "VOID_PENDING",
+        State.Null => "NULL",
+        State.Ready => "READY",
+        State.Paused => "PAUSED",
+        State.Playing => "PLAYING",
+        _ => ((int)state).ToString(System.Globalization.CultureInfo.InvariantCulture),
+    };
+
 }
