@@ -50,6 +50,17 @@ internal static unsafe partial class GObjectNative
     [LibraryImport("GObject", EntryPoint = "g_object_class_find_property")]
     internal static partial nint ObjectClassFindProperty(nint objectClass, byte* name);
 
+    /// <summary>
+    /// Lists the properties of a class. The array is a fresh allocation the
+    /// caller frees with <c>g_free</c>; the specifications in it belong to the
+    /// class and are not reffed.
+    /// </summary>
+    /// <param name="objectClass">The <c>GObjectClass</c> to inspect.</param>
+    /// <param name="count">The number of entries of the array.</param>
+    /// <returns>The array of <c>GParamSpec *</c>.</returns>
+    [LibraryImport("GObject", EntryPoint = "g_object_class_list_properties")]
+    internal static partial nint* ObjectClassListProperties(nint objectClass, out uint count);
+
     [LibraryImport("GObject", EntryPoint = "g_object_new_with_properties")]
     internal static partial nint ObjectNewWithProperties(
         nuint objectType,

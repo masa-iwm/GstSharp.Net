@@ -26,24 +26,14 @@
 //     call in either tool -- that function is bound and deliberately unused
 //     here, because using it would be a different program.
 //
-//   * THE LAUNCH LINE IS THE FACTORY NAME ALONE. get_launch_line() in the C
-//     tool creates the element for the device, creates a second bare element
-//     from the same factory, walks the properties of the class and appends
-//     every one whose value differs from the bare element's. Two pieces of
-//     that are missing from the binding:
-//
-//       - g_object_class_list_properties has no binding at all. Core's
-//         ParamSpec exposes Name and ValueType and nothing enumerates the
-//         parameter specifications of a class; g_object_class_find_property is
-//         declared in Core/Interop/GObjectNative.cs and is internal, and it
-//         answers by name, which is the question that cannot be asked here.
-//       - gst_value_compare has no binding either, so "differs from the
-//         default" could not be decided even with the list in hand.
-//
-//     So a device whose element needs "device=..." to be reachable prints a
-//     snippet that would open the default device instead. This is stated here
-//     rather than papered over, and closing it is a Core property-introspection
-//     feature, not sample code.
+//   * The launch line is complete, and the one place where the C tool has to
+//     guard against a null it created: gst_element_factory_create() for the
+//     bare element is not checked there, and here a failure to build it prints
+//     the factory name alone rather than crashing. Everything else --
+//     Object.ListProperties() over the class of the device's element, the
+//     G_PARAM_READWRITE filter, the five ignored names, Global.ValueCompare
+//     against a bare element of the same factory -- is get_launch_line()
+//     statement by statement. See DeviceMonitoring.LaunchLine.cs.
 //
 //   * --follow-for is not a gst-device-monitor option. It bounds the follow
 //     loop so that the hotplug path can be exercised, and gated, without a
@@ -60,13 +50,18 @@
 //     decided at run time). value_to_string() shell-quotes any property value
 //     that is not purely alphanumeric, and get_shell_type() picks the dialect
 //     from the environment: PROMPT set means cmd.exe, PSModulePath set means
-//     PowerShell, otherwise POSIX. The three quoters -- g_shell_quote,
-//     cmd_quote and powershell_quote -- differ in real ways, down to
-//     cmd_quote's caret-escaping of % and powershell_quote's doubling of the
-//     typographic quotes. NONE OF IT IS PORTED, because all three exist only to
-//     quote the property values of the launch line, and the paragraph above
-//     explains why there are none. Porting the quoters would be porting dead
-//     code; they come back with the property enumeration or not at all.
+//     PowerShell, otherwise POSIX. All three quoters are ported, down to
+//     cmd_quote's caret-escaping of % after the quotes are in place and
+//     powershell_quote's doubling of the typographic quotes; g_shell_quote is
+//     written out because GLib's own is not bound. The scan that decides
+//     whether to quote at all starts at the second byte, which is a quirk of
+//     the C loop and is reproduced rather than corrected -- it is what makes
+//     loopback=true come out bare and device='{...}' come out quoted.
+//
+//     One case is not reachable here: value_to_string() falls back to
+//     gst_value_serialize for a string property whose bytes are not valid
+//     UTF-8, and a managed string has already been decoded by the time this
+//     sample sees it.
 //
 //   * g_win32_get_command_line() plus g_option_context_parse_strv() under
 //     G_OS_WIN32 -- the C tool re-reads the Unicode command line because the

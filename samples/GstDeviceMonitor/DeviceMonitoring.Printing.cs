@@ -191,6 +191,7 @@ internal sealed partial class DeviceMonitoring
     /// <remarks>
     /// A device that is neither a source, a sink nor a camera source gets no
     /// line at all, which is what the C tool's chain of conditions amounts to.
+    /// The snippet itself is built in <c>DeviceMonitoring.LaunchLine.cs</c>.
     /// </remarks>
     private static void PrintLaunchLine(Device device)
     {
@@ -211,35 +212,6 @@ internal sealed partial class DeviceMonitoring
             Console.WriteLine(
                 $"\tgst-launch-1.0 {line}.vfsrc name=camerasrc ! ... camerasrc.vidsrc ! [video/x-h264] ... ");
         }
-    }
-
-    /// <summary>
-    /// Builds the element part of the gst-launch snippet.
-    /// </summary>
-    /// <param name="device">The device to build it for.</param>
-    /// <returns>
-    /// The name of the element factory, or <see langword="null"/> when the
-    /// device produces no element or the element has no factory.
-    /// </returns>
-    /// <remarks>
-    /// <b>The properties are missing.</b> The C tool appends every property of
-    /// the element whose value differs from a bare element of the same factory,
-    /// which is what makes its snippet address one particular device rather
-    /// than the default one. That needs to enumerate the parameter
-    /// specifications of a class and to compare two values, and neither
-    /// <c>g_object_class_list_properties</c> nor <c>gst_value_compare</c> has a
-    /// binding. Program.cs says so at length, because a snippet that silently
-    /// opens the wrong device would be worse than one that says what it left
-    /// out.
-    /// </remarks>
-    private static string? LaunchLine(Device device)
-    {
-        // The element is created here and finished with here, which is the one
-        // sanctioned Dispose of a GObject wrapper. The factory behind it is
-        // interned and is not disposed. See docs/ownership.md.
-        using Element? element = device.CreateElement(null);
-
-        return element?.GetFactory()?.Name;
     }
 
     /// <summary>

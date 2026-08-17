@@ -468,6 +468,84 @@ public partial class Object : IDisposable
     }
 
     /// <summary>
+    /// Lists the properties of the class of this object.
+    /// </summary>
+    /// <returns>
+    /// One <see cref="ParamSpec"/> per property, in the order GObject reports
+    /// them, each of which the caller has to dispose.
+    /// </returns>
+    /// <remarks>
+    /// <para>
+    /// This is <c>g_object_class_list_properties</c> against
+    /// <c>G_OBJECT_GET_CLASS</c> of this object. The question is about the
+    /// class rather than about the instance — every <c>filesrc</c> answers the
+    /// same list — and it is asked on the instance because that is where a
+    /// class comes from: a <c>GType</c> alone would have to have its class
+    /// referenced first, which for an element means creating one anyway.
+    /// </para>
+    /// <para>
+    /// <b>Every specification is the caller's to dispose.</b> The array C hands
+    /// back holds pointers the class owns and does not reference, and a
+    /// <see cref="ParamSpec"/> wrapper takes a reference of its own so that it
+    /// stays valid whatever happens to the class; the array itself is freed
+    /// here. A <c>foreach</c> that disposes as it goes is the shape:
+    /// </para>
+    /// <code>
+    /// foreach (ParamSpec property in element.ListProperties())
+    /// {
+    ///     using (property)
+    ///     {
+    ///         if ((property.Flags &amp; ParamFlags.Readable) != 0)
+    ///         {
+    ///             using Value value = element.GetProperty(property.Name);
+    ///             Console.WriteLine($"{property.Name} = {Gst.Global.ValueSerialize(value)}");
+    ///         }
+    ///     }
+    /// }
+    /// </code>
+    /// <para>
+    /// <see cref="GetProperty"/> asks the same class for one property by name,
+    /// which is the question to ask when the name is already known.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="ObjectDisposedException">The wrapper was disposed.</exception>
+    public unsafe ParamSpec[] ListProperties()
+    {
+        nint handle = Handle;
+
+        // The first word of a GTypeInstance is its class, which is what
+        // G_OBJECT_GET_CLASS reads; GetProperty takes the same route.
+        nint* properties = GObjectNative.ObjectClassListProperties(*(nint*)handle, out uint count);
+
+        // Handle was the last use of this wrapper, and the class is only known
+        // to be alive for as long as the object is.
+        GC.KeepAlive(this);
+
+        if (properties is null)
+        {
+            return [];
+        }
+
+        try
+        {
+            ParamSpec[] result = new ParamSpec[count];
+
+            for (uint i = 0; i < count; i++)
+            {
+                result[i] = new ParamSpec(properties[i], Transfer.None);
+            }
+
+            return result;
+        }
+        finally
+        {
+            // The array is a fresh allocation of GObject; what it points at
+            // belongs to the class.
+            GLibNative.Free((nint)properties);
+        }
+    }
+
+    /// <summary>
     /// Writes a property.
     /// </summary>
     /// <param name="name">The name of the property.</param>
