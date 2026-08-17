@@ -218,3 +218,67 @@ internal struct ElementClassRaw
         private nint _element0;
     }
 }
+
+/// <summary>The native layout of <c>GstBinClass</c>.</summary>
+/// <remarks>
+/// <c>pool</c> is a data field, not a slot: it is the <c>GThreadPool</c> the
+/// bin was going to use for asynchronous state changes and is unused today.
+/// The reserved tail is <c>GST_PADDING - 2</c>, because
+/// <c>deep_element_added</c> and <c>deep_element_removed</c> were carved out of
+/// it in 1.10.
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal struct BinClassRaw
+{
+    /// <summary>The <c>parent_class</c> field.</summary>
+    internal ElementClassRaw ParentClass;
+
+    /// <summary>The <c>pool</c> field, a <c>GThreadPool*</c>.</summary>
+    internal nint Pool;
+
+    /// <summary>The <c>element_added</c> slot.</summary>
+    internal nint ElementAdded;
+
+    /// <summary>The <c>element_removed</c> slot.</summary>
+    internal nint ElementRemoved;
+
+    /// <summary>The <c>add_element</c> slot.</summary>
+    internal nint AddElement;
+
+    /// <summary>The <c>remove_element</c> slot.</summary>
+    internal nint RemoveElement;
+
+    /// <summary>The <c>handle_message</c> slot.</summary>
+    internal nint HandleMessage;
+
+    /// <summary>The <c>do_latency</c> slot.</summary>
+    internal nint DoLatency;
+
+    /// <summary>The <c>deep_element_added</c> slot.</summary>
+    internal nint DeepElementAdded;
+
+    /// <summary>The <c>deep_element_removed</c> slot.</summary>
+    internal nint DeepElementRemoved;
+
+    /// <summary>The <c>_gst_reserved</c> field.</summary>
+    private GstReservedArray _gstReserved;
+
+    /// <summary>
+    /// Gets the byte offset of <see cref="HandleMessage"/> within the class
+    /// struct, which is what a subclass declares the slot with.
+    /// </summary>
+    internal static int HandleMessageOffset { get; } = MeasureHandleMessageOffset();
+
+    private static unsafe int MeasureHandleMessageOffset()
+    {
+        BinClassRaw probe = default;
+        return (int)((byte*)&probe.HandleMessage - (byte*)&probe);
+    }
+
+    /// <summary>Inline storage of the 2 elements of the <c>_gst_reserved</c> field of <c>GstBinClass</c>.</summary>
+    [InlineArray(2)]
+    private struct GstReservedArray
+    {
+        private nint _element0;
+    }
+}

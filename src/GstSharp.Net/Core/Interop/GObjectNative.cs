@@ -87,6 +87,9 @@ internal static unsafe partial class GObjectNative
     [LibraryImport("GObject", EntryPoint = "g_type_class_unref")]
     internal static partial void TypeClassUnref(nint gClass);
 
+    [LibraryImport("GObject", EntryPoint = "g_type_class_peek")]
+    internal static partial nint TypeClassPeek(nuint type);
+
     [LibraryImport("GObject", EntryPoint = "g_type_name")]
     internal static partial nint TypeName(nuint type);
 

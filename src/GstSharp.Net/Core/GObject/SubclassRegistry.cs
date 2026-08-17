@@ -41,6 +41,7 @@ internal sealed class SubclassDescriptor
     private readonly VfuncSlot[] _slots;
     private nint _parentClass;
     private nuint _registeredType;
+    private Exception? _classInitFailure;
 
     /// <summary>
     /// Describes a managed subclass.
@@ -56,15 +57,15 @@ internal sealed class SubclassDescriptor
     /// </param>
     /// <param name="slots">The vfunc slots the subclass takes over.</param>
     /// <param name="classInitializer">
-    /// Runs at the end of <c>class_init</c>, with the raw class pointer, for
-    /// the class level configuration that GStreamer needs (metadata, pad
-    /// templates). Stage 0 has no facade over it, see §5.5.
+    /// Runs at the end of <c>class_init</c>, with the facade over the class
+    /// that is being initialised, for the class level configuration that
+    /// GStreamer needs (metadata, pad templates). See §5.5.
     /// </param>
     internal SubclassDescriptor(
         GType parentType,
         string typeName,
         VfuncSlot[] slots,
-        Action<nint>? classInitializer = null)
+        Action<ClassConfig>? classInitializer = null)
     {
         ArgumentException.ThrowIfNullOrEmpty(typeName);
         ArgumentNullException.ThrowIfNull(slots);
@@ -82,7 +83,7 @@ internal sealed class SubclassDescriptor
     internal string TypeName { get; }
 
     /// <summary>Gets the hook that runs at the end of <c>class_init</c>.</summary>
-    internal Action<nint>? ClassInitializer { get; }
+    internal Action<ClassConfig>? ClassInitializer { get; }
 
     /// <summary>Gets the vfunc slots the subclass takes over.</summary>
     internal ReadOnlySpan<VfuncSlot> Slots => _slots;
@@ -106,7 +107,26 @@ internal sealed class SubclassDescriptor
     /// </remarks>
     internal nint ParentClass => Volatile.Read(ref _parentClass);
 
+    /// <summary>
+    /// Gets what <c>class_init</c> threw, or <see langword="null"/> when it
+    /// succeeded.
+    /// </summary>
+    /// <remarks>
+    /// <c>class_init</c> is called by GObject, so an exception cannot leave it;
+    /// it is caught, kept here, and rethrown by
+    /// <see cref="SubclassRegistry.Register"/>. Without that, a class
+    /// initialiser that failed would leave a registered type whose metadata and
+    /// pad templates are missing, and the first symptom would be a
+    /// <c>g_return_if_fail</c> deep inside <c>g_object_new</c>.
+    /// </remarks>
+    internal Exception? ClassInitFailure => Volatile.Read(ref _classInitFailure);
+
     internal void SetRegisteredType(GType type) => Volatile.Write(ref _registeredType, type.Value);
+
+    /// <summary>Remembers what <c>class_init</c> threw.</summary>
+    /// <param name="failure">The exception the class initialiser raised.</param>
+    internal void CaptureClassInitFailure(Exception failure) =>
+        Interlocked.CompareExchange(ref _classInitFailure, failure, null);
 
     /// <summary>
     /// Remembers the parent class of the first class that was initialised from
@@ -137,7 +157,7 @@ internal sealed class SubclassDescriptor
 /// appears in the subclass's own code. See <c>docs/subclassing.md</c> §5.3,
 /// option (b).
 /// </remarks>
-internal readonly struct SubclassCtorArgs
+public readonly struct SubclassCtorArgs
 {
     internal SubclassCtorArgs(nint handle) => Handle = handle;
 
@@ -150,6 +170,57 @@ internal readonly struct SubclassCtorArgs
     /// the caller, and a floating one is sunk by the wrapper's constructor.
     /// </summary>
     internal Transfer Transfer => Transfer.Full;
+
+    /// <summary>
+    /// Gets the new instance, once it is known to be of the type the wrapper
+    /// stands for.
+    /// </summary>
+    /// <param name="requiredType">The type of the base class being constructed.</param>
+    /// <returns>The new instance.</returns>
+    /// <remarks>
+    /// <para>
+    /// The registration and the wrapper are two independent statements — one
+    /// says which native class to derive from, the other which managed class
+    /// wraps it — and handing the arguments of one registration to the
+    /// constructor of an unrelated wrapper would build a wrapper whose vfunc
+    /// dispatch never matches. The check costs one <c>g_type_is_a</c> per
+    /// construction and turns that into a message at the point of the mistake.
+    /// </para>
+    /// <para>
+    /// The instance is destroyed on the way out. Nothing has wrapped it yet, so
+    /// throwing without releasing it would leak an object nobody can reach; the
+    /// vfuncs that run during its teardown find no wrapper and chain up, which
+    /// is the same window as any other unwrapped instance.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="ArgumentException">
+    /// The instance is not of <paramref name="requiredType"/>.
+    /// </exception>
+    internal nint HandleFor(nuint requiredType)
+    {
+        GType actual = TypeRegistry.GetInstanceType(Handle);
+
+        if (!actual.IsA(new GType(requiredType)))
+        {
+            if (GObjectNative.ObjectIsFloating(Handle) != 0)
+            {
+                // g_object_new hands out a floating reference for anything
+                // derived from GInitiallyUnowned, which every element is;
+                // sinking it first is what makes the unref below the last one.
+                GObjectNative.ObjectRefSink(Handle);
+            }
+
+            GObjectNative.ObjectUnref(Handle);
+
+            throw new ArgumentException(
+                $"An instance of {actual.Name} cannot be wrapped as {new GType(requiredType).Name}. The " +
+                "registration these arguments came from derives from a different class than the wrapper being " +
+                "constructed.",
+                nameof(requiredType));
+        }
+
+        return Handle;
+    }
 }
 
 /// <summary>
@@ -158,9 +229,13 @@ internal readonly struct SubclassCtorArgs
 /// </summary>
 /// <remarks>
 /// <para>
-/// Everything here is internal: this is the stage 0 runtime of
-/// <c>docs/subclassing.md</c>, proven by the integration tests and by the
-/// NativeAOT smoke sample, and it promises no public API yet.
+/// The registry itself stays internal. What applications use is the surface
+/// stage 1 of <c>docs/subclassing.md</c> puts on the base classes —
+/// <c>DefineSubclass</c>, <see cref="SubclassType"/>, <see cref="ClassConfig"/>
+/// and the <c>OnX</c> virtuals — so that a subclass never names a descriptor,
+/// a slot offset or a handle. Registering through a base class is also what
+/// keeps a managed parent inexpressible: the parent is always the
+/// <c>GType</c> of the wrapped native class.
 /// </para>
 /// <para>
 /// NativeAOT rules out per-type code generation, so all managed subclasses
@@ -297,6 +372,14 @@ internal static unsafe class SubclassRegistry
                     $"The class of \"{descriptor.TypeName}\" could not be created.");
             }
 
+            if (descriptor.ClassInitFailure is { } failure)
+            {
+                throw new InvalidOperationException(
+                    $"The class initialiser of \"{descriptor.TypeName}\" failed, so the class is not usable. " +
+                    "The type stays registered: static GTypes cannot be unregistered.",
+                    failure);
+            }
+
             return new GType(type);
         }
     }
@@ -393,10 +476,22 @@ internal static unsafe class SubclassRegistry
                 *(nint*)(gClass + slot.Offset) = slot.Function;
             }
 
-            descriptor.ClassInitializer?.Invoke(gClass);
+            if (descriptor.ClassInitializer is { } configure)
+            {
+                configure(new ClassConfig(gClass));
+            }
         }
         catch (Exception exception)
         {
+            // The exception cannot leave this frame, because GObject called it,
+            // so it is kept on the descriptor and rethrown by Register, which
+            // is the call the author of the subclass made. Reporting it as well
+            // keeps the trap the one place every callback failure shows up in.
+            if (Descriptors.TryGetValue(classData, out SubclassDescriptor? failed))
+            {
+                failed.CaptureClassInitFailure(exception);
+            }
+
             ExceptionTrap.Report(exception);
         }
     }

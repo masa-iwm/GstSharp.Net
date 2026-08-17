@@ -49,4 +49,42 @@ internal static unsafe partial class GstNative
 
     [LibraryImport("Gst", EntryPoint = "gst_mini_object_make_writable")]
     internal static partial nint MiniObjectMakeWritable(nint miniObject);
+
+    /// <summary>
+    /// Describes an element class, for the <c>class_init</c> of a managed
+    /// subclass. The strings are copied by GStreamer.
+    /// </summary>
+    /// <param name="elementClass">The class being initialised.</param>
+    /// <param name="longname">The human readable name of the element.</param>
+    /// <param name="classification">
+    /// The classification, a slash separated list such as
+    /// <c>Source/Network</c>.
+    /// </param>
+    /// <param name="description">What the element does.</param>
+    /// <param name="author">Who wrote it.</param>
+    [LibraryImport("Gst", EntryPoint = "gst_element_class_set_metadata")]
+    internal static partial void ElementClassSetMetadata(
+        nint elementClass,
+        byte* longname,
+        byte* classification,
+        byte* description,
+        byte* author);
+
+    /// <summary>
+    /// Adds a pad template to an element class, taking a reference of its own
+    /// and sinking a floating one.
+    /// </summary>
+    /// <param name="elementClass">The class being initialised.</param>
+    /// <param name="padTemplate">The template to add.</param>
+    [LibraryImport("Gst", EntryPoint = "gst_element_class_add_pad_template")]
+    internal static partial void ElementClassAddPadTemplate(nint elementClass, nint padTemplate);
+
+    /// <summary>
+    /// Looks a pad template of an element class up by name.
+    /// </summary>
+    /// <param name="elementClass">The class to search.</param>
+    /// <param name="name">The name of the template.</param>
+    /// <returns>The template, which the class keeps owning, or null.</returns>
+    [LibraryImport("Gst", EntryPoint = "gst_element_class_get_pad_template")]
+    internal static partial nint ElementClassGetPadTemplate(nint elementClass, byte* name);
 }
