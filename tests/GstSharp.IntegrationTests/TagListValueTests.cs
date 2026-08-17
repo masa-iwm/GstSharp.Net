@@ -6,8 +6,11 @@ using Xunit.Abstractions;
 namespace GstSharp.IntegrationTests;
 
 /// <summary>
-/// Covers <see cref="TagList.GetValueIndex"/>: the generic reader that reaches
-/// the tags whose type has no typed getter, and the values past the first one.
+/// Covers the two generic readers of a tag list:
+/// <see cref="TagList.GetValueIndex"/>, which reaches the tags whose type has
+/// no typed getter and the values past the first one, and
+/// <see cref="TagList.CopyValue"/>, which merges a tag that carries several
+/// values into one.
 /// </summary>
 /// <remarks>
 /// The list is built from its text form, which is the only way to put more than
@@ -104,6 +107,87 @@ public sealed class TagListValueTests
         using (title)
         {
             Assert.Equal("Hello", title.GetString());
+        }
+    }
+
+    /// <summary>
+    /// A tag that carries several values is merged into one by
+    /// <see cref="TagList.CopyValue"/>, which is the difference from reading it
+    /// by index.
+    /// </summary>
+    [Fact]
+    public void SeveralValuesOfATagAreMergedIntoOne()
+    {
+        using TagList tags = Assert.IsAssignableFrom<TagList>(
+            TagList.NewFromString("taglist, artist=(string){ \"first\", \"second\" };"));
+
+        using Value merged = tags.CopyValue("artist");
+        Assert.False(merged.IsEmpty);
+        Assert.Equal(GType.String, merged.Type);
+
+        string? text = merged.GetString();
+        _output.WriteLine($"merged artist={text}");
+
+        Assert.NotNull(text);
+        Assert.Contains("first", text, StringComparison.Ordinal);
+        Assert.Contains("second", text, StringComparison.Ordinal);
+
+        // The index reader answers the other question and still answers it.
+        using Value byIndex = tags.GetValueIndex("artist", 0);
+        Assert.Equal("first", byIndex.GetString());
+        Assert.NotEqual(byIndex.GetString(), text);
+    }
+
+    /// <summary>
+    /// A tag with a single value reads the same either way.
+    /// </summary>
+    [Fact]
+    public void OneValuedTagsReadTheSameEitherWay()
+    {
+        using TagList tags = Assert.IsAssignableFrom<TagList>(
+            TagList.NewFromString("taglist, title=(string)Hello, track-number=(uint)3;"));
+
+        using Value copiedTitle = tags.CopyValue("title");
+        using Value indexedTitle = tags.GetValueIndex("title", 0);
+        Assert.Equal(indexedTitle.GetString(), copiedTitle.GetString());
+
+        using Value copiedTrack = tags.CopyValue("track-number");
+        Assert.Equal(GType.UInt, copiedTrack.Type);
+        Assert.Equal(3u, copiedTrack.GetUInt());
+    }
+
+    /// <summary>
+    /// A tag the list does not carry copies as the empty value, the way it
+    /// reads as one by index.
+    /// </summary>
+    [Fact]
+    public void AMissingTagCopiesAsTheEmptyValue()
+    {
+        using TagList tags = Assert.IsAssignableFrom<TagList>(
+            TagList.NewFromString("taglist, title=(string)Hello;"));
+
+        using Value missing = tags.CopyValue("album");
+        Assert.True(missing.IsEmpty);
+    }
+
+    /// <summary>
+    /// The copy owns its content, so it outlives the list as the indexed read
+    /// does.
+    /// </summary>
+    [Fact]
+    public void TheCopiedValueOutlivesTheList()
+    {
+        Value artist;
+
+        using (TagList tags = Assert.IsAssignableFrom<TagList>(
+            TagList.NewFromString("taglist, artist=(string){ \"first\", \"second\" };")))
+        {
+            artist = tags.CopyValue("artist");
+        }
+
+        using (artist)
+        {
+            Assert.Contains("second", artist.GetString() ?? string.Empty, StringComparison.Ordinal);
         }
     }
 }
