@@ -226,17 +226,22 @@ never end up with half an MSVC and half a MinGW GStreamer.
 | `samples/GstLaunch` | A port of `gst-launch-1.0`: the whole bus loop, the preroll/buffering/progress state machine, `-t -c -v -q -m -e -X -f`, `--gst-*` passthrough and the exit codes of the C tool. One binary with per-OS behavior — Ctrl+C through a `GstLaunchInterrupt` application message everywhere, SIGHUP and SIGQUIT on POSIX, the multimedia timer on Windows. Its header comment lists what it cannot match. | `dotnet run --project samples/GstLaunch -- videotestsrc num-buffers=100 ! fakesink` |
 | `samples/GstTypefind` | A port of `gst-typefind-1.0`: `filesrc ! typefind ! fakesink` per file, PAUSED and a blocking `GetState`, directory recursion, and the `<file> - <caps>` line of the C tool. It is the sample that connects a signal **by name** — `have-type` on a plugin element no `.gir` describes — and its header comment records what that emission can and cannot hand over. | `dotnet run --project samples/GstTypefind -- <file-or-directory>` |
 | `samples/GstDeviceMonitor` | A port of `gst-device-monitor-1.0`: `DeviceMonitor` with the `DEVICE_CLASSES[:FILTER_CAPS]` filters, the device listing with caps and properties, and `--follow` for hotplug — all of it as messages on the monitor's bus, polled rather than watched from a main loop. Its header comment lists the shell-quoting and property-enumeration parts of the C tool that the binding cannot reach yet. | `dotnet run --project samples/GstDeviceMonitor` |
+| `samples/GstDiscoverer` | A port of `gst-discoverer-1.0`, synchronous path: `DiscoverUri` per URI, the result and duration, the topology walk with its container recursion, the per-stream blocks for audio, video and subtitles, `--verbose` tags and `--toc`. Its output is byte for byte the C tool's on generated media; its header comment says why `-a` is absent and what a failed discovery cannot report. | `dotnet run --project samples/GstDiscoverer -- <file-or-uri>` |
+| `samples/GstInspect` | A partial port of `gst-inspect-1.0`: the registry census, and the element page as far as the bound surface reaches — factory and plugin details, the type hierarchy, pad templates with their caps, URI handling and the property listing. Every page ends with a note naming the sections it does not print, and its header says what each of them would need. | `dotnet run --project samples/GstInspect -- fakesink` |
 | `samples/AotSmoke` | The NativeAOT gate: initialise, make an element, release it, with zero trimming warnings. | `dotnet publish samples/AotSmoke -r win-x64 -c Release /p:PublishAot=true` |
 
 `PlaybinPlayer` and `AppSinkSpans` also take `--native-path <directory>`,
-`--flavor msvc\|mingw` and `--timeout <seconds>`; `GstLaunch`, `GstTypefind`
-and `GstDeviceMonitor` take the first two. Each of the three ports adds one
-option of its own that the C tool does not have, so that a path which normally
-needs a console signal or a person can be run unattended:
+`--flavor msvc\|mingw` and `--timeout <seconds>`; `GstLaunch`, `GstTypefind`,
+`GstDeviceMonitor`, `GstDiscoverer` and `GstInspect` take the first two. Each
+of the five ports adds one option of its own that the C tool does not have, so
+that a path which normally needs a console signal or a person can be run
+unattended, or so that what the port cannot do stays visible:
 `GstLaunch --interrupt-after <seconds>` drives its Ctrl+C path,
-`GstDeviceMonitor --follow-for <seconds>` bounds a hotplug run, and
+`GstDeviceMonitor --follow-for <seconds>` bounds a hotplug run,
 `GstTypefind --fail-on-unknown` turns a file whose type was not found into a
-non-zero exit code.
+non-zero exit code, `GstDiscoverer --fail-on-error` does the same for a URI
+that could not be discovered, and `GstInspect --no-coverage-note` takes the
+closing note off a page that is being diffed against the C tool's.
 
 ### The official tutorials
 

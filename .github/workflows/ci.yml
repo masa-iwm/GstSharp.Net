@@ -214,6 +214,33 @@ jobs:
           dotnet run --project samples/tutorials/BasicTutorial08 --no-restore -- --headless --chunks 200
           dotnet run --project samples/tutorials/BasicTutorial13 --no-restore -- --headless --keys SsPNNPDq tutorial-media.ogg
 
+      # The gst-discoverer port, run against both files the steps above made:
+      # the wav for a single elementary stream and the ogg for a container with
+      # a video and an audio stream under it, which is what exercises the
+      # topology walk. --fail-on-error is the gate — the C tool exits 0 for a
+      # URI it could not discover — and --verbose --toc puts the tag and table
+      # of contents paths on the log line as well.
+      #
+      # This is the leg that has the plugins for it: wavparse comes from
+      # gst-plugins-good, oggdemux, theoradec, vorbisdec and uridecodebin from
+      # gst-plugins-base, and typefind from core.
+      - name: GstDiscoverer
+        run: |
+          dotnet run --project samples/GstDiscoverer --no-restore -- --fail-on-error typefind-sample.wav
+          dotnet run --project samples/GstDiscoverer --no-restore -- --fail-on-error --verbose --toc tutorial-media.ogg
+
+      # The inspect-lite port, run the two ways it can be run. The census walks
+      # the whole registry and needs no plugin in particular; the element page
+      # is asked for fakesink, which is in the core elements every leg has, and
+      # exits 1 for a name the registry does not know — which is what makes the
+      # second line a gate rather than a print. This step runs on all three
+      # native legs, because what it exercises is the registry surface and that
+      # is where the three installations differ most.
+      - name: GstInspect
+        run: |
+          dotnet run --project samples/GstInspect --no-restore
+          dotnet run --project samples/GstInspect --no-restore -- fakesink
+
       # The gst-device-monitor port. A hosted runner has no capture or playback
       # hardware, so finding zero devices is the expected outcome and is exit 0,
       # exactly as it is for the C tool. What is being gated is that the monitor
@@ -299,6 +326,12 @@ jobs:
 
       - name: GstDeviceMonitor
         run: dotnet run --project samples/GstDeviceMonitor --no-restore
+
+      # Same two runs as the Linux leg; see the comments there.
+      - name: GstInspect
+        run: |
+          dotnet run --project samples/GstInspect --no-restore
+          dotnet run --project samples/GstInspect --no-restore -- fakesink
 
       - name: Upload test results
         if: ${{ failure() }}
@@ -399,6 +432,12 @@ jobs:
         run: |
           dotnet run --project samples/GstLaunch --no-restore -- -q audiotestsrc num-buffers=50 ! wavenc ! filesink location=typefind-sample.wav
           dotnet run --project samples/GstTypefind --no-restore -- --fail-on-unknown typefind-sample.wav
+
+      # Same two runs as the Linux leg; see the comments there.
+      - name: GstInspect
+        run: |
+          dotnet run --project samples/GstInspect --no-restore
+          dotnet run --project samples/GstInspect --no-restore -- fakesink
 
       # No GstDeviceMonitor on this leg: no device provider comes up on it.
       # The practical Windows providers, wasapi2 among them, live in the bad

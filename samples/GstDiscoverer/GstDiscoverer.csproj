@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>GstSharp.Samples.GstDiscoverer</RootNamespace>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/GstSharp.Net/GstSharp.Net.csproj" />
+    <ProjectReference Include="../../src/GstSharp.Net.Pbutils/GstSharp.Net.Pbutils.csproj" />
+    <!--
+      For GstAudio.AudioChannelPosition alone, which is what the C tool
+      includes gst/audio/audio.h for: the channel layout of an audio stream.
+    -->
+    <ProjectReference Include="../../src/GstSharp.Net.Audio/GstSharp.Net.Audio.csproj" />
+  </ItemGroup>
+
+</Project>
