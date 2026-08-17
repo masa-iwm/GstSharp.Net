@@ -362,18 +362,19 @@ jobs:
       - name: GstLaunch
         run: dotnet run --project samples/GstLaunch --no-restore -- videotestsrc num-buffers=100 ! fakesink
 
-      # Same two ports as the Linux leg; see the comments there. The relative
+      # Same port as the Linux leg; see the comments there. The relative
       # location= path keeps the two lines identical across bash and pwsh, and
       # dotnet run leaves the working directory at the repository root on both.
-      # The device provider that keeps the monitor startable here is
-      # directsound, out of gst-plugins-good.
       - name: GstTypefind
         run: |
           dotnet run --project samples/GstLaunch --no-restore -- -q audiotestsrc num-buffers=50 ! wavenc ! filesink location=typefind-sample.wav
           dotnet run --project samples/GstTypefind --no-restore -- --fail-on-unknown typefind-sample.wav
 
-      - name: GstDeviceMonitor
-        run: dotnet run --project samples/GstDeviceMonitor --no-restore
+      # No GstDeviceMonitor on this leg: no device provider comes up on it.
+      # The practical Windows providers, wasapi2 among them, live in the bad
+      # plugins, which this job deliberately installs as libraries only, and
+      # the directsound provider of gst-plugins-good does not register in a
+      # headless session - the first run proved it by failing to start.
 
       - name: Upload test results
         if: ${{ failure() }}
