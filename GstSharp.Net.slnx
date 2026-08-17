@@ -15,6 +15,15 @@
     <Project Path="samples/GstTypefind/GstTypefind.csproj" />
     <Project Path="samples/PlaybinPlayer/PlaybinPlayer.csproj" />
   </Folder>
+  <Folder Name="/samples/tutorials/">
+    <Project Path="samples/tutorials/BasicTutorial01/BasicTutorial01.csproj" />
+    <Project Path="samples/tutorials/BasicTutorial02/BasicTutorial02.csproj" />
+    <Project Path="samples/tutorials/BasicTutorial03/BasicTutorial03.csproj" />
+    <Project Path="samples/tutorials/BasicTutorial04/BasicTutorial04.csproj" />
+    <Project Path="samples/tutorials/BasicTutorial06/BasicTutorial06.csproj" />
+    <Project Path="samples/tutorials/BasicTutorial08/BasicTutorial08.csproj" />
+    <Project Path="samples/tutorials/BasicTutorial13/BasicTutorial13.csproj" />
+  </Folder>
   <Folder Name="/src/">
     <Project Path="src/GstSharp.Net.Analyzers/GstSharp.Net.Analyzers.csproj" />
     <Project Path="src/GstSharp.Net.App/GstSharp.Net.App.csproj" />

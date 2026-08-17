@@ -237,6 +237,35 @@ needs a console signal or a person can be run unattended:
 `GstTypefind --fail-on-unknown` turns a file whose type was not found into a
 non-zero exit code.
 
+### The official tutorials
+
+`samples/tutorials/` holds the [GStreamer basic
+tutorials](https://gstreamer.freedesktop.org/documentation/tutorials/) ported
+onto this binding, one runnable project per tutorial, with the upstream
+numbering kept:
+
+| Project | Upstream page | What it teaches |
+| --- | --- | --- |
+| `BasicTutorial01` | [Hello world](https://gstreamer.freedesktop.org/documentation/tutorials/basic/hello-world.html) | `ParseLaunch`, the states, the bus |
+| `BasicTutorial02` | [GStreamer concepts](https://gstreamer.freedesktop.org/documentation/tutorials/basic/concepts.html) | factories, a pipeline, a link, a property, a parsed error |
+| `BasicTutorial03` | [Dynamic pipelines](https://gstreamer.freedesktop.org/documentation/tutorials/basic/dynamic-pipelines.html) | `pad-added`, linking pads, reading caps |
+| `BasicTutorial04` | [Time management](https://gstreamer.freedesktop.org/documentation/tutorials/basic/time-management.html) | position, duration, the seeking query, `SeekSimple` |
+| `BasicTutorial06` | [Media formats and pad capabilities](https://gstreamer.freedesktop.org/documentation/tutorials/basic/media-formats-and-pad-capabilities.html) | caps, structures, fields, pad templates |
+| `BasicTutorial08` | [Short-cutting the pipeline](https://gstreamer.freedesktop.org/documentation/tutorials/basic/short-cutting-the-pipeline.html) | `appsrc`, `appsink`, a `tee` and its request pads |
+| `BasicTutorial13` | [Playback speed](https://gstreamer.freedesktop.org/documentation/tutorials/basic/playback-speed.html) | seek events with a rate, reverse playback, step events |
+
+The walkthrough text stays upstream; each file carries a header comment saying
+where the port differs from the C original and why — a polled bus instead of a
+`GMainLoop`, `using` instead of `gst_*_unref`, a typed event instead of
+`g_signal_connect`. `samples/tutorials/README.md` is the index and explains the
+two options the tutorials do not have (`--headless` and
+`BasicTutorial13 --keys`), which exist so that a tutorial can be run unattended.
+
+```sh
+dotnet run --project samples/tutorials/BasicTutorial02
+dotnet run --project samples/tutorials/BasicTutorial03 -- <file-or-uri>
+```
+
 ## Properties and signals without a generated binding
 
 Not everything is in the `.gir` files. Plugins add properties and signals that
@@ -348,7 +377,7 @@ through the by-name property and signal surface above.
 | `girs/` | Vendored `.gir` inputs and overlay files. See `girs/README.md`. |
 | `generator/` | The `.gir` to C# generator (console application, no NuGet dependencies). |
 | `src/` | Shipping libraries: the bindings, the hand-written runtime under `src/GstSharp.Net/Core/`, and the Roslyn analyzers. |
-| `samples/` | Runnable samples, including the NativeAOT smoke test. |
+| `samples/` | Runnable samples, including the NativeAOT smoke test and, under `samples/tutorials/`, the official GStreamer tutorials ported onto the binding. |
 | `tests/` | Generator unit tests, analyzer tests, and integration tests that need a native GStreamer. |
 
 ## Building

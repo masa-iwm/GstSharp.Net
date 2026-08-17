@@ -186,6 +186,34 @@ jobs:
           dotnet run --project samples/GstLaunch --no-restore -- -q audiotestsrc num-buffers=50 ! wavenc ! filesink location=typefind-sample.wav
           dotnet run --project samples/GstTypefind --no-restore -- --fail-on-unknown typefind-sample.wav
 
+      # The ported GStreamer tutorials. All seven are built by the solution on
+      # every leg; these five are the ones that can also run, and they run here
+      # rather than anywhere else because this leg has the richest plugin set
+      # and no GUI to tempt them.
+      #
+      # --headless is the sample-only option that swaps every automatic sink
+      # for a fakesink and bounds a source that has no end of its own: an audio
+      # sink in a session with no sound daemon does not fail, it waits, which
+      # is the lesson the device monitor step below records. Each line is an
+      # exit code gate.
+      #
+      # The media is made here rather than fetched. Ten seconds of Theora and
+      # Vorbis in an Ogg container is a real file with two streams, which is
+      # what tutorial 3 needs to have a pad to ignore and tutorial 4 and 13
+      # need to have something to seek in. theoraenc, vorbisenc and oggmux are
+      # all in gst-plugins-base, which this job installs.
+      #
+      # Not run: tutorial 1, whose default media is an https URI, and tutorial
+      # 6, whose interesting output is the caps a real audio sink negotiates.
+      - name: Basic tutorials
+        run: |
+          dotnet run --project samples/GstLaunch --no-restore -- -q videotestsrc num-buffers=300 ! video/x-raw,width=320,height=240,framerate=30/1 ! videoconvert ! theoraenc ! oggmux name=mux ! filesink location=tutorial-media.ogg audiotestsrc num-buffers=430 ! audioconvert ! vorbisenc ! mux.
+          dotnet run --project samples/tutorials/BasicTutorial02 --no-restore -- --headless
+          dotnet run --project samples/tutorials/BasicTutorial03 --no-restore -- --headless tutorial-media.ogg
+          dotnet run --project samples/tutorials/BasicTutorial04 --no-restore -- --headless --seek-at 1 --seek-to 7 tutorial-media.ogg
+          dotnet run --project samples/tutorials/BasicTutorial08 --no-restore -- --headless --chunks 200
+          dotnet run --project samples/tutorials/BasicTutorial13 --no-restore -- --headless --keys SsPNNPDq tutorial-media.ogg
+
       # The gst-device-monitor port. A hosted runner has no capture or playback
       # hardware, so finding zero devices is the expected outcome and is exit 0,
       # exactly as it is for the C tool. What is being gated is that the monitor
