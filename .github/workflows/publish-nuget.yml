@@ -9,11 +9,13 @@
 #
 # Authentication is Trusted Publishing (OIDC): NuGet/login exchanges this
 # workflow's identity for a short-lived API key, so the repository holds no
-# long-lived nuget.org secret. The exchange is allowed by a trusted
-# publishing policy on nuget.org (Account settings -> Trusted Publishing)
-# tied to this repository and to this workflow file's name — renaming the
-# file breaks the policy. The policy owner's profile name is typed at
-# dispatch time, next to the tag.
+# long-lived nuget.org secret. Two things have to exist for that to work:
+#   * a trusted publishing policy on nuget.org for this repository and this
+#     workflow file (Account settings -> Trusted Publishing) — the policy is
+#     tied to this file's name, so renaming the file breaks it,
+#   * the NUGET_USER repository variable, set to the nuget.org profile name
+#     that owns the policy (a variable, not a secret: the name is public
+#     anyway, and typing it at every dispatch invites typos).
 name: Publish to nuget.org
 
 on:
@@ -21,10 +23,6 @@ on:
     inputs:
       tag:
         description: 'The tag to publish (v1.2.3 or v1.2.3-preview.1)'
-        required: true
-        type: string
-      user:
-        description: 'nuget.org profile that owns the trusted publishing policy'
         required: true
         type: string
 
@@ -49,6 +47,16 @@ jobs:
       id-token: write
 
     steps:
+      # Fail before anything is packed when the variable is missing:
+      # NuGet/login with an empty user fails much later with a less readable
+      # message.
+      - name: Require the NUGET_USER variable
+        run: |
+          if [[ -z "${{ vars.NUGET_USER }}" ]]; then
+            echo "::error::The NUGET_USER repository variable is not set (Settings -> Secrets and variables -> Actions -> Variables)."
+            exit 1
+          fi
+
       # The same shape release.yml enforces: the tag is the single source of
       # the version.
       - name: Read the version from the tag
@@ -119,7 +127,7 @@ jobs:
         id: login
         uses: NuGet/login@v1
         with:
-          user: ${{ inputs.user }}
+          user: ${{ vars.NUGET_USER }}
 
       # --skip-duplicate makes a re-run harmless: versions that already made
       # it stay as they are, the rest are pushed.
