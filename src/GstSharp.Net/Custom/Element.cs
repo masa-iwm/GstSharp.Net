@@ -159,7 +159,79 @@ public abstract partial class Element
         return result != 0;
     }
 
+    /// <summary>
+    /// Posts a message on the bus of this element, taking the message over.
+    /// </summary>
+    /// <param name="message">
+    /// The message to post. The call consumes it: <paramref name="message"/> is
+    /// disposed when this method returns, whatever the answer is, and using it
+    /// afterwards throws <see cref="ObjectDisposedException"/>.
+    /// </param>
+    /// <returns>
+    /// <see langword="true"/> when the message reached the bus.
+    /// <see langword="false"/> when the element has no bus, or when the bus is
+    /// flushing — which a pipeline's bus is once it has gone back to
+    /// <see cref="State.Null"/>.
+    /// </returns>
+    /// <remarks>
+    /// <para>
+    /// This is <c>gst_element_post_message</c>, whose <c>message</c> parameter
+    /// is <c>transfer-ownership="full"</c>, so it is written by hand for the
+    /// reason <see cref="SendEvent"/> is: it hands the call a reference of its
+    /// own and then disposes the wrapper, which leaves the native reference
+    /// count exactly where the C call leaves it.
+    /// <see cref="Gst.MiniObject.Dispose()"/> is idempotent, so a
+    /// <c>using</c> declaration around the message stays correct.
+    /// </para>
+    /// <para>
+    /// <b>This is how an application talks to its own bus loop.</b> Paired with
+    /// <see cref="Message.NewApplication"/> it moves an event from wherever it
+    /// happened — a signal handler, a timer, a user interface thread — onto the
+    /// thread that reads the bus, in order with the messages the pipeline posts
+    /// itself. The call is thread safe, which is what makes that work.
+    /// </para>
+    /// <para>
+    /// Posting is not restricted to application messages: an element built in
+    /// managed code posts its errors and its state notifications the same way.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="message"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    /// This wrapper or <paramref name="message"/> was disposed.
+    /// </exception>
+    public bool PostMessage(Gst.Message message)
+    {
+        ArgumentNullException.ThrowIfNull(message);
+
+        // Both handles are read before anything is referenced, so that a
+        // disposed wrapper throws without leaking the reference of the other.
+        nint element = Handle;
+        nint owned = message.Handle;
+
+        // The reference the call consumes. Without it the wrapper and the
+        // library would both own the one reference the wrapper holds.
+        GstNative.MiniObjectRef(owned);
+
+        int result = GstElementPostMessage(element, owned);
+
+        // The handles were read before the call, so nothing keeps either
+        // wrapper alive across it on its own.
+        GC.KeepAlive(this);
+
+        // And the reference of the wrapper goes away with the wrapper, which is
+        // what makes this call consuming rather than borrowing.
+        message.Dispose();
+
+        return result != 0;
+    }
+
     /// <summary>The <c>gst_element_send_event</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_element_send_event")]
     private static partial int GstElementSendEvent(nint element, nint @event);
+
+    /// <summary>The <c>gst_element_post_message</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_element_post_message")]
+    private static partial int GstElementPostMessage(nint element, nint message);
 }

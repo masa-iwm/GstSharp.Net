@@ -95,6 +95,8 @@ the wrapper owns nothing — which is precisely what its disposed state means:
 | --- | --- |
 | `AppSrc.PushBuffer` | the buffer |
 | `Element.SendEvent`, `Pad.SendEvent`, `Pad.PushEvent` | the event |
+| `Element.PostMessage` | the message |
+| `Message.NewApplication` | the payload structure |
 | `BufferPool.SetConfig` | the configuration structure, on refusal as well |
 | `AppSink.SetSimpleCallbacks`, `AppSrc.SetSimpleCallbacks` | the callbacks builder |
 | `WebRTCSessionDescription.New` | the SDP message |

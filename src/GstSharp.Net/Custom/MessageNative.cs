@@ -23,6 +23,22 @@ namespace Gst;
 /// import of it internal.
 /// </para>
 /// <para>
+/// <c>gst_message_parse_property_notify</c> is here for a third reason: two of
+/// its three out parameters are borrowed — a <c>const gchar **</c> and a
+/// <c>const GValue **</c> that both point into the structure of the message —
+/// and the generator emits no signature that hands a pointer out without
+/// saying who owns it. The hand written wrapper answers the question by
+/// copying: the name becomes a managed string and the value a
+/// <see cref="Gst.GObject.Value"/> of the caller's own.
+/// </para>
+/// <para>
+/// <c>gst_message_new_application</c> is here for a fourth: its
+/// <c>structure</c> parameter is <c>transfer-ownership="full"</c>, and the
+/// generator emits no call that takes a wrapper over, because handing the only
+/// value of a wrapper to the library would let both of them release it. See
+/// <see cref="Message.NewApplication"/> and <c>docs/ownership.md</c>.
+/// </para>
+/// <para>
 /// <c>gst_message_copy</c> is imported for a different reason, the one
 /// <c>gst_buffer_copy</c> has: the gir marks it <c>introspectable="0"</c>, so
 /// the generator skips it and no overlay can bring it back. It is a static
@@ -67,6 +83,28 @@ internal static unsafe partial class MessageNative
     internal static partial void ParseInfo(nint message, nint* error, nint* debug);
 
     /// <summary>
+    /// Extracts the object, the property name and the property value of a
+    /// <see cref="MessageType.PropertyNotify"/> message.
+    /// </summary>
+    /// <param name="message">The message to read.</param>
+    /// <param name="object">
+    /// Receives the object whose property changed, borrowed from the message.
+    /// </param>
+    /// <param name="propertyName">
+    /// Receives the name of the property, borrowed from the message.
+    /// </param>
+    /// <param name="propertyValue">
+    /// Receives the new value of the property, borrowed from the message, or
+    /// <c>0</c> when the watch was installed without values.
+    /// </param>
+    [LibraryImport("Gst", EntryPoint = "gst_message_parse_property_notify")]
+    internal static partial void ParsePropertyNotify(
+        nint message,
+        nint* @object,
+        nint* propertyName,
+        nint* propertyValue);
+
+    /// <summary>
     /// Creates a copy of a message: its type, source, timestamp, sequence
     /// number and payload are copied.
     /// </summary>
@@ -76,6 +114,18 @@ internal static unsafe partial class MessageNative
     /// </returns>
     [LibraryImport("Gst", EntryPoint = "gst_message_copy")]
     internal static partial nint Copy(nint message);
+
+    /// <summary>
+    /// Creates a message that carries whatever an application wants to send
+    /// through the bus of its own pipeline.
+    /// </summary>
+    /// <param name="src">The object to post it as, which may be <c>0</c>.</param>
+    /// <param name="structure">
+    /// The payload, which the call takes over.
+    /// </param>
+    /// <returns>The message, which the caller owns.</returns>
+    [LibraryImport("Gst", EntryPoint = "gst_message_new_application")]
+    internal static partial nint NewApplication(nint src, nint structure);
 
     /// <summary>
     /// Releases a <c>GError</c> that the caller owns.
