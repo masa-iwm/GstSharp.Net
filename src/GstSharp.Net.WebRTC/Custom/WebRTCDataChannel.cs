@@ -36,6 +36,21 @@ public abstract unsafe partial class WebRTCDataChannel
     /// <see cref="SendData"/> reads this before it sends.
     /// </para>
     /// <para>
+    /// <b><see cref="Close"/> is where the last two states come from, and it
+    /// is graceful.</b> The closing procedure of the specification does not
+    /// throw away what is already queued: the channel moves to
+    /// <see cref="Gst.WebRTC.WebRTCDataChannelState.Closing"/>, the messages
+    /// that were handed over before the call are still sent, and only then does
+    /// the transport reset the stream and the channel reach
+    /// <see cref="Gst.WebRTC.WebRTCDataChannelState.Closed"/> and raise
+    /// <c>on-close</c>. Nothing is accepted after the call, so a send that
+    /// races it is refused rather than half delivered. Closing a channel that
+    /// is already closing or closed does nothing, and closing one that never
+    /// reached a peer — one <c>webrtcbin</c> never associated with an SCTP
+    /// transport — leaves it in the state it was created in, because there is
+    /// no transport to run the procedure on.
+    /// </para>
+    /// <para>
     /// <b>Compare against
     /// <see cref="Gst.WebRTC.WebRTCDataChannelState.Open"/> rather than
     /// switching over the members.</b> The C enumeration starts at a zero that
