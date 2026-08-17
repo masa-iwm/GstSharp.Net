@@ -65,7 +65,7 @@ jobs:
         run: dotnet restore GstSharp.Net.slnx
 
       # The generated sources are committed, so the gate is that regenerating
-      # them changes nothing: 410 files plus girs/skip-report.md, which the
+      # them changes nothing: 408 files plus girs/skip-report.md, which the
       # generator writes next to the gir files it was derived from.
       - name: Generator drift
         run: dotnet run --project generator/GstSharp.Generator --no-restore -- verify --gir-dir girs --out-dir src
