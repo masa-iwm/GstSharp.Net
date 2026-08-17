@@ -52,6 +52,11 @@ internal static partial class Smoke
             ObjectRefSink(element);
             ObjectUnref(element);
 
+            if (!RunManagedSubclass())
+            {
+                return 1;
+            }
+
             GstSharp.DrainPendingReleases();
 
             Console.WriteLine("OK");
@@ -62,6 +67,36 @@ internal static partial class Smoke
             Console.Error.WriteLine($"AotSmoke: {exception}");
             return 1;
         }
+    }
+
+    /// <summary>
+    /// Registers a managed <c>GstElement</c> subclass, builds one and drives it
+    /// through a state change, so that the ahead of time compiler has to keep
+    /// the whole subclassing path: the registration, the shared
+    /// <c>class_init</c>, the unmanaged trampoline of the overridden slot and
+    /// the chain-up through the class struct mirrors.
+    /// </summary>
+    /// <returns><see langword="true"/> when the override ran and chained up.</returns>
+    private static bool RunManagedSubclass()
+    {
+        Console.WriteLine($"subclass:    {ManagedElement.RegisteredType.Name}");
+
+        using ManagedElement managed = new();
+
+        StateChangeReturn up = managed.SetState(State.Ready);
+        StateChangeReturn down = managed.SetState(State.Null);
+
+        Console.WriteLine(string.Create(
+            CultureInfo.InvariantCulture,
+            $"override:    {up} then {down}, {managed.Transitions} managed change_state calls"));
+
+        if (up != StateChangeReturn.Success || down != StateChangeReturn.Success || managed.Transitions != 2)
+        {
+            Console.Error.WriteLine("AotSmoke: the managed change_state override did not run as expected.");
+            return false;
+        }
+
+        return true;
     }
 
     [LibraryImport("Gst", EntryPoint = "gst_element_factory_make", StringMarshalling = StringMarshalling.Utf8)]

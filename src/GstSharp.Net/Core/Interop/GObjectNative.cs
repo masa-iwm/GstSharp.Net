@@ -50,6 +50,32 @@ internal static unsafe partial class GObjectNative
     [LibraryImport("GObject", EntryPoint = "g_object_class_find_property")]
     internal static partial nint ObjectClassFindProperty(nint objectClass, byte* name);
 
+    [LibraryImport("GObject", EntryPoint = "g_object_new_with_properties")]
+    internal static partial nint ObjectNewWithProperties(
+        nuint objectType,
+        uint propertyCount,
+        byte** names,
+        GValueNative* values);
+
+    [LibraryImport("GObject", EntryPoint = "g_type_register_static")]
+    internal static partial nuint TypeRegisterStatic(
+        nuint parentType,
+        byte* typeName,
+        GTypeInfo* info,
+        int flags);
+
+    [LibraryImport("GObject", EntryPoint = "g_type_query")]
+    internal static partial void TypeQuery(nuint type, out GTypeQuery query);
+
+    [LibraryImport("GObject", EntryPoint = "g_type_class_peek_parent")]
+    internal static partial nint TypeClassPeekParent(nint gClass);
+
+    [LibraryImport("GObject", EntryPoint = "g_type_class_ref")]
+    internal static partial nint TypeClassRef(nuint type);
+
+    [LibraryImport("GObject", EntryPoint = "g_type_class_unref")]
+    internal static partial void TypeClassUnref(nint gClass);
+
     [LibraryImport("GObject", EntryPoint = "g_type_name")]
     internal static partial nint TypeName(nuint type);
 

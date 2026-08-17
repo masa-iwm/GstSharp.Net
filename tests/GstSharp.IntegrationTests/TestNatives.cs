@@ -98,6 +98,28 @@ internal static unsafe partial class TestNatives
     [LibraryImport("Gst", EntryPoint = "gst_object_unref")]
     internal static partial void ObjectUnref(nint obj);
 
+    /// <summary>Changes the state of an element that has no wrapper.</summary>
+    /// <param name="element">The element to drive.</param>
+    /// <param name="state">The <c>GstState</c> to reach.</param>
+    /// <returns>The <c>GstStateChangeReturn</c> of the change.</returns>
+    /// <remarks>
+    /// The binding drives elements through <c>Gst.Element</c>, and wrapping is
+    /// exactly what the construction window test must not do: it needs a live
+    /// native element whose vfuncs fire while no wrapper is interned, which is
+    /// the state <c>g_object_new</c> leaves an instance in.
+    /// </remarks>
+    [LibraryImport("Gst", EntryPoint = "gst_element_set_state")]
+    internal static partial int ElementSetState(nint element, int state);
+
+    /// <summary>Reads the state of an element that has no wrapper.</summary>
+    /// <param name="element">The element to inspect.</param>
+    /// <param name="state">Receives the current <c>GstState</c>.</param>
+    /// <param name="pending">Receives the pending <c>GstState</c>.</param>
+    /// <param name="timeout">How long to wait, in nanoseconds.</param>
+    /// <returns>The <c>GstStateChangeReturn</c> of the last change.</returns>
+    [LibraryImport("Gst", EntryPoint = "gst_element_get_state")]
+    internal static partial int ElementGetState(nint element, int* state, int* pending, ulong timeout);
+
     /// <summary>Takes a reference of a mini object.</summary>
     /// <param name="miniObject">The mini object to reference.</param>
     /// <returns>The mini object.</returns>

@@ -3,6 +3,7 @@ extern alias gstsharp;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using Gst;
+using Gst.GObject;
 using Gst.Interop;
 using Xunit;
 using Xunit.Abstractions;
@@ -189,6 +190,150 @@ public sealed class AbiProbeTests
         finally
         {
             GstNative.MiniObjectUnref(handle);
+        }
+    }
+
+    /// <summary>
+    /// <c>struct _GTypeInfo</c> of <c>gtype.h</c>: <c>guint16 class_size</c> at
+    /// 0 with 6 bytes of padding, the four function pointers <c>base_init</c>,
+    /// <c>base_finalize</c>, <c>class_init</c> and <c>class_finalize</c> at 8,
+    /// 16, 24 and 32, <c>gconstpointer class_data</c> at 40, the three
+    /// <c>guint16</c> fields <c>instance_size</c> and <c>n_preallocs</c> at 48
+    /// and 50 with 4 bytes of padding, <c>instance_init</c> at 56 and
+    /// <c>value_table</c> at 64, for 72 bytes in total.
+    /// <c>struct _GTypeQuery</c> is <c>GType</c>, <c>const gchar *</c> and two
+    /// <c>guint</c>, for 24.
+    /// </summary>
+    [Fact]
+    public unsafe void TheRegistrationStructsMatchTheHeaderLayout()
+    {
+        GTypeInfo info = default;
+        GTypeQuery query = default;
+
+        _output.WriteLine(Format("GTypeInfo", Unsafe.SizeOf<GTypeInfo>()));
+        _output.WriteLine(Format("GTypeQuery", Unsafe.SizeOf<GTypeQuery>()));
+
+        Assert.Equal(72, Unsafe.SizeOf<GTypeInfo>());
+        Assert.Equal(0L, Offset(&info, &info.ClassSize));
+        Assert.Equal(8L, Offset(&info, &info.BaseInit));
+        Assert.Equal(16L, Offset(&info, &info.BaseFinalize));
+        Assert.Equal(24L, Offset(&info, &info.ClassInit));
+        Assert.Equal(32L, Offset(&info, &info.ClassFinalize));
+        Assert.Equal(40L, Offset(&info, &info.ClassData));
+        Assert.Equal(48L, Offset(&info, &info.InstanceSize));
+        Assert.Equal(50L, Offset(&info, &info.NPreallocs));
+        Assert.Equal(56L, Offset(&info, &info.InstanceInit));
+        Assert.Equal(64L, Offset(&info, &info.ValueTable));
+
+        Assert.Equal(24, Unsafe.SizeOf<GTypeQuery>());
+        Assert.Equal(0L, Offset(&query, &query.Type));
+        Assert.Equal(8L, Offset(&query, &query.TypeName));
+        Assert.Equal(16L, Offset(&query, &query.ClassSize));
+        Assert.Equal(20L, Offset(&query, &query.InstanceSize));
+    }
+
+    /// <summary>
+    /// The class struct chain of <c>GstElement</c>:
+    /// <c>GTypeClass</c> is one <c>GType</c>, so 8 bytes; <c>GObjectClass</c>
+    /// adds <c>construct_properties</c>, eight slots, <c>flags</c>,
+    /// <c>n_construct_properties</c>, <c>pspecs</c>, <c>n_pspecs</c> and
+    /// <c>pdummy[3]</c>, for 136; <c>GstObjectClass</c> adds
+    /// <c>path_string_separator</c>, <c>deep_notify</c> and
+    /// <c>_gst_reserved[4]</c>, for 184; <c>GstElementClass</c> adds five data
+    /// fields (the two <c>guint</c> sized ones pack into one word), sixteen
+    /// slots and <c>_gst_reserved[18]</c>, for 488.
+    /// </summary>
+    [Fact]
+    public unsafe void ElementClassRawMatchesTheHeaderLayout()
+    {
+        ElementClassRaw raw = default;
+
+        _output.WriteLine(Format("GTypeClassRaw", Unsafe.SizeOf<GTypeClassRaw>()));
+        _output.WriteLine(Format("GObjectClassRaw", Unsafe.SizeOf<GObjectClassRaw>()));
+        _output.WriteLine(Format("GstObjectClassRaw", Unsafe.SizeOf<GstObjectClassRaw>()));
+        _output.WriteLine(Format("ElementClassRaw", Unsafe.SizeOf<ElementClassRaw>()));
+
+        Assert.Equal(8, Unsafe.SizeOf<GTypeClassRaw>());
+        Assert.Equal(136, Unsafe.SizeOf<GObjectClassRaw>());
+        Assert.Equal(184, Unsafe.SizeOf<GstObjectClassRaw>());
+        Assert.Equal(488, Unsafe.SizeOf<ElementClassRaw>());
+
+        Assert.Equal(0L, Offset(&raw, &raw.ParentClass));
+        Assert.Equal(184L, Offset(&raw, &raw.Metadata));
+        Assert.Equal(192L, Offset(&raw, &raw.ElementFactory));
+        Assert.Equal(200L, Offset(&raw, &raw.PadTemplates));
+        Assert.Equal(208L, Offset(&raw, &raw.PadTemplateCount));
+        Assert.Equal(212L, Offset(&raw, &raw.PadTemplateCookie));
+        Assert.Equal(216L, Offset(&raw, &raw.PadAdded));
+        Assert.Equal(224L, Offset(&raw, &raw.PadRemoved));
+        Assert.Equal(232L, Offset(&raw, &raw.NoMorePads));
+        Assert.Equal(240L, Offset(&raw, &raw.RequestNewPad));
+        Assert.Equal(248L, Offset(&raw, &raw.ReleasePad));
+        Assert.Equal(256L, Offset(&raw, &raw.GetState));
+        Assert.Equal(264L, Offset(&raw, &raw.SetState));
+        Assert.Equal(272L, Offset(&raw, &raw.ChangeState));
+        Assert.Equal(280L, Offset(&raw, &raw.StateChanged));
+        Assert.Equal(288L, Offset(&raw, &raw.SetBus));
+        Assert.Equal(296L, Offset(&raw, &raw.ProvideClock));
+        Assert.Equal(304L, Offset(&raw, &raw.SetClock));
+        Assert.Equal(312L, Offset(&raw, &raw.SendEvent));
+        Assert.Equal(320L, Offset(&raw, &raw.Query));
+        Assert.Equal(328L, Offset(&raw, &raw.PostMessage));
+        Assert.Equal(336L, Offset(&raw, &raw.SetContext));
+
+        // The offset a subclass declares its override with is measured from the
+        // mirror, so it can never drift from the fields asserted above.
+        Assert.Equal(272, ElementClassRaw.ChangeStateOffset);
+    }
+
+    /// <summary>
+    /// The library is the ground truth for the total size of a class struct:
+    /// <c>g_type_query</c> reports what <c>g_type_register_static</c> would
+    /// allocate, and the mirror has to agree with it exactly.
+    /// </summary>
+    [Fact]
+    public void ElementClassSizeMatchesTheRunningLibrary()
+    {
+        GObjectNative.TypeQuery(Element.GetGType(), out GTypeQuery query);
+
+        _output.WriteLine(FormattableString.Invariant(
+            $"g_type_query(GstElement): class_size={query.ClassSize} instance_size={query.InstanceSize}"));
+
+        Assert.Equal((uint)Unsafe.SizeOf<ElementClassRaw>(), query.ClassSize);
+    }
+
+    /// <summary>
+    /// The <c>change_state</c> slot is where the mirror says it is, proven
+    /// against a class the library filled in itself: <c>GstBin</c> overrides
+    /// <c>change_state</c>, so its slot holds an address of its own, different
+    /// from the one <c>GstElement</c> installs. A wrong offset reads a null or
+    /// an unrelated field and fails one of the two.
+    /// </summary>
+    [Fact]
+    public unsafe void TheChangeStateSlotHoldsWhatTheLibraryPutThere()
+    {
+        nint element = GObjectNative.TypeClassRef(Element.GetGType());
+        nint bin = GObjectNative.TypeClassRef(Bin.GetGType());
+
+        try
+        {
+            Assert.NotEqual(nint.Zero, element);
+            Assert.NotEqual(nint.Zero, bin);
+
+            nint elementSlot = ((ElementClassRaw*)element)->ChangeState;
+            nint binSlot = ((ElementClassRaw*)bin)->ChangeState;
+
+            _output.WriteLine(FormattableString.Invariant(
+                $"change_state: GstElement=0x{elementSlot:x} GstBin=0x{binSlot:x}"));
+
+            Assert.NotEqual(nint.Zero, elementSlot);
+            Assert.NotEqual(nint.Zero, binSlot);
+            Assert.NotEqual(elementSlot, binSlot);
+        }
+        finally
+        {
+            GObjectNative.TypeClassUnref(bin);
+            GObjectNative.TypeClassUnref(element);
         }
     }
 

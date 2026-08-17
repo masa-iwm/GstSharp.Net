@@ -250,6 +250,48 @@ public partial class Object : IDisposable
         where T : Object => FromNative(handle, transfer) as T;
 
     /// <summary>
+    /// Returns the live wrapper of a native object, and never creates one.
+    /// </summary>
+    /// <param name="handle">The object to look up, may be <see cref="nint.Zero"/>.</param>
+    /// <returns>
+    /// The interned wrapper, or <see langword="null"/> when there is none, when
+    /// it was collected, or when it was disposed.
+    /// </returns>
+    /// <remarks>
+    /// <para>
+    /// This is the lookup that vfunc dispatch uses.
+    /// <see cref="FromNative(nint, Transfer)"/> is exactly wrong there: it
+    /// builds a wrapper when none is interned, and inside a vfunc that means
+    /// building one during <c>g_object_new</c>, whose toggle reference would
+    /// collide with the one the constructor is about to install. The doctrine
+    /// is therefore that vfunc dispatch only ever dispatches to an interned
+    /// live wrapper and otherwise chains up, which covers the construction
+    /// window and the window after <see cref="Dispose()"/> with one rule. See
+    /// <c>docs/subclassing.md</c> §4.1.
+    /// </para>
+    /// <para>
+    /// The lookup takes no lock. It runs on whichever thread GStreamer calls a
+    /// vfunc on — a streaming thread, most of the time — and the answer is
+    /// only ever used to decide between dispatching and chaining up, so a
+    /// wrapper that is being disposed concurrently may be seen either way and
+    /// both are correct.
+    /// </para>
+    /// </remarks>
+    internal static Object? TryGetInterned(nint handle)
+    {
+        if (handle == nint.Zero)
+        {
+            return null;
+        }
+
+        return Wrappers.TryGetValue(handle, out ToggleRef? known) &&
+            known.TryGetTarget(out Object? existing) &&
+            !existing.IsDisposed
+                ? existing
+                : null;
+    }
+
+    /// <summary>
     /// Releases the native objects whose wrappers have been collected.
     /// </summary>
     /// <remarks>
