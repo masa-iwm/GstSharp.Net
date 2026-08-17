@@ -1,0 +1,128 @@
+# Manual publish of an already released tag to nuget.org.
+#
+# Nothing publishes to nuget.org automatically. A human runs this workflow and
+# names a tag; the workflow checks the tag out, packs the set under the
+# version the tag names, and pushes it. GitHub Packages and the GitHub
+# release are release.yml's business and stay automatic; this workflow only
+# accepts a tag that release.yml has already turned into a GitHub release,
+# so nothing can reach nuget.org without having passed the full CI matrix.
+#
+# Authentication is Trusted Publishing (OIDC): NuGet/login exchanges this
+# workflow's identity for a short-lived API key, so the repository holds no
+# long-lived nuget.org secret. Two things have to exist for that to work:
+#   * a trusted publishing policy on nuget.org for this repository and this
+#     workflow file (Account settings -> Trusted Publishing),
+#   * the NUGET_USER repository variable, set to the nuget.org profile name
+#     that owns the policy.
+name: Publish to nuget.org
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'The tag to publish (v1.2.3 or v1.2.3-preview.1)'
+        required: true
+        type: string
+
+# One publish at a time, never cancelled: a half pushed set is worse than a
+# slow one.
+concurrency:
+  group: publish-nuget
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: pack and push to nuget.org
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    permissions:
+      contents: read
+      # id-token: write is what lets NuGet/login mint the short-lived key.
+      id-token: write
+
+    steps:
+      # The same shape release.yml enforces: the tag is the single source of
+      # the version.
+      - name: Read the version from the tag
+        id: version
+        run: |
+          tag="${{ inputs.tag }}"
+          if [[ ! "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "::error::'$tag' is not a version tag (expected v1.2.3 or v1.2.3-preview.1)."
+            exit 1
+          fi
+          echo "version=${tag#v}" >> "$GITHUB_OUTPUT"
+          echo "Publishing version ${tag#v}."
+
+      # Only a tag that already carries a GitHub release is accepted: the
+      # release is release.yml's last step, so its existence proves the full
+      # CI matrix passed on this tag.
+      - name: Require the GitHub release of the tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="${{ inputs.tag }}"
+          if ! gh release view "$tag" --repo "${{ github.repository }}" > /dev/null 2>&1; then
+            echo "::error::Tag '$tag' has no GitHub release. Push the tag and let release.yml finish first."
+            exit 1
+          fi
+          echo "Release $tag exists."
+
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.tag }}
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v6
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/Directory.Packages.props', '**/*.csproj', 'global.json') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      - name: Pack
+        run: >
+          dotnet pack GstSharp.Net.slnx
+          --configuration Release
+          --output artifacts/dist
+          -p:Version=${{ steps.version.outputs.version }}
+          -p:ContinuousIntegrationBuild=true
+          -p:RepositoryUrl=https://github.com/${{ github.repository }}
+          -p:RepositoryType=git
+
+      # The same census stance release.yml takes: an unexpected set must fail
+      # the publish, not ship.
+      - name: Check the package count
+        run: |
+          expected=12
+          actual=$(ls artifacts/dist/*.nupkg | wc -l)
+          if [[ "$actual" -ne "$expected" ]]; then
+            echo "::error::Expected $expected packages, found $actual:"
+            ls -l artifacts/dist
+            exit 1
+          fi
+          echo "All $expected packages are present."
+          ls -l artifacts/dist
+
+      - name: Log in to nuget.org
+        id: login
+        uses: NuGet/login@v1
+        with:
+          user: ${{ vars.NUGET_USER }}
+
+      # --skip-duplicate makes a re-run harmless: versions that already made
+      # it stay as they are, the rest are pushed.
+      - name: Push to nuget.org
+        run: >
+          dotnet nuget push "artifacts/dist/*.nupkg"
+          --source https://api.nuget.org/v3/index.json
+          --api-key ${{ steps.login.outputs.NUGET_API_KEY }}
+          --skip-duplicate
+          --no-symbols
