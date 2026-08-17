@@ -36,12 +36,18 @@ namespace GstSharp.IntegrationTests;
 public sealed class RequiresElementFactAttribute : FactAttribute
 {
     /// <summary>
-    /// Initialises the fact with the element factory the test needs.
+    /// Initialises the fact with the element factories the test needs.
     /// </summary>
-    /// <param name="factoryName">
-    /// The name of the factory, for example <c>webrtcbin</c>.
+    /// <param name="factoryNames">
+    /// The names of the factories, for example <c>webrtcbin</c>. Every one of
+    /// them has to exist for the test to run: an element is often usable only
+    /// with the elements it builds its internals from — <c>webrtcbin</c> is
+    /// findable wherever its plugin is installed, but leaves the NULL state
+    /// only where <c>nicesrc</c> and <c>dtlssrtpenc</c> exist to build its
+    /// transports from — and gating on the entry element alone runs the test
+    /// on installations where it can only fail.
     /// </param>
-    public RequiresElementFactAttribute(string factoryName)
+    public RequiresElementFactAttribute(params string[] factoryNames)
     {
         try
         {
@@ -53,12 +59,17 @@ public sealed class RequiresElementFactAttribute : FactAttribute
             return;
         }
 
-        // The factory is a singleton of the plugin registry and is not disposed:
-        // a GObject wrapper stands for the whole process, and giving up its part
-        // in the lifetime of a registry entry is not this attribute's to do.
-        if (Gst.ElementFactory.Find(factoryName) is null)
+        foreach (string factoryName in factoryNames)
         {
-            Skip = $"needs the \"{factoryName}\" element, which the installed GStreamer does not provide";
+            // The factory is a singleton of the plugin registry and is not
+            // disposed: a GObject wrapper stands for the whole process, and
+            // giving up its part in the lifetime of a registry entry is not
+            // this attribute's to do.
+            if (Gst.ElementFactory.Find(factoryName) is null)
+            {
+                Skip = $"needs the \"{factoryName}\" element, which the installed GStreamer does not provide";
+                return;
+            }
         }
     }
 }

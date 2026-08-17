@@ -68,7 +68,7 @@ public sealed class WebRTCOfferTests
     /// <c>create-offer</c> answers with a session description, and the binding
     /// reads it out of the promise reply.
     /// </summary>
-    [RequiresElementFact("webrtcbin")]
+    [RequiresElementFact("webrtcbin", "nicesrc", "dtlssrtpenc")]
     public void CreateOfferAnswersWithASessionDescriptionInItsPromiseReply()
     {
         using Pipeline pipeline = Pipeline.New("webrtc-offer");
@@ -149,7 +149,7 @@ public sealed class WebRTCOfferTests
     /// registration, measured.
     /// </para>
     /// </remarks>
-    [RequiresElementFact("webrtcbin")]
+    [RequiresElementFact("webrtcbin", "nicesrc", "dtlssrtpenc")]
     public void ADataChannelRefusesABinarySendBeforeItIsOpenAndCarriesAMessageHandler()
     {
         using Pipeline pipeline = Pipeline.New("webrtc-data");

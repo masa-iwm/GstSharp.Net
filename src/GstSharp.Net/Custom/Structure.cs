@@ -187,7 +187,7 @@ public sealed unsafe partial class Structure
 
         nint structure = Handle;
 
-        if (!IsWritable())
+        if (!IsMutableOrUnanswerable())
         {
             throw new InvalidOperationException(
                 $"The \"{GetName()}\" structure is not mutable, so \"{fieldName}\" cannot be written. " +
@@ -202,6 +202,50 @@ public sealed unsafe partial class Structure
         // The handle was read before the call, so nothing keeps this wrapper
         // alive across it on its own.
         GC.KeepAlive(this);
+    }
+
+    /// <summary>
+    /// Answers whether the mutability question can be asked and, where it can,
+    /// what the answer is: 0 while unknown, 1 when the entry point resolves,
+    /// -1 when the installed library predates it.
+    /// </summary>
+    private static int _isWritableAvailability;
+
+    /// <summary>
+    /// Tests whether the structure is mutable, on the installations that can
+    /// say.
+    /// </summary>
+    /// <returns>
+    /// <see langword="false"/> only when the installed library answered that
+    /// the structure is frozen.
+    /// </returns>
+    /// <remarks>
+    /// <c>gst_structure_is_writable</c> was added in 1.28 and the binding
+    /// supports 1.24, so the guard is asked once and remembered. Where the
+    /// entry point does not exist the guard passes: every structure a wrapper
+    /// of this binding holds is a parentless copy and therefore mutable, so on
+    /// an older installation the misuse the guard exists for surfaces the way
+    /// it does in C — a GLib warning and a write that did not happen — instead
+    /// of an exception the library cannot help to raise.
+    /// </remarks>
+    private bool IsMutableOrUnanswerable()
+    {
+        if (Volatile.Read(ref _isWritableAvailability) < 0)
+        {
+            return true;
+        }
+
+        try
+        {
+            bool result = IsWritable();
+            Volatile.Write(ref _isWritableAvailability, 1);
+            return result;
+        }
+        catch (EntryPointNotFoundException)
+        {
+            Volatile.Write(ref _isWritableAvailability, -1);
+            return true;
+        }
     }
 
     /// <summary>The <c>gst_structure_get_value</c> entry point.</summary>
