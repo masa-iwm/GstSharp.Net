@@ -3,6 +3,23 @@ namespace Gst;
 public sealed partial class Caps
 {
     /// <summary>
+    /// Wraps caps that GStreamer keeps owning, for the length of one call.
+    /// </summary>
+    /// <param name="handle">The caps that are lent to managed code.</param>
+    /// <remarks>
+    /// This is how a vfunc override receives <c>transfer none</c> caps. The
+    /// wrapper takes no reference of its own and disposing it only detaches it,
+    /// so caps that outlive the call throw instead of releasing a reference
+    /// that was never taken. See <see cref="Gst.Interop.Borrowed"/>.
+    /// </remarks>
+    internal static Caps Borrow(nint handle) => new(new Gst.Interop.Borrowed(handle));
+
+    private Caps(Gst.Interop.Borrowed borrowed)
+        : base(borrowed)
+    {
+    }
+
+    /// <summary>
     /// Makes the caps writable, copying them when somebody else holds a
     /// reference to them, and returns the wrapper to keep using.
     /// </summary>

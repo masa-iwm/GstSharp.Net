@@ -30,6 +30,8 @@ namespace Gst;
 /// </remarks>
 public abstract class MiniObject : IDisposable
 {
+    private readonly bool _borrowed;
+
     private nint _handle;
 
     /// <summary>
@@ -65,6 +67,44 @@ public abstract class MiniObject : IDisposable
         // without bound. The call costs two volatile reads when the queue is
         // empty, which it normally is.
         Gst.GObject.Object.DrainPendingReleases();
+    }
+
+    /// <summary>
+    /// Wraps a native mini object that the caller keeps owning, for the length
+    /// of one call.
+    /// </summary>
+    /// <param name="borrowed">The mini object that is lent to managed code.</param>
+    /// <remarks>
+    /// <para>
+    /// See <see cref="Borrowed"/> for why the borrow is a real one rather than
+    /// a reference of its own: an in-place transform receives a buffer that
+    /// GStreamer has already made writable, and a second reference would take
+    /// that away.
+    /// </para>
+    /// <para>
+    /// Nothing is queued and nothing is drained here. This constructor runs per
+    /// buffer on a streaming thread, and the releases of collected wrappers are
+    /// drained by every other path that touches a wrapper; performing them from
+    /// inside a vfunc would put an unbounded amount of unrelated work into the
+    /// data path.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// The lent handle is <see cref="nint.Zero"/>.
+    /// </exception>
+    internal MiniObject(Borrowed borrowed)
+    {
+        if (borrowed.Handle == nint.Zero)
+        {
+            throw new ArgumentOutOfRangeException(nameof(borrowed), "A mini object handle must not be null.");
+        }
+
+        _borrowed = true;
+        _handle = borrowed.Handle;
+
+        // There is no reference to release, so there is nothing for the
+        // finalizer to do and no reason to put the wrapper on its queue.
+        GC.SuppressFinalize(this);
     }
 
     /// <summary>
@@ -142,6 +182,20 @@ public abstract class MiniObject : IDisposable
     protected nint MakeWritableHandle()
     {
         nint current = Handle;
+
+        if (_borrowed)
+        {
+            // gst_mini_object_make_writable consumes the reference it is given,
+            // and a borrowed wrapper has none: on a shared object it would copy
+            // and then release the reference of whoever lent the object. A
+            // borrowed object is handed out writable when the vfunc it belongs
+            // to promises that, and needs no call at all.
+            throw new InvalidOperationException(
+                "This wrapper borrows a mini object for the length of one call, so it cannot make it writable: " +
+                "the call would release a reference the wrapper does not own. A buffer that an in place vfunc " +
+                "receives is writable already; copy the object to keep one.");
+        }
+
         nint writable = GstNative.MiniObjectMakeWritable(current);
 
         if (writable != current)
@@ -168,7 +222,12 @@ public abstract class MiniObject : IDisposable
     protected virtual void Dispose(bool disposing)
     {
         nint handle = Interlocked.Exchange(ref _handle, nint.Zero);
-        if (handle != nint.Zero)
+
+        // A borrowed wrapper owns nothing, so disposing it only detaches it.
+        // That is what makes a stray using declaration around a vfunc argument
+        // harmless, and what makes a wrapper that outlives the call throw
+        // instead of touching an object somebody else owns.
+        if (handle != nint.Zero && !_borrowed)
         {
             GstNative.MiniObjectUnref(handle);
         }

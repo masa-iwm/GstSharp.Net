@@ -1,10 +1,11 @@
 # GObject subclassing in GstSharp.Net — design
 
-Status: **approved design, written before any code**; implementation follows
-the staged plan in §10.
+Status: **approved design**; stages 0 and 1 of §10 have shipped, stages 2 and
+3 have not. §11 is the guide to what shipped; everything before it is the
+design the implementation follows.
 Scope: class-struct ABI, vfunc overrides, managed type registration.
 Audience: contributors to the runtime (`src/GstSharp.Net/Core`) and the
-generator (`generator/GstSharp.Generator`).
+generator (`generator/GstSharp.Generator`); §11 is for applications.
 
 ---
 
@@ -363,6 +364,15 @@ transfer annotations, e.g. `change_state` takes
 * MiniObjects (`GstBuffer` in `BaseSink.render`, `GstQuery` in `query`):
   wrap with the existing MiniObject borrow-with-ref doctrine; transfer-full
   parameters (a vfunc that consumes) adopt.
+  **Amended in stage 1**: borrow-with-ref does not work for a vfunc that has
+  to *write* to what it is given. `gst_buffer_map_range` refuses a write
+  mapping on a buffer that anybody else holds, so the reference the wrapper
+  would take makes `BaseTransform.transform_ip` — whose buffer GStreamer has
+  already made writable — unwritable. Transfer-none mini object parameters are
+  therefore wrapped by a true borrow (`Gst.Interop.Borrowed`): no reference is
+  taken, and disposing the wrapper only detaches it, so a wrapper that outlives
+  the call throws instead of releasing what it never owned. Transfer-full
+  parameters adopt, unchanged.
 * Out parameters (`get_state`'s `GstState *state, *pending`): write-back
   through pointers, the same plan shapes `MarshalPlanner` already produces
   for generated methods, mirrored.
@@ -770,6 +780,139 @@ registered into `TypeRegistry` (needs the new
 installation; `gst_element_register` for by-name construction (prerequisite
 for GES custom sources and for plugin-style use); then the GES wave can
 rely on all of it.
+
+---
+
+## 11. Using it (stage 1)
+
+What shipped is a **closed set of subclassable base classes**: `Gst.Element`,
+`Gst.Bin`, `Gst.Base.BaseSrc`, `Gst.Base.PushSrc`, `Gst.Base.BaseSink` and
+`Gst.Base.BaseTransform`. Each one carries three things — a `DefineSubclass`
+that registers a managed type, a `protected` constructor that builds instances
+of it, and, per bound vfunc, an `OnX` virtual with a matching `ChainUpX`.
+
+### A source in thirty lines
+
+```csharp
+using Gst;
+using Gst.Base;
+using Gst.GObject;
+
+internal sealed class CounterSrc : PushSrc
+{
+    // Templates are built BEFORE the registration and only added inside it,
+    // so this field has to be declared before the one below.
+    private static readonly PadTemplate SrcTemplate = PadTemplate.New(
+        "src", PadDirection.Src, PadPresence.Always, Caps.NewAny())!;
+
+    private static readonly SubclassType Definition = DefineSubclass(
+        "MyAppCounterSrc",          // the GType name, unique in the process
+        ConfigureClass,             // runs inside class_init
+        CreateOverride,             // one declaration per OnX override
+        StartOverride);
+
+    private int _produced;
+
+    public CounterSrc() : base(Definition.NewInstance()) { }
+
+    protected override bool OnStart() { _produced = 0; return ChainUpStart(); }
+
+    protected override FlowReturn OnCreate(out Gst.Buffer? buffer)
+    {
+        if (_produced == 10) { buffer = null; return FlowReturn.Eos; }
+        buffer = Gst.Buffer.NewMemdup([(byte)_produced++]);
+        return FlowReturn.Ok;
+    }
+
+    private static void ConfigureClass(ClassConfig config)
+    {
+        config.SetMetadata("Counter source", "Source/Testing", "Counts up", "me");
+        config.AddPadTemplate(SrcTemplate);
+    }
+}
+```
+
+`new CounterSrc()` is then an ordinary element: add it to a `Pipeline`, link it,
+set the state. `GstSharp.Initialize()` (or `GstBase.Initialize()`) has to have
+run before the registration, which happens the first time `Definition` is
+touched.
+
+### The rules the surface enforces
+
+* **Declaring and overriding are two statements of the same fact.** Only
+  declared slots are patched, because GStreamer reads slot *presence* (§4.2);
+  `PushSrc.CreateOverride` is what says "this element produces its own
+  buffers", `BaseTransform.TransformIpOverride` what says "this element
+  rewrites buffers in place". A declaration without an override costs a managed
+  transition that chains up — harmless except on those presence-sensitive
+  slots. An override without a declaration is never called. The analyzer that
+  checks the pairing is stage 2.
+* **A slot belongs to the class that hands it out.** Passing
+  `BaseSink.RenderOverride` to `PushSrc.DefineSubclass` is refused: the offset
+  only means anything inside `GstBaseSinkClass`.
+* **Pad templates are mandatory for the GstBase bases** — `src` for `BaseSrc`
+  and `PushSrc`, `sink` for `BaseSink`, both for `BaseTransform` — because
+  their instance init creates the pads from them. `DefineSubclass` checks for
+  them once the class is initialised and fails with a message rather than
+  letting `g_object_new` produce a half built element.
+* **Build pad templates outside `class_init`.** It runs under the GObject type
+  lock, and creating a wrapper there would take the interning lock of the
+  binding under it — the reverse of the order every other path uses (§9,
+  risk 2). `ClassConfig` therefore only adds templates that already exist.
+* **Mini objects follow the C annotation.** A `transfer none` parameter — the
+  buffer of `OnRender`, the caps of `OnSetCaps`, the buffer of `OnTransformIp`
+  — is *borrowed*: the wrapper takes no reference and is released when the
+  override returns, so keeping one means copying it. That is also what keeps
+  the buffer of `OnTransformIp` writable, which a reference of our own would
+  not. A `transfer full` parameter — the message of `Bin.OnHandleMessage` — is
+  owned by the override, and chaining up passes it on.
+* **Exceptions never reach a native frame.** Each slot answers its documented
+  error value and reports the exception through
+  `GstSharp.UnhandledCallbackException`: `StateChangeReturn.Failure` for
+  `OnChangeState`, `FlowReturn.Error` for `OnCreate`, `OnRender`, `OnPreroll`
+  and `OnTransformIp`, `false` for the lifecycle and caps slots, and a dropped
+  message for `OnHandleMessage`. The chain-up does not run afterwards.
+
+### The vfuncs that are bound
+
+| Base | Slots |
+| --- | --- |
+| `Gst.Element` | `change_state` |
+| `Gst.Bin` | `handle_message` |
+| `Gst.Base.BaseSrc` | `start`, `stop`, `is_seekable`, `set_caps` |
+| `Gst.Base.PushSrc` | `create` |
+| `Gst.Base.BaseSink` | `start`, `stop`, `set_caps`, `preroll`, `render` |
+| `Gst.Base.BaseTransform` | `start`, `stop`, `set_caps`, `transform_ip` |
+
+Everything else is stage 2, and the omissions that will be missed first are
+`unlock` / `unlock_stop` (so a managed source must not block in `OnCreate`),
+`BaseSrc.fill` (filling a buffer the pipeline provided), `query` and `event`,
+`BaseTransform.transform` with the caps negotiation slots that an out of place
+filter needs, and `request_new_pad`.
+
+### The limits of stage 1
+
+* **A managed subclass cannot be derived from by another managed subclass.**
+  One level only: the chain-up resolves the parent class of the registration,
+  and a managed parent's slot would be the same trampoline (§4.4). The surface
+  cannot express it — `DefineSubclass` always derives from the wrapped native
+  class it is called on.
+* **C#-initiated construction only.** `new CounterSrc()` works;
+  `gst_element_factory_make("mycountersrc")` does not exist, and neither does
+  anything else that creates the instance natively — GES instantiating a type
+  by name, a `gst_parse_launch` description naming it, a plugin. A natively
+  created instance of a managed type would be wrapped as the closest registered
+  ancestor, `GstSharp.TypeFallback` would report it once, and its vfuncs would
+  chain up for ever: **functional never**. Closing this is stage 3 (§5.4).
+* **No properties and no signals** on managed types, so a managed element
+  cannot be configured with `g_object_set` or from a pipeline description.
+* **No `dispose` or `finalize` override**, by design (§1): teardown belongs in
+  the `READY` to `NULL` transition of `OnChangeState`, or in `OnStop`.
+* **Disposing a managed element that GStreamer still drives** does not crash,
+  but the element silently loses its managed behaviour: the wrapper is gone, so
+  every vfunc chains up. The ordinary rule of
+  [`docs/ownership.md`](ownership.md) applies — do not dispose GObject
+  wrappers.
 
 ---
 

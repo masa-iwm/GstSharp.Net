@@ -48,6 +48,17 @@ Release is synchronous. `Dispose` unrefs on the calling thread and the
 finalizer unrefs directly; nothing is ever deferred through a GLib timeout or
 an idle callback.
 
+**One kind of wrapper owns nothing: the one a vfunc override is given.** A
+buffer handed to `BaseSink.OnRender` or `BaseTransform.OnTransformIp`, and the
+caps handed to an `OnSetCaps`, are *borrowed* for the length of the call —
+GStreamer keeps owning them, the wrapper takes no reference of its own, and it
+is released when the override returns. Using one afterwards throws
+`ObjectDisposedException` rather than touching an object somebody else owns, so
+keeping the data means copying it. Disposing such a wrapper early is harmless,
+and `MakeWritable` on one throws: it would release a reference the wrapper does
+not own. See
+[`docs/subclassing.md`](subclassing.md#11-using-it-stage-1).
+
 ## GObject wrappers
 
 A `GObject` wrapper is **interned**. Every lookup of the same native object
