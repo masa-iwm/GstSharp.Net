@@ -183,9 +183,26 @@ using IDisposable subscription = pipeline.GetBus().SubscribeSyncDrop(
 Every message reaches the handler in the thread that posted it — a streaming
 thread, while that thread is blocked in the post, so the handler has to be quick
 and safe there — and the binding then drops it, so the queue stays empty.
-Disposing the subscription takes the handler off. There is one sync handler per
-bus and this takes it, so it replaces `EnableSyncMessageEmission` and any handler
-installed with `SetSyncHandler`, and disposing clears whatever is installed at
-that moment rather than putting the previous one back. The message wrapper the
+Disposing the subscription takes the handler off. The message wrapper the
 handler is given is released when the handler returns; `Message.Copy` is how to
 keep one.
+
+There is one sync handler per bus and this takes it. **A second
+`SubscribeSyncDrop` on a bus that still carries an undisposed subscription
+throws `InvalidOperationException`** rather than silencing the first subscriber:
+dispose the one that is live, or fan out from inside the one handler. The raw
+`SetSyncHandler` and `ClearSyncHandler` mirror `gst_bus_set_sync_handler` and
+keep its swap semantics untouched, so they are not guarded — calling either of
+them (or `EnableSyncMessageEmission`, whose handler is installed the same way)
+while a subscription is live replaces the handler on the bus and the subscriber
+stops seeing messages, while the subscription object still holds the slot until
+it is disposed. Disposing it clears whatever is installed at that moment rather
+than putting the previous handler back, because C offers no exchange.
+
+A subscriber that throws is a leak if the binding passes the message on, since
+there is no queue consumer behind a subscription to take it off again, so
+`SubscribeSyncDrop` reports the exception through `GstSharp.UnhandledCallbackException`
+and drops the message anyway. That is the one deliberate difference from
+`SetSyncHandler`, whose handler is answered `Pass` when it throws: there the
+queue is still read by somebody, and swallowing an error or an end-of-stream
+message would hang the application waiting for it.

@@ -380,7 +380,7 @@ public sealed unsafe class BusSyncHandlerTests
 
         bus.SetSyncHandler((_, message) =>
         {
-            kept = message?.Copy();
+            kept = message.Copy();
             return BusSyncReply.Drop;
         });
 
@@ -443,7 +443,10 @@ public sealed unsafe class BusSyncHandlerTests
 
         IDisposable subscription = bus.SubscribeSyncDrop((_, message) =>
         {
-            if (message?.Type == MessageType.Eos)
+            // The arguments are not nullable: the C contract promises both, and
+            // the trampoline reports a broken promise through the trap instead
+            // of handing the subscriber a null.
+            if (message.Type == MessageType.Eos)
             {
                 Interlocked.Increment(ref seen);
             }
@@ -489,10 +492,18 @@ public sealed unsafe class BusSyncHandlerTests
     }
 
     /// <summary>
-    /// A subscription is the sync handler of the bus, so it replaces the one
-    /// that is installed and disposing it clears whatever is installed. This is
-    /// the caveat the documentation states, measured.
+    /// A subscription is the sync handler of the bus, so it replaces the raw
+    /// handler that is installed and disposing it clears whatever is installed.
+    /// This is the caveat the documentation states, measured.
     /// </summary>
+    /// <remarks>
+    /// Only the subscription is guarded against being silenced: a second
+    /// <see cref="Bus.SubscribeSyncDrop"/> throws. The raw install keeps the
+    /// swap semantics of <c>gst_bus_set_sync_handler</c> in both directions,
+    /// which is what this test and
+    /// <see cref="ARawInstallWhileSubscribedWinsAndTheSlotStaysClaimed"/>
+    /// measure.
+    /// </remarks>
     [Fact]
     public void ASyncDropSubscriptionTakesTheOneSyncHandlerOfTheBus()
     {
@@ -528,11 +539,28 @@ public sealed unsafe class BusSyncHandlerTests
     }
 
     /// <summary>
-    /// A handler of a subscription that throws is trapped the way any sync
-    /// handler is, and the message it failed on takes the ordinary route.
+    /// A handler of a subscription that throws is trapped and the message it
+    /// failed on is dropped all the same, rather than being passed to a queue
+    /// that the subscription is the reason nobody reads.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This is the one place the subscription departs from
+    /// <see cref="Bus.SetSyncHandler"/>, which answers
+    /// <see cref="BusSyncReply.Pass"/> when a handler throws so that whoever
+    /// reads the queue still sees the message. Behind a subscription there is
+    /// nobody: passing would leave the message in the queue for the lifetime of
+    /// the pipeline, so a handler that fails on every message would leak one
+    /// message per message.
+    /// </para>
+    /// <para>
+    /// The weak reference is what says the message was really released and not
+    /// merely kept out of the queue. It holds nothing itself; it reports the
+    /// moment the message is destroyed.
+    /// </para>
+    /// </remarks>
     [Fact]
-    public void AFailingSubscriptionHandlerIsTrappedAndTheMessageStillArrives()
+    public unsafe void AFailingSubscriptionHandlerIsTrappedAndItsMessageIsDroppedAnyway()
     {
         using Bus bus = Bus.New();
 
@@ -547,16 +575,52 @@ public sealed unsafe class BusSyncHandlerTests
 
         Gst.Interop.ExceptionTrap.UnhandledException += OnFailure;
 
+        Volatile.Write(ref _freed, 0);
+
+        int seen = 0;
         IDisposable subscription = bus.SubscribeSyncDrop((_, _) =>
-            throw new InvalidOperationException("The subscription of the test throws on purpose."));
+        {
+            if (Interlocked.Increment(ref seen) == 1)
+            {
+                throw new InvalidOperationException("The subscription of the test throws on purpose.");
+            }
+        });
 
         try
         {
+            Message message = Message.NewEos(null);
+            nint handle = message.Handle;
+
+            TestNatives.MiniObjectWeakRef(
+                handle,
+                (nint)(delegate* unmanaged[Cdecl]<nint, nint, void>)&OnFreed,
+                nint.Zero);
+
+            // The reference the post takes over; the wrapper gives back the one
+            // the message was created with.
+            TestNatives.MiniObjectRef(handle);
+            message.Dispose();
+
+            Assert.NotEqual(0, TestNatives.BusPost(bus.Handle, handle));
+
+            Assert.Equal(1, Volatile.Read(ref seen));
+
+            // The message the handler failed on never reached the queue.
+            Assert.Null(bus.Pop());
+            Assert.False(bus.HavePending());
+
+            // And it was released rather than held: the drop gave back the
+            // reference of the poster exactly as it does for a handler that
+            // returned. A binding that passed instead reads 0 here and finds a
+            // message on the queue above.
+            Assert.Equal(1, Volatile.Read(ref _freed));
+
+            // One failure does not end the subscription: the next message is
+            // delivered and dropped as before.
             Post(bus);
 
-            using Message? popped = bus.Pop();
-            Assert.NotNull(popped);
-            Assert.Equal(MessageType.Eos, popped.Type);
+            Assert.Equal(2, Volatile.Read(ref seen));
+            Assert.Null(bus.Pop());
         }
         finally
         {
@@ -569,6 +633,140 @@ public sealed unsafe class BusSyncHandlerTests
             Assert.Single(failures);
             Assert.IsType<InvalidOperationException>(failures[0]);
         }
+    }
+
+    /// <summary>
+    /// A second subscription on a bus that still carries one is refused rather
+    /// than silently taking the handler off the first subscriber.
+    /// </summary>
+    /// <remarks>
+    /// This used to be silent: the second install won and the first subscriber
+    /// stopped seeing messages with nothing said anywhere. A subscription is
+    /// the whole message stream of a bus, so losing it is not a detail.
+    /// </remarks>
+    [Fact]
+    public void ASecondSyncDropSubscriptionThrowsRatherThanSilencingTheFirst()
+    {
+        using Bus bus = Bus.New();
+
+        int first = 0;
+        int second = 0;
+
+        IDisposable subscription = bus.SubscribeSyncDrop((_, _) => Interlocked.Increment(ref first));
+
+        try
+        {
+            InvalidOperationException failure = Assert.Throws<InvalidOperationException>(
+                () => bus.SubscribeSyncDrop((_, _) => Interlocked.Increment(ref second)));
+
+            // The message names the way out rather than only the problem.
+            Assert.Contains("Dispose", failure.Message, StringComparison.Ordinal);
+
+            // The refusal changed nothing: the first subscriber is still the
+            // handler of the bus and the queue still stays empty.
+            Post(bus);
+
+            Assert.Equal(1, Volatile.Read(ref first));
+            Assert.Equal(0, Volatile.Read(ref second));
+            Assert.Null(bus.Pop());
+        }
+        finally
+        {
+            subscription.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Disposing the subscription gives the slot back, so the bus takes another
+    /// one. This is the way out the refusal names.
+    /// </summary>
+    [Fact]
+    public void DisposingASubscriptionLetsTheBusBeSubscribedAgain()
+    {
+        using Bus bus = Bus.New();
+
+        int first = 0;
+        IDisposable subscription = bus.SubscribeSyncDrop((_, _) => Interlocked.Increment(ref first));
+
+        Post(bus);
+        Assert.Equal(1, Volatile.Read(ref first));
+
+        subscription.Dispose();
+
+        int second = 0;
+        using IDisposable resubscribed = bus.SubscribeSyncDrop((_, _) => Interlocked.Increment(ref second));
+
+        Post(bus);
+
+        // The second subscription sees the message and the first one does not,
+        // and the queue is empty either way.
+        Assert.Equal(1, Volatile.Read(ref first));
+        Assert.Equal(1, Volatile.Read(ref second));
+        Assert.Null(bus.Pop());
+    }
+
+    /// <summary>
+    /// The cross interaction, stated honestly: a raw install while a
+    /// subscription is live wins on the bus, the subscription keeps the slot
+    /// until it is disposed, and disposing it clears the raw handler rather
+    /// than restoring anything.
+    /// </summary>
+    /// <remarks>
+    /// <see cref="Bus.SetSyncHandler"/> mirrors <c>gst_bus_set_sync_handler</c>
+    /// and keeps its swap semantics, so it is not guarded. What the guard
+    /// covers is the subscription slot, and the slot is the subscription
+    /// object's until it is disposed whatever else happened to the bus in the
+    /// meantime.
+    /// </remarks>
+    [Fact]
+    public void ARawInstallWhileSubscribedWinsAndTheSlotStaysClaimed()
+    {
+        using Bus bus = Bus.New();
+
+        int subscribed = 0;
+        int raw = 0;
+
+        IDisposable subscription = bus.SubscribeSyncDrop((_, _) => Interlocked.Increment(ref subscribed));
+
+        try
+        {
+            bus.SetSyncHandler((_, _) =>
+            {
+                Interlocked.Increment(ref raw);
+                return BusSyncReply.Drop;
+            });
+
+            Post(bus);
+
+            // The raw install won on the bus: the subscriber sees nothing more.
+            Assert.Equal(0, Volatile.Read(ref subscribed));
+            Assert.Equal(1, Volatile.Read(ref raw));
+
+            // And it did not free the slot, so subscribing again still throws.
+            Assert.Throws<InvalidOperationException>(() => bus.SubscribeSyncDrop((_, _) => { }));
+        }
+        finally
+        {
+            subscription.Dispose();
+        }
+
+        // Disposing cleared whatever was installed at that moment, which is the
+        // raw handler, and put nothing back.
+        Post(bus);
+
+        Assert.Equal(0, Volatile.Read(ref subscribed));
+        Assert.Equal(1, Volatile.Read(ref raw));
+
+        using Message? popped = bus.Pop();
+        Assert.NotNull(popped);
+        Assert.Equal(MessageType.Eos, popped.Type);
+
+        // The slot came back with the disposal, so the bus takes a subscription
+        // again.
+        using IDisposable resubscribed = bus.SubscribeSyncDrop((_, _) => Interlocked.Increment(ref subscribed));
+
+        Post(bus);
+        Assert.Equal(1, Volatile.Read(ref subscribed));
     }
 
     /// <summary>
