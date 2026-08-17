@@ -19,6 +19,29 @@ public abstract class Boxed : IDisposable
     /// <see cref="Transfer.Full"/> when the caller hands the value over,
     /// <see cref="Transfer.None"/> to adopt a copy of it.
     /// </param>
+    /// <remarks>
+    /// <para>
+    /// This is the constructor a wrapper class chains to, including one in a
+    /// binding module outside this repository; see
+    /// <see href="https://github.com/masa-iwm/GstSharp.Net/blob/main/docs/modules.md">docs/modules.md</see>.
+    /// Boxed wrappers are not interned either, and unlike a mini object a boxed
+    /// value is not reference counted at all: <see cref="Transfer.None"/> makes
+    /// this take a <c>g_boxed_copy</c>, so the wrapper always owns a value that
+    /// is nobody else's, and disposing it frees that value.
+    /// </para>
+    /// <para>
+    /// <b>The type has to be the boxed type of the value.</b> It is not read
+    /// back from the value — a boxed value is a plain structure whose first word
+    /// is a field rather than a pointer to a class — so it is what the copy and
+    /// the free are dispatched through, and a wrong one corrupts memory rather
+    /// than failing. It comes from the <c>get_type</c> function of the type the
+    /// module binds.
+    /// </para>
+    /// <para>
+    /// <b>Its owner has to dispose it</b>, exactly as for a mini object, and for
+    /// the same reason a module must not expose one from a property.
+    /// </para>
+    /// </remarks>
     protected Boxed(nint handle, GType boxedType, Transfer transfer)
     {
         BoxedType = boxedType;

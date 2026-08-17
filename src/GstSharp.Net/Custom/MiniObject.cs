@@ -42,6 +42,33 @@ public abstract class MiniObject : IDisposable
     /// <see cref="Transfer.Full"/> when the caller hands a reference over,
     /// anything else when the wrapper has to take its own.
     /// </param>
+    /// <remarks>
+    /// <para>
+    /// This is the constructor a wrapper class chains to, including one in a
+    /// binding module outside this repository; see
+    /// <see href="https://github.com/masa-iwm/GstSharp.Net/blob/main/docs/modules.md">docs/modules.md</see>.
+    /// The contract is not the one <see cref="Gst.GObject.Object"/> imposes:
+    /// mini objects are <b>not interned</b>, so constructing a second wrapper
+    /// for the same native object is legal and simply produces a second
+    /// reference. Nothing throws, and nothing is shared between the two.
+    /// </para>
+    /// <para>
+    /// <b>Every wrapper this builds owns one reference, and its owner has to
+    /// dispose it.</b> That is the whole of the mini object rule of
+    /// <see href="https://github.com/masa-iwm/GstSharp.Net/blob/main/docs/ownership.md">docs/ownership.md</see>,
+    /// and it is why a module must not expose an owning wrapper from a property:
+    /// a property would hand out a fresh reference per read in the one place the
+    /// <c>GST0001</c> analyzer cannot watch. Name such a member
+    /// <c>GetSomething()</c>.
+    /// </para>
+    /// <para>
+    /// <b>Pass the transfer the C function documented.</b> A
+    /// <c>transfer none</c> return has to arrive as <see cref="Transfer.None"/>
+    /// so that this takes a reference of its own; a <c>transfer full</c> return
+    /// as <see cref="Transfer.Full"/> so that the reference the call handed over
+    /// is adopted rather than doubled.
+    /// </para>
+    /// </remarks>
     /// <exception cref="ArgumentOutOfRangeException">
     /// <paramref name="handle"/> is <see cref="nint.Zero"/>.
     /// </exception>

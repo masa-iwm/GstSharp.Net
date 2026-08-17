@@ -20,6 +20,13 @@ public class InitiallyUnowned : Object
     /// </summary>
     /// <param name="handle">The object to wrap.</param>
     /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
+    /// <remarks>
+    /// This is the constructor a wrapper of a <c>GstObject</c> derived type
+    /// chains to — every <c>GstObject</c> has floating references — and the
+    /// obligations of <see cref="Object(nint, Transfer)"/> apply unchanged. The
+    /// floating reference itself needs nothing from the caller: it is sunk when
+    /// there is one, whichever <see cref="Transfer"/> the call documented.
+    /// </remarks>
     protected InitiallyUnowned(nint handle, Transfer transfer)
         : base(handle, transfer)
     {

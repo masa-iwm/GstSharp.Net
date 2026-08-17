@@ -79,6 +79,39 @@ public partial class Object : IDisposable
     /// floating reference is sunk in both cases, because the wrapper always
     /// ends up owning a real reference.
     /// </param>
+    /// <remarks>
+    /// <para>
+    /// This is the constructor a wrapper class chains to, including one in a
+    /// binding module outside this repository; see
+    /// <see href="https://github.com/masa-iwm/GstSharp.Net/blob/main/docs/modules.md">docs/modules.md</see>.
+    /// Reaching it means accepting two obligations, because the interning table
+    /// this constructor writes to is what the whole GObject lifetime rests on.
+    /// </para>
+    /// <para>
+    /// <b>Call it from a type-registry factory, never from application code.</b>
+    /// <see cref="FromNative(nint, Transfer)"/> is the supported way to turn a
+    /// handle into a wrapper: it hands out the interned wrapper when there is
+    /// one and only builds a new one when there is not, which is precisely the
+    /// decision a raw constructor call skips. A derived wrapper therefore
+    /// exposes a <c>CreateWrapper</c> factory to
+    /// <see cref="Gst.Interop.ModuleTypeEntry"/> and keeps its own constructor
+    /// out of the public surface; a public factory of its own, if it has one,
+    /// goes through <see cref="FromNative(nint, Transfer)"/> as well.
+    /// </para>
+    /// <para>
+    /// <b>Pass the transfer the C function documented.</b> The wrapper ends up
+    /// owning one reference either way — this takes one when
+    /// <paramref name="transfer"/> is not <see cref="Transfer.Full"/> — so
+    /// getting it wrong leaks the object or releases a reference that was never
+    /// handed over.
+    /// </para>
+    /// <para>
+    /// Wrapping a handle that a live wrapper already holds throws rather than
+    /// producing a second wrapper. Two toggle references on one object suspend
+    /// each other's toggling until one is removed, so the failure is loud here
+    /// instead of being a lifetime bug much later.
+    /// </para>
+    /// </remarks>
     /// <exception cref="ArgumentOutOfRangeException">
     /// <paramref name="handle"/> is <see cref="nint.Zero"/>.
     /// </exception>
