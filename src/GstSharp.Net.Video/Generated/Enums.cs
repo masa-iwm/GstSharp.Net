@@ -238,6 +238,9 @@ public enum NavigationEventType
     /// Use gst_navigation_event_parse_mouse_button_event() to extract the details
     /// from the event.
     /// </summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.26.</para>
+    /// </remarks>
     MouseDoubleClick = 13,
 }
 
@@ -1478,27 +1481,51 @@ public enum VideoFormat
     Rbga = 133,
 
     /// <summary>packed 4:2:2 YUV, 16 bits per channel (Y-U-Y-V)</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.26.</para>
+    /// </remarks>
     Y216Le = 134,
 
     /// <summary>packed 4:2:2 YUV, 16 bits per channel (Y-U-Y-V)</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.26.</para>
+    /// </remarks>
     Y216Be = 135,
 
     /// <summary>packed 4:4:4:4 YUV, 16 bits per channel(U-Y-V-A)</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.26.</para>
+    /// </remarks>
     Y416Le = 136,
 
     /// <summary>packed 4:4:4:4 YUV, 16 bits per channel(U-Y-V-A)</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.26.</para>
+    /// </remarks>
     Y416Be = 137,
 
     /// <summary>10-bit grayscale, packed into 16bit words (6 bits left padding)</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.26.</para>
+    /// </remarks>
     Gray10Le16 = 138,
 
     /// <summary>Fully packed variant of NV16_10LE32</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
     Nv1610le40 = 139,
 
     /// <summary>packed 4:4:4 RGB (B-G-R-x), 10 bits for R/G/B channel and MSB 2 bits for padding.</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
     Bgr10x2Le = 140,
 
     /// <summary>packed 4:4:4 RGB (R-G-B-x), 10 bits for R/G/B channel and MSB 2 bits for padding.</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
     Rgb10x2Le = 141,
 }
 

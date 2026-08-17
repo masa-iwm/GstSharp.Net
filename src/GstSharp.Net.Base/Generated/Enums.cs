@@ -24,6 +24,9 @@ public enum AggregatorStartTimeSelection
     Set = 2,
 
     /// <summary>Start at the current running time when reaching %GST_STATE_PLAYING.</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
     Now = 3,
 }
 

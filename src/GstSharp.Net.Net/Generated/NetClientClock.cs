@@ -78,6 +78,9 @@ public unsafe partial class NetClientClock : Gst.SystemClock
     /// All references should be released beforehand.
     /// Mainly used for testing.
     /// </summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
     public static void Deinit()
     {
         GstNetClientClockDeinit();

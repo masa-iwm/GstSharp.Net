@@ -114,6 +114,9 @@ public sealed unsafe partial class Caps : Gst.MiniObject
     /// Creates a new #GstCaps that contains one #GstStructure with name
     /// @media_type.
     /// </summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.26.</para>
+    /// </remarks>
     /// <param name="mediaType">The <c>mediaType</c> argument.</param>
     /// <returns>the new #GstCaps</returns>
     public static Gst.Caps NewIdStrEmptySimple(Gst.IdStr mediaType)

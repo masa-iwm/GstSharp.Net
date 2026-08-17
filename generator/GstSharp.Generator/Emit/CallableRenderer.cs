@@ -97,7 +97,7 @@ internal static class CallableRenderer
     internal static void WriteCallback(CodeWriter writer, CallbackPlan plan)
     {
         string cType = plan.Callback.CType ?? plan.Callback.Name;
-        XmlDocWriter.Write(writer, plan.Callback.Doc, "The <c>" + cType + "</c> callback.");
+        XmlDocWriter.Write(writer, plan.Callback.Doc, "The <c>" + cType + "</c> callback.", plan.Callback);
         foreach (ArgumentPlan argument in plan.Arguments)
         {
             if (!argument.IsHidden)
@@ -198,7 +198,7 @@ internal static class CallableRenderer
     private static void WriteDocumentation(CodeWriter writer, MarshalPlan plan)
     {
         string cType = plan.EntryPoint;
-        XmlDocWriter.Write(writer, plan.Callable.Doc, "The <c>" + cType + "</c> function.");
+        XmlDocWriter.Write(writer, plan.Callable.Doc, "The <c>" + cType + "</c> function.", plan.Callable);
 
         foreach (ArgumentPlan argument in plan.Arguments)
         {

@@ -13,6 +13,9 @@ namespace Gst.App;
 /// Called when the end-of-stream has been reached. This callback
 /// is called from the streaming thread.
 /// </summary>
+/// <remarks>
+/// <para>Available since GStreamer 1.28.</para>
+/// </remarks>
 /// <param name="appsink">a #GstAppSink</param>
 public delegate void AppSinkEosCallback(Gst.App.AppSink appsink);
 
@@ -53,6 +56,7 @@ internal static unsafe class AppSinkEosCallbackTrampoline
 /// The callback should return %TRUE if the event has been handled, %FALSE
 /// otherwise.
 /// </para>
+/// <para>Available since GStreamer 1.28.</para>
 /// </remarks>
 /// <param name="appsink">a #GstAppSink</param>
 /// <returns>%TRUE when the event has been handled.</returns>
@@ -92,6 +96,9 @@ internal static unsafe class AppSinkNewEventCallbackTrampoline
 /// gst_app_sink_pull_preroll() either from this callback or from any other
 /// thread.
 /// </summary>
+/// <remarks>
+/// <para>Available since GStreamer 1.28.</para>
+/// </remarks>
 /// <param name="appsink">a #GstAppSink</param>
 /// <returns>%GST_FLOW_OK on success.</returns>
 public delegate Gst.FlowReturn AppSinkNewPrerollCallback(Gst.App.AppSink appsink);
@@ -130,6 +137,9 @@ internal static unsafe class AppSinkNewPrerollCallbackTrampoline
 /// gst_app_sink_pull_sample() either from this callback or from any other
 /// thread.
 /// </summary>
+/// <remarks>
+/// <para>Available since GStreamer 1.28.</para>
+/// </remarks>
 /// <param name="appsink">a #GstAppSink</param>
 /// <returns>%GST_FLOW_OK on success.</returns>
 public delegate Gst.FlowReturn AppSinkNewSampleCallback(Gst.App.AppSink appsink);
@@ -166,6 +176,9 @@ internal static unsafe class AppSinkNewSampleCallbackTrampoline
 /// Called when the propose_allocation query is available. This callback is
 /// called from the streaming thread.
 /// </summary>
+/// <remarks>
+/// <para>Available since GStreamer 1.28.</para>
+/// </remarks>
 /// <param name="appsink">a #GstAppSink</param>
 /// <param name="query">An ALLOCATION query</param>
 /// <returns>%TRUE when the query has been handled.</returns>
@@ -206,6 +219,9 @@ internal static unsafe class AppSinkProposeAllocationCallbackTrampoline
 /// stops calling push-buffer until the need_data callback is emitted again to
 /// avoid excessive buffer queueing.
 /// </summary>
+/// <remarks>
+/// <para>Available since GStreamer 1.28.</para>
+/// </remarks>
 /// <param name="appsrc">a #GstAppSrc</param>
 public delegate void AppSrcEnoughDataCallback(Gst.App.AppSrc appsrc);
 
@@ -241,6 +257,9 @@ internal static unsafe class AppSrcEnoughDataCallbackTrampoline
 /// appsrc from this thread or another thread. @length is just a hint and when it
 /// is set to -1, any number of bytes can be pushed into @appsrc.
 /// </summary>
+/// <remarks>
+/// <para>Available since GStreamer 1.28.</para>
+/// </remarks>
 /// <param name="appsrc">a #GstAppSrc</param>
 /// <param name="length">Length hint</param>
 public delegate void AppSrcNeedDataCallback(Gst.App.AppSrc appsrc, uint length);
@@ -277,6 +296,9 @@ internal static unsafe class AppSrcNeedDataCallbackTrampoline
 /// should produce buffers from the new @offset. This callback is only called for
 /// seekable stream types.
 /// </summary>
+/// <remarks>
+/// <para>Available since GStreamer 1.28.</para>
+/// </remarks>
 /// <param name="appsrc">a #GstAppSrc</param>
 /// <param name="offset">Offset to seek to.</param>
 /// <returns>%TRUE if the seek was successful.</returns>

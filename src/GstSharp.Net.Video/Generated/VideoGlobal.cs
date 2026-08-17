@@ -350,6 +350,9 @@ public static unsafe partial class VideoGlobal
     /// If no matching fourcc found, then DRM_FORMAT_INVALID is returned
     /// and @modifier will be set to DRM_FORMAT_MOD_INVALID.
     /// </summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.26.</para>
+    /// </remarks>
     /// <param name="format">The <c>format</c> argument.</param>
     /// <param name="modifier">The <c>modifier</c> argument.</param>
     /// <returns>the DRM_FORMAT_* corresponding to @format.</returns>
@@ -365,6 +368,9 @@ public static unsafe partial class VideoGlobal
     /// Converting a dma drm fourcc and modifier pair into a #GstVideoFormat. If
     /// no matching video format is found, then GST_VIDEO_FORMAT_UNKNOWN is returned.
     /// </summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.26.</para>
+    /// </remarks>
     /// <param name="fourcc">The <c>fourcc</c> argument.</param>
     /// <param name="modifier">The <c>modifier</c> argument.</param>
     /// <returns>

@@ -29,6 +29,7 @@ namespace Gst;
 /// }
 /// ]|
 /// </para>
+/// <para>Available since GStreamer 1.28.</para>
 /// </remarks>
 public unsafe partial class MetaFactory : Gst.PluginFeature
 {
@@ -41,6 +42,9 @@ public unsafe partial class MetaFactory : Gst.PluginFeature
     }
 
     /// <summary>Loads a previously registered #GstMetaInfo from the registry.</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
     /// <param name="factoryname">The <c>factoryname</c> argument.</param>
     /// <returns>A #GstMetaInfo or NULL if not found</returns>
     public static Gst.MetaInfo Load(string factoryname)
@@ -54,6 +58,9 @@ public unsafe partial class MetaFactory : Gst.PluginFeature
     }
 
     /// <summary>Registers a new #GstMetaInfo in the registry</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
     /// <param name="plugin">The <c>plugin</c> argument.</param>
     /// <param name="metaInfo">The <c>metaInfo</c> argument.</param>
     /// <returns>The result of <c>gst_meta_factory_register</c>.</returns>

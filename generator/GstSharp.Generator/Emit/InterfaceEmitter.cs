@@ -101,7 +101,11 @@ internal sealed class InterfaceEmitter
         CodeWriter writer = new();
         ClassEmitter.WriteHeader(writer, module, ns);
         writer.WriteLine();
-        XmlDocWriter.Write(writer, declaration.Doc, "The <c>" + CTypeOf(declaration) + "</c> interface.");
+        XmlDocWriter.Write(
+            writer,
+            declaration.Doc,
+            "The <c>" + CTypeOf(declaration) + "</c> interface.",
+            declaration);
         XmlDocWriter.WriteObsolete(writer, declaration);
         writer.WriteLine("public interface " + typeName);
         writer.OpenBlock();

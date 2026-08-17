@@ -60,6 +60,7 @@ namespace Gst;
 /// );
 /// ```
 /// </para>
+/// <para>Available since GStreamer 1.28.</para>
 /// </remarks>
 public sealed unsafe partial class LogContext
 {
@@ -82,6 +83,9 @@ public sealed unsafe partial class LogContext
         handle == 0 ? null : new(handle);
 
     /// <summary>Free the logging context, clearing all tracked messages.</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
     public void Free()
     {
         GstLogContextFree(Handle);
@@ -89,6 +93,9 @@ public sealed unsafe partial class LogContext
     }
 
     /// <summary>Resets the logging context, clearing all tracked messages.</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
     public void Reset()
     {
         GstLogContextReset(Handle);

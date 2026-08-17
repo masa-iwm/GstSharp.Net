@@ -231,6 +231,9 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// support monitoring at all, only whether at least one was able to start
     /// probing.
     /// </summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
     /// <param name="src">The <c>src</c> argument.</param>
     /// <param name="success">The <c>success</c> argument.</param>
     /// <returns>a newly allocated #GstMessage</returns>
@@ -700,6 +703,7 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// <summary>Returns the optional details structure of the message. May be NULL if none.</summary>
     /// <remarks>
     /// <para>The returned structure must not be freed.</para>
+    /// <para>Available since GStreamer 1.26.</para>
     /// </remarks>
     /// <returns>
     /// The details, or NULL if none.
@@ -911,6 +915,9 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// is produced by a #GstDeviceMonitor once at least one #GstDeviceProvider
     /// successfully starts probing.
     /// </summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
     /// <param name="success">The <c>success</c> argument.</param>
     public void ParseDeviceMonitorStarted(out bool success)
     {
@@ -951,6 +958,9 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// Returns the details structure if present or will create one if not present.
     /// The returned structure must not be freed.
     /// </summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.26.</para>
+    /// </remarks>
     /// <param name="structure">The <c>structure</c> argument.</param>
     public void ParseErrorWritableDetails(out Gst.Structure? structure)
     {
@@ -1002,6 +1012,9 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// Returns the details structure if present or will create one if not present.
     /// The returned structure must not be freed.
     /// </summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.26.</para>
+    /// </remarks>
     /// <param name="structure">The <c>structure</c> argument.</param>
     public void ParseInfoWritableDetails(out Gst.Structure? structure)
     {
@@ -1438,6 +1451,9 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// Returns the details structure if present or will create one if not present.
     /// The returned structure must not be freed.
     /// </summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.26.</para>
+    /// </remarks>
     /// <param name="structure">The <c>structure</c> argument.</param>
     public void ParseWarningWritableDetails(out Gst.Structure? structure)
     {
@@ -1561,6 +1577,7 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// </summary>
     /// <remarks>
     /// <para>The returned structure must not be freed.</para>
+    /// <para>Available since GStreamer 1.26.</para>
     /// </remarks>
     /// <returns>
     /// The details

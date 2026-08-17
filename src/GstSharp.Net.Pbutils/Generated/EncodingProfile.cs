@@ -334,6 +334,9 @@ public unsafe partial class EncodingProfile : Gst.GObject.Object
     /// Converts a GstEncodingProfile to a string in the "Encoding Profile
     /// serialization format".
     /// </summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.26.</para>
+    /// </remarks>
     /// <returns>A string representation of the GstEncodingProfile.</returns>
     public override string ToString()
     {
@@ -381,6 +384,9 @@ public unsafe partial class EncodingProfile : Gst.GObject.Object
     /// GstEncodingProfile. Refer to the encoding-profile documentation for details
     /// on the format.
     /// </summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.26.</para>
+    /// </remarks>
     /// <param name="string">The <c>@string</c> argument.</param>
     /// <returns>
     /// A newly created GstEncodingProfile or NULL if the

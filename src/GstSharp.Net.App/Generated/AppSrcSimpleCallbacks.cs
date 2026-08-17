@@ -14,6 +14,7 @@ namespace Gst.App;
 /// </summary>
 /// <remarks>
 /// <para>Unlike GstAppSrcCallbacks this can also be used from bindings.</para>
+/// <para>Available since GStreamer 1.28.</para>
 /// </remarks>
 public sealed unsafe partial class AppSrcSimpleCallbacks : Gst.GObject.Boxed
 {
@@ -33,6 +34,9 @@ public sealed unsafe partial class AppSrcSimpleCallbacks : Gst.GObject.Boxed
         handle == 0 ? null : new(handle, transfer);
 
     /// <summary>Creates a new instance of callbacks.</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
     /// <returns>New empty GstAppSrcSimpleCallbacks</returns>
     public static Gst.App.AppSrcSimpleCallbacks New()
     {
@@ -47,6 +51,7 @@ public sealed unsafe partial class AppSrcSimpleCallbacks : Gst.GObject.Boxed
     /// Once @cb is set on an #GstAppSrc it is not possible anymore to change any of
     /// the callbacks inside it.
     /// </para>
+    /// <para>Available since GStreamer 1.28.</para>
     /// </remarks>
     /// <param name="enoughDataCb">EOS callback</param>
     public void SetEnoughData(Gst.App.AppSrcEnoughDataCallback enoughDataCb)
@@ -64,6 +69,7 @@ public sealed unsafe partial class AppSrcSimpleCallbacks : Gst.GObject.Boxed
     /// Once @cb is set on an #GstAppSrc it is not possible anymore to change any of
     /// the callbacks inside it.
     /// </para>
+    /// <para>Available since GStreamer 1.28.</para>
     /// </remarks>
     /// <param name="needDataCb">EOS callback</param>
     public void SetNeedData(Gst.App.AppSrcNeedDataCallback needDataCb)
@@ -81,6 +87,7 @@ public sealed unsafe partial class AppSrcSimpleCallbacks : Gst.GObject.Boxed
     /// Once @cb is set on an #GstAppSrc it is not possible anymore to change any of
     /// the callbacks inside it.
     /// </para>
+    /// <para>Available since GStreamer 1.28.</para>
     /// </remarks>
     /// <param name="seekDataCb">EOS callback</param>
     public void SetSeekData(Gst.App.AppSrcSeekDataCallback seekDataCb)

@@ -98,6 +98,9 @@ public sealed unsafe partial class VideoMeta
     /// the paddings defined in @alignment are compatible with the strides
     /// defined in @meta and will fail to update if they are not.
     /// </summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
     /// <param name="alignment">The <c>alignment</c> argument.</param>
     /// <returns>%TRUE if @alignment's meta has been updated, %FALSE if not</returns>
     public bool SetAlignmentFull(Gst.Video.VideoAlignment alignment)

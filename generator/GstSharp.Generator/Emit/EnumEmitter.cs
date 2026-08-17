@@ -110,7 +110,7 @@ internal sealed class EnumEmitter
 
     private void WriteEnumeration(CodeWriter writer, GirNamespace ns, GirEnumeration enumeration)
     {
-        XmlDocWriter.Write(writer, enumeration.Doc, FallbackSummary(enumeration));
+        XmlDocWriter.Write(writer, enumeration.Doc, FallbackSummary(enumeration), enumeration);
         XmlDocWriter.WriteObsolete(writer, enumeration);
         if (enumeration.IsBitfield)
         {
@@ -159,7 +159,7 @@ internal sealed class EnumEmitter
             }
 
             first = false;
-            XmlDocWriter.Write(writer, member.Doc, FallbackSummary(enumeration, member));
+            XmlDocWriter.Write(writer, member.Doc, FallbackSummary(enumeration, member), member);
             XmlDocWriter.WriteObsolete(writer, member);
             writer.WriteLine(name + " = " + literal + ",");
         }

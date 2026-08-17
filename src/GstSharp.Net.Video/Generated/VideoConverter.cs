@@ -113,6 +113,9 @@ public sealed unsafe partial class VideoConverter
     }
 
     /// <summary>Transform the GstMeta of @src into @dest using @convert.</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
     /// <param name="src">The <c>src</c> argument.</param>
     /// <param name="dest">The <c>dest</c> argument.</param>
     /// <returns>TRUE if any meta was copied</returns>

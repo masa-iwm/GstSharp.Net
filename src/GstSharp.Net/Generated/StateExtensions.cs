@@ -12,6 +12,9 @@ namespace Gst;
 public static unsafe partial class StateExtensions
 {
     /// <summary>Gets a string representing the given state.</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
     /// <param name="state">The <c>state</c> argument.</param>
     /// <returns>a string with the name of the state.</returns>
     public static string GetName(Gst.State state)

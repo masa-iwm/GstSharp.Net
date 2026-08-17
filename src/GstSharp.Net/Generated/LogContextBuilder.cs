@@ -10,6 +10,9 @@ namespace Gst;
 /// configure a log context with various options while maintaining immutability
 /// of the resulting context.
 /// </summary>
+/// <remarks>
+/// <para>Available since GStreamer 1.28.</para>
+/// </remarks>
 public sealed partial class LogContextBuilder
 {
     /// <summary>The native instance.</summary>

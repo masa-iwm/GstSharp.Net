@@ -15,6 +15,9 @@ public static unsafe partial class Global
     /// Applications might want to check if the runtime GStreamer version is greater
     /// or equal to the version specified using @major, @minor and @micro.
     /// </summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
     /// <param name="major">The <c>major</c> argument.</param>
     /// <param name="minor">The <c>minor</c> argument.</param>
     /// <param name="micro">The <c>micro</c> argument.</param>
@@ -31,6 +34,9 @@ public static unsafe partial class Global
     }
 
     /// <summary>The <c>gst_cpuid_supports_arm_neon</c> function.</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
     /// <returns>%TRUE if NEON (32-bit) is supported by the CPU, %FALSE otherwise.</returns>
     public static bool CpuidSupportsArmNeon()
     {
@@ -39,6 +45,9 @@ public static unsafe partial class Global
     }
 
     /// <summary>The <c>gst_cpuid_supports_arm_neon64</c> function.</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
     /// <returns>%TRUE if NEON (64-bit) is supported by the CPU, %FALSE otherwise.</returns>
     public static bool CpuidSupportsArmNeon64()
     {
@@ -47,6 +56,9 @@ public static unsafe partial class Global
     }
 
     /// <summary>The <c>gst_cpuid_supports_x86_3dnow</c> function.</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
     /// <returns>%TRUE if 3DNow! is supported by the CPU, %FALSE otherwise.</returns>
     public static bool CpuidSupportsX863dnow()
     {
@@ -55,6 +67,9 @@ public static unsafe partial class Global
     }
 
     /// <summary>The <c>gst_cpuid_supports_x86_avx</c> function.</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
     /// <returns>%TRUE if AVX is supported by the CPU, %FALSE otherwise.</returns>
     public static bool CpuidSupportsX86Avx()
     {
@@ -63,6 +78,9 @@ public static unsafe partial class Global
     }
 
     /// <summary>The <c>gst_cpuid_supports_x86_avx2</c> function.</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
     /// <returns>%TRUE if avx2 is supported by the CPU, %FALSE otherwise.</returns>
     public static bool CpuidSupportsX86Avx2()
     {
@@ -71,6 +89,9 @@ public static unsafe partial class Global
     }
 
     /// <summary>The <c>gst_cpuid_supports_x86_mmx</c> function.</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
     /// <returns>%TRUE if MMX is supported by the CPU, %FALSE otherwise.</returns>
     public static bool CpuidSupportsX86Mmx()
     {
@@ -79,6 +100,9 @@ public static unsafe partial class Global
     }
 
     /// <summary>The <c>gst_cpuid_supports_x86_mmxext</c> function.</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
     /// <returns>%TRUE if extended MMX is supported by the CPU, %FALSE otherwise.</returns>
     public static bool CpuidSupportsX86Mmxext()
     {
@@ -87,6 +111,9 @@ public static unsafe partial class Global
     }
 
     /// <summary>The <c>gst_cpuid_supports_x86_sse2</c> function.</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
     /// <returns>%TRUE if SSE2 is supported by the CPU, %FALSE otherwise.</returns>
     public static bool CpuidSupportsX86Sse2()
     {
@@ -95,6 +122,9 @@ public static unsafe partial class Global
     }
 
     /// <summary>The <c>gst_cpuid_supports_x86_sse3</c> function.</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
     /// <returns>%TRUE if SSE3 is supported by the CPU, %FALSE otherwise.</returns>
     public static bool CpuidSupportsX86Sse3()
     {
@@ -103,6 +133,9 @@ public static unsafe partial class Global
     }
 
     /// <summary>The <c>gst_cpuid_supports_x86_sse4_1</c> function.</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
     /// <returns>%TRUE if SSE4.1 is supported by the CPU, %FALSE otherwise.</returns>
     public static bool CpuidSupportsX86Sse41()
     {
@@ -111,6 +144,9 @@ public static unsafe partial class Global
     }
 
     /// <summary>The <c>gst_cpuid_supports_x86_sse4_2</c> function.</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
     /// <returns>%TRUE if SSSE3 is supported by the CPU, %FALSE otherwise.</returns>
     public static bool CpuidSupportsX86Sse42()
     {
@@ -119,6 +155,9 @@ public static unsafe partial class Global
     }
 
     /// <summary>The <c>gst_cpuid_supports_x86_ssse3</c> function.</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
     /// <returns>%TRUE if SSSE3 is supported by the CPU, %FALSE otherwise.</returns>
     public static bool CpuidSupportsX86Ssse3()
     {
@@ -400,6 +439,7 @@ public static unsafe partial class Global
     /// </summary>
     /// <remarks>
     /// <para>@level &gt;= %GST_LEVEL_MEMDUMP is not supported.</para>
+    /// <para>Available since GStreamer 1.28.</para>
     /// </remarks>
     /// <param name="ctx">The <c>ctx</c> argument.</param>
     /// <param name="level">The <c>level</c> argument.</param>
@@ -457,6 +497,7 @@ public static unsafe partial class Global
     /// </summary>
     /// <remarks>
     /// <para>@level &gt;= %GST_LEVEL_MEMDUMP is not supported.</para>
+    /// <para>Available since GStreamer 1.28.</para>
     /// </remarks>
     /// <param name="ctx">The <c>ctx</c> argument.</param>
     /// <param name="level">The <c>level</c> argument.</param>
@@ -496,6 +537,7 @@ public static unsafe partial class Global
     /// Passing other kind of pointers might or might not work and is generally
     /// unsafe to do.
     /// </para>
+    /// <para>Available since GStreamer 1.26.</para>
     /// </remarks>
     /// <param name="ptr">The <c>ptr</c> argument.</param>
     /// <returns>
@@ -515,6 +557,7 @@ public static unsafe partial class Global
     /// The string representation is meant to be used for debugging purposes and
     /// might change between GStreamer versions.
     /// </para>
+    /// <para>Available since GStreamer 1.26.</para>
     /// </remarks>
     /// <param name="segment">The <c>segment</c> argument.</param>
     /// <returns>
@@ -1237,6 +1280,9 @@ public static unsafe partial class Global
     }
 
     /// <summary>Returns smallest integral value not bigger than log2(v).</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.26.</para>
+    /// </remarks>
     /// <param name="v">The <c>v</c> argument.</param>
     /// <returns>a computed #guint val.</returns>
     public static uint UtilFloorLog2(uint v)
@@ -1306,6 +1352,9 @@ public static unsafe partial class Global
     /// Multiplies the fractions @a_n/@a_d and @b_n/@b_d and stores
     /// the result in @res_n and @res_d.
     /// </summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.26.</para>
+    /// </remarks>
     /// <param name="aN">The <c>aN</c> argument.</param>
     /// <param name="aD">The <c>aD</c> argument.</param>
     /// <param name="bN">The <c>bN</c> argument.</param>

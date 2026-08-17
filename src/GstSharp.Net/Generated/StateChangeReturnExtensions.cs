@@ -12,6 +12,9 @@ namespace Gst;
 public static unsafe partial class StateChangeReturnExtensions
 {
     /// <summary>Gets a string representing the given state change result.</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
     /// <param name="stateRet">The <c>stateRet</c> argument.</param>
     /// <returns>
     /// a string with the name of the state

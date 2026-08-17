@@ -9,6 +9,9 @@ using System.Runtime.InteropServices;
 namespace Gst.WebRTC;
 
 /// <summary>The <c>GstWebRTCICECandidatePair</c> boxed type.</summary>
+/// <remarks>
+/// <para>Available since GStreamer 1.28.</para>
+/// </remarks>
 public sealed unsafe partial class WebRTCICECandidatePair : Gst.GObject.Boxed
 {
     /// <summary>Wraps a native <c>GstWebRTCICECandidatePair</c>.</summary>
@@ -27,6 +30,9 @@ public sealed unsafe partial class WebRTCICECandidatePair : Gst.GObject.Boxed
         handle == 0 ? null : new(handle, transfer);
 
     /// <summary>The <c>gst_webrtc_ice_candidate_pair_copy</c> function.</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
     /// <returns>A copy of @pair</returns>
     public Gst.WebRTC.WebRTCICECandidatePair Copy()
     {

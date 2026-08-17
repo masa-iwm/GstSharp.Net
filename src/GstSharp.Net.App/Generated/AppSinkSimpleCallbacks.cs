@@ -14,6 +14,7 @@ namespace Gst.App;
 /// </summary>
 /// <remarks>
 /// <para>Unlike GstAppSinkCallbacks this can also be used from bindings.</para>
+/// <para>Available since GStreamer 1.28.</para>
 /// </remarks>
 public sealed unsafe partial class AppSinkSimpleCallbacks : Gst.GObject.Boxed
 {
@@ -33,6 +34,9 @@ public sealed unsafe partial class AppSinkSimpleCallbacks : Gst.GObject.Boxed
         handle == 0 ? null : new(handle, transfer);
 
     /// <summary>Creates a new instance of callbacks.</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
     /// <returns>New empty GstAppSinkSimpleCallbacks</returns>
     public static Gst.App.AppSinkSimpleCallbacks New()
     {
@@ -47,6 +51,7 @@ public sealed unsafe partial class AppSinkSimpleCallbacks : Gst.GObject.Boxed
     /// Once @cb is set on an #GstAppSink it is not possible anymore to change any of
     /// the callbacks inside it.
     /// </para>
+    /// <para>Available since GStreamer 1.28.</para>
     /// </remarks>
     /// <param name="eosCb">EOS callback</param>
     public void SetEos(Gst.App.AppSinkEosCallback eosCb)
@@ -64,6 +69,7 @@ public sealed unsafe partial class AppSinkSimpleCallbacks : Gst.GObject.Boxed
     /// Once @cb is set on an #GstAppSink it is not possible anymore to change any of
     /// the callbacks inside it.
     /// </para>
+    /// <para>Available since GStreamer 1.28.</para>
     /// </remarks>
     /// <param name="newEventCb">new event callback</param>
     public void SetNewEvent(Gst.App.AppSinkNewEventCallback newEventCb)
@@ -81,6 +87,7 @@ public sealed unsafe partial class AppSinkSimpleCallbacks : Gst.GObject.Boxed
     /// Once @cb is set on an #GstAppSink it is not possible anymore to change any of
     /// the callbacks inside it.
     /// </para>
+    /// <para>Available since GStreamer 1.28.</para>
     /// </remarks>
     /// <param name="newPrerollCb">new preroll callback</param>
     public void SetNewPreroll(Gst.App.AppSinkNewPrerollCallback newPrerollCb)
@@ -98,6 +105,7 @@ public sealed unsafe partial class AppSinkSimpleCallbacks : Gst.GObject.Boxed
     /// Once @cb is set on an #GstAppSink it is not possible anymore to change any of
     /// the callbacks inside it.
     /// </para>
+    /// <para>Available since GStreamer 1.28.</para>
     /// </remarks>
     /// <param name="newSampleCb">new sample callback</param>
     public void SetNewSample(Gst.App.AppSinkNewSampleCallback newSampleCb)
@@ -115,6 +123,7 @@ public sealed unsafe partial class AppSinkSimpleCallbacks : Gst.GObject.Boxed
     /// Once @cb is set on an #GstAppSink it is not possible anymore to change any of
     /// the callbacks inside it.
     /// </para>
+    /// <para>Available since GStreamer 1.28.</para>
     /// </remarks>
     /// <param name="proposeAllocationCb">propose allocation callback</param>
     public void SetProposeAllocation(Gst.App.AppSinkProposeAllocationCallback proposeAllocationCb)

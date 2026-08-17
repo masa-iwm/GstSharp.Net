@@ -29,6 +29,7 @@ namespace Gst;
 /// gst_id_str_clear (&amp;s);
 /// ```
 /// </para>
+/// <para>Available since GStreamer 1.26.</para>
 /// </remarks>
 public sealed unsafe partial class IdStr : Gst.GObject.Boxed
 {
@@ -48,6 +49,9 @@ public sealed unsafe partial class IdStr : Gst.GObject.Boxed
         handle == 0 ? null : new(handle, transfer);
 
     /// <summary>Returns a newly heap allocated empty string.</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.26.</para>
+    /// </remarks>
     /// <returns>A heap-allocated string.</returns>
     public static Gst.IdStr New()
     {
@@ -57,6 +61,9 @@ public sealed unsafe partial class IdStr : Gst.GObject.Boxed
     }
 
     /// <summary>The <c>gst_id_str_as_str</c> function.</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.26.</para>
+    /// </remarks>
     /// <returns>the NUL-terminated string representation of @s.</returns>
     public string AsStr()
     {
@@ -67,6 +74,9 @@ public sealed unsafe partial class IdStr : Gst.GObject.Boxed
     }
 
     /// <summary>Clears @s and sets it to the empty string.</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.26.</para>
+    /// </remarks>
     public void Clear()
     {
         GstIdStrClear(Handle);
@@ -74,6 +84,9 @@ public sealed unsafe partial class IdStr : Gst.GObject.Boxed
     }
 
     /// <summary>Copies @s into newly allocated heap memory.</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.26.</para>
+    /// </remarks>
     /// <returns>A heap-allocated copy of @s.</returns>
     public Gst.IdStr Copy()
     {
@@ -84,6 +97,9 @@ public sealed unsafe partial class IdStr : Gst.GObject.Boxed
     }
 
     /// <summary>Copies @s into @d.</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.26.</para>
+    /// </remarks>
     /// <param name="s">The <c>s</c> argument.</param>
     public void CopyInto(Gst.IdStr s)
     {
@@ -97,6 +113,9 @@ public sealed unsafe partial class IdStr : Gst.GObject.Boxed
     /// Returns the length of @s, exluding the NUL-terminator. This is equivalent to
     /// calling `strcmp()` but potentially faster.
     /// </summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.26.</para>
+    /// </remarks>
     /// <returns>The result of <c>gst_id_str_get_len</c>.</returns>
     public nuint GetLen()
     {
@@ -109,6 +128,9 @@ public sealed unsafe partial class IdStr : Gst.GObject.Boxed
     /// Initializes a (usually stack-allocated) id string @s. The newly-initialized
     /// id string will contain an empty string by default as value.
     /// </summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.26.</para>
+    /// </remarks>
     public void Init()
     {
         GstIdStrInit(Handle);
@@ -116,6 +138,9 @@ public sealed unsafe partial class IdStr : Gst.GObject.Boxed
     }
 
     /// <summary>Compares @s1 and @s2 for equality.</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.26.</para>
+    /// </remarks>
     /// <param name="s2">The <c>s2</c> argument.</param>
     /// <returns>%TRUE if @s1 and @s2 are equal.</returns>
     public bool IsEqual(Gst.IdStr s2)
@@ -128,6 +153,9 @@ public sealed unsafe partial class IdStr : Gst.GObject.Boxed
     }
 
     /// <summary>Compares @s1 and @s2 for equality.</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.26.</para>
+    /// </remarks>
     /// <param name="s2">The <c>s2</c> argument.</param>
     /// <returns>%TRUE if @s1 and @s2 are equal.</returns>
     public bool IsEqualToStr(string s2)
@@ -149,6 +177,7 @@ public sealed unsafe partial class IdStr : Gst.GObject.Boxed
     /// This is generally faster than gst_id_str_is_equal_to_str() if the length is
     /// already known.
     /// </para>
+    /// <para>Available since GStreamer 1.26.</para>
     /// </remarks>
     /// <param name="s2">The <c>s2</c> argument.</param>
     /// <param name="len">The <c>len</c> argument.</param>
@@ -164,6 +193,9 @@ public sealed unsafe partial class IdStr : Gst.GObject.Boxed
     }
 
     /// <summary>Moves @s into @d and resets @s.</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.26.</para>
+    /// </remarks>
     /// <param name="s">The <c>s</c> argument.</param>
     public void Move(Gst.IdStr s)
     {
@@ -174,6 +206,9 @@ public sealed unsafe partial class IdStr : Gst.GObject.Boxed
     }
 
     /// <summary>Sets @s to the string @value.</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.26.</para>
+    /// </remarks>
     /// <param name="value">The <c>value</c> argument.</param>
     public void Set(string value)
     {
@@ -188,6 +223,9 @@ public sealed unsafe partial class IdStr : Gst.GObject.Boxed
     /// Sets @s to the string @value of length @len. @value does not have to be
     /// NUL-terminated and @len should not include the NUL-terminator.
     /// </summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.26.</para>
+    /// </remarks>
     /// <param name="value">The <c>value</c> argument.</param>
     /// <param name="len">The <c>len</c> argument.</param>
     public void SetWithLen(string value, nuint len)

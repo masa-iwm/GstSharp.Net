@@ -664,6 +664,9 @@ public abstract unsafe partial class Clip : GES.Container, GES.IExtractable, GES
     /// layers, or is being added/removed for other reasons (like being added
     /// for the first time, or being actually removed).
     /// </summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
     /// <returns>
     /// %TRUE if @clip is currently being moved between layers,
     /// %FALSE otherwise.

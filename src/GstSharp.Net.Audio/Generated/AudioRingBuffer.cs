@@ -167,6 +167,7 @@ public abstract unsafe partial class AudioRingBuffer : Gst.Object
     /// <summary>Gets the current segment base number of the ringbuffer.</summary>
     /// <remarks>
     /// <para>MT safe.</para>
+    /// <para>Available since GStreamer 1.26.</para>
     /// </remarks>
     /// <returns>Current segment base number of the ringbuffer.</returns>
     public ulong GetSegbase()
@@ -179,6 +180,7 @@ public abstract unsafe partial class AudioRingBuffer : Gst.Object
     /// <summary>Gets the current segment number of the ringbuffer.</summary>
     /// <remarks>
     /// <para>MT safe.</para>
+    /// <para>Available since GStreamer 1.26.</para>
     /// </remarks>
     /// <returns>Current segment number of the ringbuffer.</returns>
     public ulong GetSegdone()
@@ -377,6 +379,7 @@ public abstract unsafe partial class AudioRingBuffer : Gst.Object
     /// <summary>Sets the current segment number of the ringbuffer.</summary>
     /// <remarks>
     /// <para>MT safe.</para>
+    /// <para>Available since GStreamer 1.26.</para>
     /// </remarks>
     /// <param name="segdone">The <c>segdone</c> argument.</param>
     public void SetSegdone(ulong segdone)

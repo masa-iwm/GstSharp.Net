@@ -486,7 +486,7 @@ internal sealed class RecordEmitter
 
     private void WriteStruct(CodeWriter writer, GirRecord record, string typeName, IReadOnlyList<LayoutField> layout)
     {
-        XmlDocWriter.Write(writer, record.Doc, FallbackSummary(record, "structure"));
+        XmlDocWriter.Write(writer, record.Doc, FallbackSummary(record, "structure"), record);
         XmlDocWriter.WriteObsolete(writer, record);
         writer.WriteLine("[StructLayout(LayoutKind.Sequential)]");
         writer.WriteLine("public partial struct " + typeName);
@@ -540,7 +540,7 @@ internal sealed class RecordEmitter
             return;
         }
 
-        XmlDocWriter.Write(writer, field.Field.Doc, FallbackSummary(record, field.Field));
+        XmlDocWriter.Write(writer, field.Field.Doc, FallbackSummary(record, field.Field), field.Field);
         XmlDocWriter.WriteObsolete(writer, field.Field);
         writer.WriteLine("public " + field.TypeName + " " + field.Name + ";");
     }
@@ -599,7 +599,7 @@ internal sealed class RecordEmitter
         IReadOnlyList<Accessor> accessors,
         TypeSurface surface)
     {
-        XmlDocWriter.Write(writer, record.Doc, FallbackSummary(record, "mini object"));
+        XmlDocWriter.Write(writer, record.Doc, FallbackSummary(record, "mini object"), record);
         XmlDocWriter.WriteObsolete(writer, record);
         writer.WriteLine(
             "public sealed " + (accessors.Count > 0 || surface.NeedsUnsafe ? "unsafe " : string.Empty)
@@ -611,7 +611,7 @@ internal sealed class RecordEmitter
         foreach (Accessor accessor in accessors)
         {
             writer.WriteLine();
-            XmlDocWriter.Write(writer, accessor.Field.Doc, FallbackSummary(record, accessor.Field));
+            XmlDocWriter.Write(writer, accessor.Field.Doc, FallbackSummary(record, accessor.Field), accessor.Field);
             XmlDocWriter.WriteObsolete(writer, accessor.Field);
             WriteAccessor(writer, accessor);
         }
@@ -631,7 +631,7 @@ internal sealed class RecordEmitter
         string typeName,
         TypeSurface surface)
     {
-        XmlDocWriter.Write(writer, record.Doc, FallbackSummary(record, "boxed type"));
+        XmlDocWriter.Write(writer, record.Doc, FallbackSummary(record, "boxed type"), record);
         XmlDocWriter.WriteObsolete(writer, record);
         writer.WriteLine(
             "public sealed " + (surface.NeedsUnsafe ? "unsafe " : string.Empty) + "partial class " + typeName
@@ -659,7 +659,7 @@ internal sealed class RecordEmitter
         string typeName,
         TypeSurface surface)
     {
-        XmlDocWriter.Write(writer, record.Doc, FallbackSummary(record, "record"));
+        XmlDocWriter.Write(writer, record.Doc, FallbackSummary(record, "record"), record);
         XmlDocWriter.WriteObsolete(writer, record);
         writer.WriteLine(
             "public sealed " + (surface.NeedsUnsafe ? "unsafe " : string.Empty) + "partial class " + typeName);

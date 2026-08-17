@@ -20,6 +20,7 @@ namespace Gst.Video;
 /// goes down and right from there..
 /// </para>
 /// <para>It's a programming error to have a singular matrix.</para>
+/// <para>Available since GStreamer 1.28.</para>
 /// </remarks>
 [StructLayout(LayoutKind.Sequential)]
 public partial struct VideoMetaTransformMatrix

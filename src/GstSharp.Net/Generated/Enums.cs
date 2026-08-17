@@ -1081,6 +1081,9 @@ public enum LockFlags
 }
 
 /// <summary>Flags to control the behavior of a #GstLogContext.</summary>
+/// <remarks>
+/// <para>Available since GStreamer 1.28.</para>
+/// </remarks>
 [Flags]
 public enum LogContextFlags
 {
@@ -1102,6 +1105,9 @@ public enum LogContextFlags
 /// The message hash is used to determine if a message is a duplicate of a previously
 /// logged message.
 /// </summary>
+/// <remarks>
+/// <para>Available since GStreamer 1.28.</para>
+/// </remarks>
 [Flags]
 public enum LogContextHashFlags
 {
@@ -1145,6 +1151,9 @@ public enum MapFlags
     /// makes sure that the memory stays valid  while it is mapped and
     /// automatically unrefs it on unmap.
     /// </summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
     RefMemory = 0x00000100,
 
     /// <summary>first flag that can be used for custom purposes</summary>
@@ -1435,6 +1444,9 @@ public enum MessageType : uint
     InstantRateRequest = 0x80000008,
 
     /// <summary>Message indicating the #GstDeviceMonitor has completed async startup.</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
     DeviceMonitorStarted = 0x80000009,
 
     /// <summary>mask for all of the above messages.</summary>
@@ -2869,6 +2881,9 @@ public enum StreamType
     Text = 0x00000010,
 
     /// <summary>The stream contains metadata.</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
     Metadata = 0x00000020,
 }
 

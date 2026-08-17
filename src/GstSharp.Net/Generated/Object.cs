@@ -203,6 +203,9 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
     /// Returns the toplevel parent of @object. This function increases the refcount
     /// of the toplevel object so you should gst_object_unref() it after usage.
     /// </summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
     /// <returns>
     /// toplevel of @object, or @object itself if it has no
     ///   parent. unref after usage.

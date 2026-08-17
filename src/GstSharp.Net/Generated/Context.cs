@@ -115,6 +115,9 @@ public sealed unsafe partial class Context : Gst.MiniObject
     }
 
     /// <summary>Gets the task pool from @context.</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
     /// <param name="pool">The <c>pool</c> argument.</param>
     /// <returns>%TRUE if a task pool was set on @context</returns>
     public bool GetTaskPool(out Gst.TaskPool? pool)
@@ -153,6 +156,9 @@ public sealed unsafe partial class Context : Gst.MiniObject
     /// If @pool is %NULL, any previously set task pool will be removed from
     /// the context.
     /// </summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
     /// <param name="pool">The <c>pool</c> argument.</param>
     public void SetTaskPool(Gst.TaskPool? pool)
     {

@@ -245,6 +245,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     /// <summary>Creates a new, empty #GstStructure with the given name.</summary>
     /// <remarks>
     /// <para>Free-function: gst_structure_free</para>
+    /// <para>Available since GStreamer 1.26.</para>
     /// </remarks>
     /// <param name="name">The <c>name</c> argument.</param>
     /// <returns>a new, empty #GstStructure</returns>
@@ -427,6 +428,9 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     /// correspondind to field with fieldname @fieldname. Caller is responsible
     /// for making sure the field exists and has the correct type.
     /// </summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
     /// <param name="fieldname">The <c>fieldname</c> argument.</param>
     /// <param name="caps">The <c>caps</c> argument.</param>
     /// <returns>
@@ -715,6 +719,9 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     }
 
     /// <summary>Get the name of @structure as a GstIdStr.</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.26.</para>
+    /// </remarks>
     /// <returns>
     /// the name of the structure.
     /// The wrapper owns a reference of its own, which is a copy for a boxed type:
@@ -871,6 +878,9 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     /// value it contains.  If the field is not found, G_TYPE_INVALID is
     /// returned.
     /// </summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.26.</para>
+    /// </remarks>
     /// <param name="fieldname">The <c>fieldname</c> argument.</param>
     /// <returns>the #GValue of the field</returns>
     public Gst.GObject.GType IdStrGetFieldType(Gst.IdStr fieldname)
@@ -883,6 +893,9 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     }
 
     /// <summary>Check if @structure contains a field named @fieldname.</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.26.</para>
+    /// </remarks>
     /// <param name="fieldname">The <c>fieldname</c> argument.</param>
     /// <returns>%TRUE if the structure contains a field with the given name</returns>
     public bool IdStrHasField(Gst.IdStr fieldname)
@@ -895,6 +908,9 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     }
 
     /// <summary>Check if @structure contains a field named @fieldname and with GType @type.</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.26.</para>
+    /// </remarks>
     /// <param name="fieldname">The <c>fieldname</c> argument.</param>
     /// <param name="type">The <c>type</c> argument.</param>
     /// <returns>%TRUE if the structure contains a field with the given name and type</returns>
@@ -911,6 +927,9 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     /// Get the name (as a GstIdStr) of the given field number,
     /// counting from 0 onwards.
     /// </summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.26.</para>
+    /// </remarks>
     /// <param name="index">The <c>index</c> argument.</param>
     /// <returns>
     /// the name of the given field number
@@ -930,6 +949,9 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     /// Removes the field with the given name.  If the field with the given
     /// name does not exist, the structure is unchanged.
     /// </summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.26.</para>
+    /// </remarks>
     /// <param name="fieldname">The <c>fieldname</c> argument.</param>
     public void IdStrRemoveField(Gst.IdStr fieldname)
     {
@@ -983,6 +1005,9 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     /// Checks if the structure is writable. %TRUE if parent
     /// is not set or its refcount is 1, %FALSE otherwise.
     /// </summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
     /// <returns>%TRUE if the structure is writable.</returns>
     public bool IsWritable()
     {
@@ -1097,6 +1122,9 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     /// provided is copied before being used. It must not be empty, start with a
     /// letter and can be followed by letters, numbers and any of "/-_.:".
     /// </summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.26.</para>
+    /// </remarks>
     /// <param name="name">The <c>name</c> argument.</param>
     public void SetNameIdStr(Gst.IdStr name)
     {

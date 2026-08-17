@@ -329,6 +329,9 @@ public abstract unsafe partial class Clock : Gst.Object
     /// Checks that @clock is the default system clock, as returned by
     /// gst_system_clock_obtain(), and is of type %GST_CLOCK_TYPE_MONOTONIC.
     /// </summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
     /// <returns>
     /// %TRUE if @clock is the default system monotonic clock,
     ///   %FALSE otherwise.

@@ -308,7 +308,8 @@ internal sealed class ClassEmitter
         XmlDocWriter.Write(
             writer,
             property.Property.Doc,
-            "The <c>" + property.Property.Name + "</c> property.");
+            "The <c>" + property.Property.Name + "</c> property.",
+            Arrival(property));
         XmlDocWriter.WriteObsolete(writer, Deprecation(property));
 
         string modifiers = "public " + (property.IsNew ? "new " : string.Empty);
@@ -356,6 +357,35 @@ internal sealed class ClassEmitter
         }
 
         return property.Property;
+    }
+
+    /// <summary>
+    /// Returns the gir element whose <c>version</c> attribute says which
+    /// GStreamer the property needs.
+    /// </summary>
+    /// <remarks>
+    /// The newest of the three, because a property is nothing but a call of its
+    /// accessors: the member is there once the gir property, the getter and the
+    /// setter are all there, and the newest of them is when that happens. A
+    /// read only property has no setter to wait for.
+    /// </remarks>
+    /// <param name="property">The property being written.</param>
+    /// <returns>The element to take the version from.</returns>
+    private static GirNode Arrival(PropertyEmission property)
+    {
+        GirNode newest = property.Property;
+
+        if (Availability.IsNewer(property.Getter.Callable.Version, newest.Version))
+        {
+            newest = property.Getter.Callable;
+        }
+
+        if (property.Setter is { } setter && Availability.IsNewer(setter.Callable.Version, newest.Version))
+        {
+            newest = setter.Callable;
+        }
+
+        return newest;
     }
 
     private static string CTypeOf(GirClass declaration) =>
@@ -423,7 +453,7 @@ internal sealed class ClassEmitter
         CodeWriter writer = new();
         WriteHeader(writer, module, ns);
         writer.WriteLine();
-        XmlDocWriter.Write(writer, declaration.Doc, "The <c>" + CTypeOf(declaration) + "</c> class.");
+        XmlDocWriter.Write(writer, declaration.Doc, "The <c>" + CTypeOf(declaration) + "</c> class.", declaration);
         XmlDocWriter.WriteObsolete(writer, declaration);
 
         string modifiers = declaration.IsAbstract ? "public abstract " : "public ";

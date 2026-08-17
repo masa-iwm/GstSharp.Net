@@ -23,6 +23,9 @@ public enum WebRTCBundlePolicy
 }
 
 /// <summary>The <c>GstWebRTCDTLSRole</c> enumeration.</summary>
+/// <remarks>
+/// <para>Available since GStreamer 1.28.</para>
+/// </remarks>
 public enum WebRTCDTLSRole
 {
     /// <summary>client</summary>
@@ -134,6 +137,9 @@ public enum WebRTCFECType
 }
 
 /// <summary>The <c>GstWebRTCICECandidateProtocolType</c> enumeration.</summary>
+/// <remarks>
+/// <para>Available since GStreamer 1.28.</para>
+/// </remarks>
 public enum WebRTCICECandidateProtocolType
 {
     /// <summary>The <c>GST_WEBRTC_ICE_CANDIDATE_PROTOCOL_TYPE_TCP</c> value.</summary>
@@ -144,6 +150,9 @@ public enum WebRTCICECandidateProtocolType
 }
 
 /// <summary>The <c>GstWebRTCICECandidateType</c> enumeration.</summary>
+/// <remarks>
+/// <para>Available since GStreamer 1.28.</para>
+/// </remarks>
 public enum WebRTCICECandidateType
 {
     /// <summary>
@@ -235,6 +244,9 @@ public enum WebRTCICERole
 }
 
 /// <summary>The <c>GstWebRTCICETcpCandidateType</c> enumeration.</summary>
+/// <remarks>
+/// <para>Available since GStreamer 1.28.</para>
+/// </remarks>
 public enum WebRTCICETcpCandidateType
 {
     /// <summary>

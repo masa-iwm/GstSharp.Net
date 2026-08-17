@@ -105,6 +105,9 @@ public sealed unsafe partial class CapsFeatures : Gst.GObject.Boxed
     }
 
     /// <summary>Adds @feature to @features.</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.26.</para>
+    /// </remarks>
     /// <param name="feature">The <c>feature</c> argument.</param>
     public void AddIdStr(Gst.IdStr feature)
     {
@@ -139,6 +142,9 @@ public sealed unsafe partial class CapsFeatures : Gst.GObject.Boxed
     }
 
     /// <summary>Checks if @features contains @feature.</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.26.</para>
+    /// </remarks>
     /// <param name="feature">The <c>feature</c> argument.</param>
     /// <returns>%TRUE if @features contains @feature.</returns>
     public bool ContainsIdStr(Gst.IdStr feature)
@@ -182,6 +188,9 @@ public sealed unsafe partial class CapsFeatures : Gst.GObject.Boxed
     }
 
     /// <summary>Returns the @i-th feature of @features.</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.26.</para>
+    /// </remarks>
     /// <param name="i">The <c>i</c> argument.</param>
     /// <returns>
     /// The @i-th feature of @features.
@@ -248,6 +257,9 @@ public sealed unsafe partial class CapsFeatures : Gst.GObject.Boxed
     }
 
     /// <summary>Removes @feature from @features.</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.26.</para>
+    /// </remarks>
     /// <param name="feature">The <c>feature</c> argument.</param>
     public void RemoveIdStr(Gst.IdStr feature)
     {

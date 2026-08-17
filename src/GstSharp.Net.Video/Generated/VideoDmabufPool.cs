@@ -9,6 +9,9 @@ using System.Runtime.InteropServices;
 namespace Gst.Video;
 
 /// <summary>Using #GstUdmabufAllocator, setting defaults and implementing implicit sync.</summary>
+/// <remarks>
+/// <para>Available since GStreamer 1.28.</para>
+/// </remarks>
 public unsafe partial class VideoDmabufPool : Gst.Video.VideoBufferPool
 {
     /// <summary>Wraps a native <c>GstVideoDmabufPool</c>.</summary>
@@ -20,6 +23,9 @@ public unsafe partial class VideoDmabufPool : Gst.Video.VideoBufferPool
     }
 
     /// <summary>Create a new #GstVideoDmabufPool instance.</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
     /// <returns>
     /// a #GstVideoDmabufPool or %NULL
     ///     if dmabufs are not supported.

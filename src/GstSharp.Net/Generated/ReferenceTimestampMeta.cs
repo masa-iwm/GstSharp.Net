@@ -58,5 +58,8 @@ public partial struct ReferenceTimestampMeta
     public Gst.ClockTime Duration;
 
     /// <summary>Additional information about the timestamp.</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
     public nint Info;
 }

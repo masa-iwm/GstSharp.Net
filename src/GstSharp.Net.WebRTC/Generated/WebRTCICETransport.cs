@@ -39,6 +39,9 @@ public abstract unsafe partial class WebRTCICETransport : Gst.Object
     /// See also
     /// https://w3c.github.io/webrtc-pc/#dom-rtcicetransport-getselectedcandidatepair
     /// </summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
     /// <returns>A #GstWebRTCICECandidatePair</returns>
     public Gst.WebRTC.WebRTCICECandidatePair? GetSelectedCandidatePair()
     {

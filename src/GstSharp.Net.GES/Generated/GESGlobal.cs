@@ -25,6 +25,9 @@ public static unsafe partial class GESGlobal
     }
 
     /// <summary>Get the error quark for GES errors.</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
     /// <returns>The error quark for GES errors</returns>
     public static Gst.GLib.Quark ErrorQuark()
     {

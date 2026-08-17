@@ -156,6 +156,9 @@ public static unsafe partial class PbutilsGlobal
     }
 
     /// <summary>Creates the corresponding AV1 Codec Configuration Record</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.26.</para>
+    /// </remarks>
     /// <param name="caps">The <c>caps</c> argument.</param>
     /// <returns>
     /// The AV1 Codec Configuration Record, or
@@ -170,6 +173,9 @@ public static unsafe partial class PbutilsGlobal
     }
 
     /// <summary>Parses the provided @av1c and returns the corresponding caps</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.26.</para>
+    /// </remarks>
     /// <param name="av1c">The <c>av1c</c> argument.</param>
     /// <returns>
     /// The parsed AV1 caps, or %NULL if there
@@ -184,6 +190,9 @@ public static unsafe partial class PbutilsGlobal
     }
 
     /// <summary>Transform a seq_level_idx into the level string</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.26.</para>
+    /// </remarks>
     /// <param name="seqLevelIdx">The <c>seqLevelIdx</c> argument.</param>
     /// <returns>the level string or %NULL if the seq_level_idx is unknown</returns>
     public static string? CodecUtilsAv1GetLevel(byte seqLevelIdx)
@@ -193,6 +202,9 @@ public static unsafe partial class PbutilsGlobal
     }
 
     /// <summary>Transform a level string from the caps into the seq_level_idx</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.26.</para>
+    /// </remarks>
     /// <param name="level">The <c>level</c> argument.</param>
     /// <returns>the seq_level_idx or 31 (max-level) if the level is unknown</returns>
     public static byte CodecUtilsAv1GetSeqLevelIdx(string level)
@@ -463,6 +475,9 @@ public static unsafe partial class PbutilsGlobal
     /// gst_codec_utils_h266_get_tier() and gst_codec_utils_h266_get_profile()
     /// for more details on the parameters.
     /// </summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.26.</para>
+    /// </remarks>
     /// <param name="caps">The <c>caps</c> argument.</param>
     /// <param name="decoderConfiguration">Pointer to the VvcDecoderConfigurationRecord struct as defined in ISO/IEC 14496-15</param>
     /// <returns>%TRUE if the level, tier, profile could be set, %FALSE otherwise.</returns>
@@ -481,6 +496,9 @@ public static unsafe partial class PbutilsGlobal
     /// Converts the level indication (general_level_idc) in the stream's
     /// ptl_record structure into a string.
     /// </summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.26.</para>
+    /// </remarks>
     /// <param name="ptlRecord">Pointer to the VvcPTLRecord structure as defined in ISO/IEC 14496-15.</param>
     /// <returns>The level as a const string, or %NULL if there is an error.</returns>
     public static string? CodecUtilsH266GetLevel(System.ReadOnlySpan<byte> ptlRecord)
@@ -493,6 +511,9 @@ public static unsafe partial class PbutilsGlobal
     }
 
     /// <summary>Transform a level string from the caps into the level_idc</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.26.</para>
+    /// </remarks>
     /// <param name="level">The <c>level</c> argument.</param>
     /// <returns>the level_idc or 0 if the level is unknown</returns>
     public static byte CodecUtilsH266GetLevelIdc(string level)
@@ -508,6 +529,9 @@ public static unsafe partial class PbutilsGlobal
     /// Converts the profile indication (general_profile_idc) in the stream's
     /// ptl_record structure into a string.
     /// </summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.26.</para>
+    /// </remarks>
     /// <param name="ptlRecord">Pointer to the VvcPTLRecord structure as defined in ISO/IEC 14496-15.</param>
     /// <returns>The profile as a const string, or %NULL if there is an error.</returns>
     public static string? CodecUtilsH266GetProfile(System.ReadOnlySpan<byte> ptlRecord)
@@ -523,6 +547,9 @@ public static unsafe partial class PbutilsGlobal
     /// Converts the tier indication (general_tier_flag) in the stream's
     /// ptl_record structure into a string.
     /// </summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.26.</para>
+    /// </remarks>
     /// <param name="ptlRecord">Pointer to the VvcPTLRecord structure as defined in ISO/IEC 14496-15.</param>
     /// <returns>The tier as a const string, or %NULL if there is an error.</returns>
     public static string? CodecUtilsH266GetTier(System.ReadOnlySpan<byte> ptlRecord)
@@ -884,6 +911,9 @@ public static unsafe partial class PbutilsGlobal
     }
 
     /// <summary>Get the stream-id of the stream for which an element is missing.</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.26.</para>
+    /// </remarks>
     /// <param name="msg">The <c>msg</c> argument.</param>
     /// <returns>The stream-id or %NULL if none is specified.</returns>
     public static string? MissingPluginMessageGetStreamId(Gst.Message msg)
@@ -895,6 +925,9 @@ public static unsafe partial class PbutilsGlobal
     }
 
     /// <summary>Set the stream-id of the stream for which an element is missing.</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.26.</para>
+    /// </remarks>
     /// <param name="msg">The <c>msg</c> argument.</param>
     /// <param name="streamId">The <c>streamId</c> argument.</param>
     public static void MissingPluginMessageSetStreamId(Gst.Message msg, string streamId)

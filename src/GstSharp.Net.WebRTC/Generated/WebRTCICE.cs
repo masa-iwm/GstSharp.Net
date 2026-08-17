@@ -62,6 +62,9 @@ public abstract unsafe partial class WebRTCICE : Gst.Object
     /// Invoke the close procedure as specified in
     /// https://www.w3.org/TR/webrtc/#dom-rtcpeerconnection-close.
     /// </summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
     /// <param name="promise">The <c>promise</c> argument.</param>
     public void Close(Gst.Promise? promise)
     {

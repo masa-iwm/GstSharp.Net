@@ -123,6 +123,7 @@ public static unsafe partial class AudioGlobal
     /// gst_audio_get_channel_reorder_map().
     /// </para>
     /// <para>Note: this function assumes the audio data is in interleaved layout</para>
+    /// <para>Available since GStreamer 1.26.</para>
     /// </remarks>
     /// <param name="data">
     /// The pointer to

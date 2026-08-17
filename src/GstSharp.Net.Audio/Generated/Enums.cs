@@ -245,9 +245,15 @@ public enum AudioChannelPosition
     SurroundRight = 27,
 
     /// <summary>Top surround left (between rear left and side left).</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.26.</para>
+    /// </remarks>
     TopSurroundLeft = 28,
 
     /// <summary>Top surround right (between rear right and side right).</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.26.</para>
+    /// </remarks>
     TopSurroundRight = 29,
 }
 
@@ -401,15 +407,27 @@ public enum AudioFormat
     F64be = 31,
 
     /// <summary>20 bits in 32 bits, signed, little endian.</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
     S2032le = 32,
 
     /// <summary>20 bits in 32 bits, signed, big endian.</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
     S2032be = 33,
 
     /// <summary>20 bits in 32 bits, unsigned, little endian.</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
     U2032le = 34,
 
     /// <summary>20 bits in 32 bits, unsigned, big endian.</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
     U2032be = 35,
 
     /// <summary>16 bits in 16 bits, signed, native endianness</summary>
@@ -443,9 +461,15 @@ public enum AudioFormat
     U20 = 22,
 
     /// <summary>20 bits in 32 bits, signed, native endian.</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
     S2032 = 32,
 
     /// <summary>20 bits in 32 bits, unsigned, native endian.</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
     U2032 = 34,
 
     /// <summary>18 bits in 24 bits, signed, native endianness</summary>

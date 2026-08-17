@@ -84,6 +84,9 @@ public unsafe partial class AppSink : Gst.Base.BaseSink, Gst.IURIHandler
     }
 
     /// <summary>Get the number of currently queued buffers inside @appsink.</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
     /// <returns>The number of currently queued buffers.</returns>
     public ulong GetCurrentLevelBuffers()
     {
@@ -93,6 +96,9 @@ public unsafe partial class AppSink : Gst.Base.BaseSink, Gst.IURIHandler
     }
 
     /// <summary>Get the number of currently queued bytes inside @appsink.</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
     /// <returns>The number of currently queued bytes.</returns>
     public ulong GetCurrentLevelBytes()
     {
@@ -102,6 +108,9 @@ public unsafe partial class AppSink : Gst.Base.BaseSink, Gst.IURIHandler
     }
 
     /// <summary>Get the amount of currently queued time inside @appsink.</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
     /// <returns>The amount of currently queued time.</returns>
     public Gst.ClockTime GetCurrentLevelTime()
     {
@@ -142,6 +151,9 @@ public unsafe partial class AppSink : Gst.Base.BaseSink, Gst.IURIHandler
     /// Returns the currently set #GstAppLeakyType. See gst_app_sink_set_leaky_type()
     /// for more details.
     /// </summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
     /// <returns>The currently set #GstAppLeakyType.</returns>
     public Gst.App.AppLeakyType GetLeakyType()
     {
@@ -334,6 +346,9 @@ public unsafe partial class AppSink : Gst.Base.BaseSink, Gst.IURIHandler
     /// full. The selected type defines whether to drop the oldest or new
     /// buffers.
     /// </summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
     /// <param name="leaky">The <c>leaky</c> argument.</param>
     public void SetLeakyType(Gst.App.AppLeakyType leaky)
     {
@@ -459,12 +474,21 @@ public unsafe partial class AppSink : Gst.Base.BaseSink, Gst.IURIHandler
     }
 
     /// <summary>The number of currently queued buffers inside appsink.</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
     public ulong CurrentLevelBuffers => GetCurrentLevelBuffers();
 
     /// <summary>The number of currently queued bytes inside appsink.</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
     public ulong CurrentLevelBytes => GetCurrentLevelBytes();
 
     /// <summary>The amount of currently queued time inside appsink.</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
     public Gst.ClockTime CurrentLevelTime => GetCurrentLevelTime();
 
     /// <summary>Drop old buffers when the buffer queue is filled.</summary>
@@ -488,6 +512,9 @@ public unsafe partial class AppSink : Gst.Base.BaseSink, Gst.IURIHandler
     /// full. The selected type defines whether to drop the oldest or new
     /// buffers.
     /// </summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
     public Gst.App.AppLeakyType LeakyType
     {
         get => GetLeakyType();

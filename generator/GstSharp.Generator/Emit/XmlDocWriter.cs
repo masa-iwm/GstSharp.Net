@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text;
 using GstSharp.Generator.GirParsing.Model;
+using GstSharp.Generator.Semantic;
 
 namespace GstSharp.Generator.Emit;
 
@@ -19,7 +20,8 @@ internal static class XmlDocWriter
 
     /// <summary>
     /// Writes a <c>&lt;summary&gt;</c> element, plus a <c>&lt;remarks&gt;</c>
-    /// element when the gir documentation has more than one paragraph.
+    /// element when the gir documentation has more than one paragraph or when
+    /// the member arrived after the supported floor.
     /// </summary>
     /// <param name="writer">The target writer.</param>
     /// <param name="doc">The gir documentation, if any.</param>
@@ -27,22 +29,43 @@ internal static class XmlDocWriter
     /// The summary used when there is no documentation. It is generator
     /// authored XML documentation markup and is emitted verbatim.
     /// </param>
-    internal static void Write(CodeWriter writer, string? doc, string fallbackSummary)
+    /// <param name="availability">
+    /// The gir element whose <c>version</c> attribute says which GStreamer the
+    /// member needs, when the member has one to report.
+    /// </param>
+    internal static void Write(
+        CodeWriter writer,
+        string? doc,
+        string fallbackSummary,
+        GirNode? availability = null)
     {
+        string? since = Availability.SinceVersion(availability);
         IReadOnlyList<IReadOnlyList<string>> paragraphs = SplitParagraphs(doc);
         if (paragraphs.Count == 0)
         {
             writer.WriteLine("/// <summary>" + fallbackSummary + "</summary>");
+            if (since is not null)
+            {
+                writer.WriteLine("/// <remarks>");
+                WriteSince(writer, since);
+                writer.WriteLine("/// </remarks>");
+            }
+
             return;
         }
 
         WriteSummary(writer, paragraphs[0]);
-        if (paragraphs.Count > 1)
+        if (paragraphs.Count > 1 || since is not null)
         {
             writer.WriteLine("/// <remarks>");
             for (int i = 1; i < paragraphs.Count; i++)
             {
                 WriteParagraph(writer, paragraphs[i]);
+            }
+
+            if (since is not null)
+            {
+                WriteSince(writer, since);
             }
 
             writer.WriteLine("/// </remarks>");
@@ -218,6 +241,19 @@ internal static class XmlDocWriter
 
         writer.WriteLine("/// </" + closeTag + ">");
     }
+
+    /// <summary>
+    /// Writes the paragraph that names the GStreamer a member needs.
+    /// </summary>
+    /// <param name="writer">The target writer.</param>
+    /// <param name="since">The version the member arrived in.</param>
+    /// <remarks>
+    /// It is the last paragraph of the remarks, after whatever the gir had to
+    /// say, because it is the generator talking about the library rather than
+    /// the library talking about itself.
+    /// </remarks>
+    private static void WriteSince(CodeWriter writer, string since) =>
+        writer.WriteLine("/// <para>Available since GStreamer " + Escape(since) + ".</para>");
 
     private static void WriteNote(CodeWriter writer, IReadOnlyList<string> note)
     {

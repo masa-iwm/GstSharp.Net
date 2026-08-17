@@ -220,6 +220,9 @@ public static unsafe partial class NavigationExtensions
     }
 
     /// <summary>Create a new navigation event for the given key mouse double click.</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.26.</para>
+    /// </remarks>
     /// <param name="button">The <c>button</c> argument.</param>
     /// <param name="x">The <c>x</c> argument.</param>
     /// <param name="y">The <c>y</c> argument.</param>

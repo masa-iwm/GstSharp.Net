@@ -72,6 +72,9 @@ public sealed unsafe partial class PadProbeInfo
     }
 
     /// <summary>The <c>gst_pad_probe_info_get_flow_return</c> function.</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
     /// <returns>The #GstFlowReturn from the probe</returns>
     public Gst.FlowReturn GetFlowReturn()
     {
@@ -81,6 +84,9 @@ public sealed unsafe partial class PadProbeInfo
     }
 
     /// <summary>The <c>gst_pad_probe_info_get_id</c> function.</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
     /// <returns>The probe ID from the probe</returns>
     public System.Runtime.InteropServices.CULong GetId()
     {
@@ -90,6 +96,9 @@ public sealed unsafe partial class PadProbeInfo
     }
 
     /// <summary>The <c>gst_pad_probe_info_get_offset</c> function.</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
     /// <returns>The offset from the probe</returns>
     public ulong GetOffset()
     {
@@ -113,6 +122,9 @@ public sealed unsafe partial class PadProbeInfo
     }
 
     /// <summary>The <c>gst_pad_probe_info_get_size</c> function.</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
     /// <returns>The size from the probe</returns>
     public nuint GetSize()
     {
@@ -122,6 +134,9 @@ public sealed unsafe partial class PadProbeInfo
     }
 
     /// <summary>Updates @info with @flow_ret.</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
     /// <param name="flowRet">The <c>flowRet</c> argument.</param>
     public void SetFlowReturn(Gst.FlowReturn flowRet)
     {

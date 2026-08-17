@@ -354,7 +354,7 @@ internal static class SignalEmitter
     private static void WriteEvent(CodeWriter writer, SignalEmission signal, ModuleInfo module, string cType)
     {
         SignalPlan plan = signal.Plan;
-        XmlDocWriter.Write(writer, plan.Signal.Doc, "Raised for " + Describe(plan, cType) + ".");
+        XmlDocWriter.Write(writer, plan.Signal.Doc, "Raised for " + Describe(plan, cType) + ".", plan.Signal);
         if (plan.IsDetailed)
         {
             writer.WriteLine("/// <remarks>");
@@ -386,7 +386,11 @@ internal static class SignalEmitter
     {
         string connections = module.ClrNamespace + "." + ConnectionsName;
 
-        XmlDocWriter.Write(writer, plan.Signal.Doc, "Connects a handler of " + Describe(plan, cType) + ".");
+        XmlDocWriter.Write(
+            writer,
+            plan.Signal.Doc,
+            "Connects a handler of " + Describe(plan, cType) + ".",
+            plan.Signal);
         writer.WriteLine("/// <param name=\"self\">The instance to connect the handler to.</param>");
         writer.WriteLine("/// <param name=\"handler\">The handler to connect.</param>");
         if (plan.IsDetailed)
