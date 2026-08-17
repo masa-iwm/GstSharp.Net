@@ -9,6 +9,7 @@ using System.Globalization;
 using System.Runtime.InteropServices;
 using Gst;
 using Gst.Base;
+using Gst.Controller;
 using Gst.Interop;
 
 return Smoke.Run(args);
@@ -56,7 +57,7 @@ internal static partial class Smoke
             ObjectRefSink(element);
             ObjectUnref(element);
 
-            if (!RunManagedSubclass() || !RunManagedPipeline())
+            if (!RunManagedSubclass() || !RunManagedPipeline() || !RunBindingModule())
             {
                 return 1;
             }
@@ -187,6 +188,47 @@ internal static partial class Smoke
         if (!source.Cycled)
         {
             Console.Error.WriteLine("AotSmoke: the managed source was not started and stopped.");
+            return false;
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Exercises a binding module that lives outside the runtime assembly and
+    /// is written entirely against the public SPI: <c>GstSharp.Net.Controller</c>.
+    /// </summary>
+    /// <returns>
+    /// <see langword="true"/> when the control source interpolated the way its
+    /// mode says.
+    /// </returns>
+    /// <remarks>
+    /// Three things have to survive ILC for this to work, and none of them is a
+    /// build warning when it does not: the module initialiser of another
+    /// assembly, which teaches the loader the file names of
+    /// <c>libgstcontroller-1.0</c>; the function pointers of its type table,
+    /// which the registry calls to resolve the <c>GType</c> and to build the
+    /// wrapper; and the property round trip through <c>GValue</c>. A control
+    /// source needs no plugin and no pipeline, so this stays a few
+    /// milliseconds.
+    /// </remarks>
+    private static bool RunBindingModule()
+    {
+        InterpolationControlSource source = InterpolationControlSource.New();
+        source.Mode = InterpolationMode.Linear;
+        source.Set(ClockTime.Zero, 0.0);
+        source.Set(ClockTime.FromSeconds(1), 1.0);
+
+        bool answered = source.TryGetValue(ClockTime.FromMilliseconds(500), out double middle);
+
+        Console.WriteLine($"module:      GstController from {NativeLoader.GetLoadedModulePath("GstController") ?? "the library search path"}");
+        Console.WriteLine(string.Create(
+            CultureInfo.InvariantCulture,
+            $"controlled:  {source.Count} points, {source.Mode} at 0.5s is {middle}"));
+
+        if (!answered || Math.Abs(middle - 0.5) > 1e-9 || source.Count != 2)
+        {
+            Console.Error.WriteLine("AotSmoke: the binding module did not interpolate as expected.");
             return false;
         }
 

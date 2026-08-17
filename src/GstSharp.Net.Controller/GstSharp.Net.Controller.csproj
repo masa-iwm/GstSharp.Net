@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>Gst.Controller</RootNamespace>
+  </PropertyGroup>
+
+  <!-- This project is the certification of the module SPI, and the way it
+       certifies it is by what is NOT here.
+
+       There is no InternalsVisibleTo anywhere in this file, and GstSharp.Net
+       grants none to "GstSharp.Net.Controller" either: every other module in
+       src/ is named in the InternalsVisibleTo list of GstSharp.Net.csproj and
+       this one deliberately is not. Everything below is written against the
+       public surface — NativeLoader.EnsureRegistered and
+       NativeLoader.RegisterLibrary, TypeRegistry.RegisterModule with
+       NativeModule and ModuleTypeEntry, the protected wrapper constructors,
+       Object.FromNative, GMarshal — which is exactly the surface a binding
+       module outside this repository has. If this project compiles, that
+       surface is complete enough to write a module with; if a future change
+       closes part of it, this project stops compiling.
+
+       See docs/modules.md. -->
+
+  <ItemGroup>
+    <ProjectReference Include="../GstSharp.Net/GstSharp.Net.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -48,6 +48,10 @@ public sealed class ModuleRegistrationTests
         "GstSharp.Net.Net",
         "GstSharp.Net.Rtsp",
         "GstSharp.Net.GES",
+
+        // The hand-written module of docs/modules.md registers the same way,
+        // through the public SPI rather than through the generated table.
+        "GstSharp.Net.Controller",
     ];
 
     /// <summary>The logical library name each of them registers.</summary>
@@ -64,6 +68,7 @@ public sealed class ModuleRegistrationTests
         "GstNet",
         "GstRtsp",
         "GES",
+        "GstController",
     ];
 
     /// <summary>

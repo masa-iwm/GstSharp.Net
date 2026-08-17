@@ -20,6 +20,12 @@
     <ProjectReference Include="../../src/GstSharp.Net/GstSharp.Net.csproj" Aliases="global,gstsharp" />
     <ProjectReference Include="../../src/GstSharp.Net.App/GstSharp.Net.App.csproj" />
     <ProjectReference Include="../../src/GstSharp.Net.Base/GstSharp.Net.Base.csproj" />
+
+    <!-- The proof of the module SPI. This project has the internals of
+         GstSharp.Net, but GstSharp.Net.Controller does not and grants none of
+         its own, so the tests below reach it through its public surface like
+         any other consumer would. -->
+    <ProjectReference Include="../../src/GstSharp.Net.Controller/GstSharp.Net.Controller.csproj" />
     <ProjectReference Include="../../src/GstSharp.Net.Sdp/GstSharp.Net.Sdp.csproj" />
     <ProjectReference Include="../../src/GstSharp.Net.WebRTC/GstSharp.Net.WebRTC.csproj" />
     <ProjectReference Include="../../src/GstSharp.Net.Net/GstSharp.Net.Net.csproj" />

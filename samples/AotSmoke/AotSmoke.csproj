@@ -12,6 +12,11 @@
     <!-- The managed source and sink of the sample derive from GstBaseSrc and
          GstBaseSink, whose subclassing surface lives in this module. -->
     <ProjectReference Include="../../src/GstSharp.Net.Base/GstSharp.Net.Base.csproj" />
+    <!-- The module SPI under ILC: GstSharp.Net.Controller registers its own
+         native library name and its own function-pointer type table from a
+         module initialiser, none of which the ahead of time compiler may
+         drop. -->
+    <ProjectReference Include="../../src/GstSharp.Net.Controller/GstSharp.Net.Controller.csproj" />
   </ItemGroup>
 
 </Project>

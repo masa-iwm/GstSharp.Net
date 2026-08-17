@@ -29,6 +29,7 @@
     <Project Path="src/GstSharp.Net.App/GstSharp.Net.App.csproj" />
     <Project Path="src/GstSharp.Net.Audio/GstSharp.Net.Audio.csproj" />
     <Project Path="src/GstSharp.Net.Base/GstSharp.Net.Base.csproj" />
+    <Project Path="src/GstSharp.Net.Controller/GstSharp.Net.Controller.csproj" />
     <Project Path="src/GstSharp.Net.GES/GstSharp.Net.GES.csproj" />
     <Project Path="src/GstSharp.Net.Net/GstSharp.Net.Net.csproj" />
     <Project Path="src/GstSharp.Net.Pbutils/GstSharp.Net.Pbutils.csproj" />
