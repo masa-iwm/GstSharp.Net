@@ -333,6 +333,12 @@ public static unsafe partial class VideoGlobal
         nint nativeResult = GstVideoConvertSample(sample.Handle, toCaps.Handle, timeout.Nanoseconds, &errorNative);
         System.GC.KeepAlive(sample);
         System.GC.KeepAlive(toCaps);
+        if (errorNative != 0 && nativeResult != 0)
+        {
+            // The call failed and transferred a value all the same. The throw
+            // below puts it out of reach, so it is released rather than leaked.
+            Gst.Sample.FromNative(nativeResult, Gst.Interop.Transfer.Full)?.Dispose();
+        }
         Gst.GLib.GException.ThrowIfSet(ref errorNative);
         return Gst.Sample.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }

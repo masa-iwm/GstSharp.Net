@@ -239,6 +239,151 @@ public sealed class ClassEmitterTests
     }
 
     [Fact]
+    public void AGeneratedClassOpensItsConstructorToBindingModules()
+    {
+        // The constructor is the one thing about a generated class that is
+        // open, and it is deliberate public surface: it is where a module
+        // written against the package attaches its wrappers to the generated
+        // hierarchy. Everything else stays internal.
+        string source = Source("ControlSource.cs");
+
+        Assert.Contains(
+            "    protected ControlSource(nint handle, Gst.Interop.Transfer transfer)\n",
+            source,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "/// This is where a binding module attaches its own wrappers: derive from",
+            source,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "    internal static new object CreateWrapper(nint handle, Gst.Interop.Transfer transfer)",
+            source,
+            StringComparison.Ordinal);
+        Assert.Contains("    internal static new partial nuint GetGType();\n", source, StringComparison.Ordinal);
+
+        // The private concrete subclass reaches the constructor by nesting, so
+        // its own accessibility is unaffected.
+        Assert.Contains("    private sealed class Concrete : ControlSource\n", source, StringComparison.Ordinal);
+        Assert.Contains(
+            "        internal Concrete(nint handle, Gst.Interop.Transfer transfer)\n",
+            source,
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void EveryGeneratedClassOpensItsConstructorAndEveryRecordDoesNot()
+    {
+        // A class is never sealed, so protected is always legal on it. A mini
+        // object, a boxed value and an opaque record are sealed and keep the
+        // internal constructor that only a generated factory calls.
+        int classes = 0;
+        int records = 0;
+
+        foreach (GeneratedFile file in Generated.Files)
+        {
+            string content = file.Content;
+
+            if (content.Contains("\npublic abstract unsafe partial class ", StringComparison.Ordinal)
+                || content.Contains("\npublic unsafe partial class ", StringComparison.Ordinal))
+            {
+                classes++;
+                Assert.Contains(
+                    "\n    protected ",
+                    content,
+                    StringComparison.Ordinal);
+                Assert.DoesNotContain(
+                    "\n    internal " + Path.GetFileNameWithoutExtension(file.RelativePath) + "(nint handle",
+                    content,
+                    StringComparison.Ordinal);
+                continue;
+            }
+
+            if (!content.Contains("\npublic sealed unsafe partial class ", StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            records++;
+            Assert.DoesNotContain("\n    protected ", content, StringComparison.Ordinal);
+        }
+
+        Assert.Equal(151, classes);
+        Assert.Equal(81, records);
+    }
+
+    [Fact]
+    public void AFailedCallReleasesTheResultItStillTransferred()
+    {
+        // gst_discoverer_discover_uri sets its GError whenever the run saw an
+        // error message on the bus and returns the information object all the
+        // same. The throw puts that object out of reach, so it is released
+        // first; without this the call leaks one GObject per failed discovery.
+        Assert.Contains(
+            """
+                    nint nativeResult = GstDiscovererDiscoverUri(Handle, uriScope.Pointer, &errorNative);
+                    System.GC.KeepAlive(this);
+                    if (errorNative != 0 && nativeResult != 0)
+                    {
+                        // The call failed and transferred a value all the same. The throw
+                        // below puts it out of reach, so it is released rather than leaked.
+                        Gst.Interop.GObjectNative.ObjectUnref(nativeResult);
+                    }
+                    Gst.GLib.GException.ThrowIfSet(ref errorNative);
+            """,
+            SourceOf("GstSharp.Net.Pbutils/Generated/Discoverer.cs"),
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void TheReleaseOfAFailedResultFollowsItsKind()
+    {
+        // A mini object and a boxed value are not interned, so the wrapper is
+        // the release: it adopts what the call transferred and hands it back.
+        Assert.Contains(
+            "Gst.Sdp.MIKEYMessage.FromNative(nativeResult, Gst.Interop.Transfer.Full)?.Dispose();",
+            SourceOf("GstSharp.Net.Sdp/Generated/MIKEYMessage.cs"),
+            StringComparison.Ordinal);
+
+        // A transferred string is memory of GLib and nothing else.
+        Assert.Contains(
+            "Gst.Interop.GMarshal.Free(nativeResult);",
+            Source("Global.cs"),
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ABorrowedResultIsNotReleasedOnTheThrowPath()
+    {
+        // gst_parse_launch returns a floating reference the wrapper sinks, and
+        // gst_element_make_from_uri returns transfer none. Releasing either
+        // would be releasing something this call was never given.
+        Assert.Contains(
+            """
+                    nint nativeResult = GstElementMakeFromUri((int)type, uriScope.Pointer, elementnameScope.Pointer, &errorNative);
+                    Gst.GLib.GException.ThrowIfSet(ref errorNative);
+            """,
+            Source("Element.cs"),
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void EveryThrowingCallableThatOwnsItsResultReleasesIt()
+    {
+        // The guard is emitted for a transferred handle and a transferred
+        // string, which is every owned return the bound surface throws with. A
+        // new one of a kind the emitter does not cover — an opaque record, a
+        // string vector, a list, an array — would leak silently, so the count
+        // is frozen here and a change to it has to be looked at.
+        int guards = 0;
+        foreach (GeneratedFile file in Generated.Files)
+        {
+            guards += file.Content.Split("// The call failed and transferred a value all the same.").Length - 1;
+        }
+
+        Assert.Equal(12, guards);
+    }
+
+    [Fact]
     public void TheSkipReportListsEverySkippedSymbolAndIsDeterministic()
     {
         string report = Generated.SkipReport;

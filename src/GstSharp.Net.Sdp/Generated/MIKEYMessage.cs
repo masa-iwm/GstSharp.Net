@@ -139,6 +139,12 @@ public sealed unsafe partial class MIKEYMessage : Gst.MiniObject
         {
             nint nativeResult = GstMikeyMessageNewFromData(dataPointer, (nuint)data.Length, info.Handle, &errorNative);
             System.GC.KeepAlive(info);
+            if (errorNative != 0 && nativeResult != 0)
+            {
+                // The call failed and transferred a value all the same. The throw
+                // below puts it out of reach, so it is released rather than leaked.
+                Gst.Sdp.MIKEYMessage.FromNative(nativeResult, Gst.Interop.Transfer.Full)?.Dispose();
+            }
             Gst.GLib.GException.ThrowIfSet(ref errorNative);
             return Gst.Sdp.MIKEYMessage.FromNative(nativeResult, Gst.Interop.Transfer.Full)
                 ?? throw new InvalidOperationException("gst_mikey_message_new_from_data returned no value.");

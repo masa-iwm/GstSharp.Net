@@ -78,6 +78,12 @@ public sealed unsafe partial class NetTimePacket : Gst.GObject.Boxed
         nint errorNative = 0;
         nint nativeResult = GstNetTimePacketReceive(socket.Handle, &srcAddressNative, &errorNative);
         System.GC.KeepAlive(socket);
+        if (errorNative != 0 && nativeResult != 0)
+        {
+            // The call failed and transferred a value all the same. The throw
+            // below puts it out of reach, so it is released rather than leaked.
+            Gst.Net.NetTimePacket.FromNative(nativeResult, Gst.Interop.Transfer.Full)?.Dispose();
+        }
         Gst.GLib.GException.ThrowIfSet(ref errorNative);
         srcAddress = Gst.GObject.Object.FromNative<Gst.Gio.SocketAddress>(srcAddressNative, Gst.Interop.Transfer.Full);
         return Gst.Net.NetTimePacket.FromNative(nativeResult, Gst.Interop.Transfer.Full)

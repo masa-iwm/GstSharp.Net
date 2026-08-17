@@ -765,6 +765,12 @@ public static unsafe partial class Global
         using Gst.Interop.Utf8Scope filenameScope = Gst.Interop.GMarshal.StackUtf8(filename, filenameBuffer);
         nint errorNative = 0;
         nint nativeResult = GstFilenameToUri(filenameScope.Pointer, &errorNative);
+        if (errorNative != 0 && nativeResult != 0)
+        {
+            // The call failed and transferred a value all the same. The throw
+            // below puts it out of reach, so it is released rather than leaked.
+            Gst.Interop.GMarshal.Free(nativeResult);
+        }
         Gst.GLib.GException.ThrowIfSet(ref errorNative);
         return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
     }

@@ -294,6 +294,12 @@ public unsafe partial class Plugin : Gst.Object
         using Gst.Interop.Utf8Scope filenameScope = Gst.Interop.GMarshal.StackUtf8(filename, filenameBuffer);
         nint errorNative = 0;
         nint nativeResult = GstPluginLoadFile(filenameScope.Pointer, &errorNative);
+        if (errorNative != 0 && nativeResult != 0)
+        {
+            // The call failed and transferred a value all the same. The throw
+            // below puts it out of reach, so it is released rather than leaked.
+            Gst.Interop.GObjectNative.ObjectUnref(nativeResult);
+        }
         Gst.GLib.GException.ThrowIfSet(ref errorNative);
         return Gst.GObject.Object.FromNative<Gst.Plugin>(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_plugin_load_file returned no value.");

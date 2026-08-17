@@ -300,6 +300,7 @@ internal static class CallableRenderer
 
         if (plan.Throws)
         {
+            WriteFailedResultRelease(writer, plan);
             writer.WriteLine("Gst.GLib.GException.ThrowIfSet(ref errorNative);");
         }
 
@@ -323,6 +324,75 @@ internal static class CallableRenderer
             writer.WriteLine(scopes[i].Name + "State.Free();");
             writer.CloseBlock();
         }
+    }
+
+    /// <summary>
+    /// Releases a return value the call transferred to the caller on its way to
+    /// failing, before the error it reported is raised.
+    /// </summary>
+    /// <param name="writer">The target writer.</param>
+    /// <param name="plan">The member being written.</param>
+    /// <remarks>
+    /// <para>
+    /// A function that takes a <c>GError**</c> may set the error and still
+    /// return something. <c>gst_discoverer_discover_uri</c> is the one that
+    /// matters: it fills the error whenever the run saw an error message on the
+    /// bus and hands the information object over all the same. The member
+    /// raises the error before it wraps the return value, because it has no way
+    /// to give the caller both, so a transferred result would be dropped on the
+    /// floor with nothing left holding it. Releasing it here is what keeps a
+    /// failed call from leaking; whether the caller could reach it instead is a
+    /// separate question that this does not answer.
+    /// </para>
+    /// <para>
+    /// Only a transferred return is released. A borrowed one belongs to
+    /// whatever produced it, and a value that is not a pointer is not an
+    /// allocation. The release of a GObject is the raw unref rather than a
+    /// wrapper that is built and disposed: GObject wrappers are interned, so
+    /// building one for a handle that already has a live wrapper and disposing
+    /// that would end the wrapper the rest of the process is holding, while
+    /// dropping the reference the call transferred is the whole of what is
+    /// owed. Mini objects and boxed values are not interned, so for those the
+    /// wrapper <em>is</em> the release: it adopts the reference or takes the
+    /// copy and hands it straight back.
+    /// </para>
+    /// <para>
+    /// The three kinds below are the ones the bound surface has. No throwing
+    /// callable returns an owned opaque record, string vector, list or array,
+    /// so nothing is emitted for those and a new one would leak the way this
+    /// fixes — the shape is pinned by a test for that reason.
+    /// </para>
+    /// </remarks>
+    private static void WriteFailedResultRelease(CodeWriter writer, MarshalPlan plan)
+    {
+        ReturnPlan value = plan.Return;
+        if (value.IsVoid || value.Transfer is not (GirTransfer.Full or GirTransfer.Floating))
+        {
+            return;
+        }
+
+        string? release = value.Kind switch
+        {
+            ArgumentKind.Handle when value.Flavor == HandleFlavor.GObject =>
+                "Gst.Interop.GObjectNative.ObjectUnref(" + ResultLocal + ");",
+            ArgumentKind.Handle when value.Flavor == HandleFlavor.Wrapper =>
+                TrimNullable(value.PublicType) + ".FromNative(" + ResultLocal
+                    + ", Gst.Interop.Transfer.Full)?.Dispose();",
+            ArgumentKind.Utf8 => "Gst.Interop.GMarshal.Free(" + ResultLocal + ");",
+            _ => null,
+        };
+
+        if (release is null)
+        {
+            return;
+        }
+
+        writer.WriteLine("if (errorNative != 0 && " + ResultLocal + " != 0)");
+        writer.OpenBlock();
+        writer.WriteLine("// The call failed and transferred a value all the same. The throw");
+        writer.WriteLine("// below puts it out of reach, so it is released rather than leaked.");
+        writer.WriteLine(release);
+        writer.CloseBlock();
     }
 
     /// <summary>

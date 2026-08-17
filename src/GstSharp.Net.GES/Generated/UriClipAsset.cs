@@ -100,6 +100,12 @@ public unsafe partial class UriClipAsset : GES.SourceClipAsset, GES.IMetaContain
         using Gst.Interop.Utf8Scope uriScope = Gst.Interop.GMarshal.StackUtf8(uri, uriBuffer);
         nint errorNative = 0;
         nint nativeResult = GesUriClipAssetRequestSync(uriScope.Pointer, &errorNative);
+        if (errorNative != 0 && nativeResult != 0)
+        {
+            // The call failed and transferred a value all the same. The throw
+            // below puts it out of reach, so it is released rather than leaked.
+            Gst.Interop.GObjectNative.ObjectUnref(nativeResult);
+        }
         Gst.GLib.GException.ThrowIfSet(ref errorNative);
         return Gst.GObject.Object.FromNative<GES.UriClipAsset>(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("ges_uri_clip_asset_request_sync returned no value.");

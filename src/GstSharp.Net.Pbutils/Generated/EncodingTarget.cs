@@ -153,6 +153,12 @@ public unsafe partial class EncodingTarget : Gst.GObject.Object
         using Gst.Interop.Utf8Scope categoryScope = Gst.Interop.GMarshal.StackUtf8(category, categoryBuffer);
         nint errorNative = 0;
         nint nativeResult = GstEncodingTargetLoad(nameScope.Pointer, categoryScope.Pointer, &errorNative);
+        if (errorNative != 0 && nativeResult != 0)
+        {
+            // The call failed and transferred a value all the same. The throw
+            // below puts it out of reach, so it is released rather than leaked.
+            Gst.Interop.GObjectNative.ObjectUnref(nativeResult);
+        }
         Gst.GLib.GException.ThrowIfSet(ref errorNative);
         return Gst.GObject.Object.FromNative<Gst.Pbutils.EncodingTarget>(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_encoding_target_load returned no value.");
@@ -172,6 +178,12 @@ public unsafe partial class EncodingTarget : Gst.GObject.Object
         using Gst.Interop.Utf8Scope filepathScope = Gst.Interop.GMarshal.StackUtf8(filepath, filepathBuffer);
         nint errorNative = 0;
         nint nativeResult = GstEncodingTargetLoadFromFile(filepathScope.Pointer, &errorNative);
+        if (errorNative != 0 && nativeResult != 0)
+        {
+            // The call failed and transferred a value all the same. The throw
+            // below puts it out of reach, so it is released rather than leaked.
+            Gst.Interop.GObjectNative.ObjectUnref(nativeResult);
+        }
         Gst.GLib.GException.ThrowIfSet(ref errorNative);
         return Gst.GObject.Object.FromNative<Gst.Pbutils.EncodingTarget>(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_encoding_target_load_from_file returned no value.");

@@ -329,6 +329,12 @@ public unsafe partial class Asset : Gst.GObject.Object, GES.IMetaContainer
         using Gst.Interop.Utf8Scope idScope = Gst.Interop.GMarshal.StackUtf8(id, idBuffer);
         nint errorNative = 0;
         nint nativeResult = GesAssetRequest(extractableType.Value, idScope.Pointer, &errorNative);
+        if (errorNative != 0 && nativeResult != 0)
+        {
+            // The call failed and transferred a value all the same. The throw
+            // below puts it out of reach, so it is released rather than leaked.
+            Gst.Interop.GObjectNative.ObjectUnref(nativeResult);
+        }
         Gst.GLib.GException.ThrowIfSet(ref errorNative);
         return Gst.GObject.Object.FromNative<GES.Asset>(nativeResult, Gst.Interop.Transfer.Full);
     }

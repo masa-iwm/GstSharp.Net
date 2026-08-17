@@ -51,6 +51,12 @@ public unsafe partial class Discoverer : Gst.GObject.Object
     {
         nint errorNative = 0;
         nint nativeResult = GstDiscovererNew(timeout.Nanoseconds, &errorNative);
+        if (errorNative != 0 && nativeResult != 0)
+        {
+            // The call failed and transferred a value all the same. The throw
+            // below puts it out of reach, so it is released rather than leaked.
+            Gst.Interop.GObjectNative.ObjectUnref(nativeResult);
+        }
         Gst.GLib.GException.ThrowIfSet(ref errorNative);
         return Gst.GObject.Object.FromNative<Gst.Pbutils.Discoverer>(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_discoverer_new returned no value.");
@@ -77,6 +83,12 @@ public unsafe partial class Discoverer : Gst.GObject.Object
         nint errorNative = 0;
         nint nativeResult = GstDiscovererDiscoverUri(Handle, uriScope.Pointer, &errorNative);
         System.GC.KeepAlive(this);
+        if (errorNative != 0 && nativeResult != 0)
+        {
+            // The call failed and transferred a value all the same. The throw
+            // below puts it out of reach, so it is released rather than leaked.
+            Gst.Interop.GObjectNative.ObjectUnref(nativeResult);
+        }
         Gst.GLib.GException.ThrowIfSet(ref errorNative);
         return Gst.GObject.Object.FromNative<Gst.Pbutils.DiscovererInfo>(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_discoverer_discover_uri returned no value.");
