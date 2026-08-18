@@ -288,7 +288,7 @@ public abstract unsafe partial class DeviceProvider : Gst.Object
     }
 
     /// <summary>The arguments of the <c>provider-hidden</c> signal of <c>GstDeviceProvider</c>.</summary>
-    public sealed class ProviderHiddenSignalArgs
+    public sealed class ProviderHiddenSignalArgs : System.EventArgs
     {
         /// <summary>Initializes a new instance of the <see cref="ProviderHiddenSignalArgs"/> class.</summary>
         /// <param name="object">The <c>object</c> argument.</param>
@@ -338,7 +338,7 @@ public abstract unsafe partial class DeviceProvider : Gst.Object
     }
 
     /// <summary>The arguments of the <c>provider-unhidden</c> signal of <c>GstDeviceProvider</c>.</summary>
-    public sealed class ProviderUnhiddenSignalArgs
+    public sealed class ProviderUnhiddenSignalArgs : System.EventArgs
     {
         /// <summary>Initializes a new instance of the <see cref="ProviderUnhiddenSignalArgs"/> class.</summary>
         /// <param name="object">The <c>object</c> argument.</param>

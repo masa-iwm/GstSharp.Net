@@ -197,7 +197,7 @@ public unsafe partial class Discoverer : Gst.GObject.Object
     }
 
     /// <summary>The arguments of the <c>source-setup</c> signal of <c>GstDiscoverer</c>.</summary>
-    public sealed class SourceSetupSignalArgs
+    public sealed class SourceSetupSignalArgs : System.EventArgs
     {
         /// <summary>Initializes a new instance of the <see cref="SourceSetupSignalArgs"/> class.</summary>
         /// <param name="source">source element</param>

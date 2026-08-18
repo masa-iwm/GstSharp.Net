@@ -142,7 +142,7 @@ public abstract unsafe partial class WebRTCDataChannel : Gst.GObject.Object
     }
 
     /// <summary>The arguments of the <c>on-message-string</c> signal of <c>GstWebRTCDataChannel</c>.</summary>
-    public sealed class OnMessageStringSignalArgs
+    public sealed class OnMessageStringSignalArgs : System.EventArgs
     {
         /// <summary>Initializes a new instance of the <see cref="OnMessageStringSignalArgs"/> class.</summary>
         /// <param name="data">the data received as a string</param>

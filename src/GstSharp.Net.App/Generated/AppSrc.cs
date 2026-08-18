@@ -558,7 +558,7 @@ public unsafe partial class AppSrc : Gst.Base.BaseSrc, Gst.IURIHandler
     }
 
     /// <summary>The arguments of the <c>need-data</c> signal of <c>GstAppSrc</c>.</summary>
-    public sealed class NeedDataSignalArgs
+    public sealed class NeedDataSignalArgs : System.EventArgs
     {
         /// <summary>Initializes a new instance of the <see cref="NeedDataSignalArgs"/> class.</summary>
         /// <param name="length">the amount of bytes needed.</param>
@@ -620,7 +620,7 @@ public unsafe partial class AppSrc : Gst.Base.BaseSrc, Gst.IURIHandler
     }
 
     /// <summary>The arguments of the <c>seek-data</c> signal of <c>GstAppSrc</c>.</summary>
-    public sealed class SeekDataSignalArgs
+    public sealed class SeekDataSignalArgs : System.EventArgs
     {
         /// <summary>Initializes a new instance of the <see cref="SeekDataSignalArgs"/> class.</summary>
         /// <param name="offset">the offset to seek to</param>

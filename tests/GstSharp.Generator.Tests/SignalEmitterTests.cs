@@ -125,7 +125,7 @@ public sealed class SignalEmitterTests
         FixtureRun run = Fixture.Run(SignalFixture);
         string source = run.File("Element.cs");
 
-        Assert.Contains("public sealed class PadAddedSignalArgs\n", source, StringComparison.Ordinal);
+        Assert.Contains("public sealed class PadAddedSignalArgs : System.EventArgs\n", source, StringComparison.Ordinal);
         Assert.Contains("internal PadAddedSignalArgs(Gst.Pad newPad)", source, StringComparison.Ordinal);
         Assert.Contains("public Gst.Pad NewPad { get; }", source, StringComparison.Ordinal);
         Assert.Contains(
@@ -467,7 +467,7 @@ public sealed class SignalEmitterTests
     {
         string source = Source("Bus.cs");
 
-        Assert.Contains("public sealed class MessageSignalArgs\n", source, StringComparison.Ordinal);
+        Assert.Contains("public sealed class MessageSignalArgs : System.EventArgs\n", source, StringComparison.Ordinal);
         Assert.Contains("public Gst.Message Message { get; }", source, StringComparison.Ordinal);
         Assert.Contains(
             "using Gst.Message messageValue = Gst.Message.FromNative(message, Gst.Interop.Transfer.None)",
@@ -580,7 +580,7 @@ public sealed class SignalEmitterTests
 
         // The arguments carrier is nested in the extension class, because the
         // interface itself only exposes the native handle.
-        Assert.Contains("public sealed class ChildAddedSignalArgs", source, StringComparison.Ordinal);
+        Assert.Contains("public sealed class ChildAddedSignalArgs : System.EventArgs", source, StringComparison.Ordinal);
         Assert.DoesNotContain("public event", source, StringComparison.Ordinal);
     }
 

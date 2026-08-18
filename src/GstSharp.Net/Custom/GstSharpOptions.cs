@@ -13,6 +13,8 @@ namespace Gst;
 /// </remarks>
 public sealed class GstSharpOptions
 {
+    private bool _skipNativeInit;
+
     /// <summary>
     /// Gets or sets the directory that holds the native libraries, or
     /// <see langword="null"/> to let <see cref="NativeLoader"/> find them.
@@ -57,8 +59,34 @@ public sealed class GstSharpOptions
     /// GStreamer libraries expect an initialised library and complain to the
     /// GLib log when they do not get one.
     /// </para>
+    /// <para>
+    /// The property carries three states rather than two, because
+    /// <c>GstSharp.Initialize</c> rejects a second call that asks for something
+    /// the first one did not do and the other options say "no preference" with
+    /// a <see langword="null"/> that a <see cref="bool"/> has no room for.
+    /// Never assigning it is the third state: an object that was left alone
+    /// states no preference and never conflicts, while assigning it — including
+    /// assigning <see langword="false"/> — states one and takes part in the
+    /// check. An application that hands <c>GstSharp.Initialize</c> a fresh
+    /// <see cref="GstSharpOptions"/> for the search path alone therefore does
+    /// not accidentally demand an initialisation the first call suppressed.
+    /// </para>
     /// </remarks>
-    public bool SkipNativeInit { get; set; }
+    public bool SkipNativeInit
+    {
+        get => _skipNativeInit;
+        set
+        {
+            _skipNativeInit = value;
+            SkipNativeInitSpecified = true;
+        }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether <see cref="SkipNativeInit"/> was
+    /// assigned, which is what tells a stated preference from the default.
+    /// </summary>
+    internal bool SkipNativeInitSpecified { get; private set; }
 
     /// <summary>
     /// Gets or sets the command line arguments to hand to <c>gst_init</c>, for

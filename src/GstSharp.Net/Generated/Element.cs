@@ -1604,7 +1604,7 @@ public abstract unsafe partial class Element : Gst.Object
     }
 
     /// <summary>The arguments of the <c>pad-added</c> signal of <c>GstElement</c>.</summary>
-    public sealed class PadAddedSignalArgs
+    public sealed class PadAddedSignalArgs : System.EventArgs
     {
         /// <summary>Initializes a new instance of the <see cref="PadAddedSignalArgs"/> class.</summary>
         /// <param name="newPad">the pad that has been added</param>
@@ -1660,7 +1660,7 @@ public abstract unsafe partial class Element : Gst.Object
     }
 
     /// <summary>The arguments of the <c>pad-removed</c> signal of <c>GstElement</c>.</summary>
-    public sealed class PadRemovedSignalArgs
+    public sealed class PadRemovedSignalArgs : System.EventArgs
     {
         /// <summary>Initializes a new instance of the <see cref="PadRemovedSignalArgs"/> class.</summary>
         /// <param name="oldPad">the pad that has been removed</param>

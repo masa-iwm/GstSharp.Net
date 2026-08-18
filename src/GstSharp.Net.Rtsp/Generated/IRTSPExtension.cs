@@ -173,7 +173,7 @@ public static unsafe partial class RTSPExtensionExtensions
     }
 
     /// <summary>The arguments of the <c>send</c> signal of <c>GstRTSPExtension</c>.</summary>
-    public sealed class SendSignalArgs
+    public sealed class SendSignalArgs : System.EventArgs
     {
         /// <summary>Initializes a new instance of the <see cref="SendSignalArgs"/> class.</summary>
         /// <param name="object">The <c>object</c> argument.</param>

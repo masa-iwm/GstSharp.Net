@@ -463,7 +463,7 @@ public unsafe partial class Bus : Gst.Object
     }
 
     /// <summary>The arguments of the <c>message</c> signal of <c>GstBus</c>.</summary>
-    public sealed class MessageSignalArgs
+    public sealed class MessageSignalArgs : System.EventArgs
     {
         /// <summary>Initializes a new instance of the <see cref="MessageSignalArgs"/> class.</summary>
         /// <param name="message">the message that has been posted asynchronously</param>
@@ -526,7 +526,7 @@ public unsafe partial class Bus : Gst.Object
     }
 
     /// <summary>The arguments of the <c>sync-message</c> signal of <c>GstBus</c>.</summary>
-    public sealed class SyncMessageSignalArgs
+    public sealed class SyncMessageSignalArgs : System.EventArgs
     {
         /// <summary>Initializes a new instance of the <see cref="SyncMessageSignalArgs"/> class.</summary>
         /// <param name="message">the message that has been posted synchronously</param>

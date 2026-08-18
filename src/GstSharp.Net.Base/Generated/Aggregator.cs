@@ -320,7 +320,7 @@ public abstract unsafe partial class Aggregator : Gst.Element
     public Gst.ClockTime Latency => GetLatency();
 
     /// <summary>The arguments of the <c>samples-selected</c> signal of <c>GstAggregator</c>.</summary>
-    public sealed class SamplesSelectedSignalArgs
+    public sealed class SamplesSelectedSignalArgs : System.EventArgs
     {
         /// <summary>Initializes a new instance of the <see cref="SamplesSelectedSignalArgs"/> class.</summary>
         /// <param name="segment">The #GstSegment the next output buffer is part of</param>

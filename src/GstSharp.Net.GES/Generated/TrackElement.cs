@@ -378,7 +378,7 @@ public abstract unsafe partial class TrackElement : GES.TimelineElement, GES.IEx
     }
 
     /// <summary>The arguments of the <c>control-binding-added</c> signal of <c>GESTrackElement</c>.</summary>
-    public sealed class ControlBindingAddedSignalArgs
+    public sealed class ControlBindingAddedSignalArgs : System.EventArgs
     {
         /// <summary>Initializes a new instance of the <see cref="ControlBindingAddedSignalArgs"/> class.</summary>
         /// <param name="controlBinding">The control binding that has been added</param>
@@ -431,7 +431,7 @@ public abstract unsafe partial class TrackElement : GES.TimelineElement, GES.IEx
     }
 
     /// <summary>The arguments of the <c>control-binding-removed</c> signal of <c>GESTrackElement</c>.</summary>
-    public sealed class ControlBindingRemovedSignalArgs
+    public sealed class ControlBindingRemovedSignalArgs : System.EventArgs
     {
         /// <summary>Initializes a new instance of the <see cref="ControlBindingRemovedSignalArgs"/> class.</summary>
         /// <param name="controlBinding">The control binding that has been removed</param>

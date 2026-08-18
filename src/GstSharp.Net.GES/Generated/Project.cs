@@ -327,7 +327,7 @@ public unsafe partial class Project : GES.Asset, GES.IMetaContainer
     public string? Uri => GetUri();
 
     /// <summary>The arguments of the <c>asset-added</c> signal of <c>GESProject</c>.</summary>
-    public sealed class AssetAddedSignalArgs
+    public sealed class AssetAddedSignalArgs : System.EventArgs
     {
         /// <summary>Initializes a new instance of the <see cref="AssetAddedSignalArgs"/> class.</summary>
         /// <param name="asset">The #GESAsset that has been added to @project</param>
@@ -377,7 +377,7 @@ public unsafe partial class Project : GES.Asset, GES.IMetaContainer
     }
 
     /// <summary>The arguments of the <c>asset-loading</c> signal of <c>GESProject</c>.</summary>
-    public sealed class AssetLoadingSignalArgs
+    public sealed class AssetLoadingSignalArgs : System.EventArgs
     {
         /// <summary>Initializes a new instance of the <see cref="AssetLoadingSignalArgs"/> class.</summary>
         /// <param name="asset">The #GESAsset that started loading</param>
@@ -427,7 +427,7 @@ public unsafe partial class Project : GES.Asset, GES.IMetaContainer
     }
 
     /// <summary>The arguments of the <c>asset-removed</c> signal of <c>GESProject</c>.</summary>
-    public sealed class AssetRemovedSignalArgs
+    public sealed class AssetRemovedSignalArgs : System.EventArgs
     {
         /// <summary>Initializes a new instance of the <see cref="AssetRemovedSignalArgs"/> class.</summary>
         /// <param name="asset">The #GESAsset that has been removed from @project</param>
@@ -477,7 +477,7 @@ public unsafe partial class Project : GES.Asset, GES.IMetaContainer
     }
 
     /// <summary>The arguments of the <c>loaded</c> signal of <c>GESProject</c>.</summary>
-    public sealed class LoadedSignalArgs
+    public sealed class LoadedSignalArgs : System.EventArgs
     {
         /// <summary>Initializes a new instance of the <see cref="LoadedSignalArgs"/> class.</summary>
         /// <param name="timeline">The #GESTimeline that completed loading</param>
@@ -527,7 +527,7 @@ public unsafe partial class Project : GES.Asset, GES.IMetaContainer
     }
 
     /// <summary>The arguments of the <c>loading</c> signal of <c>GESProject</c>.</summary>
-    public sealed class LoadingSignalArgs
+    public sealed class LoadingSignalArgs : System.EventArgs
     {
         /// <summary>Initializes a new instance of the <see cref="LoadingSignalArgs"/> class.</summary>
         /// <param name="timeline">The #GESTimeline that started loading</param>

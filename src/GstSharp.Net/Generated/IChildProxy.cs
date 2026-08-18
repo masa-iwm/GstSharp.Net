@@ -148,7 +148,7 @@ public static unsafe partial class ChildProxyExtensions
     }
 
     /// <summary>The arguments of the <c>child-added</c> signal of <c>GstChildProxy</c>.</summary>
-    public sealed class ChildAddedSignalArgs
+    public sealed class ChildAddedSignalArgs : System.EventArgs
     {
         /// <summary>Initializes a new instance of the <see cref="ChildAddedSignalArgs"/> class.</summary>
         /// <param name="object">the #GObject that was added</param>
@@ -216,7 +216,7 @@ public static unsafe partial class ChildProxyExtensions
     }
 
     /// <summary>The arguments of the <c>child-removed</c> signal of <c>GstChildProxy</c>.</summary>
-    public sealed class ChildRemovedSignalArgs
+    public sealed class ChildRemovedSignalArgs : System.EventArgs
     {
         /// <summary>Initializes a new instance of the <see cref="ChildRemovedSignalArgs"/> class.</summary>
         /// <param name="object">the #GObject that was removed</param>

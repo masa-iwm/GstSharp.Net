@@ -14,8 +14,13 @@
 
   <ItemGroup>
     <!-- The runtime layer these tests exercise is part of the binding assembly;
-         the project keeps its name because the layer is still the core. -->
-    <ProjectReference Include="../../src/GstSharp.Net/GstSharp.Net.csproj" />
+         the project keeps its name because the layer is still the core.
+
+         The entry point of the binding is the type GstSharp in the global
+         namespace, and this assembly declares a namespace of the same name, so
+         the type is only reachable through an alias. The reference stays in the
+         global alias as well, so that every other type is used unqualified. -->
+    <ProjectReference Include="../../src/GstSharp.Net/GstSharp.Net.csproj" Aliases="global,gstsharp" />
   </ItemGroup>
 
 </Project>

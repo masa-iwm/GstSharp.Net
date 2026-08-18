@@ -486,7 +486,7 @@ public unsafe partial class Bin : Gst.Element, Gst.IChildProxy
     }
 
     /// <summary>The arguments of the <c>deep-element-added</c> signal of <c>GstBin</c>.</summary>
-    public sealed class DeepElementAddedSignalArgs
+    public sealed class DeepElementAddedSignalArgs : System.EventArgs
     {
         /// <summary>Initializes a new instance of the <see cref="DeepElementAddedSignalArgs"/> class.</summary>
         /// <param name="subBin">the #GstBin the element was added to</param>
@@ -543,7 +543,7 @@ public unsafe partial class Bin : Gst.Element, Gst.IChildProxy
     }
 
     /// <summary>The arguments of the <c>deep-element-removed</c> signal of <c>GstBin</c>.</summary>
-    public sealed class DeepElementRemovedSignalArgs
+    public sealed class DeepElementRemovedSignalArgs : System.EventArgs
     {
         /// <summary>Initializes a new instance of the <see cref="DeepElementRemovedSignalArgs"/> class.</summary>
         /// <param name="subBin">the #GstBin the element was removed from</param>
@@ -658,7 +658,7 @@ public unsafe partial class Bin : Gst.Element, Gst.IChildProxy
     }
 
     /// <summary>The arguments of the <c>element-added</c> signal of <c>GstBin</c>.</summary>
-    public sealed class ElementAddedSignalArgs
+    public sealed class ElementAddedSignalArgs : System.EventArgs
     {
         /// <summary>Initializes a new instance of the <see cref="ElementAddedSignalArgs"/> class.</summary>
         /// <param name="element">the #GstElement that was added to the bin</param>
@@ -708,7 +708,7 @@ public unsafe partial class Bin : Gst.Element, Gst.IChildProxy
     }
 
     /// <summary>The arguments of the <c>element-removed</c> signal of <c>GstBin</c>.</summary>
-    public sealed class ElementRemovedSignalArgs
+    public sealed class ElementRemovedSignalArgs : System.EventArgs
     {
         /// <summary>Initializes a new instance of the <see cref="ElementRemovedSignalArgs"/> class.</summary>
         /// <param name="element">the #GstElement that was removed from the bin</param>

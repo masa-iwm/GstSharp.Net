@@ -492,7 +492,7 @@ public unsafe partial class Registry : Gst.Object
     }
 
     /// <summary>The arguments of the <c>feature-added</c> signal of <c>GstRegistry</c>.</summary>
-    public sealed class FeatureAddedSignalArgs
+    public sealed class FeatureAddedSignalArgs : System.EventArgs
     {
         /// <summary>Initializes a new instance of the <see cref="FeatureAddedSignalArgs"/> class.</summary>
         /// <param name="feature">the feature that has been added</param>
@@ -545,7 +545,7 @@ public unsafe partial class Registry : Gst.Object
     }
 
     /// <summary>The arguments of the <c>plugin-added</c> signal of <c>GstRegistry</c>.</summary>
-    public sealed class PluginAddedSignalArgs
+    public sealed class PluginAddedSignalArgs : System.EventArgs
     {
         /// <summary>Initializes a new instance of the <see cref="PluginAddedSignalArgs"/> class.</summary>
         /// <param name="plugin">the plugin that has been added</param>

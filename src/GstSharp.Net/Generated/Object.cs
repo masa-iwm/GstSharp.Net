@@ -460,7 +460,7 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
     public Gst.Object? Parent => GetParent();
 
     /// <summary>The arguments of the <c>deep-notify</c> signal of <c>GstObject</c>.</summary>
-    public sealed class DeepNotifySignalArgs
+    public sealed class DeepNotifySignalArgs : System.EventArgs
     {
         /// <summary>Initializes a new instance of the <see cref="DeepNotifySignalArgs"/> class.</summary>
         /// <param name="propObject">the object that originated the signal</param>

@@ -128,7 +128,7 @@ public static unsafe partial class ColorBalanceExtensions
     }
 
     /// <summary>The arguments of the <c>value-changed</c> signal of <c>GstColorBalance</c>.</summary>
-    public sealed class ValueChangedSignalArgs
+    public sealed class ValueChangedSignalArgs : System.EventArgs
     {
         /// <summary>Initializes a new instance of the <see cref="ValueChangedSignalArgs"/> class.</summary>
         /// <param name="channel">The #GstColorBalanceChannel</param>

@@ -33,6 +33,12 @@ public readonly record struct ClockTime : IComparable<ClockTime>
     private const ulong NanosecondsPerTick = 100;
 
     /// <summary>
+    /// The largest tick count that still counts in nanoseconds below
+    /// <see cref="NoneValue"/>, which is about 584 years.
+    /// </summary>
+    private const ulong MaxTicks = (NoneValue - 1) / NanosecondsPerTick;
+
+    /// <summary>
     /// Initialises a time from a raw nanosecond count.
     /// </summary>
     /// <param name="nanoseconds">The number of nanoseconds.</param>
@@ -104,7 +110,10 @@ public readonly record struct ClockTime : IComparable<ClockTime>
     /// Converts a <see cref="TimeSpan"/> to a time.
     /// </summary>
     /// <param name="value">The interval to convert.</param>
-    /// <exception cref="ArgumentOutOfRangeException"><paramref name="value"/> is negative.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// <paramref name="value"/> is negative, or too long to be counted in
+    /// nanoseconds.
+    /// </exception>
     public static explicit operator ClockTime(TimeSpan value) => FromTimeSpan(value);
 
     /// <summary>
@@ -142,7 +151,16 @@ public readonly record struct ClockTime : IComparable<ClockTime>
     /// </summary>
     /// <param name="value">The interval to convert.</param>
     /// <returns>The time.</returns>
-    /// <exception cref="ArgumentOutOfRangeException"><paramref name="value"/> is negative.</exception>
+    /// <remarks>
+    /// A <see cref="TimeSpan"/> counts hundreds of nanoseconds and reaches much
+    /// further than a clock time does, so the conversion has an upper bound as
+    /// well as a lower one: everything up to about 584 years converts, and
+    /// anything beyond that is rejected rather than wrapped around.
+    /// </remarks>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// <paramref name="value"/> is negative, or too long to be counted in
+    /// nanoseconds.
+    /// </exception>
     public static ClockTime FromTimeSpan(TimeSpan value)
     {
         if (value < TimeSpan.Zero)
@@ -150,7 +168,18 @@ public readonly record struct ClockTime : IComparable<ClockTime>
             throw new ArgumentOutOfRangeException(nameof(value), value, "A clock time cannot be negative.");
         }
 
-        return new ClockTime((ulong)value.Ticks * NanosecondsPerTick);
+        // Multiplying the ticks out is what overflows: the largest TimeSpan is
+        // some ten thousand years, and a hundred times its tick count does not
+        // fit into the nanoseconds of a clock time. Checking the ticks first
+        // keeps the rejection identical to the one FromSeconds makes, where the
+        // scaled value has to stay below the unset marker.
+        ulong ticks = (ulong)value.Ticks;
+        if (ticks > MaxTicks)
+        {
+            throw new ArgumentOutOfRangeException(nameof(value), value, "The value does not fit into a clock time.");
+        }
+
+        return new ClockTime(ticks * NanosecondsPerTick);
     }
 
     /// <summary>

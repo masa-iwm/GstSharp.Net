@@ -92,7 +92,7 @@ public abstract unsafe partial class WebRTCICETransport : Gst.Object
     }
 
     /// <summary>The arguments of the <c>on-new-candidate</c> signal of <c>GstWebRTCICETransport</c>.</summary>
-    public sealed class OnNewCandidateSignalArgs
+    public sealed class OnNewCandidateSignalArgs : System.EventArgs
     {
         /// <summary>Initializes a new instance of the <see cref="OnNewCandidateSignalArgs"/> class.</summary>
         /// <param name="object">The <c>object</c> argument.</param>

@@ -106,7 +106,7 @@ public unsafe partial class StreamCollection : Gst.Object
     public string? UpstreamId => GetUpstreamId();
 
     /// <summary>The arguments of the <c>stream-notify</c> signal of <c>GstStreamCollection</c>.</summary>
-    public sealed class StreamNotifySignalArgs
+    public sealed class StreamNotifySignalArgs : System.EventArgs
     {
         /// <summary>Initializes a new instance of the <see cref="StreamNotifySignalArgs"/> class.</summary>
         /// <param name="propStream">the #GstStream that originated the signal</param>

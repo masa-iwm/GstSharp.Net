@@ -119,7 +119,7 @@ public abstract unsafe partial class Container : GES.TimelineElement, GES.IExtra
     }
 
     /// <summary>The arguments of the <c>child-added</c> signal of <c>GESContainer</c>.</summary>
-    public sealed class ChildAddedSignalArgs
+    public sealed class ChildAddedSignalArgs : System.EventArgs
     {
         /// <summary>Initializes a new instance of the <see cref="ChildAddedSignalArgs"/> class.</summary>
         /// <param name="element">The child that was added</param>
@@ -173,7 +173,7 @@ public abstract unsafe partial class Container : GES.TimelineElement, GES.IExtra
     }
 
     /// <summary>The arguments of the <c>child-removed</c> signal of <c>GESContainer</c>.</summary>
-    public sealed class ChildRemovedSignalArgs
+    public sealed class ChildRemovedSignalArgs : System.EventArgs
     {
         /// <summary>Initializes a new instance of the <see cref="ChildRemovedSignalArgs"/> class.</summary>
         /// <param name="element">The child that was removed</param>

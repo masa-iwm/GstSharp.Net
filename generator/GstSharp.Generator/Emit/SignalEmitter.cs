@@ -283,7 +283,15 @@ internal static class SignalEmitter
     {
         string name = plan.ArgsName!;
         writer.WriteLine("/// <summary>The arguments of " + Describe(plan, cType) + ".</summary>");
-        writer.WriteLine("public " + (isNew ? "new " : string.Empty) + "sealed class " + name);
+
+        // The event is a System.EventHandler<T>, which does not constrain its
+        // argument, but every consumer of a .NET event expects the arguments to
+        // be an EventArgs: a handler written as EventHandler, a handler shared
+        // between several signals and anything that stores the arguments as
+        // EventArgs all need the conversion. Deriving costs nothing at run time
+        // and is purely additive to the surface.
+        writer.WriteLine(
+            "public " + (isNew ? "new " : string.Empty) + "sealed class " + name + " : System.EventArgs");
         writer.OpenBlock();
 
         List<string> parameters = [];

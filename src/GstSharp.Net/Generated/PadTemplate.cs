@@ -216,7 +216,7 @@ public unsafe partial class PadTemplate : Gst.Object
     }
 
     /// <summary>The arguments of the <c>pad-created</c> signal of <c>GstPadTemplate</c>.</summary>
-    public sealed class PadCreatedSignalArgs
+    public sealed class PadCreatedSignalArgs : System.EventArgs
     {
         /// <summary>Initializes a new instance of the <see cref="PadCreatedSignalArgs"/> class.</summary>
         /// <param name="pad">the pad that was created.</param>

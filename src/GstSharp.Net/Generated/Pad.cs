@@ -1320,7 +1320,7 @@ public unsafe partial class Pad : Gst.Object
     }
 
     /// <summary>The arguments of the <c>linked</c> signal of <c>GstPad</c>.</summary>
-    public sealed class LinkedSignalArgs
+    public sealed class LinkedSignalArgs : System.EventArgs
     {
         /// <summary>Initializes a new instance of the <see cref="LinkedSignalArgs"/> class.</summary>
         /// <param name="peer">the peer pad that has been connected</param>
@@ -1370,7 +1370,7 @@ public unsafe partial class Pad : Gst.Object
     }
 
     /// <summary>The arguments of the <c>unlinked</c> signal of <c>GstPad</c>.</summary>
-    public sealed class UnlinkedSignalArgs
+    public sealed class UnlinkedSignalArgs : System.EventArgs
     {
         /// <summary>Initializes a new instance of the <see cref="UnlinkedSignalArgs"/> class.</summary>
         /// <param name="peer">the peer pad that has been disconnected</param>

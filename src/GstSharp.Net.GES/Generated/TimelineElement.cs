@@ -714,7 +714,7 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
     public GES.Timeline? Timeline => GetTimeline();
 
     /// <summary>The arguments of the <c>child-property-added</c> signal of <c>GESTimelineElement</c>.</summary>
-    public sealed class ChildPropertyAddedSignalArgs
+    public sealed class ChildPropertyAddedSignalArgs : System.EventArgs
     {
         /// <summary>Initializes a new instance of the <see cref="ChildPropertyAddedSignalArgs"/> class.</summary>
         /// <param name="propObject">The child whose property has been registered</param>
@@ -785,7 +785,7 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
     }
 
     /// <summary>The arguments of the <c>child-property-removed</c> signal of <c>GESTimelineElement</c>.</summary>
-    public sealed class ChildPropertyRemovedSignalArgs
+    public sealed class ChildPropertyRemovedSignalArgs : System.EventArgs
     {
         /// <summary>Initializes a new instance of the <see cref="ChildPropertyRemovedSignalArgs"/> class.</summary>
         /// <param name="propObject">The child whose property has been unregistered</param>
@@ -849,7 +849,7 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
     }
 
     /// <summary>The arguments of the <c>deep-notify</c> signal of <c>GESTimelineElement</c>.</summary>
-    public sealed class DeepNotifySignalArgs
+    public sealed class DeepNotifySignalArgs : System.EventArgs
     {
         /// <summary>Initializes a new instance of the <see cref="DeepNotifySignalArgs"/> class.</summary>
         /// <param name="propObject">The child whose property has been set</param>

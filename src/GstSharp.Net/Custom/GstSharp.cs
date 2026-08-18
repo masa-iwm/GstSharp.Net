@@ -124,6 +124,15 @@ public static class GstSharp
     /// are <see langword="null"/> mean "no preference" and never conflict.
     /// </para>
     /// <para>
+    /// <see cref="GstSharpOptions.SkipNativeInit"/> is a <see cref="bool"/> and
+    /// has no <see langword="null"/> to say that with, so what says it there is
+    /// never having assigned the property: an options object that was left
+    /// alone takes no part in the check, and one that was assigned — including
+    /// one assigned <see langword="false"/> — does. Handing a second call a
+    /// fresh <see cref="GstSharpOptions"/> for the sake of another option is
+    /// therefore not a demand that <c>gst_init</c> run after all.
+    /// </para>
+    /// <para>
     /// The <c>GError</c> of a failed <c>gst_init_check</c> is raised as a
     /// <see cref="GException"/>.
     /// </para>
@@ -318,7 +327,7 @@ public static class GstSharp
         // flavor that does not match it.
         NativeLoader.Configure(options.NativeSearchPath, options.WindowsFlavor);
 
-        if (!options.SkipNativeInit && _appliedSkipNativeInit)
+        if (ConflictsWithAppliedSkipNativeInit(options, _appliedSkipNativeInit))
         {
             throw new InvalidOperationException(
                 "GstSharp was initialised with SkipNativeInit, so gst_init has not run and cannot run now.");
@@ -331,6 +340,28 @@ public static class GstSharp
                 "Pass InitArgs on the first call to GstSharp.Initialize.");
         }
     }
+
+    /// <summary>
+    /// Tests whether a second call asks for the initialisation that the first
+    /// one suppressed.
+    /// </summary>
+    /// <param name="options">The options of the second call.</param>
+    /// <param name="applied">
+    /// Whether the first call was made with
+    /// <see cref="GstSharpOptions.SkipNativeInit"/>.
+    /// </param>
+    /// <returns><see langword="true"/> when the two cannot both be honoured.</returns>
+    /// <remarks>
+    /// Every other option says "no preference" with a <see langword="null"/>,
+    /// which a <see cref="bool"/> has no room for, so the third state of
+    /// <see cref="GstSharpOptions.SkipNativeInit"/> is whether it was ever
+    /// assigned. Without that, the unavoidable <see langword="false"/> of a
+    /// fresh options object read as a demand that <c>gst_init</c> run, and a
+    /// second <see cref="Initialize"/> that only wanted to state a search path
+    /// failed for a preference its caller never expressed.
+    /// </remarks>
+    internal static bool ConflictsWithAppliedSkipNativeInit(GstSharpOptions options, bool applied) =>
+        applied && options.SkipNativeInitSpecified && !options.SkipNativeInit;
 
     private static bool SameArguments(string[] requested, string[]? applied)
     {

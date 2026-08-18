@@ -788,7 +788,7 @@ public unsafe partial class Timeline : Gst.Bin, GES.IExtractable, GES.IMetaConta
     }
 
     /// <summary>The arguments of the <c>group-added</c> signal of <c>GESTimeline</c>.</summary>
-    public sealed class GroupAddedSignalArgs
+    public sealed class GroupAddedSignalArgs : System.EventArgs
     {
         /// <summary>Initializes a new instance of the <see cref="GroupAddedSignalArgs"/> class.</summary>
         /// <param name="group">The group that was added to @timeline</param>
@@ -850,7 +850,7 @@ public unsafe partial class Timeline : Gst.Bin, GES.IExtractable, GES.IMetaConta
     }
 
     /// <summary>The arguments of the <c>layer-added</c> signal of <c>GESTimeline</c>.</summary>
-    public sealed class LayerAddedSignalArgs
+    public sealed class LayerAddedSignalArgs : System.EventArgs
     {
         /// <summary>Initializes a new instance of the <see cref="LayerAddedSignalArgs"/> class.</summary>
         /// <param name="layer">The layer that was added to @timeline</param>
@@ -908,7 +908,7 @@ public unsafe partial class Timeline : Gst.Bin, GES.IExtractable, GES.IMetaConta
     }
 
     /// <summary>The arguments of the <c>layer-removed</c> signal of <c>GESTimeline</c>.</summary>
-    public sealed class LayerRemovedSignalArgs
+    public sealed class LayerRemovedSignalArgs : System.EventArgs
     {
         /// <summary>Initializes a new instance of the <see cref="LayerRemovedSignalArgs"/> class.</summary>
         /// <param name="layer">The layer that was removed from @timeline</param>
@@ -958,7 +958,7 @@ public unsafe partial class Timeline : Gst.Bin, GES.IExtractable, GES.IMetaConta
     }
 
     /// <summary>The arguments of the <c>snapping-ended</c> signal of <c>GESTimeline</c>.</summary>
-    public sealed class SnappingEndedSignalArgs
+    public sealed class SnappingEndedSignalArgs : System.EventArgs
     {
         /// <summary>Initializes a new instance of the <see cref="SnappingEndedSignalArgs"/> class.</summary>
         /// <param name="obj1">The first element that was snapping</param>
@@ -1027,7 +1027,7 @@ public unsafe partial class Timeline : Gst.Bin, GES.IExtractable, GES.IMetaConta
     }
 
     /// <summary>The arguments of the <c>snapping-started</c> signal of <c>GESTimeline</c>.</summary>
-    public sealed class SnappingStartedSignalArgs
+    public sealed class SnappingStartedSignalArgs : System.EventArgs
     {
         /// <summary>Initializes a new instance of the <see cref="SnappingStartedSignalArgs"/> class.</summary>
         /// <param name="obj1">The first element that is snapping</param>
@@ -1102,7 +1102,7 @@ public unsafe partial class Timeline : Gst.Bin, GES.IExtractable, GES.IMetaConta
     }
 
     /// <summary>The arguments of the <c>track-added</c> signal of <c>GESTimeline</c>.</summary>
-    public sealed class TrackAddedSignalArgs
+    public sealed class TrackAddedSignalArgs : System.EventArgs
     {
         /// <summary>Initializes a new instance of the <see cref="TrackAddedSignalArgs"/> class.</summary>
         /// <param name="track">The track that was added to @timeline</param>
@@ -1160,7 +1160,7 @@ public unsafe partial class Timeline : Gst.Bin, GES.IExtractable, GES.IMetaConta
     }
 
     /// <summary>The arguments of the <c>track-removed</c> signal of <c>GESTimeline</c>.</summary>
-    public sealed class TrackRemovedSignalArgs
+    public sealed class TrackRemovedSignalArgs : System.EventArgs
     {
         /// <summary>Initializes a new instance of the <see cref="TrackRemovedSignalArgs"/> class.</summary>
         /// <param name="track">The track that was removed from @timeline</param>

@@ -141,6 +141,7 @@ public sealed class SkipRulesTests
                 "gst_adapter_unmap",
                 "gst_audio_buffer_unmap",
                 "gst_audio_ring_buffer_commit",
+                "gst_audio_ring_buffer_read",
                 "gst_buffer_remove_meta",
                 "gst_bus_set_sync_handler",
                 "gst_caps_features_add_static_str",

@@ -793,7 +793,7 @@ public unsafe partial class AppSink : Gst.Base.BaseSink, Gst.IURIHandler
     }
 
     /// <summary>The arguments of the <c>propose-allocation</c> signal of <c>GstAppSink</c>.</summary>
-    public sealed class ProposeAllocationSignalArgs
+    public sealed class ProposeAllocationSignalArgs : System.EventArgs
     {
         /// <summary>Initializes a new instance of the <see cref="ProposeAllocationSignalArgs"/> class.</summary>
         /// <param name="query">the allocation query</param>

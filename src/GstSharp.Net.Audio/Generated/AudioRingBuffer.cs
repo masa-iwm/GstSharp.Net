@@ -305,38 +305,6 @@ public abstract unsafe partial class AudioRingBuffer : Gst.Object
         return nativeResult != 0;
     }
 
-    /// <summary>
-    /// Read @len samples from the ringbuffer into the memory pointed
-    /// to by @data.
-    /// The first sample should be read from position @sample in
-    /// the ringbuffer.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// @len should not be a multiple of the segment size of the ringbuffer
-    /// although it is recommended.
-    /// </para>
-    /// <para>@timestamp will return the timestamp associated with the data returned.</para>
-    /// </remarks>
-    /// <param name="sample">The <c>sample</c> argument.</param>
-    /// <param name="data">where the data should be read</param>
-    /// <param name="timestamp">The <c>timestamp</c> argument.</param>
-    /// <returns>
-    /// The number of samples read from the ringbuffer or -1 on
-    /// error.
-    /// </returns>
-    public uint Read(ulong sample, System.Span<byte> data, out Gst.ClockTime timestamp)
-    {
-        ulong timestampNative = default;
-        fixed (byte* dataPointer = data)
-        {
-            uint nativeResult = GstAudioRingBufferRead(Handle, sample, dataPointer, (uint)data.Length, &timestampNative);
-            System.GC.KeepAlive(this);
-            timestamp = new Gst.ClockTime(timestampNative);
-            return nativeResult;
-        }
-    }
-
     /// <summary>Free the resources of the ringbuffer.</summary>
     /// <returns>TRUE if the device could be released, FALSE on error.</returns>
     public bool Release()
@@ -539,10 +507,6 @@ public abstract unsafe partial class AudioRingBuffer : Gst.Object
     /// <summary>The <c>gst_audio_ring_buffer_prepare_read</c> entry point.</summary>
     [LibraryImport("GstAudio", EntryPoint = "gst_audio_ring_buffer_prepare_read")]
     private static partial int GstAudioRingBufferPrepareRead(nint buf, int* segment, nint* readptr, int* len);
-
-    /// <summary>The <c>gst_audio_ring_buffer_read</c> entry point.</summary>
-    [LibraryImport("GstAudio", EntryPoint = "gst_audio_ring_buffer_read")]
-    private static partial uint GstAudioRingBufferRead(nint buf, ulong sample, byte* data, uint len, ulong* timestamp);
 
     /// <summary>The <c>gst_audio_ring_buffer_release</c> entry point.</summary>
     [LibraryImport("GstAudio", EntryPoint = "gst_audio_ring_buffer_release")]

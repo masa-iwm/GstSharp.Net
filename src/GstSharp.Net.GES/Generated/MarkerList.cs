@@ -130,7 +130,7 @@ public unsafe partial class MarkerList : Gst.GObject.Object
     }
 
     /// <summary>The arguments of the <c>marker-added</c> signal of <c>GESMarkerList</c>.</summary>
-    public sealed class MarkerAddedSignalArgs
+    public sealed class MarkerAddedSignalArgs : System.EventArgs
     {
         /// <summary>Initializes a new instance of the <see cref="MarkerAddedSignalArgs"/> class.</summary>
         /// <param name="position">the position of the added marker</param>
@@ -186,7 +186,7 @@ public unsafe partial class MarkerList : Gst.GObject.Object
     }
 
     /// <summary>The arguments of the <c>marker-moved</c> signal of <c>GESMarkerList</c>.</summary>
-    public sealed class MarkerMovedSignalArgs
+    public sealed class MarkerMovedSignalArgs : System.EventArgs
     {
         /// <summary>Initializes a new instance of the <see cref="MarkerMovedSignalArgs"/> class.</summary>
         /// <param name="previousPosition">the previous position of the marker</param>
@@ -248,7 +248,7 @@ public unsafe partial class MarkerList : Gst.GObject.Object
     }
 
     /// <summary>The arguments of the <c>marker-removed</c> signal of <c>GESMarkerList</c>.</summary>
-    public sealed class MarkerRemovedSignalArgs
+    public sealed class MarkerRemovedSignalArgs : System.EventArgs
     {
         /// <summary>Initializes a new instance of the <see cref="MarkerRemovedSignalArgs"/> class.</summary>
         /// <param name="marker">the #GESMarker that was removed.</param>

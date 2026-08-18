@@ -355,7 +355,7 @@ public unsafe partial class Track : Gst.Bin, GES.IMetaContainer, Gst.IChildProxy
     }
 
     /// <summary>The arguments of the <c>track-element-added</c> signal of <c>GESTrack</c>.</summary>
-    public sealed class TrackElementAddedSignalArgs
+    public sealed class TrackElementAddedSignalArgs : System.EventArgs
     {
         /// <summary>Initializes a new instance of the <see cref="TrackElementAddedSignalArgs"/> class.</summary>
         /// <param name="effect">The element that was added</param>
@@ -405,7 +405,7 @@ public unsafe partial class Track : Gst.Bin, GES.IMetaContainer, Gst.IChildProxy
     }
 
     /// <summary>The arguments of the <c>track-element-removed</c> signal of <c>GESTrack</c>.</summary>
-    public sealed class TrackElementRemovedSignalArgs
+    public sealed class TrackElementRemovedSignalArgs : System.EventArgs
     {
         /// <summary>Initializes a new instance of the <see cref="TrackElementRemovedSignalArgs"/> class.</summary>
         /// <param name="effect">The element that was removed</param>

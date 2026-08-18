@@ -45,7 +45,7 @@ public unsafe partial class ColorBalanceChannel : Gst.GObject.Object
     }
 
     /// <summary>The arguments of the <c>value-changed</c> signal of <c>GstColorBalanceChannel</c>.</summary>
-    public sealed class ValueChangedSignalArgs
+    public sealed class ValueChangedSignalArgs : System.EventArgs
     {
         /// <summary>Initializes a new instance of the <see cref="ValueChangedSignalArgs"/> class.</summary>
         /// <param name="value">The new value</param>

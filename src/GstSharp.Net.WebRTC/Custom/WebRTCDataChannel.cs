@@ -168,7 +168,7 @@ public abstract unsafe partial class WebRTCDataChannel
     }
 
     /// <summary>The arguments of the <c>on-message-data</c> signal of <c>GstWebRTCDataChannel</c>.</summary>
-    public sealed class OnMessageDataSignalArgs
+    public sealed class OnMessageDataSignalArgs : System.EventArgs
     {
         /// <summary>Initializes a new instance of the <see cref="OnMessageDataSignalArgs"/> class.</summary>
         /// <param name="data">The bytes that were received.</param>

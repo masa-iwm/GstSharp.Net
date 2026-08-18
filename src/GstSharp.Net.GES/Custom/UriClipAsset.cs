@@ -51,11 +51,14 @@ public unsafe partial class UriClipAsset
     /// <paramref name="uri"/> contains a null character.
     /// </exception>
     /// <exception cref="Gst.GLib.GException">
-    /// The file could not be discovered, or the request was cancelled by
-    /// something other than <paramref name="cancellationToken"/>.
+    /// The file could not be discovered.
     /// </exception>
     /// <exception cref="OperationCanceledException">
-    /// <paramref name="cancellationToken"/> was cancelled.
+    /// The request was cancelled. It carries
+    /// <paramref name="cancellationToken"/> when that token is what cancelled
+    /// it, and no token when something else did — a cancellation the caller did
+    /// not ask for is still a cancellation rather than a fault, so it is not a
+    /// <see cref="Gst.GLib.GException"/> either.
     /// </exception>
     public static Task<GES.UriClipAsset> NewAsync(string uri, CancellationToken cancellationToken = default)
     {

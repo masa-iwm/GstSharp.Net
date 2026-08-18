@@ -112,7 +112,7 @@ public unsafe partial class AggregatorPad : Gst.Pad
     }
 
     /// <summary>The arguments of the <c>buffer-consumed</c> signal of <c>GstAggregatorPad</c>.</summary>
-    public sealed class BufferConsumedSignalArgs
+    public sealed class BufferConsumedSignalArgs : System.EventArgs
     {
         /// <summary>Initializes a new instance of the <see cref="BufferConsumedSignalArgs"/> class.</summary>
         /// <param name="object">The <c>object</c> argument.</param>

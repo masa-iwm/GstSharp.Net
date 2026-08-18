@@ -362,7 +362,7 @@ public unsafe partial class Layer : Gst.GObject.InitiallyUnowned, GES.IExtractab
     }
 
     /// <summary>The arguments of the <c>clip-added</c> signal of <c>GESLayer</c>.</summary>
-    public sealed class ClipAddedSignalArgs
+    public sealed class ClipAddedSignalArgs : System.EventArgs
     {
         /// <summary>Initializes a new instance of the <see cref="ClipAddedSignalArgs"/> class.</summary>
         /// <param name="clip">The clip that was added</param>
@@ -412,7 +412,7 @@ public unsafe partial class Layer : Gst.GObject.InitiallyUnowned, GES.IExtractab
     }
 
     /// <summary>The arguments of the <c>clip-removed</c> signal of <c>GESLayer</c>.</summary>
-    public sealed class ClipRemovedSignalArgs
+    public sealed class ClipRemovedSignalArgs : System.EventArgs
     {
         /// <summary>Initializes a new instance of the <see cref="ClipRemovedSignalArgs"/> class.</summary>
         /// <param name="clip">The clip that was removed</param>

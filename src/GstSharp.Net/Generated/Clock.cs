@@ -756,7 +756,7 @@ public abstract unsafe partial class Clock : Gst.Object
     }
 
     /// <summary>The arguments of the <c>synced</c> signal of <c>GstClock</c>.</summary>
-    public sealed class SyncedSignalArgs
+    public sealed class SyncedSignalArgs : System.EventArgs
     {
         /// <summary>Initializes a new instance of the <see cref="SyncedSignalArgs"/> class.</summary>
         /// <param name="synced">if the clock is synced now</param>
