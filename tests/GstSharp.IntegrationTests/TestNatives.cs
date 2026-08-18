@@ -194,6 +194,32 @@ internal static unsafe partial class TestNatives
     [LibraryImport("GLib", EntryPoint = "g_log_writer_format_fields")]
     internal static partial nint LogWriterFormatFields(int logLevel, nint fields, nuint fieldCount, int useColor);
 
+    /// <summary>Registers a tag, so that a tag list may carry a value under it.</summary>
+    /// <param name="name">The name of the tag, which GStreamer interns.</param>
+    /// <param name="flag">The <c>GstTagFlag</c> of the tag.</param>
+    /// <param name="type">The <c>GType</c> the tag holds.</param>
+    /// <param name="nick">A short human readable name.</param>
+    /// <param name="blurb">A description of the tag.</param>
+    /// <param name="mergeFunc">A <c>GstTagMergeFunc</c>, or <c>0</c> for none.</param>
+    /// <remarks>
+    /// GStreamer registers no tag whose type is <c>gint</c>, <c>gint64</c> or
+    /// <c>gboolean</c>, so three of the typed writers of <c>Gst.TagList</c> have
+    /// nothing in the built in registry to be measured against. Registering one
+    /// is what the C test suite does in the same situation. A second
+    /// registration of the same name and type is a no-op inside GStreamer, so
+    /// the tests stay order independent and may run more than once in a process.
+    /// The binding does not expose this: a library that registered tags would be
+    /// changing process wide state its caller did not ask about.
+    /// </remarks>
+    [LibraryImport("Gst", EntryPoint = "gst_tag_register")]
+    internal static partial void TagRegister(
+        byte* name,
+        int flag,
+        nuint type,
+        byte* nick,
+        byte* blurb,
+        nint mergeFunc);
+
     /// <summary>The <c>GType</c> of a <c>GstCaps</c>.</summary>
     /// <returns><c>GST_TYPE_CAPS</c>.</returns>
     /// <remarks>
