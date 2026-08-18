@@ -1,0 +1,34 @@
+# Dependency updates.
+#
+# Two ecosystems, both weekly, both from the repository root:
+#
+#   github-actions  every action in .github/workflows is pinned to a commit
+#                   sha with the release it belongs to in a trailing comment.
+#                   Dependabot understands that pairing: it moves the sha and
+#                   rewrites the comment in the same pull request, so the pin
+#                   stays a pin.
+#   nuget           the versions live in Directory.Packages.props at the root
+#                   (central package management), which is what dependabot
+#                   reads when the directory is "/". The individual project
+#                   files carry no versions and need no entry of their own.
+#
+# Nothing here merges anything: every update is a pull request that has to go
+# through the same CI matrix as any other change.
+version: 2
+
+updates:
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: ci
+
+  - package-ecosystem: nuget
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: build
