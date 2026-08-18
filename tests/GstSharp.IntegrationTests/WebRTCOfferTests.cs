@@ -25,10 +25,12 @@ namespace GstSharp.IntegrationTests;
 /// field, and the type registry for the wrapper.
 /// </para>
 /// <para>
-/// <c>webrtcbin</c> lives in the bad plugins, which the CI matrix installs as
-/// libraries without the plugins on Linux and MinGW, so the test is gated on
-/// the element being there. Where it is absent the gap is a skip with a reason
-/// rather than a silent pass.
+/// <c>webrtcbin</c> lives in the bad plugins, which only the Linux leg of the
+/// CI matrix installs — everywhere else the libraries are there without the
+/// plugins — so the test is gated on the element being there. Where it is
+/// absent the gap is a skip with a reason rather than a silent pass, and that
+/// the one leg promising the element still has it is asserted by
+/// <see cref="RequiredElementsTests"/>.
 /// </para>
 /// </remarks>
 [Collection(GstCollection.Name)]

@@ -5,7 +5,8 @@
 #   verify            no native GStreamer at all: generator drift, a
 #                     warning-free build, and every test suite that runs
 #                     against fakes rather than against the library.
-#   linux             the Linux SONAME path of the native loader.
+#   linux             the Linux SONAME path of the native loader and the only
+#                     plugin set complete enough to run the WebRTC tests.
 #   macos             the macOS dylib path of the native loader.
 #   windows-mingw     the MinGW flavor, found the way a developer with MSYS2
 #                     finds it: from the process search path, with no
@@ -127,12 +128,22 @@ jobs:
       # (libgstreamer-1.0.so.0, libgstapp-1.0.so.0), which the runtime packages
       # provide. The -dev packages would only add headers and the unversioned
       # symlinks, neither of which is used. libgstwebrtc-1.0.so.0 is what the
-      # bad plugins package is here for: the GstWebRTC binding registers its
+      # bad libraries package is here for: the GstWebRTC binding registers its
       # types from a module initialiser, so the library has to be resolvable
-      # even though no test builds a webrtcbin. libges-1.0-0 is the same story
-      # twice: it carries libges-1.0.so.0 for the registry freeze, and the nle
-      # and ges plugins beside it, which ges_init needs before a timeline can
-      # be built at all.
+      # whatever else is installed. libges-1.0-0 is the same story twice: it
+      # carries libges-1.0.so.0 for the registry freeze, and the nle and ges
+      # plugins beside it, which ges_init needs before a timeline can be built
+      # at all.
+      #
+      # This is also the one leg that takes the bad *plugins* and not only their
+      # libraries, and it takes them for a single element: webrtcbin. Everywhere
+      # else the plugins are left out because they cost fifty packages and buy
+      # the binding nothing, with the result that every WebRTC test was skipped
+      # on every leg — a guard that never runs guards nothing. gstreamer1.0-nice
+      # is the other half of that element: webrtcbin is findable without it but
+      # cannot leave the NULL state, because it builds its transports out of
+      # nicesrc and nicesink. What this leg now promises is asserted rather than
+      # assumed; see the integration test step below.
       - name: Install GStreamer
         run: |
           sudo apt-get update
@@ -143,6 +154,8 @@ jobs:
             libges-1.0-0 \
             gstreamer1.0-plugins-base \
             gstreamer1.0-plugins-good \
+            gstreamer1.0-plugins-bad \
+            gstreamer1.0-nice \
             gstreamer1.0-tools
           gst-inspect-1.0 --version
 
@@ -155,7 +168,18 @@ jobs:
       - name: Test the runtime
         run: dotnet test tests/GstSharp.Core.Tests --no-restore --logger "trx;LogFileName=core.trx" --results-directory artifacts/test-results
 
+      # GSTSHARP_REQUIRED_ELEMENTS is the promise this leg makes about its
+      # installation, and RequiredElementsTests is what holds it to it: these
+      # three factories are exactly what the WebRTC tests ask
+      # RequiresElementFact for, so the day gstreamer1.0-plugins-bad or
+      # gstreamer1.0-nice stops providing one of them this step turns red
+      # instead of quietly downgrading those tests to skips. The variable is
+      # scoped to this step because it is a statement about the suite that reads
+      # it, and it is set on this leg alone because this is the only leg that
+      # installs the plugins.
       - name: Test against the installation
+        env:
+          GSTSHARP_REQUIRED_ELEMENTS: webrtcbin,nicesrc,dtlssrtpenc
         run: dotnet test tests/GstSharp.IntegrationTests --no-restore --logger "trx;LogFileName=integration.trx" --results-directory artifacts/test-results
 
       # The whole consumer path without AOT: parse a pipeline, cast the sink

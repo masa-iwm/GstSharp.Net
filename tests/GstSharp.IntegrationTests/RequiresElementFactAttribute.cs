@@ -10,14 +10,25 @@ namespace GstSharp.IntegrationTests;
 /// <remarks>
 /// <para>
 /// <see cref="RequiresGStreamerFactAttribute"/> gates on the version of the
-/// library; this gates on what is beside it. The CI matrix installs the
-/// libraries of the bad plugins without the plugins themselves — the Linux job
-/// takes <c>libgstreamer-plugins-bad1.0-0</c> and the MinGW job
-/// <c>mingw-w64-x86_64-gst-plugins-bad-libs</c>, both of which carry
-/// <c>libgstwebrtc-1.0</c> and no <c>webrtcbin</c> — because the binding needs
-/// the library to resolve its types and pulling in the plugins would add fifty
-/// packages to every run. A test that builds an element from one of those
-/// plugins therefore cannot run everywhere and must not fail where it cannot.
+/// library; this gates on what is beside it. The binding needs the library of a
+/// plugin set to resolve its types even where nothing builds an element out of
+/// it, so most of the CI matrix installs the libraries of the bad plugins
+/// without the plugins themselves — the MinGW job takes
+/// <c>mingw-w64-x86_64-gst-plugins-bad-libs</c>, which carries
+/// <c>libgstwebrtc-1.0</c> and no <c>webrtcbin</c> — because pulling the plugins
+/// in there as well would add fifty packages to a run that gains nothing from
+/// them. A test that builds an element from one of those plugins therefore
+/// cannot run everywhere and must not fail where it cannot.
+/// </para>
+/// <para>
+/// One leg does carry them. The Linux job installs
+/// <c>gstreamer1.0-plugins-bad</c> and <c>gstreamer1.0-nice</c> beside the
+/// libraries and owns the WebRTC tests, which is what keeps them from being
+/// skipped everywhere — a test that never runs guards nothing. That the
+/// elements really are there is not left to this attribute, whose answer to a
+/// missing one is a skip: the job names them in
+/// <c>GSTSHARP_REQUIRED_ELEMENTS</c> and
+/// <see cref="RequiredElementsTests"/> fails when the promise is broken.
 /// </para>
 /// <para>
 /// The skip is computed in the constructor, which xunit runs during discovery,

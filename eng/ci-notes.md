@@ -13,7 +13,7 @@ workflow. Jobs are split by what they need from the machine:
 | Job | Runner | Needs GStreamer | What only this job covers |
 | --- | --- | --- | --- |
 | `verify` | `ubuntu-latest` | no | generator drift (the whole generated tree plus `girs/skip-report.md`), warning-free build, generator/analyzer tests, and the proof that `GstSharp.Core.Tests` needs no installation |
-| `linux` | `ubuntu-24.04` | apt | the Linux SONAME path of `NativeLoader` |
+| `linux` | `ubuntu-24.04` | apt | the Linux SONAME path of `NativeLoader` and the only plugin set that can run the WebRTC tests |
 | `macos` | `macos-latest` | Homebrew | the macOS dylib path and the Homebrew directory of the planner |
 | `windows-mingw` | `windows-latest` | MSYS2 | the MinGW file names and the MSYS2 / search-path branch of `NativeInstallPlanner` |
 | `windows-msvc-aot` | `windows-latest` | official installer | the MSVC file names, the environment-variable branch of the planner, and both NativeAOT gates |
@@ -93,7 +93,8 @@ Runtime packages only:
 ```
 libgstreamer1.0-0 libgstreamer-plugins-base1.0-0 libgstreamer-plugins-bad1.0-0
 libges-1.0-0
-gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-tools
+gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad
+gstreamer1.0-nice gstreamer1.0-tools
 ```
 
 The `-dev` packages are deliberately not installed. The binding loads versioned
@@ -101,14 +102,31 @@ SONAMEs (`libgstreamer-1.0.so.0`, `libgstapp-1.0.so.0`, see `NativeNames`),
 which the runtime packages provide; `-dev` would only add headers and the
 unversioned `.so` symlinks, which nothing here uses.
 
-The last two are libraries rather than plugin sets. Every binding assembly
-registers its types from a module initialiser, and `TypeRegistry.Freeze`
-resolves them all, so a library a module names has to be there even when no
-test builds an element out of it: `libgstwebrtc-1.0.so.0` comes from the bad
-plugins package and `libges-1.0.so.0` from `libges-1.0-0`. The latter earns its
-place twice — it ships the `nle` and `ges` plugins beside the library, and
-`ges_init` fails outright when the non linear engine is not in the registry
-("The `nle` plugin is missing", which is the library's own wording).
+`libgstreamer-plugins-bad1.0-0` and `libges-1.0-0` are libraries rather than
+plugin sets. Every binding assembly registers its types from a module
+initialiser, and `TypeRegistry.Freeze` resolves them all, so a library a module
+names has to be there even when no test builds an element out of it:
+`libgstwebrtc-1.0.so.0` comes from the bad libraries package and
+`libges-1.0.so.0` from `libges-1.0-0`. The latter earns its place twice — it
+ships the `nle` and `ges` plugins beside the library, and `ges_init` fails
+outright when the non linear engine is not in the registry ("The `nle` plugin is
+missing", which is the library's own wording).
+
+This is also the only leg that installs the bad *plugins*, and it does so for
+one element: `webrtcbin`. Everywhere else the plugin half is deliberately left
+out, which used to mean that every test behind
+`[RequiresElementFact("webrtcbin", …)]` was skipped on every leg — a guard that
+never runs guards nothing. `gstreamer1.0-nice` completes the element rather than
+adding another one: `webrtcbin` is findable without it and cannot leave the NULL
+state, because it builds its transports out of `nicesrc` and `nicesink`.
+
+The other side of that decision is `RequiredElementsTests`. The job sets
+`GSTSHARP_REQUIRED_ELEMENTS=webrtcbin,nicesrc,dtlssrtpenc` on its integration
+test step, and the test fails when any of them is missing from the registry.
+Without it, a package that stopped shipping one of the three would turn the
+WebRTC tests back into skips and nothing would be red. The variable is unset
+everywhere else, where the test asserts nothing: it is the promise of a leg that
+installs a plugin set on purpose, not a switch.
 
 The runner is pinned to `ubuntu-24.04` rather than `ubuntu-latest`. Its
 GStreamer is 1.24, which is the floor `AbiProbeTests.NativeVersionIsSupported`
@@ -121,11 +139,12 @@ leg has the richest plugin set and no GUI — and why `BasicTutorial08` wires it
 appsrc and appsink with the `need-data` / `new-sample` **signals** rather than
 with `SetSimpleCallbacks`: the callbacks stand for
 `gst_app_src_set_simple_callbacks`, which arrived in 1.28, and calling it on
-1.24 throws `EntryPointNotFoundException`. Two of the elements the C tutorials
-use are not on this leg either. `wavescope` is in `gstreamer1.0-plugins-bad`,
-of which only the *library* package is installed, so `BasicTutorial08` looks the
-factory up and leaves its visualization branch out when it is not there; the
-same applies to `basic-tutorial-7` whenever it is ported.
+1.24 throws `EntryPointNotFoundException`. `BasicTutorial08` still looks
+`wavescope` up before it builds its visualization branch and runs without the
+branch when the factory is absent — the same shape `basic-tutorial-7` will need
+whenever it is ported — but on this leg the factory is now found, because
+`gstreamer1.0-plugins-bad` is installed for `webrtcbin`, so the branch is
+exercised here rather than skipped.
 
 ### macOS — Homebrew
 
