@@ -1,0 +1,106 @@
+name: Bug report
+description: Something in the binding behaves differently from what it documents.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Two things that look like bugs and are not, so they are worth ruling out first:
+
+        * **Lifetime surprises.** [`docs/ownership.md`](https://github.com/masa-iwm/GstSharp.Net/blob/main/docs/ownership.md)
+          says who owns a wrapper and who disposes it. Mini objects and boxed values are
+          owned and disposed; GObject wrappers are interned and normally are not.
+        * **`EntryPointNotFoundException`.** The surface is generated from GStreamer 1.28
+          and the run-time floor is 1.24. An entry point added after 1.24 is present in the
+          managed surface and throws against an older installation. That is documented
+          behavior.
+
+  - type: input
+    id: packages
+    attributes:
+      label: Affected package(s) and version
+      description: Every `GstSharp.Net*` package involved, with the version each is pinned to.
+      placeholder: GstSharp.Net 1.28.0, GstSharp.Net.App 1.28.0
+    validations:
+      required: true
+
+  - type: input
+    id: os
+    attributes:
+      label: OS and architecture
+      placeholder: Windows 11 x64 / Ubuntu 24.04 x64 / macOS 15 arm64
+    validations:
+      required: true
+
+  - type: textarea
+    id: gstreamer
+    attributes:
+      label: GStreamer version, flavor and how it was installed
+      description: >-
+        Flavor is MSVC or MinGW on Windows; elsewhere say distro packages, Homebrew or a
+        source build. Include the output of `gst-inspect-1.0 --version`.
+      placeholder: |
+        Official runtime installer, MSVC flavor.
+
+        $ gst-inspect-1.0 --version
+        gst-inspect-1.0 version 1.28.6
+        GStreamer 1.28.6
+    validations:
+      required: true
+
+  - type: dropdown
+    id: runtime
+    attributes:
+      label: Runtime
+      description: Which one the problem reproduces on.
+      options:
+        - CoreCLR (dotnet run / regular publish)
+        - NativeAOT (PublishAot=true)
+        - Both
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: >-
+        The smallest thing that shows it — ideally a pipeline description, or a short
+        `Program.cs` that can be pasted into an empty project.
+      placeholder: |
+        videotestsrc num-buffers=100 ! fakesink
+
+        or, as a program:
+
+        using Gst;
+
+        GstSharp.Initialize();
+        using var pipeline = (Pipeline)Global.ParseLaunch("videotestsrc num-buffers=100 ! fakesink");
+        pipeline.SetState(State.Playing);
+        // ... what goes wrong here
+        pipeline.SetState(State.Null);
+    validations:
+      required: true
+
+  - type: textarea
+    id: behavior
+    attributes:
+      label: What happened, and what you expected
+      description: Include the exception type and message if one was thrown.
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs
+      description: >-
+        Run with `GST_DEBUG=3` in the environment (higher, or scoped to one category,
+        when the problem is in a specific element) and paste what is relevant. When the
+        report is about finding or loading the native library, the loader's own values
+        say what it picked: `NativeLoader.ResolvedDirectory`, `ResolvedFlavor`,
+        `ResolvedOrigin`, `ResolvedSourceDescription` and
+        `NativeLoader.GetLoadedModulePath("Gst")`.
+      render: shell
+    validations:
+      required: false

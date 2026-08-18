@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: GStreamer itself
+    url: https://gitlab.freedesktop.org/gstreamer/gstreamer/-/issues
+    about: A bug in the GStreamer libraries or plugins, rather than in these bindings, belongs upstream.

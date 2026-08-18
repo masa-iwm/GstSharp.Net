@@ -1,0 +1,61 @@
+name: Feature request
+description: A part of GStreamer the binding does not reach yet.
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Everything the generator did **not** bind is listed per module and per reason in
+        [`girs/skip-report.md`](https://github.com/masa-iwm/GstSharp.Net/blob/main/girs/skip-report.md),
+        and the known gaps are named in the README. A quick look there says whether the
+        symbol was skipped on purpose and why.
+
+  - type: textarea
+    id: missing
+    attributes:
+      label: What is missing
+      description: The type, member or behavior that is not there today.
+    validations:
+      required: true
+
+  - type: textarea
+    id: use-case
+    attributes:
+      label: Use case
+      description: >-
+        What you are building and what the gap forces you to do instead — a by-name
+        property or signal, an unsafe pointer, a separate process, giving up.
+    validations:
+      required: true
+
+  - type: textarea
+    id: native-api
+    attributes:
+      label: Native GStreamer API involved
+      description: >-
+        Which library and, if you know them, the C symbol names — `gst_element_foo()`,
+        `GstFooBar`, the signal or property name.
+      placeholder: |
+        libgstreamer-1.0: gst_element_call_async(), GstElementCallAsyncFunc
+    validations:
+      required: true
+
+  - type: textarea
+    id: sketch
+    attributes:
+      label: API sketch (optional)
+      description: How you would like it to look from C#. A signature or two is enough.
+      render: csharp
+    validations:
+      required: false
+
+  - type: dropdown
+    id: pull-request
+    attributes:
+      label: Would you like to send a pull request? (optional)
+      options:
+        - "Yes"
+        - "Yes, with some guidance on where it belongs"
+        - "No"
+    validations:
+      required: false
