@@ -58,6 +58,13 @@ internal enum ArgumentKind
     /// <summary>A C array the callee only reads, passed as a span.</summary>
     Span,
 
+    /// <summary>
+    /// A fixed size array the callee writes into storage the caller provides,
+    /// passed as an <c>out</c> parameter of the inline storage type named by
+    /// <see cref="ArgumentPlan.FixedArray"/>.
+    /// </summary>
+    FixedArrayOut,
+
     /// <summary>A C array that the call produces.</summary>
     ArrayOut,
 
@@ -133,6 +140,23 @@ internal enum HandleFlavor
 }
 
 /// <summary>
+/// The inline storage of a fixed size array, emitted as an
+/// <c>[InlineArray]</c> struct beside the declaration that needs it.
+/// </summary>
+/// <param name="TypeName">The simple C# name of the storage type.</param>
+/// <param name="ElementTypeName">The C# type of one element.</param>
+/// <param name="Length">The number of elements.</param>
+/// <remarks>
+/// Two declarations use it. A fixed size <em>field</em> of a generated
+/// structure is spelled with one, and so is a <em>parameter</em> that the
+/// callee fills with a fixed number of elements; both are nested in the type
+/// that declares them and are named after the field or the parameter with an
+/// <c>Array</c> suffix, so that the storage a caller has to allocate says how
+/// large it is.
+/// </remarks>
+internal sealed record InlineArrayInfo(string TypeName, string ElementTypeName, int Length);
+
+/// <summary>
 /// One argument of a planned callable, visible or hidden.
 /// </summary>
 internal sealed class ArgumentPlan
@@ -172,6 +196,12 @@ internal sealed class ArgumentPlan
 
     /// <summary>Gets the index of the argument that carries the length of this array.</summary>
     internal int? LengthArgument { get; init; }
+
+    /// <summary>
+    /// Gets the inline storage type of a <see cref="ArgumentKind.FixedArrayOut"/>
+    /// argument, which the declaring type declares beside its members.
+    /// </summary>
+    internal InlineArrayInfo? FixedArray { get; init; }
 
     /// <summary>
     /// Gets the index of the argument a hidden argument belongs to: the array

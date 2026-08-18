@@ -21,6 +21,32 @@ internal sealed class AnnotationOverride
     /// <summary>Gets or sets the corrected <c>caller-allocates</c> flag.</summary>
     public bool? CallerAllocates { get; set; }
 
+    /// <summary>
+    /// Gets or sets how the parameter is passed in C#: <c>in</c>, <c>out</c> or
+    /// <c>ref</c>.
+    /// </summary>
+    /// <remarks>
+    /// It only corrects a parameter the gir spells as a bare pointer to a plain
+    /// structure, which the planner would otherwise pass as a copy the callee
+    /// writes into and the caller never sees. Everything else is left alone and
+    /// reported, because a direction is not a marshalling this can invent: an
+    /// out handle, an array or a string needs a projection of its own.
+    /// </remarks>
+    public string? Direction { get; set; }
+
+    /// <summary>
+    /// Gets or sets the number of elements a caller allocated out array holds,
+    /// for a parameter the gir spells as a pointer to a single value.
+    /// </summary>
+    /// <remarks>
+    /// The C function writes that many elements into storage the caller
+    /// provides, which the gir does not say: <c>gst_video_info_align_full</c>
+    /// fills four <c>gsize</c> values through a parameter its gir declares as
+    /// one <c>gsize*</c>. The size is a fact about the C implementation and
+    /// belongs in the overlays for that reason.
+    /// </remarks>
+    public int? FixedArraySize { get; set; }
+
     /// <summary>Gets or sets the index of the parameter carrying the array length.</summary>
     public int? ArrayLength { get; set; }
 
@@ -56,7 +82,11 @@ internal sealed class PlatformSupport
 /// <item><description><c>annotationOverrides</c>: <c>c:identifier</c> of a
 /// callable, or the <c>c:type</c> of a callback, which has no identifier of its
 /// own; optionally suffixed with <c>#parameter-name</c> or
-/// <c>#return</c>.</description></item>
+/// <c>#return</c>. Besides the annotations the gir spells, an entry may state
+/// the <c>direction</c> of a pointer to a plain structure and the
+/// <c>fixedArraySize</c> of a caller allocated out array, both of which are
+/// facts about the C implementation that no gir annotation
+/// carries.</description></item>
 /// <item><description><c>forceOpaque</c>: qualified gir name of a record
 /// (<c>Gst.DebugCategory</c>) that must be wrapped behind a pointer rather
 /// than copied by value.</description></item>

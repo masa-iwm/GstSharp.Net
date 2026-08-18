@@ -99,7 +99,7 @@ internal sealed class InterfaceEmitter
             includeSignals: true);
 
         CodeWriter writer = new();
-        ClassEmitter.WriteHeader(writer, module, ns);
+        ClassEmitter.WriteHeader(writer, module, ns, surface.ParameterArrays.Count > 0);
         writer.WriteLine();
         XmlDocWriter.Write(
             writer,

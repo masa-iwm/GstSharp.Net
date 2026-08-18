@@ -44,6 +44,37 @@ internal sealed record TypeSurface(
     internal bool IsEmpty => Members.Count == 0 && Properties.Count == 0 && Signals.Count == 0;
 
     /// <summary>
+    /// Gets the inline storage types the parameters of the members need, in
+    /// declaration order and without repetitions.
+    /// </summary>
+    /// <remarks>
+    /// A caller allocated out array is passed as a struct that is nested in the
+    /// declaring type and named after the parameter, so two members that fill
+    /// the same array share one storage type rather than declaring two of the
+    /// same name.
+    /// </remarks>
+    internal IReadOnlyList<InlineArrayInfo> ParameterArrays
+    {
+        get
+        {
+            List<InlineArrayInfo> arrays = [];
+            HashSet<string> seen = new(StringComparer.Ordinal);
+            foreach (MarshalPlan member in Members)
+            {
+                foreach (ArgumentPlan argument in member.Arguments)
+                {
+                    if (argument.FixedArray is { } array && seen.Add(array.TypeName))
+                    {
+                        arrays.Add(array);
+                    }
+                }
+            }
+
+            return arrays;
+        }
+    }
+
+    /// <summary>
     /// Gets a value indicating whether the declaring type has to be compiled in
     /// an unsafe context, which every generated entry point and every signal
     /// trampoline needs.

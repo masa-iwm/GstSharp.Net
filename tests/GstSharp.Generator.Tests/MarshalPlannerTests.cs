@@ -142,6 +142,45 @@ public sealed class MarshalPlannerTests
                   </parameter>
                 </parameters>
               </method>
+              <method name="get_extent" c:identifier="gst_widget_get_extent">
+                <return-value transfer-ownership="none">
+                  <type name="gboolean" c:type="gboolean"/>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="widget" transfer-ownership="none">
+                    <type name="Widget" c:type="GstWidget*"/>
+                  </instance-parameter>
+                  <parameter name="extent" transfer-ownership="none">
+                    <type name="Extent" c:type="GstExtent*"/>
+                  </parameter>
+                </parameters>
+              </method>
+              <method name="grow_extent" c:identifier="gst_widget_grow_extent">
+                <return-value transfer-ownership="none">
+                  <type name="gboolean" c:type="gboolean"/>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="widget" transfer-ownership="none">
+                    <type name="Widget" c:type="GstWidget*"/>
+                  </instance-parameter>
+                  <parameter name="extent" transfer-ownership="none">
+                    <type name="Extent" c:type="GstExtent*"/>
+                  </parameter>
+                </parameters>
+              </method>
+              <method name="get_plane_sizes" c:identifier="gst_widget_get_plane_sizes">
+                <return-value transfer-ownership="none">
+                  <type name="none" c:type="void"/>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="widget" transfer-ownership="none">
+                    <type name="Widget" c:type="GstWidget*"/>
+                  </instance-parameter>
+                  <parameter name="plane_size" direction="out" caller-allocates="0" transfer-ownership="full">
+                    <type name="gsize" c:type="gsize*"/>
+                  </parameter>
+                </parameters>
+              </method>
               <method name="write" c:identifier="gst_widget_write" throws="1">
                 <return-value transfer-ownership="none">
                   <type name="gboolean" c:type="gboolean"/>
@@ -404,6 +443,148 @@ public sealed class MarshalPlannerTests
             StringComparer.Ordinal);
     }
 
+    /// <summary>
+    /// The shipped projection of a pointer to a plain structure, which is the
+    /// one the corrections below change: the argument is copied into a local
+    /// and the address of the copy is handed over, so a callee that writes
+    /// through the pointer writes into a temporary the caller never sees.
+    /// </summary>
+    [Fact]
+    public void APointerToAPlainStructIsPassedAsACopyByDefault()
+    {
+        Assert.Equal(
+            """
+            public bool GetExtent(Gst.Extent extent)
+            {
+                Gst.Extent extentNative = extent;
+                int nativeResult = GstWidgetGetExtent(Handle, &extentNative);
+                System.GC.KeepAlive(this);
+                return nativeResult != 0;
+            }
+            """,
+            Run.Member("Widget.cs", "public bool GetExtent("),
+            StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public void ADirectionOverrideTurnsAFilledStructIntoAnOutParameter()
+    {
+        // The gir spells the storage a call fills exactly like the value a call
+        // reads. Saying which of the two it is makes the local the caller's own
+        // variable, which is what the C function was being handed all along.
+        FixtureRun run = RunWithOverlay(
+            """
+            {
+              "annotationOverrides": { "gst_widget_get_extent#extent": { "direction": "out" } }
+            }
+            """);
+
+        Assert.Equal(
+            """
+            public bool GetExtent(out Gst.Extent extent)
+            {
+                Gst.Extent extentNative = default;
+                int nativeResult = GstWidgetGetExtent(Handle, &extentNative);
+                System.GC.KeepAlive(this);
+                extent = extentNative;
+                return nativeResult != 0;
+            }
+            """,
+            run.Member("Widget.cs", "public bool GetExtent("),
+            StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public void ADirectionOverrideTurnsAnUpdatedStructIntoARefParameter()
+    {
+        // gst_video_info_align is the real one: it reads the alignment the
+        // caller asks for and writes back the padding it had to raise, so both
+        // halves of the value have to cross.
+        FixtureRun run = RunWithOverlay(
+            """
+            {
+              "annotationOverrides": { "gst_widget_grow_extent#extent": { "direction": "ref" } }
+            }
+            """);
+
+        Assert.Equal(
+            """
+            public bool GrowExtent(ref Gst.Extent extent)
+            {
+                Gst.Extent extentNative = extent;
+                int nativeResult = GstWidgetGrowExtent(Handle, &extentNative);
+                System.GC.KeepAlive(this);
+                extent = extentNative;
+                return nativeResult != 0;
+            }
+            """,
+            run.Member("Widget.cs", "public bool GrowExtent("),
+            StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public void AFixedArraySizeTurnsAScalarOutIntoInlineStorage()
+    {
+        // The C function writes four values through a pointer the gir describes
+        // as one, so the shipped 'out nuint' corrupted the stack of every
+        // caller. The storage type carries the length, so the size is never
+        // spelled at the call site and nothing is allocated per call.
+        FixtureRun run = RunWithOverlay(
+            """
+            {
+              "annotationOverrides": { "gst_widget_get_plane_sizes#plane_size": { "fixedArraySize": 4 } }
+            }
+            """);
+
+        string source = run.File("Widget.cs");
+
+        Assert.Equal(
+            """
+            public void GetPlaneSizes(out Gst.Widget.PlaneSizeArray planeSize)
+            {
+                Gst.Widget.PlaneSizeArray planeSizeNative = default;
+                GstWidgetGetPlaneSizes(Handle, &planeSizeNative);
+                System.GC.KeepAlive(this);
+                planeSize = planeSizeNative;
+            }
+            """,
+            run.Member("Widget.cs", "public void GetPlaneSizes("),
+            StringComparer.Ordinal);
+
+        // The storage is nested in the declaring type and named after the
+        // parameter, exactly as the inline storage of a fixed size field is.
+        Assert.Contains("using System.Runtime.CompilerServices;", source, StringComparison.Ordinal);
+        Assert.Contains(
+            """
+                [InlineArray(4)]
+                public struct PlaneSizeArray
+                {
+                    private nuint _element0;
+                }
+            """,
+            source,
+            StringComparison.Ordinal);
+
+        // The entry point takes the same storage, so the raw signature states
+        // the size of the block the call writes into as well.
+        Assert.Contains(
+            "private static partial void GstWidgetGetPlaneSizes(nint widget, Gst.Widget.PlaneSizeArray* planeSize);",
+            source,
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AScalarOutWithoutAFixedArraySizeStaysASingleValue()
+    {
+        // Nothing is guessed: the size of a caller allocated array is a fact
+        // about the C implementation, and without it in the overlays the
+        // parameter is the single value the gir describes.
+        Assert.Contains(
+            "public void GetPlaneSizes(out nuint planeSize)",
+            Run.File("Widget.cs"),
+            StringComparison.Ordinal);
+    }
+
     [Fact]
     public void AnArrayWithALengthBecomesASpanAndTheLengthDisappears()
     {
@@ -596,39 +777,26 @@ public sealed class MarshalPlannerTests
     [Fact]
     public void AnOverrideKeyedByTheCallbackTypeRestoresNullability()
     {
-        string directory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
-        Directory.CreateDirectory(directory);
+        string source = RunWithOverlay(
+            """
+            {
+              "annotationOverrides": { "GstWidgetFunc#widget": { "nullable": true } }
+            }
+            """).File("Callbacks.cs");
 
-        try
-        {
-            File.WriteAllText(
-                Path.Combine(directory, "fixups.json"),
-                """
-                {
-                  "annotationOverrides": { "GstWidgetFunc#widget": { "nullable": true } }
-                }
-                """);
+        Assert.Contains(
+            "public delegate bool WidgetFunc(Gst.Widget? widget);",
+            source,
+            StringComparison.Ordinal);
 
-            string source = Fixture.Run(Body, Overlays.Load(directory)).File("Callbacks.cs");
-
-            Assert.Contains(
-                "public delegate bool WidgetFunc(Gst.Widget? widget);",
-                source,
-                StringComparison.Ordinal);
-
-            // A parameter that may be null is handed over as it arrives: there
-            // is nothing broken to report, so the handler decides.
-            Assert.Contains(
-                "Gst.Widget? widgetValue = Gst.GObject.Object.FromNative<Gst.Widget>"
-                + "(widget, Gst.Interop.Transfer.None);",
-                source,
-                StringComparison.Ordinal);
-            Assert.DoesNotContain("passed no widget", source, StringComparison.Ordinal);
-        }
-        finally
-        {
-            Directory.Delete(directory, recursive: true);
-        }
+        // A parameter that may be null is handed over as it arrives: there
+        // is nothing broken to report, so the handler decides.
+        Assert.Contains(
+            "Gst.Widget? widgetValue = Gst.GObject.Object.FromNative<Gst.Widget>"
+            + "(widget, Gst.Interop.Transfer.None);",
+            source,
+            StringComparison.Ordinal);
+        Assert.DoesNotContain("passed no widget", source, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -817,5 +985,23 @@ public sealed class MarshalPlannerTests
             "internal static object CreateWrapper(nint handle, Gst.Interop.Transfer transfer) => new Concrete(handle, transfer);",
             source,
             StringComparison.Ordinal);
+    }
+
+    /// <summary>Runs the fixture with a hand written <c>fixups.json</c>.</summary>
+    /// <param name="fixups">The content of <c>fixups.json</c>.</param>
+    /// <returns>The run.</returns>
+    private static FixtureRun RunWithOverlay(string fixups)
+    {
+        string directory = Path.Combine(Path.GetTempPath(), "GstSharp.Generator.Tests", Path.GetRandomFileName());
+        Directory.CreateDirectory(directory);
+        try
+        {
+            File.WriteAllText(Path.Combine(directory, "fixups.json"), fixups);
+            return Fixture.Run(Body, Overlays.Load(directory));
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
     }
 }

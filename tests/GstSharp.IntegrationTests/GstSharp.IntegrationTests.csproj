@@ -31,6 +31,7 @@
     <ProjectReference Include="../../src/GstSharp.Net.Net/GstSharp.Net.Net.csproj" />
     <ProjectReference Include="../../src/GstSharp.Net.Rtsp/GstSharp.Net.Rtsp.csproj" />
     <ProjectReference Include="../../src/GstSharp.Net.GES/GstSharp.Net.GES.csproj" />
+    <ProjectReference Include="../../src/GstSharp.Net.Video/GstSharp.Net.Video.csproj" />
 
     <!-- Referenced, but never called into: the module sweep of
          GstSharp.Initialize is what has to put their types into the registry,
@@ -39,7 +40,6 @@
          names no type of any module for the same reason; the modules above are
          called into by their own tests, which is why it has to be run on its
          own to be discriminating. -->
-    <ProjectReference Include="../../src/GstSharp.Net.Video/GstSharp.Net.Video.csproj" />
     <ProjectReference Include="../../src/GstSharp.Net.Audio/GstSharp.Net.Audio.csproj" />
     <ProjectReference Include="../../src/GstSharp.Net.Pbutils/GstSharp.Net.Pbutils.csproj" />
   </ItemGroup>

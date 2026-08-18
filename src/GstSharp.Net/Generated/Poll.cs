@@ -61,33 +61,36 @@ public sealed unsafe partial class Poll
     /// <summary>Add a file descriptor to the file descriptor set.</summary>
     /// <param name="fd">The <c>fd</c> argument.</param>
     /// <returns>%TRUE if the file descriptor was successfully added to the set.</returns>
-    public bool AddFd(Gst.PollFD fd)
+    public bool AddFd(ref Gst.PollFD fd)
     {
         Gst.PollFD fdNative = fd;
         int nativeResult = GstPollAddFd(Handle, &fdNative);
         System.GC.KeepAlive(this);
+        fd = fdNative;
         return nativeResult != 0;
     }
 
     /// <summary>Check if @fd in @set has data to be read.</summary>
     /// <param name="fd">The <c>fd</c> argument.</param>
     /// <returns>%TRUE if the descriptor has data to be read.</returns>
-    public bool FdCanRead(Gst.PollFD fd)
+    public bool FdCanRead(ref Gst.PollFD fd)
     {
         Gst.PollFD fdNative = fd;
         int nativeResult = GstPollFdCanRead(Handle, &fdNative);
         System.GC.KeepAlive(this);
+        fd = fdNative;
         return nativeResult != 0;
     }
 
     /// <summary>Check if @fd in @set can be used for writing.</summary>
     /// <param name="fd">The <c>fd</c> argument.</param>
     /// <returns>%TRUE if the descriptor can be used for writing.</returns>
-    public bool FdCanWrite(Gst.PollFD fd)
+    public bool FdCanWrite(ref Gst.PollFD fd)
     {
         Gst.PollFD fdNative = fd;
         int nativeResult = GstPollFdCanWrite(Handle, &fdNative);
         System.GC.KeepAlive(this);
+        fd = fdNative;
         return nativeResult != 0;
     }
 
@@ -101,11 +104,12 @@ public sealed unsafe partial class Poll
     /// <param name="fd">The <c>fd</c> argument.</param>
     /// <param name="active">The <c>active</c> argument.</param>
     /// <returns>%TRUE if the descriptor was successfully updated.</returns>
-    public bool FdCtlPri(Gst.PollFD fd, bool active)
+    public bool FdCtlPri(ref Gst.PollFD fd, bool active)
     {
         Gst.PollFD fdNative = fd;
         int nativeResult = GstPollFdCtlPri(Handle, &fdNative, active ? 1 : 0);
         System.GC.KeepAlive(this);
+        fd = fdNative;
         return nativeResult != 0;
     }
 
@@ -116,11 +120,12 @@ public sealed unsafe partial class Poll
     /// <param name="fd">The <c>fd</c> argument.</param>
     /// <param name="active">The <c>active</c> argument.</param>
     /// <returns>%TRUE if the descriptor was successfully updated.</returns>
-    public bool FdCtlRead(Gst.PollFD fd, bool active)
+    public bool FdCtlRead(ref Gst.PollFD fd, bool active)
     {
         Gst.PollFD fdNative = fd;
         int nativeResult = GstPollFdCtlRead(Handle, &fdNative, active ? 1 : 0);
         System.GC.KeepAlive(this);
+        fd = fdNative;
         return nativeResult != 0;
     }
 
@@ -131,33 +136,36 @@ public sealed unsafe partial class Poll
     /// <param name="fd">The <c>fd</c> argument.</param>
     /// <param name="active">The <c>active</c> argument.</param>
     /// <returns>%TRUE if the descriptor was successfully updated.</returns>
-    public bool FdCtlWrite(Gst.PollFD fd, bool active)
+    public bool FdCtlWrite(ref Gst.PollFD fd, bool active)
     {
         Gst.PollFD fdNative = fd;
         int nativeResult = GstPollFdCtlWrite(Handle, &fdNative, active ? 1 : 0);
         System.GC.KeepAlive(this);
+        fd = fdNative;
         return nativeResult != 0;
     }
 
     /// <summary>Check if @fd in @set has closed the connection.</summary>
     /// <param name="fd">The <c>fd</c> argument.</param>
     /// <returns>%TRUE if the connection was closed.</returns>
-    public bool FdHasClosed(Gst.PollFD fd)
+    public bool FdHasClosed(ref Gst.PollFD fd)
     {
         Gst.PollFD fdNative = fd;
         int nativeResult = GstPollFdHasClosed(Handle, &fdNative);
         System.GC.KeepAlive(this);
+        fd = fdNative;
         return nativeResult != 0;
     }
 
     /// <summary>Check if @fd in @set has an error.</summary>
     /// <param name="fd">The <c>fd</c> argument.</param>
     /// <returns>%TRUE if the descriptor has an error.</returns>
-    public bool FdHasError(Gst.PollFD fd)
+    public bool FdHasError(ref Gst.PollFD fd)
     {
         Gst.PollFD fdNative = fd;
         int nativeResult = GstPollFdHasError(Handle, &fdNative);
         System.GC.KeepAlive(this);
+        fd = fdNative;
         return nativeResult != 0;
     }
 
@@ -167,11 +175,12 @@ public sealed unsafe partial class Poll
     /// </remarks>
     /// <param name="fd">The <c>fd</c> argument.</param>
     /// <returns>%TRUE if the descriptor has an exceptional condition.</returns>
-    public bool FdHasPri(Gst.PollFD fd)
+    public bool FdHasPri(ref Gst.PollFD fd)
     {
         Gst.PollFD fdNative = fd;
         int nativeResult = GstPollFdHasPri(Handle, &fdNative);
         System.GC.KeepAlive(this);
+        fd = fdNative;
         return nativeResult != 0;
     }
 
@@ -189,11 +198,12 @@ public sealed unsafe partial class Poll
     /// </para>
     /// </remarks>
     /// <param name="fd">The <c>fd</c> argument.</param>
-    public void FdIgnored(Gst.PollFD fd)
+    public void FdIgnored(ref Gst.PollFD fd)
     {
         Gst.PollFD fdNative = fd;
         GstPollFdIgnored(Handle, &fdNative);
         System.GC.KeepAlive(this);
+        fd = fdNative;
     }
 
     /// <summary>Free a file descriptor set.</summary>
@@ -226,11 +236,12 @@ public sealed unsafe partial class Poll
     /// <summary>Remove a file descriptor from the file descriptor set.</summary>
     /// <param name="fd">The <c>fd</c> argument.</param>
     /// <returns>%TRUE if the file descriptor was successfully removed from the set.</returns>
-    public bool RemoveFd(Gst.PollFD fd)
+    public bool RemoveFd(ref Gst.PollFD fd)
     {
         Gst.PollFD fdNative = fd;
         int nativeResult = GstPollRemoveFd(Handle, &fdNative);
         System.GC.KeepAlive(this);
+        fd = fdNative;
         return nativeResult != 0;
     }
 

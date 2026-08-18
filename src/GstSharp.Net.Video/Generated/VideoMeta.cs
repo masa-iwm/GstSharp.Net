@@ -66,13 +66,14 @@ public sealed unsafe partial class VideoMeta
     /// <param name="stride">The <c>stride</c> argument.</param>
     /// <param name="flags">The <c>flags</c> argument.</param>
     /// <returns>TRUE if the map operation was successful.</returns>
-    public bool Map(uint plane, Gst.MapInfo info, out nint data, out int stride, Gst.MapFlags flags)
+    public bool Map(uint plane, out Gst.MapInfo info, out nint data, out int stride, Gst.MapFlags flags)
     {
-        Gst.MapInfo infoNative = info;
+        Gst.MapInfo infoNative = default;
         nint dataNative = default;
         int strideNative = default;
         int nativeResult = GstVideoMetaMap(Handle, plane, &infoNative, &dataNative, &strideNative, (int)flags);
         System.GC.KeepAlive(this);
+        info = infoNative;
         data = dataNative;
         stride = strideNative;
         return nativeResult != 0;
@@ -115,11 +116,12 @@ public sealed unsafe partial class VideoMeta
     /// <param name="plane">The <c>plane</c> argument.</param>
     /// <param name="info">The <c>info</c> argument.</param>
     /// <returns>TRUE if the memory was successfully unmapped.</returns>
-    public bool Unmap(uint plane, Gst.MapInfo info)
+    public bool Unmap(uint plane, ref Gst.MapInfo info)
     {
         Gst.MapInfo infoNative = info;
         int nativeResult = GstVideoMetaUnmap(Handle, plane, &infoNative);
         System.GC.KeepAlive(this);
+        info = infoNative;
         return nativeResult != 0;
     }
 

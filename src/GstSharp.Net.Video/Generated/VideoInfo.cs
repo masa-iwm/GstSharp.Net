@@ -4,6 +4,7 @@
 #nullable enable
 
 using System;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace Gst.Video;
@@ -72,11 +73,12 @@ public sealed unsafe partial class VideoInfo : Gst.GObject.Boxed
     /// %FALSE if alignment could not be applied, e.g. because the
     ///   size of a frame can't be represented as a 32 bit integer (Since: 1.12)
     /// </returns>
-    public bool Align(Gst.Video.VideoAlignment align)
+    public bool Align(ref Gst.Video.VideoAlignment align)
     {
         Gst.Video.VideoAlignment alignNative = align;
         int nativeResult = GstVideoInfoAlign(Handle, &alignNative);
         System.GC.KeepAlive(this);
+        align = alignNative;
         return nativeResult != 0;
     }
 
@@ -96,17 +98,18 @@ public sealed unsafe partial class VideoInfo : Gst.GObject.Boxed
     /// </para>
     /// </remarks>
     /// <param name="align">The <c>align</c> argument.</param>
-    /// <param name="planeSize">The <c>planeSize</c> argument.</param>
+    /// <param name="planeSize">array used to store the plane sizes</param>
     /// <returns>
     /// %FALSE if alignment could not be applied, e.g. because the
     ///   size of a frame can't be represented as a 32 bit integer
     /// </returns>
-    public bool AlignFull(Gst.Video.VideoAlignment align, out nuint planeSize)
+    public bool AlignFull(ref Gst.Video.VideoAlignment align, out Gst.Video.VideoInfo.PlaneSizeArray planeSize)
     {
         Gst.Video.VideoAlignment alignNative = align;
-        nuint planeSizeNative = default;
+        Gst.Video.VideoInfo.PlaneSizeArray planeSizeNative = default;
         int nativeResult = GstVideoInfoAlignFull(Handle, &alignNative, &planeSizeNative);
         System.GC.KeepAlive(this);
+        align = alignNative;
         planeSize = planeSizeNative;
         return nativeResult != 0;
     }
@@ -204,6 +207,13 @@ public sealed unsafe partial class VideoInfo : Gst.GObject.Boxed
             ?? throw new InvalidOperationException("gst_video_info_to_caps returned no value.");
     }
 
+    /// <summary>Inline storage of the 4 elements a call writes into the parameter this type is named after.</summary>
+    [InlineArray(4)]
+    public struct PlaneSizeArray
+    {
+        private nuint _element0;
+    }
+
     /// <summary>The <c>gst_video_info_new</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_info_new")]
     private static partial nint GstVideoInfoNew();
@@ -218,7 +228,7 @@ public sealed unsafe partial class VideoInfo : Gst.GObject.Boxed
 
     /// <summary>The <c>gst_video_info_align_full</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_info_align_full")]
-    private static partial int GstVideoInfoAlignFull(nint info, Gst.Video.VideoAlignment* align, nuint* planeSize);
+    private static partial int GstVideoInfoAlignFull(nint info, Gst.Video.VideoAlignment* align, Gst.Video.VideoInfo.PlaneSizeArray* planeSize);
 
     /// <summary>The <c>gst_video_info_convert</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_info_convert")]

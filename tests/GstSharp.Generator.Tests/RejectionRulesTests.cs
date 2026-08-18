@@ -435,9 +435,57 @@ public sealed class RejectionRulesTests
     }
 
     [Fact]
+    public void ADirectionOverrideDoesNotUnlockARecordBoundBehindAHandle()
+    {
+        // GstInfo carries a pointer field, so it is bound behind a handle: one
+        // pointer wide in C# and a whole structure in C. Letting a correction
+        // turn it into an out parameter would hand the callee the address of a
+        // pointer sized local to write a structure into, which is the fault the
+        // caller-allocates rule exists for. The correction stops at a plain
+        // struct, so the member keeps the projection it had.
+        FixtureRun run = RunWithOverlay(
+            """
+            {
+              "annotationOverrides": { "gst_widget_free#info": { "direction": "out" } }
+            }
+            """);
+
+        Assert.Contains("public void Free(Gst.Info info)", run.File("Widget.cs"), StringComparison.Ordinal);
+        Assert.Contains(
+            run.Result.Diagnostics,
+            diagnostic => diagnostic.Code == "GEN0017" && diagnostic.Message.Contains(
+                "gst_widget_free#info",
+                StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void AFixedArraySizeDoesNotUnlockACallerAllocatedHandle()
+    {
+        // The other half of the same boundary: a caller allocated out parameter
+        // of a record that is bound behind a handle stays rejected, whatever
+        // the overlays say about its size. Only a blittable value has storage
+        // the caller can provide, so gst_video_frame_map and its relatives stay
+        // in the CallerAllocates bucket.
+        FixtureRun run = RunWithOverlay(
+            """
+            {
+              "annotationOverrides": { "gst_widget_get_info#info": { "fixedArraySize": 4 } }
+            }
+            """);
+
+        Assert.DoesNotContain("gst_widget_get_info", run.File("Widget.cs"), StringComparison.Ordinal);
+        Assert.Equal(1, run.Result.Census.SkippedCount("Gst", SkipReason.CallerAllocates));
+        Assert.Contains(
+            run.Result.Diagnostics,
+            diagnostic => diagnostic.Code == "GEN0017" && diagnostic.Message.Contains(
+                "gst_widget_get_info#info",
+                StringComparison.Ordinal));
+    }
+
+    [Fact]
     public void AReturnTypeOverrideNarrowsAFactoryOntoItsDeclaringType()
     {
-        FixtureRun run = RunWithOverlay(
+        FixtureRun run = RunFactoryWithOverlay(
             """
             {
               "returnTypeOverrides": { "gst_widget_new": "Gst.Widget" }
@@ -457,7 +505,7 @@ public sealed class RejectionRulesTests
     [Fact]
     public void AReturnTypeOverrideThatNamesAnotherTypeIsIgnored()
     {
-        FixtureRun run = RunWithOverlay(
+        FixtureRun run = RunFactoryWithOverlay(
             """
             {
               "returnTypeOverrides": { "gst_widget_new": "Gst.Thing" }
@@ -470,32 +518,43 @@ public sealed class RejectionRulesTests
             diagnostic => diagnostic.Code == "GEN0015");
     }
 
+    /// <summary>Runs the fixture of this class with a hand written <c>fixups.json</c>.</summary>
+    /// <param name="fixups">The content of <c>fixups.json</c>.</param>
+    /// <returns>The run.</returns>
+    private static FixtureRun RunWithOverlay(string fixups) => RunWithOverlay(Body, fixups);
+
     /// <summary>
     /// Runs a factory fixture whose gir return type is the base class, which is
     /// the shape <c>gst_pipeline_new</c> has.
     /// </summary>
     /// <param name="fixups">The content of <c>fixups.json</c>.</param>
     /// <returns>The run.</returns>
-    private static FixtureRun RunWithOverlay(string fixups)
+    private static FixtureRun RunFactoryWithOverlay(string fixups) => RunWithOverlay(
+        """
+            <class name="Object" c:type="GstObject" parent="GObject.InitiallyUnowned" glib:type-name="GstObject" glib:get-type="gst_object_get_type">
+            </class>
+            <class name="Widget" c:type="GstWidget" parent="Object" glib:type-name="GstWidget" glib:get-type="gst_widget_get_type">
+              <constructor name="new" c:identifier="gst_widget_new">
+                <return-value transfer-ownership="full">
+                  <type name="Object" c:type="GstObject*"/>
+                </return-value>
+              </constructor>
+            </class>
+        """,
+        fixups);
+
+    /// <summary>Runs one gir namespace with a hand written <c>fixups.json</c>.</summary>
+    /// <param name="body">The members of the <c>Gst</c> namespace.</param>
+    /// <param name="fixups">The content of <c>fixups.json</c>.</param>
+    /// <returns>The run.</returns>
+    private static FixtureRun RunWithOverlay(string body, string fixups)
     {
         string directory = Path.Combine(Path.GetTempPath(), "GstSharp.Generator.Tests", Path.GetRandomFileName());
         Directory.CreateDirectory(directory);
         try
         {
             File.WriteAllText(Path.Combine(directory, "fixups.json"), fixups);
-            return Fixture.Run(
-                """
-                    <class name="Object" c:type="GstObject" parent="GObject.InitiallyUnowned" glib:type-name="GstObject" glib:get-type="gst_object_get_type">
-                    </class>
-                    <class name="Widget" c:type="GstWidget" parent="Object" glib:type-name="GstWidget" glib:get-type="gst_widget_get_type">
-                      <constructor name="new" c:identifier="gst_widget_new">
-                        <return-value transfer-ownership="full">
-                          <type name="Object" c:type="GstObject*"/>
-                        </return-value>
-                      </constructor>
-                    </class>
-                """,
-                Overlays.Load(directory));
+            return Fixture.Run(body, Overlays.Load(directory));
         }
         finally
         {

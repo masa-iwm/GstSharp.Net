@@ -281,12 +281,13 @@ public static unsafe partial class VideoGlobal
     /// <param name="config">The <c>config</c> argument.</param>
     /// <param name="align">The <c>align</c> argument.</param>
     /// <returns>%TRUE if @config could be parsed correctly.</returns>
-    public static bool BufferPoolConfigGetVideoAlignment(Gst.Structure config, Gst.Video.VideoAlignment align)
+    public static bool BufferPoolConfigGetVideoAlignment(Gst.Structure config, out Gst.Video.VideoAlignment align)
     {
         ArgumentNullException.ThrowIfNull(config);
-        Gst.Video.VideoAlignment alignNative = align;
+        Gst.Video.VideoAlignment alignNative = default;
         int nativeResult = GstBufferPoolConfigGetVideoAlignment(config.Handle, &alignNative);
         System.GC.KeepAlive(config);
+        align = alignNative;
         return nativeResult != 0;
     }
 

@@ -4,6 +4,7 @@
 #nullable enable
 
 using System;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace Gst.Video;
@@ -35,10 +36,10 @@ public sealed unsafe partial class VideoFormatInfo
     /// components are packed in the plane.
     /// </summary>
     /// <param name="plane">The <c>plane</c> argument.</param>
-    /// <param name="components">The <c>components</c> argument.</param>
-    public void Component(uint plane, out int components)
+    /// <param name="components">array used to store component numbers</param>
+    public void Component(uint plane, out Gst.Video.VideoFormatInfo.ComponentsArray components)
     {
-        int componentsNative = default;
+        Gst.Video.VideoFormatInfo.ComponentsArray componentsNative = default;
         GstVideoFormatInfoComponent(Handle, plane, &componentsNative);
         System.GC.KeepAlive(this);
         components = componentsNative;
@@ -58,9 +59,16 @@ public sealed unsafe partial class VideoFormatInfo
         return nativeResult;
     }
 
+    /// <summary>Inline storage of the 4 elements a call writes into the parameter this type is named after.</summary>
+    [InlineArray(4)]
+    public struct ComponentsArray
+    {
+        private int _element0;
+    }
+
     /// <summary>The <c>gst_video_format_info_component</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_format_info_component")]
-    private static partial void GstVideoFormatInfoComponent(nint info, uint plane, int* components);
+    private static partial void GstVideoFormatInfoComponent(nint info, uint plane, Gst.Video.VideoFormatInfo.ComponentsArray* components);
 
     /// <summary>The <c>gst_video_format_info_extrapolate_stride</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_format_info_extrapolate_stride")]

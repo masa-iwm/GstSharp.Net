@@ -83,6 +83,23 @@ internal sealed class CallbackPlan
 /// which is a plain struct. A record that is bound behind a handle is one
 /// pointer wide in C# and several hundred bytes in C, so the call would write
 /// past the end of the local it is given.</description></item>
+/// <item><description>A pointer to a plain struct is passed by value: the
+/// member copies the argument into a local and hands the address of that local
+/// over, so a callee that writes through the pointer writes into a temporary
+/// the caller never sees. Where the C function does write - <c>align</c> of
+/// <c>gst_video_info_align</c> is updated with the padding the call raised -
+/// the overlays give the parameter a <c>direction</c> of <c>out</c> or
+/// <c>ref</c>, and the local becomes the caller's own storage. The correction
+/// is refused for anything but a pointer to a plain struct, because every other
+/// out shape needs a projection of its own.</description></item>
+/// <item><description>A parameter the gir spells as a pointer to one value and
+/// the C function fills with several is only bound when the overlays state how
+/// many: <c>gst_video_format_info_component</c> writes four <c>gint</c> through
+/// a <c>gint*</c>, so an <c>out int</c> would corrupt twelve bytes of the
+/// caller's stack on every call. With a <c>fixedArraySize</c> the parameter is
+/// planned as an <c>out</c> of an <c>[InlineArray]</c> struct of that length,
+/// which is storage of the size the callee writes and says so at the call
+/// site.</description></item>
 /// <item><description>An instance the callable takes ownership of
 /// (<c>transfer-ownership="full"</c> on the instance parameter), and a method
 /// named <c>ref</c>, <c>unref</c> or <c>free</c>, are only bound on a wrapper
@@ -771,14 +788,17 @@ internal sealed class MarshalPlanner
     private static string? AnnotationKeyOf(GirCallable callable) =>
         callable.CIdentifier ?? (callable as GirCallback)?.CType;
 
-    private GirTransfer TransferOf(GirCallable callable, GirParameter parameter)
-    {
-        AnnotationOverride? overlay = AnnotationKeyOf(callable) is { } identifier
+    /// <summary>Reads the annotation correction of one parameter, if there is one.</summary>
+    /// <param name="callable">The callable being planned.</param>
+    /// <param name="parameter">The parameter to look up.</param>
+    /// <returns>The correction, or <see langword="null"/>.</returns>
+    private AnnotationOverride? OverrideOf(GirCallable callable, GirParameter parameter) =>
+        AnnotationKeyOf(callable) is { } identifier
             ? _overlays.GetAnnotationOverride(identifier + "#" + parameter.Name)
             : null;
 
-        return ParseTransfer(overlay?.Transfer) ?? parameter.Transfer;
-    }
+    private GirTransfer TransferOf(GirCallable callable, GirParameter parameter) =>
+        ParseTransfer(OverrideOf(callable, parameter)?.Transfer) ?? parameter.Transfer;
 
     private GirTransfer TransferOf(GirCallable callable)
     {
@@ -789,23 +809,11 @@ internal sealed class MarshalPlanner
         return ParseTransfer(overlay?.Transfer) ?? callable.ReturnValue.Transfer;
     }
 
-    private bool NullableOf(GirCallable callable, GirParameter parameter)
-    {
-        AnnotationOverride? overlay = AnnotationKeyOf(callable) is { } identifier
-            ? _overlays.GetAnnotationOverride(identifier + "#" + parameter.Name)
-            : null;
+    private bool NullableOf(GirCallable callable, GirParameter parameter) =>
+        OverrideOf(callable, parameter)?.Nullable ?? parameter.IsNullable;
 
-        return overlay?.Nullable ?? parameter.IsNullable;
-    }
-
-    private bool CallerAllocatesOf(GirCallable callable, GirParameter parameter)
-    {
-        AnnotationOverride? overlay = AnnotationKeyOf(callable) is { } identifier
-            ? _overlays.GetAnnotationOverride(identifier + "#" + parameter.Name)
-            : null;
-
-        return overlay?.CallerAllocates ?? parameter.IsCallerAllocates;
-    }
+    private bool CallerAllocatesOf(GirCallable callable, GirParameter parameter) =>
+        OverrideOf(callable, parameter)?.CallerAllocates ?? parameter.IsCallerAllocates;
 
     private bool NullableOf(GirCallable callable)
     {
@@ -822,6 +830,14 @@ internal sealed class MarshalPlanner
         "container" => GirTransfer.Container,
         "full" => GirTransfer.Full,
         "floating" => GirTransfer.Floating,
+        _ => null,
+    };
+
+    private static ArgumentDirection? ParseDirection(string? value) => value switch
+    {
+        "in" => ArgumentDirection.In,
+        "out" => ArgumentDirection.Out,
+        "ref" or "inout" => ArgumentDirection.Ref,
         _ => null,
     };
 
@@ -904,11 +920,20 @@ internal sealed class MarshalPlanner
         GirTransfer transfer = TransferOf(callable, parameter);
         bool nullable = NullableOf(callable, parameter);
         MappedType mapped = _types.Map(parameter.Type, context.Namespace);
+        AnnotationOverride? overlay = OverrideOf(callable, parameter);
 
         if (mapped.Kind == MarshalKind.Callback)
         {
             return PlanCallbackArgument(parameter, name, context);
         }
+
+        if (overlay?.FixedArraySize is int size
+            && PlanFixedArray(callable, parameter, name, mapped, direction, size, context) is { } fixedArray)
+        {
+            return fixedArray;
+        }
+
+        direction = OverriddenDirection(callable, parameter, mapped, direction, overlay);
 
         if (parameter.Type is GirArrayRef array)
         {
@@ -934,6 +959,135 @@ internal sealed class MarshalPlanner
             nullable,
             context,
             callerAllocates: CallerAllocatesOf(callable, parameter));
+    }
+
+    /// <summary>
+    /// Applies the <c>direction</c> correction of the overlays to a parameter
+    /// the gir spells as a bare pointer to a plain structure.
+    /// </summary>
+    /// <param name="callable">The callable being planned.</param>
+    /// <param name="parameter">The parameter being projected.</param>
+    /// <param name="mapped">Its mapping.</param>
+    /// <param name="declared">The direction the gir states.</param>
+    /// <param name="overlay">The correction of the parameter, if any.</param>
+    /// <returns>The direction the argument is passed in.</returns>
+    /// <remarks>
+    /// <para>
+    /// The gir has one spelling for both halves of a structure pointer: the
+    /// value a call reads and the storage it fills are both
+    /// <c>&lt;type name="VideoAlignment" c:type="GstVideoAlignment*"/&gt;</c>
+    /// with no direction on it. The planner passes such a parameter by value,
+    /// which is right for the first half and silently wrong for the second: the
+    /// copy the callee wrote into is a local of the member and is discarded when
+    /// it returns.
+    /// </para>
+    /// <para>
+    /// Which of the two a parameter is, is a fact about the C function, so it
+    /// is stated in the overlays. <c>out</c> is the parameter the callee fills
+    /// and <c>ref</c> the one it reads and updates; both make the argument the
+    /// caller's own storage, which is what the C function was handed all along.
+    /// </para>
+    /// <para>
+    /// The correction stops at a plain structure. A handle, a string, an array
+    /// or a scalar has an out projection of its own with a conversion on either
+    /// side of the call, and turning one into a bare pointer to managed storage
+    /// would hand native code the address of something whose size and layout it
+    /// does not agree with.
+    /// </para>
+    /// </remarks>
+    private ArgumentDirection OverriddenDirection(
+        GirCallable callable,
+        GirParameter parameter,
+        MappedType mapped,
+        ArgumentDirection declared,
+        AnnotationOverride? overlay)
+    {
+        if (ParseDirection(overlay?.Direction) is not { } overridden || overridden == declared)
+        {
+            return declared;
+        }
+
+        if (mapped.Kind != MarshalKind.PlainStruct || parameter.Type is GirArrayRef || !parameter.Type.IsPointer)
+        {
+            _diagnostics.Warn(
+                "GEN0017",
+                $"The direction override of '{AnnotationKeyOf(callable)}#{parameter.Name}' is ignored: only a "
+                + "pointer to a plain structure can be re-planned as an out or a ref parameter.");
+            return declared;
+        }
+
+        return overridden;
+    }
+
+    /// <summary>
+    /// Plans a parameter the gir spells as a pointer to one value and the C
+    /// function fills with a fixed number of them.
+    /// </summary>
+    /// <param name="callable">The callable being planned.</param>
+    /// <param name="parameter">The parameter being projected.</param>
+    /// <param name="name">The C# name of the argument.</param>
+    /// <param name="mapped">Its mapping, whose element carries the payload.</param>
+    /// <param name="direction">The direction the gir states.</param>
+    /// <param name="size">The number of elements the callee writes.</param>
+    /// <param name="context">The type the member is emitted into.</param>
+    /// <returns>The plan, or <see langword="null"/> when the override does not apply.</returns>
+    /// <remarks>
+    /// <para>
+    /// The storage is an <c>[InlineArray]</c> struct of the stated length,
+    /// declared beside the members of the declaring type and named after the
+    /// parameter, exactly as the inline storage of a fixed size field is. That
+    /// makes the size part of the type the caller declares: there is no span
+    /// whose length the caller has to know and no allocation per call, and the
+    /// member cannot be called with storage that is too small.
+    /// </para>
+    /// <para>
+    /// Only an out parameter of a blittable element is planned. The declaring
+    /// type has to be known as well, because the storage type is nested in it;
+    /// a global function has none, so the override is reported and ignored
+    /// there rather than silently dropping the array somewhere else.
+    /// </para>
+    /// </remarks>
+    private ArgumentPlan? PlanFixedArray(
+        GirCallable callable,
+        GirParameter parameter,
+        string name,
+        MappedType mapped,
+        ArgumentDirection direction,
+        int size,
+        PlanningContext context)
+    {
+        if (size > 0
+            && direction == ArgumentDirection.Out
+            && parameter.Type is not GirArrayRef
+            && parameter.Type.IsPointer
+            && mapped.Kind == MarshalKind.Blittable
+            && string.Equals(mapped.RawType, mapped.PublicType, StringComparison.Ordinal)
+            && context.OwnerType is { } owner)
+        {
+            InlineArrayInfo storage = new(
+                NameMapper.EscapeIdentifier(NameMapper.ToPascalCase(parameter.Name)) + "Array",
+                mapped.PublicType,
+                size);
+
+            return new ArgumentPlan
+            {
+                Source = parameter,
+                Kind = ArgumentKind.FixedArrayOut,
+                Name = name,
+                PublicType = owner + "." + storage.TypeName,
+                RawType = owner + "." + storage.TypeName + "*",
+                Direction = ArgumentDirection.Out,
+                ElementType = mapped.PublicType,
+                FixedArray = storage,
+            };
+        }
+
+        _diagnostics.Warn(
+            "GEN0017",
+            $"The fixed array size of '{AnnotationKeyOf(callable)}#{parameter.Name}' is ignored: only an out "
+            + "parameter of a blittable value, declared on a type that can carry the storage, is planned as a "
+            + "caller allocated array.");
+        return null;
     }
 
     /// <summary>
