@@ -1,6 +1,6 @@
 # GstSharp.Net
 
-[![NuGet](https://img.shields.io/nuget/vpre/GstSharp.Net?logo=nuget)](https://www.nuget.org/packages/GstSharp.Net)
+[![NuGet](https://img.shields.io/nuget/v/GstSharp.Net?logo=nuget)](https://www.nuget.org/packages/GstSharp.Net)
 [![CI](https://github.com/masa-iwm/GstSharp.Net/actions/workflows/ci.yml/badge.svg)](https://github.com/masa-iwm/GstSharp.Net/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-LGPL--2.1--or--later-blue)](https://github.com/masa-iwm/GstSharp.Net/blob/main/LICENSE)
 
@@ -336,11 +336,18 @@ surface hands out and nothing else.
 
 ## Status and versioning
 
-**Stable.** Within a `1.28.x` series the public surface only grows: new
-members appear as the binding closes gaps, existing signatures stay. A
-behavioral bug — ownership, lifetime, a wrong contract — is fixed in a patch
-release and called out in the release notes. A change that would break
-compilation waits for the next GStreamer series.
+**Stable.** From `1.28.1` on the public surface only grows: new members
+appear as the binding closes gaps, existing signatures stay. A behavioral
+bug — ownership, lifetime, a wrong contract — is fixed in a patch release and
+called out in the release notes. A change that would break compilation waits
+for the next GStreamer series.
+
+`1.28.1` itself is the one deliberate exception, taken in the first week of
+the series while nothing depended on the surface: it re-projected the types a
+value copy could not represent — the buffer metas, the static caps and pad
+templates — and repaired the shipped members that discarded or overran what
+the native call wrote. That window is closed. The compatibility promise above
+counts from `1.28.1`, and `1.28.0` is unlisted for it.
 
 The version is `<gstreamer-major>.<gstreamer-minor>.<binding-patch>`:
 
