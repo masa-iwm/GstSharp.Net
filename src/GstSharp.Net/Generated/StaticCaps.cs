@@ -3,7 +3,7 @@
 
 #nullable enable
 
-using System.Runtime.CompilerServices;
+using System;
 using System.Runtime.InteropServices;
 
 namespace Gst;
@@ -13,22 +13,51 @@ namespace Gst;
 /// used in conjunction with GST_STATIC_CAPS() and gst_static_caps_get() to
 /// instantiate a #GstCaps.
 /// </summary>
-[StructLayout(LayoutKind.Sequential)]
-public partial struct StaticCaps
+public sealed unsafe partial class StaticCaps
 {
-    /// <summary>the cached #GstCaps</summary>
-    public nint Caps;
+    /// <summary>The native instance.</summary>
+    internal nint Handle;
 
-    /// <summary>a string describing a caps</summary>
-    public nint String;
+    /// <summary>Wraps a native <c>GstStaticCaps</c>.</summary>
+    /// <param name="handle">The native instance.</param>
+    internal StaticCaps(nint handle) => Handle = handle;
 
-    /// <summary>The <c>_gst_reserved</c> field of <c>GstStaticCaps</c>.</summary>
-    private GstReservedArray _gstReserved;
+    /// <summary>Wraps a native <c>GstStaticCaps</c>, mapping the null pointer onto <see langword="null"/>.</summary>
+    /// <param name="handle">The native instance, or <c>0</c>.</param>
+    /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>
+    /// <remarks>
+    /// The wrapper of an opaque record is a bare pointer holder: the gir
+    /// describes no way of releasing one, so it does not take part in the
+    /// ownership of what it points at.
+    /// </remarks>
+    internal static StaticCaps? FromNative(nint handle) =>
+        handle == 0 ? null : new(handle);
 
-    /// <summary>Inline storage of the 4 elements of the <c>_gst_reserved</c> field of <c>GstStaticCaps</c>.</summary>
-    [InlineArray(4)]
-    private struct GstReservedArray
+    /// <summary>Cleans up the cached caps contained in @static_caps.</summary>
+    public void Cleanup()
     {
-        private nint _element0;
+        GstStaticCapsCleanup(Handle);
+        System.GC.KeepAlive(this);
     }
+
+    /// <summary>Converts a #GstStaticCaps to a #GstCaps.</summary>
+    /// <returns>
+    /// a pointer to the #GstCaps. Since the
+    ///     core holds an additional ref to the returned caps, use
+    ///     gst_caps_make_writable() on the returned caps to modify it.
+    /// </returns>
+    public Gst.Caps? Get()
+    {
+        nint nativeResult = GstStaticCapsGet(Handle);
+        System.GC.KeepAlive(this);
+        return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+    }
+
+    /// <summary>The <c>gst_static_caps_cleanup</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_static_caps_cleanup")]
+    private static partial void GstStaticCapsCleanup(nint staticCaps);
+
+    /// <summary>The <c>gst_static_caps_get</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_static_caps_get")]
+    private static partial nint GstStaticCapsGet(nint staticCaps);
 }

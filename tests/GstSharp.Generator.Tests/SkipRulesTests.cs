@@ -174,6 +174,8 @@ public sealed class SkipRulesTests
                 "Gst.ParentBufferMeta",
                 "Gst.ProtectionMeta",
                 "Gst.ReferenceTimestampMeta",
+                "Gst.StaticCaps",
+                "Gst.StaticPadTemplate",
                 "GstAudio.AudioClippingMeta",
                 "GstAudio.AudioDownmixMeta",
                 "GstAudio.AudioLevelMeta",

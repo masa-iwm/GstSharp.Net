@@ -155,7 +155,7 @@ public sealed class ClassEmitterTests
     }
 
     [Theory]
-    [InlineData("Gst", 35, 51, 5, 17, 18, 1225, 14, 23)]
+    [InlineData("Gst", 35, 51, 5, 17, 18, 1230, 14, 23)]
     [InlineData("GstBase", 11, 4, 0, 5, 0, 166, 11, 2)]
     [InlineData("GstApp", 2, 2, 0, 8, 0, 61, 21, 8)]
     [InlineData("GstAudio", 14, 17, 1, 2, 2, 191, 15, 0)]
@@ -190,7 +190,7 @@ public sealed class ClassEmitterTests
     }
 
     [Theory]
-    [InlineData("Gst", 1, 94, 53, 119, 304, 10)]
+    [InlineData("Gst", 1, 94, 53, 119, 299, 10)]
     [InlineData("GstBase", 0, 11, 0, 20, 32, 0)]
     [InlineData("GstApp", 0, 0, 0, 2, 23, 0)]
     [InlineData("GstAudio", 0, 27, 0, 8, 43, 0)]
@@ -308,7 +308,7 @@ public sealed class ClassEmitterTests
         }
 
         Assert.Equal(151, classes);
-        Assert.Equal(102, records);
+        Assert.Equal(104, records);
     }
 
     [Fact]

@@ -613,10 +613,11 @@ public sealed class RecordEmitterTests
         Assert.Equal(11, Count(files, " : Gst.MiniObject\n"));
         Assert.Equal(12, Count(files, " : Gst.GObject.Boxed\n"));
 
-        // GstDebugCategory and the five metadata structures of the module are
-        // forced behind a pointer by fixups.json, so the module carries six
-        // plain structs fewer than the gir would give.
-        Assert.Equal(8, Count(files, "\npublic partial struct "));
+        // GstDebugCategory, the five metadata structures of the module and the
+        // two static template structures are forced behind a pointer by
+        // fixups.json, so the module carries eight plain structs fewer than the
+        // gir would give.
+        Assert.Equal(6, Count(files, "\npublic partial struct "));
         Assert.Equal(9, Count(files, "\ninternal unsafe struct "));
 
         foreach (Diagnostic diagnostic in Generated.Diagnostics)
@@ -699,6 +700,59 @@ public sealed class RecordEmitterTests
         Assert.Contains(
             "public partial struct RTSPTimeRange",
             SourceOf("GstSharp.Net.Rtsp/Generated/RTSPTimeRange.cs"),
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ForcingTheStaticTemplatesOpaqueBindsThePadTemplatesOfAFactory()
+    {
+        // A GstStaticCaps is a cache the library writes back through the
+        // pointer it is handed, and a GstStaticPadTemplate lives in the static
+        // storage of a factory and embeds one by value. A value projection
+        // dropped all four of their methods and handed native code the address
+        // of a stack copy, which reparsed the caps and leaked the reference the
+        // parse took on every call.
+        Assert.Contains(
+            "public sealed unsafe partial class StaticCaps\n",
+            SourceOf("GstSharp.Net/Generated/StaticCaps.cs"),
+            StringComparison.Ordinal);
+
+        string template = SourceOf("GstSharp.Net/Generated/StaticPadTemplate.cs");
+
+        Assert.Contains("public sealed unsafe partial class StaticPadTemplate\n", template, StringComparison.Ordinal);
+        Assert.Contains("public Gst.PadTemplate? Get()", template, StringComparison.Ordinal);
+        Assert.Contains("public Gst.Caps GetCaps()", template, StringComparison.Ordinal);
+
+        // The two shipped consumers hand the pointer over instead of the
+        // address of a copy.
+        Assert.Contains(
+            "GstPadNewFromStaticTemplate(templ.Handle, ",
+            SourceOf("GstSharp.Net/Generated/Pad.cs"),
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "GstPadTemplateNewFromStaticPadTemplateWithGtype(padTemplate.Handle, ",
+            SourceOf("GstSharp.Net/Generated/PadTemplate.cs"),
+            StringComparison.Ordinal);
+
+        // And what the change is for: the templates of a factory are readable
+        // without building an element first. The list is a const GList the
+        // factory keeps owning, so neither its spine nor its elements are
+        // released here.
+        string factory = SourceOf("GstSharp.Net/Generated/ElementFactory.cs");
+
+        Assert.Contains(
+            "public System.Collections.Generic.IReadOnlyList<Gst.StaticPadTemplate> GetStaticPadTemplates()",
+            factory,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "        nint nativeResult = GstElementFactoryGetStaticPadTemplates(Handle);\n"
+            + "        System.GC.KeepAlive(this);\n"
+            + "        nint[] nativeItems = Gst.Interop.GListMarshal.Collect(nativeResult);\n",
+            factory,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "if (nativeItem != 0 && Gst.StaticPadTemplate.FromNative(nativeItem) is { } adopted)",
+            factory,
             StringComparison.Ordinal);
     }
 

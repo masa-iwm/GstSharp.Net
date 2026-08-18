@@ -445,7 +445,7 @@ disappears shows up here as an added line.
 
 - `gst_bus_add_watch`
 
-### UnsupportedSignature (304)
+### UnsupportedSignature (299)
 
 - `Gst.Bin:async-handling`
 - `Gst.Bin:message-forward`
@@ -513,7 +513,6 @@ disappears shows up here as an added line.
 - `gst_device_provider_get_hidden_providers`
 - `gst_element_factory_create_with_properties`
 - `gst_element_factory_get_metadata_keys`
-- `gst_element_factory_get_static_pad_templates`
 - `gst_element_factory_get_uri_protocols`
 - `gst_element_factory_list_filter`
 - `gst_element_factory_make_with_properties`
@@ -643,10 +642,6 @@ disappears shows up here as an added line.
 - `gst_query_take`
 - `gst_sample_new`
 - `gst_sample_set_info`
-- `gst_static_caps_cleanup`
-- `gst_static_caps_get`
-- `gst_static_pad_template_get`
-- `gst_static_pad_template_get_caps`
 - `gst_stream_collection_add_stream`
 - `gst_structure_filter_and_map_in_place`
 - `gst_structure_filter_and_map_in_place_id_str`

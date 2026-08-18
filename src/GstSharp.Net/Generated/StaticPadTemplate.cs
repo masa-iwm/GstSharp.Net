@@ -3,23 +3,61 @@
 
 #nullable enable
 
+using System;
 using System.Runtime.InteropServices;
 
 namespace Gst;
 
 /// <summary>Structure describing the #GstStaticPadTemplate.</summary>
-[StructLayout(LayoutKind.Sequential)]
-public partial struct StaticPadTemplate
+public sealed unsafe partial class StaticPadTemplate
 {
-    /// <summary>the name of the template</summary>
-    public nint NameTemplate;
+    /// <summary>The native instance.</summary>
+    internal nint Handle;
 
-    /// <summary>the direction of the template</summary>
-    public Gst.PadDirection Direction;
+    /// <summary>Wraps a native <c>GstStaticPadTemplate</c>.</summary>
+    /// <param name="handle">The native instance.</param>
+    internal StaticPadTemplate(nint handle) => Handle = handle;
 
-    /// <summary>the presence of the template</summary>
-    public Gst.PadPresence Presence;
+    /// <summary>Wraps a native <c>GstStaticPadTemplate</c>, mapping the null pointer onto <see langword="null"/>.</summary>
+    /// <param name="handle">The native instance, or <c>0</c>.</param>
+    /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>
+    /// <remarks>
+    /// The wrapper of an opaque record is a bare pointer holder: the gir
+    /// describes no way of releasing one, so it does not take part in the
+    /// ownership of what it points at.
+    /// </remarks>
+    internal static StaticPadTemplate? FromNative(nint handle) =>
+        handle == 0 ? null : new(handle);
 
-    /// <summary>the caps of the template.</summary>
-    public Gst.StaticCaps StaticCaps;
+    /// <summary>Converts a #GstStaticPadTemplate into a #GstPadTemplate.</summary>
+    /// <returns>a new #GstPadTemplate.</returns>
+    public Gst.PadTemplate? Get()
+    {
+        nint nativeResult = GstStaticPadTemplateGet(Handle);
+        System.GC.KeepAlive(this);
+        return Gst.GObject.Object.FromNative<Gst.PadTemplate>(nativeResult, Gst.Interop.Transfer.None);
+    }
+
+    /// <summary>Gets the capabilities of the static pad template.</summary>
+    /// <returns>
+    /// the #GstCaps of the static pad template.
+    /// Unref after usage. Since the core holds an additional
+    /// ref to the returned caps, use gst_caps_make_writable()
+    /// on the returned caps to modify it.
+    /// </returns>
+    public Gst.Caps GetCaps()
+    {
+        nint nativeResult = GstStaticPadTemplateGetCaps(Handle);
+        System.GC.KeepAlive(this);
+        return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_static_pad_template_get_caps returned no value.");
+    }
+
+    /// <summary>The <c>gst_static_pad_template_get</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_static_pad_template_get")]
+    private static partial nint GstStaticPadTemplateGet(nint padTemplate);
+
+    /// <summary>The <c>gst_static_pad_template_get_caps</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_static_pad_template_get_caps")]
+    private static partial nint GstStaticPadTemplateGetCaps(nint templ);
 }

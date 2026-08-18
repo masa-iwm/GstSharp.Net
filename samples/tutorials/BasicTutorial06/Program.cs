@@ -11,14 +11,16 @@
 //
 // Where this port differs from the C original, and why:
 //
-//   * gst_element_factory_get_static_pad_templates is not bound: it hands back
-//     a GList of GstStaticPadTemplate, a structure whose caps field is a
-//     GstStaticCaps that the generator does not emit (girs/skip-report.md,
-//     UnsupportedSignature). The templates of the element class say the same
-//     thing and are bound, so this asks the factory for an element and reads
-//     Element.GetPadTemplateList. The difference is that the templates come
-//     from an instance rather than from the class, and instantiating a sink
-//     does not touch its device — that happens on the way to READY.
+//   * gst_element_factory_get_static_pad_templates is bound, so the templates
+//     are read from the factory exactly as the C program reads them and no
+//     element has to be built to see them. Two things differ. A static pad
+//     template lives in the static storage of the factory and is borrowed, so
+//     nothing releases one, while the caps that gst_static_caps_get parses out
+//     of it are the caller's and are released by `using`. And the C program
+//     reads name_template, direction and presence as fields of the structure,
+//     which a record bound behind a pointer does not offer; the GstPadTemplate
+//     that gst_static_pad_template_get builds from it carries the same three as
+//     construct-only properties, and that is what is read here.
 //
 //   * gst_element_factory_get_longname is a macro over the metadata table.
 //     GetMetadata("long-name") is the same lookup, spelled out.
@@ -91,8 +93,7 @@ internal static class PadCapabilities
             }
 
             // gst_element_factory_create: the factory builds the element the
-            // pipeline will run, and the same element answers what its pad
-            // templates are.
+            // pipeline will run.
             Element? source = sourceFactory.Create("source");
             Element? sink = sinkFactory.Create("sink");
             Pipeline? pipeline = Pipeline.New("test-pipeline");
@@ -103,8 +104,8 @@ internal static class PadCapabilities
                 return 1;
             }
 
-            PrintPadTemplates(sourceFactory, source);
-            PrintPadTemplates(sinkFactory, sink);
+            PrintPadTemplates(sourceFactory);
+            PrintPadTemplates(sinkFactory);
 
             using (pipeline)
             {
@@ -233,8 +234,7 @@ internal static class PadCapabilities
     /// Prints the pad templates of a factory, and the caps each one allows.
     /// </summary>
     /// <param name="factory">The factory to describe.</param>
-    /// <param name="element">An element the factory built, which carries the templates.</param>
-    private static void PrintPadTemplates(ElementFactory factory, Element element)
+    private static void PrintPadTemplates(ElementFactory factory)
     {
         Console.WriteLine($"Pad templates for {factory.GetMetadata("long-name") ?? factory.Name}:");
 
@@ -245,13 +245,20 @@ internal static class PadCapabilities
             return;
         }
 
-        foreach (PadTemplate template in element.GetPadTemplateList())
+        // gst_element_factory_get_static_pad_templates. The list and the
+        // templates in it belong to the factory, so nothing here releases
+        // either; the wrappers are bare pointer holders into its storage.
+        foreach (StaticPadTemplate staticTemplate in factory.GetStaticPadTemplates())
         {
-            // name-template, direction and presence are construct-only
-            // properties of every GstPadTemplate. Reading them through the
-            // GValue bridge is what a binding does where C reads a struct
-            // field. The name is also the object name of the template, so
-            // template.Name says the same thing as the first of the three.
+            // gst_static_pad_template_get. The C program reads the three
+            // fields of the structure; a record behind a pointer offers no
+            // fields, and the GstPadTemplate built from it carries all three as
+            // construct-only properties, which the GValue bridge reads.
+            if (staticTemplate.Get() is not { } template)
+            {
+                continue;
+            }
+
             string name = StringProperty(template, "name-template");
             PadDirection direction = (PadDirection)EnumProperty(template, "direction");
             PadPresence presence = (PadPresence)EnumProperty(template, "presence");
@@ -260,7 +267,9 @@ internal static class PadCapabilities
             Console.WriteLine($"    Availability: {presence}");
             Console.WriteLine("    Capabilities:");
 
-            using Caps caps = template.GetCaps();
+            // gst_static_caps_get, through the cache the factory owns. The
+            // caps it hands back are the caller's and are released here.
+            using Caps caps = staticTemplate.GetCaps();
             PrintCaps(caps, "      ");
             Console.WriteLine();
         }

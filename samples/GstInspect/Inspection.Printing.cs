@@ -200,12 +200,16 @@ internal sealed partial class Inspection
     /// <param name="factory">The factory of the element.</param>
     /// <remarks>
     /// The C tool reads the static templates off the factory, through
-    /// <c>gst_element_factory_get_static_pad_templates</c>, which returns a
-    /// <c>GList</c> of structures the binding does not marshal. The templates of
-    /// the element's own class are the same set with the same names, directions,
-    /// presences and caps — they are what the factory's static ones were turned
-    /// into — so they are what is walked here. Their direction and presence come
-    /// from the GObject properties of the template, since
+    /// <c>gst_element_factory_get_static_pad_templates</c>, which is bound as
+    /// <c>ElementFactory.GetStaticPadTemplates</c>. What it hands back is a list
+    /// of records bound behind a pointer, and a record bound behind a pointer
+    /// offers no fields, so the name, direction and presence the C tool reads
+    /// out of the structure would have to come from the <c>GstPadTemplate</c>
+    /// that <c>gst_static_pad_template_get</c> builds from each one. The
+    /// templates of the element's own class are that same set — they are what
+    /// the factory's static ones were turned into — and they are already built,
+    /// so they are what is walked here. Their direction and presence come from
+    /// the GObject properties of the template, since
     /// <c>GST_PAD_TEMPLATE_DIRECTION</c> and <c>GST_PAD_TEMPLATE_PRESENCE</c>
     /// are macros over the structure and have no accessor to bind.
     /// </remarks>

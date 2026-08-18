@@ -39,6 +39,7 @@ public sealed class MarshalPlannerTests
                 <type name="gint" c:type="gint"/>
               </field>
             </record>
+            <record name="Anchor" c:type="GstAnchor" disguised="1"/>
             <callback name="WidgetFunc" c:type="GstWidgetFunc">
               <return-value transfer-ownership="none">
                 <type name="gboolean" c:type="gboolean"/>
@@ -251,6 +252,30 @@ public sealed class MarshalPlannerTests
                 <return-value transfer-ownership="container">
                   <type name="GLib.List" c:type="GList*">
                     <type name="utf8"/>
+                  </type>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="widget" transfer-ownership="none">
+                    <type name="Widget" c:type="GstWidget*"/>
+                  </instance-parameter>
+                </parameters>
+              </method>
+              <method name="list_anchors" c:identifier="gst_widget_list_anchors">
+                <return-value transfer-ownership="none">
+                  <type name="GLib.List" c:type="GList*">
+                    <type name="Anchor"/>
+                  </type>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="widget" transfer-ownership="none">
+                    <type name="Widget" c:type="GstWidget*"/>
+                  </instance-parameter>
+                </parameters>
+              </method>
+              <method name="take_anchors" c:identifier="gst_widget_take_anchors">
+                <return-value transfer-ownership="full">
+                  <type name="GLib.List" c:type="GList*">
+                    <type name="Anchor"/>
                   </type>
                 </return-value>
                 <parameters>
@@ -668,6 +693,42 @@ public sealed class MarshalPlannerTests
     }
 
     [Fact]
+    public void ABorrowedListOfOpaqueRecordsIsWalkedWithoutOwningAnything()
+    {
+        // The wrapper of an opaque record is a bare pointer holder that owns
+        // nothing, so it can only stand in for an element the library keeps.
+        // Under transfer-ownership="none" it does: neither the spine nor the
+        // elements are released, and the wrapper takes no transfer argument
+        // because there is nothing for it to take.
+        Assert.Equal(
+            """
+            public System.Collections.Generic.IReadOnlyList<Gst.Anchor> ListAnchors()
+            {
+                nint nativeResult = GstWidgetListAnchors(Handle);
+                System.GC.KeepAlive(this);
+                nint[] nativeItems = Gst.Interop.GListMarshal.Collect(nativeResult);
+                System.Collections.Generic.List<Gst.Anchor> result = new(nativeItems.Length);
+                foreach (nint nativeItem in nativeItems)
+                {
+                    if (nativeItem != 0 && Gst.Anchor.FromNative(nativeItem) is { } adopted)
+                    {
+                        result.Add(adopted);
+                    }
+                }
+
+                return result;
+            }
+            """,
+            Run.Member("Widget.cs", "public System.Collections.Generic.IReadOnlyList<Gst.Anchor> ListAnchors("),
+            StringComparer.Ordinal);
+
+        // The other half of the same rule: transfer-ownership="full" hands the
+        // elements over, and an opaque wrapper has no way of releasing one, so
+        // the member is refused rather than emitted as a leak.
+        Assert.DoesNotContain("TakeAnchors", Run.File("Widget.cs"), StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void AContainerTransferFreesTheSpineAndLeavesTheElementsAlone()
     {
         // transfer-ownership="container": the nodes are ours and the strings
@@ -702,16 +763,18 @@ public sealed class MarshalPlannerTests
         string source = Run.File("Widget.cs");
 
         // gst_widget_take_caps would hand the only reference of the wrapper to
-        // native code. The three containers are refused for reasons of their
+        // native code. The four containers are refused for reasons of their
         // own: a list of a plain record has no projection of its elements, a
+        // list that hands over opaque records has nobody to release them, a
         // GSList is not bound at all, and a list that is passed in would have to
         // be allocated here and handed over under an ownership rule that is the
         // callee's to state.
         Assert.DoesNotContain("TakeCaps", source, StringComparison.Ordinal);
         Assert.DoesNotContain("ListExtents", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("TakeAnchors", source, StringComparison.Ordinal);
         Assert.DoesNotContain("ListTags", source, StringComparison.Ordinal);
         Assert.DoesNotContain("AddChildren", source, StringComparison.Ordinal);
-        Assert.Equal(4, Run.Result.Census.SkippedCount("Gst", SkipReason.UnsupportedSignature));
+        Assert.Equal(5, Run.Result.Census.SkippedCount("Gst", SkipReason.UnsupportedSignature));
     }
 
     [Fact]

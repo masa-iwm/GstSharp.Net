@@ -142,11 +142,12 @@ public unsafe partial class Pad : Gst.Object
     /// <returns>a new #GstPad.</returns>
     public static Gst.Pad NewFromStaticTemplate(Gst.StaticPadTemplate templ, string name)
     {
-        Gst.StaticPadTemplate templNative = templ;
+        ArgumentNullException.ThrowIfNull(templ);
         ArgumentNullException.ThrowIfNull(name);
         System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
-        nint nativeResult = GstPadNewFromStaticTemplate(&templNative, nameScope.Pointer);
+        nint nativeResult = GstPadNewFromStaticTemplate(templ.Handle, nameScope.Pointer);
+        System.GC.KeepAlive(templ);
         return Gst.GObject.Object.FromNative<Gst.Pad>(nativeResult, Gst.Interop.Transfer.None)
             ?? throw new InvalidOperationException("gst_pad_new_from_static_template returned no value.");
     }
@@ -1424,7 +1425,7 @@ public unsafe partial class Pad : Gst.Object
 
     /// <summary>The <c>gst_pad_new_from_static_template</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_pad_new_from_static_template")]
-    private static partial nint GstPadNewFromStaticTemplate(Gst.StaticPadTemplate* templ, byte* name);
+    private static partial nint GstPadNewFromStaticTemplate(nint templ, byte* name);
 
     /// <summary>The <c>gst_pad_new_from_template</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_pad_new_from_template")]

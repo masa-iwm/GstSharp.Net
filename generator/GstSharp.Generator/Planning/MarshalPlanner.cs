@@ -1476,10 +1476,10 @@ internal sealed class MarshalPlanner
     /// </para>
     /// <para>
     /// The element decides everything: a wrapper that the runtime can adopt
-    /// (a <c>GObject</c>, a mini object or a boxed record) or a string. Anything
-    /// else, a plain record above all, is refused, because there is no
-    /// projection of a bare pointer into it that the generator can check. The
-    /// list itself is never nullable on the public surface:
+    /// (a <c>GObject</c>, a mini object or a boxed record), an opaque record, or
+    /// a string. Anything else, a plain record above all, is refused, because
+    /// there is no projection of a bare pointer into it that the generator can
+    /// check. The list itself is never nullable on the public surface:
     /// <c>NULL</c> is how C spells the empty list, so the member returns an
     /// empty list rather than <see langword="null"/>.
     /// </para>
@@ -1487,7 +1487,14 @@ internal sealed class MarshalPlanner
     /// <paramref name="transfer"/> is carried through unchanged and the emitter
     /// reads both halves of it: <c>full</c> owns the spine and the elements,
     /// <c>container</c> owns the spine alone, and <c>none</c> owns neither and
-    /// leaves the spine to the library.
+    /// leaves the spine to the library. That second half is what bounds the
+    /// opaque element: the wrapper of an opaque record is a bare pointer holder
+    /// that owns nothing and is never disposed, so a list that hands its
+    /// elements over has nobody to release them and is refused. Only a list
+    /// whose elements stay the library's - <c>none</c> and <c>container</c> - is
+    /// planned, which is what <c>gst_element_factory_get_static_pad_templates</c>
+    /// returns: a <c>const GList</c> of the static pad templates the factory
+    /// keeps in its own storage.
     /// </para>
     /// </remarks>
     private ReturnPlan? PlanListReturn(GirReturnValue value, MappedType mapped, GirTransfer transfer)
@@ -1506,9 +1513,13 @@ internal sealed class MarshalPlanner
                 elementKind = ArgumentKind.Utf8;
                 break;
 
+            case MarshalKind.OpaqueRecord when transfer is GirTransfer.Full or GirTransfer.Floating:
+                return null;
+
             case MarshalKind.GObject:
             case MarshalKind.MiniObject:
             case MarshalKind.Boxed:
+            case MarshalKind.OpaqueRecord:
                 if (element.Symbol is not { } symbol
                     || !IsEmitted(symbol)
                     || UnusableTypes.Contains(element.PublicType))
@@ -1517,7 +1528,12 @@ internal sealed class MarshalPlanner
                 }
 
                 elementKind = ArgumentKind.Handle;
-                flavor = element.Kind == MarshalKind.GObject ? HandleFlavor.GObject : HandleFlavor.Wrapper;
+                flavor = element.Kind switch
+                {
+                    MarshalKind.GObject => HandleFlavor.GObject,
+                    MarshalKind.OpaqueRecord => HandleFlavor.Opaque,
+                    _ => HandleFlavor.Wrapper,
+                };
                 break;
 
             default:

@@ -137,8 +137,9 @@ public unsafe partial class PadTemplate : Gst.Object
     /// <returns>a new #GstPadTemplate.</returns>
     public static Gst.PadTemplate? NewFromStaticPadTemplateWithGtype(Gst.StaticPadTemplate padTemplate, Gst.GObject.GType padType)
     {
-        Gst.StaticPadTemplate padTemplateNative = padTemplate;
-        nint nativeResult = GstPadTemplateNewFromStaticPadTemplateWithGtype(&padTemplateNative, padType.Value);
+        ArgumentNullException.ThrowIfNull(padTemplate);
+        nint nativeResult = GstPadTemplateNewFromStaticPadTemplateWithGtype(padTemplate.Handle, padType.Value);
+        System.GC.KeepAlive(padTemplate);
         return Gst.GObject.Object.FromNative<Gst.PadTemplate>(nativeResult, Gst.Interop.Transfer.None);
     }
 
@@ -270,7 +271,7 @@ public unsafe partial class PadTemplate : Gst.Object
 
     /// <summary>The <c>gst_pad_template_new_from_static_pad_template_with_gtype</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_pad_template_new_from_static_pad_template_with_gtype")]
-    private static partial nint GstPadTemplateNewFromStaticPadTemplateWithGtype(Gst.StaticPadTemplate* padTemplate, nuint padType);
+    private static partial nint GstPadTemplateNewFromStaticPadTemplateWithGtype(nint padTemplate, nuint padType);
 
     /// <summary>The <c>gst_pad_template_new_with_gtype</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_pad_template_new_with_gtype")]

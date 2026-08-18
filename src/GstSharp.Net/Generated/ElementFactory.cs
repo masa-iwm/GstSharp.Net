@@ -190,6 +190,28 @@ public unsafe partial class ElementFactory : Gst.PluginFeature
         return nativeResult != 0;
     }
 
+    /// <summary>Gets the #GList of #GstStaticPadTemplate for this factory.</summary>
+    /// <returns>
+    /// the
+    ///     static pad templates
+    /// </returns>
+    public System.Collections.Generic.IReadOnlyList<Gst.StaticPadTemplate> GetStaticPadTemplates()
+    {
+        nint nativeResult = GstElementFactoryGetStaticPadTemplates(Handle);
+        System.GC.KeepAlive(this);
+        nint[] nativeItems = Gst.Interop.GListMarshal.Collect(nativeResult);
+        System.Collections.Generic.List<Gst.StaticPadTemplate> result = new(nativeItems.Length);
+        foreach (nint nativeItem in nativeItems)
+        {
+            if (nativeItem != 0 && Gst.StaticPadTemplate.FromNative(nativeItem) is { } adopted)
+            {
+                result.Add(adopted);
+            }
+        }
+
+        return result;
+    }
+
     /// <summary>Gets the type of URIs the element supports or #GST_URI_UNKNOWN if none.</summary>
     /// <returns>type of URIs this element supports</returns>
     public Gst.URIType GetUriType()
@@ -326,6 +348,10 @@ public unsafe partial class ElementFactory : Gst.PluginFeature
     /// <summary>The <c>gst_element_factory_get_skip_documentation</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_element_factory_get_skip_documentation")]
     private static partial int GstElementFactoryGetSkipDocumentation(nint factory);
+
+    /// <summary>The <c>gst_element_factory_get_static_pad_templates</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_element_factory_get_static_pad_templates")]
+    private static partial nint GstElementFactoryGetStaticPadTemplates(nint factory);
 
     /// <summary>The <c>gst_element_factory_get_uri_type</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_element_factory_get_uri_type")]

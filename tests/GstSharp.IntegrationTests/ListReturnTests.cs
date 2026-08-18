@@ -99,6 +99,70 @@ public sealed class ListReturnTests
     }
 
     /// <summary>
+    /// <c>gst_element_factory_get_static_pad_templates</c> is the other shape a
+    /// borrowed list can have: its elements are records rather than objects, and
+    /// the wrapper of one is a bare pointer into the static storage of the
+    /// factory. Nothing about the list is owned here, which is what asking twice
+    /// and reading through the first answer afterwards checks.
+    /// </summary>
+    /// <remarks>
+    /// <c>videotestsrc</c> declares exactly one template, an always-present
+    /// source named <c>src</c>, and it is in the base plugin set that every leg
+    /// of the matrix installs. Its caps come out of the cache the factory holds:
+    /// <c>gst_static_pad_template_get_caps</c> transfers them, so they are
+    /// disposed, while the template itself is not.
+    /// </remarks>
+    [RequiresElementFact("videotestsrc")]
+    public void TheStaticPadTemplatesOfAFactoryAreBorrowed()
+    {
+        using ElementFactory? factory = ElementFactory.Find("videotestsrc");
+
+        Assert.NotNull(factory);
+
+        IReadOnlyList<StaticPadTemplate> templates = factory.GetStaticPadTemplates();
+        IReadOnlyList<StaticPadTemplate> again = factory.GetStaticPadTemplates();
+
+        // The templates live in the static storage of the plugin, so the same
+        // addresses come back every time. A freed spine or a copied element
+        // would show up here.
+        Assert.Equal(templates.Count, again.Count);
+        Assert.Equal((int)factory.GetNumPadTemplates(), templates.Count);
+
+        StaticPadTemplate source = Assert.Single(templates);
+
+        Assert.Equal(source.Handle, again[0].Handle);
+
+        // The three fields of the structure are not on the wrapper; the pad
+        // template built from it carries them as construct-only properties.
+        using (PadTemplate built = Assert.IsAssignableFrom<PadTemplate>(source.Get()))
+        {
+            using Gst.GObject.Value direction = built.GetProperty("direction");
+            using Gst.GObject.Value presence = built.GetProperty("presence");
+            using Gst.GObject.Value name = built.GetProperty("name-template");
+
+            Assert.Equal(PadDirection.Src, (PadDirection)direction.GetEnum());
+            Assert.Equal(PadPresence.Always, (PadPresence)presence.GetEnum());
+            Assert.Equal("src", name.GetString());
+        }
+
+        // gst_static_caps_get parses on the first call and hands the cached caps
+        // out afterwards, with a reference of its own each time. Both are
+        // released here, and the second read is what a snapshot of the cache
+        // rather than the cache itself would have got wrong: the two calls see
+        // one cached GstCaps, not two freshly parsed ones.
+        using (Caps caps = source.GetCaps())
+        using (Caps twice = source.GetCaps())
+        {
+            Assert.False(caps.IsEmpty());
+            Assert.Equal(caps.Handle, twice.Handle);
+            Assert.Contains("video/x-raw", caps.ToString(), StringComparison.Ordinal);
+        }
+
+        // Nothing above owned the templates, so the factory still has them.
+        Assert.Equal(templates.Count, factory.GetStaticPadTemplates().Count);
+    }
+
+    /// <summary>
     /// The two string shapes: <c>gst_uri_get_path_segments</c> owns its strings
     /// and <c>gst_uri_get_query_keys</c> only owns the spine. Both come back
     /// decoded, and the second one must not free strings that still belong to
