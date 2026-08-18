@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <RootNamespace>Gst.Net</RootNamespace>
+    <Description>GstNet for GstSharp.Net: network clocks and time providers.</Description>
   </PropertyGroup>
 
   <ItemGroup>

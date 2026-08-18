@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <RootNamespace>Gst.Sdp</RootNamespace>
+    <Description>GstSdp for GstSharp.Net: SDP session descriptions and MIKEY key management.</Description>
   </PropertyGroup>
 
   <ItemGroup>

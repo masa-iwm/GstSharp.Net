@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <RootNamespace>Gst.App</RootNamespace>
+    <Description>GstApp for GstSharp.Net: appsrc and appsink, the two elements that move buffers between a pipeline and application code.</Description>
   </PropertyGroup>
 
   <ItemGroup>

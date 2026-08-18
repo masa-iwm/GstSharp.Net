@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <RootNamespace>Gst.Rtsp</RootNamespace>
+    <Description>GstRtsp for GstSharp.Net: RTSP connections, messages, URLs and transports.</Description>
   </PropertyGroup>
 
   <ItemGroup>

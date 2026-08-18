@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <RootNamespace>GES</RootNamespace>
+    <Description>GStreamer Editing Services for GstSharp.Net: timelines, layers, clips and the assets behind them.</Description>
   </PropertyGroup>
 
   <ItemGroup>

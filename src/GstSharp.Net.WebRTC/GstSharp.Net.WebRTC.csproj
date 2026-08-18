@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <RootNamespace>Gst.WebRTC</RootNamespace>
+    <Description>GstWebRTC for GstSharp.Net: session descriptions, ICE, transports and data channels for webrtcbin.</Description>
   </PropertyGroup>
 
   <ItemGroup>

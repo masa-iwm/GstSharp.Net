@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <RootNamespace>Gst.Controller</RootNamespace>
+    <Description>GstController for GstSharp.Net: the interpolation, LFO and trigger control sources, and the direct, ARGB and proxy bindings that drive element properties from them.</Description>
   </PropertyGroup>
 
   <!-- This project is the certification of the module SPI, and the way it

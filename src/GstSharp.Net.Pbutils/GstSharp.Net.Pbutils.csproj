@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <RootNamespace>Gst.Pbutils</RootNamespace>
+    <Description>GstPbutils for GstSharp.Net: the discoverer and the encoding profiles.</Description>
   </PropertyGroup>
 
   <ItemGroup>

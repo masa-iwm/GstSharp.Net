@@ -56,6 +56,9 @@
     <Authors>GstSharp.Net contributors</Authors>
     <Company>GstSharp.Net</Company>
     <Product>GstSharp.Net</Product>
+    <!-- The fallback for a project that says nothing more about itself; every
+         shipping project overrides it with the one sentence that names the
+         library it binds, so a search result tells the twelve apart. -->
     <Description>NativeAOT-first .NET bindings for GStreamer 1.28.</Description>
     <PackageLicenseExpression>LGPL-2.1-or-later</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/masa-iwm/GstSharp.Net</PackageProjectUrl>
@@ -67,12 +70,16 @@
     <!-- The whole set is one product with one story, so every package shows the
          repository README rather than a per-package stub nobody keeps current.
          The file has to be packed as well, which the item below does; naming it
-         without packing it is NU5039. -->
+         without packing it is NU5039. The icon follows the same rule - one
+         image beside the README for all twelve, packed by the item below, and
+         naming it without packing it is NU5046. -->
     <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>icon.png</PackageIcon>
   </PropertyGroup>
 
   <ItemGroup Label="Package metadata">
     <None Include="$(MSBuildThisFileDirectory)../README.md" Pack="true" PackagePath="/" Visible="false" />
+    <None Include="$(MSBuildThisFileDirectory)../icon.png" Pack="true" PackagePath="/" Visible="false" />
   </ItemGroup>
 
 </Project>

@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <RootNamespace>Gst.Audio</RootNamespace>
+    <Description>GstAudio for GstSharp.Net: audio formats, audio info, the audio metas and the ring buffer.</Description>
   </PropertyGroup>
 
   <ItemGroup>

@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <RootNamespace>Gst.Video</RootNamespace>
+    <Description>GstVideo for GstSharp.Net: video formats, video info and the video metas.</Description>
   </PropertyGroup>
 
   <ItemGroup>

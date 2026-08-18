@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <RootNamespace>Gst.Base</RootNamespace>
+    <Description>GstBase for GstSharp.Net: the base element classes, the Adapter and the typefind helpers.</Description>
   </PropertyGroup>
 
   <ItemGroup>

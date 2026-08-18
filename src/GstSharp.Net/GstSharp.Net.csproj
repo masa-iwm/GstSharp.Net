@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <RootNamespace>Gst</RootNamespace>
+    <Description>NativeAOT-first .NET bindings for GStreamer 1.28: the Gst core, the hand-written runtime - native loader, marshalling, GObject/GLib layer - and the Roslyn analyzers. Every other GstSharp.Net package builds on this one.</Description>
   </PropertyGroup>
 
   <PropertyGroup>
