@@ -598,18 +598,101 @@ public partial class Object : IDisposable
     /// Writes a property.
     /// </summary>
     /// <param name="name">The name of the property.</param>
-    /// <param name="value">The new value.</param>
+    /// <param name="value">The new value, which the property copies.</param>
     /// <remarks>
-    /// The value has to be of the type the property declares, and nothing is
-    /// checked here: this is <c>g_object_set_property</c> and nothing else.
-    /// <see cref="SetProperty(string, object?)"/> builds the value against the
-    /// type of the property and refuses a property that cannot be written,
-    /// which is the call to make from application code.
+    /// <para>
+    /// This is <c>g_object_set_property</c> with its misuses turned into
+    /// exceptions. The C call answers an unknown name, a property that cannot
+    /// be written — or can only be given to the constructor — and a value it
+    /// cannot convert with a warning on the console and a write that never
+    /// happens; each of those is refused here before the call instead, the way
+    /// <see cref="GetProperty(string)"/> refuses a property that cannot be
+    /// read. <see cref="FindProperty(string)"/> is where the same questions
+    /// can be asked without an exception.
+    /// </para>
+    /// <para>
+    /// The value does not have to hold the declared type exactly: whatever
+    /// GObject can transform still goes through, exactly as it always has —
+    /// an integer into a double property, for example. What is refused is a
+    /// pair of types <c>g_value_transform</c> refuses, which is the same
+    /// boundary the C call decides the write on.
+    /// <see cref="SetProperty(string, object?)"/> is the same write taking a
+    /// plain managed value instead of a <see cref="Value"/>.
+    /// </para>
     /// </remarks>
+    /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
+    /// <exception cref="ArgumentException">
+    /// The object has no such property, the property cannot be written at all
+    /// or cannot be written any more, or <paramref name="value"/> holds
+    /// nothing or holds a type the property cannot take.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">The wrapper was disposed.</exception>
     public unsafe void SetProperty(string name, in Value value)
     {
         ArgumentNullException.ThrowIfNull(name);
 
+        nint handle = Handle;
+        Span<byte> buffer = stackalloc byte[GMarshal.StackBufferSize];
+        using Utf8Scope scope = GMarshal.StackUtf8(name, buffer);
+
+        // The first word of a GTypeInstance is its class, which is what
+        // G_OBJECT_GET_CLASS reads; GetProperty takes the same route. The
+        // specification belongs to the class and is borrowed, so there is
+        // nothing here to release.
+        nint pspec = GObjectNative.ObjectClassFindProperty(*(nint*)handle, scope.Pointer);
+        if (pspec == nint.Zero)
+        {
+            throw new ArgumentException($"\"{name}\" is not a property of {NativeType.Name}.", nameof(name));
+        }
+
+        ParamFlags flags = ParamSpec.FlagsOf(pspec);
+
+        if ((flags & ParamFlags.Writable) == 0)
+        {
+            throw new ArgumentException(
+                $"The property \"{name}\" of {NativeType.Name} cannot be written.",
+                nameof(name));
+        }
+
+        if ((flags & ParamFlags.ConstructOnly) != 0)
+        {
+            throw new ArgumentException(
+                $"The property \"{name}\" of {NativeType.Name} can only be given to the constructor.",
+                nameof(name));
+        }
+
+        if (value.IsEmpty)
+        {
+            throw new ArgumentException(
+                $"An empty value cannot be written to the property \"{name}\" of {NativeType.Name}: " +
+                "it has no type and holds nothing.",
+                nameof(value));
+        }
+
+        GType declared = ParamSpec.ValueTypeOf(pspec);
+
+        if (GObjectNative.ValueTypeTransformable(value.Type.Value, declared.Value) == 0)
+        {
+            throw new ArgumentException(
+                $"The property \"{name}\" of {NativeType.Name} holds {declared.Name} and the value holds " +
+                $"{value.Type.Name}, which GObject cannot transform into it.",
+                nameof(value));
+        }
+
+        GObjectNative.ObjectSetProperty(handle, scope.Pointer, ref Unsafe.AsRef(in value).NativeValue);
+
+        // See GetProperty: Handle was the last use of this wrapper.
+        GC.KeepAlive(this);
+    }
+
+    /// <summary>
+    /// Writes a property whose specification the caller has already checked:
+    /// <see cref="SetProperty(string, in Value)"/> below its guards.
+    /// </summary>
+    /// <param name="name">The name of the property.</param>
+    /// <param name="value">The new value, of the declared type.</param>
+    private unsafe void SetPropertyCore(string name, in Value value)
+    {
         nint handle = Handle;
         Span<byte> buffer = stackalloc byte[GMarshal.StackBufferSize];
         using Utf8Scope scope = GMarshal.StackUtf8(name, buffer);

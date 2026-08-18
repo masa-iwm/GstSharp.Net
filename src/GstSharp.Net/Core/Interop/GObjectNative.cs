@@ -51,6 +51,15 @@ internal static unsafe partial class GObjectNative
     internal static partial nint ObjectClassFindProperty(nint objectClass, byte* name);
 
     /// <summary>
+    /// Tells whether every value of one type can be turned into a value of
+    /// another, which is the exact question <c>g_object_set_property</c>
+    /// decides a write on: a transformable pair goes through, anything else is
+    /// a console warning and no write at all.
+    /// </summary>
+    [LibraryImport("GObject", EntryPoint = "g_value_type_transformable")]
+    internal static partial int ValueTypeTransformable(nuint sourceType, nuint targetType);
+
+    /// <summary>
     /// Lists the properties of a class. The array is a fresh allocation the
     /// caller frees with <c>g_free</c>; the specifications in it belong to the
     /// class and are not reffed.

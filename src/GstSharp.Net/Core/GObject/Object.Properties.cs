@@ -115,7 +115,9 @@ public partial class Object
         // of this wrapper, so it is what keeps it alive across everything above:
         // a wrapper that native code does not hold besides us is held weakly, and
         // the collector may take one whose last use has passed. See GetProperty.
-        SetProperty(name, value);
+        // The core skips the guards of the public overload, which all ran here
+        // - looking the specification up a second time would answer the same.
+        SetPropertyCore(name, value);
     }
 
     /// <summary>

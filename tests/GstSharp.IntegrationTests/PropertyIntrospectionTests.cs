@@ -226,4 +226,67 @@ public sealed class PropertyIntrospectionTests
         using Value bareSizeType = bare.GetProperty("sizetype");
         Assert.Equal(ValueOrder.Equal, Global.ValueCompare(sameOnBoth, bareSizeType));
     }
+
+    /// <summary>
+    /// The value-taking writer refuses every misuse the C call would answer
+    /// with a console warning and no write: an unknown name, a read only or
+    /// construct only property, an empty value, and a pair of types GObject
+    /// cannot transform.
+    /// </summary>
+    /// <remarks>
+    /// <c>g_object_set_property</c> is void and has no error channel, so before
+    /// these guards each of the calls below succeeded silently and changed
+    /// nothing. The transformable write at the end pins the other half of the
+    /// contract: what GObject can convert still goes through, exactly as it
+    /// always has, so the guard sits on the boundary the C call decides the
+    /// write on and not inside it.
+    /// </remarks>
+    [Fact]
+    public void TheValueWriterRefusesWhatNativeWouldSilentlyIgnore()
+    {
+        using Element sink = Assert.IsAssignableFrom<Element>(ElementFactory.Make("fakesink", "guarded"));
+
+        using (Value number = Value.New(GType.Int))
+        {
+            number.SetInt(1);
+            Assert.Throws<ArgumentException>(() => sink.SetProperty("no-such-property", number));
+        }
+
+        // A read only property, with a value of exactly the right type: the
+        // refusal is about the flags, not the payload.
+        using (Value stats = sink.GetProperty("stats"))
+        {
+            Assert.Throws<ArgumentException>(() => sink.SetProperty("stats", stats));
+        }
+
+        // A construct only property, likewise read back from the object itself.
+        Pad pad = Assert.IsAssignableFrom<Pad>(sink.GetStaticPad("sink"));
+        using (Value direction = pad.GetProperty("direction"))
+        {
+            Assert.Throws<ArgumentException>(() => pad.SetProperty("direction", direction));
+        }
+
+        Value empty = default;
+        Assert.Throws<ArgumentException>(() => sink.SetProperty("sync", empty));
+
+        // A string cannot become a boolean, and the message names both sides.
+        using (Value text = Value.New(GType.String))
+        {
+            text.SetString("yes");
+            ArgumentException failure = Assert.Throws<ArgumentException>(
+                () => sink.SetProperty("sync", text));
+            Assert.Contains("gchararray", failure.Message, StringComparison.Ordinal);
+            Assert.Contains("gboolean", failure.Message, StringComparison.Ordinal);
+        }
+
+        // And the boundary from the other side: an int is transformable into a
+        // gint64 property, so the write that always worked still works.
+        using (Value offset = Value.New(GType.Int))
+        {
+            offset.SetInt(25);
+            sink.SetProperty("ts-offset", offset);
+        }
+
+        Assert.Equal(25L, sink.GetProperty<long>("ts-offset"));
+    }
 }
