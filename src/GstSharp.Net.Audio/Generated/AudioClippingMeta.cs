@@ -3,6 +3,7 @@
 
 #nullable enable
 
+using System;
 using System.Runtime.InteropServices;
 
 namespace Gst.Audio;
@@ -24,19 +25,36 @@ namespace Gst.Audio;
 /// has to be dropped from buffers as otherwise clipping could happen twice.
 /// </para>
 /// </remarks>
-[StructLayout(LayoutKind.Sequential)]
-public partial struct AudioClippingMeta
+public sealed unsafe partial class AudioClippingMeta
 {
-    /// <summary>parent #GstMeta</summary>
-    public Gst.Meta Meta;
+    /// <summary>The native instance.</summary>
+    internal nint Handle;
 
-    // <c>GstFormat</c> is not generated in this module; the field keeps its underlying type.
-    /// <summary>GstFormat of @start and @stop, GST_FORMAT_DEFAULT is samples</summary>
-    public int Format;
+    /// <summary>Wraps a native <c>GstAudioClippingMeta</c>.</summary>
+    /// <param name="handle">The native instance.</param>
+    internal AudioClippingMeta(nint handle) => Handle = handle;
 
-    /// <summary>Amount of audio to clip from start of buffer</summary>
-    public ulong Start;
+    /// <summary>Wraps a native <c>GstAudioClippingMeta</c>, mapping the null pointer onto <see langword="null"/>.</summary>
+    /// <param name="handle">The native instance, or <c>0</c>.</param>
+    /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>
+    /// <remarks>
+    /// The wrapper of an opaque record is a bare pointer holder: the gir
+    /// describes no way of releasing one, so it does not take part in the
+    /// ownership of what it points at.
+    /// </remarks>
+    internal static AudioClippingMeta? FromNative(nint handle) =>
+        handle == 0 ? null : new(handle);
 
-    /// <summary>Amount of  to clip from end of buffer</summary>
-    public ulong End;
+    /// <summary>The <c>gst_audio_clipping_meta_get_info</c> function.</summary>
+    /// <returns>The result of <c>gst_audio_clipping_meta_get_info</c>.</returns>
+    public static Gst.MetaInfo GetInfo()
+    {
+        nint nativeResult = GstAudioClippingMetaGetInfo();
+        return Gst.MetaInfo.FromNative(nativeResult)
+            ?? throw new InvalidOperationException("gst_audio_clipping_meta_get_info returned no value.");
+    }
+
+    /// <summary>The <c>gst_audio_clipping_meta_get_info</c> entry point.</summary>
+    [LibraryImport("GstAudio", EntryPoint = "gst_audio_clipping_meta_get_info")]
+    private static partial nint GstAudioClippingMetaGetInfo();
 }

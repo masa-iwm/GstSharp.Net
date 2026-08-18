@@ -3,6 +3,7 @@
 
 #nullable enable
 
+using System;
 using System.Runtime.InteropServices;
 
 namespace Gst.Video;
@@ -19,18 +20,36 @@ namespace Gst.Video;
 /// <para>https://en.wikipedia.org/wiki/Active_Format_Description#Complete_list_of_AFD_codes</para>
 /// <para>and SMPTE ST2016-1</para>
 /// </remarks>
-[StructLayout(LayoutKind.Sequential)]
-public partial struct VideoAFDMeta
+public sealed unsafe partial class VideoAFDMeta
 {
-    /// <summary>parent #GstMeta</summary>
-    public Gst.Meta Meta;
+    /// <summary>The native instance.</summary>
+    internal nint Handle;
 
-    /// <summary>0 for progressive or field 1 and 1 for field 2</summary>
-    public byte Field;
+    /// <summary>Wraps a native <c>GstVideoAFDMeta</c>.</summary>
+    /// <param name="handle">The native instance.</param>
+    internal VideoAFDMeta(nint handle) => Handle = handle;
 
-    /// <summary>#GstVideoAFDSpec that applies to @afd</summary>
-    public Gst.Video.VideoAFDSpec Spec;
+    /// <summary>Wraps a native <c>GstVideoAFDMeta</c>, mapping the null pointer onto <see langword="null"/>.</summary>
+    /// <param name="handle">The native instance, or <c>0</c>.</param>
+    /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>
+    /// <remarks>
+    /// The wrapper of an opaque record is a bare pointer holder: the gir
+    /// describes no way of releasing one, so it does not take part in the
+    /// ownership of what it points at.
+    /// </remarks>
+    internal static VideoAFDMeta? FromNative(nint handle) =>
+        handle == 0 ? null : new(handle);
 
-    /// <summary>#GstVideoAFDValue AFD value</summary>
-    public Gst.Video.VideoAFDValue Afd;
+    /// <summary>The <c>gst_video_afd_meta_get_info</c> function.</summary>
+    /// <returns>The result of <c>gst_video_afd_meta_get_info</c>.</returns>
+    public static Gst.MetaInfo GetInfo()
+    {
+        nint nativeResult = GstVideoAfdMetaGetInfo();
+        return Gst.MetaInfo.FromNative(nativeResult)
+            ?? throw new InvalidOperationException("gst_video_afd_meta_get_info returned no value.");
+    }
+
+    /// <summary>The <c>gst_video_afd_meta_get_info</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_video_afd_meta_get_info")]
+    private static partial nint GstVideoAfdMetaGetInfo();
 }

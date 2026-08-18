@@ -3,6 +3,7 @@
 
 #nullable enable
 
+using System;
 using System.Runtime.InteropServices;
 
 namespace Gst.Video;
@@ -11,55 +12,36 @@ namespace Gst.Video;
 /// #GstMeta for carrying SMPTE-291M Ancillary data. Note that all the ADF fields
 ///    (@DID to @checksum) are 10bit values with parity/non-parity high-bits set.
 /// </summary>
-[StructLayout(LayoutKind.Sequential)]
-public partial struct AncillaryMeta
+public sealed unsafe partial class AncillaryMeta
 {
-    /// <summary>Parent #GstMeta</summary>
-    public Gst.Meta Meta;
+    /// <summary>The native instance.</summary>
+    internal nint Handle;
 
-    /// <summary>The field where the ancillary data is located</summary>
-    public Gst.Video.AncillaryMetaField Field;
+    /// <summary>Wraps a native <c>GstAncillaryMeta</c>.</summary>
+    /// <param name="handle">The native instance.</param>
+    internal AncillaryMeta(nint handle) => Handle = handle;
 
-    // <c>gboolean</c> is a 32 bit integer; every non zero value is true.
-    /// <summary>
-    /// Which channel (luminance or chrominance) the ancillary
-    ///    data is located. 0 if content is SD or stored in the luminance channel
-    ///    (default). 1 if HD and stored in the chrominance channel.
-    /// </summary>
-    public int CNotYChannel;
+    /// <summary>Wraps a native <c>GstAncillaryMeta</c>, mapping the null pointer onto <see langword="null"/>.</summary>
+    /// <param name="handle">The native instance, or <c>0</c>.</param>
+    /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>
+    /// <remarks>
+    /// The wrapper of an opaque record is a bare pointer holder: the gir
+    /// describes no way of releasing one, so it does not take part in the
+    /// ownership of what it points at.
+    /// </remarks>
+    internal static AncillaryMeta? FromNative(nint handle) =>
+        handle == 0 ? null : new(handle);
 
-    /// <summary>
-    /// The line on which the ancillary data is located (max 11bit). There
-    ///    are two special values: 0x7ff if no line is specified (default), 0x7fe
-    ///    to specify the ancillary data is on any valid line before active video
-    /// </summary>
-    public ushort Line;
+    /// <summary>The <c>gst_ancillary_meta_get_info</c> function.</summary>
+    /// <returns>The result of <c>gst_ancillary_meta_get_info</c>.</returns>
+    public static Gst.MetaInfo GetInfo()
+    {
+        nint nativeResult = GstAncillaryMetaGetInfo();
+        return Gst.MetaInfo.FromNative(nativeResult)
+            ?? throw new InvalidOperationException("gst_ancillary_meta_get_info returned no value.");
+    }
 
-    /// <summary>
-    /// The location of the ancillary data packet in a SDI raster relative
-    ///    to the start of active video (max 12bits). A value of 0 means the ADF of
-    ///    the ancillary packet starts immediately following SAV. There are 3
-    ///    special values: 0xfff: No specified location (default), 0xffe: within
-    ///    HANC data space, 0xffd: within the ancillary data space located between
-    ///    SAV and EAV
-    /// </summary>
-    public ushort Offset;
-
-    /// <summary>Data Identified</summary>
-    public ushort DID;
-
-    /// <summary>
-    /// Secondary Data identification (if type 2) or Data block
-    ///    number (if type 1)
-    /// </summary>
-    public ushort SDIDBlockNumber;
-
-    /// <summary>The amount of user data</summary>
-    public ushort DataCount;
-
-    /// <summary>The User data</summary>
-    public nint Data;
-
-    /// <summary>The checksum of the ADF</summary>
-    public ushort Checksum;
+    /// <summary>The <c>gst_ancillary_meta_get_info</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_ancillary_meta_get_info")]
+    private static partial nint GstAncillaryMetaGetInfo();
 }

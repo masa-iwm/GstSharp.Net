@@ -24,6 +24,18 @@ public static unsafe partial class GESGlobal
         return nativeResult != 0;
     }
 
+    /// <summary>Attaches positioning metadata to a #GstBuffer.</summary>
+    /// <param name="buffer">The <c>buffer</c> argument.</param>
+    /// <returns>a pointer to the added #GESFrameCompositionMeta.</returns>
+    public static GES.FrameCompositionMeta BufferAddFrameCompositionMeta(Gst.Buffer buffer)
+    {
+        ArgumentNullException.ThrowIfNull(buffer);
+        nint nativeResult = GesBufferAddFrameCompositionMeta(buffer.Handle);
+        System.GC.KeepAlive(buffer);
+        return GES.FrameCompositionMeta.FromNative(nativeResult)
+            ?? throw new InvalidOperationException("ges_buffer_add_frame_composition_meta returned no value.");
+    }
+
     /// <summary>Get the error quark for GES errors.</summary>
     /// <remarks>
     /// <para>Available since GStreamer 1.28.</para>
@@ -191,6 +203,10 @@ public static unsafe partial class GESGlobal
     /// <summary>The <c>ges_add_missing_uri_relocation_uri</c> entry point.</summary>
     [LibraryImport("GES", EntryPoint = "ges_add_missing_uri_relocation_uri")]
     private static partial int GesAddMissingUriRelocationUri(byte* uri, int recurse);
+
+    /// <summary>The <c>ges_buffer_add_frame_composition_meta</c> entry point.</summary>
+    [LibraryImport("GES", EntryPoint = "ges_buffer_add_frame_composition_meta")]
+    private static partial nint GesBufferAddFrameCompositionMeta(nint buffer);
 
     /// <summary>The <c>ges_error_quark</c> entry point.</summary>
     [LibraryImport("GES", EntryPoint = "ges_error_quark")]

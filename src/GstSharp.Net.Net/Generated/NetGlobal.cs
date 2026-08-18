@@ -11,6 +11,50 @@ namespace Gst.Net;
 /// <summary>The functions of the <c>GstNet</c> namespace that belong to no type.</summary>
 public static unsafe partial class NetGlobal
 {
+    /// <summary>Attaches @addr as metadata in a #GstNetAddressMeta to @buffer.</summary>
+    /// <param name="buffer">The <c>buffer</c> argument.</param>
+    /// <param name="addr">The <c>addr</c> argument.</param>
+    /// <returns>a #GstNetAddressMeta connected to @buffer</returns>
+    public static Gst.Net.NetAddressMeta BufferAddNetAddressMeta(Gst.Buffer buffer, Gst.Gio.SocketAddress addr)
+    {
+        ArgumentNullException.ThrowIfNull(buffer);
+        ArgumentNullException.ThrowIfNull(addr);
+        nint nativeResult = GstBufferAddNetAddressMeta(buffer.Handle, addr.Handle);
+        System.GC.KeepAlive(buffer);
+        System.GC.KeepAlive(addr);
+        return Gst.Net.NetAddressMeta.FromNative(nativeResult)
+            ?? throw new InvalidOperationException("gst_buffer_add_net_address_meta returned no value.");
+    }
+
+    /// <summary>Attaches @message as metadata in a #GstNetControlMessageMeta to @buffer.</summary>
+    /// <param name="buffer">The <c>buffer</c> argument.</param>
+    /// <param name="message">The <c>message</c> argument.</param>
+    /// <returns>a #GstNetControlMessageMeta connected to @buffer</returns>
+    public static Gst.Net.NetControlMessageMeta BufferAddNetControlMessageMeta(Gst.Buffer buffer, Gst.Gio.SocketControlMessage message)
+    {
+        ArgumentNullException.ThrowIfNull(buffer);
+        ArgumentNullException.ThrowIfNull(message);
+        nint nativeResult = GstBufferAddNetControlMessageMeta(buffer.Handle, message.Handle);
+        System.GC.KeepAlive(buffer);
+        System.GC.KeepAlive(message);
+        return Gst.Net.NetControlMessageMeta.FromNative(nativeResult)
+            ?? throw new InvalidOperationException("gst_buffer_add_net_control_message_meta returned no value.");
+    }
+
+    /// <summary>Find the #GstNetAddressMeta on @buffer.</summary>
+    /// <param name="buffer">The <c>buffer</c> argument.</param>
+    /// <returns>
+    /// the #GstNetAddressMeta or %NULL when there
+    /// is no such metadata on @buffer.
+    /// </returns>
+    public static Gst.Net.NetAddressMeta? BufferGetNetAddressMeta(Gst.Buffer buffer)
+    {
+        ArgumentNullException.ThrowIfNull(buffer);
+        nint nativeResult = GstBufferGetNetAddressMeta(buffer.Handle);
+        System.GC.KeepAlive(buffer);
+        return Gst.Net.NetAddressMeta.FromNative(nativeResult);
+    }
+
     /// <summary>The <c>gst_net_address_meta_api_get_type</c> function.</summary>
     /// <returns>The result of <c>gst_net_address_meta_api_get_type</c>.</returns>
     public static Gst.GObject.GType NetAddressMetaApiGetType()
@@ -128,6 +172,18 @@ public static unsafe partial class NetGlobal
     {
         GstPtpStatisticsCallbackRemove(id);
     }
+
+    /// <summary>The <c>gst_buffer_add_net_address_meta</c> entry point.</summary>
+    [LibraryImport("GstNet", EntryPoint = "gst_buffer_add_net_address_meta")]
+    private static partial nint GstBufferAddNetAddressMeta(nint buffer, nint addr);
+
+    /// <summary>The <c>gst_buffer_add_net_control_message_meta</c> entry point.</summary>
+    [LibraryImport("GstNet", EntryPoint = "gst_buffer_add_net_control_message_meta")]
+    private static partial nint GstBufferAddNetControlMessageMeta(nint buffer, nint message);
+
+    /// <summary>The <c>gst_buffer_get_net_address_meta</c> entry point.</summary>
+    [LibraryImport("GstNet", EntryPoint = "gst_buffer_get_net_address_meta")]
+    private static partial nint GstBufferGetNetAddressMeta(nint buffer);
 
     /// <summary>The <c>gst_net_address_meta_api_get_type</c> entry point.</summary>
     [LibraryImport("GstNet", EntryPoint = "gst_net_address_meta_api_get_type")]

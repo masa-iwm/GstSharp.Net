@@ -3,7 +3,7 @@
 
 #nullable enable
 
-using System.Runtime.CompilerServices;
+using System;
 using System.Runtime.InteropServices;
 
 namespace Gst.Audio;
@@ -35,38 +35,36 @@ namespace Gst.Audio;
 /// use the @num_bytes_per_channel variable of this metadata.
 /// </para>
 /// </remarks>
-[StructLayout(LayoutKind.Sequential)]
-public partial struct DsdPlaneOffsetMeta
+public sealed unsafe partial class DsdPlaneOffsetMeta
 {
-    /// <summary>parent #GstMeta</summary>
-    public Gst.Meta Meta;
+    /// <summary>The native instance.</summary>
+    internal nint Handle;
 
-    /// <summary>number of channels in the DSD data</summary>
-    public int NumChannels;
+    /// <summary>Wraps a native <c>GstDsdPlaneOffsetMeta</c>.</summary>
+    /// <param name="handle">The native instance.</param>
+    internal DsdPlaneOffsetMeta(nint handle) => Handle = handle;
 
-    /// <summary>the number of valid bytes per channel in the buffer</summary>
-    public nuint NumBytesPerChannel;
+    /// <summary>Wraps a native <c>GstDsdPlaneOffsetMeta</c>, mapping the null pointer onto <see langword="null"/>.</summary>
+    /// <param name="handle">The native instance, or <c>0</c>.</param>
+    /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>
+    /// <remarks>
+    /// The wrapper of an opaque record is a bare pointer holder: the gir
+    /// describes no way of releasing one, so it does not take part in the
+    /// ownership of what it points at.
+    /// </remarks>
+    internal static DsdPlaneOffsetMeta? FromNative(nint handle) =>
+        handle == 0 ? null : new(handle);
 
-    /// <summary>the offsets (in bytes) where each channel plane starts in the buffer</summary>
-    public nint Offsets;
-
-    /// <summary>The <c>priv_offsets_arr</c> field of <c>GstDsdPlaneOffsetMeta</c>.</summary>
-    private PrivOffsetsArrArray _privOffsetsArr;
-
-    /// <summary>The <c>_gst_reserved</c> field of <c>GstDsdPlaneOffsetMeta</c>.</summary>
-    private GstReservedArray _gstReserved;
-
-    /// <summary>Inline storage of the 8 elements of the <c>priv_offsets_arr</c> field of <c>GstDsdPlaneOffsetMeta</c>.</summary>
-    [InlineArray(8)]
-    private struct PrivOffsetsArrArray
+    /// <summary>The <c>gst_dsd_plane_offset_meta_get_info</c> function.</summary>
+    /// <returns>The result of <c>gst_dsd_plane_offset_meta_get_info</c>.</returns>
+    public static Gst.MetaInfo GetInfo()
     {
-        private nuint _element0;
+        nint nativeResult = GstDsdPlaneOffsetMetaGetInfo();
+        return Gst.MetaInfo.FromNative(nativeResult)
+            ?? throw new InvalidOperationException("gst_dsd_plane_offset_meta_get_info returned no value.");
     }
 
-    /// <summary>Inline storage of the 4 elements of the <c>_gst_reserved</c> field of <c>GstDsdPlaneOffsetMeta</c>.</summary>
-    [InlineArray(4)]
-    private struct GstReservedArray
-    {
-        private nint _element0;
-    }
+    /// <summary>The <c>gst_dsd_plane_offset_meta_get_info</c> entry point.</summary>
+    [LibraryImport("GstAudio", EntryPoint = "gst_dsd_plane_offset_meta_get_info")]
+    private static partial nint GstDsdPlaneOffsetMetaGetInfo();
 }

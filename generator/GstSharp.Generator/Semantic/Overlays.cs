@@ -112,6 +112,12 @@ internal sealed class Overlays
     internal IReadOnlyCollection<string> SkippedIdentifiers => _skip;
 
     /// <summary>
+    /// The qualified gir names of the records kept behind a pointer instead of
+    /// being projected as value types.
+    /// </summary>
+    internal IReadOnlyCollection<string> OpaqueRecords => _forceOpaque;
+
+    /// <summary>
     /// Loads <c>fixups.json</c> and <c>platform-symbols.json</c> from an overlay
     /// directory. Missing files are treated as empty.
     /// </summary>

@@ -254,6 +254,68 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     }
 
     /// <summary>
+    /// Creates and adds a #GstCustomMeta for the desired @name. @name must have
+    /// been successfully registered with gst_meta_register_custom().
+    /// </summary>
+    /// <param name="name">The <c>name</c> argument.</param>
+    /// <returns>The #GstCustomMeta that was added to the buffer</returns>
+    public Gst.CustomMeta? AddCustomMeta(string name)
+    {
+        ArgumentNullException.ThrowIfNull(name);
+        System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
+        nint nativeResult = GstBufferAddCustomMeta(Handle, nameScope.Pointer);
+        System.GC.KeepAlive(this);
+        return Gst.CustomMeta.FromNative(nativeResult);
+    }
+
+    /// <summary>Adds metadata for @info to @buffer using the parameters in @params.</summary>
+    /// <param name="info">The <c>info</c> argument.</param>
+    /// <param name="params">The <c>@params</c> argument.</param>
+    /// <returns>the metadata for the api in @info on @buffer.</returns>
+    public Gst.Meta? AddMeta(Gst.MetaInfo info, nint @params)
+    {
+        ArgumentNullException.ThrowIfNull(info);
+        nint nativeResult = GstBufferAddMeta(Handle, info.Handle, @params);
+        System.GC.KeepAlive(this);
+        System.GC.KeepAlive(info);
+        return Gst.Meta.FromNative(nativeResult);
+    }
+
+    /// <summary>
+    /// Adds a #GstParentBufferMeta to @buffer that holds a reference on
+    /// @ref until the buffer is freed.
+    /// </summary>
+    /// <param name="ref">The <c>@ref</c> argument.</param>
+    /// <returns>The #GstParentBufferMeta that was added to the buffer</returns>
+    public Gst.ParentBufferMeta? AddParentBufferMeta(Gst.Buffer @ref)
+    {
+        ArgumentNullException.ThrowIfNull(@ref);
+        nint nativeResult = GstBufferAddParentBufferMeta(Handle, @ref.Handle);
+        System.GC.KeepAlive(this);
+        System.GC.KeepAlive(@ref);
+        return Gst.ParentBufferMeta.FromNative(nativeResult);
+    }
+
+    /// <summary>
+    /// Adds a #GstReferenceTimestampMeta to @buffer that holds a @timestamp and
+    /// optionally @duration based on a specific timestamp @reference. See the
+    /// documentation of #GstReferenceTimestampMeta for details.
+    /// </summary>
+    /// <param name="reference">The <c>reference</c> argument.</param>
+    /// <param name="timestamp">The <c>timestamp</c> argument.</param>
+    /// <param name="duration">The <c>duration</c> argument.</param>
+    /// <returns>The #GstReferenceTimestampMeta that was added to the buffer</returns>
+    public Gst.ReferenceTimestampMeta? AddReferenceTimestampMeta(Gst.Caps reference, Gst.ClockTime timestamp, Gst.ClockTime duration)
+    {
+        ArgumentNullException.ThrowIfNull(reference);
+        nint nativeResult = GstBufferAddReferenceTimestampMeta(Handle, reference.Handle, timestamp.Nanoseconds, duration.Nanoseconds);
+        System.GC.KeepAlive(this);
+        System.GC.KeepAlive(reference);
+        return Gst.ReferenceTimestampMeta.FromNative(nativeResult);
+    }
+
+    /// <summary>
     /// Creates a copy of the given buffer. This will make a newly allocated
     /// copy of the data the source buffer contains.
     /// </summary>
@@ -401,6 +463,19 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
         return Gst.Memory.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
 
+    /// <summary>Finds the first #GstCustomMeta on @buffer for the desired @name.</summary>
+    /// <param name="name">The <c>name</c> argument.</param>
+    /// <returns>the #GstCustomMeta</returns>
+    public Gst.CustomMeta? GetCustomMeta(string name)
+    {
+        ArgumentNullException.ThrowIfNull(name);
+        System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
+        nint nativeResult = GstBufferGetCustomMeta(Handle, nameScope.Pointer);
+        System.GC.KeepAlive(this);
+        return Gst.CustomMeta.FromNative(nativeResult);
+    }
+
     /// <summary>Gets the #GstBufferFlags flags set on this buffer.</summary>
     /// <returns>the flags set on this buffer.</returns>
     public Gst.BufferFlags GetFlags()
@@ -443,6 +518,22 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
         return Gst.Memory.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
 
+    /// <summary>
+    /// Gets the metadata for @api on buffer. When there is no such metadata, %NULL is
+    /// returned. If multiple metadata with the given @api are attached to this
+    /// buffer only the first one is returned.  To handle multiple metadata with a
+    /// given API use gst_buffer_iterate_meta() or gst_buffer_foreach_meta() instead
+    /// and check the `meta-&gt;info.api` member for the API type.
+    /// </summary>
+    /// <param name="api">The <c>api</c> argument.</param>
+    /// <returns>the metadata for @api on @buffer.</returns>
+    public Gst.Meta? GetMeta(Gst.GObject.GType api)
+    {
+        nint nativeResult = GstBufferGetMeta(Handle, api.Value);
+        System.GC.KeepAlive(this);
+        return Gst.Meta.FromNative(nativeResult);
+    }
+
     /// <summary>The <c>gst_buffer_get_n_meta</c> function.</summary>
     /// <param name="apiType">The <c>apiType</c> argument.</param>
     /// <returns>number of metas of type @api_type on @buffer.</returns>
@@ -451,6 +542,27 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
         uint nativeResult = GstBufferGetNMeta(Handle, apiType.Value);
         System.GC.KeepAlive(this);
         return nativeResult;
+    }
+
+    /// <summary>
+    /// Finds the first #GstReferenceTimestampMeta on @buffer that conforms to
+    /// @reference. Conformance is tested by checking if the meta's reference is a
+    /// subset of @reference.
+    /// </summary>
+    /// <remarks>
+    /// <para>Buffers can contain multiple #GstReferenceTimestampMeta metadata items.</para>
+    /// </remarks>
+    /// <param name="reference">The <c>reference</c> argument.</param>
+    /// <returns>
+    /// the #GstReferenceTimestampMeta or %NULL when there
+    /// is no such metadata on @buffer.
+    /// </returns>
+    public Gst.ReferenceTimestampMeta? GetReferenceTimestampMeta(Gst.Caps? reference)
+    {
+        nint nativeResult = GstBufferGetReferenceTimestampMeta(Handle, reference is null ? 0 : reference.Handle);
+        System.GC.KeepAlive(this);
+        System.GC.KeepAlive(reference);
+        return Gst.ReferenceTimestampMeta.FromNative(nativeResult);
     }
 
     /// <summary>Gets the total size of the memory blocks in @buffer.</summary>
@@ -798,6 +910,22 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     [LibraryImport("Gst", EntryPoint = "gst_buffer_new_memdup")]
     private static partial nint GstBufferNewMemdup(byte* data, nuint size);
 
+    /// <summary>The <c>gst_buffer_add_custom_meta</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_buffer_add_custom_meta")]
+    private static partial nint GstBufferAddCustomMeta(nint buffer, byte* name);
+
+    /// <summary>The <c>gst_buffer_add_meta</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_buffer_add_meta")]
+    private static partial nint GstBufferAddMeta(nint buffer, nint info, nint @params);
+
+    /// <summary>The <c>gst_buffer_add_parent_buffer_meta</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_buffer_add_parent_buffer_meta")]
+    private static partial nint GstBufferAddParentBufferMeta(nint buffer, nint @ref);
+
+    /// <summary>The <c>gst_buffer_add_reference_timestamp_meta</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_buffer_add_reference_timestamp_meta")]
+    private static partial nint GstBufferAddReferenceTimestampMeta(nint buffer, nint reference, ulong timestamp, ulong duration);
+
     /// <summary>The <c>gst_buffer_copy_deep</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_buffer_copy_deep")]
     private static partial nint GstBufferCopyDeep(nint buf);
@@ -826,6 +954,10 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     [LibraryImport("Gst", EntryPoint = "gst_buffer_get_all_memory")]
     private static partial nint GstBufferGetAllMemory(nint buffer);
 
+    /// <summary>The <c>gst_buffer_get_custom_meta</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_buffer_get_custom_meta")]
+    private static partial nint GstBufferGetCustomMeta(nint buffer, byte* name);
+
     /// <summary>The <c>gst_buffer_get_flags</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_buffer_get_flags")]
     private static partial int GstBufferGetFlags(nint buffer);
@@ -838,9 +970,17 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     [LibraryImport("Gst", EntryPoint = "gst_buffer_get_memory_range")]
     private static partial nint GstBufferGetMemoryRange(nint buffer, uint idx, int length);
 
+    /// <summary>The <c>gst_buffer_get_meta</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_buffer_get_meta")]
+    private static partial nint GstBufferGetMeta(nint buffer, nuint api);
+
     /// <summary>The <c>gst_buffer_get_n_meta</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_buffer_get_n_meta")]
     private static partial uint GstBufferGetNMeta(nint buffer, nuint apiType);
+
+    /// <summary>The <c>gst_buffer_get_reference_timestamp_meta</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_buffer_get_reference_timestamp_meta")]
+    private static partial nint GstBufferGetReferenceTimestampMeta(nint buffer, nint reference);
 
     /// <summary>The <c>gst_buffer_get_size</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_buffer_get_size")]

@@ -3,6 +3,7 @@
 
 #nullable enable
 
+using System;
 using System.Runtime.InteropServices;
 
 namespace Gst.Video;
@@ -19,32 +20,36 @@ namespace Gst.Video;
 /// <para>https://www.atsc.org/wp-content/uploads/2015/03/a_53-Part-4-2009.pdf</para>
 /// <para>and SMPTE ST2016-1</para>
 /// </remarks>
-[StructLayout(LayoutKind.Sequential)]
-public partial struct VideoBarMeta
+public sealed unsafe partial class VideoBarMeta
 {
-    /// <summary>parent #GstMeta</summary>
-    public Gst.Meta Meta;
+    /// <summary>The native instance.</summary>
+    internal nint Handle;
 
-    /// <summary>0 for progressive or field 1 and 1 for field 2</summary>
-    public byte Field;
+    /// <summary>Wraps a native <c>GstVideoBarMeta</c>.</summary>
+    /// <param name="handle">The native instance.</param>
+    internal VideoBarMeta(nint handle) => Handle = handle;
 
-    // <c>gboolean</c> is a 32 bit integer; every non zero value is true.
-    /// <summary>if true then bar data specifies letterbox, otherwise pillarbox</summary>
-    public int IsLetterbox;
+    /// <summary>Wraps a native <c>GstVideoBarMeta</c>, mapping the null pointer onto <see langword="null"/>.</summary>
+    /// <param name="handle">The native instance, or <c>0</c>.</param>
+    /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>
+    /// <remarks>
+    /// The wrapper of an opaque record is a bare pointer holder: the gir
+    /// describes no way of releasing one, so it does not take part in the
+    /// ownership of what it points at.
+    /// </remarks>
+    internal static VideoBarMeta? FromNative(nint handle) =>
+        handle == 0 ? null : new(handle);
 
-    /// <summary>
-    /// If @is_letterbox is true, then the value specifies the
-    ///      last line of a horizontal letterbox bar area at top of reconstructed frame.
-    ///      Otherwise, it specifies the last horizontal luminance sample of a vertical pillarbox
-    ///      bar area at the left side of the reconstructed frame
-    /// </summary>
-    public uint BarData1;
+    /// <summary>The <c>gst_video_bar_meta_get_info</c> function.</summary>
+    /// <returns>The result of <c>gst_video_bar_meta_get_info</c>.</returns>
+    public static Gst.MetaInfo GetInfo()
+    {
+        nint nativeResult = GstVideoBarMetaGetInfo();
+        return Gst.MetaInfo.FromNative(nativeResult)
+            ?? throw new InvalidOperationException("gst_video_bar_meta_get_info returned no value.");
+    }
 
-    /// <summary>
-    /// If @is_letterbox is true, then the value specifies the
-    ///      first line of a horizontal letterbox bar area at bottom of reconstructed frame.
-    ///      Otherwise, it specifies the first horizontal
-    ///      luminance sample of a vertical pillarbox bar area at the right side of the reconstructed frame.
-    /// </summary>
-    public uint BarData2;
+    /// <summary>The <c>gst_video_bar_meta_get_info</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_video_bar_meta_get_info")]
+    private static partial nint GstVideoBarMetaGetInfo();
 }

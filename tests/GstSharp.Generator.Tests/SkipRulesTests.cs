@@ -160,6 +160,47 @@ public sealed class SkipRulesTests
         Assert.True(GirFixture.Overlays.TryGetReturnTypeOverride("gst_pipeline_new", out string? pipeline));
         Assert.Equal("Gst.Pipeline", pipeline);
         Assert.Null(GirFixture.Overlays.GetPlatformSupport("gst_macos_main"));
+
+        // The opaque list carries the same weight as the skip list: whether a
+        // record is copied by value or addressed through a pointer is the shape
+        // of its public type, so an entry that is added or dropped is a
+        // decision, not a detail.
+        Assert.Equal(
+            [
+                "GES.FrameCompositionMeta",
+                "Gst.CustomMeta",
+                "Gst.DebugCategory",
+                "Gst.Meta",
+                "Gst.ParentBufferMeta",
+                "Gst.ProtectionMeta",
+                "Gst.ReferenceTimestampMeta",
+                "GstAudio.AudioClippingMeta",
+                "GstAudio.AudioDownmixMeta",
+                "GstAudio.AudioLevelMeta",
+                "GstAudio.DsdPlaneOffsetMeta",
+                "GstNet.NetAddressMeta",
+                "GstNet.NetControlMessageMeta",
+                "GstRtsp.RTSPTransport",
+                "GstSdp.SDPAttribute",
+                "GstSdp.SDPBandwidth",
+                "GstSdp.SDPConnection",
+                "GstSdp.SDPKey",
+                "GstSdp.SDPMedia",
+                "GstSdp.SDPOrigin",
+                "GstSdp.SDPTime",
+                "GstSdp.SDPZone",
+                "GstVideo.AncillaryMeta",
+                "GstVideo.VideoAFDMeta",
+                "GstVideo.VideoAffineTransformationMeta",
+                "GstVideo.VideoBarMeta",
+                "GstVideo.VideoCaptionMeta",
+                "GstVideo.VideoCodecAlphaMeta",
+                "GstVideo.VideoCropMeta",
+                "GstVideo.VideoOverlayCompositionMeta",
+                "GstVideo.VideoRegionOfInterestMeta",
+                "GstVideo.VideoSEIUserDataUnregisteredMeta",
+            ],
+            GirFixture.Overlays.OpaqueRecords.Order(StringComparer.Ordinal).ToArray());
     }
 
     [Fact]

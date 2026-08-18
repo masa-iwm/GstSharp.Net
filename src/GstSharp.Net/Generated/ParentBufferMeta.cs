@@ -3,6 +3,7 @@
 
 #nullable enable
 
+using System;
 using System.Runtime.InteropServices;
 
 namespace Gst;
@@ -20,12 +21,36 @@ namespace Gst;
 /// for re-use.
 /// </para>
 /// </remarks>
-[StructLayout(LayoutKind.Sequential)]
-public partial struct ParentBufferMeta
+public sealed unsafe partial class ParentBufferMeta
 {
-    /// <summary>the parent #GstMeta structure</summary>
-    public Gst.Meta Parent;
+    /// <summary>The native instance.</summary>
+    internal nint Handle;
 
-    /// <summary>the #GstBuffer on which a reference is being held.</summary>
-    public nint Buffer;
+    /// <summary>Wraps a native <c>GstParentBufferMeta</c>.</summary>
+    /// <param name="handle">The native instance.</param>
+    internal ParentBufferMeta(nint handle) => Handle = handle;
+
+    /// <summary>Wraps a native <c>GstParentBufferMeta</c>, mapping the null pointer onto <see langword="null"/>.</summary>
+    /// <param name="handle">The native instance, or <c>0</c>.</param>
+    /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>
+    /// <remarks>
+    /// The wrapper of an opaque record is a bare pointer holder: the gir
+    /// describes no way of releasing one, so it does not take part in the
+    /// ownership of what it points at.
+    /// </remarks>
+    internal static ParentBufferMeta? FromNative(nint handle) =>
+        handle == 0 ? null : new(handle);
+
+    /// <summary>Gets the global #GstMetaInfo describing  the #GstParentBufferMeta meta.</summary>
+    /// <returns>The #GstMetaInfo</returns>
+    public static Gst.MetaInfo GetInfo()
+    {
+        nint nativeResult = GstParentBufferMetaGetInfo();
+        return Gst.MetaInfo.FromNative(nativeResult)
+            ?? throw new InvalidOperationException("gst_parent_buffer_meta_get_info returned no value.");
+    }
+
+    /// <summary>The <c>gst_parent_buffer_meta_get_info</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_parent_buffer_meta_get_info")]
+    private static partial nint GstParentBufferMetaGetInfo();
 }

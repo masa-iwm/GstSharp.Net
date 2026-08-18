@@ -3,8 +3,6 @@
 
 #nullable enable
 
-using System.Runtime.InteropServices;
-
 namespace GES;
 
 /// <summary>
@@ -12,36 +10,23 @@ namespace GES;
 /// transparency and composition operator of a video frame in the timeline
 /// composition.
 /// </summary>
-[StructLayout(LayoutKind.Sequential)]
-public partial struct FrameCompositionMeta
+public sealed partial class FrameCompositionMeta
 {
-    /// <summary>the parent #GstMeta.</summary>
-    public Gst.Meta Meta;
+    /// <summary>The native instance.</summary>
+    internal nint Handle;
 
-    /// <summary>The <c>alpha</c> field of <c>GESFrameCompositionMeta</c>.</summary>
-    public double Alpha;
+    /// <summary>Wraps a native <c>GESFrameCompositionMeta</c>.</summary>
+    /// <param name="handle">The native instance.</param>
+    internal FrameCompositionMeta(nint handle) => Handle = handle;
 
-    /// <summary>The desired x position.</summary>
-    public double Posx;
-
-    /// <summary>The desired y position.</summary>
-    public double Posy;
-
-    /// <summary>
-    /// The desired height of the video. -1 means that no scaling should be
-    /// applied.
-    /// </summary>
-    public double Height;
-
-    /// <summary>
-    /// The desired width of the video. -1 means that no scaling should beapplied
-    /// applied.
-    /// </summary>
-    public double Width;
-
-    /// <summary>The desired z order.</summary>
-    public uint Zorder;
-
-    /// <summary>The blending operator for the source.</summary>
-    public int Operator;
+    /// <summary>Wraps a native <c>GESFrameCompositionMeta</c>, mapping the null pointer onto <see langword="null"/>.</summary>
+    /// <param name="handle">The native instance, or <c>0</c>.</param>
+    /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>
+    /// <remarks>
+    /// The wrapper of an opaque record is a bare pointer holder: the gir
+    /// describes no way of releasing one, so it does not take part in the
+    /// ownership of what it points at.
+    /// </remarks>
+    internal static FrameCompositionMeta? FromNative(nint handle) =>
+        handle == 0 ? null : new(handle);
 }

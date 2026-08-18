@@ -3,6 +3,7 @@
 
 #nullable enable
 
+using System;
 using System.Runtime.InteropServices;
 
 namespace Gst.Net;
@@ -14,12 +15,36 @@ namespace Gst.Net;
 /// sending and receiving ancillary data such as unix credentials (See
 /// #GUnixCredentialsMessage) and Unix file descriptions (See #GUnixFDMessage).
 /// </summary>
-[StructLayout(LayoutKind.Sequential)]
-public partial struct NetControlMessageMeta
+public sealed unsafe partial class NetControlMessageMeta
 {
-    /// <summary>the parent type</summary>
-    public Gst.Meta Meta;
+    /// <summary>The native instance.</summary>
+    internal nint Handle;
 
-    /// <summary>a #GSocketControlMessage stored as metadata</summary>
-    public nint Message;
+    /// <summary>Wraps a native <c>GstNetControlMessageMeta</c>.</summary>
+    /// <param name="handle">The native instance.</param>
+    internal NetControlMessageMeta(nint handle) => Handle = handle;
+
+    /// <summary>Wraps a native <c>GstNetControlMessageMeta</c>, mapping the null pointer onto <see langword="null"/>.</summary>
+    /// <param name="handle">The native instance, or <c>0</c>.</param>
+    /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>
+    /// <remarks>
+    /// The wrapper of an opaque record is a bare pointer holder: the gir
+    /// describes no way of releasing one, so it does not take part in the
+    /// ownership of what it points at.
+    /// </remarks>
+    internal static NetControlMessageMeta? FromNative(nint handle) =>
+        handle == 0 ? null : new(handle);
+
+    /// <summary>The <c>gst_net_control_message_meta_get_info</c> function.</summary>
+    /// <returns>The result of <c>gst_net_control_message_meta_get_info</c>.</returns>
+    public static Gst.MetaInfo GetInfo()
+    {
+        nint nativeResult = GstNetControlMessageMetaGetInfo();
+        return Gst.MetaInfo.FromNative(nativeResult)
+            ?? throw new InvalidOperationException("gst_net_control_message_meta_get_info returned no value.");
+    }
+
+    /// <summary>The <c>gst_net_control_message_meta_get_info</c> entry point.</summary>
+    [LibraryImport("GstNet", EntryPoint = "gst_net_control_message_meta_get_info")]
+    private static partial nint GstNetControlMessageMetaGetInfo();
 }

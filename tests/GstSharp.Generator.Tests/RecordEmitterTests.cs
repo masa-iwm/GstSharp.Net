@@ -613,9 +613,10 @@ public sealed class RecordEmitterTests
         Assert.Equal(11, Count(files, " : Gst.MiniObject\n"));
         Assert.Equal(12, Count(files, " : Gst.GObject.Boxed\n"));
 
-        // GstDebugCategory is forced behind a pointer by fixups.json, so the
-        // module carries one plain struct fewer than the gir would give.
-        Assert.Equal(13, Count(files, "\npublic partial struct "));
+        // GstDebugCategory and the five metadata structures of the module are
+        // forced behind a pointer by fixups.json, so the module carries six
+        // plain structs fewer than the gir would give.
+        Assert.Equal(8, Count(files, "\npublic partial struct "));
         Assert.Equal(9, Count(files, "\ninternal unsafe struct "));
 
         foreach (Diagnostic diagnostic in Generated.Diagnostics)
@@ -699,6 +700,71 @@ public sealed class RecordEmitterTests
             "public partial struct RTSPTimeRange",
             SourceOf("GstSharp.Net.Rtsp/Generated/RTSPTimeRange.cs"),
             StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("GstSharp.Net/Generated/Meta.cs", "Meta")]
+    [InlineData("GstSharp.Net/Generated/CustomMeta.cs", "CustomMeta")]
+    [InlineData("GstSharp.Net/Generated/ParentBufferMeta.cs", "ParentBufferMeta")]
+    [InlineData("GstSharp.Net/Generated/ProtectionMeta.cs", "ProtectionMeta")]
+    [InlineData("GstSharp.Net/Generated/ReferenceTimestampMeta.cs", "ReferenceTimestampMeta")]
+    [InlineData("GstSharp.Net.Audio/Generated/AudioClippingMeta.cs", "AudioClippingMeta")]
+    [InlineData("GstSharp.Net.Audio/Generated/AudioDownmixMeta.cs", "AudioDownmixMeta")]
+    [InlineData("GstSharp.Net.Audio/Generated/AudioLevelMeta.cs", "AudioLevelMeta")]
+    [InlineData("GstSharp.Net.Audio/Generated/DsdPlaneOffsetMeta.cs", "DsdPlaneOffsetMeta")]
+    [InlineData("GstSharp.Net.Video/Generated/AncillaryMeta.cs", "AncillaryMeta")]
+    [InlineData("GstSharp.Net.Video/Generated/VideoAFDMeta.cs", "VideoAFDMeta")]
+    [InlineData("GstSharp.Net.Video/Generated/VideoAffineTransformationMeta.cs", "VideoAffineTransformationMeta")]
+    [InlineData("GstSharp.Net.Video/Generated/VideoBarMeta.cs", "VideoBarMeta")]
+    [InlineData("GstSharp.Net.Video/Generated/VideoCaptionMeta.cs", "VideoCaptionMeta")]
+    [InlineData("GstSharp.Net.Video/Generated/VideoCodecAlphaMeta.cs", "VideoCodecAlphaMeta")]
+    [InlineData("GstSharp.Net.Video/Generated/VideoCropMeta.cs", "VideoCropMeta")]
+    [InlineData("GstSharp.Net.Video/Generated/VideoOverlayCompositionMeta.cs", "VideoOverlayCompositionMeta")]
+    [InlineData("GstSharp.Net.Video/Generated/VideoRegionOfInterestMeta.cs", "VideoRegionOfInterestMeta")]
+    [InlineData("GstSharp.Net.Video/Generated/VideoSEIUserDataUnregisteredMeta.cs", "VideoSEIUserDataUnregisteredMeta")]
+    [InlineData("GstSharp.Net.Net/Generated/NetAddressMeta.cs", "NetAddressMeta")]
+    [InlineData("GstSharp.Net.Net/Generated/NetControlMessageMeta.cs", "NetControlMessageMeta")]
+    [InlineData("GstSharp.Net.GES/Generated/FrameCompositionMeta.cs", "FrameCompositionMeta")]
+    public void EveryMetadataStructureIsWrappedBehindAPointer(string path, string typeName)
+    {
+        // A metadata item lives inside the buffer that carries it, so a value
+        // projection could only snapshot it: reads stop tracking the buffer,
+        // writes reach a temporary, and the pointer identity the removal and
+        // iteration calls key on is lost. GstMeta is the header the other
+        // twenty one embed as their first field, so the family goes behind a
+        // pointer together and no value type of the family is left.
+        string source = SourceOf(path);
+
+        Assert.Contains("public sealed ", source, StringComparison.Ordinal);
+        Assert.Contains("partial class " + typeName + "\n", source, StringComparison.Ordinal);
+        Assert.Contains("internal " + typeName + "(nint handle) => Handle = handle;", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("public partial struct ", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("public Gst.Meta Meta;", source, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void TheMetadataAccessorsOfABufferFollowTheirRecords()
+    {
+        // Every one of these used to be dropped, because a value projected
+        // GstMeta has no C# spelling the planner would accept for a pointer
+        // the library hands out. Behind a pointer they bind, and what the
+        // caller receives addresses the metadata of the buffer itself.
+        string source = SourceOf("GstSharp.Net/Generated/Buffer.cs");
+
+        Assert.Contains("public Gst.Meta? GetMeta(Gst.GObject.GType api)", source, StringComparison.Ordinal);
+        Assert.Contains("public Gst.CustomMeta? GetCustomMeta(string name)", source, StringComparison.Ordinal);
+        Assert.Contains(
+            "public Gst.Meta? AddMeta(Gst.MetaInfo info, nint @params)",
+            source,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "public Gst.ParentBufferMeta? AddParentBufferMeta(Gst.Buffer @ref)",
+            source,
+            StringComparison.Ordinal);
+
+        // The removal keeps its overlay skip: it is the one call of the family
+        // whose contract the gir does not describe.
+        Assert.DoesNotContain("RemoveMeta(", source, StringComparison.Ordinal);
     }
 
     [Fact]

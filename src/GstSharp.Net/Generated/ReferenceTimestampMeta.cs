@@ -3,6 +3,7 @@
 
 #nullable enable
 
+using System;
 using System.Runtime.InteropServices;
 
 namespace Gst;
@@ -42,24 +43,36 @@ namespace Gst;
 /// </para>
 /// <para>Interpretation of the fields of @info depends on the @reference.</para>
 /// </remarks>
-[StructLayout(LayoutKind.Sequential)]
-public partial struct ReferenceTimestampMeta
+public sealed unsafe partial class ReferenceTimestampMeta
 {
-    /// <summary>the parent #GstMeta structure</summary>
-    public Gst.Meta Parent;
+    /// <summary>The native instance.</summary>
+    internal nint Handle;
 
-    /// <summary>identifier for the timestamp reference.</summary>
-    public nint Reference;
+    /// <summary>Wraps a native <c>GstReferenceTimestampMeta</c>.</summary>
+    /// <param name="handle">The native instance.</param>
+    internal ReferenceTimestampMeta(nint handle) => Handle = handle;
 
-    /// <summary>timestamp</summary>
-    public Gst.ClockTime Timestamp;
-
-    /// <summary>duration, or %GST_CLOCK_TIME_NONE</summary>
-    public Gst.ClockTime Duration;
-
-    /// <summary>Additional information about the timestamp.</summary>
+    /// <summary>Wraps a native <c>GstReferenceTimestampMeta</c>, mapping the null pointer onto <see langword="null"/>.</summary>
+    /// <param name="handle">The native instance, or <c>0</c>.</param>
+    /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>
     /// <remarks>
-    /// <para>Available since GStreamer 1.28.</para>
+    /// The wrapper of an opaque record is a bare pointer holder: the gir
+    /// describes no way of releasing one, so it does not take part in the
+    /// ownership of what it points at.
     /// </remarks>
-    public nint Info;
+    internal static ReferenceTimestampMeta? FromNative(nint handle) =>
+        handle == 0 ? null : new(handle);
+
+    /// <summary>Gets the global #GstMetaInfo describing the #GstReferenceTimestampMeta meta.</summary>
+    /// <returns>The #GstMetaInfo</returns>
+    public static Gst.MetaInfo GetInfo()
+    {
+        nint nativeResult = GstReferenceTimestampMetaGetInfo();
+        return Gst.MetaInfo.FromNative(nativeResult)
+            ?? throw new InvalidOperationException("gst_reference_timestamp_meta_get_info returned no value.");
+    }
+
+    /// <summary>The <c>gst_reference_timestamp_meta_get_info</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_reference_timestamp_meta_get_info")]
+    private static partial nint GstReferenceTimestampMetaGetInfo();
 }

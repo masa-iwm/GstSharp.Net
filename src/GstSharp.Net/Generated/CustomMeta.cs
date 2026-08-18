@@ -3,6 +3,7 @@
 
 #nullable enable
 
+using System;
 using System.Runtime.InteropServices;
 
 namespace Gst;
@@ -18,12 +19,62 @@ namespace Gst;
 /// fields that cannot be serialized, see %GST_SERIALIZE_FLAG_STRICT.
 /// </para>
 /// </remarks>
-[StructLayout(LayoutKind.Sequential)]
-public partial struct CustomMeta
+public sealed unsafe partial class CustomMeta
 {
-    /// <summary>parent #GstMeta</summary>
-    public Gst.Meta Meta;
+    /// <summary>The native instance.</summary>
+    internal nint Handle;
 
-    /// <summary>#GstStructure containing custom metadata.</summary>
-    public nint Structure;
+    /// <summary>Wraps a native <c>GstCustomMeta</c>.</summary>
+    /// <param name="handle">The native instance.</param>
+    internal CustomMeta(nint handle) => Handle = handle;
+
+    /// <summary>Wraps a native <c>GstCustomMeta</c>, mapping the null pointer onto <see langword="null"/>.</summary>
+    /// <param name="handle">The native instance, or <c>0</c>.</param>
+    /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>
+    /// <remarks>
+    /// The wrapper of an opaque record is a bare pointer holder: the gir
+    /// describes no way of releasing one, so it does not take part in the
+    /// ownership of what it points at.
+    /// </remarks>
+    internal static CustomMeta? FromNative(nint handle) =>
+        handle == 0 ? null : new(handle);
+
+    /// <summary>
+    /// Retrieve the #GstStructure backing a custom meta, the structure's mutability
+    /// is conditioned to the writability of the #GstBuffer @meta is attached to.
+    /// </summary>
+    /// <returns>
+    /// the #GstStructure backing @meta
+    /// The wrapper owns a reference of its own, which is a copy for a boxed type:
+    /// dispose it when you are done, and note that changes made to a copy of a
+    /// boxed value are not written back.
+    /// </returns>
+    public Gst.Structure GetStructure()
+    {
+        nint nativeResult = GstCustomMetaGetStructure(Handle);
+        System.GC.KeepAlive(this);
+        return Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.None)
+            ?? throw new InvalidOperationException("gst_custom_meta_get_structure returned no value.");
+    }
+
+    /// <summary>Checks whether the name of the custom meta is @name</summary>
+    /// <param name="name">The <c>name</c> argument.</param>
+    /// <returns>Whether @name is the name of the custom meta</returns>
+    public bool HasName(string name)
+    {
+        ArgumentNullException.ThrowIfNull(name);
+        System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
+        int nativeResult = GstCustomMetaHasName(Handle, nameScope.Pointer);
+        System.GC.KeepAlive(this);
+        return nativeResult != 0;
+    }
+
+    /// <summary>The <c>gst_custom_meta_get_structure</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_custom_meta_get_structure")]
+    private static partial nint GstCustomMetaGetStructure(nint meta);
+
+    /// <summary>The <c>gst_custom_meta_has_name</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_custom_meta_has_name")]
+    private static partial int GstCustomMetaHasName(nint meta, byte* name);
 }

@@ -3,21 +3,42 @@
 
 #nullable enable
 
+using System;
 using System.Runtime.InteropServices;
 
 namespace Gst.Audio;
 
 /// <summary>Meta containing Audio Level Indication: https://tools.ietf.org/html/rfc6464</summary>
-[StructLayout(LayoutKind.Sequential)]
-public partial struct AudioLevelMeta
+public sealed unsafe partial class AudioLevelMeta
 {
-    /// <summary>parent #GstMeta</summary>
-    public Gst.Meta Meta;
+    /// <summary>The native instance.</summary>
+    internal nint Handle;
 
-    /// <summary>the -dBov from 0-127 (127 is silence).</summary>
-    public byte Level;
+    /// <summary>Wraps a native <c>GstAudioLevelMeta</c>.</summary>
+    /// <param name="handle">The native instance.</param>
+    internal AudioLevelMeta(nint handle) => Handle = handle;
 
-    // <c>gboolean</c> is a 32 bit integer; every non zero value is true.
-    /// <summary>whether the buffer contains voice activity</summary>
-    public int VoiceActivity;
+    /// <summary>Wraps a native <c>GstAudioLevelMeta</c>, mapping the null pointer onto <see langword="null"/>.</summary>
+    /// <param name="handle">The native instance, or <c>0</c>.</param>
+    /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>
+    /// <remarks>
+    /// The wrapper of an opaque record is a bare pointer holder: the gir
+    /// describes no way of releasing one, so it does not take part in the
+    /// ownership of what it points at.
+    /// </remarks>
+    internal static AudioLevelMeta? FromNative(nint handle) =>
+        handle == 0 ? null : new(handle);
+
+    /// <summary>Return the #GstMetaInfo associated with #GstAudioLevelMeta.</summary>
+    /// <returns>a #GstMetaInfo</returns>
+    public static Gst.MetaInfo GetInfo()
+    {
+        nint nativeResult = GstAudioLevelMetaGetInfo();
+        return Gst.MetaInfo.FromNative(nativeResult)
+            ?? throw new InvalidOperationException("gst_audio_level_meta_get_info returned no value.");
+    }
+
+    /// <summary>The <c>gst_audio_level_meta_get_info</c> entry point.</summary>
+    [LibraryImport("GstAudio", EntryPoint = "gst_audio_level_meta_get_info")]
+    private static partial nint GstAudioLevelMetaGetInfo();
 }

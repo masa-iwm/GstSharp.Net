@@ -3,31 +3,42 @@
 
 #nullable enable
 
-using System.Runtime.CompilerServices;
+using System;
 using System.Runtime.InteropServices;
 
 namespace Gst.Video;
 
 /// <summary>H.264 H.265 metadata from SEI User Data Unregistered messages</summary>
-[StructLayout(LayoutKind.Sequential)]
-public partial struct VideoSEIUserDataUnregisteredMeta
+public sealed unsafe partial class VideoSEIUserDataUnregisteredMeta
 {
-    /// <summary>parent #GstMeta</summary>
-    public Gst.Meta Meta;
+    /// <summary>The native instance.</summary>
+    internal nint Handle;
 
-    /// <summary>User Data Unregistered UUID</summary>
-    public UuidArray Uuid;
+    /// <summary>Wraps a native <c>GstVideoSEIUserDataUnregisteredMeta</c>.</summary>
+    /// <param name="handle">The native instance.</param>
+    internal VideoSEIUserDataUnregisteredMeta(nint handle) => Handle = handle;
 
-    /// <summary>Unparsed data buffer</summary>
-    public nint Data;
+    /// <summary>Wraps a native <c>GstVideoSEIUserDataUnregisteredMeta</c>, mapping the null pointer onto <see langword="null"/>.</summary>
+    /// <param name="handle">The native instance, or <c>0</c>.</param>
+    /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>
+    /// <remarks>
+    /// The wrapper of an opaque record is a bare pointer holder: the gir
+    /// describes no way of releasing one, so it does not take part in the
+    /// ownership of what it points at.
+    /// </remarks>
+    internal static VideoSEIUserDataUnregisteredMeta? FromNative(nint handle) =>
+        handle == 0 ? null : new(handle);
 
-    /// <summary>Size of the data buffer</summary>
-    public nuint Size;
-
-    /// <summary>Inline storage of the 16 elements of the <c>uuid</c> field of <c>GstVideoSEIUserDataUnregisteredMeta</c>.</summary>
-    [InlineArray(16)]
-    public struct UuidArray
+    /// <summary>The <c>gst_video_sei_user_data_unregistered_meta_get_info</c> function.</summary>
+    /// <returns>#GstMetaInfo pointer that describes #GstVideoSEIUserDataUnregisteredMeta.</returns>
+    public static Gst.MetaInfo GetInfo()
     {
-        private byte _element0;
+        nint nativeResult = GstVideoSeiUserDataUnregisteredMetaGetInfo();
+        return Gst.MetaInfo.FromNative(nativeResult)
+            ?? throw new InvalidOperationException("gst_video_sei_user_data_unregistered_meta_get_info returned no value.");
     }
+
+    /// <summary>The <c>gst_video_sei_user_data_unregistered_meta_get_info</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_video_sei_user_data_unregistered_meta_get_info")]
+    private static partial nint GstVideoSeiUserDataUnregisteredMetaGetInfo();
 }

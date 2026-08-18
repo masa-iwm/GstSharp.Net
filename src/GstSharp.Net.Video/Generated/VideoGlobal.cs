@@ -20,6 +20,93 @@ public static unsafe partial class VideoGlobal
     }
 
     /// <summary>
+    /// Adds a new #GstAncillaryMeta to the @buffer. The caller is responsible for setting the appropriate
+    /// fields.
+    /// </summary>
+    /// <param name="buffer">The <c>buffer</c> argument.</param>
+    /// <returns>A new #GstAncillaryMeta, or %NULL if an error happened.</returns>
+    public static Gst.Video.AncillaryMeta BufferAddAncillaryMeta(Gst.Buffer buffer)
+    {
+        ArgumentNullException.ThrowIfNull(buffer);
+        nint nativeResult = GstBufferAddAncillaryMeta(buffer.Handle);
+        System.GC.KeepAlive(buffer);
+        return Gst.Video.AncillaryMeta.FromNative(nativeResult)
+            ?? throw new InvalidOperationException("gst_buffer_add_ancillary_meta returned no value.");
+    }
+
+    /// <summary>
+    /// Attaches #GstVideoAFDMeta metadata to @buffer with the given
+    /// parameters.
+    /// </summary>
+    /// <param name="buffer">The <c>buffer</c> argument.</param>
+    /// <param name="field">The <c>field</c> argument.</param>
+    /// <param name="spec">The <c>spec</c> argument.</param>
+    /// <param name="afd">The <c>afd</c> argument.</param>
+    /// <returns>the #GstVideoAFDMeta on @buffer.</returns>
+    public static Gst.Video.VideoAFDMeta BufferAddVideoAfdMeta(Gst.Buffer buffer, byte field, Gst.Video.VideoAFDSpec spec, Gst.Video.VideoAFDValue afd)
+    {
+        ArgumentNullException.ThrowIfNull(buffer);
+        nint nativeResult = GstBufferAddVideoAfdMeta(buffer.Handle, field, (int)spec, (int)afd);
+        System.GC.KeepAlive(buffer);
+        return Gst.Video.VideoAFDMeta.FromNative(nativeResult)
+            ?? throw new InvalidOperationException("gst_buffer_add_video_afd_meta returned no value.");
+    }
+
+    /// <summary>
+    /// Attaches GstVideoAffineTransformationMeta metadata to @buffer with
+    /// the given parameters.
+    /// </summary>
+    /// <param name="buffer">The <c>buffer</c> argument.</param>
+    /// <returns>the #GstVideoAffineTransformationMeta on @buffer.</returns>
+    public static Gst.Video.VideoAffineTransformationMeta BufferAddVideoAffineTransformationMeta(Gst.Buffer buffer)
+    {
+        ArgumentNullException.ThrowIfNull(buffer);
+        nint nativeResult = GstBufferAddVideoAffineTransformationMeta(buffer.Handle);
+        System.GC.KeepAlive(buffer);
+        return Gst.Video.VideoAffineTransformationMeta.FromNative(nativeResult)
+            ?? throw new InvalidOperationException("gst_buffer_add_video_affine_transformation_meta returned no value.");
+    }
+
+    /// <summary>
+    /// Attaches #GstVideoBarMeta metadata to @buffer with the given
+    /// parameters.
+    /// </summary>
+    /// <param name="buffer">The <c>buffer</c> argument.</param>
+    /// <param name="field">The <c>field</c> argument.</param>
+    /// <param name="isLetterbox">The <c>isLetterbox</c> argument.</param>
+    /// <param name="barData1">The <c>barData1</c> argument.</param>
+    /// <param name="barData2">The <c>barData2</c> argument.</param>
+    /// <returns>the #GstVideoBarMeta on @buffer.</returns>
+    public static Gst.Video.VideoBarMeta BufferAddVideoBarMeta(Gst.Buffer buffer, byte field, bool isLetterbox, uint barData1, uint barData2)
+    {
+        ArgumentNullException.ThrowIfNull(buffer);
+        nint nativeResult = GstBufferAddVideoBarMeta(buffer.Handle, field, isLetterbox ? 1 : 0, barData1, barData2);
+        System.GC.KeepAlive(buffer);
+        return Gst.Video.VideoBarMeta.FromNative(nativeResult)
+            ?? throw new InvalidOperationException("gst_buffer_add_video_bar_meta returned no value.");
+    }
+
+    /// <summary>
+    /// Attaches #GstVideoCaptionMeta metadata to @buffer with the given
+    /// parameters.
+    /// </summary>
+    /// <param name="buffer">The <c>buffer</c> argument.</param>
+    /// <param name="captionType">The <c>captionType</c> argument.</param>
+    /// <param name="data">The Closed Caption data</param>
+    /// <returns>the #GstVideoCaptionMeta on @buffer.</returns>
+    public static Gst.Video.VideoCaptionMeta BufferAddVideoCaptionMeta(Gst.Buffer buffer, Gst.Video.VideoCaptionType captionType, System.ReadOnlySpan<byte> data)
+    {
+        ArgumentNullException.ThrowIfNull(buffer);
+        fixed (byte* dataPointer = data)
+        {
+            nint nativeResult = GstBufferAddVideoCaptionMeta(buffer.Handle, (int)captionType, dataPointer, (nuint)data.Length);
+            System.GC.KeepAlive(buffer);
+            return Gst.Video.VideoCaptionMeta.FromNative(nativeResult)
+                ?? throw new InvalidOperationException("gst_buffer_add_video_caption_meta returned no value.");
+        }
+    }
+
+    /// <summary>
     /// Attaches GstVideoMeta metadata to @buffer with the given parameters and the
     /// default offsets and strides for @format and @width x @height.
     /// </summary>
@@ -42,6 +129,67 @@ public static unsafe partial class VideoGlobal
         System.GC.KeepAlive(buffer);
         return Gst.Video.VideoMeta.FromNative(nativeResult)
             ?? throw new InvalidOperationException("gst_buffer_add_video_meta returned no value.");
+    }
+
+    /// <summary>
+    /// Sets an overlay composition on a buffer. The buffer will obtain its own
+    /// reference to the composition, meaning this function does not take ownership
+    /// of @comp.
+    /// </summary>
+    /// <param name="buf">The <c>buf</c> argument.</param>
+    /// <param name="comp">The <c>comp</c> argument.</param>
+    /// <returns>a #GstVideoOverlayCompositionMeta</returns>
+    public static Gst.Video.VideoOverlayCompositionMeta BufferAddVideoOverlayCompositionMeta(Gst.Buffer buf, Gst.Video.VideoOverlayComposition? comp)
+    {
+        ArgumentNullException.ThrowIfNull(buf);
+        nint nativeResult = GstBufferAddVideoOverlayCompositionMeta(buf.Handle, comp is null ? 0 : comp.Handle);
+        System.GC.KeepAlive(buf);
+        System.GC.KeepAlive(comp);
+        return Gst.Video.VideoOverlayCompositionMeta.FromNative(nativeResult)
+            ?? throw new InvalidOperationException("gst_buffer_add_video_overlay_composition_meta returned no value.");
+    }
+
+    /// <summary>
+    /// Attaches #GstVideoRegionOfInterestMeta metadata to @buffer with the given
+    /// parameters.
+    /// </summary>
+    /// <param name="buffer">The <c>buffer</c> argument.</param>
+    /// <param name="roiType">The <c>roiType</c> argument.</param>
+    /// <param name="x">The <c>x</c> argument.</param>
+    /// <param name="y">The <c>y</c> argument.</param>
+    /// <param name="w">The <c>w</c> argument.</param>
+    /// <param name="h">The <c>h</c> argument.</param>
+    /// <returns>the #GstVideoRegionOfInterestMeta on @buffer.</returns>
+    public static Gst.Video.VideoRegionOfInterestMeta BufferAddVideoRegionOfInterestMeta(Gst.Buffer buffer, string roiType, uint x, uint y, uint w, uint h)
+    {
+        ArgumentNullException.ThrowIfNull(buffer);
+        ArgumentNullException.ThrowIfNull(roiType);
+        System.Span<byte> roiTypeBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope roiTypeScope = Gst.Interop.GMarshal.StackUtf8(roiType, roiTypeBuffer);
+        nint nativeResult = GstBufferAddVideoRegionOfInterestMeta(buffer.Handle, roiTypeScope.Pointer, x, y, w, h);
+        System.GC.KeepAlive(buffer);
+        return Gst.Video.VideoRegionOfInterestMeta.FromNative(nativeResult)
+            ?? throw new InvalidOperationException("gst_buffer_add_video_region_of_interest_meta returned no value.");
+    }
+
+    /// <summary>
+    /// Attaches #GstVideoRegionOfInterestMeta metadata to @buffer with the given
+    /// parameters.
+    /// </summary>
+    /// <param name="buffer">The <c>buffer</c> argument.</param>
+    /// <param name="roiType">The <c>roiType</c> argument.</param>
+    /// <param name="x">The <c>x</c> argument.</param>
+    /// <param name="y">The <c>y</c> argument.</param>
+    /// <param name="w">The <c>w</c> argument.</param>
+    /// <param name="h">The <c>h</c> argument.</param>
+    /// <returns>the #GstVideoRegionOfInterestMeta on @buffer.</returns>
+    public static Gst.Video.VideoRegionOfInterestMeta BufferAddVideoRegionOfInterestMetaId(Gst.Buffer buffer, Gst.GLib.Quark roiType, uint x, uint y, uint w, uint h)
+    {
+        ArgumentNullException.ThrowIfNull(buffer);
+        nint nativeResult = GstBufferAddVideoRegionOfInterestMetaId(buffer.Handle, roiType.Value, x, y, w, h);
+        System.GC.KeepAlive(buffer);
+        return Gst.Video.VideoRegionOfInterestMeta.FromNative(nativeResult)
+            ?? throw new InvalidOperationException("gst_buffer_add_video_region_of_interest_meta_id returned no value.");
     }
 
     /// <summary>
@@ -103,6 +251,27 @@ public static unsafe partial class VideoGlobal
         nint nativeResult = GstBufferGetVideoMetaId(buffer.Handle, id);
         System.GC.KeepAlive(buffer);
         return Gst.Video.VideoMeta.FromNative(nativeResult);
+    }
+
+    /// <summary>Find the #GstVideoRegionOfInterestMeta on @buffer with the given @id.</summary>
+    /// <remarks>
+    /// <para>
+    /// Buffers can contain multiple #GstVideoRegionOfInterestMeta metadata items if
+    /// multiple regions of interests are marked on a frame.
+    /// </para>
+    /// </remarks>
+    /// <param name="buffer">The <c>buffer</c> argument.</param>
+    /// <param name="id">The <c>id</c> argument.</param>
+    /// <returns>
+    /// the #GstVideoRegionOfInterestMeta with @id or %NULL when there is
+    /// no such metadata on @buffer.
+    /// </returns>
+    public static Gst.Video.VideoRegionOfInterestMeta? BufferGetVideoRegionOfInterestMetaId(Gst.Buffer buffer, int id)
+    {
+        ArgumentNullException.ThrowIfNull(buffer);
+        nint nativeResult = GstBufferGetVideoRegionOfInterestMetaId(buffer.Handle, id);
+        System.GC.KeepAlive(buffer);
+        return Gst.Video.VideoRegionOfInterestMeta.FromNative(nativeResult);
     }
 
     /// <summary>
@@ -766,10 +935,11 @@ public static unsafe partial class VideoGlobal
     /// <returns>True if data is a Precision Time Stamp and it was parsed correctly</returns>
     public static bool VideoSeiUserDataUnregisteredParsePrecisionTimeStamp(Gst.Video.VideoSEIUserDataUnregisteredMeta userData, out byte status, out ulong precisionTimeStamp)
     {
-        Gst.Video.VideoSEIUserDataUnregisteredMeta userDataNative = userData;
+        ArgumentNullException.ThrowIfNull(userData);
         byte statusNative = default;
         ulong precisionTimeStampNative = default;
-        int nativeResult = GstVideoSeiUserDataUnregisteredParsePrecisionTimeStamp(&userDataNative, &statusNative, &precisionTimeStampNative);
+        int nativeResult = GstVideoSeiUserDataUnregisteredParsePrecisionTimeStamp(userData.Handle, &statusNative, &precisionTimeStampNative);
+        System.GC.KeepAlive(userData);
         status = statusNative;
         precisionTimeStamp = precisionTimeStampNative;
         return nativeResult != 0;
@@ -809,9 +979,41 @@ public static unsafe partial class VideoGlobal
     [LibraryImport("GstVideo", EntryPoint = "gst_ancillary_meta_api_get_type")]
     private static partial nuint GstAncillaryMetaApiGetType();
 
+    /// <summary>The <c>gst_buffer_add_ancillary_meta</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_buffer_add_ancillary_meta")]
+    private static partial nint GstBufferAddAncillaryMeta(nint buffer);
+
+    /// <summary>The <c>gst_buffer_add_video_afd_meta</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_buffer_add_video_afd_meta")]
+    private static partial nint GstBufferAddVideoAfdMeta(nint buffer, byte field, int spec, int afd);
+
+    /// <summary>The <c>gst_buffer_add_video_affine_transformation_meta</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_buffer_add_video_affine_transformation_meta")]
+    private static partial nint GstBufferAddVideoAffineTransformationMeta(nint buffer);
+
+    /// <summary>The <c>gst_buffer_add_video_bar_meta</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_buffer_add_video_bar_meta")]
+    private static partial nint GstBufferAddVideoBarMeta(nint buffer, byte field, int isLetterbox, uint barData1, uint barData2);
+
+    /// <summary>The <c>gst_buffer_add_video_caption_meta</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_buffer_add_video_caption_meta")]
+    private static partial nint GstBufferAddVideoCaptionMeta(nint buffer, int captionType, byte* data, nuint size);
+
     /// <summary>The <c>gst_buffer_add_video_meta</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_buffer_add_video_meta")]
     private static partial nint GstBufferAddVideoMeta(nint buffer, int flags, int format, uint width, uint height);
+
+    /// <summary>The <c>gst_buffer_add_video_overlay_composition_meta</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_buffer_add_video_overlay_composition_meta")]
+    private static partial nint GstBufferAddVideoOverlayCompositionMeta(nint buf, nint comp);
+
+    /// <summary>The <c>gst_buffer_add_video_region_of_interest_meta</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_buffer_add_video_region_of_interest_meta")]
+    private static partial nint GstBufferAddVideoRegionOfInterestMeta(nint buffer, byte* roiType, uint x, uint y, uint w, uint h);
+
+    /// <summary>The <c>gst_buffer_add_video_region_of_interest_meta_id</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_buffer_add_video_region_of_interest_meta_id")]
+    private static partial nint GstBufferAddVideoRegionOfInterestMetaId(nint buffer, uint roiType, uint x, uint y, uint w, uint h);
 
     /// <summary>The <c>gst_buffer_add_video_time_code_meta</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_buffer_add_video_time_code_meta")]
@@ -824,6 +1026,10 @@ public static unsafe partial class VideoGlobal
     /// <summary>The <c>gst_buffer_get_video_meta_id</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_buffer_get_video_meta_id")]
     private static partial nint GstBufferGetVideoMetaId(nint buffer, int id);
+
+    /// <summary>The <c>gst_buffer_get_video_region_of_interest_meta_id</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_buffer_get_video_region_of_interest_meta_id")]
+    private static partial nint GstBufferGetVideoRegionOfInterestMetaId(nint buffer, int id);
 
     /// <summary>The <c>gst_buffer_pool_config_get_video_alignment</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_buffer_pool_config_get_video_alignment")]
@@ -991,7 +1197,7 @@ public static unsafe partial class VideoGlobal
 
     /// <summary>The <c>gst_video_sei_user_data_unregistered_parse_precision_time_stamp</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_sei_user_data_unregistered_parse_precision_time_stamp")]
-    private static partial int GstVideoSeiUserDataUnregisteredParsePrecisionTimeStamp(Gst.Video.VideoSEIUserDataUnregisteredMeta* userData, byte* status, ulong* precisionTimeStamp);
+    private static partial int GstVideoSeiUserDataUnregisteredParsePrecisionTimeStamp(nint userData, byte* status, ulong* precisionTimeStamp);
 
     /// <summary>The <c>gst_video_tile_get_index</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_tile_get_index")]

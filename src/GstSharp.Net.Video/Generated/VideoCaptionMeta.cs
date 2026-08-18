@@ -3,23 +3,42 @@
 
 #nullable enable
 
+using System;
 using System.Runtime.InteropServices;
 
 namespace Gst.Video;
 
 /// <summary>Extra buffer metadata providing Closed Caption.</summary>
-[StructLayout(LayoutKind.Sequential)]
-public partial struct VideoCaptionMeta
+public sealed unsafe partial class VideoCaptionMeta
 {
-    /// <summary>parent #GstMeta</summary>
-    public Gst.Meta Meta;
+    /// <summary>The native instance.</summary>
+    internal nint Handle;
 
-    /// <summary>The type of Closed Caption contained in the meta.</summary>
-    public Gst.Video.VideoCaptionType CaptionType;
+    /// <summary>Wraps a native <c>GstVideoCaptionMeta</c>.</summary>
+    /// <param name="handle">The native instance.</param>
+    internal VideoCaptionMeta(nint handle) => Handle = handle;
 
-    /// <summary>The Closed Caption data.</summary>
-    public nint Data;
+    /// <summary>Wraps a native <c>GstVideoCaptionMeta</c>, mapping the null pointer onto <see langword="null"/>.</summary>
+    /// <param name="handle">The native instance, or <c>0</c>.</param>
+    /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>
+    /// <remarks>
+    /// The wrapper of an opaque record is a bare pointer holder: the gir
+    /// describes no way of releasing one, so it does not take part in the
+    /// ownership of what it points at.
+    /// </remarks>
+    internal static VideoCaptionMeta? FromNative(nint handle) =>
+        handle == 0 ? null : new(handle);
 
-    /// <summary>The size in bytes of @data</summary>
-    public nuint Size;
+    /// <summary>The <c>gst_video_caption_meta_get_info</c> function.</summary>
+    /// <returns>The result of <c>gst_video_caption_meta_get_info</c>.</returns>
+    public static Gst.MetaInfo GetInfo()
+    {
+        nint nativeResult = GstVideoCaptionMetaGetInfo();
+        return Gst.MetaInfo.FromNative(nativeResult)
+            ?? throw new InvalidOperationException("gst_video_caption_meta_get_info returned no value.");
+    }
+
+    /// <summary>The <c>gst_video_caption_meta_get_info</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_video_caption_meta_get_info")]
+    private static partial nint GstVideoCaptionMetaGetInfo();
 }

@@ -142,6 +142,97 @@ public static unsafe partial class AudioGlobal
         }
     }
 
+    /// <summary>Attaches #GstAudioClippingMeta metadata to @buffer with the given parameters.</summary>
+    /// <param name="buffer">The <c>buffer</c> argument.</param>
+    /// <param name="format">The <c>format</c> argument.</param>
+    /// <param name="start">The <c>start</c> argument.</param>
+    /// <param name="end">The <c>end</c> argument.</param>
+    /// <returns>the #GstAudioClippingMeta on @buffer.</returns>
+    public static Gst.Audio.AudioClippingMeta BufferAddAudioClippingMeta(Gst.Buffer buffer, Gst.Format format, ulong start, ulong end)
+    {
+        ArgumentNullException.ThrowIfNull(buffer);
+        nint nativeResult = GstBufferAddAudioClippingMeta(buffer.Handle, (int)format, start, end);
+        System.GC.KeepAlive(buffer);
+        return Gst.Audio.AudioClippingMeta.FromNative(nativeResult)
+            ?? throw new InvalidOperationException("gst_buffer_add_audio_clipping_meta returned no value.");
+    }
+
+    /// <summary>Attaches audio level information to @buffer. (RFC 6464)</summary>
+    /// <param name="buffer">The <c>buffer</c> argument.</param>
+    /// <param name="level">The <c>level</c> argument.</param>
+    /// <param name="voiceActivity">The <c>voiceActivity</c> argument.</param>
+    /// <returns>the #GstAudioLevelMeta on @buffer.</returns>
+    public static Gst.Audio.AudioLevelMeta? BufferAddAudioLevelMeta(Gst.Buffer buffer, byte level, bool voiceActivity)
+    {
+        ArgumentNullException.ThrowIfNull(buffer);
+        nint nativeResult = GstBufferAddAudioLevelMeta(buffer.Handle, level, voiceActivity ? 1 : 0);
+        System.GC.KeepAlive(buffer);
+        return Gst.Audio.AudioLevelMeta.FromNative(nativeResult);
+    }
+
+    /// <summary>
+    /// Allocates and attaches a #GstDsdPlaneOffsetMeta on @buffer, which must be
+    /// writable for that purpose. The fields of the #GstDsdPlaneOffsetMeta are
+    /// directly populated from the arguments of this function.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// If @offsets is NULL, then the meta's offsets field is left uninitialized.
+    /// This is useful if for example offset values are to be calculated in the
+    /// meta's offsets field in-place. Similarly, @num_bytes_per_channel can be
+    /// set to 0, but only if @offsets is NULL. This is useful if the number of
+    /// bytes per channel is known only later.
+    /// </para>
+    /// <para>
+    /// It is not allowed for channels to overlap in memory,
+    /// i.e. for each i in [0, channels), the range
+    /// [@offsets[i], @offsets[i] + @num_bytes_per_channel) must not overlap
+    /// with any other such range. This function will assert if the parameters
+    /// specified cause this restriction to be violated.
+    /// </para>
+    /// <para>
+    /// It is, obviously, also not allowed to specify parameters that would cause
+    /// out-of-bounds memory access on @buffer. This is also checked, which means
+    /// that you must add enough memory on the @buffer before adding this meta.
+    /// </para>
+    /// <para>This meta is only needed for non-interleaved (= planar) DSD data.</para>
+    /// </remarks>
+    /// <param name="buffer">The <c>buffer</c> argument.</param>
+    /// <param name="numBytesPerChannel">The <c>numBytesPerChannel</c> argument.</param>
+    /// <param name="offsets">
+    /// the offsets (in bytes) where each channel plane starts
+    ///   in the buffer
+    /// </param>
+    /// <returns>
+    /// the #GstDsdPlaneOffsetMeta that was attached
+    ///   on the @buffer
+    /// </returns>
+    public static Gst.Audio.DsdPlaneOffsetMeta BufferAddDsdPlaneOffsetMeta(Gst.Buffer buffer, nuint numBytesPerChannel, System.Span<nuint> offsets)
+    {
+        ArgumentNullException.ThrowIfNull(buffer);
+        fixed (nuint* offsetsPointer = offsets)
+        {
+            nint nativeResult = GstBufferAddDsdPlaneOffsetMeta(buffer.Handle, (int)offsets.Length, numBytesPerChannel, offsetsPointer);
+            System.GC.KeepAlive(buffer);
+            return Gst.Audio.DsdPlaneOffsetMeta.FromNative(nativeResult)
+                ?? throw new InvalidOperationException("gst_buffer_add_dsd_plane_offset_meta returned no value.");
+        }
+    }
+
+    /// <summary>Find the #GstAudioLevelMeta on @buffer.</summary>
+    /// <param name="buffer">The <c>buffer</c> argument.</param>
+    /// <returns>
+    /// the #GstAudioLevelMeta or %NULL when
+    /// there is no such metadata on @buffer.
+    /// </returns>
+    public static Gst.Audio.AudioLevelMeta? BufferGetAudioLevelMeta(Gst.Buffer buffer)
+    {
+        ArgumentNullException.ThrowIfNull(buffer);
+        nint nativeResult = GstBufferGetAudioLevelMeta(buffer.Handle);
+        System.GC.KeepAlive(buffer);
+        return Gst.Audio.AudioLevelMeta.FromNative(nativeResult);
+    }
+
     /// <summary>The <c>gst_dsd_plane_offset_meta_api_get_type</c> function.</summary>
     /// <returns>The result of <c>gst_dsd_plane_offset_meta_api_get_type</c>.</returns>
     public static Gst.GObject.GType DsdPlaneOffsetMetaApiGetType()
@@ -185,6 +276,22 @@ public static unsafe partial class AudioGlobal
     /// <summary>The <c>gst_audio_reorder_channels_with_reorder_map</c> entry point.</summary>
     [LibraryImport("GstAudio", EntryPoint = "gst_audio_reorder_channels_with_reorder_map")]
     private static partial void GstAudioReorderChannelsWithReorderMap(byte* data, nuint size, int bps, int channels, int* reorderMap);
+
+    /// <summary>The <c>gst_buffer_add_audio_clipping_meta</c> entry point.</summary>
+    [LibraryImport("GstAudio", EntryPoint = "gst_buffer_add_audio_clipping_meta")]
+    private static partial nint GstBufferAddAudioClippingMeta(nint buffer, int format, ulong start, ulong end);
+
+    /// <summary>The <c>gst_buffer_add_audio_level_meta</c> entry point.</summary>
+    [LibraryImport("GstAudio", EntryPoint = "gst_buffer_add_audio_level_meta")]
+    private static partial nint GstBufferAddAudioLevelMeta(nint buffer, byte level, int voiceActivity);
+
+    /// <summary>The <c>gst_buffer_add_dsd_plane_offset_meta</c> entry point.</summary>
+    [LibraryImport("GstAudio", EntryPoint = "gst_buffer_add_dsd_plane_offset_meta")]
+    private static partial nint GstBufferAddDsdPlaneOffsetMeta(nint buffer, int numChannels, nuint numBytesPerChannel, nuint* offsets);
+
+    /// <summary>The <c>gst_buffer_get_audio_level_meta</c> entry point.</summary>
+    [LibraryImport("GstAudio", EntryPoint = "gst_buffer_get_audio_level_meta")]
+    private static partial nint GstBufferGetAudioLevelMeta(nint buffer);
 
     /// <summary>The <c>gst_dsd_plane_offset_meta_api_get_type</c> entry point.</summary>
     [LibraryImport("GstAudio", EntryPoint = "gst_dsd_plane_offset_meta_api_get_type")]

@@ -155,17 +155,17 @@ public sealed class ClassEmitterTests
     }
 
     [Theory]
-    [InlineData("Gst", 35, 51, 5, 17, 18, 1205, 14, 23)]
+    [InlineData("Gst", 35, 51, 5, 17, 18, 1225, 14, 23)]
     [InlineData("GstBase", 11, 4, 0, 5, 0, 166, 11, 2)]
     [InlineData("GstApp", 2, 2, 0, 8, 0, 61, 21, 8)]
-    [InlineData("GstAudio", 14, 17, 1, 2, 2, 183, 15, 0)]
-    [InlineData("GstVideo", 12, 42, 5, 0, 9, 292, 2, 2)]
+    [InlineData("GstAudio", 14, 17, 1, 2, 2, 191, 15, 0)]
+    [InlineData("GstVideo", 12, 42, 5, 0, 9, 312, 2, 2)]
     [InlineData("GstPbutils", 14, 1, 0, 0, 1, 169, 0, 3)]
     [InlineData("GstSdp", 1, 21, 0, 0, 0, 156, 0, 0)]
     [InlineData("GstWebRTC", 9, 4, 0, 1, 2, 37, 0, 6)]
-    [InlineData("GstNet", 5, 3, 0, 1, 0, 17, 0, 0)]
+    [InlineData("GstNet", 5, 3, 0, 1, 0, 22, 0, 0)]
     [InlineData("GstRtsp", 1, 10, 1, 1, 2, 109, 0, 1)]
-    [InlineData("GES", 56, 2, 2, 0, 3, 361, 49, 29)]
+    [InlineData("GES", 56, 2, 2, 0, 3, 362, 49, 29)]
     public void TheEmissionCensusIsStable(
         string module,
         int classes,
@@ -190,17 +190,17 @@ public sealed class ClassEmitterTests
     }
 
     [Theory]
-    [InlineData("Gst", 1, 94, 53, 118, 325, 10)]
+    [InlineData("Gst", 1, 94, 53, 119, 304, 10)]
     [InlineData("GstBase", 0, 11, 0, 20, 32, 0)]
     [InlineData("GstApp", 0, 0, 0, 2, 23, 0)]
-    [InlineData("GstAudio", 0, 27, 0, 8, 51, 0)]
-    [InlineData("GstVideo", 0, 102, 1, 6, 105, 0)]
+    [InlineData("GstAudio", 0, 27, 0, 8, 43, 0)]
+    [InlineData("GstVideo", 0, 102, 1, 6, 85, 0)]
     [InlineData("GstPbutils", 0, 1, 0, 0, 22, 0)]
     [InlineData("GstSdp", 0, 10, 0, 0, 12, 0)]
     [InlineData("GstWebRTC", 0, 2, 0, 0, 45, 0)]
-    [InlineData("GstNet", 0, 3, 0, 0, 25, 0)]
+    [InlineData("GstNet", 0, 3, 0, 0, 20, 0)]
     [InlineData("GstRtsp", 0, 17, 0, 0, 20, 0)]
-    [InlineData("GES", 0, 3, 4, 10, 83, 0)]
+    [InlineData("GES", 0, 3, 4, 10, 82, 0)]
     public void TheSkipCensusIsStable(
         string module,
         int shadowed,
@@ -308,7 +308,7 @@ public sealed class ClassEmitterTests
         }
 
         Assert.Equal(151, classes);
-        Assert.Equal(81, records);
+        Assert.Equal(102, records);
     }
 
     [Fact]

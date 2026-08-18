@@ -3,41 +3,67 @@
 
 #nullable enable
 
+using System;
 using System.Runtime.InteropServices;
 
 namespace Gst.Video;
 
 /// <summary>Extra buffer metadata describing an image region of interest</summary>
-[StructLayout(LayoutKind.Sequential)]
-public partial struct VideoRegionOfInterestMeta
+public sealed unsafe partial class VideoRegionOfInterestMeta
 {
-    /// <summary>parent #GstMeta</summary>
-    public Gst.Meta Meta;
+    /// <summary>The native instance.</summary>
+    internal nint Handle;
 
-    /// <summary>GQuark describing the semantic of the Roi (f.i. a face, a pedestrian)</summary>
-    public Gst.GLib.Quark RoiType;
+    /// <summary>Wraps a native <c>GstVideoRegionOfInterestMeta</c>.</summary>
+    /// <param name="handle">The native instance.</param>
+    internal VideoRegionOfInterestMeta(nint handle) => Handle = handle;
 
-    /// <summary>identifier of this particular ROI</summary>
-    public int Id;
-
-    /// <summary>identifier of its parent ROI, used f.i. for ROI hierarchisation.</summary>
-    public int ParentId;
-
-    /// <summary>x component of upper-left corner</summary>
-    public uint X;
-
-    /// <summary>y component of upper-left corner</summary>
-    public uint Y;
-
-    /// <summary>bounding box width</summary>
-    public uint W;
-
-    /// <summary>bounding box height</summary>
-    public uint H;
+    /// <summary>Wraps a native <c>GstVideoRegionOfInterestMeta</c>, mapping the null pointer onto <see langword="null"/>.</summary>
+    /// <param name="handle">The native instance, or <c>0</c>.</param>
+    /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>
+    /// <remarks>
+    /// The wrapper of an opaque record is a bare pointer holder: the gir
+    /// describes no way of releasing one, so it does not take part in the
+    /// ownership of what it points at.
+    /// </remarks>
+    internal static VideoRegionOfInterestMeta? FromNative(nint handle) =>
+        handle == 0 ? null : new(handle);
 
     /// <summary>
-    /// list of #GstStructure containing element-specific params for downstream,
-    ///          see gst_video_region_of_interest_meta_add_param(). (Since: 1.14)
+    /// Retrieve the parameter for @meta having @name as structure name,
+    /// or %NULL if there is none.
     /// </summary>
-    public nint Params;
+    /// <param name="name">The <c>name</c> argument.</param>
+    /// <returns>
+    /// a #GstStructure
+    /// The wrapper owns a reference of its own, which is a copy for a boxed type:
+    /// dispose it when you are done, and note that changes made to a copy of a
+    /// boxed value are not written back.
+    /// </returns>
+    public Gst.Structure? GetParam(string name)
+    {
+        ArgumentNullException.ThrowIfNull(name);
+        System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
+        nint nativeResult = GstVideoRegionOfInterestMetaGetParam(Handle, nameScope.Pointer);
+        System.GC.KeepAlive(this);
+        return Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.None);
+    }
+
+    /// <summary>The <c>gst_video_region_of_interest_meta_get_info</c> function.</summary>
+    /// <returns>The result of <c>gst_video_region_of_interest_meta_get_info</c>.</returns>
+    public static Gst.MetaInfo GetInfo()
+    {
+        nint nativeResult = GstVideoRegionOfInterestMetaGetInfo();
+        return Gst.MetaInfo.FromNative(nativeResult)
+            ?? throw new InvalidOperationException("gst_video_region_of_interest_meta_get_info returned no value.");
+    }
+
+    /// <summary>The <c>gst_video_region_of_interest_meta_get_param</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_video_region_of_interest_meta_get_param")]
+    private static partial nint GstVideoRegionOfInterestMetaGetParam(nint meta, byte* name);
+
+    /// <summary>The <c>gst_video_region_of_interest_meta_get_info</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_video_region_of_interest_meta_get_info")]
+    private static partial nint GstVideoRegionOfInterestMetaGetInfo();
 }

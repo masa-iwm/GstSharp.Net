@@ -3,6 +3,7 @@
 
 #nullable enable
 
+using System;
 using System.Runtime.InteropServices;
 
 namespace Gst.Audio;
@@ -20,24 +21,36 @@ namespace Gst.Audio;
 /// of the results.
 /// </para>
 /// </remarks>
-[StructLayout(LayoutKind.Sequential)]
-public partial struct AudioDownmixMeta
+public sealed unsafe partial class AudioDownmixMeta
 {
-    /// <summary>parent #GstMeta</summary>
-    public Gst.Meta Meta;
+    /// <summary>The native instance.</summary>
+    internal nint Handle;
 
-    /// <summary>the channel positions of the source</summary>
-    public nint FromPosition;
+    /// <summary>Wraps a native <c>GstAudioDownmixMeta</c>.</summary>
+    /// <param name="handle">The native instance.</param>
+    internal AudioDownmixMeta(nint handle) => Handle = handle;
 
-    /// <summary>the channel positions of the destination</summary>
-    public nint ToPosition;
+    /// <summary>Wraps a native <c>GstAudioDownmixMeta</c>, mapping the null pointer onto <see langword="null"/>.</summary>
+    /// <param name="handle">The native instance, or <c>0</c>.</param>
+    /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>
+    /// <remarks>
+    /// The wrapper of an opaque record is a bare pointer holder: the gir
+    /// describes no way of releasing one, so it does not take part in the
+    /// ownership of what it points at.
+    /// </remarks>
+    internal static AudioDownmixMeta? FromNative(nint handle) =>
+        handle == 0 ? null : new(handle);
 
-    /// <summary>the number of channels of the source</summary>
-    public int FromChannels;
+    /// <summary>The <c>gst_audio_downmix_meta_get_info</c> function.</summary>
+    /// <returns>The result of <c>gst_audio_downmix_meta_get_info</c>.</returns>
+    public static Gst.MetaInfo GetInfo()
+    {
+        nint nativeResult = GstAudioDownmixMetaGetInfo();
+        return Gst.MetaInfo.FromNative(nativeResult)
+            ?? throw new InvalidOperationException("gst_audio_downmix_meta_get_info returned no value.");
+    }
 
-    /// <summary>the number of channels of the destination</summary>
-    public int ToChannels;
-
-    /// <summary>the matrix coefficients.</summary>
-    public nint Matrix;
+    /// <summary>The <c>gst_audio_downmix_meta_get_info</c> entry point.</summary>
+    [LibraryImport("GstAudio", EntryPoint = "gst_audio_downmix_meta_get_info")]
+    private static partial nint GstAudioDownmixMetaGetInfo();
 }

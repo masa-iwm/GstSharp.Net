@@ -3,6 +3,7 @@
 
 #nullable enable
 
+using System;
 using System.Runtime.InteropServices;
 
 namespace Gst;
@@ -32,12 +33,216 @@ namespace Gst;
 /// buffers.
 /// </para>
 /// </remarks>
-[StructLayout(LayoutKind.Sequential)]
-public partial struct Meta
+public sealed unsafe partial class Meta
 {
-    /// <summary>extra flags for the metadata</summary>
-    public Gst.MetaFlags Flags;
+    /// <summary>The native instance.</summary>
+    internal nint Handle;
 
-    /// <summary>pointer to the #GstMetaInfo</summary>
-    public nint Info;
+    /// <summary>Wraps a native <c>GstMeta</c>.</summary>
+    /// <param name="handle">The native instance.</param>
+    internal Meta(nint handle) => Handle = handle;
+
+    /// <summary>Wraps a native <c>GstMeta</c>, mapping the null pointer onto <see langword="null"/>.</summary>
+    /// <param name="handle">The native instance, or <c>0</c>.</param>
+    /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>
+    /// <remarks>
+    /// The wrapper of an opaque record is a bare pointer holder: the gir
+    /// describes no way of releasing one, so it does not take part in the
+    /// ownership of what it points at.
+    /// </remarks>
+    internal static Meta? FromNative(nint handle) =>
+        handle == 0 ? null : new(handle);
+
+    /// <summary>
+    /// Meta sequence number compare function. Can be used as #GCompareFunc
+    /// or a #GCompareDataFunc.
+    /// </summary>
+    /// <param name="meta2">The <c>meta2</c> argument.</param>
+    /// <returns>
+    /// a negative number if @meta1 comes before @meta2, 0 if both metas
+    ///   have an equal sequence number, or a positive integer if @meta1 comes
+    ///   after @meta2.
+    /// </returns>
+    public int CompareSeqnum(Gst.Meta meta2)
+    {
+        ArgumentNullException.ThrowIfNull(meta2);
+        int nativeResult = GstMetaCompareSeqnum(Handle, meta2.Handle);
+        System.GC.KeepAlive(this);
+        System.GC.KeepAlive(meta2);
+        return nativeResult;
+    }
+
+    /// <summary>Gets seqnum for this meta.</summary>
+    /// <returns>The result of <c>gst_meta_get_seqnum</c>.</returns>
+    public ulong GetSeqnum()
+    {
+        ulong nativeResult = GstMetaGetSeqnum(Handle);
+        System.GC.KeepAlive(this);
+        return nativeResult;
+    }
+
+    /// <summary>
+    /// Serialize @meta into a format that can be stored or transmitted and later
+    /// deserialized by gst_meta_deserialize().
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This is only supported for meta that implements #GstMetaInfo.serialize_func,
+    /// %FALSE is returned otherwise.
+    /// </para>
+    /// <para>
+    /// Upon failure, @data-&gt;data pointer could have been reallocated, but @data-&gt;len
+    /// won't be modified. This is intended to be able to append multiple metas
+    /// into the same #GByteArray.
+    /// </para>
+    /// <para>
+    /// Since serialization size is often the same for every buffer, caller may want
+    /// to remember the size of previous data to preallocate the next.
+    /// </para>
+    /// </remarks>
+    /// <param name="data">The <c>data</c> argument.</param>
+    /// <returns>%TRUE on success, %FALSE otherwise.</returns>
+    public bool Serialize(Gst.ByteArrayInterface data)
+    {
+        ArgumentNullException.ThrowIfNull(data);
+        int nativeResult = GstMetaSerialize(Handle, data.Handle);
+        System.GC.KeepAlive(this);
+        System.GC.KeepAlive(data);
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// When a element like `tee` decides the allocation, each downstream element may
+    /// fill different parameters and pass them to gst_query_add_allocation_meta().
+    /// In order to keep these parameters, a merge operation is needed. This
+    /// aggregate function can combine the parameters from @params0 and @param1, and
+    /// write the result back into @aggregated_params.
+    /// </summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.26.</para>
+    /// </remarks>
+    /// <param name="api">The <c>api</c> argument.</param>
+    /// <param name="aggregatedParams">The <c>aggregatedParams</c> argument.</param>
+    /// <param name="params0">The <c>params0</c> argument.</param>
+    /// <param name="params1">The <c>params1</c> argument.</param>
+    /// <returns>%TRUE if the parameters were successfully aggregated, %FALSE otherwise.</returns>
+    public static bool ApiTypeAggregateParams(Gst.GObject.GType api, Gst.Structure aggregatedParams, Gst.Structure params0, Gst.Structure params1)
+    {
+        ArgumentNullException.ThrowIfNull(aggregatedParams);
+        ArgumentNullException.ThrowIfNull(params0);
+        ArgumentNullException.ThrowIfNull(params1);
+        int nativeResult = GstMetaApiTypeAggregateParams(api.Value, aggregatedParams.Handle, params0.Handle, params1.Handle);
+        System.GC.KeepAlive(aggregatedParams);
+        System.GC.KeepAlive(params0);
+        System.GC.KeepAlive(params1);
+        return nativeResult != 0;
+    }
+
+    /// <summary>Check if @api was registered with @tag.</summary>
+    /// <param name="api">The <c>api</c> argument.</param>
+    /// <param name="tag">The <c>tag</c> argument.</param>
+    /// <returns>%TRUE if @api was registered with @tag.</returns>
+    public static bool ApiTypeHasTag(Gst.GObject.GType api, Gst.GLib.Quark tag)
+    {
+        int nativeResult = GstMetaApiTypeHasTag(api.Value, tag.Value);
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Recreate a #GstMeta from serialized data returned by
+    /// gst_meta_serialize() and add it to @buffer.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Note that the meta must have been previously registered by calling one of
+    /// `gst_*_meta_get_info ()` functions.
+    /// </para>
+    /// <para>
+    /// @consumed is set to the number of bytes that can be skipped from @data to
+    /// find the next meta serialization, if any. In case of parsing error that does
+    /// not allow to determine that size, @consumed is set to 0.
+    /// </para>
+    /// </remarks>
+    /// <param name="buffer">The <c>buffer</c> argument.</param>
+    /// <param name="data">serialization data obtained from gst_meta_serialize()</param>
+    /// <param name="consumed">The <c>consumed</c> argument.</param>
+    /// <returns>the metadata owned by @buffer, or %NULL.</returns>
+    public static Gst.Meta? Deserialize(Gst.Buffer buffer, System.ReadOnlySpan<byte> data, out uint consumed)
+    {
+        ArgumentNullException.ThrowIfNull(buffer);
+        uint consumedNative = default;
+        fixed (byte* dataPointer = data)
+        {
+            nint nativeResult = GstMetaDeserialize(buffer.Handle, dataPointer, (nuint)data.Length, &consumedNative);
+            System.GC.KeepAlive(buffer);
+            consumed = consumedNative;
+            return Gst.Meta.FromNative(nativeResult);
+        }
+    }
+
+    /// <summary>
+    /// Lookup a previously registered meta info structure by its implementation name
+    /// @impl.
+    /// </summary>
+    /// <param name="impl">The <c>impl</c> argument.</param>
+    /// <returns>
+    /// a #GstMetaInfo with @impl, or
+    /// %NULL when no such metainfo exists.
+    /// </returns>
+    public static Gst.MetaInfo? GetInfo(string impl)
+    {
+        ArgumentNullException.ThrowIfNull(impl);
+        System.Span<byte> implBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope implScope = Gst.Interop.GMarshal.StackUtf8(impl, implBuffer);
+        nint nativeResult = GstMetaGetInfo(implScope.Pointer);
+        return Gst.MetaInfo.FromNative(nativeResult);
+    }
+
+    /// <summary>
+    /// Simplified version of gst_meta_register_custom(), with no tags and no
+    /// transform function.
+    /// </summary>
+    /// <param name="name">The <c>name</c> argument.</param>
+    /// <returns>a #GstMetaInfo that can be used to access metadata.</returns>
+    public static Gst.MetaInfo RegisterCustomSimple(string name)
+    {
+        ArgumentNullException.ThrowIfNull(name);
+        System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
+        nint nativeResult = GstMetaRegisterCustomSimple(nameScope.Pointer);
+        return Gst.MetaInfo.FromNative(nativeResult)
+            ?? throw new InvalidOperationException("gst_meta_register_custom_simple returned no value.");
+    }
+
+    /// <summary>The <c>gst_meta_compare_seqnum</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_meta_compare_seqnum")]
+    private static partial int GstMetaCompareSeqnum(nint meta1, nint meta2);
+
+    /// <summary>The <c>gst_meta_get_seqnum</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_meta_get_seqnum")]
+    private static partial ulong GstMetaGetSeqnum(nint meta);
+
+    /// <summary>The <c>gst_meta_serialize</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_meta_serialize")]
+    private static partial int GstMetaSerialize(nint meta, nint data);
+
+    /// <summary>The <c>gst_meta_api_type_aggregate_params</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_meta_api_type_aggregate_params")]
+    private static partial int GstMetaApiTypeAggregateParams(nuint api, nint aggregatedParams, nint params0, nint params1);
+
+    /// <summary>The <c>gst_meta_api_type_has_tag</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_meta_api_type_has_tag")]
+    private static partial int GstMetaApiTypeHasTag(nuint api, uint tag);
+
+    /// <summary>The <c>gst_meta_deserialize</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_meta_deserialize")]
+    private static partial nint GstMetaDeserialize(nint buffer, byte* data, nuint size, uint* consumed);
+
+    /// <summary>The <c>gst_meta_get_info</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_meta_get_info")]
+    private static partial nint GstMetaGetInfo(byte* impl);
+
+    /// <summary>The <c>gst_meta_register_custom_simple</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_meta_register_custom_simple")]
+    private static partial nint GstMetaRegisterCustomSimple(byte* name);
 }

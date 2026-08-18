@@ -40,7 +40,7 @@ disappears shows up here as an added line.
 - `GES.Track:caps`
 - `GES.Track:restriction-caps`
 
-### UnsupportedSignature (83)
+### UnsupportedSignature (82)
 
 - `GES.AudioUriSource:uri`
 - `GES.Container:height`
@@ -93,7 +93,6 @@ disappears shows up here as an added line.
 - `ges_asset_request_async`
 - `ges_asset_request_finish`
 - `ges_base_effect_set_time_translation_funcs`
-- `ges_buffer_add_frame_composition_meta`
 - `ges_command_line_formatter_get_help`
 - `ges_container_edit`
 - `ges_container_group`
@@ -298,7 +297,7 @@ disappears shows up here as an added line.
 - `gst_sample_is_writable`
 - `gst_tag_list_is_writable`
 
-### NotIntrospectable (118)
+### NotIntrospectable (119)
 
 - `gst_buffer_copy`
 - `gst_buffer_is_writable`
@@ -382,6 +381,7 @@ disappears shows up here as an added line.
 - `gst_message_steal`
 - `gst_message_unref`
 - `gst_meta_info_new`
+- `gst_meta_register`
 - `gst_object_get_value_array`
 - `gst_object_ref_sink`
 - `gst_pad_create_stream_id_printf_valist`
@@ -445,7 +445,7 @@ disappears shows up here as an added line.
 
 - `gst_bus_add_watch`
 
-### UnsupportedSignature (325)
+### UnsupportedSignature (304)
 
 - `Gst.Bin:async-handling`
 - `Gst.Bin:message-forward`
@@ -465,16 +465,9 @@ disappears shows up here as an added line.
 - `Gst.Tracer:params`
 - `gst_allocator_free`
 - `gst_allocator_register`
-- `gst_buffer_add_custom_meta`
-- `gst_buffer_add_meta`
-- `gst_buffer_add_parent_buffer_meta`
 - `gst_buffer_add_protection_meta`
-- `gst_buffer_add_reference_timestamp_meta`
 - `gst_buffer_append_memory`
 - `gst_buffer_foreach_meta`
-- `gst_buffer_get_custom_meta`
-- `gst_buffer_get_meta`
-- `gst_buffer_get_reference_timestamp_meta`
 - `gst_buffer_insert_memory`
 - `gst_buffer_list_foreach`
 - `gst_buffer_list_insert`
@@ -508,8 +501,6 @@ disappears shows up here as an added line.
 - `gst_context_replace`
 - `gst_control_binding_get_g_value_array`
 - `gst_control_binding_get_value`
-- `gst_custom_meta_get_structure`
-- `gst_custom_meta_has_name`
 - `gst_date_time_new_from_g_date_time`
 - `gst_date_time_to_g_date_time`
 - `gst_debug_get_all_categories`
@@ -570,20 +561,11 @@ disappears shows up here as an added line.
 - `gst_message_set_details`
 - `gst_message_set_stream_status_object`
 - `gst_message_take`
-- `gst_meta_api_type_aggregate_params`
 - `gst_meta_api_type_get_tags`
-- `gst_meta_api_type_has_tag`
 - `gst_meta_api_type_register`
 - `gst_meta_api_type_set_params_aggregator`
 - `gst_meta_api_type_tags_contain_only`
-- `gst_meta_compare_seqnum`
-- `gst_meta_deserialize`
-- `gst_meta_get_info`
-- `gst_meta_get_seqnum`
-- `gst_meta_register`
 - `gst_meta_register_custom`
-- `gst_meta_register_custom_simple`
-- `gst_meta_serialize`
 - `gst_meta_serialize_simple`
 - `gst_mini_object_add_parent`
 - `gst_mini_object_copy`
@@ -634,7 +616,6 @@ disappears shows up here as an added line.
 - `gst_pad_sticky_events_foreach`
 - `gst_param_spec_array`
 - `gst_param_spec_fraction`
-- `gst_parent_buffer_meta_get_info`
 - `gst_parse_context_get_missing_elements`
 - `gst_parse_launchv`
 - `gst_parse_launchv_full`
@@ -654,14 +635,12 @@ disappears shows up here as an added line.
 - `gst_preset_get_property_names`
 - `gst_promise_reply`
 - `gst_protection_filter_systems_by_available_decryptors`
-- `gst_protection_meta_get_info`
 - `gst_protection_select_system`
 - `gst_proxy_pad_chain_default`
 - `gst_proxy_pad_chain_list_default`
 - `gst_query_new_custom`
 - `gst_query_set_formatsv`
 - `gst_query_take`
-- `gst_reference_timestamp_meta_get_info`
 - `gst_sample_new`
 - `gst_sample_set_info`
 - `gst_static_caps_cleanup`
@@ -951,7 +930,7 @@ disappears shows up here as an added line.
 - `gst_audio_buffer_unmap`
 - `gst_audio_ring_buffer_commit`
 
-### UnsupportedSignature (51)
+### UnsupportedSignature (43)
 
 - `GstAudio.AudioAggregator:alignment-threshold`
 - `GstAudio.AudioAggregator:discont-wait`
@@ -979,31 +958,23 @@ disappears shows up here as an added line.
 - `gst_audio_channel_positions_to_string`
 - `gst_audio_channel_positions_to_valid_order`
 - `gst_audio_check_valid_channel_positions`
-- `gst_audio_clipping_meta_get_info`
 - `gst_audio_converter_new`
 - `gst_audio_converter_update_config`
 - `gst_audio_decoder_finish_frame`
 - `gst_audio_decoder_finish_subframe`
-- `gst_audio_downmix_meta_get_info`
 - `gst_audio_encoder_finish_frame`
 - `gst_audio_encoder_set_headers`
 - `gst_audio_formats_raw`
 - `gst_audio_get_channel_reorder_map`
 - `gst_audio_info_set_format`
-- `gst_audio_level_meta_get_info`
 - `gst_audio_make_raw_caps`
 - `gst_audio_reorder_channels`
 - `gst_audio_ring_buffer_set_callback_full`
 - `gst_audio_ring_buffer_set_channel_positions`
-- `gst_buffer_add_audio_clipping_meta`
-- `gst_buffer_add_audio_level_meta`
 - `gst_buffer_add_audio_meta`
-- `gst_buffer_add_dsd_plane_offset_meta`
 - `gst_buffer_get_audio_downmix_meta_for_channels`
-- `gst_buffer_get_audio_level_meta`
 - `gst_dsd_convert`
 - `gst_dsd_info_set_format`
-- `gst_dsd_plane_offset_meta_get_info`
 
 ## GstBase
 
@@ -1115,7 +1086,7 @@ disappears shows up here as an added line.
 - `gst_net_control_message_meta_get_info`
 - `gst_net_time_packet_receive`
 
-### UnsupportedSignature (25)
+### UnsupportedSignature (20)
 
 - `GstNet.NetClientClock:address`
 - `GstNet.NetClientClock:base-time`
@@ -1134,11 +1105,6 @@ disappears shows up here as an added line.
 - `GstNet.PtpClock:grandmaster-clock-id`
 - `GstNet.PtpClock:internal-clock`
 - `GstNet.PtpClock:master-clock-id`
-- `gst_buffer_add_net_address_meta`
-- `gst_buffer_add_net_control_message_meta`
-- `gst_buffer_get_net_address_meta`
-- `gst_net_address_meta_get_info`
-- `gst_net_control_message_meta_get_info`
 - `gst_net_time_packet_new`
 - `gst_net_time_packet_serialize`
 - `gst_ptp_init`
@@ -1434,7 +1400,7 @@ disappears shows up here as an added line.
 
 - `gst_video_frame_unmap`
 
-### UnsupportedSignature (105)
+### UnsupportedSignature (85)
 
 - `GstVideo.VideoAggregator:force-live`
 - `GstVideo.VideoAggregatorConvertPad:converter-config`
@@ -1448,30 +1414,15 @@ disappears shows up here as an added line.
 - `GstVideo.VideoDecoder:qos`
 - `GstVideo.VideoEncoder:qos`
 - `GstVideo.VideoSink:show-preroll-frame`
-- `gst_ancillary_meta_get_info`
-- `gst_buffer_add_ancillary_meta`
-- `gst_buffer_add_video_afd_meta`
-- `gst_buffer_add_video_affine_transformation_meta`
-- `gst_buffer_add_video_bar_meta`
-- `gst_buffer_add_video_caption_meta`
 - `gst_buffer_add_video_codec_alpha_meta`
 - `gst_buffer_add_video_gl_texture_upload_meta`
 - `gst_buffer_add_video_meta_full`
-- `gst_buffer_add_video_overlay_composition_meta`
-- `gst_buffer_add_video_region_of_interest_meta`
-- `gst_buffer_add_video_region_of_interest_meta_id`
 - `gst_buffer_add_video_sei_user_data_unregistered_meta`
 - `gst_buffer_add_video_time_code_meta_full`
-- `gst_buffer_get_video_region_of_interest_meta_id`
 - `gst_navigation_query_set_commandsv`
 - `gst_navigation_send_event_simple`
-- `gst_video_afd_meta_get_info`
 - `gst_video_affine_transformation_meta_apply_matrix`
-- `gst_video_affine_transformation_meta_get_info`
 - `gst_video_alignment_reset`
-- `gst_video_bar_meta_get_info`
-- `gst_video_caption_meta_get_info`
-- `gst_video_codec_alpha_meta_get_info`
 - `gst_video_codec_frame_set_user_data`
 - `gst_video_color_primaries_get_info`
 - `gst_video_color_range_offsets`
@@ -1488,7 +1439,6 @@ disappears shows up here as an added line.
 - `gst_video_content_light_level_to_string`
 - `gst_video_convert_sample_async`
 - `gst_video_converter_set_config`
-- `gst_video_crop_meta_get_info`
 - `gst_video_decoder_drop_frame`
 - `gst_video_decoder_drop_subframe`
 - `gst_video_decoder_finish_frame`
@@ -1523,15 +1473,11 @@ disappears shows up here as an added line.
 - `gst_video_multiview_get_doubled_width_modes`
 - `gst_video_multiview_get_mono_modes`
 - `gst_video_multiview_get_unpacked_modes`
-- `gst_video_overlay_composition_meta_get_info`
 - `gst_video_overlay_install_properties`
 - `gst_video_overlay_set_property`
 - `gst_video_region_of_interest_meta_add_param`
-- `gst_video_region_of_interest_meta_get_info`
-- `gst_video_region_of_interest_meta_get_param`
 - `gst_video_resampler_clear`
 - `gst_video_resampler_init`
-- `gst_video_sei_user_data_unregistered_meta_get_info`
 - `gst_video_time_code_init`
 - `gst_video_time_code_init_from_date_time`
 - `gst_video_time_code_init_from_date_time_full`
