@@ -97,8 +97,15 @@ measured differences between flavors are tiny:
 * **macOS**: adds the `gst_macos_main` / `gst_macos_main_simple` family, which
   runs the program on a thread of its own while the main thread runs a Cocoa
   run loop, plus the two callback types those functions take. None of them is
-  in the `.gir` files and so none is bound today; hand-binding the family in
-  `src/GstSharp.Net/Core/` is on the roadmap.
+  in the `.gir` files, and upstream compiles `gstmacos.m` only where the host
+  system is Darwin and the subsystem is macOS, so no other build carries the
+  symbols at all — not even as a pass-through. The family is therefore bound by
+  hand in `src/GstSharp.Net/Custom/Global.Macos.cs`, as `Gst.Global.MacosMain`
+  and `Gst.Global.MacosMainSimple` with the `Gst.MainFunc` and
+  `Gst.MainFuncSimple` delegates. Both are marked
+  `[SupportedOSPlatform("macos")]`, so a caller guards them with
+  `OperatingSystem.IsMacOS()` the way the C tools guard their own `main` with an
+  `#ifdef`; calling them anywhere else throws `EntryPointNotFoundException`.
 
 Symbols that genuinely exist on only some platforms are listed in
 `overlays/platform-symbols.json`.

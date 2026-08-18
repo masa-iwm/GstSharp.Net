@@ -74,11 +74,12 @@ neither survives the port:
 * Every one of them wraps its `tutorial_main` in `gst_macos_main` under
   `__APPLE__`. That call runs the program on a thread of its own while the main
   thread runs a Cocoa run loop, which is what a video window on macOS needs.
-  `gst_macos_main` is not in the `.gir` files and so is not bound. Nothing here
-  needs it — `--headless` opens no window, and CI runs these on Linux — but a
-  **manual run with a video window on macOS** is the one case where the C
-  original does something this port cannot yet: expect `autovideosink` not to
-  come up there.
+  `gst_macos_main` is in none of the `.gir` files, but it is bound by hand as
+  `Gst.Global.MacosMain`. Nothing here uses it — `--headless` opens no window,
+  and CI runs these on Linux — so a **manual run with a video window on macOS**
+  is the one case where the C original still does something these ports do not:
+  expect `autovideosink` not to come up there unless you wrap the run in
+  `Gst.Global.MacosMain` yourself.
 * `basic-tutorial-13.c` reads the keyboard through `g_io_channel_win32_new_fd`
   on Windows and `g_io_channel_unix_new` everywhere else. `BasicTutorial13` uses
   `System.Console` and is one program on every operating system, which is how

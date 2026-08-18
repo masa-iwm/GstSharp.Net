@@ -59,7 +59,8 @@
 //     GST_XINITTHREADS environment hints, because a managed
 //     SetEnvironmentVariable does not reach the native getenv on every
 //     platform; gst_macos_main, the Cocoa run loop wrapper the C main() uses on
-//     macOS; and the index statistics, which are #if 0 in the C tool too.
+//     macOS, which Gst.Global.MacosMain binds for a program that wants it; and
+//     the index statistics, which are #if 0 in the C tool too.
 //
 //   * --interrupt-after is not a gst-launch option. It exists so that the
 //     interrupt path can be exercised without a console signal, and it can be
