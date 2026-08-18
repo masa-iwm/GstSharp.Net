@@ -300,7 +300,6 @@ public abstract unsafe partial class AudioRingBuffer : Gst.Object
         {
             readptr = new byte[(int)lenNative];
             new System.ReadOnlySpan<byte>((void*)readptrNative, (int)lenNative).CopyTo(readptr);
-            Gst.Interop.GMarshal.Free(readptrNative);
         }
         return nativeResult != 0;
     }
