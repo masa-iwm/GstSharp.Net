@@ -91,6 +91,37 @@ public sealed class AbiProbeTests
     }
 
     /// <summary>
+    /// <c>struct _GstSegment</c> of <c>gstsegment.h</c>:
+    /// <c>GstSegmentFlags flags</c> at 0 with 4 bytes of padding behind it,
+    /// <c>gdouble rate</c> at 8, <c>gdouble applied_rate</c> at 16,
+    /// <c>GstFormat format</c> at 24 with 4 more bytes of padding, the seven
+    /// <c>guint64</c> values <c>base</c>, <c>offset</c>, <c>start</c>,
+    /// <c>stop</c>, <c>time</c>, <c>position</c> and <c>duration</c> at 32 to
+    /// 80, and <c>gpointer _gst_reserved[GST_PADDING]</c> at 88, for 120 bytes
+    /// in total.
+    /// </summary>
+    [Fact]
+    public unsafe void SegmentRawMatchesTheHeaderLayout()
+    {
+        SegmentRaw raw = default;
+
+        _output.WriteLine(Format("SegmentRaw", Unsafe.SizeOf<SegmentRaw>()));
+        Assert.Equal(120, Unsafe.SizeOf<SegmentRaw>());
+
+        Assert.Equal(0L, Offset(&raw, &raw.Flags));
+        Assert.Equal(8L, Offset(&raw, &raw.Rate));
+        Assert.Equal(16L, Offset(&raw, &raw.AppliedRate));
+        Assert.Equal(24L, Offset(&raw, &raw.Format));
+        Assert.Equal(32L, Offset(&raw, &raw.Base));
+        Assert.Equal(40L, Offset(&raw, &raw.Offset));
+        Assert.Equal(48L, Offset(&raw, &raw.Start));
+        Assert.Equal(56L, Offset(&raw, &raw.Stop));
+        Assert.Equal(64L, Offset(&raw, &raw.Time));
+        Assert.Equal(72L, Offset(&raw, &raw.Position));
+        Assert.Equal(80L, Offset(&raw, &raw.Duration));
+    }
+
+    /// <summary>
     /// <c>struct _GstMapInfo</c> of <c>gstmemory.h</c>: <c>GstMemory *memory</c>
     /// at 0, <c>GstMapFlags flags</c> at 8, 4 bytes of padding,
     /// <c>guint8 *data</c> at 16, <c>gsize size</c> at 24, <c>gsize maxsize</c>
