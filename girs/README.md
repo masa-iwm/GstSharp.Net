@@ -94,9 +94,11 @@ measured differences between flavors are tiny:
 * **Windows MSVC vs. MinGW**: only the library file naming differs
   (`gstreamer-1.0-0.dll` vs. `libgstreamer-1.0-0.dll`); the exported signatures
   are identical. This is likewise handled by `NativeLoader`.
-* **macOS**: adds the `gst_macos_main` / `gst_macos_main_simple` family plus two
-  callback types. These are hand-bound in `src/GstSharp.Net/Core/` behind
-  `[SupportedOSPlatform("macos")]` instead of being generated.
+* **macOS**: adds the `gst_macos_main` / `gst_macos_main_simple` family, which
+  runs the program on a thread of its own while the main thread runs a Cocoa
+  run loop, plus the two callback types those functions take. None of them is
+  in the `.gir` files and so none is bound today; hand-binding the family in
+  `src/GstSharp.Net/Core/` is on the roadmap.
 
 Symbols that genuinely exist on only some platforms are listed in
 `overlays/platform-symbols.json`.
