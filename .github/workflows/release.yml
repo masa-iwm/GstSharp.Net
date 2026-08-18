@@ -43,7 +43,12 @@ jobs:
       packages: write
 
     steps:
+      # fetch-depth: 0 is what the release notes need: the whole history and
+      # every tag, so that the previous tag can be found and the commits
+      # between it and this one listed. A shallow clone knows neither.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
@@ -134,6 +139,13 @@ jobs:
       # exists, a re-run re-uploads the assets instead of failing or stopping
       # short: that repairs a release a broken upload left incomplete, the
       # same stance --skip-duplicate takes for the feed.
+      #
+      # The body is written here rather than left to --generate-notes, which
+      # has nothing to summarize in a repository that lands its work on main
+      # directly: it would produce the compare link and nothing else. So the
+      # commit subjects since the previous tag go in front of that link. The
+      # very first tag has no previous tag to diff against and keeps the
+      # generated notes, which is exactly the compare-link-only body.
       - name: Cut the GitHub release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -149,10 +161,26 @@ jobs:
           if [[ "$tag" == *-* ]]; then
             prerelease="--prerelease"
           fi
+          notes=(--generate-notes)
+          previous=$(git describe --tags --abbrev=0 "$tag^" 2>/dev/null || true)
+          if [[ -n "$previous" ]]; then
+            echo "Listing the commits of $previous..$tag."
+            {
+              echo "## Changes"
+              echo
+              git log "$previous..$tag" --format='- %s'
+              echo
+              echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/$previous...$tag"
+            } > "$RUNNER_TEMP/release-notes.md"
+            cat "$RUNNER_TEMP/release-notes.md"
+            notes=(--notes-file "$RUNNER_TEMP/release-notes.md")
+          else
+            echo "No previous tag; falling back to the generated notes."
+          fi
           gh release create "$tag" \
             --repo "${{ github.repository }}" \
             --title "$tag" \
-            --generate-notes \
+            "${notes[@]}" \
             --verify-tag \
             $prerelease \
             artifacts/dist/*.nupkg
