@@ -474,7 +474,14 @@ public partial class Object : IDisposable
     /// </summary>
     /// <param name="name">The name of the property.</param>
     /// <returns>The value of the property, which the caller has to dispose.</returns>
-    /// <exception cref="ArgumentException">The object has no such property.</exception>
+    /// <remarks>
+    /// <see cref="GetProperty{T}(string)"/> is the same lookup with the content
+    /// handed back as a managed type, which is the shorter call wherever the
+    /// type is known.
+    /// </remarks>
+    /// <exception cref="ArgumentException">
+    /// The object has no such property, or the property cannot be read.
+    /// </exception>
     public unsafe Value GetProperty(string name)
     {
         ArgumentNullException.ThrowIfNull(name);
@@ -487,6 +494,14 @@ public partial class Object : IDisposable
         if (pspec == nint.Zero)
         {
             throw new ArgumentException($"\"{name}\" is not a property of {NativeType.Name}.", nameof(name));
+        }
+
+        // g_object_get_property answers a write only property with a warning on
+        // the console and a value that was never filled in, which is a failure
+        // an application cannot see, so the question is asked here.
+        if ((ParamSpec.FlagsOf(pspec) & ParamFlags.Readable) == 0)
+        {
+            throw new ArgumentException($"The property \"{name}\" of {NativeType.Name} cannot be read.", nameof(name));
         }
 
         Value value = Value.New(ParamSpec.ValueTypeOf(pspec));
@@ -583,6 +598,13 @@ public partial class Object : IDisposable
     /// </summary>
     /// <param name="name">The name of the property.</param>
     /// <param name="value">The new value.</param>
+    /// <remarks>
+    /// The value has to be of the type the property declares, and nothing is
+    /// checked here: this is <c>g_object_set_property</c> and nothing else.
+    /// <see cref="SetProperty(string, object?)"/> builds the value against the
+    /// type of the property and refuses a property that cannot be written,
+    /// which is the call to make from application code.
+    /// </remarks>
     public unsafe void SetProperty(string name, in Value value)
     {
         ArgumentNullException.ThrowIfNull(name);

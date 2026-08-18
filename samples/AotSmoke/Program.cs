@@ -57,7 +57,7 @@ internal static partial class Smoke
             ObjectRefSink(element);
             ObjectUnref(element);
 
-            if (!RunManagedSubclass() || !RunManagedPipeline() || !RunBindingModule())
+            if (!RunManagedSubclass() || !RunManagedPipeline() || !RunBindingModule() || !RunPropertiesByName())
             {
                 return 1;
             }
@@ -229,6 +229,57 @@ internal static partial class Smoke
         if (!answered || Math.Abs(middle - 0.5) > 1e-9 || source.Count != 2)
         {
             Console.Error.WriteLine("AotSmoke: the binding module did not interpolate as expected.");
+            return false;
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Reads and writes properties by name, which is the route to every element
+    /// that no <c>.gir</c> file describes.
+    /// </summary>
+    /// <returns>
+    /// <see langword="true"/> when every property answered what was written to
+    /// it.
+    /// </returns>
+    /// <remarks>
+    /// The pair is generic over the managed type of the property, and generic
+    /// code is where ILC has the most room to leave something behind: the
+    /// enumeration read goes through <c>Enum.ToObject</c> over a type argument,
+    /// and the wrapper read goes through the type registry with one. Neither is
+    /// a build warning when it fails, so both are asked here.
+    /// </remarks>
+    private static bool RunPropertiesByName()
+    {
+        using Element sink = ElementFactory.Make("fakesink", "properties")
+            ?? throw new InvalidOperationException("gst_element_factory_make returned NULL for \"fakesink\".");
+
+        sink.SetProperty("sync", true);
+        sink.SetProperty("ts-offset", 250_000_000L);
+        sink.SetProperty("blocksize", 8192);
+
+        // The pad is an interned wrapper and is not disposed here. Its direction
+        // is an enumeration the bindings declare, so it reads as one.
+        Pad pad = sink.GetStaticPad("sink")
+            ?? throw new InvalidOperationException("the fakesink has no sink pad.");
+
+        bool synchronised = sink.GetProperty<bool>("sync");
+        long offset = sink.GetProperty<long>("ts-offset");
+        uint blockSize = sink.GetProperty<uint>("blocksize");
+        string? name = sink.GetProperty<string>("name");
+        PadDirection direction = pad.GetProperty<PadDirection>("direction");
+        using Structure? stats = sink.GetProperty<Structure>("stats");
+
+        Console.WriteLine(string.Create(
+            CultureInfo.InvariantCulture,
+            $"property:    {name} sync={synchronised} ts-offset={offset} blocksize={blockSize} pad={direction}"));
+        Console.WriteLine($"boxed:       {stats?.GetName() ?? "nothing"}");
+
+        if (!synchronised || offset != 250_000_000L || blockSize != 8192 ||
+            name != "properties" || direction != PadDirection.Sink || stats is null)
+        {
+            Console.Error.WriteLine("AotSmoke: a property did not answer what was written to it.");
             return false;
         }
 
