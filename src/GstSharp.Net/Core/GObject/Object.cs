@@ -552,8 +552,9 @@ public partial class Object : IDisposable
     /// }
     /// </code>
     /// <para>
-    /// <see cref="GetProperty"/> asks the same class for one property by name,
-    /// which is the question to ask when the name is already known.
+    /// <see cref="FindProperty(string)"/> asks the same class for one
+    /// specification by name, which is the question to ask when the name is
+    /// already known.
     /// </para>
     /// </remarks>
     /// <exception cref="ObjectDisposedException">The wrapper was disposed.</exception>

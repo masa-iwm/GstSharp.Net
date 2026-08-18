@@ -3,8 +3,9 @@ using Gst.Interop;
 namespace Gst.GObject;
 
 /// <content>
-/// The properties that no generated binding covers: writing one by name, and
-/// reading one by name as a managed type.
+/// The properties that no generated binding covers: writing one by name,
+/// reading one by name as a managed type, and asking by name what a property
+/// is before doing either.
 /// </content>
 /// <remarks>
 /// <para>
@@ -61,7 +62,8 @@ public partial class Object
     /// a construct only property once the object is built, with a warning on the
     /// console and a write that never happens — a failure an application cannot
     /// see. Both are an <see cref="ArgumentException"/> instead;
-    /// <see cref="ListProperties"/> is where the flags can be asked in advance.
+    /// <see cref="FindProperty(string)"/> is where the flags can be asked in
+    /// advance.
     /// </para>
     /// </remarks>
     /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
@@ -235,6 +237,68 @@ public partial class Object
         {
             value.Dispose();
         }
+    }
+
+    /// <summary>
+    /// Looks one property up by name and hands back its description, or
+    /// <see langword="null"/> when the class declares no property under that
+    /// name.
+    /// </summary>
+    /// <param name="name">The name of the property.</param>
+    /// <returns>
+    /// The <see cref="ParamSpec"/> of the property, which the caller has to
+    /// dispose, or <see langword="null"/> when there is no such property.
+    /// </returns>
+    /// <remarks>
+    /// <para>
+    /// This is <c>g_object_class_find_property</c>, the lookup that
+    /// <see cref="GetProperty(string)"/> and
+    /// <see cref="SetProperty(string, object?)"/> run before they touch the
+    /// property — published so that the questions those calls answer with an
+    /// exception can be asked in advance. Absence is an answer here rather than
+    /// a throw, because asking is the point:
+    /// </para>
+    /// <code>
+    /// using ParamSpec? property = sink.FindProperty("last-sample");
+    ///
+    /// if (property is not null &amp;&amp; (property.Flags &amp; ParamFlags.Readable) != 0)
+    /// {
+    ///     using Sample? last = sink.GetProperty&lt;Sample&gt;("last-sample");
+    /// }
+    /// </code>
+    /// <para>
+    /// <see cref="ParamFlags.Writable"/> and
+    /// <see cref="ParamFlags.ConstructOnly"/> are the flags
+    /// <see cref="SetProperty(string, object?)"/> enforces, and
+    /// <see cref="ParamSpec.ValueType"/> is the type a value has to fit. The
+    /// question is about the class rather than the instance — every
+    /// <c>fakesink</c> answers the same — and, as with
+    /// <see cref="ListProperties"/>, the specification that comes back holds a
+    /// reference of its own: it stays valid whatever happens to the object, and
+    /// it is the caller's to dispose.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
+    /// <exception cref="ObjectDisposedException">The wrapper was disposed.</exception>
+    public unsafe ParamSpec? FindProperty(string name)
+    {
+        ArgumentNullException.ThrowIfNull(name);
+
+        nint handle = Handle;
+        Span<byte> buffer = stackalloc byte[GMarshal.StackBufferSize];
+        using Utf8Scope scope = GMarshal.StackUtf8(name, buffer);
+
+        // The first word of a GTypeInstance is its class, which is what
+        // G_OBJECT_GET_CLASS reads; GetProperty takes the same route. The
+        // specification the class answers with is borrowed, and the wrapper
+        // takes a reference of its own in its constructor.
+        nint pspec = GObjectNative.ObjectClassFindProperty(*(nint*)handle, scope.Pointer);
+
+        // Handle was the last use of this wrapper, and the class is only known
+        // to be alive for as long as the object is.
+        GC.KeepAlive(this);
+
+        return pspec == nint.Zero ? null : new ParamSpec(pspec, Transfer.None);
     }
 
     /// <summary>

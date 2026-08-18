@@ -371,4 +371,79 @@ public sealed class PropertyConvenienceTests
         using Value raw = sink.GetProperty("max-lateness");
         Assert.Equal(20_000_000L, raw.GetInt64());
     }
+
+    /// <summary>
+    /// The description of a property answers in advance everything the by-name
+    /// calls enforce: the flags, the declared type, and construct-only.
+    /// </summary>
+    [Fact]
+    public void FindPropertyDescribesWhatTheByNameCallsEnforce()
+    {
+        using Element sink = Assert.IsAssignableFrom<Element>(ElementFactory.Make("fakesink", "described"));
+
+        using (ParamSpec? sync = sink.FindProperty("sync"))
+        {
+            Assert.NotNull(sync);
+            Assert.Equal("sync", sync.Name);
+            Assert.Equal(GType.Boolean, sync.ValueType);
+            Assert.NotEqual(ParamFlags.None, sync.Flags & ParamFlags.Readable);
+            Assert.NotEqual(ParamFlags.None, sync.Flags & ParamFlags.Writable);
+        }
+
+        // The read-only mini object: the refusal SetProperty answers for it is
+        // visible here before any call is made.
+        using (ParamSpec? lastSample = sink.FindProperty("last-sample"))
+        {
+            Assert.NotNull(lastSample);
+            Assert.NotEqual(ParamFlags.None, lastSample.Flags & ParamFlags.Readable);
+            Assert.Equal(ParamFlags.None, lastSample.Flags & ParamFlags.Writable);
+        }
+
+        // And the construct-only case, on the one reliably bound example: the
+        // direction of a pad is given to its constructor and never again.
+        using Element filter = Assert.IsAssignableFrom<Element>(ElementFactory.Make("capsfilter", "flagged"));
+        Pad pad = Assert.IsAssignableFrom<Pad>(filter.GetStaticPad("sink"));
+
+        using (ParamSpec? direction = pad.FindProperty("direction"))
+        {
+            Assert.NotNull(direction);
+            Assert.NotEqual(ParamFlags.None, direction.Flags & ParamFlags.ConstructOnly);
+        }
+    }
+
+    /// <summary>
+    /// Absence is an answer for the lookup and an exception for the calls built
+    /// on it, which is the difference between asking and doing.
+    /// </summary>
+    [Fact]
+    public void FindPropertyAnswersNullWhereTheOtherCallsThrow()
+    {
+        using Element sink = Assert.IsAssignableFrom<Element>(ElementFactory.Make("fakesink", "absent"));
+
+        Assert.Null(sink.FindProperty("no-such-property"));
+        Assert.Throws<ArgumentException>(() => sink.GetProperty<bool>("no-such-property"));
+        Assert.Throws<ArgumentNullException>(() => sink.FindProperty(null!));
+    }
+
+    /// <summary>
+    /// The specification holds a reference of its own, so it outlives the
+    /// object that answered the lookup.
+    /// </summary>
+    [Fact]
+    public void TheSpecificationOutlivesTheObjectThatAnsweredIt()
+    {
+        ParamSpec? sync;
+
+        using (Element sink = Assert.IsAssignableFrom<Element>(ElementFactory.Make("fakesink", "short-lived")))
+        {
+            sync = sink.FindProperty("sync");
+        }
+
+        using (sync)
+        {
+            Assert.NotNull(sync);
+            Assert.Equal("sync", sync.Name);
+            Assert.Equal(GType.Boolean, sync.ValueType);
+        }
+    }
 }
