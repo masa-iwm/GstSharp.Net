@@ -13,7 +13,7 @@ workflow. Jobs are split by what they need from the machine:
 | Job | Runner | Needs GStreamer | What only this job covers |
 | --- | --- | --- | --- |
 | `verify` | `ubuntu-latest` | no | generator drift (the whole generated tree plus `girs/skip-report.md`), warning-free build, generator/analyzer tests, and the proof that `GstSharp.Core.Tests` needs no installation |
-| `linux` | `ubuntu-24.04` | apt | the Linux SONAME path of `NativeLoader` and the only plugin set that can run the WebRTC tests |
+| `linux` | `ubuntu-24.04` | apt | the Linux SONAME path of `NativeLoader`, the only plugin set that can run the WebRTC tests, and the `linux-x64` NativeAOT gate |
 | `macos` | `macos-latest` | Homebrew | the macOS dylib path and the Homebrew directory of the planner |
 | `windows-mingw` | `windows-latest` | MSYS2 | the MinGW file names and the MSYS2 / search-path branch of `NativeInstallPlanner` |
 | `windows-msvc-aot` | `windows-latest` | official installer | the MSVC file names, the environment-variable branch of the planner, and both NativeAOT gates |
@@ -202,6 +202,24 @@ a suite that does not belong on it.
   (see `docs/ownership.md`), so the assertion is the exit code of the
   published executable.
 
+The script is RID agnostic — the only thing it decides from `-Rid` is whether
+the file it runs ends in `.exe` — so the `linux` job runs the first gate as
+well:
+
+```
+./eng/aot-gate.ps1 -Project samples/AotSmoke -Rid linux-x64
+```
+
+`pwsh` is on the ubuntu images and so is what ILC links with (`clang`, `zlib`),
+and the run half of the gate finds the library the job installed from apt;
+`AotSmoke` needs nothing beyond core, base, controller and `fakesink`. Only that
+one sample is gated there. The AppSinkSpans gate measures the GType registry
+under full trimming, which is a decision ILC makes from the same IL whatever the
+RID; what is genuinely per-RID is the compile, the native link and the load of a
+binary with no host beside it, and `AotSmoke` already covers those. A second ILC
+publish would roughly double the minutes the leg spends to repeat the first
+answer.
+
 ## Release
 
 `.github/workflows/release.yml` triggers on tags matching `v*`, calls `ci.yml`
@@ -280,6 +298,9 @@ dotnet run --project samples/tutorials/BasicTutorial13 --no-restore -- --headles
 # the AOT gates (Windows)
 ./eng/aot-gate.ps1 -Project samples/AotSmoke -Rid win-x64
 ./eng/aot-gate.ps1 -Project samples/AppSinkSpans -Rid win-x64 -Property InvariantGlobalization=true -RunArguments '--mode','pull'
+
+# the AOT gate the linux job runs (from pwsh on a Linux machine)
+./eng/aot-gate.ps1 -Project samples/AotSmoke -Rid linux-x64
 
 # what the release job packs (no push)
 dotnet pack GstSharp.Net.slnx --configuration Release --output artifacts/dist -p:Version=1.28.0-preview.1

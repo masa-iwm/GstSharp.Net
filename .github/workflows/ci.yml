@@ -5,13 +5,14 @@
 #   verify            no native GStreamer at all: generator drift, a
 #                     warning-free build, and every test suite that runs
 #                     against fakes rather than against the library.
-#   linux             the Linux SONAME path of the native loader and the only
-#                     plugin set complete enough to run the WebRTC tests.
+#   linux             the Linux SONAME path of the native loader, the only
+#                     plugin set complete enough to run the WebRTC tests, and
+#                     the linux-x64 NativeAOT gate.
 #   macos             the macOS dylib path of the native loader.
 #   windows-mingw     the MinGW flavor, found the way a developer with MSYS2
 #                     finds it: from the process search path, with no
 #                     environment variable to help it.
-#   windows-msvc-aot  the MSVC flavor plus the two NativeAOT gates.
+#   windows-msvc-aot  the MSVC flavor plus the two win-x64 NativeAOT gates.
 #
 # eng/ci-notes.md explains every installation strategy, the pinned versions and
 # how to run the same gate on a development machine.
@@ -108,7 +109,10 @@ jobs:
   linux:
     name: linux (GStreamer from apt)
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    # 30 rather than 20 since the NativeAOT publish at the end of the job
+    # joined it: ILC compiles and links a native binary, which the rest of the
+    # leg does not.
+    timeout-minutes: 30
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -265,6 +269,32 @@ jobs:
           dotnet run --project samples/GstInspect --no-restore
           dotnet run --project samples/GstInspect --no-restore -- fakesink
 
+      # The Linux half of the NativeAOT promise. Both AOT gates used to run on
+      # win-x64 alone, which left the ILC toolchain, the native link and the
+      # SONAME resolution of a published binary — an executable with no host and
+      # no deps.json beside it — unmeasured on the other platform the binding
+      # claims. eng/aot-gate.ps1 is RID agnostic (the only thing it decides from
+      # the RID is the .exe suffix of the file it runs), pwsh is on the ubuntu
+      # images, and what ILC needs to link, clang and zlib, is preinstalled
+      # there as well. The run half of the gate has a library to load because
+      # this job installed one, and AotSmoke needs nothing beyond it: core,
+      # base, controller and the fakesink of the core elements.
+      #
+      # Only AotSmoke is gated here, and not the AppSinkSpans gate the MSVC job
+      # runs beside it. What the second gate measures is the GType registry
+      # under full trimming, and that is a decision ILC makes from the same IL
+      # on every RID; what is genuinely per-RID is loading and linking, which
+      # AotSmoke covers — it initialises, resolves its own LibraryImport stubs,
+      # runs a pipeline of two managed subclasses and reaches into a second
+      # binding module. A second ILC publish would roughly double the minutes
+      # this leg spends to say that again.
+      #
+      # Last of the steps on purpose: an ILC publish takes minutes, and a plain
+      # test or sample failure belongs on the log before it, not behind it.
+      - name: NativeAOT smoke (linux-x64)
+        shell: pwsh
+        run: ./eng/aot-gate.ps1 -Project samples/AotSmoke -Rid linux-x64
+
       # The gst-device-monitor port. A hosted runner has no capture or playback
       # hardware, so finding zero devices is the expected outcome and is exit 0,
       # exactly as it is for the C tool. What is being gated is that the monitor
@@ -282,7 +312,12 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: test-results-linux
-          path: artifacts/test-results
+          # artifacts/logs is where aot-gate.ps1 tees the publish output, so a
+          # failed AOT gate leaves the same artifact behind here as on the MSVC
+          # job.
+          path: |
+            artifacts/test-results
+            artifacts/logs
           if-no-files-found: ignore
           retention-days: 7
 
