@@ -73,7 +73,7 @@ public sealed class SegmentFieldTests
 
         segment.Init(Gst.Format.Time);
 
-        _output.WriteLine(Gst.Global.DebugPrintSegment(segment));
+        _output.WriteLine(Describe(segment));
 
         Assert.Equal(SegmentFlags.None, segment.Flags);
         Assert.Equal(1.0, segment.Rate);
@@ -110,7 +110,7 @@ public sealed class SegmentFieldTests
             FiveSeconds,
             out bool update);
 
-        _output.WriteLine(Gst.Global.DebugPrintSegment(segment));
+        _output.WriteLine(Describe(segment));
 
         Assert.True(seeked);
         Assert.True(update);
@@ -159,7 +159,7 @@ public sealed class SegmentFieldTests
             FiveSeconds,
             out bool update);
 
-        _output.WriteLine(Gst.Global.DebugPrintSegment(segment));
+        _output.WriteLine(Describe(segment));
 
         Assert.True(seeked);
         Assert.True(update);
@@ -198,7 +198,7 @@ public sealed class SegmentFieldTests
             0,
             out bool update);
 
-        _output.WriteLine(Gst.Global.DebugPrintSegment(segment));
+        _output.WriteLine(Describe(segment));
 
         Assert.True(seeked);
 
@@ -247,7 +247,7 @@ public sealed class SegmentFieldTests
             0,
             out bool update);
 
-        _output.WriteLine(Gst.Global.DebugPrintSegment(segment));
+        _output.WriteLine(Describe(segment));
 
         Assert.True(seeked);
         Assert.True(update);
@@ -445,4 +445,24 @@ public sealed class SegmentFieldTests
         Assert.Throws<ObjectDisposedException>(() => segment.SetStart(OneSecond));
         Assert.Throws<ObjectDisposedException>(() => _ = segment.Start);
     }
+
+    /// <summary>
+    /// Formats every field of a segment for the test output.
+    /// </summary>
+    /// <param name="segment">The segment to describe.</param>
+    /// <returns>One line naming each field this suite reads.</returns>
+    /// <remarks>
+    /// <c>gst_debug_print_segment</c> would answer this, but it arrived in
+    /// GStreamer 1.26 and the Linux leg of CI runs the 1.24 floor, where the
+    /// call is an <see cref="EntryPointNotFoundException"/>. The line is built
+    /// out of the accessors under test instead, which needs nothing beyond
+    /// 1.24 and reads every field once more while it is at it.
+    /// </remarks>
+    private static string Describe(Segment segment) =>
+        FormattableString.Invariant(
+            $"flags={segment.Flags} rate={segment.Rate} applied_rate={segment.AppliedRate} format={segment.Format}") +
+        FormattableString.Invariant(
+            $" base={segment.Base} offset={segment.Offset} start={segment.Start} stop={segment.Stop}") +
+        FormattableString.Invariant(
+            $" time={segment.Time} position={segment.Position} duration={segment.Duration}");
 }
