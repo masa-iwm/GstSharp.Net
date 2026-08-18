@@ -827,7 +827,7 @@ public sealed class RecordEmitterTests
         GirNamespace ns = repository.FindNamespace("Gst")
             ?? throw new InvalidOperationException("The fixture declares no Gst namespace.");
         DiagnosticBag diagnostics = new();
-        NameMapper names = new(Overlays.Empty);
+        NameMapper names = new(Overlays.Empty, diagnostics);
         Classifier classifier = new(repository, Overlays.Empty, diagnostics);
         TypeMap types = new(repository, classifier, names, diagnostics);
         EmissionCensus census = new();

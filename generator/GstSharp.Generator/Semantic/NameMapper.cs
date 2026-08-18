@@ -26,10 +26,16 @@ internal sealed class NameMapper
     };
 
     private readonly Overlays _overlays;
+    private readonly DiagnosticBag _diagnostics;
 
     /// <summary>Initializes a new instance of the <see cref="NameMapper"/> class.</summary>
     /// <param name="overlays">The overlay configuration holding the renames.</param>
-    internal NameMapper(Overlays overlays) => _overlays = overlays;
+    /// <param name="diagnostics">The diagnostic sink.</param>
+    internal NameMapper(Overlays overlays, DiagnosticBag diagnostics)
+    {
+        _overlays = overlays;
+        _diagnostics = diagnostics;
+    }
 
     /// <summary>
     /// Converts a <c>snake_case</c> or <c>kebab-case</c> gir name to
@@ -95,9 +101,11 @@ internal sealed class NameMapper
             return "@" + name;
         }
 
-        // Enum members such as GST_VIDEO_AFD_16_9_TOP_ALIGNED start with a digit
-        // once the prefix is stripped. Prefixing with an underscore is the
-        // documented, deterministic rule.
+        // A derived name can start with a digit, as gst_video_scaler_2d does.
+        // Prefixing with an underscore is the deterministic rule that keeps such
+        // a name legal. It does not apply to enumeration members: an underscore
+        // in front of a number says nothing about what the member means, so
+        // EnumMemberName demands a rename from the overlays instead of escaping.
         return char.IsAsciiDigit(name[0]) ? "_" + name : name;
     }
 
@@ -198,6 +206,16 @@ internal sealed class NameMapper
     /// <param name="enumerationNamespace">The gir namespace of the enumeration.</param>
     /// <param name="member">The member to name.</param>
     /// <returns>The C# member name.</returns>
+    /// <remarks>
+    /// A member whose gir name starts with a digit has no derived C# name that
+    /// says anything: <c>GST_RTSP_VERSION_1_0</c> would be spelled
+    /// <c>_10</c>, which reads as ten and whose value is 16. Such a member is
+    /// named in <c>girs/overlays/fixups.json</c>, and a run that meets one
+    /// without a rename fails with <c>GEN0016</c> rather than emitting the
+    /// escape. The escaped name is still returned so that the rest of the run
+    /// works on legal C#; nothing is written, because the error stops the run
+    /// before the files reach the disk.
+    /// </remarks>
     internal string EnumMemberName(GirEnumeration enumeration, GirNamespace enumerationNamespace, GirEnumMember member)
     {
         string key = enumerationNamespace.Name + "." + enumeration.Name + "." + member.Name;
@@ -207,6 +225,16 @@ internal sealed class NameMapper
         }
 
         string source = member.Name.Length > 0 ? member.Name : member.Nick ?? string.Empty;
-        return EscapeIdentifier(ToPascalCase(source));
+        string derived = ToPascalCase(source);
+        if (derived.Length > 0 && char.IsAsciiDigit(derived[0]))
+        {
+            _diagnostics.Error(
+                "GEN0016",
+                $"Enumeration member '{key}' derives the C# name '{derived}', which starts with a digit. "
+                + $"Add a rename for the key '{key}' to girs/overlays/fixups.json that spells out what the "
+                + "leading number means; the generator does not escape such a name with an underscore.");
+        }
+
+        return EscapeIdentifier(derived);
     }
 }

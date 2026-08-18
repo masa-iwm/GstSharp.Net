@@ -104,7 +104,7 @@ public sealed class RtspTests
                 message.ParseRequest(out RTSPMethod method, out string? uri, out RTSPVersion version));
             Assert.Equal(RTSPMethod.Options, method);
             Assert.Equal("rtsp://host.example:8554/stream", uri);
-            Assert.Equal(RTSPVersion._10, version);
+            Assert.Equal(RTSPVersion.V1_0, version);
 
             Assert.Equal(RTSPResult.Ok, message.RemoveHeader(RTSPHeaderField.Cseq, 0));
             Assert.Equal(

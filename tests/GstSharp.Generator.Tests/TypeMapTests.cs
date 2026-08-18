@@ -15,7 +15,7 @@ public sealed class TypeMapTests
     private static readonly TypeMap Subject = new(
         GirFixture.Repository,
         new Classifier(GirFixture.Repository, Overlays.Empty, Diagnostics),
-        new NameMapper(Overlays.Empty),
+        new NameMapper(Overlays.Empty, Diagnostics),
         Diagnostics);
 
     [Theory]
@@ -181,7 +181,7 @@ public sealed class TypeMapTests
         TypeMap map = new(
             GirFixture.Repository,
             new Classifier(GirFixture.Repository, Overlays.Empty, diagnostics),
-            new NameMapper(Overlays.Empty),
+            new NameMapper(Overlays.Empty, diagnostics),
             diagnostics);
 
         MappedType mapped = map.Map(new GirTypeRef { Name = "Nonexistent", CType = "GstNonexistent*" }, GirFixture.Namespace("Gst"));

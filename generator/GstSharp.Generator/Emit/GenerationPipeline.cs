@@ -63,7 +63,7 @@ internal static class GenerationPipeline
     internal static GenerationResult Execute(Repository repository, Overlays overlays)
     {
         DiagnosticBag diagnostics = new();
-        NameMapper names = new(overlays);
+        NameMapper names = new(overlays, diagnostics);
         Classifier classifier = new(repository, overlays, diagnostics);
 
         // Classify everything once so that the diagnostics of a run do not

@@ -429,67 +429,67 @@ public enum VideoAFDValue
     ///      at top of the coded frame. For 16:9 coded frame, full frame 16:9 image,
     ///      the same as the coded frame.
     /// </summary>
-    _169TopAligned = 2,
+    Ratio16_9TopAligned = 2,
 
     /// <summary>
     /// For 4:3 coded frame, letterbox 14:9 image,
     ///      at top of the coded frame. For 16:9 coded frame, pillarbox 14:9 image,
     ///      horizontally centered in the coded frame.
     /// </summary>
-    _149TopAligned = 3,
+    Ratio14_9TopAligned = 3,
 
     /// <summary>
     /// For 4:3 coded frame, letterbox image with an aspect ratio
     ///      greater than 16:9, vertically centered in the coded frame. For 16:9 coded frame,
     ///      letterbox image with an aspect ratio greater than 16:9.
     /// </summary>
-    GreaterThan169 = 4,
+    GreaterThan16_9 = 4,
 
     /// <summary>
     /// For 4:3 coded frame, full frame 4:3 image,
     ///      the same as the coded frame. For 16:9 coded frame, full frame 16:9 image, the same as
     ///      the coded frame.
     /// </summary>
-    _43Full169Full = 8,
+    Ratio4_3Full16_9Full = 8,
 
     /// <summary>
     /// For 4:3 coded frame, full frame 4:3 image, the same as
     ///      the coded frame. For 16:9 coded frame, pillarbox 4:3 image, horizontally centered in the
     ///      coded frame.
     /// </summary>
-    _43Full43Pillar = 9,
+    Ratio4_3Full4_3Pillar = 9,
 
     /// <summary>
     /// For 4:3 coded frame, letterbox 16:9 image, vertically centered in
     ///      the coded frame with all image areas protected. For 16:9 coded frame, full frame 16:9 image,
     ///      with all image areas protected.
     /// </summary>
-    _169Letter169Full = 10,
+    Ratio16_9Letter16_9Full = 10,
 
     /// <summary>
     /// For 4:3 coded frame, letterbox 14:9 image, vertically centered in
     ///      the coded frame. For 16:9 coded frame, pillarbox 14:9 image, horizontally centered in the
     ///      coded frame.
     /// </summary>
-    _149Letter149Pillar = 11,
+    Ratio14_9Letter14_9Pillar = 11,
 
     /// <summary>
     /// For 4:3 coded frame, full frame 4:3 image, with alternative 14:9
     ///      center. For 16:9 coded frame, pillarbox 4:3 image, with alternative 14:9 center.
     /// </summary>
-    _43Full149Center = 13,
+    Ratio4_3Full14_9Center = 13,
 
     /// <summary>
     /// For 4:3 coded frame, letterbox 16:9 image, with alternative 14:9
     ///      center. For 16:9 coded frame, full frame 16:9 image, with alternative 14:9 center.
     /// </summary>
-    _169Letter149Center = 14,
+    Ratio16_9Letter14_9Center = 14,
 
     /// <summary>
     /// For 4:3 coded frame, letterbox 16:9 image, with alternative 4:3
     ///      center. For 16:9 coded frame, full frame 16:9 image, with alternative 4:3 center.
     /// </summary>
-    _169Letter43Center = 15,
+    Ratio16_9Letter4_3Center = 15,
 }
 
 /// <summary>Different alpha modes.</summary>
@@ -910,13 +910,13 @@ public enum VideoColorRange
     Unknown = 0,
 
     /// <summary>[0..255] for 8 bit components</summary>
-    _0255 = 1,
+    Range0_255 = 1,
 
     /// <summary>
     /// [16..235] for 8 bit components. Chroma has
     ///                 [16..240] range.
     /// </summary>
-    _16235 = 2,
+    Range16_235 = 2,
 }
 
 /// <summary>
@@ -2003,13 +2003,13 @@ public enum VideoOrientationMethod
     Identity = 0,
 
     /// <summary>Rotate clockwise 90 degrees</summary>
-    _90r = 1,
+    Rotate90R = 1,
 
     /// <summary>Rotate 180 degrees</summary>
-    _180 = 2,
+    Rotate180 = 2,
 
     /// <summary>Rotate counter-clockwise 90 degrees</summary>
-    _90l = 3,
+    Rotate90L = 3,
 
     /// <summary>Flip horizontally</summary>
     Horiz = 4,

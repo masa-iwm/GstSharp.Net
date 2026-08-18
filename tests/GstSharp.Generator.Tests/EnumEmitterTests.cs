@@ -149,17 +149,28 @@ public sealed class EnumEmitterTests
         Assert.Contains("    TopField = 0x0000000A,", source, StringComparison.Ordinal);
     }
 
+    /// <summary>
+    /// A member whose gir name starts with a digit is named from the overlays.
+    /// Without a rename the run fails, because an underscore in front of a
+    /// number says nothing about what the member means.
+    /// </summary>
     [Fact]
-    public void LeadingDigitMembersGetAnUnderscore()
+    public void LeadingDigitMembersFailTheRun()
     {
-        string source = EmitFixture(
-            """
-            <enumeration name="Range" c:type="TestRange">
-              <member name="16_235" value="1" c:identifier="TEST_RANGE_16_235"/>
-            </enumeration>
-            """);
+        DiagnosticBag diagnostics = new();
+        Emit(
+            Fixture(
+                """
+                <enumeration name="Range" c:type="TestRange">
+                  <member name="16_235" value="1" c:identifier="TEST_RANGE_16_235"/>
+                </enumeration>
+                """),
+            diagnostics);
 
-        Assert.Contains("    _16235 = 1,", source, StringComparison.Ordinal);
+        Diagnostic error = Assert.Single(diagnostics.Items);
+        Assert.Equal(DiagnosticSeverity.Error, error.Severity);
+        Assert.Equal("GEN0016", error.Code);
+        Assert.Contains("Test.Range.16_235", error.Message, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -191,7 +202,8 @@ public sealed class EnumEmitterTests
             """,
             "fixture.gir").Namespaces[0];
 
-        EnumEmitter emitter = new(new NameMapper(Overlays.Empty), Overlays.Empty, new DiagnosticBag());
+        DiagnosticBag diagnostics = new();
+        EnumEmitter emitter = new(new NameMapper(Overlays.Empty, diagnostics), Overlays.Empty, diagnostics);
         Assert.Null(emitter.Emit(GstModule, ns));
     }
 
@@ -218,26 +230,25 @@ public sealed class EnumEmitterTests
         }
     }
 
-    private static string Emit(GirNamespace ns)
+    private static string Emit(GirNamespace ns) => Emit(ns, new DiagnosticBag());
+
+    private static string Emit(GirNamespace ns, DiagnosticBag diagnostics)
     {
-        EnumEmitter emitter = new(new NameMapper(Overlays.Empty), Overlays.Empty, new DiagnosticBag());
+        EnumEmitter emitter = new(new NameMapper(Overlays.Empty, diagnostics), Overlays.Empty, diagnostics);
         GeneratedFile file = emitter.Emit(GstModule, ns)
             ?? throw new InvalidOperationException("The namespace produced no output.");
         return file.Content;
     }
 
-    private static string EmitFixture(string body)
-    {
-        GirNamespace ns = GirReader.ReadXml(
-            $"""
-            <repository xmlns="http://www.gtk.org/introspection/core/1.0" xmlns:c="http://www.gtk.org/introspection/c/1.0" xmlns:glib="http://www.gtk.org/introspection/glib/1.0" version="1.2">
-              <namespace name="Test" version="1.0" c:identifier-prefixes="Test" c:symbol-prefixes="test">
-            {body}
-              </namespace>
-            </repository>
-            """,
-            "fixture.gir").Namespaces[0];
+    private static GirNamespace Fixture(string body) => GirReader.ReadXml(
+        $"""
+        <repository xmlns="http://www.gtk.org/introspection/core/1.0" xmlns:c="http://www.gtk.org/introspection/c/1.0" xmlns:glib="http://www.gtk.org/introspection/glib/1.0" version="1.2">
+          <namespace name="Test" version="1.0" c:identifier-prefixes="Test" c:symbol-prefixes="test">
+        {body}
+          </namespace>
+        </repository>
+        """,
+        "fixture.gir").Namespaces[0];
 
-        return Emit(ns);
-    }
+    private static string EmitFixture(string body) => Emit(Fixture(body));
 }

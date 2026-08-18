@@ -718,11 +718,11 @@ public enum RTSPVersion
     Invalid = 0,
 
     /// <summary>version 1.0</summary>
-    _10 = 16,
+    V1_0 = 16,
 
     /// <summary>version 1.1.</summary>
-    _11 = 17,
+    V1_1 = 17,
 
     /// <summary>version 2.0.</summary>
-    _20 = 32,
+    V2_0 = 32,
 }
