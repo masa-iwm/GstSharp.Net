@@ -32,3 +32,11 @@ updates:
     open-pull-requests-limit: 5
     commit-message:
       prefix: build
+    ignore:
+      # The analyzers ship inside the GstSharp.Net package and load into the
+      # consumer's compiler, so Microsoft.CodeAnalysis.CSharp has to reference
+      # the OLDEST Roslyn the binding means to support, not the newest that
+      # exists: raising the major raises the minimum SDK of every consumer.
+      # Moving this floor is a support-policy decision, made by hand.
+      - dependency-name: Microsoft.CodeAnalysis.CSharp
+        update-types: ["version-update:semver-major"]
