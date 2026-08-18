@@ -3,7 +3,7 @@
 
 #nullable enable
 
-using System.Runtime.CompilerServices;
+using System;
 using System.Runtime.InteropServices;
 
 namespace Gst.Video;
@@ -12,40 +12,57 @@ namespace Gst.Video;
 /// #GstVideoResampler is a structure which holds the information
 /// required to perform various kinds of resampling filtering.
 /// </summary>
-[StructLayout(LayoutKind.Sequential)]
-public partial struct VideoResampler
+public sealed unsafe partial class VideoResampler
 {
-    /// <summary>the input size</summary>
-    public int InSize;
+    /// <summary>The native instance.</summary>
+    internal nint Handle;
 
-    /// <summary>the output size</summary>
-    public int OutSize;
+    /// <summary>Wraps a native <c>GstVideoResampler</c>.</summary>
+    /// <param name="handle">The native instance.</param>
+    internal VideoResampler(nint handle) => Handle = handle;
 
-    /// <summary>the maximum number of taps</summary>
-    public uint MaxTaps;
+    /// <summary>Wraps a native <c>GstVideoResampler</c>, mapping the null pointer onto <see langword="null"/>.</summary>
+    /// <param name="handle">The native instance, or <c>0</c>.</param>
+    /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>
+    /// <remarks>
+    /// The wrapper of an opaque record is a bare pointer holder: the gir
+    /// describes no way of releasing one, so it does not take part in the
+    /// ownership of what it points at.
+    /// </remarks>
+    internal static VideoResampler? FromNative(nint handle) =>
+        handle == 0 ? null : new(handle);
 
-    /// <summary>the number of phases</summary>
-    public uint NPhases;
-
-    /// <summary>array with the source offset for each output element</summary>
-    public nint Offset;
-
-    /// <summary>array with the phase to use for each output element</summary>
-    public nint Phase;
-
-    /// <summary>array with new number of taps for each phase</summary>
-    public nint NTaps;
-
-    /// <summary>the taps for all phases</summary>
-    public nint Taps;
-
-    /// <summary>The <c>_gst_reserved</c> field of <c>GstVideoResampler</c>.</summary>
-    private GstReservedArray _gstReserved;
-
-    /// <summary>Inline storage of the 4 elements of the <c>_gst_reserved</c> field of <c>GstVideoResampler</c>.</summary>
-    [InlineArray(4)]
-    private struct GstReservedArray
+    /// <summary>Clear a previously initialized #GstVideoResampler @resampler.</summary>
+    public void Clear()
     {
-        private nint _element0;
+        GstVideoResamplerClear(Handle);
+        System.GC.KeepAlive(this);
     }
+
+    /// <summary>The <c>gst_video_resampler_init</c> function.</summary>
+    /// <param name="method">The <c>method</c> argument.</param>
+    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <param name="nPhases">The <c>nPhases</c> argument.</param>
+    /// <param name="nTaps">The <c>nTaps</c> argument.</param>
+    /// <param name="shift">The <c>shift</c> argument.</param>
+    /// <param name="inSize">The <c>inSize</c> argument.</param>
+    /// <param name="outSize">The <c>outSize</c> argument.</param>
+    /// <param name="options">The <c>options</c> argument.</param>
+    /// <returns>The result of <c>gst_video_resampler_init</c>.</returns>
+    public bool Init(Gst.Video.VideoResamplerMethod method, Gst.Video.VideoResamplerFlags flags, uint nPhases, uint nTaps, double shift, uint inSize, uint outSize, Gst.Structure options)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+        int nativeResult = GstVideoResamplerInit(Handle, (int)method, (int)flags, nPhases, nTaps, shift, inSize, outSize, options.Handle);
+        System.GC.KeepAlive(this);
+        System.GC.KeepAlive(options);
+        return nativeResult != 0;
+    }
+
+    /// <summary>The <c>gst_video_resampler_clear</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_video_resampler_clear")]
+    private static partial void GstVideoResamplerClear(nint resampler);
+
+    /// <summary>The <c>gst_video_resampler_init</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_video_resampler_init")]
+    private static partial int GstVideoResamplerInit(nint resampler, int method, int flags, uint nPhases, uint nTaps, double shift, uint inSize, uint outSize, nint options);
 }

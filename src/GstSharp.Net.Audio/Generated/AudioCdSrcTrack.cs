@@ -3,9 +3,6 @@
 
 #nullable enable
 
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-
 namespace Gst.Audio;
 
 /// <summary>CD track abstraction to communicate TOC entries to the base class.</summary>
@@ -19,42 +16,23 @@ namespace Gst.Audio;
 /// on the pipeline's #GstBus instead.
 /// </para>
 /// </remarks>
-[StructLayout(LayoutKind.Sequential)]
-public partial struct AudioCdSrcTrack
+public sealed partial class AudioCdSrcTrack
 {
-    // <c>gboolean</c> is a 32 bit integer; every non zero value is true.
-    /// <summary>Whether this is an audio track</summary>
-    public int IsAudio;
+    /// <summary>The native instance.</summary>
+    internal nint Handle;
 
-    /// <summary>Track number in TOC (usually starts from 1, but not always)</summary>
-    public uint Num;
+    /// <summary>Wraps a native <c>GstAudioCdSrcTrack</c>.</summary>
+    /// <param name="handle">The native instance.</param>
+    internal AudioCdSrcTrack(nint handle) => Handle = handle;
 
-    /// <summary>The first sector of this track (LBA)</summary>
-    public uint Start;
-
-    /// <summary>The last sector of this track (LBA)</summary>
-    public uint End;
-
-    /// <summary>Track-specific tags (e.g. from cd-text information), or NULL</summary>
-    public nint Tags;
-
-    /// <summary>The <c>_gst_reserved1</c> field of <c>GstAudioCdSrcTrack</c>.</summary>
-    private GstReserved1Array _gstReserved1;
-
-    /// <summary>The <c>_gst_reserved2</c> field of <c>GstAudioCdSrcTrack</c>.</summary>
-    private GstReserved2Array _gstReserved2;
-
-    /// <summary>Inline storage of the 2 elements of the <c>_gst_reserved1</c> field of <c>GstAudioCdSrcTrack</c>.</summary>
-    [InlineArray(2)]
-    private struct GstReserved1Array
-    {
-        private uint _element0;
-    }
-
-    /// <summary>Inline storage of the 2 elements of the <c>_gst_reserved2</c> field of <c>GstAudioCdSrcTrack</c>.</summary>
-    [InlineArray(2)]
-    private struct GstReserved2Array
-    {
-        private nint _element0;
-    }
+    /// <summary>Wraps a native <c>GstAudioCdSrcTrack</c>, mapping the null pointer onto <see langword="null"/>.</summary>
+    /// <param name="handle">The native instance, or <c>0</c>.</param>
+    /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>
+    /// <remarks>
+    /// The wrapper of an opaque record is a bare pointer holder: the gir
+    /// describes no way of releasing one, so it does not take part in the
+    /// ownership of what it points at.
+    /// </remarks>
+    internal static AudioCdSrcTrack? FromNative(nint handle) =>
+        handle == 0 ? null : new(handle);
 }

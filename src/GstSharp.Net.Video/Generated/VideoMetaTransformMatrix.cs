@@ -26,13 +26,13 @@ namespace Gst.Video;
 public partial struct VideoMetaTransformMatrix
 {
     /// <summary>the input #GstVideoInfo</summary>
-    public nint InInfo;
+    public nint InInfoPtr;
 
     /// <summary>the input #GstVideoRectangle</summary>
     public Gst.Video.VideoRectangle InRectangle;
 
     /// <summary>the output #GstVideoInfo</summary>
-    public nint OutInfo;
+    public nint OutInfoPtr;
 
     /// <summary>the output #GstVideoRectangle</summary>
     public Gst.Video.VideoRectangle OutRectangle;

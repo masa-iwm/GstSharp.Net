@@ -1395,7 +1395,7 @@ disappears shows up here as an added line.
 
 - `gst_video_frame_unmap`
 
-### UnsupportedSignature (85)
+### UnsupportedSignature (83)
 
 - `GstVideo.VideoAggregator:force-live`
 - `GstVideo.VideoAggregatorConvertPad:converter-config`
@@ -1471,8 +1471,6 @@ disappears shows up here as an added line.
 - `gst_video_overlay_install_properties`
 - `gst_video_overlay_set_property`
 - `gst_video_region_of_interest_meta_add_param`
-- `gst_video_resampler_clear`
-- `gst_video_resampler_init`
 - `gst_video_time_code_init`
 - `gst_video_time_code_init_from_date_time`
 - `gst_video_time_code_init_from_date_time_full`

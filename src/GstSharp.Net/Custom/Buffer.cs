@@ -354,7 +354,7 @@ public sealed partial class Buffer
             get
             {
                 ObjectDisposedException.ThrowIf(_buffer == nint.Zero, typeof(MapScope));
-                return new Span<byte>((void*)_info.Data, checked((int)_info.Size));
+                return new Span<byte>((void*)_info.DataPtr, checked((int)_info.Size));
             }
         }
 

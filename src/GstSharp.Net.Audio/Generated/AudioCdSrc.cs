@@ -99,15 +99,16 @@ public unsafe partial class AudioCdSrc : Gst.Base.PushSrc, Gst.IURIHandler
     /// <returns>FALSE on error, otherwise TRUE.</returns>
     public bool AddTrack(Gst.Audio.AudioCdSrcTrack track)
     {
-        Gst.Audio.AudioCdSrcTrack trackNative = track;
-        int nativeResult = GstAudioCdSrcAddTrack(Handle, &trackNative);
+        ArgumentNullException.ThrowIfNull(track);
+        int nativeResult = GstAudioCdSrcAddTrack(Handle, track.Handle);
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(track);
         return nativeResult != 0;
     }
 
     /// <summary>The <c>gst_audio_cd_src_add_track</c> entry point.</summary>
     [LibraryImport("GstAudio", EntryPoint = "gst_audio_cd_src_add_track")]
-    private static partial int GstAudioCdSrcAddTrack(nint src, Gst.Audio.AudioCdSrcTrack* track);
+    private static partial int GstAudioCdSrcAddTrack(nint src, nint track);
 
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstAudioCdSrc</c> under.</summary>
     /// <returns>The type of the instances of this wrapper.</returns>

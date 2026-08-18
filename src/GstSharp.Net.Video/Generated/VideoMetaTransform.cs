@@ -21,8 +21,8 @@ namespace Gst.Video;
 public partial struct VideoMetaTransform
 {
     /// <summary>the input #GstVideoInfo</summary>
-    public nint InInfo;
+    public nint InInfoPtr;
 
     /// <summary>the output #GstVideoInfo</summary>
-    public nint OutInfo;
+    public nint OutInfoPtr;
 }

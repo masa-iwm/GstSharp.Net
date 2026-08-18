@@ -3,8 +3,6 @@
 
 #nullable enable
 
-using System.Runtime.InteropServices;
-
 namespace Gst.Video;
 
 /// <summary>
@@ -14,18 +12,23 @@ namespace Gst.Video;
 /// <remarks>
 /// <para>The configuration of the time code.</para>
 /// </remarks>
-[StructLayout(LayoutKind.Sequential)]
-public partial struct VideoTimeCodeConfig
+public sealed partial class VideoTimeCodeConfig
 {
-    /// <summary>Numerator of the frame rate</summary>
-    public uint FpsN;
+    /// <summary>The native instance.</summary>
+    internal nint Handle;
 
-    /// <summary>Denominator of the frame rate</summary>
-    public uint FpsD;
+    /// <summary>Wraps a native <c>GstVideoTimeCodeConfig</c>.</summary>
+    /// <param name="handle">The native instance.</param>
+    internal VideoTimeCodeConfig(nint handle) => Handle = handle;
 
-    /// <summary>the corresponding #GstVideoTimeCodeFlags</summary>
-    public Gst.Video.VideoTimeCodeFlags Flags;
-
-    /// <summary>The latest daily jam information, if present, or NULL</summary>
-    public nint LatestDailyJam;
+    /// <summary>Wraps a native <c>GstVideoTimeCodeConfig</c>, mapping the null pointer onto <see langword="null"/>.</summary>
+    /// <param name="handle">The native instance, or <c>0</c>.</param>
+    /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>
+    /// <remarks>
+    /// The wrapper of an opaque record is a bare pointer holder: the gir
+    /// describes no way of releasing one, so it does not take part in the
+    /// ownership of what it points at.
+    /// </remarks>
+    internal static VideoTimeCodeConfig? FromNative(nint handle) =>
+        handle == 0 ? null : new(handle);
 }

@@ -23,13 +23,13 @@ namespace Gst;
 public partial struct MapInfo
 {
     /// <summary>a pointer to the mapped memory</summary>
-    public nint Memory;
+    public nint MemoryPtr;
 
     /// <summary>flags used when mapping the memory</summary>
     public Gst.MapFlags Flags;
 
     /// <summary>a pointer to the mapped data</summary>
-    public nint Data;
+    public nint DataPtr;
 
     /// <summary>the valid size in @data</summary>
     public nuint Size;

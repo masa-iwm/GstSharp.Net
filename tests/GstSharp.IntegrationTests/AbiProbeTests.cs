@@ -105,9 +105,9 @@ public sealed class AbiProbeTests
         _output.WriteLine(Format("MapInfo", Unsafe.SizeOf<MapInfo>()));
         Assert.Equal(104, Unsafe.SizeOf<MapInfo>());
 
-        Assert.Equal(0L, Offset(&info, &info.Memory));
+        Assert.Equal(0L, Offset(&info, &info.MemoryPtr));
         Assert.Equal(8L, Offset(&info, &info.Flags));
-        Assert.Equal(16L, Offset(&info, &info.Data));
+        Assert.Equal(16L, Offset(&info, &info.DataPtr));
         Assert.Equal(24L, Offset(&info, &info.Size));
         Assert.Equal(32L, Offset(&info, &info.Maxsize));
         Assert.Equal(40L, Offset(&info, &info.UserData));

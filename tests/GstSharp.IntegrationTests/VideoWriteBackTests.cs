@@ -197,8 +197,8 @@ public sealed class VideoWriteBackTests
 
         // The mapping is the caller's now: without the write back, all four of
         // these are zero and the unmap below unmaps nothing.
-        Assert.NotEqual(0, info.Memory);
-        Assert.NotEqual(0, info.Data);
+        Assert.NotEqual(0, info.MemoryPtr);
+        Assert.NotEqual(0, info.DataPtr);
         Assert.True(info.Size > 0);
         Assert.NotEqual(0, data);
         Assert.Equal((int)Width, stride);

@@ -15,10 +15,10 @@ public partial struct FormatDefinition
     public Gst.Format Value;
 
     /// <summary>A short nick of the format</summary>
-    public nint Nick;
+    public nint NickPtr;
 
     /// <summary>A longer description of the format</summary>
-    public nint Description;
+    public nint DescriptionPtr;
 
     /// <summary>A quark for the nick</summary>
     public Gst.GLib.Quark Quark;

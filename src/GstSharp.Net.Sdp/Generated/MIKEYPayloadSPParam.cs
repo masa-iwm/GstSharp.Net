@@ -18,5 +18,5 @@ public partial struct MIKEYPayloadSPParam
     public byte Len;
 
     /// <summary>specifies the value of the parameter</summary>
-    public nint Val;
+    public nint ValPtr;
 }

@@ -180,15 +180,67 @@ internal sealed class NameMapper
     /// <returns>The C# identifier.</returns>
     internal static string ParameterName(string girName) => EscapeIdentifier(ToCamelCase(girName));
 
+    /// <summary>
+    /// The suffix that a public field of a value projected record carries when
+    /// the field is projected onto a bare pointer.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// A record that marshals by value spells every pointer field as an
+    /// <c>nint</c>, because that is all the layout can say: the address of a
+    /// string, of a mini object, of a boxed record or of a block of bytes is one
+    /// pointer wide and nothing more is known about it at the point the struct
+    /// is laid out. The name a field derives from the gir is the name the typed
+    /// accessor wants - <c>string? Nick</c> over <c>const gchar *nick</c>,
+    /// <c>Gst.Memory? Memory</c> over <c>GstMemory *memory</c>,
+    /// <c>ReadOnlySpan&lt;byte&gt; Data</c> over the mapped block - and a
+    /// property cannot carry the name of a field of the same type. Emitting the
+    /// raw address under the derived name therefore spends the one name the
+    /// accessor needs on the projection that says the least, and a released
+    /// surface cannot take it back: adding <c>Nick</c> later is a source and
+    /// binary break, while adding it beside an existing <c>NickPtr</c> is
+    /// additive and can be done in any 1.28.x.
+    /// </para>
+    /// <para>
+    /// The rule is driven by the projected type and not by an entry in
+    /// <c>girs/overlays/fixups.json</c>, so a gir refresh that adds a pointer
+    /// field to a value type gets the suffix without anyone remembering to ask
+    /// for it. It reaches public fields of value projected records alone: a
+    /// field that is private to the C implementation is named by
+    /// <see cref="PrivateFieldName"/>, an inline array is storage rather than an
+    /// address, and a boxed record, a mini object and a record behind a pointer
+    /// expose no public field at all. An explicit rename still wins, which is
+    /// the escape hatch for a field the suffix reads badly on.
+    /// </para>
+    /// </remarks>
+    internal const string PointerFieldSuffix = "Ptr";
+
     /// <summary>Maps the C# name of a field that is part of the API.</summary>
     /// <param name="fieldNamespace">The gir namespace of the declaring type.</param>
     /// <param name="owner">The declaring type.</param>
     /// <param name="field">The field to name.</param>
+    /// <param name="barePointer">
+    /// <see langword="true"/> when the field is a public field of a value
+    /// projected record that lands on a bare pointer, which appends
+    /// <see cref="PointerFieldSuffix"/>.
+    /// </param>
     /// <returns>The C# field name.</returns>
-    internal string FieldName(GirNamespace fieldNamespace, GirTypeDeclaration owner, GirField field) =>
-        _overlays.TryGetRename(fieldNamespace.Name + "." + owner.Name + "." + field.Name, out string? renamed)
-            ? renamed
-            : EscapeIdentifier(ToPascalCase(field.Name));
+    internal string FieldName(
+        GirNamespace fieldNamespace,
+        GirTypeDeclaration owner,
+        GirField field,
+        bool barePointer = false)
+    {
+        if (_overlays.TryGetRename(
+                fieldNamespace.Name + "." + owner.Name + "." + field.Name,
+                out string? renamed))
+        {
+            return renamed;
+        }
+
+        string name = EscapeIdentifier(ToPascalCase(field.Name));
+        return barePointer ? name + PointerFieldSuffix : name;
+    }
 
     /// <summary>
     /// Maps the C# name of a field that is private to the C implementation.

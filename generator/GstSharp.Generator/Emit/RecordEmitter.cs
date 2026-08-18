@@ -849,12 +849,7 @@ internal sealed class RecordEmitter
         for (int i = 0; i < record.Fields.Count; i++)
         {
             GirField field = record.Fields[i];
-            string pascalName = _names.FieldName(ns, record, field);
-            if (string.Equals(pascalName, typeName, StringComparison.Ordinal))
-            {
-                // A member cannot carry the name of its enclosing type.
-                pascalName += "Field";
-            }
+            string pascalName = PublicFieldName(ns, record, field, typeName, barePointer: false);
 
             FieldProjection? projection = Project(ns, field, pascalName, publicSurface);
             if (projection is null)
@@ -869,6 +864,20 @@ internal sealed class RecordEmitter
             }
 
             bool hidden = IsHidden(field);
+
+            // A public field of a value projected record that lands on a bare
+            // pointer takes the Ptr suffix, so that the name it derives from the
+            // gir stays free for the typed accessor that reads what the address
+            // points at; NameMapper.PointerFieldSuffix states why. Nothing else
+            // is touched: a private field is named by PrivateFieldName, an
+            // inline array is storage rather than an address, and the mirror of
+            // a mini object is internal and keeps the plain name because no
+            // public accessor competes for it.
+            if (publicSurface && !hidden && projection.IsPointer)
+            {
+                pascalName = PublicFieldName(ns, record, field, typeName, barePointer: true);
+            }
+
             layout.Add(new LayoutField(
                 field,
                 hidden ? _names.PrivateFieldName(ns, record, field) : pascalName,
@@ -884,6 +893,26 @@ internal sealed class RecordEmitter
 
     private string TypeNameOf(GirNamespace ns, GirRecord record) =>
         _names.TypeName(new GirSymbol(ns, record.Name, GirSymbolKind.Record, record));
+
+    /// <summary>Names one field that carries API, in the declaring record.</summary>
+    /// <param name="ns">The gir namespace of the record.</param>
+    /// <param name="record">The declaring record.</param>
+    /// <param name="field">The field to name.</param>
+    /// <param name="typeName">The C# name of the declaring record.</param>
+    /// <param name="barePointer">Whether the field is projected onto a bare pointer.</param>
+    /// <returns>The C# field name.</returns>
+    private string PublicFieldName(
+        GirNamespace ns,
+        GirRecord record,
+        GirField field,
+        string typeName,
+        bool barePointer)
+    {
+        string name = _names.FieldName(ns, record, field, barePointer);
+
+        // A member cannot carry the name of its enclosing type.
+        return string.Equals(name, typeName, StringComparison.Ordinal) ? name + "Field" : name;
+    }
 
     private FieldProjection? Project(GirNamespace ns, GirField field, string pascalName, bool publicSurface)
     {
@@ -935,8 +964,10 @@ internal sealed class RecordEmitter
         if (type.IsPointer)
         {
             // Whatever the mapping makes of the pointee, a pointer field is one
-            // pointer wide.
-            return new FieldProjection(NativeInt, null, null);
+            // pointer wide. The projection carries that it is an address rather
+            // than a value, because a public field of a value type that lands on
+            // one is renamed; see NameMapper.PointerFieldSuffix.
+            return new FieldProjection(NativeInt, null, null, IsPointer: true);
         }
 
         if (!TryProjectByValue(ns, type, publicSurface, out FieldProjection? byValue))
@@ -963,6 +994,12 @@ internal sealed class RecordEmitter
                     mapped.RawType,
                     null,
                     $"<c>{type.CType ?? type.Name}</c> is not generated in this module; the field keeps its underlying type.");
+
+            case MarshalKind.Pointer:
+                // A gpointer or a gconstpointer, which the gir spells without a
+                // star, so the check above does not catch it. It is an address
+                // like any other pointer field and is named like one.
+                return new FieldProjection(mapped.RawType, null, null, IsPointer: true);
 
             case MarshalKind.GType:
             case MarshalKind.Quark:
@@ -1068,7 +1105,17 @@ internal sealed class RecordEmitter
     /// <param name="TypeName">The C# type of the field.</param>
     /// <param name="InlineArray">The inline storage type, for a fixed size array.</param>
     /// <param name="Note">A comment that explains a lossy projection.</param>
-    private sealed record FieldProjection(string TypeName, InlineArrayInfo? InlineArray, string? Note);
+    /// <param name="IsPointer">
+    /// Whether the field is a bare pointer, that is an <c>nint</c> that stands
+    /// for a C address rather than for a value of its own. A function pointer
+    /// slot is not one: it is spelled the same way, but no typed accessor is
+    /// ever going to compete with it for the name.
+    /// </param>
+    private sealed record FieldProjection(
+        string TypeName,
+        InlineArrayInfo? InlineArray,
+        string? Note,
+        bool IsPointer = false);
 
     /// <summary>One field of a generated struct.</summary>
     /// <param name="Field">The gir field.</param>

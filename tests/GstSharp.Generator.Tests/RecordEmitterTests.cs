@@ -141,7 +141,7 @@ public sealed class RecordEmitterTests
                     public Gst.MapFlags Flags;
 
                     /// <summary>The <c>data</c> field of <c>GstMapInfo</c>.</summary>
-                    public nint Data;
+                    public nint DataPtr;
 
                     /// <summary>The <c>size</c> field of <c>GstMapInfo</c>.</summary>
                     public System.Runtime.InteropServices.CLong Size;
@@ -386,6 +386,69 @@ public sealed class RecordEmitterTests
     }
 
     [Fact]
+    public void OnlyThePointerFieldsOfAValueTypeCarryThePtrSuffix()
+    {
+        // A public field of a value projected record that lands on a bare
+        // pointer keeps the address under the Ptr suffix, so that the name it
+        // derives from the gir stays free for the typed accessor that reads what
+        // the address points at. Nothing else moves: a scalar is a value of its
+        // own, an inline array is storage rather than an address, and a field
+        // private to the C implementation is named by the private rule. Both
+        // spellings of a pointer are covered, the star of a 'const gchar *' and
+        // the 'gpointer' the gir writes without one.
+        string source = EmitFixture(
+            """
+                <record name="Definition" c:type="GstDefinition">
+                  <field name="value" writable="1">
+                    <type name="gint" c:type="gint"/>
+                  </field>
+                  <field name="nick" writable="1">
+                    <type name="utf8" c:type="const gchar*"/>
+                  </field>
+                  <field name="data" writable="1">
+                    <type name="gpointer" c:type="gpointer"/>
+                  </field>
+                  <field name="samples" writable="1">
+                    <array zero-terminated="0" fixed-size="2">
+                      <type name="gpointer" c:type="gpointer"/>
+                    </array>
+                  </field>
+                  <field name="_reserved" readable="0" private="1">
+                    <type name="gpointer" c:type="gpointer"/>
+                  </field>
+                </record>
+            """,
+            "Definition");
+
+        Assert.Equal(
+            [
+                "public int Value;",
+                "public nint NickPtr;",
+                "public nint DataPtr;",
+                "public SamplesArray Samples;",
+                "private nint _reserved;",
+            ],
+            StructFields(source));
+
+        // The inline storage type is still named after the field itself.
+        Assert.Contains("[InlineArray(2)]\n    public struct SamplesArray\n", source, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void TheMirrorOfAMiniObjectKeepsThePlainPointerName()
+    {
+        // The suffix belongs to the public value types alone. A mirror is
+        // internal and is only ever read through a pointer into memory that
+        // GStreamer owns, so no public accessor competes with its fields for a
+        // name; the same holds for a boxed record and for a record behind a
+        // pointer, neither of which emits a public field at all.
+        string source = Source("Buffer");
+
+        Assert.Contains("internal nint Pool;", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("PoolPtr", source, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void AFieldNamedAfterItsStructIsRenamed()
     {
         // A member cannot carry the name of its enclosing type.
@@ -465,9 +528,9 @@ public sealed class RecordEmitterTests
         Assert.Contains("[StructLayout(LayoutKind.Sequential)]\npublic partial struct MapInfo\n", source, StringComparison.Ordinal);
         Assert.Equal(
             [
-                "public nint Memory;",
+                "public nint MemoryPtr;",
                 "public Gst.MapFlags Flags;",
-                "public nint Data;",
+                "public nint DataPtr;",
                 "public nuint Size;",
                 "public nuint Maxsize;",
                 "public UserDataArray UserData;",

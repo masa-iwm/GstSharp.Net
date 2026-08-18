@@ -176,6 +176,7 @@ public sealed class SkipRulesTests
                 "Gst.ReferenceTimestampMeta",
                 "Gst.StaticCaps",
                 "Gst.StaticPadTemplate",
+                "GstAudio.AudioCdSrcTrack",
                 "GstAudio.AudioClippingMeta",
                 "GstAudio.AudioDownmixMeta",
                 "GstAudio.AudioLevelMeta",
@@ -200,7 +201,9 @@ public sealed class SkipRulesTests
                 "GstVideo.VideoCropMeta",
                 "GstVideo.VideoOverlayCompositionMeta",
                 "GstVideo.VideoRegionOfInterestMeta",
+                "GstVideo.VideoResampler",
                 "GstVideo.VideoSEIUserDataUnregisteredMeta",
+                "GstVideo.VideoTimeCodeConfig",
             ],
             GirFixture.Overlays.OpaqueRecords.Order(StringComparer.Ordinal).ToArray());
     }
