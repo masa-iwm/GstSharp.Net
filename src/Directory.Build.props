@@ -41,14 +41,18 @@
          IsPackable, and the analyzer project answers no to that - it ships
          inside GstSharp.Net and has no package of its own to compare against.
 
-         The baseline is 1.28.1 and not simply the previous release. 1.28.0
-         predates the promise and is unlisted for it, so comparing against it
-         would report the deliberate re-projection of that first week as a
-         breaking change forever. The version moves when the GStreamer series
-         does: 1.30.0 is the release that is allowed to break compilation, and
-         the first 1.30 package becomes the new baseline. -->
+         The baseline is the newest published 1.28.x, moved forward once
+         nuget.org serves each release - it enters every CI job's restore as a
+         PackageDownload, so it can only name a version that is really there.
+         Following the newest release is what puts each release's additions
+         under the same guard: against 1.28.1 alone, everything 1.28.2 added
+         could vanish unnoticed. 1.28.0 is never the baseline - it predates the
+         promise and is unlisted for it, and comparing against it would report
+         the deliberate re-projection of that first week as a breaking change
+         forever. 1.30.0 is the release that is allowed to break compilation,
+         and the first 1.30 package starts the anchor over. -->
     <EnablePackageValidation>true</EnablePackageValidation>
-    <PackageValidationBaselineVersion>1.28.1</PackageValidationBaselineVersion>
+    <PackageValidationBaselineVersion>1.28.2</PackageValidationBaselineVersion>
   </PropertyGroup>
 
   <PropertyGroup Label="Package metadata">
