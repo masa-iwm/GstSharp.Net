@@ -12,7 +12,7 @@ workflow. Jobs are split by what they need from the machine:
 
 | Job | Runner | Needs GStreamer | What only this job covers |
 | --- | --- | --- | --- |
-| `verify` | `ubuntu-latest` | no | generator drift (the whole generated tree plus `girs/skip-report.md`), warning-free build, generator/analyzer tests, and the proof that `GstSharp.Core.Tests` needs no installation |
+| `verify` | `ubuntu-latest` | no | generator drift (the whole generated tree plus `girs/skip-report.md`), warning-free build, generator/analyzer tests, the proof that `GstSharp.Core.Tests` needs no installation, and the pack that validates the public surface against the published 1.28.1 |
 | `linux` | `ubuntu-24.04` | apt | the Linux SONAME path of `NativeLoader`, the only plugin set that can run the WebRTC tests, and the `linux-x64` NativeAOT gate |
 | `macos` | `macos-latest` | Homebrew | the macOS dylib path and the Homebrew directory of the planner |
 | `windows-mingw` | `windows-latest` | MSYS2 | the MinGW file names and the MSYS2 / search-path branch of `NativeInstallPlanner` |
@@ -220,6 +220,53 @@ binary with no host beside it, and `AotSmoke` already covers those. A second ILC
 publish would roughly double the minutes the leg spends to repeat the first
 answer.
 
+## The surface check
+
+The last step of `verify` packs the whole solution:
+
+```
+dotnet pack GstSharp.Net.slnx --no-restore --configuration Release \
+    --output artifacts/surface-check -p:Version=1.28.999-surface-check
+```
+
+Nothing is pushed and the packages are thrown away with the runner. What the
+step is there for is what happens after the pack:
+`EnablePackageValidation=true` and `PackageValidationBaselineVersion=1.28.1` in
+`src/Directory.Build.props` make the SDK download each package at 1.28.1 from
+nuget.org and compare the assembly about to be packed against the published
+one. A public member that disappeared, or that changed its shape, fails the
+pack with `CP0002` (or a sibling code) naming the member; an added member says
+nothing. That is the README's promise for `1.28.x` turned into a gate.
+
+It runs on every push rather than at release time only, because package
+validation is a **pack**-time check and no other job packs. Without this step a
+removed member would survive review, sit on `main`, and first turn red when a
+tag was already being published.
+
+`1.28.999-surface-check` is a marker version. It sorts above anything the
+series will realistically tag, so a package that escapes the runner cannot be
+mistaken for a release, and the baseline it is compared against is unaffected
+by it — the baseline is named by the property, not by the version being packed.
+
+Two consequences worth knowing:
+
+* The comparison covers exactly the twelve published packages. Both the
+  baseline download and the check itself are conditioned on `IsPackable` by the
+  SDK, and `GstSharp.Net.Analyzers` sets it to `false`: it ships inside
+  `GstSharp.Net` and has no package of its own to compare against.
+* The baseline packages join the restore graph as `PackageDownload` items, so
+  every job fetches them on `dotnet restore`, not only the one that packs.
+  `**/Directory.Build.props` had to join the NuGet cache key for that to be
+  paid once: the properties live there, the key hashed only
+  `Directory.Packages.props`, the `.csproj` files and `global.json`, and
+  `actions/cache` does not write a new cache when the key it was given already
+  exists. The twelve baselines would have been downloaded on every run of every
+  job and cached on none of them.
+
+The baseline moves with the GStreamer series, not with the patch level: `1.30`
+is the release allowed to break compilation, and its first package becomes the
+new `PackageValidationBaselineVersion`.
+
 ## Release
 
 `.github/workflows/release.yml` triggers on tags matching `v*`, calls `ci.yml`
@@ -282,6 +329,7 @@ dotnet build GstSharp.Net.slnx --no-restore -warnaserror
 dotnet test tests/GstSharp.Generator.Tests --no-restore
 dotnet test tests/GstSharp.Analyzers.Tests --no-restore
 dotnet test tests/GstSharp.Core.Tests --no-restore
+dotnet pack GstSharp.Net.slnx --no-restore --configuration Release --output artifacts/surface-check -p:Version=1.28.999-surface-check
 
 # the native jobs (needs a GStreamer installation the loader can find)
 dotnet test tests/GstSharp.IntegrationTests --no-restore
@@ -325,6 +373,7 @@ Everything the scripts write goes below `artifacts/`, which is ignored by git.
 | `actions/checkout` `v7`, `actions/upload-artifact` `v7`, `actions/setup-dotnet` `v6`, `actions/cache` `v6` | major version only | current major versions; a major bump is a deliberate edit |
 | `msys2/setup-msys2` | `v2` | the `msys2-location` output the MinGW job reads |
 | .NET SDK | `global.json` (`10.0.300`, `rollForward: latestFeature`) | one place for the SDK version |
+| Package validation baseline | `1.28.1` (`PackageValidationBaselineVersion` in `src/Directory.Build.props`) | the release the compatibility promise counts from; it moves with the GStreamer series, not with the patch level |
 | GStreamer, Windows MSVC | `1.28.6` (`GSTREAMER_VERSION` in the job) | the version the binding is generated from |
 | GStreamer, Windows MinGW | whatever MSYS2 ships | the MSYS2 packages are not versioned per release; the ABI probes only require >= 1.24 |
 | GStreamer, Linux | `ubuntu-24.04` archive (1.24) | the supported floor |

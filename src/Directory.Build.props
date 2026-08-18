@@ -23,6 +23,34 @@
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
   </PropertyGroup>
 
+  <PropertyGroup Label="Package validation">
+    <!-- The mechanical half of the promise the README makes under "Status and
+         versioning": from 1.28.1 on the public surface of a 1.28.x package only
+         grows. Package validation is what holds the repository to it. `dotnet
+         pack` restores the same package at the baseline version from nuget.org
+         and compares what is about to be packed against what is already
+         published: a public type or member that disappeared, or that kept its
+         name and changed its shape, fails the pack with a CP#### error naming
+         it. A member that was only added says nothing, which is the point -
+         additive is the whole allowance.
+
+         Written here beside IsPackable rather than in each project, so that a
+         module added later is covered by construction and cannot be the one
+         that ships a removal. It reaches exactly the twelve published packages:
+         the SDK conditions both the baseline download and the check itself on
+         IsPackable, and the analyzer project answers no to that - it ships
+         inside GstSharp.Net and has no package of its own to compare against.
+
+         The baseline is 1.28.1 and not simply the previous release. 1.28.0
+         predates the promise and is unlisted for it, so comparing against it
+         would report the deliberate re-projection of that first week as a
+         breaking change forever. The version moves when the GStreamer series
+         does: 1.30.0 is the release that is allowed to break compilation, and
+         the first 1.30 package becomes the new baseline. -->
+    <EnablePackageValidation>true</EnablePackageValidation>
+    <PackageValidationBaselineVersion>1.28.1</PackageValidationBaselineVersion>
+  </PropertyGroup>
+
   <PropertyGroup Label="Package metadata">
     <VersionPrefix>1.28.0</VersionPrefix>
     <Authors>GstSharp.Net contributors</Authors>

@@ -3,8 +3,9 @@
 # The jobs are split by what they need from the machine:
 #
 #   verify            no native GStreamer at all: generator drift, a
-#                     warning-free build, and every test suite that runs
-#                     against fakes rather than against the library.
+#                     warning-free build, every test suite that runs against
+#                     fakes rather than against the library, and the pack that
+#                     validates the surface against the published 1.28.1.
 #   linux             the Linux SONAME path of the native loader, the only
 #                     plugin set complete enough to run the WebRTC tests, and
 #                     the linux-x64 NativeAOT gate.
@@ -47,7 +48,10 @@ jobs:
   verify:
     name: verify (no native)
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # 20 rather than 15 since the surface check at the end of the job joined
+    # it: packing in Release compiles the whole solution a second time, which
+    # the rest of the leg does not.
+    timeout-minutes: 20
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -60,7 +64,7 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.nuget/packages
-          key: nuget-${{ runner.os }}-${{ hashFiles('**/Directory.Packages.props', '**/*.csproj', 'global.json') }}
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/Directory.Packages.props', '**/Directory.Build.props', '**/*.csproj', 'global.json') }}
           restore-keys: nuget-${{ runner.os }}-
 
       - name: Restore
@@ -90,6 +94,27 @@ jobs:
       # what keeps that true.
       - name: Test the runtime (proves it needs no GStreamer)
         run: dotnet test tests/GstSharp.Core.Tests --no-restore --logger "trx;LogFileName=core.trx" --results-directory artifacts/test-results
+
+      # The compatibility gate, and the reason it runs here rather than at
+      # release time only: EnablePackageValidation is a pack-time check
+      # (src/Directory.Build.props), so without this step a removed member
+      # would sit on main until a tag went out and then fail the publish, with
+      # the surface already promised. Every push proves instead that the twelve
+      # packages still contain everything 1.28.1 shipped.
+      #
+      # The version is a marker, not a release: 1.28.999-surface-check sorts
+      # above anything the series will ever tag, so a stray package from this
+      # step cannot be mistaken for one, and nothing is pushed anywhere - the
+      # packages are written into artifacts/ and thrown away with the runner.
+      # The invocation is otherwise the release job's, minus the arguments that
+      # only the GitHub Packages feed needs.
+      - name: Pack against the 1.28.1 surface
+        run: >
+          dotnet pack GstSharp.Net.slnx
+          --no-restore
+          --configuration Release
+          --output artifacts/surface-check
+          -p:Version=1.28.999-surface-check
 
       - name: Upload test results
         if: ${{ failure() }}
@@ -125,7 +150,7 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.nuget/packages
-          key: nuget-${{ runner.os }}-${{ hashFiles('**/Directory.Packages.props', '**/*.csproj', 'global.json') }}
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/Directory.Packages.props', '**/Directory.Build.props', '**/*.csproj', 'global.json') }}
           restore-keys: nuget-${{ runner.os }}-
 
       # Runtime packages only: the binding loads versioned SONAMEs
@@ -343,7 +368,7 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.nuget/packages
-          key: nuget-${{ runner.os }}-${{ hashFiles('**/Directory.Packages.props', '**/*.csproj', 'global.json') }}
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/Directory.Packages.props', '**/Directory.Build.props', '**/*.csproj', 'global.json') }}
           restore-keys: nuget-${{ runner.os }}-
 
       # The formula bundles core, base, good, bad, ugly and libav, and installs
@@ -424,7 +449,7 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.nuget/packages
-          key: nuget-${{ runner.os }}-${{ hashFiles('**/Directory.Packages.props', '**/*.csproj', 'global.json') }}
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/Directory.Packages.props', '**/Directory.Build.props', '**/*.csproj', 'global.json') }}
           restore-keys: nuget-${{ runner.os }}-
 
       - name: Install MSYS2 with GStreamer
@@ -535,7 +560,7 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.nuget/packages
-          key: nuget-${{ runner.os }}-${{ hashFiles('**/Directory.Packages.props', '**/*.csproj', 'global.json') }}
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/Directory.Packages.props', '**/Directory.Build.props', '**/*.csproj', 'global.json') }}
           restore-keys: nuget-${{ runner.os }}-
 
       # The installer does not change for a pinned version, so downloading it
