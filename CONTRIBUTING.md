@@ -71,6 +71,34 @@ All of these must pass before a change is merged:
    completes with zero IL trimming or AOT warnings. `eng/aot-gate.ps1` runs this
    the way CI does, for both AOT samples.
 
+## When the census tests fail
+
+Quality gate 3 is the one a first pull request usually trips. The census is a
+set of frozen numbers, so any deliberate change of the surface — a gir refresh,
+a new fixup, a new marshalling rule — fails it by design.
+
+The symptom is an `Assert.Equal()` failure in `GstSharp.Generator.Tests` whose
+whole message is two integers, an expected `1205` against an actual `1206`.
+
+When the move is intended, update the expectations:
+
+1. Regenerate, as above. The `generate` verb prints the new census, one line per
+   module and category, and rewrites `girs/skip-report.md`.
+2. Fix the `[InlineData]` rows of the failing theory. The expectations live in
+   two files: `tests/GstSharp.Generator.Tests/CensusTests.cs` for what the gir
+   files declare — classes, records, interfaces, enumerations, bitfields,
+   callbacks, aliases, constants, functions and signals per namespace — and
+   `tests/GstSharp.Generator.Tests/ClassEmitterTests.cs` for what a run emitted
+   and what it skipped, per module and per skip reason.
+3. Commit the regenerated sources, `girs/skip-report.md` and the new counts as
+   one change, and say in the pull request which numbers moved and why.
+
+Never bump a number you cannot account for. Census drift that nobody asked for
+is a bug in the change — typically an accidental skip: an overlay entry that
+matches more than it was meant to, or a rule that rejects a signature it should
+handle. The diff of `girs/skip-report.md` names the symbol that disappeared and
+the reason it was dropped.
+
 ## Line endings and determinism
 
 Everything is LF, enforced by `.gitattributes` and `.editorconfig`. The
