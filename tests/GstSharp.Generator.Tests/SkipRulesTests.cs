@@ -129,6 +129,10 @@ public sealed class SkipRulesTests
         // decision, not a detail.
         Assert.Equal(
             [
+                "GstBase.BitReader",
+                "GstBase.BitWriter",
+                "GstBase.ByteReader",
+                "GstBase.ByteWriter",
                 "GstRtsp.RTSPWatch",
                 "GstRtsp.RTSPWatchFuncs",
                 "ges_deinit",

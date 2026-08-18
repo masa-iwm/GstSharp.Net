@@ -308,6 +308,18 @@ The gaps worth naming here:
   is exposed as `Task`-returning methods instead, hand written per operation;
   see
   [`docs/gio-async.md`](https://github.com/masa-iwm/GstSharp.Net/blob/main/docs/gio-async.md).
+* **The byte and bit cursors are out of scope.** `GstByteReader`,
+  `GstByteWriter`, `GstBitReader` and `GstBitWriter` walk a block of memory the
+  caller already owns, and .NET has that surface built in: `Span<byte>`,
+  `BinaryPrimitives` (every width and endianness as a single inlined
+  instruction), `ArrayBufferWriter<byte>` for the growing writer. The memory is
+  already reached as a span — `Gst.Buffer.Map` and `Gst.Base.Adapter.Map` hand
+  one out, `Gst.Buffer.NewMemdup` takes one back — and the masked 32 bit start
+  code scan is bound on `Gst.Base.Adapter.MaskedScanUint32`. The C cursors add a
+  bit level position with fixed width reads only — no Exp-Golomb, nothing codec
+  aware. The 148 dropped methods are listed under `GstBase` in
+  [`girs/skip-report.md`](https://github.com/masa-iwm/GstSharp.Net/blob/main/girs/skip-report.md).
+  This is a decision, not a gap, and it does not change within `1.28.x`.
 
 ## Namespaces
 
