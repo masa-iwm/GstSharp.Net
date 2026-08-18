@@ -167,6 +167,90 @@ public sealed unsafe partial class Message
     }
 
     /// <summary>
+    /// Creates a message of any type, carrying whatever payload it is given and
+    /// taking that payload over.
+    /// </summary>
+    /// <param name="type">
+    /// What the message is. Every member of <see cref="MessageType"/> is
+    /// allowed, including <see cref="MessageType.Element"/>, which is the type
+    /// an element posts something of its own under.
+    /// </param>
+    /// <param name="src">
+    /// The object to post the message as. It may be <see langword="null"/>,
+    /// which produces a message with no source.
+    /// </param>
+    /// <param name="structure">
+    /// The payload, whose name is what the receiver dispatches on. The call
+    /// consumes it: <paramref name="structure"/> is disposed when this method
+    /// returns, and using it afterwards throws
+    /// <see cref="ObjectDisposedException"/>. It may be
+    /// <see langword="null"/>, which produces a message with no payload and
+    /// leaves nothing to consume.
+    /// </param>
+    /// <returns>The message, which the caller owns and has to dispose.</returns>
+    /// <remarks>
+    /// <para>
+    /// This is <c>gst_message_new_custom</c>, the constructor every other
+    /// <c>gst_message_new_*</c> is written in terms of. It is the way to post a
+    /// message of a type the binding has no dedicated factory for — an
+    /// <see cref="MessageType.Element"/> message being the one an element
+    /// defines for itself — and the way to build a message whose type is only
+    /// known at run time.
+    /// </para>
+    /// <para>
+    /// <see cref="NewApplication"/> is this call with
+    /// <see cref="MessageType.Application"/> fixed and the payload required. It
+    /// stays the one to reach for when an application talks to its own bus
+    /// loop, because the type is what a bus loop filters on; the ownership
+    /// contract of the two is the same, and the remarks of
+    /// <see cref="NewApplication"/> describe it in full.
+    /// </para>
+    /// <para>
+    /// The <c>structure</c> parameter is <c>transfer-ownership="full"</c>, so
+    /// this is written by hand for the reason <see cref="NewApplication"/> is:
+    /// the call is handed a value of its own and the wrapper is disposed
+    /// afterwards. <see cref="Gst.GObject.Boxed.Dispose()"/> is idempotent, so a
+    /// <c>using</c> declaration around the payload stays correct.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="ObjectDisposedException">
+    /// <paramref name="structure"/> was disposed, or <paramref name="src"/> was.
+    /// </exception>
+    public static Gst.Message NewCustom(
+        Gst.MessageType type,
+        Gst.Object? src,
+        Gst.Structure? structure)
+    {
+        // Both handles are read before anything is copied, so that a disposed
+        // wrapper throws before a copy exists that nobody would free.
+        nint source = src?.Handle ?? nint.Zero;
+        nint copy = nint.Zero;
+
+        if (structure is not null)
+        {
+            nint owned = structure.Handle;
+            nuint boxedType = structure.BoxedType.Value;
+
+            // The value the call consumes.
+            copy = Gst.Interop.GObjectNative.BoxedCopy(boxedType, owned);
+        }
+
+        nint message = MessageNative.NewCustom((uint)type, source, copy);
+
+        // The handles were read before the call, so nothing keeps either
+        // wrapper alive across it on its own.
+        GC.KeepAlive(src);
+
+        // And the structure of the wrapper goes away with the wrapper, which is
+        // what makes this call consuming rather than borrowing. A message
+        // without a payload has nothing to consume.
+        structure?.Dispose();
+
+        return Gst.Message.FromNative(message, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_message_new_custom returned no message.");
+    }
+
+    /// <summary>
     /// Reads the error and the debug string of a
     /// <see cref="MessageType.Error"/> message.
     /// </summary>

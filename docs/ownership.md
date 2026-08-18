@@ -107,10 +107,22 @@ the wrapper owns nothing — which is precisely what its disposed state means:
 | `AppSrc.PushBuffer` | the buffer |
 | `Element.SendEvent`, `Pad.SendEvent`, `Pad.PushEvent` | the event |
 | `Element.PostMessage` | the message |
-| `Message.NewApplication` | the payload structure |
+| `Event.NewCustom`, `Message.NewApplication`, `Message.NewCustom`, `Query.NewCustom` | the payload structure |
+| `Promise.Reply` | the reply structure |
 | `BufferPool.SetConfig` | the configuration structure, on refusal as well |
 | `AppSink.SetSimpleCallbacks`, `AppSrc.SetSimpleCallbacks` | the callbacks builder |
 | `WebRTCSessionDescription.New` | the SDP message |
+| `EncodingContainerProfile.AddProfile` | the stream profile |
+
+A mini object is handed a reference of its own and a boxed value a copy, since
+a boxed value has no reference count to raise; either way the wrapper is
+disposed afterwards and the native side is left where the C call leaves it. The
+one that takes a **GObject** over — `AddProfile` — works the same way, with the
+reach `Dispose` has on a GObject wrapper: the object is given up for the whole
+process rather than for one holder, so there is no wrapper for that profile
+anywhere afterwards and `GetProfiles` is the way back to it. Where a consuming
+argument is nullable, `null` is the absence of a payload and there is nothing
+to consume.
 
 `Dispose` is idempotent, so a `using` around the argument stays correct and
 stays the recommended shape — the analyzer sees the disposal, and an early

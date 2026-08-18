@@ -32,11 +32,12 @@ namespace Gst;
 /// <see cref="Gst.GObject.Value"/> of the caller's own.
 /// </para>
 /// <para>
-/// <c>gst_message_new_application</c> is here for a fourth: its
-/// <c>structure</c> parameter is <c>transfer-ownership="full"</c>, and the
-/// generator emits no call that takes a wrapper over, because handing the only
-/// value of a wrapper to the library would let both of them release it. See
-/// <see cref="Message.NewApplication"/> and <c>docs/ownership.md</c>.
+/// <c>gst_message_new_application</c> and <c>gst_message_new_custom</c> are
+/// here for a fourth: their <c>structure</c> parameter is
+/// <c>transfer-ownership="full"</c>, and the generator emits no call that takes
+/// a wrapper over, because handing the only value of a wrapper to the library
+/// would let both of them release it. See <see cref="Message.NewApplication"/>,
+/// <see cref="Message.NewCustom"/> and <c>docs/ownership.md</c>.
 /// </para>
 /// <para>
 /// <c>gst_message_copy</c> is imported for a different reason, the one
@@ -126,6 +127,19 @@ internal static unsafe partial class MessageNative
     /// <returns>The message, which the caller owns.</returns>
     [LibraryImport("Gst", EntryPoint = "gst_message_new_application")]
     internal static partial nint NewApplication(nint src, nint structure);
+
+    /// <summary>
+    /// Creates a message of any type, carrying whatever payload the caller
+    /// gives it.
+    /// </summary>
+    /// <param name="type">The <c>GstMessageType</c> of the message.</param>
+    /// <param name="src">The object to post it as, which may be <c>0</c>.</param>
+    /// <param name="structure">
+    /// The payload, which the call takes over, and which may be <c>0</c>.
+    /// </param>
+    /// <returns>The message, which the caller owns.</returns>
+    [LibraryImport("Gst", EntryPoint = "gst_message_new_custom")]
+    internal static partial nint NewCustom(uint type, nint src, nint structure);
 
     /// <summary>
     /// Releases a <c>GError</c> that the caller owns.
