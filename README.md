@@ -35,7 +35,7 @@ so a single `packageSourceMapping` pattern covers all of them.
 | --- | --- |
 | `GstSharp.Net` | `Gst` core, the hand-written runtime (native loader, marshalling, GObject/GLib layer) and the Roslyn analyzers. Every other package depends on it. |
 | `GstSharp.Net.Base` | `GstBase`. |
-| `GstSharp.Net.Controller` | `GstController`: interpolated control sources and the direct control binding that drives a property from one. Hand written against the public module SPI — see [`docs/modules.md`](https://github.com/masa-iwm/GstSharp.Net/blob/main/docs/modules.md). |
+| `GstSharp.Net.Controller` | `GstController`: the interpolation, LFO and trigger control sources, and the direct, ARGB and proxy control bindings that drive a property from one. Hand written against the public module SPI — see [`docs/modules.md`](https://github.com/masa-iwm/GstSharp.Net/blob/main/docs/modules.md). |
 | `GstSharp.Net.App` | `GstApp`: `appsrc` and `appsink`. |
 | `GstSharp.Net.Video` | `GstVideo`. |
 | `GstSharp.Net.Audio` | `GstAudio`. |
@@ -366,8 +366,8 @@ with the loader, hand its `GType`-to-wrapper table to `TypeRegistry`, and derive
 its wrappers through the `protected` constructors of `Gst.GObject.Object`,
 `Gst.GObject.InitiallyUnowned`, `Gst.MiniObject` and `Gst.GObject.Boxed` — with
 no `InternalsVisibleTo` from here. `GstSharp.Net.Controller` is that module
-written out: it binds `libgstcontroller-1.0`, it ships, and nothing grants it
-the internals of anything.
+written out: it binds all of `libgstcontroller-1.0`, it ships, and nothing
+grants it the internals of anything.
 
 **It attaches to the generated hierarchy too.** Every generated wrapper class —
 `Gst.Element`, `Gst.Object`, `Gst.ControlSource` and the rest — carries the same

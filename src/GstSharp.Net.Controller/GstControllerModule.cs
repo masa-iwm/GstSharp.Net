@@ -74,17 +74,19 @@ internal static unsafe class GstControllerModule
     /// <returns>One entry per wrapper of this assembly.</returns>
     /// <remarks>
     /// <para>
-    /// <c>GstDirectControlBinding</c> is deliberately absent. It has no wrapper
-    /// class of its own — see <see cref="DirectControlBinding"/> — so an
-    /// instance of it should keep arriving as the
+    /// The three control bindings of the library are deliberately absent. None
+    /// of them has a wrapper class of its own — see
+    /// <see cref="DirectControlBinding"/>, <see cref="ARGBControlBinding"/> and
+    /// <see cref="ProxyControlBinding"/>, which are factories — so an instance
+    /// of any of them should keep arriving as the
     /// <see cref="Gst.ControlBinding"/> that <c>GstSharp.Net</c> registers, and
     /// an entry here would take that away.
     /// </para>
     /// <para>
     /// <c>GstTimedValueControlSource</c> is abstract and no instance of it ever
     /// exists, but the entry is not pointless: a type that derives from it and
-    /// has no binding, <c>GstTriggerControlSource</c> for example, is wrapped
-    /// through it instead of falling back further.
+    /// has no binding here — one that a later release of GStreamer or another
+    /// library adds — is wrapped through it instead of falling back further.
     /// </para>
     /// </remarks>
     private static ModuleTypeEntry[] CreateEntries() =>
@@ -92,6 +94,12 @@ internal static unsafe class GstControllerModule
         new ModuleTypeEntry(
             &InterpolationControlSource.GetGType,
             &InterpolationControlSource.CreateWrapper),
+        new ModuleTypeEntry(
+            &LFOControlSource.GetGType,
+            &LFOControlSource.CreateWrapper),
+        new ModuleTypeEntry(
+            &TriggerControlSource.GetGType,
+            &TriggerControlSource.CreateWrapper),
         new ModuleTypeEntry(
             &TimedValueControlSource.GetGType,
             &TimedValueControlSource.CreateWrapper),

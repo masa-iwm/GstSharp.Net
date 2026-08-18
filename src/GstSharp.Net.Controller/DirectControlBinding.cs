@@ -25,6 +25,14 @@ namespace Gst.Controller;
 /// element. A binding to a property that is not marked so is built, logs a
 /// warning through the GStreamer debug system, and then does nothing.
 /// </para>
+/// <para>
+/// Each of the two methods comes in a pair: one takes any
+/// <see cref="Gst.ControlSource"/>, which is what the C function takes and what
+/// an <see cref="LFOControlSource"/> is, and one takes a
+/// <see cref="TimedValueControlSource"/>, which is the narrower parameter the
+/// first release of this module published. Both end up in the same call; the
+/// narrow pair is kept because the public surface of a package only ever grows.
+/// </para>
 /// </remarks>
 public static unsafe partial class DirectControlBinding
 {
@@ -43,7 +51,34 @@ public static unsafe partial class DirectControlBinding
     /// The source answers values in <c>[0, 1]</c> and this maps them onto the
     /// minimum and maximum the property declares, so <c>0.5</c> on a property
     /// that runs from <c>0</c> to <c>10</c> is <c>5</c>. Use
-    /// <see cref="NewAbsolute"/> to pass the values through untouched.
+    /// <see cref="NewAbsolute(Gst.Object, string, Gst.ControlSource)"/> to pass
+    /// the values through untouched.
+    /// </remarks>
+    /// <exception cref="ArgumentNullException">An argument is <see langword="null"/>.</exception>
+    /// <exception cref="ObjectDisposedException">One of the wrappers was disposed.</exception>
+    public static Gst.ControlBinding New(
+        Gst.Object @object,
+        string propertyName,
+        Gst.ControlSource controlSource) =>
+        Create(@object, propertyName, controlSource, absolute: false);
+
+    /// <summary>
+    /// Binds a property to a control source that is described by control points,
+    /// mapping the values of the source onto the range of the property.
+    /// </summary>
+    /// <param name="object">The object whose property is bound.</param>
+    /// <param name="propertyName">The name of the property.</param>
+    /// <param name="controlSource">The control source to follow.</param>
+    /// <returns>
+    /// The binding, which is not attached yet:
+    /// <see cref="Gst.Object.AddControlBinding"/> is what attaches it.
+    /// </returns>
+    /// <remarks>
+    /// This is <see cref="New(Gst.Object, string, Gst.ControlSource)"/> with the
+    /// narrower parameter the first release of this module published; a
+    /// <see cref="TimedValueControlSource"/> is a
+    /// <see cref="Gst.ControlSource"/>, and either overload does the same thing
+    /// with one.
     /// </remarks>
     /// <exception cref="ArgumentNullException">An argument is <see langword="null"/>.</exception>
     /// <exception cref="ObjectDisposedException">One of the wrappers was disposed.</exception>
@@ -74,13 +109,37 @@ public static unsafe partial class DirectControlBinding
     public static Gst.ControlBinding NewAbsolute(
         Gst.Object @object,
         string propertyName,
+        Gst.ControlSource controlSource) =>
+        Create(@object, propertyName, controlSource, absolute: true);
+
+    /// <summary>
+    /// Binds a property to a control source that is described by control points,
+    /// taking the values of the source as they are.
+    /// </summary>
+    /// <param name="object">The object whose property is bound.</param>
+    /// <param name="propertyName">The name of the property.</param>
+    /// <param name="controlSource">The control source to follow.</param>
+    /// <returns>
+    /// The binding, which is not attached yet:
+    /// <see cref="Gst.Object.AddControlBinding"/> is what attaches it.
+    /// </returns>
+    /// <remarks>
+    /// This is
+    /// <see cref="NewAbsolute(Gst.Object, string, Gst.ControlSource)"/> with the
+    /// narrower parameter the first release of this module published.
+    /// </remarks>
+    /// <exception cref="ArgumentNullException">An argument is <see langword="null"/>.</exception>
+    /// <exception cref="ObjectDisposedException">One of the wrappers was disposed.</exception>
+    public static Gst.ControlBinding NewAbsolute(
+        Gst.Object @object,
+        string propertyName,
         TimedValueControlSource controlSource) =>
         Create(@object, propertyName, controlSource, absolute: true);
 
     private static Gst.ControlBinding Create(
         Gst.Object @object,
         string propertyName,
-        TimedValueControlSource controlSource,
+        Gst.ControlSource controlSource,
         bool absolute)
     {
         ArgumentNullException.ThrowIfNull(@object);

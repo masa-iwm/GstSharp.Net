@@ -11,12 +11,14 @@ namespace Gst.Controller;
 /// <para>
 /// The pairs are the control points, and what a concrete source does with them
 /// is its own business: <see cref="InterpolationControlSource"/> interpolates
-/// between them. Setting the same timestamp twice replaces the value there.
+/// between them, <see cref="TriggerControlSource"/> answers at them and nowhere
+/// else. Setting the same timestamp twice replaces the value there.
 /// </para>
 /// <para>
 /// A control source on its own changes nothing. It is attached to a property of
 /// a <see cref="Gst.Object"/> through a control binding —
-/// <see cref="DirectControlBinding.New"/> — and the property then follows it
+/// <see cref="DirectControlBinding.New(Gst.Object, string, Gst.ControlSource)"/> — and the property then
+/// follows it
 /// whenever <c>gst_object_sync_values</c> runs, which for an element inside a
 /// running pipeline is once per buffer.
 /// </para>
@@ -171,8 +173,8 @@ public abstract unsafe partial class TimedValueControlSource : Gst.ControlSource
 
     /// <summary>
     /// The wrapper of a native type that derives from
-    /// <c>GstTimedValueControlSource</c> and has no binding of its own, for
-    /// example <c>GstTriggerControlSource</c>.
+    /// <c>GstTimedValueControlSource</c> and has no wrapper class of its own —
+    /// one that a later release of GStreamer, or another library, adds.
     /// </summary>
     private sealed class Concrete : TimedValueControlSource
     {

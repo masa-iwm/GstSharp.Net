@@ -13,7 +13,7 @@ namespace Gst.Controller;
 /// Set the control points with
 /// <see cref="TimedValueControlSource.Set(Gst.ClockTime, double)"/>, pick a
 /// <see cref="Mode"/>, and attach the source to a property with
-/// <see cref="DirectControlBinding.New"/>:
+/// <see cref="DirectControlBinding.New(Gst.Object, string, Gst.ControlSource)"/>:
 /// </para>
 /// <code>
 /// InterpolationControlSource source = InterpolationControlSource.New();
@@ -26,7 +26,7 @@ namespace Gst.Controller;
 /// <para>
 /// The values are in <c>[0, 1]</c> and the binding maps them onto the range the
 /// bound property declares, unless it is an absolute binding — see
-/// <see cref="DirectControlBinding.NewAbsolute"/>.
+/// <see cref="DirectControlBinding.NewAbsolute(Gst.Object, string, Gst.ControlSource)"/>.
 /// </para>
 /// </remarks>
 public sealed unsafe partial class InterpolationControlSource : TimedValueControlSource

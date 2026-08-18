@@ -10,7 +10,7 @@ extension surface — a **module SPI** — for exactly that, and this page is th
 contract that comes with it.
 
 `src/GstSharp.Net.Controller` is the worked example. It is a real shipping
-module, it binds the useful heart of `libgstcontroller-1.0`, its wrappers derive
+module, it binds the whole of `libgstcontroller-1.0`, its wrappers derive
 from the generated `Gst.ControlSource`, and **it is built with no
 `InternalsVisibleTo` in either direction**: nothing grants it the internals of
 `GstSharp.Net`, and it grants nothing to anybody. That it compiles is what
@@ -130,6 +130,10 @@ private static ModuleTypeEntry[] CreateEntries() =>
 [
     new ModuleTypeEntry(&InterpolationControlSource.GetGType,
                         &InterpolationControlSource.CreateWrapper),
+    new ModuleTypeEntry(&LFOControlSource.GetGType,
+                        &LFOControlSource.CreateWrapper),
+    new ModuleTypeEntry(&TriggerControlSource.GetGType,
+                        &TriggerControlSource.CreateWrapper),
     new ModuleTypeEntry(&TimedValueControlSource.GetGType,
                         &TimedValueControlSource.CreateWrapper),
 ];
@@ -161,15 +165,16 @@ Two entries worth thinking about before you add them:
 
 * **An abstract native type is worth registering.** No instance of
   `GstTimedValueControlSource` exists, but a type that derives from it and has no
-  binding — `GstTriggerControlSource` — is then wrapped through your class
-  instead of falling back further.
+  wrapper class of its own — one a later GStreamer release, or another library,
+  adds — is then wrapped through your class instead of falling back further.
 * **Do not register a type whose wrapper you did not write.** An entry replaces
   whatever the registry would otherwise have chosen for that `GType`, including
   a perfectly good wrapper from `GstSharp.Net`. The example binds
-  `gst_direct_control_binding_new` as a factory returning the existing
-  `Gst.ControlBinding` and deliberately registers no entry for
-  `GstDirectControlBinding`, so that `Gst.Object.GetControlBinding` keeps
-  answering what it always answered.
+  `gst_direct_control_binding_new`, `gst_argb_control_binding_new` and
+  `gst_proxy_control_binding_new` as factories returning the existing
+  `Gst.ControlBinding` and deliberately registers no entry for any of the three
+  binding types, so that `Gst.Object.GetControlBinding` keeps answering what it
+  always answered.
 
 ### 3. The wrapper classes
 
@@ -299,9 +304,11 @@ but its closed set of base classes is the one that ships in `GstSharp.Net` and
 
 ## The worked example
 
-[`src/GstSharp.Net.Controller`](../src/GstSharp.Net.Controller) binds the part of
-`libgstcontroller-1.0` that most applications want: a control source whose timed
-values drive a property of an element over stream time.
+[`src/GstSharp.Net.Controller`](../src/GstSharp.Net.Controller) binds all of
+`libgstcontroller-1.0`: the three control sources, the three control bindings and
+the timed value base they share. The one most applications want is the first
+row of the second half of this table — a control source whose timed values drive
+a property of an element over stream time.
 
 | File | What it shows |
 | --- | --- |
@@ -310,7 +317,11 @@ values drive a property of an element over stream time.
 | [`GstController.cs`](../src/GstSharp.Net.Controller/GstController.cs) | The public `Initialize()` a module owes its users. |
 | [`TimedValueControlSource.cs`](../src/GstSharp.Net.Controller/TimedValueControlSource.cs) | A wrapper class deriving from the *generated* `Gst.ControlSource`: the protected constructor, `GetGType` and `CreateWrapper`, a `Concrete` for the abstract type. |
 | [`InterpolationControlSource.cs`](../src/GstSharp.Net.Controller/InterpolationControlSource.cs) | A factory through `FromNative`, and a `GValue` property round trip. |
+| [`TriggerControlSource.cs`](../src/GstSharp.Net.Controller/TriggerControlSource.cs) | A second concrete class on the same base, with its property read through `GetProperty<T>` and `SetProperty` instead. |
+| [`LFOControlSource.cs`](../src/GstSharp.Net.Controller/LFOControlSource.cs) | Attaching one level higher up, at the generated `Gst.ControlSource`, because that is where the native type attaches. |
 | [`DirectControlBinding.cs`](../src/GstSharp.Net.Controller/DirectControlBinding.cs) | Binding a constructor function as a factory that returns the *generated* wrapper. |
+| [`ARGBControlBinding.cs`](../src/GstSharp.Net.Controller/ARGBControlBinding.cs) | The same shape with four control sources, for a packed colour property. |
+| [`ProxyControlBinding.cs`](../src/GstSharp.Net.Controller/ProxyControlBinding.cs) | The same shape again, for a binding that forwards to the binding of another object. |
 
 Using it:
 
