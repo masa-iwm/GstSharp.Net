@@ -372,7 +372,7 @@ Everything the scripts write goes below `artifacts/`, which is ignored by git.
 | --- | --- | --- |
 | `actions/checkout` `v7`, `actions/upload-artifact` `v7`, `actions/setup-dotnet` `v6`, `actions/cache` `v6` | major version only | current major versions; a major bump is a deliberate edit |
 | `msys2/setup-msys2` | `v2` | the `msys2-location` output the MinGW job reads |
-| .NET SDK | `global.json` (`10.0.300`, `rollForward: latestFeature`) | one place for the SDK version |
+| .NET SDK | `global.json` (`10.0.100`, `rollForward: latestFeature`) | one place for the SDK version. The floor is the whole .NET 10 line rather than a feature band: every gate — build, the four test suites, generator determinism, package validation and the NativeAOT publish — was verified on 10.0.111, so a narrower floor would turn a working SDK away. `latestFeature` still selects the newest band that is installed, and CI installs what this file asks for, so the floor is what gets exercised |
 | Package validation baseline | `1.28.1` (`PackageValidationBaselineVersion` in `src/Directory.Build.props`) | the release the compatibility promise counts from; it moves with the GStreamer series, not with the patch level |
 | GStreamer, Windows MSVC | `1.28.6` (`GSTREAMER_VERSION` in the job) | the version the binding is generated from |
 | GStreamer, Windows MinGW | whatever MSYS2 ships | the MSYS2 packages are not versioned per release; the ABI probes only require >= 1.24 |
