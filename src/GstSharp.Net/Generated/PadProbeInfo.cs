@@ -133,6 +133,99 @@ public sealed unsafe partial class PadProbeInfo
         return nativeResult;
     }
 
+    /// <summary>Updates @info with @buffer or %NULL.</summary>
+    /// <remarks>
+    /// <para>
+    /// The <c>buffer</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a reference of its own and the wrapper is disposed afterwards, which
+    /// leaves the native reference count exactly where the C call leaves it.
+    /// <see cref="Gst.MiniObject.Dispose()"/> is idempotent, so a <c>using</c>
+    /// declaration around the argument stays correct.
+    /// </para>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
+    /// <param name="buffer">
+    /// The <c>buffer</c> argument.
+    /// The call consumes it: <paramref name="buffer"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// It may be <see langword="null"/>, which is the absence of a payload and leaves
+    /// nothing to consume.
+    /// </param>
+    /// <exception cref="ObjectDisposedException">
+    /// This wrapper or <paramref name="buffer"/> was disposed.
+    /// </exception>
+    public void SetBuffer(Gst.Buffer? buffer)
+    {
+        nint instanceHandle = Handle;
+        nint bufferNative = buffer is null ? 0 : buffer.Handle;
+        nint bufferOwned = buffer is null ? 0 : Gst.GstNative.MiniObjectRef(bufferNative);
+        GstPadProbeInfoSetBuffer(instanceHandle, bufferOwned);
+        System.GC.KeepAlive(this);
+        buffer?.Dispose();
+    }
+
+    /// <summary>Updates @info with @list or %NULL.</summary>
+    /// <remarks>
+    /// <para>
+    /// The <c>list</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a reference of its own and the wrapper is disposed afterwards, which
+    /// leaves the native reference count exactly where the C call leaves it.
+    /// <see cref="Gst.MiniObject.Dispose()"/> is idempotent, so a <c>using</c>
+    /// declaration around the argument stays correct.
+    /// </para>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
+    /// <param name="list">
+    /// The <c>list</c> argument.
+    /// The call consumes it: <paramref name="list"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// It may be <see langword="null"/>, which is the absence of a payload and leaves
+    /// nothing to consume.
+    /// </param>
+    /// <exception cref="ObjectDisposedException">
+    /// This wrapper or <paramref name="list"/> was disposed.
+    /// </exception>
+    public void SetBufferList(Gst.BufferList? list)
+    {
+        nint instanceHandle = Handle;
+        nint listNative = list is null ? 0 : list.Handle;
+        nint listOwned = list is null ? 0 : Gst.GstNative.MiniObjectRef(listNative);
+        GstPadProbeInfoSetBufferList(instanceHandle, listOwned);
+        System.GC.KeepAlive(this);
+        list?.Dispose();
+    }
+
+    /// <summary>Updates @info with @event or %NULL.</summary>
+    /// <remarks>
+    /// <para>
+    /// The <c>event</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a reference of its own and the wrapper is disposed afterwards, which
+    /// leaves the native reference count exactly where the C call leaves it.
+    /// <see cref="Gst.MiniObject.Dispose()"/> is idempotent, so a <c>using</c>
+    /// declaration around the argument stays correct.
+    /// </para>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
+    /// <param name="event">
+    /// The <c>@event</c> argument.
+    /// The call consumes it: <paramref name="event"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// It may be <see langword="null"/>, which is the absence of a payload and leaves
+    /// nothing to consume.
+    /// </param>
+    /// <exception cref="ObjectDisposedException">
+    /// This wrapper or <paramref name="event"/> was disposed.
+    /// </exception>
+    public void SetEvent(Gst.Event? @event)
+    {
+        nint instanceHandle = Handle;
+        nint @eventNative = @event is null ? 0 : @event.Handle;
+        nint @eventOwned = @event is null ? 0 : Gst.GstNative.MiniObjectRef(@eventNative);
+        GstPadProbeInfoSetEvent(instanceHandle, @eventOwned);
+        System.GC.KeepAlive(this);
+        @event?.Dispose();
+    }
+
     /// <summary>Updates @info with @flow_ret.</summary>
     /// <remarks>
     /// <para>Available since GStreamer 1.28.</para>
@@ -175,6 +268,18 @@ public sealed unsafe partial class PadProbeInfo
     /// <summary>The <c>gst_pad_probe_info_get_size</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_pad_probe_info_get_size")]
     private static partial nuint GstPadProbeInfoGetSize(nint info);
+
+    /// <summary>The <c>gst_pad_probe_info_set_buffer</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_pad_probe_info_set_buffer")]
+    private static partial void GstPadProbeInfoSetBuffer(nint info, nint buffer);
+
+    /// <summary>The <c>gst_pad_probe_info_set_buffer_list</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_pad_probe_info_set_buffer_list")]
+    private static partial void GstPadProbeInfoSetBufferList(nint info, nint list);
+
+    /// <summary>The <c>gst_pad_probe_info_set_event</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_pad_probe_info_set_event")]
+    private static partial void GstPadProbeInfoSetEvent(nint info, nint @event);
 
     /// <summary>The <c>gst_pad_probe_info_set_flow_return</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_pad_probe_info_set_flow_return")]

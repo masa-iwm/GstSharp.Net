@@ -312,6 +312,41 @@ public sealed unsafe partial class Event : Gst.MiniObject
             ?? throw new InvalidOperationException("gst_event_new_latency returned no value.");
     }
 
+    /// <summary>Create a new navigation event from the given description.</summary>
+    /// <remarks>
+    /// <para>
+    /// The <c>structure</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a copy of the value and the wrapper is disposed afterwards, which
+    /// leaves the caller with exactly what the C call leaves it with. A boxed
+    /// value has no reference count to raise, so the copy is what a reference is
+    /// there. <see cref="Gst.GObject.Boxed.Dispose()"/> is idempotent, so a
+    /// <c>using</c> declaration around the argument stays correct.
+    /// </para>
+    /// </remarks>
+    /// <param name="structure">
+    /// The <c>structure</c> argument.
+    /// The call consumes it: <paramref name="structure"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// </param>
+    /// <returns>a new #GstEvent</returns>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="structure"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    /// <paramref name="structure"/> was disposed.
+    /// </exception>
+    public static Gst.Event NewNavigation(Gst.Structure structure)
+    {
+        ArgumentNullException.ThrowIfNull(structure);
+        nint structureNative = structure.Handle;
+        nuint structureType = structure.BoxedType.Value;
+        nint structureOwned = Gst.Interop.GObjectNative.BoxedCopy(structureType, structureNative);
+        nint nativeResult = GstEventNewNavigation(structureOwned);
+        structure.Dispose();
+        return Gst.Event.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_event_new_navigation returned no value.");
+    }
+
     /// <summary>
     /// Creates a new event containing information specific to a particular
     /// protection system (uniquely identified by @system_id), by which that
@@ -703,6 +738,46 @@ public sealed unsafe partial class Event : Gst.MiniObject
         nint nativeResult = GstEventNewStreamStart(streamIdScope.Pointer);
         return Gst.Event.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_event_new_stream_start returned no value.");
+    }
+
+    /// <summary>Generates a metadata tag event from the given @taglist.</summary>
+    /// <remarks>
+    /// <para>
+    /// The scope of the taglist specifies if the taglist applies to the
+    /// complete medium or only to this specific stream. As the tag event
+    /// is a sticky event, elements should merge tags received from
+    /// upstream with a given scope with their own tags with the same
+    /// scope and create a new tag event from it.
+    /// </para>
+    /// <para>
+    /// The <c>taglist</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a reference of its own and the wrapper is disposed afterwards, which
+    /// leaves the native reference count exactly where the C call leaves it.
+    /// <see cref="Gst.MiniObject.Dispose()"/> is idempotent, so a <c>using</c>
+    /// declaration around the argument stays correct.
+    /// </para>
+    /// </remarks>
+    /// <param name="taglist">
+    /// The <c>taglist</c> argument.
+    /// The call consumes it: <paramref name="taglist"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// </param>
+    /// <returns>a new #GstEvent</returns>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="taglist"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    /// <paramref name="taglist"/> was disposed.
+    /// </exception>
+    public static Gst.Event NewTag(Gst.TagList taglist)
+    {
+        ArgumentNullException.ThrowIfNull(taglist);
+        nint taglistNative = taglist.Handle;
+        nint taglistOwned = Gst.GstNative.MiniObjectRef(taglistNative);
+        nint nativeResult = GstEventNewTag(taglistOwned);
+        taglist.Dispose();
+        return Gst.Event.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_event_new_tag returned no value.");
     }
 
     /// <summary>
@@ -1348,6 +1423,10 @@ public sealed unsafe partial class Event : Gst.MiniObject
     [LibraryImport("Gst", EntryPoint = "gst_event_new_latency")]
     private static partial nint GstEventNewLatency(ulong latency);
 
+    /// <summary>The <c>gst_event_new_navigation</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_event_new_navigation")]
+    private static partial nint GstEventNewNavigation(nint structure);
+
     /// <summary>The <c>gst_event_new_protection</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_event_new_protection")]
     private static partial nint GstEventNewProtection(byte* systemId, nint data, byte* origin);
@@ -1391,6 +1470,10 @@ public sealed unsafe partial class Event : Gst.MiniObject
     /// <summary>The <c>gst_event_new_stream_start</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_event_new_stream_start")]
     private static partial nint GstEventNewStreamStart(byte* streamId);
+
+    /// <summary>The <c>gst_event_new_tag</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_event_new_tag")]
+    private static partial nint GstEventNewTag(nint taglist);
 
     /// <summary>The <c>gst_event_new_toc</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_event_new_toc")]

@@ -171,6 +171,36 @@ public sealed unsafe partial class Toc : Gst.GObject.Boxed
         System.GC.KeepAlive(tags);
     }
 
+    /// <summary>Set a #GstTagList with tags for the complete @toc.</summary>
+    /// <remarks>
+    /// <para>
+    /// The <c>tags</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a reference of its own and the wrapper is disposed afterwards, which
+    /// leaves the native reference count exactly where the C call leaves it.
+    /// <see cref="Gst.MiniObject.Dispose()"/> is idempotent, so a <c>using</c>
+    /// declaration around the argument stays correct.
+    /// </para>
+    /// </remarks>
+    /// <param name="tags">
+    /// The <c>tags</c> argument.
+    /// The call consumes it: <paramref name="tags"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// It may be <see langword="null"/>, which is the absence of a payload and leaves
+    /// nothing to consume.
+    /// </param>
+    /// <exception cref="ObjectDisposedException">
+    /// This wrapper or <paramref name="tags"/> was disposed.
+    /// </exception>
+    public void SetTags(Gst.TagList? tags)
+    {
+        nint instanceHandle = Handle;
+        nint tagsNative = tags is null ? 0 : tags.Handle;
+        nint tagsOwned = tags is null ? 0 : Gst.GstNative.MiniObjectRef(tagsNative);
+        GstTocSetTags(instanceHandle, tagsOwned);
+        System.GC.KeepAlive(this);
+        tags?.Dispose();
+    }
+
     /// <summary>The <c>gst_toc_new</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_toc_new")]
     private static partial nint GstTocNew(int scope);
@@ -198,6 +228,10 @@ public sealed unsafe partial class Toc : Gst.GObject.Boxed
     /// <summary>The <c>gst_toc_merge_tags</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_toc_merge_tags")]
     private static partial void GstTocMergeTags(nint toc, nint tags, int mode);
+
+    /// <summary>The <c>gst_toc_set_tags</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_toc_set_tags")]
+    private static partial void GstTocSetTags(nint toc, nint tags);
 
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstToc</c> under.</summary>
     /// <returns>The type of the instances of this wrapper.</returns>

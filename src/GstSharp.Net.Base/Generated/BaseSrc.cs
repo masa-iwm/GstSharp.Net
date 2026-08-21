@@ -490,6 +490,57 @@ public abstract unsafe partial class BaseSrc : Gst.Element
     }
 
     /// <summary>
+    /// Subclasses can call this from their create virtual method implementation
+    /// to submit a buffer list to be pushed out later. This is useful in
+    /// cases where the create function wants to produce multiple buffers to be
+    /// pushed out in one go in form of a #GstBufferList, which can reduce overhead
+    /// drastically, especially for packetised inputs (for data streams where
+    /// the packetisation/chunking is not important it is usually more efficient
+    /// to return larger buffers instead).
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Subclasses that use this function from their create function must return
+    /// %GST_FLOW_OK and no buffer from their create virtual method implementation.
+    /// If a buffer is returned after a buffer list has also been submitted via this
+    /// function the behaviour is undefined.
+    /// </para>
+    /// <para>
+    /// Subclasses must only call this function once per create function call and
+    /// subclasses must only call this function when the source operates in push
+    /// mode.
+    /// </para>
+    /// <para>
+    /// The <c>bufferList</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a reference of its own and the wrapper is disposed afterwards, which
+    /// leaves the native reference count exactly where the C call leaves it.
+    /// <see cref="Gst.MiniObject.Dispose()"/> is idempotent, so a <c>using</c>
+    /// declaration around the argument stays correct.
+    /// </para>
+    /// </remarks>
+    /// <param name="bufferList">
+    /// The <c>bufferList</c> argument.
+    /// The call consumes it: <paramref name="bufferList"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// </param>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="bufferList"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    /// This wrapper or <paramref name="bufferList"/> was disposed.
+    /// </exception>
+    public void SubmitBufferList(Gst.BufferList bufferList)
+    {
+        ArgumentNullException.ThrowIfNull(bufferList);
+        nint instanceHandle = Handle;
+        nint bufferListNative = bufferList.Handle;
+        nint bufferListOwned = Gst.GstNative.MiniObjectRef(bufferListNative);
+        GstBaseSrcSubmitBufferList(instanceHandle, bufferListOwned);
+        System.GC.KeepAlive(this);
+        bufferList.Dispose();
+    }
+
+    /// <summary>
     /// If the #GstBaseSrcClass::create method performs its own synchronisation
     /// against the clock it must unblock when going from PLAYING to the PAUSED state
     /// and call this method before continuing to produce the remaining data.
@@ -606,6 +657,10 @@ public abstract unsafe partial class BaseSrc : Gst.Element
     /// <summary>The <c>gst_base_src_start_wait</c> entry point.</summary>
     [LibraryImport("GstBase", EntryPoint = "gst_base_src_start_wait")]
     private static partial int GstBaseSrcStartWait(nint basesrc);
+
+    /// <summary>The <c>gst_base_src_submit_buffer_list</c> entry point.</summary>
+    [LibraryImport("GstBase", EntryPoint = "gst_base_src_submit_buffer_list")]
+    private static partial void GstBaseSrcSubmitBufferList(nint src, nint bufferList);
 
     /// <summary>The <c>gst_base_src_wait_playing</c> entry point.</summary>
     [LibraryImport("GstBase", EntryPoint = "gst_base_src_wait_playing")]

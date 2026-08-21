@@ -280,6 +280,49 @@ public sealed unsafe partial class Message : Gst.MiniObject
     }
 
     /// <summary>
+    /// Create a new element-specific message. This is meant as a generic way of
+    /// allowing one-way communication from an element to an application, for example
+    /// "the firewire cable was unplugged". The format of the message should be
+    /// documented in the element's documentation. The structure field can be %NULL.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The <c>structure</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a copy of the value and the wrapper is disposed afterwards, which
+    /// leaves the caller with exactly what the C call leaves it with. A boxed
+    /// value has no reference count to raise, so the copy is what a reference is
+    /// there. <see cref="Gst.GObject.Boxed.Dispose()"/> is idempotent, so a
+    /// <c>using</c> declaration around the argument stays correct.
+    /// </para>
+    /// </remarks>
+    /// <param name="src">The <c>src</c> argument.</param>
+    /// <param name="structure">
+    /// The <c>structure</c> argument.
+    /// The call consumes it: <paramref name="structure"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// </param>
+    /// <returns>The new element message.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="structure"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    /// <paramref name="structure"/> was disposed.
+    /// </exception>
+    public static Gst.Message NewElement(Gst.Object? src, Gst.Structure structure)
+    {
+        ArgumentNullException.ThrowIfNull(structure);
+        nint srcNative = src is null ? 0 : src.Handle;
+        nint structureNative = structure.Handle;
+        nuint structureType = structure.BoxedType.Value;
+        nint structureOwned = Gst.Interop.GObjectNative.BoxedCopy(structureType, structureNative);
+        nint nativeResult = GstMessageNewElement(srcNative, structureOwned);
+        System.GC.KeepAlive(src);
+        structure.Dispose();
+        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_message_new_element returned no value.");
+    }
+
+    /// <summary>
     /// Create a new eos message. This message is generated and posted in
     /// the sink elements of a GstBin. The bin will only forward the EOS
     /// message to the application if all sinks have posted an EOS message.
@@ -292,6 +335,42 @@ public sealed unsafe partial class Message : Gst.MiniObject
         System.GC.KeepAlive(src);
         return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_message_new_eos returned no value.");
+    }
+
+    /// <summary>This message is posted when an element has a new local #GstContext.</summary>
+    /// <remarks>
+    /// <para>
+    /// The <c>context</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a reference of its own and the wrapper is disposed afterwards, which
+    /// leaves the native reference count exactly where the C call leaves it.
+    /// <see cref="Gst.MiniObject.Dispose()"/> is idempotent, so a <c>using</c>
+    /// declaration around the argument stays correct.
+    /// </para>
+    /// </remarks>
+    /// <param name="src">The <c>src</c> argument.</param>
+    /// <param name="context">
+    /// The <c>context</c> argument.
+    /// The call consumes it: <paramref name="context"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// </param>
+    /// <returns>The new have-context message.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="context"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    /// <paramref name="context"/> was disposed.
+    /// </exception>
+    public static Gst.Message NewHaveContext(Gst.Object? src, Gst.Context context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        nint srcNative = src is null ? 0 : src.Handle;
+        nint contextNative = context.Handle;
+        nint contextOwned = Gst.GstNative.MiniObjectRef(contextNative);
+        nint nativeResult = GstMessageNewHaveContext(srcNative, contextOwned);
+        System.GC.KeepAlive(src);
+        context.Dispose();
+        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_message_new_have_context returned no value.");
     }
 
     /// <summary>
@@ -420,6 +499,93 @@ public sealed unsafe partial class Message : Gst.MiniObject
         System.GC.KeepAlive(src);
         return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_message_new_qos returned no value.");
+    }
+
+    /// <summary>
+    /// Creates a new redirect message and adds a new entry to it. Redirect messages
+    /// are posted when an element detects that the actual data has to be retrieved
+    /// from a different location. This is useful if such a redirection cannot be
+    /// handled inside a source element, for example when HTTP 302/303 redirects
+    /// return a non-HTTP URL.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The redirect message can hold multiple entries. The first one is added
+    /// when the redirect message is created, with the given location, tag_list,
+    /// entry_struct arguments. Use gst_message_add_redirect_entry() to add more
+    /// entries.
+    /// </para>
+    /// <para>
+    /// Each entry has a location, a tag list, and a structure. All of these are
+    /// optional. The tag list and structure are useful for additional metadata,
+    /// such as bitrate statistics for the given location.
+    /// </para>
+    /// <para>
+    /// By default, message recipients should treat entries in the order they are
+    /// stored. The recipient should therefore try entry \#0 first, and if this
+    /// entry is not acceptable or working, try entry \#1 etc. Senders must make
+    /// sure that they add entries in this order. However, recipients are free to
+    /// ignore the order and pick an entry that is "best" for them. One example
+    /// would be a recipient that scans the entries for the one with the highest
+    /// bitrate tag.
+    /// </para>
+    /// <para>
+    /// The specified location string is copied. However, ownership over the tag
+    /// list and structure are transferred to the message.
+    /// </para>
+    /// <para>
+    /// The <c>tagList</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a reference of its own and the wrapper is disposed afterwards, which
+    /// leaves the native reference count exactly where the C call leaves it.
+    /// <see cref="Gst.MiniObject.Dispose()"/> is idempotent, so a <c>using</c>
+    /// declaration around the argument stays correct.
+    /// </para>
+    /// <para>
+    /// The <c>entryStruct</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a copy of the value and the wrapper is disposed afterwards, which
+    /// leaves the caller with exactly what the C call leaves it with. A boxed
+    /// value has no reference count to raise, so the copy is what a reference is
+    /// there. <see cref="Gst.GObject.Boxed.Dispose()"/> is idempotent, so a
+    /// <c>using</c> declaration around the argument stays correct.
+    /// </para>
+    /// </remarks>
+    /// <param name="src">The <c>src</c> argument.</param>
+    /// <param name="location">The <c>location</c> argument.</param>
+    /// <param name="tagList">
+    /// The <c>tagList</c> argument.
+    /// The call consumes it: <paramref name="tagList"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// It may be <see langword="null"/>, which is the absence of a payload and leaves
+    /// nothing to consume.
+    /// </param>
+    /// <param name="entryStruct">
+    /// The <c>entryStruct</c> argument.
+    /// The call consumes it: <paramref name="entryStruct"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// It may be <see langword="null"/>, which is the absence of a payload and leaves
+    /// nothing to consume.
+    /// </param>
+    /// <returns>a newly allocated #GstMessage</returns>
+    /// <exception cref="ObjectDisposedException">
+    /// <paramref name="tagList"/> or <paramref name="entryStruct"/> was disposed.
+    /// </exception>
+    public static Gst.Message NewRedirect(Gst.Object? src, string location, Gst.TagList? tagList, Gst.Structure? entryStruct)
+    {
+        ArgumentNullException.ThrowIfNull(location);
+        nint srcNative = src is null ? 0 : src.Handle;
+        nint tagListNative = tagList is null ? 0 : tagList.Handle;
+        nint entryStructNative = entryStruct is null ? 0 : entryStruct.Handle;
+        nuint entryStructType = entryStruct is null ? 0 : entryStruct.BoxedType.Value;
+        System.Span<byte> locationBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope locationScope = Gst.Interop.GMarshal.StackUtf8(location, locationBuffer);
+        nint tagListOwned = tagList is null ? 0 : Gst.GstNative.MiniObjectRef(tagListNative);
+        nint entryStructOwned = entryStruct is null ? 0 : Gst.Interop.GObjectNative.BoxedCopy(entryStructType, entryStructNative);
+        nint nativeResult = GstMessageNewRedirect(srcNative, locationScope.Pointer, tagListOwned, entryStructOwned);
+        System.GC.KeepAlive(src);
+        tagList?.Dispose();
+        entryStruct?.Dispose();
+        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_message_new_redirect returned no value.");
     }
 
     /// <summary>
@@ -683,6 +849,45 @@ public sealed unsafe partial class Message : Gst.MiniObject
     }
 
     /// <summary>
+    /// Create a new tag message. The message will take ownership of the tag list.
+    /// The message is posted by elements that discovered a new taglist.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The <c>tagList</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a reference of its own and the wrapper is disposed afterwards, which
+    /// leaves the native reference count exactly where the C call leaves it.
+    /// <see cref="Gst.MiniObject.Dispose()"/> is idempotent, so a <c>using</c>
+    /// declaration around the argument stays correct.
+    /// </para>
+    /// </remarks>
+    /// <param name="src">The <c>src</c> argument.</param>
+    /// <param name="tagList">
+    /// The <c>tagList</c> argument.
+    /// The call consumes it: <paramref name="tagList"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// </param>
+    /// <returns>the new tag message.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="tagList"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    /// <paramref name="tagList"/> was disposed.
+    /// </exception>
+    public static Gst.Message NewTag(Gst.Object? src, Gst.TagList tagList)
+    {
+        ArgumentNullException.ThrowIfNull(tagList);
+        nint srcNative = src is null ? 0 : src.Handle;
+        nint tagListNative = tagList.Handle;
+        nint tagListOwned = Gst.GstNative.MiniObjectRef(tagListNative);
+        nint nativeResult = GstMessageNewTag(srcNative, tagListOwned);
+        System.GC.KeepAlive(src);
+        tagList.Dispose();
+        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_message_new_tag returned no value.");
+    }
+
+    /// <summary>
     /// Create a new TOC message. The message is posted by elements
     /// that discovered or updated a TOC.
     /// </summary>
@@ -698,6 +903,63 @@ public sealed unsafe partial class Message : Gst.MiniObject
         System.GC.KeepAlive(toc);
         return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_message_new_toc returned no value.");
+    }
+
+    /// <summary>Creates and appends a new entry.</summary>
+    /// <remarks>
+    /// <para>
+    /// The specified location string is copied. However, ownership over the tag
+    /// list and structure are transferred to the message.
+    /// </para>
+    /// <para>
+    /// The <c>tagList</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a reference of its own and the wrapper is disposed afterwards, which
+    /// leaves the native reference count exactly where the C call leaves it.
+    /// <see cref="Gst.MiniObject.Dispose()"/> is idempotent, so a <c>using</c>
+    /// declaration around the argument stays correct.
+    /// </para>
+    /// <para>
+    /// The <c>entryStruct</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a copy of the value and the wrapper is disposed afterwards, which
+    /// leaves the caller with exactly what the C call leaves it with. A boxed
+    /// value has no reference count to raise, so the copy is what a reference is
+    /// there. <see cref="Gst.GObject.Boxed.Dispose()"/> is idempotent, so a
+    /// <c>using</c> declaration around the argument stays correct.
+    /// </para>
+    /// </remarks>
+    /// <param name="location">The <c>location</c> argument.</param>
+    /// <param name="tagList">
+    /// The <c>tagList</c> argument.
+    /// The call consumes it: <paramref name="tagList"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// It may be <see langword="null"/>, which is the absence of a payload and leaves
+    /// nothing to consume.
+    /// </param>
+    /// <param name="entryStruct">
+    /// The <c>entryStruct</c> argument.
+    /// The call consumes it: <paramref name="entryStruct"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// It may be <see langword="null"/>, which is the absence of a payload and leaves
+    /// nothing to consume.
+    /// </param>
+    /// <exception cref="ObjectDisposedException">
+    /// This wrapper or <paramref name="tagList"/> or <paramref name="entryStruct"/> was disposed.
+    /// </exception>
+    public void AddRedirectEntry(string location, Gst.TagList? tagList, Gst.Structure? entryStruct)
+    {
+        ArgumentNullException.ThrowIfNull(location);
+        nint instanceHandle = Handle;
+        nint tagListNative = tagList is null ? 0 : tagList.Handle;
+        nint entryStructNative = entryStruct is null ? 0 : entryStruct.Handle;
+        nuint entryStructType = entryStruct is null ? 0 : entryStruct.BoxedType.Value;
+        System.Span<byte> locationBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope locationScope = Gst.Interop.GMarshal.StackUtf8(location, locationBuffer);
+        nint tagListOwned = tagList is null ? 0 : Gst.GstNative.MiniObjectRef(tagListNative);
+        nint entryStructOwned = entryStruct is null ? 0 : Gst.Interop.GObjectNative.BoxedCopy(entryStructType, entryStructNative);
+        GstMessageAddRedirectEntry(instanceHandle, locationScope.Pointer, tagListOwned, entryStructOwned);
+        System.GC.KeepAlive(this);
+        tagList?.Dispose();
+        entryStruct?.Dispose();
     }
 
     /// <summary>Returns the optional details structure of the message. May be NULL if none.</summary>
@@ -1474,6 +1736,42 @@ public sealed unsafe partial class Message : Gst.MiniObject
         System.GC.KeepAlive(this);
     }
 
+    /// <summary>
+    /// Add @details to @message. Will fail if the message already has details set on
+    /// it or if it is not writable.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The <c>details</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a copy of the value and the wrapper is disposed afterwards, which
+    /// leaves the caller with exactly what the C call leaves it with. A boxed
+    /// value has no reference count to raise, so the copy is what a reference is
+    /// there. <see cref="Gst.GObject.Boxed.Dispose()"/> is idempotent, so a
+    /// <c>using</c> declaration around the argument stays correct.
+    /// </para>
+    /// <para>Available since GStreamer 1.26.</para>
+    /// </remarks>
+    /// <param name="details">
+    /// The <c>details</c> argument.
+    /// The call consumes it: <paramref name="details"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// It may be <see langword="null"/>, which is the absence of a payload and leaves
+    /// nothing to consume.
+    /// </param>
+    /// <exception cref="ObjectDisposedException">
+    /// This wrapper or <paramref name="details"/> was disposed.
+    /// </exception>
+    public void SetDetails(Gst.Structure? details)
+    {
+        nint instanceHandle = Handle;
+        nint detailsNative = details is null ? 0 : details.Handle;
+        nuint detailsType = details is null ? 0 : details.BoxedType.Value;
+        nint detailsOwned = details is null ? 0 : Gst.Interop.GObjectNative.BoxedCopy(detailsType, detailsNative);
+        GstMessageSetDetails(instanceHandle, detailsOwned);
+        System.GC.KeepAlive(this);
+        details?.Dispose();
+    }
+
     /// <summary>Sets the group id on the stream-start message.</summary>
     /// <remarks>
     /// <para>
@@ -1652,9 +1950,17 @@ public sealed unsafe partial class Message : Gst.MiniObject
     [LibraryImport("Gst", EntryPoint = "gst_message_new_duration_changed")]
     private static partial nint GstMessageNewDurationChanged(nint src);
 
+    /// <summary>The <c>gst_message_new_element</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_new_element")]
+    private static partial nint GstMessageNewElement(nint src, nint structure);
+
     /// <summary>The <c>gst_message_new_eos</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_message_new_eos")]
     private static partial nint GstMessageNewEos(nint src);
+
+    /// <summary>The <c>gst_message_new_have_context</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_new_have_context")]
+    private static partial nint GstMessageNewHaveContext(nint src, nint context);
 
     /// <summary>The <c>gst_message_new_instant_rate_request</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_message_new_instant_rate_request")]
@@ -1679,6 +1985,10 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// <summary>The <c>gst_message_new_qos</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_message_new_qos")]
     private static partial nint GstMessageNewQos(nint src, int live, ulong runningTime, ulong streamTime, ulong timestamp, ulong duration);
+
+    /// <summary>The <c>gst_message_new_redirect</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_new_redirect")]
+    private static partial nint GstMessageNewRedirect(nint src, byte* location, nint tagList, nint entryStruct);
 
     /// <summary>The <c>gst_message_new_request_state</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_message_new_request_state")]
@@ -1732,9 +2042,17 @@ public sealed unsafe partial class Message : Gst.MiniObject
     [LibraryImport("Gst", EntryPoint = "gst_message_new_structure_change")]
     private static partial nint GstMessageNewStructureChange(nint src, int type, nint owner, int busy);
 
+    /// <summary>The <c>gst_message_new_tag</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_new_tag")]
+    private static partial nint GstMessageNewTag(nint src, nint tagList);
+
     /// <summary>The <c>gst_message_new_toc</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_message_new_toc")]
     private static partial nint GstMessageNewToc(nint src, nint toc, int updated);
+
+    /// <summary>The <c>gst_message_add_redirect_entry</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_add_redirect_entry")]
+    private static partial void GstMessageAddRedirectEntry(nint message, byte* location, nint tagList, nint entryStruct);
 
     /// <summary>The <c>gst_message_get_details</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_message_get_details")]
@@ -1911,6 +2229,10 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// <summary>The <c>gst_message_set_buffering_stats</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_message_set_buffering_stats")]
     private static partial void GstMessageSetBufferingStats(nint message, int mode, int avgIn, int avgOut, long bufferingLeft);
+
+    /// <summary>The <c>gst_message_set_details</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_set_details")]
+    private static partial void GstMessageSetDetails(nint message, nint details);
 
     /// <summary>The <c>gst_message_set_group_id</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_message_set_group_id")]

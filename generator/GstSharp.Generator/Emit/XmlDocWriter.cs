@@ -20,8 +20,9 @@ internal static class XmlDocWriter
 
     /// <summary>
     /// Writes a <c>&lt;summary&gt;</c> element, plus a <c>&lt;remarks&gt;</c>
-    /// element when the gir documentation has more than one paragraph or when
-    /// the member arrived after the supported floor.
+    /// element when the gir documentation has more than one paragraph, when the
+    /// caller has a generator authored note to append, or when the member
+    /// arrived after the supported floor.
     /// </summary>
     /// <param name="writer">The target writer.</param>
     /// <param name="doc">The gir documentation, if any.</param>
@@ -33,21 +34,37 @@ internal static class XmlDocWriter
     /// The gir element whose <c>version</c> attribute says which GStreamer the
     /// member needs, when the member has one to report.
     /// </param>
+    /// <param name="remarksNote">
+    /// Generator authored lines appended to the remarks, for the parts of the
+    /// contract that the gir does not state. They are emitted verbatim, after
+    /// whatever the gir had to say and before the availability paragraph, which
+    /// stays last.
+    /// </param>
     internal static void Write(
         CodeWriter writer,
         string? doc,
         string fallbackSummary,
-        GirNode? availability = null)
+        GirNode? availability = null,
+        IReadOnlyList<string>? remarksNote = null)
     {
         string? since = Availability.SinceVersion(availability);
         IReadOnlyList<IReadOnlyList<string>> paragraphs = SplitParagraphs(doc);
         if (paragraphs.Count == 0)
         {
             writer.WriteLine("/// <summary>" + fallbackSummary + "</summary>");
-            if (since is not null)
+            if (remarksNote is not null || since is not null)
             {
                 writer.WriteLine("/// <remarks>");
-                WriteSince(writer, since);
+                if (remarksNote is not null)
+                {
+                    WriteNote(writer, remarksNote);
+                }
+
+                if (since is not null)
+                {
+                    WriteSince(writer, since);
+                }
+
                 writer.WriteLine("/// </remarks>");
             }
 
@@ -55,12 +72,17 @@ internal static class XmlDocWriter
         }
 
         WriteSummary(writer, paragraphs[0]);
-        if (paragraphs.Count > 1 || since is not null)
+        if (paragraphs.Count > 1 || remarksNote is not null || since is not null)
         {
             writer.WriteLine("/// <remarks>");
             for (int i = 1; i < paragraphs.Count; i++)
             {
                 WriteParagraph(writer, paragraphs[i]);
+            }
+
+            if (remarksNote is not null)
+            {
+                WriteNote(writer, remarksNote);
             }
 
             if (since is not null)
@@ -82,8 +104,17 @@ internal static class XmlDocWriter
     /// The description used when there is no documentation. It is generator
     /// authored XML documentation markup and is emitted verbatim.
     /// </param>
-    internal static void WriteParam(CodeWriter writer, string name, string? doc, string fallback) =>
-        WriteElement(writer, "param name=\"" + name + "\"", "param", doc, fallback);
+    /// <param name="note">
+    /// Generator authored lines appended to the description, for the parts of
+    /// the contract that the gir does not state. They are emitted verbatim.
+    /// </param>
+    internal static void WriteParam(
+        CodeWriter writer,
+        string name,
+        string? doc,
+        string fallback,
+        IReadOnlyList<string>? note = null) =>
+        WriteElement(writer, "param name=\"" + name + "\"", "param", doc, fallback, note);
 
     /// <summary>
     /// Writes a <c>&lt;returns&gt;</c> element.

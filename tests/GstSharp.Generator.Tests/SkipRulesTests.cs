@@ -126,7 +126,16 @@ public sealed class SkipRulesTests
         // Every skip of the committed fixups is a symbol whose C contract the
         // gir does not describe, or one that hand written glue has taken over,
         // so the list is asserted whole: a symbol that is added or dropped is a
-        // decision, not a detail.
+        // decision, not a detail. The fifteen consuming calls that shipped in
+        // 1.28.2 as hand written members joined the list when the generator
+        // learned the consuming argument kind, so that the hand written surface
+        // stays canonical; gst_allocator_free joined it for the opposite
+        // reason, because the consuming recipe would free a memory block the
+        // wrapper still references. The toc append pair and
+        // gst_buffer_pool_release_buffer joined for a third: the callee keys
+        // on the writability of its consumed argument, which the reference the
+        // recipe mints makes fail on every call - the toc entry is never
+        // appended and the released buffer is never requeued.
         Assert.Equal(
             [
                 "GstBase.BitReader",
@@ -139,22 +148,41 @@ public sealed class SkipRulesTests
                 "gst_adapter_map",
                 "gst_adapter_take",
                 "gst_adapter_unmap",
+                "gst_allocator_free",
+                "gst_app_sink_set_simple_callbacks",
+                "gst_app_src_push_buffer",
+                "gst_app_src_set_simple_callbacks",
                 "gst_audio_buffer_unmap",
                 "gst_audio_ring_buffer_commit",
                 "gst_audio_ring_buffer_read",
+                "gst_buffer_pool_release_buffer",
+                "gst_buffer_pool_set_config",
                 "gst_buffer_remove_meta",
                 "gst_bus_set_sync_handler",
                 "gst_caps_features_add_static_str",
                 "gst_caps_features_new_single_static_str",
                 "gst_caps_new_static_str_empty_simple",
+                "gst_element_post_message",
+                "gst_element_send_event",
+                "gst_encoding_container_profile_add_profile",
+                "gst_event_new_custom",
                 "gst_id_str_set_static_str",
                 "gst_id_str_set_static_str_with_len",
+                "gst_message_new_application",
+                "gst_message_new_custom",
                 "gst_meta_info_register",
+                "gst_pad_push_event",
+                "gst_pad_send_event",
+                "gst_promise_reply",
+                "gst_query_new_custom",
                 "gst_rtsp_auth_credentials_free",
                 "gst_structure_new_static_str_empty",
                 "gst_structure_set_name_static_str",
+                "gst_toc_append_entry",
+                "gst_toc_entry_append_sub_entry",
                 "gst_type_find_peek",
                 "gst_video_frame_unmap",
+                "gst_webrtc_session_description_new",
             ],
             GirFixture.Overlays.SkippedIdentifiers.Order(StringComparer.Ordinal).ToArray());
 

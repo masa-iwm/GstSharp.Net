@@ -29,6 +29,52 @@ public sealed unsafe partial class Sample : Gst.MiniObject
     internal static Sample? FromNative(nint handle, Gst.Interop.Transfer transfer) =>
         handle == 0 ? null : new(handle, transfer);
 
+    /// <summary>Create a new #GstSample with the provided details.</summary>
+    /// <remarks>
+    /// <para>Free-function: gst_sample_unref</para>
+    /// <para>
+    /// The <c>info</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a copy of the value and the wrapper is disposed afterwards, which
+    /// leaves the caller with exactly what the C call leaves it with. A boxed
+    /// value has no reference count to raise, so the copy is what a reference is
+    /// there. <see cref="Gst.GObject.Boxed.Dispose()"/> is idempotent, so a
+    /// <c>using</c> declaration around the argument stays correct.
+    /// </para>
+    /// </remarks>
+    /// <param name="buffer">The <c>buffer</c> argument.</param>
+    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <param name="segment">The <c>segment</c> argument.</param>
+    /// <param name="info">
+    /// The <c>info</c> argument.
+    /// The call consumes it: <paramref name="info"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// It may be <see langword="null"/>, which is the absence of a payload and leaves
+    /// nothing to consume.
+    /// </param>
+    /// <returns>
+    /// the new #GstSample. gst_sample_unref()
+    ///     after usage.
+    /// </returns>
+    /// <exception cref="ObjectDisposedException">
+    /// <paramref name="info"/> was disposed.
+    /// </exception>
+    public static Gst.Sample New(Gst.Buffer? buffer, Gst.Caps? caps, Gst.Segment? segment, Gst.Structure? info)
+    {
+        nint bufferNative = buffer is null ? 0 : buffer.Handle;
+        nint capsNative = caps is null ? 0 : caps.Handle;
+        nint segmentNative = segment is null ? 0 : segment.Handle;
+        nint infoNative = info is null ? 0 : info.Handle;
+        nuint infoType = info is null ? 0 : info.BoxedType.Value;
+        nint infoOwned = info is null ? 0 : Gst.Interop.GObjectNative.BoxedCopy(infoType, infoNative);
+        nint nativeResult = GstSampleNew(bufferNative, capsNative, segmentNative, infoOwned);
+        System.GC.KeepAlive(buffer);
+        System.GC.KeepAlive(caps);
+        System.GC.KeepAlive(segment);
+        info?.Dispose();
+        return Gst.Sample.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_sample_new returned no value.");
+    }
+
     /// <summary>Get the buffer associated with @sample</summary>
     /// <returns>
     /// the buffer of @sample or %NULL
@@ -141,6 +187,45 @@ public sealed unsafe partial class Sample : Gst.MiniObject
         System.GC.KeepAlive(caps);
     }
 
+    /// <summary>
+    /// Set the info structure associated with @sample. @sample must be writable,
+    /// and @info must not have a parent set already.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The <c>info</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a copy of the value and the wrapper is disposed afterwards, which
+    /// leaves the caller with exactly what the C call leaves it with. A boxed
+    /// value has no reference count to raise, so the copy is what a reference is
+    /// there. <see cref="Gst.GObject.Boxed.Dispose()"/> is idempotent, so a
+    /// <c>using</c> declaration around the argument stays correct.
+    /// </para>
+    /// </remarks>
+    /// <param name="info">
+    /// The <c>info</c> argument.
+    /// The call consumes it: <paramref name="info"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// </param>
+    /// <returns>The result of <c>gst_sample_set_info</c>.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="info"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    /// This wrapper or <paramref name="info"/> was disposed.
+    /// </exception>
+    public bool SetInfo(Gst.Structure info)
+    {
+        ArgumentNullException.ThrowIfNull(info);
+        nint instanceHandle = Handle;
+        nint infoNative = info.Handle;
+        nuint infoType = info.BoxedType.Value;
+        nint infoOwned = Gst.Interop.GObjectNative.BoxedCopy(infoType, infoNative);
+        int nativeResult = GstSampleSetInfo(instanceHandle, infoOwned);
+        System.GC.KeepAlive(this);
+        info.Dispose();
+        return nativeResult != 0;
+    }
+
     /// <summary>Set the segment associated with @sample. @sample must be writable.</summary>
     /// <param name="segment">The <c>segment</c> argument.</param>
     public void SetSegment(Gst.Segment segment)
@@ -150,6 +235,10 @@ public sealed unsafe partial class Sample : Gst.MiniObject
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(segment);
     }
+
+    /// <summary>The <c>gst_sample_new</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_sample_new")]
+    private static partial nint GstSampleNew(nint buffer, nint caps, nint segment, nint info);
 
     /// <summary>The <c>gst_sample_get_buffer</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_sample_get_buffer")]
@@ -182,6 +271,10 @@ public sealed unsafe partial class Sample : Gst.MiniObject
     /// <summary>The <c>gst_sample_set_caps</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_sample_set_caps")]
     private static partial void GstSampleSetCaps(nint sample, nint caps);
+
+    /// <summary>The <c>gst_sample_set_info</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_sample_set_info")]
+    private static partial int GstSampleSetInfo(nint sample, nint info);
 
     /// <summary>The <c>gst_sample_set_segment</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_sample_set_segment")]

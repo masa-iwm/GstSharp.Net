@@ -58,6 +58,84 @@ public unsafe partial class ProxyPad : Gst.Pad
         return Gst.GObject.Object.FromNative<Gst.ProxyPad>(nativeResult, Gst.Interop.Transfer.Full);
     }
 
+    /// <summary>Invoke the default chain function of the proxy pad.</summary>
+    /// <remarks>
+    /// <para>
+    /// The <c>buffer</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a reference of its own and the wrapper is disposed afterwards, which
+    /// leaves the native reference count exactly where the C call leaves it.
+    /// <see cref="Gst.MiniObject.Dispose()"/> is idempotent, so a <c>using</c>
+    /// declaration around the argument stays correct.
+    /// </para>
+    /// </remarks>
+    /// <param name="pad">The <c>pad</c> argument.</param>
+    /// <param name="parent">The <c>parent</c> argument.</param>
+    /// <param name="buffer">
+    /// The <c>buffer</c> argument.
+    /// The call consumes it: <paramref name="buffer"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// </param>
+    /// <returns>a #GstFlowReturn from the pad.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="buffer"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    /// <paramref name="buffer"/> was disposed.
+    /// </exception>
+    public static Gst.FlowReturn ChainDefault(Gst.Pad pad, Gst.Object? parent, Gst.Buffer buffer)
+    {
+        ArgumentNullException.ThrowIfNull(pad);
+        ArgumentNullException.ThrowIfNull(buffer);
+        nint padNative = pad.Handle;
+        nint parentNative = parent is null ? 0 : parent.Handle;
+        nint bufferNative = buffer.Handle;
+        nint bufferOwned = Gst.GstNative.MiniObjectRef(bufferNative);
+        int nativeResult = GstProxyPadChainDefault(padNative, parentNative, bufferOwned);
+        System.GC.KeepAlive(pad);
+        System.GC.KeepAlive(parent);
+        buffer.Dispose();
+        return (Gst.FlowReturn)nativeResult;
+    }
+
+    /// <summary>Invoke the default chain list function of the proxy pad.</summary>
+    /// <remarks>
+    /// <para>
+    /// The <c>list</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a reference of its own and the wrapper is disposed afterwards, which
+    /// leaves the native reference count exactly where the C call leaves it.
+    /// <see cref="Gst.MiniObject.Dispose()"/> is idempotent, so a <c>using</c>
+    /// declaration around the argument stays correct.
+    /// </para>
+    /// </remarks>
+    /// <param name="pad">The <c>pad</c> argument.</param>
+    /// <param name="parent">The <c>parent</c> argument.</param>
+    /// <param name="list">
+    /// The <c>list</c> argument.
+    /// The call consumes it: <paramref name="list"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// </param>
+    /// <returns>a #GstFlowReturn from the pad.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="list"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    /// <paramref name="list"/> was disposed.
+    /// </exception>
+    public static Gst.FlowReturn ChainListDefault(Gst.Pad pad, Gst.Object? parent, Gst.BufferList list)
+    {
+        ArgumentNullException.ThrowIfNull(pad);
+        ArgumentNullException.ThrowIfNull(list);
+        nint padNative = pad.Handle;
+        nint parentNative = parent is null ? 0 : parent.Handle;
+        nint listNative = list.Handle;
+        nint listOwned = Gst.GstNative.MiniObjectRef(listNative);
+        int nativeResult = GstProxyPadChainListDefault(padNative, parentNative, listOwned);
+        System.GC.KeepAlive(pad);
+        System.GC.KeepAlive(parent);
+        list.Dispose();
+        return (Gst.FlowReturn)nativeResult;
+    }
+
     /// <summary>Invoke the default getrange function of the proxy pad.</summary>
     /// <param name="pad">The <c>pad</c> argument.</param>
     /// <param name="parent">The <c>parent</c> argument.</param>
@@ -96,6 +174,14 @@ public unsafe partial class ProxyPad : Gst.Pad
     /// <summary>The <c>gst_proxy_pad_get_internal</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_proxy_pad_get_internal")]
     private static partial nint GstProxyPadGetInternal(nint pad);
+
+    /// <summary>The <c>gst_proxy_pad_chain_default</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_proxy_pad_chain_default")]
+    private static partial int GstProxyPadChainDefault(nint pad, nint parent, nint buffer);
+
+    /// <summary>The <c>gst_proxy_pad_chain_list_default</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_proxy_pad_chain_list_default")]
+    private static partial int GstProxyPadChainListDefault(nint pad, nint parent, nint list);
 
     /// <summary>The <c>gst_proxy_pad_getrange_default</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_proxy_pad_getrange_default")]

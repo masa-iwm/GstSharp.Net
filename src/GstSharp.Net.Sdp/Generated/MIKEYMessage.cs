@@ -163,6 +163,40 @@ public sealed unsafe partial class MIKEYMessage : Gst.MiniObject
         return nativeResult != 0;
     }
 
+    /// <summary>Add a new payload to @msg.</summary>
+    /// <remarks>
+    /// <para>
+    /// The <c>payload</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a reference of its own and the wrapper is disposed afterwards, which
+    /// leaves the native reference count exactly where the C call leaves it.
+    /// <see cref="Gst.MiniObject.Dispose()"/> is idempotent, so a <c>using</c>
+    /// declaration around the argument stays correct.
+    /// </para>
+    /// </remarks>
+    /// <param name="payload">
+    /// The <c>payload</c> argument.
+    /// The call consumes it: <paramref name="payload"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// </param>
+    /// <returns>%TRUE on success</returns>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="payload"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    /// This wrapper or <paramref name="payload"/> was disposed.
+    /// </exception>
+    public bool AddPayload(Gst.Sdp.MIKEYPayload payload)
+    {
+        ArgumentNullException.ThrowIfNull(payload);
+        nint instanceHandle = Handle;
+        nint payloadNative = payload.Handle;
+        nint payloadOwned = Gst.GstNative.MiniObjectRef(payloadNative);
+        int nativeResult = GstMikeyMessageAddPayload(instanceHandle, payloadOwned);
+        System.GC.KeepAlive(this);
+        payload.Dispose();
+        return nativeResult != 0;
+    }
+
     /// <summary>Add a new PKE payload to @msg with the given parameters.</summary>
     /// <param name="c">The <c>c</c> argument.</param>
     /// <param name="data">the encrypted envelope key</param>
@@ -287,6 +321,44 @@ public sealed unsafe partial class MIKEYMessage : Gst.MiniObject
         return nativeResult != 0;
     }
 
+    /// <summary>
+    /// Insert the @payload at index @idx in @msg. If @idx is -1, the payload
+    /// will be appended to @msg.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The <c>payload</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a reference of its own and the wrapper is disposed afterwards, which
+    /// leaves the native reference count exactly where the C call leaves it.
+    /// <see cref="Gst.MiniObject.Dispose()"/> is idempotent, so a <c>using</c>
+    /// declaration around the argument stays correct.
+    /// </para>
+    /// </remarks>
+    /// <param name="idx">The <c>idx</c> argument.</param>
+    /// <param name="payload">
+    /// The <c>payload</c> argument.
+    /// The call consumes it: <paramref name="payload"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// </param>
+    /// <returns>%TRUE on success</returns>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="payload"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    /// This wrapper or <paramref name="payload"/> was disposed.
+    /// </exception>
+    public bool InsertPayload(uint idx, Gst.Sdp.MIKEYPayload payload)
+    {
+        ArgumentNullException.ThrowIfNull(payload);
+        nint instanceHandle = Handle;
+        nint payloadNative = payload.Handle;
+        nint payloadOwned = Gst.GstNative.MiniObjectRef(payloadNative);
+        int nativeResult = GstMikeyMessageInsertPayload(instanceHandle, idx, payloadOwned);
+        System.GC.KeepAlive(this);
+        payload.Dispose();
+        return nativeResult != 0;
+    }
+
     /// <summary>Remove the SRTP policy at @idx.</summary>
     /// <param name="idx">The <c>idx</c> argument.</param>
     /// <returns>%TRUE on success</returns>
@@ -316,6 +388,41 @@ public sealed unsafe partial class MIKEYMessage : Gst.MiniObject
         Gst.Sdp.MIKEYMapSRTP mapNative = map;
         int nativeResult = GstMikeyMessageReplaceCsSrtp(Handle, idx, &mapNative);
         System.GC.KeepAlive(this);
+        return nativeResult != 0;
+    }
+
+    /// <summary>Replace the payload at @idx in @msg with @payload.</summary>
+    /// <remarks>
+    /// <para>
+    /// The <c>payload</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a reference of its own and the wrapper is disposed afterwards, which
+    /// leaves the native reference count exactly where the C call leaves it.
+    /// <see cref="Gst.MiniObject.Dispose()"/> is idempotent, so a <c>using</c>
+    /// declaration around the argument stays correct.
+    /// </para>
+    /// </remarks>
+    /// <param name="idx">The <c>idx</c> argument.</param>
+    /// <param name="payload">
+    /// The <c>payload</c> argument.
+    /// The call consumes it: <paramref name="payload"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// </param>
+    /// <returns>%TRUE on success</returns>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="payload"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    /// This wrapper or <paramref name="payload"/> was disposed.
+    /// </exception>
+    public bool ReplacePayload(uint idx, Gst.Sdp.MIKEYPayload payload)
+    {
+        ArgumentNullException.ThrowIfNull(payload);
+        nint instanceHandle = Handle;
+        nint payloadNative = payload.Handle;
+        nint payloadOwned = Gst.GstNative.MiniObjectRef(payloadNative);
+        int nativeResult = GstMikeyMessageReplacePayload(instanceHandle, idx, payloadOwned);
+        System.GC.KeepAlive(this);
+        payload.Dispose();
         return nativeResult != 0;
     }
 
@@ -362,6 +469,10 @@ public sealed unsafe partial class MIKEYMessage : Gst.MiniObject
     [LibraryImport("GstSdp", EntryPoint = "gst_mikey_message_add_cs_srtp")]
     private static partial int GstMikeyMessageAddCsSrtp(nint msg, byte policy, uint ssrc, uint roc);
 
+    /// <summary>The <c>gst_mikey_message_add_payload</c> entry point.</summary>
+    [LibraryImport("GstSdp", EntryPoint = "gst_mikey_message_add_payload")]
+    private static partial int GstMikeyMessageAddPayload(nint msg, nint payload);
+
     /// <summary>The <c>gst_mikey_message_add_pke</c> entry point.</summary>
     [LibraryImport("GstSdp", EntryPoint = "gst_mikey_message_add_pke")]
     private static partial int GstMikeyMessageAddPke(nint msg, int c, ushort dataLen, byte* data);
@@ -402,6 +513,10 @@ public sealed unsafe partial class MIKEYMessage : Gst.MiniObject
     [LibraryImport("GstSdp", EntryPoint = "gst_mikey_message_insert_cs_srtp")]
     private static partial int GstMikeyMessageInsertCsSrtp(nint msg, int idx, Gst.Sdp.MIKEYMapSRTP* map);
 
+    /// <summary>The <c>gst_mikey_message_insert_payload</c> entry point.</summary>
+    [LibraryImport("GstSdp", EntryPoint = "gst_mikey_message_insert_payload")]
+    private static partial int GstMikeyMessageInsertPayload(nint msg, uint idx, nint payload);
+
     /// <summary>The <c>gst_mikey_message_remove_cs_srtp</c> entry point.</summary>
     [LibraryImport("GstSdp", EntryPoint = "gst_mikey_message_remove_cs_srtp")]
     private static partial int GstMikeyMessageRemoveCsSrtp(nint msg, int idx);
@@ -413,6 +528,10 @@ public sealed unsafe partial class MIKEYMessage : Gst.MiniObject
     /// <summary>The <c>gst_mikey_message_replace_cs_srtp</c> entry point.</summary>
     [LibraryImport("GstSdp", EntryPoint = "gst_mikey_message_replace_cs_srtp")]
     private static partial int GstMikeyMessageReplaceCsSrtp(nint msg, int idx, Gst.Sdp.MIKEYMapSRTP* map);
+
+    /// <summary>The <c>gst_mikey_message_replace_payload</c> entry point.</summary>
+    [LibraryImport("GstSdp", EntryPoint = "gst_mikey_message_replace_payload")]
+    private static partial int GstMikeyMessageReplacePayload(nint msg, uint idx, nint payload);
 
     /// <summary>The <c>gst_mikey_message_set_info</c> entry point.</summary>
     [LibraryImport("GstSdp", EntryPoint = "gst_mikey_message_set_info")]

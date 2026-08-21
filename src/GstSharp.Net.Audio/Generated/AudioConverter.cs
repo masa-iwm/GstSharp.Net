@@ -35,6 +35,54 @@ public sealed unsafe partial class AudioConverter : Gst.GObject.Boxed
         handle == 0 ? null : new(handle, transfer);
 
     /// <summary>
+    /// Create a new #GstAudioConverter that is able to convert between @in and @out
+    /// audio formats.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// @config contains extra configuration options, see `GST_AUDIO_CONVERTER_OPT_*`
+    /// parameters for details about the options and values.
+    /// </para>
+    /// <para>
+    /// The <c>config</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a copy of the value and the wrapper is disposed afterwards, which
+    /// leaves the caller with exactly what the C call leaves it with. A boxed
+    /// value has no reference count to raise, so the copy is what a reference is
+    /// there. <see cref="Gst.GObject.Boxed.Dispose()"/> is idempotent, so a
+    /// <c>using</c> declaration around the argument stays correct.
+    /// </para>
+    /// </remarks>
+    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <param name="inInfo">The <c>inInfo</c> argument.</param>
+    /// <param name="outInfo">The <c>outInfo</c> argument.</param>
+    /// <param name="config">
+    /// The <c>config</c> argument.
+    /// The call consumes it: <paramref name="config"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// It may be <see langword="null"/>, which is the absence of a payload and leaves
+    /// nothing to consume.
+    /// </param>
+    /// <returns>a #GstAudioConverter or %NULL if conversion is not possible.</returns>
+    /// <exception cref="ObjectDisposedException">
+    /// <paramref name="config"/> was disposed.
+    /// </exception>
+    public static Gst.Audio.AudioConverter? New(Gst.Audio.AudioConverterFlags flags, Gst.Audio.AudioInfo inInfo, Gst.Audio.AudioInfo outInfo, Gst.Structure? config)
+    {
+        ArgumentNullException.ThrowIfNull(inInfo);
+        ArgumentNullException.ThrowIfNull(outInfo);
+        nint inInfoNative = inInfo.Handle;
+        nint outInfoNative = outInfo.Handle;
+        nint configNative = config is null ? 0 : config.Handle;
+        nuint configType = config is null ? 0 : config.BoxedType.Value;
+        nint configOwned = config is null ? 0 : Gst.Interop.GObjectNative.BoxedCopy(configType, configNative);
+        nint nativeResult = GstAudioConverterNew((int)flags, inInfoNative, outInfoNative, configOwned);
+        System.GC.KeepAlive(inInfo);
+        System.GC.KeepAlive(outInfo);
+        config?.Dispose();
+        return Gst.Audio.AudioConverter.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+    }
+
+    /// <summary>
     /// Convenience wrapper around gst_audio_converter_samples(), which will
     /// perform allocation of the output buffer based on the result from
     /// gst_audio_converter_get_out_frames().
@@ -162,6 +210,63 @@ public sealed unsafe partial class AudioConverter : Gst.GObject.Boxed
         return nativeResult != 0;
     }
 
+    /// <summary>Set @in_rate, @out_rate and @config as extra configuration for @convert.</summary>
+    /// <remarks>
+    /// <para>
+    /// @in_rate and @out_rate specify the new sample rates of input and output
+    /// formats. A value of 0 leaves the sample rate unchanged.
+    /// </para>
+    /// <para>
+    /// @config can be %NULL, in which case, the current configuration is not
+    /// changed.
+    /// </para>
+    /// <para>
+    /// If the parameters in @config can not be set exactly, this function returns
+    /// %FALSE and will try to update as much state as possible. The new state can
+    /// then be retrieved and refined with gst_audio_converter_get_config().
+    /// </para>
+    /// <para>
+    /// Look at the `GST_AUDIO_CONVERTER_OPT_*` fields to check valid configuration
+    /// option and values.
+    /// </para>
+    /// <para>
+    /// The <c>config</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a copy of the value and the wrapper is disposed afterwards, which
+    /// leaves the caller with exactly what the C call leaves it with. A boxed
+    /// value has no reference count to raise, so the copy is what a reference is
+    /// there. <see cref="Gst.GObject.Boxed.Dispose()"/> is idempotent, so a
+    /// <c>using</c> declaration around the argument stays correct.
+    /// </para>
+    /// </remarks>
+    /// <param name="inRate">The <c>inRate</c> argument.</param>
+    /// <param name="outRate">The <c>outRate</c> argument.</param>
+    /// <param name="config">
+    /// The <c>config</c> argument.
+    /// The call consumes it: <paramref name="config"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// It may be <see langword="null"/>, which is the absence of a payload and leaves
+    /// nothing to consume.
+    /// </param>
+    /// <returns>%TRUE when the new parameters could be set</returns>
+    /// <exception cref="ObjectDisposedException">
+    /// This wrapper or <paramref name="config"/> was disposed.
+    /// </exception>
+    public bool UpdateConfig(int inRate, int outRate, Gst.Structure? config)
+    {
+        nint instanceHandle = Handle;
+        nint configNative = config is null ? 0 : config.Handle;
+        nuint configType = config is null ? 0 : config.BoxedType.Value;
+        nint configOwned = config is null ? 0 : Gst.Interop.GObjectNative.BoxedCopy(configType, configNative);
+        int nativeResult = GstAudioConverterUpdateConfig(instanceHandle, inRate, outRate, configOwned);
+        System.GC.KeepAlive(this);
+        config?.Dispose();
+        return nativeResult != 0;
+    }
+
+    /// <summary>The <c>gst_audio_converter_new</c> entry point.</summary>
+    [LibraryImport("GstAudio", EntryPoint = "gst_audio_converter_new")]
+    private static partial nint GstAudioConverterNew(int flags, nint inInfo, nint outInfo, nint config);
+
     /// <summary>The <c>gst_audio_converter_convert</c> entry point.</summary>
     [LibraryImport("GstAudio", EntryPoint = "gst_audio_converter_convert")]
     private static partial int GstAudioConverterConvert(nint convert, int flags, byte* @in, nuint inSize, nint* @out, nuint* outSize);
@@ -193,6 +298,10 @@ public sealed unsafe partial class AudioConverter : Gst.GObject.Boxed
     /// <summary>The <c>gst_audio_converter_supports_inplace</c> entry point.</summary>
     [LibraryImport("GstAudio", EntryPoint = "gst_audio_converter_supports_inplace")]
     private static partial int GstAudioConverterSupportsInplace(nint convert);
+
+    /// <summary>The <c>gst_audio_converter_update_config</c> entry point.</summary>
+    [LibraryImport("GstAudio", EntryPoint = "gst_audio_converter_update_config")]
+    private static partial int GstAudioConverterUpdateConfig(nint convert, int inRate, int outRate, nint config);
 
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstAudioConverter</c> under.</summary>
     /// <returns>The type of the instances of this wrapper.</returns>

@@ -431,6 +431,43 @@ public sealed unsafe partial class RTSPMessage : Gst.GObject.Boxed
     }
 
     /// <summary>
+    /// Set the body of @msg to @buffer. This method takes ownership of @buffer.
+    /// Any existing body or body buffer will be replaced by the new body.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The <c>buffer</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a reference of its own and the wrapper is disposed afterwards, which
+    /// leaves the native reference count exactly where the C call leaves it.
+    /// <see cref="Gst.MiniObject.Dispose()"/> is idempotent, so a <c>using</c>
+    /// declaration around the argument stays correct.
+    /// </para>
+    /// </remarks>
+    /// <param name="buffer">
+    /// The <c>buffer</c> argument.
+    /// The call consumes it: <paramref name="buffer"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// </param>
+    /// <returns>#GST_RTSP_OK.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="buffer"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    /// This wrapper or <paramref name="buffer"/> was disposed.
+    /// </exception>
+    public Gst.Rtsp.RTSPResult TakeBodyBuffer(Gst.Buffer buffer)
+    {
+        ArgumentNullException.ThrowIfNull(buffer);
+        nint instanceHandle = Handle;
+        nint bufferNative = buffer.Handle;
+        nint bufferOwned = Gst.GstNative.MiniObjectRef(bufferNative);
+        int nativeResult = GstRtspMessageTakeBodyBuffer(instanceHandle, bufferOwned);
+        System.GC.KeepAlive(this);
+        buffer.Dispose();
+        return (Gst.Rtsp.RTSPResult)nativeResult;
+    }
+
+    /// <summary>
     /// Add a header with key @field and @value to @msg. This function takes
     /// ownership of @value.
     /// </summary>
@@ -572,6 +609,10 @@ public sealed unsafe partial class RTSPMessage : Gst.GObject.Boxed
     /// <summary>The <c>gst_rtsp_message_steal_body_buffer</c> entry point.</summary>
     [LibraryImport("GstRtsp", EntryPoint = "gst_rtsp_message_steal_body_buffer")]
     private static partial int GstRtspMessageStealBodyBuffer(nint msg, nint* buffer);
+
+    /// <summary>The <c>gst_rtsp_message_take_body_buffer</c> entry point.</summary>
+    [LibraryImport("GstRtsp", EntryPoint = "gst_rtsp_message_take_body_buffer")]
+    private static partial int GstRtspMessageTakeBodyBuffer(nint msg, nint buffer);
 
     /// <summary>The <c>gst_rtsp_message_take_header</c> entry point.</summary>
     [LibraryImport("GstRtsp", EntryPoint = "gst_rtsp_message_take_header")]

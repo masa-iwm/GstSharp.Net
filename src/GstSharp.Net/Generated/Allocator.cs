@@ -105,6 +105,43 @@ public abstract unsafe partial class Allocator : Gst.Object
         return Gst.GObject.Object.FromNative<Gst.Allocator>(nativeResult, Gst.Interop.Transfer.Full);
     }
 
+    /// <summary>Registers the memory @allocator with @name.</summary>
+    /// <remarks>
+    /// <para>
+    /// The <c>allocator</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a reference of its own and the wrapper is disposed afterwards, which
+    /// leaves the native reference count exactly where the C call leaves it. A
+    /// GObject wrapper is interned, so disposing it gives the object up for the
+    /// whole process rather than for one holder: after this call there is no
+    /// wrapper for that object anywhere.
+    /// <see cref="Gst.GObject.Object.Dispose()"/> is idempotent, so a <c>using</c>
+    /// declaration around the argument stays correct.
+    /// </para>
+    /// </remarks>
+    /// <param name="name">The <c>name</c> argument.</param>
+    /// <param name="allocator">
+    /// The <c>allocator</c> argument.
+    /// The call consumes it: <paramref name="allocator"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// </param>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="allocator"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    /// <paramref name="allocator"/> was disposed.
+    /// </exception>
+    public static void Register(string name, Gst.Allocator allocator)
+    {
+        ArgumentNullException.ThrowIfNull(name);
+        ArgumentNullException.ThrowIfNull(allocator);
+        nint allocatorNative = allocator.Handle;
+        System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
+        nint allocatorOwned = Gst.Interop.GObjectNative.ObjectRef(allocatorNative);
+        GstAllocatorRegister(nameScope.Pointer, allocatorOwned);
+        allocator.Dispose();
+    }
+
     /// <summary>The <c>gst_allocator_alloc</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_allocator_alloc")]
     private static partial nint GstAllocatorAlloc(nint allocator, nuint size, nint @params);
@@ -112,6 +149,10 @@ public abstract unsafe partial class Allocator : Gst.Object
     /// <summary>The <c>gst_allocator_find</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_allocator_find")]
     private static partial nint GstAllocatorFind(byte* name);
+
+    /// <summary>The <c>gst_allocator_register</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_allocator_register")]
+    private static partial void GstAllocatorRegister(byte* name, nint allocator);
 
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstAllocator</c> under.</summary>
     /// <returns>The type of the instances of this wrapper.</returns>

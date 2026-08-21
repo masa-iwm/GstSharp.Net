@@ -129,6 +129,135 @@ public sealed unsafe partial class Caps : Gst.MiniObject
     }
 
     /// <summary>
+    /// Appends the structures contained in @caps2 to @caps1. The structures in
+    /// @caps2 are not copied -- they are transferred to @caps1, and then @caps2 is
+    /// freed. If either caps is ANY, the resulting caps will be ANY.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The <c>caps2</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a reference of its own and the wrapper is disposed afterwards, which
+    /// leaves the native reference count exactly where the C call leaves it.
+    /// <see cref="Gst.MiniObject.Dispose()"/> is idempotent, so a <c>using</c>
+    /// declaration around the argument stays correct.
+    /// </para>
+    /// </remarks>
+    /// <param name="caps2">
+    /// The <c>caps2</c> argument.
+    /// The call consumes it: <paramref name="caps2"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// </param>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="caps2"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    /// This wrapper or <paramref name="caps2"/> was disposed.
+    /// </exception>
+    public void Append(Gst.Caps caps2)
+    {
+        ArgumentNullException.ThrowIfNull(caps2);
+        nint instanceHandle = Handle;
+        nint caps2Native = caps2.Handle;
+        nint caps2Owned = Gst.GstNative.MiniObjectRef(caps2Native);
+        GstCapsAppend(instanceHandle, caps2Owned);
+        System.GC.KeepAlive(this);
+        caps2.Dispose();
+    }
+
+    /// <summary>
+    /// Appends @structure to @caps.  The structure is not copied; @caps
+    /// becomes the owner of @structure.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The <c>structure</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a copy of the value and the wrapper is disposed afterwards, which
+    /// leaves the caller with exactly what the C call leaves it with. A boxed
+    /// value has no reference count to raise, so the copy is what a reference is
+    /// there. <see cref="Gst.GObject.Boxed.Dispose()"/> is idempotent, so a
+    /// <c>using</c> declaration around the argument stays correct.
+    /// </para>
+    /// </remarks>
+    /// <param name="structure">
+    /// The <c>structure</c> argument.
+    /// The call consumes it: <paramref name="structure"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// </param>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="structure"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    /// This wrapper or <paramref name="structure"/> was disposed.
+    /// </exception>
+    public void AppendStructure(Gst.Structure structure)
+    {
+        ArgumentNullException.ThrowIfNull(structure);
+        nint instanceHandle = Handle;
+        nint structureNative = structure.Handle;
+        nuint structureType = structure.BoxedType.Value;
+        nint structureOwned = Gst.Interop.GObjectNative.BoxedCopy(structureType, structureNative);
+        GstCapsAppendStructure(instanceHandle, structureOwned);
+        System.GC.KeepAlive(this);
+        structure.Dispose();
+    }
+
+    /// <summary>
+    /// Appends @structure with @features to @caps.  The structure is not copied; @caps
+    /// becomes the owner of @structure.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The <c>structure</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a copy of the value and the wrapper is disposed afterwards, which
+    /// leaves the caller with exactly what the C call leaves it with. A boxed
+    /// value has no reference count to raise, so the copy is what a reference is
+    /// there. <see cref="Gst.GObject.Boxed.Dispose()"/> is idempotent, so a
+    /// <c>using</c> declaration around the argument stays correct.
+    /// </para>
+    /// <para>
+    /// The <c>features</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a copy of the value and the wrapper is disposed afterwards, which
+    /// leaves the caller with exactly what the C call leaves it with. A boxed
+    /// value has no reference count to raise, so the copy is what a reference is
+    /// there. <see cref="Gst.GObject.Boxed.Dispose()"/> is idempotent, so a
+    /// <c>using</c> declaration around the argument stays correct.
+    /// </para>
+    /// </remarks>
+    /// <param name="structure">
+    /// The <c>structure</c> argument.
+    /// The call consumes it: <paramref name="structure"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// </param>
+    /// <param name="features">
+    /// The <c>features</c> argument.
+    /// The call consumes it: <paramref name="features"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// It may be <see langword="null"/>, which is the absence of a payload and leaves
+    /// nothing to consume.
+    /// </param>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="structure"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    /// This wrapper or <paramref name="structure"/> or <paramref name="features"/> was disposed.
+    /// </exception>
+    public void AppendStructureFull(Gst.Structure structure, Gst.CapsFeatures? features)
+    {
+        ArgumentNullException.ThrowIfNull(structure);
+        nint instanceHandle = Handle;
+        nint structureNative = structure.Handle;
+        nuint structureType = structure.BoxedType.Value;
+        nint featuresNative = features is null ? 0 : features.Handle;
+        nuint featuresType = features is null ? 0 : features.BoxedType.Value;
+        nint structureOwned = Gst.Interop.GObjectNative.BoxedCopy(structureType, structureNative);
+        nint featuresOwned = features is null ? 0 : Gst.Interop.GObjectNative.BoxedCopy(featuresType, featuresNative);
+        GstCapsAppendStructureFull(instanceHandle, structureOwned, featuresOwned);
+        System.GC.KeepAlive(this);
+        structure.Dispose();
+        features?.Dispose();
+    }
+
+    /// <summary>
     /// Tries intersecting @caps1 and @caps2 and reports whether the result would not
     /// be empty
     /// </summary>
@@ -519,6 +648,71 @@ public sealed unsafe partial class Caps : Gst.MiniObject
             ?? throw new InvalidOperationException("gst_caps_serialize returned no value.");
     }
 
+    /// <summary>Sets the @features for the structure at @index.</summary>
+    /// <remarks>
+    /// <para>
+    /// The <c>features</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a copy of the value and the wrapper is disposed afterwards, which
+    /// leaves the caller with exactly what the C call leaves it with. A boxed
+    /// value has no reference count to raise, so the copy is what a reference is
+    /// there. <see cref="Gst.GObject.Boxed.Dispose()"/> is idempotent, so a
+    /// <c>using</c> declaration around the argument stays correct.
+    /// </para>
+    /// </remarks>
+    /// <param name="index">The <c>index</c> argument.</param>
+    /// <param name="features">
+    /// The <c>features</c> argument.
+    /// The call consumes it: <paramref name="features"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// It may be <see langword="null"/>, which is the absence of a payload and leaves
+    /// nothing to consume.
+    /// </param>
+    /// <exception cref="ObjectDisposedException">
+    /// This wrapper or <paramref name="features"/> was disposed.
+    /// </exception>
+    public void SetFeatures(uint index, Gst.CapsFeatures? features)
+    {
+        nint instanceHandle = Handle;
+        nint featuresNative = features is null ? 0 : features.Handle;
+        nuint featuresType = features is null ? 0 : features.BoxedType.Value;
+        nint featuresOwned = features is null ? 0 : Gst.Interop.GObjectNative.BoxedCopy(featuresType, featuresNative);
+        GstCapsSetFeatures(instanceHandle, index, featuresOwned);
+        System.GC.KeepAlive(this);
+        features?.Dispose();
+    }
+
+    /// <summary>Sets the @features for all the structures of @caps.</summary>
+    /// <remarks>
+    /// <para>
+    /// The <c>features</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a copy of the value and the wrapper is disposed afterwards, which
+    /// leaves the caller with exactly what the C call leaves it with. A boxed
+    /// value has no reference count to raise, so the copy is what a reference is
+    /// there. <see cref="Gst.GObject.Boxed.Dispose()"/> is idempotent, so a
+    /// <c>using</c> declaration around the argument stays correct.
+    /// </para>
+    /// </remarks>
+    /// <param name="features">
+    /// The <c>features</c> argument.
+    /// The call consumes it: <paramref name="features"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// It may be <see langword="null"/>, which is the absence of a payload and leaves
+    /// nothing to consume.
+    /// </param>
+    /// <exception cref="ObjectDisposedException">
+    /// This wrapper or <paramref name="features"/> was disposed.
+    /// </exception>
+    public void SetFeaturesSimple(Gst.CapsFeatures? features)
+    {
+        nint instanceHandle = Handle;
+        nint featuresNative = features is null ? 0 : features.Handle;
+        nuint featuresType = features is null ? 0 : features.BoxedType.Value;
+        nint featuresOwned = features is null ? 0 : Gst.Interop.GObjectNative.BoxedCopy(featuresType, featuresNative);
+        GstCapsSetFeaturesSimple(instanceHandle, featuresOwned);
+        System.GC.KeepAlive(this);
+        features?.Dispose();
+    }
+
     /// <summary>
     /// Retrieves the structure with the given index from the list of structures
     /// contained in @caps. The caller becomes the owner of the returned structure.
@@ -612,6 +806,18 @@ public sealed unsafe partial class Caps : Gst.MiniObject
     [LibraryImport("Gst", EntryPoint = "gst_caps_new_id_str_empty_simple")]
     private static partial nint GstCapsNewIdStrEmptySimple(nint mediaType);
 
+    /// <summary>The <c>gst_caps_append</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_append")]
+    private static partial void GstCapsAppend(nint caps1, nint caps2);
+
+    /// <summary>The <c>gst_caps_append_structure</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_append_structure")]
+    private static partial void GstCapsAppendStructure(nint caps, nint structure);
+
+    /// <summary>The <c>gst_caps_append_structure_full</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_append_structure_full")]
+    private static partial void GstCapsAppendStructureFull(nint caps, nint structure, nint features);
+
     /// <summary>The <c>gst_caps_can_intersect</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_caps_can_intersect")]
     private static partial int GstCapsCanIntersect(nint caps1, nint caps2);
@@ -703,6 +909,14 @@ public sealed unsafe partial class Caps : Gst.MiniObject
     /// <summary>The <c>gst_caps_serialize</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_caps_serialize")]
     private static partial nint GstCapsSerialize(nint caps, int flags);
+
+    /// <summary>The <c>gst_caps_set_features</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_set_features")]
+    private static partial void GstCapsSetFeatures(nint caps, uint index, nint features);
+
+    /// <summary>The <c>gst_caps_set_features_simple</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_set_features_simple")]
+    private static partial void GstCapsSetFeaturesSimple(nint caps, nint features);
 
     /// <summary>The <c>gst_caps_steal_structure</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_caps_steal_structure")]

@@ -3,6 +3,9 @@
 
 #nullable enable
 
+using System;
+using System.Runtime.InteropServices;
+
 namespace Gst.Audio;
 
 /// <summary>
@@ -16,7 +19,7 @@ namespace Gst.Audio;
 /// <remarks>
 /// <para>The different channels in @planes are always in the GStreamer channel order.</para>
 /// </remarks>
-public sealed partial class AudioBuffer
+public sealed unsafe partial class AudioBuffer
 {
     /// <summary>The native instance.</summary>
     internal nint Handle;
@@ -35,4 +38,108 @@ public sealed partial class AudioBuffer
     /// </remarks>
     internal static AudioBuffer? FromNative(nint handle) =>
         handle == 0 ? null : new(handle);
+
+    /// <summary>Clip the buffer to the given %GstSegment.</summary>
+    /// <remarks>
+    /// <para>
+    /// After calling this function the caller does not own a reference to
+    /// @buffer anymore.
+    /// </para>
+    /// <para>
+    /// The <c>buffer</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a reference of its own and the wrapper is disposed afterwards, which
+    /// leaves the native reference count exactly where the C call leaves it.
+    /// <see cref="Gst.MiniObject.Dispose()"/> is idempotent, so a <c>using</c>
+    /// declaration around the argument stays correct.
+    /// </para>
+    /// </remarks>
+    /// <param name="buffer">
+    /// The <c>buffer</c> argument.
+    /// The call consumes it: <paramref name="buffer"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// </param>
+    /// <param name="segment">The <c>segment</c> argument.</param>
+    /// <param name="rate">The <c>rate</c> argument.</param>
+    /// <param name="bpf">The <c>bpf</c> argument.</param>
+    /// <returns>
+    /// %NULL if the buffer is completely outside the configured segment,
+    /// otherwise the clipped buffer is returned.
+    /// </returns>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="buffer"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    /// <paramref name="buffer"/> was disposed.
+    /// </exception>
+    public static Gst.Buffer? Clip(Gst.Buffer buffer, Gst.Segment segment, int rate, int bpf)
+    {
+        ArgumentNullException.ThrowIfNull(buffer);
+        ArgumentNullException.ThrowIfNull(segment);
+        nint bufferNative = buffer.Handle;
+        nint segmentNative = segment.Handle;
+        nint bufferOwned = Gst.GstNative.MiniObjectRef(bufferNative);
+        nint nativeResult = GstAudioBufferClip(bufferOwned, segmentNative, rate, bpf);
+        System.GC.KeepAlive(segment);
+        buffer.Dispose();
+        return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+    }
+
+    /// <summary>
+    /// Truncate the buffer to finally have @samples number of samples, removing
+    /// the necessary amount of samples from the end and @trim number of samples
+    /// from the beginning.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This function does not know the audio rate, therefore the caller is
+    /// responsible for re-setting the correct timestamp and duration to the
+    /// buffer. However, timestamp will be preserved if trim == 0, and duration
+    /// will also be preserved if there is no trimming to be done. Offset and
+    /// offset end will be preserved / updated.
+    /// </para>
+    /// <para>
+    /// After calling this function the caller does not own a reference to
+    /// @buffer anymore.
+    /// </para>
+    /// <para>
+    /// The <c>buffer</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a reference of its own and the wrapper is disposed afterwards, which
+    /// leaves the native reference count exactly where the C call leaves it.
+    /// <see cref="Gst.MiniObject.Dispose()"/> is idempotent, so a <c>using</c>
+    /// declaration around the argument stays correct.
+    /// </para>
+    /// </remarks>
+    /// <param name="buffer">
+    /// The <c>buffer</c> argument.
+    /// The call consumes it: <paramref name="buffer"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// </param>
+    /// <param name="bpf">The <c>bpf</c> argument.</param>
+    /// <param name="trim">The <c>trim</c> argument.</param>
+    /// <param name="samples">The <c>samples</c> argument.</param>
+    /// <returns>the truncated buffer</returns>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="buffer"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    /// <paramref name="buffer"/> was disposed.
+    /// </exception>
+    public static Gst.Buffer Truncate(Gst.Buffer buffer, int bpf, nuint trim, nuint samples)
+    {
+        ArgumentNullException.ThrowIfNull(buffer);
+        nint bufferNative = buffer.Handle;
+        nint bufferOwned = Gst.GstNative.MiniObjectRef(bufferNative);
+        nint nativeResult = GstAudioBufferTruncate(bufferOwned, bpf, trim, samples);
+        buffer.Dispose();
+        return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_audio_buffer_truncate returned no value.");
+    }
+
+    /// <summary>The <c>gst_audio_buffer_clip</c> entry point.</summary>
+    [LibraryImport("GstAudio", EntryPoint = "gst_audio_buffer_clip")]
+    private static partial nint GstAudioBufferClip(nint buffer, nint segment, int rate, int bpf);
+
+    /// <summary>The <c>gst_audio_buffer_truncate</c> entry point.</summary>
+    [LibraryImport("GstAudio", EntryPoint = "gst_audio_buffer_truncate")]
+    private static partial nint GstAudioBufferTruncate(nint buffer, int bpf, nuint trim, nuint samples);
 }

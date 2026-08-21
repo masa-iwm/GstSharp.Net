@@ -9,8 +9,11 @@ namespace Gst;
 /// <remarks>
 /// Every signature is blittable: strings are passed as <c>byte*</c> and encoded
 /// by <see cref="Gst.Interop.GMarshal"/>, and <c>gboolean</c> is an
-/// <see cref="int"/>. The generated bindings bring their own imports; only what
-/// <c>GstSharp.Initialize</c> and <see cref="MiniObject"/> need lives here.
+/// <see cref="int"/>. The generated bindings bring their own imports; what
+/// lives here is what <c>GstSharp.Initialize</c> and <see cref="MiniObject"/>
+/// need, plus <see cref="MiniObjectRef"/>, which a generated member that
+/// consumes a mini object argument calls to mint the reference the callee
+/// takes over.
 /// </remarks>
 internal static unsafe partial class GstNative
 {

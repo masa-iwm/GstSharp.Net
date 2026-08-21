@@ -64,6 +64,60 @@ public unsafe partial class Track : Gst.Bin, GES.IMetaContainer, Gst.IChildProxy
     {
     }
 
+    /// <summary>Creates a new track with the given track-type and caps.</summary>
+    /// <remarks>
+    /// <para>
+    /// If @type is #GES_TRACK_TYPE_VIDEO, and @caps is a subset of
+    /// "video/x-raw(ANY)", then a #GESVideoTrack is created. This will
+    /// automatically choose a gap creation method suitable for video data. You
+    /// will likely want to set #GESTrack:restriction-caps separately. You may
+    /// prefer to use the ges_video_track_new() method instead.
+    /// </para>
+    /// <para>
+    /// If @type is #GES_TRACK_TYPE_AUDIO, and @caps is a subset of
+    /// "audio/x-raw(ANY)", then a #GESAudioTrack is created. This will
+    /// automatically choose a gap creation method suitable for audio data, and
+    /// will set the #GESTrack:restriction-caps to the default for
+    /// #GESAudioTrack. You may prefer to use the ges_audio_track_new() method
+    /// instead.
+    /// </para>
+    /// <para>
+    /// Otherwise, a plain #GESTrack is returned. You will likely want to set
+    /// the #GESTrack:restriction-caps and call
+    /// ges_track_set_create_element_for_gap_func() on the returned track.
+    /// </para>
+    /// <para>
+    /// The <c>caps</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a reference of its own and the wrapper is disposed afterwards, which
+    /// leaves the native reference count exactly where the C call leaves it.
+    /// <see cref="Gst.MiniObject.Dispose()"/> is idempotent, so a <c>using</c>
+    /// declaration around the argument stays correct.
+    /// </para>
+    /// </remarks>
+    /// <param name="type">The <c>type</c> argument.</param>
+    /// <param name="caps">
+    /// The <c>caps</c> argument.
+    /// The call consumes it: <paramref name="caps"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// </param>
+    /// <returns>A new track.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="caps"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    /// <paramref name="caps"/> was disposed.
+    /// </exception>
+    public static GES.Track New(GES.TrackType type, Gst.Caps caps)
+    {
+        ArgumentNullException.ThrowIfNull(caps);
+        nint capsNative = caps.Handle;
+        nint capsOwned = Gst.GstNative.MiniObjectRef(capsNative);
+        nint nativeResult = GesTrackNew((int)type, capsOwned);
+        caps.Dispose();
+        return Gst.GObject.Object.FromNative<GES.Track>(nativeResult, Gst.Interop.Transfer.None)
+            ?? throw new InvalidOperationException("ges_track_new returned no value.");
+    }
+
     /// <summary>See ges_track_add_element(), which also gives an error.</summary>
     /// <param name="object">The <c>@object</c> argument.</param>
     /// <returns>%TRUE if @object was successfully added to @track.</returns>
@@ -453,6 +507,10 @@ public unsafe partial class Track : Gst.Bin, GES.IMetaContainer, Gst.IChildProxy
             Gst.Interop.ExceptionTrap.Report(exception);
         }
     }
+
+    /// <summary>The <c>ges_track_new</c> entry point.</summary>
+    [LibraryImport("GES", EntryPoint = "ges_track_new")]
+    private static partial nint GesTrackNew(int type, nint caps);
 
     /// <summary>The <c>ges_track_add_element</c> entry point.</summary>
     [LibraryImport("GES", EntryPoint = "ges_track_add_element")]

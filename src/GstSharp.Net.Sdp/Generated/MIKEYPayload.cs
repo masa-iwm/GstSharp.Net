@@ -57,6 +57,40 @@ public sealed unsafe partial class MIKEYPayload : Gst.MiniObject
         return Gst.Sdp.MIKEYPayload.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
 
+    /// <summary>Add a new sub payload to @payload.</summary>
+    /// <remarks>
+    /// <para>
+    /// The <c>newpay</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a reference of its own and the wrapper is disposed afterwards, which
+    /// leaves the native reference count exactly where the C call leaves it.
+    /// <see cref="Gst.MiniObject.Dispose()"/> is idempotent, so a <c>using</c>
+    /// declaration around the argument stays correct.
+    /// </para>
+    /// </remarks>
+    /// <param name="newpay">
+    /// The <c>newpay</c> argument.
+    /// The call consumes it: <paramref name="newpay"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// </param>
+    /// <returns>%TRUE on success.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="newpay"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    /// This wrapper or <paramref name="newpay"/> was disposed.
+    /// </exception>
+    public bool KemacAddSub(Gst.Sdp.MIKEYPayload newpay)
+    {
+        ArgumentNullException.ThrowIfNull(newpay);
+        nint instanceHandle = Handle;
+        nint newpayNative = newpay.Handle;
+        nint newpayOwned = Gst.GstNative.MiniObjectRef(newpayNative);
+        int nativeResult = GstMikeyPayloadKemacAddSub(instanceHandle, newpayOwned);
+        System.GC.KeepAlive(this);
+        newpay.Dispose();
+        return nativeResult != 0;
+    }
+
     /// <summary>
     /// Get the number of sub payloads of @payload. @payload should be of type
     /// %GST_MIKEY_PT_KEMAC.
@@ -260,6 +294,10 @@ public sealed unsafe partial class MIKEYPayload : Gst.MiniObject
     /// <summary>The <c>gst_mikey_payload_new</c> entry point.</summary>
     [LibraryImport("GstSdp", EntryPoint = "gst_mikey_payload_new")]
     private static partial nint GstMikeyPayloadNew(int type);
+
+    /// <summary>The <c>gst_mikey_payload_kemac_add_sub</c> entry point.</summary>
+    [LibraryImport("GstSdp", EntryPoint = "gst_mikey_payload_kemac_add_sub")]
+    private static partial int GstMikeyPayloadKemacAddSub(nint payload, nint newpay);
 
     /// <summary>The <c>gst_mikey_payload_kemac_get_n_sub</c> entry point.</summary>
     [LibraryImport("GstSdp", EntryPoint = "gst_mikey_payload_kemac_get_n_sub")]

@@ -107,6 +107,46 @@ public static unsafe partial class VideoGlobal
     }
 
     /// <summary>
+    /// Attaches a #GstVideoCodecAlphaMeta metadata to @buffer with
+    /// the given alpha buffer.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The <c>alphaBuffer</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a reference of its own and the wrapper is disposed afterwards, which
+    /// leaves the native reference count exactly where the C call leaves it.
+    /// <see cref="Gst.MiniObject.Dispose()"/> is idempotent, so a <c>using</c>
+    /// declaration around the argument stays correct.
+    /// </para>
+    /// </remarks>
+    /// <param name="buffer">The <c>buffer</c> argument.</param>
+    /// <param name="alphaBuffer">
+    /// The <c>alphaBuffer</c> argument.
+    /// The call consumes it: <paramref name="alphaBuffer"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// </param>
+    /// <returns>the #GstVideoCodecAlphaMeta on @buffer.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="alphaBuffer"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    /// <paramref name="alphaBuffer"/> was disposed.
+    /// </exception>
+    public static Gst.Video.VideoCodecAlphaMeta BufferAddVideoCodecAlphaMeta(Gst.Buffer buffer, Gst.Buffer alphaBuffer)
+    {
+        ArgumentNullException.ThrowIfNull(buffer);
+        ArgumentNullException.ThrowIfNull(alphaBuffer);
+        nint bufferNative = buffer.Handle;
+        nint alphaBufferNative = alphaBuffer.Handle;
+        nint alphaBufferOwned = Gst.GstNative.MiniObjectRef(alphaBufferNative);
+        nint nativeResult = GstBufferAddVideoCodecAlphaMeta(bufferNative, alphaBufferOwned);
+        System.GC.KeepAlive(buffer);
+        alphaBuffer.Dispose();
+        return Gst.Video.VideoCodecAlphaMeta.FromNative(nativeResult)
+            ?? throw new InvalidOperationException("gst_buffer_add_video_codec_alpha_meta returned no value.");
+    }
+
+    /// <summary>
     /// Attaches GstVideoMeta metadata to @buffer with the given parameters and the
     /// default offsets and strides for @format and @width x @height.
     /// </summary>
@@ -999,6 +1039,10 @@ public static unsafe partial class VideoGlobal
     /// <summary>The <c>gst_buffer_add_video_caption_meta</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_buffer_add_video_caption_meta")]
     private static partial nint GstBufferAddVideoCaptionMeta(nint buffer, int captionType, byte* data, nuint size);
+
+    /// <summary>The <c>gst_buffer_add_video_codec_alpha_meta</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_buffer_add_video_codec_alpha_meta")]
+    private static partial nint GstBufferAddVideoCodecAlphaMeta(nint buffer, nint alphaBuffer);
 
     /// <summary>The <c>gst_buffer_add_video_meta</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_buffer_add_video_meta")]

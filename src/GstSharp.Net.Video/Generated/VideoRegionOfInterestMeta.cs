@@ -30,6 +30,51 @@ public sealed unsafe partial class VideoRegionOfInterestMeta
         handle == 0 ? null : new(handle);
 
     /// <summary>
+    /// Attach element-specific parameters to @meta meant to be used by downstream
+    /// elements which may handle this ROI.
+    /// The name of @s is used to identify the element these parameters are meant for.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This is typically used to tell encoders how they should encode this specific region.
+    /// For example, a structure named "roi/x264enc" could be used to give the
+    /// QP offsets this encoder should use when encoding the region described in @meta.
+    /// Multiple parameters can be defined for the same meta so different encoders
+    /// can be supported by cross platform applications).
+    /// </para>
+    /// <para>
+    /// The <c>s</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a copy of the value and the wrapper is disposed afterwards, which
+    /// leaves the caller with exactly what the C call leaves it with. A boxed
+    /// value has no reference count to raise, so the copy is what a reference is
+    /// there. <see cref="Gst.GObject.Boxed.Dispose()"/> is idempotent, so a
+    /// <c>using</c> declaration around the argument stays correct.
+    /// </para>
+    /// </remarks>
+    /// <param name="s">
+    /// The <c>s</c> argument.
+    /// The call consumes it: <paramref name="s"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// </param>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="s"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    /// This wrapper or <paramref name="s"/> was disposed.
+    /// </exception>
+    public void AddParam(Gst.Structure s)
+    {
+        ArgumentNullException.ThrowIfNull(s);
+        nint instanceHandle = Handle;
+        nint sNative = s.Handle;
+        nuint sType = s.BoxedType.Value;
+        nint sOwned = Gst.Interop.GObjectNative.BoxedCopy(sType, sNative);
+        GstVideoRegionOfInterestMetaAddParam(instanceHandle, sOwned);
+        System.GC.KeepAlive(this);
+        s.Dispose();
+    }
+
+    /// <summary>
     /// Retrieve the parameter for @meta having @name as structure name,
     /// or %NULL if there is none.
     /// </summary>
@@ -58,6 +103,10 @@ public sealed unsafe partial class VideoRegionOfInterestMeta
         return Gst.MetaInfo.FromNative(nativeResult)
             ?? throw new InvalidOperationException("gst_video_region_of_interest_meta_get_info returned no value.");
     }
+
+    /// <summary>The <c>gst_video_region_of_interest_meta_add_param</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_video_region_of_interest_meta_add_param")]
+    private static partial void GstVideoRegionOfInterestMetaAddParam(nint meta, nint s);
 
     /// <summary>The <c>gst_video_region_of_interest_meta_get_param</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_region_of_interest_meta_get_param")]

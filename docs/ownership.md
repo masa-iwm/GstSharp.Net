@@ -98,9 +98,22 @@ away leaves its streaming threads running. Set it to `NULL` first.
 
 ## Calls that consume their argument
 
-A few calls take a wrapper over instead of borrowing it, because the C function
-they stand for does. They dispose the argument themselves, and after the call
-the wrapper owns nothing — which is precisely what its disposed state means:
+A call whose C function takes ownership of a parameter
+(`transfer-ownership="full"`) consumes the wrapper it is given instead of
+borrowing it. **The generator emits these members**, for a mini object, a boxed
+value or a GObject, and every one of them follows one contract: the call is
+handed a value minted for it — a mini object and a GObject are handed a
+reference of their own, a boxed value is handed a copy, since it has no
+reference count to raise — and the argument is disposed when the member
+returns, **whatever the call answered**, because the C function offers no way
+back. After the call the wrapper owns nothing, which is precisely what its
+disposed state means, and the member says so on its parameter:
+`Caps.Append(caps2)` consumes the caps it appends,
+`StreamCollection.AddStream(stream)` the stream, `Pad.Push(buffer)` the buffer.
+
+A handful of consuming calls shipped as hand written members before the
+generator learned the shape. They carry the same contract and stay the binding
+for their entry points:
 
 | Call | Consumes |
 | --- | --- |
@@ -114,15 +127,13 @@ the wrapper owns nothing — which is precisely what its disposed state means:
 | `WebRTCSessionDescription.New` | the SDP message |
 | `EncodingContainerProfile.AddProfile` | the stream profile |
 
-A mini object is handed a reference of its own and a boxed value a copy, since
-a boxed value has no reference count to raise; either way the wrapper is
-disposed afterwards and the native side is left where the C call leaves it. The
-one that takes a **GObject** over — `AddProfile` — works the same way, with the
+The ones that take a **GObject** over — `AddProfile` above, and generated
+members such as `StreamCollection.AddStream` — work the same way, with the
 reach `Dispose` has on a GObject wrapper: the object is given up for the whole
-process rather than for one holder, so there is no wrapper for that profile
-anywhere afterwards and `GetProfiles` is the way back to it. Where a consuming
-argument is nullable, `null` is the absence of a payload and there is nothing
-to consume.
+process rather than for one holder, so there is no wrapper for that object
+anywhere afterwards and a fresh lookup (`GetProfiles`, `GetStream`) is the way
+back to it. Where a consuming argument is nullable, `null` is the absence of a
+payload and there is nothing to consume.
 
 `Dispose` is idempotent, so a `using` around the argument stays correct and
 stays the recommended shape — the analyzer sees the disposal, and an early

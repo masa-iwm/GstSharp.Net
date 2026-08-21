@@ -132,6 +132,43 @@ public sealed unsafe partial class BufferList : Gst.MiniObject
             ?? throw new InvalidOperationException("gst_buffer_list_get_writable returned no value.");
     }
 
+    /// <summary>
+    /// Inserts @buffer at @idx in @list. Other buffers are moved to make room for
+    /// this new buffer.
+    /// </summary>
+    /// <remarks>
+    /// <para>A -1 value for @idx will append the buffer at the end.</para>
+    /// <para>
+    /// The <c>buffer</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a reference of its own and the wrapper is disposed afterwards, which
+    /// leaves the native reference count exactly where the C call leaves it.
+    /// <see cref="Gst.MiniObject.Dispose()"/> is idempotent, so a <c>using</c>
+    /// declaration around the argument stays correct.
+    /// </para>
+    /// </remarks>
+    /// <param name="idx">The <c>idx</c> argument.</param>
+    /// <param name="buffer">
+    /// The <c>buffer</c> argument.
+    /// The call consumes it: <paramref name="buffer"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// </param>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="buffer"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    /// This wrapper or <paramref name="buffer"/> was disposed.
+    /// </exception>
+    public void Insert(int idx, Gst.Buffer buffer)
+    {
+        ArgumentNullException.ThrowIfNull(buffer);
+        nint instanceHandle = Handle;
+        nint bufferNative = buffer.Handle;
+        nint bufferOwned = Gst.GstNative.MiniObjectRef(bufferNative);
+        GstBufferListInsert(instanceHandle, idx, bufferOwned);
+        System.GC.KeepAlive(this);
+        buffer.Dispose();
+    }
+
     /// <summary>Returns the number of buffers in @list.</summary>
     /// <returns>the number of buffers in the buffer list</returns>
     public uint Length()
@@ -176,6 +213,10 @@ public sealed unsafe partial class BufferList : Gst.MiniObject
     /// <summary>The <c>gst_buffer_list_get_writable</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_buffer_list_get_writable")]
     private static partial nint GstBufferListGetWritable(nint list, uint idx);
+
+    /// <summary>The <c>gst_buffer_list_insert</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_buffer_list_insert")]
+    private static partial void GstBufferListInsert(nint list, int idx, nint buffer);
 
     /// <summary>The <c>gst_buffer_list_length</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_buffer_list_length")]

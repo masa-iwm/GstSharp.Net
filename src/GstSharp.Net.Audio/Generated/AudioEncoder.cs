@@ -153,6 +153,52 @@ public abstract unsafe partial class AudioEncoder : Gst.Element, Gst.IPreset
             ?? throw new InvalidOperationException("gst_audio_encoder_allocate_output_buffer returned no value.");
     }
 
+    /// <summary>
+    /// Collects encoded data and pushes encoded data downstream.
+    /// Source pad caps must be set when this is called.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// If @samples &lt; 0, then best estimate is all samples provided to encoder
+    /// (subclass) so far.  @buf may be NULL, in which case next number of @samples
+    /// are considered discarded, e.g. as a result of discontinuous transmission,
+    /// and a discontinuity is marked.
+    /// </para>
+    /// <para>
+    /// Note that samples received in #GstAudioEncoderClass.handle_frame()
+    /// may be invalidated by a call to this function.
+    /// </para>
+    /// <para>
+    /// The <c>buffer</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a reference of its own and the wrapper is disposed afterwards, which
+    /// leaves the native reference count exactly where the C call leaves it.
+    /// <see cref="Gst.MiniObject.Dispose()"/> is idempotent, so a <c>using</c>
+    /// declaration around the argument stays correct.
+    /// </para>
+    /// </remarks>
+    /// <param name="buffer">
+    /// The <c>buffer</c> argument.
+    /// The call consumes it: <paramref name="buffer"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// It may be <see langword="null"/>, which is the absence of a payload and leaves
+    /// nothing to consume.
+    /// </param>
+    /// <param name="samples">The <c>samples</c> argument.</param>
+    /// <returns>a #GstFlowReturn that should be escalated to caller (of caller)</returns>
+    /// <exception cref="ObjectDisposedException">
+    /// This wrapper or <paramref name="buffer"/> was disposed.
+    /// </exception>
+    public Gst.FlowReturn FinishFrame(Gst.Buffer? buffer, int samples)
+    {
+        nint instanceHandle = Handle;
+        nint bufferNative = buffer is null ? 0 : buffer.Handle;
+        nint bufferOwned = buffer is null ? 0 : Gst.GstNative.MiniObjectRef(bufferNative);
+        int nativeResult = GstAudioEncoderFinishFrame(instanceHandle, bufferOwned, samples);
+        System.GC.KeepAlive(this);
+        buffer?.Dispose();
+        return (Gst.FlowReturn)nativeResult;
+    }
+
     /// <summary>The <c>gst_audio_encoder_get_audio_info</c> function.</summary>
     /// <returns>
     /// a #GstAudioInfo describing the input audio format
@@ -538,6 +584,10 @@ public abstract unsafe partial class AudioEncoder : Gst.Element, Gst.IPreset
     /// <summary>The <c>gst_audio_encoder_allocate_output_buffer</c> entry point.</summary>
     [LibraryImport("GstAudio", EntryPoint = "gst_audio_encoder_allocate_output_buffer")]
     private static partial nint GstAudioEncoderAllocateOutputBuffer(nint enc, nuint size);
+
+    /// <summary>The <c>gst_audio_encoder_finish_frame</c> entry point.</summary>
+    [LibraryImport("GstAudio", EntryPoint = "gst_audio_encoder_finish_frame")]
+    private static partial int GstAudioEncoderFinishFrame(nint enc, nint buffer, int samples);
 
     /// <summary>The <c>gst_audio_encoder_get_audio_info</c> entry point.</summary>
     [LibraryImport("GstAudio", EntryPoint = "gst_audio_encoder_get_audio_info")]

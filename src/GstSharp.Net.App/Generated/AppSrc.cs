@@ -271,6 +271,52 @@ public unsafe partial class AppSrc : Gst.Base.BaseSrc, Gst.IURIHandler
     }
 
     /// <summary>
+    /// Adds a buffer list to the queue of buffers and buffer lists that the
+    /// appsrc element will push to its source pad.  This function takes ownership
+    /// of @buffer_list.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// When the block property is TRUE, this function can block until free
+    /// space becomes available in the queue.
+    /// </para>
+    /// <para>
+    /// The <c>bufferList</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a reference of its own and the wrapper is disposed afterwards, which
+    /// leaves the native reference count exactly where the C call leaves it.
+    /// <see cref="Gst.MiniObject.Dispose()"/> is idempotent, so a <c>using</c>
+    /// declaration around the argument stays correct.
+    /// </para>
+    /// </remarks>
+    /// <param name="bufferList">
+    /// The <c>bufferList</c> argument.
+    /// The call consumes it: <paramref name="bufferList"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// </param>
+    /// <returns>
+    /// #GST_FLOW_OK when the buffer list was successfully queued.
+    /// #GST_FLOW_FLUSHING when @appsrc is not PAUSED or PLAYING.
+    /// #GST_FLOW_EOS when EOS occurred.
+    /// </returns>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="bufferList"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    /// This wrapper or <paramref name="bufferList"/> was disposed.
+    /// </exception>
+    public Gst.FlowReturn PushBufferList(Gst.BufferList bufferList)
+    {
+        ArgumentNullException.ThrowIfNull(bufferList);
+        nint instanceHandle = Handle;
+        nint bufferListNative = bufferList.Handle;
+        nint bufferListOwned = Gst.GstNative.MiniObjectRef(bufferListNative);
+        int nativeResult = GstAppSrcPushBufferList(instanceHandle, bufferListOwned);
+        System.GC.KeepAlive(this);
+        bufferList.Dispose();
+        return (Gst.FlowReturn)nativeResult;
+    }
+
+    /// <summary>
     /// Extract a buffer from the provided sample and adds it to the queue of
     /// buffers that the appsrc element will push to its source pad. Any
     /// previous caps that were set on appsrc will be replaced by the caps
@@ -735,6 +781,10 @@ public unsafe partial class AppSrc : Gst.Base.BaseSrc, Gst.IURIHandler
     /// <summary>The <c>gst_app_src_get_stream_type</c> entry point.</summary>
     [LibraryImport("GstApp", EntryPoint = "gst_app_src_get_stream_type")]
     private static partial int GstAppSrcGetStreamType(nint appsrc);
+
+    /// <summary>The <c>gst_app_src_push_buffer_list</c> entry point.</summary>
+    [LibraryImport("GstApp", EntryPoint = "gst_app_src_push_buffer_list")]
+    private static partial int GstAppSrcPushBufferList(nint appsrc, nint bufferList);
 
     /// <summary>The <c>gst_app_src_push_sample</c> entry point.</summary>
     [LibraryImport("GstApp", EntryPoint = "gst_app_src_push_sample")]

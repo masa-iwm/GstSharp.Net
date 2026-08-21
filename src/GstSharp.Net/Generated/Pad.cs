@@ -239,6 +239,106 @@ public unsafe partial class Pad : Gst.Object
         return nativeResult != 0;
     }
 
+    /// <summary>Chain a buffer to @pad.</summary>
+    /// <remarks>
+    /// <para>The function returns #GST_FLOW_FLUSHING if the pad was flushing.</para>
+    /// <para>
+    /// If the buffer type is not acceptable for @pad (as negotiated with a
+    /// preceding GST_EVENT_CAPS event), this function returns
+    /// #GST_FLOW_NOT_NEGOTIATED.
+    /// </para>
+    /// <para>
+    /// The function proceeds calling the chain function installed on @pad (see
+    /// gst_pad_set_chain_function()) and the return value of that function is
+    /// returned to the caller. #GST_FLOW_NOT_SUPPORTED is returned if @pad has no
+    /// chain function.
+    /// </para>
+    /// <para>
+    /// In all cases, success or failure, the caller loses its reference to @buffer
+    /// after calling this function.
+    /// </para>
+    /// <para>
+    /// The <c>buffer</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a reference of its own and the wrapper is disposed afterwards, which
+    /// leaves the native reference count exactly where the C call leaves it.
+    /// <see cref="Gst.MiniObject.Dispose()"/> is idempotent, so a <c>using</c>
+    /// declaration around the argument stays correct.
+    /// </para>
+    /// </remarks>
+    /// <param name="buffer">
+    /// The <c>buffer</c> argument.
+    /// The call consumes it: <paramref name="buffer"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// </param>
+    /// <returns>a #GstFlowReturn from the pad.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="buffer"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    /// This wrapper or <paramref name="buffer"/> was disposed.
+    /// </exception>
+    public Gst.FlowReturn Chain(Gst.Buffer buffer)
+    {
+        ArgumentNullException.ThrowIfNull(buffer);
+        nint instanceHandle = Handle;
+        nint bufferNative = buffer.Handle;
+        nint bufferOwned = Gst.GstNative.MiniObjectRef(bufferNative);
+        int nativeResult = GstPadChain(instanceHandle, bufferOwned);
+        System.GC.KeepAlive(this);
+        buffer.Dispose();
+        return (Gst.FlowReturn)nativeResult;
+    }
+
+    /// <summary>Chain a bufferlist to @pad.</summary>
+    /// <remarks>
+    /// <para>The function returns #GST_FLOW_FLUSHING if the pad was flushing.</para>
+    /// <para>
+    /// If @pad was not negotiated properly with a CAPS event, this function
+    /// returns #GST_FLOW_NOT_NEGOTIATED.
+    /// </para>
+    /// <para>
+    /// The function proceeds calling the chainlist function installed on @pad (see
+    /// gst_pad_set_chain_list_function()) and the return value of that function is
+    /// returned to the caller. #GST_FLOW_NOT_SUPPORTED is returned if @pad has no
+    /// chainlist function.
+    /// </para>
+    /// <para>
+    /// In all cases, success or failure, the caller loses its reference to @list
+    /// after calling this function.
+    /// </para>
+    /// <para>MT safe.</para>
+    /// <para>
+    /// The <c>list</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a reference of its own and the wrapper is disposed afterwards, which
+    /// leaves the native reference count exactly where the C call leaves it.
+    /// <see cref="Gst.MiniObject.Dispose()"/> is idempotent, so a <c>using</c>
+    /// declaration around the argument stays correct.
+    /// </para>
+    /// </remarks>
+    /// <param name="list">
+    /// The <c>list</c> argument.
+    /// The call consumes it: <paramref name="list"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// </param>
+    /// <returns>a #GstFlowReturn from the pad.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="list"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    /// This wrapper or <paramref name="list"/> was disposed.
+    /// </exception>
+    public Gst.FlowReturn ChainList(Gst.BufferList list)
+    {
+        ArgumentNullException.ThrowIfNull(list);
+        nint instanceHandle = Handle;
+        nint listNative = list.Handle;
+        nint listOwned = Gst.GstNative.MiniObjectRef(listNative);
+        int nativeResult = GstPadChainList(instanceHandle, listOwned);
+        System.GC.KeepAlive(this);
+        list.Dispose();
+        return (Gst.FlowReturn)nativeResult;
+    }
+
     /// <summary>
     /// Check and clear the #GST_PAD_FLAG_NEED_RECONFIGURE flag on @pad and return %TRUE
     /// if the flag was set.
@@ -287,6 +387,51 @@ public unsafe partial class Pad : Gst.Object
         System.GC.KeepAlive(parent);
         return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
             ?? throw new InvalidOperationException("gst_pad_create_stream_id returned no value.");
+    }
+
+    /// <summary>Invokes the default event handler for the given pad.</summary>
+    /// <remarks>
+    /// <para>
+    /// The EOS event will pause the task associated with @pad before it is forwarded
+    /// to all internally linked pads,
+    /// </para>
+    /// <para>
+    /// The event is sent to all pads internally linked to @pad. This function
+    /// takes ownership of @event.
+    /// </para>
+    /// <para>
+    /// The <c>event</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a reference of its own and the wrapper is disposed afterwards, which
+    /// leaves the native reference count exactly where the C call leaves it.
+    /// <see cref="Gst.MiniObject.Dispose()"/> is idempotent, so a <c>using</c>
+    /// declaration around the argument stays correct.
+    /// </para>
+    /// </remarks>
+    /// <param name="parent">The <c>parent</c> argument.</param>
+    /// <param name="event">
+    /// The <c>@event</c> argument.
+    /// The call consumes it: <paramref name="event"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// </param>
+    /// <returns>%TRUE if the event was sent successfully.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="event"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    /// This wrapper or <paramref name="event"/> was disposed.
+    /// </exception>
+    public bool EventDefault(Gst.Object? parent, Gst.Event @event)
+    {
+        ArgumentNullException.ThrowIfNull(@event);
+        nint instanceHandle = Handle;
+        nint parentNative = parent is null ? 0 : parent.Handle;
+        nint @eventNative = @event.Handle;
+        nint @eventOwned = Gst.GstNative.MiniObjectRef(@eventNative);
+        int nativeResult = GstPadEventDefault(instanceHandle, parentNative, @eventOwned);
+        System.GC.KeepAlive(this);
+        System.GC.KeepAlive(parent);
+        @event.Dispose();
+        return nativeResult != 0;
     }
 
     /// <summary>
@@ -1017,6 +1162,102 @@ public unsafe partial class Pad : Gst.Object
         return (Gst.FlowReturn)nativeResult;
     }
 
+    /// <summary>Pushes a buffer to the peer of @pad.</summary>
+    /// <remarks>
+    /// <para>
+    /// This function will call installed block probes before triggering any
+    /// installed data probes.
+    /// </para>
+    /// <para>
+    /// The function proceeds calling gst_pad_chain() on the peer pad and returns
+    /// the value from that function. If @pad has no peer, #GST_FLOW_NOT_LINKED will
+    /// be returned.
+    /// </para>
+    /// <para>
+    /// In all cases, success or failure, the caller loses its reference to @buffer
+    /// after calling this function.
+    /// </para>
+    /// <para>
+    /// The <c>buffer</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a reference of its own and the wrapper is disposed afterwards, which
+    /// leaves the native reference count exactly where the C call leaves it.
+    /// <see cref="Gst.MiniObject.Dispose()"/> is idempotent, so a <c>using</c>
+    /// declaration around the argument stays correct.
+    /// </para>
+    /// </remarks>
+    /// <param name="buffer">
+    /// The <c>buffer</c> argument.
+    /// The call consumes it: <paramref name="buffer"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// </param>
+    /// <returns>a #GstFlowReturn from the peer pad.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="buffer"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    /// This wrapper or <paramref name="buffer"/> was disposed.
+    /// </exception>
+    public Gst.FlowReturn Push(Gst.Buffer buffer)
+    {
+        ArgumentNullException.ThrowIfNull(buffer);
+        nint instanceHandle = Handle;
+        nint bufferNative = buffer.Handle;
+        nint bufferOwned = Gst.GstNative.MiniObjectRef(bufferNative);
+        int nativeResult = GstPadPush(instanceHandle, bufferOwned);
+        System.GC.KeepAlive(this);
+        buffer.Dispose();
+        return (Gst.FlowReturn)nativeResult;
+    }
+
+    /// <summary>Pushes a buffer list to the peer of @pad.</summary>
+    /// <remarks>
+    /// <para>
+    /// This function will call installed block probes before triggering any
+    /// installed data probes.
+    /// </para>
+    /// <para>
+    /// The function proceeds calling the chain function on the peer pad and returns
+    /// the value from that function. If @pad has no peer, #GST_FLOW_NOT_LINKED will
+    /// be returned. If the peer pad does not have any installed chainlist function
+    /// every group buffer of the list will be merged into a normal #GstBuffer and
+    /// chained via gst_pad_chain().
+    /// </para>
+    /// <para>
+    /// In all cases, success or failure, the caller loses its reference to @list
+    /// after calling this function.
+    /// </para>
+    /// <para>
+    /// The <c>list</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a reference of its own and the wrapper is disposed afterwards, which
+    /// leaves the native reference count exactly where the C call leaves it.
+    /// <see cref="Gst.MiniObject.Dispose()"/> is idempotent, so a <c>using</c>
+    /// declaration around the argument stays correct.
+    /// </para>
+    /// </remarks>
+    /// <param name="list">
+    /// The <c>list</c> argument.
+    /// The call consumes it: <paramref name="list"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// </param>
+    /// <returns>a #GstFlowReturn from the peer pad.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="list"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    /// This wrapper or <paramref name="list"/> was disposed.
+    /// </exception>
+    public Gst.FlowReturn PushList(Gst.BufferList list)
+    {
+        ArgumentNullException.ThrowIfNull(list);
+        nint instanceHandle = Handle;
+        nint listNative = list.Handle;
+        nint listOwned = Gst.GstNative.MiniObjectRef(listNative);
+        int nativeResult = GstPadPushList(instanceHandle, listOwned);
+        System.GC.KeepAlive(this);
+        list.Dispose();
+        return (Gst.FlowReturn)nativeResult;
+    }
+
     /// <summary>
     /// Dispatches a query to a pad. The query should have been allocated by the
     /// caller via one of the type-specific allocation functions. The element that
@@ -1443,6 +1684,14 @@ public unsafe partial class Pad : Gst.Object
     [LibraryImport("Gst", EntryPoint = "gst_pad_can_link")]
     private static partial int GstPadCanLink(nint srcpad, nint sinkpad);
 
+    /// <summary>The <c>gst_pad_chain</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_pad_chain")]
+    private static partial int GstPadChain(nint pad, nint buffer);
+
+    /// <summary>The <c>gst_pad_chain_list</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_pad_chain_list")]
+    private static partial int GstPadChainList(nint pad, nint list);
+
     /// <summary>The <c>gst_pad_check_reconfigure</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_pad_check_reconfigure")]
     private static partial int GstPadCheckReconfigure(nint pad);
@@ -1450,6 +1699,10 @@ public unsafe partial class Pad : Gst.Object
     /// <summary>The <c>gst_pad_create_stream_id</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_pad_create_stream_id")]
     private static partial nint GstPadCreateStreamId(nint pad, nint parent, byte* streamId);
+
+    /// <summary>The <c>gst_pad_event_default</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_pad_event_default")]
+    private static partial int GstPadEventDefault(nint pad, nint parent, nint @event);
 
     /// <summary>The <c>gst_pad_forward</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_pad_forward")]
@@ -1610,6 +1863,14 @@ public unsafe partial class Pad : Gst.Object
     /// <summary>The <c>gst_pad_pull_range</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_pad_pull_range")]
     private static partial int GstPadPullRange(nint pad, ulong offset, uint size, nint* buffer);
+
+    /// <summary>The <c>gst_pad_push</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_pad_push")]
+    private static partial int GstPadPush(nint pad, nint buffer);
+
+    /// <summary>The <c>gst_pad_push_list</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_pad_push_list")]
+    private static partial int GstPadPushList(nint pad, nint list);
 
     /// <summary>The <c>gst_pad_query</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_pad_query")]

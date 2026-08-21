@@ -299,22 +299,15 @@ public sealed class RejectionRulesTests
         // gst_adapter_copy_bytes, which returns a GBytes that this milestone
         // cannot marshal. Skipping both would leave the function unbound, so
         // the shadowed declaration takes the clean name. The fixture rejects
-        // the shadowing one for the other documented reason, a handle
-        // parameter whose ownership the call takes over.
+        // the shadowing one for another documented planner rule, an array
+        // parameter whose elements the call takes over — a shape the planner
+        // itself refuses, which is what keeps the shadow retry of the surface
+        // builder exercised. (It used to be a transfer-full handle parameter,
+        // which the consuming argument kind has since made bindable.)
         FixtureRun run = Fixture.Run(
             """
-                <record name="MiniObject" c:type="GstMiniObject" glib:type-name="GstMiniObject" glib:get-type="gst_mini_object_get_type">
-                  <field name="type" writable="1">
-                    <type name="GType" c:type="GType"/>
-                  </field>
-                </record>
-                <record name="Caps" c:type="GstCaps" glib:type-name="GstCaps" glib:get-type="gst_caps_get_type">
-                  <field name="mini_object" writable="1">
-                    <type name="MiniObject" c:type="GstMiniObject"/>
-                  </field>
-                </record>
                 <class name="Widget" c:type="GstWidget" parent="GObject.InitiallyUnowned" glib:type-name="GstWidget" glib:get-type="gst_widget_get_type">
-                  <method name="copy" c:identifier="gst_widget_copy" shadowed-by="copy_caps">
+                  <method name="copy" c:identifier="gst_widget_copy" shadowed-by="copy_data">
                     <return-value transfer-ownership="none">
                       <type name="gint" c:type="gint"/>
                     </return-value>
@@ -324,7 +317,7 @@ public sealed class RejectionRulesTests
                       </instance-parameter>
                     </parameters>
                   </method>
-                  <method name="copy_caps" c:identifier="gst_widget_copy_caps" shadows="copy">
+                  <method name="copy_data" c:identifier="gst_widget_copy_data" shadows="copy">
                     <return-value transfer-ownership="none">
                       <type name="gint" c:type="gint"/>
                     </return-value>
@@ -332,8 +325,13 @@ public sealed class RejectionRulesTests
                       <instance-parameter name="widget" transfer-ownership="none">
                         <type name="Widget" c:type="GstWidget*"/>
                       </instance-parameter>
-                      <parameter name="caps" transfer-ownership="full">
-                        <type name="Caps" c:type="GstCaps*"/>
+                      <parameter name="data" transfer-ownership="full">
+                        <array length="1" zero-terminated="0" c:type="guint8*">
+                          <type name="guint8" c:type="guint8"/>
+                        </array>
+                      </parameter>
+                      <parameter name="size" transfer-ownership="none">
+                        <type name="gsize" c:type="gsize"/>
                       </parameter>
                     </parameters>
                   </method>
@@ -344,7 +342,7 @@ public sealed class RejectionRulesTests
 
         Assert.Contains("public int Copy()", source, StringComparison.Ordinal);
         Assert.Contains("EntryPoint = \"gst_widget_copy\"", source, StringComparison.Ordinal);
-        Assert.DoesNotContain("EntryPoint = \"gst_widget_copy_caps\"", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("EntryPoint = \"gst_widget_copy_data\"", source, StringComparison.Ordinal);
         Assert.Equal(0, run.Result.Census.SkippedCount("Gst", SkipReason.ShadowedBy));
     }
 
@@ -353,21 +351,13 @@ public sealed class RejectionRulesTests
     {
         // The fallback only lifts the shadowing rule. Every other reason still
         // applies, which is what keeps the declarations of the real girs out:
-        // all three of their shadowed callables are introspectable="0".
+        // all three of their shadowed callables are introspectable="0". The
+        // shadowing one is rejected by the planner for its owned array, as in
+        // the fixture above.
         FixtureRun run = Fixture.Run(
             """
-                <record name="MiniObject" c:type="GstMiniObject" glib:type-name="GstMiniObject" glib:get-type="gst_mini_object_get_type">
-                  <field name="type" writable="1">
-                    <type name="GType" c:type="GType"/>
-                  </field>
-                </record>
-                <record name="Caps" c:type="GstCaps" glib:type-name="GstCaps" glib:get-type="gst_caps_get_type">
-                  <field name="mini_object" writable="1">
-                    <type name="MiniObject" c:type="GstMiniObject"/>
-                  </field>
-                </record>
                 <class name="Widget" c:type="GstWidget" parent="GObject.InitiallyUnowned" glib:type-name="GstWidget" glib:get-type="gst_widget_get_type">
-                  <method name="copy" c:identifier="gst_widget_copy" introspectable="0" shadowed-by="copy_caps">
+                  <method name="copy" c:identifier="gst_widget_copy" introspectable="0" shadowed-by="copy_data">
                     <return-value transfer-ownership="none">
                       <type name="gint" c:type="gint"/>
                     </return-value>
@@ -377,7 +367,7 @@ public sealed class RejectionRulesTests
                       </instance-parameter>
                     </parameters>
                   </method>
-                  <method name="copy_caps" c:identifier="gst_widget_copy_caps" shadows="copy">
+                  <method name="copy_data" c:identifier="gst_widget_copy_data" shadows="copy">
                     <return-value transfer-ownership="none">
                       <type name="gint" c:type="gint"/>
                     </return-value>
@@ -385,8 +375,13 @@ public sealed class RejectionRulesTests
                       <instance-parameter name="widget" transfer-ownership="none">
                         <type name="Widget" c:type="GstWidget*"/>
                       </instance-parameter>
-                      <parameter name="caps" transfer-ownership="full">
-                        <type name="Caps" c:type="GstCaps*"/>
+                      <parameter name="data" transfer-ownership="full">
+                        <array length="1" zero-terminated="0" c:type="guint8*">
+                          <type name="guint8" c:type="guint8"/>
+                        </array>
+                      </parameter>
+                      <parameter name="size" transfer-ownership="none">
+                        <type name="gsize" c:type="gsize"/>
                       </parameter>
                     </parameters>
                   </method>

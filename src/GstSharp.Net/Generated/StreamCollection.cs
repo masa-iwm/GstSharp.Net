@@ -71,6 +71,43 @@ public unsafe partial class StreamCollection : Gst.Object
             ?? throw new InvalidOperationException("gst_stream_collection_new returned no value.");
     }
 
+    /// <summary>Add the given @stream to the @collection.</summary>
+    /// <remarks>
+    /// <para>
+    /// The <c>stream</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a reference of its own and the wrapper is disposed afterwards, which
+    /// leaves the native reference count exactly where the C call leaves it. A
+    /// GObject wrapper is interned, so disposing it gives the object up for the
+    /// whole process rather than for one holder: after this call there is no
+    /// wrapper for that object anywhere.
+    /// <see cref="Gst.GObject.Object.Dispose()"/> is idempotent, so a <c>using</c>
+    /// declaration around the argument stays correct.
+    /// </para>
+    /// </remarks>
+    /// <param name="stream">
+    /// The <c>stream</c> argument.
+    /// The call consumes it: <paramref name="stream"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// </param>
+    /// <returns>%TRUE if the @stream was properly added, else %FALSE</returns>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="stream"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    /// This wrapper or <paramref name="stream"/> was disposed.
+    /// </exception>
+    public bool AddStream(Gst.Stream stream)
+    {
+        ArgumentNullException.ThrowIfNull(stream);
+        nint instanceHandle = Handle;
+        nint streamNative = stream.Handle;
+        nint streamOwned = Gst.Interop.GObjectNative.ObjectRef(streamNative);
+        int nativeResult = GstStreamCollectionAddStream(instanceHandle, streamOwned);
+        System.GC.KeepAlive(this);
+        stream.Dispose();
+        return nativeResult != 0;
+    }
+
     /// <summary>Get the number of streams this collection contains</summary>
     /// <returns>The number of streams that @collection contains</returns>
     public uint GetSize()
@@ -176,6 +213,10 @@ public unsafe partial class StreamCollection : Gst.Object
     /// <summary>The <c>gst_stream_collection_new</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_stream_collection_new")]
     private static partial nint GstStreamCollectionNew(byte* upstreamId);
+
+    /// <summary>The <c>gst_stream_collection_add_stream</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_stream_collection_add_stream")]
+    private static partial int GstStreamCollectionAddStream(nint collection, nint stream);
 
     /// <summary>The <c>gst_stream_collection_get_size</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_stream_collection_get_size")]

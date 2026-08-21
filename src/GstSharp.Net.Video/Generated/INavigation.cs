@@ -68,6 +68,40 @@ public static unsafe partial class NavigationExtensions
         System.GC.KeepAlive(structure);
     }
 
+    /// <summary>Sends an event to the navigation interface.</summary>
+    /// <remarks>
+    /// <para>
+    /// The <c>event</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a reference of its own and the wrapper is disposed afterwards, which
+    /// leaves the native reference count exactly where the C call leaves it.
+    /// <see cref="Gst.MiniObject.Dispose()"/> is idempotent, so a <c>using</c>
+    /// declaration around the argument stays correct.
+    /// </para>
+    /// </remarks>
+    /// <param name="navigation">The navigation interface instance</param>
+    /// <param name="event">
+    /// The <c>@event</c> argument.
+    /// The call consumes it: <paramref name="event"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// </param>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="event"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    /// <paramref name="navigation"/> or <paramref name="event"/> was disposed.
+    /// </exception>
+    public static void SendEventSimple(this Gst.Video.INavigation navigation, Gst.Event @event)
+    {
+        ArgumentNullException.ThrowIfNull(navigation);
+        ArgumentNullException.ThrowIfNull(@event);
+        nint instanceHandle = navigation.Handle;
+        nint @eventNative = @event.Handle;
+        nint @eventOwned = Gst.GstNative.MiniObjectRef(@eventNative);
+        GstNavigationSendEventSimple(instanceHandle, @eventOwned);
+        System.GC.KeepAlive(navigation);
+        @event.Dispose();
+    }
+
     /// <summary>The <c>gst_navigation_send_key_event</c> function.</summary>
     /// <param name="navigation">The navigation interface instance</param>
     /// <param name="event">The <c>@event</c> argument.</param>
@@ -776,6 +810,10 @@ public static unsafe partial class NavigationExtensions
     /// <summary>The <c>gst_navigation_send_event</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_navigation_send_event")]
     private static partial void GstNavigationSendEvent(nint navigation, nint structure);
+
+    /// <summary>The <c>gst_navigation_send_event_simple</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_navigation_send_event_simple")]
+    private static partial void GstNavigationSendEventSimple(nint navigation, nint @event);
 
     /// <summary>The <c>gst_navigation_send_key_event</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_navigation_send_key_event")]

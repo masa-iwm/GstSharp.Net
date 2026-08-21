@@ -46,6 +46,51 @@ public unsafe partial class EncodingTarget : Gst.GObject.Object
     {
     }
 
+    /// <summary>
+    /// Adds the given @profile to the @target. Each added profile must have
+    /// a unique name within the profile.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The @target will steal a reference to the @profile. If you wish to use
+    /// the profile after calling this method, you should increase its reference
+    /// count.
+    /// </para>
+    /// <para>
+    /// The <c>profile</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a reference of its own and the wrapper is disposed afterwards, which
+    /// leaves the native reference count exactly where the C call leaves it. A
+    /// GObject wrapper is interned, so disposing it gives the object up for the
+    /// whole process rather than for one holder: after this call there is no
+    /// wrapper for that object anywhere.
+    /// <see cref="Gst.GObject.Object.Dispose()"/> is idempotent, so a <c>using</c>
+    /// declaration around the argument stays correct.
+    /// </para>
+    /// </remarks>
+    /// <param name="profile">
+    /// The <c>profile</c> argument.
+    /// The call consumes it: <paramref name="profile"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// </param>
+    /// <returns>%TRUE if the profile was added, else %FALSE.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="profile"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    /// This wrapper or <paramref name="profile"/> was disposed.
+    /// </exception>
+    public bool AddProfile(Gst.Pbutils.EncodingProfile profile)
+    {
+        ArgumentNullException.ThrowIfNull(profile);
+        nint instanceHandle = Handle;
+        nint profileNative = profile.Handle;
+        nint profileOwned = Gst.Interop.GObjectNative.ObjectRef(profileNative);
+        int nativeResult = GstEncodingTargetAddProfile(instanceHandle, profileOwned);
+        System.GC.KeepAlive(this);
+        profile.Dispose();
+        return nativeResult != 0;
+    }
+
     /// <summary>The <c>gst_encoding_target_get_category</c> function.</summary>
     /// <returns>
     /// The category of the @target. For example:
@@ -209,6 +254,10 @@ public unsafe partial class EncodingTarget : Gst.GObject.Object
         return Gst.GObject.Object.FromNative<Gst.Pbutils.EncodingTarget>(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_encoding_target_load_from_file returned no value.");
     }
+
+    /// <summary>The <c>gst_encoding_target_add_profile</c> entry point.</summary>
+    [LibraryImport("GstPbutils", EntryPoint = "gst_encoding_target_add_profile")]
+    private static partial int GstEncodingTargetAddProfile(nint target, nint profile);
 
     /// <summary>The <c>gst_encoding_target_get_category</c> entry point.</summary>
     [LibraryImport("GstPbutils", EntryPoint = "gst_encoding_target_get_category")]

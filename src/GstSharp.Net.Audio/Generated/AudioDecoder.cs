@@ -153,6 +153,99 @@ public abstract unsafe partial class AudioDecoder : Gst.Element
             ?? throw new InvalidOperationException("gst_audio_decoder_allocate_output_buffer returned no value.");
     }
 
+    /// <summary>Collects decoded data and pushes it downstream.</summary>
+    /// <remarks>
+    /// <para>
+    /// @buf may be NULL in which case the indicated number of frames
+    /// are discarded and considered to have produced no output
+    /// (e.g. lead-in or setup frames).
+    /// Otherwise, source pad caps must be set when it is called with valid
+    /// data in @buf.
+    /// </para>
+    /// <para>
+    /// Note that a frame received in #GstAudioDecoderClass.handle_frame() may be
+    /// invalidated by a call to this function.
+    /// </para>
+    /// <para>
+    /// The <c>buf</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a reference of its own and the wrapper is disposed afterwards, which
+    /// leaves the native reference count exactly where the C call leaves it.
+    /// <see cref="Gst.MiniObject.Dispose()"/> is idempotent, so a <c>using</c>
+    /// declaration around the argument stays correct.
+    /// </para>
+    /// </remarks>
+    /// <param name="buf">
+    /// The <c>buf</c> argument.
+    /// The call consumes it: <paramref name="buf"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// It may be <see langword="null"/>, which is the absence of a payload and leaves
+    /// nothing to consume.
+    /// </param>
+    /// <param name="frames">The <c>frames</c> argument.</param>
+    /// <returns>a #GstFlowReturn that should be escalated to caller (of caller)</returns>
+    /// <exception cref="ObjectDisposedException">
+    /// This wrapper or <paramref name="buf"/> was disposed.
+    /// </exception>
+    public Gst.FlowReturn FinishFrame(Gst.Buffer? buf, int frames)
+    {
+        nint instanceHandle = Handle;
+        nint bufNative = buf is null ? 0 : buf.Handle;
+        nint bufOwned = buf is null ? 0 : Gst.GstNative.MiniObjectRef(bufNative);
+        int nativeResult = GstAudioDecoderFinishFrame(instanceHandle, bufOwned, frames);
+        System.GC.KeepAlive(this);
+        buf?.Dispose();
+        return (Gst.FlowReturn)nativeResult;
+    }
+
+    /// <summary>
+    /// Collects decoded data and pushes it downstream. This function may be called
+    /// multiple times for a given input frame.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// @buf may be NULL in which case it is assumed that the current input frame is
+    /// finished. This is equivalent to calling gst_audio_decoder_finish_subframe()
+    /// with a NULL buffer and frames=1 after having pushed out all decoded audio
+    /// subframes using this function.
+    /// </para>
+    /// <para>
+    /// When called with valid data in @buf the source pad caps must have been set
+    /// already.
+    /// </para>
+    /// <para>
+    /// Note that a frame received in #GstAudioDecoderClass.handle_frame() may be
+    /// invalidated by a call to this function.
+    /// </para>
+    /// <para>
+    /// The <c>buf</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a reference of its own and the wrapper is disposed afterwards, which
+    /// leaves the native reference count exactly where the C call leaves it.
+    /// <see cref="Gst.MiniObject.Dispose()"/> is idempotent, so a <c>using</c>
+    /// declaration around the argument stays correct.
+    /// </para>
+    /// </remarks>
+    /// <param name="buf">
+    /// The <c>buf</c> argument.
+    /// The call consumes it: <paramref name="buf"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// It may be <see langword="null"/>, which is the absence of a payload and leaves
+    /// nothing to consume.
+    /// </param>
+    /// <returns>a #GstFlowReturn that should be escalated to caller (of caller)</returns>
+    /// <exception cref="ObjectDisposedException">
+    /// This wrapper or <paramref name="buf"/> was disposed.
+    /// </exception>
+    public Gst.FlowReturn FinishSubframe(Gst.Buffer? buf)
+    {
+        nint instanceHandle = Handle;
+        nint bufNative = buf is null ? 0 : buf.Handle;
+        nint bufOwned = buf is null ? 0 : Gst.GstNative.MiniObjectRef(bufNative);
+        int nativeResult = GstAudioDecoderFinishSubframe(instanceHandle, bufOwned);
+        System.GC.KeepAlive(this);
+        buf?.Dispose();
+        return (Gst.FlowReturn)nativeResult;
+    }
+
     /// <summary>The <c>gst_audio_decoder_get_audio_info</c> function.</summary>
     /// <returns>
     /// a #GstAudioInfo describing the input audio format
@@ -536,6 +629,14 @@ public abstract unsafe partial class AudioDecoder : Gst.Element
     /// <summary>The <c>gst_audio_decoder_allocate_output_buffer</c> entry point.</summary>
     [LibraryImport("GstAudio", EntryPoint = "gst_audio_decoder_allocate_output_buffer")]
     private static partial nint GstAudioDecoderAllocateOutputBuffer(nint dec, nuint size);
+
+    /// <summary>The <c>gst_audio_decoder_finish_frame</c> entry point.</summary>
+    [LibraryImport("GstAudio", EntryPoint = "gst_audio_decoder_finish_frame")]
+    private static partial int GstAudioDecoderFinishFrame(nint dec, nint buf, int frames);
+
+    /// <summary>The <c>gst_audio_decoder_finish_subframe</c> entry point.</summary>
+    [LibraryImport("GstAudio", EntryPoint = "gst_audio_decoder_finish_subframe")]
+    private static partial int GstAudioDecoderFinishSubframe(nint dec, nint buf);
 
     /// <summary>The <c>gst_audio_decoder_get_audio_info</c> entry point.</summary>
     [LibraryImport("GstAudio", EntryPoint = "gst_audio_decoder_get_audio_info")]

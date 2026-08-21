@@ -575,6 +575,41 @@ public unsafe partial class Adapter : Gst.GObject.Object
     }
 
     /// <summary>
+    /// Adds the data from @buf to the data stored inside @adapter and takes
+    /// ownership of the buffer.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The <c>buf</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a reference of its own and the wrapper is disposed afterwards, which
+    /// leaves the native reference count exactly where the C call leaves it.
+    /// <see cref="Gst.MiniObject.Dispose()"/> is idempotent, so a <c>using</c>
+    /// declaration around the argument stays correct.
+    /// </para>
+    /// </remarks>
+    /// <param name="buf">
+    /// The <c>buf</c> argument.
+    /// The call consumes it: <paramref name="buf"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// </param>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="buf"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    /// This wrapper or <paramref name="buf"/> was disposed.
+    /// </exception>
+    public void Push(Gst.Buffer buf)
+    {
+        ArgumentNullException.ThrowIfNull(buf);
+        nint instanceHandle = Handle;
+        nint bufNative = buf.Handle;
+        nint bufOwned = Gst.GstNative.MiniObjectRef(bufNative);
+        GstAdapterPush(instanceHandle, bufOwned);
+        System.GC.KeepAlive(this);
+        buf.Dispose();
+    }
+
+    /// <summary>
     /// Returns a #GstBuffer containing the first @nbytes bytes of the
     /// @adapter. The returned bytes will be flushed from the adapter.
     /// This function is potentially more performant than
@@ -804,6 +839,10 @@ public unsafe partial class Adapter : Gst.GObject.Object
     /// <summary>The <c>gst_adapter_pts_at_discont</c> entry point.</summary>
     [LibraryImport("GstBase", EntryPoint = "gst_adapter_pts_at_discont")]
     private static partial ulong GstAdapterPtsAtDiscont(nint adapter);
+
+    /// <summary>The <c>gst_adapter_push</c> entry point.</summary>
+    [LibraryImport("GstBase", EntryPoint = "gst_adapter_push")]
+    private static partial void GstAdapterPush(nint adapter, nint buf);
 
     /// <summary>The <c>gst_adapter_take_buffer</c> entry point.</summary>
     [LibraryImport("GstBase", EntryPoint = "gst_adapter_take_buffer")]

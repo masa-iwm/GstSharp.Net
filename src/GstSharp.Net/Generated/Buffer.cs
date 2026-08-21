@@ -297,6 +297,43 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
         return Gst.ParentBufferMeta.FromNative(nativeResult);
     }
 
+    /// <summary>Attaches protection metadata to a #GstBuffer.</summary>
+    /// <remarks>
+    /// <para>
+    /// The <c>info</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a copy of the value and the wrapper is disposed afterwards, which
+    /// leaves the caller with exactly what the C call leaves it with. A boxed
+    /// value has no reference count to raise, so the copy is what a reference is
+    /// there. <see cref="Gst.GObject.Boxed.Dispose()"/> is idempotent, so a
+    /// <c>using</c> declaration around the argument stays correct.
+    /// </para>
+    /// </remarks>
+    /// <param name="info">
+    /// The <c>info</c> argument.
+    /// The call consumes it: <paramref name="info"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// </param>
+    /// <returns>a pointer to the added #GstProtectionMeta if successful</returns>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="info"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    /// This wrapper or <paramref name="info"/> was disposed.
+    /// </exception>
+    public Gst.ProtectionMeta AddProtectionMeta(Gst.Structure info)
+    {
+        ArgumentNullException.ThrowIfNull(info);
+        nint instanceHandle = Handle;
+        nint infoNative = info.Handle;
+        nuint infoType = info.BoxedType.Value;
+        nint infoOwned = Gst.Interop.GObjectNative.BoxedCopy(infoType, infoNative);
+        nint nativeResult = GstBufferAddProtectionMeta(instanceHandle, infoOwned);
+        System.GC.KeepAlive(this);
+        info.Dispose();
+        return Gst.ProtectionMeta.FromNative(nativeResult)
+            ?? throw new InvalidOperationException("gst_buffer_add_protection_meta returned no value.");
+    }
+
     /// <summary>
     /// Adds a #GstReferenceTimestampMeta to @buffer that holds a @timestamp and
     /// optionally @duration based on a specific timestamp @reference. See the
@@ -313,6 +350,45 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(reference);
         return Gst.ReferenceTimestampMeta.FromNative(nativeResult);
+    }
+
+    /// <summary>
+    /// Appends the memory block @mem to @buffer. This function takes
+    /// ownership of @mem and thus doesn't increase its refcount.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This function is identical to gst_buffer_insert_memory() with an index of -1.
+    /// See gst_buffer_insert_memory() for more details.
+    /// </para>
+    /// <para>
+    /// The <c>mem</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a reference of its own and the wrapper is disposed afterwards, which
+    /// leaves the native reference count exactly where the C call leaves it.
+    /// <see cref="Gst.MiniObject.Dispose()"/> is idempotent, so a <c>using</c>
+    /// declaration around the argument stays correct.
+    /// </para>
+    /// </remarks>
+    /// <param name="mem">
+    /// The <c>mem</c> argument.
+    /// The call consumes it: <paramref name="mem"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// </param>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="mem"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    /// This wrapper or <paramref name="mem"/> was disposed.
+    /// </exception>
+    public void AppendMemory(Gst.Memory mem)
+    {
+        ArgumentNullException.ThrowIfNull(mem);
+        nint instanceHandle = Handle;
+        nint memNative = mem.Handle;
+        nint memOwned = Gst.GstNative.MiniObjectRef(memNative);
+        GstBufferAppendMemory(instanceHandle, memOwned);
+        System.GC.KeepAlive(this);
+        mem.Dispose();
     }
 
     /// <summary>
@@ -635,6 +711,47 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
         return nativeResult != 0;
     }
 
+    /// <summary>
+    /// Inserts the memory block @mem into @buffer at @idx. This function takes ownership
+    /// of @mem and thus doesn't increase its refcount.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Only gst_buffer_get_max_memory() can be added to a buffer. If more memory is
+    /// added, existing memory blocks will automatically be merged to make room for
+    /// the new memory.
+    /// </para>
+    /// <para>
+    /// The <c>mem</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a reference of its own and the wrapper is disposed afterwards, which
+    /// leaves the native reference count exactly where the C call leaves it.
+    /// <see cref="Gst.MiniObject.Dispose()"/> is idempotent, so a <c>using</c>
+    /// declaration around the argument stays correct.
+    /// </para>
+    /// </remarks>
+    /// <param name="idx">The <c>idx</c> argument.</param>
+    /// <param name="mem">
+    /// The <c>mem</c> argument.
+    /// The call consumes it: <paramref name="mem"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// </param>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="mem"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    /// This wrapper or <paramref name="mem"/> was disposed.
+    /// </exception>
+    public void InsertMemory(int idx, Gst.Memory mem)
+    {
+        ArgumentNullException.ThrowIfNull(mem);
+        nint instanceHandle = Handle;
+        nint memNative = mem.Handle;
+        nint memOwned = Gst.GstNative.MiniObjectRef(memNative);
+        GstBufferInsertMemory(instanceHandle, idx, memOwned);
+        System.GC.KeepAlive(this);
+        mem.Dispose();
+    }
+
     /// <summary>Checks if all memory blocks in @buffer are writable.</summary>
     /// <remarks>
     /// <para>
@@ -792,6 +909,45 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
         return Gst.Memory.FromNative(nativeResult, Gst.Interop.Transfer.None);
     }
 
+    /// <summary>
+    /// Prepends the memory block @mem to @buffer. This function takes
+    /// ownership of @mem and thus doesn't increase its refcount.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This function is identical to gst_buffer_insert_memory() with an index of 0.
+    /// See gst_buffer_insert_memory() for more details.
+    /// </para>
+    /// <para>
+    /// The <c>mem</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a reference of its own and the wrapper is disposed afterwards, which
+    /// leaves the native reference count exactly where the C call leaves it.
+    /// <see cref="Gst.MiniObject.Dispose()"/> is idempotent, so a <c>using</c>
+    /// declaration around the argument stays correct.
+    /// </para>
+    /// </remarks>
+    /// <param name="mem">
+    /// The <c>mem</c> argument.
+    /// The call consumes it: <paramref name="mem"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// </param>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="mem"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    /// This wrapper or <paramref name="mem"/> was disposed.
+    /// </exception>
+    public void PrependMemory(Gst.Memory mem)
+    {
+        ArgumentNullException.ThrowIfNull(mem);
+        nint instanceHandle = Handle;
+        nint memNative = mem.Handle;
+        nint memOwned = Gst.GstNative.MiniObjectRef(memNative);
+        GstBufferPrependMemory(instanceHandle, memOwned);
+        System.GC.KeepAlive(this);
+        mem.Dispose();
+    }
+
     /// <summary>Removes all the memory blocks in @buffer.</summary>
     public void RemoveAllMemory()
     {
@@ -817,6 +973,110 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     {
         GstBufferRemoveMemoryRange(Handle, idx, length);
         System.GC.KeepAlive(this);
+    }
+
+    /// <summary>Replaces all memory in @buffer with @mem.</summary>
+    /// <remarks>
+    /// <para>
+    /// The <c>mem</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a reference of its own and the wrapper is disposed afterwards, which
+    /// leaves the native reference count exactly where the C call leaves it.
+    /// <see cref="Gst.MiniObject.Dispose()"/> is idempotent, so a <c>using</c>
+    /// declaration around the argument stays correct.
+    /// </para>
+    /// </remarks>
+    /// <param name="mem">
+    /// The <c>mem</c> argument.
+    /// The call consumes it: <paramref name="mem"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// </param>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="mem"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    /// This wrapper or <paramref name="mem"/> was disposed.
+    /// </exception>
+    public void ReplaceAllMemory(Gst.Memory mem)
+    {
+        ArgumentNullException.ThrowIfNull(mem);
+        nint instanceHandle = Handle;
+        nint memNative = mem.Handle;
+        nint memOwned = Gst.GstNative.MiniObjectRef(memNative);
+        GstBufferReplaceAllMemory(instanceHandle, memOwned);
+        System.GC.KeepAlive(this);
+        mem.Dispose();
+    }
+
+    /// <summary>Replaces the memory block at index @idx in @buffer with @mem.</summary>
+    /// <remarks>
+    /// <para>
+    /// The <c>mem</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a reference of its own and the wrapper is disposed afterwards, which
+    /// leaves the native reference count exactly where the C call leaves it.
+    /// <see cref="Gst.MiniObject.Dispose()"/> is idempotent, so a <c>using</c>
+    /// declaration around the argument stays correct.
+    /// </para>
+    /// </remarks>
+    /// <param name="idx">The <c>idx</c> argument.</param>
+    /// <param name="mem">
+    /// The <c>mem</c> argument.
+    /// The call consumes it: <paramref name="mem"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// </param>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="mem"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    /// This wrapper or <paramref name="mem"/> was disposed.
+    /// </exception>
+    public void ReplaceMemory(uint idx, Gst.Memory mem)
+    {
+        ArgumentNullException.ThrowIfNull(mem);
+        nint instanceHandle = Handle;
+        nint memNative = mem.Handle;
+        nint memOwned = Gst.GstNative.MiniObjectRef(memNative);
+        GstBufferReplaceMemory(instanceHandle, idx, memOwned);
+        System.GC.KeepAlive(this);
+        mem.Dispose();
+    }
+
+    /// <summary>Replaces @length memory blocks in @buffer starting at @idx with @mem.</summary>
+    /// <remarks>
+    /// <para>
+    /// If @length is -1, all memory starting from @idx will be removed and
+    /// replaced with @mem.
+    /// </para>
+    /// <para>@buffer should be writable.</para>
+    /// <para>
+    /// The <c>mem</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a reference of its own and the wrapper is disposed afterwards, which
+    /// leaves the native reference count exactly where the C call leaves it.
+    /// <see cref="Gst.MiniObject.Dispose()"/> is idempotent, so a <c>using</c>
+    /// declaration around the argument stays correct.
+    /// </para>
+    /// </remarks>
+    /// <param name="idx">The <c>idx</c> argument.</param>
+    /// <param name="length">The <c>length</c> argument.</param>
+    /// <param name="mem">
+    /// The <c>mem</c> argument.
+    /// The call consumes it: <paramref name="mem"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// </param>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="mem"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    /// This wrapper or <paramref name="mem"/> was disposed.
+    /// </exception>
+    public void ReplaceMemoryRange(uint idx, int length, Gst.Memory mem)
+    {
+        ArgumentNullException.ThrowIfNull(mem);
+        nint instanceHandle = Handle;
+        nint memNative = mem.Handle;
+        nint memOwned = Gst.GstNative.MiniObjectRef(memNative);
+        GstBufferReplaceMemoryRange(instanceHandle, idx, length, memOwned);
+        System.GC.KeepAlive(this);
+        mem.Dispose();
     }
 
     /// <summary>Sets the offset and total size of the memory blocks in @buffer.</summary>
@@ -922,9 +1182,17 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     [LibraryImport("Gst", EntryPoint = "gst_buffer_add_parent_buffer_meta")]
     private static partial nint GstBufferAddParentBufferMeta(nint buffer, nint @ref);
 
+    /// <summary>The <c>gst_buffer_add_protection_meta</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_buffer_add_protection_meta")]
+    private static partial nint GstBufferAddProtectionMeta(nint buffer, nint info);
+
     /// <summary>The <c>gst_buffer_add_reference_timestamp_meta</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_buffer_add_reference_timestamp_meta")]
     private static partial nint GstBufferAddReferenceTimestampMeta(nint buffer, nint reference, ulong timestamp, ulong duration);
+
+    /// <summary>The <c>gst_buffer_append_memory</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_buffer_append_memory")]
+    private static partial void GstBufferAppendMemory(nint buffer, nint mem);
 
     /// <summary>The <c>gst_buffer_copy_deep</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_buffer_copy_deep")]
@@ -998,6 +1266,10 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     [LibraryImport("Gst", EntryPoint = "gst_buffer_has_flags")]
     private static partial int GstBufferHasFlags(nint buffer, int flags);
 
+    /// <summary>The <c>gst_buffer_insert_memory</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_buffer_insert_memory")]
+    private static partial void GstBufferInsertMemory(nint buffer, int idx, nint mem);
+
     /// <summary>The <c>gst_buffer_is_all_memory_writable</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_buffer_is_all_memory_writable")]
     private static partial int GstBufferIsAllMemoryWritable(nint buffer);
@@ -1030,6 +1302,10 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     [LibraryImport("Gst", EntryPoint = "gst_buffer_peek_memory")]
     private static partial nint GstBufferPeekMemory(nint buffer, uint idx);
 
+    /// <summary>The <c>gst_buffer_prepend_memory</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_buffer_prepend_memory")]
+    private static partial void GstBufferPrependMemory(nint buffer, nint mem);
+
     /// <summary>The <c>gst_buffer_remove_all_memory</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_buffer_remove_all_memory")]
     private static partial void GstBufferRemoveAllMemory(nint buffer);
@@ -1041,6 +1317,18 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     /// <summary>The <c>gst_buffer_remove_memory_range</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_buffer_remove_memory_range")]
     private static partial void GstBufferRemoveMemoryRange(nint buffer, uint idx, int length);
+
+    /// <summary>The <c>gst_buffer_replace_all_memory</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_buffer_replace_all_memory")]
+    private static partial void GstBufferReplaceAllMemory(nint buffer, nint mem);
+
+    /// <summary>The <c>gst_buffer_replace_memory</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_buffer_replace_memory")]
+    private static partial void GstBufferReplaceMemory(nint buffer, uint idx, nint mem);
+
+    /// <summary>The <c>gst_buffer_replace_memory_range</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_buffer_replace_memory_range")]
+    private static partial void GstBufferReplaceMemoryRange(nint buffer, uint idx, int length, nint mem);
 
     /// <summary>The <c>gst_buffer_resize</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_buffer_resize")]

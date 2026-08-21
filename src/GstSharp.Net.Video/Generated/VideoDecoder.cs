@@ -238,6 +238,173 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
         return (Gst.FlowReturn)nativeResult;
     }
 
+    /// <summary>
+    /// Similar to gst_video_decoder_finish_frame(), but drops @frame in any
+    /// case and posts a QoS message with the frame's details on the bus.
+    /// In any case, the frame is considered finished and released.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The <c>frame</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a copy of the value and the wrapper is disposed afterwards, which
+    /// leaves the caller with exactly what the C call leaves it with. A boxed
+    /// value has no reference count to raise, so the copy is what a reference is
+    /// there. <see cref="Gst.GObject.Boxed.Dispose()"/> is idempotent, so a
+    /// <c>using</c> declaration around the argument stays correct.
+    /// </para>
+    /// </remarks>
+    /// <param name="frame">
+    /// The <c>frame</c> argument.
+    /// The call consumes it: <paramref name="frame"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// </param>
+    /// <returns>a #GstFlowReturn, usually GST_FLOW_OK.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="frame"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    /// This wrapper or <paramref name="frame"/> was disposed.
+    /// </exception>
+    public Gst.FlowReturn DropFrame(Gst.Video.VideoCodecFrame frame)
+    {
+        ArgumentNullException.ThrowIfNull(frame);
+        nint instanceHandle = Handle;
+        nint frameNative = frame.Handle;
+        nuint frameType = frame.BoxedType.Value;
+        nint frameOwned = Gst.Interop.GObjectNative.BoxedCopy(frameType, frameNative);
+        int nativeResult = GstVideoDecoderDropFrame(instanceHandle, frameOwned);
+        System.GC.KeepAlive(this);
+        frame.Dispose();
+        return (Gst.FlowReturn)nativeResult;
+    }
+
+    /// <summary>
+    /// Drops input data.
+    /// The frame is not considered finished until the whole frame
+    /// is finished or dropped by the subclass.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The <c>frame</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a copy of the value and the wrapper is disposed afterwards, which
+    /// leaves the caller with exactly what the C call leaves it with. A boxed
+    /// value has no reference count to raise, so the copy is what a reference is
+    /// there. <see cref="Gst.GObject.Boxed.Dispose()"/> is idempotent, so a
+    /// <c>using</c> declaration around the argument stays correct.
+    /// </para>
+    /// </remarks>
+    /// <param name="frame">
+    /// The <c>frame</c> argument.
+    /// The call consumes it: <paramref name="frame"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// </param>
+    /// <returns>a #GstFlowReturn, usually GST_FLOW_OK.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="frame"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    /// This wrapper or <paramref name="frame"/> was disposed.
+    /// </exception>
+    public Gst.FlowReturn DropSubframe(Gst.Video.VideoCodecFrame frame)
+    {
+        ArgumentNullException.ThrowIfNull(frame);
+        nint instanceHandle = Handle;
+        nint frameNative = frame.Handle;
+        nuint frameType = frame.BoxedType.Value;
+        nint frameOwned = Gst.Interop.GObjectNative.BoxedCopy(frameType, frameNative);
+        int nativeResult = GstVideoDecoderDropSubframe(instanceHandle, frameOwned);
+        System.GC.KeepAlive(this);
+        frame.Dispose();
+        return (Gst.FlowReturn)nativeResult;
+    }
+
+    /// <summary>
+    /// @frame should have a valid decoded data buffer, whose metadata fields
+    /// are then appropriately set according to frame data and pushed downstream.
+    /// If no output data is provided, @frame is considered skipped.
+    /// In any case, the frame is considered finished and released.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// After calling this function the output buffer of the frame is to be
+    /// considered read-only. This function will also change the metadata
+    /// of the buffer.
+    /// </para>
+    /// <para>
+    /// The <c>frame</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a copy of the value and the wrapper is disposed afterwards, which
+    /// leaves the caller with exactly what the C call leaves it with. A boxed
+    /// value has no reference count to raise, so the copy is what a reference is
+    /// there. <see cref="Gst.GObject.Boxed.Dispose()"/> is idempotent, so a
+    /// <c>using</c> declaration around the argument stays correct.
+    /// </para>
+    /// </remarks>
+    /// <param name="frame">
+    /// The <c>frame</c> argument.
+    /// The call consumes it: <paramref name="frame"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// </param>
+    /// <returns>a #GstFlowReturn resulting from sending data downstream</returns>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="frame"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    /// This wrapper or <paramref name="frame"/> was disposed.
+    /// </exception>
+    public Gst.FlowReturn FinishFrame(Gst.Video.VideoCodecFrame frame)
+    {
+        ArgumentNullException.ThrowIfNull(frame);
+        nint instanceHandle = Handle;
+        nint frameNative = frame.Handle;
+        nuint frameType = frame.BoxedType.Value;
+        nint frameOwned = Gst.Interop.GObjectNative.BoxedCopy(frameType, frameNative);
+        int nativeResult = GstVideoDecoderFinishFrame(instanceHandle, frameOwned);
+        System.GC.KeepAlive(this);
+        frame.Dispose();
+        return (Gst.FlowReturn)nativeResult;
+    }
+
+    /// <summary>
+    /// Indicate that a subframe has been finished to be decoded
+    /// by the subclass. This method should be called for all subframes
+    /// except the last subframe where @gst_video_decoder_finish_frame
+    /// should be called instead.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The <c>frame</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a copy of the value and the wrapper is disposed afterwards, which
+    /// leaves the caller with exactly what the C call leaves it with. A boxed
+    /// value has no reference count to raise, so the copy is what a reference is
+    /// there. <see cref="Gst.GObject.Boxed.Dispose()"/> is idempotent, so a
+    /// <c>using</c> declaration around the argument stays correct.
+    /// </para>
+    /// </remarks>
+    /// <param name="frame">
+    /// The <c>frame</c> argument.
+    /// The call consumes it: <paramref name="frame"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// </param>
+    /// <returns>a #GstFlowReturn, usually GST_FLOW_OK.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="frame"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    /// This wrapper or <paramref name="frame"/> was disposed.
+    /// </exception>
+    public Gst.FlowReturn FinishSubframe(Gst.Video.VideoCodecFrame frame)
+    {
+        ArgumentNullException.ThrowIfNull(frame);
+        nint instanceHandle = Handle;
+        nint frameNative = frame.Handle;
+        nuint frameType = frame.BoxedType.Value;
+        nint frameOwned = Gst.Interop.GObjectNative.BoxedCopy(frameType, frameNative);
+        int nativeResult = GstVideoDecoderFinishSubframe(instanceHandle, frameOwned);
+        System.GC.KeepAlive(this);
+        frame.Dispose();
+        return (Gst.FlowReturn)nativeResult;
+    }
+
     /// <summary>The <c>gst_video_decoder_get_buffer_pool</c> function.</summary>
     /// <returns>
     /// the instance of the #GstBufferPool used
@@ -527,6 +694,44 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     }
 
     /// <summary>
+    /// Similar to gst_video_decoder_drop_frame(), but simply releases @frame
+    /// without any processing other than removing it from list of pending frames,
+    /// after which it is considered finished and released.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The <c>frame</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a copy of the value and the wrapper is disposed afterwards, which
+    /// leaves the caller with exactly what the C call leaves it with. A boxed
+    /// value has no reference count to raise, so the copy is what a reference is
+    /// there. <see cref="Gst.GObject.Boxed.Dispose()"/> is idempotent, so a
+    /// <c>using</c> declaration around the argument stays correct.
+    /// </para>
+    /// </remarks>
+    /// <param name="frame">
+    /// The <c>frame</c> argument.
+    /// The call consumes it: <paramref name="frame"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// </param>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="frame"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    /// This wrapper or <paramref name="frame"/> was disposed.
+    /// </exception>
+    public void ReleaseFrame(Gst.Video.VideoCodecFrame frame)
+    {
+        ArgumentNullException.ThrowIfNull(frame);
+        nint instanceHandle = Handle;
+        nint frameNative = frame.Handle;
+        nuint frameType = frame.BoxedType.Value;
+        nint frameOwned = Gst.Interop.GObjectNative.BoxedCopy(frameType, frameNative);
+        GstVideoDecoderReleaseFrame(instanceHandle, frameOwned);
+        System.GC.KeepAlive(this);
+        frame.Dispose();
+    }
+
+    /// <summary>
     /// Allows the #GstVideoDecoder subclass to request from the base class that
     /// a new sync should be requested from upstream, and that @frame was the frame
     /// when the subclass noticed that a new sync point is required. A reason for
@@ -773,6 +978,22 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     [LibraryImport("GstVideo", EntryPoint = "gst_video_decoder_allocate_output_frame_with_params")]
     private static partial int GstVideoDecoderAllocateOutputFrameWithParams(nint decoder, nint frame, Gst.BufferPoolAcquireParams* @params);
 
+    /// <summary>The <c>gst_video_decoder_drop_frame</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_video_decoder_drop_frame")]
+    private static partial int GstVideoDecoderDropFrame(nint dec, nint frame);
+
+    /// <summary>The <c>gst_video_decoder_drop_subframe</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_video_decoder_drop_subframe")]
+    private static partial int GstVideoDecoderDropSubframe(nint dec, nint frame);
+
+    /// <summary>The <c>gst_video_decoder_finish_frame</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_video_decoder_finish_frame")]
+    private static partial int GstVideoDecoderFinishFrame(nint decoder, nint frame);
+
+    /// <summary>The <c>gst_video_decoder_finish_subframe</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_video_decoder_finish_subframe")]
+    private static partial int GstVideoDecoderFinishSubframe(nint decoder, nint frame);
+
     /// <summary>The <c>gst_video_decoder_get_buffer_pool</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_decoder_get_buffer_pool")]
     private static partial nint GstVideoDecoderGetBufferPool(nint decoder);
@@ -860,6 +1081,10 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     /// <summary>The <c>gst_video_decoder_proxy_getcaps</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_decoder_proxy_getcaps")]
     private static partial nint GstVideoDecoderProxyGetcaps(nint decoder, nint caps, nint filter);
+
+    /// <summary>The <c>gst_video_decoder_release_frame</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_video_decoder_release_frame")]
+    private static partial void GstVideoDecoderReleaseFrame(nint dec, nint frame);
 
     /// <summary>The <c>gst_video_decoder_request_sync_point</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_decoder_request_sync_point")]

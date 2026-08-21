@@ -113,6 +113,82 @@ public abstract unsafe partial class Aggregator : Gst.Element
     {
     }
 
+    /// <summary>
+    /// This method will push the provided output buffer downstream. If needed,
+    /// mandatory events such as stream-start, caps, and segment events will be
+    /// sent before pushing the buffer.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The <c>buffer</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a reference of its own and the wrapper is disposed afterwards, which
+    /// leaves the native reference count exactly where the C call leaves it.
+    /// <see cref="Gst.MiniObject.Dispose()"/> is idempotent, so a <c>using</c>
+    /// declaration around the argument stays correct.
+    /// </para>
+    /// </remarks>
+    /// <param name="buffer">
+    /// The <c>buffer</c> argument.
+    /// The call consumes it: <paramref name="buffer"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// </param>
+    /// <returns>The result of <c>gst_aggregator_finish_buffer</c>.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="buffer"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    /// This wrapper or <paramref name="buffer"/> was disposed.
+    /// </exception>
+    public Gst.FlowReturn FinishBuffer(Gst.Buffer buffer)
+    {
+        ArgumentNullException.ThrowIfNull(buffer);
+        nint instanceHandle = Handle;
+        nint bufferNative = buffer.Handle;
+        nint bufferOwned = Gst.GstNative.MiniObjectRef(bufferNative);
+        int nativeResult = GstAggregatorFinishBuffer(instanceHandle, bufferOwned);
+        System.GC.KeepAlive(this);
+        buffer.Dispose();
+        return (Gst.FlowReturn)nativeResult;
+    }
+
+    /// <summary>
+    /// This method will push the provided output buffer list downstream. If needed,
+    /// mandatory events such as stream-start, caps, and segment events will be
+    /// sent before pushing the buffer.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The <c>bufferlist</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a reference of its own and the wrapper is disposed afterwards, which
+    /// leaves the native reference count exactly where the C call leaves it.
+    /// <see cref="Gst.MiniObject.Dispose()"/> is idempotent, so a <c>using</c>
+    /// declaration around the argument stays correct.
+    /// </para>
+    /// </remarks>
+    /// <param name="bufferlist">
+    /// The <c>bufferlist</c> argument.
+    /// The call consumes it: <paramref name="bufferlist"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// </param>
+    /// <returns>The result of <c>gst_aggregator_finish_buffer_list</c>.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="bufferlist"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    /// This wrapper or <paramref name="bufferlist"/> was disposed.
+    /// </exception>
+    public Gst.FlowReturn FinishBufferList(Gst.BufferList bufferlist)
+    {
+        ArgumentNullException.ThrowIfNull(bufferlist);
+        nint instanceHandle = Handle;
+        nint bufferlistNative = bufferlist.Handle;
+        nint bufferlistOwned = Gst.GstNative.MiniObjectRef(bufferlistNative);
+        int nativeResult = GstAggregatorFinishBufferList(instanceHandle, bufferlistOwned);
+        System.GC.KeepAlive(this);
+        bufferlist.Dispose();
+        return (Gst.FlowReturn)nativeResult;
+    }
+
     /// <summary>The <c>gst_aggregator_get_buffer_pool</c> function.</summary>
     /// <returns>
     /// the instance of the #GstBufferPool used
@@ -195,6 +271,49 @@ public abstract unsafe partial class Aggregator : Gst.Element
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(pad);
         return Gst.Sample.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+    }
+
+    /// <summary>
+    /// This method will push the provided event downstream. If needed, mandatory
+    /// events such as stream-start, caps, and segment events will be sent before
+    /// pushing the event.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This API does not allow pushing stream-start, caps, segment and EOS events.
+    /// Specific API like gst_aggregator_set_src_caps() should be used for these.
+    /// </para>
+    /// <para>
+    /// The <c>event</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a reference of its own and the wrapper is disposed afterwards, which
+    /// leaves the native reference count exactly where the C call leaves it.
+    /// <see cref="Gst.MiniObject.Dispose()"/> is idempotent, so a <c>using</c>
+    /// declaration around the argument stays correct.
+    /// </para>
+    /// <para>Available since GStreamer 1.26.</para>
+    /// </remarks>
+    /// <param name="event">
+    /// The <c>@event</c> argument.
+    /// The call consumes it: <paramref name="event"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// </param>
+    /// <returns>The result of <c>gst_aggregator_push_src_event</c>.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="event"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    /// This wrapper or <paramref name="event"/> was disposed.
+    /// </exception>
+    public bool PushSrcEvent(Gst.Event @event)
+    {
+        ArgumentNullException.ThrowIfNull(@event);
+        nint instanceHandle = Handle;
+        nint @eventNative = @event.Handle;
+        nint @eventOwned = Gst.GstNative.MiniObjectRef(@eventNative);
+        int nativeResult = GstAggregatorPushSrcEvent(instanceHandle, @eventOwned);
+        System.GC.KeepAlive(this);
+        @event.Dispose();
+        return nativeResult != 0;
     }
 
     /// <summary>
@@ -407,6 +526,14 @@ public abstract unsafe partial class Aggregator : Gst.Element
         }
     }
 
+    /// <summary>The <c>gst_aggregator_finish_buffer</c> entry point.</summary>
+    [LibraryImport("GstBase", EntryPoint = "gst_aggregator_finish_buffer")]
+    private static partial int GstAggregatorFinishBuffer(nint aggregator, nint buffer);
+
+    /// <summary>The <c>gst_aggregator_finish_buffer_list</c> entry point.</summary>
+    [LibraryImport("GstBase", EntryPoint = "gst_aggregator_finish_buffer_list")]
+    private static partial int GstAggregatorFinishBufferList(nint aggregator, nint bufferlist);
+
     /// <summary>The <c>gst_aggregator_get_buffer_pool</c> entry point.</summary>
     [LibraryImport("GstBase", EntryPoint = "gst_aggregator_get_buffer_pool")]
     private static partial nint GstAggregatorGetBufferPool(nint self);
@@ -430,6 +557,10 @@ public abstract unsafe partial class Aggregator : Gst.Element
     /// <summary>The <c>gst_aggregator_peek_next_sample</c> entry point.</summary>
     [LibraryImport("GstBase", EntryPoint = "gst_aggregator_peek_next_sample")]
     private static partial nint GstAggregatorPeekNextSample(nint self, nint pad);
+
+    /// <summary>The <c>gst_aggregator_push_src_event</c> entry point.</summary>
+    [LibraryImport("GstBase", EntryPoint = "gst_aggregator_push_src_event")]
+    private static partial int GstAggregatorPushSrcEvent(nint aggregator, nint @event);
 
     /// <summary>The <c>gst_aggregator_selected_samples</c> entry point.</summary>
     [LibraryImport("GstBase", EntryPoint = "gst_aggregator_selected_samples")]

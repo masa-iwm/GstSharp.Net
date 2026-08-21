@@ -155,17 +155,17 @@ public sealed class ClassEmitterTests
     }
 
     [Theory]
-    [InlineData("Gst", 35, 51, 5, 17, 18, 1230, 14, 23)]
-    [InlineData("GstBase", 11, 4, 0, 5, 0, 166, 11, 2)]
-    [InlineData("GstApp", 2, 2, 0, 8, 0, 61, 21, 8)]
-    [InlineData("GstAudio", 14, 17, 1, 2, 2, 190, 15, 0)]
-    [InlineData("GstVideo", 12, 42, 5, 0, 9, 314, 2, 2)]
-    [InlineData("GstPbutils", 14, 1, 0, 0, 1, 169, 0, 3)]
-    [InlineData("GstSdp", 1, 21, 0, 0, 0, 156, 0, 0)]
+    [InlineData("Gst", 35, 51, 5, 17, 18, 1270, 14, 23)]
+    [InlineData("GstBase", 11, 4, 0, 5, 0, 171, 11, 2)]
+    [InlineData("GstApp", 2, 2, 0, 8, 0, 62, 21, 8)]
+    [InlineData("GstAudio", 14, 17, 1, 2, 2, 197, 15, 0)]
+    [InlineData("GstVideo", 12, 42, 5, 0, 9, 327, 2, 2)]
+    [InlineData("GstPbutils", 14, 1, 0, 0, 1, 172, 0, 3)]
+    [InlineData("GstSdp", 1, 21, 0, 0, 0, 160, 0, 0)]
     [InlineData("GstWebRTC", 9, 4, 0, 1, 2, 37, 0, 6)]
     [InlineData("GstNet", 5, 3, 0, 1, 0, 22, 0, 0)]
-    [InlineData("GstRtsp", 1, 10, 1, 1, 2, 109, 0, 1)]
-    [InlineData("GES", 56, 2, 2, 0, 3, 362, 49, 29)]
+    [InlineData("GstRtsp", 1, 10, 1, 1, 2, 110, 0, 1)]
+    [InlineData("GES", 56, 2, 2, 0, 3, 364, 49, 29)]
     public void TheEmissionCensusIsStable(
         string module,
         int classes,
@@ -190,17 +190,17 @@ public sealed class ClassEmitterTests
     }
 
     [Theory]
-    [InlineData("Gst", 1, 94, 53, 119, 299, 10)]
-    [InlineData("GstBase", 0, 11, 0, 20, 32, 0)]
-    [InlineData("GstApp", 0, 0, 0, 2, 23, 0)]
-    [InlineData("GstAudio", 0, 27, 0, 8, 43, 0)]
-    [InlineData("GstVideo", 0, 102, 1, 6, 83, 0)]
-    [InlineData("GstPbutils", 0, 1, 0, 0, 22, 0)]
-    [InlineData("GstSdp", 0, 10, 0, 0, 12, 0)]
-    [InlineData("GstWebRTC", 0, 2, 0, 0, 45, 0)]
+    [InlineData("Gst", 1, 94, 53, 119, 245, 10)]
+    [InlineData("GstBase", 0, 11, 0, 20, 27, 0)]
+    [InlineData("GstApp", 0, 0, 0, 2, 19, 0)]
+    [InlineData("GstAudio", 0, 27, 0, 8, 36, 0)]
+    [InlineData("GstVideo", 0, 102, 1, 6, 70, 0)]
+    [InlineData("GstPbutils", 0, 1, 0, 0, 18, 0)]
+    [InlineData("GstSdp", 0, 10, 0, 0, 8, 0)]
+    [InlineData("GstWebRTC", 0, 2, 0, 0, 44, 0)]
     [InlineData("GstNet", 0, 3, 0, 0, 20, 0)]
-    [InlineData("GstRtsp", 0, 17, 0, 0, 20, 0)]
-    [InlineData("GES", 0, 3, 4, 10, 82, 0)]
+    [InlineData("GstRtsp", 0, 17, 0, 0, 19, 0)]
+    [InlineData("GES", 0, 3, 4, 10, 80, 0)]
     public void TheSkipCensusIsStable(
         string module,
         int shadowed,
@@ -235,6 +235,76 @@ public sealed class ClassEmitterTests
                 /// boxed value are not written back.
             """,
             Source("Buffer.cs"),
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AConsumedParameterSaysItIsConsumed()
+    {
+        // The wording is the contract of the hand written consuming members:
+        // the parameter note, the transfer statement with the idempotence
+        // sentence in the remarks, and the two exceptions.
+        string source = Source("Caps.cs");
+
+        Assert.Contains(
+            """
+                /// <param name="caps2">
+                /// The <c>caps2</c> argument.
+                /// The call consumes it: <paramref name="caps2"/> is disposed when this
+                /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+                /// </param>
+            """,
+            source,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            """
+                /// The <c>caps2</c> parameter is <c>transfer-ownership="full"</c>: the call is
+                /// handed a reference of its own and the wrapper is disposed afterwards, which
+                /// leaves the native reference count exactly where the C call leaves it.
+                /// <see cref="Gst.MiniObject.Dispose()"/> is idempotent, so a <c>using</c>
+                /// declaration around the argument stays correct.
+            """,
+            source,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            """
+                /// <exception cref="ArgumentNullException">
+                /// <paramref name="caps2"/> is <see langword="null"/>.
+                /// </exception>
+                /// <exception cref="ObjectDisposedException">
+                /// This wrapper or <paramref name="caps2"/> was disposed.
+                /// </exception>
+            """,
+            source,
+            StringComparison.Ordinal);
+
+        // A consumed GObject says what its dispose reaches: the wrapper is
+        // interned, so it is given up process-wide, the way the hand written
+        // EncodingContainerProfile.AddProfile words it.
+        Assert.Contains(
+            """
+                /// GObject wrapper is interned, so disposing it gives the object up for the
+                /// whole process rather than for one holder: after this call there is no
+                /// wrapper for that object anywhere.
+            """,
+            Source("StreamCollection.cs"),
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AConsumedArgumentIsDisposedBeforeAThrowingMemberRaises()
+    {
+        // ges_project_save consumes its formatter asset and reports errors
+        // through a GError. The C call has consumed what it was handed whether
+        // it also set the error or not, so the dispose sits before the throw —
+        // pinned adjacent, because nothing else in the suite pins this path.
+        Assert.Contains(
+            """
+                    System.GC.KeepAlive(timeline);
+                    formatterAsset?.Dispose();
+                    Gst.GLib.GException.ThrowIfSet(ref errorNative);
+            """,
+            SourceOf("GstSharp.Net.GES/Generated/Project.cs"),
             StringComparison.Ordinal);
     }
 
@@ -307,8 +377,12 @@ public sealed class ClassEmitterTests
             Assert.DoesNotContain("\n    protected ", content, StringComparison.Ordinal);
         }
 
+        // 106 rather than 105 since the consuming argument kind landed:
+        // GstAudio.AudioBuffer gained its first members (Clip and Truncate,
+        // whose buffer the call takes over), so its wrapper is emitted with the
+        // unsafe modifier the counting here keys on.
         Assert.Equal(151, classes);
-        Assert.Equal(105, records);
+        Assert.Equal(106, records);
     }
 
     [Fact]
@@ -488,14 +562,14 @@ public sealed class ClassEmitterTests
     /// <param name="actionSignals">Signals that are a call API rather than a notification.</param>
     /// <param name="owningProperties">Properties whose value is a wrapper the reader would have to dispose.</param>
     [Theory]
-    [InlineData("Gst", 11, 3, 21, 20, 0, 5)]
+    [InlineData("Gst", 25, 3, 21, 20, 0, 5)]
     [InlineData("GstBase", 3, 3, 4, 0, 0, 2)]
-    [InlineData("GstApp", 0, 0, 4, 0, 9, 2)]
+    [InlineData("GstApp", 3, 0, 4, 0, 9, 2)]
     [InlineData("GstAudio", 3, 7, 4, 0, 0, 0)]
     [InlineData("GstVideo", 1, 11, 10, 1, 0, 0)]
-    [InlineData("GstPbutils", 0, 0, 1, 0, 0, 1)]
+    [InlineData("GstPbutils", 1, 0, 1, 0, 0, 1)]
     [InlineData("GstSdp", 0, 4, 1, 0, 0, 0)]
-    [InlineData("GstWebRTC", 0, 0, 4, 0, 4, 0)]
+    [InlineData("GstWebRTC", 1, 0, 4, 0, 4, 0)]
     [InlineData("GstNet", 0, 0, 1, 0, 0, 0)]
     [InlineData("GstRtsp", 1, 2, 3, 0, 0, 0)]
     [InlineData("GES", 1, 0, 1, 0, 0, 2)]

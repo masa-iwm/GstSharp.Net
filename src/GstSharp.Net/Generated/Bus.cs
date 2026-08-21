@@ -371,6 +371,43 @@ public unsafe partial class Bus : Gst.Object
         return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
 
+    /// <summary>
+    /// Posts a message on the given bus. Ownership of the message
+    /// is taken by the bus.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The <c>message</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a reference of its own and the wrapper is disposed afterwards, which
+    /// leaves the native reference count exactly where the C call leaves it.
+    /// <see cref="Gst.MiniObject.Dispose()"/> is idempotent, so a <c>using</c>
+    /// declaration around the argument stays correct.
+    /// </para>
+    /// </remarks>
+    /// <param name="message">
+    /// The <c>message</c> argument.
+    /// The call consumes it: <paramref name="message"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// </param>
+    /// <returns>%TRUE if the message could be posted, %FALSE if the bus is flushing.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="message"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    /// This wrapper or <paramref name="message"/> was disposed.
+    /// </exception>
+    public bool Post(Gst.Message message)
+    {
+        ArgumentNullException.ThrowIfNull(message);
+        nint instanceHandle = Handle;
+        nint messageNative = message.Handle;
+        nint messageOwned = Gst.GstNative.MiniObjectRef(messageNative);
+        int nativeResult = GstBusPost(instanceHandle, messageOwned);
+        System.GC.KeepAlive(this);
+        message.Dispose();
+        return nativeResult != 0;
+    }
+
     /// <summary>Removes a signal watch previously added with gst_bus_add_signal_watch().</summary>
     public void RemoveSignalWatch()
     {
@@ -640,6 +677,10 @@ public unsafe partial class Bus : Gst.Object
     /// <summary>The <c>gst_bus_pop_filtered</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_bus_pop_filtered")]
     private static partial nint GstBusPopFiltered(nint bus, uint types);
+
+    /// <summary>The <c>gst_bus_post</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_bus_post")]
+    private static partial int GstBusPost(nint bus, nint message);
 
     /// <summary>The <c>gst_bus_remove_signal_watch</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_bus_remove_signal_watch")]

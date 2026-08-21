@@ -286,6 +286,44 @@ public unsafe partial class Plugin : Gst.Object
         return Gst.GObject.Object.FromNative<Gst.Plugin>(nativeResult, Gst.Interop.Transfer.Full);
     }
 
+    /// <summary>
+    /// Adds plugin specific data to cache. Passes the ownership of the structure to
+    /// the @plugin.
+    /// </summary>
+    /// <remarks>
+    /// <para>The cache is flushed every time the registry is rebuilt.</para>
+    /// <para>
+    /// The <c>cacheData</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a copy of the value and the wrapper is disposed afterwards, which
+    /// leaves the caller with exactly what the C call leaves it with. A boxed
+    /// value has no reference count to raise, so the copy is what a reference is
+    /// there. <see cref="Gst.GObject.Boxed.Dispose()"/> is idempotent, so a
+    /// <c>using</c> declaration around the argument stays correct.
+    /// </para>
+    /// </remarks>
+    /// <param name="cacheData">
+    /// The <c>cacheData</c> argument.
+    /// The call consumes it: <paramref name="cacheData"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// </param>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="cacheData"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    /// This wrapper or <paramref name="cacheData"/> was disposed.
+    /// </exception>
+    public void SetCacheData(Gst.Structure cacheData)
+    {
+        ArgumentNullException.ThrowIfNull(cacheData);
+        nint instanceHandle = Handle;
+        nint cacheDataNative = cacheData.Handle;
+        nuint cacheDataType = cacheData.BoxedType.Value;
+        nint cacheDataOwned = Gst.Interop.GObjectNative.BoxedCopy(cacheDataType, cacheDataNative);
+        GstPluginSetCacheData(instanceHandle, cacheDataOwned);
+        System.GC.KeepAlive(this);
+        cacheData.Dispose();
+    }
+
     /// <summary>Load the named plugin. Refs the plugin.</summary>
     /// <param name="name">The <c>name</c> argument.</param>
     /// <returns>
@@ -452,6 +490,10 @@ public unsafe partial class Plugin : Gst.Object
     /// <summary>The <c>gst_plugin_load</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_plugin_load")]
     private static partial nint GstPluginLoad(nint plugin);
+
+    /// <summary>The <c>gst_plugin_set_cache_data</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_plugin_set_cache_data")]
+    private static partial void GstPluginSetCacheData(nint plugin, nint cacheData);
 
     /// <summary>The <c>gst_plugin_load_by_name</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_plugin_load_by_name")]

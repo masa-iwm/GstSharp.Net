@@ -244,6 +244,55 @@ public unsafe partial class EncodingProfile : Gst.GObject.Object
         System.GC.KeepAlive(this);
     }
 
+    /// <summary>This allows setting the muxing/encoding element properties.</summary>
+    /// <remarks>
+    /// <para>**Set properties generically**</para>
+    /// <para>
+    /// ``` properties
+    ///  [element-properties, boolean-prop=true, string-prop="hi"]
+    /// ```
+    /// </para>
+    /// <para>**Mapping properties with well known element factories**</para>
+    /// <para>
+    /// ``` properties
+    /// element-properties-map, map = {
+    ///      [openh264enc, gop-size=32, ],
+    ///      [x264enc, key-int-max=32, tune=zerolatency],
+    ///  }
+    /// ```
+    /// </para>
+    /// <para>
+    /// The <c>elementProperties</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a copy of the value and the wrapper is disposed afterwards, which
+    /// leaves the caller with exactly what the C call leaves it with. A boxed
+    /// value has no reference count to raise, so the copy is what a reference is
+    /// there. <see cref="Gst.GObject.Boxed.Dispose()"/> is idempotent, so a
+    /// <c>using</c> declaration around the argument stays correct.
+    /// </para>
+    /// </remarks>
+    /// <param name="elementProperties">
+    /// The <c>elementProperties</c> argument.
+    /// The call consumes it: <paramref name="elementProperties"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// </param>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="elementProperties"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    /// This wrapper or <paramref name="elementProperties"/> was disposed.
+    /// </exception>
+    public void SetElementProperties(Gst.Structure elementProperties)
+    {
+        ArgumentNullException.ThrowIfNull(elementProperties);
+        nint instanceHandle = Handle;
+        nint elementPropertiesNative = elementProperties.Handle;
+        nuint elementPropertiesType = elementProperties.BoxedType.Value;
+        nint elementPropertiesOwned = Gst.Interop.GObjectNative.BoxedCopy(elementPropertiesType, elementPropertiesNative);
+        GstEncodingProfileSetElementProperties(instanceHandle, elementPropertiesOwned);
+        System.GC.KeepAlive(this);
+        elementProperties.Dispose();
+    }
+
     /// <summary>Set whether the profile should be used or not.</summary>
     /// <param name="enabled">The <c>enabled</c> argument.</param>
     public void SetEnabled(bool enabled)
@@ -332,6 +381,40 @@ public unsafe partial class EncodingProfile : Gst.GObject.Object
         using Gst.Interop.Utf8Scope presetNameScope = Gst.Interop.GMarshal.StackUtf8(presetName, presetNameBuffer);
         GstEncodingProfileSetPresetName(Handle, presetNameScope.Pointer);
         System.GC.KeepAlive(this);
+    }
+
+    /// <summary>
+    /// Set the restriction #GstCaps to apply before the encoder
+    /// that will be used in the profile. See gst_encoding_profile_get_restriction()
+    /// for more about restrictions. Does not apply to #GstEncodingContainerProfile.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The <c>restriction</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a reference of its own and the wrapper is disposed afterwards, which
+    /// leaves the native reference count exactly where the C call leaves it.
+    /// <see cref="Gst.MiniObject.Dispose()"/> is idempotent, so a <c>using</c>
+    /// declaration around the argument stays correct.
+    /// </para>
+    /// </remarks>
+    /// <param name="restriction">
+    /// The <c>restriction</c> argument.
+    /// The call consumes it: <paramref name="restriction"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// It may be <see langword="null"/>, which is the absence of a payload and leaves
+    /// nothing to consume.
+    /// </param>
+    /// <exception cref="ObjectDisposedException">
+    /// This wrapper or <paramref name="restriction"/> was disposed.
+    /// </exception>
+    public void SetRestriction(Gst.Caps? restriction)
+    {
+        nint instanceHandle = Handle;
+        nint restrictionNative = restriction is null ? 0 : restriction.Handle;
+        nint restrictionOwned = restriction is null ? 0 : Gst.GstNative.MiniObjectRef(restrictionNative);
+        GstEncodingProfileSetRestriction(instanceHandle, restrictionOwned);
+        System.GC.KeepAlive(this);
+        restriction?.Dispose();
     }
 
     /// <summary>
@@ -494,6 +577,10 @@ public unsafe partial class EncodingProfile : Gst.GObject.Object
     [LibraryImport("GstPbutils", EntryPoint = "gst_encoding_profile_set_description")]
     private static partial void GstEncodingProfileSetDescription(nint profile, byte* description);
 
+    /// <summary>The <c>gst_encoding_profile_set_element_properties</c> entry point.</summary>
+    [LibraryImport("GstPbutils", EntryPoint = "gst_encoding_profile_set_element_properties")]
+    private static partial void GstEncodingProfileSetElementProperties(nint self, nint elementProperties);
+
     /// <summary>The <c>gst_encoding_profile_set_enabled</c> entry point.</summary>
     [LibraryImport("GstPbutils", EntryPoint = "gst_encoding_profile_set_enabled")]
     private static partial void GstEncodingProfileSetEnabled(nint profile, int enabled);
@@ -517,6 +604,10 @@ public unsafe partial class EncodingProfile : Gst.GObject.Object
     /// <summary>The <c>gst_encoding_profile_set_preset_name</c> entry point.</summary>
     [LibraryImport("GstPbutils", EntryPoint = "gst_encoding_profile_set_preset_name")]
     private static partial void GstEncodingProfileSetPresetName(nint profile, byte* presetName);
+
+    /// <summary>The <c>gst_encoding_profile_set_restriction</c> entry point.</summary>
+    [LibraryImport("GstPbutils", EntryPoint = "gst_encoding_profile_set_restriction")]
+    private static partial void GstEncodingProfileSetRestriction(nint profile, nint restriction);
 
     /// <summary>The <c>gst_encoding_profile_set_single_segment</c> entry point.</summary>
     [LibraryImport("GstPbutils", EntryPoint = "gst_encoding_profile_set_single_segment")]

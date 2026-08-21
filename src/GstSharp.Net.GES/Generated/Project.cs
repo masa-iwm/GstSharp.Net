@@ -323,6 +323,57 @@ public unsafe partial class Project : GES.Asset, GES.IMetaContainer
         return nativeResult != 0;
     }
 
+    /// <summary>
+    /// Save the timeline of @project to @uri. You should make sure that @timeline
+    /// is one of the timelines that have been extracted from @project
+    /// (using ges_asset_extract (@project);)
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The <c>formatterAsset</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a reference of its own and the wrapper is disposed afterwards, which
+    /// leaves the native reference count exactly where the C call leaves it. A
+    /// GObject wrapper is interned, so disposing it gives the object up for the
+    /// whole process rather than for one holder: after this call there is no
+    /// wrapper for that object anywhere.
+    /// <see cref="Gst.GObject.Object.Dispose()"/> is idempotent, so a <c>using</c>
+    /// declaration around the argument stays correct.
+    /// </para>
+    /// </remarks>
+    /// <param name="timeline">The <c>timeline</c> argument.</param>
+    /// <param name="uri">The <c>uri</c> argument.</param>
+    /// <param name="formatterAsset">
+    /// The <c>formatterAsset</c> argument.
+    /// The call consumes it: <paramref name="formatterAsset"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// It may be <see langword="null"/>, which is the absence of a payload and leaves
+    /// nothing to consume.
+    /// </param>
+    /// <param name="overwrite">The <c>overwrite</c> argument.</param>
+    /// <returns>%TRUE if the project could be save, %FALSE otherwise</returns>
+    /// <exception cref="ObjectDisposedException">
+    /// This wrapper or <paramref name="formatterAsset"/> was disposed.
+    /// </exception>
+    /// <exception cref="Gst.GLib.GException">The native call failed.</exception>
+    public bool Save(GES.Timeline timeline, string uri, GES.Asset? formatterAsset, bool overwrite)
+    {
+        ArgumentNullException.ThrowIfNull(timeline);
+        ArgumentNullException.ThrowIfNull(uri);
+        nint instanceHandle = Handle;
+        nint timelineNative = timeline.Handle;
+        nint formatterAssetNative = formatterAsset is null ? 0 : formatterAsset.Handle;
+        System.Span<byte> uriBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope uriScope = Gst.Interop.GMarshal.StackUtf8(uri, uriBuffer);
+        nint formatterAssetOwned = formatterAsset is null ? 0 : Gst.Interop.GObjectNative.ObjectRef(formatterAssetNative);
+        nint errorNative = 0;
+        int nativeResult = GesProjectSave(instanceHandle, timelineNative, uriScope.Pointer, formatterAssetOwned, overwrite ? 1 : 0, &errorNative);
+        System.GC.KeepAlive(this);
+        System.GC.KeepAlive(timeline);
+        formatterAsset?.Dispose();
+        Gst.GLib.GException.ThrowIfSet(ref errorNative);
+        return nativeResult != 0;
+    }
+
     /// <summary>The <c>uri</c> property.</summary>
     public string? Uri => GetUri();
 
@@ -627,6 +678,10 @@ public unsafe partial class Project : GES.Asset, GES.IMetaContainer
     /// <summary>The <c>ges_project_remove_asset</c> entry point.</summary>
     [LibraryImport("GES", EntryPoint = "ges_project_remove_asset")]
     private static partial int GesProjectRemoveAsset(nint project, nint asset);
+
+    /// <summary>The <c>ges_project_save</c> entry point.</summary>
+    [LibraryImport("GES", EntryPoint = "ges_project_save")]
+    private static partial int GesProjectSave(nint project, nint timeline, byte* uri, nint formatterAsset, int overwrite, nint* error);
 
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GESProject</c> under.</summary>
     /// <returns>The type of the instances of this wrapper.</returns>

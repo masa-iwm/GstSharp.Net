@@ -200,7 +200,12 @@ internal static class CallableRenderer
     private static void WriteDocumentation(CodeWriter writer, MarshalPlan plan)
     {
         string cType = plan.EntryPoint;
-        XmlDocWriter.Write(writer, plan.Callable.Doc, "The <c>" + cType + "</c> function.", plan.Callable);
+        XmlDocWriter.Write(
+            writer,
+            plan.Callable.Doc,
+            "The <c>" + cType + "</c> function.",
+            plan.Callable,
+            ConsumptionRemarks(plan));
 
         foreach (ArgumentPlan argument in plan.Arguments)
         {
@@ -212,7 +217,12 @@ internal static class CallableRenderer
             string fallback = argument.Kind == ArgumentKind.Instance
                 ? "The instance the method is called on."
                 : "The <c>" + (argument.Source?.Name ?? argument.Name) + "</c> argument.";
-            XmlDocWriter.WriteParam(writer, DocName(argument.Name), argument.Doc ?? argument.Source?.Doc, fallback);
+            XmlDocWriter.WriteParam(
+                writer,
+                DocName(argument.Name),
+                argument.Doc ?? argument.Source?.Doc,
+                fallback,
+                argument.Kind == ArgumentKind.ConsumedHandle ? ConsumptionParamNote(argument) : null);
         }
 
         if (!plan.Return.IsVoid)
@@ -223,6 +233,8 @@ internal static class CallableRenderer
                 "The result of <c>" + cType + "</c>.",
                 AdoptsWrapper(plan.Return) ? AdoptedWrapperNote : null);
         }
+
+        WriteConsumptionExceptions(writer, plan);
 
         if (plan.Throws)
         {
@@ -247,6 +259,152 @@ internal static class CallableRenderer
         value.Kind == ArgumentKind.Handle
         && value.Flavor == HandleFlavor.Wrapper
         && value.Transfer == GirTransfer.None;
+
+    /// <summary>
+    /// Returns the remarks paragraphs of a member with a consumed argument, or
+    /// <see langword="null"/> when it has none.
+    /// </summary>
+    /// <param name="plan">The member being documented.</param>
+    /// <returns>The paragraphs, one per consumed argument.</returns>
+    /// <remarks>
+    /// The wording is the contract of the hand written consuming members: the
+    /// call is handed a value of its own — a reference for a mini object or a
+    /// GObject, a copy for a boxed value — and the wrapper is disposed
+    /// afterwards. A consumed GObject carries the extra sentence about the
+    /// reach of its dispose, because a GObject wrapper is interned and giving
+    /// it up is a statement about the whole process.
+    /// </remarks>
+    private static IReadOnlyList<string>? ConsumptionRemarks(MarshalPlan plan)
+    {
+        List<string> lines = [];
+        foreach (ArgumentPlan argument in plan.Arguments)
+        {
+            if (argument.Kind != ArgumentKind.ConsumedHandle)
+            {
+                continue;
+            }
+
+            string cName = argument.Source?.Name ?? DocName(argument.Name);
+            lines.Add("<para>");
+            lines.Add("The <c>" + cName + "</c> parameter is <c>transfer-ownership=\"full\"</c>: the call is");
+            switch (argument.ConsumedFamily)
+            {
+                case ConsumedFamily.Boxed:
+                    lines.Add("handed a copy of the value and the wrapper is disposed afterwards, which");
+                    lines.Add("leaves the caller with exactly what the C call leaves it with. A boxed");
+                    lines.Add("value has no reference count to raise, so the copy is what a reference is");
+                    lines.Add("there. <see cref=\"Gst.GObject.Boxed.Dispose()\"/> is idempotent, so a");
+                    lines.Add("<c>using</c> declaration around the argument stays correct.");
+                    break;
+
+                case ConsumedFamily.GObject:
+                    lines.Add("handed a reference of its own and the wrapper is disposed afterwards, which");
+                    lines.Add("leaves the native reference count exactly where the C call leaves it. A");
+                    lines.Add("GObject wrapper is interned, so disposing it gives the object up for the");
+                    lines.Add("whole process rather than for one holder: after this call there is no");
+                    lines.Add("wrapper for that object anywhere.");
+                    lines.Add("<see cref=\"Gst.GObject.Object.Dispose()\"/> is idempotent, so a <c>using</c>");
+                    lines.Add("declaration around the argument stays correct.");
+                    break;
+
+                default:
+                    lines.Add("handed a reference of its own and the wrapper is disposed afterwards, which");
+                    lines.Add("leaves the native reference count exactly where the C call leaves it.");
+                    lines.Add("<see cref=\"Gst.MiniObject.Dispose()\"/> is idempotent, so a <c>using</c>");
+                    lines.Add("declaration around the argument stays correct.");
+                    break;
+            }
+
+            lines.Add("</para>");
+        }
+
+        return lines.Count == 0 ? null : lines;
+    }
+
+    /// <summary>
+    /// Returns the note of a consumed parameter, which states the consumption
+    /// in the words of the hand written members.
+    /// </summary>
+    /// <param name="argument">The consumed argument.</param>
+    /// <returns>The note lines.</returns>
+    private static IReadOnlyList<string> ConsumptionParamNote(ArgumentPlan argument)
+    {
+        List<string> note =
+        [
+            "The call consumes it: <paramref name=\"" + DocName(argument.Name) + "\"/> is disposed when this",
+            "method returns, and using it afterwards throws <see cref=\"ObjectDisposedException\"/>.",
+        ];
+
+        if (argument.IsNullable)
+        {
+            note.Add("It may be <see langword=\"null\"/>, which is the absence of a payload and leaves");
+            note.Add("nothing to consume.");
+        }
+
+        return note;
+    }
+
+    /// <summary>
+    /// Writes the exception documentation of a member with a consumed argument:
+    /// the <see cref="ArgumentNullException"/> of every non nullable one and
+    /// one <see cref="ObjectDisposedException"/> entry that names the wrapper
+    /// and every consumed argument, the way the hand written members word it.
+    /// </summary>
+    /// <param name="writer">The target writer.</param>
+    /// <param name="plan">The member being documented.</param>
+    private static void WriteConsumptionExceptions(CodeWriter writer, MarshalPlan plan)
+    {
+        List<ArgumentPlan> consumed = [];
+        foreach (ArgumentPlan argument in plan.Arguments)
+        {
+            if (argument.Kind == ArgumentKind.ConsumedHandle)
+            {
+                consumed.Add(argument);
+            }
+        }
+
+        if (consumed.Count == 0)
+        {
+            return;
+        }
+
+        foreach (ArgumentPlan argument in consumed)
+        {
+            if (argument.IsNullable)
+            {
+                continue;
+            }
+
+            writer.WriteLine("/// <exception cref=\"ArgumentNullException\">");
+            writer.WriteLine("/// <paramref name=\"" + DocName(argument.Name) + "\"/> is <see langword=\"null\"/>.");
+            writer.WriteLine("/// </exception>");
+        }
+
+        List<string> names = [];
+        foreach (ArgumentPlan argument in consumed)
+        {
+            names.Add("<paramref name=\"" + DocName(argument.Name) + "\"/>");
+        }
+
+        string? instance = null;
+        foreach (ArgumentPlan argument in plan.Arguments)
+        {
+            if (argument.Kind == ArgumentKind.Instance)
+            {
+                instance = plan.Form == CallableForm.ExtensionMethod
+                    ? "<paramref name=\"" + DocName(argument.Name) + "\"/>"
+                    : "This wrapper";
+            }
+        }
+
+        string subject = instance is null
+            ? string.Join(" or ", names)
+            : instance + " or " + string.Join(" or ", names);
+
+        writer.WriteLine("/// <exception cref=\"ObjectDisposedException\">");
+        writer.WriteLine("/// " + subject + " was disposed.");
+        writer.WriteLine("/// </exception>");
+    }
 
     /// <summary>
     /// Returns the value a trampoline hands back when the managed handler could
@@ -325,6 +483,7 @@ internal static class CallableRenderer
 
         WriteCall(writer, plan);
         WriteKeepAlive(writer, plan);
+        WriteConsumedDisposes(writer, plan);
 
         if (plan.Throws)
         {
@@ -438,7 +597,9 @@ internal static class CallableRenderer
     /// arguments. The barriers are emitted right after the call, because that
     /// is the last use of the handles, and in declaration order, which puts the
     /// instance first. <c>GC.KeepAlive</c> accepts a null reference, so a
-    /// nullable argument needs no guard of its own.
+    /// nullable argument needs no guard of its own. A consumed argument gets no
+    /// barrier: its <c>Dispose</c> right after the barriers is its last use and
+    /// keeps it alive across the call on its own.
     /// </remarks>
     private static void WriteKeepAlive(CodeWriter writer, MarshalPlan plan)
     {
@@ -457,6 +618,34 @@ internal static class CallableRenderer
                 && !argument.IsHidden)
             {
                 writer.WriteLine("System.GC.KeepAlive(" + argument.Name + ");");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Disposes every consumed argument, right after the barriers of the call.
+    /// </summary>
+    /// <param name="writer">The target writer.</param>
+    /// <param name="plan">The member being written.</param>
+    /// <remarks>
+    /// The wrapper's own reference goes away with the wrapper, which is what
+    /// makes the call consuming rather than borrowing: the callee owns the
+    /// minted value, the wrapper owns nothing, and the native side is left
+    /// exactly where the C call leaves it. The dispose is unconditional — a
+    /// call that answered false has still consumed what it was handed, and the
+    /// C function offers no way back — so it sits before everything that can
+    /// throw on the way out: before the <c>GException</c> of a throwing member
+    /// and before the wrap of an owned return, whose failure throw must find
+    /// the argument already consumed. A nullable argument that was null minted
+    /// nothing, and the conditional dispose leaves it alone.
+    /// </remarks>
+    private static void WriteConsumedDisposes(CodeWriter writer, MarshalPlan plan)
+    {
+        foreach (ArgumentPlan argument in plan.Arguments)
+        {
+            if (argument.Kind == ArgumentKind.ConsumedHandle)
+            {
+                writer.WriteLine(argument.Name + (argument.IsNullable ? "?.Dispose();" : ".Dispose();"));
             }
         }
     }
@@ -504,9 +693,9 @@ internal static class CallableRenderer
 
     /// <summary>
     /// Tests whether a member materializes one of its arguments: an allocation
-    /// made for the call that no scope reclaims, which today is the UTF-8 copy
-    /// of a string the callee takes ownership of. The reference a consuming
-    /// call takes over will join it when that kind of argument exists.
+    /// made for the call that no scope reclaims. The UTF-8 copy of a string the
+    /// callee takes ownership of is one, and so is the value minted for a
+    /// consuming argument — the reference or the copy the callee takes over.
     /// </summary>
     /// <param name="plan">The member being written.</param>
     /// <returns><see langword="true"/> when one of the arguments materializes.</returns>
@@ -522,7 +711,7 @@ internal static class CallableRenderer
     {
         foreach (ArgumentPlan argument in plan.Arguments)
         {
-            if (argument.Kind == ArgumentKind.Utf8Owned)
+            if (argument.Kind is ArgumentKind.Utf8Owned or ArgumentKind.ConsumedHandle)
             {
                 return true;
             }
@@ -564,6 +753,7 @@ internal static class CallableRenderer
             case ArgumentKind.Utf8 when argument.Direction == ArgumentDirection.In:
             case ArgumentKind.Utf8Owned:
             case ArgumentKind.Handle when argument.Direction == ArgumentDirection.In:
+            case ArgumentKind.ConsumedHandle:
                 if (!argument.IsNullable)
                 {
                     writer.WriteLine("ArgumentNullException.ThrowIfNull(" + name + ");");
@@ -592,7 +782,9 @@ internal static class CallableRenderer
     /// disposed wrapper, so every read happens before the first allocation and
     /// a disposed wrapper throws without stranding what another argument would
     /// have allocated. The local carries the very read the call site emits for
-    /// every other member, null-to-zero conversion included.
+    /// every other member, null-to-zero conversion included. A consumed boxed
+    /// argument also reads its boxed type here, because the copy of phase three
+    /// is dispatched through it and phase three allocates.
     /// </remarks>
     private static void WriteHandleLocal(CodeWriter writer, MarshalPlan plan, ArgumentPlan argument)
     {
@@ -604,6 +796,20 @@ internal static class CallableRenderer
 
             case ArgumentKind.Handle when argument.Direction == ArgumentDirection.In:
                 writer.WriteLine("nint " + argument.Name + "Native = " + HandleRead(argument) + ";");
+                return;
+
+            case ArgumentKind.ConsumedHandle:
+                writer.WriteLine("nint " + argument.Name + "Native = " + HandleRead(argument) + ";");
+                if (argument.ConsumedFamily == ConsumedFamily.Boxed)
+                {
+                    writer.WriteLine(
+                        "nuint " + argument.Name + "Type = "
+                        + (argument.IsNullable
+                            ? argument.Name + " is null ? 0 : " + argument.Name + ".BoxedType.Value"
+                            : argument.Name + ".BoxedType.Value")
+                        + ";");
+                }
+
                 return;
 
             default:
@@ -621,6 +827,32 @@ internal static class CallableRenderer
         argument.IsNullable
             ? argument.Name + " is null ? 0 : " + argument.Name + ".Handle"
             : argument.Name + ".Handle";
+
+    /// <summary>
+    /// Returns the expression that mints the value a consuming call takes over:
+    /// a reference for a mini object or a GObject, a copy for a boxed value.
+    /// </summary>
+    /// <param name="argument">The consumed argument.</param>
+    /// <returns>The expression to mint.</returns>
+    /// <remarks>
+    /// The call is never handed the wrapper's own reference, because the
+    /// wrapper and the callee would both release it. A consumed argument that
+    /// is nullable and null is the absence of a payload: nothing is minted and
+    /// zero is passed. The mint reads the locals of the second phase only, so
+    /// nothing here can throw after the allocation.
+    /// </remarks>
+    private static string Minted(ArgumentPlan argument)
+    {
+        string name = argument.Name;
+        string mint = argument.ConsumedFamily switch
+        {
+            ConsumedFamily.MiniObject => "Gst.GstNative.MiniObjectRef(" + name + "Native)",
+            ConsumedFamily.Boxed => "Gst.Interop.GObjectNative.BoxedCopy(" + name + "Type, " + name + "Native)",
+            _ => "Gst.Interop.GObjectNative.ObjectRef(" + name + "Native)",
+        };
+
+        return argument.IsNullable ? name + " is null ? 0 : " + mint : mint;
+    }
 
     private static void WritePrologue(CodeWriter writer, MarshalPlan plan, ArgumentPlan argument)
     {
@@ -649,6 +881,10 @@ internal static class CallableRenderer
 
             case ArgumentKind.Utf8Owned:
                 writer.WriteLine("nint " + name + "Native = Gst.Interop.GMarshal.StringToUtf8Ptr(" + name + ");");
+                return;
+
+            case ArgumentKind.ConsumedHandle:
+                writer.WriteLine("nint " + name + "Owned = " + Minted(argument) + ";");
                 return;
 
             case ArgumentKind.Callback:
@@ -752,6 +988,9 @@ internal static class CallableRenderer
 
             case ArgumentKind.Handle when argument.Direction == ArgumentDirection.In:
                 return MaterializesArguments(plan) ? name + "Native" : HandleRead(argument);
+
+            case ArgumentKind.ConsumedHandle:
+                return name + "Owned";
 
             default:
                 break;

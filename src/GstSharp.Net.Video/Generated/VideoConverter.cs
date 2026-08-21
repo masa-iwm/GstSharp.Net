@@ -112,6 +112,51 @@ public sealed unsafe partial class VideoConverter
             ?? throw new InvalidOperationException("gst_video_converter_get_out_info returned no value.");
     }
 
+    /// <summary>Set @config as extra configuration for @convert.</summary>
+    /// <remarks>
+    /// <para>
+    /// If the parameters in @config can not be set exactly, this function returns
+    /// %FALSE and will try to update as much state as possible. The new state can
+    /// then be retrieved and refined with gst_video_converter_get_config().
+    /// </para>
+    /// <para>
+    /// Look at the `GST_VIDEO_CONVERTER_OPT_*` fields to check valid configuration
+    /// option and values.
+    /// </para>
+    /// <para>
+    /// The <c>config</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a copy of the value and the wrapper is disposed afterwards, which
+    /// leaves the caller with exactly what the C call leaves it with. A boxed
+    /// value has no reference count to raise, so the copy is what a reference is
+    /// there. <see cref="Gst.GObject.Boxed.Dispose()"/> is idempotent, so a
+    /// <c>using</c> declaration around the argument stays correct.
+    /// </para>
+    /// </remarks>
+    /// <param name="config">
+    /// The <c>config</c> argument.
+    /// The call consumes it: <paramref name="config"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// </param>
+    /// <returns>%TRUE when @config could be set.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="config"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    /// This wrapper or <paramref name="config"/> was disposed.
+    /// </exception>
+    public bool SetConfig(Gst.Structure config)
+    {
+        ArgumentNullException.ThrowIfNull(config);
+        nint instanceHandle = Handle;
+        nint configNative = config.Handle;
+        nuint configType = config.BoxedType.Value;
+        nint configOwned = Gst.Interop.GObjectNative.BoxedCopy(configType, configNative);
+        int nativeResult = GstVideoConverterSetConfig(instanceHandle, configOwned);
+        System.GC.KeepAlive(this);
+        config.Dispose();
+        return nativeResult != 0;
+    }
+
     /// <summary>Transform the GstMeta of @src into @dest using @convert.</summary>
     /// <remarks>
     /// <para>Available since GStreamer 1.28.</para>
@@ -153,6 +198,10 @@ public sealed unsafe partial class VideoConverter
     /// <summary>The <c>gst_video_converter_get_out_info</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_converter_get_out_info")]
     private static partial nint GstVideoConverterGetOutInfo(nint convert);
+
+    /// <summary>The <c>gst_video_converter_set_config</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_video_converter_set_config")]
+    private static partial int GstVideoConverterSetConfig(nint convert, nint config);
 
     /// <summary>The <c>gst_video_converter_transform_metas</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_converter_transform_metas")]

@@ -16,8 +16,9 @@ public sealed class MarshalPlannerTests
     /// both nullabilities, an out parameter, a span, a callback with user data
     /// and a destroy notification, a callable that throws, an owned string
     /// beside handle arguments, a property built from its accessors, a
-    /// returned <c>GList</c> in each of its three ownership shapes, and the
-    /// shapes that are rejected on purpose.
+    /// returned <c>GList</c> in each of its three ownership shapes, a consuming
+    /// argument of each wrapper family, and the shapes that are rejected on
+    /// purpose.
     /// </summary>
     private const string Body =
         """
@@ -33,6 +34,21 @@ public sealed class MarshalPlannerTests
             <record name="Caps" c:type="GstCaps" glib:type-name="GstCaps" glib:get-type="gst_caps_get_type">
               <field name="mini_object" writable="1">
                 <type name="MiniObject" c:type="GstMiniObject"/>
+              </field>
+              <constructor name="from_payload" c:identifier="gst_caps_from_payload">
+                <return-value transfer-ownership="full">
+                  <type name="Caps" c:type="GstCaps*"/>
+                </return-value>
+                <parameters>
+                  <parameter name="payload" transfer-ownership="full">
+                    <type name="Payload" c:type="GstPayload*"/>
+                  </parameter>
+                </parameters>
+              </constructor>
+            </record>
+            <record name="Payload" c:type="GstPayload" glib:type-name="GstPayload" glib:get-type="gst_payload_get_type">
+              <field name="kind" writable="1">
+                <type name="gint" c:type="gint"/>
               </field>
             </record>
             <record name="Extent" c:type="GstExtent">
@@ -279,6 +295,58 @@ public sealed class MarshalPlannerTests
                     <type name="Widget" c:type="GstWidget*"/>
                   </instance-parameter>
                   <parameter name="caps" transfer-ownership="full">
+                    <type name="Caps" c:type="GstCaps*"/>
+                  </parameter>
+                </parameters>
+              </method>
+              <method name="take_payload" c:identifier="gst_widget_take_payload">
+                <return-value transfer-ownership="none">
+                  <type name="none" c:type="void"/>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="widget" transfer-ownership="none">
+                    <type name="Widget" c:type="GstWidget*"/>
+                  </instance-parameter>
+                  <parameter name="payload" transfer-ownership="full">
+                    <type name="Payload" c:type="GstPayload*"/>
+                  </parameter>
+                </parameters>
+              </method>
+              <method name="take_mark" c:identifier="gst_widget_take_mark">
+                <return-value transfer-ownership="none">
+                  <type name="none" c:type="void"/>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="widget" transfer-ownership="none">
+                    <type name="Widget" c:type="GstWidget*"/>
+                  </instance-parameter>
+                  <parameter name="mark" transfer-ownership="full" nullable="1">
+                    <type name="Payload" c:type="GstPayload*"/>
+                  </parameter>
+                </parameters>
+              </method>
+              <method name="take_peer" c:identifier="gst_widget_take_peer">
+                <return-value transfer-ownership="none">
+                  <type name="none" c:type="void"/>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="widget" transfer-ownership="none">
+                    <type name="Widget" c:type="GstWidget*"/>
+                  </instance-parameter>
+                  <parameter name="peer" transfer-ownership="full">
+                    <type name="Widget" c:type="GstWidget*"/>
+                  </parameter>
+                </parameters>
+              </method>
+              <method name="steal_caps" c:identifier="gst_widget_steal_caps">
+                <return-value transfer-ownership="none">
+                  <type name="none" c:type="void"/>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="widget" transfer-ownership="none">
+                    <type name="Widget" c:type="GstWidget*"/>
+                  </instance-parameter>
+                  <parameter name="caps" transfer-ownership="container">
                     <type name="Caps" c:type="GstCaps*"/>
                   </parameter>
                 </parameters>
@@ -974,23 +1042,193 @@ public sealed class MarshalPlannerTests
     }
 
     [Fact]
-    public void OwnershipTakingParametersAndUnsupportedContainersAreSkipped()
+    public void ContainerTransfersAndUnsupportedContainersAreSkipped()
     {
         string source = Run.File("Widget.cs");
 
-        // gst_widget_take_caps would hand the only reference of the wrapper to
-        // native code. The four containers are refused for reasons of their
-        // own: a list of a plain record has no projection of its elements, a
-        // list that hands over opaque records has nobody to release them, a
-        // GSList is not bound at all, and a list that is passed in would have to
-        // be allocated here and handed over under an ownership rule that is the
-        // callee's to state.
-        Assert.DoesNotContain("TakeCaps", source, StringComparison.Ordinal);
+        // gst_widget_steal_caps takes its parameter transfer="container": the
+        // callee would own the container and not the contents, a split no
+        // minting rule covers, so it stays out while the transfer="full"
+        // neighbours of the fixture now bind. No introspectable in parameter of
+        // the real girs carries the container transfer, so this synthetic one
+        // is the only thing that keeps the rejection honest — a regression
+        // here produces no committed diff at all. The four containers are
+        // refused for reasons of their own: a list of a plain record has no
+        // projection of its elements, a list that hands over opaque records has
+        // nobody to release them, a GSList is not bound at all, and a list that
+        // is passed in would have to be allocated here and handed over under an
+        // ownership rule that is the callee's to state.
+        Assert.DoesNotContain("StealCaps", source, StringComparison.Ordinal);
+        Assert.Contains("public void TakeCaps(", source, StringComparison.Ordinal);
         Assert.DoesNotContain("ListExtents", source, StringComparison.Ordinal);
         Assert.DoesNotContain("TakeAnchors", source, StringComparison.Ordinal);
         Assert.DoesNotContain("ListTags", source, StringComparison.Ordinal);
         Assert.DoesNotContain("AddChildren", source, StringComparison.Ordinal);
         Assert.Equal(5, Run.Result.Census.SkippedCount("Gst", SkipReason.UnsupportedSignature));
+    }
+
+    [Fact]
+    public void AConsumedMiniObjectIsMintedAReferenceAndDisposed()
+    {
+        // The consuming contract of docs/ownership.md: guards first, every
+        // handle read next, then the reference minted for the callee, and the
+        // dispose of the wrapper after the barriers — unconditionally, because
+        // the C function offers no way back. No KeepAlive is emitted for the
+        // consumed argument: the dispose is its last use.
+        Assert.Equal(
+            """
+            public void TakeCaps(Gst.Caps caps)
+            {
+                ArgumentNullException.ThrowIfNull(caps);
+                nint instanceHandle = Handle;
+                nint capsNative = caps.Handle;
+                nint capsOwned = Gst.GstNative.MiniObjectRef(capsNative);
+                GstWidgetTakeCaps(instanceHandle, capsOwned);
+                System.GC.KeepAlive(this);
+                caps.Dispose();
+            }
+            """,
+            Run.Member("Widget.cs", "public void TakeCaps("),
+            StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public void AConsumedBoxedValueIsMintedACopyAndDisposed()
+    {
+        // A boxed value has no reference count, so the copy is what a
+        // reference is there. The boxed type is read in the handle phase, right
+        // after the handle whose read throws on a disposed wrapper, because the
+        // copy of the third phase is dispatched through it and the third phase
+        // allocates.
+        Assert.Equal(
+            """
+            public void TakePayload(Gst.Payload payload)
+            {
+                ArgumentNullException.ThrowIfNull(payload);
+                nint instanceHandle = Handle;
+                nint payloadNative = payload.Handle;
+                nuint payloadType = payload.BoxedType.Value;
+                nint payloadOwned = Gst.Interop.GObjectNative.BoxedCopy(payloadType, payloadNative);
+                GstWidgetTakePayload(instanceHandle, payloadOwned);
+                System.GC.KeepAlive(this);
+                payload.Dispose();
+            }
+            """,
+            Run.Member("Widget.cs", "public void TakePayload("),
+            StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public void AConsumedGObjectIsMintedAReferenceAndDisposed()
+    {
+        Assert.Equal(
+            """
+            public void TakePeer(Gst.Widget peer)
+            {
+                ArgumentNullException.ThrowIfNull(peer);
+                nint instanceHandle = Handle;
+                nint peerNative = peer.Handle;
+                nint peerOwned = Gst.Interop.GObjectNative.ObjectRef(peerNative);
+                GstWidgetTakePeer(instanceHandle, peerOwned);
+                System.GC.KeepAlive(this);
+                peer.Dispose();
+            }
+            """,
+            Run.Member("Widget.cs", "public void TakePeer("),
+            StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public void ANullableConsumedArgumentMintsAndDisposesNothingForNull()
+    {
+        // Null is the absence of a payload: zero crosses, nothing is minted
+        // and nothing is disposed. Every conditional keys on the argument, so
+        // a disposed wrapper still throws from its handle read.
+        Assert.Equal(
+            """
+            public void TakeMark(Gst.Payload? mark)
+            {
+                nint instanceHandle = Handle;
+                nint markNative = mark is null ? 0 : mark.Handle;
+                nuint markType = mark is null ? 0 : mark.BoxedType.Value;
+                nint markOwned = mark is null ? 0 : Gst.Interop.GObjectNative.BoxedCopy(markType, markNative);
+                GstWidgetTakeMark(instanceHandle, markOwned);
+                System.GC.KeepAlive(this);
+                mark?.Dispose();
+            }
+            """,
+            Run.Member("Widget.cs", "public void TakeMark("),
+            StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public void AFactoryDisposesItsConsumedArgumentBeforeTheWrapFailureThrow()
+    {
+        // The dispose sits before the throw of the return wrap on purpose:
+        // the C call has consumed the minted copy whatever it returned, so the
+        // argument is spent even on that exception path — the order
+        // Gst.Event.NewCustom pins by hand.
+        Assert.Equal(
+            """
+            public static Gst.Caps FromPayload(Gst.Payload payload)
+            {
+                ArgumentNullException.ThrowIfNull(payload);
+                nint payloadNative = payload.Handle;
+                nuint payloadType = payload.BoxedType.Value;
+                nint payloadOwned = Gst.Interop.GObjectNative.BoxedCopy(payloadType, payloadNative);
+                nint nativeResult = GstCapsFromPayload(payloadOwned);
+                payload.Dispose();
+                return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+                    ?? throw new InvalidOperationException("gst_caps_from_payload returned no value.");
+            }
+            """,
+            Run.Member("Caps.cs", "public static Gst.Caps FromPayload("),
+            StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public void ASignalArgumentThatTransfersOwnershipStaysUnbound()
+    {
+        // The consuming kind is a contract for arguments this code passes in.
+        // A signal argument is received: the handler borrows it for the length
+        // of the emission, so a transfer-full argument stays rejected exactly
+        // as it was before the kind existed.
+        FixtureRun run = Fixture.Run(
+            """
+                <record name="MiniObject" c:type="GstMiniObject" glib:type-name="GstMiniObject" glib:get-type="gst_mini_object_get_type">
+                  <field name="type" writable="1">
+                    <type name="GType" c:type="GType"/>
+                  </field>
+                </record>
+                <record name="Caps" c:type="GstCaps" glib:type-name="GstCaps" glib:get-type="gst_caps_get_type">
+                  <field name="mini_object" writable="1">
+                    <type name="MiniObject" c:type="GstMiniObject"/>
+                  </field>
+                </record>
+                <class name="Widget" c:type="GstWidget" parent="GObject.InitiallyUnowned" glib:type-name="GstWidget" glib:get-type="gst_widget_get_type">
+                  <glib:signal name="caps-taken" when="last">
+                    <return-value transfer-ownership="none">
+                      <type name="none" c:type="void"/>
+                    </return-value>
+                    <parameters>
+                      <parameter name="caps" transfer-ownership="full">
+                        <type name="Caps" c:type="GstCaps*"/>
+                      </parameter>
+                    </parameters>
+                  </glib:signal>
+                  <glib:signal name="ready" when="last">
+                    <return-value transfer-ownership="none">
+                      <type name="none" c:type="void"/>
+                    </return-value>
+                  </glib:signal>
+                </class>
+            """);
+
+        string source = run.File("Widget.cs");
+
+        Assert.DoesNotContain("CapsTaken", source, StringComparison.Ordinal);
+        Assert.Contains("public event System.EventHandler Ready", source, StringComparison.Ordinal);
+        Assert.Equal(1, run.Result.Census.SkippedCount("Gst", SkipReason.UnsupportedSignature));
     }
 
     [Fact]

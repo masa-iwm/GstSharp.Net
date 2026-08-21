@@ -52,6 +52,16 @@ internal enum ArgumentKind
     /// <summary>An instance behind a handle.</summary>
     Handle,
 
+    /// <summary>
+    /// An instance behind a handle whose ownership the callee takes
+    /// (<c>transfer-ownership="full"</c> on an <c>in</c> parameter). The call
+    /// is handed a value minted for it — a reference for a mini object or a
+    /// GObject, a copy for a boxed value; which one is stated by
+    /// <see cref="ArgumentPlan.ConsumedFamily"/> — and the wrapper is disposed
+    /// when the member returns, whatever the call answered.
+    /// </summary>
+    ConsumedHandle,
+
     /// <summary>A blittable structure, passed by value or through a pointer.</summary>
     PlainStruct,
 
@@ -140,6 +150,28 @@ internal enum HandleFlavor
 }
 
 /// <summary>
+/// What a consuming call is handed for an argument it takes over, which the
+/// wrapper family of the argument decides.
+/// </summary>
+internal enum ConsumedFamily
+{
+    /// <summary>The argument is not consumed.</summary>
+    None,
+
+    /// <summary>A mini object; the call is handed a reference of its own.</summary>
+    MiniObject,
+
+    /// <summary>
+    /// A boxed value; the call is handed a copy, because a boxed value has no
+    /// reference count to raise — the copy is what a reference is there.
+    /// </summary>
+    Boxed,
+
+    /// <summary>A <c>GObject</c>; the call is handed a reference of its own.</summary>
+    GObject,
+}
+
+/// <summary>
 /// The inline storage of a fixed size array, emitted as an
 /// <c>[InlineArray]</c> struct beside the declaration that needs it.
 /// </summary>
@@ -190,6 +222,13 @@ internal sealed class ArgumentPlan
 
     /// <summary>Gets the wrapper flavour of a handle.</summary>
     internal HandleFlavor Flavor { get; init; }
+
+    /// <summary>
+    /// Gets what a <see cref="ArgumentKind.ConsumedHandle"/> argument hands the
+    /// call: a reference for a mini object or a GObject, a copy for a boxed
+    /// value. <see cref="ConsumedFamily.None"/> for every other kind.
+    /// </summary>
+    internal ConsumedFamily ConsumedFamily { get; init; }
 
     /// <summary>Gets the element type of an array, on the public surface.</summary>
     internal string? ElementType { get; init; }

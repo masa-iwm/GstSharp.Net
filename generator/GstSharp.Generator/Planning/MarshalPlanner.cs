@@ -66,10 +66,15 @@ internal sealed class CallbackPlan
 /// </para>
 /// <list type="bullet">
 /// <item><description>An <c>in</c> parameter that takes ownership of a handle
-/// (<c>transfer-ownership="full"</c>) is rejected. The wrapper owns the only
-/// reference it has, so handing it over would free the instance twice. Adding a
-/// reference is not a fix either: <c>gst_caps_append</c> and its relatives empty
-/// the instance they consume.</description></item>
+/// (<c>transfer-ownership="full"</c>) is a consuming argument. The wrapper owns
+/// the only reference it has, so the call is handed a value minted for it — a
+/// reference for a mini object or a GObject, a copy for a boxed value — and the
+/// wrapper is disposed when the member returns, which is the contract of the
+/// hand written consuming members in docs/ownership.md. An opaque record owns
+/// nothing to mint from and stays rejected, and so does
+/// <c>transfer="container"</c>. The arguments of a callback and of a signal are
+/// received rather than passed, so the consuming kind is rejected on
+/// both.</description></item>
 /// <item><description>A <c>floating</c> parameter is passed as it is: every
 /// wrapper sinks the floating reference when it is created, and the callee only
 /// ever adds one of its own.</description></item>
@@ -1337,11 +1342,46 @@ internal sealed class MarshalPlanner
             };
         }
 
-        // Handing the only reference of a wrapper over would free the instance
-        // twice; a floating reference is safe, because every wrapper sinks it
-        // when it is created. A returned handle is the other way round: the
-        // wrapper adopts whatever the call transferred.
-        if (!isReturn && transfer is GirTransfer.Full or GirTransfer.Container)
+        // A callee that takes ownership of an in parameter is not handed the
+        // wrapper's own reference — both of them would release it — but a value
+        // minted for the call: a reference for a mini object or a GObject, a
+        // copy for a boxed value. The wrapper is disposed when the member
+        // returns, which is the consuming contract of the hand written members
+        // in docs/ownership.md. An opaque record owns nothing to hand over, so
+        // it stays rejected, and so does transfer="container", whose split
+        // ownership no minting rule covers. A floating reference is passed as
+        // it is, because every wrapper sinks it when it is created; a returned
+        // handle is the other way round and the wrapper adopts it.
+        if (!isReturn && transfer == GirTransfer.Full)
+        {
+            ConsumedFamily family = flavor switch
+            {
+                HandleFlavor.GObject => ConsumedFamily.GObject,
+                HandleFlavor.Wrapper when mapped.Kind == MarshalKind.MiniObject => ConsumedFamily.MiniObject,
+                HandleFlavor.Wrapper when mapped.Kind == MarshalKind.Boxed => ConsumedFamily.Boxed,
+                _ => ConsumedFamily.None,
+            };
+
+            if (family == ConsumedFamily.None)
+            {
+                return null;
+            }
+
+            return new ArgumentPlan
+            {
+                Kind = ArgumentKind.ConsumedHandle,
+                Name = name,
+                PublicType = nullable ? publicType + "?" : publicType,
+                RawType = NativeInt,
+                Direction = direction,
+                Transfer = transfer,
+                Flavor = flavor,
+                ConsumedFamily = family,
+                IsNullable = nullable,
+            };
+        }
+
+        if (!isReturn && transfer == GirTransfer.Container)
         {
             return null;
         }
@@ -1850,8 +1890,11 @@ internal sealed class MarshalPlanner
             }
 
             // A handle the callback receives is only borrowed; taking ownership
-            // of it would free what the caller still uses.
-            if (argument.Kind == ArgumentKind.Handle && argument.Transfer == GirTransfer.Full)
+            // of it would free what the caller still uses. The consuming kind
+            // is a contract for arguments this code passes in, not for ones a
+            // trampoline receives, so it is rejected here as well.
+            if (argument.Kind == ArgumentKind.ConsumedHandle
+                || (argument.Kind == ArgumentKind.Handle && argument.Transfer == GirTransfer.Full))
             {
                 return null;
             }

@@ -982,6 +982,60 @@ public abstract unsafe partial class Element : Gst.Object
         System.GC.KeepAlive(this);
     }
 
+    /// <summary>Post an error, warning or info message on the bus from inside an element.</summary>
+    /// <remarks>
+    /// <para>
+    /// @type must be of #GST_MESSAGE_ERROR, #GST_MESSAGE_WARNING or
+    /// #GST_MESSAGE_INFO.
+    /// </para>
+    /// <para>
+    /// The <c>structure</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a copy of the value and the wrapper is disposed afterwards, which
+    /// leaves the caller with exactly what the C call leaves it with. A boxed
+    /// value has no reference count to raise, so the copy is what a reference is
+    /// there. <see cref="Gst.GObject.Boxed.Dispose()"/> is idempotent, so a
+    /// <c>using</c> declaration around the argument stays correct.
+    /// </para>
+    /// </remarks>
+    /// <param name="type">The <c>type</c> argument.</param>
+    /// <param name="domain">The <c>domain</c> argument.</param>
+    /// <param name="code">The <c>code</c> argument.</param>
+    /// <param name="text">The <c>text</c> argument.</param>
+    /// <param name="debug">The <c>debug</c> argument.</param>
+    /// <param name="file">The <c>file</c> argument.</param>
+    /// <param name="function">The <c>function</c> argument.</param>
+    /// <param name="line">The <c>line</c> argument.</param>
+    /// <param name="structure">
+    /// The <c>structure</c> argument.
+    /// The call consumes it: <paramref name="structure"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// </param>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="structure"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    /// This wrapper or <paramref name="structure"/> was disposed.
+    /// </exception>
+    public void MessageFullWithDetails(Gst.MessageType type, Gst.GLib.Quark domain, int code, string? text, string? debug, string file, string function, int line, Gst.Structure structure)
+    {
+        ArgumentNullException.ThrowIfNull(file);
+        ArgumentNullException.ThrowIfNull(function);
+        ArgumentNullException.ThrowIfNull(structure);
+        nint instanceHandle = Handle;
+        nint structureNative = structure.Handle;
+        nuint structureType = structure.BoxedType.Value;
+        nint textNative = Gst.Interop.GMarshal.StringToUtf8Ptr(text);
+        nint debugNative = Gst.Interop.GMarshal.StringToUtf8Ptr(debug);
+        System.Span<byte> fileBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope fileScope = Gst.Interop.GMarshal.StackUtf8(file, fileBuffer);
+        System.Span<byte> functionBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope functionScope = Gst.Interop.GMarshal.StackUtf8(function, functionBuffer);
+        nint structureOwned = Gst.Interop.GObjectNative.BoxedCopy(structureType, structureNative);
+        GstElementMessageFullWithDetails(instanceHandle, (uint)type, domain.Value, code, textNative, debugNative, fileScope.Pointer, functionScope.Pointer, line, structureOwned);
+        System.GC.KeepAlive(this);
+        structure.Dispose();
+    }
+
     /// <summary>
     /// Use this function to signal that the element does not expect any more pads
     /// to show up in the current pipeline. This function should be called whenever
@@ -1873,6 +1927,10 @@ public abstract unsafe partial class Element : Gst.Object
     /// <summary>The <c>gst_element_message_full</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_element_message_full")]
     private static partial void GstElementMessageFull(nint element, uint type, uint domain, int code, nint text, nint debug, byte* file, byte* function, int line);
+
+    /// <summary>The <c>gst_element_message_full_with_details</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_element_message_full_with_details")]
+    private static partial void GstElementMessageFullWithDetails(nint element, uint type, uint domain, int code, nint text, nint debug, byte* file, byte* function, int line, nint structure);
 
     /// <summary>The <c>gst_element_no_more_pads</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_element_no_more_pads")]
