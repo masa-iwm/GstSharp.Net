@@ -370,6 +370,8 @@ internal static class CallableRenderer
         ["gst_caps_id_str_set_value"] = "The caps have to be writable.",
         ["gst_structure_id_set_value"] = "The structure has to be writable.",
         ["gst_structure_id_str_set_value"] = "The structure has to be writable.",
+        ["gst_structure_set_array"] = "The structure has to be writable.",
+        ["gst_structure_set_list"] = "The structure has to be writable.",
     };
 
     /// <summary>

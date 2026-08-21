@@ -464,7 +464,7 @@ disappears shows up here as an added line.
 
 - `gst_bus_add_watch`
 
-### UnsupportedSignature (171)
+### UnsupportedSignature (165)
 
 - `Gst.Bin:async-handling`
 - `Gst.Bin:message-forward`
@@ -605,15 +605,11 @@ disappears shows up here as an added line.
 - `gst_structure_filter_and_map_in_place_id_str`
 - `gst_structure_foreach`
 - `gst_structure_foreach_id_str`
-- `gst_structure_get_array`
 - `gst_structure_get_date`
-- `gst_structure_get_list`
 - `gst_structure_id_str_take_value`
 - `gst_structure_id_take_value`
 - `gst_structure_map_in_place`
 - `gst_structure_map_in_place_id_str`
-- `gst_structure_set_array`
-- `gst_structure_set_list`
 - `gst_structure_take`
 - `gst_structure_take_value`
 - `gst_tag_list_get_date`
@@ -634,8 +630,6 @@ disappears shows up here as an added line.
 - `gst_uri_set_query_table`
 - `gst_uri_to_string_with_keys`
 - `gst_util_array_binary_search`
-- `gst_util_get_object_array`
-- `gst_util_set_object_array`
 - `gst_value_deserialize_with_pspec`
 
 ### VarArgs (53)

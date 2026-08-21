@@ -96,8 +96,10 @@ internal static class Fixture
     /// The <c>GObject</c> namespace that every class fixture needs. The
     /// <c>Value</c> record is declared so that a fixture may reference
     /// <c>GObject.Value</c>, which the type map projects onto the hand written
-    /// runtime struct; the record itself is never emitted, because the GObject
-    /// module is not generated.
+    /// runtime struct, and the <c>ValueArray</c> record so that one may
+    /// reference <c>GObject.ValueArray</c>, whose boxed registration routes it
+    /// through the runtime type registry of the planner; neither record is
+    /// ever emitted, because the GObject module is not generated.
     /// </summary>
     internal const string GObjectNamespace =
         """
@@ -109,6 +111,11 @@ internal static class Fixture
             <record name="Value" c:type="GValue">
               <field name="g_type" writable="1">
                 <type name="GType" c:type="GType"/>
+              </field>
+            </record>
+            <record name="ValueArray" c:type="GValueArray" glib:type-name="GValueArray" glib:get-type="g_value_array_get_type">
+              <field name="n_values" writable="1">
+                <type name="guint" c:type="guint"/>
               </field>
             </record>
           </namespace>

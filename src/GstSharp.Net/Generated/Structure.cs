@@ -400,6 +400,31 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     }
 
     /// <summary>
+    /// This is useful in language bindings where unknown #GValue types are not
+    /// supported. This function will convert the %GST_TYPE_ARRAY into a newly
+    /// allocated #GValueArray and return it through @array. Be aware that this is
+    /// slower then getting the #GValue directly.
+    /// </summary>
+    /// <param name="fieldname">The <c>fieldname</c> argument.</param>
+    /// <param name="array">The <c>array</c> argument.</param>
+    /// <returns>
+    /// %TRUE if the value could be set correctly. If there was no field
+    /// with @fieldname or the existing field did not contain a %GST_TYPE_ARRAY,
+    /// this function returns %FALSE.
+    /// </returns>
+    public bool GetArray(string fieldname, out Gst.GObject.ValueArray? array)
+    {
+        ArgumentNullException.ThrowIfNull(fieldname);
+        System.Span<byte> fieldnameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope fieldnameScope = Gst.Interop.GMarshal.StackUtf8(fieldname, fieldnameBuffer);
+        nint arrayNative = default;
+        int nativeResult = GstStructureGetArray(Handle, fieldnameScope.Pointer, &arrayNative);
+        System.GC.KeepAlive(this);
+        array = Gst.GObject.ValueArray.FromNative(arrayNative, Gst.Interop.Transfer.Full);
+        return nativeResult != 0;
+    }
+
+    /// <summary>
     /// Sets the boolean pointed to by @value corresponding to the value of the
     /// given field.  Caller is responsible for making sure the field exists
     /// and has the correct type.
@@ -695,6 +720,31 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
         int nativeResult = GstStructureGetInt64(Handle, fieldnameScope.Pointer, &valueNative);
         System.GC.KeepAlive(this);
         value = valueNative;
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// This is useful in language bindings where unknown #GValue types are not
+    /// supported. This function will convert the %GST_TYPE_LIST into a newly
+    /// allocated GValueArray and return it through @array. Be aware that this is
+    /// slower then getting the #GValue directly.
+    /// </summary>
+    /// <param name="fieldname">The <c>fieldname</c> argument.</param>
+    /// <param name="array">The <c>array</c> argument.</param>
+    /// <returns>
+    /// %TRUE if the value could be set correctly. If there was no field
+    /// with @fieldname or the existing field did not contain a %GST_TYPE_LIST, this
+    /// function returns %FALSE.
+    /// </returns>
+    public bool GetList(string fieldname, out Gst.GObject.ValueArray? array)
+    {
+        ArgumentNullException.ThrowIfNull(fieldname);
+        System.Span<byte> fieldnameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope fieldnameScope = Gst.Interop.GMarshal.StackUtf8(fieldname, fieldnameBuffer);
+        nint arrayNative = default;
+        int nativeResult = GstStructureGetList(Handle, fieldnameScope.Pointer, &arrayNative);
+        System.GC.KeepAlive(this);
+        array = Gst.GObject.ValueArray.FromNative(arrayNative, Gst.Interop.Transfer.Full);
         return nativeResult != 0;
     }
 
@@ -1212,6 +1262,56 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     }
 
     /// <summary>
+    /// This is useful in language bindings where unknown GValue types are not
+    /// supported. This function will convert a @array to %GST_TYPE_ARRAY and set
+    /// the field specified by @fieldname.  Be aware that this is slower then using
+    /// %GST_TYPE_ARRAY in a #GValue directly.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The structure has to be writable. Like the C API, the call raises a warning
+    /// and writes nothing otherwise.
+    /// </para>
+    /// </remarks>
+    /// <param name="fieldname">The <c>fieldname</c> argument.</param>
+    /// <param name="array">The <c>array</c> argument.</param>
+    public void SetArray(string fieldname, Gst.GObject.ValueArray array)
+    {
+        ArgumentNullException.ThrowIfNull(fieldname);
+        System.Span<byte> fieldnameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope fieldnameScope = Gst.Interop.GMarshal.StackUtf8(fieldname, fieldnameBuffer);
+        ArgumentNullException.ThrowIfNull(array);
+        GstStructureSetArray(Handle, fieldnameScope.Pointer, array.Handle);
+        System.GC.KeepAlive(this);
+        System.GC.KeepAlive(array);
+    }
+
+    /// <summary>
+    /// This is useful in language bindings where unknown GValue types are not
+    /// supported. This function will convert a @array to %GST_TYPE_LIST and set
+    /// the field specified by @fieldname. Be aware that this is slower then using
+    /// %GST_TYPE_LIST in a #GValue directly.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The structure has to be writable. Like the C API, the call raises a warning
+    /// and writes nothing otherwise.
+    /// </para>
+    /// </remarks>
+    /// <param name="fieldname">The <c>fieldname</c> argument.</param>
+    /// <param name="array">The <c>array</c> argument.</param>
+    public void SetList(string fieldname, Gst.GObject.ValueArray array)
+    {
+        ArgumentNullException.ThrowIfNull(fieldname);
+        System.Span<byte> fieldnameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope fieldnameScope = Gst.Interop.GMarshal.StackUtf8(fieldname, fieldnameBuffer);
+        ArgumentNullException.ThrowIfNull(array);
+        GstStructureSetList(Handle, fieldnameScope.Pointer, array.Handle);
+        System.GC.KeepAlive(this);
+        System.GC.KeepAlive(array);
+    }
+
+    /// <summary>
     /// Sets the name of the structure to the given @name.  The string
     /// provided is copied before being used. It must not be empty, start with a
     /// letter and can be followed by letters, numbers and any of "/-_.:".
@@ -1326,6 +1426,10 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     [LibraryImport("Gst", EntryPoint = "gst_structure_fixate_field_string")]
     private static partial int GstStructureFixateFieldString(nint structure, byte* fieldName, byte* target);
 
+    /// <summary>The <c>gst_structure_get_array</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_structure_get_array")]
+    private static partial int GstStructureGetArray(nint structure, byte* fieldname, nint* array);
+
     /// <summary>The <c>gst_structure_get_boolean</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_structure_get_boolean")]
     private static partial int GstStructureGetBoolean(nint structure, byte* fieldname, int* value);
@@ -1373,6 +1477,10 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     /// <summary>The <c>gst_structure_get_int64</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_structure_get_int64")]
     private static partial int GstStructureGetInt64(nint structure, byte* fieldname, long* value);
+
+    /// <summary>The <c>gst_structure_get_list</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_structure_get_list")]
+    private static partial int GstStructureGetList(nint structure, byte* fieldname, nint* array);
 
     /// <summary>The <c>gst_structure_get_name</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_structure_get_name")]
@@ -1493,6 +1601,14 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     /// <summary>The <c>gst_structure_serialize_full</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_structure_serialize_full")]
     private static partial nint GstStructureSerializeFull(nint structure, int flags);
+
+    /// <summary>The <c>gst_structure_set_array</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_structure_set_array")]
+    private static partial void GstStructureSetArray(nint structure, byte* fieldname, nint array);
+
+    /// <summary>The <c>gst_structure_set_list</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_structure_set_list")]
+    private static partial void GstStructureSetList(nint structure, byte* fieldname, nint array);
 
     /// <summary>The <c>gst_structure_set_name</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_structure_set_name")]

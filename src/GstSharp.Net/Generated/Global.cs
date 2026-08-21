@@ -1470,6 +1470,28 @@ public static unsafe partial class Global
     }
 
     /// <summary>
+    /// Get a property of type %GST_TYPE_ARRAY and transform it into a
+    /// #GValueArray. This allow language bindings to get GST_TYPE_ARRAY
+    /// properties which are otherwise not an accessible type.
+    /// </summary>
+    /// <param name="object">The <c>@object</c> argument.</param>
+    /// <param name="name">The <c>name</c> argument.</param>
+    /// <param name="array">The <c>array</c> argument.</param>
+    /// <returns>The result of <c>gst_util_get_object_array</c>.</returns>
+    public static bool UtilGetObjectArray(Gst.GObject.Object @object, string name, out Gst.GObject.ValueArray? array)
+    {
+        ArgumentNullException.ThrowIfNull(@object);
+        ArgumentNullException.ThrowIfNull(name);
+        System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
+        nint arrayNative = default;
+        int nativeResult = GstUtilGetObjectArray(@object.Handle, nameScope.Pointer, &arrayNative);
+        System.GC.KeepAlive(@object);
+        array = Gst.GObject.ValueArray.FromNative(arrayNative, Gst.Interop.Transfer.Full);
+        return nativeResult != 0;
+    }
+
+    /// <summary>
     /// Get a timestamp as GstClockTime to be used for interval measurements.
     /// The timestamp should not be interpreted in any other way.
     /// </summary>
@@ -1594,6 +1616,28 @@ public static unsafe partial class Global
         using Gst.Interop.Utf8Scope valueScope = Gst.Interop.GMarshal.StackUtf8(value, valueBuffer);
         GstUtilSetObjectArg(@object.Handle, nameScope.Pointer, valueScope.Pointer);
         System.GC.KeepAlive(@object);
+    }
+
+    /// <summary>
+    /// Transfer a #GValueArray to %GST_TYPE_ARRAY and set this value on the
+    /// specified property name. This allow language bindings to set GST_TYPE_ARRAY
+    /// properties which are otherwise not an accessible type.
+    /// </summary>
+    /// <param name="object">The <c>@object</c> argument.</param>
+    /// <param name="name">The <c>name</c> argument.</param>
+    /// <param name="array">The <c>array</c> argument.</param>
+    /// <returns>The result of <c>gst_util_set_object_array</c>.</returns>
+    public static bool UtilSetObjectArray(Gst.GObject.Object @object, string name, Gst.GObject.ValueArray array)
+    {
+        ArgumentNullException.ThrowIfNull(@object);
+        ArgumentNullException.ThrowIfNull(name);
+        System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
+        ArgumentNullException.ThrowIfNull(array);
+        int nativeResult = GstUtilSetObjectArray(@object.Handle, nameScope.Pointer, array.Handle);
+        System.GC.KeepAlive(@object);
+        System.GC.KeepAlive(array);
+        return nativeResult != 0;
     }
 
     /// <summary>
@@ -3609,6 +3653,10 @@ public static unsafe partial class Global
     [LibraryImport("Gst", EntryPoint = "gst_util_gdouble_to_guint64")]
     private static partial ulong GstUtilGdoubleToGuint64(double value);
 
+    /// <summary>The <c>gst_util_get_object_array</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_util_get_object_array")]
+    private static partial int GstUtilGetObjectArray(nint @object, byte* name, nint* array);
+
     /// <summary>The <c>gst_util_get_timestamp</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_util_get_timestamp")]
     private static partial ulong GstUtilGetTimestamp();
@@ -3640,6 +3688,10 @@ public static unsafe partial class Global
     /// <summary>The <c>gst_util_set_object_arg</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_util_set_object_arg")]
     private static partial void GstUtilSetObjectArg(nint @object, byte* name, byte* value);
+
+    /// <summary>The <c>gst_util_set_object_array</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_util_set_object_array")]
+    private static partial int GstUtilSetObjectArray(nint @object, byte* name, nint array);
 
     /// <summary>The <c>gst_util_set_value_from_string</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_util_set_value_from_string")]

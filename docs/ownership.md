@@ -170,6 +170,31 @@ after it. One rule per shape:
   freed (`Gst.Object.GetValue`). Either way dispose it; a call that had
   nothing to return produces the empty value rather than a null.
 
+The container of those values, `Gst.GObject.ValueArray`, is an ordinary boxed
+wrapper — owned, not interned, disposed by its consumer — and the members that
+carry one follow the two rules its C functions really have:
+
+* **An out array is newly allocated for the caller.** `Structure.GetArray`,
+  `Structure.GetList` and `Global.UtilGetObjectArray` convert the field or the
+  property into a fresh `GValueArray` that the caller owns and disposes; the
+  conversion is deliberate in the C implementation, which builds the array and
+  never releases it itself. On refusal — no such field, a field that does not
+  hold the `GST_TYPE_ARRAY` (`GetArray`) or `GST_TYPE_LIST` (`GetList`) being
+  converted, or a missing or non-convertible property for
+  `UtilGetObjectArray` — the out parameter is `null` and there is nothing to
+  dispose.
+* **An in array is only read.** `Structure.SetArray`, `Structure.SetList` and
+  `Global.UtilSetObjectArray` copy the contents into the field or the
+  property, so the caller keeps the array and still disposes it. The structure
+  setters require a writable structure, with the same C parity — a warning and
+  no write — as every generated setter, and their remarks say so.
+
+The wrapper itself keeps the same discipline element-wise: `Get` hands out an
+independent copy of the element, because the pointer the C accessor returns is
+interior to storage the array reallocates and frees, and `Append` stores a copy
+of the value it is given, so the caller disposes both its own value and, in
+time, the array.
+
 ## The GType registry
 
 Every binding assembly fills a `GType` to managed-type registry from a

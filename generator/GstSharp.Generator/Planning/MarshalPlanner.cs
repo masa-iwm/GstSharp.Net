@@ -139,27 +139,47 @@ internal sealed class MarshalPlanner
     private const string NativeInt = "nint";
 
     /// <summary>
+    /// One entry of <see cref="RuntimeTypes"/>: a hand written wrapper of the
+    /// runtime, named by its public type and the flavour its handles are
+    /// wrapped with.
+    /// </summary>
+    /// <param name="PublicType">The fully qualified C# type of the wrapper.</param>
+    /// <param name="Flavor">The wrap flavour of a handle of the type.</param>
+    private sealed record RuntimeHandle(string PublicType, HandleFlavor Flavor);
+
+    /// <summary>
     /// Handles of the hand written runtime that generated code may refer to even
     /// though their module is not generated.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// The entries cover handles only, which is what <see cref="PlanHandle"/>
     /// consults. An enumeration of such a module is named by
     /// <see cref="RuntimeEnums"/> instead: a handle crosses as a pointer, an
     /// enumeration as its underlying integer, so the two need different plans.
+    /// </para>
+    /// <para>
+    /// An entry carries the flavour of its wrapper, because the flavour decides
+    /// the wrap expression: a <see cref="HandleFlavor.GObject"/> goes through
+    /// the interning <c>Gst.GObject.Object.FromNative&lt;T&gt;</c>, a
+    /// <see cref="HandleFlavor.Wrapper"/> — the boxed
+    /// <c>GObject.ValueArray</c> — through the typed <c>FromNative</c> of its
+    /// own class, exactly like a generated boxed type.
+    /// </para>
     /// </remarks>
-    private static readonly Dictionary<string, string> RuntimeTypes = new(StringComparer.Ordinal)
+    private static readonly Dictionary<string, RuntimeHandle> RuntimeTypes = new(StringComparer.Ordinal)
     {
-        ["GObject.Object"] = "Gst.GObject.Object",
-        ["GObject.InitiallyUnowned"] = "Gst.GObject.InitiallyUnowned",
-        ["Gio.Cancellable"] = "Gst.Gio.Cancellable",
-        ["Gio.Socket"] = "Gst.Gio.Socket",
-        ["Gio.SocketAddress"] = "Gst.Gio.SocketAddress",
-        ["Gio.SocketControlMessage"] = "Gst.Gio.SocketControlMessage",
-        ["Gio.TlsCertificate"] = "Gst.Gio.TlsCertificate",
-        ["Gio.TlsConnection"] = "Gst.Gio.TlsConnection",
-        ["Gio.TlsDatabase"] = "Gst.Gio.TlsDatabase",
-        ["Gio.TlsInteraction"] = "Gst.Gio.TlsInteraction",
+        ["GObject.Object"] = new("Gst.GObject.Object", HandleFlavor.GObject),
+        ["GObject.InitiallyUnowned"] = new("Gst.GObject.InitiallyUnowned", HandleFlavor.GObject),
+        ["GObject.ValueArray"] = new("Gst.GObject.ValueArray", HandleFlavor.Wrapper),
+        ["Gio.Cancellable"] = new("Gst.Gio.Cancellable", HandleFlavor.GObject),
+        ["Gio.Socket"] = new("Gst.Gio.Socket", HandleFlavor.GObject),
+        ["Gio.SocketAddress"] = new("Gst.Gio.SocketAddress", HandleFlavor.GObject),
+        ["Gio.SocketControlMessage"] = new("Gst.Gio.SocketControlMessage", HandleFlavor.GObject),
+        ["Gio.TlsCertificate"] = new("Gst.Gio.TlsCertificate", HandleFlavor.GObject),
+        ["Gio.TlsConnection"] = new("Gst.Gio.TlsConnection", HandleFlavor.GObject),
+        ["Gio.TlsDatabase"] = new("Gst.Gio.TlsDatabase", HandleFlavor.GObject),
+        ["Gio.TlsInteraction"] = new("Gst.Gio.TlsInteraction", HandleFlavor.GObject),
     };
 
     /// <summary>
@@ -1443,10 +1463,10 @@ internal sealed class MarshalPlanner
 
         HandleFlavor flavor;
         string publicType;
-        if (RuntimeTypes.TryGetValue(symbol.QualifiedName, out string? runtimeType))
+        if (RuntimeTypes.TryGetValue(symbol.QualifiedName, out RuntimeHandle? runtimeType))
         {
-            flavor = HandleFlavor.GObject;
-            publicType = runtimeType;
+            flavor = runtimeType.Flavor;
+            publicType = runtimeType.PublicType;
         }
         else if (!IsEmitted(symbol))
         {
