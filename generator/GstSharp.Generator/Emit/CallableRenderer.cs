@@ -183,11 +183,13 @@ internal static class CallableRenderer
             }
             else
             {
+                // A GValue that is only read still crosses by pointer, so it
+                // is an `in` parameter rather than a copy of the struct.
                 prefix = argument.Direction switch
                 {
                     ArgumentDirection.Out => "out ",
                     ArgumentDirection.Ref => "ref ",
-                    _ => string.Empty,
+                    _ => argument.Kind == ArgumentKind.GValue ? "in " : string.Empty,
                 };
             }
 
@@ -205,7 +207,7 @@ internal static class CallableRenderer
             plan.Callable.Doc,
             "The <c>" + cType + "</c> function.",
             plan.Callable,
-            ConsumptionRemarks(plan));
+            GeneratedRemarks(plan));
 
         foreach (ArgumentPlan argument in plan.Arguments)
         {
@@ -222,7 +224,7 @@ internal static class CallableRenderer
                 DocName(argument.Name),
                 argument.Doc ?? argument.Source?.Doc,
                 fallback,
-                argument.Kind == ArgumentKind.ConsumedHandle ? ConsumptionParamNote(argument) : null);
+                ParamNote(argument));
         }
 
         if (!plan.Return.IsVoid)
@@ -231,10 +233,11 @@ internal static class CallableRenderer
                 writer,
                 plan.Return.Doc,
                 "The result of <c>" + cType + "</c>.",
-                AdoptsWrapper(plan.Return) ? AdoptedWrapperNote : null);
+                AdoptsWrapper(plan.Return) ? AdoptedWrapperNote : GValueReturnNote(plan.Return));
         }
 
         WriteConsumptionExceptions(writer, plan);
+        WriteGValueExceptions(writer, plan);
 
         if (plan.Throws)
         {
@@ -259,6 +262,141 @@ internal static class CallableRenderer
         value.Kind == ArgumentKind.Handle
         && value.Flavor == HandleFlavor.Wrapper
         && value.Transfer == GirTransfer.None;
+
+    /// <summary>
+    /// Returns the generator authored note of one parameter, or
+    /// <see langword="null"/> when the parameter needs none.
+    /// </summary>
+    /// <param name="argument">The parameter being documented.</param>
+    /// <returns>The note lines.</returns>
+    private static IReadOnlyList<string>? ParamNote(ArgumentPlan argument) => argument.Kind switch
+    {
+        ArgumentKind.ConsumedHandle => ConsumptionParamNote(argument),
+        ArgumentKind.GValue => GValueParamNote(argument),
+        _ => null,
+    };
+
+    /// <summary>
+    /// Returns the note of a <c>GValue</c> parameter, which states the
+    /// ownership and initialization contract of its shape: the gir describes
+    /// the C pointer and says none of it.
+    /// </summary>
+    /// <param name="argument">The value argument.</param>
+    /// <returns>The note lines.</returns>
+    private static IReadOnlyList<string>? GValueParamNote(ArgumentPlan argument) => argument.Direction switch
+    {
+        ArgumentDirection.In =>
+        [
+            "The callee copies what it keeps, so the caller keeps ownership of",
+            "<paramref name=\"" + DocName(argument.Name) + "\"/> and still disposes it.",
+        ],
+        ArgumentDirection.Ref =>
+        [
+            "The value has to be initialized with the type the call expects before",
+            "the call; like the C API, the call raises a warning and does nothing",
+            "otherwise.",
+        ],
+        ArgumentDirection.Out =>
+        [
+            "On success the caller owns the contents and disposes the value; on",
+            "failure it is left empty, and disposing an empty value does nothing.",
+        ],
+        _ => null,
+    };
+
+    /// <summary>
+    /// Returns the note of a returned <c>GValue</c>, or <see langword="null"/>
+    /// for every other return. The value is the caller's own in both transfer
+    /// shapes; what differs is how it got there.
+    /// </summary>
+    /// <param name="value">The return value.</param>
+    /// <returns>The note lines.</returns>
+    private static IReadOnlyList<string>? GValueReturnNote(ReturnPlan value)
+    {
+        if (value.Kind != ArgumentKind.GValue)
+        {
+            return null;
+        }
+
+        return value.Transfer == GirTransfer.Full
+            ?
+            [
+                "Ownership is transferred: dispose the value. It is empty when the call",
+                "returns <c>NULL</c>, and disposing an empty value does nothing.",
+            ]
+            :
+            [
+                "The value is a copy the caller owns: dispose it. It is empty when the",
+                "source has no value to hand out.",
+            ];
+    }
+
+    /// <summary>
+    /// Writes the <see cref="ArgumentException"/> documentation of every
+    /// <c>GValue</c> parameter that carries the empty guard, which is the
+    /// read-only <c>in</c> shape alone.
+    /// </summary>
+    /// <param name="writer">The target writer.</param>
+    /// <param name="plan">The member being documented.</param>
+    private static void WriteGValueExceptions(CodeWriter writer, MarshalPlan plan)
+    {
+        foreach (ArgumentPlan argument in plan.Arguments)
+        {
+            if (argument.Kind != ArgumentKind.GValue
+                || argument.Direction != ArgumentDirection.In
+                || argument.IsHidden)
+            {
+                continue;
+            }
+
+            writer.WriteLine("/// <exception cref=\"ArgumentException\">");
+            writer.WriteLine("/// <paramref name=\"" + DocName(argument.Name) + "\"/> is empty.");
+            writer.WriteLine("/// </exception>");
+        }
+    }
+
+    /// <summary>
+    /// The entry points that require a writable caps or structure and, like
+    /// the C API they bind, warn and write nothing on a frozen one. The C
+    /// assert is not turned into a generated guard — the shipped
+    /// <c>gst_caps_append_structure</c> carries the same assert and no guard —
+    /// so parity with C is stated in the documentation instead. The value is
+    /// the first sentence of the note, because the subject of the two differs
+    /// in number.
+    /// </summary>
+    private static readonly Dictionary<string, string> WritableTargets = new(StringComparer.Ordinal)
+    {
+        ["gst_caps_set_value"] = "The caps have to be writable.",
+        ["gst_caps_id_str_set_value"] = "The caps have to be writable.",
+        ["gst_structure_id_set_value"] = "The structure has to be writable.",
+        ["gst_structure_id_str_set_value"] = "The structure has to be writable.",
+    };
+
+    /// <summary>
+    /// Returns every generator authored remarks paragraph of a member: the
+    /// consumption contract of its consumed arguments and the writability
+    /// requirement of the entry points that have one.
+    /// </summary>
+    /// <param name="plan">The member being documented.</param>
+    /// <returns>The paragraphs, or <see langword="null"/> when there are none.</returns>
+    private static IReadOnlyList<string>? GeneratedRemarks(MarshalPlan plan)
+    {
+        List<string> lines = [];
+        if (ConsumptionRemarks(plan) is { } consumption)
+        {
+            lines.AddRange(consumption);
+        }
+
+        if (WritableTargets.TryGetValue(plan.EntryPoint, out string? sentence))
+        {
+            lines.Add("<para>");
+            lines.Add(sentence + " Like the C API, the call raises a warning");
+            lines.Add("and writes nothing otherwise.");
+            lines.Add("</para>");
+        }
+
+        return lines.Count == 0 ? null : lines;
+    }
 
     /// <summary>
     /// Returns the remarks paragraphs of a member with a consumed argument, or
@@ -462,7 +600,13 @@ internal static class CallableRenderer
 
         // A span has to be pinned and a callback that only lives for the
         // duration of the call has to be released again, so both wrap the call
-        // in a block. They are closed in reverse order further down.
+        // in a block; they are closed in reverse order further down. A GValue
+        // is pinned the same way: the call is handed the address of the layout
+        // field inside the caller's value, and an `in` or `ref` argument may
+        // refer into the heap, so the address only holds while a fixed scope
+        // does. The import takes a typed pointer rather than a `ref`, because
+        // the interop generator refuses a by-ref struct from a referenced
+        // assembly (SYSLIB1051).
         List<ArgumentPlan> scopes = [];
         foreach (ArgumentPlan argument in plan.Arguments)
         {
@@ -470,6 +614,16 @@ internal static class CallableRenderer
             {
                 writer.WriteLine(
                     "fixed (" + argument.RawType + " " + argument.Name + "Pointer = " + argument.Name + ")");
+                writer.OpenBlock();
+                scopes.Add(argument);
+            }
+            else if (argument.Kind == ArgumentKind.GValue)
+            {
+                string storage = argument.Direction == ArgumentDirection.In
+                    ? "System.Runtime.CompilerServices.Unsafe.AsRef(in " + argument.Name + ").NativeValue"
+                    : argument.Name + ".NativeValue";
+                writer.WriteLine(
+                    "fixed (" + argument.RawType + " " + argument.Name + "Pointer = &" + storage + ")");
                 writer.OpenBlock();
                 scopes.Add(argument);
             }
@@ -765,6 +919,20 @@ internal static class CallableRenderer
                 writer.WriteLine("ArgumentNullException.ThrowIfNull(" + name + ");");
                 return;
 
+            // Only the read-only shape is guarded: an empty value has no type
+            // for the callee to read, and the C side answers it with a
+            // g_critical and a silent no-op. A ref value is storage the callee
+            // writes under a contract of its own — which states are valid is
+            // the callee's to say — and an out value starts empty by design.
+            case ArgumentKind.GValue when argument.Direction == ArgumentDirection.In:
+                writer.WriteLine("if (" + name + ".IsEmpty)");
+                writer.OpenBlock();
+                writer.WriteLine("throw new ArgumentException(");
+                writer.WriteLine("    \"An empty value cannot be passed: it has no type for the call to read.\",");
+                writer.WriteLine("    nameof(" + name + "));");
+                writer.CloseBlock();
+                return;
+
             default:
                 return;
         }
@@ -897,6 +1065,18 @@ internal static class CallableRenderer
             case ArgumentKind.DestroyNotify:
                 return;
 
+            case ArgumentKind.GValue:
+                // The call points at the caller's own storage, so nothing is
+                // allocated here. An out value starts zeroed, which is the
+                // uninitialized state the callee's g_value_init expects to
+                // find; a pre-initialized destination would be a g_critical.
+                if (argument.Direction == ArgumentDirection.Out)
+                {
+                    writer.WriteLine(name + " = default;");
+                }
+
+                return;
+
             case ArgumentKind.PlainStruct when argument.RawType.EndsWith('*'):
                 writer.WriteLine(
                     argument.PublicType + " " + name + "Native = "
@@ -992,6 +1172,11 @@ internal static class CallableRenderer
             case ArgumentKind.ConsumedHandle:
                 return name + "Owned";
 
+            case ArgumentKind.GValue:
+                // The pinned address of the layout field inside the caller's
+                // value, taken by the fixed scope that wraps the call.
+                return name + "Pointer";
+
             default:
                 break;
         }
@@ -1024,6 +1209,14 @@ internal static class CallableRenderer
         ArgumentKind.Handle => HandleConversion(argument.Flavor, TrimNullable(argument.PublicType), source, argument.Transfer),
         ArgumentKind.Strv => "Gst.Interop.GMarshal.StrvToArray(" + source + ", free: "
             + (argument.Transfer == GirTransfer.None ? "false" : "true") + ")",
+
+        // Only the return position reaches this for a GValue; an argument is
+        // read or written in place. A borrowed return is copied and an owned
+        // one is adopted — contents moved, shell freed — and NULL is the
+        // empty value either way.
+        ArgumentKind.GValue => argument.Transfer == GirTransfer.Full
+            ? "Gst.GObject.Value.TakeOwnership(" + source + ")"
+            : "Gst.GObject.Value.CopyFrom(" + source + ")",
         _ => source,
     };
 
@@ -1046,6 +1239,13 @@ internal static class CallableRenderer
     private static void WriteEpilogue(CodeWriter writer, MarshalPlan plan, ArgumentPlan argument)
     {
         if (argument.IsHidden || argument.Direction == ArgumentDirection.In)
+        {
+            return;
+        }
+
+        // A GValue was read or written in place through the caller's own
+        // storage; there is no local to copy back and nothing to release.
+        if (argument.Kind == ArgumentKind.GValue)
         {
             return;
         }

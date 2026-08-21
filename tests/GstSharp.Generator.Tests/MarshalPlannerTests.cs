@@ -17,8 +17,9 @@ public sealed class MarshalPlannerTests
     /// and a destroy notification, a callable that throws, an owned string
     /// beside handle arguments, a property built from its accessors, a
     /// returned <c>GList</c> in each of its three ownership shapes, a consuming
-    /// argument of each wrapper family, and the shapes that are rejected on
-    /// purpose.
+    /// argument of each wrapper family, a <c>GValue</c> in each of its bound
+    /// shapes and each of its rejected ones, and the other shapes that are
+    /// rejected on purpose.
     /// </summary>
     private const string Body =
         """
@@ -64,6 +65,19 @@ public sealed class MarshalPlannerTests
               <parameters>
                 <parameter name="widget" transfer-ownership="none">
                   <type name="Widget" c:type="GstWidget*"/>
+                </parameter>
+                <parameter name="user_data" transfer-ownership="none" nullable="1" closure="1">
+                  <type name="gpointer" c:type="gpointer"/>
+                </parameter>
+              </parameters>
+            </callback>
+            <callback name="QualityFunc" c:type="GstQualityFunc">
+              <return-value transfer-ownership="none">
+                <type name="none" c:type="void"/>
+              </return-value>
+              <parameters>
+                <parameter name="value" transfer-ownership="none">
+                  <type name="GObject.Value" c:type="const GValue*"/>
                 </parameter>
                 <parameter name="user_data" transfer-ownership="none" nullable="1" closure="1">
                   <type name="gpointer" c:type="gpointer"/>
@@ -335,6 +349,107 @@ public sealed class MarshalPlannerTests
                   </instance-parameter>
                   <parameter name="peer" transfer-ownership="full">
                     <type name="Widget" c:type="GstWidget*"/>
+                  </parameter>
+                </parameters>
+              </method>
+              <method name="set_quality" c:identifier="gst_widget_set_quality">
+                <return-value transfer-ownership="none">
+                  <type name="none" c:type="void"/>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="widget" transfer-ownership="none">
+                    <type name="Widget" c:type="GstWidget*"/>
+                  </instance-parameter>
+                  <parameter name="value" transfer-ownership="none">
+                    <type name="GObject.Value" c:type="const GValue*"/>
+                  </parameter>
+                </parameters>
+              </method>
+              <method name="merge_quality" c:identifier="gst_widget_merge_quality">
+                <return-value transfer-ownership="none">
+                  <type name="none" c:type="void"/>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="widget" transfer-ownership="none">
+                    <type name="Widget" c:type="GstWidget*"/>
+                  </instance-parameter>
+                  <parameter name="value" transfer-ownership="none">
+                    <type name="GObject.Value" c:type="GValue*"/>
+                  </parameter>
+                </parameters>
+              </method>
+              <method name="fetch_quality" c:identifier="gst_widget_fetch_quality">
+                <return-value transfer-ownership="none">
+                  <type name="gboolean" c:type="gboolean"/>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="widget" transfer-ownership="none">
+                    <type name="Widget" c:type="GstWidget*"/>
+                  </instance-parameter>
+                  <parameter name="value" direction="out" caller-allocates="1" transfer-ownership="none" optional="1">
+                    <type name="GObject.Value" c:type="GValue*"/>
+                  </parameter>
+                </parameters>
+              </method>
+              <method name="peek_quality" c:identifier="gst_widget_peek_quality">
+                <return-value transfer-ownership="none" nullable="1">
+                  <type name="GObject.Value" c:type="const GValue*"/>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="widget" transfer-ownership="none">
+                    <type name="Widget" c:type="GstWidget*"/>
+                  </instance-parameter>
+                </parameters>
+              </method>
+              <method name="pull_quality" c:identifier="gst_widget_pull_quality">
+                <return-value transfer-ownership="full" nullable="1">
+                  <type name="GObject.Value" c:type="GValue*"/>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="widget" transfer-ownership="none">
+                    <type name="Widget" c:type="GstWidget*"/>
+                  </instance-parameter>
+                </parameters>
+              </method>
+              <method name="absorb_quality" c:identifier="gst_widget_absorb_quality">
+                <return-value transfer-ownership="none">
+                  <type name="none" c:type="void"/>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="widget" transfer-ownership="none">
+                    <type name="Widget" c:type="GstWidget*"/>
+                  </instance-parameter>
+                  <parameter name="value" transfer-ownership="full">
+                    <type name="GObject.Value" c:type="GValue*"/>
+                  </parameter>
+                </parameters>
+              </method>
+              <method name="maybe_set_quality" c:identifier="gst_widget_maybe_set_quality">
+                <return-value transfer-ownership="none">
+                  <type name="none" c:type="void"/>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="widget" transfer-ownership="none">
+                    <type name="Widget" c:type="GstWidget*"/>
+                  </instance-parameter>
+                  <parameter name="value" transfer-ownership="none" nullable="1">
+                    <type name="GObject.Value" c:type="const GValue*"/>
+                  </parameter>
+                </parameters>
+              </method>
+              <method name="watch_quality" c:identifier="gst_widget_watch_quality">
+                <return-value transfer-ownership="none">
+                  <type name="none" c:type="void"/>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="widget" transfer-ownership="none">
+                    <type name="Widget" c:type="GstWidget*"/>
+                  </instance-parameter>
+                  <parameter name="func" transfer-ownership="none" scope="call" closure="1">
+                    <type name="QualityFunc" c:type="GstQualityFunc"/>
+                  </parameter>
+                  <parameter name="user_data" transfer-ownership="none" nullable="1">
+                    <type name="gpointer" c:type="gpointer"/>
                   </parameter>
                 </parameters>
               </method>
@@ -1064,7 +1179,12 @@ public sealed class MarshalPlannerTests
         Assert.DoesNotContain("TakeAnchors", source, StringComparison.Ordinal);
         Assert.DoesNotContain("ListTags", source, StringComparison.Ordinal);
         Assert.DoesNotContain("AddChildren", source, StringComparison.Ordinal);
-        Assert.Equal(5, Run.Result.Census.SkippedCount("Gst", SkipReason.UnsupportedSignature));
+
+        // The eight: steal_caps, list_extents, take_anchors, list_tags and
+        // add_children above, and the three GValue rejections that
+        // TheTakeValueShapeStaysUnbound, ANullableGValueParameterStaysUnbound
+        // and AGValueTakingCallbackStaysUnbound pin.
+        Assert.Equal(8, Run.Result.Census.SkippedCount("Gst", SkipReason.UnsupportedSignature));
     }
 
     [Fact]
@@ -1184,6 +1304,164 @@ public sealed class MarshalPlannerTests
             """,
             Run.Member("Caps.cs", "public static Gst.Caps FromPayload("),
             StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public void AReadOnlyGValueIsGuardedAndPinnedInPlace()
+    {
+        // Rule of the read-only shape: a `const GValue*` becomes an `in`
+        // parameter, the empty value is refused before anything else — the C
+        // side would g_critical and silently do nothing — and the call is
+        // handed the pinned address of the layout field inside the caller's
+        // own value. Nothing is allocated and nothing is disposed: the callee
+        // copies what it keeps.
+        Assert.Equal(
+            """
+            public void SetQuality(in Gst.GObject.Value value)
+            {
+                if (value.IsEmpty)
+                {
+                    throw new ArgumentException(
+                        "An empty value cannot be passed: it has no type for the call to read.",
+                        nameof(value));
+                }
+                fixed (Gst.GObject.GValueNative* valuePointer = &System.Runtime.CompilerServices.Unsafe.AsRef(in value).NativeValue)
+                {
+                    GstWidgetSetQuality(Handle, valuePointer);
+                    System.GC.KeepAlive(this);
+                }
+            }
+            """,
+            Run.Member("Widget.cs", "public void SetQuality("),
+            StringComparer.Ordinal);
+
+        // The import takes a typed pointer: a by-ref struct from a referenced
+        // assembly is not strictly blittable to the interop generator
+        // (SYSLIB1051), and the fixed scope above is the same AOT-safe stub.
+        Assert.Contains(
+            "private static partial void GstWidgetSetQuality(nint widget, Gst.GObject.GValueNative* value);",
+            Run.File("Widget.cs"),
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AWritableGValueCrossesAsARefWithoutAGuard()
+    {
+        // A non-const GValue* in parameter is storage the callee writes under
+        // a contract of its own — gst_value_set_fraction wants an initialized
+        // fraction, gst_value_fixate initializes its dest itself — so it is a
+        // `ref` and carries no empty guard: which states are valid is the
+        // callee's to say, and C asserts misuse.
+        Assert.Equal(
+            """
+            public void MergeQuality(ref Gst.GObject.Value value)
+            {
+                fixed (Gst.GObject.GValueNative* valuePointer = &value.NativeValue)
+                {
+                    GstWidgetMergeQuality(Handle, valuePointer);
+                    System.GC.KeepAlive(this);
+                }
+            }
+            """,
+            Run.Member("Widget.cs", "public void MergeQuality("),
+            StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public void ACallerAllocatedGValueOutIsZeroedAndFilledInPlace()
+    {
+        // The member zeroes the caller's storage — the uninitialized state the
+        // callee's g_value_init expects to find — and the callee fills it in
+        // place; there is no epilogue, because there is no local to copy back.
+        // The gir marks the parameter optional, and that is ignored: storage
+        // is always passed, and a callee that declines leaves it empty, which
+        // disposes as a no-op.
+        Assert.Equal(
+            """
+            public bool FetchQuality(out Gst.GObject.Value value)
+            {
+                value = default;
+                fixed (Gst.GObject.GValueNative* valuePointer = &value.NativeValue)
+                {
+                    int nativeResult = GstWidgetFetchQuality(Handle, valuePointer);
+                    System.GC.KeepAlive(this);
+                    return nativeResult != 0;
+                }
+            }
+            """,
+            Run.Member("Widget.cs", "public bool FetchQuality("),
+            StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public void ABorrowedGValueReturnIsCopiedIntoTheCallersOwn()
+    {
+        // The C function hands out a pointer it keeps owning, so the member
+        // returns a copy of the caller's own, and NULL is the empty value
+        // rather than a nullable return.
+        Assert.Equal(
+            """
+            public Gst.GObject.Value PeekQuality()
+            {
+                nint nativeResult = GstWidgetPeekQuality(Handle);
+                System.GC.KeepAlive(this);
+                return Gst.GObject.Value.CopyFrom(nativeResult);
+            }
+            """,
+            Run.Member("Widget.cs", "public Gst.GObject.Value PeekQuality("),
+            StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public void ATransferredGValueReturnIsAdoptedShellAndAll()
+    {
+        // transfer-ownership="full": the contents move into the caller's value
+        // and the heap shell is freed, which is what Value.TakeOwnership does.
+        Assert.Equal(
+            """
+            public Gst.GObject.Value PullQuality()
+            {
+                nint nativeResult = GstWidgetPullQuality(Handle);
+                System.GC.KeepAlive(this);
+                return Gst.GObject.Value.TakeOwnership(nativeResult);
+            }
+            """,
+            Run.Member("Widget.cs", "public Gst.GObject.Value PullQuality("),
+            StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public void TheTakeValueShapeStaysUnbound()
+    {
+        // A GValue in parameter the callee takes over
+        // (transfer-ownership="full", the take_value family) would leave the
+        // caller's struct owning what the callee now owns; binding it needs an
+        // emission that moves the contents out of the caller's value, which
+        // does not exist. Every real case is under an overlay skip, so this
+        // synthetic fixture is the only thing that keeps the rejection honest
+        // — a regression here produces no committed diff at all.
+        Assert.DoesNotContain("AbsorbQuality", Run.File("Widget.cs"), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ANullableGValueParameterStaysUnbound()
+    {
+        // A C# `in` struct cannot be null, so a nullable GValue has no
+        // spelling on the public surface and the member is rejected rather
+        // than bound with an unreachable null.
+        Assert.DoesNotContain("MaybeSetQuality", Run.File("Widget.cs"), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AGValueTakingCallbackStaysUnbound()
+    {
+        // A callback receives its arguments rather than passing them, and a
+        // trampoline has no equivalent of a pointer into caller owned storage,
+        // so a GValue carrying callback and the member that takes it stay
+        // unbound — GstControlBindingConvert and the iterator fold family are
+        // the real cases.
+        Assert.DoesNotContain("WatchQuality", Run.File("Widget.cs"), StringComparison.Ordinal);
+        Assert.DoesNotContain("QualityFunc", Run.File("Callbacks.cs"), StringComparison.Ordinal);
     }
 
     [Fact]

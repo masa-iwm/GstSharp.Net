@@ -70,6 +70,38 @@ public sealed unsafe partial class Iterator : Gst.GObject.Boxed
     internal static Iterator? FromNative(nint handle, Gst.Interop.Transfer transfer) =>
         handle == 0 ? null : new(handle, transfer);
 
+    /// <summary>
+    /// This #GstIterator is a convenient iterator for the common
+    /// case where a #GstIterator needs to be returned but only
+    /// a single object has to be considered. This happens often
+    /// for the #GstPadIterIntLinkFunction.
+    /// </summary>
+    /// <param name="type">The <c>type</c> argument.</param>
+    /// <param name="object">
+    /// The <c>@object</c> argument.
+    /// The callee copies what it keeps, so the caller keeps ownership of
+    /// <paramref name="object"/> and still disposes it.
+    /// </param>
+    /// <returns>the new #GstIterator for @object.</returns>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="object"/> is empty.
+    /// </exception>
+    public static Gst.Iterator NewSingle(Gst.GObject.GType type, in Gst.GObject.Value @object)
+    {
+        if (@object.IsEmpty)
+        {
+            throw new ArgumentException(
+                "An empty value cannot be passed: it has no type for the call to read.",
+                nameof(@object));
+        }
+        fixed (Gst.GObject.GValueNative* @objectPointer = &System.Runtime.CompilerServices.Unsafe.AsRef(in @object).NativeValue)
+        {
+            nint nativeResult = GstIteratorNewSingle(type.Value, @objectPointer);
+            return Gst.Iterator.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+                ?? throw new InvalidOperationException("gst_iterator_new_single returned no value.");
+        }
+    }
+
     /// <summary>Copy the iterator and its state.</summary>
     /// <returns>a new copy of @it.</returns>
     public Gst.Iterator Copy()
@@ -121,6 +153,10 @@ public sealed unsafe partial class Iterator : Gst.GObject.Boxed
         GstIteratorResync(Handle);
         System.GC.KeepAlive(this);
     }
+
+    /// <summary>The <c>gst_iterator_new_single</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_iterator_new_single")]
+    private static partial nint GstIteratorNewSingle(nuint type, Gst.GObject.GValueNative* @object);
 
     /// <summary>The <c>gst_iterator_copy</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_iterator_copy")]

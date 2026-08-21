@@ -570,7 +570,8 @@ internal sealed class SurfaceBuilder
                 continue;
             }
 
-            if (getter.Return.Kind == ArgumentKind.Handle && getter.Return.Flavor == HandleFlavor.Wrapper)
+            if ((getter.Return.Kind == ArgumentKind.Handle && getter.Return.Flavor == HandleFlavor.Wrapper)
+                || getter.Return.Kind == ArgumentKind.GValue)
             {
                 // A mini object or a boxed value reaches managed code as a
                 // wrapper that owns a reference of its own and releases it when
@@ -580,7 +581,9 @@ internal sealed class SurfaceBuilder
                 // reads by design, and two reads of the same property are two
                 // wrappers holding two references. The getter is emitted as a
                 // method beside this, and Get* is where a caller sees that the
-                // result is theirs to dispose.
+                // result is theirs to dispose. A returned GValue is the same
+                // owning shape — the caller has to dispose it — so it never
+                // backs a property either.
                 _census.Skipped(module, SkipReason.OwningProperty, symbol);
                 continue;
             }

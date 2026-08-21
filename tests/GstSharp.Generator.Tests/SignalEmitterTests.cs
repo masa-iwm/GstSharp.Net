@@ -535,9 +535,11 @@ public sealed class SignalEmitterTests
         // are a pair of extension methods instead. The editing services are
         // twenty nine of them, and all twenty nine are events: the one signal
         // of a GES interface, GESMetaContainer::notify-meta, carries a GValue
-        // and is not bound.
+        // and is not bound. The adder count carries one match that is not a
+        // signal pair at all: Gst.ITagSetter's AddTagValue extension, a GValue
+        // method whose name the pattern cannot tell from a subscription adder.
         Assert.Equal(70, events);
-        Assert.Equal(4, adders);
+        Assert.Equal(5, adders);
         Assert.Equal(4, removers);
         Assert.Equal(74, trampolines);
 

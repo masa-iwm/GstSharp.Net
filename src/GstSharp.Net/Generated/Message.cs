@@ -1013,6 +1013,22 @@ public sealed unsafe partial class Message : Gst.MiniObject
         return nativeResult;
     }
 
+    /// <summary>Extracts the object managing the streaming thread from @message.</summary>
+    /// <returns>
+    /// a GValue containing the object that manages the
+    /// streaming thread. This object is usually of type GstTask but other types can
+    /// be added in the future. The object remains valid as long as @message is
+    /// valid.
+    /// The value is a copy the caller owns: dispose it. It is empty when the
+    /// source has no value to hand out.
+    /// </returns>
+    public Gst.GObject.Value GetStreamStatusObject()
+    {
+        nint nativeResult = GstMessageGetStreamStatusObject(Handle);
+        System.GC.KeepAlive(this);
+        return Gst.GObject.Value.CopyFrom(nativeResult);
+    }
+
     /// <summary>Access the structure of the message.</summary>
     /// <returns>
     /// The structure of the message. The
@@ -1839,6 +1855,33 @@ public sealed unsafe partial class Message : Gst.MiniObject
         System.GC.KeepAlive(this);
     }
 
+    /// <summary>
+    /// Configures the object handling the streaming thread. This is usually a
+    /// GstTask object but other objects might be added in the future.
+    /// </summary>
+    /// <param name="object">
+    /// The <c>@object</c> argument.
+    /// The callee copies what it keeps, so the caller keeps ownership of
+    /// <paramref name="object"/> and still disposes it.
+    /// </param>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="object"/> is empty.
+    /// </exception>
+    public void SetStreamStatusObject(in Gst.GObject.Value @object)
+    {
+        if (@object.IsEmpty)
+        {
+            throw new ArgumentException(
+                "An empty value cannot be passed: it has no type for the call to read.",
+                nameof(@object));
+        }
+        fixed (Gst.GObject.GValueNative* @objectPointer = &System.Runtime.CompilerServices.Unsafe.AsRef(in @object).NativeValue)
+        {
+            GstMessageSetStreamStatusObject(Handle, @objectPointer);
+            System.GC.KeepAlive(this);
+        }
+    }
+
     /// <summary>Adds the @stream to the @message.</summary>
     /// <param name="stream">The <c>stream</c> argument.</param>
     public void StreamsSelectedAdd(Gst.Stream stream)
@@ -2066,6 +2109,10 @@ public sealed unsafe partial class Message : Gst.MiniObject
     [LibraryImport("Gst", EntryPoint = "gst_message_get_seqnum")]
     private static partial uint GstMessageGetSeqnum(nint message);
 
+    /// <summary>The <c>gst_message_get_stream_status_object</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_get_stream_status_object")]
+    private static partial nint GstMessageGetStreamStatusObject(nint message);
+
     /// <summary>The <c>gst_message_get_structure</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_message_get_structure")]
     private static partial nint GstMessageGetStructure(nint message);
@@ -2249,6 +2296,10 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// <summary>The <c>gst_message_set_seqnum</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_message_set_seqnum")]
     private static partial void GstMessageSetSeqnum(nint message, uint seqnum);
+
+    /// <summary>The <c>gst_message_set_stream_status_object</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_set_stream_status_object")]
+    private static partial void GstMessageSetStreamStatusObject(nint message, Gst.GObject.GValueNative* @object);
 
     /// <summary>The <c>gst_message_streams_selected_add</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_message_streams_selected_add")]

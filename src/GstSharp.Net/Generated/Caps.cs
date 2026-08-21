@@ -424,6 +424,44 @@ public sealed unsafe partial class Caps : Gst.MiniObject
     }
 
     /// <summary>
+    /// Sets the given @field on all structures of @caps to the given @value.
+    /// This is a convenience function for calling gst_structure_set_value() on
+    /// all structures of @caps.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The caps have to be writable. Like the C API, the call raises a warning
+    /// and writes nothing otherwise.
+    /// </para>
+    /// <para>Available since GStreamer 1.26.</para>
+    /// </remarks>
+    /// <param name="field">The <c>field</c> argument.</param>
+    /// <param name="value">
+    /// The <c>value</c> argument.
+    /// The callee copies what it keeps, so the caller keeps ownership of
+    /// <paramref name="value"/> and still disposes it.
+    /// </param>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="value"/> is empty.
+    /// </exception>
+    public void IdStrSetValue(Gst.IdStr field, in Gst.GObject.Value value)
+    {
+        ArgumentNullException.ThrowIfNull(field);
+        if (value.IsEmpty)
+        {
+            throw new ArgumentException(
+                "An empty value cannot be passed: it has no type for the call to read.",
+                nameof(value));
+        }
+        fixed (Gst.GObject.GValueNative* valuePointer = &System.Runtime.CompilerServices.Unsafe.AsRef(in value).NativeValue)
+        {
+            GstCapsIdStrSetValue(Handle, field.Handle, valuePointer);
+            System.GC.KeepAlive(this);
+            System.GC.KeepAlive(field);
+        }
+    }
+
+    /// <summary>
     /// Creates a new #GstCaps that contains all the formats that are common
     /// to both @caps1 and @caps2. Defaults to %GST_CAPS_INTERSECT_ZIG_ZAG mode.
     /// </summary>
@@ -714,6 +752,44 @@ public sealed unsafe partial class Caps : Gst.MiniObject
     }
 
     /// <summary>
+    /// Sets the given @field on all structures of @caps to the given @value.
+    /// This is a convenience function for calling gst_structure_set_value() on
+    /// all structures of @caps.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The caps have to be writable. Like the C API, the call raises a warning
+    /// and writes nothing otherwise.
+    /// </para>
+    /// </remarks>
+    /// <param name="field">The <c>field</c> argument.</param>
+    /// <param name="value">
+    /// The <c>value</c> argument.
+    /// The callee copies what it keeps, so the caller keeps ownership of
+    /// <paramref name="value"/> and still disposes it.
+    /// </param>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="value"/> is empty.
+    /// </exception>
+    public void SetValue(string field, in Gst.GObject.Value value)
+    {
+        ArgumentNullException.ThrowIfNull(field);
+        System.Span<byte> fieldBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope fieldScope = Gst.Interop.GMarshal.StackUtf8(field, fieldBuffer);
+        if (value.IsEmpty)
+        {
+            throw new ArgumentException(
+                "An empty value cannot be passed: it has no type for the call to read.",
+                nameof(value));
+        }
+        fixed (Gst.GObject.GValueNative* valuePointer = &System.Runtime.CompilerServices.Unsafe.AsRef(in value).NativeValue)
+        {
+            GstCapsSetValue(Handle, fieldScope.Pointer, valuePointer);
+            System.GC.KeepAlive(this);
+        }
+    }
+
+    /// <summary>
     /// Retrieves the structure with the given index from the list of structures
     /// contained in @caps. The caller becomes the owner of the returned structure.
     /// </summary>
@@ -850,6 +926,10 @@ public sealed unsafe partial class Caps : Gst.MiniObject
     [LibraryImport("Gst", EntryPoint = "gst_caps_get_structure")]
     private static partial nint GstCapsGetStructure(nint caps, uint index);
 
+    /// <summary>The <c>gst_caps_id_str_set_value</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_id_str_set_value")]
+    private static partial void GstCapsIdStrSetValue(nint caps, nint field, Gst.GObject.GValueNative* value);
+
     /// <summary>The <c>gst_caps_intersect</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_caps_intersect")]
     private static partial nint GstCapsIntersect(nint caps1, nint caps2);
@@ -917,6 +997,10 @@ public sealed unsafe partial class Caps : Gst.MiniObject
     /// <summary>The <c>gst_caps_set_features_simple</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_caps_set_features_simple")]
     private static partial void GstCapsSetFeaturesSimple(nint caps, nint features);
+
+    /// <summary>The <c>gst_caps_set_value</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_set_value")]
+    private static partial void GstCapsSetValue(nint caps, byte* field, Gst.GObject.GValueNative* value);
 
     /// <summary>The <c>gst_caps_steal_structure</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_caps_steal_structure")]

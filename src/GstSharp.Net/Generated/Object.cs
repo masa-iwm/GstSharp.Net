@@ -239,6 +239,25 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
             ?? throw new InvalidOperationException("gst_object_get_toplevel returned no value.");
     }
 
+    /// <summary>Gets the value for the given controlled property at the requested time.</summary>
+    /// <param name="propertyName">The <c>propertyName</c> argument.</param>
+    /// <param name="timestamp">The <c>timestamp</c> argument.</param>
+    /// <returns>
+    /// the GValue of the property at the given time,
+    /// or %NULL if the property isn't controlled.
+    /// Ownership is transferred: dispose the value. It is empty when the call
+    /// returns <c>NULL</c>, and disposing an empty value does nothing.
+    /// </returns>
+    public Gst.GObject.Value GetValue(string propertyName, Gst.ClockTime timestamp)
+    {
+        ArgumentNullException.ThrowIfNull(propertyName);
+        System.Span<byte> propertyNameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope propertyNameScope = Gst.Interop.GMarshal.StackUtf8(propertyName, propertyNameBuffer);
+        nint nativeResult = GstObjectGetValue(Handle, propertyNameScope.Pointer, timestamp.Nanoseconds);
+        System.GC.KeepAlive(this);
+        return Gst.GObject.Value.TakeOwnership(nativeResult);
+    }
+
     /// <summary>Check if the @object has active controlled properties.</summary>
     /// <returns>%TRUE if the object has active controlled properties</returns>
     public bool HasActiveControlBindings()
@@ -555,6 +574,10 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
     /// <summary>The <c>gst_object_get_toplevel</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_object_get_toplevel")]
     private static partial nint GstObjectGetToplevel(nint @object);
+
+    /// <summary>The <c>gst_object_get_value</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_object_get_value")]
+    private static partial nint GstObjectGetValue(nint @object, byte* propertyName, ulong timestamp);
 
     /// <summary>The <c>gst_object_has_active_control_bindings</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_object_has_active_control_bindings")]

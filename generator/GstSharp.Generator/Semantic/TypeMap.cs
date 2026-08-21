@@ -49,6 +49,13 @@ internal enum MarshalKind
     /// <summary>A boxed instance.</summary>
     Boxed,
 
+    /// <summary>
+    /// A <c>GValue</c>, projected onto the hand written
+    /// <c>Gst.GObject.Value</c> struct and passed as a pointer to storage the
+    /// caller owns.
+    /// </summary>
+    GValue,
+
     /// <summary>A blittable struct passed by value.</summary>
     PlainStruct,
 
@@ -325,6 +332,25 @@ internal sealed class TypeMap
                     RawType = "ulong",
                     PublicType = "Gst.ClockTime",
                     Kind = MarshalKind.Blittable,
+                    Symbol = symbol,
+                };
+            case "GObject.Value":
+                // The runtime declares Gst.GObject.Value by hand, a struct
+                // whose NativeValue field is the GValue layout itself, so the
+                // call crosses as a pointer into the caller's own storage:
+                // nothing is allocated and nothing has to be adopted. The raw
+                // side is a typed pointer rather than the `ref` of the hand
+                // written import in Custom/Structure.cs, because the interop
+                // generator only accepts a by-ref struct it can prove strictly
+                // blittable, and a struct from a referenced assembly never is
+                // (SYSLIB1051); the member pins the storage with `fixed`
+                // instead, which is the same AOT-safe stub. A return travels
+                // as a bare pointer; the planner overrides the raw type there.
+                return new MappedType
+                {
+                    RawType = "Gst.GObject.GValueNative*",
+                    PublicType = "Gst.GObject.Value",
+                    Kind = MarshalKind.GValue,
                     Symbol = symbol,
                 };
         }

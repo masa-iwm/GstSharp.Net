@@ -155,17 +155,17 @@ public sealed class ClassEmitterTests
     }
 
     [Theory]
-    [InlineData("Gst", 35, 51, 5, 17, 18, 1270, 14, 23)]
+    [InlineData("Gst", 35, 51, 5, 17, 18, 1333, 14, 23)]
     [InlineData("GstBase", 11, 4, 0, 5, 0, 171, 11, 2)]
     [InlineData("GstApp", 2, 2, 0, 8, 0, 62, 21, 8)]
     [InlineData("GstAudio", 14, 17, 1, 2, 2, 197, 15, 0)]
-    [InlineData("GstVideo", 12, 42, 5, 0, 9, 327, 2, 2)]
+    [InlineData("GstVideo", 12, 42, 5, 0, 9, 333, 2, 2)]
     [InlineData("GstPbutils", 14, 1, 0, 0, 1, 172, 0, 3)]
     [InlineData("GstSdp", 1, 21, 0, 0, 0, 160, 0, 0)]
     [InlineData("GstWebRTC", 9, 4, 0, 1, 2, 37, 0, 6)]
     [InlineData("GstNet", 5, 3, 0, 1, 0, 22, 0, 0)]
     [InlineData("GstRtsp", 1, 10, 1, 1, 2, 110, 0, 1)]
-    [InlineData("GES", 56, 2, 2, 0, 3, 364, 49, 29)]
+    [InlineData("GES", 56, 2, 2, 0, 3, 367, 49, 29)]
     public void TheEmissionCensusIsStable(
         string module,
         int classes,
@@ -190,17 +190,17 @@ public sealed class ClassEmitterTests
     }
 
     [Theory]
-    [InlineData("Gst", 1, 94, 53, 119, 245, 10)]
+    [InlineData("Gst", 1, 93, 53, 119, 171, 10)]
     [InlineData("GstBase", 0, 11, 0, 20, 27, 0)]
     [InlineData("GstApp", 0, 0, 0, 2, 19, 0)]
     [InlineData("GstAudio", 0, 27, 0, 8, 36, 0)]
-    [InlineData("GstVideo", 0, 102, 1, 6, 70, 0)]
+    [InlineData("GstVideo", 0, 102, 1, 6, 64, 0)]
     [InlineData("GstPbutils", 0, 1, 0, 0, 18, 0)]
     [InlineData("GstSdp", 0, 10, 0, 0, 8, 0)]
     [InlineData("GstWebRTC", 0, 2, 0, 0, 44, 0)]
     [InlineData("GstNet", 0, 3, 0, 0, 20, 0)]
     [InlineData("GstRtsp", 0, 17, 0, 0, 19, 0)]
-    [InlineData("GES", 0, 3, 4, 10, 80, 0)]
+    [InlineData("GES", 0, 3, 4, 10, 75, 0)]
     public void TheSkipCensusIsStable(
         string module,
         int shadowed,
@@ -220,6 +220,32 @@ public sealed class ClassEmitterTests
         Assert.Equal(collisions, census.SkippedCount(module, SkipReason.NameCollision));
         Assert.Equal(0, census.SkippedCount(module, SkipReason.NoCIdentifier));
         Assert.Equal(0, census.SkippedCount(module, SkipReason.FieldSlotCallback));
+    }
+
+    [Fact]
+    public void AWritableTargetSaysSoInItsRemarks()
+    {
+        // The C side asserts writability and the generated member deliberately
+        // carries no guard — gst_caps_append_structure shipped with the same
+        // assert and none — so C parity is stated in the documentation, and
+        // this pins the note: nothing else fails when the entry point list in
+        // CallableRenderer.WritableTargets is dropped.
+        Assert.Contains(
+            """
+                /// <remarks>
+                /// <para>
+                /// The caps have to be writable. Like the C API, the call raises a warning
+                /// and writes nothing otherwise.
+                /// </para>
+                /// </remarks>
+                /// <param name="field">The <c>field</c> argument.</param>
+            """,
+            Source("Caps.cs"),
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "/// The structure has to be writable. Like the C API, the call raises a warning",
+            Source("Structure.cs"),
+            StringComparison.Ordinal);
     }
 
     [Fact]
@@ -562,7 +588,7 @@ public sealed class ClassEmitterTests
     /// <param name="actionSignals">Signals that are a call API rather than a notification.</param>
     /// <param name="owningProperties">Properties whose value is a wrapper the reader would have to dispose.</param>
     [Theory]
-    [InlineData("Gst", 25, 3, 21, 20, 0, 5)]
+    [InlineData("Gst", 37, 3, 21, 20, 0, 5)]
     [InlineData("GstBase", 3, 3, 4, 0, 0, 2)]
     [InlineData("GstApp", 3, 0, 4, 0, 9, 2)]
     [InlineData("GstAudio", 3, 7, 4, 0, 0, 0)]
@@ -572,7 +598,7 @@ public sealed class ClassEmitterTests
     [InlineData("GstWebRTC", 1, 0, 4, 0, 4, 0)]
     [InlineData("GstNet", 0, 0, 1, 0, 0, 0)]
     [InlineData("GstRtsp", 1, 2, 3, 0, 0, 0)]
-    [InlineData("GES", 1, 0, 1, 0, 0, 2)]
+    [InlineData("GES", 3, 0, 1, 0, 0, 2)]
     public void TheRejectionCensusIsStable(
         string module,
         int overlaySkip,

@@ -31,16 +31,18 @@ disappears shows up here as an added line.
 - `ges_track_element_set_child_property_valist`
 - `ges_track_set_create_element_for_gap_func`
 
-### OverlaySkip (1)
+### OverlaySkip (3)
 
 - `ges_deinit`
+- `ges_timeline_element_get_child_property`
+- `ges_timeline_element_set_child_property`
 
 ### OwningProperty (2)
 
 - `GES.Track:caps`
 - `GES.Track:restriction-caps`
 
-### UnsupportedSignature (80)
+### UnsupportedSignature (75)
 
 - `GES.AudioUriSource:uri`
 - `GES.Container:height`
@@ -100,21 +102,16 @@ disappears shows up here as an added line.
 - `ges_layer_set_active_for_tracks`
 - `ges_meta_container_foreach`
 - `ges_meta_container_get_date`
-- `ges_meta_container_get_meta`
-- `ges_meta_container_register_meta`
 - `ges_meta_container_register_meta_date`
 - `ges_meta_container_set_date`
 - `ges_meta_container_set_meta`
 - `ges_timeline_element_add_child_property`
 - `ges_timeline_element_edit`
-- `ges_timeline_element_get_child_property`
 - `ges_timeline_element_get_child_property_by_pspec`
 - `ges_timeline_element_list_children_properties`
 - `ges_timeline_element_lookup_child`
 - `ges_timeline_element_remove_child_property`
-- `ges_timeline_element_set_child_property`
 - `ges_timeline_element_set_child_property_by_pspec`
-- `ges_timeline_element_set_child_property_full`
 - `ges_track_element_add_children_props`
 - `ges_track_element_edit`
 - `ges_track_element_get_all_control_bindings`
@@ -185,7 +182,7 @@ disappears shows up here as an added line.
 - `gst_uri_ref`
 - `gst_uri_unref`
 
-### MovedTo (94)
+### MovedTo (93)
 
 - `gst_buffer_get_max_memory`
 - `gst_buffer_list_replace`
@@ -263,7 +260,6 @@ disappears shows up here as an added line.
 - `gst_stream_error_quark`
 - `gst_stream_type_get_name`
 - `gst_structure_take`
-- `gst_tag_list_copy_value`
 - `gst_tag_list_replace`
 - `gst_tag_list_take`
 - `gst_toc_entry_type_get_nick`
@@ -417,7 +413,7 @@ disappears shows up here as an added line.
 - `gst_tag_setter_add_tag_valist`
 - `gst_tag_setter_add_tag_valist_values`
 
-### OverlaySkip (25)
+### OverlaySkip (36)
 
 - `gst_allocator_free`
 - `gst_buffer_pool_release_buffer`
@@ -427,11 +423,13 @@ disappears shows up here as an added line.
 - `gst_caps_features_add_static_str`
 - `gst_caps_features_new_single_static_str`
 - `gst_caps_new_static_str_empty_simple`
+- `gst_caps_set_value_static_str`
 - `gst_element_post_message`
 - `gst_element_send_event`
 - `gst_event_new_custom`
 - `gst_id_str_set_static_str`
 - `gst_id_str_set_static_str_with_len`
+- `gst_iterator_next`
 - `gst_message_new_application`
 - `gst_message_new_custom`
 - `gst_meta_info_register`
@@ -439,11 +437,20 @@ disappears shows up here as an added line.
 - `gst_pad_send_event`
 - `gst_promise_reply`
 - `gst_query_new_custom`
+- `gst_structure_get_value`
 - `gst_structure_new_static_str_empty`
 - `gst_structure_set_name_static_str`
+- `gst_structure_set_value`
+- `gst_structure_set_value_static_str`
+- `gst_structure_take_value_static_str`
+- `gst_tag_list_add_value`
+- `gst_tag_list_copy_value`
+- `gst_tag_list_get_value_index`
 - `gst_toc_append_entry`
 - `gst_toc_entry_append_sub_entry`
 - `gst_type_find_peek`
+- `gst_value_compare`
+- `gst_value_serialize`
 
 ### OwningProperty (5)
 
@@ -457,7 +464,7 @@ disappears shows up here as an added line.
 
 - `gst_bus_add_watch`
 
-### UnsupportedSignature (245)
+### UnsupportedSignature (171)
 
 - `Gst.Bin:async-handling`
 - `Gst.Bin:message-forward`
@@ -486,15 +493,9 @@ disappears shows up here as an added line.
 - `gst_bus_create_watch`
 - `gst_bus_get_pollfd`
 - `gst_call_async`
-- `gst_caps_id_str_set_value`
-- `gst_caps_set_value`
-- `gst_caps_set_value_static_str`
-- `gst_child_proxy_get_property`
 - `gst_child_proxy_lookup`
-- `gst_child_proxy_set_property`
 - `gst_context_replace`
 - `gst_control_binding_get_g_value_array`
-- `gst_control_binding_get_value`
 - `gst_date_time_new_from_g_date_time`
 - `gst_date_time_to_g_date_time`
 - `gst_debug_get_all_categories`
@@ -520,13 +521,10 @@ disappears shows up here as an added line.
 - `gst_iterator_find_custom`
 - `gst_iterator_fold`
 - `gst_iterator_foreach`
-- `gst_iterator_new_single`
-- `gst_iterator_next`
 - `gst_map_info_clear`
 - `gst_map_info_get_data`
 - `gst_map_info_init`
 - `gst_memory_new_wrapped`
-- `gst_message_get_stream_status_object`
 - `gst_message_new_error`
 - `gst_message_new_error_with_details`
 - `gst_message_new_info`
@@ -538,7 +536,6 @@ disappears shows up here as an added line.
 - `gst_message_parse_info`
 - `gst_message_parse_property_notify`
 - `gst_message_parse_warning`
-- `gst_message_set_stream_status_object`
 - `gst_message_take`
 - `gst_meta_api_type_get_tags`
 - `gst_meta_api_type_register`
@@ -569,7 +566,6 @@ disappears shows up here as an added line.
 - `gst_object_default_deep_notify`
 - `gst_object_default_error`
 - `gst_object_get_g_value_array`
-- `gst_object_get_value`
 - `gst_object_replace`
 - `gst_pad_set_activate_function_full`
 - `gst_pad_set_activatemode_function_full`
@@ -612,32 +608,18 @@ disappears shows up here as an added line.
 - `gst_structure_get_array`
 - `gst_structure_get_date`
 - `gst_structure_get_list`
-- `gst_structure_get_value`
-- `gst_structure_id_get_value`
-- `gst_structure_id_set_value`
-- `gst_structure_id_str_get_value`
-- `gst_structure_id_str_set_value`
 - `gst_structure_id_str_take_value`
 - `gst_structure_id_take_value`
 - `gst_structure_map_in_place`
 - `gst_structure_map_in_place_id_str`
 - `gst_structure_set_array`
 - `gst_structure_set_list`
-- `gst_structure_set_value`
-- `gst_structure_set_value_static_str`
 - `gst_structure_take`
 - `gst_structure_take_value`
-- `gst_structure_take_value_static_str`
-- `gst_tag_list_add_value`
-- `gst_tag_list_copy_value`
 - `gst_tag_list_get_date`
 - `gst_tag_list_get_date_index`
-- `gst_tag_list_get_value_index`
 - `gst_tag_list_replace`
 - `gst_tag_list_take`
-- `gst_tag_merge_strings_with_comma`
-- `gst_tag_merge_use_first`
-- `gst_tag_setter_add_tag_value`
 - `gst_task_pool_push`
 - `gst_task_set_enter_callback`
 - `gst_task_set_leave_callback`
@@ -654,56 +636,7 @@ disappears shows up here as an added line.
 - `gst_util_array_binary_search`
 - `gst_util_get_object_array`
 - `gst_util_set_object_array`
-- `gst_util_set_value_from_string`
-- `gst_value_can_compare`
-- `gst_value_can_intersect`
-- `gst_value_can_subtract`
-- `gst_value_can_union`
-- `gst_value_compare`
-- `gst_value_deserialize`
 - `gst_value_deserialize_with_pspec`
-- `gst_value_fixate`
-- `gst_value_fraction_multiply`
-- `gst_value_fraction_subtract`
-- `gst_value_get_bitmask`
-- `gst_value_get_caps`
-- `gst_value_get_caps_features`
-- `gst_value_get_double_range_max`
-- `gst_value_get_double_range_min`
-- `gst_value_get_flagset_flags`
-- `gst_value_get_flagset_mask`
-- `gst_value_get_fraction_denominator`
-- `gst_value_get_fraction_numerator`
-- `gst_value_get_fraction_range_max`
-- `gst_value_get_fraction_range_min`
-- `gst_value_get_int64_range_max`
-- `gst_value_get_int64_range_min`
-- `gst_value_get_int64_range_step`
-- `gst_value_get_int_range_max`
-- `gst_value_get_int_range_min`
-- `gst_value_get_int_range_step`
-- `gst_value_get_structure`
-- `gst_value_hash`
-- `gst_value_init_and_copy`
-- `gst_value_intersect`
-- `gst_value_is_fixed`
-- `gst_value_is_subset`
-- `gst_value_serialize`
-- `gst_value_set_bitmask`
-- `gst_value_set_caps`
-- `gst_value_set_caps_features`
-- `gst_value_set_double_range`
-- `gst_value_set_flagset`
-- `gst_value_set_fraction`
-- `gst_value_set_fraction_range`
-- `gst_value_set_fraction_range_full`
-- `gst_value_set_int64_range`
-- `gst_value_set_int64_range_step`
-- `gst_value_set_int_range`
-- `gst_value_set_int_range_step`
-- `gst_value_set_structure`
-- `gst_value_subtract`
-- `gst_value_union`
 
 ### VarArgs (53)
 
@@ -1339,7 +1272,7 @@ disappears shows up here as an added line.
 
 - `gst_video_frame_unmap`
 
-### UnsupportedSignature (70)
+### UnsupportedSignature (64)
 
 - `GstVideo.VideoAggregator:force-live`
 - `GstVideo.VideoAggregatorConvertPad:converter-config`
@@ -1395,13 +1328,7 @@ disappears shows up here as an added line.
 - `gst_video_meta_transform_matrix_rectangle`
 - `gst_video_meta_transform_matrix_rectangle_clipped`
 - `gst_video_meta_transform_scale_get_quark`
-- `gst_video_multiview_get_doubled_height_modes`
-- `gst_video_multiview_get_doubled_size_modes`
-- `gst_video_multiview_get_doubled_width_modes`
-- `gst_video_multiview_get_mono_modes`
-- `gst_video_multiview_get_unpacked_modes`
 - `gst_video_overlay_install_properties`
-- `gst_video_overlay_set_property`
 - `gst_video_time_code_init`
 - `gst_video_time_code_init_from_date_time`
 - `gst_video_time_code_init_from_date_time_full`

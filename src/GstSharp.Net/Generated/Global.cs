@@ -1125,6 +1125,77 @@ public static unsafe partial class Global
     }
 
     /// <summary>
+    /// This is a convenience function for the func argument of gst_tag_register().
+    /// It concatenates all given strings using a comma. The tag must be registered
+    /// as a G_TYPE_STRING or this function will fail.
+    /// </summary>
+    /// <param name="dest">
+    /// The <c>dest</c> argument.
+    /// On success the caller owns the contents and disposes the value; on
+    /// failure it is left empty, and disposing an empty value does nothing.
+    /// </param>
+    /// <param name="src">
+    /// The <c>src</c> argument.
+    /// The callee copies what it keeps, so the caller keeps ownership of
+    /// <paramref name="src"/> and still disposes it.
+    /// </param>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="src"/> is empty.
+    /// </exception>
+    public static void TagMergeStringsWithComma(out Gst.GObject.Value dest, in Gst.GObject.Value src)
+    {
+        dest = default;
+        if (src.IsEmpty)
+        {
+            throw new ArgumentException(
+                "An empty value cannot be passed: it has no type for the call to read.",
+                nameof(src));
+        }
+        fixed (Gst.GObject.GValueNative* destPointer = &dest.NativeValue)
+        {
+            fixed (Gst.GObject.GValueNative* srcPointer = &System.Runtime.CompilerServices.Unsafe.AsRef(in src).NativeValue)
+            {
+                GstTagMergeStringsWithComma(destPointer, srcPointer);
+            }
+        }
+    }
+
+    /// <summary>
+    /// This is a convenience function for the func argument of gst_tag_register().
+    /// It creates a copy of the first value from the list.
+    /// </summary>
+    /// <param name="dest">
+    /// The <c>dest</c> argument.
+    /// On success the caller owns the contents and disposes the value; on
+    /// failure it is left empty, and disposing an empty value does nothing.
+    /// </param>
+    /// <param name="src">
+    /// The <c>src</c> argument.
+    /// The callee copies what it keeps, so the caller keeps ownership of
+    /// <paramref name="src"/> and still disposes it.
+    /// </param>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="src"/> is empty.
+    /// </exception>
+    public static void TagMergeUseFirst(out Gst.GObject.Value dest, in Gst.GObject.Value src)
+    {
+        dest = default;
+        if (src.IsEmpty)
+        {
+            throw new ArgumentException(
+                "An empty value cannot be passed: it has no type for the call to read.",
+                nameof(src));
+        }
+        fixed (Gst.GObject.GValueNative* destPointer = &dest.NativeValue)
+        {
+            fixed (Gst.GObject.GValueNative* srcPointer = &System.Runtime.CompilerServices.Unsafe.AsRef(in src).NativeValue)
+            {
+                GstTagMergeUseFirst(destPointer, srcPointer);
+            }
+        }
+    }
+
+    /// <summary>
     /// Get a list of all active tracer objects owned by the tracing framework for
     /// the entirety of the run-time of the process or till gst_deinit() is called.
     /// </summary>
@@ -1526,6 +1597,34 @@ public static unsafe partial class Global
     }
 
     /// <summary>
+    /// Converts the string to the type of the value and
+    /// sets the value with it.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Note that this function is dangerous as it does not return any indication
+    /// if the conversion worked or not.
+    /// </para>
+    /// </remarks>
+    /// <param name="value">
+    /// The <c>value</c> argument.
+    /// The value has to be initialized with the type the call expects before
+    /// the call; like the C API, the call raises a warning and does nothing
+    /// otherwise.
+    /// </param>
+    /// <param name="valueStr">The <c>valueStr</c> argument.</param>
+    public static void UtilSetValueFromString(ref Gst.GObject.Value value, string valueStr)
+    {
+        ArgumentNullException.ThrowIfNull(valueStr);
+        System.Span<byte> valueStrBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope valueStrScope = Gst.Interop.GMarshal.StackUtf8(valueStr, valueStrBuffer);
+        fixed (Gst.GObject.GValueNative* valuePointer = &value.NativeValue)
+        {
+            GstUtilSetValueFromString(valuePointer, valueStrScope.Pointer);
+        }
+    }
+
+    /// <summary>
     /// Calculates the simpler representation of @numerator and @denominator and
     /// update both values with the resulting simplified fraction.
     /// </summary>
@@ -1699,6 +1798,1038 @@ public static unsafe partial class Global
         return nativeResult;
     }
 
+    /// <summary>Determines if @value1 and @value2 can be compared.</summary>
+    /// <param name="value1">
+    /// The <c>value1</c> argument.
+    /// The callee copies what it keeps, so the caller keeps ownership of
+    /// <paramref name="value1"/> and still disposes it.
+    /// </param>
+    /// <param name="value2">
+    /// The <c>value2</c> argument.
+    /// The callee copies what it keeps, so the caller keeps ownership of
+    /// <paramref name="value2"/> and still disposes it.
+    /// </param>
+    /// <returns>%TRUE if the values can be compared</returns>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="value1"/> is empty.
+    /// </exception>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="value2"/> is empty.
+    /// </exception>
+    public static bool ValueCanCompare(in Gst.GObject.Value value1, in Gst.GObject.Value value2)
+    {
+        if (value1.IsEmpty)
+        {
+            throw new ArgumentException(
+                "An empty value cannot be passed: it has no type for the call to read.",
+                nameof(value1));
+        }
+        if (value2.IsEmpty)
+        {
+            throw new ArgumentException(
+                "An empty value cannot be passed: it has no type for the call to read.",
+                nameof(value2));
+        }
+        fixed (Gst.GObject.GValueNative* value1Pointer = &System.Runtime.CompilerServices.Unsafe.AsRef(in value1).NativeValue)
+        {
+            fixed (Gst.GObject.GValueNative* value2Pointer = &System.Runtime.CompilerServices.Unsafe.AsRef(in value2).NativeValue)
+            {
+                int nativeResult = GstValueCanCompare(value1Pointer, value2Pointer);
+                return nativeResult != 0;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Determines if intersecting two values will produce a valid result.
+    /// Two values will produce a valid intersection if they have the same
+    /// type.
+    /// </summary>
+    /// <param name="value1">
+    /// The <c>value1</c> argument.
+    /// The callee copies what it keeps, so the caller keeps ownership of
+    /// <paramref name="value1"/> and still disposes it.
+    /// </param>
+    /// <param name="value2">
+    /// The <c>value2</c> argument.
+    /// The callee copies what it keeps, so the caller keeps ownership of
+    /// <paramref name="value2"/> and still disposes it.
+    /// </param>
+    /// <returns>%TRUE if the values can intersect</returns>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="value1"/> is empty.
+    /// </exception>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="value2"/> is empty.
+    /// </exception>
+    public static bool ValueCanIntersect(in Gst.GObject.Value value1, in Gst.GObject.Value value2)
+    {
+        if (value1.IsEmpty)
+        {
+            throw new ArgumentException(
+                "An empty value cannot be passed: it has no type for the call to read.",
+                nameof(value1));
+        }
+        if (value2.IsEmpty)
+        {
+            throw new ArgumentException(
+                "An empty value cannot be passed: it has no type for the call to read.",
+                nameof(value2));
+        }
+        fixed (Gst.GObject.GValueNative* value1Pointer = &System.Runtime.CompilerServices.Unsafe.AsRef(in value1).NativeValue)
+        {
+            fixed (Gst.GObject.GValueNative* value2Pointer = &System.Runtime.CompilerServices.Unsafe.AsRef(in value2).NativeValue)
+            {
+                int nativeResult = GstValueCanIntersect(value1Pointer, value2Pointer);
+                return nativeResult != 0;
+            }
+        }
+    }
+
+    /// <summary>Checks if it's possible to subtract @subtrahend from @minuend.</summary>
+    /// <param name="minuend">
+    /// The <c>minuend</c> argument.
+    /// The callee copies what it keeps, so the caller keeps ownership of
+    /// <paramref name="minuend"/> and still disposes it.
+    /// </param>
+    /// <param name="subtrahend">
+    /// The <c>subtrahend</c> argument.
+    /// The callee copies what it keeps, so the caller keeps ownership of
+    /// <paramref name="subtrahend"/> and still disposes it.
+    /// </param>
+    /// <returns>%TRUE if a subtraction is possible</returns>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="minuend"/> is empty.
+    /// </exception>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="subtrahend"/> is empty.
+    /// </exception>
+    public static bool ValueCanSubtract(in Gst.GObject.Value minuend, in Gst.GObject.Value subtrahend)
+    {
+        if (minuend.IsEmpty)
+        {
+            throw new ArgumentException(
+                "An empty value cannot be passed: it has no type for the call to read.",
+                nameof(minuend));
+        }
+        if (subtrahend.IsEmpty)
+        {
+            throw new ArgumentException(
+                "An empty value cannot be passed: it has no type for the call to read.",
+                nameof(subtrahend));
+        }
+        fixed (Gst.GObject.GValueNative* minuendPointer = &System.Runtime.CompilerServices.Unsafe.AsRef(in minuend).NativeValue)
+        {
+            fixed (Gst.GObject.GValueNative* subtrahendPointer = &System.Runtime.CompilerServices.Unsafe.AsRef(in subtrahend).NativeValue)
+            {
+                int nativeResult = GstValueCanSubtract(minuendPointer, subtrahendPointer);
+                return nativeResult != 0;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Determines if @value1 and @value2 can be non-trivially unioned.
+    /// Any two values can be trivially unioned by adding both of them
+    /// to a GstValueList.  However, certain types have the possibility
+    /// to be unioned in a simpler way.  For example, an integer range
+    /// and an integer can be unioned if the integer is a subset of the
+    /// integer range.  If there is the possibility that two values can
+    /// be unioned, this function returns %TRUE.
+    /// </summary>
+    /// <param name="value1">
+    /// The <c>value1</c> argument.
+    /// The callee copies what it keeps, so the caller keeps ownership of
+    /// <paramref name="value1"/> and still disposes it.
+    /// </param>
+    /// <param name="value2">
+    /// The <c>value2</c> argument.
+    /// The callee copies what it keeps, so the caller keeps ownership of
+    /// <paramref name="value2"/> and still disposes it.
+    /// </param>
+    /// <returns>
+    /// %TRUE if there is a function allowing the two values to
+    /// be unioned.
+    /// </returns>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="value1"/> is empty.
+    /// </exception>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="value2"/> is empty.
+    /// </exception>
+    public static bool ValueCanUnion(in Gst.GObject.Value value1, in Gst.GObject.Value value2)
+    {
+        if (value1.IsEmpty)
+        {
+            throw new ArgumentException(
+                "An empty value cannot be passed: it has no type for the call to read.",
+                nameof(value1));
+        }
+        if (value2.IsEmpty)
+        {
+            throw new ArgumentException(
+                "An empty value cannot be passed: it has no type for the call to read.",
+                nameof(value2));
+        }
+        fixed (Gst.GObject.GValueNative* value1Pointer = &System.Runtime.CompilerServices.Unsafe.AsRef(in value1).NativeValue)
+        {
+            fixed (Gst.GObject.GValueNative* value2Pointer = &System.Runtime.CompilerServices.Unsafe.AsRef(in value2).NativeValue)
+            {
+                int nativeResult = GstValueCanUnion(value1Pointer, value2Pointer);
+                return nativeResult != 0;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Tries to deserialize a string into the type specified by the given GValue.
+    /// If the operation succeeds, %TRUE is returned, %FALSE otherwise.
+    /// </summary>
+    /// <param name="dest">
+    /// The <c>dest</c> argument.
+    /// The value has to be initialized with the type the call expects before
+    /// the call; like the C API, the call raises a warning and does nothing
+    /// otherwise.
+    /// </param>
+    /// <param name="src">The <c>src</c> argument.</param>
+    /// <returns>%TRUE on success</returns>
+    public static bool ValueDeserialize(ref Gst.GObject.Value dest, string src)
+    {
+        ArgumentNullException.ThrowIfNull(src);
+        System.Span<byte> srcBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope srcScope = Gst.Interop.GMarshal.StackUtf8(src, srcBuffer);
+        fixed (Gst.GObject.GValueNative* destPointer = &dest.NativeValue)
+        {
+            int nativeResult = GstValueDeserialize(destPointer, srcScope.Pointer);
+            return nativeResult != 0;
+        }
+    }
+
+    /// <summary>
+    /// Fixate @src into a new value @dest.
+    /// For ranges, the first element is taken. For lists and arrays, the
+    /// first item is fixated and returned.
+    /// If @src is already fixed, this function returns %FALSE.
+    /// </summary>
+    /// <param name="dest">
+    /// The <c>dest</c> argument.
+    /// On success the caller owns the contents and disposes the value; on
+    /// failure it is left empty, and disposing an empty value does nothing.
+    /// </param>
+    /// <param name="src">
+    /// The <c>src</c> argument.
+    /// The callee copies what it keeps, so the caller keeps ownership of
+    /// <paramref name="src"/> and still disposes it.
+    /// </param>
+    /// <returns>%TRUE if @dest contains a fixated version of @src.</returns>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="src"/> is empty.
+    /// </exception>
+    public static bool ValueFixate(out Gst.GObject.Value dest, in Gst.GObject.Value src)
+    {
+        dest = default;
+        if (src.IsEmpty)
+        {
+            throw new ArgumentException(
+                "An empty value cannot be passed: it has no type for the call to read.",
+                nameof(src));
+        }
+        fixed (Gst.GObject.GValueNative* destPointer = &dest.NativeValue)
+        {
+            fixed (Gst.GObject.GValueNative* srcPointer = &System.Runtime.CompilerServices.Unsafe.AsRef(in src).NativeValue)
+            {
+                int nativeResult = GstValueFixate(destPointer, srcPointer);
+                return nativeResult != 0;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Multiplies the two #GValue items containing a #GST_TYPE_FRACTION and sets
+    /// @product to the product of the two fractions.
+    /// </summary>
+    /// <param name="product">
+    /// The <c>product</c> argument.
+    /// The value has to be initialized with the type the call expects before
+    /// the call; like the C API, the call raises a warning and does nothing
+    /// otherwise.
+    /// </param>
+    /// <param name="factor1">
+    /// The <c>factor1</c> argument.
+    /// The callee copies what it keeps, so the caller keeps ownership of
+    /// <paramref name="factor1"/> and still disposes it.
+    /// </param>
+    /// <param name="factor2">
+    /// The <c>factor2</c> argument.
+    /// The callee copies what it keeps, so the caller keeps ownership of
+    /// <paramref name="factor2"/> and still disposes it.
+    /// </param>
+    /// <returns>%FALSE in case of an error (like integer overflow), %TRUE otherwise.</returns>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="factor1"/> is empty.
+    /// </exception>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="factor2"/> is empty.
+    /// </exception>
+    public static bool ValueFractionMultiply(ref Gst.GObject.Value product, in Gst.GObject.Value factor1, in Gst.GObject.Value factor2)
+    {
+        if (factor1.IsEmpty)
+        {
+            throw new ArgumentException(
+                "An empty value cannot be passed: it has no type for the call to read.",
+                nameof(factor1));
+        }
+        if (factor2.IsEmpty)
+        {
+            throw new ArgumentException(
+                "An empty value cannot be passed: it has no type for the call to read.",
+                nameof(factor2));
+        }
+        fixed (Gst.GObject.GValueNative* productPointer = &product.NativeValue)
+        {
+            fixed (Gst.GObject.GValueNative* factor1Pointer = &System.Runtime.CompilerServices.Unsafe.AsRef(in factor1).NativeValue)
+            {
+                fixed (Gst.GObject.GValueNative* factor2Pointer = &System.Runtime.CompilerServices.Unsafe.AsRef(in factor2).NativeValue)
+                {
+                    int nativeResult = GstValueFractionMultiply(productPointer, factor1Pointer, factor2Pointer);
+                    return nativeResult != 0;
+                }
+            }
+        }
+    }
+
+    /// <summary>Subtracts the @subtrahend from the @minuend and sets @dest to the result.</summary>
+    /// <param name="dest">
+    /// The <c>dest</c> argument.
+    /// The value has to be initialized with the type the call expects before
+    /// the call; like the C API, the call raises a warning and does nothing
+    /// otherwise.
+    /// </param>
+    /// <param name="minuend">
+    /// The <c>minuend</c> argument.
+    /// The callee copies what it keeps, so the caller keeps ownership of
+    /// <paramref name="minuend"/> and still disposes it.
+    /// </param>
+    /// <param name="subtrahend">
+    /// The <c>subtrahend</c> argument.
+    /// The callee copies what it keeps, so the caller keeps ownership of
+    /// <paramref name="subtrahend"/> and still disposes it.
+    /// </param>
+    /// <returns>%FALSE in case of an error (like integer overflow), %TRUE otherwise.</returns>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="minuend"/> is empty.
+    /// </exception>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="subtrahend"/> is empty.
+    /// </exception>
+    public static bool ValueFractionSubtract(ref Gst.GObject.Value dest, in Gst.GObject.Value minuend, in Gst.GObject.Value subtrahend)
+    {
+        if (minuend.IsEmpty)
+        {
+            throw new ArgumentException(
+                "An empty value cannot be passed: it has no type for the call to read.",
+                nameof(minuend));
+        }
+        if (subtrahend.IsEmpty)
+        {
+            throw new ArgumentException(
+                "An empty value cannot be passed: it has no type for the call to read.",
+                nameof(subtrahend));
+        }
+        fixed (Gst.GObject.GValueNative* destPointer = &dest.NativeValue)
+        {
+            fixed (Gst.GObject.GValueNative* minuendPointer = &System.Runtime.CompilerServices.Unsafe.AsRef(in minuend).NativeValue)
+            {
+                fixed (Gst.GObject.GValueNative* subtrahendPointer = &System.Runtime.CompilerServices.Unsafe.AsRef(in subtrahend).NativeValue)
+                {
+                    int nativeResult = GstValueFractionSubtract(destPointer, minuendPointer, subtrahendPointer);
+                    return nativeResult != 0;
+                }
+            }
+        }
+    }
+
+    /// <summary>Gets the bitmask specified by @value.</summary>
+    /// <param name="value">
+    /// The <c>value</c> argument.
+    /// The callee copies what it keeps, so the caller keeps ownership of
+    /// <paramref name="value"/> and still disposes it.
+    /// </param>
+    /// <returns>the bitmask.</returns>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="value"/> is empty.
+    /// </exception>
+    public static ulong ValueGetBitmask(in Gst.GObject.Value value)
+    {
+        if (value.IsEmpty)
+        {
+            throw new ArgumentException(
+                "An empty value cannot be passed: it has no type for the call to read.",
+                nameof(value));
+        }
+        fixed (Gst.GObject.GValueNative* valuePointer = &System.Runtime.CompilerServices.Unsafe.AsRef(in value).NativeValue)
+        {
+            ulong nativeResult = GstValueGetBitmask(valuePointer);
+            return nativeResult;
+        }
+    }
+
+    /// <summary>
+    /// Gets the contents of @value. The reference count of the returned
+    /// #GstCaps will not be modified, therefore the caller must take one
+    /// before getting rid of the @value.
+    /// </summary>
+    /// <param name="value">
+    /// The <c>value</c> argument.
+    /// The callee copies what it keeps, so the caller keeps ownership of
+    /// <paramref name="value"/> and still disposes it.
+    /// </param>
+    /// <returns>
+    /// the contents of @value
+    /// The wrapper owns a reference of its own, which is a copy for a boxed type:
+    /// dispose it when you are done, and note that changes made to a copy of a
+    /// boxed value are not written back.
+    /// </returns>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="value"/> is empty.
+    /// </exception>
+    public static Gst.Caps ValueGetCaps(in Gst.GObject.Value value)
+    {
+        if (value.IsEmpty)
+        {
+            throw new ArgumentException(
+                "An empty value cannot be passed: it has no type for the call to read.",
+                nameof(value));
+        }
+        fixed (Gst.GObject.GValueNative* valuePointer = &System.Runtime.CompilerServices.Unsafe.AsRef(in value).NativeValue)
+        {
+            nint nativeResult = GstValueGetCaps(valuePointer);
+            return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("gst_value_get_caps returned no value.");
+        }
+    }
+
+    /// <summary>Gets the contents of @value.</summary>
+    /// <param name="value">
+    /// The <c>value</c> argument.
+    /// The callee copies what it keeps, so the caller keeps ownership of
+    /// <paramref name="value"/> and still disposes it.
+    /// </param>
+    /// <returns>
+    /// the contents of @value
+    /// The wrapper owns a reference of its own, which is a copy for a boxed type:
+    /// dispose it when you are done, and note that changes made to a copy of a
+    /// boxed value are not written back.
+    /// </returns>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="value"/> is empty.
+    /// </exception>
+    public static Gst.CapsFeatures ValueGetCapsFeatures(in Gst.GObject.Value value)
+    {
+        if (value.IsEmpty)
+        {
+            throw new ArgumentException(
+                "An empty value cannot be passed: it has no type for the call to read.",
+                nameof(value));
+        }
+        fixed (Gst.GObject.GValueNative* valuePointer = &System.Runtime.CompilerServices.Unsafe.AsRef(in value).NativeValue)
+        {
+            nint nativeResult = GstValueGetCapsFeatures(valuePointer);
+            return Gst.CapsFeatures.FromNative(nativeResult, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("gst_value_get_caps_features returned no value.");
+        }
+    }
+
+    /// <summary>Gets the maximum of the range specified by @value.</summary>
+    /// <param name="value">
+    /// The <c>value</c> argument.
+    /// The callee copies what it keeps, so the caller keeps ownership of
+    /// <paramref name="value"/> and still disposes it.
+    /// </param>
+    /// <returns>the maximum of the range</returns>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="value"/> is empty.
+    /// </exception>
+    public static double ValueGetDoubleRangeMax(in Gst.GObject.Value value)
+    {
+        if (value.IsEmpty)
+        {
+            throw new ArgumentException(
+                "An empty value cannot be passed: it has no type for the call to read.",
+                nameof(value));
+        }
+        fixed (Gst.GObject.GValueNative* valuePointer = &System.Runtime.CompilerServices.Unsafe.AsRef(in value).NativeValue)
+        {
+            double nativeResult = GstValueGetDoubleRangeMax(valuePointer);
+            return nativeResult;
+        }
+    }
+
+    /// <summary>Gets the minimum of the range specified by @value.</summary>
+    /// <param name="value">
+    /// The <c>value</c> argument.
+    /// The callee copies what it keeps, so the caller keeps ownership of
+    /// <paramref name="value"/> and still disposes it.
+    /// </param>
+    /// <returns>the minimum of the range</returns>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="value"/> is empty.
+    /// </exception>
+    public static double ValueGetDoubleRangeMin(in Gst.GObject.Value value)
+    {
+        if (value.IsEmpty)
+        {
+            throw new ArgumentException(
+                "An empty value cannot be passed: it has no type for the call to read.",
+                nameof(value));
+        }
+        fixed (Gst.GObject.GValueNative* valuePointer = &System.Runtime.CompilerServices.Unsafe.AsRef(in value).NativeValue)
+        {
+            double nativeResult = GstValueGetDoubleRangeMin(valuePointer);
+            return nativeResult;
+        }
+    }
+
+    /// <summary>Retrieve the flags field of a GstFlagSet @value.</summary>
+    /// <param name="value">
+    /// The <c>value</c> argument.
+    /// The callee copies what it keeps, so the caller keeps ownership of
+    /// <paramref name="value"/> and still disposes it.
+    /// </param>
+    /// <returns>the flags field of the flagset instance.</returns>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="value"/> is empty.
+    /// </exception>
+    public static uint ValueGetFlagsetFlags(in Gst.GObject.Value value)
+    {
+        if (value.IsEmpty)
+        {
+            throw new ArgumentException(
+                "An empty value cannot be passed: it has no type for the call to read.",
+                nameof(value));
+        }
+        fixed (Gst.GObject.GValueNative* valuePointer = &System.Runtime.CompilerServices.Unsafe.AsRef(in value).NativeValue)
+        {
+            uint nativeResult = GstValueGetFlagsetFlags(valuePointer);
+            return nativeResult;
+        }
+    }
+
+    /// <summary>Retrieve the mask field of a GstFlagSet @value.</summary>
+    /// <param name="value">
+    /// The <c>value</c> argument.
+    /// The callee copies what it keeps, so the caller keeps ownership of
+    /// <paramref name="value"/> and still disposes it.
+    /// </param>
+    /// <returns>the mask field of the flagset instance.</returns>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="value"/> is empty.
+    /// </exception>
+    public static uint ValueGetFlagsetMask(in Gst.GObject.Value value)
+    {
+        if (value.IsEmpty)
+        {
+            throw new ArgumentException(
+                "An empty value cannot be passed: it has no type for the call to read.",
+                nameof(value));
+        }
+        fixed (Gst.GObject.GValueNative* valuePointer = &System.Runtime.CompilerServices.Unsafe.AsRef(in value).NativeValue)
+        {
+            uint nativeResult = GstValueGetFlagsetMask(valuePointer);
+            return nativeResult;
+        }
+    }
+
+    /// <summary>Gets the denominator of the fraction specified by @value.</summary>
+    /// <param name="value">
+    /// The <c>value</c> argument.
+    /// The callee copies what it keeps, so the caller keeps ownership of
+    /// <paramref name="value"/> and still disposes it.
+    /// </param>
+    /// <returns>the denominator of the fraction.</returns>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="value"/> is empty.
+    /// </exception>
+    public static int ValueGetFractionDenominator(in Gst.GObject.Value value)
+    {
+        if (value.IsEmpty)
+        {
+            throw new ArgumentException(
+                "An empty value cannot be passed: it has no type for the call to read.",
+                nameof(value));
+        }
+        fixed (Gst.GObject.GValueNative* valuePointer = &System.Runtime.CompilerServices.Unsafe.AsRef(in value).NativeValue)
+        {
+            int nativeResult = GstValueGetFractionDenominator(valuePointer);
+            return nativeResult;
+        }
+    }
+
+    /// <summary>Gets the numerator of the fraction specified by @value.</summary>
+    /// <param name="value">
+    /// The <c>value</c> argument.
+    /// The callee copies what it keeps, so the caller keeps ownership of
+    /// <paramref name="value"/> and still disposes it.
+    /// </param>
+    /// <returns>the numerator of the fraction.</returns>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="value"/> is empty.
+    /// </exception>
+    public static int ValueGetFractionNumerator(in Gst.GObject.Value value)
+    {
+        if (value.IsEmpty)
+        {
+            throw new ArgumentException(
+                "An empty value cannot be passed: it has no type for the call to read.",
+                nameof(value));
+        }
+        fixed (Gst.GObject.GValueNative* valuePointer = &System.Runtime.CompilerServices.Unsafe.AsRef(in value).NativeValue)
+        {
+            int nativeResult = GstValueGetFractionNumerator(valuePointer);
+            return nativeResult;
+        }
+    }
+
+    /// <summary>Gets the maximum of the range specified by @value.</summary>
+    /// <param name="value">
+    /// The <c>value</c> argument.
+    /// The callee copies what it keeps, so the caller keeps ownership of
+    /// <paramref name="value"/> and still disposes it.
+    /// </param>
+    /// <returns>
+    /// the maximum of the range
+    /// The value is a copy the caller owns: dispose it. It is empty when the
+    /// source has no value to hand out.
+    /// </returns>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="value"/> is empty.
+    /// </exception>
+    public static Gst.GObject.Value ValueGetFractionRangeMax(in Gst.GObject.Value value)
+    {
+        if (value.IsEmpty)
+        {
+            throw new ArgumentException(
+                "An empty value cannot be passed: it has no type for the call to read.",
+                nameof(value));
+        }
+        fixed (Gst.GObject.GValueNative* valuePointer = &System.Runtime.CompilerServices.Unsafe.AsRef(in value).NativeValue)
+        {
+            nint nativeResult = GstValueGetFractionRangeMax(valuePointer);
+            return Gst.GObject.Value.CopyFrom(nativeResult);
+        }
+    }
+
+    /// <summary>Gets the minimum of the range specified by @value.</summary>
+    /// <param name="value">
+    /// The <c>value</c> argument.
+    /// The callee copies what it keeps, so the caller keeps ownership of
+    /// <paramref name="value"/> and still disposes it.
+    /// </param>
+    /// <returns>
+    /// the minimum of the range
+    /// The value is a copy the caller owns: dispose it. It is empty when the
+    /// source has no value to hand out.
+    /// </returns>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="value"/> is empty.
+    /// </exception>
+    public static Gst.GObject.Value ValueGetFractionRangeMin(in Gst.GObject.Value value)
+    {
+        if (value.IsEmpty)
+        {
+            throw new ArgumentException(
+                "An empty value cannot be passed: it has no type for the call to read.",
+                nameof(value));
+        }
+        fixed (Gst.GObject.GValueNative* valuePointer = &System.Runtime.CompilerServices.Unsafe.AsRef(in value).NativeValue)
+        {
+            nint nativeResult = GstValueGetFractionRangeMin(valuePointer);
+            return Gst.GObject.Value.CopyFrom(nativeResult);
+        }
+    }
+
+    /// <summary>Gets the maximum of the range specified by @value.</summary>
+    /// <param name="value">
+    /// The <c>value</c> argument.
+    /// The callee copies what it keeps, so the caller keeps ownership of
+    /// <paramref name="value"/> and still disposes it.
+    /// </param>
+    /// <returns>the maximum of the range</returns>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="value"/> is empty.
+    /// </exception>
+    public static long ValueGetInt64RangeMax(in Gst.GObject.Value value)
+    {
+        if (value.IsEmpty)
+        {
+            throw new ArgumentException(
+                "An empty value cannot be passed: it has no type for the call to read.",
+                nameof(value));
+        }
+        fixed (Gst.GObject.GValueNative* valuePointer = &System.Runtime.CompilerServices.Unsafe.AsRef(in value).NativeValue)
+        {
+            long nativeResult = GstValueGetInt64RangeMax(valuePointer);
+            return nativeResult;
+        }
+    }
+
+    /// <summary>Gets the minimum of the range specified by @value.</summary>
+    /// <param name="value">
+    /// The <c>value</c> argument.
+    /// The callee copies what it keeps, so the caller keeps ownership of
+    /// <paramref name="value"/> and still disposes it.
+    /// </param>
+    /// <returns>the minimum of the range</returns>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="value"/> is empty.
+    /// </exception>
+    public static long ValueGetInt64RangeMin(in Gst.GObject.Value value)
+    {
+        if (value.IsEmpty)
+        {
+            throw new ArgumentException(
+                "An empty value cannot be passed: it has no type for the call to read.",
+                nameof(value));
+        }
+        fixed (Gst.GObject.GValueNative* valuePointer = &System.Runtime.CompilerServices.Unsafe.AsRef(in value).NativeValue)
+        {
+            long nativeResult = GstValueGetInt64RangeMin(valuePointer);
+            return nativeResult;
+        }
+    }
+
+    /// <summary>Gets the step of the range specified by @value.</summary>
+    /// <param name="value">
+    /// The <c>value</c> argument.
+    /// The callee copies what it keeps, so the caller keeps ownership of
+    /// <paramref name="value"/> and still disposes it.
+    /// </param>
+    /// <returns>the step of the range</returns>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="value"/> is empty.
+    /// </exception>
+    public static long ValueGetInt64RangeStep(in Gst.GObject.Value value)
+    {
+        if (value.IsEmpty)
+        {
+            throw new ArgumentException(
+                "An empty value cannot be passed: it has no type for the call to read.",
+                nameof(value));
+        }
+        fixed (Gst.GObject.GValueNative* valuePointer = &System.Runtime.CompilerServices.Unsafe.AsRef(in value).NativeValue)
+        {
+            long nativeResult = GstValueGetInt64RangeStep(valuePointer);
+            return nativeResult;
+        }
+    }
+
+    /// <summary>Gets the maximum of the range specified by @value.</summary>
+    /// <param name="value">
+    /// The <c>value</c> argument.
+    /// The callee copies what it keeps, so the caller keeps ownership of
+    /// <paramref name="value"/> and still disposes it.
+    /// </param>
+    /// <returns>the maximum of the range</returns>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="value"/> is empty.
+    /// </exception>
+    public static int ValueGetIntRangeMax(in Gst.GObject.Value value)
+    {
+        if (value.IsEmpty)
+        {
+            throw new ArgumentException(
+                "An empty value cannot be passed: it has no type for the call to read.",
+                nameof(value));
+        }
+        fixed (Gst.GObject.GValueNative* valuePointer = &System.Runtime.CompilerServices.Unsafe.AsRef(in value).NativeValue)
+        {
+            int nativeResult = GstValueGetIntRangeMax(valuePointer);
+            return nativeResult;
+        }
+    }
+
+    /// <summary>Gets the minimum of the range specified by @value.</summary>
+    /// <param name="value">
+    /// The <c>value</c> argument.
+    /// The callee copies what it keeps, so the caller keeps ownership of
+    /// <paramref name="value"/> and still disposes it.
+    /// </param>
+    /// <returns>the minimum of the range</returns>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="value"/> is empty.
+    /// </exception>
+    public static int ValueGetIntRangeMin(in Gst.GObject.Value value)
+    {
+        if (value.IsEmpty)
+        {
+            throw new ArgumentException(
+                "An empty value cannot be passed: it has no type for the call to read.",
+                nameof(value));
+        }
+        fixed (Gst.GObject.GValueNative* valuePointer = &System.Runtime.CompilerServices.Unsafe.AsRef(in value).NativeValue)
+        {
+            int nativeResult = GstValueGetIntRangeMin(valuePointer);
+            return nativeResult;
+        }
+    }
+
+    /// <summary>Gets the step of the range specified by @value.</summary>
+    /// <param name="value">
+    /// The <c>value</c> argument.
+    /// The callee copies what it keeps, so the caller keeps ownership of
+    /// <paramref name="value"/> and still disposes it.
+    /// </param>
+    /// <returns>the step of the range</returns>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="value"/> is empty.
+    /// </exception>
+    public static int ValueGetIntRangeStep(in Gst.GObject.Value value)
+    {
+        if (value.IsEmpty)
+        {
+            throw new ArgumentException(
+                "An empty value cannot be passed: it has no type for the call to read.",
+                nameof(value));
+        }
+        fixed (Gst.GObject.GValueNative* valuePointer = &System.Runtime.CompilerServices.Unsafe.AsRef(in value).NativeValue)
+        {
+            int nativeResult = GstValueGetIntRangeStep(valuePointer);
+            return nativeResult;
+        }
+    }
+
+    /// <summary>Gets the contents of @value.</summary>
+    /// <param name="value">
+    /// The <c>value</c> argument.
+    /// The callee copies what it keeps, so the caller keeps ownership of
+    /// <paramref name="value"/> and still disposes it.
+    /// </param>
+    /// <returns>
+    /// the contents of @value
+    /// The wrapper owns a reference of its own, which is a copy for a boxed type:
+    /// dispose it when you are done, and note that changes made to a copy of a
+    /// boxed value are not written back.
+    /// </returns>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="value"/> is empty.
+    /// </exception>
+    public static Gst.Structure ValueGetStructure(in Gst.GObject.Value value)
+    {
+        if (value.IsEmpty)
+        {
+            throw new ArgumentException(
+                "An empty value cannot be passed: it has no type for the call to read.",
+                nameof(value));
+        }
+        fixed (Gst.GObject.GValueNative* valuePointer = &System.Runtime.CompilerServices.Unsafe.AsRef(in value).NativeValue)
+        {
+            nint nativeResult = GstValueGetStructure(valuePointer);
+            return Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("gst_value_get_structure returned no value.");
+        }
+    }
+
+    /// <summary>
+    /// Compute a hash value of @value.
+    /// #GValue considered as equals by gst_value_compare() will have the same hash value.
+    /// </summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
+    /// <param name="value">
+    /// The <c>value</c> argument.
+    /// The callee copies what it keeps, so the caller keeps ownership of
+    /// <paramref name="value"/> and still disposes it.
+    /// </param>
+    /// <param name="res">The <c>res</c> argument.</param>
+    /// <returns>%TRUE, or %FALSE if @value cannot be hashed.</returns>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="value"/> is empty.
+    /// </exception>
+    public static bool ValueHash(in Gst.GObject.Value value, out uint res)
+    {
+        if (value.IsEmpty)
+        {
+            throw new ArgumentException(
+                "An empty value cannot be passed: it has no type for the call to read.",
+                nameof(value));
+        }
+        uint resNative = default;
+        fixed (Gst.GObject.GValueNative* valuePointer = &System.Runtime.CompilerServices.Unsafe.AsRef(in value).NativeValue)
+        {
+            int nativeResult = GstValueHash(valuePointer, &resNative);
+            res = resNative;
+            return nativeResult != 0;
+        }
+    }
+
+    /// <summary>
+    /// Initialises the target value to be of the same type as source and then copies
+    /// the contents from source to target.
+    /// </summary>
+    /// <param name="dest">
+    /// The <c>dest</c> argument.
+    /// On success the caller owns the contents and disposes the value; on
+    /// failure it is left empty, and disposing an empty value does nothing.
+    /// </param>
+    /// <param name="src">
+    /// The <c>src</c> argument.
+    /// The callee copies what it keeps, so the caller keeps ownership of
+    /// <paramref name="src"/> and still disposes it.
+    /// </param>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="src"/> is empty.
+    /// </exception>
+    public static void ValueInitAndCopy(out Gst.GObject.Value dest, in Gst.GObject.Value src)
+    {
+        dest = default;
+        if (src.IsEmpty)
+        {
+            throw new ArgumentException(
+                "An empty value cannot be passed: it has no type for the call to read.",
+                nameof(src));
+        }
+        fixed (Gst.GObject.GValueNative* destPointer = &dest.NativeValue)
+        {
+            fixed (Gst.GObject.GValueNative* srcPointer = &System.Runtime.CompilerServices.Unsafe.AsRef(in src).NativeValue)
+            {
+                GstValueInitAndCopy(destPointer, srcPointer);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Calculates the intersection of two values.  If the values have
+    /// a non-empty intersection, the value representing the intersection
+    /// is placed in @dest, unless %NULL.  If the intersection is non-empty,
+    /// @dest is not modified.
+    /// </summary>
+    /// <param name="dest">
+    /// The <c>dest</c> argument.
+    /// On success the caller owns the contents and disposes the value; on
+    /// failure it is left empty, and disposing an empty value does nothing.
+    /// </param>
+    /// <param name="value1">
+    /// The <c>value1</c> argument.
+    /// The callee copies what it keeps, so the caller keeps ownership of
+    /// <paramref name="value1"/> and still disposes it.
+    /// </param>
+    /// <param name="value2">
+    /// The <c>value2</c> argument.
+    /// The callee copies what it keeps, so the caller keeps ownership of
+    /// <paramref name="value2"/> and still disposes it.
+    /// </param>
+    /// <returns>%TRUE if the intersection is non-empty</returns>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="value1"/> is empty.
+    /// </exception>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="value2"/> is empty.
+    /// </exception>
+    public static bool ValueIntersect(out Gst.GObject.Value dest, in Gst.GObject.Value value1, in Gst.GObject.Value value2)
+    {
+        dest = default;
+        if (value1.IsEmpty)
+        {
+            throw new ArgumentException(
+                "An empty value cannot be passed: it has no type for the call to read.",
+                nameof(value1));
+        }
+        if (value2.IsEmpty)
+        {
+            throw new ArgumentException(
+                "An empty value cannot be passed: it has no type for the call to read.",
+                nameof(value2));
+        }
+        fixed (Gst.GObject.GValueNative* destPointer = &dest.NativeValue)
+        {
+            fixed (Gst.GObject.GValueNative* value1Pointer = &System.Runtime.CompilerServices.Unsafe.AsRef(in value1).NativeValue)
+            {
+                fixed (Gst.GObject.GValueNative* value2Pointer = &System.Runtime.CompilerServices.Unsafe.AsRef(in value2).NativeValue)
+                {
+                    int nativeResult = GstValueIntersect(destPointer, value1Pointer, value2Pointer);
+                    return nativeResult != 0;
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Tests if the given GValue, if available in a GstStructure (or any other
+    /// container) contains a "fixed" (which means: one value) or an "unfixed"
+    /// (which means: multiple possible values, such as data lists or data
+    /// ranges) value.
+    /// </summary>
+    /// <param name="value">
+    /// The <c>value</c> argument.
+    /// The callee copies what it keeps, so the caller keeps ownership of
+    /// <paramref name="value"/> and still disposes it.
+    /// </param>
+    /// <returns>true if the value is "fixed".</returns>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="value"/> is empty.
+    /// </exception>
+    public static bool ValueIsFixed(in Gst.GObject.Value value)
+    {
+        if (value.IsEmpty)
+        {
+            throw new ArgumentException(
+                "An empty value cannot be passed: it has no type for the call to read.",
+                nameof(value));
+        }
+        fixed (Gst.GObject.GValueNative* valuePointer = &System.Runtime.CompilerServices.Unsafe.AsRef(in value).NativeValue)
+        {
+            int nativeResult = GstValueIsFixed(valuePointer);
+            return nativeResult != 0;
+        }
+    }
+
+    /// <summary>
+    /// Check that @value1 is a subset of @value2. If @value1 and @value2 is are
+    /// fixed value, value1 must be a subset of value2 and not equal to @value2 to
+    /// be a subset of @value2.
+    /// </summary>
+    /// <param name="value1">
+    /// The <c>value1</c> argument.
+    /// The callee copies what it keeps, so the caller keeps ownership of
+    /// <paramref name="value1"/> and still disposes it.
+    /// </param>
+    /// <param name="value2">
+    /// The <c>value2</c> argument.
+    /// The callee copies what it keeps, so the caller keeps ownership of
+    /// <paramref name="value2"/> and still disposes it.
+    /// </param>
+    /// <returns>%TRUE is @value1 is a subset, strict subset if both values are  of @value2</returns>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="value1"/> is empty.
+    /// </exception>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="value2"/> is empty.
+    /// </exception>
+    public static bool ValueIsSubset(in Gst.GObject.Value value1, in Gst.GObject.Value value2)
+    {
+        if (value1.IsEmpty)
+        {
+            throw new ArgumentException(
+                "An empty value cannot be passed: it has no type for the call to read.",
+                nameof(value1));
+        }
+        if (value2.IsEmpty)
+        {
+            throw new ArgumentException(
+                "An empty value cannot be passed: it has no type for the call to read.",
+                nameof(value2));
+        }
+        fixed (Gst.GObject.GValueNative* value1Pointer = &System.Runtime.CompilerServices.Unsafe.AsRef(in value1).NativeValue)
+        {
+            fixed (Gst.GObject.GValueNative* value2Pointer = &System.Runtime.CompilerServices.Unsafe.AsRef(in value2).NativeValue)
+            {
+                int nativeResult = GstValueIsSubset(value1Pointer, value2Pointer);
+                return nativeResult != 0;
+            }
+        }
+    }
+
     /// <summary>
     /// Registers functions to perform calculations on #GValue items of a given
     /// type. Each type can only be added once.
@@ -1709,6 +2840,384 @@ public static unsafe partial class Global
         ArgumentNullException.ThrowIfNull(table);
         GstValueRegister(table.Handle);
         System.GC.KeepAlive(table);
+    }
+
+    /// <summary>Sets @value to the bitmask specified by @bitmask.</summary>
+    /// <param name="value">
+    /// The <c>value</c> argument.
+    /// The value has to be initialized with the type the call expects before
+    /// the call; like the C API, the call raises a warning and does nothing
+    /// otherwise.
+    /// </param>
+    /// <param name="bitmask">The <c>bitmask</c> argument.</param>
+    public static void ValueSetBitmask(ref Gst.GObject.Value value, ulong bitmask)
+    {
+        fixed (Gst.GObject.GValueNative* valuePointer = &value.NativeValue)
+        {
+            GstValueSetBitmask(valuePointer, bitmask);
+        }
+    }
+
+    /// <summary>
+    /// Sets the contents of @value to @caps. A reference to the
+    /// provided @caps will be taken by the @value.
+    /// </summary>
+    /// <param name="value">
+    /// The <c>value</c> argument.
+    /// The value has to be initialized with the type the call expects before
+    /// the call; like the C API, the call raises a warning and does nothing
+    /// otherwise.
+    /// </param>
+    /// <param name="caps">The <c>caps</c> argument.</param>
+    public static void ValueSetCaps(ref Gst.GObject.Value value, Gst.Caps caps)
+    {
+        ArgumentNullException.ThrowIfNull(caps);
+        fixed (Gst.GObject.GValueNative* valuePointer = &value.NativeValue)
+        {
+            GstValueSetCaps(valuePointer, caps.Handle);
+            System.GC.KeepAlive(caps);
+        }
+    }
+
+    /// <summary>Sets the contents of @value to @features.</summary>
+    /// <param name="value">
+    /// The <c>value</c> argument.
+    /// The value has to be initialized with the type the call expects before
+    /// the call; like the C API, the call raises a warning and does nothing
+    /// otherwise.
+    /// </param>
+    /// <param name="features">The <c>features</c> argument.</param>
+    public static void ValueSetCapsFeatures(ref Gst.GObject.Value value, Gst.CapsFeatures features)
+    {
+        ArgumentNullException.ThrowIfNull(features);
+        fixed (Gst.GObject.GValueNative* valuePointer = &value.NativeValue)
+        {
+            GstValueSetCapsFeatures(valuePointer, features.Handle);
+            System.GC.KeepAlive(features);
+        }
+    }
+
+    /// <summary>Sets @value to the range specified by @start and @end.</summary>
+    /// <param name="value">
+    /// The <c>value</c> argument.
+    /// The value has to be initialized with the type the call expects before
+    /// the call; like the C API, the call raises a warning and does nothing
+    /// otherwise.
+    /// </param>
+    /// <param name="start">The <c>start</c> argument.</param>
+    /// <param name="end">The <c>end</c> argument.</param>
+    public static void ValueSetDoubleRange(ref Gst.GObject.Value value, double start, double end)
+    {
+        fixed (Gst.GObject.GValueNative* valuePointer = &value.NativeValue)
+        {
+            GstValueSetDoubleRange(valuePointer, start, end);
+        }
+    }
+
+    /// <summary>
+    /// Sets @value to the flags and mask values provided in @flags and @mask.
+    /// The @flags value indicates the values of flags, the @mask represents
+    /// which bits in the flag value have been set, and which are "don't care"
+    /// </summary>
+    /// <param name="value">
+    /// The <c>value</c> argument.
+    /// The value has to be initialized with the type the call expects before
+    /// the call; like the C API, the call raises a warning and does nothing
+    /// otherwise.
+    /// </param>
+    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <param name="mask">The <c>mask</c> argument.</param>
+    public static void ValueSetFlagset(ref Gst.GObject.Value value, uint flags, uint mask)
+    {
+        fixed (Gst.GObject.GValueNative* valuePointer = &value.NativeValue)
+        {
+            GstValueSetFlagset(valuePointer, flags, mask);
+        }
+    }
+
+    /// <summary>
+    /// Sets @value to the fraction specified by @numerator over @denominator.
+    /// The fraction gets reduced to the smallest numerator and denominator,
+    /// and if necessary the sign is moved to the numerator.
+    /// </summary>
+    /// <param name="value">
+    /// The <c>value</c> argument.
+    /// The value has to be initialized with the type the call expects before
+    /// the call; like the C API, the call raises a warning and does nothing
+    /// otherwise.
+    /// </param>
+    /// <param name="numerator">The <c>numerator</c> argument.</param>
+    /// <param name="denominator">The <c>denominator</c> argument.</param>
+    public static void ValueSetFraction(ref Gst.GObject.Value value, int numerator, int denominator)
+    {
+        fixed (Gst.GObject.GValueNative* valuePointer = &value.NativeValue)
+        {
+            GstValueSetFraction(valuePointer, numerator, denominator);
+        }
+    }
+
+    /// <summary>Sets @value to the range specified by @start and @end.</summary>
+    /// <param name="value">
+    /// The <c>value</c> argument.
+    /// The value has to be initialized with the type the call expects before
+    /// the call; like the C API, the call raises a warning and does nothing
+    /// otherwise.
+    /// </param>
+    /// <param name="start">
+    /// The <c>start</c> argument.
+    /// The callee copies what it keeps, so the caller keeps ownership of
+    /// <paramref name="start"/> and still disposes it.
+    /// </param>
+    /// <param name="end">
+    /// The <c>end</c> argument.
+    /// The callee copies what it keeps, so the caller keeps ownership of
+    /// <paramref name="end"/> and still disposes it.
+    /// </param>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="start"/> is empty.
+    /// </exception>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="end"/> is empty.
+    /// </exception>
+    public static void ValueSetFractionRange(ref Gst.GObject.Value value, in Gst.GObject.Value start, in Gst.GObject.Value end)
+    {
+        if (start.IsEmpty)
+        {
+            throw new ArgumentException(
+                "An empty value cannot be passed: it has no type for the call to read.",
+                nameof(start));
+        }
+        if (end.IsEmpty)
+        {
+            throw new ArgumentException(
+                "An empty value cannot be passed: it has no type for the call to read.",
+                nameof(end));
+        }
+        fixed (Gst.GObject.GValueNative* valuePointer = &value.NativeValue)
+        {
+            fixed (Gst.GObject.GValueNative* startPointer = &System.Runtime.CompilerServices.Unsafe.AsRef(in start).NativeValue)
+            {
+                fixed (Gst.GObject.GValueNative* endPointer = &System.Runtime.CompilerServices.Unsafe.AsRef(in end).NativeValue)
+                {
+                    GstValueSetFractionRange(valuePointer, startPointer, endPointer);
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Sets @value to the range specified by @numerator_start/@denominator_start
+    /// and @numerator_end/@denominator_end.
+    /// </summary>
+    /// <param name="value">
+    /// The <c>value</c> argument.
+    /// The value has to be initialized with the type the call expects before
+    /// the call; like the C API, the call raises a warning and does nothing
+    /// otherwise.
+    /// </param>
+    /// <param name="numeratorStart">The <c>numeratorStart</c> argument.</param>
+    /// <param name="denominatorStart">The <c>denominatorStart</c> argument.</param>
+    /// <param name="numeratorEnd">The <c>numeratorEnd</c> argument.</param>
+    /// <param name="denominatorEnd">The <c>denominatorEnd</c> argument.</param>
+    public static void ValueSetFractionRangeFull(ref Gst.GObject.Value value, int numeratorStart, int denominatorStart, int numeratorEnd, int denominatorEnd)
+    {
+        fixed (Gst.GObject.GValueNative* valuePointer = &value.NativeValue)
+        {
+            GstValueSetFractionRangeFull(valuePointer, numeratorStart, denominatorStart, numeratorEnd, denominatorEnd);
+        }
+    }
+
+    /// <summary>Sets @value to the range specified by @start and @end.</summary>
+    /// <param name="value">
+    /// The <c>value</c> argument.
+    /// The value has to be initialized with the type the call expects before
+    /// the call; like the C API, the call raises a warning and does nothing
+    /// otherwise.
+    /// </param>
+    /// <param name="start">The <c>start</c> argument.</param>
+    /// <param name="end">The <c>end</c> argument.</param>
+    public static void ValueSetInt64Range(ref Gst.GObject.Value value, long start, long end)
+    {
+        fixed (Gst.GObject.GValueNative* valuePointer = &value.NativeValue)
+        {
+            GstValueSetInt64Range(valuePointer, start, end);
+        }
+    }
+
+    /// <summary>Sets @value to the range specified by @start, @end and @step.</summary>
+    /// <param name="value">
+    /// The <c>value</c> argument.
+    /// The value has to be initialized with the type the call expects before
+    /// the call; like the C API, the call raises a warning and does nothing
+    /// otherwise.
+    /// </param>
+    /// <param name="start">The <c>start</c> argument.</param>
+    /// <param name="end">The <c>end</c> argument.</param>
+    /// <param name="step">The <c>step</c> argument.</param>
+    public static void ValueSetInt64RangeStep(ref Gst.GObject.Value value, long start, long end, long step)
+    {
+        fixed (Gst.GObject.GValueNative* valuePointer = &value.NativeValue)
+        {
+            GstValueSetInt64RangeStep(valuePointer, start, end, step);
+        }
+    }
+
+    /// <summary>Sets @value to the range specified by @start and @end.</summary>
+    /// <param name="value">
+    /// The <c>value</c> argument.
+    /// The value has to be initialized with the type the call expects before
+    /// the call; like the C API, the call raises a warning and does nothing
+    /// otherwise.
+    /// </param>
+    /// <param name="start">The <c>start</c> argument.</param>
+    /// <param name="end">The <c>end</c> argument.</param>
+    public static void ValueSetIntRange(ref Gst.GObject.Value value, int start, int end)
+    {
+        fixed (Gst.GObject.GValueNative* valuePointer = &value.NativeValue)
+        {
+            GstValueSetIntRange(valuePointer, start, end);
+        }
+    }
+
+    /// <summary>Sets @value to the range specified by @start, @end and @step.</summary>
+    /// <param name="value">
+    /// The <c>value</c> argument.
+    /// The value has to be initialized with the type the call expects before
+    /// the call; like the C API, the call raises a warning and does nothing
+    /// otherwise.
+    /// </param>
+    /// <param name="start">The <c>start</c> argument.</param>
+    /// <param name="end">The <c>end</c> argument.</param>
+    /// <param name="step">The <c>step</c> argument.</param>
+    public static void ValueSetIntRangeStep(ref Gst.GObject.Value value, int start, int end, int step)
+    {
+        fixed (Gst.GObject.GValueNative* valuePointer = &value.NativeValue)
+        {
+            GstValueSetIntRangeStep(valuePointer, start, end, step);
+        }
+    }
+
+    /// <summary>Sets the contents of @value to @structure.</summary>
+    /// <param name="value">
+    /// The <c>value</c> argument.
+    /// The value has to be initialized with the type the call expects before
+    /// the call; like the C API, the call raises a warning and does nothing
+    /// otherwise.
+    /// </param>
+    /// <param name="structure">The <c>structure</c> argument.</param>
+    public static void ValueSetStructure(ref Gst.GObject.Value value, Gst.Structure structure)
+    {
+        ArgumentNullException.ThrowIfNull(structure);
+        fixed (Gst.GObject.GValueNative* valuePointer = &value.NativeValue)
+        {
+            GstValueSetStructure(valuePointer, structure.Handle);
+            System.GC.KeepAlive(structure);
+        }
+    }
+
+    /// <summary>
+    /// Subtracts @subtrahend from @minuend and stores the result in @dest.
+    /// Note that this means subtraction as in sets, not as in mathematics.
+    /// </summary>
+    /// <param name="dest">
+    /// The <c>dest</c> argument.
+    /// On success the caller owns the contents and disposes the value; on
+    /// failure it is left empty, and disposing an empty value does nothing.
+    /// </param>
+    /// <param name="minuend">
+    /// The <c>minuend</c> argument.
+    /// The callee copies what it keeps, so the caller keeps ownership of
+    /// <paramref name="minuend"/> and still disposes it.
+    /// </param>
+    /// <param name="subtrahend">
+    /// The <c>subtrahend</c> argument.
+    /// The callee copies what it keeps, so the caller keeps ownership of
+    /// <paramref name="subtrahend"/> and still disposes it.
+    /// </param>
+    /// <returns>%TRUE if the subtraction is not empty</returns>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="minuend"/> is empty.
+    /// </exception>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="subtrahend"/> is empty.
+    /// </exception>
+    public static bool ValueSubtract(out Gst.GObject.Value dest, in Gst.GObject.Value minuend, in Gst.GObject.Value subtrahend)
+    {
+        dest = default;
+        if (minuend.IsEmpty)
+        {
+            throw new ArgumentException(
+                "An empty value cannot be passed: it has no type for the call to read.",
+                nameof(minuend));
+        }
+        if (subtrahend.IsEmpty)
+        {
+            throw new ArgumentException(
+                "An empty value cannot be passed: it has no type for the call to read.",
+                nameof(subtrahend));
+        }
+        fixed (Gst.GObject.GValueNative* destPointer = &dest.NativeValue)
+        {
+            fixed (Gst.GObject.GValueNative* minuendPointer = &System.Runtime.CompilerServices.Unsafe.AsRef(in minuend).NativeValue)
+            {
+                fixed (Gst.GObject.GValueNative* subtrahendPointer = &System.Runtime.CompilerServices.Unsafe.AsRef(in subtrahend).NativeValue)
+                {
+                    int nativeResult = GstValueSubtract(destPointer, minuendPointer, subtrahendPointer);
+                    return nativeResult != 0;
+                }
+            }
+        }
+    }
+
+    /// <summary>Creates a GValue corresponding to the union of @value1 and @value2.</summary>
+    /// <param name="dest">
+    /// The <c>dest</c> argument.
+    /// On success the caller owns the contents and disposes the value; on
+    /// failure it is left empty, and disposing an empty value does nothing.
+    /// </param>
+    /// <param name="value1">
+    /// The <c>value1</c> argument.
+    /// The callee copies what it keeps, so the caller keeps ownership of
+    /// <paramref name="value1"/> and still disposes it.
+    /// </param>
+    /// <param name="value2">
+    /// The <c>value2</c> argument.
+    /// The callee copies what it keeps, so the caller keeps ownership of
+    /// <paramref name="value2"/> and still disposes it.
+    /// </param>
+    /// <returns>%TRUE if the union succeeded.</returns>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="value1"/> is empty.
+    /// </exception>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="value2"/> is empty.
+    /// </exception>
+    public static bool ValueUnion(out Gst.GObject.Value dest, in Gst.GObject.Value value1, in Gst.GObject.Value value2)
+    {
+        dest = default;
+        if (value1.IsEmpty)
+        {
+            throw new ArgumentException(
+                "An empty value cannot be passed: it has no type for the call to read.",
+                nameof(value1));
+        }
+        if (value2.IsEmpty)
+        {
+            throw new ArgumentException(
+                "An empty value cannot be passed: it has no type for the call to read.",
+                nameof(value2));
+        }
+        fixed (Gst.GObject.GValueNative* destPointer = &dest.NativeValue)
+        {
+            fixed (Gst.GObject.GValueNative* value1Pointer = &System.Runtime.CompilerServices.Unsafe.AsRef(in value1).NativeValue)
+            {
+                fixed (Gst.GObject.GValueNative* value2Pointer = &System.Runtime.CompilerServices.Unsafe.AsRef(in value2).NativeValue)
+                {
+                    int nativeResult = GstValueUnion(destPointer, value1Pointer, value2Pointer);
+                    return nativeResult != 0;
+                }
+            }
+        }
     }
 
     /// <summary>Gets the version number of the GStreamer library.</summary>
@@ -2024,6 +3533,14 @@ public static unsafe partial class Global
     [LibraryImport("Gst", EntryPoint = "gst_tag_is_fixed")]
     private static partial int GstTagIsFixed(byte* tag);
 
+    /// <summary>The <c>gst_tag_merge_strings_with_comma</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_tag_merge_strings_with_comma")]
+    private static partial void GstTagMergeStringsWithComma(Gst.GObject.GValueNative* dest, Gst.GObject.GValueNative* src);
+
+    /// <summary>The <c>gst_tag_merge_use_first</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_tag_merge_use_first")]
+    private static partial void GstTagMergeUseFirst(Gst.GObject.GValueNative* dest, Gst.GObject.GValueNative* src);
+
     /// <summary>The <c>gst_tracing_get_active_tracers</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_tracing_get_active_tracers")]
     private static partial nint GstTracingGetActiveTracers();
@@ -2124,6 +3641,10 @@ public static unsafe partial class Global
     [LibraryImport("Gst", EntryPoint = "gst_util_set_object_arg")]
     private static partial void GstUtilSetObjectArg(nint @object, byte* name, byte* value);
 
+    /// <summary>The <c>gst_util_set_value_from_string</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_util_set_value_from_string")]
+    private static partial void GstUtilSetValueFromString(Gst.GObject.GValueNative* value, byte* valueStr);
+
     /// <summary>The <c>gst_util_simplify_fraction</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_util_simplify_fraction")]
     private static partial void GstUtilSimplifyFraction(int* numerator, int* denominator, uint nTerms, uint threshold);
@@ -2152,9 +3673,193 @@ public static unsafe partial class Global
     [LibraryImport("Gst", EntryPoint = "gst_util_uint64_scale_round")]
     private static partial ulong GstUtilUint64ScaleRound(ulong val, ulong num, ulong denom);
 
+    /// <summary>The <c>gst_value_can_compare</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_value_can_compare")]
+    private static partial int GstValueCanCompare(Gst.GObject.GValueNative* value1, Gst.GObject.GValueNative* value2);
+
+    /// <summary>The <c>gst_value_can_intersect</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_value_can_intersect")]
+    private static partial int GstValueCanIntersect(Gst.GObject.GValueNative* value1, Gst.GObject.GValueNative* value2);
+
+    /// <summary>The <c>gst_value_can_subtract</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_value_can_subtract")]
+    private static partial int GstValueCanSubtract(Gst.GObject.GValueNative* minuend, Gst.GObject.GValueNative* subtrahend);
+
+    /// <summary>The <c>gst_value_can_union</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_value_can_union")]
+    private static partial int GstValueCanUnion(Gst.GObject.GValueNative* value1, Gst.GObject.GValueNative* value2);
+
+    /// <summary>The <c>gst_value_deserialize</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_value_deserialize")]
+    private static partial int GstValueDeserialize(Gst.GObject.GValueNative* dest, byte* src);
+
+    /// <summary>The <c>gst_value_fixate</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_value_fixate")]
+    private static partial int GstValueFixate(Gst.GObject.GValueNative* dest, Gst.GObject.GValueNative* src);
+
+    /// <summary>The <c>gst_value_fraction_multiply</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_value_fraction_multiply")]
+    private static partial int GstValueFractionMultiply(Gst.GObject.GValueNative* product, Gst.GObject.GValueNative* factor1, Gst.GObject.GValueNative* factor2);
+
+    /// <summary>The <c>gst_value_fraction_subtract</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_value_fraction_subtract")]
+    private static partial int GstValueFractionSubtract(Gst.GObject.GValueNative* dest, Gst.GObject.GValueNative* minuend, Gst.GObject.GValueNative* subtrahend);
+
+    /// <summary>The <c>gst_value_get_bitmask</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_value_get_bitmask")]
+    private static partial ulong GstValueGetBitmask(Gst.GObject.GValueNative* value);
+
+    /// <summary>The <c>gst_value_get_caps</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_value_get_caps")]
+    private static partial nint GstValueGetCaps(Gst.GObject.GValueNative* value);
+
+    /// <summary>The <c>gst_value_get_caps_features</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_value_get_caps_features")]
+    private static partial nint GstValueGetCapsFeatures(Gst.GObject.GValueNative* value);
+
+    /// <summary>The <c>gst_value_get_double_range_max</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_value_get_double_range_max")]
+    private static partial double GstValueGetDoubleRangeMax(Gst.GObject.GValueNative* value);
+
+    /// <summary>The <c>gst_value_get_double_range_min</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_value_get_double_range_min")]
+    private static partial double GstValueGetDoubleRangeMin(Gst.GObject.GValueNative* value);
+
+    /// <summary>The <c>gst_value_get_flagset_flags</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_value_get_flagset_flags")]
+    private static partial uint GstValueGetFlagsetFlags(Gst.GObject.GValueNative* value);
+
+    /// <summary>The <c>gst_value_get_flagset_mask</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_value_get_flagset_mask")]
+    private static partial uint GstValueGetFlagsetMask(Gst.GObject.GValueNative* value);
+
+    /// <summary>The <c>gst_value_get_fraction_denominator</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_value_get_fraction_denominator")]
+    private static partial int GstValueGetFractionDenominator(Gst.GObject.GValueNative* value);
+
+    /// <summary>The <c>gst_value_get_fraction_numerator</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_value_get_fraction_numerator")]
+    private static partial int GstValueGetFractionNumerator(Gst.GObject.GValueNative* value);
+
+    /// <summary>The <c>gst_value_get_fraction_range_max</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_value_get_fraction_range_max")]
+    private static partial nint GstValueGetFractionRangeMax(Gst.GObject.GValueNative* value);
+
+    /// <summary>The <c>gst_value_get_fraction_range_min</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_value_get_fraction_range_min")]
+    private static partial nint GstValueGetFractionRangeMin(Gst.GObject.GValueNative* value);
+
+    /// <summary>The <c>gst_value_get_int64_range_max</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_value_get_int64_range_max")]
+    private static partial long GstValueGetInt64RangeMax(Gst.GObject.GValueNative* value);
+
+    /// <summary>The <c>gst_value_get_int64_range_min</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_value_get_int64_range_min")]
+    private static partial long GstValueGetInt64RangeMin(Gst.GObject.GValueNative* value);
+
+    /// <summary>The <c>gst_value_get_int64_range_step</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_value_get_int64_range_step")]
+    private static partial long GstValueGetInt64RangeStep(Gst.GObject.GValueNative* value);
+
+    /// <summary>The <c>gst_value_get_int_range_max</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_value_get_int_range_max")]
+    private static partial int GstValueGetIntRangeMax(Gst.GObject.GValueNative* value);
+
+    /// <summary>The <c>gst_value_get_int_range_min</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_value_get_int_range_min")]
+    private static partial int GstValueGetIntRangeMin(Gst.GObject.GValueNative* value);
+
+    /// <summary>The <c>gst_value_get_int_range_step</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_value_get_int_range_step")]
+    private static partial int GstValueGetIntRangeStep(Gst.GObject.GValueNative* value);
+
+    /// <summary>The <c>gst_value_get_structure</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_value_get_structure")]
+    private static partial nint GstValueGetStructure(Gst.GObject.GValueNative* value);
+
+    /// <summary>The <c>gst_value_hash</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_value_hash")]
+    private static partial int GstValueHash(Gst.GObject.GValueNative* value, uint* res);
+
+    /// <summary>The <c>gst_value_init_and_copy</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_value_init_and_copy")]
+    private static partial void GstValueInitAndCopy(Gst.GObject.GValueNative* dest, Gst.GObject.GValueNative* src);
+
+    /// <summary>The <c>gst_value_intersect</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_value_intersect")]
+    private static partial int GstValueIntersect(Gst.GObject.GValueNative* dest, Gst.GObject.GValueNative* value1, Gst.GObject.GValueNative* value2);
+
+    /// <summary>The <c>gst_value_is_fixed</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_value_is_fixed")]
+    private static partial int GstValueIsFixed(Gst.GObject.GValueNative* value);
+
+    /// <summary>The <c>gst_value_is_subset</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_value_is_subset")]
+    private static partial int GstValueIsSubset(Gst.GObject.GValueNative* value1, Gst.GObject.GValueNative* value2);
+
     /// <summary>The <c>gst_value_register</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_value_register")]
     private static partial void GstValueRegister(nint table);
+
+    /// <summary>The <c>gst_value_set_bitmask</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_value_set_bitmask")]
+    private static partial void GstValueSetBitmask(Gst.GObject.GValueNative* value, ulong bitmask);
+
+    /// <summary>The <c>gst_value_set_caps</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_value_set_caps")]
+    private static partial void GstValueSetCaps(Gst.GObject.GValueNative* value, nint caps);
+
+    /// <summary>The <c>gst_value_set_caps_features</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_value_set_caps_features")]
+    private static partial void GstValueSetCapsFeatures(Gst.GObject.GValueNative* value, nint features);
+
+    /// <summary>The <c>gst_value_set_double_range</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_value_set_double_range")]
+    private static partial void GstValueSetDoubleRange(Gst.GObject.GValueNative* value, double start, double end);
+
+    /// <summary>The <c>gst_value_set_flagset</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_value_set_flagset")]
+    private static partial void GstValueSetFlagset(Gst.GObject.GValueNative* value, uint flags, uint mask);
+
+    /// <summary>The <c>gst_value_set_fraction</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_value_set_fraction")]
+    private static partial void GstValueSetFraction(Gst.GObject.GValueNative* value, int numerator, int denominator);
+
+    /// <summary>The <c>gst_value_set_fraction_range</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_value_set_fraction_range")]
+    private static partial void GstValueSetFractionRange(Gst.GObject.GValueNative* value, Gst.GObject.GValueNative* start, Gst.GObject.GValueNative* end);
+
+    /// <summary>The <c>gst_value_set_fraction_range_full</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_value_set_fraction_range_full")]
+    private static partial void GstValueSetFractionRangeFull(Gst.GObject.GValueNative* value, int numeratorStart, int denominatorStart, int numeratorEnd, int denominatorEnd);
+
+    /// <summary>The <c>gst_value_set_int64_range</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_value_set_int64_range")]
+    private static partial void GstValueSetInt64Range(Gst.GObject.GValueNative* value, long start, long end);
+
+    /// <summary>The <c>gst_value_set_int64_range_step</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_value_set_int64_range_step")]
+    private static partial void GstValueSetInt64RangeStep(Gst.GObject.GValueNative* value, long start, long end, long step);
+
+    /// <summary>The <c>gst_value_set_int_range</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_value_set_int_range")]
+    private static partial void GstValueSetIntRange(Gst.GObject.GValueNative* value, int start, int end);
+
+    /// <summary>The <c>gst_value_set_int_range_step</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_value_set_int_range_step")]
+    private static partial void GstValueSetIntRangeStep(Gst.GObject.GValueNative* value, int start, int end, int step);
+
+    /// <summary>The <c>gst_value_set_structure</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_value_set_structure")]
+    private static partial void GstValueSetStructure(Gst.GObject.GValueNative* value, nint structure);
+
+    /// <summary>The <c>gst_value_subtract</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_value_subtract")]
+    private static partial int GstValueSubtract(Gst.GObject.GValueNative* dest, Gst.GObject.GValueNative* minuend, Gst.GObject.GValueNative* subtrahend);
+
+    /// <summary>The <c>gst_value_union</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_value_union")]
+    private static partial int GstValueUnion(Gst.GObject.GValueNative* dest, Gst.GObject.GValueNative* value1, Gst.GObject.GValueNative* value2);
 
     /// <summary>The <c>gst_version</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_version")]

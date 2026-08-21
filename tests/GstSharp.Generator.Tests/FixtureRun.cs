@@ -92,7 +92,13 @@ internal sealed record FixtureRun(GenerationResult Result)
 /// </remarks>
 internal static class Fixture
 {
-    /// <summary>The <c>GObject</c> namespace that every class fixture needs.</summary>
+    /// <summary>
+    /// The <c>GObject</c> namespace that every class fixture needs. The
+    /// <c>Value</c> record is declared so that a fixture may reference
+    /// <c>GObject.Value</c>, which the type map projects onto the hand written
+    /// runtime struct; the record itself is never emitted, because the GObject
+    /// module is not generated.
+    /// </summary>
     internal const string GObjectNamespace =
         """
           <namespace name="GObject" version="2.0" c:identifier-prefixes="G" c:symbol-prefixes="g">
@@ -100,6 +106,11 @@ internal static class Fixture
             </class>
             <class name="InitiallyUnowned" c:type="GInitiallyUnowned" parent="Object" glib:type-name="GInitiallyUnowned" glib:get-type="g_initially_unowned_get_type">
             </class>
+            <record name="Value" c:type="GValue">
+              <field name="g_type" writable="1">
+                <type name="GType" c:type="GType"/>
+              </field>
+            </record>
           </namespace>
         """;
 

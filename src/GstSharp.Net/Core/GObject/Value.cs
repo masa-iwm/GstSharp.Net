@@ -105,7 +105,11 @@ public struct Value : IDisposable
     /// Creates an independent copy of an existing native <c>GValue</c>.
     /// </summary>
     /// <param name="nativeValue">The <c>GValue</c> to copy.</param>
-    /// <returns>The new value, which the caller has to dispose.</returns>
+    /// <returns>
+    /// The new value, which the caller has to dispose; the empty value when
+    /// <paramref name="nativeValue"/> is <c>0</c> or points at an
+    /// uninitialized <c>GValue</c>.
+    /// </returns>
     public static unsafe Value CopyFrom(nint nativeValue)
     {
         if (nativeValue == nint.Zero)
@@ -114,8 +118,52 @@ public struct Value : IDisposable
         }
 
         ref GValueNative source = ref Unsafe.AsRef<GValueNative>((void*)nativeValue);
+        if (source.TypeValue == GType.InvalidValue)
+        {
+            // An uninitialized source has nothing to copy, and g_value_copy
+            // would answer it with a critical warning.
+            return default;
+        }
+
         Value value = New(source.Type);
         GObjectNative.ValueCopy(ref source, ref value.NativeValue);
+        return value;
+    }
+
+    /// <summary>
+    /// Adopts a heap allocated <c>GValue</c> whose ownership a call
+    /// transferred: the contents move into the new value and the empty shell
+    /// is freed.
+    /// </summary>
+    /// <param name="nativeValue">The <c>GValue</c> to adopt.</param>
+    /// <returns>
+    /// The value, which the caller has to dispose; the empty value when
+    /// <paramref name="nativeValue"/> is <c>0</c>.
+    /// </returns>
+    /// <remarks>
+    /// <para>
+    /// This is the projection of a return the C API hands over with
+    /// <c>transfer-ownership="full"</c> — <c>gst_object_get_value</c> and
+    /// <c>gst_control_binding_get_value</c> allocate theirs with plain
+    /// <c>g_new0</c>. The contents are moved rather than copied: the bits of
+    /// the native structure become the bits of this value, so only the shell
+    /// is released, with <c>g_free</c> and deliberately without
+    /// <c>g_value_unset</c>, which would release the contents that now live on
+    /// here. Unset plus free is exactly what GLib's own boxed
+    /// <c>G_TYPE_VALUE</c> free function does; keeping the contents means
+    /// keeping the unset.
+    /// </para>
+    /// </remarks>
+    public static unsafe Value TakeOwnership(nint nativeValue)
+    {
+        if (nativeValue == nint.Zero)
+        {
+            return default;
+        }
+
+        Value value = default;
+        value.NativeValue = *(GValueNative*)nativeValue;
+        GLibNative.Free(nativeValue);
         return value;
     }
 

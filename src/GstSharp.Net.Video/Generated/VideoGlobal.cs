@@ -912,6 +912,66 @@ public static unsafe partial class VideoGlobal
         return new Gst.GObject.GType(nativeResult);
     }
 
+    /// <summary>The <c>gst_video_multiview_get_doubled_height_modes</c> function.</summary>
+    /// <returns>
+    /// A const #GValue containing a list of stereo video modes
+    /// The value is a copy the caller owns: dispose it. It is empty when the
+    /// source has no value to hand out.
+    /// </returns>
+    public static Gst.GObject.Value VideoMultiviewGetDoubledHeightModes()
+    {
+        nint nativeResult = GstVideoMultiviewGetDoubledHeightModes();
+        return Gst.GObject.Value.CopyFrom(nativeResult);
+    }
+
+    /// <summary>The <c>gst_video_multiview_get_doubled_size_modes</c> function.</summary>
+    /// <returns>
+    /// A const #GValue containing a list of stereo video modes
+    /// The value is a copy the caller owns: dispose it. It is empty when the
+    /// source has no value to hand out.
+    /// </returns>
+    public static Gst.GObject.Value VideoMultiviewGetDoubledSizeModes()
+    {
+        nint nativeResult = GstVideoMultiviewGetDoubledSizeModes();
+        return Gst.GObject.Value.CopyFrom(nativeResult);
+    }
+
+    /// <summary>The <c>gst_video_multiview_get_doubled_width_modes</c> function.</summary>
+    /// <returns>
+    /// A const #GValue containing a list of stereo video modes
+    /// The value is a copy the caller owns: dispose it. It is empty when the
+    /// source has no value to hand out.
+    /// </returns>
+    public static Gst.GObject.Value VideoMultiviewGetDoubledWidthModes()
+    {
+        nint nativeResult = GstVideoMultiviewGetDoubledWidthModes();
+        return Gst.GObject.Value.CopyFrom(nativeResult);
+    }
+
+    /// <summary>The <c>gst_video_multiview_get_mono_modes</c> function.</summary>
+    /// <returns>
+    /// A const #GValue containing a list of mono video modes
+    /// The value is a copy the caller owns: dispose it. It is empty when the
+    /// source has no value to hand out.
+    /// </returns>
+    public static Gst.GObject.Value VideoMultiviewGetMonoModes()
+    {
+        nint nativeResult = GstVideoMultiviewGetMonoModes();
+        return Gst.GObject.Value.CopyFrom(nativeResult);
+    }
+
+    /// <summary>The <c>gst_video_multiview_get_unpacked_modes</c> function.</summary>
+    /// <returns>
+    /// A const #GValue containing a list of 'unpacked' stereo video modes
+    /// The value is a copy the caller owns: dispose it. It is empty when the
+    /// source has no value to hand out.
+    /// </returns>
+    public static Gst.GObject.Value VideoMultiviewGetUnpackedModes()
+    {
+        nint nativeResult = GstVideoMultiviewGetUnpackedModes();
+        return Gst.GObject.Value.CopyFrom(nativeResult);
+    }
+
     /// <summary>The <c>gst_video_multiview_guess_half_aspect</c> function.</summary>
     /// <param name="mvMode">The <c>mvMode</c> argument.</param>
     /// <param name="width">The <c>width</c> argument.</param>
@@ -1219,6 +1279,26 @@ public static unsafe partial class VideoGlobal
     /// <summary>The <c>gst_video_meta_api_get_type</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_meta_api_get_type")]
     private static partial nuint GstVideoMetaApiGetType();
+
+    /// <summary>The <c>gst_video_multiview_get_doubled_height_modes</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_video_multiview_get_doubled_height_modes")]
+    private static partial nint GstVideoMultiviewGetDoubledHeightModes();
+
+    /// <summary>The <c>gst_video_multiview_get_doubled_size_modes</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_video_multiview_get_doubled_size_modes")]
+    private static partial nint GstVideoMultiviewGetDoubledSizeModes();
+
+    /// <summary>The <c>gst_video_multiview_get_doubled_width_modes</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_video_multiview_get_doubled_width_modes")]
+    private static partial nint GstVideoMultiviewGetDoubledWidthModes();
+
+    /// <summary>The <c>gst_video_multiview_get_mono_modes</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_video_multiview_get_mono_modes")]
+    private static partial nint GstVideoMultiviewGetMonoModes();
+
+    /// <summary>The <c>gst_video_multiview_get_unpacked_modes</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_video_multiview_get_unpacked_modes")]
+    private static partial nint GstVideoMultiviewGetUnpackedModes();
 
     /// <summary>The <c>gst_video_multiview_guess_half_aspect</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_multiview_guess_half_aspect")]

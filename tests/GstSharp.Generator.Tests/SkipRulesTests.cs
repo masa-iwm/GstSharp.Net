@@ -135,7 +135,12 @@ public sealed class SkipRulesTests
         // gst_buffer_pool_release_buffer joined for a third: the callee keys
         // on the writability of its consumed argument, which the reference the
         // recipe mints makes fail on every call - the toc entry is never
-        // appended and the released buffer is never requeued.
+        // appended and the released buffer is never requeued. The GValue
+        // carrying calls joined when the planner learned the GValue
+        // projection, for the same hand-written-stays-canonical reason as the
+        // consuming fifteen, plus the three *_value_static_str entries of the
+        // static string family and gst_iterator_next, whose out value would
+        // bind beside the typed Iterator.Items&lt;T&gt;.
         Assert.Equal(
             [
                 "GstBase.BitReader",
@@ -145,6 +150,8 @@ public sealed class SkipRulesTests
                 "GstRtsp.RTSPWatch",
                 "GstRtsp.RTSPWatchFuncs",
                 "ges_deinit",
+                "ges_timeline_element_get_child_property",
+                "ges_timeline_element_set_child_property",
                 "gst_adapter_map",
                 "gst_adapter_take",
                 "gst_adapter_unmap",
@@ -162,12 +169,14 @@ public sealed class SkipRulesTests
                 "gst_caps_features_add_static_str",
                 "gst_caps_features_new_single_static_str",
                 "gst_caps_new_static_str_empty_simple",
+                "gst_caps_set_value_static_str",
                 "gst_element_post_message",
                 "gst_element_send_event",
                 "gst_encoding_container_profile_add_profile",
                 "gst_event_new_custom",
                 "gst_id_str_set_static_str",
                 "gst_id_str_set_static_str_with_len",
+                "gst_iterator_next",
                 "gst_message_new_application",
                 "gst_message_new_custom",
                 "gst_meta_info_register",
@@ -176,11 +185,20 @@ public sealed class SkipRulesTests
                 "gst_promise_reply",
                 "gst_query_new_custom",
                 "gst_rtsp_auth_credentials_free",
+                "gst_structure_get_value",
                 "gst_structure_new_static_str_empty",
                 "gst_structure_set_name_static_str",
+                "gst_structure_set_value",
+                "gst_structure_set_value_static_str",
+                "gst_structure_take_value_static_str",
+                "gst_tag_list_add_value",
+                "gst_tag_list_copy_value",
+                "gst_tag_list_get_value_index",
                 "gst_toc_append_entry",
                 "gst_toc_entry_append_sub_entry",
                 "gst_type_find_peek",
+                "gst_value_compare",
+                "gst_value_serialize",
                 "gst_video_frame_unmap",
                 "gst_webrtc_session_description_new",
             ],

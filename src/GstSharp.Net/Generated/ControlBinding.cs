@@ -45,6 +45,21 @@ public abstract unsafe partial class ControlBinding : Gst.Object
     {
     }
 
+    /// <summary>Gets the value for the given controlled property at the requested time.</summary>
+    /// <param name="timestamp">The <c>timestamp</c> argument.</param>
+    /// <returns>
+    /// the GValue of the property at the given time,
+    /// or %NULL if the property isn't controlled.
+    /// Ownership is transferred: dispose the value. It is empty when the call
+    /// returns <c>NULL</c>, and disposing an empty value does nothing.
+    /// </returns>
+    public Gst.GObject.Value GetValue(Gst.ClockTime timestamp)
+    {
+        nint nativeResult = GstControlBindingGetValue(Handle, timestamp.Nanoseconds);
+        System.GC.KeepAlive(this);
+        return Gst.GObject.Value.TakeOwnership(nativeResult);
+    }
+
     /// <summary>Checks if the control binding is disabled.</summary>
     /// <returns>%TRUE if the binding is inactive</returns>
     public bool IsDisabled()
@@ -90,6 +105,10 @@ public abstract unsafe partial class ControlBinding : Gst.Object
         System.GC.KeepAlive(@object);
         return nativeResult != 0;
     }
+
+    /// <summary>The <c>gst_control_binding_get_value</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_control_binding_get_value")]
+    private static partial nint GstControlBindingGetValue(nint binding, ulong timestamp);
 
     /// <summary>The <c>gst_control_binding_is_disabled</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_control_binding_is_disabled")]

@@ -144,6 +144,32 @@ consumes the reference it is given and adopts whatever comes back, so the same
 wrapper stands for possibly different caps or a different buffer afterwards.
 Any handle read before the call is stale.
 
+## Members that take or return a `GValue`
+
+A `Gst.GObject.Value` is a struct that owns its contents, and a generated
+member never takes that ownership over: the call is handed a pointer into the
+caller's own storage, nothing is allocated for it, and nothing is disposed
+after it. One rule per shape:
+
+* **An `in` value is read.** The callee copies what it keeps —
+  `caps.SetValue`, `Global.ValueIsFixed` — so the caller keeps the value and
+  still disposes it. An empty value has no type for the call to read and
+  throws `ArgumentException`.
+* **A `ref` value has to arrive initialized** with the type the call expects:
+  `Global.ValueSetFraction` wants a `GST_TYPE_FRACTION`, and
+  `Global.ValueDeserialize` reads the type of its destination to pick the
+  parser. Like the C API, the call raises a warning and does nothing on a
+  value of the wrong type.
+* **An `out` value is storage the member zeroes and the callee fills.** On
+  success the caller owns the contents and disposes the value; on failure —
+  `Global.ValueIntersect` answering `false` — it is left empty, and disposing
+  an empty value does nothing.
+* **A returned value is the caller's own**, whether the C function handed out
+  a borrowed pointer, which is copied (`Global.ValueGetFractionRangeMin`), or
+  transferred an owned one, whose contents are adopted and whose shell is
+  freed (`Gst.Object.GetValue`). Either way dispose it; a call that had
+  nothing to return produces the empty value rather than a null.
+
 ## The GType registry
 
 Every binding assembly fills a `GType` to managed-type registry from a

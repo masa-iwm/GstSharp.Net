@@ -446,6 +446,56 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
         return nativeResult != 0;
     }
 
+    /// <summary>Sets the property of a child of the element.</summary>
+    /// <remarks>
+    /// <para>
+    /// @property_name can either be in the format "prop-name" or
+    /// "TypeName::prop-name", where "prop-name" is the name of the property
+    /// to set (as used in g_object_set()), and "TypeName" is the type name of
+    /// the child (as returned by G_OBJECT_TYPE_NAME()). The latter format is
+    /// useful when two children of different types share the same property
+    /// name.
+    /// </para>
+    /// <para>
+    /// The first child found with the given "prop-name" property that was
+    /// registered with ges_timeline_element_add_child_property() (and of the
+    /// type "TypeName", if it was given) will have the corresponding
+    /// property set to @value. Other children that may have also matched the
+    /// property name (and type name) are left unchanged!
+    /// </para>
+    /// </remarks>
+    /// <param name="propertyName">The <c>propertyName</c> argument.</param>
+    /// <param name="value">
+    /// The <c>value</c> argument.
+    /// The callee copies what it keeps, so the caller keeps ownership of
+    /// <paramref name="value"/> and still disposes it.
+    /// </param>
+    /// <returns>%TRUE if the property was found and set.</returns>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="value"/> is empty.
+    /// </exception>
+    /// <exception cref="Gst.GLib.GException">The native call failed.</exception>
+    public bool SetChildPropertyFull(string propertyName, in Gst.GObject.Value value)
+    {
+        ArgumentNullException.ThrowIfNull(propertyName);
+        System.Span<byte> propertyNameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope propertyNameScope = Gst.Interop.GMarshal.StackUtf8(propertyName, propertyNameBuffer);
+        if (value.IsEmpty)
+        {
+            throw new ArgumentException(
+                "An empty value cannot be passed: it has no type for the call to read.",
+                nameof(value));
+        }
+        nint errorNative = 0;
+        fixed (Gst.GObject.GValueNative* valuePointer = &System.Runtime.CompilerServices.Unsafe.AsRef(in value).NativeValue)
+        {
+            int nativeResult = GesTimelineElementSetChildPropertyFull(Handle, propertyNameScope.Pointer, valuePointer, &errorNative);
+            System.GC.KeepAlive(this);
+            Gst.GLib.GException.ThrowIfSet(ref errorNative);
+            return nativeResult != 0;
+        }
+    }
+
     /// <summary>Sets #GESTimelineElement:duration for the element.</summary>
     /// <remarks>
     /// <para>
@@ -993,6 +1043,10 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
     /// <summary>The <c>ges_timeline_element_roll_start</c> entry point.</summary>
     [LibraryImport("GES", EntryPoint = "ges_timeline_element_roll_start")]
     private static partial int GesTimelineElementRollStart(nint self, ulong start);
+
+    /// <summary>The <c>ges_timeline_element_set_child_property_full</c> entry point.</summary>
+    [LibraryImport("GES", EntryPoint = "ges_timeline_element_set_child_property_full")]
+    private static partial int GesTimelineElementSetChildPropertyFull(nint self, byte* propertyName, Gst.GObject.GValueNative* value, nint* error);
 
     /// <summary>The <c>ges_timeline_element_set_duration</c> entry point.</summary>
     [LibraryImport("GES", EntryPoint = "ges_timeline_element_set_duration")]

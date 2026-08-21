@@ -75,6 +75,17 @@ internal sealed class CallbackPlan
 /// <c>transfer="container"</c>. The arguments of a callback and of a signal are
 /// received rather than passed, so the consuming kind is rejected on
 /// both.</description></item>
+/// <item><description>A <c>GValue</c> crosses as a pointer into storage the
+/// caller owns, so nothing is allocated for it and nothing is disposed after
+/// the call. A <c>const GValue*</c> is only read and becomes an <c>in</c>
+/// parameter; a non-const one is storage the callee may write under a contract
+/// of its own and becomes a <c>ref</c>; a caller allocated out parameter is
+/// zeroed and filled in place. A callee that takes the contents over
+/// (<c>transfer-ownership="full"</c>, the <c>take_value</c> family) would leave
+/// the caller's struct owning what the callee now owns, and a nullable
+/// <c>GValue</c> has no <c>in</c> struct spelling, so both are rejected — see
+/// <see cref="PlanGValue"/>. A returned <c>GValue</c> becomes a value of the
+/// caller's own, copied or adopted by its transfer.</description></item>
 /// <item><description>A <c>floating</c> parameter is passed as it is: every
 /// wrapper sinks the floating reference when it is created, and the callee only
 /// ever adds one of its own.</description></item>
@@ -993,11 +1004,15 @@ internal sealed class MarshalPlanner
     /// caller's own storage, which is what the C function was handed all along.
     /// </para>
     /// <para>
-    /// The correction stops at a plain structure. A handle, a string, an array
-    /// or a scalar has an out projection of its own with a conversion on either
-    /// side of the call, and turning one into a bare pointer to managed storage
-    /// would hand native code the address of something whose size and layout it
-    /// does not agree with.
+    /// The correction stops at a plain structure and at a <c>GValue</c>, whose
+    /// projection is a pointer into the caller's own storage as well — that is
+    /// what moves <c>gst_value_deserialize</c> from a destination this would
+    /// zero to the pre-initialized one its parser table reads, and
+    /// <c>gst_value_fixate</c> from a read to the fill it really is. A handle,
+    /// a string, an array or a scalar has an out projection of its own with a
+    /// conversion on either side of the call, and turning one into a bare
+    /// pointer to managed storage would hand native code the address of
+    /// something whose size and layout it does not agree with.
     /// </para>
     /// </remarks>
     private ArgumentDirection OverriddenDirection(
@@ -1012,12 +1027,14 @@ internal sealed class MarshalPlanner
             return declared;
         }
 
-        if (mapped.Kind != MarshalKind.PlainStruct || parameter.Type is GirArrayRef || !parameter.Type.IsPointer)
+        if (mapped.Kind is not (MarshalKind.PlainStruct or MarshalKind.GValue)
+            || parameter.Type is GirArrayRef
+            || !parameter.Type.IsPointer)
         {
             _diagnostics.Warn(
                 "GEN0017",
                 $"The direction override of '{AnnotationKeyOf(callable)}#{parameter.Name}' is ignored: only a "
-                + "pointer to a plain structure can be re-planned as an out or a ref parameter.");
+                + "pointer to a plain structure or to a GValue can be re-planned as an out or a ref parameter.");
             return declared;
         }
 
@@ -1233,6 +1250,9 @@ internal sealed class MarshalPlanner
                     IsNullable = nullable,
                 };
 
+            case MarshalKind.GValue:
+                return PlanGValue(type, name, direction, transfer, nullable, isReturn);
+
             case MarshalKind.GObject:
             case MarshalKind.MiniObject:
             case MarshalKind.Boxed:
@@ -1274,6 +1294,137 @@ internal sealed class MarshalPlanner
             default:
                 return null;
         }
+    }
+
+    /// <summary>
+    /// Plans a <c>GValue</c>, which crosses as a pointer into storage the
+    /// caller owns: the runtime <c>Gst.GObject.Value</c> struct, passed by
+    /// <c>in</c>, <c>ref</c> or <c>out</c>. Nothing is allocated for the call
+    /// and nothing is disposed after it, so the argument takes no part in the
+    /// three phase prologue of the materializing members.
+    /// </summary>
+    /// <param name="type">The gir type reference, whose C type tells const from writable.</param>
+    /// <param name="name">The C# name of the argument.</param>
+    /// <param name="direction">How the argument is passed, overrides applied.</param>
+    /// <param name="transfer">The ownership transfer.</param>
+    /// <param name="nullable">Whether the gir marks the value nullable.</param>
+    /// <param name="isReturn">Whether the value is the return value.</param>
+    /// <returns>The plan, or <see langword="null"/> when the shape is not supported.</returns>
+    /// <remarks>
+    /// <para>
+    /// The shapes, keyed on direction, transfer and the const-ness of the C
+    /// type. A <c>const GValue*</c> in parameter is only read; it is guarded
+    /// against the empty value, which the callee would <c>g_critical</c> on and
+    /// ignore. A non-const <c>GValue*</c> in parameter is storage the callee
+    /// writes under a contract of its own — <c>gst_value_set_fraction</c> wants
+    /// an initialized fraction, <c>gst_value_fraction_multiply</c> a
+    /// pre-initialized product — so it crosses as <c>ref</c> and is not
+    /// guarded: which states are valid is the callee's to say. A <c>ref</c>
+    /// direction also arrives from the overlays, for the out parameters whose
+    /// callee reads the type of the destination before writing it
+    /// (<c>gst_value_deserialize</c>, <c>gst_util_set_value_from_string</c>).
+    /// </para>
+    /// <para>
+    /// An out parameter is bound when it is a single <c>GValue*</c> the callee
+    /// fills: the member zeroes the caller's storage — the uninitialized state
+    /// <c>g_value_init</c> expects to find — and the callee writes in place. A
+    /// nullable or optional annotation is ignored there: storage is always
+    /// passed, and a callee that declines leaves it empty, which disposes as a
+    /// no-op. A <c>const GValue**</c> hands back a borrowed pointer instead
+    /// (<c>gst_message_parse_property_notify</c>) and stays unsupported.
+    /// </para>
+    /// <para>
+    /// Two in shapes are rejected on purpose, and a synthetic fixture asserts
+    /// each so that a refactor cannot silently widen them. A callee that takes
+    /// the contents over (<c>transfer-ownership="full"</c>, the
+    /// <c>take_value</c> family) would leave the caller's struct owning what
+    /// the callee now owns; binding that needs an emission that moves the
+    /// contents out of the caller's value, which does not exist. And a nullable
+    /// <c>GValue</c> cannot be expressed: a C# <c>in</c> struct has no null.
+    /// </para>
+    /// </remarks>
+    private static ArgumentPlan? PlanGValue(
+        GirTypeRef type,
+        string name,
+        ArgumentDirection direction,
+        GirTransfer transfer,
+        bool nullable,
+        bool isReturn)
+    {
+        const string PublicType = "Gst.GObject.Value";
+        const string RawType = "Gst.GObject.GValueNative*";
+
+        if (isReturn)
+        {
+            // A returned GValue becomes a value of the caller's own: a
+            // borrowed return is copied, an owned one is adopted — contents
+            // moved, shell freed. NULL is the empty value either way, so the
+            // public type is never nullable.
+            if (transfer is not (GirTransfer.None or GirTransfer.Full))
+            {
+                return null;
+            }
+
+            return new ArgumentPlan
+            {
+                Kind = ArgumentKind.GValue,
+                Name = name,
+                PublicType = PublicType,
+                RawType = NativeInt,
+                Transfer = transfer,
+            };
+        }
+
+        if (direction == ArgumentDirection.Out)
+        {
+            // Only a single GValue* the callee fills is storage this can
+            // provide; a `const GValue**` hands back a borrowed pointer and
+            // stays unsupported.
+            if (type.CType is not { } cType
+                || !cType.EndsWith('*')
+                || cType.EndsWith("**", StringComparison.Ordinal))
+            {
+                return null;
+            }
+
+            return new ArgumentPlan
+            {
+                Kind = ArgumentKind.GValue,
+                Name = name,
+                PublicType = PublicType,
+                RawType = RawType,
+                Direction = ArgumentDirection.Out,
+                Transfer = transfer,
+            };
+        }
+
+        // The take_value family. Rejected on purpose; the synthetic fixture
+        // that asserts this path is the only guard — no introspectable real
+        // gir case survives the overlays — so do not let a refactor turn it
+        // into a fall-through.
+        if (transfer != GirTransfer.None)
+        {
+            return null;
+        }
+
+        // A C# `in` or `ref` struct cannot be null. Rejected on purpose and
+        // asserted by a synthetic fixture as well.
+        if (nullable)
+        {
+            return null;
+        }
+
+        bool isConst = type.CType?.Contains("const", StringComparison.Ordinal) ?? false;
+        return new ArgumentPlan
+        {
+            Kind = ArgumentKind.GValue,
+            Name = name,
+            PublicType = PublicType,
+            RawType = RawType,
+            Direction = direction == ArgumentDirection.In && isConst
+                ? ArgumentDirection.In
+                : ArgumentDirection.Ref,
+        };
     }
 
     private ArgumentPlan? PlanHandle(
@@ -1833,7 +1984,14 @@ internal sealed class MarshalPlanner
                 NullableOf(callback, parameter),
                 context);
 
-            if (argument is null || argument.Kind is ArgumentKind.Utf8Owned or ArgumentKind.Callback)
+            // A GValue argument is received rather than passed: the method
+            // surface points its ref at storage the caller owns, which a
+            // trampoline has no equivalent of, so the callbacks that carry one
+            // (GstControlBindingConvert, the iterator, structure and tag merge
+            // families) stay unbound rather than flowing into a trampoline
+            // whose raw signature could not compile.
+            if (argument is null
+                || argument.Kind is ArgumentKind.Utf8Owned or ArgumentKind.Callback or ArgumentKind.GValue)
             {
                 return null;
             }

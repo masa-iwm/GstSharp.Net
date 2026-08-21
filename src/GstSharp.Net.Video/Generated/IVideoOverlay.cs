@@ -392,6 +392,41 @@ public static unsafe partial class VideoOverlayExtensions
         System.GC.KeepAlive(overlay);
     }
 
+    /// <summary>
+    /// This helper shall be used by classes implementing the #GstVideoOverlay
+    /// interface that want the render rectangle to be controllable using
+    /// properties. This helper will parse and set the render rectangle calling
+    /// gst_video_overlay_set_render_rectangle().
+    /// </summary>
+    /// <param name="object">The <c>@object</c> argument.</param>
+    /// <param name="lastPropId">The <c>lastPropId</c> argument.</param>
+    /// <param name="propertyId">The <c>propertyId</c> argument.</param>
+    /// <param name="value">
+    /// The <c>value</c> argument.
+    /// The callee copies what it keeps, so the caller keeps ownership of
+    /// <paramref name="value"/> and still disposes it.
+    /// </param>
+    /// <returns>%TRUE if the @property_id matches the GstVideoOverlay property</returns>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="value"/> is empty.
+    /// </exception>
+    public static bool SetProperty(Gst.GObject.Object @object, int lastPropId, uint propertyId, in Gst.GObject.Value value)
+    {
+        ArgumentNullException.ThrowIfNull(@object);
+        if (value.IsEmpty)
+        {
+            throw new ArgumentException(
+                "An empty value cannot be passed: it has no type for the call to read.",
+                nameof(value));
+        }
+        fixed (Gst.GObject.GValueNative* valuePointer = &System.Runtime.CompilerServices.Unsafe.AsRef(in value).NativeValue)
+        {
+            int nativeResult = GstVideoOverlaySetProperty(@object.Handle, lastPropId, propertyId, valuePointer);
+            System.GC.KeepAlive(@object);
+            return nativeResult != 0;
+        }
+    }
+
     /// <summary>The <c>gst_video_overlay_expose</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_overlay_expose")]
     private static partial void GstVideoOverlayExpose(nint overlay);
@@ -415,4 +450,8 @@ public static unsafe partial class VideoOverlayExtensions
     /// <summary>The <c>gst_video_overlay_set_window_handle</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_overlay_set_window_handle")]
     private static partial void GstVideoOverlaySetWindowHandle(nint overlay, nuint handle);
+
+    /// <summary>The <c>gst_video_overlay_set_property</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_video_overlay_set_property")]
+    private static partial int GstVideoOverlaySetProperty(nint @object, int lastPropId, uint propertyId, Gst.GObject.GValueNative* value);
 }

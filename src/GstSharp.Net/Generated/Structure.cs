@@ -850,6 +850,21 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
         return nativeResult != 0;
     }
 
+    /// <summary>Get the value of the field with GQuark @field.</summary>
+    /// <param name="field">The <c>field</c> argument.</param>
+    /// <returns>
+    /// the #GValue corresponding to the field with the given
+    /// name identifier.
+    /// The value is a copy the caller owns: dispose it. It is empty when the
+    /// source has no value to hand out.
+    /// </returns>
+    public Gst.GObject.Value IdGetValue(Gst.GLib.Quark field)
+    {
+        nint nativeResult = GstStructureIdGetValue(Handle, field.Value);
+        System.GC.KeepAlive(this);
+        return Gst.GObject.Value.CopyFrom(nativeResult);
+    }
+
     /// <summary>Check if @structure contains a field named @field.</summary>
     /// <param name="field">The <c>field</c> argument.</param>
     /// <returns>%TRUE if the structure contains a field with the given name</returns>
@@ -874,6 +889,42 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     }
 
     /// <summary>
+    /// Sets the field with the given GQuark @field to @value.  If the field
+    /// does not exist, it is created.  If the field exists, the previous
+    /// value is replaced and freed.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The structure has to be writable. Like the C API, the call raises a warning
+    /// and writes nothing otherwise.
+    /// </para>
+    /// </remarks>
+    /// <param name="field">The <c>field</c> argument.</param>
+    /// <param name="value">
+    /// The <c>value</c> argument.
+    /// The callee copies what it keeps, so the caller keeps ownership of
+    /// <paramref name="value"/> and still disposes it.
+    /// </param>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="value"/> is empty.
+    /// </exception>
+    [Obsolete("Use gst_structure_id_str_set_value(). (deprecated since 1.26)")]
+    public void IdSetValue(Gst.GLib.Quark field, in Gst.GObject.Value value)
+    {
+        if (value.IsEmpty)
+        {
+            throw new ArgumentException(
+                "An empty value cannot be passed: it has no type for the call to read.",
+                nameof(value));
+        }
+        fixed (Gst.GObject.GValueNative* valuePointer = &System.Runtime.CompilerServices.Unsafe.AsRef(in value).NativeValue)
+        {
+            GstStructureIdSetValue(Handle, field.Value, valuePointer);
+            System.GC.KeepAlive(this);
+        }
+    }
+
+    /// <summary>
     /// Finds the field with the given name, and returns the type of the
     /// value it contains.  If the field is not found, G_TYPE_INVALID is
     /// returned.
@@ -890,6 +941,26 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(fieldname);
         return new Gst.GObject.GType(nativeResult);
+    }
+
+    /// <summary>Get the value of the field with name @fieldname.</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.26.</para>
+    /// </remarks>
+    /// <param name="fieldname">The <c>fieldname</c> argument.</param>
+    /// <returns>
+    /// the #GValue corresponding to the field with the given
+    /// name.
+    /// The value is a copy the caller owns: dispose it. It is empty when the
+    /// source has no value to hand out.
+    /// </returns>
+    public Gst.GObject.Value IdStrGetValue(Gst.IdStr fieldname)
+    {
+        ArgumentNullException.ThrowIfNull(fieldname);
+        nint nativeResult = GstStructureIdStrGetValue(Handle, fieldname.Handle);
+        System.GC.KeepAlive(this);
+        System.GC.KeepAlive(fieldname);
+        return Gst.GObject.Value.CopyFrom(nativeResult);
     }
 
     /// <summary>Check if @structure contains a field named @fieldname.</summary>
@@ -959,6 +1030,44 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
         GstStructureIdStrRemoveField(Handle, fieldname.Handle);
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(fieldname);
+    }
+
+    /// <summary>
+    /// Sets the field with the given name @field to @value.  If the field
+    /// does not exist, it is created.  If the field exists, the previous
+    /// value is replaced and freed.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The structure has to be writable. Like the C API, the call raises a warning
+    /// and writes nothing otherwise.
+    /// </para>
+    /// <para>Available since GStreamer 1.26.</para>
+    /// </remarks>
+    /// <param name="fieldname">The <c>fieldname</c> argument.</param>
+    /// <param name="value">
+    /// The <c>value</c> argument.
+    /// The callee copies what it keeps, so the caller keeps ownership of
+    /// <paramref name="value"/> and still disposes it.
+    /// </param>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="value"/> is empty.
+    /// </exception>
+    public void IdStrSetValue(Gst.IdStr fieldname, in Gst.GObject.Value value)
+    {
+        ArgumentNullException.ThrowIfNull(fieldname);
+        if (value.IsEmpty)
+        {
+            throw new ArgumentException(
+                "An empty value cannot be passed: it has no type for the call to read.",
+                nameof(value));
+        }
+        fixed (Gst.GObject.GValueNative* valuePointer = &System.Runtime.CompilerServices.Unsafe.AsRef(in value).NativeValue)
+        {
+            GstStructureIdStrSetValue(Handle, fieldname.Handle, valuePointer);
+            System.GC.KeepAlive(this);
+            System.GC.KeepAlive(fieldname);
+        }
     }
 
     /// <summary>Intersects @struct1 and @struct2 and returns the intersection.</summary>
@@ -1301,6 +1410,10 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     [LibraryImport("Gst", EntryPoint = "gst_structure_has_name")]
     private static partial int GstStructureHasName(nint structure, byte* name);
 
+    /// <summary>The <c>gst_structure_id_get_value</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_structure_id_get_value")]
+    private static partial nint GstStructureIdGetValue(nint structure, uint field);
+
     /// <summary>The <c>gst_structure_id_has_field</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_structure_id_has_field")]
     private static partial int GstStructureIdHasField(nint structure, uint field);
@@ -1309,9 +1422,17 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     [LibraryImport("Gst", EntryPoint = "gst_structure_id_has_field_typed")]
     private static partial int GstStructureIdHasFieldTyped(nint structure, uint field, nuint type);
 
+    /// <summary>The <c>gst_structure_id_set_value</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_structure_id_set_value")]
+    private static partial void GstStructureIdSetValue(nint structure, uint field, Gst.GObject.GValueNative* value);
+
     /// <summary>The <c>gst_structure_id_str_get_field_type</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_structure_id_str_get_field_type")]
     private static partial nuint GstStructureIdStrGetFieldType(nint structure, nint fieldname);
+
+    /// <summary>The <c>gst_structure_id_str_get_value</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_structure_id_str_get_value")]
+    private static partial nint GstStructureIdStrGetValue(nint structure, nint fieldname);
 
     /// <summary>The <c>gst_structure_id_str_has_field</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_structure_id_str_has_field")]
@@ -1328,6 +1449,10 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     /// <summary>The <c>gst_structure_id_str_remove_field</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_structure_id_str_remove_field")]
     private static partial void GstStructureIdStrRemoveField(nint structure, nint fieldname);
+
+    /// <summary>The <c>gst_structure_id_str_set_value</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_structure_id_str_set_value")]
+    private static partial void GstStructureIdStrSetValue(nint structure, nint fieldname, Gst.GObject.GValueNative* value);
 
     /// <summary>The <c>gst_structure_intersect</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_structure_intersect")]

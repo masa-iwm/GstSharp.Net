@@ -62,6 +62,17 @@ internal enum ArgumentKind
     /// </summary>
     ConsumedHandle,
 
+    /// <summary>
+    /// A <c>GValue</c>, passed as a pointer to storage the caller owns. The
+    /// public surface takes the runtime <c>Gst.GObject.Value</c> struct by
+    /// <c>in</c>, <c>ref</c> or <c>out</c>; nothing is allocated for the call
+    /// and nothing is disposed after it. A returned <c>GValue</c> travels as a
+    /// bare pointer and becomes a value of the caller's own: copied when it is
+    /// borrowed, adopted — contents moved, shell freed — when the call
+    /// transfers it.
+    /// </summary>
+    GValue,
+
     /// <summary>A blittable structure, passed by value or through a pointer.</summary>
     PlainStruct,
 

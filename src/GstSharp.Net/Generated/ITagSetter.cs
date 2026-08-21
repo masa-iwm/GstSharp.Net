@@ -64,6 +64,37 @@ public interface ITagSetter
 /// <summary>The methods of <c>GstTagSetter</c>.</summary>
 public static unsafe partial class TagSetterExtensions
 {
+    /// <summary>Adds the given tag / GValue pair on the setter using the given merge mode.</summary>
+    /// <param name="setter">a #GstTagSetter</param>
+    /// <param name="mode">The <c>mode</c> argument.</param>
+    /// <param name="tag">The <c>tag</c> argument.</param>
+    /// <param name="value">
+    /// The <c>value</c> argument.
+    /// The callee copies what it keeps, so the caller keeps ownership of
+    /// <paramref name="value"/> and still disposes it.
+    /// </param>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="value"/> is empty.
+    /// </exception>
+    public static void AddTagValue(this Gst.ITagSetter setter, Gst.TagMergeMode mode, string tag, in Gst.GObject.Value value)
+    {
+        ArgumentNullException.ThrowIfNull(setter);
+        ArgumentNullException.ThrowIfNull(tag);
+        System.Span<byte> tagBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope tagScope = Gst.Interop.GMarshal.StackUtf8(tag, tagBuffer);
+        if (value.IsEmpty)
+        {
+            throw new ArgumentException(
+                "An empty value cannot be passed: it has no type for the call to read.",
+                nameof(value));
+        }
+        fixed (Gst.GObject.GValueNative* valuePointer = &System.Runtime.CompilerServices.Unsafe.AsRef(in value).NativeValue)
+        {
+            GstTagSetterAddTagValue(setter.Handle, (int)mode, tagScope.Pointer, valuePointer);
+            System.GC.KeepAlive(setter);
+        }
+    }
+
     /// <summary>
     /// Returns the current list of tags the setter uses.  The list should not be
     /// modified or freed.
@@ -139,6 +170,10 @@ public static unsafe partial class TagSetterExtensions
         GstTagSetterSetTagMergeMode(setter.Handle, (int)mode);
         System.GC.KeepAlive(setter);
     }
+
+    /// <summary>The <c>gst_tag_setter_add_tag_value</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_tag_setter_add_tag_value")]
+    private static partial void GstTagSetterAddTagValue(nint setter, int mode, byte* tag, Gst.GObject.GValueNative* value);
 
     /// <summary>The <c>gst_tag_setter_get_tag_list</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_tag_setter_get_tag_list")]

@@ -27,10 +27,12 @@ internal sealed class AnnotationOverride
     /// </summary>
     /// <remarks>
     /// It only corrects a parameter the gir spells as a bare pointer to a plain
-    /// structure, which the planner would otherwise pass as a copy the callee
-    /// writes into and the caller never sees. Everything else is left alone and
-    /// reported, because a direction is not a marshalling this can invent: an
-    /// out handle, an array or a string needs a projection of its own.
+    /// structure — which the planner would otherwise pass as a copy the callee
+    /// writes into and the caller never sees — or to a <c>GValue</c>, whose
+    /// projection is a pointer into the caller's own storage in every
+    /// direction. Everything else is left alone and reported, because a
+    /// direction is not a marshalling this can invent: an out handle, an array
+    /// or a string needs a projection of its own.
     /// </remarks>
     public string? Direction { get; set; }
 

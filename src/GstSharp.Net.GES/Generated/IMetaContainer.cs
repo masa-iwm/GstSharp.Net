@@ -268,6 +268,26 @@ public static unsafe partial class MetaContainerExtensions
         return Gst.GObject.Object.FromNative<GES.MarkerList>(nativeResult, Gst.Interop.Transfer.Full);
     }
 
+    /// <summary>Gets the current value of the specified field of the meta container.</summary>
+    /// <param name="container">A #GESMetaContainer</param>
+    /// <param name="key">The <c>key</c> argument.</param>
+    /// <returns>
+    /// The value under @key, or %NULL if @container
+    /// does not have the field set.
+    /// The value is a copy the caller owns: dispose it. It is empty when the
+    /// source has no value to hand out.
+    /// </returns>
+    public static Gst.GObject.Value GetMeta(this GES.IMetaContainer container, string key)
+    {
+        ArgumentNullException.ThrowIfNull(container);
+        ArgumentNullException.ThrowIfNull(key);
+        System.Span<byte> keyBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope keyScope = Gst.Interop.GMarshal.StackUtf8(key, keyBuffer);
+        nint nativeResult = GesMetaContainerGetMeta(container.Handle, keyScope.Pointer);
+        System.GC.KeepAlive(container);
+        return Gst.GObject.Value.CopyFrom(nativeResult);
+    }
+
     /// <summary>
     /// Gets the current string value of the specified field of the meta
     /// container. If the field does not have a set value, or it is of the
@@ -350,6 +370,49 @@ public static unsafe partial class MetaContainerExtensions
         System.GC.KeepAlive(container);
         return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
             ?? throw new InvalidOperationException("ges_meta_container_metas_to_string returned no value.");
+    }
+
+    /// <summary>
+    /// Sets the value of the specified field of the meta container to the
+    /// given value, and registers the field to only hold a value of the
+    /// same type. After calling this, only values of the same type as @value
+    /// can be set for this field. The given flags can be set to make this
+    /// field only readable after calling this method.
+    /// </summary>
+    /// <param name="container">A #GESMetaContainer</param>
+    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <param name="metaItem">The <c>metaItem</c> argument.</param>
+    /// <param name="value">
+    /// The <c>value</c> argument.
+    /// The callee copies what it keeps, so the caller keeps ownership of
+    /// <paramref name="value"/> and still disposes it.
+    /// </param>
+    /// <returns>
+    /// %TRUE if the @meta_item field was successfully registered on
+    /// @container to only hold @value types, with the given @flags, and the
+    /// field was successfully set to @value.
+    /// </returns>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="value"/> is empty.
+    /// </exception>
+    public static bool RegisterMeta(this GES.IMetaContainer container, GES.MetaFlag flags, string metaItem, in Gst.GObject.Value value)
+    {
+        ArgumentNullException.ThrowIfNull(container);
+        ArgumentNullException.ThrowIfNull(metaItem);
+        System.Span<byte> metaItemBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope metaItemScope = Gst.Interop.GMarshal.StackUtf8(metaItem, metaItemBuffer);
+        if (value.IsEmpty)
+        {
+            throw new ArgumentException(
+                "An empty value cannot be passed: it has no type for the call to read.",
+                nameof(value));
+        }
+        fixed (Gst.GObject.GValueNative* valuePointer = &System.Runtime.CompilerServices.Unsafe.AsRef(in value).NativeValue)
+        {
+            int nativeResult = GesMetaContainerRegisterMeta(container.Handle, (int)flags, metaItemScope.Pointer, valuePointer);
+            System.GC.KeepAlive(container);
+            return nativeResult != 0;
+        }
     }
 
     /// <summary>
@@ -871,6 +934,10 @@ public static unsafe partial class MetaContainerExtensions
     [LibraryImport("GES", EntryPoint = "ges_meta_container_get_marker_list")]
     private static partial nint GesMetaContainerGetMarkerList(nint container, byte* key);
 
+    /// <summary>The <c>ges_meta_container_get_meta</c> entry point.</summary>
+    [LibraryImport("GES", EntryPoint = "ges_meta_container_get_meta")]
+    private static partial nint GesMetaContainerGetMeta(nint container, byte* key);
+
     /// <summary>The <c>ges_meta_container_get_string</c> entry point.</summary>
     [LibraryImport("GES", EntryPoint = "ges_meta_container_get_string")]
     private static partial nint GesMetaContainerGetString(nint container, byte* metaItem);
@@ -886,6 +953,10 @@ public static unsafe partial class MetaContainerExtensions
     /// <summary>The <c>ges_meta_container_metas_to_string</c> entry point.</summary>
     [LibraryImport("GES", EntryPoint = "ges_meta_container_metas_to_string")]
     private static partial nint GesMetaContainerMetasToString(nint container);
+
+    /// <summary>The <c>ges_meta_container_register_meta</c> entry point.</summary>
+    [LibraryImport("GES", EntryPoint = "ges_meta_container_register_meta")]
+    private static partial int GesMetaContainerRegisterMeta(nint container, int flags, byte* metaItem, Gst.GObject.GValueNative* value);
 
     /// <summary>The <c>ges_meta_container_register_meta_boolean</c> entry point.</summary>
     [LibraryImport("GES", EntryPoint = "ges_meta_container_register_meta_boolean")]

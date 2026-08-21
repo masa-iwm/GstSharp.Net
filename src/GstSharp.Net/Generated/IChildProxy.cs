@@ -147,6 +147,61 @@ public static unsafe partial class ChildProxyExtensions
         return nativeResult;
     }
 
+    /// <summary>
+    /// Gets a single property using the GstChildProxy mechanism.
+    /// You are responsible for freeing it by calling g_value_unset()
+    /// </summary>
+    /// <param name="object">object to query</param>
+    /// <param name="name">The <c>name</c> argument.</param>
+    /// <param name="value">
+    /// The <c>value</c> argument.
+    /// On success the caller owns the contents and disposes the value; on
+    /// failure it is left empty, and disposing an empty value does nothing.
+    /// </param>
+    public static void GetProperty(this Gst.IChildProxy @object, string name, out Gst.GObject.Value value)
+    {
+        ArgumentNullException.ThrowIfNull(@object);
+        ArgumentNullException.ThrowIfNull(name);
+        System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
+        value = default;
+        fixed (Gst.GObject.GValueNative* valuePointer = &value.NativeValue)
+        {
+            GstChildProxyGetProperty(@object.Handle, nameScope.Pointer, valuePointer);
+            System.GC.KeepAlive(@object);
+        }
+    }
+
+    /// <summary>Sets a single property using the GstChildProxy mechanism.</summary>
+    /// <param name="object">the parent object</param>
+    /// <param name="name">The <c>name</c> argument.</param>
+    /// <param name="value">
+    /// The <c>value</c> argument.
+    /// The callee copies what it keeps, so the caller keeps ownership of
+    /// <paramref name="value"/> and still disposes it.
+    /// </param>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="value"/> is empty.
+    /// </exception>
+    public static void SetProperty(this Gst.IChildProxy @object, string name, in Gst.GObject.Value value)
+    {
+        ArgumentNullException.ThrowIfNull(@object);
+        ArgumentNullException.ThrowIfNull(name);
+        System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
+        if (value.IsEmpty)
+        {
+            throw new ArgumentException(
+                "An empty value cannot be passed: it has no type for the call to read.",
+                nameof(value));
+        }
+        fixed (Gst.GObject.GValueNative* valuePointer = &System.Runtime.CompilerServices.Unsafe.AsRef(in value).NativeValue)
+        {
+            GstChildProxySetProperty(@object.Handle, nameScope.Pointer, valuePointer);
+            System.GC.KeepAlive(@object);
+        }
+    }
+
     /// <summary>The arguments of the <c>child-added</c> signal of <c>GstChildProxy</c>.</summary>
     public sealed class ChildAddedSignalArgs : System.EventArgs
     {
@@ -306,4 +361,12 @@ public static unsafe partial class ChildProxyExtensions
     /// <summary>The <c>gst_child_proxy_get_children_count</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_child_proxy_get_children_count")]
     private static partial uint GstChildProxyGetChildrenCount(nint parent);
+
+    /// <summary>The <c>gst_child_proxy_get_property</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_child_proxy_get_property")]
+    private static partial void GstChildProxyGetProperty(nint @object, byte* name, Gst.GObject.GValueNative* value);
+
+    /// <summary>The <c>gst_child_proxy_set_property</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_child_proxy_set_property")]
+    private static partial void GstChildProxySetProperty(nint @object, byte* name, Gst.GObject.GValueNative* value);
 }
