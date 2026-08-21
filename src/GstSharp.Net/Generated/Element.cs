@@ -969,15 +969,16 @@ public abstract unsafe partial class Element : Gst.Object
     /// <param name="line">The <c>line</c> argument.</param>
     public void MessageFull(Gst.MessageType type, Gst.GLib.Quark domain, int code, string? text, string? debug, string file, string function, int line)
     {
+        ArgumentNullException.ThrowIfNull(file);
+        ArgumentNullException.ThrowIfNull(function);
+        nint instanceHandle = Handle;
         nint textNative = Gst.Interop.GMarshal.StringToUtf8Ptr(text);
         nint debugNative = Gst.Interop.GMarshal.StringToUtf8Ptr(debug);
-        ArgumentNullException.ThrowIfNull(file);
         System.Span<byte> fileBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope fileScope = Gst.Interop.GMarshal.StackUtf8(file, fileBuffer);
-        ArgumentNullException.ThrowIfNull(function);
         System.Span<byte> functionBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope functionScope = Gst.Interop.GMarshal.StackUtf8(function, functionBuffer);
-        GstElementMessageFull(Handle, (uint)type, domain.Value, code, textNative, debugNative, fileScope.Pointer, functionScope.Pointer, line);
+        GstElementMessageFull(instanceHandle, (uint)type, domain.Value, code, textNative, debugNative, fileScope.Pointer, functionScope.Pointer, line);
         System.GC.KeepAlive(this);
     }
 

@@ -639,4 +639,23 @@ public sealed class ClassEmitterTests
         // the order is what this pins: the two lines are asserted adjacent.
         Assert.Contains(body, SourceOf(path), StringComparison.Ordinal);
     }
+
+    [Fact]
+    public void AMemberThatTakesAnOwnedStringGuardsAndReadsItsHandleFirst()
+    {
+        // gst_element_message_full takes two owned strings, whose UTF-8 copies
+        // only the call releases. The member used to allocate the first before
+        // the guard of a later parameter ran, so a throwing guard leaked it.
+        // The order pinned here is the fix: every guard, then the handle read,
+        // then the first allocation, asserted adjacent.
+        Assert.Contains(
+            """
+                    ArgumentNullException.ThrowIfNull(file);
+                    ArgumentNullException.ThrowIfNull(function);
+                    nint instanceHandle = Handle;
+                    nint textNative = Gst.Interop.GMarshal.StringToUtf8Ptr(text);
+            """,
+            Source("Element.cs"),
+            StringComparison.Ordinal);
+    }
 }

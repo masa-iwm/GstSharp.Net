@@ -14,9 +14,10 @@ public sealed class MarshalPlannerTests
     /// A namespace that exercises every projection the planner knows: strings
     /// in both directions, an enumeration, a handle in both directions and in
     /// both nullabilities, an out parameter, a span, a callback with user data
-    /// and a destroy notification, a callable that throws, a property built
-    /// from its accessors, a returned <c>GList</c> in each of its three
-    /// ownership shapes, and the shapes that are rejected on purpose.
+    /// and a destroy notification, a callable that throws, an owned string
+    /// beside handle arguments, a property built from its accessors, a
+    /// returned <c>GList</c> in each of its three ownership shapes, and the
+    /// shapes that are rejected on purpose.
     /// </summary>
     private const string Body =
         """
@@ -247,6 +248,25 @@ public sealed class MarshalPlannerTests
                   </parameter>
                   <parameter name="peer" transfer-ownership="none" nullable="1">
                     <type name="Widget" c:type="GstWidget*"/>
+                  </parameter>
+                </parameters>
+              </method>
+              <method name="adopt_label" c:identifier="gst_widget_adopt_label">
+                <return-value transfer-ownership="none">
+                  <type name="none" c:type="void"/>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="widget" transfer-ownership="none">
+                    <type name="Widget" c:type="GstWidget*"/>
+                  </instance-parameter>
+                  <parameter name="caps" transfer-ownership="none">
+                    <type name="Caps" c:type="GstCaps*"/>
+                  </parameter>
+                  <parameter name="peer" transfer-ownership="none" nullable="1">
+                    <type name="Widget" c:type="GstWidget*"/>
+                  </parameter>
+                  <parameter name="label" transfer-ownership="full">
+                    <type name="utf8" c:type="gchar*"/>
                   </parameter>
                 </parameters>
               </method>
@@ -624,6 +644,34 @@ public sealed class MarshalPlannerTests
             }
             """,
             Run.Member("Widget.cs", "public void Attach("),
+            StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public void AnOwnedStringOrdersThePrologueInThreePhases()
+    {
+        // The UTF-8 copy of an owned string is an allocation that only the
+        // call releases, so the member runs every guard first, reads every
+        // handle next — a disposed wrapper throws before anything is
+        // allocated — and materializes the string last. The barriers stay on
+        // the wrappers: the locals keep nothing alive.
+        Assert.Equal(
+            """
+            public void AdoptLabel(Gst.Caps caps, Gst.Widget? peer, string label)
+            {
+                ArgumentNullException.ThrowIfNull(caps);
+                ArgumentNullException.ThrowIfNull(label);
+                nint instanceHandle = Handle;
+                nint capsNative = caps.Handle;
+                nint peerNative = peer is null ? 0 : peer.Handle;
+                nint labelNative = Gst.Interop.GMarshal.StringToUtf8Ptr(label);
+                GstWidgetAdoptLabel(instanceHandle, capsNative, peerNative, labelNative);
+                System.GC.KeepAlive(this);
+                System.GC.KeepAlive(caps);
+                System.GC.KeepAlive(peer);
+            }
+            """,
+            Run.Member("Widget.cs", "public void AdoptLabel("),
             StringComparer.Ordinal);
     }
 

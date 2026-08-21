@@ -440,8 +440,9 @@ public sealed unsafe partial class RTSPMessage : Gst.GObject.Boxed
     public Gst.Rtsp.RTSPResult TakeHeader(Gst.Rtsp.RTSPHeaderField field, string value)
     {
         ArgumentNullException.ThrowIfNull(value);
+        nint instanceHandle = Handle;
         nint valueNative = Gst.Interop.GMarshal.StringToUtf8Ptr(value);
-        int nativeResult = GstRtspMessageTakeHeader(Handle, (int)field, valueNative);
+        int nativeResult = GstRtspMessageTakeHeader(instanceHandle, (int)field, valueNative);
         System.GC.KeepAlive(this);
         return (Gst.Rtsp.RTSPResult)nativeResult;
     }
@@ -456,11 +457,12 @@ public sealed unsafe partial class RTSPMessage : Gst.GObject.Boxed
     public Gst.Rtsp.RTSPResult TakeHeaderByName(string header, string value)
     {
         ArgumentNullException.ThrowIfNull(header);
+        ArgumentNullException.ThrowIfNull(value);
+        nint instanceHandle = Handle;
         System.Span<byte> headerBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope headerScope = Gst.Interop.GMarshal.StackUtf8(header, headerBuffer);
-        ArgumentNullException.ThrowIfNull(value);
         nint valueNative = Gst.Interop.GMarshal.StringToUtf8Ptr(value);
-        int nativeResult = GstRtspMessageTakeHeaderByName(Handle, headerScope.Pointer, valueNative);
+        int nativeResult = GstRtspMessageTakeHeaderByName(instanceHandle, headerScope.Pointer, valueNative);
         System.GC.KeepAlive(this);
         return (Gst.Rtsp.RTSPResult)nativeResult;
     }

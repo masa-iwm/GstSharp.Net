@@ -18,7 +18,9 @@ namespace GstSharp.Generator.Emit;
 /// scopes that have to wrap the call (a <c>fixed</c> for a span, a
 /// <c>try</c>/<c>finally</c> for a callback that only lives for the duration of
 /// the call), then the call itself, then the error check, the out parameters
-/// and the return value.
+/// and the return value. A member that materializes an argument tightens the
+/// first step into three strict phases — every guard, every handle read, every
+/// materialization; <see cref="MaterializesArguments"/> says why.
 /// </para>
 /// </remarks>
 internal static class CallableRenderer
@@ -269,9 +271,35 @@ internal static class CallableRenderer
 
     private static void WriteBody(CodeWriter writer, MarshalPlan plan)
     {
-        foreach (ArgumentPlan argument in plan.Arguments)
+        if (MaterializesArguments(plan))
         {
-            WritePrologue(writer, plan, argument);
+            // Three strict phases: every guard, then every handle read, then
+            // every materialization. A guard that throws must find nothing
+            // allocated yet, and a disposed wrapper must throw from its handle
+            // read before the first allocation, so that no exit strands what a
+            // materializing argument allocated.
+            foreach (ArgumentPlan argument in plan.Arguments)
+            {
+                WriteGuard(writer, plan, argument);
+            }
+
+            foreach (ArgumentPlan argument in plan.Arguments)
+            {
+                WriteHandleLocal(writer, plan, argument);
+            }
+
+            foreach (ArgumentPlan argument in plan.Arguments)
+            {
+                WritePrologue(writer, plan, argument);
+            }
+        }
+        else
+        {
+            foreach (ArgumentPlan argument in plan.Arguments)
+            {
+                WriteGuard(writer, plan, argument);
+                WritePrologue(writer, plan, argument);
+            }
         }
 
         // A span has to be pinned and a callback that only lives for the
@@ -455,9 +483,10 @@ internal static class CallableRenderer
     /// after the allocation because the call site is where the handle is read.
     /// So the read is hoisted into a local ahead of the allocation whenever a
     /// callback is present, which is the order the hand written surfaces of the
-    /// binding follow. The local is emitted only for those members, because
+    /// binding follow. The local is emitted only for those members and for the
+    /// materializing members of <see cref="MaterializesArguments"/>, because
     /// hoisting it everywhere would rewrite every generated body for a
-    /// guarantee that nothing but a callback needs.
+    /// guarantee that no other member needs.
     /// </para>
     /// </remarks>
     private static bool TakesCallback(MarshalPlan plan)
@@ -465,6 +494,35 @@ internal static class CallableRenderer
         foreach (ArgumentPlan argument in plan.Arguments)
         {
             if (argument.Kind == ArgumentKind.Callback)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Tests whether a member materializes one of its arguments: an allocation
+    /// made for the call that no scope reclaims, which today is the UTF-8 copy
+    /// of a string the callee takes ownership of. The reference a consuming
+    /// call takes over will join it when that kind of argument exists.
+    /// </summary>
+    /// <param name="plan">The member being written.</param>
+    /// <returns><see langword="true"/> when one of the arguments materializes.</returns>
+    /// <remarks>
+    /// Such a member orders its prologue in three strict phases — every guard,
+    /// every handle read, every materialization — so that nothing that can
+    /// throw runs after the allocation, which nothing but the call itself
+    /// releases. Every other member keeps the plain one pass prologue: the
+    /// phases guarantee nothing there, and applying them everywhere would
+    /// rewrite every generated body.
+    /// </remarks>
+    private static bool MaterializesArguments(MarshalPlan plan)
+    {
+        foreach (ArgumentPlan argument in plan.Arguments)
+        {
+            if (argument.Kind == ArgumentKind.Utf8Owned)
             {
                 return true;
             }
@@ -483,7 +541,14 @@ internal static class CallableRenderer
     private static string InstanceHandle(MarshalPlan plan, string name) =>
         plan.Form == CallableForm.ExtensionMethod ? name + ".Handle" : "Handle";
 
-    private static void WritePrologue(CodeWriter writer, MarshalPlan plan, ArgumentPlan argument)
+    /// <summary>
+    /// Writes the validation guards of one argument, which every prologue puts
+    /// before anything is allocated.
+    /// </summary>
+    /// <param name="writer">The target writer.</param>
+    /// <param name="plan">The member being written.</param>
+    /// <param name="argument">The argument to guard.</param>
+    private static void WriteGuard(CodeWriter writer, MarshalPlan plan, ArgumentPlan argument)
     {
         string name = argument.Name;
         switch (argument.Kind)
@@ -494,7 +559,76 @@ internal static class CallableRenderer
                     writer.WriteLine("ArgumentNullException.ThrowIfNull(" + name + ");");
                 }
 
-                if (TakesCallback(plan))
+                return;
+
+            case ArgumentKind.Utf8 when argument.Direction == ArgumentDirection.In:
+            case ArgumentKind.Utf8Owned:
+            case ArgumentKind.Handle when argument.Direction == ArgumentDirection.In:
+                if (!argument.IsNullable)
+                {
+                    writer.WriteLine("ArgumentNullException.ThrowIfNull(" + name + ");");
+                }
+
+                return;
+
+            case ArgumentKind.Callback:
+                writer.WriteLine("ArgumentNullException.ThrowIfNull(" + name + ");");
+                return;
+
+            default:
+                return;
+        }
+    }
+
+    /// <summary>
+    /// Writes the raw handle of the instance and of a handle argument into a
+    /// local, the second phase of a materializing prologue.
+    /// </summary>
+    /// <param name="writer">The target writer.</param>
+    /// <param name="plan">The member being written.</param>
+    /// <param name="argument">The argument whose handle is read.</param>
+    /// <remarks>
+    /// Reading <c>Handle</c> throws <see cref="ObjectDisposedException"/> on a
+    /// disposed wrapper, so every read happens before the first allocation and
+    /// a disposed wrapper throws without stranding what another argument would
+    /// have allocated. The local carries the very read the call site emits for
+    /// every other member, null-to-zero conversion included.
+    /// </remarks>
+    private static void WriteHandleLocal(CodeWriter writer, MarshalPlan plan, ArgumentPlan argument)
+    {
+        switch (argument.Kind)
+        {
+            case ArgumentKind.Instance:
+                writer.WriteLine("nint " + InstanceLocal + " = " + InstanceHandle(plan, argument.Name) + ";");
+                return;
+
+            case ArgumentKind.Handle when argument.Direction == ArgumentDirection.In:
+                writer.WriteLine("nint " + argument.Name + "Native = " + HandleRead(argument) + ";");
+                return;
+
+            default:
+                return;
+        }
+    }
+
+    /// <summary>
+    /// Returns the expression that reads the raw handle out of a handle
+    /// argument, turning null into zero when the argument is nullable.
+    /// </summary>
+    /// <param name="argument">The argument to read.</param>
+    /// <returns>The expression to read.</returns>
+    private static string HandleRead(ArgumentPlan argument) =>
+        argument.IsNullable
+            ? argument.Name + " is null ? 0 : " + argument.Name + ".Handle"
+            : argument.Name + ".Handle";
+
+    private static void WritePrologue(CodeWriter writer, MarshalPlan plan, ArgumentPlan argument)
+    {
+        string name = argument.Name;
+        switch (argument.Kind)
+        {
+            case ArgumentKind.Instance:
+                if (TakesCallback(plan) && !MaterializesArguments(plan))
                 {
                     writer.WriteLine("nint " + InstanceLocal + " = " + InstanceHandle(plan, name) + ";");
                 }
@@ -506,11 +640,6 @@ internal static class CallableRenderer
                 return;
 
             case ArgumentKind.Utf8 when argument.Direction == ArgumentDirection.In:
-                if (!argument.IsNullable)
-                {
-                    writer.WriteLine("ArgumentNullException.ThrowIfNull(" + name + ");");
-                }
-
                 writer.WriteLine(
                     "System.Span<byte> " + name + "Buffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];");
                 writer.WriteLine(
@@ -519,24 +648,10 @@ internal static class CallableRenderer
                 return;
 
             case ArgumentKind.Utf8Owned:
-                if (!argument.IsNullable)
-                {
-                    writer.WriteLine("ArgumentNullException.ThrowIfNull(" + name + ");");
-                }
-
                 writer.WriteLine("nint " + name + "Native = Gst.Interop.GMarshal.StringToUtf8Ptr(" + name + ");");
                 return;
 
-            case ArgumentKind.Handle when argument.Direction == ArgumentDirection.In:
-                if (!argument.IsNullable)
-                {
-                    writer.WriteLine("ArgumentNullException.ThrowIfNull(" + name + ");");
-                }
-
-                return;
-
             case ArgumentKind.Callback:
-                writer.WriteLine("ArgumentNullException.ThrowIfNull(" + name + ");");
                 writer.WriteLine(
                     "Gst.Interop.CallbackHandle " + name + "State = Gst.Interop.CallbackHandle.Alloc(" + name + ");");
                 return;
@@ -602,7 +717,9 @@ internal static class CallableRenderer
         switch (argument.Kind)
         {
             case ArgumentKind.Instance:
-                return TakesCallback(plan) ? InstanceLocal : InstanceHandle(plan, name);
+                return TakesCallback(plan) || MaterializesArguments(plan)
+                    ? InstanceLocal
+                    : InstanceHandle(plan, name);
 
             case ArgumentKind.Error:
                 return "&errorNative";
@@ -634,7 +751,7 @@ internal static class CallableRenderer
                 return argument.RawType.EndsWith('*') ? "&" + name + "Native" : name;
 
             case ArgumentKind.Handle when argument.Direction == ArgumentDirection.In:
-                return argument.IsNullable ? name + " is null ? 0 : " + name + ".Handle" : name + ".Handle";
+                return MaterializesArguments(plan) ? name + "Native" : HandleRead(argument);
 
             default:
                 break;
