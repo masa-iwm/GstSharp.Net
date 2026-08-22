@@ -43,6 +43,42 @@ public unsafe partial class AudioAggregatorConvertPad : Gst.Audio.AudioAggregato
     {
     }
 
+    /// <summary>The <c>converter-config</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// <para>
+    /// Reading builds a wrapper that owns a copy of the value: dispose it when
+    /// you are done with it.
+    /// </para>
+    /// <para>
+    /// Writing copies the argument, which stays the caller's to dispose, and
+    /// <see langword="null"/> clears the property.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public Gst.Structure? ConverterConfig
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("converter-config");
+            return holder.GetBoxed<Gst.Structure>();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("converter-config");
+            holder.SetBoxed(value);
+            SetPropertyValue("converter-config", in holder);
+        }
+    }
+
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstAudioAggregatorConvertPad</c> under.</summary>
     /// <returns>The type of the instances of this wrapper.</returns>
     [LibraryImport("GstAudio", EntryPoint = "gst_audio_aggregator_convert_pad_get_type")]

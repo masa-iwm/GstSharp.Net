@@ -63,6 +63,34 @@ public abstract unsafe partial class Tracer : Gst.Object
         return nativeResult != 0;
     }
 
+    /// <summary>The <c>params</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public string? Params
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("params");
+            return holder.GetString();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("params");
+            holder.SetString(value);
+            SetPropertyValue("params", in holder);
+        }
+    }
+
     /// <summary>The <c>gst_tracer_register</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_tracer_register")]
     private static partial int GstTracerRegister(nint plugin, byte* name, nuint type);

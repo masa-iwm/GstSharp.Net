@@ -45,6 +45,27 @@ public unsafe partial class ImageSource : GES.VideoSource, GES.IExtractable, GES
     {
     }
 
+    /// <summary>The location of the file/resource to use.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// <para>The property is construct-only and therefore read-only here.</para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public string? Uri
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("uri");
+            return holder.GetString();
+        }
+    }
+
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GESImageSource</c> under.</summary>
     /// <returns>The type of the instances of this wrapper.</returns>
     [LibraryImport("GES", EntryPoint = "ges_image_source_get_type")]

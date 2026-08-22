@@ -60,6 +60,37 @@ public unsafe partial class VideoSink : Gst.Base.BaseSink
         result = resultNative;
     }
 
+    /// <summary>
+    /// Whether to show video frames during preroll. If set to %FALSE, video
+    /// frames will only be rendered in PLAYING state.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public bool ShowPrerollFrame
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("show-preroll-frame");
+            return holder.GetBoolean();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("show-preroll-frame");
+            holder.SetBoolean(value);
+            SetPropertyValue("show-preroll-frame", in holder);
+        }
+    }
+
     /// <summary>The <c>gst_video_sink_center_rect</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_sink_center_rect")]
     private static partial void GstVideoSinkCenterRect(Gst.Video.VideoRectangle src, Gst.Video.VideoRectangle dst, Gst.Video.VideoRectangle* result, int scaling);

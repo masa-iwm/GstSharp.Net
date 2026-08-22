@@ -19,58 +19,6 @@ namespace Gst.WebRTC;
 public abstract unsafe partial class WebRTCDataChannel
 {
     /// <summary>
-    /// Gets what the channel is doing: connecting, open, closing or closed.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// The <c>ready-state</c> property has no generated binding — the planner
-    /// has no plan for a property whose type is an enumeration of another
-    /// module, and every property of this class is skipped for that reason — so
-    /// it is read here through
-    /// <see cref="Gst.GObject.Object.GetProperty(string)"/>, which is the
-    /// general route to any property of any object.
-    /// </para>
-    /// <para>
-    /// A channel is connecting from the moment it is created until the peers
-    /// have agreed on it, and only an open channel carries a message.
-    /// <see cref="SendData"/> reads this before it sends.
-    /// </para>
-    /// <para>
-    /// <b><see cref="Close"/> is where the last two states come from, and it
-    /// is graceful.</b> The closing procedure of the specification does not
-    /// throw away what is already queued: the channel moves to
-    /// <see cref="Gst.WebRTC.WebRTCDataChannelState.Closing"/>, the messages
-    /// that were handed over before the call are still sent, and only then does
-    /// the transport reset the stream and the channel reach
-    /// <see cref="Gst.WebRTC.WebRTCDataChannelState.Closed"/> and raise
-    /// <c>on-close</c>. Nothing is accepted after the call, so a send that
-    /// races it is refused rather than half delivered. Closing a channel that
-    /// is already closing or closed does nothing, and closing one that never
-    /// reached a peer — one <c>webrtcbin</c> never associated with an SCTP
-    /// transport — leaves it in the state it was created in, because there is
-    /// no transport to run the procedure on.
-    /// </para>
-    /// <para>
-    /// <b>Compare against
-    /// <see cref="Gst.WebRTC.WebRTCDataChannelState.Open"/> rather than
-    /// switching over the members.</b> The C enumeration starts at a zero that
-    /// its introspection data does not describe — the state a channel is in
-    /// before it starts connecting — so a channel that was just created reports
-    /// a number this enumeration has no name for. Only the four named states
-    /// are ones the library documents; the unnamed one means "not yet".
-    /// </para>
-    /// </remarks>
-    /// <exception cref="ObjectDisposedException">The wrapper was disposed.</exception>
-    public Gst.WebRTC.WebRTCDataChannelState ReadyState
-    {
-        get
-        {
-            using Gst.GObject.Value state = GetProperty("ready-state");
-            return (Gst.WebRTC.WebRTCDataChannelState)state.GetEnum();
-        }
-    }
-
-    /// <summary>
     /// Sends a binary message over the channel.
     /// </summary>
     /// <param name="data">
@@ -105,7 +53,14 @@ public abstract unsafe partial class WebRTCDataChannel
     /// class behave differently, which is a bug of the library rather than a
     /// contract. Sending through the deprecated <c>send-data</c> action signal
     /// crashes in exactly the same way, so nothing about the shape of this call
-    /// is what avoids it; the check is.
+    /// is what avoids it; the check is. It is a comparison against
+    /// <see cref="Gst.WebRTC.WebRTCDataChannelState.Open"/> rather than a
+    /// switch over the members, because the members are not all the states
+    /// there are: the C enumeration has a zero its introspection data does not
+    /// describe — the state a channel is in before it starts connecting — so
+    /// the generated enumeration begins at
+    /// <see cref="Gst.WebRTC.WebRTCDataChannelState.Connecting"/> and a channel
+    /// that was just created reports a number it has no name for.
     /// </para>
     /// <para>
     /// The check is a read and not a lock. A channel that closes between it and
@@ -114,7 +69,14 @@ public abstract unsafe partial class WebRTCDataChannel
     /// connection down still has to keep the two apart. What the check does
     /// remove is the case that is not a race at all: sending before the peers
     /// have agreed on the channel, which is what an application does when it
-    /// sends without waiting for the open notification.
+    /// sends without waiting for the open notification. The window is narrow
+    /// on the closing side, because <see cref="Close"/> is graceful: the
+    /// channel moves to
+    /// <see cref="Gst.WebRTC.WebRTCDataChannelState.Closing"/>, the messages
+    /// handed over before the call are still sent, and only then does the
+    /// transport reset the stream. A channel that never reached a peer is not
+    /// closed by it at all — there is no transport to run the procedure on, so
+    /// it stays in the state it was created in.
     /// </para>
     /// <para>
     /// The <c>GBytes</c> the call needs is built here and released here.

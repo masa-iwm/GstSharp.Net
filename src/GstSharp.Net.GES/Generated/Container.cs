@@ -118,6 +118,31 @@ public abstract unsafe partial class Container : GES.TimelineElement, GES.IExtra
         return nativeResult != 0;
     }
 
+    /// <summary>
+    /// The span of the container's children's #GESTimelineElement:priority
+    /// values, which is the number of integers that lie between (inclusive)
+    /// the minimum and maximum priorities found amongst the container's
+    /// children (maximum - minimum + 1).
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public uint Height
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("height");
+            return holder.GetUInt();
+        }
+    }
+
     /// <summary>The arguments of the <c>child-added</c> signal of <c>GESContainer</c>.</summary>
     public sealed class ChildAddedSignalArgs : System.EventArgs
     {

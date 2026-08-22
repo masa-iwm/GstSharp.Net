@@ -369,6 +369,34 @@ public abstract unsafe partial class BaseTransform : Gst.Element
         return nativeResult != 0;
     }
 
+    /// <summary>The <c>qos</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public bool Qos
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("qos");
+            return holder.GetBoolean();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("qos");
+            holder.SetBoolean(value);
+            SetPropertyValue("qos", in holder);
+        }
+    }
+
     /// <summary>The <c>gst_base_transform_get_buffer_pool</c> entry point.</summary>
     [LibraryImport("GstBase", EntryPoint = "gst_base_transform_get_buffer_pool")]
     private static partial nint GstBaseTransformGetBufferPool(nint trans);

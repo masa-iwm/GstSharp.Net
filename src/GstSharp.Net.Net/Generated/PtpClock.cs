@@ -95,6 +95,91 @@ public unsafe partial class PtpClock : Gst.SystemClock
         return Gst.GObject.Object.FromNative<Gst.Net.PtpClock>(nativeResult, Gst.Interop.Transfer.Full);
     }
 
+    /// <summary>The <c>domain</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// <para>The property is construct-only and therefore read-only here.</para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public uint Domain
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("domain");
+            return holder.GetUInt();
+        }
+    }
+
+    /// <summary>The <c>grandmaster-clock-id</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public ulong GrandmasterClockId
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("grandmaster-clock-id");
+            return holder.GetUInt64();
+        }
+    }
+
+    /// <summary>The <c>internal-clock</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// <para>
+    /// Reading hands back the interned wrapper of the object, which the binding
+    /// keeps; it is not the reader's to dispose.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public Gst.Clock? InternalClock
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("internal-clock");
+            return (Gst.Clock?)holder.GetObject();
+        }
+    }
+
+    /// <summary>The <c>master-clock-id</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public ulong MasterClockId
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("master-clock-id");
+            return holder.GetUInt64();
+        }
+    }
+
     /// <summary>The <c>gst_ptp_clock_new</c> entry point.</summary>
     [LibraryImport("GstNet", EntryPoint = "gst_ptp_clock_new")]
     private static partial nint GstPtpClockNew(byte* name, uint domain);

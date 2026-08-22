@@ -40,6 +40,90 @@ public abstract unsafe partial class WebRTCSCTPTransport : Gst.Object
     {
     }
 
+    /// <summary>The <c>max-channels</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public uint MaxChannels
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("max-channels");
+            return holder.GetUInt();
+        }
+    }
+
+    /// <summary>The <c>max-message-size</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public ulong MaxMessageSize
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("max-message-size");
+            return holder.GetUInt64();
+        }
+    }
+
+    /// <summary>The <c>state</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public Gst.WebRTC.WebRTCSCTPTransportState State
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("state");
+            return (Gst.WebRTC.WebRTCSCTPTransportState)holder.GetEnum();
+        }
+    }
+
+    /// <summary>The <c>transport</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// <para>
+    /// Reading hands back the interned wrapper of the object, which the binding
+    /// keeps; it is not the reader's to dispose.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public Gst.WebRTC.WebRTCDTLSTransport? Transport
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("transport");
+            return (Gst.WebRTC.WebRTCDTLSTransport?)holder.GetObject();
+        }
+    }
+
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstWebRTCSCTPTransport</c> under.</summary>
     /// <returns>The type of the instances of this wrapper.</returns>
     [LibraryImport("GstWebRTC", EntryPoint = "gst_webrtc_sctp_transport_get_type")]

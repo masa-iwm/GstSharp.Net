@@ -287,6 +287,68 @@ public abstract unsafe partial class WebRTCICE : Gst.Object
         System.GC.KeepAlive(this);
     }
 
+    /// <summary>
+    /// Maximum port for local rtp port range.
+    /// min-rtp-port must be &lt;= max-rtp-port
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public uint MaxRtpPort
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("max-rtp-port");
+            return holder.GetUInt();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("max-rtp-port");
+            holder.SetUInt(value);
+            SetPropertyValue("max-rtp-port", in holder);
+        }
+    }
+
+    /// <summary>
+    /// Minimum port for local rtp port range.
+    /// min-rtp-port must be &lt;= max-rtp-port
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public uint MinRtpPort
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("min-rtp-port");
+            return holder.GetUInt();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("min-rtp-port");
+            holder.SetUInt(value);
+            SetPropertyValue("min-rtp-port", in holder);
+        }
+    }
+
     /// <summary>The <c>gst_webrtc_ice_add_candidate</c> entry point.</summary>
     [LibraryImport("GstWebRTC", EntryPoint = "gst_webrtc_ice_add_candidate")]
     private static partial void GstWebrtcIceAddCandidate(nint ice, nint stream, byte* candidate, nint promise);

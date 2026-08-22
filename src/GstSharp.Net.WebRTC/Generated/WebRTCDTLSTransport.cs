@@ -40,6 +40,147 @@ public unsafe partial class WebRTCDTLSTransport : Gst.Object
     {
     }
 
+    /// <summary>The <c>certificate</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public string? Certificate
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("certificate");
+            return holder.GetString();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("certificate");
+            holder.SetString(value);
+            SetPropertyValue("certificate", in holder);
+        }
+    }
+
+    /// <summary>The <c>client</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public bool Client
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("client");
+            return holder.GetBoolean();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("client");
+            holder.SetBoolean(value);
+            SetPropertyValue("client", in holder);
+        }
+    }
+
+    /// <summary>The <c>remote-certificate</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public string? RemoteCertificate
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("remote-certificate");
+            return holder.GetString();
+        }
+    }
+
+    /// <summary>The <c>session-id</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// <para>The property is construct-only and therefore read-only here.</para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public uint SessionId
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("session-id");
+            return holder.GetUInt();
+        }
+    }
+
+    /// <summary>The <c>state</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public Gst.WebRTC.WebRTCDTLSTransportState State
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("state");
+            return (Gst.WebRTC.WebRTCDTLSTransportState)holder.GetEnum();
+        }
+    }
+
+    /// <summary>The <c>transport</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// <para>
+    /// Reading hands back the interned wrapper of the object, which the binding
+    /// keeps; it is not the reader's to dispose.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public Gst.WebRTC.WebRTCICETransport? Transport
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("transport");
+            return (Gst.WebRTC.WebRTCICETransport?)holder.GetObject();
+        }
+    }
+
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstWebRTCDTLSTransport</c> under.</summary>
     /// <returns>The type of the instances of this wrapper.</returns>
     [LibraryImport("GstWebRTC", EntryPoint = "gst_webrtc_dtls_transport_get_type")]

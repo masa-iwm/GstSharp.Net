@@ -51,6 +51,62 @@ public abstract unsafe partial class AudioVisualizer : Gst.Element
     {
     }
 
+    /// <summary>The <c>shade-amount</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public uint ShadeAmount
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("shade-amount");
+            return holder.GetUInt();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("shade-amount");
+            holder.SetUInt(value);
+            SetPropertyValue("shade-amount", in holder);
+        }
+    }
+
+    /// <summary>The <c>shader</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public Gst.Pbutils.AudioVisualizerShader Shader
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("shader");
+            return (Gst.Pbutils.AudioVisualizerShader)holder.GetEnum();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("shader");
+            holder.SetEnum((int)value);
+            SetPropertyValue("shader", in holder);
+        }
+    }
+
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstAudioVisualizer</c> under.</summary>
     /// <returns>The type of the instances of this wrapper.</returns>
     [LibraryImport("GstPbutils", EntryPoint = "gst_audio_visualizer_get_type")]

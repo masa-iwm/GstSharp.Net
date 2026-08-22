@@ -264,6 +264,34 @@ public unsafe partial class DeviceMonitor : Gst.Object
         System.GC.KeepAlive(this);
     }
 
+    /// <summary>The <c>show-all</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public bool ShowAll
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("show-all");
+            return holder.GetBoolean();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("show-all");
+            holder.SetBoolean(value);
+            SetPropertyValue("show-all", in holder);
+        }
+    }
+
     /// <summary>The <c>gst_device_monitor_new</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_device_monitor_new")]
     private static partial nint GstDeviceMonitorNew();

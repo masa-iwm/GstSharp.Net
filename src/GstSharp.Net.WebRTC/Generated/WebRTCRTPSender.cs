@@ -55,6 +55,53 @@ public unsafe partial class WebRTCRTPSender : Gst.Object
         System.GC.KeepAlive(this);
     }
 
+    /// <summary>The priority from which to set the DSCP field on packets</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C getter; it is read through the GObject property
+    /// system (<c>g_object_get_property</c>) and written through
+    /// <see cref="SetPriority"/>.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public Gst.WebRTC.WebRTCPriorityType Priority
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("priority");
+            return (Gst.WebRTC.WebRTCPriorityType)holder.GetEnum();
+        }
+
+        set => SetPriority(value);
+    }
+
+    /// <summary>The DTLS transport for this sender</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// <para>
+    /// Reading hands back the interned wrapper of the object, which the binding
+    /// keeps; it is not the reader's to dispose.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public Gst.WebRTC.WebRTCDTLSTransport? Transport
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("transport");
+            return (Gst.WebRTC.WebRTCDTLSTransport?)holder.GetObject();
+        }
+    }
+
     /// <summary>The <c>gst_webrtc_rtp_sender_set_priority</c> entry point.</summary>
     [LibraryImport("GstWebRTC", EntryPoint = "gst_webrtc_rtp_sender_set_priority")]
     private static partial void GstWebrtcRtpSenderSetPriority(nint sender, int priority);

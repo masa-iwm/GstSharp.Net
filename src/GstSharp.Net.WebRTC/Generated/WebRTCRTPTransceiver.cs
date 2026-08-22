@@ -40,6 +40,213 @@ public abstract unsafe partial class WebRTCRTPTransceiver : Gst.Object
     {
     }
 
+    /// <summary>Caps representing the codec preferences.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// <para>
+    /// Reading builds a wrapper that owns a reference of its own: dispose it
+    /// when you are done with it.
+    /// </para>
+    /// <para>
+    /// Writing takes a reference of its own, so the argument stays the caller's
+    /// to dispose, and <see langword="null"/> clears the property.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public Gst.Caps? CodecPreferences
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("codec-preferences");
+            return holder.GetMiniObject<Gst.Caps>();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("codec-preferences");
+            holder.SetMiniObject(value);
+            SetPropertyValue("codec-preferences", in holder);
+        }
+    }
+
+    /// <summary>
+    /// The transceiver's current directionality, or none if the
+    /// transceiver is stopped or has never participated in an exchange
+    /// of offers and answers. To change the transceiver's
+    /// directionality, set the value of the direction property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public Gst.WebRTC.WebRTCRTPTransceiverDirection CurrentDirection
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("current-direction");
+            return (Gst.WebRTC.WebRTCRTPTransceiverDirection)holder.GetEnum();
+        }
+    }
+
+    /// <summary>Direction of the transceiver.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public Gst.WebRTC.WebRTCRTPTransceiverDirection Direction
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("direction");
+            return (Gst.WebRTC.WebRTCRTPTransceiverDirection)holder.GetEnum();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("direction");
+            holder.SetEnum((int)value);
+            SetPropertyValue("direction", in holder);
+        }
+    }
+
+    /// <summary>The kind of media this transceiver transports</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public Gst.WebRTC.WebRTCKind Kind
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("kind");
+            return (Gst.WebRTC.WebRTCKind)holder.GetEnum();
+        }
+    }
+
+    /// <summary>
+    /// The media ID of the m-line associated with this transceiver. This
+    /// association is established, when possible, whenever either a
+    /// local or remote description is applied. This field is null if
+    /// neither a local or remote description has been applied, or if its
+    /// associated m-line is rejected by either a remote offer or any
+    /// answer.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public string? Mid
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("mid");
+            return holder.GetString();
+        }
+    }
+
+    /// <summary>The <c>mlineindex</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// <para>The property is construct-only and therefore read-only here.</para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public uint Mlineindex
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("mlineindex");
+            return holder.GetUInt();
+        }
+    }
+
+    /// <summary>The <c>receiver</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// <para>The property is construct-only and therefore read-only here.</para>
+    /// <para>
+    /// Reading hands back the interned wrapper of the object, which the binding
+    /// keeps; it is not the reader's to dispose.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public Gst.WebRTC.WebRTCRTPReceiver? Receiver
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("receiver");
+            return (Gst.WebRTC.WebRTCRTPReceiver?)holder.GetObject();
+        }
+    }
+
+    /// <summary>The <c>sender</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// <para>The property is construct-only and therefore read-only here.</para>
+    /// <para>
+    /// Reading hands back the interned wrapper of the object, which the binding
+    /// keeps; it is not the reader's to dispose.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public Gst.WebRTC.WebRTCRTPSender? Sender
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("sender");
+            return (Gst.WebRTC.WebRTCRTPSender?)holder.GetObject();
+        }
+    }
+
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstWebRTCRTPTransceiver</c> under.</summary>
     /// <returns>The type of the instances of this wrapper.</returns>
     [LibraryImport("GstWebRTC", EntryPoint = "gst_webrtc_rtp_transceiver_get_type")]

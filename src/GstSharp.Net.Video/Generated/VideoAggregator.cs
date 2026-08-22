@@ -71,6 +71,32 @@ public abstract unsafe partial class VideoAggregator : Gst.Base.Aggregator
             ?? throw new InvalidOperationException("gst_video_aggregator_get_execution_task_pool returned no value.");
     }
 
+    /// <summary>
+    /// Causes the element to aggregate on a timeout even when no live source is
+    /// connected to its sinks. See #GstAggregator:min-upstream-latency for a
+    /// companion property: in the vast majority of cases where you plan to plug in
+    /// live sources with a non-zero latency, you should set it to a non-zero value.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// <para>The property is construct-only and therefore read-only here.</para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public bool ForceLive
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("force-live");
+            return holder.GetBoolean();
+        }
+    }
+
     /// <summary>The <c>gst_video_aggregator_get_execution_task_pool</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_aggregator_get_execution_task_pool")]
     private static partial nint GstVideoAggregatorGetExecutionTaskPool(nint vagg);

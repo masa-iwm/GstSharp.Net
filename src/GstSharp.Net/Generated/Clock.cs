@@ -755,6 +755,62 @@ public abstract unsafe partial class Clock : Gst.Object
         set => SetTimeout(value);
     }
 
+    /// <summary>The <c>window-size</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public int WindowSize
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("window-size");
+            return holder.GetInt();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("window-size");
+            holder.SetInt(value);
+            SetPropertyValue("window-size", in holder);
+        }
+    }
+
+    /// <summary>The <c>window-threshold</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public int WindowThreshold
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("window-threshold");
+            return holder.GetInt();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("window-threshold");
+            holder.SetInt(value);
+            SetPropertyValue("window-threshold", in holder);
+        }
+    }
+
     /// <summary>The arguments of the <c>synced</c> signal of <c>GstClock</c>.</summary>
     public sealed class SyncedSignalArgs : System.EventArgs
     {

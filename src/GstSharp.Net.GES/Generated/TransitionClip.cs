@@ -84,6 +84,34 @@ public unsafe partial class TransitionClip : GES.BaseTransitionClip, GES.IExtrac
         return Gst.GObject.Object.FromNative<GES.TransitionClip>(nativeResult, Gst.Interop.Transfer.None);
     }
 
+    /// <summary>a #GESVideoStandardTransitionType representing the wipe to use</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public GES.VideoStandardTransitionType Vtype
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("vtype");
+            return (GES.VideoStandardTransitionType)holder.GetEnum();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("vtype");
+            holder.SetEnum((int)value);
+            SetPropertyValue("vtype", in holder);
+        }
+    }
+
     /// <summary>The <c>ges_transition_clip_new</c> entry point.</summary>
     [LibraryImport("GES", EntryPoint = "ges_transition_clip_new")]
     private static partial nint GesTransitionClipNew(int vtype);

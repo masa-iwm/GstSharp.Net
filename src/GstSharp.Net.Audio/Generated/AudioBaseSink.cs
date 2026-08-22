@@ -227,6 +227,90 @@ public unsafe partial class AudioBaseSink : Gst.Base.BaseSink
         set => SetSlaveMethod(value);
     }
 
+    /// <summary>The <c>buffer-time</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public long BufferTime
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("buffer-time");
+            return holder.GetInt64();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("buffer-time");
+            holder.SetInt64(value);
+            SetPropertyValue("buffer-time", in holder);
+        }
+    }
+
+    /// <summary>The <c>can-activate-pull</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public bool CanActivatePull
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("can-activate-pull");
+            return holder.GetBoolean();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("can-activate-pull");
+            holder.SetBoolean(value);
+            SetPropertyValue("can-activate-pull", in holder);
+        }
+    }
+
+    /// <summary>The <c>latency-time</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public long LatencyTime
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("latency-time");
+            return holder.GetInt64();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("latency-time");
+            holder.SetInt64(value);
+            SetPropertyValue("latency-time", in holder);
+        }
+    }
+
     /// <summary>The <c>gst_audio_base_sink_create_ringbuffer</c> entry point.</summary>
     [LibraryImport("GstAudio", EntryPoint = "gst_audio_base_sink_create_ringbuffer")]
     private static partial nint GstAudioBaseSinkCreateRingbuffer(nint sink);

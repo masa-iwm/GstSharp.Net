@@ -106,6 +106,154 @@ public abstract unsafe partial class AudioAggregator : Gst.Base.Aggregator
         System.GC.KeepAlive(caps);
     }
 
+    /// <summary>The <c>alignment-threshold</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public ulong AlignmentThreshold
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("alignment-threshold");
+            return holder.GetUInt64();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("alignment-threshold");
+            holder.SetUInt64(value);
+            SetPropertyValue("alignment-threshold", in holder);
+        }
+    }
+
+    /// <summary>The <c>discont-wait</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public ulong DiscontWait
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("discont-wait");
+            return holder.GetUInt64();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("discont-wait");
+            holder.SetUInt64(value);
+            SetPropertyValue("discont-wait", in holder);
+        }
+    }
+
+    /// <summary>
+    /// Causes the element to aggregate on a timeout even when no live source is
+    /// connected to its sinks. See #GstAggregator:min-upstream-latency for a
+    /// companion property: in the vast majority of cases where you plan to plug in
+    /// live sources with a non-zero latency, you should set it to a non-zero value.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// <para>The property is construct-only and therefore read-only here.</para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public bool ForceLive
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("force-live");
+            return holder.GetBoolean();
+        }
+    }
+
+    /// <summary>
+    /// Don't wait for inactive pads when live. An inactive pad
+    /// is a pad that hasn't yet received a buffer, but that has
+    /// been waited on at least once.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The purpose of this property is to avoid aggregating on
+    /// timeout when new pads are requested in advance of receiving
+    /// data flow, for example the user may decide to connect it later,
+    /// but wants to configure it already.
+    /// </para>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public bool IgnoreInactivePads
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("ignore-inactive-pads");
+            return holder.GetBoolean();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("ignore-inactive-pads");
+            holder.SetBoolean(value);
+            SetPropertyValue("ignore-inactive-pads", in holder);
+        }
+    }
+
+    /// <summary>The <c>output-buffer-duration</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public ulong OutputBufferDuration
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("output-buffer-duration");
+            return holder.GetUInt64();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("output-buffer-duration");
+            holder.SetUInt64(value);
+            SetPropertyValue("output-buffer-duration", in holder);
+        }
+    }
+
     /// <summary>The <c>gst_audio_aggregator_set_sink_caps</c> entry point.</summary>
     [LibraryImport("GstAudio", EntryPoint = "gst_audio_aggregator_set_sink_caps")]
     private static partial void GstAudioAggregatorSetSinkCaps(nint aagg, nint pad, nint caps);

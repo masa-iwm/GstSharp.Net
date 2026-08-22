@@ -438,6 +438,124 @@ public abstract unsafe partial class Aggregator : Gst.Element
     /// <summary>The <c>latency</c> property.</summary>
     public Gst.ClockTime Latency => GetLatency();
 
+    /// <summary>Enables the emission of signals such as #GstAggregator::samples-selected</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public bool EmitSignals
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("emit-signals");
+            return holder.GetBoolean();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("emit-signals");
+            holder.SetBoolean(value);
+            SetPropertyValue("emit-signals", in holder);
+        }
+    }
+
+    /// <summary>
+    /// Force minimum upstream latency (in nanoseconds). When sources with a
+    /// higher latency are expected to be plugged in dynamically after the
+    /// aggregator has started playing, this allows overriding the minimum
+    /// latency reported by the initial source(s). This is only taken into
+    /// account when larger than the actually reported minimum latency.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public ulong MinUpstreamLatency
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("min-upstream-latency");
+            return holder.GetUInt64();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("min-upstream-latency");
+            holder.SetUInt64(value);
+            SetPropertyValue("min-upstream-latency", in holder);
+        }
+    }
+
+    /// <summary>The <c>start-time</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public ulong StartTime
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("start-time");
+            return holder.GetUInt64();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("start-time");
+            holder.SetUInt64(value);
+            SetPropertyValue("start-time", in holder);
+        }
+    }
+
+    /// <summary>The <c>start-time-selection</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public Gst.Base.AggregatorStartTimeSelection StartTimeSelection
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("start-time-selection");
+            return (Gst.Base.AggregatorStartTimeSelection)holder.GetEnum();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("start-time-selection");
+            holder.SetEnum((int)value);
+            SetPropertyValue("start-time-selection", in holder);
+        }
+    }
+
     /// <summary>The arguments of the <c>samples-selected</c> signal of <c>GstAggregator</c>.</summary>
     public sealed class SamplesSelectedSignalArgs : System.EventArgs
     {

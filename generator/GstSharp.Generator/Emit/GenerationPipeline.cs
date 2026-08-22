@@ -137,7 +137,7 @@ internal static class GenerationPipeline
             shared.SkipRules,
             shared.Diagnostics);
 
-        SurfaceBuilder surfaces = new(planner, shared.Names, shared.Census, shared.Diagnostics);
+        SurfaceBuilder surfaces = new(planner, shared.Names, shared.Types, shared.Census, shared.Diagnostics);
         List<RegistryEntry> registry = [];
         RecordEmitter recordEmitter = new(
             shared.Repository,

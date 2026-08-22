@@ -1560,6 +1560,66 @@ public unsafe partial class Pad : Gst.Object
         set => SetOffset(value);
     }
 
+    /// <summary>The <c>caps</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// <para>
+    /// Reading builds a wrapper that owns a reference of its own: dispose it
+    /// when you are done with it.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public Gst.Caps? Caps
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("caps");
+            return holder.GetMiniObject<Gst.Caps>();
+        }
+    }
+
+    /// <summary>The <c>template</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// <para>
+    /// Reading hands back the interned wrapper of the object, which the binding
+    /// keeps; it is not the reader's to dispose.
+    /// </para>
+    /// <para>
+    /// Writing takes a reference of its own, so the argument stays the caller's
+    /// to dispose, and <see langword="null"/> clears the property.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public Gst.PadTemplate? Template
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("template");
+            return (Gst.PadTemplate?)holder.GetObject();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("template");
+            holder.SetObject(value);
+            SetPropertyValue("template", in holder);
+        }
+    }
+
     /// <summary>The arguments of the <c>linked</c> signal of <c>GstPad</c>.</summary>
     public sealed class LinkedSignalArgs : System.EventArgs
     {

@@ -369,6 +369,84 @@ public unsafe partial class Track : Gst.Bin, GES.IMetaContainer, Gst.IChildProxy
         set => SetMixing(value);
     }
 
+    /// <summary>Current duration of the track</summary>
+    /// <remarks>
+    /// <para>Default value: O</para>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public ulong Duration
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("duration");
+            return holder.GetUInt64();
+        }
+    }
+
+    /// <summary>The #nlecomposition:id of the underlying #nlecomposition.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public string? Id
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("id");
+            return holder.GetString();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("id");
+            holder.SetString(value);
+            SetPropertyValue("id", in holder);
+        }
+    }
+
+    /// <summary>
+    /// The track type of the track. This controls the type of
+    /// #GESTrackElement-s that can be added to the track. This should
+    /// match with the track's #GESTrack:caps.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Once a track has been added to a #GESTimeline, you should not change
+    /// this.
+    /// </para>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// <para>The property is construct-only and therefore read-only here.</para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public GES.TrackType TrackType
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("track-type");
+            return (GES.TrackType)holder.GetFlags();
+        }
+    }
+
     /// <summary>
     /// This signal will be emitted once the changes initiated by
     /// ges_track_commit() have been executed in the backend. In particular,

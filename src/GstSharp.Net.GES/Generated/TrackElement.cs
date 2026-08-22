@@ -377,6 +377,38 @@ public abstract unsafe partial class TrackElement : GES.TimelineElement, GES.IEx
         set => SetTrackType(value);
     }
 
+    /// <summary>
+    /// Whether the effect of the element should be applied in its
+    /// #GESTrackElement:track. If set to %FALSE, it will not be used in
+    /// the output of the track.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public bool Active
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("active");
+            return holder.GetBoolean();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("active");
+            holder.SetBoolean(value);
+            SetPropertyValue("active", in holder);
+        }
+    }
+
     /// <summary>The arguments of the <c>control-binding-added</c> signal of <c>GESTrackElement</c>.</summary>
     public sealed class ControlBindingAddedSignalArgs : System.EventArgs
     {

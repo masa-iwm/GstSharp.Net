@@ -195,6 +195,22 @@ interior to storage the array reallocates and frees, and `Append` stores a copy
 of the value it is given, so the caller disposes both its own value and, in
 time, the array.
 
+## Properties without a C accessor
+
+Some properties exist only on the GObject property system: the gir names no C
+getter for them, so they are read through `g_object_get_property` into a
+`GValue` and written through `g_object_set_property` out of one. The value is
+an implementation detail of the accessor — it never reaches the caller — but
+what comes out of it follows the same rules as everywhere else. Reading an
+object hands back the interned wrapper, which the binding keeps and the reader
+does not dispose. Reading a boxed value or a mini object builds a wrapper that
+owns a copy or a reference of its own, exactly as `Value.GetBoxed<T>` and
+`Value.GetMiniObject<T>` do, so the reader disposes it and reading twice
+produces two wrappers. Writing any of the three copies or references the
+argument, so the caller keeps what it passed and still disposes it, and `null`
+clears the property. A property that is construct-only, or that the gir marks
+read-only, has no setter at all.
+
 ## The GType registry
 
 Every binding assembly fills a `GType` to managed-type registry from a

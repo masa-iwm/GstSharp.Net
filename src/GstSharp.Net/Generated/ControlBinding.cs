@@ -106,6 +106,52 @@ public abstract unsafe partial class ControlBinding : Gst.Object
         return nativeResult != 0;
     }
 
+    /// <summary>The <c>name</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// <para>The property is construct-only and therefore read-only here.</para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public string? PropertyName
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("name");
+            return holder.GetString();
+        }
+    }
+
+    /// <summary>The <c>object</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// <para>The property is construct-only and therefore read-only here.</para>
+    /// <para>
+    /// Reading hands back the interned wrapper of the object, which the binding
+    /// keeps; it is not the reader's to dispose.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public Gst.Object? Object
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("object");
+            return (Gst.Object?)holder.GetObject();
+        }
+    }
+
     /// <summary>The <c>gst_control_binding_get_value</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_control_binding_get_value")]
     private static partial nint GstControlBindingGetValue(nint binding, ulong timestamp);

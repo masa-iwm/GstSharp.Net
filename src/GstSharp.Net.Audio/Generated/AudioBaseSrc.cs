@@ -112,6 +112,102 @@ public unsafe partial class AudioBaseSrc : Gst.Base.PushSrc
         set => SetSlaveMethod(value);
     }
 
+    /// <summary>Actual configured size of audio buffer in microseconds.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public long ActualBufferTime
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("actual-buffer-time");
+            return holder.GetInt64();
+        }
+    }
+
+    /// <summary>Actual configured audio latency in microseconds.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public long ActualLatencyTime
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("actual-latency-time");
+            return holder.GetInt64();
+        }
+    }
+
+    /// <summary>The <c>buffer-time</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public long BufferTime
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("buffer-time");
+            return holder.GetInt64();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("buffer-time");
+            holder.SetInt64(value);
+            SetPropertyValue("buffer-time", in holder);
+        }
+    }
+
+    /// <summary>The <c>latency-time</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public long LatencyTime
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("latency-time");
+            return holder.GetInt64();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("latency-time");
+            holder.SetInt64(value);
+            SetPropertyValue("latency-time", in holder);
+        }
+    }
+
     /// <summary>The <c>gst_audio_base_src_create_ringbuffer</c> entry point.</summary>
     [LibraryImport("GstAudio", EntryPoint = "gst_audio_base_src_create_ringbuffer")]
     private static partial nint GstAudioBaseSrcCreateRingbuffer(nint src);

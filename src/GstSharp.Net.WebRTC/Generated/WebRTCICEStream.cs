@@ -59,6 +59,27 @@ public abstract unsafe partial class WebRTCICEStream : Gst.Object
         return nativeResult != 0;
     }
 
+    /// <summary>The <c>stream-id</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// <para>The property is construct-only and therefore read-only here.</para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public uint StreamId
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("stream-id");
+            return holder.GetUInt();
+        }
+    }
+
     /// <summary>The <c>gst_webrtc_ice_stream_find_transport</c> entry point.</summary>
     [LibraryImport("GstWebRTC", EntryPoint = "gst_webrtc_ice_stream_find_transport")]
     private static partial nint GstWebrtcIceStreamFindTransport(nint stream, int component);

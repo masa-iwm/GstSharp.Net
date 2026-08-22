@@ -135,6 +135,26 @@ public unsafe partial class UriClipAsset : GES.SourceClipAsset, GES.IMetaContain
     /// <summary>The duration (in nanoseconds) of the media file</summary>
     public Gst.ClockTime Duration => GetDuration();
 
+    /// <summary>The duration (in nanoseconds) of the media file</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public bool IsNestedTimeline
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("is-nested-timeline");
+            return holder.GetBoolean();
+        }
+    }
+
     /// <summary>The <c>ges_uri_clip_asset_get_duration</c> entry point.</summary>
     [LibraryImport("GES", EntryPoint = "ges_uri_clip_asset_get_duration")]
     private static partial ulong GesUriClipAssetGetDuration(nint self);

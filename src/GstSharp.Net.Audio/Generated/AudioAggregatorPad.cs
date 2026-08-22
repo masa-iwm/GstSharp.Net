@@ -40,6 +40,34 @@ public unsafe partial class AudioAggregatorPad : Gst.Base.AggregatorPad
     {
     }
 
+    /// <summary>Emit QoS messages when dropping buffers.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public bool QosMessages
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("qos-messages");
+            return holder.GetBoolean();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("qos-messages");
+            holder.SetBoolean(value);
+            SetPropertyValue("qos-messages", in holder);
+        }
+    }
+
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstAudioAggregatorPad</c> under.</summary>
     /// <returns>The type of the instances of this wrapper.</returns>
     [LibraryImport("GstAudio", EntryPoint = "gst_audio_aggregator_pad_get_type")]

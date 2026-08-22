@@ -129,6 +129,34 @@ public unsafe partial class MarkerList : Gst.GObject.Object
         return nativeResult;
     }
 
+    /// <summary>Flags indicating how markers on the list should be treated.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public GES.MarkerFlags Flags
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("flags");
+            return (GES.MarkerFlags)holder.GetFlags();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("flags");
+            holder.SetFlags((uint)value);
+            SetPropertyValue("flags", in holder);
+        }
+    }
+
     /// <summary>The arguments of the <c>marker-added</c> signal of <c>GESMarkerList</c>.</summary>
     public sealed class MarkerAddedSignalArgs : System.EventArgs
     {

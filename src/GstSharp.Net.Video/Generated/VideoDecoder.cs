@@ -962,6 +962,169 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
         set => SetMaxErrors(value);
     }
 
+    /// <summary>
+    /// GstVideoDecoderRequestSyncPointFlags to use for the automatically
+    /// requested sync points if `automatic-request-sync-points` is enabled.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public Gst.Video.VideoDecoderRequestSyncPointFlags AutomaticRequestSyncPointFlags
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("automatic-request-sync-point-flags");
+            return (Gst.Video.VideoDecoderRequestSyncPointFlags)holder.GetFlags();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("automatic-request-sync-point-flags");
+            holder.SetFlags((uint)value);
+            SetPropertyValue("automatic-request-sync-point-flags", in holder);
+        }
+    }
+
+    /// <summary>
+    /// If set to %TRUE the decoder will automatically request sync points when
+    /// it seems like a good idea, e.g. if the first frames are not key frames or
+    /// if packet loss was reported by upstream.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public bool AutomaticRequestSyncPoints
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("automatic-request-sync-points");
+            return holder.GetBoolean();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("automatic-request-sync-points");
+            holder.SetBoolean(value);
+            SetPropertyValue("automatic-request-sync-points", in holder);
+        }
+    }
+
+    /// <summary>
+    /// If set to %TRUE the decoder will discard frames that are marked as
+    /// corrupted instead of outputting them.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public bool DiscardCorruptedFrames
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("discard-corrupted-frames");
+            return holder.GetBoolean();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("discard-corrupted-frames");
+            holder.SetBoolean(value);
+            SetPropertyValue("discard-corrupted-frames", in holder);
+        }
+    }
+
+    /// <summary>
+    /// Minimum interval between force-key-unit events sent upstream by the
+    /// decoder. Setting this to 0 will cause every event to be handled, setting
+    /// this to %GST_CLOCK_TIME_NONE will cause every event to be ignored.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// See gst_video_event_new_upstream_force_key_unit() for more details about
+    /// force-key-unit events.
+    /// </para>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public ulong MinForceKeyUnitInterval
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("min-force-key-unit-interval");
+            return holder.GetUInt64();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("min-force-key-unit-interval");
+            holder.SetUInt64(value);
+            SetPropertyValue("min-force-key-unit-interval", in holder);
+        }
+    }
+
+    /// <summary>
+    /// If set to %TRUE the decoder will handle QoS events received
+    /// from downstream elements.
+    /// This includes dropping output frames which are detected as late
+    /// using the metrics reported by those events.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public bool Qos
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("qos");
+            return holder.GetBoolean();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("qos");
+            holder.SetBoolean(value);
+            SetPropertyValue("qos", in holder);
+        }
+    }
+
     /// <summary>The <c>gst_video_decoder_add_to_frame</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_decoder_add_to_frame")]
     private static partial void GstVideoDecoderAddToFrame(nint decoder, int nBytes);

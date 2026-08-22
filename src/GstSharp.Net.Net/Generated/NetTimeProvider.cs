@@ -66,6 +66,129 @@ public unsafe partial class NetTimeProvider : Gst.Object
         return Gst.GObject.Object.FromNative<Gst.Net.NetTimeProvider>(nativeResult, Gst.Interop.Transfer.Full);
     }
 
+    /// <summary>The <c>active</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public bool Active
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("active");
+            return holder.GetBoolean();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("active");
+            holder.SetBoolean(value);
+            SetPropertyValue("active", in holder);
+        }
+    }
+
+    /// <summary>The <c>address</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// <para>The property is construct-only and therefore read-only here.</para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public string? Address
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("address");
+            return holder.GetString();
+        }
+    }
+
+    /// <summary>The <c>clock</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// <para>The property is construct-only and therefore read-only here.</para>
+    /// <para>
+    /// Reading hands back the interned wrapper of the object, which the binding
+    /// keeps; it is not the reader's to dispose.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public Gst.Clock? Clock
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("clock");
+            return (Gst.Clock?)holder.GetObject();
+        }
+    }
+
+    /// <summary>The <c>port</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// <para>The property is construct-only and therefore read-only here.</para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public int Port
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("port");
+            return holder.GetInt();
+        }
+    }
+
+    /// <summary>The <c>qos-dscp</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public int QosDscp
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("qos-dscp");
+            return holder.GetInt();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("qos-dscp");
+            holder.SetInt(value);
+            SetPropertyValue("qos-dscp", in holder);
+        }
+    }
+
     /// <summary>The <c>gst_net_time_provider_new</c> entry point.</summary>
     [LibraryImport("GstNet", EntryPoint = "gst_net_time_provider_new")]
     private static partial nint GstNetTimeProviderNew(nint clock, byte* address, int port);

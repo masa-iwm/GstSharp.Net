@@ -117,6 +117,90 @@ public unsafe partial class VideoAggregatorPad : Gst.Base.AggregatorPad
         System.GC.KeepAlive(this);
     }
 
+    /// <summary>The <c>max-last-buffer-repeat</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public ulong MaxLastBufferRepeat
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("max-last-buffer-repeat");
+            return holder.GetUInt64();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("max-last-buffer-repeat");
+            holder.SetUInt64(value);
+            SetPropertyValue("max-last-buffer-repeat", in holder);
+        }
+    }
+
+    /// <summary>The <c>repeat-after-eos</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public bool RepeatAfterEos
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("repeat-after-eos");
+            return holder.GetBoolean();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("repeat-after-eos");
+            holder.SetBoolean(value);
+            SetPropertyValue("repeat-after-eos", in holder);
+        }
+    }
+
+    /// <summary>The <c>zorder</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public uint Zorder
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("zorder");
+            return holder.GetUInt();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("zorder");
+            holder.SetUInt(value);
+            SetPropertyValue("zorder", in holder);
+        }
+    }
+
     /// <summary>The <c>gst_video_aggregator_pad_get_current_buffer</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_aggregator_pad_get_current_buffer")]
     private static partial nint GstVideoAggregatorPadGetCurrentBuffer(nint pad);

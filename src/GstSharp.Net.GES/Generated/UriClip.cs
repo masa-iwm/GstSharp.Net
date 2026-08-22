@@ -113,6 +113,29 @@ public unsafe partial class UriClip : GES.SourceClip, GES.IExtractable, GES.IMet
     /// <summary>The location of the file/resource to use.</summary>
     public string Uri => GetUri();
 
+    /// <summary>Whether the sound will be played or not.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C getter; it is read through the GObject property
+    /// system (<c>g_object_get_property</c>) and written through
+    /// <see cref="SetMute"/>.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public bool Mute
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("mute");
+            return holder.GetBoolean();
+        }
+
+        set => SetMute(value);
+    }
+
     /// <summary>The <c>ges_uri_clip_new</c> entry point.</summary>
     [LibraryImport("GES", EntryPoint = "ges_uri_clip_new")]
     private static partial nint GesUriClipNew(byte* uri);

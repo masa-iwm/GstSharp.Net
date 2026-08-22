@@ -485,6 +485,75 @@ public unsafe partial class Bin : Gst.Element, Gst.IChildProxy
         return nativeResult != 0;
     }
 
+    /// <summary>
+    /// If set to %TRUE, the bin will handle asynchronous state changes.
+    /// This should be used only if the bin subclass is modifying the state
+    /// of its children on its own.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public bool AsyncHandling
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("async-handling");
+            return holder.GetBoolean();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("async-handling");
+            holder.SetBoolean(value);
+            SetPropertyValue("async-handling", in holder);
+        }
+    }
+
+    /// <summary>
+    /// Forward all children messages, even those that would normally be filtered by
+    /// the bin. This can be interesting when one wants to be notified of the EOS
+    /// state of individual elements, for example.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The messages are converted to an ELEMENT message with the bin as the
+    /// source. The structure of the message is named `GstBinForwarded` and contains
+    /// a field named `message` that contains the original forwarded #GstMessage.
+    /// </para>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public bool MessageForward
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("message-forward");
+            return holder.GetBoolean();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("message-forward");
+            holder.SetBoolean(value);
+            SetPropertyValue("message-forward", in holder);
+        }
+    }
+
     /// <summary>The arguments of the <c>deep-element-added</c> signal of <c>GstBin</c>.</summary>
     public sealed class DeepElementAddedSignalArgs : System.EventArgs
     {

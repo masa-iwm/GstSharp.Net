@@ -56,6 +56,22 @@ public sealed class ClassEmitterTests
         Assert.Contains("public bool SetName(string? name)", source, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void TheNameOfAControlBindingIsTheControlledProperty()
+    {
+        // GstControlBinding installs a construct-only "name" of its own that
+        // holds the name of the property it controls, which is not what
+        // GstObject means by "name" and not what Gst.Object.Name already binds.
+        // The rename of fixups.json is what binds it under a name of its own;
+        // without it the property would be dropped for hiding the inherited
+        // member.
+        string source = Source("ControlBinding.cs");
+
+        Assert.Contains("public string? PropertyName\n", source, StringComparison.Ordinal);
+        Assert.Contains("GetProperty(\"name\");", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("public string? Name\n", source, StringComparison.Ordinal);
+    }
+
     [Theory]
     [InlineData("GstSharp.Net/Generated/Stream.cs", "Caps", "public Gst.Caps? GetCaps()")]
     [InlineData("GstSharp.Net/Generated/Stream.cs", "Tags", "public Gst.TagList? GetTags()")]
@@ -155,17 +171,17 @@ public sealed class ClassEmitterTests
     }
 
     [Theory]
-    [InlineData("Gst", 35, 51, 5, 17, 18, 1339, 14, 23)]
-    [InlineData("GstBase", 11, 4, 0, 5, 0, 171, 11, 2)]
-    [InlineData("GstApp", 2, 2, 0, 8, 0, 62, 21, 8)]
-    [InlineData("GstAudio", 14, 17, 1, 2, 2, 197, 15, 0)]
-    [InlineData("GstVideo", 12, 42, 5, 0, 9, 333, 2, 2)]
-    [InlineData("GstPbutils", 14, 1, 0, 0, 1, 172, 0, 3)]
+    [InlineData("Gst", 35, 51, 5, 17, 18, 1339, 29, 23)]
+    [InlineData("GstBase", 11, 4, 0, 5, 0, 171, 31, 2)]
+    [InlineData("GstApp", 2, 2, 0, 8, 0, 62, 36, 8)]
+    [InlineData("GstAudio", 14, 17, 1, 2, 2, 197, 32, 0)]
+    [InlineData("GstVideo", 12, 42, 5, 0, 9, 333, 14, 2)]
+    [InlineData("GstPbutils", 14, 1, 0, 0, 1, 172, 5, 3)]
     [InlineData("GstSdp", 1, 21, 0, 0, 0, 160, 0, 0)]
-    [InlineData("GstWebRTC", 9, 4, 0, 1, 2, 37, 0, 6)]
-    [InlineData("GstNet", 5, 3, 0, 1, 0, 22, 0, 0)]
+    [InlineData("GstWebRTC", 9, 4, 0, 1, 2, 37, 38, 6)]
+    [InlineData("GstNet", 5, 3, 0, 1, 0, 22, 17, 0)]
     [InlineData("GstRtsp", 1, 10, 1, 1, 2, 110, 0, 1)]
-    [InlineData("GES", 56, 2, 2, 0, 3, 367, 49, 29)]
+    [InlineData("GES", 56, 2, 2, 0, 3, 367, 77, 29)]
     public void TheEmissionCensusIsStable(
         string module,
         int classes,
@@ -190,17 +206,17 @@ public sealed class ClassEmitterTests
     }
 
     [Theory]
-    [InlineData("Gst", 1, 93, 53, 119, 165, 10)]
-    [InlineData("GstBase", 0, 11, 0, 20, 27, 0)]
-    [InlineData("GstApp", 0, 0, 0, 2, 19, 0)]
-    [InlineData("GstAudio", 0, 27, 0, 8, 36, 0)]
-    [InlineData("GstVideo", 0, 102, 1, 6, 64, 0)]
-    [InlineData("GstPbutils", 0, 1, 0, 0, 18, 0)]
+    [InlineData("Gst", 1, 93, 53, 119, 150, 10)]
+    [InlineData("GstBase", 0, 11, 0, 20, 7, 0)]
+    [InlineData("GstApp", 1, 0, 0, 2, 2, 1)]
+    [InlineData("GstAudio", 0, 27, 0, 8, 19, 0)]
+    [InlineData("GstVideo", 0, 102, 1, 6, 52, 0)]
+    [InlineData("GstPbutils", 0, 1, 0, 0, 13, 0)]
     [InlineData("GstSdp", 0, 10, 0, 0, 8, 0)]
-    [InlineData("GstWebRTC", 0, 2, 0, 0, 44, 0)]
-    [InlineData("GstNet", 0, 3, 0, 0, 20, 0)]
+    [InlineData("GstWebRTC", 0, 2, 0, 0, 6, 0)]
+    [InlineData("GstNet", 0, 3, 0, 0, 3, 0)]
     [InlineData("GstRtsp", 0, 17, 0, 0, 19, 0)]
-    [InlineData("GES", 0, 3, 4, 10, 75, 0)]
+    [InlineData("GES", 6, 3, 4, 10, 39, 2)]
     public void TheSkipCensusIsStable(
         string module,
         int shadowed,

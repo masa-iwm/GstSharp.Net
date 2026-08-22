@@ -532,6 +532,70 @@ public abstract unsafe partial class BaseParse : Gst.Element
         System.GC.KeepAlive(this);
     }
 
+    /// <summary>Disable dropping buffers that are out of segment</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public bool DisableClip
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("disable-clip");
+            return holder.GetBoolean();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("disable-clip");
+            holder.SetBoolean(value);
+            SetPropertyValue("disable-clip", in holder);
+        }
+    }
+
+    /// <summary>
+    /// If set to %TRUE, baseparse will unconditionally force parsing of the
+    /// incoming data. This can be required in the rare cases where the incoming
+    /// side-data (caps, pts, dts, ...) is not trusted by the user and wants to
+    /// force validation and parsing of the incoming data.
+    /// If set to %FALSE, decision of whether to parse the data or not is up to
+    /// the implementation (standard behaviour).
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public bool DisablePassthrough
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("disable-passthrough");
+            return holder.GetBoolean();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("disable-passthrough");
+            holder.SetBoolean(value);
+            SetPropertyValue("disable-passthrough", in holder);
+        }
+    }
+
     /// <summary>The <c>gst_base_parse_add_index_entry</c> entry point.</summary>
     [LibraryImport("GstBase", EntryPoint = "gst_base_parse_add_index_entry")]
     private static partial int GstBaseParseAddIndexEntry(nint parse, ulong offset, ulong ts, int key, int force);

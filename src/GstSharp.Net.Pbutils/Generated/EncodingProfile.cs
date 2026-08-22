@@ -505,6 +505,42 @@ public unsafe partial class EncodingProfile : Gst.GObject.Object
         return Gst.GObject.Object.FromNative<Gst.Pbutils.EncodingProfile>(nativeResult, Gst.Interop.Transfer.Full);
     }
 
+    /// <summary>The <c>restriction-caps</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// <para>
+    /// Reading builds a wrapper that owns a reference of its own: dispose it
+    /// when you are done with it.
+    /// </para>
+    /// <para>
+    /// Writing takes a reference of its own, so the argument stays the caller's
+    /// to dispose, and <see langword="null"/> clears the property.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public Gst.Caps? RestrictionCaps
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("restriction-caps");
+            return holder.GetMiniObject<Gst.Caps>();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("restriction-caps");
+            holder.SetMiniObject(value);
+            SetPropertyValue("restriction-caps", in holder);
+        }
+    }
+
     /// <summary>The <c>gst_encoding_profile_copy</c> entry point.</summary>
     [LibraryImport("GstPbutils", EntryPoint = "gst_encoding_profile_copy")]
     private static partial nint GstEncodingProfileCopy(nint self);

@@ -73,6 +73,242 @@ public abstract unsafe partial class WebRTCDataChannel : Gst.GObject.Object
         return nativeResult != 0;
     }
 
+    /// <summary>The <c>buffered-amount</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public ulong BufferedAmount
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("buffered-amount");
+            return holder.GetUInt64();
+        }
+    }
+
+    /// <summary>The <c>buffered-amount-low-threshold</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public ulong BufferedAmountLowThreshold
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("buffered-amount-low-threshold");
+            return holder.GetUInt64();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("buffered-amount-low-threshold");
+            holder.SetUInt64(value);
+            SetPropertyValue("buffered-amount-low-threshold", in holder);
+        }
+    }
+
+    /// <summary>The <c>id</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// <para>The property is construct-only and therefore read-only here.</para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public int Id
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("id");
+            return holder.GetInt();
+        }
+    }
+
+    /// <summary>The <c>label</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// <para>The property is construct-only and therefore read-only here.</para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public string? Label
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("label");
+            return holder.GetString();
+        }
+    }
+
+    /// <summary>The <c>max-packet-lifetime</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// <para>The property is construct-only and therefore read-only here.</para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public int MaxPacketLifetime
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("max-packet-lifetime");
+            return holder.GetInt();
+        }
+    }
+
+    /// <summary>The <c>max-retransmits</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// <para>The property is construct-only and therefore read-only here.</para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public int MaxRetransmits
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("max-retransmits");
+            return holder.GetInt();
+        }
+    }
+
+    /// <summary>The <c>negotiated</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// <para>The property is construct-only and therefore read-only here.</para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public bool Negotiated
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("negotiated");
+            return holder.GetBoolean();
+        }
+    }
+
+    /// <summary>The <c>ordered</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// <para>The property is construct-only and therefore read-only here.</para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public bool Ordered
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("ordered");
+            return holder.GetBoolean();
+        }
+    }
+
+    /// <summary>The <c>priority</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// <para>The property is construct-only and therefore read-only here.</para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public Gst.WebRTC.WebRTCPriorityType Priority
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("priority");
+            return (Gst.WebRTC.WebRTCPriorityType)holder.GetEnum();
+        }
+    }
+
+    /// <summary>The <c>protocol</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// <para>The property is construct-only and therefore read-only here.</para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public string? Protocol
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("protocol");
+            return holder.GetString();
+        }
+    }
+
+    /// <summary>The <c>ready-state</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public Gst.WebRTC.WebRTCDataChannelState ReadyState
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("ready-state");
+            return (Gst.WebRTC.WebRTCDataChannelState)holder.GetEnum();
+        }
+    }
+
     /// <summary>Raised for the <c>on-buffered-amount-low</c> signal of <c>GstWebRTCDataChannel</c>.</summary>
     /// <remarks>
     /// The handler is remembered on the wrapper it was added to and has to be

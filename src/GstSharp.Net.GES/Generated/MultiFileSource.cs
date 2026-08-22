@@ -64,6 +64,35 @@ public unsafe partial class MultiFileSource : GES.VideoSource, GES.IExtractable,
             ?? throw new InvalidOperationException("ges_multi_file_source_new returned no value.");
     }
 
+    /// <summary>
+    /// The uri of the file/resource to use. You can set a start index,
+    /// a stop index and a sequence pattern.
+    /// The format is &lt;multifile://start:stop\@location-pattern&gt;.
+    /// The pattern uses printf string formating.
+    /// </summary>
+    /// <remarks>
+    /// <para>Example uris:</para>
+    /// <para>multifile:///home/you/image\%03d.jpg</para>
+    /// <para>multifile://20:50@/home/you/sequence/\%04d.png</para>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// <para>The property is construct-only and therefore read-only here.</para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public string? Uri
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("uri");
+            return holder.GetString();
+        }
+    }
+
     /// <summary>The <c>ges_multi_file_source_new</c> entry point.</summary>
     [LibraryImport("GES", EntryPoint = "ges_multi_file_source_new")]
     private static partial nint GesMultiFileSourceNew(byte* uri);

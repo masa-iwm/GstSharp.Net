@@ -18,6 +18,11 @@ disappears shows up here as an added line.
 - `ges_edit_mode_name`
 - `ges_track_type_name`
 
+### NameCollision (2)
+
+- `GES.TrackElement:has-internal-source`
+- `GES.UriClip:is-image`
+
 ### NotIntrospectable (10)
 
 - `ges_init_get_option_group`
@@ -42,54 +47,27 @@ disappears shows up here as an added line.
 - `GES.Track:caps`
 - `GES.Track:restriction-caps`
 
-### UnsupportedSignature (75)
+### ShadowedBy (6)
 
-- `GES.AudioUriSource:uri`
-- `GES.Container:height`
-- `GES.DiscovererManager::discovered`
-- `GES.DiscovererManager::load-serialized-info`
-- `GES.Effect:bin-description`
-- `GES.EffectClip:audio-bin-description`
-- `GES.EffectClip:video-bin-description`
 - `GES.Group:duration`
 - `GES.Group:in-point`
 - `GES.Group:max-duration`
 - `GES.Group:priority`
 - `GES.Group:start`
-- `GES.ImageSource:uri`
+- `GES.UriClip:supported-formats`
+
+### UnsupportedSignature (39)
+
+- `GES.DiscovererManager::discovered`
+- `GES.DiscovererManager::load-serialized-info`
 - `GES.Layer::active-changed`
-- `GES.Marker:position`
-- `GES.MarkerList:flags`
 - `GES.MetaContainer::notify-meta`
-- `GES.MultiFileSource:uri`
-- `GES.Pipeline:audio-filter`
-- `GES.Pipeline:audio-sink`
-- `GES.Pipeline:timeline`
-- `GES.Pipeline:video-filter`
-- `GES.Pipeline:video-sink`
 - `GES.Project::error-loading`
 - `GES.Project::error-loading-asset`
 - `GES.Project::missing-uri`
-- `GES.TestClip:freq`
-- `GES.TestClip:mute`
 - `GES.Timeline::group-removed`
 - `GES.Timeline::select-element-track`
 - `GES.Timeline::select-tracks-for-object`
-- `GES.TimelineElement:serialize`
-- `GES.TitleClip:background`
-- `GES.TitleClip:color`
-- `GES.Track:duration`
-- `GES.Track:id`
-- `GES.Track:track-type`
-- `GES.TrackElement:active`
-- `GES.TrackElement:has-internal-source`
-- `GES.TransitionClip:vtype`
-- `GES.UriClip:is-image`
-- `GES.UriClip:mute`
-- `GES.UriClip:supported-formats`
-- `GES.UriClipAsset:is-nested-timeline`
-- `GES.VideoTransition:invert`
-- `GES.VideoUriSource:uri`
 - `ges_asset_extract`
 - `ges_asset_get_error`
 - `ges_asset_request_async`
@@ -464,24 +442,9 @@ disappears shows up here as an added line.
 
 - `gst_bus_add_watch`
 
-### UnsupportedSignature (165)
+### UnsupportedSignature (150)
 
-- `Gst.Bin:async-handling`
-- `Gst.Bin:message-forward`
 - `Gst.Bus:enable-async`
-- `Gst.Clock:window-size`
-- `Gst.Clock:window-threshold`
-- `Gst.ControlBinding:name`
-- `Gst.ControlBinding:object`
-- `Gst.DeviceMonitor:show-all`
-- `Gst.Pad:caps`
-- `Gst.Pad:template`
-- `Gst.PadTemplate:direction`
-- `Gst.PadTemplate:gtype`
-- `Gst.PadTemplate:name-template`
-- `Gst.PadTemplate:presence`
-- `Gst.SystemClock:clock-type`
-- `Gst.Tracer:params`
 - `gst_buffer_foreach_meta`
 - `gst_buffer_list_foreach`
 - `gst_buffer_list_replace`
@@ -709,6 +672,10 @@ disappears shows up here as an added line.
 - `gst_app_src_simple_callbacks_ref`
 - `gst_app_src_simple_callbacks_unref`
 
+### NameCollision (1)
+
+- `GstApp.AppSink:eos`
+
 ### NotIntrospectable (2)
 
 - `gst_app_sink_set_callbacks`
@@ -725,25 +692,12 @@ disappears shows up here as an added line.
 - `GstApp.AppSink:caps`
 - `GstApp.AppSrc:caps`
 
-### UnsupportedSignature (19)
+### ShadowedBy (1)
 
-- `GstApp.AppSink:buffer-list`
-- `GstApp.AppSink:dropped`
-- `GstApp.AppSink:eos`
-- `GstApp.AppSink:in`
-- `GstApp.AppSink:out`
-- `GstApp.AppSink:silent`
-- `GstApp.AppSrc:block`
-- `GstApp.AppSrc:dropped`
-- `GstApp.AppSrc:format`
-- `GstApp.AppSrc:handle-segment-change`
-- `GstApp.AppSrc:in`
 - `GstApp.AppSrc:is-live`
-- `GstApp.AppSrc:max-latency`
-- `GstApp.AppSrc:min-latency`
-- `GstApp.AppSrc:min-percent`
-- `GstApp.AppSrc:out`
-- `GstApp.AppSrc:silent`
+
+### UnsupportedSignature (2)
+
 - `gst_app_sink_pull_object`
 - `gst_app_sink_try_pull_object`
 
@@ -813,26 +767,9 @@ disappears shows up here as an added line.
 - `gst_audio_ring_buffer_commit`
 - `gst_audio_ring_buffer_read`
 
-### UnsupportedSignature (36)
+### UnsupportedSignature (19)
 
-- `GstAudio.AudioAggregator:alignment-threshold`
-- `GstAudio.AudioAggregator:discont-wait`
-- `GstAudio.AudioAggregator:force-live`
-- `GstAudio.AudioAggregator:ignore-inactive-pads`
-- `GstAudio.AudioAggregator:output-buffer-duration`
 - `GstAudio.AudioAggregator:output-buffer-duration-fraction`
-- `GstAudio.AudioAggregatorConvertPad:converter-config`
-- `GstAudio.AudioAggregatorPad:qos-messages`
-- `GstAudio.AudioBaseSink:buffer-time`
-- `GstAudio.AudioBaseSink:can-activate-pull`
-- `GstAudio.AudioBaseSink:latency-time`
-- `GstAudio.AudioBaseSrc:actual-buffer-time`
-- `GstAudio.AudioBaseSrc:actual-latency-time`
-- `GstAudio.AudioBaseSrc:buffer-time`
-- `GstAudio.AudioBaseSrc:latency-time`
-- `GstAudio.AudioCdSrc:device`
-- `GstAudio.AudioCdSrc:mode`
-- `GstAudio.AudioCdSrc:track`
 - `gst_audio_buffer_reorder_channels`
 - `gst_audio_channel_positions_from_mask`
 - `gst_audio_channel_positions_to_mask`
@@ -915,28 +852,8 @@ disappears shows up here as an added line.
 - `GstBase.BaseSink:last-sample`
 - `GstBase.BaseSink:stats`
 
-### UnsupportedSignature (27)
+### UnsupportedSignature (7)
 
-- `GstBase.Aggregator:emit-signals`
-- `GstBase.Aggregator:min-upstream-latency`
-- `GstBase.Aggregator:start-time`
-- `GstBase.Aggregator:start-time-selection`
-- `GstBase.AggregatorPad:current-level-buffers`
-- `GstBase.AggregatorPad:current-level-bytes`
-- `GstBase.AggregatorPad:current-level-time`
-- `GstBase.AggregatorPad:emit-signals`
-- `GstBase.BaseParse:disable-clip`
-- `GstBase.BaseParse:disable-passthrough`
-- `GstBase.BaseSink:async`
-- `GstBase.BaseSink:enable-last-sample`
-- `GstBase.BaseSink:qos`
-- `GstBase.BaseSrc:automatic-eos`
-- `GstBase.BaseSrc:num-buffers`
-- `GstBase.BaseSrc:typefind`
-- `GstBase.BaseTransform:qos`
-- `GstBase.DataQueue:current-level-bytes`
-- `GstBase.DataQueue:current-level-time`
-- `GstBase.DataQueue:current-level-visible`
 - `gst_adapter_copy_bytes`
 - `gst_base_sink_do_preroll`
 - `gst_collect_pads_add_pad`
@@ -957,25 +874,8 @@ disappears shows up here as an added line.
 - `gst_net_control_message_meta_get_info`
 - `gst_net_time_packet_receive`
 
-### UnsupportedSignature (20)
+### UnsupportedSignature (3)
 
-- `GstNet.NetClientClock:address`
-- `GstNet.NetClientClock:base-time`
-- `GstNet.NetClientClock:bus`
-- `GstNet.NetClientClock:internal-clock`
-- `GstNet.NetClientClock:minimum-update-interval`
-- `GstNet.NetClientClock:port`
-- `GstNet.NetClientClock:qos-dscp`
-- `GstNet.NetClientClock:round-trip-limit`
-- `GstNet.NetTimeProvider:active`
-- `GstNet.NetTimeProvider:address`
-- `GstNet.NetTimeProvider:clock`
-- `GstNet.NetTimeProvider:port`
-- `GstNet.NetTimeProvider:qos-dscp`
-- `GstNet.PtpClock:domain`
-- `GstNet.PtpClock:grandmaster-clock-id`
-- `GstNet.PtpClock:internal-clock`
-- `GstNet.PtpClock:master-clock-id`
 - `gst_net_time_packet_new`
 - `gst_net_time_packet_serialize`
 - `gst_ptp_init`
@@ -998,15 +898,10 @@ disappears shows up here as an added line.
 
 - `GstPbutils.EncodingProfile:element-properties`
 
-### UnsupportedSignature (18)
+### UnsupportedSignature (13)
 
-- `GstPbutils.AudioVisualizer:shade-amount`
-- `GstPbutils.AudioVisualizer:shader`
 - `GstPbutils.Discoverer::discovered`
 - `GstPbutils.Discoverer::load-serialized-info`
-- `GstPbutils.Discoverer:timeout`
-- `GstPbutils.Discoverer:use-cache`
-- `GstPbutils.EncodingProfile:restriction-caps`
 - `gst_codec_utils_opus_create_caps`
 - `gst_codec_utils_opus_create_header`
 - `gst_codec_utils_opus_parse_caps`
@@ -1266,20 +1161,8 @@ disappears shows up here as an added line.
 
 - `gst_video_frame_unmap`
 
-### UnsupportedSignature (64)
+### UnsupportedSignature (52)
 
-- `GstVideo.VideoAggregator:force-live`
-- `GstVideo.VideoAggregatorConvertPad:converter-config`
-- `GstVideo.VideoAggregatorPad:max-last-buffer-repeat`
-- `GstVideo.VideoAggregatorPad:repeat-after-eos`
-- `GstVideo.VideoAggregatorPad:zorder`
-- `GstVideo.VideoDecoder:automatic-request-sync-point-flags`
-- `GstVideo.VideoDecoder:automatic-request-sync-points`
-- `GstVideo.VideoDecoder:discard-corrupted-frames`
-- `GstVideo.VideoDecoder:min-force-key-unit-interval`
-- `GstVideo.VideoDecoder:qos`
-- `GstVideo.VideoEncoder:qos`
-- `GstVideo.VideoSink:show-preroll-frame`
 - `gst_buffer_add_video_gl_texture_upload_meta`
 - `gst_buffer_add_video_meta_full`
 - `gst_buffer_add_video_sei_user_data_unregistered_meta`
@@ -1362,48 +1245,10 @@ disappears shows up here as an added line.
 
 - `gst_webrtc_session_description_new`
 
-### UnsupportedSignature (44)
+### UnsupportedSignature (6)
 
-- `GstWebRTC.WebRTCDTLSTransport:certificate`
-- `GstWebRTC.WebRTCDTLSTransport:client`
-- `GstWebRTC.WebRTCDTLSTransport:remote-certificate`
-- `GstWebRTC.WebRTCDTLSTransport:session-id`
-- `GstWebRTC.WebRTCDTLSTransport:state`
-- `GstWebRTC.WebRTCDTLSTransport:transport`
 - `GstWebRTC.WebRTCDataChannel::on-error`
 - `GstWebRTC.WebRTCDataChannel::on-message-data`
-- `GstWebRTC.WebRTCDataChannel:buffered-amount`
-- `GstWebRTC.WebRTCDataChannel:buffered-amount-low-threshold`
-- `GstWebRTC.WebRTCDataChannel:id`
-- `GstWebRTC.WebRTCDataChannel:label`
-- `GstWebRTC.WebRTCDataChannel:max-packet-lifetime`
-- `GstWebRTC.WebRTCDataChannel:max-retransmits`
-- `GstWebRTC.WebRTCDataChannel:negotiated`
-- `GstWebRTC.WebRTCDataChannel:ordered`
-- `GstWebRTC.WebRTCDataChannel:priority`
-- `GstWebRTC.WebRTCDataChannel:protocol`
-- `GstWebRTC.WebRTCDataChannel:ready-state`
-- `GstWebRTC.WebRTCICE:max-rtp-port`
-- `GstWebRTC.WebRTCICE:min-rtp-port`
-- `GstWebRTC.WebRTCICEStream:stream-id`
-- `GstWebRTC.WebRTCICETransport:component`
-- `GstWebRTC.WebRTCICETransport:gathering-state`
-- `GstWebRTC.WebRTCICETransport:state`
-- `GstWebRTC.WebRTCRTPReceiver:transport`
-- `GstWebRTC.WebRTCRTPSender:priority`
-- `GstWebRTC.WebRTCRTPSender:transport`
-- `GstWebRTC.WebRTCRTPTransceiver:codec-preferences`
-- `GstWebRTC.WebRTCRTPTransceiver:current-direction`
-- `GstWebRTC.WebRTCRTPTransceiver:direction`
-- `GstWebRTC.WebRTCRTPTransceiver:kind`
-- `GstWebRTC.WebRTCRTPTransceiver:mid`
-- `GstWebRTC.WebRTCRTPTransceiver:mlineindex`
-- `GstWebRTC.WebRTCRTPTransceiver:receiver`
-- `GstWebRTC.WebRTCRTPTransceiver:sender`
-- `GstWebRTC.WebRTCSCTPTransport:max-channels`
-- `GstWebRTC.WebRTCSCTPTransport:max-message-size`
-- `GstWebRTC.WebRTCSCTPTransport:state`
-- `GstWebRTC.WebRTCSCTPTransport:transport`
 - `gst_webrtc_data_channel_send_data`
 - `gst_webrtc_data_channel_send_data_full`
 - `gst_webrtc_ice_get_local_candidates`

@@ -763,6 +763,34 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
     /// <summary>The timeline that the element lies within.</summary>
     public GES.Timeline? Timeline => GetTimeline();
 
+    /// <summary>Whether the element should be serialized.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public bool Serialize
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("serialize");
+            return holder.GetBoolean();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("serialize");
+            holder.SetBoolean(value);
+            SetPropertyValue("serialize", in holder);
+        }
+    }
+
     /// <summary>The arguments of the <c>child-property-added</c> signal of <c>GESTimelineElement</c>.</summary>
     public sealed class ChildPropertyAddedSignalArgs : System.EventArgs
     {

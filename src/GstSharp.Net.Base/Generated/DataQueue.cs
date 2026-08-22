@@ -44,6 +44,66 @@ public unsafe partial class DataQueue : Gst.GObject.Object
     {
     }
 
+    /// <summary>The <c>current-level-bytes</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public uint CurrentLevelBytes
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("current-level-bytes");
+            return holder.GetUInt();
+        }
+    }
+
+    /// <summary>The <c>current-level-time</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public ulong CurrentLevelTime
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("current-level-time");
+            return holder.GetUInt64();
+        }
+    }
+
+    /// <summary>The <c>current-level-visible</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public uint CurrentLevelVisible
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("current-level-visible");
+            return holder.GetUInt();
+        }
+    }
+
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstDataQueue</c> under.</summary>
     /// <returns>The type of the instances of this wrapper.</returns>
     [LibraryImport("GstBase", EntryPoint = "gst_data_queue_get_type")]

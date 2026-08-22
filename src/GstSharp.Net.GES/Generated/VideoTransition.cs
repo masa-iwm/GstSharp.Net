@@ -132,6 +132,35 @@ public unsafe partial class VideoTransition : GES.Transition, GES.IExtractable, 
     /// <summary>The <c>transition-type</c> property.</summary>
     public GES.VideoStandardTransitionType TransitionType => GetTransitionType();
 
+    /// <summary>This value represents the direction of the transition.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    [Obsolete("Use ges_timeline_element_[sg]et_child_property instead. (deprecated since 1.20)")]
+    public bool Invert
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("invert");
+            return holder.GetBoolean();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("invert");
+            holder.SetBoolean(value);
+            SetPropertyValue("invert", in holder);
+        }
+    }
+
     /// <summary>The <c>ges_video_transition_new</c> entry point.</summary>
     [LibraryImport("GES", EntryPoint = "ges_video_transition_new")]
     private static partial nint GesVideoTransitionNew();

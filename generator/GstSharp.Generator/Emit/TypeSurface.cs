@@ -5,21 +5,70 @@ using GstSharp.Generator.Semantic;
 namespace GstSharp.Generator.Emit;
 
 /// <summary>
-/// One generated property, built from the accessor methods the gir names.
+/// What a value backed property hands out when it is read and takes in when it
+/// is written, which is what its documentation has to state.
+/// </summary>
+internal enum ValueOwnership
+{
+    /// <summary>A number, a string, a <c>GType</c> or an enumeration: nothing is owned.</summary>
+    Plain,
+
+    /// <summary>A <c>GObject</c>: the reader gets the interned wrapper, the writer takes a reference.</summary>
+    GObject,
+
+    /// <summary>A boxed value: the reader gets a copy of its own, the writer copies.</summary>
+    Boxed,
+
+    /// <summary>A mini object: the reader gets a reference of its own, the writer takes one.</summary>
+    MiniObject,
+}
+
+/// <summary>
+/// How the value of a property that has no C accessor crosses a <c>GValue</c>.
+/// </summary>
+/// <param name="Type">The C# type of the property.</param>
+/// <param name="Read">The expression that reads the value out of <c>holder</c>.</param>
+/// <param name="Write">The statement that writes <c>value</c> into <c>holder</c>.</param>
+/// <param name="Ownership">What the two sides own.</param>
+internal sealed record ValueAccess(string Type, string Read, string Write, ValueOwnership Ownership);
+
+/// <summary>
+/// A property that the GObject property system backs, because the gir names no
+/// C getter for it or the one it names is not bound.
+/// </summary>
+/// <param name="GirName">The GObject name of the property, as <c>g_object_get_property</c> takes it.</param>
+/// <param name="Access">How its value crosses the <c>GValue</c>.</param>
+/// <param name="WritesValue">Whether the setter goes through the <c>GValue</c> as well.</param>
+/// <param name="IsConstructOnly">Whether the property can only be given to the constructor.</param>
+internal sealed record ValueBackedProperty(
+    string GirName,
+    ValueAccess Access,
+    bool WritesValue,
+    bool IsConstructOnly);
+
+/// <summary>
+/// One generated property, built from the accessor methods the gir names or,
+/// when it names none, from the GObject property system.
 /// </summary>
 /// <param name="Property">The gir property.</param>
 /// <param name="Name">The C# name of the property.</param>
 /// <param name="Type">The C# type of the property.</param>
-/// <param name="Getter">The method that reads it.</param>
+/// <param name="Getter">The method that reads it, when a bound one exists.</param>
 /// <param name="Setter">The method that writes it, if any.</param>
 /// <param name="IsNew">Whether the property hides an inherited generated member.</param>
+/// <param name="ValueBacked">
+/// How the property is read and written when no bound C getter backs it. A
+/// value backed property never hides an inherited member: it is skipped
+/// instead, so <paramref name="IsNew"/> is always <see langword="false"/> here.
+/// </param>
 internal sealed record PropertyEmission(
     GirProperty Property,
     string Name,
     string Type,
-    MarshalPlan Getter,
+    MarshalPlan? Getter,
     MarshalPlan? Setter,
-    bool IsNew);
+    bool IsNew,
+    ValueBackedProperty? ValueBacked = null);
 
 /// <summary>
 /// One generated event, built from a <c>&lt;glib:signal&gt;</c>.
@@ -207,22 +256,26 @@ internal sealed class SurfaceBuilder
 
     private readonly MarshalPlanner _planner;
     private readonly NameMapper _names;
+    private readonly TypeMap _types;
     private readonly EmissionCensus _census;
     private readonly DiagnosticBag _diagnostics;
 
     /// <summary>Initializes a new instance of the <see cref="SurfaceBuilder"/> class.</summary>
     /// <param name="planner">The marshal planner.</param>
     /// <param name="names">The name mapper.</param>
+    /// <param name="types">The type map, which says what a property holds.</param>
     /// <param name="census">The census of the run.</param>
     /// <param name="diagnostics">The diagnostic sink.</param>
     internal SurfaceBuilder(
         MarshalPlanner planner,
         NameMapper names,
+        TypeMap types,
         EmissionCensus census,
         DiagnosticBag diagnostics)
     {
         _planner = planner;
         _names = names;
+        _types = types;
         _census = census;
         _diagnostics = diagnostics;
     }
@@ -265,8 +318,9 @@ internal sealed class SurfaceBuilder
             Add(function, CallableForm.StaticMethod);
         }
 
+        List<GirProperty> valueBacked = [];
         List<PropertyEmission> properties = includeProperties
-            ? BuildProperties(declaration, context, used, hidden, members)
+            ? BuildProperties(declaration, context, used, hidden, members, valueBacked)
             : [];
 
         // The methods and the properties claim their names first, so that a
@@ -274,6 +328,17 @@ internal sealed class SurfaceBuilder
         List<SignalEmission> signals = includeSignals
             ? BuildSignals(declaration, context, used, hidden, methodForm)
             : [];
+
+        // A property the GObject property system backs comes last of all,
+        // because it is the weakest claim on a name: it exists only where the
+        // gir names no C accessor, so a method, another property and an event
+        // are all bindings of something the library named and it is not. That
+        // is what makes GstAppSink::eos the Eos of that class and leaves the
+        // "eos" property of the same name unbound.
+        if (valueBacked.Count > 0)
+        {
+            BuildValueProperties(declaration, context, used, hidden, members, valueBacked, properties);
+        }
 
         return new TypeSurface(members, properties, signals);
 
@@ -549,7 +614,8 @@ internal sealed class SurfaceBuilder
         PlanningContext context,
         HashSet<string> used,
         HiddenMembers hidden,
-        IReadOnlyList<MarshalPlan> members)
+        IReadOnlyList<MarshalPlan> members,
+        List<GirProperty> valueBacked)
     {
         string module = context.Module.GirNamespace;
         List<PropertyEmission> properties = [];
@@ -563,10 +629,11 @@ internal sealed class SurfaceBuilder
                 || getter.Return.IsVoid
                 || VisibleCount(getter) != 0)
             {
-                // Without a generated getter there is nothing to delegate to;
-                // properties that only exist on the GObject property system are
-                // reached through GetProperty and SetProperty.
-                _census.Skipped(module, SkipReason.UnsupportedSignature, symbol);
+                // Without a generated getter there is nothing to delegate to.
+                // The property is still there on the GObject property system,
+                // so it is decided in the second pass, once every member that
+                // binds something the library named has claimed its name.
+                valueBacked.Add(property);
                 continue;
             }
 
@@ -620,6 +687,212 @@ internal sealed class SurfaceBuilder
         }
 
         return properties;
+    }
+
+    /// <summary>
+    /// Emits the properties the gir declares without naming a C getter for
+    /// them, or whose getter is not bound.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// There is nothing to delegate to, so the member goes through the GObject
+    /// property system itself: <c>g_object_get_property</c> fills a
+    /// <c>GValue</c> of the type the specification declares, and
+    /// <c>g_object_set_property</c> reads one back. That is the route the hand
+    /// written <c>WebRTCDataChannel.ReadyState</c> took before this, and it is
+    /// the only one a property whose accessors exist solely as the
+    /// <c>get_property</c> and <c>set_property</c> slots of a class has.
+    /// </para>
+    /// <para>
+    /// The rules are deliberately narrow. A property that cannot be read is not
+    /// a property; a type the <c>GValue</c> accessors of the runtime do not
+    /// cover is left out rather than half bound; a name another member of the
+    /// same type already took is a collision as it always is; and a name an
+    /// inherited member carries is left to that member, because this shape
+    /// never emits <c>new</c>: what it would hide is the binding of a C
+    /// accessor and this is not one.
+    /// </para>
+    /// </remarks>
+    /// <param name="declaration">The gir declaration.</param>
+    /// <param name="context">The type the members are emitted into.</param>
+    /// <param name="used">The names that are taken.</param>
+    /// <param name="hidden">The members the generated base classes carry.</param>
+    /// <param name="members">The methods that were planned for this type.</param>
+    /// <param name="candidates">The properties the first pass could not delegate.</param>
+    /// <param name="properties">The list the emitted properties are added to.</param>
+    private void BuildValueProperties(
+        GirTypeDeclaration declaration,
+        PlanningContext context,
+        HashSet<string> used,
+        HiddenMembers hidden,
+        IReadOnlyList<MarshalPlan> members,
+        IReadOnlyList<GirProperty> candidates,
+        List<PropertyEmission> properties)
+    {
+        string module = context.Module.GirNamespace;
+
+        foreach (GirProperty property in candidates)
+        {
+            string symbol = context.Namespace.Name + "." + declaration.Name + ":" + property.Name;
+
+            // A write only property has nothing to hand back, and
+            // g_object_get_property on one warns and fills in nothing.
+            if (!property.IsReadable)
+            {
+                _census.Skipped(module, SkipReason.UnsupportedSignature, symbol);
+                continue;
+            }
+
+            if (MapValueAccess(property, context) is not { } access)
+            {
+                _census.Skipped(module, SkipReason.UnsupportedSignature, symbol);
+                continue;
+            }
+
+            string name = _names.PropertyName(context.Namespace, declaration, property);
+            if (used.Contains(name))
+            {
+                _census.Skipped(module, SkipReason.NameCollision, symbol);
+                _diagnostics.Warn(
+                    "GEN0010",
+                    $"The '{property.Name}' property of '{declaration.Name}' would be emitted as '{name}', which is "
+                    + "already taken; the property is skipped.");
+                continue;
+            }
+
+            // An inherited member of the same name would have to be hidden, and
+            // a property that reads the GObject property system is not what a
+            // caller of the hidden member asked for: GstAppSrc declares an
+            // "is-live" property and GstBaseSrc binds gst_base_src_is_live, so
+            // the property is dropped and IsLive() stays the one answer.
+            if (hidden.HidesName(name))
+            {
+                _census.Skipped(module, SkipReason.ShadowedBy, symbol);
+                continue;
+            }
+
+            used.Add(name);
+
+            // A setter the gir names and the planner bound is the better half
+            // of the pair: it is the C call the library documents, and it takes
+            // exactly what this property holds.
+            MarshalPlan? setter = FindAccessor(members, property.Setter);
+            if (setter is not null
+                && (setter.Form != CallableForm.InstanceMethod
+                    || !setter.Return.IsVoid
+                    || VisibleCount(setter) != 1
+                    || !string.Equals(SetterType(setter), access.Type, StringComparison.Ordinal)))
+            {
+                setter = null;
+            }
+
+            // Construct-only leaves the property read only: the runtime refuses
+            // to write one after construction, as g_object_set_property does.
+            bool writesValue = setter is null && property.IsWritable && !property.IsConstructOnly;
+
+            properties.Add(new PropertyEmission(
+                property,
+                name,
+                access.Type,
+                Getter: null,
+                setter,
+                IsNew: false,
+                new ValueBackedProperty(property.Name, access, writesValue, property.IsConstructOnly)));
+            _census.Emitted(module, "property");
+        }
+    }
+
+    /// <summary>
+    /// Maps the gir type of a property onto the <c>GValue</c> accessors that
+    /// read and write it.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The primitives are keyed on the gir type name rather than on the mapped
+    /// marshalling kind, because an alias maps onto the same kind while asking
+    /// for a different C# type: <c>Gst.ClockTime</c> is a <c>guint64</c> that
+    /// projects onto the <c>Gst.ClockTime</c> struct, while a property the gir
+    /// spells <c>guint64</c> is a plain <c>ulong</c> here whatever it counts.
+    /// Which of the durations among them deserve the time type is a decision
+    /// about each property rather than about the width of its value.
+    /// </para>
+    /// <para>
+    /// Everything the table does not name is left out: a fundamental such as
+    /// <c>GstFraction</c>, an array, a nested <c>GValue</c>, a bare pointer and
+    /// every container. Each of them needs a projection that the value
+    /// accessors of the runtime do not have.
+    /// </para>
+    /// </remarks>
+    /// <param name="property">The property to map.</param>
+    /// <param name="context">The type the property is emitted into.</param>
+    /// <returns>The accessors, or <see langword="null"/> when the type is not covered.</returns>
+    private ValueAccess? MapValueAccess(GirProperty property, PlanningContext context)
+    {
+        if (property.Type is GirArrayRef || property.Type.Name is not { } girType)
+        {
+            return null;
+        }
+
+        switch (girType)
+        {
+            case "gboolean":
+                return new ValueAccess("bool", "holder.GetBoolean()", "holder.SetBoolean(value);", ValueOwnership.Plain);
+            case "gint":
+                return new ValueAccess("int", "holder.GetInt()", "holder.SetInt(value);", ValueOwnership.Plain);
+            case "guint":
+                return new ValueAccess("uint", "holder.GetUInt()", "holder.SetUInt(value);", ValueOwnership.Plain);
+            case "gint64":
+                return new ValueAccess("long", "holder.GetInt64()", "holder.SetInt64(value);", ValueOwnership.Plain);
+            case "guint64":
+                return new ValueAccess("ulong", "holder.GetUInt64()", "holder.SetUInt64(value);", ValueOwnership.Plain);
+            case "gfloat":
+                return new ValueAccess("float", "holder.GetFloat()", "holder.SetFloat(value);", ValueOwnership.Plain);
+            case "gdouble":
+                return new ValueAccess("double", "holder.GetDouble()", "holder.SetDouble(value);", ValueOwnership.Plain);
+            case "utf8":
+                return new ValueAccess("string?", "holder.GetString()", "holder.SetString(value);", ValueOwnership.Plain);
+            case "GType":
+                return new ValueAccess(
+                    "Gst.GObject.GType",
+                    "holder.GetGType()",
+                    "holder.SetGType(value);",
+                    ValueOwnership.Plain);
+            default:
+                break;
+        }
+
+        MappedType mapped = _types.Map(property.Type, context.Namespace);
+        string type = mapped.PublicType;
+
+        return mapped.Kind switch
+        {
+            MarshalKind.Enum => new ValueAccess(
+                type,
+                "(" + type + ")holder.GetEnum()",
+                "holder.SetEnum((int)value);",
+                ValueOwnership.Plain),
+            MarshalKind.Flags => new ValueAccess(
+                type,
+                "(" + type + ")holder.GetFlags()",
+                "holder.SetFlags((uint)value);",
+                ValueOwnership.Plain),
+            MarshalKind.GObject => new ValueAccess(
+                type + "?",
+                "(" + type + "?)holder.GetObject()",
+                "holder.SetObject(value);",
+                ValueOwnership.GObject),
+            MarshalKind.Boxed => new ValueAccess(
+                type + "?",
+                "holder.GetBoxed<" + type + ">()",
+                "holder.SetBoxed(value);",
+                ValueOwnership.Boxed),
+            MarshalKind.MiniObject => new ValueAccess(
+                type + "?",
+                "holder.GetMiniObject<" + type + ">()",
+                "holder.SetMiniObject(value);",
+                ValueOwnership.MiniObject),
+            _ => null,
+        };
     }
 
     /// <summary>

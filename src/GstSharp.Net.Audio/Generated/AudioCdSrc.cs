@@ -106,6 +106,90 @@ public unsafe partial class AudioCdSrc : Gst.Base.PushSrc, Gst.IURIHandler
         return nativeResult != 0;
     }
 
+    /// <summary>The <c>device</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public string? Device
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("device");
+            return holder.GetString();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("device");
+            holder.SetString(value);
+            SetPropertyValue("device", in holder);
+        }
+    }
+
+    /// <summary>The <c>mode</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public Gst.Audio.AudioCdSrcMode Mode
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("mode");
+            return (Gst.Audio.AudioCdSrcMode)holder.GetEnum();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("mode");
+            holder.SetEnum((int)value);
+            SetPropertyValue("mode", in holder);
+        }
+    }
+
+    /// <summary>The <c>track</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public uint Track
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("track");
+            return holder.GetUInt();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("track");
+            holder.SetUInt(value);
+            SetPropertyValue("track", in holder);
+        }
+    }
+
     /// <summary>The <c>gst_audio_cd_src_add_track</c> entry point.</summary>
     [LibraryImport("GstAudio", EntryPoint = "gst_audio_cd_src_add_track")]
     private static partial int GstAudioCdSrcAddTrack(nint src, nint track);

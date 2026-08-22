@@ -43,6 +43,30 @@ public unsafe partial class WebRTCRTPReceiver : Gst.Object
     {
     }
 
+    /// <summary>The DTLS transport for this receiver</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// <para>
+    /// Reading hands back the interned wrapper of the object, which the binding
+    /// keeps; it is not the reader's to dispose.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public Gst.WebRTC.WebRTCDTLSTransport? Transport
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("transport");
+            return (Gst.WebRTC.WebRTCDTLSTransport?)holder.GetObject();
+        }
+    }
+
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstWebRTCRTPReceiver</c> under.</summary>
     /// <returns>The type of the instances of this wrapper.</returns>
     [LibraryImport("GstWebRTC", EntryPoint = "gst_webrtc_rtp_receiver_get_type")]

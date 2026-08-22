@@ -576,6 +576,126 @@ public unsafe partial class AppSink : Gst.Base.BaseSink, Gst.IURIHandler
         set => SetWaitOnEos(value);
     }
 
+    /// <summary>The <c>buffer-list</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public bool BufferList
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("buffer-list");
+            return holder.GetBoolean();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("buffer-list");
+            holder.SetBoolean(value);
+            SetPropertyValue("buffer-list", in holder);
+        }
+    }
+
+    /// <summary>Number of buffers that were dropped.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public ulong Dropped
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("dropped");
+            return holder.GetUInt64();
+        }
+    }
+
+    /// <summary>Number of input buffers that were queued.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public ulong In
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("in");
+            return holder.GetUInt64();
+        }
+    }
+
+    /// <summary>Number of output buffers that were dequeued.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public ulong Out
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("out");
+            return holder.GetUInt64();
+        }
+    }
+
+    /// <summary>Don't emit notify for input, output and dropped buffers.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public bool Silent
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("silent");
+            return holder.GetBoolean();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("silent");
+            holder.SetBoolean(value);
+            SetPropertyValue("silent", in holder);
+        }
+    }
+
     /// <summary>
     /// Signal that the end-of-stream has been reached. This signal is emitted from
     /// the streaming thread.

@@ -215,6 +215,90 @@ public unsafe partial class PadTemplate : Gst.Object
         System.GC.KeepAlive(caps);
     }
 
+    /// <summary>The direction of the pad described by the pad template.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// <para>The property is construct-only and therefore read-only here.</para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public Gst.PadDirection Direction
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("direction");
+            return (Gst.PadDirection)holder.GetEnum();
+        }
+    }
+
+    /// <summary>The type of the pad described by the pad template.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// <para>The property is construct-only and therefore read-only here.</para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public Gst.GObject.GType Gtype
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("gtype");
+            return holder.GetGType();
+        }
+    }
+
+    /// <summary>The name template of the pad template.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// <para>The property is construct-only and therefore read-only here.</para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public string? NameTemplate
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("name-template");
+            return holder.GetString();
+        }
+    }
+
+    /// <summary>When the pad described by the pad template will become available.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// <para>The property is construct-only and therefore read-only here.</para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public Gst.PadPresence Presence
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("presence");
+            return (Gst.PadPresence)holder.GetEnum();
+        }
+    }
+
     /// <summary>The arguments of the <c>pad-created</c> signal of <c>GstPadTemplate</c>.</summary>
     public sealed class PadCreatedSignalArgs : System.EventArgs
     {

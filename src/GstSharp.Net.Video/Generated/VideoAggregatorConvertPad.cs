@@ -53,6 +53,42 @@ public unsafe partial class VideoAggregatorConvertPad : Gst.Video.VideoAggregato
         System.GC.KeepAlive(this);
     }
 
+    /// <summary>The <c>converter-config</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// <para>
+    /// Reading builds a wrapper that owns a copy of the value: dispose it when
+    /// you are done with it.
+    /// </para>
+    /// <para>
+    /// Writing copies the argument, which stays the caller's to dispose, and
+    /// <see langword="null"/> clears the property.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public Gst.Structure? ConverterConfig
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("converter-config");
+            return holder.GetBoxed<Gst.Structure>();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("converter-config");
+            holder.SetBoxed(value);
+            SetPropertyValue("converter-config", in holder);
+        }
+    }
+
     /// <summary>The <c>gst_video_aggregator_convert_pad_update_conversion_info</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_aggregator_convert_pad_update_conversion_info")]
     private static partial void GstVideoAggregatorConvertPadUpdateConversionInfo(nint pad);

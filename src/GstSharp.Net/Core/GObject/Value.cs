@@ -386,8 +386,17 @@ public struct Value : IDisposable
     /// Stores an object. The value takes its own reference.
     /// </summary>
     /// <param name="content">The object to store, may be <see langword="null"/>.</param>
-    public void SetObject(Object? content) =>
+    /// <remarks>
+    /// The wrapper is kept alive across the call. Between the read of its
+    /// handle and the reference the value takes, nothing else in the caller
+    /// necessarily uses it, and a wrapper that holds the only reference to its
+    /// object would be free to be collected and to release it there.
+    /// </remarks>
+    public void SetObject(Object? content)
+    {
         GObjectNative.ValueSetObject(ref NativeValue, content?.Handle ?? nint.Zero);
+        GC.KeepAlive(content);
+    }
 
     /// <summary>
     /// Reads an object.
@@ -404,6 +413,27 @@ public struct Value : IDisposable
     /// </summary>
     /// <param name="content">The boxed value to store.</param>
     public void SetBoxed(nint content) => GObjectNative.ValueSetBoxed(ref NativeValue, content);
+
+    /// <summary>
+    /// Stores a boxed value through its wrapper. The value takes its own copy.
+    /// </summary>
+    /// <param name="content">
+    /// The wrapper of the value to store, or <see langword="null"/> to clear
+    /// the value.
+    /// </param>
+    /// <remarks>
+    /// The wrapper stays the caller's: what the value holds afterwards is a
+    /// <c>g_boxed_copy</c> of what the wrapper owns, and disposing the wrapper
+    /// does not reach it. This is the overload to prefer over
+    /// <see cref="SetBoxed(nint)"/>, because it keeps the wrapper alive across
+    /// the call — a handle read out of one leaves it collectable while the copy
+    /// is still running, and its finalizer would free the value being copied.
+    /// </remarks>
+    public void SetBoxed(Boxed? content)
+    {
+        GObjectNative.ValueSetBoxed(ref NativeValue, content?.Handle ?? nint.Zero);
+        GC.KeepAlive(content);
+    }
 
     /// <summary>
     /// Reads a boxed value, which stays owned by this value.
@@ -500,6 +530,29 @@ public struct Value : IDisposable
         throw new InvalidCastException(
             $"The value holds a {type.Name}, whose wrapper is " +
             $"{wrapper?.GetType().ToString() ?? "nothing"} and not a {typeof(T)}.");
+    }
+
+    /// <summary>
+    /// Stores a mini object through its wrapper. The value takes a reference of
+    /// its own.
+    /// </summary>
+    /// <param name="content">
+    /// The wrapper of the mini object to store, or <see langword="null"/> to
+    /// clear the value.
+    /// </param>
+    /// <remarks>
+    /// This is <see cref="SetBoxed(Boxed?)"/> for the other object model: a
+    /// mini object is a boxed type as far as GObject is concerned, and its copy
+    /// function is <c>gst_mini_object_ref</c>, so the value ends up holding a
+    /// reference of its own and the wrapper stays the caller's to dispose. The
+    /// wrapper is kept alive across the call, so a mini object that nothing else
+    /// holds cannot be unreferenced by a finalizer while the value is taking its
+    /// reference.
+    /// </remarks>
+    public void SetMiniObject(Gst.MiniObject? content)
+    {
+        GObjectNative.ValueSetBoxed(ref NativeValue, content?.Handle ?? nint.Zero);
+        GC.KeepAlive(content);
     }
 
     /// <summary>
@@ -1035,7 +1088,7 @@ public struct Value : IDisposable
                 return;
 
             case GType.BoxedValue when content is Boxed boxed && boxed.BoxedType.IsA(expected):
-                SetBoxed(boxed.Handle);
+                SetBoxed(boxed);
                 return;
 
             // A mini object is a boxed type whose wrapper does not derive from
@@ -1047,7 +1100,7 @@ public struct Value : IDisposable
             // travel as one.
             case GType.BoxedValue when content is Gst.MiniObject miniObject &&
                 MiniObjectTypeOf(miniObject.Handle).IsA(expected):
-                SetBoxed(miniObject.Handle);
+                SetMiniObject(miniObject);
                 return;
 
             // The raw handle of a boxed value or of a mini object, which is

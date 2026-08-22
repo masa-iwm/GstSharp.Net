@@ -162,6 +162,57 @@ public unsafe partial class TestClip : GES.SourceClip, GES.IExtractable, GES.IMe
         set => SetVpattern(value);
     }
 
+    /// <summary>The frequency to generate for audio track elements.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public double Freq
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("freq");
+            return holder.GetDouble();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("freq");
+            holder.SetDouble(value);
+            SetPropertyValue("freq", in holder);
+        }
+    }
+
+    /// <summary>Whether the sound will be played or not.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C getter; it is read through the GObject property
+    /// system (<c>g_object_get_property</c>) and written through
+    /// <see cref="SetMute"/>.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public bool Mute
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("mute");
+            return holder.GetBoolean();
+        }
+
+        set => SetMute(value);
+    }
+
     /// <summary>The <c>ges_test_clip_new</c> entry point.</summary>
     [LibraryImport("GES", EntryPoint = "ges_test_clip_new")]
     private static partial nint GesTestClipNew();

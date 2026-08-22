@@ -68,6 +68,56 @@ public unsafe partial class EffectClip : GES.BaseEffectClip, GES.IExtractable, G
         return Gst.GObject.Object.FromNative<GES.EffectClip>(nativeResult, Gst.Interop.Transfer.None);
     }
 
+    /// <summary>
+    /// The description of the audio track of the effect bin with a gst-launch-style
+    /// pipeline description. This should be used for test purposes.
+    /// </summary>
+    /// <remarks>
+    /// <para>Example: "audiopanorama panorama=1.0"</para>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// <para>The property is construct-only and therefore read-only here.</para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public string? AudioBinDescription
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("audio-bin-description");
+            return holder.GetString();
+        }
+    }
+
+    /// <summary>
+    /// The description of the video track of the effect bin with a gst-launch-style
+    /// pipeline description. This should be used for test purposes.
+    /// </summary>
+    /// <remarks>
+    /// <para>Example: "videobalance saturation=1.5 hue=+0.5"</para>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// <para>The property is construct-only and therefore read-only here.</para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public string? VideoBinDescription
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("video-bin-description");
+            return holder.GetString();
+        }
+    }
+
     /// <summary>The <c>ges_effect_clip_new</c> entry point.</summary>
     [LibraryImport("GES", EntryPoint = "ges_effect_clip_new")]
     private static partial nint GesEffectClipNew(byte* videoBinDescription, byte* audioBinDescription);

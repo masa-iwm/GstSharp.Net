@@ -88,6 +88,31 @@ public unsafe partial class Effect : GES.BaseEffect, GES.IExtractable, GES.IMeta
         return Gst.GObject.Object.FromNative<GES.Effect>(nativeResult, Gst.Interop.Transfer.None);
     }
 
+    /// <summary>
+    /// The description of the effect bin with a gst-launch-style
+    /// pipeline description.
+    /// </summary>
+    /// <remarks>
+    /// <para>Example: "videobalance saturation=1.5 hue=+0.5"</para>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// <para>The property is construct-only and therefore read-only here.</para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public string? BinDescription
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("bin-description");
+            return holder.GetString();
+        }
+    }
+
     /// <summary>The <c>ges_effect_new</c> entry point.</summary>
     [LibraryImport("GES", EntryPoint = "ges_effect_new")]
     private static partial nint GesEffectNew(byte* binDescription);

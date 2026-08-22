@@ -258,6 +258,54 @@ public unsafe partial class TitleClip : GES.SourceClip, GES.IExtractable, GES.IM
         set => SetYpos(value);
     }
 
+    /// <summary>The background of the text</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C getter; it is read through the GObject property
+    /// system (<c>g_object_get_property</c>) and written through
+    /// <see cref="SetBackground"/>.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    [Obsolete("use #ges_timeline_element_set_children_properties or #ges_timeline_element_get_children_properties instead. See #GESTitleSource for more information about exposed properties (deprecated since 1.6)")]
+    public uint Background
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("background");
+            return holder.GetUInt();
+        }
+
+        set => SetBackground(value);
+    }
+
+    /// <summary>The color of the text</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C getter; it is read through the GObject property
+    /// system (<c>g_object_get_property</c>) and written through
+    /// <see cref="SetColor"/>.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    [Obsolete("use #ges_timeline_element_set_children_properties or #ges_timeline_element_get_children_properties instead. See #GESTitleSource for more information about exposed properties (deprecated since 1.6)")]
+    public uint Color
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("color");
+            return holder.GetUInt();
+        }
+
+        set => SetColor(value);
+    }
+
     /// <summary>The <c>ges_title_clip_new</c> entry point.</summary>
     [LibraryImport("GES", EntryPoint = "ges_title_clip_new")]
     private static partial nint GesTitleClipNew();

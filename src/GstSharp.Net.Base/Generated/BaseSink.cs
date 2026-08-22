@@ -727,6 +727,100 @@ public abstract unsafe partial class BaseSink : Gst.Element
         set => SetTsOffset(value);
     }
 
+    /// <summary>
+    /// If set to %TRUE, the basesink will perform asynchronous state changes.
+    /// When set to %FALSE, the sink will not signal the parent when it prerolls.
+    /// Use this option when dealing with sparse streams or when synchronisation is
+    /// not required.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public bool Async
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("async");
+            return holder.GetBoolean();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("async");
+            holder.SetBoolean(value);
+            SetPropertyValue("async", in holder);
+        }
+    }
+
+    /// <summary>
+    /// Enable the last-sample property. If %FALSE, basesink doesn't keep a
+    /// reference to the last buffer arrived and the last-sample property is always
+    /// set to %NULL. This can be useful if you need buffers to be released as soon
+    /// as possible, eg. if you're using a buffer pool.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public bool EnableLastSample
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("enable-last-sample");
+            return holder.GetBoolean();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("enable-last-sample");
+            holder.SetBoolean(value);
+            SetPropertyValue("enable-last-sample", in holder);
+        }
+    }
+
+    /// <summary>The <c>qos</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public bool Qos
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("qos");
+            return holder.GetBoolean();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("qos");
+            holder.SetBoolean(value);
+            SetPropertyValue("qos", in holder);
+        }
+    }
+
     /// <summary>The <c>gst_base_sink_get_blocksize</c> entry point.</summary>
     [LibraryImport("GstBase", EntryPoint = "gst_base_sink_get_blocksize")]
     private static partial uint GstBaseSinkGetBlocksize(nint sink);

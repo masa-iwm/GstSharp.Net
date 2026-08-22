@@ -107,6 +107,227 @@ public unsafe partial class NetClientClock : Gst.SystemClock
         GstNetClientClockDeinit();
     }
 
+    /// <summary>The <c>address</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public string? Address
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("address");
+            return holder.GetString();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("address");
+            holder.SetString(value);
+            SetPropertyValue("address", in holder);
+        }
+    }
+
+    /// <summary>The <c>base-time</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// <para>The property is construct-only and therefore read-only here.</para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public ulong BaseTime
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("base-time");
+            return holder.GetUInt64();
+        }
+    }
+
+    /// <summary>The <c>bus</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// <para>
+    /// Reading hands back the interned wrapper of the object, which the binding
+    /// keeps; it is not the reader's to dispose.
+    /// </para>
+    /// <para>
+    /// Writing takes a reference of its own, so the argument stays the caller's
+    /// to dispose, and <see langword="null"/> clears the property.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public Gst.Bus? Bus
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("bus");
+            return (Gst.Bus?)holder.GetObject();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("bus");
+            holder.SetObject(value);
+            SetPropertyValue("bus", in holder);
+        }
+    }
+
+    /// <summary>The <c>internal-clock</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// <para>
+    /// Reading hands back the interned wrapper of the object, which the binding
+    /// keeps; it is not the reader's to dispose.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public Gst.Clock? InternalClock
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("internal-clock");
+            return (Gst.Clock?)holder.GetObject();
+        }
+    }
+
+    /// <summary>The <c>minimum-update-interval</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public ulong MinimumUpdateInterval
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("minimum-update-interval");
+            return holder.GetUInt64();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("minimum-update-interval");
+            holder.SetUInt64(value);
+            SetPropertyValue("minimum-update-interval", in holder);
+        }
+    }
+
+    /// <summary>The <c>port</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public int Port
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("port");
+            return holder.GetInt();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("port");
+            holder.SetInt(value);
+            SetPropertyValue("port", in holder);
+        }
+    }
+
+    /// <summary>The <c>qos-dscp</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public int QosDscp
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("qos-dscp");
+            return holder.GetInt();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("qos-dscp");
+            holder.SetInt(value);
+            SetPropertyValue("qos-dscp", in holder);
+        }
+    }
+
+    /// <summary>The <c>round-trip-limit</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public ulong RoundTripLimit
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("round-trip-limit");
+            return holder.GetUInt64();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("round-trip-limit");
+            holder.SetUInt64(value);
+            SetPropertyValue("round-trip-limit", in holder);
+        }
+    }
+
     /// <summary>The <c>gst_net_client_clock_new</c> entry point.</summary>
     [LibraryImport("GstNet", EntryPoint = "gst_net_client_clock_new")]
     private static partial nint GstNetClientClockNew(byte* name, byte* remoteAddress, int remotePort, ulong baseTime);

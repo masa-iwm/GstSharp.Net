@@ -264,6 +264,207 @@ public unsafe partial class Pipeline : Gst.Pipeline, Gst.IChildProxy, Gst.Video.
     /// </summary>
     public GES.PipelineFlags Mode => GetMode();
 
+    /// <summary>
+    /// The audio filter(s) to apply during playback in preview mode,
+    /// immediately before the #GESPipeline:audio-sink. This exposes the
+    /// #playsink:audio-filter property of the internal #playsink.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// <para>
+    /// Reading hands back the interned wrapper of the object, which the binding
+    /// keeps; it is not the reader's to dispose.
+    /// </para>
+    /// <para>
+    /// Writing takes a reference of its own, so the argument stays the caller's
+    /// to dispose, and <see langword="null"/> clears the property.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public Gst.Element? AudioFilter
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("audio-filter");
+            return (Gst.Element?)holder.GetObject();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("audio-filter");
+            holder.SetObject(value);
+            SetPropertyValue("audio-filter", in holder);
+        }
+    }
+
+    /// <summary>
+    /// The audio sink used for preview. This exposes the
+    /// #playsink:audio-sink property of the internal #playsink.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// <para>
+    /// Reading hands back the interned wrapper of the object, which the binding
+    /// keeps; it is not the reader's to dispose.
+    /// </para>
+    /// <para>
+    /// Writing takes a reference of its own, so the argument stays the caller's
+    /// to dispose, and <see langword="null"/> clears the property.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public Gst.Element? AudioSink
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("audio-sink");
+            return (Gst.Element?)holder.GetObject();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("audio-sink");
+            holder.SetObject(value);
+            SetPropertyValue("audio-sink", in holder);
+        }
+    }
+
+    /// <summary>
+    /// The timeline used by this pipeline, whose content it will play and
+    /// render, or %NULL if the pipeline does not yet have a timeline.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Note that after you set the timeline for the first time, subsequent
+    /// calls to change the timeline will fail.
+    /// </para>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// <para>
+    /// Reading hands back the interned wrapper of the object, which the binding
+    /// keeps; it is not the reader's to dispose.
+    /// </para>
+    /// <para>
+    /// Writing takes a reference of its own, so the argument stays the caller's
+    /// to dispose, and <see langword="null"/> clears the property.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public GES.Timeline? Timeline
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("timeline");
+            return (GES.Timeline?)holder.GetObject();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("timeline");
+            holder.SetObject(value);
+            SetPropertyValue("timeline", in holder);
+        }
+    }
+
+    /// <summary>
+    /// The video filter(s) to apply during playback in preview mode,
+    /// immediately before the #GESPipeline:video-sink. This exposes the
+    /// #playsink:video-filter property of the internal #playsink.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// <para>
+    /// Reading hands back the interned wrapper of the object, which the binding
+    /// keeps; it is not the reader's to dispose.
+    /// </para>
+    /// <para>
+    /// Writing takes a reference of its own, so the argument stays the caller's
+    /// to dispose, and <see langword="null"/> clears the property.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public Gst.Element? VideoFilter
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("video-filter");
+            return (Gst.Element?)holder.GetObject();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("video-filter");
+            holder.SetObject(value);
+            SetPropertyValue("video-filter", in holder);
+        }
+    }
+
+    /// <summary>
+    /// The video sink used for preview. This exposes the
+    /// #playsink:video-sink property of the internal #playsink.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// <para>
+    /// Reading hands back the interned wrapper of the object, which the binding
+    /// keeps; it is not the reader's to dispose.
+    /// </para>
+    /// <para>
+    /// Writing takes a reference of its own, so the argument stays the caller's
+    /// to dispose, and <see langword="null"/> clears the property.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public Gst.Element? VideoSink
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("video-sink");
+            return (Gst.Element?)holder.GetObject();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("video-sink");
+            holder.SetObject(value);
+            SetPropertyValue("video-sink", in holder);
+        }
+    }
+
     /// <summary>The <c>ges_pipeline_new</c> entry point.</summary>
     [LibraryImport("GES", EntryPoint = "ges_pipeline_new")]
     private static partial nint GesPipelineNew();

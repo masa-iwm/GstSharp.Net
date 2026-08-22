@@ -304,6 +304,106 @@ public partial class Object
     }
 
     /// <summary>
+    /// Creates the value a property is written with: empty, and of the type the
+    /// specification of that property declares.
+    /// </summary>
+    /// <param name="name">The name of the property.</param>
+    /// <returns>The value to fill in, which the caller has to dispose.</returns>
+    /// <remarks>
+    /// <para>
+    /// This is the first half of the setter of a generated property that no C
+    /// accessor backs, and <see cref="SetPropertyValue(string, in Value)"/> is
+    /// the second: the pair is what
+    /// <see cref="SetProperty(string, in Value)"/> does, split so that the
+    /// declared type is known before the value is filled in. The type is what
+    /// the generated setter needs and cannot compute: the binding declares no
+    /// <c>GType</c> of its own for a generated enumeration, and
+    /// <c>g_value_set_enum</c> asserts that the value it is given already holds
+    /// one.
+    /// </para>
+    /// <para>
+    /// Every guard of the public overload runs here, before anything is
+    /// allocated: an unknown name, a property that cannot be written and one
+    /// that can only be given to the constructor are the same three
+    /// <see cref="ArgumentException"/>s, with the same messages. What the
+    /// second half no longer has to check is the pair of types, because a value
+    /// created here holds exactly what the property declares.
+    /// </para>
+    /// <para>
+    /// It is <c>internal</c> on purpose. The two halves are only correct
+    /// together, and the generator is the one caller that always writes both;
+    /// <see cref="SetProperty(string, object?)"/> and
+    /// <see cref="SetProperty(string, in Value)"/> are the public ways to write
+    /// a property in one call.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
+    /// <exception cref="ArgumentException">
+    /// The object has no such property, or the property cannot be written at
+    /// all or cannot be written any more.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">The wrapper was disposed.</exception>
+    internal unsafe Value NewPropertyValue(string name)
+    {
+        ArgumentNullException.ThrowIfNull(name);
+
+        nint handle = Handle;
+        Span<byte> buffer = stackalloc byte[GMarshal.StackBufferSize];
+        using Utf8Scope scope = GMarshal.StackUtf8(name, buffer);
+
+        // The first word of a GTypeInstance is its class, which is what
+        // G_OBJECT_GET_CLASS reads; GetProperty takes the same route. The
+        // specification belongs to the class and is borrowed, so there is
+        // nothing here to release.
+        nint pspec = GObjectNative.ObjectClassFindProperty(*(nint*)handle, scope.Pointer);
+        if (pspec == nint.Zero)
+        {
+            throw new ArgumentException($"\"{name}\" is not a property of {NativeType.Name}.", nameof(name));
+        }
+
+        ParamFlags flags = ParamSpec.FlagsOf(pspec);
+
+        if ((flags & ParamFlags.Writable) == 0)
+        {
+            throw new ArgumentException(
+                $"The property \"{name}\" of {NativeType.Name} cannot be written.",
+                nameof(name));
+        }
+
+        if ((flags & ParamFlags.ConstructOnly) != 0)
+        {
+            throw new ArgumentException(
+                $"The property \"{name}\" of {NativeType.Name} can only be given to the constructor.",
+                nameof(name));
+        }
+
+        Value value = Value.New(ParamSpec.ValueTypeOf(pspec));
+
+        // The specification is only valid for as long as the class that owns
+        // it, and the class only for as long as the object; Handle was the last
+        // use of this wrapper. See GetProperty.
+        GC.KeepAlive(this);
+        return value;
+    }
+
+    /// <summary>
+    /// Writes a value that <see cref="NewPropertyValue(string)"/> created for
+    /// this property and this object.
+    /// </summary>
+    /// <param name="name">The name of the property, the one the value was created for.</param>
+    /// <param name="value">The value to write.</param>
+    /// <remarks>
+    /// The second half of the pair, which skips the guards because they all ran
+    /// in the first: looking the specification up a second time would answer
+    /// the same, the value is not empty because it was created with a type, and
+    /// no transformation is needed because that type is the declared one. This
+    /// is the same split that <see cref="SetProperty(string, object?)"/> makes
+    /// between its own guards and the write it ends with.
+    /// </remarks>
+    /// <exception cref="ObjectDisposedException">The wrapper was disposed.</exception>
+    internal void SetPropertyValue(string name, in Value value) => SetPropertyCore(name, value);
+
+    /// <summary>
     /// Reads the content of a value as <typeparamref name="T"/>, without
     /// reflection and without a table: the type argument is compared against the
     /// managed types a property can supply, and the fundamental type of the

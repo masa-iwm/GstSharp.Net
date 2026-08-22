@@ -111,6 +111,97 @@ public unsafe partial class AggregatorPad : Gst.Pad
         return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
 
+    /// <summary>The number of currently queued buffers inside this pad</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public ulong CurrentLevelBuffers
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("current-level-buffers");
+            return holder.GetUInt64();
+        }
+    }
+
+    /// <summary>The number of currently queued bytes inside this pad</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public ulong CurrentLevelBytes
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("current-level-bytes");
+            return holder.GetUInt64();
+        }
+    }
+
+    /// <summary>The amount of currently queued time inside this pad</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public ulong CurrentLevelTime
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("current-level-time");
+            return holder.GetUInt64();
+        }
+    }
+
+    /// <summary>Enables the emission of signals such as #GstAggregatorPad::buffer-consumed</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public bool EmitSignals
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("emit-signals");
+            return holder.GetBoolean();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("emit-signals");
+            holder.SetBoolean(value);
+            SetPropertyValue("emit-signals", in holder);
+        }
+    }
+
     /// <summary>The arguments of the <c>buffer-consumed</c> signal of <c>GstAggregatorPad</c>.</summary>
     public sealed class BufferConsumedSignalArgs : System.EventArgs
     {

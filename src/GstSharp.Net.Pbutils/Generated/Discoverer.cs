@@ -162,6 +162,69 @@ public unsafe partial class Discoverer : Gst.GObject.Object
         System.GC.KeepAlive(this);
     }
 
+    /// <summary>
+    /// The duration (in nanoseconds) after which the discovery of an individual
+    /// URI will timeout.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// If the discovery of a URI times out, the %GST_DISCOVERER_TIMEOUT will be
+    /// set on the result flags.
+    /// </para>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public ulong Timeout
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("timeout");
+            return holder.GetUInt64();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("timeout");
+            holder.SetUInt64(value);
+            SetPropertyValue("timeout", in holder);
+        }
+    }
+
+    /// <summary>The <c>use-cache</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public bool UseCache
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("use-cache");
+            return holder.GetBoolean();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("use-cache");
+            holder.SetBoolean(value);
+            SetPropertyValue("use-cache", in holder);
+        }
+    }
+
     /// <summary>Will be emitted in async mode when all pending URIs have been processed.</summary>
     /// <remarks>
     /// The handler is remembered on the wrapper it was added to and has to be

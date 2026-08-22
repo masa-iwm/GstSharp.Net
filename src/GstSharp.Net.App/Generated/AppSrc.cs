@@ -566,6 +566,289 @@ public unsafe partial class AppSrc : Gst.Base.BaseSrc, Gst.IURIHandler
     }
 
     /// <summary>
+    /// When max-bytes are queued and after the enough-data signal has been emitted,
+    /// block any further push-buffer calls until the amount of queued bytes drops
+    /// below the max-bytes limit.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public bool Block
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("block");
+            return holder.GetBoolean();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("block");
+            holder.SetBoolean(value);
+            SetPropertyValue("block", in holder);
+        }
+    }
+
+    /// <summary>Number of buffers that were dropped.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public ulong Dropped
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("dropped");
+            return holder.GetUInt64();
+        }
+    }
+
+    /// <summary>
+    /// The format to use for segment events. When the source is producing
+    /// timestamped buffers this property should be set to GST_FORMAT_TIME.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public Gst.Format Format
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("format");
+            return (Gst.Format)holder.GetEnum();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("format");
+            holder.SetEnum((int)value);
+            SetPropertyValue("format", in holder);
+        }
+    }
+
+    /// <summary>
+    /// When enabled, appsrc will check GstSegment in GstSample which was
+    /// pushed via gst_app_src_push_sample() or "push-sample" signal action.
+    /// If a GstSegment is changed, corresponding segment event will be followed
+    /// by next data flow.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// FIXME: currently only GST_FORMAT_TIME format is supported and therefore
+    /// GstAppSrc::format should be time. However, possibly #GstAppSrc can support
+    /// other formats.
+    /// </para>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public bool HandleSegmentChange
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("handle-segment-change");
+            return holder.GetBoolean();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("handle-segment-change");
+            holder.SetBoolean(value);
+            SetPropertyValue("handle-segment-change", in holder);
+        }
+    }
+
+    /// <summary>Number of input buffers that were queued.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public ulong In
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("in");
+            return holder.GetUInt64();
+        }
+    }
+
+    /// <summary>The <c>max-latency</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public long MaxLatency
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("max-latency");
+            return holder.GetInt64();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("max-latency");
+            holder.SetInt64(value);
+            SetPropertyValue("max-latency", in holder);
+        }
+    }
+
+    /// <summary>
+    /// The minimum latency of the source. A value of -1 will use the default
+    /// latency calculations of #GstBaseSrc.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public long MinLatency
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("min-latency");
+            return holder.GetInt64();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("min-latency");
+            holder.SetInt64(value);
+            SetPropertyValue("min-latency", in holder);
+        }
+    }
+
+    /// <summary>
+    /// Make appsrc emit the "need-data" signal when the amount of bytes in the
+    /// queue drops below this percentage of max-bytes.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public uint MinPercent
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("min-percent");
+            return holder.GetUInt();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("min-percent");
+            holder.SetUInt(value);
+            SetPropertyValue("min-percent", in holder);
+        }
+    }
+
+    /// <summary>Number of output buffers that were dequeued.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public ulong Out
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("out");
+            return holder.GetUInt64();
+        }
+    }
+
+    /// <summary>Don't emit notify for input, output and dropped buffers.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public bool Silent
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("silent");
+            return holder.GetBoolean();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("silent");
+            holder.SetBoolean(value);
+            SetPropertyValue("silent", in holder);
+        }
+    }
+
+    /// <summary>
     /// Signal that the source has enough data. It is recommended that the
     /// application stops calling push-buffer until the need-data signal is
     /// emitted again to avoid excessive buffer queueing.

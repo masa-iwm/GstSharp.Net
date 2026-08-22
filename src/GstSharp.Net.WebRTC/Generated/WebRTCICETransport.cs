@@ -91,6 +91,67 @@ public abstract unsafe partial class WebRTCICETransport : Gst.Object
         System.GC.KeepAlive(this);
     }
 
+    /// <summary>The <c>component</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// <para>The property is construct-only and therefore read-only here.</para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public Gst.WebRTC.WebRTCICEComponent Component
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("component");
+            return (Gst.WebRTC.WebRTCICEComponent)holder.GetEnum();
+        }
+    }
+
+    /// <summary>The <c>gathering-state</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public Gst.WebRTC.WebRTCICEGatheringState GatheringState
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("gathering-state");
+            return (Gst.WebRTC.WebRTCICEGatheringState)holder.GetEnum();
+        }
+    }
+
+    /// <summary>The <c>state</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public Gst.WebRTC.WebRTCICEConnectionState State
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("state");
+            return (Gst.WebRTC.WebRTCICEConnectionState)holder.GetEnum();
+        }
+    }
+
     /// <summary>The arguments of the <c>on-new-candidate</c> signal of <c>GstWebRTCICETransport</c>.</summary>
     public sealed class OnNewCandidateSignalArgs : System.EventArgs
     {

@@ -342,6 +342,12 @@ internal sealed class ClassEmitter
 
     private static void WriteProperty(CodeWriter writer, PropertyEmission property)
     {
+        if (property.ValueBacked is { } backed)
+        {
+            WriteValueProperty(writer, property, backed);
+            return;
+        }
+
         XmlDocWriter.Write(
             writer,
             property.Property.Doc,
@@ -350,17 +356,185 @@ internal sealed class ClassEmitter
         XmlDocWriter.WriteObsolete(writer, Deprecation(property));
 
         string modifiers = "public " + (property.IsNew ? "new " : string.Empty);
+        MarshalPlan getter = property.Getter
+            ?? throw new InvalidOperationException("A property without a value backing needs a getter.");
         if (property.Setter is null)
         {
-            writer.WriteLine(modifiers + property.Type + " " + property.Name + " => " + property.Getter.Name + "();");
+            writer.WriteLine(modifiers + property.Type + " " + property.Name + " => " + getter.Name + "();");
             return;
         }
 
         writer.WriteLine(modifiers + property.Type + " " + property.Name);
         writer.OpenBlock();
-        writer.WriteLine("get => " + property.Getter.Name + "();");
+        writer.WriteLine("get => " + getter.Name + "();");
         writer.WriteLine("set => " + property.Setter.Name + "(value);");
         writer.CloseBlock();
+    }
+
+    /// <summary>
+    /// Writes a property that the GObject property system backs, because the
+    /// gir names no C accessor for it.
+    /// </summary>
+    /// <remarks>
+    /// The local is called <c>holder</c> rather than <c>value</c>, which is the
+    /// implicit parameter of the setter, and it is disposed by the <c>using</c>
+    /// the way every <c>GValue</c> of the runtime is. The body carries no
+    /// <c>GC.KeepAlive</c>: the three runtime helpers it calls each end with one
+    /// over the instance, which is the last use of this wrapper in either
+    /// accessor.
+    /// </remarks>
+    /// <param name="writer">The target writer.</param>
+    /// <param name="property">The property being written.</param>
+    /// <param name="backed">How its value crosses the <c>GValue</c>.</param>
+    private static void WriteValueProperty(
+        CodeWriter writer,
+        PropertyEmission property,
+        ValueBackedProperty backed)
+    {
+        XmlDocWriter.Write(
+            writer,
+            property.Property.Doc,
+            "The <c>" + property.Property.Name + "</c> property.",
+            Arrival(property),
+            ValueRemarks(property, backed));
+        writer.WriteLine(
+            "/// <exception cref=\"System.ObjectDisposedException\">The wrapper was disposed.</exception>");
+        writer.WriteLine("/// <exception cref=\"System.ArgumentException\">");
+        if (backed.WritesValue)
+        {
+            // The setter goes through the property system as well, and that is
+            // where a property the installed library declares read-only is
+            // refused: the same exception, for the other reason.
+            writer.WriteLine("/// The installed GStreamer declares no such property on this class, or");
+            writer.WriteLine("/// declares it read-only.");
+        }
+        else
+        {
+            writer.WriteLine("/// The installed GStreamer declares no such property on this class.");
+        }
+
+        writer.WriteLine("/// </exception>");
+        XmlDocWriter.WriteObsolete(writer, Deprecation(property));
+
+        string name = "\"" + property.Property.Name + "\"";
+        writer.WriteLine("public " + property.Type + " " + property.Name);
+        writer.OpenBlock();
+        writer.WriteLine("get");
+        writer.OpenBlock();
+        writer.WriteLine("using Gst.GObject.Value holder = GetProperty(" + name + ");");
+        writer.WriteLine("return " + backed.Access.Read + ";");
+        writer.CloseBlock();
+
+        if (property.Setter is { } setter)
+        {
+            writer.WriteLine();
+            writer.WriteLine("set => " + setter.Name + "(value);");
+        }
+        else if (backed.WritesValue)
+        {
+            writer.WriteLine();
+            writer.WriteLine("set");
+            writer.OpenBlock();
+            writer.WriteLine("using Gst.GObject.Value holder = NewPropertyValue(" + name + ");");
+            writer.WriteLine(backed.Access.Write);
+            writer.WriteLine("SetPropertyValue(" + name + ", in holder);");
+            writer.CloseBlock();
+        }
+
+        writer.CloseBlock();
+    }
+
+    /// <summary>
+    /// The generator authored remarks of a value backed property: where its
+    /// value comes from, who owns what crosses it, and whether it can be
+    /// written at all.
+    /// </summary>
+    /// <param name="property">The property being written.</param>
+    /// <param name="backed">How its value crosses the <c>GValue</c>.</param>
+    /// <returns>The lines to append to the remarks.</returns>
+    private static IReadOnlyList<string> ValueRemarks(PropertyEmission property, ValueBackedProperty backed)
+    {
+        // A property whose gir names a C setter writes through that call and
+        // reads through the property system, so only half of it is value
+        // backed and the note has to say which half.
+        List<string> note = property.Setter is { } setter
+            ?
+            [
+                "<para>",
+                "This property has no C getter; it is read through the GObject property",
+                "system (<c>g_object_get_property</c>) and written through",
+                "<see cref=\"" + setter.Name + "\"/>.",
+                "</para>",
+            ]
+            :
+            [
+                "<para>",
+                "This property has no C accessor; it is read and written through the GObject",
+                "property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).",
+                "</para>",
+            ];
+
+        // Construct-only comes before the ownership note: it is a statement
+        // about the member itself, and the ownership note is a statement about
+        // the values that cross it.
+        if (backed.IsConstructOnly)
+        {
+            note.Add("<para>The property is construct-only and therefore read-only here.</para>");
+        }
+
+        bool writes = backed.WritesValue;
+        switch (backed.Access.Ownership)
+        {
+            case ValueOwnership.GObject:
+                note.Add("<para>");
+                note.Add("Reading hands back the interned wrapper of the object, which the binding");
+                note.Add("keeps; it is not the reader's to dispose.");
+                note.Add("</para>");
+                if (writes)
+                {
+                    note.Add("<para>");
+                    note.Add("Writing takes a reference of its own, so the argument stays the caller's");
+                    note.Add("to dispose, and <see langword=\"null\"/> clears the property.");
+                    note.Add("</para>");
+                }
+
+                break;
+
+            case ValueOwnership.Boxed:
+                note.Add("<para>");
+                note.Add("Reading builds a wrapper that owns a copy of the value: dispose it when");
+                note.Add("you are done with it.");
+                note.Add("</para>");
+                if (writes)
+                {
+                    note.Add("<para>");
+                    note.Add("Writing copies the argument, which stays the caller's to dispose, and");
+                    note.Add("<see langword=\"null\"/> clears the property.");
+                    note.Add("</para>");
+                }
+
+                break;
+
+            case ValueOwnership.MiniObject:
+                note.Add("<para>");
+                note.Add("Reading builds a wrapper that owns a reference of its own: dispose it");
+                note.Add("when you are done with it.");
+                note.Add("</para>");
+                if (writes)
+                {
+                    note.Add("<para>");
+                    note.Add("Writing takes a reference of its own, so the argument stays the caller's");
+                    note.Add("to dispose, and <see langword=\"null\"/> clears the property.");
+                    note.Add("</para>");
+                }
+
+                break;
+
+            default:
+                break;
+        }
+
+        return note;
     }
 
     /// <summary>
@@ -372,7 +546,9 @@ internal sealed class ClassEmitter
     /// body would use an obsolete member and the generated file would not
     /// compile under warnings as errors. Only the first deprecation found is
     /// used, because a second <c>[Obsolete]</c> attribute is an error of its
-    /// own, and the gir property comes first when it carries one.
+    /// own, and the gir property comes first when it carries one. A value
+    /// backed property has no getter to inspect and often no setter either, so
+    /// what is left is the deprecation of the gir property itself.
     /// </remarks>
     /// <param name="property">The property being written.</param>
     /// <returns>The element to take the <c>[Obsolete]</c> attribute from.</returns>
@@ -383,7 +559,7 @@ internal sealed class ClassEmitter
             return property.Property;
         }
 
-        if (property.Getter.Callable.IsDeprecated)
+        if (property.Getter is { Callable.IsDeprecated: true })
         {
             return property.Getter.Callable;
         }
@@ -404,7 +580,9 @@ internal sealed class ClassEmitter
     /// The newest of the three, because a property is nothing but a call of its
     /// accessors: the member is there once the gir property, the getter and the
     /// setter are all there, and the newest of them is when that happens. A
-    /// read only property has no setter to wait for.
+    /// read only property has no setter to wait for, and a value backed one has
+    /// no getter either: what it waits for is the property, which is the
+    /// specification the accessors of the GObject property system look up.
     /// </remarks>
     /// <param name="property">The property being written.</param>
     /// <returns>The element to take the version from.</returns>
@@ -412,9 +590,9 @@ internal sealed class ClassEmitter
     {
         GirNode newest = property.Property;
 
-        if (Availability.IsNewer(property.Getter.Callable.Version, newest.Version))
+        if (property.Getter is { } getter && Availability.IsNewer(getter.Callable.Version, newest.Version))
         {
-            newest = property.Getter.Callable;
+            newest = getter.Callable;
         }
 
         if (property.Setter is { } setter && Availability.IsNewer(setter.Callable.Version, newest.Version))

@@ -86,6 +86,34 @@ public unsafe partial class SystemClock : Gst.Clock
         System.GC.KeepAlive(newClock);
     }
 
+    /// <summary>The <c>clock-type</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public Gst.ClockType ClockType
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("clock-type");
+            return (Gst.ClockType)holder.GetEnum();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("clock-type");
+            holder.SetEnum((int)value);
+            SetPropertyValue("clock-type", in holder);
+        }
+    }
+
     /// <summary>The <c>gst_system_clock_obtain</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_system_clock_obtain")]
     private static partial nint GstSystemClockObtain();

@@ -578,6 +578,85 @@ public abstract unsafe partial class BaseSrc : Gst.Element
         set => SetDoTimestamp(value);
     }
 
+    /// <summary>See gst_base_src_set_automatic_eos()</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C getter; it is read through the GObject property
+    /// system (<c>g_object_get_property</c>) and written through
+    /// <see cref="SetAutomaticEos"/>.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public bool AutomaticEos
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("automatic-eos");
+            return holder.GetBoolean();
+        }
+
+        set => SetAutomaticEos(value);
+    }
+
+    /// <summary>The <c>num-buffers</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public int NumBuffers
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("num-buffers");
+            return holder.GetInt();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("num-buffers");
+            holder.SetInt(value);
+            SetPropertyValue("num-buffers", in holder);
+        }
+    }
+
+    /// <summary>The <c>typefind</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public bool Typefind
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("typefind");
+            return holder.GetBoolean();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("typefind");
+            holder.SetBoolean(value);
+            SetPropertyValue("typefind", in holder);
+        }
+    }
+
     /// <summary>The <c>gst_base_src_get_blocksize</c> entry point.</summary>
     [LibraryImport("GstBase", EntryPoint = "gst_base_src_get_blocksize")]
     private static partial uint GstBaseSrcGetBlocksize(nint src);
