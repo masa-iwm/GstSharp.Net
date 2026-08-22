@@ -118,7 +118,8 @@ public unsafe partial class DiscovererManager : Gst.GObject.Object
     /// the caller's to manage. Returning <see langword="null"/> answers no value,
     /// and what the emission makes of that is the contract of the signal, stated
     /// in its own returns documentation: it may go on to another handler, to the
-    /// class handler, or read the empty answer as the result.
+    /// class handler, or read the empty answer as the result. That choice belongs
+    /// to the emitting library and can differ between GStreamer versions.
     /// </remarks>
     /// <param name="sender">The instance that emitted the signal.</param>
     /// <param name="args">The arguments of the signal.</param>

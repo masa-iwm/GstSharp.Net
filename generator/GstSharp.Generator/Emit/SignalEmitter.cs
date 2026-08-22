@@ -359,7 +359,8 @@ internal static class SignalEmitter
             writer.WriteLine("/// the caller's to manage. Returning <see langword=\"null\"/> answers no value,");
             writer.WriteLine("/// and what the emission makes of that is the contract of the signal, stated");
             writer.WriteLine("/// in its own returns documentation: it may go on to another handler, to the");
-            writer.WriteLine("/// class handler, or read the empty answer as the result.");
+            writer.WriteLine("/// class handler, or read the empty answer as the result. That choice belongs");
+            writer.WriteLine("/// to the emitting library and can differ between GStreamer versions.");
             writer.WriteLine("/// </remarks>");
         }
 

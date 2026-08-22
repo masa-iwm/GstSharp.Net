@@ -34,7 +34,10 @@ namespace GstSharp.IntegrationTests;
 /// Every member called here is GStreamer 1.24 or older — the two
 /// <c>load-serialized-info</c> signals arrived in 1.24 and
 /// <c>select-element-track</c> in 1.18 — so the file runs on the 1.24 floor of
-/// the Linux leg without an availability gate.
+/// the Linux leg without an availability gate. One test still reads
+/// <see cref="NativeAvailability.Has128"/>, not because a member is missing
+/// there but because what the timeline does with a null answer changed in
+/// 1.28; see its own remarks.
 /// </para>
 /// </remarks>
 [Collection(GstCollection.Name)]
@@ -99,20 +102,37 @@ public sealed class GesSignalReturnTests
     }
 
     /// <summary>
-    /// A handler that answers nothing discards the element, which is what the
-    /// signal documents.
+    /// A handler that answers nothing hands the decision on, and what the
+    /// emission then does with it is the version's own business.
     /// </summary>
     /// <remarks>
-    /// The C reads the fallback off <c>g_signal_has_handler_pending</c>
-    /// (ges-timeline.c:1494-1500): the older <c>select-tracks-for-object</c>
-    /// signal is only emitted when nothing is connected to this one, so
-    /// <see langword="null"/> here means "no track" rather than "decide for
-    /// me". What the null path of the trampoline has to guarantee is that it
-    /// crosses as the null pointer and that the timeline stays usable, and both
-    /// are asserted.
+    /// <para>
+    /// What the null path of the trampoline has to guarantee is that it crosses
+    /// as the null pointer and that the timeline stays usable. Both are
+    /// asserted on every version; the track content is not the same on all of
+    /// them, so it is read against the installed one.
+    /// </para>
+    /// <para>
+    /// From 1.28 on, <c>_get_selected_tracks</c> reads the fallback off
+    /// <c>g_signal_has_handler_pending</c> (ges-timeline.c:1493-1498): the
+    /// older <c>select-tracks-for-object</c> signal is only emitted when
+    /// nothing is connected to this one, so <see langword="null"/> here means
+    /// "no track" and the element is discarded. Before that the <c>else</c> was
+    /// unconditional (1.24.13 ges-timeline.c:1492-1496), so the fallback fired
+    /// anyway and its default class handler put each core element into the
+    /// track matching its type — the same placement a timeline with no handler
+    /// at all makes.
+    /// </para>
+    /// <para>
+    /// The boundary is exact: the gate is upstream commit d3d8989798 ("ges:
+    /// timeline: Respect SELECT_ELEMENT_TRACK signal discard decision", October
+    /// 2025), and the first tags that contain it are 1.27.50 and 1.28.0. No
+    /// 1.24.x or 1.26.x release carries it, which is why <c>Has128</c> is the
+    /// right question to ask here.
+    /// </para>
     /// </remarks>
     [Fact]
-    public void AHandlerThatAnswersNothingDiscardsTheElement()
+    public void AHandlerThatAnswersNothingCrossesAsTheNullPointer()
     {
         GstGES.Initialize();
 
@@ -135,11 +155,21 @@ public sealed class GesSignalReturnTests
                 using Layer layer = timeline.AppendLayer();
                 AddOneSecondTestClip(layer);
 
+                // The emission reaches the handler on every version: the
+                // fallback is a second signal, not a second handler of this
+                // one.
                 Assert.Equal(2, calls);
 
                 foreach (Track track in tracks)
                 {
-                    AssertHoldsNoElement(track);
+                    if (NativeAvailability.Has128)
+                    {
+                        AssertHoldsNoElement(track);
+                    }
+                    else
+                    {
+                        AssertHoldsOneElementOfType(track, track.TrackType);
+                    }
                 }
             }
             finally
