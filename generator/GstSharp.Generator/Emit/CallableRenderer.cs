@@ -1560,8 +1560,15 @@ internal static class CallableRenderer
 
                 return;
 
+            // A callback the C function accepts as NULL is not guarded: the
+            // absence of a function is a value the callee acts on, and the
+            // call site hands it the null pointer rather than a trampoline.
             case ArgumentKind.Callback:
-                writer.WriteLine("ArgumentNullException.ThrowIfNull(" + name + ");");
+                if (!argument.IsNullable)
+                {
+                    writer.WriteLine("ArgumentNullException.ThrowIfNull(" + name + ");");
+                }
+
                 return;
 
             // Storage the binding allocates itself. There is nothing the
@@ -1684,12 +1691,21 @@ internal static class CallableRenderer
     /// </summary>
     /// <param name="countType">The type <see cref="NarrowCountType"/> answered.</param>
     /// <returns>The limit.</returns>
+    /// <exception cref="InvalidOperationException">
+    /// <paramref name="countType"/> is not one of the types
+    /// <see cref="NarrowCountType"/> answers. The two are written together, so
+    /// a type added to one and not to the other fails here rather than being
+    /// documented with the limit of a type it is not.
+    /// </exception>
     private static string NarrowCountLimit(string countType) => countType switch
     {
         "sbyte" => "127",
         "byte" => "255",
         "short" => "32767",
-        _ => "65535",
+        "ushort" => "65535",
+        _ => throw new InvalidOperationException(
+            $"'{countType}' is not a narrow count type; NarrowCountType and NarrowCountLimit "
+            + "have to list the same types."),
     };
 
     /// <summary>Writes the length guard of a span.</summary>
@@ -1904,9 +1920,14 @@ internal static class CallableRenderer
                     "nint " + name + "Native = " + argument.StorageFactory!.NativeName + "();");
                 return;
 
+            // No handle is allocated for a callback that is not there: the
+            // default handle carries the null user data the call site passes
+            // along, and freeing it is a no-op.
             case ArgumentKind.Callback:
                 writer.WriteLine(
-                    "Gst.Interop.CallbackHandle " + name + "State = Gst.Interop.CallbackHandle.Alloc(" + name + ");");
+                    "Gst.Interop.CallbackHandle " + name + "State = "
+                    + (argument.IsNullable ? name + " is null ? default : " : string.Empty)
+                    + "Gst.Interop.CallbackHandle.Alloc(" + name + ");");
                 return;
 
             case ArgumentKind.Span:
@@ -1996,10 +2017,22 @@ internal static class CallableRenderer
                 return plan.Arguments[argument.OwnerArgument ?? 0].Name + "State.UserData";
 
             case ArgumentKind.DestroyNotify:
-                return "(nint)Gst.Interop.CallbackHandle.DestroyNotify";
+            {
+                // Nothing was allocated for an absent callback, so there is
+                // nothing for the callee to notify: handing it a notification
+                // over a null user data would free a handle that never was.
+                ArgumentPlan owner = plan.Arguments[argument.OwnerArgument ?? 0];
+                string notify = "(nint)Gst.Interop.CallbackHandle.DestroyNotify";
+                return owner.IsNullable ? owner.Name + " is null ? 0 : " + notify : notify;
+            }
 
+            // The C function branches on the function pointer, so an absent
+            // callback has to reach it as the null pointer rather than as a
+            // trampoline with no delegate behind it.
             case ArgumentKind.Callback:
-                return argument.TrampolineType + ".Pointer";
+                return argument.IsNullable
+                    ? name + " is null ? 0 : " + argument.TrampolineType + ".Pointer"
+                    : argument.TrampolineType + ".Pointer";
 
             case ArgumentKind.Span:
                 return name + "Pointer";

@@ -122,8 +122,11 @@ public static unsafe class GMarshal
             return default;
         }
 
-        nint* vector = (nint*)NativeMemory.AllocZeroed((nuint)values.Length + 1, (nuint)sizeof(nint));
+        // The managed vector of the copies is allocated first: an out of
+        // memory throw here has nothing to release, while the reverse order
+        // would leak the native vector nothing is holding yet.
         nint[] owned = new nint[values.Length];
+        nint* vector = (nint*)NativeMemory.AllocZeroed((nuint)values.Length + 1, (nuint)sizeof(nint));
         StrvScope scope = new(vector, owned);
 
         try

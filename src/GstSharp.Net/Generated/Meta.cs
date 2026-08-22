@@ -278,16 +278,15 @@ public sealed unsafe partial class Meta
     /// a #GstMetaInfo that can be used to
     /// access metadata.
     /// </returns>
-    public static Gst.MetaInfo RegisterCustom(string name, string[] tags, Gst.CustomMetaTransformFunction transformFunc)
+    public static Gst.MetaInfo RegisterCustom(string name, string[] tags, Gst.CustomMetaTransformFunction? transformFunc)
     {
         ArgumentNullException.ThrowIfNull(name);
         System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
         ArgumentNullException.ThrowIfNull(tags);
         using Gst.Interop.StrvScope tagsScope = Gst.Interop.GMarshal.AllocStrv(tags);
-        ArgumentNullException.ThrowIfNull(transformFunc);
-        Gst.Interop.CallbackHandle transformFuncState = Gst.Interop.CallbackHandle.Alloc(transformFunc);
-        nint nativeResult = GstMetaRegisterCustom(nameScope.Pointer, tagsScope.Pointer, Gst.CustomMetaTransformFunctionTrampoline.Pointer, transformFuncState.UserData, (nint)Gst.Interop.CallbackHandle.DestroyNotify);
+        Gst.Interop.CallbackHandle transformFuncState = transformFunc is null ? default : Gst.Interop.CallbackHandle.Alloc(transformFunc);
+        nint nativeResult = GstMetaRegisterCustom(nameScope.Pointer, tagsScope.Pointer, transformFunc is null ? 0 : Gst.CustomMetaTransformFunctionTrampoline.Pointer, transformFuncState.UserData, transformFunc is null ? 0 : (nint)Gst.Interop.CallbackHandle.DestroyNotify);
         return Gst.MetaInfo.FromNative(nativeResult)
             ?? throw new InvalidOperationException("gst_meta_register_custom returned no value.");
     }

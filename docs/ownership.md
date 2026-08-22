@@ -246,10 +246,10 @@ hand written scopes rather than out parameters — see below.
 ## Arrays of strings
 
 A `string[]?` result — `BufferPool.GetOptions`, `ElementFactory.GetUriProtocols`,
-`Preset.GetPresetNames` — is a decoded copy of what the C function handed back,
-so it holds no native memory and there is nothing to release; a result the C
-function answers with `NULL` is `null` rather than an empty array, and the two
-mean different things often enough that the distinction is kept. An
+`PresetExtensions.GetPresetNames` — is a decoded copy of what the C function
+handed back, so it holds no native memory and there is nothing to release; a
+result the C function answers with `NULL` is `null` rather than an empty array,
+and the two mean different things often enough that the distinction is kept. An
 `in string[]` — `Global.ParseLaunchv`, `Meta.ApiTypeRegister`,
 `Plugin.AddDependency` — is copied into a `NULL` terminated native vector that
 lives for the one call and is released whether the call returns or throws, which
@@ -278,6 +278,14 @@ again, so `SetFunction`, `SetCompareFunction`, `SetEventFunction`,
 `SetFlushFunction` and `SetQueryFunction` keep it alive for the life of the
 process. Install those once, at construction; a call per buffer or per state
 change leaks a handle each time. Their documentation says so on the parameter.
+
+A callback parameter the gir marks `nullable` is a `Gst.Foo?` and is not
+guarded: the absence of a function is a value the C side acts on, not a mistake.
+`Gst.Meta.RegisterCustom` is the one such member — its `transformFunc` may be
+`null`, and `gst_meta_register_custom` then copies the meta and its backing
+structure on a copy transform and discards every other one. The call site hands
+the library the null function pointer, a null `user_data` and no destroy
+notification, so no `GCHandle` is allocated for a callback that is not there.
 
 ### Memory the caller lends to the pipeline
 

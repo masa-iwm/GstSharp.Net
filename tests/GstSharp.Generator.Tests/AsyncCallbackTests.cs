@@ -8,7 +8,10 @@ namespace GstSharp.Generator.Tests;
 /// The scopes a callback parameter may carry: the asynchronous arm, whose
 /// trampoline releases the state of the one invocation, the <c>forever</c>
 /// arm, which releases nothing and says so, and the <c>scope</c> correction
-/// that is how a gir that describes neither is repaired.
+/// that is how a gir that describes neither is repaired. The nullability of a
+/// callback parameter belongs here too: a C function that documents what it
+/// does without one takes no function at all, and the call site has to hand it
+/// the null pointer rather than a trampoline with no delegate behind it.
 /// </summary>
 /// <remarks>
 /// The vendored girs exercise the asynchronous arm through
@@ -171,6 +174,77 @@ public sealed class AsyncCallbackTests
                   </parameter>
                   <parameter name="user_data" transfer-ownership="none" nullable="1">
                     <type name="gpointer" c:type="gpointer"/>
+                  </parameter>
+                </parameters>
+              </method>
+            </class>
+        """;
+
+    /// <summary>
+    /// Two <c>notified</c> sites that differ in one annotation. <c>func</c> of
+    /// <c>set_tick_function</c> is <c>nullable</c>, the way
+    /// <c>gst_meta_register_custom#transform_func</c> is, and <c>func</c> of
+    /// <c>set_pulse_function</c> is the control that has to keep the guard and
+    /// the unconditional hand over.
+    /// </summary>
+    private const string NullableBody =
+        """
+            <callback name="TickFunc" c:type="GstTickFunc">
+              <return-value transfer-ownership="none">
+                <type name="none" c:type="void"/>
+              </return-value>
+              <parameters>
+                <parameter name="user_data" transfer-ownership="none" nullable="1" closure="0">
+                  <type name="gpointer" c:type="gpointer"/>
+                </parameter>
+              </parameters>
+            </callback>
+            <callback name="PulseFunc" c:type="GstPulseFunc">
+              <return-value transfer-ownership="none">
+                <type name="none" c:type="void"/>
+              </return-value>
+              <parameters>
+                <parameter name="user_data" transfer-ownership="none" nullable="1" closure="0">
+                  <type name="gpointer" c:type="gpointer"/>
+                </parameter>
+              </parameters>
+            </callback>
+            <class name="Widget" c:type="GstWidget" parent="GObject.InitiallyUnowned" glib:type-name="GstWidget" glib:get-type="gst_widget_get_type">
+              <method name="set_tick_function" c:identifier="gst_widget_set_tick_function">
+                <return-value transfer-ownership="none">
+                  <type name="none" c:type="void"/>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="widget" transfer-ownership="none">
+                    <type name="Widget" c:type="GstWidget*"/>
+                  </instance-parameter>
+                  <parameter name="func" transfer-ownership="none" nullable="1" allow-none="1" scope="notified" closure="1" destroy="2">
+                    <type name="TickFunc" c:type="GstTickFunc"/>
+                  </parameter>
+                  <parameter name="user_data" transfer-ownership="none" nullable="1">
+                    <type name="gpointer" c:type="gpointer"/>
+                  </parameter>
+                  <parameter name="notify" transfer-ownership="none" scope="async">
+                    <type name="GLib.DestroyNotify" c:type="GDestroyNotify"/>
+                  </parameter>
+                </parameters>
+              </method>
+              <method name="set_pulse_function" c:identifier="gst_widget_set_pulse_function">
+                <return-value transfer-ownership="none">
+                  <type name="none" c:type="void"/>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="widget" transfer-ownership="none">
+                    <type name="Widget" c:type="GstWidget*"/>
+                  </instance-parameter>
+                  <parameter name="func" transfer-ownership="none" scope="notified" closure="1" destroy="2">
+                    <type name="PulseFunc" c:type="GstPulseFunc"/>
+                  </parameter>
+                  <parameter name="user_data" transfer-ownership="none" nullable="1">
+                    <type name="gpointer" c:type="gpointer"/>
+                  </parameter>
+                  <parameter name="notify" transfer-ownership="none" scope="async">
+                    <type name="GLib.DestroyNotify" c:type="GDestroyNotify"/>
                   </parameter>
                 </parameters>
               </method>
@@ -351,6 +425,46 @@ public sealed class AsyncCallbackTests
             "FromUserData(userData).Free()",
             run.File("Callbacks.cs"),
             StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ANullableCallbackReachesTheCalleeAsTheNullPointer()
+    {
+        FixtureRun run = Fixture.Run(NullableBody);
+
+        // The absence of a function is a value the callee acts on -- the C
+        // side branches on the function pointer -- so the parameter is
+        // nullable, nothing guards it, and the three arguments the call is
+        // handed are the null pointer, the null user data of the default
+        // handle, and no destroy notification.
+        string member = run.Member("Widget.cs", "public void SetTickFunction(Gst.TickFunc? func)");
+        Assert.DoesNotContain("ArgumentNullException.ThrowIfNull(func)", member, StringComparison.Ordinal);
+        Assert.Contains(
+            "Gst.Interop.CallbackHandle funcState = func is null ? default : Gst.Interop.CallbackHandle.Alloc(func);",
+            member,
+            StringComparison.Ordinal);
+        Assert.Contains("func is null ? 0 : Gst.TickFuncTrampoline.Pointer", member, StringComparison.Ordinal);
+        Assert.Contains(
+            "func is null ? 0 : (nint)Gst.Interop.CallbackHandle.DestroyNotify",
+            member,
+            StringComparison.Ordinal);
+        Assert.Contains("funcState.UserData", member, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ACallbackTheGirDoesNotCallNullableKeepsItsGuard()
+    {
+        FixtureRun run = Fixture.Run(NullableBody);
+
+        // The control site of the same fixture: one annotation apart, and
+        // every line of the hand over is the unconditional one.
+        string member = run.Member("Widget.cs", "public void SetPulseFunction(Gst.PulseFunc func)");
+        Assert.Contains("ArgumentNullException.ThrowIfNull(func);", member, StringComparison.Ordinal);
+        Assert.Contains(
+            "Gst.Interop.CallbackHandle funcState = Gst.Interop.CallbackHandle.Alloc(func);",
+            member,
+            StringComparison.Ordinal);
+        Assert.DoesNotContain("func is null", member, StringComparison.Ordinal);
     }
 
     /// <summary>Runs a fixture with a hand written <c>fixups.json</c>.</summary>

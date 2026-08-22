@@ -1211,7 +1211,7 @@ internal sealed class MarshalPlanner
 
         if (mapped.Kind == MarshalKind.Callback)
         {
-            return PlanCallbackArgument(callable, parameter, name, context);
+            return PlanCallbackArgument(callable, parameter, name, nullable, context);
         }
 
         // The overlay states the size of a parameter the gir spells as a
@@ -2247,6 +2247,7 @@ internal sealed class MarshalPlanner
     /// <param name="callable">The callable being planned.</param>
     /// <param name="parameter">The callback parameter.</param>
     /// <param name="name">The C# name of the parameter.</param>
+    /// <param name="nullable">Whether the C function accepts no function at all.</param>
     /// <param name="context">The module that is being emitted.</param>
     /// <returns>The plan, or <see langword="null"/> when the callback cannot be handed over.</returns>
     /// <remarks>
@@ -2270,6 +2271,7 @@ internal sealed class MarshalPlanner
         GirCallable callable,
         GirParameter parameter,
         string name,
+        bool nullable,
         PlanningContext context)
     {
         GirScope scope = ScopeOf(callable, parameter);
@@ -2323,7 +2325,8 @@ internal sealed class MarshalPlanner
             Source = parameter,
             Kind = ArgumentKind.Callback,
             Name = name,
-            PublicType = plan.DelegateType,
+            PublicType = nullable ? plan.DelegateType + "?" : plan.DelegateType,
+            IsNullable = nullable,
             RawType = NativeInt,
             Scope = scope,
             DelegateType = plan.DelegateType,
