@@ -88,6 +88,71 @@ public static unsafe class GMarshal
     }
 
     /// <summary>
+    /// Copies <paramref name="values"/> into a <c>NULL</c> terminated vector of
+    /// UTF-8 strings for the duration of a single native call.
+    /// </summary>
+    /// <param name="values">The strings to copy, may be <see langword="null"/>.</param>
+    /// <returns>
+    /// A scope that has to be disposed once the call has returned, and whose
+    /// <see cref="StrvScope.Pointer"/> is <see langword="null"/> when
+    /// <paramref name="values"/> is <see langword="null"/>.
+    /// </returns>
+    /// <remarks>
+    /// <para>
+    /// An empty array is not a <see langword="null"/> one: it becomes a vector
+    /// of one zeroed slot, which is an empty list and not the absence of a
+    /// list, and several callees tell the two apart.
+    /// </para>
+    /// <para>
+    /// The vector comes from <see cref="NativeMemory"/> and the strings from
+    /// <c>g_malloc0</c>, and each is released by the allocator that made it.
+    /// That split is only safe because nothing native takes either allocation
+    /// over, which is the <c>transfer-ownership="none"</c> contract this helper
+    /// exists for.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="ArgumentException">
+    /// One of <paramref name="values"/> is <see langword="null"/> or contains a
+    /// null character.
+    /// </exception>
+    public static StrvScope AllocStrv(string[]? values)
+    {
+        if (values is null)
+        {
+            return default;
+        }
+
+        nint* vector = (nint*)NativeMemory.AllocZeroed((nuint)values.Length + 1, (nuint)sizeof(nint));
+        nint[] owned = new nint[values.Length];
+        StrvScope scope = new(vector, owned);
+
+        try
+        {
+            for (int i = 0; i < values.Length; i++)
+            {
+                if (values[i] is null)
+                {
+                    throw new ArgumentException(
+                        "A null terminated array of strings cannot carry a null element: native code would "
+                        + "read it as the end of the array and never see the elements behind it.",
+                        nameof(values));
+                }
+
+                nint item = StringToUtf8Ptr(values[i]);
+                owned[i] = item;
+                vector[i] = item;
+            }
+        }
+        catch
+        {
+            scope.Dispose();
+            throw;
+        }
+
+        return scope;
+    }
+
+    /// <summary>
     /// Reads a null terminated UTF-8 string that stays owned by native code.
     /// </summary>
     /// <param name="pointer">The string to read, may be <see cref="nint.Zero"/>.</param>

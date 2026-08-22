@@ -29,6 +29,25 @@ public interface IURIHandler
 /// <summary>The methods of <c>GstURIHandler</c>.</summary>
 public static unsafe partial class URIHandlerExtensions
 {
+    /// <summary>
+    /// Gets the list of protocols supported by @handler. This list may not be
+    /// modified.
+    /// </summary>
+    /// <param name="handler">A #GstURIHandler.</param>
+    /// <returns>
+    /// the
+    ///     supported protocols.  Returns %NULL if the @handler isn't
+    ///     implemented properly, or the @handler doesn't support any
+    ///     protocols.
+    /// </returns>
+    public static string[]? GetProtocols(this Gst.IURIHandler handler)
+    {
+        ArgumentNullException.ThrowIfNull(handler);
+        nint nativeResult = GstUriHandlerGetProtocols(handler.Handle);
+        System.GC.KeepAlive(handler);
+        return Gst.Interop.GMarshal.StrvToArray(nativeResult, free: false);
+    }
+
     /// <summary>Gets the currently handled URI.</summary>
     /// <param name="handler">A #GstURIHandler</param>
     /// <returns>
@@ -76,6 +95,10 @@ public static unsafe partial class URIHandlerExtensions
         Gst.GLib.GException.ThrowIfSet(ref errorNative);
         return nativeResult != 0;
     }
+
+    /// <summary>The <c>gst_uri_handler_get_protocols</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_uri_handler_get_protocols")]
+    private static partial nint GstUriHandlerGetProtocols(nint handler);
 
     /// <summary>The <c>gst_uri_handler_get_uri</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_uri_handler_get_uri")]

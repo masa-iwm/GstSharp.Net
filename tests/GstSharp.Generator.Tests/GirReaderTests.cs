@@ -131,6 +131,66 @@ public sealed class GirReaderTests
         Assert.Equal(4, fixedSize.FixedSize);
     }
 
+    /// <summary>
+    /// The gir writer omits <c>zero-terminated</c> whenever the value it would
+    /// write is the one the shape of the array already implies, so the absent
+    /// attribute carries a value of its own.
+    /// </summary>
+    [Fact]
+    public void ReadsTheImpliedZeroTerminatedDefault()
+    {
+        GirNamespace ns = ReadNamespace(
+            """
+            <function name="implied" c:identifier="test_implied">
+              <return-value transfer-ownership="none">
+                <array c:type="gchar**"><type name="utf8" c:type="gchar*"/></array>
+              </return-value>
+              <parameters>
+                <parameter name="counted" transfer-ownership="none">
+                  <array length="1" c:type="guint8*"><type name="guint8" c:type="guint8"/></array>
+                </parameter>
+                <parameter name="size" transfer-ownership="none"><type name="gsize" c:type="gsize"/></parameter>
+                <parameter name="block" transfer-ownership="none">
+                  <array fixed-size="4" c:type="guint8*"><type name="guint8" c:type="guint8"/></array>
+                </parameter>
+                <parameter name="denied" transfer-ownership="none">
+                  <array zero-terminated="0" c:type="gchar**"><type name="utf8" c:type="gchar*"/></array>
+                </parameter>
+                <parameter name="both" transfer-ownership="none">
+                  <array zero-terminated="1" length="5" c:type="gchar**"><type name="utf8" c:type="gchar*"/></array>
+                </parameter>
+                <parameter name="count" transfer-ownership="none"><type name="gsize" c:type="gsize"/></parameter>
+              </parameters>
+            </function>
+            """);
+
+        GirFunction function = Assert.Single(ns.Functions);
+
+        // No attribute, no length and no fixed size: the value giscanner
+        // defaults to and leaves out, which is what every string array of the
+        // reference girs is spelled with.
+        GirArrayRef returned = Assert.IsType<GirArrayRef>(function.ReturnValue.Type);
+        Assert.True(returned.IsZeroTerminated);
+
+        // The same absent attribute beside a length or a fixed size is the
+        // false the writer left out instead.
+        GirArrayRef counted = Assert.IsType<GirArrayRef>(function.Parameters[0].Type);
+        Assert.False(counted.IsZeroTerminated);
+
+        GirArrayRef block = Assert.IsType<GirArrayRef>(function.Parameters[2].Type);
+        Assert.False(block.IsZeroTerminated);
+
+        // An attribute that is spelled out is read as it is spelled, in both
+        // directions; the second case is the one the writer emits, because
+        // there the value contradicts what the length implies.
+        GirArrayRef denied = Assert.IsType<GirArrayRef>(function.Parameters[3].Type);
+        Assert.False(denied.IsZeroTerminated);
+
+        GirArrayRef both = Assert.IsType<GirArrayRef>(function.Parameters[4].Type);
+        Assert.True(both.IsZeroTerminated);
+        Assert.Equal(5, both.LengthParameterIndex);
+    }
+
     [Fact]
     public void ReadsVarArgsOutParametersAndShadowing()
     {

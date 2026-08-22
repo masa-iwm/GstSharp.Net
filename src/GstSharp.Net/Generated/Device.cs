@@ -129,6 +129,20 @@ public abstract unsafe partial class Device : Gst.Object
         return nativeResult != 0;
     }
 
+    /// <summary>Check if @factory matches all of the given classes</summary>
+    /// <param name="classes">
+    /// a %NULL terminated array of classes
+    ///   to match, only match if all classes are matched
+    /// </param>
+    /// <returns>%TRUE if @device matches.</returns>
+    public bool HasClassesv(string[]? classes)
+    {
+        using Gst.Interop.StrvScope classesScope = Gst.Interop.GMarshal.AllocStrv(classes);
+        int nativeResult = GstDeviceHasClassesv(Handle, classesScope.Pointer);
+        System.GC.KeepAlive(this);
+        return nativeResult != 0;
+    }
+
     /// <summary>
     /// Tries to reconfigure an existing element to use the device. If this
     /// function fails, then one must destroy the element and create a new one
@@ -217,6 +231,10 @@ public abstract unsafe partial class Device : Gst.Object
     /// <summary>The <c>gst_device_has_classes</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_device_has_classes")]
     private static partial int GstDeviceHasClasses(nint device, byte* classes);
+
+    /// <summary>The <c>gst_device_has_classesv</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_device_has_classesv")]
+    private static partial int GstDeviceHasClassesv(nint device, nint* classes);
 
     /// <summary>The <c>gst_device_reconfigure_element</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_device_reconfigure_element")]

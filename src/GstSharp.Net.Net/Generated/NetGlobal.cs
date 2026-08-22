@@ -95,6 +95,31 @@ public static unsafe partial class NetGlobal
 
     /// <summary>
     /// Initialize the GStreamer PTP subsystem and create a PTP ordinary clock in
+    /// slave-only mode for all domains on the given @interfaces with the
+    /// given @clock_id.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// If @clock_id is %GST_PTP_CLOCK_ID_NONE, a clock id is automatically
+    /// generated from the MAC address of the first network interface.
+    /// </para>
+    /// <para>
+    /// This function is automatically called by gst_ptp_clock_new() with default
+    /// parameters if it wasn't called before.
+    /// </para>
+    /// </remarks>
+    /// <param name="clockId">The <c>clockId</c> argument.</param>
+    /// <param name="interfaces">network interfaces to run the clock on</param>
+    /// <returns>%TRUE if the GStreamer PTP clock subsystem could be initialized.</returns>
+    public static bool PtpInit(ulong clockId, string[]? interfaces)
+    {
+        using Gst.Interop.StrvScope interfacesScope = Gst.Interop.GMarshal.AllocStrv(interfaces);
+        int nativeResult = GstPtpInit(clockId, interfacesScope.Pointer);
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Initialize the GStreamer PTP subsystem and create a PTP ordinary clock in
     /// slave-only mode according to the @config.
     /// </summary>
     /// <remarks>
@@ -200,6 +225,10 @@ public static unsafe partial class NetGlobal
     /// <summary>The <c>gst_ptp_deinit</c> entry point.</summary>
     [LibraryImport("GstNet", EntryPoint = "gst_ptp_deinit")]
     private static partial void GstPtpDeinit();
+
+    /// <summary>The <c>gst_ptp_init</c> entry point.</summary>
+    [LibraryImport("GstNet", EntryPoint = "gst_ptp_init")]
+    private static partial int GstPtpInit(ulong clockId, nint* interfaces);
 
     /// <summary>The <c>gst_ptp_init_full</c> entry point.</summary>
     [LibraryImport("GstNet", EntryPoint = "gst_ptp_init_full")]

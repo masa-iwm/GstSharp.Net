@@ -171,6 +171,21 @@ public abstract unsafe partial class DeviceProvider : Gst.Object
         return Gst.GObject.Object.FromNative<Gst.DeviceProviderFactory>(nativeResult, Gst.Interop.Transfer.None);
     }
 
+    /// <summary>
+    /// Get the provider factory names of the #GstDeviceProvider instances that
+    /// are hidden by @provider.
+    /// </summary>
+    /// <returns>
+    ///   a list of hidden providers factory names or %NULL when
+    ///   nothing is hidden by @provider. Free with g_strfreev.
+    /// </returns>
+    public string[]? GetHiddenProviders()
+    {
+        nint nativeResult = GstDeviceProviderGetHiddenProviders(Handle);
+        System.GC.KeepAlive(this);
+        return Gst.Interop.GMarshal.StrvToArray(nativeResult, free: true);
+    }
+
     /// <summary>Get metadata with @key in @provider.</summary>
     /// <param name="key">The <c>key</c> argument.</param>
     /// <returns>the metadata for @key.</returns>
@@ -414,6 +429,10 @@ public abstract unsafe partial class DeviceProvider : Gst.Object
     /// <summary>The <c>gst_device_provider_get_factory</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_device_provider_get_factory")]
     private static partial nint GstDeviceProviderGetFactory(nint provider);
+
+    /// <summary>The <c>gst_device_provider_get_hidden_providers</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_device_provider_get_hidden_providers")]
+    private static partial nint GstDeviceProviderGetHiddenProviders(nint provider);
 
     /// <summary>The <c>gst_device_provider_get_metadata</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_device_provider_get_metadata")]

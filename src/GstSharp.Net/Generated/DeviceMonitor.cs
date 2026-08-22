@@ -192,6 +192,21 @@ public unsafe partial class DeviceMonitor : Gst.Object
         return result;
     }
 
+    /// <summary>Get a list of the currently selected device provider factories.</summary>
+    /// <remarks>
+    /// <para>This</para>
+    /// </remarks>
+    /// <returns>
+    ///     A list of device provider factory names that are currently being
+    ///     monitored by @monitor or %NULL when nothing is being monitored.
+    /// </returns>
+    public string[]? GetProviders()
+    {
+        nint nativeResult = GstDeviceMonitorGetProviders(Handle);
+        System.GC.KeepAlive(this);
+        return Gst.Interop.GMarshal.StrvToArray(nativeResult, free: true);
+    }
+
     /// <summary>
     /// Get if @monitor is currently showing all devices, even those from hidden
     /// providers.
@@ -307,6 +322,10 @@ public unsafe partial class DeviceMonitor : Gst.Object
     /// <summary>The <c>gst_device_monitor_get_devices</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_device_monitor_get_devices")]
     private static partial nint GstDeviceMonitorGetDevices(nint monitor);
+
+    /// <summary>The <c>gst_device_monitor_get_providers</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_device_monitor_get_providers")]
+    private static partial nint GstDeviceMonitorGetProviders(nint monitor);
 
     /// <summary>The <c>gst_device_monitor_get_show_all_devices</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_device_monitor_get_show_all_devices")]

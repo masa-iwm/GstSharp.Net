@@ -96,6 +96,18 @@ public unsafe partial class DeviceProviderFactory : Gst.PluginFeature
         return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
     }
 
+    /// <summary>Get the available keys for the metadata on @factory.</summary>
+    /// <returns>
+    /// a %NULL-terminated array of key strings, or %NULL when there is no
+    /// metadata. Free with g_strfreev() when no longer needed.
+    /// </returns>
+    public string[]? GetMetadataKeys()
+    {
+        nint nativeResult = GstDeviceProviderFactoryGetMetadataKeys(Handle);
+        System.GC.KeepAlive(this);
+        return Gst.Interop.GMarshal.StrvToArray(nativeResult, free: true);
+    }
+
     /// <summary>Check if @factory matches all of the given @classes</summary>
     /// <param name="classes">The <c>classes</c> argument.</param>
     /// <returns>%TRUE if @factory matches or if @classes is %NULL.</returns>
@@ -104,6 +116,20 @@ public unsafe partial class DeviceProviderFactory : Gst.PluginFeature
         System.Span<byte> classesBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope classesScope = Gst.Interop.GMarshal.StackUtf8(classes, classesBuffer);
         int nativeResult = GstDeviceProviderFactoryHasClasses(Handle, classesScope.Pointer);
+        System.GC.KeepAlive(this);
+        return nativeResult != 0;
+    }
+
+    /// <summary>Check if @factory matches all of the given classes</summary>
+    /// <param name="classes">
+    /// a %NULL terminated array
+    ///   of classes to match, only match if all classes are matched
+    /// </param>
+    /// <returns>%TRUE if @factory matches.</returns>
+    public bool HasClassesv(string[]? classes)
+    {
+        using Gst.Interop.StrvScope classesScope = Gst.Interop.GMarshal.AllocStrv(classes);
+        int nativeResult = GstDeviceProviderFactoryHasClassesv(Handle, classesScope.Pointer);
         System.GC.KeepAlive(this);
         return nativeResult != 0;
     }
@@ -181,9 +207,17 @@ public unsafe partial class DeviceProviderFactory : Gst.PluginFeature
     [LibraryImport("Gst", EntryPoint = "gst_device_provider_factory_get_metadata")]
     private static partial nint GstDeviceProviderFactoryGetMetadata(nint factory, byte* key);
 
+    /// <summary>The <c>gst_device_provider_factory_get_metadata_keys</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_device_provider_factory_get_metadata_keys")]
+    private static partial nint GstDeviceProviderFactoryGetMetadataKeys(nint factory);
+
     /// <summary>The <c>gst_device_provider_factory_has_classes</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_device_provider_factory_has_classes")]
     private static partial int GstDeviceProviderFactoryHasClasses(nint factory, byte* classes);
+
+    /// <summary>The <c>gst_device_provider_factory_has_classesv</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_device_provider_factory_has_classesv")]
+    private static partial int GstDeviceProviderFactoryHasClassesv(nint factory, nint* classes);
 
     /// <summary>The <c>gst_device_provider_factory_find</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_device_provider_factory_find")]

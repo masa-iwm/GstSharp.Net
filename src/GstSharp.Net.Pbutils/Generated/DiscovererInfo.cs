@@ -131,6 +131,20 @@ public unsafe partial class DiscovererInfo : Gst.GObject.Object
         return Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.None);
     }
 
+    /// <summary>Get the installer details for missing elements</summary>
+    /// <returns>
+    /// An array of strings
+    /// containing information about how to install the various missing elements
+    /// for @info to be usable. If you wish to use the strings after the life-time
+    /// of @info, you will need to copy them.
+    /// </returns>
+    public string[]? GetMissingElementsInstallerDetails()
+    {
+        nint nativeResult = GstDiscovererInfoGetMissingElementsInstallerDetails(Handle);
+        System.GC.KeepAlive(this);
+        return Gst.Interop.GMarshal.StrvToArray(nativeResult, free: false);
+    }
+
     /// <summary>The <c>gst_discoverer_info_get_result</c> function.</summary>
     /// <returns>the result of the discovery as a #GstDiscovererResult.</returns>
     public Gst.Pbutils.DiscovererResult GetResult()
@@ -326,6 +340,10 @@ public unsafe partial class DiscovererInfo : Gst.GObject.Object
     /// <summary>The <c>gst_discoverer_info_get_misc</c> entry point.</summary>
     [LibraryImport("GstPbutils", EntryPoint = "gst_discoverer_info_get_misc")]
     private static partial nint GstDiscovererInfoGetMisc(nint info);
+
+    /// <summary>The <c>gst_discoverer_info_get_missing_elements_installer_details</c> entry point.</summary>
+    [LibraryImport("GstPbutils", EntryPoint = "gst_discoverer_info_get_missing_elements_installer_details")]
+    private static partial nint GstDiscovererInfoGetMissingElementsInstallerDetails(nint info);
 
     /// <summary>The <c>gst_discoverer_info_get_result</c> entry point.</summary>
     [LibraryImport("GstPbutils", EntryPoint = "gst_discoverer_info_get_result")]

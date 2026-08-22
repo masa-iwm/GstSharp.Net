@@ -600,6 +600,20 @@ public static unsafe partial class Global
     }
 
     /// <summary>
+    /// Fetches the current logs per thread from the ring buffer logger. See
+    /// gst_debug_add_ring_buffer_logger() for details.
+    /// </summary>
+    /// <returns>
+    /// NULL-terminated array of
+    /// strings with the debug output per thread
+    /// </returns>
+    public static string[]? DebugRingBufferLoggerGetLogs()
+    {
+        nint nativeResult = GstDebugRingBufferLoggerGetLogs();
+        return Gst.Interop.GMarshal.StrvToArray(nativeResult, free: true);
+    }
+
+    /// <summary>
     /// If activated, debugging messages are sent to the debugging
     /// handlers.
     /// It makes sense to deactivate it for speed issues.
@@ -980,12 +994,107 @@ public static unsafe partial class Global
             ?? throw new InvalidOperationException("gst_parse_launch_full returned no value.");
     }
 
+    /// <summary>
+    /// Create a new element based on command line syntax.
+    /// @error will contain an error message if an erroneous pipeline is specified.
+    /// An error does not mean that the pipeline could not be constructed.
+    /// </summary>
+    /// <param name="argv">null-terminated array of arguments</param>
+    /// <returns>
+    /// a new element on success and %NULL
+    /// on failure.
+    /// </returns>
+    /// <exception cref="Gst.GLib.GException">The native call failed.</exception>
+    public static Gst.Element ParseLaunchv(string[] argv)
+    {
+        ArgumentNullException.ThrowIfNull(argv);
+        using Gst.Interop.StrvScope argvScope = Gst.Interop.GMarshal.AllocStrv(argv);
+        nint errorNative = 0;
+        nint nativeResult = GstParseLaunchv(argvScope.Pointer, &errorNative);
+        Gst.GLib.GException.ThrowIfSet(ref errorNative);
+        return Gst.GObject.Object.FromNative<Gst.Element>(nativeResult, Gst.Interop.Transfer.None)
+            ?? throw new InvalidOperationException("gst_parse_launchv returned no value.");
+    }
+
+    /// <summary>
+    /// Create a new element based on command line syntax.
+    /// @error will contain an error message if an erroneous pipeline is specified.
+    /// An error does not mean that the pipeline could not be constructed.
+    /// </summary>
+    /// <param name="argv">null-terminated array of arguments</param>
+    /// <param name="context">The <c>context</c> argument.</param>
+    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <returns>
+    /// a new element on success; on
+    ///   failure, either %NULL or a partially-constructed bin or element will be
+    ///   returned and @error will be set (unless you passed
+    ///   #GST_PARSE_FLAG_FATAL_ERRORS in @flags, then %NULL will always be returned
+    ///   on failure)
+    /// </returns>
+    /// <exception cref="Gst.GLib.GException">The native call failed.</exception>
+    public static Gst.Element ParseLaunchvFull(string[] argv, Gst.ParseContext? context, Gst.ParseFlags flags)
+    {
+        ArgumentNullException.ThrowIfNull(argv);
+        using Gst.Interop.StrvScope argvScope = Gst.Interop.GMarshal.AllocStrv(argv);
+        nint errorNative = 0;
+        nint nativeResult = GstParseLaunchvFull(argvScope.Pointer, context is null ? 0 : context.Handle, (int)flags, &errorNative);
+        System.GC.KeepAlive(context);
+        Gst.GLib.GException.ThrowIfSet(ref errorNative);
+        return Gst.GObject.Object.FromNative<Gst.Element>(nativeResult, Gst.Interop.Transfer.None)
+            ?? throw new InvalidOperationException("gst_parse_launchv_full returned no value.");
+    }
+
+    /// <summary>
+    /// Iterates the supplied list of UUIDs and checks the GstRegistry for
+    /// all the decryptors supporting one of the supplied UUIDs.
+    /// </summary>
+    /// <param name="systemIdentifiers">
+    /// A null terminated array of strings that contains the UUID values of each
+    /// protection system that is to be checked.
+    /// </param>
+    /// <returns>
+    /// A null terminated array containing all
+    /// the @system_identifiers supported by the set of available decryptors, or
+    /// %NULL if no matches were found.
+    /// </returns>
+    public static string[]? ProtectionFilterSystemsByAvailableDecryptors(string[] systemIdentifiers)
+    {
+        ArgumentNullException.ThrowIfNull(systemIdentifiers);
+        using Gst.Interop.StrvScope systemIdentifiersScope = Gst.Interop.GMarshal.AllocStrv(systemIdentifiers);
+        nint nativeResult = GstProtectionFilterSystemsByAvailableDecryptors(systemIdentifiersScope.Pointer);
+        return Gst.Interop.GMarshal.StrvToArray(nativeResult, free: true);
+    }
+
     /// <summary>The <c>gst_protection_meta_api_get_type</c> function.</summary>
     /// <returns>The result of <c>gst_protection_meta_api_get_type</c>.</returns>
     public static Gst.GObject.GType ProtectionMetaApiGetType()
     {
         nuint nativeResult = GstProtectionMetaApiGetType();
         return new Gst.GObject.GType(nativeResult);
+    }
+
+    /// <summary>
+    /// Iterates the supplied list of UUIDs and checks the GstRegistry for
+    /// an element that supports one of the supplied UUIDs. If more than one
+    /// element matches, the system ID of the highest ranked element is selected.
+    /// </summary>
+    /// <param name="systemIdentifiers">
+    /// A null terminated array of strings
+    /// that contains the UUID values of each protection system that is to be
+    /// checked.
+    /// </param>
+    /// <returns>
+    /// One of the strings from
+    /// @system_identifiers that indicates the highest ranked element that
+    /// implements the protection system indicated by that system ID, or %NULL if no
+    /// element has been found.
+    /// </returns>
+    public static string? ProtectionSelectSystem(string[] systemIdentifiers)
+    {
+        ArgumentNullException.ThrowIfNull(systemIdentifiers);
+        using Gst.Interop.StrvScope systemIdentifiersScope = Gst.Interop.GMarshal.AllocStrv(systemIdentifiers);
+        nint nativeResult = GstProtectionSelectSystem(systemIdentifiersScope.Pointer);
+        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
     }
 
     /// <summary>The <c>gst_reference_timestamp_meta_api_get_type</c> function.</summary>
@@ -3441,6 +3550,10 @@ public static unsafe partial class Global
     [LibraryImport("Gst", EntryPoint = "gst_debug_remove_ring_buffer_logger")]
     private static partial void GstDebugRemoveRingBufferLogger();
 
+    /// <summary>The <c>gst_debug_ring_buffer_logger_get_logs</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_debug_ring_buffer_logger_get_logs")]
+    private static partial nint GstDebugRingBufferLoggerGetLogs();
+
     /// <summary>The <c>gst_debug_set_active</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_debug_set_active")]
     private static partial void GstDebugSetActive(int active);
@@ -3529,9 +3642,25 @@ public static unsafe partial class Global
     [LibraryImport("Gst", EntryPoint = "gst_parse_launch_full")]
     private static partial nint GstParseLaunchFull(byte* pipelineDescription, nint context, int flags, nint* error);
 
+    /// <summary>The <c>gst_parse_launchv</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_parse_launchv")]
+    private static partial nint GstParseLaunchv(nint* argv, nint* error);
+
+    /// <summary>The <c>gst_parse_launchv_full</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_parse_launchv_full")]
+    private static partial nint GstParseLaunchvFull(nint* argv, nint context, int flags, nint* error);
+
+    /// <summary>The <c>gst_protection_filter_systems_by_available_decryptors</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_protection_filter_systems_by_available_decryptors")]
+    private static partial nint GstProtectionFilterSystemsByAvailableDecryptors(nint* systemIdentifiers);
+
     /// <summary>The <c>gst_protection_meta_api_get_type</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_protection_meta_api_get_type")]
     private static partial nuint GstProtectionMetaApiGetType();
+
+    /// <summary>The <c>gst_protection_select_system</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_protection_select_system")]
+    private static partial nint GstProtectionSelectSystem(nint* systemIdentifiers);
 
     /// <summary>The <c>gst_reference_timestamp_meta_api_get_type</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_reference_timestamp_meta_api_get_type")]

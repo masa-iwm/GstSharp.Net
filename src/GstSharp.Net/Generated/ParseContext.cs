@@ -52,6 +52,23 @@ public sealed unsafe partial class ParseContext : Gst.GObject.Boxed
         return Gst.ParseContext.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
 
+    /// <summary>
+    /// Retrieve missing elements from a previous run of gst_parse_launch_full()
+    /// or gst_parse_launchv_full(). Will only return results if an error code
+    /// of %GST_PARSE_ERROR_NO_SUCH_ELEMENT was returned.
+    /// </summary>
+    /// <returns>
+    /// a
+    ///     %NULL-terminated array of element factory name strings of missing
+    ///     elements. Free with g_strfreev() when no longer needed.
+    /// </returns>
+    public string[]? GetMissingElements()
+    {
+        nint nativeResult = GstParseContextGetMissingElements(Handle);
+        System.GC.KeepAlive(this);
+        return Gst.Interop.GMarshal.StrvToArray(nativeResult, free: true);
+    }
+
     /// <summary>The <c>gst_parse_context_new</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_parse_context_new")]
     private static partial nint GstParseContextNew();
@@ -59,6 +76,10 @@ public sealed unsafe partial class ParseContext : Gst.GObject.Boxed
     /// <summary>The <c>gst_parse_context_copy</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_parse_context_copy")]
     private static partial nint GstParseContextCopy(nint context);
+
+    /// <summary>The <c>gst_parse_context_get_missing_elements</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_parse_context_get_missing_elements")]
+    private static partial nint GstParseContextGetMissingElements(nint context);
 
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstParseContext</c> under.</summary>
     /// <returns>The type of the instances of this wrapper.</returns>

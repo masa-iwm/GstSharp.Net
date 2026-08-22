@@ -1012,6 +1012,7 @@ internal sealed class MarshalPlanner
                 name,
                 direction,
                 transfer,
+                nullable,
                 index,
                 context,
                 offset,
@@ -1754,6 +1755,7 @@ internal sealed class MarshalPlanner
         string name,
         ArgumentDirection direction,
         GirTransfer transfer,
+        bool nullable,
         int index,
         PlanningContext context,
         int offset,
@@ -1778,9 +1780,45 @@ internal sealed class MarshalPlanner
         // runtime knows how to read.
         if (element.Kind is MarshalKind.Utf8String or MarshalKind.FilenameString)
         {
-            if (!array.IsZeroTerminated || direction == ArgumentDirection.In)
+            if (!array.IsZeroTerminated)
             {
                 return null;
+            }
+
+            // A vector the callee both reads and replaces is neither shape: the
+            // encode below owns what it built for the length of the call, and
+            // reading a replacement back out of it would read the caller's own
+            // allocation as the callee's answer. Nothing of the reference girs
+            // reaches this — every `char***` there is spelled
+            // zero-terminated="0" — so this is the rule that keeps a future
+            // annotation from being planned as an out.
+            if (direction == ArgumentDirection.Ref)
+            {
+                return null;
+            }
+
+            if (direction == ArgumentDirection.In)
+            {
+                // The vector and its strings live in the caller's scope, which
+                // releases both when the call returns. A callee that took them
+                // over would free memory that scope frees again, the reason the
+                // span arm below states for the same shape.
+                if (transfer is GirTransfer.Full or GirTransfer.Container)
+                {
+                    return null;
+                }
+
+                return new ArgumentPlan
+                {
+                    Source = parameter,
+                    Kind = ArgumentKind.Strv,
+                    Name = name,
+                    PublicType = nullable ? "string[]?" : "string[]",
+                    RawType = NativeInt + "*",
+                    Direction = ArgumentDirection.In,
+                    Transfer = transfer,
+                    IsNullable = nullable,
+                };
             }
 
             return new ArgumentPlan

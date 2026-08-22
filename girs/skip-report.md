@@ -56,7 +56,7 @@ disappears shows up here as an added line.
 - `GES.Group:start`
 - `GES.UriClip:supported-formats`
 
-### UnsupportedSignature (37)
+### UnsupportedSignature (36)
 
 - `GES.DiscovererManager::discovered`
 - `GES.Layer::active-changed`
@@ -88,7 +88,6 @@ disappears shows up here as an added line.
 - `ges_timeline_element_lookup_child`
 - `ges_timeline_element_remove_child_property`
 - `ges_timeline_element_set_child_property_by_pspec`
-- `ges_track_element_add_children_props`
 - `ges_track_element_edit`
 - `ges_track_element_get_all_control_bindings`
 - `ges_track_element_list_children_properties`
@@ -438,7 +437,7 @@ disappears shows up here as an added line.
 
 - `gst_bus_add_watch`
 
-### UnsupportedSignature (147)
+### UnsupportedSignature (121)
 
 - `Gst.Bus:enable-async`
 - `gst_buffer_foreach_meta`
@@ -448,7 +447,6 @@ disappears shows up here as an added line.
 - `gst_buffer_new_wrapped`
 - `gst_buffer_new_wrapped_bytes`
 - `gst_buffer_new_wrapped_full`
-- `gst_buffer_pool_get_options`
 - `gst_bus_create_watch`
 - `gst_bus_get_pollfd`
 - `gst_call_async`
@@ -457,15 +455,7 @@ disappears shows up here as an added line.
 - `gst_control_binding_get_g_value_array`
 - `gst_debug_get_all_categories`
 - `gst_debug_remove_log_function`
-- `gst_debug_ring_buffer_logger_get_logs`
-- `gst_device_has_classesv`
-- `gst_device_monitor_get_providers`
-- `gst_device_provider_factory_get_metadata_keys`
-- `gst_device_provider_factory_has_classesv`
-- `gst_device_provider_get_hidden_providers`
 - `gst_element_factory_create_with_properties`
-- `gst_element_factory_get_metadata_keys`
-- `gst_element_factory_get_uri_protocols`
 - `gst_element_factory_list_filter`
 - `gst_element_factory_make_with_properties`
 - `gst_event_new_select_streams`
@@ -491,11 +481,7 @@ disappears shows up here as an added line.
 - `gst_message_parse_property_notify`
 - `gst_message_parse_warning`
 - `gst_message_take`
-- `gst_meta_api_type_get_tags`
-- `gst_meta_api_type_register`
 - `gst_meta_api_type_set_params_aggregator`
-- `gst_meta_api_type_tags_contain_only`
-- `gst_meta_register_custom`
 - `gst_meta_serialize_simple`
 - `gst_mini_object_add_parent`
 - `gst_mini_object_copy`
@@ -535,23 +521,12 @@ disappears shows up here as an added line.
 - `gst_pad_sticky_events_foreach`
 - `gst_param_spec_array`
 - `gst_param_spec_fraction`
-- `gst_parse_context_get_missing_elements`
-- `gst_parse_launchv`
-- `gst_parse_launchv_full`
-- `gst_plugin_add_dependency`
 - `gst_plugin_feature_list_copy`
 - `gst_plugin_feature_list_debug`
 - `gst_plugin_feature_list_free`
-- `gst_plugin_get_status_errors`
-- `gst_plugin_get_status_infos`
-- `gst_plugin_get_status_warnings`
 - `gst_plugin_list_free`
 - `gst_plugin_register_static`
 - `gst_poll_get_read_gpollfd`
-- `gst_preset_get_preset_names`
-- `gst_preset_get_property_names`
-- `gst_protection_filter_systems_by_available_decryptors`
-- `gst_protection_select_system`
 - `gst_query_set_formatsv`
 - `gst_query_take`
 - `gst_structure_filter_and_map_in_place`
@@ -574,11 +549,9 @@ disappears shows up here as an added line.
 - `gst_task_set_leave_callback`
 - `gst_task_set_lock`
 - `gst_tracing_register_hook`
-- `gst_type_find_factory_get_extensions`
 - `gst_uri_get_media_fragment_table`
 - `gst_uri_get_query_string_ordered`
 - `gst_uri_get_query_table`
-- `gst_uri_handler_get_protocols`
 - `gst_uri_set_path_segments`
 - `gst_uri_set_query_table`
 - `gst_uri_to_string_with_keys`
@@ -851,11 +824,10 @@ disappears shows up here as an added line.
 - `gst_net_control_message_meta_get_info`
 - `gst_net_time_packet_receive`
 
-### UnsupportedSignature (3)
+### UnsupportedSignature (2)
 
 - `gst_net_time_packet_new`
 - `gst_net_time_packet_serialize`
-- `gst_ptp_init`
 
 ## GstPbutils
 
@@ -875,7 +847,7 @@ disappears shows up here as an added line.
 
 - `GstPbutils.EncodingProfile:element-properties`
 
-### UnsupportedSignature (12)
+### UnsupportedSignature (10)
 
 - `GstPbutils.Discoverer::discovered`
 - `gst_codec_utils_opus_create_caps`
@@ -883,12 +855,10 @@ disappears shows up here as an added line.
 - `gst_codec_utils_opus_parse_caps`
 - `gst_codec_utils_opus_parse_header`
 - `gst_discoverer_info_from_variant`
-- `gst_discoverer_info_get_missing_elements_installer_details`
 - `gst_discoverer_info_to_variant`
 - `gst_discoverer_stream_info_list_free`
 - `gst_encoding_target_new`
 - `gst_install_plugins_async`
-- `gst_install_plugins_sync`
 
 ## GstRtsp
 
@@ -922,7 +892,7 @@ disappears shows up here as an added line.
 - `gst_rtsp_transport_init`
 - `gst_rtsp_transport_parse`
 
-### UnsupportedSignature (14)
+### UnsupportedSignature (13)
 
 - `gst_rtsp_connection_connect`
 - `gst_rtsp_connection_connect_with_response`
@@ -937,7 +907,6 @@ disappears shows up here as an added line.
 - `gst_rtsp_message_append_headers`
 - `gst_rtsp_message_parse_auth_credentials`
 - `gst_rtsp_message_take_body`
-- `gst_rtsp_url_decode_path_components`
 
 ## GstSdp
 
@@ -961,7 +930,7 @@ disappears shows up here as an added line.
 - `gst_sdp_media_init`
 - `gst_sdp_message_init`
 
-### UnsupportedSignature (8)
+### UnsupportedSignature (6)
 
 - `gst_mikey_message_add_t`
 - `gst_mikey_message_get_cs_srtp`
@@ -969,8 +938,6 @@ disappears shows up here as an added line.
 - `gst_mikey_message_to_bytes`
 - `gst_mikey_payload_sp_get_param`
 - `gst_mikey_payload_t_set`
-- `gst_sdp_message_add_time`
-- `gst_sdp_time_set`
 
 ## GstVideo
 

@@ -149,6 +149,15 @@ public sealed unsafe partial class Meta
         return nativeResult != 0;
     }
 
+    /// <summary>The <c>gst_meta_api_type_get_tags</c> function.</summary>
+    /// <param name="api">The <c>api</c> argument.</param>
+    /// <returns>an array of tags as strings.</returns>
+    public static string[]? ApiTypeGetTags(Gst.GObject.GType api)
+    {
+        nint nativeResult = GstMetaApiTypeGetTags(api.Value);
+        return Gst.Interop.GMarshal.StrvToArray(nativeResult, free: false);
+    }
+
     /// <summary>Check if @api was registered with @tag.</summary>
     /// <param name="api">The <c>api</c> argument.</param>
     /// <param name="tag">The <c>tag</c> argument.</param>
@@ -156,6 +165,39 @@ public sealed unsafe partial class Meta
     public static bool ApiTypeHasTag(Gst.GObject.GType api, Gst.GLib.Quark tag)
     {
         int nativeResult = GstMetaApiTypeHasTag(api.Value, tag.Value);
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Register and return a GType for the @api and associate it with
+    /// @tags.
+    /// </summary>
+    /// <param name="api">The <c>api</c> argument.</param>
+    /// <param name="tags">tags for @api</param>
+    /// <returns>a unique GType for @api.</returns>
+    public static Gst.GObject.GType ApiTypeRegister(string api, string[] tags)
+    {
+        ArgumentNullException.ThrowIfNull(api);
+        System.Span<byte> apiBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope apiScope = Gst.Interop.GMarshal.StackUtf8(api, apiBuffer);
+        ArgumentNullException.ThrowIfNull(tags);
+        using Gst.Interop.StrvScope tagsScope = Gst.Interop.GMarshal.AllocStrv(tags);
+        nuint nativeResult = GstMetaApiTypeRegister(apiScope.Pointer, tagsScope.Pointer);
+        return new Gst.GObject.GType(nativeResult);
+    }
+
+    /// <summary>The <c>gst_meta_api_type_tags_contain_only</c> function.</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
+    /// <param name="api">The <c>api</c> argument.</param>
+    /// <param name="validTags">a list of valid tags</param>
+    /// <returns>%TRUE if @api only contains tags from @valid_tags.</returns>
+    public static bool ApiTypeTagsContainOnly(Gst.GObject.GType api, string[] validTags)
+    {
+        ArgumentNullException.ThrowIfNull(validTags);
+        using Gst.Interop.StrvScope validTagsScope = Gst.Interop.GMarshal.AllocStrv(validTags);
+        int nativeResult = GstMetaApiTypeTagsContainOnly(api.Value, validTagsScope.Pointer);
         return nativeResult != 0;
     }
 
@@ -210,6 +252,47 @@ public sealed unsafe partial class Meta
     }
 
     /// <summary>
+    /// Register a new custom #GstMeta implementation, backed by an opaque
+    /// structure holding a #GstStructure.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The registered info can be retrieved later with gst_meta_get_info() by using
+    /// @name as the key.
+    /// </para>
+    /// <para>
+    /// The backing #GstStructure can be retrieved with
+    /// gst_custom_meta_get_structure(), its mutability is conditioned by the
+    /// writability of the buffer the meta is attached to.
+    /// </para>
+    /// <para>
+    /// When @transform_func is %NULL, the meta and its backing #GstStructure
+    /// will always be copied when the transform operation is copy, other operations
+    /// are discarded, copy regions are ignored.
+    /// </para>
+    /// </remarks>
+    /// <param name="name">The <c>name</c> argument.</param>
+    /// <param name="tags">tags for @api</param>
+    /// <param name="transformFunc">a #GstMetaTransformFunction</param>
+    /// <returns>
+    /// a #GstMetaInfo that can be used to
+    /// access metadata.
+    /// </returns>
+    public static Gst.MetaInfo RegisterCustom(string name, string[] tags, Gst.CustomMetaTransformFunction transformFunc)
+    {
+        ArgumentNullException.ThrowIfNull(name);
+        System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
+        ArgumentNullException.ThrowIfNull(tags);
+        using Gst.Interop.StrvScope tagsScope = Gst.Interop.GMarshal.AllocStrv(tags);
+        ArgumentNullException.ThrowIfNull(transformFunc);
+        Gst.Interop.CallbackHandle transformFuncState = Gst.Interop.CallbackHandle.Alloc(transformFunc);
+        nint nativeResult = GstMetaRegisterCustom(nameScope.Pointer, tagsScope.Pointer, Gst.CustomMetaTransformFunctionTrampoline.Pointer, transformFuncState.UserData, (nint)Gst.Interop.CallbackHandle.DestroyNotify);
+        return Gst.MetaInfo.FromNative(nativeResult)
+            ?? throw new InvalidOperationException("gst_meta_register_custom returned no value.");
+    }
+
+    /// <summary>
     /// Simplified version of gst_meta_register_custom(), with no tags and no
     /// transform function.
     /// </summary>
@@ -241,9 +324,21 @@ public sealed unsafe partial class Meta
     [LibraryImport("Gst", EntryPoint = "gst_meta_api_type_aggregate_params")]
     private static partial int GstMetaApiTypeAggregateParams(nuint api, nint aggregatedParams, nint params0, nint params1);
 
+    /// <summary>The <c>gst_meta_api_type_get_tags</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_meta_api_type_get_tags")]
+    private static partial nint GstMetaApiTypeGetTags(nuint api);
+
     /// <summary>The <c>gst_meta_api_type_has_tag</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_meta_api_type_has_tag")]
     private static partial int GstMetaApiTypeHasTag(nuint api, uint tag);
+
+    /// <summary>The <c>gst_meta_api_type_register</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_meta_api_type_register")]
+    private static partial nuint GstMetaApiTypeRegister(byte* api, nint* tags);
+
+    /// <summary>The <c>gst_meta_api_type_tags_contain_only</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_meta_api_type_tags_contain_only")]
+    private static partial int GstMetaApiTypeTagsContainOnly(nuint api, nint* validTags);
 
     /// <summary>The <c>gst_meta_deserialize</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_meta_deserialize")]
@@ -252,6 +347,10 @@ public sealed unsafe partial class Meta
     /// <summary>The <c>gst_meta_get_info</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_meta_get_info")]
     private static partial nint GstMetaGetInfo(byte* impl);
+
+    /// <summary>The <c>gst_meta_register_custom</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_meta_register_custom")]
+    private static partial nint GstMetaRegisterCustom(byte* name, nint* tags, nint transformFunc, nint userData, nint destroyData);
 
     /// <summary>The <c>gst_meta_register_custom_simple</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_meta_register_custom_simple")]

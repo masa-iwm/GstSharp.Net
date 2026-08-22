@@ -78,6 +78,48 @@ public unsafe partial class Plugin : Gst.Object
     /// codec loader which exposes elements and/or caps dependent on what external
     /// codec libraries are currently installed.
     /// </para>
+    /// </remarks>
+    /// <param name="envVars">
+    /// %NULL-terminated array of environment variables affecting the
+    ///     feature set of the plugin (e.g. an environment variable containing
+    ///     paths where to look for additional modules/plugins of a library),
+    ///     or %NULL. Environment variable names may be followed by a path component
+    ///      which will be added to the content of the environment variable, e.g.
+    ///      "HOME/.mystuff/plugins".
+    /// </param>
+    /// <param name="paths">
+    /// %NULL-terminated array of directories/paths where dependent files
+    ///     may be, or %NULL.
+    /// </param>
+    /// <param name="names">
+    /// %NULL-terminated array of file names (or file name suffixes,
+    ///     depending on @flags) to be used in combination with the paths from
+    ///     @paths and/or the paths extracted from the environment variables in
+    ///     @env_vars, or %NULL.
+    /// </param>
+    /// <param name="flags">The <c>flags</c> argument.</param>
+    public void AddDependency(string[]? envVars, string[]? paths, string[]? names, Gst.PluginDependencyFlags flags)
+    {
+        using Gst.Interop.StrvScope envVarsScope = Gst.Interop.GMarshal.AllocStrv(envVars);
+        using Gst.Interop.StrvScope pathsScope = Gst.Interop.GMarshal.AllocStrv(paths);
+        using Gst.Interop.StrvScope namesScope = Gst.Interop.GMarshal.AllocStrv(names);
+        GstPluginAddDependency(Handle, envVarsScope.Pointer, pathsScope.Pointer, namesScope.Pointer, (int)flags);
+        System.GC.KeepAlive(this);
+    }
+
+    /// <summary>
+    /// Make GStreamer aware of external dependencies which affect the feature
+    /// set of this plugin (ie. the elements or typefinders associated with it).
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// GStreamer will re-inspect plugins with external dependencies whenever any
+    /// of the external dependencies change. This is useful for plugins which wrap
+    /// other plugin systems, e.g. a plugin which wraps a plugin-based visualisation
+    /// library and makes visualisations available as GStreamer elements, or a
+    /// codec loader which exposes elements and/or caps dependent on what external
+    /// codec libraries are currently installed.
+    /// </para>
     /// <para>
     /// Convenience wrapper function for gst_plugin_add_dependency() which
     /// takes simple strings as arguments instead of string arrays, with multiple
@@ -239,6 +281,33 @@ public unsafe partial class Plugin : Gst.Object
         System.GC.KeepAlive(this);
         return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
             ?? throw new InvalidOperationException("gst_plugin_get_source returned no value.");
+    }
+
+    /// <summary>The <c>gst_plugin_get_status_errors</c> function.</summary>
+    /// <returns>an array of plugin status error messages, or NULL</returns>
+    public string[]? GetStatusErrors()
+    {
+        nint nativeResult = GstPluginGetStatusErrors(Handle);
+        System.GC.KeepAlive(this);
+        return Gst.Interop.GMarshal.StrvToArray(nativeResult, free: true);
+    }
+
+    /// <summary>The <c>gst_plugin_get_status_infos</c> function.</summary>
+    /// <returns>an array of plugin status info messages, or NULL</returns>
+    public string[]? GetStatusInfos()
+    {
+        nint nativeResult = GstPluginGetStatusInfos(Handle);
+        System.GC.KeepAlive(this);
+        return Gst.Interop.GMarshal.StrvToArray(nativeResult, free: true);
+    }
+
+    /// <summary>The <c>gst_plugin_get_status_warnings</c> function.</summary>
+    /// <returns>an array of plugin status warning messages, or NULL</returns>
+    public string[]? GetStatusWarnings()
+    {
+        nint nativeResult = GstPluginGetStatusWarnings(Handle);
+        System.GC.KeepAlive(this);
+        return Gst.Interop.GMarshal.StrvToArray(nativeResult, free: true);
     }
 
     /// <summary>get the version of the plugin</summary>
@@ -427,6 +496,10 @@ public unsafe partial class Plugin : Gst.Object
         }
     }
 
+    /// <summary>The <c>gst_plugin_add_dependency</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_plugin_add_dependency")]
+    private static partial void GstPluginAddDependency(nint plugin, nint* envVars, nint* paths, nint* names, int flags);
+
     /// <summary>The <c>gst_plugin_add_dependency_simple</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_plugin_add_dependency_simple")]
     private static partial void GstPluginAddDependencySimple(nint plugin, byte* envVars, byte* paths, byte* names, int flags);
@@ -478,6 +551,18 @@ public unsafe partial class Plugin : Gst.Object
     /// <summary>The <c>gst_plugin_get_source</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_plugin_get_source")]
     private static partial nint GstPluginGetSource(nint plugin);
+
+    /// <summary>The <c>gst_plugin_get_status_errors</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_plugin_get_status_errors")]
+    private static partial nint GstPluginGetStatusErrors(nint plugin);
+
+    /// <summary>The <c>gst_plugin_get_status_infos</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_plugin_get_status_infos")]
+    private static partial nint GstPluginGetStatusInfos(nint plugin);
+
+    /// <summary>The <c>gst_plugin_get_status_warnings</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_plugin_get_status_warnings")]
+    private static partial nint GstPluginGetStatusWarnings(nint plugin);
 
     /// <summary>The <c>gst_plugin_get_version</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_plugin_get_version")]

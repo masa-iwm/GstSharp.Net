@@ -130,6 +130,22 @@ public unsafe partial class BufferPool : Gst.Object
             ?? throw new InvalidOperationException("gst_buffer_pool_get_config returned no value.");
     }
 
+    /// <summary>
+    /// Gets a %NULL terminated array of string with supported bufferpool options for
+    /// @pool. An option would typically be enabled with
+    /// gst_buffer_pool_config_add_option().
+    /// </summary>
+    /// <returns>
+    /// a %NULL terminated array
+    ///          of strings.
+    /// </returns>
+    public string[]? GetOptions()
+    {
+        nint nativeResult = GstBufferPoolGetOptions(Handle);
+        System.GC.KeepAlive(this);
+        return Gst.Interop.GMarshal.StrvToArray(nativeResult, free: false);
+    }
+
     /// <summary>Checks if the bufferpool supports @option.</summary>
     /// <param name="option">The <c>option</c> argument.</param>
     /// <returns>%TRUE if the buffer pool contains @option.</returns>
@@ -390,6 +406,10 @@ public unsafe partial class BufferPool : Gst.Object
     /// <summary>The <c>gst_buffer_pool_get_config</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_buffer_pool_get_config")]
     private static partial nint GstBufferPoolGetConfig(nint pool);
+
+    /// <summary>The <c>gst_buffer_pool_get_options</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_buffer_pool_get_options")]
+    private static partial nint GstBufferPoolGetOptions(nint pool);
 
     /// <summary>The <c>gst_buffer_pool_has_option</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_buffer_pool_has_option")]

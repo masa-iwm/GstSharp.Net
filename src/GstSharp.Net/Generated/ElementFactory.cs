@@ -169,6 +169,18 @@ public unsafe partial class ElementFactory : Gst.PluginFeature
         return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
     }
 
+    /// <summary>Get the available keys for the metadata on @factory.</summary>
+    /// <returns>
+    /// a %NULL-terminated array of key strings, or %NULL when there is no
+    /// metadata. Free with g_strfreev() when no longer needed.
+    /// </returns>
+    public string[]? GetMetadataKeys()
+    {
+        nint nativeResult = GstElementFactoryGetMetadataKeys(Handle);
+        System.GC.KeepAlive(this);
+        return Gst.Interop.GMarshal.StrvToArray(nativeResult, free: true);
+    }
+
     /// <summary>Gets the number of pad_templates in this factory.</summary>
     /// <returns>the number of pad_templates</returns>
     public uint GetNumPadTemplates()
@@ -210,6 +222,23 @@ public unsafe partial class ElementFactory : Gst.PluginFeature
         }
 
         return result;
+    }
+
+    /// <summary>
+    /// Gets a %NULL-terminated array of protocols this element supports or %NULL if
+    /// no protocols are supported. You may not change the contents of the returned
+    /// array, as it is still owned by the element factory. Use g_strdupv() to
+    /// make a copy of the protocol string array if you need to.
+    /// </summary>
+    /// <returns>
+    /// the supported protocols
+    ///     or %NULL
+    /// </returns>
+    public string[]? GetUriProtocols()
+    {
+        nint nativeResult = GstElementFactoryGetUriProtocols(Handle);
+        System.GC.KeepAlive(this);
+        return Gst.Interop.GMarshal.StrvToArray(nativeResult, free: false);
     }
 
     /// <summary>Gets the type of URIs the element supports or #GST_URI_UNKNOWN if none.</summary>
@@ -341,6 +370,10 @@ public unsafe partial class ElementFactory : Gst.PluginFeature
     [LibraryImport("Gst", EntryPoint = "gst_element_factory_get_metadata")]
     private static partial nint GstElementFactoryGetMetadata(nint factory, byte* key);
 
+    /// <summary>The <c>gst_element_factory_get_metadata_keys</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_element_factory_get_metadata_keys")]
+    private static partial nint GstElementFactoryGetMetadataKeys(nint factory);
+
     /// <summary>The <c>gst_element_factory_get_num_pad_templates</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_element_factory_get_num_pad_templates")]
     private static partial uint GstElementFactoryGetNumPadTemplates(nint factory);
@@ -352,6 +385,10 @@ public unsafe partial class ElementFactory : Gst.PluginFeature
     /// <summary>The <c>gst_element_factory_get_static_pad_templates</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_element_factory_get_static_pad_templates")]
     private static partial nint GstElementFactoryGetStaticPadTemplates(nint factory);
+
+    /// <summary>The <c>gst_element_factory_get_uri_protocols</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_element_factory_get_uri_protocols")]
+    private static partial nint GstElementFactoryGetUriProtocols(nint factory);
 
     /// <summary>The <c>gst_element_factory_get_uri_type</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_element_factory_get_uri_type")]

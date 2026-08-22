@@ -118,6 +118,20 @@ public unsafe partial class TypeFindFactory : Gst.PluginFeature
     }
 
     /// <summary>
+    /// Gets the extensions associated with a #GstTypeFindFactory. The returned
+    /// array should not be changed. If you need to change stuff in it, you should
+    /// copy it using g_strdupv().  This function may return %NULL to indicate
+    /// a 0-length list.
+    /// </summary>
+    /// <returns>    a %NULL-terminated array of extensions associated with this factory</returns>
+    public string[]? GetExtensions()
+    {
+        nint nativeResult = GstTypeFindFactoryGetExtensions(Handle);
+        System.GC.KeepAlive(this);
+        return Gst.Interop.GMarshal.StrvToArray(nativeResult, free: false);
+    }
+
+    /// <summary>
     /// Check whether the factory has a typefind function. Typefind factories
     /// without typefind functions are a last-effort fallback mechanism to
     /// e.g. assume a certain media type based on the file extension.
@@ -168,6 +182,10 @@ public unsafe partial class TypeFindFactory : Gst.PluginFeature
     /// <summary>The <c>gst_type_find_factory_get_caps</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_type_find_factory_get_caps")]
     private static partial nint GstTypeFindFactoryGetCaps(nint factory);
+
+    /// <summary>The <c>gst_type_find_factory_get_extensions</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_type_find_factory_get_extensions")]
+    private static partial nint GstTypeFindFactoryGetExtensions(nint factory);
 
     /// <summary>The <c>gst_type_find_factory_has_function</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_type_find_factory_has_function")]

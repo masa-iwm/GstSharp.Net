@@ -709,6 +709,34 @@ public static unsafe partial class PbutilsGlobal
         return nativeResult != 0;
     }
 
+    /// <summary>
+    /// Requests plugin installation and block until the plugins have been
+    /// installed or installation has failed.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This function should almost never be used, it only exists for cases where
+    /// a non-GLib main loop is running and the user wants to run it in a separate
+    /// thread and marshal the result back asynchronously into the main thread
+    /// using the other non-GLib main loop. You should almost always use
+    /// gst_install_plugins_async() instead of this function.
+    /// </para>
+    /// </remarks>
+    /// <param name="details">
+    /// NULL-terminated array
+    ///     of installer string details
+    /// </param>
+    /// <param name="ctx">The <c>ctx</c> argument.</param>
+    /// <returns>the result of the installation.</returns>
+    public static Gst.Pbutils.InstallPluginsReturn InstallPluginsSync(string[] details, Gst.Pbutils.InstallPluginsContext? ctx)
+    {
+        ArgumentNullException.ThrowIfNull(details);
+        using Gst.Interop.StrvScope detailsScope = Gst.Interop.GMarshal.AllocStrv(details);
+        int nativeResult = GstInstallPluginsSync(detailsScope.Pointer, ctx is null ? 0 : ctx.Handle);
+        System.GC.KeepAlive(ctx);
+        return (Gst.Pbutils.InstallPluginsReturn)nativeResult;
+    }
+
     /// <summary>Checks whether @msg is a missing plugins message.</summary>
     /// <param name="msg">The <c>msg</c> argument.</param>
     /// <returns>%TRUE if @msg is a missing-plugins message, otherwise %FALSE.</returns>
@@ -1428,6 +1456,10 @@ public static unsafe partial class PbutilsGlobal
     /// <summary>The <c>gst_install_plugins_supported</c> entry point.</summary>
     [LibraryImport("GstPbutils", EntryPoint = "gst_install_plugins_supported")]
     private static partial int GstInstallPluginsSupported();
+
+    /// <summary>The <c>gst_install_plugins_sync</c> entry point.</summary>
+    [LibraryImport("GstPbutils", EntryPoint = "gst_install_plugins_sync")]
+    private static partial int GstInstallPluginsSync(nint* details, nint ctx);
 
     /// <summary>The <c>gst_is_missing_plugin_message</c> entry point.</summary>
     [LibraryImport("GstPbutils", EntryPoint = "gst_is_missing_plugin_message")]

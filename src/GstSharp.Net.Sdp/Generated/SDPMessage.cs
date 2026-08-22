@@ -101,6 +101,25 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
         return (Gst.Sdp.SDPResult)nativeResult;
     }
 
+    /// <summary>Add time information @start and @stop to @msg.</summary>
+    /// <param name="start">The <c>start</c> argument.</param>
+    /// <param name="stop">The <c>stop</c> argument.</param>
+    /// <param name="repeat">the repeat times</param>
+    /// <returns>a #GstSDPResult.</returns>
+    public Gst.Sdp.SDPResult AddTime(string start, string stop, string[]? repeat)
+    {
+        ArgumentNullException.ThrowIfNull(start);
+        System.Span<byte> startBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope startScope = Gst.Interop.GMarshal.StackUtf8(start, startBuffer);
+        ArgumentNullException.ThrowIfNull(stop);
+        System.Span<byte> stopBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope stopScope = Gst.Interop.GMarshal.StackUtf8(stop, stopBuffer);
+        using Gst.Interop.StrvScope repeatScope = Gst.Interop.GMarshal.AllocStrv(repeat);
+        int nativeResult = GstSdpMessageAddTime(Handle, startScope.Pointer, stopScope.Pointer, repeatScope.Pointer);
+        System.GC.KeepAlive(this);
+        return (Gst.Sdp.SDPResult)nativeResult;
+    }
+
     /// <summary>Add time zone information to @msg.</summary>
     /// <param name="adjTime">The <c>adjTime</c> argument.</param>
     /// <param name="typedTime">The <c>typedTime</c> argument.</param>
@@ -918,6 +937,10 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     /// <summary>The <c>gst_sdp_message_add_phone</c> entry point.</summary>
     [LibraryImport("GstSdp", EntryPoint = "gst_sdp_message_add_phone")]
     private static partial int GstSdpMessageAddPhone(nint msg, byte* phone);
+
+    /// <summary>The <c>gst_sdp_message_add_time</c> entry point.</summary>
+    [LibraryImport("GstSdp", EntryPoint = "gst_sdp_message_add_time")]
+    private static partial int GstSdpMessageAddTime(nint msg, byte* start, byte* stop, nint* repeat);
 
     /// <summary>The <c>gst_sdp_message_add_zone</c> entry point.</summary>
     [LibraryImport("GstSdp", EntryPoint = "gst_sdp_message_add_zone")]

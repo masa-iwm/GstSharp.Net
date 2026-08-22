@@ -89,6 +89,31 @@ public static unsafe partial class PresetExtensions
         return nativeResult != 0;
     }
 
+    /// <summary>Get a copy of preset names as a %NULL terminated string array.</summary>
+    /// <param name="preset">a #GObject that implements #GstPreset</param>
+    /// <returns>    list with names, use g_strfreev() after usage.</returns>
+    public static string[]? GetPresetNames(this Gst.IPreset preset)
+    {
+        ArgumentNullException.ThrowIfNull(preset);
+        nint nativeResult = GstPresetGetPresetNames(preset.Handle);
+        System.GC.KeepAlive(preset);
+        return Gst.Interop.GMarshal.StrvToArray(nativeResult, free: true);
+    }
+
+    /// <summary>Get a the names of the GObject properties that can be used for presets.</summary>
+    /// <param name="preset">a #GObject that implements #GstPreset</param>
+    /// <returns>
+    /// an
+    ///   array of property names which should be freed with g_strfreev() after use.
+    /// </returns>
+    public static string[]? GetPropertyNames(this Gst.IPreset preset)
+    {
+        ArgumentNullException.ThrowIfNull(preset);
+        nint nativeResult = GstPresetGetPropertyNames(preset.Handle);
+        System.GC.KeepAlive(preset);
+        return Gst.Interop.GMarshal.StrvToArray(nativeResult, free: true);
+    }
+
     /// <summary>Check if one can add new presets, change existing ones and remove presets.</summary>
     /// <param name="preset">a #GObject that implements #GstPreset</param>
     /// <returns>%TRUE if presets are editable or %FALSE if they are static</returns>
@@ -218,6 +243,14 @@ public static unsafe partial class PresetExtensions
     /// <summary>The <c>gst_preset_get_meta</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_preset_get_meta")]
     private static partial int GstPresetGetMeta(nint preset, byte* name, byte* tag, nint* value);
+
+    /// <summary>The <c>gst_preset_get_preset_names</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_preset_get_preset_names")]
+    private static partial nint GstPresetGetPresetNames(nint preset);
+
+    /// <summary>The <c>gst_preset_get_property_names</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_preset_get_property_names")]
+    private static partial nint GstPresetGetPropertyNames(nint preset);
 
     /// <summary>The <c>gst_preset_is_editable</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_preset_is_editable")]

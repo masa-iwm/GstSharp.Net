@@ -72,6 +72,45 @@ public abstract unsafe partial class TrackElement : GES.TimelineElement, GES.IEx
     }
 
     /// <summary>
+    /// Adds all the properties of a #GstElement that match the criteria as
+    /// children properties of the track element. If the name of @element's
+    /// #GstElementFactory is not in @blacklist, and the factory's
+    /// #GST_ELEMENT_METADATA_KLASS contains at least one member of
+    /// @wanted_categories (e.g. #GST_ELEMENT_FACTORY_KLASS_DECODER), then
+    /// all the properties of @element that are also in @whitelist are added as
+    /// child properties of @self using
+    /// ges_timeline_element_add_child_property().
+    /// </summary>
+    /// <remarks>
+    /// <para>This is intended to be used by subclasses when constructing.</para>
+    /// </remarks>
+    /// <param name="element">The <c>element</c> argument.</param>
+    /// <param name="wantedCategories">
+    /// An array of element factory "klass" categories to whitelist, or %NULL
+    /// to accept all categories
+    /// </param>
+    /// <param name="blacklist">
+    /// A
+    /// blacklist of element factory names, or %NULL to not blacklist any
+    /// element factory
+    /// </param>
+    /// <param name="whitelist">
+    /// A
+    /// whitelist of element property names, or %NULL to whitelist all
+    /// writeable properties
+    /// </param>
+    public void AddChildrenProps(Gst.Element element, string[]? wantedCategories, string[]? blacklist, string[]? whitelist)
+    {
+        ArgumentNullException.ThrowIfNull(element);
+        using Gst.Interop.StrvScope wantedCategoriesScope = Gst.Interop.GMarshal.AllocStrv(wantedCategories);
+        using Gst.Interop.StrvScope blacklistScope = Gst.Interop.GMarshal.AllocStrv(blacklist);
+        using Gst.Interop.StrvScope whitelistScope = Gst.Interop.GMarshal.AllocStrv(whitelist);
+        GesTrackElementAddChildrenProps(Handle, element.Handle, wantedCategoriesScope.Pointer, blacklistScope.Pointer, whitelistScope.Pointer);
+        System.GC.KeepAlive(this);
+        System.GC.KeepAlive(element);
+    }
+
+    /// <summary>
     /// Clamp the #GstTimedValueControlSource for the specified child property
     /// to lie between the #GESTimelineElement:in-point and out-point of the
     /// element. The out-point is the #GES_TIMELINE_ELEMENT_END of the element
@@ -514,6 +553,10 @@ public abstract unsafe partial class TrackElement : GES.TimelineElement, GES.IEx
             Gst.Interop.ExceptionTrap.Report(exception);
         }
     }
+
+    /// <summary>The <c>ges_track_element_add_children_props</c> entry point.</summary>
+    [LibraryImport("GES", EntryPoint = "ges_track_element_add_children_props")]
+    private static partial void GesTrackElementAddChildrenProps(nint self, nint element, nint* wantedCategories, nint* blacklist, nint* whitelist);
 
     /// <summary>The <c>ges_track_element_clamp_control_source</c> entry point.</summary>
     [LibraryImport("GES", EntryPoint = "ges_track_element_clamp_control_source")]

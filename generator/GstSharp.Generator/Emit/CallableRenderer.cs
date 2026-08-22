@@ -1363,6 +1363,7 @@ internal static class CallableRenderer
             case ArgumentKind.Utf8Owned:
             case ArgumentKind.Handle when argument.Direction == ArgumentDirection.In:
             case ArgumentKind.ConsumedHandle:
+            case ArgumentKind.Strv when argument.Direction == ArgumentDirection.In:
                 if (!argument.IsNullable)
                 {
                     writer.WriteLine("ArgumentNullException.ThrowIfNull(" + name + ");");
@@ -1522,6 +1523,15 @@ internal static class CallableRenderer
                     + name + ", " + name + "Buffer);");
                 return;
 
+            // The vector and every string in it belong to the scope, which
+            // releases both when the call returns and when the call throws.
+            // The callee reads them and copies whatever it keeps.
+            case ArgumentKind.Strv when argument.Direction == ArgumentDirection.In:
+                writer.WriteLine(
+                    "using Gst.Interop.StrvScope " + name + "Scope = Gst.Interop.GMarshal.AllocStrv("
+                    + name + ");");
+                return;
+
             case ArgumentKind.Utf8Owned:
                 writer.WriteLine("nint " + name + "Native = Gst.Interop.GMarshal.StringToUtf8Ptr(" + name + ");");
                 return;
@@ -1642,6 +1652,7 @@ internal static class CallableRenderer
                 return "(" + argument.RawType + ")" + plan.Arguments[argument.OwnerArgument ?? 0].Name + ".Length";
 
             case ArgumentKind.Utf8 when argument.Direction == ArgumentDirection.In:
+            case ArgumentKind.Strv when argument.Direction == ArgumentDirection.In:
                 return name + "Scope.Pointer";
 
             case ArgumentKind.Utf8Owned:

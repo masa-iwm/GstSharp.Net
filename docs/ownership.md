@@ -243,6 +243,21 @@ interned one and is not the caller's to dispose.
 Three of these out parameters are not storage but a *mapping*, and those are
 hand written scopes rather than out parameters — see below.
 
+## Arrays of strings
+
+A `string[]?` result — `BufferPool.GetOptions`, `ElementFactory.GetUriProtocols`,
+`Preset.GetPresetNames` — is a decoded copy of what the C function handed back,
+so it holds no native memory and there is nothing to release; a result the C
+function answers with `NULL` is `null` rather than an empty array, and the two
+mean different things often enough that the distinction is kept. An
+`in string[]` — `Global.ParseLaunchv`, `Meta.ApiTypeRegister`,
+`Plugin.AddDependency` — is copied into a `NULL` terminated native vector that
+lives for the one call and is released whether the call returns or throws, which
+is why only the `transfer-ownership="none"` direction is bound at all. A `null`
+element inside such an array is rejected with an `ArgumentException`, because a
+C array of strings ends at the first `NULL` and native code would never see the
+elements behind it.
+
 ## The two mapping scopes
 
 `Gst.Video.VideoFrame.MapScope` and `Gst.Audio.AudioBuffer.MapScope` are what

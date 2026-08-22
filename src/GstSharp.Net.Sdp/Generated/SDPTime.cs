@@ -41,9 +41,32 @@ public sealed unsafe partial class SDPTime
         return (Gst.Sdp.SDPResult)nativeResult;
     }
 
+    /// <summary>Set time information @start, @stop and @repeat in @t.</summary>
+    /// <param name="start">The <c>start</c> argument.</param>
+    /// <param name="stop">The <c>stop</c> argument.</param>
+    /// <param name="repeat">the repeat times</param>
+    /// <returns>a #GstSDPResult.</returns>
+    public Gst.Sdp.SDPResult Set(string start, string stop, string[]? repeat)
+    {
+        ArgumentNullException.ThrowIfNull(start);
+        System.Span<byte> startBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope startScope = Gst.Interop.GMarshal.StackUtf8(start, startBuffer);
+        ArgumentNullException.ThrowIfNull(stop);
+        System.Span<byte> stopBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope stopScope = Gst.Interop.GMarshal.StackUtf8(stop, stopBuffer);
+        using Gst.Interop.StrvScope repeatScope = Gst.Interop.GMarshal.AllocStrv(repeat);
+        int nativeResult = GstSdpTimeSet(Handle, startScope.Pointer, stopScope.Pointer, repeatScope.Pointer);
+        System.GC.KeepAlive(this);
+        return (Gst.Sdp.SDPResult)nativeResult;
+    }
+
     /// <summary>The <c>gst_sdp_time_clear</c> entry point.</summary>
     [LibraryImport("GstSdp", EntryPoint = "gst_sdp_time_clear")]
     private static partial int GstSdpTimeClear(nint t);
+
+    /// <summary>The <c>gst_sdp_time_set</c> entry point.</summary>
+    [LibraryImport("GstSdp", EntryPoint = "gst_sdp_time_set")]
+    private static partial int GstSdpTimeSet(nint t, byte* start, byte* stop, nint* repeat);
 }
 
 /// <summary>The native layout of <c>GstSDPTime</c>.</summary>

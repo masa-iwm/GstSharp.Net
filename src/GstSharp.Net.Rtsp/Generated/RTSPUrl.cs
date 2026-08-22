@@ -69,6 +69,32 @@ public sealed unsafe partial class RTSPUrl : Gst.GObject.Boxed
             ?? throw new InvalidOperationException("gst_rtsp_url_copy returned no value.");
     }
 
+    /// <summary>Splits the path of @url on '/' boundaries, decoding the resulting components,</summary>
+    /// <remarks>
+    /// <para>
+    /// The decoding performed by this routine is "URI decoding", as defined in RFC
+    /// 3986, commonly known as percent-decoding. For example, a string "foo\%2fbar"
+    /// will decode to "foo/bar" -- the \%2f being replaced by the corresponding byte
+    /// with hex value 0x2f. Note that there is no guarantee that the resulting byte
+    /// sequence is valid in any given encoding. As a special case, \%00 is not
+    /// unescaped to NUL, as that would prematurely terminate the string.
+    /// </para>
+    /// <para>
+    /// Also note that since paths usually start with a slash, the first component
+    /// will usually be the empty string.
+    /// </para>
+    /// </remarks>
+    /// <returns>
+    /// %NULL-terminated array of URL components. Free with
+    /// g_strfreev() when no longer needed.
+    /// </returns>
+    public string[]? DecodePathComponents()
+    {
+        nint nativeResult = GstRtspUrlDecodePathComponents(Handle);
+        System.GC.KeepAlive(this);
+        return Gst.Interop.GMarshal.StrvToArray(nativeResult, free: true);
+    }
+
     /// <summary>Get the port number of @url.</summary>
     /// <param name="port">The <c>port</c> argument.</param>
     /// <returns>#GST_RTSP_OK.</returns>
@@ -142,6 +168,10 @@ public sealed unsafe partial class RTSPUrl : Gst.GObject.Boxed
     /// <summary>The <c>gst_rtsp_url_copy</c> entry point.</summary>
     [LibraryImport("GstRtsp", EntryPoint = "gst_rtsp_url_copy")]
     private static partial nint GstRtspUrlCopy(nint url);
+
+    /// <summary>The <c>gst_rtsp_url_decode_path_components</c> entry point.</summary>
+    [LibraryImport("GstRtsp", EntryPoint = "gst_rtsp_url_decode_path_components")]
+    private static partial nint GstRtspUrlDecodePathComponents(nint url);
 
     /// <summary>The <c>gst_rtsp_url_get_port</c> entry point.</summary>
     [LibraryImport("GstRtsp", EntryPoint = "gst_rtsp_url_get_port")]

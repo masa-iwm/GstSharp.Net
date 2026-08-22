@@ -480,7 +480,7 @@ internal static class GirReader
                 CType = CAttr(element, "type"),
                 InnerTypes = inner,
                 LengthParameterIndex = IntAttr(element, "length"),
-                IsZeroTerminated = Flag(element, "zero-terminated"),
+                IsZeroTerminated = ZeroTerminated(element),
                 FixedSize = IntAttr(element, "fixed-size"),
             };
         }
@@ -545,6 +545,32 @@ internal static class GirReader
 
     private static bool FlagOrTrue(XElement element, string name) =>
         element.Attribute(name) is not { } attribute || IsSet(attribute.Value);
+
+    /// <summary>
+    /// Reads the <c>zero-terminated</c> annotation of an <c>&lt;array&gt;</c>,
+    /// including the value the gir writer leaves out.
+    /// </summary>
+    /// <param name="element">The <c>&lt;array&gt;</c> element to read.</param>
+    /// <returns>
+    /// <see langword="true"/> when the array ends at a null element.
+    /// </returns>
+    /// <remarks>
+    /// The attribute is written out only when it contradicts what the shape of
+    /// the array already implies: giscanner defaults
+    /// <c>Array.zeroterminated</c> to <see langword="true"/>
+    /// (<c>giscanner/ast.py:882</c>) and omits the attribute whenever the value
+    /// it would write is that default (<c>giscanner/girwriter.py:386-393</c>),
+    /// which it decides from the presence of a <c>length</c> or a
+    /// <c>fixed-size</c>. An absent attribute therefore reads as
+    /// <see langword="true"/> for an array that carries neither, and as
+    /// <see langword="false"/> for one that carries either; a blanket default
+    /// of <see langword="true"/> would call a length indexed array null
+    /// terminated as well.
+    /// </remarks>
+    private static bool ZeroTerminated(XElement element) =>
+        element.Attribute("zero-terminated") is { } attribute
+            ? IsSet(attribute.Value)
+            : IntAttr(element, "length") is null && IntAttr(element, "fixed-size") is null;
 
     private static bool IsSet(string value) =>
         string.Equals(value, "1", StringComparison.Ordinal)
