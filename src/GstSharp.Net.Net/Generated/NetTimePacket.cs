@@ -51,6 +51,42 @@ public sealed unsafe partial class NetTimePacket : Gst.GObject.Boxed
     internal static NetTimePacket? FromNative(nint handle, Gst.Interop.Transfer transfer) =>
         handle == 0 ? null : new(handle, transfer);
 
+    /// <summary>
+    /// Creates a new #GstNetTimePacket from a buffer received over the network. The
+    /// caller is responsible for ensuring that @buffer is at least
+    /// #GST_NET_TIME_PACKET_SIZE bytes long.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// If @buffer is %NULL, the local and remote times will be set to
+    /// #GST_CLOCK_TIME_NONE.
+    /// </para>
+    /// <para>MT safe. Caller owns return value (gst_net_time_packet_free to free).</para>
+    /// </remarks>
+    /// <param name="buffer">
+    /// a buffer from which to construct the packet, or NULL
+    /// The C declaration sizes this buffer at 16 elements; pass exactly 16, or an empty span for <c>NULL</c>.
+    /// </param>
+    /// <returns>The new #GstNetTimePacket.</returns>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="buffer"/> does not have exactly 16 elements and is not empty.
+    /// </exception>
+    public static Gst.Net.NetTimePacket New(System.ReadOnlySpan<byte> buffer)
+    {
+        if (buffer.Length != 16 && buffer.Length != 0)
+        {
+            throw new ArgumentException(
+                "buffer must have exactly 16 elements, or none at all.",
+                nameof(buffer));
+        }
+        fixed (byte* bufferPointer = buffer)
+        {
+            nint nativeResult = GstNetTimePacketNew(bufferPointer);
+            return Gst.Net.NetTimePacket.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+                ?? throw new InvalidOperationException("gst_net_time_packet_new returned no value.");
+        }
+    }
+
     /// <summary>Make a copy of @packet.</summary>
     /// <returns>a copy of @packet, free with gst_net_time_packet_free().</returns>
     public Gst.Net.NetTimePacket Copy()
@@ -83,6 +119,30 @@ public sealed unsafe partial class NetTimePacket : Gst.GObject.Boxed
     }
 
     /// <summary>
+    /// Serialized a #GstNetTimePacket into a newly-allocated sequence of
+    /// #GST_NET_TIME_PACKET_SIZE bytes, in network byte order. The value returned is
+    /// suitable for passing to write(2) or sendto(2) for communication over the
+    /// network.
+    /// </summary>
+    /// <remarks>
+    /// <para>MT safe. Caller owns return value (g_free to free).</para>
+    /// </remarks>
+    /// <returns>A newly allocated sequence of #GST_NET_TIME_PACKET_SIZE bytes.</returns>
+    public byte[]? Serialize()
+    {
+        nint nativeResult = GstNetTimePacketSerialize(Handle);
+        System.GC.KeepAlive(this);
+        byte[]? result = null;
+        if (nativeResult != 0)
+        {
+            result = new byte[16];
+            new System.ReadOnlySpan<byte>((void*)nativeResult, 16).CopyTo(result);
+            Gst.Interop.GMarshal.Free(nativeResult);
+        }
+        return result;
+    }
+
+    /// <summary>
     /// Receives a #GstNetTimePacket over a socket. Handles interrupted system
     /// calls, but otherwise returns NULL on error.
     /// </summary>
@@ -112,6 +172,10 @@ public sealed unsafe partial class NetTimePacket : Gst.GObject.Boxed
             ?? throw new InvalidOperationException("gst_net_time_packet_receive returned no value.");
     }
 
+    /// <summary>The <c>gst_net_time_packet_new</c> entry point.</summary>
+    [LibraryImport("GstNet", EntryPoint = "gst_net_time_packet_new")]
+    private static partial nint GstNetTimePacketNew(byte* buffer);
+
     /// <summary>The <c>gst_net_time_packet_copy</c> entry point.</summary>
     [LibraryImport("GstNet", EntryPoint = "gst_net_time_packet_copy")]
     private static partial nint GstNetTimePacketCopy(nint packet);
@@ -119,6 +183,10 @@ public sealed unsafe partial class NetTimePacket : Gst.GObject.Boxed
     /// <summary>The <c>gst_net_time_packet_send</c> entry point.</summary>
     [LibraryImport("GstNet", EntryPoint = "gst_net_time_packet_send")]
     private static partial int GstNetTimePacketSend(nint packet, nint socket, nint destAddress, nint* error);
+
+    /// <summary>The <c>gst_net_time_packet_serialize</c> entry point.</summary>
+    [LibraryImport("GstNet", EntryPoint = "gst_net_time_packet_serialize")]
+    private static partial nint GstNetTimePacketSerialize(nint packet);
 
     /// <summary>The <c>gst_net_time_packet_receive</c> entry point.</summary>
     [LibraryImport("GstNet", EntryPoint = "gst_net_time_packet_receive")]

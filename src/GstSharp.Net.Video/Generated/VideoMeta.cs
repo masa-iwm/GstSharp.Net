@@ -124,6 +124,48 @@ public sealed unsafe partial class VideoMeta
         handle == 0 ? null : new(handle);
 
     /// <summary>
+    /// Compute the padded height of each plane from @meta (padded size
+    /// divided by stride).
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// It is not valid to call this function with a meta associated to a
+    /// TILED video format.
+    /// </para>
+    /// </remarks>
+    /// <param name="planeHeight">array used to store the plane height</param>
+    /// <returns>
+    /// %TRUE if @meta's alignment is valid and @plane_height has been
+    /// updated, %FALSE otherwise
+    /// </returns>
+    public bool GetPlaneHeight(out Gst.Video.VideoMeta.PlaneHeightArray planeHeight)
+    {
+        Gst.Video.VideoMeta.PlaneHeightArray planeHeightNative = default;
+        int nativeResult = GstVideoMetaGetPlaneHeight(Handle, &planeHeightNative);
+        System.GC.KeepAlive(this);
+        planeHeight = planeHeightNative;
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Compute the size, in bytes, of each video plane described in @meta including
+    /// any padding and alignment constraint defined in @meta-&gt;alignment.
+    /// </summary>
+    /// <param name="planeSize">array used to store the plane sizes</param>
+    /// <returns>
+    /// %TRUE if @meta's alignment is valid and @plane_size has been
+    /// updated, %FALSE otherwise
+    /// </returns>
+    public bool GetPlaneSize(out Gst.Video.VideoMeta.PlaneSizeArray planeSize)
+    {
+        Gst.Video.VideoMeta.PlaneSizeArray planeSizeNative = default;
+        int nativeResult = GstVideoMetaGetPlaneSize(Handle, &planeSizeNative);
+        System.GC.KeepAlive(this);
+        planeSize = planeSizeNative;
+        return nativeResult != 0;
+    }
+
+    /// <summary>
     /// Map the video plane with index @plane in @meta and return a pointer to the
     /// first byte of the plane and the stride of the plane.
     /// </summary>
@@ -200,6 +242,28 @@ public sealed unsafe partial class VideoMeta
         return Gst.MetaInfo.FromNative(nativeResult)
             ?? throw new InvalidOperationException("gst_video_meta_get_info returned no value.");
     }
+
+    /// <summary>Inline storage of the 4 elements a call writes into the parameter this type is named after.</summary>
+    [InlineArray(4)]
+    public struct PlaneHeightArray
+    {
+        private uint _element0;
+    }
+
+    /// <summary>Inline storage of the 4 elements a call writes into the parameter this type is named after.</summary>
+    [InlineArray(4)]
+    public struct PlaneSizeArray
+    {
+        private nuint _element0;
+    }
+
+    /// <summary>The <c>gst_video_meta_get_plane_height</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_video_meta_get_plane_height")]
+    private static partial int GstVideoMetaGetPlaneHeight(nint meta, Gst.Video.VideoMeta.PlaneHeightArray* planeHeight);
+
+    /// <summary>The <c>gst_video_meta_get_plane_size</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_video_meta_get_plane_size")]
+    private static partial int GstVideoMetaGetPlaneSize(nint meta, Gst.Video.VideoMeta.PlaneSizeArray* planeSize);
 
     /// <summary>The <c>gst_video_meta_map</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_meta_map")]

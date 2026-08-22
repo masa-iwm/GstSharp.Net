@@ -17,12 +17,21 @@ namespace GstSharp.Generator.Planning;
 /// class for a gir interface, which cannot carry them. Defaults to
 /// <paramref name="OwnerType"/>.
 /// </param>
+/// <param name="StorageOwner">
+/// The C# type that carries the inline storage of a caller allocated array,
+/// which is nested in the type the member is declared on. It is the declaring
+/// type for a class or a record, and the static holder for the functions that
+/// belong to no type: those have no <paramref name="OwnerType"/> and would
+/// have nowhere to put the storage otherwise. Defaults to
+/// <paramref name="OwnerType"/>.
+/// </param>
 internal readonly record struct PlanningContext(
     ModuleInfo Module,
     GirNamespace Namespace,
     TypeKind OwnerKind,
     string? OwnerType,
-    string? SignalHost = null);
+    string? SignalHost = null,
+    string? StorageOwner = null);
 
 /// <summary>
 /// The trampoline of one <c>&lt;callback&gt;</c>.
@@ -252,6 +261,16 @@ internal sealed class MarshalPlanner
     private readonly Dictionary<GirCallback, CallbackPlan?> _callbackCache = new(ReferenceEqualityComparer.Instance);
 
     /// <summary>
+    /// The keys of the array corrections this run has applied to a real
+    /// <c>&lt;array&gt;</c>. It belongs to the run rather than to the overlays,
+    /// which are shared and must stay immutable, and it is written by
+    /// <see cref="EffectiveArray"/> alone: a lookup that found nothing to
+    /// correct is not a use, or an entry that names a parameter which is no
+    /// array would report itself as consumed.
+    /// </summary>
+    private readonly HashSet<string> _consumedArrayOverrides;
+
+    /// <summary>
     /// Why the callable that is being planned was rejected, when a rule has a
     /// more precise answer than <see cref="SkipReason.UnsupportedSignature"/>.
     /// The rules run deep inside the projection of a single argument, so the
@@ -268,6 +287,11 @@ internal sealed class MarshalPlanner
     /// <param name="overlays">The overlay configuration.</param>
     /// <param name="skipRules">The skip rules.</param>
     /// <param name="diagnostics">The diagnostic sink.</param>
+    /// <param name="consumedArrayOverrides">
+    /// The set the applied array corrections are recorded in. A run shares one
+    /// across its modules, because the planner is built per module and the
+    /// stale entries are reported once for the whole run.
+    /// </param>
     internal MarshalPlanner(
         Repository repository,
         Classifier classifier,
@@ -275,7 +299,8 @@ internal sealed class MarshalPlanner
         TypeMap types,
         Overlays overlays,
         SkipRules skipRules,
-        DiagnosticBag diagnostics)
+        DiagnosticBag diagnostics,
+        HashSet<string>? consumedArrayOverrides = null)
     {
         _repository = repository;
         _classifier = classifier;
@@ -284,6 +309,7 @@ internal sealed class MarshalPlanner
         _overlays = overlays;
         _skipRules = skipRules;
         _diagnostics = diagnostics;
+        _consumedArrayOverrides = consumedArrayOverrides ?? new HashSet<string>(StringComparer.Ordinal);
     }
 
     /// <summary>
@@ -753,13 +779,19 @@ internal sealed class MarshalPlanner
     /// <param name="forced">Receives the role of each parameter.</param>
     /// <param name="owners">Receives the array a length belongs to.</param>
     /// <returns><see langword="false"/> when the annotations contradict each other.</returns>
-    private static bool MarkHiddenArguments(GirCallable callable, ArgumentKind[] forced, int[] owners)
+    /// <remarks>
+    /// The lengths are read off the <em>effective</em> arrays, so that a length
+    /// index the overlays supply hides its parameter before the per parameter
+    /// loop projects it. The contradiction checks hold for an overlay supplied
+    /// index exactly as they do for one the gir states.
+    /// </remarks>
+    private bool MarkHiddenArguments(GirCallable callable, ArgumentKind[] forced, int[] owners)
     {
         IReadOnlyList<GirParameter> parameters = callable.Parameters;
         for (int i = 0; i < parameters.Count; i++)
         {
             GirParameter parameter = parameters[i];
-            if (parameter.Type is GirArrayRef { LengthParameterIndex: int length })
+            if (EffectiveArrayOf(callable, parameter) is { LengthParameterIndex: int length })
             {
                 if (length < 0 || length >= parameters.Count || length == i)
                 {
@@ -793,7 +825,7 @@ internal sealed class MarshalPlanner
             }
         }
 
-        if (callable.ReturnValue.Type is GirArrayRef { LengthParameterIndex: int returnLength })
+        if (EffectiveArrayOf(callable) is { LengthParameterIndex: int returnLength })
         {
             if (returnLength < 0 || returnLength >= parameters.Count)
             {
@@ -840,6 +872,84 @@ internal sealed class MarshalPlanner
         AnnotationKeyOf(callable) is { } identifier
             ? _overlays.GetAnnotationOverride(identifier + "#" + parameter.Name)
             : null;
+
+    /// <summary>Reads the array correction of one parameter, if there is one.</summary>
+    /// <param name="callable">The callable being planned.</param>
+    /// <param name="parameter">The parameter to look up.</param>
+    /// <returns>The correction, or <see langword="null"/>.</returns>
+    private ArrayOverride? ArrayOverrideOf(GirCallable callable, GirParameter parameter) =>
+        AnnotationKeyOf(callable) is { } identifier
+            ? _overlays.GetArrayOverride(identifier + "#" + parameter.Name)
+            : null;
+
+    /// <summary>
+    /// Returns the array a parameter really is: the one the gir spells, with
+    /// the corrections of <c>arrayOverrides</c> applied.
+    /// </summary>
+    /// <param name="callable">The callable being planned.</param>
+    /// <param name="parameter">The parameter being projected.</param>
+    /// <returns>The array, or <see langword="null"/> when the parameter is none.</returns>
+    private GirArrayRef? EffectiveArrayOf(GirCallable callable, GirParameter parameter) =>
+        EffectiveArray(
+            parameter.Type,
+            AnnotationKeyOf(callable) is { } identifier ? identifier + "#" + parameter.Name : null);
+
+    /// <summary>
+    /// Returns the array the return value really is, with the corrections of
+    /// <c>arrayOverrides</c> applied.
+    /// </summary>
+    /// <param name="callable">The callable being planned.</param>
+    /// <returns>The array, or <see langword="null"/> when the return value is none.</returns>
+    private GirArrayRef? EffectiveArrayOf(GirCallable callable) =>
+        EffectiveArray(
+            callable.ReturnValue.Type,
+            AnnotationKeyOf(callable) is { } identifier ? identifier + "#return" : null);
+
+    /// <summary>Applies an array correction to one gir type reference.</summary>
+    /// <param name="type">The declared type of the parameter or return value.</param>
+    /// <param name="key">The overlay key it is addressed by, if it has one.</param>
+    /// <returns>The corrected array, or <see langword="null"/> when there is none.</returns>
+    /// <remarks>
+    /// <para>
+    /// A correction of something the gir does not spell as an
+    /// <c>&lt;array&gt;</c> is ignored: deciding that a bare pointer is an
+    /// array is exactly the decision an overlay must not make on its own, and
+    /// the entry is reported as stale because nothing consumed it.
+    /// </para>
+    /// <para>
+    /// <c>length</c> and <c>fixed-size</c> are mutually exclusive in GIR, so an
+    /// entry that states one clears the other. Everything else the correction
+    /// leaves unsaid is carried over from the declared array.
+    /// </para>
+    /// </remarks>
+    private GirArrayRef? EffectiveArray(GirTypeRef type, string? key)
+    {
+        GirArrayRef? array = type as GirArrayRef;
+        if (key is null || _overlays.GetArrayOverride(key) is not { } correction)
+        {
+            return array;
+        }
+
+        if (array is null)
+        {
+            return null;
+        }
+
+        _consumedArrayOverrides.Add(key);
+        return new GirArrayRef
+        {
+            Name = array.Name,
+            CType = array.CType,
+            IsVarArgs = array.IsVarArgs,
+            LengthParameterIndex =
+                correction.Length ?? (correction.FixedSize is null ? array.LengthParameterIndex : null),
+            IsZeroTerminated = correction.ZeroTerminated ?? array.IsZeroTerminated,
+            FixedSize = correction.FixedSize ?? (correction.Length is null ? array.FixedSize : null),
+            InnerTypes = correction.ElementType is { } element
+                ? [new GirTypeRef { Name = element }]
+                : array.InnerTypes,
+        };
+    }
 
     private GirTransfer TransferOf(GirCallable callable, GirParameter parameter) =>
         ParseTransfer(OverrideOf(callable, parameter)?.Transfer) ?? parameter.Transfer;
@@ -982,7 +1092,13 @@ internal sealed class MarshalPlanner
         ArgumentDirection direction = ToDirection(parameter.Direction);
         GirTransfer transfer = TransferOf(callable, parameter);
         bool nullable = NullableOf(callable, parameter);
-        MappedType mapped = _types.Map(parameter.Type, context.Namespace);
+
+        // The array facts of the parameter are read once, here, and everything
+        // downstream is handed the corrected reference: the mapping of the
+        // element comes out of it as well, which is what makes an `elementType`
+        // correction take effect.
+        GirTypeRef effective = EffectiveArrayOf(callable, parameter) ?? parameter.Type;
+        MappedType mapped = _types.Map(effective, context.Namespace);
         AnnotationOverride? overlay = OverrideOf(callable, parameter);
 
         if (mapped.Kind == MarshalKind.Callback)
@@ -990,20 +1106,94 @@ internal sealed class MarshalPlanner
             return PlanCallbackArgument(parameter, name, context);
         }
 
-        if (overlay?.FixedArraySize is int size
-            && PlanFixedArray(callable, parameter, name, mapped, direction, size, context) is { } fixedArray)
+        // The overlay states the size of a parameter the gir spells as a
+        // pointer to one value. An <array> of its own is what arrayOverrides
+        // corrects, so this path keeps refusing one: the gate lives here
+        // rather than inside PlanFixedArray, which the fixed size arm below
+        // reaches with an array on purpose.
+        if (overlay?.FixedArraySize is int size)
         {
-            return fixedArray;
+            if (effective is GirArrayRef)
+            {
+                _diagnostics.Warn(
+                    "GEN0017",
+                    $"The fixed array size of '{AnnotationKeyOf(callable)}#{parameter.Name}' is ignored: the gir "
+                    + "already spells the parameter as an array, whose size is corrected through "
+                    + "'arrayOverrides'.");
+            }
+            else if (PlanFixedArray(callable, parameter, name, mapped, direction, size, context) is { } fixedArray)
+            {
+                return fixedArray;
+            }
         }
 
         ArgumentDirection declared = direction;
-        direction = OverriddenDirection(callable, parameter, mapped, direction, overlay);
+        direction = OverriddenDirection(callable, parameter, effective, mapped, direction, overlay);
 
         // A destination the overlays moved off the out position is the storage
         // the C function works on, not a result the member produces.
         bool redirectedDestination = direction == ArgumentDirection.In && declared != ArgumentDirection.In;
 
-        if (parameter.Type is GirArrayRef array)
+        // A block the C declaration sizes itself. The count is part of the
+        // type rather than of the call, so there is no length argument to hide
+        // and no pointer coming back: an in array is a span of exactly that
+        // many elements, and an out array the caller allocates is the inline
+        // storage a fixedArraySize correction already produces. Anything else
+        // falls through and stays unbound, silently: the girs spell a great
+        // many fixed size arrays this cannot project.
+        if (effective is GirArrayRef { FixedSize: int fixedSize } sized && fixedSize > 0)
+        {
+            if (direction == ArgumentDirection.In
+                && mapped.ElementType is { } inElement
+                && ArrayElementType(inElement) is { } inElementType)
+            {
+                // An array the callee takes over cannot be a span, whether the
+                // count comes from a length argument or from the C declaration
+                // itself: the caller keeps owning the memory a span points at,
+                // and freeing it inside the library would corrupt the heap.
+                // The counted arm below states the same rule.
+                if (transfer is GirTransfer.Full or GirTransfer.Container)
+                {
+                    return null;
+                }
+
+                bool readOnlyFixed = sized.CType?.Contains("const", StringComparison.Ordinal) ?? false;
+                return new ArgumentPlan
+                {
+                    Source = parameter,
+                    Kind = ArgumentKind.Span,
+                    Name = name,
+                    PublicType = (readOnlyFixed ? "System.ReadOnlySpan<" : "System.Span<") + inElementType + ">",
+                    RawType = inElementType + "*",
+                    Direction = ArgumentDirection.In,
+                    ElementType = inElementType,
+                    FixedLength = fixedSize,
+                    IsNullable = nullable,
+                };
+            }
+
+            // The caller allocates gate is what makes this safe: an out array
+            // the gir calls transfer=full caller-allocates=0 would otherwise be
+            // read as a pointer the callee allocated, and the storage the
+            // caller really passed would be read as that pointer.
+            if (direction == ArgumentDirection.Out
+                && CallerAllocatesOf(callable, parameter)
+                && mapped.ElementType is { } outElement
+                && PlanFixedArray(
+                    callable,
+                    parameter,
+                    name,
+                    outElement,
+                    direction,
+                    fixedSize,
+                    context,
+                    reportFailure: false) is { } sizedStorage)
+            {
+                return sizedStorage;
+            }
+        }
+
+        if (effective is GirArrayRef array)
         {
             return PlanArrayArgument(
                 parameter,
@@ -1016,11 +1206,12 @@ internal sealed class MarshalPlanner
                 index,
                 context,
                 offset,
-                CallerAllocatesOf(callable, parameter));
+                CallerAllocatesOf(callable, parameter),
+                ArrayOverrideOf(callable, parameter)?.Length is not null);
         }
 
         return PlanScalar(
-            parameter.Type,
+            effective,
             mapped,
             name,
             direction,
@@ -1070,6 +1261,7 @@ internal sealed class MarshalPlanner
     /// </summary>
     /// <param name="callable">The callable being planned.</param>
     /// <param name="parameter">The parameter being projected.</param>
+    /// <param name="effective">Its type, with the array corrections applied.</param>
     /// <param name="mapped">Its mapping.</param>
     /// <param name="declared">The direction the gir states.</param>
     /// <param name="overlay">The correction of the parameter, if any.</param>
@@ -1115,6 +1307,7 @@ internal sealed class MarshalPlanner
     private ArgumentDirection OverriddenDirection(
         GirCallable callable,
         GirParameter parameter,
+        GirTypeRef effective,
         MappedType mapped,
         ArgumentDirection declared,
         AnnotationOverride? overlay)
@@ -1132,8 +1325,8 @@ internal sealed class MarshalPlanner
         // believes the member produces storage. `out` and `ref` stay what they
         // were, the two halves of a pointer to a plain structure or to a
         // GValue.
-        bool corrected = parameter.Type is not GirArrayRef
-            && parameter.Type.IsPointer
+        bool corrected = effective is not GirArrayRef
+            && effective.IsPointer
             && (overridden == ArgumentDirection.In
                 ? mapped.Kind is MarshalKind.Boxed or MarshalKind.OpaqueRecord or MarshalKind.MiniObject
                 : mapped.Kind is MarshalKind.PlainStruct or MarshalKind.GValue);
@@ -1162,6 +1355,13 @@ internal sealed class MarshalPlanner
     /// <param name="direction">The direction the gir states.</param>
     /// <param name="size">The number of elements the callee writes.</param>
     /// <param name="context">The type the member is emitted into.</param>
+    /// <param name="reportFailure">
+    /// <see langword="true"/> to report a shape this cannot plan. Only the
+    /// overlay driven path does: an <c>&lt;array fixed-size&gt;</c> the gir
+    /// spells itself is offered here and falls through silently when it is not
+    /// the caller allocated out this projects, because the gir states a great
+    /// many of them that no member of the surface reaches.
+    /// </param>
     /// <returns>The plan, or <see langword="null"/> when the override does not apply.</returns>
     /// <remarks>
     /// <para>
@@ -1186,15 +1386,15 @@ internal sealed class MarshalPlanner
         MappedType mapped,
         ArgumentDirection direction,
         int size,
-        PlanningContext context)
+        PlanningContext context,
+        bool reportFailure = true)
     {
         if (size > 0
             && direction == ArgumentDirection.Out
-            && parameter.Type is not GirArrayRef
             && parameter.Type.IsPointer
             && mapped.Kind == MarshalKind.Blittable
             && string.Equals(mapped.RawType, mapped.PublicType, StringComparison.Ordinal)
-            && context.OwnerType is { } owner)
+            && (context.StorageOwner ?? context.OwnerType) is { } owner)
         {
             InlineArrayInfo storage = new(
                 NameMapper.EscapeIdentifier(NameMapper.ToPascalCase(parameter.Name)) + "Array",
@@ -1214,11 +1414,15 @@ internal sealed class MarshalPlanner
             };
         }
 
-        _diagnostics.Warn(
-            "GEN0017",
-            $"The fixed array size of '{AnnotationKeyOf(callable)}#{parameter.Name}' is ignored: only an out "
-            + "parameter of a blittable value, declared on a type that can carry the storage, is planned as a "
-            + "caller allocated array.");
+        if (reportFailure)
+        {
+            _diagnostics.Warn(
+                "GEN0017",
+                $"The fixed array size of '{AnnotationKeyOf(callable)}#{parameter.Name}' is ignored: only an out "
+                + "parameter of a blittable value, declared on a type that can carry the storage, is planned as a "
+                + "caller allocated array.");
+        }
+
         return null;
     }
 
@@ -1748,6 +1952,53 @@ internal sealed class MarshalPlanner
         return null;
     }
 
+    /// <summary>
+    /// Returns the C# type one element of a block of memory is read as, or
+    /// <see langword="null"/> when the element has no projection a span or a
+    /// managed array can carry.
+    /// </summary>
+    /// <param name="element">The mapping of the element.</param>
+    /// <returns>The public element type.</returns>
+    /// <remarks>
+    /// <para>
+    /// A blittable value whose raw and public spellings agree is the case that
+    /// needs nothing: the memory the call points at already holds the type the
+    /// span declares.
+    /// </para>
+    /// <para>
+    /// A generated enumeration is the same memory read under a name. It is
+    /// backed by the <c>int</c> or the <c>uint</c> its members fit into, which
+    /// is the very reinterpretation a scalar enumeration argument already
+    /// performs; anything wider is refused, so that an enumeration of another
+    /// width could never be read out of a block sized for this one.
+    /// </para>
+    /// </remarks>
+    private string? ArrayElementType(MappedType element)
+    {
+        if (element.Kind == MarshalKind.Blittable
+            && string.Equals(element.RawType, element.PublicType, StringComparison.Ordinal))
+        {
+            return element.PublicType;
+        }
+
+        if (element.Kind is not (MarshalKind.Enum or MarshalKind.Flags)
+            || element.RawType is not ("int" or "uint")
+            || element.Symbol is not { } enumeration)
+        {
+            return null;
+        }
+
+        // The hand written enumerations come first, exactly as they do in
+        // PlanScalar: their module emits nothing, so IsEmitted rejects them
+        // although the runtime declares them.
+        if (RuntimeEnums.TryGetValue(enumeration.QualifiedName, out string? runtimeEnum))
+        {
+            return runtimeEnum;
+        }
+
+        return IsEmitted(enumeration) ? element.PublicType : null;
+    }
+
     private ArgumentPlan? PlanArrayArgument(
         GirParameter parameter,
         GirArrayRef array,
@@ -1759,7 +2010,8 @@ internal sealed class MarshalPlanner
         int index,
         PlanningContext context,
         int offset,
-        bool callerAllocates)
+        bool callerAllocates,
+        bool lengthIsOverridden)
     {
         _ = index;
 
@@ -1834,8 +2086,7 @@ internal sealed class MarshalPlanner
             };
         }
 
-        if (element.Kind != MarshalKind.Blittable
-            || !string.Equals(element.RawType, element.PublicType, StringComparison.Ordinal)
+        if (ArrayElementType(element) is not { } elementType
             || array.LengthParameterIndex is not int length)
         {
             return null;
@@ -1860,11 +2111,12 @@ internal sealed class MarshalPlanner
                 Source = parameter,
                 Kind = ArgumentKind.Span,
                 Name = name,
-                PublicType = (readOnly ? "System.ReadOnlySpan<" : "System.Span<") + element.PublicType + ">",
-                RawType = element.RawType + "*",
+                PublicType = (readOnly ? "System.ReadOnlySpan<" : "System.Span<") + elementType + ">",
+                RawType = elementType + "*",
                 Direction = ArgumentDirection.In,
-                ElementType = element.PublicType,
+                ElementType = elementType,
                 LengthArgument = length + offset,
+                LengthIsOverridden = lengthIsOverridden,
             };
         }
 
@@ -1873,11 +2125,11 @@ internal sealed class MarshalPlanner
             Source = parameter,
             Kind = ArgumentKind.ArrayOut,
             Name = name,
-            PublicType = element.PublicType + "[]?",
+            PublicType = elementType + "[]?",
             RawType = NativeInt + "*",
             Direction = ArgumentDirection.Out,
             Transfer = transfer,
-            ElementType = element.PublicType,
+            ElementType = elementType,
             LengthArgument = length + offset,
             IsNullable = true,
         };
@@ -1922,7 +2174,11 @@ internal sealed class MarshalPlanner
     private ReturnPlan? PlanReturn(GirCallable callable, PlanningContext context, int offset)
     {
         GirReturnValue value = callable.ReturnValue;
-        MappedType mapped = _types.Map(value.Type, context.Namespace);
+
+        // The array facts of the return value are read once, here, exactly as
+        // they are for a parameter.
+        GirTypeRef effective = EffectiveArrayOf(callable) ?? value.Type;
+        MappedType mapped = _types.Map(effective, context.Namespace);
         GirTransfer transfer = TransferOf(callable);
         bool nullable = NullableOf(callable);
         bool discarded = DiscardsReturn(callable);
@@ -1967,11 +2223,36 @@ internal sealed class MarshalPlanner
             return PlanListReturn(value, mapped, transfer);
         }
 
-        if (value.Type is GirArrayRef array)
+        if (effective is GirArrayRef array)
         {
-            if (mapped.ElementType is not { } element || array.FixedSize is not null)
+            if (mapped.ElementType is not { } element)
             {
                 return null;
+            }
+
+            // A returned block of a size the C declaration fixes carries no
+            // count of its own, so the length of the managed array is that
+            // size rather than the value of an argument.
+            if (array.FixedSize is int returnedSize)
+            {
+                if (array.LengthParameterIndex is not null
+                    || returnedSize <= 0
+                    || ArrayElementType(element) is not { } sizedElement)
+                {
+                    return null;
+                }
+
+                return new ReturnPlan
+                {
+                    Kind = ArgumentKind.ArrayOut,
+                    PublicType = sizedElement + "[]?",
+                    RawType = NativeInt,
+                    Transfer = transfer,
+                    ElementType = sizedElement,
+                    FixedLength = returnedSize,
+                    IsNullable = true,
+                    Doc = value.Doc,
+                };
             }
 
             if (element.Kind is MarshalKind.Utf8String or MarshalKind.FilenameString)
@@ -1992,8 +2273,7 @@ internal sealed class MarshalPlanner
                 };
             }
 
-            if (element.Kind != MarshalKind.Blittable
-                || !string.Equals(element.RawType, element.PublicType, StringComparison.Ordinal)
+            if (ArrayElementType(element) is not { } elementType
                 || array.LengthParameterIndex is not int length)
             {
                 return null;
@@ -2002,10 +2282,10 @@ internal sealed class MarshalPlanner
             return new ReturnPlan
             {
                 Kind = ArgumentKind.ArrayOut,
-                PublicType = element.PublicType + "[]?",
+                PublicType = elementType + "[]?",
                 RawType = NativeInt,
                 Transfer = transfer,
-                ElementType = element.PublicType,
+                ElementType = elementType,
                 LengthArgument = length + offset,
                 IsNullable = true,
                 Doc = value.Doc,
@@ -2028,7 +2308,7 @@ internal sealed class MarshalPlanner
         }
 
         ArgumentPlan? scalar = PlanScalar(
-            value.Type,
+            effective,
             mapped,
             "result",
             ArgumentDirection.In,
@@ -2043,7 +2323,7 @@ internal sealed class MarshalPlanner
         }
 
         // A returned structure is only understood when it comes back by value.
-        if (scalar.Kind == ArgumentKind.PlainStruct && value.Type.IsPointer)
+        if (scalar.Kind == ArgumentKind.PlainStruct && effective.IsPointer)
         {
             return null;
         }

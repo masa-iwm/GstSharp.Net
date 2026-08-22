@@ -4,6 +4,7 @@
 #nullable enable
 
 using System;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace Gst.Pbutils;
@@ -624,6 +625,37 @@ public static unsafe partial class PbutilsGlobal
         }
     }
 
+    /// <summary>Creates Opus caps from the given parameters.</summary>
+    /// <param name="rate">The <c>rate</c> argument.</param>
+    /// <param name="channelMappingFamily">The <c>channelMappingFamily</c> argument.</param>
+    /// <param name="streamCount">The <c>streamCount</c> argument.</param>
+    /// <param name="coupledCount">The <c>coupledCount</c> argument.</param>
+    /// <param name="channelMapping">
+    /// the mapping between the streams
+    /// Its number of elements is passed to the C function as the <c>channels</c> argument.
+    /// </param>
+    /// <returns>
+    /// The #GstCaps, or %NULL if the parameters would lead to
+    /// invalid Opus caps.
+    /// </returns>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="channelMapping"/> has more than 255 elements.
+    /// </exception>
+    public static Gst.Caps? CodecUtilsOpusCreateCaps(uint rate, byte channelMappingFamily, byte streamCount, byte coupledCount, System.ReadOnlySpan<byte> channelMapping)
+    {
+        if (channelMapping.Length > byte.MaxValue)
+        {
+            throw new ArgumentException(
+                "channelMapping must have at most 255 elements: the call takes its count as a byte.",
+                nameof(channelMapping));
+        }
+        fixed (byte* channelMappingPointer = channelMapping)
+        {
+            nint nativeResult = GstCodecUtilsOpusCreateCaps(rate, (byte)channelMapping.Length, channelMappingFamily, streamCount, coupledCount, channelMappingPointer);
+            return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        }
+    }
+
     /// <summary>
     /// Creates Opus caps from the given OpusHead @header and comment header
     /// @comments.
@@ -638,6 +670,100 @@ public static unsafe partial class PbutilsGlobal
         System.GC.KeepAlive(header);
         System.GC.KeepAlive(comments);
         return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+    }
+
+    /// <summary>Creates OpusHead header from the given parameters.</summary>
+    /// <param name="rate">The <c>rate</c> argument.</param>
+    /// <param name="channelMappingFamily">The <c>channelMappingFamily</c> argument.</param>
+    /// <param name="streamCount">The <c>streamCount</c> argument.</param>
+    /// <param name="coupledCount">The <c>coupledCount</c> argument.</param>
+    /// <param name="channelMapping">
+    /// the mapping between the streams
+    /// Its number of elements is passed to the C function as the <c>channels</c> argument.
+    /// </param>
+    /// <param name="preSkip">The <c>preSkip</c> argument.</param>
+    /// <param name="outputGain">The <c>outputGain</c> argument.</param>
+    /// <returns>The #GstBuffer containing the OpusHead.</returns>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="channelMapping"/> has more than 255 elements.
+    /// </exception>
+    public static Gst.Buffer? CodecUtilsOpusCreateHeader(uint rate, byte channelMappingFamily, byte streamCount, byte coupledCount, System.ReadOnlySpan<byte> channelMapping, ushort preSkip, short outputGain)
+    {
+        if (channelMapping.Length > byte.MaxValue)
+        {
+            throw new ArgumentException(
+                "channelMapping must have at most 255 elements: the call takes its count as a byte.",
+                nameof(channelMapping));
+        }
+        fixed (byte* channelMappingPointer = channelMapping)
+        {
+            nint nativeResult = GstCodecUtilsOpusCreateHeader(rate, (byte)channelMapping.Length, channelMappingFamily, streamCount, coupledCount, channelMappingPointer, preSkip, outputGain);
+            return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        }
+    }
+
+    /// <summary>Parses Opus caps and fills the different fields with defaults if possible.</summary>
+    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <param name="rate">The <c>rate</c> argument.</param>
+    /// <param name="channels">The <c>channels</c> argument.</param>
+    /// <param name="channelMappingFamily">The <c>channelMappingFamily</c> argument.</param>
+    /// <param name="streamCount">The <c>streamCount</c> argument.</param>
+    /// <param name="coupledCount">The <c>coupledCount</c> argument.</param>
+    /// <param name="channelMapping">the mapping between the streams</param>
+    /// <returns>%TRUE if parsing was successful, %FALSE otherwise.</returns>
+    public static bool CodecUtilsOpusParseCaps(Gst.Caps caps, out uint rate, out byte channels, out byte channelMappingFamily, out byte streamCount, out byte coupledCount, out Gst.Pbutils.PbutilsGlobal.ChannelMappingArray channelMapping)
+    {
+        ArgumentNullException.ThrowIfNull(caps);
+        uint rateNative = default;
+        byte channelsNative = default;
+        byte channelMappingFamilyNative = default;
+        byte streamCountNative = default;
+        byte coupledCountNative = default;
+        Gst.Pbutils.PbutilsGlobal.ChannelMappingArray channelMappingNative = default;
+        int nativeResult = GstCodecUtilsOpusParseCaps(caps.Handle, &rateNative, &channelsNative, &channelMappingFamilyNative, &streamCountNative, &coupledCountNative, &channelMappingNative);
+        System.GC.KeepAlive(caps);
+        rate = rateNative;
+        channels = channelsNative;
+        channelMappingFamily = channelMappingFamilyNative;
+        streamCount = streamCountNative;
+        coupledCount = coupledCountNative;
+        channelMapping = channelMappingNative;
+        return nativeResult != 0;
+    }
+
+    /// <summary>Parses the OpusHead header.</summary>
+    /// <param name="header">The <c>header</c> argument.</param>
+    /// <param name="rate">The <c>rate</c> argument.</param>
+    /// <param name="channels">The <c>channels</c> argument.</param>
+    /// <param name="channelMappingFamily">The <c>channelMappingFamily</c> argument.</param>
+    /// <param name="streamCount">The <c>streamCount</c> argument.</param>
+    /// <param name="coupledCount">The <c>coupledCount</c> argument.</param>
+    /// <param name="channelMapping">the mapping between the streams</param>
+    /// <param name="preSkip">The <c>preSkip</c> argument.</param>
+    /// <param name="outputGain">The <c>outputGain</c> argument.</param>
+    /// <returns>%TRUE if parsing was successful, %FALSE otherwise.</returns>
+    public static bool CodecUtilsOpusParseHeader(Gst.Buffer header, out uint rate, out byte channels, out byte channelMappingFamily, out byte streamCount, out byte coupledCount, out Gst.Pbutils.PbutilsGlobal.ChannelMappingArray channelMapping, out ushort preSkip, out short outputGain)
+    {
+        ArgumentNullException.ThrowIfNull(header);
+        uint rateNative = default;
+        byte channelsNative = default;
+        byte channelMappingFamilyNative = default;
+        byte streamCountNative = default;
+        byte coupledCountNative = default;
+        Gst.Pbutils.PbutilsGlobal.ChannelMappingArray channelMappingNative = default;
+        ushort preSkipNative = default;
+        short outputGainNative = default;
+        int nativeResult = GstCodecUtilsOpusParseHeader(header.Handle, &rateNative, &channelsNative, &channelMappingFamilyNative, &streamCountNative, &coupledCountNative, &channelMappingNative, &preSkipNative, &outputGainNative);
+        System.GC.KeepAlive(header);
+        rate = rateNative;
+        channels = channelsNative;
+        channelMappingFamily = channelMappingFamilyNative;
+        streamCount = streamCountNative;
+        coupledCount = coupledCountNative;
+        channelMapping = channelMappingNative;
+        preSkip = preSkipNative;
+        outputGain = outputGainNative;
+        return nativeResult != 0;
     }
 
     /// <summary>
@@ -1313,6 +1439,13 @@ public static unsafe partial class PbutilsGlobal
             ?? throw new InvalidOperationException("gst_plugins_base_version_string returned no value.");
     }
 
+    /// <summary>Inline storage of the 256 elements a call writes into the parameter this type is named after.</summary>
+    [InlineArray(256)]
+    public struct ChannelMappingArray
+    {
+        private byte _element0;
+    }
+
     /// <summary>The <c>gst_codec_utils_aac_caps_set_level_and_profile</c> entry point.</summary>
     [LibraryImport("GstPbutils", EntryPoint = "gst_codec_utils_aac_caps_set_level_and_profile")]
     private static partial int GstCodecUtilsAacCapsSetLevelAndProfile(nint caps, byte* audioConfig, uint len);
@@ -1437,9 +1570,25 @@ public static unsafe partial class PbutilsGlobal
     [LibraryImport("GstPbutils", EntryPoint = "gst_codec_utils_mpeg4video_get_profile")]
     private static partial nint GstCodecUtilsMpeg4videoGetProfile(byte* visObjSeq, uint len);
 
+    /// <summary>The <c>gst_codec_utils_opus_create_caps</c> entry point.</summary>
+    [LibraryImport("GstPbutils", EntryPoint = "gst_codec_utils_opus_create_caps")]
+    private static partial nint GstCodecUtilsOpusCreateCaps(uint rate, byte channels, byte channelMappingFamily, byte streamCount, byte coupledCount, byte* channelMapping);
+
     /// <summary>The <c>gst_codec_utils_opus_create_caps_from_header</c> entry point.</summary>
     [LibraryImport("GstPbutils", EntryPoint = "gst_codec_utils_opus_create_caps_from_header")]
     private static partial nint GstCodecUtilsOpusCreateCapsFromHeader(nint header, nint comments);
+
+    /// <summary>The <c>gst_codec_utils_opus_create_header</c> entry point.</summary>
+    [LibraryImport("GstPbutils", EntryPoint = "gst_codec_utils_opus_create_header")]
+    private static partial nint GstCodecUtilsOpusCreateHeader(uint rate, byte channels, byte channelMappingFamily, byte streamCount, byte coupledCount, byte* channelMapping, ushort preSkip, short outputGain);
+
+    /// <summary>The <c>gst_codec_utils_opus_parse_caps</c> entry point.</summary>
+    [LibraryImport("GstPbutils", EntryPoint = "gst_codec_utils_opus_parse_caps")]
+    private static partial int GstCodecUtilsOpusParseCaps(nint caps, uint* rate, byte* channels, byte* channelMappingFamily, byte* streamCount, byte* coupledCount, Gst.Pbutils.PbutilsGlobal.ChannelMappingArray* channelMapping);
+
+    /// <summary>The <c>gst_codec_utils_opus_parse_header</c> entry point.</summary>
+    [LibraryImport("GstPbutils", EntryPoint = "gst_codec_utils_opus_parse_header")]
+    private static partial int GstCodecUtilsOpusParseHeader(nint header, uint* rate, byte* channels, byte* channelMappingFamily, byte* streamCount, byte* coupledCount, Gst.Pbutils.PbutilsGlobal.ChannelMappingArray* channelMapping, ushort* preSkip, short* outputGain);
 
     /// <summary>The <c>gst_encoding_list_all_targets</c> entry point.</summary>
     [LibraryImport("GstPbutils", EntryPoint = "gst_encoding_list_all_targets")]

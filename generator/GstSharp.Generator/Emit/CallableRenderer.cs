@@ -1,3 +1,4 @@
+using System.Globalization;
 using GstSharp.Generator.GirParsing.Model;
 using GstSharp.Generator.Planning;
 
@@ -388,6 +389,7 @@ internal static class CallableRenderer
 
         WriteConsumptionExceptions(writer, plan);
         WriteGValueExceptions(writer, plan);
+        WriteSpanExceptions(writer, plan);
 
         if (plan.Throws)
         {
@@ -435,8 +437,90 @@ internal static class CallableRenderer
             ArgumentKind.ConsumedHandle => ConsumptionParamNote(argument),
             ArgumentKind.GValue => GValueParamNote(plan, argument),
             ArgumentKind.CallerAllocatedBoxed => CallerAllocatedParamNote(argument),
+            ArgumentKind.Span => SpanParamNote(plan, argument),
             _ => null,
         };
+    }
+
+    /// <summary>
+    /// Returns the note of a span whose length the member hands to the C
+    /// function under a name of its own, or <see langword="null"/> when the
+    /// gir already says which argument that is.
+    /// </summary>
+    /// <param name="plan">The member being documented.</param>
+    /// <param name="argument">The span being documented.</param>
+    /// <returns>The note lines.</returns>
+    /// <remarks>
+    /// Three shapes need it. A span of a size the C declaration fixes states
+    /// that size, because the guard is the only other place a caller would
+    /// meet it. A length the overlays supplied is a fact about the C
+    /// implementation that the gir does not carry, and a length two spans share
+    /// is read off exactly one of them. In the latter two a hidden C argument
+    /// is taken from this span's <see cref="System.Span{T}.Length"/>, and with
+    /// nothing in the documentation saying so a caller has no way to find out
+    /// which argument, or which span, decides it.
+    /// </remarks>
+    private static IReadOnlyList<string>? SpanParamNote(MarshalPlan plan, ArgumentPlan argument)
+    {
+        if (argument.FixedLength is int fixedLength)
+        {
+            string count = fixedLength.ToString(CultureInfo.InvariantCulture);
+            return argument.IsNullable
+                ?
+                [
+                    "The C declaration sizes this buffer at " + count + " elements; pass exactly "
+                    + count + ", or an empty span for <c>NULL</c>.",
+                ]
+                :
+                [
+                    "The C declaration sizes this buffer at " + count + " elements; pass exactly "
+                    + count + ".",
+                ];
+        }
+
+        if (argument.LengthArgument is not int length)
+        {
+            return null;
+        }
+
+        ArgumentPlan lengthArgument = plan.Arguments[length];
+        if (lengthArgument.OwnerArgument is not int owned
+            || owned < 0
+            || !ReferenceEquals(plan.Arguments[owned], argument))
+        {
+            return null;
+        }
+
+        if (!argument.LengthIsOverridden && !SharesLength(plan, argument, length))
+        {
+            return null;
+        }
+
+        return
+        [
+            "Its number of elements is passed to the C function as the <c>"
+            + (lengthArgument.Source?.Name ?? DocName(lengthArgument.Name)) + "</c> argument.",
+        ];
+    }
+
+    /// <summary>Tests whether a second span is counted by the same length argument.</summary>
+    /// <param name="plan">The member being documented.</param>
+    /// <param name="argument">The span that owns the length.</param>
+    /// <param name="length">The index of the length argument.</param>
+    /// <returns><see langword="true"/> when another span shares it.</returns>
+    private static bool SharesLength(MarshalPlan plan, ArgumentPlan argument, int length)
+    {
+        foreach (ArgumentPlan other in plan.Arguments)
+        {
+            if (other.Kind == ArgumentKind.Span
+                && !ReferenceEquals(other, argument)
+                && other.LengthArgument == length)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /// <summary>
@@ -568,6 +652,52 @@ internal static class CallableRenderer
 
             writer.WriteLine("/// <exception cref=\"ArgumentException\">");
             writer.WriteLine("/// <paramref name=\"" + DocName(argument.Name) + "\"/> is empty.");
+            writer.WriteLine("/// </exception>");
+        }
+    }
+
+    /// <summary>
+    /// Writes the <see cref="ArgumentException"/> documentation of every span
+    /// the body guards, off the same classification the guard is written from.
+    /// </summary>
+    /// <param name="writer">The target writer.</param>
+    /// <param name="plan">The member being documented.</param>
+    /// <remarks>
+    /// A length rule that only the generated body states is one a caller meets
+    /// at run time and nowhere else. The rules are all about the caller's own
+    /// argument, so each is documented on the parameter that carries it, the
+    /// way <see cref="WriteGValueExceptions"/> documents the empty value.
+    /// </remarks>
+    private static void WriteSpanExceptions(CodeWriter writer, MarshalPlan plan)
+    {
+        foreach (ArgumentPlan argument in plan.Arguments)
+        {
+            string name = DocName(argument.Name);
+            string sentence;
+            switch (ClassifySpanGuard(plan, argument, out ArgumentPlan? owner, out string? countType))
+            {
+                case SpanGuard.FixedLength:
+                    string fixedLength = (argument.FixedLength ?? 0).ToString(CultureInfo.InvariantCulture);
+                    sentence = "<paramref name=\"" + name + "\"/> does not have exactly " + fixedLength
+                        + " elements" + (argument.IsNullable ? " and is not empty" : string.Empty) + ".";
+                    break;
+
+                case SpanGuard.SharedLength:
+                    sentence = "<paramref name=\"" + name + "\"/> does not have the same length as "
+                        + "<paramref name=\"" + DocName(owner!.Name) + "\"/>.";
+                    break;
+
+                case SpanGuard.NarrowLength:
+                    sentence = "<paramref name=\"" + name + "\"/> has more than "
+                        + NarrowCountLimit(countType!) + " elements.";
+                    break;
+
+                default:
+                    continue;
+            }
+
+            writer.WriteLine("/// <exception cref=\"ArgumentException\">");
+            writer.WriteLine("/// " + sentence);
             writer.WriteLine("/// </exception>");
         }
     }
@@ -1396,6 +1526,173 @@ internal static class CallableRenderer
                 writer.CloseBlock();
                 return;
 
+            case ArgumentKind.Span:
+                WriteSpanGuard(writer, plan, argument);
+                return;
+
+            default:
+                return;
+        }
+    }
+
+    /// <summary>The length rule one span argument is guarded by.</summary>
+    private enum SpanGuard
+    {
+        /// <summary>Nothing about the length is the caller's to get wrong.</summary>
+        None,
+
+        /// <summary>The C declaration sizes the block itself.</summary>
+        FixedLength,
+
+        /// <summary>The count the call is handed is another span's.</summary>
+        SharedLength,
+
+        /// <summary>The count the call is handed cannot hold every length.</summary>
+        NarrowLength,
+    }
+
+    /// <summary>
+    /// Classifies the length rule of a span, which is read once and answers
+    /// both the guard the body carries and the exception its documentation
+    /// states. A member whose body throws is a member whose documentation says
+    /// so because the two are written off this one answer.
+    /// </summary>
+    /// <param name="plan">The member being written.</param>
+    /// <param name="argument">The span to classify.</param>
+    /// <param name="owner">The span the shared count is read off.</param>
+    /// <param name="countType">The C# type of a count that is too narrow.</param>
+    /// <returns>The rule.</returns>
+    private static SpanGuard ClassifySpanGuard(
+        MarshalPlan plan,
+        ArgumentPlan argument,
+        out ArgumentPlan? owner,
+        out string? countType)
+    {
+        owner = null;
+        countType = null;
+
+        if (argument.Kind != ArgumentKind.Span || argument.IsHidden)
+        {
+            return SpanGuard.None;
+        }
+
+        if (argument.FixedLength is not null)
+        {
+            return SpanGuard.FixedLength;
+        }
+
+        if (argument.LengthArgument is not int length
+            || plan.Arguments[length].OwnerArgument is not int owned
+            || owned < 0)
+        {
+            return SpanGuard.None;
+        }
+
+        if (!ReferenceEquals(plan.Arguments[owned], argument))
+        {
+            owner = plan.Arguments[owned];
+            return SpanGuard.SharedLength;
+        }
+
+        countType = NarrowCountType(plan.Arguments[length]);
+        return countType is null ? SpanGuard.None : SpanGuard.NarrowLength;
+    }
+
+    /// <summary>
+    /// Returns the C# type of a hidden count that cannot hold every length a
+    /// span can have, or <see langword="null"/> when it can.
+    /// </summary>
+    /// <param name="length">The hidden count argument.</param>
+    /// <returns>The type name, or <see langword="null"/>.</returns>
+    /// <remarks>
+    /// The count is a cast of <see cref="System.Span{T}.Length"/>, and a cast
+    /// into a type that cannot hold it wraps silently: a 256 element span
+    /// counted by a <c>guint8</c> tells the C function there is nothing to
+    /// read, and a 65536 element one counted by a <c>guint16</c> does the
+    /// same, while the pointer it is handed is real. Only the types narrower
+    /// than <see cref="int"/> can wrap, because a length is a non-negative
+    /// <see cref="int"/> to begin with.
+    /// </remarks>
+    private static string? NarrowCountType(ArgumentPlan length) => length.RawType switch
+    {
+        "sbyte" or "byte" or "short" or "ushort" => length.RawType,
+        _ => null,
+    };
+
+    /// <summary>
+    /// The largest length a narrow count can hold, spelled out for the message
+    /// and for the documentation.
+    /// </summary>
+    /// <param name="countType">The type <see cref="NarrowCountType"/> answered.</param>
+    /// <returns>The limit.</returns>
+    private static string NarrowCountLimit(string countType) => countType switch
+    {
+        "sbyte" => "127",
+        "byte" => "255",
+        "short" => "32767",
+        _ => "65535",
+    };
+
+    /// <summary>Writes the length guard of a span.</summary>
+    /// <param name="writer">The target writer.</param>
+    /// <param name="plan">The member being written.</param>
+    /// <param name="argument">The span to guard.</param>
+    /// <remarks>
+    /// When two arrays name the same length parameter, only one of them is the
+    /// owner the call site reads <c>Length</c> off. Every other span is passed
+    /// along with a count that came from somewhere else, so a caller that hands
+    /// over a shorter one would have the C function read past its end. The
+    /// owner has a requirement of its own when the C argument is narrower than
+    /// a length: what the call is handed is a cast, and a cast that wraps hands
+    /// the library a count that has nothing to do with the span. Both state a
+    /// requirement the C declaration does not.
+    /// </remarks>
+    private static void WriteSpanGuard(CodeWriter writer, MarshalPlan plan, ArgumentPlan argument)
+    {
+        string name = argument.Name;
+        switch (ClassifySpanGuard(plan, argument, out ArgumentPlan? owner, out string? countType))
+        {
+            // Exact, and never merely "at least": the C function reads the
+            // size its declaration states whenever the pointer is not NULL, so
+            // a shorter span is an over-read and a longer one hides a caller
+            // that expected more of the call than it does. An empty span pins
+            // to a null pointer, which is the NULL the nullable ones document.
+            case SpanGuard.FixedLength:
+                string fixedLength = (argument.FixedLength ?? 0).ToString(CultureInfo.InvariantCulture);
+                writer.WriteLine(
+                    "if (" + name + ".Length != " + fixedLength
+                    + (argument.IsNullable ? " && " + name + ".Length != 0" : string.Empty) + ")");
+                writer.OpenBlock();
+                writer.WriteLine("throw new ArgumentException(");
+                writer.WriteLine(
+                    "    \"" + DocName(name) + " must have exactly " + fixedLength + " elements"
+                    + (argument.IsNullable ? ", or none at all" : string.Empty) + ".\",");
+                writer.WriteLine("    nameof(" + name + "));");
+                writer.CloseBlock();
+                return;
+
+            case SpanGuard.SharedLength:
+                writer.WriteLine("if (" + name + ".Length != " + owner!.Name + ".Length)");
+                writer.OpenBlock();
+                writer.WriteLine("throw new ArgumentException(");
+                writer.WriteLine(
+                    "    \"" + DocName(name) + " must have the same length as " + DocName(owner.Name)
+                    + ": the call reads one length for both.\",");
+                writer.WriteLine("    nameof(" + name + "));");
+                writer.CloseBlock();
+                return;
+
+            case SpanGuard.NarrowLength:
+                writer.WriteLine("if (" + name + ".Length > " + countType + ".MaxValue)");
+                writer.OpenBlock();
+                writer.WriteLine("throw new ArgumentException(");
+                writer.WriteLine(
+                    "    \"" + DocName(name) + " must have at most " + NarrowCountLimit(countType!)
+                    + " elements: the call takes its count as a " + countType + ".\",");
+                writer.WriteLine("    nameof(" + name + "));");
+                writer.CloseBlock();
+                return;
+
             default:
                 return;
         }
@@ -1773,7 +2070,8 @@ internal static class CallableRenderer
                 argument.LengthArgument,
                 argument.Transfer,
                 target: name,
-                declare: false);
+                declare: false,
+                fixedLength: argument.FixedLength);
             return;
         }
 
@@ -1846,7 +2144,8 @@ internal static class CallableRenderer
                 value.LengthArgument,
                 value.Transfer,
                 target: ConvertedLocal,
-                declare: true);
+                declare: true,
+                fixedLength: value.FixedLength);
             writer.WriteLine("return " + ConvertedLocal + ";");
             return;
         }
@@ -1953,9 +2252,15 @@ internal static class CallableRenderer
         int? lengthArgument,
         GirTransfer transfer,
         string target,
-        bool declare)
+        bool declare,
+        int? fixedLength = null)
     {
-        string length = "(int)" + plan.Arguments[lengthArgument ?? 0].Name + "Native";
+        // A block whose size the C declaration fixes carries no count of its
+        // own, so the length is the literal size rather than the value an
+        // argument came back with.
+        string length = fixedLength is int size
+            ? size.ToString(CultureInfo.InvariantCulture)
+            : "(int)" + plan.Arguments[lengthArgument ?? 0].Name + "Native";
         writer.WriteLine(declare ? elementType + "[]? " + target + " = null;" : target + " = null;");
         writer.WriteLine("if (" + source + " != 0)");
         writer.OpenBlock();

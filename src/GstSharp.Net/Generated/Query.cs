@@ -1103,6 +1103,23 @@ public sealed unsafe partial class Query : Gst.MiniObject
         System.GC.KeepAlive(this);
     }
 
+    /// <summary>
+    /// Set the formats query result fields in @query. The number of formats passed
+    /// in the @formats array must be equal to @n_formats.
+    /// </summary>
+    /// <param name="formats">
+    /// an array containing @n_formats
+    ///     @GstFormat values.
+    /// </param>
+    public void SetFormatsv(System.ReadOnlySpan<Gst.Format> formats)
+    {
+        fixed (Gst.Format* formatsPointer = formats)
+        {
+            GstQuerySetFormatsv(Handle, (int)formats.Length, formatsPointer);
+            System.GC.KeepAlive(this);
+        }
+    }
+
     /// <summary>Answer a latency query by setting the requested values in the given format.</summary>
     /// <param name="live">The <c>live</c> argument.</param>
     /// <param name="minLatency">The <c>minLatency</c> argument.</param>
@@ -1543,6 +1560,10 @@ public sealed unsafe partial class Query : Gst.MiniObject
     /// <summary>The <c>gst_query_set_duration</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_query_set_duration")]
     private static partial void GstQuerySetDuration(nint query, int format, long duration);
+
+    /// <summary>The <c>gst_query_set_formatsv</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_set_formatsv")]
+    private static partial void GstQuerySetFormatsv(nint query, int nFormats, Gst.Format* formats);
 
     /// <summary>The <c>gst_query_set_latency</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_query_set_latency")]

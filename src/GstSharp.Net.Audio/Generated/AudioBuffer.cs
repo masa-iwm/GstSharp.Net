@@ -108,6 +108,43 @@ public sealed unsafe partial class AudioBuffer
     }
 
     /// <summary>
+    /// Reorders @buffer from the channel positions @from to the channel
+    /// positions @to. @from and @to must contain the same number of
+    /// positions and the same positions, only in a different order.
+    /// @buffer must be writable.
+    /// </summary>
+    /// <param name="buffer">The <c>buffer</c> argument.</param>
+    /// <param name="format">The <c>format</c> argument.</param>
+    /// <param name="from">The channel positions in the buffer.</param>
+    /// <param name="to">
+    /// The channel positions to convert to.
+    /// Its number of elements is passed to the C function as the <c>channels</c> argument.
+    /// </param>
+    /// <returns>%TRUE if the reordering was possible.</returns>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="from"/> does not have the same length as <paramref name="to"/>.
+    /// </exception>
+    public static bool ReorderChannels(Gst.Buffer buffer, Gst.Audio.AudioFormat format, System.ReadOnlySpan<Gst.Audio.AudioChannelPosition> from, System.ReadOnlySpan<Gst.Audio.AudioChannelPosition> to)
+    {
+        ArgumentNullException.ThrowIfNull(buffer);
+        if (from.Length != to.Length)
+        {
+            throw new ArgumentException(
+                "from must have the same length as to: the call reads one length for both.",
+                nameof(from));
+        }
+        fixed (Gst.Audio.AudioChannelPosition* fromPointer = from)
+        {
+            fixed (Gst.Audio.AudioChannelPosition* toPointer = to)
+            {
+                int nativeResult = GstAudioBufferReorderChannels(buffer.Handle, (int)format, (int)to.Length, fromPointer, toPointer);
+                System.GC.KeepAlive(buffer);
+                return nativeResult != 0;
+            }
+        }
+    }
+
+    /// <summary>
     /// Truncate the buffer to finally have @samples number of samples, removing
     /// the necessary amount of samples from the end and @trim number of samples
     /// from the beginning.
@@ -161,6 +198,10 @@ public sealed unsafe partial class AudioBuffer
     /// <summary>The <c>gst_audio_buffer_clip</c> entry point.</summary>
     [LibraryImport("GstAudio", EntryPoint = "gst_audio_buffer_clip")]
     private static partial nint GstAudioBufferClip(nint buffer, nint segment, int rate, int bpf);
+
+    /// <summary>The <c>gst_audio_buffer_reorder_channels</c> entry point.</summary>
+    [LibraryImport("GstAudio", EntryPoint = "gst_audio_buffer_reorder_channels")]
+    private static partial int GstAudioBufferReorderChannels(nint buffer, int format, int channels, Gst.Audio.AudioChannelPosition* from, Gst.Audio.AudioChannelPosition* to);
 
     /// <summary>The <c>gst_audio_buffer_truncate</c> entry point.</summary>
     [LibraryImport("GstAudio", EntryPoint = "gst_audio_buffer_truncate")]

@@ -44,6 +44,32 @@ public sealed unsafe partial class VideoAffineTransformationMeta
     internal static VideoAffineTransformationMeta? FromNative(nint handle) =>
         handle == 0 ? null : new(handle);
 
+    /// <summary>
+    /// Apply a transformation using the given 4x4 transformation matrix.
+    /// Performs the multiplication, meta-&gt;matrix X matrix.
+    /// </summary>
+    /// <param name="matrix">
+    /// a 4x4 transformation matrix to be applied
+    /// The C declaration sizes this buffer at 16 elements; pass exactly 16.
+    /// </param>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="matrix"/> does not have exactly 16 elements.
+    /// </exception>
+    public void ApplyMatrix(System.ReadOnlySpan<float> matrix)
+    {
+        if (matrix.Length != 16)
+        {
+            throw new ArgumentException(
+                "matrix must have exactly 16 elements.",
+                nameof(matrix));
+        }
+        fixed (float* matrixPointer = matrix)
+        {
+            GstVideoAffineTransformationMetaApplyMatrix(Handle, matrixPointer);
+            System.GC.KeepAlive(this);
+        }
+    }
+
     /// <summary>The <c>gst_video_affine_transformation_meta_get_info</c> function.</summary>
     /// <returns>The result of <c>gst_video_affine_transformation_meta_get_info</c>.</returns>
     public static Gst.MetaInfo GetInfo()
@@ -52,6 +78,10 @@ public sealed unsafe partial class VideoAffineTransformationMeta
         return Gst.MetaInfo.FromNative(nativeResult)
             ?? throw new InvalidOperationException("gst_video_affine_transformation_meta_get_info returned no value.");
     }
+
+    /// <summary>The <c>gst_video_affine_transformation_meta_apply_matrix</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_video_affine_transformation_meta_apply_matrix")]
+    private static partial void GstVideoAffineTransformationMetaApplyMatrix(nint meta, float* matrix);
 
     /// <summary>The <c>gst_video_affine_transformation_meta_get_info</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_affine_transformation_meta_get_info")]

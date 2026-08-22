@@ -303,6 +303,30 @@ internal sealed class ArgumentPlan
     internal int? LengthArgument { get; init; }
 
     /// <summary>
+    /// Gets a value indicating whether <see cref="LengthArgument"/> was named
+    /// by an <c>arrayOverrides</c> entry rather than by the gir.
+    /// </summary>
+    /// <remarks>
+    /// The documentation of the parameter reads it: a length the gir states is
+    /// visible in the C declaration a caller can look up, while one the
+    /// overlays supply is a fact about the C implementation that only the
+    /// generated documentation can carry.
+    /// </remarks>
+    internal bool LengthIsOverridden { get; init; }
+
+    /// <summary>
+    /// Gets the number of elements the C declaration sizes this array at, when
+    /// it sizes it at all.
+    /// </summary>
+    /// <remarks>
+    /// It is the other half of <see cref="LengthArgument"/> and never appears
+    /// beside it: a block of a size the declaration fixes carries no count of
+    /// its own, so the member states the length in its guard and in its
+    /// documentation instead of passing it.
+    /// </remarks>
+    internal int? FixedLength { get; init; }
+
+    /// <summary>
     /// Gets the inline storage type of a <see cref="ArgumentKind.FixedArrayOut"/>
     /// argument, which the declaring type declares beside its members.
     /// </summary>
@@ -363,6 +387,12 @@ internal sealed class ReturnPlan
 
     /// <summary>Gets the index of the argument that carries the length of the returned array.</summary>
     internal int? LengthArgument { get; init; }
+
+    /// <summary>
+    /// Gets the number of elements the C declaration sizes the returned array
+    /// at, when no argument carries the count.
+    /// </summary>
+    internal int? FixedLength { get; init; }
 
     /// <summary>Gets the gir documentation of the return value.</summary>
     internal string? Doc { get; init; }

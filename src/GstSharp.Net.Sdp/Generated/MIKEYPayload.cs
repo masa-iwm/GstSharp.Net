@@ -149,8 +149,26 @@ public sealed unsafe partial class MIKEYPayload : Gst.MiniObject
     /// <param name="vfData">the Valid From data</param>
     /// <param name="vtData">the Valid To data</param>
     /// <returns>%TRUE on success</returns>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="vfData"/> has more than 255 elements.
+    /// </exception>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="vtData"/> has more than 255 elements.
+    /// </exception>
     public bool KeyDataSetInterval(System.ReadOnlySpan<byte> vfData, System.ReadOnlySpan<byte> vtData)
     {
+        if (vfData.Length > byte.MaxValue)
+        {
+            throw new ArgumentException(
+                "vfData must have at most 255 elements: the call takes its count as a byte.",
+                nameof(vfData));
+        }
+        if (vtData.Length > byte.MaxValue)
+        {
+            throw new ArgumentException(
+                "vtData must have at most 255 elements: the call takes its count as a byte.",
+                nameof(vtData));
+        }
         fixed (byte* vfDataPointer = vfData)
         {
             fixed (byte* vtDataPointer = vtData)
@@ -169,8 +187,17 @@ public sealed unsafe partial class MIKEYPayload : Gst.MiniObject
     /// <param name="keyType">The <c>keyType</c> argument.</param>
     /// <param name="keyData">the key of type @key_type</param>
     /// <returns>%TRUE on success</returns>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="keyData"/> has more than 65535 elements.
+    /// </exception>
     public bool KeyDataSetKey(Gst.Sdp.MIKEYKeyDataType keyType, System.ReadOnlySpan<byte> keyData)
     {
+        if (keyData.Length > ushort.MaxValue)
+        {
+            throw new ArgumentException(
+                "keyData must have at most 65535 elements: the call takes its count as a ushort.",
+                nameof(keyData));
+        }
         fixed (byte* keyDataPointer = keyData)
         {
             int nativeResult = GstMikeyPayloadKeyDataSetKey(Handle, (int)keyType, (ushort)keyData.Length, keyDataPointer);
@@ -185,8 +212,17 @@ public sealed unsafe partial class MIKEYPayload : Gst.MiniObject
     /// </summary>
     /// <param name="saltData">the salt</param>
     /// <returns>%TRUE on success</returns>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="saltData"/> has more than 65535 elements.
+    /// </exception>
     public bool KeyDataSetSalt(System.ReadOnlySpan<byte> saltData)
     {
+        if (saltData.Length > ushort.MaxValue)
+        {
+            throw new ArgumentException(
+                "saltData must have at most 65535 elements: the call takes its count as a ushort.",
+                nameof(saltData));
+        }
         fixed (byte* saltDataPointer = saltData)
         {
             int nativeResult = GstMikeyPayloadKeyDataSetSalt(Handle, (ushort)saltData.Length, saltDataPointer);
@@ -198,8 +234,17 @@ public sealed unsafe partial class MIKEYPayload : Gst.MiniObject
     /// <summary>Set the SPI/MKI validity in the %GST_MIKEY_PT_KEY_DATA @payload.</summary>
     /// <param name="spiData">the SPI/MKI data</param>
     /// <returns>%TRUE on success</returns>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="spiData"/> has more than 255 elements.
+    /// </exception>
     public bool KeyDataSetSpi(System.ReadOnlySpan<byte> spiData)
     {
+        if (spiData.Length > byte.MaxValue)
+        {
+            throw new ArgumentException(
+                "spiData must have at most 255 elements: the call takes its count as a byte.",
+                nameof(spiData));
+        }
         fixed (byte* spiDataPointer = spiData)
         {
             int nativeResult = GstMikeyPayloadKeyDataSetSpi(Handle, (byte)spiData.Length, spiDataPointer);
@@ -215,8 +260,17 @@ public sealed unsafe partial class MIKEYPayload : Gst.MiniObject
     /// <param name="c">The <c>c</c> argument.</param>
     /// <param name="data">the encrypted envelope key</param>
     /// <returns>%TRUE on success</returns>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="data"/> has more than 65535 elements.
+    /// </exception>
     public bool PkeSet(Gst.Sdp.MIKEYCacheType c, System.ReadOnlySpan<byte> data)
     {
+        if (data.Length > ushort.MaxValue)
+        {
+            throw new ArgumentException(
+                "data must have at most 65535 elements: the call takes its count as a ushort.",
+                nameof(data));
+        }
         fixed (byte* dataPointer = data)
         {
             int nativeResult = GstMikeyPayloadPkeSet(Handle, (int)c, (ushort)data.Length, dataPointer);
@@ -228,8 +282,17 @@ public sealed unsafe partial class MIKEYPayload : Gst.MiniObject
     /// <summary>Set the random values in a %GST_MIKEY_PT_RAND @payload.</summary>
     /// <param name="rand">random values</param>
     /// <returns>%TRUE on success</returns>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="rand"/> has more than 255 elements.
+    /// </exception>
     public bool RandSet(System.ReadOnlySpan<byte> rand)
     {
+        if (rand.Length > byte.MaxValue)
+        {
+            throw new ArgumentException(
+                "rand must have at most 255 elements: the call takes its count as a byte.",
+                nameof(rand));
+        }
         fixed (byte* randPointer = rand)
         {
             int nativeResult = GstMikeyPayloadRandSet(Handle, (byte)rand.Length, randPointer);
@@ -245,8 +308,17 @@ public sealed unsafe partial class MIKEYPayload : Gst.MiniObject
     /// <param name="type">The <c>type</c> argument.</param>
     /// <param name="val">@len bytes of data</param>
     /// <returns>%TRUE on success</returns>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="val"/> has more than 255 elements.
+    /// </exception>
     public bool SpAddParam(byte type, System.ReadOnlySpan<byte> val)
     {
+        if (val.Length > byte.MaxValue)
+        {
+            throw new ArgumentException(
+                "val must have at most 255 elements: the call takes its count as a byte.",
+                nameof(val));
+        }
         fixed (byte* valPointer = val)
         {
             int nativeResult = GstMikeyPayloadSpAddParam(Handle, type, (byte)val.Length, valPointer);

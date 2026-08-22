@@ -199,6 +199,35 @@ public sealed unsafe partial class DsdInfo : Gst.GObject.Boxed
         return nativeResult != 0;
     }
 
+    /// <summary>Set the default info for the DSD info of @format and @rate and @channels.</summary>
+    /// <remarks>
+    /// <para>Note: This initializes @info first, no values are preserved.</para>
+    /// </remarks>
+    /// <param name="format">The <c>format</c> argument.</param>
+    /// <param name="rate">The <c>rate</c> argument.</param>
+    /// <param name="channels">The <c>channels</c> argument.</param>
+    /// <param name="positions">
+    /// the channel positions
+    /// The C declaration sizes this buffer at 64 elements; pass exactly 64, or an empty span for <c>NULL</c>.
+    /// </param>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="positions"/> does not have exactly 64 elements and is not empty.
+    /// </exception>
+    public void SetFormat(Gst.Audio.DsdFormat format, int rate, int channels, System.ReadOnlySpan<Gst.Audio.AudioChannelPosition> positions)
+    {
+        if (positions.Length != 64 && positions.Length != 0)
+        {
+            throw new ArgumentException(
+                "positions must have exactly 64 elements, or none at all.",
+                nameof(positions));
+        }
+        fixed (Gst.Audio.AudioChannelPosition* positionsPointer = positions)
+        {
+            GstDsdInfoSetFormat(Handle, (int)format, rate, channels, positionsPointer);
+            System.GC.KeepAlive(this);
+        }
+    }
+
     /// <summary>Convert the values of @info into a #GstCaps.</summary>
     /// <returns>
     /// the new #GstCaps containing the
@@ -227,6 +256,10 @@ public sealed unsafe partial class DsdInfo : Gst.GObject.Boxed
     /// <summary>The <c>gst_dsd_info_is_equal</c> entry point.</summary>
     [LibraryImport("GstAudio", EntryPoint = "gst_dsd_info_is_equal")]
     private static partial int GstDsdInfoIsEqual(nint info, nint other);
+
+    /// <summary>The <c>gst_dsd_info_set_format</c> entry point.</summary>
+    [LibraryImport("GstAudio", EntryPoint = "gst_dsd_info_set_format")]
+    private static partial void GstDsdInfoSetFormat(nint info, int format, int rate, int channels, Gst.Audio.AudioChannelPosition* positions);
 
     /// <summary>The <c>gst_dsd_info_to_caps</c> entry point.</summary>
     [LibraryImport("GstAudio", EntryPoint = "gst_dsd_info_to_caps")]

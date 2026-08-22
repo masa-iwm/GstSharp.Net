@@ -82,6 +82,12 @@ internal static class GenerationPipeline
         EnumEmitter enumEmitter = new(names, overlays, diagnostics);
         Dictionary<string, List<string>> inherited = new(StringComparer.Ordinal);
 
+        // The array corrections are consumed by a planner that is built per
+        // module, and reported once for the whole run, so the record of what
+        // was applied belongs here. The overlays themselves stay immutable:
+        // Overlays.Empty is shared by every fixture of the test suite.
+        HashSet<string> consumedArrayOverrides = new(StringComparer.Ordinal);
+
         List<GeneratedFile> files = [];
         foreach (ModuleInfo module in ModuleMap.Modules)
         {
@@ -110,9 +116,31 @@ internal static class GenerationPipeline
                     census,
                     diagnostics,
                     enumEmitter,
-                    inherited),
+                    inherited,
+                    consumedArrayOverrides),
                 module,
                 ns));
+        }
+
+        // An array correction that matched nothing is a statement about a gir
+        // that has moved on. Reporting it is what keeps the overlays from
+        // accumulating entries that describe a symbol which no longer exists,
+        // or a parameter that is no array.
+        List<string> stale = [];
+        foreach (string key in overlays.ArrayOverrideKeys)
+        {
+            if (!consumedArrayOverrides.Contains(key))
+            {
+                stale.Add(key);
+            }
+        }
+
+        stale.Sort(StringComparer.Ordinal);
+        foreach (string key in stale)
+        {
+            diagnostics.Warn(
+                "GEN0020",
+                $"The array override '{key}' matched no array parameter or return value; the entry is stale.");
         }
 
         files.Sort(static (left, right) => string.CompareOrdinal(left.RelativePath, right.RelativePath));
@@ -135,7 +163,8 @@ internal static class GenerationPipeline
             shared.Types,
             shared.Overlays,
             shared.SkipRules,
-            shared.Diagnostics);
+            shared.Diagnostics,
+            shared.ConsumedArrayOverrides);
 
         SurfaceBuilder surfaces = new(planner, shared.Names, shared.Types, shared.Census, shared.Diagnostics);
         List<RegistryEntry> registry = [];
@@ -214,6 +243,10 @@ internal static class GenerationPipeline
     /// The members of every class the run has emitted so far, keyed by
     /// qualified gir name and shared by every module.
     /// </param>
+    /// <param name="ConsumedArrayOverrides">
+    /// The keys of the array corrections the run has applied, shared by every
+    /// module so that the stale ones can be reported once.
+    /// </param>
     private sealed record ModuleEmitters(
         Repository Repository,
         Classifier Classifier,
@@ -224,5 +257,6 @@ internal static class GenerationPipeline
         EmissionCensus Census,
         DiagnosticBag Diagnostics,
         EnumEmitter Enums,
-        Dictionary<string, List<string>> Inherited);
+        Dictionary<string, List<string>> Inherited,
+        HashSet<string> ConsumedArrayOverrides);
 }

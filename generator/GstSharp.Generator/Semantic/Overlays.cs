@@ -62,12 +62,6 @@ internal sealed class AnnotationOverride
     /// </remarks>
     public int? FixedArraySize { get; set; }
 
-    /// <summary>Gets or sets the index of the parameter carrying the array length.</summary>
-    public int? ArrayLength { get; set; }
-
-    /// <summary>Gets or sets the corrected <c>zero-terminated</c> flag of an array.</summary>
-    public bool? ZeroTerminated { get; set; }
-
     /// <summary>
     /// Gets or sets whether the return value is dropped, so that the member is
     /// emitted as if the C function returned nothing.
@@ -80,6 +74,40 @@ internal sealed class AnnotationOverride
     /// freshly initialized list into a second owner for nothing.
     /// </remarks>
     public bool? DiscardReturn { get; set; }
+}
+
+/// <summary>
+/// A correction of an <c>&lt;array&gt;</c> the gir already spells, whose
+/// element count or element type the annotation gets wrong.
+/// </summary>
+/// <remarks>
+/// <para>
+/// Every field corrects an attribute of the <c>&lt;array&gt;</c> element and
+/// nothing else: this never promotes a bare pointer into an array, because the
+/// decision that a pointer is one is exactly the decision a binding must not
+/// invent. An entry on a parameter the gir does not spell as an array is
+/// reported as GEN0020 and ignored.
+/// </para>
+/// <para>
+/// <c>length</c> and <c>fixedSize</c> are mutually exclusive in GIR, so an
+/// entry that states one clears the other: an array whose length the overlays
+/// name is not also of a size fixed by the C declaration, and the other way
+/// round.
+/// </para>
+/// </remarks>
+internal sealed class ArrayOverride
+{
+    /// <summary>Gets or sets the index of the parameter carrying the element count.</summary>
+    public int? Length { get; set; }
+
+    /// <summary>Gets or sets the number of elements the C declaration sizes the array at.</summary>
+    public int? FixedSize { get; set; }
+
+    /// <summary>Gets or sets the corrected <c>zero-terminated</c> flag.</summary>
+    public bool? ZeroTerminated { get; set; }
+
+    /// <summary>Gets or sets the gir name of the element type.</summary>
+    public string? ElementType { get; set; }
 }
 
 /// <summary>
@@ -117,6 +145,13 @@ internal sealed class PlatformSupport
 /// implementation that no gir annotation carries; it may also state
 /// <c>discardReturn</c> on <c>#return</c> to drop a return value the caller
 /// already holds.</description></item>
+/// <item><description><c>arrayOverrides</c>: keyed like
+/// <c>annotationOverrides</c> and applied to a parameter or a return value the
+/// gir already spells as an <c>&lt;array&gt;</c>. It corrects the
+/// <c>length</c> index, the <c>fixedSize</c>, the <c>zeroTerminated</c> flag
+/// or the <c>elementType</c> of that array, which is how a C function that
+/// counts its elements off another argument gets a span rather than staying
+/// unbound. It never turns a bare pointer into an array.</description></item>
 /// <item><description><c>forceOpaque</c>: qualified gir name of a record
 /// (<c>Gst.DebugCategory</c>) that must be wrapped behind a pointer rather
 /// than copied by value.</description></item>
@@ -140,6 +175,7 @@ internal sealed class Overlays
     private readonly HashSet<string> _forceOpaque;
     private readonly Dictionary<string, string> _rename;
     private readonly Dictionary<string, AnnotationOverride> _annotations;
+    private readonly Dictionary<string, ArrayOverride> _arrayOverrides;
     private readonly Dictionary<string, PlatformSupport> _platforms;
     private readonly Dictionary<string, string> _returnTypes;
 
@@ -148,6 +184,7 @@ internal sealed class Overlays
         HashSet<string> forceOpaque,
         Dictionary<string, string> rename,
         Dictionary<string, AnnotationOverride> annotations,
+        Dictionary<string, ArrayOverride> arrayOverrides,
         Dictionary<string, PlatformSupport> platforms,
         Dictionary<string, string> returnTypes)
     {
@@ -155,6 +192,7 @@ internal sealed class Overlays
         _forceOpaque = forceOpaque;
         _rename = rename;
         _annotations = annotations;
+        _arrayOverrides = arrayOverrides;
         _platforms = platforms;
         _returnTypes = returnTypes;
     }
@@ -165,6 +203,7 @@ internal sealed class Overlays
         new HashSet<string>(StringComparer.Ordinal),
         new Dictionary<string, string>(StringComparer.Ordinal),
         new Dictionary<string, AnnotationOverride>(StringComparer.Ordinal),
+        new Dictionary<string, ArrayOverride>(StringComparer.Ordinal),
         new Dictionary<string, PlatformSupport>(StringComparer.Ordinal),
         new Dictionary<string, string>(StringComparer.Ordinal));
 
@@ -176,6 +215,12 @@ internal sealed class Overlays
     /// being projected as value types.
     /// </summary>
     internal IReadOnlyCollection<string> OpaqueRecords => _forceOpaque;
+
+    /// <summary>
+    /// Gets the keys of every declared array correction, so that a run can
+    /// report the ones no array matched.
+    /// </summary>
+    internal IReadOnlyCollection<string> ArrayOverrideKeys => _arrayOverrides.Keys;
 
     /// <summary>
     /// Loads <c>fixups.json</c> and <c>platform-symbols.json</c> from an overlay
@@ -214,6 +259,12 @@ internal sealed class Overlays
             annotations[entry.Key] = entry.Value;
         }
 
+        Dictionary<string, ArrayOverride> arrayOverrides = new(StringComparer.Ordinal);
+        foreach (KeyValuePair<string, ArrayOverride> entry in fixups.ArrayOverrides ?? [])
+        {
+            arrayOverrides[entry.Key] = entry.Value;
+        }
+
         Dictionary<string, PlatformSupport> symbols = new(StringComparer.Ordinal);
         foreach (KeyValuePair<string, PlatformSupport> entry in platforms.Symbols ?? [])
         {
@@ -226,7 +277,7 @@ internal sealed class Overlays
             returnTypes[entry.Key] = entry.Value;
         }
 
-        return new Overlays(skip, forceOpaque, rename, annotations, symbols, returnTypes);
+        return new Overlays(skip, forceOpaque, rename, annotations, arrayOverrides, symbols, returnTypes);
     }
 
     /// <summary>Tests whether a symbol is skipped by the overlays.</summary>
@@ -262,6 +313,12 @@ internal sealed class Overlays
     internal AnnotationOverride? GetAnnotationOverride(string key) =>
         _annotations.TryGetValue(key, out AnnotationOverride? value) ? value : null;
 
+    /// <summary>Looks up the correction of an array.</summary>
+    /// <param name="key">A <c>c:identifier</c> suffixed with <c>#parameter</c> or <c>#return</c>.</param>
+    /// <returns>The correction, or <see langword="null"/>.</returns>
+    internal ArrayOverride? GetArrayOverride(string key) =>
+        _arrayOverrides.TryGetValue(key, out ArrayOverride? value) ? value : null;
+
     /// <summary>Looks up the platform availability of a native symbol.</summary>
     /// <param name="cIdentifier">The <c>c:identifier</c> of the symbol.</param>
     /// <returns>The availability, or <see langword="null"/> when the symbol is portable.</returns>
@@ -289,6 +346,8 @@ internal sealed class Overlays
         public Dictionary<string, string>? Rename { get; set; }
 
         public Dictionary<string, AnnotationOverride>? AnnotationOverrides { get; set; }
+
+        public Dictionary<string, ArrayOverride>? ArrayOverrides { get; set; }
 
         public Dictionary<string, string>? ReturnTypeOverrides { get; set; }
     }

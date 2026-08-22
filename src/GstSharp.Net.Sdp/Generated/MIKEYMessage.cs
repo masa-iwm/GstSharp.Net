@@ -201,8 +201,17 @@ public sealed unsafe partial class MIKEYMessage : Gst.MiniObject
     /// <param name="c">The <c>c</c> argument.</param>
     /// <param name="data">the encrypted envelope key</param>
     /// <returns>%TRUE on success</returns>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="data"/> has more than 65535 elements.
+    /// </exception>
     public bool AddPke(Gst.Sdp.MIKEYCacheType c, System.ReadOnlySpan<byte> data)
     {
+        if (data.Length > ushort.MaxValue)
+        {
+            throw new ArgumentException(
+                "data must have at most 65535 elements: the call takes its count as a ushort.",
+                nameof(data));
+        }
         fixed (byte* dataPointer = data)
         {
             int nativeResult = GstMikeyMessageAddPke(Handle, (int)c, (ushort)data.Length, dataPointer);
@@ -214,8 +223,17 @@ public sealed unsafe partial class MIKEYMessage : Gst.MiniObject
     /// <summary>Add a new RAND payload to @msg with the given parameters.</summary>
     /// <param name="rand">random data</param>
     /// <returns>%TRUE on success</returns>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="rand"/> has more than 255 elements.
+    /// </exception>
     public bool AddRand(System.ReadOnlySpan<byte> rand)
     {
+        if (rand.Length > byte.MaxValue)
+        {
+            throw new ArgumentException(
+                "rand must have at most 255 elements: the call takes its count as a byte.",
+                nameof(rand));
+        }
         fixed (byte* randPointer = rand)
         {
             int nativeResult = GstMikeyMessageAddRand(Handle, (byte)rand.Length, randPointer);

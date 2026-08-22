@@ -90,4 +90,36 @@ public sealed class GstNetTests
 
         socket.Close();
     }
+
+    /// <summary>
+    /// The wire form of a time packet is sixteen bytes: two big endian
+    /// <c>GstClockTime</c> values. Both halves of it are bound off an
+    /// <c>&lt;array fixed-size="16"&gt;</c> that carries no count of its own,
+    /// so the length is part of the projection rather than of the call.
+    /// </summary>
+    /// <remarks>
+    /// The constructor accepts an empty span as well, which pins to the
+    /// <c>NULL</c> the C function answers with a zeroed packet; a span of any
+    /// other length is refused, because the C function reads sixteen bytes
+    /// whenever the pointer is not <c>NULL</c>.
+    /// </remarks>
+    [Fact]
+    public void ATimePacketRoundTripsThroughItsSixteenByteWireForm()
+    {
+        using NetTimePacket packet = NetTimePacket.New([]);
+
+        byte[]? wire = packet.Serialize();
+
+        Assert.NotNull(wire);
+        Assert.Equal(16, wire.Length);
+
+        using NetTimePacket restored = NetTimePacket.New(wire);
+
+        Assert.Equal(packet.LocalTime, restored.LocalTime);
+        Assert.Equal(packet.RemoteTime, restored.RemoteTime);
+
+        ArgumentException error = Assert.Throws<ArgumentException>(() => NetTimePacket.New(new byte[8]));
+
+        Assert.Equal("buffer", error.ParamName);
+    }
 }

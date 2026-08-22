@@ -803,6 +803,25 @@ public static unsafe partial class NavigationExtensions
         System.GC.KeepAlive(query);
     }
 
+    /// <summary>
+    /// Set the #GstNavigation command query result fields in @query. The number
+    /// of commands passed must be equal to @n_commands.
+    /// </summary>
+    /// <param name="query">The <c>query</c> argument.</param>
+    /// <param name="cmds">
+    /// An array containing @n_cmds
+    ///     @GstNavigationCommand values.
+    /// </param>
+    public static void QuerySetCommandsv(Gst.Query query, System.Span<Gst.Video.NavigationCommand> cmds)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+        fixed (Gst.Video.NavigationCommand* cmdsPointer = cmds)
+        {
+            GstNavigationQuerySetCommandsv(query.Handle, (int)cmds.Length, cmdsPointer);
+            System.GC.KeepAlive(query);
+        }
+    }
+
     /// <summary>The <c>gst_navigation_send_command</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_navigation_send_command")]
     private static partial void GstNavigationSendCommand(nint navigation, int command);
@@ -982,4 +1001,8 @@ public static unsafe partial class NavigationExtensions
     /// <summary>The <c>gst_navigation_query_set_angles</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_navigation_query_set_angles")]
     private static partial void GstNavigationQuerySetAngles(nint query, uint curAngle, uint nAngles);
+
+    /// <summary>The <c>gst_navigation_query_set_commandsv</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_navigation_query_set_commandsv")]
+    private static partial void GstNavigationQuerySetCommandsv(nint query, int nCmds, Gst.Video.NavigationCommand* cmds);
 }

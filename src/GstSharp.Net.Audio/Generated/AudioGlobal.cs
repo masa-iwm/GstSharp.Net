@@ -29,6 +29,114 @@ public static unsafe partial class AudioGlobal
         return nativeResult;
     }
 
+    /// <summary>
+    /// Convert the @channels present in @channel_mask to a @position array
+    /// (which should have at least @channels entries ensured by caller).
+    /// If @channel_mask is set to 0, it is considered as 'not present' for purpose
+    /// of conversion.
+    /// A partially valid @channel_mask with less bits set than the number
+    /// of channels is considered valid.
+    /// </summary>
+    /// <param name="channelMask">The <c>channelMask</c> argument.</param>
+    /// <param name="position">
+    /// The
+    ///   %GstAudioChannelPosition&lt;!-- --&gt;s
+    /// </param>
+    /// <returns>%TRUE if channel and channel mask are valid and could be converted</returns>
+    public static bool AudioChannelPositionsFromMask(ulong channelMask, System.Span<Gst.Audio.AudioChannelPosition> position)
+    {
+        fixed (Gst.Audio.AudioChannelPosition* positionPointer = position)
+        {
+            int nativeResult = GstAudioChannelPositionsFromMask((int)position.Length, channelMask, positionPointer);
+            return nativeResult != 0;
+        }
+    }
+
+    /// <summary>Convert the @position array of @channels channels to a bitmask.</summary>
+    /// <remarks>
+    /// <para>
+    /// If @force_order is %TRUE it additionally checks if the channels are
+    /// in the order required by GStreamer.
+    /// </para>
+    /// </remarks>
+    /// <param name="position">The %GstAudioChannelPositions</param>
+    /// <param name="forceOrder">The <c>forceOrder</c> argument.</param>
+    /// <param name="channelMask">The <c>channelMask</c> argument.</param>
+    /// <returns>%TRUE if the channel positions are valid and could be converted.</returns>
+    public static bool AudioChannelPositionsToMask(System.ReadOnlySpan<Gst.Audio.AudioChannelPosition> position, bool forceOrder, out ulong channelMask)
+    {
+        ulong channelMaskNative = default;
+        fixed (Gst.Audio.AudioChannelPosition* positionPointer = position)
+        {
+            int nativeResult = GstAudioChannelPositionsToMask(positionPointer, (int)position.Length, forceOrder ? 1 : 0, &channelMaskNative);
+            channelMask = channelMaskNative;
+            return nativeResult != 0;
+        }
+    }
+
+    /// <summary>
+    /// Converts @position to a human-readable string representation for
+    /// debugging purposes.
+    /// </summary>
+    /// <param name="position">
+    /// The %GstAudioChannelPositions
+    ///   to convert.
+    /// </param>
+    /// <returns>
+    /// a newly allocated string representing
+    /// @position
+    /// </returns>
+    public static string AudioChannelPositionsToString(System.ReadOnlySpan<Gst.Audio.AudioChannelPosition> position)
+    {
+        fixed (Gst.Audio.AudioChannelPosition* positionPointer = position)
+        {
+            nint nativeResult = GstAudioChannelPositionsToString(positionPointer, (int)position.Length);
+            return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
+                ?? throw new InvalidOperationException("gst_audio_channel_positions_to_string returned no value.");
+        }
+    }
+
+    /// <summary>
+    /// Reorders the channel positions in @position from any order to
+    /// the GStreamer channel order.
+    /// </summary>
+    /// <param name="position">
+    /// The channel positions to
+    ///   reorder to.
+    /// </param>
+    /// <returns>
+    /// %TRUE if the channel positions are valid and reordering
+    /// was successful.
+    /// </returns>
+    public static bool AudioChannelPositionsToValidOrder(System.Span<Gst.Audio.AudioChannelPosition> position)
+    {
+        fixed (Gst.Audio.AudioChannelPosition* positionPointer = position)
+        {
+            int nativeResult = GstAudioChannelPositionsToValidOrder(positionPointer, (int)position.Length);
+            return nativeResult != 0;
+        }
+    }
+
+    /// <summary>
+    /// Checks if @position contains valid channel positions for
+    /// @channels channels. If @force_order is %TRUE it additionally
+    /// checks if the channels are in the order required by GStreamer.
+    /// </summary>
+    /// <param name="position">
+    /// The %GstAudioChannelPositions
+    ///   to check.
+    /// </param>
+    /// <param name="forceOrder">The <c>forceOrder</c> argument.</param>
+    /// <returns>%TRUE if the channel positions are valid.</returns>
+    public static bool AudioCheckValidChannelPositions(System.ReadOnlySpan<Gst.Audio.AudioChannelPosition> position, bool forceOrder)
+    {
+        fixed (Gst.Audio.AudioChannelPosition* positionPointer = position)
+        {
+            int nativeResult = GstAudioCheckValidChannelPositions(positionPointer, (int)position.Length, forceOrder ? 1 : 0);
+            return nativeResult != 0;
+        }
+    }
+
     /// <summary>The <c>gst_audio_clipping_meta_api_get_type</c> function.</summary>
     /// <returns>The result of <c>gst_audio_clipping_meta_api_get_type</c>.</returns>
     public static Gst.GObject.GType AudioClippingMetaApiGetType()
@@ -51,6 +159,77 @@ public static unsafe partial class AudioGlobal
     {
         nuint nativeResult = GstAudioFormatInfoGetType();
         return new Gst.GObject.GType(nativeResult);
+    }
+
+    /// <summary>Return all the raw audio formats supported by GStreamer.</summary>
+    /// <returns>an array of #GstAudioFormat</returns>
+    public static Gst.Audio.AudioFormat[]? AudioFormatsRaw()
+    {
+        uint lenNative = default;
+        nint nativeResult = GstAudioFormatsRaw(&lenNative);
+        Gst.Audio.AudioFormat[]? result = null;
+        if (nativeResult != 0)
+        {
+            result = new Gst.Audio.AudioFormat[(int)lenNative];
+            new System.ReadOnlySpan<Gst.Audio.AudioFormat>((void*)nativeResult, (int)lenNative).CopyTo(result);
+        }
+        return result;
+    }
+
+    /// <summary>
+    /// Returns a reorder map for @from to @to that can be used in
+    /// custom channel reordering code, e.g. to convert from or to the
+    /// GStreamer channel order. @from and @to must contain the same
+    /// number of positions and the same positions, only in a
+    /// different order.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The resulting @reorder_map can be used for reordering by assigning
+    /// channel i of the input to channel reorder_map[i] of the output.
+    /// </para>
+    /// </remarks>
+    /// <param name="from">The channel positions to reorder from.</param>
+    /// <param name="to">The channel positions to reorder to.</param>
+    /// <param name="reorderMap">
+    /// Pointer to the reorder map.
+    /// Its number of elements is passed to the C function as the <c>channels</c> argument.
+    /// </param>
+    /// <returns>
+    /// %TRUE if the channel positions are valid and reordering
+    /// is possible.
+    /// </returns>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="from"/> does not have the same length as <paramref name="reorderMap"/>.
+    /// </exception>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="to"/> does not have the same length as <paramref name="reorderMap"/>.
+    /// </exception>
+    public static bool AudioGetChannelReorderMap(System.ReadOnlySpan<Gst.Audio.AudioChannelPosition> from, System.ReadOnlySpan<Gst.Audio.AudioChannelPosition> to, System.Span<int> reorderMap)
+    {
+        if (from.Length != reorderMap.Length)
+        {
+            throw new ArgumentException(
+                "from must have the same length as reorderMap: the call reads one length for both.",
+                nameof(from));
+        }
+        if (to.Length != reorderMap.Length)
+        {
+            throw new ArgumentException(
+                "to must have the same length as reorderMap: the call reads one length for both.",
+                nameof(to));
+        }
+        fixed (Gst.Audio.AudioChannelPosition* fromPointer = from)
+        {
+            fixed (Gst.Audio.AudioChannelPosition* toPointer = to)
+            {
+                fixed (int* reorderMapPointer = reorderMap)
+                {
+                    int nativeResult = GstAudioGetChannelReorderMap((int)reorderMap.Length, fromPointer, toPointer, reorderMapPointer);
+                    return nativeResult != 0;
+                }
+            }
+        }
     }
 
     /// <summary>
@@ -108,12 +287,80 @@ public static unsafe partial class AudioGlobal
         return new Gst.GObject.GType(nativeResult);
     }
 
+    /// <summary>
+    /// Return a generic raw audio caps for formats defined in @formats.
+    /// If @formats is %NULL returns a caps for all the supported raw audio formats,
+    /// see gst_audio_formats_raw().
+    /// </summary>
+    /// <param name="formats">an array of raw #GstAudioFormat, or %NULL</param>
+    /// <param name="layout">The <c>layout</c> argument.</param>
+    /// <returns>an audio @GstCaps</returns>
+    public static Gst.Caps AudioMakeRawCaps(System.ReadOnlySpan<Gst.Audio.AudioFormat> formats, Gst.Audio.AudioLayout layout)
+    {
+        fixed (Gst.Audio.AudioFormat* formatsPointer = formats)
+        {
+            nint nativeResult = GstAudioMakeRawCaps(formatsPointer, (uint)formats.Length, (int)layout);
+            return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+                ?? throw new InvalidOperationException("gst_audio_make_raw_caps returned no value.");
+        }
+    }
+
     /// <summary>The <c>gst_audio_meta_api_get_type</c> function.</summary>
     /// <returns>The result of <c>gst_audio_meta_api_get_type</c>.</returns>
     public static Gst.GObject.GType AudioMetaApiGetType()
     {
         nuint nativeResult = GstAudioMetaApiGetType();
         return new Gst.GObject.GType(nativeResult);
+    }
+
+    /// <summary>
+    /// Reorders @data from the channel positions @from to the channel
+    /// positions @to. @from and @to must contain the same number of
+    /// positions and the same positions, only in a different order.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This function internally calls gst_audio_get_channel_reorder_map() and
+    /// gst_audio_reorder_channels_with_reorder_map(). It is more efficient to call
+    /// gst_audio_get_channel_reorder_map() once to retrieve the reorder map and
+    /// then call gst_audio_reorder_channels_with_reorder_map() with the same
+    /// reorder map until the channel positions change.
+    /// </para>
+    /// <para>Note: this function assumes the audio data is in interleaved layout</para>
+    /// </remarks>
+    /// <param name="data">
+    /// The pointer to
+    ///   the memory.
+    /// </param>
+    /// <param name="format">The <c>format</c> argument.</param>
+    /// <param name="from">The channel positions in the buffer.</param>
+    /// <param name="to">
+    /// The channel positions to convert to.
+    /// Its number of elements is passed to the C function as the <c>channels</c> argument.
+    /// </param>
+    /// <returns>%TRUE if the reordering was possible.</returns>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="from"/> does not have the same length as <paramref name="to"/>.
+    /// </exception>
+    public static bool AudioReorderChannels(System.Span<byte> data, Gst.Audio.AudioFormat format, System.ReadOnlySpan<Gst.Audio.AudioChannelPosition> from, System.ReadOnlySpan<Gst.Audio.AudioChannelPosition> to)
+    {
+        if (from.Length != to.Length)
+        {
+            throw new ArgumentException(
+                "from must have the same length as to: the call reads one length for both.",
+                nameof(from));
+        }
+        fixed (byte* dataPointer = data)
+        {
+            fixed (Gst.Audio.AudioChannelPosition* fromPointer = from)
+            {
+                fixed (Gst.Audio.AudioChannelPosition* toPointer = to)
+                {
+                    int nativeResult = GstAudioReorderChannels(dataPointer, (nuint)data.Length, (int)format, (int)to.Length, fromPointer, toPointer);
+                    return nativeResult != 0;
+                }
+            }
+        }
     }
 
     /// <summary>Reorders @data with the given @reorder_map.</summary>
@@ -219,6 +466,27 @@ public static unsafe partial class AudioGlobal
         }
     }
 
+    /// <summary>
+    /// Find the #GstAudioDownmixMeta on @buffer for the given destination
+    /// channel positions.
+    /// </summary>
+    /// <param name="buffer">The <c>buffer</c> argument.</param>
+    /// <param name="toPosition">
+    /// the channel positions of
+    ///   the destination
+    /// </param>
+    /// <returns>the #GstAudioDownmixMeta on @buffer.</returns>
+    public static Gst.Audio.AudioDownmixMeta? BufferGetAudioDownmixMetaForChannels(Gst.Buffer buffer, System.ReadOnlySpan<Gst.Audio.AudioChannelPosition> toPosition)
+    {
+        ArgumentNullException.ThrowIfNull(buffer);
+        fixed (Gst.Audio.AudioChannelPosition* toPositionPointer = toPosition)
+        {
+            nint nativeResult = GstBufferGetAudioDownmixMetaForChannels(buffer.Handle, toPositionPointer, (int)toPosition.Length);
+            System.GC.KeepAlive(buffer);
+            return Gst.Audio.AudioDownmixMeta.FromNative(nativeResult);
+        }
+    }
+
     /// <summary>Find the #GstAudioLevelMeta on @buffer.</summary>
     /// <param name="buffer">The <c>buffer</c> argument.</param>
     /// <returns>
@@ -245,6 +513,26 @@ public static unsafe partial class AudioGlobal
     [LibraryImport("GstAudio", EntryPoint = "gst_audio_channel_get_fallback_mask")]
     private static partial ulong GstAudioChannelGetFallbackMask(int channels);
 
+    /// <summary>The <c>gst_audio_channel_positions_from_mask</c> entry point.</summary>
+    [LibraryImport("GstAudio", EntryPoint = "gst_audio_channel_positions_from_mask")]
+    private static partial int GstAudioChannelPositionsFromMask(int channels, ulong channelMask, Gst.Audio.AudioChannelPosition* position);
+
+    /// <summary>The <c>gst_audio_channel_positions_to_mask</c> entry point.</summary>
+    [LibraryImport("GstAudio", EntryPoint = "gst_audio_channel_positions_to_mask")]
+    private static partial int GstAudioChannelPositionsToMask(Gst.Audio.AudioChannelPosition* position, int channels, int forceOrder, ulong* channelMask);
+
+    /// <summary>The <c>gst_audio_channel_positions_to_string</c> entry point.</summary>
+    [LibraryImport("GstAudio", EntryPoint = "gst_audio_channel_positions_to_string")]
+    private static partial nint GstAudioChannelPositionsToString(Gst.Audio.AudioChannelPosition* position, int channels);
+
+    /// <summary>The <c>gst_audio_channel_positions_to_valid_order</c> entry point.</summary>
+    [LibraryImport("GstAudio", EntryPoint = "gst_audio_channel_positions_to_valid_order")]
+    private static partial int GstAudioChannelPositionsToValidOrder(Gst.Audio.AudioChannelPosition* position, int channels);
+
+    /// <summary>The <c>gst_audio_check_valid_channel_positions</c> entry point.</summary>
+    [LibraryImport("GstAudio", EntryPoint = "gst_audio_check_valid_channel_positions")]
+    private static partial int GstAudioCheckValidChannelPositions(Gst.Audio.AudioChannelPosition* position, int channels, int forceOrder);
+
     /// <summary>The <c>gst_audio_clipping_meta_api_get_type</c> entry point.</summary>
     [LibraryImport("GstAudio", EntryPoint = "gst_audio_clipping_meta_api_get_type")]
     private static partial nuint GstAudioClippingMetaApiGetType();
@@ -256,6 +544,14 @@ public static unsafe partial class AudioGlobal
     /// <summary>The <c>gst_audio_format_info_get_type</c> entry point.</summary>
     [LibraryImport("GstAudio", EntryPoint = "gst_audio_format_info_get_type")]
     private static partial nuint GstAudioFormatInfoGetType();
+
+    /// <summary>The <c>gst_audio_formats_raw</c> entry point.</summary>
+    [LibraryImport("GstAudio", EntryPoint = "gst_audio_formats_raw")]
+    private static partial nint GstAudioFormatsRaw(uint* len);
+
+    /// <summary>The <c>gst_audio_get_channel_reorder_map</c> entry point.</summary>
+    [LibraryImport("GstAudio", EntryPoint = "gst_audio_get_channel_reorder_map")]
+    private static partial int GstAudioGetChannelReorderMap(int channels, Gst.Audio.AudioChannelPosition* from, Gst.Audio.AudioChannelPosition* to, int* reorderMap);
 
     /// <summary>The <c>gst_audio_iec61937_frame_size</c> entry point.</summary>
     [LibraryImport("GstAudio", EntryPoint = "gst_audio_iec61937_frame_size")]
@@ -269,9 +565,17 @@ public static unsafe partial class AudioGlobal
     [LibraryImport("GstAudio", EntryPoint = "gst_audio_level_meta_api_get_type")]
     private static partial nuint GstAudioLevelMetaApiGetType();
 
+    /// <summary>The <c>gst_audio_make_raw_caps</c> entry point.</summary>
+    [LibraryImport("GstAudio", EntryPoint = "gst_audio_make_raw_caps")]
+    private static partial nint GstAudioMakeRawCaps(Gst.Audio.AudioFormat* formats, uint len, int layout);
+
     /// <summary>The <c>gst_audio_meta_api_get_type</c> entry point.</summary>
     [LibraryImport("GstAudio", EntryPoint = "gst_audio_meta_api_get_type")]
     private static partial nuint GstAudioMetaApiGetType();
+
+    /// <summary>The <c>gst_audio_reorder_channels</c> entry point.</summary>
+    [LibraryImport("GstAudio", EntryPoint = "gst_audio_reorder_channels")]
+    private static partial int GstAudioReorderChannels(byte* data, nuint size, int format, int channels, Gst.Audio.AudioChannelPosition* from, Gst.Audio.AudioChannelPosition* to);
 
     /// <summary>The <c>gst_audio_reorder_channels_with_reorder_map</c> entry point.</summary>
     [LibraryImport("GstAudio", EntryPoint = "gst_audio_reorder_channels_with_reorder_map")]
@@ -288,6 +592,10 @@ public static unsafe partial class AudioGlobal
     /// <summary>The <c>gst_buffer_add_dsd_plane_offset_meta</c> entry point.</summary>
     [LibraryImport("GstAudio", EntryPoint = "gst_buffer_add_dsd_plane_offset_meta")]
     private static partial nint GstBufferAddDsdPlaneOffsetMeta(nint buffer, int numChannels, nuint numBytesPerChannel, nuint* offsets);
+
+    /// <summary>The <c>gst_buffer_get_audio_downmix_meta_for_channels</c> entry point.</summary>
+    [LibraryImport("GstAudio", EntryPoint = "gst_buffer_get_audio_downmix_meta_for_channels")]
+    private static partial nint GstBufferGetAudioDownmixMetaForChannels(nint buffer, Gst.Audio.AudioChannelPosition* toPosition, int toChannels);
 
     /// <summary>The <c>gst_buffer_get_audio_level_meta</c> entry point.</summary>
     [LibraryImport("GstAudio", EntryPoint = "gst_buffer_get_audio_level_meta")]

@@ -437,7 +437,7 @@ disappears shows up here as an added line.
 
 - `gst_bus_add_watch`
 
-### UnsupportedSignature (121)
+### UnsupportedSignature (120)
 
 - `Gst.Bus:enable-async`
 - `gst_buffer_foreach_meta`
@@ -527,7 +527,6 @@ disappears shows up here as an added line.
 - `gst_plugin_list_free`
 - `gst_plugin_register_static`
 - `gst_poll_get_read_gpollfd`
-- `gst_query_set_formatsv`
 - `gst_query_take`
 - `gst_structure_filter_and_map_in_place`
 - `gst_structure_filter_and_map_in_place_id_str`
@@ -723,27 +722,14 @@ disappears shows up here as an added line.
 - `gst_dsd_info_from_caps`
 - `gst_dsd_info_init`
 
-### UnsupportedSignature (19)
+### UnsupportedSignature (6)
 
 - `GstAudio.AudioAggregator:output-buffer-duration-fraction`
-- `gst_audio_buffer_reorder_channels`
-- `gst_audio_channel_positions_from_mask`
-- `gst_audio_channel_positions_to_mask`
-- `gst_audio_channel_positions_to_string`
-- `gst_audio_channel_positions_to_valid_order`
-- `gst_audio_check_valid_channel_positions`
 - `gst_audio_encoder_set_headers`
-- `gst_audio_formats_raw`
-- `gst_audio_get_channel_reorder_map`
-- `gst_audio_info_set_format`
-- `gst_audio_make_raw_caps`
-- `gst_audio_reorder_channels`
 - `gst_audio_ring_buffer_set_callback_full`
 - `gst_audio_ring_buffer_set_channel_positions`
 - `gst_buffer_add_audio_meta`
-- `gst_buffer_get_audio_downmix_meta_for_channels`
 - `gst_dsd_convert`
-- `gst_dsd_info_set_format`
 
 ## GstBase
 
@@ -824,11 +810,6 @@ disappears shows up here as an added line.
 - `gst_net_control_message_meta_get_info`
 - `gst_net_time_packet_receive`
 
-### UnsupportedSignature (2)
-
-- `gst_net_time_packet_new`
-- `gst_net_time_packet_serialize`
-
 ## GstPbutils
 
 ### LifetimePrimitive (1)
@@ -847,13 +828,9 @@ disappears shows up here as an added line.
 
 - `GstPbutils.EncodingProfile:element-properties`
 
-### UnsupportedSignature (10)
+### UnsupportedSignature (6)
 
 - `GstPbutils.Discoverer::discovered`
-- `gst_codec_utils_opus_create_caps`
-- `gst_codec_utils_opus_create_header`
-- `gst_codec_utils_opus_parse_caps`
-- `gst_codec_utils_opus_parse_header`
 - `gst_discoverer_info_from_variant`
 - `gst_discoverer_info_to_variant`
 - `gst_discoverer_stream_info_list_free`
@@ -1077,24 +1054,13 @@ disappears shows up here as an added line.
 - `gst_video_info_from_caps`
 - `gst_video_info_init`
 
-### UnsupportedSignature (19)
+### UnsupportedSignature (8)
 
 - `gst_buffer_add_video_gl_texture_upload_meta`
-- `gst_buffer_add_video_meta_full`
-- `gst_buffer_add_video_sei_user_data_unregistered_meta`
-- `gst_navigation_query_set_commandsv`
-- `gst_video_affine_transformation_meta_apply_matrix`
 - `gst_video_codec_frame_set_user_data`
 - `gst_video_color_primaries_get_info`
-- `gst_video_color_range_offsets`
 - `gst_video_convert_sample_async`
 - `gst_video_encoder_set_headers`
-- `gst_video_formats_any`
-- `gst_video_formats_raw`
-- `gst_video_make_raw_caps`
-- `gst_video_make_raw_caps_with_features`
-- `gst_video_meta_get_plane_height`
-- `gst_video_meta_get_plane_size`
 - `gst_video_overlay_install_properties`
 - `gst_video_vbi_encoder_write_line`
 - `gst_video_vbi_parser_add_line`

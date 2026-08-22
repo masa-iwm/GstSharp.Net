@@ -148,7 +148,15 @@ internal sealed class ClassEmitter
     internal GeneratedFile? EmitGlobal(ModuleInfo module, GirNamespace ns)
     {
         string globalName = module.GlobalTypeName;
-        PlanningContext context = new(module, ns, TypeKind.Unknown, OwnerType: null);
+
+        // The holder declares no instance, but it is a type all the same, so
+        // it is where the inline storage of a caller allocated array goes.
+        PlanningContext context = new(
+            module,
+            ns,
+            TypeKind.Unknown,
+            OwnerType: null,
+            StorageOwner: module.ClrNamespace + "." + globalName);
         GirRecord holder = new() { Name = globalName, Functions = ns.Functions };
         TypeSurface surface = _surfaces.Build(
             holder,
@@ -191,8 +199,14 @@ internal sealed class ClassEmitter
         string holderName = typeName + EnumHolderSuffix;
 
         // The functions belong to no instance, so the holder is only a
-        // namespace for them: nothing of the enumeration is in scope.
-        PlanningContext context = new(module, ns, TypeKind.Unknown, OwnerType: null);
+        // namespace for them: nothing of the enumeration is in scope. It still
+        // carries the inline storage of a caller allocated array.
+        PlanningContext context = new(
+            module,
+            ns,
+            TypeKind.Unknown,
+            OwnerType: null,
+            StorageOwner: module.ClrNamespace + "." + holderName);
         GirRecord holder = new() { Name = holderName, Functions = enumeration.Functions };
         TypeSurface surface = _surfaces.Build(
             holder,

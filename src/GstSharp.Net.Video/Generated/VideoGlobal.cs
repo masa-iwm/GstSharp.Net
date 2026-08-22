@@ -171,6 +171,55 @@ public static unsafe partial class VideoGlobal
             ?? throw new InvalidOperationException("gst_buffer_add_video_meta returned no value.");
     }
 
+    /// <summary>Attaches GstVideoMeta metadata to @buffer with the given parameters.</summary>
+    /// <param name="buffer">The <c>buffer</c> argument.</param>
+    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <param name="format">The <c>format</c> argument.</param>
+    /// <param name="width">The <c>width</c> argument.</param>
+    /// <param name="height">The <c>height</c> argument.</param>
+    /// <param name="nPlanes">The <c>nPlanes</c> argument.</param>
+    /// <param name="offset">
+    /// offset of each plane
+    /// The C declaration sizes this buffer at 4 elements; pass exactly 4.
+    /// </param>
+    /// <param name="stride">
+    /// stride of each plane
+    /// The C declaration sizes this buffer at 4 elements; pass exactly 4.
+    /// </param>
+    /// <returns>the #GstVideoMeta on @buffer.</returns>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="offset"/> does not have exactly 4 elements.
+    /// </exception>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="stride"/> does not have exactly 4 elements.
+    /// </exception>
+    public static Gst.Video.VideoMeta BufferAddVideoMetaFull(Gst.Buffer buffer, Gst.Video.VideoFrameFlags flags, Gst.Video.VideoFormat format, uint width, uint height, uint nPlanes, System.ReadOnlySpan<nuint> offset, System.ReadOnlySpan<int> stride)
+    {
+        ArgumentNullException.ThrowIfNull(buffer);
+        if (offset.Length != 4)
+        {
+            throw new ArgumentException(
+                "offset must have exactly 4 elements.",
+                nameof(offset));
+        }
+        if (stride.Length != 4)
+        {
+            throw new ArgumentException(
+                "stride must have exactly 4 elements.",
+                nameof(stride));
+        }
+        fixed (nuint* offsetPointer = offset)
+        {
+            fixed (int* stridePointer = stride)
+            {
+                nint nativeResult = GstBufferAddVideoMetaFull(buffer.Handle, (int)flags, (int)format, width, height, nPlanes, offsetPointer, stridePointer);
+                System.GC.KeepAlive(buffer);
+                return Gst.Video.VideoMeta.FromNative(nativeResult)
+                    ?? throw new InvalidOperationException("gst_buffer_add_video_meta_full returned no value.");
+            }
+        }
+    }
+
     /// <summary>
     /// Sets an overlay composition on a buffer. The buffer will obtain its own
     /// reference to the composition, meaning this function does not take ownership
@@ -230,6 +279,41 @@ public static unsafe partial class VideoGlobal
         System.GC.KeepAlive(buffer);
         return Gst.Video.VideoRegionOfInterestMeta.FromNative(nativeResult)
             ?? throw new InvalidOperationException("gst_buffer_add_video_region_of_interest_meta_id returned no value.");
+    }
+
+    /// <summary>
+    /// Attaches #GstVideoSEIUserDataUnregisteredMeta metadata to @buffer with the given
+    /// parameters.
+    /// </summary>
+    /// <param name="buffer">The <c>buffer</c> argument.</param>
+    /// <param name="uuid">
+    /// User Data Unregistered UUID
+    /// The C declaration sizes this buffer at 16 elements; pass exactly 16.
+    /// </param>
+    /// <param name="data">SEI User Data Unregistered buffer</param>
+    /// <returns>the #GstVideoSEIUserDataUnregisteredMeta on @buffer.</returns>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="uuid"/> does not have exactly 16 elements.
+    /// </exception>
+    public static Gst.Video.VideoSEIUserDataUnregisteredMeta BufferAddVideoSeiUserDataUnregisteredMeta(Gst.Buffer buffer, System.Span<byte> uuid, System.Span<byte> data)
+    {
+        ArgumentNullException.ThrowIfNull(buffer);
+        if (uuid.Length != 16)
+        {
+            throw new ArgumentException(
+                "uuid must have exactly 16 elements.",
+                nameof(uuid));
+        }
+        fixed (byte* uuidPointer = uuid)
+        {
+            fixed (byte* dataPointer = data)
+            {
+                nint nativeResult = GstBufferAddVideoSeiUserDataUnregisteredMeta(buffer.Handle, uuidPointer, dataPointer, (nuint)data.Length);
+                System.GC.KeepAlive(buffer);
+                return Gst.Video.VideoSEIUserDataUnregisteredMeta.FromNative(nativeResult)
+                    ?? throw new InvalidOperationException("gst_buffer_add_video_sei_user_data_unregistered_meta returned no value.");
+            }
+        }
     }
 
     /// <summary>
@@ -861,6 +945,41 @@ public static unsafe partial class VideoGlobal
         return nativeResult != 0;
     }
 
+    /// <summary>
+    /// Return all the raw video formats supported by GStreamer including
+    /// special opaque formats such as %GST_VIDEO_FORMAT_DMA_DRM for which
+    /// no software conversion exists. This should be use for passthrough
+    /// template cpas.
+    /// </summary>
+    /// <returns>an array of #GstVideoFormat</returns>
+    public static Gst.Video.VideoFormat[]? VideoFormatsAny()
+    {
+        uint lenNative = default;
+        nint nativeResult = GstVideoFormatsAny(&lenNative);
+        Gst.Video.VideoFormat[]? result = null;
+        if (nativeResult != 0)
+        {
+            result = new Gst.Video.VideoFormat[(int)lenNative];
+            new System.ReadOnlySpan<Gst.Video.VideoFormat>((void*)nativeResult, (int)lenNative).CopyTo(result);
+        }
+        return result;
+    }
+
+    /// <summary>Return all the raw video formats supported by GStreamer.</summary>
+    /// <returns>an array of #GstVideoFormat</returns>
+    public static Gst.Video.VideoFormat[]? VideoFormatsRaw()
+    {
+        uint lenNative = default;
+        nint nativeResult = GstVideoFormatsRaw(&lenNative);
+        Gst.Video.VideoFormat[]? result = null;
+        if (nativeResult != 0)
+        {
+            result = new Gst.Video.VideoFormat[(int)lenNative];
+            new System.ReadOnlySpan<Gst.Video.VideoFormat>((void*)nativeResult, (int)lenNative).CopyTo(result);
+        }
+        return result;
+    }
+
     /// <summary>The <c>gst_video_gl_texture_upload_meta_api_get_type</c> function.</summary>
     /// <returns>The result of <c>gst_video_gl_texture_upload_meta_api_get_type</c>.</returns>
     public static Gst.GObject.GType VideoGlTextureUploadMetaApiGetType()
@@ -929,6 +1048,65 @@ public static unsafe partial class VideoGlobal
         int nativeResult = GstVideoIsDmaDrmCaps(caps.Handle);
         System.GC.KeepAlive(caps);
         return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Return a generic raw video caps for formats defined in @formats.
+    /// If @formats is %NULL returns a caps for all the supported raw video formats,
+    /// see gst_video_formats_raw().
+    /// </summary>
+    /// <param name="formats">an array of raw #GstVideoFormat, or %NULL</param>
+    /// <returns>a video @GstCaps</returns>
+    public static Gst.Caps VideoMakeRawCaps(System.ReadOnlySpan<Gst.Video.VideoFormat> formats)
+    {
+        fixed (Gst.Video.VideoFormat* formatsPointer = formats)
+        {
+            nint nativeResult = GstVideoMakeRawCaps(formatsPointer, (uint)formats.Length);
+            return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+                ?? throw new InvalidOperationException("gst_video_make_raw_caps returned no value.");
+        }
+    }
+
+    /// <summary>
+    /// Return a generic raw video caps for formats defined in @formats with features
+    /// @features.
+    /// If @formats is %NULL returns a caps for all the supported video formats,
+    /// see gst_video_formats_raw().
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The <c>features</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a copy of the value and the wrapper is disposed afterwards, which
+    /// leaves the caller with exactly what the C call leaves it with. A boxed
+    /// value has no reference count to raise, so the copy is what a reference is
+    /// there. <see cref="Gst.GObject.Boxed.Dispose()"/> is idempotent, so a
+    /// <c>using</c> declaration around the argument stays correct.
+    /// </para>
+    /// </remarks>
+    /// <param name="formats">an array of raw #GstVideoFormat, or %NULL</param>
+    /// <param name="features">
+    /// The <c>features</c> argument.
+    /// The call consumes it: <paramref name="features"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// It may be <see langword="null"/>, which is the absence of a payload and leaves
+    /// nothing to consume.
+    /// </param>
+    /// <returns>a video @GstCaps</returns>
+    /// <exception cref="ObjectDisposedException">
+    /// <paramref name="features"/> was disposed.
+    /// </exception>
+    public static Gst.Caps VideoMakeRawCapsWithFeatures(System.ReadOnlySpan<Gst.Video.VideoFormat> formats, Gst.CapsFeatures? features)
+    {
+        nint featuresNative = features is null ? 0 : features.Handle;
+        nuint featuresType = features is null ? 0 : features.BoxedType.Value;
+        nint featuresOwned = features is null ? 0 : Gst.Interop.GObjectNative.BoxedCopy(featuresType, featuresNative);
+        fixed (Gst.Video.VideoFormat* formatsPointer = formats)
+        {
+            nint nativeResult = GstVideoMakeRawCapsWithFeatures(formatsPointer, (uint)formats.Length, featuresOwned);
+            features?.Dispose();
+            return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+                ?? throw new InvalidOperationException("gst_video_make_raw_caps_with_features returned no value.");
+        }
     }
 
     /// <summary>The <c>gst_video_meta_api_get_type</c> function.</summary>
@@ -1135,6 +1313,10 @@ public static unsafe partial class VideoGlobal
     [LibraryImport("GstVideo", EntryPoint = "gst_buffer_add_video_meta")]
     private static partial nint GstBufferAddVideoMeta(nint buffer, int flags, int format, uint width, uint height);
 
+    /// <summary>The <c>gst_buffer_add_video_meta_full</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_buffer_add_video_meta_full")]
+    private static partial nint GstBufferAddVideoMetaFull(nint buffer, int flags, int format, uint width, uint height, uint nPlanes, nuint* offset, int* stride);
+
     /// <summary>The <c>gst_buffer_add_video_overlay_composition_meta</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_buffer_add_video_overlay_composition_meta")]
     private static partial nint GstBufferAddVideoOverlayCompositionMeta(nint buf, nint comp);
@@ -1146,6 +1328,10 @@ public static unsafe partial class VideoGlobal
     /// <summary>The <c>gst_buffer_add_video_region_of_interest_meta_id</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_buffer_add_video_region_of_interest_meta_id")]
     private static partial nint GstBufferAddVideoRegionOfInterestMetaId(nint buffer, uint roiType, uint x, uint y, uint w, uint h);
+
+    /// <summary>The <c>gst_buffer_add_video_sei_user_data_unregistered_meta</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_buffer_add_video_sei_user_data_unregistered_meta")]
+    private static partial nint GstBufferAddVideoSeiUserDataUnregisteredMeta(nint buffer, byte* uuid, byte* data, nuint size);
 
     /// <summary>The <c>gst_buffer_add_video_time_code_meta</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_buffer_add_video_time_code_meta")]
@@ -1291,6 +1477,14 @@ public static unsafe partial class VideoGlobal
     [LibraryImport("GstVideo", EntryPoint = "gst_video_event_parse_upstream_force_key_unit")]
     private static partial int GstVideoEventParseUpstreamForceKeyUnit(nint @event, ulong* runningTime, int* allHeaders, uint* count);
 
+    /// <summary>The <c>gst_video_formats_any</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_video_formats_any")]
+    private static partial nint GstVideoFormatsAny(uint* len);
+
+    /// <summary>The <c>gst_video_formats_raw</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_video_formats_raw")]
+    private static partial nint GstVideoFormatsRaw(uint* len);
+
     /// <summary>The <c>gst_video_gl_texture_upload_meta_api_get_type</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_gl_texture_upload_meta_api_get_type")]
     private static partial nuint GstVideoGlTextureUploadMetaApiGetType();
@@ -1306,6 +1500,14 @@ public static unsafe partial class VideoGlobal
     /// <summary>The <c>gst_video_is_dma_drm_caps</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_is_dma_drm_caps")]
     private static partial int GstVideoIsDmaDrmCaps(nint caps);
+
+    /// <summary>The <c>gst_video_make_raw_caps</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_video_make_raw_caps")]
+    private static partial nint GstVideoMakeRawCaps(Gst.Video.VideoFormat* formats, uint len);
+
+    /// <summary>The <c>gst_video_make_raw_caps_with_features</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_video_make_raw_caps_with_features")]
+    private static partial nint GstVideoMakeRawCapsWithFeatures(Gst.Video.VideoFormat* formats, uint len, nint features);
 
     /// <summary>The <c>gst_video_meta_api_get_type</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_meta_api_get_type")]
