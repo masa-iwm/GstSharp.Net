@@ -171,17 +171,17 @@ public sealed class ClassEmitterTests
     }
 
     [Theory]
-    [InlineData("Gst", 35, 51, 5, 17, 18, 1360, 29, 23, 52)]
+    [InlineData("Gst", 35, 51, 5, 17, 18, 1362, 29, 23, 52)]
     [InlineData("GstBase", 11, 4, 0, 5, 0, 174, 31, 2, 4)]
     [InlineData("GstApp", 2, 2, 0, 8, 0, 62, 36, 8, 0)]
     [InlineData("GstAudio", 14, 17, 1, 2, 2, 199, 32, 0, 38)]
-    [InlineData("GstVideo", 12, 42, 5, 0, 9, 362, 14, 2, 80)]
-    [InlineData("GstPbutils", 14, 1, 0, 0, 1, 172, 5, 3, 0)]
+    [InlineData("GstVideo", 12, 42, 5, 0, 9, 370, 14, 2, 80)]
+    [InlineData("GstPbutils", 14, 1, 0, 0, 1, 172, 5, 4, 0)]
     [InlineData("GstSdp", 1, 21, 0, 0, 0, 162, 0, 0, 25)]
     [InlineData("GstWebRTC", 9, 4, 0, 1, 2, 37, 38, 6, 6)]
     [InlineData("GstNet", 5, 3, 0, 1, 0, 22, 17, 0, 2)]
     [InlineData("GstRtsp", 1, 10, 1, 1, 2, 113, 0, 1, 14)]
-    [InlineData("GES", 56, 2, 2, 0, 3, 367, 77, 29, 7)]
+    [InlineData("GES", 56, 2, 2, 0, 3, 367, 77, 31, 7)]
     public void TheEmissionCensusIsStable(
         string module,
         int classes,
@@ -212,17 +212,17 @@ public sealed class ClassEmitterTests
     }
 
     [Theory]
-    [InlineData("Gst", 1, 93, 53, 119, 149, 10)]
+    [InlineData("Gst", 1, 93, 53, 119, 147, 10)]
     [InlineData("GstBase", 0, 11, 0, 20, 7, 0)]
     [InlineData("GstApp", 1, 0, 0, 2, 2, 1)]
     [InlineData("GstAudio", 0, 22, 0, 8, 19, 0)]
-    [InlineData("GstVideo", 0, 96, 1, 6, 27, 0)]
-    [InlineData("GstPbutils", 0, 1, 0, 0, 13, 0)]
+    [InlineData("GstVideo", 0, 96, 1, 6, 19, 0)]
+    [InlineData("GstPbutils", 0, 1, 0, 0, 12, 0)]
     [InlineData("GstSdp", 0, 8, 0, 0, 8, 0)]
     [InlineData("GstWebRTC", 0, 2, 0, 0, 6, 0)]
     [InlineData("GstNet", 0, 3, 0, 0, 3, 0)]
     [InlineData("GstRtsp", 0, 13, 0, 0, 14, 0)]
-    [InlineData("GES", 6, 3, 4, 10, 39, 2)]
+    [InlineData("GES", 6, 3, 4, 10, 37, 2)]
     public void TheSkipCensusIsStable(
         string module,
         int shadowed,
@@ -267,6 +267,42 @@ public sealed class ClassEmitterTests
         Assert.Contains(
             "/// The structure has to be writable. Like the C API, the call raises a warning",
             Source("Structure.cs"),
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AStolenReferenceClaimIsCorrectedInTheRemarks()
+    {
+        // gst_video_time_code_new and gst_video_time_code_init both carry the
+        // C sentence "@latest_daiy_jam reference is stolen from caller.", which
+        // the generator copies verbatim onto the member. It is false at 1.28.6
+        // - gst_video_time_code_init takes a reference of its own - so the two
+        // members would otherwise ship a sentence that contradicts the
+        // consuming contract of the binding. This pins the correction: nothing
+        // else fails when the entry point list in
+        // CallableRenderer.StolenReferenceTargets is dropped.
+        const string correction =
+            """
+                /// <para>
+                /// The documentation above says that the reference of the daily jam is stolen
+                /// from the caller. It is not: the C function takes a reference of its own, so
+                /// the caller keeps the value it passes and disposes it as usual.
+                /// </para>
+            """;
+
+        string source = SourceOf("GstSharp.Net.Video/Generated/VideoTimeCode.cs");
+
+        // Once on the constructor and once on the initializer, and nowhere
+        // else: the four members that take a dt rather than a daily jam say
+        // nothing about a stolen reference, because their gir does not either.
+        Assert.Equal(2, source.Split(correction).Length - 1);
+        Assert.Contains(
+            "public static Gst.Video.VideoTimeCode New(uint fpsN, uint fpsD, Gst.GLib.DateTime? latestDailyJam,",
+            source,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "public void Init(uint fpsN, uint fpsD, Gst.GLib.DateTime? latestDailyJam,",
+            source,
             StringComparison.Ordinal);
     }
 

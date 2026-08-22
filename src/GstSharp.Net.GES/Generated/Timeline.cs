@@ -957,6 +957,87 @@ public unsafe partial class Timeline : Gst.Bin, GES.IExtractable, GES.IMetaConta
         }
     }
 
+    /// <summary>The arguments of the <c>select-element-track</c> signal of <c>GESTimeline</c>.</summary>
+    public sealed class SelectElementTrackSignalArgs : System.EventArgs
+    {
+        /// <summary>Initializes a new instance of the <see cref="SelectElementTrackSignalArgs"/> class.</summary>
+        /// <param name="clip">The clip that @track_element is being added to</param>
+        /// <param name="trackElement">The element being added</param>
+        internal SelectElementTrackSignalArgs(GES.Clip clip, GES.TrackElement trackElement)
+        {
+            Clip = clip;
+            TrackElement = trackElement;
+        }
+
+        /// <summary>The clip that @track_element is being added to</summary>
+        public GES.Clip Clip { get; }
+
+        /// <summary>The element being added</summary>
+        public GES.TrackElement TrackElement { get; }
+    }
+
+    /// <summary>The handler of the <c>select-element-track</c> signal of <c>GESTimeline</c>.</summary>
+    /// <remarks>
+    /// The value the handler returns is handed to native code with a reference
+    /// minted for it, so the wrapper the handler holds stays usable and is still
+    /// the caller's to manage. Returning <see langword="null"/> answers no value,
+    /// and what the emission makes of that is the contract of the signal, stated
+    /// in its own returns documentation: it may go on to another handler, to the
+    /// class handler, or read the empty answer as the result.
+    /// </remarks>
+    /// <param name="sender">The instance that emitted the signal.</param>
+    /// <param name="args">The arguments of the signal.</param>
+    /// <returns>
+    /// A track to put @track_element into, or %NULL if
+    /// it should be discarded.
+    /// </returns>
+    public delegate GES.Track? SelectElementTrackHandler(object? sender, GES.Timeline.SelectElementTrackSignalArgs args);
+
+    /// <summary>
+    /// Simplified version of #GESTimeline::select-tracks-for-object which only
+    /// allows @track_element to be added to a single #GESTrack.
+    /// </summary>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
+    public event GES.Timeline.SelectElementTrackHandler SelectElementTrack
+    {
+        add => GES.SignalConnections.Add(this, "select-element-track", (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, nint, nint>)&SelectElementTrackTrampoline, value);
+        remove => GES.SignalConnections.Remove(this, "select-element-track", value);
+    }
+
+    /// <summary>The native handler of the <c>select-element-track</c> signal of <c>GESTimeline</c>.</summary>
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
+    private static nint SelectElementTrackTrampoline(nint instance, nint clip, nint trackElement, nint userData)
+    {
+        try
+        {
+            if (Gst.Interop.CallbackHandle.GetState<GES.Timeline.SelectElementTrackHandler>(userData) is not { } handler)
+            {
+                return default;
+            }
+
+            GES.Clip clipValue = Gst.GObject.Object.FromNative<GES.Clip>(clip, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("The select-element-track signal of GESTimeline passed no clip.");
+            GES.TrackElement trackElementValue = Gst.GObject.Object.FromNative<GES.TrackElement>(trackElement, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("The select-element-track signal of GESTimeline passed no track_element.");
+            GES.Track? result = handler(
+                Gst.GObject.Object.FromNative(instance, Gst.Interop.Transfer.None),
+                new GES.Timeline.SelectElementTrackSignalArgs(clipValue, trackElementValue));
+            nint owned = result is null ? 0 : Gst.Interop.GObjectNative.ObjectRef(result.Handle);
+            System.GC.KeepAlive(result);
+            return owned;
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+            return default;
+        }
+    }
+
     /// <summary>The arguments of the <c>snapping-ended</c> signal of <c>GESTimeline</c>.</summary>
     public sealed class SnappingEndedSignalArgs : System.EventArgs
     {

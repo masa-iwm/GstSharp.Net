@@ -229,4 +229,30 @@ internal static unsafe partial class TestNatives
     /// </remarks>
     [LibraryImport("Gst", EntryPoint = "gst_caps_get_type")]
     internal static partial nuint CapsGetType();
+
+    /// <summary>The <c>GType</c> of a <c>GstDiscovererInfo</c>.</summary>
+    /// <returns><c>GST_TYPE_DISCOVERER_INFO</c>.</returns>
+    /// <remarks>
+    /// A <c>GstDiscovererInfo</c> has no public constructor: the library builds
+    /// one per discovery and hands it out. A test of the
+    /// <c>load-serialized-info</c> signal has to answer one, and the way the
+    /// library itself makes an empty one is <c>g_object_new</c> on this type.
+    /// </remarks>
+    [LibraryImport("GstPbutils", EntryPoint = "gst_discoverer_info_get_type")]
+    internal static partial nuint DiscovererInfoGetType();
+
+    /// <summary>Creates an instance of a <c>GType</c> with no properties set.</summary>
+    /// <param name="objectType">The type to instantiate.</param>
+    /// <param name="count">The number of properties, which is zero here.</param>
+    /// <param name="names">The property names, or <c>0</c>.</param>
+    /// <param name="values">The property values, or <c>0</c>.</param>
+    /// <returns>The new instance, owned by the caller.</returns>
+    /// <remarks>
+    /// The variadic <c>g_object_new</c> has no safe managed declaration, and
+    /// this sibling — GLib 2.54, below the floor of the binding — takes the
+    /// same arguments as an array. The binding does not expose either: building
+    /// an arbitrary GObject by type is what the subclassing API is for.
+    /// </remarks>
+    [LibraryImport("GObject", EntryPoint = "g_object_new_with_properties")]
+    internal static partial nint ObjectNewWithProperties(nuint objectType, uint count, nint names, nint values);
 }

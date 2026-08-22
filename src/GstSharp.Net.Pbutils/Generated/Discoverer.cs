@@ -259,6 +259,81 @@ public unsafe partial class Discoverer : Gst.GObject.Object
         }
     }
 
+    /// <summary>The arguments of the <c>load-serialized-info</c> signal of <c>GstDiscoverer</c>.</summary>
+    public sealed class LoadSerializedInfoSignalArgs : System.EventArgs
+    {
+        /// <summary>Initializes a new instance of the <see cref="LoadSerializedInfoSignalArgs"/> class.</summary>
+        /// <param name="uri">THe URI to load the serialized info for</param>
+        internal LoadSerializedInfoSignalArgs(string uri)
+        {
+            Uri = uri;
+        }
+
+        /// <summary>THe URI to load the serialized info for</summary>
+        public string Uri { get; }
+    }
+
+    /// <summary>The handler of the <c>load-serialized-info</c> signal of <c>GstDiscoverer</c>.</summary>
+    /// <remarks>
+    /// The value the handler returns is handed to native code with a reference
+    /// minted for it, so the wrapper the handler holds stays usable and is still
+    /// the caller's to manage. Returning <see langword="null"/> answers no value,
+    /// and what the emission makes of that is the contract of the signal, stated
+    /// in its own returns documentation: it may go on to another handler, to the
+    /// class handler, or read the empty answer as the result.
+    /// </remarks>
+    /// <param name="sender">The instance that emitted the signal.</param>
+    /// <param name="args">The arguments of the signal.</param>
+    /// <returns>
+    /// The #GstDiscovererInfo representing
+    /// @uri, or %NULL if no information
+    /// </returns>
+    public delegate Gst.Pbutils.DiscovererInfo? LoadSerializedInfoHandler(object? sender, Gst.Pbutils.Discoverer.LoadSerializedInfoSignalArgs args);
+
+    /// <summary>
+    /// Retrieves information about a URI from and external source of information,
+    /// like a cache file. This is used by the discoverer to speed up the
+    /// discovery.
+    /// </summary>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
+    public event Gst.Pbutils.Discoverer.LoadSerializedInfoHandler LoadSerializedInfo
+    {
+        add => Gst.Pbutils.SignalConnections.Add(this, "load-serialized-info", (nint)(delegate* unmanaged[Cdecl]<nint, byte*, nint, nint>)&LoadSerializedInfoTrampoline, value);
+        remove => Gst.Pbutils.SignalConnections.Remove(this, "load-serialized-info", value);
+    }
+
+    /// <summary>The native handler of the <c>load-serialized-info</c> signal of <c>GstDiscoverer</c>.</summary>
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
+    private static nint LoadSerializedInfoTrampoline(nint instance, byte* uri, nint userData)
+    {
+        try
+        {
+            if (Gst.Interop.CallbackHandle.GetState<Gst.Pbutils.Discoverer.LoadSerializedInfoHandler>(userData) is not { } handler)
+            {
+                return default;
+            }
+
+            string uriValue = Gst.Interop.GMarshal.PtrToStringUtf8((nint)uri)
+                ?? throw new InvalidOperationException("The load-serialized-info signal of GstDiscoverer passed no uri.");
+            Gst.Pbutils.DiscovererInfo? result = handler(
+                Gst.GObject.Object.FromNative(instance, Gst.Interop.Transfer.None),
+                new Gst.Pbutils.Discoverer.LoadSerializedInfoSignalArgs(uriValue));
+            nint owned = result is null ? 0 : Gst.Interop.GObjectNative.ObjectRef(result.Handle);
+            System.GC.KeepAlive(result);
+            return owned;
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+            return default;
+        }
+    }
+
     /// <summary>The arguments of the <c>source-setup</c> signal of <c>GstDiscoverer</c>.</summary>
     public sealed class SourceSetupSignalArgs : System.EventArgs
     {

@@ -594,6 +594,23 @@ internal static class CallableRenderer
     };
 
     /// <summary>
+    /// The entry points whose gir documentation says that the reference of the
+    /// daily jam is stolen from the caller while the C code takes a reference
+    /// of its own. The generator copies gir documentation verbatim, so the two
+    /// members would otherwise ship a sentence that contradicts the contract of
+    /// the binding: the argument is a borrow, and its wrapper stays the
+    /// caller's to dispose. Verified against <c>gstvideotimecode.c</c> at
+    /// 1.28.6, where <c>gst_video_time_code_init</c> calls
+    /// <c>g_date_time_ref</c>; the gir sentence is on the upstream report
+    /// backlog.
+    /// </summary>
+    private static readonly HashSet<string> StolenReferenceTargets = new(StringComparer.Ordinal)
+    {
+        "gst_video_time_code_new",
+        "gst_video_time_code_init",
+    };
+
+    /// <summary>
     /// The entry points that take a writable pointer to the structure they are
     /// called on and do not write through it. The C signature is what the
     /// <c>readonly</c> modifier follows, so these stay writable members; what
@@ -707,7 +724,8 @@ internal static class CallableRenderer
     /// <summary>
     /// Returns every generator authored remarks paragraph of a member: the
     /// consumption contract of its consumed arguments, the writability
-    /// requirement of the entry points that have one, the behaviour note of the
+    /// requirement of the entry points that have one, the correction of the gir
+    /// sentence that claims a stolen reference, the behaviour note of the
     /// members of a fundamental value container, and what a member of a value
     /// projected structure does to the instance it is called on.
     /// </summary>
@@ -726,6 +744,15 @@ internal static class CallableRenderer
             lines.Add("<para>");
             lines.Add(sentence + " Like the C API, the call raises a warning");
             lines.Add("and writes nothing otherwise.");
+            lines.Add("</para>");
+        }
+
+        if (StolenReferenceTargets.Contains(plan.EntryPoint))
+        {
+            lines.Add("<para>");
+            lines.Add("The documentation above says that the reference of the daily jam is stolen");
+            lines.Add("from the caller. It is not: the C function takes a reference of its own, so");
+            lines.Add("the caller keeps the value it passes and disposes it as usual.");
             lines.Add("</para>");
         }
 

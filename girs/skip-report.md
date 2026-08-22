@@ -56,17 +56,15 @@ disappears shows up here as an added line.
 - `GES.Group:start`
 - `GES.UriClip:supported-formats`
 
-### UnsupportedSignature (39)
+### UnsupportedSignature (37)
 
 - `GES.DiscovererManager::discovered`
-- `GES.DiscovererManager::load-serialized-info`
 - `GES.Layer::active-changed`
 - `GES.MetaContainer::notify-meta`
 - `GES.Project::error-loading`
 - `GES.Project::error-loading-asset`
 - `GES.Project::missing-uri`
 - `GES.Timeline::group-removed`
-- `GES.Timeline::select-element-track`
 - `GES.Timeline::select-tracks-for-object`
 - `ges_asset_extract`
 - `ges_asset_get_error`
@@ -440,7 +438,7 @@ disappears shows up here as an added line.
 
 - `gst_bus_add_watch`
 
-### UnsupportedSignature (149)
+### UnsupportedSignature (147)
 
 - `Gst.Bus:enable-async`
 - `gst_buffer_foreach_meta`
@@ -457,8 +455,6 @@ disappears shows up here as an added line.
 - `gst_child_proxy_lookup`
 - `gst_context_replace`
 - `gst_control_binding_get_g_value_array`
-- `gst_date_time_new_from_g_date_time`
-- `gst_date_time_to_g_date_time`
 - `gst_debug_get_all_categories`
 - `gst_debug_remove_log_function`
 - `gst_debug_ring_buffer_logger_get_logs`
@@ -879,10 +875,9 @@ disappears shows up here as an added line.
 
 - `GstPbutils.EncodingProfile:element-properties`
 
-### UnsupportedSignature (13)
+### UnsupportedSignature (12)
 
 - `GstPbutils.Discoverer::discovered`
-- `GstPbutils.Discoverer::load-serialized-info`
 - `gst_codec_utils_opus_create_caps`
 - `gst_codec_utils_opus_create_header`
 - `gst_codec_utils_opus_parse_caps`
@@ -1115,12 +1110,11 @@ disappears shows up here as an added line.
 - `gst_video_info_from_caps`
 - `gst_video_info_init`
 
-### UnsupportedSignature (27)
+### UnsupportedSignature (19)
 
 - `gst_buffer_add_video_gl_texture_upload_meta`
 - `gst_buffer_add_video_meta_full`
 - `gst_buffer_add_video_sei_user_data_unregistered_meta`
-- `gst_buffer_add_video_time_code_meta_full`
 - `gst_navigation_query_set_commandsv`
 - `gst_video_affine_transformation_meta_apply_matrix`
 - `gst_video_codec_frame_set_user_data`
@@ -1135,13 +1129,6 @@ disappears shows up here as an added line.
 - `gst_video_meta_get_plane_height`
 - `gst_video_meta_get_plane_size`
 - `gst_video_overlay_install_properties`
-- `gst_video_time_code_init`
-- `gst_video_time_code_init_from_date_time`
-- `gst_video_time_code_init_from_date_time_full`
-- `gst_video_time_code_new`
-- `gst_video_time_code_new_from_date_time`
-- `gst_video_time_code_new_from_date_time_full`
-- `gst_video_time_code_to_date_time`
 - `gst_video_vbi_encoder_write_line`
 - `gst_video_vbi_parser_add_line`
 

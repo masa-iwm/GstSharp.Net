@@ -90,6 +90,39 @@ public sealed unsafe partial class VideoTimeCode : Gst.GObject.Boxed
     internal static VideoTimeCode? FromNative(nint handle, Gst.Interop.Transfer transfer) =>
         handle == 0 ? null : new(handle, transfer);
 
+    /// <summary>
+    /// @field_count is 0 for progressive, 1 or 2 for interlaced.
+    /// @latest_daiy_jam reference is stolen from caller.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The documentation above says that the reference of the daily jam is stolen
+    /// from the caller. It is not: the C function takes a reference of its own, so
+    /// the caller keeps the value it passes and disposes it as usual.
+    /// </para>
+    /// </remarks>
+    /// <param name="fpsN">The <c>fpsN</c> argument.</param>
+    /// <param name="fpsD">The <c>fpsD</c> argument.</param>
+    /// <param name="latestDailyJam">The <c>latestDailyJam</c> argument.</param>
+    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <param name="hours">The <c>hours</c> argument.</param>
+    /// <param name="minutes">The <c>minutes</c> argument.</param>
+    /// <param name="seconds">The <c>seconds</c> argument.</param>
+    /// <param name="frames">The <c>frames</c> argument.</param>
+    /// <param name="fieldCount">The <c>fieldCount</c> argument.</param>
+    /// <returns>
+    /// a new #GstVideoTimeCode with the given values.
+    /// The values are not checked for being in a valid range. To see if your
+    /// timecode actually has valid content, use gst_video_time_code_is_valid().
+    /// </returns>
+    public static Gst.Video.VideoTimeCode New(uint fpsN, uint fpsD, Gst.GLib.DateTime? latestDailyJam, Gst.Video.VideoTimeCodeFlags flags, uint hours, uint minutes, uint seconds, uint frames, uint fieldCount)
+    {
+        nint nativeResult = GstVideoTimeCodeNew(fpsN, fpsD, latestDailyJam is null ? 0 : latestDailyJam.Handle, (int)flags, hours, minutes, seconds, frames, fieldCount);
+        System.GC.KeepAlive(latestDailyJam);
+        return Gst.Video.VideoTimeCode.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_video_time_code_new returned no value.");
+    }
+
     /// <summary>The <c>gst_video_time_code_new_empty</c> function.</summary>
     /// <returns>a new empty, invalid #GstVideoTimeCode</returns>
     public static Gst.Video.VideoTimeCode NewEmpty()
@@ -97,6 +130,53 @@ public sealed unsafe partial class VideoTimeCode : Gst.GObject.Boxed
         nint nativeResult = GstVideoTimeCodeNewEmpty();
         return Gst.Video.VideoTimeCode.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_video_time_code_new_empty returned no value.");
+    }
+
+    /// <summary>
+    /// The resulting config-&gt;latest_daily_jam is set to
+    /// midnight, and timecode is set to the given time.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This might return a completely invalid timecode, use
+    /// gst_video_time_code_new_from_date_time_full() to ensure
+    /// that you would get %NULL instead in that case.
+    /// </para>
+    /// </remarks>
+    /// <param name="fpsN">The <c>fpsN</c> argument.</param>
+    /// <param name="fpsD">The <c>fpsD</c> argument.</param>
+    /// <param name="dt">The <c>dt</c> argument.</param>
+    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <param name="fieldCount">The <c>fieldCount</c> argument.</param>
+    /// <returns>the #GstVideoTimeCode representation of @dt.</returns>
+    public static Gst.Video.VideoTimeCode NewFromDateTime(uint fpsN, uint fpsD, Gst.GLib.DateTime dt, Gst.Video.VideoTimeCodeFlags flags, uint fieldCount)
+    {
+        ArgumentNullException.ThrowIfNull(dt);
+        nint nativeResult = GstVideoTimeCodeNewFromDateTime(fpsN, fpsD, dt.Handle, (int)flags, fieldCount);
+        System.GC.KeepAlive(dt);
+        return Gst.Video.VideoTimeCode.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_video_time_code_new_from_date_time returned no value.");
+    }
+
+    /// <summary>
+    /// The resulting config-&gt;latest_daily_jam is set to
+    /// midnight, and timecode is set to the given time.
+    /// </summary>
+    /// <param name="fpsN">The <c>fpsN</c> argument.</param>
+    /// <param name="fpsD">The <c>fpsD</c> argument.</param>
+    /// <param name="dt">The <c>dt</c> argument.</param>
+    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <param name="fieldCount">The <c>fieldCount</c> argument.</param>
+    /// <returns>
+    /// the #GstVideoTimeCode representation of @dt, or %NULL if
+    ///   no valid timecode could be created.
+    /// </returns>
+    public static Gst.Video.VideoTimeCode? NewFromDateTimeFull(uint fpsN, uint fpsD, Gst.GLib.DateTime dt, Gst.Video.VideoTimeCodeFlags flags, uint fieldCount)
+    {
+        ArgumentNullException.ThrowIfNull(dt);
+        nint nativeResult = GstVideoTimeCodeNewFromDateTimeFull(fpsN, fpsD, dt.Handle, (int)flags, fieldCount);
+        System.GC.KeepAlive(dt);
+        return Gst.Video.VideoTimeCode.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
 
     /// <summary>The <c>gst_video_time_code_new_from_string</c> function.</summary>
@@ -200,6 +280,80 @@ public sealed unsafe partial class VideoTimeCode : Gst.GObject.Boxed
         System.GC.KeepAlive(this);
     }
 
+    /// <summary>
+    /// @field_count is 0 for progressive, 1 or 2 for interlaced.
+    /// @latest_daiy_jam reference is stolen from caller.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Initializes @tc with the given values.
+    /// The values are not checked for being in a valid range. To see if your
+    /// timecode actually has valid content, use gst_video_time_code_is_valid().
+    /// </para>
+    /// <para>
+    /// The documentation above says that the reference of the daily jam is stolen
+    /// from the caller. It is not: the C function takes a reference of its own, so
+    /// the caller keeps the value it passes and disposes it as usual.
+    /// </para>
+    /// </remarks>
+    /// <param name="fpsN">The <c>fpsN</c> argument.</param>
+    /// <param name="fpsD">The <c>fpsD</c> argument.</param>
+    /// <param name="latestDailyJam">The <c>latestDailyJam</c> argument.</param>
+    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <param name="hours">The <c>hours</c> argument.</param>
+    /// <param name="minutes">The <c>minutes</c> argument.</param>
+    /// <param name="seconds">The <c>seconds</c> argument.</param>
+    /// <param name="frames">The <c>frames</c> argument.</param>
+    /// <param name="fieldCount">The <c>fieldCount</c> argument.</param>
+    public void Init(uint fpsN, uint fpsD, Gst.GLib.DateTime? latestDailyJam, Gst.Video.VideoTimeCodeFlags flags, uint hours, uint minutes, uint seconds, uint frames, uint fieldCount)
+    {
+        GstVideoTimeCodeInit(Handle, fpsN, fpsD, latestDailyJam is null ? 0 : latestDailyJam.Handle, (int)flags, hours, minutes, seconds, frames, fieldCount);
+        System.GC.KeepAlive(this);
+        System.GC.KeepAlive(latestDailyJam);
+    }
+
+    /// <summary>
+    /// The resulting config-&gt;latest_daily_jam is set to midnight, and timecode is
+    /// set to the given time.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Will assert on invalid parameters, use gst_video_time_code_init_from_date_time_full()
+    /// for being able to handle invalid parameters.
+    /// </para>
+    /// </remarks>
+    /// <param name="fpsN">The <c>fpsN</c> argument.</param>
+    /// <param name="fpsD">The <c>fpsD</c> argument.</param>
+    /// <param name="dt">The <c>dt</c> argument.</param>
+    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <param name="fieldCount">The <c>fieldCount</c> argument.</param>
+    public void InitFromDateTime(uint fpsN, uint fpsD, Gst.GLib.DateTime dt, Gst.Video.VideoTimeCodeFlags flags, uint fieldCount)
+    {
+        ArgumentNullException.ThrowIfNull(dt);
+        GstVideoTimeCodeInitFromDateTime(Handle, fpsN, fpsD, dt.Handle, (int)flags, fieldCount);
+        System.GC.KeepAlive(this);
+        System.GC.KeepAlive(dt);
+    }
+
+    /// <summary>
+    /// The resulting config-&gt;latest_daily_jam is set to
+    /// midnight, and timecode is set to the given time.
+    /// </summary>
+    /// <param name="fpsN">The <c>fpsN</c> argument.</param>
+    /// <param name="fpsD">The <c>fpsD</c> argument.</param>
+    /// <param name="dt">The <c>dt</c> argument.</param>
+    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <param name="fieldCount">The <c>fieldCount</c> argument.</param>
+    /// <returns>%TRUE if @tc could be correctly initialized to a valid timecode</returns>
+    public bool InitFromDateTimeFull(uint fpsN, uint fpsD, Gst.GLib.DateTime dt, Gst.Video.VideoTimeCodeFlags flags, uint fieldCount)
+    {
+        ArgumentNullException.ThrowIfNull(dt);
+        int nativeResult = GstVideoTimeCodeInitFromDateTimeFull(Handle, fpsN, fpsD, dt.Handle, (int)flags, fieldCount);
+        System.GC.KeepAlive(this);
+        System.GC.KeepAlive(dt);
+        return nativeResult != 0;
+    }
+
     /// <summary>The <c>gst_video_time_code_is_valid</c> function.</summary>
     /// <returns>
     /// whether @tc is a valid timecode (supported frame rate,
@@ -221,6 +375,18 @@ public sealed unsafe partial class VideoTimeCode : Gst.GObject.Boxed
         return nativeResult;
     }
 
+    /// <summary>The @tc.config-&gt;latest_daily_jam is required to be non-NULL.</summary>
+    /// <returns>
+    /// the #GDateTime representation of @tc or %NULL if @tc
+    ///   has no daily jam.
+    /// </returns>
+    public Gst.GLib.DateTime? ToDateTime()
+    {
+        nint nativeResult = GstVideoTimeCodeToDateTime(Handle);
+        System.GC.KeepAlive(this);
+        return Gst.GLib.DateTime.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+    }
+
     /// <summary>The <c>gst_video_time_code_to_string</c> function.</summary>
     /// <returns>
     /// the SMPTE ST 2059-1:2015 string representation of @tc. That will
@@ -235,9 +401,21 @@ public sealed unsafe partial class VideoTimeCode : Gst.GObject.Boxed
             ?? throw new InvalidOperationException("gst_video_time_code_to_string returned no value.");
     }
 
+    /// <summary>The <c>gst_video_time_code_new</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_video_time_code_new")]
+    private static partial nint GstVideoTimeCodeNew(uint fpsN, uint fpsD, nint latestDailyJam, int flags, uint hours, uint minutes, uint seconds, uint frames, uint fieldCount);
+
     /// <summary>The <c>gst_video_time_code_new_empty</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_time_code_new_empty")]
     private static partial nint GstVideoTimeCodeNewEmpty();
+
+    /// <summary>The <c>gst_video_time_code_new_from_date_time</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_video_time_code_new_from_date_time")]
+    private static partial nint GstVideoTimeCodeNewFromDateTime(uint fpsN, uint fpsD, nint dt, int flags, uint fieldCount);
+
+    /// <summary>The <c>gst_video_time_code_new_from_date_time_full</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_video_time_code_new_from_date_time_full")]
+    private static partial nint GstVideoTimeCodeNewFromDateTimeFull(uint fpsN, uint fpsD, nint dt, int flags, uint fieldCount);
 
     /// <summary>The <c>gst_video_time_code_new_from_string</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_time_code_new_from_string")]
@@ -271,6 +449,18 @@ public sealed unsafe partial class VideoTimeCode : Gst.GObject.Boxed
     [LibraryImport("GstVideo", EntryPoint = "gst_video_time_code_increment_frame")]
     private static partial void GstVideoTimeCodeIncrementFrame(nint tc);
 
+    /// <summary>The <c>gst_video_time_code_init</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_video_time_code_init")]
+    private static partial void GstVideoTimeCodeInit(nint tc, uint fpsN, uint fpsD, nint latestDailyJam, int flags, uint hours, uint minutes, uint seconds, uint frames, uint fieldCount);
+
+    /// <summary>The <c>gst_video_time_code_init_from_date_time</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_video_time_code_init_from_date_time")]
+    private static partial void GstVideoTimeCodeInitFromDateTime(nint tc, uint fpsN, uint fpsD, nint dt, int flags, uint fieldCount);
+
+    /// <summary>The <c>gst_video_time_code_init_from_date_time_full</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_video_time_code_init_from_date_time_full")]
+    private static partial int GstVideoTimeCodeInitFromDateTimeFull(nint tc, uint fpsN, uint fpsD, nint dt, int flags, uint fieldCount);
+
     /// <summary>The <c>gst_video_time_code_is_valid</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_time_code_is_valid")]
     private static partial int GstVideoTimeCodeIsValid(nint tc);
@@ -278,6 +468,10 @@ public sealed unsafe partial class VideoTimeCode : Gst.GObject.Boxed
     /// <summary>The <c>gst_video_time_code_nsec_since_daily_jam</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_time_code_nsec_since_daily_jam")]
     private static partial ulong GstVideoTimeCodeNsecSinceDailyJam(nint tc);
+
+    /// <summary>The <c>gst_video_time_code_to_date_time</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_video_time_code_to_date_time")]
+    private static partial nint GstVideoTimeCodeToDateTime(nint tc);
 
     /// <summary>The <c>gst_video_time_code_to_string</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_time_code_to_string")]

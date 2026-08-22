@@ -162,9 +162,10 @@ internal sealed class MarshalPlanner
     /// An entry carries the flavour of its wrapper, because the flavour decides
     /// the wrap expression: a <see cref="HandleFlavor.GObject"/> goes through
     /// the interning <c>Gst.GObject.Object.FromNative&lt;T&gt;</c>, a
-    /// <see cref="HandleFlavor.Wrapper"/> — the boxed
-    /// <c>GObject.ValueArray</c> — through the typed <c>FromNative</c> of its
-    /// own class, exactly like a generated boxed type.
+    /// <see cref="HandleFlavor.Wrapper"/> — a boxed value of the hand written
+    /// runtime, such as <c>GObject.ValueArray</c> or <c>GLib.DateTime</c> —
+    /// through the typed <c>FromNative</c> of its own class, exactly like a
+    /// generated boxed type.
     /// </para>
     /// </remarks>
     private static readonly Dictionary<string, RuntimeHandle> RuntimeTypes = new(StringComparer.Ordinal)
@@ -172,6 +173,7 @@ internal sealed class MarshalPlanner
         ["GObject.Object"] = new("Gst.GObject.Object", HandleFlavor.GObject),
         ["GObject.InitiallyUnowned"] = new("Gst.GObject.InitiallyUnowned", HandleFlavor.GObject),
         ["GObject.ValueArray"] = new("Gst.GObject.ValueArray", HandleFlavor.Wrapper),
+        ["GLib.DateTime"] = new("Gst.GLib.DateTime", HandleFlavor.Wrapper),
         ["Gio.Cancellable"] = new("Gst.Gio.Cancellable", HandleFlavor.GObject),
         ["Gio.Socket"] = new("Gst.Gio.Socket", HandleFlavor.GObject),
         ["Gio.SocketAddress"] = new("Gst.Gio.SocketAddress", HandleFlavor.GObject),
@@ -2405,11 +2407,29 @@ internal sealed class MarshalPlanner
     }
 
     /// <summary>
-    /// Plans the value a signal handler returns. Only the values that are
-    /// blittable on their own are supported: handing a handle back would make
-    /// the handler transfer ownership into native code, which needs the
-    /// accumulator of the signal to be known.
+    /// Plans the value a signal handler returns: a value that is blittable on
+    /// its own, or a GObject the handler transfers ownership of.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// A handle return is supported when the handler transfers ownership of a
+    /// GObject, because that is the shape whose emitter takes the reference:
+    /// the generic marshal hands what the handler returned to
+    /// <c>g_value_take_object</c>, so the trampoline mints a reference for the
+    /// value it passes out and the wrapper the handler holds stays the
+    /// handler's own. A transfer-none handle is excluded for the same reason
+    /// read the other way round — the marshal would take a reference nobody
+    /// minted — and a mini object or a boxed value is excluded because it needs
+    /// a different minting function than <c>g_object_ref</c>.
+    /// </para>
+    /// <para>
+    /// What the accumulator of a signal may do is therefore bounded rather than
+    /// unknown: it sees an owned reference and either keeps it or releases it.
+    /// Every other non blittable shape stays rejected, notably a container the
+    /// handler would have to allocate — the accumulator of such a signal
+    /// decides how the container is freed, and no annotation states it.
+    /// </para>
+    /// </remarks>
     /// <param name="signal">The signal declaration.</param>
     /// <param name="context">The module that is being emitted.</param>
     /// <returns>The plan, or <see langword="null"/> when the value is not supported.</returns>
@@ -2435,11 +2455,24 @@ internal sealed class MarshalPlanner
             ArgumentDirection.In,
             value.Transfer,
             value.IsNullable,
-            context);
+            context,
+            isReturn: true);
 
-        if (scalar is null
-            || scalar.Kind is not (ArgumentKind.Value or ArgumentKind.Boolean or ArgumentKind.Enumeration
-                or ArgumentKind.Wrapper or ArgumentKind.Pointer))
+        if (scalar is null)
+        {
+            return null;
+        }
+
+        bool supported = scalar.Kind switch
+        {
+            ArgumentKind.Value or ArgumentKind.Boolean or ArgumentKind.Enumeration
+                or ArgumentKind.Wrapper or ArgumentKind.Pointer => true,
+            ArgumentKind.Handle => value.Transfer == GirTransfer.Full
+                && scalar.Flavor == HandleFlavor.GObject,
+            _ => false,
+        };
+
+        if (!supported)
         {
             return null;
         }
@@ -2449,6 +2482,9 @@ internal sealed class MarshalPlanner
             Kind = scalar.Kind,
             PublicType = scalar.PublicType,
             RawType = scalar.RawType,
+            Transfer = scalar.Transfer,
+            IsNullable = scalar.IsNullable,
+            Flavor = scalar.Flavor,
             Doc = value.Doc,
         };
     }

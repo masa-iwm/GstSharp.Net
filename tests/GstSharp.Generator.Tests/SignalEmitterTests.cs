@@ -493,12 +493,12 @@ public sealed class SignalEmitterTests
     [InlineData("GstApp", 8)]
     [InlineData("GstAudio", 0)]
     [InlineData("GstVideo", 2)]
-    [InlineData("GstPbutils", 3)]
+    [InlineData("GstPbutils", 4)]
     [InlineData("GstSdp", 0)]
     [InlineData("GstWebRTC", 6)]
     [InlineData("GstNet", 0)]
     [InlineData("GstRtsp", 1)]
-    [InlineData("GES", 29)]
+    [InlineData("GES", 31)]
     public void TheSignalCensusIsStable(string module, int signals)
     {
         // The two signals whose C# name a method of the same class had taken
@@ -530,18 +530,19 @@ public sealed class SignalEmitterTests
             removers += file.Content.Split("    public static void Remove").Length - 1;
         }
 
-        // Seventy four signals are emitted over the eleven modules. Seventy are
-        // events of a class; the remaining four belong to a gir interface and
-        // are a pair of extension methods instead. The editing services are
-        // twenty nine of them, and all twenty nine are events: the one signal
-        // of a GES interface, GESMetaContainer::notify-meta, carries a GValue
-        // and is not bound. The adder count carries one match that is not a
-        // signal pair at all: Gst.ITagSetter's AddTagValue extension, a GValue
-        // method whose name the pattern cannot tell from a subscription adder.
-        Assert.Equal(70, events);
+        // Seventy seven signals are emitted over the eleven modules. Seventy
+        // three are events of a class; the remaining four belong to a gir
+        // interface and are a pair of extension methods instead. The editing
+        // services are thirty one of them, and all thirty one are events: the
+        // one signal of a GES interface, GESMetaContainer::notify-meta,
+        // carries a GValue and is not bound. The adder count carries one match
+        // that is not a signal pair at all: Gst.ITagSetter's AddTagValue
+        // extension, a GValue method whose name the pattern cannot tell from a
+        // subscription adder.
+        Assert.Equal(73, events);
         Assert.Equal(5, adders);
         Assert.Equal(4, removers);
-        Assert.Equal(74, trampolines);
+        Assert.Equal(77, trampolines);
 
         string[] withSignals =
         [

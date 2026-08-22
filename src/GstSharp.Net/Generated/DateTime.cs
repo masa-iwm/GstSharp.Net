@@ -74,6 +74,41 @@ public sealed unsafe partial class DateTime : Gst.GObject.Boxed
         return Gst.DateTime.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
 
+    /// <summary>Creates a new #GstDateTime from a #GDateTime object.</summary>
+    /// <remarks>
+    /// <para>
+    /// The <c>dt</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a copy of the value and the wrapper is disposed afterwards, which
+    /// leaves the caller with exactly what the C call leaves it with. A boxed
+    /// value has no reference count to raise, so the copy is what a reference is
+    /// there. <see cref="Gst.GObject.Boxed.Dispose()"/> is idempotent, so a
+    /// <c>using</c> declaration around the argument stays correct.
+    /// </para>
+    /// </remarks>
+    /// <param name="dt">
+    /// The <c>dt</c> argument.
+    /// The call consumes it: <paramref name="dt"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// It may be <see langword="null"/>, which is the absence of a payload and leaves
+    /// nothing to consume.
+    /// </param>
+    /// <returns>
+    /// a newly created #GstDateTime,
+    /// or %NULL if @dt is %NULL.
+    /// </returns>
+    /// <exception cref="ObjectDisposedException">
+    /// <paramref name="dt"/> was disposed.
+    /// </exception>
+    public static Gst.DateTime? NewFromGDateTime(Gst.GLib.DateTime? dt)
+    {
+        nint dtNative = dt is null ? 0 : dt.Handle;
+        nuint dtType = dt is null ? 0 : dt.BoxedType.Value;
+        nint dtOwned = dt is null ? 0 : Gst.Interop.GObjectNative.BoxedCopy(dtType, dtNative);
+        nint nativeResult = GstDateTimeNewFromGDateTime(dtOwned);
+        dt?.Dispose();
+        return Gst.DateTime.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+    }
+
     /// <summary>
     /// Tries to parse common variants of ISO-8601 datetime strings into a
     /// #GstDateTime. Possible input formats are (for example):
@@ -435,6 +470,19 @@ public sealed unsafe partial class DateTime : Gst.GObject.Boxed
         return nativeResult != 0;
     }
 
+    /// <summary>Creates a new #GDateTime from a fully defined #GstDateTime object.</summary>
+    /// <returns>
+    /// a newly created #GDateTime, or
+    /// %NULL on error or if @datetime does not have a year, month, day, hour,
+    /// minute and second.
+    /// </returns>
+    public Gst.GLib.DateTime? ToGDateTime()
+    {
+        nint nativeResult = GstDateTimeToGDateTime(Handle);
+        System.GC.KeepAlive(this);
+        return Gst.GLib.DateTime.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+    }
+
     /// <summary>
     /// Create a minimal string compatible with ISO-8601. Possible output formats
     /// are (for example): `2012`, `2012-06`, `2012-06-23`, `2012-06-23T23:30Z`,
@@ -455,6 +503,10 @@ public sealed unsafe partial class DateTime : Gst.GObject.Boxed
     /// <summary>The <c>gst_date_time_new</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_date_time_new")]
     private static partial nint GstDateTimeNew(float tzoffset, int year, int month, int day, int hour, int minute, double seconds);
+
+    /// <summary>The <c>gst_date_time_new_from_g_date_time</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_date_time_new_from_g_date_time")]
+    private static partial nint GstDateTimeNewFromGDateTime(nint dt);
 
     /// <summary>The <c>gst_date_time_new_from_iso8601_string</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_date_time_new_from_iso8601_string")]
@@ -551,6 +603,10 @@ public sealed unsafe partial class DateTime : Gst.GObject.Boxed
     /// <summary>The <c>gst_date_time_has_year</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_date_time_has_year")]
     private static partial int GstDateTimeHasYear(nint datetime);
+
+    /// <summary>The <c>gst_date_time_to_g_date_time</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_date_time_to_g_date_time")]
+    private static partial nint GstDateTimeToGDateTime(nint datetime);
 
     /// <summary>The <c>gst_date_time_to_iso8601_string</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_date_time_to_iso8601_string")]

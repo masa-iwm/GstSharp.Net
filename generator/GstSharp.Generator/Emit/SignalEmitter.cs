@@ -351,6 +351,18 @@ internal static class SignalEmitter
     private static void WriteHandlerDelegate(CodeWriter writer, SignalPlan plan, string cType)
     {
         writer.WriteLine("/// <summary>The handler of " + Describe(plan, cType) + ".</summary>");
+        if (plan.Return.Kind == ArgumentKind.Handle)
+        {
+            writer.WriteLine("/// <remarks>");
+            writer.WriteLine("/// The value the handler returns is handed to native code with a reference");
+            writer.WriteLine("/// minted for it, so the wrapper the handler holds stays usable and is still");
+            writer.WriteLine("/// the caller's to manage. Returning <see langword=\"null\"/> answers no value,");
+            writer.WriteLine("/// and what the emission makes of that is the contract of the signal, stated");
+            writer.WriteLine("/// in its own returns documentation: it may go on to another handler, to the");
+            writer.WriteLine("/// class handler, or read the empty answer as the result.");
+            writer.WriteLine("/// </remarks>");
+        }
+
         writer.WriteLine("/// <param name=\"sender\">The instance that emitted the signal.</param>");
         writer.WriteLine("/// <param name=\"args\">The arguments of the signal.</param>");
         XmlDocWriter.WriteReturns(writer, plan.Return.Doc, "The result the emission collects.");
@@ -526,7 +538,21 @@ internal static class SignalEmitter
             writer.WriteLine(plan.Return.PublicType + " result = handler(");
             writer.WriteLine("    " + sender + ",");
             writer.WriteLine("    " + arguments + ");");
-            writer.WriteLine("return " + ToNative(plan.Return, "result") + ";");
+            if (plan.Return.Kind == ArgumentKind.Handle)
+            {
+                // The reference is minted off the handle of a wrapper that has
+                // no use left after the read, so the collector may run its
+                // finalizer, and the release the finalizer queues may be
+                // drained on another thread, in the window before the reference
+                // exists. The wrapper is kept alive across that window.
+                writer.WriteLine("nint owned = " + ToNative(plan.Return, "result") + ";");
+                writer.WriteLine("System.GC.KeepAlive(result);");
+                writer.WriteLine("return owned;");
+            }
+            else
+            {
+                writer.WriteLine("return " + ToNative(plan.Return, "result") + ";");
+            }
         }
 
         writer.CloseBlock();
@@ -629,6 +655,8 @@ internal static class SignalEmitter
     {
         ArgumentKind.Boolean => source + " ? 1 : 0",
         ArgumentKind.Enumeration => "(" + value.RawType + ")" + source,
+        ArgumentKind.Handle => source + " is null ? 0 : Gst.Interop.GObjectNative.ObjectRef("
+            + source + ".Handle)",
         ArgumentKind.Wrapper => source + "." + (value.PublicType switch
         {
             "Gst.ClockTime" => "Nanoseconds",

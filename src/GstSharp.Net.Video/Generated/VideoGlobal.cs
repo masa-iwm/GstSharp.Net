@@ -252,6 +252,33 @@ public static unsafe partial class VideoGlobal
         return Gst.Video.VideoTimeCodeMeta.FromNative(nativeResult);
     }
 
+    /// <summary>
+    /// Attaches #GstVideoTimeCodeMeta metadata to @buffer with the given
+    /// parameters.
+    /// </summary>
+    /// <param name="buffer">The <c>buffer</c> argument.</param>
+    /// <param name="fpsN">The <c>fpsN</c> argument.</param>
+    /// <param name="fpsD">The <c>fpsD</c> argument.</param>
+    /// <param name="latestDailyJam">The <c>latestDailyJam</c> argument.</param>
+    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <param name="hours">The <c>hours</c> argument.</param>
+    /// <param name="minutes">The <c>minutes</c> argument.</param>
+    /// <param name="seconds">The <c>seconds</c> argument.</param>
+    /// <param name="frames">The <c>frames</c> argument.</param>
+    /// <param name="fieldCount">The <c>fieldCount</c> argument.</param>
+    /// <returns>
+    /// the #GstVideoTimeCodeMeta on @buffer, or
+    /// (since 1.16) %NULL if the timecode was invalid.
+    /// </returns>
+    public static Gst.Video.VideoTimeCodeMeta? BufferAddVideoTimeCodeMetaFull(Gst.Buffer buffer, uint fpsN, uint fpsD, Gst.GLib.DateTime? latestDailyJam, Gst.Video.VideoTimeCodeFlags flags, uint hours, uint minutes, uint seconds, uint frames, uint fieldCount)
+    {
+        ArgumentNullException.ThrowIfNull(buffer);
+        nint nativeResult = GstBufferAddVideoTimeCodeMetaFull(buffer.Handle, fpsN, fpsD, latestDailyJam is null ? 0 : latestDailyJam.Handle, (int)flags, hours, minutes, seconds, frames, fieldCount);
+        System.GC.KeepAlive(buffer);
+        System.GC.KeepAlive(latestDailyJam);
+        return Gst.Video.VideoTimeCodeMeta.FromNative(nativeResult);
+    }
+
     /// <summary>Find the #GstVideoMeta on @buffer with the lowest @id.</summary>
     /// <remarks>
     /// <para>
@@ -1123,6 +1150,10 @@ public static unsafe partial class VideoGlobal
     /// <summary>The <c>gst_buffer_add_video_time_code_meta</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_buffer_add_video_time_code_meta")]
     private static partial nint GstBufferAddVideoTimeCodeMeta(nint buffer, nint tc);
+
+    /// <summary>The <c>gst_buffer_add_video_time_code_meta_full</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_buffer_add_video_time_code_meta_full")]
+    private static partial nint GstBufferAddVideoTimeCodeMetaFull(nint buffer, uint fpsN, uint fpsD, nint latestDailyJam, int flags, uint hours, uint minutes, uint seconds, uint frames, uint fieldCount);
 
     /// <summary>The <c>gst_buffer_get_video_meta</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_buffer_get_video_meta")]
