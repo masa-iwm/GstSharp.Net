@@ -228,7 +228,7 @@ internal sealed class RecordEmitter
             return null;
         }
 
-        TypeSurface surface = BuildSurface(module, ns, record, kind, typeName, handWritten, accessors);
+        TypeSurface surface = BuildSurface(module, ns, record, kind, typeName, layout, handWritten, accessors);
 
         CodeWriter writer = new();
         WriteHeader(
@@ -247,7 +247,7 @@ internal sealed class RecordEmitter
             switch (kind)
             {
                 case TypeKind.PlainStruct:
-                    WriteStruct(writer, record, typeName, layout!);
+                    WriteStruct(writer, module, record, typeName, layout!, surface);
                     break;
 
                 case TypeKind.MiniObject:
@@ -557,12 +557,19 @@ internal sealed class RecordEmitter
         writer.CloseBlock();
     }
 
-    private void WriteStruct(CodeWriter writer, GirRecord record, string typeName, IReadOnlyList<LayoutField> layout)
+    private void WriteStruct(
+        CodeWriter writer,
+        ModuleInfo module,
+        GirRecord record,
+        string typeName,
+        IReadOnlyList<LayoutField> layout,
+        TypeSurface surface)
     {
         XmlDocWriter.Write(writer, record.Doc, FallbackSummary(record, "structure"), record);
         XmlDocWriter.WriteObsolete(writer, record);
         writer.WriteLine("[StructLayout(LayoutKind.Sequential)]");
-        writer.WriteLine("public partial struct " + typeName);
+        writer.WriteLine(
+            "public " + (surface.NeedsUnsafe ? "unsafe " : string.Empty) + "partial struct " + typeName);
         writer.OpenBlock();
 
         bool first = true;
@@ -594,6 +601,7 @@ internal sealed class RecordEmitter
                 inline);
         }
 
+        ClassEmitter.WriteMembers(writer, surface, module, first: false);
         writer.CloseBlock();
     }
 
@@ -619,28 +627,36 @@ internal sealed class RecordEmitter
     }
 
     /// <summary>
-    /// Plans the members of a wrapper. Plain structs get none: an instance
-    /// method of a structure would have to pin the instance, and none of the
-    /// structures of this milestone needs one.
+    /// Plans the members of a wrapper.
     /// </summary>
     /// <param name="module">The module being emitted.</param>
     /// <param name="ns">The gir namespace of the module.</param>
     /// <param name="record">The record being emitted.</param>
     /// <param name="kind">Its classification.</param>
     /// <param name="typeName">Its C# name.</param>
+    /// <param name="layout">The laid out fields of a value projected structure, if any.</param>
     /// <param name="handWritten">Whether the wrapper itself is hand written.</param>
     /// <param name="accessors">The field accessors, which have already claimed their names.</param>
     /// <returns>The members to emit.</returns>
+    /// <remarks>
+    /// A plain struct goes through the same builder as every other kind. Its
+    /// instance methods pin <c>this</c> instead of reading a handle, which is
+    /// what <see cref="ArgumentKind.ValueInstance"/> describes, and its field
+    /// names are reserved beside the inherited ones: a struct carries its
+    /// fields in the same declaration space as its methods, so a method that
+    /// took the name of a field would not compile.
+    /// </remarks>
     private TypeSurface BuildSurface(
         ModuleInfo module,
         GirNamespace ns,
         GirRecord record,
         TypeKind kind,
         string typeName,
+        IReadOnlyList<LayoutField>? layout,
         bool handWritten,
         IReadOnlyList<Accessor> accessors)
     {
-        if (handWritten || kind == TypeKind.PlainStruct)
+        if (handWritten)
         {
             foreach (GirFunction callable in
                 record.Constructors.Concat(record.Methods).Concat(record.Functions))
@@ -660,6 +676,14 @@ internal sealed class RecordEmitter
         foreach (Accessor accessor in accessors)
         {
             reserved.Add(accessor.Name);
+        }
+
+        if (kind == TypeKind.PlainStruct && layout is not null)
+        {
+            foreach (LayoutField field in layout)
+            {
+                reserved.Add(field.Name);
+            }
         }
 
         PlanningContext context = new(module, ns, kind, module.ClrNamespace + "." + typeName);

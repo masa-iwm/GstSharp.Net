@@ -201,6 +201,8 @@ public sealed class SkipRulesTests
                 "gst_query_new_custom",
                 "gst_query_parse_nth_allocation_param",
                 "gst_rtsp_auth_credentials_free",
+                "gst_rtsp_range_free",
+                "gst_rtsp_range_parse",
                 "gst_rtsp_transport_init",
                 "gst_rtsp_transport_parse",
                 "gst_sdp_media_init",

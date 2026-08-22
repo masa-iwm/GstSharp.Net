@@ -440,7 +440,7 @@ disappears shows up here as an added line.
 
 - `gst_bus_add_watch`
 
-### UnsupportedSignature (153)
+### UnsupportedSignature (149)
 
 - `Gst.Bus:enable-async`
 - `gst_buffer_foreach_meta`
@@ -482,9 +482,6 @@ disappears shows up here as an added line.
 - `gst_iterator_find_custom`
 - `gst_iterator_fold`
 - `gst_iterator_foreach`
-- `gst_map_info_clear`
-- `gst_map_info_get_data`
-- `gst_map_info_init`
 - `gst_memory_new_wrapped`
 - `gst_message_new_error`
 - `gst_message_new_error_with_details`
@@ -554,7 +551,6 @@ disappears shows up here as an added line.
 - `gst_plugin_get_status_warnings`
 - `gst_plugin_list_free`
 - `gst_plugin_register_static`
-- `gst_poll_fd_init`
 - `gst_poll_get_read_gpollfd`
 - `gst_preset_get_preset_names`
 - `gst_preset_get_property_names`
@@ -907,16 +903,14 @@ disappears shows up here as an added line.
 - `gst_rtsp_message_free`
 - `gst_rtsp_url_free`
 
-### MovedTo (15)
+### MovedTo (13)
 
 - `gst_rtsp_connection_accept`
 - `gst_rtsp_connection_create`
 - `gst_rtsp_connection_create_from_socket`
 - `gst_rtsp_method_as_text`
 - `gst_rtsp_range_convert_units`
-- `gst_rtsp_range_free`
 - `gst_rtsp_range_get_times`
-- `gst_rtsp_range_parse`
 - `gst_rtsp_range_to_string`
 - `gst_rtsp_transport_get_manager`
 - `gst_rtsp_transport_get_mime`
@@ -925,13 +919,15 @@ disappears shows up here as an added line.
 - `gst_rtsp_version_as_text`
 - `gst_rtsp_watch_new`
 
-### OverlaySkip (3)
+### OverlaySkip (5)
 
 - `gst_rtsp_auth_credentials_free`
+- `gst_rtsp_range_free`
+- `gst_rtsp_range_parse`
 - `gst_rtsp_transport_init`
 - `gst_rtsp_transport_parse`
 
-### UnsupportedSignature (19)
+### UnsupportedSignature (14)
 
 - `gst_rtsp_connection_connect`
 - `gst_rtsp_connection_connect_with_response`
@@ -946,11 +942,6 @@ disappears shows up here as an added line.
 - `gst_rtsp_message_append_headers`
 - `gst_rtsp_message_parse_auth_credentials`
 - `gst_rtsp_message_take_body`
-- `gst_rtsp_range_convert_units`
-- `gst_rtsp_range_free`
-- `gst_rtsp_range_get_times`
-- `gst_rtsp_range_parse`
-- `gst_rtsp_range_to_string`
 - `gst_rtsp_url_decode_path_components`
 
 ## GstSdp
@@ -1124,7 +1115,7 @@ disappears shows up here as an added line.
 - `gst_video_info_from_caps`
 - `gst_video_info_init`
 
-### UnsupportedSignature (52)
+### UnsupportedSignature (27)
 
 - `gst_buffer_add_video_gl_texture_upload_meta`
 - `gst_buffer_add_video_meta_full`
@@ -1132,42 +1123,17 @@ disappears shows up here as an added line.
 - `gst_buffer_add_video_time_code_meta_full`
 - `gst_navigation_query_set_commandsv`
 - `gst_video_affine_transformation_meta_apply_matrix`
-- `gst_video_alignment_reset`
 - `gst_video_codec_frame_set_user_data`
 - `gst_video_color_primaries_get_info`
 - `gst_video_color_range_offsets`
-- `gst_video_colorimetry_from_string`
-- `gst_video_colorimetry_is_equal`
-- `gst_video_colorimetry_is_equivalent`
-- `gst_video_colorimetry_matches`
-- `gst_video_colorimetry_to_string`
-- `gst_video_content_light_level_add_to_caps`
-- `gst_video_content_light_level_from_caps`
-- `gst_video_content_light_level_from_string`
-- `gst_video_content_light_level_init`
-- `gst_video_content_light_level_is_equal`
-- `gst_video_content_light_level_to_string`
 - `gst_video_convert_sample_async`
 - `gst_video_encoder_set_headers`
 - `gst_video_formats_any`
 - `gst_video_formats_raw`
 - `gst_video_make_raw_caps`
 - `gst_video_make_raw_caps_with_features`
-- `gst_video_mastering_display_info_add_to_caps`
-- `gst_video_mastering_display_info_from_caps`
-- `gst_video_mastering_display_info_from_string`
-- `gst_video_mastering_display_info_init`
-- `gst_video_mastering_display_info_is_equal`
-- `gst_video_mastering_display_info_to_string`
 - `gst_video_meta_get_plane_height`
 - `gst_video_meta_get_plane_size`
-- `gst_video_meta_transform_matrix_get_quark`
-- `gst_video_meta_transform_matrix_init`
-- `gst_video_meta_transform_matrix_point`
-- `gst_video_meta_transform_matrix_point_clipped`
-- `gst_video_meta_transform_matrix_rectangle`
-- `gst_video_meta_transform_matrix_rectangle_clipped`
-- `gst_video_meta_transform_scale_get_quark`
 - `gst_video_overlay_install_properties`
 - `gst_video_time_code_init`
 - `gst_video_time_code_init_from_date_time`

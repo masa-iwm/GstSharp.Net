@@ -371,6 +371,15 @@ internal sealed class SurfaceBuilder
                 if (form == methodForm && VisibleCount(plan) == 0 && plan.Return.Kind == ArgumentKind.Utf8)
                 {
                     plan.IsOverride = true;
+
+                    // A value projected structure has a default value that
+                    // describes nothing, and the C function answers NULL for
+                    // it. Every instance of a struct is reachable, so the
+                    // override must answer something for all of them: the
+                    // empty string, rather than the null a non-nullable
+                    // override cannot carry or the throw the wrapper kinds get.
+                    plan.ReturnsEmptyOnNull =
+                        context.OwnerKind == TypeKind.PlainStruct && plan.Return.IsNullable;
                     members.Add(plan);
                     _census.Emitted(module, "method");
                     return;

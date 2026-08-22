@@ -3,6 +3,7 @@
 
 #nullable enable
 
+using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -23,7 +24,7 @@ namespace Gst.Video;
 /// <para>Available since GStreamer 1.28.</para>
 /// </remarks>
 [StructLayout(LayoutKind.Sequential)]
-public partial struct VideoMetaTransformMatrix
+public unsafe partial struct VideoMetaTransformMatrix
 {
     /// <summary>the input #GstVideoInfo</summary>
     public nint InInfoPtr;
@@ -46,4 +47,193 @@ public partial struct VideoMetaTransformMatrix
     {
         private float _element0;
     }
+
+    /// <summary>
+    /// Based on the rectangles, initializes the matrix to do a translation and
+    /// scaling from @in_rectangle to @out_rectangle
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Mutates this instance; call it on a variable, not on a copy returned by a
+    /// property.
+    /// </para>
+    /// <para>
+    /// The matrix stores the two <see cref="Gst.Video.VideoInfo"/> pointers rather
+    /// than copies of what they describe, so both wrappers have to stay alive and
+    /// undisposed for as long as the matrix is used.
+    /// </para>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
+    /// <param name="inInfo">The <c>inInfo</c> argument.</param>
+    /// <param name="inRectangle">The <c>inRectangle</c> argument.</param>
+    /// <param name="outInfo">The <c>outInfo</c> argument.</param>
+    /// <param name="outRectangle">The <c>outRectangle</c> argument.</param>
+    public void Init(Gst.Video.VideoInfo inInfo, Gst.Video.VideoRectangle inRectangle, Gst.Video.VideoInfo outInfo, Gst.Video.VideoRectangle outRectangle)
+    {
+        ArgumentNullException.ThrowIfNull(inInfo);
+        Gst.Video.VideoRectangle inRectangleNative = inRectangle;
+        ArgumentNullException.ThrowIfNull(outInfo);
+        Gst.Video.VideoRectangle outRectangleNative = outRectangle;
+        fixed (Gst.Video.VideoMetaTransformMatrix* self = &this)
+        {
+            GstVideoMetaTransformMatrixInit(self, inInfo.Handle, &inRectangleNative, outInfo.Handle, &outRectangleNative);
+            System.GC.KeepAlive(inInfo);
+            System.GC.KeepAlive(outInfo);
+        }
+    }
+
+    /// <summary>
+    /// Transforms the (@x, @y) point from the input coordinates to the
+    /// output ones.  The point's coordinates are transformed by first
+    /// applying the @transform.matrix to it using the top left (x, y) of
+    /// @transform.in_rectangle as the origin, then translate it to use
+    /// the top-left of @transform.out_rectangle as new origin.
+    /// </summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
+    /// <param name="x">The <c>x</c> argument.</param>
+    /// <param name="y">The <c>y</c> argument.</param>
+    /// <returns>
+    /// %FALSE if the point is outside of @transform.out_rectangle
+    /// after the transformation has been applied
+    /// </returns>
+    public readonly bool Point(ref int x, ref int y)
+    {
+        int xNative = x;
+        int yNative = y;
+        fixed (Gst.Video.VideoMetaTransformMatrix* self = &System.Runtime.CompilerServices.Unsafe.AsRef(in this))
+        {
+            int nativeResult = GstVideoMetaTransformMatrixPoint(self, &xNative, &yNative);
+            x = xNative;
+            y = yNative;
+            return nativeResult != 0;
+        }
+    }
+
+    /// <summary>
+    /// Transforms the (@x, @y) point from the input coordinates to the
+    /// output ones.  The point's coordinates are transformed by first
+    /// applying the @transform.matrix to it using the top left (x, y) of
+    /// @transform.in_rectangle as the origin, then translate it to use
+    /// the top-left of @transform.out_rectangle as new origin.
+    /// </summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
+    /// <param name="x">The <c>x</c> argument.</param>
+    /// <param name="y">The <c>y</c> argument.</param>
+    /// <returns>
+    /// %FALSE if the point is outside of @transform.out_rectangle
+    /// after the transformation has been applied
+    /// </returns>
+    public readonly bool PointClipped(ref int x, ref int y)
+    {
+        int xNative = x;
+        int yNative = y;
+        fixed (Gst.Video.VideoMetaTransformMatrix* self = &System.Runtime.CompilerServices.Unsafe.AsRef(in this))
+        {
+            int nativeResult = GstVideoMetaTransformMatrixPointClipped(self, &xNative, &yNative);
+            x = xNative;
+            y = yNative;
+            return nativeResult != 0;
+        }
+    }
+
+    /// <summary>
+    /// Transforms @rect from the input coordinates to the
+    /// output ones.  The point's coordinates are transformed by first
+    /// applying the @transform.matrix to it using the top left (x, y) of
+    /// @transform.in_rectangle as the origin, then translate it to use
+    /// the top-left of @transform.out_rectangle as new origin.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// @rect is always axis aligned at input and this function only returns
+    /// axis aligned rectangles as output, otherwise it returns FALSE.
+    /// </para>
+    /// <para>
+    /// Output rectangle could be in partially or totally outside of
+    /// @transform.out_rectangle.
+    /// </para>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
+    /// <param name="rect">The <c>rect</c> argument.</param>
+    /// <returns>%FALSE is the output rectangle is not axis aligned</returns>
+    public readonly bool Rectangle(ref Gst.Video.VideoRectangle rect)
+    {
+        Gst.Video.VideoRectangle rectNative = rect;
+        fixed (Gst.Video.VideoMetaTransformMatrix* self = &System.Runtime.CompilerServices.Unsafe.AsRef(in this))
+        {
+            int nativeResult = GstVideoMetaTransformMatrixRectangle(self, &rectNative);
+            rect = rectNative;
+            return nativeResult != 0;
+        }
+    }
+
+    /// <summary>
+    /// Transforms @rect from the input coordinates to the
+    /// output ones.  The point's coordinates are transformed by first
+    /// applying the @transform.matrix to it using the top left (x, y) of
+    /// @transform.in_rectangle as the origin, then translate it to use
+    /// the top-left of @transform.out_rectangle as new origin.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// @rect is always axis aligned at input and this function only returns
+    /// axis aligned rectangles as output, otherwise it returns FALSE.
+    /// </para>
+    /// <para>Output rectangle will be clipped to fit inside @transform.out_rectangle.</para>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
+    /// <param name="rect">The <c>rect</c> argument.</param>
+    /// <returns>
+    /// %FALSE if the output rectangle is not axis aligned or if
+    ///  the rectangle is entirely outside of the out_rectangle.
+    /// </returns>
+    public readonly bool RectangleClipped(ref Gst.Video.VideoRectangle rect)
+    {
+        Gst.Video.VideoRectangle rectNative = rect;
+        fixed (Gst.Video.VideoMetaTransformMatrix* self = &System.Runtime.CompilerServices.Unsafe.AsRef(in this))
+        {
+            int nativeResult = GstVideoMetaTransformMatrixRectangleClipped(self, &rectNative);
+            rect = rectNative;
+            return nativeResult != 0;
+        }
+    }
+
+    /// <summary>Get the #GQuark for the "gst-video-matrix" metadata transform operation.</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
+    /// <returns>a #GQuark</returns>
+    public static Gst.GLib.Quark GetQuark()
+    {
+        uint nativeResult = GstVideoMetaTransformMatrixGetQuark();
+        return new Gst.GLib.Quark(nativeResult);
+    }
+
+    /// <summary>The <c>gst_video_meta_transform_matrix_init</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_video_meta_transform_matrix_init")]
+    private static partial void GstVideoMetaTransformMatrixInit(Gst.Video.VideoMetaTransformMatrix* trans, nint inInfo, Gst.Video.VideoRectangle* inRectangle, nint outInfo, Gst.Video.VideoRectangle* outRectangle);
+
+    /// <summary>The <c>gst_video_meta_transform_matrix_point</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_video_meta_transform_matrix_point")]
+    private static partial int GstVideoMetaTransformMatrixPoint(Gst.Video.VideoMetaTransformMatrix* transform, int* x, int* y);
+
+    /// <summary>The <c>gst_video_meta_transform_matrix_point_clipped</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_video_meta_transform_matrix_point_clipped")]
+    private static partial int GstVideoMetaTransformMatrixPointClipped(Gst.Video.VideoMetaTransformMatrix* transform, int* x, int* y);
+
+    /// <summary>The <c>gst_video_meta_transform_matrix_rectangle</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_video_meta_transform_matrix_rectangle")]
+    private static partial int GstVideoMetaTransformMatrixRectangle(Gst.Video.VideoMetaTransformMatrix* transform, Gst.Video.VideoRectangle* rect);
+
+    /// <summary>The <c>gst_video_meta_transform_matrix_rectangle_clipped</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_video_meta_transform_matrix_rectangle_clipped")]
+    private static partial int GstVideoMetaTransformMatrixRectangleClipped(Gst.Video.VideoMetaTransformMatrix* transform, Gst.Video.VideoRectangle* rect);
+
+    /// <summary>The <c>gst_video_meta_transform_matrix_get_quark</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_video_meta_transform_matrix_get_quark")]
+    private static partial uint GstVideoMetaTransformMatrixGetQuark();
 }

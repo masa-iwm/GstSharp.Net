@@ -3,13 +3,14 @@
 
 #nullable enable
 
+using System;
 using System.Runtime.InteropServices;
 
 namespace Gst.Video;
 
 /// <summary>Structure describing the color info.</summary>
 [StructLayout(LayoutKind.Sequential)]
-public partial struct VideoColorimetry
+public unsafe partial struct VideoColorimetry
 {
     /// <summary>
     /// the color range. This is the valid range for the samples.
@@ -28,4 +29,117 @@ public partial struct VideoColorimetry
 
     /// <summary>color primaries. used to convert between R'G'B' and CIE XYZ</summary>
     public Gst.Video.VideoColorPrimaries Primaries;
+
+    /// <summary>
+    /// Parse the colorimetry string and update @cinfo with the parsed
+    /// values.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Mutates this instance; call it on a variable, not on a copy returned by a
+    /// property.
+    /// </para>
+    /// <para>
+    /// A string the parser does not accept answers <see langword="false"/> and leaves
+    /// this instance exactly as it was.
+    /// </para>
+    /// </remarks>
+    /// <param name="color">The <c>color</c> argument.</param>
+    /// <returns>%TRUE if @color points to valid colorimetry info.</returns>
+    public bool FromString(string color)
+    {
+        ArgumentNullException.ThrowIfNull(color);
+        System.Span<byte> colorBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope colorScope = Gst.Interop.GMarshal.StackUtf8(color, colorBuffer);
+        fixed (Gst.Video.VideoColorimetry* self = &this)
+        {
+            int nativeResult = GstVideoColorimetryFromString(self, colorScope.Pointer);
+            return nativeResult != 0;
+        }
+    }
+
+    /// <summary>Compare the 2 colorimetry sets for equality</summary>
+    /// <param name="other">The <c>other</c> argument.</param>
+    /// <returns>%TRUE if @cinfo and @other are equal.</returns>
+    public readonly bool IsEqual(Gst.Video.VideoColorimetry other)
+    {
+        Gst.Video.VideoColorimetry otherNative = other;
+        fixed (Gst.Video.VideoColorimetry* self = &System.Runtime.CompilerServices.Unsafe.AsRef(in this))
+        {
+            int nativeResult = GstVideoColorimetryIsEqual(self, &otherNative);
+            return nativeResult != 0;
+        }
+    }
+
+    /// <summary>Compare the 2 colorimetry sets for functionally equality</summary>
+    /// <param name="bitdepth">The <c>bitdepth</c> argument.</param>
+    /// <param name="other">The <c>other</c> argument.</param>
+    /// <param name="otherBitdepth">The <c>otherBitdepth</c> argument.</param>
+    /// <returns>%TRUE if @cinfo and @other are equivalent.</returns>
+    public readonly bool IsEquivalent(uint bitdepth, Gst.Video.VideoColorimetry other, uint otherBitdepth)
+    {
+        Gst.Video.VideoColorimetry otherNative = other;
+        fixed (Gst.Video.VideoColorimetry* self = &System.Runtime.CompilerServices.Unsafe.AsRef(in this))
+        {
+            int nativeResult = GstVideoColorimetryIsEquivalent(self, bitdepth, &otherNative, otherBitdepth);
+            return nativeResult != 0;
+        }
+    }
+
+    /// <summary>
+    /// Check if the colorimetry information in @info matches that of the
+    /// string @color.
+    /// </summary>
+    /// <param name="color">The <c>color</c> argument.</param>
+    /// <returns>
+    /// %TRUE if @color conveys the same colorimetry info as the color
+    /// information in @info.
+    /// </returns>
+    public readonly bool Matches(string color)
+    {
+        ArgumentNullException.ThrowIfNull(color);
+        System.Span<byte> colorBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope colorScope = Gst.Interop.GMarshal.StackUtf8(color, colorBuffer);
+        fixed (Gst.Video.VideoColorimetry* self = &System.Runtime.CompilerServices.Unsafe.AsRef(in this))
+        {
+            int nativeResult = GstVideoColorimetryMatches(self, colorScope.Pointer);
+            return nativeResult != 0;
+        }
+    }
+
+    /// <summary>Make a string representation of @cinfo.</summary>
+    /// <returns>
+    /// a string representation of @cinfo
+    /// or %NULL if all the entries of @cinfo are unknown values.
+    /// The empty string when the C function has no representation to hand out,
+    /// which is what the default value of this structure is.
+    /// </returns>
+    public override readonly string ToString()
+    {
+        fixed (Gst.Video.VideoColorimetry* self = &System.Runtime.CompilerServices.Unsafe.AsRef(in this))
+        {
+            nint nativeResult = GstVideoColorimetryToString(self);
+            return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult) ?? string.Empty;
+        }
+    }
+
+    /// <summary>The <c>gst_video_colorimetry_from_string</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_video_colorimetry_from_string")]
+    private static partial int GstVideoColorimetryFromString(Gst.Video.VideoColorimetry* cinfo, byte* color);
+
+    /// <summary>The <c>gst_video_colorimetry_is_equal</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_video_colorimetry_is_equal")]
+    private static partial int GstVideoColorimetryIsEqual(Gst.Video.VideoColorimetry* cinfo, Gst.Video.VideoColorimetry* other);
+
+    /// <summary>The <c>gst_video_colorimetry_is_equivalent</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_video_colorimetry_is_equivalent")]
+    private static partial int GstVideoColorimetryIsEquivalent(Gst.Video.VideoColorimetry* cinfo, uint bitdepth, Gst.Video.VideoColorimetry* other, uint otherBitdepth);
+
+    /// <summary>The <c>gst_video_colorimetry_matches</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_video_colorimetry_matches")]
+    private static partial int GstVideoColorimetryMatches(Gst.Video.VideoColorimetry* cinfo, byte* color);
+
+    /// <summary>The <c>gst_video_colorimetry_to_string</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_video_colorimetry_to_string")]
+    private static partial nint GstVideoColorimetryToString(Gst.Video.VideoColorimetry* cinfo);
 }

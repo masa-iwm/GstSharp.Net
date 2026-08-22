@@ -364,12 +364,18 @@ internal sealed class MarshalPlanner
                 return null;
             }
 
+            // A value projected structure has no handle to read: the C
+            // function takes a pointer to the structure itself, so the
+            // instance travels as the pinned address of `this`. The import
+            // declares a pointer to the public struct, which is legal because
+            // the declaring type lives in the same assembly as the import.
+            bool byValue = context.OwnerKind == TypeKind.PlainStruct && form == CallableForm.InstanceMethod;
             arguments.Add(new ArgumentPlan
             {
-                Kind = ArgumentKind.Instance,
+                Kind = byValue ? ArgumentKind.ValueInstance : ArgumentKind.Instance,
                 Name = NameMapper.ParameterName(callable.InstanceParameter.Name),
                 PublicType = context.OwnerType,
-                RawType = NativeInt,
+                RawType = byValue ? context.OwnerType + "*" : NativeInt,
                 IsHidden = form == CallableForm.InstanceMethod,
                 Doc = callable.InstanceParameter.Doc,
             });

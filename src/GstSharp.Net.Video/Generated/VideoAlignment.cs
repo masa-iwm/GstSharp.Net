@@ -3,6 +3,7 @@
 
 #nullable enable
 
+using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -14,7 +15,7 @@ namespace Gst.Video;
 /// #GST_BUFFER_POOL_OPTION_VIDEO_ALIGNMENT.
 /// </summary>
 [StructLayout(LayoutKind.Sequential)]
-public partial struct VideoAlignment
+public unsafe partial struct VideoAlignment
 {
     /// <summary>extra pixels on the top</summary>
     public uint PaddingTop;
@@ -37,4 +38,23 @@ public partial struct VideoAlignment
     {
         private uint _element0;
     }
+
+    /// <summary>Set @align to its default values with no padding and no alignment.</summary>
+    /// <remarks>
+    /// <para>
+    /// Mutates this instance; call it on a variable, not on a copy returned by a
+    /// property.
+    /// </para>
+    /// </remarks>
+    public void Reset()
+    {
+        fixed (Gst.Video.VideoAlignment* self = &this)
+        {
+            GstVideoAlignmentReset(self);
+        }
+    }
+
+    /// <summary>The <c>gst_video_alignment_reset</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_video_alignment_reset")]
+    private static partial void GstVideoAlignmentReset(Gst.Video.VideoAlignment* align);
 }

@@ -3,6 +3,7 @@
 
 #nullable enable
 
+using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -10,7 +11,7 @@ namespace Gst.Video;
 
 /// <summary>Content light level information specified in CEA-861.3, Appendix A.</summary>
 [StructLayout(LayoutKind.Sequential)]
-public partial struct VideoContentLightLevel
+public unsafe partial struct VideoContentLightLevel
 {
     /// <summary>
     /// the maximum content light level
@@ -33,4 +34,142 @@ public partial struct VideoContentLightLevel
     {
         private nint _element0;
     }
+
+    /// <summary>Parse @caps and update @linfo</summary>
+    /// <remarks>
+    /// <para>
+    /// The caps have to be writable. Like the C API, the call raises a warning
+    /// and writes nothing otherwise.
+    /// </para>
+    /// </remarks>
+    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <returns>%TRUE if @linfo was successfully set to @caps</returns>
+    public readonly bool AddToCaps(Gst.Caps caps)
+    {
+        ArgumentNullException.ThrowIfNull(caps);
+        fixed (Gst.Video.VideoContentLightLevel* self = &System.Runtime.CompilerServices.Unsafe.AsRef(in this))
+        {
+            int nativeResult = GstVideoContentLightLevelAddToCaps(self, caps.Handle);
+            System.GC.KeepAlive(caps);
+            return nativeResult != 0;
+        }
+    }
+
+    /// <summary>Parse @caps and update @linfo</summary>
+    /// <remarks>
+    /// <para>
+    /// Mutates this instance; call it on a variable, not on a copy returned by a
+    /// property.
+    /// </para>
+    /// <para>
+    /// When the caps carry no such information the call answers
+    /// <see langword="false"/> and the contents of this instance are unspecified:
+    /// the C function leaves it untouched or zeroed depending on how far the read
+    /// got. Read it only after the call answered <see langword="true"/>.
+    /// </para>
+    /// </remarks>
+    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <returns>if @caps has #GstVideoContentLightLevel and could be parsed</returns>
+    public bool FromCaps(Gst.Caps caps)
+    {
+        ArgumentNullException.ThrowIfNull(caps);
+        fixed (Gst.Video.VideoContentLightLevel* self = &this)
+        {
+            int nativeResult = GstVideoContentLightLevelFromCaps(self, caps.Handle);
+            System.GC.KeepAlive(caps);
+            return nativeResult != 0;
+        }
+    }
+
+    /// <summary>
+    /// Parse the value of content-light-level caps field and update @minfo
+    /// with the parsed values.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Mutates this instance; call it on a variable, not on a copy returned by a
+    /// property.
+    /// </para>
+    /// <para>
+    /// A string the parser does not accept answers <see langword="false"/> and leaves
+    /// this instance zeroed.
+    /// </para>
+    /// </remarks>
+    /// <param name="level">The <c>level</c> argument.</param>
+    /// <returns>%TRUE if @linfo points to valid #GstVideoContentLightLevel.</returns>
+    public bool FromString(string level)
+    {
+        ArgumentNullException.ThrowIfNull(level);
+        System.Span<byte> levelBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope levelScope = Gst.Interop.GMarshal.StackUtf8(level, levelBuffer);
+        fixed (Gst.Video.VideoContentLightLevel* self = &this)
+        {
+            int nativeResult = GstVideoContentLightLevelFromString(self, levelScope.Pointer);
+            return nativeResult != 0;
+        }
+    }
+
+    /// <summary>Initialize @linfo</summary>
+    /// <remarks>
+    /// <para>
+    /// Mutates this instance; call it on a variable, not on a copy returned by a
+    /// property.
+    /// </para>
+    /// </remarks>
+    public void Init()
+    {
+        fixed (Gst.Video.VideoContentLightLevel* self = &this)
+        {
+            GstVideoContentLightLevelInit(self);
+        }
+    }
+
+    /// <summary>Checks equality between @linfo and @other.</summary>
+    /// <param name="other">The <c>other</c> argument.</param>
+    /// <returns>%TRUE if @linfo and @other are equal.</returns>
+    public readonly bool IsEqual(Gst.Video.VideoContentLightLevel other)
+    {
+        Gst.Video.VideoContentLightLevel otherNative = other;
+        fixed (Gst.Video.VideoContentLightLevel* self = &System.Runtime.CompilerServices.Unsafe.AsRef(in this))
+        {
+            int nativeResult = GstVideoContentLightLevelIsEqual(self, &otherNative);
+            return nativeResult != 0;
+        }
+    }
+
+    /// <summary>Convert @linfo to its string representation.</summary>
+    /// <returns>a string representation of @linfo.</returns>
+    public override readonly string ToString()
+    {
+        fixed (Gst.Video.VideoContentLightLevel* self = &System.Runtime.CompilerServices.Unsafe.AsRef(in this))
+        {
+            nint nativeResult = GstVideoContentLightLevelToString(self);
+            return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
+                ?? throw new InvalidOperationException("gst_video_content_light_level_to_string returned no value.");
+        }
+    }
+
+    /// <summary>The <c>gst_video_content_light_level_add_to_caps</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_video_content_light_level_add_to_caps")]
+    private static partial int GstVideoContentLightLevelAddToCaps(Gst.Video.VideoContentLightLevel* linfo, nint caps);
+
+    /// <summary>The <c>gst_video_content_light_level_from_caps</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_video_content_light_level_from_caps")]
+    private static partial int GstVideoContentLightLevelFromCaps(Gst.Video.VideoContentLightLevel* linfo, nint caps);
+
+    /// <summary>The <c>gst_video_content_light_level_from_string</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_video_content_light_level_from_string")]
+    private static partial int GstVideoContentLightLevelFromString(Gst.Video.VideoContentLightLevel* linfo, byte* level);
+
+    /// <summary>The <c>gst_video_content_light_level_init</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_video_content_light_level_init")]
+    private static partial void GstVideoContentLightLevelInit(Gst.Video.VideoContentLightLevel* linfo);
+
+    /// <summary>The <c>gst_video_content_light_level_is_equal</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_video_content_light_level_is_equal")]
+    private static partial int GstVideoContentLightLevelIsEqual(Gst.Video.VideoContentLightLevel* linfo, Gst.Video.VideoContentLightLevel* other);
+
+    /// <summary>The <c>gst_video_content_light_level_to_string</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_video_content_light_level_to_string")]
+    private static partial nint GstVideoContentLightLevelToString(Gst.Video.VideoContentLightLevel* linfo);
 }

@@ -3,17 +3,40 @@
 
 #nullable enable
 
+using System;
 using System.Runtime.InteropServices;
 
 namespace Gst;
 
 /// <summary>A file descriptor object.</summary>
 [StructLayout(LayoutKind.Sequential)]
-public partial struct PollFD
+public unsafe partial struct PollFD
 {
     /// <summary>a file descriptor</summary>
     public int Fd;
 
     /// <summary>The <c>idx</c> field of <c>GstPollFD</c>.</summary>
     private int _idx;
+
+    /// <summary>
+    /// Initializes @fd. Alternatively you can initialize it with
+    /// #GST_POLL_FD_INIT.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Mutates this instance; call it on a variable, not on a copy returned by a
+    /// property.
+    /// </para>
+    /// </remarks>
+    public void Init()
+    {
+        fixed (Gst.PollFD* self = &this)
+        {
+            GstPollFdInit(self);
+        }
+    }
+
+    /// <summary>The <c>gst_poll_fd_init</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_poll_fd_init")]
+    private static partial void GstPollFdInit(Gst.PollFD* fd);
 }

@@ -3,6 +3,7 @@
 
 #nullable enable
 
+using System;
 using System.Runtime.InteropServices;
 
 namespace Gst.Video;
@@ -18,11 +19,23 @@ namespace Gst.Video;
 /// </para>
 /// </remarks>
 [StructLayout(LayoutKind.Sequential)]
-public partial struct VideoMetaTransform
+public unsafe partial struct VideoMetaTransform
 {
     /// <summary>the input #GstVideoInfo</summary>
     public nint InInfoPtr;
 
     /// <summary>the output #GstVideoInfo</summary>
     public nint OutInfoPtr;
+
+    /// <summary>Get the #GQuark for the "gst-video-scale" metadata transform operation.</summary>
+    /// <returns>a #GQuark</returns>
+    public static Gst.GLib.Quark ScaleGetQuark()
+    {
+        uint nativeResult = GstVideoMetaTransformScaleGetQuark();
+        return new Gst.GLib.Quark(nativeResult);
+    }
+
+    /// <summary>The <c>gst_video_meta_transform_scale_get_quark</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_video_meta_transform_scale_get_quark")]
+    private static partial uint GstVideoMetaTransformScaleGetQuark();
 }

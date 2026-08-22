@@ -3,6 +3,7 @@
 
 #nullable enable
 
+using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -13,7 +14,7 @@ namespace Gst.Video;
 /// (a.k.a static HDR metadata).
 /// </summary>
 [StructLayout(LayoutKind.Sequential)]
-public partial struct VideoMasteringDisplayInfo
+public unsafe partial struct VideoMasteringDisplayInfo
 {
     /// <summary>
     /// the xy coordinates of primaries in the CIE 1931 color space.
@@ -56,4 +57,135 @@ public partial struct VideoMasteringDisplayInfo
     {
         private nint _element0;
     }
+
+    /// <summary>Set string representation of @minfo to @caps</summary>
+    /// <remarks>
+    /// <para>
+    /// The caps have to be writable. Like the C API, the call raises a warning
+    /// and writes nothing otherwise.
+    /// </para>
+    /// </remarks>
+    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <returns>%TRUE if @minfo was successfully set to @caps</returns>
+    public readonly bool AddToCaps(Gst.Caps caps)
+    {
+        ArgumentNullException.ThrowIfNull(caps);
+        fixed (Gst.Video.VideoMasteringDisplayInfo* self = &System.Runtime.CompilerServices.Unsafe.AsRef(in this))
+        {
+            int nativeResult = GstVideoMasteringDisplayInfoAddToCaps(self, caps.Handle);
+            System.GC.KeepAlive(caps);
+            return nativeResult != 0;
+        }
+    }
+
+    /// <summary>Parse @caps and update @minfo</summary>
+    /// <remarks>
+    /// <para>
+    /// Mutates this instance; call it on a variable, not on a copy returned by a
+    /// property.
+    /// </para>
+    /// <para>
+    /// When the caps carry no such information the call answers
+    /// <see langword="false"/> and the contents of this instance are unspecified:
+    /// the C function leaves it untouched or zeroed depending on how far the read
+    /// got. Read it only after the call answered <see langword="true"/>.
+    /// </para>
+    /// </remarks>
+    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <returns>%TRUE if @caps has #GstVideoMasteringDisplayInfo and could be parsed</returns>
+    public bool FromCaps(Gst.Caps caps)
+    {
+        ArgumentNullException.ThrowIfNull(caps);
+        fixed (Gst.Video.VideoMasteringDisplayInfo* self = &this)
+        {
+            int nativeResult = GstVideoMasteringDisplayInfoFromCaps(self, caps.Handle);
+            System.GC.KeepAlive(caps);
+            return nativeResult != 0;
+        }
+    }
+
+    /// <summary>Initialize @minfo</summary>
+    /// <remarks>
+    /// <para>
+    /// Mutates this instance; call it on a variable, not on a copy returned by a
+    /// property.
+    /// </para>
+    /// </remarks>
+    public void Init()
+    {
+        fixed (Gst.Video.VideoMasteringDisplayInfo* self = &this)
+        {
+            GstVideoMasteringDisplayInfoInit(self);
+        }
+    }
+
+    /// <summary>Checks equality between @minfo and @other.</summary>
+    /// <param name="other">The <c>other</c> argument.</param>
+    /// <returns>%TRUE if @minfo and @other are equal.</returns>
+    public readonly bool IsEqual(Gst.Video.VideoMasteringDisplayInfo other)
+    {
+        Gst.Video.VideoMasteringDisplayInfo otherNative = other;
+        fixed (Gst.Video.VideoMasteringDisplayInfo* self = &System.Runtime.CompilerServices.Unsafe.AsRef(in this))
+        {
+            int nativeResult = GstVideoMasteringDisplayInfoIsEqual(self, &otherNative);
+            return nativeResult != 0;
+        }
+    }
+
+    /// <summary>Convert @minfo to its string representation</summary>
+    /// <returns>a string representation of @minfo</returns>
+    public override readonly string ToString()
+    {
+        fixed (Gst.Video.VideoMasteringDisplayInfo* self = &System.Runtime.CompilerServices.Unsafe.AsRef(in this))
+        {
+            nint nativeResult = GstVideoMasteringDisplayInfoToString(self);
+            return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
+                ?? throw new InvalidOperationException("gst_video_mastering_display_info_to_string returned no value.");
+        }
+    }
+
+    /// <summary>Extract #GstVideoMasteringDisplayInfo from @mastering</summary>
+    /// <remarks>
+    /// <para>
+    /// A string the parser does not accept answers <see langword="false"/> and leaves
+    /// <paramref name="minfo"/> zeroed.
+    /// </para>
+    /// </remarks>
+    /// <param name="minfo">The <c>minfo</c> argument.</param>
+    /// <param name="mastering">The <c>mastering</c> argument.</param>
+    /// <returns>%TRUE if @minfo was filled with @mastering</returns>
+    public static bool FromString(out Gst.Video.VideoMasteringDisplayInfo minfo, string mastering)
+    {
+        Gst.Video.VideoMasteringDisplayInfo minfoNative = default;
+        ArgumentNullException.ThrowIfNull(mastering);
+        System.Span<byte> masteringBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope masteringScope = Gst.Interop.GMarshal.StackUtf8(mastering, masteringBuffer);
+        int nativeResult = GstVideoMasteringDisplayInfoFromString(&minfoNative, masteringScope.Pointer);
+        minfo = minfoNative;
+        return nativeResult != 0;
+    }
+
+    /// <summary>The <c>gst_video_mastering_display_info_add_to_caps</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_video_mastering_display_info_add_to_caps")]
+    private static partial int GstVideoMasteringDisplayInfoAddToCaps(Gst.Video.VideoMasteringDisplayInfo* minfo, nint caps);
+
+    /// <summary>The <c>gst_video_mastering_display_info_from_caps</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_video_mastering_display_info_from_caps")]
+    private static partial int GstVideoMasteringDisplayInfoFromCaps(Gst.Video.VideoMasteringDisplayInfo* minfo, nint caps);
+
+    /// <summary>The <c>gst_video_mastering_display_info_init</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_video_mastering_display_info_init")]
+    private static partial void GstVideoMasteringDisplayInfoInit(Gst.Video.VideoMasteringDisplayInfo* minfo);
+
+    /// <summary>The <c>gst_video_mastering_display_info_is_equal</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_video_mastering_display_info_is_equal")]
+    private static partial int GstVideoMasteringDisplayInfoIsEqual(Gst.Video.VideoMasteringDisplayInfo* minfo, Gst.Video.VideoMasteringDisplayInfo* other);
+
+    /// <summary>The <c>gst_video_mastering_display_info_to_string</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_video_mastering_display_info_to_string")]
+    private static partial nint GstVideoMasteringDisplayInfoToString(Gst.Video.VideoMasteringDisplayInfo* minfo);
+
+    /// <summary>The <c>gst_video_mastering_display_info_from_string</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_video_mastering_display_info_from_string")]
+    private static partial int GstVideoMasteringDisplayInfoFromString(Gst.Video.VideoMasteringDisplayInfo* minfo, byte* mastering);
 }

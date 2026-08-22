@@ -171,16 +171,16 @@ public sealed class ClassEmitterTests
     }
 
     [Theory]
-    [InlineData("Gst", 35, 51, 5, 17, 18, 1356, 29, 23, 52)]
+    [InlineData("Gst", 35, 51, 5, 17, 18, 1360, 29, 23, 52)]
     [InlineData("GstBase", 11, 4, 0, 5, 0, 174, 31, 2, 4)]
     [InlineData("GstApp", 2, 2, 0, 8, 0, 62, 36, 8, 0)]
     [InlineData("GstAudio", 14, 17, 1, 2, 2, 199, 32, 0, 38)]
-    [InlineData("GstVideo", 12, 42, 5, 0, 9, 337, 14, 2, 80)]
+    [InlineData("GstVideo", 12, 42, 5, 0, 9, 362, 14, 2, 80)]
     [InlineData("GstPbutils", 14, 1, 0, 0, 1, 172, 5, 3, 0)]
     [InlineData("GstSdp", 1, 21, 0, 0, 0, 162, 0, 0, 25)]
     [InlineData("GstWebRTC", 9, 4, 0, 1, 2, 37, 38, 6, 6)]
     [InlineData("GstNet", 5, 3, 0, 1, 0, 22, 17, 0, 2)]
-    [InlineData("GstRtsp", 1, 10, 1, 1, 2, 110, 0, 1, 14)]
+    [InlineData("GstRtsp", 1, 10, 1, 1, 2, 113, 0, 1, 14)]
     [InlineData("GES", 56, 2, 2, 0, 3, 367, 77, 29, 7)]
     public void TheEmissionCensusIsStable(
         string module,
@@ -212,16 +212,16 @@ public sealed class ClassEmitterTests
     }
 
     [Theory]
-    [InlineData("Gst", 1, 93, 53, 119, 153, 10)]
+    [InlineData("Gst", 1, 93, 53, 119, 149, 10)]
     [InlineData("GstBase", 0, 11, 0, 20, 7, 0)]
     [InlineData("GstApp", 1, 0, 0, 2, 2, 1)]
     [InlineData("GstAudio", 0, 22, 0, 8, 19, 0)]
-    [InlineData("GstVideo", 0, 96, 1, 6, 52, 0)]
+    [InlineData("GstVideo", 0, 96, 1, 6, 27, 0)]
     [InlineData("GstPbutils", 0, 1, 0, 0, 13, 0)]
     [InlineData("GstSdp", 0, 8, 0, 0, 8, 0)]
     [InlineData("GstWebRTC", 0, 2, 0, 0, 6, 0)]
     [InlineData("GstNet", 0, 3, 0, 0, 3, 0)]
-    [InlineData("GstRtsp", 0, 15, 0, 0, 19, 0)]
+    [InlineData("GstRtsp", 0, 13, 0, 0, 14, 0)]
     [InlineData("GES", 6, 3, 4, 10, 39, 2)]
     public void TheSkipCensusIsStable(
         string module,
@@ -634,7 +634,12 @@ public sealed class ClassEmitterTests
     /// binding that used to be emitted and corrupt memory.
     /// </summary>
     /// <param name="module">The gir namespace to read.</param>
-    /// <param name="overlaySkip">Callables that fixups.json lists.</param>
+    /// <param name="overlaySkip">Callables that fixups.json lists. The five of
+    /// GstRtsp count gst_rtsp_range_parse and gst_rtsp_range_free twice each,
+    /// because both exist as a function of the record and as a namespace level
+    /// function that used to be counted under MovedTo; the overlay skip is
+    /// tested before the move, so skip-report.md lists the two identifiers
+    /// once and this census counts both of their declarations.</param>
     /// <param name="callerAllocates">Callables with unusable caller allocated storage.</param>
     /// <param name="lifetime">Callables that release or reference their instance.</param>
     /// <param name="instanceTransfer">Callables that consume their instance and replace it.</param>
@@ -650,7 +655,7 @@ public sealed class ClassEmitterTests
     [InlineData("GstSdp", 4, 0, 1, 0, 0, 0)]
     [InlineData("GstWebRTC", 1, 0, 4, 0, 4, 0)]
     [InlineData("GstNet", 0, 0, 1, 0, 0, 0)]
-    [InlineData("GstRtsp", 5, 0, 3, 0, 0, 0)]
+    [InlineData("GstRtsp", 9, 0, 3, 0, 0, 0)]
     [InlineData("GES", 3, 0, 1, 0, 0, 2)]
     public void TheRejectionCensusIsStable(
         string module,

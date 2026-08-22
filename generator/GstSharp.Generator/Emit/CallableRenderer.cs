@@ -31,6 +31,9 @@ internal static class CallableRenderer
     /// <summary>The local that holds the raw handle of the instance.</summary>
     private const string InstanceLocal = "instanceHandle";
 
+    /// <summary>The pinned pointer to the instance of a value projected structure.</summary>
+    private const string ValueInstanceLocal = "self";
+
     /// <summary>The local that holds the converted return value.</summary>
     private const string ConvertedLocal = "result";
 
@@ -66,6 +69,17 @@ internal static class CallableRenderer
         "Must be an initialised instance; the call updates it in place.",
     ];
 
+    /// <summary>
+    /// What the documentation of a <c>ToString</c> that the C side may answer
+    /// <c>NULL</c> to says, because the member hands out the empty string
+    /// rather than a null reference.
+    /// </summary>
+    private static readonly string[] EmptyStringNote =
+    [
+        "The empty string when the C function has no representation to hand out,",
+        "which is what the default value of this structure is.",
+    ];
+
     /// <summary>Writes the public member of a plan.</summary>
     /// <param name="writer">The target writer.</param>
     /// <param name="plan">The plan to write.</param>
@@ -80,11 +94,67 @@ internal static class CallableRenderer
             : plan.Form == CallableForm.InstanceMethod
                 ? "public " + hiding
                 : "public static " + hiding;
-        writer.WriteLine(modifiers + plan.Return.PublicType + " " + plan.Name + "(" + Parameters(plan) + ")");
+        writer.WriteLine(
+            modifiers + ReadOnlyModifier(plan) + ReturnType(plan) + " " + plan.Name
+            + "(" + Parameters(plan) + ")");
         writer.OpenBlock();
         WriteBody(writer, plan);
         writer.CloseBlock();
     }
+
+    /// <summary>
+    /// Returns the <c>readonly</c> modifier of a method of a value projected
+    /// structure whose instance the gir spells <c>const</c>, and nothing for
+    /// every other member.
+    /// </summary>
+    /// <param name="plan">The member being written.</param>
+    /// <returns>The modifier, with its trailing space, or the empty string.</returns>
+    /// <remarks>
+    /// A <c>readonly</c> member states that the call does not write through
+    /// the instance, which is what lets a caller invoke it on a readonly field
+    /// without the compiler making a defensive copy first. The gir carries the
+    /// fact in the <c>c:type</c> of the instance parameter, so the const-ness
+    /// of the C signature is what decides it; a non-const instance stays
+    /// writable even when the implementation happens not to write.
+    /// </remarks>
+    private static string ReadOnlyModifier(MarshalPlan plan) =>
+        HasConstValueInstance(plan) ? "readonly " : string.Empty;
+
+    /// <summary>
+    /// Tests whether a member is called on a value projected structure the C
+    /// function only reads.
+    /// </summary>
+    /// <param name="plan">The member being written.</param>
+    /// <returns><see langword="true"/> when the instance is a <c>const</c> pointer.</returns>
+    private static bool HasConstValueInstance(MarshalPlan plan)
+    {
+        foreach (ArgumentPlan argument in plan.Arguments)
+        {
+            if (argument.Kind == ArgumentKind.ValueInstance)
+            {
+                return IsConstInstance(plan);
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>Tests whether the gir spells the instance parameter <c>const</c>.</summary>
+    /// <param name="plan">The member being written.</param>
+    /// <returns><see langword="true"/> when the C type leads with <c>const</c>.</returns>
+    private static bool IsConstInstance(MarshalPlan plan) =>
+        plan.Callable.InstanceParameter?.Type.CType?.StartsWith("const ", StringComparison.Ordinal) ?? false;
+
+    /// <summary>
+    /// Returns the declared return type of a member, which is the planned one
+    /// except for the <c>ToString</c> of a structure that answers
+    /// <see langword="null"/>: it hands out the empty string instead, so it is
+    /// declared non-nullable.
+    /// </summary>
+    /// <param name="plan">The member being written.</param>
+    /// <returns>The C# type of the return value.</returns>
+    private static string ReturnType(MarshalPlan plan) =>
+        plan.ReturnsEmptyOnNull ? TrimNullable(plan.Return.PublicType) : plan.Return.PublicType;
 
     /// <summary>Writes the <c>LibraryImport</c> declaration of a plan.</summary>
     /// <param name="writer">The target writer.</param>
@@ -305,11 +375,14 @@ internal static class CallableRenderer
 
         if (!plan.Return.IsVoid)
         {
+            IReadOnlyList<string>? returnNote = plan.ReturnsEmptyOnNull
+                ? EmptyStringNote
+                : AdoptsWrapper(plan.Return) ? AdoptedWrapperNote : GValueReturnNote(plan.Return);
             XmlDocWriter.WriteReturns(
                 writer,
                 plan.Return.Doc,
                 "The result of <c>" + cType + "</c>.",
-                AdoptsWrapper(plan.Return) ? AdoptedWrapperNote : GValueReturnNote(plan.Return));
+                returnNote);
         }
 
         WriteConsumptionExceptions(writer, plan);
@@ -515,6 +588,75 @@ internal static class CallableRenderer
         ["gst_structure_id_str_set_value"] = "The structure has to be writable.",
         ["gst_structure_set_array"] = "The structure has to be writable.",
         ["gst_structure_set_list"] = "The structure has to be writable.",
+        ["gst_video_content_light_level_add_to_caps"] = "The caps have to be writable.",
+        ["gst_video_mastering_display_info_add_to_caps"] = "The caps have to be writable.",
+    };
+
+    /// <summary>
+    /// The entry points that take a writable pointer to the structure they are
+    /// called on and do not write through it. The C signature is what the
+    /// <c>readonly</c> modifier follows, so these stay writable members; what
+    /// they must not carry is the sentence that says they mutate. The C of
+    /// <c>gst_map_info_get_data</c> spells its instance a plain
+    /// <c>GstMapInfo*</c> for a read that never writes, which is a signature
+    /// the upstream report backlog carries alongside the two GstRTSPRange
+    /// annotations that fixups.json corrects.
+    /// </summary>
+    private static readonly HashSet<string> NonMutatingValueTargets = new(StringComparer.Ordinal)
+    {
+        "gst_map_info_get_data",
+    };
+
+    /// <summary>
+    /// What a member of a value projected structure documents beyond the
+    /// mutation sentence: the state the instance is left in when the call
+    /// fails, and the lifetimes a call ties together. None of it is in the gir,
+    /// and each entry was read off the C implementation.
+    /// </summary>
+    private static readonly Dictionary<string, string[]> ValueStructRemarks = new(StringComparer.Ordinal)
+    {
+        ["gst_video_colorimetry_from_string"] =
+        [
+            "A string the parser does not accept answers <see langword=\"false\"/> and leaves",
+            "this instance exactly as it was.",
+        ],
+        ["gst_video_mastering_display_info_from_string"] =
+        [
+            "A string the parser does not accept answers <see langword=\"false\"/> and leaves",
+            "<paramref name=\"minfo\"/> zeroed.",
+        ],
+        ["gst_video_content_light_level_from_string"] =
+        [
+            "A string the parser does not accept answers <see langword=\"false\"/> and leaves",
+            "this instance zeroed.",
+        ],
+        ["gst_video_mastering_display_info_from_caps"] =
+        [
+            "When the caps carry no such information the call answers",
+            "<see langword=\"false\"/> and the contents of this instance are unspecified:",
+            "the C function leaves it untouched or zeroed depending on how far the read",
+            "got. Read it only after the call answered <see langword=\"true\"/>.",
+        ],
+        ["gst_video_content_light_level_from_caps"] =
+        [
+            "When the caps carry no such information the call answers",
+            "<see langword=\"false\"/> and the contents of this instance are unspecified:",
+            "the C function leaves it untouched or zeroed depending on how far the read",
+            "got. Read it only after the call answered <see langword=\"true\"/>.",
+        ],
+        ["gst_video_meta_transform_matrix_init"] =
+        [
+            "The matrix stores the two <see cref=\"Gst.Video.VideoInfo\"/> pointers rather",
+            "than copies of what they describe, so both wrappers have to stay alive and",
+            "undisposed for as long as the matrix is used.",
+        ],
+        ["gst_map_info_clear"] =
+        [
+            "This is a full unmap and does the same as",
+            "<see cref=\"Gst.Memory.Unmap(Gst.MapInfo)\"/>. Never call it on the mapping a",
+            "<c>Gst.Buffer.MapScope</c> holds: that scope unmaps what it mapped when it is",
+            "disposed, and a second unmap releases a reference nobody owns.",
+        ],
     };
 
     /// <summary>
@@ -564,8 +706,9 @@ internal static class CallableRenderer
     /// <summary>
     /// Returns every generator authored remarks paragraph of a member: the
     /// consumption contract of its consumed arguments, the writability
-    /// requirement of the entry points that have one, and the behaviour note of
-    /// the members of a fundamental value container.
+    /// requirement of the entry points that have one, the behaviour note of the
+    /// members of a fundamental value container, and what a member of a value
+    /// projected structure does to the instance it is called on.
     /// </summary>
     /// <param name="plan">The member being documented.</param>
     /// <returns>The paragraphs, or <see langword="null"/> when there are none.</returns>
@@ -590,7 +733,42 @@ internal static class CallableRenderer
             lines.AddRange(container);
         }
 
+        if (MutatesValueInstance(plan))
+        {
+            lines.Add("<para>");
+            lines.Add("Mutates this instance; call it on a variable, not on a copy returned by a");
+            lines.Add("property.");
+            lines.Add("</para>");
+        }
+
+        if (ValueStructRemarks.TryGetValue(plan.EntryPoint, out string[]? note))
+        {
+            lines.Add("<para>");
+            lines.AddRange(note);
+            lines.Add("</para>");
+        }
+
         return lines.Count == 0 ? null : lines;
+    }
+
+    /// <summary>
+    /// Tests whether a member writes through the value projected structure it
+    /// is called on, which a caller has to be told because a C# structure is
+    /// copied by every assignment and by every property that hands one out.
+    /// </summary>
+    /// <param name="plan">The member being documented.</param>
+    /// <returns><see langword="true"/> when the member mutates the instance.</returns>
+    private static bool MutatesValueInstance(MarshalPlan plan)
+    {
+        foreach (ArgumentPlan argument in plan.Arguments)
+        {
+            if (argument.Kind == ArgumentKind.ValueInstance)
+            {
+                return !IsConstInstance(plan) && !NonMutatingValueTargets.Contains(plan.EntryPoint);
+            }
+        }
+
+        return false;
     }
 
     /// <summary>
@@ -805,7 +983,22 @@ internal static class CallableRenderer
         List<ArgumentPlan> scopes = [];
         foreach (ArgumentPlan argument in plan.Arguments)
         {
-            if (argument.Kind == ArgumentKind.Span)
+            if (argument.Kind == ArgumentKind.ValueInstance)
+            {
+                // The instance is the caller's own storage, which may be a
+                // field of a heap object, so the address only holds while a
+                // fixed scope does. A readonly member cannot take the address
+                // of `this` directly, and Unsafe.AsRef is what turns the
+                // readonly reference back into the writable one the fixed
+                // statement needs; the member still writes nothing.
+                string storage = IsConstInstance(plan)
+                    ? "System.Runtime.CompilerServices.Unsafe.AsRef(in this)"
+                    : "this";
+                writer.WriteLine("fixed (" + argument.RawType + " " + ValueInstanceLocal + " = &" + storage + ")");
+                writer.OpenBlock();
+                scopes.Add(argument);
+            }
+            else if (argument.Kind == ArgumentKind.Span)
             {
                 writer.WriteLine(
                     "fixed (" + argument.RawType + " " + argument.Name + "Pointer = " + argument.Name + ")");
@@ -1133,6 +1326,11 @@ internal static class CallableRenderer
 
                 return;
 
+            // The instance of a value projected structure is `this`, which a
+            // caller cannot pass as null and no wrapper can have disposed.
+            case ArgumentKind.ValueInstance:
+                return;
+
             case ArgumentKind.Utf8 when argument.Direction == ArgumentDirection.In:
             case ArgumentKind.Utf8Owned:
             case ArgumentKind.Handle when argument.Direction == ArgumentDirection.In:
@@ -1196,6 +1394,11 @@ internal static class CallableRenderer
         {
             case ArgumentKind.Instance:
                 writer.WriteLine("nint " + InstanceLocal + " = " + InstanceHandle(plan, argument.Name) + ";");
+                return;
+
+            // There is no handle to read: the pointer is taken by the fixed
+            // scope that wraps the call, which is opened after the prologue.
+            case ArgumentKind.ValueInstance:
                 return;
 
             case ArgumentKind.Handle when argument.Direction == ArgumentDirection.In:
@@ -1274,6 +1477,9 @@ internal static class CallableRenderer
                     writer.WriteLine("nint " + InstanceLocal + " = " + InstanceHandle(plan, name) + ";");
                 }
 
+                return;
+
+            case ArgumentKind.ValueInstance:
                 return;
 
             case ArgumentKind.Error:
@@ -1385,6 +1591,9 @@ internal static class CallableRenderer
                 return TakesCallback(plan) || MaterializesArguments(plan)
                     ? InstanceLocal
                     : InstanceHandle(plan, name);
+
+            case ArgumentKind.ValueInstance:
+                return ValueInstanceLocal;
 
             case ArgumentKind.Error:
                 return "&errorNative";
@@ -1621,6 +1830,16 @@ internal static class CallableRenderer
         };
 
         string expression = FromNative(projection, ResultLocal);
+        if (plan.ReturnsEmptyOnNull)
+        {
+            // The C function answers NULL for a structure it cannot describe,
+            // and the default of a struct is such a value. object.ToString has
+            // to answer something for every instance, so the empty string is
+            // what a description that does not exist reads as.
+            writer.WriteLine("return " + expression + " ?? string.Empty;");
+            return;
+        }
+
         bool needsCheck = !value.IsNullable
             && value.Kind is ArgumentKind.Handle or ArgumentKind.Utf8 or ArgumentKind.Strv;
 

@@ -28,6 +28,16 @@ internal enum ArgumentKind
     /// <summary>The instance the method is called on.</summary>
     Instance,
 
+    /// <summary>
+    /// The instance a method of a value projected structure is called on. The
+    /// C function takes a pointer to the structure and the public surface has
+    /// no wrapper to read a handle out of, so the address is the address of
+    /// <c>this</c>, pinned by a <c>fixed</c> scope that wraps the call. The
+    /// argument is never visible, and the member is <c>readonly</c> when the
+    /// gir spells the instance <c>const</c>.
+    /// </summary>
+    ValueInstance,
+
     /// <summary>Passed through unchanged.</summary>
     Value,
 
@@ -409,4 +419,18 @@ internal sealed class MarshalPlan
     /// what keeps the compiler quiet.
     /// </summary>
     internal bool IsNew { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether a <see langword="null"/> return
+    /// is handed out as the empty string, which makes the member non-nullable.
+    /// </summary>
+    /// <remarks>
+    /// Only the <c>ToString</c> of a value projected structure sets it. The C
+    /// function answers <c>NULL</c> for a structure it cannot describe — the
+    /// <c>default</c> of the struct is exactly such a value — and
+    /// <c>object.ToString</c> is the one member a caller may reach on any
+    /// instance, so it must not throw and it must not hand out
+    /// <see langword="null"/> from a signature that is not nullable.
+    /// </remarks>
+    internal bool ReturnsEmptyOnNull { get; set; }
 }

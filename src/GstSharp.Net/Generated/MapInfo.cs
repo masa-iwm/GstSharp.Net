@@ -3,6 +3,7 @@
 
 #nullable enable
 
+using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -20,7 +21,7 @@ namespace Gst;
 /// </para>
 /// </remarks>
 [StructLayout(LayoutKind.Sequential)]
-public partial struct MapInfo
+public unsafe partial struct MapInfo
 {
     /// <summary>a pointer to the mapped memory</summary>
     public nint MemoryPtr;
@@ -59,4 +60,75 @@ public partial struct MapInfo
     {
         private nint _element0;
     }
+
+    /// <summary>Release the memory obtained with gst_memory_map()</summary>
+    /// <remarks>
+    /// <para>
+    /// Mutates this instance; call it on a variable, not on a copy returned by a
+    /// property.
+    /// </para>
+    /// <para>
+    /// This is a full unmap and does the same as
+    /// <see cref="Gst.Memory.Unmap(Gst.MapInfo)"/>. Never call it on the mapping a
+    /// <c>Gst.Buffer.MapScope</c> holds: that scope unmaps what it mapped when it is
+    /// disposed, and a second unmap releases a reference nobody owns.
+    /// </para>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
+    public void Clear()
+    {
+        fixed (Gst.MapInfo* self = &this)
+        {
+            GstMapInfoClear(self);
+        }
+    }
+
+    /// <summary>The <c>gst_map_info_get_data</c> function.</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
+    /// <returns>Data of @info.</returns>
+    public byte[]? GetData()
+    {
+        nuint sizeNative = default;
+        fixed (Gst.MapInfo* self = &this)
+        {
+            nint nativeResult = GstMapInfoGetData(self, &sizeNative);
+            byte[]? result = null;
+            if (nativeResult != 0)
+            {
+                result = new byte[(int)sizeNative];
+                new System.ReadOnlySpan<byte>((void*)nativeResult, (int)sizeNative).CopyTo(result);
+            }
+            return result;
+        }
+    }
+
+    /// <summary>Initializes @info.</summary>
+    /// <remarks>
+    /// <para>
+    /// Mutates this instance; call it on a variable, not on a copy returned by a
+    /// property.
+    /// </para>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
+    public void Init()
+    {
+        fixed (Gst.MapInfo* self = &this)
+        {
+            GstMapInfoInit(self);
+        }
+    }
+
+    /// <summary>The <c>gst_map_info_clear</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_map_info_clear")]
+    private static partial void GstMapInfoClear(Gst.MapInfo* info);
+
+    /// <summary>The <c>gst_map_info_get_data</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_map_info_get_data")]
+    private static partial nint GstMapInfoGetData(Gst.MapInfo* info, nuint* size);
+
+    /// <summary>The <c>gst_map_info_init</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_map_info_init")]
+    private static partial void GstMapInfoInit(Gst.MapInfo* info);
 }

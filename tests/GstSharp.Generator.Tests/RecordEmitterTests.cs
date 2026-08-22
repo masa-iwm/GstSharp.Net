@@ -896,7 +896,10 @@ public sealed class RecordEmitterTests
     {
         string source = Source("MapInfo");
 
-        Assert.Contains("[StructLayout(LayoutKind.Sequential)]\npublic partial struct MapInfo\n", source, StringComparison.Ordinal);
+        Assert.Contains(
+            "[StructLayout(LayoutKind.Sequential)]\npublic unsafe partial struct MapInfo\n",
+            source,
+            StringComparison.Ordinal);
         Assert.Equal(
             [
                 "public nint MemoryPtr;",
@@ -1051,8 +1054,11 @@ public sealed class RecordEmitterTests
         // GstDebugCategory, the five metadata structures of the module and the
         // two static template structures are forced behind a pointer by
         // fixups.json, so the module carries eight plain structs fewer than the
-        // gir would give.
-        Assert.Equal(6, Count(files, "\npublic partial struct "));
+        // gir would give. GstMapInfo and GstPollFD carry bound methods, so
+        // their declarations are unsafe: the entry point behind a member of a
+        // value projected structure takes a pointer to the structure itself.
+        Assert.Equal(4, Count(files, "\npublic partial struct "));
+        Assert.Equal(2, Count(files, "\npublic unsafe partial struct "));
 
         // Nine mini object mirrors and twenty of a boxed or an opaque record:
         // every wrapper of the module whose gir declares a field the layout
@@ -1133,7 +1139,7 @@ public sealed class RecordEmitterTests
         // The ranges it embeds by value keep their value projection; forcing
         // one of them behind a pointer would demote the transport again.
         Assert.Contains(
-            "public partial struct RTSPRange",
+            "public unsafe partial struct RTSPRange",
             SourceOf("GstSharp.Net.Rtsp/Generated/RTSPRange.cs"),
             StringComparison.Ordinal);
         Assert.Contains(
@@ -1357,9 +1363,13 @@ public sealed class RecordEmitterTests
                 continue;
             }
 
+            // The entry points of the members a value projected structure
+            // carries sit at the same level and end in a semicolon too; they
+            // are declarations rather than storage.
             string trimmed = line.Trim();
             if ((trimmed.StartsWith("public ", StringComparison.Ordinal)
                     || trimmed.StartsWith("private ", StringComparison.Ordinal))
+                && !trimmed.StartsWith("private static partial ", StringComparison.Ordinal)
                 && trimmed.EndsWith(';'))
             {
                 fields.Add(trimmed);

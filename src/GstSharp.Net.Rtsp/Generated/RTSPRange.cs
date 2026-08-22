@@ -3,17 +3,82 @@
 
 #nullable enable
 
+using System;
 using System.Runtime.InteropServices;
 
 namespace Gst.Rtsp;
 
 /// <summary>Provides helper functions to deal with time ranges.</summary>
 [StructLayout(LayoutKind.Sequential)]
-public partial struct RTSPRange
+public unsafe partial struct RTSPRange
 {
     /// <summary>minimum value of the range</summary>
     public int Min;
 
     /// <summary>maximum value of the range</summary>
     public int Max;
+
+    /// <summary>
+    /// Converts the range in-place between different types of units.
+    /// Ranges containing the special value #GST_RTSP_TIME_NOW can not be
+    /// converted as these are only valid for #GST_RTSP_RANGE_NPT.
+    /// </summary>
+    /// <param name="range">The <c>range</c> argument.</param>
+    /// <param name="unit">The <c>unit</c> argument.</param>
+    /// <returns>%TRUE if the range could be converted</returns>
+    public static bool ConvertUnits(ref Gst.Rtsp.RTSPTimeRange range, Gst.Rtsp.RTSPRangeUnit unit)
+    {
+        Gst.Rtsp.RTSPTimeRange rangeNative = range;
+        int nativeResult = GstRtspRangeConvertUnits(&rangeNative, (int)unit);
+        range = rangeNative;
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Retrieve the minimum and maximum values from @range converted to
+    /// #GstClockTime in @min and @max.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// A value of %GST_CLOCK_TIME_NONE will be used to signal #GST_RTSP_TIME_NOW
+    /// and #GST_RTSP_TIME_END for @min and @max respectively.
+    /// </para>
+    /// <para>UTC times will be converted to nanoseconds since 1900.</para>
+    /// </remarks>
+    /// <param name="range">The <c>range</c> argument.</param>
+    /// <param name="min">The <c>min</c> argument.</param>
+    /// <param name="max">The <c>max</c> argument.</param>
+    /// <returns>%TRUE on success.</returns>
+    public static bool GetTimes(Gst.Rtsp.RTSPTimeRange range, out Gst.ClockTime min, out Gst.ClockTime max)
+    {
+        Gst.Rtsp.RTSPTimeRange rangeNative = range;
+        ulong minNative = default;
+        ulong maxNative = default;
+        int nativeResult = GstRtspRangeGetTimes(&rangeNative, &minNative, &maxNative);
+        min = new Gst.ClockTime(minNative);
+        max = new Gst.ClockTime(maxNative);
+        return nativeResult != 0;
+    }
+
+    /// <summary>Convert @range into a string representation.</summary>
+    /// <param name="range">The <c>range</c> argument.</param>
+    /// <returns>The string representation of @range. g_free() after usage.</returns>
+    public static string? ToString(Gst.Rtsp.RTSPTimeRange range)
+    {
+        Gst.Rtsp.RTSPTimeRange rangeNative = range;
+        nint nativeResult = GstRtspRangeToString(&rangeNative);
+        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
+    }
+
+    /// <summary>The <c>gst_rtsp_range_convert_units</c> entry point.</summary>
+    [LibraryImport("GstRtsp", EntryPoint = "gst_rtsp_range_convert_units")]
+    private static partial int GstRtspRangeConvertUnits(Gst.Rtsp.RTSPTimeRange* range, int unit);
+
+    /// <summary>The <c>gst_rtsp_range_get_times</c> entry point.</summary>
+    [LibraryImport("GstRtsp", EntryPoint = "gst_rtsp_range_get_times")]
+    private static partial int GstRtspRangeGetTimes(Gst.Rtsp.RTSPTimeRange* range, ulong* min, ulong* max);
+
+    /// <summary>The <c>gst_rtsp_range_to_string</c> entry point.</summary>
+    [LibraryImport("GstRtsp", EntryPoint = "gst_rtsp_range_to_string")]
+    private static partial nint GstRtspRangeToString(Gst.Rtsp.RTSPTimeRange* range);
 }
