@@ -11,6 +11,18 @@ namespace Gst;
 /// <summary>The functions of the <c>Gst</c> namespace that belong to no type.</summary>
 public static unsafe partial class Global
 {
+    /// <summary>Calls @func from another thread and passes @user_data to it.</summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
+    /// <param name="func">function to call asynchronously from another thread</param>
+    public static void CallAsync(Gst.CallAsyncFunc func)
+    {
+        ArgumentNullException.ThrowIfNull(func);
+        Gst.Interop.CallbackHandle funcState = Gst.Interop.CallbackHandle.Alloc(func);
+        GstCallAsync(Gst.CallAsyncFuncTrampoline.Pointer, funcState.UserData);
+    }
+
     /// <summary>
     /// Applications might want to check if the runtime GStreamer version is greater
     /// or equal to the version specified using @major, @minor and @micro.
@@ -3405,6 +3417,10 @@ public static unsafe partial class Global
         return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
             ?? throw new InvalidOperationException("gst_version_string returned no value.");
     }
+
+    /// <summary>The <c>gst_call_async</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_call_async")]
+    private static partial void GstCallAsync(nint func, nint userData);
 
     /// <summary>The <c>gst_check_version</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_check_version")]

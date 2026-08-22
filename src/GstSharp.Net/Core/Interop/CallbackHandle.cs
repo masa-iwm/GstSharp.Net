@@ -26,6 +26,12 @@ public enum CallbackScope
     /// the destroy notification that releases the state.
     /// </summary>
     Notified,
+
+    /// <summary>
+    /// The callback is invoked for the life of the process and its state is
+    /// never released.
+    /// </summary>
+    Forever,
 }
 
 /// <summary>
@@ -56,6 +62,20 @@ public readonly unsafe struct CallbackHandle : IEquatable<CallbackHandle>
     /// <see cref="CallbackHandle"/>.
     /// </summary>
     public static delegate* unmanaged[Cdecl]<nint, nint, void> ClosureNotify => &ClosureNotifyTrampoline;
+
+    /// <summary>
+    /// Gets the <c>GDestroyNotify</c> that runs the state of a
+    /// <see cref="CallbackHandle"/> and releases it again.
+    /// </summary>
+    /// <remarks>
+    /// It is the notification the zero copy members hand over: the state is an
+    /// <see cref="Action"/> the caller wrote, native code runs it when it is
+    /// done with the memory the caller lent it, and the handle that carried it
+    /// is freed by the same invocation. <see cref="DestroyNotify"/> is the
+    /// other half of the pair and releases the state without running it, which
+    /// is what a callback of the notified scope needs.
+    /// </remarks>
+    public static delegate* unmanaged[Cdecl]<nint, void> InvokeAndFreeNotify => &InvokeAndFreeNotifyTrampoline;
 
     /// <summary>
     /// Gets the pointer that is passed to native code as <c>user_data</c>.
@@ -148,6 +168,23 @@ public readonly unsafe struct CallbackHandle : IEquatable<CallbackHandle>
         catch (Exception exception)
         {
             ExceptionTrap.Report(exception);
+        }
+    }
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static void InvokeAndFreeNotifyTrampoline(nint userData)
+    {
+        try
+        {
+            GetState<Action>(userData)?.Invoke();
+        }
+        catch (Exception exception)
+        {
+            ExceptionTrap.Report(exception);
+        }
+        finally
+        {
+            FromUserData(userData).Free();
         }
     }
 

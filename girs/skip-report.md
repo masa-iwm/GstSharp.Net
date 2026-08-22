@@ -382,10 +382,11 @@ disappears shows up here as an added line.
 - `gst_tag_setter_add_tag_valist`
 - `gst_tag_setter_add_tag_valist_values`
 
-### OverlaySkip (40)
+### OverlaySkip (47)
 
 - `gst_allocator_free`
 - `gst_buffer_extract`
+- `gst_buffer_new_wrapped_full`
 - `gst_buffer_pool_release_buffer`
 - `gst_buffer_pool_set_config`
 - `gst_buffer_remove_meta`
@@ -394,6 +395,7 @@ disappears shows up here as an added line.
 - `gst_caps_features_new_single_static_str`
 - `gst_caps_new_static_str_empty_simple`
 - `gst_caps_set_value_static_str`
+- `gst_debug_remove_log_function`
 - `gst_element_post_message`
 - `gst_element_send_event`
 - `gst_event_new_custom`
@@ -401,11 +403,13 @@ disappears shows up here as an added line.
 - `gst_id_str_set_static_str`
 - `gst_id_str_set_static_str_with_len`
 - `gst_iterator_next`
+- `gst_memory_new_wrapped`
 - `gst_message_new_application`
 - `gst_message_new_custom`
 - `gst_meta_info_register`
 - `gst_pad_push_event`
 - `gst_pad_send_event`
+- `gst_plugin_register_static`
 - `gst_promise_reply`
 - `gst_query_new_custom`
 - `gst_query_parse_nth_allocation_param`
@@ -418,9 +422,12 @@ disappears shows up here as an added line.
 - `gst_tag_list_add_value`
 - `gst_tag_list_copy_value`
 - `gst_tag_list_get_value_index`
+- `gst_task_pool_push`
 - `gst_toc_append_entry`
 - `gst_toc_entry_append_sub_entry`
+- `gst_tracing_register_hook`
 - `gst_type_find_peek`
+- `gst_util_array_binary_search`
 - `gst_value_compare`
 - `gst_value_serialize`
 - `gst_value_unique_list_prepend_value`
@@ -437,7 +444,7 @@ disappears shows up here as an added line.
 
 - `gst_bus_add_watch`
 
-### UnsupportedSignature (120)
+### UnsupportedSignature (111)
 
 - `Gst.Bus:enable-async`
 - `gst_buffer_foreach_meta`
@@ -446,15 +453,12 @@ disappears shows up here as an added line.
 - `gst_buffer_list_take`
 - `gst_buffer_new_wrapped`
 - `gst_buffer_new_wrapped_bytes`
-- `gst_buffer_new_wrapped_full`
 - `gst_bus_create_watch`
 - `gst_bus_get_pollfd`
-- `gst_call_async`
 - `gst_child_proxy_lookup`
 - `gst_context_replace`
 - `gst_control_binding_get_g_value_array`
 - `gst_debug_get_all_categories`
-- `gst_debug_remove_log_function`
 - `gst_element_factory_create_with_properties`
 - `gst_element_factory_list_filter`
 - `gst_element_factory_make_with_properties`
@@ -468,7 +472,6 @@ disappears shows up here as an added line.
 - `gst_iterator_find_custom`
 - `gst_iterator_fold`
 - `gst_iterator_foreach`
-- `gst_memory_new_wrapped`
 - `gst_message_new_error`
 - `gst_message_new_error_with_details`
 - `gst_message_new_info`
@@ -501,7 +504,6 @@ disappears shows up here as an added line.
 - `gst_mini_object_unref`
 - `gst_mini_object_weak_ref`
 - `gst_mini_object_weak_unref`
-- `gst_object_call_async`
 - `gst_object_check_uniqueness`
 - `gst_object_default_deep_notify`
 - `gst_object_default_error`
@@ -525,7 +527,6 @@ disappears shows up here as an added line.
 - `gst_plugin_feature_list_debug`
 - `gst_plugin_feature_list_free`
 - `gst_plugin_list_free`
-- `gst_plugin_register_static`
 - `gst_poll_get_read_gpollfd`
 - `gst_query_take`
 - `gst_structure_filter_and_map_in_place`
@@ -543,18 +544,15 @@ disappears shows up here as an added line.
 - `gst_tag_list_get_date_index`
 - `gst_tag_list_replace`
 - `gst_tag_list_take`
-- `gst_task_pool_push`
 - `gst_task_set_enter_callback`
 - `gst_task_set_leave_callback`
 - `gst_task_set_lock`
-- `gst_tracing_register_hook`
 - `gst_uri_get_media_fragment_table`
 - `gst_uri_get_query_string_ordered`
 - `gst_uri_get_query_table`
 - `gst_uri_set_path_segments`
 - `gst_uri_set_query_table`
 - `gst_uri_to_string_with_keys`
-- `gst_util_array_binary_search`
 - `gst_value_array_append_and_take_value`
 - `gst_value_deserialize_with_pspec`
 - `gst_value_list_append_and_take_value`
@@ -777,22 +775,22 @@ disappears shows up here as an added line.
 - `gst_type_find_data_get_typefind`
 - `gst_type_find_data_new`
 
-### OverlaySkip (3)
+### OverlaySkip (4)
 
 - `gst_adapter_map`
 - `gst_adapter_take`
 - `gst_adapter_unmap`
+- `gst_collect_pads_add_pad`
 
 ### OwningProperty (2)
 
 - `GstBase.BaseSink:last-sample`
 - `GstBase.BaseSink:stats`
 
-### UnsupportedSignature (7)
+### UnsupportedSignature (6)
 
 - `gst_adapter_copy_bytes`
 - `gst_base_sink_do_preroll`
-- `gst_collect_pads_add_pad`
 - `gst_collect_pads_set_buffer_function`
 - `gst_collect_pads_set_clip_function`
 - `gst_type_find_helper_get_range`
@@ -820,22 +818,22 @@ disappears shows up here as an added line.
 
 - `gst_install_plugins_return_get_name`
 
-### OverlaySkip (1)
+### OverlaySkip (2)
 
 - `gst_encoding_container_profile_add_profile`
+- `gst_install_plugins_async`
 
 ### OwningProperty (1)
 
 - `GstPbutils.EncodingProfile:element-properties`
 
-### UnsupportedSignature (6)
+### UnsupportedSignature (5)
 
 - `GstPbutils.Discoverer::discovered`
 - `gst_discoverer_info_from_variant`
 - `gst_discoverer_info_to_variant`
 - `gst_discoverer_stream_info_list_free`
 - `gst_encoding_target_new`
-- `gst_install_plugins_async`
 
 ## GstRtsp
 
@@ -1043,9 +1041,11 @@ disappears shows up here as an added line.
 - `gst_video_scaler_combine_packed_YUV`
 - `gst_video_scaler_new`
 
-### OverlaySkip (8)
+### OverlaySkip (10)
 
+- `gst_buffer_add_video_gl_texture_upload_meta`
 - `gst_video_blend_scale_linear_RGBA`
+- `gst_video_codec_frame_set_user_data`
 - `gst_video_frame_map`
 - `gst_video_frame_map_id`
 - `gst_video_frame_unmap`
@@ -1054,10 +1054,8 @@ disappears shows up here as an added line.
 - `gst_video_info_from_caps`
 - `gst_video_info_init`
 
-### UnsupportedSignature (8)
+### UnsupportedSignature (6)
 
-- `gst_buffer_add_video_gl_texture_upload_meta`
-- `gst_video_codec_frame_set_user_data`
 - `gst_video_color_primaries_get_info`
 - `gst_video_convert_sample_async`
 - `gst_video_encoder_set_headers`

@@ -258,6 +258,59 @@ element inside such an array is rejected with an `ArgumentException`, because a
 C array of strings ends at the first `NULL` and native code would never see the
 elements behind it.
 
+## Callbacks and the state they carry
+
+A callback that is handed to native code is a `GCHandle` on a delegate, and the
+one question every such member has to answer is who frees that handle. The gir
+answers it with a `scope` annotation, and the binding emits one of four shapes:
+
+| Scope | When the handle is freed | Example |
+| --- | --- | --- |
+| `call` | when the call that received the callback returns | `Gst.Caps.Foreach` |
+| `notified` | by the destroy notification the library runs | `Gst.Element.CallAsync` |
+| `async` | by the single invocation, in the trampoline itself | `Gst.Global.CallAsync` |
+| `forever` | never; one handle is leaked per call | the `Gst.Base.CollectPads` setters |
+
+Only the last one costs the caller anything, and it is not a choice the binding
+made: `gst_collect_pads_set_function` and its four siblings store the function
+pointer for the life of the object and offer nothing that releases the state
+again, so `SetFunction`, `SetCompareFunction`, `SetEventFunction`,
+`SetFlushFunction` and `SetQueryFunction` keep it alive for the life of the
+process. Install those once, at construction; a call per buffer or per state
+change leaks a handle each time. Their documentation says so on the parameter.
+
+### Memory the caller lends to the pipeline
+
+`Gst.Buffer.NewWrappedFull` and `Gst.Memory.NewWrapped` are the reverse
+direction: the caller keeps owning a block of memory and lends it to GStreamer
+without a copy. The contract is the caller's to keep:
+
+* the block has to stay valid, and at the same address, until the `notify`
+  delegate runs — a managed array has to be pinned by a `GCHandle` of its own
+  for exactly that long;
+* `notify` runs once, on an arbitrary streaming thread, whichever one drops the
+  last reference of the memory. It does not run at all if the memory is never
+  released;
+* the range is validated before anything is allocated, because the C functions
+  answer a bad one with a critical warning and a null pointer that
+  `gst_buffer_new_wrapped_full` then dereferences itself. `data` must not be
+  `0`, and `offset` plus `size` must fit into `maxsize`.
+
+`Gst.Video.VideoCodecFrame.SetUserData` is the third member of that family. Its
+notification runs *synchronously* when the slot is written again, so replacing
+one releases the previous state on the calling thread, and `GetUserData` answers
+the binding's own handle rather than something to dereference.
+
+### `CallAsync` on an element
+
+`Gst.Object.CallAsync` and `Gst.Element.CallAsync` are overloads that differ by
+delegate type, `Gst.ObjectCallAsyncFunc` against `Gst.ElementCallAsyncFunc`. A
+lambda written on a `Gst.Element` binds the `Element` overload, because C#
+drops the base type candidate once a derived one applies; reaching the other one
+from an element needs a variable typed `Gst.ObjectCallAsyncFunc`. Both invoke
+the callback exactly once, on a thread of the shared pool, and both release the
+state with that invocation.
+
 ## The two mapping scopes
 
 `Gst.Video.VideoFrame.MapScope` and `Gst.Audio.AudioBuffer.MapScope` are what

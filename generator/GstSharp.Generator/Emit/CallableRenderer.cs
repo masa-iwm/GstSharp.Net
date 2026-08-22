@@ -71,6 +71,33 @@ internal static class CallableRenderer
     ];
 
     /// <summary>
+    /// What the documentation of a callback the library never releases says.
+    /// The gir has no annotation for it, and a caller that installs one per
+    /// buffer has written a leak that nothing else reports.
+    /// </summary>
+    private static readonly string[] ForeverCallbackNote =
+    [
+        "The binding keeps the state of this callback alive for the life of the",
+        "process: the library stores the function pointer and calls it from a",
+        "streaming thread, and it offers no destroy notification to release the",
+        "state again. One handle is leaked per call — install the callback once,",
+        "at construction.",
+    ];
+
+    /// <summary>
+    /// The remarks paragraph of a member that installs a callback of the
+    /// forever scope, which states what replacing it costs.
+    /// </summary>
+    private static readonly string[] ForeverCallbackRemarks =
+    [
+        "<para>",
+        "The callback is installed for the lifetime of the object. Replacing it",
+        "does not release the state of the previous one, so a call per buffer or",
+        "per state change leaks.",
+        "</para>",
+    ];
+
+    /// <summary>
     /// What the documentation of a <c>ToString</c> that the C side may answer
     /// <c>NULL</c> to says, because the member hands out the empty string
     /// rather than a null reference.
@@ -438,6 +465,7 @@ internal static class CallableRenderer
             ArgumentKind.GValue => GValueParamNote(plan, argument),
             ArgumentKind.CallerAllocatedBoxed => CallerAllocatedParamNote(argument),
             ArgumentKind.Span => SpanParamNote(plan, argument),
+            ArgumentKind.Callback when argument.Scope == GirScope.Forever => ForeverCallbackNote,
             _ => null,
         };
     }
@@ -891,6 +919,11 @@ internal static class CallableRenderer
             lines.AddRange(container);
         }
 
+        if (InstallsForeverCallback(plan))
+        {
+            lines.AddRange(ForeverCallbackRemarks);
+        }
+
         if (MutatesValueInstance(plan))
         {
             lines.Add("<para>");
@@ -907,6 +940,32 @@ internal static class CallableRenderer
         }
 
         return lines.Count == 0 ? null : lines;
+    }
+
+    /// <summary>
+    /// Tests whether a member hands over a callback the library never releases
+    /// again.
+    /// </summary>
+    /// <param name="plan">The member being documented.</param>
+    /// <returns><see langword="true"/> when one of its callbacks has the forever scope.</returns>
+    /// <remarks>
+    /// The paragraph is keyed on the scope of the arguments rather than on a
+    /// list of entry points, because the scope is the fact that makes it true:
+    /// every member that installs such a callback leaks one handle per call,
+    /// and a correction that gives a sixth member the same scope has to
+    /// document it without a second edit.
+    /// </remarks>
+    private static bool InstallsForeverCallback(MarshalPlan plan)
+    {
+        foreach (ArgumentPlan argument in plan.Arguments)
+        {
+            if (argument.Kind == ArgumentKind.Callback && argument.Scope == GirScope.Forever)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /// <summary>
@@ -2343,8 +2402,6 @@ internal static class CallableRenderer
         writer.WriteLine(
             "private static " + plan.Return.RawType + " Invoke(" + string.Join(", ", rawParameters) + ")");
         writer.OpenBlock();
-        writer.WriteLine("try");
-        writer.OpenBlock();
 
         string userData = "userData";
         foreach (ArgumentPlan argument in plan.Arguments)
@@ -2354,6 +2411,20 @@ internal static class CallableRenderer
                 userData = argument.Name;
             }
         }
+
+        // A callback of the async scope is invoked once and nothing else ever
+        // releases its state, so the trampoline frees the handle it was called
+        // through. The outer scope covers the early return of a state that
+        // cannot be read as well as the body and the trapped exception; Free
+        // already does nothing to a zero pointer.
+        if (plan.SelfFreeing)
+        {
+            writer.WriteLine("try");
+            writer.OpenBlock();
+        }
+
+        writer.WriteLine("try");
+        writer.OpenBlock();
 
         writer.WriteLine(
             "if (Gst.Interop.CallbackHandle.GetState<" + plan.DelegateType + ">(" + userData
@@ -2433,6 +2504,16 @@ internal static class CallableRenderer
         }
 
         writer.CloseBlock();
+
+        if (plan.SelfFreeing)
+        {
+            writer.CloseBlock();
+            writer.WriteLine("finally");
+            writer.OpenBlock();
+            writer.WriteLine("Gst.Interop.CallbackHandle.FromUserData(" + userData + ").Free();");
+            writer.CloseBlock();
+        }
+
         writer.CloseBlock();
         writer.CloseBlock();
     }

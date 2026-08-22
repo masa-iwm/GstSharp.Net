@@ -59,6 +59,44 @@ internal static unsafe class BusFuncTrampoline
     }
 }
 
+/// <summary>Callback prototype used in #gst_call_async</summary>
+/// <remarks>
+/// <para>Available since GStreamer 1.28.</para>
+/// </remarks>
+public delegate void CallAsyncFunc();
+
+/// <summary>The native entry point of <see cref="Gst.CallAsyncFunc"/>.</summary>
+internal static unsafe class CallAsyncFuncTrampoline
+{
+    /// <summary>Gets the address that is handed to native code.</summary>
+    internal static nint Pointer => (nint)(delegate* unmanaged[Cdecl]<nint, void>)&Invoke;
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static void Invoke(nint userData)
+    {
+        try
+        {
+            try
+            {
+                if (Gst.Interop.CallbackHandle.GetState<Gst.CallAsyncFunc>(userData) is not { } callback)
+                {
+                    return;
+                }
+
+                callback();
+            }
+            catch (Exception exception)
+            {
+                Gst.Interop.ExceptionTrap.Report(exception);
+            }
+        }
+        finally
+        {
+            Gst.Interop.CallbackHandle.FromUserData(userData).Free();
+        }
+    }
+}
+
 /// <summary>
 /// A function that will be called in gst_caps_filter_and_map_in_place().
 /// The function may modify @features and @structure, and both will be
@@ -386,6 +424,47 @@ internal static unsafe class LogFunctionTrampoline
         catch (Exception exception)
         {
             Gst.Interop.ExceptionTrap.Report(exception);
+        }
+    }
+}
+
+/// <summary>Callback prototype used in #gst_object_call_async</summary>
+/// <remarks>
+/// <para>Available since GStreamer 1.28.</para>
+/// </remarks>
+/// <param name="object">A #GstObject this function has been called against</param>
+public delegate void ObjectCallAsyncFunc(Gst.Object @object);
+
+/// <summary>The native entry point of <see cref="Gst.ObjectCallAsyncFunc"/>.</summary>
+internal static unsafe class ObjectCallAsyncFuncTrampoline
+{
+    /// <summary>Gets the address that is handed to native code.</summary>
+    internal static nint Pointer => (nint)(delegate* unmanaged[Cdecl]<nint, nint, void>)&Invoke;
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static void Invoke(nint @object, nint userData)
+    {
+        try
+        {
+            try
+            {
+                if (Gst.Interop.CallbackHandle.GetState<Gst.ObjectCallAsyncFunc>(userData) is not { } callback)
+                {
+                    return;
+                }
+
+                Gst.Object @objectValue = Gst.GObject.Object.FromNative<Gst.Object>(@object, Gst.Interop.Transfer.None)
+                    ?? throw new InvalidOperationException("GstObjectCallAsyncFunc passed no object.");
+                callback(@objectValue);
+            }
+            catch (Exception exception)
+            {
+                Gst.Interop.ExceptionTrap.Report(exception);
+            }
+        }
+        finally
+        {
+            Gst.Interop.CallbackHandle.FromUserData(userData).Free();
         }
     }
 }

@@ -21,6 +21,80 @@ public sealed partial class Buffer
     }
 
     /// <summary>
+    /// Creates a buffer over memory the caller owns, without copying it.
+    /// </summary>
+    /// <param name="flags">
+    /// The flags of the wrapped memory. <see cref="Gst.MemoryFlags.Readonly"/>
+    /// is what keeps the pipeline from writing through the block.
+    /// </param>
+    /// <param name="data">The address of the block, which must not be <c>0</c>.</param>
+    /// <param name="maxsize">How many bytes the block holds.</param>
+    /// <param name="offset">Where the valid data starts inside the block.</param>
+    /// <param name="size">How many valid bytes there are from <paramref name="offset"/> on.</param>
+    /// <param name="notify">
+    /// What to run once the pipeline has released the memory, or
+    /// <see langword="null"/> when the caller releases it some other way.
+    /// </param>
+    /// <returns>The buffer, which the caller owns and disposes.</returns>
+    /// <remarks>
+    /// <para>
+    /// This is <c>gst_buffer_new_wrapped_full</c>, and it is zero copy: the
+    /// buffer reads and writes the very block that is passed in. The caller
+    /// keeps owning that memory and has to keep it alive, and unmoved, until
+    /// <paramref name="notify"/> runs. A managed array therefore has to be
+    /// pinned by a <see cref="System.Runtime.InteropServices.GCHandle"/> of its
+    /// own for exactly that long; a span or an unpinned array cannot stand for
+    /// the block, which is why this is not generated.
+    /// </para>
+    /// <para>
+    /// <paramref name="notify"/> runs on an arbitrary streaming thread —
+    /// whichever one drops the last reference of the memory — and it runs
+    /// exactly once. It is not run at all when the memory is never released,
+    /// which is the case for a buffer that is still alive when the process
+    /// ends.
+    /// </para>
+    /// <para>
+    /// The gir describes <paramref name="data"/> as an array of
+    /// <paramref name="size"/> bytes. That is upstream's own doc comment and it
+    /// is wrong twice over: the block is <paramref name="maxsize"/> bytes, and
+    /// it has to outlive the call.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="data"/> is <c>0</c>, or <paramref name="offset"/> and
+    /// <paramref name="size"/> do not fit into <paramref name="maxsize"/>. The
+    /// C function answers such a call with a critical warning and a null
+    /// pointer that it then dereferences itself, so the binding validates
+    /// before it allocates anything.
+    /// </exception>
+    public static unsafe Buffer NewWrappedFull(
+        Gst.MemoryFlags flags,
+        nint data,
+        nuint maxsize,
+        nuint offset,
+        nuint size,
+        Action? notify)
+    {
+        Gst.Interop.WrappedMemory.ValidateRange(data, maxsize, offset, size);
+
+        Gst.Interop.CallbackHandle state = notify is null
+            ? default
+            : Gst.Interop.CallbackHandle.Alloc(notify);
+
+        nint result = BufferNative.NewWrappedFull(
+            flags,
+            data,
+            maxsize,
+            offset,
+            size,
+            state.UserData,
+            notify is null ? 0 : (nint)Gst.Interop.CallbackHandle.InvokeAndFreeNotify);
+
+        return Gst.Buffer.FromNative(result, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_buffer_new_wrapped_full returned no value.");
+    }
+
+    /// <summary>
     /// Sets the presentation timestamp of the buffer.
     /// </summary>
     /// <param name="pts">

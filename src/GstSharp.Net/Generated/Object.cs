@@ -124,6 +124,23 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
     }
 
     /// <summary>
+    /// Equivalent to gst_element_call_async() but this API allows @func to be called
+    /// with #GstObject. See also gst_element_call_async()
+    /// </summary>
+    /// <remarks>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
+    /// <param name="func">function to call asynchronously from another thread</param>
+    public void CallAsync(Gst.ObjectCallAsyncFunc func)
+    {
+        nint instanceHandle = Handle;
+        ArgumentNullException.ThrowIfNull(func);
+        Gst.Interop.CallbackHandle funcState = Gst.Interop.CallbackHandle.Alloc(func);
+        GstObjectCallAsync(instanceHandle, Gst.ObjectCallAsyncFuncTrampoline.Pointer, funcState.UserData);
+        System.GC.KeepAlive(this);
+    }
+
+    /// <summary>
     /// Gets the corresponding #GstControlBinding for the property. This should be
     /// unreferenced again after use.
     /// </summary>
@@ -550,6 +567,10 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
     /// <summary>The <c>gst_object_add_control_binding</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_object_add_control_binding")]
     private static partial int GstObjectAddControlBinding(nint @object, nint binding);
+
+    /// <summary>The <c>gst_object_call_async</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_object_call_async")]
+    private static partial void GstObjectCallAsync(nint @object, nint func, nint userData);
 
     /// <summary>The <c>gst_object_get_control_binding</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_object_get_control_binding")]

@@ -55,6 +55,26 @@ internal sealed class CallbackPlan
 
     /// <summary>Gets the return value.</summary>
     internal required ReturnPlan Return { get; init; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the trampoline releases the
+    /// state of the callback after it has invoked it.
+    /// </summary>
+    /// <remarks>
+    /// It is a property of the callback type rather than of one call site,
+    /// because one trampoline is emitted per <c>&lt;callback&gt;</c> and every
+    /// site that hands the callback over shares it. A type that is used at an
+    /// asynchronous site is therefore self freeing everywhere, which is why a
+    /// type that is used at both kinds of site is refused rather than emitted.
+    /// </remarks>
+    internal bool SelfFreeing { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the callback is handed to a call
+    /// whose scope is not <c>async</c>, and whose state the trampoline must
+    /// therefore leave alone.
+    /// </summary>
+    internal bool UsedOutsideAsync { get; set; }
 }
 
 /// <summary>
@@ -271,6 +291,16 @@ internal sealed class MarshalPlanner
     private readonly HashSet<string> _consumedArrayOverrides;
 
     /// <summary>
+    /// The callback uses the callable that is being planned has claimed, and
+    /// the scope each of them claimed it under. Claiming a use decides how the
+    /// shared trampoline of the callback type ends, so it is only written to
+    /// the plans once the whole callable has been planned: a callable that a
+    /// later argument or its return value rejects must leave the callback
+    /// types it mentioned exactly as it found them.
+    /// </summary>
+    private readonly List<(CallbackPlan Plan, bool SelfFreeing)> _pendingCallbacks = [];
+
+    /// <summary>
     /// Why the callable that is being planned was rejected, when a rule has a
     /// more precise answer than <see cref="SkipReason.UnsupportedSignature"/>.
     /// The rules run deep inside the projection of a single argument, so the
@@ -337,6 +367,7 @@ internal sealed class MarshalPlanner
         bool ignoreShadowedBy = false)
     {
         _rejection = null;
+        _pendingCallbacks.Clear();
         MarshalPlan? plan = TryPlanCore(callable, form, context, out reason, ignoreShadowedBy);
         if (plan is null && _rejection is { } rejected)
         {
@@ -344,7 +375,35 @@ internal sealed class MarshalPlanner
             ReportRejection(callable, rejected);
         }
 
+        if (plan is not null)
+        {
+            CommitCallbackUses();
+        }
+
+        _pendingCallbacks.Clear();
         return plan;
+    }
+
+    /// <summary>
+    /// Records the callback uses of a callable that could be planned. Nothing
+    /// is written before this point, so a rejected callable leaves no trace on
+    /// the callback types it mentioned.
+    /// </summary>
+    private void CommitCallbackUses()
+    {
+        foreach ((CallbackPlan plan, bool selfFreeing) in _pendingCallbacks)
+        {
+            if (selfFreeing)
+            {
+                plan.SelfFreeing = true;
+            }
+            else
+            {
+                plan.UsedOutsideAsync = true;
+            }
+
+            _callbacks[plan.DelegateName] = plan;
+        }
     }
 
     private MarshalPlan? TryPlanCore(
@@ -969,6 +1028,55 @@ internal sealed class MarshalPlanner
     private bool CallerAllocatesOf(GirCallable callable, GirParameter parameter) =>
         OverrideOf(callable, parameter)?.CallerAllocates ?? parameter.IsCallerAllocates;
 
+    /// <summary>
+    /// Reads how long the library keeps the callback it is handed, which the
+    /// overlays may correct.
+    /// </summary>
+    /// <param name="callable">The callable being planned.</param>
+    /// <param name="parameter">The callback parameter.</param>
+    /// <returns>The effective scope.</returns>
+    /// <remarks>
+    /// Unlike a transfer or a nullability, a scope that is wrong is not a
+    /// missing projection but a lifetime bug in shipped code, so an override
+    /// that says nothing — an unknown spelling, or the value the gir already
+    /// carries — is reported rather than dropped silently.
+    /// </remarks>
+    private GirScope ScopeOf(GirCallable callable, GirParameter parameter)
+    {
+        if (OverrideOf(callable, parameter)?.Scope is not { } value)
+        {
+            return parameter.Scope;
+        }
+
+        string key = (AnnotationKeyOf(callable) ?? callable.Name) + "#" + parameter.Name;
+        if (ParseScope(value) is not { } scope)
+        {
+            _diagnostics.Warn(
+                "GEN0021",
+                $"the scope override of '{key}' names '{value}', which is not one of call, notified, async, "
+                + "forever; the override is ignored.");
+            return parameter.Scope;
+        }
+
+        if (scope == parameter.Scope)
+        {
+            _diagnostics.Warn(
+                "GEN0021",
+                $"the scope override of '{key}' states what the gir already says; the override is ignored.");
+        }
+
+        return scope;
+    }
+
+    private static GirScope? ParseScope(string? value) => value switch
+    {
+        "call" => GirScope.Call,
+        "notified" => GirScope.Notified,
+        "async" => GirScope.Async,
+        "forever" => GirScope.Forever,
+        _ => null,
+    };
+
     private bool NullableOf(GirCallable callable)
     {
         AnnotationOverride? overlay = AnnotationKeyOf(callable) is { } identifier
@@ -1103,7 +1211,7 @@ internal sealed class MarshalPlanner
 
         if (mapped.Kind == MarshalKind.Callback)
         {
-            return PlanCallbackArgument(parameter, name, context);
+            return PlanCallbackArgument(callable, parameter, name, context);
         }
 
         // The overlay states the size of a parameter the gir spells as a
@@ -2135,11 +2243,40 @@ internal sealed class MarshalPlanner
         };
     }
 
-    private ArgumentPlan? PlanCallbackArgument(GirParameter parameter, string name, PlanningContext context)
+    /// <summary>Plans a parameter the callee is handed a function through.</summary>
+    /// <param name="callable">The callable being planned.</param>
+    /// <param name="parameter">The callback parameter.</param>
+    /// <param name="name">The C# name of the parameter.</param>
+    /// <param name="context">The module that is being emitted.</param>
+    /// <returns>The plan, or <see langword="null"/> when the callback cannot be handed over.</returns>
+    /// <remarks>
+    /// <para>
+    /// Every accepted scope needs a closure index, because a callback the
+    /// binding cannot attach its state to is a function pointer with no
+    /// delegate behind it. <c>notified</c> needs a destroy index as well, which
+    /// is what releases the state again; <c>async</c> and <c>forever</c> must
+    /// have none, because a trampoline that frees its own handle after the one
+    /// invocation and a destroy notification that frees the same handle are
+    /// mutually exclusive by construction. No site of the corpus carries both.
+    /// </para>
+    /// <para>
+    /// <c>forever</c> keeps the handle for the life of the process: the library
+    /// stores the pointer and offers nothing that releases it again, so the
+    /// generated member leaks one handle per call and says so in its
+    /// documentation.
+    /// </para>
+    /// </remarks>
+    private ArgumentPlan? PlanCallbackArgument(
+        GirCallable callable,
+        GirParameter parameter,
+        string name,
+        PlanningContext context)
     {
-        if (parameter.Scope is not (GirScope.Call or GirScope.Notified)
+        GirScope scope = ScopeOf(callable, parameter);
+        if (scope is not (GirScope.Call or GirScope.Notified or GirScope.Async or GirScope.Forever)
             || parameter.ClosureIndex is null
-            || (parameter.Scope == GirScope.Notified && parameter.DestroyIndex is null))
+            || (scope == GirScope.Notified && parameter.DestroyIndex is null)
+            || (scope is GirScope.Async or GirScope.Forever && parameter.DestroyIndex is not null))
         {
             return null;
         }
@@ -2156,7 +2293,31 @@ internal sealed class MarshalPlanner
             return null;
         }
 
-        _callbacks[plan.DelegateName] = plan;
+        // The trampoline is shared by every site of the callback type, so the
+        // free after invoke epilogue cannot be decided per site. A type that is
+        // asked to be self freeing at one site and not at another is refused
+        // here, rather than emitted with an epilogue that would double free.
+        // The claim of this callable is only queued: it is written to the plan
+        // once the whole callable has been planned, so that a site the planner
+        // rejects afterwards does not decide the epilogue of a type it never
+        // binds. The queue is consulted alongside the plan, because one
+        // callable can hand the same callback type over twice. A plan the
+        // emitter drops after the planner has built it -- the probe that asks
+        // whether a shadowing callable binds, and a name collision -- still
+        // counts as a use, which can only make a type stricter than it has to
+        // be, never laxer.
+        bool selfFreeing = scope == GirScope.Async;
+        if (selfFreeing ? IsUsedOutsideAsync(plan) : IsSelfFreeing(plan))
+        {
+            _diagnostics.Warn(
+                "GEN0022",
+                $"'{plan.Callback.CType ?? plan.Callback.Name}' is used at both an async and a non-async site; "
+                + $"the {(selfFreeing ? "async" : "non-async")} use of "
+                + $"'{callable.CIdentifier ?? callable.Name}' is skipped.");
+            return null;
+        }
+
+        _pendingCallbacks.Add((plan, selfFreeing));
         return new ArgumentPlan
         {
             Source = parameter,
@@ -2164,12 +2325,30 @@ internal sealed class MarshalPlanner
             Name = name,
             PublicType = plan.DelegateType,
             RawType = NativeInt,
-            Scope = parameter.Scope,
+            Scope = scope,
             DelegateType = plan.DelegateType,
             TrampolineType = plan.TrampolineType,
             Doc = parameter.Doc,
         };
     }
+
+    /// <summary>
+    /// Answers whether a callback type is already known to be self freeing,
+    /// counting the claims of the callable that is being planned.
+    /// </summary>
+    /// <param name="plan">The callback type.</param>
+    /// <returns><see langword="true"/> when an async site has claimed it.</returns>
+    private bool IsSelfFreeing(CallbackPlan plan) =>
+        plan.SelfFreeing || _pendingCallbacks.Any(pending => pending.Plan == plan && pending.SelfFreeing);
+
+    /// <summary>
+    /// Answers whether a callback type is already known to be used outside an
+    /// async site, counting the claims of the callable that is being planned.
+    /// </summary>
+    /// <param name="plan">The callback type.</param>
+    /// <returns><see langword="true"/> when a non-async site has claimed it.</returns>
+    private bool IsUsedOutsideAsync(CallbackPlan plan) =>
+        plan.UsedOutsideAsync || _pendingCallbacks.Any(pending => pending.Plan == plan && !pending.SelfFreeing);
 
     private ReturnPlan? PlanReturn(GirCallable callable, PlanningContext context, int offset)
     {

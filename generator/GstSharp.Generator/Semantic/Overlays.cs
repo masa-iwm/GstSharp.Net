@@ -63,6 +63,20 @@ internal sealed class AnnotationOverride
     public int? FixedArraySize { get; set; }
 
     /// <summary>
+    /// Gets or sets the corrected <c>scope</c> of a callback parameter:
+    /// <c>call</c>, <c>notified</c>, <c>async</c> or <c>forever</c>.
+    /// </summary>
+    /// <remarks>
+    /// The scope is the lifetime of the managed state behind the callback, and
+    /// a gir that states the wrong one is a use after free rather than a
+    /// missing binding: the <c>GstCollectPads</c> setters annotate their
+    /// function <c>(scope call)</c> and the library keeps the pointer for the
+    /// life of the object. The correction states what the C implementation
+    /// does with the function it is handed, which no other annotation carries.
+    /// </remarks>
+    public string? Scope { get; set; }
+
+    /// <summary>
     /// Gets or sets whether the return value is dropped, so that the member is
     /// emitted as if the C function returned nothing.
     /// </summary>
@@ -144,7 +158,9 @@ internal sealed class PlatformSupport
 /// caller allocated out array, all of which are facts about the C
 /// implementation that no gir annotation carries; it may also state
 /// <c>discardReturn</c> on <c>#return</c> to drop a return value the caller
-/// already holds.</description></item>
+/// already holds, and the <c>scope</c> of a callback parameter whose gir
+/// annotation does not describe how long the library keeps the function it is
+/// handed.</description></item>
 /// <item><description><c>arrayOverrides</c>: keyed like
 /// <c>annotationOverrides</c> and applied to a parameter or a return value the
 /// gir already spells as an <c>&lt;array&gt;</c>. It corrects the

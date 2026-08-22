@@ -303,22 +303,27 @@ public unsafe partial class CollectPads : Gst.Object
     /// <summary>Set the timestamp comparison function.</summary>
     /// <remarks>
     /// <para>MT safe.</para>
+    /// <para>
+    /// The callback is installed for the lifetime of the object. Replacing it
+    /// does not release the state of the previous one, so a call per buffer or
+    /// per state change leaks.
+    /// </para>
     /// </remarks>
-    /// <param name="func">the function to set</param>
+    /// <param name="func">
+    /// the function to set
+    /// The binding keeps the state of this callback alive for the life of the
+    /// process: the library stores the function pointer and calls it from a
+    /// streaming thread, and it offers no destroy notification to release the
+    /// state again. One handle is leaked per call — install the callback once,
+    /// at construction.
+    /// </param>
     public void SetCompareFunction(Gst.Base.CollectPadsCompareFunction func)
     {
         nint instanceHandle = Handle;
         ArgumentNullException.ThrowIfNull(func);
         Gst.Interop.CallbackHandle funcState = Gst.Interop.CallbackHandle.Alloc(func);
-        try
-        {
-            GstCollectPadsSetCompareFunction(instanceHandle, Gst.Base.CollectPadsCompareFunctionTrampoline.Pointer, funcState.UserData);
-            System.GC.KeepAlive(this);
-        }
-        finally
-        {
-            funcState.Free();
-        }
+        GstCollectPadsSetCompareFunction(instanceHandle, Gst.Base.CollectPadsCompareFunctionTrampoline.Pointer, funcState.UserData);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -331,22 +336,27 @@ public unsafe partial class CollectPads : Gst.Object
     /// </summary>
     /// <remarks>
     /// <para>MT safe.</para>
+    /// <para>
+    /// The callback is installed for the lifetime of the object. Replacing it
+    /// does not release the state of the previous one, so a call per buffer or
+    /// per state change leaks.
+    /// </para>
     /// </remarks>
-    /// <param name="func">the function to set</param>
+    /// <param name="func">
+    /// the function to set
+    /// The binding keeps the state of this callback alive for the life of the
+    /// process: the library stores the function pointer and calls it from a
+    /// streaming thread, and it offers no destroy notification to release the
+    /// state again. One handle is leaked per call — install the callback once,
+    /// at construction.
+    /// </param>
     public void SetEventFunction(Gst.Base.CollectPadsEventFunction func)
     {
         nint instanceHandle = Handle;
         ArgumentNullException.ThrowIfNull(func);
         Gst.Interop.CallbackHandle funcState = Gst.Interop.CallbackHandle.Alloc(func);
-        try
-        {
-            GstCollectPadsSetEventFunction(instanceHandle, Gst.Base.CollectPadsEventFunctionTrampoline.Pointer, funcState.UserData);
-            System.GC.KeepAlive(this);
-        }
-        finally
-        {
-            funcState.Free();
-        }
+        GstCollectPadsSetEventFunction(instanceHandle, Gst.Base.CollectPadsEventFunctionTrampoline.Pointer, funcState.UserData);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -354,21 +364,28 @@ public unsafe partial class CollectPads : Gst.Object
     /// state of all pads should be flushed as part of flushing seek
     /// handling. See #GstCollectPadsFlushFunction for more info.
     /// </summary>
-    /// <param name="func">flush function to install</param>
+    /// <remarks>
+    /// <para>
+    /// The callback is installed for the lifetime of the object. Replacing it
+    /// does not release the state of the previous one, so a call per buffer or
+    /// per state change leaks.
+    /// </para>
+    /// </remarks>
+    /// <param name="func">
+    /// flush function to install
+    /// The binding keeps the state of this callback alive for the life of the
+    /// process: the library stores the function pointer and calls it from a
+    /// streaming thread, and it offers no destroy notification to release the
+    /// state again. One handle is leaked per call — install the callback once,
+    /// at construction.
+    /// </param>
     public void SetFlushFunction(Gst.Base.CollectPadsFlushFunction func)
     {
         nint instanceHandle = Handle;
         ArgumentNullException.ThrowIfNull(func);
         Gst.Interop.CallbackHandle funcState = Gst.Interop.CallbackHandle.Alloc(func);
-        try
-        {
-            GstCollectPadsSetFlushFunction(instanceHandle, Gst.Base.CollectPadsFlushFunctionTrampoline.Pointer, funcState.UserData);
-            System.GC.KeepAlive(this);
-        }
-        finally
-        {
-            funcState.Free();
-        }
+        GstCollectPadsSetFlushFunction(instanceHandle, Gst.Base.CollectPadsFlushFunctionTrampoline.Pointer, funcState.UserData);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -401,22 +418,27 @@ public unsafe partial class CollectPads : Gst.Object
     /// </summary>
     /// <remarks>
     /// <para>MT safe.</para>
+    /// <para>
+    /// The callback is installed for the lifetime of the object. Replacing it
+    /// does not release the state of the previous one, so a call per buffer or
+    /// per state change leaks.
+    /// </para>
     /// </remarks>
-    /// <param name="func">the function to set</param>
+    /// <param name="func">
+    /// the function to set
+    /// The binding keeps the state of this callback alive for the life of the
+    /// process: the library stores the function pointer and calls it from a
+    /// streaming thread, and it offers no destroy notification to release the
+    /// state again. One handle is leaked per call — install the callback once,
+    /// at construction.
+    /// </param>
     public void SetFunction(Gst.Base.CollectPadsFunction func)
     {
         nint instanceHandle = Handle;
         ArgumentNullException.ThrowIfNull(func);
         Gst.Interop.CallbackHandle funcState = Gst.Interop.CallbackHandle.Alloc(func);
-        try
-        {
-            GstCollectPadsSetFunction(instanceHandle, Gst.Base.CollectPadsFunctionTrampoline.Pointer, funcState.UserData);
-            System.GC.KeepAlive(this);
-        }
-        finally
-        {
-            funcState.Free();
-        }
+        GstCollectPadsSetFunction(instanceHandle, Gst.Base.CollectPadsFunctionTrampoline.Pointer, funcState.UserData);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -429,22 +451,27 @@ public unsafe partial class CollectPads : Gst.Object
     /// </summary>
     /// <remarks>
     /// <para>MT safe.</para>
+    /// <para>
+    /// The callback is installed for the lifetime of the object. Replacing it
+    /// does not release the state of the previous one, so a call per buffer or
+    /// per state change leaks.
+    /// </para>
     /// </remarks>
-    /// <param name="func">the function to set</param>
+    /// <param name="func">
+    /// the function to set
+    /// The binding keeps the state of this callback alive for the life of the
+    /// process: the library stores the function pointer and calls it from a
+    /// streaming thread, and it offers no destroy notification to release the
+    /// state again. One handle is leaked per call — install the callback once,
+    /// at construction.
+    /// </param>
     public void SetQueryFunction(Gst.Base.CollectPadsQueryFunction func)
     {
         nint instanceHandle = Handle;
         ArgumentNullException.ThrowIfNull(func);
         Gst.Interop.CallbackHandle funcState = Gst.Interop.CallbackHandle.Alloc(func);
-        try
-        {
-            GstCollectPadsSetQueryFunction(instanceHandle, Gst.Base.CollectPadsQueryFunctionTrampoline.Pointer, funcState.UserData);
-            System.GC.KeepAlive(this);
-        }
-        finally
-        {
-            funcState.Free();
-        }
+        GstCollectPadsSetQueryFunction(instanceHandle, Gst.Base.CollectPadsQueryFunctionTrampoline.Pointer, funcState.UserData);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>

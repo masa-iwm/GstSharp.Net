@@ -148,7 +148,11 @@ public sealed class SkipRulesTests
         // joined with the holders of the fundamental value containers:
         // gst_value_unique_list_prepend_value can only raise a critical in
         // 1.28, and gst_flagset_register is the one function of a fundamental
-        // that the containers were not designed for.
+        // that the containers were not designed for. Twelve joined with the
+        // callback scopes: four whose managed state has a lifetime no emitted
+        // shape expresses and that are hand written for it, three whose
+        // lifetime is not derivable at all, and five that are skipped on
+        // value rather than for a missing mechanism.
         Assert.Equal(
             [
                 "GstBase.BitReader",
@@ -173,7 +177,9 @@ public sealed class SkipRulesTests
                 "gst_audio_info_init",
                 "gst_audio_ring_buffer_commit",
                 "gst_audio_ring_buffer_read",
+                "gst_buffer_add_video_gl_texture_upload_meta",
                 "gst_buffer_extract",
+                "gst_buffer_new_wrapped_full",
                 "gst_buffer_pool_release_buffer",
                 "gst_buffer_pool_set_config",
                 "gst_buffer_remove_meta",
@@ -182,6 +188,8 @@ public sealed class SkipRulesTests
                 "gst_caps_features_new_single_static_str",
                 "gst_caps_new_static_str_empty_simple",
                 "gst_caps_set_value_static_str",
+                "gst_collect_pads_add_pad",
+                "gst_debug_remove_log_function",
                 "gst_dsd_info_from_caps",
                 "gst_dsd_info_init",
                 "gst_element_post_message",
@@ -191,12 +199,16 @@ public sealed class SkipRulesTests
                 "gst_flagset_register",
                 "gst_id_str_set_static_str",
                 "gst_id_str_set_static_str_with_len",
+                "gst_install_plugins_async",
                 "gst_iterator_next",
+                "gst_memory_new_wrapped",
                 "gst_message_new_application",
                 "gst_message_new_custom",
                 "gst_meta_info_register",
+                "gst_mini_object_set_qdata",
                 "gst_pad_push_event",
                 "gst_pad_send_event",
+                "gst_plugin_register_static",
                 "gst_promise_reply",
                 "gst_query_new_custom",
                 "gst_query_parse_nth_allocation_param",
@@ -216,13 +228,17 @@ public sealed class SkipRulesTests
                 "gst_tag_list_add_value",
                 "gst_tag_list_copy_value",
                 "gst_tag_list_get_value_index",
+                "gst_task_pool_push",
                 "gst_toc_append_entry",
                 "gst_toc_entry_append_sub_entry",
+                "gst_tracing_register_hook",
                 "gst_type_find_peek",
+                "gst_util_array_binary_search",
                 "gst_value_compare",
                 "gst_value_serialize",
                 "gst_value_unique_list_prepend_value",
                 "gst_video_blend_scale_linear_RGBA",
+                "gst_video_codec_frame_set_user_data",
                 "gst_video_frame_map",
                 "gst_video_frame_map_id",
                 "gst_video_frame_unmap",

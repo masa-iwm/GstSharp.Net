@@ -171,7 +171,7 @@ public sealed class ClassEmitterTests
     }
 
     [Theory]
-    [InlineData("Gst", 35, 51, 5, 18, 18, 1389, 29, 23, 52)]
+    [InlineData("Gst", 35, 51, 5, 20, 18, 1391, 29, 23, 52)]
     [InlineData("GstBase", 11, 4, 0, 5, 0, 174, 31, 2, 4)]
     [InlineData("GstApp", 2, 2, 0, 8, 0, 62, 36, 8, 0)]
     [InlineData("GstAudio", 14, 17, 1, 2, 2, 212, 32, 0, 38)]
@@ -212,12 +212,12 @@ public sealed class ClassEmitterTests
     }
 
     [Theory]
-    [InlineData("Gst", 1, 93, 53, 119, 120, 10)]
-    [InlineData("GstBase", 0, 11, 0, 20, 7, 0)]
+    [InlineData("Gst", 1, 93, 53, 119, 111, 10)]
+    [InlineData("GstBase", 0, 11, 0, 20, 6, 0)]
     [InlineData("GstApp", 1, 0, 0, 2, 2, 1)]
     [InlineData("GstAudio", 0, 22, 0, 8, 6, 0)]
-    [InlineData("GstVideo", 0, 96, 1, 6, 8, 0)]
-    [InlineData("GstPbutils", 0, 1, 0, 0, 6, 0)]
+    [InlineData("GstVideo", 0, 96, 1, 6, 6, 0)]
+    [InlineData("GstPbutils", 0, 1, 0, 0, 5, 0)]
     [InlineData("GstSdp", 0, 8, 0, 0, 6, 0)]
     [InlineData("GstWebRTC", 0, 2, 0, 0, 6, 0)]
     [InlineData("GstNet", 0, 3, 0, 0, 0, 0)]
@@ -556,7 +556,7 @@ public sealed class ClassEmitterTests
         // from the report and the entry points the overlays took over are
         // named under the overlay skips instead.
         Assert.DoesNotContain("### CallerAllocates", report, StringComparison.Ordinal);
-        Assert.Contains("### OverlaySkip (40)\n", report, StringComparison.Ordinal);
+        Assert.Contains("### OverlaySkip (47)\n", report, StringComparison.Ordinal);
         Assert.Contains("- `gst_video_frame_map`\n", GenerationPipeline.Run(GirFixture.GirDirectory).SkipReport, StringComparison.Ordinal);
         Assert.Contains("- `GstApp.AppSrc::push-buffer`\n", report, StringComparison.Ordinal);
 
@@ -682,12 +682,12 @@ public sealed class ClassEmitterTests
     /// <param name="actionSignals">Signals that are a call API rather than a notification.</param>
     /// <param name="owningProperties">Properties whose value is a wrapper the reader would have to dispose.</param>
     [Theory]
-    [InlineData("Gst", 41, 0, 21, 20, 0, 5)]
-    [InlineData("GstBase", 3, 0, 4, 0, 0, 2)]
+    [InlineData("Gst", 48, 0, 21, 20, 0, 5)]
+    [InlineData("GstBase", 4, 0, 4, 0, 0, 2)]
     [InlineData("GstApp", 3, 0, 4, 0, 9, 2)]
     [InlineData("GstAudio", 13, 0, 4, 0, 0, 0)]
-    [InlineData("GstVideo", 14, 0, 10, 1, 0, 0)]
-    [InlineData("GstPbutils", 1, 0, 1, 0, 0, 1)]
+    [InlineData("GstVideo", 16, 0, 10, 1, 0, 0)]
+    [InlineData("GstPbutils", 2, 0, 1, 0, 0, 1)]
     [InlineData("GstSdp", 4, 0, 1, 0, 0, 0)]
     [InlineData("GstWebRTC", 1, 0, 4, 0, 4, 0)]
     [InlineData("GstNet", 0, 0, 1, 0, 0, 0)]

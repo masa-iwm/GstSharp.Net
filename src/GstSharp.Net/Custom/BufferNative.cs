@@ -84,4 +84,31 @@ internal static unsafe partial class BufferNative
     /// </remarks>
     [LibraryImport("Gst", EntryPoint = "gst_buffer_extract")]
     internal static partial nuint Extract(nint buffer, nuint offset, byte* dest, nuint size);
+
+    /// <summary>
+    /// Creates a buffer over memory the caller owns, without copying it.
+    /// </summary>
+    /// <param name="flags">The flags of the memory that is wrapped.</param>
+    /// <param name="data">The block the buffer reads and writes through.</param>
+    /// <param name="maxsize">How many bytes the block holds.</param>
+    /// <param name="offset">Where the valid data starts inside the block.</param>
+    /// <param name="size">How many valid bytes there are.</param>
+    /// <param name="userData">The state of the notification, or <c>0</c>.</param>
+    /// <param name="notify">The notification that runs when the memory is released, or <c>0</c>.</param>
+    /// <returns>The buffer, which the caller owns.</returns>
+    /// <remarks>
+    /// The gir describes <c>data</c> as an array of <c>size</c> bytes, which is
+    /// upstream's own doc comment and wrong twice over: the block is
+    /// <paramref name="maxsize"/> bytes and it has to outlive the call. That is
+    /// why the entry point is on the skip list and this is imported by hand.
+    /// </remarks>
+    [LibraryImport("Gst", EntryPoint = "gst_buffer_new_wrapped_full")]
+    internal static partial nint NewWrappedFull(
+        MemoryFlags flags,
+        nint data,
+        nuint maxsize,
+        nuint offset,
+        nuint size,
+        nint userData,
+        nint notify);
 }
