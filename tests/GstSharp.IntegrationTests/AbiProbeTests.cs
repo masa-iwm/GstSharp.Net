@@ -1,4 +1,4 @@
-extern alias gstsharp;
+﻿extern alias gstsharp;
 
 using System.Globalization;
 using System.Runtime.CompilerServices;
@@ -731,6 +731,648 @@ public sealed class AbiProbeTests
         Assert.True(
             version.Minor >= 24,
             FormattableString.Invariant($"GStreamer 1.24 or newer is required, but {version} is installed."));
+    }
+
+    /// <summary>
+    /// <c>struct _GstAllocationParams</c> of <c>gstallocator.h</c>:
+    /// <c>GstMemoryFlags flags</c> at 0 with 4 bytes of padding behind it, the
+    /// three <c>gsize</c> values <c>align</c>, <c>prefix</c> and
+    /// <c>padding</c> at 8, 16 and 24, and <c>GST_PADDING</c> at 32, for 64
+    /// bytes in total.
+    /// </summary>
+    [Fact]
+    public unsafe void AllocationParamsRawMatchesTheHeaderLayout()
+    {
+        AllocationParamsRaw raw = default;
+
+        _output.WriteLine(Format("AllocationParamsRaw", Unsafe.SizeOf<AllocationParamsRaw>()));
+        Assert.Equal(64, Unsafe.SizeOf<AllocationParamsRaw>());
+
+        Assert.Equal(0L, Offset(&raw, &raw.Flags));
+        Assert.Equal(8L, Offset(&raw, &raw.Align));
+        Assert.Equal(16L, Offset(&raw, &raw.Prefix));
+        Assert.Equal(24L, Offset(&raw, &raw.Padding));
+    }
+
+    /// <summary>
+    /// <c>struct _GstStructure</c> of <c>gststructure.h</c>: <c>GType type</c>
+    /// at 0 and <c>GQuark name</c> at 8, which the alignment of the first pads
+    /// out to 16.
+    /// </summary>
+    [Fact]
+    public unsafe void StructureRawMatchesTheHeaderLayout()
+    {
+        StructureRaw raw = default;
+
+        _output.WriteLine(Format("StructureRaw", Unsafe.SizeOf<StructureRaw>()));
+        Assert.Equal(16, Unsafe.SizeOf<StructureRaw>());
+
+        Assert.Equal(0L, Offset(&raw, &raw.Type));
+        Assert.Equal(8L, Offset(&raw, &raw.Name));
+    }
+
+    /// <summary>
+    /// <c>struct _GstIterator</c> of <c>gstiterator.h</c>: the five function
+    /// pointers <c>copy</c> … <c>free</c> at 0 to 32, <c>GstIterator *pushed</c>
+    /// at 40, <c>GType type</c> at 48, <c>GMutex *lock</c> at 56,
+    /// <c>guint32 cookie</c> at 64, <c>guint32 *master_cookie</c> at 72,
+    /// <c>guint size</c> at 80 and <c>GST_PADDING</c> at 88, for 120 bytes.
+    /// </summary>
+    [Fact]
+    public unsafe void IteratorRawMatchesTheHeaderLayout()
+    {
+        IteratorRaw raw = default;
+
+        _output.WriteLine(Format("IteratorRaw", Unsafe.SizeOf<IteratorRaw>()));
+        Assert.Equal(120, Unsafe.SizeOf<IteratorRaw>());
+
+        Assert.Equal(0L, Offset(&raw, &raw.Copy));
+        Assert.Equal(40L, Offset(&raw, &raw.Pushed));
+        Assert.Equal(48L, Offset(&raw, &raw.Type));
+        Assert.Equal(56L, Offset(&raw, &raw.Lock));
+        Assert.Equal(64L, Offset(&raw, &raw.Cookie));
+        Assert.Equal(72L, Offset(&raw, &raw.MasterCookie));
+        Assert.Equal(80L, Offset(&raw, &raw.Size));
+    }
+
+    /// <summary>
+    /// <c>struct _GstMetaInfo</c> of <c>gstmeta.h</c>: <c>GType api</c>,
+    /// <c>GType type</c> and <c>gsize size</c> at 0, 8 and 16, then the six
+    /// function pointers <c>init_func</c> … <c>clear_func</c> at 24 to 64, for
+    /// 72 bytes. The structure carries no padding pointers: GStreamer always
+    /// allocates it itself, so it is extended in place.
+    /// </summary>
+    [Fact]
+    public unsafe void MetaInfoRawMatchesTheHeaderLayout()
+    {
+        MetaInfoRaw raw = default;
+
+        _output.WriteLine(Format("MetaInfoRaw", Unsafe.SizeOf<MetaInfoRaw>()));
+        Assert.Equal(72, Unsafe.SizeOf<MetaInfoRaw>());
+
+        Assert.Equal(0L, Offset(&raw, &raw.Api));
+        Assert.Equal(8L, Offset(&raw, &raw.Type));
+        Assert.Equal(16L, Offset(&raw, &raw.Size));
+        Assert.Equal(24L, Offset(&raw, &raw.InitFunc));
+        Assert.Equal(32L, Offset(&raw, &raw.FreeFunc));
+        Assert.Equal(40L, Offset(&raw, &raw.TransformFunc));
+        Assert.Equal(48L, Offset(&raw, &raw.SerializeFunc));
+        Assert.Equal(56L, Offset(&raw, &raw.DeserializeFunc));
+        Assert.Equal(64L, Offset(&raw, &raw.ClearFunc));
+    }
+
+    /// <summary>
+    /// <c>struct _GstMeta</c> of <c>gstmeta.h</c>: <c>GstMetaFlags flags</c> at
+    /// 0 and <c>const GstMetaInfo *info</c> at 8, for 16 bytes. This is the
+    /// header every <c>*Meta</c> record of the girs embeds by value, so a
+    /// wrong size here moves every field of all twenty two of them.
+    /// </summary>
+    [Fact]
+    public unsafe void MetaRawMatchesTheHeaderLayout()
+    {
+        MetaRaw raw = default;
+
+        _output.WriteLine(Format("MetaRaw", Unsafe.SizeOf<MetaRaw>()));
+        Assert.Equal(16, Unsafe.SizeOf<MetaRaw>());
+
+        Assert.Equal(0L, Offset(&raw, &raw.Flags));
+        Assert.Equal(8L, Offset(&raw, &raw.Info));
+    }
+
+    /// <summary>
+    /// <c>struct _GstPadProbeInfo</c> of <c>gstpad.h</c>:
+    /// <c>GstPadProbeType type</c> at 0, <c>gulong id</c>, <c>gpointer data</c>,
+    /// <c>guint64 offset</c>, <c>guint size</c> and the <c>ABI</c> union the
+    /// mirror stops in front of. <b>A <c>gulong</c> is four bytes on Windows
+    /// and eight everywhere else</b>, which moves everything behind it: the
+    /// union sits at 32 on Windows and at 40 on the other platforms, and that
+    /// is what the prefix mirror is as large as.
+    /// </summary>
+    [Fact]
+    public unsafe void PadProbeInfoRawMatchesTheHeaderLayout()
+    {
+        PadProbeInfoRaw raw = default;
+        bool windows = OperatingSystem.IsWindows();
+
+        _output.WriteLine(Format("PadProbeInfoRaw", Unsafe.SizeOf<PadProbeInfoRaw>()));
+        Assert.Equal(windows ? 32 : 40, Unsafe.SizeOf<PadProbeInfoRaw>());
+
+        Assert.Equal(0L, Offset(&raw, &raw.Type));
+        Assert.Equal(windows ? 4L : 8L, Offset(&raw, &raw.Id));
+        Assert.Equal(windows ? 8L : 16L, Offset(&raw, &raw.Data));
+        Assert.Equal(windows ? 16L : 24L, Offset(&raw, &raw.Offset));
+        Assert.Equal(windows ? 24L : 32L, Offset(&raw, &raw.Size));
+    }
+
+    /// <summary>
+    /// <c>struct _GstStaticPadTemplate</c> of <c>gstpadtemplate.h</c>:
+    /// <c>const gchar *name_template</c> at 0, <c>GstPadDirection direction</c>
+    /// at 8, <c>GstPadPresence presence</c> at 12 and the
+    /// <c>GstStaticCaps static_caps</c> it embeds by value at 16. A
+    /// <c>GstStaticCaps</c> is a <c>GstCaps *</c>, a <c>const char *</c> and
+    /// <c>GST_PADDING</c>, for 48, which makes the template 64.
+    /// </summary>
+    [Fact]
+    public unsafe void StaticPadTemplateRawMatchesTheHeaderLayout()
+    {
+        StaticPadTemplateRaw raw = default;
+        StaticCapsRaw caps = default;
+
+        _output.WriteLine(Format("StaticPadTemplateRaw", Unsafe.SizeOf<StaticPadTemplateRaw>()));
+        _output.WriteLine(Format("StaticCapsRaw", Unsafe.SizeOf<StaticCapsRaw>()));
+
+        Assert.Equal(64, Unsafe.SizeOf<StaticPadTemplateRaw>());
+        Assert.Equal(48, Unsafe.SizeOf<StaticCapsRaw>());
+
+        Assert.Equal(0L, Offset(&raw, &raw.NameTemplate));
+        Assert.Equal(8L, Offset(&raw, &raw.Direction));
+        Assert.Equal(12L, Offset(&raw, &raw.Presence));
+        Assert.Equal(16L, Offset(&raw, &raw.StaticCaps));
+
+        Assert.Equal(0L, Offset(&caps, &caps.Caps));
+        Assert.Equal(8L, Offset(&caps, &caps.String));
+    }
+
+    /// <summary>
+    /// <c>GstReferenceTimestampMeta</c> of <c>gstbuffer.h</c>: the 16 byte
+    /// <c>GstMeta</c> header, <c>GstCaps *reference</c> at 16, the two
+    /// <c>GstClockTime</c> values <c>timestamp</c> and <c>duration</c> at 24
+    /// and 32 and <c>GstStructure *info</c> at 40, for 48 bytes.
+    /// </summary>
+    [Fact]
+    public unsafe void ReferenceTimestampMetaRawMatchesTheHeaderLayout()
+    {
+        ReferenceTimestampMetaRaw raw = default;
+
+        _output.WriteLine(Format("ReferenceTimestampMetaRaw", Unsafe.SizeOf<ReferenceTimestampMetaRaw>()));
+        Assert.Equal(48, Unsafe.SizeOf<ReferenceTimestampMetaRaw>());
+
+        Assert.Equal(0L, Offset(&raw, &raw.Parent));
+        Assert.Equal(16L, Offset(&raw, &raw.Reference));
+        Assert.Equal(24L, Offset(&raw, &raw.Timestamp));
+        Assert.Equal(32L, Offset(&raw, &raw.Duration));
+        Assert.Equal(40L, Offset(&raw, &raw.Info));
+    }
+
+    /// <summary>
+    /// <c>GstVideoCropMeta</c> of <c>gstvideometa.h</c>: the 16 byte
+    /// <c>GstMeta</c> header and the four <c>guint</c> values <c>x</c>,
+    /// <c>y</c>, <c>width</c> and <c>height</c> at 16, 20, 24 and 28, for 32
+    /// bytes.
+    /// </summary>
+    [Fact]
+    public unsafe void VideoCropMetaRawMatchesTheHeaderLayout()
+    {
+        Gst.Video.VideoCropMetaRaw raw = default;
+
+        _output.WriteLine(Format("VideoCropMetaRaw", Unsafe.SizeOf<Gst.Video.VideoCropMetaRaw>()));
+        Assert.Equal(32, Unsafe.SizeOf<Gst.Video.VideoCropMetaRaw>());
+
+        Assert.Equal(0L, Offset(&raw, &raw.Meta));
+        Assert.Equal(16L, Offset(&raw, &raw.X));
+        Assert.Equal(20L, Offset(&raw, &raw.Y));
+        Assert.Equal(24L, Offset(&raw, &raw.Width));
+        Assert.Equal(28L, Offset(&raw, &raw.Height));
+    }
+
+    /// <summary>
+    /// <c>GstVideoRegionOfInterestMeta</c> of <c>gstvideometa.h</c>: the 16
+    /// byte header, <c>GQuark roi_type</c> at 16, <c>gint id</c> and
+    /// <c>gint parent_id</c> at 20 and 24, the four <c>guint</c> values
+    /// <c>x</c>, <c>y</c>, <c>w</c> and <c>h</c> at 28 to 40, and
+    /// <c>GList *params</c> at 48, for 56 bytes.
+    /// </summary>
+    [Fact]
+    public unsafe void VideoRegionOfInterestMetaRawMatchesTheHeaderLayout()
+    {
+        Gst.Video.VideoRegionOfInterestMetaRaw raw = default;
+
+        _output.WriteLine(Format(
+            "VideoRegionOfInterestMetaRaw",
+            Unsafe.SizeOf<Gst.Video.VideoRegionOfInterestMetaRaw>()));
+        Assert.Equal(56, Unsafe.SizeOf<Gst.Video.VideoRegionOfInterestMetaRaw>());
+
+        Assert.Equal(16L, Offset(&raw, &raw.RoiType));
+        Assert.Equal(20L, Offset(&raw, &raw.Id));
+        Assert.Equal(24L, Offset(&raw, &raw.ParentId));
+        Assert.Equal(28L, Offset(&raw, &raw.X));
+        Assert.Equal(32L, Offset(&raw, &raw.Y));
+        Assert.Equal(36L, Offset(&raw, &raw.W));
+        Assert.Equal(40L, Offset(&raw, &raw.H));
+        Assert.Equal(48L, Offset(&raw, &raw.Params));
+    }
+
+    /// <summary>
+    /// <c>GstVideoMeta</c> of <c>gstvideometa.h</c>: the 16 byte header,
+    /// <c>GstBuffer *buffer</c> at 16, <c>flags</c> and <c>format</c> at 24 and
+    /// 28, <c>gint id</c> at 32, <c>width</c>, <c>height</c> and
+    /// <c>n_planes</c> at 36, 40 and 44, <c>gsize offset[4]</c> at 48,
+    /// <c>gint stride[4]</c> at 80, the <c>map</c> and <c>unmap</c> slots at 96
+    /// and 104 and the 32 byte <c>GstVideoAlignment alignment</c> at 112, for
+    /// 144 bytes.
+    /// </summary>
+    [Fact]
+    public unsafe void VideoMetaRawMatchesTheHeaderLayout()
+    {
+        Gst.Video.VideoMetaRaw raw = default;
+
+        _output.WriteLine(Format("VideoMetaRaw", Unsafe.SizeOf<Gst.Video.VideoMetaRaw>()));
+        Assert.Equal(144, Unsafe.SizeOf<Gst.Video.VideoMetaRaw>());
+        Assert.Equal(32, Unsafe.SizeOf<Gst.Video.VideoAlignment>());
+
+        Assert.Equal(16L, Offset(&raw, &raw.Buffer));
+        Assert.Equal(24L, Offset(&raw, &raw.Flags));
+        Assert.Equal(28L, Offset(&raw, &raw.Format));
+        Assert.Equal(32L, Offset(&raw, &raw.Id));
+        Assert.Equal(36L, Offset(&raw, &raw.Width));
+        Assert.Equal(40L, Offset(&raw, &raw.Height));
+        Assert.Equal(44L, Offset(&raw, &raw.NPlanes));
+        Assert.Equal(48L, Offset(&raw, &raw.Offset));
+        Assert.Equal(80L, Offset(&raw, &raw.Stride));
+        Assert.Equal(96L, Offset(&raw, &raw.Map));
+        Assert.Equal(104L, Offset(&raw, &raw.Unmap));
+        Assert.Equal(112L, Offset(&raw, &raw.Alignment));
+    }
+
+    /// <summary>
+    /// <c>GstAudioClippingMeta</c> of <c>gstaudiometa.h</c>: the 16 byte
+    /// header, <c>GstFormat format</c> at 16 with 4 bytes of padding behind it
+    /// and the two <c>guint64</c> values <c>start</c> and <c>end</c> at 24 and
+    /// 32, for 40 bytes.
+    /// </summary>
+    [Fact]
+    public unsafe void AudioClippingMetaRawMatchesTheHeaderLayout()
+    {
+        Gst.Audio.AudioClippingMetaRaw raw = default;
+
+        _output.WriteLine(Format("AudioClippingMetaRaw", Unsafe.SizeOf<Gst.Audio.AudioClippingMetaRaw>()));
+        Assert.Equal(40, Unsafe.SizeOf<Gst.Audio.AudioClippingMetaRaw>());
+
+        Assert.Equal(16L, Offset(&raw, &raw.Format));
+        Assert.Equal(24L, Offset(&raw, &raw.Start));
+        Assert.Equal(32L, Offset(&raw, &raw.End));
+    }
+
+    /// <summary>
+    /// <c>GstAudioDownmixMeta</c> of <c>gstaudiometa.h</c>: the 16 byte header,
+    /// the two position pointers at 16 and 24, <c>gint from_channels</c> and
+    /// <c>gint to_channels</c> at 32 and 36 and <c>gfloat **matrix</c> at 40,
+    /// for 48 bytes.
+    /// </summary>
+    [Fact]
+    public unsafe void AudioDownmixMetaRawMatchesTheHeaderLayout()
+    {
+        Gst.Audio.AudioDownmixMetaRaw raw = default;
+
+        _output.WriteLine(Format("AudioDownmixMetaRaw", Unsafe.SizeOf<Gst.Audio.AudioDownmixMetaRaw>()));
+        Assert.Equal(48, Unsafe.SizeOf<Gst.Audio.AudioDownmixMetaRaw>());
+
+        Assert.Equal(16L, Offset(&raw, &raw.FromPosition));
+        Assert.Equal(24L, Offset(&raw, &raw.ToPosition));
+        Assert.Equal(32L, Offset(&raw, &raw.FromChannels));
+        Assert.Equal(36L, Offset(&raw, &raw.ToChannels));
+        Assert.Equal(40L, Offset(&raw, &raw.Matrix));
+    }
+
+    /// <summary>
+    /// <c>struct _GstVideoCodecFrame</c> of <c>gstvideoutils.h</c>:
+    /// <c>ref_count</c> at 0, the four frame numbers at 4 to 16, the three
+    /// <c>GstClockTime</c> values <c>dts</c>, <c>pts</c> and <c>duration</c> at
+    /// 24, 32 and 40, <c>distance_from_sync</c> at 48, the two buffers at 56
+    /// and 64, <c>deadline</c> at 72, and the private <c>events</c>,
+    /// <c>user_data</c> and <c>user_data_destroy_notify</c> at 80, 88 and 96.
+    /// The <c>abidata</c> union sits at 104, which is where the prefix mirror
+    /// stops.
+    /// </summary>
+    [Fact]
+    public unsafe void VideoCodecFrameRawMatchesTheHeaderLayout()
+    {
+        Gst.Video.VideoCodecFrameRaw raw = default;
+
+        _output.WriteLine(Format("VideoCodecFrameRaw", Unsafe.SizeOf<Gst.Video.VideoCodecFrameRaw>()));
+        Assert.Equal(104, Unsafe.SizeOf<Gst.Video.VideoCodecFrameRaw>());
+
+        Assert.Equal(0L, Offset(&raw, &raw.RefCount));
+        Assert.Equal(4L, Offset(&raw, &raw.Flags));
+        Assert.Equal(8L, Offset(&raw, &raw.SystemFrameNumber));
+        Assert.Equal(12L, Offset(&raw, &raw.DecodeFrameNumber));
+        Assert.Equal(16L, Offset(&raw, &raw.PresentationFrameNumber));
+        Assert.Equal(24L, Offset(&raw, &raw.Dts));
+        Assert.Equal(32L, Offset(&raw, &raw.Pts));
+        Assert.Equal(40L, Offset(&raw, &raw.Duration));
+        Assert.Equal(48L, Offset(&raw, &raw.DistanceFromSync));
+        Assert.Equal(56L, Offset(&raw, &raw.InputBuffer));
+        Assert.Equal(64L, Offset(&raw, &raw.OutputBuffer));
+        Assert.Equal(72L, Offset(&raw, &raw.Deadline));
+    }
+
+    /// <summary>
+    /// <c>struct _GstVideoInfo</c> of <c>video-info.h</c>:
+    /// <c>const GstVideoFormatInfo *finfo</c> at 0, <c>interlace_mode</c> and
+    /// <c>flags</c> at 8 and 12, <c>gint width</c> and <c>gint height</c> at 16
+    /// and 20 and <c>gsize size</c> at 24. Behind those, <c>views</c> and
+    /// <c>chroma_site</c> at 32 and 36, the 16 byte <c>colorimetry</c> at 40,
+    /// the pixel aspect ratio and the framerate at 56 to 68,
+    /// <c>gsize offset[4]</c> at 72 and <c>gint stride[4]</c> at 104. The
+    /// <c>ABI</c> union sits at 120, which is where the prefix mirror stops —
+    /// the whole C structure is 152 bytes and the mirror is deliberately not.
+    /// </summary>
+    [Fact]
+    public unsafe void VideoInfoRawMatchesTheHeaderLayoutUpToTheAbiUnion()
+    {
+        Gst.Video.VideoInfoRaw raw = default;
+
+        _output.WriteLine(Format("VideoInfoRaw", Unsafe.SizeOf<Gst.Video.VideoInfoRaw>()));
+        Assert.Equal(120, Unsafe.SizeOf<Gst.Video.VideoInfoRaw>());
+
+        Assert.Equal(0L, Offset(&raw, &raw.Finfo));
+        Assert.Equal(8L, Offset(&raw, &raw.InterlaceMode));
+        Assert.Equal(12L, Offset(&raw, &raw.Flags));
+        Assert.Equal(16L, Offset(&raw, &raw.Width));
+        Assert.Equal(20L, Offset(&raw, &raw.Height));
+        Assert.Equal(24L, Offset(&raw, &raw.Size));
+        Assert.Equal(32L, Offset(&raw, &raw.Views));
+        Assert.Equal(36L, Offset(&raw, &raw.ChromaSite));
+        Assert.Equal(40L, Offset(&raw, &raw.Colorimetry));
+        Assert.Equal(56L, Offset(&raw, &raw.ParN));
+        Assert.Equal(60L, Offset(&raw, &raw.ParD));
+        Assert.Equal(64L, Offset(&raw, &raw.FpsN));
+        Assert.Equal(68L, Offset(&raw, &raw.FpsD));
+        Assert.Equal(72L, Offset(&raw, &raw.Offset));
+        Assert.Equal(104L, Offset(&raw, &raw.Stride));
+    }
+
+    /// <summary>
+    /// <c>struct _GstAudioInfo</c> of <c>audio-info.h</c>:
+    /// <c>const GstAudioFormatInfo *finfo</c> at 0, <c>flags</c> and
+    /// <c>layout</c> at 8 and 12, <c>rate</c>, <c>channels</c> and <c>bpf</c>
+    /// at 16, 20 and 24, <c>GstAudioChannelPosition position[64]</c> at 28 and
+    /// <c>GST_PADDING</c> at 288, for 320 bytes.
+    /// </summary>
+    [Fact]
+    public unsafe void AudioInfoRawMatchesTheHeaderLayout()
+    {
+        Gst.Audio.AudioInfoRaw raw = default;
+
+        _output.WriteLine(Format("AudioInfoRaw", Unsafe.SizeOf<Gst.Audio.AudioInfoRaw>()));
+        Assert.Equal(320, Unsafe.SizeOf<Gst.Audio.AudioInfoRaw>());
+
+        Assert.Equal(0L, Offset(&raw, &raw.Finfo));
+        Assert.Equal(8L, Offset(&raw, &raw.Flags));
+        Assert.Equal(12L, Offset(&raw, &raw.Layout));
+        Assert.Equal(16L, Offset(&raw, &raw.Rate));
+        Assert.Equal(20L, Offset(&raw, &raw.Channels));
+        Assert.Equal(24L, Offset(&raw, &raw.Bpf));
+        Assert.Equal(28L, Offset(&raw, &raw.Position));
+    }
+
+    /// <summary>
+    /// <c>struct _GstDsdInfo</c> of <c>gstdsd.h</c>: <c>format</c>,
+    /// <c>rate</c>, <c>channels</c> and <c>layout</c> at 0 to 12,
+    /// <c>gboolean reversed_bytes</c> at 16,
+    /// <c>GstAudioChannelPosition positions[64]</c> at 20, <c>flags</c> at 276
+    /// and <c>GST_PADDING</c> at 280, for 312 bytes.
+    /// </summary>
+    /// <remarks>
+    /// <c>GstDsdInfo</c> arrived in 1.24, and nothing here calls into the
+    /// library: the assertion is about the mirror the generator built from the
+    /// 1.28 gir, so it runs everywhere the other probes do.
+    /// </remarks>
+    [Fact]
+    public unsafe void DsdInfoRawMatchesTheHeaderLayout()
+    {
+        Gst.Audio.DsdInfoRaw raw = default;
+
+        _output.WriteLine(Format("DsdInfoRaw", Unsafe.SizeOf<Gst.Audio.DsdInfoRaw>()));
+        Assert.Equal(312, Unsafe.SizeOf<Gst.Audio.DsdInfoRaw>());
+
+        Assert.Equal(0L, Offset(&raw, &raw.Format));
+        Assert.Equal(4L, Offset(&raw, &raw.Rate));
+        Assert.Equal(8L, Offset(&raw, &raw.Channels));
+        Assert.Equal(12L, Offset(&raw, &raw.Layout));
+        Assert.Equal(16L, Offset(&raw, &raw.ReversedBytes));
+        Assert.Equal(20L, Offset(&raw, &raw.Positions));
+        Assert.Equal(276L, Offset(&raw, &raw.Flags));
+    }
+
+    /// <summary>
+    /// <c>struct _GstVideoTimeCode</c> of <c>gstvideotimecode.h</c>: the 24
+    /// byte <c>GstVideoTimeCodeConfig</c> it embeds by value — two
+    /// <c>guint</c>, a flags word and a <c>GDateTime *</c> at 16 — and the five
+    /// <c>guint</c> values <c>hours</c> … <c>field_count</c> at 24 to 40, for
+    /// 48 bytes. The interval is four <c>guint</c>, for 16.
+    /// </summary>
+    [Fact]
+    public unsafe void VideoTimeCodeRawMatchesTheHeaderLayout()
+    {
+        Gst.Video.VideoTimeCodeRaw raw = default;
+        Gst.Video.VideoTimeCodeConfigRaw config = default;
+        Gst.Video.VideoTimeCodeIntervalRaw interval = default;
+
+        _output.WriteLine(Format("VideoTimeCodeRaw", Unsafe.SizeOf<Gst.Video.VideoTimeCodeRaw>()));
+
+        Assert.Equal(48, Unsafe.SizeOf<Gst.Video.VideoTimeCodeRaw>());
+        Assert.Equal(24, Unsafe.SizeOf<Gst.Video.VideoTimeCodeConfigRaw>());
+        Assert.Equal(16, Unsafe.SizeOf<Gst.Video.VideoTimeCodeIntervalRaw>());
+
+        Assert.Equal(0L, Offset(&raw, &raw.Config));
+        Assert.Equal(24L, Offset(&raw, &raw.Hours));
+        Assert.Equal(28L, Offset(&raw, &raw.Minutes));
+        Assert.Equal(32L, Offset(&raw, &raw.Seconds));
+        Assert.Equal(36L, Offset(&raw, &raw.Frames));
+        Assert.Equal(40L, Offset(&raw, &raw.FieldCount));
+
+        Assert.Equal(0L, Offset(&config, &config.FpsN));
+        Assert.Equal(4L, Offset(&config, &config.FpsD));
+        Assert.Equal(8L, Offset(&config, &config.Flags));
+        Assert.Equal(16L, Offset(&config, &config.LatestDailyJam));
+
+        Assert.Equal(0L, Offset(&interval, &interval.Hours));
+        Assert.Equal(12L, Offset(&interval, &interval.Frames));
+    }
+
+    /// <summary>
+    /// <c>struct _GstRTSPTransport</c> of <c>gstrtsptransport.h</c>: the three
+    /// enumerations at 0, 4 and 8, <c>destination</c> and <c>source</c> at 16
+    /// and 24, <c>layers</c> at 32, the three <c>gboolean</c> at 36, 40 and 44,
+    /// the eight byte <c>interleaved</c> range at 48, <c>ttl</c> at 56, the
+    /// three port ranges at 60, 68 and 76, <c>ssrc</c> at 84 and
+    /// <c>GST_PADDING</c> at 88, for 120 bytes.
+    /// </summary>
+    [Fact]
+    public unsafe void RtspTransportRawMatchesTheHeaderLayout()
+    {
+        Gst.Rtsp.RTSPTransportRaw raw = default;
+
+        _output.WriteLine(Format("RTSPTransportRaw", Unsafe.SizeOf<Gst.Rtsp.RTSPTransportRaw>()));
+        Assert.Equal(120, Unsafe.SizeOf<Gst.Rtsp.RTSPTransportRaw>());
+
+        Assert.Equal(0L, Offset(&raw, &raw.Trans));
+        Assert.Equal(4L, Offset(&raw, &raw.Profile));
+        Assert.Equal(8L, Offset(&raw, &raw.LowerTransport));
+        Assert.Equal(16L, Offset(&raw, &raw.Destination));
+        Assert.Equal(24L, Offset(&raw, &raw.Source));
+        Assert.Equal(32L, Offset(&raw, &raw.Layers));
+        Assert.Equal(36L, Offset(&raw, &raw.ModePlay));
+        Assert.Equal(40L, Offset(&raw, &raw.ModeRecord));
+        Assert.Equal(44L, Offset(&raw, &raw.Append));
+        Assert.Equal(48L, Offset(&raw, &raw.Interleaved));
+        Assert.Equal(56L, Offset(&raw, &raw.Ttl));
+        Assert.Equal(60L, Offset(&raw, &raw.Port));
+        Assert.Equal(68L, Offset(&raw, &raw.ClientPort));
+        Assert.Equal(76L, Offset(&raw, &raw.ServerPort));
+        Assert.Equal(84L, Offset(&raw, &raw.Ssrc));
+    }
+
+    /// <summary>
+    /// <c>struct _GstNetTimePacket</c> of <c>gstnettimepacket.h</c>: the two
+    /// <c>GstClockTime</c> values <c>local_time</c> and <c>remote_time</c> at 0
+    /// and 8, for 16 bytes.
+    /// </summary>
+    [Fact]
+    public unsafe void NetTimePacketRawMatchesTheHeaderLayout()
+    {
+        Gst.Net.NetTimePacketRaw raw = default;
+
+        _output.WriteLine(Format("NetTimePacketRaw", Unsafe.SizeOf<Gst.Net.NetTimePacketRaw>()));
+        Assert.Equal(16, Unsafe.SizeOf<Gst.Net.NetTimePacketRaw>());
+
+        Assert.Equal(0L, Offset(&raw, &raw.LocalTime));
+        Assert.Equal(8L, Offset(&raw, &raw.RemoteTime));
+    }
+
+    /// <summary>
+    /// <c>struct _GstWebRTCSessionDescription</c> of
+    /// <c>rtcsessiondescription.h</c>: <c>GstWebRTCSDPType type</c> at 0 and
+    /// <c>GstSDPMessage *sdp</c> at 8, for 16 bytes.
+    /// </summary>
+    [Fact]
+    public unsafe void WebRtcSessionDescriptionRawMatchesTheHeaderLayout()
+    {
+        Gst.WebRTC.WebRTCSessionDescriptionRaw raw = default;
+
+        _output.WriteLine(Format(
+            "WebRTCSessionDescriptionRaw",
+            Unsafe.SizeOf<Gst.WebRTC.WebRTCSessionDescriptionRaw>()));
+        Assert.Equal(16, Unsafe.SizeOf<Gst.WebRTC.WebRTCSessionDescriptionRaw>());
+
+        Assert.Equal(0L, Offset(&raw, &raw.Type));
+        Assert.Equal(8L, Offset(&raw, &raw.Sdp));
+    }
+
+    /// <summary>
+    /// <c>struct _GstAudioBuffer</c> of <c>audio-buffer.h</c>: the 320 byte
+    /// <c>GstAudioInfo</c> it embeds by value at 0, <c>gsize n_samples</c> at
+    /// 320, <c>gint n_planes</c> at 328, <c>gpointer *planes</c> at 336,
+    /// <c>GstBuffer *buffer</c> at 344 and the private <c>map_infos</c> at 352,
+    /// followed by <c>gpointer priv_planes_arr[8]</c> at 360,
+    /// <c>GstMapInfo priv_map_infos_arr[8]</c> at 424 and
+    /// <c>GST_PADDING</c>, for 1288 bytes.
+    /// </summary>
+    /// <remarks>
+    /// The two accessors of the wrapper sit behind the embedded info, so this
+    /// is what says the embed has the size the C structure gives it.
+    /// </remarks>
+    [Fact]
+    public unsafe void AudioBufferRawMatchesTheHeaderLayout()
+    {
+        Gst.Audio.AudioBufferRaw raw = default;
+
+        _output.WriteLine(Format("AudioBufferRaw", Unsafe.SizeOf<Gst.Audio.AudioBufferRaw>()));
+        Assert.Equal(1288, Unsafe.SizeOf<Gst.Audio.AudioBufferRaw>());
+
+        Assert.Equal(0L, Offset(&raw, &raw.Info));
+        Assert.Equal(320L, Offset(&raw, &raw.NSamples));
+        Assert.Equal(328L, Offset(&raw, &raw.NPlanes));
+        Assert.Equal(336L, Offset(&raw, &raw.Planes));
+        Assert.Equal(344L, Offset(&raw, &raw.Buffer));
+        Assert.Equal(352L, Offset(&raw, &raw.MapInfos));
+        Assert.Equal(360L, Offset(&raw, &raw.PrivPlanesArr));
+        Assert.Equal(424L, Offset(&raw, &raw.PrivMapInfosArr));
+    }
+
+    /// <summary>
+    /// <c>GstAudioMeta</c> of <c>gstaudiometa.h</c>: the 16 byte header, the
+    /// 320 byte <c>GstAudioInfo</c> at 16, <c>gsize samples</c> at 336,
+    /// <c>gsize *offsets</c> at 344, <c>gsize priv_offsets_arr[8]</c> at 352
+    /// and <c>GST_PADDING</c>, for 448 bytes.
+    /// </summary>
+    /// <remarks>
+    /// The one accessor of the wrapper sits behind two embedded records, which
+    /// is the deepest the layout of a mirror goes.
+    /// </remarks>
+    [Fact]
+    public unsafe void AudioMetaRawMatchesTheHeaderLayout()
+    {
+        Gst.Audio.AudioMetaRaw raw = default;
+
+        _output.WriteLine(Format("AudioMetaRaw", Unsafe.SizeOf<Gst.Audio.AudioMetaRaw>()));
+        Assert.Equal(448, Unsafe.SizeOf<Gst.Audio.AudioMetaRaw>());
+
+        Assert.Equal(0L, Offset(&raw, &raw.Meta));
+        Assert.Equal(16L, Offset(&raw, &raw.Info));
+        Assert.Equal(336L, Offset(&raw, &raw.Samples));
+        Assert.Equal(344L, Offset(&raw, &raw.Offsets));
+        Assert.Equal(352L, Offset(&raw, &raw.PrivOffsetsArr));
+    }
+
+    /// <summary>
+    /// <c>struct _GstAudioRingBufferSpec</c> of <c>gstaudioringbuffer.h</c>:
+    /// <c>GstCaps *caps</c> at 0, <c>GstAudioRingBufferFormatType type</c> at 8
+    /// with four bytes of padding behind it, the 320 byte <c>GstAudioInfo</c>
+    /// at 16, the two <c>guint64</c> values <c>latency_time</c> and
+    /// <c>buffer_time</c> at 336 and 344 and the three <c>gint</c> values
+    /// <c>segsize</c>, <c>segtotal</c> and <c>seglatency</c> at 352, 356 and
+    /// 360. The <c>ABI</c> union sits at 368, which is where the prefix mirror
+    /// stops — the whole C structure is 400 bytes and the mirror is
+    /// deliberately not.
+    /// </summary>
+    /// <remarks>
+    /// This is the record where a four byte enumeration precedes the eight byte
+    /// aligned embed, so it is the one that says the padding of the embed is
+    /// where C puts it.
+    /// </remarks>
+    [Fact]
+    public unsafe void AudioRingBufferSpecRawMatchesTheHeaderLayoutUpToTheAbiUnion()
+    {
+        Gst.Audio.AudioRingBufferSpecRaw raw = default;
+
+        _output.WriteLine(Format("AudioRingBufferSpecRaw", Unsafe.SizeOf<Gst.Audio.AudioRingBufferSpecRaw>()));
+        Assert.Equal(368, Unsafe.SizeOf<Gst.Audio.AudioRingBufferSpecRaw>());
+
+        Assert.Equal(0L, Offset(&raw, &raw.Caps));
+        Assert.Equal(8L, Offset(&raw, &raw.Type));
+        Assert.Equal(16L, Offset(&raw, &raw.Info));
+        Assert.Equal(336L, Offset(&raw, &raw.LatencyTime));
+        Assert.Equal(344L, Offset(&raw, &raw.BufferTime));
+        Assert.Equal(352L, Offset(&raw, &raw.Segsize));
+        Assert.Equal(356L, Offset(&raw, &raw.Segtotal));
+        Assert.Equal(360L, Offset(&raw, &raw.Seglatency));
+    }
+
+    /// <summary>
+    /// <c>struct _GstMIKEYPayloadSP</c> of <c>gstmikey.h</c>: the 72 byte
+    /// <c>GstMIKEYPayload</c> it embeds by value at 0 — a 64 byte
+    /// <c>GstMiniObject</c> and two <c>guint</c> — <c>guint policy</c> at 72,
+    /// <c>GstMIKEYSecProto proto</c> at 76 and <c>GArray *params</c> at 80, for
+    /// 88 bytes.
+    /// </summary>
+    /// <remarks>
+    /// The six MIKEY payload records embed the same header, so the one probe
+    /// says where the accessors of all of them sit.
+    /// </remarks>
+    [Fact]
+    public unsafe void MikeyPayloadSpRawMatchesTheHeaderLayout()
+    {
+        Gst.Sdp.MIKEYPayloadSPRaw raw = default;
+
+        _output.WriteLine(Format("MIKEYPayloadSPRaw", Unsafe.SizeOf<Gst.Sdp.MIKEYPayloadSPRaw>()));
+        Assert.Equal(88, Unsafe.SizeOf<Gst.Sdp.MIKEYPayloadSPRaw>());
+
+        Assert.Equal(0L, Offset(&raw, &raw.Pt));
+        Assert.Equal(72L, Offset(&raw, &raw.Policy));
+        Assert.Equal(76L, Offset(&raw, &raw.Proto));
+        Assert.Equal(80L, Offset(&raw, &raw.Params));
     }
 
     /// <summary>

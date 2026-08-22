@@ -171,17 +171,17 @@ public sealed class ClassEmitterTests
     }
 
     [Theory]
-    [InlineData("Gst", 35, 51, 5, 17, 18, 1355, 29, 23)]
-    [InlineData("GstBase", 11, 4, 0, 5, 0, 171, 31, 2)]
-    [InlineData("GstApp", 2, 2, 0, 8, 0, 62, 36, 8)]
-    [InlineData("GstAudio", 14, 17, 1, 2, 2, 197, 32, 0)]
-    [InlineData("GstVideo", 12, 42, 5, 0, 9, 333, 14, 2)]
-    [InlineData("GstPbutils", 14, 1, 0, 0, 1, 172, 5, 3)]
-    [InlineData("GstSdp", 1, 21, 0, 0, 0, 160, 0, 0)]
-    [InlineData("GstWebRTC", 9, 4, 0, 1, 2, 37, 38, 6)]
-    [InlineData("GstNet", 5, 3, 0, 1, 0, 22, 17, 0)]
-    [InlineData("GstRtsp", 1, 10, 1, 1, 2, 110, 0, 1)]
-    [InlineData("GES", 56, 2, 2, 0, 3, 367, 77, 29)]
+    [InlineData("Gst", 35, 51, 5, 17, 18, 1355, 29, 23, 52)]
+    [InlineData("GstBase", 11, 4, 0, 5, 0, 171, 31, 2, 4)]
+    [InlineData("GstApp", 2, 2, 0, 8, 0, 62, 36, 8, 0)]
+    [InlineData("GstAudio", 14, 17, 1, 2, 2, 197, 32, 0, 38)]
+    [InlineData("GstVideo", 12, 42, 5, 0, 9, 333, 14, 2, 80)]
+    [InlineData("GstPbutils", 14, 1, 0, 0, 1, 172, 5, 3, 0)]
+    [InlineData("GstSdp", 1, 21, 0, 0, 0, 160, 0, 0, 25)]
+    [InlineData("GstWebRTC", 9, 4, 0, 1, 2, 37, 38, 6, 6)]
+    [InlineData("GstNet", 5, 3, 0, 1, 0, 22, 17, 0, 2)]
+    [InlineData("GstRtsp", 1, 10, 1, 1, 2, 110, 0, 1, 14)]
+    [InlineData("GES", 56, 2, 2, 0, 3, 367, 77, 29, 7)]
     public void TheEmissionCensusIsStable(
         string module,
         int classes,
@@ -191,7 +191,8 @@ public sealed class ClassEmitterTests
         int enumHolders,
         int methods,
         int properties,
-        int signals)
+        int signals,
+        int fieldAccessors)
     {
         EmissionCensus census = Generated.Census;
 
@@ -203,6 +204,11 @@ public sealed class ClassEmitterTests
         Assert.Equal(methods, census.EmittedCount(module, "method"));
         Assert.Equal(properties, census.EmittedCount(module, "property"));
         Assert.Equal(signals, census.EmittedCount(module, "signal"));
+
+        // A get only property per field of a mini object, a boxed record or an
+        // opaque record that the mirror of its native layout projects onto a
+        // value. GstApp and GstPbutils declare no such field at all.
+        Assert.Equal(fieldAccessors, census.EmittedCount(module, "field accessor"));
     }
 
     [Theory]
@@ -419,12 +425,13 @@ public sealed class ClassEmitterTests
             Assert.DoesNotContain("\n    protected ", content, StringComparison.Ordinal);
         }
 
-        // 106 rather than 105 since the consuming argument kind landed:
-        // GstAudio.AudioBuffer gained its first members (Clip and Truncate,
-        // whose buffer the call takes over), so its wrapper is emitted with the
-        // unsafe modifier the counting here keys on.
+        // 122 rather than 106 since the field accessors of a boxed or opaque
+        // record landed: sixteen wrappers whose gir declares no callable, from
+        // Gst.ValueTable to GstSdp.MIKEYPayloadT, now read their fields through
+        // a mirror and are therefore emitted with the unsafe modifier the
+        // counting here keys on.
         Assert.Equal(151, classes);
-        Assert.Equal(106, records);
+        Assert.Equal(122, records);
     }
 
     [Fact]

@@ -4,6 +4,7 @@
 #nullable enable
 
 using System;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace Gst;
@@ -299,4 +300,28 @@ public sealed unsafe partial class IdStr : Gst.GObject.Boxed
     /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
     /// <returns>The new wrapper.</returns>
     internal static object CreateWrapper(nint handle, Gst.Interop.Transfer transfer) => new IdStr(handle, transfer);
+}
+
+/// <summary>The native layout of <c>GstIdStr</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct IdStrRaw
+{
+    /// <summary>The <c>pointer</c> field.</summary>
+    internal nint Pointer;
+
+    /// <summary>The <c>padding</c> field.</summary>
+    internal PaddingArray Padding;
+
+    /// <summary>Inline storage of the 8 elements of the <c>padding</c> field.</summary>
+    [InlineArray(8)]
+    internal struct PaddingArray
+    {
+        private byte _element0;
+    }
 }

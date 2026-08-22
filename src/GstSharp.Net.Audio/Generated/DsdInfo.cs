@@ -4,6 +4,7 @@
 #nullable enable
 
 using System;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace Gst.Audio;
@@ -74,6 +75,75 @@ public sealed unsafe partial class DsdInfo : Gst.GObject.Boxed
     internal DsdInfo(nint handle, Gst.Interop.Transfer transfer)
         : base(handle, new Gst.GObject.GType(GetGType()), transfer)
     {
+    }
+
+    /// <summary>DSD grouping format</summary>
+    public Gst.Audio.DsdFormat Format
+    {
+        get
+        {
+            Gst.Audio.DsdFormat value = ((DsdInfoRaw*)Handle)->Format;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>DSD rate</summary>
+    public int Rate
+    {
+        get
+        {
+            int value = ((DsdInfoRaw*)Handle)->Rate;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>number of channels (must be at least 1)</summary>
+    public int Channels
+    {
+        get
+        {
+            int value = ((DsdInfoRaw*)Handle)->Channels;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>audio layout</summary>
+    public Gst.Audio.AudioLayout Layout
+    {
+        get
+        {
+            Gst.Audio.AudioLayout value = ((DsdInfoRaw*)Handle)->Layout;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>
+    /// true if the DSD bits in the data bytes are reversed,
+    ///   that is, the least significant bit comes first
+    /// </summary>
+    public bool ReversedBytes
+    {
+        get
+        {
+            bool value = ((DsdInfoRaw*)Handle)->ReversedBytes != 0;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>The <c>flags</c> field of <c>GstDsdInfo</c>.</summary>
+    public Gst.Audio.AudioFlags Flags
+    {
+        get
+        {
+            Gst.Audio.AudioFlags value = ((DsdInfoRaw*)Handle)->Flags;
+            System.GC.KeepAlive(this);
+            return value;
+        }
     }
 
     /// <summary>Wraps a native <c>GstDsdInfo</c>, mapping the null pointer onto <see langword="null"/>.</summary>
@@ -172,4 +242,54 @@ public sealed unsafe partial class DsdInfo : Gst.GObject.Boxed
     /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
     /// <returns>The new wrapper.</returns>
     internal static object CreateWrapper(nint handle, Gst.Interop.Transfer transfer) => new DsdInfo(handle, transfer);
+}
+
+/// <summary>The native layout of <c>GstDsdInfo</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct DsdInfoRaw
+{
+    /// <summary>The <c>format</c> field.</summary>
+    internal Gst.Audio.DsdFormat Format;
+
+    /// <summary>The <c>rate</c> field.</summary>
+    internal int Rate;
+
+    /// <summary>The <c>channels</c> field.</summary>
+    internal int Channels;
+
+    /// <summary>The <c>layout</c> field.</summary>
+    internal Gst.Audio.AudioLayout Layout;
+
+    // <c>gboolean</c> is a 32 bit integer; every non zero value is true.
+    /// <summary>The <c>reversed_bytes</c> field.</summary>
+    internal int ReversedBytes;
+
+    /// <summary>The <c>positions</c> field.</summary>
+    internal PositionsArray Positions;
+
+    /// <summary>The <c>flags</c> field.</summary>
+    internal Gst.Audio.AudioFlags Flags;
+
+    /// <summary>The <c>_gst_reserved</c> field.</summary>
+    internal GstReservedArray GstReserved;
+
+    /// <summary>Inline storage of the 64 elements of the <c>positions</c> field.</summary>
+    [InlineArray(64)]
+    internal struct PositionsArray
+    {
+        private Gst.Audio.AudioChannelPosition _element0;
+    }
+
+    /// <summary>Inline storage of the 4 elements of the <c>_gst_reserved</c> field.</summary>
+    [InlineArray(4)]
+    internal struct GstReservedArray
+    {
+        private nint _element0;
+    }
 }

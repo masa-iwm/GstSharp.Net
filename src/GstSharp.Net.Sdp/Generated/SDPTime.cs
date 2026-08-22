@@ -45,3 +45,23 @@ public sealed unsafe partial class SDPTime
     [LibraryImport("GstSdp", EntryPoint = "gst_sdp_time_clear")]
     private static partial int GstSdpTimeClear(nint t);
 }
+
+/// <summary>The native layout of <c>GstSDPTime</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct SDPTimeRaw
+{
+    /// <summary>The <c>start</c> field.</summary>
+    internal nint Start;
+
+    /// <summary>The <c>stop</c> field.</summary>
+    internal nint Stop;
+
+    /// <summary>The <c>repeat</c> field.</summary>
+    internal nint Repeat;
+}

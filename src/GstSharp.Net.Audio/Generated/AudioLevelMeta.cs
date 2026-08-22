@@ -18,6 +18,28 @@ public sealed unsafe partial class AudioLevelMeta
     /// <param name="handle">The native instance.</param>
     internal AudioLevelMeta(nint handle) => Handle = handle;
 
+    /// <summary>the -dBov from 0-127 (127 is silence).</summary>
+    public byte Level
+    {
+        get
+        {
+            byte value = ((AudioLevelMetaRaw*)Handle)->Level;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>whether the buffer contains voice activity</summary>
+    public bool VoiceActivity
+    {
+        get
+        {
+            bool value = ((AudioLevelMetaRaw*)Handle)->VoiceActivity != 0;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
     /// <summary>Wraps a native <c>GstAudioLevelMeta</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
     /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>
@@ -41,4 +63,25 @@ public sealed unsafe partial class AudioLevelMeta
     /// <summary>The <c>gst_audio_level_meta_get_info</c> entry point.</summary>
     [LibraryImport("GstAudio", EntryPoint = "gst_audio_level_meta_get_info")]
     private static partial nint GstAudioLevelMetaGetInfo();
+}
+
+/// <summary>The native layout of <c>GstAudioLevelMeta</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct AudioLevelMetaRaw
+{
+    /// <summary>The <c>meta</c> field.</summary>
+    internal Gst.MetaRaw Meta;
+
+    /// <summary>The <c>level</c> field.</summary>
+    internal byte Level;
+
+    // <c>gboolean</c> is a 32 bit integer; every non zero value is true.
+    /// <summary>The <c>voice_activity</c> field.</summary>
+    internal int VoiceActivity;
 }

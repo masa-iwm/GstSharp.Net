@@ -29,6 +29,60 @@ public sealed unsafe partial class VideoBarMeta
     /// <param name="handle">The native instance.</param>
     internal VideoBarMeta(nint handle) => Handle = handle;
 
+    /// <summary>0 for progressive or field 1 and 1 for field 2</summary>
+    public byte Field
+    {
+        get
+        {
+            byte value = ((VideoBarMetaRaw*)Handle)->Field;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>if true then bar data specifies letterbox, otherwise pillarbox</summary>
+    public bool IsLetterbox
+    {
+        get
+        {
+            bool value = ((VideoBarMetaRaw*)Handle)->IsLetterbox != 0;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>
+    /// If @is_letterbox is true, then the value specifies the
+    ///      last line of a horizontal letterbox bar area at top of reconstructed frame.
+    ///      Otherwise, it specifies the last horizontal luminance sample of a vertical pillarbox
+    ///      bar area at the left side of the reconstructed frame
+    /// </summary>
+    public uint BarData1
+    {
+        get
+        {
+            uint value = ((VideoBarMetaRaw*)Handle)->BarData1;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>
+    /// If @is_letterbox is true, then the value specifies the
+    ///      first line of a horizontal letterbox bar area at bottom of reconstructed frame.
+    ///      Otherwise, it specifies the first horizontal
+    ///      luminance sample of a vertical pillarbox bar area at the right side of the reconstructed frame.
+    /// </summary>
+    public uint BarData2
+    {
+        get
+        {
+            uint value = ((VideoBarMetaRaw*)Handle)->BarData2;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
     /// <summary>Wraps a native <c>GstVideoBarMeta</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
     /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>
@@ -52,4 +106,31 @@ public sealed unsafe partial class VideoBarMeta
     /// <summary>The <c>gst_video_bar_meta_get_info</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_bar_meta_get_info")]
     private static partial nint GstVideoBarMetaGetInfo();
+}
+
+/// <summary>The native layout of <c>GstVideoBarMeta</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct VideoBarMetaRaw
+{
+    /// <summary>The <c>meta</c> field.</summary>
+    internal Gst.MetaRaw Meta;
+
+    /// <summary>The <c>field</c> field.</summary>
+    internal byte Field;
+
+    // <c>gboolean</c> is a 32 bit integer; every non zero value is true.
+    /// <summary>The <c>is_letterbox</c> field.</summary>
+    internal int IsLetterbox;
+
+    /// <summary>The <c>bar_data1</c> field.</summary>
+    internal uint BarData1;
+
+    /// <summary>The <c>bar_data2</c> field.</summary>
+    internal uint BarData2;
 }

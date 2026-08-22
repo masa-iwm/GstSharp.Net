@@ -4,6 +4,7 @@
 #nullable enable
 
 using System;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace Gst.Video;
@@ -22,6 +23,28 @@ public sealed unsafe partial class VideoGLTextureUploadMeta
     /// <summary>Wraps a native <c>GstVideoGLTextureUploadMeta</c>.</summary>
     /// <param name="handle">The native instance.</param>
     internal VideoGLTextureUploadMeta(nint handle) => Handle = handle;
+
+    /// <summary>Orientation of the textures</summary>
+    public Gst.Video.VideoGLTextureOrientation TextureOrientation
+    {
+        get
+        {
+            Gst.Video.VideoGLTextureOrientation value = ((VideoGLTextureUploadMetaRaw*)Handle)->TextureOrientation;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>Number of textures that are generated</summary>
+    public uint NTextures
+    {
+        get
+        {
+            uint value = ((VideoGLTextureUploadMetaRaw*)Handle)->NTextures;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
 
     /// <summary>Wraps a native <c>GstVideoGLTextureUploadMeta</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
@@ -60,4 +83,49 @@ public sealed unsafe partial class VideoGLTextureUploadMeta
     /// <summary>The <c>gst_video_gl_texture_upload_meta_get_info</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_gl_texture_upload_meta_get_info")]
     private static partial nint GstVideoGlTextureUploadMetaGetInfo();
+}
+
+/// <summary>The native layout of <c>GstVideoGLTextureUploadMeta</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct VideoGLTextureUploadMetaRaw
+{
+    /// <summary>The <c>meta</c> field.</summary>
+    internal Gst.MetaRaw Meta;
+
+    /// <summary>The <c>texture_orientation</c> field.</summary>
+    internal Gst.Video.VideoGLTextureOrientation TextureOrientation;
+
+    /// <summary>The <c>n_textures</c> field.</summary>
+    internal uint NTextures;
+
+    /// <summary>The <c>texture_type</c> field.</summary>
+    internal TextureTypeArray TextureType;
+
+    /// <summary>The <c>buffer</c> field.</summary>
+    internal nint Buffer;
+
+    /// <summary>The <c>upload</c> field.</summary>
+    internal nint Upload;
+
+    /// <summary>The <c>user_data</c> field.</summary>
+    internal nint UserData;
+
+    /// <summary>The <c>user_data_copy</c> field.</summary>
+    internal nint UserDataCopy;
+
+    /// <summary>The <c>user_data_free</c> field.</summary>
+    internal nint UserDataFree;
+
+    /// <summary>Inline storage of the 4 elements of the <c>texture_type</c> field.</summary>
+    [InlineArray(4)]
+    internal struct TextureTypeArray
+    {
+        private Gst.Video.VideoGLTextureType _element0;
+    }
 }

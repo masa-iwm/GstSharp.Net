@@ -3,13 +3,16 @@
 
 #nullable enable
 
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+
 namespace Gst.Sdp;
 
 /// <summary>
 /// The Key data payload contains key material. It should be added as sub
 /// payload to the KEMAC.
 /// </summary>
-public sealed partial class MIKEYPayloadKeyData
+public sealed unsafe partial class MIKEYPayloadKeyData
 {
     /// <summary>The native instance.</summary>
     internal nint Handle;
@@ -17,6 +20,50 @@ public sealed partial class MIKEYPayloadKeyData
     /// <summary>Wraps a native <c>GstMIKEYPayloadKeyData</c>.</summary>
     /// <param name="handle">The native instance.</param>
     internal MIKEYPayloadKeyData(nint handle) => Handle = handle;
+
+    /// <summary>the #GstMIKEYKeyDataType of @key_data</summary>
+    public Gst.Sdp.MIKEYKeyDataType KeyType
+    {
+        get
+        {
+            Gst.Sdp.MIKEYKeyDataType value = ((MIKEYPayloadKeyDataRaw*)Handle)->KeyType;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>length of @key_data</summary>
+    public ushort KeyLen
+    {
+        get
+        {
+            ushort value = ((MIKEYPayloadKeyDataRaw*)Handle)->KeyLen;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>the length of @salt_data, can be 0</summary>
+    public ushort SaltLen
+    {
+        get
+        {
+            ushort value = ((MIKEYPayloadKeyDataRaw*)Handle)->SaltLen;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>the Key Validity type</summary>
+    public Gst.Sdp.MIKEYKVType KvType
+    {
+        get
+        {
+            Gst.Sdp.MIKEYKVType value = ((MIKEYPayloadKeyDataRaw*)Handle)->KvType;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
 
     /// <summary>Wraps a native <c>GstMIKEYPayloadKeyData</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
@@ -28,4 +75,56 @@ public sealed partial class MIKEYPayloadKeyData
     /// </remarks>
     internal static MIKEYPayloadKeyData? FromNative(nint handle) =>
         handle == 0 ? null : new(handle);
+}
+
+/// <summary>The native layout of <c>GstMIKEYPayloadKeyData</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct MIKEYPayloadKeyDataRaw
+{
+    /// <summary>The <c>pt</c> field.</summary>
+    internal Gst.Sdp.MIKEYPayloadRaw Pt;
+
+    /// <summary>The <c>key_type</c> field.</summary>
+    internal Gst.Sdp.MIKEYKeyDataType KeyType;
+
+    /// <summary>The <c>key_len</c> field.</summary>
+    internal ushort KeyLen;
+
+    /// <summary>The <c>key_data</c> field.</summary>
+    internal nint KeyData;
+
+    /// <summary>The <c>salt_len</c> field.</summary>
+    internal ushort SaltLen;
+
+    /// <summary>The <c>salt_data</c> field.</summary>
+    internal nint SaltData;
+
+    /// <summary>The <c>kv_type</c> field.</summary>
+    internal Gst.Sdp.MIKEYKVType KvType;
+
+    /// <summary>The <c>kv_len</c> field.</summary>
+    internal KvLenArray KvLen;
+
+    /// <summary>The <c>kv_data</c> field.</summary>
+    internal KvDataArray KvData;
+
+    /// <summary>Inline storage of the 2 elements of the <c>kv_len</c> field.</summary>
+    [InlineArray(2)]
+    internal struct KvLenArray
+    {
+        private byte _element0;
+    }
+
+    /// <summary>Inline storage of the 2 elements of the <c>kv_data</c> field.</summary>
+    [InlineArray(2)]
+    internal struct KvDataArray
+    {
+        private nint _element0;
+    }
 }

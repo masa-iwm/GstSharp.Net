@@ -29,6 +29,39 @@ public sealed unsafe partial class VideoAFDMeta
     /// <param name="handle">The native instance.</param>
     internal VideoAFDMeta(nint handle) => Handle = handle;
 
+    /// <summary>0 for progressive or field 1 and 1 for field 2</summary>
+    public byte Field
+    {
+        get
+        {
+            byte value = ((VideoAFDMetaRaw*)Handle)->Field;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>#GstVideoAFDSpec that applies to @afd</summary>
+    public Gst.Video.VideoAFDSpec Spec
+    {
+        get
+        {
+            Gst.Video.VideoAFDSpec value = ((VideoAFDMetaRaw*)Handle)->Spec;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>#GstVideoAFDValue AFD value</summary>
+    public Gst.Video.VideoAFDValue Afd
+    {
+        get
+        {
+            Gst.Video.VideoAFDValue value = ((VideoAFDMetaRaw*)Handle)->Afd;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
     /// <summary>Wraps a native <c>GstVideoAFDMeta</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
     /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>
@@ -52,4 +85,27 @@ public sealed unsafe partial class VideoAFDMeta
     /// <summary>The <c>gst_video_afd_meta_get_info</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_afd_meta_get_info")]
     private static partial nint GstVideoAfdMetaGetInfo();
+}
+
+/// <summary>The native layout of <c>GstVideoAFDMeta</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct VideoAFDMetaRaw
+{
+    /// <summary>The <c>meta</c> field.</summary>
+    internal Gst.MetaRaw Meta;
+
+    /// <summary>The <c>field</c> field.</summary>
+    internal byte Field;
+
+    /// <summary>The <c>spec</c> field.</summary>
+    internal Gst.Video.VideoAFDSpec Spec;
+
+    /// <summary>The <c>afd</c> field.</summary>
+    internal Gst.Video.VideoAFDValue Afd;
 }

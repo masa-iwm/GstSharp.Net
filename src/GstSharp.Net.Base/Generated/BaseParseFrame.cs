@@ -4,6 +4,7 @@
 #nullable enable
 
 using System;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace Gst.Base;
@@ -25,6 +26,51 @@ public sealed unsafe partial class BaseParseFrame : Gst.GObject.Boxed
     internal BaseParseFrame(nint handle, Gst.Interop.Transfer transfer)
         : base(handle, new Gst.GObject.GType(GetGType()), transfer)
     {
+    }
+
+    /// <summary>
+    /// a combination of input and output #GstBaseParseFrameFlags that
+    ///  convey additional context to subclass or allow subclass to tune
+    ///  subsequent #GstBaseParse actions.
+    /// </summary>
+    public uint Flags
+    {
+        get
+        {
+            uint value = ((BaseParseFrameRaw*)Handle)->Flags;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>
+    /// media specific offset of input frame
+    ///   Note that a converter may have a different one on the frame's buffer.
+    /// </summary>
+    public ulong Offset
+    {
+        get
+        {
+            ulong value = ((BaseParseFrameRaw*)Handle)->Offset;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>
+    /// subclass can set this to indicates the metadata overhead
+    ///   for the given frame, which is then used to enable more accurate bitrate
+    ///   computations. If this is -1, it is assumed that this frame should be
+    ///   skipped in bitrate calculation.
+    /// </summary>
+    public int Overhead
+    {
+        get
+        {
+            int value = ((BaseParseFrameRaw*)Handle)->Overhead;
+            System.GC.KeepAlive(this);
+            return value;
+        }
     }
 
     /// <summary>Wraps a native <c>GstBaseParseFrame</c>, mapping the null pointer onto <see langword="null"/>.</summary>
@@ -100,4 +146,56 @@ public sealed unsafe partial class BaseParseFrame : Gst.GObject.Boxed
     /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
     /// <returns>The new wrapper.</returns>
     internal static object CreateWrapper(nint handle, Gst.Interop.Transfer transfer) => new BaseParseFrame(handle, transfer);
+}
+
+/// <summary>The native layout of <c>GstBaseParseFrame</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct BaseParseFrameRaw
+{
+    /// <summary>The <c>buffer</c> field.</summary>
+    internal nint Buffer;
+
+    /// <summary>The <c>out_buffer</c> field.</summary>
+    internal nint OutBuffer;
+
+    /// <summary>The <c>flags</c> field.</summary>
+    internal uint Flags;
+
+    /// <summary>The <c>offset</c> field.</summary>
+    internal ulong Offset;
+
+    /// <summary>The <c>overhead</c> field.</summary>
+    internal int Overhead;
+
+    /// <summary>The <c>size</c> field.</summary>
+    internal int Size;
+
+    /// <summary>The <c>_gst_reserved_i</c> field.</summary>
+    internal GstReservedIArray GstReservedI;
+
+    /// <summary>The <c>_gst_reserved_p</c> field.</summary>
+    internal GstReservedPArray GstReservedP;
+
+    /// <summary>The <c>_private_flags</c> field.</summary>
+    internal uint PrivateFlags;
+
+    /// <summary>Inline storage of the 2 elements of the <c>_gst_reserved_i</c> field.</summary>
+    [InlineArray(2)]
+    internal struct GstReservedIArray
+    {
+        private uint _element0;
+    }
+
+    /// <summary>Inline storage of the 2 elements of the <c>_gst_reserved_p</c> field.</summary>
+    [InlineArray(2)]
+    internal struct GstReservedPArray
+    {
+        private nint _element0;
+    }
 }

@@ -50,3 +50,21 @@ public sealed partial class VideoCodecState : Gst.GObject.Boxed
     /// <returns>The new wrapper.</returns>
     internal static object CreateWrapper(nint handle, Gst.Interop.Transfer transfer) => new VideoCodecState(handle, transfer);
 }
+
+/// <summary>The native layout of <c>GstVideoCodecState</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// <para>
+/// Prefix mirror of the C struct: field offsets are exact, <c>sizeof</c> is NOT
+/// the C size; never allocate from it.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct VideoCodecStateRaw
+{
+    /// <summary>The <c>ref_count</c> field.</summary>
+    internal int RefCount;
+}

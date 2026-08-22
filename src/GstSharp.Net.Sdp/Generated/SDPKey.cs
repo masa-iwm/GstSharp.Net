@@ -3,6 +3,8 @@
 
 #nullable enable
 
+using System.Runtime.InteropServices;
+
 namespace Gst.Sdp;
 
 /// <summary>
@@ -28,4 +30,21 @@ public sealed partial class SDPKey
     /// </remarks>
     internal static SDPKey? FromNative(nint handle) =>
         handle == 0 ? null : new(handle);
+}
+
+/// <summary>The native layout of <c>GstSDPKey</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct SDPKeyRaw
+{
+    /// <summary>The <c>type</c> field.</summary>
+    internal nint Type;
+
+    /// <summary>The <c>data</c> field.</summary>
+    internal nint Data;
 }

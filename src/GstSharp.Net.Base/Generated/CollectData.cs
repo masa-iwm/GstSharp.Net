@@ -3,10 +3,12 @@
 
 #nullable enable
 
+using System.Runtime.InteropServices;
+
 namespace Gst.Base;
 
 /// <summary>Structure used by the collect_pads.</summary>
-public sealed partial class CollectData
+public sealed unsafe partial class CollectData
 {
     /// <summary>The native instance.</summary>
     internal nint Handle;
@@ -14,6 +16,17 @@ public sealed partial class CollectData
     /// <summary>Wraps a native <c>GstCollectData</c>.</summary>
     /// <param name="handle">The native instance.</param>
     internal CollectData(nint handle) => Handle = handle;
+
+    /// <summary>position in the buffer</summary>
+    public uint Pos
+    {
+        get
+        {
+            uint value = ((CollectDataRaw*)Handle)->Pos;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
 
     /// <summary>Wraps a native <c>GstCollectData</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
@@ -25,4 +38,40 @@ public sealed partial class CollectData
     /// </remarks>
     internal static CollectData? FromNative(nint handle) =>
         handle == 0 ? null : new(handle);
+}
+
+/// <summary>The native layout of <c>GstCollectData</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// <para>
+/// Prefix mirror of the C struct: field offsets are exact, <c>sizeof</c> is NOT
+/// the C size; never allocate from it.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct CollectDataRaw
+{
+    /// <summary>The <c>collect</c> field.</summary>
+    internal nint Collect;
+
+    /// <summary>The <c>pad</c> field.</summary>
+    internal nint Pad;
+
+    /// <summary>The <c>buffer</c> field.</summary>
+    internal nint Buffer;
+
+    /// <summary>The <c>pos</c> field.</summary>
+    internal uint Pos;
+
+    /// <summary>The <c>segment</c> field.</summary>
+    internal Gst.SegmentRaw Segment;
+
+    /// <summary>The <c>state</c> field.</summary>
+    internal Gst.Base.CollectPadsStateFlags State;
+
+    /// <summary>The <c>priv</c> field.</summary>
+    internal nint Priv;
 }

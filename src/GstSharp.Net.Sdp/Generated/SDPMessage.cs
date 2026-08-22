@@ -1174,3 +1174,56 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     /// <returns>The new wrapper.</returns>
     internal static object CreateWrapper(nint handle, Gst.Interop.Transfer transfer) => new SDPMessage(handle, transfer);
 }
+
+/// <summary>The native layout of <c>GstSDPMessage</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct SDPMessageRaw
+{
+    /// <summary>The <c>version</c> field.</summary>
+    internal nint Version;
+
+    /// <summary>The <c>origin</c> field.</summary>
+    internal Gst.Sdp.SDPOriginRaw Origin;
+
+    /// <summary>The <c>session_name</c> field.</summary>
+    internal nint SessionName;
+
+    /// <summary>The <c>information</c> field.</summary>
+    internal nint Information;
+
+    /// <summary>The <c>uri</c> field.</summary>
+    internal nint Uri;
+
+    /// <summary>The <c>emails</c> field.</summary>
+    internal nint Emails;
+
+    /// <summary>The <c>phones</c> field.</summary>
+    internal nint Phones;
+
+    /// <summary>The <c>connection</c> field.</summary>
+    internal Gst.Sdp.SDPConnectionRaw Connection;
+
+    /// <summary>The <c>bandwidths</c> field.</summary>
+    internal nint Bandwidths;
+
+    /// <summary>The <c>times</c> field.</summary>
+    internal nint Times;
+
+    /// <summary>The <c>zones</c> field.</summary>
+    internal nint Zones;
+
+    /// <summary>The <c>key</c> field.</summary>
+    internal Gst.Sdp.SDPKeyRaw Key;
+
+    /// <summary>The <c>attributes</c> field.</summary>
+    internal nint Attributes;
+
+    /// <summary>The <c>medias</c> field.</summary>
+    internal nint Medias;
+}

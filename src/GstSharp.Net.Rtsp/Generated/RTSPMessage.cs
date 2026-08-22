@@ -19,6 +19,17 @@ public sealed unsafe partial class RTSPMessage : Gst.GObject.Boxed
     {
     }
 
+    /// <summary>the message type</summary>
+    public Gst.Rtsp.RTSPMsgType Type
+    {
+        get
+        {
+            Gst.Rtsp.RTSPMsgType value = ((RTSPMessageRaw*)Handle)->Type;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
     /// <summary>Wraps a native <c>GstRTSPMessage</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
     /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
@@ -636,4 +647,22 @@ public sealed unsafe partial class RTSPMessage : Gst.GObject.Boxed
     /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
     /// <returns>The new wrapper.</returns>
     internal static object CreateWrapper(nint handle, Gst.Interop.Transfer transfer) => new RTSPMessage(handle, transfer);
+}
+
+/// <summary>The native layout of <c>GstRTSPMessage</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// <para>
+/// Prefix mirror of the C struct: field offsets are exact, <c>sizeof</c> is NOT
+/// the C size; never allocate from it.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct RTSPMessageRaw
+{
+    /// <summary>The <c>type</c> field.</summary>
+    internal Gst.Rtsp.RTSPMsgType Type;
 }

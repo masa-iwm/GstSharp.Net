@@ -3,6 +3,8 @@
 
 #nullable enable
 
+using System.Runtime.InteropServices;
+
 namespace GES;
 
 /// <summary>
@@ -10,7 +12,7 @@ namespace GES;
 /// transparency and composition operator of a video frame in the timeline
 /// composition.
 /// </summary>
-public sealed partial class FrameCompositionMeta
+public sealed unsafe partial class FrameCompositionMeta
 {
     /// <summary>The native instance.</summary>
     internal nint Handle;
@@ -18,6 +20,89 @@ public sealed partial class FrameCompositionMeta
     /// <summary>Wraps a native <c>GESFrameCompositionMeta</c>.</summary>
     /// <param name="handle">The native instance.</param>
     internal FrameCompositionMeta(nint handle) => Handle = handle;
+
+    /// <summary>The <c>alpha</c> field of <c>GESFrameCompositionMeta</c>.</summary>
+    public double Alpha
+    {
+        get
+        {
+            double value = ((FrameCompositionMetaRaw*)Handle)->Alpha;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>The desired x position.</summary>
+    public double Posx
+    {
+        get
+        {
+            double value = ((FrameCompositionMetaRaw*)Handle)->Posx;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>The desired y position.</summary>
+    public double Posy
+    {
+        get
+        {
+            double value = ((FrameCompositionMetaRaw*)Handle)->Posy;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>
+    /// The desired height of the video. -1 means that no scaling should be
+    /// applied.
+    /// </summary>
+    public double Height
+    {
+        get
+        {
+            double value = ((FrameCompositionMetaRaw*)Handle)->Height;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>
+    /// The desired width of the video. -1 means that no scaling should beapplied
+    /// applied.
+    /// </summary>
+    public double Width
+    {
+        get
+        {
+            double value = ((FrameCompositionMetaRaw*)Handle)->Width;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>The desired z order.</summary>
+    public uint Zorder
+    {
+        get
+        {
+            uint value = ((FrameCompositionMetaRaw*)Handle)->Zorder;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>The blending operator for the source.</summary>
+    public int Operator
+    {
+        get
+        {
+            int value = ((FrameCompositionMetaRaw*)Handle)->Operator;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
 
     /// <summary>Wraps a native <c>GESFrameCompositionMeta</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
@@ -29,4 +114,39 @@ public sealed partial class FrameCompositionMeta
     /// </remarks>
     internal static FrameCompositionMeta? FromNative(nint handle) =>
         handle == 0 ? null : new(handle);
+}
+
+/// <summary>The native layout of <c>GESFrameCompositionMeta</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct FrameCompositionMetaRaw
+{
+    /// <summary>The <c>meta</c> field.</summary>
+    internal Gst.MetaRaw Meta;
+
+    /// <summary>The <c>alpha</c> field.</summary>
+    internal double Alpha;
+
+    /// <summary>The <c>posx</c> field.</summary>
+    internal double Posx;
+
+    /// <summary>The <c>posy</c> field.</summary>
+    internal double Posy;
+
+    /// <summary>The <c>height</c> field.</summary>
+    internal double Height;
+
+    /// <summary>The <c>width</c> field.</summary>
+    internal double Width;
+
+    /// <summary>The <c>zorder</c> field.</summary>
+    internal uint Zorder;
+
+    /// <summary>The <c>operator</c> field.</summary>
+    internal int Operator;
 }

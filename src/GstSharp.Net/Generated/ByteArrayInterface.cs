@@ -3,6 +3,9 @@
 
 #nullable enable
 
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+
 namespace Gst;
 
 /// <summary>
@@ -17,7 +20,7 @@ namespace Gst;
 /// array cannot grow.
 /// </para>
 /// </remarks>
-public sealed partial class ByteArrayInterface
+public sealed unsafe partial class ByteArrayInterface
 {
     /// <summary>The native instance.</summary>
     internal nint Handle;
@@ -25,6 +28,17 @@ public sealed partial class ByteArrayInterface
     /// <summary>Wraps a native <c>GstByteArrayInterface</c>.</summary>
     /// <param name="handle">The native instance.</param>
     internal ByteArrayInterface(nint handle) => Handle = handle;
+
+    /// <summary>Number of bytes in @data.</summary>
+    public nuint Len
+    {
+        get
+        {
+            nuint value = ((ByteArrayInterfaceRaw*)Handle)->Len;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
 
     /// <summary>Wraps a native <c>GstByteArrayInterface</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
@@ -36,4 +50,34 @@ public sealed partial class ByteArrayInterface
     /// </remarks>
     internal static ByteArrayInterface? FromNative(nint handle) =>
         handle == 0 ? null : new(handle);
+}
+
+/// <summary>The native layout of <c>GstByteArrayInterface</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct ByteArrayInterfaceRaw
+{
+    /// <summary>The <c>data</c> field.</summary>
+    internal nint Data;
+
+    /// <summary>The <c>len</c> field.</summary>
+    internal nuint Len;
+
+    /// <summary>The <c>resize</c> field.</summary>
+    internal nint Resize;
+
+    /// <summary>The <c>_gst_reserved</c> field.</summary>
+    internal GstReservedArray GstReserved;
+
+    /// <summary>Inline storage of the 4 elements of the <c>_gst_reserved</c> field.</summary>
+    [InlineArray(4)]
+    internal struct GstReservedArray
+    {
+        private nint _element0;
+    }
 }

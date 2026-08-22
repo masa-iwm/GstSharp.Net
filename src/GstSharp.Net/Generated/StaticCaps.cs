@@ -4,6 +4,7 @@
 #nullable enable
 
 using System;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace Gst;
@@ -60,4 +61,31 @@ public sealed unsafe partial class StaticCaps
     /// <summary>The <c>gst_static_caps_get</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_static_caps_get")]
     private static partial nint GstStaticCapsGet(nint staticCaps);
+}
+
+/// <summary>The native layout of <c>GstStaticCaps</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct StaticCapsRaw
+{
+    /// <summary>The <c>caps</c> field.</summary>
+    internal nint Caps;
+
+    /// <summary>The <c>string</c> field.</summary>
+    internal nint String;
+
+    /// <summary>The <c>_gst_reserved</c> field.</summary>
+    internal GstReservedArray GstReserved;
+
+    /// <summary>Inline storage of the 4 elements of the <c>_gst_reserved</c> field.</summary>
+    [InlineArray(4)]
+    internal struct GstReservedArray
+    {
+        private nint _element0;
+    }
 }

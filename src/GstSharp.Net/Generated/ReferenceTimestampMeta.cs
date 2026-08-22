@@ -52,6 +52,28 @@ public sealed unsafe partial class ReferenceTimestampMeta
     /// <param name="handle">The native instance.</param>
     internal ReferenceTimestampMeta(nint handle) => Handle = handle;
 
+    /// <summary>timestamp</summary>
+    public Gst.ClockTime Timestamp
+    {
+        get
+        {
+            Gst.ClockTime value = new(((ReferenceTimestampMetaRaw*)Handle)->Timestamp);
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>duration, or %GST_CLOCK_TIME_NONE</summary>
+    public Gst.ClockTime Duration
+    {
+        get
+        {
+            Gst.ClockTime value = new(((ReferenceTimestampMetaRaw*)Handle)->Duration);
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
     /// <summary>Wraps a native <c>GstReferenceTimestampMeta</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
     /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>
@@ -75,4 +97,30 @@ public sealed unsafe partial class ReferenceTimestampMeta
     /// <summary>The <c>gst_reference_timestamp_meta_get_info</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_reference_timestamp_meta_get_info")]
     private static partial nint GstReferenceTimestampMetaGetInfo();
+}
+
+/// <summary>The native layout of <c>GstReferenceTimestampMeta</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct ReferenceTimestampMetaRaw
+{
+    /// <summary>The <c>parent</c> field.</summary>
+    internal Gst.MetaRaw Parent;
+
+    /// <summary>The <c>reference</c> field.</summary>
+    internal nint Reference;
+
+    /// <summary>The <c>timestamp</c> field.</summary>
+    internal ulong Timestamp;
+
+    /// <summary>The <c>duration</c> field.</summary>
+    internal ulong Duration;
+
+    /// <summary>The <c>info</c> field.</summary>
+    internal nint Info;
 }

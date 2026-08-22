@@ -18,6 +18,28 @@ public sealed unsafe partial class SDPConnection
     /// <param name="handle">The native instance.</param>
     internal SDPConnection(nint handle) => Handle = handle;
 
+    /// <summary>the time to live of the address</summary>
+    public uint Ttl
+    {
+        get
+        {
+            uint value = ((SDPConnectionRaw*)Handle)->Ttl;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>the number of layers</summary>
+    public uint AddrNumber
+    {
+        get
+        {
+            uint value = ((SDPConnectionRaw*)Handle)->AddrNumber;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
     /// <summary>Wraps a native <c>GstSDPConnection</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
     /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>
@@ -68,4 +90,30 @@ public sealed unsafe partial class SDPConnection
     /// <summary>The <c>gst_sdp_connection_set</c> entry point.</summary>
     [LibraryImport("GstSdp", EntryPoint = "gst_sdp_connection_set")]
     private static partial int GstSdpConnectionSet(nint conn, byte* nettype, byte* addrtype, byte* address, uint ttl, uint addrNumber);
+}
+
+/// <summary>The native layout of <c>GstSDPConnection</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct SDPConnectionRaw
+{
+    /// <summary>The <c>nettype</c> field.</summary>
+    internal nint Nettype;
+
+    /// <summary>The <c>addrtype</c> field.</summary>
+    internal nint Addrtype;
+
+    /// <summary>The <c>address</c> field.</summary>
+    internal nint Address;
+
+    /// <summary>The <c>ttl</c> field.</summary>
+    internal uint Ttl;
+
+    /// <summary>The <c>addr_number</c> field.</summary>
+    internal uint AddrNumber;
 }

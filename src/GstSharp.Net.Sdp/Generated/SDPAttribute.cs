@@ -62,3 +62,20 @@ public sealed unsafe partial class SDPAttribute
     [LibraryImport("GstSdp", EntryPoint = "gst_sdp_attribute_set")]
     private static partial int GstSdpAttributeSet(nint attr, byte* key, byte* value);
 }
+
+/// <summary>The native layout of <c>GstSDPAttribute</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct SDPAttributeRaw
+{
+    /// <summary>The <c>key</c> field.</summary>
+    internal nint Key;
+
+    /// <summary>The <c>value</c> field.</summary>
+    internal nint Value;
+}

@@ -66,7 +66,7 @@ internal static class GirReader
             Classes = [.. Children(element, "class").Select(ReadClass)],
             Records = [.. Children(element, "record").Select(ReadRecord)],
             Interfaces = [.. Children(element, "interface").Select(ReadInterface)],
-            Unions = [.. Children(element, "union").Select(ReadUnion)],
+            Unions = ReadUnions(element),
             Enumerations = [.. Children(element, "enumeration").Select(static e => ReadEnumeration(e, isBitfield: false))],
             Bitfields = [.. Children(element, "bitfield").Select(static e => ReadEnumeration(e, isBitfield: true))],
             Callbacks = [.. Children(element, "callback").Select(static e => ReadCallback(e, isFieldSlot: false))],
@@ -157,7 +157,7 @@ internal static class GirReader
             VirtualMethods = [.. Children(element, "virtual-method").Select(ReadVirtualMethod)],
             Signals = [.. element.Elements(GirXml.Glib + "signal").Select(ReadSignal)],
             Properties = [.. Children(element, "property").Select(ReadProperty)],
-            Unions = [.. Children(element, "union").Select(ReadUnion)],
+            Unions = ReadUnions(element),
             Doc = Doc(element),
             DocDeprecated = DocDeprecated(element),
             Version = Attr(element, "version"),
@@ -182,7 +182,7 @@ internal static class GirReader
             Constructors = [.. Children(element, "constructor").Select(static e => ReadFunction(e, GirCallableKind.Constructor))],
             Methods = [.. Children(element, "method").Select(static e => ReadFunction(e, GirCallableKind.Method))],
             Functions = [.. Children(element, "function").Select(static e => ReadFunction(e, GirCallableKind.Function))],
-            Unions = [.. Children(element, "union").Select(ReadUnion)],
+            Unions = ReadUnions(element),
             Doc = Doc(element),
             DocDeprecated = DocDeprecated(element),
             Version = Attr(element, "version"),
@@ -212,9 +212,41 @@ internal static class GirReader
             IsIntrospectable = FlagOrTrue(element, "introspectable"),
         };
 
-    private static GirUnion ReadUnion(XElement element) =>
+    /// <summary>
+    /// Reads the unions declared inside one element, remembering how many
+    /// <c>&lt;field&gt;</c> siblings precede each of them.
+    /// </summary>
+    /// <param name="element">The declaring element.</param>
+    /// <returns>The unions, in document order.</returns>
+    /// <remarks>
+    /// The fields and the unions of a structure end up in two separate lists,
+    /// so the count of the fields in front of a union is what is left of the
+    /// document order, and it is what says where the union sits in the C
+    /// layout.
+    /// </remarks>
+    private static IReadOnlyList<GirUnion> ReadUnions(XElement element)
+    {
+        List<GirUnion> unions = [];
+        int fields = 0;
+        foreach (XElement child in element.Elements())
+        {
+            if (child.Name == GirXml.Core + "field")
+            {
+                fields++;
+            }
+            else if (child.Name == GirXml.Core + "union")
+            {
+                unions.Add(ReadUnion(child, fields));
+            }
+        }
+
+        return unions;
+    }
+
+    private static GirUnion ReadUnion(XElement element, int fieldIndex) =>
         new()
         {
+            FieldIndex = fieldIndex,
             Name = Attr(element, "name") ?? string.Empty,
             CType = CAttr(element, "type"),
             CSymbolPrefix = CAttr(element, "symbol-prefix"),

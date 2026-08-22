@@ -3,6 +3,8 @@
 
 #nullable enable
 
+using System.Runtime.InteropServices;
+
 namespace Gst.Video;
 
 /// <summary>
@@ -12,7 +14,7 @@ namespace Gst.Video;
 /// <remarks>
 /// <para>The configuration of the time code.</para>
 /// </remarks>
-public sealed partial class VideoTimeCodeConfig
+public sealed unsafe partial class VideoTimeCodeConfig
 {
     /// <summary>The native instance.</summary>
     internal nint Handle;
@@ -20,6 +22,39 @@ public sealed partial class VideoTimeCodeConfig
     /// <summary>Wraps a native <c>GstVideoTimeCodeConfig</c>.</summary>
     /// <param name="handle">The native instance.</param>
     internal VideoTimeCodeConfig(nint handle) => Handle = handle;
+
+    /// <summary>Numerator of the frame rate</summary>
+    public uint FpsN
+    {
+        get
+        {
+            uint value = ((VideoTimeCodeConfigRaw*)Handle)->FpsN;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>Denominator of the frame rate</summary>
+    public uint FpsD
+    {
+        get
+        {
+            uint value = ((VideoTimeCodeConfigRaw*)Handle)->FpsD;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>the corresponding #GstVideoTimeCodeFlags</summary>
+    public Gst.Video.VideoTimeCodeFlags Flags
+    {
+        get
+        {
+            Gst.Video.VideoTimeCodeFlags value = ((VideoTimeCodeConfigRaw*)Handle)->Flags;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
 
     /// <summary>Wraps a native <c>GstVideoTimeCodeConfig</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
@@ -31,4 +66,27 @@ public sealed partial class VideoTimeCodeConfig
     /// </remarks>
     internal static VideoTimeCodeConfig? FromNative(nint handle) =>
         handle == 0 ? null : new(handle);
+}
+
+/// <summary>The native layout of <c>GstVideoTimeCodeConfig</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct VideoTimeCodeConfigRaw
+{
+    /// <summary>The <c>fps_n</c> field.</summary>
+    internal uint FpsN;
+
+    /// <summary>The <c>fps_d</c> field.</summary>
+    internal uint FpsD;
+
+    /// <summary>The <c>flags</c> field.</summary>
+    internal Gst.Video.VideoTimeCodeFlags Flags;
+
+    /// <summary>The <c>latest_daily_jam</c> field.</summary>
+    internal nint LatestDailyJam;
 }

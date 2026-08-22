@@ -3,6 +3,8 @@
 
 #nullable enable
 
+using System.Runtime.InteropServices;
+
 namespace Gst.Audio;
 
 /// <summary>The <c>GstAudioSinkClassExtension</c> record.</summary>
@@ -25,4 +27,18 @@ public sealed partial class AudioSinkClassExtension
     /// </remarks>
     internal static AudioSinkClassExtension? FromNative(nint handle) =>
         handle == 0 ? null : new(handle);
+}
+
+/// <summary>The native layout of <c>GstAudioSinkClassExtension</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct AudioSinkClassExtensionRaw
+{
+    /// <summary>The <c>clear_all</c> field.</summary>
+    internal nint ClearAll;
 }

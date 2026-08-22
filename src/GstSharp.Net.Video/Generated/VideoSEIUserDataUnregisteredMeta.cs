@@ -4,6 +4,7 @@
 #nullable enable
 
 using System;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace Gst.Video;
@@ -17,6 +18,17 @@ public sealed unsafe partial class VideoSEIUserDataUnregisteredMeta
     /// <summary>Wraps a native <c>GstVideoSEIUserDataUnregisteredMeta</c>.</summary>
     /// <param name="handle">The native instance.</param>
     internal VideoSEIUserDataUnregisteredMeta(nint handle) => Handle = handle;
+
+    /// <summary>Size of the data buffer</summary>
+    public nuint Size
+    {
+        get
+        {
+            nuint value = ((VideoSEIUserDataUnregisteredMetaRaw*)Handle)->Size;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
 
     /// <summary>Wraps a native <c>GstVideoSEIUserDataUnregisteredMeta</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
@@ -41,4 +53,34 @@ public sealed unsafe partial class VideoSEIUserDataUnregisteredMeta
     /// <summary>The <c>gst_video_sei_user_data_unregistered_meta_get_info</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_sei_user_data_unregistered_meta_get_info")]
     private static partial nint GstVideoSeiUserDataUnregisteredMetaGetInfo();
+}
+
+/// <summary>The native layout of <c>GstVideoSEIUserDataUnregisteredMeta</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct VideoSEIUserDataUnregisteredMetaRaw
+{
+    /// <summary>The <c>meta</c> field.</summary>
+    internal Gst.MetaRaw Meta;
+
+    /// <summary>The <c>uuid</c> field.</summary>
+    internal UuidArray Uuid;
+
+    /// <summary>The <c>data</c> field.</summary>
+    internal nint Data;
+
+    /// <summary>The <c>size</c> field.</summary>
+    internal nuint Size;
+
+    /// <summary>Inline storage of the 16 elements of the <c>uuid</c> field.</summary>
+    [InlineArray(16)]
+    internal struct UuidArray
+    {
+        private byte _element0;
+    }
 }

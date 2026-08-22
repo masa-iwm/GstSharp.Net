@@ -3,10 +3,13 @@
 
 #nullable enable
 
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+
 namespace Gst;
 
 /// <summary>VTable for the #GValue @type.</summary>
-public sealed partial class ValueTable
+public sealed unsafe partial class ValueTable
 {
     /// <summary>The native instance.</summary>
     internal nint Handle;
@@ -14,6 +17,17 @@ public sealed partial class ValueTable
     /// <summary>Wraps a native <c>GstValueTable</c>.</summary>
     /// <param name="handle">The native instance.</param>
     internal ValueTable(nint handle) => Handle = handle;
+
+    /// <summary>a #GType</summary>
+    public Gst.GObject.GType Type
+    {
+        get
+        {
+            Gst.GObject.GType value = new(((ValueTableRaw*)Handle)->Type);
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
 
     /// <summary>Wraps a native <c>GstValueTable</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
@@ -25,4 +39,43 @@ public sealed partial class ValueTable
     /// </remarks>
     internal static ValueTable? FromNative(nint handle) =>
         handle == 0 ? null : new(handle);
+}
+
+/// <summary>The native layout of <c>GstValueTable</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct ValueTableRaw
+{
+    /// <summary>The <c>type</c> field.</summary>
+    internal nuint Type;
+
+    /// <summary>The <c>compare</c> field.</summary>
+    internal nint Compare;
+
+    /// <summary>The <c>serialize</c> field.</summary>
+    internal nint Serialize;
+
+    /// <summary>The <c>deserialize</c> field.</summary>
+    internal nint Deserialize;
+
+    /// <summary>The <c>deserialize_with_pspec</c> field.</summary>
+    internal nint DeserializeWithPspec;
+
+    /// <summary>The <c>hash</c> field.</summary>
+    internal nint Hash;
+
+    /// <summary>The <c>_gst_reserved</c> field.</summary>
+    internal GstReservedArray GstReserved;
+
+    /// <summary>Inline storage of the 2 elements of the <c>_gst_reserved</c> field.</summary>
+    [InlineArray(2)]
+    internal struct GstReservedArray
+    {
+        private nint _element0;
+    }
 }

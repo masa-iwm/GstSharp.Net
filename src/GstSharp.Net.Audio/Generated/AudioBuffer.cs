@@ -4,6 +4,7 @@
 #nullable enable
 
 using System;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace Gst.Audio;
@@ -27,6 +28,28 @@ public sealed unsafe partial class AudioBuffer
     /// <summary>Wraps a native <c>GstAudioBuffer</c>.</summary>
     /// <param name="handle">The native instance.</param>
     internal AudioBuffer(nint handle) => Handle = handle;
+
+    /// <summary>the size of the buffer in samples</summary>
+    public nuint NSamples
+    {
+        get
+        {
+            nuint value = ((AudioBufferRaw*)Handle)->NSamples;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>the number of planes available</summary>
+    public int NPlanes
+    {
+        get
+        {
+            int value = ((AudioBufferRaw*)Handle)->NPlanes;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
 
     /// <summary>Wraps a native <c>GstAudioBuffer</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
@@ -142,4 +165,63 @@ public sealed unsafe partial class AudioBuffer
     /// <summary>The <c>gst_audio_buffer_truncate</c> entry point.</summary>
     [LibraryImport("GstAudio", EntryPoint = "gst_audio_buffer_truncate")]
     private static partial nint GstAudioBufferTruncate(nint buffer, int bpf, nuint trim, nuint samples);
+}
+
+/// <summary>The native layout of <c>GstAudioBuffer</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct AudioBufferRaw
+{
+    /// <summary>The <c>info</c> field.</summary>
+    internal Gst.Audio.AudioInfoRaw Info;
+
+    /// <summary>The <c>n_samples</c> field.</summary>
+    internal nuint NSamples;
+
+    /// <summary>The <c>n_planes</c> field.</summary>
+    internal int NPlanes;
+
+    /// <summary>The <c>planes</c> field.</summary>
+    internal nint Planes;
+
+    /// <summary>The <c>buffer</c> field.</summary>
+    internal nint Buffer;
+
+    /// <summary>The <c>map_infos</c> field.</summary>
+    internal nint MapInfos;
+
+    /// <summary>The <c>priv_planes_arr</c> field.</summary>
+    internal PrivPlanesArrArray PrivPlanesArr;
+
+    /// <summary>The <c>priv_map_infos_arr</c> field.</summary>
+    internal PrivMapInfosArrArray PrivMapInfosArr;
+
+    /// <summary>The <c>_gst_reserved</c> field.</summary>
+    internal GstReservedArray GstReserved;
+
+    /// <summary>Inline storage of the 8 elements of the <c>priv_planes_arr</c> field.</summary>
+    [InlineArray(8)]
+    internal struct PrivPlanesArrArray
+    {
+        private nint _element0;
+    }
+
+    /// <summary>Inline storage of the 8 elements of the <c>priv_map_infos_arr</c> field.</summary>
+    [InlineArray(8)]
+    internal struct PrivMapInfosArrArray
+    {
+        private Gst.MapInfo _element0;
+    }
+
+    /// <summary>Inline storage of the 4 elements of the <c>_gst_reserved</c> field.</summary>
+    [InlineArray(4)]
+    internal struct GstReservedArray
+    {
+        private nint _element0;
+    }
 }

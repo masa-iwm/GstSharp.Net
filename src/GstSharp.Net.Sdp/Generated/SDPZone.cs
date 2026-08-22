@@ -67,3 +67,20 @@ public sealed unsafe partial class SDPZone
     [LibraryImport("GstSdp", EntryPoint = "gst_sdp_zone_set")]
     private static partial int GstSdpZoneSet(nint zone, byte* adjTime, byte* typedTime);
 }
+
+/// <summary>The native layout of <c>GstSDPZone</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct SDPZoneRaw
+{
+    /// <summary>The <c>time</c> field.</summary>
+    internal nint Time;
+
+    /// <summary>The <c>typed_time</c> field.</summary>
+    internal nint TypedTime;
+}

@@ -46,3 +46,20 @@ public sealed unsafe partial class NetAddressMeta
     [LibraryImport("GstNet", EntryPoint = "gst_net_address_meta_get_info")]
     private static partial nint GstNetAddressMetaGetInfo();
 }
+
+/// <summary>The native layout of <c>GstNetAddressMeta</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct NetAddressMetaRaw
+{
+    /// <summary>The <c>meta</c> field.</summary>
+    internal Gst.MetaRaw Meta;
+
+    /// <summary>The <c>addr</c> field.</summary>
+    internal nint Addr;
+}

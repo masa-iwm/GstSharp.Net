@@ -3,10 +3,12 @@
 
 #nullable enable
 
+using System.Runtime.InteropServices;
+
 namespace Gst.Sdp;
 
 /// <summary>The timestamp payload carries the timestamp information</summary>
-public sealed partial class MIKEYPayloadT
+public sealed unsafe partial class MIKEYPayloadT
 {
     /// <summary>The native instance.</summary>
     internal nint Handle;
@@ -14,6 +16,17 @@ public sealed partial class MIKEYPayloadT
     /// <summary>Wraps a native <c>GstMIKEYPayloadT</c>.</summary>
     /// <param name="handle">The native instance.</param>
     internal MIKEYPayloadT(nint handle) => Handle = handle;
+
+    /// <summary>a #GstMIKEYTSType</summary>
+    public Gst.Sdp.MIKEYTSType Type
+    {
+        get
+        {
+            Gst.Sdp.MIKEYTSType value = ((MIKEYPayloadTRaw*)Handle)->Type;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
 
     /// <summary>Wraps a native <c>GstMIKEYPayloadT</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
@@ -25,4 +38,24 @@ public sealed partial class MIKEYPayloadT
     /// </remarks>
     internal static MIKEYPayloadT? FromNative(nint handle) =>
         handle == 0 ? null : new(handle);
+}
+
+/// <summary>The native layout of <c>GstMIKEYPayloadT</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct MIKEYPayloadTRaw
+{
+    /// <summary>The <c>pt</c> field.</summary>
+    internal Gst.Sdp.MIKEYPayloadRaw Pt;
+
+    /// <summary>The <c>type</c> field.</summary>
+    internal Gst.Sdp.MIKEYTSType Type;
+
+    /// <summary>The <c>ts_value</c> field.</summary>
+    internal nint TsValue;
 }

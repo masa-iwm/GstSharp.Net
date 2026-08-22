@@ -4,6 +4,7 @@
 #nullable enable
 
 using System;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace Gst;
@@ -75,6 +76,192 @@ public sealed unsafe partial class Segment : Gst.GObject.Boxed
     internal Segment(nint handle, Gst.Interop.Transfer transfer)
         : base(handle, new Gst.GObject.GType(GetGType()), transfer)
     {
+    }
+
+    /// <summary>flags for this segment</summary>
+    public Gst.SegmentFlags Flags
+    {
+        get
+        {
+            Gst.SegmentFlags value = ((SegmentRaw*)Handle)->Flags;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>
+    /// the playback rate of the segment is set in response to a seek
+    ///                event and, without any seek, the value should be `1.0`. This
+    ///                value is used by elements that synchronize buffer [running
+    ///                times](additional/design/synchronisation.md#running-time) on
+    ///                the clock (usually the sink elements), leading to consuming
+    ///                buffers faster (for a value `&gt; 1.0`) or slower (for `0.0 &lt;
+    ///                value &lt; 1.0`) than normal playback speed. The rate also
+    ///                defines the playback direction, meaning that when the value is
+    ///                lower than `0.0`, the playback happens in reverse, and the
+    ///                [stream-time](additional/design/synchronisation.md#stream-time)
+    ///                is going backward. The `rate` value should never be `0.0`.
+    /// </summary>
+    public double Rate
+    {
+        get
+        {
+            double value = ((SegmentRaw*)Handle)->Rate;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>
+    /// The applied rate is the rate that has been applied to the stream.
+    ///                The effective/resulting playback rate of a stream is
+    ///                `rate * applied_rate`.
+    ///                The applied rate can be set by source elements when a server is
+    ///                sending the stream with an already modified playback speed
+    ///                rate. Filter elements that modify the stream in a way that
+    ///                modifies the playback speed should also modify the applied
+    ///                rate. For example the #videorate element when its
+    ///                #videorate:rate property is set will set the applied rate of
+    ///                the segment it pushed downstream. Also #scaletempo applies the
+    ///                input segment rate to the stream and outputs a segment with
+    ///                rate=1.0 and applied_rate=&lt;inputsegment.rate&gt;.
+    /// </summary>
+    public double AppliedRate
+    {
+        get
+        {
+            double value = ((SegmentRaw*)Handle)->AppliedRate;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>the unit used for all of the segment's values.</summary>
+    public Gst.Format Format
+    {
+        get
+        {
+            Gst.Format value = ((SegmentRaw*)Handle)->Format;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>
+    /// the running time (plus elapsed time, see offset) of the
+    ///                segment [start](GstSegment.start) ([stop](GstSegment.stop) if
+    ///                rate &lt; 0.0).
+    /// </summary>
+    public ulong Base
+    {
+        get
+        {
+            ulong value = ((SegmentRaw*)Handle)->Base;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>
+    /// the offset expresses the elapsed time (in buffer timestamps)
+    ///                before a seek with its start (stop if rate &lt; 0.0) seek type
+    ///                set to #GST_SEEK_TYPE_NONE, the value is set to the position
+    ///                of the segment at the time of the seek.
+    /// </summary>
+    public ulong Offset
+    {
+        get
+        {
+            ulong value = ((SegmentRaw*)Handle)->Offset;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>
+    /// the start time of the segment (in buffer timestamps)
+    ///                [(PTS)](GstBuffer.pts), that is the timestamp of the first
+    ///                buffer to output inside the segment (last one during
+    ///                reverse playback). For example decoders will
+    ///                [clip](gst_segment_clip) out the buffers before the start
+    ///                time.
+    /// </summary>
+    public ulong Start
+    {
+        get
+        {
+            ulong value = ((SegmentRaw*)Handle)->Start;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>
+    /// the stop time of the segment (in buffer timestamps)
+    ///                [(PTS)](GstBuffer.pts), that is the timestamp of the last
+    ///                buffer to output inside the segment (first one during
+    ///                reverse playback). For example decoders will
+    ///                [clip](gst_segment_clip) out buffers after the stop time.
+    /// </summary>
+    public ulong Stop
+    {
+        get
+        {
+            ulong value = ((SegmentRaw*)Handle)->Stop;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>
+    /// the stream time of the segment [start](GstSegment.start)
+    ///                ([stop](GstSegment.stop) if rate &lt; 0.0).
+    /// </summary>
+    public ulong Time
+    {
+        get
+        {
+            ulong value = ((SegmentRaw*)Handle)->Time;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>
+    /// the buffer timestamp position in the segment is supposed to be
+    ///                updated by elements such as sources, demuxers or parsers to
+    ///                track progress by setting it to the last pushed buffer' end time
+    ///                ([timestamp](GstBuffer.pts) + #GstBuffer.duration) for that
+    ///                specific segment. The position is used when reconfiguring the
+    ///                segment with #gst_segment_do_seek when the seek is only
+    ///                updating the segment (see [offset](GstSegment.offset)).
+    /// </summary>
+    public ulong Position
+    {
+        get
+        {
+            ulong value = ((SegmentRaw*)Handle)->Position;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>
+    /// the duration of the segment is the maximum absolute difference
+    ///                between #GstSegment.start and #GstSegment.stop if stop is not
+    ///                set, otherwise it should be the difference between those
+    ///                two values. This should be set by elements that know the
+    ///                overall stream duration (like demuxers) and will be used when
+    ///                seeking with #GST_SEEK_TYPE_END.
+    /// </summary>
+    public ulong Duration
+    {
+        get
+        {
+            ulong value = ((SegmentRaw*)Handle)->Duration;
+            System.GC.KeepAlive(this);
+            return value;
+        }
     }
 
     /// <summary>Wraps a native <c>GstSegment</c>, mapping the null pointer onto <see langword="null"/>.</summary>
@@ -614,4 +801,58 @@ public sealed unsafe partial class Segment : Gst.GObject.Boxed
     /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
     /// <returns>The new wrapper.</returns>
     internal static object CreateWrapper(nint handle, Gst.Interop.Transfer transfer) => new Segment(handle, transfer);
+}
+
+/// <summary>The native layout of <c>GstSegment</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct SegmentRaw
+{
+    /// <summary>The <c>flags</c> field.</summary>
+    internal Gst.SegmentFlags Flags;
+
+    /// <summary>The <c>rate</c> field.</summary>
+    internal double Rate;
+
+    /// <summary>The <c>applied_rate</c> field.</summary>
+    internal double AppliedRate;
+
+    /// <summary>The <c>format</c> field.</summary>
+    internal Gst.Format Format;
+
+    /// <summary>The <c>base</c> field.</summary>
+    internal ulong Base;
+
+    /// <summary>The <c>offset</c> field.</summary>
+    internal ulong Offset;
+
+    /// <summary>The <c>start</c> field.</summary>
+    internal ulong Start;
+
+    /// <summary>The <c>stop</c> field.</summary>
+    internal ulong Stop;
+
+    /// <summary>The <c>time</c> field.</summary>
+    internal ulong Time;
+
+    /// <summary>The <c>position</c> field.</summary>
+    internal ulong Position;
+
+    /// <summary>The <c>duration</c> field.</summary>
+    internal ulong Duration;
+
+    /// <summary>The <c>_gst_reserved</c> field.</summary>
+    internal GstReservedArray GstReserved;
+
+    /// <summary>Inline storage of the 4 elements of the <c>_gst_reserved</c> field.</summary>
+    [InlineArray(4)]
+    internal struct GstReservedArray
+    {
+        private nint _element0;
+    }
 }

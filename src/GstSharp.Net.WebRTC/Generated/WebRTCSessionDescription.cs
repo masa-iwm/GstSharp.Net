@@ -19,6 +19,17 @@ public sealed unsafe partial class WebRTCSessionDescription : Gst.GObject.Boxed
     {
     }
 
+    /// <summary>the #GstWebRTCSDPType of the description</summary>
+    public Gst.WebRTC.WebRTCSDPType Type
+    {
+        get
+        {
+            Gst.WebRTC.WebRTCSDPType value = ((WebRTCSessionDescriptionRaw*)Handle)->Type;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
     /// <summary>Wraps a native <c>GstWebRTCSessionDescription</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
     /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
@@ -50,4 +61,21 @@ public sealed unsafe partial class WebRTCSessionDescription : Gst.GObject.Boxed
     /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
     /// <returns>The new wrapper.</returns>
     internal static object CreateWrapper(nint handle, Gst.Interop.Transfer transfer) => new WebRTCSessionDescription(handle, transfer);
+}
+
+/// <summary>The native layout of <c>GstWebRTCSessionDescription</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct WebRTCSessionDescriptionRaw
+{
+    /// <summary>The <c>type</c> field.</summary>
+    internal Gst.WebRTC.WebRTCSDPType Type;
+
+    /// <summary>The <c>sdp</c> field.</summary>
+    internal nint Sdp;
 }

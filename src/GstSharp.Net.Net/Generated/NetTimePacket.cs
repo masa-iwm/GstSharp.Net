@@ -22,6 +22,28 @@ public sealed unsafe partial class NetTimePacket : Gst.GObject.Boxed
     {
     }
 
+    /// <summary>the local time when this packet was sent</summary>
+    public Gst.ClockTime LocalTime
+    {
+        get
+        {
+            Gst.ClockTime value = new(((NetTimePacketRaw*)Handle)->LocalTime);
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>the remote time observation</summary>
+    public Gst.ClockTime RemoteTime
+    {
+        get
+        {
+            Gst.ClockTime value = new(((NetTimePacketRaw*)Handle)->RemoteTime);
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
     /// <summary>Wraps a native <c>GstNetTimePacket</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
     /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
@@ -112,4 +134,21 @@ public sealed unsafe partial class NetTimePacket : Gst.GObject.Boxed
     /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
     /// <returns>The new wrapper.</returns>
     internal static object CreateWrapper(nint handle, Gst.Interop.Transfer transfer) => new NetTimePacket(handle, transfer);
+}
+
+/// <summary>The native layout of <c>GstNetTimePacket</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct NetTimePacketRaw
+{
+    /// <summary>The <c>local_time</c> field.</summary>
+    internal ulong LocalTime;
+
+    /// <summary>The <c>remote_time</c> field.</summary>
+    internal ulong RemoteTime;
 }

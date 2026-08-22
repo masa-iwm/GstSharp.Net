@@ -8,7 +8,7 @@ using System.Runtime.InteropServices;
 namespace Gst.Rtsp;
 
 /// <summary>RTSP Authentication credentials</summary>
-public sealed partial class RTSPAuthCredential : Gst.GObject.Boxed
+public sealed unsafe partial class RTSPAuthCredential : Gst.GObject.Boxed
 {
     /// <summary>Wraps a native <c>GstRTSPAuthCredential</c>.</summary>
     /// <param name="handle">The native instance.</param>
@@ -16,6 +16,17 @@ public sealed partial class RTSPAuthCredential : Gst.GObject.Boxed
     internal RTSPAuthCredential(nint handle, Gst.Interop.Transfer transfer)
         : base(handle, new Gst.GObject.GType(GetGType()), transfer)
     {
+    }
+
+    /// <summary>a #GstRTSPAuthMethod</summary>
+    public Gst.Rtsp.RTSPAuthMethod Scheme
+    {
+        get
+        {
+            Gst.Rtsp.RTSPAuthMethod value = ((RTSPAuthCredentialRaw*)Handle)->Scheme;
+            System.GC.KeepAlive(this);
+            return value;
+        }
     }
 
     /// <summary>Wraps a native <c>GstRTSPAuthCredential</c>, mapping the null pointer onto <see langword="null"/>.</summary>
@@ -35,4 +46,24 @@ public sealed partial class RTSPAuthCredential : Gst.GObject.Boxed
     /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
     /// <returns>The new wrapper.</returns>
     internal static object CreateWrapper(nint handle, Gst.Interop.Transfer transfer) => new RTSPAuthCredential(handle, transfer);
+}
+
+/// <summary>The native layout of <c>GstRTSPAuthCredential</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct RTSPAuthCredentialRaw
+{
+    /// <summary>The <c>scheme</c> field.</summary>
+    internal Gst.Rtsp.RTSPAuthMethod Scheme;
+
+    /// <summary>The <c>params</c> field.</summary>
+    internal nint Params;
+
+    /// <summary>The <c>authorization</c> field.</summary>
+    internal nint Authorization;
 }

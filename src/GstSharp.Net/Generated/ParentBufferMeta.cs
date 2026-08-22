@@ -54,3 +54,20 @@ public sealed unsafe partial class ParentBufferMeta
     [LibraryImport("Gst", EntryPoint = "gst_parent_buffer_meta_get_info")]
     private static partial nint GstParentBufferMetaGetInfo();
 }
+
+/// <summary>The native layout of <c>GstParentBufferMeta</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct ParentBufferMetaRaw
+{
+    /// <summary>The <c>parent</c> field.</summary>
+    internal Gst.MetaRaw Parent;
+
+    /// <summary>The <c>buffer</c> field.</summary>
+    internal nint Buffer;
+}

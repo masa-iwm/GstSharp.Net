@@ -28,6 +28,127 @@ public sealed unsafe partial class VideoInfo : Gst.GObject.Boxed
     {
     }
 
+    /// <summary>the interlace mode</summary>
+    public Gst.Video.VideoInterlaceMode InterlaceMode
+    {
+        get
+        {
+            Gst.Video.VideoInterlaceMode value = ((VideoInfoRaw*)Handle)->InterlaceMode;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>additional video flags</summary>
+    public Gst.Video.VideoFlags Flags
+    {
+        get
+        {
+            Gst.Video.VideoFlags value = ((VideoInfoRaw*)Handle)->Flags;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>the width of the video</summary>
+    public int Width
+    {
+        get
+        {
+            int value = ((VideoInfoRaw*)Handle)->Width;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>the height of the video</summary>
+    public int Height
+    {
+        get
+        {
+            int value = ((VideoInfoRaw*)Handle)->Height;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>the default size of one frame</summary>
+    public nuint Size
+    {
+        get
+        {
+            nuint value = ((VideoInfoRaw*)Handle)->Size;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>the number of views for multiview video</summary>
+    public int Views
+    {
+        get
+        {
+            int value = ((VideoInfoRaw*)Handle)->Views;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>a #GstVideoChromaSite.</summary>
+    public Gst.Video.VideoChromaSite ChromaSite
+    {
+        get
+        {
+            Gst.Video.VideoChromaSite value = ((VideoInfoRaw*)Handle)->ChromaSite;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>the pixel-aspect-ratio numerator</summary>
+    public int ParN
+    {
+        get
+        {
+            int value = ((VideoInfoRaw*)Handle)->ParN;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>the pixel-aspect-ratio denominator</summary>
+    public int ParD
+    {
+        get
+        {
+            int value = ((VideoInfoRaw*)Handle)->ParD;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>the framerate numerator</summary>
+    public int FpsN
+    {
+        get
+        {
+            int value = ((VideoInfoRaw*)Handle)->FpsN;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>the framerate denominator</summary>
+    public int FpsD
+    {
+        get
+        {
+            int value = ((VideoInfoRaw*)Handle)->FpsD;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
     /// <summary>Wraps a native <c>GstVideoInfo</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
     /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
@@ -264,4 +385,78 @@ public sealed unsafe partial class VideoInfo : Gst.GObject.Boxed
     /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
     /// <returns>The new wrapper.</returns>
     internal static object CreateWrapper(nint handle, Gst.Interop.Transfer transfer) => new VideoInfo(handle, transfer);
+}
+
+/// <summary>The native layout of <c>GstVideoInfo</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// <para>
+/// Prefix mirror of the C struct: field offsets are exact, <c>sizeof</c> is NOT
+/// the C size; never allocate from it.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct VideoInfoRaw
+{
+    /// <summary>The <c>finfo</c> field.</summary>
+    internal nint Finfo;
+
+    /// <summary>The <c>interlace_mode</c> field.</summary>
+    internal Gst.Video.VideoInterlaceMode InterlaceMode;
+
+    /// <summary>The <c>flags</c> field.</summary>
+    internal Gst.Video.VideoFlags Flags;
+
+    /// <summary>The <c>width</c> field.</summary>
+    internal int Width;
+
+    /// <summary>The <c>height</c> field.</summary>
+    internal int Height;
+
+    /// <summary>The <c>size</c> field.</summary>
+    internal nuint Size;
+
+    /// <summary>The <c>views</c> field.</summary>
+    internal int Views;
+
+    /// <summary>The <c>chroma_site</c> field.</summary>
+    internal Gst.Video.VideoChromaSite ChromaSite;
+
+    /// <summary>The <c>colorimetry</c> field.</summary>
+    internal Gst.Video.VideoColorimetry Colorimetry;
+
+    /// <summary>The <c>par_n</c> field.</summary>
+    internal int ParN;
+
+    /// <summary>The <c>par_d</c> field.</summary>
+    internal int ParD;
+
+    /// <summary>The <c>fps_n</c> field.</summary>
+    internal int FpsN;
+
+    /// <summary>The <c>fps_d</c> field.</summary>
+    internal int FpsD;
+
+    /// <summary>The <c>offset</c> field.</summary>
+    internal OffsetArray Offset;
+
+    /// <summary>The <c>stride</c> field.</summary>
+    internal StrideArray Stride;
+
+    /// <summary>Inline storage of the 4 elements of the <c>offset</c> field.</summary>
+    [InlineArray(4)]
+    internal struct OffsetArray
+    {
+        private nuint _element0;
+    }
+
+    /// <summary>Inline storage of the 4 elements of the <c>stride</c> field.</summary>
+    [InlineArray(4)]
+    internal struct StrideArray
+    {
+        private int _element0;
+    }
 }

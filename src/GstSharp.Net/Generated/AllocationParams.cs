@@ -4,6 +4,7 @@
 #nullable enable
 
 using System;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace Gst;
@@ -17,6 +18,50 @@ public sealed unsafe partial class AllocationParams : Gst.GObject.Boxed
     internal AllocationParams(nint handle, Gst.Interop.Transfer transfer)
         : base(handle, new Gst.GObject.GType(GetGType()), transfer)
     {
+    }
+
+    /// <summary>flags to control allocation</summary>
+    public Gst.MemoryFlags Flags
+    {
+        get
+        {
+            Gst.MemoryFlags value = ((AllocationParamsRaw*)Handle)->Flags;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>the desired alignment of the memory</summary>
+    public nuint Align
+    {
+        get
+        {
+            nuint value = ((AllocationParamsRaw*)Handle)->Align;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>the desired prefix</summary>
+    public nuint Prefix
+    {
+        get
+        {
+            nuint value = ((AllocationParamsRaw*)Handle)->Prefix;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>the desired padding</summary>
+    public nuint Padding
+    {
+        get
+        {
+            nuint value = ((AllocationParamsRaw*)Handle)->Padding;
+            System.GC.KeepAlive(this);
+            return value;
+        }
     }
 
     /// <summary>Wraps a native <c>GstAllocationParams</c>, mapping the null pointer onto <see langword="null"/>.</summary>
@@ -84,4 +129,37 @@ public sealed unsafe partial class AllocationParams : Gst.GObject.Boxed
     /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
     /// <returns>The new wrapper.</returns>
     internal static object CreateWrapper(nint handle, Gst.Interop.Transfer transfer) => new AllocationParams(handle, transfer);
+}
+
+/// <summary>The native layout of <c>GstAllocationParams</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct AllocationParamsRaw
+{
+    /// <summary>The <c>flags</c> field.</summary>
+    internal Gst.MemoryFlags Flags;
+
+    /// <summary>The <c>align</c> field.</summary>
+    internal nuint Align;
+
+    /// <summary>The <c>prefix</c> field.</summary>
+    internal nuint Prefix;
+
+    /// <summary>The <c>padding</c> field.</summary>
+    internal nuint Padding;
+
+    /// <summary>The <c>_gst_reserved</c> field.</summary>
+    internal GstReservedArray GstReserved;
+
+    /// <summary>Inline storage of the 4 elements of the <c>_gst_reserved</c> field.</summary>
+    [InlineArray(4)]
+    internal struct GstReservedArray
+    {
+        private nint _element0;
+    }
 }

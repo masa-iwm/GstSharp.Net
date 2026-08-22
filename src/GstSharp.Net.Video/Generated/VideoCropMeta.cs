@@ -18,6 +18,50 @@ public sealed unsafe partial class VideoCropMeta
     /// <param name="handle">The native instance.</param>
     internal VideoCropMeta(nint handle) => Handle = handle;
 
+    /// <summary>the horizontal offset</summary>
+    public uint X
+    {
+        get
+        {
+            uint value = ((VideoCropMetaRaw*)Handle)->X;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>the vertical offset</summary>
+    public uint Y
+    {
+        get
+        {
+            uint value = ((VideoCropMetaRaw*)Handle)->Y;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>the cropped width</summary>
+    public uint Width
+    {
+        get
+        {
+            uint value = ((VideoCropMetaRaw*)Handle)->Width;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>the cropped height</summary>
+    public uint Height
+    {
+        get
+        {
+            uint value = ((VideoCropMetaRaw*)Handle)->Height;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
     /// <summary>Wraps a native <c>GstVideoCropMeta</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
     /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>
@@ -41,4 +85,30 @@ public sealed unsafe partial class VideoCropMeta
     /// <summary>The <c>gst_video_crop_meta_get_info</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_crop_meta_get_info")]
     private static partial nint GstVideoCropMetaGetInfo();
+}
+
+/// <summary>The native layout of <c>GstVideoCropMeta</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct VideoCropMetaRaw
+{
+    /// <summary>The <c>meta</c> field.</summary>
+    internal Gst.MetaRaw Meta;
+
+    /// <summary>The <c>x</c> field.</summary>
+    internal uint X;
+
+    /// <summary>The <c>y</c> field.</summary>
+    internal uint Y;
+
+    /// <summary>The <c>width</c> field.</summary>
+    internal uint Width;
+
+    /// <summary>The <c>height</c> field.</summary>
+    internal uint Height;
 }

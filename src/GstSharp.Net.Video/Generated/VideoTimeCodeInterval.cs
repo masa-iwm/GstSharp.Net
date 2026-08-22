@@ -22,6 +22,50 @@ public sealed unsafe partial class VideoTimeCodeInterval : Gst.GObject.Boxed
     {
     }
 
+    /// <summary>the hours field of #GstVideoTimeCodeInterval</summary>
+    public uint Hours
+    {
+        get
+        {
+            uint value = ((VideoTimeCodeIntervalRaw*)Handle)->Hours;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>the minutes field of #GstVideoTimeCodeInterval</summary>
+    public uint Minutes
+    {
+        get
+        {
+            uint value = ((VideoTimeCodeIntervalRaw*)Handle)->Minutes;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>the seconds field of #GstVideoTimeCodeInterval</summary>
+    public uint Seconds
+    {
+        get
+        {
+            uint value = ((VideoTimeCodeIntervalRaw*)Handle)->Seconds;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>the frames field of #GstVideoTimeCodeInterval</summary>
+    public uint Frames
+    {
+        get
+        {
+            uint value = ((VideoTimeCodeIntervalRaw*)Handle)->Frames;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
     /// <summary>Wraps a native <c>GstVideoTimeCodeInterval</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
     /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
@@ -115,4 +159,27 @@ public sealed unsafe partial class VideoTimeCodeInterval : Gst.GObject.Boxed
     /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
     /// <returns>The new wrapper.</returns>
     internal static object CreateWrapper(nint handle, Gst.Interop.Transfer transfer) => new VideoTimeCodeInterval(handle, transfer);
+}
+
+/// <summary>The native layout of <c>GstVideoTimeCodeInterval</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct VideoTimeCodeIntervalRaw
+{
+    /// <summary>The <c>hours</c> field.</summary>
+    internal uint Hours;
+
+    /// <summary>The <c>minutes</c> field.</summary>
+    internal uint Minutes;
+
+    /// <summary>The <c>seconds</c> field.</summary>
+    internal uint Seconds;
+
+    /// <summary>The <c>frames</c> field.</summary>
+    internal uint Frames;
 }

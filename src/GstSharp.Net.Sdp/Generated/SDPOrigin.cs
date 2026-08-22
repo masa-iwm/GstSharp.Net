@@ -3,6 +3,8 @@
 
 #nullable enable
 
+using System.Runtime.InteropServices;
+
 namespace Gst.Sdp;
 
 /// <summary>
@@ -29,4 +31,33 @@ public sealed partial class SDPOrigin
     /// </remarks>
     internal static SDPOrigin? FromNative(nint handle) =>
         handle == 0 ? null : new(handle);
+}
+
+/// <summary>The native layout of <c>GstSDPOrigin</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct SDPOriginRaw
+{
+    /// <summary>The <c>username</c> field.</summary>
+    internal nint Username;
+
+    /// <summary>The <c>sess_id</c> field.</summary>
+    internal nint SessId;
+
+    /// <summary>The <c>sess_version</c> field.</summary>
+    internal nint SessVersion;
+
+    /// <summary>The <c>nettype</c> field.</summary>
+    internal nint Nettype;
+
+    /// <summary>The <c>addrtype</c> field.</summary>
+    internal nint Addrtype;
+
+    /// <summary>The <c>addr</c> field.</summary>
+    internal nint Addr;
 }

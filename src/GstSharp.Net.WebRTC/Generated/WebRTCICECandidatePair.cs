@@ -57,3 +57,20 @@ public sealed unsafe partial class WebRTCICECandidatePair : Gst.GObject.Boxed
     /// <returns>The new wrapper.</returns>
     internal static object CreateWrapper(nint handle, Gst.Interop.Transfer transfer) => new WebRTCICECandidatePair(handle, transfer);
 }
+
+/// <summary>The native layout of <c>GstWebRTCICECandidatePair</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct WebRTCICECandidatePairRaw
+{
+    /// <summary>The <c>local</c> field.</summary>
+    internal nint Local;
+
+    /// <summary>The <c>remote</c> field.</summary>
+    internal nint Remote;
+}

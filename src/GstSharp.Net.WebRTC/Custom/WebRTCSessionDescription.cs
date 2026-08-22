@@ -1,4 +1,4 @@
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 using Gst.Interop;
 
 namespace Gst.WebRTC;
@@ -82,28 +82,6 @@ public sealed unsafe partial class WebRTCSessionDescription
     }
 
     /// <summary>
-    /// Gets what the description is: an offer, an answer, or one of the
-    /// provisional forms of the two.
-    /// </summary>
-    /// <remarks>
-    /// The <c>type</c> field of <c>GstWebRTCSessionDescription</c> has no
-    /// accessor function in C — the structure is public and callers read
-    /// <c>desc-&gt;type</c> — so the field is read through the raw mirror of the
-    /// structure. That the mirror agrees with the library is what the round trip
-    /// of the integration tests establishes.
-    /// </remarks>
-    /// <exception cref="ObjectDisposedException">The wrapper was disposed.</exception>
-    public Gst.WebRTC.WebRTCSDPType Type
-    {
-        get
-        {
-            int type = ((WebRTCSessionDescriptionRaw*)Handle)->Type;
-            GC.KeepAlive(this);
-            return (Gst.WebRTC.WebRTCSDPType)type;
-        }
-    }
-
-    /// <summary>
     /// Gets the session description message this description carries, as a
     /// message of the caller's own.
     /// </summary>
@@ -113,9 +91,9 @@ public sealed unsafe partial class WebRTCSessionDescription
     /// </returns>
     /// <remarks>
     /// <para>
-    /// The <c>sdp</c> field has no accessor function in C either, so it is read
-    /// through the raw mirror of the structure, and what the field holds is a
-    /// pointer the description owns. A <see cref="Gst.GObject.Boxed"/> wrapper
+    /// The <c>sdp</c> field has no accessor function in C, so it is read
+    /// through the generated mirror of the structure, and what the field holds
+    /// is a pointer the description owns. A <see cref="Gst.GObject.Boxed"/> wrapper
     /// cannot borrow: it frees what it holds when it is disposed, and its
     /// <see cref="Gst.Interop.Transfer.None"/> constructor therefore adopts a
     /// copy rather than the value itself. That is what this method hands out,
@@ -129,6 +107,15 @@ public sealed unsafe partial class WebRTCSessionDescription
     /// disposed. This is a method rather than a property because it produces a
     /// new wrapper on every call, which is a thing to dispose rather than a
     /// thing to read.
+    /// </para>
+    /// <para>
+    /// <see cref="Type"/> is in the same position and has the easier answer: it
+    /// has no accessor function in C either and is read straight out of the
+    /// mirror, but it is a value rather than a pointer, so it is a generated
+    /// property and nothing is owned. That the mirror agrees with the library on
+    /// where both fields sit is what the round trip of the integration tests
+    /// establishes — a description built by <see cref="New"/> and read back
+    /// through <see cref="Type"/> and this method.
     /// </para>
     /// </remarks>
     /// <exception cref="ObjectDisposedException">The wrapper was disposed.</exception>
@@ -153,28 +140,4 @@ public sealed unsafe partial class WebRTCSessionDescription
     /// <summary>The <c>gst_webrtc_session_description_new</c> entry point.</summary>
     [LibraryImport("GstWebRTC", EntryPoint = "gst_webrtc_session_description_new")]
     private static partial nint GstWebrtcSessionDescriptionNew(int type, nint sdp);
-
-    /// <summary>
-    /// The raw layout of <c>struct _GstWebRTCSessionDescription</c> of
-    /// <c>rtcsessiondescription.h</c>: a <c>GstWebRTCSDPType</c> and a
-    /// <c>GstSDPMessage *</c>, in that order.
-    /// </summary>
-    /// <remarks>
-    /// The structure is boxed, so the record emitter builds no mirror of it —
-    /// the wrapper is a pointer holder and the generator has no reason to
-    /// project the fields. Both fields are public API in C and neither has an
-    /// accessor function, so reading them is what a binding has to do, and the
-    /// mirror is written out here for that. A C enumeration is an
-    /// <see cref="int"/> and a pointer is an <see cref="nint"/> on every
-    /// platform this binding runs on, which is all the layout depends on.
-    /// </remarks>
-    [StructLayout(LayoutKind.Sequential)]
-    private struct WebRTCSessionDescriptionRaw
-    {
-        /// <summary>The <c>type</c> field.</summary>
-        internal int Type;
-
-        /// <summary>The <c>sdp</c> field.</summary>
-        internal nint Sdp;
-    }
 }

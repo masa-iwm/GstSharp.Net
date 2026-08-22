@@ -3,6 +3,9 @@
 
 #nullable enable
 
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+
 namespace Gst.Audio;
 
 /// <summary>CD track abstraction to communicate TOC entries to the base class.</summary>
@@ -16,7 +19,7 @@ namespace Gst.Audio;
 /// on the pipeline's #GstBus instead.
 /// </para>
 /// </remarks>
-public sealed partial class AudioCdSrcTrack
+public sealed unsafe partial class AudioCdSrcTrack
 {
     /// <summary>The native instance.</summary>
     internal nint Handle;
@@ -24,6 +27,50 @@ public sealed partial class AudioCdSrcTrack
     /// <summary>Wraps a native <c>GstAudioCdSrcTrack</c>.</summary>
     /// <param name="handle">The native instance.</param>
     internal AudioCdSrcTrack(nint handle) => Handle = handle;
+
+    /// <summary>Whether this is an audio track</summary>
+    public bool IsAudio
+    {
+        get
+        {
+            bool value = ((AudioCdSrcTrackRaw*)Handle)->IsAudio != 0;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>Track number in TOC (usually starts from 1, but not always)</summary>
+    public uint Num
+    {
+        get
+        {
+            uint value = ((AudioCdSrcTrackRaw*)Handle)->Num;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>The first sector of this track (LBA)</summary>
+    public uint Start
+    {
+        get
+        {
+            uint value = ((AudioCdSrcTrackRaw*)Handle)->Start;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>The last sector of this track (LBA)</summary>
+    public uint End
+    {
+        get
+        {
+            uint value = ((AudioCdSrcTrackRaw*)Handle)->End;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
 
     /// <summary>Wraps a native <c>GstAudioCdSrcTrack</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
@@ -35,4 +82,51 @@ public sealed partial class AudioCdSrcTrack
     /// </remarks>
     internal static AudioCdSrcTrack? FromNative(nint handle) =>
         handle == 0 ? null : new(handle);
+}
+
+/// <summary>The native layout of <c>GstAudioCdSrcTrack</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct AudioCdSrcTrackRaw
+{
+    // <c>gboolean</c> is a 32 bit integer; every non zero value is true.
+    /// <summary>The <c>is_audio</c> field.</summary>
+    internal int IsAudio;
+
+    /// <summary>The <c>num</c> field.</summary>
+    internal uint Num;
+
+    /// <summary>The <c>start</c> field.</summary>
+    internal uint Start;
+
+    /// <summary>The <c>end</c> field.</summary>
+    internal uint End;
+
+    /// <summary>The <c>tags</c> field.</summary>
+    internal nint Tags;
+
+    /// <summary>The <c>_gst_reserved1</c> field.</summary>
+    internal GstReserved1Array GstReserved1;
+
+    /// <summary>The <c>_gst_reserved2</c> field.</summary>
+    internal GstReserved2Array GstReserved2;
+
+    /// <summary>Inline storage of the 2 elements of the <c>_gst_reserved1</c> field.</summary>
+    [InlineArray(2)]
+    internal struct GstReserved1Array
+    {
+        private uint _element0;
+    }
+
+    /// <summary>Inline storage of the 2 elements of the <c>_gst_reserved2</c> field.</summary>
+    [InlineArray(2)]
+    internal struct GstReserved2Array
+    {
+        private nint _element0;
+    }
 }

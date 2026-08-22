@@ -4,6 +4,7 @@
 #nullable enable
 
 using System;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace Gst.Video;
@@ -44,6 +45,72 @@ public sealed unsafe partial class VideoMeta
     /// <summary>Wraps a native <c>GstVideoMeta</c>.</summary>
     /// <param name="handle">The native instance.</param>
     internal VideoMeta(nint handle) => Handle = handle;
+
+    /// <summary>additional video flags</summary>
+    public Gst.Video.VideoFrameFlags Flags
+    {
+        get
+        {
+            Gst.Video.VideoFrameFlags value = ((VideoMetaRaw*)Handle)->Flags;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>the video format</summary>
+    public Gst.Video.VideoFormat Format
+    {
+        get
+        {
+            Gst.Video.VideoFormat value = ((VideoMetaRaw*)Handle)->Format;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>identifier of the frame</summary>
+    public int Id
+    {
+        get
+        {
+            int value = ((VideoMetaRaw*)Handle)->Id;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>the video width</summary>
+    public uint Width
+    {
+        get
+        {
+            uint value = ((VideoMetaRaw*)Handle)->Width;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>the video height</summary>
+    public uint Height
+    {
+        get
+        {
+            uint value = ((VideoMetaRaw*)Handle)->Height;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>the number of planes in the image</summary>
+    public uint NPlanes
+    {
+        get
+        {
+            uint value = ((VideoMetaRaw*)Handle)->NPlanes;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
 
     /// <summary>Wraps a native <c>GstVideoMeta</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
@@ -153,4 +220,68 @@ public sealed unsafe partial class VideoMeta
     /// <summary>The <c>gst_video_meta_get_info</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_meta_get_info")]
     private static partial nint GstVideoMetaGetInfo();
+}
+
+/// <summary>The native layout of <c>GstVideoMeta</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct VideoMetaRaw
+{
+    /// <summary>The <c>meta</c> field.</summary>
+    internal Gst.MetaRaw Meta;
+
+    /// <summary>The <c>buffer</c> field.</summary>
+    internal nint Buffer;
+
+    /// <summary>The <c>flags</c> field.</summary>
+    internal Gst.Video.VideoFrameFlags Flags;
+
+    /// <summary>The <c>format</c> field.</summary>
+    internal Gst.Video.VideoFormat Format;
+
+    /// <summary>The <c>id</c> field.</summary>
+    internal int Id;
+
+    /// <summary>The <c>width</c> field.</summary>
+    internal uint Width;
+
+    /// <summary>The <c>height</c> field.</summary>
+    internal uint Height;
+
+    /// <summary>The <c>n_planes</c> field.</summary>
+    internal uint NPlanes;
+
+    /// <summary>The <c>offset</c> field.</summary>
+    internal OffsetArray Offset;
+
+    /// <summary>The <c>stride</c> field.</summary>
+    internal StrideArray Stride;
+
+    /// <summary>The <c>map</c> field.</summary>
+    internal nint Map;
+
+    /// <summary>The <c>unmap</c> field.</summary>
+    internal nint Unmap;
+
+    /// <summary>The <c>alignment</c> field.</summary>
+    internal Gst.Video.VideoAlignment Alignment;
+
+    /// <summary>Inline storage of the 4 elements of the <c>offset</c> field.</summary>
+    [InlineArray(4)]
+    internal struct OffsetArray
+    {
+        private nuint _element0;
+    }
+
+    /// <summary>Inline storage of the 4 elements of the <c>stride</c> field.</summary>
+    [InlineArray(4)]
+    internal struct StrideArray
+    {
+        private int _element0;
+    }
 }

@@ -19,6 +19,134 @@ public sealed unsafe partial class VideoFormatInfo
     /// <param name="handle">The native instance.</param>
     internal VideoFormatInfo(nint handle) => Handle = handle;
 
+    /// <summary>#GstVideoFormat</summary>
+    public Gst.Video.VideoFormat Format
+    {
+        get
+        {
+            Gst.Video.VideoFormat value = ((VideoFormatInfoRaw*)Handle)->Format;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>#GstVideoFormatFlags</summary>
+    public Gst.Video.VideoFormatFlags Flags
+    {
+        get
+        {
+            Gst.Video.VideoFormatFlags value = ((VideoFormatInfoRaw*)Handle)->Flags;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>
+    /// The number of bits used to pack data items. This can be less than 8
+    ///    when multiple pixels are stored in a byte. for values &gt; 8 multiple bytes
+    ///    should be read according to the endianness flag before applying the shift
+    ///    and mask.
+    /// </summary>
+    public uint Bits
+    {
+        get
+        {
+            uint value = ((VideoFormatInfoRaw*)Handle)->Bits;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>the number of components in the video format.</summary>
+    public uint NComponents
+    {
+        get
+        {
+            uint value = ((VideoFormatInfoRaw*)Handle)->NComponents;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>
+    /// the number of planes for this format. The number of planes can be
+    ///    less than the amount of components when multiple components are packed into
+    ///    one plane.
+    /// </summary>
+    public uint NPlanes
+    {
+        get
+        {
+            uint value = ((VideoFormatInfoRaw*)Handle)->NPlanes;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>
+    /// the format of the unpacked pixels. This format must have the
+    ///     #GST_VIDEO_FORMAT_FLAG_UNPACK flag set.
+    /// </summary>
+    public Gst.Video.VideoFormat UnpackFormat
+    {
+        get
+        {
+            Gst.Video.VideoFormat value = ((VideoFormatInfoRaw*)Handle)->UnpackFormat;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>the amount of lines that will be packed</summary>
+    public int PackLines
+    {
+        get
+        {
+            int value = ((VideoFormatInfoRaw*)Handle)->PackLines;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>The tiling mode</summary>
+    public Gst.Video.VideoTileMode TileMode
+    {
+        get
+        {
+            Gst.Video.VideoTileMode value = ((VideoFormatInfoRaw*)Handle)->TileMode;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>
+    /// The width of a tile, in bytes, represented as a shift. DEPRECATED,
+    /// use tile_info[] array instead.
+    /// </summary>
+    public uint TileWs
+    {
+        get
+        {
+            uint value = ((VideoFormatInfoRaw*)Handle)->TileWs;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>
+    /// The height of a tile, in bytes, represented as a shift. DEPREACTED,
+    /// use tile_info[] array instead.
+    /// </summary>
+    public uint TileHs
+    {
+        get
+        {
+            uint value = ((VideoFormatInfoRaw*)Handle)->TileHs;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
     /// <summary>Wraps a native <c>GstVideoFormatInfo</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
     /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>
@@ -73,4 +201,137 @@ public sealed unsafe partial class VideoFormatInfo
     /// <summary>The <c>gst_video_format_info_extrapolate_stride</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_format_info_extrapolate_stride")]
     private static partial int GstVideoFormatInfoExtrapolateStride(nint finfo, int plane, int stride);
+}
+
+/// <summary>The native layout of <c>GstVideoFormatInfo</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct VideoFormatInfoRaw
+{
+    /// <summary>The <c>format</c> field.</summary>
+    internal Gst.Video.VideoFormat Format;
+
+    /// <summary>The <c>name</c> field.</summary>
+    internal nint Name;
+
+    /// <summary>The <c>description</c> field.</summary>
+    internal nint Description;
+
+    /// <summary>The <c>flags</c> field.</summary>
+    internal Gst.Video.VideoFormatFlags Flags;
+
+    /// <summary>The <c>bits</c> field.</summary>
+    internal uint Bits;
+
+    /// <summary>The <c>n_components</c> field.</summary>
+    internal uint NComponents;
+
+    /// <summary>The <c>shift</c> field.</summary>
+    internal ShiftArray Shift;
+
+    /// <summary>The <c>depth</c> field.</summary>
+    internal DepthArray Depth;
+
+    /// <summary>The <c>pixel_stride</c> field.</summary>
+    internal PixelStrideArray PixelStride;
+
+    /// <summary>The <c>n_planes</c> field.</summary>
+    internal uint NPlanes;
+
+    /// <summary>The <c>plane</c> field.</summary>
+    internal PlaneArray Plane;
+
+    /// <summary>The <c>poffset</c> field.</summary>
+    internal PoffsetArray Poffset;
+
+    /// <summary>The <c>w_sub</c> field.</summary>
+    internal WSubArray WSub;
+
+    /// <summary>The <c>h_sub</c> field.</summary>
+    internal HSubArray HSub;
+
+    /// <summary>The <c>unpack_format</c> field.</summary>
+    internal Gst.Video.VideoFormat UnpackFormat;
+
+    /// <summary>The <c>unpack_func</c> field.</summary>
+    internal nint UnpackFunc;
+
+    /// <summary>The <c>pack_lines</c> field.</summary>
+    internal int PackLines;
+
+    /// <summary>The <c>pack_func</c> field.</summary>
+    internal nint PackFunc;
+
+    /// <summary>The <c>tile_mode</c> field.</summary>
+    internal Gst.Video.VideoTileMode TileMode;
+
+    /// <summary>The <c>tile_ws</c> field.</summary>
+    internal uint TileWs;
+
+    /// <summary>The <c>tile_hs</c> field.</summary>
+    internal uint TileHs;
+
+    /// <summary>The <c>tile_info</c> field.</summary>
+    internal TileInfoArray TileInfo;
+
+    /// <summary>Inline storage of the 4 elements of the <c>shift</c> field.</summary>
+    [InlineArray(4)]
+    internal struct ShiftArray
+    {
+        private uint _element0;
+    }
+
+    /// <summary>Inline storage of the 4 elements of the <c>depth</c> field.</summary>
+    [InlineArray(4)]
+    internal struct DepthArray
+    {
+        private uint _element0;
+    }
+
+    /// <summary>Inline storage of the 4 elements of the <c>pixel_stride</c> field.</summary>
+    [InlineArray(4)]
+    internal struct PixelStrideArray
+    {
+        private int _element0;
+    }
+
+    /// <summary>Inline storage of the 4 elements of the <c>plane</c> field.</summary>
+    [InlineArray(4)]
+    internal struct PlaneArray
+    {
+        private uint _element0;
+    }
+
+    /// <summary>Inline storage of the 4 elements of the <c>poffset</c> field.</summary>
+    [InlineArray(4)]
+    internal struct PoffsetArray
+    {
+        private uint _element0;
+    }
+
+    /// <summary>Inline storage of the 4 elements of the <c>w_sub</c> field.</summary>
+    [InlineArray(4)]
+    internal struct WSubArray
+    {
+        private uint _element0;
+    }
+
+    /// <summary>Inline storage of the 4 elements of the <c>h_sub</c> field.</summary>
+    [InlineArray(4)]
+    internal struct HSubArray
+    {
+        private uint _element0;
+    }
+
+    /// <summary>Inline storage of the 4 elements of the <c>tile_info</c> field.</summary>
+    [InlineArray(4)]
+    internal struct TileInfoArray
+    {
+        private Gst.Video.VideoTileInfo _element0;
+    }
 }

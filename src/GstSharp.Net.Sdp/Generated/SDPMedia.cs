@@ -18,6 +18,28 @@ public sealed unsafe partial class SDPMedia
     /// <param name="handle">The native instance.</param>
     internal SDPMedia(nint handle) => Handle = handle;
 
+    /// <summary>the transport port to which the media stream will be sent</summary>
+    public uint Port
+    {
+        get
+        {
+            uint value = ((SDPMediaRaw*)Handle)->Port;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>the number of ports or -1 if only one port was specified</summary>
+    public uint NumPorts
+    {
+        get
+        {
+            uint value = ((SDPMediaRaw*)Handle)->NumPorts;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
     /// <summary>Wraps a native <c>GstSDPMedia</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
     /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>
@@ -771,4 +793,45 @@ public sealed unsafe partial class SDPMedia
     /// <summary>The <c>gst_sdp_media_new</c> entry point.</summary>
     [LibraryImport("GstSdp", EntryPoint = "gst_sdp_media_new")]
     private static partial int GstSdpMediaNew(nint* media);
+}
+
+/// <summary>The native layout of <c>GstSDPMedia</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct SDPMediaRaw
+{
+    /// <summary>The <c>media</c> field.</summary>
+    internal nint Media;
+
+    /// <summary>The <c>port</c> field.</summary>
+    internal uint Port;
+
+    /// <summary>The <c>num_ports</c> field.</summary>
+    internal uint NumPorts;
+
+    /// <summary>The <c>proto</c> field.</summary>
+    internal nint Proto;
+
+    /// <summary>The <c>fmts</c> field.</summary>
+    internal nint Fmts;
+
+    /// <summary>The <c>information</c> field.</summary>
+    internal nint Information;
+
+    /// <summary>The <c>connections</c> field.</summary>
+    internal nint Connections;
+
+    /// <summary>The <c>bandwidths</c> field.</summary>
+    internal nint Bandwidths;
+
+    /// <summary>The <c>key</c> field.</summary>
+    internal Gst.Sdp.SDPKeyRaw Key;
+
+    /// <summary>The <c>attributes</c> field.</summary>
+    internal nint Attributes;
 }

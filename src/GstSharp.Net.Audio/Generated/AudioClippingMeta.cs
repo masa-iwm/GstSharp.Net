@@ -34,6 +34,28 @@ public sealed unsafe partial class AudioClippingMeta
     /// <param name="handle">The native instance.</param>
     internal AudioClippingMeta(nint handle) => Handle = handle;
 
+    /// <summary>Amount of audio to clip from start of buffer</summary>
+    public ulong Start
+    {
+        get
+        {
+            ulong value = ((AudioClippingMetaRaw*)Handle)->Start;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>Amount of  to clip from end of buffer</summary>
+    public ulong End
+    {
+        get
+        {
+            ulong value = ((AudioClippingMetaRaw*)Handle)->End;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
     /// <summary>Wraps a native <c>GstAudioClippingMeta</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
     /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>
@@ -57,4 +79,28 @@ public sealed unsafe partial class AudioClippingMeta
     /// <summary>The <c>gst_audio_clipping_meta_get_info</c> entry point.</summary>
     [LibraryImport("GstAudio", EntryPoint = "gst_audio_clipping_meta_get_info")]
     private static partial nint GstAudioClippingMetaGetInfo();
+}
+
+/// <summary>The native layout of <c>GstAudioClippingMeta</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct AudioClippingMetaRaw
+{
+    /// <summary>The <c>meta</c> field.</summary>
+    internal Gst.MetaRaw Meta;
+
+    // <c>GstFormat</c> is not generated in this module; the field keeps its underlying type.
+    /// <summary>The <c>format</c> field.</summary>
+    internal int Format;
+
+    /// <summary>The <c>start</c> field.</summary>
+    internal ulong Start;
+
+    /// <summary>The <c>end</c> field.</summary>
+    internal ulong End;
 }

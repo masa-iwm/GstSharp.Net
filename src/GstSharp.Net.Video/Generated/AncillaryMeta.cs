@@ -21,6 +21,112 @@ public sealed unsafe partial class AncillaryMeta
     /// <param name="handle">The native instance.</param>
     internal AncillaryMeta(nint handle) => Handle = handle;
 
+    /// <summary>The field where the ancillary data is located</summary>
+    public Gst.Video.AncillaryMetaField Field
+    {
+        get
+        {
+            Gst.Video.AncillaryMetaField value = ((AncillaryMetaRaw*)Handle)->Field;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>
+    /// Which channel (luminance or chrominance) the ancillary
+    ///    data is located. 0 if content is SD or stored in the luminance channel
+    ///    (default). 1 if HD and stored in the chrominance channel.
+    /// </summary>
+    public bool CNotYChannel
+    {
+        get
+        {
+            bool value = ((AncillaryMetaRaw*)Handle)->CNotYChannel != 0;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>
+    /// The line on which the ancillary data is located (max 11bit). There
+    ///    are two special values: 0x7ff if no line is specified (default), 0x7fe
+    ///    to specify the ancillary data is on any valid line before active video
+    /// </summary>
+    public ushort Line
+    {
+        get
+        {
+            ushort value = ((AncillaryMetaRaw*)Handle)->Line;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>
+    /// The location of the ancillary data packet in a SDI raster relative
+    ///    to the start of active video (max 12bits). A value of 0 means the ADF of
+    ///    the ancillary packet starts immediately following SAV. There are 3
+    ///    special values: 0xfff: No specified location (default), 0xffe: within
+    ///    HANC data space, 0xffd: within the ancillary data space located between
+    ///    SAV and EAV
+    /// </summary>
+    public ushort Offset
+    {
+        get
+        {
+            ushort value = ((AncillaryMetaRaw*)Handle)->Offset;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>Data Identified</summary>
+    public ushort DID
+    {
+        get
+        {
+            ushort value = ((AncillaryMetaRaw*)Handle)->DID;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>
+    /// Secondary Data identification (if type 2) or Data block
+    ///    number (if type 1)
+    /// </summary>
+    public ushort SDIDBlockNumber
+    {
+        get
+        {
+            ushort value = ((AncillaryMetaRaw*)Handle)->SDIDBlockNumber;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>The amount of user data</summary>
+    public ushort DataCount
+    {
+        get
+        {
+            ushort value = ((AncillaryMetaRaw*)Handle)->DataCount;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>The checksum of the ADF</summary>
+    public ushort Checksum
+    {
+        get
+        {
+            ushort value = ((AncillaryMetaRaw*)Handle)->Checksum;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
     /// <summary>Wraps a native <c>GstAncillaryMeta</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
     /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>
@@ -44,4 +150,46 @@ public sealed unsafe partial class AncillaryMeta
     /// <summary>The <c>gst_ancillary_meta_get_info</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_ancillary_meta_get_info")]
     private static partial nint GstAncillaryMetaGetInfo();
+}
+
+/// <summary>The native layout of <c>GstAncillaryMeta</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct AncillaryMetaRaw
+{
+    /// <summary>The <c>meta</c> field.</summary>
+    internal Gst.MetaRaw Meta;
+
+    /// <summary>The <c>field</c> field.</summary>
+    internal Gst.Video.AncillaryMetaField Field;
+
+    // <c>gboolean</c> is a 32 bit integer; every non zero value is true.
+    /// <summary>The <c>c_not_y_channel</c> field.</summary>
+    internal int CNotYChannel;
+
+    /// <summary>The <c>line</c> field.</summary>
+    internal ushort Line;
+
+    /// <summary>The <c>offset</c> field.</summary>
+    internal ushort Offset;
+
+    /// <summary>The <c>DID</c> field.</summary>
+    internal ushort DID;
+
+    /// <summary>The <c>SDID_block_number</c> field.</summary>
+    internal ushort SDIDBlockNumber;
+
+    /// <summary>The <c>data_count</c> field.</summary>
+    internal ushort DataCount;
+
+    /// <summary>The <c>data</c> field.</summary>
+    internal nint Data;
+
+    /// <summary>The <c>checksum</c> field.</summary>
+    internal ushort Checksum;
 }

@@ -137,3 +137,26 @@ public sealed unsafe partial class DebugCategory
     [LibraryImport("Gst", EntryPoint = "gst_debug_category_set_threshold")]
     private static partial void GstDebugCategorySetThreshold(nint category, int level);
 }
+
+/// <summary>The native layout of <c>GstDebugCategory</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct DebugCategoryRaw
+{
+    /// <summary>The <c>threshold</c> field.</summary>
+    internal int Threshold;
+
+    /// <summary>The <c>color</c> field.</summary>
+    internal uint Color;
+
+    /// <summary>The <c>name</c> field.</summary>
+    internal nint Name;
+
+    /// <summary>The <c>description</c> field.</summary>
+    internal nint Description;
+}

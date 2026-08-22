@@ -4,6 +4,7 @@
 #nullable enable
 
 using System;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace Gst.Video;
@@ -20,6 +21,50 @@ public sealed unsafe partial class VideoResampler
     /// <summary>Wraps a native <c>GstVideoResampler</c>.</summary>
     /// <param name="handle">The native instance.</param>
     internal VideoResampler(nint handle) => Handle = handle;
+
+    /// <summary>the input size</summary>
+    public int InSize
+    {
+        get
+        {
+            int value = ((VideoResamplerRaw*)Handle)->InSize;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>the output size</summary>
+    public int OutSize
+    {
+        get
+        {
+            int value = ((VideoResamplerRaw*)Handle)->OutSize;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>the maximum number of taps</summary>
+    public uint MaxTaps
+    {
+        get
+        {
+            uint value = ((VideoResamplerRaw*)Handle)->MaxTaps;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>the number of phases</summary>
+    public uint NPhases
+    {
+        get
+        {
+            uint value = ((VideoResamplerRaw*)Handle)->NPhases;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
 
     /// <summary>Wraps a native <c>GstVideoResampler</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
@@ -65,4 +110,49 @@ public sealed unsafe partial class VideoResampler
     /// <summary>The <c>gst_video_resampler_init</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_resampler_init")]
     private static partial int GstVideoResamplerInit(nint resampler, int method, int flags, uint nPhases, uint nTaps, double shift, uint inSize, uint outSize, nint options);
+}
+
+/// <summary>The native layout of <c>GstVideoResampler</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct VideoResamplerRaw
+{
+    /// <summary>The <c>in_size</c> field.</summary>
+    internal int InSize;
+
+    /// <summary>The <c>out_size</c> field.</summary>
+    internal int OutSize;
+
+    /// <summary>The <c>max_taps</c> field.</summary>
+    internal uint MaxTaps;
+
+    /// <summary>The <c>n_phases</c> field.</summary>
+    internal uint NPhases;
+
+    /// <summary>The <c>offset</c> field.</summary>
+    internal nint Offset;
+
+    /// <summary>The <c>phase</c> field.</summary>
+    internal nint Phase;
+
+    /// <summary>The <c>n_taps</c> field.</summary>
+    internal nint NTaps;
+
+    /// <summary>The <c>taps</c> field.</summary>
+    internal nint Taps;
+
+    /// <summary>The <c>_gst_reserved</c> field.</summary>
+    internal GstReservedArray GstReserved;
+
+    /// <summary>Inline storage of the 4 elements of the <c>_gst_reserved</c> field.</summary>
+    [InlineArray(4)]
+    internal struct GstReservedArray
+    {
+        private nint _element0;
+    }
 }

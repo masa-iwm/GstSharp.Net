@@ -4,6 +4,7 @@
 #nullable enable
 
 using System;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace Gst;
@@ -61,6 +62,42 @@ public sealed unsafe partial class Iterator : Gst.GObject.Boxed
     internal Iterator(nint handle, Gst.Interop.Transfer transfer)
         : base(handle, new Gst.GObject.GType(GetGType()), transfer)
     {
+    }
+
+    /// <summary>The type of the object that this iterator will return</summary>
+    public Gst.GObject.GType Type
+    {
+        get
+        {
+            Gst.GObject.GType value = new(((IteratorRaw*)Handle)->Type);
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>
+    /// The cookie; the value of the master_cookie when this iterator was
+    ///          created.
+    /// </summary>
+    public uint Cookie
+    {
+        get
+        {
+            uint value = ((IteratorRaw*)Handle)->Cookie;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>the size of the iterator</summary>
+    public uint Size
+    {
+        get
+        {
+            uint value = ((IteratorRaw*)Handle)->Size;
+            System.GC.KeepAlive(this);
+            return value;
+        }
     }
 
     /// <summary>Wraps a native <c>GstIterator</c>, mapping the null pointer onto <see langword="null"/>.</summary>
@@ -180,4 +217,58 @@ public sealed unsafe partial class Iterator : Gst.GObject.Boxed
     /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
     /// <returns>The new wrapper.</returns>
     internal static object CreateWrapper(nint handle, Gst.Interop.Transfer transfer) => new Iterator(handle, transfer);
+}
+
+/// <summary>The native layout of <c>GstIterator</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct IteratorRaw
+{
+    /// <summary>The <c>copy</c> field.</summary>
+    internal nint Copy;
+
+    /// <summary>The <c>next</c> field.</summary>
+    internal nint Next;
+
+    /// <summary>The <c>item</c> field.</summary>
+    internal nint Item;
+
+    /// <summary>The <c>resync</c> field.</summary>
+    internal nint Resync;
+
+    /// <summary>The <c>free</c> field.</summary>
+    internal nint Free;
+
+    /// <summary>The <c>pushed</c> field.</summary>
+    internal nint Pushed;
+
+    /// <summary>The <c>type</c> field.</summary>
+    internal nuint Type;
+
+    /// <summary>The <c>lock</c> field.</summary>
+    internal nint Lock;
+
+    /// <summary>The <c>cookie</c> field.</summary>
+    internal uint Cookie;
+
+    /// <summary>The <c>master_cookie</c> field.</summary>
+    internal nint MasterCookie;
+
+    /// <summary>The <c>size</c> field.</summary>
+    internal uint Size;
+
+    /// <summary>The <c>_gst_reserved</c> field.</summary>
+    internal GstReservedArray GstReserved;
+
+    /// <summary>Inline storage of the 4 elements of the <c>_gst_reserved</c> field.</summary>
+    [InlineArray(4)]
+    internal struct GstReservedArray
+    {
+        private nint _element0;
+    }
 }

@@ -51,3 +51,20 @@ public sealed unsafe partial class RTSPAuthParam : Gst.GObject.Boxed
     /// <returns>The new wrapper.</returns>
     internal static object CreateWrapper(nint handle, Gst.Interop.Transfer transfer) => new RTSPAuthParam(handle, transfer);
 }
+
+/// <summary>The native layout of <c>GstRTSPAuthParam</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct RTSPAuthParamRaw
+{
+    /// <summary>The <c>name</c> field.</summary>
+    internal nint Name;
+
+    /// <summary>The <c>value</c> field.</summary>
+    internal nint Value;
+}

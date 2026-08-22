@@ -18,6 +18,83 @@ public sealed unsafe partial class VideoRegionOfInterestMeta
     /// <param name="handle">The native instance.</param>
     internal VideoRegionOfInterestMeta(nint handle) => Handle = handle;
 
+    /// <summary>GQuark describing the semantic of the Roi (f.i. a face, a pedestrian)</summary>
+    public Gst.GLib.Quark RoiType
+    {
+        get
+        {
+            Gst.GLib.Quark value = new(((VideoRegionOfInterestMetaRaw*)Handle)->RoiType);
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>identifier of this particular ROI</summary>
+    public int Id
+    {
+        get
+        {
+            int value = ((VideoRegionOfInterestMetaRaw*)Handle)->Id;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>identifier of its parent ROI, used f.i. for ROI hierarchisation.</summary>
+    public int ParentId
+    {
+        get
+        {
+            int value = ((VideoRegionOfInterestMetaRaw*)Handle)->ParentId;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>x component of upper-left corner</summary>
+    public uint X
+    {
+        get
+        {
+            uint value = ((VideoRegionOfInterestMetaRaw*)Handle)->X;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>y component of upper-left corner</summary>
+    public uint Y
+    {
+        get
+        {
+            uint value = ((VideoRegionOfInterestMetaRaw*)Handle)->Y;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>bounding box width</summary>
+    public uint W
+    {
+        get
+        {
+            uint value = ((VideoRegionOfInterestMetaRaw*)Handle)->W;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>bounding box height</summary>
+    public uint H
+    {
+        get
+        {
+            uint value = ((VideoRegionOfInterestMetaRaw*)Handle)->H;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
     /// <summary>Wraps a native <c>GstVideoRegionOfInterestMeta</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
     /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>
@@ -115,4 +192,42 @@ public sealed unsafe partial class VideoRegionOfInterestMeta
     /// <summary>The <c>gst_video_region_of_interest_meta_get_info</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_region_of_interest_meta_get_info")]
     private static partial nint GstVideoRegionOfInterestMetaGetInfo();
+}
+
+/// <summary>The native layout of <c>GstVideoRegionOfInterestMeta</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct VideoRegionOfInterestMetaRaw
+{
+    /// <summary>The <c>meta</c> field.</summary>
+    internal Gst.MetaRaw Meta;
+
+    /// <summary>The <c>roi_type</c> field.</summary>
+    internal uint RoiType;
+
+    /// <summary>The <c>id</c> field.</summary>
+    internal int Id;
+
+    /// <summary>The <c>parent_id</c> field.</summary>
+    internal int ParentId;
+
+    /// <summary>The <c>x</c> field.</summary>
+    internal uint X;
+
+    /// <summary>The <c>y</c> field.</summary>
+    internal uint Y;
+
+    /// <summary>The <c>w</c> field.</summary>
+    internal uint W;
+
+    /// <summary>The <c>h</c> field.</summary>
+    internal uint H;
+
+    /// <summary>The <c>params</c> field.</summary>
+    internal nint Params;
 }

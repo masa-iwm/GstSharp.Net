@@ -19,6 +19,42 @@ public sealed unsafe partial class WebRTCICECandidateStats : Gst.GObject.Boxed
     {
     }
 
+    /// <summary>The network port number used by the candidate</summary>
+    public uint Port
+    {
+        get
+        {
+            uint value = ((WebRTCICECandidateStatsRaw*)Handle)->Port;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>
+    /// A string that uniquely identifies the object that is being
+    ///             monitored to produce this set of statistics
+    /// </summary>
+    public uint StreamId
+    {
+        get
+        {
+            uint value = ((WebRTCICECandidateStatsRaw*)Handle)->StreamId;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>The candidate's priority, corresponding to RTCIceCandidate.priority</summary>
+    public uint Prio
+    {
+        get
+        {
+            uint value = ((WebRTCICECandidateStatsRaw*)Handle)->Prio;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
     /// <summary>Wraps a native <c>GstWebRTCICECandidateStats</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
     /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
@@ -50,4 +86,43 @@ public sealed unsafe partial class WebRTCICECandidateStats : Gst.GObject.Boxed
     /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
     /// <returns>The new wrapper.</returns>
     internal static object CreateWrapper(nint handle, Gst.Interop.Transfer transfer) => new WebRTCICECandidateStats(handle, transfer);
+}
+
+/// <summary>The native layout of <c>GstWebRTCICECandidateStats</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// <para>
+/// Prefix mirror of the C struct: field offsets are exact, <c>sizeof</c> is NOT
+/// the C size; never allocate from it.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct WebRTCICECandidateStatsRaw
+{
+    /// <summary>The <c>ipaddr</c> field.</summary>
+    internal nint Ipaddr;
+
+    /// <summary>The <c>port</c> field.</summary>
+    internal uint Port;
+
+    /// <summary>The <c>stream_id</c> field.</summary>
+    internal uint StreamId;
+
+    /// <summary>The <c>type</c> field.</summary>
+    internal nint Type;
+
+    /// <summary>The <c>proto</c> field.</summary>
+    internal nint Proto;
+
+    /// <summary>The <c>relay_proto</c> field.</summary>
+    internal nint RelayProto;
+
+    /// <summary>The <c>prio</c> field.</summary>
+    internal uint Prio;
+
+    /// <summary>The <c>url</c> field.</summary>
+    internal nint Url;
 }

@@ -4,6 +4,7 @@
 #nullable enable
 
 using System;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace Gst.Audio;
@@ -23,6 +24,64 @@ public sealed unsafe partial class AudioInfo : Gst.GObject.Boxed
     internal AudioInfo(nint handle, Gst.Interop.Transfer transfer)
         : base(handle, new Gst.GObject.GType(GetGType()), transfer)
     {
+    }
+
+    /// <summary>additional audio flags</summary>
+    public Gst.Audio.AudioFlags Flags
+    {
+        get
+        {
+            Gst.Audio.AudioFlags value = ((AudioInfoRaw*)Handle)->Flags;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>audio layout</summary>
+    public Gst.Audio.AudioLayout Layout
+    {
+        get
+        {
+            Gst.Audio.AudioLayout value = ((AudioInfoRaw*)Handle)->Layout;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>the audio sample rate</summary>
+    public int Rate
+    {
+        get
+        {
+            int value = ((AudioInfoRaw*)Handle)->Rate;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>the number of channels</summary>
+    public int Channels
+    {
+        get
+        {
+            int value = ((AudioInfoRaw*)Handle)->Channels;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>
+    /// the number of bytes for one frame, this is the size of one
+    ///         sample * @channels
+    /// </summary>
+    public int Bpf
+    {
+        get
+        {
+            int value = ((AudioInfoRaw*)Handle)->Bpf;
+            System.GC.KeepAlive(this);
+            return value;
+        }
     }
 
     /// <summary>Wraps a native <c>GstAudioInfo</c>, mapping the null pointer onto <see langword="null"/>.</summary>
@@ -144,4 +203,53 @@ public sealed unsafe partial class AudioInfo : Gst.GObject.Boxed
     /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
     /// <returns>The new wrapper.</returns>
     internal static object CreateWrapper(nint handle, Gst.Interop.Transfer transfer) => new AudioInfo(handle, transfer);
+}
+
+/// <summary>The native layout of <c>GstAudioInfo</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct AudioInfoRaw
+{
+    /// <summary>The <c>finfo</c> field.</summary>
+    internal nint Finfo;
+
+    /// <summary>The <c>flags</c> field.</summary>
+    internal Gst.Audio.AudioFlags Flags;
+
+    /// <summary>The <c>layout</c> field.</summary>
+    internal Gst.Audio.AudioLayout Layout;
+
+    /// <summary>The <c>rate</c> field.</summary>
+    internal int Rate;
+
+    /// <summary>The <c>channels</c> field.</summary>
+    internal int Channels;
+
+    /// <summary>The <c>bpf</c> field.</summary>
+    internal int Bpf;
+
+    /// <summary>The <c>position</c> field.</summary>
+    internal PositionArray Position;
+
+    /// <summary>The <c>_gst_reserved</c> field.</summary>
+    internal GstReservedArray GstReserved;
+
+    /// <summary>Inline storage of the 64 elements of the <c>position</c> field.</summary>
+    [InlineArray(64)]
+    internal struct PositionArray
+    {
+        private Gst.Audio.AudioChannelPosition _element0;
+    }
+
+    /// <summary>Inline storage of the 4 elements of the <c>_gst_reserved</c> field.</summary>
+    [InlineArray(4)]
+    internal struct GstReservedArray
+    {
+        private nint _element0;
+    }
 }

@@ -3,6 +3,9 @@
 
 #nullable enable
 
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+
 namespace Gst;
 
 /// <summary>
@@ -11,7 +14,7 @@ namespace Gst;
 /// Note that GstClockEntry should be treated as an opaque structure. It must
 /// not be extended or allocated using a custom allocator.
 /// </summary>
-public sealed partial class ClockEntry
+public sealed unsafe partial class ClockEntry
 {
     /// <summary>The native instance.</summary>
     internal nint Handle;
@@ -19,6 +22,17 @@ public sealed partial class ClockEntry
     /// <summary>Wraps a native <c>GstClockEntry</c>.</summary>
     /// <param name="handle">The native instance.</param>
     internal ClockEntry(nint handle) => Handle = handle;
+
+    /// <summary>reference counter (read-only)</summary>
+    public int Refcount
+    {
+        get
+        {
+            int value = ((ClockEntryRaw*)Handle)->Refcount;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
 
     /// <summary>Wraps a native <c>GstClockEntry</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
@@ -30,4 +44,60 @@ public sealed partial class ClockEntry
     /// </remarks>
     internal static ClockEntry? FromNative(nint handle) =>
         handle == 0 ? null : new(handle);
+}
+
+/// <summary>The native layout of <c>GstClockEntry</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct ClockEntryRaw
+{
+    /// <summary>The <c>refcount</c> field.</summary>
+    internal int Refcount;
+
+    /// <summary>The <c>clock</c> field.</summary>
+    internal nint Clock;
+
+    /// <summary>The <c>type</c> field.</summary>
+    internal Gst.ClockEntryType Type;
+
+    /// <summary>The <c>time</c> field.</summary>
+    internal ulong Time;
+
+    /// <summary>The <c>interval</c> field.</summary>
+    internal ulong Interval;
+
+    /// <summary>The <c>status</c> field.</summary>
+    internal Gst.ClockReturn Status;
+
+    /// <summary>The <c>func</c> field.</summary>
+    internal nint Func;
+
+    /// <summary>The <c>user_data</c> field.</summary>
+    internal nint UserData;
+
+    /// <summary>The <c>destroy_data</c> field.</summary>
+    internal nint DestroyData;
+
+    // <c>gboolean</c> is a 32 bit integer; every non zero value is true.
+    /// <summary>The <c>unscheduled</c> field.</summary>
+    internal int Unscheduled;
+
+    // <c>gboolean</c> is a 32 bit integer; every non zero value is true.
+    /// <summary>The <c>woken_up</c> field.</summary>
+    internal int WokenUp;
+
+    /// <summary>The <c>_gst_reserved</c> field.</summary>
+    internal GstReservedArray GstReserved;
+
+    /// <summary>Inline storage of the 4 elements of the <c>_gst_reserved</c> field.</summary>
+    [InlineArray(4)]
+    internal struct GstReservedArray
+    {
+        private nint _element0;
+    }
 }

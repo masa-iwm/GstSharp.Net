@@ -30,6 +30,28 @@ public sealed unsafe partial class AudioDownmixMeta
     /// <param name="handle">The native instance.</param>
     internal AudioDownmixMeta(nint handle) => Handle = handle;
 
+    /// <summary>the number of channels of the source</summary>
+    public int FromChannels
+    {
+        get
+        {
+            int value = ((AudioDownmixMetaRaw*)Handle)->FromChannels;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>the number of channels of the destination</summary>
+    public int ToChannels
+    {
+        get
+        {
+            int value = ((AudioDownmixMetaRaw*)Handle)->ToChannels;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
     /// <summary>Wraps a native <c>GstAudioDownmixMeta</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
     /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>
@@ -53,4 +75,33 @@ public sealed unsafe partial class AudioDownmixMeta
     /// <summary>The <c>gst_audio_downmix_meta_get_info</c> entry point.</summary>
     [LibraryImport("GstAudio", EntryPoint = "gst_audio_downmix_meta_get_info")]
     private static partial nint GstAudioDownmixMetaGetInfo();
+}
+
+/// <summary>The native layout of <c>GstAudioDownmixMeta</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct AudioDownmixMetaRaw
+{
+    /// <summary>The <c>meta</c> field.</summary>
+    internal Gst.MetaRaw Meta;
+
+    /// <summary>The <c>from_position</c> field.</summary>
+    internal nint FromPosition;
+
+    /// <summary>The <c>to_position</c> field.</summary>
+    internal nint ToPosition;
+
+    /// <summary>The <c>from_channels</c> field.</summary>
+    internal int FromChannels;
+
+    /// <summary>The <c>to_channels</c> field.</summary>
+    internal int ToChannels;
+
+    /// <summary>The <c>matrix</c> field.</summary>
+    internal nint Matrix;
 }

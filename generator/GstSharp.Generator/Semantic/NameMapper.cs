@@ -207,10 +207,15 @@ internal sealed class NameMapper
     /// field to a value type gets the suffix without anyone remembering to ask
     /// for it. It reaches public fields of value projected records alone: a
     /// field that is private to the C implementation is named by
-    /// <see cref="PrivateFieldName"/>, an inline array is storage rather than an
-    /// address, and a boxed record, a mini object and a record behind a pointer
-    /// expose no public field at all. An explicit rename still wins, which is
-    /// the escape hatch for a field the suffix reads badly on.
+    /// <see cref="PrivateFieldName"/>, and an inline array is storage rather
+    /// than an address. A boxed record, a mini object and a record behind a
+    /// pointer are wrapped rather than projected by value, and their fields
+    /// reach the surface as get only properties over an internal mirror; the
+    /// mirror spells a pointer field as a plain <c>nint</c> under the name the
+    /// gir gives it, and no property is emitted for one, so nothing competes
+    /// for the name and the suffix has nothing to do there. An explicit rename
+    /// still wins, which is the escape hatch for a field the suffix reads badly
+    /// on.
     /// </para>
     /// </remarks>
     internal const string PointerFieldSuffix = "Ptr";

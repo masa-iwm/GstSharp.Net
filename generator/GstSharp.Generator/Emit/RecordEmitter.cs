@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Globalization;
 using GstSharp.Generator.GirParsing.Model;
 using GstSharp.Generator.Planning;
@@ -21,12 +21,22 @@ namespace GstSharp.Generator.Emit;
 /// out.</description></item>
 /// <item><description><see cref="TypeKind.Boxed"/>: a sealed wrapper that
 /// derives from <c>Gst.GObject.Boxed</c> and imports the <c>glib:get-type</c>
-/// function of the record.</description></item>
+/// function of the record, plus a mirror of as much of the native layout as
+/// can be projected.</description></item>
 /// <item><description><see cref="TypeKind.PlainStruct"/>: a struct that is
 /// marshalled by value.</description></item>
 /// <item><description><see cref="TypeKind.OpaqueRecord"/>: a sealed wrapper
-/// around the bare pointer.</description></item>
+/// around the bare pointer, with the same mirror.</description></item>
 /// </list>
+/// <para>
+/// Every wrapper that owns a mirror also carries a get only property per field
+/// the mirror projects onto a value, because the fields of these structures are
+/// public API in C and most of them have no accessor function. A wrapper is a
+/// pointer into memory that GStreamer owns, so the property reads the live
+/// structure rather than a snapshot; writing stays with the C setters and with
+/// the hand written glue, which is where the writability rules of the
+/// individual types are stated.
+/// </para>
 /// <para>
 /// Fields keep their gir order, because that order is the ABI. Every generated
 /// struct carries an explicit <c>StructLayout</c>: it states the intent, and it
@@ -62,6 +72,9 @@ internal sealed class RecordEmitter
     private readonly SurfaceBuilder _surfaces;
     private readonly EmissionCensus _census;
     private readonly List<RegistryEntry> _registry;
+
+    /// <summary>The records whose layout is being measured, which guards the recursion.</summary>
+    private readonly HashSet<string> _completeLayouts = new(StringComparer.Ordinal);
 
     /// <summary>Initializes a new instance of the <see cref="RecordEmitter"/> class.</summary>
     /// <param name="repository">The loaded gir repository.</param>
@@ -143,7 +156,7 @@ internal sealed class RecordEmitter
         switch (kind)
         {
             case TypeKind.PlainStruct:
-                layout = TryLayout(ns, record, typeName, publicSurface: true, allowPrivateTail: false, out truncated);
+                layout = TryLayout(ns, record, typeName, publicSurface: true, LayoutTail.None, out truncated);
                 if (layout is null or { Count: 0 })
                 {
                     // The classifier only reports PlainStruct for records whose
@@ -158,7 +171,7 @@ internal sealed class RecordEmitter
                 break;
 
             case TypeKind.MiniObject:
-                layout = TryLayout(ns, record, typeName, publicSurface: false, allowPrivateTail: true, out truncated);
+                layout = TryLayout(ns, record, typeName, publicSurface: false, LayoutTail.Private, out truncated);
                 if (layout is { Count: 0 })
                 {
                     layout = null;
@@ -177,17 +190,45 @@ internal sealed class RecordEmitter
                 }
 
                 break;
+
+            case TypeKind.Boxed:
+            case TypeKind.OpaqueRecord:
+                // A wrapper is a pointer, so nothing needs the whole structure:
+                // the mirror carries as long a prefix of it as can be projected
+                // and the accessors of that prefix are emitted. There is no
+                // warning to report, because a prefix always succeeds.
+                layout = TryLayout(ns, record, typeName, publicSurface: false, LayoutTail.Prefix, out truncated);
+                if (layout is { Count: 0 })
+                {
+                    layout = null;
+                }
+
+                if (layout is not null)
+                {
+                    accessors = BuildAccessors(ns, typeName, layout);
+                }
+
+                break;
+        }
+
+        // The accessors claim their names before anything the gir declares is
+        // planned, so that a method named after a field is the member that is
+        // reported as colliding rather than the field silently losing.
+        if (accessors.Count > 0)
+        {
+            accessors = KeepUnclaimedAccessors(module, qualifiedName, kind, typeName, accessors);
         }
 
         // A hand written wrapper only reaches a file when the generator still
         // owns the mirror of its native layout.
-        bool emitsMirror = kind == TypeKind.MiniObject && layout is not null;
+        bool emitsMirror = layout is not null
+            && kind is TypeKind.MiniObject or TypeKind.Boxed or TypeKind.OpaqueRecord;
         if (handWritten && !emitsMirror)
         {
             return null;
         }
 
-        TypeSurface surface = BuildSurface(module, ns, record, kind, typeName, handWritten);
+        TypeSurface surface = BuildSurface(module, ns, record, kind, typeName, handWritten, accessors);
 
         CodeWriter writer = new();
         WriteHeader(
@@ -214,11 +255,11 @@ internal sealed class RecordEmitter
                     break;
 
                 case TypeKind.Boxed:
-                    WriteBoxed(writer, module, record, typeName, surface);
+                    WriteBoxed(writer, module, record, typeName, accessors, surface);
                     break;
 
                 default:
-                    WriteOpaque(writer, module, record, typeName, surface);
+                    WriteOpaque(writer, module, record, typeName, accessors, surface);
                     break;
             }
 
@@ -231,10 +272,15 @@ internal sealed class RecordEmitter
         if (emitsMirror)
         {
             writer.WriteLine();
-            WriteRawStruct(writer, record, typeName, layout!, truncated);
+            WriteRawStruct(writer, record, kind, typeName, layout!, truncated);
         }
 
         _census.Emitted(module.GirNamespace, "record");
+        for (int i = 0; i < accessors.Count; i++)
+        {
+            _census.Emitted(module.GirNamespace, "field accessor");
+        }
+
         return new GeneratedFile(module.ProjectDirectory + "/Generated/" + typeName + ".cs", writer.ToSource());
     }
 
@@ -438,6 +484,7 @@ internal sealed class RecordEmitter
     private static void WriteRawStruct(
         CodeWriter writer,
         GirRecord record,
+        TypeKind kind,
         string typeName,
         IReadOnlyList<LayoutField> layout,
         bool truncated)
@@ -448,11 +495,22 @@ internal sealed class RecordEmitter
         writer.WriteLine("/// The mirror is only ever read through a pointer into memory that GStreamer");
         writer.WriteLine("/// owns; it is never allocated, assigned or copied.");
         writer.WriteLine("/// </para>");
-        if (truncated)
+        if (truncated && kind == TypeKind.MiniObject)
         {
             writer.WriteLine("/// <para>");
             writer.WriteLine("/// It stops at the first field that has no portable C# spelling. Every field");
             writer.WriteLine("/// behind that one is private to the C implementation and is never read.");
+            writer.WriteLine("/// </para>");
+        }
+        else if (truncated)
+        {
+            // A boxed or opaque record stops at the first field it cannot
+            // project whatever follows it, so what is behind the stop may well
+            // be public API in C. The offsets in front of it are exact and that
+            // is all a read through the pointer needs.
+            writer.WriteLine("/// <para>");
+            writer.WriteLine("/// Prefix mirror of the C struct: field offsets are exact, <c>sizeof</c> is NOT");
+            writer.WriteLine("/// the C size; never allocate from it.");
             writer.WriteLine("/// </para>");
         }
 
@@ -571,6 +629,7 @@ internal sealed class RecordEmitter
     /// <param name="kind">Its classification.</param>
     /// <param name="typeName">Its C# name.</param>
     /// <param name="handWritten">Whether the wrapper itself is hand written.</param>
+    /// <param name="accessors">The field accessors, which have already claimed their names.</param>
     /// <returns>The members to emit.</returns>
     private TypeSurface BuildSurface(
         ModuleInfo module,
@@ -578,7 +637,8 @@ internal sealed class RecordEmitter
         GirRecord record,
         TypeKind kind,
         string typeName,
-        bool handWritten)
+        bool handWritten,
+        IReadOnlyList<Accessor> accessors)
     {
         if (handWritten || kind == TypeKind.PlainStruct)
         {
@@ -596,10 +656,10 @@ internal sealed class RecordEmitter
             return new TypeSurface([], [], []);
         }
 
-        List<string> reserved = [.. SurfaceBuilder.WrapperNames, typeName];
-        if (kind == TypeKind.MiniObject)
+        List<string> reserved = ReservedNames(kind, typeName);
+        foreach (Accessor accessor in accessors)
         {
-            reserved.AddRange(SurfaceBuilder.MiniObjectNames);
+            reserved.Add(accessor.Name);
         }
 
         PlanningContext context = new(module, ns, kind, module.ClrNamespace + "." + typeName);
@@ -623,13 +683,7 @@ internal sealed class RecordEmitter
 
         WriteWrapperConstructor(writer, record, typeName, "base(handle, transfer)");
 
-        foreach (Accessor accessor in accessors)
-        {
-            writer.WriteLine();
-            XmlDocWriter.Write(writer, accessor.Field.Doc, FallbackSummary(record, accessor.Field), accessor.Field);
-            XmlDocWriter.WriteObsolete(writer, accessor.Field);
-            WriteAccessor(writer, accessor);
-        }
+        WriteAccessors(writer, record, accessors);
 
         writer.WriteLine();
         WriteFromNative(writer, record, typeName);
@@ -644,13 +698,14 @@ internal sealed class RecordEmitter
         ModuleInfo module,
         GirRecord record,
         string typeName,
+        IReadOnlyList<Accessor> accessors,
         TypeSurface surface)
     {
         XmlDocWriter.Write(writer, record.Doc, FallbackSummary(record, "boxed type"), record);
         XmlDocWriter.WriteObsolete(writer, record);
         writer.WriteLine(
-            "public sealed " + (surface.NeedsUnsafe ? "unsafe " : string.Empty) + "partial class " + typeName
-            + " : Gst.GObject.Boxed");
+            "public sealed " + (accessors.Count > 0 || surface.NeedsUnsafe ? "unsafe " : string.Empty)
+            + "partial class " + typeName + " : Gst.GObject.Boxed");
         writer.OpenBlock();
 
         WriteWrapperConstructor(
@@ -658,6 +713,8 @@ internal sealed class RecordEmitter
             record,
             typeName,
             "base(handle, new Gst.GObject.GType(GetGType()), transfer)");
+
+        WriteAccessors(writer, record, accessors);
 
         writer.WriteLine();
         WriteFromNative(writer, record, typeName);
@@ -672,18 +729,22 @@ internal sealed class RecordEmitter
         ModuleInfo module,
         GirRecord record,
         string typeName,
+        IReadOnlyList<Accessor> accessors,
         TypeSurface surface)
     {
         XmlDocWriter.Write(writer, record.Doc, FallbackSummary(record, "record"), record);
         XmlDocWriter.WriteObsolete(writer, record);
         writer.WriteLine(
-            "public sealed " + (surface.NeedsUnsafe ? "unsafe " : string.Empty) + "partial class " + typeName);
+            "public sealed " + (accessors.Count > 0 || surface.NeedsUnsafe ? "unsafe " : string.Empty)
+            + "partial class " + typeName);
         writer.OpenBlock();
 
         writer.WriteLine("/// <summary>The native instance.</summary>");
         writer.WriteLine("internal nint Handle;");
         writer.WriteLine();
         WriteWrapperConstructor(writer, record, typeName, baseCall: null);
+
+        WriteAccessors(writer, record, accessors);
 
         writer.WriteLine();
         writer.WriteLine(
@@ -729,15 +790,39 @@ internal sealed class RecordEmitter
         ClassEmitter.WriteFactory(writer, typeName, isAbstract: false, hidesBase: false);
     }
 
-    /// <summary>Writes one field accessor of a mini object wrapper.</summary>
+    /// <summary>Writes the field accessors of a wrapper.</summary>
+    /// <param name="writer">The target writer.</param>
+    /// <param name="record">The record being emitted.</param>
+    /// <param name="accessors">The accessors to write, in field order.</param>
+    private static void WriteAccessors(CodeWriter writer, GirRecord record, IReadOnlyList<Accessor> accessors)
+    {
+        foreach (Accessor accessor in accessors)
+        {
+            writer.WriteLine();
+            XmlDocWriter.Write(writer, accessor.Field.Doc, FallbackSummary(record, accessor.Field), accessor.Field);
+            XmlDocWriter.WriteObsolete(writer, accessor.Field);
+            WriteAccessor(writer, accessor);
+        }
+    }
+
+    /// <summary>Writes one field accessor of a wrapper.</summary>
     /// <param name="writer">The target writer.</param>
     /// <param name="accessor">The accessor to write.</param>
     /// <remarks>
+    /// <para>
     /// The body reads through the raw pointer of the wrapper, so the wrapper
     /// has to stay reachable until the read is done. Without that, the last
     /// statement that mentions the wrapper is the one that took its handle, and
     /// the finalizer may release the instance while the pointer into it is
     /// still being dereferenced.
+    /// </para>
+    /// <para>
+    /// The handle is read exactly the way a generated instance method reads it,
+    /// which is what makes a disposed boxed wrapper throw an
+    /// <c>ObjectDisposedException</c> here rather than dereference the null
+    /// pointer. The wrapper of an opaque record has no disposed state to check,
+    /// so the same expression is a plain read there.
+    /// </para>
     /// </remarks>
     private static void WriteAccessor(CodeWriter writer, Accessor accessor)
     {
@@ -750,6 +835,73 @@ internal sealed class RecordEmitter
         writer.WriteLine("return value;");
         writer.CloseBlock();
         writer.CloseBlock();
+    }
+
+    /// <summary>
+    /// The names a generated wrapper carries before anything the gir declares
+    /// is planned: the members of the runtime base types and the name of the
+    /// wrapper itself.
+    /// </summary>
+    /// <param name="kind">The classification of the record.</param>
+    /// <param name="typeName">The C# name of the wrapper.</param>
+    /// <returns>The reserved names.</returns>
+    private static List<string> ReservedNames(TypeKind kind, string typeName)
+    {
+        List<string> reserved = [.. SurfaceBuilder.WrapperNames, typeName];
+        if (kind == TypeKind.MiniObject)
+        {
+            reserved.AddRange(SurfaceBuilder.MiniObjectNames);
+        }
+
+        return reserved;
+    }
+
+    /// <summary>
+    /// Drops the accessors whose name a runtime member, the wrapper itself or
+    /// an earlier accessor already carries.
+    /// </summary>
+    /// <param name="module">The module being emitted.</param>
+    /// <param name="qualifiedName">The gir name of the record, for the report.</param>
+    /// <param name="kind">The classification of the record.</param>
+    /// <param name="typeName">The C# name of the wrapper.</param>
+    /// <param name="accessors">The accessors of the layout, in field order.</param>
+    /// <returns>The accessors that keep their name.</returns>
+    /// <remarks>
+    /// The surviving names are reserved before the callables of the record are
+    /// planned, so that a method that would carry the name of a field is the
+    /// one reported as colliding. The field wins because it is the only
+    /// binding of what it names, while a method that collides can be renamed
+    /// through <c>fixups.json</c>.
+    /// </remarks>
+    private List<Accessor> KeepUnclaimedAccessors(
+        ModuleInfo module,
+        string qualifiedName,
+        TypeKind kind,
+        string typeName,
+        IReadOnlyList<Accessor> accessors)
+    {
+        HashSet<string> used = new(ReservedNames(kind, typeName), StringComparer.Ordinal);
+        List<Accessor> kept = [];
+        foreach (Accessor accessor in accessors)
+        {
+            if (used.Add(accessor.Name))
+            {
+                kept.Add(accessor);
+                continue;
+            }
+
+            _census.Skipped(
+                module.GirNamespace,
+                SkipReason.NameCollision,
+                qualifiedName + "." + accessor.Field.Name);
+            _diagnostics.Warn(
+                "GEN0018",
+                $"The '{accessor.Field.Name}' field of '{qualifiedName}' would be emitted as "
+                + $"'{typeName}.{accessor.Name}', which is already taken; the accessor is skipped. "
+                + "Add a rename to fixups.json to bind it.");
+        }
+
+        return kept;
     }
 
     private List<Accessor> BuildAccessors(GirNamespace ns, string typeName, IReadOnlyList<LayoutField> layout)
@@ -830,10 +982,7 @@ internal sealed class RecordEmitter
     /// <see langword="false"/> for a mirror of the native layout, which uses
     /// the interop types.
     /// </param>
-    /// <param name="allowPrivateTail">
-    /// <see langword="true"/> when the layout may stop early, as long as every
-    /// remaining field is private to the C implementation.
-    /// </param>
+    /// <param name="tail">How far the layout may fall short of the whole structure.</param>
     /// <param name="truncated">Whether the layout stopped early.</param>
     /// <returns>The fields, or <see langword="null"/> when the record cannot be laid out.</returns>
     private List<LayoutField>? TryLayout(
@@ -841,20 +990,41 @@ internal sealed class RecordEmitter
         GirRecord record,
         string typeName,
         bool publicSurface,
-        bool allowPrivateTail,
+        LayoutTail tail,
         out bool truncated)
     {
         truncated = false;
         List<LayoutField> layout = [];
-        for (int i = 0; i < record.Fields.Count; i++)
+        int unionAt = FirstUnionField(record);
+        for (int i = 0; i <= record.Fields.Count; i++)
         {
+            // A union has no C# spelling of a guaranteed size, and the gir
+            // keeps it out of the field list of the record, so the layout has
+            // to stop where it sits. Laying the fields behind it out anyway
+            // would put every one of them at the wrong offset.
+            if (i == unionAt)
+            {
+                if (tail != LayoutTail.Prefix)
+                {
+                    return null;
+                }
+
+                truncated = true;
+                break;
+            }
+
+            if (i == record.Fields.Count)
+            {
+                break;
+            }
+
             GirField field = record.Fields[i];
             string pascalName = PublicFieldName(ns, record, field, typeName, barePointer: false);
 
             FieldProjection? projection = Project(ns, field, pascalName, publicSurface);
             if (projection is null)
             {
-                if (!allowPrivateTail || !IsTailHidden(record, i))
+                if (tail == LayoutTail.None || (tail == LayoutTail.Private && !IsTailHidden(record, i)))
                 {
                     return null;
                 }
@@ -889,6 +1059,23 @@ internal sealed class RecordEmitter
         }
 
         return layout;
+    }
+
+    /// <summary>
+    /// Returns the number of fields that sit in front of the first union of a
+    /// record, which is where a layout of that record has to stop.
+    /// </summary>
+    /// <param name="record">The record to inspect.</param>
+    /// <returns>The field index, or <see cref="int.MaxValue"/> when there is no union.</returns>
+    private static int FirstUnionField(GirRecord record)
+    {
+        int index = int.MaxValue;
+        foreach (GirUnion union in record.Unions)
+        {
+            index = Math.Min(index, union.FieldIndex);
+        }
+
+        return index;
     }
 
     private string TypeNameOf(GirNamespace ns, GirRecord record) =>
@@ -1075,13 +1262,22 @@ internal sealed class RecordEmitter
 
     /// <summary>
     /// Projects a record that is embedded by value. It has to be a type that
-    /// this run emits: a plain struct, or the mirror of a mini object, which is
-    /// internal and can therefore only sit in another mirror.
+    /// this run emits: a plain struct, or a mirror, which is internal and can
+    /// therefore only sit in another mirror.
     /// </summary>
     /// <param name="symbol">The embedded record.</param>
     /// <param name="embedded">Its declaration.</param>
     /// <param name="publicSurface">Whether the embedding struct is part of the API.</param>
     /// <returns>The projection, or <see langword="null"/> when there is none.</returns>
+    /// <remarks>
+    /// The mirror of a boxed, an opaque or a mini object record is only
+    /// embeddable when its own layout is complete: a prefix is shorter than the
+    /// C structure, so everything behind it in the embedding structure would sit
+    /// at the wrong offset. A prefix is fine at the end of the chain, where
+    /// nothing follows it, which is why it is a mirror of its own and not one of
+    /// these. No mini object mirror is a prefix today, and the check is what
+    /// keeps that from silently shifting every field behind one if it changes.
+    /// </remarks>
     private FieldProjection? ProjectEmbeddedRecord(GirSymbol symbol, GirRecord embedded, bool publicSurface)
     {
         ModuleInfo? module = ModuleMap.Find(symbol.Namespace.Name);
@@ -1092,13 +1288,73 @@ internal sealed class RecordEmitter
             return null;
         }
 
-        string name = module.ClrNamespace + "." + _names.TypeName(symbol);
+        string typeName = _names.TypeName(symbol);
+        string name = module.ClrNamespace + "." + typeName;
         return _classifier.Classify(embedded) switch
         {
-            TypeKind.MiniObject when !publicSurface => new FieldProjection(name + RawSuffix, null, null),
+            TypeKind.MiniObject or TypeKind.Boxed or TypeKind.OpaqueRecord when !publicSurface
+                && HasCompleteLayout(symbol.Namespace, embedded, typeName) =>
+                new FieldProjection(name + RawSuffix, null, null),
             TypeKind.PlainStruct => new FieldProjection(name, null, null),
             _ => null,
         };
+    }
+
+    /// <summary>
+    /// Tests whether a record lays out in full: every field projected, the
+    /// fields that are private to the C implementation projected as the padding
+    /// they are, no union and no truncation.
+    /// </summary>
+    /// <param name="ns">The gir namespace of the record.</param>
+    /// <param name="record">The record to inspect.</param>
+    /// <param name="typeName">Its C# name.</param>
+    /// <returns><see langword="true"/> when the mirror has the size of the C structure.</returns>
+    private bool HasCompleteLayout(GirNamespace ns, GirRecord record, string typeName)
+    {
+        // C cannot embed a structure in itself, but the guard costs nothing and
+        // keeps a malformed gir from recursing without end.
+        string qualifiedName = ns.Name + "." + record.Name;
+        if (!_completeLayouts.Add(qualifiedName))
+        {
+            return false;
+        }
+
+        try
+        {
+            return TryLayout(ns, record, typeName, publicSurface: false, LayoutTail.None, out _)
+                is { Count: > 0 };
+        }
+        finally
+        {
+            _completeLayouts.Remove(qualifiedName);
+        }
+    }
+
+    /// <summary>How far a layout may fall short of the whole C structure.</summary>
+    private enum LayoutTail
+    {
+        /// <summary>
+        /// Every field has to be projected. This is what a record that
+        /// marshals by value needs: it is passed around as a copy, so a
+        /// mirror that is short of the C size would corrupt the stack.
+        /// </summary>
+        None,
+
+        /// <summary>
+        /// The layout may stop early, as long as every remaining field is
+        /// private to the C implementation. This is what the mirror of a mini
+        /// object uses: the wrapper is a pointer, and nothing behind the stop
+        /// carries API.
+        /// </summary>
+        Private,
+
+        /// <summary>
+        /// The layout may stop at the first field it cannot project, whatever
+        /// follows it. This is what the mirror of a boxed or opaque record
+        /// uses: the wrapper is a pointer, the offsets in front of the stop
+        /// are exact, and the total size is never needed.
+        /// </summary>
+        Prefix,
     }
 
     /// <summary>How one gir field is spelled in C#.</summary>

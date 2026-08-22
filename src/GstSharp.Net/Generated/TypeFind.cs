@@ -4,6 +4,7 @@
 #nullable enable
 
 using System;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace Gst;
@@ -120,4 +121,37 @@ public sealed unsafe partial class TypeFind
     /// <summary>The <c>gst_type_find_register</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_type_find_register")]
     private static partial int GstTypeFindRegister(nint plugin, byte* name, uint rank, nint func, byte* extensions, nint possibleCaps, nint data, nint dataNotify);
+}
+
+/// <summary>The native layout of <c>GstTypeFind</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct TypeFindRaw
+{
+    /// <summary>The <c>peek</c> field.</summary>
+    internal nint Peek;
+
+    /// <summary>The <c>suggest</c> field.</summary>
+    internal nint Suggest;
+
+    /// <summary>The <c>data</c> field.</summary>
+    internal nint Data;
+
+    /// <summary>The <c>get_length</c> field.</summary>
+    internal nint GetLength;
+
+    /// <summary>The <c>_gst_reserved</c> field.</summary>
+    internal GstReservedArray GstReserved;
+
+    /// <summary>Inline storage of the 4 elements of the <c>_gst_reserved</c> field.</summary>
+    [InlineArray(4)]
+    internal struct GstReservedArray
+    {
+        private nint _element0;
+    }
 }

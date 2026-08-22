@@ -19,6 +19,39 @@ public sealed unsafe partial class RTSPUrl : Gst.GObject.Boxed
     {
     }
 
+    /// <summary>the transports allowed</summary>
+    public Gst.Rtsp.RTSPLowerTrans Transports
+    {
+        get
+        {
+            Gst.Rtsp.RTSPLowerTrans value = ((RTSPUrlRaw*)Handle)->Transports;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>the family</summary>
+    public Gst.Rtsp.RTSPFamily Family
+    {
+        get
+        {
+            Gst.Rtsp.RTSPFamily value = ((RTSPUrlRaw*)Handle)->Family;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>the port</summary>
+    public ushort Port
+    {
+        get
+        {
+            ushort value = ((RTSPUrlRaw*)Handle)->Port;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
     /// <summary>Wraps a native <c>GstRTSPUrl</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
     /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
@@ -140,4 +173,39 @@ public sealed unsafe partial class RTSPUrl : Gst.GObject.Boxed
     /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
     /// <returns>The new wrapper.</returns>
     internal static object CreateWrapper(nint handle, Gst.Interop.Transfer transfer) => new RTSPUrl(handle, transfer);
+}
+
+/// <summary>The native layout of <c>GstRTSPUrl</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct RTSPUrlRaw
+{
+    /// <summary>The <c>transports</c> field.</summary>
+    internal Gst.Rtsp.RTSPLowerTrans Transports;
+
+    /// <summary>The <c>family</c> field.</summary>
+    internal Gst.Rtsp.RTSPFamily Family;
+
+    /// <summary>The <c>user</c> field.</summary>
+    internal nint User;
+
+    /// <summary>The <c>passwd</c> field.</summary>
+    internal nint Passwd;
+
+    /// <summary>The <c>host</c> field.</summary>
+    internal nint Host;
+
+    /// <summary>The <c>port</c> field.</summary>
+    internal ushort Port;
+
+    /// <summary>The <c>abspath</c> field.</summary>
+    internal nint Abspath;
+
+    /// <summary>The <c>query</c> field.</summary>
+    internal nint Query;
 }

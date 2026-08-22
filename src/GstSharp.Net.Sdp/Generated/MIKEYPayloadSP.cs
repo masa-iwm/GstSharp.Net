@@ -3,13 +3,15 @@
 
 #nullable enable
 
+using System.Runtime.InteropServices;
+
 namespace Gst.Sdp;
 
 /// <summary>
 /// The Security Policy payload defines a set of policies that apply to a
 /// specific security protocol
 /// </summary>
-public sealed partial class MIKEYPayloadSP
+public sealed unsafe partial class MIKEYPayloadSP
 {
     /// <summary>The native instance.</summary>
     internal nint Handle;
@@ -17,6 +19,28 @@ public sealed partial class MIKEYPayloadSP
     /// <summary>Wraps a native <c>GstMIKEYPayloadSP</c>.</summary>
     /// <param name="handle">The native instance.</param>
     internal MIKEYPayloadSP(nint handle) => Handle = handle;
+
+    /// <summary>the policy number</summary>
+    public uint Policy
+    {
+        get
+        {
+            uint value = ((MIKEYPayloadSPRaw*)Handle)->Policy;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>the security protocol</summary>
+    public Gst.Sdp.MIKEYSecProto Proto
+    {
+        get
+        {
+            Gst.Sdp.MIKEYSecProto value = ((MIKEYPayloadSPRaw*)Handle)->Proto;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
 
     /// <summary>Wraps a native <c>GstMIKEYPayloadSP</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
@@ -28,4 +52,27 @@ public sealed partial class MIKEYPayloadSP
     /// </remarks>
     internal static MIKEYPayloadSP? FromNative(nint handle) =>
         handle == 0 ? null : new(handle);
+}
+
+/// <summary>The native layout of <c>GstMIKEYPayloadSP</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct MIKEYPayloadSPRaw
+{
+    /// <summary>The <c>pt</c> field.</summary>
+    internal Gst.Sdp.MIKEYPayloadRaw Pt;
+
+    /// <summary>The <c>policy</c> field.</summary>
+    internal uint Policy;
+
+    /// <summary>The <c>proto</c> field.</summary>
+    internal Gst.Sdp.MIKEYSecProto Proto;
+
+    /// <summary>The <c>params</c> field.</summary>
+    internal nint Params;
 }

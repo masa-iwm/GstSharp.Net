@@ -45,3 +45,20 @@ public sealed unsafe partial class ProtectionMeta
     [LibraryImport("Gst", EntryPoint = "gst_protection_meta_get_info")]
     private static partial nint GstProtectionMetaGetInfo();
 }
+
+/// <summary>The native layout of <c>GstProtectionMeta</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct ProtectionMetaRaw
+{
+    /// <summary>The <c>meta</c> field.</summary>
+    internal Gst.MetaRaw Meta;
+
+    /// <summary>The <c>info</c> field.</summary>
+    internal nint Info;
+}

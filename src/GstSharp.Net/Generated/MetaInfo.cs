@@ -21,6 +21,39 @@ public sealed unsafe partial class MetaInfo
     /// <param name="handle">The native instance.</param>
     internal MetaInfo(nint handle) => Handle = handle;
 
+    /// <summary>tag identifying the metadata structure and api</summary>
+    public Gst.GObject.GType Api
+    {
+        get
+        {
+            Gst.GObject.GType value = new(((MetaInfoRaw*)Handle)->Api);
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>type identifying the implementor of the api</summary>
+    public Gst.GObject.GType Type
+    {
+        get
+        {
+            Gst.GObject.GType value = new(((MetaInfoRaw*)Handle)->Type);
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>size of the metadata</summary>
+    public nuint Size
+    {
+        get
+        {
+            nuint value = ((MetaInfoRaw*)Handle)->Size;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
     /// <summary>Wraps a native <c>GstMetaInfo</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
     /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>
@@ -47,4 +80,42 @@ public sealed unsafe partial class MetaInfo
     /// <summary>The <c>gst_meta_info_is_custom</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_meta_info_is_custom")]
     private static partial int GstMetaInfoIsCustom(nint info);
+}
+
+/// <summary>The native layout of <c>GstMetaInfo</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct MetaInfoRaw
+{
+    /// <summary>The <c>api</c> field.</summary>
+    internal nuint Api;
+
+    /// <summary>The <c>type</c> field.</summary>
+    internal nuint Type;
+
+    /// <summary>The <c>size</c> field.</summary>
+    internal nuint Size;
+
+    /// <summary>The <c>init_func</c> field.</summary>
+    internal nint InitFunc;
+
+    /// <summary>The <c>free_func</c> field.</summary>
+    internal nint FreeFunc;
+
+    /// <summary>The <c>transform_func</c> field.</summary>
+    internal nint TransformFunc;
+
+    /// <summary>The <c>serialize_func</c> field.</summary>
+    internal nint SerializeFunc;
+
+    /// <summary>The <c>deserialize_func</c> field.</summary>
+    internal nint DeserializeFunc;
+
+    /// <summary>The <c>clear_func</c> field.</summary>
+    internal nint ClearFunc;
 }

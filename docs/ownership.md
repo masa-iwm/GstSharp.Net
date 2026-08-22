@@ -33,7 +33,7 @@ if (buffer is not null)
 escapes; `GST0002` reports a `Buffer.Map` scope that is never released. See
 [the analyzer rules](analyzers.md).
 
-Two consequences worth stating:
+Three consequences worth stating:
 
 * **No owning properties.** A property that produced an owned wrapper would
   produce one per read, in the one place the analyzer cannot watch. The
@@ -43,6 +43,11 @@ Two consequences worth stating:
 * **A `Structure` from `Caps.GetStructure` is a copy**, not a window into the
   caps. Writing to it does not write back, whether the caps are writable or
   not.
+* **A generated field getter reads through the live handle** and owns nothing:
+  `segment.Start` reads the C structure the wrapper points at, not a snapshot
+  of it. On a wrapper that owns its value — a boxed one or a mini object — the
+  getter therefore throws `ObjectDisposedException` once the wrapper is
+  disposed, exactly as every other member that needs the handle does.
 
 Release is synchronous. `Dispose` unrefs on the calling thread and the
 finalizer unrefs directly; nothing is ever deferred through a GLib timeout or

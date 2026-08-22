@@ -4,6 +4,7 @@
 #nullable enable
 
 using System;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace Gst.Audio;
@@ -44,6 +45,28 @@ public sealed unsafe partial class DsdPlaneOffsetMeta
     /// <param name="handle">The native instance.</param>
     internal DsdPlaneOffsetMeta(nint handle) => Handle = handle;
 
+    /// <summary>number of channels in the DSD data</summary>
+    public int NumChannels
+    {
+        get
+        {
+            int value = ((DsdPlaneOffsetMetaRaw*)Handle)->NumChannels;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>the number of valid bytes per channel in the buffer</summary>
+    public nuint NumBytesPerChannel
+    {
+        get
+        {
+            nuint value = ((DsdPlaneOffsetMetaRaw*)Handle)->NumBytesPerChannel;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
     /// <summary>Wraps a native <c>GstDsdPlaneOffsetMeta</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
     /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>
@@ -67,4 +90,47 @@ public sealed unsafe partial class DsdPlaneOffsetMeta
     /// <summary>The <c>gst_dsd_plane_offset_meta_get_info</c> entry point.</summary>
     [LibraryImport("GstAudio", EntryPoint = "gst_dsd_plane_offset_meta_get_info")]
     private static partial nint GstDsdPlaneOffsetMetaGetInfo();
+}
+
+/// <summary>The native layout of <c>GstDsdPlaneOffsetMeta</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct DsdPlaneOffsetMetaRaw
+{
+    /// <summary>The <c>meta</c> field.</summary>
+    internal Gst.MetaRaw Meta;
+
+    /// <summary>The <c>num_channels</c> field.</summary>
+    internal int NumChannels;
+
+    /// <summary>The <c>num_bytes_per_channel</c> field.</summary>
+    internal nuint NumBytesPerChannel;
+
+    /// <summary>The <c>offsets</c> field.</summary>
+    internal nint Offsets;
+
+    /// <summary>The <c>priv_offsets_arr</c> field.</summary>
+    internal PrivOffsetsArrArray PrivOffsetsArr;
+
+    /// <summary>The <c>_gst_reserved</c> field.</summary>
+    internal GstReservedArray GstReserved;
+
+    /// <summary>Inline storage of the 8 elements of the <c>priv_offsets_arr</c> field.</summary>
+    [InlineArray(8)]
+    internal struct PrivOffsetsArrArray
+    {
+        private nuint _element0;
+    }
+
+    /// <summary>Inline storage of the 4 elements of the <c>_gst_reserved</c> field.</summary>
+    [InlineArray(4)]
+    internal struct GstReservedArray
+    {
+        private nint _element0;
+    }
 }

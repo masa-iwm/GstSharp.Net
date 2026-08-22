@@ -18,6 +18,56 @@ public sealed unsafe partial class PadProbeInfo
     /// <param name="handle">The native instance.</param>
     internal PadProbeInfo(nint handle) => Handle = handle;
 
+    /// <summary>the current probe type</summary>
+    public Gst.PadProbeType Type
+    {
+        get
+        {
+            Gst.PadProbeType value = ((PadProbeInfoRaw*)Handle)->Type;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>the id of the probe</summary>
+    public System.Runtime.InteropServices.CULong Id
+    {
+        get
+        {
+            System.Runtime.InteropServices.CULong value = ((PadProbeInfoRaw*)Handle)->Id;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>
+    /// offset of pull probe, this field is valid when @type contains
+    ///    #GST_PAD_PROBE_TYPE_PULL
+    /// </summary>
+    public ulong Offset
+    {
+        get
+        {
+            ulong value = ((PadProbeInfoRaw*)Handle)->Offset;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>
+    /// size of pull probe, this field is valid when @type contains
+    ///    #GST_PAD_PROBE_TYPE_PULL
+    /// </summary>
+    public uint Size
+    {
+        get
+        {
+            uint value = ((PadProbeInfoRaw*)Handle)->Size;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
     /// <summary>Wraps a native <c>GstPadProbeInfo</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
     /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>
@@ -284,4 +334,34 @@ public sealed unsafe partial class PadProbeInfo
     /// <summary>The <c>gst_pad_probe_info_set_flow_return</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_pad_probe_info_set_flow_return")]
     private static partial void GstPadProbeInfoSetFlowReturn(nint info, int flowRet);
+}
+
+/// <summary>The native layout of <c>GstPadProbeInfo</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// <para>
+/// Prefix mirror of the C struct: field offsets are exact, <c>sizeof</c> is NOT
+/// the C size; never allocate from it.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct PadProbeInfoRaw
+{
+    /// <summary>The <c>type</c> field.</summary>
+    internal Gst.PadProbeType Type;
+
+    /// <summary>The <c>id</c> field.</summary>
+    internal System.Runtime.InteropServices.CULong Id;
+
+    /// <summary>The <c>data</c> field.</summary>
+    internal nint Data;
+
+    /// <summary>The <c>offset</c> field.</summary>
+    internal ulong Offset;
+
+    /// <summary>The <c>size</c> field.</summary>
+    internal uint Size;
 }

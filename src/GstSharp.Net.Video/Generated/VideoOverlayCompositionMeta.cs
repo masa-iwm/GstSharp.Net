@@ -42,3 +42,20 @@ public sealed unsafe partial class VideoOverlayCompositionMeta
     [LibraryImport("GstVideo", EntryPoint = "gst_video_overlay_composition_meta_get_info")]
     private static partial nint GstVideoOverlayCompositionMetaGetInfo();
 }
+
+/// <summary>The native layout of <c>GstVideoOverlayCompositionMeta</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct VideoOverlayCompositionMetaRaw
+{
+    /// <summary>The <c>meta</c> field.</summary>
+    internal Gst.MetaRaw Meta;
+
+    /// <summary>The <c>overlay</c> field.</summary>
+    internal nint Overlay;
+}

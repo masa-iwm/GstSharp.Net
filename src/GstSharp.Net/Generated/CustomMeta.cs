@@ -78,3 +78,20 @@ public sealed unsafe partial class CustomMeta
     [LibraryImport("Gst", EntryPoint = "gst_custom_meta_has_name")]
     private static partial int GstCustomMetaHasName(nint meta, byte* name);
 }
+
+/// <summary>The native layout of <c>GstCustomMeta</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct CustomMetaRaw
+{
+    /// <summary>The <c>meta</c> field.</summary>
+    internal Gst.MetaRaw Meta;
+
+    /// <summary>The <c>structure</c> field.</summary>
+    internal nint Structure;
+}

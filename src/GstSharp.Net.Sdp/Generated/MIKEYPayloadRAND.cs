@@ -3,10 +3,12 @@
 
 #nullable enable
 
+using System.Runtime.InteropServices;
+
 namespace Gst.Sdp;
 
 /// <summary>The RAND payload consists of a (pseudo-)random bit-string</summary>
-public sealed partial class MIKEYPayloadRAND
+public sealed unsafe partial class MIKEYPayloadRAND
 {
     /// <summary>The native instance.</summary>
     internal nint Handle;
@@ -14,6 +16,17 @@ public sealed partial class MIKEYPayloadRAND
     /// <summary>Wraps a native <c>GstMIKEYPayloadRAND</c>.</summary>
     /// <param name="handle">The native instance.</param>
     internal MIKEYPayloadRAND(nint handle) => Handle = handle;
+
+    /// <summary>the length of @rand</summary>
+    public byte Len
+    {
+        get
+        {
+            byte value = ((MIKEYPayloadRANDRaw*)Handle)->Len;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
 
     /// <summary>Wraps a native <c>GstMIKEYPayloadRAND</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
@@ -25,4 +38,24 @@ public sealed partial class MIKEYPayloadRAND
     /// </remarks>
     internal static MIKEYPayloadRAND? FromNative(nint handle) =>
         handle == 0 ? null : new(handle);
+}
+
+/// <summary>The native layout of <c>GstMIKEYPayloadRAND</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct MIKEYPayloadRANDRaw
+{
+    /// <summary>The <c>pt</c> field.</summary>
+    internal Gst.Sdp.MIKEYPayloadRaw Pt;
+
+    /// <summary>The <c>len</c> field.</summary>
+    internal byte Len;
+
+    /// <summary>The <c>rand</c> field.</summary>
+    internal nint Rand;
 }

@@ -4,6 +4,7 @@
 #nullable enable
 
 using System;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace Gst.WebRTC;
@@ -20,6 +21,34 @@ public sealed unsafe partial class WebRTCICECandidate : Gst.GObject.Boxed
     internal WebRTCICECandidate(nint handle, Gst.Interop.Transfer transfer)
         : base(handle, new Gst.GObject.GType(GetGType()), transfer)
     {
+    }
+
+    /// <summary>
+    /// The assigned network component of the candidate (1 for RTP
+    ///   2 for RTCP).
+    /// </summary>
+    public int Component
+    {
+        get
+        {
+            int value = ((WebRTCICECandidateRaw*)Handle)->Component;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>
+    /// The index (starting at zero) of the media description in
+    ///   the SDP this candidate is associated with.
+    /// </summary>
+    public int SdpMlineIndex
+    {
+        get
+        {
+            int value = ((WebRTCICECandidateRaw*)Handle)->SdpMlineIndex;
+            System.GC.KeepAlive(this);
+            return value;
+        }
     }
 
     /// <summary>Wraps a native <c>GstWebRTCICECandidate</c>, mapping the null pointer onto <see langword="null"/>.</summary>
@@ -56,4 +85,40 @@ public sealed unsafe partial class WebRTCICECandidate : Gst.GObject.Boxed
     /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
     /// <returns>The new wrapper.</returns>
     internal static object CreateWrapper(nint handle, Gst.Interop.Transfer transfer) => new WebRTCICECandidate(handle, transfer);
+}
+
+/// <summary>The native layout of <c>GstWebRTCICECandidate</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct WebRTCICECandidateRaw
+{
+    /// <summary>The <c>candidate</c> field.</summary>
+    internal nint Candidate;
+
+    /// <summary>The <c>component</c> field.</summary>
+    internal int Component;
+
+    /// <summary>The <c>sdp_mid</c> field.</summary>
+    internal nint SdpMid;
+
+    /// <summary>The <c>sdp_mline_index</c> field.</summary>
+    internal int SdpMlineIndex;
+
+    /// <summary>The <c>stats</c> field.</summary>
+    internal nint Stats;
+
+    /// <summary>The <c>_gst_reserved</c> field.</summary>
+    internal GstReservedArray GstReserved;
+
+    /// <summary>Inline storage of the 20 elements of the <c>_gst_reserved</c> field.</summary>
+    [InlineArray(20)]
+    internal struct GstReservedArray
+    {
+        private nint _element0;
+    }
 }

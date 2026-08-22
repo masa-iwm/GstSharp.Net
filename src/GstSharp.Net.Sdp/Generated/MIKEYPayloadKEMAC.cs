@@ -3,10 +3,12 @@
 
 #nullable enable
 
+using System.Runtime.InteropServices;
+
 namespace Gst.Sdp;
 
 /// <summary>A structure holding the KEMAC payload</summary>
-public sealed partial class MIKEYPayloadKEMAC
+public sealed unsafe partial class MIKEYPayloadKEMAC
 {
     /// <summary>The native instance.</summary>
     internal nint Handle;
@@ -14,6 +16,28 @@ public sealed partial class MIKEYPayloadKEMAC
     /// <summary>Wraps a native <c>GstMIKEYPayloadKEMAC</c>.</summary>
     /// <param name="handle">The native instance.</param>
     internal MIKEYPayloadKEMAC(nint handle) => Handle = handle;
+
+    /// <summary>the #GstMIKEYEncAlg</summary>
+    public Gst.Sdp.MIKEYEncAlg EncAlg
+    {
+        get
+        {
+            Gst.Sdp.MIKEYEncAlg value = ((MIKEYPayloadKEMACRaw*)Handle)->EncAlg;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>the #GstMIKEYMacAlg</summary>
+    public Gst.Sdp.MIKEYMacAlg MacAlg
+    {
+        get
+        {
+            Gst.Sdp.MIKEYMacAlg value = ((MIKEYPayloadKEMACRaw*)Handle)->MacAlg;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
 
     /// <summary>Wraps a native <c>GstMIKEYPayloadKEMAC</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
@@ -25,4 +49,27 @@ public sealed partial class MIKEYPayloadKEMAC
     /// </remarks>
     internal static MIKEYPayloadKEMAC? FromNative(nint handle) =>
         handle == 0 ? null : new(handle);
+}
+
+/// <summary>The native layout of <c>GstMIKEYPayloadKEMAC</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct MIKEYPayloadKEMACRaw
+{
+    /// <summary>The <c>pt</c> field.</summary>
+    internal Gst.Sdp.MIKEYPayloadRaw Pt;
+
+    /// <summary>The <c>enc_alg</c> field.</summary>
+    internal Gst.Sdp.MIKEYEncAlg EncAlg;
+
+    /// <summary>The <c>mac_alg</c> field.</summary>
+    internal Gst.Sdp.MIKEYMacAlg MacAlg;
+
+    /// <summary>The <c>subpayloads</c> field.</summary>
+    internal nint Subpayloads;
 }

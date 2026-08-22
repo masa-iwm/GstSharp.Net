@@ -18,6 +18,28 @@ public sealed unsafe partial class VideoCaptionMeta
     /// <param name="handle">The native instance.</param>
     internal VideoCaptionMeta(nint handle) => Handle = handle;
 
+    /// <summary>The type of Closed Caption contained in the meta.</summary>
+    public Gst.Video.VideoCaptionType CaptionType
+    {
+        get
+        {
+            Gst.Video.VideoCaptionType value = ((VideoCaptionMetaRaw*)Handle)->CaptionType;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>The size in bytes of @data</summary>
+    public nuint Size
+    {
+        get
+        {
+            nuint value = ((VideoCaptionMetaRaw*)Handle)->Size;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
     /// <summary>Wraps a native <c>GstVideoCaptionMeta</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
     /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>
@@ -41,4 +63,27 @@ public sealed unsafe partial class VideoCaptionMeta
     /// <summary>The <c>gst_video_caption_meta_get_info</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_caption_meta_get_info")]
     private static partial nint GstVideoCaptionMetaGetInfo();
+}
+
+/// <summary>The native layout of <c>GstVideoCaptionMeta</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct VideoCaptionMetaRaw
+{
+    /// <summary>The <c>meta</c> field.</summary>
+    internal Gst.MetaRaw Meta;
+
+    /// <summary>The <c>caption_type</c> field.</summary>
+    internal Gst.Video.VideoCaptionType CaptionType;
+
+    /// <summary>The <c>data</c> field.</summary>
+    internal nint Data;
+
+    /// <summary>The <c>size</c> field.</summary>
+    internal nuint Size;
 }

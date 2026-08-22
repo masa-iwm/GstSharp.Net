@@ -1,4 +1,4 @@
-using GstSharp.Generator.Emit;
+﻿using GstSharp.Generator.Emit;
 using GstSharp.Generator.GirParsing;
 using GstSharp.Generator.Planning;
 using GstSharp.Generator.GirParsing.Model;
@@ -95,6 +95,151 @@ public sealed class RecordEmitterTests
               <doc xml:space="preserve">A segment of a stream.</doc>
               <field name="rate" writable="1">
                 <type name="gdouble" c:type="gdouble"/>
+              </field>
+            </record>
+        """;
+
+    /// <summary>
+    /// An opaque record that declares fields: the header of the metadata family
+    /// is the shape, a flags word and a pointer to a description of the item.
+    /// </summary>
+    private const string OpaqueFieldsFixture =
+        """
+            <bitfield name="MetaFlags" c:type="GstMetaFlags">
+              <member name="none" value="0" c:identifier="GST_META_FLAG_NONE"/>
+            </bitfield>
+            <record name="Meta" c:type="GstMeta" opaque="1">
+              <doc xml:space="preserve">Extra data attached to a buffer.</doc>
+              <field name="flags" writable="1">
+                <doc xml:space="preserve">extra flags for the metadata</doc>
+                <type name="MetaFlags" c:type="GstMetaFlags"/>
+              </field>
+              <field name="info" writable="1">
+                <type name="MetaInfo" c:type="const GstMetaInfo*"/>
+              </field>
+            </record>
+        """;
+
+    /// <summary>
+    /// A record whose gir declares a union, and one that embeds it by value.
+    /// The union stops the layout of the first, which leaves it a prefix, and a
+    /// prefix cannot be embedded, so the second is not laid out at all.
+    /// </summary>
+    private const string UnionFixture =
+        """
+            <record name="VideoInfo" c:type="GstVideoInfo" opaque="1">
+              <field name="width" writable="1">
+                <type name="gint" c:type="gint"/>
+              </field>
+              <union name="ABI" c:type="ABI">
+                <field name="flags" writable="1">
+                  <type name="gint" c:type="gint"/>
+                </field>
+              </union>
+              <field name="views" writable="1">
+                <type name="gint" c:type="gint"/>
+              </field>
+            </record>
+            <record name="VideoFrame" c:type="GstVideoFrame" opaque="1">
+              <field name="info" writable="1">
+                <type name="VideoInfo" c:type="GstVideoInfo"/>
+              </field>
+              <field name="id" writable="1">
+                <type name="gint" c:type="gint"/>
+              </field>
+            </record>
+        """;
+
+    /// <summary>
+    /// A record that embeds an opaque record whose own layout is complete, which
+    /// is the shape of every <c>*Meta</c> of the girs.
+    /// </summary>
+    private const string EmbeddedRecordFixture =
+        """
+            <bitfield name="MetaFlags" c:type="GstMetaFlags">
+              <member name="none" value="0" c:identifier="GST_META_FLAG_NONE"/>
+            </bitfield>
+            <record name="Meta" c:type="GstMeta" opaque="1">
+              <field name="flags" writable="1">
+                <type name="MetaFlags" c:type="GstMetaFlags"/>
+              </field>
+              <field name="info" writable="1">
+                <type name="MetaInfo" c:type="const GstMetaInfo*"/>
+              </field>
+            </record>
+            <record name="VideoCropMeta" c:type="GstVideoCropMeta" opaque="1">
+              <field name="meta" writable="1">
+                <type name="Meta" c:type="GstMeta"/>
+              </field>
+              <field name="x" writable="1">
+                <type name="guint" c:type="guint"/>
+              </field>
+              <field name="height" writable="1" version="1.26">
+                <type name="guint" c:type="guint"/>
+              </field>
+            </record>
+        """;
+
+    /// <summary>
+    /// Fields that take up space in the mirror but carry no value to read: a
+    /// vtable slot, a pointer and a fixed size array.
+    /// </summary>
+    private const string UnreadableFieldsFixture =
+        """
+            <record name="Iterator" c:type="GstIterator" opaque="1">
+              <field name="copy" writable="1">
+                <callback name="copy" c:type="GstIteratorCopyFunction">
+                  <return-value transfer-ownership="none">
+                    <type name="none" c:type="void"/>
+                  </return-value>
+                </callback>
+              </field>
+              <field name="cookie" writable="1">
+                <type name="guint" c:type="guint"/>
+              </field>
+              <field name="master_cookie" writable="1">
+                <type name="guint" c:type="guint*"/>
+              </field>
+              <field name="samples" writable="1">
+                <array zero-terminated="0" fixed-size="2">
+                  <type name="guint" c:type="guint"/>
+                </array>
+              </field>
+              <field name="size" writable="1">
+                <type name="guint" c:type="guint"/>
+              </field>
+            </record>
+        """;
+
+    /// <summary>A method that would carry the name of a field accessor.</summary>
+    private const string AccessorCollisionFixture =
+        """
+            <record name="RTSPUrl" c:type="GstRTSPUrl" opaque="1">
+              <field name="port" writable="1">
+                <type name="guint16" c:type="guint16"/>
+              </field>
+              <method name="port" c:identifier="gst_rtsp_url_port">
+                <return-value transfer-ownership="none">
+                  <type name="gint" c:type="gint"/>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="url" transfer-ownership="none">
+                    <type name="RTSPUrl" c:type="GstRTSPUrl*"/>
+                  </instance-parameter>
+                </parameters>
+              </method>
+            </record>
+        """;
+
+    /// <summary>A field whose accessor would carry a name of the runtime.</summary>
+    private const string ReservedAccessorNameFixture =
+        """
+            <record name="RTSPUrl" c:type="GstRTSPUrl" opaque="1">
+              <field name="handle" writable="1">
+                <type name="guint" c:type="guint"/>
+              </field>
+              <field name="port" writable="1">
+                <type name="guint16" c:type="guint16"/>
               </field>
             </record>
         """;
@@ -278,7 +423,7 @@ public sealed class RecordEmitterTests
                 namespace Gst;
 
                 /// <summary>A segment of a stream.</summary>
-                public sealed partial class Segment : Gst.GObject.Boxed
+                public sealed unsafe partial class Segment : Gst.GObject.Boxed
                 {
                     /// <summary>Wraps a native <c>GstSegment</c>.</summary>
                     /// <param name="handle">The native instance.</param>
@@ -286,6 +431,17 @@ public sealed class RecordEmitterTests
                     internal Segment(nint handle, Gst.Interop.Transfer transfer)
                         : base(handle, new Gst.GObject.GType(GetGType()), transfer)
                     {
+                    }
+
+                    /// <summary>The <c>rate</c> field of <c>GstSegment</c>.</summary>
+                    public double Rate
+                    {
+                        get
+                        {
+                            double value = ((SegmentRaw*)Handle)->Rate;
+                            System.GC.KeepAlive(this);
+                            return value;
+                        }
                     }
 
                     /// <summary>Wraps a native <c>GstSegment</c>, mapping the null pointer onto <see langword="null"/>.</summary>
@@ -305,6 +461,20 @@ public sealed class RecordEmitterTests
                     /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
                     /// <returns>The new wrapper.</returns>
                     internal static object CreateWrapper(nint handle, Gst.Interop.Transfer transfer) => new Segment(handle, transfer);
+                }
+
+                /// <summary>The native layout of <c>GstSegment</c>.</summary>
+                /// <remarks>
+                /// <para>
+                /// The mirror is only ever read through a pointer into memory that GStreamer
+                /// owns; it is never allocated, assigned or copied.
+                /// </para>
+                /// </remarks>
+                [StructLayout(LayoutKind.Sequential)]
+                internal unsafe struct SegmentRaw
+                {
+                    /// <summary>The <c>rate</c> field.</summary>
+                    internal double Rate;
                 }
                 """),
             source,
@@ -350,6 +520,207 @@ public sealed class RecordEmitterTests
                 """),
             source,
             StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public void OpaqueRecordWithFieldsMatchesTheSnapshot()
+    {
+        string source = EmitFixture(OpaqueFieldsFixture, "Meta");
+
+        Assert.Equal(
+            Snapshot(
+                """
+                // <auto-generated/>
+                // Generated by GstSharp.Generator from Gst-1.0.gir. Do not edit.
+
+                #nullable enable
+
+                using System.Runtime.InteropServices;
+
+                namespace Gst;
+
+                /// <summary>Extra data attached to a buffer.</summary>
+                public sealed unsafe partial class Meta
+                {
+                    /// <summary>The native instance.</summary>
+                    internal nint Handle;
+
+                    /// <summary>Wraps a native <c>GstMeta</c>.</summary>
+                    /// <param name="handle">The native instance.</param>
+                    internal Meta(nint handle) => Handle = handle;
+
+                    /// <summary>extra flags for the metadata</summary>
+                    public Gst.MetaFlags Flags
+                    {
+                        get
+                        {
+                            Gst.MetaFlags value = ((MetaRaw*)Handle)->Flags;
+                            System.GC.KeepAlive(this);
+                            return value;
+                        }
+                    }
+
+                    /// <summary>Wraps a native <c>GstMeta</c>, mapping the null pointer onto <see langword="null"/>.</summary>
+                    /// <param name="handle">The native instance, or <c>0</c>.</param>
+                    /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>
+                    /// <remarks>
+                    /// The wrapper of an opaque record is a bare pointer holder: the gir
+                    /// describes no way of releasing one, so it does not take part in the
+                    /// ownership of what it points at.
+                    /// </remarks>
+                    internal static Meta? FromNative(nint handle) =>
+                        handle == 0 ? null : new(handle);
+                }
+
+                /// <summary>The native layout of <c>GstMeta</c>.</summary>
+                /// <remarks>
+                /// <para>
+                /// The mirror is only ever read through a pointer into memory that GStreamer
+                /// owns; it is never allocated, assigned or copied.
+                /// </para>
+                /// </remarks>
+                [StructLayout(LayoutKind.Sequential)]
+                internal unsafe struct MetaRaw
+                {
+                    /// <summary>The <c>flags</c> field.</summary>
+                    internal Gst.MetaFlags Flags;
+
+                    /// <summary>The <c>info</c> field.</summary>
+                    internal nint Info;
+                }
+                """),
+            source,
+            StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public void AUnionStopsTheLayoutWhereItSits()
+    {
+        // The gir keeps a union out of the field list of the record it is
+        // declared in, so every field behind it would land at the wrong offset.
+        // The mirror is the prefix in front of the union, and it says so.
+        string source = EmitFixture(UnionFixture, "VideoInfo");
+
+        Assert.Equal(["internal int Width;"], MirrorFields(source, "VideoInfoRaw"));
+        Assert.Contains(
+            "/// Prefix mirror of the C struct: field offsets are exact, <c>sizeof</c> is NOT\n"
+            + "/// the C size; never allocate from it.\n",
+            source,
+            StringComparison.Ordinal);
+        Assert.Contains("public int Width\n", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("Views", source, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ARecordThatEmbedsATruncatedOneIsNotLaidOut()
+    {
+        // A prefix is shorter than the C structure, so everything behind it in
+        // the embedding record would sit at the wrong offset. Nothing is laid
+        // out rather than laid out wrongly.
+        string source = EmitFixture(UnionFixture, "VideoFrame");
+
+        Assert.DoesNotContain("VideoFrameRaw", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("public int Id", source, StringComparison.Ordinal);
+        Assert.Contains("public sealed partial class VideoFrame\n", source, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ARecordThatEmbedsACompleteOneKeepsTheFieldsBehindIt()
+    {
+        // The header of the metadata family: a complete opaque record embedded
+        // by value, which the mirror spells as the mirror of that record, so
+        // the fields behind it keep their offsets and get their accessors.
+        string source = EmitFixture(EmbeddedRecordFixture, "VideoCropMeta");
+
+        Assert.Equal(
+            [
+                "internal Gst.MetaRaw Meta;",
+                "internal uint X;",
+                "internal uint Height;",
+            ],
+            MirrorFields(source, "VideoCropMetaRaw"));
+        Assert.Contains("uint value = ((VideoCropMetaRaw*)Handle)->X;", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("public Gst.Meta Meta", source, StringComparison.Ordinal);
+
+        // The mirror is complete, so it carries no prefix warning.
+        Assert.DoesNotContain("Prefix mirror of the C struct", source, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AFieldThatArrivedLateSaysWhichGStreamerItNeeds()
+    {
+        string source = EmitFixture(EmbeddedRecordFixture, "VideoCropMeta");
+
+        Assert.Contains(
+            """
+                /// <summary>The <c>height</c> field of <c>GstVideoCropMeta</c>.</summary>
+                /// <remarks>
+                /// <para>Available since GStreamer 1.26.</para>
+                /// </remarks>
+                public uint Height
+            """,
+            source,
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AFieldThatCarriesNoValueIsMirroredWithoutAnAccessor()
+    {
+        // A vtable slot, a pointer and a fixed size array all take up space in
+        // the mirror, and none of them is a value the wrapper can hand out.
+        string source = EmitFixture(UnreadableFieldsFixture, "Iterator");
+
+        Assert.Equal(
+            [
+                "internal nint Copy;",
+                "internal uint Cookie;",
+                "internal nint MasterCookie;",
+                "internal SamplesArray Samples;",
+                "internal uint Size;",
+            ],
+            MirrorFields(source, "IteratorRaw"));
+
+        Assert.Contains("public uint Cookie\n", source, StringComparison.Ordinal);
+        Assert.Contains("public uint Size\n", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("public nint Copy", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("public nint MasterCookie", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("public SamplesArray", source, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AMethodNamedAfterAFieldIsTheOneThatCollides()
+    {
+        // The accessors claim their names before the callables are planned, so
+        // the field keeps the name it is the only binding of, and the method,
+        // which a rename in fixups.json can move, is what is reported.
+        FixtureEmission emission = EmitFixtureWithDiagnostics(AccessorCollisionFixture, "RTSPUrl");
+
+        Assert.Contains("public ushort Port\n", emission.Source, StringComparison.Ordinal);
+        Assert.DoesNotContain("public ushort Port()", emission.Source, StringComparison.Ordinal);
+        Assert.Equal(1, emission.Census.SkippedCount("Gst", SkipReason.NameCollision));
+
+        Diagnostic collision = Assert.Single(emission.Diagnostics);
+        Assert.Equal("GEN0009", collision.Code);
+        Assert.Contains("gst_rtsp_url_port", collision.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AFieldNamedAfterARuntimeMemberLosesItsAccessor()
+    {
+        // Every wrapper carries Handle, so the field cannot have it. The
+        // accessor is the side that gives way here, because the runtime member
+        // is not something fixups.json can move; a rename of the field is.
+        FixtureEmission emission = EmitFixtureWithDiagnostics(ReservedAccessorNameFixture, "RTSPUrl");
+
+        Assert.DoesNotContain("public uint Handle", emission.Source, StringComparison.Ordinal);
+        Assert.Contains("internal uint Handle;", emission.Source, StringComparison.Ordinal);
+        Assert.Contains("public ushort Port\n", emission.Source, StringComparison.Ordinal);
+        Assert.Equal(1, emission.Census.SkippedCount("Gst", SkipReason.NameCollision));
+
+        Diagnostic collision = Assert.Single(emission.Diagnostics);
+        Assert.Equal("GEN0018", collision.Code);
+        Assert.Contains("'handle' field of 'Gst.RTSPUrl'", collision.Message, StringComparison.Ordinal);
+        Assert.Contains("RTSPUrl.Handle", collision.Message, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -682,7 +1053,11 @@ public sealed class RecordEmitterTests
         // fixups.json, so the module carries eight plain structs fewer than the
         // gir would give.
         Assert.Equal(6, Count(files, "\npublic partial struct "));
-        Assert.Equal(9, Count(files, "\ninternal unsafe struct "));
+
+        // Nine mini object mirrors and twenty of a boxed or an opaque record:
+        // every wrapper of the module whose gir declares a field the layout
+        // can project reads it through one.
+        Assert.Equal(29, Count(files, "\ninternal unsafe struct "));
 
         foreach (Diagnostic diagnostic in Generated.Diagnostics)
         {
@@ -994,7 +1369,26 @@ public sealed class RecordEmitterTests
         return [.. fields];
     }
 
+    /// <summary>What one fixture run produced.</summary>
+    /// <param name="Source">The generated source text.</param>
+    /// <param name="Diagnostics">What the run reported.</param>
+    /// <param name="Census">What the run emitted and left out.</param>
+    private sealed record FixtureEmission(
+        string Source,
+        IReadOnlyList<Diagnostic> Diagnostics,
+        EmissionCensus Census);
+
     private static string EmitFixture(string body, string recordName, string? extraNamespace = null)
+    {
+        FixtureEmission emission = EmitFixtureWithDiagnostics(body, recordName, extraNamespace);
+        Assert.Empty(emission.Diagnostics);
+        return emission.Source;
+    }
+
+    private static FixtureEmission EmitFixtureWithDiagnostics(
+        string body,
+        string recordName,
+        string? extraNamespace = null)
     {
         GirRepository file = GirReader.ReadXml(
             $"""
@@ -1035,7 +1429,6 @@ public sealed class RecordEmitterTests
         GeneratedFile generated = emitter.Emit(GstModule, ns, record)
             ?? throw new InvalidOperationException("The record produced no output.");
 
-        Assert.Empty(diagnostics.Items);
-        return generated.Content;
+        return new FixtureEmission(generated.Content, diagnostics.Items, census);
     }
 }

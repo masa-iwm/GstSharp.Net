@@ -3,6 +3,8 @@
 
 #nullable enable
 
+using System.Runtime.InteropServices;
+
 namespace Gst.Sdp;
 
 /// <summary>
@@ -11,7 +13,7 @@ namespace Gst.Sdp;
 /// transport payload.  The encryption algorithm used is implicit from
 /// the certificate/public key used.
 /// </summary>
-public sealed partial class MIKEYPayloadPKE
+public sealed unsafe partial class MIKEYPayloadPKE
 {
     /// <summary>The native instance.</summary>
     internal nint Handle;
@@ -19,6 +21,28 @@ public sealed partial class MIKEYPayloadPKE
     /// <summary>Wraps a native <c>GstMIKEYPayloadPKE</c>.</summary>
     /// <param name="handle">The native instance.</param>
     internal MIKEYPayloadPKE(nint handle) => Handle = handle;
+
+    /// <summary>envelope key cache indicator</summary>
+    public Gst.Sdp.MIKEYCacheType C
+    {
+        get
+        {
+            Gst.Sdp.MIKEYCacheType value = ((MIKEYPayloadPKERaw*)Handle)->C;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>length of @data</summary>
+    public ushort DataLen
+    {
+        get
+        {
+            ushort value = ((MIKEYPayloadPKERaw*)Handle)->DataLen;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
 
     /// <summary>Wraps a native <c>GstMIKEYPayloadPKE</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
@@ -30,4 +54,27 @@ public sealed partial class MIKEYPayloadPKE
     /// </remarks>
     internal static MIKEYPayloadPKE? FromNative(nint handle) =>
         handle == 0 ? null : new(handle);
+}
+
+/// <summary>The native layout of <c>GstMIKEYPayloadPKE</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct MIKEYPayloadPKERaw
+{
+    /// <summary>The <c>pt</c> field.</summary>
+    internal Gst.Sdp.MIKEYPayloadRaw Pt;
+
+    /// <summary>The <c>C</c> field.</summary>
+    internal Gst.Sdp.MIKEYCacheType C;
+
+    /// <summary>The <c>data_len</c> field.</summary>
+    internal ushort DataLen;
+
+    /// <summary>The <c>data</c> field.</summary>
+    internal nint Data;
 }

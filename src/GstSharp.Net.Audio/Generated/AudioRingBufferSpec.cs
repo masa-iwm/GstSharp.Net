@@ -3,6 +3,8 @@
 
 #nullable enable
 
+using System.Runtime.InteropServices;
+
 namespace Gst.Audio;
 
 /// <summary>The structure containing the format specification of the ringbuffer.</summary>
@@ -13,7 +15,7 @@ namespace Gst.Audio;
 /// only the rate, channels, position, and bpf fields in @info are populated.
 /// </para>
 /// </remarks>
-public sealed partial class AudioRingBufferSpec
+public sealed unsafe partial class AudioRingBufferSpec
 {
     /// <summary>The native instance.</summary>
     internal nint Handle;
@@ -21,6 +23,75 @@ public sealed partial class AudioRingBufferSpec
     /// <summary>Wraps a native <c>GstAudioRingBufferSpec</c>.</summary>
     /// <param name="handle">The native instance.</param>
     internal AudioRingBufferSpec(nint handle) => Handle = handle;
+
+    /// <summary>the sample type</summary>
+    public Gst.Audio.AudioRingBufferFormatType Type
+    {
+        get
+        {
+            Gst.Audio.AudioRingBufferFormatType value = ((AudioRingBufferSpecRaw*)Handle)->Type;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>the latency in microseconds</summary>
+    public ulong LatencyTime
+    {
+        get
+        {
+            ulong value = ((AudioRingBufferSpecRaw*)Handle)->LatencyTime;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>the total buffer size in microseconds</summary>
+    public ulong BufferTime
+    {
+        get
+        {
+            ulong value = ((AudioRingBufferSpecRaw*)Handle)->BufferTime;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>the size of one segment in bytes</summary>
+    public int Segsize
+    {
+        get
+        {
+            int value = ((AudioRingBufferSpecRaw*)Handle)->Segsize;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>the total number of segments</summary>
+    public int Segtotal
+    {
+        get
+        {
+            int value = ((AudioRingBufferSpecRaw*)Handle)->Segtotal;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>
+    /// number of segments queued in the lower level device,
+    ///  defaults to segtotal
+    /// </summary>
+    public int Seglatency
+    {
+        get
+        {
+            int value = ((AudioRingBufferSpecRaw*)Handle)->Seglatency;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
 
     /// <summary>Wraps a native <c>GstAudioRingBufferSpec</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
@@ -32,4 +103,43 @@ public sealed partial class AudioRingBufferSpec
     /// </remarks>
     internal static AudioRingBufferSpec? FromNative(nint handle) =>
         handle == 0 ? null : new(handle);
+}
+
+/// <summary>The native layout of <c>GstAudioRingBufferSpec</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// <para>
+/// Prefix mirror of the C struct: field offsets are exact, <c>sizeof</c> is NOT
+/// the C size; never allocate from it.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct AudioRingBufferSpecRaw
+{
+    /// <summary>The <c>caps</c> field.</summary>
+    internal nint Caps;
+
+    /// <summary>The <c>type</c> field.</summary>
+    internal Gst.Audio.AudioRingBufferFormatType Type;
+
+    /// <summary>The <c>info</c> field.</summary>
+    internal Gst.Audio.AudioInfoRaw Info;
+
+    /// <summary>The <c>latency_time</c> field.</summary>
+    internal ulong LatencyTime;
+
+    /// <summary>The <c>buffer_time</c> field.</summary>
+    internal ulong BufferTime;
+
+    /// <summary>The <c>segsize</c> field.</summary>
+    internal int Segsize;
+
+    /// <summary>The <c>segtotal</c> field.</summary>
+    internal int Segtotal;
+
+    /// <summary>The <c>seglatency</c> field.</summary>
+    internal int Seglatency;
 }

@@ -48,3 +48,20 @@ public sealed unsafe partial class NetControlMessageMeta
     [LibraryImport("GstNet", EntryPoint = "gst_net_control_message_meta_get_info")]
     private static partial nint GstNetControlMessageMetaGetInfo();
 }
+
+/// <summary>The native layout of <c>GstNetControlMessageMeta</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct NetControlMessageMetaRaw
+{
+    /// <summary>The <c>meta</c> field.</summary>
+    internal Gst.MetaRaw Meta;
+
+    /// <summary>The <c>message</c> field.</summary>
+    internal nint Message;
+}

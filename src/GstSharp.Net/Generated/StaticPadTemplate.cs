@@ -18,6 +18,28 @@ public sealed unsafe partial class StaticPadTemplate
     /// <param name="handle">The native instance.</param>
     internal StaticPadTemplate(nint handle) => Handle = handle;
 
+    /// <summary>the direction of the template</summary>
+    public Gst.PadDirection Direction
+    {
+        get
+        {
+            Gst.PadDirection value = ((StaticPadTemplateRaw*)Handle)->Direction;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>the presence of the template</summary>
+    public Gst.PadPresence Presence
+    {
+        get
+        {
+            Gst.PadPresence value = ((StaticPadTemplateRaw*)Handle)->Presence;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
     /// <summary>Wraps a native <c>GstStaticPadTemplate</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
     /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>
@@ -60,4 +82,27 @@ public sealed unsafe partial class StaticPadTemplate
     /// <summary>The <c>gst_static_pad_template_get_caps</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_static_pad_template_get_caps")]
     private static partial nint GstStaticPadTemplateGetCaps(nint templ);
+}
+
+/// <summary>The native layout of <c>GstStaticPadTemplate</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct StaticPadTemplateRaw
+{
+    /// <summary>The <c>name_template</c> field.</summary>
+    internal nint NameTemplate;
+
+    /// <summary>The <c>direction</c> field.</summary>
+    internal Gst.PadDirection Direction;
+
+    /// <summary>The <c>presence</c> field.</summary>
+    internal Gst.PadPresence Presence;
+
+    /// <summary>The <c>static_caps</c> field.</summary>
+    internal Gst.StaticCapsRaw StaticCaps;
 }

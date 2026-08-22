@@ -4,6 +4,7 @@
 #nullable enable
 
 using System;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace Gst.Rtsp;
@@ -17,6 +18,105 @@ public sealed unsafe partial class RTSPTransport
     /// <summary>Wraps a native <c>GstRTSPTransport</c>.</summary>
     /// <param name="handle">The native instance.</param>
     internal RTSPTransport(nint handle) => Handle = handle;
+
+    /// <summary>the transport mode</summary>
+    public Gst.Rtsp.RTSPTransMode Trans
+    {
+        get
+        {
+            Gst.Rtsp.RTSPTransMode value = ((RTSPTransportRaw*)Handle)->Trans;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>the tansport profile</summary>
+    public Gst.Rtsp.RTSPProfile Profile
+    {
+        get
+        {
+            Gst.Rtsp.RTSPProfile value = ((RTSPTransportRaw*)Handle)->Profile;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>the lower transport</summary>
+    public Gst.Rtsp.RTSPLowerTrans LowerTransport
+    {
+        get
+        {
+            Gst.Rtsp.RTSPLowerTrans value = ((RTSPTransportRaw*)Handle)->LowerTransport;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>the number of layers</summary>
+    public uint Layers
+    {
+        get
+        {
+            uint value = ((RTSPTransportRaw*)Handle)->Layers;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>if play mode was selected</summary>
+    public bool ModePlay
+    {
+        get
+        {
+            bool value = ((RTSPTransportRaw*)Handle)->ModePlay != 0;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>if record mode was selected</summary>
+    public bool ModeRecord
+    {
+        get
+        {
+            bool value = ((RTSPTransportRaw*)Handle)->ModeRecord != 0;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>is append mode was selected</summary>
+    public bool Append
+    {
+        get
+        {
+            bool value = ((RTSPTransportRaw*)Handle)->Append != 0;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>the time to live for multicast UDP</summary>
+    public uint Ttl
+    {
+        get
+        {
+            uint value = ((RTSPTransportRaw*)Handle)->Ttl;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>the ssrc that the sender/receiver will use</summary>
+    public uint Ssrc
+    {
+        get
+        {
+            uint value = ((RTSPTransportRaw*)Handle)->Ssrc;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
 
     /// <summary>Wraps a native <c>GstRTSPTransport</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
@@ -144,4 +244,73 @@ public sealed unsafe partial class RTSPTransport
     /// <summary>The <c>gst_rtsp_transport_new</c> entry point.</summary>
     [LibraryImport("GstRtsp", EntryPoint = "gst_rtsp_transport_new")]
     private static partial int GstRtspTransportNew(nint* transport);
+}
+
+/// <summary>The native layout of <c>GstRTSPTransport</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct RTSPTransportRaw
+{
+    /// <summary>The <c>trans</c> field.</summary>
+    internal Gst.Rtsp.RTSPTransMode Trans;
+
+    /// <summary>The <c>profile</c> field.</summary>
+    internal Gst.Rtsp.RTSPProfile Profile;
+
+    /// <summary>The <c>lower_transport</c> field.</summary>
+    internal Gst.Rtsp.RTSPLowerTrans LowerTransport;
+
+    /// <summary>The <c>destination</c> field.</summary>
+    internal nint Destination;
+
+    /// <summary>The <c>source</c> field.</summary>
+    internal nint Source;
+
+    /// <summary>The <c>layers</c> field.</summary>
+    internal uint Layers;
+
+    // <c>gboolean</c> is a 32 bit integer; every non zero value is true.
+    /// <summary>The <c>mode_play</c> field.</summary>
+    internal int ModePlay;
+
+    // <c>gboolean</c> is a 32 bit integer; every non zero value is true.
+    /// <summary>The <c>mode_record</c> field.</summary>
+    internal int ModeRecord;
+
+    // <c>gboolean</c> is a 32 bit integer; every non zero value is true.
+    /// <summary>The <c>append</c> field.</summary>
+    internal int Append;
+
+    /// <summary>The <c>interleaved</c> field.</summary>
+    internal Gst.Rtsp.RTSPRange Interleaved;
+
+    /// <summary>The <c>ttl</c> field.</summary>
+    internal uint Ttl;
+
+    /// <summary>The <c>port</c> field.</summary>
+    internal Gst.Rtsp.RTSPRange Port;
+
+    /// <summary>The <c>client_port</c> field.</summary>
+    internal Gst.Rtsp.RTSPRange ClientPort;
+
+    /// <summary>The <c>server_port</c> field.</summary>
+    internal Gst.Rtsp.RTSPRange ServerPort;
+
+    /// <summary>The <c>ssrc</c> field.</summary>
+    internal uint Ssrc;
+
+    /// <summary>The <c>_gst_reserved</c> field.</summary>
+    internal GstReservedArray GstReserved;
+
+    /// <summary>Inline storage of the 4 elements of the <c>_gst_reserved</c> field.</summary>
+    [InlineArray(4)]
+    internal struct GstReservedArray
+    {
+        private nint _element0;
+    }
 }

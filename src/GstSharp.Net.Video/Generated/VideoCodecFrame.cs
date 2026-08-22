@@ -22,6 +22,77 @@ public sealed unsafe partial class VideoCodecFrame : Gst.GObject.Boxed
     {
     }
 
+    /// <summary>
+    /// Unique identifier for the frame. Use this if you need
+    ///       to get hold of the frame later (like when data is being decoded).
+    ///       Typical usage in decoders is to set this on the opaque value provided
+    ///       to the library and get back the frame using gst_video_decoder_get_frame()
+    /// </summary>
+    public uint SystemFrameNumber
+    {
+        get
+        {
+            uint value = ((VideoCodecFrameRaw*)Handle)->SystemFrameNumber;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>Decoding timestamp</summary>
+    public Gst.ClockTime Dts
+    {
+        get
+        {
+            Gst.ClockTime value = new(((VideoCodecFrameRaw*)Handle)->Dts);
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>Presentation timestamp</summary>
+    public Gst.ClockTime Pts
+    {
+        get
+        {
+            Gst.ClockTime value = new(((VideoCodecFrameRaw*)Handle)->Pts);
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>Duration of the frame</summary>
+    public Gst.ClockTime Duration
+    {
+        get
+        {
+            Gst.ClockTime value = new(((VideoCodecFrameRaw*)Handle)->Duration);
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>Distance in frames from the last synchronization point.</summary>
+    public int DistanceFromSync
+    {
+        get
+        {
+            int value = ((VideoCodecFrameRaw*)Handle)->DistanceFromSync;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>Running time when the frame will be used.</summary>
+    public Gst.ClockTime Deadline
+    {
+        get
+        {
+            Gst.ClockTime value = new(((VideoCodecFrameRaw*)Handle)->Deadline);
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
     /// <summary>Wraps a native <c>GstVideoCodecFrame</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
     /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
@@ -55,4 +126,64 @@ public sealed unsafe partial class VideoCodecFrame : Gst.GObject.Boxed
     /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
     /// <returns>The new wrapper.</returns>
     internal static object CreateWrapper(nint handle, Gst.Interop.Transfer transfer) => new VideoCodecFrame(handle, transfer);
+}
+
+/// <summary>The native layout of <c>GstVideoCodecFrame</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// <para>
+/// Prefix mirror of the C struct: field offsets are exact, <c>sizeof</c> is NOT
+/// the C size; never allocate from it.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct VideoCodecFrameRaw
+{
+    /// <summary>The <c>ref_count</c> field.</summary>
+    internal int RefCount;
+
+    /// <summary>The <c>flags</c> field.</summary>
+    internal uint Flags;
+
+    /// <summary>The <c>system_frame_number</c> field.</summary>
+    internal uint SystemFrameNumber;
+
+    /// <summary>The <c>decode_frame_number</c> field.</summary>
+    internal uint DecodeFrameNumber;
+
+    /// <summary>The <c>presentation_frame_number</c> field.</summary>
+    internal uint PresentationFrameNumber;
+
+    /// <summary>The <c>dts</c> field.</summary>
+    internal ulong Dts;
+
+    /// <summary>The <c>pts</c> field.</summary>
+    internal ulong Pts;
+
+    /// <summary>The <c>duration</c> field.</summary>
+    internal ulong Duration;
+
+    /// <summary>The <c>distance_from_sync</c> field.</summary>
+    internal int DistanceFromSync;
+
+    /// <summary>The <c>input_buffer</c> field.</summary>
+    internal nint InputBuffer;
+
+    /// <summary>The <c>output_buffer</c> field.</summary>
+    internal nint OutputBuffer;
+
+    /// <summary>The <c>deadline</c> field.</summary>
+    internal ulong Deadline;
+
+    /// <summary>The <c>events</c> field.</summary>
+    internal nint Events;
+
+    /// <summary>The <c>user_data</c> field.</summary>
+    internal nint UserData;
+
+    /// <summary>The <c>user_data_destroy_notify</c> field.</summary>
+    internal nint UserDataDestroyNotify;
 }

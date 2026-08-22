@@ -42,6 +42,17 @@ public sealed unsafe partial class Meta
     /// <param name="handle">The native instance.</param>
     internal Meta(nint handle) => Handle = handle;
 
+    /// <summary>extra flags for the metadata</summary>
+    public Gst.MetaFlags Flags
+    {
+        get
+        {
+            Gst.MetaFlags value = ((MetaRaw*)Handle)->Flags;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
     /// <summary>Wraps a native <c>GstMeta</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
     /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>
@@ -245,4 +256,21 @@ public sealed unsafe partial class Meta
     /// <summary>The <c>gst_meta_register_custom_simple</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_meta_register_custom_simple")]
     private static partial nint GstMetaRegisterCustomSimple(byte* name);
+}
+
+/// <summary>The native layout of <c>GstMeta</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct MetaRaw
+{
+    /// <summary>The <c>flags</c> field.</summary>
+    internal Gst.MetaFlags Flags;
+
+    /// <summary>The <c>info</c> field.</summary>
+    internal nint Info;
 }

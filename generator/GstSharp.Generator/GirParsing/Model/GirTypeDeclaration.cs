@@ -100,4 +100,16 @@ internal sealed class GirUnion : GirTypeDeclaration
 {
     /// <summary>Gets the records declared inside the union.</summary>
     internal IReadOnlyList<GirRecord> Records { get; init; } = [];
+
+    /// <summary>
+    /// Gets the number of <c>&lt;field&gt;</c> siblings that precede the union
+    /// inside its declaration, which is where the union sits in the C layout.
+    /// </summary>
+    /// <remarks>
+    /// The gir keeps the fields and the unions of a structure in two lists, so
+    /// the position of a union is lost unless it is read off the document
+    /// order. It is the only thing that says which fields of the declaration
+    /// are still in front of the union and can therefore be laid out.
+    /// </remarks>
+    internal int FieldIndex { get; init; }
 }

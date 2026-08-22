@@ -4,6 +4,7 @@
 #nullable enable
 
 using System;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace Gst.Audio;
@@ -17,6 +18,72 @@ public sealed unsafe partial class AudioFormatInfo
     /// <summary>Wraps a native <c>GstAudioFormatInfo</c>.</summary>
     /// <param name="handle">The native instance.</param>
     internal AudioFormatInfo(nint handle) => Handle = handle;
+
+    /// <summary>#GstAudioFormat</summary>
+    public Gst.Audio.AudioFormat Format
+    {
+        get
+        {
+            Gst.Audio.AudioFormat value = ((AudioFormatInfoRaw*)Handle)->Format;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>#GstAudioFormatFlags</summary>
+    public Gst.Audio.AudioFormatFlags Flags
+    {
+        get
+        {
+            Gst.Audio.AudioFormatFlags value = ((AudioFormatInfoRaw*)Handle)->Flags;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>the endianness</summary>
+    public int Endianness
+    {
+        get
+        {
+            int value = ((AudioFormatInfoRaw*)Handle)->Endianness;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>amount of bits used for one sample</summary>
+    public int Width
+    {
+        get
+        {
+            int value = ((AudioFormatInfoRaw*)Handle)->Width;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>amount of valid bits in @width</summary>
+    public int Depth
+    {
+        get
+        {
+            int value = ((AudioFormatInfoRaw*)Handle)->Depth;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>the format of the unpacked samples</summary>
+    public Gst.Audio.AudioFormat UnpackFormat
+    {
+        get
+        {
+            Gst.Audio.AudioFormat value = ((AudioFormatInfoRaw*)Handle)->UnpackFormat;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
 
     /// <summary>Wraps a native <c>GstAudioFormatInfo</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
@@ -46,4 +113,65 @@ public sealed unsafe partial class AudioFormatInfo
     /// <summary>The <c>gst_audio_format_info_fill_silence</c> entry point.</summary>
     [LibraryImport("GstAudio", EntryPoint = "gst_audio_format_info_fill_silence")]
     private static partial void GstAudioFormatInfoFillSilence(nint info, byte* dest, nuint length);
+}
+
+/// <summary>The native layout of <c>GstAudioFormatInfo</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct AudioFormatInfoRaw
+{
+    /// <summary>The <c>format</c> field.</summary>
+    internal Gst.Audio.AudioFormat Format;
+
+    /// <summary>The <c>name</c> field.</summary>
+    internal nint Name;
+
+    /// <summary>The <c>description</c> field.</summary>
+    internal nint Description;
+
+    /// <summary>The <c>flags</c> field.</summary>
+    internal Gst.Audio.AudioFormatFlags Flags;
+
+    /// <summary>The <c>endianness</c> field.</summary>
+    internal int Endianness;
+
+    /// <summary>The <c>width</c> field.</summary>
+    internal int Width;
+
+    /// <summary>The <c>depth</c> field.</summary>
+    internal int Depth;
+
+    /// <summary>The <c>silence</c> field.</summary>
+    internal SilenceArray Silence;
+
+    /// <summary>The <c>unpack_format</c> field.</summary>
+    internal Gst.Audio.AudioFormat UnpackFormat;
+
+    /// <summary>The <c>unpack_func</c> field.</summary>
+    internal nint UnpackFunc;
+
+    /// <summary>The <c>pack_func</c> field.</summary>
+    internal nint PackFunc;
+
+    /// <summary>The <c>_gst_reserved</c> field.</summary>
+    internal GstReservedArray GstReserved;
+
+    /// <summary>Inline storage of the 8 elements of the <c>silence</c> field.</summary>
+    [InlineArray(8)]
+    internal struct SilenceArray
+    {
+        private byte _element0;
+    }
+
+    /// <summary>Inline storage of the 4 elements of the <c>_gst_reserved</c> field.</summary>
+    [InlineArray(4)]
+    internal struct GstReservedArray
+    {
+        private nint _element0;
+    }
 }

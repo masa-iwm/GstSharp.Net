@@ -3,6 +3,9 @@
 
 #nullable enable
 
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+
 namespace Gst;
 
 /// <summary>
@@ -15,7 +18,7 @@ namespace Gst;
 /// BSD, MIT/X11, Proprietary, unknown.
 /// </para>
 /// </remarks>
-public sealed partial class PluginDesc
+public sealed unsafe partial class PluginDesc
 {
     /// <summary>The native instance.</summary>
     internal nint Handle;
@@ -23,6 +26,28 @@ public sealed partial class PluginDesc
     /// <summary>Wraps a native <c>GstPluginDesc</c>.</summary>
     /// <param name="handle">The native instance.</param>
     internal PluginDesc(nint handle) => Handle = handle;
+
+    /// <summary>the major version number of core that plugin was compiled for</summary>
+    public int MajorVersion
+    {
+        get
+        {
+            int value = ((PluginDescRaw*)Handle)->MajorVersion;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>the minor version number of core that plugin was compiled for</summary>
+    public int MinorVersion
+    {
+        get
+        {
+            int value = ((PluginDescRaw*)Handle)->MinorVersion;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
 
     /// <summary>Wraps a native <c>GstPluginDesc</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
@@ -34,4 +59,58 @@ public sealed partial class PluginDesc
     /// </remarks>
     internal static PluginDesc? FromNative(nint handle) =>
         handle == 0 ? null : new(handle);
+}
+
+/// <summary>The native layout of <c>GstPluginDesc</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct PluginDescRaw
+{
+    /// <summary>The <c>major_version</c> field.</summary>
+    internal int MajorVersion;
+
+    /// <summary>The <c>minor_version</c> field.</summary>
+    internal int MinorVersion;
+
+    /// <summary>The <c>name</c> field.</summary>
+    internal nint Name;
+
+    /// <summary>The <c>description</c> field.</summary>
+    internal nint Description;
+
+    /// <summary>The <c>plugin_init</c> field.</summary>
+    internal nint PluginInit;
+
+    /// <summary>The <c>version</c> field.</summary>
+    internal nint Version;
+
+    /// <summary>The <c>license</c> field.</summary>
+    internal nint License;
+
+    /// <summary>The <c>source</c> field.</summary>
+    internal nint Source;
+
+    /// <summary>The <c>package</c> field.</summary>
+    internal nint Package;
+
+    /// <summary>The <c>origin</c> field.</summary>
+    internal nint Origin;
+
+    /// <summary>The <c>release_datetime</c> field.</summary>
+    internal nint ReleaseDatetime;
+
+    /// <summary>The <c>_gst_reserved</c> field.</summary>
+    internal GstReservedArray GstReserved;
+
+    /// <summary>Inline storage of the 4 elements of the <c>_gst_reserved</c> field.</summary>
+    [InlineArray(4)]
+    internal struct GstReservedArray
+    {
+        private nint _element0;
+    }
 }

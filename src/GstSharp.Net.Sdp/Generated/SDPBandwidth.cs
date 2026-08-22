@@ -21,6 +21,17 @@ public sealed unsafe partial class SDPBandwidth
     /// <param name="handle">The native instance.</param>
     internal SDPBandwidth(nint handle) => Handle = handle;
 
+    /// <summary>the bandwidth in kilobits per second</summary>
+    public uint Bandwidth
+    {
+        get
+        {
+            uint value = ((SDPBandwidthRaw*)Handle)->Bandwidth;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
     /// <summary>Wraps a native <c>GstSDPBandwidth</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
     /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>
@@ -62,4 +73,21 @@ public sealed unsafe partial class SDPBandwidth
     /// <summary>The <c>gst_sdp_bandwidth_set</c> entry point.</summary>
     [LibraryImport("GstSdp", EntryPoint = "gst_sdp_bandwidth_set")]
     private static partial int GstSdpBandwidthSet(nint bw, byte* bwtype, uint bandwidth);
+}
+
+/// <summary>The native layout of <c>GstSDPBandwidth</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct SDPBandwidthRaw
+{
+    /// <summary>The <c>bwtype</c> field.</summary>
+    internal nint Bwtype;
+
+    /// <summary>The <c>bandwidth</c> field.</summary>
+    internal uint Bandwidth;
 }

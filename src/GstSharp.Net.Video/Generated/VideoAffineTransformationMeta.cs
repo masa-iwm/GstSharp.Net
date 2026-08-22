@@ -4,6 +4,7 @@
 #nullable enable
 
 using System;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace Gst.Video;
@@ -55,4 +56,28 @@ public sealed unsafe partial class VideoAffineTransformationMeta
     /// <summary>The <c>gst_video_affine_transformation_meta_get_info</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_affine_transformation_meta_get_info")]
     private static partial nint GstVideoAffineTransformationMetaGetInfo();
+}
+
+/// <summary>The native layout of <c>GstVideoAffineTransformationMeta</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct VideoAffineTransformationMetaRaw
+{
+    /// <summary>The <c>meta</c> field.</summary>
+    internal Gst.MetaRaw Meta;
+
+    /// <summary>The <c>matrix</c> field.</summary>
+    internal MatrixArray Matrix;
+
+    /// <summary>Inline storage of the 16 elements of the <c>matrix</c> field.</summary>
+    [InlineArray(16)]
+    internal struct MatrixArray
+    {
+        private float _element0;
+    }
 }
