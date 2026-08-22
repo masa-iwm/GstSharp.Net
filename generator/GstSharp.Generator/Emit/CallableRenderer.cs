@@ -224,7 +224,7 @@ internal static class CallableRenderer
                 DocName(argument.Name),
                 argument.Doc ?? argument.Source?.Doc,
                 fallback,
-                ParamNote(argument));
+                ParamNote(plan, argument));
         }
 
         if (!plan.Return.IsVoid)
@@ -267,13 +267,27 @@ internal static class CallableRenderer
     /// Returns the generator authored note of one parameter, or
     /// <see langword="null"/> when the parameter needs none.
     /// </summary>
+    /// <param name="plan">The member being documented.</param>
     /// <param name="argument">The parameter being documented.</param>
     /// <returns>The note lines.</returns>
-    private static IReadOnlyList<string>? ParamNote(ArgumentPlan argument) => argument.Kind switch
+    private static IReadOnlyList<string>? ParamNote(MarshalPlan plan, ArgumentPlan argument) => argument.Kind switch
     {
         ArgumentKind.ConsumedHandle => ConsumptionParamNote(argument),
-        ArgumentKind.GValue => GValueParamNote(argument),
+        ArgumentKind.GValue => GValueParamNote(plan, argument),
         _ => null,
+    };
+
+    /// <summary>
+    /// The entry points whose writable <c>GValue</c> parameter must arrive
+    /// empty rather than holding the type the call works on. They are the
+    /// <c>init</c> functions of the fundamental containers, which call
+    /// <c>g_value_init</c> themselves: the generic note of the <c>ref</c> shape
+    /// states the opposite contract and would be wrong on them.
+    /// </summary>
+    private static readonly HashSet<string> ZeroedValueTargets = new(StringComparer.Ordinal)
+    {
+        "gst_value_array_init",
+        "gst_value_list_init",
     };
 
     /// <summary>
@@ -281,9 +295,28 @@ internal static class CallableRenderer
     /// ownership and initialization contract of its shape: the gir describes
     /// the C pointer and says none of it.
     /// </summary>
+    /// <param name="plan">The member being documented.</param>
     /// <param name="argument">The value argument.</param>
     /// <returns>The note lines.</returns>
-    private static IReadOnlyList<string>? GValueParamNote(ArgumentPlan argument) => argument.Direction switch
+    private static IReadOnlyList<string>? GValueParamNote(MarshalPlan plan, ArgumentPlan argument)
+    {
+        if (argument.Direction == ArgumentDirection.Ref && ZeroedValueTargets.Contains(plan.EntryPoint))
+        {
+            return
+            [
+                "The value has to be empty, that is of type zero: the call initializes",
+                "it. Like the C API, the call raises a critical on a value that already",
+                "holds a type and leaves it untouched.",
+            ];
+        }
+
+        return NoteOf(argument);
+    }
+
+    /// <summary>The note of a <c>GValue</c> parameter of each shape.</summary>
+    /// <param name="argument">The value argument.</param>
+    /// <returns>The note lines.</returns>
+    private static IReadOnlyList<string>? NoteOf(ArgumentPlan argument) => argument.Direction switch
     {
         ArgumentDirection.In =>
         [
@@ -375,9 +408,54 @@ internal static class CallableRenderer
     };
 
     /// <summary>
+    /// The note of the indexer of a fundamental container, shared by the three
+    /// of them. The return note already states that the value is an owned copy
+    /// to dispose, so this one only adds what it does not: the copy is a
+    /// standalone value, unaffected by what happens to the container next.
+    /// </summary>
+    private static readonly IReadOnlyList<string> MemberCopyNote =
+    [
+        "<para>",
+        "The copy is independent of the container: appending to it, or disposing",
+        "it, leaves a member already read out untouched.",
+        "</para>",
+    ];
+
+    /// <summary>
+    /// The note of a member of a fundamental value container whose behaviour
+    /// the gir describes in C terms only. Each states what a caller of the C#
+    /// member has to know and cannot read off the signature: what the returned
+    /// value is, and what the call does with a duplicate or with two equal
+    /// operands.
+    /// </summary>
+    private static readonly Dictionary<string, IReadOnlyList<string>> ValueContainerTargets =
+        new(StringComparer.Ordinal)
+        {
+            ["gst_value_array_get_value"] = MemberCopyNote,
+            ["gst_value_list_get_value"] = MemberCopyNote,
+            ["gst_value_unique_list_get_value"] = MemberCopyNote,
+            ["gst_value_list_merge"] =
+            [
+                "<para>",
+                "The result is not always a list: merging two values that compare equal",
+                "yields that single value, so read the type of the destination before",
+                "treating it as a container.",
+                "</para>",
+            ],
+            ["gst_value_unique_list_append_value"] =
+            [
+                "<para>",
+                "A value the set already contains is dropped silently, which is what",
+                "makes the set unique; the call reports nothing either way.",
+                "</para>",
+            ],
+        };
+
+    /// <summary>
     /// Returns every generator authored remarks paragraph of a member: the
-    /// consumption contract of its consumed arguments and the writability
-    /// requirement of the entry points that have one.
+    /// consumption contract of its consumed arguments, the writability
+    /// requirement of the entry points that have one, and the behaviour note of
+    /// the members of a fundamental value container.
     /// </summary>
     /// <param name="plan">The member being documented.</param>
     /// <returns>The paragraphs, or <see langword="null"/> when there are none.</returns>
@@ -395,6 +473,11 @@ internal static class CallableRenderer
             lines.Add(sentence + " Like the C API, the call raises a warning");
             lines.Add("and writes nothing otherwise.");
             lines.Add("</para>");
+        }
+
+        if (ValueContainerTargets.TryGetValue(plan.EntryPoint, out IReadOnlyList<string>? container))
+        {
+            lines.AddRange(container);
         }
 
         return lines.Count == 0 ? null : lines;

@@ -860,6 +860,25 @@ internal sealed class MarshalPlanner
         return overlay?.Nullable ?? callable.ReturnValue.IsNullable;
     }
 
+    /// <summary>
+    /// Tests whether the overlays drop the return value of a callable, which
+    /// makes the member void whatever the C function hands back.
+    /// </summary>
+    /// <param name="callable">The callable being planned.</param>
+    /// <returns><see langword="true"/> when the return value is not bound.</returns>
+    /// <remarks>
+    /// The raw entry point is declared void as well. Ignoring a returned
+    /// register is what a C caller that discards the value does, so nothing of
+    /// the call changes; what the correction states is that the value is not
+    /// worth a projection, which is the case when it is a pointer the caller
+    /// passed in. A return the callee transfers the ownership of is not such a
+    /// value, and <see cref="PlanReturn"/> reports and ignores the correction
+    /// on one rather than leaking the allocation.
+    /// </remarks>
+    private bool DiscardsReturn(GirCallable callable) =>
+        AnnotationKeyOf(callable) is { } identifier
+        && _overlays.GetAnnotationOverride(identifier + "#return")?.DiscardReturn == true;
+
     private static GirTransfer? ParseTransfer(string? value) => value switch
     {
         "none" => GirTransfer.None,
@@ -1710,9 +1729,31 @@ internal sealed class MarshalPlanner
         MappedType mapped = _types.Map(value.Type, context.Namespace);
         GirTransfer transfer = TransferOf(callable);
         bool nullable = NullableOf(callable);
+        bool discarded = DiscardsReturn(callable);
 
-        if (mapped.Kind == MarshalKind.Void)
+        // Dropping a return the caller is handed the ownership of would leak it
+        // on every call, so the correction only holds for one the caller
+        // already has. The override is reported and ignored rather than obeyed.
+        if (discarded && mapped.Kind != MarshalKind.Void && transfer == GirTransfer.Full)
         {
+            _diagnostics.Warn(
+                "GEN0019",
+                $"'{callable.CIdentifier ?? callable.Name}' is marked 'discardReturn' but hands the ownership "
+                + "of its return value to the caller; the override is ignored, because dropping the value "
+                + "would leak it.");
+            discarded = false;
+        }
+
+        if (mapped.Kind == MarshalKind.Void || discarded)
+        {
+            if (discarded && mapped.Kind == MarshalKind.Void)
+            {
+                _diagnostics.Warn(
+                    "GEN0018",
+                    $"'{callable.CIdentifier ?? callable.Name}' is marked 'discardReturn' and returns nothing; "
+                    + "the override has no effect and is stale.");
+            }
+
             return new ReturnPlan
             {
                 Kind = ArgumentKind.Void,

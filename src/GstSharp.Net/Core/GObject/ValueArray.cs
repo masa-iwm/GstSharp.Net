@@ -26,6 +26,11 @@ namespace Gst.GObject;
 /// <c>g_value_array_free</c> — does.
 /// </para>
 /// <para>
+/// Not to be confused with <see cref="Gst.ValueArray"/>, which holds the
+/// functions of the GStreamer fundamental type <c>GST_TYPE_ARRAY</c> and
+/// operates on a <see cref="Value"/> rather than on a wrapper of its own.
+/// </para>
+/// <para>
 /// GLib deprecates <c>GValueArray</c> in favour of <c>GArray</c>, but that
 /// deprecation is a C compile time attribute on an API that GStreamer still
 /// requires for the functions above; it says nothing about calling the entry

@@ -174,7 +174,9 @@ internal sealed class Classifier
     private TypeKind ClassifyClass(GirClass girClass)
     {
         // GType fundamentals (GstFraction, GstIntRange, the GObject ParamSpec
-        // family, ...) are hand written; the generator only records them.
+        // family, ...) are hand written; the generator only records them. A
+        // fundamental that declares functions gets a static holder of them,
+        // see ClassEmitter.EmitFundamental.
         if (girClass.IsFundamental || string.Equals(girClass.GlibGetType, "intern", StringComparison.Ordinal))
         {
             return TypeKind.Fundamental;

@@ -609,12 +609,148 @@ internal sealed class ClassEmitter
     private static string CTypeOf(GirEnumeration declaration) =>
         declaration.CType is { Length: > 0 } cType ? cType : declaration.Name;
 
+    /// <summary>
+    /// The <c>GST_TYPE_*</c> macro that names a fundamental type in C, keyed by
+    /// its qualified gir name.
+    /// </summary>
+    /// <remarks>
+    /// The gir spells the C type of the fundamental (<c>GstValueList</c>) and
+    /// the entry point of its <c>GType</c>, but not the macro every C caller
+    /// and every serialized caps writes, and there is no rule that derives
+    /// <c>GST_TYPE_LIST</c> from <c>GstValueList</c>. Naming it in the
+    /// documentation is what connects the holder to the caps a reader is
+    /// holding, so the handful of macros are listed here.
+    /// </remarks>
+    private static readonly Dictionary<string, string> FundamentalMacros = new(StringComparer.Ordinal)
+    {
+        ["Gst.ValueArray"] = "GST_TYPE_ARRAY",
+        ["Gst.ValueList"] = "GST_TYPE_LIST",
+        ["Gst.ValueUniqueList"] = "GST_TYPE_UNIQUE_LIST",
+    };
+
+    /// <summary>
+    /// Emits the functions a <c>glib:fundamental="1"</c> class declares, as a
+    /// static holder named after it.
+    /// </summary>
+    /// <param name="module">The module to emit.</param>
+    /// <param name="ns">The gir namespace of the module.</param>
+    /// <param name="declaration">The fundamental class.</param>
+    /// <returns>The generated file, or <see langword="null"/> when there is nothing to emit.</returns>
+    /// <remarks>
+    /// <para>
+    /// A fundamental <c>GType</c> is not a class: it has no instance structure,
+    /// no <c>GObject</c> above it and nothing to derive a wrapper from, which
+    /// is why the classifier stops at it. Its functions are still ordinary
+    /// entry points, and every one of them operates on a <c>GValue</c> that
+    /// holds a value of the type, so they bind exactly like the functions a gir
+    /// declares inside an enumeration: a static holder that is only a namespace
+    /// for them.
+    /// </para>
+    /// <para>
+    /// Without this the members were dropped with the type, before the census
+    /// ever saw them, so a caller had no binding and <c>skip-report.md</c> had
+    /// no line either. That blind spot is what the holder closes: what is not
+    /// bound is now skipped for a reason that is written down.
+    /// </para>
+    /// </remarks>
+    private GeneratedFile? EmitFundamental(ModuleInfo module, GirNamespace ns, GirClass declaration)
+    {
+        if (declaration.Functions.Count == 0)
+        {
+            return null;
+        }
+
+        GirSymbol symbol = new(ns, declaration.Name, GirSymbolKind.Class, declaration);
+        string typeName = _names.TypeName(symbol);
+
+        // Nothing of the fundamental is in scope: the holder only names the
+        // functions, exactly as the holder of an enumeration does.
+        PlanningContext context = new(module, ns, TypeKind.Unknown, OwnerType: null);
+        GirRecord holder = new() { Name = typeName, Functions = declaration.Functions };
+        TypeSurface surface = _surfaces.Build(
+            holder,
+            context,
+            CallableForm.StaticMethod,
+            [typeName],
+            [],
+            includeProperties: false);
+
+        if (surface.IsEmpty)
+        {
+            return null;
+        }
+
+        CodeWriter writer = new();
+        WriteHeader(writer, module, ns, surface.ParameterArrays.Count > 0);
+        writer.WriteLine();
+        XmlDocWriter.Write(
+            writer,
+            declaration.Doc,
+            "The functions the gir declares inside <c>" + CTypeOf(declaration) + "</c>.",
+            declaration,
+            FundamentalRemarks(ns, declaration));
+        XmlDocWriter.WriteObsolete(writer, declaration);
+        writer.WriteLine("public static unsafe partial class " + typeName);
+        writer.OpenBlock();
+        WriteMembers(writer, surface, module, first: true);
+        writer.CloseBlock();
+
+        _census.Emitted(module.GirNamespace, "value container");
+        return new GeneratedFile(module.ProjectDirectory + "/Generated/" + typeName + ".cs", writer.ToSource());
+    }
+
+    /// <summary>
+    /// Returns the remarks of a fundamental holder: where the container of that
+    /// type lives, because there is no wrapper of it to hold.
+    /// </summary>
+    /// <param name="ns">The gir namespace of the module.</param>
+    /// <param name="declaration">The fundamental class.</param>
+    /// <returns>The remarks lines.</returns>
+    private static IReadOnlyList<string> FundamentalRemarks(GirNamespace ns, GirClass declaration)
+    {
+        string qualifiedName = ns.Name + "." + declaration.Name;
+        string type = FundamentalMacros.TryGetValue(qualifiedName, out string? macro)
+            ? "<c>" + macro + "</c>"
+            : "<c>" + CTypeOf(declaration) + "</c>";
+
+        List<string> lines =
+        [
+            "<para>",
+            "Functions of the fundamental type " + type + ".",
+            "A value of a fundamental type has no wrapper of its own: it lives inside",
+            "a <see cref=\"Gst.GObject.Value\"/>, which is what every function here takes.",
+            "Such a value comes from an <c>Init</c> call on a zeroed value, from a call",
+            "that fills one, or from a field of a caps or a structure, and is disposed",
+            "like any other value.",
+            "</para>",
+        ];
+
+        if (string.Equals(qualifiedName, "Gst.ValueArray", StringComparison.Ordinal))
+        {
+            lines.Add("<para>");
+            lines.Add("Not to be confused with <see cref=\"Gst.GObject.ValueArray\"/>, which is the");
+            lines.Add("boxed <c>GValueArray</c> of GLib and a wrapper of its own.");
+            lines.Add("</para>");
+        }
+
+        return lines;
+    }
+
     private GeneratedFile? Emit(ModuleInfo module, GirNamespace ns, GirClass declaration)
     {
         string qualifiedName = ns.Name + "." + declaration.Name;
-        if (!declaration.IsIntrospectable
-            || _overlays.IsSkipped(qualifiedName)
-            || _classifier.Classify(declaration) != TypeKind.GObjectClass)
+        if (!declaration.IsIntrospectable || _overlays.IsSkipped(qualifiedName))
+        {
+            return null;
+        }
+
+        TypeKind kind = _classifier.Classify(declaration);
+        if (kind == TypeKind.Fundamental)
+        {
+            return EmitFundamental(module, ns, declaration);
+        }
+
+        if (kind != TypeKind.GObjectClass)
         {
             return null;
         }

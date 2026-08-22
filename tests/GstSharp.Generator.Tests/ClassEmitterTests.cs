@@ -171,7 +171,7 @@ public sealed class ClassEmitterTests
     }
 
     [Theory]
-    [InlineData("Gst", 35, 51, 5, 17, 18, 1339, 29, 23)]
+    [InlineData("Gst", 35, 51, 5, 17, 18, 1355, 29, 23)]
     [InlineData("GstBase", 11, 4, 0, 5, 0, 171, 31, 2)]
     [InlineData("GstApp", 2, 2, 0, 8, 0, 62, 36, 8)]
     [InlineData("GstAudio", 14, 17, 1, 2, 2, 197, 32, 0)]
@@ -206,7 +206,7 @@ public sealed class ClassEmitterTests
     }
 
     [Theory]
-    [InlineData("Gst", 1, 93, 53, 119, 150, 10)]
+    [InlineData("Gst", 1, 93, 53, 119, 153, 10)]
     [InlineData("GstBase", 0, 11, 0, 20, 7, 0)]
     [InlineData("GstApp", 1, 0, 0, 2, 2, 1)]
     [InlineData("GstAudio", 0, 27, 0, 8, 19, 0)]
@@ -551,14 +551,38 @@ public sealed class ClassEmitterTests
     }
 
     [Fact]
-    public void NothingIsEmittedForAFundamentalOrAVirtualMethod()
+    public void NothingIsEmittedForAFundamentalWithoutFunctionsOrForAVirtualMethod()
     {
-        // The GType fundamentals of Gst (GstFraction, GstValueList, ...) are
-        // hand written, and vfuncs need subclassing support that does not exist
-        // yet.
+        // A GType fundamental has no instance structure to wrap, so nothing is
+        // emitted for one that declares no function of its own - GstFraction,
+        // GstBitmask and the range types are read and written through the
+        // gst_value_* family instead. Vfuncs need subclassing support that does
+        // not exist yet.
         Assert.False(HasFile("Fraction.cs"));
-        Assert.False(HasFile("ValueList.cs"));
+        Assert.False(HasFile("Bitmask.cs"));
+        Assert.False(HasFile("IntRange.cs"));
         Assert.DoesNotContain("virtual", Source("Element.cs"), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void TheFundamentalsThatDeclareFunctionsBecomeStaticHolders()
+    {
+        // Exactly the three value containers. Any other fundamental that grows
+        // a function - or one whose functions stop being skipped, which is what
+        // gst_flagset_register is held back by - is a surface nobody decided
+        // on, so the count is frozen rather than derived.
+        Assert.Equal(3, Generated.Census.EmittedCount("Gst", "value container"));
+        foreach (string name in new[] { "ValueArray", "ValueList", "ValueUniqueList" })
+        {
+            Assert.Contains(
+                "public static unsafe partial class " + name + "\n",
+                Source(name + ".cs"),
+                StringComparison.Ordinal);
+        }
+
+        // The holder is not a wrapper, so it is not in the type table.
+        Assert.DoesNotContain("Gst.ValueList.GetGType", Source("_Module.cs"), StringComparison.Ordinal);
+        Assert.False(HasFile("FlagSet.cs"));
     }
 
     private static bool HasFile(string fileName) =>
@@ -604,7 +628,7 @@ public sealed class ClassEmitterTests
     /// <param name="actionSignals">Signals that are a call API rather than a notification.</param>
     /// <param name="owningProperties">Properties whose value is a wrapper the reader would have to dispose.</param>
     [Theory]
-    [InlineData("Gst", 37, 3, 21, 20, 0, 5)]
+    [InlineData("Gst", 39, 3, 21, 20, 0, 5)]
     [InlineData("GstBase", 3, 3, 4, 0, 0, 2)]
     [InlineData("GstApp", 3, 0, 4, 0, 9, 2)]
     [InlineData("GstAudio", 3, 7, 4, 0, 0, 0)]

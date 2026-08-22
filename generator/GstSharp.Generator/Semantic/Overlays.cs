@@ -54,6 +54,19 @@ internal sealed class AnnotationOverride
 
     /// <summary>Gets or sets the corrected <c>zero-terminated</c> flag of an array.</summary>
     public bool? ZeroTerminated { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether the return value is dropped, so that the member is
+    /// emitted as if the C function returned nothing.
+    /// </summary>
+    /// <remarks>
+    /// It is keyed on <c>#return</c> and states a fact about the C
+    /// implementation that no gir annotation carries: the value handed back is
+    /// something the caller already holds. <c>gst_value_list_init</c> returns
+    /// the very pointer it was given, and binding that return would deep copy a
+    /// freshly initialized list into a second owner for nothing.
+    /// </remarks>
+    public bool? DiscardReturn { get; set; }
 }
 
 /// <summary>
@@ -88,7 +101,8 @@ internal sealed class PlatformSupport
 /// the <c>direction</c> of a pointer to a plain structure and the
 /// <c>fixedArraySize</c> of a caller allocated out array, both of which are
 /// facts about the C implementation that no gir annotation
-/// carries.</description></item>
+/// carries, and <c>discardReturn</c> on <c>#return</c> to drop a return value
+/// the caller already holds.</description></item>
 /// <item><description><c>forceOpaque</c>: qualified gir name of a record
 /// (<c>Gst.DebugCategory</c>) that must be wrapped behind a pointer rather
 /// than copied by value.</description></item>

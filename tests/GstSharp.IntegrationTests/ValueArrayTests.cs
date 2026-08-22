@@ -3,6 +3,10 @@ using Gst.GObject;
 using Xunit;
 using Value = Gst.GObject.Value;
 
+// Gst.ValueArray is the holder of the GST_TYPE_ARRAY functions, a different
+// type of the same name in a namespace this file also imports.
+using ValueArray = Gst.GObject.ValueArray;
+
 namespace GstSharp.IntegrationTests;
 
 /// <summary>

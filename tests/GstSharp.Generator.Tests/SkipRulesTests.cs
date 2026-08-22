@@ -140,7 +140,11 @@ public sealed class SkipRulesTests
         // projection, for the same hand-written-stays-canonical reason as the
         // consuming fifteen, plus the three *_value_static_str entries of the
         // static string family and gst_iterator_next, whose out value would
-        // bind beside the typed Iterator.Items&lt;T&gt;.
+        // bind beside the typed Iterator.Items&lt;T&gt;. The last two joined
+        // with the holders of the fundamental value containers:
+        // gst_value_unique_list_prepend_value can only raise a critical in
+        // 1.28, and gst_flagset_register is the one function of a fundamental
+        // that the containers were not designed for.
         Assert.Equal(
             [
                 "GstBase.BitReader",
@@ -174,6 +178,7 @@ public sealed class SkipRulesTests
                 "gst_element_send_event",
                 "gst_encoding_container_profile_add_profile",
                 "gst_event_new_custom",
+                "gst_flagset_register",
                 "gst_id_str_set_static_str",
                 "gst_id_str_set_static_str_with_len",
                 "gst_iterator_next",
@@ -199,6 +204,7 @@ public sealed class SkipRulesTests
                 "gst_type_find_peek",
                 "gst_value_compare",
                 "gst_value_serialize",
+                "gst_value_unique_list_prepend_value",
                 "gst_video_frame_unmap",
                 "gst_webrtc_session_description_new",
             ],

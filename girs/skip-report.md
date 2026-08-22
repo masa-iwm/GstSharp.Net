@@ -391,7 +391,7 @@ disappears shows up here as an added line.
 - `gst_tag_setter_add_tag_valist`
 - `gst_tag_setter_add_tag_valist_values`
 
-### OverlaySkip (36)
+### OverlaySkip (38)
 
 - `gst_allocator_free`
 - `gst_buffer_pool_release_buffer`
@@ -405,6 +405,7 @@ disappears shows up here as an added line.
 - `gst_element_post_message`
 - `gst_element_send_event`
 - `gst_event_new_custom`
+- `gst_flagset_register`
 - `gst_id_str_set_static_str`
 - `gst_id_str_set_static_str_with_len`
 - `gst_iterator_next`
@@ -429,6 +430,7 @@ disappears shows up here as an added line.
 - `gst_type_find_peek`
 - `gst_value_compare`
 - `gst_value_serialize`
+- `gst_value_unique_list_prepend_value`
 
 ### OwningProperty (5)
 
@@ -442,7 +444,7 @@ disappears shows up here as an added line.
 
 - `gst_bus_add_watch`
 
-### UnsupportedSignature (150)
+### UnsupportedSignature (153)
 
 - `Gst.Bus:enable-async`
 - `gst_buffer_foreach_meta`
@@ -593,7 +595,10 @@ disappears shows up here as an added line.
 - `gst_uri_set_query_table`
 - `gst_uri_to_string_with_keys`
 - `gst_util_array_binary_search`
+- `gst_value_array_append_and_take_value`
 - `gst_value_deserialize_with_pspec`
+- `gst_value_list_append_and_take_value`
+- `gst_value_unique_list_append_and_take_value`
 
 ### VarArgs (53)
 
