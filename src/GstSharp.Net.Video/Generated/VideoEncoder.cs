@@ -261,6 +261,31 @@ public abstract unsafe partial class VideoEncoder : Gst.Element, Gst.IPreset
         return (Gst.FlowReturn)nativeResult;
     }
 
+    /// <summary>
+    /// Lets #GstVideoEncoder sub-classes to know the memory @allocator
+    /// used by the base class and its @params.
+    /// </summary>
+    /// <remarks>
+    /// <para>Unref the @allocator after use it.</para>
+    /// </remarks>
+    /// <param name="allocator">The <c>allocator</c> argument.</param>
+    /// <param name="params">
+    /// The <c>@params</c> argument.
+    /// The binding allocates the storage; on return the caller owns
+    /// <paramref name="params"/> and disposes it.
+    /// </param>
+    public void GetAllocator(out Gst.Allocator? allocator, out Gst.AllocationParams @params)
+    {
+        nint instanceHandle = Handle;
+        nint allocatorNative = default;
+        nint @paramsNative = GstAllocationParamsNew();
+        GstVideoEncoderGetAllocator(instanceHandle, &allocatorNative, @paramsNative);
+        System.GC.KeepAlive(this);
+        @params = Gst.AllocationParams.FromNative(@paramsNative, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_allocation_params_new returned no value.");
+        allocator = Gst.GObject.Object.FromNative<Gst.Allocator>(allocatorNative, Gst.Interop.Transfer.Full);
+    }
+
     /// <summary>Get a pending unfinished #GstVideoCodecFrame</summary>
     /// <param name="frameNumber">The <c>frameNumber</c> argument.</param>
     /// <returns>pending unfinished #GstVideoCodecFrame identified by @frame_number.</returns>
@@ -628,6 +653,10 @@ public abstract unsafe partial class VideoEncoder : Gst.Element, Gst.IPreset
     [LibraryImport("GstVideo", EntryPoint = "gst_video_encoder_finish_subframe")]
     private static partial int GstVideoEncoderFinishSubframe(nint encoder, nint frame);
 
+    /// <summary>The <c>gst_video_encoder_get_allocator</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_video_encoder_get_allocator")]
+    private static partial void GstVideoEncoderGetAllocator(nint encoder, nint* allocator, nint @params);
+
     /// <summary>The <c>gst_video_encoder_get_frame</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_encoder_get_frame")]
     private static partial nint GstVideoEncoderGetFrame(nint encoder, int frameNumber);
@@ -695,6 +724,11 @@ public abstract unsafe partial class VideoEncoder : Gst.Element, Gst.IPreset
     /// <summary>The <c>gst_video_encoder_set_qos_enabled</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_encoder_set_qos_enabled")]
     private static partial void GstVideoEncoderSetQosEnabled(nint encoder, int enabled);
+
+    /// <summary>The <c>gst_allocation_params_new</c> entry point, which allocates the storage of a caller allocated out parameter.</summary>
+    /// <returns>A new, zeroed instance the caller owns.</returns>
+    [LibraryImport("Gst", EntryPoint = "gst_allocation_params_new")]
+    private static partial nint GstAllocationParamsNew();
 
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstVideoEncoder</c> under.</summary>
     /// <returns>The type of the instances of this wrapper.</returns>

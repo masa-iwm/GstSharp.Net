@@ -603,6 +603,31 @@ public sealed unsafe partial class SDPMedia
         return (Gst.Sdp.SDPResult)nativeResult;
     }
 
+    /// <summary>Mapping of structure fields to SDP attributes:</summary>
+    /// <remarks>
+    /// <para>a=rtpmap:(payload) (encoding_name) or (clock_rate)[or (encoding_params)]</para>
+    /// <para>a=framesize:(payload) (width)-(height)</para>
+    /// <para>a=fmtp:(payload) (param)[=(value)];...</para>
+    /// <para>a=rtcp-fb:(payload) (param1) [param2]...</para>
+    /// <para>a=extmap:(id)[/direction] (extensionname) (extensionattributes)</para>
+    /// <para>Available since GStreamer 1.28.</para>
+    /// </remarks>
+    /// <param name="media">
+    /// The <c>media</c> argument.
+    /// Must be an initialised instance; the call updates it in place.
+    /// </param>
+    /// <param name="structure">The <c>structure</c> argument.</param>
+    /// <returns>a #GstSDPResult.</returns>
+    public static Gst.Sdp.SDPResult AddMediaFromStructure(Gst.Sdp.SDPMedia media, Gst.Structure structure)
+    {
+        ArgumentNullException.ThrowIfNull(structure);
+        ArgumentNullException.ThrowIfNull(media);
+        int nativeResult = GstSdpMediaAddMediaFromStructure(structure.Handle, media.Handle);
+        System.GC.KeepAlive(structure);
+        System.GC.KeepAlive(media);
+        return (Gst.Sdp.SDPResult)nativeResult;
+    }
+
     /// <summary>Allocate a new GstSDPMedia and store the result in @media.</summary>
     /// <param name="media">The <c>media</c> argument.</param>
     /// <returns>a #GstSDPResult.</returns>
@@ -611,6 +636,31 @@ public sealed unsafe partial class SDPMedia
         nint mediaNative = default;
         int nativeResult = GstSdpMediaNew(&mediaNative);
         media = Gst.Sdp.SDPMedia.FromNative(mediaNative);
+        return (Gst.Sdp.SDPResult)nativeResult;
+    }
+
+    /// <summary>Mapping of caps to SDP fields:</summary>
+    /// <remarks>
+    /// <para>a=rtpmap:(payload) (encoding_name) or (clock_rate)[or (encoding_params)]</para>
+    /// <para>a=framesize:(payload) (width)-(height)</para>
+    /// <para>a=fmtp:(payload) (param)[=(value)];...</para>
+    /// <para>a=rtcp-fb:(payload) (param1) [param2]...</para>
+    /// <para>a=extmap:(id)[/direction] (extensionname) (extensionattributes)</para>
+    /// <para>Only the first #GstStructure of the @caps is used.</para>
+    /// </remarks>
+    /// <param name="media">
+    /// The <c>media</c> argument.
+    /// Must be an initialised instance; the call updates it in place.
+    /// </param>
+    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <returns>a #GstSDPResult.</returns>
+    public static Gst.Sdp.SDPResult SetMediaFromCaps(Gst.Sdp.SDPMedia media, Gst.Caps caps)
+    {
+        ArgumentNullException.ThrowIfNull(caps);
+        ArgumentNullException.ThrowIfNull(media);
+        int nativeResult = GstSdpMediaSetMediaFromCaps(caps.Handle, media.Handle);
+        System.GC.KeepAlive(caps);
+        System.GC.KeepAlive(media);
         return (Gst.Sdp.SDPResult)nativeResult;
     }
 
@@ -790,9 +840,17 @@ public sealed unsafe partial class SDPMedia
     [LibraryImport("GstSdp", EntryPoint = "gst_sdp_media_uninit")]
     private static partial int GstSdpMediaUninit(nint media);
 
+    /// <summary>The <c>gst_sdp_media_add_media_from_structure</c> entry point.</summary>
+    [LibraryImport("GstSdp", EntryPoint = "gst_sdp_media_add_media_from_structure")]
+    private static partial int GstSdpMediaAddMediaFromStructure(nint structure, nint media);
+
     /// <summary>The <c>gst_sdp_media_new</c> entry point.</summary>
     [LibraryImport("GstSdp", EntryPoint = "gst_sdp_media_new")]
     private static partial int GstSdpMediaNew(nint* media);
+
+    /// <summary>The <c>gst_sdp_media_set_media_from_caps</c> entry point.</summary>
+    [LibraryImport("GstSdp", EntryPoint = "gst_sdp_media_set_media_from_caps")]
+    private static partial int GstSdpMediaSetMediaFromCaps(nint caps, nint media);
 }
 
 /// <summary>The native layout of <c>GstSDPMedia</c>.</summary>

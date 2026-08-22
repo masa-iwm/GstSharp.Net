@@ -63,4 +63,25 @@ internal static unsafe partial class BufferNative
     /// </returns>
     [LibraryImport("Gst", EntryPoint = "gst_buffer_copy")]
     internal static partial nint Copy(nint buffer);
+
+    /// <summary>
+    /// Copies bytes out of a buffer into memory the caller provides.
+    /// </summary>
+    /// <param name="buffer">The buffer to read from.</param>
+    /// <param name="offset">Where in the buffer to start reading.</param>
+    /// <param name="dest">The destination, pinned by the caller.</param>
+    /// <param name="size">How many bytes to copy at most.</param>
+    /// <returns>
+    /// How many bytes were copied, which is less than <paramref name="size"/>
+    /// when the buffer held less than that from <paramref name="offset"/> on.
+    /// </returns>
+    /// <remarks>
+    /// The gir describes the destination as a caller allocated out array, whose
+    /// length is a second parameter the caller states; the C# spelling of that
+    /// is a span, whose length says the same thing and cannot disagree with it.
+    /// The generated marshalling has no such projection, which is why the entry
+    /// point is on the skip list and this is imported by hand.
+    /// </remarks>
+    [LibraryImport("Gst", EntryPoint = "gst_buffer_extract")]
+    internal static partial nuint Extract(nint buffer, nuint offset, byte* dest, nuint size);
 }

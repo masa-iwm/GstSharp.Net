@@ -63,6 +63,18 @@ internal enum ArgumentKind
     ConsumedHandle,
 
     /// <summary>
+    /// A boxed record the callee fills through storage the caller provides
+    /// (<c>caller-allocates="1"</c> on an <c>out</c> parameter). The binding
+    /// allocates that storage from the zero argument constructor of the record
+    /// named by <see cref="ArgumentPlan.StorageFactory"/>, hands the call the
+    /// bare pointer, and wraps it afterwards: the caller owns the wrapper and
+    /// disposes it. A callee that answers a <c>gboolean</c> filled nothing when
+    /// it answered false, so the storage is freed again and the parameter is
+    /// <see langword="null"/>.
+    /// </summary>
+    CallerAllocatedBoxed,
+
+    /// <summary>
     /// A <c>GValue</c>, passed as a pointer to storage the caller owns. The
     /// public surface takes the runtime <c>Gst.GObject.Value</c> struct by
     /// <c>in</c>, <c>ref</c> or <c>out</c>; nothing is allocated for the call
@@ -200,6 +212,25 @@ internal enum ConsumedFamily
 internal sealed record InlineArrayInfo(string TypeName, string ElementTypeName, int Length);
 
 /// <summary>
+/// The zero argument constructor a caller allocated boxed out parameter takes
+/// its storage from.
+/// </summary>
+/// <param name="EntryPoint">The <c>c:identifier</c> of the constructor.</param>
+/// <param name="NativeName">The name of its <c>LibraryImport</c> declaration.</param>
+/// <param name="Library">The logical native library that exports it.</param>
+/// <remarks>
+/// The record the callee fills is sized and zeroed by the library that declares
+/// it, which is the only allocation whose size and whose matching free the
+/// binding can be sure of: a mirror of the C structure could be truncated, and
+/// a record that frees with <c>g_slice_free</c> may not be handed storage from
+/// <c>g_malloc0</c>. The library is carried here because the constructor rarely
+/// belongs to the module that declares the member —
+/// <c>gst_allocation_params_new</c> is exported by <c>Gst</c> and called from
+/// members of <c>GstBase</c>, <c>GstAudio</c> and <c>GstVideo</c>.
+/// </remarks>
+internal sealed record BoxedStorageFactory(string EntryPoint, string NativeName, string Library);
+
+/// <summary>
 /// One argument of a planned callable, visible or hidden.
 /// </summary>
 internal sealed class ArgumentPlan
@@ -240,6 +271,20 @@ internal sealed class ArgumentPlan
     /// value. <see cref="ConsumedFamily.None"/> for every other kind.
     /// </summary>
     internal ConsumedFamily ConsumedFamily { get; init; }
+
+    /// <summary>
+    /// Gets the constructor a <see cref="ArgumentKind.CallerAllocatedBoxed"/>
+    /// argument takes its storage from. <see langword="null"/> for every other
+    /// kind.
+    /// </summary>
+    internal BoxedStorageFactory? StorageFactory { get; init; }
+
+    /// <summary>
+    /// Gets a value indicating whether the overlays redirected the parameter
+    /// from a caller allocated out onto an ordinary <c>in</c> handle, which
+    /// makes it the destination the C function works on rather than a result.
+    /// </summary>
+    internal bool IsRedirectedDestination { get; init; }
 
     /// <summary>Gets the element type of an array, on the public surface.</summary>
     internal string? ElementType { get; init; }

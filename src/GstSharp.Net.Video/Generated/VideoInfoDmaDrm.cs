@@ -80,6 +80,74 @@ public sealed unsafe partial class VideoInfoDmaDrm : Gst.GObject.Boxed
         return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
 
+    /// <summary>
+    /// Convert the #GstVideoInfoDmaDrm into a traditional #GstVideoInfo with
+    /// recognized video format. For DMA kind memory, the non linear DMA format
+    /// should be recognized as #GST_VIDEO_FORMAT_DMA_DRM. This helper function
+    /// sets @info's video format into the default value according to @drm_info's
+    /// drm_fourcc field.
+    /// </summary>
+    /// <param name="info">
+    /// The <c>info</c> argument.
+    /// The binding allocates the storage; on success the caller owns
+    /// <paramref name="info"/> and disposes it. On failure it is
+    /// <see langword="null"/>.
+    /// </param>
+    /// <returns>%TRUE if @info is converted correctly.</returns>
+    public bool ToVideoInfo(out Gst.Video.VideoInfo? info)
+    {
+        nint instanceHandle = Handle;
+        nint infoNative = GstVideoInfoNew();
+        int nativeResult = GstVideoInfoDmaDrmToVideoInfo(instanceHandle, infoNative);
+        System.GC.KeepAlive(this);
+        if (nativeResult != 0)
+        {
+            info = Gst.Video.VideoInfo.FromNative(infoNative, Gst.Interop.Transfer.Full);
+        }
+        else
+        {
+            // The call filled nothing, so the storage goes back through
+            // the boxed free the wrapper disposes through.
+            Gst.Video.VideoInfo.FromNative(infoNative, Gst.Interop.Transfer.Full)?.Dispose();
+            info = null;
+        }
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Fills @drm_info if @info's format has a valid drm format and @modifier is also
+    /// valid
+    /// </summary>
+    /// <param name="info">The <c>info</c> argument.</param>
+    /// <param name="modifier">The <c>modifier</c> argument.</param>
+    /// <param name="drmInfo">
+    /// The <c>drmInfo</c> argument.
+    /// The binding allocates the storage; on success the caller owns
+    /// <paramref name="drmInfo"/> and disposes it. On failure it is
+    /// <see langword="null"/>.
+    /// </param>
+    /// <returns>%TRUE if @drm_info is filled correctly.</returns>
+    public static bool FromVideoInfo(Gst.Video.VideoInfo info, ulong modifier, out Gst.Video.VideoInfoDmaDrm? drmInfo)
+    {
+        ArgumentNullException.ThrowIfNull(info);
+        nint infoNative = info.Handle;
+        nint drmInfoNative = GstVideoInfoDmaDrmNew();
+        int nativeResult = GstVideoInfoDmaDrmFromVideoInfo(drmInfoNative, infoNative, modifier);
+        System.GC.KeepAlive(info);
+        if (nativeResult != 0)
+        {
+            drmInfo = Gst.Video.VideoInfoDmaDrm.FromNative(drmInfoNative, Gst.Interop.Transfer.Full);
+        }
+        else
+        {
+            // The call filled nothing, so the storage goes back through
+            // the boxed free the wrapper disposes through.
+            Gst.Video.VideoInfoDmaDrm.FromNative(drmInfoNative, Gst.Interop.Transfer.Full)?.Dispose();
+            drmInfo = null;
+        }
+        return nativeResult != 0;
+    }
+
     /// <summary>The <c>gst_video_info_dma_drm_new</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_info_dma_drm_new")]
     private static partial nint GstVideoInfoDmaDrmNew();
@@ -91,6 +159,19 @@ public sealed unsafe partial class VideoInfoDmaDrm : Gst.GObject.Boxed
     /// <summary>The <c>gst_video_info_dma_drm_to_caps</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_info_dma_drm_to_caps")]
     private static partial nint GstVideoInfoDmaDrmToCaps(nint drmInfo);
+
+    /// <summary>The <c>gst_video_info_dma_drm_to_video_info</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_video_info_dma_drm_to_video_info")]
+    private static partial int GstVideoInfoDmaDrmToVideoInfo(nint drmInfo, nint info);
+
+    /// <summary>The <c>gst_video_info_dma_drm_from_video_info</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_video_info_dma_drm_from_video_info")]
+    private static partial int GstVideoInfoDmaDrmFromVideoInfo(nint drmInfo, nint info, ulong modifier);
+
+    /// <summary>The <c>gst_video_info_new</c> entry point, which allocates the storage of a caller allocated out parameter.</summary>
+    /// <returns>A new, zeroed instance the caller owns.</returns>
+    [LibraryImport("GstVideo", EntryPoint = "gst_video_info_new")]
+    private static partial nint GstVideoInfoNew();
 
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstVideoInfoDmaDrm</c> under.</summary>
     /// <returns>The type of the instances of this wrapper.</returns>

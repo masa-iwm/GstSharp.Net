@@ -246,6 +246,31 @@ public abstract unsafe partial class AudioDecoder : Gst.Element
         return (Gst.FlowReturn)nativeResult;
     }
 
+    /// <summary>
+    /// Lets #GstAudioDecoder sub-classes to know the memory @allocator
+    /// used by the base class and its @params.
+    /// </summary>
+    /// <remarks>
+    /// <para>Unref the @allocator after use it.</para>
+    /// </remarks>
+    /// <param name="allocator">The <c>allocator</c> argument.</param>
+    /// <param name="params">
+    /// The <c>@params</c> argument.
+    /// The binding allocates the storage; on return the caller owns
+    /// <paramref name="params"/> and disposes it.
+    /// </param>
+    public void GetAllocator(out Gst.Allocator? allocator, out Gst.AllocationParams @params)
+    {
+        nint instanceHandle = Handle;
+        nint allocatorNative = default;
+        nint @paramsNative = GstAllocationParamsNew();
+        GstAudioDecoderGetAllocator(instanceHandle, &allocatorNative, @paramsNative);
+        System.GC.KeepAlive(this);
+        @params = Gst.AllocationParams.FromNative(@paramsNative, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_allocation_params_new returned no value.");
+        allocator = Gst.GObject.Object.FromNative<Gst.Allocator>(allocatorNative, Gst.Interop.Transfer.Full);
+    }
+
     /// <summary>The <c>gst_audio_decoder_get_audio_info</c> function.</summary>
     /// <returns>
     /// a #GstAudioInfo describing the input audio format
@@ -638,6 +663,10 @@ public abstract unsafe partial class AudioDecoder : Gst.Element
     [LibraryImport("GstAudio", EntryPoint = "gst_audio_decoder_finish_subframe")]
     private static partial int GstAudioDecoderFinishSubframe(nint dec, nint buf);
 
+    /// <summary>The <c>gst_audio_decoder_get_allocator</c> entry point.</summary>
+    [LibraryImport("GstAudio", EntryPoint = "gst_audio_decoder_get_allocator")]
+    private static partial void GstAudioDecoderGetAllocator(nint dec, nint* allocator, nint @params);
+
     /// <summary>The <c>gst_audio_decoder_get_audio_info</c> entry point.</summary>
     [LibraryImport("GstAudio", EntryPoint = "gst_audio_decoder_get_audio_info")]
     private static partial nint GstAudioDecoderGetAudioInfo(nint dec);
@@ -749,6 +778,11 @@ public abstract unsafe partial class AudioDecoder : Gst.Element
     /// <summary>The <c>gst_audio_decoder_set_use_default_pad_acceptcaps</c> entry point.</summary>
     [LibraryImport("GstAudio", EntryPoint = "gst_audio_decoder_set_use_default_pad_acceptcaps")]
     private static partial void GstAudioDecoderSetUseDefaultPadAcceptcaps(nint decoder, int use);
+
+    /// <summary>The <c>gst_allocation_params_new</c> entry point, which allocates the storage of a caller allocated out parameter.</summary>
+    /// <returns>A new, zeroed instance the caller owns.</returns>
+    [LibraryImport("Gst", EntryPoint = "gst_allocation_params_new")]
+    private static partial nint GstAllocationParamsNew();
 
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstAudioDecoder</c> under.</summary>
     /// <returns>The type of the instances of this wrapper.</returns>

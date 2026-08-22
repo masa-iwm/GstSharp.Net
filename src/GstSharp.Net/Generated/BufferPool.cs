@@ -212,6 +212,39 @@ public unsafe partial class BufferPool : Gst.Object
         System.GC.KeepAlive(config);
     }
 
+    /// <summary>Gets the @allocator and @params from @config.</summary>
+    /// <param name="config">The <c>config</c> argument.</param>
+    /// <param name="allocator">The <c>allocator</c> argument.</param>
+    /// <param name="params">
+    /// The <c>@params</c> argument.
+    /// The binding allocates the storage; on success the caller owns
+    /// <paramref name="params"/> and disposes it. On failure it is
+    /// <see langword="null"/>.
+    /// </param>
+    /// <returns>%TRUE, if the values are set.</returns>
+    public static bool ConfigGetAllocator(Gst.Structure config, out Gst.Allocator? allocator, out Gst.AllocationParams? @params)
+    {
+        ArgumentNullException.ThrowIfNull(config);
+        nint configNative = config.Handle;
+        nint allocatorNative = default;
+        nint @paramsNative = GstAllocationParamsNew();
+        int nativeResult = GstBufferPoolConfigGetAllocator(configNative, &allocatorNative, @paramsNative);
+        System.GC.KeepAlive(config);
+        if (nativeResult != 0)
+        {
+            @params = Gst.AllocationParams.FromNative(@paramsNative, Gst.Interop.Transfer.Full);
+        }
+        else
+        {
+            // The call filled nothing, so the storage goes back through
+            // the boxed free the wrapper disposes through.
+            Gst.AllocationParams.FromNative(@paramsNative, Gst.Interop.Transfer.Full)?.Dispose();
+            @params = null;
+        }
+        allocator = Gst.GObject.Object.FromNative<Gst.Allocator>(allocatorNative, Gst.Interop.Transfer.None);
+        return nativeResult != 0;
+    }
+
     /// <summary>
     /// Parses an available @config and gets the option at @index of the options API
     /// array.
@@ -378,6 +411,10 @@ public unsafe partial class BufferPool : Gst.Object
     [LibraryImport("Gst", EntryPoint = "gst_buffer_pool_config_add_option")]
     private static partial void GstBufferPoolConfigAddOption(nint config, byte* option);
 
+    /// <summary>The <c>gst_buffer_pool_config_get_allocator</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_buffer_pool_config_get_allocator")]
+    private static partial int GstBufferPoolConfigGetAllocator(nint config, nint* allocator, nint @params);
+
     /// <summary>The <c>gst_buffer_pool_config_get_option</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_buffer_pool_config_get_option")]
     private static partial nint GstBufferPoolConfigGetOption(nint config, uint index);
@@ -405,6 +442,11 @@ public unsafe partial class BufferPool : Gst.Object
     /// <summary>The <c>gst_buffer_pool_config_validate_params</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_buffer_pool_config_validate_params")]
     private static partial int GstBufferPoolConfigValidateParams(nint config, nint caps, uint size, uint minBuffers, uint maxBuffers);
+
+    /// <summary>The <c>gst_allocation_params_new</c> entry point, which allocates the storage of a caller allocated out parameter.</summary>
+    /// <returns>A new, zeroed instance the caller owns.</returns>
+    [LibraryImport("Gst", EntryPoint = "gst_allocation_params_new")]
+    private static partial nint GstAllocationParamsNew();
 
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstBufferPool</c> under.</summary>
     /// <returns>The type of the instances of this wrapper.</returns>

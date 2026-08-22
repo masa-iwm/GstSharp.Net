@@ -333,11 +333,54 @@ internal sealed class ClassEmitter
                 array);
         }
 
+        HashSet<string> imported = new(StringComparer.Ordinal);
         foreach (MarshalPlan member in surface.Members)
         {
+            imported.Add(member.EntryPoint);
             writer.WriteLine();
             CallableRenderer.WriteImport(writer, member, module.NativeLibrary);
         }
+
+        // The constructor a caller allocated out parameter takes its storage
+        // from is an entry point of the record's own library rather than of the
+        // module the member lives in, so it is imported here beside the member
+        // that calls it. One import per factory and per file: several members
+        // of one type ask for the same storage, and a type that already binds
+        // the constructor as a member of its own imported it above.
+        foreach (BoxedStorageFactory factory in StorageFactories(surface))
+        {
+            if (!imported.Add(factory.EntryPoint))
+            {
+                continue;
+            }
+
+            writer.WriteLine();
+            CallableRenderer.WriteStorageFactoryImport(writer, factory);
+        }
+    }
+
+    /// <summary>
+    /// Returns the storage constructors the members of a type call, ordered by
+    /// entry point so that the output does not depend on the order the members
+    /// happen to be planned in.
+    /// </summary>
+    /// <param name="surface">The type being emitted.</param>
+    /// <returns>The distinct factories.</returns>
+    private static IEnumerable<BoxedStorageFactory> StorageFactories(TypeSurface surface)
+    {
+        SortedDictionary<string, BoxedStorageFactory> factories = new(StringComparer.Ordinal);
+        foreach (MarshalPlan member in surface.Members)
+        {
+            foreach (ArgumentPlan argument in member.Arguments)
+            {
+                if (argument.StorageFactory is { } factory)
+                {
+                    factories[factory.EntryPoint] = factory;
+                }
+            }
+        }
+
+        return factories.Values;
     }
 
     private static void WriteProperty(CodeWriter writer, PropertyEmission property)

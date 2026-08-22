@@ -405,6 +405,31 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
         return (Gst.FlowReturn)nativeResult;
     }
 
+    /// <summary>
+    /// Lets #GstVideoDecoder sub-classes to know the memory @allocator
+    /// used by the base class and its @params.
+    /// </summary>
+    /// <remarks>
+    /// <para>Unref the @allocator after use it.</para>
+    /// </remarks>
+    /// <param name="allocator">The <c>allocator</c> argument.</param>
+    /// <param name="params">
+    /// The <c>@params</c> argument.
+    /// The binding allocates the storage; on return the caller owns
+    /// <paramref name="params"/> and disposes it.
+    /// </param>
+    public void GetAllocator(out Gst.Allocator? allocator, out Gst.AllocationParams @params)
+    {
+        nint instanceHandle = Handle;
+        nint allocatorNative = default;
+        nint @paramsNative = GstAllocationParamsNew();
+        GstVideoDecoderGetAllocator(instanceHandle, &allocatorNative, @paramsNative);
+        System.GC.KeepAlive(this);
+        @params = Gst.AllocationParams.FromNative(@paramsNative, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_allocation_params_new returned no value.");
+        allocator = Gst.GObject.Object.FromNative<Gst.Allocator>(allocatorNative, Gst.Interop.Transfer.Full);
+    }
+
     /// <summary>The <c>gst_video_decoder_get_buffer_pool</c> function.</summary>
     /// <returns>
     /// the instance of the #GstBufferPool used
@@ -1157,6 +1182,10 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     [LibraryImport("GstVideo", EntryPoint = "gst_video_decoder_finish_subframe")]
     private static partial int GstVideoDecoderFinishSubframe(nint decoder, nint frame);
 
+    /// <summary>The <c>gst_video_decoder_get_allocator</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_video_decoder_get_allocator")]
+    private static partial void GstVideoDecoderGetAllocator(nint decoder, nint* allocator, nint @params);
+
     /// <summary>The <c>gst_video_decoder_get_buffer_pool</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_decoder_get_buffer_pool")]
     private static partial nint GstVideoDecoderGetBufferPool(nint decoder);
@@ -1292,6 +1321,11 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     /// <summary>The <c>gst_video_decoder_set_use_default_pad_acceptcaps</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_decoder_set_use_default_pad_acceptcaps")]
     private static partial void GstVideoDecoderSetUseDefaultPadAcceptcaps(nint decoder, int use);
+
+    /// <summary>The <c>gst_allocation_params_new</c> entry point, which allocates the storage of a caller allocated out parameter.</summary>
+    /// <returns>A new, zeroed instance the caller owns.</returns>
+    [LibraryImport("Gst", EntryPoint = "gst_allocation_params_new")]
+    private static partial nint GstAllocationParamsNew();
 
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstVideoDecoder</c> under.</summary>
     /// <returns>The type of the instances of this wrapper.</returns>

@@ -107,12 +107,6 @@ disappears shows up here as an added line.
 
 ## Gst
 
-### CallerAllocates (3)
-
-- `gst_buffer_extract`
-- `gst_buffer_pool_config_get_allocator`
-- `gst_query_parse_nth_allocation_param`
-
 ### InstanceTransferFull (20)
 
 - `gst_buffer_append`
@@ -391,9 +385,10 @@ disappears shows up here as an added line.
 - `gst_tag_setter_add_tag_valist`
 - `gst_tag_setter_add_tag_valist_values`
 
-### OverlaySkip (38)
+### OverlaySkip (40)
 
 - `gst_allocator_free`
+- `gst_buffer_extract`
 - `gst_buffer_pool_release_buffer`
 - `gst_buffer_pool_set_config`
 - `gst_buffer_remove_meta`
@@ -416,6 +411,7 @@ disappears shows up here as an added line.
 - `gst_pad_send_event`
 - `gst_promise_reply`
 - `gst_query_new_custom`
+- `gst_query_parse_nth_allocation_param`
 - `gst_structure_get_value`
 - `gst_structure_new_static_str_empty`
 - `gst_structure_set_name_static_str`
@@ -708,16 +704,6 @@ disappears shows up here as an added line.
 
 ## GstAudio
 
-### CallerAllocates (7)
-
-- `gst_audio_buffer_map`
-- `gst_audio_decoder_get_allocator`
-- `gst_audio_encoder_get_allocator`
-- `gst_audio_info_from_caps`
-- `gst_audio_info_init`
-- `gst_dsd_info_from_caps`
-- `gst_dsd_info_init`
-
 ### LifetimePrimitive (4)
 
 - `gst_audio_converter_free`
@@ -725,10 +711,9 @@ disappears shows up here as an added line.
 - `gst_audio_stream_align_free`
 - `gst_dsd_info_free`
 
-### MovedTo (27)
+### MovedTo (22)
 
 - `gst_audio_buffer_clip`
-- `gst_audio_buffer_map`
 - `gst_audio_buffer_reorder_channels`
 - `gst_audio_buffer_truncate`
 - `gst_audio_channel_mixer_new`
@@ -740,8 +725,6 @@ disappears shows up here as an added line.
 - `gst_audio_format_from_string`
 - `gst_audio_format_get_info`
 - `gst_audio_format_to_string`
-- `gst_audio_info_from_caps`
-- `gst_audio_info_init`
 - `gst_audio_level_meta_get_info`
 - `gst_audio_meta_get_info`
 - `gst_audio_quantize_new`
@@ -750,8 +733,6 @@ disappears shows up here as an added line.
 - `gst_dsd_format_from_string`
 - `gst_dsd_format_get_width`
 - `gst_dsd_format_to_string`
-- `gst_dsd_info_from_caps`
-- `gst_dsd_info_init`
 - `gst_dsd_plane_offset_meta_get_info`
 - `gst_stream_volume_convert_volume`
 
@@ -766,11 +747,16 @@ disappears shows up here as an added line.
 - `gst_audio_ring_buffer_set_callback`
 - `gst_buffer_add_audio_downmix_meta`
 
-### OverlaySkip (3)
+### OverlaySkip (8)
 
+- `gst_audio_buffer_map`
 - `gst_audio_buffer_unmap`
+- `gst_audio_info_from_caps`
+- `gst_audio_info_init`
 - `gst_audio_ring_buffer_commit`
 - `gst_audio_ring_buffer_read`
+- `gst_dsd_info_from_caps`
+- `gst_dsd_info_init`
 
 ### UnsupportedSignature (19)
 
@@ -795,12 +781,6 @@ disappears shows up here as an added line.
 - `gst_dsd_info_set_format`
 
 ## GstBase
-
-### CallerAllocates (3)
-
-- `gst_aggregator_get_allocator`
-- `gst_base_src_get_allocator`
-- `gst_base_transform_get_allocator`
 
 ### LifetimePrimitive (4)
 
@@ -921,18 +901,13 @@ disappears shows up here as an added line.
 
 ## GstRtsp
 
-### CallerAllocates (2)
-
-- `gst_rtsp_transport_init`
-- `gst_rtsp_transport_parse`
-
 ### LifetimePrimitive (3)
 
 - `gst_rtsp_auth_param_free`
 - `gst_rtsp_message_free`
 - `gst_rtsp_url_free`
 
-### MovedTo (17)
+### MovedTo (15)
 
 - `gst_rtsp_connection_accept`
 - `gst_rtsp_connection_create`
@@ -945,16 +920,16 @@ disappears shows up here as an added line.
 - `gst_rtsp_range_to_string`
 - `gst_rtsp_transport_get_manager`
 - `gst_rtsp_transport_get_mime`
-- `gst_rtsp_transport_init`
 - `gst_rtsp_transport_new`
-- `gst_rtsp_transport_parse`
 - `gst_rtsp_url_parse`
 - `gst_rtsp_version_as_text`
 - `gst_rtsp_watch_new`
 
-### OverlaySkip (1)
+### OverlaySkip (3)
 
 - `gst_rtsp_auth_credentials_free`
+- `gst_rtsp_transport_init`
+- `gst_rtsp_transport_parse`
 
 ### UnsupportedSignature (19)
 
@@ -980,29 +955,25 @@ disappears shows up here as an added line.
 
 ## GstSdp
 
-### CallerAllocates (4)
-
-- `gst_sdp_media_add_media_from_structure`
-- `gst_sdp_media_init`
-- `gst_sdp_media_set_media_from_caps`
-- `gst_sdp_message_init`
-
 ### LifetimePrimitive (1)
 
 - `gst_sdp_message_free`
 
-### MovedTo (10)
+### MovedTo (8)
 
 - `gst_sdp_media_add_media_from_structure`
-- `gst_sdp_media_init`
 - `gst_sdp_media_new`
 - `gst_sdp_media_set_media_from_caps`
 - `gst_sdp_message_as_uri`
-- `gst_sdp_message_init`
 - `gst_sdp_message_new`
 - `gst_sdp_message_new_from_text`
 - `gst_sdp_message_parse_buffer`
 - `gst_sdp_message_parse_uri`
+
+### OverlaySkip (2)
+
+- `gst_sdp_media_init`
+- `gst_sdp_message_init`
 
 ### UnsupportedSignature (8)
 
@@ -1016,20 +987,6 @@ disappears shows up here as an added line.
 - `gst_sdp_time_set`
 
 ## GstVideo
-
-### CallerAllocates (11)
-
-- `gst_video_blend_scale_linear_RGBA`
-- `gst_video_decoder_get_allocator`
-- `gst_video_encoder_get_allocator`
-- `gst_video_frame_map`
-- `gst_video_frame_map_id`
-- `gst_video_info_dma_drm_from_caps`
-- `gst_video_info_dma_drm_from_video_info`
-- `gst_video_info_dma_drm_init`
-- `gst_video_info_dma_drm_to_video_info`
-- `gst_video_info_from_caps`
-- `gst_video_info_init`
 
 ### InstanceTransferFull (1)
 
@@ -1048,7 +1005,7 @@ disappears shows up here as an added line.
 - `gst_video_vbi_encoder_free`
 - `gst_video_vbi_parser_free`
 
-### MovedTo (102)
+### MovedTo (96)
 
 - `gst_ancillary_meta_get_info`
 - `gst_navigation_event_get_coordinates`
@@ -1123,14 +1080,8 @@ disappears shows up here as an added line.
 - `gst_video_format_get_palette`
 - `gst_video_format_to_fourcc`
 - `gst_video_format_to_string`
-- `gst_video_frame_map`
-- `gst_video_frame_map_id`
 - `gst_video_gl_texture_upload_meta_get_info`
-- `gst_video_info_dma_drm_from_caps`
 - `gst_video_info_dma_drm_from_video_info`
-- `gst_video_info_dma_drm_init`
-- `gst_video_info_from_caps`
-- `gst_video_info_init`
 - `gst_video_interlace_mode_from_string`
 - `gst_video_interlace_mode_to_string`
 - `gst_video_mastering_display_info_from_string`
@@ -1162,9 +1113,16 @@ disappears shows up here as an added line.
 - `gst_video_scaler_combine_packed_YUV`
 - `gst_video_scaler_new`
 
-### OverlaySkip (1)
+### OverlaySkip (8)
 
+- `gst_video_blend_scale_linear_RGBA`
+- `gst_video_frame_map`
+- `gst_video_frame_map_id`
 - `gst_video_frame_unmap`
+- `gst_video_info_dma_drm_from_caps`
+- `gst_video_info_dma_drm_init`
+- `gst_video_info_from_caps`
+- `gst_video_info_init`
 
 ### UnsupportedSignature (52)
 

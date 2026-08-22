@@ -93,7 +93,73 @@ public sealed partial class Query
             ?? throw new InvalidOperationException("gst_query_new_custom returned no query.");
     }
 
+    /// <summary>
+    /// Reads one entry of the allocator array of an allocation query.
+    /// </summary>
+    /// <param name="index">
+    /// Which entry to read, below <see cref="GetNAllocationParams"/>.
+    /// </param>
+    /// <param name="allocator">
+    /// The allocator of the entry, which may be <see langword="null"/> when the
+    /// element that answered named none. The caller owns it and disposes it.
+    /// </param>
+    /// <param name="params">
+    /// The allocation parameters of the entry. The binding allocates the
+    /// storage; on return the caller owns it and disposes it.
+    /// </param>
+    /// <remarks>
+    /// <para>
+    /// This is <c>gst_query_parse_nth_allocation_param</c>, which is hand
+    /// written for its range behaviour. The C function returns <c>void</c> and
+    /// leaves both of its out parameters exactly as it found them when
+    /// <paramref name="index"/> is past the end of the array, so a caller has
+    /// no way of telling an empty entry from one that was never read. The range
+    /// is checked here instead and answered with an exception, which is the
+    /// contract the hand written surface of the binding keeps.
+    /// </para>
+    /// <para>
+    /// The parameters are storage the C function fills rather than a value it
+    /// hands out, and the binding allocates it with
+    /// <c>gst_allocation_params_new</c>: the library sizes and zeroes the
+    /// record, and disposing the wrapper is the matching free.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// <paramref name="index"/> is not below <see cref="GetNAllocationParams"/>.
+    /// </exception>
+    public unsafe void ParseNthAllocationParam(uint index, out Gst.Allocator? allocator, out AllocationParams @params)
+    {
+        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(index, GetNAllocationParams());
+
+        nint handle = Handle;
+        nint allocatorNative = 0;
+        nint paramsNative = GstAllocationParamsNew();
+        GstQueryParseNthAllocationParam(handle, index, &allocatorNative, paramsNative);
+        GC.KeepAlive(this);
+
+        allocator = Gst.GObject.Object.FromNative<Gst.Allocator>(allocatorNative, Transfer.Full);
+        @params = AllocationParams.FromNative(paramsNative, Transfer.Full)
+            ?? throw new InvalidOperationException("gst_allocation_params_new returned no value.");
+    }
+
     /// <summary>The <c>gst_query_new_custom</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_query_new_custom")]
     private static partial nint GstQueryNewCustom(int type, nint structure);
+
+    /// <summary>The <c>gst_query_parse_nth_allocation_param</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_query_parse_nth_allocation_param")]
+    private static unsafe partial void GstQueryParseNthAllocationParam(
+        nint query,
+        uint index,
+        nint* allocator,
+        nint @params);
+
+    /// <summary>
+    /// The <c>gst_allocation_params_new</c> entry point, which allocates the
+    /// storage the parse above fills.
+    /// </summary>
+    /// <returns>A new, zeroed instance the caller owns.</returns>
+    [LibraryImport("Gst", EntryPoint = "gst_allocation_params_new")]
+    private static partial nint GstAllocationParamsNew();
 }

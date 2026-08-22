@@ -54,6 +54,18 @@ internal static class CallableRenderer
         "boxed value are not written back.",
     ];
 
+    /// <summary>
+    /// The note of a destination the overlays moved off the out position. The
+    /// gir calls the parameter storage the callee fills, and the C function
+    /// really reads and updates what is already in it, so an instance that was
+    /// never initialised is the one way of calling the member that does not
+    /// work.
+    /// </summary>
+    private static readonly string[] RedirectedDestinationNote =
+    [
+        "Must be an initialised instance; the call updates it in place.",
+    ];
+
     /// <summary>Writes the public member of a plan.</summary>
     /// <param name="writer">The target writer.</param>
     /// <param name="plan">The plan to write.</param>
@@ -91,6 +103,23 @@ internal static class CallableRenderer
         writer.WriteLine(
             "private static partial " + plan.Return.RawType + " " + plan.NativeName
             + "(" + string.Join(", ", parameters) + ");");
+    }
+
+    /// <summary>
+    /// Writes the <c>LibraryImport</c> of the constructor a caller allocated
+    /// out parameter takes its storage from.
+    /// </summary>
+    /// <param name="writer">The target writer.</param>
+    /// <param name="factory">The constructor to import.</param>
+    internal static void WriteStorageFactoryImport(CodeWriter writer, BoxedStorageFactory factory)
+    {
+        writer.WriteLine(
+            "/// <summary>The <c>" + factory.EntryPoint
+            + "</c> entry point, which allocates the storage of a caller allocated out parameter.</summary>");
+        writer.WriteLine("/// <returns>A new, zeroed instance the caller owns.</returns>");
+        writer.WriteLine(
+            "[LibraryImport(\"" + factory.Library + "\", EntryPoint = \"" + factory.EntryPoint + "\")]");
+        writer.WriteLine("private static partial nint " + factory.NativeName + "();");
     }
 
     /// <summary>Writes the delegate and the trampoline of a callback.</summary>
@@ -166,9 +195,33 @@ internal static class CallableRenderer
         _ => "Value",
     };
 
-    private static string Parameters(MarshalPlan plan)
+    /// <summary>
+    /// Returns the visible parameters of a member, in the order the public
+    /// signature spells them.
+    /// </summary>
+    /// <param name="plan">The member being written.</param>
+    /// <returns>The visible arguments.</returns>
+    /// <remarks>
+    /// <para>
+    /// The order is the gir order for all but two shapes, and the native call,
+    /// the prologue and the import keep the gir order in every case: this is
+    /// the public signature alone.
+    /// </para>
+    /// <para>
+    /// A caller allocated boxed out is storage the binding provides rather than
+    /// an input, so it trails the arguments the caller chooses, which is where
+    /// .NET puts an out parameter. A record the overlays redirected off the out
+    /// position is the destination the C function works on, so it leads them,
+    /// which is where the instance of an ordinary method sits — the gir spells
+    /// <c>gst_sdp_media_set_media_from_caps</c> with its media last only
+    /// because it calls it an out.
+    /// </para>
+    /// </remarks>
+    private static List<ArgumentPlan> VisibleParameters(MarshalPlan plan)
     {
-        List<string> parameters = [];
+        List<ArgumentPlan> leading = [];
+        List<ArgumentPlan> middle = [];
+        List<ArgumentPlan> trailing = [];
         foreach (ArgumentPlan argument in plan.Arguments)
         {
             if (argument.IsHidden)
@@ -176,6 +229,34 @@ internal static class CallableRenderer
                 continue;
             }
 
+            if (argument.Kind == ArgumentKind.Instance)
+            {
+                leading.Add(argument);
+            }
+            else if (argument.IsRedirectedDestination)
+            {
+                leading.Add(argument);
+            }
+            else if (argument.Kind == ArgumentKind.CallerAllocatedBoxed)
+            {
+                trailing.Add(argument);
+            }
+            else
+            {
+                middle.Add(argument);
+            }
+        }
+
+        leading.AddRange(middle);
+        leading.AddRange(trailing);
+        return leading;
+    }
+
+    private static string Parameters(MarshalPlan plan)
+    {
+        List<string> parameters = [];
+        foreach (ArgumentPlan argument in VisibleParameters(plan))
+        {
             string prefix;
             if (argument.Kind == ArgumentKind.Instance)
             {
@@ -209,13 +290,8 @@ internal static class CallableRenderer
             plan.Callable,
             GeneratedRemarks(plan));
 
-        foreach (ArgumentPlan argument in plan.Arguments)
+        foreach (ArgumentPlan argument in VisibleParameters(plan))
         {
-            if (argument.IsHidden)
-            {
-                continue;
-            }
-
             string fallback = argument.Kind == ArgumentKind.Instance
                 ? "The instance the method is called on."
                 : "The <c>" + (argument.Source?.Name ?? argument.Name) + "</c> argument.";
@@ -270,12 +346,46 @@ internal static class CallableRenderer
     /// <param name="plan">The member being documented.</param>
     /// <param name="argument">The parameter being documented.</param>
     /// <returns>The note lines.</returns>
-    private static IReadOnlyList<string>? ParamNote(MarshalPlan plan, ArgumentPlan argument) => argument.Kind switch
+    private static IReadOnlyList<string>? ParamNote(MarshalPlan plan, ArgumentPlan argument)
     {
-        ArgumentKind.ConsumedHandle => ConsumptionParamNote(argument),
-        ArgumentKind.GValue => GValueParamNote(plan, argument),
-        _ => null,
-    };
+        // A destination the overlays moved off the out position reads as an
+        // ordinary argument on the surface, and the one thing that makes it
+        // different is the one thing a caller has to know.
+        if (argument.IsRedirectedDestination)
+        {
+            return RedirectedDestinationNote;
+        }
+
+        return argument.Kind switch
+        {
+            ArgumentKind.ConsumedHandle => ConsumptionParamNote(argument),
+            ArgumentKind.GValue => GValueParamNote(plan, argument),
+            ArgumentKind.CallerAllocatedBoxed => CallerAllocatedParamNote(argument),
+            _ => null,
+        };
+    }
+
+    /// <summary>
+    /// Returns the note of a caller allocated boxed out parameter, which states
+    /// who allocated the storage and who releases it: the gir describes the C
+    /// contract, where the caller declares the structure and the binding's
+    /// caller never sees one.
+    /// </summary>
+    /// <param name="argument">The out argument.</param>
+    /// <returns>The note lines.</returns>
+    private static IReadOnlyList<string> CallerAllocatedParamNote(ArgumentPlan argument) =>
+        argument.IsNullable
+            ?
+            [
+                "The binding allocates the storage; on success the caller owns",
+                "<paramref name=\"" + DocName(argument.Name) + "\"/> and disposes it. On failure it is",
+                "<see langword=\"null\"/>.",
+            ]
+            :
+            [
+                "The binding allocates the storage; on return the caller owns",
+                "<paramref name=\"" + DocName(argument.Name) + "\"/> and disposes it.",
+            ];
 
     /// <summary>
     /// The entry points whose writable <c>GValue</c> parameter must arrive
@@ -730,9 +840,25 @@ internal static class CallableRenderer
             writer.WriteLine("Gst.GLib.GException.ThrowIfSet(ref errorNative);");
         }
 
+        // Storage the binding allocated goes first. Every other out conversion
+        // may throw — a handle whose GType does not match the wrapper it is
+        // asked for does — and a throw between the call and this hand over
+        // would leave nobody holding the allocation. Nothing here depends on
+        // the other conversions, so the order costs nothing.
         foreach (ArgumentPlan argument in plan.Arguments)
         {
-            WriteEpilogue(writer, plan, argument);
+            if (argument.Kind == ArgumentKind.CallerAllocatedBoxed)
+            {
+                WriteEpilogue(writer, plan, argument);
+            }
+        }
+
+        foreach (ArgumentPlan argument in plan.Arguments)
+        {
+            if (argument.Kind != ArgumentKind.CallerAllocatedBoxed)
+            {
+                WriteEpilogue(writer, plan, argument);
+            }
         }
 
         WriteReturn(writer, plan);
@@ -791,6 +917,22 @@ internal static class CallableRenderer
     /// </remarks>
     private static void WriteFailedResultRelease(CodeWriter writer, MarshalPlan plan)
     {
+        // Storage the binding allocated for an out parameter is released the
+        // same way, and for the same reason: the throw below runs before the
+        // epilogue that would have handed it over.
+        foreach (ArgumentPlan argument in plan.Arguments)
+        {
+            if (argument.Kind != ArgumentKind.CallerAllocatedBoxed)
+            {
+                continue;
+            }
+
+            writer.WriteLine("if (errorNative != 0)");
+            writer.OpenBlock();
+            writer.WriteLine(FromNative(argument, argument.Name + "Native") + "?.Dispose();");
+            writer.CloseBlock();
+        }
+
         ReturnPlan value = plan.Return;
         if (value.IsVoid || value.Transfer is not (GirTransfer.Full or GirTransfer.Floating))
         {
@@ -934,7 +1076,8 @@ internal static class CallableRenderer
     /// Tests whether a member materializes one of its arguments: an allocation
     /// made for the call that no scope reclaims. The UTF-8 copy of a string the
     /// callee takes ownership of is one, and so is the value minted for a
-    /// consuming argument — the reference or the copy the callee takes over.
+    /// consuming argument — the reference or the copy the callee takes over —
+    /// and the storage a caller allocated boxed out parameter is filled into.
     /// </summary>
     /// <param name="plan">The member being written.</param>
     /// <returns><see langword="true"/> when one of the arguments materializes.</returns>
@@ -950,7 +1093,8 @@ internal static class CallableRenderer
     {
         foreach (ArgumentPlan argument in plan.Arguments)
         {
-            if (argument.Kind is ArgumentKind.Utf8Owned or ArgumentKind.ConsumedHandle)
+            if (argument.Kind is ArgumentKind.Utf8Owned or ArgumentKind.ConsumedHandle
+                or ArgumentKind.CallerAllocatedBoxed)
             {
                 return true;
             }
@@ -1004,6 +1148,13 @@ internal static class CallableRenderer
                 writer.WriteLine("ArgumentNullException.ThrowIfNull(" + name + ");");
                 return;
 
+            // Storage the binding allocates itself. There is nothing the
+            // caller could hand over and nothing to validate, and the guard
+            // phase must stay free of allocations for the phase order to mean
+            // anything.
+            case ArgumentKind.CallerAllocatedBoxed:
+                return;
+
             // Only the read-only shape is guarded: an empty value has no type
             // for the callee to read, and the C side answers it with a
             // g_critical and a silent no-op. A ref value is storage the callee
@@ -1049,6 +1200,11 @@ internal static class CallableRenderer
 
             case ArgumentKind.Handle when argument.Direction == ArgumentDirection.In:
                 writer.WriteLine("nint " + argument.Name + "Native = " + HandleRead(argument) + ";");
+                return;
+
+            // The storage of a caller allocated out is allocated in the third
+            // phase, after every read that can throw, so nothing is read here.
+            case ArgumentKind.CallerAllocatedBoxed:
                 return;
 
             case ArgumentKind.ConsumedHandle:
@@ -1138,6 +1294,14 @@ internal static class CallableRenderer
 
             case ArgumentKind.ConsumedHandle:
                 writer.WriteLine("nint " + name + "Owned = " + Minted(argument) + ";");
+                return;
+
+            // The library sizes and zeroes the record the callee fills, which
+            // is the last step of the prologue for the same reason a mint is:
+            // nothing but the epilogue releases it again.
+            case ArgumentKind.CallerAllocatedBoxed:
+                writer.WriteLine(
+                    "nint " + name + "Native = " + argument.StorageFactory!.NativeName + "();");
                 return;
 
             case ArgumentKind.Callback:
@@ -1257,6 +1421,9 @@ internal static class CallableRenderer
             case ArgumentKind.ConsumedHandle:
                 return name + "Owned";
 
+            case ArgumentKind.CallerAllocatedBoxed:
+                return name + "Native";
+
             case ArgumentKind.GValue:
                 // The pinned address of the layout field inside the caller's
                 // value, taken by the fixed scope that wraps the call.
@@ -1292,6 +1459,12 @@ internal static class CallableRenderer
         ArgumentKind.Wrapper => "new " + TrimNullable(argument.PublicType) + "(" + source + ")",
         ArgumentKind.Utf8 => StringConversion(argument.Transfer, source),
         ArgumentKind.Handle => HandleConversion(argument.Flavor, TrimNullable(argument.PublicType), source, argument.Transfer),
+
+        // The storage was allocated by the binding, so the wrapper adopts it
+        // whatever the gir says the C function transfers: what it describes is
+        // the caller's own structure, which the binding is.
+        ArgumentKind.CallerAllocatedBoxed =>
+            TrimNullable(argument.PublicType) + ".FromNative(" + source + ", Gst.Interop.Transfer.Full)",
         ArgumentKind.Strv => "Gst.Interop.GMarshal.StrvToArray(" + source + ", free: "
             + (argument.Transfer == GirTransfer.None ? "false" : "true") + ")",
 
@@ -1336,6 +1509,12 @@ internal static class CallableRenderer
         }
 
         string name = argument.Name;
+        if (argument.Kind == ArgumentKind.CallerAllocatedBoxed)
+        {
+            WriteCallerAllocatedEpilogue(writer, argument);
+            return;
+        }
+
         if (argument.Kind == ArgumentKind.ArrayOut)
         {
             WriteArrayConversion(
@@ -1351,6 +1530,54 @@ internal static class CallableRenderer
         }
 
         writer.WriteLine(name + " = " + FromNative(argument, name + "Native") + ";");
+    }
+
+    /// <summary>
+    /// Hands the storage of a caller allocated out parameter to the caller, or
+    /// frees it again when the call reported that it filled nothing.
+    /// </summary>
+    /// <param name="writer">The target writer.</param>
+    /// <param name="argument">The out argument.</param>
+    /// <remarks>
+    /// <para>
+    /// The wrapper adopts the storage, so disposing it is the free the
+    /// allocation asks for and the caller owes exactly one of them. A callee
+    /// that answers a <c>gboolean</c> leaves the record untouched when it
+    /// answers false — <c>gst_video_info_dma_drm_from_video_info</c> returns
+    /// before it writes anything — so the storage is released here rather than
+    /// handed over zeroed, and the parameter is null.
+    /// </para>
+    /// <para>
+    /// The wrap cannot fail: the constructor of the record does not answer
+    /// NULL, and a wrapper of a non-zero pointer is never null. The throw says
+    /// so rather than suppressing the nullability with an operator that would
+    /// hide a real one.
+    /// </para>
+    /// </remarks>
+    private static void WriteCallerAllocatedEpilogue(CodeWriter writer, ArgumentPlan argument)
+    {
+        string name = argument.Name;
+        string adopt = FromNative(argument, name + "Native");
+        if (!argument.IsNullable)
+        {
+            writer.WriteLine(name + " = " + adopt);
+            writer.WriteLine(
+                "    ?? throw new InvalidOperationException(\""
+                + argument.StorageFactory!.EntryPoint + " returned no value.\");");
+            return;
+        }
+
+        writer.WriteLine("if (" + ResultLocal + " != 0)");
+        writer.OpenBlock();
+        writer.WriteLine(name + " = " + adopt + ";");
+        writer.CloseBlock();
+        writer.WriteLine("else");
+        writer.OpenBlock();
+        writer.WriteLine("// The call filled nothing, so the storage goes back through");
+        writer.WriteLine("// the boxed free the wrapper disposes through.");
+        writer.WriteLine(adopt + "?.Dispose();");
+        writer.WriteLine(name + " = null;");
+        writer.CloseBlock();
     }
 
     private static void WriteReturn(CodeWriter writer, MarshalPlan plan)

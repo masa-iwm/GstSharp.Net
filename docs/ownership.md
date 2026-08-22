@@ -216,6 +216,54 @@ argument, so the caller keeps what it passed and still disposes it, and `null`
 clears the property. A property that is construct-only, or that the gir marks
 read-only, has no setter at all.
 
+## Out parameters whose storage the caller provides
+
+A C function that fills a structure the caller declared —
+`gst_base_src_get_allocator` writes a `GstAllocationParams`,
+`gst_video_info_dma_drm_to_video_info` a `GstVideoInfo` — has no out parameter
+in the usual sense: it is handed the address of storage that already exists and
+writes into it. The binding provides that storage from the zero argument
+constructor the record declares (`gst_allocation_params_new`,
+`gst_video_info_new`, `gst_video_info_dma_drm_new`), which is what makes the
+size the library's business and pairs the allocation with the registered boxed
+free:
+
+| Shape | What the caller gets | Who releases it |
+| --- | --- | --- |
+| caller-allocated boxed out | a wrapper that owns the record the call filled | **the caller**, by disposing it |
+
+The parameter is not nullable when the C function returns `void`, because the
+record is filled by the time the call returns. It **is** nullable when the C
+function answers a `gboolean`: a false answer means the record was never
+written, so the binding releases the storage rather than handing back a zeroed
+value, and the parameter is `null`. `BufferPool.ConfigGetAllocator` is that
+shape, and the allocator beside it is `transfer none`, so its wrapper is the
+interned one and is not the caller's to dispose.
+
+Three of these out parameters are not storage but a *mapping*, and those are
+hand written scopes rather than out parameters — see below.
+
+## The two mapping scopes
+
+`Gst.Video.VideoFrame.MapScope` and `Gst.Audio.AudioBuffer.MapScope` are what
+`gst_video_frame_map`, `gst_video_frame_map_id` and `gst_audio_buffer_map`
+become. The C functions fill a `GstVideoFrame` or a `GstAudioBuffer` the caller
+declared, and what is in it is a mapping that `gst_video_frame_unmap` or
+`gst_audio_buffer_unmap` has to release again; the plane spans point into
+memory that belongs to the buffer and are only valid until then. Both scopes
+therefore follow `Gst.Buffer.MapScope`: a `ref struct` that carries the
+structure, hands out `Span<byte>` planes, releases the mapping in `Dispose` and
+refuses every accessor afterwards. Releasing twice does nothing the second
+time.
+
+Each scope also holds the `Gst.Buffer` wrapper it was created from, and for the
+audio one that is a correctness requirement rather than a convenience:
+`gst_audio_buffer_map` takes no reference of the buffer at all, and
+`gst_video_frame_map` takes none either when
+`Gst.Video.VideoFrameMapFlags.NoRef` is set. Without the scope holding it,
+nothing would stop the collector from finalizing a wrapper whose last use was
+the call that produced the mapping.
+
 ## The GType registry
 
 Every binding assembly fills a `GType` to managed-type registry from a

@@ -988,7 +988,12 @@ internal sealed class MarshalPlanner
             return fixedArray;
         }
 
+        ArgumentDirection declared = direction;
         direction = OverriddenDirection(callable, parameter, mapped, direction, overlay);
+
+        // A destination the overlays moved off the out position is the storage
+        // the C function works on, not a result the member produces.
+        bool redirectedDestination = direction == ArgumentDirection.In && declared != ArgumentDirection.In;
 
         if (parameter.Type is GirArrayRef array)
         {
@@ -1013,8 +1018,25 @@ internal sealed class MarshalPlanner
             transfer,
             nullable,
             context,
-            callerAllocates: CallerAllocatesOf(callable, parameter));
+            // A destination that was moved onto `in` is not storage the member
+            // produces, whatever the gir annotated beside the direction. The
+            // overlay entry says so as well; clearing it here is what makes
+            // that statement a second reading of the correction rather than
+            // the only thing holding it up.
+            callerAllocates: !redirectedDestination && CallerAllocatesOf(callable, parameter),
+            booleanCallee: IsBooleanCallee(callable, context),
+            redirectedDestination: redirectedDestination);
     }
+
+    /// <summary>
+    /// Tests whether the callable answers a <c>gboolean</c>, which is what says
+    /// that a caller allocated out parameter is only filled on success.
+    /// </summary>
+    /// <param name="callable">The callable being planned.</param>
+    /// <param name="context">The type the member is emitted into.</param>
+    /// <returns><see langword="true"/> for a <c>gboolean</c> return.</returns>
+    private bool IsBooleanCallee(GirCallable callable, PlanningContext context) =>
+        _types.Map(callable.ReturnValue.Type, context.Namespace).Kind == MarshalKind.Boolean;
 
     /// <summary>
     /// Applies the <c>direction</c> correction of the overlays to a parameter
@@ -1053,6 +1075,16 @@ internal sealed class MarshalPlanner
     /// pointer to managed storage would hand native code the address of
     /// something whose size and layout it does not agree with.
     /// </para>
+    /// <para>
+    /// <c>in</c> is the one correction a pointer to a <em>record</em> takes.
+    /// The gir of <c>gst_sdp_media_set_media_from_caps</c> calls its
+    /// <c>media</c> a caller allocated out, and the C function frees the media
+    /// string that is already there and appends to <c>media-&gt;fmts</c>: it
+    /// requires an initialised <c>GstSDPMedia</c> and would walk uninitialised
+    /// storage otherwise. Corrected onto <c>in</c> the parameter plans as the
+    /// ordinary handle it always was, which is why the redirect is spelled here
+    /// and not as a marshalling of its own.
+    /// </para>
     /// </remarks>
     private ArgumentDirection OverriddenDirection(
         GirCallable callable,
@@ -1066,14 +1098,27 @@ internal sealed class MarshalPlanner
             return declared;
         }
 
-        if (mapped.Kind is not (MarshalKind.PlainStruct or MarshalKind.GValue)
-            || parameter.Type is GirArrayRef
-            || !parameter.Type.IsPointer)
+        // Each correction is checked on its own terms. A record the gir calls a
+        // caller allocated out and the C function really reads and updates in
+        // place is the third shape, and it is the only one `in` applies to: the
+        // parameter plans as the ordinary handle it always was, and the
+        // redirect clears caller-allocates with it, so nothing downstream still
+        // believes the member produces storage. `out` and `ref` stay what they
+        // were, the two halves of a pointer to a plain structure or to a
+        // GValue.
+        bool corrected = parameter.Type is not GirArrayRef
+            && parameter.Type.IsPointer
+            && (overridden == ArgumentDirection.In
+                ? mapped.Kind is MarshalKind.Boxed or MarshalKind.OpaqueRecord or MarshalKind.MiniObject
+                : mapped.Kind is MarshalKind.PlainStruct or MarshalKind.GValue);
+
+        if (!corrected)
         {
             _diagnostics.Warn(
                 "GEN0017",
                 $"The direction override of '{AnnotationKeyOf(callable)}#{parameter.Name}' is ignored: only a "
-                + "pointer to a plain structure or to a GValue can be re-planned as an out or a ref parameter.");
+                + "pointer to a plain structure or to a GValue can be re-planned as an out or a ref parameter, "
+                + "and only a pointer to a record can be re-planned as an in parameter.");
             return declared;
         }
 
@@ -1178,7 +1223,9 @@ internal sealed class MarshalPlanner
         bool nullable,
         PlanningContext context,
         bool isReturn = false,
-        bool callerAllocates = false)
+        bool callerAllocates = false,
+        bool booleanCallee = false,
+        bool redirectedDestination = false)
     {
         bool byPointer = direction != ArgumentDirection.In;
         string pointerSuffix = byPointer ? "*" : string.Empty;
@@ -1296,7 +1343,16 @@ internal sealed class MarshalPlanner
             case MarshalKind.MiniObject:
             case MarshalKind.Boxed:
             case MarshalKind.OpaqueRecord:
-                return PlanHandle(mapped, name, direction, transfer, nullable, isReturn, callerAllocates);
+                return PlanHandle(
+                    mapped,
+                    name,
+                    direction,
+                    transfer,
+                    nullable,
+                    isReturn,
+                    callerAllocates,
+                    booleanCallee,
+                    redirectedDestination);
 
             case MarshalKind.PlainStruct:
                 if (mapped.Symbol is not { } record || !IsEmitted(record))
@@ -1473,7 +1529,9 @@ internal sealed class MarshalPlanner
         GirTransfer transfer,
         bool nullable,
         bool isReturn,
-        bool callerAllocates)
+        bool callerAllocates,
+        bool booleanCallee = false,
+        bool redirectedDestination = false)
     {
         if (mapped.Symbol is not { } symbol || UnusableTypes.Contains(mapped.PublicType))
         {
@@ -1512,11 +1570,35 @@ internal sealed class MarshalPlanner
             // The callee writes a whole C structure into storage the caller
             // provides. A handle is one pointer wide in C#, and a GstVideoFrame
             // is some six hundred bytes, so the call would run off the end of
-            // the local it is handed. Only a plain struct, which C# spells with
-            // the size of the C type, can carry that contract.
+            // the local it is handed. A boxed record whose own library can
+            // allocate one is the case that has an answer: the binding calls
+            // that constructor, which sizes and zeroes the storage and pairs it
+            // with the registered boxed free the wrapper disposes through.
+            // Everything else stays rejected.
             if (callerAllocates)
             {
-                return Reject(SkipReason.CallerAllocates);
+                if (StorageFactoryOf(symbol) is not { } factory)
+                {
+                    return Reject(SkipReason.CallerAllocates);
+                }
+
+                return new ArgumentPlan
+                {
+                    Kind = ArgumentKind.CallerAllocatedBoxed,
+                    Name = name,
+                    PublicType = booleanCallee ? publicType + "?" : publicType,
+                    RawType = NativeInt,
+                    Direction = direction,
+                    Transfer = transfer,
+                    Flavor = flavor,
+                    StorageFactory = factory,
+
+                    // The gir marks most of these optional, which is the C
+                    // caller's freedom to pass NULL. The binding has no such
+                    // shape: it always provides the storage and always hands
+                    // the value back.
+                    IsNullable = booleanCallee,
+                };
             }
 
             return new ArgumentPlan
@@ -1586,7 +1668,58 @@ internal sealed class MarshalPlanner
             Transfer = transfer,
             Flavor = flavor,
             IsNullable = nullable,
+            IsRedirectedDestination = redirectedDestination,
         };
+    }
+
+    /// <summary>
+    /// Returns the constructor the storage of a caller allocated out parameter
+    /// is taken from, or <see langword="null"/> when the record has none.
+    /// </summary>
+    /// <param name="symbol">The record the callee fills.</param>
+    /// <returns>The factory, or <see langword="null"/>.</returns>
+    /// <remarks>
+    /// Only a boxed record qualifies, and only through a <c>&lt;constructor&gt;</c>
+    /// that takes nothing, is named <c>_new</c> and hands the value over. That
+    /// is the one allocation whose size the library itself decides and whose
+    /// free is the registered boxed free the wrapper already disposes through.
+    /// An opaque record has no boxed free to pair with, and a plain structure
+    /// is spelled with the size of the C type in C# and needs none of this.
+    /// </remarks>
+    private BoxedStorageFactory? StorageFactoryOf(GirSymbol symbol)
+    {
+        if (_classifier.Classify(symbol.Declaration) != TypeKind.Boxed
+            || symbol.Declaration is not GirTypeDeclaration declaration
+            || ModuleMap.Find(symbol.Namespace.Name) is not { } module)
+        {
+            return null;
+        }
+
+        foreach (GirFunction constructor in declaration.Constructors)
+        {
+            if (constructor.Parameters.Count != 0
+                || constructor.Throws
+                || constructor.CIdentifier is not { } identifier
+                || !identifier.EndsWith("_new", StringComparison.Ordinal)
+                || constructor.ReturnValue.Transfer != GirTransfer.Full
+                || _overlays.IsSkipped(identifier))
+            {
+                continue;
+            }
+
+            MappedType returned = _types.Map(constructor.ReturnValue.Type, symbol.Namespace);
+            if (returned.Symbol?.QualifiedName != symbol.QualifiedName)
+            {
+                continue;
+            }
+
+            return new BoxedStorageFactory(
+                identifier,
+                NameMapper.EscapeIdentifier(NameMapper.ToPascalCase(identifier)),
+                module.NativeLibrary);
+        }
+
+        return null;
     }
 
     private ArgumentPlan? PlanArrayArgument(

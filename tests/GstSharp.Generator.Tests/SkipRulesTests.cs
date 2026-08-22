@@ -140,8 +140,12 @@ public sealed class SkipRulesTests
         // projection, for the same hand-written-stays-canonical reason as the
         // consuming fifteen, plus the three *_value_static_str entries of the
         // static string family and gst_iterator_next, whose out value would
-        // bind beside the typed Iterator.Items&lt;T&gt;. The last two joined
-        // with the holders of the fundamental value containers:
+        // bind beside the typed Iterator.Items&lt;T&gt;. Eighteen more joined
+        // with the caller allocated out parameters: six whose storage is a
+        // scope, a span or a range check and is hand written for it, and
+        // twelve whose whole job is to initialise a record the binding already
+        // allocates through a _new or _new_from_caps sibling. The last two
+        // joined with the holders of the fundamental value containers:
         // gst_value_unique_list_prepend_value can only raise a critical in
         // 1.28, and gst_flagset_register is the one function of a fundamental
         // that the containers were not designed for.
@@ -163,9 +167,13 @@ public sealed class SkipRulesTests
                 "gst_app_sink_set_simple_callbacks",
                 "gst_app_src_push_buffer",
                 "gst_app_src_set_simple_callbacks",
+                "gst_audio_buffer_map",
                 "gst_audio_buffer_unmap",
+                "gst_audio_info_from_caps",
+                "gst_audio_info_init",
                 "gst_audio_ring_buffer_commit",
                 "gst_audio_ring_buffer_read",
+                "gst_buffer_extract",
                 "gst_buffer_pool_release_buffer",
                 "gst_buffer_pool_set_config",
                 "gst_buffer_remove_meta",
@@ -174,6 +182,8 @@ public sealed class SkipRulesTests
                 "gst_caps_features_new_single_static_str",
                 "gst_caps_new_static_str_empty_simple",
                 "gst_caps_set_value_static_str",
+                "gst_dsd_info_from_caps",
+                "gst_dsd_info_init",
                 "gst_element_post_message",
                 "gst_element_send_event",
                 "gst_encoding_container_profile_add_profile",
@@ -189,7 +199,12 @@ public sealed class SkipRulesTests
                 "gst_pad_send_event",
                 "gst_promise_reply",
                 "gst_query_new_custom",
+                "gst_query_parse_nth_allocation_param",
                 "gst_rtsp_auth_credentials_free",
+                "gst_rtsp_transport_init",
+                "gst_rtsp_transport_parse",
+                "gst_sdp_media_init",
+                "gst_sdp_message_init",
                 "gst_structure_get_value",
                 "gst_structure_new_static_str_empty",
                 "gst_structure_set_name_static_str",
@@ -205,8 +220,15 @@ public sealed class SkipRulesTests
                 "gst_value_compare",
                 "gst_value_serialize",
                 "gst_value_unique_list_prepend_value",
+                "gst_video_blend_scale_linear_RGBA",
+                "gst_video_frame_map",
+                "gst_video_frame_map_id",
                 "gst_video_frame_unmap",
-                "gst_webrtc_session_description_new",
+                "gst_video_info_dma_drm_from_caps",
+                "gst_video_info_dma_drm_init",
+                "gst_video_info_from_caps",
+                "gst_video_info_init",
+                "gst_webrtc_session_description_new"
             ],
             GirFixture.Overlays.SkippedIdentifiers.Order(StringComparer.Ordinal).ToArray());
 

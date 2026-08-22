@@ -1260,6 +1260,40 @@ public sealed class AbiProbeTests
         Assert.Equal(8L, Offset(&raw, &raw.Sdp));
     }
 
+    /// <c>struct _GstVideoFrame</c> of <c>video-frame.h</c>: the 152 byte
+    /// <c>GstVideoInfo info</c> at 0, <c>GstVideoFrameFlags flags</c> at 152,
+    /// four bytes of padding, <c>GstBuffer *buffer</c> at 160,
+    /// <c>gpointer meta</c> at 168, <c>gint id</c> at 176, four bytes of
+    /// padding, <c>gpointer data[4]</c> at 184, <c>GstMapInfo map[4]</c> at 216
+    /// and the four reserved pointers of <c>GST_PADDING</c> at 632, for 664
+    /// bytes in total.
+    /// </summary>
+    /// <remarks>
+    /// This is the mirror <c>Gst.Video.VideoFrame.MapScope</c> hands to
+    /// <c>gst_video_frame_map</c> as its own storage, so it is the one mirror
+    /// whose size the library writes through rather than reads: a mirror that
+    /// is too small is a stack frame the library writes past. The header is
+    /// what this probe states; that the installed library agrees is what
+    /// <c>CallerAllocatedStorageTests</c> measures, by reading the fields back
+    /// out of a live mapping.
+    /// </remarks>
+    [Fact]
+    public unsafe void VideoFrameRawMatchesTheHeaderLayout()
+    {
+        Gst.Video.VideoFrameRaw raw = default;
+
+        _output.WriteLine(Format("VideoFrameRaw", Unsafe.SizeOf<Gst.Video.VideoFrameRaw>()));
+        Assert.Equal(664, Unsafe.SizeOf<Gst.Video.VideoFrameRaw>());
+
+        Assert.Equal(0L, Offset(&raw, &raw.Info));
+        Assert.Equal(152L, Offset(&raw, &raw.Flags));
+        Assert.Equal(160L, Offset(&raw, &raw.BufferPtr));
+        Assert.Equal(168L, Offset(&raw, &raw.MetaPtr));
+        Assert.Equal(176L, Offset(&raw, &raw.Id));
+        Assert.Equal(184L, Offset(&raw, &raw.Data));
+        Assert.Equal(216L, Offset(&raw, &raw.Map));
+    }
+
     /// <summary>
     /// <c>struct _GstAudioBuffer</c> of <c>audio-buffer.h</c>: the 320 byte
     /// <c>GstAudioInfo</c> it embeds by value at 0, <c>gsize n_samples</c> at
@@ -1271,7 +1305,13 @@ public sealed class AbiProbeTests
     /// </summary>
     /// <remarks>
     /// The two accessors of the wrapper sit behind the embedded info, so this
-    /// is what says the embed has the size the C structure gives it.
+    /// is what says the embed has the size the C structure gives it. The two
+    /// private arrays are part of the mirror as well, because a live mapping
+    /// points at them: for eight planes or fewer <c>planes</c> and
+    /// <c>map_infos</c> address the structure itself, which is what
+    /// <c>Gst.Audio.AudioBuffer.MapScope</c> has to repair after the scope is
+    /// moved. That the installed library really writes those two addresses is
+    /// what <c>CallerAllocatedStorageTests</c> measures, on a live mapping.
     /// </remarks>
     [Fact]
     public unsafe void AudioBufferRawMatchesTheHeaderLayout()

@@ -189,6 +189,31 @@ public abstract unsafe partial class Aggregator : Gst.Element
         return (Gst.FlowReturn)nativeResult;
     }
 
+    /// <summary>
+    /// Lets #GstAggregator sub-classes get the memory @allocator
+    /// acquired by the base class and its @params.
+    /// </summary>
+    /// <remarks>
+    /// <para>Unref the @allocator after use it.</para>
+    /// </remarks>
+    /// <param name="allocator">The <c>allocator</c> argument.</param>
+    /// <param name="params">
+    /// The <c>@params</c> argument.
+    /// The binding allocates the storage; on return the caller owns
+    /// <paramref name="params"/> and disposes it.
+    /// </param>
+    public void GetAllocator(out Gst.Allocator? allocator, out Gst.AllocationParams @params)
+    {
+        nint instanceHandle = Handle;
+        nint allocatorNative = default;
+        nint @paramsNative = GstAllocationParamsNew();
+        GstAggregatorGetAllocator(instanceHandle, &allocatorNative, @paramsNative);
+        System.GC.KeepAlive(this);
+        @params = Gst.AllocationParams.FromNative(@paramsNative, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_allocation_params_new returned no value.");
+        allocator = Gst.GObject.Object.FromNative<Gst.Allocator>(allocatorNative, Gst.Interop.Transfer.Full);
+    }
+
     /// <summary>The <c>gst_aggregator_get_buffer_pool</c> function.</summary>
     /// <returns>
     /// the instance of the #GstBufferPool used
@@ -652,6 +677,10 @@ public abstract unsafe partial class Aggregator : Gst.Element
     [LibraryImport("GstBase", EntryPoint = "gst_aggregator_finish_buffer_list")]
     private static partial int GstAggregatorFinishBufferList(nint aggregator, nint bufferlist);
 
+    /// <summary>The <c>gst_aggregator_get_allocator</c> entry point.</summary>
+    [LibraryImport("GstBase", EntryPoint = "gst_aggregator_get_allocator")]
+    private static partial void GstAggregatorGetAllocator(nint self, nint* allocator, nint @params);
+
     /// <summary>The <c>gst_aggregator_get_buffer_pool</c> entry point.</summary>
     [LibraryImport("GstBase", EntryPoint = "gst_aggregator_get_buffer_pool")]
     private static partial nint GstAggregatorGetBufferPool(nint self);
@@ -707,6 +736,11 @@ public abstract unsafe partial class Aggregator : Gst.Element
     /// <summary>The <c>gst_aggregator_update_segment</c> entry point.</summary>
     [LibraryImport("GstBase", EntryPoint = "gst_aggregator_update_segment")]
     private static partial void GstAggregatorUpdateSegment(nint self, nint segment);
+
+    /// <summary>The <c>gst_allocation_params_new</c> entry point, which allocates the storage of a caller allocated out parameter.</summary>
+    /// <returns>A new, zeroed instance the caller owns.</returns>
+    [LibraryImport("Gst", EntryPoint = "gst_allocation_params_new")]
+    private static partial nint GstAllocationParamsNew();
 
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstAggregator</c> under.</summary>
     /// <returns>The type of the instances of this wrapper.</returns>

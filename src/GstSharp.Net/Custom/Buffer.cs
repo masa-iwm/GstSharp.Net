@@ -269,6 +269,53 @@ public sealed partial class Buffer
     public MapScope Map(MapFlags flags) => new(this, flags);
 
     /// <summary>
+    /// Copies bytes out of the buffer into memory the caller owns.
+    /// </summary>
+    /// <param name="offset">Where in the buffer to start reading.</param>
+    /// <param name="dest">
+    /// The destination. Its length is how many bytes are copied at most.
+    /// </param>
+    /// <returns>
+    /// How many bytes were copied, which is less than the length of
+    /// <paramref name="dest"/> when the buffer held less than that from
+    /// <paramref name="offset"/> on, and zero when <paramref name="offset"/> is
+    /// past the end of the buffer.
+    /// </returns>
+    /// <remarks>
+    /// <para>
+    /// This is <c>gst_buffer_extract</c>. Unlike <see cref="Map(MapFlags)"/> it
+    /// needs no scope and no writability: the bytes are copied out of whatever
+    /// memory blocks the buffer holds and the caller owns the copy, so nothing
+    /// has to be released and the buffer may be shared with anyone.
+    /// </para>
+    /// <para>
+    /// The copy is the point. A mapping hands out the memory of the buffer
+    /// itself and is only valid while the scope lives; this hands out bytes
+    /// that outlive the buffer.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="ObjectDisposedException">The wrapper was disposed.</exception>
+    public unsafe nuint Extract(nuint offset, Span<byte> dest)
+    {
+        nint handle = Handle;
+        if (dest.IsEmpty)
+        {
+            // An empty span pins to the null pointer, which the C function
+            // answers with a critical warning rather than with the zero it
+            // would have copied.
+            GC.KeepAlive(this);
+            return 0;
+        }
+
+        fixed (byte* pointer = dest)
+        {
+            nuint copied = BufferNative.Extract(handle, offset, pointer, (nuint)dest.Length);
+            GC.KeepAlive(this);
+            return copied;
+        }
+    }
+
+    /// <summary>
     /// A buffer that is mapped into the address space of the process, and the
     /// span over the memory it was mapped to.
     /// </summary>

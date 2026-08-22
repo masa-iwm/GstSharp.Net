@@ -157,6 +157,31 @@ public abstract unsafe partial class BaseTransform : Gst.Element
     {
     }
 
+    /// <summary>
+    /// Lets #GstBaseTransform sub-classes know the memory @allocator
+    /// used by the base class and its @params.
+    /// </summary>
+    /// <remarks>
+    /// <para>Unref the @allocator after use.</para>
+    /// </remarks>
+    /// <param name="allocator">The <c>allocator</c> argument.</param>
+    /// <param name="params">
+    /// The <c>@params</c> argument.
+    /// The binding allocates the storage; on return the caller owns
+    /// <paramref name="params"/> and disposes it.
+    /// </param>
+    public void GetAllocator(out Gst.Allocator? allocator, out Gst.AllocationParams @params)
+    {
+        nint instanceHandle = Handle;
+        nint allocatorNative = default;
+        nint @paramsNative = GstAllocationParamsNew();
+        GstBaseTransformGetAllocator(instanceHandle, &allocatorNative, @paramsNative);
+        System.GC.KeepAlive(this);
+        @params = Gst.AllocationParams.FromNative(@paramsNative, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_allocation_params_new returned no value.");
+        allocator = Gst.GObject.Object.FromNative<Gst.Allocator>(allocatorNative, Gst.Interop.Transfer.Full);
+    }
+
     /// <summary>The <c>gst_base_transform_get_buffer_pool</c> function.</summary>
     /// <returns>
     /// the instance of the #GstBufferPool used
@@ -397,6 +422,10 @@ public abstract unsafe partial class BaseTransform : Gst.Element
         }
     }
 
+    /// <summary>The <c>gst_base_transform_get_allocator</c> entry point.</summary>
+    [LibraryImport("GstBase", EntryPoint = "gst_base_transform_get_allocator")]
+    private static partial void GstBaseTransformGetAllocator(nint trans, nint* allocator, nint @params);
+
     /// <summary>The <c>gst_base_transform_get_buffer_pool</c> entry point.</summary>
     [LibraryImport("GstBase", EntryPoint = "gst_base_transform_get_buffer_pool")]
     private static partial nint GstBaseTransformGetBufferPool(nint trans);
@@ -452,6 +481,11 @@ public abstract unsafe partial class BaseTransform : Gst.Element
     /// <summary>The <c>gst_base_transform_update_src_caps</c> entry point.</summary>
     [LibraryImport("GstBase", EntryPoint = "gst_base_transform_update_src_caps")]
     private static partial int GstBaseTransformUpdateSrcCaps(nint trans, nint updatedCaps);
+
+    /// <summary>The <c>gst_allocation_params_new</c> entry point, which allocates the storage of a caller allocated out parameter.</summary>
+    /// <returns>A new, zeroed instance the caller owns.</returns>
+    [LibraryImport("Gst", EntryPoint = "gst_allocation_params_new")]
+    private static partial nint GstAllocationParamsNew();
 
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstBaseTransform</c> under.</summary>
     /// <returns>The type of the instances of this wrapper.</returns>
