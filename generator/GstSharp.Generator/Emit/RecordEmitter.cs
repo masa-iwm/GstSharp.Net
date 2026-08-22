@@ -683,6 +683,16 @@ internal sealed class RecordEmitter
             foreach (LayoutField field in layout)
             {
                 reserved.Add(field.Name);
+
+                // A fixed size field nests the storage type it is spelled with
+                // in the structure, so that name is taken as well. The mirror
+                // of a wrapper nests its own inside Raw, where no member of the
+                // wrapper can reach it, which is why only a plain struct
+                // reserves them here.
+                if (field.InlineArray is { } inline)
+                {
+                    reserved.Add(inline.TypeName);
+                }
             }
         }
 

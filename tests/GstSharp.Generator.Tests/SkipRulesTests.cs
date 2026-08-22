@@ -230,7 +230,7 @@ public sealed class SkipRulesTests
                 "gst_video_info_dma_drm_init",
                 "gst_video_info_from_caps",
                 "gst_video_info_init",
-                "gst_webrtc_session_description_new"
+                "gst_webrtc_session_description_new",
             ],
             GirFixture.Overlays.SkippedIdentifiers.Order(StringComparer.Ordinal).ToArray());
 

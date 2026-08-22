@@ -209,8 +209,9 @@ public sealed class ValueInstanceMethodTests
     {
         Assert.Contains(
             """
-                /// The empty string when the C function has no representation to hand out,
-                /// which is what the default value of this structure is.
+                /// Where the C documentation says %NULL, this member answers the empty
+                /// string instead, which is what the default value of this structure
+                /// describes.
             """.ReplaceLineEndings("\n"),
             Run.File("Colorimetry.cs"),
             StringComparison.Ordinal);

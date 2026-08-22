@@ -76,8 +76,9 @@ internal static class CallableRenderer
     /// </summary>
     private static readonly string[] EmptyStringNote =
     [
-        "The empty string when the C function has no representation to hand out,",
-        "which is what the default value of this structure is.",
+        "Where the C documentation says %NULL, this member answers the empty",
+        "string instead, which is what the default value of this structure",
+        "describes.",
     ];
 
     /// <summary>Writes the public member of a plan.</summary>

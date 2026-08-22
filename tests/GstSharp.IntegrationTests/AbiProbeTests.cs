@@ -1260,6 +1260,7 @@ public sealed class AbiProbeTests
         Assert.Equal(8L, Offset(&raw, &raw.Sdp));
     }
 
+    /// <summary>
     /// <c>struct _GstVideoFrame</c> of <c>video-frame.h</c>: the 152 byte
     /// <c>GstVideoInfo info</c> at 0, <c>GstVideoFrameFlags flags</c> at 152,
     /// four bytes of padding, <c>GstBuffer *buffer</c> at 160,

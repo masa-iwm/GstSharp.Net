@@ -111,8 +111,9 @@ public unsafe partial struct VideoColorimetry
     /// <returns>
     /// a string representation of @cinfo
     /// or %NULL if all the entries of @cinfo are unknown values.
-    /// The empty string when the C function has no representation to hand out,
-    /// which is what the default value of this structure is.
+    /// Where the C documentation says %NULL, this member answers the empty
+    /// string instead, which is what the default value of this structure
+    /// describes.
     /// </returns>
     public override readonly string ToString()
     {

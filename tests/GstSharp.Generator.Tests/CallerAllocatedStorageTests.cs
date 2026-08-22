@@ -252,6 +252,43 @@ public sealed class CallerAllocatedStorageTests
     }
 
     [Fact]
+    public void ADiscardedBooleanHandsTheStorageOverUnconditionally()
+    {
+        // A correction that drops the return makes the member void, so there
+        // is no answer left to read the success of the call off. The storage
+        // has to be handed over the way a void callee's is; planning it as the
+        // conditional hand over of a boolean callee would spell an epilogue
+        // over a nativeResult the member never declares, which does not
+        // compile.
+        FixtureRun run = RunWithOverlay(
+            """
+            {
+              "annotationOverrides": { "gst_widget_fill_params#return": { "discardReturn": true } }
+            }
+            """);
+
+        Assert.Equal(
+            """
+            public void FillParams(out Gst.Params @params)
+            {
+                nint instanceHandle = Handle;
+                nint @paramsNative = GstParamsNew();
+                GstWidgetFillParams(instanceHandle, @paramsNative);
+                System.GC.KeepAlive(this);
+                @params = Gst.Params.FromNative(@paramsNative, Gst.Interop.Transfer.Full)
+                    ?? throw new InvalidOperationException("gst_params_new returned no value.");
+            }
+            """,
+            run.Member("Widget.cs", "public void FillParams"));
+
+        // The gboolean is transferred none, so the correction holds and
+        // neither the stale nor the ownership diagnostic fires.
+        Assert.DoesNotContain(
+            run.Result.Diagnostics,
+            diagnostic => diagnostic.Code is "GEN0018" or "GEN0019");
+    }
+
+    [Fact]
     public void EveryGuardRunsBeforeTheStorageIsAllocated()
     {
         // The storage is an allocation nothing but the epilogue releases, so a

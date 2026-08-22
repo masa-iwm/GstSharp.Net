@@ -1035,14 +1035,31 @@ internal sealed class MarshalPlanner
     }
 
     /// <summary>
-    /// Tests whether the callable answers a <c>gboolean</c>, which is what says
-    /// that a caller allocated out parameter is only filled on success.
+    /// Tests whether the callable answers a <c>gboolean</c> the member hands
+    /// on, which is what says that a caller allocated out parameter is only
+    /// filled on success.
     /// </summary>
     /// <param name="callable">The callable being planned.</param>
     /// <param name="context">The type the member is emitted into.</param>
-    /// <returns><see langword="true"/> for a <c>gboolean</c> return.</returns>
+    /// <returns><see langword="true"/> for a <c>gboolean</c> return that is bound.</returns>
+    /// <remarks>
+    /// <para>
+    /// A discarded return makes the member void, so there is no answer to read
+    /// the success of the call off: the storage is handed over unconditionally,
+    /// the way it is for a callee that returns nothing of its own. Planning it
+    /// against the return the gir states would spell an epilogue over a
+    /// <c>nativeResult</c> that the member never declares.
+    /// </para>
+    /// <para>
+    /// <see cref="PlanReturn"/> refuses the correction on a return the caller
+    /// owns, which a <c>gboolean</c> is not; a gir that annotates one as such
+    /// is reported as GEN0019 and keeps the return, and this reads it as the
+    /// void callee it was corrected to be.
+    /// </para>
+    /// </remarks>
     private bool IsBooleanCallee(GirCallable callable, PlanningContext context) =>
-        _types.Map(callable.ReturnValue.Type, context.Namespace).Kind == MarshalKind.Boolean;
+        _types.Map(callable.ReturnValue.Type, context.Namespace).Kind == MarshalKind.Boolean
+        && !DiscardsReturn(callable);
 
     /// <summary>
     /// Applies the <c>direction</c> correction of the overlays to a parameter
