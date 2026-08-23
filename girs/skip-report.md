@@ -151,7 +151,7 @@ disappears shows up here as an added line.
 - `gst_uri_ref`
 - `gst_uri_unref`
 
-### MovedTo (93)
+### MovedTo (91)
 
 - `gst_buffer_get_max_memory`
 - `gst_buffer_list_replace`
@@ -191,11 +191,9 @@ disappears shows up here as an added line.
 - `gst_message_take`
 - `gst_message_type_get_name`
 - `gst_message_type_to_quark`
-- `gst_meta_api_type_aggregate_params`
 - `gst_meta_api_type_get_tags`
 - `gst_meta_api_type_has_tag`
 - `gst_meta_api_type_register`
-- `gst_meta_api_type_set_params_aggregator`
 - `gst_meta_api_type_tags_contain_only`
 - `gst_meta_deserialize`
 - `gst_meta_get_info`
@@ -382,10 +380,11 @@ disappears shows up here as an added line.
 - `gst_tag_setter_add_tag_valist`
 - `gst_tag_setter_add_tag_valist_values`
 
-### OverlaySkip (47)
+### OverlaySkip (51)
 
 - `gst_allocator_free`
 - `gst_buffer_extract`
+- `gst_buffer_foreach_meta`
 - `gst_buffer_new_wrapped_full`
 - `gst_buffer_pool_release_buffer`
 - `gst_buffer_pool_set_config`
@@ -406,7 +405,10 @@ disappears shows up here as an added line.
 - `gst_memory_new_wrapped`
 - `gst_message_new_application`
 - `gst_message_new_custom`
+- `gst_meta_api_type_aggregate_params`
+- `gst_meta_api_type_set_params_aggregator`
 - `gst_meta_info_register`
+- `gst_meta_serialize_simple`
 - `gst_pad_push_event`
 - `gst_pad_send_event`
 - `gst_plugin_register_static`
@@ -444,10 +446,9 @@ disappears shows up here as an added line.
 
 - `gst_bus_add_watch`
 
-### UnsupportedSignature (111)
+### UnsupportedSignature (108)
 
 - `Gst.Bus:enable-async`
-- `gst_buffer_foreach_meta`
 - `gst_buffer_list_foreach`
 - `gst_buffer_list_replace`
 - `gst_buffer_list_take`
@@ -484,8 +485,6 @@ disappears shows up here as an added line.
 - `gst_message_parse_property_notify`
 - `gst_message_parse_warning`
 - `gst_message_take`
-- `gst_meta_api_type_set_params_aggregator`
-- `gst_meta_serialize_simple`
 - `gst_mini_object_add_parent`
 - `gst_mini_object_copy`
 - `gst_mini_object_get_qdata`
@@ -709,7 +708,7 @@ disappears shows up here as an added line.
 - `gst_audio_ring_buffer_set_callback`
 - `gst_buffer_add_audio_downmix_meta`
 
-### OverlaySkip (8)
+### OverlaySkip (9)
 
 - `gst_audio_buffer_map`
 - `gst_audio_buffer_unmap`
@@ -717,16 +716,16 @@ disappears shows up here as an added line.
 - `gst_audio_info_init`
 - `gst_audio_ring_buffer_commit`
 - `gst_audio_ring_buffer_read`
+- `gst_buffer_add_audio_meta`
 - `gst_dsd_info_from_caps`
 - `gst_dsd_info_init`
 
-### UnsupportedSignature (6)
+### UnsupportedSignature (5)
 
 - `GstAudio.AudioAggregator:output-buffer-duration-fraction`
 - `gst_audio_encoder_set_headers`
 - `gst_audio_ring_buffer_set_callback_full`
 - `gst_audio_ring_buffer_set_channel_positions`
-- `gst_buffer_add_audio_meta`
 - `gst_dsd_convert`
 
 ## GstBase

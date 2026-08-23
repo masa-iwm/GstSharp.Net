@@ -125,4 +125,38 @@ internal static unsafe partial class GLibNative
 
     [LibraryImport("GLib", EntryPoint = "g_main_loop_get_context")]
     internal static partial nint MainLoopGetContext(nint loop);
+
+    /// <summary>Allocates an empty, growable byte array.</summary>
+    /// <returns>The array, which the caller frees with <see cref="ByteArrayFree"/>.</returns>
+    [LibraryImport("GLib", EntryPoint = "g_byte_array_new")]
+    internal static partial nint ByteArrayNew();
+
+    /// <summary>Releases a byte array.</summary>
+    /// <param name="array">The array to release.</param>
+    /// <param name="freeSegment">
+    /// Non zero to release the bytes as well, zero to hand them to the caller.
+    /// </param>
+    /// <returns>
+    /// The bytes when <paramref name="freeSegment"/> is zero, and <c>0</c>
+    /// otherwise.
+    /// </returns>
+    [LibraryImport("GLib", EntryPoint = "g_byte_array_free")]
+    internal static partial nint ByteArrayFree(nint array, int freeSegment);
+}
+
+/// <summary>The native layout of <c>GByteArray</c>.</summary>
+/// <remarks>
+/// The mirror is only ever read through a pointer into memory that GLib owns;
+/// it is never allocated, assigned or copied. Both fields are public in the C
+/// header, which is what makes reading them the supported way of getting at
+/// what a <c>GByteArray</c> holds.
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal struct GByteArrayRaw
+{
+    /// <summary>The <c>data</c> field: the bytes, or <c>0</c> while empty.</summary>
+    internal nint Data;
+
+    /// <summary>The <c>len</c> field: how many bytes are in the array.</summary>
+    internal uint Len;
 }

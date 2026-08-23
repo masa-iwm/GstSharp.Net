@@ -122,33 +122,6 @@ public sealed unsafe partial class Meta
         return nativeResult != 0;
     }
 
-    /// <summary>
-    /// When a element like `tee` decides the allocation, each downstream element may
-    /// fill different parameters and pass them to gst_query_add_allocation_meta().
-    /// In order to keep these parameters, a merge operation is needed. This
-    /// aggregate function can combine the parameters from @params0 and @param1, and
-    /// write the result back into @aggregated_params.
-    /// </summary>
-    /// <remarks>
-    /// <para>Available since GStreamer 1.26.</para>
-    /// </remarks>
-    /// <param name="api">The <c>api</c> argument.</param>
-    /// <param name="aggregatedParams">The <c>aggregatedParams</c> argument.</param>
-    /// <param name="params0">The <c>params0</c> argument.</param>
-    /// <param name="params1">The <c>params1</c> argument.</param>
-    /// <returns>%TRUE if the parameters were successfully aggregated, %FALSE otherwise.</returns>
-    public static bool ApiTypeAggregateParams(Gst.GObject.GType api, Gst.Structure aggregatedParams, Gst.Structure params0, Gst.Structure params1)
-    {
-        ArgumentNullException.ThrowIfNull(aggregatedParams);
-        ArgumentNullException.ThrowIfNull(params0);
-        ArgumentNullException.ThrowIfNull(params1);
-        int nativeResult = GstMetaApiTypeAggregateParams(api.Value, aggregatedParams.Handle, params0.Handle, params1.Handle);
-        System.GC.KeepAlive(aggregatedParams);
-        System.GC.KeepAlive(params0);
-        System.GC.KeepAlive(params1);
-        return nativeResult != 0;
-    }
-
     /// <summary>The <c>gst_meta_api_type_get_tags</c> function.</summary>
     /// <param name="api">The <c>api</c> argument.</param>
     /// <returns>an array of tags as strings.</returns>
@@ -318,10 +291,6 @@ public sealed unsafe partial class Meta
     /// <summary>The <c>gst_meta_serialize</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_meta_serialize")]
     private static partial int GstMetaSerialize(nint meta, nint data);
-
-    /// <summary>The <c>gst_meta_api_type_aggregate_params</c> entry point.</summary>
-    [LibraryImport("Gst", EntryPoint = "gst_meta_api_type_aggregate_params")]
-    private static partial int GstMetaApiTypeAggregateParams(nuint api, nint aggregatedParams, nint params0, nint params1);
 
     /// <summary>The <c>gst_meta_api_type_get_tags</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_meta_api_type_get_tags")]

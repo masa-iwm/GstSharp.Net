@@ -162,13 +162,12 @@ public static unsafe partial class VideoGlobal
     /// <param name="width">The <c>width</c> argument.</param>
     /// <param name="height">The <c>height</c> argument.</param>
     /// <returns>the #GstVideoMeta on @buffer.</returns>
-    public static Gst.Video.VideoMeta BufferAddVideoMeta(Gst.Buffer buffer, Gst.Video.VideoFrameFlags flags, Gst.Video.VideoFormat format, uint width, uint height)
+    public static Gst.Video.VideoMeta? BufferAddVideoMeta(Gst.Buffer buffer, Gst.Video.VideoFrameFlags flags, Gst.Video.VideoFormat format, uint width, uint height)
     {
         ArgumentNullException.ThrowIfNull(buffer);
         nint nativeResult = GstBufferAddVideoMeta(buffer.Handle, (int)flags, (int)format, width, height);
         System.GC.KeepAlive(buffer);
-        return Gst.Video.VideoMeta.FromNative(nativeResult)
-            ?? throw new InvalidOperationException("gst_buffer_add_video_meta returned no value.");
+        return Gst.Video.VideoMeta.FromNative(nativeResult);
     }
 
     /// <summary>Attaches GstVideoMeta metadata to @buffer with the given parameters.</summary>
@@ -193,7 +192,7 @@ public static unsafe partial class VideoGlobal
     /// <exception cref="ArgumentException">
     /// <paramref name="stride"/> does not have exactly 4 elements.
     /// </exception>
-    public static Gst.Video.VideoMeta BufferAddVideoMetaFull(Gst.Buffer buffer, Gst.Video.VideoFrameFlags flags, Gst.Video.VideoFormat format, uint width, uint height, uint nPlanes, System.ReadOnlySpan<nuint> offset, System.ReadOnlySpan<int> stride)
+    public static Gst.Video.VideoMeta? BufferAddVideoMetaFull(Gst.Buffer buffer, Gst.Video.VideoFrameFlags flags, Gst.Video.VideoFormat format, uint width, uint height, uint nPlanes, System.ReadOnlySpan<nuint> offset, System.ReadOnlySpan<int> stride)
     {
         ArgumentNullException.ThrowIfNull(buffer);
         if (offset.Length != 4)
@@ -214,8 +213,7 @@ public static unsafe partial class VideoGlobal
             {
                 nint nativeResult = GstBufferAddVideoMetaFull(buffer.Handle, (int)flags, (int)format, width, height, nPlanes, offsetPointer, stridePointer);
                 System.GC.KeepAlive(buffer);
-                return Gst.Video.VideoMeta.FromNative(nativeResult)
-                    ?? throw new InvalidOperationException("gst_buffer_add_video_meta_full returned no value.");
+                return Gst.Video.VideoMeta.FromNative(nativeResult);
             }
         }
     }

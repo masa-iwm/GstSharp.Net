@@ -186,12 +186,16 @@ public sealed class VideoWriteBackTests
         using Buffer? buffer = Buffer.NewAllocate(null, Width * Height * 3 / 2, null);
         Assert.NotNull(buffer);
 
-        VideoMeta meta = VideoGlobal.BufferAddVideoMeta(
+        VideoMeta? meta = VideoGlobal.BufferAddVideoMeta(
             buffer,
             VideoFrameFlags.None,
             VideoFormat.I420,
             Width,
             Height);
+
+        // The return is nullable since the overlay of item E3-13; this buffer
+        // is exclusively held, so the adder answers an item.
+        Assert.NotNull(meta);
 
         Assert.True(meta.Map(0, out MapInfo info, out nint data, out int stride, MapFlags.Read));
 

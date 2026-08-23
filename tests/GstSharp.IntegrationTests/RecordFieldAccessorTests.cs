@@ -125,12 +125,16 @@ public sealed class RecordFieldAccessorTests
     {
         using Buffer buffer = AbiProbeTests.NewBuffer();
 
-        VideoMeta added = VideoGlobal.BufferAddVideoMeta(
+        VideoMeta? added = VideoGlobal.BufferAddVideoMeta(
             buffer,
             VideoFrameFlags.None,
             VideoFormat.I420,
             Width,
             Height);
+
+        // The return is nullable since the overlay of item E3-13; this buffer
+        // is exclusively held, so the adder answers an item.
+        Assert.NotNull(added);
 
         _output.WriteLine(FormattableString.Invariant(
             $"gst_buffer_add_video_meta: {added.Width}x{added.Height} format={added.Format} planes={added.NPlanes} id={added.Id}"));

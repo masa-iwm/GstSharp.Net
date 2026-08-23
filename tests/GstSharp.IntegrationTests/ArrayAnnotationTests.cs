@@ -316,12 +316,17 @@ public sealed class ArrayAnnotationTests
     {
         using Gst.Buffer buffer = Gst.Buffer.New();
 
-        VideoMeta meta = VideoGlobal.BufferAddVideoMeta(
+        VideoMeta? meta = VideoGlobal.BufferAddVideoMeta(
             buffer,
             VideoFrameFlags.None,
             VideoFormat.I420,
             width: 320,
             height: 240);
+
+        // The return is nullable since the overlay of item E3-13: the C
+        // function answers NULL on an invalid format and on a buffer that is
+        // not writable, and this buffer is neither.
+        Assert.NotNull(meta);
 
         Assert.True(meta.GetPlaneSize(out VideoMeta.PlaneSizeArray sizes));
 

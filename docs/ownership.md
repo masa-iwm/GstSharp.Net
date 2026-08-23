@@ -64,6 +64,46 @@ and `MakeWritable` on one throws: it would release a reference the wrapper does
 not own. See
 [`docs/subclassing.md`](subclassing.md#11-using-it-stage-1).
 
+## Metadata items and the buffer that owns them
+
+A metadata wrapper — `Gst.Meta` and every typed `*Meta` record — **owns
+nothing**. It addresses storage inside the buffer that carries the item, it
+takes no reference and it is never disposed, so it takes no part in ownership at
+all. Its lifetime is the lifetime of the item: it dies with the buffer, and it
+dies with the item when `Buffer.RemoveMeta` removes it or a
+`Buffer.ForeachMeta` function answers `MetaForeachAction.Remove` and the walk
+honours it. The library frees a removed item synchronously, before the call that
+removed it returns.
+
+A wrapper whose handle is zero is dead, and that is the one convention the
+hand-written metadata surface shares: `RemoveMeta` zeroes the handle when, and
+only when, it answers `true`, and a honoured `Remove` does the same, after which
+every hand-written member — `Meta.Info`, `Meta.ApiType`, `Meta.Serialize` and
+every `FromMeta` cast — throws `ObjectDisposedException`. **The generated field
+accessors do not check it**: reading `Meta.Flags`, or a field of a typed record,
+through a wrapper of an item that was removed is undefined rather than an
+exception. A generator-side guard for the forced-opaque records would close that
+gap and is on the backlog.
+
+The converse holds as well: a removal the walk **refuses** leaves the wrapper
+alive. `MetaForeachAction.Remove` needs a writable buffer and an item that is not
+flagged `GST_META_FLAG_LOCKED`, and when either fails the library answers `false`
+and aborts the walk before it frees anything, so the item is still attached.
+`ForeachMeta` restores the handle it had provisionally zeroed in that case, and
+the wrapper keeps reading the item it always addressed.
+
+The typed casts are reinterpretations and nothing else. `GstMeta` is the first
+field of every typed metadata structure, so `VideoMeta.FromMeta(meta)` hands out
+a second wrapper over the same address; both are alive exactly as long as the
+item is.
+
+`Buffer.IterateMeta` is **read only for the length of the enumeration**. The
+cursor of `gst_buffer_iterate_meta` is the metadata item itself, so removing one
+while the enumeration is open frees the node the cursor stands on and the next
+step is a use after free. `Buffer.ForeachMeta` is the way to remove while
+walking, because the library captures the successor of an item before it hands
+it to the function.
+
 ## GObject wrappers
 
 A `GObject` wrapper is **interned**. Every lookup of the same native object

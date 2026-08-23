@@ -111,4 +111,53 @@ internal static unsafe partial class BufferNative
         nuint size,
         nint userData,
         nint notify);
+
+    /// <summary>
+    /// Removes one metadata item from a buffer and frees it.
+    /// </summary>
+    /// <param name="buffer">The buffer that carries the item.</param>
+    /// <param name="meta">The item to remove.</param>
+    /// <returns>
+    /// Non zero when the item was found on the buffer and freed.
+    /// </returns>
+    /// <remarks>
+    /// The item is matched by pointer identity and freed before the call
+    /// returns, which is what <see cref="Gst.Buffer.RemoveMeta"/> adds the
+    /// invalidation of the wrapper for.
+    /// </remarks>
+    [LibraryImport("Gst", EntryPoint = "gst_buffer_remove_meta")]
+    internal static partial int RemoveMeta(nint buffer, nint meta);
+
+    /// <summary>
+    /// Calls a function once for every metadata item of a buffer.
+    /// </summary>
+    /// <param name="buffer">The buffer to walk.</param>
+    /// <param name="func">The callback, as a plain address.</param>
+    /// <param name="userData">The state handed to the callback.</param>
+    /// <returns>Non zero when the walk ran to the end.</returns>
+    /// <remarks>
+    /// The callback is an <c>[UnmanagedCallersOnly]</c> method, which has no
+    /// delegate type to marshal, so it is passed as an address.
+    /// </remarks>
+    [LibraryImport("Gst", EntryPoint = "gst_buffer_foreach_meta")]
+    internal static partial int ForeachMeta(nint buffer, nint func, nint userData);
+
+    /// <summary>
+    /// Hands out the metadata items of a buffer, one per call.
+    /// </summary>
+    /// <param name="buffer">The buffer to walk.</param>
+    /// <param name="state">
+    /// The cursor, which starts at <c>0</c> and is written by every call.
+    /// </param>
+    /// <returns>The next item, or <c>0</c> once there is none.</returns>
+    /// <remarks>
+    /// The gir marks the function <c>introspectable="0"</c>, so the generator
+    /// never sees it and no overlay can bring it back; it is imported here for
+    /// <see cref="Gst.Buffer.IterateMeta()"/>. The cursor is declared
+    /// <see langword="ref"/> rather than as a pointer so that the iterator
+    /// block that drives it needs no unsafe context, which a C# iterator cannot
+    /// have.
+    /// </remarks>
+    [LibraryImport("Gst", EntryPoint = "gst_buffer_iterate_meta")]
+    internal static partial nint IterateMeta(nint buffer, ref nint state);
 }

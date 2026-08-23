@@ -152,7 +152,15 @@ public sealed class SkipRulesTests
         // callback scopes: four whose managed state has a lifetime no emitted
         // shape expresses and that are hand written for it, three whose
         // lifetime is not derivable at all, and five that are skipped on
-        // value rather than for a missing mechanism.
+        // value rather than for a missing mechanism. Five joined with the
+        // metadata attachment cluster: gst_buffer_foreach_meta, whose GstMeta**
+        // is a keep, remove or stop decision rather than an inout parameter,
+        // gst_meta_serialize_simple, whose GByteArray sink the hand written
+        // Meta.Serialize owns, gst_buffer_add_audio_meta, whose offsets array
+        // is sized by a field of another argument, and the
+        // gst_meta_api_type_aggregate_params pair, whose GstStructure** the gir
+        // declares as a GstStructure* and which no direction override can
+        // correct on a boxed record.
         Assert.Equal(
             [
                 "GstBase.BitReader",
@@ -177,8 +185,10 @@ public sealed class SkipRulesTests
                 "gst_audio_info_init",
                 "gst_audio_ring_buffer_commit",
                 "gst_audio_ring_buffer_read",
+                "gst_buffer_add_audio_meta",
                 "gst_buffer_add_video_gl_texture_upload_meta",
                 "gst_buffer_extract",
+                "gst_buffer_foreach_meta",
                 "gst_buffer_new_wrapped_full",
                 "gst_buffer_pool_release_buffer",
                 "gst_buffer_pool_set_config",
@@ -204,7 +214,10 @@ public sealed class SkipRulesTests
                 "gst_memory_new_wrapped",
                 "gst_message_new_application",
                 "gst_message_new_custom",
+                "gst_meta_api_type_aggregate_params",
+                "gst_meta_api_type_set_params_aggregator",
                 "gst_meta_info_register",
+                "gst_meta_serialize_simple",
                 "gst_mini_object_set_qdata",
                 "gst_pad_push_event",
                 "gst_pad_send_event",
