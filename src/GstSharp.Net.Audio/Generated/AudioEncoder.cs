@@ -510,6 +510,22 @@ public abstract unsafe partial class AudioEncoder : Gst.Element, Gst.IPreset
         System.GC.KeepAlive(this);
     }
 
+    /// <summary>Set the codec headers to be sent downstream whenever requested.</summary>
+    /// <param name="headers">
+    /// The <c>headers</c> argument.
+    /// The call takes the list over. The binding hands it a native list of its own
+    /// and one reference per element, and releases neither afterwards - the callee
+    /// owns both from the moment the call is made, including when it answers false.
+    /// Your own objects keep their references and stay usable.
+    /// </param>
+    public void SetHeaders(System.Collections.Generic.IEnumerable<Gst.Buffer>? headers)
+    {
+        nint instanceHandle = Handle;
+        nint headersOwned = Gst.Interop.GMarshal.ConsumeList(headers, singly: false);
+        GstAudioEncoderSetHeaders(instanceHandle, headersOwned);
+        System.GC.KeepAlive(this);
+    }
+
     /// <summary>
     /// Sets encoder latency. If the provided values changed from
     /// previously provided ones, this will also post a LATENCY message on the bus
@@ -705,6 +721,10 @@ public abstract unsafe partial class AudioEncoder : Gst.Element, Gst.IPreset
     /// <summary>The <c>gst_audio_encoder_set_hard_resync</c> entry point.</summary>
     [LibraryImport("GstAudio", EntryPoint = "gst_audio_encoder_set_hard_resync")]
     private static partial void GstAudioEncoderSetHardResync(nint enc, int enabled);
+
+    /// <summary>The <c>gst_audio_encoder_set_headers</c> entry point.</summary>
+    [LibraryImport("GstAudio", EntryPoint = "gst_audio_encoder_set_headers")]
+    private static partial void GstAudioEncoderSetHeaders(nint enc, nint headers);
 
     /// <summary>The <c>gst_audio_encoder_set_latency</c> entry point.</summary>
     [LibraryImport("GstAudio", EntryPoint = "gst_audio_encoder_set_latency")]

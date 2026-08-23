@@ -156,6 +156,263 @@ public static unsafe class GMarshal
     }
 
     /// <summary>
+    /// Builds the temporary list of handles a borrowing call is given.
+    /// </summary>
+    /// <param name="items">The wrappers to list, may be <see langword="null"/>.</param>
+    /// <param name="singly">
+    /// <see langword="true"/> for a <c>GSList</c>, <see langword="false"/> for a
+    /// <c>GList</c>.
+    /// </param>
+    /// <returns>
+    /// A scope that has to be disposed once the call has returned, and whose
+    /// <see cref="GListScope.Head"/> is <see cref="nint.Zero"/> when
+    /// <paramref name="items"/> is <see langword="null"/> or empty.
+    /// </returns>
+    /// <remarks>
+    /// <para>
+    /// No reference is taken. The list is a view of wrappers the caller keeps
+    /// owning, which is the <c>transfer-ownership="none"</c> contract: the
+    /// callee reads the list while the call runs and copies whatever it keeps.
+    /// The scope holds the wrappers so that they stay reachable across the
+    /// call, which the bare handles in the spine would not do.
+    /// </para>
+    /// <para>
+    /// The parameter is an <see cref="IEnumerable{T}"/> of the base wrapper
+    /// rather than a generic one, because <see cref="IEnumerable{T}"/> is
+    /// covariant: a sequence of any generated GObject wrapper is one of these
+    /// without a cast and without a type argument at the call site.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="ArgumentException">
+    /// One of <paramref name="items"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    /// One of <paramref name="items"/> was disposed.
+    /// </exception>
+    public static GListScope AllocList(IEnumerable<Gst.GObject.Object>? items, bool singly)
+    {
+        if (items is null)
+        {
+            return default;
+        }
+
+        // The sequence is walked once, into an array, before anything native
+        // is allocated: a sequence that produces its elements lazily must not
+        // be asked for them twice, and a throw from it has to happen while
+        // there is still nothing to release.
+        Gst.GObject.Object[] elements = [.. items];
+        GListScope scope = new(elements, null, singly);
+
+        try
+        {
+            nint[] handles = new nint[elements.Length];
+            for (int i = 0; i < elements.Length; i++)
+            {
+                if (elements[i] is null)
+                {
+                    throw new ArgumentException(NullElementMessage(i), nameof(items));
+                }
+
+                handles[i] = elements[i].Handle;
+            }
+
+            scope.Adopt(GListMarshal.BuildSpine(handles, singly));
+        }
+        catch
+        {
+            scope.Dispose();
+            throw;
+        }
+
+        return scope;
+    }
+
+    /// <summary>
+    /// Builds the temporary list of strings a borrowing call is given.
+    /// </summary>
+    /// <param name="values">The strings to copy, may be <see langword="null"/>.</param>
+    /// <param name="singly">
+    /// <see langword="true"/> for a <c>GSList</c>, <see langword="false"/> for a
+    /// <c>GList</c>.
+    /// </param>
+    /// <returns>
+    /// A scope that has to be disposed once the call has returned, and whose
+    /// <see cref="GListScope.Head"/> is <see cref="nint.Zero"/> when
+    /// <paramref name="values"/> is <see langword="null"/> or empty.
+    /// </returns>
+    /// <remarks>
+    /// Every element is copied into a fresh UTF-8 buffer that the scope owns
+    /// and releases, the way <see cref="AllocStrv"/> owns the strings of a
+    /// vector.
+    /// </remarks>
+    /// <exception cref="ArgumentException">
+    /// One of <paramref name="values"/> is <see langword="null"/> or contains a
+    /// null character.
+    /// </exception>
+    public static GListScope AllocList(IEnumerable<string>? values, bool singly)
+    {
+        if (values is null)
+        {
+            return default;
+        }
+
+        string[] items = [.. values];
+        nint[] owned = new nint[items.Length];
+        GListScope scope = new(null, owned, singly);
+
+        try
+        {
+            for (int i = 0; i < items.Length; i++)
+            {
+                if (items[i] is null)
+                {
+                    throw new ArgumentException(NullElementMessage(i), nameof(values));
+                }
+
+                owned[i] = StringToUtf8Ptr(items[i]);
+            }
+
+            scope.Adopt(GListMarshal.BuildSpine(owned, singly));
+        }
+        catch
+        {
+            scope.Dispose();
+            throw;
+        }
+
+        return scope;
+    }
+
+    /// <summary>
+    /// Builds the list of strings a consuming call takes over.
+    /// </summary>
+    /// <param name="values">The strings to copy, may be <see langword="null"/>.</param>
+    /// <param name="singly">
+    /// <see langword="true"/> for a <c>GSList</c>, <see langword="false"/> for a
+    /// <c>GList</c>.
+    /// </param>
+    /// <returns>
+    /// The first node, or <see cref="nint.Zero"/> when <paramref name="values"/>
+    /// is <see langword="null"/> or empty. The callee owns it from the moment
+    /// the call is made, and nothing here or at the call site releases it.
+    /// </returns>
+    /// <remarks>
+    /// The copies come from <c>g_malloc0</c>, which is what
+    /// <see cref="StringToUtf8Ptr"/> allocates with, so the <c>g_free</c> the
+    /// callee eventually calls on each of them matches. A throw part way
+    /// through releases the spine and every copy that was made already, so a
+    /// failed encode hands nothing to nobody.
+    /// </remarks>
+    /// <exception cref="ArgumentException">
+    /// One of <paramref name="values"/> is <see langword="null"/> or contains a
+    /// null character.
+    /// </exception>
+    public static nint ConsumeList(IEnumerable<string>? values, bool singly)
+    {
+        if (values is null)
+        {
+            return nint.Zero;
+        }
+
+        string[] items = [.. values];
+        nint[] minted = new nint[items.Length];
+
+        try
+        {
+            for (int i = 0; i < items.Length; i++)
+            {
+                if (items[i] is null)
+                {
+                    throw new ArgumentException(NullElementMessage(i), nameof(values));
+                }
+
+                minted[i] = StringToUtf8Ptr(items[i]);
+            }
+
+            return GListMarshal.BuildSpine(minted, singly);
+        }
+        catch
+        {
+            foreach (nint item in minted)
+            {
+                Free(item);
+            }
+
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Builds the list of mini objects a consuming call takes over.
+    /// </summary>
+    /// <param name="items">The mini objects to list, may be <see langword="null"/>.</param>
+    /// <param name="singly">
+    /// <see langword="true"/> for a <c>GSList</c>, <see langword="false"/> for a
+    /// <c>GList</c>.
+    /// </param>
+    /// <returns>
+    /// The first node, or <see cref="nint.Zero"/> when <paramref name="items"/>
+    /// is <see langword="null"/> or empty. The callee owns the spine and one
+    /// reference per element from the moment the call is made.
+    /// </returns>
+    /// <remarks>
+    /// One reference is minted per element, so the wrappers the caller passed
+    /// keep their own and stay usable afterwards. A throw part way through
+    /// releases the spine and every reference that was minted already.
+    /// </remarks>
+    /// <exception cref="ArgumentException">
+    /// One of <paramref name="items"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    /// One of <paramref name="items"/> was disposed.
+    /// </exception>
+    public static nint ConsumeList(IEnumerable<Gst.MiniObject>? items, bool singly)
+    {
+        if (items is null)
+        {
+            return nint.Zero;
+        }
+
+        Gst.MiniObject[] elements = [.. items];
+        nint[] minted = new nint[elements.Length];
+
+        try
+        {
+            for (int i = 0; i < elements.Length; i++)
+            {
+                if (elements[i] is null)
+                {
+                    throw new ArgumentException(NullElementMessage(i), nameof(items));
+                }
+
+                minted[i] = Gst.GstNative.MiniObjectRef(elements[i].Handle);
+            }
+
+            return GListMarshal.BuildSpine(minted, singly);
+        }
+        catch
+        {
+            foreach (nint item in minted)
+            {
+                if (item != nint.Zero)
+                {
+                    Gst.GstNative.MiniObjectUnref(item);
+                }
+            }
+
+            throw;
+        }
+    }
+
+    /// <summary>The message of a list element that is null.</summary>
+    /// <param name="index">The position of the element in the sequence.</param>
+    /// <returns>The message.</returns>
+    private static string NullElementMessage(int index) =>
+        "A list cannot carry a null element: the element at index " + index.ToString(
+            System.Globalization.CultureInfo.InvariantCulture)
+        + " is null, and native code would read it as a payload of its own.";
+
+    /// <summary>
     /// Reads a null terminated UTF-8 string that stays owned by native code.
     /// </summary>
     /// <param name="pointer">The string to read, may be <see cref="nint.Zero"/>.</param>

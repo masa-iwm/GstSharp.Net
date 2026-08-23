@@ -298,6 +298,33 @@ element inside such an array is rejected with an `ArgumentException`, because a
 C array of strings ends at the first `NULL` and native code would never see the
 elements behind it.
 
+## Lists a call is given
+
+A member that takes a `GList` takes an `IEnumerable<T>` — `ElementFactory.ListFilter`,
+`Container.Group`, `Uri.ToStringWithKeys`, `VideoEncoder.SetHeaders` — and
+there are exactly two shapes behind it. A `null` sequence and an empty one are
+the same value in both, because C spells the empty list `NULL` and GLib has no
+non-null empty list; every such parameter is nullable, so none of them throws
+`ArgumentNullException`.
+
+A **borrowed** list is what the call only reads. The binding builds a native
+list for the length of that one call, out of the handles of the wrappers passed
+or out of fresh UTF-8 copies of the strings passed, and releases the list and
+everything allocated for it when the call returns — including when it throws.
+Nothing native outlives the call, the wrappers are the caller's throughout, and
+what the callee decided to keep it copied for itself.
+
+A **consumed** list is what the call takes over: `Uri.SetPathSegments`,
+`AudioEncoder.SetHeaders` and `VideoEncoder.SetHeaders`. The binding hands over
+a native list of its own and one value minted per element — a fresh string, or a
+fresh reference for a mini object — and releases neither afterwards. The callee
+owns the list and the minted values from the moment the call is made, which
+includes the case where it answers `false`: `gst_uri_set_path_segments` takes
+ownership before it tests whether the URI is writable, so a failed call has
+consumed the list all the same. The objects the caller passed keep their own
+references and stay usable; a buffer handed to `SetHeaders` is simply no longer
+writable, because the encoder now holds a reference to it as well.
+
 ## Callbacks and the state they carry
 
 A callback that is handed to native code is a `GCHandle` on a delegate, and the

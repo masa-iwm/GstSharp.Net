@@ -98,6 +98,31 @@ internal static class CallableRenderer
     ];
 
     /// <summary>
+    /// The note of a list the call only reads. It states what happens to the
+    /// temporary allocation and what an empty sequence means, because neither
+    /// is visible in the signature.
+    /// </summary>
+    private static readonly string[] BorrowedListNote =
+    [
+        "The call reads the list while it runs and copies whatever it keeps. A",
+        "temporary native list is built for the call and released when it returns,",
+        "and an empty sequence is passed as the null pointer, which is how C spells",
+        "the empty list.",
+    ];
+
+    /// <summary>
+    /// The note of a list the call takes over. What the caller keeps is the one
+    /// thing that is easy to get wrong, so it is the sentence the note ends on.
+    /// </summary>
+    private static readonly string[] ConsumedListNote =
+    [
+        "The call takes the list over. The binding hands it a native list of its own",
+        "and one reference per element, and releases neither afterwards - the callee",
+        "owns both from the moment the call is made, including when it answers false.",
+        "Your own objects keep their references and stay usable.",
+    ];
+
+    /// <summary>
     /// What the documentation of a <c>ToString</c> that the C side may answer
     /// <c>NULL</c> to says, because the member hands out the empty string
     /// rather than a null reference.
@@ -466,6 +491,9 @@ internal static class CallableRenderer
             ArgumentKind.CallerAllocatedBoxed => CallerAllocatedParamNote(argument),
             ArgumentKind.Span => SpanParamNote(plan, argument),
             ArgumentKind.Callback when argument.Scope == GirScope.Forever => ForeverCallbackNote,
+            ArgumentKind.ListIn => argument.Transfer == GirTransfer.Full
+                ? ConsumedListNote
+                : BorrowedListNote,
             _ => null,
         };
     }
@@ -836,6 +864,65 @@ internal static class CallableRenderer
     };
 
     /// <summary>
+    /// The fact the three <c>edit</c> members share: the list they take has
+    /// been ignored upstream since the FIXME that says so was written.
+    /// </summary>
+    private static readonly string[] IgnoredLayersRemarks =
+    [
+        "GStreamer ignores this list. ges_timeline_element_edit forwards to",
+        "ges_timeline_element_edit_full with NULL and never reads it",
+        "(ges-timeline-element.c:2533-2543, where the upstream FIXME says so), and the",
+        "two deprecated wrappers forward to it (ges-container.c:1063-1070,",
+        "ges-track-element.c:1823-1831). Pass null.",
+    ];
+
+    /// <summary>
+    /// What a list argument does upstream, for the entry points where the
+    /// answer is not the one the signature suggests. Each was read off the C
+    /// implementation of the 1.28 branch and is stated on the member rather
+    /// than in the parameter note, because it is about that one call and not
+    /// about the marshalling shape.
+    /// </summary>
+    private static readonly Dictionary<string, string[]> ListArgumentRemarks = new(StringComparer.Ordinal)
+    {
+        ["ges_container_edit"] =
+        [
+            .. IgnoredLayersRemarks,
+            "This overload takes the new priority as an <see langword=\"int\"/> while the",
+            "member it does not hide, <c>GES.TimelineElement.Edit</c>, takes it as a",
+            "<see langword=\"long\"/>: an integer literal binds this one, and an argument",
+            "of type <see langword=\"long\"/> reaches the other.",
+        ],
+        ["ges_timeline_element_edit"] = IgnoredLayersRemarks,
+        ["ges_track_element_edit"] = IgnoredLayersRemarks,
+        ["ges_container_group"] =
+        [
+            "A list of one answers that element's own wrapper rather than a new group,",
+            "and takes no new reference (ges-container.c:1007-1014, upstream FIXME). A",
+            "null or empty list answers a new, empty group (ges-group.c:461). Where the",
+            "members are clips, the clips after the first are merged into the first and",
+            "removed from their layer (ges-clip.c:2238-2330).",
+        ],
+        ["ges_layer_set_active_for_tracks"] =
+        [
+            "A null list means every track of the timeline (ges-layer.c:1083). Every",
+            "track named has to belong to the timeline of this layer; one that does not",
+            "makes the call answer false (ges-layer.c:1089).",
+        ],
+        ["gst_uri_set_path_segments"] =
+        [
+            "On a URI that is not writable the call answers false and the list is leaked:",
+            "C takes ownership before it checks (gsturi.c:2518-2532). Test",
+            "<see cref=\"Gst.Uri.IsWritable\"/> first.",
+        ],
+        ["gst_uri_to_string_with_keys"] =
+        [
+            "A null or empty sequence asks for the unordered query string, which is what",
+            "the C function falls back to when it is given no keys.",
+        ],
+    };
+
+    /// <summary>
     /// The note of the indexer of a fundamental container, shared by the three
     /// of them. The return note already states that the value is an owned copy
     /// to dispose, so this one only adds what it does not: the copy is a
@@ -884,8 +971,9 @@ internal static class CallableRenderer
     /// consumption contract of its consumed arguments, the writability
     /// requirement of the entry points that have one, the correction of the gir
     /// sentence that claims a stolen reference, the behaviour note of the
-    /// members of a fundamental value container, and what a member of a value
-    /// projected structure does to the instance it is called on.
+    /// members of a fundamental value container, what a member of a value
+    /// projected structure does to the instance it is called on, and what a
+    /// call really does with the list it is given.
     /// </summary>
     /// <param name="plan">The member being documented.</param>
     /// <returns>The paragraphs, or <see langword="null"/> when there are none.</returns>
@@ -936,6 +1024,13 @@ internal static class CallableRenderer
         {
             lines.Add("<para>");
             lines.AddRange(note);
+            lines.Add("</para>");
+        }
+
+        if (ListArgumentRemarks.TryGetValue(plan.EntryPoint, out string[]? list))
+        {
+            lines.Add("<para>");
+            lines.AddRange(list);
             lines.Add("</para>");
         }
 
@@ -1508,6 +1603,17 @@ internal static class CallableRenderer
             {
                 return true;
             }
+
+            // A borrowed list is not one: its scope reclaims the spine and the
+            // strings whether the call returns or throws, exactly as the scope
+            // of a string vector does. A consumed list is, and the phases are
+            // what put every guard and every handle read before the mint, so
+            // that nothing which can throw runs between the mint and the call
+            // that takes it over.
+            if (argument.Kind == ArgumentKind.ListIn && argument.Transfer == GirTransfer.Full)
+            {
+                return true;
+            }
         }
 
         return false;
@@ -1553,6 +1659,7 @@ internal static class CallableRenderer
             case ArgumentKind.Handle when argument.Direction == ArgumentDirection.In:
             case ArgumentKind.ConsumedHandle:
             case ArgumentKind.Strv when argument.Direction == ArgumentDirection.In:
+            case ArgumentKind.ListIn when argument.Direction == ArgumentDirection.In:
                 if (!argument.IsNullable)
                 {
                     writer.WriteLine("ArgumentNullException.ThrowIfNull(" + name + ");");
@@ -1811,6 +1918,14 @@ internal static class CallableRenderer
             case ArgumentKind.CallerAllocatedBoxed:
                 return;
 
+            // There is no single handle to read: the list is built element by
+            // element in the third phase, which is where the reads that can
+            // throw - a disposed wrapper, a string with an embedded NUL - and
+            // the allocations happen together, inside a factory that releases
+            // what it already made when one of them throws.
+            case ArgumentKind.ListIn:
+                return;
+
             case ArgumentKind.ConsumedHandle:
                 writer.WriteLine("nint " + argument.Name + "Native = " + HandleRead(argument) + ";");
                 if (argument.ConsumedFamily == ConsumedFamily.Boxed)
@@ -1902,6 +2017,24 @@ internal static class CallableRenderer
                 writer.WriteLine(
                     "using Gst.Interop.StrvScope " + name + "Scope = Gst.Interop.GMarshal.AllocStrv("
                     + name + ");");
+                return;
+
+            // The spine, and the UTF-8 copies of a list of strings, belong to
+            // the scope, which releases them when the call returns and when it
+            // throws. The scope also holds the element wrappers, which is what
+            // keeps them reachable across the call.
+            case ArgumentKind.ListIn when argument.Transfer != GirTransfer.Full:
+                writer.WriteLine(
+                    "using Gst.Interop.GListScope " + name + "Scope = Gst.Interop.GMarshal.AllocList("
+                    + name + ", singly: " + (argument.IsSinglyLinked ? "true" : "false") + ");");
+                return;
+
+            // The consumed half: one value is minted per element and the whole
+            // list is handed over, so nothing is released here or afterwards.
+            case ArgumentKind.ListIn:
+                writer.WriteLine(
+                    "nint " + name + "Owned = Gst.Interop.GMarshal.ConsumeList("
+                    + name + ", singly: " + (argument.IsSinglyLinked ? "true" : "false") + ");");
                 return;
 
             case ArgumentKind.Utf8Owned:
@@ -2043,6 +2176,12 @@ internal static class CallableRenderer
             case ArgumentKind.Utf8 when argument.Direction == ArgumentDirection.In:
             case ArgumentKind.Strv when argument.Direction == ArgumentDirection.In:
                 return name + "Scope.Pointer";
+
+            case ArgumentKind.ListIn when argument.Transfer != GirTransfer.Full:
+                return name + "Scope.Head";
+
+            case ArgumentKind.ListIn:
+                return name + "Owned";
 
             case ArgumentKind.Utf8Owned:
                 return name + "Native";

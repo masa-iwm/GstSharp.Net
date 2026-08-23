@@ -199,17 +199,19 @@ jobs:
 
       # GSTSHARP_REQUIRED_ELEMENTS is the promise this leg makes about its
       # installation, and RequiredElementsTests is what holds it to it: these
-      # four factories are exactly what the tests ask RequiresElementFact for —
-      # three for WebRTC and audiomixer for the only boxed valued property the
-      # integration suite writes — so the day gstreamer1.0-plugins-bad,
-      # gstreamer1.0-nice or gstreamer1.0-plugins-base stops providing one of
-      # them this step turns red instead of quietly downgrading those tests to
-      # skips. The variable is scoped to this step because it is a statement
-      # about the suite that reads it, and it is set on this leg alone because
-      # this is the only leg that installs the plugins.
+      # six factories are exactly what the tests ask RequiresElementFact for —
+      # three for WebRTC, audiomixer for the only boxed valued property the
+      # integration suite writes, and theoraenc and vorbisenc for the two
+      # encoders whose set_headers hands a list over — so the day
+      # gstreamer1.0-plugins-bad, gstreamer1.0-nice or
+      # gstreamer1.0-plugins-base stops providing one of them this step turns
+      # red instead of quietly downgrading those tests to skips. The variable
+      # is scoped to this step because it is a statement about the suite that
+      # reads it, and it is set on this leg alone because this is the only leg
+      # that installs the plugins.
       - name: Test against the installation
         env:
-          GSTSHARP_REQUIRED_ELEMENTS: webrtcbin,nicesrc,dtlssrtpenc,audiomixer
+          GSTSHARP_REQUIRED_ELEMENTS: webrtcbin,nicesrc,dtlssrtpenc,audiomixer,theoraenc,vorbisenc
         run: dotnet test tests/GstSharp.IntegrationTests --no-restore --logger "trx;LogFileName=integration.trx" --results-directory artifacts/test-results
 
       # The whole consumer path without AOT: parse a pipeline, cast the sink

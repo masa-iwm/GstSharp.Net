@@ -292,6 +292,51 @@ public unsafe partial class ElementFactory : Gst.PluginFeature
     }
 
     /// <summary>
+    /// Filter out all the elementfactories in @list that can handle @caps in
+    /// the given direction.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// If @subsetonly is %TRUE, then only the elements whose pads templates
+    /// are a complete superset of @caps will be returned. Else any element
+    /// whose pad templates caps can intersect with @caps will be returned.
+    /// </para>
+    /// </remarks>
+    /// <param name="list">
+    /// The <c>list</c> argument.
+    /// The call reads the list while it runs and copies whatever it keeps. A
+    /// temporary native list is built for the call and released when it returns,
+    /// and an empty sequence is passed as the null pointer, which is how C spells
+    /// the empty list.
+    /// </param>
+    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <param name="direction">The <c>direction</c> argument.</param>
+    /// <param name="subsetonly">The <c>subsetonly</c> argument.</param>
+    /// <returns>
+    /// a #GList of
+    ///     #GstElementFactory elements that match the given requisites.
+    ///     Use #gst_plugin_feature_list_free after usage.
+    /// </returns>
+    public static System.Collections.Generic.IReadOnlyList<Gst.ElementFactory> ListFilter(System.Collections.Generic.IEnumerable<Gst.ElementFactory>? list, Gst.Caps caps, Gst.PadDirection direction, bool subsetonly)
+    {
+        using Gst.Interop.GListScope listScope = Gst.Interop.GMarshal.AllocList(list, singly: false);
+        ArgumentNullException.ThrowIfNull(caps);
+        nint nativeResult = GstElementFactoryListFilter(listScope.Head, caps.Handle, (int)direction, subsetonly ? 1 : 0);
+        System.GC.KeepAlive(caps);
+        nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
+        System.Collections.Generic.List<Gst.ElementFactory> result = new(nativeItems.Length);
+        foreach (nint nativeItem in nativeItems)
+        {
+            if (nativeItem != 0 && Gst.GObject.Object.FromNative<Gst.ElementFactory>(nativeItem, Gst.Interop.Transfer.Full) is { } adopted)
+            {
+                result.Add(adopted);
+            }
+        }
+
+        return result;
+    }
+
+    /// <summary>
     /// Get a list of factories that match the given @type. Only elements
     /// with a rank greater or equal to @minrank will be returned.
     /// The list of factories is returned by decreasing rank.
@@ -405,6 +450,10 @@ public unsafe partial class ElementFactory : Gst.PluginFeature
     /// <summary>The <c>gst_element_factory_find</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_element_factory_find")]
     private static partial nint GstElementFactoryFind(byte* name);
+
+    /// <summary>The <c>gst_element_factory_list_filter</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_element_factory_list_filter")]
+    private static partial nint GstElementFactoryListFilter(nint list, nint caps, int direction, int subsetonly);
 
     /// <summary>The <c>gst_element_factory_list_get_elements</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_element_factory_list_get_elements")]

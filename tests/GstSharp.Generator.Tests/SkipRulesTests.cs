@@ -160,7 +160,12 @@ public sealed class SkipRulesTests
         // is sized by a field of another argument, and the
         // gst_meta_api_type_aggregate_params pair, whose GstStructure** the gir
         // declares as a GstStructure* and which no direction override can
-        // correct on a boxed record.
+        // correct on a boxed record. Five more joined with the list arguments:
+        // three *_list_free calls whose whole body is the release of a list
+        // managed code never holds, gst_iterator_new_list, which keeps the
+        // address of the caller's own list variable, and
+        // gst_event_new_select_streams, which is hand bound and is the one call
+        // of the family that refuses an empty list.
         Assert.Equal(
             [
                 "GstBase.BitReader",
@@ -200,16 +205,19 @@ public sealed class SkipRulesTests
                 "gst_caps_set_value_static_str",
                 "gst_collect_pads_add_pad",
                 "gst_debug_remove_log_function",
+                "gst_discoverer_stream_info_list_free",
                 "gst_dsd_info_from_caps",
                 "gst_dsd_info_init",
                 "gst_element_post_message",
                 "gst_element_send_event",
                 "gst_encoding_container_profile_add_profile",
                 "gst_event_new_custom",
+                "gst_event_new_select_streams",
                 "gst_flagset_register",
                 "gst_id_str_set_static_str",
                 "gst_id_str_set_static_str_with_len",
                 "gst_install_plugins_async",
+                "gst_iterator_new_list",
                 "gst_iterator_next",
                 "gst_memory_new_wrapped",
                 "gst_message_new_application",
@@ -221,6 +229,8 @@ public sealed class SkipRulesTests
                 "gst_mini_object_set_qdata",
                 "gst_pad_push_event",
                 "gst_pad_send_event",
+                "gst_plugin_feature_list_free",
+                "gst_plugin_list_free",
                 "gst_plugin_register_static",
                 "gst_promise_reply",
                 "gst_query_new_custom",

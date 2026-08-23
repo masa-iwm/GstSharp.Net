@@ -140,6 +140,52 @@ public abstract unsafe partial class PluginFeature : Gst.Object
     }
 
     /// <summary>
+    /// Copies the list of features. Caller should call @gst_plugin_feature_list_free
+    /// when done with the list.
+    /// </summary>
+    /// <param name="list">
+    /// The <c>list</c> argument.
+    /// The call reads the list while it runs and copies whatever it keeps. A
+    /// temporary native list is built for the call and released when it returns,
+    /// and an empty sequence is passed as the null pointer, which is how C spells
+    /// the empty list.
+    /// </param>
+    /// <returns>
+    /// a copy of @list,
+    ///     with each feature's reference count incremented.
+    /// </returns>
+    public static System.Collections.Generic.IReadOnlyList<Gst.PluginFeature> ListCopy(System.Collections.Generic.IEnumerable<Gst.PluginFeature>? list)
+    {
+        using Gst.Interop.GListScope listScope = Gst.Interop.GMarshal.AllocList(list, singly: false);
+        nint nativeResult = GstPluginFeatureListCopy(listScope.Head);
+        nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
+        System.Collections.Generic.List<Gst.PluginFeature> result = new(nativeItems.Length);
+        foreach (nint nativeItem in nativeItems)
+        {
+            if (nativeItem != 0 && Gst.GObject.Object.FromNative<Gst.PluginFeature>(nativeItem, Gst.Interop.Transfer.Full) is { } adopted)
+            {
+                result.Add(adopted);
+            }
+        }
+
+        return result;
+    }
+
+    /// <summary>Debug the plugin feature names in @list.</summary>
+    /// <param name="list">
+    /// The <c>list</c> argument.
+    /// The call reads the list while it runs and copies whatever it keeps. A
+    /// temporary native list is built for the call and released when it returns,
+    /// and an empty sequence is passed as the null pointer, which is how C spells
+    /// the empty list.
+    /// </param>
+    public static void ListDebug(System.Collections.Generic.IEnumerable<Gst.PluginFeature>? list)
+    {
+        using Gst.Interop.GListScope listScope = Gst.Interop.GMarshal.AllocList(list, singly: false);
+        GstPluginFeatureListDebug(listScope.Head);
+    }
+
+    /// <summary>
     /// Compares the two given #GstPluginFeature instances. This function can be
     /// used as a #GCompareFunc when sorting by rank and then by name.
     /// </summary>
@@ -180,6 +226,14 @@ public abstract unsafe partial class PluginFeature : Gst.Object
     /// <summary>The <c>gst_plugin_feature_set_rank</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_plugin_feature_set_rank")]
     private static partial void GstPluginFeatureSetRank(nint feature, uint rank);
+
+    /// <summary>The <c>gst_plugin_feature_list_copy</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_plugin_feature_list_copy")]
+    private static partial nint GstPluginFeatureListCopy(nint list);
+
+    /// <summary>The <c>gst_plugin_feature_list_debug</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_plugin_feature_list_debug")]
+    private static partial void GstPluginFeatureListDebug(nint list);
 
     /// <summary>The <c>gst_plugin_feature_rank_compare_func</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_plugin_feature_rank_compare_func")]

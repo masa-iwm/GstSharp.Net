@@ -1170,21 +1170,22 @@ public sealed class MarshalPlannerTests
         // here produces no committed diff at all. The four containers are
         // refused for reasons of their own: a list of a plain record has no
         // projection of its elements, a list that hands over opaque records has
-        // nobody to release them, a GSList is not bound at all, and a list that
-        // is passed in would have to be allocated here and handed over under an
-        // ownership rule that is the callee's to state.
+        // nobody to release them, a GSList return is not bound, and a list that
+        // is passed in is now built by the borrowed list marshaller, which is
+        // why add_children binds and is asserted present rather than absent;
+        // ListArgumentTests owns that shape and every refusal of it.
         Assert.DoesNotContain("StealCaps", source, StringComparison.Ordinal);
         Assert.Contains("public void TakeCaps(", source, StringComparison.Ordinal);
         Assert.DoesNotContain("ListExtents", source, StringComparison.Ordinal);
         Assert.DoesNotContain("TakeAnchors", source, StringComparison.Ordinal);
         Assert.DoesNotContain("ListTags", source, StringComparison.Ordinal);
-        Assert.DoesNotContain("AddChildren", source, StringComparison.Ordinal);
+        Assert.Contains("public void AddChildren(", source, StringComparison.Ordinal);
 
-        // The eight: steal_caps, list_extents, take_anchors, list_tags and
-        // add_children above, and the three GValue rejections that
+        // The seven: steal_caps, list_extents, take_anchors and list_tags
+        // above, and the three GValue rejections that
         // TheTakeValueShapeStaysUnbound, ANullableGValueParameterStaysUnbound
         // and AGValueTakingCallbackStaysUnbound pin.
-        Assert.Equal(8, Run.Result.Census.SkippedCount("Gst", SkipReason.UnsupportedSignature));
+        Assert.Equal(7, Run.Result.Census.SkippedCount("Gst", SkipReason.UnsupportedSignature));
     }
 
     [Fact]

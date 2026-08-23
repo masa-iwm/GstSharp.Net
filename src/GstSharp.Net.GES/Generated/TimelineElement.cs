@@ -157,6 +157,40 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
             ?? throw new InvalidOperationException("ges_timeline_element_copy returned no value.");
     }
 
+    /// <summary>See ges_timeline_element_edit_full(), which also gives an error.</summary>
+    /// <remarks>
+    /// <para>
+    /// Note that the @layers argument is currently ignored, so you should
+    /// just pass %NULL.
+    /// </para>
+    /// <para>
+    /// GStreamer ignores this list. ges_timeline_element_edit forwards to
+    /// ges_timeline_element_edit_full with NULL and never reads it
+    /// (ges-timeline-element.c:2533-2543, where the upstream FIXME says so), and the
+    /// two deprecated wrappers forward to it (ges-container.c:1063-1070,
+    /// ges-track-element.c:1823-1831). Pass null.
+    /// </para>
+    /// </remarks>
+    /// <param name="layers">
+    /// The <c>layers</c> argument.
+    /// The call reads the list while it runs and copies whatever it keeps. A
+    /// temporary native list is built for the call and released when it returns,
+    /// and an empty sequence is passed as the null pointer, which is how C spells
+    /// the empty list.
+    /// </param>
+    /// <param name="newLayerPriority">The <c>newLayerPriority</c> argument.</param>
+    /// <param name="mode">The <c>mode</c> argument.</param>
+    /// <param name="edge">The <c>edge</c> argument.</param>
+    /// <param name="position">The <c>position</c> argument.</param>
+    /// <returns>%TRUE if the edit of @self completed, %FALSE on failure.</returns>
+    public bool Edit(System.Collections.Generic.IEnumerable<GES.Layer>? layers, long newLayerPriority, GES.EditMode mode, GES.Edge edge, ulong position)
+    {
+        using Gst.Interop.GListScope layersScope = Gst.Interop.GMarshal.AllocList(layers, singly: false);
+        int nativeResult = GesTimelineElementEdit(Handle, layersScope.Head, newLayerPriority, (int)mode, (int)edge, position);
+        System.GC.KeepAlive(this);
+        return nativeResult != 0;
+    }
+
     /// <summary>
     /// Edits the element within its timeline by adjusting its
     /// #GESTimelineElement:start, #GESTimelineElement:duration or
@@ -999,6 +1033,10 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
     /// <summary>The <c>ges_timeline_element_copy</c> entry point.</summary>
     [LibraryImport("GES", EntryPoint = "ges_timeline_element_copy")]
     private static partial nint GesTimelineElementCopy(nint self, int deep);
+
+    /// <summary>The <c>ges_timeline_element_edit</c> entry point.</summary>
+    [LibraryImport("GES", EntryPoint = "ges_timeline_element_edit")]
+    private static partial int GesTimelineElementEdit(nint self, nint layers, long newLayerPriority, int mode, int edge, ulong position);
 
     /// <summary>The <c>ges_timeline_element_edit_full</c> entry point.</summary>
     [LibraryImport("GES", EntryPoint = "ges_timeline_element_edit_full")]

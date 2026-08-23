@@ -136,6 +136,36 @@ public abstract unsafe partial class TrackElement : GES.TimelineElement, GES.IEx
         System.GC.KeepAlive(this);
     }
 
+    /// <summary>Edits the element within its track.</summary>
+    /// <remarks>
+    /// <para>
+    /// GStreamer ignores this list. ges_timeline_element_edit forwards to
+    /// ges_timeline_element_edit_full with NULL and never reads it
+    /// (ges-timeline-element.c:2533-2543, where the upstream FIXME says so), and the
+    /// two deprecated wrappers forward to it (ges-container.c:1063-1070,
+    /// ges-track-element.c:1823-1831). Pass null.
+    /// </para>
+    /// </remarks>
+    /// <param name="layers">
+    /// The <c>layers</c> argument.
+    /// The call reads the list while it runs and copies whatever it keeps. A
+    /// temporary native list is built for the call and released when it returns,
+    /// and an empty sequence is passed as the null pointer, which is how C spells
+    /// the empty list.
+    /// </param>
+    /// <param name="mode">The <c>mode</c> argument.</param>
+    /// <param name="edge">The <c>edge</c> argument.</param>
+    /// <param name="position">The <c>position</c> argument.</param>
+    /// <returns>%TRUE if the edit of @object completed, %FALSE on failure.</returns>
+    [Obsolete("use #ges_timeline_element_edit instead. (deprecated since 1.18)")]
+    public bool Edit(System.Collections.Generic.IEnumerable<GES.Layer>? layers, GES.EditMode mode, GES.Edge edge, ulong position)
+    {
+        using Gst.Interop.GListScope layersScope = Gst.Interop.GMarshal.AllocList(layers, singly: false);
+        int nativeResult = GesTrackElementEdit(Handle, layersScope.Head, (int)mode, (int)edge, position);
+        System.GC.KeepAlive(this);
+        return nativeResult != 0;
+    }
+
     /// <summary>Gets #GESTrackElement:auto-clamp-control-sources.</summary>
     /// <returns>
     /// Whether the control sources for the child properties of
@@ -561,6 +591,10 @@ public abstract unsafe partial class TrackElement : GES.TimelineElement, GES.IEx
     /// <summary>The <c>ges_track_element_clamp_control_source</c> entry point.</summary>
     [LibraryImport("GES", EntryPoint = "ges_track_element_clamp_control_source")]
     private static partial void GesTrackElementClampControlSource(nint @object, byte* propertyName);
+
+    /// <summary>The <c>ges_track_element_edit</c> entry point.</summary>
+    [LibraryImport("GES", EntryPoint = "ges_track_element_edit")]
+    private static partial int GesTrackElementEdit(nint @object, nint layers, int mode, int edge, ulong position);
 
     /// <summary>The <c>ges_track_element_get_auto_clamp_control_sources</c> entry point.</summary>
     [LibraryImport("GES", EntryPoint = "ges_track_element_get_auto_clamp_control_sources")]

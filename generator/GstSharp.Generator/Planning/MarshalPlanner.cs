@@ -151,11 +151,15 @@ internal sealed class CallbackPlan
 /// that owns nothing. Every other wrapper releases its reference when it is
 /// disposed, so a second release path can only corrupt the reference
 /// count.</description></item>
-/// <item><description>A <c>GList</c> is bound in the return position only, and
-/// only when its elements are wrappers the runtime knows how to adopt or
-/// strings. The list is materialized eagerly and its spine is released before
-/// the first element is adopted, so no managed value ever points into it. A
-/// <c>GList</c> parameter and every <c>GSList</c> stay
+/// <item><description>A <c>GList</c> is bound in the return position when its
+/// elements are wrappers the runtime knows how to adopt or strings. The list is
+/// materialized eagerly and its spine is released before the first element is
+/// adopted, so no managed value ever points into it. In the parameter position
+/// it is built out of an <c>IEnumerable</c> in exactly two shapes: borrowed,
+/// where a scope releases the spine and everything allocated for it once the
+/// call returns, and consumed, where one value is minted per element and the
+/// callee owns all of it from the moment of the call. A <c>GSList</c> parameter
+/// takes the same route; a <c>GSList</c> return stays
 /// unsupported.</description></item>
 /// <item><description>Only the <c>call</c> and <c>notified</c> callback scopes
 /// are supported. A <c>async</c> callback would have to release its state from
@@ -504,6 +508,11 @@ internal sealed class MarshalPlanner
             });
         }
 
+        if (StrandsConsumedList(arguments))
+        {
+            return null;
+        }
+
         reason = SkipReason.None;
         return new MarshalPlan
         {
@@ -518,6 +527,74 @@ internal sealed class MarshalPlanner
             InstanceType = form == CallableForm.ExtensionMethod ? context.OwnerType : null,
         };
     }
+
+    /// <summary>
+    /// Tests whether the prologue of a callable would strand the list one of
+    /// its arguments hands over.
+    /// </summary>
+    /// <param name="arguments">The planned arguments, in the order the prologue writes them.</param>
+    /// <returns><see langword="true"/> when the callable cannot be bound.</returns>
+    /// <remarks>
+    /// <para>
+    /// A consumed list is built element by element and handed over: the spine,
+    /// the UTF-8 copies of a list of strings and the reference minted for every
+    /// mini object in it belong to the callee from the moment the call is made,
+    /// and nothing in the generated body releases them again. The three phase
+    /// prologue is what makes that safe, because every guard and every handle
+    /// read runs before the first allocation - but the phases only order the
+    /// steps against each other. Inside the third phase the steps run in
+    /// argument order, so a step that throws after the list was built strands
+    /// the whole of it, and there is no epilogue that could release it.
+    /// </para>
+    /// <para>
+    /// The steps of the third phase that can throw are the ones that encode a
+    /// string or walk a sequence. A UTF-8 copy the callee takes over
+    /// (<see cref="ArgumentKind.Utf8Owned"/>) and the transient copy of a
+    /// borrowed string (<see cref="ArgumentKind.Utf8"/>) both refuse an
+    /// embedded NUL; a string vector (<see cref="ArgumentKind.Strv"/>) and
+    /// either shape of list (<see cref="ArgumentKind.ListIn"/>) refuse a null
+    /// element as well. Minting a reference for a consumed handle and
+    /// allocating the storage of a caller allocated out read the locals the
+    /// second phase produced and call into C, so neither of them can throw, and
+    /// everything else the third phase writes is an assignment.
+    /// </para>
+    /// <para>
+    /// A callable that puts one of those steps after a consumed list is
+    /// refused rather than emitted with a leak in it. No member of the eleven
+    /// modules has the shape - all three consumed lists are the last argument
+    /// of their call - so a synthetic fixture is what keeps the refusal honest.
+    /// </para>
+    /// </remarks>
+    private static bool StrandsConsumedList(List<ArgumentPlan> arguments)
+    {
+        bool handedOver = false;
+        foreach (ArgumentPlan argument in arguments)
+        {
+            if (handedOver && ThrowsInPrologue(argument))
+            {
+                return true;
+            }
+
+            if (argument.Kind == ArgumentKind.ListIn && argument.Transfer == GirTransfer.Full)
+            {
+                handedOver = true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Tests whether the third phase of the prologue can throw on an argument,
+    /// which is what <see cref="StrandsConsumedList"/> weighs against a list
+    /// that was already handed over.
+    /// </summary>
+    /// <param name="argument">The argument whose materialization is weighed.</param>
+    /// <returns><see langword="true"/> when building the argument can throw.</returns>
+    private static bool ThrowsInPrologue(ArgumentPlan argument) =>
+        argument.Direction == ArgumentDirection.In
+        && argument.Kind is ArgumentKind.Utf8 or ArgumentKind.Utf8Owned or ArgumentKind.Strv
+            or ArgumentKind.ListIn;
 
     /// <summary>
     /// Records why the callable that is being planned is rejected. The rules
@@ -1724,6 +1801,18 @@ internal sealed class MarshalPlanner
                     Direction = direction,
                 };
 
+            case MarshalKind.GList:
+            case MarshalKind.GSList:
+                return PlanListArgument(
+                    type,
+                    mapped,
+                    name,
+                    direction,
+                    transfer,
+                    nullable,
+                    isReturn,
+                    callerAllocates);
+
             default:
                 return null;
         }
@@ -2531,12 +2620,12 @@ internal sealed class MarshalPlanner
     /// <returns>The plan, or <see langword="null"/> when the element is not supported.</returns>
     /// <remarks>
     /// <para>
-    /// Only the return position is planned. A <c>GList</c> parameter would have
-    /// to be built in managed code and handed over, which needs an allocation
-    /// the callee agrees with and an ownership rule per callee, so
-    /// <c>gst_element_factory_list_filter</c> and its relatives stay skipped. A
-    /// <c>GSList</c> is skipped as well: the only one in a bound module carries
-    /// an element this projection would refuse anyway.
+    /// Only the return position is planned here. A <c>GList</c> parameter is
+    /// built in managed code and handed over by
+    /// <see cref="PlanListArgument"/>, which is the mirror of this method and
+    /// carries the ownership rules of that direction. A <c>GSList</c> return is
+    /// skipped: the only one in a bound module carries an element this
+    /// projection would refuse anyway.
     /// </para>
     /// <para>
     /// The element decides everything: a wrapper that the runtime can adopt
@@ -2615,6 +2704,138 @@ internal sealed class MarshalPlanner
             Flavor = flavor,
             IsNullable = false,
             Doc = value.Doc,
+        };
+    }
+
+    /// <summary>
+    /// Plans a <c>GList</c> or a <c>GSList</c> that a call is given, the mirror
+    /// of <see cref="PlanListReturn"/>.
+    /// </summary>
+    /// <param name="type">The gir type reference, whose C type tells a list from its address.</param>
+    /// <param name="mapped">Its mapping, whose element type carries the payload.</param>
+    /// <param name="name">The C# name of the argument.</param>
+    /// <param name="direction">How the argument is passed.</param>
+    /// <param name="transfer">What the call takes over along with the list.</param>
+    /// <param name="nullable">Whether the list may be null.</param>
+    /// <param name="isReturn">Whether the value is the return value of the callable.</param>
+    /// <param name="callerAllocates">Whether the caller provides the storage of an out parameter.</param>
+    /// <returns>The plan, or <see langword="null"/> when the shape is not supported.</returns>
+    /// <remarks>
+    /// <para>
+    /// There are exactly two shapes, and <paramref name="transfer"/> decides
+    /// which one. A <em>borrowed</em> list (<c>none</c>) is built into a scope
+    /// that owns the spine, and the UTF-8 copies of a list of strings, and
+    /// releases both when the call returns; the callee reads the list while the
+    /// call runs and copies whatever it keeps. A <em>consumed</em> list
+    /// (<c>full</c>) is built with one value minted per element and handed
+    /// over; the callee owns the spine and the minted values from the moment
+    /// the call is made, including when it answers false, and nothing is
+    /// released afterwards. <c>container</c>, the hybrid that would consume the
+    /// spine and borrow the elements, has no introspectable case in the eleven
+    /// modules and is refused; a synthetic fixture is what keeps that refusal
+    /// honest.
+    /// </para>
+    /// <para>
+    /// Only the <c>in</c> direction is planned. An out or inout list comes back
+    /// through the address of the caller's own variable, which is a different
+    /// marshaller altogether, and a <c>GSList</c> return has to be refused here
+    /// rather than fall through: <see cref="PlanReturn"/> intercepts a
+    /// <c>GList</c> before this method is reached but leaves a <c>GSList</c> to
+    /// the scalar switch. A <c>c:type</c> that ends in two stars is refused for
+    /// the same family of reasons — <c>gst_iterator_new_list</c> keeps the
+    /// address it is given and re-reads it on every resync, so the caller's
+    /// list variable has to stay valid and mutable for the life of the
+    /// iterator, which is not a value the callee reads once.
+    /// </para>
+    /// <para>
+    /// The element decides the rest. A string is copied, a <c>GObject</c> is
+    /// listed by its handle and only where the list is borrowed — a call that
+    /// takes a list of GObjects over releases the references the binding would
+    /// have to mint for it, which is the <c>*_list_free</c> family and is a
+    /// no-op with a double release hazard — and a mini object is listed only
+    /// where the list is consumed, because a reference minted per element is
+    /// the only thing this plans for one. Everything else is refused, a boxed
+    /// value and an opaque record included: neither shape has a per element
+    /// mint story for them.
+    /// </para>
+    /// <para>
+    /// The public type is spelled here rather than taken from
+    /// <paramref name="mapped"/>. The type map projects a GLib container onto
+    /// <c>IReadOnlyList&lt;T&gt;</c>, which is the shape of a list that comes
+    /// back; a list that goes in is an <c>IEnumerable&lt;T&gt;</c>, so that a
+    /// caller may hand over whatever sequence it already has.
+    /// </para>
+    /// </remarks>
+    private ArgumentPlan? PlanListArgument(
+        GirTypeRef type,
+        MappedType mapped,
+        string name,
+        ArgumentDirection direction,
+        GirTransfer transfer,
+        bool nullable,
+        bool isReturn,
+        bool callerAllocates)
+    {
+        if (direction != ArgumentDirection.In || isReturn || callerAllocates)
+        {
+            return null;
+        }
+
+        if (type.CType?.EndsWith("**", StringComparison.Ordinal) ?? false)
+        {
+            return null;
+        }
+
+        if (transfer == GirTransfer.Container)
+        {
+            return null;
+        }
+
+        if (mapped.ElementType is not { } element)
+        {
+            return null;
+        }
+
+        ArgumentKind elementKind;
+        HandleFlavor flavor = HandleFlavor.None;
+
+        switch (element.Kind)
+        {
+            case MarshalKind.Utf8String when transfer is GirTransfer.None or GirTransfer.Full:
+                elementKind = ArgumentKind.Utf8;
+                break;
+
+            case MarshalKind.GObject when transfer == GirTransfer.None:
+            case MarshalKind.MiniObject when transfer == GirTransfer.Full:
+                if (element.Symbol is not { } symbol
+                    || !IsEmitted(symbol)
+                    || UnusableTypes.Contains(element.PublicType))
+                {
+                    return null;
+                }
+
+                elementKind = ArgumentKind.Handle;
+                flavor = element.Kind == MarshalKind.GObject ? HandleFlavor.GObject : HandleFlavor.Wrapper;
+                break;
+
+            default:
+                return null;
+        }
+
+        string publicType = "System.Collections.Generic.IEnumerable<" + element.PublicType + ">";
+        return new ArgumentPlan
+        {
+            Kind = ArgumentKind.ListIn,
+            Name = name,
+            PublicType = nullable ? publicType + "?" : publicType,
+            RawType = NativeInt,
+            Direction = direction,
+            Transfer = transfer,
+            IsNullable = nullable,
+            Flavor = flavor,
+            ElementType = element.PublicType,
+            ElementKind = elementKind,
+            IsSinglyLinked = mapped.Kind == MarshalKind.GSList,
         };
     }
 
@@ -2709,8 +2930,13 @@ internal sealed class MarshalPlanner
             // (GstControlBindingConvert, the iterator, structure and tag merge
             // families) stay unbound rather than flowing into a trampoline
             // whose raw signature could not compile.
+            // A list argument is the same story: it is built and handed over on
+            // the method surface, while a trampoline is handed one and would
+            // have to project it into managed code, which is the return side
+            // shape and not this one.
             if (argument is null
-                || argument.Kind is ArgumentKind.Utf8Owned or ArgumentKind.Callback or ArgumentKind.GValue)
+                || argument.Kind is ArgumentKind.Utf8Owned or ArgumentKind.Callback or ArgumentKind.GValue
+                    or ArgumentKind.ListIn)
             {
                 return null;
             }

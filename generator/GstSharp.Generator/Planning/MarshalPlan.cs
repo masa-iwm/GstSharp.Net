@@ -115,6 +115,23 @@ internal enum ArgumentKind
     Strv,
 
     /// <summary>
+    /// A <c>GList</c> or a <c>GSList</c> that a call is given, built out of an
+    /// <c>IEnumerable</c> of the element type. It has exactly two shapes, which
+    /// <see cref="ArgumentPlan.Transfer"/> tells apart. A <em>borrowed</em>
+    /// list (<c>none</c>) is built into a scope that releases the spine, and
+    /// everything that was allocated for it, when the call returns. A
+    /// <em>consumed</em> list (<c>full</c>) is built with one value minted per
+    /// element and handed over: the callee owns the spine and the minted values
+    /// from the moment the call is made, and nothing releases either
+    /// afterwards. The element projection is carried by
+    /// <see cref="ArgumentPlan.ElementKind"/> and
+    /// <see cref="ArgumentPlan.Flavor"/>, and
+    /// <see cref="ArgumentPlan.IsSinglyLinked"/> says which of the two GLib
+    /// list types the spine is.
+    /// </summary>
+    ListIn,
+
+    /// <summary>
     /// A <c>GList</c> that a call returned, materialized into a read only list.
     /// The element projection is carried by <see cref="ReturnPlan.ElementKind"/>
     /// and <see cref="ReturnPlan.Flavor"/>.
@@ -298,6 +315,20 @@ internal sealed class ArgumentPlan
 
     /// <summary>Gets the element type of an array, on the public surface.</summary>
     internal string? ElementType { get; init; }
+
+    /// <summary>
+    /// Gets how one element of a container is marshalled. Only
+    /// <see cref="ArgumentKind.ListIn"/> sets it, to
+    /// <see cref="ArgumentKind.Handle"/> or <see cref="ArgumentKind.Utf8"/>.
+    /// </summary>
+    internal ArgumentKind ElementKind { get; init; }
+
+    /// <summary>
+    /// Gets a value indicating whether a list argument is a <c>GSList</c>
+    /// rather than a <c>GList</c>. The two differ in nothing but the functions
+    /// that build and release the spine, which the factory is told by a flag.
+    /// </summary>
+    internal bool IsSinglyLinked { get; init; }
 
     /// <summary>Gets the index of the argument that carries the length of this array.</summary>
     internal int? LengthArgument { get; init; }

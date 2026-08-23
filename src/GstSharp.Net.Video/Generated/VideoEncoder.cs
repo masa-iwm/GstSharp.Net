@@ -488,6 +488,22 @@ public abstract unsafe partial class VideoEncoder : Gst.Element, Gst.IPreset
         frame.Dispose();
     }
 
+    /// <summary>Set the codec headers to be sent downstream whenever requested.</summary>
+    /// <param name="headers">
+    /// The <c>headers</c> argument.
+    /// The call takes the list over. The binding hands it a native list of its own
+    /// and one reference per element, and releases neither afterwards - the callee
+    /// owns both from the moment the call is made, including when it answers false.
+    /// Your own objects keep their references and stay usable.
+    /// </param>
+    public void SetHeaders(System.Collections.Generic.IEnumerable<Gst.Buffer>? headers)
+    {
+        nint instanceHandle = Handle;
+        nint headersOwned = Gst.Interop.GMarshal.ConsumeList(headers, singly: false);
+        GstVideoEncoderSetHeaders(instanceHandle, headersOwned);
+        System.GC.KeepAlive(this);
+    }
+
     /// <summary>
     /// Informs baseclass of encoding latency. If the provided values changed from
     /// previously provided ones, this will also post a LATENCY message on the bus
@@ -704,6 +720,10 @@ public abstract unsafe partial class VideoEncoder : Gst.Element, Gst.IPreset
     /// <summary>The <c>gst_video_encoder_release_frame</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_encoder_release_frame")]
     private static partial void GstVideoEncoderReleaseFrame(nint encoder, nint frame);
+
+    /// <summary>The <c>gst_video_encoder_set_headers</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_video_encoder_set_headers")]
+    private static partial void GstVideoEncoderSetHeaders(nint encoder, nint headers);
 
     /// <summary>The <c>gst_video_encoder_set_latency</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_encoder_set_latency")]

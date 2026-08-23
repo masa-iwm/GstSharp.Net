@@ -251,6 +251,32 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
     }
 
     /// <summary>
+    /// Get a percent encoded URI query string from the @uri, with query parameters
+    /// in the order provided by the @keys list. Only parameter keys in the list will
+    /// be added to the resulting URI string. This method can be used by retrieving
+    /// the keys with gst_uri_get_query_keys() and then sorting the list, for
+    /// example.
+    /// </summary>
+    /// <param name="keys">
+    /// The <c>keys</c> argument.
+    /// The call reads the list while it runs and copies whatever it keeps. A
+    /// temporary native list is built for the call and released when it returns,
+    /// and an empty sequence is passed as the null pointer, which is how C spells
+    /// the empty list.
+    /// </param>
+    /// <returns>
+    /// A percent encoded query string. Use
+    /// g_free() when no longer needed.
+    /// </returns>
+    public string? GetQueryStringOrdered(System.Collections.Generic.IEnumerable<string>? keys)
+    {
+        using Gst.Interop.GListScope keysScope = Gst.Interop.GMarshal.AllocList(keys, singly: false);
+        nint nativeResult = GstUriGetQueryStringOrdered(Handle, keysScope.Head);
+        System.GC.KeepAlive(this);
+        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
+    }
+
+    /// <summary>
     /// Get the value associated with the @query_key key. Will return %NULL if the
     /// key has no value or if the key does not exist in the URI query table. Because
     /// %NULL is returned for both missing keys and keys with no value, you should
@@ -456,6 +482,31 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
         return nativeResult != 0;
     }
 
+    /// <summary>Replace the path segments list in the URI.</summary>
+    /// <remarks>
+    /// <para>
+    /// On a URI that is not writable the call answers false and the list is leaked:
+    /// C takes ownership before it checks (gsturi.c:2518-2532). Test
+    /// <see cref="Gst.Uri.IsWritable"/> first.
+    /// </para>
+    /// </remarks>
+    /// <param name="pathSegments">
+    /// The <c>pathSegments</c> argument.
+    /// The call takes the list over. The binding hands it a native list of its own
+    /// and one reference per element, and releases neither afterwards - the callee
+    /// owns both from the moment the call is made, including when it answers false.
+    /// Your own objects keep their references and stay usable.
+    /// </param>
+    /// <returns>%TRUE if the path segments were set successfully.</returns>
+    public bool SetPathSegments(System.Collections.Generic.IEnumerable<string>? pathSegments)
+    {
+        nint instanceHandle = Handle;
+        nint pathSegmentsOwned = Gst.Interop.GMarshal.ConsumeList(pathSegments, singly: false);
+        int nativeResult = GstUriSetPathSegments(instanceHandle, pathSegmentsOwned);
+        System.GC.KeepAlive(this);
+        return nativeResult != 0;
+    }
+
     /// <summary>Sets or unsets the path in the URI.</summary>
     /// <param name="path">The <c>path</c> argument.</param>
     /// <returns>%TRUE if the path was set successfully.</returns>
@@ -552,6 +603,38 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
         System.GC.KeepAlive(this);
         return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
             ?? throw new InvalidOperationException("gst_uri_to_string returned no value.");
+    }
+
+    /// <summary>
+    /// Convert the URI to a string, with the query arguments in a specific order.
+    /// Only the keys in the @keys list will be added to the resulting string.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Returns the URI as held in this object as a #gchar* nul-terminated string.
+    /// The caller should g_free() the string once they are finished with it.
+    /// The string is put together as described in RFC 3986.
+    /// </para>
+    /// <para>
+    /// A null or empty sequence asks for the unordered query string, which is what
+    /// the C function falls back to when it is given no keys.
+    /// </para>
+    /// </remarks>
+    /// <param name="keys">
+    /// The <c>keys</c> argument.
+    /// The call reads the list while it runs and copies whatever it keeps. A
+    /// temporary native list is built for the call and released when it returns,
+    /// and an empty sequence is passed as the null pointer, which is how C spells
+    /// the empty list.
+    /// </param>
+    /// <returns>The string version of the URI.</returns>
+    public string ToStringWithKeys(System.Collections.Generic.IEnumerable<string>? keys)
+    {
+        using Gst.Interop.GListScope keysScope = Gst.Interop.GMarshal.AllocList(keys, singly: false);
+        nint nativeResult = GstUriToStringWithKeys(Handle, keysScope.Head);
+        System.GC.KeepAlive(this);
+        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
+            ?? throw new InvalidOperationException("gst_uri_to_string_with_keys returned no value.");
     }
 
     /// <summary>Constructs a URI for a given valid protocol and location.</summary>
@@ -801,6 +884,10 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
     [LibraryImport("Gst", EntryPoint = "gst_uri_get_query_string")]
     private static partial nint GstUriGetQueryString(nint uri);
 
+    /// <summary>The <c>gst_uri_get_query_string_ordered</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_uri_get_query_string_ordered")]
+    private static partial nint GstUriGetQueryStringOrdered(nint uri, nint keys);
+
     /// <summary>The <c>gst_uri_get_query_value</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_uri_get_query_value")]
     private static partial nint GstUriGetQueryValue(nint uri, byte* queryKey);
@@ -853,6 +940,10 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
     [LibraryImport("Gst", EntryPoint = "gst_uri_set_path")]
     private static partial int GstUriSetPath(nint uri, byte* path);
 
+    /// <summary>The <c>gst_uri_set_path_segments</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_uri_set_path_segments")]
+    private static partial int GstUriSetPathSegments(nint uri, nint pathSegments);
+
     /// <summary>The <c>gst_uri_set_path_string</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_uri_set_path_string")]
     private static partial int GstUriSetPathString(nint uri, byte* path);
@@ -880,6 +971,10 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
     /// <summary>The <c>gst_uri_to_string</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_uri_to_string")]
     private static partial nint GstUriToString(nint uri);
+
+    /// <summary>The <c>gst_uri_to_string_with_keys</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_uri_to_string_with_keys")]
+    private static partial nint GstUriToStringWithKeys(nint uri, nint keys);
 
     /// <summary>The <c>gst_uri_construct</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_uri_construct")]

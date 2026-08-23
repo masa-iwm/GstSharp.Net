@@ -171,17 +171,17 @@ public sealed class ClassEmitterTests
     }
 
     [Theory]
-    [InlineData("Gst", 35, 51, 5, 20, 18, 1390, 29, 23, 52)]
+    [InlineData("Gst", 35, 51, 5, 20, 18, 1397, 29, 23, 52)]
     [InlineData("GstBase", 11, 4, 0, 5, 0, 174, 31, 2, 4)]
     [InlineData("GstApp", 2, 2, 0, 8, 0, 62, 36, 8, 0)]
-    [InlineData("GstAudio", 14, 17, 1, 2, 2, 212, 32, 0, 38)]
-    [InlineData("GstVideo", 12, 42, 5, 0, 10, 381, 14, 2, 80)]
-    [InlineData("GstPbutils", 14, 1, 0, 0, 1, 178, 5, 4, 0)]
+    [InlineData("GstAudio", 14, 17, 1, 2, 2, 213, 32, 0, 38)]
+    [InlineData("GstVideo", 12, 42, 5, 0, 10, 382, 14, 2, 80)]
+    [InlineData("GstPbutils", 14, 1, 0, 0, 1, 179, 5, 4, 0)]
     [InlineData("GstSdp", 1, 21, 0, 0, 0, 164, 0, 0, 25)]
     [InlineData("GstWebRTC", 9, 4, 0, 1, 2, 37, 38, 6, 6)]
     [InlineData("GstNet", 5, 3, 0, 1, 0, 25, 17, 0, 2)]
     [InlineData("GstRtsp", 1, 10, 1, 1, 2, 114, 0, 1, 14)]
-    [InlineData("GES", 56, 2, 2, 0, 3, 368, 77, 31, 7)]
+    [InlineData("GES", 56, 2, 2, 0, 3, 373, 77, 31, 7)]
     public void TheEmissionCensusIsStable(
         string module,
         int classes,
@@ -212,17 +212,17 @@ public sealed class ClassEmitterTests
     }
 
     [Theory]
-    [InlineData("Gst", 1, 91, 53, 119, 108, 10)]
+    [InlineData("Gst", 1, 91, 53, 118, 98, 10)]
     [InlineData("GstBase", 0, 11, 0, 20, 6, 0)]
     [InlineData("GstApp", 1, 0, 0, 2, 2, 1)]
-    [InlineData("GstAudio", 0, 22, 0, 8, 5, 0)]
-    [InlineData("GstVideo", 0, 96, 1, 6, 6, 0)]
-    [InlineData("GstPbutils", 0, 1, 0, 0, 5, 0)]
+    [InlineData("GstAudio", 0, 22, 0, 8, 4, 0)]
+    [InlineData("GstVideo", 0, 96, 1, 6, 5, 0)]
+    [InlineData("GstPbutils", 0, 1, 0, 0, 3, 0)]
     [InlineData("GstSdp", 0, 8, 0, 0, 6, 0)]
     [InlineData("GstWebRTC", 0, 2, 0, 0, 6, 0)]
     [InlineData("GstNet", 0, 3, 0, 0, 0, 0)]
     [InlineData("GstRtsp", 0, 13, 0, 0, 13, 0)]
-    [InlineData("GES", 6, 3, 4, 10, 36, 2)]
+    [InlineData("GES", 6, 3, 4, 10, 31, 2)]
     public void TheSkipCensusIsStable(
         string module,
         int shadowed,
@@ -556,7 +556,7 @@ public sealed class ClassEmitterTests
         // from the report and the entry points the overlays took over are
         // named under the overlay skips instead.
         Assert.DoesNotContain("### CallerAllocates", report, StringComparison.Ordinal);
-        Assert.Contains("### OverlaySkip (51)\n", report, StringComparison.Ordinal);
+        Assert.Contains("### OverlaySkip (55)\n", report, StringComparison.Ordinal);
         Assert.Contains("- `gst_video_frame_map`\n", GenerationPipeline.Run(GirFixture.GirDirectory).SkipReport, StringComparison.Ordinal);
         Assert.Contains("- `GstApp.AppSrc::push-buffer`\n", report, StringComparison.Ordinal);
 
@@ -686,12 +686,12 @@ public sealed class ClassEmitterTests
     /// <param name="actionSignals">Signals that are a call API rather than a notification.</param>
     /// <param name="owningProperties">Properties whose value is a wrapper the reader would have to dispose.</param>
     [Theory]
-    [InlineData("Gst", 54, 0, 21, 20, 0, 5)]
+    [InlineData("Gst", 58, 0, 21, 20, 0, 5)]
     [InlineData("GstBase", 4, 0, 4, 0, 0, 2)]
     [InlineData("GstApp", 3, 0, 4, 0, 9, 2)]
     [InlineData("GstAudio", 14, 0, 4, 0, 0, 0)]
     [InlineData("GstVideo", 16, 0, 10, 1, 0, 0)]
-    [InlineData("GstPbutils", 2, 0, 1, 0, 0, 1)]
+    [InlineData("GstPbutils", 3, 0, 1, 0, 0, 1)]
     [InlineData("GstSdp", 4, 0, 1, 0, 0, 0)]
     [InlineData("GstWebRTC", 1, 0, 4, 0, 4, 0)]
     [InlineData("GstNet", 0, 0, 1, 0, 0, 0)]

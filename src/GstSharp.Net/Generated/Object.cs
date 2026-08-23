@@ -483,6 +483,35 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
         System.GC.KeepAlive(this);
     }
 
+    /// <summary>
+    /// Checks to see if there is any object named @name in @list. This function
+    /// does not do any locking of any kind. You might want to protect the
+    /// provided list with the lock of the owner of the list. This function
+    /// will lock each #GstObject in the list to compare the name, so be
+    /// careful when passing a list with a locked object.
+    /// </summary>
+    /// <param name="list">
+    /// The <c>list</c> argument.
+    /// The call reads the list while it runs and copies whatever it keeps. A
+    /// temporary native list is built for the call and released when it returns,
+    /// and an empty sequence is passed as the null pointer, which is how C spells
+    /// the empty list.
+    /// </param>
+    /// <param name="name">The <c>name</c> argument.</param>
+    /// <returns>
+    /// %TRUE if a #GstObject named @name does not appear in @list,
+    /// %FALSE if it does.
+    /// </returns>
+    public static bool CheckUniqueness(System.Collections.Generic.IEnumerable<Gst.Object>? list, string name)
+    {
+        using Gst.Interop.GListScope listScope = Gst.Interop.GMarshal.AllocList(list, singly: false);
+        ArgumentNullException.ThrowIfNull(name);
+        System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
+        int nativeResult = GstObjectCheckUniqueness(listScope.Head, nameScope.Pointer);
+        return nativeResult != 0;
+    }
+
     /// <summary>The <c>name</c> property.</summary>
     public string? Name => GetName();
 
@@ -651,6 +680,10 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
     /// <summary>The <c>gst_object_unparent</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_object_unparent")]
     private static partial void GstObjectUnparent(nint @object);
+
+    /// <summary>The <c>gst_object_check_uniqueness</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_object_check_uniqueness")]
+    private static partial int GstObjectCheckUniqueness(nint list, byte* name);
 
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstObject</c> under.</summary>
     /// <returns>The type of the instances of this wrapper.</returns>

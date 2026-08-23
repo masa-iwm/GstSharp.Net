@@ -24,6 +24,15 @@ namespace Gst.Interop;
 /// is no list to free twice and none to forget.
 /// </para>
 /// <para>
+/// A list the callee takes over is built here as well, by the very same spine
+/// builder, and is not released at all: the head and one value minted per
+/// element belong to the callee from the moment the call is made. The builder
+/// takes no side in that, which is why it answers a bare head and leaves the
+/// ownership to whichever factory of <see cref="GMarshal"/> asked for it — the
+/// borrowed direction wraps the head in a <see cref="GListScope"/> that frees
+/// it, the consumed direction hands it straight to the call.
+/// </para>
+/// <para>
 /// The order matters and is the reason this is one call rather than an
 /// enumerator: every element pointer is copied out first, the spine is released
 /// next, and the elements are adopted last. Wrapping an element can throw — a
@@ -171,9 +180,74 @@ internal static partial class GListMarshal
         }
     }
 
+    /// <summary>
+    /// Builds a spine over element pointers the caller already produced.
+    /// </summary>
+    /// <param name="items">The <c>data</c> of every node, in list order.</param>
+    /// <param name="singly">
+    /// <see langword="true"/> for a <c>GSList</c>, <see langword="false"/> for a
+    /// <c>GList</c>.
+    /// </param>
+    /// <returns>
+    /// The first node, or <see cref="nint.Zero"/> when <paramref name="items"/>
+    /// is empty: <c>NULL</c> is how C spells the empty list.
+    /// </returns>
+    /// <remarks>
+    /// The nodes are prepended from the back, so the list comes out in the
+    /// order of <paramref name="items"/> without a second walk. Nothing here
+    /// owns the elements — they were minted or read by the caller, which is
+    /// also the only party that knows whether they have to be released — so a
+    /// throw takes the half built spine down and leaves the elements to the
+    /// caller's own <c>catch</c>.
+    /// </remarks>
+    internal static nint BuildSpine(ReadOnlySpan<nint> items, bool singly)
+    {
+        nint head = nint.Zero;
+
+        try
+        {
+            for (int i = items.Length - 1; i >= 0; i--)
+            {
+                head = singly ? SListPrepend(head, items[i]) : ListPrepend(head, items[i]);
+            }
+        }
+        catch
+        {
+            FreeSpine(head, singly);
+            throw;
+        }
+
+        return head;
+    }
+
+    /// <summary>
+    /// Releases the nodes of a list, and nothing else.
+    /// </summary>
+    /// <param name="head">The first node, or <see cref="nint.Zero"/> for an empty list.</param>
+    /// <param name="singly">
+    /// <see langword="true"/> for a <c>GSList</c>, <see langword="false"/> for a
+    /// <c>GList</c>.
+    /// </param>
+    internal static void FreeSpine(nint head, bool singly)
+    {
+        if (singly)
+        {
+            SListFree(head);
+            return;
+        }
+
+        ListFree(head);
+    }
+
     [LibraryImport("GLib", EntryPoint = "g_list_free")]
     private static partial void ListFree(nint list);
 
     [LibraryImport("GLib", EntryPoint = "g_list_prepend")]
     private static partial nint ListPrepend(nint list, nint data);
+
+    [LibraryImport("GLib", EntryPoint = "g_slist_free")]
+    private static partial void SListFree(nint list);
+
+    [LibraryImport("GLib", EntryPoint = "g_slist_prepend")]
+    private static partial nint SListPrepend(nint list, nint data);
 }

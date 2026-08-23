@@ -75,6 +75,41 @@ public abstract unsafe partial class Container : GES.TimelineElement, GES.IExtra
         return nativeResult != 0;
     }
 
+    /// <summary>Edits the container within its timeline.</summary>
+    /// <remarks>
+    /// <para>
+    /// GStreamer ignores this list. ges_timeline_element_edit forwards to
+    /// ges_timeline_element_edit_full with NULL and never reads it
+    /// (ges-timeline-element.c:2533-2543, where the upstream FIXME says so), and the
+    /// two deprecated wrappers forward to it (ges-container.c:1063-1070,
+    /// ges-track-element.c:1823-1831). Pass null.
+    /// This overload takes the new priority as an <see langword="int"/> while the
+    /// member it does not hide, <c>GES.TimelineElement.Edit</c>, takes it as a
+    /// <see langword="long"/>: an integer literal binds this one, and an argument
+    /// of type <see langword="long"/> reaches the other.
+    /// </para>
+    /// </remarks>
+    /// <param name="layers">
+    /// The <c>layers</c> argument.
+    /// The call reads the list while it runs and copies whatever it keeps. A
+    /// temporary native list is built for the call and released when it returns,
+    /// and an empty sequence is passed as the null pointer, which is how C spells
+    /// the empty list.
+    /// </param>
+    /// <param name="newLayerPriority">The <c>newLayerPriority</c> argument.</param>
+    /// <param name="mode">The <c>mode</c> argument.</param>
+    /// <param name="edge">The <c>edge</c> argument.</param>
+    /// <param name="position">The <c>position</c> argument.</param>
+    /// <returns>%TRUE if the edit of @container completed, %FALSE on failure.</returns>
+    [Obsolete("use #ges_timeline_element_edit instead. (deprecated since 1.18)")]
+    public bool Edit(System.Collections.Generic.IEnumerable<GES.Layer>? layers, int newLayerPriority, GES.EditMode mode, GES.Edge edge, ulong position)
+    {
+        using Gst.Interop.GListScope layersScope = Gst.Interop.GMarshal.AllocList(layers, singly: false);
+        int nativeResult = GesContainerEdit(Handle, layersScope.Head, newLayerPriority, (int)mode, (int)edge, position);
+        System.GC.KeepAlive(this);
+        return nativeResult != 0;
+    }
+
     /// <summary>
     /// Get the list of timeline elements contained in the container. If
     /// @recursive is %TRUE, and the container contains other containers as
@@ -116,6 +151,47 @@ public abstract unsafe partial class Container : GES.TimelineElement, GES.IExtra
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(child);
         return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Groups the containers into a single container by merging them. The
+    /// containers must all belong to the same #GESTimelineElement:timeline.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// If the elements are all #GESClip-s then this method will attempt to
+    /// combine them all into a single #GESClip. This should succeed if they:
+    /// share the same #GESTimelineElement:start, #GESTimelineElement:duration
+    /// and #GESTimelineElement:in-point; exist in the same layer; and all of
+    /// the sources share the same #GESAsset. If this fails, or one of the
+    /// elements is not a #GESClip, this method will try to create a #GESGroup
+    /// instead.
+    /// </para>
+    /// <para>
+    /// A list of one answers that element's own wrapper rather than a new group,
+    /// and takes no new reference (ges-container.c:1007-1014, upstream FIXME). A
+    /// null or empty list answers a new, empty group (ges-group.c:461). Where the
+    /// members are clips, the clips after the first are merged into the first and
+    /// removed from their layer (ges-clip.c:2238-2330).
+    /// </para>
+    /// </remarks>
+    /// <param name="containers">
+    /// The <c>containers</c> argument.
+    /// The call reads the list while it runs and copies whatever it keeps. A
+    /// temporary native list is built for the call and released when it returns,
+    /// and an empty sequence is passed as the null pointer, which is how C spells
+    /// the empty list.
+    /// </param>
+    /// <returns>
+    /// The container created by merging
+    /// @containers, or %NULL if they could not be merged into a single
+    /// container.
+    /// </returns>
+    public static GES.Container? Group(System.Collections.Generic.IEnumerable<GES.Container>? containers)
+    {
+        using Gst.Interop.GListScope containersScope = Gst.Interop.GMarshal.AllocList(containers, singly: false);
+        nint nativeResult = GesContainerGroup(containersScope.Head);
+        return Gst.GObject.Object.FromNative<GES.Container>(nativeResult, Gst.Interop.Transfer.None);
     }
 
     /// <summary>
@@ -251,6 +327,10 @@ public abstract unsafe partial class Container : GES.TimelineElement, GES.IExtra
     [LibraryImport("GES", EntryPoint = "ges_container_add")]
     private static partial int GesContainerAdd(nint container, nint child);
 
+    /// <summary>The <c>ges_container_edit</c> entry point.</summary>
+    [LibraryImport("GES", EntryPoint = "ges_container_edit")]
+    private static partial int GesContainerEdit(nint container, nint layers, int newLayerPriority, int mode, int edge, ulong position);
+
     /// <summary>The <c>ges_container_get_children</c> entry point.</summary>
     [LibraryImport("GES", EntryPoint = "ges_container_get_children")]
     private static partial nint GesContainerGetChildren(nint container, int recursive);
@@ -258,6 +338,10 @@ public abstract unsafe partial class Container : GES.TimelineElement, GES.IExtra
     /// <summary>The <c>ges_container_remove</c> entry point.</summary>
     [LibraryImport("GES", EntryPoint = "ges_container_remove")]
     private static partial int GesContainerRemove(nint container, nint child);
+
+    /// <summary>The <c>ges_container_group</c> entry point.</summary>
+    [LibraryImport("GES", EntryPoint = "ges_container_group")]
+    private static partial nint GesContainerGroup(nint containers);
 
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GESContainer</c> under.</summary>
     /// <returns>The type of the instances of this wrapper.</returns>

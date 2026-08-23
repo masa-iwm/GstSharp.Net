@@ -46,6 +46,50 @@ public unsafe partial class EncodingTarget : Gst.GObject.Object
     {
     }
 
+    /// <summary>Creates a new #GstEncodingTarget.</summary>
+    /// <remarks>
+    /// <para>
+    /// The name and category can only consist of lowercase ASCII letters for the
+    /// first character, followed by either lowercase ASCII letters, digits or
+    /// hyphens ('-').
+    /// </para>
+    /// <para>
+    /// The @category *should* be one of the existing
+    /// well-defined categories, like #GST_ENCODING_CATEGORY_DEVICE, but it
+    /// *can* be a application or user specific category if
+    /// needed.
+    /// </para>
+    /// </remarks>
+    /// <param name="name">The <c>name</c> argument.</param>
+    /// <param name="category">The <c>category</c> argument.</param>
+    /// <param name="description">The <c>description</c> argument.</param>
+    /// <param name="profiles">
+    /// The <c>profiles</c> argument.
+    /// The call reads the list while it runs and copies whatever it keeps. A
+    /// temporary native list is built for the call and released when it returns,
+    /// and an empty sequence is passed as the null pointer, which is how C spells
+    /// the empty list.
+    /// </param>
+    /// <returns>
+    /// The newly created #GstEncodingTarget or %NULL if
+    /// there was an error.
+    /// </returns>
+    public static Gst.Pbutils.EncodingTarget? New(string name, string category, string description, System.Collections.Generic.IEnumerable<Gst.Pbutils.EncodingProfile>? profiles)
+    {
+        ArgumentNullException.ThrowIfNull(name);
+        System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
+        ArgumentNullException.ThrowIfNull(category);
+        System.Span<byte> categoryBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope categoryScope = Gst.Interop.GMarshal.StackUtf8(category, categoryBuffer);
+        ArgumentNullException.ThrowIfNull(description);
+        System.Span<byte> descriptionBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope descriptionScope = Gst.Interop.GMarshal.StackUtf8(description, descriptionBuffer);
+        using Gst.Interop.GListScope profilesScope = Gst.Interop.GMarshal.AllocList(profiles, singly: false);
+        nint nativeResult = GstEncodingTargetNew(nameScope.Pointer, categoryScope.Pointer, descriptionScope.Pointer, profilesScope.Head);
+        return Gst.GObject.Object.FromNative<Gst.Pbutils.EncodingTarget>(nativeResult, Gst.Interop.Transfer.Full);
+    }
+
     /// <summary>
     /// Adds the given @profile to the @target. Each added profile must have
     /// a unique name within the profile.
@@ -254,6 +298,10 @@ public unsafe partial class EncodingTarget : Gst.GObject.Object
         return Gst.GObject.Object.FromNative<Gst.Pbutils.EncodingTarget>(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_encoding_target_load_from_file returned no value.");
     }
+
+    /// <summary>The <c>gst_encoding_target_new</c> entry point.</summary>
+    [LibraryImport("GstPbutils", EntryPoint = "gst_encoding_target_new")]
+    private static partial nint GstEncodingTargetNew(byte* name, byte* category, byte* description, nint profiles);
 
     /// <summary>The <c>gst_encoding_target_add_profile</c> entry point.</summary>
     [LibraryImport("GstPbutils", EntryPoint = "gst_encoding_target_add_profile")]

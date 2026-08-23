@@ -291,6 +291,44 @@ public unsafe partial class Layer : Gst.GObject.InitiallyUnowned, GES.IExtractab
     }
 
     /// <summary>
+    /// Activate or deactivate track elements in @tracks (or in all tracks if @tracks
+    /// is %NULL).
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// When a layer is deactivated for a track, all the #GESTrackElement-s in
+    /// the track that belong to a #GESClip in the layer will no longer be
+    /// active in the track, regardless of their individual
+    /// #GESTrackElement:active value.
+    /// </para>
+    /// <para>
+    /// Note that by default a layer will be active for all of its
+    /// timeline's tracks.
+    /// </para>
+    /// <para>
+    /// A null list means every track of the timeline (ges-layer.c:1083). Every
+    /// track named has to belong to the timeline of this layer; one that does not
+    /// makes the call answer false (ges-layer.c:1089).
+    /// </para>
+    /// </remarks>
+    /// <param name="active">The <c>active</c> argument.</param>
+    /// <param name="tracks">
+    /// The <c>tracks</c> argument.
+    /// The call reads the list while it runs and copies whatever it keeps. A
+    /// temporary native list is built for the call and released when it returns,
+    /// and an empty sequence is passed as the null pointer, which is how C spells
+    /// the empty list.
+    /// </param>
+    /// <returns>%TRUE if the operation worked %FALSE otherwise.</returns>
+    public bool SetActiveForTracks(bool active, System.Collections.Generic.IEnumerable<GES.Track>? tracks)
+    {
+        using Gst.Interop.GListScope tracksScope = Gst.Interop.GMarshal.AllocList(tracks, singly: false);
+        int nativeResult = GesLayerSetActiveForTracks(Handle, active ? 1 : 0, tracksScope.Head);
+        System.GC.KeepAlive(this);
+        return nativeResult != 0;
+    }
+
+    /// <summary>
     /// Sets #GESLayer:auto-transition for the layer. Use
     /// ges_timeline_set_auto_transition() if you want all layers within a
     /// #GESTimeline to have #GESLayer:auto-transition set to %TRUE. Use this
@@ -516,6 +554,10 @@ public unsafe partial class Layer : Gst.GObject.InitiallyUnowned, GES.IExtractab
     /// <summary>The <c>ges_layer_remove_clip</c> entry point.</summary>
     [LibraryImport("GES", EntryPoint = "ges_layer_remove_clip")]
     private static partial int GesLayerRemoveClip(nint layer, nint clip);
+
+    /// <summary>The <c>ges_layer_set_active_for_tracks</c> entry point.</summary>
+    [LibraryImport("GES", EntryPoint = "ges_layer_set_active_for_tracks")]
+    private static partial int GesLayerSetActiveForTracks(nint layer, int active, nint tracks);
 
     /// <summary>The <c>ges_layer_set_auto_transition</c> entry point.</summary>
     [LibraryImport("GES", EntryPoint = "ges_layer_set_auto_transition")]
