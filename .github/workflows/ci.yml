@@ -64,7 +64,7 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.nuget/packages
-          key: nuget-${{ runner.os }}-${{ hashFiles('**/Directory.Packages.props', '**/Directory.Build.props', '**/*.csproj', 'global.json') }}
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/Directory.Packages.props', '**/Directory.Build.props', 'global.json') }}
           restore-keys: nuget-${{ runner.os }}-
 
       - name: Restore
@@ -150,7 +150,7 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.nuget/packages
-          key: nuget-${{ runner.os }}-${{ hashFiles('**/Directory.Packages.props', '**/Directory.Build.props', '**/*.csproj', 'global.json') }}
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/Directory.Packages.props', '**/Directory.Build.props', 'global.json') }}
           restore-keys: nuget-${{ runner.os }}-
 
       # Runtime packages only: the binding loads versioned SONAMEs
@@ -371,7 +371,7 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.nuget/packages
-          key: nuget-${{ runner.os }}-${{ hashFiles('**/Directory.Packages.props', '**/Directory.Build.props', '**/*.csproj', 'global.json') }}
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/Directory.Packages.props', '**/Directory.Build.props', 'global.json') }}
           restore-keys: nuget-${{ runner.os }}-
 
       # The formula bundles core, base, good, bad, ugly and libav, and installs
@@ -452,7 +452,7 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.nuget/packages
-          key: nuget-${{ runner.os }}-${{ hashFiles('**/Directory.Packages.props', '**/Directory.Build.props', '**/*.csproj', 'global.json') }}
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/Directory.Packages.props', '**/Directory.Build.props', 'global.json') }}
           restore-keys: nuget-${{ runner.os }}-
 
       - name: Install MSYS2 with GStreamer
@@ -563,7 +563,7 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.nuget/packages
-          key: nuget-${{ runner.os }}-${{ hashFiles('**/Directory.Packages.props', '**/Directory.Build.props', '**/*.csproj', 'global.json') }}
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/Directory.Packages.props', '**/Directory.Build.props', 'global.json') }}
           restore-keys: nuget-${{ runner.os }}-
 
       # The installer does not change for a pinned version, so downloading it
