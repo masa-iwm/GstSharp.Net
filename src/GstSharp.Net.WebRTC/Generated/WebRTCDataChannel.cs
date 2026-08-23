@@ -377,6 +377,56 @@ public abstract unsafe partial class WebRTCDataChannel : Gst.GObject.Object
         }
     }
 
+    /// <summary>The arguments of the <c>on-error</c> signal of <c>GstWebRTCDataChannel</c>.</summary>
+    public sealed class OnErrorSignalArgs : System.EventArgs
+    {
+        /// <summary>Initializes a new instance of the <see cref="OnErrorSignalArgs"/> class.</summary>
+        /// <param name="error">the #GError thrown</param>
+        internal OnErrorSignalArgs(Gst.GLib.GException error)
+        {
+            Error = error;
+        }
+
+        /// <summary>the #GError thrown</summary>
+        public Gst.GLib.GException Error { get; }
+    }
+
+    /// <summary>Raised for the <c>on-error</c> signal of <c>GstWebRTCDataChannel</c>.</summary>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
+    public event System.EventHandler<Gst.WebRTC.WebRTCDataChannel.OnErrorSignalArgs> OnError
+    {
+        add => Gst.WebRTC.SignalConnections.Add(this, "on-error", (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, void>)&OnErrorTrampoline, value);
+        remove => Gst.WebRTC.SignalConnections.Remove(this, "on-error", value);
+    }
+
+    /// <summary>The native handler of the <c>on-error</c> signal of <c>GstWebRTCDataChannel</c>.</summary>
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
+    private static void OnErrorTrampoline(nint instance, nint error, nint userData)
+    {
+        try
+        {
+            if (Gst.Interop.CallbackHandle.GetState<System.EventHandler<Gst.WebRTC.WebRTCDataChannel.OnErrorSignalArgs>>(userData) is not { } handler)
+            {
+                return;
+            }
+
+            Gst.GLib.GException errorValue = Gst.GLib.GException.FromBorrowed(error)
+                ?? throw new InvalidOperationException("The on-error signal of GstWebRTCDataChannel passed no error.");
+            handler(
+                Gst.GObject.Object.FromNative(instance, Gst.Interop.Transfer.None),
+                new Gst.WebRTC.WebRTCDataChannel.OnErrorSignalArgs(errorValue));
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+        }
+    }
+
     /// <summary>The arguments of the <c>on-message-string</c> signal of <c>GstWebRTCDataChannel</c>.</summary>
     public sealed class OnMessageStringSignalArgs : System.EventArgs
     {

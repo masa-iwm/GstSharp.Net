@@ -134,6 +134,20 @@ internal static class CallableRenderer
         "describes.",
     ];
 
+    /// <summary>
+    /// What the documentation of a <c>GError</c> the call only borrows says:
+    /// the exception value never crosses, a temporary built from it does, and
+    /// the value it is built from has to carry an error domain.
+    /// </summary>
+    private static readonly string[] GErrorParamNote =
+    [
+        "The call is handed a temporary native error built from this value and",
+        "releases it again when the call returns. The library copies whatever it",
+        "keeps, so the exception object itself is never retained. It needs a",
+        "registered error domain: an exception created without one — every",
+        "constructor but <c>GException(Quark, int, string)</c> — is rejected.",
+    ];
+
     /// <summary>Writes the public member of a plan.</summary>
     /// <param name="writer">The target writer.</param>
     /// <param name="plan">The plan to write.</param>
@@ -442,6 +456,7 @@ internal static class CallableRenderer
         WriteConsumptionExceptions(writer, plan);
         WriteGValueExceptions(writer, plan);
         WriteSpanExceptions(writer, plan);
+        WriteGErrorExceptions(writer, plan);
 
         if (plan.Throws)
         {
@@ -488,6 +503,7 @@ internal static class CallableRenderer
         {
             ArgumentKind.ConsumedHandle => ConsumptionParamNote(argument),
             ArgumentKind.GValue => GValueParamNote(plan, argument),
+            ArgumentKind.GError when argument.Direction == ArgumentDirection.In => GErrorParamNote,
             ArgumentKind.CallerAllocatedBoxed => CallerAllocatedParamNote(argument),
             ArgumentKind.Span => SpanParamNote(plan, argument),
             ArgumentKind.Callback when argument.Scope == GirScope.Forever => ForeverCallbackNote,
@@ -754,6 +770,38 @@ internal static class CallableRenderer
 
             writer.WriteLine("/// <exception cref=\"ArgumentException\">");
             writer.WriteLine("/// " + sentence);
+            writer.WriteLine("/// </exception>");
+        }
+    }
+
+    /// <summary>
+    /// Documents the validation of every <c>GError</c> the member builds a
+    /// temporary from.
+    /// </summary>
+    /// <param name="writer">The target writer.</param>
+    /// <param name="plan">The member being documented.</param>
+    /// <remarks>
+    /// The rule is about the caller's own argument and is met at run time and
+    /// nowhere else, so it is documented on the parameter that carries it, the
+    /// way <see cref="WriteSpanExceptions"/> documents a length. A nullable
+    /// error is exempt: the absent value is one the member passes on as
+    /// <c>NULL</c> and validates nothing about.
+    /// </remarks>
+    private static void WriteGErrorExceptions(CodeWriter writer, MarshalPlan plan)
+    {
+        foreach (ArgumentPlan argument in plan.Arguments)
+        {
+            if (argument.Kind != ArgumentKind.GError
+                || argument.Direction != ArgumentDirection.In
+                || argument.IsNullable)
+            {
+                continue;
+            }
+
+            writer.WriteLine("/// <exception cref=\"ArgumentException\">");
+            writer.WriteLine(
+                "/// <paramref name=\"" + DocName(argument.Name)
+                + "\"/> carries no error domain, no message, or a message with an embedded null.");
             writer.WriteLine("/// </exception>");
         }
     }
@@ -1699,6 +1747,22 @@ internal static class CallableRenderer
                 writer.CloseBlock();
                 return;
 
+            // The temporary GError the prologue builds needs a registered
+            // domain and a message, because g_error_new_literal answers NULL
+            // with a critical without them. The validation is a guard rather
+            // than a check inside the allocation: a member that also mints a
+            // consumed handle orders its prologue in three phases, and a guard
+            // that throws has to find nothing allocated yet.
+            case ArgumentKind.GError when argument.Direction == ArgumentDirection.In:
+                if (!argument.IsNullable)
+                {
+                    writer.WriteLine("ArgumentNullException.ThrowIfNull(" + name + ");");
+                }
+
+                writer.WriteLine(
+                    "Gst.GLib.GException.ValidateForNative(" + name + ", nameof(" + name + "));");
+                return;
+
             case ArgumentKind.Span:
                 WriteSpanGuard(writer, plan, argument);
                 return;
@@ -2002,6 +2066,15 @@ internal static class CallableRenderer
                 writer.WriteLine("nint errorNative = 0;");
                 return;
 
+            // The temporary error belongs to the scope, which releases it when
+            // the call returns and when the call throws. Every callee that
+            // takes one copies what it keeps.
+            case ArgumentKind.GError when argument.Direction == ArgumentDirection.In:
+                writer.WriteLine(
+                    "using Gst.Interop.GErrorScope " + name + "Scope = Gst.Interop.GMarshal.AllocError("
+                    + name + ");");
+                return;
+
             case ArgumentKind.Utf8 when argument.Direction == ArgumentDirection.In:
                 writer.WriteLine(
                     "System.Span<byte> " + name + "Buffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];");
@@ -2175,6 +2248,7 @@ internal static class CallableRenderer
 
             case ArgumentKind.Utf8 when argument.Direction == ArgumentDirection.In:
             case ArgumentKind.Strv when argument.Direction == ArgumentDirection.In:
+            case ArgumentKind.GError when argument.Direction == ArgumentDirection.In:
                 return name + "Scope.Pointer";
 
             case ArgumentKind.ListIn when argument.Transfer != GirTransfer.Full:
@@ -2251,6 +2325,12 @@ internal static class CallableRenderer
         ArgumentKind.GValue => argument.Transfer == GirTransfer.Full
             ? "Gst.GObject.Value.TakeOwnership(" + source + ")"
             : "Gst.GObject.Value.CopyFrom(" + source + ")",
+
+        // Only the return position reaches this for a GError; an argument is
+        // built into a temporary the scope owns. The three fields are copied
+        // and the pointer is never freed, because the library that produced it
+        // keeps owning it.
+        ArgumentKind.GError => "Gst.GLib.GException.FromBorrowed(" + source + ")",
         _ => source,
     };
 
@@ -2410,7 +2490,8 @@ internal static class CallableRenderer
         }
 
         bool needsCheck = !value.IsNullable
-            && value.Kind is ArgumentKind.Handle or ArgumentKind.Utf8 or ArgumentKind.Strv;
+            && value.Kind is ArgumentKind.Handle or ArgumentKind.Utf8 or ArgumentKind.Strv
+                or ArgumentKind.GError;
 
         if (!needsCheck)
         {

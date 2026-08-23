@@ -225,6 +225,83 @@ public unsafe partial class Discoverer : Gst.GObject.Object
         }
     }
 
+    /// <summary>The arguments of the <c>discovered</c> signal of <c>GstDiscoverer</c>.</summary>
+    public sealed class DiscoveredSignalArgs : System.EventArgs
+    {
+        /// <summary>Initializes a new instance of the <see cref="DiscoveredSignalArgs"/> class.</summary>
+        /// <param name="info">the results #GstDiscovererInfo</param>
+        /// <param name="error">
+        /// #GError, which will be non-NULL
+        ///                                         if an error occurred during
+        ///                                         discovery. You must not free
+        ///                                         this #GError, it will be freed by
+        ///                                         the discoverer.
+        /// </param>
+        internal DiscoveredSignalArgs(Gst.Pbutils.DiscovererInfo info, Gst.GLib.GException? error)
+        {
+            Info = info;
+            Error = error;
+        }
+
+        /// <summary>the results #GstDiscovererInfo</summary>
+        public Gst.Pbutils.DiscovererInfo Info { get; }
+
+        /// <summary>
+        /// #GError, which will be non-NULL
+        ///                                         if an error occurred during
+        ///                                         discovery. You must not free
+        ///                                         this #GError, it will be freed by
+        ///                                         the discoverer.
+        /// </summary>
+        public Gst.GLib.GException? Error { get; }
+    }
+
+    /// <summary>
+    /// Will be emitted in async mode when all information on a URI could be
+    /// discovered, or an error occurred.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// When an error occurs, @info might still contain some partial information,
+    /// depending on the circumstances of the error.
+    /// </para>
+    /// </remarks>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
+    public event System.EventHandler<Gst.Pbutils.Discoverer.DiscoveredSignalArgs> Discovered
+    {
+        add => Gst.Pbutils.SignalConnections.Add(this, "discovered", (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, nint, void>)&DiscoveredTrampoline, value);
+        remove => Gst.Pbutils.SignalConnections.Remove(this, "discovered", value);
+    }
+
+    /// <summary>The native handler of the <c>discovered</c> signal of <c>GstDiscoverer</c>.</summary>
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
+    private static void DiscoveredTrampoline(nint instance, nint info, nint error, nint userData)
+    {
+        try
+        {
+            if (Gst.Interop.CallbackHandle.GetState<System.EventHandler<Gst.Pbutils.Discoverer.DiscoveredSignalArgs>>(userData) is not { } handler)
+            {
+                return;
+            }
+
+            Gst.Pbutils.DiscovererInfo infoValue = Gst.GObject.Object.FromNative<Gst.Pbutils.DiscovererInfo>(info, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("The discovered signal of GstDiscoverer passed no info.");
+            Gst.GLib.GException? errorValue = Gst.GLib.GException.FromBorrowed(error);
+            handler(
+                Gst.GObject.Object.FromNative(instance, Gst.Interop.Transfer.None),
+                new Gst.Pbutils.Discoverer.DiscoveredSignalArgs(infoValue, errorValue));
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+        }
+    }
+
     /// <summary>Will be emitted in async mode when all pending URIs have been processed.</summary>
     /// <remarks>
     /// The handler is remembered on the wrapper it was added to and has to be

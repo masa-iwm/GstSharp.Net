@@ -95,6 +95,14 @@ internal enum ArgumentKind
     /// </summary>
     GValue,
 
+    /// <summary>
+    /// A <c>GError</c> the callee only borrows, projected onto
+    /// <c>Gst.GLib.GException</c>. An <c>in</c> parameter is built into a
+    /// temporary native error for the duration of the call; a borrowed return
+    /// is read into a managed exception value and never freed.
+    /// </summary>
+    GError,
+
     /// <summary>A blittable structure, passed by value or through a pointer.</summary>
     PlainStruct,
 

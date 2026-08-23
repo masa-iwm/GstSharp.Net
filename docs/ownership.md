@@ -240,6 +240,39 @@ interior to storage the array reallocates and frees, and `Append` stores a copy
 of the value it is given, so the caller disposes both its own value and, in
 time, the array.
 
+## Errors that cross the boundary
+
+A `GError` is not a wrapper and is never owned by a `Gst.GLib.GException`: the
+exception carries a copy of the three fields the error holds — the domain, the
+code and the message — and the pointer it was read from is nobody's to keep.
+Four shapes reach the surface, and each says who frees what.
+
+* **A member that throws** takes a hidden `GError**`, and a call that fills it
+  raises the error as a `Gst.GLib.GException` and frees it on the way out
+  (`GException.ThrowIfSet`). The exception outlives the pointer, because it
+  shares nothing with it. A call that also returned something releases that
+  first: the caller cannot be handed both.
+* **An error handed to a handler, or returned borrowed**, is the library's own
+  for as long as the emission or the call runs. `GES.Project.ErrorLoading`,
+  `Gst.Pbutils.Discoverer.Discovered` and their relatives read domain, code
+  and message inside the trampoline and free nothing, and so does
+  `GES.Asset.GetError()`, whose error `ges_asset_needs_reload` clears out from
+  under a caller who kept the pointer. The value the handler sees is a
+  managed exception object and stays valid for as long as anything holds it.
+* **An error passed in** — `Gst.Message.NewError`, `Gst.Object.DefaultError`
+  and their siblings — is built into a temporary `GError` that the member
+  frees again when the call returns. The library copies what it keeps
+  (`gst_message_new_error` through `g_error_copy`), so the exception object is
+  never retained. Such an error needs a registered error domain and a message:
+  an exception built by any constructor but
+  `GException(Quark, int, string)` carries no domain, and passing one throws
+  `ArgumentException` before anything is allocated.
+* **An error taken out of a message** is the fourth shape and is hand written:
+  `Gst.Message.ParseError()`, `ParseWarning()` and `ParseInfo()` answer a
+  tuple of the exception and the debug string, and the `GError` the C function
+  transferred is freed inside the member. Nothing is left for the caller to
+  release.
+
 ## Properties without a C accessor
 
 Some properties exist only on the GObject property system: the gir names no C

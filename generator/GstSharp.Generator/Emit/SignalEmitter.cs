@@ -363,6 +363,15 @@ internal static class SignalEmitter
             writer.WriteLine("/// to the emitting library and can differ between GStreamer versions.");
             writer.WriteLine("/// </remarks>");
         }
+        else if (plan.Return.Kind == ArgumentKind.Utf8Owned)
+        {
+            writer.WriteLine("/// <remarks>");
+            writer.WriteLine("/// The string the handler returns is copied into memory the emitting library");
+            writer.WriteLine("/// owns and frees. Returning <see langword=\"null\"/> answers no value, and what");
+            writer.WriteLine("/// the emission makes of that is the contract of the signal, stated in its own");
+            writer.WriteLine("/// returns documentation.");
+            writer.WriteLine("/// </remarks>");
+        }
 
         writer.WriteLine("/// <param name=\"sender\">The instance that emitted the signal.</param>");
         writer.WriteLine("/// <param name=\"args\">The arguments of the signal.</param>");
@@ -605,6 +614,7 @@ internal static class SignalEmitter
     private static bool CanBeNull(ArgumentPlan argument) =>
         !argument.IsNullable
         && (argument.Kind == ArgumentKind.Utf8
+            || argument.Kind == ArgumentKind.GError
             || (argument.Kind == ArgumentKind.Handle && argument.Flavor != HandleFlavor.ParamSpec));
 
     /// <summary>
@@ -633,6 +643,11 @@ internal static class SignalEmitter
             ArgumentKind.Enumeration => "(" + type + ")" + argument.Name,
             ArgumentKind.Wrapper => "new " + type + "(" + argument.Name + ")",
             ArgumentKind.Utf8 => "Gst.Interop.GMarshal.PtrToStringUtf8((nint)" + argument.Name + ")",
+
+            // The error belongs to the emission and is freed once it returns,
+            // so the three fields are copied here and the pointer is never
+            // retained.
+            ArgumentKind.GError => "Gst.GLib.GException.FromBorrowed(" + argument.Name + ")",
             ArgumentKind.Handle => argument.Flavor switch
             {
                 HandleFlavor.GObject => "Gst.GObject.Object.FromNative<" + type + ">("
@@ -658,6 +673,12 @@ internal static class SignalEmitter
         ArgumentKind.Enumeration => "(" + value.RawType + ")" + source,
         ArgumentKind.Handle => source + " is null ? 0 : Gst.Interop.GObjectNative.ObjectRef("
             + source + ".Handle)",
+
+        // The string is copied into memory the emitting library owns: the
+        // accumulator of the signal g_frees what the handler answered, and
+        // g_malloc is the allocator this copy comes from. A null answer is the
+        // null pointer, which is how the emission spells "no value".
+        ArgumentKind.Utf8Owned => "Gst.Interop.GMarshal.StringToUtf8Ptr(" + source + ")",
         ArgumentKind.Wrapper => source + "." + (value.PublicType switch
         {
             "Gst.ClockTime" => "Nanoseconds",

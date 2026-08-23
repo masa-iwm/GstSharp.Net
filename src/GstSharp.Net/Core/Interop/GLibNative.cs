@@ -38,6 +38,9 @@ internal static unsafe partial class GLibNative
     [LibraryImport("GLib", EntryPoint = "g_quark_to_string")]
     internal static partial nint QuarkToString(uint quark);
 
+    [LibraryImport("GLib", EntryPoint = "g_error_new_literal")]
+    internal static partial nint ErrorNewLiteral(uint domain, int code, byte* message);
+
     [LibraryImport("GLib", EntryPoint = "g_error_free")]
     internal static partial void ErrorFree(nint error);
 

@@ -413,6 +413,48 @@ public static unsafe class GMarshal
         + " is null, and native code would read it as a payload of its own.";
 
     /// <summary>
+    /// Builds a <c>GError</c> from an exception value for the duration of a
+    /// single native call.
+    /// </summary>
+    /// <param name="error">The value to encode, may be <see langword="null"/>.</param>
+    /// <returns>
+    /// A scope that has to be disposed once the call has returned, and whose
+    /// <see cref="GErrorScope.Pointer"/> is <see cref="nint.Zero"/> when
+    /// <paramref name="error"/> is <see langword="null"/>.
+    /// </returns>
+    /// <remarks>
+    /// <para>
+    /// The message is copied by <c>g_error_new_literal</c>, so the buffer this
+    /// encodes it into is released again before the scope is handed back and
+    /// only the error itself is left for the scope to own.
+    /// </para>
+    /// <para>
+    /// The domain has to be a registered quark and the message must be neither
+    /// empty nor carry an embedded null; <c>GException.ValidateForNative</c> is
+    /// what says so, and the generated members call it in their guard phase,
+    /// before anything is allocated.
+    /// </para>
+    /// </remarks>
+    public static GErrorScope AllocError(Gst.GLib.GException? error)
+    {
+        if (error is null)
+        {
+            return default;
+        }
+
+        nint message = StringToUtf8Ptr(error.Message);
+        try
+        {
+            return new GErrorScope(
+                GLibNative.ErrorNewLiteral(error.Domain.Value, error.Code, (byte*)message));
+        }
+        finally
+        {
+            GLibNative.Free(message);
+        }
+    }
+
+    /// <summary>
     /// Reads a null terminated UTF-8 string that stays owned by native code.
     /// </summary>
     /// <param name="pointer">The string to read, may be <see cref="nint.Zero"/>.</param>

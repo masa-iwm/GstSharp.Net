@@ -589,6 +589,14 @@ internal sealed class MarshalPlanner
     /// which is what <see cref="StrandsConsumedList"/> weighs against a list
     /// that was already handed over.
     /// </summary>
+    /// <remarks>
+    /// <see cref="ArgumentKind.GError"/> is deliberately absent: everything
+    /// that would make <c>GMarshal.AllocError</c> throw (no domain, no message,
+    /// an embedded null) is refused by <c>GException.ValidateForNative</c> in
+    /// the first phase, before any list is handed over. That invariant is what
+    /// keeps a GError after a consumed list safe; relaxing the guard means
+    /// adding the kind here.
+    /// </remarks>
     /// <param name="argument">The argument whose materialization is weighed.</param>
     /// <returns><see langword="true"/> when building the argument can throw.</returns>
     private static bool ThrowsInPrologue(ArgumentPlan argument) =>
@@ -786,6 +794,12 @@ internal sealed class MarshalPlanner
 
         string host = context.SignalHost ?? ownerType;
         string name = _names.SignalName(context.Namespace, owner, signal);
+
+        // The GObject spelling of the signal, which is the key an overlay
+        // addresses its arguments by. It is the same key NameMapper.SignalName
+        // renames on and the same one the skip report prints, so a correction
+        // is written once and reads the same everywhere.
+        string signalKey = context.Namespace.Name + "." + owner.Name + "::" + signal.Name;
         string? argsName = signal.Parameters.Count > 0 ? ArgsClassName(name) : null;
         HashSet<string> taken = new(ArgsMemberNames, StringComparer.Ordinal);
         if (argsName is not null)
@@ -796,7 +810,7 @@ internal sealed class MarshalPlanner
         List<SignalArgument> arguments = [];
         foreach (GirParameter parameter in signal.Parameters)
         {
-            ArgumentPlan? argument = PlanSignalArgument(parameter, context);
+            ArgumentPlan? argument = PlanSignalArgument(parameter, context, signalKey);
 
             // The trampoline names its own locals, and the arguments class
             // cannot carry two properties of one name or one that its own type
@@ -1754,6 +1768,9 @@ internal sealed class MarshalPlanner
             case MarshalKind.GValue:
                 return PlanGValue(type, name, direction, transfer, nullable, isReturn);
 
+            case MarshalKind.GError:
+                return PlanGError(name, direction, transfer, nullable);
+
             case MarshalKind.GObject:
             case MarshalKind.MiniObject:
             case MarshalKind.Boxed:
@@ -1946,6 +1963,60 @@ internal sealed class MarshalPlanner
             Direction = direction == ArgumentDirection.In && isConst
                 ? ArgumentDirection.In
                 : ArgumentDirection.Ref,
+        };
+    }
+
+    /// <summary>
+    /// Plans a <c>GError</c>, projected onto <c>Gst.GLib.GException</c>.
+    /// </summary>
+    /// <param name="name">The C# name of the argument.</param>
+    /// <param name="direction">How the argument is passed, overrides applied.</param>
+    /// <param name="transfer">The ownership transfer.</param>
+    /// <param name="nullable">Whether the gir marks the value nullable.</param>
+    /// <returns>The plan, or <see langword="null"/> when the shape is not supported.</returns>
+    /// <remarks>
+    /// <para>
+    /// Exactly one shape is understood: an error the callee only borrows,
+    /// travelling <c>in</c>. A parameter of that shape is built into a
+    /// temporary <c>GError</c> that the member frees when the call returns,
+    /// which is safe because every callee in the corpus either copies it
+    /// (<c>gst_message_new_error</c> and its relatives, through
+    /// <c>g_error_copy</c>) or only reads it
+    /// (<c>gst_object_default_error</c>). A return value reaches this with
+    /// <c>direction: In</c> as well - that is how <c>PlanReturn</c> and
+    /// <c>PlanSignalReturn</c> call <c>PlanScalar</c> - and is read into a
+    /// managed value the binding copies eagerly and never frees.
+    /// </para>
+    /// <para>
+    /// An <c>out</c> or <c>ref</c> direction is refused, and that refusal is
+    /// what keeps the explicit <c>GError**</c> direction out of the pipeline:
+    /// <c>gst_message_parse_error</c> and its relatives stay rejected, and the
+    /// hand written members of <c>Custom/Message.cs</c> keep the surface. A
+    /// transfer other than <c>none</c> is refused for the same reason the
+    /// scope exists: the temporary belongs to the member, and a callee that
+    /// took it over would be freed twice.
+    /// </para>
+    /// </remarks>
+    private static ArgumentPlan? PlanGError(
+        string name,
+        ArgumentDirection direction,
+        GirTransfer transfer,
+        bool nullable)
+    {
+        if (direction != ArgumentDirection.In || transfer != GirTransfer.None)
+        {
+            return null;
+        }
+
+        return new ArgumentPlan
+        {
+            Kind = ArgumentKind.GError,
+            Name = name,
+            PublicType = nullable ? "Gst.GLib.GException?" : "Gst.GLib.GException",
+            RawType = NativeInt,
+            Direction = ArgumentDirection.In,
+            Transfer = transfer,
+            IsNullable = nullable,
         };
     }
 
@@ -2934,9 +3005,18 @@ internal sealed class MarshalPlanner
             // the method surface, while a trampoline is handed one and would
             // have to project it into managed code, which is the return side
             // shape and not this one.
+            //
+            // A GError is excluded for a related reason: a trampoline that
+            // receives a borrowed error needs a delegate contract - how long
+            // the value it hands the delegate stays valid, and what a delegate
+            // may do with it - that nothing states. Its only user in the
+            // corpus is GstVideoConvertSampleCallback, whose entry point
+            // gst_video_convert_sample_async is unsupported for reasons of its
+            // own, so the exclusion costs nothing and keeps the kind from
+            // widening the callback surface behind the scope it was added for.
             if (argument is null
                 || argument.Kind is ArgumentKind.Utf8Owned or ArgumentKind.Callback or ArgumentKind.GValue
-                    or ArgumentKind.ListIn)
+                    or ArgumentKind.ListIn or ArgumentKind.GError)
             {
                 return null;
             }
@@ -3068,8 +3148,19 @@ internal sealed class MarshalPlanner
     /// </summary>
     /// <param name="parameter">The gir parameter.</param>
     /// <param name="context">The module that is being emitted.</param>
+    /// <param name="signalKey">
+    /// The GObject spelling of the signal, <c>GES.Project::error-loading-asset</c>,
+    /// which an overlay keys its corrections by.
+    /// </param>
     /// <returns>The plan, or <see langword="null"/> when the argument is not supported.</returns>
-    private ArgumentPlan? PlanSignalArgument(GirParameter parameter, PlanningContext context)
+    /// <remarks>
+    /// Only <c>nullable</c> is honoured on a signal key. Every other field of
+    /// an annotation override describes something a signal argument does not
+    /// have - a direction, an array, a callback scope, a discardable return -
+    /// so a key that carries one of those is read for its nullable flag and
+    /// otherwise ignored. An unmatched key is silent, as it is for a callable.
+    /// </remarks>
+    private ArgumentPlan? PlanSignalArgument(GirParameter parameter, PlanningContext context, string signalKey)
     {
         if (parameter.IsVarArgs
             || parameter.Type.IsVarArgs
@@ -3081,6 +3172,8 @@ internal sealed class MarshalPlanner
 
         string name = NameMapper.ParameterName(parameter.Name);
         MappedType mapped = _types.Map(parameter.Type, context.Namespace);
+        bool nullable = _overlays.GetAnnotationOverride(signalKey + "#" + parameter.Name)?.Nullable
+            ?? parameter.IsNullable;
 
         // A notify style signal hands the handler the GParamSpec of the
         // property that changed. It is neither a GObject nor a generated
@@ -3108,12 +3201,13 @@ internal sealed class MarshalPlanner
             name,
             ArgumentDirection.In,
             parameter.Transfer,
-            parameter.IsNullable,
+            nullable,
             context);
 
         if (argument is null
             || argument.Kind is not (ArgumentKind.Value or ArgumentKind.Boolean or ArgumentKind.Enumeration
-                or ArgumentKind.Wrapper or ArgumentKind.Pointer or ArgumentKind.Utf8 or ArgumentKind.Handle))
+                or ArgumentKind.Wrapper or ArgumentKind.Pointer or ArgumentKind.Utf8 or ArgumentKind.Handle
+                or ArgumentKind.GError))
         {
             return null;
         }
@@ -3195,6 +3289,14 @@ internal sealed class MarshalPlanner
                 or ArgumentKind.Wrapper or ArgumentKind.Pointer => true,
             ArgumentKind.Handle => value.Transfer == GirTransfer.Full
                 && scalar.Flavor == HandleFlavor.GObject,
+
+            // A string the handler transfers is copied into memory the
+            // emitting library owns and frees - the accumulator of
+            // GESProject::missing-uri g_frees it - so the trampoline hands out
+            // a g_malloc'd copy. A borrowed string return stays rejected:
+            // nobody would own it, and the emission has no way to say who
+            // does.
+            ArgumentKind.Utf8Owned => value.Transfer == GirTransfer.Full,
             _ => false,
         };
 

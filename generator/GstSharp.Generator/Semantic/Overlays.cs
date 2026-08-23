@@ -160,7 +160,11 @@ internal sealed class PlatformSupport
 /// <c>discardReturn</c> on <c>#return</c> to drop a return value the caller
 /// already holds, and the <c>scope</c> of a callback parameter whose gir
 /// annotation does not describe how long the library keeps the function it is
-/// handed.</description></item>
+/// handed. A signal argument is addressed by the GObject spelling of its
+/// signal instead, <c>GES.Project::error-loading-asset#error</c>, the key
+/// <c>rename</c> uses for the event of the same signal; only <c>nullable</c>
+/// is read there, because a signal argument has no direction, no array, no
+/// callback scope and no discardable return.</description></item>
 /// <item><description><c>arrayOverrides</c>: keyed like
 /// <c>annotationOverrides</c> and applied to a parameter or a return value the
 /// gir already spells as an <c>&lt;array&gt;</c>. It corrects the

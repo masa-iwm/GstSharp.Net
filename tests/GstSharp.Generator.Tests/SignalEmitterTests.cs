@@ -493,12 +493,12 @@ public sealed class SignalEmitterTests
     [InlineData("GstApp", 8)]
     [InlineData("GstAudio", 0)]
     [InlineData("GstVideo", 2)]
-    [InlineData("GstPbutils", 4)]
+    [InlineData("GstPbutils", 5)]
     [InlineData("GstSdp", 0)]
-    [InlineData("GstWebRTC", 6)]
+    [InlineData("GstWebRTC", 7)]
     [InlineData("GstNet", 0)]
     [InlineData("GstRtsp", 1)]
-    [InlineData("GES", 31)]
+    [InlineData("GES", 35)]
     public void TheSignalCensusIsStable(string module, int signals)
     {
         // The two signals whose C# name a method of the same class had taken
@@ -509,8 +509,8 @@ public sealed class SignalEmitterTests
         // The nine action signals of GstApp are not events: they are the call
         // API of GstAppSrc and GstAppSink, which is already bound as methods.
         // Four of the twelve signals of GstWebRTC are action signals as well,
-        // and the two that carry a GLib.Bytes or a GLib.Error are not bound at
-        // all, which leaves the six that are counted here.
+        // and the one that carries a GLib.Bytes is not bound at all, which
+        // leaves the seven that are counted here.
         Assert.Equal(signals, Generated.Census.EmittedCount(module, "signal"));
         Assert.DoesNotContain(Generated.Diagnostics, diagnostic => diagnostic.Code == "GEN0011");
     }
@@ -530,19 +530,19 @@ public sealed class SignalEmitterTests
             removers += file.Content.Split("    public static void Remove").Length - 1;
         }
 
-        // Seventy seven signals are emitted over the eleven modules. Seventy
-        // three are events of a class; the remaining four belong to a gir
+        // Eighty three signals are emitted over the eleven modules. Seventy
+        // nine are events of a class; the remaining four belong to a gir
         // interface and are a pair of extension methods instead. The editing
-        // services are thirty one of them, and all thirty one are events: the
-        // one signal of a GES interface, GESMetaContainer::notify-meta,
+        // services are thirty five of them, and all thirty five are events:
+        // the one signal of a GES interface, GESMetaContainer::notify-meta,
         // carries a GValue and is not bound. The adder count carries one match
         // that is not a signal pair at all: Gst.ITagSetter's AddTagValue
         // extension, a GValue method whose name the pattern cannot tell from a
         // subscription adder.
-        Assert.Equal(73, events);
+        Assert.Equal(79, events);
         Assert.Equal(5, adders);
         Assert.Equal(4, removers);
-        Assert.Equal(77, trampolines);
+        Assert.Equal(83, trampolines);
 
         string[] withSignals =
         [

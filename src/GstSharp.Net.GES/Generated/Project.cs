@@ -527,6 +527,135 @@ public unsafe partial class Project : GES.Asset, GES.IMetaContainer
         }
     }
 
+    /// <summary>The arguments of the <c>error-loading</c> signal of <c>GESProject</c>.</summary>
+    public sealed class ErrorLoadingSignalArgs : System.EventArgs
+    {
+        /// <summary>Initializes a new instance of the <see cref="ErrorLoadingSignalArgs"/> class.</summary>
+        /// <param name="timeline">The timeline that failed loading</param>
+        /// <param name="error">The #GError defining the error that occured</param>
+        internal ErrorLoadingSignalArgs(GES.Timeline timeline, Gst.GLib.GException error)
+        {
+            Timeline = timeline;
+            Error = error;
+        }
+
+        /// <summary>The timeline that failed loading</summary>
+        public GES.Timeline Timeline { get; }
+
+        /// <summary>The #GError defining the error that occured</summary>
+        public Gst.GLib.GException Error { get; }
+    }
+
+    /// <summary>Raised for the <c>error-loading</c> signal of <c>GESProject</c>.</summary>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
+    public event System.EventHandler<GES.Project.ErrorLoadingSignalArgs> ErrorLoading
+    {
+        add => GES.SignalConnections.Add(this, "error-loading", (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, nint, void>)&ErrorLoadingTrampoline, value);
+        remove => GES.SignalConnections.Remove(this, "error-loading", value);
+    }
+
+    /// <summary>The native handler of the <c>error-loading</c> signal of <c>GESProject</c>.</summary>
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
+    private static void ErrorLoadingTrampoline(nint instance, nint timeline, nint error, nint userData)
+    {
+        try
+        {
+            if (Gst.Interop.CallbackHandle.GetState<System.EventHandler<GES.Project.ErrorLoadingSignalArgs>>(userData) is not { } handler)
+            {
+                return;
+            }
+
+            GES.Timeline timelineValue = Gst.GObject.Object.FromNative<GES.Timeline>(timeline, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("The error-loading signal of GESProject passed no timeline.");
+            Gst.GLib.GException errorValue = Gst.GLib.GException.FromBorrowed(error)
+                ?? throw new InvalidOperationException("The error-loading signal of GESProject passed no error.");
+            handler(
+                Gst.GObject.Object.FromNative(instance, Gst.Interop.Transfer.None),
+                new GES.Project.ErrorLoadingSignalArgs(timelineValue, errorValue));
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+        }
+    }
+
+    /// <summary>The arguments of the <c>error-loading-asset</c> signal of <c>GESProject</c>.</summary>
+    public sealed class ErrorLoadingAssetSignalArgs : System.EventArgs
+    {
+        /// <summary>Initializes a new instance of the <see cref="ErrorLoadingAssetSignalArgs"/> class.</summary>
+        /// <param name="error">The #GError defining the error that occured, might be %NULL</param>
+        /// <param name="id">The @id of the asset that failed loading</param>
+        /// <param name="extractableType">
+        /// The @extractable_type of the asset that
+        /// failed loading
+        /// </param>
+        internal ErrorLoadingAssetSignalArgs(Gst.GLib.GException? error, string id, Gst.GObject.GType extractableType)
+        {
+            Error = error;
+            Id = id;
+            ExtractableType = extractableType;
+        }
+
+        /// <summary>The #GError defining the error that occured, might be %NULL</summary>
+        public Gst.GLib.GException? Error { get; }
+
+        /// <summary>The @id of the asset that failed loading</summary>
+        public string Id { get; }
+
+        /// <summary>
+        /// The @extractable_type of the asset that
+        /// failed loading
+        /// </summary>
+        public Gst.GObject.GType ExtractableType { get; }
+    }
+
+    /// <summary>
+    /// Informs you that a #GESAsset could not be created. In case of
+    /// missing GStreamer plugins, the error will be set to #GST_CORE_ERROR
+    /// #GST_CORE_ERROR_MISSING_PLUGIN
+    /// </summary>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
+    public event System.EventHandler<GES.Project.ErrorLoadingAssetSignalArgs> ErrorLoadingAsset
+    {
+        add => GES.SignalConnections.Add(this, "error-loading-asset", (nint)(delegate* unmanaged[Cdecl]<nint, nint, byte*, nuint, nint, void>)&ErrorLoadingAssetTrampoline, value);
+        remove => GES.SignalConnections.Remove(this, "error-loading-asset", value);
+    }
+
+    /// <summary>The native handler of the <c>error-loading-asset</c> signal of <c>GESProject</c>.</summary>
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
+    private static void ErrorLoadingAssetTrampoline(nint instance, nint error, byte* id, nuint extractableType, nint userData)
+    {
+        try
+        {
+            if (Gst.Interop.CallbackHandle.GetState<System.EventHandler<GES.Project.ErrorLoadingAssetSignalArgs>>(userData) is not { } handler)
+            {
+                return;
+            }
+
+            Gst.GLib.GException? errorValue = Gst.GLib.GException.FromBorrowed(error);
+            string idValue = Gst.Interop.GMarshal.PtrToStringUtf8((nint)id)
+                ?? throw new InvalidOperationException("The error-loading-asset signal of GESProject passed no id.");
+            Gst.GObject.GType extractableTypeValue = new Gst.GObject.GType(extractableType);
+            handler(
+                Gst.GObject.Object.FromNative(instance, Gst.Interop.Transfer.None),
+                new GES.Project.ErrorLoadingAssetSignalArgs(errorValue, idValue, extractableTypeValue));
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+        }
+    }
+
     /// <summary>The arguments of the <c>loaded</c> signal of <c>GESProject</c>.</summary>
     public sealed class LoadedSignalArgs : System.EventArgs
     {
@@ -624,6 +753,105 @@ public unsafe partial class Project : GES.Asset, GES.IMetaContainer
         catch (Exception exception)
         {
             Gst.Interop.ExceptionTrap.Report(exception);
+        }
+    }
+
+    /// <summary>The arguments of the <c>missing-uri</c> signal of <c>GESProject</c>.</summary>
+    public sealed class MissingUriSignalArgs : System.EventArgs
+    {
+        /// <summary>Initializes a new instance of the <see cref="MissingUriSignalArgs"/> class.</summary>
+        /// <param name="error">The error that happened</param>
+        /// <param name="wrongAsset">
+        /// The asset with the wrong ID, you should us it and its content
+        /// only to find out what the new location is.
+        /// </param>
+        internal MissingUriSignalArgs(Gst.GLib.GException error, GES.Asset wrongAsset)
+        {
+            Error = error;
+            WrongAsset = wrongAsset;
+        }
+
+        /// <summary>The error that happened</summary>
+        public Gst.GLib.GException Error { get; }
+
+        /// <summary>
+        /// The asset with the wrong ID, you should us it and its content
+        /// only to find out what the new location is.
+        /// </summary>
+        public GES.Asset WrongAsset { get; }
+    }
+
+    /// <summary>The handler of the <c>missing-uri</c> signal of <c>GESProject</c>.</summary>
+    /// <remarks>
+    /// The string the handler returns is copied into memory the emitting library
+    /// owns and frees. Returning <see langword="null"/> answers no value, and what
+    /// the emission makes of that is the contract of the signal, stated in its own
+    /// returns documentation.
+    /// </remarks>
+    /// <param name="sender">The instance that emitted the signal.</param>
+    /// <param name="args">The arguments of the signal.</param>
+    /// <returns>The new URI of @wrong_asset</returns>
+    public delegate string? MissingUriHandler(object? sender, GES.Project.MissingUriSignalArgs args);
+
+    /// <summary>
+    /// ```c
+    /// static gchar
+    /// source_moved_cb (GESProject *project, GError *error, GESAsset *asset_with_error)
+    /// {
+    ///   return g_strdup ("file:///the/new/uri.ogg");
+    /// }
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// static int
+    /// main (int argc, gchar ** argv)
+    /// {
+    ///   GESTimeline *timeline;
+    ///   GESProject *project = ges_project_new ("file:///some/uri.xges");
+    /// </para>
+    /// <para>
+    ///   g_signal_connect (project, "missing-uri", source_moved_cb, NULL);
+    ///   timeline = ges_asset_extract (GES_ASSET (project));
+    /// }
+    /// ```
+    /// </para>
+    /// </remarks>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
+    public event GES.Project.MissingUriHandler MissingUri
+    {
+        add => GES.SignalConnections.Add(this, "missing-uri", (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, nint, nint>)&MissingUriTrampoline, value);
+        remove => GES.SignalConnections.Remove(this, "missing-uri", value);
+    }
+
+    /// <summary>The native handler of the <c>missing-uri</c> signal of <c>GESProject</c>.</summary>
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
+    private static nint MissingUriTrampoline(nint instance, nint error, nint wrongAsset, nint userData)
+    {
+        try
+        {
+            if (Gst.Interop.CallbackHandle.GetState<GES.Project.MissingUriHandler>(userData) is not { } handler)
+            {
+                return default;
+            }
+
+            Gst.GLib.GException errorValue = Gst.GLib.GException.FromBorrowed(error)
+                ?? throw new InvalidOperationException("The missing-uri signal of GESProject passed no error.");
+            GES.Asset wrongAssetValue = Gst.GObject.Object.FromNative<GES.Asset>(wrongAsset, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("The missing-uri signal of GESProject passed no wrong_asset.");
+            string? result = handler(
+                Gst.GObject.Object.FromNative(instance, Gst.Interop.Transfer.None),
+                new GES.Project.MissingUriSignalArgs(errorValue, wrongAssetValue));
+            return Gst.Interop.GMarshal.StringToUtf8Ptr(result);
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+            return default;
         }
     }
 

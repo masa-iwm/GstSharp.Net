@@ -144,6 +144,18 @@ public unsafe partial class Asset : Gst.GObject.Object, GES.IMetaContainer
     {
     }
 
+    /// <summary>Retrieve the error that was set on the asset when it was loaded.</summary>
+    /// <returns>
+    /// The error set on @asset, or
+    /// %NULL if no error occurred when @asset was loaded.
+    /// </returns>
+    public Gst.GLib.GException? GetError()
+    {
+        nint nativeResult = GesAssetGetError(Handle);
+        System.GC.KeepAlive(this);
+        return Gst.GLib.GException.FromBorrowed(nativeResult);
+    }
+
     /// <summary>Gets the #GESAsset:extractable-type of the asset.</summary>
     /// <returns>The extractable type of @self.</returns>
     public Gst.GObject.GType GetExtractableType()
@@ -408,6 +420,10 @@ public unsafe partial class Asset : Gst.GObject.Object, GES.IMetaContainer
     /// </para>
     /// </remarks>
     public GES.Asset? ProxyTarget => GetProxyTarget();
+
+    /// <summary>The <c>ges_asset_get_error</c> entry point.</summary>
+    [LibraryImport("GES", EntryPoint = "ges_asset_get_error")]
+    private static partial nint GesAssetGetError(nint self);
 
     /// <summary>The <c>ges_asset_get_extractable_type</c> entry point.</summary>
     [LibraryImport("GES", EntryPoint = "ges_asset_get_extractable_type")]

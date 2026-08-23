@@ -56,6 +56,12 @@ internal enum MarshalKind
     /// </summary>
     GValue,
 
+    /// <summary>
+    /// A <c>GError</c>, projected onto the hand written
+    /// <c>Gst.GLib.GException</c>.
+    /// </summary>
+    GError,
+
     /// <summary>A blittable struct passed by value.</summary>
     PlainStruct,
 
@@ -351,6 +357,24 @@ internal sealed class TypeMap
                     RawType = "Gst.GObject.GValueNative*",
                     PublicType = "Gst.GObject.Value",
                     Kind = MarshalKind.GValue,
+                    Symbol = symbol,
+                };
+            case "GLib.Error":
+                // The runtime declares Gst.GLib.GException by hand, and it is
+                // a plain Exception subclass built from the three fields of a
+                // GError rather than a disposable wrapper with a
+                // FromNative(nint, Transfer) factory. The route every other
+                // hand written GLib type takes - a RuntimeTypes entry read by
+                // PlanHandle - therefore does not fit: there is nothing to
+                // adopt, nothing to dispose, and the projection is a copy in
+                // one direction and a temporary in the other. The special case
+                // here is what keeps it out of PlanHandle, exactly as the
+                // GValue one above does.
+                return new MappedType
+                {
+                    RawType = "nint",
+                    PublicType = "Gst.GLib.GException",
+                    Kind = MarshalKind.GError,
                     Symbol = symbol,
                 };
         }

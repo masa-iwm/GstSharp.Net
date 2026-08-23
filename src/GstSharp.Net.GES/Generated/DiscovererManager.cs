@@ -97,6 +97,62 @@ public unsafe partial class DiscovererManager : Gst.GObject.Object
         set => SetUseCache(value);
     }
 
+    /// <summary>The arguments of the <c>discovered</c> signal of <c>GESDiscovererManager</c>.</summary>
+    public sealed class DiscoveredSignalArgs : System.EventArgs
+    {
+        /// <summary>Initializes a new instance of the <see cref="DiscoveredSignalArgs"/> class.</summary>
+        /// <param name="info">The #GstDiscovererInfo representing the discovered URI</param>
+        /// <param name="error">The #GError that occurred, or %NULL</param>
+        internal DiscoveredSignalArgs(Gst.Pbutils.DiscovererInfo info, Gst.GLib.GException? error)
+        {
+            Info = info;
+            Error = error;
+        }
+
+        /// <summary>The #GstDiscovererInfo representing the discovered URI</summary>
+        public Gst.Pbutils.DiscovererInfo Info { get; }
+
+        /// <summary>The #GError that occurred, or %NULL</summary>
+        public Gst.GLib.GException? Error { get; }
+    }
+
+    /// <summary>Raised for the <c>discovered</c> signal of <c>GESDiscovererManager</c>.</summary>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
+    public event System.EventHandler<GES.DiscovererManager.DiscoveredSignalArgs> Discovered
+    {
+        add => GES.SignalConnections.Add(this, "discovered", (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, nint, void>)&DiscoveredTrampoline, value);
+        remove => GES.SignalConnections.Remove(this, "discovered", value);
+    }
+
+    /// <summary>The native handler of the <c>discovered</c> signal of <c>GESDiscovererManager</c>.</summary>
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
+    private static void DiscoveredTrampoline(nint instance, nint info, nint error, nint userData)
+    {
+        try
+        {
+            if (Gst.Interop.CallbackHandle.GetState<System.EventHandler<GES.DiscovererManager.DiscoveredSignalArgs>>(userData) is not { } handler)
+            {
+                return;
+            }
+
+            Gst.Pbutils.DiscovererInfo infoValue = Gst.GObject.Object.FromNative<Gst.Pbutils.DiscovererInfo>(info, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("The discovered signal of GESDiscovererManager passed no info.");
+            Gst.GLib.GException? errorValue = Gst.GLib.GException.FromBorrowed(error);
+            handler(
+                Gst.GObject.Object.FromNative(instance, Gst.Interop.Transfer.None),
+                new GES.DiscovererManager.DiscoveredSignalArgs(infoValue, errorValue));
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+        }
+    }
+
     /// <summary>The arguments of the <c>load-serialized-info</c> signal of <c>GESDiscovererManager</c>.</summary>
     public sealed class LoadSerializedInfoSignalArgs : System.EventArgs
     {

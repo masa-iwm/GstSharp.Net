@@ -141,6 +141,36 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
     }
 
     /// <summary>
+    /// A default error function that uses g_printerr() to display the error message
+    /// and the optional debug string..
+    /// </summary>
+    /// <remarks>
+    /// <para>The default handler will simply print the error string using g_print.</para>
+    /// </remarks>
+    /// <param name="error">
+    /// The <c>error</c> argument.
+    /// The call is handed a temporary native error built from this value and
+    /// releases it again when the call returns. The library copies whatever it
+    /// keeps, so the exception object itself is never retained. It needs a
+    /// registered error domain: an exception created without one — every
+    /// constructor but <c>GException(Quark, int, string)</c> — is rejected.
+    /// </param>
+    /// <param name="debug">The <c>debug</c> argument.</param>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="error"/> carries no error domain, no message, or a message with an embedded null.
+    /// </exception>
+    public void DefaultError(Gst.GLib.GException error, string? debug)
+    {
+        ArgumentNullException.ThrowIfNull(error);
+        Gst.GLib.GException.ValidateForNative(error, nameof(error));
+        using Gst.Interop.GErrorScope errorScope = Gst.Interop.GMarshal.AllocError(error);
+        System.Span<byte> debugBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope debugScope = Gst.Interop.GMarshal.StackUtf8(debug, debugBuffer);
+        GstObjectDefaultError(Handle, errorScope.Pointer, debugScope.Pointer);
+        System.GC.KeepAlive(this);
+    }
+
+    /// <summary>
     /// Gets the corresponding #GstControlBinding for the property. This should be
     /// unreferenced again after use.
     /// </summary>
@@ -600,6 +630,10 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
     /// <summary>The <c>gst_object_call_async</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_object_call_async")]
     private static partial void GstObjectCallAsync(nint @object, nint func, nint userData);
+
+    /// <summary>The <c>gst_object_default_error</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_object_default_error")]
+    private static partial void GstObjectDefaultError(nint source, nint error, byte* debug);
 
     /// <summary>The <c>gst_object_get_control_binding</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_object_get_control_binding")]

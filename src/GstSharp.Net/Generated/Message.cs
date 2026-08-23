@@ -337,6 +337,97 @@ public sealed unsafe partial class Message : Gst.MiniObject
             ?? throw new InvalidOperationException("gst_message_new_eos returned no value.");
     }
 
+    /// <summary>
+    /// Create a new error message. The message will copy @error and
+    /// @debug. This message is posted by element when a fatal event
+    /// occurred. The pipeline will probably (partially) stop. The application
+    /// receiving this message should stop the pipeline.
+    /// </summary>
+    /// <param name="src">The <c>src</c> argument.</param>
+    /// <param name="error">
+    /// The <c>error</c> argument.
+    /// The call is handed a temporary native error built from this value and
+    /// releases it again when the call returns. The library copies whatever it
+    /// keeps, so the exception object itself is never retained. It needs a
+    /// registered error domain: an exception created without one — every
+    /// constructor but <c>GException(Quark, int, string)</c> — is rejected.
+    /// </param>
+    /// <param name="debug">The <c>debug</c> argument.</param>
+    /// <returns>the new error message.</returns>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="error"/> carries no error domain, no message, or a message with an embedded null.
+    /// </exception>
+    public static Gst.Message NewError(Gst.Object? src, Gst.GLib.GException error, string? debug)
+    {
+        ArgumentNullException.ThrowIfNull(error);
+        Gst.GLib.GException.ValidateForNative(error, nameof(error));
+        using Gst.Interop.GErrorScope errorScope = Gst.Interop.GMarshal.AllocError(error);
+        System.Span<byte> debugBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope debugScope = Gst.Interop.GMarshal.StackUtf8(debug, debugBuffer);
+        nint nativeResult = GstMessageNewError(src is null ? 0 : src.Handle, errorScope.Pointer, debugScope.Pointer);
+        System.GC.KeepAlive(src);
+        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_message_new_error returned no value.");
+    }
+
+    /// <summary>
+    /// Create a new error message. The message will copy @error and
+    /// @debug. This message is posted by element when a fatal event
+    /// occurred. The pipeline will probably (partially) stop. The application
+    /// receiving this message should stop the pipeline.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The <c>details</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a copy of the value and the wrapper is disposed afterwards, which
+    /// leaves the caller with exactly what the C call leaves it with. A boxed
+    /// value has no reference count to raise, so the copy is what a reference is
+    /// there. <see cref="Gst.GObject.Boxed.Dispose()"/> is idempotent, so a
+    /// <c>using</c> declaration around the argument stays correct.
+    /// </para>
+    /// </remarks>
+    /// <param name="src">The <c>src</c> argument.</param>
+    /// <param name="error">
+    /// The <c>error</c> argument.
+    /// The call is handed a temporary native error built from this value and
+    /// releases it again when the call returns. The library copies whatever it
+    /// keeps, so the exception object itself is never retained. It needs a
+    /// registered error domain: an exception created without one — every
+    /// constructor but <c>GException(Quark, int, string)</c> — is rejected.
+    /// </param>
+    /// <param name="debug">The <c>debug</c> argument.</param>
+    /// <param name="details">
+    /// The <c>details</c> argument.
+    /// The call consumes it: <paramref name="details"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// It may be <see langword="null"/>, which is the absence of a payload and leaves
+    /// nothing to consume.
+    /// </param>
+    /// <returns>the new error message.</returns>
+    /// <exception cref="ObjectDisposedException">
+    /// <paramref name="details"/> was disposed.
+    /// </exception>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="error"/> carries no error domain, no message, or a message with an embedded null.
+    /// </exception>
+    public static Gst.Message NewErrorWithDetails(Gst.Object? src, Gst.GLib.GException error, string? debug, Gst.Structure? details)
+    {
+        ArgumentNullException.ThrowIfNull(error);
+        Gst.GLib.GException.ValidateForNative(error, nameof(error));
+        nint srcNative = src is null ? 0 : src.Handle;
+        nint detailsNative = details is null ? 0 : details.Handle;
+        nuint detailsType = details is null ? 0 : details.BoxedType.Value;
+        using Gst.Interop.GErrorScope errorScope = Gst.Interop.GMarshal.AllocError(error);
+        System.Span<byte> debugBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope debugScope = Gst.Interop.GMarshal.StackUtf8(debug, debugBuffer);
+        nint detailsOwned = details is null ? 0 : Gst.Interop.GObjectNative.BoxedCopy(detailsType, detailsNative);
+        nint nativeResult = GstMessageNewErrorWithDetails(srcNative, errorScope.Pointer, debugScope.Pointer, detailsOwned);
+        System.GC.KeepAlive(src);
+        details?.Dispose();
+        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_message_new_error_with_details returned no value.");
+    }
+
     /// <summary>This message is posted when an element has a new local #GstContext.</summary>
     /// <remarks>
     /// <para>
@@ -371,6 +462,93 @@ public sealed unsafe partial class Message : Gst.MiniObject
         context.Dispose();
         return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_message_new_have_context returned no value.");
+    }
+
+    /// <summary>
+    /// Create a new info message. The message will make copies of @error and
+    /// @debug.
+    /// </summary>
+    /// <param name="src">The <c>src</c> argument.</param>
+    /// <param name="error">
+    /// The <c>error</c> argument.
+    /// The call is handed a temporary native error built from this value and
+    /// releases it again when the call returns. The library copies whatever it
+    /// keeps, so the exception object itself is never retained. It needs a
+    /// registered error domain: an exception created without one — every
+    /// constructor but <c>GException(Quark, int, string)</c> — is rejected.
+    /// </param>
+    /// <param name="debug">The <c>debug</c> argument.</param>
+    /// <returns>the new info message.</returns>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="error"/> carries no error domain, no message, or a message with an embedded null.
+    /// </exception>
+    public static Gst.Message NewInfo(Gst.Object? src, Gst.GLib.GException error, string? debug)
+    {
+        ArgumentNullException.ThrowIfNull(error);
+        Gst.GLib.GException.ValidateForNative(error, nameof(error));
+        using Gst.Interop.GErrorScope errorScope = Gst.Interop.GMarshal.AllocError(error);
+        System.Span<byte> debugBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope debugScope = Gst.Interop.GMarshal.StackUtf8(debug, debugBuffer);
+        nint nativeResult = GstMessageNewInfo(src is null ? 0 : src.Handle, errorScope.Pointer, debugScope.Pointer);
+        System.GC.KeepAlive(src);
+        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_message_new_info returned no value.");
+    }
+
+    /// <summary>
+    /// Create a new info message. The message will make copies of @error and
+    /// @debug.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The <c>details</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a copy of the value and the wrapper is disposed afterwards, which
+    /// leaves the caller with exactly what the C call leaves it with. A boxed
+    /// value has no reference count to raise, so the copy is what a reference is
+    /// there. <see cref="Gst.GObject.Boxed.Dispose()"/> is idempotent, so a
+    /// <c>using</c> declaration around the argument stays correct.
+    /// </para>
+    /// </remarks>
+    /// <param name="src">The <c>src</c> argument.</param>
+    /// <param name="error">
+    /// The <c>error</c> argument.
+    /// The call is handed a temporary native error built from this value and
+    /// releases it again when the call returns. The library copies whatever it
+    /// keeps, so the exception object itself is never retained. It needs a
+    /// registered error domain: an exception created without one — every
+    /// constructor but <c>GException(Quark, int, string)</c> — is rejected.
+    /// </param>
+    /// <param name="debug">The <c>debug</c> argument.</param>
+    /// <param name="details">
+    /// The <c>details</c> argument.
+    /// The call consumes it: <paramref name="details"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// It may be <see langword="null"/>, which is the absence of a payload and leaves
+    /// nothing to consume.
+    /// </param>
+    /// <returns>the new warning message.</returns>
+    /// <exception cref="ObjectDisposedException">
+    /// <paramref name="details"/> was disposed.
+    /// </exception>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="error"/> carries no error domain, no message, or a message with an embedded null.
+    /// </exception>
+    public static Gst.Message NewInfoWithDetails(Gst.Object? src, Gst.GLib.GException error, string? debug, Gst.Structure? details)
+    {
+        ArgumentNullException.ThrowIfNull(error);
+        Gst.GLib.GException.ValidateForNative(error, nameof(error));
+        nint srcNative = src is null ? 0 : src.Handle;
+        nint detailsNative = details is null ? 0 : details.Handle;
+        nuint detailsType = details is null ? 0 : details.BoxedType.Value;
+        using Gst.Interop.GErrorScope errorScope = Gst.Interop.GMarshal.AllocError(error);
+        System.Span<byte> debugBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope debugScope = Gst.Interop.GMarshal.StackUtf8(debug, debugBuffer);
+        nint detailsOwned = details is null ? 0 : Gst.Interop.GObjectNative.BoxedCopy(detailsType, detailsNative);
+        nint nativeResult = GstMessageNewInfoWithDetails(srcNative, errorScope.Pointer, debugScope.Pointer, detailsOwned);
+        System.GC.KeepAlive(src);
+        details?.Dispose();
+        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_message_new_info_with_details returned no value.");
     }
 
     /// <summary>
@@ -903,6 +1081,93 @@ public sealed unsafe partial class Message : Gst.MiniObject
         System.GC.KeepAlive(toc);
         return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_message_new_toc returned no value.");
+    }
+
+    /// <summary>
+    /// Create a new warning message. The message will make copies of @error and
+    /// @debug.
+    /// </summary>
+    /// <param name="src">The <c>src</c> argument.</param>
+    /// <param name="error">
+    /// The <c>error</c> argument.
+    /// The call is handed a temporary native error built from this value and
+    /// releases it again when the call returns. The library copies whatever it
+    /// keeps, so the exception object itself is never retained. It needs a
+    /// registered error domain: an exception created without one — every
+    /// constructor but <c>GException(Quark, int, string)</c> — is rejected.
+    /// </param>
+    /// <param name="debug">The <c>debug</c> argument.</param>
+    /// <returns>the new warning message.</returns>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="error"/> carries no error domain, no message, or a message with an embedded null.
+    /// </exception>
+    public static Gst.Message NewWarning(Gst.Object? src, Gst.GLib.GException error, string? debug)
+    {
+        ArgumentNullException.ThrowIfNull(error);
+        Gst.GLib.GException.ValidateForNative(error, nameof(error));
+        using Gst.Interop.GErrorScope errorScope = Gst.Interop.GMarshal.AllocError(error);
+        System.Span<byte> debugBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope debugScope = Gst.Interop.GMarshal.StackUtf8(debug, debugBuffer);
+        nint nativeResult = GstMessageNewWarning(src is null ? 0 : src.Handle, errorScope.Pointer, debugScope.Pointer);
+        System.GC.KeepAlive(src);
+        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_message_new_warning returned no value.");
+    }
+
+    /// <summary>
+    /// Create a new warning message. The message will make copies of @error and
+    /// @debug.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The <c>details</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a copy of the value and the wrapper is disposed afterwards, which
+    /// leaves the caller with exactly what the C call leaves it with. A boxed
+    /// value has no reference count to raise, so the copy is what a reference is
+    /// there. <see cref="Gst.GObject.Boxed.Dispose()"/> is idempotent, so a
+    /// <c>using</c> declaration around the argument stays correct.
+    /// </para>
+    /// </remarks>
+    /// <param name="src">The <c>src</c> argument.</param>
+    /// <param name="error">
+    /// The <c>error</c> argument.
+    /// The call is handed a temporary native error built from this value and
+    /// releases it again when the call returns. The library copies whatever it
+    /// keeps, so the exception object itself is never retained. It needs a
+    /// registered error domain: an exception created without one — every
+    /// constructor but <c>GException(Quark, int, string)</c> — is rejected.
+    /// </param>
+    /// <param name="debug">The <c>debug</c> argument.</param>
+    /// <param name="details">
+    /// The <c>details</c> argument.
+    /// The call consumes it: <paramref name="details"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// It may be <see langword="null"/>, which is the absence of a payload and leaves
+    /// nothing to consume.
+    /// </param>
+    /// <returns>the new warning message.</returns>
+    /// <exception cref="ObjectDisposedException">
+    /// <paramref name="details"/> was disposed.
+    /// </exception>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="error"/> carries no error domain, no message, or a message with an embedded null.
+    /// </exception>
+    public static Gst.Message NewWarningWithDetails(Gst.Object? src, Gst.GLib.GException error, string? debug, Gst.Structure? details)
+    {
+        ArgumentNullException.ThrowIfNull(error);
+        Gst.GLib.GException.ValidateForNative(error, nameof(error));
+        nint srcNative = src is null ? 0 : src.Handle;
+        nint detailsNative = details is null ? 0 : details.Handle;
+        nuint detailsType = details is null ? 0 : details.BoxedType.Value;
+        using Gst.Interop.GErrorScope errorScope = Gst.Interop.GMarshal.AllocError(error);
+        System.Span<byte> debugBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope debugScope = Gst.Interop.GMarshal.StackUtf8(debug, debugBuffer);
+        nint detailsOwned = details is null ? 0 : Gst.Interop.GObjectNative.BoxedCopy(detailsType, detailsNative);
+        nint nativeResult = GstMessageNewWarningWithDetails(srcNative, errorScope.Pointer, debugScope.Pointer, detailsOwned);
+        System.GC.KeepAlive(src);
+        details?.Dispose();
+        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_message_new_warning_with_details returned no value.");
     }
 
     /// <summary>Creates and appends a new entry.</summary>
@@ -2001,9 +2266,25 @@ public sealed unsafe partial class Message : Gst.MiniObject
     [LibraryImport("Gst", EntryPoint = "gst_message_new_eos")]
     private static partial nint GstMessageNewEos(nint src);
 
+    /// <summary>The <c>gst_message_new_error</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_new_error")]
+    private static partial nint GstMessageNewError(nint src, nint error, byte* debug);
+
+    /// <summary>The <c>gst_message_new_error_with_details</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_new_error_with_details")]
+    private static partial nint GstMessageNewErrorWithDetails(nint src, nint error, byte* debug, nint details);
+
     /// <summary>The <c>gst_message_new_have_context</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_message_new_have_context")]
     private static partial nint GstMessageNewHaveContext(nint src, nint context);
+
+    /// <summary>The <c>gst_message_new_info</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_new_info")]
+    private static partial nint GstMessageNewInfo(nint src, nint error, byte* debug);
+
+    /// <summary>The <c>gst_message_new_info_with_details</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_new_info_with_details")]
+    private static partial nint GstMessageNewInfoWithDetails(nint src, nint error, byte* debug, nint details);
 
     /// <summary>The <c>gst_message_new_instant_rate_request</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_message_new_instant_rate_request")]
@@ -2092,6 +2373,14 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// <summary>The <c>gst_message_new_toc</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_message_new_toc")]
     private static partial nint GstMessageNewToc(nint src, nint toc, int updated);
+
+    /// <summary>The <c>gst_message_new_warning</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_new_warning")]
+    private static partial nint GstMessageNewWarning(nint src, nint error, byte* debug);
+
+    /// <summary>The <c>gst_message_new_warning_with_details</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_message_new_warning_with_details")]
+    private static partial nint GstMessageNewWarningWithDetails(nint src, nint error, byte* debug, nint details);
 
     /// <summary>The <c>gst_message_add_redirect_entry</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_message_add_redirect_entry")]

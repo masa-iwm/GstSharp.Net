@@ -56,18 +56,13 @@ disappears shows up here as an added line.
 - `GES.Group:start`
 - `GES.UriClip:supported-formats`
 
-### UnsupportedSignature (31)
+### UnsupportedSignature (26)
 
-- `GES.DiscovererManager::discovered`
 - `GES.Layer::active-changed`
 - `GES.MetaContainer::notify-meta`
-- `GES.Project::error-loading`
-- `GES.Project::error-loading-asset`
-- `GES.Project::missing-uri`
 - `GES.Timeline::group-removed`
 - `GES.Timeline::select-tracks-for-object`
 - `ges_asset_extract`
-- `ges_asset_get_error`
 - `ges_asset_request_async`
 - `ges_asset_request_finish`
 - `ges_base_effect_set_time_translation_funcs`
@@ -444,7 +439,7 @@ disappears shows up here as an added line.
 
 - `gst_bus_add_watch`
 
-### UnsupportedSignature (98)
+### UnsupportedSignature (91)
 
 - `Gst.Bus:enable-async`
 - `gst_buffer_list_foreach`
@@ -469,13 +464,7 @@ disappears shows up here as an added line.
 - `gst_iterator_find_custom`
 - `gst_iterator_fold`
 - `gst_iterator_foreach`
-- `gst_message_new_error`
-- `gst_message_new_error_with_details`
-- `gst_message_new_info`
-- `gst_message_new_info_with_details`
 - `gst_message_new_property_notify`
-- `gst_message_new_warning`
-- `gst_message_new_warning_with_details`
 - `gst_message_parse_error`
 - `gst_message_parse_info`
 - `gst_message_parse_property_notify`
@@ -500,7 +489,6 @@ disappears shows up here as an added line.
 - `gst_mini_object_weak_ref`
 - `gst_mini_object_weak_unref`
 - `gst_object_default_deep_notify`
-- `gst_object_default_error`
 - `gst_object_get_g_value_array`
 - `gst_object_replace`
 - `gst_pad_set_activate_function_full`
@@ -814,9 +802,8 @@ disappears shows up here as an added line.
 
 - `GstPbutils.EncodingProfile:element-properties`
 
-### UnsupportedSignature (3)
+### UnsupportedSignature (2)
 
-- `GstPbutils.Discoverer::discovered`
 - `gst_discoverer_info_from_variant`
 - `gst_discoverer_info_to_variant`
 
@@ -1076,9 +1063,8 @@ disappears shows up here as an added line.
 
 - `gst_webrtc_session_description_new`
 
-### UnsupportedSignature (6)
+### UnsupportedSignature (5)
 
-- `GstWebRTC.WebRTCDataChannel::on-error`
 - `GstWebRTC.WebRTCDataChannel::on-message-data`
 - `gst_webrtc_data_channel_send_data`
 - `gst_webrtc_data_channel_send_data_full`
