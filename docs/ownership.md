@@ -246,6 +246,64 @@ interior to storage the array reallocates and frees, and `Append` stores a copy
 of the value it is given, so the caller disposes both its own value and, in
 time, the array.
 
+### A `GValue` a callback is handed
+
+The rules above are for the values a *caller* provides. A callback is on the
+other side of the pointer: `Structure.Foreach`, `Structure.MapInPlace`,
+`Structure.FilterAndMapInPlace`, their three `_id_str` twins and
+`Iterator.Fold` / `Iterator.Foreach` hand the delegate a `GValue` that belongs
+to whoever is running the walk. It cannot be a `Gst.GObject.Value`, which owns
+its contents and would release them, so it arrives as one of two views:
+
+* **`Gst.GObject.ValueView`** for a `const GValue*`, which the C contract says
+  the callback may only read. It carries the readers of `Value` under the same
+  names.
+* **`Gst.GObject.ValueRef`** for a writable `GValue*`, which the caller invites
+  the callback to change in place — that is what makes `MapInPlace` different
+  from `Foreach`. It carries the same readers, `AsView()`, and the setters.
+
+Three things follow, and all three are enforced rather than documented:
+
+* **A view is only valid while the callback runs.** Both are `ref struct`s, so
+  the compiler refuses to let one be stored in a field, in an array, in a
+  closure or in an `async` state machine. The storage really does go away: the
+  item `gst_iterator_fold` hands out is a stack `GValue` that is reset after
+  every call, and a structure field is gone with its structure. To keep what a
+  view holds, copy it with `ToValue()` and dispose the copy — that copy is an
+  ordinary owned `Value`.
+* **A view owns nothing**, so there is no `Dispose` and no `using`. The
+  wrappers its `GetObject`, `GetBoxed<T>` and `GetMiniObject<T>` hand out are
+  the caller's own, exactly as they are on `Value`.
+* **The type of the value cannot be changed.** Every setter of `ValueRef`
+  throws `InvalidOperationException` unless the value already holds the type it
+  is about to write, and there is no `Unset`. `gst_structure_map_in_place`
+  writes the field back without checking anything, so a callback that unset a
+  field and answered `true` would leave the structure holding a field with no
+  type at all. A field that should go away is removed by answering `false` from
+  `FilterAndMapInPlace`, which is the supported way to say so. `SetBoxed` and
+  `SetMiniObject` check the wrapper they are handed as well as the value,
+  because `g_value_set_boxed` copies its argument with the copy function of the
+  type the value already holds: a wrapper of another boxed type would be handed
+  to the wrong copy function, silently, rather than be refused.
+
+An exception a handler throws does not reach the caller of the walk. A managed
+exception must never unwind through a native frame, so the trampoline catches
+it, reports it through `Gst.Interop.ExceptionTrap` and answers the call with the
+failure value of the callback — `false` for the ones that return a `gboolean`,
+nothing for the ones that return `void`. That is the shape of every `scope=call`
+trampoline of this binding; see
+[Callbacks and the state they carry](#callbacks-and-the-state-they-carry).
+
+**What that failure value means is the C caller's to say, and for one of these
+it is not benign.** `FilterAndMapInPlace` reads `false` as "remove this field",
+so a handler that throws loses the field it was visiting; a handler that has to
+fail without losing data has to catch its own exceptions. The four plain
+structure walks read it as "stop", and the walk then answers `false`, which is
+indistinguishable from a deliberate stop. `Iterator.Fold` reads it as "stop" as
+well and still answers `GST_ITERATOR_OK`. `Iterator.Foreach` has no failure
+value at all, so its walk carries on with the next element. Each member says so
+in its own remarks.
+
 ## Errors that cross the boundary
 
 A `GError` is not a wrapper and is never owned by a `Gst.GLib.GException`: the

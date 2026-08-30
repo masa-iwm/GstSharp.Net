@@ -631,6 +631,21 @@ internal static class CallableRenderer
     };
 
     /// <summary>
+    /// The entry points whose writable <c>GValue</c> parameter is handed
+    /// straight to a callback and is never read or written by the call itself.
+    /// <c>gst_iterator_fold</c> is the one: its <c>ret</c> is the accumulator of
+    /// the fold, passed to the function as it stands (<c>gstiterator.c</c> at
+    /// 1.28.6 and at 1.24.0 alike). The generic note of the <c>ref</c> shape
+    /// promises a warning from the C API on an uninitialized value, and there is
+    /// none — the value reaches the function, where every setter of the
+    /// projection throws instead.
+    /// </summary>
+    private static readonly HashSet<string> ForwardedValueTargets = new(StringComparer.Ordinal)
+    {
+        "gst_iterator_fold",
+    };
+
+    /// <summary>
     /// Returns the note of a <c>GValue</c> parameter, which states the
     /// ownership and initialization contract of its shape: the gir describes
     /// the C pointer and says none of it.
@@ -647,6 +662,17 @@ internal static class CallableRenderer
                 "The value has to be empty, that is of type zero: the call initializes",
                 "it. Like the C API, the call raises a critical on a value that already",
                 "holds a type and leaves it untouched.",
+            ];
+        }
+
+        if (argument.Direction == ArgumentDirection.Ref && ForwardedValueTargets.Contains(plan.EntryPoint))
+        {
+            return
+            [
+                "The value has to be initialized with the type the function writes",
+                "before the call. The call itself never reads or writes it: it hands it to",
+                "the function as it stands, and a setter on an uninitialized value throws",
+                "inside the function, which stops the fold as the remarks above describe.",
             ];
         }
 
@@ -806,26 +832,63 @@ internal static class CallableRenderer
         }
     }
 
+    /// <summary>The subject of a writability note whose instance is a caps.</summary>
+    private const string WritableCaps = "The caps have to be writable.";
+
+    /// <summary>The subject of a writability note whose instance is a structure.</summary>
+    private const string WritableStructure = "The structure has to be writable.";
+
+    /// <summary>
+    /// What a frozen instance costs a member that writes into it directly.
+    /// </summary>
+    private static readonly string[] WritesNothing = ["and writes nothing otherwise."];
+
+    /// <summary>
+    /// What a frozen instance costs a walk that answers a <c>gboolean</c>: the
+    /// assert is checked before the first field, so the function is never called
+    /// and the <see langword="false"/> the member then answers is the same
+    /// <see langword="false"/> a function that stopped the walk produces.
+    /// </summary>
+    private static readonly string[] SkipsTheWalkAndAnswersFalse =
+    [
+        "and does not call the function otherwise; the <see langword=\"false\"/> it then",
+        "answers is the one a walk the function stopped answers.",
+    ];
+
+    /// <summary>
+    /// What a frozen instance costs a walk that answers nothing at all.
+    /// </summary>
+    private static readonly string[] SkipsTheWalk = ["and does not call the function otherwise."];
+
     /// <summary>
     /// The entry points that require a writable caps or structure and, like
-    /// the C API they bind, warn and write nothing on a frozen one. The C
+    /// the C API they bind, warn and do nothing on a frozen one. The C
     /// assert is not turned into a generated guard — the shipped
     /// <c>gst_caps_append_structure</c> carries the same assert and no guard —
     /// so parity with C is stated in the documentation instead. The value is
-    /// the first sentence of the note, because the subject of the two differs
-    /// in number.
+    /// the first sentence of the note plus the clause that says what the call
+    /// does instead: the subject of the members differs in number, and a walk
+    /// that never runs is not the same event as a write that never lands.
+    /// The four walks assert on the same <c>IS_MUTABLE</c> as the setters
+    /// (<c>gststructure.c</c> at 1.28.6, where the two deprecated spellings
+    /// reach it through their <c>_id_str</c> twin, and directly at 1.24.0).
     /// </summary>
-    private static readonly Dictionary<string, string> WritableTargets = new(StringComparer.Ordinal)
-    {
-        ["gst_caps_set_value"] = "The caps have to be writable.",
-        ["gst_caps_id_str_set_value"] = "The caps have to be writable.",
-        ["gst_structure_id_set_value"] = "The structure has to be writable.",
-        ["gst_structure_id_str_set_value"] = "The structure has to be writable.",
-        ["gst_structure_set_array"] = "The structure has to be writable.",
-        ["gst_structure_set_list"] = "The structure has to be writable.",
-        ["gst_video_content_light_level_add_to_caps"] = "The caps have to be writable.",
-        ["gst_video_mastering_display_info_add_to_caps"] = "The caps have to be writable.",
-    };
+    private static readonly Dictionary<string, (string Subject, string[] Consequence)> WritableTargets =
+        new(StringComparer.Ordinal)
+        {
+            ["gst_caps_set_value"] = (WritableCaps, WritesNothing),
+            ["gst_caps_id_str_set_value"] = (WritableCaps, WritesNothing),
+            ["gst_structure_id_set_value"] = (WritableStructure, WritesNothing),
+            ["gst_structure_id_str_set_value"] = (WritableStructure, WritesNothing),
+            ["gst_structure_set_array"] = (WritableStructure, WritesNothing),
+            ["gst_structure_set_list"] = (WritableStructure, WritesNothing),
+            ["gst_video_content_light_level_add_to_caps"] = (WritableCaps, WritesNothing),
+            ["gst_video_mastering_display_info_add_to_caps"] = (WritableCaps, WritesNothing),
+            ["gst_structure_map_in_place"] = (WritableStructure, SkipsTheWalkAndAnswersFalse),
+            ["gst_structure_map_in_place_id_str"] = (WritableStructure, SkipsTheWalkAndAnswersFalse),
+            ["gst_structure_filter_and_map_in_place"] = (WritableStructure, SkipsTheWalk),
+            ["gst_structure_filter_and_map_in_place_id_str"] = (WritableStructure, SkipsTheWalk),
+        };
 
     /// <summary>
     /// The entry points whose gir documentation says that the reference of the
@@ -1015,6 +1078,125 @@ internal static class CallableRenderer
         };
 
     /// <summary>
+    /// The failure value of a filtering map is "remove this field", so a
+    /// handler that throws loses one.
+    /// </summary>
+    private static readonly string[] FilterAndMapThrowNote =
+    [
+        "<para>",
+        "An exception the function throws does not reach this caller: it is reported",
+        "through <c>Gst.Interop.ExceptionTrap</c> and the function is answered",
+        "<see langword=\"false\"/>, which this call reads as a request to remove the field",
+        "that was being visited. A handler that has to fail without losing data has to",
+        "catch its own exceptions.",
+        "</para>",
+    ];
+
+    /// <summary>
+    /// The failure value of the four plain structure walks stops the walk and
+    /// is answered to the caller.
+    /// </summary>
+    private static readonly string[] WalkStopsThrowNote =
+    [
+        "<para>",
+        "An exception the function throws does not reach this caller: it is reported",
+        "through <c>Gst.Interop.ExceptionTrap</c> and the function is answered",
+        "<see langword=\"false\"/>, which stops the walk and is what this call then",
+        "returns. A failed walk is therefore indistinguishable from one the function",
+        "stopped on purpose.",
+        "</para>",
+    ];
+
+    /// <summary>
+    /// The failure value of a fold stops it, and a stopped fold reports success.
+    /// </summary>
+    private static readonly string[] FoldThrowNote =
+    [
+        "<para>",
+        "An exception the function throws does not reach this caller: it is reported",
+        "through <c>Gst.Interop.ExceptionTrap</c> and the function is answered",
+        "<see langword=\"false\"/>, which stops the fold. A fold the function stopped",
+        "answers <c>GST_ITERATOR_OK</c>, so a failed one is indistinguishable from one",
+        "that stopped on purpose, and the accumulator holds whatever was written before",
+        "the failure.",
+        "</para>",
+    ];
+
+    /// <summary>
+    /// A void handler has no failure value, so the walk carries on.
+    /// </summary>
+    private static readonly string[] IteratorForeachThrowNote =
+    [
+        "<para>",
+        "An exception the function throws does not reach this caller: it is reported",
+        "through <c>Gst.Interop.ExceptionTrap</c>. The function answers nothing, so the",
+        "walk carries on with the next element and this call still reports the result of",
+        "the walk itself.",
+        "</para>",
+    ];
+
+    /// <summary>
+    /// What a handler that throws costs, for the eight members that hand a
+    /// <c>GValue</c> to one.
+    /// </summary>
+    /// <remarks>
+    /// A managed exception must never unwind through a native frame, so every
+    /// <c>scope=call</c> trampoline catches it, reports it through
+    /// <c>Gst.Interop.ExceptionTrap</c> and answers the call with the failure
+    /// value of the callback. What that failure value <em>means</em> is the
+    /// caller's to say, and for one of these it is not benign:
+    /// <c>gst_structure_filter_and_map_in_place</c> reads <c>FALSE</c> as
+    /// "remove this field", so a handler that threw loses the field it was
+    /// visiting. Nothing on the signature says so, which is why it is said
+    /// here. Verified against <c>gststructure.c</c> and <c>gstiterator.c</c> at
+    /// 1.28.6.
+    /// </remarks>
+    private static readonly Dictionary<string, IReadOnlyList<string>> ThrowingHandlerTargets =
+        new(StringComparer.Ordinal)
+        {
+            ["gst_structure_filter_and_map_in_place"] = FilterAndMapThrowNote,
+            ["gst_structure_filter_and_map_in_place_id_str"] = FilterAndMapThrowNote,
+            ["gst_structure_foreach"] = WalkStopsThrowNote,
+            ["gst_structure_foreach_id_str"] = WalkStopsThrowNote,
+            ["gst_structure_map_in_place"] = WalkStopsThrowNote,
+            ["gst_structure_map_in_place_id_str"] = WalkStopsThrowNote,
+            ["gst_iterator_fold"] = FoldThrowNote,
+            ["gst_iterator_foreach"] = IteratorForeachThrowNote,
+        };
+
+    /// <summary>
+    /// What a caller does about <c>GST_ITERATOR_RESYNC</c>, which neither
+    /// iterator walk handles for it.
+    /// </summary>
+    private static readonly string[] IteratorResyncNote =
+    [
+        "<para>",
+        "A collection that changed while the walk was running stops it with",
+        "<c>GST_ITERATOR_RESYNC</c>, and the walk does not resynchronise by itself: the",
+        "caller decides whether to call <see cref=\"Resync\"/> and walk again. A second",
+        "walk starts the collection over, so every element the function has already",
+        "seen is handed to it again.",
+        "</para>",
+    ];
+
+    /// <summary>
+    /// The paragraph the two iterator walks carry. Both answer
+    /// <c>GST_ITERATOR_RESYNC</c> and stop when the collection changed under
+    /// them, and neither resynchronises by itself — <c>gst_iterator_fold</c>
+    /// leaves the loop on that result (<c>gstiterator.c</c> at 1.28.6) and
+    /// <c>gst_iterator_foreach</c> is a fold. What the caller has to do about it
+    /// is not in the gir documentation, and it is not free of consequence: the
+    /// walk that follows a resync starts the collection over, so the elements
+    /// that were already handed to the function arrive a second time.
+    /// </summary>
+    private static readonly Dictionary<string, IReadOnlyList<string>> IteratorWalkTargets =
+        new(StringComparer.Ordinal)
+        {
+            ["gst_iterator_fold"] = IteratorResyncNote,
+            ["gst_iterator_foreach"] = IteratorResyncNote,
+        };
+
+    /// <summary>
     /// Returns every generator authored remarks paragraph of a member: the
     /// consumption contract of its consumed arguments, the writability
     /// requirement of the entry points that have one, the correction of the gir
@@ -1033,11 +1215,11 @@ internal static class CallableRenderer
             lines.AddRange(consumption);
         }
 
-        if (WritableTargets.TryGetValue(plan.EntryPoint, out string? sentence))
+        if (WritableTargets.TryGetValue(plan.EntryPoint, out (string Subject, string[] Consequence) writability))
         {
             lines.Add("<para>");
-            lines.Add(sentence + " Like the C API, the call raises a warning");
-            lines.Add("and writes nothing otherwise.");
+            lines.Add(writability.Subject + " Like the C API, the call raises a warning");
+            lines.AddRange(writability.Consequence);
             lines.Add("</para>");
         }
 
@@ -1053,6 +1235,16 @@ internal static class CallableRenderer
         if (ValueContainerTargets.TryGetValue(plan.EntryPoint, out IReadOnlyList<string>? container))
         {
             lines.AddRange(container);
+        }
+
+        if (IteratorWalkTargets.TryGetValue(plan.EntryPoint, out IReadOnlyList<string>? resync))
+        {
+            lines.AddRange(resync);
+        }
+
+        if (ThrowingHandlerTargets.TryGetValue(plan.EntryPoint, out IReadOnlyList<string>? throwing))
+        {
+            lines.AddRange(throwing);
         }
 
         if (InstallsForeverCallback(plan))
@@ -2749,6 +2941,19 @@ internal static class CallableRenderer
                         argument,
                         "Gst.Interop.GMarshal.PtrToStringUtf8((nint)" + argument.Name + ")",
                         NullMessage(plan, argument));
+                    arguments.Add(argument.Name + "Value");
+                    break;
+
+                case ArgumentKind.BorrowedGValue:
+                    // The view is built over the pointer and owns nothing, so
+                    // there is no epilogue: it stops being usable when the
+                    // invocation returns, which is what its ref struct shape
+                    // states and the compiler enforces.
+                    writer.WriteLine(
+                        argument.PublicType + " " + argument.Name + "Value = " + argument.Name + " != null");
+                    writer.WriteLine("    ? new " + argument.PublicType + "(ref *" + argument.Name + ")");
+                    writer.WriteLine(
+                        "    : throw new InvalidOperationException(\"" + NullMessage(plan, argument) + "\");");
                     arguments.Add(argument.Name + "Value");
                     break;
 

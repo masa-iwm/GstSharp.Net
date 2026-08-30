@@ -110,14 +110,23 @@ public struct Value : IDisposable
     /// <paramref name="nativeValue"/> is <c>0</c> or points at an
     /// uninitialized <c>GValue</c>.
     /// </returns>
-    public static unsafe Value CopyFrom(nint nativeValue)
-    {
-        if (nativeValue == nint.Zero)
-        {
-            return default;
-        }
+    public static unsafe Value CopyFrom(nint nativeValue) =>
+        nativeValue == nint.Zero
+            ? default
+            : CopyFrom(ref Unsafe.AsRef<GValueNative>((void*)nativeValue));
 
-        ref GValueNative source = ref Unsafe.AsRef<GValueNative>((void*)nativeValue);
+    /// <summary>
+    /// Creates an independent copy of a native <c>GValue</c> that somebody else
+    /// owns, which is how <see cref="ValueView.ToValue"/> keeps what a callback
+    /// was shown.
+    /// </summary>
+    /// <param name="source">The <c>GValue</c> to copy.</param>
+    /// <returns>
+    /// The new value, which the caller has to dispose; the empty value when
+    /// <paramref name="source"/> is an uninitialized <c>GValue</c>.
+    /// </returns>
+    internal static Value CopyFrom(ref GValueNative source)
+    {
         if (source.TypeValue == GType.InvalidValue)
         {
             // An uninitialized source has nothing to copy, and g_value_copy
@@ -259,7 +268,7 @@ public struct Value : IDisposable
 
     /// <summary>Reads a signed 8 bit integer.</summary>
     /// <returns>The stored value.</returns>
-    public readonly sbyte GetSChar() => GObjectNative.ValueGetSChar(ref AsMutable());
+    public readonly sbyte GetSChar() => ValueAccess.GetSChar(ref AsMutable());
 
     /// <summary>Stores an unsigned 8 bit integer.</summary>
     /// <param name="content">The value to store.</param>
@@ -267,11 +276,11 @@ public struct Value : IDisposable
 
     /// <summary>Reads an unsigned 8 bit integer.</summary>
     /// <returns>The stored value.</returns>
-    public readonly byte GetUChar() => GObjectNative.ValueGetUChar(ref AsMutable());
+    public readonly byte GetUChar() => ValueAccess.GetUChar(ref AsMutable());
 
     /// <summary>Reads a boolean.</summary>
     /// <returns>The stored value.</returns>
-    public readonly bool GetBoolean() => GObjectNative.ValueGetBoolean(ref AsMutable()) != 0;
+    public readonly bool GetBoolean() => ValueAccess.GetBoolean(ref AsMutable());
 
     /// <summary>Stores a 32 bit integer.</summary>
     /// <param name="content">The value to store.</param>
@@ -279,7 +288,7 @@ public struct Value : IDisposable
 
     /// <summary>Reads a 32 bit integer.</summary>
     /// <returns>The stored value.</returns>
-    public readonly int GetInt() => GObjectNative.ValueGetInt(ref AsMutable());
+    public readonly int GetInt() => ValueAccess.GetInt(ref AsMutable());
 
     /// <summary>Stores an unsigned 32 bit integer.</summary>
     /// <param name="content">The value to store.</param>
@@ -287,7 +296,7 @@ public struct Value : IDisposable
 
     /// <summary>Reads an unsigned 32 bit integer.</summary>
     /// <returns>The stored value.</returns>
-    public readonly uint GetUInt() => GObjectNative.ValueGetUInt(ref AsMutable());
+    public readonly uint GetUInt() => ValueAccess.GetUInt(ref AsMutable());
 
     /// <summary>Stores a 64 bit integer.</summary>
     /// <param name="content">The value to store.</param>
@@ -295,7 +304,7 @@ public struct Value : IDisposable
 
     /// <summary>Reads a 64 bit integer.</summary>
     /// <returns>The stored value.</returns>
-    public readonly long GetInt64() => GObjectNative.ValueGetInt64(ref AsMutable());
+    public readonly long GetInt64() => ValueAccess.GetInt64(ref AsMutable());
 
     /// <summary>Stores an unsigned 64 bit integer.</summary>
     /// <param name="content">The value to store.</param>
@@ -303,7 +312,7 @@ public struct Value : IDisposable
 
     /// <summary>Reads an unsigned 64 bit integer.</summary>
     /// <returns>The stored value.</returns>
-    public readonly ulong GetUInt64() => GObjectNative.ValueGetUInt64(ref AsMutable());
+    public readonly ulong GetUInt64() => ValueAccess.GetUInt64(ref AsMutable());
 
     /// <summary>Stores a C <c>long</c>.</summary>
     /// <param name="content">The value to store.</param>
@@ -311,7 +320,7 @@ public struct Value : IDisposable
 
     /// <summary>Reads a C <c>long</c>.</summary>
     /// <returns>The stored value.</returns>
-    public readonly nint GetLong() => GObjectNative.ValueGetLong(ref AsMutable()).Value;
+    public readonly nint GetLong() => ValueAccess.GetLong(ref AsMutable());
 
     /// <summary>Stores an unsigned C <c>long</c>.</summary>
     /// <param name="content">The value to store.</param>
@@ -319,7 +328,7 @@ public struct Value : IDisposable
 
     /// <summary>Reads an unsigned C <c>long</c>.</summary>
     /// <returns>The stored value.</returns>
-    public readonly nuint GetULong() => GObjectNative.ValueGetULong(ref AsMutable()).Value;
+    public readonly nuint GetULong() => ValueAccess.GetULong(ref AsMutable());
 
     /// <summary>Stores a single precision number.</summary>
     /// <param name="content">The value to store.</param>
@@ -327,7 +336,7 @@ public struct Value : IDisposable
 
     /// <summary>Reads a single precision number.</summary>
     /// <returns>The stored value.</returns>
-    public readonly float GetFloat() => GObjectNative.ValueGetFloat(ref AsMutable());
+    public readonly float GetFloat() => ValueAccess.GetFloat(ref AsMutable());
 
     /// <summary>Stores a double precision number.</summary>
     /// <param name="content">The value to store.</param>
@@ -335,7 +344,7 @@ public struct Value : IDisposable
 
     /// <summary>Reads a double precision number.</summary>
     /// <returns>The stored value.</returns>
-    public readonly double GetDouble() => GObjectNative.ValueGetDouble(ref AsMutable());
+    public readonly double GetDouble() => ValueAccess.GetDouble(ref AsMutable());
 
     /// <summary>Stores a copy of a string.</summary>
     /// <param name="content">The value to store, may be <see langword="null"/>.</param>
@@ -348,7 +357,7 @@ public struct Value : IDisposable
 
     /// <summary>Reads a string.</summary>
     /// <returns>The stored value, or <see langword="null"/>.</returns>
-    public readonly string? GetString() => GMarshal.PtrToStringUtf8(GObjectNative.ValueGetString(ref AsMutable()));
+    public readonly string? GetString() => ValueAccess.GetString(ref AsMutable());
 
     /// <summary>Stores an untyped pointer.</summary>
     /// <param name="content">The value to store.</param>
@@ -356,7 +365,7 @@ public struct Value : IDisposable
 
     /// <summary>Reads an untyped pointer.</summary>
     /// <returns>The stored value.</returns>
-    public readonly nint GetPointer() => GObjectNative.ValueGetPointer(ref AsMutable());
+    public readonly nint GetPointer() => ValueAccess.GetPointer(ref AsMutable());
 
     /// <summary>Stores a type.</summary>
     /// <param name="content">The value to store.</param>
@@ -364,7 +373,7 @@ public struct Value : IDisposable
 
     /// <summary>Reads a type.</summary>
     /// <returns>The stored value.</returns>
-    public readonly GType GetGType() => new(GObjectNative.ValueGetGType(ref AsMutable()));
+    public readonly GType GetGType() => ValueAccess.GetGType(ref AsMutable());
 
     /// <summary>Stores an enumeration member.</summary>
     /// <param name="content">The value to store.</param>
@@ -372,7 +381,7 @@ public struct Value : IDisposable
 
     /// <summary>Reads an enumeration member.</summary>
     /// <returns>The stored value.</returns>
-    public readonly int GetEnum() => GObjectNative.ValueGetEnum(ref AsMutable());
+    public readonly int GetEnum() => ValueAccess.GetEnum(ref AsMutable());
 
     /// <summary>Stores a set of flags.</summary>
     /// <param name="content">The value to store.</param>
@@ -380,7 +389,7 @@ public struct Value : IDisposable
 
     /// <summary>Reads a set of flags.</summary>
     /// <returns>The stored value.</returns>
-    public readonly uint GetFlags() => GObjectNative.ValueGetFlags(ref AsMutable());
+    public readonly uint GetFlags() => ValueAccess.GetFlags(ref AsMutable());
 
     /// <summary>
     /// Stores an object. The value takes its own reference.
@@ -405,8 +414,7 @@ public struct Value : IDisposable
     /// The wrapper of the stored object, or <see langword="null"/> when the
     /// value holds nothing.
     /// </returns>
-    public readonly Object? GetObject() =>
-        Object.FromNative(GObjectNative.ValueGetObject(ref AsMutable()), Transfer.None);
+    public readonly Object? GetObject() => ValueAccess.GetObject(ref AsMutable());
 
     /// <summary>
     /// Stores a boxed value. The value takes its own copy.
@@ -439,7 +447,7 @@ public struct Value : IDisposable
     /// Reads a boxed value, which stays owned by this value.
     /// </summary>
     /// <returns>The stored value.</returns>
-    public readonly nint GetBoxed() => GObjectNative.ValueGetBoxed(ref AsMutable());
+    public readonly nint GetBoxed() => ValueAccess.GetBoxed(ref AsMutable());
 
     /// <summary>
     /// Reads a boxed value as the wrapper of the binding, as a copy of the
@@ -494,43 +502,7 @@ public struct Value : IDisposable
     /// </exception>
     public readonly T? GetBoxed<T>()
         where T : Boxed
-    {
-        GType type = Type;
-
-        // g_value_get_boxed on a value of another fundamental type is a GLib
-        // assertion failure rather than a cast, so the question is asked here.
-        if (GObjectNative.TypeFundamental(type.Value) != GType.BoxedValue)
-        {
-            throw new InvalidCastException(
-                $"A value of type {type.Name} does not hold a boxed value.");
-        }
-
-        nint boxed = GetBoxed();
-        if (boxed == nint.Zero)
-        {
-            return null;
-        }
-
-        if (!TypeRegistry.TryCreateWrapper(type, boxed, Transfer.None, out object? wrapper))
-        {
-            throw new InvalidOperationException(
-                $"No wrapper is registered for the boxed type {type.Name}. " +
-                "Initialise the binding module that covers it — for example " +
-                "Gst.WebRTC.GstWebRTC.Initialize() — before reading the value.");
-        }
-
-        if (wrapper is T typed)
-        {
-            return typed;
-        }
-
-        // The factory built a copy of its own, and nothing else holds it.
-        (wrapper as IDisposable)?.Dispose();
-
-        throw new InvalidCastException(
-            $"The value holds a {type.Name}, whose wrapper is " +
-            $"{wrapper?.GetType().ToString() ?? "nothing"} and not a {typeof(T)}.");
-    }
+        => ValueAccess.GetBoxed<T>(ref AsMutable());
 
     /// <summary>
     /// Stores a mini object through its wrapper. The value takes a reference of
@@ -610,43 +582,7 @@ public struct Value : IDisposable
     /// </exception>
     public readonly T? GetMiniObject<T>()
         where T : Gst.MiniObject
-    {
-        GType type = Type;
-
-        // g_value_get_boxed on a value of another fundamental type is a GLib
-        // assertion failure rather than a cast, so the question is asked here.
-        if (GObjectNative.TypeFundamental(type.Value) != GType.BoxedValue)
-        {
-            throw new InvalidCastException(
-                $"A value of type {type.Name} does not hold a mini object.");
-        }
-
-        nint boxed = GetBoxed();
-        if (boxed == nint.Zero)
-        {
-            return null;
-        }
-
-        if (!TypeRegistry.TryCreateWrapper(type, boxed, Transfer.None, out object? wrapper))
-        {
-            throw new InvalidOperationException(
-                $"No wrapper is registered for the mini object type {type.Name}. " +
-                "Initialise the binding module that covers it — for example " +
-                "Gst.Video.GstVideo.Initialize() — before reading the value.");
-        }
-
-        if (wrapper is T typed)
-        {
-            return typed;
-        }
-
-        // The factory took a reference of its own, and nothing else holds it.
-        (wrapper as IDisposable)?.Dispose();
-
-        throw new InvalidCastException(
-            $"The value holds a {type.Name}, whose wrapper is " +
-            $"{wrapper?.GetType().ToString() ?? "nothing"} and not a {typeof(T)}.");
-    }
+        => ValueAccess.GetMiniObject<T>(ref AsMutable());
 
     /// <summary>
     /// Stores a parameter specification. The value takes its own reference.
@@ -658,7 +594,7 @@ public struct Value : IDisposable
     /// Reads a parameter specification, which stays owned by this value.
     /// </summary>
     /// <returns>The stored <c>GParamSpec</c>.</returns>
-    public readonly nint GetParam() => GObjectNative.ValueGetParam(ref AsMutable());
+    public readonly nint GetParam() => ValueAccess.GetParam(ref AsMutable());
 
     /// <summary>
     /// Stores a variant. The value takes its own reference.
@@ -670,7 +606,7 @@ public struct Value : IDisposable
     /// Reads a variant, which stays owned by this value.
     /// </summary>
     /// <returns>The stored <c>GVariant</c>.</returns>
-    public readonly nint GetVariant() => GObjectNative.ValueGetVariant(ref AsMutable());
+    public readonly nint GetVariant() => ValueAccess.GetVariant(ref AsMutable());
 
     /// <summary>
     /// Reads the content of the value as a managed object, based on its
@@ -681,54 +617,7 @@ public struct Value : IDisposable
     /// <see cref="string"/>, an <see cref="Object"/> wrapper, or the raw
     /// pointer for boxed, parameter, variant and pointer types.
     /// </returns>
-    public readonly object? GetContent()
-    {
-        GType type = Type;
-        nuint fundamental = GObjectNative.TypeFundamental(NativeValue.TypeValue);
-
-        return fundamental switch
-        {
-            GType.InvalidValue => null,
-            GType.BooleanValue => GetBoolean(),
-            GType.CharValue => GetSChar(),
-            GType.UCharValue => GetUChar(),
-            GType.IntValue => GetInt(),
-            GType.UIntValue => GetUInt(),
-            GType.LongValue => GetLong(),
-            GType.ULongValue => GetULong(),
-            GType.Int64Value => GetInt64(),
-            GType.UInt64Value => GetUInt64(),
-            GType.FloatValue => GetFloat(),
-            GType.DoubleValue => GetDouble(),
-            GType.StringValue => GetString(),
-            GType.EnumValue => GetEnum(),
-            GType.FlagsValue => GetFlags(),
-            GType.ObjectValue => GetObject(),
-            GType.BoxedValue => GetBoxed(),
-
-            // Every one of these has an accessor of its own; g_value_get_pointer
-            // on them is a fatal warning rather than a cast.
-            GType.ParamValue => GetParam(),
-            GType.VariantValue => GetVariant(),
-
-            // An interface with GObject among its prerequisites holds an
-            // object. One without is not something a value can be read as: it
-            // has no accessor of its own and g_value_get_pointer on it is an
-            // assertion failure in GLib rather than a cast.
-            GType.InterfaceValue => Type.IsA(GType.Object) ? GetObject() : throw Unreadable(type, fundamental),
-            GType.PointerValue => GetPointer(),
-
-            // A fundamental type that GLib itself does not define. Reading it
-            // as a pointer would be a guess about a layout nothing here knows,
-            // and a wrong guess is a crash rather than a wrong answer.
-            _ => throw Unreadable(type, fundamental),
-        };
-
-        static NotSupportedException Unreadable(GType type, nuint fundamental) => new(
-            $"A value of type {type.Name} cannot be read as a managed object: " +
-            $"its fundamental type {new GType(fundamental).Name} has no accessor here. " +
-            "Read the value with the accessor of its own type.");
-    }
+    public readonly object? GetContent() => ValueAccess.GetContent(ref AsMutable());
 
     /// <summary>
     /// Reads the content the way the dynamic signal layer hands it to
@@ -833,8 +722,10 @@ public struct Value : IDisposable
     /// <see cref="TypeRegistry.TryCreateWrapper(GType, nint, Transfer, out object?)"/>
     /// documents from the other side. GStreamer offers the field through the
     /// <c>GST_MINI_OBJECT_TYPE</c> macro only, so it is read here.
+    /// It is <c>internal</c> because <see cref="ValueRef.SetMiniObject"/> asks
+    /// the same question of the wrapper it is handed.
     /// </remarks>
-    private static unsafe GType MiniObjectTypeOf(nint handle) =>
+    internal static unsafe GType MiniObjectTypeOf(nint handle) =>
         handle == nint.Zero ? GType.Invalid : new GType(*(nuint*)handle);
 
     /// <summary>

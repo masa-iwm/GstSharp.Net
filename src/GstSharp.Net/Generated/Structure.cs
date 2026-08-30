@@ -298,6 +298,82 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     }
 
     /// <summary>
+    /// Calls the provided function once for each field in the #GstStructure. In
+    /// contrast to gst_structure_foreach(), the function may modify the fields.
+    /// In contrast to gst_structure_map_in_place(), the field is removed from
+    /// the structure if %FALSE is returned from the function.
+    /// The structure must be mutable.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The structure has to be writable. Like the C API, the call raises a warning
+    /// and does not call the function otherwise.
+    /// </para>
+    /// <para>
+    /// An exception the function throws does not reach this caller: it is reported
+    /// through <c>Gst.Interop.ExceptionTrap</c> and the function is answered
+    /// <see langword="false"/>, which this call reads as a request to remove the field
+    /// that was being visited. A handler that has to fail without losing data has to
+    /// catch its own exceptions.
+    /// </para>
+    /// </remarks>
+    /// <param name="func">a function to call for each field</param>
+    [Obsolete("Use gst_structure_filter_and_map_in_place_id_str(). (deprecated since 1.26)")]
+    public void FilterAndMapInPlace(Gst.StructureFilterMapFunc func)
+    {
+        ArgumentNullException.ThrowIfNull(func);
+        nint instanceHandle = Handle;
+        Gst.Interop.CallbackHandle funcState = Gst.Interop.CallbackHandle.Alloc(func);
+        try
+        {
+            GstStructureFilterAndMapInPlace(instanceHandle, Gst.StructureFilterMapFuncTrampoline.Pointer, funcState.UserData);
+            System.GC.KeepAlive(this);
+        }
+        finally
+        {
+            funcState.Free();
+        }
+    }
+
+    /// <summary>
+    /// Calls the provided function once for each field in the #GstStructure. In
+    /// contrast to gst_structure_foreach_id_str(), the function may modify the fields.
+    /// In contrast to gst_structure_map_in_place_id_str(), the field is removed from
+    /// the structure if %FALSE is returned from the function.
+    /// The structure must be mutable.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The structure has to be writable. Like the C API, the call raises a warning
+    /// and does not call the function otherwise.
+    /// </para>
+    /// <para>
+    /// An exception the function throws does not reach this caller: it is reported
+    /// through <c>Gst.Interop.ExceptionTrap</c> and the function is answered
+    /// <see langword="false"/>, which this call reads as a request to remove the field
+    /// that was being visited. A handler that has to fail without losing data has to
+    /// catch its own exceptions.
+    /// </para>
+    /// <para>Available since GStreamer 1.26.</para>
+    /// </remarks>
+    /// <param name="func">a function to call for each field</param>
+    public void FilterAndMapInPlaceIdStr(Gst.StructureFilterMapIdStrFunc func)
+    {
+        ArgumentNullException.ThrowIfNull(func);
+        nint instanceHandle = Handle;
+        Gst.Interop.CallbackHandle funcState = Gst.Interop.CallbackHandle.Alloc(func);
+        try
+        {
+            GstStructureFilterAndMapInPlaceIdStr(instanceHandle, Gst.StructureFilterMapIdStrFuncTrampoline.Pointer, funcState.UserData);
+            System.GC.KeepAlive(this);
+        }
+        finally
+        {
+            funcState.Free();
+        }
+    }
+
+    /// <summary>
     /// Fixate all values in @structure using gst_value_fixate().
     /// @structure will be modified in-place and should be writable.
     /// </summary>
@@ -408,6 +484,80 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
         int nativeResult = GstStructureFixateFieldString(Handle, fieldNameScope.Pointer, targetScope.Pointer);
         System.GC.KeepAlive(this);
         return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Calls the provided function once for each field in the #GstStructure. The
+    /// function must not modify the fields. Also see gst_structure_map_in_place()
+    /// and gst_structure_filter_and_map_in_place().
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// An exception the function throws does not reach this caller: it is reported
+    /// through <c>Gst.Interop.ExceptionTrap</c> and the function is answered
+    /// <see langword="false"/>, which stops the walk and is what this call then
+    /// returns. A failed walk is therefore indistinguishable from one the function
+    /// stopped on purpose.
+    /// </para>
+    /// </remarks>
+    /// <param name="func">a function to call for each field</param>
+    /// <returns>
+    /// %TRUE if the supplied function returns %TRUE For each of the fields,
+    /// %FALSE otherwise.
+    /// </returns>
+    [Obsolete("Use gst_structure_foreach_id_str(). (deprecated since 1.26)")]
+    public bool Foreach(Gst.StructureForeachFunc func)
+    {
+        ArgumentNullException.ThrowIfNull(func);
+        nint instanceHandle = Handle;
+        Gst.Interop.CallbackHandle funcState = Gst.Interop.CallbackHandle.Alloc(func);
+        try
+        {
+            int nativeResult = GstStructureForeach(instanceHandle, Gst.StructureForeachFuncTrampoline.Pointer, funcState.UserData);
+            System.GC.KeepAlive(this);
+            return nativeResult != 0;
+        }
+        finally
+        {
+            funcState.Free();
+        }
+    }
+
+    /// <summary>
+    /// Calls the provided function once for each field in the #GstStructure. The
+    /// function must not modify the fields. Also see gst_structure_map_in_place_id_str()
+    /// and gst_structure_filter_and_map_in_place_id_str().
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// An exception the function throws does not reach this caller: it is reported
+    /// through <c>Gst.Interop.ExceptionTrap</c> and the function is answered
+    /// <see langword="false"/>, which stops the walk and is what this call then
+    /// returns. A failed walk is therefore indistinguishable from one the function
+    /// stopped on purpose.
+    /// </para>
+    /// <para>Available since GStreamer 1.26.</para>
+    /// </remarks>
+    /// <param name="func">a function to call for each field</param>
+    /// <returns>
+    /// %TRUE if the supplied function returns %TRUE For each of the fields,
+    /// %FALSE otherwise.
+    /// </returns>
+    public bool ForeachIdStr(Gst.StructureForeachIdStrFunc func)
+    {
+        ArgumentNullException.ThrowIfNull(func);
+        nint instanceHandle = Handle;
+        Gst.Interop.CallbackHandle funcState = Gst.Interop.CallbackHandle.Alloc(func);
+        try
+        {
+            int nativeResult = GstStructureForeachIdStr(instanceHandle, Gst.StructureForeachIdStrFuncTrampoline.Pointer, funcState.UserData);
+            System.GC.KeepAlive(this);
+            return nativeResult != 0;
+        }
+        finally
+        {
+            funcState.Free();
+        }
     }
 
     /// <summary>
@@ -1186,6 +1336,90 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
         return nativeResult != 0;
     }
 
+    /// <summary>
+    /// Calls the provided function once for each field in the #GstStructure. In
+    /// contrast to gst_structure_foreach(), the function may modify but not delete the
+    /// fields. The structure must be mutable.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The structure has to be writable. Like the C API, the call raises a warning
+    /// and does not call the function otherwise; the <see langword="false"/> it then
+    /// answers is the one a walk the function stopped answers.
+    /// </para>
+    /// <para>
+    /// An exception the function throws does not reach this caller: it is reported
+    /// through <c>Gst.Interop.ExceptionTrap</c> and the function is answered
+    /// <see langword="false"/>, which stops the walk and is what this call then
+    /// returns. A failed walk is therefore indistinguishable from one the function
+    /// stopped on purpose.
+    /// </para>
+    /// </remarks>
+    /// <param name="func">a function to call for each field</param>
+    /// <returns>
+    /// %TRUE if the supplied function returns %TRUE For each of the fields,
+    /// %FALSE otherwise.
+    /// </returns>
+    [Obsolete("Use gst_structure_map_in_place_id_str(). (deprecated since 1.26)")]
+    public bool MapInPlace(Gst.StructureMapFunc func)
+    {
+        ArgumentNullException.ThrowIfNull(func);
+        nint instanceHandle = Handle;
+        Gst.Interop.CallbackHandle funcState = Gst.Interop.CallbackHandle.Alloc(func);
+        try
+        {
+            int nativeResult = GstStructureMapInPlace(instanceHandle, Gst.StructureMapFuncTrampoline.Pointer, funcState.UserData);
+            System.GC.KeepAlive(this);
+            return nativeResult != 0;
+        }
+        finally
+        {
+            funcState.Free();
+        }
+    }
+
+    /// <summary>
+    /// Calls the provided function once for each field in the #GstStructure. In
+    /// contrast to gst_structure_foreach_id_str(), the function may modify but not delete the
+    /// fields. The structure must be mutable.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The structure has to be writable. Like the C API, the call raises a warning
+    /// and does not call the function otherwise; the <see langword="false"/> it then
+    /// answers is the one a walk the function stopped answers.
+    /// </para>
+    /// <para>
+    /// An exception the function throws does not reach this caller: it is reported
+    /// through <c>Gst.Interop.ExceptionTrap</c> and the function is answered
+    /// <see langword="false"/>, which stops the walk and is what this call then
+    /// returns. A failed walk is therefore indistinguishable from one the function
+    /// stopped on purpose.
+    /// </para>
+    /// <para>Available since GStreamer 1.26.</para>
+    /// </remarks>
+    /// <param name="func">a function to call for each field</param>
+    /// <returns>
+    /// %TRUE if the supplied function returns %TRUE For each of the fields,
+    /// %FALSE otherwise.
+    /// </returns>
+    public bool MapInPlaceIdStr(Gst.StructureMapIdStrFunc func)
+    {
+        ArgumentNullException.ThrowIfNull(func);
+        nint instanceHandle = Handle;
+        Gst.Interop.CallbackHandle funcState = Gst.Interop.CallbackHandle.Alloc(func);
+        try
+        {
+            int nativeResult = GstStructureMapInPlaceIdStr(instanceHandle, Gst.StructureMapIdStrFuncTrampoline.Pointer, funcState.UserData);
+            System.GC.KeepAlive(this);
+            return nativeResult != 0;
+        }
+        finally
+        {
+            funcState.Free();
+        }
+    }
+
     /// <summary>Get the number of fields in the structure.</summary>
     /// <returns>the number of fields in the structure</returns>
     public int NFields()
@@ -1409,6 +1643,14 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     [LibraryImport("Gst", EntryPoint = "gst_structure_copy")]
     private static partial nint GstStructureCopy(nint structure);
 
+    /// <summary>The <c>gst_structure_filter_and_map_in_place</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_structure_filter_and_map_in_place")]
+    private static partial void GstStructureFilterAndMapInPlace(nint structure, nint func, nint userData);
+
+    /// <summary>The <c>gst_structure_filter_and_map_in_place_id_str</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_structure_filter_and_map_in_place_id_str")]
+    private static partial void GstStructureFilterAndMapInPlaceIdStr(nint structure, nint func, nint userData);
+
     /// <summary>The <c>gst_structure_fixate</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_structure_fixate")]
     private static partial void GstStructureFixate(nint structure);
@@ -1436,6 +1678,14 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     /// <summary>The <c>gst_structure_fixate_field_string</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_structure_fixate_field_string")]
     private static partial int GstStructureFixateFieldString(nint structure, byte* fieldName, byte* target);
+
+    /// <summary>The <c>gst_structure_foreach</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_structure_foreach")]
+    private static partial int GstStructureForeach(nint structure, nint func, nint userData);
+
+    /// <summary>The <c>gst_structure_foreach_id_str</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_structure_foreach_id_str")]
+    private static partial int GstStructureForeachIdStr(nint structure, nint func, nint userData);
 
     /// <summary>The <c>gst_structure_get_array</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_structure_get_array")]
@@ -1588,6 +1838,14 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     /// <summary>The <c>gst_structure_is_writable</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_structure_is_writable")]
     private static partial int GstStructureIsWritable(nint structure);
+
+    /// <summary>The <c>gst_structure_map_in_place</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_structure_map_in_place")]
+    private static partial int GstStructureMapInPlace(nint structure, nint func, nint userData);
+
+    /// <summary>The <c>gst_structure_map_in_place_id_str</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_structure_map_in_place_id_str")]
+    private static partial int GstStructureMapInPlaceIdStr(nint structure, nint func, nint userData);
 
     /// <summary>The <c>gst_structure_n_fields</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_structure_n_fields")]

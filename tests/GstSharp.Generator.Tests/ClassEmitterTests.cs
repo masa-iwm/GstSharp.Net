@@ -171,7 +171,7 @@ public sealed class ClassEmitterTests
     }
 
     [Theory]
-    [InlineData("Gst", 35, 51, 5, 18, 18, 1402, 29, 23, 52)]
+    [InlineData("Gst", 35, 51, 5, 26, 18, 1410, 29, 23, 52)]
     [InlineData("GstBase", 11, 4, 0, 5, 0, 174, 31, 2, 4)]
     [InlineData("GstApp", 2, 2, 0, 8, 0, 62, 36, 8, 0)]
     [InlineData("GstAudio", 14, 17, 1, 2, 2, 213, 32, 0, 38)]
@@ -212,7 +212,7 @@ public sealed class ClassEmitterTests
     }
 
     [Theory]
-    [InlineData("Gst", 1, 90, 53, 115, 80, 10)]
+    [InlineData("Gst", 1, 90, 53, 115, 72, 10)]
     [InlineData("GstBase", 0, 11, 0, 20, 6, 0)]
     [InlineData("GstApp", 1, 0, 0, 2, 2, 1)]
     [InlineData("GstAudio", 0, 22, 0, 8, 4, 0)]

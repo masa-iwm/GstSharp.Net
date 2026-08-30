@@ -150,6 +150,111 @@ public sealed unsafe partial class Iterator : Gst.GObject.Boxed
     }
 
     /// <summary>
+    /// Folds @func over the elements of @iter. That is to say, @func will be called
+    /// as @func (object, @ret, @user_data) for each object in @it. The normal use
+    /// of this procedure is to accumulate the results of operating on the objects in
+    /// @ret.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This procedure can be used (and is used internally) to implement the
+    /// gst_iterator_foreach() and gst_iterator_find_custom() operations.
+    /// </para>
+    /// <para>
+    /// The fold will proceed as long as @func returns %TRUE. When the iterator has no
+    /// more arguments, %GST_ITERATOR_DONE will be returned. If @func returns %FALSE,
+    /// the fold will stop, and %GST_ITERATOR_OK will be returned. Errors or resyncs
+    /// will cause fold to return %GST_ITERATOR_ERROR or %GST_ITERATOR_RESYNC as
+    /// appropriate.
+    /// </para>
+    /// <para>The iterator will not be freed.</para>
+    /// <para>
+    /// A collection that changed while the walk was running stops it with
+    /// <c>GST_ITERATOR_RESYNC</c>, and the walk does not resynchronise by itself: the
+    /// caller decides whether to call <see cref="Resync"/> and walk again. A second
+    /// walk starts the collection over, so every element the function has already
+    /// seen is handed to it again.
+    /// </para>
+    /// <para>
+    /// An exception the function throws does not reach this caller: it is reported
+    /// through <c>Gst.Interop.ExceptionTrap</c> and the function is answered
+    /// <see langword="false"/>, which stops the fold. A fold the function stopped
+    /// answers <c>GST_ITERATOR_OK</c>, so a failed one is indistinguishable from one
+    /// that stopped on purpose, and the accumulator holds whatever was written before
+    /// the failure.
+    /// </para>
+    /// </remarks>
+    /// <param name="func">the fold function</param>
+    /// <param name="ret">
+    /// The <c>ret</c> argument.
+    /// The value has to be initialized with the type the function writes
+    /// before the call. The call itself never reads or writes it: it hands it to
+    /// the function as it stands, and a setter on an uninitialized value throws
+    /// inside the function, which stops the fold as the remarks above describe.
+    /// </param>
+    /// <returns>A #GstIteratorResult, as described above.</returns>
+    public Gst.IteratorResult Fold(Gst.IteratorFoldFunction func, ref Gst.GObject.Value ret)
+    {
+        ArgumentNullException.ThrowIfNull(func);
+        nint instanceHandle = Handle;
+        Gst.Interop.CallbackHandle funcState = Gst.Interop.CallbackHandle.Alloc(func);
+        try
+        {
+            fixed (Gst.GObject.GValueNative* retPointer = &ret.NativeValue)
+            {
+                int nativeResult = GstIteratorFold(instanceHandle, Gst.IteratorFoldFunctionTrampoline.Pointer, retPointer, funcState.UserData);
+                System.GC.KeepAlive(this);
+                return (Gst.IteratorResult)nativeResult;
+            }
+        }
+        finally
+        {
+            funcState.Free();
+        }
+    }
+
+    /// <summary>
+    /// Iterate over all element of @it and call the given function @func for
+    /// each element.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// A collection that changed while the walk was running stops it with
+    /// <c>GST_ITERATOR_RESYNC</c>, and the walk does not resynchronise by itself: the
+    /// caller decides whether to call <see cref="Resync"/> and walk again. A second
+    /// walk starts the collection over, so every element the function has already
+    /// seen is handed to it again.
+    /// </para>
+    /// <para>
+    /// An exception the function throws does not reach this caller: it is reported
+    /// through <c>Gst.Interop.ExceptionTrap</c>. The function answers nothing, so the
+    /// walk carries on with the next element and this call still reports the result of
+    /// the walk itself.
+    /// </para>
+    /// </remarks>
+    /// <param name="func">the function to call for each element.</param>
+    /// <returns>
+    /// the result call to gst_iterator_fold(). The iterator will not be
+    /// freed.
+    /// </returns>
+    public Gst.IteratorResult Foreach(Gst.IteratorForeachFunction func)
+    {
+        ArgumentNullException.ThrowIfNull(func);
+        nint instanceHandle = Handle;
+        Gst.Interop.CallbackHandle funcState = Gst.Interop.CallbackHandle.Alloc(func);
+        try
+        {
+            int nativeResult = GstIteratorForeach(instanceHandle, Gst.IteratorForeachFunctionTrampoline.Pointer, funcState.UserData);
+            System.GC.KeepAlive(this);
+            return (Gst.IteratorResult)nativeResult;
+        }
+        finally
+        {
+            funcState.Free();
+        }
+    }
+
+    /// <summary>
     /// Pushes @other iterator onto @it. All calls performed on @it are
     /// forwarded to @other. If @other returns %GST_ITERATOR_DONE, it is
     /// popped again and calls are handled by @it again.
@@ -198,6 +303,14 @@ public sealed unsafe partial class Iterator : Gst.GObject.Boxed
     /// <summary>The <c>gst_iterator_copy</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_iterator_copy")]
     private static partial nint GstIteratorCopy(nint it);
+
+    /// <summary>The <c>gst_iterator_fold</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_iterator_fold")]
+    private static partial int GstIteratorFold(nint it, nint func, Gst.GObject.GValueNative* ret, nint userData);
+
+    /// <summary>The <c>gst_iterator_foreach</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_iterator_foreach")]
+    private static partial int GstIteratorForeach(nint it, nint func, nint userData);
 
     /// <summary>The <c>gst_iterator_push</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_iterator_push")]

@@ -84,6 +84,45 @@ public sealed class MarshalPlannerTests
                 </parameter>
               </parameters>
             </callback>
+            <callback name="TuneQualityFunc" c:type="GstTuneQualityFunc">
+              <return-value transfer-ownership="none">
+                <type name="gboolean" c:type="gboolean"/>
+              </return-value>
+              <parameters>
+                <parameter name="value" transfer-ownership="none">
+                  <type name="GObject.Value" c:type="GValue*"/>
+                </parameter>
+                <parameter name="user_data" transfer-ownership="none" nullable="1" closure="1">
+                  <type name="gpointer" c:type="gpointer"/>
+                </parameter>
+              </parameters>
+            </callback>
+            <callback name="OwnQualityFunc" c:type="GstOwnQualityFunc">
+              <return-value transfer-ownership="none">
+                <type name="none" c:type="void"/>
+              </return-value>
+              <parameters>
+                <parameter name="value" transfer-ownership="full">
+                  <type name="GObject.Value" c:type="const GValue*"/>
+                </parameter>
+                <parameter name="user_data" transfer-ownership="none" nullable="1" closure="1">
+                  <type name="gpointer" c:type="gpointer"/>
+                </parameter>
+              </parameters>
+            </callback>
+            <callback name="MaybeQualityFunc" c:type="GstMaybeQualityFunc">
+              <return-value transfer-ownership="none">
+                <type name="none" c:type="void"/>
+              </return-value>
+              <parameters>
+                <parameter name="value" transfer-ownership="none" nullable="1">
+                  <type name="GObject.Value" c:type="const GValue*"/>
+                </parameter>
+                <parameter name="user_data" transfer-ownership="none" nullable="1" closure="1">
+                  <type name="gpointer" c:type="gpointer"/>
+                </parameter>
+              </parameters>
+            </callback>
             <interface name="Sizer" c:type="GstSizer" glib:type-name="GstSizer" glib:get-type="gst_sizer_get_type">
               <method name="get_size" c:identifier="gst_sizer_get_size">
                 <return-value transfer-ownership="none">
@@ -447,6 +486,54 @@ public sealed class MarshalPlannerTests
                   </instance-parameter>
                   <parameter name="func" transfer-ownership="none" scope="call" closure="1">
                     <type name="QualityFunc" c:type="GstQualityFunc"/>
+                  </parameter>
+                  <parameter name="user_data" transfer-ownership="none" nullable="1">
+                    <type name="gpointer" c:type="gpointer"/>
+                  </parameter>
+                </parameters>
+              </method>
+              <method name="tune_quality" c:identifier="gst_widget_tune_quality">
+                <return-value transfer-ownership="none">
+                  <type name="none" c:type="void"/>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="widget" transfer-ownership="none">
+                    <type name="Widget" c:type="GstWidget*"/>
+                  </instance-parameter>
+                  <parameter name="func" transfer-ownership="none" scope="call" closure="1">
+                    <type name="TuneQualityFunc" c:type="GstTuneQualityFunc"/>
+                  </parameter>
+                  <parameter name="user_data" transfer-ownership="none" nullable="1">
+                    <type name="gpointer" c:type="gpointer"/>
+                  </parameter>
+                </parameters>
+              </method>
+              <method name="own_quality" c:identifier="gst_widget_own_quality">
+                <return-value transfer-ownership="none">
+                  <type name="none" c:type="void"/>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="widget" transfer-ownership="none">
+                    <type name="Widget" c:type="GstWidget*"/>
+                  </instance-parameter>
+                  <parameter name="func" transfer-ownership="none" scope="call" closure="1">
+                    <type name="OwnQualityFunc" c:type="GstOwnQualityFunc"/>
+                  </parameter>
+                  <parameter name="user_data" transfer-ownership="none" nullable="1">
+                    <type name="gpointer" c:type="gpointer"/>
+                  </parameter>
+                </parameters>
+              </method>
+              <method name="maybe_quality" c:identifier="gst_widget_maybe_quality">
+                <return-value transfer-ownership="none">
+                  <type name="none" c:type="void"/>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="widget" transfer-ownership="none">
+                    <type name="Widget" c:type="GstWidget*"/>
+                  </instance-parameter>
+                  <parameter name="func" transfer-ownership="none" scope="call" closure="1">
+                    <type name="MaybeQualityFunc" c:type="GstMaybeQualityFunc"/>
                   </parameter>
                   <parameter name="user_data" transfer-ownership="none" nullable="1">
                     <type name="gpointer" c:type="gpointer"/>
@@ -1181,11 +1268,14 @@ public sealed class MarshalPlannerTests
         Assert.DoesNotContain("ListTags", source, StringComparison.Ordinal);
         Assert.Contains("public void AddChildren(", source, StringComparison.Ordinal);
 
-        // The seven: steal_caps, list_extents, take_anchors and list_tags
-        // above, and the three GValue rejections that
-        // TheTakeValueShapeStaysUnbound, ANullableGValueParameterStaysUnbound
-        // and AGValueTakingCallbackStaysUnbound pin.
-        Assert.Equal(7, Run.Result.Census.SkippedCount("Gst", SkipReason.UnsupportedSignature));
+        // The eight: steal_caps, list_extents, take_anchors and list_tags
+        // above, the two GValue parameter rejections that
+        // TheTakeValueShapeStaysUnbound and ANullableGValueParameterStaysUnbound
+        // pin, and the two GValue callback argument rejections of
+        // AGValueCallbackArgumentThatTransfersOrIsNullableStaysUnbound. The
+        // plain GValue taking callback now binds as a view, which
+        // AGValueTakingCallbackIsHandedAView pins.
+        Assert.Equal(8, Run.Result.Census.SkippedCount("Gst", SkipReason.UnsupportedSignature));
     }
 
     [Fact]
@@ -1454,15 +1544,76 @@ public sealed class MarshalPlannerTests
     }
 
     [Fact]
-    public void AGValueTakingCallbackStaysUnbound()
+    public void AGValueTakingCallbackIsHandedAView()
     {
-        // A callback receives its arguments rather than passing them, and a
-        // trampoline has no equivalent of a pointer into caller owned storage,
-        // so a GValue carrying callback and the member that takes it stay
-        // unbound — GstControlBindingConvert and the iterator fold family are
-        // the real cases.
-        Assert.DoesNotContain("WatchQuality", Run.File("Widget.cs"), StringComparison.Ordinal);
-        Assert.DoesNotContain("QualityFunc", Run.File("Callbacks.cs"), StringComparison.Ordinal);
+        // A callback receives its GValue rather than passing one, so it is
+        // handed a view over storage the caller of the callback owns: a read
+        // only ValueView for a const GValue*, a writable ValueRef for the
+        // GValue* that the caller invites it to change in place. Both are ref
+        // structs, so neither can be stored past the invocation - which is the
+        // contract, not a convenience: the item gst_iterator_fold hands out is
+        // a stack GValue that is reset after every call.
+        string callbacks = Run.File("Callbacks.cs");
+
+        Assert.Contains(
+            "public delegate void QualityFunc(Gst.GObject.ValueView value);",
+            callbacks,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "public delegate bool TuneQualityFunc(Gst.GObject.ValueRef value);",
+            callbacks,
+            StringComparison.Ordinal);
+        Assert.Contains("public void WatchQuality(Gst.QualityFunc func)", Run.File("Widget.cs"), StringComparison.Ordinal);
+        Assert.Contains("public void TuneQuality(Gst.TuneQualityFunc func)", Run.File("Widget.cs"), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void TheTrampolineBuildsTheViewOverThePointerItWasHanded()
+    {
+        // The view owns nothing, so there is no epilogue; the null check is the
+        // one every non nullable callback argument gets, and it is raised
+        // inside the try, where the trap answers it with the failure value.
+        Assert.Equal(
+            """
+            private static void Invoke(Gst.GObject.GValueNative* value, nint userData)
+            {
+                try
+                {
+                    if (Gst.Interop.CallbackHandle.GetState<Gst.QualityFunc>(userData) is not { } callback)
+                    {
+                        return;
+                    }
+
+                    Gst.GObject.ValueView valueValue = value != null
+                        ? new Gst.GObject.ValueView(ref *value)
+                        : throw new InvalidOperationException("GstQualityFunc passed no value.");
+                    callback(valueValue);
+                }
+                catch (Exception exception)
+                {
+                    Gst.Interop.ExceptionTrap.Report(exception);
+                }
+            }
+            """,
+            Run.Member("Callbacks.cs", "private static void Invoke(Gst.GObject.GValueNative* value, nint userData)"),
+            StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public void AGValueCallbackArgumentThatTransfersOrIsNullableStaysUnbound()
+    {
+        // The two widening guards of the view projection, each pinned by a
+        // synthetic fixture because no introspectable real gir case has either
+        // shape - a regression here produces no committed diff at all. A
+        // callback that is handed the contents of a GValue would have to
+        // release them, and nothing says when; a nullable GValue has no
+        // spelling, because a view is a struct and cannot be null.
+        string widget = Run.File("Widget.cs");
+
+        Assert.DoesNotContain("OwnQuality", widget, StringComparison.Ordinal);
+        Assert.DoesNotContain("MaybeQuality", widget, StringComparison.Ordinal);
+        Assert.DoesNotContain("OwnQualityFunc", Run.File("Callbacks.cs"), StringComparison.Ordinal);
+        Assert.DoesNotContain("MaybeQualityFunc", Run.File("Callbacks.cs"), StringComparison.Ordinal);
     }
 
     [Fact]

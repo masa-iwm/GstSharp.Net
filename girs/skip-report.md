@@ -457,7 +457,7 @@ disappears shows up here as an added line.
 
 - `gst_bus_add_watch`
 
-### UnsupportedSignature (80)
+### UnsupportedSignature (72)
 
 - `Gst.Bus:enable-async`
 - `gst_buffer_list_foreach`
@@ -478,8 +478,6 @@ disappears shows up here as an added line.
 - `gst_init`
 - `gst_iterator_filter`
 - `gst_iterator_find_custom`
-- `gst_iterator_fold`
-- `gst_iterator_foreach`
 - `gst_message_new_property_notify`
 - `gst_message_take`
 - `gst_mini_object_add_parent`
@@ -514,15 +512,9 @@ disappears shows up here as an added line.
 - `gst_param_spec_fraction`
 - `gst_poll_get_read_gpollfd`
 - `gst_query_take`
-- `gst_structure_filter_and_map_in_place`
-- `gst_structure_filter_and_map_in_place_id_str`
-- `gst_structure_foreach`
-- `gst_structure_foreach_id_str`
 - `gst_structure_get_date`
 - `gst_structure_id_str_take_value`
 - `gst_structure_id_take_value`
-- `gst_structure_map_in_place`
-- `gst_structure_map_in_place_id_str`
 - `gst_structure_take`
 - `gst_structure_take_value`
 - `gst_tag_list_get_date`

@@ -5,14 +5,14 @@ using Xunit;
 namespace GstSharp.IntegrationTests;
 
 /// <summary>
-/// The shared 1.28 gate against the installed library.
+/// The shared 1.26 and 1.28 gates against the installed library.
 /// </summary>
 /// <remarks>
 /// A gate nothing measures is a gate that may be wrong on the one leg that
-/// needs it. These tests run everywhere and pin the probe of
+/// needs it. These tests run everywhere and pin the probes of
 /// <see cref="NativeAvailability"/> to the version the library reports of
 /// itself, in both directions, so that a probe symbol that stopped being a
-/// 1.28 marker — because it was backported, renamed or removed — turns the
+/// version marker — because it was backported, renamed or removed — turns the
 /// suite red instead of silently skipping every test behind it.
 /// </remarks>
 [Collection(GstCollection.Name)]
@@ -44,5 +44,28 @@ public sealed class NativeAvailabilityTests
     public void AGatedFactRunsOnlyWhereTheEntryPointsExist()
     {
         Assert.True(NativeAvailability.Has128);
+    }
+
+    /// <summary>
+    /// The 1.26 probe agrees with the version the library reports: the
+    /// <c>GstIdStr</c> boxed type is there on 1.26 and newer, and nowhere else.
+    /// </summary>
+    [Fact]
+    public void The126ProbeAgreesWithTheReportedVersion()
+    {
+        Gst.Version version = gstsharp::GstSharp.NativeVersion;
+        bool expected = version.Major > 1 || (version.Major == 1 && version.Minor >= 26);
+
+        Assert.Equal(expected, NativeAvailability.Has126);
+    }
+
+    /// <summary>
+    /// The same agreement for the 1.26 gate, which is what every test of an
+    /// <c>_id_str</c> member rests on.
+    /// </summary>
+    [RequiresGStreamerFact(26)]
+    public void AGatedFactRunsOnlyWhereTheIdStrEntryPointsExist()
+    {
+        Assert.True(NativeAvailability.Has126);
     }
 }

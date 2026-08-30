@@ -293,6 +293,76 @@ internal static unsafe class ElementForeachPadFuncTrampoline
     }
 }
 
+/// <summary>A function to be passed to gst_iterator_fold().</summary>
+/// <param name="item">the item to fold</param>
+/// <param name="ret">a #GValue collecting the result</param>
+/// <returns>%TRUE if the fold should continue, %FALSE if it should stop.</returns>
+public delegate bool IteratorFoldFunction(Gst.GObject.ValueView item, Gst.GObject.ValueRef ret);
+
+/// <summary>The native entry point of <see cref="Gst.IteratorFoldFunction"/>.</summary>
+internal static unsafe class IteratorFoldFunctionTrampoline
+{
+    /// <summary>Gets the address that is handed to native code.</summary>
+    internal static nint Pointer => (nint)(delegate* unmanaged[Cdecl]<Gst.GObject.GValueNative*, Gst.GObject.GValueNative*, nint, int>)&Invoke;
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static int Invoke(Gst.GObject.GValueNative* item, Gst.GObject.GValueNative* ret, nint userData)
+    {
+        try
+        {
+            if (Gst.Interop.CallbackHandle.GetState<Gst.IteratorFoldFunction>(userData) is not { } callback)
+            {
+                return default;
+            }
+
+            Gst.GObject.ValueView itemValue = item != null
+                ? new Gst.GObject.ValueView(ref *item)
+                : throw new InvalidOperationException("GstIteratorFoldFunction passed no item.");
+            Gst.GObject.ValueRef retValue = ret != null
+                ? new Gst.GObject.ValueRef(ref *ret)
+                : throw new InvalidOperationException("GstIteratorFoldFunction passed no ret.");
+            return callback(itemValue, retValue) ? 1 : 0;
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+            return default;
+        }
+    }
+}
+
+/// <summary>A function that is called by gst_iterator_foreach() for every element.</summary>
+/// <param name="item">The item</param>
+public delegate void IteratorForeachFunction(Gst.GObject.ValueView item);
+
+/// <summary>The native entry point of <see cref="Gst.IteratorForeachFunction"/>.</summary>
+internal static unsafe class IteratorForeachFunctionTrampoline
+{
+    /// <summary>Gets the address that is handed to native code.</summary>
+    internal static nint Pointer => (nint)(delegate* unmanaged[Cdecl]<Gst.GObject.GValueNative*, nint, void>)&Invoke;
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static void Invoke(Gst.GObject.GValueNative* item, nint userData)
+    {
+        try
+        {
+            if (Gst.Interop.CallbackHandle.GetState<Gst.IteratorForeachFunction>(userData) is not { } callback)
+            {
+                return;
+            }
+
+            Gst.GObject.ValueView itemValue = item != null
+                ? new Gst.GObject.ValueView(ref *item)
+                : throw new InvalidOperationException("GstIteratorForeachFunction passed no item.");
+            callback(itemValue);
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+        }
+    }
+}
+
 /// <summary>
 /// Function prototype for a logging function that can be registered with
 /// gst_debug_add_log_function().
@@ -598,6 +668,269 @@ internal static unsafe class PromiseChangeFuncTrampoline
         catch (Exception exception)
         {
             Gst.Interop.ExceptionTrap.Report(exception);
+        }
+    }
+}
+
+/// <summary>
+/// A function that will be called in gst_structure_filter_and_map_in_place().
+/// The function may modify @value, and the value will be removed from
+/// the structure if %FALSE is returned.
+/// </summary>
+/// <param name="fieldId">the #GQuark of the field name</param>
+/// <param name="value">the #GValue of the field</param>
+/// <returns>
+/// %TRUE if the field should be preserved, %FALSE if it
+/// should be removed.
+/// </returns>
+public delegate bool StructureFilterMapFunc(Gst.GLib.Quark fieldId, Gst.GObject.ValueRef value);
+
+/// <summary>The native entry point of <see cref="Gst.StructureFilterMapFunc"/>.</summary>
+internal static unsafe class StructureFilterMapFuncTrampoline
+{
+    /// <summary>Gets the address that is handed to native code.</summary>
+    internal static nint Pointer => (nint)(delegate* unmanaged[Cdecl]<uint, Gst.GObject.GValueNative*, nint, int>)&Invoke;
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static int Invoke(uint fieldId, Gst.GObject.GValueNative* value, nint userData)
+    {
+        try
+        {
+            if (Gst.Interop.CallbackHandle.GetState<Gst.StructureFilterMapFunc>(userData) is not { } callback)
+            {
+                return default;
+            }
+
+            Gst.GObject.ValueRef valueValue = value != null
+                ? new Gst.GObject.ValueRef(ref *value)
+                : throw new InvalidOperationException("GstStructureFilterMapFunc passed no value.");
+            return callback(new Gst.GLib.Quark(fieldId), valueValue) ? 1 : 0;
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+            return default;
+        }
+    }
+}
+
+/// <summary>
+/// A function that will be called in gst_structure_filter_and_map_in_place_id_str().
+/// The function may modify @value, and the value will be removed from the
+/// structure if %FALSE is returned.
+/// </summary>
+/// <remarks>
+/// <para>Available since GStreamer 1.26.</para>
+/// </remarks>
+/// <param name="fieldname">the #GstIdStr field name</param>
+/// <param name="value">the #GValue of the field</param>
+/// <returns>
+/// %TRUE if the field should be preserved, %FALSE if it
+/// should be removed.
+/// </returns>
+public delegate bool StructureFilterMapIdStrFunc(Gst.IdStr fieldname, Gst.GObject.ValueRef value);
+
+/// <summary>The native entry point of <see cref="Gst.StructureFilterMapIdStrFunc"/>.</summary>
+internal static unsafe class StructureFilterMapIdStrFuncTrampoline
+{
+    /// <summary>Gets the address that is handed to native code.</summary>
+    internal static nint Pointer => (nint)(delegate* unmanaged[Cdecl]<nint, Gst.GObject.GValueNative*, nint, int>)&Invoke;
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static int Invoke(nint fieldname, Gst.GObject.GValueNative* value, nint userData)
+    {
+        try
+        {
+            if (Gst.Interop.CallbackHandle.GetState<Gst.StructureFilterMapIdStrFunc>(userData) is not { } callback)
+            {
+                return default;
+            }
+
+            Gst.IdStr fieldnameValue = Gst.IdStr.FromNative(fieldname, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("GstStructureFilterMapIdStrFunc passed no fieldname.");
+            Gst.GObject.ValueRef valueValue = value != null
+                ? new Gst.GObject.ValueRef(ref *value)
+                : throw new InvalidOperationException("GstStructureFilterMapIdStrFunc passed no value.");
+            return callback(fieldnameValue, valueValue) ? 1 : 0;
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+            return default;
+        }
+    }
+}
+
+/// <summary>
+/// A function that will be called in gst_structure_foreach(). The function may
+/// not modify @value.
+/// </summary>
+/// <param name="fieldId">the #GQuark of the field name</param>
+/// <param name="value">the #GValue of the field</param>
+/// <returns>
+/// %TRUE if the foreach operation should continue, %FALSE if
+/// the foreach operation should stop with %FALSE.
+/// </returns>
+public delegate bool StructureForeachFunc(Gst.GLib.Quark fieldId, Gst.GObject.ValueView value);
+
+/// <summary>The native entry point of <see cref="Gst.StructureForeachFunc"/>.</summary>
+internal static unsafe class StructureForeachFuncTrampoline
+{
+    /// <summary>Gets the address that is handed to native code.</summary>
+    internal static nint Pointer => (nint)(delegate* unmanaged[Cdecl]<uint, Gst.GObject.GValueNative*, nint, int>)&Invoke;
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static int Invoke(uint fieldId, Gst.GObject.GValueNative* value, nint userData)
+    {
+        try
+        {
+            if (Gst.Interop.CallbackHandle.GetState<Gst.StructureForeachFunc>(userData) is not { } callback)
+            {
+                return default;
+            }
+
+            Gst.GObject.ValueView valueValue = value != null
+                ? new Gst.GObject.ValueView(ref *value)
+                : throw new InvalidOperationException("GstStructureForeachFunc passed no value.");
+            return callback(new Gst.GLib.Quark(fieldId), valueValue) ? 1 : 0;
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+            return default;
+        }
+    }
+}
+
+/// <summary>
+/// A function that will be called in gst_structure_foreach_id_str(). The
+/// function may not modify @value.
+/// </summary>
+/// <remarks>
+/// <para>Available since GStreamer 1.26.</para>
+/// </remarks>
+/// <param name="fieldname">the #GstIdStr field name</param>
+/// <param name="value">the #GValue of the field</param>
+/// <returns>
+/// %TRUE if the foreach operation should continue, %FALSE if
+/// the foreach operation should stop with %FALSE.
+/// </returns>
+public delegate bool StructureForeachIdStrFunc(Gst.IdStr fieldname, Gst.GObject.ValueView value);
+
+/// <summary>The native entry point of <see cref="Gst.StructureForeachIdStrFunc"/>.</summary>
+internal static unsafe class StructureForeachIdStrFuncTrampoline
+{
+    /// <summary>Gets the address that is handed to native code.</summary>
+    internal static nint Pointer => (nint)(delegate* unmanaged[Cdecl]<nint, Gst.GObject.GValueNative*, nint, int>)&Invoke;
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static int Invoke(nint fieldname, Gst.GObject.GValueNative* value, nint userData)
+    {
+        try
+        {
+            if (Gst.Interop.CallbackHandle.GetState<Gst.StructureForeachIdStrFunc>(userData) is not { } callback)
+            {
+                return default;
+            }
+
+            Gst.IdStr fieldnameValue = Gst.IdStr.FromNative(fieldname, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("GstStructureForeachIdStrFunc passed no fieldname.");
+            Gst.GObject.ValueView valueValue = value != null
+                ? new Gst.GObject.ValueView(ref *value)
+                : throw new InvalidOperationException("GstStructureForeachIdStrFunc passed no value.");
+            return callback(fieldnameValue, valueValue) ? 1 : 0;
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+            return default;
+        }
+    }
+}
+
+/// <summary>
+/// A function that will be called in gst_structure_map_in_place(). The function
+/// may modify @value.
+/// </summary>
+/// <param name="fieldId">the #GQuark of the field name</param>
+/// <param name="value">the #GValue of the field</param>
+/// <returns>
+/// %TRUE if the map operation should continue, %FALSE if
+/// the map operation should stop with %FALSE.
+/// </returns>
+public delegate bool StructureMapFunc(Gst.GLib.Quark fieldId, Gst.GObject.ValueRef value);
+
+/// <summary>The native entry point of <see cref="Gst.StructureMapFunc"/>.</summary>
+internal static unsafe class StructureMapFuncTrampoline
+{
+    /// <summary>Gets the address that is handed to native code.</summary>
+    internal static nint Pointer => (nint)(delegate* unmanaged[Cdecl]<uint, Gst.GObject.GValueNative*, nint, int>)&Invoke;
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static int Invoke(uint fieldId, Gst.GObject.GValueNative* value, nint userData)
+    {
+        try
+        {
+            if (Gst.Interop.CallbackHandle.GetState<Gst.StructureMapFunc>(userData) is not { } callback)
+            {
+                return default;
+            }
+
+            Gst.GObject.ValueRef valueValue = value != null
+                ? new Gst.GObject.ValueRef(ref *value)
+                : throw new InvalidOperationException("GstStructureMapFunc passed no value.");
+            return callback(new Gst.GLib.Quark(fieldId), valueValue) ? 1 : 0;
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+            return default;
+        }
+    }
+}
+
+/// <summary>
+/// A function that will be called in gst_structure_map_in_place_id_str(). The
+/// function may modify @value.
+/// </summary>
+/// <remarks>
+/// <para>Available since GStreamer 1.26.</para>
+/// </remarks>
+/// <param name="fieldname">the #GstIdStr field name</param>
+/// <param name="value">the #GValue of the field</param>
+/// <returns>
+/// %TRUE if the map operation should continue, %FALSE if
+/// the map operation should stop with %FALSE.
+/// </returns>
+public delegate bool StructureMapIdStrFunc(Gst.IdStr fieldname, Gst.GObject.ValueRef value);
+
+/// <summary>The native entry point of <see cref="Gst.StructureMapIdStrFunc"/>.</summary>
+internal static unsafe class StructureMapIdStrFuncTrampoline
+{
+    /// <summary>Gets the address that is handed to native code.</summary>
+    internal static nint Pointer => (nint)(delegate* unmanaged[Cdecl]<nint, Gst.GObject.GValueNative*, nint, int>)&Invoke;
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static int Invoke(nint fieldname, Gst.GObject.GValueNative* value, nint userData)
+    {
+        try
+        {
+            if (Gst.Interop.CallbackHandle.GetState<Gst.StructureMapIdStrFunc>(userData) is not { } callback)
+            {
+                return default;
+            }
+
+            Gst.IdStr fieldnameValue = Gst.IdStr.FromNative(fieldname, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("GstStructureMapIdStrFunc passed no fieldname.");
+            Gst.GObject.ValueRef valueValue = value != null
+                ? new Gst.GObject.ValueRef(ref *value)
+                : throw new InvalidOperationException("GstStructureMapIdStrFunc passed no value.");
+            return callback(fieldnameValue, valueValue) ? 1 : 0;
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+            return default;
         }
     }
 }

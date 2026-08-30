@@ -2995,6 +2995,56 @@ internal sealed class MarshalPlanner
         return scalar.PublicType.EndsWith('?') ? overridden + "?" : overridden;
     }
 
+    /// <summary>
+    /// Re-projects a <c>GValue</c> argument of a callback onto the view that
+    /// matches how the caller of the callback lets it be used.
+    /// </summary>
+    /// <param name="argument">The argument as the shared scalar projection planned it.</param>
+    /// <returns>The projected argument, or <see langword="null"/> when the shape is not supported.</returns>
+    /// <remarks>
+    /// <para>
+    /// <see cref="PlanGValue"/> has already read the const-ness of the C type
+    /// and answered with the direction the method surface would use: <c>in</c>
+    /// for a <c>const GValue*</c>, which is only read, and <c>ref</c> for a
+    /// writable <c>GValue*</c>, which the callee is invited to change in place.
+    /// A callback receives its argument instead of passing one, so the direction
+    /// becomes the choice of view — <c>Gst.GObject.ValueView</c> or
+    /// <c>Gst.GObject.ValueRef</c> — and the argument is passed by value, the
+    /// view being a pointer already.
+    /// </para>
+    /// <para>
+    /// Nothing else is admitted. An <c>out</c> <c>GValue</c> would be storage
+    /// the trampoline has to provide and a lifetime nothing states, and the
+    /// transfers and the nullable in shapes are already refused where every
+    /// other <c>GValue</c> refuses them.
+    /// </para>
+    /// </remarks>
+    private static ArgumentPlan? BorrowedGValue(ArgumentPlan argument)
+    {
+        string? publicType = argument.Direction switch
+        {
+            ArgumentDirection.In => "Gst.GObject.ValueView",
+            ArgumentDirection.Ref => "Gst.GObject.ValueRef",
+            _ => null,
+        };
+
+        if (publicType is null)
+        {
+            return null;
+        }
+
+        return new ArgumentPlan
+        {
+            Source = argument.Source,
+            Kind = ArgumentKind.BorrowedGValue,
+            Name = argument.Name,
+            PublicType = publicType,
+            RawType = argument.RawType,
+            Direction = ArgumentDirection.In,
+            Doc = argument.Doc,
+        };
+    }
+
     private CallbackPlan? PlanCallbackCore(GirCallback callback, PlanningContext context)
     {
         if (callback.IsFieldSlot || callback.Throws || callback.HasVarArgs || !callback.IsIntrospectable)
@@ -3037,16 +3087,22 @@ internal sealed class MarshalPlanner
                 NullableOf(callback, parameter),
                 context);
 
-            // A GValue argument is received rather than passed: the method
-            // surface points its ref at storage the caller owns, which a
-            // trampoline has no equivalent of, so the callbacks that carry one
-            // (GstControlBindingConvert, the iterator, structure and tag merge
-            // families) stay unbound rather than flowing into a trampoline
-            // whose raw signature could not compile.
-            // A list argument is the same story: it is built and handed over on
-            // the method surface, while a trampoline is handed one and would
-            // have to project it into managed code, which is the return side
-            // shape and not this one.
+            // A GValue a callback is handed points into storage that the
+            // caller of the callback owns and keeps, which the owning
+            // Gst.GObject.Value cannot wrap, so it is re-projected onto a view
+            // whose lifetime the compiler bounds by the invocation. Everything
+            // the projection does not cover - an out parameter, a transfer, a
+            // nullable value - comes back as null from PlanGValue or from the
+            // projection itself and takes the callback with it.
+            if (argument is { Kind: ArgumentKind.GValue })
+            {
+                argument = BorrowedGValue(argument);
+            }
+
+            // A list argument is built and handed over on the method surface,
+            // while a trampoline is handed one and would have to project it
+            // into managed code, which is the return side shape and not this
+            // one.
             //
             // A GError is excluded for a related reason: a trampoline that
             // receives a borrowed error needs a delegate contract - how long
@@ -3057,7 +3113,7 @@ internal sealed class MarshalPlanner
             // own, so the exclusion costs nothing and keeps the kind from
             // widening the callback surface behind the scope it was added for.
             if (argument is null
-                || argument.Kind is ArgumentKind.Utf8Owned or ArgumentKind.Callback or ArgumentKind.GValue
+                || argument.Kind is ArgumentKind.Utf8Owned or ArgumentKind.Callback
                     or ArgumentKind.ListIn or ArgumentKind.GError)
             {
                 return null;

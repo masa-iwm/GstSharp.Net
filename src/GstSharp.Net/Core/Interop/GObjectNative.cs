@@ -264,6 +264,9 @@ internal static unsafe partial class GObjectNative
     [LibraryImport("GObject", EntryPoint = "g_value_get_gtype")]
     internal static partial nuint ValueGetGType(ref GValueNative value);
 
+    [LibraryImport("GObject", EntryPoint = "g_gtype_get_type")]
+    internal static partial nuint GTypeGetType();
+
     [LibraryImport("GObject", EntryPoint = "g_value_set_param")]
     internal static partial void ValueSetParam(ref GValueNative value, nint content);
 

@@ -96,6 +96,20 @@ internal enum ArgumentKind
     GValue,
 
     /// <summary>
+    /// A <c>GValue</c> a callback is <em>handed</em>, as a pointer into storage
+    /// that the caller of the callback owns and keeps. It is projected onto a
+    /// view rather than onto <c>Gst.GObject.Value</c>, which owns its payload
+    /// and could not wrap one: a <c>const GValue*</c> becomes
+    /// <c>Gst.GObject.ValueView</c> and a writable <c>GValue*</c> becomes
+    /// <c>Gst.GObject.ValueRef</c>. Both are <c>ref struct</c>s, so the compiler
+    /// keeps them from outliving the invocation they arrived on — which is the
+    /// contract: the item <c>gst_iterator_fold</c> hands out is a stack
+    /// <c>GValue</c> that is reset after every call. The trampoline builds the
+    /// view and does nothing afterwards; no ownership crosses either way.
+    /// </summary>
+    BorrowedGValue,
+
+    /// <summary>
     /// A <c>GError</c> the callee only borrows, projected onto
     /// <c>Gst.GLib.GException</c>. An <c>in</c> parameter is built into a
     /// temporary native error for the duration of the call; a borrowed return
