@@ -368,6 +368,46 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
         return Gst.Uri.FromNative(nativeResult, Gst.Interop.Transfer.Full);
     }
 
+    /// <summary>Make the #GstUri writable.</summary>
+    /// <remarks>
+    /// <para>
+    /// Checks if @uri is writable, and if so the original object is returned. If
+    /// not, then a writable copy is made and returned. This gives away the
+    /// reference to @uri and returns a reference to the new #GstUri.
+    /// If @uri is %NULL then %NULL is returned.
+    /// </para>
+    /// <para>
+    /// The call consumes the reference of this wrapper and answers one that is
+    /// either the same object, when nobody else held it, or a writable copy of it.
+    /// The wrapper adopts whatever comes back, so the object it stands for can
+    /// change identity across the call and <b>any handle read before the call is
+    /// stale</b>.
+    /// </para>
+    /// <para>
+    /// This is single owner surgery: it is only correct while no other wrapper and
+    /// no other thread uses this one, which is the rule the C API imposes as well.
+    /// </para>
+    /// </remarks>
+    /// <returns>
+    /// A writable version of @uri.
+    /// This wrapper. The call may have replaced the object behind it and the
+    /// wrapper now owns the writable one, so the return value exists to let the
+    /// call be chained and is never a second wrapper.
+    /// </returns>
+    /// <exception cref="ObjectDisposedException">This wrapper was disposed.</exception>
+    /// <exception cref="InvalidOperationException">
+    /// The writable copy could not be made. The C function released the value of
+    /// this wrapper all the same, so this wrapper is left disposed.
+    /// </exception>
+    public Gst.Uri MakeWritable()
+    {
+        nint instanceHandle = BeginMakeWritable();
+        nint nativeResult = GstUriMakeWritable(instanceHandle);
+        System.GC.KeepAlive(this);
+        AdoptWritable(nativeResult);
+        return this;
+    }
+
     /// <summary>Like gst_uri_new(), but joins the new URI onto a base URI.</summary>
     /// <param name="scheme">The <c>scheme</c> argument.</param>
     /// <param name="userinfo">The <c>userinfo</c> argument.</param>
@@ -911,6 +951,10 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
     /// <summary>The <c>gst_uri_join</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_uri_join")]
     private static partial nint GstUriJoin(nint baseUri, nint refUri);
+
+    /// <summary>The <c>gst_uri_make_writable</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_uri_make_writable")]
+    private static partial nint GstUriMakeWritable(nint uri);
 
     /// <summary>The <c>gst_uri_new_with_base</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_uri_new_with_base")]

@@ -237,7 +237,13 @@ public sealed partial class Buffer
     /// another thread takes while the call runs is simply lost work.
     /// </para>
     /// </remarks>
-    /// <exception cref="ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="ObjectDisposedException">This wrapper was disposed.</exception>
+    /// <exception cref="InvalidOperationException">
+    /// This wrapper borrows the object for the length of one call and has no
+    /// reference to give, or the writable copy could not be made. In the second
+    /// case the C function released the object all the same, so this wrapper is
+    /// left disposed.
+    /// </exception>
     public Gst.Buffer MakeWritable()
     {
         _ = MakeWritableHandle();

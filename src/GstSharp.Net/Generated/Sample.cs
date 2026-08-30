@@ -157,6 +157,69 @@ public sealed unsafe partial class Sample : Gst.MiniObject
             ?? throw new InvalidOperationException("gst_sample_get_segment returned no value.");
     }
 
+    /// <summary>
+    /// Returns a writable copy of @sample. If the source sample is
+    /// already writable, this will simply return the same sample.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Use this function to ensure that a sample can be safely modified before
+    /// making changes to it, for example before calling gst_sample_set_buffer()
+    /// </para>
+    /// <para>
+    /// If the reference count of the source sample @sample is exactly one, the caller
+    /// is the sole owner and this function will return the sample object unchanged.
+    /// </para>
+    /// <para>
+    /// If there is more than one reference on the object, a copy will be made using
+    /// gst_sample_copy(). The passed-in @sample will be unreffed in that case, and the
+    /// caller will now own a reference to the new returned sample object.
+    /// </para>
+    /// <para>
+    /// In short, this function unrefs the sample in the argument and refs the sample
+    /// that it returns. Don't access the argument after calling this function unless
+    /// you have an additional reference to it.
+    /// </para>
+    /// <para>
+    /// The call consumes the reference of this wrapper and answers one that is
+    /// either the same object, when nobody else held it, or a writable copy of it.
+    /// The wrapper adopts whatever comes back, so the object it stands for can
+    /// change identity across the call and <b>any handle read before the call is
+    /// stale</b>.
+    /// </para>
+    /// <para>
+    /// This is single owner surgery: it is only correct while no other wrapper and
+    /// no other thread uses this one, which is the rule the C API imposes as well.
+    /// </para>
+    /// <para>
+    /// A wrapper that borrows the object for the length of one call has no
+    /// reference to give and refuses instead; an object an in place vfunc receives
+    /// is writable already.
+    /// </para>
+    /// </remarks>
+    /// <returns>
+    /// a writable sample which may or may not be the
+    ///     same as @sample
+    /// This wrapper. The call may have replaced the object behind it and the
+    /// wrapper now owns the writable one, so the return value exists to let the
+    /// call be chained and is never a second wrapper.
+    /// </returns>
+    /// <exception cref="ObjectDisposedException">This wrapper was disposed.</exception>
+    /// <exception cref="InvalidOperationException">
+    /// This wrapper borrows the object for the length of one call and has no
+    /// reference to give, or the writable copy could not be made. In the second
+    /// case the C function released the object all the same, so this wrapper is
+    /// left disposed.
+    /// </exception>
+    public Gst.Sample MakeWritable()
+    {
+        nint instanceHandle = BeginMakeWritable();
+        nint nativeResult = Gst.GstNative.MiniObjectMakeWritable(instanceHandle);
+        System.GC.KeepAlive(this);
+        AdoptWritable(nativeResult);
+        return this;
+    }
+
     /// <summary>Set the buffer associated with @sample. @sample must be writable.</summary>
     /// <param name="buffer">The <c>buffer</c> argument.</param>
     public void SetBuffer(Gst.Buffer buffer)

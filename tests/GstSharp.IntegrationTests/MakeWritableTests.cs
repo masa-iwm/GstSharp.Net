@@ -152,6 +152,123 @@ public sealed class MakeWritableTests
     }
 
     /// <summary>
+    /// A borrowed wrapper owns no reference, so it has none to give the call.
+    /// Refusing is the whole of the answer: what an in place vfunc receives is
+    /// writable already.
+    /// </summary>
+    [Fact]
+    public void MakeWritableOnABorrowedWrapperThrows()
+    {
+        using Caps owner = Assert.IsType<Caps>(Caps.FromString("video/x-raw,width=(int)320"));
+        Caps borrowed = Caps.Borrow(owner.Handle);
+
+        InvalidOperationException error = Assert.Throws<InvalidOperationException>(() => borrowed.MakeWritable());
+
+        Assert.Contains("borrows a mini object", error.Message, StringComparison.Ordinal);
+
+        // Nothing was consumed: the wrapper that owns the caps still holds
+        // them, and the borrow is still attached to the same object.
+        Assert.Equal(owner.Handle, borrowed.Handle);
+        Assert.True(owner.IsWritable);
+    }
+
+    /// <summary>
+    /// Memory follows the same rule, and it is the one mini object whose
+    /// writability is decided by its lock state rather than by its reference
+    /// count. An exclusive memory is writable, so the call keeps its handle.
+    /// </summary>
+    [Fact]
+    public void MakeWritableOnAMemoryKeepsTheHandleOfAnExclusiveMemory()
+    {
+        using Allocator allocator = Assert.IsAssignableFrom<Allocator>(Allocator.Find(null));
+        using Memory memory = Assert.IsType<Memory>(allocator.Alloc(16, null));
+
+        nint before = memory.Handle;
+        Memory returned = memory.MakeWritable();
+
+        Assert.Same(memory, returned);
+        Assert.Equal(before, memory.Handle);
+        Assert.True(memory.IsWritable);
+    }
+
+    /// <summary>
+    /// Memory is <c>LOCKABLE</c>, so a second reference does not make it
+    /// unwritable the way it makes a buffer unwritable: the lock state decides.
+    /// The call therefore answers the very same memory, and the wrapper keeps
+    /// standing for it.
+    /// </summary>
+    /// <remarks>
+    /// This is why <c>MakeWritable</c> adopts in place rather than answering a
+    /// second wrapper. A mint and adopt shape would hand the caller a second
+    /// owning wrapper of one mutable object here, which is exactly what the
+    /// call is asked to prevent.
+    /// </remarks>
+    [Fact]
+    public void MakeWritableOnAMemoryReadsTheLockStateRatherThanTheReferenceCount()
+    {
+        using Allocator allocator = Assert.IsAssignableFrom<Allocator>(Allocator.Find(null));
+        using Memory memory = Assert.IsType<Memory>(allocator.Alloc(16, null));
+
+        nint shared = memory.Handle;
+        TestNatives.MiniObjectRef(shared);
+
+        try
+        {
+            // A buffer would report false here. Memory is locked rather than
+            // counted, and nothing has locked this one.
+            Assert.True(memory.IsWritable);
+
+            Memory returned = memory.MakeWritable();
+
+            Assert.Same(memory, returned);
+            Assert.Equal(shared, memory.Handle);
+            Assert.True(memory.IsWritable);
+        }
+        finally
+        {
+            TestNatives.MiniObjectUnref(shared);
+        }
+    }
+
+    /// <summary>
+    /// <c>GstUri</c> is the one of the family that the gir declares as a boxed
+    /// record, and it is a mini object underneath:
+    /// <c>GST_DEFINE_MINI_OBJECT_TYPE</c> registers its boxed copy as
+    /// <c>gst_mini_object_ref</c>. The adopt in place shape therefore behaves
+    /// exactly as it does on a mini object wrapper — the reference count
+    /// decides, and the wrapper follows the answer.
+    /// </summary>
+    [Fact]
+    public void MakeWritableOnAUriFollowsTheMiniObjectRule()
+    {
+        using Gst.Uri uri = Assert.IsType<Gst.Uri>(Gst.Uri.FromString("http://example.com/stream"));
+
+        // Nobody else holds it, so the call is a no-op and the wrapper keeps
+        // standing for the same value.
+        nint exclusive = uri.Handle;
+        Assert.Same(uri, uri.MakeWritable());
+        Assert.Equal(exclusive, uri.Handle);
+
+        // A second reference makes it shared, so the call copies and the
+        // wrapper adopts the copy.
+        nint shared = uri.Handle;
+        TestNatives.MiniObjectRef(shared);
+
+        try
+        {
+            Assert.Same(uri, uri.MakeWritable());
+            Assert.NotEqual(shared, uri.Handle);
+            Assert.Equal("http", uri.GetScheme());
+        }
+        finally
+        {
+            // The reference the wrapper held went into the copy, so the one
+            // taken above is the last one on the value it was taken on.
+            TestNatives.MiniObjectUnref(shared);
+        }
+    }
+
+    /// <summary>
     /// The composites are the ones the C header defines, values included.
     /// </summary>
     [Fact]

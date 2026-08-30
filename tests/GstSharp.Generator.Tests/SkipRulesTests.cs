@@ -175,7 +175,11 @@ public sealed class SkipRulesTests
         // joined it for the same reason: the C function only takes the state of
         // its transform function over once the registration is accepted, so the
         // hand written Gst.Meta.RegisterCustom releases it before it reports a
-        // refusal.
+        // refusal. gst_caps_fixate is the last: it is the one conversion of the
+        // self consuming family that does not consume what it is given on every
+        // path, because it refuses ANY caps before the reference reaches the
+        // conversion, so the hand written Gst.Caps.Fixate makes that check
+        // before it mints anything.
         // The two type entries at the head are callback types whose delegate is
         // written by hand: a hand bound consumer keeps its callback type
         // generated, and these two are the ones whose hand written declaration
@@ -218,6 +222,7 @@ public sealed class SkipRulesTests
                 "gst_bus_set_sync_handler",
                 "gst_caps_features_add_static_str",
                 "gst_caps_features_new_single_static_str",
+                "gst_caps_fixate",
                 "gst_caps_new_static_str_empty_simple",
                 "gst_caps_set_value_static_str",
                 "gst_clock_id_wait_async",
@@ -326,6 +331,7 @@ public sealed class SkipRulesTests
                 "gst_buffer_pool_set_config",
                 "gst_buffer_remove_meta",
                 "gst_bus_set_sync_handler",
+                "gst_caps_fixate",
                 "gst_clock_id_wait_async",
                 "gst_element_post_message",
                 "gst_element_send_event",

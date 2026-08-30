@@ -250,8 +250,21 @@ internal sealed class SurfaceBuilder
     /// <summary>Names that a generated mini object wrapper inherits.</summary>
     internal static readonly IReadOnlyList<string> MiniObjectNames =
     [
+        "AdoptWritable",
+        "BeginMakeWritable",
         "IsWritable",
         "MakeWritableHandle",
+    ];
+
+    /// <summary>
+    /// Names that a generated boxed wrapper inherits beyond
+    /// <see cref="WrapperNames"/>: the pair that an adopt in place member of a
+    /// boxed type calls.
+    /// </summary>
+    internal static readonly IReadOnlyList<string> BoxedNames =
+    [
+        "AdoptWritable",
+        "BeginMakeWritable",
     ];
 
     private readonly MarshalPlanner _planner;

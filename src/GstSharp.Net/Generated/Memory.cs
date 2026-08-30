@@ -185,6 +185,109 @@ public sealed unsafe partial class Memory : Gst.MiniObject
     }
 
     /// <summary>
+    /// Create a #GstMemory object that is mapped with @flags. If @mem is mappable
+    /// with @flags, this function returns the mapped @mem directly. Otherwise a
+    /// mapped copy of @mem is returned.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This function takes ownership of old @mem and returns a reference to a new
+    /// #GstMemory.
+    /// </para>
+    /// <para>
+    /// This wrapper is left alone: the call is handed a reference minted for it, so
+    /// the object this wrapper stands for keeps the reference it owns and both
+    /// wrappers are disposed by whoever holds them.
+    /// </para>
+    /// <para>
+    /// The returned wrapper may refer to the same native object as this one when the
+    /// call did not need to change it; it is then shared and not writable.
+    /// </para>
+    /// <para>
+    /// The returned memory is mapped when the call succeeds. Unmapping it is the
+    /// caller's, with <see cref="Gst.Memory.Unmap(Gst.MapInfo)"/> on the wrapper
+    /// this answers and the <see cref="Gst.MapInfo"/> it filled in; the mapping is
+    /// on the returned memory, which is this one only when it could be mapped as it
+    /// was.
+    /// <see langword="null"/> is a normal answer and means the memory could
+    /// neither be mapped nor copied into one that can be. <c>info</c> holds
+    /// nothing usable then, because gstmemory.c fills it in only on a mapping
+    /// that succeeded. The reference minted for the call is spent either way;
+    /// this wrapper keeps its own.
+    /// </para>
+    /// </remarks>
+    /// <param name="info">The <c>info</c> argument.</param>
+    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <returns>
+    /// a #GstMemory object mapped
+    /// with @flags or %NULL when a mapping is not possible.
+    /// </returns>
+    public Gst.Memory? MakeMapped(out Gst.MapInfo info, Gst.MapFlags flags)
+    {
+        nint instanceHandle = Handle;
+        Gst.MapInfo infoNative = default;
+        nint instanceOwned = Gst.GstNative.MiniObjectRef(instanceHandle);
+        nint nativeResult = GstMemoryMakeMapped(instanceOwned, &infoNative, (int)flags);
+        System.GC.KeepAlive(this);
+        info = infoNative;
+        return Gst.Memory.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+    }
+
+    /// <summary>Returns a writable copy of @memory.</summary>
+    /// <remarks>
+    /// <para>
+    /// If there is only one reference count on @memory, the caller must be the owner,
+    /// and so this function will return the memory object unchanged. If on the other
+    /// hand there is more than one reference on the object, a new memory object will
+    /// be returned. The caller's reference on @memory will be removed, and instead the
+    /// caller will own a reference to the returned object.
+    /// </para>
+    /// <para>
+    /// In short, this function unrefs the memory in the argument and refs the memory
+    /// that it returns. Don't access the argument after calling this function. See
+    /// also: gst_memory_ref().
+    /// </para>
+    /// <para>
+    /// The call consumes the reference of this wrapper and answers one that is
+    /// either the same object, when nobody else held it, or a writable copy of it.
+    /// The wrapper adopts whatever comes back, so the object it stands for can
+    /// change identity across the call and <b>any handle read before the call is
+    /// stale</b>.
+    /// </para>
+    /// <para>
+    /// This is single owner surgery: it is only correct while no other wrapper and
+    /// no other thread uses this one, which is the rule the C API imposes as well.
+    /// </para>
+    /// <para>
+    /// A wrapper that borrows the object for the length of one call has no
+    /// reference to give and refuses instead; an object an in place vfunc receives
+    /// is writable already.
+    /// </para>
+    /// </remarks>
+    /// <returns>
+    /// a writable memory which may or may not be the
+    ///     same as @memory
+    /// This wrapper. The call may have replaced the object behind it and the
+    /// wrapper now owns the writable one, so the return value exists to let the
+    /// call be chained and is never a second wrapper.
+    /// </returns>
+    /// <exception cref="ObjectDisposedException">This wrapper was disposed.</exception>
+    /// <exception cref="InvalidOperationException">
+    /// This wrapper borrows the object for the length of one call and has no
+    /// reference to give, or the writable copy could not be made. In the second
+    /// case the C function released the object all the same, so this wrapper is
+    /// left disposed.
+    /// </exception>
+    public Gst.Memory MakeWritable()
+    {
+        nint instanceHandle = BeginMakeWritable();
+        nint nativeResult = Gst.GstNative.MiniObjectMakeWritable(instanceHandle);
+        System.GC.KeepAlive(this);
+        AdoptWritable(nativeResult);
+        return this;
+    }
+
+    /// <summary>
     /// Fill @info with the pointer and sizes of the memory in @mem that can be
     /// accessed according to @flags.
     /// </summary>
@@ -274,6 +377,10 @@ public sealed unsafe partial class Memory : Gst.MiniObject
     /// <summary>The <c>gst_memory_is_type</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_memory_is_type")]
     private static partial int GstMemoryIsType(nint mem, byte* memType);
+
+    /// <summary>The <c>gst_memory_make_mapped</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_memory_make_mapped")]
+    private static partial nint GstMemoryMakeMapped(nint mem, Gst.MapInfo* info, int flags);
 
     /// <summary>The <c>gst_memory_map</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_memory_map")]

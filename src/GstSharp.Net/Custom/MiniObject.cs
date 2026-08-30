@@ -206,7 +206,37 @@ public abstract class MiniObject : IDisposable
     /// </para>
     /// </remarks>
     /// <exception cref="ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="InvalidOperationException">
+    /// The wrapper borrows the object, or the writable copy could not be made.
+    /// </exception>
     protected nint MakeWritableHandle()
+    {
+        nint current = BeginMakeWritable();
+        nint writable = GstNative.MiniObjectMakeWritable(current);
+
+        // On the path where the object was writable already, nothing touches
+        // this wrapper after the handle is read, so the collector would be free
+        // to finalize it while the native call runs.
+        GC.KeepAlive(this);
+        AdoptWritable(writable);
+        return writable;
+    }
+
+    /// <summary>
+    /// Gives the reference of the wrapper up to a call that takes it over, and
+    /// returns the handle to hand that call.
+    /// </summary>
+    /// <returns>The mini object the call is given.</returns>
+    /// <remarks>
+    /// The wrapper keeps holding the handle until
+    /// <see cref="AdoptWritable(nint)"/> takes the answer of the call, which is
+    /// what keeps the object alive across it. Nothing between the two may
+    /// throw, and nothing between the two does: the call is the only statement
+    /// there.
+    /// </remarks>
+    /// <exception cref="ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="InvalidOperationException">The wrapper borrows the object.</exception>
+    protected nint BeginMakeWritable()
     {
         nint current = Handle;
 
@@ -223,20 +253,34 @@ public abstract class MiniObject : IDisposable
                 "receives is writable already; copy the object to keep one.");
         }
 
-        nint writable = GstNative.MiniObjectMakeWritable(current);
+        return current;
+    }
 
-        if (writable != current)
+    /// <summary>
+    /// Adopts the mini object a call that consumed the reference of the wrapper
+    /// answered.
+    /// </summary>
+    /// <param name="writable">The answer of the call.</param>
+    /// <remarks>
+    /// The old reference is gone whichever object comes back: the call consumed
+    /// it, whether it copied or not. A zero is the copy the C function could not
+    /// make — <c>gst_memory_make_writable</c> on an allocator whose
+    /// <c>mem_copy</c> failed is the one way to see it — and it, too, consumed
+    /// the reference. The wrapper is left disposed rather than holding a handle
+    /// that stands for nothing, and the failure is raised instead of being
+    /// handed out as a wrapper that throws on its next use.
+    /// </remarks>
+    /// <exception cref="InvalidOperationException">The writable copy could not be made.</exception>
+    protected void AdoptWritable(nint writable)
+    {
+        Interlocked.Exchange(ref _handle, writable);
+
+        if (writable == nint.Zero)
         {
-            // The old reference is gone: it was consumed by the call, whether a
-            // copy was made or not.
-            Interlocked.Exchange(ref _handle, writable);
+            throw new InvalidOperationException(
+                "The mini object could not be made writable: it is shared and the copy failed. The call " +
+                "released the reference of this wrapper all the same, so the wrapper is now disposed.");
         }
-
-        // On the path where the object was writable already, nothing touches
-        // this wrapper after the handle is read, so the collector would be free
-        // to finalize it while the native call runs.
-        GC.KeepAlive(this);
-        return writable;
     }
 
     /// <summary>

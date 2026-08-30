@@ -1,5 +1,14 @@
+using System.Runtime.InteropServices;
+using Gst.Interop;
+
 namespace Gst;
 
+/// <content>
+/// The two corners of the caps surface the generator does not emit: the borrow
+/// a vfunc override receives, and <c>gst_caps_fixate</c>, the one conversion of
+/// its family that does not always consume what it is given. See
+/// <see href="https://github.com/masa-iwm/GstSharp.Net/blob/main/docs/ownership.md#calls-that-consume-the-instance-they-are-called-on">Calls that consume the instance they are called on</see>.
+/// </content>
 public sealed partial class Caps
 {
     /// <summary>
@@ -20,59 +29,68 @@ public sealed partial class Caps
     }
 
     /// <summary>
-    /// Makes the caps writable, copying them when somebody else holds a
-    /// reference to them, and returns the wrapper to keep using.
+    /// Fixates the caps: keeps their first structure, replaces every range and
+    /// list in it by one value, and answers the result.
     /// </summary>
     /// <returns>
-    /// This wrapper. The return value exists so that the call can be chained;
-    /// it is never a second wrapper.
+    /// The fixated caps, which the caller owns and disposes. They are writable.
     /// </returns>
     /// <remarks>
     /// <para>
-    /// This is <c>gst_caps_make_writable</c>. That function consumes the
-    /// reference it is given and returns one that is either the same caps, when
-    /// the caller held the only reference, or a fresh copy of them. The wrapper
-    /// adopts whatever comes back, so the caps this wrapper stands for can
-    /// change identity across the call, and it is the same wrapper either
-    /// way — the C idiom <c>caps = gst_caps_make_writable (caps)</c> becomes a
-    /// plain <c>caps.MakeWritable()</c>.
+    /// This is <c>gst_caps_fixate</c>. It is hand written because it is the one
+    /// member of its family that does not consume the reference it is given on
+    /// every path: <c>gstcaps.c</c> guards it with
+    /// <c>g_return_val_if_fail (!CAPS_IS_ANY (caps), NULL)</c>, so ANY caps
+    /// answer <c>NULL</c> without the reference ever reaching the conversion.
+    /// The generated shape mints a reference for the call and adopts the
+    /// answer, which on that path would leak the mint. The check happens here
+    /// instead, before anything is minted; every other path is what the
+    /// generator emits for <see cref="Truncate"/> and its relatives.
     /// </para>
     /// <para>
-    /// Rewriting caps is what this is for: the calls that change the caps
-    /// themselves — <see cref="Caps.RemoveStructure(uint)"/>,
-    /// <see cref="Caps.StealStructure(uint)"/>,
-    /// <see cref="Caps.MapInPlace(Gst.CapsMapFunc)"/> and
-    /// <see cref="Caps.FilterAndMapInPlace(Gst.CapsFilterMapFunc)"/> — write
-    /// into the caps in place, and the library refuses them on caps that
-    /// somebody else holds. Caps that come out of a pad, a sample or a message
-    /// are shared with whoever produced them and are not writable.
+    /// This wrapper is left alone: the call is handed a reference minted for
+    /// it, so the caps this wrapper stands for keep the reference they own and
+    /// both wrappers are disposed by whoever holds them.
     /// </para>
     /// <para>
-    /// A <see cref="Structure"/> taken from
-    /// <see cref="Caps.GetStructure(uint)"/> needs none of this and gains
-    /// nothing from it. <see cref="Structure"/> is a boxed type, so the binding
-    /// hands back a copy that the caller owns and disposes rather than a window
-    /// into the caps: changes made to that copy are not written back, whether
-    /// the caps are writable or not.
+    /// The returned wrapper may refer to the same native caps as this one when
+    /// the call did not need to change them; it is then shared and not
+    /// writable.
     /// </para>
     /// <para>
-    /// <b>Any handle read before the call is stale afterwards.</b>
-    /// <see cref="MiniObject.Handle"/> has to be read again. A
-    /// <see cref="Structure"/> read earlier is unaffected, because it was a
-    /// copy of its own all along and never pointed into the old caps.
-    /// </para>
-    /// <para>
-    /// This is single owner surgery. It is only correct while no other wrapper
-    /// and no other thread uses this wrapper, which is the rule the C API
-    /// imposes on <c>gst_caps_make_writable</c> as well: caps belong to one
-    /// owner until they are handed on. Nothing here locks, and a reference
-    /// another thread takes while the call runs is simply lost work.
+    /// Empty caps are fixated: they answer empty caps, which carry no structure
+    /// at all. Only ANY caps are refused, and
+    /// <see cref="Caps.IsAny"/> is the test to make first.
     /// </para>
     /// </remarks>
-    /// <exception cref="ObjectDisposedException">The wrapper was disposed.</exception>
-    public Gst.Caps MakeWritable()
+    /// <exception cref="ObjectDisposedException">This wrapper was disposed.</exception>
+    /// <exception cref="InvalidOperationException">
+    /// The caps are ANY, which the C function refuses.
+    /// </exception>
+    public Gst.Caps Fixate()
     {
-        _ = MakeWritableHandle();
-        return this;
+        if (IsAny())
+        {
+            throw new InvalidOperationException(
+                "ANY caps cannot be fixated: gst_caps_fixate refuses them and answers nothing, without " +
+                "consuming anything. Test Caps.IsAny() first and fixate a concrete set of caps instead.");
+        }
+
+        nint instanceHandle = Handle;
+
+        // The call takes a reference over, so it is handed one of its own and
+        // this wrapper keeps the one it holds.
+        nint instanceOwned = GstNative.MiniObjectRef(instanceHandle);
+        nint nativeResult = GstCapsFixate(instanceOwned);
+
+        // Reading Handle is the last use of this wrapper before the call, so
+        // without this the collector may finalize it while the call runs.
+        GC.KeepAlive(this);
+        return Gst.Caps.FromNative(nativeResult, Transfer.Full)
+            ?? throw new InvalidOperationException("gst_caps_fixate returned no value.");
     }
+
+    /// <summary>The <c>gst_caps_fixate</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_fixate")]
+    private static partial nint GstCapsFixate(nint caps);
 }

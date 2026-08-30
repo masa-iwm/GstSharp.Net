@@ -350,6 +350,14 @@ internal sealed class ClassEmitter
         HashSet<string> imported = new(StringComparer.Ordinal);
         foreach (MarshalPlan member in surface.Members)
         {
+            // A handful of members bind no symbol of their own: their entry
+            // point is a macro on the oldest supported GStreamer, so they call
+            // the runtime import of what it expands to.
+            if (CallableRenderer.CallsMiniObjectMakeWritable(member))
+            {
+                continue;
+            }
+
             imported.Add(member.EntryPoint);
             writer.WriteLine();
             CallableRenderer.WriteImport(writer, member, module.NativeLibrary);

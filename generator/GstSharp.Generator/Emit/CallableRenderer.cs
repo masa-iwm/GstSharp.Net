@@ -32,6 +32,9 @@ internal static class CallableRenderer
     /// <summary>The local that holds the raw handle of the instance.</summary>
     private const string InstanceLocal = "instanceHandle";
 
+    /// <summary>The local that holds the reference minted for a call that takes the instance over.</summary>
+    private const string InstanceOwnedLocal = "instanceOwned";
+
     /// <summary>The pinned pointer to the instance of a value projected structure.</summary>
     private const string ValueInstanceLocal = "self";
 
@@ -56,6 +59,72 @@ internal static class CallableRenderer
         "The wrapper owns a reference of its own, which is a copy for a boxed type:",
         "dispose it when you are done, and note that changes made to a copy of a",
         "boxed value are not written back.",
+    ];
+
+    /// <summary>
+    /// What the documentation of an adopt in place member says about the
+    /// wrapper it answers. The gir describes the C function, which hands back
+    /// a pointer that may be a different object; the binding hands back the
+    /// wrapper, which is the same one either way.
+    /// </summary>
+    private static readonly string[] AdoptedInPlaceNote =
+    [
+        "This wrapper. The call may have replaced the object behind it and the",
+        "wrapper now owns the writable one, so the return value exists to let the",
+        "call be chained and is never a second wrapper.",
+    ];
+
+    /// <summary>
+    /// The remarks of an adopt in place member: what the call does to the
+    /// wrapper, and the rule that makes it correct. None of it is in the gir,
+    /// which describes a C function whose caller holds a bare pointer.
+    /// </summary>
+    private static readonly string[] AdoptedInPlaceRemarks =
+    [
+        "<para>",
+        "The call consumes the reference of this wrapper and answers one that is",
+        "either the same object, when nobody else held it, or a writable copy of it.",
+        "The wrapper adopts whatever comes back, so the object it stands for can",
+        "change identity across the call and <b>any handle read before the call is",
+        "stale</b>.",
+        "</para>",
+        "<para>",
+        "This is single owner surgery: it is only correct while no other wrapper and",
+        "no other thread uses this one, which is the rule the C API imposes as well.",
+        "</para>",
+    ];
+
+    /// <summary>
+    /// The sentence that closes the remarks of an adopt in place member on a
+    /// mini object, which is the only wrapper that can be a borrow: a boxed
+    /// wrapper always owns the value it holds, so it can never refuse for this
+    /// reason.
+    /// </summary>
+    private static readonly string[] BorrowedInstanceNote =
+    [
+        "<para>",
+        "A wrapper that borrows the object for the length of one call has no",
+        "reference to give and refuses instead; an object an in place vfunc receives",
+        "is writable already.",
+        "</para>",
+    ];
+
+    /// <summary>
+    /// The remarks of a mint and adopt member. The one thing that is not in
+    /// the signature is that the two wrappers may stand for the same object,
+    /// which is what the C functions answer when they had nothing to change.
+    /// </summary>
+    private static readonly string[] MintedInstanceRemarks =
+    [
+        "<para>",
+        "This wrapper is left alone: the call is handed a reference minted for it, so",
+        "the object this wrapper stands for keeps the reference it owns and both",
+        "wrappers are disposed by whoever holds them.",
+        "</para>",
+        "<para>",
+        "The returned wrapper may refer to the same native object as this one when the",
+        "call did not need to change it; it is then shared and not writable.",
+        "</para>",
     ];
 
     /// <summary>
@@ -215,14 +284,17 @@ internal static class CallableRenderer
 
     /// <summary>
     /// Returns the declared return type of a member, which is the planned one
-    /// except for the <c>ToString</c> of a structure that answers
-    /// <see langword="null"/>: it hands out the empty string instead, so it is
-    /// declared non-nullable.
+    /// except for two shapes that never hand out <see langword="null"/>. The
+    /// <c>ToString</c> of a structure that answers <see langword="null"/> hands
+    /// out the empty string instead, and an adopt in place member answers the
+    /// wrapper it was called on, which exists by construction.
     /// </summary>
     /// <param name="plan">The member being written.</param>
     /// <returns>The C# type of the return value.</returns>
     private static string ReturnType(MarshalPlan plan) =>
-        plan.ReturnsEmptyOnNull ? TrimNullable(plan.Return.PublicType) : plan.Return.PublicType;
+        plan.ReturnsEmptyOnNull || plan.InstanceConsumption == InstanceConsumption.InPlace
+            ? TrimNullable(plan.Return.PublicType)
+            : plan.Return.PublicType;
 
     /// <summary>Writes the <c>LibraryImport</c> declaration of a plan.</summary>
     /// <param name="writer">The target writer.</param>
@@ -445,7 +517,9 @@ internal static class CallableRenderer
         {
             IReadOnlyList<string>? returnNote = plan.ReturnsEmptyOnNull
                 ? EmptyStringNote
-                : AdoptsWrapper(plan.Return) ? AdoptedWrapperNote : GValueReturnNote(plan.Return);
+                : plan.InstanceConsumption == InstanceConsumption.InPlace
+                    ? AdoptedInPlaceNote
+                    : AdoptsWrapper(plan.Return) ? AdoptedWrapperNote : GValueReturnNote(plan.Return);
             XmlDocWriter.WriteReturns(
                 writer,
                 plan.Return.Doc,
@@ -454,6 +528,7 @@ internal static class CallableRenderer
         }
 
         WriteConsumptionExceptions(writer, plan);
+        WriteInPlaceExceptions(writer, plan);
         WriteGValueExceptions(writer, plan);
         WriteSpanExceptions(writer, plan);
         WriteGErrorExceptions(writer, plan);
@@ -731,6 +806,43 @@ internal static class CallableRenderer
     }
 
     /// <summary>
+    /// Writes the exception documentation of an adopt in place member: the
+    /// states of the wrapper that the call refuses, and the one the C function
+    /// leaves behind when it could not make the copy it needed.
+    /// </summary>
+    /// <param name="writer">The target writer.</param>
+    /// <param name="plan">The member being documented.</param>
+    /// <remarks>
+    /// The refusal of a borrowed wrapper is only reachable on a mini object:
+    /// that is the wrapper an in place vfunc override receives, and a boxed
+    /// wrapper always owns the value it holds.
+    /// </remarks>
+    private static void WriteInPlaceExceptions(CodeWriter writer, MarshalPlan plan)
+    {
+        if (plan.InstanceConsumption != InstanceConsumption.InPlace)
+        {
+            return;
+        }
+
+        writer.WriteLine("/// <exception cref=\"ObjectDisposedException\">This wrapper was disposed.</exception>");
+        writer.WriteLine("/// <exception cref=\"InvalidOperationException\">");
+        if (plan.InstanceIsBorrowable)
+        {
+            writer.WriteLine("/// This wrapper borrows the object for the length of one call and has no");
+            writer.WriteLine("/// reference to give, or the writable copy could not be made. In the second");
+            writer.WriteLine("/// case the C function released the object all the same, so this wrapper is");
+            writer.WriteLine("/// left disposed.");
+        }
+        else
+        {
+            writer.WriteLine("/// The writable copy could not be made. The C function released the value of");
+            writer.WriteLine("/// this wrapper all the same, so this wrapper is left disposed.");
+        }
+
+        writer.WriteLine("/// </exception>");
+    }
+
+    /// <summary>
     /// Writes the <see cref="ArgumentException"/> documentation of every
     /// <c>GValue</c> parameter that carries the empty guard, which is the
     /// read-only <c>in</c> shape alone.
@@ -889,6 +1001,93 @@ internal static class CallableRenderer
             ["gst_structure_filter_and_map_in_place"] = (WritableStructure, SkipsTheWalk),
             ["gst_structure_filter_and_map_in_place_id_str"] = (WritableStructure, SkipsTheWalk),
         };
+
+    /// <summary>
+    /// What a self consuming member says beyond the shape it belongs to. Each
+    /// entry was read off the C implementation of the 1.28 branch and states
+    /// the one thing the signature and the gir do not: whether a
+    /// <see langword="null"/> answer is a normal one, and what the caller owes
+    /// the value it gets back.
+    /// </summary>
+    private static readonly Dictionary<string, string[]> SelfConsumingRemarks = new(StringComparer.Ordinal)
+    {
+        ["gst_caps_merge"] =
+        [
+            "The answer can also be the caps that were merged <em>in</em> rather than",
+            "these: gstcaps.c answers the second caps whole when they are ANY and these",
+            "are not, and it answers these whole when these are ANY. Both are consumed",
+            "either way, so the wrapper this hands back is the only one left holding",
+            "whichever of the two came through.",
+        ],
+        ["gst_memory_make_mapped"] =
+        [
+            "The returned memory is mapped when the call succeeds. Unmapping it is the",
+            "caller's, with <see cref=\"Gst.Memory.Unmap(Gst.MapInfo)\"/> on the wrapper",
+            "this answers and the <see cref=\"Gst.MapInfo\"/> it filled in; the mapping is",
+            "on the returned memory, which is this one only when it could be mapped as it",
+            "was.",
+            "<see langword=\"null\"/> is a normal answer and means the memory could",
+            "neither be mapped nor copied into one that can be. <c>info</c> holds",
+            "nothing usable then, because gstmemory.c fills it in only on a mapping",
+            "that succeeded. The reference minted for the call is spent either way;",
+            "this wrapper keeps its own.",
+        ],
+    };
+
+    /// <summary>
+    /// The <c>_make_writable</c> entry points that are not entry points at all
+    /// on the oldest GStreamer this binding runs against, and are called
+    /// through <c>gst_mini_object_make_writable</c> instead.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Each of these was a preprocessor macro that expands to
+    /// <c>gst_mini_object_make_writable</c> — <c>gstcaps.h:256</c> at 1.24.0
+    /// and its eight siblings — and became an exported function only in
+    /// 1.27.2. The gir carries no <c>version</c> attribute for them, because
+    /// to a C caller they have always been there, so nothing in the
+    /// introspection data says that binding the symbol by name raises
+    /// <c>EntryPointNotFoundException</c> on 1.24 and 1.26. Calling what the
+    /// macro expanded to binds a symbol that has been exported all along and
+    /// is the very code the function runs.
+    /// </para>
+    /// <para>
+    /// The list is closed by construction rather than by luck: a
+    /// <c>_make_writable</c> added in a later release carries a
+    /// <c>version</c> attribute and is an exported function from its first
+    /// release, so it belongs on the other arm. And the other arm is where a
+    /// member has to be when its C implementation is more than the forward.
+    /// <c>gst_video_overlay_composition_make_writable</c> copies when a
+    /// rectangle of an otherwise writable composition is shared
+    /// (video-overlay-composition.c:588-597), which
+    /// <c>gst_mini_object_make_writable</c> knows nothing about, which is why
+    /// the rerouting is a list of the nine forwards rather than a rule over
+    /// the suffix.
+    /// </para>
+    /// </remarks>
+    private static readonly HashSet<string> InlinedMakeWritable = new(StringComparer.Ordinal)
+    {
+        "gst_buffer_list_make_writable",
+        "gst_caps_make_writable",
+        "gst_context_make_writable",
+        "gst_event_make_writable",
+        "gst_memory_make_writable",
+        "gst_message_make_writable",
+        "gst_query_make_writable",
+        "gst_sample_make_writable",
+        "gst_tag_list_make_writable",
+    };
+
+    /// <summary>
+    /// Tests whether a member is called through the runtime import of
+    /// <c>gst_mini_object_make_writable</c> rather than through an import of
+    /// its own, which is what <see cref="InlinedMakeWritable"/> lists.
+    /// </summary>
+    /// <param name="plan">The member being written.</param>
+    /// <returns><see langword="true"/> when the member imports nothing of its own.</returns>
+    internal static bool CallsMiniObjectMakeWritable(MarshalPlan plan) =>
+        plan.InstanceConsumption == InstanceConsumption.InPlace
+        && InlinedMakeWritable.Contains(plan.EntryPoint);
 
     /// <summary>
     /// The entry points whose gir documentation says that the reference of the
@@ -1215,6 +1414,26 @@ internal static class CallableRenderer
             lines.AddRange(consumption);
         }
 
+        if (plan.InstanceConsumption == InstanceConsumption.InPlace)
+        {
+            lines.AddRange(AdoptedInPlaceRemarks);
+            if (plan.InstanceIsBorrowable)
+            {
+                lines.AddRange(BorrowedInstanceNote);
+            }
+        }
+        else if (plan.InstanceConsumption == InstanceConsumption.Minted)
+        {
+            lines.AddRange(MintedInstanceRemarks);
+        }
+
+        if (SelfConsumingRemarks.TryGetValue(plan.EntryPoint, out string[]? selfConsuming))
+        {
+            lines.Add("<para>");
+            lines.AddRange(selfConsuming);
+            lines.Add("</para>");
+        }
+
         if (WritableTargets.TryGetValue(plan.EntryPoint, out (string Subject, string[] Consequence) writability))
         {
             lines.Add("<para>");
@@ -1521,6 +1740,16 @@ internal static class CallableRenderer
                 {
                     WritePrologue(writer, plan, argument);
                 }
+            }
+
+            // The reference a conversion takes over is minted after every
+            // other argument, so that a prologue which can throw - the UTF-8
+            // copy of a string, the walk of a sequence - runs while there is
+            // still nothing to strand. Nothing releases this one but the call.
+            if (plan.InstanceConsumption == InstanceConsumption.Minted)
+            {
+                writer.WriteLine(
+                    "nint " + InstanceOwnedLocal + " = Gst.GstNative.MiniObjectRef(" + InstanceLocal + ");");
             }
 
             foreach (ArgumentPlan argument in plan.Arguments)
@@ -1868,6 +2097,15 @@ internal static class CallableRenderer
             return true;
         }
 
+        // A call that takes the instance over materializes it: an adopt in
+        // place member hands its own reference to the call, and a mint and
+        // adopt member raises one for it. Both have to happen after every
+        // guard and every handle read, which is what the phases give them.
+        if (plan.InstanceConsumption != InstanceConsumption.None)
+        {
+            return true;
+        }
+
         foreach (ArgumentPlan argument in plan.Arguments)
         {
             if (argument.Kind is ArgumentKind.Utf8Owned or ArgumentKind.ConsumedHandle
@@ -2189,7 +2427,15 @@ internal static class CallableRenderer
         switch (argument.Kind)
         {
             case ArgumentKind.Instance:
-                writer.WriteLine("nint " + InstanceLocal + " = " + InstanceHandle(plan, argument.Name) + ";");
+                // An adopt in place member gives the reference of the wrapper
+                // to the call, so the read is the one that refuses a borrowed
+                // wrapper: it has no reference of its own to give.
+                writer.WriteLine(
+                    "nint " + InstanceLocal + " = "
+                    + (plan.InstanceConsumption == InstanceConsumption.InPlace
+                        ? "BeginMakeWritable()"
+                        : InstanceHandle(plan, argument.Name))
+                    + ";");
                 return;
 
             // There is no handle to read: the pointer is taken by the fixed
@@ -2414,7 +2660,12 @@ internal static class CallableRenderer
             arguments.Add(Argument(plan, argument));
         }
 
-        string call = plan.NativeName + "(" + string.Join(", ", arguments) + ")";
+        // A member whose entry point is a macro on the oldest supported
+        // GStreamer calls the runtime import of what that macro expands to.
+        string target = CallsMiniObjectMakeWritable(plan)
+            ? "Gst.GstNative.MiniObjectMakeWritable"
+            : plan.NativeName;
+        string call = target + "(" + string.Join(", ", arguments) + ")";
         if (plan.Return.IsVoid)
         {
             writer.WriteLine(call + ";");
@@ -2429,6 +2680,9 @@ internal static class CallableRenderer
         string name = argument.Name;
         switch (argument.Kind)
         {
+            case ArgumentKind.Instance when plan.InstanceConsumption == InstanceConsumption.Minted:
+                return InstanceOwnedLocal;
+
             case ArgumentKind.Instance:
                 return MaterializesArguments(plan)
                     ? InstanceLocal
@@ -2663,6 +2917,18 @@ internal static class CallableRenderer
         ReturnPlan value = plan.Return;
         if (value.IsVoid)
         {
+            return;
+        }
+
+        // The wrapper adopts what the call answered and hands itself back. A
+        // zero is the copy the C function could not make: it consumed the
+        // reference all the same, so the adoption leaves the wrapper disposed
+        // and raises the failure rather than answering a wrapper that stands
+        // for nothing.
+        if (plan.InstanceConsumption == InstanceConsumption.InPlace)
+        {
+            writer.WriteLine("AdoptWritable(" + ResultLocal + ");");
+            writer.WriteLine("return this;");
             return;
         }
 

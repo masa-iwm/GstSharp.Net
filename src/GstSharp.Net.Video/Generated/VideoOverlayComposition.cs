@@ -166,6 +166,60 @@ public sealed unsafe partial class VideoOverlayComposition : Gst.MiniObject
         return nativeResult;
     }
 
+    /// <summary>
+    /// Takes ownership of @comp and returns a version of @comp that is writable
+    /// (i.e. can be modified). Will either return @comp right away, or create a
+    /// new writable copy of @comp and unref @comp itself. All the contained
+    /// rectangles will also be copied, but the actual overlay pixel data buffers
+    /// contained in the rectangles are not copied.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This should be avoided unless rectangles need to be modified because it
+    /// invalidates caching in sinks and compositor elements. To add extra rectangles
+    /// it is rather recommended to add an extra composition meta using
+    /// gst_buffer_add_video_overlay_composition_meta().
+    /// </para>
+    /// <para>
+    /// The call consumes the reference of this wrapper and answers one that is
+    /// either the same object, when nobody else held it, or a writable copy of it.
+    /// The wrapper adopts whatever comes back, so the object it stands for can
+    /// change identity across the call and <b>any handle read before the call is
+    /// stale</b>.
+    /// </para>
+    /// <para>
+    /// This is single owner surgery: it is only correct while no other wrapper and
+    /// no other thread uses this one, which is the rule the C API imposes as well.
+    /// </para>
+    /// <para>
+    /// A wrapper that borrows the object for the length of one call has no
+    /// reference to give and refuses instead; an object an in place vfunc receives
+    /// is writable already.
+    /// </para>
+    /// </remarks>
+    /// <returns>
+    /// a writable #GstVideoOverlayComposition
+    ///     equivalent to @comp.
+    /// This wrapper. The call may have replaced the object behind it and the
+    /// wrapper now owns the writable one, so the return value exists to let the
+    /// call be chained and is never a second wrapper.
+    /// </returns>
+    /// <exception cref="ObjectDisposedException">This wrapper was disposed.</exception>
+    /// <exception cref="InvalidOperationException">
+    /// This wrapper borrows the object for the length of one call and has no
+    /// reference to give, or the writable copy could not be made. In the second
+    /// case the C function released the object all the same, so this wrapper is
+    /// left disposed.
+    /// </exception>
+    public Gst.Video.VideoOverlayComposition MakeWritable()
+    {
+        nint instanceHandle = BeginMakeWritable();
+        nint nativeResult = GstVideoOverlayCompositionMakeWritable(instanceHandle);
+        System.GC.KeepAlive(this);
+        AdoptWritable(nativeResult);
+        return this;
+    }
+
     /// <summary>Returns the number of #GstVideoOverlayRectangle&lt;!-- --&gt;s contained in @comp.</summary>
     /// <returns>the number of rectangles</returns>
     public uint NRectangles()
@@ -198,6 +252,10 @@ public sealed unsafe partial class VideoOverlayComposition : Gst.MiniObject
     /// <summary>The <c>gst_video_overlay_composition_get_seqnum</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_overlay_composition_get_seqnum")]
     private static partial uint GstVideoOverlayCompositionGetSeqnum(nint comp);
+
+    /// <summary>The <c>gst_video_overlay_composition_make_writable</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_video_overlay_composition_make_writable")]
+    private static partial nint GstVideoOverlayCompositionMakeWritable(nint comp);
 
     /// <summary>The <c>gst_video_overlay_composition_n_rectangles</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_overlay_composition_n_rectangles")]

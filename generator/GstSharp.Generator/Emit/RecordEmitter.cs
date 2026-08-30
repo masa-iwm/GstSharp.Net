@@ -965,6 +965,10 @@ internal sealed class RecordEmitter
         {
             reserved.AddRange(SurfaceBuilder.MiniObjectNames);
         }
+        else if (kind == TypeKind.Boxed)
+        {
+            reserved.AddRange(SurfaceBuilder.BoxedNames);
+        }
 
         return reserved;
     }

@@ -218,10 +218,51 @@ payload and there is nothing to consume.
 stays the recommended shape — the analyzer sees the disposal, and an early
 return before the consuming call still releases the wrapper.
 
-`MakeWritable` on a mini object is the related case in the other direction: it
-consumes the reference it is given and adopts whatever comes back, so the same
-wrapper stands for possibly different caps or a different buffer afterwards.
-Any handle read before the call is stale.
+## Calls that consume the instance they are called on
+
+A handful of C functions take the reference of the object they are called on
+and hand one back: the instance is `transfer full` and so is the return, which
+is of the type of the instance. `caps = gst_caps_make_writable (caps)` is the
+shape, and `caps = gst_caps_truncate (caps)` is the other half of it. The
+binding tells the two apart, because a caller does something different with
+each.
+
+**`MakeWritable` adopts in place and answers this wrapper.** The wrapper gives
+the reference it owns to the call and takes whatever comes back, so the same
+wrapper stands for possibly different caps, a different buffer or a different
+memory afterwards, and the return value only exists so that the call can be
+chained. **Any handle read before the call is stale**, and a mapping or a raw
+field address taken from the old object must not be used again. It is single
+owner surgery: it is correct only while no other wrapper and no other thread
+uses this one, which is the rule the C API imposes as well.
+
+Two things refuse it. A **borrowed** wrapper — the one a vfunc override
+receives — owns no reference to give, so it raises `InvalidOperationException`;
+what such a vfunc receives is writable already. And when the object is shared
+and the copy fails, the C function has spent the reference all the same: the
+wrapper is left **disposed** and `InvalidOperationException` is raised rather
+than a wrapper handed back that stands for nothing. `Gst.Memory.MakeWritable`
+on an allocator that cannot copy is the one way to reach it.
+
+**A conversion mints the reference it hands over and answers a new wrapper.**
+`Caps.Truncate`, `Caps.Normalize`, `Caps.Simplify`, `Caps.Merge`,
+`Caps.MergeStructure`, `Caps.MergeStructureFull`, `Buffer.Append`,
+`Buffer.AppendRegion` and `Memory.MakeMapped` leave the wrapper they are called
+on exactly as it was — it keeps the reference it owns — and hand back a second
+wrapper that the caller owns and disposes. The two may stand for **the same
+native object**, which is what the C functions answer when they had nothing to
+change; it is then shared and, being shared, not writable. Passing the same
+wrapper as the instance and as the argument is legal: two references are minted
+and the books balance. The wrapper is disposed all the same, because it was the
+argument too, and the argument of a conversion is consumed.
+
+`Memory.MakeMapped` is the one of them whose `null` is a normal answer: it
+means the memory could neither be mapped nor copied into one that can be.
+What it answers otherwise is mapped, and unmapping it is the caller's.
+`Caps.Fixate` is hand written rather than generated, because it is the one of
+the family that refuses ANY caps without consuming anything; it raises
+`InvalidOperationException` on them, and `Caps.IsAny()` is the test to make
+first.
 
 ## Members that take or return a `GValue`
 

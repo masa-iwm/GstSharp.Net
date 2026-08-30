@@ -625,6 +625,60 @@ public sealed unsafe partial class Caps : Gst.MiniObject
         return nativeResult != 0;
     }
 
+    /// <summary>Returns a writable copy of @caps.</summary>
+    /// <remarks>
+    /// <para>
+    /// If there is only one reference count on @caps, the caller must be the owner,
+    /// and so this function will return the caps object unchanged. If on the other
+    /// hand there is more than one reference on the object, a new caps object will
+    /// be returned. The caller's reference on @caps will be removed, and instead the
+    /// caller will own a reference to the returned object.
+    /// </para>
+    /// <para>
+    /// In short, this function unrefs the caps in the argument and refs the caps
+    /// that it returns. Don't access the argument after calling this function. See
+    /// also: gst_caps_ref().
+    /// </para>
+    /// <para>
+    /// The call consumes the reference of this wrapper and answers one that is
+    /// either the same object, when nobody else held it, or a writable copy of it.
+    /// The wrapper adopts whatever comes back, so the object it stands for can
+    /// change identity across the call and <b>any handle read before the call is
+    /// stale</b>.
+    /// </para>
+    /// <para>
+    /// This is single owner surgery: it is only correct while no other wrapper and
+    /// no other thread uses this one, which is the rule the C API imposes as well.
+    /// </para>
+    /// <para>
+    /// A wrapper that borrows the object for the length of one call has no
+    /// reference to give and refuses instead; an object an in place vfunc receives
+    /// is writable already.
+    /// </para>
+    /// </remarks>
+    /// <returns>
+    /// a writable caps which may or may not be the
+    ///     same as @caps
+    /// This wrapper. The call may have replaced the object behind it and the
+    /// wrapper now owns the writable one, so the return value exists to let the
+    /// call be chained and is never a second wrapper.
+    /// </returns>
+    /// <exception cref="ObjectDisposedException">This wrapper was disposed.</exception>
+    /// <exception cref="InvalidOperationException">
+    /// This wrapper borrows the object for the length of one call and has no
+    /// reference to give, or the writable copy could not be made. In the second
+    /// case the C function released the object all the same, so this wrapper is
+    /// left disposed.
+    /// </exception>
+    public Gst.Caps MakeWritable()
+    {
+        nint instanceHandle = BeginMakeWritable();
+        nint nativeResult = Gst.GstNative.MiniObjectMakeWritable(instanceHandle);
+        System.GC.KeepAlive(this);
+        AdoptWritable(nativeResult);
+        return this;
+    }
+
     /// <summary>
     /// Calls the provided function once for each structure and caps feature in the
     /// #GstCaps. In contrast to gst_caps_foreach(), the function may modify but not
@@ -650,6 +704,208 @@ public sealed unsafe partial class Caps : Gst.MiniObject
         {
             funcState.Free();
         }
+    }
+
+    /// <summary>
+    /// Appends the structures contained in @caps2 to @caps1 if they are not yet
+    /// expressed by @caps1. The structures in @caps2 are not copied -- they are
+    /// transferred to a writable copy of @caps1, and then @caps2 is freed.
+    /// If either caps is ANY, the resulting caps will be ANY.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The <c>caps2</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a reference of its own and the wrapper is disposed afterwards, which
+    /// leaves the native reference count exactly where the C call leaves it.
+    /// <see cref="Gst.MiniObject.Dispose()"/> is idempotent, so a <c>using</c>
+    /// declaration around the argument stays correct.
+    /// </para>
+    /// <para>
+    /// This wrapper is left alone: the call is handed a reference minted for it, so
+    /// the object this wrapper stands for keeps the reference it owns and both
+    /// wrappers are disposed by whoever holds them.
+    /// </para>
+    /// <para>
+    /// The returned wrapper may refer to the same native object as this one when the
+    /// call did not need to change it; it is then shared and not writable.
+    /// </para>
+    /// <para>
+    /// The answer can also be the caps that were merged <em>in</em> rather than
+    /// these: gstcaps.c answers the second caps whole when they are ANY and these
+    /// are not, and it answers these whole when these are ANY. Both are consumed
+    /// either way, so the wrapper this hands back is the only one left holding
+    /// whichever of the two came through.
+    /// </para>
+    /// </remarks>
+    /// <param name="caps2">
+    /// The <c>caps2</c> argument.
+    /// The call consumes it: <paramref name="caps2"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// </param>
+    /// <returns>the merged caps.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="caps2"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    /// This wrapper or <paramref name="caps2"/> was disposed.
+    /// </exception>
+    public Gst.Caps Merge(Gst.Caps caps2)
+    {
+        ArgumentNullException.ThrowIfNull(caps2);
+        nint instanceHandle = Handle;
+        nint caps2Native = caps2.Handle;
+        nint caps2Owned = Gst.GstNative.MiniObjectRef(caps2Native);
+        nint instanceOwned = Gst.GstNative.MiniObjectRef(instanceHandle);
+        nint nativeResult = GstCapsMerge(instanceOwned, caps2Owned);
+        System.GC.KeepAlive(this);
+        caps2.Dispose();
+        return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_caps_merge returned no value.");
+    }
+
+    /// <summary>Appends @structure to @caps if it is not already expressed by @caps.</summary>
+    /// <remarks>
+    /// <para>
+    /// The <c>structure</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a copy of the value and the wrapper is disposed afterwards, which
+    /// leaves the caller with exactly what the C call leaves it with. A boxed
+    /// value has no reference count to raise, so the copy is what a reference is
+    /// there. <see cref="Gst.GObject.Boxed.Dispose()"/> is idempotent, so a
+    /// <c>using</c> declaration around the argument stays correct.
+    /// </para>
+    /// <para>
+    /// This wrapper is left alone: the call is handed a reference minted for it, so
+    /// the object this wrapper stands for keeps the reference it owns and both
+    /// wrappers are disposed by whoever holds them.
+    /// </para>
+    /// <para>
+    /// The returned wrapper may refer to the same native object as this one when the
+    /// call did not need to change it; it is then shared and not writable.
+    /// </para>
+    /// </remarks>
+    /// <param name="structure">
+    /// The <c>structure</c> argument.
+    /// The call consumes it: <paramref name="structure"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// </param>
+    /// <returns>the merged caps.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="structure"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    /// This wrapper or <paramref name="structure"/> was disposed.
+    /// </exception>
+    public Gst.Caps MergeStructure(Gst.Structure structure)
+    {
+        ArgumentNullException.ThrowIfNull(structure);
+        nint instanceHandle = Handle;
+        nint structureNative = structure.Handle;
+        nuint structureType = structure.BoxedType.Value;
+        nint structureOwned = Gst.Interop.GObjectNative.BoxedCopy(structureType, structureNative);
+        nint instanceOwned = Gst.GstNative.MiniObjectRef(instanceHandle);
+        nint nativeResult = GstCapsMergeStructure(instanceOwned, structureOwned);
+        System.GC.KeepAlive(this);
+        structure.Dispose();
+        return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_caps_merge_structure returned no value.");
+    }
+
+    /// <summary>Appends @structure with @features to @caps if its not already expressed by @caps.</summary>
+    /// <remarks>
+    /// <para>
+    /// The <c>structure</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a copy of the value and the wrapper is disposed afterwards, which
+    /// leaves the caller with exactly what the C call leaves it with. A boxed
+    /// value has no reference count to raise, so the copy is what a reference is
+    /// there. <see cref="Gst.GObject.Boxed.Dispose()"/> is idempotent, so a
+    /// <c>using</c> declaration around the argument stays correct.
+    /// </para>
+    /// <para>
+    /// The <c>features</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a copy of the value and the wrapper is disposed afterwards, which
+    /// leaves the caller with exactly what the C call leaves it with. A boxed
+    /// value has no reference count to raise, so the copy is what a reference is
+    /// there. <see cref="Gst.GObject.Boxed.Dispose()"/> is idempotent, so a
+    /// <c>using</c> declaration around the argument stays correct.
+    /// </para>
+    /// <para>
+    /// This wrapper is left alone: the call is handed a reference minted for it, so
+    /// the object this wrapper stands for keeps the reference it owns and both
+    /// wrappers are disposed by whoever holds them.
+    /// </para>
+    /// <para>
+    /// The returned wrapper may refer to the same native object as this one when the
+    /// call did not need to change it; it is then shared and not writable.
+    /// </para>
+    /// </remarks>
+    /// <param name="structure">
+    /// The <c>structure</c> argument.
+    /// The call consumes it: <paramref name="structure"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// </param>
+    /// <param name="features">
+    /// The <c>features</c> argument.
+    /// The call consumes it: <paramref name="features"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// It may be <see langword="null"/>, which is the absence of a payload and leaves
+    /// nothing to consume.
+    /// </param>
+    /// <returns>the merged caps.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="structure"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    /// This wrapper or <paramref name="structure"/> or <paramref name="features"/> was disposed.
+    /// </exception>
+    public Gst.Caps MergeStructureFull(Gst.Structure structure, Gst.CapsFeatures? features)
+    {
+        ArgumentNullException.ThrowIfNull(structure);
+        nint instanceHandle = Handle;
+        nint structureNative = structure.Handle;
+        nuint structureType = structure.BoxedType.Value;
+        nint featuresNative = features is null ? 0 : features.Handle;
+        nuint featuresType = features is null ? 0 : features.BoxedType.Value;
+        nint structureOwned = Gst.Interop.GObjectNative.BoxedCopy(structureType, structureNative);
+        nint featuresOwned = features is null ? 0 : Gst.Interop.GObjectNative.BoxedCopy(featuresType, featuresNative);
+        nint instanceOwned = Gst.GstNative.MiniObjectRef(instanceHandle);
+        nint nativeResult = GstCapsMergeStructureFull(instanceOwned, structureOwned, featuresOwned);
+        System.GC.KeepAlive(this);
+        structure.Dispose();
+        features?.Dispose();
+        return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_caps_merge_structure_full returned no value.");
+    }
+
+    /// <summary>
+    /// Returns a #GstCaps that represents the same set of formats as
+    /// @caps, but contains no lists.  Each list is expanded into separate
+    /// #GstStructure.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This function takes ownership of @caps and will call gst_caps_make_writable()
+    /// on it so you must not use @caps afterwards unless you keep an additional
+    /// reference to it with gst_caps_ref().
+    /// </para>
+    /// <para>
+    /// This wrapper is left alone: the call is handed a reference minted for it, so
+    /// the object this wrapper stands for keeps the reference it owns and both
+    /// wrappers are disposed by whoever holds them.
+    /// </para>
+    /// <para>
+    /// The returned wrapper may refer to the same native object as this one when the
+    /// call did not need to change it; it is then shared and not writable.
+    /// </para>
+    /// </remarks>
+    /// <returns>the normalized #GstCaps</returns>
+    public Gst.Caps Normalize()
+    {
+        nint instanceHandle = Handle;
+        nint instanceOwned = Gst.GstNative.MiniObjectRef(instanceHandle);
+        nint nativeResult = GstCapsNormalize(instanceOwned);
+        System.GC.KeepAlive(this);
+        return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_caps_normalize returned no value.");
     }
 
     /// <summary>
@@ -790,6 +1046,40 @@ public sealed unsafe partial class Caps : Gst.MiniObject
     }
 
     /// <summary>
+    /// Converts the given @caps into a representation that represents the
+    /// same set of formats, but in a simpler form.  Component structures that are
+    /// identical are merged.  Component structures that have values that can be
+    /// merged are also merged.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This function takes ownership of @caps and will call gst_caps_make_writable()
+    /// on it if necessary, so you must not use @caps afterwards unless you keep an
+    /// additional reference to it with gst_caps_ref().
+    /// </para>
+    /// <para>This method does not preserve the original order of @caps.</para>
+    /// <para>
+    /// This wrapper is left alone: the call is handed a reference minted for it, so
+    /// the object this wrapper stands for keeps the reference it owns and both
+    /// wrappers are disposed by whoever holds them.
+    /// </para>
+    /// <para>
+    /// The returned wrapper may refer to the same native object as this one when the
+    /// call did not need to change it; it is then shared and not writable.
+    /// </para>
+    /// </remarks>
+    /// <returns>The simplified caps.</returns>
+    public Gst.Caps Simplify()
+    {
+        nint instanceHandle = Handle;
+        nint instanceOwned = Gst.GstNative.MiniObjectRef(instanceHandle);
+        nint nativeResult = GstCapsSimplify(instanceOwned);
+        System.GC.KeepAlive(this);
+        return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_caps_simplify returned no value.");
+    }
+
+    /// <summary>
     /// Retrieves the structure with the given index from the list of structures
     /// contained in @caps. The caller becomes the owner of the returned structure.
     /// </summary>
@@ -846,6 +1136,42 @@ public sealed unsafe partial class Caps : Gst.MiniObject
         System.GC.KeepAlive(this);
         return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
             ?? throw new InvalidOperationException("gst_caps_to_string returned no value.");
+    }
+
+    /// <summary>
+    /// Discards all but the first structure from @caps. Useful when
+    /// fixating.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This function takes ownership of @caps and will call gst_caps_make_writable()
+    /// on it if necessary, so you must not use @caps afterwards unless you keep an
+    /// additional reference to it with gst_caps_ref().
+    /// </para>
+    /// <para>
+    /// Note that it is not guaranteed that the returned caps have exactly one
+    /// structure. If @caps is any or empty caps then the returned caps will be
+    /// the same and contain no structure at all.
+    /// </para>
+    /// <para>
+    /// This wrapper is left alone: the call is handed a reference minted for it, so
+    /// the object this wrapper stands for keeps the reference it owns and both
+    /// wrappers are disposed by whoever holds them.
+    /// </para>
+    /// <para>
+    /// The returned wrapper may refer to the same native object as this one when the
+    /// call did not need to change it; it is then shared and not writable.
+    /// </para>
+    /// </remarks>
+    /// <returns>truncated caps</returns>
+    public Gst.Caps Truncate()
+    {
+        nint instanceHandle = Handle;
+        nint instanceOwned = Gst.GstNative.MiniObjectRef(instanceHandle);
+        nint nativeResult = GstCapsTruncate(instanceOwned);
+        System.GC.KeepAlive(this);
+        return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_caps_truncate returned no value.");
     }
 
     /// <summary>Converts @caps from a string representation.</summary>
@@ -982,6 +1308,22 @@ public sealed unsafe partial class Caps : Gst.MiniObject
     [LibraryImport("Gst", EntryPoint = "gst_caps_map_in_place")]
     private static partial int GstCapsMapInPlace(nint caps, nint func, nint userData);
 
+    /// <summary>The <c>gst_caps_merge</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_merge")]
+    private static partial nint GstCapsMerge(nint caps1, nint caps2);
+
+    /// <summary>The <c>gst_caps_merge_structure</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_merge_structure")]
+    private static partial nint GstCapsMergeStructure(nint caps, nint structure);
+
+    /// <summary>The <c>gst_caps_merge_structure_full</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_merge_structure_full")]
+    private static partial nint GstCapsMergeStructureFull(nint caps, nint structure, nint features);
+
+    /// <summary>The <c>gst_caps_normalize</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_normalize")]
+    private static partial nint GstCapsNormalize(nint caps);
+
     /// <summary>The <c>gst_caps_remove_structure</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_caps_remove_structure")]
     private static partial void GstCapsRemoveStructure(nint caps, uint idx);
@@ -1002,6 +1344,10 @@ public sealed unsafe partial class Caps : Gst.MiniObject
     [LibraryImport("Gst", EntryPoint = "gst_caps_set_value")]
     private static partial void GstCapsSetValue(nint caps, byte* field, Gst.GObject.GValueNative* value);
 
+    /// <summary>The <c>gst_caps_simplify</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_simplify")]
+    private static partial nint GstCapsSimplify(nint caps);
+
     /// <summary>The <c>gst_caps_steal_structure</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_caps_steal_structure")]
     private static partial nint GstCapsStealStructure(nint caps, uint index);
@@ -1013,6 +1359,10 @@ public sealed unsafe partial class Caps : Gst.MiniObject
     /// <summary>The <c>gst_caps_to_string</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_caps_to_string")]
     private static partial nint GstCapsToString(nint caps);
+
+    /// <summary>The <c>gst_caps_truncate</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_truncate")]
+    private static partial nint GstCapsTruncate(nint caps);
 
     /// <summary>The <c>gst_caps_from_string</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_caps_from_string")]

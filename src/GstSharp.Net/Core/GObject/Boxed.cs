@@ -88,6 +88,55 @@ public abstract class Boxed : IDisposable
     }
 
     /// <summary>
+    /// Gives the value of the wrapper up to a call that takes it over, and
+    /// returns the handle to hand that call.
+    /// </summary>
+    /// <returns>The value the call is given.</returns>
+    /// <remarks>
+    /// <para>
+    /// This is the boxed half of the adopt in place shape that
+    /// <c>gst_uri_make_writable</c> has: the call consumes what it is given and
+    /// answers a value of the same type, which the wrapper adopts through
+    /// <see cref="AdoptWritable(nint)"/>. The wrapper keeps holding the handle
+    /// until then, which is what keeps the value alive across the call.
+    /// </para>
+    /// <para>
+    /// It is only correct for a boxed type whose copy raises a reference count
+    /// rather than duplicating the value, which is what
+    /// <c>GST_DEFINE_MINI_OBJECT_TYPE</c> registers: the wrapper owns one
+    /// reference and hands exactly that one over. The generator emits the
+    /// members that use it for any boxed type whose <c>*_make_writable</c>
+    /// consumes the instance it is called on; today the only such type is
+    /// <c>Gst.Uri</c>, whose boxed copy is <c>gst_mini_object_ref</c>.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="ObjectDisposedException">The wrapper was disposed.</exception>
+    protected nint BeginMakeWritable() => Handle;
+
+    /// <summary>
+    /// Adopts the value a call that consumed the value of the wrapper answered.
+    /// </summary>
+    /// <param name="writable">The answer of the call.</param>
+    /// <remarks>
+    /// What the wrapper held is gone whichever value comes back: the call took
+    /// it over, whether it copied or not. A zero is a copy the C function could
+    /// not make, and it took the value over all the same, so the wrapper is
+    /// left disposed rather than holding a handle that stands for nothing.
+    /// </remarks>
+    /// <exception cref="InvalidOperationException">The writable copy could not be made.</exception>
+    protected void AdoptWritable(nint writable)
+    {
+        Interlocked.Exchange(ref _handle, writable);
+
+        if (writable == nint.Zero)
+        {
+            throw new InvalidOperationException(
+                "The boxed value could not be made writable: it is shared and the copy failed. The call " +
+                "released the value of this wrapper all the same, so the wrapper is now disposed.");
+        }
+    }
+
+    /// <summary>
     /// Releases the boxed value.
     /// </summary>
     /// <param name="disposing">

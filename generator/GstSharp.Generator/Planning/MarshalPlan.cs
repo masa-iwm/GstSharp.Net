@@ -244,6 +244,50 @@ internal enum ConsumedFamily
 }
 
 /// <summary>
+/// How a call takes over the reference of the instance it is called on, which
+/// is the shape of the <c>make_writable</c> family and of the conversions that
+/// hand a replacement back.
+/// </summary>
+/// <remarks>
+/// <para>
+/// The gir spells both the same way — the instance is
+/// <c>transfer-ownership="full"</c> and the return is an owned value of the
+/// type of the instance — and the C implementations differ in what a caller
+/// does with the answer, so the binding tells them apart by name. A
+/// <c>_make_writable</c> is the identity of the object it is called on and the
+/// wrapper follows it (<see cref="InPlace"/>); everything else is a conversion
+/// whose result is a second value (<see cref="Minted"/>).
+/// </para>
+/// <para>
+/// <see cref="None"/> covers every other member, including one that consumes
+/// its instance in a shape neither rule matches: that one stays rejected under
+/// <c>SkipReason.InstanceTransferFull</c>, so a future symbol of an unforeseen
+/// shape is reported rather than emitted.
+/// </para>
+/// </remarks>
+internal enum InstanceConsumption
+{
+    /// <summary>The call borrows the instance, which is what nearly every member does.</summary>
+    None,
+
+    /// <summary>
+    /// The call consumes the reference of the wrapper and hands one back that
+    /// stands for the same logical object. The wrapper gives up its handle,
+    /// adopts the answer and returns itself, so the member reads as the C
+    /// idiom <c>caps = gst_caps_make_writable (caps)</c> written as
+    /// <c>caps.MakeWritable()</c>.
+    /// </summary>
+    InPlace,
+
+    /// <summary>
+    /// The call consumes a reference and produces a new value. The binding
+    /// mints the reference it is handed, so the wrapper the member was called
+    /// on is untouched and the result is a wrapper of its own.
+    /// </summary>
+    Minted,
+}
+
+/// <summary>
 /// The inline storage of a fixed size array, emitted as an
 /// <c>[InlineArray]</c> struct beside the declaration that needs it.
 /// </summary>
@@ -486,6 +530,24 @@ internal sealed class MarshalPlan
 
     /// <summary>Gets the C# type of the instance, for an extension method.</summary>
     internal string? InstanceType { get; init; }
+
+    /// <summary>
+    /// Gets how the call takes over the reference of its instance.
+    /// </summary>
+    internal InstanceConsumption InstanceConsumption { get; init; }
+
+    /// <summary>
+    /// Gets a value indicating whether a wrapper of the declaring type can be
+    /// one that borrows what it stands for rather than owning it.
+    /// </summary>
+    /// <remarks>
+    /// Only a mini object wrapper can: it has the borrow constructor an in
+    /// place vfunc override needs, while a boxed wrapper owns its value from
+    /// the moment it exists. What reads this is the documentation of a call
+    /// that takes the reference of its instance over, which refuses a borrow
+    /// and says so.
+    /// </remarks>
+    internal bool InstanceIsBorrowable { get; init; }
 
     /// <summary>
     /// Gets or sets a value indicating whether the member overrides a member of

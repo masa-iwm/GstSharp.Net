@@ -44,12 +44,42 @@ public sealed class RejectionRulesTests
               <field name="owner" writable="1">
                 <type name="Widget" c:type="GstWidget*"/>
               </field>
+              <method name="make_writable" c:identifier="gst_info_make_writable">
+                <return-value transfer-ownership="full">
+                  <type name="Info" c:type="GstInfo*"/>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="info" transfer-ownership="full">
+                    <type name="Info" c:type="GstInfo*"/>
+                  </instance-parameter>
+                </parameters>
+              </method>
+              <method name="merge" c:identifier="gst_info_merge">
+                <return-value transfer-ownership="full">
+                  <type name="Info" c:type="GstInfo*"/>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="info" transfer-ownership="full">
+                    <type name="Info" c:type="GstInfo*"/>
+                  </instance-parameter>
+                </parameters>
+              </method>
             </record>
             <record name="Caps" c:type="GstCaps" glib:type-name="GstCaps" glib:get-type="gst_caps_get_type">
               <field name="mini_object" writable="1">
                 <type name="MiniObject" c:type="GstMiniObject"/>
               </field>
               <method name="make_writable" c:identifier="gst_caps_make_writable">
+                <return-value transfer-ownership="full">
+                  <type name="Caps" c:type="GstCaps*"/>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="caps" transfer-ownership="full">
+                    <type name="Caps" c:type="GstCaps*"/>
+                  </instance-parameter>
+                </parameters>
+              </method>
+              <method name="truncate" c:identifier="gst_caps_truncate">
                 <return-value transfer-ownership="full">
                   <type name="Caps" c:type="GstCaps*"/>
                 </return-value>
@@ -86,6 +116,21 @@ public sealed class RejectionRulesTests
                 <parameters>
                   <instance-parameter name="caps" transfer-ownership="none">
                     <type name="Caps" c:type="GstCaps*"/>
+                  </instance-parameter>
+                </parameters>
+              </method>
+            </record>
+            <record name="Overlay" c:type="GstOverlay" glib:type-name="GstOverlay" glib:get-type="gst_overlay_get_type">
+              <field name="mini_object" writable="1">
+                <type name="MiniObject" c:type="GstMiniObject"/>
+              </field>
+              <method name="make_writable" c:identifier="gst_overlay_make_writable">
+                <return-value transfer-ownership="full">
+                  <type name="Overlay" c:type="GstOverlay*"/>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="overlay" transfer-ownership="full">
+                    <type name="Overlay" c:type="GstOverlay*"/>
                   </instance-parameter>
                 </parameters>
               </method>
@@ -219,16 +264,121 @@ public sealed class RejectionRulesTests
     }
 
     [Fact]
-    public void AMethodThatConsumesItsInstanceAndReplacesItIsRejected()
+    public void AMakeWritableAdoptsWhatTheCallAnsweredAndHandsTheWrapperBack()
     {
-        string source = Run.File("Caps.cs");
+        // The wrapper gives the reference it owns to the call and takes the
+        // answer, so the member is the C idiom
+        // `caps = gst_caps_make_writable (caps)` written as one call. The read
+        // is the one that refuses a borrowed wrapper, and the adoption is the
+        // one that raises the copy the C function could not make.
+        //
+        // The call goes through the runtime import of what the C macro expands
+        // to, because gst_caps_make_writable is a macro rather than a symbol
+        // until 1.27.2 and this binding runs on 1.24: importing it by name
+        // would raise EntryPointNotFoundException there.
+        Assert.Equal(
+            """
+            public Gst.Caps MakeWritable()
+            {
+                nint instanceHandle = BeginMakeWritable();
+                nint nativeResult = Gst.GstNative.MiniObjectMakeWritable(instanceHandle);
+                System.GC.KeepAlive(this);
+                AdoptWritable(nativeResult);
+                return this;
+            }
+            """,
+            Run.Member("Caps.cs", "public Gst.Caps MakeWritable"));
+        Assert.DoesNotContain(
+            "EntryPoint = \"gst_caps_make_writable\"",
+            Run.File("Caps.cs"),
+            StringComparison.Ordinal);
+    }
 
-        Assert.DoesNotContain("MakeWritable", source, StringComparison.Ordinal);
+    [Fact]
+    public void AMakeWritableThatIsAFunctionOfItsOwnKeepsItsOwnImport()
+    {
+        // Only the nine that are macros on the floor are rerouted. A
+        // _make_writable whose C implementation is more than the forward to
+        // gst_mini_object_make_writable - gst_video_overlay_composition_make_writable
+        // copies when a rectangle of an otherwise writable composition is
+        // shared - has to keep calling its own symbol.
+        Assert.Equal(
+            """
+            public Gst.Overlay MakeWritable()
+            {
+                nint instanceHandle = BeginMakeWritable();
+                nint nativeResult = GstOverlayMakeWritable(instanceHandle);
+                System.GC.KeepAlive(this);
+                AdoptWritable(nativeResult);
+                return this;
+            }
+            """,
+            Run.Member("Overlay.cs", "public Gst.Overlay MakeWritable"));
+        Assert.Contains(
+            "EntryPoint = \"gst_overlay_make_writable\"",
+            Run.File("Overlay.cs"),
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AConversionThatConsumesItsInstanceMintsTheReferenceItHandsOver()
+    {
+        // Everything else of the shape answers a value of its own, so the
+        // wrapper keeps what it holds and the call is handed a reference
+        // minted for it. Both wrappers are live afterwards, and they may stand
+        // for the same object.
+        Assert.Equal(
+            """
+            public Gst.Caps Truncate()
+            {
+                nint instanceHandle = Handle;
+                nint instanceOwned = Gst.GstNative.MiniObjectRef(instanceHandle);
+                nint nativeResult = GstCapsTruncate(instanceOwned);
+                System.GC.KeepAlive(this);
+                return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+                    ?? throw new InvalidOperationException("gst_caps_truncate returned no value.");
+            }
+            """,
+            Run.Member("Caps.cs", "public Gst.Caps Truncate"));
+    }
+
+    [Fact]
+    public void ABoxedMakeWritableAdoptsInPlaceAsWell()
+    {
+        // GstUri is the one of the eleven that the gir declares as an opaque
+        // boxed record, and it is a mini object underneath: its boxed copy is
+        // gst_mini_object_ref. The wrapper owns one reference either way, so
+        // the adopt in place shape is the same one, off the base class of a
+        // boxed wrapper.
+        Assert.Equal(
+            """
+            public Gst.Info MakeWritable()
+            {
+                nint instanceHandle = BeginMakeWritable();
+                nint nativeResult = GstInfoMakeWritable(instanceHandle);
+                System.GC.KeepAlive(this);
+                AdoptWritable(nativeResult);
+                return this;
+            }
+            """,
+            Run.Member("Info.cs", "public Gst.Info MakeWritable"));
+    }
+
+    [Fact]
+    public void AConversionThatConsumesABoxedInstanceIsStillRejected()
+    {
+        // The mint of a boxed value is a copy, so a conversion that consumed
+        // one would leave the original where it was and answer a value nobody
+        // asked for. Only the adopt in place shape is bound for a boxed
+        // wrapper; everything else keeps the diagnostic that says so.
+        string source = Run.File("Info.cs");
+
+        Assert.DoesNotContain("public Gst.Info Merge()", source, StringComparison.Ordinal);
         Assert.Equal(1, Run.Result.Census.SkippedCount("Gst", SkipReason.InstanceTransferFull));
         Assert.Contains(
             Run.Result.Diagnostics,
             diagnostic => diagnostic.Code == "GEN0013" && diagnostic.Message.Contains(
-                "gst_caps_make_writable",
+                "gst_info_merge",
                 StringComparison.Ordinal));
     }
 

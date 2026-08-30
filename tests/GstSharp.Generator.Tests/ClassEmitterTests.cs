@@ -171,11 +171,11 @@ public sealed class ClassEmitterTests
     }
 
     [Theory]
-    [InlineData("Gst", 35, 51, 5, 28, 18, 1410, 29, 23, 52)]
+    [InlineData("Gst", 35, 51, 5, 28, 18, 1429, 29, 23, 52)]
     [InlineData("GstBase", 11, 4, 0, 5, 0, 174, 31, 2, 4)]
     [InlineData("GstApp", 2, 2, 0, 8, 0, 62, 36, 8, 0)]
     [InlineData("GstAudio", 14, 17, 1, 2, 2, 213, 32, 0, 41)]
-    [InlineData("GstVideo", 12, 42, 5, 0, 10, 382, 14, 2, 94)]
+    [InlineData("GstVideo", 12, 42, 5, 0, 10, 383, 14, 2, 94)]
     [InlineData("GstPbutils", 14, 1, 0, 0, 1, 179, 5, 5, 0)]
     [InlineData("GstSdp", 1, 21, 0, 0, 0, 164, 0, 0, 26)]
     [InlineData("GstWebRTC", 9, 4, 0, 1, 2, 37, 38, 7, 6)]
@@ -565,7 +565,7 @@ public sealed class ClassEmitterTests
         // under the overlay skips it is also listed in. The whole section is
         // anchored, because a lone "- `symbol`" line matches under any reason
         // and in any module.
-        Assert.Contains("### HandBound (44)\n", report, StringComparison.Ordinal);
+        Assert.Contains("### HandBound (45)\n", report, StringComparison.Ordinal);
         Assert.Contains(
             "### HandBound (4)\n\n"
             + "- `gst_video_codec_frame_set_user_data`\n"
@@ -802,11 +802,11 @@ public sealed class ClassEmitterTests
     /// than under the reason that kept them out of the emitters, which is why the overlay skips of a module
     /// fall by the number of its hand bound entries that reach the census through the skip list.</param>
     [Theory]
-    [InlineData("Gst", 28, 0, 21, 20, 0, 5, 47)]
+    [InlineData("Gst", 28, 0, 21, 0, 0, 5, 48)]
     [InlineData("GstBase", 2, 0, 4, 0, 0, 2, 2)]
     [InlineData("GstApp", 0, 0, 2, 0, 9, 2, 5)]
     [InlineData("GstAudio", 9, 0, 4, 0, 0, 0, 5)]
-    [InlineData("GstVideo", 10, 0, 10, 1, 0, 0, 6)]
+    [InlineData("GstVideo", 10, 0, 10, 0, 0, 0, 6)]
     [InlineData("GstPbutils", 1, 0, 1, 0, 0, 1, 2)]
     [InlineData("GstSdp", 4, 0, 1, 0, 0, 0, 0)]
     [InlineData("GstWebRTC", 0, 0, 4, 0, 4, 0, 2)]

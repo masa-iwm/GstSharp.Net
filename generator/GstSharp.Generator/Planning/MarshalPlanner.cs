@@ -540,7 +540,7 @@ internal sealed class MarshalPlanner
             return null;
         }
 
-        if (RejectsLifetime(callable, form, context))
+        if (RejectsLifetime(callable, form, context, out InstanceConsumption consumption))
         {
             return null;
         }
@@ -636,6 +636,8 @@ internal sealed class MarshalPlanner
             Return = returnPlan,
             Throws = callable.Throws,
             InstanceType = form == CallableForm.ExtensionMethod ? context.OwnerType : null,
+            InstanceConsumption = consumption,
+            InstanceIsBorrowable = context.OwnerKind == TypeKind.MiniObject,
         };
     }
 
@@ -748,8 +750,10 @@ internal sealed class MarshalPlanner
             case SkipReason.InstanceTransferFull:
                 _diagnostics.Warn(
                     "GEN0013",
-                    $"'{name}' consumes the instance and returns a replacement of the same type; binding it needs "
-                    + "the wrapper to reference the instance before the call. The member is skipped.");
+                    $"'{name}' consumes the instance and returns a replacement of the same type, in a shape "
+                    + "neither self consuming rule covers: only a mini object can mint the reference such a call "
+                    + "takes over, and only a '_make_writable' hands the value of the wrapper over in place. The "
+                    + "member is skipped.");
                 return;
 
             case SkipReason.LifetimePrimitive:
@@ -771,16 +775,22 @@ internal sealed class MarshalPlanner
     /// <param name="callable">The callable to inspect.</param>
     /// <param name="form">The C# shape it would be emitted in.</param>
     /// <param name="context">The type it is emitted into.</param>
+    /// <param name="consumption">
+    /// How the call takes the reference of its instance over, for the two
+    /// shapes that are bound; <see cref="InstanceConsumption.None"/> for every
+    /// other callable, rejected or not.
+    /// </param>
     /// <returns><see langword="true"/> when the callable is rejected.</returns>
     /// <remarks>
     /// <para>
     /// Two shapes are told apart. <c>gst_caps_make_writable</c> and its
     /// relatives consume the instance and hand a replacement of the same type
-    /// back; binding one needs the wrapper to add a reference before the call
-    /// and to adopt the returned handle afterwards, so that the instance the
-    /// caller holds stays valid whichever of the two the call returns. That is
-    /// a change of the ownership model rather than of one signature, so they
-    /// are rejected until it lands.
+    /// back. Those are bound rather than rejected, through the two rules of
+    /// <see cref="ClassifyConsumption"/>: the wrapper either follows the
+    /// answer or mints the reference the call takes over. A shape neither rule
+    /// matches — a boxed value that is not reference counted, a GObject — is
+    /// still rejected, because minting for it means something else and the
+    /// binding has no member to prove it on.
     /// </para>
     /// <para>
     /// Everything else that consumes the instance releases it, and so does
@@ -791,8 +801,13 @@ internal sealed class MarshalPlanner
     /// way of releasing a <c>GstPoll</c>.
     /// </para>
     /// </remarks>
-    private bool RejectsLifetime(GirCallable callable, CallableForm form, PlanningContext context)
+    private bool RejectsLifetime(
+        GirCallable callable,
+        CallableForm form,
+        PlanningContext context,
+        out InstanceConsumption consumption)
     {
+        consumption = InstanceConsumption.None;
         if (form is not (CallableForm.InstanceMethod or CallableForm.ExtensionMethod)
             || callable.InstanceParameter is not { } instance)
         {
@@ -802,6 +817,15 @@ internal sealed class MarshalPlanner
         bool consumes = instance.Transfer is GirTransfer.Full;
         if (consumes && ReturnsInstanceType(callable, instance, context))
         {
+            consumption = ClassifyConsumption(callable, form, context);
+            if (consumption != InstanceConsumption.None)
+            {
+                // The call is bound, and the rule that follows must not see it
+                // again: it consumes its instance, which is the very thing that
+                // makes a lifetime primitive.
+                return false;
+            }
+
             _rejection ??= SkipReason.InstanceTransferFull;
             return true;
         }
@@ -819,6 +843,58 @@ internal sealed class MarshalPlanner
         }
 
         return false;
+    }
+
+    /// <summary>
+    /// Decides which of the two self consuming shapes a callable has, once it
+    /// is known to consume its instance and to return a value of the type of
+    /// its instance.
+    /// </summary>
+    /// <param name="callable">The callable to classify.</param>
+    /// <param name="form">The C# shape it would be emitted in.</param>
+    /// <param name="context">The type it is emitted into.</param>
+    /// <returns>
+    /// How the call takes the reference over, or
+    /// <see cref="InstanceConsumption.None"/> when neither rule matches.
+    /// </returns>
+    /// <remarks>
+    /// <para>
+    /// The name is what tells the two apart, because the annotations cannot:
+    /// every one of the eleven <c>_make_writable</c> entry points forwards to
+    /// <c>gst_mini_object_make_writable</c> and answers the same logical
+    /// object, while <c>gst_caps_truncate</c> and its relatives answer a
+    /// converted one. Reading the suffix is what makes the rule survive a gir
+    /// refresh; an overlay list of eleven identifiers would silently miss a
+    /// twelfth.
+    /// </para>
+    /// <para>
+    /// The kind of the declaring type is the other half of the rule.
+    /// <em>In place</em> works for a mini object and for the one boxed type of
+    /// the shape, <c>GstUri</c>, which is a mini object underneath —
+    /// <c>GST_DEFINE_MINI_OBJECT_TYPE</c> registers its boxed copy as
+    /// <c>gst_mini_object_ref</c> — so giving up the handle of the wrapper
+    /// hands over exactly one reference either way. <em>Minted</em> is mini
+    /// object only, because the mint of a boxed value is a copy and a
+    /// conversion that consumed a copy would leave the original where it was.
+    /// </para>
+    /// </remarks>
+    private static InstanceConsumption ClassifyConsumption(
+        GirCallable callable,
+        CallableForm form,
+        PlanningContext context)
+    {
+        if (form != CallableForm.InstanceMethod)
+        {
+            return InstanceConsumption.None;
+        }
+
+        bool inPlace = callable.CIdentifier?.EndsWith("_make_writable", StringComparison.Ordinal) ?? false;
+        return context.OwnerKind switch
+        {
+            TypeKind.MiniObject => inPlace ? InstanceConsumption.InPlace : InstanceConsumption.Minted,
+            TypeKind.Boxed when inPlace => InstanceConsumption.InPlace,
+            _ => InstanceConsumption.None,
+        };
     }
 
     /// <summary>Tests whether a wrapper of a kind owns the reference it holds.</summary>

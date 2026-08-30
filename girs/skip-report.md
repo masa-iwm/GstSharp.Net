@@ -97,7 +97,7 @@ disappears shows up here as an added line.
 
 ## Gst
 
-### HandBound (44)
+### HandBound (45)
 
 - `gst_buffer_copy`
 - `gst_buffer_extract`
@@ -107,6 +107,7 @@ disappears shows up here as an added line.
 - `gst_buffer_pool_set_config`
 - `gst_buffer_remove_meta`
 - `gst_bus_set_sync_handler`
+- `gst_caps_fixate`
 - `gst_clock_id_wait_async`
 - `gst_element_post_message`
 - `gst_element_send_event`
@@ -143,29 +144,6 @@ disappears shows up here as an added line.
 - `gst_type_find_peek`
 - `gst_value_compare`
 - `gst_value_serialize`
-
-### InstanceTransferFull (20)
-
-- `gst_buffer_append`
-- `gst_buffer_append_region`
-- `gst_buffer_list_make_writable`
-- `gst_caps_fixate`
-- `gst_caps_make_writable`
-- `gst_caps_merge`
-- `gst_caps_merge_structure`
-- `gst_caps_merge_structure_full`
-- `gst_caps_normalize`
-- `gst_caps_simplify`
-- `gst_caps_truncate`
-- `gst_context_make_writable`
-- `gst_event_make_writable`
-- `gst_memory_make_mapped`
-- `gst_memory_make_writable`
-- `gst_message_make_writable`
-- `gst_query_make_writable`
-- `gst_sample_make_writable`
-- `gst_tag_list_make_writable`
-- `gst_uri_make_writable`
 
 ### LifetimePrimitive (21)
 
@@ -905,10 +883,6 @@ disappears shows up here as an added line.
 - `gst_video_frame_map`
 - `gst_video_frame_map_id`
 - `gst_video_frame_unmap`
-
-### InstanceTransferFull (1)
-
-- `gst_video_overlay_composition_make_writable`
 
 ### LifetimePrimitive (10)
 

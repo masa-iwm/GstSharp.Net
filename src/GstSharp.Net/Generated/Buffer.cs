@@ -353,6 +353,57 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     }
 
     /// <summary>
+    /// Appends all the memory from @buf2 to @buf1. The result buffer will contain a
+    /// concatenation of the memory of @buf1 and @buf2.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The <c>buf2</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a reference of its own and the wrapper is disposed afterwards, which
+    /// leaves the native reference count exactly where the C call leaves it.
+    /// <see cref="Gst.MiniObject.Dispose()"/> is idempotent, so a <c>using</c>
+    /// declaration around the argument stays correct.
+    /// </para>
+    /// <para>
+    /// This wrapper is left alone: the call is handed a reference minted for it, so
+    /// the object this wrapper stands for keeps the reference it owns and both
+    /// wrappers are disposed by whoever holds them.
+    /// </para>
+    /// <para>
+    /// The returned wrapper may refer to the same native object as this one when the
+    /// call did not need to change it; it is then shared and not writable.
+    /// </para>
+    /// </remarks>
+    /// <param name="buf2">
+    /// The <c>buf2</c> argument.
+    /// The call consumes it: <paramref name="buf2"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// </param>
+    /// <returns>
+    /// the new #GstBuffer that contains the memory
+    ///     of the two source buffers.
+    /// </returns>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="buf2"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    /// This wrapper or <paramref name="buf2"/> was disposed.
+    /// </exception>
+    public Gst.Buffer Append(Gst.Buffer buf2)
+    {
+        ArgumentNullException.ThrowIfNull(buf2);
+        nint instanceHandle = Handle;
+        nint buf2Native = buf2.Handle;
+        nint buf2Owned = Gst.GstNative.MiniObjectRef(buf2Native);
+        nint instanceOwned = Gst.GstNative.MiniObjectRef(instanceHandle);
+        nint nativeResult = GstBufferAppend(instanceOwned, buf2Owned);
+        System.GC.KeepAlive(this);
+        buf2.Dispose();
+        return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_buffer_append returned no value.");
+    }
+
+    /// <summary>
     /// Appends the memory block @mem to @buffer. This function takes
     /// ownership of @mem and thus doesn't increase its refcount.
     /// </summary>
@@ -389,6 +440,60 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
         GstBufferAppendMemory(instanceHandle, memOwned);
         System.GC.KeepAlive(this);
         mem.Dispose();
+    }
+
+    /// <summary>
+    /// Appends @size bytes at @offset from @buf2 to @buf1. The result buffer will
+    /// contain a concatenation of the memory of @buf1 and the requested region of
+    /// @buf2.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The <c>buf2</c> parameter is <c>transfer-ownership="full"</c>: the call is
+    /// handed a reference of its own and the wrapper is disposed afterwards, which
+    /// leaves the native reference count exactly where the C call leaves it.
+    /// <see cref="Gst.MiniObject.Dispose()"/> is idempotent, so a <c>using</c>
+    /// declaration around the argument stays correct.
+    /// </para>
+    /// <para>
+    /// This wrapper is left alone: the call is handed a reference minted for it, so
+    /// the object this wrapper stands for keeps the reference it owns and both
+    /// wrappers are disposed by whoever holds them.
+    /// </para>
+    /// <para>
+    /// The returned wrapper may refer to the same native object as this one when the
+    /// call did not need to change it; it is then shared and not writable.
+    /// </para>
+    /// </remarks>
+    /// <param name="buf2">
+    /// The <c>buf2</c> argument.
+    /// The call consumes it: <paramref name="buf2"/> is disposed when this
+    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// </param>
+    /// <param name="offset">The <c>offset</c> argument.</param>
+    /// <param name="size">The <c>size</c> argument.</param>
+    /// <returns>
+    /// the new #GstBuffer that contains the memory
+    ///     of the two source buffers.
+    /// </returns>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="buf2"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    /// This wrapper or <paramref name="buf2"/> was disposed.
+    /// </exception>
+    public Gst.Buffer AppendRegion(Gst.Buffer buf2, nint offset, nint size)
+    {
+        ArgumentNullException.ThrowIfNull(buf2);
+        nint instanceHandle = Handle;
+        nint buf2Native = buf2.Handle;
+        nint buf2Owned = Gst.GstNative.MiniObjectRef(buf2Native);
+        nint instanceOwned = Gst.GstNative.MiniObjectRef(instanceHandle);
+        nint nativeResult = GstBufferAppendRegion(instanceOwned, buf2Owned, offset, size);
+        System.GC.KeepAlive(this);
+        buf2.Dispose();
+        return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_buffer_append_region returned no value.");
     }
 
     /// <summary>
@@ -1190,9 +1295,17 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     [LibraryImport("Gst", EntryPoint = "gst_buffer_add_reference_timestamp_meta")]
     private static partial nint GstBufferAddReferenceTimestampMeta(nint buffer, nint reference, ulong timestamp, ulong duration);
 
+    /// <summary>The <c>gst_buffer_append</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_buffer_append")]
+    private static partial nint GstBufferAppend(nint buf1, nint buf2);
+
     /// <summary>The <c>gst_buffer_append_memory</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_buffer_append_memory")]
     private static partial void GstBufferAppendMemory(nint buffer, nint mem);
+
+    /// <summary>The <c>gst_buffer_append_region</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_buffer_append_region")]
+    private static partial nint GstBufferAppendRegion(nint buf1, nint buf2, nint offset, nint size);
 
     /// <summary>The <c>gst_buffer_copy_deep</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_buffer_copy_deep")]
