@@ -21,7 +21,7 @@ namespace Gst;
 /// with a given width, height and bits per plane.
 /// </para>
 /// <para>
-/// ``` C
+/// <code>
 ///   GstBuffer *buffer;
 ///   GstMemory *memory;
 ///   gint size, width, height, bpp;
@@ -31,7 +31,7 @@ namespace Gst;
 ///   memory = gst_allocator_alloc (NULL, size, NULL);
 ///   gst_buffer_insert_memory (buffer, -1, memory);
 ///   ...
-/// ```
+/// </code>
 /// </para>
 /// <para>
 /// Alternatively, use gst_buffer_new_allocate() to create a buffer with

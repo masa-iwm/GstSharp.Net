@@ -15,19 +15,18 @@ namespace GES;
 /// </summary>
 /// <remarks>
 /// <para>
-/// ```c
+/// <code>
 /// GESProject *project;
 /// GESTimeline *timeline;
-/// </para>
-/// <para>project = ges_project_new ("file:///path/to/a/valid/project/uri");</para>
-/// <para>
+///
+/// project = ges_project_new ("file:///path/to/a/valid/project/uri");
+///
 /// // Here you can connect to the various signal to get more infos about
 /// // what is happening and recover from errors if possible
 /// ...
-/// </para>
-/// <para>
+///
 /// timeline = ges_asset_extract (GES_ASSET (project));
-/// ```
+/// </code>
 /// </para>
 /// <para>
 /// The #GESProject class offers a higher level API to handle #GESAsset-s.
@@ -41,9 +40,11 @@ namespace GES;
 /// to the main project:
 /// </para>
 /// <para>
-/// ``` c
+/// <code>
 /// ges_project_add_asset (project, GES_ASSET (subproject));
-/// ```
+/// </code>
+/// </para>
+/// <para>
 /// then the subproject will be serialized in the project files. To use
 /// the subproject in a timeline, you should use a #GESUriClip with the
 /// same subproject URI.
@@ -794,28 +795,24 @@ public unsafe partial class Project : GES.Asset, GES.IMetaContainer
     public delegate string? MissingUriHandler(object? sender, GES.Project.MissingUriSignalArgs args);
 
     /// <summary>
-    /// ```c
+    /// <code>
     /// static gchar
     /// source_moved_cb (GESProject *project, GError *error, GESAsset *asset_with_error)
     /// {
     ///   return g_strdup ("file:///the/new/uri.ogg");
     /// }
-    /// </summary>
-    /// <remarks>
-    /// <para>
+    ///
     /// static int
     /// main (int argc, gchar ** argv)
     /// {
     ///   GESTimeline *timeline;
     ///   GESProject *project = ges_project_new ("file:///some/uri.xges");
-    /// </para>
-    /// <para>
+    ///
     ///   g_signal_connect (project, "missing-uri", source_moved_cb, NULL);
     ///   timeline = ges_asset_extract (GES_ASSET (project));
     /// }
-    /// ```
-    /// </para>
-    /// </remarks>
+    /// </code>
+    /// </summary>
     /// <remarks>
     /// The handler is remembered on the wrapper it was added to and has to be
     /// removed from that same instance. Looking the object up again normally

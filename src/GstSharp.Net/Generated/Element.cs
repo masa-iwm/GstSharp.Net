@@ -1596,22 +1596,20 @@ public abstract unsafe partial class Element : Gst.Object
     /// plugin documentation system.
     /// </summary>
     /// <remarks>
+    /// <para>Example:</para>
     /// <para>
-    /// Example:
-    /// ```c
+    /// <code>
     /// GType my_type;
     /// GTypeInfo my_type_info;
-    /// </para>
-    /// <para>
+    ///
     /// // Fill "my_type_info"
     /// ...
-    /// </para>
-    /// <para>
+    ///
     /// my_type = g_type_register_static (GST_TYPE_MY_ELEMENT, "my-type-name",
     ///    &amp;my_type_info, 0);
     /// gst_element_type_set_skip_documentation (my_type);
     /// gst_element_register (plugin, "my-plugin-feature-name", rank, my_type);
-    /// ```
+    /// </code>
     /// </para>
     /// </remarks>
     /// <param name="type">The <c>type</c> argument.</param>

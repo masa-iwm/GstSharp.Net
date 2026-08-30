@@ -19,16 +19,14 @@ namespace Gst;
 /// strings are stored on the heap.
 /// </para>
 /// <para>
-/// ```cpp
+/// <code>
 /// GstIdStr s = GST_ID_STR_INIT;
-/// </para>
-/// <para>
+///
 /// gst_id_str_set (&amp;s, "Hello, World!");
 /// g_print ("%s\n", gst_id_str_as_str (&amp;s));
-/// </para>
-/// <para>
+///
 /// gst_id_str_clear (&amp;s);
-/// ```
+/// </code>
 /// </para>
 /// <para>Available since GStreamer 1.26.</para>
 /// </remarks>

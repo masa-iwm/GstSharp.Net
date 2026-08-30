@@ -16,30 +16,28 @@ namespace Gst;
 /// <remarks>
 /// <para>## Simple log context using static macros</para>
 /// <para>
-/// ``` c
+/// <code>
 /// // At global/file scope:
 /// GST_LOG_CONTEXT_STATIC_DEFINE(my_context, GST_LOG_CONTEXT_FLAG_THROTTLE, );
 /// #define MY_CONTEXT GST_LOG_CONTEXT_LAZY_INIT(my_context)
-/// </para>
-/// <para>
+///
 /// // Then in code:
 /// GST_CTX_INFO(MY_CONTEXT, "This will only appear once per file/line");
-/// ```
+/// </code>
 /// </para>
 /// <para>## Periodic logging</para>
 /// <para>For messages that should be logged periodically (e.g., maximum once per minute):</para>
 /// <para>
-/// ``` c
+/// <code>
 /// // At global/file scope:
 /// GST_LOG_CONTEXT_STATIC_DEFINE(my_periodic_context, GST_LOG_CONTEXT_FLAG_THROTTLE,
 ///   GST_LOG_CONTEXT_BUILDER_SET_INTERVAL(60 * GST_SECOND);
 /// );
 /// #define MY_PERIODIC_CONTEXT GST_LOG_CONTEXT_LAZY_INIT(my_periodic_context)
-/// </para>
-/// <para>
+///
 /// // Then in code:
 /// GST_CTX_INFO(MY_PERIODIC_CONTEXT, "This appears once per minute");
-/// ```
+/// </code>
 /// </para>
 /// <para>## Customizing Message hash with custom flags and category</para>
 /// <para>
@@ -47,18 +45,17 @@ namespace Gst;
 /// and format string. You can customize this with builder operations:
 /// </para>
 /// <para>
-/// ``` c
+/// <code>
 /// // Ignore the object pointer when determining message hash (with throttling)
 /// GST_LOG_CONTEXT_STATIC_DEFINE(obj_independent_ctx, GST_LOG_CONTEXT_FLAG_THROTTLE,
 ///   GST_LOG_CONTEXT_BUILDER_SET_HASH_FLAGS(GST_LOG_CONTEXT_IGNORE_OBJECT);
 /// );
-/// </para>
-/// <para>
+///
 /// // Use a custom category (without throttling)
 /// GST_LOG_CONTEXT_STATIC_DEFINE(custom_cat_ctx, GST_LOG_CONTEXT_FLAG_NONE,
 ///   GST_LOG_CONTEXT_BUILDER_SET_CATEGORY(my_category);
 /// );
-/// ```
+/// </code>
 /// </para>
 /// <para>Available since GStreamer 1.28.</para>
 /// </remarks>

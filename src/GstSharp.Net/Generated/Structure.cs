@@ -55,9 +55,9 @@ namespace Gst;
 /// `key=value`, for example:
 /// </para>
 /// <para>
-/// ```
+/// <code>
 /// a-structure, key=value
-/// ````
+/// </code>
 /// </para>
 /// <para>
 /// The values type will be inferred if not explicitly specified with the
@@ -65,9 +65,9 @@ namespace Gst;
 /// field called 'is-string' which has the string 'true' as a value:
 /// </para>
 /// <para>
-/// ```
+/// <code>
 /// a-struct, field-is-string=(string)true, field-is-boolean=true
-/// ```
+/// </code>
 /// </para>
 /// <para>
 /// *Note*: without specifying `(string), `field-is-string` type would have been
@@ -114,24 +114,24 @@ namespace Gst;
 /// characters inside them, for example:
 /// </para>
 /// <para>
-/// ```
+/// <code>
 /// a-struct, special="\"{[(;)]}\" can be used inside quotes"
-/// ```
+/// </code>
 /// </para>
 /// <para>They also allow for nested structure, such as:</para>
 /// <para>
-/// ```
+/// <code>
 /// a-struct, nested=(GstStructure)"nested-struct, nested=true"
-/// ```
+/// </code>
 /// </para>
 /// <para>
 /// Since 1.20, nested structures and caps can be specified using brackets (`[`
 /// and `]`), for example:
 /// </para>
 /// <para>
-/// ```
+/// <code>
 /// a-struct, nested=[nested-struct, nested=true]
-/// ```
+/// </code>
 /// </para>
 /// <para>
 /// &gt; *note*: gst_structure_to_string() won't use that syntax for backward

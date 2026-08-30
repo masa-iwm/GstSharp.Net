@@ -432,9 +432,9 @@ public abstract unsafe partial class Clock : Gst.Object
     /// follows:
     /// </para>
     /// <para>
-    /// ``` C
+    /// <code>
     ///   time = (internal_time - internal) * rate_num / rate_denom + external
-    /// ```
+    /// </code>
     /// </para>
     /// <para>
     /// This formula is implemented in gst_clock_adjust_unlocked(). Of course, it

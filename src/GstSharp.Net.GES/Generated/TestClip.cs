@@ -16,9 +16,11 @@ namespace GES;
 /// size can be overridden using an ID of the form:
 /// </para>
 /// <para>
-/// ```
+/// <code>
 /// framerate=60/1, width=1920, height=1080, max-duration=5.0
-/// ```
+/// </code>
+/// </para>
+/// <para>
 /// Note: `max-duration` can be provided in seconds as float, or as GstClockTime
 /// as guint64 or gint.
 /// </para>

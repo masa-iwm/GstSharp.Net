@@ -277,13 +277,13 @@ public enum CapsFlags
 /// by iterating on the caps' structures as the following matrix shows:
 /// </para>
 /// <para>
-/// ```
+/// <code>
 ///          caps1
 ///       +-------------
 ///       | 1  2  4  7
 /// caps2 | 3  5  8 10
 ///       | 6  9 11 12
-/// ```
+/// </code>
 /// </para>
 /// <para>
 /// Used when there is no explicit precedence of one caps over the other. e.g.

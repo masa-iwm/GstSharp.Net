@@ -15,9 +15,9 @@ namespace GES;
 /// <remarks>
 /// <para>The asset ID of an effect clip is in the form:</para>
 /// <para>
-/// ```
+/// <code>
 ///   "audio ! bin ! description || video ! bin ! description"
-/// ```
+/// </code>
 /// </para>
 /// </remarks>
 public unsafe partial class EffectClip : GES.BaseEffectClip, GES.IExtractable, GES.IMetaContainer

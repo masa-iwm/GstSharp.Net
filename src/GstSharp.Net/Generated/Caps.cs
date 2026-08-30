@@ -25,7 +25,7 @@ namespace Gst;
 /// </para>
 /// <para>A #GstCaps can be constructed with the following code fragment:</para>
 /// <para>
-/// ``` C
+/// <code>
 ///   GstCaps *caps = gst_caps_new_simple ("video/x-raw",
 ///      "format", G_TYPE_STRING, "I420",
 ///      "framerate", GST_TYPE_FRACTION, 25, 1,
@@ -33,7 +33,7 @@ namespace Gst;
 ///      "width", G_TYPE_INT, 320,
 ///      "height", G_TYPE_INT, 240,
 ///      NULL);
-/// ```
+/// </code>
 /// </para>
 /// <para>
 /// A #GstCaps is fixed when it has no fields with ranges or lists. Use
@@ -829,9 +829,9 @@ public sealed unsafe partial class Caps : Gst.MiniObject
     /// <remarks>
     /// <para>For debugging purposes its easier to do something like this:</para>
     /// <para>
-    /// ``` C
+    /// <code>
     /// GST_LOG ("caps are %" GST_PTR_FORMAT, caps);
-    /// ```
+    /// </code>
     /// </para>
     /// <para>This prints the caps in human readable form.</para>
     /// <para>

@@ -147,7 +147,7 @@ namespace GES;
 /// following.
 /// </para>
 /// <para>
-/// ```c
+/// <code>
 /// void
 /// do_time_effect_change (GESClip * clip)
 /// {
@@ -156,58 +156,49 @@ namespace GES;
 ///   GstClockTime source_outpoint;
 ///   GstClockTime new_end;
 ///   GError *error = NULL;
-/// </para>
-/// <para>
+///
 ///   // choose some active source in a track to preserve the internal
 ///   // duration of
 ///   source = ges_clip_get_track_element (clip, NULL, GES_TYPE_SOURCE);
-/// </para>
-/// <para>
+///
 ///   // note its current internal end time
 ///   source_outpoint = ges_clip_get_internal_time_from_timeline_time (
 ///         clip, source, GES_TIMELINE_ELEMENT_END (clip), NULL);
-/// </para>
-/// <para>  // handle invalid out-point</para>
-/// <para>
+///
+///   // handle invalid out-point
+///
 ///   // stop the children's control sources from clamping when their
 ///   // out-point changes with a change in the time effects
 ///   children = ges_container_get_children (GES_CONTAINER (clip), FALSE);
-/// </para>
-/// <para>
+///
 ///   for (tmp = children; tmp; tmp = tmp-&gt;next)
 ///     ges_track_element_set_auto_clamp_control_sources (tmp-&gt;data, FALSE);
-/// </para>
-/// <para>
+///
 ///   // add time effect, or set their children properties, or move them around
 ///   ...
 ///   // user can make sure that if a time effect changes one source, we should
 ///   // also change the time effect for another source. E.g. if
 ///   // "GstVideorate::rate" is set to 2.0, we also set "GstPitch::rate" to
 ///   // 2.0
-/// </para>
-/// <para>
+///
 ///   // Note the duration of the clip may have already changed if the
 ///   // duration-limit of the clip dropped below its current value
-/// </para>
-/// <para>
+///
 ///   new_end = ges_clip_get_timeline_time_from_internal_time (
 ///         clip, source, source_outpoint, &amp;error);
 ///   // handle error
-/// </para>
-/// <para>
+///
 ///   if (!ges_timeline_elemnet_edit_full (GES_TIMELINE_ELEMENT (clip),
 ///         -1, GES_EDIT_MODE_TRIM, GES_EDGE_END, new_end, &amp;error))
 ///     // handle error
-/// </para>
-/// <para>
+///
 ///   for (tmp = children; tmp; tmp = tmp-&gt;next)
 ///     ges_track_element_set_auto_clamp_control_sources (tmp-&gt;data, TRUE);
-/// </para>
-/// <para>
+///
 ///   g_list_free_full (children, gst_object_unref);
 ///   gst_object_unref (source);
 /// }
-/// ```
+/// </code>
 /// </para>
 /// </remarks>
 public abstract unsafe partial class Clip : GES.Container, GES.IExtractable, GES.IMetaContainer

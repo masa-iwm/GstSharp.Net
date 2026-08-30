@@ -24,19 +24,17 @@ namespace GES;
 /// using ges_asset_request().
 /// </para>
 /// <para>
-/// ``` c
+/// <code>
 /// GESAsset *effect_asset;
 /// GESEffect *effect;
-/// </para>
-/// <para>
+///
 /// // You create an asset for an effect
 /// effect_asset = ges_asset_request (GES_TYPE_EFFECT, "agingtv", NULL);
-/// </para>
-/// <para>
+///
 /// // And now you can extract an instance of GESEffect from that asset
 /// effect = GES_EFFECT (ges_asset_extract (effect_asset));
+/// </code>
 /// </para>
-/// <para>```</para>
 /// <para>
 /// The advantage of using assets, rather than simply creating the object
 /// directly, is that the currently loaded resources can be listed with

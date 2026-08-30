@@ -235,9 +235,9 @@ public static unsafe partial class Global
     /// </summary>
     /// <remarks>
     /// <para>
-    /// ``` shell
+    /// <code>
     ///  dot -Tpng -oimage.png graph_lowlevel.dot
-    /// ```
+    /// </code>
     /// </para>
     /// </remarks>
     /// <param name="bin">The <c>bin</c> argument.</param>

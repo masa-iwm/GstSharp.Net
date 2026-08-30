@@ -273,9 +273,9 @@ public sealed unsafe partial class CapsFeatures : Gst.GObject.Boxed
     /// <remarks>
     /// <para>For debugging purposes its easier to do something like this:</para>
     /// <para>
-    /// ``` C
+    /// <code>
     /// GST_LOG ("features is %" GST_PTR_FORMAT, features);
-    /// ```
+    /// </code>
     /// </para>
     /// <para>This prints the features in human readable form.</para>
     /// </remarks>

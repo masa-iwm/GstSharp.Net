@@ -248,18 +248,18 @@ public unsafe partial class EncodingProfile : Gst.GObject.Object
     /// <remarks>
     /// <para>**Set properties generically**</para>
     /// <para>
-    /// ``` properties
+    /// <code>
     ///  [element-properties, boolean-prop=true, string-prop="hi"]
-    /// ```
+    /// </code>
     /// </para>
     /// <para>**Mapping properties with well known element factories**</para>
     /// <para>
-    /// ``` properties
+    /// <code>
     /// element-properties-map, map = {
     ///      [openh264enc, gop-size=32, ],
     ///      [x264enc, key-int-max=32, tune=zerolatency],
     ///  }
-    /// ```
+    /// </code>
     /// </para>
     /// <para>
     /// The <c>elementProperties</c> parameter is <c>transfer-ownership="full"</c>: the call is
@@ -344,7 +344,7 @@ public unsafe partial class EncodingProfile : Gst.GObject.Object
     /// </summary>
     /// <remarks>
     /// <para>
-    /// ``` bash
+    /// <code>
     /// $ gst-inspect-1.0 x264enc
     /// ...
     /// Presets:
@@ -356,9 +356,9 @@ public unsafe partial class EncodingProfile : Gst.GObject.Object
     ///  "Quality Low": Low quality
     ///  "Quality Normal": Normal quality
     ///  "Zero Latency"
-    /// ```
-    ///  }
+    /// </code>
     /// </para>
+    /// <para> }</para>
     /// </remarks>
     /// <param name="preset">The <c>preset</c> argument.</param>
     public void SetPreset(string? preset)

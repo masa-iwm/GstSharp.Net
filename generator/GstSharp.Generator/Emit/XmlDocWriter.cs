@@ -10,8 +10,11 @@ namespace GstSharp.Generator.Emit;
 /// </summary>
 /// <remarks>
 /// The conversion stays deliberately small: gtk-doc markup is not translated,
-/// the text is only XML escaped and split into a summary and remarks. Every
-/// emitted member gets a summary, because the shipping projects compile with
+/// the text is only XML escaped and split into a summary and remarks. The one
+/// exception is the fenced code block, which is kept whole and written as
+/// <c>&lt;code&gt;</c>, because splitting it on its blank lines turned a
+/// sample program into unreadable prose. Every emitted member gets a summary,
+/// because the shipping projects compile with
 /// <c>GenerateDocumentationFile</c> and warnings as errors.
 /// </remarks>
 internal static class XmlDocWriter
@@ -48,7 +51,7 @@ internal static class XmlDocWriter
         IReadOnlyList<string>? remarksNote = null)
     {
         string? since = Availability.SinceVersion(availability);
-        IReadOnlyList<IReadOnlyList<string>> paragraphs = SplitParagraphs(doc);
+        IReadOnlyList<DocUnit> paragraphs = SplitParagraphs(doc);
         if (paragraphs.Count == 0)
         {
             writer.WriteLine("/// <summary>" + fallbackSummary + "</summary>");
@@ -71,13 +74,32 @@ internal static class XmlDocWriter
             return;
         }
 
-        WriteSummary(writer, paragraphs[0]);
+        // A fenced code block never leads the summary: a summary that opens
+        // with a line of C is unreadable in every tool that shows one. The
+        // first paragraph that is not a fence becomes the summary and the
+        // fences ahead of it move into the remarks, which leaves the document
+        // order of everything else alone. A documentation that is nothing but
+        // a fence has no prose to promote, so there the fence stays.
+        int summary = 0;
+        for (int i = 0; i < paragraphs.Count; i++)
+        {
+            if (!paragraphs[i].IsFence)
+            {
+                summary = i;
+                break;
+            }
+        }
+
+        WriteSummary(writer, paragraphs[summary]);
         if (paragraphs.Count > 1 || remarksNote is not null || since is not null)
         {
             writer.WriteLine("/// <remarks>");
-            for (int i = 1; i < paragraphs.Count; i++)
+            for (int i = 0; i < paragraphs.Count; i++)
             {
-                WriteParagraph(writer, paragraphs[i]);
+                if (i != summary)
+                {
+                    WriteParagraph(writer, paragraphs[i]);
+                }
             }
 
             if (remarksNote is not null)
@@ -234,7 +256,7 @@ internal static class XmlDocWriter
         string fallback,
         IReadOnlyList<string>? note = null)
     {
-        IReadOnlyList<IReadOnlyList<string>> paragraphs = SplitParagraphs(doc);
+        IReadOnlyList<DocUnit> paragraphs = SplitParagraphs(doc);
         if (paragraphs.Count == 0)
         {
             if (note is null)
@@ -251,19 +273,17 @@ internal static class XmlDocWriter
         }
 
         // Only the first paragraph is kept: a parameter description has no
-        // place for the <para> elements that the summary uses.
-        IReadOnlyList<string> first = paragraphs[0];
-        if (note is null && first.Count == 1 && first[0].Length <= InlineLimit)
+        // place for the <para> elements that the summary uses. A fence there
+        // is written as the code it is, in the one element this writes.
+        DocUnit first = paragraphs[0];
+        if (note is null && !first.IsFence && first.Lines.Count == 1 && first.Lines[0].Length <= InlineLimit)
         {
-            writer.WriteLine("/// <" + openTag + ">" + Escape(first[0]) + "</" + closeTag + ">");
+            writer.WriteLine("/// <" + openTag + ">" + Escape(first.Lines[0]) + "</" + closeTag + ">");
             return;
         }
 
         writer.WriteLine("/// <" + openTag + ">");
-        foreach (string line in first)
-        {
-            WriteTextLine(writer, line);
-        }
+        WriteUnit(writer, first);
 
         if (note is not null)
         {
@@ -294,44 +314,80 @@ internal static class XmlDocWriter
         }
     }
 
-    private static void WriteSummary(CodeWriter writer, IReadOnlyList<string> paragraph)
+    private static void WriteSummary(CodeWriter writer, DocUnit paragraph)
     {
-        if (paragraph.Count == 1 && paragraph[0].Length <= InlineLimit)
+        if (!paragraph.IsFence && paragraph.Lines.Count == 1 && paragraph.Lines[0].Length <= InlineLimit)
         {
-            writer.WriteLine("/// <summary>" + Escape(paragraph[0]) + "</summary>");
+            writer.WriteLine("/// <summary>" + Escape(paragraph.Lines[0]) + "</summary>");
             return;
         }
 
         writer.WriteLine("/// <summary>");
-        foreach (string line in paragraph)
-        {
-            WriteTextLine(writer, line);
-        }
-
+        WriteUnit(writer, paragraph);
         writer.WriteLine("/// </summary>");
     }
 
-    private static void WriteParagraph(CodeWriter writer, IReadOnlyList<string> paragraph)
+    private static void WriteParagraph(CodeWriter writer, DocUnit paragraph)
     {
-        if (paragraph.Count == 1 && paragraph[0].Length <= InlineLimit)
+        if (!paragraph.IsFence && paragraph.Lines.Count == 1 && paragraph.Lines[0].Length <= InlineLimit)
         {
-            writer.WriteLine("/// <para>" + Escape(paragraph[0]) + "</para>");
+            writer.WriteLine("/// <para>" + Escape(paragraph.Lines[0]) + "</para>");
             return;
         }
 
         writer.WriteLine("/// <para>");
-        foreach (string line in paragraph)
+        WriteUnit(writer, paragraph);
+        writer.WriteLine("/// </para>");
+    }
+
+    /// <summary>
+    /// Writes the lines of one unit, wrapped in <c>&lt;code&gt;</c> when the
+    /// unit is a fenced block.
+    /// </summary>
+    /// <param name="writer">The target writer.</param>
+    /// <param name="unit">The unit to write.</param>
+    /// <remarks>
+    /// The fence lines themselves are gone by now; what is left is the sample
+    /// as the gir wrote it, indentation and blank lines included, so that it
+    /// can be read and copied. Only the characters that are special in XML are
+    /// translated.
+    /// </remarks>
+    private static void WriteUnit(CodeWriter writer, DocUnit unit)
+    {
+        if (unit.IsFence)
+        {
+            writer.WriteLine("/// <code>");
+        }
+
+        foreach (string line in unit.Lines)
         {
             WriteTextLine(writer, line);
         }
 
-        writer.WriteLine("/// </para>");
+        if (unit.IsFence)
+        {
+            writer.WriteLine("/// </code>");
+        }
     }
 
     private static void WriteTextLine(CodeWriter writer, string line) =>
         writer.WriteLine(line.Length == 0 ? "///" : "/// " + Escape(line));
 
-    private static IReadOnlyList<IReadOnlyList<string>> SplitParagraphs(string? doc)
+    /// <summary>
+    /// Splits gir documentation into the units that a summary and remarks are
+    /// built from: a paragraph of prose, or one fenced code block.
+    /// </summary>
+    /// <param name="doc">The gir documentation, if any.</param>
+    /// <returns>The units, in the order the documentation wrote them.</returns>
+    /// <remarks>
+    /// Prose is split on blank lines. A fenced block is not: its blank lines
+    /// belong to the sample, so it is read from its opening fence to its
+    /// closing one as a single unit and both fence lines are dropped. An
+    /// opening fence that is never closed takes the rest of the text with it,
+    /// and a fence whose body is blank contributes no unit at all. The blank
+    /// lines around the sample are dropped, the ones inside it are kept.
+    /// </remarks>
+    private static IReadOnlyList<DocUnit> SplitParagraphs(string? doc)
     {
         if (string.IsNullOrWhiteSpace(doc))
         {
@@ -341,16 +397,53 @@ internal static class XmlDocWriter
         string normalized = doc.Replace("\r\n", "\n", StringComparison.Ordinal)
             .Replace('\r', '\n');
 
-        List<IReadOnlyList<string>> paragraphs = [];
+        string[] lines = normalized.Split('\n');
+        List<DocUnit> paragraphs = [];
         List<string> current = [];
-        foreach (string rawLine in normalized.Split('\n'))
+        for (int i = 0; i < lines.Length; i++)
         {
-            string line = rawLine.TrimEnd();
+            string line = lines[i].TrimEnd();
+            if (IsFenceLine(line))
+            {
+                if (current.Count > 0)
+                {
+                    paragraphs.Add(new DocUnit(current, IsFence: false));
+                    current = [];
+                }
+
+                List<string> block = [];
+                int j = i + 1;
+                for (; j < lines.Length && !IsFenceLine(lines[j].TrimEnd()); j++)
+                {
+                    block.Add(lines[j].TrimEnd());
+                }
+
+                // A blank line above or below the sample is the space the
+                // author left around the fence, not part of the sample.
+                while (block.Count > 0 && block[0].Length == 0)
+                {
+                    block.RemoveAt(0);
+                }
+
+                while (block.Count > 0 && block[^1].Length == 0)
+                {
+                    block.RemoveAt(block.Count - 1);
+                }
+
+                if (block.Count > 0)
+                {
+                    paragraphs.Add(new DocUnit(block, IsFence: true));
+                }
+
+                i = j;
+                continue;
+            }
+
             if (line.Length == 0)
             {
                 if (current.Count > 0)
                 {
-                    paragraphs.Add(current);
+                    paragraphs.Add(new DocUnit(current, IsFence: false));
                     current = [];
                 }
 
@@ -362,9 +455,32 @@ internal static class XmlDocWriter
 
         if (current.Count > 0)
         {
-            paragraphs.Add(current);
+            paragraphs.Add(new DocUnit(current, IsFence: false));
         }
 
         return paragraphs;
     }
+
+    /// <summary>Tests whether a line opens or closes a fenced code block.</summary>
+    /// <param name="line">The line, already trimmed of its trailing space.</param>
+    /// <returns><see langword="true"/> when the line is a fence.</returns>
+    /// <remarks>
+    /// Only a line that starts with the fence counts. Three backticks in the
+    /// middle of a sentence are the inline markup for a backtick, which
+    /// <c>g_shell_unquote</c> uses while describing shell quoting, and reading
+    /// that as a fence would swallow the rest of the documentation.
+    /// </remarks>
+    private static bool IsFenceLine(string line) =>
+        line.TrimStart().StartsWith("```", StringComparison.Ordinal);
+
+    /// <summary>
+    /// One unit of gir documentation: a paragraph of prose, or the body of a
+    /// fenced code block without its fence lines.
+    /// </summary>
+    /// <param name="Lines">The lines of the unit.</param>
+    /// <param name="IsFence">
+    /// <see langword="true"/> when the lines are a code sample, which is
+    /// written as <c>&lt;code&gt;</c> and never split.
+    /// </param>
+    private sealed record DocUnit(IReadOnlyList<string> Lines, bool IsFence);
 }
