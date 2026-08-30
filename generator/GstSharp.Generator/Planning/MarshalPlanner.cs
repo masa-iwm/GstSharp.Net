@@ -302,6 +302,14 @@ internal sealed class MarshalPlanner
     private readonly HashSet<string> _consumedArrayOverrides;
 
     /// <summary>
+    /// The keys of the annotation corrections this run has read. Like
+    /// <see cref="_consumedArrayOverrides"/> it belongs to the run rather than
+    /// to the overlays, and it is written by <see cref="AnnotationOverrideFor"/>
+    /// alone: a lookup that found no entry is not a use of one.
+    /// </summary>
+    private readonly HashSet<string> _consumedAnnotationOverrides;
+
+    /// <summary>
     /// The callback uses the callable that is being planned has claimed, and
     /// the scope each of them claimed it under. Claiming a use decides how the
     /// shared trampoline of the callback type ends, so it is only written to
@@ -333,6 +341,10 @@ internal sealed class MarshalPlanner
     /// across its modules, because the planner is built per module and the
     /// stale entries are reported once for the whole run.
     /// </param>
+    /// <param name="consumedAnnotationOverrides">
+    /// The set the annotation corrections that were read are recorded in,
+    /// shared across the modules of a run for the same reason.
+    /// </param>
     internal MarshalPlanner(
         Repository repository,
         Classifier classifier,
@@ -341,7 +353,8 @@ internal sealed class MarshalPlanner
         Overlays overlays,
         SkipRules skipRules,
         DiagnosticBag diagnostics,
-        HashSet<string>? consumedArrayOverrides = null)
+        HashSet<string>? consumedArrayOverrides = null,
+        HashSet<string>? consumedAnnotationOverrides = null)
     {
         _repository = repository;
         _classifier = classifier;
@@ -351,6 +364,8 @@ internal sealed class MarshalPlanner
         _skipRules = skipRules;
         _diagnostics = diagnostics;
         _consumedArrayOverrides = consumedArrayOverrides ?? new HashSet<string>(StringComparer.Ordinal);
+        _consumedAnnotationOverrides =
+            consumedAnnotationOverrides ?? new HashSet<string>(StringComparer.Ordinal);
     }
 
     /// <summary>
@@ -1021,13 +1036,33 @@ internal sealed class MarshalPlanner
     private static string? AnnotationKeyOf(GirCallable callable) =>
         callable.CIdentifier ?? (callable as GirCallback)?.CType;
 
+    /// <summary>Reads one annotation correction and records that it was read.</summary>
+    /// <param name="key">The key to look up.</param>
+    /// <returns>The correction, or <see langword="null"/>.</returns>
+    /// <remarks>
+    /// Every lookup of an annotation correction goes through here, so that a
+    /// key which never answers one can be reported as stale. Only a lookup
+    /// that found an entry counts as a use: a key that matches nothing is
+    /// exactly the case this records.
+    /// </remarks>
+    private AnnotationOverride? AnnotationOverrideFor(string key)
+    {
+        AnnotationOverride? correction = _overlays.GetAnnotationOverride(key);
+        if (correction is not null)
+        {
+            _consumedAnnotationOverrides.Add(key);
+        }
+
+        return correction;
+    }
+
     /// <summary>Reads the annotation correction of one parameter, if there is one.</summary>
     /// <param name="callable">The callable being planned.</param>
     /// <param name="parameter">The parameter to look up.</param>
     /// <returns>The correction, or <see langword="null"/>.</returns>
     private AnnotationOverride? OverrideOf(GirCallable callable, GirParameter parameter) =>
         AnnotationKeyOf(callable) is { } identifier
-            ? _overlays.GetAnnotationOverride(identifier + "#" + parameter.Name)
+            ? AnnotationOverrideFor(identifier + "#" + parameter.Name)
             : null;
 
     /// <summary>Reads the array correction of one parameter, if there is one.</summary>
@@ -1114,7 +1149,7 @@ internal sealed class MarshalPlanner
     private GirTransfer TransferOf(GirCallable callable)
     {
         AnnotationOverride? overlay = AnnotationKeyOf(callable) is { } identifier
-            ? _overlays.GetAnnotationOverride(identifier + "#return")
+            ? AnnotationOverrideFor(identifier + "#return")
             : null;
 
         return ParseTransfer(overlay?.Transfer) ?? callable.ReturnValue.Transfer;
@@ -1178,7 +1213,7 @@ internal sealed class MarshalPlanner
     private bool NullableOf(GirCallable callable)
     {
         AnnotationOverride? overlay = AnnotationKeyOf(callable) is { } identifier
-            ? _overlays.GetAnnotationOverride(identifier + "#return")
+            ? AnnotationOverrideFor(identifier + "#return")
             : null;
 
         return overlay?.Nullable ?? callable.ReturnValue.IsNullable;
@@ -1201,7 +1236,7 @@ internal sealed class MarshalPlanner
     /// </remarks>
     private bool DiscardsReturn(GirCallable callable) =>
         AnnotationKeyOf(callable) is { } identifier
-        && _overlays.GetAnnotationOverride(identifier + "#return")?.DiscardReturn == true;
+        && AnnotationOverrideFor(identifier + "#return")?.DiscardReturn == true;
 
     private static GirTransfer? ParseTransfer(string? value) => value switch
     {
@@ -3165,7 +3200,8 @@ internal sealed class MarshalPlanner
     /// an annotation override describes something a signal argument does not
     /// have - a direction, an array, a callback scope, a discardable return -
     /// so a key that carries one of those is read for its nullable flag and
-    /// otherwise ignored. An unmatched key is silent, as it is for a callable.
+    /// otherwise ignored. A key that matches nothing is reported as GEN0024,
+    /// as it is for a callable.
     /// </remarks>
     private ArgumentPlan? PlanSignalArgument(GirParameter parameter, PlanningContext context, string signalKey)
     {
@@ -3179,7 +3215,7 @@ internal sealed class MarshalPlanner
 
         string name = NameMapper.ParameterName(parameter.Name);
         MappedType mapped = _types.Map(parameter.Type, context.Namespace);
-        bool nullable = _overlays.GetAnnotationOverride(signalKey + "#" + parameter.Name)?.Nullable
+        bool nullable = AnnotationOverrideFor(signalKey + "#" + parameter.Name)?.Nullable
             ?? parameter.IsNullable;
 
         // A notify style signal hands the handler the GParamSpec of the

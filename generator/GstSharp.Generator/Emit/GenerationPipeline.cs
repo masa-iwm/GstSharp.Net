@@ -87,6 +87,7 @@ internal static class GenerationPipeline
         // was applied belongs here. The overlays themselves stay immutable:
         // Overlays.Empty is shared by every fixture of the test suite.
         HashSet<string> consumedArrayOverrides = new(StringComparer.Ordinal);
+        HashSet<string> consumedAnnotationOverrides = new(StringComparer.Ordinal);
 
         List<GeneratedFile> files = [];
         foreach (ModuleInfo module in ModuleMap.Modules)
@@ -117,7 +118,8 @@ internal static class GenerationPipeline
                     diagnostics,
                     enumEmitter,
                     inherited,
-                    consumedArrayOverrides),
+                    consumedArrayOverrides,
+                    consumedAnnotationOverrides),
                 module,
                 ns));
         }
@@ -141,6 +143,29 @@ internal static class GenerationPipeline
             diagnostics.Warn(
                 "GEN0020",
                 $"The array override '{key}' matched no array parameter or return value; the entry is stale.");
+        }
+
+        // An annotation correction is read wherever the planner asks for one,
+        // so a key that was never read matched no callable, no parameter and
+        // no signal argument of this run. Silently ignoring it is what lets
+        // the overlays describe a gir that has moved on, which the corrections
+        // of an array are already protected from.
+        List<string> staleAnnotations = [];
+        foreach (string key in overlays.AnnotationOverrideKeys)
+        {
+            if (!consumedAnnotationOverrides.Contains(key))
+            {
+                staleAnnotations.Add(key);
+            }
+        }
+
+        staleAnnotations.Sort(StringComparer.Ordinal);
+        foreach (string key in staleAnnotations)
+        {
+            diagnostics.Warn(
+                "GEN0024",
+                $"The annotation override '{key}' matched no callable, parameter or signal argument; "
+                + "the entry is stale.");
         }
 
         // A hand bound entry the run never saw skipped names a symbol that is
@@ -186,7 +211,8 @@ internal static class GenerationPipeline
             shared.Overlays,
             shared.SkipRules,
             shared.Diagnostics,
-            shared.ConsumedArrayOverrides);
+            shared.ConsumedArrayOverrides,
+            shared.ConsumedAnnotationOverrides);
 
         SurfaceBuilder surfaces = new(planner, shared.Names, shared.Types, shared.Census, shared.Diagnostics);
         List<RegistryEntry> registry = [];
@@ -270,6 +296,10 @@ internal static class GenerationPipeline
     /// The keys of the array corrections the run has applied, shared by every
     /// module so that the stale ones can be reported once.
     /// </param>
+    /// <param name="ConsumedAnnotationOverrides">
+    /// The keys of the annotation corrections the run has read, shared for the
+    /// same reason.
+    /// </param>
     private sealed record ModuleEmitters(
         Repository Repository,
         Classifier Classifier,
@@ -281,5 +311,6 @@ internal static class GenerationPipeline
         DiagnosticBag Diagnostics,
         EnumEmitter Enums,
         Dictionary<string, List<string>> Inherited,
-        HashSet<string> ConsumedArrayOverrides);
+        HashSet<string> ConsumedArrayOverrides,
+        HashSet<string> ConsumedAnnotationOverrides);
 }

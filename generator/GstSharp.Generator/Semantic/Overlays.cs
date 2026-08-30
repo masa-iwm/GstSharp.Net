@@ -252,6 +252,12 @@ internal sealed class Overlays
     internal IReadOnlyCollection<string> OpaqueRecords => _forceOpaque;
 
     /// <summary>
+    /// Gets the keys of every declared annotation correction, so that a run
+    /// can report the ones no callable, parameter or signal argument matched.
+    /// </summary>
+    internal IReadOnlyCollection<string> AnnotationOverrideKeys => _annotations.Keys;
+
+    /// <summary>
     /// Gets the keys of every declared array correction, so that a run can
     /// report the ones no array matched.
     /// </summary>
