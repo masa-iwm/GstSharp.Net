@@ -675,20 +675,17 @@ public sealed class ClassEmitterTests
     /// binding that used to be emitted and corrupt memory.
     /// </summary>
     /// <param name="module">The gir namespace to read.</param>
-    /// <param name="overlaySkip">Callables that fixups.json lists. The five of
-    /// GstRtsp count gst_rtsp_range_parse and gst_rtsp_range_free twice each,
-    /// because both exist as a function of the record and as a namespace level
-    /// function that used to be counted under MovedTo; the overlay skip is
-    /// tested before the move, so skip-report.md lists the two identifiers
-    /// once and this census counts both of their declarations. Gst counts
-    /// gst_meta_api_type_aggregate_params and
-    /// gst_meta_api_type_set_params_aggregator twice for the same reason, which
-    /// is why the four Gst identifiers the metadata attachment cluster added
-    /// raise this count by six while the report string rises by four.
-    /// gst_meta_register_custom is the third of that shape and raises the count
-    /// by two while the report string rises by one, and it leaves the MovedTo
-    /// count one lower than it was, because the namespace level declaration
-    /// used to be counted there.</param>
+    /// <param name="overlaySkip">Callables that fixups.json lists and the hand
+    /// bound ledger does not claim. Every count of this theory is of gir
+    /// declarations rather than of identifiers, so a function the gir declares
+    /// twice - once inside the record it belongs to and once at namespace
+    /// level, where it used to be counted under MovedTo - is counted twice
+    /// here while skip-report.md lists it once. gst_rtsp_range_parse,
+    /// gst_rtsp_range_free, gst_meta_api_type_set_params_aggregator and
+    /// gst_meta_register_custom are of that shape, which is why these numbers
+    /// run above the counts of the report; the same holds for the hand bound
+    /// ones, where gst_meta_api_type_aggregate_params and
+    /// gst_rtsp_transport_parse are declared twice.</param>
     /// <param name="callerAllocates">Callables with unusable caller allocated storage.</param>
     /// <param name="lifetime">Callables that release or reference their instance.</param>
     /// <param name="instanceTransfer">Callables that consume their instance and replace it.</param>
