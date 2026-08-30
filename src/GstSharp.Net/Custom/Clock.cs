@@ -60,20 +60,28 @@ public abstract unsafe partial class Clock
     /// core or from a streaming thread. The application should be prepared for this.
     /// </para>
     /// <para>
-    /// <b>A result other than <see cref="Gst.ClockReturn.Ok"/> releases the
-    /// state of the callback here.</b> <c>gst_clock_id_wait_async</c> assigns
-    /// the callback, its state and the destroy notification onto the entry
-    /// immediately before it dispatches to the clock, and every other exit is
-    /// taken before that assignment: <see cref="Gst.ClockReturn.Error"/> when
-    /// the entry lost its clock, <see cref="Gst.ClockReturn.Unsupported"/> when
-    /// the clock cannot wait asynchronously, and
+    /// <b>A refusal that the entry never saw releases the state of the callback
+    /// here.</b> <c>gst_clock_id_wait_async</c> assigns the callback, its state
+    /// and the destroy notification onto the entry immediately before it
+    /// dispatches to the clock, so the exits in front of that assignment are the
+    /// ones nothing native releases the state on:
     /// <see cref="Gst.ClockReturn.Badtime"/> when the time of the entry is
     /// invalid, which runs the callback once and returns without ever having
-    /// seen the destroy notification. Nothing native releases the state on
-    /// those three, so this member does, and the callback is then no longer
-    /// reachable from native code either. On
-    /// <see cref="Gst.ClockReturn.Ok"/> the entry owns the state and releases
-    /// it when it expires, is unscheduled or is released.
+    /// seen the destroy notification, <see cref="Gst.ClockReturn.Unsupported"/>
+    /// when the clock cannot wait asynchronously, and
+    /// <see cref="Gst.ClockReturn.Error"/> when the entry lost its clock. This
+    /// member releases the state on those, and the callback is then no longer
+    /// reachable from native code either. Every result of the dispatch itself
+    /// leaves the state with the entry, which releases it when it expires, is
+    /// unscheduled or is released: <see cref="Gst.ClockReturn.Ok"/>, but also
+    /// <see cref="Gst.ClockReturn.Unscheduled"/> for an entry that was
+    /// unscheduled beforehand and <see cref="Gst.ClockReturn.Error"/> for a
+    /// clock that could not start its waiting thread, where a release here would
+    /// be a second one. The two kinds of <see cref="Gst.ClockReturn.Error"/> are
+    /// told apart by the clock of the entry, which this member holds a reference
+    /// to across the call: an entry keeps nothing but a weak reference to its
+    /// clock, so only an entry whose clock is already gone can take the exit in
+    /// front of the assignment.
     /// </para>
     /// </remarks>
     /// <param name="id">The <c>id</c> argument.</param>
@@ -82,10 +90,17 @@ public abstract unsafe partial class Clock
     public static Gst.ClockReturn IdWaitAsync(nint id, Gst.ClockCallback func)
     {
         ArgumentNullException.ThrowIfNull(func);
+
+        // Held across the call so that the weak reference of the entry cannot
+        // be cleared while it runs: with the clock alive, the exit that answers
+        // Error in front of the assignment is out of reach, and an Error is
+        // therefore one the entry has already taken the state over on.
+        using Gst.Clock? clock = Gst.Clock.IdGetClock(id);
         Gst.Interop.CallbackHandle funcState = Gst.Interop.CallbackHandle.Alloc(func);
         int nativeResult = ClockNative.IdWaitAsync(id, Gst.ClockCallbackTrampoline.Pointer, funcState.UserData, (nint)Gst.Interop.CallbackHandle.DestroyNotify);
         Gst.ClockReturn result = (Gst.ClockReturn)nativeResult;
-        if (result != Gst.ClockReturn.Ok)
+        if (result is Gst.ClockReturn.Badtime or Gst.ClockReturn.Unsupported
+            || (result is Gst.ClockReturn.Error && clock is null))
         {
             funcState.Free();
         }

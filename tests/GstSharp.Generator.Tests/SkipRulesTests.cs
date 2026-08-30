@@ -167,12 +167,14 @@ public sealed class SkipRulesTests
         // gst_event_new_select_streams, which is hand bound and is the one call
         // of the family that refuses an empty list. One joined on a leak the
         // generated shape cannot see: gst_clock_id_wait_async only takes the
-        // destroy notification of its callback over on the path that succeeds,
-        // so the hand written Gst.Clock.IdWaitAsync releases the state on every
-        // other one, and gst_meta_register_custom joined it for the same
-        // reason: the C function only takes the state of its transform function
-        // over once the registration is accepted, so the hand written
-        // Gst.Meta.RegisterCustom releases it before it reports a refusal.
+        // destroy notification of its callback over once it has written it onto
+        // the entry, so the hand written Gst.Clock.IdWaitAsync releases the
+        // state on the refusals in front of that and leaves it with the entry on
+        // the ones that come back from the clock, and gst_meta_register_custom
+        // joined it for the same reason: the C function only takes the state of
+        // its transform function over once the registration is accepted, so the
+        // hand written Gst.Meta.RegisterCustom releases it before it reports a
+        // refusal.
         Assert.Equal(
             [
                 "GstBase.BitReader",

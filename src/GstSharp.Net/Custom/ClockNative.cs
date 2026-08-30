@@ -10,10 +10,12 @@ namespace Gst;
 /// <para>
 /// <c>gst_clock_id_wait_async</c> is imported by hand because the member that
 /// stands for it is written by hand: the C function only takes the destroy
-/// notification over on the path that succeeds, so the binding has to release
-/// the state of the callback itself on every other one. See the <c>skip</c>
+/// notification over once it has written it onto the entry, which it does right
+/// before it dispatches to the clock, so the binding has to release the state of
+/// the callback itself on the refusals in front of that. See the <c>skip</c>
 /// list of <c>girs/overlays/fixups.json</c> for the ledger entry and
-/// <see cref="Gst.Clock.IdWaitAsync"/> for what the binding does with it.
+/// <see cref="Gst.Clock.IdWaitAsync"/> for how the binding tells those apart
+/// from the refusals that come back from the clock.
 /// </para>
 /// <para>
 /// The signature is the one of the C function, with the callback and the
@@ -32,8 +34,8 @@ internal static partial class ClockNative
     /// <param name="userData">The state handed to the callback.</param>
     /// <param name="destroyData">
     /// Called when <paramref name="userData"/> is no longer used, which the C
-    /// function only arranges for on the path that returns
-    /// <c>GST_CLOCK_OK</c>.
+    /// function only arranges for once it has reached the clock: the refusals
+    /// it answers before that never store it.
     /// </param>
     /// <returns>The result of the non blocking wait, as a <c>GstClockReturn</c>.</returns>
     [LibraryImport("Gst", EntryPoint = "gst_clock_id_wait_async")]

@@ -14,22 +14,27 @@ namespace GstSharp.IntegrationTests;
 /// <para>
 /// <c>gst_clock_id_wait_async</c> assigns the callback, its state and the
 /// destroy notification onto the clock entry immediately before it dispatches
-/// to the clock, and it returns through three earlier exits without ever having
-/// seen the destroy notification. The binding releases the state itself on all
-/// three, which is what the first test measures; the second measures that it
-/// does <em>not</em> do so when the entry took the state over, because a double
-/// release would be a use after free rather than a leak.
+/// to the clock. Three exits are taken before that assignment and never see the
+/// destroy notification, so the binding releases the state itself on them,
+/// which is what the first test measures. Every return of the dispatch leaves
+/// the state with the entry, whether it succeeded or not, and the binding must
+/// not touch it there, because a second release would be a use after free
+/// rather than a leak. The other two tests measure that, once on the return
+/// that succeeded and once on a return that failed.
 /// </para>
 /// <para>
-/// Of the three failing exits only <c>GST_CLOCK_ERROR</c> is reachable through
-/// the public API. <c>GST_CLOCK_BADTIME</c> needs an entry whose time is
-/// invalid, and both <c>gst_clock_new_single_shot_id</c> and
+/// Of the three exits before the assignment only <c>GST_CLOCK_ERROR</c> is
+/// reachable through the public API. <c>GST_CLOCK_BADTIME</c> needs an entry
+/// whose time is invalid, and both <c>gst_clock_new_single_shot_id</c> and
 /// <c>gst_clock_single_shot_id_reinit</c> refuse one;
 /// <c>GST_CLOCK_UNSUPPORTED</c> needs a clock class with no <c>wait_async</c>,
 /// and every instantiable clock derives from <c>GstSystemClock</c>, which has
 /// one. <c>GST_CLOCK_ERROR</c> is the exit taken when the entry lost its clock,
 /// and an entry holds nothing but a weak reference to the clock it was made
-/// from, so outliving that clock is all it takes.
+/// from, so outliving that clock is all it takes. That same
+/// <c>GST_CLOCK_ERROR</c> is answered from behind the assignment as well, by a
+/// clock that could not start its waiting thread, which is why the binding
+/// tells the two apart by the clock of the entry rather than by the result.
 /// </para>
 /// </remarks>
 [Collection(GstCollection.Name)]
@@ -111,6 +116,52 @@ public sealed class ClockWaitAsyncTests
         Assert.True(state.IsAlive);
 
         Clock.IdUnschedule(id);
+        Clock.IdUnref(id);
+
+        Assert.True(CollectUntilGone(state), "The entry never released the state of the callback.");
+    }
+
+    /// <summary>
+    /// An entry that was unscheduled before the wait answers
+    /// <see cref="ClockReturn.Unscheduled"/> from behind the assignment, so the
+    /// state stays with the entry and is released when the entry is.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Unscheduling an entry sets its status, which the <c>wait_async</c> of
+    /// the system clock reads after <c>gst_clock_id_wait_async</c> has already
+    /// written the callback, its state and the destroy notification onto it.
+    /// The refusal therefore looks like the two exits in front of the
+    /// assignment from the result alone, and is the opposite of them: releasing
+    /// the state here would free it a second time when the entry is freed.
+    /// </para>
+    /// <para>
+    /// The entry is never added to the list of the clock on this path, so
+    /// nothing takes a reference on it and the release is synchronous with the
+    /// unreference below, unlike the accepted wait above.
+    /// </para>
+    /// </remarks>
+    [Fact]
+    public void AWaitAsyncOnAnUnscheduledEntryLeavesTheStateWithTheEntry()
+    {
+        using NtpClock clock = NtpClock.New("gstsharp-wait-async-unscheduled", "127.0.0.1", 5678, ClockTime.Zero);
+        nint id = clock.NewSingleShotId(
+            ClockTime.FromNanoseconds(clock.GetTime().Nanoseconds + ClockTime.FromSeconds(3600).Nanoseconds));
+
+        Clock.IdUnschedule(id);
+
+        (WeakReference state, ClockReturn result) = WaitAsyncOnALiveClock(id);
+
+        Assert.Equal(ClockReturn.Unscheduled, result);
+
+        // The entry owns the state even though the wait was refused, because
+        // the refusal came from the clock and not from the exits in front of
+        // the assignment.
+        GC.Collect();
+        GC.WaitForPendingFinalizers();
+        GC.Collect();
+        Assert.True(state.IsAlive, "The binding released a state that the entry owns.");
+
         Clock.IdUnref(id);
 
         Assert.True(CollectUntilGone(state), "The entry never released the state of the callback.");
