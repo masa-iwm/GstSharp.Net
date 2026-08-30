@@ -3,18 +3,16 @@ using System.Runtime.InteropServices;
 
 namespace Gst;
 
+// The delegate and its trampoline are written by hand for one reason only:
+// gst_clock_id_wait_async is the sole consumer of the callback in the gir and
+// it is on the skip list, so the generator emits neither any more. Both are
+// copies of what it emitted, down to the documentation, so that the public
+// surface of 1.28 is unchanged.
 /// <summary>The function prototype of the callback.</summary>
 /// <param name="clock">The clock that triggered the callback</param>
 /// <param name="time">The time it was triggered</param>
 /// <param name="id">The #GstClockID that expired</param>
 /// <returns>%TRUE or %FALSE (currently unused)</returns>
-/// <remarks>
-/// The delegate and its trampoline are written by hand for one reason only:
-/// <c>gst_clock_id_wait_async</c> is the sole consumer of the callback in the
-/// gir and it is on the <c>skip</c> list, so the generator emits neither any
-/// more. Both are copies of what it emitted, so that the public surface of
-/// 1.28 is unchanged.
-/// </remarks>
 public delegate bool ClockCallback(Gst.Clock clock, Gst.ClockTime time, nint id);
 
 /// <summary>The native entry point of <see cref="Gst.ClockCallback"/>.</summary>

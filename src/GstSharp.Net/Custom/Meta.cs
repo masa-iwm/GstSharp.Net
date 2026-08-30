@@ -4,6 +4,11 @@ using System.Runtime.InteropServices;
 
 namespace Gst;
 
+// The delegate and its trampoline are written by hand for one reason only:
+// gst_meta_register_custom is the sole consumer of the callback in the gir and
+// it is on the skip list, so the generator emits neither any more. Both are
+// copies of what it emitted, down to the documentation, so that the public
+// surface of 1.28 is unchanged.
 /// <summary>
 /// Function called for each @meta in @buffer as a result of performing a
 /// transformation that yields @transbuf. Additional @type specific transform
@@ -14,13 +19,6 @@ namespace Gst;
 /// Implementations should check the @type of the transform and parse
 /// additional type specific fields in @data that should be used to update
 /// the metadata on @transbuf.
-/// </para>
-/// <para>
-/// The delegate and its trampoline are written by hand for one reason only:
-/// <c>gst_meta_register_custom</c> is the sole consumer of the callback in the
-/// gir and it is on the <c>skip</c> list, so the generator emits neither any
-/// more. Both are copies of what it emitted, so that the public surface of
-/// 1.28 is unchanged.
 /// </para>
 /// </remarks>
 /// <param name="transbuf">a #GstBuffer</param>
@@ -248,11 +246,15 @@ public sealed unsafe partial class Meta
     /// <b>A refused registration releases the state of the transform function
     /// here.</b> <c>gst_meta_register_custom</c> only writes the transform
     /// function, its state and the destroy notification onto the implementation
-    /// block once that block exists, and both of the failures before it - an
-    /// API type that could not be registered, which is what a name that is
-    /// already taken produces, and an implementation block that could not be
-    /// allocated - answer nothing at all. Nothing native releases the state on
-    /// those two, so this member does before it throws.
+    /// block once that block exists, so neither of the two failures before it
+    /// has anything to release - an API type that could not be registered,
+    /// which is what a name that is already taken produces, and an
+    /// implementation block that could not be allocated. The registration that
+    /// follows them can refuse the block as well, when the type of the
+    /// implementation could not be registered either, and it frees the block
+    /// without running the destroy notification that is on it by then. Nothing
+    /// native releases the state on any of the three, so this member does
+    /// before it throws.
     /// </para>
     /// </remarks>
     /// <param name="name">The <c>name</c> argument.</param>

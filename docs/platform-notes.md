@@ -40,7 +40,8 @@ opens a source picker is the usual place to do it.
 Branch on the `CanMonitor()` answer rather than on the provider name. It is
 what the provider itself says about the build that is installed, so a later
 release that gains or loses the ability for one of these classes is picked up
-without a change. The other Windows providers are a mix — `ksdeviceprovider`,
-`wasapi2deviceprovider` and `asiodeviceprovider` answer `true`,
-`decklinkdeviceprovider` answers `false` — and the same rule covers all of
-them.
+without a change. The other Windows providers are a mix — `ksdeviceprovider`
+and `wasapi2deviceprovider` answer `true`, as does `asiodeviceprovider` where
+the plugin is shipped, which needs the ASIO SDK at build time and is therefore
+missing from some binary distributions; `decklinkdeviceprovider` answers
+`false` — and the same rule covers all of them.
