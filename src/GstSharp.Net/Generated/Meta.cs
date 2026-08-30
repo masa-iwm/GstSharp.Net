@@ -225,46 +225,6 @@ public sealed unsafe partial class Meta
     }
 
     /// <summary>
-    /// Register a new custom #GstMeta implementation, backed by an opaque
-    /// structure holding a #GstStructure.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// The registered info can be retrieved later with gst_meta_get_info() by using
-    /// @name as the key.
-    /// </para>
-    /// <para>
-    /// The backing #GstStructure can be retrieved with
-    /// gst_custom_meta_get_structure(), its mutability is conditioned by the
-    /// writability of the buffer the meta is attached to.
-    /// </para>
-    /// <para>
-    /// When @transform_func is %NULL, the meta and its backing #GstStructure
-    /// will always be copied when the transform operation is copy, other operations
-    /// are discarded, copy regions are ignored.
-    /// </para>
-    /// </remarks>
-    /// <param name="name">The <c>name</c> argument.</param>
-    /// <param name="tags">tags for @api</param>
-    /// <param name="transformFunc">a #GstMetaTransformFunction</param>
-    /// <returns>
-    /// a #GstMetaInfo that can be used to
-    /// access metadata.
-    /// </returns>
-    public static Gst.MetaInfo RegisterCustom(string name, string[] tags, Gst.CustomMetaTransformFunction? transformFunc)
-    {
-        ArgumentNullException.ThrowIfNull(name);
-        ArgumentNullException.ThrowIfNull(tags);
-        System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
-        using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
-        using Gst.Interop.StrvScope tagsScope = Gst.Interop.GMarshal.AllocStrv(tags);
-        Gst.Interop.CallbackHandle transformFuncState = transformFunc is null ? default : Gst.Interop.CallbackHandle.Alloc(transformFunc);
-        nint nativeResult = GstMetaRegisterCustom(nameScope.Pointer, tagsScope.Pointer, transformFunc is null ? 0 : Gst.CustomMetaTransformFunctionTrampoline.Pointer, transformFuncState.UserData, transformFunc is null ? 0 : (nint)Gst.Interop.CallbackHandle.DestroyNotify);
-        return Gst.MetaInfo.FromNative(nativeResult)
-            ?? throw new InvalidOperationException("gst_meta_register_custom returned no value.");
-    }
-
-    /// <summary>
     /// Simplified version of gst_meta_register_custom(), with no tags and no
     /// transform function.
     /// </summary>
@@ -315,10 +275,6 @@ public sealed unsafe partial class Meta
     /// <summary>The <c>gst_meta_get_info</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_meta_get_info")]
     private static partial nint GstMetaGetInfo(byte* impl);
-
-    /// <summary>The <c>gst_meta_register_custom</c> entry point.</summary>
-    [LibraryImport("Gst", EntryPoint = "gst_meta_register_custom")]
-    private static partial nint GstMetaRegisterCustom(byte* name, nint* tags, nint transformFunc, nint userData, nint destroyData);
 
     /// <summary>The <c>gst_meta_register_custom_simple</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_meta_register_custom_simple")]

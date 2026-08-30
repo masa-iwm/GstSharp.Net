@@ -1,6 +1,67 @@
 using System;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace Gst;
+
+/// <summary>
+/// Function called for each @meta in @buffer as a result of performing a
+/// transformation that yields @transbuf. Additional @type specific transform
+/// data is passed to the function as @data.
+/// </summary>
+/// <remarks>
+/// <para>
+/// Implementations should check the @type of the transform and parse
+/// additional type specific fields in @data that should be used to update
+/// the metadata on @transbuf.
+/// </para>
+/// <para>
+/// The delegate and its trampoline are written by hand for one reason only:
+/// <c>gst_meta_register_custom</c> is the sole consumer of the callback in the
+/// gir and it is on the <c>skip</c> list, so the generator emits neither any
+/// more. Both are copies of what it emitted, so that the public surface of
+/// 1.28 is unchanged.
+/// </para>
+/// </remarks>
+/// <param name="transbuf">a #GstBuffer</param>
+/// <param name="meta">a #GstCustomMeta</param>
+/// <param name="buffer">a #GstBuffer</param>
+/// <param name="type">the transform type</param>
+/// <param name="data">transform specific data.</param>
+/// <returns>%TRUE if the transform could be performed</returns>
+public delegate bool CustomMetaTransformFunction(Gst.Buffer transbuf, Gst.CustomMeta meta, Gst.Buffer buffer, Gst.GLib.Quark type, nint data);
+
+/// <summary>The native entry point of <see cref="Gst.CustomMetaTransformFunction"/>.</summary>
+internal static unsafe class CustomMetaTransformFunctionTrampoline
+{
+    /// <summary>Gets the address that is handed to native code.</summary>
+    internal static nint Pointer => (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, uint, nint, nint, int>)&Invoke;
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static int Invoke(nint transbuf, nint meta, nint buffer, uint type, nint data, nint userData)
+    {
+        try
+        {
+            if (Gst.Interop.CallbackHandle.GetState<Gst.CustomMetaTransformFunction>(userData) is not { } callback)
+            {
+                return default;
+            }
+
+            Gst.Buffer transbufValue = Gst.Buffer.FromNative(transbuf, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("GstCustomMetaTransformFunction passed no transbuf.");
+            Gst.CustomMeta metaValue = Gst.CustomMeta.FromNative(meta)
+                ?? throw new InvalidOperationException("GstCustomMetaTransformFunction passed no meta.");
+            Gst.Buffer bufferValue = Gst.Buffer.FromNative(buffer, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("GstCustomMetaTransformFunction passed no buffer.");
+            return callback(transbufValue, metaValue, bufferValue, new Gst.GLib.Quark(type), data) ? 1 : 0;
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+            return default;
+        }
+    }
+}
 
 public sealed unsafe partial class Meta
 {
@@ -163,6 +224,61 @@ public sealed unsafe partial class Meta
             "gst_meta_api_type_aggregate_params writes a GstStructure* through its second argument, so this " +
             "overload overwrote the header of the structure it was given and never produced a result. Use " +
             "the overload whose second parameter is an out parameter.");
+
+    /// <summary>
+    /// Register a new custom #GstMeta implementation, backed by an opaque
+    /// structure holding a #GstStructure.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The registered info can be retrieved later with gst_meta_get_info() by using
+    /// @name as the key.
+    /// </para>
+    /// <para>
+    /// The backing #GstStructure can be retrieved with
+    /// gst_custom_meta_get_structure(), its mutability is conditioned by the
+    /// writability of the buffer the meta is attached to.
+    /// </para>
+    /// <para>
+    /// When @transform_func is %NULL, the meta and its backing #GstStructure
+    /// will always be copied when the transform operation is copy, other operations
+    /// are discarded, copy regions are ignored.
+    /// </para>
+    /// <para>
+    /// <b>A refused registration releases the state of the transform function
+    /// here.</b> <c>gst_meta_register_custom</c> only writes the transform
+    /// function, its state and the destroy notification onto the implementation
+    /// block once that block exists, and both of the failures before it - an
+    /// API type that could not be registered, which is what a name that is
+    /// already taken produces, and an implementation block that could not be
+    /// allocated - answer nothing at all. Nothing native releases the state on
+    /// those two, so this member does before it throws.
+    /// </para>
+    /// </remarks>
+    /// <param name="name">The <c>name</c> argument.</param>
+    /// <param name="tags">tags for @api</param>
+    /// <param name="transformFunc">a #GstMetaTransformFunction</param>
+    /// <returns>
+    /// a #GstMetaInfo that can be used to
+    /// access metadata.
+    /// </returns>
+    public static Gst.MetaInfo RegisterCustom(string name, string[] tags, Gst.CustomMetaTransformFunction? transformFunc)
+    {
+        ArgumentNullException.ThrowIfNull(name);
+        System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
+        ArgumentNullException.ThrowIfNull(tags);
+        using Gst.Interop.StrvScope tagsScope = Gst.Interop.GMarshal.AllocStrv(tags);
+        Gst.Interop.CallbackHandle transformFuncState = transformFunc is null ? default : Gst.Interop.CallbackHandle.Alloc(transformFunc);
+        nint nativeResult = MetaNative.RegisterCustom(nameScope.Pointer, tagsScope.Pointer, transformFunc is null ? 0 : Gst.CustomMetaTransformFunctionTrampoline.Pointer, transformFuncState.UserData, transformFunc is null ? 0 : (nint)Gst.Interop.CallbackHandle.DestroyNotify);
+        if (Gst.MetaInfo.FromNative(nativeResult) is not { } info)
+        {
+            transformFuncState.Free();
+            throw new InvalidOperationException("gst_meta_register_custom returned no value.");
+        }
+
+        return info;
+    }
 
     /// <summary>
     /// Returns the handle of a metadata item that is still attached to its

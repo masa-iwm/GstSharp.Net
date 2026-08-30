@@ -23,6 +23,14 @@ namespace Gst;
 /// here is the one of the C function.
 /// </para>
 /// <para>
+/// <c>gst_meta_register_custom</c> allocates the state of its transform
+/// function before it can know whether the registration is accepted, and the C
+/// function only takes that state over once it has an implementation block to
+/// write it onto, so the entry point is on the skip list too and
+/// <see cref="Gst.Meta.RegisterCustom"/> releases the state itself when the
+/// registration is refused.
+/// </para>
+/// <para>
 /// Every signature is blittable: <c>gboolean</c> is an <see cref="int"/> and a
 /// <c>GType</c> is an <see cref="nuint"/>.
 /// </para>
@@ -57,4 +65,25 @@ internal static unsafe partial class MetaNative
         nint* aggregatedParams,
         nint params0,
         nint params1);
+
+    /// <summary>
+    /// Registers a custom metadata implementation backed by a
+    /// <c>GstStructure</c>.
+    /// </summary>
+    /// <param name="name">The name of the implementation.</param>
+    /// <param name="tags">The tags of the API, as a <c>NULL</c> terminated vector.</param>
+    /// <param name="transformFunc">The transform function, or <c>0</c>.</param>
+    /// <param name="userData">The state handed to the transform function.</param>
+    /// <param name="destroyData">
+    /// Called when <paramref name="userData"/> is no longer used, which the C
+    /// function only arranges for once the registration is accepted.
+    /// </param>
+    /// <returns>The registered implementation block, or <c>0</c>.</returns>
+    [LibraryImport("Gst", EntryPoint = "gst_meta_register_custom")]
+    internal static partial nint RegisterCustom(
+        byte* name,
+        nint* tags,
+        nint transformFunc,
+        nint userData,
+        nint destroyData);
 }

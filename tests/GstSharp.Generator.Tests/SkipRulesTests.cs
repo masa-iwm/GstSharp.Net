@@ -169,7 +169,10 @@ public sealed class SkipRulesTests
         // generated shape cannot see: gst_clock_id_wait_async only takes the
         // destroy notification of its callback over on the path that succeeds,
         // so the hand written Gst.Clock.IdWaitAsync releases the state on every
-        // other one.
+        // other one, and gst_meta_register_custom joined it for the same
+        // reason: the C function only takes the state of its transform function
+        // over once the registration is accepted, so the hand written
+        // Gst.Meta.RegisterCustom releases it before it reports a refusal.
         Assert.Equal(
             [
                 "GstBase.BitReader",
@@ -230,6 +233,7 @@ public sealed class SkipRulesTests
                 "gst_meta_api_type_aggregate_params",
                 "gst_meta_api_type_set_params_aggregator",
                 "gst_meta_info_register",
+                "gst_meta_register_custom",
                 "gst_meta_serialize_simple",
                 "gst_mini_object_set_qdata",
                 "gst_pad_push_event",

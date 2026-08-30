@@ -141,7 +141,7 @@ disappears shows up here as an added line.
 - `gst_uri_ref`
 - `gst_uri_unref`
 
-### MovedTo (91)
+### MovedTo (90)
 
 - `gst_buffer_get_max_memory`
 - `gst_buffer_list_replace`
@@ -189,7 +189,6 @@ disappears shows up here as an added line.
 - `gst_meta_get_info`
 - `gst_meta_info_new`
 - `gst_meta_register`
-- `gst_meta_register_custom`
 - `gst_meta_register_custom_simple`
 - `gst_mini_object_replace`
 - `gst_mini_object_steal`
@@ -369,7 +368,7 @@ disappears shows up here as an added line.
 - `gst_tag_setter_add_tag_valist`
 - `gst_tag_setter_add_tag_valist_values`
 
-### OverlaySkip (56)
+### OverlaySkip (57)
 
 - `gst_allocator_free`
 - `gst_buffer_extract`
@@ -400,6 +399,7 @@ disappears shows up here as an added line.
 - `gst_meta_api_type_aggregate_params`
 - `gst_meta_api_type_set_params_aggregator`
 - `gst_meta_info_register`
+- `gst_meta_register_custom`
 - `gst_meta_serialize_simple`
 - `gst_pad_push_event`
 - `gst_pad_send_event`

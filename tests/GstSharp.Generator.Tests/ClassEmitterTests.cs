@@ -171,7 +171,7 @@ public sealed class ClassEmitterTests
     }
 
     [Theory]
-    [InlineData("Gst", 35, 51, 5, 19, 18, 1403, 29, 23, 52)]
+    [InlineData("Gst", 35, 51, 5, 18, 18, 1402, 29, 23, 52)]
     [InlineData("GstBase", 11, 4, 0, 5, 0, 174, 31, 2, 4)]
     [InlineData("GstApp", 2, 2, 0, 8, 0, 62, 36, 8, 0)]
     [InlineData("GstAudio", 14, 17, 1, 2, 2, 213, 32, 0, 38)]
@@ -212,7 +212,7 @@ public sealed class ClassEmitterTests
     }
 
     [Theory]
-    [InlineData("Gst", 1, 91, 53, 118, 91, 10)]
+    [InlineData("Gst", 1, 90, 53, 118, 91, 10)]
     [InlineData("GstBase", 0, 11, 0, 20, 6, 0)]
     [InlineData("GstApp", 1, 0, 0, 2, 2, 1)]
     [InlineData("GstAudio", 0, 22, 0, 8, 4, 0)]
@@ -556,7 +556,7 @@ public sealed class ClassEmitterTests
         // from the report and the entry points the overlays took over are
         // named under the overlay skips instead.
         Assert.DoesNotContain("### CallerAllocates", report, StringComparison.Ordinal);
-        Assert.Contains("### OverlaySkip (56)\n", report, StringComparison.Ordinal);
+        Assert.Contains("### OverlaySkip (57)\n", report, StringComparison.Ordinal);
         Assert.Contains("- `gst_video_frame_map`\n", GenerationPipeline.Run(GirFixture.GirDirectory).SkipReport, StringComparison.Ordinal);
         Assert.Contains("- `GstApp.AppSrc::push-buffer`\n", report, StringComparison.Ordinal);
 
@@ -679,14 +679,18 @@ public sealed class ClassEmitterTests
     /// gst_meta_api_type_aggregate_params and
     /// gst_meta_api_type_set_params_aggregator twice for the same reason, which
     /// is why the four Gst identifiers the metadata attachment cluster added
-    /// raise this count by six while the report string rises by four.</param>
+    /// raise this count by six while the report string rises by four.
+    /// gst_meta_register_custom is the third of that shape and raises the count
+    /// by two while the report string rises by one, and it leaves the MovedTo
+    /// count one lower than it was, because the namespace level declaration
+    /// used to be counted there.</param>
     /// <param name="callerAllocates">Callables with unusable caller allocated storage.</param>
     /// <param name="lifetime">Callables that release or reference their instance.</param>
     /// <param name="instanceTransfer">Callables that consume their instance and replace it.</param>
     /// <param name="actionSignals">Signals that are a call API rather than a notification.</param>
     /// <param name="owningProperties">Properties whose value is a wrapper the reader would have to dispose.</param>
     [Theory]
-    [InlineData("Gst", 59, 0, 21, 20, 0, 5)]
+    [InlineData("Gst", 61, 0, 21, 20, 0, 5)]
     [InlineData("GstBase", 4, 0, 4, 0, 0, 2)]
     [InlineData("GstApp", 3, 0, 4, 0, 9, 2)]
     [InlineData("GstAudio", 14, 0, 4, 0, 0, 0)]
