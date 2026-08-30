@@ -259,6 +259,12 @@ internal static class GenerationPipeline
             files.Add(globalFile);
         }
 
+        // A callback type whose only consumers are hand bound is reached by
+        // nothing the emitters planned, and would leave the module although
+        // the bindings do hand it out. The ledger names those consumers, so
+        // they claim their callback types here.
+        planner.PlanHandBoundCallbacks(module, ns);
+
         // Every emitter has run, so the set of reachable callbacks is complete.
         if (callbackEmitter.Emit(module, ns) is { } callbackFile)
         {

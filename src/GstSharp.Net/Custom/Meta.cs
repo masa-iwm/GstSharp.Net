@@ -1,65 +1,6 @@
 using System;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 
 namespace Gst;
-
-// The delegate and its trampoline are written by hand for one reason only:
-// gst_meta_register_custom is the sole consumer of the callback in the gir and
-// it is on the skip list, so the generator emits neither any more. Both are
-// copies of what it emitted, down to the documentation, so that the public
-// surface of 1.28 is unchanged.
-/// <summary>
-/// Function called for each @meta in @buffer as a result of performing a
-/// transformation that yields @transbuf. Additional @type specific transform
-/// data is passed to the function as @data.
-/// </summary>
-/// <remarks>
-/// <para>
-/// Implementations should check the @type of the transform and parse
-/// additional type specific fields in @data that should be used to update
-/// the metadata on @transbuf.
-/// </para>
-/// </remarks>
-/// <param name="transbuf">a #GstBuffer</param>
-/// <param name="meta">a #GstCustomMeta</param>
-/// <param name="buffer">a #GstBuffer</param>
-/// <param name="type">the transform type</param>
-/// <param name="data">transform specific data.</param>
-/// <returns>%TRUE if the transform could be performed</returns>
-public delegate bool CustomMetaTransformFunction(Gst.Buffer transbuf, Gst.CustomMeta meta, Gst.Buffer buffer, Gst.GLib.Quark type, nint data);
-
-/// <summary>The native entry point of <see cref="Gst.CustomMetaTransformFunction"/>.</summary>
-internal static unsafe class CustomMetaTransformFunctionTrampoline
-{
-    /// <summary>Gets the address that is handed to native code.</summary>
-    internal static nint Pointer => (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, uint, nint, nint, int>)&Invoke;
-
-    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
-    private static int Invoke(nint transbuf, nint meta, nint buffer, uint type, nint data, nint userData)
-    {
-        try
-        {
-            if (Gst.Interop.CallbackHandle.GetState<Gst.CustomMetaTransformFunction>(userData) is not { } callback)
-            {
-                return default;
-            }
-
-            Gst.Buffer transbufValue = Gst.Buffer.FromNative(transbuf, Gst.Interop.Transfer.None)
-                ?? throw new InvalidOperationException("GstCustomMetaTransformFunction passed no transbuf.");
-            Gst.CustomMeta metaValue = Gst.CustomMeta.FromNative(meta)
-                ?? throw new InvalidOperationException("GstCustomMetaTransformFunction passed no meta.");
-            Gst.Buffer bufferValue = Gst.Buffer.FromNative(buffer, Gst.Interop.Transfer.None)
-                ?? throw new InvalidOperationException("GstCustomMetaTransformFunction passed no buffer.");
-            return callback(transbufValue, metaValue, bufferValue, new Gst.GLib.Quark(type), data) ? 1 : 0;
-        }
-        catch (Exception exception)
-        {
-            Gst.Interop.ExceptionTrap.Report(exception);
-            return default;
-        }
-    }
-}
 
 public sealed unsafe partial class Meta
 {

@@ -25,6 +25,9 @@ internal sealed class EmissionCensus
     private readonly SortedDictionary<string, SortedDictionary<string, SortedSet<string>>> _skippedSymbols =
         new(StringComparer.Ordinal);
 
+    private readonly SortedDictionary<string, SortedDictionary<string, string>> _droppedFields =
+        new(StringComparer.Ordinal);
+
     /// <summary>Initializes a new instance of the <see cref="EmissionCensus"/> class.</summary>
     /// <param name="overlays">
     /// The overlays, read for the hand bound ledger. A census built without
@@ -106,6 +109,55 @@ internal sealed class EmissionCensus
         names.Add(symbol);
     }
 
+    /// <summary>Counts one record field that carries no binding.</summary>
+    /// <param name="module">The gir namespace of the module.</param>
+    /// <param name="field">
+    /// What was dropped, spelled <c>Record.field</c> in the gir names of both.
+    /// </param>
+    /// <param name="reason">
+    /// The shape that kept it out: <c>Pointer</c>, <c>EmbeddedStruct</c>,
+    /// <c>Callback</c>, <c>Union</c>, <c>InlineArray(pointer element)</c>,
+    /// <c>InlineArray(struct element)</c> or <c>Other</c>.
+    /// </param>
+    /// <remarks>
+    /// A field is not a callable, so none of the skip reasons describes one and
+    /// none of the sections above would ever show it. Without this ledger a
+    /// record whose fields carry API in C is reported as fully bound the moment
+    /// its methods are, which is how the fixed size fields of
+    /// <c>GstVideoInfo</c> went unnoticed for four milestones.
+    /// </remarks>
+    internal void DroppedField(string module, string field, string reason)
+    {
+        if (!_droppedFields.TryGetValue(module, out SortedDictionary<string, string>? fields))
+        {
+            fields = new SortedDictionary<string, string>(StringComparer.Ordinal);
+            _droppedFields.Add(module, fields);
+        }
+
+        fields[field] = reason;
+    }
+
+    /// <summary>Reads back the number of record fields the run left unbound.</summary>
+    /// <param name="module">The gir namespace of the module, or <see langword="null"/> for the whole run.</param>
+    /// <returns>The count.</returns>
+    internal int DroppedFieldCount(string? module = null)
+    {
+        if (module is null)
+        {
+            int total = 0;
+            foreach (SortedDictionary<string, string> fields in _droppedFields.Values)
+            {
+                total += fields.Count;
+            }
+
+            return total;
+        }
+
+        return _droppedFields.TryGetValue(module, out SortedDictionary<string, string>? entries)
+            ? entries.Count
+            : 0;
+    }
+
     /// <summary>Reads back the number of emitted members of one category.</summary>
     /// <param name="module">The gir namespace of the module.</param>
     /// <param name="category">The category to read.</param>
@@ -166,7 +218,51 @@ internal sealed class EmissionCensus
             }
         }
 
+        WriteFieldLedger(writer);
         return writer.ToSource();
+    }
+
+    /// <summary>
+    /// Writes the record fields the run laid out but did not bind, grouped by
+    /// module.
+    /// </summary>
+    /// <param name="writer">The target writer.</param>
+    /// <remarks>
+    /// The sections above list callables, properties and signals, all of which
+    /// are named by a symbol the gir declares on its own. A field is named by
+    /// the record it belongs to, it has no <c>c:identifier</c>, and nothing
+    /// that measures the binding gap counted one until this section existed.
+    /// Padding and the fields the gir marks <c>private</c> or
+    /// <c>readable="0"</c> are left out: they carry no API in C either. A field
+    /// a hand written member reads through stays listed, the same way a hand
+    /// bound entry point stays on the skip list: what is measured is the
+    /// generated surface.
+    /// </remarks>
+    private void WriteFieldLedger(CodeWriter writer)
+    {
+        writer.WriteLine();
+        writer.WriteLine(string.Create(CultureInfo.InvariantCulture, $"## Fields ({DroppedFieldCount()})"));
+        writer.WriteLine();
+        writer.WriteLine("Public record fields that carry API in C and none in C#, with the shape that");
+        writer.WriteLine("kept them out. A field is bound when a wrapper declares an accessor for it, or");
+        writer.WriteLine("when a value projected structure declares it as a typed public field; one that");
+        writer.WriteLine("is projected onto a machine address binds nothing that can be read without the");
+        writer.WriteLine("interop layer and stays listed. A union is listed once, under its own name,");
+        writer.WriteLine("because the layout of the record stops where it sits. A field a hand written");
+        writer.WriteLine("member reads through, such as the `finfo` of `GstVideoInfo`, stays listed as");
+        writer.WriteLine("well: the ledger measures what the generator binds, the same convention the");
+        writer.WriteLine("hand bound entry points above follow.");
+
+        foreach ((string module, SortedDictionary<string, string> fields) in _droppedFields)
+        {
+            writer.WriteLine();
+            writer.WriteLine(string.Create(CultureInfo.InvariantCulture, $"### {module} ({fields.Count})"));
+            writer.WriteLine();
+            foreach ((string field, string reason) in fields)
+            {
+                writer.WriteLine("- `" + field + "` — " + reason);
+            }
+        }
     }
 
     /// <summary>Renders the census as one line per module and category.</summary>

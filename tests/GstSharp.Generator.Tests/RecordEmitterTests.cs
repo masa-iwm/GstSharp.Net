@@ -666,8 +666,8 @@ public sealed class RecordEmitterTests
     [Fact]
     public void AFieldThatCarriesNoValueIsMirroredWithoutAnAccessor()
     {
-        // A vtable slot, a pointer and a fixed size array all take up space in
-        // the mirror, and none of them is a value the wrapper can hand out.
+        // A vtable slot and a pointer take up space in the mirror and neither
+        // is a value the wrapper can hand out.
         string source = EmitFixture(UnreadableFieldsFixture, "Iterator");
 
         Assert.Equal(
@@ -675,7 +675,7 @@ public sealed class RecordEmitterTests
                 "internal nint Copy;",
                 "internal uint Cookie;",
                 "internal nint MasterCookie;",
-                "internal SamplesArray Samples;",
+                "internal Gst.Iterator.SamplesArray Samples;",
                 "internal uint Size;",
             ],
             MirrorFields(source, "IteratorRaw"));
@@ -684,7 +684,48 @@ public sealed class RecordEmitterTests
         Assert.Contains("public uint Size\n", source, StringComparison.Ordinal);
         Assert.DoesNotContain("public nint Copy", source, StringComparison.Ordinal);
         Assert.DoesNotContain("public nint MasterCookie", source, StringComparison.Ordinal);
-        Assert.DoesNotContain("public SamplesArray", source, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AFixedSizeFieldIsAnsweredAsTheStorageTheWrapperDeclares()
+    {
+        // The elements are scalars, so the field carries API. The storage type
+        // moves out of the mirror and onto the wrapper, because a public
+        // property cannot answer a type only the interop layer can name, and
+        // the mirror then spells its own field with the promoted name.
+        string source = EmitFixture(UnreadableFieldsFixture, "Iterator");
+
+        Assert.Contains(
+            """
+                public Gst.Iterator.SamplesArray Samples
+                {
+                    get
+                    {
+                        Gst.Iterator.SamplesArray value = ((IteratorRaw*)Handle)->Samples;
+                        System.GC.KeepAlive(this);
+                        return value;
+                    }
+                }
+            """,
+            source,
+            StringComparison.Ordinal);
+
+        // The storage types close the accessors, the way the storage of a
+        // caller allocated array closes the members that take one.
+        Assert.Contains(
+            """
+                /// <summary>Inline storage of the 2 elements of the <c>samples</c> field of <c>GstIterator</c>.</summary>
+                [InlineArray(2)]
+                public struct SamplesArray
+                {
+                    private uint _element0;
+                }
+            """,
+            source,
+            StringComparison.Ordinal);
+
+        // One declaration of the storage, not two.
+        Assert.DoesNotContain("internal struct SamplesArray", source, StringComparison.Ordinal);
     }
 
     [Fact]

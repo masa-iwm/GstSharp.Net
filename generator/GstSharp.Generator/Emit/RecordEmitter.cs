@@ -157,6 +157,14 @@ internal sealed class RecordEmitter
         bool truncated = false;
         List<Accessor> accessors = [];
 
+        // What the record binds of its own fields, before a name collision can
+        // take an accessor away again; the field ledger below reports the rest.
+        // A wrapper binds what it declares an accessor for. A plain struct
+        // declares the fields themselves instead, so it binds every one of them
+        // that is public and lands on a value: an embedded structure is handed
+        // out whole there, where a wrapper has no accessor for it.
+        HashSet<string> boundFields = new(StringComparer.Ordinal);
+
         switch (kind)
         {
             case TypeKind.PlainStruct:
@@ -170,6 +178,14 @@ internal sealed class RecordEmitter
                         "GEN0006",
                         $"Record '{qualifiedName}' is classified as a plain struct but has a field that cannot be laid out; the type is skipped.");
                     return null;
+                }
+
+                foreach (LayoutField field in layout)
+                {
+                    if (!field.IsPrivate && !field.IsAddress)
+                    {
+                        boundFields.Add(field.Field.Name);
+                    }
                 }
 
                 break;
@@ -190,7 +206,8 @@ internal sealed class RecordEmitter
 
                 if (layout is not null && !handWritten)
                 {
-                    accessors = BuildAccessors(ns, typeName, layout);
+                    accessors = BuildAccessors(module, ns, typeName, layout);
+                    boundFields = BoundFieldNames(accessors);
                 }
 
                 break;
@@ -209,11 +226,14 @@ internal sealed class RecordEmitter
 
                 if (layout is not null)
                 {
-                    accessors = BuildAccessors(ns, typeName, layout);
+                    accessors = BuildAccessors(module, ns, typeName, layout);
+                    boundFields = BoundFieldNames(accessors);
                 }
 
                 break;
         }
+
+        ReportDroppedFields(module, ns, record, boundFields);
 
         // The accessors claim their names before anything the gir declares is
         // planned, so that a method named after a field is the member that is
@@ -276,7 +296,7 @@ internal sealed class RecordEmitter
         if (emitsMirror)
         {
             writer.WriteLine();
-            WriteRawStruct(writer, record, kind, typeName, layout!, truncated);
+            WriteRawStruct(writer, record, kind, typeName, layout!, truncated, accessors);
         }
 
         _census.Emitted(module.GirNamespace, "record");
@@ -491,8 +511,21 @@ internal sealed class RecordEmitter
         TypeKind kind,
         string typeName,
         IReadOnlyList<LayoutField> layout,
-        bool truncated)
+        bool truncated,
+        IReadOnlyList<Accessor> accessors)
     {
+        // The storage of a fixed size field the wrapper hands out is declared
+        // by the wrapper, so the mirror names it there instead of nesting a
+        // second copy of the same layout under Raw.
+        Dictionary<string, string> promoted = new(StringComparer.Ordinal);
+        foreach (Accessor accessor in accessors)
+        {
+            if (accessor.InlineArray is not null)
+            {
+                promoted.Add(accessor.Name, accessor.TypeName);
+            }
+        }
+
         writer.WriteLine("/// <summary>The native layout of <c>" + CTypeOf(record) + "</c>.</summary>");
         writer.WriteLine("/// <remarks>");
         writer.WriteLine("/// <para>");
@@ -538,12 +571,15 @@ internal sealed class RecordEmitter
             }
 
             writer.WriteLine("/// <summary>The <c>" + field.Field.Name + "</c> field.</summary>");
-            writer.WriteLine("internal " + field.TypeName + " " + field.PascalName + ";");
+            writer.WriteLine(
+                "internal "
+                + (promoted.TryGetValue(field.PascalName, out string? storage) ? storage : field.TypeName)
+                + " " + field.PascalName + ";");
         }
 
         foreach (LayoutField field in layout)
         {
-            if (field.InlineArray is not { } inline)
+            if (field.InlineArray is not { } inline || promoted.ContainsKey(field.PascalName))
             {
                 continue;
             }
@@ -690,6 +726,13 @@ internal sealed class RecordEmitter
         foreach (Accessor accessor in accessors)
         {
             reserved.Add(accessor.Name);
+
+            // The accessor of a fixed size field nests the storage type it
+            // hands out in the wrapper, so that name is taken as well.
+            if (accessor.InlineArray is { } inline)
+            {
+                reserved.Add(inline.TypeName);
+            }
         }
 
         if (kind == TypeKind.PlainStruct && layout is not null)
@@ -851,6 +894,28 @@ internal sealed class RecordEmitter
             XmlDocWriter.WriteObsolete(writer, accessor.Field);
             WriteAccessor(writer, accessor);
         }
+
+        // The storage of a fixed size field is declared here rather than in the
+        // mirror, because a public property cannot answer a type only the
+        // interop layer can name. It sits behind the accessors that hand it
+        // out, next to the inline storage of a caller allocated array, which is
+        // the same shape under the same name.
+        foreach (Accessor accessor in accessors)
+        {
+            if (accessor.InlineArray is not { } inline)
+            {
+                continue;
+            }
+
+            writer.WriteLine();
+            WriteInlineArray(
+                writer,
+                "public",
+                string.Create(
+                    CultureInfo.InvariantCulture,
+                    $"Inline storage of the {inline.Length} elements of the <c>{accessor.Field.Name}</c> field of <c>{CTypeOf(record)}</c>."),
+                inline);
+        }
     }
 
     /// <summary>Writes one field accessor of a wrapper.</summary>
@@ -952,16 +1017,55 @@ internal sealed class RecordEmitter
         return kept;
     }
 
-    private List<Accessor> BuildAccessors(GirNamespace ns, string typeName, IReadOnlyList<LayoutField> layout)
+    /// <summary>Names the gir fields a set of accessors binds.</summary>
+    /// <param name="accessors">The accessors of the record.</param>
+    /// <returns>The gir names of the fields they read.</returns>
+    private static HashSet<string> BoundFieldNames(IReadOnlyList<Accessor> accessors)
+    {
+        HashSet<string> names = new(StringComparer.Ordinal);
+        foreach (Accessor accessor in accessors)
+        {
+            names.Add(accessor.Field.Name);
+        }
+
+        return names;
+    }
+
+    private List<Accessor> BuildAccessors(
+        ModuleInfo module,
+        GirNamespace ns,
+        string typeName,
+        IReadOnlyList<LayoutField> layout)
     {
         string cast = "((" + typeName + RawSuffix + "*)Handle)->";
+        string owner = module.ClrNamespace + "." + typeName;
         List<Accessor> accessors = [];
         foreach (LayoutField field in layout)
         {
-            // Private fields, embedded structures and inline arrays carry no
-            // API; pointers wait for the emitters that wrap what they point at.
+            // A fixed size field is storage rather than a value the type map
+            // has a spelling for, so it is answered as the inline array the
+            // mirror lays it out with. The storage type is promoted to the
+            // wrapper, where it is public and reachable, and the property
+            // hands out a copy of the elements the way an out parameter of a
+            // caller allocated array does.
+            if (!field.IsPrivate && field.InlineArray is { } inline)
+            {
+                if (IsValueElement(ns, field.Field.Type))
+                {
+                    accessors.Add(new Accessor(
+                        field.Field,
+                        field.PascalName,
+                        owner + "." + inline.TypeName,
+                        cast + field.PascalName,
+                        inline));
+                }
+
+                continue;
+            }
+
+            // Private fields and embedded structures carry no API; pointers
+            // wait for the emitters that wrap what they point at.
             if (field.IsPrivate
-                || field.InlineArray is not null
                 || field.Field.Type is not { } type
                 || type.IsPointer)
             {
@@ -1016,6 +1120,174 @@ internal sealed class RecordEmitter
         }
 
         return accessors;
+    }
+
+    /// <summary>
+    /// Reports the fields of a record that carry API in C and none in C#.
+    /// </summary>
+    /// <param name="module">The module being emitted.</param>
+    /// <param name="ns">The gir namespace of the record.</param>
+    /// <param name="record">The record being emitted.</param>
+    /// <param name="bound">
+    /// The gir names of the fields the record does bind, before a name
+    /// collision can take one away again: a field the wrapper loses that way is
+    /// already reported under <see cref="SkipReason.NameCollision"/> and does
+    /// not belong here a second time.
+    /// </param>
+    /// <remarks>
+    /// <para>
+    /// The skip report groups callables by the reason they were left out, and a
+    /// field is not a callable: it has no <c>c:identifier</c>, no signature and
+    /// no skip reason, so a record whose methods are all bound reads as fully
+    /// bound however many of its fields are missing. The ledger this feeds is
+    /// the section that says otherwise.
+    /// </para>
+    /// <para>
+    /// What the gir marks <c>private</c> or <c>readable="0"</c> is left out,
+    /// which is what keeps the <c>_gst_reserved</c> padding of every second
+    /// structure off the ledger: those carry no API in C either. A union is
+    /// listed once under its own name, because it is where the layout of the
+    /// record stops rather than a field that was projected and dropped.
+    /// </para>
+    /// </remarks>
+    private void ReportDroppedFields(
+        ModuleInfo module,
+        GirNamespace ns,
+        GirRecord record,
+        IReadOnlySet<string> bound)
+    {
+        foreach (GirField field in record.Fields)
+        {
+            // Padding is left out whether or not the gir marks it: every
+            // underscore prefixed field of the corpus is reserved space or an
+            // implementation detail of GObject, and the gir is inconsistent
+            // about annotating them (GstWebRTCICECandidate._gst_reserved
+            // carries neither private nor readable="0").
+            if (IsHidden(field) || field.Name.StartsWith('_'))
+            {
+                continue;
+            }
+
+            if (DroppedFieldReason(ns, field, bound) is { } reason)
+            {
+                _census.DroppedField(module.GirNamespace, record.Name + "." + field.Name, reason);
+            }
+        }
+
+        foreach (GirUnion union in record.Unions)
+        {
+            _census.DroppedField(
+                module.GirNamespace,
+                record.Name + "." + (union.Name is { Length: > 0 } name ? name : "(union)"),
+                "Union");
+        }
+    }
+
+    /// <summary>
+    /// Names the shape that kept a field out of the generated surface.
+    /// </summary>
+    /// <param name="ns">The gir namespace of the record.</param>
+    /// <param name="field">The field to classify.</param>
+    /// <param name="bound">The names of the fields the record binds.</param>
+    /// <returns>
+    /// The reason, or <see langword="null"/> when the field is bound after all.
+    /// </returns>
+    private string? DroppedFieldReason(GirNamespace ns, GirField field, IReadOnlySet<string> bound)
+    {
+        if (bound.Contains(field.Name))
+        {
+            return null;
+        }
+
+        if (field.Callback is not null)
+        {
+            return "Callback";
+        }
+
+        if (field.Type is not { } type)
+        {
+            return "Other";
+        }
+
+        if (type is GirArrayRef { FixedSize: not null } array)
+        {
+            if (array.ElementType is not { } element)
+            {
+                return "Other";
+            }
+
+            if (element.IsPointer || _types.Map(element, ns).Kind == MarshalKind.Pointer)
+            {
+                return "InlineArray(pointer element)";
+            }
+
+            return IsValueElement(ns, type) ? "Other" : "InlineArray(struct element)";
+        }
+
+        // An array without a fixed size decays to a pointer in the C structure,
+        // which is what it is reported as: the length is nowhere in the layout.
+        if (type.IsPointer || type is GirArrayRef)
+        {
+            return "Pointer";
+        }
+
+        if (_repository.Resolve(type, ns) is { } reference)
+        {
+            // A field the gir spells without a star and that names a type is
+            // either a function pointer slot or a structure laid into the
+            // declaring one; a class only ever appears by value as the
+            // instance structure of the base type.
+            switch (_repository.ResolveAlias(reference))
+            {
+                case { Kind: GirSymbolKind.Callback }:
+                    return "Callback";
+
+                case { Kind: GirSymbolKind.Record or GirSymbolKind.Class or GirSymbolKind.Interface }:
+                    return "EmbeddedStruct";
+
+                default:
+                    break;
+            }
+        }
+
+        if (_types.Map(type, ns).Kind == MarshalKind.Pointer)
+        {
+            return "Pointer";
+        }
+
+        return "Other";
+    }
+
+    /// <summary>
+    /// Tests whether the elements of a fixed size field are values a wrapper
+    /// can hand out, that is scalars or an enumeration this module generates.
+    /// </summary>
+    /// <param name="ns">The gir namespace of the record.</param>
+    /// <param name="type">The type of the field.</param>
+    /// <returns><see langword="true"/> when the storage carries API.</returns>
+    /// <remarks>
+    /// An array of pointers or of embedded structures is left out: the
+    /// elements would be bare addresses or mirrors that only the interop layer
+    /// can read, which is the same line the scalar accessors draw. The three
+    /// fields that fall here are <c>GstVideoFormatInfo.tile_info</c> and the
+    /// <c>data</c> and <c>map</c> of <c>GstVideoFrame</c>, whose wrapper is
+    /// hand written and answers them already.
+    /// </remarks>
+    private bool IsValueElement(GirNamespace ns, GirTypeRef? type)
+    {
+        if (type is not GirArrayRef { ElementType: { } element } || element.IsPointer)
+        {
+            return false;
+        }
+
+        MappedType mapped = _types.Map(element, ns);
+        return mapped.Kind switch
+        {
+            MarshalKind.Blittable or MarshalKind.Boolean or MarshalKind.GType or MarshalKind.Quark => true,
+            MarshalKind.Enum or MarshalKind.Flags => mapped.Symbol is { } symbol
+                && string.Equals(symbol.Namespace.Name, ns.Name, StringComparison.Ordinal),
+            _ => false,
+        };
     }
 
     /// <summary>
@@ -1103,7 +1375,8 @@ internal sealed class RecordEmitter
                 projection.TypeName,
                 hidden,
                 projection.InlineArray,
-                projection.Note));
+                projection.Note,
+                projection.IsPointer || projection.IsPointerElement || field.Callback is not null));
         }
 
         return layout;
@@ -1181,7 +1454,7 @@ internal sealed class RecordEmitter
             }
 
             InlineArrayInfo inline = new(pascalName + "Array", element.TypeName, length);
-            return new FieldProjection(inline.TypeName, inline, element.Note);
+            return new FieldProjection(inline.TypeName, inline, element.Note, IsPointerElement: element.IsPointer);
         }
 
         return ProjectType(ns, type, publicSurface);
@@ -1415,11 +1688,18 @@ internal sealed class RecordEmitter
     /// slot is not one: it is spelled the same way, but no typed accessor is
     /// ever going to compete with it for the name.
     /// </param>
+    /// <param name="IsPointerElement">
+    /// Whether the field is inline storage whose elements are bare pointers.
+    /// The storage is a value and keeps the name the gir gives it, which is why
+    /// this is kept apart from <paramref name="IsPointer"/>; what it says is
+    /// that reading an element answers an address rather than a value.
+    /// </param>
     private sealed record FieldProjection(
         string TypeName,
         InlineArrayInfo? InlineArray,
         string? Note,
-        bool IsPointer = false);
+        bool IsPointer = false,
+        bool IsPointerElement = false);
 
     /// <summary>One field of a generated struct.</summary>
     /// <param name="Field">The gir field.</param>
@@ -1429,6 +1709,13 @@ internal sealed class RecordEmitter
     /// <param name="IsPrivate">Whether the field is private to the C implementation.</param>
     /// <param name="InlineArray">The inline storage type, for a fixed size array.</param>
     /// <param name="Note">A comment that explains a lossy projection.</param>
+    /// <param name="IsAddress">
+    /// Whether what the field is projected onto is a machine address rather
+    /// than a value: a pointer, a function pointer slot, or inline storage of
+    /// either. Such a field takes up space in the structure but hands out
+    /// nothing that can be read without the interop layer, which is the line
+    /// the accessors of a wrapper draw as well.
+    /// </param>
     private sealed record LayoutField(
         GirField Field,
         string Name,
@@ -1436,12 +1723,24 @@ internal sealed class RecordEmitter
         string TypeName,
         bool IsPrivate,
         InlineArrayInfo? InlineArray,
-        string? Note);
+        string? Note,
+        bool IsAddress);
 
     /// <summary>One generated field accessor of a mini object wrapper.</summary>
     /// <param name="Field">The gir field.</param>
     /// <param name="Name">The name of the property.</param>
     /// <param name="TypeName">The C# type of the property.</param>
     /// <param name="Expression">The expression body of the property.</param>
-    private sealed record Accessor(GirField Field, string Name, string TypeName, string Expression);
+    /// <param name="InlineArray">
+    /// The inline storage the property hands out, for a fixed size field. The
+    /// storage type of such a field is declared by the wrapper rather than by
+    /// the mirror, because a public property cannot answer an internal type;
+    /// the mirror then spells its own field with the promoted name.
+    /// </param>
+    private sealed record Accessor(
+        GirField Field,
+        string Name,
+        string TypeName,
+        string Expression,
+        InlineArrayInfo? InlineArray = null);
 }

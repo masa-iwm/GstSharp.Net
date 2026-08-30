@@ -33,6 +33,24 @@ public sealed unsafe partial class VideoAffineTransformationMeta
     /// <param name="handle">The native instance.</param>
     internal VideoAffineTransformationMeta(nint handle) => Handle = handle;
 
+    /// <summary>the column-major 4x4 transformation matrix</summary>
+    public Gst.Video.VideoAffineTransformationMeta.MatrixArray Matrix
+    {
+        get
+        {
+            Gst.Video.VideoAffineTransformationMeta.MatrixArray value = ((VideoAffineTransformationMetaRaw*)Handle)->Matrix;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>Inline storage of the 16 elements of the <c>matrix</c> field of <c>GstVideoAffineTransformationMeta</c>.</summary>
+    [InlineArray(16)]
+    public struct MatrixArray
+    {
+        private float _element0;
+    }
+
     /// <summary>Wraps a native <c>GstVideoAffineTransformationMeta</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
     /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>
@@ -102,12 +120,5 @@ internal unsafe struct VideoAffineTransformationMetaRaw
     internal Gst.MetaRaw Meta;
 
     /// <summary>The <c>matrix</c> field.</summary>
-    internal MatrixArray Matrix;
-
-    /// <summary>Inline storage of the 16 elements of the <c>matrix</c> field.</summary>
-    [InlineArray(16)]
-    internal struct MatrixArray
-    {
-        private float _element0;
-    }
+    internal Gst.Video.VideoAffineTransformationMeta.MatrixArray Matrix;
 }

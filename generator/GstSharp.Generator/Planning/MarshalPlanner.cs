@@ -432,6 +432,95 @@ internal sealed class MarshalPlanner
         }
     }
 
+    /// <summary>
+    /// Adds the callback types that only hand bound callables take to the used
+    /// set, so that a delegate the bindings do hand out keeps being generated.
+    /// </summary>
+    /// <param name="module">The module being emitted.</param>
+    /// <param name="ns">Its gir namespace.</param>
+    /// <remarks>
+    /// <para>
+    /// A callback type is emitted because a callable that could be planned
+    /// takes one. An entry point that is skipped in favour of a hand written
+    /// member therefore takes its callback type down with it, which is how
+    /// <c>Gst.ClockCallback</c> and <c>Gst.CustomMetaTransformFunction</c> came
+    /// to be copied into <c>Custom/</c> word for word.
+    /// </para>
+    /// <para>
+    /// The hand bound ledger is the statement that the call exists all the
+    /// same, so a callback type at least one hand bound consumer takes is
+    /// planned here on that consumer's behalf: the hand written member binds
+    /// the generated delegate and the generated trampoline rather than a copy
+    /// of them. Nothing else changes - the scope rules, the plan and the
+    /// self freeing decision are the ones the consumer would have produced had
+    /// it been generated - so a type that cannot be planned stays absent.
+    /// </para>
+    /// </remarks>
+    internal void PlanHandBoundCallbacks(ModuleInfo module, GirNamespace ns)
+    {
+        PlanningContext context = new(module, ns, TypeKind.Callback, null);
+        foreach (GirCallable callable in HandBoundCallables(ns))
+        {
+            _pendingCallbacks.Clear();
+            foreach (GirParameter parameter in callable.Parameters)
+            {
+                if (_repository.Resolve(parameter.Type.Name, ns) is not { Declaration: GirCallback })
+                {
+                    continue;
+                }
+
+                PlanCallbackArgument(
+                    callable,
+                    parameter,
+                    NameMapper.ParameterName(parameter.Name),
+                    nullable: false,
+                    context);
+            }
+
+            // Unlike TryPlan, the claims are kept even when another parameter
+            // of the same consumer could not be planned: the consumer is not a
+            // member this run decides about, it is a hand written member that
+            // exists either way, so what it does hand over is settled.
+            CommitCallbackUses();
+            _pendingCallbacks.Clear();
+        }
+    }
+
+    /// <summary>
+    /// The callables of a namespace whose managed surface is hand written, in
+    /// gir document order.
+    /// </summary>
+    /// <param name="ns">The namespace to walk.</param>
+    /// <returns>The hand bound callables.</returns>
+    private IEnumerable<GirCallable> HandBoundCallables(GirNamespace ns)
+    {
+        foreach (GirFunction function in ns.Functions)
+        {
+            if (_overlays.IsHandBound(function.CIdentifier))
+            {
+                yield return function;
+            }
+        }
+
+        IEnumerable<GirTypeDeclaration> declarations = ns.Classes
+            .Cast<GirTypeDeclaration>()
+            .Concat(ns.Interfaces)
+            .Concat(ns.Records)
+            .Concat(ns.Unions);
+        foreach (GirTypeDeclaration declaration in declarations)
+        {
+            foreach (GirFunction callable in declaration.Constructors
+                .Concat(declaration.Methods)
+                .Concat(declaration.Functions))
+            {
+                if (_overlays.IsHandBound(callable.CIdentifier))
+                {
+                    yield return callable;
+                }
+            }
+        }
+    }
+
     private MarshalPlan? TryPlanCore(
         GirCallable callable,
         CallableForm form,

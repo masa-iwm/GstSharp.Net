@@ -46,6 +46,24 @@ public sealed unsafe partial class VideoGLTextureUploadMeta
         }
     }
 
+    /// <summary>Type of each texture</summary>
+    public Gst.Video.VideoGLTextureUploadMeta.TextureTypeArray TextureType
+    {
+        get
+        {
+            Gst.Video.VideoGLTextureUploadMeta.TextureTypeArray value = ((VideoGLTextureUploadMetaRaw*)Handle)->TextureType;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>Inline storage of the 4 elements of the <c>texture_type</c> field of <c>GstVideoGLTextureUploadMeta</c>.</summary>
+    [InlineArray(4)]
+    public struct TextureTypeArray
+    {
+        private Gst.Video.VideoGLTextureType _element0;
+    }
+
     /// <summary>Wraps a native <c>GstVideoGLTextureUploadMeta</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
     /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>
@@ -105,7 +123,7 @@ internal unsafe struct VideoGLTextureUploadMetaRaw
     internal uint NTextures;
 
     /// <summary>The <c>texture_type</c> field.</summary>
-    internal TextureTypeArray TextureType;
+    internal Gst.Video.VideoGLTextureUploadMeta.TextureTypeArray TextureType;
 
     /// <summary>The <c>buffer</c> field.</summary>
     internal nint Buffer;
@@ -121,11 +139,4 @@ internal unsafe struct VideoGLTextureUploadMetaRaw
 
     /// <summary>The <c>user_data_free</c> field.</summary>
     internal nint UserDataFree;
-
-    /// <summary>Inline storage of the 4 elements of the <c>texture_type</c> field.</summary>
-    [InlineArray(4)]
-    internal struct TextureTypeArray
-    {
-        private Gst.Video.VideoGLTextureType _element0;
-    }
 }

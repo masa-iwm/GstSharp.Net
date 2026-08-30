@@ -68,6 +68,44 @@ public sealed unsafe partial class VideoFormatInfo
         }
     }
 
+    /// <summary>the number of bits to shift away to get the component data</summary>
+    public Gst.Video.VideoFormatInfo.ShiftArray Shift
+    {
+        get
+        {
+            Gst.Video.VideoFormatInfo.ShiftArray value = ((VideoFormatInfoRaw*)Handle)->Shift;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>the depth in bits for each component</summary>
+    public Gst.Video.VideoFormatInfo.DepthArray Depth
+    {
+        get
+        {
+            Gst.Video.VideoFormatInfo.DepthArray value = ((VideoFormatInfoRaw*)Handle)->Depth;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>
+    /// the pixel stride of each component. This is the amount of
+    ///    bytes to the pixel immediately to the right. When bits &lt; 8, the stride is
+    ///    expressed in bits. For 24-bit RGB, this would be 3 bytes, for example,
+    ///    while it would be 4 bytes for RGBx or ARGB.
+    /// </summary>
+    public Gst.Video.VideoFormatInfo.PixelStrideArray PixelStride
+    {
+        get
+        {
+            Gst.Video.VideoFormatInfo.PixelStrideArray value = ((VideoFormatInfoRaw*)Handle)->PixelStride;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
     /// <summary>
     /// the number of planes for this format. The number of planes can be
     ///    less than the amount of components when multiple components are packed into
@@ -78,6 +116,59 @@ public sealed unsafe partial class VideoFormatInfo
         get
         {
             uint value = ((VideoFormatInfoRaw*)Handle)->NPlanes;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>the plane number where a component can be found</summary>
+    public Gst.Video.VideoFormatInfo.PlaneArray Plane
+    {
+        get
+        {
+            Gst.Video.VideoFormatInfo.PlaneArray value = ((VideoFormatInfoRaw*)Handle)->Plane;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>
+    /// the offset in the plane where the first pixel of the components
+    ///    can be found.
+    /// </summary>
+    public Gst.Video.VideoFormatInfo.PoffsetArray Poffset
+    {
+        get
+        {
+            Gst.Video.VideoFormatInfo.PoffsetArray value = ((VideoFormatInfoRaw*)Handle)->Poffset;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>
+    /// subsampling factor of the width for the component. Use
+    ///     GST_VIDEO_SUB_SCALE to scale a width.
+    /// </summary>
+    public Gst.Video.VideoFormatInfo.WSubArray WSub
+    {
+        get
+        {
+            Gst.Video.VideoFormatInfo.WSubArray value = ((VideoFormatInfoRaw*)Handle)->WSub;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>
+    /// subsampling factor of the height for the component. Use
+    ///     GST_VIDEO_SUB_SCALE to scale a height.
+    /// </summary>
+    public Gst.Video.VideoFormatInfo.HSubArray HSub
+    {
+        get
+        {
+            Gst.Video.VideoFormatInfo.HSubArray value = ((VideoFormatInfoRaw*)Handle)->HSub;
             System.GC.KeepAlive(this);
             return value;
         }
@@ -145,6 +236,55 @@ public sealed unsafe partial class VideoFormatInfo
             System.GC.KeepAlive(this);
             return value;
         }
+    }
+
+    /// <summary>Inline storage of the 4 elements of the <c>shift</c> field of <c>GstVideoFormatInfo</c>.</summary>
+    [InlineArray(4)]
+    public struct ShiftArray
+    {
+        private uint _element0;
+    }
+
+    /// <summary>Inline storage of the 4 elements of the <c>depth</c> field of <c>GstVideoFormatInfo</c>.</summary>
+    [InlineArray(4)]
+    public struct DepthArray
+    {
+        private uint _element0;
+    }
+
+    /// <summary>Inline storage of the 4 elements of the <c>pixel_stride</c> field of <c>GstVideoFormatInfo</c>.</summary>
+    [InlineArray(4)]
+    public struct PixelStrideArray
+    {
+        private int _element0;
+    }
+
+    /// <summary>Inline storage of the 4 elements of the <c>plane</c> field of <c>GstVideoFormatInfo</c>.</summary>
+    [InlineArray(4)]
+    public struct PlaneArray
+    {
+        private uint _element0;
+    }
+
+    /// <summary>Inline storage of the 4 elements of the <c>poffset</c> field of <c>GstVideoFormatInfo</c>.</summary>
+    [InlineArray(4)]
+    public struct PoffsetArray
+    {
+        private uint _element0;
+    }
+
+    /// <summary>Inline storage of the 4 elements of the <c>w_sub</c> field of <c>GstVideoFormatInfo</c>.</summary>
+    [InlineArray(4)]
+    public struct WSubArray
+    {
+        private uint _element0;
+    }
+
+    /// <summary>Inline storage of the 4 elements of the <c>h_sub</c> field of <c>GstVideoFormatInfo</c>.</summary>
+    [InlineArray(4)]
+    public struct HSubArray
+    {
+        private uint _element0;
     }
 
     /// <summary>Wraps a native <c>GstVideoFormatInfo</c>, mapping the null pointer onto <see langword="null"/>.</summary>
@@ -232,28 +372,28 @@ internal unsafe struct VideoFormatInfoRaw
     internal uint NComponents;
 
     /// <summary>The <c>shift</c> field.</summary>
-    internal ShiftArray Shift;
+    internal Gst.Video.VideoFormatInfo.ShiftArray Shift;
 
     /// <summary>The <c>depth</c> field.</summary>
-    internal DepthArray Depth;
+    internal Gst.Video.VideoFormatInfo.DepthArray Depth;
 
     /// <summary>The <c>pixel_stride</c> field.</summary>
-    internal PixelStrideArray PixelStride;
+    internal Gst.Video.VideoFormatInfo.PixelStrideArray PixelStride;
 
     /// <summary>The <c>n_planes</c> field.</summary>
     internal uint NPlanes;
 
     /// <summary>The <c>plane</c> field.</summary>
-    internal PlaneArray Plane;
+    internal Gst.Video.VideoFormatInfo.PlaneArray Plane;
 
     /// <summary>The <c>poffset</c> field.</summary>
-    internal PoffsetArray Poffset;
+    internal Gst.Video.VideoFormatInfo.PoffsetArray Poffset;
 
     /// <summary>The <c>w_sub</c> field.</summary>
-    internal WSubArray WSub;
+    internal Gst.Video.VideoFormatInfo.WSubArray WSub;
 
     /// <summary>The <c>h_sub</c> field.</summary>
-    internal HSubArray HSub;
+    internal Gst.Video.VideoFormatInfo.HSubArray HSub;
 
     /// <summary>The <c>unpack_format</c> field.</summary>
     internal Gst.Video.VideoFormat UnpackFormat;
@@ -278,55 +418,6 @@ internal unsafe struct VideoFormatInfoRaw
 
     /// <summary>The <c>tile_info</c> field.</summary>
     internal TileInfoArray TileInfo;
-
-    /// <summary>Inline storage of the 4 elements of the <c>shift</c> field.</summary>
-    [InlineArray(4)]
-    internal struct ShiftArray
-    {
-        private uint _element0;
-    }
-
-    /// <summary>Inline storage of the 4 elements of the <c>depth</c> field.</summary>
-    [InlineArray(4)]
-    internal struct DepthArray
-    {
-        private uint _element0;
-    }
-
-    /// <summary>Inline storage of the 4 elements of the <c>pixel_stride</c> field.</summary>
-    [InlineArray(4)]
-    internal struct PixelStrideArray
-    {
-        private int _element0;
-    }
-
-    /// <summary>Inline storage of the 4 elements of the <c>plane</c> field.</summary>
-    [InlineArray(4)]
-    internal struct PlaneArray
-    {
-        private uint _element0;
-    }
-
-    /// <summary>Inline storage of the 4 elements of the <c>poffset</c> field.</summary>
-    [InlineArray(4)]
-    internal struct PoffsetArray
-    {
-        private uint _element0;
-    }
-
-    /// <summary>Inline storage of the 4 elements of the <c>w_sub</c> field.</summary>
-    [InlineArray(4)]
-    internal struct WSubArray
-    {
-        private uint _element0;
-    }
-
-    /// <summary>Inline storage of the 4 elements of the <c>h_sub</c> field.</summary>
-    [InlineArray(4)]
-    internal struct HSubArray
-    {
-        private uint _element0;
-    }
 
     /// <summary>Inline storage of the 4 elements of the <c>tile_info</c> field.</summary>
     [InlineArray(4)]

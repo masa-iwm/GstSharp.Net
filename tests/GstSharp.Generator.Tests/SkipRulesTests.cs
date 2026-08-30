@@ -176,12 +176,19 @@ public sealed class SkipRulesTests
         // its transform function over once the registration is accepted, so the
         // hand written Gst.Meta.RegisterCustom releases it before it reports a
         // refusal.
+        // The two type entries at the head are callback types whose delegate is
+        // written by hand: a hand bound consumer keeps its callback type
+        // generated, and these two are the ones whose hand written declaration
+        // stays the source of truth, so the emitter is told not to declare them
+        // a second time.
         Assert.Equal(
             [
+                "Gst.BusSyncHandler",
                 "GstBase.BitReader",
                 "GstBase.BitWriter",
                 "GstBase.ByteReader",
                 "GstBase.ByteWriter",
+                "GstPbutils.InstallPluginsResultFunc",
                 "GstRtsp.RTSPWatch",
                 "GstRtsp.RTSPWatchFuncs",
                 "ges_deinit",
@@ -441,6 +448,61 @@ public sealed class SkipRulesTests
     }
 
     [Fact]
+    public void ACallbackTypeGoesWithTheOnlyCallThatTakesIt()
+    {
+        // A delegate nothing can be handed to is dead surface, so a callback
+        // type is emitted because a planned callable takes one. Skipping that
+        // callable takes the type down with it.
+        FixtureRun run = RunWithOverlay(
+            """
+            {
+              "skip": [ "gst_widget_watch" ]
+            }
+            """,
+            CallbackBody);
+
+        Assert.False(run.HasFile("Callbacks.cs"));
+    }
+
+    [Fact]
+    public void AHandBoundConsumerKeepsItsCallbackTypeGenerated()
+    {
+        // The hand bound ledger says the call exists all the same, so the
+        // callback type it takes is generated and the hand written member
+        // binds the generated delegate rather than a copy of it. This is what
+        // Gst.ClockCallback and Gst.CustomMetaTransformFunction had to be
+        // copied into Custom/ for.
+        FixtureRun run = RunWithOverlay(
+            """
+            {
+              "skip": [ "gst_widget_watch" ],
+              "handBound": [ "gst_widget_watch" ]
+            }
+            """,
+            CallbackBody);
+
+        string source = run.File("Callbacks.cs");
+        Assert.Contains(
+            "public delegate void PulseFunc(Gst.Widget widget);",
+            source,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "internal static unsafe class PulseFuncTrampoline",
+            source,
+            StringComparison.Ordinal);
+
+        // The scope of the consumer decides the epilogue here as anywhere
+        // else: a notified site releases the state through its destroy
+        // notification, so the trampoline frees nothing.
+        Assert.DoesNotContain("FromUserData(userData).Free()", source, StringComparison.Ordinal);
+
+        // The call itself is still not generated, and the ledger still files
+        // it under the reason that says the bindings do cover it.
+        Assert.DoesNotContain("Watch", run.File("Widget.cs"), StringComparison.Ordinal);
+        Assert.Equal(1, run.Result.Census.SkippedCount("Gst", SkipReason.HandBound));
+    }
+
+    [Fact]
     public void AHandBoundEntryThatNamesNoSkippedSymbolIsReportedAsStale()
     {
         FixtureRun run = RunWithOverlay(
@@ -561,6 +623,48 @@ public sealed class SkipRulesTests
                 </parameter>
               </parameters>
             </function>
+        """;
+
+    /// <summary>
+    /// A callback type and the one call that takes it, which is the shape a
+    /// hand binding would otherwise remove from the module.
+    /// </summary>
+    private const string CallbackBody =
+        """
+            <callback name="PulseFunc" c:type="GstPulseFunc">
+              <return-value transfer-ownership="none">
+                <type name="none" c:type="void"/>
+              </return-value>
+              <parameters>
+                <parameter name="widget" transfer-ownership="none">
+                  <type name="Widget" c:type="GstWidget*"/>
+                </parameter>
+                <parameter name="user_data" transfer-ownership="none" nullable="1" closure="1">
+                  <type name="gpointer" c:type="gpointer"/>
+                </parameter>
+              </parameters>
+            </callback>
+            <class name="Widget" c:type="GstWidget" parent="GObject.InitiallyUnowned" glib:type-name="GstWidget" glib:get-type="gst_widget_get_type">
+              <method name="watch" c:identifier="gst_widget_watch">
+                <return-value transfer-ownership="none">
+                  <type name="none" c:type="void"/>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="widget" transfer-ownership="none">
+                    <type name="Widget" c:type="GstWidget*"/>
+                  </instance-parameter>
+                  <parameter name="func" transfer-ownership="none" scope="notified" closure="1" destroy="2">
+                    <type name="PulseFunc" c:type="GstPulseFunc"/>
+                  </parameter>
+                  <parameter name="user_data" transfer-ownership="none" nullable="1">
+                    <type name="gpointer" c:type="gpointer"/>
+                  </parameter>
+                  <parameter name="notify" transfer-ownership="none" scope="async">
+                    <type name="GLib.DestroyNotify" c:type="GDestroyNotify"/>
+                  </parameter>
+                </parameters>
+              </method>
+            </class>
         """;
 
     private static FixtureRun RunWithOverlay(string fixups) => RunWithOverlay(fixups, Body);

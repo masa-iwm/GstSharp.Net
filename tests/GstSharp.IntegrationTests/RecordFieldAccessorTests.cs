@@ -157,6 +157,168 @@ public sealed class RecordFieldAccessorTests
     }
 
     /// <summary>
+    /// The fixed size fields of <c>GstVideoInfo</c>, which the library filled
+    /// in for the caps. The plane strides and offsets of an I420 frame are
+    /// arithmetic on the width and the height, so a storage type at the wrong
+    /// offset, or one element too short, reads numbers that are nothing.
+    /// </summary>
+    [Fact]
+    public void VideoInfoAnswersThePlaneOffsetsAndStrides()
+    {
+        using Caps caps = Caps.FromString(
+            "video/x-raw,format=I420,width=320,height=240,framerate=30/1")
+            ?? throw new InvalidOperationException("The caps of a raw I420 frame have to parse.");
+
+        using VideoInfo info = VideoInfo.NewFromCaps(caps)
+            ?? throw new InvalidOperationException("gst_video_info_from_caps refused raw I420 caps.");
+
+        VideoInfo.StrideArray strides = info.Stride;
+        VideoInfo.OffsetArray offsets = info.Offset;
+
+        _output.WriteLine(FormattableString.Invariant(
+            $"gst_video_info_from_caps: strides={strides[0]},{strides[1]},{strides[2]} offsets={offsets[0]},{offsets[1]},{offsets[2]}"));
+
+        // I420 carries a full size luma plane and two half size chroma planes.
+        Assert.Equal((int)Width, strides[0]);
+        Assert.Equal((int)Width / 2, strides[1]);
+        Assert.Equal((int)Width / 2, strides[2]);
+
+        Assert.Equal((nuint)0, offsets[0]);
+        Assert.Equal((nuint)(Width * Height), offsets[1]);
+        Assert.Equal((nuint)(Width * Height * 5 / 4), offsets[2]);
+    }
+
+    /// <summary>
+    /// The same two fields on <c>GstVideoMeta</c>, which sit behind the
+    /// <c>GstMeta</c> header the record embeds by value.
+    /// </summary>
+    [Fact]
+    public void AVideoMetaAnswersThePlaneOffsetsAndStrides()
+    {
+        using Buffer buffer = AbiProbeTests.NewBuffer();
+
+        VideoMeta added = VideoGlobal.BufferAddVideoMeta(
+            buffer,
+            VideoFrameFlags.None,
+            VideoFormat.I420,
+            Width,
+            Height)
+            ?? throw new InvalidOperationException("The buffer is exclusively held, so the meta is added.");
+
+        VideoMeta.StrideArray strides = added.Stride;
+        VideoMeta.OffsetArray offsets = added.Offset;
+
+        _output.WriteLine(FormattableString.Invariant(
+            $"gst_buffer_add_video_meta: strides={strides[0]},{strides[1]} offsets={offsets[0]},{offsets[1]}"));
+
+        Assert.Equal((int)Width, strides[0]);
+        Assert.Equal((int)Width / 2, strides[1]);
+        Assert.Equal((nuint)0, offsets[0]);
+        Assert.Equal((nuint)(Width * Height), offsets[1]);
+    }
+
+    /// <summary>
+    /// The channel positions of a <c>GstAudioInfo</c>, which the library
+    /// derives from the channel count of the caps.
+    /// </summary>
+    [Fact]
+    public void AudioInfoAnswersItsChannelPositions()
+    {
+        using Caps caps = Caps.FromString(
+            "audio/x-raw,format=S16LE,layout=interleaved,rate=44100,channels=2")
+            ?? throw new InvalidOperationException("The caps of interleaved S16LE audio have to parse.");
+
+        using AudioInfo info = AudioInfo.NewFromCaps(caps)
+            ?? throw new InvalidOperationException("gst_audio_info_from_caps refused S16LE caps.");
+
+        AudioInfo.PositionArray positions = info.Position;
+
+        _output.WriteLine(FormattableString.Invariant(
+            $"gst_audio_info_from_caps: positions={positions[0]},{positions[1]}"));
+
+        Assert.Equal(AudioChannelPosition.FrontLeft, positions[0]);
+        Assert.Equal(AudioChannelPosition.FrontRight, positions[1]);
+    }
+
+    /// <summary>
+    /// The per component tables of a <c>GstVideoFormatInfo</c>, which the
+    /// library keeps one of per format. They are read through the borrowed
+    /// description a <see cref="Gst.Video.VideoInfo"/> points at.
+    /// </summary>
+    [Fact]
+    public void VideoFormatInfoAnswersItsPerComponentTables()
+    {
+        using Caps caps = Caps.FromString(
+            "video/x-raw,format=I420,width=320,height=240,framerate=30/1")
+            ?? throw new InvalidOperationException("The caps of a raw I420 frame have to parse.");
+
+        using VideoInfo info = VideoInfo.NewFromCaps(caps)
+            ?? throw new InvalidOperationException("gst_video_info_from_caps refused raw I420 caps.");
+
+        VideoFormatInfo format = info.FormatInfo;
+
+        VideoFormatInfo.DepthArray depth = format.Depth;
+        VideoFormatInfo.PixelStrideArray pixelStride = format.PixelStride;
+        VideoFormatInfo.WSubArray wsub = format.WSub;
+        VideoFormatInfo.HSubArray hsub = format.HSub;
+
+        _output.WriteLine(FormattableString.Invariant(
+            $"I420: components={format.NComponents} depth={depth[0]},{depth[1]} pixel_stride={pixelStride[0]} w_sub={wsub[1]} h_sub={hsub[1]}"));
+
+        Assert.Equal(3u, format.NComponents);
+        Assert.Equal(8u, depth[0]);
+        Assert.Equal(8u, depth[1]);
+        Assert.Equal(1, pixelStride[0]);
+
+        // The chroma planes of I420 are halved in both directions, which the
+        // subsampling tables state as one shift.
+        Assert.Equal(1u, wsub[1]);
+        Assert.Equal(1u, hsub[1]);
+        Assert.Equal(0u, wsub[0]);
+    }
+
+    /// <summary>
+    /// The hand written <c>Format</c> and <c>FormatInfo</c> of the two
+    /// <c>*Info</c> records, which read through the <c>finfo</c> pointer the
+    /// library assigns in <c>gst_video_info_init</c> and
+    /// <c>gst_audio_info_init</c>.
+    /// </summary>
+    [Fact]
+    public void TheInfoRecordsAnswerTheirFormatThroughTheirDescription()
+    {
+        using Caps videoCaps = Caps.FromString(
+            "video/x-raw,format=I420,width=320,height=240,framerate=30/1")
+            ?? throw new InvalidOperationException("The caps of a raw I420 frame have to parse.");
+
+        using VideoInfo video = VideoInfo.NewFromCaps(videoCaps)
+            ?? throw new InvalidOperationException("gst_video_info_from_caps refused raw I420 caps.");
+
+        Assert.Equal(VideoFormat.I420, video.Format);
+        Assert.Equal(VideoFormat.I420, video.FormatInfo.Format);
+
+        // A fresh structure carries the description of the unknown format
+        // rather than no description at all, which is why FormatInfo is not
+        // nullable: reading through it here answers rather than throws.
+        using VideoInfo emptyVideo = VideoInfo.New();
+        Assert.Equal(VideoFormat.Unknown, emptyVideo.Format);
+        Assert.Equal(VideoFormat.Unknown, emptyVideo.FormatInfo.Format);
+
+        using Caps audioCaps = Caps.FromString(
+            "audio/x-raw,format=S16LE,layout=interleaved,rate=44100,channels=2")
+            ?? throw new InvalidOperationException("The caps of interleaved S16LE audio have to parse.");
+
+        using AudioInfo audio = AudioInfo.NewFromCaps(audioCaps)
+            ?? throw new InvalidOperationException("gst_audio_info_from_caps refused S16LE caps.");
+
+        Assert.Equal(AudioFormat.S16le, audio.Format);
+        Assert.Equal(AudioFormat.S16le, audio.FormatInfo.Format);
+
+        using AudioInfo emptyAudio = AudioInfo.New();
+        Assert.Equal(AudioFormat.Unknown, emptyAudio.Format);
+        Assert.Equal(AudioFormat.Unknown, emptyAudio.FormatInfo.Format);
+    }
+
+    /// <summary>
     /// A field accessor of a boxed record reads through the handle of the
     /// wrapper, which a disposed wrapper refuses to hand out. Without that the
     /// read would dereference the null pointer.

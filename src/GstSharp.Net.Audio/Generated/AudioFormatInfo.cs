@@ -74,6 +74,17 @@ public sealed unsafe partial class AudioFormatInfo
         }
     }
 
+    /// <summary>@width/8 bytes with 1 silent sample</summary>
+    public Gst.Audio.AudioFormatInfo.SilenceArray Silence
+    {
+        get
+        {
+            Gst.Audio.AudioFormatInfo.SilenceArray value = ((AudioFormatInfoRaw*)Handle)->Silence;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
     /// <summary>the format of the unpacked samples</summary>
     public Gst.Audio.AudioFormat UnpackFormat
     {
@@ -83,6 +94,13 @@ public sealed unsafe partial class AudioFormatInfo
             System.GC.KeepAlive(this);
             return value;
         }
+    }
+
+    /// <summary>Inline storage of the 8 elements of the <c>silence</c> field of <c>GstAudioFormatInfo</c>.</summary>
+    [InlineArray(8)]
+    public struct SilenceArray
+    {
+        private byte _element0;
     }
 
     /// <summary>Wraps a native <c>GstAudioFormatInfo</c>, mapping the null pointer onto <see langword="null"/>.</summary>
@@ -147,7 +165,7 @@ internal unsafe struct AudioFormatInfoRaw
     internal int Depth;
 
     /// <summary>The <c>silence</c> field.</summary>
-    internal SilenceArray Silence;
+    internal Gst.Audio.AudioFormatInfo.SilenceArray Silence;
 
     /// <summary>The <c>unpack_format</c> field.</summary>
     internal Gst.Audio.AudioFormat UnpackFormat;
@@ -160,13 +178,6 @@ internal unsafe struct AudioFormatInfoRaw
 
     /// <summary>The <c>_gst_reserved</c> field.</summary>
     internal GstReservedArray GstReserved;
-
-    /// <summary>Inline storage of the 8 elements of the <c>silence</c> field.</summary>
-    [InlineArray(8)]
-    internal struct SilenceArray
-    {
-        private byte _element0;
-    }
 
     /// <summary>Inline storage of the 4 elements of the <c>_gst_reserved</c> field.</summary>
     [InlineArray(4)]

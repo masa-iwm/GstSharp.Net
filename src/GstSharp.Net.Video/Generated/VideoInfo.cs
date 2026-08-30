@@ -149,6 +149,42 @@ public sealed unsafe partial class VideoInfo : Gst.GObject.Boxed
         }
     }
 
+    /// <summary>offsets of the planes</summary>
+    public Gst.Video.VideoInfo.OffsetArray Offset
+    {
+        get
+        {
+            Gst.Video.VideoInfo.OffsetArray value = ((VideoInfoRaw*)Handle)->Offset;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>strides of the planes</summary>
+    public Gst.Video.VideoInfo.StrideArray Stride
+    {
+        get
+        {
+            Gst.Video.VideoInfo.StrideArray value = ((VideoInfoRaw*)Handle)->Stride;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>Inline storage of the 4 elements of the <c>offset</c> field of <c>GstVideoInfo</c>.</summary>
+    [InlineArray(4)]
+    public struct OffsetArray
+    {
+        private nuint _element0;
+    }
+
+    /// <summary>Inline storage of the 4 elements of the <c>stride</c> field of <c>GstVideoInfo</c>.</summary>
+    [InlineArray(4)]
+    public struct StrideArray
+    {
+        private int _element0;
+    }
+
     /// <summary>Wraps a native <c>GstVideoInfo</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
     /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
@@ -441,22 +477,8 @@ internal unsafe struct VideoInfoRaw
     internal int FpsD;
 
     /// <summary>The <c>offset</c> field.</summary>
-    internal OffsetArray Offset;
+    internal Gst.Video.VideoInfo.OffsetArray Offset;
 
     /// <summary>The <c>stride</c> field.</summary>
-    internal StrideArray Stride;
-
-    /// <summary>Inline storage of the 4 elements of the <c>offset</c> field.</summary>
-    [InlineArray(4)]
-    internal struct OffsetArray
-    {
-        private nuint _element0;
-    }
-
-    /// <summary>Inline storage of the 4 elements of the <c>stride</c> field.</summary>
-    [InlineArray(4)]
-    internal struct StrideArray
-    {
-        private int _element0;
-    }
+    internal Gst.Video.VideoInfo.StrideArray Stride;
 }

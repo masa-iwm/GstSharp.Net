@@ -135,6 +135,17 @@ public sealed unsafe partial class DsdInfo : Gst.GObject.Boxed
         }
     }
 
+    /// <summary>positions for each channel</summary>
+    public Gst.Audio.DsdInfo.PositionsArray Positions
+    {
+        get
+        {
+            Gst.Audio.DsdInfo.PositionsArray value = ((DsdInfoRaw*)Handle)->Positions;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
     /// <summary>The <c>flags</c> field of <c>GstDsdInfo</c>.</summary>
     public Gst.Audio.AudioFlags Flags
     {
@@ -144,6 +155,13 @@ public sealed unsafe partial class DsdInfo : Gst.GObject.Boxed
             System.GC.KeepAlive(this);
             return value;
         }
+    }
+
+    /// <summary>Inline storage of the 64 elements of the <c>positions</c> field of <c>GstDsdInfo</c>.</summary>
+    [InlineArray(64)]
+    public struct PositionsArray
+    {
+        private Gst.Audio.AudioChannelPosition _element0;
     }
 
     /// <summary>Wraps a native <c>GstDsdInfo</c>, mapping the null pointer onto <see langword="null"/>.</summary>
@@ -304,20 +322,13 @@ internal unsafe struct DsdInfoRaw
     internal int ReversedBytes;
 
     /// <summary>The <c>positions</c> field.</summary>
-    internal PositionsArray Positions;
+    internal Gst.Audio.DsdInfo.PositionsArray Positions;
 
     /// <summary>The <c>flags</c> field.</summary>
     internal Gst.Audio.AudioFlags Flags;
 
     /// <summary>The <c>_gst_reserved</c> field.</summary>
     internal GstReservedArray GstReserved;
-
-    /// <summary>Inline storage of the 64 elements of the <c>positions</c> field.</summary>
-    [InlineArray(64)]
-    internal struct PositionsArray
-    {
-        private Gst.Audio.AudioChannelPosition _element0;
-    }
 
     /// <summary>Inline storage of the 4 elements of the <c>_gst_reserved</c> field.</summary>
     [InlineArray(4)]

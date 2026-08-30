@@ -19,6 +19,17 @@ public sealed unsafe partial class VideoSEIUserDataUnregisteredMeta
     /// <param name="handle">The native instance.</param>
     internal VideoSEIUserDataUnregisteredMeta(nint handle) => Handle = handle;
 
+    /// <summary>User Data Unregistered UUID</summary>
+    public Gst.Video.VideoSEIUserDataUnregisteredMeta.UuidArray Uuid
+    {
+        get
+        {
+            Gst.Video.VideoSEIUserDataUnregisteredMeta.UuidArray value = ((VideoSEIUserDataUnregisteredMetaRaw*)Handle)->Uuid;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
     /// <summary>Size of the data buffer</summary>
     public nuint Size
     {
@@ -28,6 +39,13 @@ public sealed unsafe partial class VideoSEIUserDataUnregisteredMeta
             System.GC.KeepAlive(this);
             return value;
         }
+    }
+
+    /// <summary>Inline storage of the 16 elements of the <c>uuid</c> field of <c>GstVideoSEIUserDataUnregisteredMeta</c>.</summary>
+    [InlineArray(16)]
+    public struct UuidArray
+    {
+        private byte _element0;
     }
 
     /// <summary>Wraps a native <c>GstVideoSEIUserDataUnregisteredMeta</c>, mapping the null pointer onto <see langword="null"/>.</summary>
@@ -69,18 +87,11 @@ internal unsafe struct VideoSEIUserDataUnregisteredMetaRaw
     internal Gst.MetaRaw Meta;
 
     /// <summary>The <c>uuid</c> field.</summary>
-    internal UuidArray Uuid;
+    internal Gst.Video.VideoSEIUserDataUnregisteredMeta.UuidArray Uuid;
 
     /// <summary>The <c>data</c> field.</summary>
     internal nint Data;
 
     /// <summary>The <c>size</c> field.</summary>
     internal nuint Size;
-
-    /// <summary>Inline storage of the 16 elements of the <c>uuid</c> field.</summary>
-    [InlineArray(16)]
-    internal struct UuidArray
-    {
-        private byte _element0;
-    }
 }

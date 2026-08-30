@@ -141,6 +141,34 @@ using (pipeline)
 Order matters: a pipeline that is still `PLAYING` when its last reference goes
 away leaves its streaming threads running. Set it to `NULL` first.
 
+## Fields a wrapper reads
+
+A generated field accessor is a get-only property that reads through the handle
+of the wrapper. It hands out a **copy** of what the field holds and owns
+nothing; a disposed wrapper refuses it rather than dereferencing the null
+pointer. Two shapes are worth spelling out.
+
+* **A fixed size field is answered as inline storage.** `VideoInfo.Stride`,
+  `VideoInfo.Offset` and `VideoFormatInfo.Depth` hand out a struct nested in
+  the wrapper that carries the length in its own definition, the same type an
+  out parameter of a caller allocated array uses. What comes back is a copy of
+  the elements, so writing into it changes nothing native: the fields are set
+  through the calls that own them, `VideoInfo.SetFormat` and `VideoInfo.Align`.
+* **A wrapper handed out for a field is borrowed.** `VideoInfo.FormatInfo` and
+  `AudioInfo.FormatInfo` point at the per format description the library keeps
+  for the life of the process. The wrapper takes no part in its ownership,
+  there is nothing to dispose, and what it reads says nothing about the
+  `VideoInfo` it came from, which may have moved on to another format by then.
+  There is always one to hand out, so the property is not nullable: an instance
+  that carries no description is a zeroed block of memory and is reported as an
+  `InvalidOperationException`.
+
+A public field the generator binds nothing for is listed in the `## Fields`
+section of `girs/skip-report.md`, under the shape that kept it out. A field a
+hand written member reads through stays listed there, the same way a hand bound
+entry point stays on the skip list: what the ledger measures is the generated
+surface.
+
 ## Calls that consume their argument
 
 A call whose C function takes ownership of a parameter

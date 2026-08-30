@@ -171,13 +171,13 @@ public sealed class ClassEmitterTests
     }
 
     [Theory]
-    [InlineData("Gst", 35, 51, 5, 26, 18, 1410, 29, 23, 52)]
+    [InlineData("Gst", 35, 51, 5, 28, 18, 1410, 29, 23, 52)]
     [InlineData("GstBase", 11, 4, 0, 5, 0, 174, 31, 2, 4)]
     [InlineData("GstApp", 2, 2, 0, 8, 0, 62, 36, 8, 0)]
-    [InlineData("GstAudio", 14, 17, 1, 2, 2, 213, 32, 0, 38)]
-    [InlineData("GstVideo", 12, 42, 5, 0, 10, 382, 14, 2, 80)]
+    [InlineData("GstAudio", 14, 17, 1, 2, 2, 213, 32, 0, 41)]
+    [InlineData("GstVideo", 12, 42, 5, 0, 10, 382, 14, 2, 94)]
     [InlineData("GstPbutils", 14, 1, 0, 0, 1, 179, 5, 5, 0)]
-    [InlineData("GstSdp", 1, 21, 0, 0, 0, 164, 0, 0, 25)]
+    [InlineData("GstSdp", 1, 21, 0, 0, 0, 164, 0, 0, 26)]
     [InlineData("GstWebRTC", 9, 4, 0, 1, 2, 37, 38, 7, 6)]
     [InlineData("GstNet", 5, 3, 0, 1, 0, 25, 17, 0, 2)]
     [InlineData("GstRtsp", 1, 10, 1, 1, 2, 114, 0, 1, 14)]
@@ -576,6 +576,76 @@ public sealed class ClassEmitterTests
             StringComparison.Ordinal);
 
         Assert.Equal(report, GenerationPipeline.Run(GirFixture.GirDirectory).SkipReport, StringComparer.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("Gst", 83)]
+    [InlineData("GstBase", 7)]
+    [InlineData("GstAudio", 25)]
+    [InlineData("GstVideo", 61)]
+    [InlineData("GstSdp", 58)]
+    [InlineData("GstWebRTC", 12)]
+    [InlineData("GstNet", 4)]
+    [InlineData("GstRtsp", 16)]
+    [InlineData("GES", 1)]
+    [InlineData("GstApp", 0)]
+    [InlineData("GstPbutils", 0)]
+    public void TheFieldLedgerIsStable(string module, int fields)
+    {
+        // Public record fields that carry API in C and none in C#. The ledger
+        // exists because a field has no skip reason of its own: without it a
+        // record whose methods are bound reads as fully bound however many of
+        // its fields are missing, which is how the fixed size fields of
+        // GstVideoInfo went unnoticed. GstApp and GstPbutils declare no record
+        // field that is left out at all.
+        Assert.Equal(fields, Generated.Census.DroppedFieldCount(module));
+    }
+
+    [Fact]
+    public void TheSkipReportCarriesTheFieldLedger()
+    {
+        string report = Generated.SkipReport;
+
+        Assert.Equal(267, Generated.Census.DroppedFieldCount());
+        Assert.Contains("## Fields (267)\n", report, StringComparison.Ordinal);
+        Assert.Contains("### GstVideo (61)\n", report, StringComparison.Ordinal);
+
+        // One entry per shape that keeps a field out. The fixed size fields of
+        // GstVideoInfo are bound and are therefore absent; the ones whose
+        // elements are pointers or structures are not.
+        Assert.Contains("- `Buffer.pool` \u2014 Pointer\n", report, StringComparison.Ordinal);
+        Assert.Contains("- `Buffer.mini_object` \u2014 EmbeddedStruct\n", report, StringComparison.Ordinal);
+        Assert.Contains("- `Iterator.next` \u2014 Callback\n", report, StringComparison.Ordinal);
+        Assert.Contains("- `VideoInfo.ABI` \u2014 Union\n", report, StringComparison.Ordinal);
+        Assert.Contains(
+            "- `VideoFormatInfo.tile_info` \u2014 InlineArray(struct element)\n",
+            report,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "- `VideoFrame.data` \u2014 InlineArray(pointer element)\n",
+            report,
+            StringComparison.Ordinal);
+        Assert.DoesNotContain("- `VideoInfo.stride`", report, StringComparison.Ordinal);
+
+        // A value projected structure declares its fields itself, so a typed
+        // public field of one is bound although no accessor reads it:
+        // GstRTSPTimeRange embeds four GstRTSPTime by value and hands all four
+        // out. A field that lands on a machine address is not bound, and
+        // neither is one that only a hand written member reads through, which
+        // is what keeps the two ends of the rule from drifting.
+        Assert.DoesNotContain("- `RTSPTimeRange.min`", report, StringComparison.Ordinal);
+        Assert.DoesNotContain("- `VideoMetaTransformMatrix.in_rectangle`", report, StringComparison.Ordinal);
+        Assert.Contains("- `FormatDefinition.nick` \u2014 Pointer\n", report, StringComparison.Ordinal);
+        Assert.Contains("- `VideoMetaTransform.in_info` \u2014 Pointer\n", report, StringComparison.Ordinal);
+        Assert.Contains("- `VideoInfo.finfo` \u2014 Pointer\n", report, StringComparison.Ordinal);
+        Assert.Contains("- `AudioInfo.finfo` \u2014 Pointer\n", report, StringComparison.Ordinal);
+        Assert.Contains(
+            "- `MapInfo.user_data` \u2014 InlineArray(pointer element)\n",
+            report,
+            StringComparison.Ordinal);
+
+        // Padding is off the ledger whether or not the gir annotates it.
+        Assert.DoesNotContain("_gst_reserved", report, StringComparison.Ordinal);
     }
 
     [Fact]

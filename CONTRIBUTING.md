@@ -126,6 +126,21 @@ reported as `GEN0023`. That is a warning, so `generate` and `verify` still exit
 zero on it; what it fails is the test suite, which asserts that a run over the
 committed overlays reports no `GEN0020`, `GEN0023` or `GEN0024`.
 
+A hand bound consumer keeps its callback type generated: a `<callback>` whose
+only consumers are on the `handBound` ledger is emitted all the same, so the
+hand written member binds the generated delegate and trampoline instead of a
+copy of them.
+
+The last section of the report, `## Fields`, is not about callables at all: a
+record field has no `c:identifier` and no skip reason, so a record whose methods
+are all bound would read as fully bound however many of its fields carry API in
+C and none in C#. The section lists those fields under the shape that kept them
+out, and the census tests freeze its totals like every other count. A field
+counts as bound when a wrapper declares an accessor for it, or when a value
+projected structure declares it as a typed public field; one that is projected
+onto a raw address, and one that only a hand written member reads through, stay
+listed, because what the section measures is the generated surface.
+
 Never bump a number you cannot account for. Census drift that nobody asked for
 is a bug in the change — typically an accidental skip: an overlay entry that
 matches more than it was meant to, or a rule that rejects a signature it should

@@ -84,6 +84,24 @@ public sealed unsafe partial class AudioInfo : Gst.GObject.Boxed
         }
     }
 
+    /// <summary>the positions for each channel</summary>
+    public Gst.Audio.AudioInfo.PositionArray Position
+    {
+        get
+        {
+            Gst.Audio.AudioInfo.PositionArray value = ((AudioInfoRaw*)Handle)->Position;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>Inline storage of the 64 elements of the <c>position</c> field of <c>GstAudioInfo</c>.</summary>
+    [InlineArray(64)]
+    public struct PositionArray
+    {
+        private Gst.Audio.AudioChannelPosition _element0;
+    }
+
     /// <summary>Wraps a native <c>GstAudioInfo</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
     /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
@@ -267,17 +285,10 @@ internal unsafe struct AudioInfoRaw
     internal int Bpf;
 
     /// <summary>The <c>position</c> field.</summary>
-    internal PositionArray Position;
+    internal Gst.Audio.AudioInfo.PositionArray Position;
 
     /// <summary>The <c>_gst_reserved</c> field.</summary>
     internal GstReservedArray GstReserved;
-
-    /// <summary>Inline storage of the 64 elements of the <c>position</c> field.</summary>
-    [InlineArray(64)]
-    internal struct PositionArray
-    {
-        private Gst.Audio.AudioChannelPosition _element0;
-    }
 
     /// <summary>Inline storage of the 4 elements of the <c>_gst_reserved</c> field.</summary>
     [InlineArray(4)]

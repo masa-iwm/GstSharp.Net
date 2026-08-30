@@ -112,6 +112,48 @@ public sealed unsafe partial class VideoMeta
         }
     }
 
+    /// <summary>
+    /// array of offsets for the planes. This field might not always be
+    ///          valid, it is used by the default implementation of @map.
+    /// </summary>
+    public Gst.Video.VideoMeta.OffsetArray Offset
+    {
+        get
+        {
+            Gst.Video.VideoMeta.OffsetArray value = ((VideoMetaRaw*)Handle)->Offset;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>
+    /// array of strides for the planes. This field might not always be
+    ///          valid, it is used by the default implementation of @map.
+    /// </summary>
+    public Gst.Video.VideoMeta.StrideArray Stride
+    {
+        get
+        {
+            Gst.Video.VideoMeta.StrideArray value = ((VideoMetaRaw*)Handle)->Stride;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>Inline storage of the 4 elements of the <c>offset</c> field of <c>GstVideoMeta</c>.</summary>
+    [InlineArray(4)]
+    public struct OffsetArray
+    {
+        private nuint _element0;
+    }
+
+    /// <summary>Inline storage of the 4 elements of the <c>stride</c> field of <c>GstVideoMeta</c>.</summary>
+    [InlineArray(4)]
+    public struct StrideArray
+    {
+        private int _element0;
+    }
+
     /// <summary>Wraps a native <c>GstVideoMeta</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
     /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>
@@ -321,10 +363,10 @@ internal unsafe struct VideoMetaRaw
     internal uint NPlanes;
 
     /// <summary>The <c>offset</c> field.</summary>
-    internal OffsetArray Offset;
+    internal Gst.Video.VideoMeta.OffsetArray Offset;
 
     /// <summary>The <c>stride</c> field.</summary>
-    internal StrideArray Stride;
+    internal Gst.Video.VideoMeta.StrideArray Stride;
 
     /// <summary>The <c>map</c> field.</summary>
     internal nint Map;
@@ -334,18 +376,4 @@ internal unsafe struct VideoMetaRaw
 
     /// <summary>The <c>alignment</c> field.</summary>
     internal Gst.Video.VideoAlignment Alignment;
-
-    /// <summary>Inline storage of the 4 elements of the <c>offset</c> field.</summary>
-    [InlineArray(4)]
-    internal struct OffsetArray
-    {
-        private nuint _element0;
-    }
-
-    /// <summary>Inline storage of the 4 elements of the <c>stride</c> field.</summary>
-    [InlineArray(4)]
-    internal struct StrideArray
-    {
-        private int _element0;
-    }
 }

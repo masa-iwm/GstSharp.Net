@@ -1084,3 +1084,309 @@ disappears shows up here as an added line.
 - `gst_webrtc_data_channel_send_data`
 - `gst_webrtc_ice_get_local_candidates`
 - `gst_webrtc_ice_get_remote_candidates`
+
+## Fields (267)
+
+Public record fields that carry API in C and none in C#, with the shape that
+kept them out. A field is bound when a wrapper declares an accessor for it, or
+when a value projected structure declares it as a typed public field; one that
+is projected onto a machine address binds nothing that can be read without the
+interop layer and stays listed. A union is listed once, under its own name,
+because the layout of the record stops where it sits. A field a hand written
+member reads through, such as the `finfo` of `GstVideoInfo`, stays listed as
+well: the ledger measures what the generator binds, the same convention the
+hand bound entry points above follow.
+
+### GES (1)
+
+- `FrameCompositionMeta.meta` — EmbeddedStruct
+
+### Gst (83)
+
+- `Buffer.mini_object` — EmbeddedStruct
+- `Buffer.pool` — Pointer
+- `ByteArrayInterface.data` — Pointer
+- `ByteArrayInterface.resize` — Callback
+- `Caps.mini_object` — EmbeddedStruct
+- `CustomMeta.meta` — EmbeddedStruct
+- `CustomMeta.structure` — Pointer
+- `Event.mini_object` — EmbeddedStruct
+- `FormatDefinition.description` — Pointer
+- `FormatDefinition.nick` — Pointer
+- `Iterator.copy` — Callback
+- `Iterator.free` — Callback
+- `Iterator.item` — Callback
+- `Iterator.lock` — Pointer
+- `Iterator.master_cookie` — Pointer
+- `Iterator.next` — Callback
+- `Iterator.pushed` — Pointer
+- `Iterator.resync` — Callback
+- `MapInfo.data` — Pointer
+- `MapInfo.memory` — Pointer
+- `MapInfo.user_data` — InlineArray(pointer element)
+- `Memory.allocator` — Pointer
+- `Memory.mini_object` — EmbeddedStruct
+- `Memory.parent` — Pointer
+- `Message.mini_object` — EmbeddedStruct
+- `Message.src` — Pointer
+- `Meta.info` — Pointer
+- `MetaInfo.clear_func` — Callback
+- `MetaInfo.deserialize_func` — Callback
+- `MetaInfo.free_func` — Callback
+- `MetaInfo.init_func` — Callback
+- `MetaInfo.serialize_func` — Callback
+- `MetaInfo.transform_func` — Callback
+- `MiniObject.copy` — Callback
+- `MiniObject.dispose` — Callback
+- `MiniObject.flags` — Other
+- `MiniObject.free` — Callback
+- `MiniObject.lockstate` — Other
+- `MiniObject.refcount` — Other
+- `MiniObject.type` — Other
+- `PadProbeInfo.ABI` — Union
+- `PadProbeInfo.data` — Pointer
+- `ParamSpecArray.element_spec` — Pointer
+- `ParamSpecArray.parent_instance` — EmbeddedStruct
+- `ParamSpecFraction.def_den` — Other
+- `ParamSpecFraction.def_num` — Other
+- `ParamSpecFraction.max_den` — Other
+- `ParamSpecFraction.max_num` — Other
+- `ParamSpecFraction.min_den` — Other
+- `ParamSpecFraction.min_num` — Other
+- `ParamSpecFraction.parent_instance` — EmbeddedStruct
+- `ParentBufferMeta.buffer` — Pointer
+- `ParentBufferMeta.parent` — EmbeddedStruct
+- `PluginDesc.description` — Pointer
+- `PluginDesc.license` — Pointer
+- `PluginDesc.name` — Pointer
+- `PluginDesc.origin` — Pointer
+- `PluginDesc.package` — Pointer
+- `PluginDesc.plugin_init` — Callback
+- `PluginDesc.release_datetime` — Pointer
+- `PluginDesc.source` — Pointer
+- `PluginDesc.version` — Pointer
+- `Promise.parent` — EmbeddedStruct
+- `ProtectionMeta.info` — Pointer
+- `ProtectionMeta.meta` — EmbeddedStruct
+- `Query.mini_object` — EmbeddedStruct
+- `ReferenceTimestampMeta.info` — Pointer
+- `ReferenceTimestampMeta.parent` — EmbeddedStruct
+- `ReferenceTimestampMeta.reference` — Pointer
+- `StaticCaps.caps` — Pointer
+- `StaticCaps.string` — Pointer
+- `StaticPadTemplate.name_template` — Pointer
+- `StaticPadTemplate.static_caps` — EmbeddedStruct
+- `TagList.mini_object` — EmbeddedStruct
+- `TypeFind.data` — Pointer
+- `TypeFind.get_length` — Callback
+- `TypeFind.peek` — Callback
+- `TypeFind.suggest` — Callback
+- `ValueTable.compare` — Callback
+- `ValueTable.deserialize` — Callback
+- `ValueTable.deserialize_with_pspec` — Callback
+- `ValueTable.hash` — Callback
+- `ValueTable.serialize` — Callback
+
+### GstAudio (25)
+
+- `AudioBuffer.buffer` — Pointer
+- `AudioBuffer.info` — EmbeddedStruct
+- `AudioBuffer.planes` — Pointer
+- `AudioCdSrcTrack.tags` — Pointer
+- `AudioClippingMeta.format` — Other
+- `AudioClippingMeta.meta` — EmbeddedStruct
+- `AudioDownmixMeta.from_position` — Pointer
+- `AudioDownmixMeta.matrix` — Pointer
+- `AudioDownmixMeta.meta` — EmbeddedStruct
+- `AudioDownmixMeta.to_position` — Pointer
+- `AudioFormatInfo.description` — Pointer
+- `AudioFormatInfo.name` — Pointer
+- `AudioFormatInfo.pack_func` — Callback
+- `AudioFormatInfo.unpack_func` — Callback
+- `AudioInfo.finfo` — Pointer
+- `AudioLevelMeta.meta` — EmbeddedStruct
+- `AudioMeta.info` — EmbeddedStruct
+- `AudioMeta.meta` — EmbeddedStruct
+- `AudioMeta.offsets` — Pointer
+- `AudioRingBufferSpec.ABI` — Union
+- `AudioRingBufferSpec.caps` — Pointer
+- `AudioRingBufferSpec.info` — EmbeddedStruct
+- `AudioSinkClassExtension.clear_all` — Callback
+- `DsdPlaneOffsetMeta.meta` — EmbeddedStruct
+- `DsdPlaneOffsetMeta.offsets` — Pointer
+
+### GstBase (7)
+
+- `BaseParseFrame.buffer` — Pointer
+- `BaseParseFrame.out_buffer` — Pointer
+- `CollectData.ABI` — Union
+- `CollectData.buffer` — Pointer
+- `CollectData.collect` — Pointer
+- `CollectData.pad` — Pointer
+- `CollectData.segment` — EmbeddedStruct
+
+### GstNet (4)
+
+- `NetAddressMeta.addr` — Pointer
+- `NetAddressMeta.meta` — EmbeddedStruct
+- `NetControlMessageMeta.message` — Pointer
+- `NetControlMessageMeta.meta` — EmbeddedStruct
+
+### GstRtsp (16)
+
+- `RTSPAuthCredential.authorization` — Pointer
+- `RTSPAuthCredential.params` — Pointer
+- `RTSPAuthParam.name` — Pointer
+- `RTSPAuthParam.value` — Pointer
+- `RTSPMessage.type_data` — Union
+- `RTSPTransport.client_port` — EmbeddedStruct
+- `RTSPTransport.destination` — Pointer
+- `RTSPTransport.interleaved` — EmbeddedStruct
+- `RTSPTransport.port` — EmbeddedStruct
+- `RTSPTransport.server_port` — EmbeddedStruct
+- `RTSPTransport.source` — Pointer
+- `RTSPUrl.abspath` — Pointer
+- `RTSPUrl.host` — Pointer
+- `RTSPUrl.passwd` — Pointer
+- `RTSPUrl.query` — Pointer
+- `RTSPUrl.user` — Pointer
+
+### GstSdp (58)
+
+- `MIKEYMessage.map_info` — Pointer
+- `MIKEYMessage.payloads` — Pointer
+- `MIKEYPayloadKEMAC.pt` — EmbeddedStruct
+- `MIKEYPayloadKEMAC.subpayloads` — Pointer
+- `MIKEYPayloadKeyData.key_data` — Pointer
+- `MIKEYPayloadKeyData.kv_data` — InlineArray(pointer element)
+- `MIKEYPayloadKeyData.pt` — EmbeddedStruct
+- `MIKEYPayloadKeyData.salt_data` — Pointer
+- `MIKEYPayloadPKE.data` — Pointer
+- `MIKEYPayloadPKE.pt` — EmbeddedStruct
+- `MIKEYPayloadRAND.pt` — EmbeddedStruct
+- `MIKEYPayloadRAND.rand` — Pointer
+- `MIKEYPayloadSP.params` — Pointer
+- `MIKEYPayloadSP.pt` — EmbeddedStruct
+- `MIKEYPayloadSPParam.val` — Pointer
+- `MIKEYPayloadT.pt` — EmbeddedStruct
+- `MIKEYPayloadT.ts_value` — Pointer
+- `SDPAttribute.key` — Pointer
+- `SDPAttribute.value` — Pointer
+- `SDPBandwidth.bwtype` — Pointer
+- `SDPConnection.address` — Pointer
+- `SDPConnection.addrtype` — Pointer
+- `SDPConnection.nettype` — Pointer
+- `SDPKey.data` — Pointer
+- `SDPKey.type` — Pointer
+- `SDPMedia.attributes` — Pointer
+- `SDPMedia.bandwidths` — Pointer
+- `SDPMedia.connections` — Pointer
+- `SDPMedia.fmts` — Pointer
+- `SDPMedia.information` — Pointer
+- `SDPMedia.key` — EmbeddedStruct
+- `SDPMedia.media` — Pointer
+- `SDPMedia.proto` — Pointer
+- `SDPMessage.attributes` — Pointer
+- `SDPMessage.bandwidths` — Pointer
+- `SDPMessage.connection` — EmbeddedStruct
+- `SDPMessage.emails` — Pointer
+- `SDPMessage.information` — Pointer
+- `SDPMessage.key` — EmbeddedStruct
+- `SDPMessage.medias` — Pointer
+- `SDPMessage.origin` — EmbeddedStruct
+- `SDPMessage.phones` — Pointer
+- `SDPMessage.session_name` — Pointer
+- `SDPMessage.times` — Pointer
+- `SDPMessage.uri` — Pointer
+- `SDPMessage.version` — Pointer
+- `SDPMessage.zones` — Pointer
+- `SDPOrigin.addr` — Pointer
+- `SDPOrigin.addrtype` — Pointer
+- `SDPOrigin.nettype` — Pointer
+- `SDPOrigin.sess_id` — Pointer
+- `SDPOrigin.sess_version` — Pointer
+- `SDPOrigin.username` — Pointer
+- `SDPTime.repeat` — Pointer
+- `SDPTime.start` — Pointer
+- `SDPTime.stop` — Pointer
+- `SDPZone.time` — Pointer
+- `SDPZone.typed_time` — Pointer
+
+### GstVideo (61)
+
+- `AncillaryMeta.data` — Pointer
+- `AncillaryMeta.meta` — EmbeddedStruct
+- `VideoAFDMeta.meta` — EmbeddedStruct
+- `VideoAffineTransformationMeta.meta` — EmbeddedStruct
+- `VideoBarMeta.meta` — EmbeddedStruct
+- `VideoCaptionMeta.data` — Pointer
+- `VideoCaptionMeta.meta` — EmbeddedStruct
+- `VideoCodecAlphaMeta.buffer` — Pointer
+- `VideoCodecAlphaMeta.meta` — EmbeddedStruct
+- `VideoCodecFrame.abidata` — Union
+- `VideoCodecFrame.input_buffer` — Pointer
+- `VideoCodecFrame.output_buffer` — Pointer
+- `VideoCodecState.allocation_caps` — Pointer
+- `VideoCodecState.caps` — Pointer
+- `VideoCodecState.codec_data` — Pointer
+- `VideoCodecState.content_light_level` — Pointer
+- `VideoCodecState.info` — EmbeddedStruct
+- `VideoCodecState.mastering_display_info` — Pointer
+- `VideoCropMeta.meta` — EmbeddedStruct
+- `VideoFormatInfo.description` — Pointer
+- `VideoFormatInfo.name` — Pointer
+- `VideoFormatInfo.pack_func` — Callback
+- `VideoFormatInfo.tile_info` — InlineArray(struct element)
+- `VideoFormatInfo.unpack_func` — Callback
+- `VideoFrame.buffer` — Pointer
+- `VideoFrame.data` — InlineArray(pointer element)
+- `VideoFrame.flags` — Other
+- `VideoFrame.id` — Other
+- `VideoFrame.info` — EmbeddedStruct
+- `VideoFrame.map` — InlineArray(struct element)
+- `VideoFrame.meta` — Pointer
+- `VideoGLTextureUploadMeta.meta` — EmbeddedStruct
+- `VideoInfo.ABI` — Union
+- `VideoInfo.colorimetry` — EmbeddedStruct
+- `VideoInfo.finfo` — Pointer
+- `VideoInfoDmaDrm.drm_fourcc` — Other
+- `VideoInfoDmaDrm.drm_modifier` — Other
+- `VideoInfoDmaDrm.vinfo` — EmbeddedStruct
+- `VideoMeta.alignment` — EmbeddedStruct
+- `VideoMeta.buffer` — Pointer
+- `VideoMeta.map` — Callback
+- `VideoMeta.meta` — EmbeddedStruct
+- `VideoMeta.unmap` — Callback
+- `VideoMetaTransform.in_info` — Pointer
+- `VideoMetaTransform.out_info` — Pointer
+- `VideoMetaTransformMatrix.in_info` — Pointer
+- `VideoMetaTransformMatrix.out_info` — Pointer
+- `VideoOverlayCompositionMeta.meta` — EmbeddedStruct
+- `VideoOverlayCompositionMeta.overlay` — Pointer
+- `VideoRegionOfInterestMeta.meta` — EmbeddedStruct
+- `VideoRegionOfInterestMeta.params` — Pointer
+- `VideoResampler.n_taps` — Pointer
+- `VideoResampler.offset` — Pointer
+- `VideoResampler.phase` — Pointer
+- `VideoResampler.taps` — Pointer
+- `VideoSEIUserDataUnregisteredMeta.data` — Pointer
+- `VideoSEIUserDataUnregisteredMeta.meta` — EmbeddedStruct
+- `VideoTimeCode.config` — EmbeddedStruct
+- `VideoTimeCodeConfig.latest_daily_jam` — Pointer
+- `VideoTimeCodeMeta.meta` — EmbeddedStruct
+- `VideoTimeCodeMeta.tc` — EmbeddedStruct
+
+### GstWebRTC (12)
+
+- `WebRTCICECandidate.candidate` — Pointer
+- `WebRTCICECandidate.sdp_mid` — Pointer
+- `WebRTCICECandidate.stats` — Pointer
+- `WebRTCICECandidatePair.local` — Pointer
+- `WebRTCICECandidatePair.remote` — Pointer
+- `WebRTCICECandidateStats.ABI` — Union
+- `WebRTCICECandidateStats.ipaddr` — Pointer
+- `WebRTCICECandidateStats.proto` — Pointer
+- `WebRTCICECandidateStats.relay_proto` — Pointer
+- `WebRTCICECandidateStats.type` — Pointer
+- `WebRTCICECandidateStats.url` — Pointer
+- `WebRTCSessionDescription.sdp` — Pointer

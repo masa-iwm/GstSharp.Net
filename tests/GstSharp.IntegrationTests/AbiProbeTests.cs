@@ -1,4 +1,4 @@
-﻿extern alias gstsharp;
+extern alias gstsharp;
 
 using System.Globalization;
 using System.Runtime.CompilerServices;
@@ -995,6 +995,93 @@ public sealed class AbiProbeTests
     }
 
     /// <summary>
+    /// <c>struct _GstVideoAffineTransformationMeta</c> of
+    /// <c>gstvideoaffinetransformationmeta.h</c>: the 16 byte header and
+    /// <c>gfloat matrix[16]</c> at 16, for 80 bytes.
+    /// </summary>
+    /// <remarks>
+    /// <c>matrix</c> is handed out by the wrapper, so the offset of the inline
+    /// storage the mirror lays it out with has to be the offset of the array
+    /// the library writes.
+    /// </remarks>
+    [Fact]
+    public unsafe void VideoAffineTransformationMetaRawMatchesTheHeaderLayout()
+    {
+        Gst.Video.VideoAffineTransformationMetaRaw raw = default;
+
+        _output.WriteLine(Format(
+            "VideoAffineTransformationMetaRaw",
+            Unsafe.SizeOf<Gst.Video.VideoAffineTransformationMetaRaw>()));
+        Assert.Equal(80, Unsafe.SizeOf<Gst.Video.VideoAffineTransformationMetaRaw>());
+        Assert.Equal(64, Unsafe.SizeOf<Gst.Video.VideoAffineTransformationMeta.MatrixArray>());
+
+        Assert.Equal(0L, Offset(&raw, &raw.Meta));
+        Assert.Equal(16L, Offset(&raw, &raw.Matrix));
+    }
+
+    /// <summary>
+    /// <c>struct _GstVideoGLTextureUploadMeta</c> of <c>gstvideometa.h</c>: the
+    /// 16 byte header, <c>GstVideoGLTextureOrientation texture_orientation</c>
+    /// at 16 and <c>guint n_textures</c> at 20,
+    /// <c>GstVideoGLTextureType texture_type[4]</c> at 24, and the private
+    /// <c>buffer</c>, <c>upload</c>, <c>user_data</c>, <c>user_data_copy</c>
+    /// and <c>user_data_free</c> slots at 40, 48, 56, 64 and 72, for 80 bytes.
+    /// </summary>
+    /// <remarks>
+    /// <c>texture_type</c> is handed out by the wrapper, so the offset of the
+    /// inline storage the mirror lays it out with has to be the offset of the
+    /// array the library writes.
+    /// </remarks>
+    [Fact]
+    public unsafe void VideoGLTextureUploadMetaRawMatchesTheHeaderLayout()
+    {
+        Gst.Video.VideoGLTextureUploadMetaRaw raw = default;
+
+        _output.WriteLine(Format(
+            "VideoGLTextureUploadMetaRaw",
+            Unsafe.SizeOf<Gst.Video.VideoGLTextureUploadMetaRaw>()));
+        Assert.Equal(80, Unsafe.SizeOf<Gst.Video.VideoGLTextureUploadMetaRaw>());
+        Assert.Equal(16, Unsafe.SizeOf<Gst.Video.VideoGLTextureUploadMeta.TextureTypeArray>());
+
+        Assert.Equal(0L, Offset(&raw, &raw.Meta));
+        Assert.Equal(16L, Offset(&raw, &raw.TextureOrientation));
+        Assert.Equal(20L, Offset(&raw, &raw.NTextures));
+        Assert.Equal(24L, Offset(&raw, &raw.TextureType));
+        Assert.Equal(40L, Offset(&raw, &raw.Buffer));
+        Assert.Equal(48L, Offset(&raw, &raw.Upload));
+        Assert.Equal(56L, Offset(&raw, &raw.UserData));
+        Assert.Equal(64L, Offset(&raw, &raw.UserDataCopy));
+        Assert.Equal(72L, Offset(&raw, &raw.UserDataFree));
+    }
+
+    /// <summary>
+    /// <c>GstVideoSEIUserDataUnregisteredMeta</c> of <c>video-sei.h</c>: the 16
+    /// byte header, <c>guint8 uuid[16]</c> at 16, <c>guint8 *data</c> at 32 and
+    /// <c>gsize size</c> at 40, for 48 bytes.
+    /// </summary>
+    /// <remarks>
+    /// <c>uuid</c> is handed out by the wrapper, so the offset of the inline
+    /// storage the mirror lays it out with has to be the offset of the array
+    /// the library writes.
+    /// </remarks>
+    [Fact]
+    public unsafe void VideoSeiUserDataUnregisteredMetaRawMatchesTheHeaderLayout()
+    {
+        Gst.Video.VideoSEIUserDataUnregisteredMetaRaw raw = default;
+
+        _output.WriteLine(Format(
+            "VideoSEIUserDataUnregisteredMetaRaw",
+            Unsafe.SizeOf<Gst.Video.VideoSEIUserDataUnregisteredMetaRaw>()));
+        Assert.Equal(48, Unsafe.SizeOf<Gst.Video.VideoSEIUserDataUnregisteredMetaRaw>());
+        Assert.Equal(16, Unsafe.SizeOf<Gst.Video.VideoSEIUserDataUnregisteredMeta.UuidArray>());
+
+        Assert.Equal(0L, Offset(&raw, &raw.Meta));
+        Assert.Equal(16L, Offset(&raw, &raw.Uuid));
+        Assert.Equal(32L, Offset(&raw, &raw.Data));
+        Assert.Equal(40L, Offset(&raw, &raw.Size));
+    }
+
+    /// <summary>
     /// <c>GstAudioClippingMeta</c> of <c>gstaudiometa.h</c>: the 16 byte
     /// header, <c>GstFormat format</c> at 16 with 4 bytes of padding behind it
     /// and the two <c>guint64</c> values <c>start</c> and <c>end</c> at 24 and
@@ -1124,6 +1211,45 @@ public sealed class AbiProbeTests
         Assert.Equal(20L, Offset(&raw, &raw.Channels));
         Assert.Equal(24L, Offset(&raw, &raw.Bpf));
         Assert.Equal(28L, Offset(&raw, &raw.Position));
+    }
+
+    /// <summary>
+    /// <c>struct _GstAudioFormatInfo</c> of <c>audio-format.h</c>:
+    /// <c>GstAudioFormat format</c> at 0 with 4 bytes of padding behind it,
+    /// <c>const gchar *name</c> at 8 and <c>const gchar *description</c> at 16,
+    /// <c>GstAudioFormatFlags flags</c> at 24 and the three <c>gint</c> values
+    /// <c>endianness</c>, <c>width</c> and <c>depth</c> at 28, 32 and 36,
+    /// <c>guint8 silence[8]</c> at 40, <c>GstAudioFormat unpack_format</c> at
+    /// 48 with 4 bytes of padding, the <c>unpack_func</c> and <c>pack_func</c>
+    /// slots at 56 and 64 and <c>gpointer _gst_reserved[GST_PADDING]</c> at 72,
+    /// for 104 bytes in total.
+    /// </summary>
+    /// <remarks>
+    /// <c>silence</c> is handed out by the wrapper, so the offset of the inline
+    /// storage the mirror lays it out with has to be the offset of the array
+    /// the library writes.
+    /// </remarks>
+    [Fact]
+    public unsafe void AudioFormatInfoRawMatchesTheHeaderLayout()
+    {
+        Gst.Audio.AudioFormatInfoRaw raw = default;
+
+        _output.WriteLine(Format("AudioFormatInfoRaw", Unsafe.SizeOf<Gst.Audio.AudioFormatInfoRaw>()));
+        Assert.Equal(104, Unsafe.SizeOf<Gst.Audio.AudioFormatInfoRaw>());
+        Assert.Equal(8, Unsafe.SizeOf<Gst.Audio.AudioFormatInfo.SilenceArray>());
+
+        Assert.Equal(0L, Offset(&raw, &raw.Format));
+        Assert.Equal(8L, Offset(&raw, &raw.Name));
+        Assert.Equal(16L, Offset(&raw, &raw.Description));
+        Assert.Equal(24L, Offset(&raw, &raw.Flags));
+        Assert.Equal(28L, Offset(&raw, &raw.Endianness));
+        Assert.Equal(32L, Offset(&raw, &raw.Width));
+        Assert.Equal(36L, Offset(&raw, &raw.Depth));
+        Assert.Equal(40L, Offset(&raw, &raw.Silence));
+        Assert.Equal(48L, Offset(&raw, &raw.UnpackFormat));
+        Assert.Equal(56L, Offset(&raw, &raw.UnpackFunc));
+        Assert.Equal(64L, Offset(&raw, &raw.PackFunc));
+        Assert.Equal(72L, Offset(&raw, &raw.GstReserved));
     }
 
     /// <summary>
@@ -1414,6 +1540,41 @@ public sealed class AbiProbeTests
         Assert.Equal(72L, Offset(&raw, &raw.Policy));
         Assert.Equal(76L, Offset(&raw, &raw.Proto));
         Assert.Equal(80L, Offset(&raw, &raw.Params));
+    }
+
+    /// <summary>
+    /// <c>GstMIKEYPayloadKeyData</c> of <c>gstmikey.h</c>: the same 72 byte
+    /// <c>GstMIKEYPayload</c> header at 0,
+    /// <c>GstMIKEYKeyDataType key_type</c> at 72, <c>guint16 key_len</c> at 76
+    /// with 4 bytes of padding behind it, <c>guint8 *key_data</c> at 80,
+    /// <c>guint16 salt_len</c> at 88 with 6 bytes of padding,
+    /// <c>guint8 *salt_data</c> at 96, <c>GstMIKEYKVType kv_type</c> at 104,
+    /// <c>guint8 kv_len[2]</c> at 108 with 2 bytes of padding and
+    /// <c>guint8 *kv_data[2]</c> at 112, for 128 bytes.
+    /// </summary>
+    /// <remarks>
+    /// <c>kv_len</c> is handed out by the wrapper, so the offset of the inline
+    /// storage the mirror lays it out with has to be the offset of the array
+    /// the library writes.
+    /// </remarks>
+    [Fact]
+    public unsafe void MikeyPayloadKeyDataRawMatchesTheHeaderLayout()
+    {
+        Gst.Sdp.MIKEYPayloadKeyDataRaw raw = default;
+
+        _output.WriteLine(Format("MIKEYPayloadKeyDataRaw", Unsafe.SizeOf<Gst.Sdp.MIKEYPayloadKeyDataRaw>()));
+        Assert.Equal(128, Unsafe.SizeOf<Gst.Sdp.MIKEYPayloadKeyDataRaw>());
+        Assert.Equal(2, Unsafe.SizeOf<Gst.Sdp.MIKEYPayloadKeyData.KvLenArray>());
+
+        Assert.Equal(0L, Offset(&raw, &raw.Pt));
+        Assert.Equal(72L, Offset(&raw, &raw.KeyType));
+        Assert.Equal(76L, Offset(&raw, &raw.KeyLen));
+        Assert.Equal(80L, Offset(&raw, &raw.KeyData));
+        Assert.Equal(88L, Offset(&raw, &raw.SaltLen));
+        Assert.Equal(96L, Offset(&raw, &raw.SaltData));
+        Assert.Equal(104L, Offset(&raw, &raw.KvType));
+        Assert.Equal(108L, Offset(&raw, &raw.KvLen));
+        Assert.Equal(112L, Offset(&raw, &raw.KvData));
     }
 
     /// <summary>

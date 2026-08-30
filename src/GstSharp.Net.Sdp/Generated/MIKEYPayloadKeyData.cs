@@ -65,6 +65,24 @@ public sealed unsafe partial class MIKEYPayloadKeyData
         }
     }
 
+    /// <summary>length of @kv_data</summary>
+    public Gst.Sdp.MIKEYPayloadKeyData.KvLenArray KvLen
+    {
+        get
+        {
+            Gst.Sdp.MIKEYPayloadKeyData.KvLenArray value = ((MIKEYPayloadKeyDataRaw*)Handle)->KvLen;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>Inline storage of the 2 elements of the <c>kv_len</c> field of <c>GstMIKEYPayloadKeyData</c>.</summary>
+    [InlineArray(2)]
+    public struct KvLenArray
+    {
+        private byte _element0;
+    }
+
     /// <summary>Wraps a native <c>GstMIKEYPayloadKeyData</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
     /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>
@@ -109,17 +127,10 @@ internal unsafe struct MIKEYPayloadKeyDataRaw
     internal Gst.Sdp.MIKEYKVType KvType;
 
     /// <summary>The <c>kv_len</c> field.</summary>
-    internal KvLenArray KvLen;
+    internal Gst.Sdp.MIKEYPayloadKeyData.KvLenArray KvLen;
 
     /// <summary>The <c>kv_data</c> field.</summary>
     internal KvDataArray KvData;
-
-    /// <summary>Inline storage of the 2 elements of the <c>kv_len</c> field.</summary>
-    [InlineArray(2)]
-    internal struct KvLenArray
-    {
-        private byte _element0;
-    }
 
     /// <summary>Inline storage of the 2 elements of the <c>kv_data</c> field.</summary>
     [InlineArray(2)]
