@@ -212,17 +212,17 @@ public sealed class ClassEmitterTests
     }
 
     [Theory]
-    [InlineData("Gst", 1, 90, 53, 118, 90, 10)]
+    [InlineData("Gst", 1, 90, 53, 115, 80, 10)]
     [InlineData("GstBase", 0, 11, 0, 20, 6, 0)]
     [InlineData("GstApp", 1, 0, 0, 2, 2, 1)]
     [InlineData("GstAudio", 0, 22, 0, 8, 4, 0)]
     [InlineData("GstVideo", 0, 96, 1, 6, 5, 0)]
     [InlineData("GstPbutils", 0, 1, 0, 0, 2, 0)]
     [InlineData("GstSdp", 0, 8, 0, 0, 6, 0)]
-    [InlineData("GstWebRTC", 0, 2, 0, 0, 5, 0)]
+    [InlineData("GstWebRTC", 0, 2, 0, 0, 4, 0)]
     [InlineData("GstNet", 0, 3, 0, 0, 0, 0)]
-    [InlineData("GstRtsp", 0, 13, 0, 0, 13, 0)]
-    [InlineData("GES", 6, 3, 4, 10, 26, 2)]
+    [InlineData("GstRtsp", 0, 12, 0, 0, 13, 0)]
+    [InlineData("GES", 6, 3, 4, 10, 22, 2)]
     public void TheSkipCensusIsStable(
         string module,
         int shadowed,
@@ -556,9 +556,14 @@ public sealed class ClassEmitterTests
         // from the report and the entry points the overlays took over are
         // named under the overlay skips instead.
         Assert.DoesNotContain("### CallerAllocates", report, StringComparison.Ordinal);
-        Assert.Contains("### OverlaySkip (58)\n", report, StringComparison.Ordinal);
+        Assert.Contains("### OverlaySkip (29)\n", report, StringComparison.Ordinal);
         Assert.Contains("- `gst_video_frame_map`\n", GenerationPipeline.Run(GirFixture.GirDirectory).SkipReport, StringComparison.Ordinal);
         Assert.Contains("- `GstApp.AppSrc::push-buffer`\n", report, StringComparison.Ordinal);
+
+        // The hand bound ledger takes precedence over the reason that kept a
+        // symbol out, so gst_video_frame_map is reported here and not under
+        // the overlay skips it is also listed in.
+        Assert.Contains("### HandBound (42)\n", report, StringComparison.Ordinal);
 
         Assert.Equal(report, GenerationPipeline.Run(GirFixture.GirDirectory).SkipReport, StringComparer.Ordinal);
     }
@@ -689,18 +694,21 @@ public sealed class ClassEmitterTests
     /// <param name="instanceTransfer">Callables that consume their instance and replace it.</param>
     /// <param name="actionSignals">Signals that are a call API rather than a notification.</param>
     /// <param name="owningProperties">Properties whose value is a wrapper the reader would have to dispose.</param>
+    /// <param name="handBound">Callables the hand written surface already covers. They are counted here rather
+    /// than under the reason that kept them out of the emitters, which is why the overlay skips of a module
+    /// fall by the number of its hand bound entries that reach the census through the skip list.</param>
     [Theory]
-    [InlineData("Gst", 62, 0, 21, 20, 0, 5)]
-    [InlineData("GstBase", 4, 0, 4, 0, 0, 2)]
-    [InlineData("GstApp", 3, 0, 4, 0, 9, 2)]
-    [InlineData("GstAudio", 14, 0, 4, 0, 0, 0)]
-    [InlineData("GstVideo", 16, 0, 10, 1, 0, 0)]
-    [InlineData("GstPbutils", 3, 0, 1, 0, 0, 1)]
-    [InlineData("GstSdp", 4, 0, 1, 0, 0, 0)]
-    [InlineData("GstWebRTC", 1, 0, 4, 0, 4, 0)]
-    [InlineData("GstNet", 0, 0, 1, 0, 0, 0)]
-    [InlineData("GstRtsp", 9, 0, 3, 0, 0, 0)]
-    [InlineData("GES", 3, 0, 1, 0, 0, 2)]
+    [InlineData("Gst", 31, 0, 21, 20, 0, 5, 44)]
+    [InlineData("GstBase", 2, 0, 4, 0, 0, 2, 2)]
+    [InlineData("GstApp", 0, 0, 2, 0, 9, 2, 5)]
+    [InlineData("GstAudio", 9, 0, 4, 0, 0, 0, 5)]
+    [InlineData("GstVideo", 10, 0, 10, 1, 0, 0, 6)]
+    [InlineData("GstPbutils", 1, 0, 1, 0, 0, 1, 2)]
+    [InlineData("GstSdp", 4, 0, 1, 0, 0, 0, 0)]
+    [InlineData("GstWebRTC", 0, 0, 4, 0, 4, 0, 2)]
+    [InlineData("GstNet", 0, 0, 1, 0, 0, 0, 0)]
+    [InlineData("GstRtsp", 7, 0, 3, 0, 0, 0, 3)]
+    [InlineData("GES", 1, 0, 1, 0, 0, 2, 6)]
     public void TheRejectionCensusIsStable(
         string module,
         int overlaySkip,
@@ -708,7 +716,8 @@ public sealed class ClassEmitterTests
         int lifetime,
         int instanceTransfer,
         int actionSignals,
-        int owningProperties)
+        int owningProperties,
+        int handBound)
     {
         EmissionCensus census = Generated.Census;
 
@@ -718,6 +727,7 @@ public sealed class ClassEmitterTests
         Assert.Equal(instanceTransfer, census.SkippedCount(module, SkipReason.InstanceTransferFull));
         Assert.Equal(actionSignals, census.SkippedCount(module, SkipReason.ActionSignal));
         Assert.Equal(owningProperties, census.SkippedCount(module, SkipReason.OwningProperty));
+        Assert.Equal(handBound, census.SkippedCount(module, SkipReason.HandBound));
     }
 
     [Theory]

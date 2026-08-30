@@ -8,6 +8,15 @@ disappears shows up here as an added line.
 
 ## GES
 
+### HandBound (6)
+
+- `ges_asset_request_async`
+- `ges_asset_request_finish`
+- `ges_timeline_element_get_child_property`
+- `ges_timeline_element_set_child_property`
+- `ges_uri_clip_asset_finish`
+- `ges_uri_clip_asset_new`
+
 ### LifetimePrimitive (1)
 
 - `ges_container_ungroup`
@@ -36,11 +45,9 @@ disappears shows up here as an added line.
 - `ges_track_element_set_child_property_valist`
 - `ges_track_set_create_element_for_gap_func`
 
-### OverlaySkip (3)
+### OverlaySkip (1)
 
 - `ges_deinit`
-- `ges_timeline_element_get_child_property`
-- `ges_timeline_element_set_child_property`
 
 ### OwningProperty (2)
 
@@ -56,15 +63,13 @@ disappears shows up here as an added line.
 - `GES.Group:start`
 - `GES.UriClip:supported-formats`
 
-### UnsupportedSignature (26)
+### UnsupportedSignature (22)
 
 - `GES.Layer::active-changed`
 - `GES.MetaContainer::notify-meta`
 - `GES.Timeline::group-removed`
 - `GES.Timeline::select-tracks-for-object`
 - `ges_asset_extract`
-- `ges_asset_request_async`
-- `ges_asset_request_finish`
 - `ges_base_effect_set_time_translation_funcs`
 - `ges_command_line_formatter_get_help`
 - `ges_init_check`
@@ -82,8 +87,6 @@ disappears shows up here as an added line.
 - `ges_track_element_get_all_control_bindings`
 - `ges_track_element_list_children_properties`
 - `ges_track_element_lookup_child`
-- `ges_uri_clip_asset_finish`
-- `ges_uri_clip_asset_new`
 
 ### VarArgs (4)
 
@@ -93,6 +96,51 @@ disappears shows up here as an added line.
 - `ges_track_element_set_child_properties`
 
 ## Gst
+
+### HandBound (42)
+
+- `gst_buffer_copy`
+- `gst_buffer_extract`
+- `gst_buffer_foreach_meta`
+- `gst_buffer_iterate_meta`
+- `gst_buffer_new_wrapped_full`
+- `gst_buffer_pool_set_config`
+- `gst_buffer_remove_meta`
+- `gst_bus_set_sync_handler`
+- `gst_element_post_message`
+- `gst_element_send_event`
+- `gst_event_new_custom`
+- `gst_event_new_select_streams`
+- `gst_event_parse_select_streams`
+- `gst_init_check`
+- `gst_iterator_next`
+- `gst_memory_new_wrapped`
+- `gst_message_copy`
+- `gst_message_new_application`
+- `gst_message_new_custom`
+- `gst_message_parse_error`
+- `gst_message_parse_info`
+- `gst_message_parse_property_notify`
+- `gst_message_parse_warning`
+- `gst_meta_api_type_aggregate_params`
+- `gst_meta_serialize_simple`
+- `gst_mini_object_is_writable`
+- `gst_mini_object_make_writable`
+- `gst_mini_object_ref`
+- `gst_mini_object_unref`
+- `gst_pad_push_event`
+- `gst_pad_send_event`
+- `gst_promise_reply`
+- `gst_query_new_custom`
+- `gst_query_parse_nth_allocation_param`
+- `gst_structure_get_value`
+- `gst_structure_set_value`
+- `gst_tag_list_add_value`
+- `gst_tag_list_copy_value`
+- `gst_tag_list_get_value_index`
+- `gst_type_find_peek`
+- `gst_value_compare`
+- `gst_value_serialize`
 
 ### InstanceTransferFull (20)
 
@@ -247,11 +295,9 @@ disappears shows up here as an added line.
 - `gst_sample_is_writable`
 - `gst_tag_list_is_writable`
 
-### NotIntrospectable (118)
+### NotIntrospectable (115)
 
-- `gst_buffer_copy`
 - `gst_buffer_is_writable`
-- `gst_buffer_iterate_meta`
 - `gst_buffer_iterate_meta_filtered`
 - `gst_buffer_list_copy`
 - `gst_buffer_list_ref`
@@ -324,7 +370,6 @@ disappears shows up here as an added line.
 - `gst_memory_steal`
 - `gst_memory_take`
 - `gst_memory_unref`
-- `gst_message_copy`
 - `gst_message_ref`
 - `gst_message_replace`
 - `gst_message_steal`
@@ -368,65 +413,36 @@ disappears shows up here as an added line.
 - `gst_tag_setter_add_tag_valist`
 - `gst_tag_setter_add_tag_valist_values`
 
-### OverlaySkip (58)
+### OverlaySkip (29)
 
 - `gst_allocator_free`
-- `gst_buffer_extract`
-- `gst_buffer_foreach_meta`
-- `gst_buffer_new_wrapped_full`
 - `gst_buffer_pool_release_buffer`
-- `gst_buffer_pool_set_config`
-- `gst_buffer_remove_meta`
-- `gst_bus_set_sync_handler`
 - `gst_caps_features_add_static_str`
 - `gst_caps_features_new_single_static_str`
 - `gst_caps_new_static_str_empty_simple`
 - `gst_caps_set_value_static_str`
 - `gst_clock_id_wait_async`
 - `gst_debug_remove_log_function`
-- `gst_element_post_message`
-- `gst_element_send_event`
-- `gst_event_new_custom`
-- `gst_event_new_select_streams`
 - `gst_flagset_register`
 - `gst_id_str_set_static_str`
 - `gst_id_str_set_static_str_with_len`
 - `gst_iterator_new_list`
-- `gst_iterator_next`
-- `gst_memory_new_wrapped`
-- `gst_message_new_application`
-- `gst_message_new_custom`
-- `gst_meta_api_type_aggregate_params`
 - `gst_meta_api_type_set_params_aggregator`
 - `gst_meta_info_register`
 - `gst_meta_register_custom`
-- `gst_meta_serialize_simple`
 - `gst_mini_object_set_qdata`
-- `gst_pad_push_event`
-- `gst_pad_send_event`
 - `gst_plugin_feature_list_free`
 - `gst_plugin_list_free`
 - `gst_plugin_register_static`
-- `gst_promise_reply`
-- `gst_query_new_custom`
-- `gst_query_parse_nth_allocation_param`
-- `gst_structure_get_value`
 - `gst_structure_new_static_str_empty`
 - `gst_structure_set_name_static_str`
-- `gst_structure_set_value`
 - `gst_structure_set_value_static_str`
 - `gst_structure_take_value_static_str`
-- `gst_tag_list_add_value`
-- `gst_tag_list_copy_value`
-- `gst_tag_list_get_value_index`
 - `gst_task_pool_push`
 - `gst_toc_append_entry`
 - `gst_toc_entry_append_sub_entry`
 - `gst_tracing_register_hook`
-- `gst_type_find_peek`
 - `gst_util_array_binary_search`
-- `gst_value_compare`
-- `gst_value_serialize`
 - `gst_value_unique_list_prepend_value`
 
 ### OwningProperty (5)
@@ -441,7 +457,7 @@ disappears shows up here as an added line.
 
 - `gst_bus_add_watch`
 
-### UnsupportedSignature (90)
+### UnsupportedSignature (80)
 
 - `Gst.Bus:enable-async`
 - `gst_buffer_list_foreach`
@@ -457,36 +473,26 @@ disappears shows up here as an added line.
 - `gst_debug_get_all_categories`
 - `gst_element_factory_create_with_properties`
 - `gst_element_factory_make_with_properties`
-- `gst_event_parse_select_streams`
 - `gst_format_get_details`
 - `gst_formats_contains`
 - `gst_init`
-- `gst_init_check`
 - `gst_iterator_filter`
 - `gst_iterator_find_custom`
 - `gst_iterator_fold`
 - `gst_iterator_foreach`
 - `gst_message_new_property_notify`
-- `gst_message_parse_error`
-- `gst_message_parse_info`
-- `gst_message_parse_property_notify`
-- `gst_message_parse_warning`
 - `gst_message_take`
 - `gst_mini_object_add_parent`
 - `gst_mini_object_copy`
 - `gst_mini_object_get_qdata`
 - `gst_mini_object_init`
-- `gst_mini_object_is_writable`
 - `gst_mini_object_lock`
-- `gst_mini_object_make_writable`
-- `gst_mini_object_ref`
 - `gst_mini_object_remove_parent`
 - `gst_mini_object_replace`
 - `gst_mini_object_steal`
 - `gst_mini_object_steal_qdata`
 - `gst_mini_object_take`
 - `gst_mini_object_unlock`
-- `gst_mini_object_unref`
 - `gst_mini_object_weak_ref`
 - `gst_mini_object_weak_unref`
 - `gst_object_default_deep_notify`
@@ -604,11 +610,17 @@ disappears shows up here as an added line.
 - `GstApp.AppSrc::push-buffer-list`
 - `GstApp.AppSrc::push-sample`
 
-### LifetimePrimitive (4)
+### HandBound (5)
 
+- `gst_app_sink_set_simple_callbacks`
 - `gst_app_sink_simple_callbacks_ref`
-- `gst_app_sink_simple_callbacks_unref`
+- `gst_app_src_push_buffer`
+- `gst_app_src_set_simple_callbacks`
 - `gst_app_src_simple_callbacks_ref`
+
+### LifetimePrimitive (2)
+
+- `gst_app_sink_simple_callbacks_unref`
 - `gst_app_src_simple_callbacks_unref`
 
 ### NameCollision (1)
@@ -619,12 +631,6 @@ disappears shows up here as an added line.
 
 - `gst_app_sink_set_callbacks`
 - `gst_app_src_set_callbacks`
-
-### OverlaySkip (3)
-
-- `gst_app_sink_set_simple_callbacks`
-- `gst_app_src_push_buffer`
-- `gst_app_src_set_simple_callbacks`
 
 ### OwningProperty (2)
 
@@ -641,6 +647,13 @@ disappears shows up here as an added line.
 - `gst_app_sink_try_pull_object`
 
 ## GstAudio
+
+### HandBound (4)
+
+- `gst_audio_buffer_map`
+- `gst_audio_buffer_unmap`
+- `gst_audio_ring_buffer_read`
+- `gst_buffer_add_audio_meta`
 
 ### LifetimePrimitive (4)
 
@@ -685,15 +698,11 @@ disappears shows up here as an added line.
 - `gst_audio_ring_buffer_set_callback`
 - `gst_buffer_add_audio_downmix_meta`
 
-### OverlaySkip (9)
+### OverlaySkip (5)
 
-- `gst_audio_buffer_map`
-- `gst_audio_buffer_unmap`
 - `gst_audio_info_from_caps`
 - `gst_audio_info_init`
 - `gst_audio_ring_buffer_commit`
-- `gst_audio_ring_buffer_read`
-- `gst_buffer_add_audio_meta`
 - `gst_dsd_info_from_caps`
 - `gst_dsd_info_init`
 
@@ -705,6 +714,11 @@ disappears shows up here as an added line.
 - `gst_dsd_convert`
 
 ## GstBase
+
+### HandBound (2)
+
+- `gst_adapter_map`
+- `gst_adapter_unmap`
 
 ### LifetimePrimitive (4)
 
@@ -750,11 +764,9 @@ disappears shows up here as an added line.
 - `gst_type_find_data_get_typefind`
 - `gst_type_find_data_new`
 
-### OverlaySkip (4)
+### OverlaySkip (2)
 
-- `gst_adapter_map`
 - `gst_adapter_take`
-- `gst_adapter_unmap`
 - `gst_collect_pads_add_pad`
 
 ### OwningProperty (2)
@@ -785,6 +797,11 @@ disappears shows up here as an added line.
 
 ## GstPbutils
 
+### HandBound (2)
+
+- `gst_encoding_container_profile_add_profile`
+- `gst_install_plugins_async`
+
 ### LifetimePrimitive (1)
 
 - `gst_install_plugins_context_free`
@@ -793,11 +810,9 @@ disappears shows up here as an added line.
 
 - `gst_install_plugins_return_get_name`
 
-### OverlaySkip (3)
+### OverlaySkip (1)
 
 - `gst_discoverer_stream_info_list_free`
-- `gst_encoding_container_profile_add_profile`
-- `gst_install_plugins_async`
 
 ### OwningProperty (1)
 
@@ -810,13 +825,18 @@ disappears shows up here as an added line.
 
 ## GstRtsp
 
+### HandBound (2)
+
+- `gst_rtsp_transport_new`
+- `gst_rtsp_transport_parse`
+
 ### LifetimePrimitive (3)
 
 - `gst_rtsp_auth_param_free`
 - `gst_rtsp_message_free`
 - `gst_rtsp_url_free`
 
-### MovedTo (13)
+### MovedTo (12)
 
 - `gst_rtsp_connection_accept`
 - `gst_rtsp_connection_create`
@@ -827,18 +847,16 @@ disappears shows up here as an added line.
 - `gst_rtsp_range_to_string`
 - `gst_rtsp_transport_get_manager`
 - `gst_rtsp_transport_get_mime`
-- `gst_rtsp_transport_new`
 - `gst_rtsp_url_parse`
 - `gst_rtsp_version_as_text`
 - `gst_rtsp_watch_new`
 
-### OverlaySkip (5)
+### OverlaySkip (4)
 
 - `gst_rtsp_auth_credentials_free`
 - `gst_rtsp_range_free`
 - `gst_rtsp_range_parse`
 - `gst_rtsp_transport_init`
-- `gst_rtsp_transport_parse`
 
 ### UnsupportedSignature (13)
 
@@ -888,6 +906,13 @@ disappears shows up here as an added line.
 - `gst_mikey_payload_t_set`
 
 ## GstVideo
+
+### HandBound (4)
+
+- `gst_video_codec_frame_set_user_data`
+- `gst_video_frame_map`
+- `gst_video_frame_map_id`
+- `gst_video_frame_unmap`
 
 ### InstanceTransferFull (1)
 
@@ -1014,14 +1039,10 @@ disappears shows up here as an added line.
 - `gst_video_scaler_combine_packed_YUV`
 - `gst_video_scaler_new`
 
-### OverlaySkip (10)
+### OverlaySkip (6)
 
 - `gst_buffer_add_video_gl_texture_upload_meta`
 - `gst_video_blend_scale_linear_RGBA`
-- `gst_video_codec_frame_set_user_data`
-- `gst_video_frame_map`
-- `gst_video_frame_map_id`
-- `gst_video_frame_unmap`
 - `gst_video_info_dma_drm_from_caps`
 - `gst_video_info_dma_drm_init`
 - `gst_video_info_from_caps`
@@ -1048,6 +1069,11 @@ disappears shows up here as an added line.
 - `GstWebRTC.WebRTCDataChannel::send-string`
 - `GstWebRTC.WebRTCICE::add-local-ip-address`
 
+### HandBound (2)
+
+- `gst_webrtc_data_channel_send_data_full`
+- `gst_webrtc_session_description_new`
+
 ### LifetimePrimitive (4)
 
 - `gst_webrtc_ice_candidate_free`
@@ -1060,14 +1086,9 @@ disappears shows up here as an added line.
 - `gst_webrtc_error_quark`
 - `gst_webrtc_sdp_type_to_string`
 
-### OverlaySkip (1)
-
-- `gst_webrtc_session_description_new`
-
-### UnsupportedSignature (5)
+### UnsupportedSignature (4)
 
 - `GstWebRTC.WebRTCDataChannel::on-message-data`
 - `gst_webrtc_data_channel_send_data`
-- `gst_webrtc_data_channel_send_data_full`
 - `gst_webrtc_ice_get_local_candidates`
 - `gst_webrtc_ice_get_remote_candidates`

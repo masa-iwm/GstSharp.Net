@@ -110,6 +110,16 @@ When the move is intended, update the expectations:
 3. Commit the regenerated sources, `girs/skip-report.md` and the new counts as
    one change, and say in the pull request which numbers moved and why.
 
+`girs/skip-report.md` groups what a run left out by reason, and one of the
+reasons is `HandBound`: the symbol is not generated, but its managed surface
+exists, hand written, under a `Custom/` folder or in `src/GstSharp.Net/Core/`.
+The ledger for that is the `handBound` array of `girs/overlays/fixups.json`; it
+changes nothing about what is emitted and only moves the symbol out of the
+sections that measure the real binding gap. A new hand binding belongs there on
+the day it is written, and an entry the generator never sees skipped — because
+the symbol is generated after all, or no longer exists, or is misspelt — fails
+the run with `GEN0023`.
+
 Never bump a number you cannot account for. Census drift that nobody asked for
 is a bug in the change — typically an accidental skip: an overlay entry that
 matches more than it was meant to, or a rule that rejects a signature it should

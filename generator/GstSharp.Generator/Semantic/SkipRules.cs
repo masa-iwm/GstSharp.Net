@@ -13,6 +13,18 @@ internal enum SkipReason
     /// <summary>Listed in the <c>skip</c> array of <c>fixups.json</c>.</summary>
     OverlaySkip,
 
+    /// <summary>
+    /// Listed in the <c>handBound</c> array of <c>fixups.json</c>: the managed
+    /// surface of the symbol exists, hand written, in a <c>Custom/</c> folder
+    /// or in the runtime. The symbol still is not generated - something else,
+    /// usually the <c>skip</c> array or the shape of its signature, is what
+    /// keeps it out - and this reason states that its absence from the
+    /// bindings is not a gap. It takes precedence over every other reason in
+    /// the report, so that the remaining sections measure what is really
+    /// unbound.
+    /// </summary>
+    HandBound,
+
     /// <summary>Superseded by a <c>shadows</c> variant that is generated instead.</summary>
     ShadowedBy,
 

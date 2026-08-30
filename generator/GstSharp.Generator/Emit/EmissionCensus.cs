@@ -13,6 +13,10 @@ namespace GstSharp.Generator.Emit;
 /// </remarks>
 internal sealed class EmissionCensus
 {
+    private readonly Overlays _overlays;
+
+    private readonly SortedSet<string> _handBound = new(StringComparer.Ordinal);
+
     private readonly SortedDictionary<string, SortedDictionary<string, int>> _emitted =
         new(StringComparer.Ordinal);
 
@@ -20,6 +24,19 @@ internal sealed class EmissionCensus
 
     private readonly SortedDictionary<string, SortedDictionary<string, SortedSet<string>>> _skippedSymbols =
         new(StringComparer.Ordinal);
+
+    /// <summary>Initializes a new instance of the <see cref="EmissionCensus"/> class.</summary>
+    /// <param name="overlays">
+    /// The overlays, read for the hand bound ledger. A census built without
+    /// them reports every skip under the reason the rules produced.
+    /// </param>
+    internal EmissionCensus(Overlays? overlays = null) => _overlays = overlays ?? Overlays.Empty;
+
+    /// <summary>
+    /// Gets the hand bound identifiers the run actually saw skipped, so that
+    /// the ones it never saw can be reported as stale.
+    /// </summary>
+    internal IReadOnlySet<string> HandBoundSymbols => _handBound;
 
     /// <summary>Counts one emitted member.</summary>
     /// <param name="module">The gir namespace of the module.</param>
@@ -45,6 +62,17 @@ internal sealed class EmissionCensus
     /// </param>
     internal void Skipped(string module, SkipReason reason, string symbol)
     {
+        // A symbol the hand written surface already covers is reported as
+        // such whatever kept it out of the emitters, because the reason it is
+        // absent from the generated code says nothing about the bindings: the
+        // call exists, and the remaining sections are the ones that measure a
+        // real gap.
+        if (_overlays.IsHandBound(symbol))
+        {
+            reason = SkipReason.HandBound;
+            _handBound.Add(symbol);
+        }
+
         if (!_skipped.TryGetValue(module, out SortedDictionary<SkipReason, int>? reasons))
         {
             reasons = [];

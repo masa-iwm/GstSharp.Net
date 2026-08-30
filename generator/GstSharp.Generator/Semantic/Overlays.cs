@@ -146,6 +146,11 @@ internal sealed class PlatformSupport
 /// <list type="bullet">
 /// <item><description><c>skip</c>: <c>c:identifier</c> of a callable, or the
 /// qualified gir name of a type (<c>Gst.Foo</c>).</description></item>
+/// <item><description><c>handBound</c>: <c>c:identifier</c> of a callable whose
+/// managed surface is hand written. It changes nothing about what is
+/// generated; it annotates the ledger, so that a symbol the bindings do cover
+/// is reported under <see cref="SkipReason.HandBound"/> instead of counting
+/// as a missing binding.</description></item>
 /// <item><description><c>rename</c>: qualified gir name of a type
 /// (<c>Gst.MessageType</c>), of an enumeration member
 /// (<c>Gst.MessageType.state_changed</c>) or a <c>c:identifier</c>.</description></item>
@@ -192,6 +197,7 @@ internal sealed class Overlays
     };
 
     private readonly HashSet<string> _skip;
+    private readonly HashSet<string> _handBound;
     private readonly HashSet<string> _forceOpaque;
     private readonly Dictionary<string, string> _rename;
     private readonly Dictionary<string, AnnotationOverride> _annotations;
@@ -201,6 +207,7 @@ internal sealed class Overlays
 
     private Overlays(
         HashSet<string> skip,
+        HashSet<string> handBound,
         HashSet<string> forceOpaque,
         Dictionary<string, string> rename,
         Dictionary<string, AnnotationOverride> annotations,
@@ -209,6 +216,7 @@ internal sealed class Overlays
         Dictionary<string, string> returnTypes)
     {
         _skip = skip;
+        _handBound = handBound;
         _forceOpaque = forceOpaque;
         _rename = rename;
         _annotations = annotations;
@@ -221,6 +229,7 @@ internal sealed class Overlays
     internal static Overlays Empty { get; } = new(
         new HashSet<string>(StringComparer.Ordinal),
         new HashSet<string>(StringComparer.Ordinal),
+        new HashSet<string>(StringComparer.Ordinal),
         new Dictionary<string, string>(StringComparer.Ordinal),
         new Dictionary<string, AnnotationOverride>(StringComparer.Ordinal),
         new Dictionary<string, ArrayOverride>(StringComparer.Ordinal),
@@ -229,6 +238,12 @@ internal sealed class Overlays
 
     /// <summary>Gets the skipped identifiers, ordered for reporting.</summary>
     internal IReadOnlyCollection<string> SkippedIdentifiers => _skip;
+
+    /// <summary>
+    /// Gets the identifiers whose managed surface is hand written, so that a
+    /// run can report the ones it never saw skipped.
+    /// </summary>
+    internal IReadOnlyCollection<string> HandBoundIdentifiers => _handBound;
 
     /// <summary>
     /// The qualified gir names of the records kept behind a pointer instead of
@@ -259,6 +274,12 @@ internal sealed class Overlays
         foreach (string identifier in fixups.Skip ?? [])
         {
             skip.Add(identifier);
+        }
+
+        HashSet<string> handBound = new(StringComparer.Ordinal);
+        foreach (string identifier in fixups.HandBound ?? [])
+        {
+            handBound.Add(identifier);
         }
 
         HashSet<string> forceOpaque = new(StringComparer.Ordinal);
@@ -297,13 +318,33 @@ internal sealed class Overlays
             returnTypes[entry.Key] = entry.Value;
         }
 
-        return new Overlays(skip, forceOpaque, rename, annotations, arrayOverrides, symbols, returnTypes);
+        return new Overlays(
+            skip,
+            handBound,
+            forceOpaque,
+            rename,
+            annotations,
+            arrayOverrides,
+            symbols,
+            returnTypes);
     }
 
     /// <summary>Tests whether a symbol is skipped by the overlays.</summary>
     /// <param name="key">A <c>c:identifier</c> or a qualified gir name.</param>
     /// <returns><see langword="true"/> when the symbol must not be generated.</returns>
     internal bool IsSkipped(string? key) => key is not null && _skip.Contains(key);
+
+    /// <summary>
+    /// Tests whether the managed surface of a symbol is hand written.
+    /// </summary>
+    /// <param name="key">A <c>c:identifier</c>.</param>
+    /// <returns><see langword="true"/> when the symbol is listed as hand bound.</returns>
+    /// <remarks>
+    /// This says nothing about whether the symbol is generated: it is the
+    /// annotation the skip report groups by, so that a call the bindings cover
+    /// by hand is not counted among the ones they do not cover at all.
+    /// </remarks>
+    internal bool IsHandBound(string? key) => key is not null && _handBound.Contains(key);
 
     /// <summary>
     /// Tests whether a record must be wrapped behind a pointer instead of being
@@ -360,6 +401,8 @@ internal sealed class Overlays
     private sealed class FixupsFile
     {
         public List<string>? Skip { get; set; }
+
+        public List<string>? HandBound { get; set; }
 
         public List<string>? ForceOpaque { get; set; }
 

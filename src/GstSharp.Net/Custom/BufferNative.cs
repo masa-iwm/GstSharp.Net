@@ -1,4 +1,4 @@
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 
 namespace Gst;
 
@@ -13,8 +13,9 @@ namespace Gst;
 /// <see cref="System.Span{T}"/> whose lifetime is tied to the unmap call, which
 /// is a shape no generated signature can produce. Once the function emitter
 /// covers <c>GstBuffer</c>, both entry points belong on the skip list of
-/// <c>girs/overlays/fixups.json</c>, so that the generated bindings do not
-/// offer a second, unscoped way to map a buffer.
+/// <c>girs/overlays/fixups.json</c>, and in its <c>handBound</c> array beside
+/// it, so that the generated bindings do not offer a second, unscoped way to
+/// map a buffer and the ledger stops counting the pair as unbound.
 /// </para>
 /// <para>
 /// <c>gst_buffer_copy</c> is imported by hand for a different reason: the gir

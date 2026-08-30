@@ -78,7 +78,7 @@ internal static class GenerationPipeline
 
         TypeMap types = new(repository, classifier, names, diagnostics);
         SkipRules skipRules = new(overlays);
-        EmissionCensus census = new();
+        EmissionCensus census = new(overlays);
         EnumEmitter enumEmitter = new(names, overlays, diagnostics);
         Dictionary<string, List<string>> inherited = new(StringComparer.Ordinal);
 
@@ -141,6 +141,28 @@ internal static class GenerationPipeline
             diagnostics.Warn(
                 "GEN0020",
                 $"The array override '{key}' matched no array parameter or return value; the entry is stale.");
+        }
+
+        // A hand bound entry the run never saw skipped names a symbol that is
+        // generated after all, or one that no longer exists, or a misspelling.
+        // Any of the three makes the ledger claim something about the bindings
+        // that is not true, which is exactly what the annotation exists to
+        // prevent.
+        List<string> unseen = [];
+        foreach (string identifier in overlays.HandBoundIdentifiers)
+        {
+            if (!census.HandBoundSymbols.Contains(identifier))
+            {
+                unseen.Add(identifier);
+            }
+        }
+
+        unseen.Sort(StringComparer.Ordinal);
+        foreach (string identifier in unseen)
+        {
+            diagnostics.Warn(
+                "GEN0023",
+                $"The hand bound entry '{identifier}' was not skipped by this run; the entry is stale.");
         }
 
         files.Sort(static (left, right) => string.CompareOrdinal(left.RelativePath, right.RelativePath));

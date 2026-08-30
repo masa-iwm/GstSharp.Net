@@ -1,3 +1,4 @@
+using GstSharp.Generator.Emit;
 using GstSharp.Generator.GirParsing;
 using GstSharp.Generator.GirParsing.Model;
 using GstSharp.Generator.Semantic;
@@ -284,6 +285,87 @@ public sealed class SkipRulesTests
             ],
             GirFixture.Overlays.SkippedIdentifiers.Order(StringComparer.Ordinal).ToArray());
 
+        // The hand bound ledger carries the same weight as the skip list, from
+        // the other side: every entry states that the managed surface of the
+        // symbol exists, hand written, so the skip report may stop counting it
+        // among the bindings that are missing. An entry that is added or
+        // dropped moves the measured gap, which is a decision rather than a
+        // detail, and an entry the generator never sees skipped is reported as
+        // GEN0023 instead of quietly overstating what is bound.
+        Assert.Equal(
+            [
+                "ges_asset_request_async",
+                "ges_asset_request_finish",
+                "ges_timeline_element_get_child_property",
+                "ges_timeline_element_set_child_property",
+                "ges_uri_clip_asset_finish",
+                "ges_uri_clip_asset_new",
+                "gst_adapter_map",
+                "gst_adapter_unmap",
+                "gst_app_sink_set_simple_callbacks",
+                "gst_app_sink_simple_callbacks_ref",
+                "gst_app_src_push_buffer",
+                "gst_app_src_set_simple_callbacks",
+                "gst_app_src_simple_callbacks_ref",
+                "gst_audio_buffer_map",
+                "gst_audio_buffer_unmap",
+                "gst_audio_ring_buffer_read",
+                "gst_buffer_add_audio_meta",
+                "gst_buffer_copy",
+                "gst_buffer_extract",
+                "gst_buffer_foreach_meta",
+                "gst_buffer_iterate_meta",
+                "gst_buffer_new_wrapped_full",
+                "gst_buffer_pool_set_config",
+                "gst_buffer_remove_meta",
+                "gst_bus_set_sync_handler",
+                "gst_element_post_message",
+                "gst_element_send_event",
+                "gst_encoding_container_profile_add_profile",
+                "gst_event_new_custom",
+                "gst_event_new_select_streams",
+                "gst_event_parse_select_streams",
+                "gst_init_check",
+                "gst_install_plugins_async",
+                "gst_iterator_next",
+                "gst_memory_new_wrapped",
+                "gst_message_copy",
+                "gst_message_new_application",
+                "gst_message_new_custom",
+                "gst_message_parse_error",
+                "gst_message_parse_info",
+                "gst_message_parse_property_notify",
+                "gst_message_parse_warning",
+                "gst_meta_api_type_aggregate_params",
+                "gst_meta_serialize_simple",
+                "gst_mini_object_is_writable",
+                "gst_mini_object_make_writable",
+                "gst_mini_object_ref",
+                "gst_mini_object_unref",
+                "gst_pad_push_event",
+                "gst_pad_send_event",
+                "gst_promise_reply",
+                "gst_query_new_custom",
+                "gst_query_parse_nth_allocation_param",
+                "gst_rtsp_transport_new",
+                "gst_rtsp_transport_parse",
+                "gst_structure_get_value",
+                "gst_structure_set_value",
+                "gst_tag_list_add_value",
+                "gst_tag_list_copy_value",
+                "gst_tag_list_get_value_index",
+                "gst_type_find_peek",
+                "gst_value_compare",
+                "gst_value_serialize",
+                "gst_video_codec_frame_set_user_data",
+                "gst_video_frame_map",
+                "gst_video_frame_map_id",
+                "gst_video_frame_unmap",
+                "gst_webrtc_data_channel_send_data_full",
+                "gst_webrtc_session_description_new",
+            ],
+            GirFixture.Overlays.HandBoundIdentifiers.Order(StringComparer.Ordinal).ToArray());
+
         Assert.True(GirFixture.Overlays.TryGetReturnTypeOverride("gst_pipeline_new", out string? pipeline));
         Assert.Equal("Gst.Pipeline", pipeline);
         Assert.Null(GirFixture.Overlays.GetPlatformSupport("gst_macos_main"));
@@ -336,6 +418,66 @@ public sealed class SkipRulesTests
     }
 
     [Fact]
+    public void AHandBoundEntryIsReportedUnderItsOwnReason()
+    {
+        // The skip list is what keeps the symbol out; the hand bound entry
+        // only says that the managed surface exists all the same, so the
+        // report files it apart from the skips that are a real gap.
+        FixtureRun run = RunWithOverlay(
+            """
+            {
+              "skip": [ "gst_widget_pack" ],
+              "handBound": [ "gst_widget_pack" ]
+            }
+            """);
+
+        Assert.Equal(1, run.Result.Census.SkippedCount("Gst", SkipReason.HandBound));
+        Assert.Equal(0, run.Result.Census.SkippedCount("Gst", SkipReason.OverlaySkip));
+        Assert.Contains("### HandBound (1)\n", run.Result.SkipReport, StringComparison.Ordinal);
+        Assert.DoesNotContain(
+            run.Result.Diagnostics,
+            static diagnostic => string.Equals(diagnostic.Code, "GEN0023", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void AHandBoundEntryThatNamesNoSkippedSymbolIsReportedAsStale()
+    {
+        FixtureRun run = RunWithOverlay(
+            """
+            {
+              "handBound": [ "gst_widget_unpack" ]
+            }
+            """);
+
+        Assert.Contains(
+            run.Result.Diagnostics,
+            static diagnostic => string.Equals(diagnostic.Code, "GEN0023", StringComparison.Ordinal)
+                && diagnostic.Message.Contains(
+                    "The hand bound entry 'gst_widget_unpack' was not skipped by this run",
+                    StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void AHandBoundEntryOnAGeneratedSymbolIsReportedAsStale()
+    {
+        // Nothing keeps gst_widget_pack out of the bindings here, so the
+        // entry claims a hand binding of a member the generator emits: two
+        // ways to call the same function, which is what the ledger exists to
+        // rule out.
+        FixtureRun run = RunWithOverlay(
+            """
+            {
+              "handBound": [ "gst_widget_pack" ]
+            }
+            """);
+
+        Assert.Contains(
+            run.Result.Diagnostics,
+            static diagnostic => string.Equals(diagnostic.Code, "GEN0023", StringComparison.Ordinal)
+                && diagnostic.Message.Contains("gst_widget_pack", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public void CallablesWithoutACIdentifierAreSkipped()
     {
         GirNamespace ns = GirReader.ReadXml(
@@ -351,5 +493,40 @@ public sealed class SkipRulesTests
             "fixture.gir").Namespaces[0];
 
         Assert.Equal(SkipReason.NoCIdentifier, Subject.GetSkipReason(ns.Functions[0]));
+    }
+
+    /// <summary>
+    /// One class with one bindable method, which is enough to state that a
+    /// symbol is skipped, hand bound, both or neither.
+    /// </summary>
+    private const string Body =
+        """
+            <class name="Widget" c:type="GstWidget" parent="GObject.InitiallyUnowned" glib:type-name="GstWidget" glib:get-type="gst_widget_get_type">
+              <method name="pack" c:identifier="gst_widget_pack">
+                <return-value transfer-ownership="none">
+                  <type name="gboolean" c:type="gboolean"/>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="widget" transfer-ownership="none">
+                    <type name="Widget" c:type="GstWidget*"/>
+                  </instance-parameter>
+                </parameters>
+              </method>
+            </class>
+        """;
+
+    private static FixtureRun RunWithOverlay(string fixups)
+    {
+        string directory = Path.Combine(Path.GetTempPath(), "GstSharp.Generator.Tests", Path.GetRandomFileName());
+        Directory.CreateDirectory(directory);
+        try
+        {
+            File.WriteAllText(Path.Combine(directory, "fixups.json"), fixups);
+            return Fixture.Run(Body, Overlays.Load(directory));
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
     }
 }
