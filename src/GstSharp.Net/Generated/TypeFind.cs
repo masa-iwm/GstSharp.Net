@@ -94,13 +94,15 @@ public sealed unsafe partial class TypeFind
     public static bool Register(Gst.Plugin? plugin, string name, uint rank, Gst.TypeFindFunction func, string? extensions, Gst.Caps? possibleCaps)
     {
         ArgumentNullException.ThrowIfNull(name);
+        ArgumentNullException.ThrowIfNull(func);
+        nint pluginNative = plugin is null ? 0 : plugin.Handle;
+        nint possibleCapsNative = possibleCaps is null ? 0 : possibleCaps.Handle;
         System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
-        ArgumentNullException.ThrowIfNull(func);
-        Gst.Interop.CallbackHandle funcState = Gst.Interop.CallbackHandle.Alloc(func);
         System.Span<byte> extensionsBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope extensionsScope = Gst.Interop.GMarshal.StackUtf8(extensions, extensionsBuffer);
-        int nativeResult = GstTypeFindRegister(plugin is null ? 0 : plugin.Handle, nameScope.Pointer, rank, Gst.TypeFindFunctionTrampoline.Pointer, extensionsScope.Pointer, possibleCaps is null ? 0 : possibleCaps.Handle, funcState.UserData, (nint)Gst.Interop.CallbackHandle.DestroyNotify);
+        Gst.Interop.CallbackHandle funcState = Gst.Interop.CallbackHandle.Alloc(func);
+        int nativeResult = GstTypeFindRegister(pluginNative, nameScope.Pointer, rank, Gst.TypeFindFunctionTrampoline.Pointer, extensionsScope.Pointer, possibleCapsNative, funcState.UserData, (nint)Gst.Interop.CallbackHandle.DestroyNotify);
         System.GC.KeepAlive(plugin);
         System.GC.KeepAlive(possibleCaps);
         return nativeResult != 0;

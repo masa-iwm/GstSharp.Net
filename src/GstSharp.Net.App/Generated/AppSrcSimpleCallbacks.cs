@@ -56,8 +56,8 @@ public sealed unsafe partial class AppSrcSimpleCallbacks : Gst.GObject.Boxed
     /// <param name="enoughDataCb">EOS callback</param>
     public void SetEnoughData(Gst.App.AppSrcEnoughDataCallback enoughDataCb)
     {
-        nint instanceHandle = Handle;
         ArgumentNullException.ThrowIfNull(enoughDataCb);
+        nint instanceHandle = Handle;
         Gst.Interop.CallbackHandle enoughDataCbState = Gst.Interop.CallbackHandle.Alloc(enoughDataCb);
         GstAppSrcSimpleCallbacksSetEnoughData(instanceHandle, Gst.App.AppSrcEnoughDataCallbackTrampoline.Pointer, enoughDataCbState.UserData, (nint)Gst.Interop.CallbackHandle.DestroyNotify);
         System.GC.KeepAlive(this);
@@ -74,8 +74,8 @@ public sealed unsafe partial class AppSrcSimpleCallbacks : Gst.GObject.Boxed
     /// <param name="needDataCb">EOS callback</param>
     public void SetNeedData(Gst.App.AppSrcNeedDataCallback needDataCb)
     {
-        nint instanceHandle = Handle;
         ArgumentNullException.ThrowIfNull(needDataCb);
+        nint instanceHandle = Handle;
         Gst.Interop.CallbackHandle needDataCbState = Gst.Interop.CallbackHandle.Alloc(needDataCb);
         GstAppSrcSimpleCallbacksSetNeedData(instanceHandle, Gst.App.AppSrcNeedDataCallbackTrampoline.Pointer, needDataCbState.UserData, (nint)Gst.Interop.CallbackHandle.DestroyNotify);
         System.GC.KeepAlive(this);
@@ -92,8 +92,8 @@ public sealed unsafe partial class AppSrcSimpleCallbacks : Gst.GObject.Boxed
     /// <param name="seekDataCb">EOS callback</param>
     public void SetSeekData(Gst.App.AppSrcSeekDataCallback seekDataCb)
     {
-        nint instanceHandle = Handle;
         ArgumentNullException.ThrowIfNull(seekDataCb);
+        nint instanceHandle = Handle;
         Gst.Interop.CallbackHandle seekDataCbState = Gst.Interop.CallbackHandle.Alloc(seekDataCb);
         GstAppSrcSimpleCallbacksSetSeekData(instanceHandle, Gst.App.AppSrcSeekDataCallbackTrampoline.Pointer, seekDataCbState.UserData, (nint)Gst.Interop.CallbackHandle.DestroyNotify);
         System.GC.KeepAlive(this);

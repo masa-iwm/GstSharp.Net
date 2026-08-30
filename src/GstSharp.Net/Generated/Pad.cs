@@ -216,8 +216,8 @@ public unsafe partial class Pad : Gst.Object
     /// </returns>
     public System.Runtime.InteropServices.CULong AddProbe(Gst.PadProbeType mask, Gst.PadProbeCallback callback)
     {
-        nint instanceHandle = Handle;
         ArgumentNullException.ThrowIfNull(callback);
+        nint instanceHandle = Handle;
         Gst.Interop.CallbackHandle callbackState = Gst.Interop.CallbackHandle.Alloc(callback);
         System.Runtime.InteropServices.CULong nativeResult = GstPadAddProbe(instanceHandle, (int)mask, Gst.PadProbeCallbackTrampoline.Pointer, callbackState.UserData, (nint)Gst.Interop.CallbackHandle.DestroyNotify);
         System.GC.KeepAlive(this);
@@ -446,8 +446,8 @@ public unsafe partial class Pad : Gst.Object
     /// <returns>%TRUE if one of the dispatcher functions returned %TRUE.</returns>
     public bool Forward(Gst.PadForwardFunction forward)
     {
-        nint instanceHandle = Handle;
         ArgumentNullException.ThrowIfNull(forward);
+        nint instanceHandle = Handle;
         Gst.Interop.CallbackHandle forwardState = Gst.Interop.CallbackHandle.Alloc(forward);
         try
         {
@@ -1458,8 +1458,8 @@ public unsafe partial class Pad : Gst.Object
     /// <returns>a %TRUE if the task could be started.</returns>
     public bool StartTask(Gst.TaskFunction func)
     {
-        nint instanceHandle = Handle;
         ArgumentNullException.ThrowIfNull(func);
+        nint instanceHandle = Handle;
         Gst.Interop.CallbackHandle funcState = Gst.Interop.CallbackHandle.Alloc(func);
         int nativeResult = GstPadStartTask(instanceHandle, Gst.TaskFunctionTrampoline.Pointer, funcState.UserData, (nint)Gst.Interop.CallbackHandle.DestroyNotify);
         System.GC.KeepAlive(this);

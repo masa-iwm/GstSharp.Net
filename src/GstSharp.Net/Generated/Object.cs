@@ -133,8 +133,8 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
     /// <param name="func">function to call asynchronously from another thread</param>
     public void CallAsync(Gst.ObjectCallAsyncFunc func)
     {
-        nint instanceHandle = Handle;
         ArgumentNullException.ThrowIfNull(func);
+        nint instanceHandle = Handle;
         Gst.Interop.CallbackHandle funcState = Gst.Interop.CallbackHandle.Alloc(func);
         GstObjectCallAsync(instanceHandle, Gst.ObjectCallAsyncFuncTrampoline.Pointer, funcState.UserData);
         System.GC.KeepAlive(this);

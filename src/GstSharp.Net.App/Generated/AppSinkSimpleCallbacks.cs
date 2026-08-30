@@ -56,8 +56,8 @@ public sealed unsafe partial class AppSinkSimpleCallbacks : Gst.GObject.Boxed
     /// <param name="eosCb">EOS callback</param>
     public void SetEos(Gst.App.AppSinkEosCallback eosCb)
     {
-        nint instanceHandle = Handle;
         ArgumentNullException.ThrowIfNull(eosCb);
+        nint instanceHandle = Handle;
         Gst.Interop.CallbackHandle eosCbState = Gst.Interop.CallbackHandle.Alloc(eosCb);
         GstAppSinkSimpleCallbacksSetEos(instanceHandle, Gst.App.AppSinkEosCallbackTrampoline.Pointer, eosCbState.UserData, (nint)Gst.Interop.CallbackHandle.DestroyNotify);
         System.GC.KeepAlive(this);
@@ -74,8 +74,8 @@ public sealed unsafe partial class AppSinkSimpleCallbacks : Gst.GObject.Boxed
     /// <param name="newEventCb">new event callback</param>
     public void SetNewEvent(Gst.App.AppSinkNewEventCallback newEventCb)
     {
-        nint instanceHandle = Handle;
         ArgumentNullException.ThrowIfNull(newEventCb);
+        nint instanceHandle = Handle;
         Gst.Interop.CallbackHandle newEventCbState = Gst.Interop.CallbackHandle.Alloc(newEventCb);
         GstAppSinkSimpleCallbacksSetNewEvent(instanceHandle, Gst.App.AppSinkNewEventCallbackTrampoline.Pointer, newEventCbState.UserData, (nint)Gst.Interop.CallbackHandle.DestroyNotify);
         System.GC.KeepAlive(this);
@@ -92,8 +92,8 @@ public sealed unsafe partial class AppSinkSimpleCallbacks : Gst.GObject.Boxed
     /// <param name="newPrerollCb">new preroll callback</param>
     public void SetNewPreroll(Gst.App.AppSinkNewPrerollCallback newPrerollCb)
     {
-        nint instanceHandle = Handle;
         ArgumentNullException.ThrowIfNull(newPrerollCb);
+        nint instanceHandle = Handle;
         Gst.Interop.CallbackHandle newPrerollCbState = Gst.Interop.CallbackHandle.Alloc(newPrerollCb);
         GstAppSinkSimpleCallbacksSetNewPreroll(instanceHandle, Gst.App.AppSinkNewPrerollCallbackTrampoline.Pointer, newPrerollCbState.UserData, (nint)Gst.Interop.CallbackHandle.DestroyNotify);
         System.GC.KeepAlive(this);
@@ -110,8 +110,8 @@ public sealed unsafe partial class AppSinkSimpleCallbacks : Gst.GObject.Boxed
     /// <param name="newSampleCb">new sample callback</param>
     public void SetNewSample(Gst.App.AppSinkNewSampleCallback newSampleCb)
     {
-        nint instanceHandle = Handle;
         ArgumentNullException.ThrowIfNull(newSampleCb);
+        nint instanceHandle = Handle;
         Gst.Interop.CallbackHandle newSampleCbState = Gst.Interop.CallbackHandle.Alloc(newSampleCb);
         GstAppSinkSimpleCallbacksSetNewSample(instanceHandle, Gst.App.AppSinkNewSampleCallbackTrampoline.Pointer, newSampleCbState.UserData, (nint)Gst.Interop.CallbackHandle.DestroyNotify);
         System.GC.KeepAlive(this);
@@ -128,8 +128,8 @@ public sealed unsafe partial class AppSinkSimpleCallbacks : Gst.GObject.Boxed
     /// <param name="proposeAllocationCb">propose allocation callback</param>
     public void SetProposeAllocation(Gst.App.AppSinkProposeAllocationCallback proposeAllocationCb)
     {
-        nint instanceHandle = Handle;
         ArgumentNullException.ThrowIfNull(proposeAllocationCb);
+        nint instanceHandle = Handle;
         Gst.Interop.CallbackHandle proposeAllocationCbState = Gst.Interop.CallbackHandle.Alloc(proposeAllocationCb);
         GstAppSinkSimpleCallbacksSetProposeAllocation(instanceHandle, Gst.App.AppSinkProposeAllocationCallbackTrampoline.Pointer, proposeAllocationCbState.UserData, (nint)Gst.Interop.CallbackHandle.DestroyNotify);
         System.GC.KeepAlive(this);

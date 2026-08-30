@@ -180,8 +180,8 @@ public unsafe partial class Registry : Gst.Object
     /// </returns>
     public System.Collections.Generic.IReadOnlyList<Gst.PluginFeature> FeatureFilter(Gst.PluginFeatureFilter filter, bool first)
     {
-        nint instanceHandle = Handle;
         ArgumentNullException.ThrowIfNull(filter);
+        nint instanceHandle = Handle;
         Gst.Interop.CallbackHandle filterState = Gst.Interop.CallbackHandle.Alloc(filter);
         try
         {
@@ -379,8 +379,8 @@ public unsafe partial class Registry : Gst.Object
     /// </returns>
     public System.Collections.Generic.IReadOnlyList<Gst.Plugin> PluginFilter(Gst.PluginFilter filter, bool first)
     {
-        nint instanceHandle = Handle;
         ArgumentNullException.ThrowIfNull(filter);
+        nint instanceHandle = Handle;
         Gst.Interop.CallbackHandle filterState = Gst.Interop.CallbackHandle.Alloc(filter);
         try
         {

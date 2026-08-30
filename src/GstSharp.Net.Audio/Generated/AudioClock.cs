@@ -57,9 +57,9 @@ public unsafe partial class AudioClock : Gst.SystemClock
     public static Gst.Clock New(string name, Gst.Audio.AudioClockGetTimeFunc func)
     {
         ArgumentNullException.ThrowIfNull(name);
+        ArgumentNullException.ThrowIfNull(func);
         System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
-        ArgumentNullException.ThrowIfNull(func);
         Gst.Interop.CallbackHandle funcState = Gst.Interop.CallbackHandle.Alloc(func);
         nint nativeResult = GstAudioClockNew(nameScope.Pointer, Gst.Audio.AudioClockGetTimeFuncTrampoline.Pointer, funcState.UserData, (nint)Gst.Interop.CallbackHandle.DestroyNotify);
         return Gst.GObject.Object.FromNative<Gst.Clock>(nativeResult, Gst.Interop.Transfer.Full)

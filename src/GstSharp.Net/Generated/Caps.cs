@@ -316,8 +316,8 @@ public sealed unsafe partial class Caps : Gst.MiniObject
     /// <param name="func">a function to call for each field</param>
     public void FilterAndMapInPlace(Gst.CapsFilterMapFunc func)
     {
-        nint instanceHandle = Handle;
         ArgumentNullException.ThrowIfNull(func);
+        nint instanceHandle = Handle;
         Gst.Interop.CallbackHandle funcState = Gst.Interop.CallbackHandle.Alloc(func);
         try
         {
@@ -342,8 +342,8 @@ public sealed unsafe partial class Caps : Gst.MiniObject
     /// </returns>
     public bool Foreach(Gst.CapsForeachFunc func)
     {
-        nint instanceHandle = Handle;
         ArgumentNullException.ThrowIfNull(func);
+        nint instanceHandle = Handle;
         Gst.Interop.CallbackHandle funcState = Gst.Interop.CallbackHandle.Alloc(func);
         try
         {
@@ -637,8 +637,8 @@ public sealed unsafe partial class Caps : Gst.MiniObject
     /// </returns>
     public bool MapInPlace(Gst.CapsMapFunc func)
     {
-        nint instanceHandle = Handle;
         ArgumentNullException.ThrowIfNull(func);
+        nint instanceHandle = Handle;
         Gst.Interop.CallbackHandle funcState = Gst.Interop.CallbackHandle.Alloc(func);
         try
         {

@@ -463,28 +463,28 @@ public unsafe partial class Plugin : Gst.Object
     public static bool RegisterStaticFull(int majorVersion, int minorVersion, string name, string description, Gst.PluginInitFullFunc initFullFunc, string version, string license, string source, string package, string origin)
     {
         ArgumentNullException.ThrowIfNull(name);
+        ArgumentNullException.ThrowIfNull(description);
+        ArgumentNullException.ThrowIfNull(initFullFunc);
+        ArgumentNullException.ThrowIfNull(version);
+        ArgumentNullException.ThrowIfNull(license);
+        ArgumentNullException.ThrowIfNull(source);
+        ArgumentNullException.ThrowIfNull(package);
+        ArgumentNullException.ThrowIfNull(origin);
         System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
-        ArgumentNullException.ThrowIfNull(description);
         System.Span<byte> descriptionBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope descriptionScope = Gst.Interop.GMarshal.StackUtf8(description, descriptionBuffer);
-        ArgumentNullException.ThrowIfNull(initFullFunc);
-        Gst.Interop.CallbackHandle initFullFuncState = Gst.Interop.CallbackHandle.Alloc(initFullFunc);
-        ArgumentNullException.ThrowIfNull(version);
         System.Span<byte> versionBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope versionScope = Gst.Interop.GMarshal.StackUtf8(version, versionBuffer);
-        ArgumentNullException.ThrowIfNull(license);
         System.Span<byte> licenseBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope licenseScope = Gst.Interop.GMarshal.StackUtf8(license, licenseBuffer);
-        ArgumentNullException.ThrowIfNull(source);
         System.Span<byte> sourceBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope sourceScope = Gst.Interop.GMarshal.StackUtf8(source, sourceBuffer);
-        ArgumentNullException.ThrowIfNull(package);
         System.Span<byte> packageBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope packageScope = Gst.Interop.GMarshal.StackUtf8(package, packageBuffer);
-        ArgumentNullException.ThrowIfNull(origin);
         System.Span<byte> originBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope originScope = Gst.Interop.GMarshal.StackUtf8(origin, originBuffer);
+        Gst.Interop.CallbackHandle initFullFuncState = Gst.Interop.CallbackHandle.Alloc(initFullFunc);
         try
         {
             int nativeResult = GstPluginRegisterStaticFull(majorVersion, minorVersion, nameScope.Pointer, descriptionScope.Pointer, Gst.PluginInitFullFuncTrampoline.Pointer, versionScope.Pointer, licenseScope.Pointer, sourceScope.Pointer, packageScope.Pointer, originScope.Pointer, initFullFuncState.UserData);

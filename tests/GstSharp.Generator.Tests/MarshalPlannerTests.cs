@@ -865,8 +865,8 @@ public sealed class MarshalPlannerTests
             """
             public void Watch(Gst.WidgetFunc func)
             {
-                nint instanceHandle = Handle;
                 ArgumentNullException.ThrowIfNull(func);
+                nint instanceHandle = Handle;
                 Gst.Interop.CallbackHandle funcState = Gst.Interop.CallbackHandle.Alloc(func);
                 GstWidgetWatch(instanceHandle, Gst.WidgetFuncTrampoline.Pointer, funcState.UserData, (nint)Gst.Interop.CallbackHandle.DestroyNotify);
                 System.GC.KeepAlive(this);
@@ -883,8 +883,8 @@ public sealed class MarshalPlannerTests
             """
             public void Visit(Gst.WidgetFunc func)
             {
-                nint instanceHandle = Handle;
                 ArgumentNullException.ThrowIfNull(func);
+                nint instanceHandle = Handle;
                 Gst.Interop.CallbackHandle funcState = Gst.Interop.CallbackHandle.Alloc(func);
                 try
                 {

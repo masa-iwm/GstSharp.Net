@@ -254,9 +254,9 @@ public sealed unsafe partial class Meta
     public static Gst.MetaInfo RegisterCustom(string name, string[] tags, Gst.CustomMetaTransformFunction? transformFunc)
     {
         ArgumentNullException.ThrowIfNull(name);
+        ArgumentNullException.ThrowIfNull(tags);
         System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
-        ArgumentNullException.ThrowIfNull(tags);
         using Gst.Interop.StrvScope tagsScope = Gst.Interop.GMarshal.AllocStrv(tags);
         Gst.Interop.CallbackHandle transformFuncState = transformFunc is null ? default : Gst.Interop.CallbackHandle.Alloc(transformFunc);
         nint nativeResult = GstMetaRegisterCustom(nameScope.Pointer, tagsScope.Pointer, transformFunc is null ? 0 : Gst.CustomMetaTransformFunctionTrampoline.Pointer, transformFuncState.UserData, transformFunc is null ? 0 : (nint)Gst.Interop.CallbackHandle.DestroyNotify);

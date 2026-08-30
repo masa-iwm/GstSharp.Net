@@ -1317,9 +1317,26 @@ internal static class CallableRenderer
                 WriteHandleLocal(writer, plan, argument);
             }
 
+            // The state of a callback is allocated last, after every other
+            // prologue. Nothing but the call itself, or the finally of a call
+            // scoped callback, releases it, so no prologue that can throw -
+            // the UTF-8 copy of a string with an embedded NUL is one - may run
+            // after it. The gir order is kept among the callbacks and among
+            // everything else.
             foreach (ArgumentPlan argument in plan.Arguments)
             {
-                WritePrologue(writer, plan, argument);
+                if (argument.Kind != ArgumentKind.Callback)
+                {
+                    WritePrologue(writer, plan, argument);
+                }
+            }
+
+            foreach (ArgumentPlan argument in plan.Arguments)
+            {
+                if (argument.Kind == ArgumentKind.Callback)
+                {
+                    WritePrologue(writer, plan, argument);
+                }
             }
         }
         else
@@ -1604,12 +1621,12 @@ internal static class CallableRenderer
     /// Reading <c>Handle</c> is exactly such a step, because a disposed wrapper
     /// throws <see cref="ObjectDisposedException"/> from it, and it used to sit
     /// after the allocation because the call site is where the handle is read.
-    /// So the read is hoisted into a local ahead of the allocation whenever a
-    /// callback is present, which is the order the hand written surfaces of the
-    /// binding follow. The local is emitted only for those members and for the
-    /// materializing members of <see cref="MaterializesArguments"/>, because
-    /// hoisting it everywhere would rewrite every generated body for a
-    /// guarantee that no other member needs.
+    /// So a member that takes a callback is a materializing member of
+    /// <see cref="MaterializesArguments"/>: every guard runs first, every
+    /// handle is read into a local next, and the allocation comes last. The
+    /// locals are emitted only for those members, because hoisting them
+    /// everywhere would rewrite every generated body for a guarantee that no
+    /// other member needs.
     /// </para>
     /// </remarks>
     private static bool TakesCallback(MarshalPlan plan)
@@ -1627,23 +1644,38 @@ internal static class CallableRenderer
 
     /// <summary>
     /// Tests whether a member materializes one of its arguments: an allocation
-    /// made for the call that no scope reclaims. The UTF-8 copy of a string the
-    /// callee takes ownership of is one, and so is the value minted for a
-    /// consuming argument — the reference or the copy the callee takes over —
-    /// and the storage a caller allocated boxed out parameter is filled into.
+    /// made for the call that no scope reclaims. The state of a callback is
+    /// one, and so is the UTF-8 copy of a string the callee takes ownership
+    /// of, the value minted for a consuming argument — the reference or the
+    /// copy the callee takes over — and the storage a caller allocated boxed
+    /// out parameter is filled into.
     /// </summary>
     /// <param name="plan">The member being written.</param>
     /// <returns><see langword="true"/> when one of the arguments materializes.</returns>
     /// <remarks>
+    /// <para>
     /// Such a member orders its prologue in three strict phases — every guard,
     /// every handle read, every materialization — so that nothing that can
     /// throw runs after the allocation, which nothing but the call itself
     /// releases. Every other member keeps the plain one pass prologue: the
     /// phases guarantee nothing there, and applying them everywhere would
     /// rewrite every generated body.
+    /// </para>
+    /// <para>
+    /// A callback argument counts, because the interleaved prologue used to
+    /// allocate its state before the guard and before the UTF-8 copy of a
+    /// later parameter, and either of those throwing stranded the handle. The
+    /// third phase writes the callbacks after everything else for the same
+    /// reason, so the allocation is the last statement before the call.
+    /// </para>
     /// </remarks>
     private static bool MaterializesArguments(MarshalPlan plan)
     {
+        if (TakesCallback(plan))
+        {
+            return true;
+        }
+
         foreach (ArgumentPlan argument in plan.Arguments)
         {
             if (argument.Kind is ArgumentKind.Utf8Owned or ArgumentKind.ConsumedHandle
@@ -2051,12 +2083,9 @@ internal static class CallableRenderer
         string name = argument.Name;
         switch (argument.Kind)
         {
+            // The handle of the instance is read in the second phase of a
+            // materializing member, and read at the call site of every other.
             case ArgumentKind.Instance:
-                if (TakesCallback(plan) && !MaterializesArguments(plan))
-                {
-                    writer.WriteLine("nint " + InstanceLocal + " = " + InstanceHandle(plan, name) + ";");
-                }
-
                 return;
 
             case ArgumentKind.ValueInstance:
@@ -2209,7 +2238,7 @@ internal static class CallableRenderer
         switch (argument.Kind)
         {
             case ArgumentKind.Instance:
-                return TakesCallback(plan) || MaterializesArguments(plan)
+                return MaterializesArguments(plan)
                     ? InstanceLocal
                     : InstanceHandle(plan, name);
 

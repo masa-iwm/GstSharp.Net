@@ -191,8 +191,8 @@ public abstract unsafe partial class Element : Gst.Object
     [Obsolete("Use gst_object_call_async() or gst_call_async() instead. (deprecated since 1.28)")]
     public void CallAsync(Gst.ElementCallAsyncFunc func)
     {
-        nint instanceHandle = Handle;
         ArgumentNullException.ThrowIfNull(func);
+        nint instanceHandle = Handle;
         Gst.Interop.CallbackHandle funcState = Gst.Interop.CallbackHandle.Alloc(func);
         GstElementCallAsync(instanceHandle, Gst.ElementCallAsyncFuncTrampoline.Pointer, funcState.UserData, (nint)Gst.Interop.CallbackHandle.DestroyNotify);
         System.GC.KeepAlive(this);
@@ -299,8 +299,8 @@ public abstract unsafe partial class Element : Gst.Object
     /// </returns>
     public bool ForeachPad(Gst.ElementForeachPadFunc func)
     {
-        nint instanceHandle = Handle;
         ArgumentNullException.ThrowIfNull(func);
+        nint instanceHandle = Handle;
         Gst.Interop.CallbackHandle funcState = Gst.Interop.CallbackHandle.Alloc(func);
         try
         {
@@ -329,8 +329,8 @@ public abstract unsafe partial class Element : Gst.Object
     /// </returns>
     public bool ForeachSinkPad(Gst.ElementForeachPadFunc func)
     {
-        nint instanceHandle = Handle;
         ArgumentNullException.ThrowIfNull(func);
+        nint instanceHandle = Handle;
         Gst.Interop.CallbackHandle funcState = Gst.Interop.CallbackHandle.Alloc(func);
         try
         {
@@ -359,8 +359,8 @@ public abstract unsafe partial class Element : Gst.Object
     /// </returns>
     public bool ForeachSrcPad(Gst.ElementForeachPadFunc func)
     {
-        nint instanceHandle = Handle;
         ArgumentNullException.ThrowIfNull(func);
+        nint instanceHandle = Handle;
         Gst.Interop.CallbackHandle funcState = Gst.Interop.CallbackHandle.Alloc(func);
         try
         {

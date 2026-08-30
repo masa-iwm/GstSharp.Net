@@ -811,20 +811,20 @@ public sealed class ClassEmitterTests
         "GstSharp.Net.App/Generated/AppSrcSimpleCallbacks.cs",
         "    public void SetNeedData(Gst.App.AppSrcNeedDataCallback needDataCb)\n"
         + "    {\n"
-        + "        nint instanceHandle = Handle;\n"
         + "        ArgumentNullException.ThrowIfNull(needDataCb);\n"
+        + "        nint instanceHandle = Handle;\n"
         + "        Gst.Interop.CallbackHandle needDataCbState = Gst.Interop.CallbackHandle.Alloc(needDataCb);\n")]
     [InlineData(
         "GstSharp.Net.App/Generated/AppSinkSimpleCallbacks.cs",
         "    public void SetNewSample(Gst.App.AppSinkNewSampleCallback newSampleCb)\n"
         + "    {\n"
-        + "        nint instanceHandle = Handle;\n"
         + "        ArgumentNullException.ThrowIfNull(newSampleCb);\n"
+        + "        nint instanceHandle = Handle;\n"
         + "        Gst.Interop.CallbackHandle newSampleCbState = Gst.Interop.CallbackHandle.Alloc(newSampleCb);\n")]
     [InlineData(
         "GstSharp.Net/Generated/Pad.cs",
-        "        nint instanceHandle = Handle;\n"
-        + "        ArgumentNullException.ThrowIfNull(callback);\n"
+        "        ArgumentNullException.ThrowIfNull(callback);\n"
+        + "        nint instanceHandle = Handle;\n"
         + "        Gst.Interop.CallbackHandle callbackState = Gst.Interop.CallbackHandle.Alloc(callback);\n"
         + "        System.Runtime.InteropServices.CULong nativeResult = GstPadAddProbe(instanceHandle, ")]
     public void AMemberThatTakesACallbackReadsItsHandleBeforeItAllocatesTheState(string path, string body)
@@ -832,10 +832,65 @@ public sealed class ClassEmitterTests
         // The GCHandle of a callback is freed by the destroy notification of
         // the native call and by nothing else, so a read of Handle that throws
         // ObjectDisposedException after the allocation would pin the delegate
-        // and everything its closure captured for the life of the process. The
-        // read is hoisted ahead of the allocation for exactly that reason, and
-        // the order is what this pins: the two lines are asserted adjacent.
+        // and everything its closure captured for the life of the process. A
+        // member that takes a callback therefore runs every guard first, reads
+        // the handle of every wrapper next and allocates last; that order is
+        // what this pins, with the three lines asserted adjacent.
         Assert.Contains(body, SourceOf(path), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AMemberThatTakesACallbackGuardsEveryParameterBeforeItAllocatesTheState()
+    {
+        // gst_plugin_register_static_full takes a callback in the middle of
+        // eight strings. The state used to be allocated where the callback
+        // sits in the gir, so the guard of a later string threw with the
+        // GCHandle already taken, and so did the UTF-8 copy of a string with
+        // an embedded NUL. Every guard now runs first and the allocation is
+        // the last statement before the call.
+        string source = Source("Plugin.cs");
+        int guard = source.IndexOf("ArgumentNullException.ThrowIfNull(origin);", StringComparison.Ordinal);
+        int copy = source.IndexOf(
+            "using Gst.Interop.Utf8Scope originScope = Gst.Interop.GMarshal.StackUtf8(origin, originBuffer);",
+            StringComparison.Ordinal);
+        int alloc = source.IndexOf(
+            "Gst.Interop.CallbackHandle initFullFuncState = Gst.Interop.CallbackHandle.Alloc(initFullFunc);",
+            StringComparison.Ordinal);
+
+        Assert.True(guard > 0 && copy > 0 && alloc > 0);
+        Assert.True(guard < copy, "A guard runs after the UTF-8 copy of an earlier parameter.");
+        Assert.True(copy < alloc, "The callback state is allocated before a prologue that can throw.");
+        Assert.Contains(
+            """
+                    Gst.Interop.CallbackHandle initFullFuncState = Gst.Interop.CallbackHandle.Alloc(initFullFunc);
+                    try
+            """,
+            source,
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AMemberThatTakesACallbackAllocatesTheStateAsItsLastPrologue()
+    {
+        // gst_type_find_register takes a callback between a string it has to
+        // copy and a nullable one, so the allocation used to sit between the
+        // two copies. The whole prologue is pinned here: every guard, then the
+        // handle of every wrapper, then the copies, then the allocation.
+        Assert.Contains(
+            """
+                    ArgumentNullException.ThrowIfNull(name);
+                    ArgumentNullException.ThrowIfNull(func);
+                    nint pluginNative = plugin is null ? 0 : plugin.Handle;
+                    nint possibleCapsNative = possibleCaps is null ? 0 : possibleCaps.Handle;
+                    System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+                    using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
+                    System.Span<byte> extensionsBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+                    using Gst.Interop.Utf8Scope extensionsScope = Gst.Interop.GMarshal.StackUtf8(extensions, extensionsBuffer);
+                    Gst.Interop.CallbackHandle funcState = Gst.Interop.CallbackHandle.Alloc(func);
+                    int nativeResult = GstTypeFindRegister(pluginNative,
+            """,
+            Source("TypeFind.cs"),
+            StringComparison.Ordinal);
     }
 
     [Fact]

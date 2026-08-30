@@ -449,8 +449,8 @@ public sealed unsafe partial class RTSPConnection
     /// <param name="func">a #GstRTSPConnectionAcceptCertificateFunc to check certificates</param>
     public void SetAcceptCertificateFunc(Gst.Rtsp.RTSPConnectionAcceptCertificateFunc func)
     {
-        nint instanceHandle = Handle;
         ArgumentNullException.ThrowIfNull(func);
+        nint instanceHandle = Handle;
         Gst.Interop.CallbackHandle funcState = Gst.Interop.CallbackHandle.Alloc(func);
         GstRtspConnectionSetAcceptCertificateFunc(instanceHandle, Gst.Rtsp.RTSPConnectionAcceptCertificateFuncTrampoline.Pointer, funcState.UserData, (nint)Gst.Interop.CallbackHandle.DestroyNotify);
         System.GC.KeepAlive(this);
