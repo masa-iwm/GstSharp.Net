@@ -198,6 +198,7 @@ public sealed class SkipRulesTests
                 "ges_deinit",
                 "ges_timeline_element_get_child_property",
                 "ges_timeline_element_set_child_property",
+                "ges_track_element_lookup_child",
                 "gst_adapter_map",
                 "gst_adapter_take",
                 "gst_adapter_unmap",

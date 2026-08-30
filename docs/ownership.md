@@ -141,6 +141,46 @@ using (pipeline)
 Order matters: a pipeline that is still `PLAYING` when its last reference goes
 away leaves its streaming threads running. Set it to `NULL` first.
 
+## Parameter specifications
+
+`Gst.GObject.ParamSpec` wraps a `GParamSpec`, the description of one property.
+It is the one wrapper of the runtime that is neither interned nor made by a
+factory: a member that hands one out constructs it, and the instance owns one
+reference of its own. `Dispose` releases that reference and nothing else — a
+specification belongs to the class that registered it, so disposing the wrapper
+never takes the description away from the class.
+
+The two directions read as they do everywhere else. A `ParamSpec` a member
+**takes** is borrowed for the call: the wrapper keeps its reference, the callee
+takes one of its own if it keeps the specification — `TimelineElement.AddChildProperty`
+is that shape — and the caller still disposes what it passed. A `ParamSpec` a
+member **hands out** is the caller's to dispose, whether the C function lent its
+reference or transferred one:
+
+| Member | What C transfers | What the wrapper does |
+| --- | --- | --- |
+| `ChildProxyExtensions.Lookup` | nothing; the specification belongs to the class of the child | takes a reference of its own |
+| `TimelineElement.LookupChild` | a reference (`g_param_spec_ref`) | adopts it |
+
+Both girs are right, and the difference is not smoothed over: the reference the
+wrapper holds is one reference either way, and disposing it is correct in both.
+
+That reference is a lifetime of its own. The wrapper takes it at construction
+when the pointer it was given is borrowed (`g_param_spec_ref_sink`) and gives
+it up in `Dispose` and nowhere else, so what `Lookup` or `LookupChild` — or a
+signal — handed out stays readable after the object or the child it describes
+is gone: a `GParamSpec` lives by its own reference count, not by that of any
+instance. The wrapper has no finalizer, which makes its leak the one silent
+one in the runtime: an instance that is never disposed holds that reference
+until the process exits. Little is lost when that happens, since an installed
+specification belongs to a class and lives as long as the process anyway, but
+dispose it as you would any other wrapper.
+
+A lookup that finds nothing answers `false` and leaves **both** out parameters
+`null`. The C functions do not touch the storage they were given on that path,
+so the binding zeroes it before the call and reads a null pointer back as
+`null`; there is no stale value to guard against and no wrapper to dispose.
+
 ## Fields a wrapper reads
 
 A generated field accessor is a get-only property that reads through the handle

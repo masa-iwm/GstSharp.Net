@@ -172,6 +172,31 @@ public static unsafe partial class ChildProxyExtensions
         }
     }
 
+    /// <summary>Looks up which object and #GParamSpec would be effected by the given @name.</summary>
+    /// <param name="object">child proxy object to lookup the property in</param>
+    /// <param name="name">The <c>name</c> argument.</param>
+    /// <param name="target">The <c>target</c> argument.</param>
+    /// <param name="pspec">The <c>pspec</c> argument.</param>
+    /// <returns>
+    /// %TRUE if @target and @pspec could be found. %FALSE otherwise. In that
+    /// case the values for @pspec and @target are not modified. Unref @target after
+    /// usage. For plain #GObject @target is the same as @object.
+    /// </returns>
+    public static bool Lookup(this Gst.IChildProxy @object, string name, out Gst.GObject.Object? target, out Gst.GObject.ParamSpec? pspec)
+    {
+        ArgumentNullException.ThrowIfNull(@object);
+        ArgumentNullException.ThrowIfNull(name);
+        System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
+        nint targetNative = default;
+        nint pspecNative = default;
+        int nativeResult = GstChildProxyLookup(@object.Handle, nameScope.Pointer, &targetNative, &pspecNative);
+        System.GC.KeepAlive(@object);
+        target = Gst.GObject.Object.FromNative<Gst.GObject.Object>(targetNative, Gst.Interop.Transfer.Full);
+        pspec = (pspecNative == 0 ? null : new Gst.GObject.ParamSpec(pspecNative, Gst.Interop.Transfer.None));
+        return nativeResult != 0;
+    }
+
     /// <summary>Sets a single property using the GstChildProxy mechanism.</summary>
     /// <param name="object">the parent object</param>
     /// <param name="name">The <c>name</c> argument.</param>
@@ -365,6 +390,10 @@ public static unsafe partial class ChildProxyExtensions
     /// <summary>The <c>gst_child_proxy_get_property</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_child_proxy_get_property")]
     private static partial void GstChildProxyGetProperty(nint @object, byte* name, Gst.GObject.GValueNative* value);
+
+    /// <summary>The <c>gst_child_proxy_lookup</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_child_proxy_lookup")]
+    private static partial int GstChildProxyLookup(nint @object, byte* name, nint* target, nint* pspec);
 
     /// <summary>The <c>gst_child_proxy_set_property</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_child_proxy_set_property")]

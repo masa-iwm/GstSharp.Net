@@ -542,6 +542,37 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
         return nativeResult != 0;
     }
 
+    /// <summary>
+    /// A default deep_notify signal callback for an object. The user data
+    /// should contain a pointer to an array of strings that should be excluded
+    /// from the notify. The default handler will print the new value of the property
+    /// using g_print.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// MT safe. This function grabs and releases @object's LOCK for getting its
+    ///          path string.
+    /// </para>
+    /// </remarks>
+    /// <param name="object">The <c>@object</c> argument.</param>
+    /// <param name="orig">The <c>orig</c> argument.</param>
+    /// <param name="pspec">The <c>pspec</c> argument.</param>
+    /// <param name="excludedProps">
+    ///     a set of user-specified properties to exclude or %NULL to show
+    ///     all changes.
+    /// </param>
+    public static void DefaultDeepNotify(Gst.GObject.Object @object, Gst.Object orig, Gst.GObject.ParamSpec pspec, string[]? excludedProps)
+    {
+        ArgumentNullException.ThrowIfNull(@object);
+        ArgumentNullException.ThrowIfNull(orig);
+        ArgumentNullException.ThrowIfNull(pspec);
+        using Gst.Interop.StrvScope excludedPropsScope = Gst.Interop.GMarshal.AllocStrv(excludedProps);
+        GstObjectDefaultDeepNotify(@object.Handle, orig.Handle, pspec.Handle, excludedPropsScope.Pointer);
+        System.GC.KeepAlive(@object);
+        System.GC.KeepAlive(orig);
+        System.GC.KeepAlive(pspec);
+    }
+
     /// <summary>The <c>name</c> property.</summary>
     public string? Name => GetName();
 
@@ -718,6 +749,10 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
     /// <summary>The <c>gst_object_check_uniqueness</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_object_check_uniqueness")]
     private static partial int GstObjectCheckUniqueness(nint list, byte* name);
+
+    /// <summary>The <c>gst_object_default_deep_notify</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_object_default_deep_notify")]
+    private static partial void GstObjectDefaultDeepNotify(nint @object, nint orig, nint pspec, nint* excludedProps);
 
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstObject</c> under.</summary>
     /// <returns>The type of the instances of this wrapper.</returns>

@@ -45,9 +45,10 @@ disappears shows up here as an added line.
 - `ges_track_element_set_child_property_valist`
 - `ges_track_set_create_element_for_gap_func`
 
-### OverlaySkip (1)
+### OverlaySkip (2)
 
 - `ges_deinit`
+- `ges_track_element_lookup_child`
 
 ### OwningProperty (2)
 
@@ -63,7 +64,7 @@ disappears shows up here as an added line.
 - `GES.Group:start`
 - `GES.UriClip:supported-formats`
 
-### UnsupportedSignature (22)
+### UnsupportedSignature (16)
 
 - `GES.Layer::active-changed`
 - `GES.MetaContainer::notify-meta`
@@ -78,15 +79,9 @@ disappears shows up here as an added line.
 - `ges_meta_container_register_meta_date`
 - `ges_meta_container_set_date`
 - `ges_meta_container_set_meta`
-- `ges_timeline_element_add_child_property`
-- `ges_timeline_element_get_child_property_by_pspec`
 - `ges_timeline_element_list_children_properties`
-- `ges_timeline_element_lookup_child`
-- `ges_timeline_element_remove_child_property`
-- `ges_timeline_element_set_child_property_by_pspec`
 - `ges_track_element_get_all_control_bindings`
 - `ges_track_element_list_children_properties`
-- `ges_track_element_lookup_child`
 
 ### VarArgs (4)
 
@@ -435,7 +430,7 @@ disappears shows up here as an added line.
 
 - `gst_bus_add_watch`
 
-### UnsupportedSignature (72)
+### UnsupportedSignature (69)
 
 - `Gst.Bus:enable-async`
 - `gst_buffer_list_foreach`
@@ -445,7 +440,6 @@ disappears shows up here as an added line.
 - `gst_buffer_new_wrapped_bytes`
 - `gst_bus_create_watch`
 - `gst_bus_get_pollfd`
-- `gst_child_proxy_lookup`
 - `gst_context_replace`
 - `gst_control_binding_get_g_value_array`
 - `gst_debug_get_all_categories`
@@ -471,7 +465,6 @@ disappears shows up here as an added line.
 - `gst_mini_object_unlock`
 - `gst_mini_object_weak_ref`
 - `gst_mini_object_weak_unref`
-- `gst_object_default_deep_notify`
 - `gst_object_get_g_value_array`
 - `gst_object_replace`
 - `gst_pad_set_activate_function_full`
@@ -506,7 +499,6 @@ disappears shows up here as an added line.
 - `gst_uri_get_query_table`
 - `gst_uri_set_query_table`
 - `gst_value_array_append_and_take_value`
-- `gst_value_deserialize_with_pspec`
 - `gst_value_list_append_and_take_value`
 - `gst_value_unique_list_append_and_take_value`
 

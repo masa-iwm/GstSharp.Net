@@ -103,7 +103,10 @@ public sealed class ParamSpec : IDisposable
             // The string belongs to the specification, so it is only there for
             // as long as this wrapper holds its reference: reading Handle is
             // the last use of the wrapper, and the collector is free to
-            // finalize it from there on.
+            // collect it from there on. Collecting it releases nothing - this
+            // class has no finalizer, and the reference is dropped by Dispose
+            // alone - so the keep alive states the extent of the borrow rather
+            // than guarding against a finalizer that could end it.
             GC.KeepAlive(this);
             return name ?? string.Empty;
         }

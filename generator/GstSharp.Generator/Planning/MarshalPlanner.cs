@@ -188,6 +188,13 @@ internal sealed class MarshalPlanner
     private sealed record RuntimeHandle(string PublicType, HandleFlavor Flavor);
 
     /// <summary>
+    /// The qualified name of <c>GParamSpec</c>, which is a fundamental type of
+    /// its own rather than a <c>GObject</c> or a record, and is therefore
+    /// recognised by name where a handle is planned.
+    /// </summary>
+    private const string ParamSpecType = "GObject.ParamSpec";
+
+    /// <summary>
     /// Handles of the hand written runtime that generated code may refer to even
     /// though their module is not generated.
     /// </summary>
@@ -205,7 +212,9 @@ internal sealed class MarshalPlanner
     /// <see cref="HandleFlavor.Wrapper"/> — a boxed value of the hand written
     /// runtime, such as <c>GObject.ValueArray</c> or <c>GLib.DateTime</c> —
     /// through the typed <c>FromNative</c> of its own class, exactly like a
-    /// generated boxed type.
+    /// generated boxed type, and a <see cref="HandleFlavor.ParamSpec"/> through
+    /// its own constructor, which is the only wrapper of the runtime that has
+    /// no factory to call.
     /// </para>
     /// </remarks>
     private static readonly Dictionary<string, RuntimeHandle> RuntimeTypes = new(StringComparer.Ordinal)
@@ -213,6 +222,7 @@ internal sealed class MarshalPlanner
         ["GObject.Object"] = new("Gst.GObject.Object", HandleFlavor.GObject),
         ["GObject.InitiallyUnowned"] = new("Gst.GObject.InitiallyUnowned", HandleFlavor.GObject),
         ["GObject.ValueArray"] = new("Gst.GObject.ValueArray", HandleFlavor.Wrapper),
+        [ParamSpecType] = new("Gst.GObject.ParamSpec", HandleFlavor.ParamSpec),
         ["GLib.DateTime"] = new("Gst.GLib.DateTime", HandleFlavor.Wrapper),
         ["Gio.Cancellable"] = new("Gst.Gio.Cancellable", HandleFlavor.GObject),
         ["Gio.Socket"] = new("Gst.Gio.Socket", HandleFlavor.GObject),
@@ -1978,6 +1988,12 @@ internal sealed class MarshalPlanner
             case MarshalKind.GError:
                 return PlanGError(name, direction, transfer, nullable);
 
+            // A GParamSpec is a fundamental type of its own rather than a
+            // GObject, and the runtime wraps it by hand, so it reaches the
+            // handle plan through its qualified name. Every other fundamental
+            // - GObject.Closure and the GParamSpec subclasses among them - has
+            // no wrapper to name and stays rejected.
+            case MarshalKind.Fundamental when mapped.Symbol is { QualifiedName: ParamSpecType }:
             case MarshalKind.GObject:
             case MarshalKind.MiniObject:
             case MarshalKind.Boxed:
@@ -3438,26 +3454,6 @@ internal sealed class MarshalPlanner
         MappedType mapped = _types.Map(parameter.Type, context.Namespace);
         bool nullable = AnnotationOverrideFor(signalKey + "#" + parameter.Name)?.Nullable
             ?? parameter.IsNullable;
-
-        // A notify style signal hands the handler the GParamSpec of the
-        // property that changed. It is neither a GObject nor a generated
-        // record, but the runtime wraps it, so it is planned here rather than
-        // in the shared scalar projection, which would let it into every
-        // method signature too.
-        if (mapped.Symbol is { QualifiedName: "GObject.ParamSpec" } && parameter.Transfer == GirTransfer.None)
-        {
-            return new ArgumentPlan
-            {
-                Source = parameter,
-                Kind = ArgumentKind.Handle,
-                Name = name,
-                PublicType = "Gst.GObject.ParamSpec",
-                RawType = NativeInt,
-                Transfer = GirTransfer.None,
-                Flavor = HandleFlavor.ParamSpec,
-                Doc = parameter.Doc,
-            };
-        }
 
         ArgumentPlan? argument = PlanScalar(
             parameter.Type,

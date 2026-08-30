@@ -130,6 +130,32 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
     }
 
     /// <summary>
+    /// Register a property of a child of the element to allow it to be
+    /// written with ges_timeline_element_set_child_property() and read with
+    /// ges_timeline_element_get_child_property(). A change in the property
+    /// will also appear in the #GESTimelineElement::deep-notify signal.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// @pspec should be unique from other children properties that have been
+    /// registered on @self.
+    /// </para>
+    /// </remarks>
+    /// <param name="pspec">The <c>pspec</c> argument.</param>
+    /// <param name="child">The <c>child</c> argument.</param>
+    /// <returns>%TRUE if the property was successfully registered.</returns>
+    public bool AddChildProperty(Gst.GObject.ParamSpec pspec, Gst.GObject.Object child)
+    {
+        ArgumentNullException.ThrowIfNull(pspec);
+        ArgumentNullException.ThrowIfNull(child);
+        int nativeResult = GesTimelineElementAddChildProperty(Handle, pspec.Handle, child.Handle);
+        System.GC.KeepAlive(this);
+        System.GC.KeepAlive(pspec);
+        System.GC.KeepAlive(child);
+        return nativeResult != 0;
+    }
+
+    /// <summary>
     /// Create a copy of @self. All the properties of @self are copied into
     /// a new element, with the exception of #GESTimelineElement:parent,
     /// #GESTimelineElement:timeline and #GESTimelineElement:name. Other data,
@@ -233,6 +259,29 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
         System.GC.KeepAlive(this);
         Gst.GLib.GException.ThrowIfSet(ref errorNative);
         return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Gets the property of a child of the element. Specifically, the property
+    /// corresponding to the @pspec used in
+    /// ges_timeline_element_add_child_property() is copied into @value.
+    /// </summary>
+    /// <param name="pspec">The <c>pspec</c> argument.</param>
+    /// <param name="value">
+    /// The <c>value</c> argument.
+    /// On success the caller owns the contents and disposes the value; on
+    /// failure it is left empty, and disposing an empty value does nothing.
+    /// </param>
+    public void GetChildPropertyByPspec(Gst.GObject.ParamSpec pspec, out Gst.GObject.Value value)
+    {
+        ArgumentNullException.ThrowIfNull(pspec);
+        value = default;
+        fixed (Gst.GObject.GValueNative* valuePointer = &value.NativeValue)
+        {
+            GesTimelineElementGetChildPropertyByPspec(Handle, pspec.Handle, valuePointer);
+            System.GC.KeepAlive(this);
+            System.GC.KeepAlive(pspec);
+        }
     }
 
     /// <summary>Gets the #GESTimelineElement:duration for the element.</summary>
@@ -384,6 +433,44 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
         return (GES.TrackType)nativeResult;
     }
 
+    /// <summary>Looks up a child property of the element.</summary>
+    /// <remarks>
+    /// <para>
+    /// @prop_name can either be in the format "prop-name" or
+    /// "TypeName::prop-name", where "prop-name" is the name of the property
+    /// to look up (as used in g_object_get()), and "TypeName" is the type name
+    /// of the child (as returned by G_OBJECT_TYPE_NAME()). The latter format is
+    /// useful when two children of different types share the same property
+    /// name.
+    /// </para>
+    /// <para>
+    /// The first child found with the given "prop-name" property that was
+    /// registered with ges_timeline_element_add_child_property() (and of the
+    /// type "TypeName", if it was given) will be passed to @child, and the
+    /// registered specification of this property will be passed to @pspec.
+    /// </para>
+    /// </remarks>
+    /// <param name="propName">The <c>propName</c> argument.</param>
+    /// <param name="child">The <c>child</c> argument.</param>
+    /// <param name="pspec">The <c>pspec</c> argument.</param>
+    /// <returns>
+    /// %TRUE if a child corresponding to the property was found, in
+    /// which case @child and @pspec are set.
+    /// </returns>
+    public bool LookupChild(string propName, out Gst.GObject.Object? child, out Gst.GObject.ParamSpec? pspec)
+    {
+        ArgumentNullException.ThrowIfNull(propName);
+        System.Span<byte> propNameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope propNameScope = Gst.Interop.GMarshal.StackUtf8(propName, propNameBuffer);
+        nint childNative = default;
+        nint pspecNative = default;
+        int nativeResult = GesTimelineElementLookupChild(Handle, propNameScope.Pointer, &childNative, &pspecNative);
+        System.GC.KeepAlive(this);
+        child = Gst.GObject.Object.FromNative<Gst.GObject.Object>(childNative, Gst.Interop.Transfer.Full);
+        pspec = (pspecNative == 0 ? null : new Gst.GObject.ParamSpec(pspecNative, Gst.Interop.Transfer.Full));
+        return nativeResult != 0;
+    }
+
     /// <summary>
     /// Paste an element inside the same timeline and layer as @self. @self
     /// **must** be the return of ges_timeline_element_copy() with `deep=TRUE`,
@@ -416,6 +503,23 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
         nint nativeResult = GesTimelineElementPaste(Handle, pastePosition.Nanoseconds);
         System.GC.KeepAlive(this);
         return Gst.GObject.Object.FromNative<GES.TimelineElement>(nativeResult, Gst.Interop.Transfer.Full);
+    }
+
+    /// <summary>
+    /// Remove a child property from the element. @pspec should be a
+    /// specification that was passed to
+    /// ges_timeline_element_add_child_property(). The corresponding property
+    /// will no longer be registered as a child property for the element.
+    /// </summary>
+    /// <param name="pspec">The <c>pspec</c> argument.</param>
+    /// <returns>%TRUE if the property was successfully un-registered for @self.</returns>
+    public bool RemoveChildProperty(Gst.GObject.ParamSpec pspec)
+    {
+        ArgumentNullException.ThrowIfNull(pspec);
+        int nativeResult = GesTimelineElementRemoveChildProperty(Handle, pspec.Handle);
+        System.GC.KeepAlive(this);
+        System.GC.KeepAlive(pspec);
+        return nativeResult != 0;
     }
 
     /// <summary>
@@ -478,6 +582,37 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
         int nativeResult = GesTimelineElementRollStart(Handle, start.Nanoseconds);
         System.GC.KeepAlive(this);
         return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Sets the property of a child of the element. Specifically, the property
+    /// corresponding to the @pspec used in
+    /// ges_timeline_element_add_child_property() is set to @value.
+    /// </summary>
+    /// <param name="pspec">The <c>pspec</c> argument.</param>
+    /// <param name="value">
+    /// The <c>value</c> argument.
+    /// The callee copies what it keeps, so the caller keeps ownership of
+    /// <paramref name="value"/> and still disposes it.
+    /// </param>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="value"/> is empty.
+    /// </exception>
+    public void SetChildPropertyByPspec(Gst.GObject.ParamSpec pspec, in Gst.GObject.Value value)
+    {
+        ArgumentNullException.ThrowIfNull(pspec);
+        if (value.IsEmpty)
+        {
+            throw new ArgumentException(
+                "An empty value cannot be passed: it has no type for the call to read.",
+                nameof(value));
+        }
+        fixed (Gst.GObject.GValueNative* valuePointer = &System.Runtime.CompilerServices.Unsafe.AsRef(in value).NativeValue)
+        {
+            GesTimelineElementSetChildPropertyByPspec(Handle, pspec.Handle, valuePointer);
+            System.GC.KeepAlive(this);
+            System.GC.KeepAlive(pspec);
+        }
     }
 
     /// <summary>Sets the property of a child of the element.</summary>
@@ -1030,6 +1165,10 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
         }
     }
 
+    /// <summary>The <c>ges_timeline_element_add_child_property</c> entry point.</summary>
+    [LibraryImport("GES", EntryPoint = "ges_timeline_element_add_child_property")]
+    private static partial int GesTimelineElementAddChildProperty(nint self, nint pspec, nint child);
+
     /// <summary>The <c>ges_timeline_element_copy</c> entry point.</summary>
     [LibraryImport("GES", EntryPoint = "ges_timeline_element_copy")]
     private static partial nint GesTimelineElementCopy(nint self, int deep);
@@ -1041,6 +1180,10 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
     /// <summary>The <c>ges_timeline_element_edit_full</c> entry point.</summary>
     [LibraryImport("GES", EntryPoint = "ges_timeline_element_edit_full")]
     private static partial int GesTimelineElementEditFull(nint self, long newLayerPriority, int mode, int edge, ulong position, nint* error);
+
+    /// <summary>The <c>ges_timeline_element_get_child_property_by_pspec</c> entry point.</summary>
+    [LibraryImport("GES", EntryPoint = "ges_timeline_element_get_child_property_by_pspec")]
+    private static partial void GesTimelineElementGetChildPropertyByPspec(nint self, nint pspec, Gst.GObject.GValueNative* value);
 
     /// <summary>The <c>ges_timeline_element_get_duration</c> entry point.</summary>
     [LibraryImport("GES", EntryPoint = "ges_timeline_element_get_duration")]
@@ -1090,9 +1233,17 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
     [LibraryImport("GES", EntryPoint = "ges_timeline_element_get_track_types")]
     private static partial int GesTimelineElementGetTrackTypes(nint self);
 
+    /// <summary>The <c>ges_timeline_element_lookup_child</c> entry point.</summary>
+    [LibraryImport("GES", EntryPoint = "ges_timeline_element_lookup_child")]
+    private static partial int GesTimelineElementLookupChild(nint self, byte* propName, nint* child, nint* pspec);
+
     /// <summary>The <c>ges_timeline_element_paste</c> entry point.</summary>
     [LibraryImport("GES", EntryPoint = "ges_timeline_element_paste")]
     private static partial nint GesTimelineElementPaste(nint self, ulong pastePosition);
+
+    /// <summary>The <c>ges_timeline_element_remove_child_property</c> entry point.</summary>
+    [LibraryImport("GES", EntryPoint = "ges_timeline_element_remove_child_property")]
+    private static partial int GesTimelineElementRemoveChildProperty(nint self, nint pspec);
 
     /// <summary>The <c>ges_timeline_element_ripple</c> entry point.</summary>
     [LibraryImport("GES", EntryPoint = "ges_timeline_element_ripple")]
@@ -1109,6 +1260,10 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
     /// <summary>The <c>ges_timeline_element_roll_start</c> entry point.</summary>
     [LibraryImport("GES", EntryPoint = "ges_timeline_element_roll_start")]
     private static partial int GesTimelineElementRollStart(nint self, ulong start);
+
+    /// <summary>The <c>ges_timeline_element_set_child_property_by_pspec</c> entry point.</summary>
+    [LibraryImport("GES", EntryPoint = "ges_timeline_element_set_child_property_by_pspec")]
+    private static partial void GesTimelineElementSetChildPropertyByPspec(nint self, nint pspec, Gst.GObject.GValueNative* value);
 
     /// <summary>The <c>ges_timeline_element_set_child_property_full</c> entry point.</summary>
     [LibraryImport("GES", EntryPoint = "ges_timeline_element_set_child_property_full")]

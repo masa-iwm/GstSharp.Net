@@ -99,7 +99,10 @@ internal static class Fixture
     /// runtime struct, and the <c>ValueArray</c> record so that one may
     /// reference <c>GObject.ValueArray</c>, whose boxed registration routes it
     /// through the runtime type registry of the planner; neither record is
-    /// ever emitted, because the GObject module is not generated.
+    /// ever emitted, because the GObject module is not generated. The
+    /// <c>ParamSpec</c> class is declared with the <c>glib:get-type="intern"</c>
+    /// of the vendored gir, which is what classifies it as a GType fundamental
+    /// rather than as a <c>GObject</c>.
     /// </summary>
     internal const string GObjectNamespace =
         """
@@ -118,6 +121,8 @@ internal static class Fixture
                 <type name="guint" c:type="guint"/>
               </field>
             </record>
+            <class name="ParamSpec" c:type="GParamSpec" abstract="1" glib:type-name="GParam" glib:get-type="intern">
+            </class>
           </namespace>
         """;
 

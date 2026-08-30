@@ -214,9 +214,9 @@ internal enum HandleFlavor
     /// <summary>
     /// A <c>GParamSpec</c>, wrapped by the hand written
     /// <c>Gst.GObject.ParamSpec</c>. It is not a <c>GObject</c> and has no
-    /// generated wrapper, so it is constructed directly; the constructor takes
-    /// a reference of its own, which makes the wrapper owned by whoever created
-    /// it. Only the signal planner produces this flavour.
+    /// generated wrapper, so it is constructed directly; under
+    /// <c>transfer-ownership="none"</c> the constructor takes a reference of
+    /// its own, which makes the wrapper owned by whoever created it.
     /// </summary>
     ParamSpec,
 }

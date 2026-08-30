@@ -2171,6 +2171,33 @@ public static unsafe partial class Global
     }
 
     /// <summary>
+    /// Tries to deserialize a string into the type specified by the given GValue.
+    /// @pspec may be used to guide the deserializing of nested members.
+    /// If the operation succeeds, %TRUE is returned, %FALSE otherwise.
+    /// </summary>
+    /// <param name="dest">
+    /// The <c>dest</c> argument.
+    /// The value has to be initialized with the type the call expects before
+    /// the call; like the C API, the call raises a warning and does nothing
+    /// otherwise.
+    /// </param>
+    /// <param name="src">The <c>src</c> argument.</param>
+    /// <param name="pspec">The <c>pspec</c> argument.</param>
+    /// <returns>%TRUE on success</returns>
+    public static bool ValueDeserializeWithPspec(ref Gst.GObject.Value dest, string src, Gst.GObject.ParamSpec? pspec)
+    {
+        ArgumentNullException.ThrowIfNull(src);
+        System.Span<byte> srcBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope srcScope = Gst.Interop.GMarshal.StackUtf8(src, srcBuffer);
+        fixed (Gst.GObject.GValueNative* destPointer = &dest.NativeValue)
+        {
+            int nativeResult = GstValueDeserializeWithPspec(destPointer, srcScope.Pointer, pspec is null ? 0 : pspec.Handle);
+            System.GC.KeepAlive(pspec);
+            return nativeResult != 0;
+        }
+    }
+
+    /// <summary>
     /// Fixate @src into a new value @dest.
     /// For ranges, the first element is taken. For lists and arrays, the
     /// first item is fixated and returned.
@@ -3889,6 +3916,10 @@ public static unsafe partial class Global
     /// <summary>The <c>gst_value_deserialize</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_value_deserialize")]
     private static partial int GstValueDeserialize(Gst.GObject.GValueNative* dest, byte* src);
+
+    /// <summary>The <c>gst_value_deserialize_with_pspec</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_value_deserialize_with_pspec")]
+    private static partial int GstValueDeserializeWithPspec(Gst.GObject.GValueNative* dest, byte* src, nint pspec);
 
     /// <summary>The <c>gst_value_fixate</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_value_fixate")]
