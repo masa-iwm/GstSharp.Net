@@ -221,7 +221,7 @@ public sealed class ClassEmitterTests
     [InlineData("GstSdp", 0, 8, 0, 0, 6, 0)]
     [InlineData("GstWebRTC", 0, 2, 0, 0, 4, 0)]
     [InlineData("GstNet", 0, 3, 0, 0, 0, 0)]
-    [InlineData("GstRtsp", 0, 12, 0, 0, 13, 0)]
+    [InlineData("GstRtsp", 0, 13, 0, 0, 13, 0)]
     [InlineData("GES", 6, 3, 4, 10, 22, 2)]
     public void TheSkipCensusIsStable(
         string module,
@@ -557,13 +557,23 @@ public sealed class ClassEmitterTests
         // named under the overlay skips instead.
         Assert.DoesNotContain("### CallerAllocates", report, StringComparison.Ordinal);
         Assert.Contains("### OverlaySkip (29)\n", report, StringComparison.Ordinal);
-        Assert.Contains("- `gst_video_frame_map`\n", GenerationPipeline.Run(GirFixture.GirDirectory).SkipReport, StringComparison.Ordinal);
         Assert.Contains("- `GstApp.AppSrc::push-buffer`\n", report, StringComparison.Ordinal);
 
         // The hand bound ledger takes precedence over the reason that kept a
-        // symbol out, so gst_video_frame_map is reported here and not under
-        // the overlay skips it is also listed in.
+        // symbol out, so gst_video_frame_map is filed under the hand bound
+        // section of its own module - GstVideo, not the Gst one - and not
+        // under the overlay skips it is also listed in. The whole section is
+        // anchored, because a lone "- `symbol`" line matches under any reason
+        // and in any module.
         Assert.Contains("### HandBound (42)\n", report, StringComparison.Ordinal);
+        Assert.Contains(
+            "### HandBound (4)\n\n"
+            + "- `gst_video_codec_frame_set_user_data`\n"
+            + "- `gst_video_frame_map`\n"
+            + "- `gst_video_frame_map_id`\n"
+            + "- `gst_video_frame_unmap`\n",
+            report,
+            StringComparison.Ordinal);
 
         Assert.Equal(report, GenerationPipeline.Run(GirFixture.GirDirectory).SkipReport, StringComparer.Ordinal);
     }
@@ -684,8 +694,16 @@ public sealed class ClassEmitterTests
     /// gst_rtsp_range_free, gst_meta_api_type_set_params_aggregator and
     /// gst_meta_register_custom are of that shape, which is why these numbers
     /// run above the counts of the report; the same holds for the hand bound
-    /// ones, where gst_meta_api_type_aggregate_params and
-    /// gst_rtsp_transport_parse are declared twice.</param>
+    /// ones, where gst_meta_api_type_aggregate_params, gst_tag_list_copy_value,
+    /// gst_audio_buffer_map, gst_video_frame_map, gst_video_frame_map_id and
+    /// gst_rtsp_transport_parse are declared twice. That is the whole of the
+    /// difference: Gst counts 44 hand bound declarations against the 42
+    /// symbols of the report, GstAudio 5 against 4, GstVideo 6 against 4 and
+    /// GstRtsp 2 against 1, and every other module counts the same on both
+    /// sides. All six are on the skip list, so both of their declarations are
+    /// rejected as an overlay skip and the ledger claims both; a twin that is
+    /// only kept out by its own moved-to is left under MovedTo instead, which
+    /// is what lets GEN0023 see a ledger entry on a generated symbol.</param>
     /// <param name="callerAllocates">Callables with unusable caller allocated storage.</param>
     /// <param name="lifetime">Callables that release or reference their instance.</param>
     /// <param name="instanceTransfer">Callables that consume their instance and replace it.</param>
@@ -704,7 +722,7 @@ public sealed class ClassEmitterTests
     [InlineData("GstSdp", 4, 0, 1, 0, 0, 0, 0)]
     [InlineData("GstWebRTC", 0, 0, 4, 0, 4, 0, 2)]
     [InlineData("GstNet", 0, 0, 1, 0, 0, 0, 0)]
-    [InlineData("GstRtsp", 7, 0, 3, 0, 0, 0, 3)]
+    [InlineData("GstRtsp", 7, 0, 3, 0, 0, 0, 2)]
     [InlineData("GES", 1, 0, 1, 0, 0, 2, 6)]
     public void TheRejectionCensusIsStable(
         string module,

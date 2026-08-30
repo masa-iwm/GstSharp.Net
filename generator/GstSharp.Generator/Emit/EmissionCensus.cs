@@ -67,7 +67,16 @@ internal sealed class EmissionCensus
         // absent from the generated code says nothing about the bindings: the
         // call exists, and the remaining sections are the ones that measure a
         // real gap.
-        if (_overlays.IsHandBound(symbol))
+        //
+        // MovedTo and ShadowedBy are the two exceptions, because neither says
+        // the symbol is absent: both say it is emitted under another
+        // declaration of the same gir. Counting one of them as hand bound
+        // would let a ledger entry on a generated symbol look satisfied - the
+        // gir declares a handful of functions twice, once at namespace scope
+        // with a moved-to and once inside the record they belong to - and
+        // GEN0023 would never see the entry it exists to report.
+        if ((reason is not SkipReason.MovedTo and not SkipReason.ShadowedBy)
+            && _overlays.IsHandBound(symbol))
         {
             reason = SkipReason.HandBound;
             _handBound.Add(symbol);

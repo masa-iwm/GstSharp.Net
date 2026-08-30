@@ -825,9 +825,8 @@ disappears shows up here as an added line.
 
 ## GstRtsp
 
-### HandBound (2)
+### HandBound (1)
 
-- `gst_rtsp_transport_new`
 - `gst_rtsp_transport_parse`
 
 ### LifetimePrimitive (3)
@@ -836,7 +835,7 @@ disappears shows up here as an added line.
 - `gst_rtsp_message_free`
 - `gst_rtsp_url_free`
 
-### MovedTo (12)
+### MovedTo (13)
 
 - `gst_rtsp_connection_accept`
 - `gst_rtsp_connection_create`
@@ -847,6 +846,7 @@ disappears shows up here as an added line.
 - `gst_rtsp_range_to_string`
 - `gst_rtsp_transport_get_manager`
 - `gst_rtsp_transport_get_mime`
+- `gst_rtsp_transport_new`
 - `gst_rtsp_url_parse`
 - `gst_rtsp_version_as_text`
 - `gst_rtsp_watch_new`

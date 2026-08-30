@@ -347,7 +347,6 @@ public sealed class SkipRulesTests
                 "gst_promise_reply",
                 "gst_query_new_custom",
                 "gst_query_parse_nth_allocation_param",
-                "gst_rtsp_transport_new",
                 "gst_rtsp_transport_parse",
                 "gst_structure_get_value",
                 "gst_structure_set_value",
@@ -478,6 +477,33 @@ public sealed class SkipRulesTests
     }
 
     [Fact]
+    public void AHandBoundEntryWhoseOnlySkipIsAMovedToTwinIsReportedAsStale()
+    {
+        // The gir declares a handful of entry points twice: once inside the
+        // type they belong to, which is the declaration the generator binds,
+        // and once at namespace level with a moved-to pointing back at it. The
+        // twin is skipped, but for a reason that says the callable is emitted
+        // under another declaration rather than absent, so the ledger may not
+        // read it as the skip that a hand binding replaces - it would satisfy
+        // the entry and leave two ways to call the function unreported.
+        FixtureRun run = RunWithOverlay(
+            """
+            {
+              "handBound": [ "gst_widget_pack" ]
+            }
+            """,
+            Body + "\n" + MovedToTwin);
+
+        Assert.Contains("Pack()", run.File("Widget.cs"), StringComparison.Ordinal);
+        Assert.Equal(1, run.Result.Census.SkippedCount("Gst", SkipReason.MovedTo));
+        Assert.Equal(0, run.Result.Census.SkippedCount("Gst", SkipReason.HandBound));
+        Assert.Contains(
+            run.Result.Diagnostics,
+            static diagnostic => string.Equals(diagnostic.Code, "GEN0023", StringComparison.Ordinal)
+                && diagnostic.Message.Contains("gst_widget_pack", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public void CallablesWithoutACIdentifierAreSkipped()
     {
         GirNamespace ns = GirReader.ReadXml(
@@ -515,14 +541,36 @@ public sealed class SkipRulesTests
             </class>
         """;
 
-    private static FixtureRun RunWithOverlay(string fixups)
+    /// <summary>
+    /// The namespace level twin of <c>gst_widget_pack</c>: the same C entry
+    /// point declared a second time, with a <c>moved-to</c> that names the
+    /// method the generator binds. The reference girs carry a handful of
+    /// these.
+    /// </summary>
+    private const string MovedToTwin =
+        """
+            <function name="widget_pack" c:identifier="gst_widget_pack" moved-to="Widget.pack">
+              <return-value transfer-ownership="none">
+                <type name="gboolean" c:type="gboolean"/>
+              </return-value>
+              <parameters>
+                <parameter name="widget" transfer-ownership="none">
+                  <type name="Widget" c:type="GstWidget*"/>
+                </parameter>
+              </parameters>
+            </function>
+        """;
+
+    private static FixtureRun RunWithOverlay(string fixups) => RunWithOverlay(fixups, Body);
+
+    private static FixtureRun RunWithOverlay(string fixups, string body)
     {
         string directory = Path.Combine(Path.GetTempPath(), "GstSharp.Generator.Tests", Path.GetRandomFileName());
         Directory.CreateDirectory(directory);
         try
         {
             File.WriteAllText(Path.Combine(directory, "fixups.json"), fixups);
-            return Fixture.Run(Body, Overlays.Load(directory));
+            return Fixture.Run(body, Overlays.Load(directory));
         }
         finally
         {

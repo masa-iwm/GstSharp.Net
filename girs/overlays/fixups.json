@@ -194,7 +194,6 @@
     "gst_promise_reply",
     "gst_query_new_custom",
     "gst_query_parse_nth_allocation_param",
-    "gst_rtsp_transport_new",
     "gst_rtsp_transport_parse",
     "gst_structure_get_value",
     "gst_structure_set_value",

@@ -21,7 +21,9 @@ internal enum SkipReason
     /// keeps it out - and this reason states that its absence from the
     /// bindings is not a gap. It takes precedence over every other reason in
     /// the report, so that the remaining sections measure what is really
-    /// unbound.
+    /// unbound - except over <see cref="MovedTo"/> and
+    /// <see cref="ShadowedBy"/>, which do not say the callable is absent but
+    /// that it is emitted under another declaration of the same gir.
     /// </summary>
     HandBound,
 
