@@ -92,7 +92,7 @@ disappears shows up here as an added line.
 
 ## Gst
 
-### HandBound (45)
+### HandBound (47)
 
 - `gst_buffer_copy`
 - `gst_buffer_extract`
@@ -104,6 +104,8 @@ disappears shows up here as an added line.
 - `gst_bus_set_sync_handler`
 - `gst_caps_fixate`
 - `gst_clock_id_wait_async`
+- `gst_element_factory_create_with_properties`
+- `gst_element_factory_make_with_properties`
 - `gst_element_post_message`
 - `gst_element_send_event`
 - `gst_event_new_custom`
@@ -430,7 +432,7 @@ disappears shows up here as an added line.
 
 - `gst_bus_add_watch`
 
-### UnsupportedSignature (69)
+### UnsupportedSignature (67)
 
 - `Gst.Bus:enable-async`
 - `gst_buffer_list_foreach`
@@ -443,8 +445,6 @@ disappears shows up here as an added line.
 - `gst_context_replace`
 - `gst_control_binding_get_g_value_array`
 - `gst_debug_get_all_categories`
-- `gst_element_factory_create_with_properties`
-- `gst_element_factory_make_with_properties`
 - `gst_format_get_details`
 - `gst_formats_contains`
 - `gst_init`

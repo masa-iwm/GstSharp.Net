@@ -460,7 +460,10 @@ owns a copy or a reference of its own, exactly as `Value.GetBoxed<T>` and
 produces two wrappers. Writing any of the three copies or references the
 argument, so the caller keeps what it passed and still disposes it, and `null`
 clears the property. A property that is construct-only, or that the gir marks
-read-only, has no setter at all.
+read-only, has no setter at all; a construct-only one is written at
+construction instead, through `ElementFactory.MakeWithProperties` or
+`CreateWithProperties`, which hand out the same floating-sunk, interned
+wrapper `Make` and `Create` do.
 
 ## Out parameters whose storage the caller provides
 

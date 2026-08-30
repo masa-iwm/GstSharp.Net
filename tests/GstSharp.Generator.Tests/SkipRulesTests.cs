@@ -175,11 +175,19 @@ public sealed class SkipRulesTests
         // joined it for the same reason: the C function only takes the state of
         // its transform function over once the registration is accepted, so the
         // hand written Gst.Meta.RegisterCustom releases it before it reports a
-        // refusal. gst_caps_fixate is the last: it is the one conversion of the
-        // self consuming family that does not consume what it is given on every
-        // path, because it refuses ANY caps before the reference reaches the
-        // conversion, so the hand written Gst.Caps.Fixate makes that check
-        // before it mints anything.
+        // refusal. gst_caps_fixate joined for a fault of its own: it is the one
+        // conversion of the self consuming family that does not consume what it
+        // is given on every path, because it refuses ANY caps before the
+        // reference reaches the conversion, so the hand written Gst.Caps.Fixate
+        // makes that check before it mints anything. The element factory pair is
+        // the last: gst_element_factory_create_with_properties and
+        // gst_element_factory_make_with_properties take the names and the values
+        // of the construction properties as parallel arrays of which the second
+        // has a bare GValue as its element type, and the type each value has to
+        // hold is the one the property beside it declares, which only the class
+        // of a loaded factory can answer, so
+        // Gst.ElementFactory.MakeWithProperties and .CreateWithProperties ask it
+        // and build the two arrays by hand.
         // The two type entries at the head are callback types whose delegate is
         // written by hand: a hand bound consumer keeps its callback type
         // generated, and these two are the ones whose hand written declaration
@@ -232,6 +240,8 @@ public sealed class SkipRulesTests
                 "gst_discoverer_stream_info_list_free",
                 "gst_dsd_info_from_caps",
                 "gst_dsd_info_init",
+                "gst_element_factory_create_with_properties",
+                "gst_element_factory_make_with_properties",
                 "gst_element_post_message",
                 "gst_element_send_event",
                 "gst_encoding_container_profile_add_profile",
@@ -335,6 +345,8 @@ public sealed class SkipRulesTests
                 "gst_bus_set_sync_handler",
                 "gst_caps_fixate",
                 "gst_clock_id_wait_async",
+                "gst_element_factory_create_with_properties",
+                "gst_element_factory_make_with_properties",
                 "gst_element_post_message",
                 "gst_element_send_event",
                 "gst_encoding_container_profile_add_profile",

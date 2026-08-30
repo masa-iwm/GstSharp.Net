@@ -212,7 +212,7 @@ public sealed class ClassEmitterTests
     }
 
     [Theory]
-    [InlineData("Gst", 1, 90, 53, 115, 69, 10)]
+    [InlineData("Gst", 1, 90, 53, 115, 67, 10)]
     [InlineData("GstBase", 0, 11, 0, 20, 6, 0)]
     [InlineData("GstApp", 1, 0, 0, 2, 2, 1)]
     [InlineData("GstAudio", 0, 22, 0, 8, 4, 0)]
@@ -565,7 +565,7 @@ public sealed class ClassEmitterTests
         // under the overlay skips it is also listed in. The whole section is
         // anchored, because a lone "- `symbol`" line matches under any reason
         // and in any module.
-        Assert.Contains("### HandBound (45)\n", report, StringComparison.Ordinal);
+        Assert.Contains("### HandBound (47)\n", report, StringComparison.Ordinal);
         Assert.Contains(
             "### HandBound (4)\n\n"
             + "- `gst_video_codec_frame_set_user_data`\n"
@@ -785,8 +785,8 @@ public sealed class ClassEmitterTests
     /// gst_meta_api_type_aggregate_params, gst_meta_register_custom,
     /// gst_tag_list_copy_value, gst_audio_buffer_map, gst_video_frame_map,
     /// gst_video_frame_map_id and gst_rtsp_transport_parse are declared twice.
-    /// That is the whole of the difference: Gst counts 47 hand bound
-    /// declarations against the 44 symbols of the report, GstAudio 5 against 4,
+    /// That is the whole of the difference: Gst counts 50 hand bound
+    /// declarations against the 47 symbols of the report, GstAudio 5 against 4,
     /// GstVideo 6 against 4 and GstRtsp 2 against 1, and every other module
     /// counts the same on both sides. All seven are on the skip list, so both
     /// of their declarations are rejected as an overlay skip and the ledger
@@ -802,7 +802,7 @@ public sealed class ClassEmitterTests
     /// than under the reason that kept them out of the emitters, which is why the overlay skips of a module
     /// fall by the number of its hand bound entries that reach the census through the skip list.</param>
     [Theory]
-    [InlineData("Gst", 28, 0, 21, 0, 0, 5, 48)]
+    [InlineData("Gst", 28, 0, 21, 0, 0, 5, 50)]
     [InlineData("GstBase", 2, 0, 4, 0, 0, 2, 2)]
     [InlineData("GstApp", 0, 0, 2, 0, 9, 2, 5)]
     [InlineData("GstAudio", 9, 0, 4, 0, 0, 0, 5)]
