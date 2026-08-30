@@ -3,6 +3,23 @@ using Xunit;
 namespace GstSharp.Generator.Tests;
 
 /// <summary>
+/// The collection of the test classes that drive a verb through the console.
+/// </summary>
+/// <remarks>
+/// Reading what a verb printed means replacing <see cref="Console.Out"/> and
+/// <see cref="Console.Error"/>, which belong to the process and not to the
+/// test: any other class running beside this one would write into the capture,
+/// or into a writer that has already been put back. The collection is
+/// therefore not run in parallel with the rest of the assembly.
+/// </remarks>
+[CollectionDefinition(Name, DisableParallelization = true)]
+public sealed class ConsoleCollection
+{
+    /// <summary>The name the collection is referred to by.</summary>
+    internal const string Name = "Console";
+}
+
+/// <summary>
 /// What the command line verbs do with a committed source of a generated
 /// directory that the run no longer produces.
 /// </summary>
@@ -12,6 +29,7 @@ namespace GstSharp.Generator.Tests;
 /// binding nobody decided to keep. <c>generate</c> therefore deletes it and
 /// says so, and <c>verify</c> fails on it like any other difference.
 /// </remarks>
+[Collection(ConsoleCollection.Name)]
 public sealed class OrphanGeneratedFileTests
 {
     /// <summary>
