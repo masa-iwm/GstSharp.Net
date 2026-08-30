@@ -172,6 +172,12 @@ for their entry points:
 | `WebRTCSessionDescription.New` | the SDP message |
 | `EncodingContainerProfile.AddProfile` | the stream profile |
 
+`SetSimpleCallbacks` has a second overload whose parameters are the individual
+callbacks and are all optional, so a bare `null` is a compile-time ambiguity
+between the two. That is by design on both `AppSink` and `AppSrc`: taking the
+callbacks off again is a different intention from installing them, and
+`ClearSimpleCallbacks()` is the call that spells it.
+
 The ones that take a **GObject** over — `AddProfile` above, and generated
 members such as `StreamCollection.AddStream` — work the same way, with the
 reach `Dispose` has on a GObject wrapper: the object is given up for the whole

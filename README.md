@@ -398,6 +398,7 @@ example, file by file.
 | [`docs/gio-async.md`](https://github.com/masa-iwm/GstSharp.Net/blob/main/docs/gio-async.md) | How Gio's `*_async` / `*_finish` pairs become `Task`-returning methods. |
 | [`docs/subclassing.md`](https://github.com/masa-iwm/GstSharp.Net/blob/main/docs/subclassing.md) | Deriving from `Element`, `Bin` and the `GstBase` classes in C#: the guide is §11, the design is the rest. |
 | [`docs/modules.md`](https://github.com/masa-iwm/GstSharp.Net/blob/main/docs/modules.md) | Writing a binding module for a library this repository does not cover, from your own assembly. |
+| [`docs/platform-notes.md`](https://github.com/masa-iwm/GstSharp.Net/blob/main/docs/platform-notes.md) | Behaviour that is a property of one platform, such as which Windows device providers a `DeviceMonitor` can watch. |
 | [`girs/skip-report.md`](https://github.com/masa-iwm/GstSharp.Net/blob/main/girs/skip-report.md) | Every gir symbol the generator did not bind, grouped by reason. |
 | [`eng/ci-notes.md`](https://github.com/masa-iwm/GstSharp.Net/blob/main/eng/ci-notes.md) | Why the workflows look the way they do, and how to run each gate by hand. |
 | [`CONTRIBUTING.md`](https://github.com/masa-iwm/GstSharp.Net/blob/main/CONTRIBUTING.md) | Build, test, regenerate, and the quality gates a change has to pass. |
