@@ -161,10 +161,17 @@ internal sealed class CallbackPlan
 /// callee owns all of it from the moment of the call. A <c>GSList</c> parameter
 /// takes the same route; a <c>GSList</c> return stays
 /// unsupported.</description></item>
-/// <item><description>Only the <c>call</c> and <c>notified</c> callback scopes
-/// are supported. A <c>async</c> callback would have to release its state from
-/// the trampoline, but the same delegate type is used at notified and async call
-/// sites, so a single trampoline cannot decide that.</description></item>
+/// <item><description>The four callback scopes are bound as four different
+/// lifetimes of the managed state, and a callback with no closure argument to
+/// attach that state to is not bound at all. <c>call</c> keeps the state for
+/// the duration of the call, <c>notified</c> hands the release to the destroy
+/// notification the callee is given, <c>async</c> makes the trampoline free
+/// its own state after the one invocation, and <c>forever</c> keeps it for the
+/// life of the process and documents that it does. Because the trampoline is
+/// shared by every site of a delegate type, self freeing is a property of the
+/// type rather than of the site: a type that is claimed at an async and at a
+/// non-async site is reported as GEN0022 and the offending site stays
+/// unbound.</description></item>
 /// </list>
 /// </remarks>
 internal sealed class MarshalPlanner
