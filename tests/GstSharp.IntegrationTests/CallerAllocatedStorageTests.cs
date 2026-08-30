@@ -466,7 +466,7 @@ public sealed class CallerAllocatedStorageTests
     /// <c>gst_sdp_media_add_media_from_structure</c> is the 1.28 half of the
     /// same pair, and adds to a media rather than replacing it.
     /// </summary>
-    [RequiresGst128Fact]
+    [RequiresGStreamerFact(28)]
     public void AStructureIsAddedToAMediaThatWasAlreadyInitialised()
     {
         Assert.Equal(SDPResult.Ok, SDPMedia.New(out SDPMedia? media));

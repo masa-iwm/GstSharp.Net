@@ -24,7 +24,7 @@ public sealed class CallAsyncTests
     /// </summary>
     private static readonly TimeSpan CollectionTimeout = TimeSpan.FromSeconds(5);
 
-    [RequiresGst128Fact]
+    [RequiresGStreamerFact(28)]
     public void GlobalCallAsyncInvokesTheDelegateOnceAndReleasesIt()
     {
         using ManualResetEventSlim done = new(initialState: false);
@@ -54,7 +54,7 @@ public sealed class CallAsyncTests
         }
     }
 
-    [RequiresGst128Fact]
+    [RequiresGStreamerFact(28)]
     public void ObjectCallAsyncPassesTheObjectAndReleasesTheDelegate()
     {
         using Pipeline pipeline = Pipeline.New("call-async");

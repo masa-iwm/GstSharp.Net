@@ -227,7 +227,7 @@ public sealed class ValueContainerTests
     /// value it already holds is dropped without a word, and appending a new
     /// one grows it.
     /// </summary>
-    [RequiresGst128Fact]
+    [RequiresGStreamerFact(28)]
     public void AUniqueListDropsTheValuesItAlreadyHolds()
     {
         using Value one = Value.CreateFor(1, GType.Int);
@@ -264,7 +264,7 @@ public sealed class ValueContainerTests
     /// Concatenating a set with a value it already holds does not repeat it,
     /// which is the difference from <see cref="ValueList.Concat"/>.
     /// </summary>
-    [RequiresGst128Fact]
+    [RequiresGStreamerFact(28)]
     public void ConcatOfAUniqueListDeduplicates()
     {
         using Value one = Value.CreateFor(1, GType.Int);

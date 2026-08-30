@@ -35,10 +35,12 @@ public sealed class NativeAvailabilityTests
     }
 
     /// <summary>
-    /// A fact behind the gate only runs where the entry points exist, which is
-    /// what every test of a 1.28 only member relies on.
+    /// A fact behind the version gate only runs where the entry points exist,
+    /// which is what every test of a 1.28 only member relies on: the two gates
+    /// are separate mechanisms and have to agree wherever one of them lets a
+    /// test through.
     /// </summary>
-    [RequiresGst128Fact]
+    [RequiresGStreamerFact(28)]
     public void AGatedFactRunsOnlyWhereTheEntryPointsExist()
     {
         Assert.True(NativeAvailability.Has128);

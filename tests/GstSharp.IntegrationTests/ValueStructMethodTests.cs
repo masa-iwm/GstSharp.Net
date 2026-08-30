@@ -20,9 +20,9 @@ namespace GstSharp.IntegrationTests;
 /// was called on, and a reader has to see the fields that variable holds.
 /// </para>
 /// <para>
-/// The 1.28 members are behind <see cref="RequiresGst128FactAttribute"/>: the
-/// Linux leg of the matrix runs the 1.24 floor, where the entry point does not
-/// exist.
+/// The 1.28 members are behind <see cref="RequiresGStreamerFactAttribute"/>:
+/// the Linux leg of the matrix runs the 1.24 floor, where the entry point does
+/// not exist.
 /// </para>
 /// </remarks>
 [Collection(GstCollection.Name)]
@@ -292,7 +292,7 @@ public sealed class ValueStructMethodTests
     /// <c>GetData</c> hands out the mapped bytes and <c>Clear</c> is the full
     /// unmap.
     /// </summary>
-    [RequiresGst128Fact]
+    [RequiresGStreamerFact(28)]
     public void AMapInfoInitializesReadsAndClears()
     {
         MapInfo info = default;
@@ -326,7 +326,7 @@ public sealed class ValueStructMethodTests
     /// rectangle onto the output one. The instance is <c>readonly</c> for both
     /// reads and the two coordinates come back through <c>ref</c> parameters.
     /// </summary>
-    [RequiresGst128Fact]
+    [RequiresGStreamerFact(28)]
     public void ATransformMatrixMapsPointsAndRectangles()
     {
         using VideoInfo inInfo = VideoInfo.New();

@@ -43,7 +43,7 @@ public sealed class StringArrayTests
     /// The 1.28 half of the same surface, which reads the vector it is handed
     /// without keeping it.
     /// </summary>
-    [RequiresGst128Fact]
+    [RequiresGStreamerFact(28)]
     public void TagsAreCheckedAgainstAVectorTheCallReads()
     {
         GType api = Meta.ApiTypeRegister("GstSharpProbeContainsApi", ["memory"]);
