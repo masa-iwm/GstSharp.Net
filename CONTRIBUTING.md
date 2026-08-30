@@ -6,6 +6,10 @@ Thanks for looking. This page is the short version of how the repository works;
 Everything inside this repository is written in **English**: code, comments, XML
 documentation, Markdown, and commit messages.
 
+Taking part in this project means following the
+[`CODE_OF_CONDUCT.md`](https://github.com/masa-iwm/GstSharp.Net/blob/main/CODE_OF_CONDUCT.md),
+which is the Contributor Covenant 2.1.
+
 ## Build and test
 
 ```sh
