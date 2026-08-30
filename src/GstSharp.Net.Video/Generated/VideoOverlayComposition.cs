@@ -198,8 +198,6 @@ public sealed unsafe partial class VideoOverlayComposition : Gst.MiniObject
     /// </para>
     /// </remarks>
     /// <returns>
-    /// a writable #GstVideoOverlayComposition
-    ///     equivalent to @comp.
     /// This wrapper. The call may have replaced the object behind it and the
     /// wrapper now owns the writable one, so the return value exists to let the
     /// call be chained and is never a second wrapper.

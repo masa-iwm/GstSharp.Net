@@ -657,8 +657,6 @@ public sealed unsafe partial class Caps : Gst.MiniObject
     /// </para>
     /// </remarks>
     /// <returns>
-    /// a writable caps which may or may not be the
-    ///     same as @caps
     /// This wrapper. The call may have replaced the object behind it and the
     /// wrapper now owns the writable one, so the return value exists to let the
     /// call be chained and is never a second wrapper.

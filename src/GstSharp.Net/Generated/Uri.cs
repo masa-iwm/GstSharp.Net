@@ -389,7 +389,6 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
     /// </para>
     /// </remarks>
     /// <returns>
-    /// A writable version of @uri.
     /// This wrapper. The call may have replaced the object behind it and the
     /// wrapper now owns the writable one, so the return value exists to let the
     /// call be chained and is never a second wrapper.

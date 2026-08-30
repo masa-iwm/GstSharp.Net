@@ -515,14 +515,21 @@ internal static class CallableRenderer
 
         if (!plan.Return.IsVoid)
         {
+            // The note of an adopt in place member replaces the gir text
+            // rather than following it. The gir describes the pointer the C
+            // function answers, which may be a different object; the member
+            // answers this wrapper. Written one after the other the two read as
+            // a contradiction, so only the one that describes the member is
+            // kept.
+            bool adoptsInPlace = plan.InstanceConsumption == InstanceConsumption.InPlace;
             IReadOnlyList<string>? returnNote = plan.ReturnsEmptyOnNull
                 ? EmptyStringNote
-                : plan.InstanceConsumption == InstanceConsumption.InPlace
-                    ? AdoptedInPlaceNote
+                : adoptsInPlace
+                    ? null
                     : AdoptsWrapper(plan.Return) ? AdoptedWrapperNote : GValueReturnNote(plan.Return);
             XmlDocWriter.WriteReturns(
                 writer,
-                plan.Return.Doc,
+                adoptsInPlace ? string.Join('\n', AdoptedInPlaceNote) : plan.Return.Doc,
                 "The result of <c>" + cType + "</c>.",
                 returnNote);
         }
