@@ -121,8 +121,10 @@ The ledger for that is the `handBound` array of `girs/overlays/fixups.json`; it
 changes nothing about what is emitted and only moves the symbol out of the
 sections that measure the real binding gap. A new hand binding belongs there on
 the day it is written, and an entry the generator never sees skipped — because
-the symbol is generated after all, or no longer exists, or is misspelt — fails
-the run with `GEN0023`.
+the symbol is generated after all, or no longer exists, or is misspelt — is
+reported as `GEN0023`. That is a warning, so `generate` and `verify` still exit
+zero on it; what it fails is the test suite, which asserts that a run over the
+committed overlays reports no `GEN0020`, `GEN0023` or `GEN0024`.
 
 Never bump a number you cannot account for. Census drift that nobody asked for
 is a bug in the change — typically an accidental skip: an overlay entry that

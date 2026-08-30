@@ -591,6 +591,24 @@ public sealed class ClassEmitterTests
     }
 
     [Fact]
+    public void TheCommittedOverlaysCarryNoStaleEntry()
+    {
+        // Each of the three names an overlay entry that matched nothing: an
+        // array correction on no array (GEN0020), a hand bound ledger entry
+        // the run never saw skipped (GEN0023), an annotation override on no
+        // callable, parameter or signal argument (GEN0024). Every one of them
+        // describes a gir that has moved on, and every one of them is a
+        // warning, which the verbs do not fail on - so this is what holds the
+        // committed overlays to them.
+        foreach (Diagnostic diagnostic in Generated.Diagnostics)
+        {
+            Assert.NotEqual("GEN0020", diagnostic.Code);
+            Assert.NotEqual("GEN0023", diagnostic.Code);
+            Assert.NotEqual("GEN0024", diagnostic.Code);
+        }
+    }
+
+    [Fact]
     public void EveryGeneratedFileHasItsOwnPath()
     {
         HashSet<string> paths = new(StringComparer.Ordinal);
