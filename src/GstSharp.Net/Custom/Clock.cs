@@ -89,20 +89,34 @@ public abstract unsafe partial class Clock
     {
         ArgumentNullException.ThrowIfNull(func);
 
-        // Held across the call so that the weak reference of the entry cannot
-        // be cleared while it runs: with the clock alive, the exit that answers
-        // Error in front of the assignment is out of reach, and an Error is
-        // therefore one the entry has already taken the state over on.
-        using Gst.Clock? clock = Gst.Clock.IdGetClock(id);
-        Gst.Interop.CallbackHandle funcState = Gst.Interop.CallbackHandle.Alloc(func);
-        int nativeResult = ClockNative.IdWaitAsync(id, Gst.ClockCallbackTrampoline.Pointer, funcState.UserData, (nint)Gst.Interop.CallbackHandle.DestroyNotify);
-        Gst.ClockReturn result = (Gst.ClockReturn)nativeResult;
-        if (result is Gst.ClockReturn.Badtime or Gst.ClockReturn.Unsupported
-            || (result is Gst.ClockReturn.Error && clock is null))
+        // A reference on the clock of the entry, held across the call so that
+        // the weak reference the entry keeps cannot be cleared while it runs:
+        // with the clock alive, the exit that answers Error in front of the
+        // assignment is out of reach, and an Error is therefore one the entry
+        // has already taken the state over on. It stays a bare handle on
+        // purpose. Wrappers are interned, so wrapping it would hand back the
+        // wrapper the caller already holds, and releasing that would dispose
+        // the clock of the caller instead of this one reference.
+        nint clockHandle = ClockNative.IdGetClock(id);
+        try
         {
-            funcState.Free();
-        }
+            Gst.Interop.CallbackHandle funcState = Gst.Interop.CallbackHandle.Alloc(func);
+            int nativeResult = ClockNative.IdWaitAsync(id, Gst.ClockCallbackTrampoline.Pointer, funcState.UserData, (nint)Gst.Interop.CallbackHandle.DestroyNotify);
+            Gst.ClockReturn result = (Gst.ClockReturn)nativeResult;
+            if (result is Gst.ClockReturn.Badtime or Gst.ClockReturn.Unsupported
+                || (result is Gst.ClockReturn.Error && clockHandle == 0))
+            {
+                funcState.Free();
+            }
 
-        return result;
+            return result;
+        }
+        finally
+        {
+            if (clockHandle != 0)
+            {
+                Gst.Interop.GObjectNative.ObjectUnref(clockHandle);
+            }
+        }
     }
 }

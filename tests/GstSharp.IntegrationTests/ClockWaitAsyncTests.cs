@@ -109,6 +109,13 @@ public sealed class ClockWaitAsyncTests
 
         Assert.Equal(ClockReturn.Ok, result);
 
+        // The reference the call holds on the clock while it runs is one of its
+        // own. Wrappers are interned, so a wrapper built around that reference
+        // would be this very one, and releasing it would dispose the clock of
+        // the caller rather than the reference of the call.
+        Assert.False(clock.IsDisposed, "The call disposed the clock wrapper of the caller.");
+        Assert.True(clock.GetTime().Nanoseconds > 0, "The clock of the caller stopped answering.");
+
         // The entry owns the state now, so it is still there.
         GC.Collect();
         GC.WaitForPendingFinalizers();

@@ -18,6 +18,14 @@ namespace Gst;
 /// from the refusals that come back from the clock.
 /// </para>
 /// <para>
+/// <c>gst_clock_id_get_clock</c> is imported here as well, next to the call
+/// that needs it, even though <see cref="Gst.Clock.IdGetClock"/> is generated:
+/// that member answers a wrapper, and wrappers are interned, so it would hand
+/// back the one the caller already holds and releasing it would dispose the
+/// clock of the caller. The reference that member takes has to stay a bare
+/// handle to be a reference of its own.
+/// </para>
+/// <para>
 /// The signature is the one of the C function, with the callback and the
 /// destroy notification as plain addresses: both are
 /// <c>[UnmanagedCallersOnly]</c> methods, which have no delegate type to
@@ -40,4 +48,13 @@ internal static partial class ClockNative
     /// <returns>The result of the non blocking wait, as a <c>GstClockReturn</c>.</returns>
     [LibraryImport("Gst", EntryPoint = "gst_clock_id_wait_async")]
     internal static partial int IdWaitAsync(nint id, nint func, nint userData, nint destroyData);
+
+    /// <summary>Takes a reference on the clock a clock entry was made from.</summary>
+    /// <param name="id">The clock entry to read.</param>
+    /// <returns>
+    /// The clock, which the caller owns a reference of, or zero when the entry
+    /// has outlived it: an entry holds nothing but a weak reference.
+    /// </returns>
+    [LibraryImport("Gst", EntryPoint = "gst_clock_id_get_clock")]
+    internal static partial nint IdGetClock(nint id);
 }
