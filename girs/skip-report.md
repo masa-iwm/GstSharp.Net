@@ -368,7 +368,7 @@ disappears shows up here as an added line.
 - `gst_tag_setter_add_tag_valist`
 - `gst_tag_setter_add_tag_valist_values`
 
-### OverlaySkip (57)
+### OverlaySkip (58)
 
 - `gst_allocator_free`
 - `gst_buffer_extract`
@@ -401,6 +401,7 @@ disappears shows up here as an added line.
 - `gst_meta_info_register`
 - `gst_meta_register_custom`
 - `gst_meta_serialize_simple`
+- `gst_mini_object_set_qdata`
 - `gst_pad_push_event`
 - `gst_pad_send_event`
 - `gst_plugin_feature_list_free`
@@ -440,7 +441,7 @@ disappears shows up here as an added line.
 
 - `gst_bus_add_watch`
 
-### UnsupportedSignature (91)
+### UnsupportedSignature (90)
 
 - `Gst.Bus:enable-async`
 - `gst_buffer_list_foreach`
@@ -481,7 +482,6 @@ disappears shows up here as an added line.
 - `gst_mini_object_ref`
 - `gst_mini_object_remove_parent`
 - `gst_mini_object_replace`
-- `gst_mini_object_set_qdata`
 - `gst_mini_object_steal`
 - `gst_mini_object_steal_qdata`
 - `gst_mini_object_take`

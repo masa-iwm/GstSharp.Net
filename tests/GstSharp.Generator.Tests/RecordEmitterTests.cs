@@ -1429,6 +1429,7 @@ public sealed class RecordEmitterTests
             names,
             types,
             Overlays.Empty,
+            skipRules,
             diagnostics,
             surfaces,
             census,

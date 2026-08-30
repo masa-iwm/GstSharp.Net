@@ -174,6 +174,7 @@ internal static class GenerationPipeline
             shared.Names,
             shared.Types,
             shared.Overlays,
+            shared.SkipRules,
             shared.Diagnostics,
             surfaces,
             shared.Census,

@@ -212,7 +212,7 @@ public sealed class ClassEmitterTests
     }
 
     [Theory]
-    [InlineData("Gst", 1, 90, 53, 118, 91, 10)]
+    [InlineData("Gst", 1, 90, 53, 118, 90, 10)]
     [InlineData("GstBase", 0, 11, 0, 20, 6, 0)]
     [InlineData("GstApp", 1, 0, 0, 2, 2, 1)]
     [InlineData("GstAudio", 0, 22, 0, 8, 4, 0)]
@@ -556,7 +556,7 @@ public sealed class ClassEmitterTests
         // from the report and the entry points the overlays took over are
         // named under the overlay skips instead.
         Assert.DoesNotContain("### CallerAllocates", report, StringComparison.Ordinal);
-        Assert.Contains("### OverlaySkip (57)\n", report, StringComparison.Ordinal);
+        Assert.Contains("### OverlaySkip (58)\n", report, StringComparison.Ordinal);
         Assert.Contains("- `gst_video_frame_map`\n", GenerationPipeline.Run(GirFixture.GirDirectory).SkipReport, StringComparison.Ordinal);
         Assert.Contains("- `GstApp.AppSrc::push-buffer`\n", report, StringComparison.Ordinal);
 
@@ -690,7 +690,7 @@ public sealed class ClassEmitterTests
     /// <param name="actionSignals">Signals that are a call API rather than a notification.</param>
     /// <param name="owningProperties">Properties whose value is a wrapper the reader would have to dispose.</param>
     [Theory]
-    [InlineData("Gst", 61, 0, 21, 20, 0, 5)]
+    [InlineData("Gst", 62, 0, 21, 20, 0, 5)]
     [InlineData("GstBase", 4, 0, 4, 0, 0, 2)]
     [InlineData("GstApp", 3, 0, 4, 0, 9, 2)]
     [InlineData("GstAudio", 14, 0, 4, 0, 0, 0)]

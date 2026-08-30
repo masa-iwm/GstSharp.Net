@@ -68,6 +68,7 @@ internal sealed class RecordEmitter
     private readonly NameMapper _names;
     private readonly TypeMap _types;
     private readonly Overlays _overlays;
+    private readonly SkipRules _skipRules;
     private readonly DiagnosticBag _diagnostics;
     private readonly SurfaceBuilder _surfaces;
     private readonly EmissionCensus _census;
@@ -82,6 +83,7 @@ internal sealed class RecordEmitter
     /// <param name="names">The name mapper.</param>
     /// <param name="types">The type map.</param>
     /// <param name="overlays">The overlay configuration.</param>
+    /// <param name="skipRules">The rules that decide what is not generated.</param>
     /// <param name="diagnostics">The diagnostic sink.</param>
     /// <param name="surfaces">The member builder.</param>
     /// <param name="census">The census of the run.</param>
@@ -92,6 +94,7 @@ internal sealed class RecordEmitter
         NameMapper names,
         TypeMap types,
         Overlays overlays,
+        SkipRules skipRules,
         DiagnosticBag diagnostics,
         SurfaceBuilder surfaces,
         EmissionCensus census,
@@ -102,6 +105,7 @@ internal sealed class RecordEmitter
         _names = names;
         _types = types;
         _overlays = overlays;
+        _skipRules = skipRules;
         _diagnostics = diagnostics;
         _surfaces = surfaces;
         _census = census;
@@ -661,9 +665,19 @@ internal sealed class RecordEmitter
             foreach (GirFunction callable in
                 record.Constructors.Concat(record.Methods).Concat(record.Functions))
             {
+                // Nothing of a hand written wrapper is planned, so no member
+                // reaches a rule of its own. The overlays are still asked,
+                // because an entry that names one of these symbols is a
+                // decision that was taken about it, and the ledger says so
+                // rather than filing every member of the record under the
+                // catch all reason.
+                SkipReason reason = _skipRules.GetSkipReason(callable) == SkipReason.OverlaySkip
+                    ? SkipReason.OverlaySkip
+                    : SkipReason.UnsupportedSignature;
+
                 _census.Skipped(
                     module.GirNamespace,
-                    SkipReason.UnsupportedSignature,
+                    reason,
                     callable.CIdentifier is { Length: > 0 } identifier
                         ? identifier
                         : record.Name + "." + callable.Name);
