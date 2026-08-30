@@ -37,6 +37,10 @@ dotnet run --project generator/GstSharp.Generator -- generate --gir-dir girs --o
 dotnet run --project generator/GstSharp.Generator -- verify --gir-dir girs --out-dir src
 ```
 
+Both verbs also look at what is in a `Generated` directory beside what the run
+wrote: `generate` deletes a committed source the generator no longer emits and
+prints the deletion, and `verify` reports it as an orphan generated file.
+
 To change generated output, change one of the inputs instead:
 
 * `girs/reference/*.gir` — refresh from upstream, see `girs/README.md`;

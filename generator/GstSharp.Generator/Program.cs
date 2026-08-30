@@ -55,6 +55,18 @@ internal static class Program
             CodeWriter.WriteFile(ToAbsolutePath(options.OutputDirectory, file.RelativePath), file.Content);
         }
 
+        // A source that used to be generated and is not any more would stay in
+        // the tree and keep compiling, which is how a binding that was renamed
+        // ends up shipped twice. Writing the run is therefore not enough: the
+        // directories it wrote into have to hold exactly what it wrote.
+        foreach (string orphan in Orphans(options, result))
+        {
+            File.Delete(orphan);
+            Console.Out.WriteLine(string.Create(
+                CultureInfo.InvariantCulture,
+                $"Deleted the orphan generated file '{Relative(options, orphan)}'."));
+        }
+
         // The listing of what was left out belongs next to the gir files it was
         // derived from, not into the binding projects: it is review
         // documentation rather than source. It is committed, so that a member
@@ -105,6 +117,11 @@ internal static class Program
             differences.Add(GenerationPipeline.SkipReportFileName);
         }
 
+        foreach (string orphan in Orphans(options, result))
+        {
+            differences.Add("orphan generated file: " + Relative(options, orphan));
+        }
+
         if (differences.Count == 0)
         {
             Console.Out.WriteLine(string.Create(
@@ -124,6 +141,63 @@ internal static class Program
 
     private static string ToAbsolutePath(string root, string relativePath) =>
         Path.Combine(root, relativePath.Replace('/', Path.DirectorySeparatorChar));
+
+    /// <summary>Spells a written path the way the generated files are named.</summary>
+    /// <param name="options">The options of the run.</param>
+    /// <param name="path">An absolute path below the output directory.</param>
+    /// <returns>The path relative to the output directory, with forward slashes.</returns>
+    private static string Relative(GeneratorOptions options, string path) =>
+        Path.GetRelativePath(options.OutputDirectory, path).Replace(Path.DirectorySeparatorChar, '/');
+
+    /// <summary>
+    /// Finds the committed sources of a generated directory that this run did
+    /// not produce.
+    /// </summary>
+    /// <param name="options">The options of the run.</param>
+    /// <param name="result">What the run produced.</param>
+    /// <returns>The absolute paths of the orphans, ordered.</returns>
+    /// <remarks>
+    /// Only the directories the run emitted into are looked at, so a module
+    /// that is not generated at all, and every hand written folder beside the
+    /// generated ones, are left alone. The comparison ignores case, because a
+    /// file whose name differs from the emitted one only in case is the same
+    /// file on the file systems this runs on, and deleting the source that was
+    /// just written would be worse than missing an orphan.
+    /// </remarks>
+    private static IReadOnlyList<string> Orphans(GeneratorOptions options, GenerationResult result)
+    {
+        HashSet<string> emitted = new(StringComparer.OrdinalIgnoreCase);
+        HashSet<string> directories = new(StringComparer.OrdinalIgnoreCase);
+        foreach (GeneratedFile file in result.Files)
+        {
+            string path = Path.GetFullPath(ToAbsolutePath(options.OutputDirectory, file.RelativePath));
+            emitted.Add(path);
+            if (Path.GetDirectoryName(path) is { Length: > 0 } directory)
+            {
+                directories.Add(directory);
+            }
+        }
+
+        List<string> orphans = [];
+        foreach (string directory in directories)
+        {
+            if (!Directory.Exists(directory))
+            {
+                continue;
+            }
+
+            foreach (string path in Directory.EnumerateFiles(directory, "*.cs"))
+            {
+                if (!emitted.Contains(Path.GetFullPath(path)))
+                {
+                    orphans.Add(Path.GetFullPath(path));
+                }
+            }
+        }
+
+        orphans.Sort(StringComparer.Ordinal);
+        return orphans;
+    }
 
     private static string SkipReportPath(GeneratorOptions options) =>
         Path.Combine(options.GirDirectory, GenerationPipeline.SkipReportFileName);
