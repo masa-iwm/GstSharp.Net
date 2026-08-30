@@ -556,7 +556,7 @@ public sealed class ClassEmitterTests
         // from the report and the entry points the overlays took over are
         // named under the overlay skips instead.
         Assert.DoesNotContain("### CallerAllocates", report, StringComparison.Ordinal);
-        Assert.Contains("### OverlaySkip (29)\n", report, StringComparison.Ordinal);
+        Assert.Contains("### OverlaySkip (27)\n", report, StringComparison.Ordinal);
         Assert.Contains("- `GstApp.AppSrc::push-buffer`\n", report, StringComparison.Ordinal);
 
         // The hand bound ledger takes precedence over the reason that kept a
@@ -565,7 +565,7 @@ public sealed class ClassEmitterTests
         // under the overlay skips it is also listed in. The whole section is
         // anchored, because a lone "- `symbol`" line matches under any reason
         // and in any module.
-        Assert.Contains("### HandBound (42)\n", report, StringComparison.Ordinal);
+        Assert.Contains("### HandBound (44)\n", report, StringComparison.Ordinal);
         Assert.Contains(
             "### HandBound (4)\n\n"
             + "- `gst_video_codec_frame_set_user_data`\n"
@@ -709,19 +709,20 @@ public sealed class ClassEmitterTests
     /// twice - once inside the record it belongs to and once at namespace
     /// level, where it used to be counted under MovedTo - is counted twice
     /// here while skip-report.md lists it once. gst_rtsp_range_parse,
-    /// gst_rtsp_range_free, gst_meta_api_type_set_params_aggregator and
-    /// gst_meta_register_custom are of that shape, which is why these numbers
-    /// run above the counts of the report; the same holds for the hand bound
-    /// ones, where gst_meta_api_type_aggregate_params, gst_tag_list_copy_value,
-    /// gst_audio_buffer_map, gst_video_frame_map, gst_video_frame_map_id and
-    /// gst_rtsp_transport_parse are declared twice. That is the whole of the
-    /// difference: Gst counts 44 hand bound declarations against the 42
-    /// symbols of the report, GstAudio 5 against 4, GstVideo 6 against 4 and
-    /// GstRtsp 2 against 1, and every other module counts the same on both
-    /// sides. All six are on the skip list, so both of their declarations are
-    /// rejected as an overlay skip and the ledger claims both; a twin that is
-    /// only kept out by its own moved-to is left under MovedTo instead, which
-    /// is what lets GEN0023 see a ledger entry on a generated symbol.</param>
+    /// gst_rtsp_range_free and gst_meta_api_type_set_params_aggregator are of
+    /// that shape, which is why these numbers run above the counts of the
+    /// report; the same holds for the hand bound ones, where
+    /// gst_meta_api_type_aggregate_params, gst_meta_register_custom,
+    /// gst_tag_list_copy_value, gst_audio_buffer_map, gst_video_frame_map,
+    /// gst_video_frame_map_id and gst_rtsp_transport_parse are declared twice.
+    /// That is the whole of the difference: Gst counts 47 hand bound
+    /// declarations against the 44 symbols of the report, GstAudio 5 against 4,
+    /// GstVideo 6 against 4 and GstRtsp 2 against 1, and every other module
+    /// counts the same on both sides. All seven are on the skip list, so both
+    /// of their declarations are rejected as an overlay skip and the ledger
+    /// claims both; a twin that is only kept out by its own moved-to is left
+    /// under MovedTo instead, which is what lets GEN0023 see a ledger entry on
+    /// a generated symbol.</param>
     /// <param name="callerAllocates">Callables with unusable caller allocated storage.</param>
     /// <param name="lifetime">Callables that release or reference their instance.</param>
     /// <param name="instanceTransfer">Callables that consume their instance and replace it.</param>
@@ -731,7 +732,7 @@ public sealed class ClassEmitterTests
     /// than under the reason that kept them out of the emitters, which is why the overlay skips of a module
     /// fall by the number of its hand bound entries that reach the census through the skip list.</param>
     [Theory]
-    [InlineData("Gst", 31, 0, 21, 20, 0, 5, 44)]
+    [InlineData("Gst", 28, 0, 21, 20, 0, 5, 47)]
     [InlineData("GstBase", 2, 0, 4, 0, 0, 2, 2)]
     [InlineData("GstApp", 0, 0, 2, 0, 9, 2, 5)]
     [InlineData("GstAudio", 9, 0, 4, 0, 0, 0, 5)]
