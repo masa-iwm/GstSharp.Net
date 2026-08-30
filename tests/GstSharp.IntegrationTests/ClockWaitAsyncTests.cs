@@ -77,15 +77,26 @@ public sealed class ClockWaitAsyncTests
     /// it when the entry is freed.
     /// </summary>
     /// <remarks>
-    /// Unscheduling wakes the waiting thread of the system clock, which then
-    /// drops the reference it took on the entry; the release of the state is
-    /// therefore not synchronous with the call here, and the collection is
-    /// retried until it happens.
+    /// <para>
+    /// Unscheduling wakes the waiting thread of the clock, which then drops the
+    /// reference it took on the entry; the release of the state is therefore
+    /// not synchronous with the call here, and the collection is retried until
+    /// it happens.
+    /// </para>
+    /// <para>
+    /// The clock is one this test owns rather than the system clock of the
+    /// process, because the waiting thread of a clock only ever looks at the
+    /// first entry of its list: an entry that is unscheduled behind an entry
+    /// that is still waiting is not touched until that one is dealt with, and
+    /// the system clock of the process carries entries other tests left on it.
+    /// An unshared clock has a list of its own, where the entry of this test is
+    /// the first one.
+    /// </para>
     /// </remarks>
     [Fact]
     public void AWaitAsyncThatWasAcceptedLeavesTheStateWithTheEntry()
     {
-        using Clock clock = SystemClock.Obtain();
+        using NtpClock clock = NtpClock.New("gstsharp-wait-async-ok", "127.0.0.1", 5678, ClockTime.Zero);
         nint id = clock.NewSingleShotId(
             ClockTime.FromNanoseconds(clock.GetTime().Nanoseconds + ClockTime.FromSeconds(3600).Nanoseconds));
 
