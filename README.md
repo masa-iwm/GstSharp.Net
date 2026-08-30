@@ -391,6 +391,9 @@ example, file by file.
 
 ## Documentation
 
+The API reference and these guides are published as a site at
+<https://masa-iwm.github.io/GstSharp.Net/>, built from `main`.
+
 | Page | Contents |
 | --- | --- |
 | [`docs/ownership.md`](https://github.com/masa-iwm/GstSharp.Net/blob/main/docs/ownership.md) | Who owns a wrapper, who disposes it, and the GType registry. **Start here.** |

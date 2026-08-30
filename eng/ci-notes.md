@@ -294,6 +294,38 @@ then packs and pushes.
   token with `read:packages`, which is a property of the feed and not something
   CI can remove.
 
+## Docs
+
+`.github/workflows/docs.yml` builds the documentation site with docfx and
+deploys it to GitHub Pages. It runs on every push to `main` and on demand; it
+is deliberately not part of `ci.yml`, because a pull request has nothing to
+deploy to.
+
+* **Pages has to be configured with the build type "GitHub Actions"**
+  (Settings -> Pages -> Build and deployment -> Source). With the legacy branch
+  source the `deploy` job fails: the `github-pages` environment it writes to
+  does not exist.
+* The two jobs are the shape the Pages actions expect: `build` uploads the
+  rendered site with `upload-pages-artifact`, and `deploy` — the only job with
+  `pages: write` and `id-token: write` — publishes it with `deploy-pages`.
+  `configure-pages` is not needed when the artifact is uploaded that way.
+* `concurrency: pages` with `cancel-in-progress: false`, so that two pushes in
+  a row queue rather than interrupt a half-finished deployment.
+* **No restore step.** `docfx metadata` compiles the twelve packable projects
+  through MSBuild and restores them itself, so the workflow goes straight from
+  `dotnet tool restore` (docfx is pinned in `.config/dotnet-tools.json`) to
+  `dotnet docfx docfx/docfx.json`.
+* The run ends with warnings and that is expected — the job is green as long as
+  the exit code is zero. Most of them are links in the *generated* XML
+  documentation to native C symbols such as `GST_PAD_SRC`, which have no page
+  in a managed reference; those are tracked as backlog work for the generator
+  and are never fixed in `Generated/`. The rest are pre-existing and outside
+  the site's control: two `Duplicate source file` warnings for
+  `AnalyzerReleases.{Shipped,Unshipped}.md`, raised while loading the
+  transitively referenced analyzer project and not suppressible (docfx's
+  `rules` map keys on a log code, which that warning does not carry), and two
+  duplicated-member warnings for `Gst.Interop.ModuleTypeEntry`.
+
 ## Runner caveats
 
 * **vswhere**: `vswhere.exe` is already on `PATH` on the GitHub-hosted Windows
@@ -373,6 +405,7 @@ Everything the scripts write goes below `artifacts/`, which is ignored by git.
 | `actions/checkout` `v7`, `actions/upload-artifact` `v7`, `actions/setup-dotnet` `v6`, `actions/cache` `v6` | major version only | current major versions; a major bump is a deliberate edit |
 | `msys2/setup-msys2` | `v2` | the `msys2-location` output the MinGW job reads |
 | .NET SDK | `global.json` (`10.0.100`, `rollForward: latestFeature`) | one place for the SDK version. The floor is the whole .NET 10 line rather than a feature band: every gate — build, the four test suites, generator determinism, package validation and the NativeAOT publish — was verified on 10.0.111, so a narrower floor would turn a working SDK away. `latestFeature` always climbs to the newest band present, so this floor decides only what is *refused*: CI runs on whatever the runners ship (10.0.400 when this was written) and a contributor runs on whatever they have |
+| docfx | `2.78.5` (`.config/dotnet-tools.json`) | the documentation site is built from a pinned tool, so a local preview and the `Docs` workflow render the same thing. `rollForward: false`, so the tool refuses to run on a runtime other than the one it targets rather than rolling forward silently |
 | Package validation baseline | `1.28.3` (`PackageValidationBaselineVersion` in `src/Directory.Build.props`) | the newest published 1.28.x, moved forward once nuget.org serves each release. Following the newest release is what puts each release's additions under the guard; against an older one they could vanish unnoticed. Never 1.28.0, which predates the promise. The anchor starts over at the next GStreamer series |
 | GStreamer, Windows MSVC | `1.28.6` (`GSTREAMER_VERSION` in the job) | the version the binding is generated from |
 | GStreamer, Windows MinGW | whatever MSYS2 ships | the MSYS2 packages are not versioned per release; the ABI probes only require >= 1.24 |

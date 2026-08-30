@@ -39,7 +39,7 @@ does, a module is written the way the example is.
 
 A module does three things at start-up and then stays out of the way. All three
 belong in the same `[ModuleInitializer]`, which is the whole of
-[`GstControllerModule.cs`](../src/GstSharp.Net.Controller/GstControllerModule.cs):
+[`GstControllerModule.cs`](https://github.com/masa-iwm/GstSharp.Net/blob/main/src/GstSharp.Net.Controller/GstControllerModule.cs):
 
 ```csharp
 [ModuleInitializer]
@@ -70,7 +70,7 @@ entry point does. That is what makes the ordering rule below unbreakable rather
 than merely documented.
 
 Ship a public `Initialize()` as well — see
-[`GstController.cs`](../src/GstSharp.Net.Controller/GstController.cs) — for the
+[`GstController.cs`](https://github.com/masa-iwm/GstSharp.Net/blob/main/src/GstSharp.Net.Controller/GstController.cs) — for the
 same reason every module in this repository does: naming one of your types in a
 cast is not a *call*, so an application that only ever writes
 `something as YourType` never runs your initialiser and the cast is silently
@@ -261,7 +261,7 @@ What that buys, concretely:
   `GES.TrackElement.SetControlSource(Gst.ControlSource, …)` is the live example
   — a control source built by this module drives a property of a GES track
   element, across three assemblies and no grant of internals, which
-  [`tests/GstSharp.IntegrationTests/GesControlSourceTests.cs`](../tests/GstSharp.IntegrationTests/GesControlSourceTests.cs)
+  [`tests/GstSharp.IntegrationTests/GesControlSourceTests.cs`](https://github.com/masa-iwm/GstSharp.Net/blob/main/tests/GstSharp.IntegrationTests/GesControlSourceTests.cs)
   asserts end to end.
 * Generated API that *returns* one of them still returns the generated wrapper
   rather than yours, because the registry decides that and the registry answers
@@ -304,7 +304,7 @@ but its closed set of base classes is the one that ships in `GstSharp.Net` and
 
 ## The worked example
 
-[`src/GstSharp.Net.Controller`](../src/GstSharp.Net.Controller) binds all of
+[`src/GstSharp.Net.Controller`](https://github.com/masa-iwm/GstSharp.Net/tree/main/src/GstSharp.Net.Controller) binds all of
 `libgstcontroller-1.0`: the three control sources, the three control bindings and
 the timed value base they share. The one most applications want is the first
 row of the second half of this table — a control source whose timed values drive
@@ -312,16 +312,16 @@ a property of an element over stream time.
 
 | File | What it shows |
 | --- | --- |
-| [`GstSharp.Net.Controller.csproj`](../src/GstSharp.Net.Controller/GstSharp.Net.Controller.csproj) | The proof: one `ProjectReference`, no `InternalsVisibleTo`. |
-| [`GstControllerModule.cs`](../src/GstSharp.Net.Controller/GstControllerModule.cs) | The three registration calls, in a module initialiser. |
-| [`GstController.cs`](../src/GstSharp.Net.Controller/GstController.cs) | The public `Initialize()` a module owes its users. |
-| [`TimedValueControlSource.cs`](../src/GstSharp.Net.Controller/TimedValueControlSource.cs) | A wrapper class deriving from the *generated* `Gst.ControlSource`: the protected constructor, `GetGType` and `CreateWrapper`, a `Concrete` for the abstract type. |
-| [`InterpolationControlSource.cs`](../src/GstSharp.Net.Controller/InterpolationControlSource.cs) | A factory through `FromNative`, and a `GValue` property round trip. |
-| [`TriggerControlSource.cs`](../src/GstSharp.Net.Controller/TriggerControlSource.cs) | A second concrete class on the same base, with its property read through `GetProperty<T>` and `SetProperty` instead. |
-| [`LFOControlSource.cs`](../src/GstSharp.Net.Controller/LFOControlSource.cs) | Attaching one level higher up, at the generated `Gst.ControlSource`, because that is where the native type attaches. |
-| [`DirectControlBinding.cs`](../src/GstSharp.Net.Controller/DirectControlBinding.cs) | Binding a constructor function as a factory that returns the *generated* wrapper. |
-| [`ARGBControlBinding.cs`](../src/GstSharp.Net.Controller/ARGBControlBinding.cs) | The same shape with four control sources, for a packed colour property. |
-| [`ProxyControlBinding.cs`](../src/GstSharp.Net.Controller/ProxyControlBinding.cs) | The same shape again, for a binding that forwards to the binding of another object. |
+| [`GstSharp.Net.Controller.csproj`](https://github.com/masa-iwm/GstSharp.Net/blob/main/src/GstSharp.Net.Controller/GstSharp.Net.Controller.csproj) | The proof: one `ProjectReference`, no `InternalsVisibleTo`. |
+| [`GstControllerModule.cs`](https://github.com/masa-iwm/GstSharp.Net/blob/main/src/GstSharp.Net.Controller/GstControllerModule.cs) | The three registration calls, in a module initialiser. |
+| [`GstController.cs`](https://github.com/masa-iwm/GstSharp.Net/blob/main/src/GstSharp.Net.Controller/GstController.cs) | The public `Initialize()` a module owes its users. |
+| [`TimedValueControlSource.cs`](https://github.com/masa-iwm/GstSharp.Net/blob/main/src/GstSharp.Net.Controller/TimedValueControlSource.cs) | A wrapper class deriving from the *generated* `Gst.ControlSource`: the protected constructor, `GetGType` and `CreateWrapper`, a `Concrete` for the abstract type. |
+| [`InterpolationControlSource.cs`](https://github.com/masa-iwm/GstSharp.Net/blob/main/src/GstSharp.Net.Controller/InterpolationControlSource.cs) | A factory through `FromNative`, and a `GValue` property round trip. |
+| [`TriggerControlSource.cs`](https://github.com/masa-iwm/GstSharp.Net/blob/main/src/GstSharp.Net.Controller/TriggerControlSource.cs) | A second concrete class on the same base, with its property read through `GetProperty<T>` and `SetProperty` instead. |
+| [`LFOControlSource.cs`](https://github.com/masa-iwm/GstSharp.Net/blob/main/src/GstSharp.Net.Controller/LFOControlSource.cs) | Attaching one level higher up, at the generated `Gst.ControlSource`, because that is where the native type attaches. |
+| [`DirectControlBinding.cs`](https://github.com/masa-iwm/GstSharp.Net/blob/main/src/GstSharp.Net.Controller/DirectControlBinding.cs) | Binding a constructor function as a factory that returns the *generated* wrapper. |
+| [`ARGBControlBinding.cs`](https://github.com/masa-iwm/GstSharp.Net/blob/main/src/GstSharp.Net.Controller/ARGBControlBinding.cs) | The same shape with four control sources, for a packed colour property. |
+| [`ProxyControlBinding.cs`](https://github.com/masa-iwm/GstSharp.Net/blob/main/src/GstSharp.Net.Controller/ProxyControlBinding.cs) | The same shape again, for a binding that forwards to the binding of another object. |
 
 Using it:
 
@@ -352,9 +352,9 @@ The bound property has to be writable, controllable
 wrote the element; a binding to a property that is not marked so is built, logs
 a warning, and then does nothing.
 
-[`tests/GstSharp.IntegrationTests/ControllerModuleTests.cs`](../tests/GstSharp.IntegrationTests/ControllerModuleTests.cs)
+[`tests/GstSharp.IntegrationTests/ControllerModuleTests.cs`](https://github.com/masa-iwm/GstSharp.Net/blob/main/tests/GstSharp.IntegrationTests/ControllerModuleTests.cs)
 asserts all of it against the installed library, and
-[`GesControlSourceTests.cs`](../tests/GstSharp.IntegrationTests/GesControlSourceTests.cs)
+[`GesControlSourceTests.cs`](https://github.com/masa-iwm/GstSharp.Net/blob/main/tests/GstSharp.IntegrationTests/GesControlSourceTests.cs)
 asserts the crossing the hierarchy makes possible: the same source handed to
 `GES.TrackElement.SetControlSource`, which takes a `Gst.ControlSource`.
 

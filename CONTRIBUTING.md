@@ -23,6 +23,31 @@ dotnet test
 needs a native GStreamer installation that `NativeLoader` can find (see the
 installation section of the README), and so do the samples.
 
+## Documentation site
+
+The site under <https://masa-iwm.github.io/GstSharp.Net/> is the API reference
+extracted from the XML documentation of the twelve packable projects, plus the
+README and the guides in `docs/`. docfx is pinned in
+`.config/dotnet-tools.json`, so a local preview is two commands:
+
+```sh
+dotnet tool restore
+dotnet docfx docfx/docfx.json --serve
+```
+
+`.github/workflows/docs.yml` runs the same command on every push to `main` and
+deploys the result to GitHub Pages, so the published site describes the tip of
+the branch rather than the latest release.
+
+The run ends with a handful of warnings and still exits 0. Most of them come
+from the generated XML documentation: gtk-doc comments that link to native C
+symbols such as `GST_PAD_SRC`, which have no page in a managed reference. Those
+are accepted as they stand — the fix belongs in the generator, not in
+`Generated/`, and is tracked as backlog work. The remaining few are
+pre-existing and not about the site: two duplicate-source warnings for the
+analyzer project's `AnalyzerReleases.*.md` and two duplicated-member warnings
+for `Gst.Interop.ModuleTypeEntry`. `eng/ci-notes.md` has the detail.
+
 ## Regenerating the bindings
 
 The C# surface under `src/*/Generated/` is produced from the `.gir` files in

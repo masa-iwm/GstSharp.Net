@@ -1,0 +1,16 @@
+- name: Guides
+  items:
+    - name: Ownership and lifetime
+      href: ../docs/ownership.md
+    - name: Analyzers
+      href: ../docs/analyzers.md
+    - name: Gio async
+      href: ../docs/gio-async.md
+    - name: Subclassing
+      href: ../docs/subclassing.md
+    - name: Binding modules
+      href: ../docs/modules.md
+    - name: Platform notes
+      href: ../docs/platform-notes.md
+- name: API reference
+  href: api/

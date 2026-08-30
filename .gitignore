@@ -20,3 +20,7 @@ Thumbs.db
 
 # Machine-local agent notes
 CLAUDE.local.md
+
+# Documentation site (docfx metadata output, rendered site)
+docfx/api/
+docfx/_site/

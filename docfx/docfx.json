@@ -1,0 +1,59 @@
+{
+  "metadata": [
+    {
+      "src": [
+        {
+          "src": "../src",
+          "files": [
+            "GstSharp.Net/GstSharp.Net.csproj",
+            "GstSharp.Net.App/GstSharp.Net.App.csproj",
+            "GstSharp.Net.Audio/GstSharp.Net.Audio.csproj",
+            "GstSharp.Net.Base/GstSharp.Net.Base.csproj",
+            "GstSharp.Net.Controller/GstSharp.Net.Controller.csproj",
+            "GstSharp.Net.GES/GstSharp.Net.GES.csproj",
+            "GstSharp.Net.Net/GstSharp.Net.Net.csproj",
+            "GstSharp.Net.Pbutils/GstSharp.Net.Pbutils.csproj",
+            "GstSharp.Net.Rtsp/GstSharp.Net.Rtsp.csproj",
+            "GstSharp.Net.Sdp/GstSharp.Net.Sdp.csproj",
+            "GstSharp.Net.Video/GstSharp.Net.Video.csproj",
+            "GstSharp.Net.WebRTC/GstSharp.Net.WebRTC.csproj"
+          ]
+        }
+      ],
+      "properties": {
+        "TargetFramework": "net10.0"
+      },
+      "dest": "api"
+    }
+  ],
+  "build": {
+    "content": [
+      {
+        "files": [ "api/**.yml" ]
+      },
+      {
+        "files": [ "index.md", "toc.yml" ]
+      },
+      {
+        "src": "..",
+        "files": [ "docs/*.md" ]
+      }
+    ],
+    "resource": [
+      {
+        "src": "..",
+        "files": [ "icon.png" ]
+      }
+    ],
+    "globalMetadata": {
+      "_appTitle": "GstSharp.Net",
+      "_appName": "GstSharp.Net",
+      "_appLogoPath": "icon.png",
+      "_appFaviconPath": "icon.png",
+      "_appFooter": "GstSharp.Net — LGPL-2.1-or-later. <a href=\"https://github.com/masa-iwm/GstSharp.Net\">github.com/masa-iwm/GstSharp.Net</a>",
+      "_enableSearch": true
+    },
+    "template": [ "default", "modern" ],
+    "dest": "_site"
+  }
+}
