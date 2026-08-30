@@ -724,30 +724,6 @@ public abstract unsafe partial class Clock : Gst.Object
         return (Gst.ClockReturn)nativeResult;
     }
 
-    /// <summary>
-    /// Registers a callback on the given #GstClockID @id with the given
-    /// function and user_data. When passing a #GstClockID with an invalid
-    /// time to this function, the callback will be called immediately
-    /// with  a time set to %GST_CLOCK_TIME_NONE. The callback will
-    /// be called when the time of @id has been reached.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// The callback @func can be invoked from any thread, either provided by the
-    /// core or from a streaming thread. The application should be prepared for this.
-    /// </para>
-    /// </remarks>
-    /// <param name="id">The <c>id</c> argument.</param>
-    /// <param name="func">The callback function</param>
-    /// <returns>the result of the non blocking wait.</returns>
-    public static Gst.ClockReturn IdWaitAsync(nint id, Gst.ClockCallback func)
-    {
-        ArgumentNullException.ThrowIfNull(func);
-        Gst.Interop.CallbackHandle funcState = Gst.Interop.CallbackHandle.Alloc(func);
-        int nativeResult = GstClockIdWaitAsync(id, Gst.ClockCallbackTrampoline.Pointer, funcState.UserData, (nint)Gst.Interop.CallbackHandle.DestroyNotify);
-        return (Gst.ClockReturn)nativeResult;
-    }
-
     /// <summary>The <c>timeout</c> property.</summary>
     public Gst.ClockTime Timeout
     {
@@ -997,10 +973,6 @@ public abstract unsafe partial class Clock : Gst.Object
     /// <summary>The <c>gst_clock_id_wait</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_clock_id_wait")]
     private static partial int GstClockIdWait(nint id, long* jitter);
-
-    /// <summary>The <c>gst_clock_id_wait_async</c> entry point.</summary>
-    [LibraryImport("Gst", EntryPoint = "gst_clock_id_wait_async")]
-    private static partial int GstClockIdWaitAsync(nint id, nint func, nint userData, nint destroyData);
 
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstClock</c> under.</summary>
     /// <returns>The type of the instances of this wrapper.</returns>

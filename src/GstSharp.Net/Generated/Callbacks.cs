@@ -221,41 +221,6 @@ internal static unsafe class CapsMapFuncTrampoline
     }
 }
 
-/// <summary>The function prototype of the callback.</summary>
-/// <param name="clock">The clock that triggered the callback</param>
-/// <param name="time">The time it was triggered</param>
-/// <param name="id">The #GstClockID that expired</param>
-/// <returns>%TRUE or %FALSE (currently unused)</returns>
-public delegate bool ClockCallback(Gst.Clock clock, Gst.ClockTime time, nint id);
-
-/// <summary>The native entry point of <see cref="Gst.ClockCallback"/>.</summary>
-internal static unsafe class ClockCallbackTrampoline
-{
-    /// <summary>Gets the address that is handed to native code.</summary>
-    internal static nint Pointer => (nint)(delegate* unmanaged[Cdecl]<nint, ulong, nint, nint, int>)&Invoke;
-
-    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
-    private static int Invoke(nint clock, ulong time, nint id, nint userData)
-    {
-        try
-        {
-            if (Gst.Interop.CallbackHandle.GetState<Gst.ClockCallback>(userData) is not { } callback)
-            {
-                return default;
-            }
-
-            Gst.Clock clockValue = Gst.GObject.Object.FromNative<Gst.Clock>(clock, Gst.Interop.Transfer.None)
-                ?? throw new InvalidOperationException("GstClockCallback passed no clock.");
-            return callback(clockValue, new Gst.ClockTime(time), id) ? 1 : 0;
-        }
-        catch (Exception exception)
-        {
-            Gst.Interop.ExceptionTrap.Report(exception);
-            return default;
-        }
-    }
-}
-
 /// <summary>
 /// Function called for each @meta in @buffer as a result of performing a
 /// transformation that yields @transbuf. Additional @type specific transform

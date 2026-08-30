@@ -165,7 +165,11 @@ public sealed class SkipRulesTests
         // managed code never holds, gst_iterator_new_list, which keeps the
         // address of the caller's own list variable, and
         // gst_event_new_select_streams, which is hand bound and is the one call
-        // of the family that refuses an empty list.
+        // of the family that refuses an empty list. One joined on a leak the
+        // generated shape cannot see: gst_clock_id_wait_async only takes the
+        // destroy notification of its callback over on the path that succeeds,
+        // so the hand written Gst.Clock.IdWaitAsync releases the state on every
+        // other one.
         Assert.Equal(
             [
                 "GstBase.BitReader",
@@ -203,6 +207,7 @@ public sealed class SkipRulesTests
                 "gst_caps_features_new_single_static_str",
                 "gst_caps_new_static_str_empty_simple",
                 "gst_caps_set_value_static_str",
+                "gst_clock_id_wait_async",
                 "gst_collect_pads_add_pad",
                 "gst_debug_remove_log_function",
                 "gst_discoverer_stream_info_list_free",

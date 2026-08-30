@@ -369,7 +369,7 @@ disappears shows up here as an added line.
 - `gst_tag_setter_add_tag_valist`
 - `gst_tag_setter_add_tag_valist_values`
 
-### OverlaySkip (55)
+### OverlaySkip (56)
 
 - `gst_allocator_free`
 - `gst_buffer_extract`
@@ -383,6 +383,7 @@ disappears shows up here as an added line.
 - `gst_caps_features_new_single_static_str`
 - `gst_caps_new_static_str_empty_simple`
 - `gst_caps_set_value_static_str`
+- `gst_clock_id_wait_async`
 - `gst_debug_remove_log_function`
 - `gst_element_post_message`
 - `gst_element_send_event`
