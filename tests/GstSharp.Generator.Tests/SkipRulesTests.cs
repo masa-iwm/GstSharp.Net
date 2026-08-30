@@ -306,6 +306,7 @@ public sealed class SkipRulesTests
         // GEN0023 instead of quietly overstating what is bound.
         Assert.Equal(
             [
+                "GstWebRTC.WebRTCDataChannel::on-message-data",
                 "ges_asset_request_async",
                 "ges_asset_request_finish",
                 "ges_timeline_element_get_child_property",
@@ -448,6 +449,38 @@ public sealed class SkipRulesTests
         Assert.Equal(1, run.Result.Census.SkippedCount("Gst", SkipReason.HandBound));
         Assert.Equal(0, run.Result.Census.SkippedCount("Gst", SkipReason.OverlaySkip));
         Assert.Contains("### HandBound (1)\n", run.Result.SkipReport, StringComparison.Ordinal);
+        Assert.DoesNotContain(
+            run.Result.Diagnostics,
+            static diagnostic => string.Equals(diagnostic.Code, "GEN0023", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void AHandBoundSignalIsNamedByItsGObjectSpelling()
+    {
+        // A signal has no c:identifier, so the ledger names it the way the
+        // census and the skip report print it. GstWebRTCDataChannel's
+        // on-message-data is the entry this exists for: its argument is a
+        // GBytes, which the signal planner has no rule for, and the event, its
+        // arguments class and its trampoline are written by hand instead.
+        // Without the entry the signal is a plain gap, filed under the reason
+        // that says the planner has no rule for it.
+        FixtureRun before = RunWithOverlay("{}", SignalBody);
+        Assert.Equal(1, before.Result.Census.SkippedCount("Gst", SkipReason.UnsupportedSignature));
+
+        FixtureRun run = RunWithOverlay(
+            """
+            {
+              "handBound": [ "Gst.Widget::packed" ]
+            }
+            """,
+            SignalBody);
+
+        Assert.Equal(1, run.Result.Census.SkippedCount("Gst", SkipReason.HandBound));
+        Assert.Equal(0, run.Result.Census.SkippedCount("Gst", SkipReason.UnsupportedSignature));
+        Assert.Contains(
+            "### HandBound (1)\n\n- `Gst.Widget::packed`\n",
+            run.Result.SkipReport,
+            StringComparison.Ordinal);
         Assert.DoesNotContain(
             run.Result.Diagnostics,
             static diagnostic => string.Equals(diagnostic.Code, "GEN0023", StringComparison.Ordinal));
@@ -608,6 +641,29 @@ public sealed class SkipRulesTests
                   </instance-parameter>
                 </parameters>
               </method>
+            </class>
+        """;
+
+    /// <summary>
+    /// One class with one signal the planner cannot bind: its argument is an
+    /// array, which a signal argument never is. It stands for the shape the
+    /// ledger has to name, a signal whose managed surface is hand written.
+    /// </summary>
+    private const string SignalBody =
+        """
+            <class name="Widget" c:type="GstWidget" parent="GObject.InitiallyUnowned" glib:type-name="GstWidget" glib:get-type="gst_widget_get_type">
+              <glib:signal name="packed" when="last">
+                <return-value transfer-ownership="none">
+                  <type name="none" c:type="void"/>
+                </return-value>
+                <parameters>
+                  <parameter name="names" transfer-ownership="none">
+                    <array c:type="gchar**">
+                      <type name="utf8" c:type="gchar*"/>
+                    </array>
+                  </parameter>
+                </parameters>
+              </glib:signal>
             </class>
         """;
 

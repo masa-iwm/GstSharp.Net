@@ -1035,8 +1035,9 @@ disappears shows up here as an added line.
 - `GstWebRTC.WebRTCDataChannel::send-string`
 - `GstWebRTC.WebRTCICE::add-local-ip-address`
 
-### HandBound (2)
+### HandBound (3)
 
+- `GstWebRTC.WebRTCDataChannel::on-message-data`
 - `gst_webrtc_data_channel_send_data_full`
 - `gst_webrtc_session_description_new`
 
@@ -1052,9 +1053,8 @@ disappears shows up here as an added line.
 - `gst_webrtc_error_quark`
 - `gst_webrtc_sdp_type_to_string`
 
-### UnsupportedSignature (4)
+### UnsupportedSignature (3)
 
-- `GstWebRTC.WebRTCDataChannel::on-message-data`
 - `gst_webrtc_data_channel_send_data`
 - `gst_webrtc_ice_get_local_candidates`
 - `gst_webrtc_ice_get_remote_candidates`

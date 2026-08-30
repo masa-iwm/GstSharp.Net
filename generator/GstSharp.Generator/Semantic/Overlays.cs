@@ -146,11 +146,13 @@ internal sealed class PlatformSupport
 /// <list type="bullet">
 /// <item><description><c>skip</c>: <c>c:identifier</c> of a callable, or the
 /// qualified gir name of a type (<c>Gst.Foo</c>).</description></item>
-/// <item><description><c>handBound</c>: <c>c:identifier</c> of a callable whose
-/// managed surface is hand written. It changes nothing about what is
-/// generated; it annotates the ledger, so that a symbol the bindings do cover
-/// is reported under <see cref="SkipReason.HandBound"/> instead of counting
-/// as a missing binding.</description></item>
+/// <item><description><c>handBound</c>: <c>c:identifier</c> of a callable, or
+/// the GObject spelling of a signal (<c>Gst.Element::pad-added</c>) or property
+/// (<c>Gst.Element:name</c>) as the census reports it, whose managed surface is
+/// hand written. It changes nothing about what is generated; it annotates the
+/// ledger, so that a symbol the bindings do cover is reported under
+/// <see cref="SkipReason.HandBound"/> instead of counting as a missing
+/// binding.</description></item>
 /// <item><description><c>rename</c>: qualified gir name of a type
 /// (<c>Gst.MessageType</c>), of an enumeration member
 /// (<c>Gst.MessageType.state_changed</c>) or a <c>c:identifier</c>.</description></item>

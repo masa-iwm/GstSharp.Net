@@ -167,11 +167,22 @@ public abstract unsafe partial class WebRTCDataChannel
     /// <summary>Raised for the <c>on-message-data</c> signal of <c>GstWebRTCDataChannel</c>.</summary>
     /// <remarks>
     /// <para>
-    /// The handler runs on whichever thread the channel received the message
-    /// on, which is a streaming thread of the pipeline and never the thread
-    /// that added the handler. An exception that leaves it does not cross the
-    /// native frame: it is reported through
-    /// <see cref="Gst.Interop.ExceptionTrap"/> and the emission continues.
+    /// <b>The handler runs on the peer connection thread of <c>webrtcbin</c>,
+    /// not on a streaming thread.</b> The element does not emit the signal
+    /// where it read the message: it wraps the received bytes and queues the
+    /// emission on the main context of the thread it starts for the
+    /// connection, and the handler is called from there. That is the thread
+    /// the state changes and the promise replies of the same connection are
+    /// delivered on, so a handler that blocks holds all of them up, and it is
+    /// never the thread that added the handler. That is the contract of
+    /// <c>webrtcbin</c> rather than of this class: a channel some other
+    /// element implements emits wherever its implementation calls
+    /// <c>gst_webrtc_data_channel_on_message_data</c>.
+    /// </para>
+    /// <para>
+    /// An exception that leaves the handler does not cross the native frame:
+    /// it is reported through <see cref="Gst.Interop.ExceptionTrap"/> and the
+    /// emission continues.
     /// </para>
     /// <para>
     /// The handler is remembered on the wrapper it was added to and has to be
