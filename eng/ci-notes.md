@@ -141,10 +141,10 @@ with `SetSimpleCallbacks`: the callbacks stand for
 `gst_app_src_set_simple_callbacks`, which arrived in 1.28, and calling it on
 1.24 throws `EntryPointNotFoundException`. `BasicTutorial08` still looks
 `wavescope` up before it builds its visualization branch and runs without the
-branch when the factory is absent — the same shape `basic-tutorial-7` will need
-whenever it is ported — but on this leg the factory is now found, because
-`gstreamer1.0-plugins-bad` is installed for `webrtcbin`, so the branch is
-exercised here rather than skipped.
+branch when the factory is absent, and `BasicTutorial07` does the same; on this
+leg the factory is found, because `gstreamer1.0-plugins-bad` is installed for
+`webrtcbin`, so both visualization branches are exercised here rather than
+skipped — and the fallback the two of them share is exercised by no leg at all.
 
 ### macOS — Homebrew
 
@@ -393,13 +393,16 @@ dotnet pack GstSharp.Net.slnx --no-restore --configuration Release --output arti
 # the native jobs (needs a GStreamer installation the loader can find)
 dotnet test tests/GstSharp.IntegrationTests --no-restore
 dotnet run --project samples/AppSinkSpans --no-restore -- --mode pull
+dotnet run --project samples/AppSrcPush --no-restore -- --buffers 200 --output appsrc-push.raw
 
 # the ported tutorials the Linux job runs, and the media they run against
 dotnet run --project samples/GstLaunch --no-restore -- -q videotestsrc num-buffers=300 ! video/x-raw,width=320,height=240,framerate=30/1 ! videoconvert ! theoraenc ! oggmux name=mux ! filesink location=tutorial-media.ogg audiotestsrc num-buffers=430 ! audioconvert ! vorbisenc ! mux.
 dotnet run --project samples/tutorials/BasicTutorial02 --no-restore -- --headless
 dotnet run --project samples/tutorials/BasicTutorial03 --no-restore -- --headless tutorial-media.ogg
 dotnet run --project samples/tutorials/BasicTutorial04 --no-restore -- --headless --seek-at 1 --seek-to 7 tutorial-media.ogg
+dotnet run --project samples/tutorials/BasicTutorial07 --no-restore -- --headless --buffers 200
 dotnet run --project samples/tutorials/BasicTutorial08 --no-restore -- --headless --chunks 200
+dotnet run --project samples/tutorials/BasicTutorial09 --no-restore -- tutorial-media.ogg
 dotnet run --project samples/tutorials/BasicTutorial13 --no-restore -- --headless --keys SsPNNPDq tutorial-media.ogg
 
 # the AOT gates (Windows)

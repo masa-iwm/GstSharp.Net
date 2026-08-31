@@ -202,14 +202,16 @@ jobs:
 
       # GSTSHARP_REQUIRED_ELEMENTS is the promise this leg makes about its
       # installation, and RequiredElementsTests is what holds it to it: these
-      # nine factories are the ones the tests gate on with RequiresElementFact
+      # ten factories are the ones the tests gate on with RequiresElementFact
       # that only a plugin set this leg installs on purpose provides — three for WebRTC,
       # audiomixer for the only boxed valued property the integration suite
       # writes, theoraenc and vorbisenc for the two encoders whose set_headers
       # hands a list over, theoradec for the decoder the VideoCodecFrame
-      # user data tests borrow a frame from, and uritranscodebin with
+      # user data tests borrow a frame from, uritranscodebin with
       # transcodebin for the transcode plugin the GstTranscoder tests build
-      # their transcoder out of — so the day
+      # their transcoder out of, and oggmux for the muxer that PbutilsTests
+      # needs beside vorbisenc before a serialised encoding profile parses
+      # into a container at all — so the day
       # gstreamer1.0-plugins-bad, gstreamer1.0-nice or
       # gstreamer1.0-plugins-base stops providing one of them this step turns
       # red instead of quietly downgrading those tests to skips. The variable
@@ -218,7 +220,7 @@ jobs:
       # that installs the plugins.
       - name: Test against the installation
         env:
-          GSTSHARP_REQUIRED_ELEMENTS: webrtcbin,nicesrc,dtlssrtpenc,audiomixer,theoraenc,theoradec,vorbisenc,uritranscodebin,transcodebin
+          GSTSHARP_REQUIRED_ELEMENTS: webrtcbin,nicesrc,dtlssrtpenc,audiomixer,theoraenc,theoradec,vorbisenc,uritranscodebin,transcodebin,oggmux
         run: dotnet test tests/GstSharp.IntegrationTests --no-restore --logger "trx;LogFileName=integration.trx" --results-directory artifacts/test-results
 
       # The whole consumer path without AOT: parse a pipeline, cast the sink
@@ -249,8 +251,16 @@ jobs:
           dotnet run --project samples/GstLaunch --no-restore -- -q audiotestsrc num-buffers=50 ! wavenc ! filesink location=typefind-sample.wav
           dotnet run --project samples/GstTypefind --no-restore -- --fail-on-unknown typefind-sample.wav
 
-      # The ported GStreamer tutorials. All seven are built by the solution on
-      # every leg; these five are the ones that can also run, and they run here
+      # The appsrc port of the same idea, from the other end: the application is
+      # the source and pushes only while appsrc asks it to. --output turns the
+      # run into a byte count gate as well — what the file weighs has to be what
+      # was pushed — and filesink and audioconvert are core and base elements
+      # this job already has.
+      - name: AppSrcPush
+        run: dotnet run --project samples/AppSrcPush --no-restore -- --buffers 200 --output appsrc-push.raw
+
+      # The ported GStreamer tutorials. All nine are built by the solution on
+      # every leg; these seven are the ones that can also run, and they run here
       # rather than anywhere else because this leg has the richest plugin set
       # and no GUI to tempt them.
       #
@@ -262,9 +272,14 @@ jobs:
       #
       # The media is made here rather than fetched. Ten seconds of Theora and
       # Vorbis in an Ogg container is a real file with two streams, which is
-      # what tutorial 3 needs to have a pad to ignore and tutorial 4 and 13
-      # need to have something to seek in. theoraenc, vorbisenc and oggmux are
-      # all in gst-plugins-base, which this job installs.
+      # what tutorial 3 needs to have a pad to ignore, tutorial 4 and 13 need to
+      # have something to seek in, and tutorial 9 needs to have a topology to
+      # walk. theoraenc, vorbisenc and oggmux are all in gst-plugins-base, which
+      # this job installs.
+      #
+      # Tutorial 9 takes no --headless: it builds no sink at all, only a
+      # discoverer, and its gate is its own exit code — a URI that was not
+      # understood is a failure there rather than a printed line.
       #
       # Not run: tutorial 1, whose default media is an https URI, and tutorial
       # 6, whose interesting output is the caps a real audio sink negotiates.
@@ -274,7 +289,9 @@ jobs:
           dotnet run --project samples/tutorials/BasicTutorial02 --no-restore -- --headless
           dotnet run --project samples/tutorials/BasicTutorial03 --no-restore -- --headless tutorial-media.ogg
           dotnet run --project samples/tutorials/BasicTutorial04 --no-restore -- --headless --seek-at 1 --seek-to 7 tutorial-media.ogg
+          dotnet run --project samples/tutorials/BasicTutorial07 --no-restore -- --headless --buffers 200
           dotnet run --project samples/tutorials/BasicTutorial08 --no-restore -- --headless --chunks 200
+          dotnet run --project samples/tutorials/BasicTutorial09 --no-restore -- tutorial-media.ogg
           dotnet run --project samples/tutorials/BasicTutorial13 --no-restore -- --headless --keys SsPNNPDq tutorial-media.ogg
 
       # The gst-discoverer port, run against both files the steps above made:

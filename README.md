@@ -211,6 +211,7 @@ never end up with half an MSVC and half a MinGW GStreamer.
 | --- | --- | --- |
 | `samples/PlaybinPlayer` | A pipeline from a description, driven by a polled bus. No main loop, no signal handler. | `dotnet run --project samples/PlaybinPlayer` |
 | `samples/AppSinkSpans` | Raw video out of an `appsink`, read through a `Span<byte>` over the mapped GStreamer memory. Pull mode and signal mode produce the same checksum. | `dotnet run --project samples/AppSinkSpans -- --mode pull` |
+| `samples/AppSrcPush` | The source half: the application generates the audio and pushes it into an `appsrc` in push mode, only while `need-data` says the pipeline wants it and never after `enough-data`. Bounded by a buffer count, and `--output` turns the run into a byte count gate on top of the exit code. | `dotnet run --project samples/AppSrcPush -- --buffers 200` |
 | `samples/GstLaunch` | A port of `gst-launch-1.0`: the whole bus loop, the preroll/buffering/progress state machine, `-t -c -v -q -m -e -X -f`, `--gst-*` passthrough and the exit codes of the C tool. One binary with per-OS behavior — Ctrl+C through a `GstLaunchInterrupt` application message everywhere, SIGHUP and SIGQUIT on POSIX, the multimedia timer on Windows. Its header comment lists what it cannot match. | `dotnet run --project samples/GstLaunch -- videotestsrc num-buffers=100 ! fakesink` |
 | `samples/GstTypefind` | A port of `gst-typefind-1.0`: `filesrc ! typefind ! fakesink` per file, PAUSED and a blocking `GetState`, directory recursion, and the `<file> - <caps>` line of the C tool. It is the sample that connects a signal **by name** — `have-type` on a plugin element no `.gir` describes — and its header comment records what that emission can and cannot hand over. | `dotnet run --project samples/GstTypefind -- <file-or-directory>` |
 | `samples/GstDeviceMonitor` | A port of `gst-device-monitor-1.0`: `DeviceMonitor` with the `DEVICE_CLASSES[:FILTER_CAPS]` filters, the device listing with caps and properties, and `--follow` for hotplug — all of it as messages on the monitor's bus, polled rather than watched from a main loop. Its header comment lists the shell-quoting and property-enumeration parts of the C tool that the binding cannot reach yet. | `dotnet run --project samples/GstDeviceMonitor` |
@@ -219,7 +220,8 @@ never end up with half an MSVC and half a MinGW GStreamer.
 | `samples/GstTranscode` | Transcoding one URI into another against a serialized `GstEncodingProfile`, on the route the transcoder documents as the recommended one: `RunAsync` plus a polled API bus, with no main loop and no signal adapter. It is also where the hand-written `ParseError` earns its keep — the imported one aborts the process on an error that carries no details. | `dotnet run --project samples/GstTranscode -- file:///in.ogg file:///out.ogg` |
 | `samples/AotSmoke` | The NativeAOT gate: initialise, make an element, release it, with zero trimming warnings. | `dotnet publish samples/AotSmoke -r win-x64 -c Release /p:PublishAot=true` |
 
-`PlaybinPlayer` and `AppSinkSpans` also take `--native-path <directory>`,
+`PlaybinPlayer`, `AppSinkSpans` and `AppSrcPush` also take
+`--native-path <directory>`,
 `--flavor msvc\|mingw` and `--timeout <seconds>`; `GstLaunch`, `GstTypefind`,
 `GstDeviceMonitor`, `GstDiscoverer` and `GstInspect` take the first two. Each
 of the five ports adds one option of its own that the C tool does not have, so
@@ -253,15 +255,17 @@ numbering kept:
 | `BasicTutorial03` | [Dynamic pipelines](https://gstreamer.freedesktop.org/documentation/tutorials/basic/dynamic-pipelines.html) | `pad-added`, linking pads, reading caps |
 | `BasicTutorial04` | [Time management](https://gstreamer.freedesktop.org/documentation/tutorials/basic/time-management.html) | position, duration, the seeking query, `SeekSimple` |
 | `BasicTutorial06` | [Media formats and pad capabilities](https://gstreamer.freedesktop.org/documentation/tutorials/basic/media-formats-and-pad-capabilities.html) | caps, structures, fields, pad templates |
+| `BasicTutorial07` | [Multithreading and pad availability](https://gstreamer.freedesktop.org/documentation/tutorials/basic/multithreading-and-pad-availability.html) | a `tee`, its request pads, a `queue` per branch |
 | `BasicTutorial08` | [Short-cutting the pipeline](https://gstreamer.freedesktop.org/documentation/tutorials/basic/short-cutting-the-pipeline.html) | `appsrc`, `appsink`, a `tee` and its request pads |
+| `BasicTutorial09` | [Media information gathering](https://gstreamer.freedesktop.org/documentation/tutorials/basic/media-information-gathering.html) | `GstDiscoverer`, an answer that arrives as a signal, the topology |
 | `BasicTutorial13` | [Playback speed](https://gstreamer.freedesktop.org/documentation/tutorials/basic/playback-speed.html) | seek events with a rate, reverse playback, step events |
 
 The walkthrough text stays upstream; each file carries a header comment saying
 where the port differs from the C original and why — a polled bus instead of a
 `GMainLoop`, `using` instead of `gst_*_unref`, a typed event instead of
 `g_signal_connect`. `samples/tutorials/README.md` is the index and explains the
-two options the tutorials do not have (`--headless` and
-`BasicTutorial13 --keys`), which exist so that a tutorial can be run unattended.
+options the tutorials do not have (`--headless`, `BasicTutorial13 --keys` and
+the per-tutorial bounds), which exist so that a tutorial can be run unattended.
 
 ```sh
 dotnet run --project samples/tutorials/BasicTutorial02

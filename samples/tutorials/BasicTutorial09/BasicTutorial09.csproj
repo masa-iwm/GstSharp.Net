@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>GstSharp.Samples.BasicTutorial09</RootNamespace>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../../src/GstSharp.Net/GstSharp.Net.csproj" />
+    <ProjectReference Include="../../../src/GstSharp.Net.Pbutils/GstSharp.Net.Pbutils.csproj" />
+  </ItemGroup>
+
+</Project>

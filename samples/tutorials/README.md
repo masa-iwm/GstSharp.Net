@@ -19,7 +19,9 @@ said here.
 | `BasicTutorial03` | [Dynamic pipelines](https://gstreamer.freedesktop.org/documentation/tutorials/basic/dynamic-pipelines.html) | `pad-added`, linking pads, reading caps |
 | `BasicTutorial04` | [Time management](https://gstreamer.freedesktop.org/documentation/tutorials/basic/time-management.html) | position, duration, the seeking query, `SeekSimple` |
 | `BasicTutorial06` | [Media formats and pad capabilities](https://gstreamer.freedesktop.org/documentation/tutorials/basic/media-formats-and-pad-capabilities.html) | caps, structures, fields, pad templates |
+| `BasicTutorial07` | [Multithreading and pad availability](https://gstreamer.freedesktop.org/documentation/tutorials/basic/multithreading-and-pad-availability.html) | a `tee`, its request pads, a `queue` per branch |
 | `BasicTutorial08` | [Short-cutting the pipeline](https://gstreamer.freedesktop.org/documentation/tutorials/basic/short-cutting-the-pipeline.html) | `appsrc`, `appsink`, a `tee` and its request pads |
+| `BasicTutorial09` | [Media information gathering](https://gstreamer.freedesktop.org/documentation/tutorials/basic/media-information-gathering.html) | `GstDiscoverer`, an answer that arrives as a signal, the topology |
 | `BasicTutorial13` | [Playback speed](https://gstreamer.freedesktop.org/documentation/tutorials/basic/playback-speed.html) | seek events with a rate, reverse playback, step events |
 
 The rest of the basic and playback tutorials follow later. Basic 5 needs a
@@ -35,10 +37,11 @@ dotnet run --project samples/tutorials/BasicTutorial03 -- <file-or-uri>
 
 Every project takes `--native-path <directory>` and `--flavor msvc|mingw`, which
 point the loader at a particular GStreamer installation, and `--timeout
-<seconds>`, which bounds the run. The four that play media — 1, 3, 4 and 13 —
-take a URI or the path of a local file as their one positional argument and
-default to the same Sintel trailer the upstream pages use, so a manual run with
-no arguments reproduces the tutorial exactly. **That default needs a network.**
+<seconds>`, which bounds the run. The five that are given media — 1, 3, 4, 9
+and 13 — take a URI or the path of a local file as their one positional argument
+and default to the same Sintel trailer the upstream pages use, so a manual run
+with no arguments reproduces the tutorial exactly. **That default needs a
+network.** Four of them play it; 9 only asks what is inside it.
 
 `BasicTutorial13` is worth pointing at a local file even when there is one. A
 flushing rate seek travels back to the source, and against `souphttpsrc` the
@@ -58,13 +61,17 @@ the tutorial teaches, and each file says so where it uses them.
   the worst thing to leave in an unattended run: in an environment with no sound
   daemon it does not fail, it waits. Where the tutorial's source has no end of
   its own, `--headless` also bounds it so that the run finishes.
+  `BasicTutorial09` is the one project without it, because it builds no sink at
+  all — a discoverer is the whole program.
 * `BasicTutorial13 --keys <string>` feeds those characters to the handler the
   keyboard would feed, one every half second from the moment the pipeline
   reports PLAYING, so the rate and step events can be exercised without a
   terminal. `BasicTutorial04 --seek-at` / `--seek-to` move
   the two thresholds of the C original, so that a short local file can be used
-  instead of the 52 second trailer. `BasicTutorial08 --chunks` says how many
-  buffers to push before ending the stream.
+  instead of the 52 second trailer. `BasicTutorial07 --buffers` and
+  `BasicTutorial08 --chunks` say how many buffers to produce, or to push,
+  before ending the stream; giving either one bounds the run on its own, so a
+  run that does open its windows can be bounded too.
 
 ## The two `#ifdef`s of the C originals
 
@@ -92,25 +99,32 @@ Every project follows one rule, which is what lets CI run them as gates:
 * **0** — the stream ended, or the run was quit as asked, or the bound elapsed
   on a pipeline that was deliberately endless.
 * **1** — an error message was posted, an element was missing, or the bound
-  elapsed on a pipeline that was supposed to end.
+  elapsed on a pipeline that was supposed to end. `BasicTutorial09`, which has
+  no bus at all, reads it as a discovery that came back with anything other than
+  OK: the C original prints "This URI cannot be played" and returns 0, which
+  would leave the CI line nothing to gate on.
 
 ## Which of them CI runs
 
-All seven are built on every CI leg, which is the point of putting them in the
+All nine are built on every CI leg, which is the point of putting them in the
 solution: a rename anywhere in the generated surface breaks a tutorial visibly.
 
-Five are also *run*, on the Linux leg only, because it has the richest plugin
-set and no GUI. Tutorials 3, 4 and 13 run against ten seconds of Theora and
+Seven are also *run*, on the Linux leg only, because it has the richest plugin
+set and no GUI. Tutorials 3, 4, 9 and 13 run against ten seconds of Theora and
 Vorbis in an Ogg container that the `GstLaunch` sample encodes in the step
 before them — real media with two streams, made on the spot rather than
-fetched. Tutorial 2 needs no media and tutorial 8 generates its own. The other
+fetched, which is also what gives tutorial 9 a topology worth walking.
+Tutorial 2 needs no media, and tutorials 7 and 8 generate their own. The other
 two are build-only: 1 would need the network, and 6 is only interesting when a
 real audio sink is on the other end of the pipeline.
 
-One element of tutorial 8 is missing there: `wavescope` is in
-`gst-plugins-bad`, of which the Linux leg installs only the library package, so
-that run exercises two branches of the tee rather than three — and proves the
-fallback while it is at it.
+`wavescope`, which both tee tutorials draw with, is in `gst-plugins-bad`. The
+Linux leg installs `gstreamer1.0-plugins-bad` — it needs it for `webrtcbin` —
+so tutorials 7 and 8 do build their visualization branch there and run every
+branch of the tee. Where the plugin is absent both of them look it up, leave
+that branch out, say so on a log line and exit 0 — but **no CI leg exercises
+that fallback**, so a manual run on an installation without the bad plugins is
+what checks it.
 
 ## Licence and provenance
 
