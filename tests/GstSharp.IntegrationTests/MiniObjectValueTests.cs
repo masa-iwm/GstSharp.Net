@@ -203,6 +203,139 @@ public sealed class MiniObjectValueTests
     }
 
     /// <summary>
+    /// A wrapper of another boxed type than the one the value holds is refused
+    /// by both wrapper setters, and the value keeps what it held.
+    /// </summary>
+    /// <remarks>
+    /// Asking whether the value holds a boxed value at all is not enough:
+    /// <c>g_value_set_boxed</c> copies what it is handed with the copy function
+    /// of the type the <em>value</em> holds, so a wrapper of another boxed type
+    /// is not a refused write but the wrong function over a foreign pointer —
+    /// <c>gst_mini_object_ref</c> over a <c>GstStructure</c> one way round and
+    /// <c>gst_structure_copy</c> over a <c>GstCaps</c> the other. GLib says
+    /// nothing on either path. This is the guard
+    /// <see cref="ValueRef.SetBoxed(Boxed?)"/> already made, on the value the
+    /// caller owns.
+    /// </remarks>
+    [Fact]
+    public void AValueRefusesContentOfAnotherBoxedType()
+    {
+        using Caps caps = Assert.IsType<Caps>(Caps.FromString(CapsText));
+        using Structure payload = Structure.NewEmpty("payload");
+
+        using Value capsValue = Value.New(new GType(TestNatives.CapsGetType()));
+        capsValue.SetMiniObject(caps);
+
+        InvalidOperationException refusedBoxed = Assert.Throws<InvalidOperationException>(
+            () => capsValue.SetBoxed(payload));
+        Assert.Contains("GstCaps", refusedBoxed.Message, StringComparison.Ordinal);
+        Assert.Contains("GstStructure", refusedBoxed.Message, StringComparison.Ordinal);
+
+        using Value payloadValue = Value.New(payload.BoxedType);
+        payloadValue.SetBoxed(payload);
+
+        InvalidOperationException refusedMiniObject = Assert.Throws<InvalidOperationException>(
+            () => payloadValue.SetMiniObject(caps));
+        Assert.Contains("GstStructure", refusedMiniObject.Message, StringComparison.Ordinal);
+        Assert.Contains("GstCaps", refusedMiniObject.Message, StringComparison.Ordinal);
+
+        // Both values hold what they always held, and both wrappers are the
+        // caller's still.
+        using Caps? heldCaps = capsValue.GetMiniObject<Caps>();
+        Assert.NotNull(heldCaps);
+        Assert.Equal(CapsText, heldCaps.ToString());
+
+        using Structure? heldPayload = payloadValue.GetBoxed<Structure>();
+        Assert.NotNull(heldPayload);
+        Assert.Equal("payload", heldPayload.GetName());
+
+        Assert.False(caps.IsDisposed);
+        Assert.False(payload.IsDisposed);
+    }
+
+    /// <summary>
+    /// The other half of the guard: content of the type the value holds goes
+    /// through, and <see langword="null"/> clears the value without changing
+    /// its type.
+    /// </summary>
+    [Fact]
+    public void AValueAcceptsContentOfItsOwnTypeAndIsClearedByNull()
+    {
+        GType capsType = new(TestNatives.CapsGetType());
+
+        using Caps written = Assert.IsType<Caps>(Caps.FromString(CapsText));
+        using Structure payload = Structure.NewEmpty("payload");
+
+        using Value capsValue = Value.New(capsType);
+        capsValue.SetMiniObject(written);
+
+        using (Caps? read = capsValue.GetMiniObject<Caps>())
+        {
+            Assert.NotNull(read);
+            Assert.Equal(CapsText, read.ToString());
+        }
+
+        capsValue.SetMiniObject(null);
+        Assert.Equal(capsType, capsValue.Type);
+        Assert.Null(capsValue.GetMiniObject<Caps>());
+
+        using Value payloadValue = Value.New(payload.BoxedType);
+        payloadValue.SetBoxed(payload);
+
+        using (Structure? read = payloadValue.GetBoxed<Structure>())
+        {
+            Assert.NotNull(read);
+            Assert.Equal("payload", read.GetName());
+        }
+
+        payloadValue.SetBoxed(null);
+        Assert.Equal(payload.BoxedType, payloadValue.Type);
+        Assert.Equal(nint.Zero, payloadValue.GetBoxed());
+    }
+
+    /// <summary>
+    /// A value that holds no boxed value at all refuses both wrapper setters,
+    /// and so does one that holds nothing yet.
+    /// </summary>
+    /// <remarks>
+    /// The mirror of the guard <see cref="ValueRef"/> makes before it looks at
+    /// the content: a setter whose type the value does not hold throws rather
+    /// than writing, which here would be <c>g_value_set_boxed</c> over the
+    /// payload of an integer and a GLib critical.
+    /// </remarks>
+    [Fact]
+    public void AValueThatHoldsNoBoxedValueRefusesBothWrapperSetters()
+    {
+        using Caps caps = Assert.IsType<Caps>(Caps.FromString(CapsText));
+        using Structure payload = Structure.NewEmpty("payload");
+
+        using Value number = Value.New(GType.Int);
+        number.SetInt(7);
+
+        Assert.Contains(
+            "gint",
+            Assert.Throws<InvalidOperationException>(() => number.SetBoxed(payload)).Message,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "gint",
+            Assert.Throws<InvalidOperationException>(() => number.SetMiniObject(caps)).Message,
+            StringComparison.Ordinal);
+        Assert.Equal(7, number.GetInt());
+
+        Value empty = default;
+
+        Assert.Contains(
+            "not initialized",
+            Assert.Throws<InvalidOperationException>(() => empty.SetBoxed(payload)).Message,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "not initialized",
+            Assert.Throws<InvalidOperationException>(() => empty.SetMiniObject(null)).Message,
+            StringComparison.Ordinal);
+        Assert.True(empty.IsEmpty);
+    }
+
+    /// <summary>
     /// A caps that arrives as the argument of a dynamically connected signal
     /// is the wrapper, and it is borrowed: keeping it means copying it.
     /// </summary>

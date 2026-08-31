@@ -429,16 +429,37 @@ public struct Value : IDisposable
     /// The wrapper of the value to store, or <see langword="null"/> to clear
     /// the value.
     /// </param>
+    /// <exception cref="InvalidOperationException">
+    /// The value does not already hold a boxed value, or it holds one of another
+    /// type than <paramref name="content"/>.
+    /// </exception>
     /// <remarks>
+    /// <para>
     /// The wrapper stays the caller's: what the value holds afterwards is a
     /// <c>g_boxed_copy</c> of what the wrapper owns, and disposing the wrapper
     /// does not reach it. This is the overload to prefer over
     /// <see cref="SetBoxed(nint)"/>, because it keeps the wrapper alive across
     /// the call — a handle read out of one leaves it collectable while the copy
     /// is still running, and its finalizer would free the value being copied.
+    /// </para>
+    /// <para>
+    /// The type of the value is checked, and the type of the content with it.
+    /// The second half is not a nicety:
+    /// <c>g_value_set_boxed</c> copies what it is given with the copy function
+    /// of the <b>value's</b> type, so a wrapper of another boxed type would be
+    /// handed to the wrong copy function and the result written into the field.
+    /// There is no warning from GLib on that path, only a corrupt value. The
+    /// raw <see cref="SetBoxed(nint)"/> carries no type and cannot ask.
+    /// </para>
     /// </remarks>
     public void SetBoxed(Boxed? content)
     {
+        Require(GType.Boxed);
+        if (content is not null)
+        {
+            RequireContent(content.BoxedType);
+        }
+
         GObjectNative.ValueSetBoxed(ref NativeValue, content?.Handle ?? nint.Zero);
         GC.KeepAlive(content);
     }
@@ -512,7 +533,12 @@ public struct Value : IDisposable
     /// The wrapper of the mini object to store, or <see langword="null"/> to
     /// clear the value.
     /// </param>
+    /// <exception cref="InvalidOperationException">
+    /// The value does not already hold a boxed value, or it holds one of another
+    /// type than <paramref name="content"/>.
+    /// </exception>
     /// <remarks>
+    /// <para>
     /// This is <see cref="SetBoxed(Boxed?)"/> for the other object model: a
     /// mini object is a boxed type as far as GObject is concerned, and its copy
     /// function is <c>gst_mini_object_ref</c>, so the value ends up holding a
@@ -520,9 +546,23 @@ public struct Value : IDisposable
     /// wrapper is kept alive across the call, so a mini object that nothing else
     /// holds cannot be unreferenced by a finalizer while the value is taking its
     /// reference.
+    /// </para>
+    /// <para>
+    /// The type of the content is checked for the reason
+    /// <see cref="SetBoxed(Boxed?)"/> states, and it matters more here: the copy
+    /// function of a mini object type is <c>gst_mini_object_ref</c>, which would
+    /// increment a word of a plain boxed value that is not a reference count at
+    /// all.
+    /// </para>
     /// </remarks>
     public void SetMiniObject(Gst.MiniObject? content)
     {
+        Require(GType.Boxed);
+        if (content is not null)
+        {
+            RequireContent(MiniObjectTypeOf(content.Handle));
+        }
+
         GObjectNative.ValueSetBoxed(ref NativeValue, content?.Handle ?? nint.Zero);
         GC.KeepAlive(content);
     }
@@ -711,6 +751,69 @@ public struct Value : IDisposable
     private readonly ref GValueNative AsMutable() => ref Unsafe.AsRef(in NativeValue);
 
     /// <summary>
+    /// Throws unless the value already holds the type that is about to be
+    /// written.
+    /// </summary>
+    /// <param name="expected">The type the setter writes.</param>
+    /// <exception cref="InvalidOperationException">
+    /// The value holds something else, or holds nothing at all.
+    /// </exception>
+    /// <remarks>
+    /// The question is <c>G_VALUE_HOLDS</c>: an exact match for a fundamental
+    /// type such as <c>G_TYPE_INT</c>, and derivation for the type families —
+    /// any boxed type holds against <c>G_TYPE_BOXED</c>. An uninitialised value
+    /// holds nothing and fails every one of them, and it is reported on its own:
+    /// it is not a value of the wrong type but a value with no type yet, which
+    /// is what a <c>default</c> value is. This is asked by the two setters whose
+    /// content carries a type of its own, so that the wrong wrapper is an
+    /// exception rather than a GLib critical and a value left as it was.
+    /// </remarks>
+    private readonly void Require(GType expected)
+    {
+        if (IsEmpty)
+        {
+            throw new InvalidOperationException(
+                "The value is not initialized; initialize it before the call.");
+        }
+
+        if (!Type.IsA(expected))
+        {
+            throw new InvalidOperationException(
+                $"A value that holds a {Type.Name} cannot be given a {expected.Name}. " +
+                "The type of a value is fixed when it is initialized; initialize a " +
+                "value of that type instead.");
+        }
+    }
+
+    /// <summary>
+    /// Throws unless the content a setter was handed is of the type the value
+    /// holds.
+    /// </summary>
+    /// <param name="actual">The type of the content.</param>
+    /// <exception cref="InvalidOperationException">The content is of another type.</exception>
+    /// <remarks>
+    /// This is the second half of the question for the two setters whose content
+    /// carries a type of its own. <see cref="Require"/> only asks whether the
+    /// value belongs to the family — every boxed type answers yes to
+    /// <c>G_TYPE_BOXED</c> — and that is as far as a setter of a scalar can go,
+    /// because an <see cref="int"/> carries no type. A wrapper does carry one,
+    /// and <c>g_value_set_boxed</c> copies whatever it is
+    /// given with the copy function registered for the type of the
+    /// <em>value</em>, so a mismatch is not a rejected write but a wrong
+    /// function over a foreign pointer.
+    /// </remarks>
+    private readonly void RequireContent(GType actual)
+    {
+        if (!actual.IsA(Type))
+        {
+            throw new InvalidOperationException(
+                $"A value that holds a {Type.Name} cannot be given a {actual.Name}. " +
+                "The content of a value has to be of the type the value already holds: " +
+                "it is copied with the copy function of that type.");
+        }
+    }
+
+    /// <summary>
     /// Reads the type out of a native mini object.
     /// </summary>
     /// <param name="handle">The mini object to inspect.</param>
@@ -722,8 +825,9 @@ public struct Value : IDisposable
     /// <see cref="TypeRegistry.TryCreateWrapper(GType, nint, Transfer, out object?)"/>
     /// documents from the other side. GStreamer offers the field through the
     /// <c>GST_MINI_OBJECT_TYPE</c> macro only, so it is read here.
-    /// It is <c>internal</c> because <see cref="ValueRef.SetMiniObject"/> asks
-    /// the same question of the wrapper it is handed.
+    /// It is <c>internal</c> because <see cref="SetMiniObject"/> and
+    /// <see cref="ValueRef.SetMiniObject"/> both ask the same question of the
+    /// wrapper they are handed.
     /// </remarks>
     internal static unsafe GType MiniObjectTypeOf(nint handle) =>
         handle == nint.Zero ? GType.Invalid : new GType(*(nuint*)handle);
