@@ -27,6 +27,7 @@
     <Project Path="samples/tutorials/BasicTutorial13/BasicTutorial13.csproj" />
   </Folder>
   <Folder Name="/src/">
+    <Project Path="src/GstSharp.Net.Allocators/GstSharp.Net.Allocators.csproj" />
     <Project Path="src/GstSharp.Net.Analyzers/GstSharp.Net.Analyzers.csproj" />
     <Project Path="src/GstSharp.Net.App/GstSharp.Net.App.csproj" />
     <Project Path="src/GstSharp.Net.Audio/GstSharp.Net.Audio.csproj" />

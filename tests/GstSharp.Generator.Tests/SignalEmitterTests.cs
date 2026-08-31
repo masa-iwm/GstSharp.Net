@@ -498,6 +498,7 @@ public sealed class SignalEmitterTests
     [InlineData("GstWebRTC", 7)]
     [InlineData("GstNet", 0)]
     [InlineData("GstRtsp", 1)]
+    [InlineData("GstAllocators", 0)]
     [InlineData("GES", 35)]
     public void TheSignalCensusIsStable(string module, int signals)
     {

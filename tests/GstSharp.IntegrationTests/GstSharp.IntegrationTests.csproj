@@ -32,6 +32,7 @@
     <ProjectReference Include="../../src/GstSharp.Net.Rtsp/GstSharp.Net.Rtsp.csproj" />
     <ProjectReference Include="../../src/GstSharp.Net.GES/GstSharp.Net.GES.csproj" />
     <ProjectReference Include="../../src/GstSharp.Net.Video/GstSharp.Net.Video.csproj" />
+    <ProjectReference Include="../../src/GstSharp.Net.Allocators/GstSharp.Net.Allocators.csproj" />
 
     <!-- Referenced, but never called into: the module sweep of
          GstSharp.Initialize is what has to put their types into the registry,

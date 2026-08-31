@@ -6,6 +6,7 @@
           "src": "../src",
           "files": [
             "GstSharp.Net/GstSharp.Net.csproj",
+            "GstSharp.Net.Allocators/GstSharp.Net.Allocators.csproj",
             "GstSharp.Net.App/GstSharp.Net.App.csproj",
             "GstSharp.Net.Audio/GstSharp.Net.Audio.csproj",
             "GstSharp.Net.Base/GstSharp.Net.Base.csproj",

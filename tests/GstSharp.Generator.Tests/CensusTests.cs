@@ -27,6 +27,7 @@ public sealed class CensusTests
     [InlineData("GstSdp", 0, 21, 0, 13, 0, 0, 0, 7, 12)]
     [InlineData("GstRtsp", 0, 13, 1, 10, 5, 1, 0, 1, 32)]
     [InlineData("GstWebRTC", 9, 13, 0, 23, 0, 1, 0, 0, 2)]
+    [InlineData("GstAllocators", 5, 6, 1, 0, 1, 0, 0, 5, 9)]
     [InlineData("GES", 55, 111, 2, 9, 4, 10, 1, 19, 19)]
     [InlineData("GLib", 0, 79, 0, 39, 22, 56, 14, 131, 689)]
     [InlineData("GObject", 30, 29, 1, 0, 8, 34, 3, 15, 185)]
@@ -71,6 +72,7 @@ public sealed class CensusTests
     [InlineData("GstSdp", 0)]
     [InlineData("GstRtsp", 1)]
     [InlineData("GstWebRTC", 12)]
+    [InlineData("GstAllocators", 0)]
     [InlineData("GES", 39)]
     public void SignalCensusIsStable(string name, int signals)
     {
@@ -98,8 +100,8 @@ public sealed class CensusTests
         // letters come first.
         string[] expected =
         [
-            "GES", "GLib", "GModule", "GObject", "Gio", "Gst", "GstApp", "GstAudio", "GstBase", "GstNet",
-            "GstPbutils", "GstRtsp", "GstSdp", "GstVideo", "GstWebRTC",
+            "GES", "GLib", "GModule", "GObject", "Gio", "Gst", "GstAllocators", "GstApp", "GstAudio", "GstBase",
+            "GstNet", "GstPbutils", "GstRtsp", "GstSdp", "GstVideo", "GstWebRTC",
         ];
 
         Assert.Equal(expected, GirFixture.Repository.Namespaces.Select(static ns => ns.Name).ToArray());

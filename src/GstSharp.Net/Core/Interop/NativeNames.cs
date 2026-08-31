@@ -179,6 +179,11 @@ internal static class NativeNames
                 "libgstrtsp-1.0.0.dylib",
                 "gstrtsp-1.0-0.dll",
                 "libgstrtsp-1.0-0.dll"),
+            ["GstAllocators"] = new(
+                "libgstallocators-1.0.so.0",
+                "libgstallocators-1.0.0.dylib",
+                "gstallocators-1.0-0.dll",
+                "libgstallocators-1.0-0.dll"),
 
             // The editing services are the one module whose file name does not
             // start with "gst": the library is libges, not libgstges, which is

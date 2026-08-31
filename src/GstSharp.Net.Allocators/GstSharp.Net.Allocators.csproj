@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>Gst.Allocators</RootNamespace>
+    <Description>GstAllocators for GstSharp.Net: file descriptor, DMA-BUF, shared memory and DRM dumb allocators.</Description>
+
+    <!-- No version of this package is on nuget.org yet, so there is no
+         baseline for the API compatibility check to download and it would fail
+         on the missing package rather than on an API change. This stays until
+         the first release has shipped and the package validation baseline has
+         been bumped; remove it after the next patch release. -->
+    <EnablePackageValidation>false</EnablePackageValidation>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../GstSharp.Net/GstSharp.Net.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The ABI probes of the integration tests read the raw mirrors of this
+         module, which are internal: nothing outside the binding has a reason
+         to know the native layout of a record. -->
+    <InternalsVisibleTo Include="GstSharp.IntegrationTests" />
+  </ItemGroup>
+
+</Project>

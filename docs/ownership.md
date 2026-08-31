@@ -585,6 +585,15 @@ notification runs *synchronously* when the slot is written again, so replacing
 one releases the previous state on the calling thread, and `GetUserData` answers
 the binding's own handle rather than something to dereference.
 
+**A file descriptor handed to `Gst.Allocators` is lent the same way, and by
+default it is not lent but given**: `FdAllocator.Alloc`, `FdAllocator.AllocFull`
+and `DmaBufAllocator.AllocWithFlags` close the descriptor when the last
+reference of the memory goes, unless `FdMemoryFlags.DontClose` says to leave it
+alone — which is what a descriptor a `SafeHandle` still owns needs.
+`DmaBufAllocator.Alloc` takes no flags and always closes, so a descriptor to
+keep has to go through `AllocWithFlags`. An allocation that answers `null`,
+which is every one of them on Windows, never took the descriptor at all.
+
 ### `CallAsync` on an element
 
 `Gst.Object.CallAsync` and `Gst.Element.CallAsync` are overloads that differ by
