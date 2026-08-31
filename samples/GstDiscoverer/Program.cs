@@ -17,14 +17,12 @@
 //
 //   -a runs the same discoveries from a GMainLoop and collects them through the
 //   "discovered" signal, which hands the handler a GstDiscovererInfo and a
-//   GError. A GError argument is the one signal shape the binding's signal
-//   planner does not marshal yet, so GstPbutils.Discoverer::discovered is in
-//   girs/skip-report.md under UnsupportedSignature. DiscoverUriAsync, Start,
-//   Stop and the Finished event are all bound, and all useless without the
-//   signal that carries the result -- so -a is absent rather than half done.
-//   The same planner feature also unblocks GES.Project::error-loading-asset and
-//   GES.DiscovererManager::discovered, which is why it is a feature and not a
-//   patch to this sample.
+//   GError. That signal is bound: samples/tutorials/BasicTutorial09 drives the
+//   asynchronous path end to end, and
+//   tests/GstSharp.IntegrationTests/DiscovererDiscoveredSignalTests.cs pins the
+//   borrowed GError the handler is handed. -a is left out because this port is
+//   the synchronous half of the tool, and a second, main-loop driven path here
+//   would only repeat what that tutorial already shows.
 //
 // What is deliberately different, and why:
 //
@@ -42,15 +40,18 @@
 //     printed by the C tool and not by this one. And an unplayable URI scheme,
 //     which the C tool reports as "Missing plugins" followed by the installer
 //     detail of the missing element, is reported here as the error message that
-//     came with it -- so the branch that would print those details is not
-//     reachable in practice, which is just as well:
-//     gst_discoverer_info_get_missing_elements_installer_details returns a
-//     gchar** and is not bound either. A result that arrives without an error
-//     message on the bus is returned normally and is reported line for line.
+//     came with it -- so the branch that would print those details is out of
+//     reach here. This port stops at the "Missing plugins" headline and does
+//     not walk gst_discoverer_info_get_missing_elements_installer_details,
+//     which is bound but unused: the error path releases the information
+//     object, so there is none left to ask. A result that arrives without an
+//     error message on the bus is returned normally and is reported line for
+//     line.
 //
 //   * Caps printed without --verbose keep their buffers. The C caps_to_string
 //     strips every field holding a GstBuffer first, through
-//     gst_structure_filter_and_map_in_place_id_str, which is not bound. The
+//     gst_structure_filter_and_map_in_place_id_str, which is bound but is not
+//     used here -- the stripping was never ported. The
 //     branch is only reachable for caps that are not fixed -- fixed caps are
 //     printed as a codec description instead, and --verbose turns the stripping
 //     off in the C tool too -- so nothing in a normal run differs.

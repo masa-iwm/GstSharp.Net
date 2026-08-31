@@ -18,10 +18,13 @@ namespace GstSharp.IntegrationTests;
 /// </summary>
 /// <remarks>
 /// <para>
-/// The signal is emitted on the main context that was thread default when the
-/// discoverer was constructed (gstdiscoverer.c:2515-2526), so both tests push a
-/// context of their own before they build one and iterate it afterwards. That
-/// keeps the emission on the test thread and needs no loop of its own.
+/// The signal is emitted on the main context that was thread default when
+/// <c>gst_discoverer_start</c> ran, not when the discoverer was constructed:
+/// the start is what reads the thread default, attaches the bus watch to it
+/// and keeps a reference (gstdiscoverer.c:2515-2526). Both tests therefore
+/// push a context of their own before they call <c>Start()</c> and iterate it
+/// afterwards. That keeps the emission on the test thread and needs no loop of
+/// its own.
 /// </para>
 /// <para>
 /// Every member here is 1.24 or older, so no availability gate is needed. The
@@ -110,8 +113,6 @@ public sealed class DiscovererDiscoveredSignalTests
         context.PushThreadDefault();
         try
         {
-            // Constructed under the pushed context, which is the one the
-            // emission is delivered on.
             using Discoverer discoverer = Discoverer.New(ClockTime.FromSeconds(10));
 
             void OnDiscovered(object? sender, Discoverer.DiscoveredSignalArgs args)
@@ -124,6 +125,9 @@ public sealed class DiscovererDiscoveredSignalTests
             discoverer.Discovered += OnDiscovered;
             try
             {
+                // Start() is the call that has to run under the pushed
+                // context: it takes the thread default and delivers the
+                // emission on it.
                 discoverer.Start();
                 Assert.True(discoverer.DiscoverUriAsync(uri));
 

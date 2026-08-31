@@ -78,12 +78,11 @@ internal sealed partial class Discovery
                 // The C tool follows this with one indented line per installer
                 // detail, out of
                 // gst_discoverer_info_get_missing_elements_installer_details.
-                // That call returns a gchar** and is not bound (see
-                // girs/skip-report.md, GstPbutils/UnsupportedSignature), so the
-                // headline is all this could print — and it does not get that
-                // far in the case that was measured, an unhandled URI scheme,
-                // because that one posts an error on the bus and arrives as an
-                // exception. See the remarks on Analyze.
+                // That call is bound, but those lines are not ported, so the
+                // headline is all this prints. An unhandled URI scheme, the
+                // usual way to reach this result, does not get here at all: it
+                // posts an error on the bus and arrives as an exception
+                // instead. See the remarks on Analyze.
                 Console.WriteLine("Missing plugins");
                 break;
 
@@ -525,14 +524,14 @@ internal sealed partial class Discovery
     /// <param name="caps">The caps to print.</param>
     /// <returns>The <c>gst_caps_to_string</c> spelling.</returns>
     /// <remarks>
-    /// The C <c>caps_to_string</c> has a second half that this cannot reach:
+    /// The C <c>caps_to_string</c> has a second half that this does not port:
     /// without <c>--verbose</c> it copies the caps and strips every field whose
     /// value is a <c>GstBuffer</c>, so that a codec_data blob does not fill the
     /// screen. That filter is <c>gst_structure_filter_and_map_in_place_id_str</c>,
-    /// which is not bound (see <c>girs/skip-report.md</c>, Gst /
-    /// UnsupportedSignature), so caps printed without <c>--verbose</c> keep
-    /// their buffers here. It is reachable in one case only: caps that are not
-    /// fixed, because fixed ones are printed as a codec description instead and
+    /// which is bound but is not used here, so caps printed without
+    /// <c>--verbose</c> keep their buffers. It is reachable in one case only:
+    /// caps that are not fixed, because fixed ones are printed as a codec
+    /// description instead and
     /// <c>--verbose</c> turns the stripping off in the C tool as well.
     /// </remarks>
     private static string CapsToString(Caps caps) => caps.ToString();
