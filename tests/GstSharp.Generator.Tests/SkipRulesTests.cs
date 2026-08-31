@@ -188,6 +188,13 @@ public sealed class SkipRulesTests
         // of a loaded factory can answer, so
         // Gst.ElementFactory.MakeWithProperties and .CreateWithProperties ask it
         // and build the two arrays by hand.
+        // The transcoder pair is the newest: gst_transcoder_message_parse_error
+        // and gst_transcoder_message_parse_warning read a details field that
+        // the transcoder does not attach to the errors it raises itself, and
+        // the macro they read their fields through calls g_error() on a miss,
+        // which aborts the process. Both are hand written in
+        // Gst.Transcoder.TranscoderMessageExtensions instead, where a message
+        // with no details answers null.
         // The two type entries at the head are callback types whose delegate is
         // written by hand: a hand bound consumer keeps its callback type
         // generated, and these two are the ones whose hand written declaration
@@ -290,6 +297,8 @@ public sealed class SkipRulesTests
                 "gst_toc_append_entry",
                 "gst_toc_entry_append_sub_entry",
                 "gst_tracing_register_hook",
+                "gst_transcoder_message_parse_error",
+                "gst_transcoder_message_parse_warning",
                 "gst_type_find_peek",
                 "gst_util_array_binary_search",
                 "gst_value_compare",
@@ -382,6 +391,8 @@ public sealed class SkipRulesTests
                 "gst_tag_list_add_value",
                 "gst_tag_list_copy_value",
                 "gst_tag_list_get_value_index",
+                "gst_transcoder_message_parse_error",
+                "gst_transcoder_message_parse_warning",
                 "gst_type_find_peek",
                 "gst_value_compare",
                 "gst_value_serialize",

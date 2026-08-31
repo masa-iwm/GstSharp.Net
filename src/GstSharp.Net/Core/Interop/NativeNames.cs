@@ -189,6 +189,11 @@ internal static class NativeNames
                 "libgsttag-1.0.0.dylib",
                 "gsttag-1.0-0.dll",
                 "libgsttag-1.0-0.dll"),
+            ["GstTranscoder"] = new(
+                "libgsttranscoder-1.0.so.0",
+                "libgsttranscoder-1.0.0.dylib",
+                "gsttranscoder-1.0-0.dll",
+                "libgsttranscoder-1.0-0.dll"),
 
             // The editing services are the one module whose file name does not
             // start with "gst": the library is libges, not libgstges, which is

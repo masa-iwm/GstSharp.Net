@@ -185,7 +185,12 @@ internal sealed class MarshalPlanner
     /// </summary>
     /// <param name="PublicType">The fully qualified C# type of the wrapper.</param>
     /// <param name="Flavor">The wrap flavour of a handle of the type.</param>
-    private sealed record RuntimeHandle(string PublicType, HandleFlavor Flavor);
+    /// <param name="BorrowedOnly">
+    /// <see langword="true"/> for a wrapper that carries its <c>Handle</c> and
+    /// nothing else, which is usable in the in argument position of a call this
+    /// code makes and in no other position; see <see cref="PlanHandle"/>.
+    /// </param>
+    private sealed record RuntimeHandle(string PublicType, HandleFlavor Flavor, bool BorrowedOnly = false);
 
     /// <summary>
     /// The qualified name of <c>GParamSpec</c>, which is a fundamental type of
@@ -224,6 +229,23 @@ internal sealed class MarshalPlanner
         ["GObject.ValueArray"] = new("Gst.GObject.ValueArray", HandleFlavor.Wrapper),
         [ParamSpecType] = new("Gst.GObject.ParamSpec", HandleFlavor.ParamSpec),
         ["GLib.DateTime"] = new("Gst.GLib.DateTime", HandleFlavor.Wrapper),
+
+        // The one consumer in the vendored girs is
+        // gst_transcoder_get_signal_adapter, which takes a nullable const
+        // GMainContext* and gives nothing back, so only the argument half of
+        // the entry is exercised: the wrapper carries the Handle a call site
+        // reads and the KeepAlive the epilogue emits. It carries nothing else -
+        // no typed FromNative to adopt a handle the binding is handed with, and
+        // no BoxedType for the copy a consumed argument is minted from - so the
+        // entry is borrowed only in the in argument position of a call this
+        // code makes, and every other position is refused rather than emitted:
+        // a returned, out or transferred handle as an UnsupportedSignature
+        // skip, and an inbound one - a parameter of a signal or of a callback,
+        // which a trampoline would have to wrap - by taking its signal or its
+        // callback with it. The fixtures of GLibMainContextRuntimeTypeTests are
+        // what keeps both halves alive, since no vendored gir reaches them.
+        ["GLib.MainContext"] = new("Gst.GLib.MainContext", HandleFlavor.Wrapper, BorrowedOnly: true),
+
         ["Gio.Cancellable"] = new("Gst.Gio.Cancellable", HandleFlavor.GObject),
         ["Gio.Socket"] = new("Gst.Gio.Socket", HandleFlavor.GObject),
         ["Gio.SocketAddress"] = new("Gst.Gio.SocketAddress", HandleFlavor.GObject),
@@ -1859,6 +1881,13 @@ internal sealed class MarshalPlanner
     /// Whether the caller provides the storage of an out parameter, which only
     /// a plain struct can do.
     /// </param>
+    /// <param name="inbound">
+    /// Whether the value travels from native code into managed code because a
+    /// trampoline is handed it: a parameter of a signal or of a callback. Such
+    /// an argument is passed <c>In</c> and usually transfers nothing, exactly
+    /// as an argument this code passes to a call does, so the two are told
+    /// apart by this flag alone.
+    /// </param>
     /// <returns>The plan, or <see langword="null"/> when the type is not supported.</returns>
     private ArgumentPlan? PlanScalar(
         GirTypeRef type,
@@ -1871,7 +1900,8 @@ internal sealed class MarshalPlanner
         bool isReturn = false,
         bool callerAllocates = false,
         bool booleanCallee = false,
-        bool redirectedDestination = false)
+        bool redirectedDestination = false,
+        bool inbound = false)
     {
         bool byPointer = direction != ArgumentDirection.In;
         string pointerSuffix = byPointer ? "*" : string.Empty;
@@ -2007,7 +2037,8 @@ internal sealed class MarshalPlanner
                     isReturn,
                     callerAllocates,
                     booleanCallee,
-                    redirectedDestination);
+                    redirectedDestination,
+                    inbound);
 
             case MarshalKind.PlainStruct:
                 if (mapped.Symbol is not { } record || !IsEmitted(record))
@@ -2252,7 +2283,8 @@ internal sealed class MarshalPlanner
         bool isReturn,
         bool callerAllocates,
         bool booleanCallee = false,
-        bool redirectedDestination = false)
+        bool redirectedDestination = false,
+        bool inbound = false)
     {
         if (mapped.Symbol is not { } symbol || UnusableTypes.Contains(mapped.PublicType))
         {
@@ -2265,6 +2297,37 @@ internal sealed class MarshalPlanner
         {
             flavor = runtimeType.Flavor;
             publicType = runtimeType.PublicType;
+
+            // A borrowed only wrapper has the Handle a call site reads and
+            // none of the members the other positions name: a handle the
+            // binding is handed - returned, written to an out parameter, or
+            // received by a trampoline - is adopted through the typed
+            // FromNative of the wrapper, and a transferred in parameter is
+            // minted with BoxedCopy off its BoxedType. All of them would be
+            // emitted as text naming a member that does not exist, which is a
+            // compile error in the shipped tree rather than a skip, so every
+            // position but the borrowed in argument is refused here.
+            if (runtimeType.BorrowedOnly)
+            {
+                // An inbound position is refused through null rather than
+                // through Reject, which is the route PlanSignalArgument and
+                // PlanCallbackCore already take for everything they cannot
+                // project: the signal is then skipped by TryPlanSignal under
+                // its own reason and the callback takes its consumer with it,
+                // while a Reject would file the rejection against whichever
+                // callable happens to be in flight.
+                if (inbound)
+                {
+                    return null;
+                }
+
+                if (isReturn
+                    || direction != ArgumentDirection.In
+                    || transfer is GirTransfer.Full or GirTransfer.Floating)
+                {
+                    return Reject(SkipReason.UnsupportedSignature);
+                }
+            }
         }
         else if (!IsEmitted(symbol))
         {
@@ -3266,7 +3329,8 @@ internal sealed class MarshalPlanner
                 ArgumentDirection.In,
                 parameter.Transfer,
                 NullableOf(callback, parameter),
-                context);
+                context,
+                inbound: true);
 
             // A GValue a callback is handed points into storage that the
             // caller of the callback owns and keeps, which the owning
@@ -3462,7 +3526,8 @@ internal sealed class MarshalPlanner
             ArgumentDirection.In,
             parameter.Transfer,
             nullable,
-            context);
+            context,
+            inbound: true);
 
         if (argument is null
             || argument.Kind is not (ArgumentKind.Value or ArgumentKind.Boolean or ArgumentKind.Enumeration

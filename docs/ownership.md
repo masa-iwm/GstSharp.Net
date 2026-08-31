@@ -444,7 +444,15 @@ Four shapes reach the surface, and each says who frees what.
   `Gst.Message.ParseError()`, `ParseWarning()` and `ParseInfo()` answer a
   tuple of the exception and the debug string, and the `GError` the C function
   transferred is freed inside the member. Nothing is left for the caller to
-  release.
+  release. `Gst.Transcoder.TranscoderMessageExtensions.ParseError()` and
+  `ParseWarning()` are the same shape in another form: they answer the
+  exception as an `out Gst.GLib.GException`, and beside it the `issue-details`
+  of the message as an `out Gst.Structure?` that is a copy of the caller's own
+  and is disposed like any other boxed wrapper — `null` when the message
+  carries none, which is every error the transcoder raises itself rather than
+  forwards from the bus of its pipeline. The
+  `GError` is not the caller's there either: it is read out of a `GValue` copy
+  of the field, which releases it.
 
 ## Properties without a C accessor
 

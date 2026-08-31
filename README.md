@@ -213,6 +213,7 @@ never end up with half an MSVC and half a MinGW GStreamer.
 | `samples/GstDeviceMonitor` | A port of `gst-device-monitor-1.0`: `DeviceMonitor` with the `DEVICE_CLASSES[:FILTER_CAPS]` filters, the device listing with caps and properties, and `--follow` for hotplug — all of it as messages on the monitor's bus, polled rather than watched from a main loop. Its header comment lists the shell-quoting and property-enumeration parts of the C tool that the binding cannot reach yet. | `dotnet run --project samples/GstDeviceMonitor` |
 | `samples/GstDiscoverer` | A port of `gst-discoverer-1.0`, synchronous path: `DiscoverUri` per URI, the result and duration, the topology walk with its container recursion, the per-stream blocks for audio, video and subtitles, `--verbose` tags and `--toc`. Its output is byte for byte the C tool's on generated media; its header comment says why `-a` is absent and what a failed discovery cannot report. | `dotnet run --project samples/GstDiscoverer -- <file-or-uri>` |
 | `samples/GstInspect` | A partial port of `gst-inspect-1.0`: the registry census, and the element page as far as the bound surface reaches — factory and plugin details, the type hierarchy, pad templates with their caps, URI handling and the property listing. Every page ends with a note naming the sections it does not print, and its header says what each of them would need. | `dotnet run --project samples/GstInspect -- fakesink` |
+| `samples/GstTranscode` | Transcoding one URI into another against a serialized `GstEncodingProfile`, on the route the transcoder documents as the recommended one: `RunAsync` plus a polled API bus, with no main loop and no signal adapter. It is also where the hand-written `ParseError` earns its keep — the imported one aborts the process on an error that carries no details. | `dotnet run --project samples/GstTranscode -- file:///in.ogg file:///out.ogg` |
 | `samples/AotSmoke` | The NativeAOT gate: initialise, make an element, release it, with zero trimming warnings. | `dotnet publish samples/AotSmoke -r win-x64 -c Release /p:PublishAot=true` |
 
 `PlaybinPlayer` and `AppSinkSpans` also take `--native-path <directory>`,
@@ -227,6 +228,13 @@ unattended, or so that what the port cannot do stays visible:
 non-zero exit code, `GstDiscoverer --fail-on-error` does the same for a URI
 that could not be discovered, and `GstInspect --no-coverage-note` takes the
 closing note off a page that is being diffed against the C tool's.
+
+`GstTranscode` takes no option of its own: it is `<src-uri> <dst-uri>
+[<profile>]`, where the profile defaults to `application/ogg:audio/x-vorbis`.
+It needs the `uritranscodebin` and `transcodebin` elements of the `transcode`
+plugin of gst-plugins-bad at run time, which ship separately from the
+`libgsttranscoder-1.0` library the module imports from; without them the
+sample says so and stops rather than reporting a transcoding failure.
 
 ### The official tutorials
 

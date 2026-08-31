@@ -1055,6 +1055,7 @@ public sealed class RecordEmitterTests
     [InlineData("GstSharp.Net.Rtsp", 18)]
     [InlineData("GstSharp.Net.Allocators", 9)]
     [InlineData("GstSharp.Net.Tag", 6)]
+    [InlineData("GstSharp.Net.Transcoder", 8)]
     [InlineData("GstSharp.Net.GES", 66)]
     public void EveryModuleEmitsItsOwnFiles(string projectDirectory, int count)
     {

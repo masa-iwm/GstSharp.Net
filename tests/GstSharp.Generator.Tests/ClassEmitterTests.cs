@@ -183,6 +183,7 @@ public sealed class ClassEmitterTests
     [InlineData("GstRtsp", 1, 10, 1, 1, 2, 114, 0, 1, 14)]
     [InlineData("GstAllocators", 6, 0, 1, 0, 0, 23, 1, 0, 0)]
     [InlineData("GstTag", 3, 0, 1, 0, 0, 46, 0, 0, 0)]
+    [InlineData("GstTranscoder", 2, 0, 0, 0, 3, 26, 9, 6, 0)]
     [InlineData("GES", 56, 2, 2, 0, 3, 379, 77, 35, 7)]
     public void TheEmissionCensusIsStable(
         string module,
@@ -226,6 +227,7 @@ public sealed class ClassEmitterTests
     [InlineData("GstRtsp", 0, 13, 0, 0, 13, 0)]
     [InlineData("GstAllocators", 0, 0, 0, 0, 1, 0)]
     [InlineData("GstTag", 0, 0, 0, 0, 0, 0)]
+    [InlineData("GstTranscoder", 0, 7, 0, 0, 0, 0)]
     [InlineData("GES", 6, 3, 4, 10, 16, 2)]
     public void TheSkipCensusIsStable(
         string module,
@@ -470,7 +472,7 @@ public sealed class ClassEmitterTests
         // Gst.ValueTable to GstSdp.MIKEYPayloadT, now read their fields through
         // a mirror and are therefore emitted with the unsafe modifier the
         // counting here keys on.
-        Assert.Equal(158, classes);
+        Assert.Equal(160, classes);
         Assert.Equal(122, records);
     }
 
@@ -593,6 +595,7 @@ public sealed class ClassEmitterTests
     [InlineData("GstRtsp", 16)]
     [InlineData("GstAllocators", 0)]
     [InlineData("GstTag", 0)]
+    [InlineData("GstTranscoder", 0)]
     [InlineData("GES", 1)]
     [InlineData("GstApp", 0)]
     [InlineData("GstPbutils", 0)]
@@ -790,12 +793,14 @@ public sealed class ClassEmitterTests
     /// report; the same holds for the hand bound ones, where
     /// gst_meta_api_type_aggregate_params, gst_meta_register_custom,
     /// gst_tag_list_copy_value, gst_audio_buffer_map, gst_video_frame_map,
-    /// gst_video_frame_map_id and gst_rtsp_transport_parse are declared twice.
-    /// That is the whole of the difference: Gst counts 50 hand bound
-    /// declarations against the 47 symbols of the report, GstAudio 5 against 4,
-    /// GstVideo 6 against 4 and GstRtsp 2 against 1, and every other module
-    /// counts the same on both sides. All seven are on the skip list, so both
-    /// of their declarations are rejected as an overlay skip and the ledger
+    /// gst_video_frame_map_id, gst_rtsp_transport_parse,
+    /// gst_transcoder_message_parse_error and
+    /// gst_transcoder_message_parse_warning are declared twice. That is the
+    /// whole of the difference: Gst counts 50 hand bound declarations against
+    /// the 47 symbols of the report, GstAudio 5 against 4, GstVideo 6 against
+    /// 4, GstRtsp 2 against 1 and GstTranscoder 4 against 2, and every other
+    /// module counts the same on both sides. All nine are on the skip list, so
+    /// both of their declarations are rejected as an overlay skip and the ledger
     /// claims both; a twin that is only kept out by its own moved-to is left
     /// under MovedTo instead, which is what lets GEN0023 see a ledger entry on
     /// a generated symbol.</param>
@@ -820,6 +825,7 @@ public sealed class ClassEmitterTests
     [InlineData("GstRtsp", 7, 0, 3, 0, 0, 0, 2)]
     [InlineData("GstAllocators", 0, 0, 0, 0, 0, 0, 0)]
     [InlineData("GstTag", 0, 0, 0, 0, 0, 0, 0)]
+    [InlineData("GstTranscoder", 0, 0, 0, 0, 0, 0, 4)]
     [InlineData("GES", 2, 0, 1, 0, 0, 2, 6)]
     public void TheRejectionCensusIsStable(
         string module,
@@ -870,6 +876,7 @@ public sealed class ClassEmitterTests
     [InlineData("GstRtsp", "GstSharp.Net.Rtsp")]
     [InlineData("GstAllocators", "GstSharp.Net.Allocators")]
     [InlineData("GstTag", "GstSharp.Net.Tag")]
+    [InlineData("GstTranscoder", "GstSharp.Net.Transcoder")]
     [InlineData("GES", "GstSharp.Net.GES")]
     public void EveryModuleEmitsItsOwnTypeTable(string module, string projectDirectory)
     {

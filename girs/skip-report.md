@@ -873,6 +873,23 @@ disappears shows up here as an added line.
 - `gst_mikey_payload_sp_get_param`
 - `gst_mikey_payload_t_set`
 
+## GstTranscoder
+
+### HandBound (2)
+
+- `gst_transcoder_message_parse_error`
+- `gst_transcoder_message_parse_warning`
+
+### MovedTo (7)
+
+- `gst_transcoder_error_get_name`
+- `gst_transcoder_error_quark`
+- `gst_transcoder_message_get_name`
+- `gst_transcoder_message_parse_duration`
+- `gst_transcoder_message_parse_position`
+- `gst_transcoder_message_parse_state`
+- `gst_transcoder_state_get_name`
+
 ## GstVideo
 
 ### HandBound (4)

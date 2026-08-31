@@ -49,6 +49,7 @@ public sealed class ModuleRegistrationTests
         "GstSharp.Net.Rtsp",
         "GstSharp.Net.Allocators",
         "GstSharp.Net.Tag",
+        "GstSharp.Net.Transcoder",
         "GstSharp.Net.GES",
 
         // The hand-written module of docs/modules.md registers the same way,
@@ -71,6 +72,7 @@ public sealed class ModuleRegistrationTests
         "GstRtsp",
         "GstAllocators",
         "GstTag",
+        "GstTranscoder",
         "GES",
         "GstController",
     ];

@@ -14,6 +14,7 @@
     <Project Path="samples/GstDiscoverer/GstDiscoverer.csproj" />
     <Project Path="samples/GstInspect/GstInspect.csproj" />
     <Project Path="samples/GstLaunch/GstLaunch.csproj" />
+    <Project Path="samples/GstTranscode/GstTranscode.csproj" />
     <Project Path="samples/GstTypefind/GstTypefind.csproj" />
     <Project Path="samples/PlaybinPlayer/PlaybinPlayer.csproj" />
   </Folder>
@@ -39,6 +40,7 @@
     <Project Path="src/GstSharp.Net.Rtsp/GstSharp.Net.Rtsp.csproj" />
     <Project Path="src/GstSharp.Net.Sdp/GstSharp.Net.Sdp.csproj" />
     <Project Path="src/GstSharp.Net.Tag/GstSharp.Net.Tag.csproj" />
+    <Project Path="src/GstSharp.Net.Transcoder/GstSharp.Net.Transcoder.csproj" />
     <Project Path="src/GstSharp.Net.Video/GstSharp.Net.Video.csproj" />
     <Project Path="src/GstSharp.Net.WebRTC/GstSharp.Net.WebRTC.csproj" />
     <Project Path="src/GstSharp.Net/GstSharp.Net.csproj" />

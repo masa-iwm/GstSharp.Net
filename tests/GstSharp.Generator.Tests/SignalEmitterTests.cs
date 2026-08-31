@@ -500,6 +500,7 @@ public sealed class SignalEmitterTests
     [InlineData("GstRtsp", 1)]
     [InlineData("GstAllocators", 0)]
     [InlineData("GstTag", 0)]
+    [InlineData("GstTranscoder", 6)]
     [InlineData("GES", 35)]
     public void TheSignalCensusIsStable(string module, int signals)
     {
@@ -532,26 +533,27 @@ public sealed class SignalEmitterTests
             removers += file.Content.Split("    public static void Remove").Length - 1;
         }
 
-        // Eighty three signals are emitted over the eleven modules. Seventy
-        // nine are events of a class; the remaining four belong to a gir
+        // Eighty nine signals are emitted over the fourteen modules. Eighty
+        // five are events of a class; the remaining four belong to a gir
         // interface and are a pair of extension methods instead. The editing
         // services are thirty five of them, and all thirty five are events:
         // the one signal of a GES interface, GESMetaContainer::notify-meta,
-        // carries a GValue and is not bound. The adder and remover counts carry
-        // matches that are not a signal pair at all: Gst.ITagSetter's
-        // AddTagValue extension, and the AddAllSchemas, AddSchema,
-        // RemoveAllSchemas and RemoveSchema extensions of
+        // carries a GValue and is not bound. The six of the transcoder are the
+        // signals of GstTranscoderSignalAdapter, which is a class as well. The
+        // adder and remover counts carry matches that are not a signal pair at
+        // all: Gst.ITagSetter's AddTagValue extension, and the AddAllSchemas,
+        // AddSchema, RemoveAllSchemas and RemoveSchema extensions of
         // Gst.Tag.ITagXmpWriter, methods whose names the pattern cannot tell
         // from a subscription adder or remover.
-        Assert.Equal(79, events);
+        Assert.Equal(85, events);
         Assert.Equal(7, adders);
         Assert.Equal(6, removers);
-        Assert.Equal(83, trampolines);
+        Assert.Equal(89, trampolines);
 
         string[] withSignals =
         [
             "GstSharp.Net", "GstSharp.Net.Base", "GstSharp.Net.App", "GstSharp.Net.Video", "GstSharp.Net.Pbutils",
-            "GstSharp.Net.WebRTC", "GstSharp.Net.Rtsp", "GstSharp.Net.GES",
+            "GstSharp.Net.WebRTC", "GstSharp.Net.Rtsp", "GstSharp.Net.Transcoder", "GstSharp.Net.GES",
         ];
 
         foreach (string module in withSignals)

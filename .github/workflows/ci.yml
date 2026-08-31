@@ -199,12 +199,14 @@ jobs:
 
       # GSTSHARP_REQUIRED_ELEMENTS is the promise this leg makes about its
       # installation, and RequiredElementsTests is what holds it to it: these
-      # seven factories are the ones the tests gate on with RequiresElementFact
+      # nine factories are the ones the tests gate on with RequiresElementFact
       # that only a plugin set this leg installs on purpose provides — three for WebRTC,
       # audiomixer for the only boxed valued property the integration suite
       # writes, theoraenc and vorbisenc for the two encoders whose set_headers
-      # hands a list over, and theoradec for the decoder the VideoCodecFrame
-      # user data tests borrow a frame from — so the day
+      # hands a list over, theoradec for the decoder the VideoCodecFrame
+      # user data tests borrow a frame from, and uritranscodebin with
+      # transcodebin for the transcode plugin the GstTranscoder tests build
+      # their transcoder out of — so the day
       # gstreamer1.0-plugins-bad, gstreamer1.0-nice or
       # gstreamer1.0-plugins-base stops providing one of them this step turns
       # red instead of quietly downgrading those tests to skips. The variable
@@ -213,7 +215,7 @@ jobs:
       # that installs the plugins.
       - name: Test against the installation
         env:
-          GSTSHARP_REQUIRED_ELEMENTS: webrtcbin,nicesrc,dtlssrtpenc,audiomixer,theoraenc,theoradec,vorbisenc
+          GSTSHARP_REQUIRED_ELEMENTS: webrtcbin,nicesrc,dtlssrtpenc,audiomixer,theoraenc,theoradec,vorbisenc,uritranscodebin,transcodebin
         run: dotnet test tests/GstSharp.IntegrationTests --no-restore --logger "trx;LogFileName=integration.trx" --results-directory artifacts/test-results
 
       # The whole consumer path without AOT: parse a pipeline, cast the sink
