@@ -67,11 +67,14 @@ namespace Gst.Tag;
 /// programming error the two sides report differently: the writer asserts and
 /// aborts the process — the assertion is ahead of the test for tags this IFD
 /// can hold, so even an empty tag list aborts — while the reader logs a
-/// critical and answers <see langword="null"/>. The binding does not guard the
-/// value, because a guard would have to replace the generated call and the C
-/// behaviour is what the rest of the surface reports. The two
-/// with-tiff-header conversions read the byte order from the header, or write
-/// it into one, and take no such argument.
+/// critical and answers <see langword="null"/>. In a GStreamer built with the
+/// GLib assertions compiled out (<c>-Dglib_assert=false</c>) the writer does
+/// not abort at all: it warns and falls back to the byte order of the host, so
+/// the same call answers a buffer rather than ending the process. The binding
+/// does not guard the value, because a guard would have to replace the
+/// generated call and the C behaviour is what the rest of the surface
+/// reports. The two with-tiff-header conversions read the byte order from the
+/// header, or write it into one, and take no such argument.
 /// </para>
 /// <para>
 /// <strong><see cref="TagGlobal.TagListNewFromId3v1"/> needs exactly 128

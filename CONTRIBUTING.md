@@ -26,7 +26,7 @@ installation section of the README), and so do the samples.
 ## Documentation site
 
 The site under <https://masa-iwm.github.io/GstSharp.Net/> is the API reference
-extracted from the XML documentation of the twelve packable projects, plus the
+extracted from the XML documentation of the fifteen packable projects, plus the
 README and the guides in `docs/`. docfx is pinned in
 `.config/dotnet-tools.json`, so a local preview is two commands:
 

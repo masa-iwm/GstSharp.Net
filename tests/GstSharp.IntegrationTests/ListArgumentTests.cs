@@ -420,7 +420,7 @@ public sealed class ListArgumentTests
     }
 
     /// <summary>
-    /// The singly linked spine, which no bound member of the eleven modules
+    /// The singly linked spine, which no bound member of the fourteen modules
     /// asks for: <c>g_slist_prepend</c> and <c>g_slist_free</c> are reachable
     /// through the <c>singly</c> flag alone, and the generator fixture only
     /// pins the literal that sets it. This is the one place the two entry

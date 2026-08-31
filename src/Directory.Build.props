@@ -36,10 +36,15 @@
 
          Written here beside IsPackable rather than in each project, so that a
          module added later is covered by construction and cannot be the one
-         that ships a removal. It reaches exactly the twelve published packages:
-         the SDK conditions both the baseline download and the check itself on
-         IsPackable, and the analyzer project answers no to that - it ships
-         inside GstSharp.Net and has no package of its own to compare against.
+         that ships a removal. It reaches exactly the twelve packages that have
+         a shipped baseline: the SDK conditions both the baseline download and
+         the check itself on IsPackable, and the analyzer project answers no to
+         that - it ships inside GstSharp.Net and has no package of its own to
+         compare against. The three modules added after the current baseline -
+         GstSharp.Net.Allocators, GstSharp.Net.Tag and GstSharp.Net.Transcoder -
+         override this to false in their own project, because a package that
+         has never been published has no baseline to restore; each of them says
+         so and joins the gate once the next patch release has shipped it.
 
          The baseline is the newest published 1.28.x, moved forward once
          nuget.org serves each release - it enters every CI job's restore as a
@@ -62,7 +67,7 @@
     <Product>GstSharp.Net</Product>
     <!-- The fallback for a project that says nothing more about itself; every
          shipping project overrides it with the one sentence that names the
-         library it binds, so a search result tells the twelve apart. -->
+         library it binds, so a search result tells the fifteen apart. -->
     <Description>NativeAOT-first .NET bindings for GStreamer 1.28.</Description>
     <PackageLicenseExpression>LGPL-2.1-or-later</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/masa-iwm/GstSharp.Net</PackageProjectUrl>
@@ -75,7 +80,7 @@
          repository README rather than a per-package stub nobody keeps current.
          The file has to be packed as well, which the item below does; naming it
          without packing it is NU5039. The icon follows the same rule - one
-         image beside the README for all twelve, packed by the item below, and
+         image beside the README for all fifteen, packed by the item below, and
          naming it without packing it is NU5046. -->
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>icon.png</PackageIcon>

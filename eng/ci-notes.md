@@ -250,18 +250,24 @@ by it — the baseline is named by the property, not by the version being packed
 
 Two consequences worth knowing:
 
-* The comparison covers exactly the twelve published packages. Both the
-  baseline download and the check itself are conditioned on `IsPackable` by the
-  SDK, and `GstSharp.Net.Analyzers` sets it to `false`: it ships inside
-  `GstSharp.Net` and has no package of its own to compare against.
+* The comparison covers exactly the twelve packages that have a shipped
+  baseline. Both the baseline download and the check itself are conditioned on
+  `IsPackable` by the SDK, and `GstSharp.Net.Analyzers` sets it to `false`: it
+  ships inside `GstSharp.Net` and has no package of its own to compare against.
+  `GstSharp.Net.Allocators`, `GstSharp.Net.Tag` and `GstSharp.Net.Transcoder`
+  are packed but set `EnablePackageValidation` to `false` in their own project:
+  no version of them is on nuget.org yet, so there is no baseline to restore
+  and the pack would fail on the missing package rather than on an API change.
+  They join the comparison once the next patch release has published them and
+  `PackageValidationBaselineVersion` names a version that includes them.
 * The baseline packages join the restore graph as `PackageDownload` items, so
   every job fetches them on `dotnet restore`, not only the one that packs.
   `**/Directory.Build.props` had to join the NuGet cache key for that to be
   paid once: the properties live there, the key hashed only
   `Directory.Packages.props`, the `.csproj` files and `global.json`, and
   `actions/cache` does not write a new cache when the key it was given already
-  exists. The twelve baselines would have been downloaded on every run of every
-  job and cached on none of them.
+  exists. The twelve baselines — one per package that has one — would have been
+  downloaded on every run of every job and cached on none of them.
 
 The baseline moves with the GStreamer series, not with the patch level: `1.30`
 is the release allowed to break compilation, and its first package becomes the
@@ -294,6 +300,27 @@ then packs and pushes.
   token with `read:packages`, which is a property of the feed and not something
   CI can remove.
 
+`.github/workflows/publish-nuget.yml` is the nuget.org half of the same story:
+it packs the solution the way `release.yml` does, checks the package count
+against the same frozen `expected`, logs in with `NuGet/login` and pushes with
+`--skip-duplicate`.
+
+### Before tagging
+
+Two items that outlive a single release and are easy to miss:
+
+* **Confirm the nuget.org Trusted Publishing policy lists every package ID
+  that is about to be pushed** — at the moment `GstSharp.Net.Allocators`,
+  `GstSharp.Net.Tag` and `GstSharp.Net.Transcoder` are the new ones. A policy
+  that does not name them lets the push start and then stops it at 12 of 15,
+  which leaves a release half published.
+* **After the next patch release has shipped those three packages, remove
+  `<EnablePackageValidation>false</EnablePackageValidation>` from
+  `src/GstSharp.Net.Allocators`, `src/GstSharp.Net.Tag` and
+  `src/GstSharp.Net.Transcoder`**, together with the comment above it, and move
+  `PackageValidationBaselineVersion` forward to the version that shipped them.
+  Until then they are the three packages the surface check does not cover.
+
 ## Docs
 
 `.github/workflows/docs.yml` builds the documentation site with docfx and
@@ -311,7 +338,7 @@ deploy to.
   `configure-pages` is not needed when the artifact is uploaded that way.
 * `concurrency: pages` with `cancel-in-progress: false`, so that two pushes in
   a row queue rather than interrupt a half-finished deployment.
-* **No restore step.** `docfx metadata` compiles the twelve packable projects
+* **No restore step.** `docfx metadata` compiles the fifteen packable projects
   through MSBuild and restores them itself, so the workflow goes straight from
   `dotnet tool restore` (docfx is pinned in `.config/dotnet-tools.json`) to
   `dotnet docfx docfx/docfx.json`.

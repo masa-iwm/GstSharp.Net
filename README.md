@@ -22,9 +22,9 @@ designed for NativeAOT from the start.
   required.
 
 Generated module set: `Gst`, `GstBase`, `GstApp`, `GstVideo`, `GstAudio`,
-`GstPbutils`, `GstSdp`, `GstWebRTC`, `GstNet`, `GstRtsp`, `GES`. A twelfth
-module, `GstController`, is written by hand against the public module SPI and
-ships alongside them.
+`GstPbutils`, `GstSdp`, `GstWebRTC`, `GstNet`, `GstRtsp`, `GstAllocators`,
+`GstTag`, `GstTranscoder`, `GES`. A fifteenth module, `GstController`, is
+written by hand against the public module SPI and ships alongside them.
 
 ## Packages
 
@@ -44,6 +44,9 @@ so a single `packageSourceMapping` pattern covers all of them.
 | `GstSharp.Net.WebRTC` | `GstWebRTC`: session descriptions, ICE, transports and data channels for `webrtcbin`. |
 | `GstSharp.Net.Net` | `GstNet`: network clocks and time providers. |
 | `GstSharp.Net.Rtsp` | `GstRtsp`: RTSP connections, messages, URLs and transports. |
+| `GstSharp.Net.Allocators` | `GstAllocators`: the file descriptor, DMA-BUF, shared memory and DRM dumb allocators. |
+| `GstSharp.Net.Tag` | `GstTag`: tag parsing and writing for ID3, Vorbis comments, XMP and EXIF. |
+| `GstSharp.Net.Transcoder` | `GstTranscoder`: transcoding a media URI into another one against an encoding profile. Needs the `transcode` plugin of gst-plugins-bad — `uritranscodebin` and `transcodebin` — at run time, which ships separately from the `libgsttranscoder-1.0` library this module imports from. |
 | `GstSharp.Net.GES` | `GES`: the editing services — timelines, layers, clips and the assets behind them. Initialise through `GES.GstGES.Initialize()`, which runs `ges_init` on top of the usual startup. |
 
 The analyzers ship inside `GstSharp.Net` rather than as a package of their own:
@@ -87,7 +90,7 @@ The packages contain managed code only. Install GStreamer itself:
 | --- | --- |
 | Windows | The [official runtime installer](https://gstreamer.freedesktop.org/download/) of one flavor; `msvc` and `mingw` both work. The development installer is not needed — the binding carries its own interop and never compiles against the headers. |
 | Windows (MSYS2) | `pacman -S mingw-w64-x86_64-gstreamer mingw-w64-x86_64-gst-plugins-base mingw-w64-x86_64-gst-plugins-good` |
-| Linux (Debian/Ubuntu) | `apt install libgstreamer1.0-0 libgstreamer-plugins-base1.0-0 gstreamer1.0-plugins-base gstreamer1.0-plugins-good`, plus `libgstreamer-plugins-bad1.0-0` for `GstWebRTC` and `libges-1.0-0` for `GES` |
+| Linux (Debian/Ubuntu) | `apt install libgstreamer1.0-0 libgstreamer-plugins-base1.0-0 gstreamer1.0-plugins-base gstreamer1.0-plugins-good`, plus `libgstreamer-plugins-bad1.0-0` for `GstWebRTC` and `GstTranscoder`, `gstreamer1.0-plugins-bad` for the `transcode` plugin the transcoder drives, and `libges-1.0-0` for `GES` |
 | macOS | `brew install gstreamer` |
 
 **Supported versions.** The surface is generated from the 1.28.6 `.gir` files.

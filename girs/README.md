@@ -10,7 +10,7 @@ generator.
 
 | File | Source |
 | --- | --- |
-| `Gst-1.0.gir`, `GstBase-1.0.gir`, `GstApp-1.0.gir`, `GstVideo-1.0.gir`, `GstAudio-1.0.gir`, `GstPbutils-1.0.gir`, `GstNet-1.0.gir`, `GstSdp-1.0.gir`, `GstRtsp-1.0.gir`, `GstWebRTC-1.0.gir`, `GES-1.0.gir` | GStreamer monorepo, `girs/` directory, commit `2d3e05cbdad68e47d645f548899b432dc9fb4473` ("Release 1.28.6", 2026-08-05). Linux flavor. |
+| `Gst-1.0.gir`, `GstBase-1.0.gir`, `GstApp-1.0.gir`, `GstVideo-1.0.gir`, `GstAudio-1.0.gir`, `GstPbutils-1.0.gir`, `GstNet-1.0.gir`, `GstSdp-1.0.gir`, `GstRtsp-1.0.gir`, `GstWebRTC-1.0.gir`, `GstAllocators-1.0.gir`, `GstTag-1.0.gir`, `GstTranscoder-1.0.gir`, `GES-1.0.gir` | GStreamer monorepo, `girs/` directory, commit `2d3e05cbdad68e47d645f548899b432dc9fb4473` ("Release 1.28.6", 2026-08-05). Linux flavor. |
 | `GLib-2.0.gir`, `GObject-2.0.gir`, `GModule-2.0.gir` | GStreamer 1.28.6 MSVC installer (`share/gir-1.0`). Used only for cross-namespace type resolution; the GLib/GObject runtime layer is hand-written in `src/GstSharp.Net/Core/` and is never generated from these files. |
 | `Gio-2.0.gir` | GStreamer 1.28.6 MSVC installer (`gstreamer-1.0-msvc-x86_64-1.28.6.exe`, `share/gir-1.0`), unpacked with `innoextract` without running the installer, then normalized from CRLF to LF. Joins the GLib stack: cross-namespace type resolution only, never generated. |
 
@@ -28,7 +28,8 @@ PowerShell would re-encode the files):
 GST=/path/to/gstreamer            # monorepo checkout
 REV=2d3e05cbdad68e47d645f548899b432dc9fb4473
 for m in Gst-1.0 GstBase-1.0 GstApp-1.0 GstVideo-1.0 GstAudio-1.0 GstPbutils-1.0 \
-         GstNet-1.0 GstSdp-1.0 GstRtsp-1.0 GstWebRTC-1.0 GES-1.0; do
+         GstNet-1.0 GstSdp-1.0 GstRtsp-1.0 GstWebRTC-1.0 GstAllocators-1.0 \
+         GstTag-1.0 GstTranscoder-1.0 GES-1.0; do
     git -C "$GST" show "$REV:girs/$m.gir" > girs/reference/"$m".gir
 done
 ```
@@ -69,7 +70,7 @@ and commit the regenerated sources together with the gir change.
 
 ## Sanity checks
 
-* Every one of the eleven GStreamer girs starts with the `<!-- This file was
+* Every one of the fourteen GStreamer girs starts with the `<!-- This file was
   automatically generated from C sources -->` comment and carries no
   `<?xml ... ?>` declaration.
 * The four GLib stack girs, `Gio-2.0.gir` included, do carry the `<?xml ... ?>`

@@ -113,7 +113,7 @@ jobs:
       # the publish, not ship.
       - name: Check the package count
         run: |
-          expected=12
+          expected=15
           actual=$(ls artifacts/dist/*.nupkg | wc -l)
           if [[ "$actual" -ne "$expected" ]]; then
             echo "::error::Expected $expected packages, found $actual:"
