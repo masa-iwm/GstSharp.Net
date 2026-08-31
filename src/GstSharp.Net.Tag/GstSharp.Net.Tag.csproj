@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>Gst.Tag</RootNamespace>
+    <Description>GstTag for GstSharp.Net: tag parsing and writing for ID3, Vorbis comments, XMP and EXIF.</Description>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!-- This package has never been published, so there is no baseline on
+         nuget.org for package validation to restore and compare against; the
+         restore of a version that does not exist is what would fail the pack.
+         Remove this line after the next patch release has shipped the package
+         and PackageValidationBaselineVersion names a version that includes it. -->
+    <EnablePackageValidation>false</EnablePackageValidation>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../GstSharp.Net/GstSharp.Net.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Every binding module grants this so that the ABI probes of the
+         integration tests can read its raw mirrors, which are internal:
+         nothing outside the binding has a reason to know the native layout of
+         a record. This module emits no record, so nothing internal is read
+         today; the grant is here for the shape the other modules have. -->
+    <InternalsVisibleTo Include="GstSharp.IntegrationTests" />
+  </ItemGroup>
+
+</Project>

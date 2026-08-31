@@ -16,6 +16,7 @@
             "GstSharp.Net.Pbutils/GstSharp.Net.Pbutils.csproj",
             "GstSharp.Net.Rtsp/GstSharp.Net.Rtsp.csproj",
             "GstSharp.Net.Sdp/GstSharp.Net.Sdp.csproj",
+            "GstSharp.Net.Tag/GstSharp.Net.Tag.csproj",
             "GstSharp.Net.Video/GstSharp.Net.Video.csproj",
             "GstSharp.Net.WebRTC/GstSharp.Net.WebRTC.csproj"
           ]

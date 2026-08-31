@@ -182,6 +182,7 @@ public sealed class ClassEmitterTests
     [InlineData("GstNet", 5, 3, 0, 1, 0, 25, 17, 0, 2)]
     [InlineData("GstRtsp", 1, 10, 1, 1, 2, 114, 0, 1, 14)]
     [InlineData("GstAllocators", 6, 0, 1, 0, 0, 23, 1, 0, 0)]
+    [InlineData("GstTag", 3, 0, 1, 0, 0, 46, 0, 0, 0)]
     [InlineData("GES", 56, 2, 2, 0, 3, 379, 77, 35, 7)]
     public void TheEmissionCensusIsStable(
         string module,
@@ -224,6 +225,7 @@ public sealed class ClassEmitterTests
     [InlineData("GstNet", 0, 3, 0, 0, 0, 0)]
     [InlineData("GstRtsp", 0, 13, 0, 0, 13, 0)]
     [InlineData("GstAllocators", 0, 0, 0, 0, 1, 0)]
+    [InlineData("GstTag", 0, 0, 0, 0, 0, 0)]
     [InlineData("GES", 6, 3, 4, 10, 16, 2)]
     public void TheSkipCensusIsStable(
         string module,
@@ -468,7 +470,7 @@ public sealed class ClassEmitterTests
         // Gst.ValueTable to GstSdp.MIKEYPayloadT, now read their fields through
         // a mirror and are therefore emitted with the unsafe modifier the
         // counting here keys on.
-        Assert.Equal(156, classes);
+        Assert.Equal(158, classes);
         Assert.Equal(122, records);
     }
 
@@ -590,6 +592,7 @@ public sealed class ClassEmitterTests
     [InlineData("GstNet", 4)]
     [InlineData("GstRtsp", 16)]
     [InlineData("GstAllocators", 0)]
+    [InlineData("GstTag", 0)]
     [InlineData("GES", 1)]
     [InlineData("GstApp", 0)]
     [InlineData("GstPbutils", 0)]
@@ -816,6 +819,7 @@ public sealed class ClassEmitterTests
     [InlineData("GstNet", 0, 0, 1, 0, 0, 0, 0)]
     [InlineData("GstRtsp", 7, 0, 3, 0, 0, 0, 2)]
     [InlineData("GstAllocators", 0, 0, 0, 0, 0, 0, 0)]
+    [InlineData("GstTag", 0, 0, 0, 0, 0, 0, 0)]
     [InlineData("GES", 2, 0, 1, 0, 0, 2, 6)]
     public void TheRejectionCensusIsStable(
         string module,
@@ -865,6 +869,7 @@ public sealed class ClassEmitterTests
     [InlineData("GstNet", "GstSharp.Net.Net")]
     [InlineData("GstRtsp", "GstSharp.Net.Rtsp")]
     [InlineData("GstAllocators", "GstSharp.Net.Allocators")]
+    [InlineData("GstTag", "GstSharp.Net.Tag")]
     [InlineData("GES", "GstSharp.Net.GES")]
     public void EveryModuleEmitsItsOwnTypeTable(string module, string projectDirectory)
     {

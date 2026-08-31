@@ -30,6 +30,7 @@
     <ProjectReference Include="../../src/GstSharp.Net.WebRTC/GstSharp.Net.WebRTC.csproj" />
     <ProjectReference Include="../../src/GstSharp.Net.Net/GstSharp.Net.Net.csproj" />
     <ProjectReference Include="../../src/GstSharp.Net.Rtsp/GstSharp.Net.Rtsp.csproj" />
+    <ProjectReference Include="../../src/GstSharp.Net.Tag/GstSharp.Net.Tag.csproj" />
     <ProjectReference Include="../../src/GstSharp.Net.GES/GstSharp.Net.GES.csproj" />
     <ProjectReference Include="../../src/GstSharp.Net.Video/GstSharp.Net.Video.csproj" />
     <ProjectReference Include="../../src/GstSharp.Net.Allocators/GstSharp.Net.Allocators.csproj" />

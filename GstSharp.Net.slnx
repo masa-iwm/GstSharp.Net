@@ -38,6 +38,7 @@
     <Project Path="src/GstSharp.Net.Pbutils/GstSharp.Net.Pbutils.csproj" />
     <Project Path="src/GstSharp.Net.Rtsp/GstSharp.Net.Rtsp.csproj" />
     <Project Path="src/GstSharp.Net.Sdp/GstSharp.Net.Sdp.csproj" />
+    <Project Path="src/GstSharp.Net.Tag/GstSharp.Net.Tag.csproj" />
     <Project Path="src/GstSharp.Net.Video/GstSharp.Net.Video.csproj" />
     <Project Path="src/GstSharp.Net.WebRTC/GstSharp.Net.WebRTC.csproj" />
     <Project Path="src/GstSharp.Net/GstSharp.Net.csproj" />

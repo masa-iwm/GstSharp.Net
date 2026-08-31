@@ -66,6 +66,7 @@ internal static class ModuleMap
         new ModuleInfo("GstNet", "Gst.Net", "GstSharp.Net.Net", "GstNet", IsGenerated: true),
         new ModuleInfo("GstRtsp", "Gst.Rtsp", "GstSharp.Net.Rtsp", "GstRtsp", IsGenerated: true),
         new ModuleInfo("GstAllocators", "Gst.Allocators", "GstSharp.Net.Allocators", "GstAllocators", IsGenerated: true),
+        new ModuleInfo("GstTag", "Gst.Tag", "GstSharp.Net.Tag", "GstTag", IsGenerated: true),
         new ModuleInfo("GES", "GES", "GstSharp.Net.GES", "GES", IsGenerated: true),
         new ModuleInfo("Gio", "Gst.Gio", "GstSharp.Net", "Gio", IsGenerated: false),
         new ModuleInfo("GLib", "Gst.GLib", "GstSharp.Net", "GLib", IsGenerated: false),

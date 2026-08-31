@@ -499,6 +499,7 @@ public sealed class SignalEmitterTests
     [InlineData("GstNet", 0)]
     [InlineData("GstRtsp", 1)]
     [InlineData("GstAllocators", 0)]
+    [InlineData("GstTag", 0)]
     [InlineData("GES", 35)]
     public void TheSignalCensusIsStable(string module, int signals)
     {
@@ -536,13 +537,15 @@ public sealed class SignalEmitterTests
         // interface and are a pair of extension methods instead. The editing
         // services are thirty five of them, and all thirty five are events:
         // the one signal of a GES interface, GESMetaContainer::notify-meta,
-        // carries a GValue and is not bound. The adder count carries one match
-        // that is not a signal pair at all: Gst.ITagSetter's AddTagValue
-        // extension, a GValue method whose name the pattern cannot tell from a
-        // subscription adder.
+        // carries a GValue and is not bound. The adder and remover counts carry
+        // matches that are not a signal pair at all: Gst.ITagSetter's
+        // AddTagValue extension, and the AddAllSchemas, AddSchema,
+        // RemoveAllSchemas and RemoveSchema extensions of
+        // Gst.Tag.ITagXmpWriter, methods whose names the pattern cannot tell
+        // from a subscription adder or remover.
         Assert.Equal(79, events);
-        Assert.Equal(5, adders);
-        Assert.Equal(4, removers);
+        Assert.Equal(7, adders);
+        Assert.Equal(6, removers);
         Assert.Equal(83, trampolines);
 
         string[] withSignals =
