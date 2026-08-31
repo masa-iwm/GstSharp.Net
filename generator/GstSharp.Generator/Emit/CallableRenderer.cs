@@ -217,6 +217,34 @@ internal static class CallableRenderer
         "constructor but <c>GException(Quark, int, string)</c> — is rejected.",
     ];
 
+    /// <summary>
+    /// What the documentation of a produced <c>GDate</c> says. Two facts a
+    /// caller cannot read off the signature: the date is <see langword="null"/>
+    /// on more than a false answer, and the managed type is narrower than the C
+    /// one at the far end of the calendar.
+    /// </summary>
+    private static readonly string[] DateOutNote =
+    [
+        "The date the call produced, or <see langword=\"null\"/> when it produced",
+        "none. A false answer always leaves it null, and on a generic value — a",
+        "field of a structure or of a meta container — a true one may as well:",
+        "such a field is allowed to hold no date at all.",
+        "A year beyond 9999 has no <c>System.DateOnly</c> — the C year is 16 bits",
+        "wide — and throws <see cref=\"ArgumentOutOfRangeException\"/>.",
+    ];
+
+    /// <summary>
+    /// What the documentation of a consumed <c>GDate</c> says. The value is
+    /// copied into a temporary the call reads, which is worth saying because the
+    /// C parameter is a pointer a caller might expect to be kept.
+    /// </summary>
+    private static readonly string[] DateInNote =
+    [
+        "The call is handed a temporary native date built from this value and",
+        "releases it again when the call returns. The library copies whatever it",
+        "keeps.",
+    ];
+
     /// <summary>Writes the public member of a plan.</summary>
     /// <param name="writer">The target writer.</param>
     /// <param name="plan">The plan to write.</param>
@@ -586,6 +614,7 @@ internal static class CallableRenderer
             ArgumentKind.ConsumedHandle => ConsumptionParamNote(argument),
             ArgumentKind.GValue => GValueParamNote(plan, argument),
             ArgumentKind.GError when argument.Direction == ArgumentDirection.In => GErrorParamNote,
+            ArgumentKind.Date => argument.Direction == ArgumentDirection.In ? DateInNote : DateOutNote,
             ArgumentKind.CallerAllocatedBoxed => CallerAllocatedParamNote(argument),
             ArgumentKind.Span => SpanParamNote(plan, argument),
             ArgumentKind.Callback when argument.Scope == GirScope.Forever => ForeverCallbackNote,
@@ -2588,6 +2617,15 @@ internal static class CallableRenderer
                 writer.WriteLine("nint " + name + "Native = Gst.Interop.GMarshal.StringToUtf8Ptr(" + name + ");");
                 return;
 
+            // The temporary date belongs to the scope, which releases it when
+            // the call returns and when the call throws. A produced date is not
+            // handled here: it comes back through the pointer local every other
+            // out parameter gets, and the epilogue adopts it.
+            case ArgumentKind.Date when argument.Direction == ArgumentDirection.In:
+                writer.WriteLine(
+                    "using Gst.GLib.DateScope " + name + "Scope = Gst.GLib.DateScope.Alloc(" + name + ");");
+                return;
+
             case ArgumentKind.ConsumedHandle:
                 writer.WriteLine("nint " + name + "Owned = " + Minted(argument) + ";");
                 return;
@@ -2742,6 +2780,9 @@ internal static class CallableRenderer
             case ArgumentKind.Utf8Owned:
                 return name + "Native";
 
+            case ArgumentKind.Date when argument.Direction == ArgumentDirection.In:
+                return name + "Scope.Pointer";
+
             case ArgumentKind.PlainStruct:
                 // A structure that the gir spells with a star is copied into a
                 // local, which the call then reads and writes through.
@@ -2813,6 +2854,12 @@ internal static class CallableRenderer
         // and the pointer is never freed, because the library that produced it
         // keeps owning it.
         ArgumentKind.GError => "Gst.GLib.GException.FromBorrowed(" + source + ")",
+
+        // Only the out position reaches this for a GDate; an in date is built
+        // into a temporary the scope owns. The pointer the call wrote is
+        // adopted: it is read, released and handed out as a managed value, and
+        // the null pointer a call may leave behind becomes a null date.
+        ArgumentKind.Date => "Gst.GLib.DateNative.ToDateOnly(" + source + ")",
         _ => source,
     };
 

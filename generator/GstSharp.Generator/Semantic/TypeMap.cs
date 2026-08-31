@@ -62,6 +62,13 @@ internal enum MarshalKind
     /// </summary>
     GError,
 
+    /// <summary>
+    /// A <c>GDate</c>, projected onto <see cref="System.DateOnly"/>. The value
+    /// is converted at the boundary rather than wrapped: no type of the binding
+    /// stands for a <c>GDate</c>.
+    /// </summary>
+    Date,
+
     /// <summary>A blittable struct passed by value.</summary>
     PlainStruct,
 
@@ -375,6 +382,20 @@ internal sealed class TypeMap
                     RawType = "nint",
                     PublicType = "Gst.GLib.GException",
                     Kind = MarshalKind.GError,
+                    Symbol = symbol,
+                };
+            case "GLib.Date":
+                // A GDate is a calendar date and nothing else: it has no
+                // identity, no reference count and no state a caller could
+                // observe, so the binding converts it at the boundary instead
+                // of wrapping it. The special case here is what keeps it out of
+                // PlanHandle, which would otherwise see the boxed type GLib
+                // registers for it and look for a wrapper that does not exist.
+                return new MappedType
+                {
+                    RawType = "nint",
+                    PublicType = "System.DateOnly",
+                    Kind = MarshalKind.Date,
                     Symbol = symbol,
                 };
         }

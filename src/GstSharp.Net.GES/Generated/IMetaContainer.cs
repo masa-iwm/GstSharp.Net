@@ -122,6 +122,39 @@ public static unsafe partial class MetaContainerExtensions
     }
 
     /// <summary>
+    /// Gets the current date value of the specified field of the meta
+    /// container. If the field does not have a set value, or it is of the
+    /// wrong type, the method will fail.
+    /// </summary>
+    /// <param name="container">A #GESMetaContainer</param>
+    /// <param name="metaItem">The <c>metaItem</c> argument.</param>
+    /// <param name="dest">
+    /// The <c>dest</c> argument.
+    /// The date the call produced, or <see langword="null"/> when it produced
+    /// none. A false answer always leaves it null, and on a generic value — a
+    /// field of a structure or of a meta container — a true one may as well:
+    /// such a field is allowed to hold no date at all.
+    /// A year beyond 9999 has no <c>System.DateOnly</c> — the C year is 16 bits
+    /// wide — and throws <see cref="ArgumentOutOfRangeException"/>.
+    /// </param>
+    /// <returns>
+    /// %TRUE if the date value under @meta_item was copied
+    /// to @dest.
+    /// </returns>
+    public static bool GetDate(this GES.IMetaContainer container, string metaItem, out System.DateOnly? dest)
+    {
+        ArgumentNullException.ThrowIfNull(container);
+        ArgumentNullException.ThrowIfNull(metaItem);
+        System.Span<byte> metaItemBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope metaItemScope = Gst.Interop.GMarshal.StackUtf8(metaItem, metaItemBuffer);
+        nint destNative = default;
+        int nativeResult = GesMetaContainerGetDate(container.Handle, metaItemScope.Pointer, &destNative);
+        System.GC.KeepAlive(container);
+        dest = Gst.GLib.DateNative.ToDateOnly(destNative);
+        return nativeResult != 0;
+    }
+
+    /// <summary>
     /// Gets the current date time value of the specified field of the meta
     /// container. If the field does not have a set value, or it is of the
     /// wrong type, the method will fail.
@@ -444,6 +477,39 @@ public static unsafe partial class MetaContainerExtensions
 
     /// <summary>
     /// Sets the value of the specified field of the meta container to the
+    /// given date value, and registers the field to only hold a date
+    /// typed value. After calling this, only date values can be set for
+    /// this field. The given flags can be set to make this field only
+    /// readable after calling this method.
+    /// </summary>
+    /// <param name="container">A #GESMetaContainer</param>
+    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <param name="metaItem">The <c>metaItem</c> argument.</param>
+    /// <param name="value">
+    /// The <c>value</c> argument.
+    /// The call is handed a temporary native date built from this value and
+    /// releases it again when the call returns. The library copies whatever it
+    /// keeps.
+    /// </param>
+    /// <returns>
+    /// %TRUE if the @meta_item field was successfully registered on
+    /// @container to only hold date typed values, with the given @flags,
+    /// and the field was successfully set to @value.
+    /// </returns>
+    public static bool RegisterMetaDate(this GES.IMetaContainer container, GES.MetaFlag flags, string metaItem, System.DateOnly value)
+    {
+        ArgumentNullException.ThrowIfNull(container);
+        ArgumentNullException.ThrowIfNull(metaItem);
+        System.Span<byte> metaItemBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope metaItemScope = Gst.Interop.GMarshal.StackUtf8(metaItem, metaItemBuffer);
+        using Gst.GLib.DateScope valueScope = Gst.GLib.DateScope.Alloc(value);
+        int nativeResult = GesMetaContainerRegisterMetaDate(container.Handle, (int)flags, metaItemScope.Pointer, valueScope.Pointer);
+        System.GC.KeepAlive(container);
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Sets the value of the specified field of the meta container to the
     /// given date time value, and registers the field to only hold a date time
     /// typed value. After calling this, only date time values can be set for
     /// this field. The given flags can be set to make this field only
@@ -722,6 +788,31 @@ public static unsafe partial class MetaContainerExtensions
 
     /// <summary>
     /// Sets the value of the specified field of the meta container to the
+    /// given date value.
+    /// </summary>
+    /// <param name="container">A #GESMetaContainer</param>
+    /// <param name="metaItem">The <c>metaItem</c> argument.</param>
+    /// <param name="value">
+    /// The <c>value</c> argument.
+    /// The call is handed a temporary native date built from this value and
+    /// releases it again when the call returns. The library copies whatever it
+    /// keeps.
+    /// </param>
+    /// <returns>%TRUE if @value was set under @meta_item for @container.</returns>
+    public static bool SetDate(this GES.IMetaContainer container, string metaItem, System.DateOnly value)
+    {
+        ArgumentNullException.ThrowIfNull(container);
+        ArgumentNullException.ThrowIfNull(metaItem);
+        System.Span<byte> metaItemBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope metaItemScope = Gst.Interop.GMarshal.StackUtf8(metaItem, metaItemBuffer);
+        using Gst.GLib.DateScope valueScope = Gst.GLib.DateScope.Alloc(value);
+        int nativeResult = GesMetaContainerSetDate(container.Handle, metaItemScope.Pointer, valueScope.Pointer);
+        System.GC.KeepAlive(container);
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Sets the value of the specified field of the meta container to the
     /// given date time value.
     /// </summary>
     /// <param name="container">A #GESMetaContainer</param>
@@ -910,6 +1001,10 @@ public static unsafe partial class MetaContainerExtensions
     [LibraryImport("GES", EntryPoint = "ges_meta_container_get_boolean")]
     private static partial int GesMetaContainerGetBoolean(nint container, byte* metaItem, int* dest);
 
+    /// <summary>The <c>ges_meta_container_get_date</c> entry point.</summary>
+    [LibraryImport("GES", EntryPoint = "ges_meta_container_get_date")]
+    private static partial int GesMetaContainerGetDate(nint container, byte* metaItem, nint* dest);
+
     /// <summary>The <c>ges_meta_container_get_date_time</c> entry point.</summary>
     [LibraryImport("GES", EntryPoint = "ges_meta_container_get_date_time")]
     private static partial int GesMetaContainerGetDateTime(nint container, byte* metaItem, nint* dest);
@@ -962,6 +1057,10 @@ public static unsafe partial class MetaContainerExtensions
     [LibraryImport("GES", EntryPoint = "ges_meta_container_register_meta_boolean")]
     private static partial int GesMetaContainerRegisterMetaBoolean(nint container, int flags, byte* metaItem, int value);
 
+    /// <summary>The <c>ges_meta_container_register_meta_date</c> entry point.</summary>
+    [LibraryImport("GES", EntryPoint = "ges_meta_container_register_meta_date")]
+    private static partial int GesMetaContainerRegisterMetaDate(nint container, int flags, byte* metaItem, nint value);
+
     /// <summary>The <c>ges_meta_container_register_meta_date_time</c> entry point.</summary>
     [LibraryImport("GES", EntryPoint = "ges_meta_container_register_meta_date_time")]
     private static partial int GesMetaContainerRegisterMetaDateTime(nint container, int flags, byte* metaItem, nint value);
@@ -1001,6 +1100,10 @@ public static unsafe partial class MetaContainerExtensions
     /// <summary>The <c>ges_meta_container_set_boolean</c> entry point.</summary>
     [LibraryImport("GES", EntryPoint = "ges_meta_container_set_boolean")]
     private static partial int GesMetaContainerSetBoolean(nint container, byte* metaItem, int value);
+
+    /// <summary>The <c>ges_meta_container_set_date</c> entry point.</summary>
+    [LibraryImport("GES", EntryPoint = "ges_meta_container_set_date")]
+    private static partial int GesMetaContainerSetDate(nint container, byte* metaItem, nint value);
 
     /// <summary>The <c>ges_meta_container_set_date_time</c> entry point.</summary>
     [LibraryImport("GES", EntryPoint = "ges_meta_container_set_date_time")]

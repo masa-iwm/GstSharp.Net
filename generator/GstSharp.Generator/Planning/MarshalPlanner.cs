@@ -2018,6 +2018,9 @@ internal sealed class MarshalPlanner
             case MarshalKind.GError:
                 return PlanGError(name, direction, transfer, nullable);
 
+            case MarshalKind.Date:
+                return PlanDate(type, name, direction, transfer, nullable, isReturn, callerAllocates);
+
             // A GParamSpec is a fundamental type of its own rather than a
             // GObject, and the runtime wraps it by hand, so it reaches the
             // handle plan through its qualified name. Every other fundamental
@@ -2271,6 +2274,87 @@ internal sealed class MarshalPlanner
             Direction = ArgumentDirection.In,
             Transfer = transfer,
             IsNullable = nullable,
+        };
+    }
+
+    /// <summary>
+    /// Plans a <c>GDate</c>, projected onto <c>System.DateOnly</c>.
+    /// </summary>
+    /// <param name="type">The gir type reference.</param>
+    /// <param name="name">The C# name of the argument.</param>
+    /// <param name="direction">How the argument is passed, overrides applied.</param>
+    /// <param name="transfer">The ownership transfer.</param>
+    /// <param name="nullable">Whether the gir marks the value nullable.</param>
+    /// <param name="isReturn">Whether the value is the return value of the callable.</param>
+    /// <param name="callerAllocates">Whether the caller provides the storage of an out parameter.</param>
+    /// <returns>The plan, or <see langword="null"/> when the shape is not supported.</returns>
+    /// <remarks>
+    /// <para>
+    /// Two shapes are understood, and they are the two the corpus has. A
+    /// <c>const GDate*</c> the callee only reads travels <c>in</c> as a
+    /// <c>System.DateOnly</c>, built into a temporary that the scope around the
+    /// call frees. A <c>GDate**</c> the callee allocates travels <c>out</c> as a
+    /// <c>System.DateOnly?</c>: the pointer the call wrote is read out and freed
+    /// again, and the parameter is nullable because a call may answer
+    /// <c>true</c> and leave no date — <c>gst_structure_get_date</c> and
+    /// <c>ges_meta_container_get_date</c> both hand out whatever a generic value
+    /// holds, and that may be <c>NULL</c>.
+    /// </para>
+    /// <para>
+    /// Every other shape is refused so that it is reported rather than emitted
+    /// wrong. A returned <c>GDate</c>, a <c>ref</c> one, a nullable <c>in</c>
+    /// one — <c>System.DateOnly</c> is a value type with no null to pass — a
+    /// consumed <c>in</c> one, a borrowed <c>out</c> one and a caller allocated
+    /// one all come back as <see langword="null"/>. None of them exists in the
+    /// corpus today.
+    /// </para>
+    /// </remarks>
+    private static ArgumentPlan? PlanDate(
+        GirTypeRef type,
+        string name,
+        ArgumentDirection direction,
+        GirTransfer transfer,
+        bool nullable,
+        bool isReturn,
+        bool callerAllocates)
+    {
+        if (isReturn || !type.IsPointer)
+        {
+            return null;
+        }
+
+        if (direction == ArgumentDirection.In)
+        {
+            if (transfer != GirTransfer.None || nullable)
+            {
+                return null;
+            }
+
+            return new ArgumentPlan
+            {
+                Kind = ArgumentKind.Date,
+                Name = name,
+                PublicType = "System.DateOnly",
+                RawType = NativeInt,
+                Direction = ArgumentDirection.In,
+                Transfer = transfer,
+            };
+        }
+
+        if (direction != ArgumentDirection.Out || callerAllocates || transfer != GirTransfer.Full)
+        {
+            return null;
+        }
+
+        return new ArgumentPlan
+        {
+            Kind = ArgumentKind.Date,
+            Name = name,
+            PublicType = "System.DateOnly?",
+            RawType = NativeInt + "*",
+            Direction = ArgumentDirection.Out,
+            Transfer = transfer,
+            IsNullable = true,
         };
     }
 
@@ -3357,9 +3441,14 @@ internal sealed class MarshalPlanner
             // gst_video_convert_sample_async is unsupported for reasons of its
             // own, so the exclusion costs nothing and keeps the kind from
             // widening the callback surface behind the scope it was added for.
+            //
+            // A GDate is excluded because the projection only exists in the two
+            // directions a method uses: a trampoline would have to convert a
+            // borrowed date into a managed value, which nothing writes and
+            // nothing needs — no callback of the corpus takes one.
             if (argument is null
                 || argument.Kind is ArgumentKind.Utf8Owned or ArgumentKind.Callback
-                    or ArgumentKind.ListIn or ArgumentKind.GError)
+                    or ArgumentKind.ListIn or ArgumentKind.GError or ArgumentKind.Date)
             {
                 return null;
             }

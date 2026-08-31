@@ -148,6 +148,75 @@ public sealed unsafe partial class TagList : Gst.MiniObject
     }
 
     /// <summary>
+    /// Copies the first date for the given tag in the taglist into the variable
+    /// pointed to by @value. Free the date with g_date_free() when it is no longer
+    /// needed.
+    /// </summary>
+    /// <remarks>
+    /// <para>Free-function: g_date_free</para>
+    /// </remarks>
+    /// <param name="tag">The <c>tag</c> argument.</param>
+    /// <param name="value">
+    /// The <c>value</c> argument.
+    /// The date the call produced, or <see langword="null"/> when it produced
+    /// none. A false answer always leaves it null, and on a generic value — a
+    /// field of a structure or of a meta container — a true one may as well:
+    /// such a field is allowed to hold no date at all.
+    /// A year beyond 9999 has no <c>System.DateOnly</c> — the C year is 16 bits
+    /// wide — and throws <see cref="ArgumentOutOfRangeException"/>.
+    /// </param>
+    /// <returns>
+    /// %TRUE, if a date was copied, %FALSE if the tag didn't exist in the
+    ///              given list or if it was %NULL.
+    /// </returns>
+    public bool GetDate(string tag, out System.DateOnly? value)
+    {
+        ArgumentNullException.ThrowIfNull(tag);
+        System.Span<byte> tagBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope tagScope = Gst.Interop.GMarshal.StackUtf8(tag, tagBuffer);
+        nint valueNative = default;
+        int nativeResult = GstTagListGetDate(Handle, tagScope.Pointer, &valueNative);
+        System.GC.KeepAlive(this);
+        value = Gst.GLib.DateNative.ToDateOnly(valueNative);
+        return nativeResult != 0;
+    }
+
+    /// <summary>
+    /// Gets the date that is at the given index for the given tag in the given
+    /// list and copies it into the variable pointed to by @value. Free the date
+    /// with g_date_free() when it is no longer needed.
+    /// </summary>
+    /// <remarks>
+    /// <para>Free-function: g_date_free</para>
+    /// </remarks>
+    /// <param name="tag">The <c>tag</c> argument.</param>
+    /// <param name="index">The <c>index</c> argument.</param>
+    /// <param name="value">
+    /// The <c>value</c> argument.
+    /// The date the call produced, or <see langword="null"/> when it produced
+    /// none. A false answer always leaves it null, and on a generic value — a
+    /// field of a structure or of a meta container — a true one may as well:
+    /// such a field is allowed to hold no date at all.
+    /// A year beyond 9999 has no <c>System.DateOnly</c> — the C year is 16 bits
+    /// wide — and throws <see cref="ArgumentOutOfRangeException"/>.
+    /// </param>
+    /// <returns>
+    /// %TRUE, if a value was copied, %FALSE if the tag didn't exist in the
+    ///              given list or if it was %NULL.
+    /// </returns>
+    public bool GetDateIndex(string tag, uint index, out System.DateOnly? value)
+    {
+        ArgumentNullException.ThrowIfNull(tag);
+        System.Span<byte> tagBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope tagScope = Gst.Interop.GMarshal.StackUtf8(tag, tagBuffer);
+        nint valueNative = default;
+        int nativeResult = GstTagListGetDateIndex(Handle, tagScope.Pointer, index, &valueNative);
+        System.GC.KeepAlive(this);
+        value = Gst.GLib.DateNative.ToDateOnly(valueNative);
+        return nativeResult != 0;
+    }
+
+    /// <summary>
     /// Copies the first datetime for the given tag in the taglist into the variable
     /// pointed to by @value. Unref the date with gst_date_time_unref() when
     /// it is no longer needed.
@@ -870,6 +939,14 @@ public sealed unsafe partial class TagList : Gst.MiniObject
     /// <summary>The <c>gst_tag_list_get_boolean_index</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_tag_list_get_boolean_index")]
     private static partial int GstTagListGetBooleanIndex(nint list, byte* tag, uint index, int* value);
+
+    /// <summary>The <c>gst_tag_list_get_date</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_tag_list_get_date")]
+    private static partial int GstTagListGetDate(nint list, byte* tag, nint* value);
+
+    /// <summary>The <c>gst_tag_list_get_date_index</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_tag_list_get_date_index")]
+    private static partial int GstTagListGetDateIndex(nint list, byte* tag, uint index, nint* value);
 
     /// <summary>The <c>gst_tag_list_get_date_time</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_tag_list_get_date_time")]

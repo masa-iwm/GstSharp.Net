@@ -64,7 +64,7 @@ disappears shows up here as an added line.
 - `GES.Group:start`
 - `GES.UriClip:supported-formats`
 
-### UnsupportedSignature (16)
+### UnsupportedSignature (13)
 
 - `GES.Layer::active-changed`
 - `GES.MetaContainer::notify-meta`
@@ -75,9 +75,6 @@ disappears shows up here as an added line.
 - `ges_command_line_formatter_get_help`
 - `ges_init_check`
 - `ges_meta_container_foreach`
-- `ges_meta_container_get_date`
-- `ges_meta_container_register_meta_date`
-- `ges_meta_container_set_date`
 - `ges_meta_container_set_meta`
 - `ges_timeline_element_list_children_properties`
 - `ges_track_element_get_all_control_bindings`
@@ -432,7 +429,7 @@ disappears shows up here as an added line.
 
 - `gst_bus_add_watch`
 
-### UnsupportedSignature (67)
+### UnsupportedSignature (64)
 
 - `Gst.Bus:enable-async`
 - `gst_buffer_list_foreach`
@@ -483,13 +480,10 @@ disappears shows up here as an added line.
 - `gst_param_spec_fraction`
 - `gst_poll_get_read_gpollfd`
 - `gst_query_take`
-- `gst_structure_get_date`
 - `gst_structure_id_str_take_value`
 - `gst_structure_id_take_value`
 - `gst_structure_take`
 - `gst_structure_take_value`
-- `gst_tag_list_get_date`
-- `gst_tag_list_get_date_index`
 - `gst_tag_list_replace`
 - `gst_tag_list_take`
 - `gst_task_set_enter_callback`

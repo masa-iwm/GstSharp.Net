@@ -661,6 +661,46 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     }
 
     /// <summary>
+    /// Sets the date pointed to by @value corresponding to the date of the
+    /// given field.  Caller is responsible for making sure the field exists
+    /// and has the correct type.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// On success @value will point to a newly-allocated copy of the date which
+    /// should be freed with g_date_free() when no longer needed (note: this is
+    /// inconsistent with e.g. gst_structure_get_string() which doesn't return a
+    /// copy of the string).
+    /// </para>
+    /// </remarks>
+    /// <param name="fieldname">The <c>fieldname</c> argument.</param>
+    /// <param name="value">
+    /// The <c>value</c> argument.
+    /// The date the call produced, or <see langword="null"/> when it produced
+    /// none. A false answer always leaves it null, and on a generic value — a
+    /// field of a structure or of a meta container — a true one may as well:
+    /// such a field is allowed to hold no date at all.
+    /// A year beyond 9999 has no <c>System.DateOnly</c> — the C year is 16 bits
+    /// wide — and throws <see cref="ArgumentOutOfRangeException"/>.
+    /// </param>
+    /// <returns>
+    /// %TRUE if the value could be set correctly. If there was no field
+    /// with @fieldname or the existing field did not contain a data, this function
+    /// returns %FALSE.
+    /// </returns>
+    public bool GetDate(string fieldname, out System.DateOnly? value)
+    {
+        ArgumentNullException.ThrowIfNull(fieldname);
+        System.Span<byte> fieldnameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope fieldnameScope = Gst.Interop.GMarshal.StackUtf8(fieldname, fieldnameBuffer);
+        nint valueNative = default;
+        int nativeResult = GstStructureGetDate(Handle, fieldnameScope.Pointer, &valueNative);
+        System.GC.KeepAlive(this);
+        value = Gst.GLib.DateNative.ToDateOnly(valueNative);
+        return nativeResult != 0;
+    }
+
+    /// <summary>
     /// Sets the datetime pointed to by @value corresponding to the datetime of the
     /// given field. Caller is responsible for making sure the field exists
     /// and has the correct type.
@@ -1702,6 +1742,10 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     /// <summary>The <c>gst_structure_get_clock_time</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_structure_get_clock_time")]
     private static partial int GstStructureGetClockTime(nint structure, byte* fieldname, ulong* value);
+
+    /// <summary>The <c>gst_structure_get_date</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_structure_get_date")]
+    private static partial int GstStructureGetDate(nint structure, byte* fieldname, nint* value);
 
     /// <summary>The <c>gst_structure_get_date_time</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_structure_get_date_time")]

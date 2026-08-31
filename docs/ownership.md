@@ -454,6 +454,18 @@ Four shapes reach the surface, and each says who frees what.
   `GError` is not the caller's there either: it is read out of a `GValue` copy
   of the field, which releases it.
 
+## Dates that cross the boundary
+
+A `GDate` is **converted, not wrapped**: no type of this binding stands for one,
+and nothing about it is ever the caller's to release. A member that takes a date
+takes a `System.DateOnly` and builds a temporary the call reads and the member
+frees; a member that produces one — `Structure.GetDate`, `TagList.GetDate`,
+`TagList.GetDateIndex` and the GES meta container's `GetDate` — reads the value
+the call allocated, frees it, and hands out a `System.DateOnly?`. The answer is
+nullable because a `true` answer does not promise a date: a generic structure may
+hold a date field whose value is `NULL`. A year beyond 9999 has no `DateOnly` and
+throws `ArgumentOutOfRangeException`, after the native value was released.
+
 ## Properties without a C accessor
 
 Some properties exist only on the GObject property system: the gir names no C

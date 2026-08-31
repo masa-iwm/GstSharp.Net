@@ -117,6 +117,16 @@ internal enum ArgumentKind
     /// </summary>
     GError,
 
+    /// <summary>
+    /// A <c>GDate</c>, projected onto <c>System.DateOnly</c>. Nothing is
+    /// wrapped: an <c>in</c> parameter is built into a temporary the scope
+    /// around the call frees, and an <c>out</c> parameter is read out of the
+    /// value the call allocated and freed again, which makes the public
+    /// parameter a <c>DateOnly?</c> — a call may answer <c>true</c> and leave
+    /// no date behind.
+    /// </summary>
+    Date,
+
     /// <summary>A blittable structure, passed by value or through a pointer.</summary>
     PlainStruct,
 
