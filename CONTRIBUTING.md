@@ -103,8 +103,9 @@ All of these must pass before a change is merged:
    `dotnet publish samples/AotSmoke -r win-x64 -c Release /p:PublishAot=true`
    completes with zero IL trimming or AOT warnings. `eng/aot-gate.ps1` runs this
    the way CI does, for both AOT samples.
-6. **The packages still contain the 1.28.1 surface.** `dotnet pack` restores
-   each package at 1.28.1 from nuget.org and compares: a public type or member
+6. **The packages still contain the published surface.** `dotnet pack` restores
+   each package at `PackageValidationBaselineVersion`
+   (`src/Directory.Build.props`) from nuget.org and compares: a public type or member
    that vanished, or that kept its name and changed its shape, fails the pack
    with a `CP####` error naming it. Adding members passes, which is the promise
    the README makes for `1.28.x`. The `verify` job packs on every push, so the

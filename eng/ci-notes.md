@@ -12,7 +12,7 @@ workflow. Jobs are split by what they need from the machine:
 
 | Job | Runner | Needs GStreamer | What only this job covers |
 | --- | --- | --- | --- |
-| `verify` | `ubuntu-latest` | no | generator drift (the whole generated tree plus `girs/skip-report.md`), warning-free build, generator/analyzer tests, the proof that `GstSharp.Core.Tests` needs no installation, and the pack that validates the public surface against the published 1.28.1 |
+| `verify` | `ubuntu-latest` | no | generator drift (the whole generated tree plus `girs/skip-report.md`), warning-free build, generator/analyzer tests, the proof that `GstSharp.Core.Tests` needs no installation, and the pack that validates the public surface against the published baseline |
 | `linux` | `ubuntu-24.04` | apt | the Linux SONAME path of `NativeLoader`, the only plugin set that can run the WebRTC tests, and the `linux-x64` NativeAOT gate |
 | `macos` | `macos-latest` | Homebrew | the macOS dylib path and the Homebrew directory of the planner |
 | `windows-mingw` | `windows-latest` | MSYS2 | the MinGW file names and the MSYS2 / search-path branch of `NativeInstallPlanner` |
@@ -231,10 +231,10 @@ dotnet pack GstSharp.Net.slnx --no-restore --configuration Release \
 
 Nothing is pushed and the packages are thrown away with the runner. What the
 step is there for is what happens after the pack:
-`EnablePackageValidation=true` and `PackageValidationBaselineVersion=1.28.1` in
-`src/Directory.Build.props` make the SDK download each package at 1.28.1 from
-nuget.org and compare the assembly about to be packed against the published
-one. A public member that disappeared, or that changed its shape, fails the
+`EnablePackageValidation=true` and `PackageValidationBaselineVersion` in
+`src/Directory.Build.props` make the SDK download each package at the baseline
+version from nuget.org and compare the assembly about to be packed against the
+published one. A public member that disappeared, or that changed its shape, fails the
 pack with `CP0002` (or a sibling code) naming the member; an added member says
 nothing. That is the README's promise for `1.28.x` turned into a gate.
 
@@ -250,23 +250,21 @@ by it — the baseline is named by the property, not by the version being packed
 
 Two consequences worth knowing:
 
-* The comparison covers exactly the twelve packages that have a shipped
-  baseline. Both the baseline download and the check itself are conditioned on
-  `IsPackable` by the SDK, and `GstSharp.Net.Analyzers` sets it to `false`: it
-  ships inside `GstSharp.Net` and has no package of its own to compare against.
-  `GstSharp.Net.Allocators`, `GstSharp.Net.Tag` and `GstSharp.Net.Transcoder`
-  are packed but set `EnablePackageValidation` to `false` in their own project:
-  no version of them is on nuget.org yet, so there is no baseline to restore
-  and the pack would fail on the missing package rather than on an API change.
-  They join the comparison once the next patch release has published them and
-  `PackageValidationBaselineVersion` names a version that includes them.
+* The comparison covers exactly the packages that have a shipped baseline.
+  Both the baseline download and the check itself are conditioned on `IsPackable` by the
+  SDK, and `GstSharp.Net.Analyzers` sets it to `false`: it ships inside
+  `GstSharp.Net` and has no package of its own to compare against. A module
+  added after the current baseline is the one case that stays outside: it turns
+  `EnablePackageValidation` off in its own project until its first release is on
+  nuget.org, because there is no baseline to restore and the pack would fail on
+  the missing package rather than on an API change.
 * The baseline packages join the restore graph as `PackageDownload` items, so
   every job fetches them on `dotnet restore`, not only the one that packs.
   `**/Directory.Build.props` had to join the NuGet cache key for that to be
   paid once: the properties live there, the key hashed only
   `Directory.Packages.props`, the `.csproj` files and `global.json`, and
   `actions/cache` does not write a new cache when the key it was given already
-  exists. The twelve baselines — one per package that has one — would have been
+  exists. The baselines — one per package that has one — would have been
   downloaded on every run of every job and cached on none of them.
 
 The baseline moves with the GStreamer series, not with the patch level: `1.30`
@@ -307,19 +305,19 @@ against the same frozen `expected`, logs in with `NuGet/login` and pushes with
 
 ### Before tagging
 
-Two items that outlive a single release and are easy to miss:
+Two standing rules that outlive a single release and are easy to miss:
 
-* **Confirm the nuget.org Trusted Publishing policy lists every package ID
-  that is about to be pushed** — at the moment `GstSharp.Net.Allocators`,
-  `GstSharp.Net.Tag` and `GstSharp.Net.Transcoder` are the new ones. A policy
-  that does not name them lets the push start and then stops it at 12 of 15,
-  which leaves a release half published.
-* **After the next patch release has shipped those three packages, remove
-  `<EnablePackageValidation>false</EnablePackageValidation>` from
-  `src/GstSharp.Net.Allocators`, `src/GstSharp.Net.Tag` and
-  `src/GstSharp.Net.Transcoder`**, together with the comment above it, and move
-  `PackageValidationBaselineVersion` forward to the version that shipped them.
-  Until then they are the three packages the surface check does not cover.
+* **Confirm the nuget.org Trusted Publishing policy lists every package ID that
+  is about to be pushed.** A policy that misses one lets the push start and then
+  stops it part-way, which leaves a release half published.
+* **A package added to the repository carries
+  `<EnablePackageValidation>false</EnablePackageValidation>`, with a comment
+  saying why, until its first release has shipped it** — there is no baseline on
+  nuget.org to compare it against, and the pack would fail on the missing
+  package rather than on an API change. The patch after that first release
+  removes the property and the comment, and moves
+  `PackageValidationBaselineVersion` forward to the version that shipped it.
+  Until that happens, such a package is one the surface check does not cover.
 
 ## Docs
 
@@ -436,7 +434,7 @@ Everything the scripts write goes below `artifacts/`, which is ignored by git.
 | `msys2/setup-msys2` | `v2` | the `msys2-location` output the MinGW job reads |
 | .NET SDK | `global.json` (`10.0.100`, `rollForward: latestFeature`) | one place for the SDK version. The floor is the whole .NET 10 line rather than a feature band: every gate — build, the four test suites, generator determinism, package validation and the NativeAOT publish — was verified on 10.0.111, so a narrower floor would turn a working SDK away. `latestFeature` always climbs to the newest band present, so this floor decides only what is *refused*: CI runs on whatever the runners ship (10.0.400 when this was written) and a contributor runs on whatever they have |
 | docfx | `2.78.5` (`.config/dotnet-tools.json`) | the documentation site is built from a pinned tool, so a local preview and the `Docs` workflow render the same thing. `rollForward: false`, so the tool refuses to run on a runtime other than the one it targets rather than rolling forward silently |
-| Package validation baseline | `1.28.3` (`PackageValidationBaselineVersion` in `src/Directory.Build.props`) | the newest published 1.28.x, moved forward once nuget.org serves each release. Following the newest release is what puts each release's additions under the guard; against an older one they could vanish unnoticed. Never 1.28.0, which predates the promise. The anchor starts over at the next GStreamer series |
+| Package validation baseline | `1.28.4` (`PackageValidationBaselineVersion` in `src/Directory.Build.props`) | the newest published 1.28.x, moved forward once nuget.org serves each release. Following the newest release is what puts each release's additions under the guard; against an older one they could vanish unnoticed. Never 1.28.0, which predates the promise. The anchor starts over at the next GStreamer series |
 | GStreamer, Windows MSVC | `1.28.6` (`GSTREAMER_VERSION` in the job) | the version the binding is generated from |
 | GStreamer, Windows MinGW | whatever MSYS2 ships | the MSYS2 packages are not versioned per release; the ABI probes only require >= 1.24 |
 | GStreamer, Linux | `ubuntu-24.04` archive (1.24) | the supported floor |

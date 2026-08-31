@@ -5,15 +5,6 @@
     <Description>GstTranscoder for GstSharp.Net: transcoding a media URI into another one against an encoding profile.</Description>
   </PropertyGroup>
 
-  <PropertyGroup>
-    <!-- No version of this package is on nuget.org yet, so there is no
-         baseline for the API compatibility gate to download and it fails the
-         build while it looks for one. It stays off until the first release is
-         published and the baseline version is bumped; remove this after the
-         next patch release. -->
-    <EnablePackageValidation>false</EnablePackageValidation>
-  </PropertyGroup>
-
   <ItemGroup>
     <ProjectReference Include="../GstSharp.Net/GstSharp.Net.csproj" />
 

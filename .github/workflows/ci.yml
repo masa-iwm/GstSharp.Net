@@ -5,7 +5,7 @@
 #   verify            no native GStreamer at all: generator drift, a
 #                     warning-free build, every test suite that runs against
 #                     fakes rather than against the library, and the pack that
-#                     validates the surface against the published 1.28.1.
+#                     validates the surface against the published baseline.
 #   linux             the Linux SONAME path of the native loader, the only
 #                     plugin set complete enough to run the WebRTC tests, and
 #                     the linux-x64 NativeAOT gate.
@@ -99,10 +99,10 @@ jobs:
       # release time only: EnablePackageValidation is a pack-time check
       # (src/Directory.Build.props), so without this step a removed member
       # would sit on main until a tag went out and then fail the publish, with
-      # the surface already promised. Every push proves instead that the twelve
-      # packages with a published baseline still contain everything 1.28.1
-      # shipped. The three modules added since that baseline turn package
-      # validation off in their own project until their first release is on
+      # the surface already promised. Every push proves instead that every
+      # package with a published baseline still contains everything that
+      # baseline shipped. A module added since the baseline turns package
+      # validation off in its own project until its first release is on
       # nuget.org; eng/ci-notes.md says why.
       #
       # The version is a marker, not a release: 1.28.999-surface-check sorts
@@ -111,7 +111,7 @@ jobs:
       # packages are written into artifacts/ and thrown away with the runner.
       # The invocation is otherwise the release job's, minus the arguments that
       # only the GitHub Packages feed needs.
-      - name: Pack against the 1.28.1 surface
+      - name: Pack against the published surface
         run: >
           dotnet pack GstSharp.Net.slnx
           --no-restore

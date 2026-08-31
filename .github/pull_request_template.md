@@ -16,9 +16,9 @@ The long form of each gate is in
       changing `girs/reference/`, `girs/overlays/` or the generator itself.
 - [ ] Census counts were changed deliberately if the emitted surface moved, and the new
       numbers are accounted for above.
-- [ ] Nothing that `1.28.1` published was removed or reshaped. `dotnet pack` compares the
-      twelve packages that have a published baseline against it and names what went
-      missing; a deliberate break waits for `1.30`.
+- [ ] Nothing the published baseline shipped was removed or reshaped. `dotnet pack`
+      compares every package that has a published baseline against it and names what
+      went missing; a deliberate break waits for `1.30`.
 - [ ] `dotnet test` passes. The integration suite needs a native GStreamer — say so if you
       could not run it.
 - [ ] NativeAOT smoke checked when the runtime or marshalling was touched:
