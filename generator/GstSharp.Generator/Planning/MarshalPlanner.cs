@@ -137,6 +137,15 @@ internal sealed class CallbackPlan
 /// <c>ref</c>, and the local becomes the caller's own storage. The correction
 /// is refused for anything but a pointer to a plain struct, because every other
 /// out shape needs a projection of its own.</description></item>
+/// <item><description>An <c>in</c> parameter whose <c>c:type</c> ends in two
+/// stars and whose <c>&lt;type&gt;</c> names something bound behind a handle is
+/// refused. A handle argument crosses as the pointer the wrapper holds, so the
+/// member would hand one level of indirection too few over and the callee would
+/// read the object as if it were a pointer;
+/// <c>gst_play_visualizations_free</c>, whose gir writes a plain
+/// <c>&lt;type c:type="GstPlayVisualization**"/&gt;</c> with no array
+/// annotation, is the shape. See
+/// <see cref="IsPointerToHandlePointer"/>.</description></item>
 /// <item><description>A parameter the gir spells as a pointer to one value and
 /// the C function fills with several is only bound when the overlays state how
 /// many: <c>gst_video_format_info_component</c> writes four <c>gint</c> through
@@ -1648,6 +1657,11 @@ internal sealed class MarshalPlanner
                 ArrayOverrideOf(callable, parameter)?.Length is not null);
         }
 
+        if (direction == ArgumentDirection.In && IsPointerToHandlePointer(effective, mapped))
+        {
+            return Reject(SkipReason.UnsupportedSignature);
+        }
+
         return PlanScalar(
             effective,
             mapped,
@@ -1664,6 +1678,60 @@ internal sealed class MarshalPlanner
             callerAllocates: !redirectedDestination && CallerAllocatesOf(callable, parameter),
             booleanCallee: IsBooleanCallee(callable, context),
             redirectedDestination: redirectedDestination);
+    }
+
+    /// <summary>
+    /// Tests whether an in parameter is a pointer to a pointer to something
+    /// that is bound behind a handle, which is a shape no marshalling covers.
+    /// </summary>
+    /// <param name="effective">The type of the parameter, with the array corrections applied.</param>
+    /// <param name="mapped">Its mapping.</param>
+    /// <returns><see langword="true"/> when the parameter cannot be bound.</returns>
+    /// <remarks>
+    /// <para>
+    /// A handle argument crosses as the pointer the wrapper holds. A
+    /// <c>c:type</c> that ends in two stars asks for the address of the
+    /// caller's own pointer variable instead, which is one level of
+    /// indirection more than a handle has: the callee would read the object
+    /// itself as if it were a pointer. <c>gst_play_visualizations_free</c> is
+    /// the shape — its gir spells the parameter as a plain
+    /// <c>&lt;type name="PlayVisualization" c:type="GstPlayVisualization**"/&gt;</c>
+    /// with no direction and no array annotation, and the C function walks the
+    /// block it is handed to its <c>NULL</c> terminator — so the member would
+    /// compile, look like an ordinary binding and corrupt memory on the first
+    /// call.
+    /// </para>
+    /// <para>
+    /// Only the <c>in</c> direction is refused, and only for the kinds the
+    /// handle plan covers. An <c>out</c> parameter of the same <c>c:type</c> is
+    /// the ordinary pointer the callee writes the handle back through and keeps
+    /// its own projection, and an <c>inout</c> one is already refused by the
+    /// handle plan, which binds no <c>ref</c> handle at all; a <c>gchar**</c>, a
+    /// <c>GError**</c> and an <c>&lt;array&gt;</c> whose element type is a
+    /// handle are all spelled with two stars as well and each has a
+    /// marshalling of its own, reached before this test. A gir that means an
+    /// array and forgets to say so is corrected through <c>arrayOverrides</c>
+    /// rather than here.
+    /// </para>
+    /// </remarks>
+    private static bool IsPointerToHandlePointer(GirTypeRef effective, MappedType mapped)
+    {
+        if (effective is GirArrayRef || !(effective.CType?.EndsWith("**", StringComparison.Ordinal) ?? false))
+        {
+            return false;
+        }
+
+        // The kinds PlanScalar routes to PlanHandle, which is what makes the
+        // rule the exact complement of the one projection this shape would
+        // otherwise fall into. A GParamSpec is a fundamental of its own and is
+        // recognised by name there, so it is recognised by name here too.
+        return mapped.Kind switch
+        {
+            MarshalKind.GObject or MarshalKind.MiniObject or MarshalKind.Boxed
+                or MarshalKind.OpaqueRecord => true,
+            MarshalKind.Fundamental => mapped.Symbol is { QualifiedName: ParamSpecType },
+            _ => false,
+        };
     }
 
     /// <summary>

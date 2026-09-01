@@ -213,9 +213,96 @@ public sealed class RejectionRulesTests
             </class>
         """;
 
+    /// <summary>
+    /// A namespace that spells the same boxed record five ways: as an in
+    /// parameter of a pointer to a pointer, plain, const, and on a function
+    /// rather than a method, which is the <c>gst_play_visualizations_free</c>
+    /// shape and is refused; and as the out parameter and the plain in
+    /// parameter of the same record, which are the two projections the refusal
+    /// must leave alone.
+    /// </summary>
+    private const string PointerToPointerBody =
+        """
+            <record name="Visualization" c:type="GstVisualization" glib:type-name="GstVisualization" glib:get-type="gst_visualization_get_type">
+              <field name="name" writable="1">
+                <type name="utf8" c:type="const gchar*"/>
+              </field>
+              <function name="release_all" c:identifier="gst_visualization_release_all">
+                <return-value transfer-ownership="none">
+                  <type name="none" c:type="void"/>
+                </return-value>
+                <parameters>
+                  <parameter name="viss" transfer-ownership="none">
+                    <type name="Visualization" c:type="GstVisualization**"/>
+                  </parameter>
+                </parameters>
+              </function>
+            </record>
+            <class name="Player" c:type="GstPlayer" parent="GObject.InitiallyUnowned" glib:type-name="GstPlayer" glib:get-type="gst_player_get_type">
+              <method name="visualizations_free" c:identifier="gst_player_visualizations_free">
+                <return-value transfer-ownership="none">
+                  <type name="none" c:type="void"/>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="player" transfer-ownership="none">
+                    <type name="Player" c:type="GstPlayer*"/>
+                  </instance-parameter>
+                  <parameter name="viss" transfer-ownership="none">
+                    <type name="Visualization" c:type="GstVisualization**"/>
+                  </parameter>
+                </parameters>
+              </method>
+              <method name="visualizations_read" c:identifier="gst_player_visualizations_read">
+                <return-value transfer-ownership="none">
+                  <type name="none" c:type="void"/>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="player" transfer-ownership="none">
+                    <type name="Player" c:type="GstPlayer*"/>
+                  </instance-parameter>
+                  <parameter name="viss" transfer-ownership="none">
+                    <type name="Visualization" c:type="const GstVisualization**"/>
+                  </parameter>
+                </parameters>
+              </method>
+              <method name="get_visualization" c:identifier="gst_player_get_visualization">
+                <return-value transfer-ownership="none">
+                  <type name="none" c:type="void"/>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="player" transfer-ownership="none">
+                    <type name="Player" c:type="GstPlayer*"/>
+                  </instance-parameter>
+                  <parameter name="vis" direction="out" transfer-ownership="full">
+                    <type name="Visualization" c:type="GstVisualization**"/>
+                  </parameter>
+                </parameters>
+              </method>
+              <method name="set_visualization" c:identifier="gst_player_set_visualization">
+                <return-value transfer-ownership="none">
+                  <type name="none" c:type="void"/>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="player" transfer-ownership="none">
+                    <type name="Player" c:type="GstPlayer*"/>
+                  </instance-parameter>
+                  <parameter name="vis" transfer-ownership="none">
+                    <type name="Visualization" c:type="GstVisualization*"/>
+                  </parameter>
+                </parameters>
+              </method>
+            </class>
+        """;
+
     private static readonly Lazy<FixtureRun> LazyRun = new(static () => Fixture.Run(Body), isThreadSafe: true);
 
+    private static readonly Lazy<FixtureRun> LazyPointerToPointerRun = new(
+        static () => Fixture.Run(PointerToPointerBody),
+        isThreadSafe: true);
+
     private static FixtureRun Run => LazyRun.Value;
+
+    private static FixtureRun PointerToPointerRun => LazyPointerToPointerRun.Value;
 
     [Fact]
     public void ACallerAllocatedHandleIsRejected()
@@ -440,6 +527,56 @@ public sealed class RejectionRulesTests
 
         Assert.False(run.HasFile("WidgetPrivate.cs"));
         Assert.True(run.HasFile("Widget.cs"));
+    }
+
+    [Fact]
+    public void AnInPointerToAHandlePointerIsRejected()
+    {
+        // gst_play_visualizations_free is the shape: the gir spells the
+        // parameter as a plain <type c:type="GstVisualization**"/> with no
+        // direction and no array annotation, and the C function walks the block
+        // it is handed to its NULL terminator. A handle argument crosses as the
+        // pointer the wrapper holds, so the member would hand one level of
+        // indirection too few over and the callee would read the record itself
+        // as if it were a pointer - a warning free binding that corrupts memory
+        // on the first call. The const spelling is the same shape and is
+        // refused with it.
+        //
+        // The two siblings are what keeps the refusal narrow: an out parameter
+        // of the very same c:type is the pointer the callee writes back
+        // through, and a single star is the ordinary handle argument. Both
+        // still bind.
+        FixtureRun run = PointerToPointerRun;
+
+        string source = run.File("Player.cs");
+
+        Assert.DoesNotContain("gst_player_visualizations_free", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("gst_player_visualizations_read", source, StringComparison.Ordinal);
+
+        // gst_play_visualizations_free is a function rather than a method, so
+        // the static form is asserted as well: the rule lives in the parameter
+        // loop that every form goes through, and nothing about it reads the
+        // instance.
+        Assert.DoesNotContain(
+            "gst_visualization_release_all",
+            run.File("Visualization.cs"),
+            StringComparison.Ordinal);
+        Assert.Equal(3, run.Result.Census.SkippedCount("Gst", SkipReason.UnsupportedSignature));
+    }
+
+    [Fact]
+    public void AnOutPointerToAHandlePointerIsStillBound()
+    {
+        string source = PointerToPointerRun.File("Player.cs");
+
+        Assert.Contains(
+            "public void GetVisualization(out Gst.Visualization? vis)",
+            source,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "public void SetVisualization(Gst.Visualization vis)",
+            source,
+            StringComparison.Ordinal);
     }
 
     [Fact]
