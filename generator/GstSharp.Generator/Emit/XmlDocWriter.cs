@@ -306,11 +306,26 @@ internal static class XmlDocWriter
     private static void WriteSince(CodeWriter writer, string since) =>
         writer.WriteLine("/// <para>Available since GStreamer " + Escape(since) + ".</para>");
 
+    /// <summary>
+    /// Writes generator authored lines into a documentation comment, verbatim.
+    /// </summary>
+    /// <param name="writer">The target writer.</param>
+    /// <param name="note">The lines to write.</param>
+    /// <remarks>
+    /// A note that runs to more than one paragraph separates them with
+    /// <c>&lt;para&gt;</c> the way the gir documentation path does, and never
+    /// with an empty line: the marker of an empty line would be a <c>///</c>
+    /// with a space behind it, which is trailing whitespace that
+    /// <c>.editorconfig</c> tells every editor to strip. A file that is saved
+    /// once would then differ from what the generator writes, and the diff gate
+    /// would fail on a change nobody made. The empty line is turned into a bare
+    /// marker here as well, so that the rule holds whatever a note carries.
+    /// </remarks>
     private static void WriteNote(CodeWriter writer, IReadOnlyList<string> note)
     {
         foreach (string line in note)
         {
-            writer.WriteLine("/// " + line);
+            writer.WriteLine(line.Length == 0 ? "///" : "/// " + line);
         }
     }
 

@@ -20,9 +20,11 @@ public sealed unsafe partial class SDPAttribute
 
     /// <summary>the attribute key</summary>
     /// <remarks>
+    /// <para>
     /// The string is copied out of the structure on every read. The storage
     /// belongs to the C structure and is released or replaced with it, so what
     /// comes back here is the caller's and outlives it.
+    /// </para>
     /// </remarks>
     public string? Key
     {
@@ -36,9 +38,11 @@ public sealed unsafe partial class SDPAttribute
 
     /// <summary>the attribute value or NULL when it was a property attribute</summary>
     /// <remarks>
+    /// <para>
     /// The string is copied out of the structure on every read. The storage
     /// belongs to the C structure and is released or replaced with it, so what
     /// comes back here is the caller's and outlives it.
+    /// </para>
     /// </remarks>
     public string? Value
     {

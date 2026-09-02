@@ -25,9 +25,11 @@ public sealed unsafe partial class WebRTCICECandidateStats : Gst.GObject.Boxed
     ///          an IPv4 address, an IPv6 address, or a fully-qualified domain name
     /// </summary>
     /// <remarks>
+    /// <para>
     /// The string is copied out of the structure on every read. The storage
     /// belongs to the C structure and is released or replaced with it, so what
     /// comes back here is the caller's and outlives it.
+    /// </para>
     /// </remarks>
     public string? Ipaddr
     {
@@ -66,9 +68,11 @@ public sealed unsafe partial class WebRTCICECandidateStats : Gst.GObject.Boxed
 
     /// <summary>The candidate type</summary>
     /// <remarks>
+    /// <para>
     /// The string is copied out of the structure on every read. The storage
     /// belongs to the C structure and is released or replaced with it, so what
     /// comes back here is the caller's and outlives it.
+    /// </para>
     /// </remarks>
     public string? Type
     {
@@ -85,9 +89,11 @@ public sealed unsafe partial class WebRTCICECandidateStats : Gst.GObject.Boxed
     ///         on the @port
     /// </summary>
     /// <remarks>
+    /// <para>
     /// The string is copied out of the structure on every read. The storage
     /// belongs to the C structure and is released or replaced with it, so what
     /// comes back here is the caller's and outlives it.
+    /// </para>
     /// </remarks>
     public string Proto
     {
@@ -102,9 +108,11 @@ public sealed unsafe partial class WebRTCICECandidateStats : Gst.GObject.Boxed
 
     /// <summary>The <c>relay_proto</c> field of <c>GstWebRTCICECandidateStats</c>.</summary>
     /// <remarks>
+    /// <para>
     /// The string is copied out of the structure on every read. The storage
     /// belongs to the C structure and is released or replaced with it, so what
     /// comes back here is the caller's and outlives it.
+    /// </para>
     /// </remarks>
     public string? RelayProto
     {
@@ -132,9 +140,11 @@ public sealed unsafe partial class WebRTCICECandidateStats : Gst.GObject.Boxed
     ///       from which the candidate was received
     /// </summary>
     /// <remarks>
+    /// <para>
     /// The string is copied out of the structure on every read. The storage
     /// belongs to the C structure and is released or replaced with it, so what
     /// comes back here is the caller's and outlives it.
+    /// </para>
     /// </remarks>
     public string? Url
     {
@@ -148,9 +158,11 @@ public sealed unsafe partial class WebRTCICECandidateStats : Gst.GObject.Boxed
 
     /// <summary>The <c>foundation</c> field of <c>GstWebRTCICECandidateStats</c>.</summary>
     /// <remarks>
+    /// <para>
     /// The string is copied out of the structure on every read. The storage
     /// belongs to the C structure and is released or replaced with it, so what
     /// comes back here is the caller's and outlives it.
+    /// </para>
     /// </remarks>
     public string? Foundation
     {
@@ -164,9 +176,11 @@ public sealed unsafe partial class WebRTCICECandidateStats : Gst.GObject.Boxed
 
     /// <summary>The <c>related_address</c> field of <c>GstWebRTCICECandidateStats</c>.</summary>
     /// <remarks>
+    /// <para>
     /// The string is copied out of the structure on every read. The storage
     /// belongs to the C structure and is released or replaced with it, so what
     /// comes back here is the caller's and outlives it.
+    /// </para>
     /// </remarks>
     public string? RelatedAddress
     {
@@ -191,9 +205,11 @@ public sealed unsafe partial class WebRTCICECandidateStats : Gst.GObject.Boxed
 
     /// <summary>The <c>username_fragment</c> field of <c>GstWebRTCICECandidateStats</c>.</summary>
     /// <remarks>
+    /// <para>
     /// The string is copied out of the structure on every read. The storage
     /// belongs to the C structure and is released or replaced with it, so what
     /// comes back here is the caller's and outlives it.
+    /// </para>
     /// </remarks>
     public string? UsernameFragment
     {

@@ -26,9 +26,11 @@ public sealed unsafe partial class SDPOrigin
     ///    if the originating host does not support the concept of user ids.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// The string is copied out of the structure on every read. The storage
     /// belongs to the C structure and is released or replaced with it, so what
     /// comes back here is the caller's and outlives it.
+    /// </para>
     /// </remarks>
     public string? Username
     {
@@ -46,9 +48,11 @@ public sealed unsafe partial class SDPOrigin
     ///    session.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// The string is copied out of the structure on every read. The storage
     /// belongs to the C structure and is released or replaced with it, so what
     /// comes back here is the caller's and outlives it.
+    /// </para>
     /// </remarks>
     public string? SessId
     {
@@ -62,9 +66,11 @@ public sealed unsafe partial class SDPOrigin
 
     /// <summary>a version number for this announcement</summary>
     /// <remarks>
+    /// <para>
     /// The string is copied out of the structure on every read. The storage
     /// belongs to the C structure and is released or replaced with it, so what
     /// comes back here is the caller's and outlives it.
+    /// </para>
     /// </remarks>
     public string? SessVersion
     {
@@ -81,9 +87,11 @@ public sealed unsafe partial class SDPOrigin
     ///    "Internet".
     /// </summary>
     /// <remarks>
+    /// <para>
     /// The string is copied out of the structure on every read. The storage
     /// belongs to the C structure and is released or replaced with it, so what
     /// comes back here is the caller's and outlives it.
+    /// </para>
     /// </remarks>
     public string? Nettype
     {
@@ -97,9 +105,11 @@ public sealed unsafe partial class SDPOrigin
 
     /// <summary>the type of @addr.</summary>
     /// <remarks>
+    /// <para>
     /// The string is copied out of the structure on every read. The storage
     /// belongs to the C structure and is released or replaced with it, so what
     /// comes back here is the caller's and outlives it.
+    /// </para>
     /// </remarks>
     public string? Addrtype
     {
@@ -116,9 +126,11 @@ public sealed unsafe partial class SDPOrigin
     ///     created.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// The string is copied out of the structure on every read. The storage
     /// belongs to the C structure and is released or replaced with it, so what
     /// comes back here is the caller's and outlives it.
+    /// </para>
     /// </remarks>
     public string? Addr
     {

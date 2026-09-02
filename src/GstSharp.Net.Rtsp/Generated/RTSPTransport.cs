@@ -54,9 +54,11 @@ public sealed unsafe partial class RTSPTransport
 
     /// <summary>the destination ip/hostname</summary>
     /// <remarks>
+    /// <para>
     /// The string is copied out of the structure on every read. The storage
     /// belongs to the C structure and is released or replaced with it, so what
     /// comes back here is the caller's and outlives it.
+    /// </para>
     /// </remarks>
     public string? Destination
     {
@@ -70,9 +72,11 @@ public sealed unsafe partial class RTSPTransport
 
     /// <summary>the source ip/hostname</summary>
     /// <remarks>
+    /// <para>
     /// The string is copied out of the structure on every read. The storage
     /// belongs to the C structure and is released or replaced with it, so what
     /// comes back here is the caller's and outlives it.
+    /// </para>
     /// </remarks>
     public string? Source
     {
@@ -130,9 +134,11 @@ public sealed unsafe partial class RTSPTransport
 
     /// <summary>the interleave range</summary>
     /// <remarks>
+    /// <para>
     /// The structure is embedded in the one this wrapper points at, so the read
     /// copies it out. What comes back is the caller's and changes nothing native;
     /// the fields are written through the calls that own them.
+    /// </para>
     /// </remarks>
     public Gst.Rtsp.RTSPRange Interleaved
     {
@@ -157,9 +163,11 @@ public sealed unsafe partial class RTSPTransport
 
     /// <summary>the port pair for multicast sessions</summary>
     /// <remarks>
+    /// <para>
     /// The structure is embedded in the one this wrapper points at, so the read
     /// copies it out. What comes back is the caller's and changes nothing native;
     /// the fields are written through the calls that own them.
+    /// </para>
     /// </remarks>
     public Gst.Rtsp.RTSPRange Port
     {
@@ -177,9 +185,11 @@ public sealed unsafe partial class RTSPTransport
     ///   sender and receiver ports of the client.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// The structure is embedded in the one this wrapper points at, so the read
     /// copies it out. What comes back is the caller's and changes nothing native;
     /// the fields are written through the calls that own them.
+    /// </para>
     /// </remarks>
     public Gst.Rtsp.RTSPRange ClientPort
     {
@@ -197,9 +207,11 @@ public sealed unsafe partial class RTSPTransport
     ///   sender and receiver ports of the server.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// The structure is embedded in the one this wrapper points at, so the read
     /// copies it out. What comes back is the caller's and changes nothing native;
     /// the fields are written through the calls that own them.
+    /// </para>
     /// </remarks>
     public Gst.Rtsp.RTSPRange ServerPort
     {

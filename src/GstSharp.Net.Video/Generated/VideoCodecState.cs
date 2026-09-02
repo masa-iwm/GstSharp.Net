@@ -35,10 +35,12 @@ public sealed unsafe partial class VideoCodecState : Gst.GObject.Boxed
 
     /// <summary>Reads the <c>info</c> field of <c>GstVideoCodecState</c>.</summary>
     /// <remarks>
+    /// <para>
     /// The structure is embedded in the one this wrapper points at. What comes
     /// back is a copy of it that the caller owns and disposes, so it stays good
     /// after the structure it was copied out of is gone, and writing into it
     /// changes nothing native.
+    /// </para>
     /// </remarks>
     /// <returns>The #GstVideoInfo describing the stream</returns>
     public Gst.Video.VideoInfo GetInfo()
@@ -51,14 +53,12 @@ public sealed unsafe partial class VideoCodecState : Gst.GObject.Boxed
 
     /// <summary>Reads the <c>codec_data</c> field of <c>GstVideoCodecState</c>.</summary>
     /// <remarks>
+    /// <para>
     /// The value is read out of the structure at the moment of the call. What
     /// comes back owns a reference of its own - a mini object is referenced, a
     /// boxed value copied - so the caller disposes it, which is why this is a
     /// method rather than a property.
-    /// 
-    /// A structure the library only fills for the length of one call, such as a
-    /// mapping or a metadata transform, holds nothing outside it: the read has
-    /// to happen while the structure describes what the caller expects.
+    /// </para>
     /// </remarks>
     /// <returns>
     /// a #GstBuffer corresponding to the

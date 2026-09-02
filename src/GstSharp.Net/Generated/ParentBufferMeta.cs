@@ -32,14 +32,12 @@ public sealed unsafe partial class ParentBufferMeta
 
     /// <summary>Reads the <c>buffer</c> field of <c>GstParentBufferMeta</c>.</summary>
     /// <remarks>
+    /// <para>
     /// The value is read out of the structure at the moment of the call. What
     /// comes back owns a reference of its own - a mini object is referenced, a
     /// boxed value copied - so the caller disposes it, which is why this is a
     /// method rather than a property.
-    /// 
-    /// A structure the library only fills for the length of one call, such as a
-    /// mapping or a metadata transform, holds nothing outside it: the read has
-    /// to happen while the structure describes what the caller expects.
+    /// </para>
     /// </remarks>
     /// <returns>the #GstBuffer on which a reference is being held.</returns>
     public Gst.Buffer? GetBuffer()

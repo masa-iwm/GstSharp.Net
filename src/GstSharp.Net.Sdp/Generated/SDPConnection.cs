@@ -23,9 +23,11 @@ public sealed unsafe partial class SDPConnection
     ///    "Internet".
     /// </summary>
     /// <remarks>
+    /// <para>
     /// The string is copied out of the structure on every read. The storage
     /// belongs to the C structure and is released or replaced with it, so what
     /// comes back here is the caller's and outlives it.
+    /// </para>
     /// </remarks>
     public string? Nettype
     {
@@ -39,9 +41,11 @@ public sealed unsafe partial class SDPConnection
 
     /// <summary>the type of @address.</summary>
     /// <remarks>
+    /// <para>
     /// The string is copied out of the structure on every read. The storage
     /// belongs to the C structure and is released or replaced with it, so what
     /// comes back here is the caller's and outlives it.
+    /// </para>
     /// </remarks>
     public string? Addrtype
     {
@@ -55,9 +59,11 @@ public sealed unsafe partial class SDPConnection
 
     /// <summary>the address</summary>
     /// <remarks>
+    /// <para>
     /// The string is copied out of the structure on every read. The storage
     /// belongs to the C structure and is released or replaced with it, so what
     /// comes back here is the caller's and outlives it.
+    /// </para>
     /// </remarks>
     public string? Address
     {

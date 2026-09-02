@@ -28,9 +28,11 @@ public sealed unsafe partial class WebRTCICECandidate : Gst.GObject.Boxed
     ///   section 15.1 of RFC5245
     /// </summary>
     /// <remarks>
+    /// <para>
     /// The string is copied out of the structure on every read. The storage
     /// belongs to the C structure and is released or replaced with it, so what
     /// comes back here is the caller's and outlives it.
+    /// </para>
     /// </remarks>
     public string? Candidate
     {
@@ -61,9 +63,11 @@ public sealed unsafe partial class WebRTCICECandidate : Gst.GObject.Boxed
     ///   media component this candidate is associated with.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// The string is copied out of the structure on every read. The storage
     /// belongs to the C structure and is released or replaced with it, so what
     /// comes back here is the caller's and outlives it.
+    /// </para>
     /// </remarks>
     public string? SdpMid
     {
@@ -91,14 +95,12 @@ public sealed unsafe partial class WebRTCICECandidate : Gst.GObject.Boxed
 
     /// <summary>Reads the <c>stats</c> field of <c>GstWebRTCICECandidate</c>.</summary>
     /// <remarks>
+    /// <para>
     /// The value is read out of the structure at the moment of the call. What
     /// comes back owns a reference of its own - a mini object is referenced, a
     /// boxed value copied - so the caller disposes it, which is why this is a
     /// method rather than a property.
-    /// 
-    /// A structure the library only fills for the length of one call, such as a
-    /// mapping or a metadata transform, holds nothing outside it: the read has
-    /// to happen while the structure describes what the caller expects.
+    /// </para>
     /// </remarks>
     /// <returns>The #GstWebRTCICECandidateStats associated to this candidate.</returns>
     public Gst.WebRTC.WebRTCICECandidateStats GetStats()

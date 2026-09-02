@@ -26,10 +26,12 @@ public sealed unsafe partial class VideoInfoDmaDrm : Gst.GObject.Boxed
 
     /// <summary>Reads the <c>vinfo</c> field of <c>GstVideoInfoDmaDrm</c>.</summary>
     /// <remarks>
+    /// <para>
     /// The structure is embedded in the one this wrapper points at. What comes
     /// back is a copy of it that the caller owns and disposes, so it stays good
     /// after the structure it was copied out of is gone, and writing into it
     /// changes nothing native.
+    /// </para>
     /// </remarks>
     /// <returns>the associated #GstVideoInfo</returns>
     public Gst.Video.VideoInfo GetVinfo()

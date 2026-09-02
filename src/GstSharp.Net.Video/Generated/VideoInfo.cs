@@ -107,9 +107,11 @@ public sealed unsafe partial class VideoInfo : Gst.GObject.Boxed
 
     /// <summary>the colorimetry info</summary>
     /// <remarks>
+    /// <para>
     /// The structure is embedded in the one this wrapper points at, so the read
     /// copies it out. What comes back is the caller's and changes nothing native;
     /// the fields are written through the calls that own them.
+    /// </para>
     /// </remarks>
     public Gst.Video.VideoColorimetry Colorimetry
     {

@@ -24,14 +24,12 @@ public sealed unsafe partial class WebRTCICECandidatePair : Gst.GObject.Boxed
 
     /// <summary>Reads the <c>local</c> field of <c>GstWebRTCICECandidatePair</c>.</summary>
     /// <remarks>
+    /// <para>
     /// The value is read out of the structure at the moment of the call. What
     /// comes back owns a reference of its own - a mini object is referenced, a
     /// boxed value copied - so the caller disposes it, which is why this is a
     /// method rather than a property.
-    /// 
-    /// A structure the library only fills for the length of one call, such as a
-    /// mapping or a metadata transform, holds nothing outside it: the read has
-    /// to happen while the structure describes what the caller expects.
+    /// </para>
     /// </remarks>
     /// <returns>The <c>local</c> field of <c>GstWebRTCICECandidatePair</c>.</returns>
     public Gst.WebRTC.WebRTCICECandidate GetLocal()
@@ -44,14 +42,12 @@ public sealed unsafe partial class WebRTCICECandidatePair : Gst.GObject.Boxed
 
     /// <summary>Reads the <c>remote</c> field of <c>GstWebRTCICECandidatePair</c>.</summary>
     /// <remarks>
+    /// <para>
     /// The value is read out of the structure at the moment of the call. What
     /// comes back owns a reference of its own - a mini object is referenced, a
     /// boxed value copied - so the caller disposes it, which is why this is a
     /// method rather than a property.
-    /// 
-    /// A structure the library only fills for the length of one call, such as a
-    /// mapping or a metadata transform, holds nothing outside it: the read has
-    /// to happen while the structure describes what the caller expects.
+    /// </para>
     /// </remarks>
     /// <returns>The <c>remote</c> field of <c>GstWebRTCICECandidatePair</c>.</returns>
     public Gst.WebRTC.WebRTCICECandidate GetRemote()

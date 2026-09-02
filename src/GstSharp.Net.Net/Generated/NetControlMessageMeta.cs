@@ -26,14 +26,12 @@ public sealed unsafe partial class NetControlMessageMeta
 
     /// <summary>a #GSocketControlMessage stored as metadata</summary>
     /// <remarks>
+    /// <para>
     /// The object is read out of the structure at the moment of the call. The
     /// wrapper owns a reference of its own and stays valid afterwards; it is
     /// the instance every other lookup of the same object hands out, so
     /// disposing it releases the reference for all of them.
-    /// 
-    /// A structure the library only fills for the length of one call, such as a
-    /// mapping or a metadata transform, holds nothing outside it: the read has
-    /// to happen while the structure describes what the caller expects.
+    /// </para>
     /// </remarks>
     public Gst.Gio.SocketControlMessage? Message
     {

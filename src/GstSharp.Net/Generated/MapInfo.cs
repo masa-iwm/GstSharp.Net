@@ -63,14 +63,18 @@ public unsafe partial struct MapInfo
 
     /// <summary>Reads the <c>memory</c> field of <c>GstMapInfo</c>.</summary>
     /// <remarks>
+    /// <para>
     /// The value is read out of the structure at the moment of the call. What
     /// comes back owns a reference of its own - a mini object is referenced, a
     /// boxed value copied - so the caller disposes it, which is why this is a
     /// method rather than a property.
-    /// 
-    /// A structure the library only fills for the length of one call, such as a
-    /// mapping or a metadata transform, holds nothing outside it: the read has
-    /// to happen while the structure describes what the caller expects.
+    /// </para>
+    /// <para>
+    /// The structure this is read out of is storage the caller holds. A library
+    /// call that fills one for the length of a single scope - a mapping, or a
+    /// metadata transform - leaves nothing behind in it, so the read has to
+    /// happen inside that scope.
+    /// </para>
     /// </remarks>
     /// <returns>a pointer to the mapped memory</returns>
     public Gst.Memory? GetMemory()

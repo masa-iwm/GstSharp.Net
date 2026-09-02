@@ -67,14 +67,12 @@ public sealed unsafe partial class Memory : Gst.MiniObject
 
     /// <summary>pointer to the #GstAllocator</summary>
     /// <remarks>
+    /// <para>
     /// The object is read out of the structure at the moment of the call. The
     /// wrapper owns a reference of its own and stays valid afterwards; it is
     /// the instance every other lookup of the same object hands out, so
     /// disposing it releases the reference for all of them.
-    /// 
-    /// A structure the library only fills for the length of one call, such as a
-    /// mapping or a metadata transform, holds nothing outside it: the read has
-    /// to happen while the structure describes what the caller expects.
+    /// </para>
     /// </remarks>
     public Gst.Allocator Allocator
     {
@@ -89,14 +87,12 @@ public sealed unsafe partial class Memory : Gst.MiniObject
 
     /// <summary>Reads the <c>parent</c> field of <c>GstMemory</c>.</summary>
     /// <remarks>
+    /// <para>
     /// The value is read out of the structure at the moment of the call. What
     /// comes back owns a reference of its own - a mini object is referenced, a
     /// boxed value copied - so the caller disposes it, which is why this is a
     /// method rather than a property.
-    /// 
-    /// A structure the library only fills for the length of one call, such as a
-    /// mapping or a metadata transform, holds nothing outside it: the read has
-    /// to happen while the structure describes what the caller expects.
+    /// </para>
     /// </remarks>
     /// <returns>parent memory block</returns>
     public Gst.Memory? GetParent()

@@ -43,9 +43,11 @@ public sealed unsafe partial class RTSPUrl : Gst.GObject.Boxed
 
     /// <summary>the user</summary>
     /// <remarks>
+    /// <para>
     /// The string is copied out of the structure on every read. The storage
     /// belongs to the C structure and is released or replaced with it, so what
     /// comes back here is the caller's and outlives it.
+    /// </para>
     /// </remarks>
     public string? User
     {
@@ -59,9 +61,11 @@ public sealed unsafe partial class RTSPUrl : Gst.GObject.Boxed
 
     /// <summary>the password</summary>
     /// <remarks>
+    /// <para>
     /// The string is copied out of the structure on every read. The storage
     /// belongs to the C structure and is released or replaced with it, so what
     /// comes back here is the caller's and outlives it.
+    /// </para>
     /// </remarks>
     public string? Passwd
     {
@@ -75,9 +79,11 @@ public sealed unsafe partial class RTSPUrl : Gst.GObject.Boxed
 
     /// <summary>the host</summary>
     /// <remarks>
+    /// <para>
     /// The string is copied out of the structure on every read. The storage
     /// belongs to the C structure and is released or replaced with it, so what
     /// comes back here is the caller's and outlives it.
+    /// </para>
     /// </remarks>
     public string Host
     {
@@ -103,9 +109,11 @@ public sealed unsafe partial class RTSPUrl : Gst.GObject.Boxed
 
     /// <summary>the absolute path</summary>
     /// <remarks>
+    /// <para>
     /// The string is copied out of the structure on every read. The storage
     /// belongs to the C structure and is released or replaced with it, so what
     /// comes back here is the caller's and outlives it.
+    /// </para>
     /// </remarks>
     public string Abspath
     {
@@ -120,9 +128,11 @@ public sealed unsafe partial class RTSPUrl : Gst.GObject.Boxed
 
     /// <summary>additional query parameters</summary>
     /// <remarks>
+    /// <para>
     /// The string is copied out of the structure on every read. The storage
     /// belongs to the C structure and is released or replaced with it, so what
     /// comes back here is the caller's and outlives it.
+    /// </para>
     /// </remarks>
     public string? Query
     {

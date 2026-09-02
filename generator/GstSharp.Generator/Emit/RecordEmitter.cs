@@ -1363,25 +1363,46 @@ internal sealed class RecordEmitter
     /// </summary>
     private static readonly string[] StringRemarks =
     [
+        "<para>",
         "The string is copied out of the structure on every read. The storage",
         "belongs to the C structure and is released or replaced with it, so what",
         "comes back here is the caller's and outlives it.",
+        "</para>",
     ];
 
     /// <summary>
     /// What an owning accessor states beyond the gir: why it is a method, and
     /// that the caller releases what it hands out.
     /// </summary>
-    private static readonly string[] OwnedRemarks =
+    private static readonly string[] OwnedNote =
     [
+        "<para>",
         "The value is read out of the structure at the moment of the call. What",
         "comes back owns a reference of its own - a mini object is referenced, a",
         "boxed value copied - so the caller disposes it, which is why this is a",
         "method rather than a property.",
-        "",
-        "A structure the library only fills for the length of one call, such as a",
-        "mapping or a metadata transform, holds nothing outside it: the read has",
-        "to happen while the structure describes what the caller expects.",
+        "</para>",
+    ];
+
+    /// <summary>
+    /// What an accessor of a value projected structure adds: the structure is
+    /// storage the caller holds, and the library only fills some of them for
+    /// the length of one call.
+    /// </summary>
+    /// <remarks>
+    /// Only a value projected host carries this. A wrapper is a pointer into
+    /// memory the library owns and answers what is there whenever it is asked;
+    /// a structure the caller holds by value keeps whatever the call that
+    /// filled it left behind, which is nothing at all once that call is over.
+    /// </remarks>
+    private static readonly string[] ScopeNote =
+    [
+        "<para>",
+        "The structure this is read out of is storage the caller holds. A library",
+        "call that fills one for the length of a single scope - a mapping, or a",
+        "metadata transform - leaves nothing behind in it, so the read has to",
+        "happen inside that scope.",
+        "</para>",
     ];
 
     /// <summary>
@@ -1390,9 +1411,11 @@ internal sealed class RecordEmitter
     /// </summary>
     private static readonly string[] EmbeddedValueRemarks =
     [
+        "<para>",
         "The structure is embedded in the one this wrapper points at, so the read",
         "copies it out. What comes back is the caller's and changes nothing native;",
         "the fields are written through the calls that own them.",
+        "</para>",
     ];
 
     /// <summary>
@@ -1401,10 +1424,12 @@ internal sealed class RecordEmitter
     /// </summary>
     private static readonly string[] EmbeddedCopyRemarks =
     [
+        "<para>",
         "The structure is embedded in the one this wrapper points at. What comes",
         "back is a copy of it that the caller owns and disposes, so it stays good",
         "after the structure it was copied out of is gone, and writing into it",
         "changes nothing native.",
+        "</para>",
     ];
 
     /// <summary>
@@ -1413,29 +1438,32 @@ internal sealed class RecordEmitter
     /// </summary>
     /// <param name="flavor">How a handle of the type is wrapped.</param>
     /// <returns>The lines of the remark.</returns>
-    private static string[] BorrowedRemarks(HandleFlavor flavor) => flavor == HandleFlavor.GObject
+    private static string[] BorrowedNote(HandleFlavor flavor) => flavor == HandleFlavor.GObject
         ?
         [
+            "<para>",
             "The object is read out of the structure at the moment of the call. The",
             "wrapper owns a reference of its own and stays valid afterwards; it is",
             "the instance every other lookup of the same object hands out, so",
             "disposing it releases the reference for all of them.",
-            "",
-            "A structure the library only fills for the length of one call, such as a",
-            "mapping or a metadata transform, holds nothing outside it: the read has",
-            "to happen while the structure describes what the caller expects.",
+            "</para>",
         ]
         :
         [
+            "<para>",
             "The value is borrowed from the structure that declares the field: the",
             "wrapper of an opaque record takes no part in the ownership of what it",
             "points at, there is nothing to dispose, and it is only good for as long",
             "as the structure that holds the field is.",
-            "",
-            "A structure the library only fills for the length of one call, such as a",
-            "mapping or a metadata transform, holds nothing outside it: the read has",
-            "to happen while the structure describes what the caller expects.",
+            "</para>",
         ];
+
+    /// <summary>Adds the scope note to a remark when the host is storage the caller holds.</summary>
+    /// <param name="note">The lines the flavour of the wrapper contributes.</param>
+    /// <param name="scopeBound">Whether the declaring structure is value projected.</param>
+    /// <returns>The lines of the remark.</returns>
+    private static string[] WithScope(string[] note, bool scopeBound) =>
+        scopeBound ? [.. note, .. ScopeNote] : note;
 
     /// <summary>
     /// Plans the get only properties a value projected structure reads its own
@@ -1552,12 +1580,15 @@ internal sealed class RecordEmitter
         // A mini object is referenced and a boxed value is copied, so every
         // read produces a resource the caller has to release, which is what a
         // Get method is for.
+        // A wrapper is a pointer into memory the library owns, so it answers
+        // what is there whenever it is asked; a value projected structure is
+        // storage the caller holds, and only that one carries the scope note.
         bool owning = flavor is HandleFlavor.Wrapper or HandleFlavor.ParamSpec;
         return Read(
             wrapper,
             CallableRenderer.HandleConversion(flavor, wrapper, raw, GirTransfer.None),
             owning,
-            owning ? OwnedRemarks : BorrowedRemarks(flavor));
+            WithScope(owning ? OwnedNote : BorrowedNote(flavor), scopeBound: !keepAlive));
 
         // The overlays are asked here rather than in front of the projection,
         // so that an entry on a field that hands out nothing anyway is reported
@@ -1748,8 +1779,11 @@ internal sealed class RecordEmitter
     /// <returns><see langword="true"/> when the accessor is non nullable.</returns>
     private bool IsNonNullable(GirRecord record, GirField field)
     {
+        // Only the nullability correction is read here. An entry that holds the
+        // field back instead says nothing about what a value of it may be, and
+        // SuppressesAccessor is what acts on that one.
         string key = FieldSkipKey(record, field);
-        if (_overlays.GetFieldAnnotation(key) is not { IsStated: true })
+        if (_overlays.GetFieldAnnotation(key) is not { IsStated: true, Nullable: false })
         {
             return false;
         }

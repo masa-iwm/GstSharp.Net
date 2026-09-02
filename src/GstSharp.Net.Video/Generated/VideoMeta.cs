@@ -48,14 +48,12 @@ public sealed unsafe partial class VideoMeta
 
     /// <summary>Reads the <c>buffer</c> field of <c>GstVideoMeta</c>.</summary>
     /// <remarks>
+    /// <para>
     /// The value is read out of the structure at the moment of the call. What
     /// comes back owns a reference of its own - a mini object is referenced, a
     /// boxed value copied - so the caller disposes it, which is why this is a
     /// method rather than a property.
-    /// 
-    /// A structure the library only fills for the length of one call, such as a
-    /// mapping or a metadata transform, holds nothing outside it: the read has
-    /// to happen while the structure describes what the caller expects.
+    /// </para>
     /// </remarks>
     /// <returns>the buffer this metadata belongs to</returns>
     public Gst.Buffer? GetBuffer()
@@ -166,9 +164,11 @@ public sealed unsafe partial class VideoMeta
     /// to no padding and no alignment. Since: 1.18
     /// </summary>
     /// <remarks>
+    /// <para>
     /// The structure is embedded in the one this wrapper points at, so the read
     /// copies it out. What comes back is the caller's and changes nothing native;
     /// the fields are written through the calls that own them.
+    /// </para>
     /// </remarks>
     public Gst.Video.VideoAlignment Alignment
     {
