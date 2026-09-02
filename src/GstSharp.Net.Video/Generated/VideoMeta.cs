@@ -159,6 +159,27 @@ public sealed unsafe partial class VideoMeta
         }
     }
 
+    /// <summary>
+    /// the paddings and alignment constraints of the video buffer.
+    /// It is up to the caller of `gst_buffer_add_video_meta_full()` to set it
+    /// using gst_video_meta_set_alignment(), if they did not it defaults
+    /// to no padding and no alignment. Since: 1.18
+    /// </summary>
+    /// <remarks>
+    /// The structure is embedded in the one this wrapper points at, so the read
+    /// copies it out. What comes back is the caller's and changes nothing native;
+    /// the fields are written through the calls that own them.
+    /// </remarks>
+    public Gst.Video.VideoAlignment Alignment
+    {
+        get
+        {
+            Gst.Video.VideoAlignment value = ((VideoMetaRaw*)Handle)->Alignment;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
     /// <summary>Inline storage of the 4 elements of the <c>offset</c> field of <c>GstVideoMeta</c>.</summary>
     [InlineArray(4)]
     public struct OffsetArray

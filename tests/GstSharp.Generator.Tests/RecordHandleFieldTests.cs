@@ -32,6 +32,14 @@ public sealed class RecordHandleFieldTests
                 <type name="gint" c:type="gint"/>
               </field>
             </record>
+            <record name="Size" c:type="GstSize">
+              <field name="width" writable="1">
+                <type name="gint" c:type="gint"/>
+              </field>
+              <field name="height" writable="1">
+                <type name="gint" c:type="gint"/>
+              </field>
+            </record>
             <record name="Tag" c:type="GstTag" opaque="1">
               <field name="size" writable="1">
                 <type name="gint" c:type="gint"/>
@@ -57,6 +65,15 @@ public sealed class RecordHandleFieldTests
               </field>
               <field name="opaque" writable="1">
                 <type name="gpointer" c:type="gpointer"/>
+              </field>
+              <field name="size" writable="1">
+                <type name="Size" c:type="GstSize"/>
+              </field>
+              <field name="inner" writable="1">
+                <type name="Bag" c:type="GstBag"/>
+              </field>
+              <field name="label" writable="1">
+                <type name="Tag" c:type="GstTag"/>
               </field>
             </record>
         """;
@@ -171,6 +188,50 @@ public sealed class RecordHandleFieldTests
             "throw new System.InvalidOperationException(\"The 'bag' field of GstWidget is null.\")",
             source,
             StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AnEmbeddedPlainStructureIsCopiedOutByAProperty()
+    {
+        // The assignment is the copy, which is the whole of the ownership
+        // question for a value: what comes back is the caller's own structure.
+        string source = RunWithOverlay("{}").File("Widget.cs");
+
+        Assert.Contains("public Gst.Size Size\n", source, StringComparison.Ordinal);
+        Assert.Contains(
+            "Gst.Size value = ((WidgetRaw*)Handle)->Size;",
+            source,
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AnEmbeddedBoxedValueIsCopiedOutByAGetMethod()
+    {
+        // The address of the field is wrapped through the transfer none
+        // projection, which copies the value with g_boxed_copy; the caller
+        // disposes that copy, so the member is a method. The address of a field
+        // is never null, which is what the check spells out.
+        string source = RunWithOverlay("{}").File("Widget.cs");
+
+        Assert.Contains("public Gst.Bag GetInner()\n", source, StringComparison.Ordinal);
+        Assert.Contains(
+            "Gst.Bag value = Gst.Bag.FromNative((nint)(&((WidgetRaw*)Handle)->Inner), "
+            + "Gst.Interop.Transfer.None)",
+            source,
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AnEmbeddedOpaqueRecordIsRefused()
+    {
+        // The wrapper of an opaque record owns nothing, so one made from the
+        // address of an embedded field would borrow storage the declaring
+        // structure owns and dangle with it. The field stays on the ledger.
+        FixtureRun run = RunWithOverlay("{}");
+
+        Assert.DoesNotContain("public Gst.Tag Label", run.File("Widget.cs"), StringComparison.Ordinal);
+        Assert.DoesNotContain("GetLabel", run.File("Widget.cs"), StringComparison.Ordinal);
+        Assert.Contains("- `Widget.label` — EmbeddedStruct\n", run.Result.SkipReport, StringComparison.Ordinal);
     }
 
     private static FixtureRun RunWithOverlay(string fixups)

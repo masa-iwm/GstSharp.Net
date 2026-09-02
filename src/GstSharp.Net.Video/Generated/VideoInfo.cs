@@ -105,6 +105,22 @@ public sealed unsafe partial class VideoInfo : Gst.GObject.Boxed
         }
     }
 
+    /// <summary>the colorimetry info</summary>
+    /// <remarks>
+    /// The structure is embedded in the one this wrapper points at, so the read
+    /// copies it out. What comes back is the caller's and changes nothing native;
+    /// the fields are written through the calls that own them.
+    /// </remarks>
+    public Gst.Video.VideoColorimetry Colorimetry
+    {
+        get
+        {
+            Gst.Video.VideoColorimetry value = ((VideoInfoRaw*)Handle)->Colorimetry;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
     /// <summary>the pixel-aspect-ratio numerator</summary>
     public int ParN
     {

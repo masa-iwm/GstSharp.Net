@@ -1270,6 +1270,10 @@ internal sealed class RecordEmitter
             {
                 accessors.Add(indirect);
             }
+            else if (EmbeddedAccessor(ns, record, cast, field) is { } embedded)
+            {
+                accessors.Add(embedded);
+            }
         }
 
         unionMembers = UnionMemberAccessors(ns, record, typeName, layout, accessors);
@@ -1365,6 +1369,29 @@ internal sealed class RecordEmitter
         "A structure the library only fills for the length of one call, such as a",
         "mapping or a metadata transform, holds nothing outside it: the read has",
         "to happen while the structure describes what the caller expects.",
+    ];
+
+    /// <summary>
+    /// What the accessor of an embedded plain structure states beyond the gir:
+    /// that the read is a copy.
+    /// </summary>
+    private static readonly string[] EmbeddedValueRemarks =
+    [
+        "The structure is embedded in the one this wrapper points at, so the read",
+        "copies it out. What comes back is the caller's and changes nothing native;",
+        "the fields are written through the calls that own them.",
+    ];
+
+    /// <summary>
+    /// What the accessor of an embedded wrapper states beyond the gir: the copy
+    /// it hands out and who releases it.
+    /// </summary>
+    private static readonly string[] EmbeddedCopyRemarks =
+    [
+        "The structure is embedded in the one this wrapper points at. What comes",
+        "back is a copy of it that the caller owns and disposes, so it stays good",
+        "after the structure it was copied out of is gone, and writing into it",
+        "changes nothing native.",
     ];
 
     /// <summary>
@@ -1542,6 +1569,105 @@ internal sealed class RecordEmitter
                     KeepAlive: keepAlive,
                     IsMethod: isMethod,
                     Remarks: remarks);
+    }
+
+    /// <summary>
+    /// Plans the get only accessor of a field that embeds another record by
+    /// value, which hands out a copy of it.
+    /// </summary>
+    /// <param name="ns">The gir namespace of the record.</param>
+    /// <param name="record">The declaring record, which the overlays are keyed by.</param>
+    /// <param name="cast">The expression that reads the mirror, ending in <c>-&gt;</c>.</param>
+    /// <param name="field">The field to read.</param>
+    /// <returns>The accessor, or <see langword="null"/> when there is none.</returns>
+    /// <remarks>
+    /// <para>
+    /// Only a wrapper reaches this. A value projected structure declares its
+    /// embedded fields itself and hands them out whole already, so there is
+    /// nothing for an accessor to add there.
+    /// </para>
+    /// <para>
+    /// A plain structure is copied out of the storage by the assignment, which
+    /// is the whole of the ownership question for one. A boxed value is wrapped
+    /// from the address the field sits at, through the same
+    /// <c>transfer none</c> projection a pointer field uses, which copies it
+    /// with <c>g_boxed_copy</c> on the way out; the caller disposes that copy,
+    /// which is why it is a method. The address of a field is never null, so
+    /// the accessor is not nullable and the check is the one a non nullable
+    /// return of a call carries.
+    /// </para>
+    /// <para>
+    /// Nothing else is handed out. The wrapper of an opaque record is a bare
+    /// pointer holder that takes no part in the ownership of what it points at,
+    /// so one made from the address of an embedded field would be a borrow of
+    /// storage the declaring structure owns and would dangle the moment that
+    /// structure does, with no lifetime the binding can state. That is the
+    /// difference between an embedded field and a pointer one, where the
+    /// pointee is allocated apart from the structure that names it.
+    /// </para>
+    /// </remarks>
+    private Accessor? EmbeddedAccessor(GirNamespace ns, GirRecord record, string cast, LayoutField field)
+    {
+        if (field.IsPrivate
+            || field.InlineArray is not null
+            || field.Union is not null
+            || field.Field.Type is not { IsPointer: false } type
+            || type is GirArrayRef
+            || type.Name is null
+            || _repository.Resolve(type.Name, ns) is not { } symbol
+            || _repository.ResolveAlias(symbol) is not { Declaration: GirRecord embedded } resolved
+            || ModuleMap.Find(resolved.Namespace.Name) is not { IsGenerated: true } module)
+        {
+            return null;
+        }
+
+        string embeddedName = _names.TypeName(resolved);
+        string publicType = module.ClrNamespace + "." + embeddedName;
+        TypeKind kind = _classifier.Classify(embedded);
+        if (kind == TypeKind.PlainStruct)
+        {
+            return SuppressesAccessor(record, field.Field)
+                ? null
+                : new Accessor(
+                    field.Field,
+                    field.ValueName,
+                    publicType,
+                    cast + field.PascalName,
+                    Remarks: EmbeddedValueRemarks);
+        }
+
+        // The mirror only embeds a wrapper by value when its own layout is
+        // complete, so a field that is projected as one addresses the whole C
+        // structure and nothing else has to be checked here.
+        if (!string.Equals(field.TypeName, publicType + RawSuffix, StringComparison.Ordinal)
+            || !MarshalPlanner.TryProjectHandle(
+                _types.Map(type, ns),
+                _overlays,
+                _classifier,
+                out string? wrapper,
+                out HandleFlavor flavor)
+            || SuppressesAccessor(record, field.Field))
+        {
+            return null;
+        }
+
+        if (flavor != HandleFlavor.Wrapper)
+        {
+            return null;
+        }
+
+        return new Accessor(
+            field.Field,
+            "Get" + field.ValueName,
+            wrapper,
+            CallableRenderer.HandleConversion(
+                flavor,
+                wrapper,
+                "(nint)(&" + cast + field.PascalName + ")",
+                GirTransfer.None),
+            NullFallback: NullFallback(record, field.Field),
+            IsMethod: true,
+            Remarks: EmbeddedCopyRemarks);
     }
 
     /// <summary>

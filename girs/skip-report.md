@@ -1126,7 +1126,7 @@ disappears shows up here as an added line.
 - `gst_webrtc_ice_get_local_candidates`
 - `gst_webrtc_ice_get_remote_candidates`
 
-## Fields (173)
+## Fields (164)
 
 Public record fields that carry API in C and none in C#, with the shape that
 kept them out. A field is bound when a wrapper declares an accessor for it, or
@@ -1244,14 +1244,10 @@ the section below.
 - `NetAddressMeta.meta` — EmbeddedStruct
 - `NetControlMessageMeta.meta` — EmbeddedStruct
 
-### GstRtsp (6)
+### GstRtsp (2)
 
 - `RTSPAuthCredential.params` — Pointer
 - `RTSPMessage.type_data` — Union
-- `RTSPTransport.client_port` — EmbeddedStruct
-- `RTSPTransport.interleaved` — EmbeddedStruct
-- `RTSPTransport.port` — EmbeddedStruct
-- `RTSPTransport.server_port` — EmbeddedStruct
 
 ### GstSdp (33)
 
@@ -1289,7 +1285,7 @@ the section below.
 - `SDPMessage.zones` — Pointer
 - `SDPTime.repeat` — Pointer
 
-### GstVideo (47)
+### GstVideo (42)
 
 - `AncillaryMeta.data` — Pointer
 - `AncillaryMeta.meta` — EmbeddedStruct
@@ -1308,20 +1304,15 @@ the section below.
 - `VideoCodecState.allocation_caps` — Pointer
 - `VideoCodecState.caps` — Pointer
 - `VideoCodecState.content_light_level` — Pointer
-- `VideoCodecState.info` — EmbeddedStruct
 - `VideoCodecState.mastering_display_info` — Pointer
 - `VideoCropMeta.meta` — EmbeddedStruct
 - `VideoFormatInfo.pack_func` — Callback
 - `VideoFormatInfo.tile_info` — InlineArray(struct element)
 - `VideoFormatInfo.unpack_func` — Callback
 - `VideoFrame.data` — InlineArray(pointer element)
-- `VideoFrame.info` — EmbeddedStruct
 - `VideoFrame.map` — InlineArray(struct element)
 - `VideoFrame.meta` — Pointer
 - `VideoGLTextureUploadMeta.meta` — EmbeddedStruct
-- `VideoInfo.colorimetry` — EmbeddedStruct
-- `VideoInfoDmaDrm.vinfo` — EmbeddedStruct
-- `VideoMeta.alignment` — EmbeddedStruct
 - `VideoMeta.map` — Callback
 - `VideoMeta.meta` — EmbeddedStruct
 - `VideoMeta.unmap` — Callback
@@ -1339,7 +1330,7 @@ the section below.
 - `VideoTimeCodeMeta.meta` — EmbeddedStruct
 - `VideoTimeCodeMeta.tc` — EmbeddedStruct
 
-## Fields exposed elsewhere (13)
+## Fields exposed elsewhere (14)
 
 Public record fields that another member of the binding answers, with the
 member that answers them. They are declared in `girs/overlays/fixups.json`
@@ -1365,9 +1356,10 @@ there is what the bindings do not cover, and these are covered.
 - `PlayVisualization.description` — hand written
 - `PlayVisualization.name` — hand written
 
-### GstVideo (2)
+### GstVideo (3)
 
 - `VideoFrame.buffer` — hand written
+- `VideoFrame.info` — hand written
 - `VideoInfo.finfo` — hand written
 
 ### GstWebRTC (1)

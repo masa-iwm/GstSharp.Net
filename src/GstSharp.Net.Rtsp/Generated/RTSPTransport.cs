@@ -128,12 +128,84 @@ public sealed unsafe partial class RTSPTransport
         }
     }
 
+    /// <summary>the interleave range</summary>
+    /// <remarks>
+    /// The structure is embedded in the one this wrapper points at, so the read
+    /// copies it out. What comes back is the caller's and changes nothing native;
+    /// the fields are written through the calls that own them.
+    /// </remarks>
+    public Gst.Rtsp.RTSPRange Interleaved
+    {
+        get
+        {
+            Gst.Rtsp.RTSPRange value = ((RTSPTransportRaw*)Handle)->Interleaved;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
     /// <summary>the time to live for multicast UDP</summary>
     public uint Ttl
     {
         get
         {
             uint value = ((RTSPTransportRaw*)Handle)->Ttl;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>the port pair for multicast sessions</summary>
+    /// <remarks>
+    /// The structure is embedded in the one this wrapper points at, so the read
+    /// copies it out. What comes back is the caller's and changes nothing native;
+    /// the fields are written through the calls that own them.
+    /// </remarks>
+    public Gst.Rtsp.RTSPRange Port
+    {
+        get
+        {
+            Gst.Rtsp.RTSPRange value = ((RTSPTransportRaw*)Handle)->Port;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>
+    /// the client port pair for receiving data. For TCP
+    ///   based transports, applications can use this field to store the
+    ///   sender and receiver ports of the client.
+    /// </summary>
+    /// <remarks>
+    /// The structure is embedded in the one this wrapper points at, so the read
+    /// copies it out. What comes back is the caller's and changes nothing native;
+    /// the fields are written through the calls that own them.
+    /// </remarks>
+    public Gst.Rtsp.RTSPRange ClientPort
+    {
+        get
+        {
+            Gst.Rtsp.RTSPRange value = ((RTSPTransportRaw*)Handle)->ClientPort;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>
+    /// the server port pair for receiving data. For TCP
+    ///   based transports, applications can use this field to store the
+    ///   sender and receiver ports of the server.
+    /// </summary>
+    /// <remarks>
+    /// The structure is embedded in the one this wrapper points at, so the read
+    /// copies it out. What comes back is the caller's and changes nothing native;
+    /// the fields are written through the calls that own them.
+    /// </remarks>
+    public Gst.Rtsp.RTSPRange ServerPort
+    {
+        get
+        {
+            Gst.Rtsp.RTSPRange value = ((RTSPTransportRaw*)Handle)->ServerPort;
             System.GC.KeepAlive(this);
             return value;
         }

@@ -24,6 +24,22 @@ public sealed unsafe partial class VideoInfoDmaDrm : Gst.GObject.Boxed
     {
     }
 
+    /// <summary>Reads the <c>vinfo</c> field of <c>GstVideoInfoDmaDrm</c>.</summary>
+    /// <remarks>
+    /// The structure is embedded in the one this wrapper points at. What comes
+    /// back is a copy of it that the caller owns and disposes, so it stays good
+    /// after the structure it was copied out of is gone, and writing into it
+    /// changes nothing native.
+    /// </remarks>
+    /// <returns>the associated #GstVideoInfo</returns>
+    public Gst.Video.VideoInfo GetVinfo()
+    {
+        Gst.Video.VideoInfo value = Gst.Video.VideoInfo.FromNative((nint)(&((VideoInfoDmaDrmRaw*)Handle)->Vinfo), Gst.Interop.Transfer.None)
+            ?? throw new System.InvalidOperationException("The 'vinfo' field of GstVideoInfoDmaDrm is null.");
+        System.GC.KeepAlive(this);
+        return value;
+    }
+
     /// <summary>the fourcc defined by drm</summary>
     public uint DrmFourcc
     {
