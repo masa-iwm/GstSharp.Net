@@ -407,6 +407,10 @@ dotnet run --project samples/tutorials/BasicTutorial13 --no-restore -- --headles
 dotnet run --project samples/GstPlay --no-restore -- --duration 2 --videosink fakesink --audiosink fakesink tutorial-media.ogg
 dotnet run --project samples/GstPlay --no-restore -- --list-visualizations
 
+# the plain application sample, run the way the native jobs run it: no URI, so
+# the pipeline is the built in test pattern into a fakesink
+dotnet run --project samples/PlaybinPlayer --no-restore -- --timeout 30
+
 # the AOT gates (Windows)
 ./eng/aot-gate.ps1 -Project samples/AotSmoke -Rid win-x64
 ./eng/aot-gate.ps1 -Project samples/AppSinkSpans -Rid win-x64 -Property InvariantGlobalization=true -RunArguments '--mode','pull'
