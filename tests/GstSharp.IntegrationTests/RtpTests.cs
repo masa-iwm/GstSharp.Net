@@ -195,9 +195,10 @@ public sealed class RtpTests
         Assert.Equal(4U, meanJitter);
         Assert.Equal(2U, devJitter);
 
-        // The mode of the flag byte, not a field of its own: the reader answers
-        // TRUE for mode 1 and FALSE for mode 2, and refuses a block whose mode
-        // is above 2 (gstrtcpbuffer.c:3355-3361).
+        // The mode of the flag byte, not a field of its own: the reader reports
+        // isIpv4 as TRUE for mode 1 alone - modes 0 and 2 both parse with it
+        // FALSE - and refuses a block whose mode is above 2
+        // (gstrtcpbuffer.c:3355-3361).
         Assert.True(packet.XrGetSummaryTtl(
             out bool isIpv4,
             out byte minTtl,

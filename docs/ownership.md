@@ -786,7 +786,12 @@ disposing the wrapper before the unmap leaves the mapping pointing at a freed
 sight: a wrapper that nothing references any more - a buffer obtained inline as
 the argument of `MapBuffer`, for one - is finalizable the moment that call
 returns, and its finalizer drops the reference while the mapping is still in
-use. Keep the wrapper in a variable that outlives the unmap.
+use. Keep the wrapper reachable until after the unmap - what keeps it reachable
+is its last use and not a variable, and one that is declared and never read
+again counts for nothing once the collector has passed that last read. A
+`using` declaration whose scope encloses the unmap does it, the disposal at the
+end of the scope being a use that comes after the unmap, and so does a
+`GC.KeepAlive(buffer)` placed after the unmap.
 
 `Gst.Rtp.RTCPPacket` borrows the address of the `RTCPBuffer` it was taken from:
 `GetFirstPacket` and `AddPacket` write that address into the packet, the

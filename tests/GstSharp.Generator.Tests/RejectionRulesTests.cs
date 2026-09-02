@@ -1167,6 +1167,8 @@ public sealed class RejectionRulesTests
 
         Assert.Contains("public void GetIpv4(ref bool isIpv4)", source, StringComparison.Ordinal);
         Assert.Contains("int* isIpv4", source, StringComparison.Ordinal);
+        Assert.Contains("int isIpv4Native = isIpv4 ? 1 : 0;", source, StringComparison.Ordinal);
+        Assert.Contains("isIpv4 = isIpv4Native != 0;", source, StringComparison.Ordinal);
         Assert.DoesNotContain(run.Result.Diagnostics, diagnostic => diagnostic.Code == "GEN0017");
     }
 
