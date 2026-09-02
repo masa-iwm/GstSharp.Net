@@ -270,6 +270,7 @@ internal sealed class SurfaceBuilder
     private readonly MarshalPlanner _planner;
     private readonly NameMapper _names;
     private readonly TypeMap _types;
+    private readonly Overlays _overlays;
     private readonly EmissionCensus _census;
     private readonly DiagnosticBag _diagnostics;
 
@@ -277,18 +278,21 @@ internal sealed class SurfaceBuilder
     /// <param name="planner">The marshal planner.</param>
     /// <param name="names">The name mapper.</param>
     /// <param name="types">The type map, which says what a property holds.</param>
+    /// <param name="overlays">The overlay corrections, for the skip list.</param>
     /// <param name="census">The census of the run.</param>
     /// <param name="diagnostics">The diagnostic sink.</param>
     internal SurfaceBuilder(
         MarshalPlanner planner,
         NameMapper names,
         TypeMap types,
+        Overlays overlays,
         EmissionCensus census,
         DiagnosticBag diagnostics)
     {
         _planner = planner;
         _names = names;
         _types = types;
+        _overlays = overlays;
         _census = census;
         _diagnostics = diagnostics;
     }
@@ -645,6 +649,19 @@ internal sealed class SurfaceBuilder
         foreach (GirProperty property in declaration.Properties)
         {
             string symbol = context.Namespace.Name + "." + declaration.Name + ":" + property.Name;
+
+            // A property whose C implementation is wrong in a way no annotation
+            // describes is kept out by name, the way a callable is. The entry is
+            // about the property rather than about the route it takes, so it is
+            // asked here once, ahead of both routes: a property that never
+            // reaches the value backed pass below is one this loop already
+            // answered.
+            if (_overlays.IsSkipped(symbol))
+            {
+                _census.Skipped(module, SkipReason.OverlaySkip, symbol);
+                continue;
+            }
+
             MarshalPlan? getter = FindAccessor(members, property.Getter);
             if (getter is null
                 || getter.Form != CallableForm.InstanceMethod
@@ -757,6 +774,9 @@ internal sealed class SurfaceBuilder
         {
             string symbol = context.Namespace.Name + "." + declaration.Name + ":" + property.Name;
 
+            // The first pass already answered an overlay skip and counted it;
+            // a candidate that reaches here was never on the skip list.
+            //
             // A write only property has nothing to hand back, and
             // g_object_get_property on one warns and fills in nothing.
             if (!property.IsReadable)

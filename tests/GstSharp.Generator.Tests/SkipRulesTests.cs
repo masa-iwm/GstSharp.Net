@@ -195,6 +195,26 @@ public sealed class SkipRulesTests
         // which aborts the process. Both are hand written in
         // Gst.Transcoder.TranscoderMessageExtensions instead, where a message
         // with no details answers null.
+        // The play group is the newest and is thirteen entries. Three of them
+        // are the first properties the list carries.
+        // GstPlay.PlayVideoOverlayVideoRenderer:video-sink has a C setter that
+        // assigns a ref_sink over the field without releasing the sink that was
+        // there, so the sink is a construction argument and the read only half
+        // of the property is hand written. GstPlay.Play:video-renderer is
+        // declared readable and has no get case in gst_play_get_property, so a
+        // read is a g_warning and nothing else. GstPlay.PlaySignalAdapter:play
+        // reads a field the adapter never referenced, which dangles once the
+        // play is disposed, and it goes with the getter beside it. The other
+        // ten are callables: the three
+        // namespace level twins of gst_play_media_info_get_*_streams, which
+        // put the same three lists on the surface a second time as statics of
+        // Play; gst_play_set_config, whose C half only honours the ownership
+        // it documents on success and leaks the structure it was handed when
+        // the play is not stopped; the two missing plugin parses, whose C half
+        // compares an uninitialised message kind when it is handed a message
+        // of another bus; and the three signal adapter factories, which store
+        // the play without referencing it, so the wrapper is what has to keep
+        // it alive. All nine are hand written in src/GstSharp.Net.Play/Custom.
         // The two type entries at the head are callback types whose delegate is
         // written by hand: a hand bound consumer keeps its callback type
         // generated, and these two are the ones whose hand written declaration
@@ -208,6 +228,9 @@ public sealed class SkipRulesTests
                 "GstBase.ByteReader",
                 "GstBase.ByteWriter",
                 "GstPbutils.InstallPluginsResultFunc",
+                "GstPlay.Play:video-renderer",
+                "GstPlay.PlaySignalAdapter:play",
+                "GstPlay.PlayVideoOverlayVideoRenderer:video-sink",
                 "GstRtsp.RTSPWatch",
                 "GstRtsp.RTSPWatchFuncs",
                 "ges_deinit",
@@ -271,6 +294,16 @@ public sealed class SkipRulesTests
                 "gst_mini_object_set_qdata",
                 "gst_pad_push_event",
                 "gst_pad_send_event",
+                "gst_play_get_audio_streams",
+                "gst_play_get_subtitle_streams",
+                "gst_play_get_video_streams",
+                "gst_play_message_parse_error_missing_plugin",
+                "gst_play_message_parse_warning_missing_plugin",
+                "gst_play_set_config",
+                "gst_play_signal_adapter_get_play",
+                "gst_play_signal_adapter_new",
+                "gst_play_signal_adapter_new_sync_emit",
+                "gst_play_signal_adapter_new_with_main_context",
                 "gst_plugin_feature_list_free",
                 "gst_plugin_list_free",
                 "gst_plugin_register_static",
@@ -382,6 +415,20 @@ public sealed class SkipRulesTests
                 "gst_mini_object_unref",
                 "gst_pad_push_event",
                 "gst_pad_send_event",
+                "gst_play_message_parse_error",
+                "gst_play_message_parse_error_missing_plugin",
+                "gst_play_message_parse_warning",
+                "gst_play_message_parse_warning_missing_plugin",
+                "gst_play_new",
+                "gst_play_set_config",
+                "gst_play_signal_adapter_get_play",
+                "gst_play_signal_adapter_new",
+                "gst_play_signal_adapter_new_sync_emit",
+                "gst_play_signal_adapter_new_with_main_context",
+                "gst_play_video_overlay_video_renderer_new",
+                "gst_play_video_overlay_video_renderer_new_with_sink",
+                "gst_play_visualizations_free",
+                "gst_play_visualizations_get",
                 "gst_promise_reply",
                 "gst_query_new_custom",
                 "gst_query_parse_nth_allocation_param",
@@ -454,6 +501,46 @@ public sealed class SkipRulesTests
                 "GstVideo.VideoTimeCodeConfig",
             ],
             GirFixture.Overlays.OpaqueRecords.Order(StringComparer.Ordinal).ToArray());
+    }
+
+    [Fact]
+    public void AnOverlaySkipKeepsAPropertyOffBothRoutesOfTheSurface()
+    {
+        // A property whose C implementation is wrong in a way no annotation
+        // describes has to be removable by name, exactly as a callable is. The
+        // entry that this exists for is
+        // GstPlay.PlayVideoOverlayVideoRenderer:video-sink, whose setter leaks
+        // the sink it replaces, and the read only half of it is hand written.
+        // Both routes of the surface builder are covered: 'pulse' is delegated
+        // to a bound C getter and 'glow' is read through the GObject property
+        // system, and the skip list is asked before either of them decides.
+        FixtureRun before = RunWithOverlay("{}", PropertyBody);
+
+        Assert.Contains("public int Pulse", before.File("Widget.cs"), StringComparison.Ordinal);
+        Assert.Contains("public bool Glow", before.File("Widget.cs"), StringComparison.Ordinal);
+        Assert.Equal(0, before.Result.Census.SkippedCount("Gst", SkipReason.OverlaySkip));
+
+        FixtureRun run = RunWithOverlay(
+            """
+            {
+              "skip": [ "Gst.Widget:pulse", "Gst.Widget:glow" ]
+            }
+            """,
+            PropertyBody);
+
+        string source = run.File("Widget.cs");
+        Assert.DoesNotContain("public int Pulse", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("public bool Glow", source, StringComparison.Ordinal);
+
+        // The C getter the gir named is a method of its own and stays bound:
+        // the entry names the property, not the call behind it.
+        Assert.Contains("public int GetPulse()", source, StringComparison.Ordinal);
+
+        Assert.Equal(2, run.Result.Census.SkippedCount("Gst", SkipReason.OverlaySkip));
+        Assert.Contains(
+            "### OverlaySkip (2)\n\n- `Gst.Widget:glow`\n- `Gst.Widget:pulse`\n",
+            run.Result.SkipReport,
+            StringComparison.Ordinal);
     }
 
     [Fact]
@@ -688,6 +775,35 @@ public sealed class SkipRulesTests
                   </parameter>
                 </parameters>
               </glib:signal>
+            </class>
+        """;
+
+    /// <summary>
+    /// One class with two properties: <c>pulse</c>, which the gir backs with a
+    /// bound C getter, and <c>glow</c>, which has no accessor at all and is
+    /// therefore read through the GObject property system. The two take the two
+    /// different routes of the surface builder, which is what makes the pair
+    /// the fixture of the overlay skip of a property.
+    /// </summary>
+    private const string PropertyBody =
+        """
+            <class name="Widget" c:type="GstWidget" parent="GObject.InitiallyUnowned" glib:type-name="GstWidget" glib:get-type="gst_widget_get_type">
+              <method name="get_pulse" c:identifier="gst_widget_get_pulse">
+                <return-value transfer-ownership="none">
+                  <type name="gint" c:type="gint"/>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="widget" transfer-ownership="none">
+                    <type name="Widget" c:type="GstWidget*"/>
+                  </instance-parameter>
+                </parameters>
+              </method>
+              <property name="pulse" readable="1" transfer-ownership="none" getter="get_pulse">
+                <type name="gint" c:type="gint"/>
+              </property>
+              <property name="glow" readable="1" writable="1" transfer-ownership="none">
+                <type name="gboolean" c:type="gboolean"/>
+              </property>
             </class>
         """;
 

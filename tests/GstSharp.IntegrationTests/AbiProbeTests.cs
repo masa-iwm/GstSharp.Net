@@ -1616,6 +1616,25 @@ public sealed class AbiProbeTests
         Assert.Equal((uint)mirror, query.ClassSize);
     }
 
+    /// <summary>
+    /// <c>struct _GstPlayVisualization</c> of <c>gstplay-visualization.h</c>:
+    /// the two <c>gchar *</c> fields <c>name</c> at 0 and <c>description</c> at
+    /// one pointer, for two pointers in total. It is the one record of the
+    /// GstPlay module that is not an opaque class structure, and the wrapper
+    /// reads both fields through this mirror because neither has a C accessor.
+    /// </summary>
+    [Fact]
+    public unsafe void PlayVisualizationRawMatchesTheHeaderLayout()
+    {
+        Gst.Play.PlayVisualizationRaw raw = default;
+
+        _output.WriteLine(Format("PlayVisualizationRaw", Unsafe.SizeOf<Gst.Play.PlayVisualizationRaw>()));
+        Assert.Equal(2 * sizeof(nint), Unsafe.SizeOf<Gst.Play.PlayVisualizationRaw>());
+
+        Assert.Equal(0L, Offset(&raw, &raw.Name));
+        Assert.Equal((long)sizeof(nint), Offset(&raw, &raw.Description));
+    }
+
     private static unsafe long Offset(void* start, void* field) => (byte*)field - (byte*)start;
 
     private static string Format(string name, int size) =>

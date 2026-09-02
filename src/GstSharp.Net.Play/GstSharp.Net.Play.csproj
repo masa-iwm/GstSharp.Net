@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>Gst.Play</RootNamespace>
+    <Description>GstPlay for GstSharp.Net: the high level playback API of gst-plugins-bad, built on playbin.</Description>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!-- This package has never been published, so there is no baseline on
+         nuget.org for the pack step to restore and compare against, and
+         leaving validation on fails the pack with NU1101. It joins the gate in
+         the patch after the release that first ships it, when the baseline
+         version of src/Directory.Build.props is moved forward. -->
+    <EnablePackageValidation>false</EnablePackageValidation>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../GstSharp.Net/GstSharp.Net.csproj" />
+
+    <!-- The video info of a stream carries the multiview mode and flags of
+         GstVideo, so the media info surface of this module names
+         Gst.Video.VideoMultiviewFramePacking and Gst.Video.VideoMultiviewFlags. -->
+    <ProjectReference Include="../GstSharp.Net.Video/GstSharp.Net.Video.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The ABI probes of the integration tests read the raw mirrors of this
+         module, which are internal: nothing outside the binding has a reason
+         to know the native layout of a record. -->
+    <InternalsVisibleTo Include="GstSharp.IntegrationTests" />
+  </ItemGroup>
+
+</Project>

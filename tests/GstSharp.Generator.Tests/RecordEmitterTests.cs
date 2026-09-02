@@ -1056,6 +1056,7 @@ public sealed class RecordEmitterTests
     [InlineData("GstSharp.Net.Allocators", 9)]
     [InlineData("GstSharp.Net.Tag", 6)]
     [InlineData("GstSharp.Net.Transcoder", 8)]
+    [InlineData("GstSharp.Net.Play", 18)]
     [InlineData("GstSharp.Net.GES", 66)]
     public void EveryModuleEmitsItsOwnFiles(string projectDirectory, int count)
     {
@@ -1465,7 +1466,7 @@ public sealed class RecordEmitterTests
         EmissionCensus census = new();
         SkipRules skipRules = new(Overlays.Empty);
         MarshalPlanner planner = new(repository, classifier, names, types, Overlays.Empty, skipRules, diagnostics);
-        SurfaceBuilder surfaces = new(planner, names, types, census, diagnostics);
+        SurfaceBuilder surfaces = new(planner, names, types, Overlays.Empty, census, diagnostics);
         List<RegistryEntry> registry = [];
         RecordEmitter emitter = new(
             repository,

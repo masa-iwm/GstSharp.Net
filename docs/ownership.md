@@ -452,7 +452,55 @@ Four shapes reach the surface, and each says who frees what.
   carries none, which is every error the transcoder raises itself rather than
   forwards from the bus of its pipeline. The
   `GError` is not the caller's there either: it is read out of a `GValue` copy
-  of the field, which releases it.
+  of the field, which releases it. `Gst.Play.PlayMessageExtensions.ParseError()`
+  and `ParseWarning()` are the same pair for the API bus of a
+  `Gst.Play.Play`, with the same ownership: the details are `null` for a
+  message GStreamer 1.24 posted without them and a copy of the caller's own
+  from 1.26 on, where they always carry the `uri`.
+
+## A play and its API bus
+
+`Gst.Play.Play` is a small state machine around `playbin3` on a thread of its
+own, and three of its members do not follow the shape of the rest of the
+bindings. All three are hand written in `src/GstSharp.Net.Play/Custom`.
+
+* **`new Play(renderer)`** does not consume the renderer, although
+  `gst_play_new` consumes the reference of its C caller. The binding raises one
+  reference before the call, so the renderer wrapper stays the caller's and
+  `Expose()`, `SetWindowHandle()` and the render rectangle of a
+  `PlayVideoOverlayVideoRenderer` are still reachable while the play runs. The
+  consume-in contract of the section above is deliberately not used here: it
+  disposes the wrapper process-wide, and the play offers no readable
+  `video-renderer` property to get it back from.
+* **`Play.SetConfig(config)`** borrows its argument. The C function documents
+  that it takes the structure over and only does so on success, so the binding
+  hands over a copy and frees that copy itself when the play answers `false` —
+  which it does for every play that is not stopped. `Play.GetConfig()` is an
+  owned copy as its transfer says.
+* **`Play.Dispose()` sets the API bus flushing** before it releases the play.
+  Every message the play posts names the play as its source, so a message that
+  is still queued holds the play, and the play holds the bus: an unread bus is
+  a reference cycle. An application that polls `Play.GetMessageBus()` itself
+  has to stop that loop before it disposes the play, because the bus answers
+  nothing afterwards. The finalizer does not flush, for the reason no finalizer
+  in this binding calls native code.
+
+`PlaySignalAdapter` keeps the `Play` wrapper it was built with, because the C
+adapter stores the play without referencing it and
+`gst_play_signal_adapter_get_play` hands that field back as transfer none.
+`GetPlay()` and the `Play` property are hand written for it and answer the kept
+wrapper — an adapter that was disposed answers `ObjectDisposedException`
+instead. **Dispose the adapters of a play before the play**: nothing on the C
+side keeps the play alive for them, and the bus watch of an adapter that
+outlives its play runs against an object that is gone. `PlaySignalAdapter.New()` binds its bus watch to the thread-default main
+context as it is at that moment, so in an application that runs no GLib main
+loop none of its signals ever fires; `NewSyncEmit()` takes the one sync handler
+of the API bus and drops every message, which makes it exclusive with polling
+that bus. Disposing either adapter flushes the bus for every other consumer.
+
+`Play.GetVisualizations()` answers wrappers the caller disposes. The C array
+they are copied out of is freed inside the member, so nothing the caller holds
+points into it.
 
 ## Dates that cross the boundary
 

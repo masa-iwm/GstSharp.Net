@@ -189,6 +189,11 @@ internal static class NativeNames
                 "libgsttag-1.0.0.dylib",
                 "gsttag-1.0-0.dll",
                 "libgsttag-1.0-0.dll"),
+            ["GstPlay"] = new(
+                "libgstplay-1.0.so.0",
+                "libgstplay-1.0.0.dylib",
+                "gstplay-1.0-0.dll",
+                "libgstplay-1.0-0.dll"),
             ["GstTranscoder"] = new(
                 "libgsttranscoder-1.0.so.0",
                 "libgsttranscoder-1.0.0.dylib",

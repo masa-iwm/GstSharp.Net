@@ -214,7 +214,13 @@ internal static class GenerationPipeline
             shared.ConsumedArrayOverrides,
             shared.ConsumedAnnotationOverrides);
 
-        SurfaceBuilder surfaces = new(planner, shared.Names, shared.Types, shared.Census, shared.Diagnostics);
+        SurfaceBuilder surfaces = new(
+            planner,
+            shared.Names,
+            shared.Types,
+            shared.Overlays,
+            shared.Census,
+            shared.Diagnostics);
         List<RegistryEntry> registry = [];
         RecordEmitter recordEmitter = new(
             shared.Repository,

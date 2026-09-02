@@ -785,6 +785,64 @@ disappears shows up here as an added line.
 - `gst_discoverer_info_from_variant`
 - `gst_discoverer_info_to_variant`
 
+## GstPlay
+
+### HandBound (14)
+
+- `gst_play_message_parse_error`
+- `gst_play_message_parse_error_missing_plugin`
+- `gst_play_message_parse_warning`
+- `gst_play_message_parse_warning_missing_plugin`
+- `gst_play_new`
+- `gst_play_set_config`
+- `gst_play_signal_adapter_get_play`
+- `gst_play_signal_adapter_new`
+- `gst_play_signal_adapter_new_sync_emit`
+- `gst_play_signal_adapter_new_with_main_context`
+- `gst_play_video_overlay_video_renderer_new`
+- `gst_play_video_overlay_video_renderer_new_with_sink`
+- `gst_play_visualizations_free`
+- `gst_play_visualizations_get`
+
+### LifetimePrimitive (1)
+
+- `gst_play_visualization_free`
+
+### MovedTo (23)
+
+- `gst_play_color_balance_type_get_name`
+- `gst_play_error_get_name`
+- `gst_play_error_quark`
+- `gst_play_loop_get_name`
+- `gst_play_message_get_name`
+- `gst_play_message_get_stream_id`
+- `gst_play_message_get_uri`
+- `gst_play_message_parse_buffering`
+- `gst_play_message_parse_buffering_percent`
+- `gst_play_message_parse_duration_changed`
+- `gst_play_message_parse_duration_updated`
+- `gst_play_message_parse_error`
+- `gst_play_message_parse_media_info_updated`
+- `gst_play_message_parse_muted_changed`
+- `gst_play_message_parse_position_updated`
+- `gst_play_message_parse_seek_done`
+- `gst_play_message_parse_state_changed`
+- `gst_play_message_parse_type`
+- `gst_play_message_parse_uri_loaded`
+- `gst_play_message_parse_video_dimensions_changed`
+- `gst_play_message_parse_volume_changed`
+- `gst_play_message_parse_warning`
+- `gst_play_state_get_name`
+
+### OverlaySkip (6)
+
+- `GstPlay.Play:video-renderer`
+- `GstPlay.PlaySignalAdapter:play`
+- `GstPlay.PlayVideoOverlayVideoRenderer:video-sink`
+- `gst_play_get_audio_streams`
+- `gst_play_get_subtitle_streams`
+- `gst_play_get_video_streams`
+
 ## GstRtsp
 
 ### HandBound (1)
@@ -1068,7 +1126,7 @@ disappears shows up here as an added line.
 - `gst_webrtc_ice_get_local_candidates`
 - `gst_webrtc_ice_get_remote_candidates`
 
-## Fields (267)
+## Fields (269)
 
 Public record fields that carry API in C and none in C#, with the shape that
 kept them out. A field is bound when a wrapper declares an accessor for it, or
@@ -1214,6 +1272,11 @@ hand bound entry points above follow.
 - `NetAddressMeta.meta` — EmbeddedStruct
 - `NetControlMessageMeta.message` — Pointer
 - `NetControlMessageMeta.meta` — EmbeddedStruct
+
+### GstPlay (2)
+
+- `PlayVisualization.description` — Pointer
+- `PlayVisualization.name` — Pointer
 
 ### GstRtsp (16)
 

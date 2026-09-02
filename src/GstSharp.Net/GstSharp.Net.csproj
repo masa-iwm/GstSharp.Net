@@ -43,6 +43,7 @@
     <InternalsVisibleTo Include="GstSharp.Net.Rtsp" />
     <InternalsVisibleTo Include="GstSharp.Net.Allocators" />
     <InternalsVisibleTo Include="GstSharp.Net.Tag" />
+    <InternalsVisibleTo Include="GstSharp.Net.Play" />
     <InternalsVisibleTo Include="GstSharp.Net.Transcoder" />
     <InternalsVisibleTo Include="GstSharp.Net.GES" />
   </ItemGroup>
