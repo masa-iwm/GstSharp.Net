@@ -463,6 +463,71 @@ public sealed class RejectionRulesTests
             </class>
         """;
 
+    /// <summary>
+    /// A namespace whose parameters carry the shape of the
+    /// <c>gst_rtcp_packet_xr_get_*</c> readers: a scalar the C function writes
+    /// through, typed as the bare scalar with a pointer <c>c:type</c> and no
+    /// direction attribute at all, beside one scalar whose <c>c:type</c> has no
+    /// star and which a correction must therefore not move.
+    /// </summary>
+    private const string ScalarPointerBody =
+        """
+            <class name="Packet" c:type="GstPacket" parent="GObject.InitiallyUnowned" glib:type-name="GstPacket" glib:get-type="gst_packet_get_type">
+              <method name="get_ssrc" c:identifier="gst_packet_get_ssrc">
+                <return-value transfer-ownership="none">
+                  <type name="none" c:type="void"/>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="packet" transfer-ownership="none">
+                    <type name="Packet" c:type="GstPacket*"/>
+                  </instance-parameter>
+                  <parameter name="ssrc" transfer-ownership="none">
+                    <type name="guint32" c:type="guint32*"/>
+                  </parameter>
+                </parameters>
+              </method>
+              <method name="get_ipv4" c:identifier="gst_packet_get_ipv4">
+                <return-value transfer-ownership="none">
+                  <type name="none" c:type="void"/>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="packet" transfer-ownership="none">
+                    <type name="Packet" c:type="GstPacket*"/>
+                  </instance-parameter>
+                  <parameter name="is_ipv4" transfer-ownership="none">
+                    <type name="gboolean" c:type="gboolean*"/>
+                  </parameter>
+                </parameters>
+              </method>
+              <method name="get_offset" c:identifier="gst_packet_get_offset">
+                <return-value transfer-ownership="none">
+                  <type name="none" c:type="void"/>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="packet" transfer-ownership="none">
+                    <type name="Packet" c:type="GstPacket*"/>
+                  </instance-parameter>
+                  <parameter name="offset" transfer-ownership="none">
+                    <type name="gint" c:type="gint*"/>
+                  </parameter>
+                </parameters>
+              </method>
+              <method name="get_count" c:identifier="gst_packet_get_count">
+                <return-value transfer-ownership="none">
+                  <type name="none" c:type="void"/>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="packet" transfer-ownership="none">
+                    <type name="Packet" c:type="GstPacket*"/>
+                  </instance-parameter>
+                  <parameter name="count" transfer-ownership="none">
+                    <type name="guint" c:type="guint"/>
+                  </parameter>
+                </parameters>
+              </method>
+            </class>
+        """;
+
     private static readonly Lazy<FixtureRun> LazyPointerToPointerRun = new(
         static () => Fixture.Run(PointerToPointerBody),
         isThreadSafe: true);
@@ -1033,6 +1098,101 @@ public sealed class RejectionRulesTests
     }
 
     [Fact]
+    public void ADirectionOverrideReachesAPointerToAScalar()
+    {
+        // The gst_rtcp_packet_xr_get_* shape: the C function returns TRUE once
+        // it has written the value through the pointer, and the gir types the
+        // parameter as the bare scalar the pointer points at with no direction
+        // on it, so the member would pass the value the callee writes through.
+        // The star of the c:type is the evidence the correction stands on.
+        FixtureRun run = RunScalarWithOverlay(
+            """
+            {
+              "annotationOverrides": { "gst_packet_get_ssrc#ssrc": { "direction": "out" } }
+            }
+            """);
+
+        Assert.Contains("public void GetSsrc(out uint ssrc)", run.File("Packet.cs"), StringComparison.Ordinal);
+        Assert.DoesNotContain(run.Result.Diagnostics, diagnostic => diagnostic.Code == "GEN0017");
+    }
+
+    [Fact]
+    public void ADirectionOverrideReachesAPointerToABoolean()
+    {
+        // gst_rtcp_packet_xr_get_summary_ttl answers whether the block carries
+        // IPv4 hop counts through a gboolean*, which is an int on the wire and
+        // a bool in the member: the conversion the out projection already has.
+        FixtureRun run = RunScalarWithOverlay(
+            """
+            {
+              "annotationOverrides": { "gst_packet_get_ipv4#is_ipv4": { "direction": "out" } }
+            }
+            """);
+
+        Assert.Contains("public void GetIpv4(out bool isIpv4)", run.File("Packet.cs"), StringComparison.Ordinal);
+        Assert.DoesNotContain(run.Result.Diagnostics, diagnostic => diagnostic.Code == "GEN0017");
+    }
+
+    [Fact]
+    public void ARefOverrideReachesAPointerToAScalar()
+    {
+        // The other half of the same correction: a value the callee reads and
+        // updates is a ref, and the local the member passes the address of is
+        // initialized from the argument rather than zeroed.
+        FixtureRun run = RunScalarWithOverlay(
+            """
+            {
+              "annotationOverrides": { "gst_packet_get_offset#offset": { "direction": "ref" } }
+            }
+            """);
+
+        Assert.Contains("public void GetOffset(ref int offset)", run.File("Packet.cs"), StringComparison.Ordinal);
+        Assert.DoesNotContain(run.Result.Diagnostics, diagnostic => diagnostic.Code == "GEN0017");
+    }
+
+    [Fact]
+    public void ARefOverrideReachesAPointerToABoolean()
+    {
+        // The unproven arm - no ref bool exists in the generated surface today -
+        // so the raw import is asserted beside the member: the conversion of a
+        // gboolean has to survive both directions of the same argument.
+        FixtureRun run = RunScalarWithOverlay(
+            """
+            {
+              "annotationOverrides": { "gst_packet_get_ipv4#is_ipv4": { "direction": "ref" } }
+            }
+            """);
+
+        string source = run.File("Packet.cs");
+
+        Assert.Contains("public void GetIpv4(ref bool isIpv4)", source, StringComparison.Ordinal);
+        Assert.Contains("int* isIpv4", source, StringComparison.Ordinal);
+        Assert.DoesNotContain(run.Result.Diagnostics, diagnostic => diagnostic.Code == "GEN0017");
+    }
+
+    [Fact]
+    public void ADirectionOverrideDoesNotUnlockAScalarPassedByValue()
+    {
+        // Without a star in the c:type nothing says the C function writes
+        // anything: the parameter is a value the callee reads, and correcting it
+        // onto an out would hand the callee an address where it expects a
+        // number. The correction is refused and the member keeps its argument.
+        FixtureRun run = RunScalarWithOverlay(
+            """
+            {
+              "annotationOverrides": { "gst_packet_get_count#count": { "direction": "out" } }
+            }
+            """);
+
+        Assert.Contains("public void GetCount(uint count)", run.File("Packet.cs"), StringComparison.Ordinal);
+        Assert.Contains(
+            run.Result.Diagnostics,
+            diagnostic => diagnostic.Code == "GEN0017" && diagnostic.Message.Contains(
+                "gst_packet_get_count#count",
+                StringComparison.Ordinal));
+    }
+
+    [Fact]
     public void AFixedArraySizeDoesNotUnlockACallerAllocatedHandle()
     {
         // The other half of the same boundary: a caller allocated out parameter
@@ -1096,6 +1256,14 @@ public sealed class RejectionRulesTests
     /// <param name="fixups">The content of <c>fixups.json</c>.</param>
     /// <returns>The run.</returns>
     private static FixtureRun RunWithOverlay(string fixups) => RunWithOverlay(Body, fixups);
+
+    /// <summary>
+    /// Runs the scalar fixture, whose parameters are the shape the RTCP XR
+    /// readers have.
+    /// </summary>
+    /// <param name="fixups">The content of <c>fixups.json</c>.</param>
+    /// <returns>The run.</returns>
+    private static FixtureRun RunScalarWithOverlay(string fixups) => RunWithOverlay(ScalarPointerBody, fixups);
 
     /// <summary>
     /// Runs a factory fixture whose gir return type is the base class, which is

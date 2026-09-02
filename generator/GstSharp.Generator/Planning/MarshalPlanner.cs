@@ -1872,7 +1872,7 @@ internal sealed class MarshalPlanner
 
     /// <summary>
     /// Applies the <c>direction</c> correction of the overlays to a parameter
-    /// the gir spells as a bare pointer to a plain structure.
+    /// the gir spells as a bare pointer to a plain structure or to a scalar.
     /// </summary>
     /// <param name="callable">The callable being planned.</param>
     /// <param name="parameter">The parameter being projected.</param>
@@ -1898,15 +1898,22 @@ internal sealed class MarshalPlanner
     /// caller's own storage, which is what the C function was handed all along.
     /// </para>
     /// <para>
-    /// The correction stops at a plain structure and at a <c>GValue</c>, whose
+    /// The correction reaches a plain structure and a <c>GValue</c>, whose
     /// projection is a pointer into the caller's own storage as well — that is
     /// what moves <c>gst_value_deserialize</c> from a destination this would
     /// zero to the pre-initialized one its parser table reads, and
-    /// <c>gst_value_fixate</c> from a read to the fill it really is. A handle,
-    /// a string, an array or a scalar has an out projection of its own with a
-    /// conversion on either side of the call, and turning one into a bare
-    /// pointer to managed storage would hand native code the address of
-    /// something whose size and layout it does not agree with.
+    /// <c>gst_value_fixate</c> from a read to the fill it really is. It reaches
+    /// a scalar too: the out projection of a <c>guint32</c> or of a
+    /// <c>gboolean</c> is a local of exactly the width the C declaration names,
+    /// whose address is what the callee was handed all along, so nothing about
+    /// its size or its layout is in doubt. The star of the <c>c:type</c> is the
+    /// evidence that the C side writes through it, so a scalar whose
+    /// <c>c:type</c> carries none keeps the value it is; an enumeration and a
+    /// bitfield are refused as well, having no case that asks for it. A handle,
+    /// a string or an array has an out projection of its own with a conversion
+    /// on either side of the call, and turning one into a bare pointer to
+    /// managed storage would hand native code the address of something whose
+    /// size and layout it does not agree with.
     /// </para>
     /// <para>
     /// <c>in</c> is the one correction a pointer to a <em>record</em> takes.
@@ -1938,21 +1945,24 @@ internal sealed class MarshalPlanner
         // parameter plans as the ordinary handle it always was, and the
         // redirect clears caller-allocates with it, so nothing downstream still
         // believes the member produces storage. `out` and `ref` stay what they
-        // were, the two halves of a pointer to a plain structure or to a
-        // GValue.
+        // were, the two halves of a pointer to a plain structure, to a GValue
+        // or to a scalar; the star of the c:type is what says the callee writes
+        // through the parameter, so a scalar without one keeps its value
+        // projection.
         bool corrected = effective is not GirArrayRef
             && effective.IsPointer
             && (overridden == ArgumentDirection.In
                 ? mapped.Kind is MarshalKind.Boxed or MarshalKind.OpaqueRecord or MarshalKind.MiniObject
-                : mapped.Kind is MarshalKind.PlainStruct or MarshalKind.GValue);
+                : mapped.Kind is MarshalKind.PlainStruct or MarshalKind.GValue
+                    or MarshalKind.Blittable or MarshalKind.Boolean);
 
         if (!corrected)
         {
             _diagnostics.Warn(
                 "GEN0017",
                 $"The direction override of '{AnnotationKeyOf(callable)}#{parameter.Name}' is ignored: only a "
-                + "pointer to a plain structure or to a GValue can be re-planned as an out or a ref parameter, "
-                + "and only a pointer to a record can be re-planned as an in parameter.");
+                + "pointer to a plain structure, to a GValue or to a scalar can be re-planned as an out or a ref "
+                + "parameter, and only a pointer to a record can be re-planned as an in parameter.");
             return declared;
         }
 
