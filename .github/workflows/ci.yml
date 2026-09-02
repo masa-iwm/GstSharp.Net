@@ -230,6 +230,12 @@ jobs:
       - name: AppSinkSpans
         run: dotnet run --project samples/AppSinkSpans --no-restore -- --mode pull
 
+      # The RTP module on the same route: a payloader feeding an appsink, every
+      # header read through a mapped RTPBuffer, and a compound RTCP packet
+      # built and read back.
+      - name: RtpPacketDump
+        run: dotnet run --project samples/RtpPacketDump --no-restore
+
       # The gst-launch port, run headless three ways: the plain end of stream,
       # the buffering state machine, and the interrupt, which travels through a
       # GstLaunchInterrupt application message and out again as an injected EOS.
@@ -456,6 +462,12 @@ jobs:
       - name: AppSinkSpans
         run: dotnet run --project samples/AppSinkSpans --no-restore -- --mode pull
 
+      # The RTP module on the same route: a payloader feeding an appsink, every
+      # header read through a mapped RTPBuffer, and a compound RTCP packet
+      # built and read back.
+      - name: RtpPacketDump
+        run: dotnet run --project samples/RtpPacketDump --no-restore
+
       - name: GstLaunch
         run: dotnet run --project samples/GstLaunch --no-restore -- videotestsrc num-buffers=100 ! fakesink
 
@@ -573,6 +585,12 @@ jobs:
       # the log even while the tests still pass.
       - name: AppSinkSpans
         run: dotnet run --project samples/AppSinkSpans --no-restore -- --mode pull
+
+      # The RTP module on the same route: a payloader feeding an appsink, every
+      # header read through a mapped RTPBuffer, and a compound RTCP packet
+      # built and read back.
+      - name: RtpPacketDump
+        run: dotnet run --project samples/RtpPacketDump --no-restore
 
       # The Windows half of the gst-launch port: this is the only leg where the
       # multimedia timer is raised, and the sample says which precision it got

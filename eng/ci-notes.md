@@ -391,6 +391,7 @@ dotnet pack GstSharp.Net.slnx --no-restore --configuration Release --output arti
 # the native jobs (needs a GStreamer installation the loader can find)
 dotnet test tests/GstSharp.IntegrationTests --no-restore
 dotnet run --project samples/AppSinkSpans --no-restore -- --mode pull
+dotnet run --project samples/RtpPacketDump --no-restore
 dotnet run --project samples/AppSrcPush --no-restore -- --buffers 200 --output appsrc-push.raw
 
 # the ported tutorials the Linux job runs, and the media they run against
