@@ -3,6 +3,7 @@
 
 #nullable enable
 
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace Gst.Audio;
@@ -93,6 +94,17 @@ public sealed unsafe partial class AudioRingBufferSpec
         }
     }
 
+    /// <summary>The <c>dsd_format</c> field of <c>GstAudioRingBufferSpec</c>.</summary>
+    public Gst.Audio.DsdFormat DsdFormat
+    {
+        get
+        {
+            Gst.Audio.DsdFormat value = ((AudioRingBufferSpecRaw.ABIMembers*)&((AudioRingBufferSpecRaw*)Handle)->ABI)->DsdFormat;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
     /// <summary>Wraps a native <c>GstAudioRingBufferSpec</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
     /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>
@@ -110,10 +122,6 @@ public sealed unsafe partial class AudioRingBufferSpec
 /// <para>
 /// The mirror is only ever read through a pointer into memory that GStreamer
 /// owns; it is never allocated, assigned or copied.
-/// </para>
-/// <para>
-/// Prefix mirror of the C struct: field offsets are exact, <c>sizeof</c> is NOT
-/// the C size; never allocate from it.
 /// </para>
 /// </remarks>
 [StructLayout(LayoutKind.Sequential)]
@@ -142,4 +150,26 @@ internal unsafe struct AudioRingBufferSpecRaw
 
     /// <summary>The <c>seglatency</c> field.</summary>
     internal int Seglatency;
+
+    /// <summary>The space the <c>ABI</c> union reserves.</summary>
+    internal ABIArray ABI;
+
+    /// <summary>The 4 pointers the <c>ABI</c> union reserves.</summary>
+    [InlineArray(4)]
+    internal struct ABIArray
+    {
+        private nint _element0;
+    }
+
+    /// <summary>The fields the <c>ABI</c> union lays over the space it reserves.</summary>
+    /// <remarks>
+    /// They start where the union starts, so this is read by reinterpreting
+    /// <see cref="ABI"/> rather than by an offset of its own.
+    /// </remarks>
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct ABIMembers
+    {
+        /// <summary>The <c>dsd_format</c> field.</summary>
+        internal Gst.Audio.DsdFormat DsdFormat;
+    }
 }

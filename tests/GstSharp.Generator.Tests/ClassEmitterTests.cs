@@ -171,14 +171,14 @@ public sealed class ClassEmitterTests
     }
 
     [Theory]
-    [InlineData("Gst", 35, 51, 5, 28, 18, 1435, 29, 23, 52)]
-    [InlineData("GstBase", 11, 4, 0, 5, 0, 174, 31, 2, 4)]
+    [InlineData("Gst", 35, 51, 5, 28, 18, 1435, 29, 23, 53)]
+    [InlineData("GstBase", 11, 4, 0, 5, 0, 174, 31, 2, 5)]
     [InlineData("GstApp", 2, 2, 0, 8, 0, 62, 36, 8, 0)]
-    [InlineData("GstAudio", 14, 17, 1, 2, 2, 213, 32, 0, 41)]
-    [InlineData("GstVideo", 12, 42, 5, 0, 10, 383, 14, 2, 94)]
+    [InlineData("GstAudio", 14, 17, 1, 2, 2, 213, 32, 0, 42)]
+    [InlineData("GstVideo", 12, 42, 5, 0, 10, 383, 14, 2, 101)]
     [InlineData("GstPbutils", 14, 1, 0, 0, 1, 179, 5, 5, 0)]
     [InlineData("GstSdp", 1, 21, 0, 0, 0, 164, 0, 0, 26)]
-    [InlineData("GstWebRTC", 9, 4, 0, 1, 2, 37, 38, 7, 6)]
+    [InlineData("GstWebRTC", 9, 4, 0, 1, 2, 37, 38, 7, 8)]
     [InlineData("GstNet", 5, 3, 0, 1, 0, 25, 17, 0, 2)]
     [InlineData("GstRtsp", 1, 10, 1, 1, 2, 114, 0, 1, 14)]
     [InlineData("GstAllocators", 6, 0, 1, 0, 0, 23, 1, 0, 0)]
@@ -587,12 +587,12 @@ public sealed class ClassEmitterTests
     }
 
     [Theory]
-    [InlineData("Gst", 83)]
-    [InlineData("GstBase", 7)]
-    [InlineData("GstAudio", 25)]
-    [InlineData("GstVideo", 61)]
+    [InlineData("Gst", 82)]
+    [InlineData("GstBase", 6)]
+    [InlineData("GstAudio", 24)]
+    [InlineData("GstVideo", 59)]
     [InlineData("GstSdp", 58)]
-    [InlineData("GstWebRTC", 12)]
+    [InlineData("GstWebRTC", 14)]
     [InlineData("GstNet", 4)]
     [InlineData("GstRtsp", 16)]
     [InlineData("GstAllocators", 0)]
@@ -618,9 +618,9 @@ public sealed class ClassEmitterTests
     {
         string report = Generated.SkipReport;
 
-        Assert.Equal(269, Generated.Census.DroppedFieldCount());
-        Assert.Contains("## Fields (269)\n", report, StringComparison.Ordinal);
-        Assert.Contains("### GstVideo (61)\n", report, StringComparison.Ordinal);
+        Assert.Equal(266, Generated.Census.DroppedFieldCount());
+        Assert.Contains("## Fields (266)\n", report, StringComparison.Ordinal);
+        Assert.Contains("### GstVideo (59)\n", report, StringComparison.Ordinal);
 
         // One entry per shape that keeps a field out. The fixed size fields of
         // GstVideoInfo are bound and are therefore absent; the ones whose
@@ -628,7 +628,20 @@ public sealed class ClassEmitterTests
         Assert.Contains("- `Buffer.pool` \u2014 Pointer\n", report, StringComparison.Ordinal);
         Assert.Contains("- `Buffer.mini_object` \u2014 EmbeddedStruct\n", report, StringComparison.Ordinal);
         Assert.Contains("- `Iterator.next` \u2014 Callback\n", report, StringComparison.Ordinal);
-        Assert.Contains("- `VideoInfo.ABI` \u2014 Union\n", report, StringComparison.Ordinal);
+        // The variant union of GstRTSPMessage still stops the layout and is
+        // still listed under its own name. A reserved ABI union is laid out
+        // instead, so what is listed of one is its members: the strings behind
+        // the reserve of GstWebRTCICECandidateStats under the shape that keeps
+        // them out, and the four members GstVideoCodecFrame keeps to its own
+        // implementation as Private.
+        Assert.Contains("- `RTSPMessage.type_data` \u2014 Union\n", report, StringComparison.Ordinal);
+        Assert.DoesNotContain("- `VideoInfo.ABI`", report, StringComparison.Ordinal);
+        Assert.DoesNotContain("- `VideoInfo.multiview_mode`", report, StringComparison.Ordinal);
+        Assert.Contains(
+            "- `WebRTCICECandidateStats.foundation` \u2014 Pointer\n",
+            report,
+            StringComparison.Ordinal);
+        Assert.Contains("- `VideoCodecFrame.ts` \u2014 Private\n", report, StringComparison.Ordinal);
         Assert.Contains(
             "- `VideoFormatInfo.tile_info` \u2014 InlineArray(struct element)\n",
             report,

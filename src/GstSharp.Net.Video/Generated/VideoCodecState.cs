@@ -3,6 +3,7 @@
 
 #nullable enable
 
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace Gst.Video;
@@ -57,14 +58,38 @@ public sealed partial class VideoCodecState : Gst.GObject.Boxed
 /// The mirror is only ever read through a pointer into memory that GStreamer
 /// owns; it is never allocated, assigned or copied.
 /// </para>
-/// <para>
-/// Prefix mirror of the C struct: field offsets are exact, <c>sizeof</c> is NOT
-/// the C size; never allocate from it.
-/// </para>
 /// </remarks>
 [StructLayout(LayoutKind.Sequential)]
 internal unsafe struct VideoCodecStateRaw
 {
     /// <summary>The <c>ref_count</c> field.</summary>
     internal int RefCount;
+
+    /// <summary>The <c>info</c> field.</summary>
+    internal Gst.Video.VideoInfoRaw Info;
+
+    /// <summary>The <c>caps</c> field.</summary>
+    internal nint Caps;
+
+    /// <summary>The <c>codec_data</c> field.</summary>
+    internal nint CodecData;
+
+    /// <summary>The <c>allocation_caps</c> field.</summary>
+    internal nint AllocationCaps;
+
+    /// <summary>The <c>mastering_display_info</c> field.</summary>
+    internal nint MasteringDisplayInfo;
+
+    /// <summary>The <c>content_light_level</c> field.</summary>
+    internal nint ContentLightLevel;
+
+    /// <summary>The <c>padding</c> field.</summary>
+    internal PaddingArray Padding;
+
+    /// <summary>Inline storage of the 17 elements of the <c>padding</c> field.</summary>
+    [InlineArray(17)]
+    internal struct PaddingArray
+    {
+        private nint _element0;
+    }
 }

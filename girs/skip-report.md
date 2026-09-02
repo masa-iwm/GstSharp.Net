@@ -1126,23 +1126,26 @@ disappears shows up here as an added line.
 - `gst_webrtc_ice_get_local_candidates`
 - `gst_webrtc_ice_get_remote_candidates`
 
-## Fields (269)
+## Fields (266)
 
 Public record fields that carry API in C and none in C#, with the shape that
 kept them out. A field is bound when a wrapper declares an accessor for it, or
 when a value projected structure declares it as a typed public field; one that
 is projected onto a machine address binds nothing that can be read without the
-interop layer and stays listed. A union is listed once, under its own name,
-because the layout of the record stops where it sits. A field a hand written
-member reads through, such as the `finfo` of `GstVideoInfo`, stays listed as
-well: the ledger measures what the generator binds, the same convention the
-hand bound entry points above follow.
+interop layer and stays listed. A union the layout stops in front of is listed
+once, under its own name, because the record ends where it sits; a reserved ABI
+union the mirror lays out is listed member by member instead, under the name of
+the member alone, and a member the gir keeps to the C implementation is listed
+as `Private` rather than left out. A field a hand written member reads through,
+such as the `finfo` of `GstVideoInfo`, stays listed as well: the ledger measures
+what the generator binds, the same convention the hand bound entry points above
+follow.
 
 ### GES (1)
 
 - `FrameCompositionMeta.meta` — EmbeddedStruct
 
-### Gst (83)
+### Gst (82)
 
 - `Buffer.mini_object` — EmbeddedStruct
 - `Buffer.pool` — Pointer
@@ -1184,7 +1187,6 @@ hand bound entry points above follow.
 - `MiniObject.lockstate` — Other
 - `MiniObject.refcount` — Other
 - `MiniObject.type` — Other
-- `PadProbeInfo.ABI` — Union
 - `PadProbeInfo.data` — Pointer
 - `ParamSpecArray.element_spec` — Pointer
 - `ParamSpecArray.parent_instance` — EmbeddedStruct
@@ -1228,7 +1230,7 @@ hand bound entry points above follow.
 - `ValueTable.hash` — Callback
 - `ValueTable.serialize` — Callback
 
-### GstAudio (25)
+### GstAudio (24)
 
 - `AudioBuffer.buffer` — Pointer
 - `AudioBuffer.info` — EmbeddedStruct
@@ -1249,18 +1251,16 @@ hand bound entry points above follow.
 - `AudioMeta.info` — EmbeddedStruct
 - `AudioMeta.meta` — EmbeddedStruct
 - `AudioMeta.offsets` — Pointer
-- `AudioRingBufferSpec.ABI` — Union
 - `AudioRingBufferSpec.caps` — Pointer
 - `AudioRingBufferSpec.info` — EmbeddedStruct
 - `AudioSinkClassExtension.clear_all` — Callback
 - `DsdPlaneOffsetMeta.meta` — EmbeddedStruct
 - `DsdPlaneOffsetMeta.offsets` — Pointer
 
-### GstBase (7)
+### GstBase (6)
 
 - `BaseParseFrame.buffer` — Pointer
 - `BaseParseFrame.out_buffer` — Pointer
-- `CollectData.ABI` — Union
 - `CollectData.buffer` — Pointer
 - `CollectData.collect` — Pointer
 - `CollectData.pad` — Pointer
@@ -1358,7 +1358,7 @@ hand bound entry points above follow.
 - `SDPZone.time` — Pointer
 - `SDPZone.typed_time` — Pointer
 
-### GstVideo (61)
+### GstVideo (59)
 
 - `AncillaryMeta.data` — Pointer
 - `AncillaryMeta.meta` — EmbeddedStruct
@@ -1369,9 +1369,12 @@ hand bound entry points above follow.
 - `VideoCaptionMeta.meta` — EmbeddedStruct
 - `VideoCodecAlphaMeta.buffer` — Pointer
 - `VideoCodecAlphaMeta.meta` — EmbeddedStruct
-- `VideoCodecFrame.abidata` — Union
 - `VideoCodecFrame.input_buffer` — Pointer
+- `VideoCodecFrame.num_subframes` — Private
 - `VideoCodecFrame.output_buffer` — Pointer
+- `VideoCodecFrame.subframes_processed` — Private
+- `VideoCodecFrame.ts` — Private
+- `VideoCodecFrame.ts2` — Private
 - `VideoCodecState.allocation_caps` — Pointer
 - `VideoCodecState.caps` — Pointer
 - `VideoCodecState.codec_data` — Pointer
@@ -1386,17 +1389,12 @@ hand bound entry points above follow.
 - `VideoFormatInfo.unpack_func` — Callback
 - `VideoFrame.buffer` — Pointer
 - `VideoFrame.data` — InlineArray(pointer element)
-- `VideoFrame.flags` — Other
-- `VideoFrame.id` — Other
 - `VideoFrame.info` — EmbeddedStruct
 - `VideoFrame.map` — InlineArray(struct element)
 - `VideoFrame.meta` — Pointer
 - `VideoGLTextureUploadMeta.meta` — EmbeddedStruct
-- `VideoInfo.ABI` — Union
 - `VideoInfo.colorimetry` — EmbeddedStruct
 - `VideoInfo.finfo` — Pointer
-- `VideoInfoDmaDrm.drm_fourcc` — Other
-- `VideoInfoDmaDrm.drm_modifier` — Other
 - `VideoInfoDmaDrm.vinfo` — EmbeddedStruct
 - `VideoMeta.alignment` — EmbeddedStruct
 - `VideoMeta.buffer` — Pointer
@@ -1422,17 +1420,19 @@ hand bound entry points above follow.
 - `VideoTimeCodeMeta.meta` — EmbeddedStruct
 - `VideoTimeCodeMeta.tc` — EmbeddedStruct
 
-### GstWebRTC (12)
+### GstWebRTC (14)
 
 - `WebRTCICECandidate.candidate` — Pointer
 - `WebRTCICECandidate.sdp_mid` — Pointer
 - `WebRTCICECandidate.stats` — Pointer
 - `WebRTCICECandidatePair.local` — Pointer
 - `WebRTCICECandidatePair.remote` — Pointer
-- `WebRTCICECandidateStats.ABI` — Union
+- `WebRTCICECandidateStats.foundation` — Pointer
 - `WebRTCICECandidateStats.ipaddr` — Pointer
 - `WebRTCICECandidateStats.proto` — Pointer
+- `WebRTCICECandidateStats.related_address` — Pointer
 - `WebRTCICECandidateStats.relay_proto` — Pointer
 - `WebRTCICECandidateStats.type` — Pointer
 - `WebRTCICECandidateStats.url` — Pointer
+- `WebRTCICECandidateStats.username_fragment` — Pointer
 - `WebRTCSessionDescription.sdp` — Pointer

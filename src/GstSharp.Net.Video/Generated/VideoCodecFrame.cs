@@ -4,6 +4,7 @@
 #nullable enable
 
 using System;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace Gst.Video;
@@ -134,10 +135,6 @@ public sealed unsafe partial class VideoCodecFrame : Gst.GObject.Boxed
 /// The mirror is only ever read through a pointer into memory that GStreamer
 /// owns; it is never allocated, assigned or copied.
 /// </para>
-/// <para>
-/// Prefix mirror of the C struct: field offsets are exact, <c>sizeof</c> is NOT
-/// the C size; never allocate from it.
-/// </para>
 /// </remarks>
 [StructLayout(LayoutKind.Sequential)]
 internal unsafe struct VideoCodecFrameRaw
@@ -186,4 +183,14 @@ internal unsafe struct VideoCodecFrameRaw
 
     /// <summary>The <c>user_data_destroy_notify</c> field.</summary>
     internal nint UserDataDestroyNotify;
+
+    /// <summary>The space the <c>abidata</c> union reserves.</summary>
+    internal AbidataArray Abidata;
+
+    /// <summary>The 20 pointers the <c>abidata</c> union reserves.</summary>
+    [InlineArray(20)]
+    internal struct AbidataArray
+    {
+        private nint _element0;
+    }
 }

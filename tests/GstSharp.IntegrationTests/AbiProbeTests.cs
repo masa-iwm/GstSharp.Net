@@ -842,26 +842,38 @@ public sealed class AbiProbeTests
     /// <summary>
     /// <c>struct _GstPadProbeInfo</c> of <c>gstpad.h</c>:
     /// <c>GstPadProbeType type</c> at 0, <c>gulong id</c>, <c>gpointer data</c>,
-    /// <c>guint64 offset</c>, <c>guint size</c> and the <c>ABI</c> union the
-    /// mirror stops in front of. <b>A <c>gulong</c> is four bytes on Windows
-    /// and eight everywhere else</b>, which moves everything behind it: the
-    /// union sits at 32 on Windows and at 40 on the other platforms, and that
-    /// is what the prefix mirror is as large as.
+    /// <c>guint64 offset</c>, <c>guint size</c> and the <c>ABI</c> union, which
+    /// is <c>GST_PADDING</c> pointers wide and carries <c>GstFlowReturn
+    /// flow_ret</c>. <b>A <c>gulong</c> is four bytes on Windows and eight
+    /// everywhere else</b>, which moves everything behind it: the union sits at
+    /// 32 on Windows and at 40 on the other platforms, so the structure is 64
+    /// bytes there and 72 here.
     /// </summary>
+    /// <remarks>
+    /// The size is derived from where the union lands rather than written out
+    /// twice, which is what keeps the two data models on one statement.
+    /// </remarks>
     [Fact]
     public unsafe void PadProbeInfoRawMatchesTheHeaderLayout()
     {
         PadProbeInfoRaw raw = default;
+        PadProbeInfoRaw.ABIMembers abi = default;
         bool windows = OperatingSystem.IsWindows();
 
         _output.WriteLine(Format("PadProbeInfoRaw", Unsafe.SizeOf<PadProbeInfoRaw>()));
-        Assert.Equal(windows ? 32 : 40, Unsafe.SizeOf<PadProbeInfoRaw>());
 
         Assert.Equal(0L, Offset(&raw, &raw.Type));
         Assert.Equal(windows ? 4L : 8L, Offset(&raw, &raw.Id));
         Assert.Equal(windows ? 8L : 16L, Offset(&raw, &raw.Data));
         Assert.Equal(windows ? 16L : 24L, Offset(&raw, &raw.Offset));
         Assert.Equal(windows ? 24L : 32L, Offset(&raw, &raw.Size));
+        Assert.Equal(windows ? 32L : 40L, Offset(&raw, &raw.ABI));
+
+        Assert.Equal(
+            Offset(&raw, &raw.ABI) + (4 * sizeof(nint)),
+            Unsafe.SizeOf<PadProbeInfoRaw>());
+
+        Assert.Equal(0L, Offset(&abi, &abi.FlowRet));
     }
 
     /// <summary>
@@ -1128,8 +1140,10 @@ public sealed class AbiProbeTests
     /// 24, 32 and 40, <c>distance_from_sync</c> at 48, the two buffers at 56
     /// and 64, <c>deadline</c> at 72, and the private <c>events</c>,
     /// <c>user_data</c> and <c>user_data_destroy_notify</c> at 80, 88 and 96.
-    /// The <c>abidata</c> union sits at 104, which is where the prefix mirror
-    /// stops.
+    /// The <c>abidata</c> union sits at 104 and is <c>GST_PADDING_LARGE</c>
+    /// pointers wide, for 264 bytes in total. Every member it carries is
+    /// private to the C implementation, so the mirror reserves the space and
+    /// declares nothing over it.
     /// </summary>
     [Fact]
     public unsafe void VideoCodecFrameRawMatchesTheHeaderLayout()
@@ -1137,7 +1151,7 @@ public sealed class AbiProbeTests
         Gst.Video.VideoCodecFrameRaw raw = default;
 
         _output.WriteLine(Format("VideoCodecFrameRaw", Unsafe.SizeOf<Gst.Video.VideoCodecFrameRaw>()));
-        Assert.Equal(104, Unsafe.SizeOf<Gst.Video.VideoCodecFrameRaw>());
+        Assert.Equal(264, Unsafe.SizeOf<Gst.Video.VideoCodecFrameRaw>());
 
         Assert.Equal(0L, Offset(&raw, &raw.RefCount));
         Assert.Equal(4L, Offset(&raw, &raw.Flags));
@@ -1151,6 +1165,7 @@ public sealed class AbiProbeTests
         Assert.Equal(56L, Offset(&raw, &raw.InputBuffer));
         Assert.Equal(64L, Offset(&raw, &raw.OutputBuffer));
         Assert.Equal(72L, Offset(&raw, &raw.Deadline));
+        Assert.Equal(104L, Offset(&raw, &raw.Abidata));
     }
 
     /// <summary>
@@ -1161,16 +1176,24 @@ public sealed class AbiProbeTests
     /// <c>chroma_site</c> at 32 and 36, the 16 byte <c>colorimetry</c> at 40,
     /// the pixel aspect ratio and the framerate at 56 to 68,
     /// <c>gsize offset[4]</c> at 72 and <c>gint stride[4]</c> at 104. The
-    /// <c>ABI</c> union sits at 120, which is where the prefix mirror stops —
-    /// the whole C structure is 152 bytes and the mirror is deliberately not.
+    /// <c>ABI</c> union sits at 120 and is <c>GST_PADDING</c> pointers wide,
+    /// which makes the structure 152 bytes; the three fields it carries —
+    /// <c>multiview_mode</c>, <c>multiview_flags</c> and <c>field_order</c> —
+    /// are four bytes each, from the front of the union.
     /// </summary>
+    /// <remarks>
+    /// This is the mirror the whole cascade turns on: once it is as large as
+    /// the C structure, <c>GstVideoFrame</c>, <c>GstVideoInfoDmaDrm</c> and
+    /// <c>GstVideoCodecState</c> can embed it and reach the fields behind it.
+    /// </remarks>
     [Fact]
-    public unsafe void VideoInfoRawMatchesTheHeaderLayoutUpToTheAbiUnion()
+    public unsafe void VideoInfoRawMatchesTheHeaderLayout()
     {
         Gst.Video.VideoInfoRaw raw = default;
+        Gst.Video.VideoInfoRaw.ABIMembers abi = default;
 
         _output.WriteLine(Format("VideoInfoRaw", Unsafe.SizeOf<Gst.Video.VideoInfoRaw>()));
-        Assert.Equal(120, Unsafe.SizeOf<Gst.Video.VideoInfoRaw>());
+        Assert.Equal(152, Unsafe.SizeOf<Gst.Video.VideoInfoRaw>());
 
         Assert.Equal(0L, Offset(&raw, &raw.Finfo));
         Assert.Equal(8L, Offset(&raw, &raw.InterlaceMode));
@@ -1187,6 +1210,11 @@ public sealed class AbiProbeTests
         Assert.Equal(68L, Offset(&raw, &raw.FpsD));
         Assert.Equal(72L, Offset(&raw, &raw.Offset));
         Assert.Equal(104L, Offset(&raw, &raw.Stride));
+        Assert.Equal(120L, Offset(&raw, &raw.ABI));
+
+        Assert.Equal(0L, Offset(&abi, &abi.MultiviewMode));
+        Assert.Equal(4L, Offset(&abi, &abi.MultiviewFlags));
+        Assert.Equal(8L, Offset(&abi, &abi.FieldOrder));
     }
 
     /// <summary>
@@ -1402,7 +1430,9 @@ public sealed class AbiProbeTests
     /// is too small is a stack frame the library writes past. The header is
     /// what this probe states; that the installed library agrees is what
     /// <c>CallerAllocatedStorageTests</c> measures, by reading the fields back
-    /// out of a live mapping.
+    /// out of a live mapping. It reaches those 664 bytes only because the
+    /// <c>GstVideoInfo</c> it embeds has the size of the C structure, which is
+    /// what <see cref="VideoInfoRawMatchesTheHeaderLayout"/> states.
     /// </remarks>
     [Fact]
     public unsafe void VideoFrameRawMatchesTheHeaderLayout()
@@ -1414,11 +1444,122 @@ public sealed class AbiProbeTests
 
         Assert.Equal(0L, Offset(&raw, &raw.Info));
         Assert.Equal(152L, Offset(&raw, &raw.Flags));
-        Assert.Equal(160L, Offset(&raw, &raw.BufferPtr));
-        Assert.Equal(168L, Offset(&raw, &raw.MetaPtr));
+        Assert.Equal(160L, Offset(&raw, &raw.Buffer));
+        Assert.Equal(168L, Offset(&raw, &raw.Meta));
         Assert.Equal(176L, Offset(&raw, &raw.Id));
         Assert.Equal(184L, Offset(&raw, &raw.Data));
         Assert.Equal(216L, Offset(&raw, &raw.Map));
+        Assert.Equal(632L, Offset(&raw, &raw.GstReserved));
+    }
+
+    /// <summary>
+    /// <c>struct _GstVideoInfoDmaDrm</c> of <c>video-info-dma.h</c>: the 152
+    /// byte <c>GstVideoInfo vinfo</c> at 0, <c>guint32 drm_fourcc</c> at 152,
+    /// four bytes of padding, <c>guint64 drm_modifier</c> at 160 and
+    /// <c>guint32 _gst_reserved[20]</c> at 168, for 248 bytes in total.
+    /// </summary>
+    /// <remarks>
+    /// Neither of the two fields behind the embed had a binding of any kind
+    /// before the mirror of <c>GstVideoInfo</c> reached the size of the C
+    /// structure: the gir declares no accessor function for either, and the
+    /// embed collapsed the whole record.
+    /// </remarks>
+    [Fact]
+    public unsafe void VideoInfoDmaDrmRawMatchesTheHeaderLayout()
+    {
+        Gst.Video.VideoInfoDmaDrmRaw raw = default;
+
+        _output.WriteLine(Format("VideoInfoDmaDrmRaw", Unsafe.SizeOf<Gst.Video.VideoInfoDmaDrmRaw>()));
+        Assert.Equal(248, Unsafe.SizeOf<Gst.Video.VideoInfoDmaDrmRaw>());
+
+        Assert.Equal(0L, Offset(&raw, &raw.Vinfo));
+        Assert.Equal(152L, Offset(&raw, &raw.DrmFourcc));
+        Assert.Equal(160L, Offset(&raw, &raw.DrmModifier));
+        Assert.Equal(168L, Offset(&raw, &raw.GstReserved));
+    }
+
+    /// <summary>
+    /// <c>struct _GstVideoCodecState</c> of <c>gstvideoutils.h</c>: the private
+    /// <c>gint ref_count</c> at 0, four bytes of padding, the 152 byte
+    /// <c>GstVideoInfo info</c> at 8, <c>GstCaps *caps</c> at 160,
+    /// <c>GstBuffer *codec_data</c> at 168, <c>GstCaps *allocation_caps</c> at
+    /// 176, the two HDR pointers at 184 and 192 and
+    /// <c>void *padding[GST_PADDING_LARGE - 3]</c> at 200, for 336 bytes.
+    /// </summary>
+    /// <remarks>
+    /// The mirror used to stop at <c>ref_count</c>, so every field a decoder or
+    /// an encoder author wants sat behind the stop. It is the embed that moved,
+    /// not this record: the offsets here are the ones the C header has always
+    /// had.
+    /// </remarks>
+    [Fact]
+    public unsafe void VideoCodecStateRawMatchesTheHeaderLayout()
+    {
+        Gst.Video.VideoCodecStateRaw raw = default;
+
+        _output.WriteLine(Format("VideoCodecStateRaw", Unsafe.SizeOf<Gst.Video.VideoCodecStateRaw>()));
+        Assert.Equal(336, Unsafe.SizeOf<Gst.Video.VideoCodecStateRaw>());
+
+        Assert.Equal(0L, Offset(&raw, &raw.RefCount));
+        Assert.Equal(8L, Offset(&raw, &raw.Info));
+        Assert.Equal(160L, Offset(&raw, &raw.Caps));
+        Assert.Equal(168L, Offset(&raw, &raw.CodecData));
+        Assert.Equal(176L, Offset(&raw, &raw.AllocationCaps));
+        Assert.Equal(184L, Offset(&raw, &raw.MasteringDisplayInfo));
+        Assert.Equal(192L, Offset(&raw, &raw.ContentLightLevel));
+        Assert.Equal(200L, Offset(&raw, &raw.Padding));
+    }
+
+    /// <summary>
+    /// <c>struct _GstWebRTCICECandidateStats</c> of <c>webrtc_fwd.h</c>:
+    /// <c>gchar *ipaddr</c> at 0, <c>guint port</c> at 8,
+    /// <c>guint stream_id</c> at 12, <c>gchar *type</c> at 16,
+    /// <c>gchar *proto</c> at 24, <c>gchar *relay_proto</c> at 32,
+    /// <c>guint prio</c> at 40, four bytes of padding and <c>gchar *url</c> at
+    /// 48. The <c>ABI</c> union sits at 56 and is <c>GST_PADDING_LARGE</c>
+    /// pointers wide, that is 160 bytes, which makes the structure 216; the
+    /// five fields it carries are <c>foundation</c> at 0,
+    /// <c>related_address</c> at 8, <c>related_port</c> at 16,
+    /// <c>username_fragment</c> at 24 and <c>tcp_type</c> at 32.
+    /// </summary>
+    /// <remarks>
+    /// The mirror is a managed layout, so this measures it without loading
+    /// <c>libgstwebrtc-1.0</c>, the same way the probe of
+    /// <c>GstWebRTCSessionDescription</c> does; the tests that build a
+    /// <c>webrtcbin</c> are the ones that need the plugin and are gated on it.
+    /// </remarks>
+    [Fact]
+    public unsafe void WebRtcIceCandidateStatsRawMatchesTheHeaderLayout()
+    {
+        Gst.WebRTC.WebRTCICECandidateStatsRaw raw = default;
+        Gst.WebRTC.WebRTCICECandidateStatsRaw.ABIMembers abi = default;
+
+        _output.WriteLine(Format(
+            "WebRTCICECandidateStatsRaw",
+            Unsafe.SizeOf<Gst.WebRTC.WebRTCICECandidateStatsRaw>()));
+        Assert.Equal(216, Unsafe.SizeOf<Gst.WebRTC.WebRTCICECandidateStatsRaw>());
+
+        Assert.Equal(0L, Offset(&raw, &raw.Ipaddr));
+        Assert.Equal(8L, Offset(&raw, &raw.Port));
+        Assert.Equal(12L, Offset(&raw, &raw.StreamId));
+        Assert.Equal(16L, Offset(&raw, &raw.Type));
+        Assert.Equal(24L, Offset(&raw, &raw.Proto));
+        Assert.Equal(32L, Offset(&raw, &raw.RelayProto));
+        Assert.Equal(40L, Offset(&raw, &raw.Prio));
+        Assert.Equal(48L, Offset(&raw, &raw.Url));
+        Assert.Equal(56L, Offset(&raw, &raw.ABI));
+
+        // The union is the last thing in the structure, so what is behind its
+        // offset is the reserve itself: GST_PADDING_LARGE pointers, 160 bytes.
+        Assert.Equal(
+            160L,
+            Unsafe.SizeOf<Gst.WebRTC.WebRTCICECandidateStatsRaw>() - Offset(&raw, &raw.ABI));
+
+        Assert.Equal(0L, Offset(&abi, &abi.Foundation));
+        Assert.Equal(8L, Offset(&abi, &abi.RelatedAddress));
+        Assert.Equal(16L, Offset(&abi, &abi.RelatedPort));
+        Assert.Equal(24L, Offset(&abi, &abi.UsernameFragment));
+        Assert.Equal(32L, Offset(&abi, &abi.TcpType));
     }
 
     /// <summary>
@@ -1490,9 +1631,9 @@ public sealed class AbiProbeTests
     /// at 16, the two <c>guint64</c> values <c>latency_time</c> and
     /// <c>buffer_time</c> at 336 and 344 and the three <c>gint</c> values
     /// <c>segsize</c>, <c>segtotal</c> and <c>seglatency</c> at 352, 356 and
-    /// 360. The <c>ABI</c> union sits at 368, which is where the prefix mirror
-    /// stops — the whole C structure is 400 bytes and the mirror is
-    /// deliberately not.
+    /// 360. The <c>ABI</c> union sits at 368 and is <c>GST_PADDING</c> pointers
+    /// wide, which makes the structure 400 bytes; the <c>GstDsdFormat
+    /// dsd_format</c> it carries sits at the front of it.
     /// </summary>
     /// <remarks>
     /// This is the record where a four byte enumeration precedes the eight byte
@@ -1500,12 +1641,13 @@ public sealed class AbiProbeTests
     /// where C puts it.
     /// </remarks>
     [Fact]
-    public unsafe void AudioRingBufferSpecRawMatchesTheHeaderLayoutUpToTheAbiUnion()
+    public unsafe void AudioRingBufferSpecRawMatchesTheHeaderLayout()
     {
         Gst.Audio.AudioRingBufferSpecRaw raw = default;
+        Gst.Audio.AudioRingBufferSpecRaw.ABIMembers abi = default;
 
         _output.WriteLine(Format("AudioRingBufferSpecRaw", Unsafe.SizeOf<Gst.Audio.AudioRingBufferSpecRaw>()));
-        Assert.Equal(368, Unsafe.SizeOf<Gst.Audio.AudioRingBufferSpecRaw>());
+        Assert.Equal(400, Unsafe.SizeOf<Gst.Audio.AudioRingBufferSpecRaw>());
 
         Assert.Equal(0L, Offset(&raw, &raw.Caps));
         Assert.Equal(8L, Offset(&raw, &raw.Type));
@@ -1515,6 +1657,39 @@ public sealed class AbiProbeTests
         Assert.Equal(352L, Offset(&raw, &raw.Segsize));
         Assert.Equal(356L, Offset(&raw, &raw.Segtotal));
         Assert.Equal(360L, Offset(&raw, &raw.Seglatency));
+        Assert.Equal(368L, Offset(&raw, &raw.ABI));
+
+        Assert.Equal(0L, Offset(&abi, &abi.DsdFormat));
+    }
+
+    /// <summary>
+    /// <c>struct _GstCollectData</c> of <c>gstcollectpads.h</c>:
+    /// <c>GSList *collect</c> at 0, <c>GstPad *pad</c> at 8,
+    /// <c>GstBuffer *buffer</c> at 16, <c>guint pos</c> at 24, the 120 byte
+    /// <c>GstSegment</c> at 32, <c>GstCollectPadsStateFlags state</c> at 152 and
+    /// the private <c>priv</c> at 160. The <c>ABI</c> union sits at 168 and is
+    /// <c>GST_PADDING</c> pointers wide, which makes the structure 200 bytes;
+    /// the <c>gint64 dts</c> it carries sits at the front of it.
+    /// </summary>
+    [Fact]
+    public unsafe void CollectDataRawMatchesTheHeaderLayout()
+    {
+        Gst.Base.CollectDataRaw raw = default;
+        Gst.Base.CollectDataRaw.ABIMembers abi = default;
+
+        _output.WriteLine(Format("CollectDataRaw", Unsafe.SizeOf<Gst.Base.CollectDataRaw>()));
+        Assert.Equal(200, Unsafe.SizeOf<Gst.Base.CollectDataRaw>());
+
+        Assert.Equal(0L, Offset(&raw, &raw.Collect));
+        Assert.Equal(8L, Offset(&raw, &raw.Pad));
+        Assert.Equal(16L, Offset(&raw, &raw.Buffer));
+        Assert.Equal(24L, Offset(&raw, &raw.Pos));
+        Assert.Equal(32L, Offset(&raw, &raw.Segment));
+        Assert.Equal(152L, Offset(&raw, &raw.State));
+        Assert.Equal(160L, Offset(&raw, &raw.Priv));
+        Assert.Equal(168L, Offset(&raw, &raw.ABI));
+
+        Assert.Equal(0L, Offset(&abi, &abi.Dts));
     }
 
     /// <summary>

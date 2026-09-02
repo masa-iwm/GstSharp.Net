@@ -151,6 +151,78 @@ public sealed class RecordEmitterTests
         """;
 
     /// <summary>
+    /// A record whose gir declares the reserved ABI union that GStreamer grows
+    /// a released structure by, and one that embeds it by value. The union is
+    /// laid out as the space it reserves, so the first record is complete and
+    /// the second can embed it.
+    /// </summary>
+    /// <remarks>
+    /// The padding comes first and the structure second, which is the order
+    /// <c>GstPadProbeInfo</c> declares them in; the rest of the corpus uses the
+    /// other one. One member is private to the C implementation, which is what
+    /// says that such a member is laid out and carries no accessor.
+    /// </remarks>
+    private const string ReservedUnionFixture =
+        """
+            <enumeration name="VideoFieldOrder" c:type="GstVideoFieldOrder">
+              <member name="unknown" value="0" c:identifier="GST_VIDEO_FIELD_ORDER_UNKNOWN"/>
+            </enumeration>
+            <record name="VideoInfo" c:type="GstVideoInfo" opaque="1">
+              <field name="width" writable="1">
+                <type name="gint" c:type="gint"/>
+              </field>
+              <union name="ABI" c:type="ABI">
+                <field name="_gst_reserved" readable="0" private="1">
+                  <array zero-terminated="0" fixed-size="4">
+                    <type name="gpointer" c:type="gpointer"/>
+                  </array>
+                </field>
+                <record name="abi" c:type="abi">
+                  <field name="field_order" writable="1">
+                    <type name="VideoFieldOrder" c:type="GstVideoFieldOrder"/>
+                  </field>
+                  <field name="secret" readable="0" private="1">
+                    <type name="gint" c:type="gint"/>
+                  </field>
+                </record>
+              </union>
+            </record>
+            <record name="VideoFrame" c:type="GstVideoFrame" opaque="1">
+              <field name="info" writable="1">
+                <type name="VideoInfo" c:type="GstVideoInfo"/>
+              </field>
+              <field name="id" writable="1">
+                <type name="gint" c:type="gint"/>
+              </field>
+            </record>
+        """;
+
+    /// <summary>
+    /// A record whose trailing union holds variants rather than reserved space,
+    /// which is the shape of <c>GstRTSPMessage</c>.
+    /// </summary>
+    private const string VariantUnionFixture =
+        """
+            <record name="RTSPMessage" c:type="GstRTSPMessage" opaque="1">
+              <field name="type" writable="1">
+                <type name="gint" c:type="gint"/>
+              </field>
+              <union name="type_data" c:type="type_data">
+                <record name="request" c:type="request">
+                  <field name="method" writable="1">
+                    <type name="gint" c:type="gint"/>
+                  </field>
+                </record>
+                <record name="response" c:type="response">
+                  <field name="code" writable="1">
+                    <type name="gint" c:type="gint"/>
+                  </field>
+                </record>
+              </union>
+            </record>
+        """;
+
+    /// <summary>
     /// A record that embeds an opaque record whose own layout is complete, which
     /// is the shape of every <c>*Meta</c> of the girs.
     /// </summary>
@@ -622,6 +694,86 @@ public sealed class RecordEmitterTests
         Assert.DoesNotContain("VideoFrameRaw", source, StringComparison.Ordinal);
         Assert.DoesNotContain("public int Id", source, StringComparison.Ordinal);
         Assert.Contains("public sealed partial class VideoFrame\n", source, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AReservedAbiUnionIsLaidOutAsTheSpaceItReserves()
+    {
+        // The union is a padding array and a structure of the fields a release
+        // added, so it is as large as the array and the mirror reaches the size
+        // of the C structure by laying that array out. The members are declared
+        // beside it and are read by reinterpreting it, which is what keeps the
+        // offsets off a number the two data models disagree about.
+        string source = EmitFixture(ReservedUnionFixture, "VideoInfo");
+
+        // The reserved space, and behind it the members the union lays over it.
+        // Every member is spelled out, including the private one: a member that
+        // was left out would move the ones behind it.
+        Assert.Equal(
+            [
+                "internal int Width;",
+                "internal ABIArray ABI;",
+                "internal Gst.VideoFieldOrder FieldOrder;",
+                "internal int Secret;",
+            ],
+            MirrorFields(source, "VideoInfoRaw"));
+        Assert.DoesNotContain("Prefix mirror of the C struct", source, StringComparison.Ordinal);
+        Assert.Contains("[InlineArray(4)]\n    internal struct ABIArray\n", source, StringComparison.Ordinal);
+        Assert.Contains("internal struct ABIMembers\n", source, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AReservedAbiUnionMemberIsNamedAfterTheMemberAlone()
+    {
+        // The union and the structure inside it are transparent, so the
+        // accessor carries the name of the leaf and nothing else.
+        string source = EmitFixture(ReservedUnionFixture, "VideoInfo");
+
+        Assert.Contains(
+            "public Gst.VideoFieldOrder FieldOrder\n"
+            + "    {\n"
+            + "        get\n"
+            + "        {\n"
+            + "            Gst.VideoFieldOrder value = "
+            + "((VideoInfoRaw.ABIMembers*)&((VideoInfoRaw*)Handle)->ABI)->FieldOrder;\n",
+            source,
+            StringComparison.Ordinal);
+
+        // The private member carries no accessor, and neither does the reserved
+        // space itself.
+        Assert.DoesNotContain("public int Secret", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("public Gst.VideoInfo.ABIArray", source, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ARecordThatEmbedsOneWithAReservedAbiUnionIsLaidOut()
+    {
+        // The embedded mirror has the size of the C structure once its union is
+        // laid out, so the fields behind it keep their offsets. This is the
+        // cascade that reaches GstVideoFrame, GstVideoInfoDmaDrm and
+        // GstVideoCodecState.
+        string source = EmitFixture(ReservedUnionFixture, "VideoFrame");
+
+        Assert.Equal(
+            ["internal Gst.VideoInfoRaw Info;", "internal int Id;"],
+            MirrorFields(source, "VideoFrameRaw"));
+        Assert.Contains("public int Id\n", source, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AUnionOfVariantsStillStopsTheLayout()
+    {
+        // Two structures and no reserved pointers: the size of the union is the
+        // size of its largest member, which no C# spelling answers, so the
+        // mirror stays the prefix in front of it.
+        string source = EmitFixture(VariantUnionFixture, "RTSPMessage");
+
+        Assert.Equal(["internal int Type;"], MirrorFields(source, "RTSPMessageRaw"));
+        Assert.Contains(
+            "/// Prefix mirror of the C struct: field offsets are exact, <c>sizeof</c> is NOT\n"
+            + "/// the C size; never allocate from it.\n",
+            source,
+            StringComparison.Ordinal);
     }
 
     [Fact]

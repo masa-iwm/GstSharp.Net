@@ -15,6 +15,13 @@ namespace Gst.Video;
 /// </remarks>
 public sealed partial class VideoFrame
 {
+    /// <summary>The number of planes a <c>GstVideoFrame</c> can hold.</summary>
+    /// <remarks>
+    /// It is the length of the <c>data</c> and <c>map</c> arrays of the
+    /// generated mirror, which the C header sizes at <c>GST_VIDEO_MAX_PLANES</c>.
+    /// </remarks>
+    internal const int MaxPlanes = 4;
+
     /// <summary>Maps a buffer as a video frame.</summary>
     /// <param name="info">The video info the buffer holds.</param>
     /// <param name="buffer">The buffer to map.</param>
@@ -177,7 +184,7 @@ public sealed partial class VideoFrame
         /// mapped frame, as the library wrote them.
         /// </summary>
         /// <remarks>
-        /// The offsets of <see cref="VideoFrameRaw"/> are stated by the ABI
+        /// The offsets of <c>VideoFrameRaw</c> are stated by the ABI
         /// probe tests and measured against the installed library by the caller
         /// allocated storage tests, which read these three back after a live
         /// mapping: they are the fields the plane spans do not reach. Nothing
@@ -186,7 +193,7 @@ public sealed partial class VideoFrame
         /// behind rather than throwing.
         /// </remarks>
         internal readonly (nint Buffer, nint Meta, int Id) RawFields =>
-            (_frame.BufferPtr, _frame.MetaPtr, _frame.Id);
+            (_frame.Buffer, _frame.Meta, _frame.Id);
 
         /// <summary>
         /// Gets the frame flags the mapping settled on, which combine the flags
@@ -200,7 +207,7 @@ public sealed partial class VideoFrame
             get
             {
                 ObjectDisposedException.ThrowIf(!_mapped, typeof(MapScope));
-                return (VideoFrameFlags)_frame.Flags;
+                return _frame.Flags;
             }
         }
 
@@ -285,7 +292,7 @@ public sealed partial class VideoFrame
         public Span<byte> Plane(uint index)
         {
             ObjectDisposedException.ThrowIf(!_mapped, typeof(MapScope));
-            ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(index, (uint)VideoFrameRaw.MaxPlanes);
+            ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(index, (uint)MaxPlanes);
 
             nint data = _frame.Data[(int)index];
             if (data == 0)

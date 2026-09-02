@@ -4,6 +4,7 @@
 #nullable enable
 
 using System;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace Gst.Video;
@@ -17,6 +18,31 @@ public sealed unsafe partial class VideoFrame
     /// <summary>Wraps a native <c>GstVideoFrame</c>.</summary>
     /// <param name="handle">The native instance.</param>
     internal VideoFrame(nint handle) => Handle = handle;
+
+    /// <summary>#GstVideoFrameFlags for the frame</summary>
+    public Gst.Video.VideoFrameFlags Flags
+    {
+        get
+        {
+            Gst.Video.VideoFrameFlags value = ((VideoFrameRaw*)Handle)->Flags;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>
+    /// id of the mapped frame. the id can for example be used to
+    ///   identify the frame in case of multiview video.
+    /// </summary>
+    public int Id
+    {
+        get
+        {
+            int value = ((VideoFrameRaw*)Handle)->Id;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
 
     /// <summary>Wraps a native <c>GstVideoFrame</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
@@ -73,4 +99,60 @@ public sealed unsafe partial class VideoFrame
     /// <summary>The <c>gst_video_frame_copy_plane</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_frame_copy_plane")]
     private static partial int GstVideoFrameCopyPlane(nint dest, nint src, uint plane);
+}
+
+/// <summary>The native layout of <c>GstVideoFrame</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct VideoFrameRaw
+{
+    /// <summary>The <c>info</c> field.</summary>
+    internal Gst.Video.VideoInfoRaw Info;
+
+    /// <summary>The <c>flags</c> field.</summary>
+    internal Gst.Video.VideoFrameFlags Flags;
+
+    /// <summary>The <c>buffer</c> field.</summary>
+    internal nint Buffer;
+
+    /// <summary>The <c>meta</c> field.</summary>
+    internal nint Meta;
+
+    /// <summary>The <c>id</c> field.</summary>
+    internal int Id;
+
+    /// <summary>The <c>data</c> field.</summary>
+    internal DataArray Data;
+
+    /// <summary>The <c>map</c> field.</summary>
+    internal MapArray Map;
+
+    /// <summary>The <c>_gst_reserved</c> field.</summary>
+    internal GstReservedArray GstReserved;
+
+    /// <summary>Inline storage of the 4 elements of the <c>data</c> field.</summary>
+    [InlineArray(4)]
+    internal struct DataArray
+    {
+        private nint _element0;
+    }
+
+    /// <summary>Inline storage of the 4 elements of the <c>map</c> field.</summary>
+    [InlineArray(4)]
+    internal struct MapArray
+    {
+        private Gst.MapInfo _element0;
+    }
+
+    /// <summary>Inline storage of the 4 elements of the <c>_gst_reserved</c> field.</summary>
+    [InlineArray(4)]
+    internal struct GstReservedArray
+    {
+        private nint _element0;
+    }
 }

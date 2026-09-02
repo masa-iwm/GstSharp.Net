@@ -116,8 +116,9 @@ internal sealed class EmissionCensus
     /// </param>
     /// <param name="reason">
     /// The shape that kept it out: <c>Pointer</c>, <c>EmbeddedStruct</c>,
-    /// <c>Callback</c>, <c>Union</c>, <c>InlineArray(pointer element)</c>,
-    /// <c>InlineArray(struct element)</c> or <c>Other</c>.
+    /// <c>Callback</c>, <c>Union</c>, <c>Private</c>,
+    /// <c>InlineArray(pointer element)</c>, <c>InlineArray(struct element)</c>
+    /// or <c>Other</c>.
     /// </param>
     /// <remarks>
     /// A field is not a callable, so none of the skip reasons describes one and
@@ -233,10 +234,11 @@ internal sealed class EmissionCensus
     /// the record it belongs to, it has no <c>c:identifier</c>, and nothing
     /// that measures the binding gap counted one until this section existed.
     /// Padding and the fields the gir marks <c>private</c> or
-    /// <c>readable="0"</c> are left out: they carry no API in C either. A field
-    /// a hand written member reads through stays listed, the same way a hand
-    /// bound entry point stays on the skip list: what is measured is the
-    /// generated surface.
+    /// <c>readable="0"</c> are left out: they carry no API in C either, the one
+    /// exception being the members of a reserved ABI union, which stand for the
+    /// single line the union itself used to occupy. A field a hand written
+    /// member reads through stays listed, the same way a hand bound entry point
+    /// stays on the skip list: what is measured is the generated surface.
     /// </remarks>
     private void WriteFieldLedger(CodeWriter writer)
     {
@@ -247,11 +249,14 @@ internal sealed class EmissionCensus
         writer.WriteLine("kept them out. A field is bound when a wrapper declares an accessor for it, or");
         writer.WriteLine("when a value projected structure declares it as a typed public field; one that");
         writer.WriteLine("is projected onto a machine address binds nothing that can be read without the");
-        writer.WriteLine("interop layer and stays listed. A union is listed once, under its own name,");
-        writer.WriteLine("because the layout of the record stops where it sits. A field a hand written");
-        writer.WriteLine("member reads through, such as the `finfo` of `GstVideoInfo`, stays listed as");
-        writer.WriteLine("well: the ledger measures what the generator binds, the same convention the");
-        writer.WriteLine("hand bound entry points above follow.");
+        writer.WriteLine("interop layer and stays listed. A union the layout stops in front of is listed");
+        writer.WriteLine("once, under its own name, because the record ends where it sits; a reserved ABI");
+        writer.WriteLine("union the mirror lays out is listed member by member instead, under the name of");
+        writer.WriteLine("the member alone, and a member the gir keeps to the C implementation is listed");
+        writer.WriteLine("as `Private` rather than left out. A field a hand written member reads through,");
+        writer.WriteLine("such as the `finfo` of `GstVideoInfo`, stays listed as well: the ledger measures");
+        writer.WriteLine("what the generator binds, the same convention the hand bound entry points above");
+        writer.WriteLine("follow.");
 
         foreach ((string module, SortedDictionary<string, string> fields) in _droppedFields)
         {

@@ -4,6 +4,7 @@
 #nullable enable
 
 using System;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace Gst.WebRTC;
@@ -55,6 +56,28 @@ public sealed unsafe partial class WebRTCICECandidateStats : Gst.GObject.Boxed
         }
     }
 
+    /// <summary>The <c>related_port</c> field of <c>GstWebRTCICECandidateStats</c>.</summary>
+    public uint RelatedPort
+    {
+        get
+        {
+            uint value = ((WebRTCICECandidateStatsRaw.ABIMembers*)&((WebRTCICECandidateStatsRaw*)Handle)->ABI)->RelatedPort;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>The <c>tcp_type</c> field of <c>GstWebRTCICECandidateStats</c>.</summary>
+    public Gst.WebRTC.WebRTCICETcpCandidateType TcpType
+    {
+        get
+        {
+            Gst.WebRTC.WebRTCICETcpCandidateType value = ((WebRTCICECandidateStatsRaw.ABIMembers*)&((WebRTCICECandidateStatsRaw*)Handle)->ABI)->TcpType;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
     /// <summary>Wraps a native <c>GstWebRTCICECandidateStats</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
     /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
@@ -94,10 +117,6 @@ public sealed unsafe partial class WebRTCICECandidateStats : Gst.GObject.Boxed
 /// The mirror is only ever read through a pointer into memory that GStreamer
 /// owns; it is never allocated, assigned or copied.
 /// </para>
-/// <para>
-/// Prefix mirror of the C struct: field offsets are exact, <c>sizeof</c> is NOT
-/// the C size; never allocate from it.
-/// </para>
 /// </remarks>
 [StructLayout(LayoutKind.Sequential)]
 internal unsafe struct WebRTCICECandidateStatsRaw
@@ -125,4 +144,38 @@ internal unsafe struct WebRTCICECandidateStatsRaw
 
     /// <summary>The <c>url</c> field.</summary>
     internal nint Url;
+
+    /// <summary>The space the <c>ABI</c> union reserves.</summary>
+    internal ABIArray ABI;
+
+    /// <summary>The 20 pointers the <c>ABI</c> union reserves.</summary>
+    [InlineArray(20)]
+    internal struct ABIArray
+    {
+        private nint _element0;
+    }
+
+    /// <summary>The fields the <c>ABI</c> union lays over the space it reserves.</summary>
+    /// <remarks>
+    /// They start where the union starts, so this is read by reinterpreting
+    /// <see cref="ABI"/> rather than by an offset of its own.
+    /// </remarks>
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct ABIMembers
+    {
+        /// <summary>The <c>foundation</c> field.</summary>
+        internal nint Foundation;
+
+        /// <summary>The <c>related_address</c> field.</summary>
+        internal nint RelatedAddress;
+
+        /// <summary>The <c>related_port</c> field.</summary>
+        internal uint RelatedPort;
+
+        /// <summary>The <c>username_fragment</c> field.</summary>
+        internal nint UsernameFragment;
+
+        /// <summary>The <c>tcp_type</c> field.</summary>
+        internal Gst.WebRTC.WebRTCICETcpCandidateType TcpType;
+    }
 }

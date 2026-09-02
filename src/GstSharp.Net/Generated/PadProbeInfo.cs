@@ -4,6 +4,7 @@
 #nullable enable
 
 using System;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace Gst;
@@ -63,6 +64,17 @@ public sealed unsafe partial class PadProbeInfo
         get
         {
             uint value = ((PadProbeInfoRaw*)Handle)->Size;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>The <c>flow_ret</c> field of <c>GstPadProbeInfo</c>.</summary>
+    public Gst.FlowReturn FlowRet
+    {
+        get
+        {
+            Gst.FlowReturn value = ((PadProbeInfoRaw.ABIMembers*)&((PadProbeInfoRaw*)Handle)->ABI)->FlowRet;
             System.GC.KeepAlive(this);
             return value;
         }
@@ -342,10 +354,6 @@ public sealed unsafe partial class PadProbeInfo
 /// The mirror is only ever read through a pointer into memory that GStreamer
 /// owns; it is never allocated, assigned or copied.
 /// </para>
-/// <para>
-/// Prefix mirror of the C struct: field offsets are exact, <c>sizeof</c> is NOT
-/// the C size; never allocate from it.
-/// </para>
 /// </remarks>
 [StructLayout(LayoutKind.Sequential)]
 internal unsafe struct PadProbeInfoRaw
@@ -364,4 +372,26 @@ internal unsafe struct PadProbeInfoRaw
 
     /// <summary>The <c>size</c> field.</summary>
     internal uint Size;
+
+    /// <summary>The space the <c>ABI</c> union reserves.</summary>
+    internal ABIArray ABI;
+
+    /// <summary>The 4 pointers the <c>ABI</c> union reserves.</summary>
+    [InlineArray(4)]
+    internal struct ABIArray
+    {
+        private nint _element0;
+    }
+
+    /// <summary>The fields the <c>ABI</c> union lays over the space it reserves.</summary>
+    /// <remarks>
+    /// They start where the union starts, so this is read by reinterpreting
+    /// <see cref="ABI"/> rather than by an offset of its own.
+    /// </remarks>
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct ABIMembers
+    {
+        /// <summary>The <c>flow_ret</c> field.</summary>
+        internal Gst.FlowReturn FlowRet;
+    }
 }

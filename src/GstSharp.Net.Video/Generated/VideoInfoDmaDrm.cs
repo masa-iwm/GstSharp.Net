@@ -4,6 +4,7 @@
 #nullable enable
 
 using System;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace Gst.Video;
@@ -21,6 +22,28 @@ public sealed unsafe partial class VideoInfoDmaDrm : Gst.GObject.Boxed
     internal VideoInfoDmaDrm(nint handle, Gst.Interop.Transfer transfer)
         : base(handle, new Gst.GObject.GType(GetGType()), transfer)
     {
+    }
+
+    /// <summary>the fourcc defined by drm</summary>
+    public uint DrmFourcc
+    {
+        get
+        {
+            uint value = ((VideoInfoDmaDrmRaw*)Handle)->DrmFourcc;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>the drm modifier</summary>
+    public ulong DrmModifier
+    {
+        get
+        {
+            ulong value = ((VideoInfoDmaDrmRaw*)Handle)->DrmModifier;
+            System.GC.KeepAlive(this);
+            return value;
+        }
     }
 
     /// <summary>Wraps a native <c>GstVideoInfoDmaDrm</c>, mapping the null pointer onto <see langword="null"/>.</summary>
@@ -183,4 +206,34 @@ public sealed unsafe partial class VideoInfoDmaDrm : Gst.GObject.Boxed
     /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
     /// <returns>The new wrapper.</returns>
     internal static object CreateWrapper(nint handle, Gst.Interop.Transfer transfer) => new VideoInfoDmaDrm(handle, transfer);
+}
+
+/// <summary>The native layout of <c>GstVideoInfoDmaDrm</c>.</summary>
+/// <remarks>
+/// <para>
+/// The mirror is only ever read through a pointer into memory that GStreamer
+/// owns; it is never allocated, assigned or copied.
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct VideoInfoDmaDrmRaw
+{
+    /// <summary>The <c>vinfo</c> field.</summary>
+    internal Gst.Video.VideoInfoRaw Vinfo;
+
+    /// <summary>The <c>drm_fourcc</c> field.</summary>
+    internal uint DrmFourcc;
+
+    /// <summary>The <c>drm_modifier</c> field.</summary>
+    internal ulong DrmModifier;
+
+    /// <summary>The <c>_gst_reserved</c> field.</summary>
+    internal GstReservedArray GstReserved;
+
+    /// <summary>Inline storage of the 20 elements of the <c>_gst_reserved</c> field.</summary>
+    [InlineArray(20)]
+    internal struct GstReservedArray
+    {
+        private uint _element0;
+    }
 }

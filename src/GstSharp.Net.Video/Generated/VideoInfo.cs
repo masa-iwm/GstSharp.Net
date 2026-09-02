@@ -171,6 +171,39 @@ public sealed unsafe partial class VideoInfo : Gst.GObject.Boxed
         }
     }
 
+    /// <summary>The <c>multiview_mode</c> field of <c>GstVideoInfo</c>.</summary>
+    public Gst.Video.VideoMultiviewMode MultiviewMode
+    {
+        get
+        {
+            Gst.Video.VideoMultiviewMode value = ((VideoInfoRaw.ABIMembers*)&((VideoInfoRaw*)Handle)->ABI)->MultiviewMode;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>The <c>multiview_flags</c> field of <c>GstVideoInfo</c>.</summary>
+    public Gst.Video.VideoMultiviewFlags MultiviewFlags
+    {
+        get
+        {
+            Gst.Video.VideoMultiviewFlags value = ((VideoInfoRaw.ABIMembers*)&((VideoInfoRaw*)Handle)->ABI)->MultiviewFlags;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>The <c>field_order</c> field of <c>GstVideoInfo</c>.</summary>
+    public Gst.Video.VideoFieldOrder FieldOrder
+    {
+        get
+        {
+            Gst.Video.VideoFieldOrder value = ((VideoInfoRaw.ABIMembers*)&((VideoInfoRaw*)Handle)->ABI)->FieldOrder;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
     /// <summary>Inline storage of the 4 elements of the <c>offset</c> field of <c>GstVideoInfo</c>.</summary>
     [InlineArray(4)]
     public struct OffsetArray
@@ -429,10 +462,6 @@ public sealed unsafe partial class VideoInfo : Gst.GObject.Boxed
 /// The mirror is only ever read through a pointer into memory that GStreamer
 /// owns; it is never allocated, assigned or copied.
 /// </para>
-/// <para>
-/// Prefix mirror of the C struct: field offsets are exact, <c>sizeof</c> is NOT
-/// the C size; never allocate from it.
-/// </para>
 /// </remarks>
 [StructLayout(LayoutKind.Sequential)]
 internal unsafe struct VideoInfoRaw
@@ -481,4 +510,32 @@ internal unsafe struct VideoInfoRaw
 
     /// <summary>The <c>stride</c> field.</summary>
     internal Gst.Video.VideoInfo.StrideArray Stride;
+
+    /// <summary>The space the <c>ABI</c> union reserves.</summary>
+    internal ABIArray ABI;
+
+    /// <summary>The 4 pointers the <c>ABI</c> union reserves.</summary>
+    [InlineArray(4)]
+    internal struct ABIArray
+    {
+        private nint _element0;
+    }
+
+    /// <summary>The fields the <c>ABI</c> union lays over the space it reserves.</summary>
+    /// <remarks>
+    /// They start where the union starts, so this is read by reinterpreting
+    /// <see cref="ABI"/> rather than by an offset of its own.
+    /// </remarks>
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct ABIMembers
+    {
+        /// <summary>The <c>multiview_mode</c> field.</summary>
+        internal Gst.Video.VideoMultiviewMode MultiviewMode;
+
+        /// <summary>The <c>multiview_flags</c> field.</summary>
+        internal Gst.Video.VideoMultiviewFlags MultiviewFlags;
+
+        /// <summary>The <c>field_order</c> field.</summary>
+        internal Gst.Video.VideoFieldOrder FieldOrder;
+    }
 }

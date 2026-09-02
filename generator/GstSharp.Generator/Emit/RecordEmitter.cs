@@ -154,6 +154,7 @@ internal sealed class RecordEmitter
         bool handWritten = HandWrittenWrappers.Contains(qualifiedName);
 
         List<LayoutField>? layout = null;
+        List<LayoutField>? unionMembers = null;
         bool truncated = false;
         List<Accessor> accessors = [];
 
@@ -206,7 +207,7 @@ internal sealed class RecordEmitter
 
                 if (layout is not null && !handWritten)
                 {
-                    accessors = BuildAccessors(module, ns, typeName, layout);
+                    accessors = BuildAccessors(module, ns, record, typeName, layout, out unionMembers);
                     boundFields = BoundFieldNames(accessors);
                 }
 
@@ -226,14 +227,14 @@ internal sealed class RecordEmitter
 
                 if (layout is not null)
                 {
-                    accessors = BuildAccessors(module, ns, typeName, layout);
+                    accessors = BuildAccessors(module, ns, record, typeName, layout, out unionMembers);
                     boundFields = BoundFieldNames(accessors);
                 }
 
                 break;
         }
 
-        ReportDroppedFields(module, ns, record, boundFields);
+        ReportDroppedFields(module, ns, record, boundFields, layout);
 
         // The accessors claim their names before anything the gir declares is
         // planned, so that a method named after a field is the member that is
@@ -241,6 +242,15 @@ internal sealed class RecordEmitter
         if (accessors.Count > 0)
         {
             accessors = KeepUnclaimedAccessors(module, qualifiedName, kind, typeName, accessors);
+        }
+
+        // The members of a reserved ABI union are only declared when an
+        // accessor survived to read them: a union whose every member is private
+        // to the C implementation reaches the mirror as the reserved space it
+        // is and nothing else.
+        if (unionMembers is not null && !ReadsUnionMembers(accessors, unionMembers))
+        {
+            unionMembers = null;
         }
 
         // A hand written wrapper only reaches a file when the generator still
@@ -296,7 +306,7 @@ internal sealed class RecordEmitter
         if (emitsMirror)
         {
             writer.WriteLine();
-            WriteRawStruct(writer, record, kind, typeName, layout!, truncated, accessors);
+            WriteRawStruct(writer, record, kind, typeName, layout!, unionMembers, truncated, accessors);
         }
 
         _census.Emitted(module.GirNamespace, "record");
@@ -511,6 +521,7 @@ internal sealed class RecordEmitter
         TypeKind kind,
         string typeName,
         IReadOnlyList<LayoutField> layout,
+        IReadOnlyList<LayoutField>? unionMembers,
         bool truncated,
         IReadOnlyList<Accessor> accessors)
     {
@@ -570,7 +581,10 @@ internal sealed class RecordEmitter
                 writer.WriteLine("// " + note);
             }
 
-            writer.WriteLine("/// <summary>The <c>" + field.Field.Name + "</c> field.</summary>");
+            writer.WriteLine(
+                field.Union is null
+                    ? "/// <summary>The <c>" + field.Field.Name + "</c> field.</summary>"
+                    : "/// <summary>The space the <c>" + field.Field.Name + "</c> union reserves.</summary>");
             writer.WriteLine(
                 "internal "
                 + (promoted.TryGetValue(field.PascalName, out string? storage) ? storage : field.TypeName)
@@ -588,13 +602,98 @@ internal sealed class RecordEmitter
             WriteInlineArray(
                 writer,
                 "internal",
-                string.Create(
-                    CultureInfo.InvariantCulture,
-                    $"Inline storage of the {inline.Length} elements of the <c>{field.Field.Name}</c> field."),
+                field.Union is null
+                    ? string.Create(
+                        CultureInfo.InvariantCulture,
+                        $"Inline storage of the {inline.Length} elements of the <c>{field.Field.Name}</c> field.")
+                    : string.Create(
+                        CultureInfo.InvariantCulture,
+                        $"The {inline.Length} pointers the <c>{field.Field.Name}</c> union reserves."),
                 inline);
         }
 
+        if (unionMembers is { Count: > 0 } && layout is [.., { Union: not null } unionField])
+        {
+            writer.WriteLine();
+            WriteUnionMembers(writer, unionField, unionMembers);
+        }
+
         writer.CloseBlock();
+    }
+
+    /// <summary>
+    /// Writes the members a reserved ABI union lays over the space it reserves.
+    /// </summary>
+    /// <param name="writer">The target writer.</param>
+    /// <param name="unionField">The field of the mirror that stands for the union.</param>
+    /// <param name="members">The members, in gir order.</param>
+    /// <remarks>
+    /// The structure is a second reading of the same bytes rather than storage
+    /// of its own: it sits beside the reserved pointers, and an accessor of the
+    /// wrapper reinterprets those pointers as one of these. Every member is
+    /// declared, including the ones no accessor reads, because a member that
+    /// was left out would move the ones behind it.
+    /// </remarks>
+    private static void WriteUnionMembers(
+        CodeWriter writer,
+        LayoutField unionField,
+        IReadOnlyList<LayoutField> members)
+    {
+        writer.WriteLine(
+            "/// <summary>The fields the <c>" + unionField.Field.Name
+            + "</c> union lays over the space it reserves.</summary>");
+        writer.WriteLine("/// <remarks>");
+        writer.WriteLine("/// They start where the union starts, so this is read by reinterpreting");
+        writer.WriteLine("/// <see cref=\"" + unionField.PascalName + "\"/> rather than by an offset of its own.");
+        writer.WriteLine("/// </remarks>");
+        writer.WriteLine("[StructLayout(LayoutKind.Sequential)]");
+        writer.WriteLine("internal struct " + UnionMembersTypeName(unionField));
+        writer.OpenBlock();
+
+        bool first = true;
+        foreach (LayoutField member in members)
+        {
+            if (!first)
+            {
+                writer.WriteLine();
+            }
+
+            first = false;
+            if (member.Note is { } note)
+            {
+                writer.WriteLine("// " + note);
+            }
+
+            writer.WriteLine("/// <summary>The <c>" + member.Field.Name + "</c> field.</summary>");
+            writer.WriteLine("internal " + member.TypeName + " " + member.PascalName + ";");
+        }
+
+        writer.CloseBlock();
+    }
+
+    /// <summary>
+    /// Tests whether any accessor that kept its name reads a member of the
+    /// reserved ABI union.
+    /// </summary>
+    /// <param name="accessors">The accessors of the wrapper.</param>
+    /// <param name="members">The laid out members of the union.</param>
+    /// <returns><see langword="true"/> when the members are read.</returns>
+    private static bool ReadsUnionMembers(
+        IReadOnlyList<Accessor> accessors,
+        IReadOnlyList<LayoutField> members)
+    {
+        foreach (Accessor accessor in accessors)
+        {
+            foreach (LayoutField member in members)
+            {
+                if (ReferenceEquals(accessor.Field, member.Field))
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     private void WriteStruct(
@@ -1035,11 +1134,26 @@ internal sealed class RecordEmitter
         return names;
     }
 
+    /// <summary>Plans the get only properties a wrapper reads its mirror through.</summary>
+    /// <param name="module">The module being emitted.</param>
+    /// <param name="ns">The gir namespace of the record.</param>
+    /// <param name="record">The record being emitted.</param>
+    /// <param name="typeName">Its C# name.</param>
+    /// <param name="layout">The laid out fields of its mirror.</param>
+    /// <param name="unionMembers">
+    /// The laid out members of the reserved ABI union of the record, or
+    /// <see langword="null"/> when it has none or they cannot be laid out. The
+    /// mirror declares them as a nested structure, which the accessors read the
+    /// reserved storage through.
+    /// </param>
+    /// <returns>The accessors, in field order.</returns>
     private List<Accessor> BuildAccessors(
         ModuleInfo module,
         GirNamespace ns,
+        GirRecord record,
         string typeName,
-        IReadOnlyList<LayoutField> layout)
+        IReadOnlyList<LayoutField> layout,
+        out List<LayoutField>? unionMembers)
     {
         string cast = "((" + typeName + RawSuffix + "*)Handle)->";
         string owner = module.ClrNamespace + "." + typeName;
@@ -1067,63 +1181,143 @@ internal sealed class RecordEmitter
                 continue;
             }
 
-            // Private fields and embedded structures carry no API; pointers
-            // wait for the emitters that wrap what they point at.
-            if (field.IsPrivate
-                || field.Field.Type is not { } type
-                || type.IsPointer)
+            if (ValueAccessor(ns, cast, field) is { } accessor)
             {
-                continue;
+                accessors.Add(accessor);
             }
-
-            MappedType mapped = _types.Map(type, ns);
-            string raw = cast + field.PascalName;
-            string? publicType = null;
-            string? expression = null;
-
-            switch (mapped.Kind)
-            {
-                case MarshalKind.Blittable:
-                    publicType = mapped.PublicType;
-                    expression = string.Equals(mapped.PublicType, mapped.RawType, StringComparison.Ordinal)
-                        ? raw
-                        : "new(" + raw + ")";
-                    break;
-
-                case MarshalKind.GType:
-                case MarshalKind.Quark:
-                    publicType = mapped.PublicType;
-                    expression = "new(" + raw + ")";
-                    break;
-
-                case MarshalKind.Boolean:
-                    publicType = mapped.PublicType;
-                    expression = raw + " != 0";
-                    break;
-
-                case MarshalKind.Enum:
-                case MarshalKind.Flags:
-                    // The mirror only spells the enumeration out when it is
-                    // generated next to the record; otherwise the field holds
-                    // the underlying integer and there is nothing to expose.
-                    if (string.Equals(field.TypeName, mapped.PublicType, StringComparison.Ordinal))
-                    {
-                        publicType = mapped.PublicType;
-                        expression = raw;
-                    }
-
-                    break;
-            }
-
-            if (publicType is null || expression is null)
-            {
-                continue;
-            }
-
-            accessors.Add(new Accessor(field.Field, field.PascalName, publicType, expression));
         }
 
+        unionMembers = UnionMemberAccessors(ns, record, typeName, layout, accessors);
         return accessors;
+    }
+
+    /// <summary>
+    /// Plans the get only property of one field of a mirror that is projected
+    /// onto a value.
+    /// </summary>
+    /// <param name="ns">The gir namespace of the record.</param>
+    /// <param name="cast">The expression that reads the mirror, ending in <c>-&gt;</c>.</param>
+    /// <param name="field">The field to read.</param>
+    /// <returns>The accessor, or <see langword="null"/> when the field carries no value.</returns>
+    private Accessor? ValueAccessor(GirNamespace ns, string cast, LayoutField field)
+    {
+        // Private fields, inline storage and embedded structures carry no API;
+        // pointers wait for the emitters that wrap what they point at.
+        if (field.IsPrivate
+            || field.InlineArray is not null
+            || field.Field.Type is not { } type
+            || type.IsPointer)
+        {
+            return null;
+        }
+
+        MappedType mapped = _types.Map(type, ns);
+        string raw = cast + field.PascalName;
+        string? publicType = null;
+        string? expression = null;
+
+        switch (mapped.Kind)
+        {
+            case MarshalKind.Blittable:
+                publicType = mapped.PublicType;
+                expression = string.Equals(mapped.PublicType, mapped.RawType, StringComparison.Ordinal)
+                    ? raw
+                    : "new(" + raw + ")";
+                break;
+
+            case MarshalKind.GType:
+            case MarshalKind.Quark:
+                publicType = mapped.PublicType;
+                expression = "new(" + raw + ")";
+                break;
+
+            case MarshalKind.Boolean:
+                publicType = mapped.PublicType;
+                expression = raw + " != 0";
+                break;
+
+            case MarshalKind.Enum:
+            case MarshalKind.Flags:
+                // The mirror only spells the enumeration out when it is
+                // generated next to the record; otherwise the field holds
+                // the underlying integer and there is nothing to expose.
+                if (string.Equals(field.TypeName, mapped.PublicType, StringComparison.Ordinal))
+                {
+                    publicType = mapped.PublicType;
+                    expression = raw;
+                }
+
+                break;
+        }
+
+        return publicType is null || expression is null
+            ? null
+            : new Accessor(field.Field, field.PascalName, publicType, expression);
+    }
+
+    /// <summary>
+    /// Lays out the members of the reserved ABI union of a record and adds an
+    /// accessor for every one of them that is projected onto a value.
+    /// </summary>
+    /// <param name="ns">The gir namespace of the record.</param>
+    /// <param name="record">The record being emitted.</param>
+    /// <param name="typeName">Its C# name.</param>
+    /// <param name="layout">The laid out fields of its mirror.</param>
+    /// <param name="accessors">Receives the accessors of the members.</param>
+    /// <returns>The laid out members, or <see langword="null"/> when there are none.</returns>
+    /// <remarks>
+    /// <para>
+    /// The members start where the union starts, so the mirror declares them as
+    /// a second structure of its own and the accessors read the reserved
+    /// storage as one. The offsets inside it are the ones the C# compiler
+    /// computes from the member types, which is what keeps the reads off a
+    /// hard coded offset the two data models disagree about.
+    /// </para>
+    /// <para>
+    /// Every member is laid out, including the ones that carry no API: a member
+    /// that is dropped would move the ones behind it. The names are made from
+    /// the member alone, with the union and its structure transparent, so
+    /// <c>GstVideoInfo.ABI.abi.multiview_mode</c> is answered by
+    /// <c>VideoInfo.MultiviewMode</c>.
+    /// </para>
+    /// </remarks>
+    private List<LayoutField>? UnionMemberAccessors(
+        GirNamespace ns,
+        GirRecord record,
+        string typeName,
+        IReadOnlyList<LayoutField> layout,
+        List<Accessor> accessors)
+    {
+        if (layout is not [.., { Union: { } union } unionField])
+        {
+            return null;
+        }
+
+        string membersTypeName = UnionMembersTypeName(unionField);
+        List<LayoutField>? members = TryLayout(
+            ns,
+            union.Records[0],
+            membersTypeName,
+            publicSurface: false,
+            LayoutTail.None,
+            out _,
+            nameOwner: record);
+        if (members is null or { Count: 0 })
+        {
+            return null;
+        }
+
+        string cast = "((" + typeName + RawSuffix + "." + membersTypeName + "*)&(("
+            + typeName + RawSuffix + "*)Handle)->" + unionField.PascalName + ")->";
+        foreach (LayoutField member in members)
+        {
+            if (ValueAccessor(ns, cast, member) is { } accessor)
+            {
+                accessors.Add(accessor);
+            }
+        }
+
+        return members;
     }
 
     /// <summary>
@@ -1138,6 +1332,10 @@ internal sealed class RecordEmitter
     /// already reported under <see cref="SkipReason.NameCollision"/> and does
     /// not belong here a second time.
     /// </param>
+    /// <param name="layout">
+    /// The laid out fields of the record, which say whether its union reached
+    /// the mirror.
+    /// </param>
     /// <remarks>
     /// <para>
     /// The skip report groups callables by the reason they were left out, and a
@@ -1149,16 +1347,22 @@ internal sealed class RecordEmitter
     /// <para>
     /// What the gir marks <c>private</c> or <c>readable="0"</c> is left out,
     /// which is what keeps the <c>_gst_reserved</c> padding of every second
-    /// structure off the ledger: those carry no API in C either. A union is
-    /// listed once under its own name, because it is where the layout of the
-    /// record stops rather than a field that was projected and dropped.
+    /// structure off the ledger: those carry no API in C either. A union that
+    /// the layout stops in front of is listed once under its own name, because
+    /// it is where the record ends rather than a field that was projected and
+    /// dropped. A reserved ABI union the mirror does lay out is listed member
+    /// by member instead, under the name of the member alone, which is the name
+    /// its accessor would carry; a member the gir marks private is listed as
+    /// such rather than left out, because the union it belongs to used to be
+    /// one line of the ledger and none of what it holds may go missing from it.
     /// </para>
     /// </remarks>
     private void ReportDroppedFields(
         ModuleInfo module,
         GirNamespace ns,
         GirRecord record,
-        IReadOnlySet<string> bound)
+        IReadOnlySet<string> bound,
+        IReadOnlyList<LayoutField>? layout)
     {
         foreach (GirField field in record.Fields)
         {
@@ -1178,12 +1382,54 @@ internal sealed class RecordEmitter
             }
         }
 
+        GirUnion? projected = layout is [.., { Union: { } laidOut }] ? laidOut : null;
         foreach (GirUnion union in record.Unions)
         {
+            if (ReferenceEquals(union, projected))
+            {
+                ReportDroppedUnionMembers(module, ns, record, union, bound);
+                continue;
+            }
+
             _census.DroppedField(
                 module.GirNamespace,
                 record.Name + "." + (union.Name is { Length: > 0 } name ? name : "(union)"),
                 "Union");
+        }
+    }
+
+    /// <summary>
+    /// Reports the members of a reserved ABI union that carry API in C and none
+    /// in C#.
+    /// </summary>
+    /// <param name="module">The module being emitted.</param>
+    /// <param name="ns">The gir namespace of the record.</param>
+    /// <param name="record">The record being emitted.</param>
+    /// <param name="union">The union the mirror laid out.</param>
+    /// <param name="bound">The gir names of the fields the record binds.</param>
+    private void ReportDroppedUnionMembers(
+        ModuleInfo module,
+        GirNamespace ns,
+        GirRecord record,
+        GirUnion union,
+        IReadOnlySet<string> bound)
+    {
+        foreach (GirField member in union.Records[0].Fields)
+        {
+            if (bound.Contains(member.Name))
+            {
+                continue;
+            }
+
+            // A member the gir keeps to the C implementation is named rather
+            // than dropped: unlike the padding of a record, it is what a
+            // structure grew by, and the ledger line of the union it replaces
+            // stood for it.
+            string reason = IsHidden(member)
+                ? "Private"
+                : DroppedFieldReason(ns, member, bound) ?? "Other";
+
+            _census.DroppedField(module.GirNamespace, record.Name + "." + member.Name, reason);
         }
     }
 
@@ -1315,9 +1561,11 @@ internal sealed class RecordEmitter
         string typeName,
         bool publicSurface,
         LayoutTail tail,
-        out bool truncated)
+        out bool truncated,
+        GirRecord? nameOwner = null)
     {
         truncated = false;
+        GirRecord owner = nameOwner ?? record;
         List<LayoutField> layout = [];
         int unionAt = FirstUnionField(record);
         for (int i = 0; i <= record.Fields.Count; i++)
@@ -1325,9 +1573,19 @@ internal sealed class RecordEmitter
             // A union has no C# spelling of a guaranteed size, and the gir
             // keeps it out of the field list of the record, so the layout has
             // to stop where it sits. Laying the fields behind it out anyway
-            // would put every one of them at the wrong offset.
+            // would put every one of them at the wrong offset. The one union
+            // whose size is known is the reserved ABI union at the end of a
+            // structure, which is as large as the pointers it reserves.
             if (i == unionAt)
             {
+                if (!publicSurface
+                    && ReservedUnion(ns, record) is { } reserved
+                    && reserved.Fields[0].Type is GirArrayRef { FixedSize: int reservedLength })
+                {
+                    layout.Add(ReservedUnionField(reserved, reservedLength));
+                    break;
+                }
+
                 if (tail != LayoutTail.Prefix)
                 {
                     return null;
@@ -1343,7 +1601,7 @@ internal sealed class RecordEmitter
             }
 
             GirField field = record.Fields[i];
-            string pascalName = PublicFieldName(ns, record, field, typeName, barePointer: false);
+            string pascalName = PublicFieldName(ns, owner, field, typeName, barePointer: false);
 
             FieldProjection? projection = Project(ns, field, pascalName, publicSurface);
             if (projection is null)
@@ -1369,12 +1627,12 @@ internal sealed class RecordEmitter
             // public accessor competes for it.
             if (publicSurface && !hidden && projection.IsPointer)
             {
-                pascalName = PublicFieldName(ns, record, field, typeName, barePointer: true);
+                pascalName = PublicFieldName(ns, owner, field, typeName, barePointer: true);
             }
 
             layout.Add(new LayoutField(
                 field,
-                hidden ? _names.PrivateFieldName(ns, record, field) : pascalName,
+                hidden ? _names.PrivateFieldName(ns, owner, field) : pascalName,
                 pascalName,
                 projection.TypeName,
                 hidden,
@@ -1402,6 +1660,86 @@ internal sealed class RecordEmitter
 
         return index;
     }
+
+    /// <summary>
+    /// Returns the trailing union of a record that stands for reserved ABI
+    /// space, which is the one union shape whose size is known.
+    /// </summary>
+    /// <param name="ns">The gir namespace of the record.</param>
+    /// <param name="record">The record to inspect.</param>
+    /// <returns>The union, or <see langword="null"/> when the record has none.</returns>
+    /// <remarks>
+    /// <para>
+    /// GStreamer grows a released structure by spending the pointers it
+    /// reserved at its end: the padding array and a structure holding the
+    /// fields that were added are declared as the two members of a union, so
+    /// that the size of the structure never moves. What is recognised here is
+    /// that shape and not a name — the union is called <c>ABI</c> in most of
+    /// the corpus and <c>abidata</c> in one record, the padding
+    /// <c>_gst_reserved</c> or <c>padding</c>, and the two members come in
+    /// either order — so exactly two members are required: one nested
+    /// structure, and one array of <c>GST_PADDING</c> or
+    /// <c>GST_PADDING_LARGE</c> pointers. The nested structure is never larger
+    /// than the padding, which is the promise the reserve exists to keep, so
+    /// the union is as large as the array and the mirror reaches the size of
+    /// the C structure by laying the array out.
+    /// </para>
+    /// <para>
+    /// Only a union that sits behind every field of the record qualifies. One
+    /// with fields behind it would have to be as large as its largest member
+    /// rather than as large as its padding, and nothing in the corpus has that
+    /// shape; the variant union of <c>GstRTSPMessage</c>, which is three
+    /// structures and no padding, is not this shape either and keeps stopping
+    /// the layout where it sits.
+    /// </para>
+    /// </remarks>
+    private GirUnion? ReservedUnion(GirNamespace ns, GirRecord record)
+    {
+        if (record.Unions is not [GirUnion union]
+            || union.FieldIndex != record.Fields.Count
+            || union.Records.Count != 1
+            || union.Fields is not [GirField padding])
+        {
+            return null;
+        }
+
+        return padding.Type is GirArrayRef { FixedSize: 4 or 20, ElementType: { } element }
+            && !element.IsPointer
+            && _types.Map(element, ns).Kind == MarshalKind.Pointer
+                ? union
+                : null;
+    }
+
+    /// <summary>Lays a reserved ABI union out as the pointers it reserves.</summary>
+    /// <param name="union">The union, as <see cref="ReservedUnion"/> found it.</param>
+    /// <param name="length">The number of reserved pointers.</param>
+    /// <returns>The field of the mirror that stands for the union.</returns>
+    /// <remarks>
+    /// The union carries no gir field of its own, so the layout is given a
+    /// synthetic one that names it: what the mirror needs from a field is the
+    /// gir name, and the storage is reserved space rather than a value, which
+    /// is what keeps an accessor of the array itself from being emitted.
+    /// </remarks>
+    private static LayoutField ReservedUnionField(GirUnion union, int length)
+    {
+        string pascalName = NameMapper.EscapeIdentifier(NameMapper.ToPascalCase(union.Name));
+        InlineArrayInfo inline = new(pascalName + "Array", NativeInt, length);
+        return new LayoutField(
+            new GirField { Name = union.Name },
+            pascalName,
+            pascalName,
+            inline.TypeName,
+            IsPrivate: false,
+            inline,
+            Note: null,
+            IsAddress: true,
+            Union: union);
+    }
+
+    /// <summary>Names the mirror of the members a reserved ABI union carries.</summary>
+    /// <param name="unionField">The field of the mirror that stands for the union.</param>
+    /// <returns>The name of the nested structure.</returns>
+    private static string UnionMembersTypeName(LayoutField unionField) => unionField.PascalName + "Members";
 
     private string TypeNameOf(GirNamespace ns, GirRecord record) =>
         _names.TypeName(new GirSymbol(ns, record.Name, GirSymbolKind.Record, record));
@@ -1720,6 +2058,11 @@ internal sealed class RecordEmitter
     /// nothing that can be read without the interop layer, which is the line
     /// the accessors of a wrapper draw as well.
     /// </param>
+    /// <param name="Union">
+    /// The reserved ABI union the field stands for, when it stands for one
+    /// rather than for a gir field. It is what says that the members of the
+    /// union can be read out of the storage this field reserves.
+    /// </param>
     private sealed record LayoutField(
         GirField Field,
         string Name,
@@ -1728,7 +2071,8 @@ internal sealed class RecordEmitter
         bool IsPrivate,
         InlineArrayInfo? InlineArray,
         string? Note,
-        bool IsAddress);
+        bool IsAddress,
+        GirUnion? Union = null);
 
     /// <summary>One generated field accessor of a mini object wrapper.</summary>
     /// <param name="Field">The gir field.</param>
