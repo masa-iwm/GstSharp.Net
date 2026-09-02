@@ -537,6 +537,28 @@ bindings. All three are hand written in `src/GstSharp.Net.Play/Custom`.
   nothing afterwards. The finalizer does not flush, for the reason no finalizer
   in this binding calls native code.
 
+**Stop a play and wait until it reports `PlayState.Stopped` before disposing
+it.** `Play.Stop()` is asynchronous: `gst_play_stop` only queues the work on the
+thread of the play, and GStreamer 1.28 queues it *without* taking a reference of
+the play. Every message that thread posts in the meantime does hold one, so a
+play that is disposed while its thread is still working can have its last
+reference dropped by that thread and be finalised underneath its own running
+dispatch, which then reads freed memory: a crash inside `libgstplay`, not a
+managed exception. The safe order is stop, wait for the `state-changed` message
+of the API bus that carries `PlayState.Stopped` — or for the `StateChanged`
+event of an adapter, which is the only way to see it when a `NewSyncEmit()`
+adapter owns the bus — and dispose only then. A play that has already reported
+`Stopped`, which is what every play does after end of stream and after an error,
+does not report it again: `gst_play_stop` returns without a state change for a
+play that is stopped, so an application tracks the last state it saw rather than
+waiting for a fresh message that never comes.
+
+This is an upstream limitation rather than a contract of the binding, and
+`Dispose()` does not wait on the caller's behalf: nothing in the C API joins the
+thread of a play, and the barrier that is left — polling the state of the
+pipeline — would block a disposal to work around a defect of the library the
+binding binds. The application is the one that knows when it has seen `Stopped`.
+
 `PlaySignalAdapter` keeps the `Play` wrapper it was built with, because the C
 adapter stores the play without referencing it and
 `gst_play_signal_adapter_get_play` hands that field back as transfer none.

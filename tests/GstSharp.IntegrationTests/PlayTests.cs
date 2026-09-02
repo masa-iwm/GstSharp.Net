@@ -53,6 +53,14 @@ public sealed class PlayTests
     /// <summary>How long a play of well under a second may take.</summary>
     private static readonly TimeSpan Patience = TimeSpan.FromSeconds(60);
 
+    /// <summary>
+    /// How long the API bus has to stay silent for the play behind it to count
+    /// as idle. A playing play posts a position update every 100 milliseconds
+    /// by default and every 250 milliseconds where a fact here configures the
+    /// interval, which is the longest gap this has to outlast.
+    /// </summary>
+    private static readonly TimeSpan Quiet = TimeSpan.FromSeconds(1);
+
     private readonly ITestOutputHelper _output;
 
     /// <summary>Initialises one test.</summary>
@@ -101,7 +109,7 @@ public sealed class PlayTests
         Assert.Equal(info.GetAudioStreams().Count, info.GetStreamList().Count);
 
         play.Pause();
-        play.Stop();
+        StopAndWait(play, bus);
     }
 
     /// <summary>
@@ -193,7 +201,7 @@ public sealed class PlayTests
             Assert.Equal("GstSharp.Net integration test", Play.ConfigGetUserAgent(unchanged));
         }
 
-        play.Stop();
+        StopAndWait(play, bus);
     }
 
     /// <summary>
@@ -230,7 +238,7 @@ public sealed class PlayTests
         }
 
         details?.Dispose();
-        play.Stop();
+        StopAndWait(play, bus);
     }
 
     /// <summary>
@@ -386,7 +394,7 @@ public sealed class PlayTests
         Assert.Null(descriptions);
         Assert.Null(installerDetails);
 
-        play.Stop();
+        StopAndWait(play, bus);
     }
 
     /// <summary>
@@ -415,6 +423,8 @@ public sealed class PlayTests
         Assert.Same(play, adapter.GetPlay());
 
         using ManualResetEventSlim playing = new(initialState: false);
+        using ManualResetEventSlim stopped = new(initialState: false);
+        using Bus bus = play.GetMessageBus();
         adapter.StateChanged += OnStateChanged;
         try
         {
@@ -427,8 +437,18 @@ public sealed class PlayTests
         }
         finally
         {
-            adapter.StateChanged -= OnStateChanged;
+            // This adapter drops every message of the API bus, so the stop is
+            // observed through the adapter rather than through the bus. The
+            // signal is emitted on the thread of the play, from inside the
+            // post that carries it, so the drain below is what waits for that
+            // thread to be done with the play before the wrapper lets go.
             play.Stop();
+            Assert.True(
+                stopped.Wait(Patience),
+                "the synchronous adapter never emitted a STOPPED state change");
+
+            adapter.StateChanged -= OnStateChanged;
+            WaitUntilQuiet(bus);
         }
 
         void OnStateChanged(object? sender, PlaySignalAdapter.StateChangedSignalArgs args)
@@ -436,6 +456,10 @@ public sealed class PlayTests
             if (args.Object == PlayState.Playing)
             {
                 playing.Set();
+            }
+            else if (args.Object == PlayState.Stopped)
+            {
+                stopped.Set();
             }
         }
     }
@@ -554,6 +578,20 @@ public sealed class PlayTests
                 Thread.Sleep(50);
             }
 
+            // What this fact needs is a message that is queued when the play
+            // is disposed, not a play that is still posting: a play has to be
+            // idle before it is let go, for the reason StopAndWait carries.
+            // So the first message the play posted is taken off the bus, the
+            // rest is drained until the play is idle, and that message is put
+            // back for the flush of the disposal to drop. It names the play as
+            // its source and holds a reference of it either way, which is what
+            // makes an unread bus a cycle.
+            Message posted = BusPump.WaitFor(bus, MessageType.Application, Quiet)
+                ?? throw new InvalidOperationException("the play posted nothing on its API bus");
+
+            StopAndWait(play, bus);
+            Assert.True(bus.Post(posted), "the API bus refused a message of the play it carries");
+
             Assert.True(bus.HavePending(), "the play posted nothing on its API bus");
         }
 
@@ -619,7 +657,7 @@ public sealed class PlayTests
             play.SetAudioTrackId(audio.GetStreamId());
         }
 
-        play.Stop();
+        StopAndWait(play, bus);
     }
 
     /// <summary>
@@ -657,6 +695,82 @@ public sealed class PlayTests
 
         sink.SetProperty("sync", true);
         pipeline.SetProperty("audio-sink", sink);
+    }
+
+    /// <summary>
+    /// Stops a play and waits until it is idle again, which is what a play has
+    /// to be before it is disposed.
+    /// </summary>
+    /// <param name="play">The play to stop.</param>
+    /// <param name="bus">The API bus of that play.</param>
+    /// <remarks>
+    /// <c>gst_play_stop</c> only queues the stop on the thread of the play, and
+    /// queues it without a reference of its own, so a play that is disposed
+    /// right after it was told to stop can have its last reference dropped by
+    /// its own thread and be finalised underneath the dispatch that is still
+    /// running. That is an upstream limitation of GStreamer 1.28; see the
+    /// remarks on <c>Play.Dispose</c> and the "A play and its API bus" section
+    /// of <c>docs/ownership.md</c>.
+    /// </remarks>
+    private static void StopAndWait(Play play, Bus bus)
+    {
+        play.Stop();
+        WaitUntilQuiet(bus);
+
+        // The silence of the bus says that nothing is posting any more; the
+        // state of the pipeline says that the stop itself has run. Every path
+        // that reaches this leaves it at READY, which the stop sets, or at
+        // NULL, which is where a play that was never started, one that
+        // reported an error and one whose ready timeout expired sit.
+        using Element pipeline = play.GetPipeline();
+        pipeline.GetState(out State state, out State _, ClockTime.Zero);
+        Assert.True(
+            state <= State.Ready,
+            FormattableString.Invariant($"the pipeline of the stopped play is in {state}"));
+    }
+
+    /// <summary>
+    /// Drains the API bus of a play until it stays silent for a whole slice,
+    /// which is the point at which the thread of the play is idle.
+    /// </summary>
+    /// <param name="bus">The API bus to drain.</param>
+    /// <remarks>
+    /// The state change to <see cref="PlayState.Stopped"/> is the last message
+    /// a stop posts, and a silent bus afterwards means the dispatch that posted
+    /// it has run to its end. A play that was stopped already posts nothing at
+    /// all — <c>gst_play_stop_internal</c> returns straight away for one, which
+    /// is what a play that reported an error or was never started does — and a
+    /// play whose messages a synchronous adapter drops queues nothing either;
+    /// both are silent from the first slice on and wait that one slice rather
+    /// than the whole patience.
+    /// </remarks>
+    private static void WaitUntilQuiet(Bus bus)
+    {
+        bool stopped = false;
+        Stopwatch elapsed = Stopwatch.StartNew();
+
+        while (elapsed.Elapsed < Patience)
+        {
+            using Message? message = BusPump.WaitFor(bus, MessageType.Application, Quiet);
+            if (message is null)
+            {
+                return;
+            }
+
+            if (!stopped && Play.IsPlayMessage(message))
+            {
+                PlayMessageExtensions.ParseType(message, out PlayMessage kind);
+                if (kind == PlayMessage.StateChanged)
+                {
+                    PlayMessageExtensions.ParseStateChanged(message, out PlayState reported);
+                    stopped = reported == PlayState.Stopped;
+                }
+            }
+        }
+
+        Assert.Fail(stopped
+            ? "the play kept posting on its API bus after it reported the STOPPED state"
+            : "the play never reported the STOPPED state on its API bus");
     }
 
     /// <summary>

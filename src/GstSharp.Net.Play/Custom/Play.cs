@@ -180,6 +180,30 @@ public unsafe partial class Play
     /// flushing bus drops what it holds and refuses what is posted next.
     /// </para>
     /// <para>
+    /// <b>Stop the play and wait until it reports
+    /// <see cref="PlayState.Stopped"/> before disposing it.</b>
+    /// <see cref="Stop"/> only queues the stop on the thread of the play, and
+    /// GStreamer 1.28 queues it without a reference of the play, while the
+    /// messages that thread posts do hold one: a play that is disposed while
+    /// its thread is still working can therefore have its last reference
+    /// dropped by that thread and be finalised underneath its own running
+    /// dispatch, which crashes inside <c>libgstplay</c>. Wait for the
+    /// <c>state-changed</c> message of the API bus that carries
+    /// <see cref="PlayState.Stopped"/>, or for the state change an adapter
+    /// emits, and dispose after it. A play that reported
+    /// <see cref="PlayState.Stopped"/> already, which is what every play does
+    /// after end of stream and after an error, does not report it again, so
+    /// what an application waits for is the last state it saw rather than a
+    /// fresh message. This is an upstream limitation and not a contract of the
+    /// binding, and disposal does not wait here because nothing in the C API
+    /// joins the thread of a play and the barrier that is left — polling the
+    /// state of the pipeline — would block a disposal to work around a defect
+    /// of the library this binds:
+    /// see
+    /// <see href="https://github.com/masa-iwm/GstSharp.Net/blob/main/docs/ownership.md#a-play-and-its-api-bus">A
+    /// play and its API bus</see>.
+    /// </para>
+    /// <para>
     /// <b>Dispose every <see cref="PlaySignalAdapter"/> of a play before the
     /// play itself.</b> The C adapter stores the play without referencing it,
     /// so an adapter that outlives its play holds a dangling pointer; the
