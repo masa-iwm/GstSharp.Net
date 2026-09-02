@@ -336,7 +336,7 @@ deploy to.
   `configure-pages` is not needed when the artifact is uploaded that way.
 * `concurrency: pages` with `cancel-in-progress: false`, so that two pushes in
   a row queue rather than interrupt a half-finished deployment.
-* **No restore step.** `docfx metadata` compiles the sixteen packable projects
+* **No restore step.** `docfx metadata` compiles the seventeen packable projects
   through MSBuild and restores them itself, so the workflow goes straight from
   `dotnet tool restore` (docfx is pinned in `.config/dotnet-tools.json`) to
   `dotnet docfx docfx/docfx.json`.

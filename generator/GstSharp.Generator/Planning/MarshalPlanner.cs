@@ -734,7 +734,7 @@ internal sealed class MarshalPlanner
     /// </para>
     /// <para>
     /// A callable that puts one of those steps after a consumed list is
-    /// refused rather than emitted with a leak in it. No member of the fifteen
+    /// refused rather than emitted with a leak in it. No member of the sixteen
     /// modules has the shape - all three consumed lists are the last argument
     /// of their call - so a synthetic fixture is what keeps the refusal honest.
     /// </para>
@@ -3430,7 +3430,7 @@ internal sealed class MarshalPlanner
     /// over; the callee owns the spine and the minted values from the moment
     /// the call is made, including when it answers false, and nothing is
     /// released afterwards. <c>container</c>, the hybrid that would consume the
-    /// spine and borrow the elements, has no introspectable case in the fifteen
+    /// spine and borrow the elements, has no introspectable case in the sixteen
     /// modules and is refused; a synthetic fixture is what keeps that refusal
     /// honest.
     /// </para>

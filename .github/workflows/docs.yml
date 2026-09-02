@@ -1,7 +1,7 @@
 # The documentation site.
 #
 # One docfx run turns two things into a static site: the XML documentation of
-# the sixteen packable projects, extracted by `docfx metadata` into an API
+# the seventeen packable projects, extracted by `docfx metadata` into an API
 # reference, and the hand-written Markdown of `docs/` plus the README. The
 # result is uploaded as a Pages artifact and deployed by the second job.
 #
@@ -54,7 +54,7 @@ jobs:
       - name: Restore tools
         run: dotnet tool restore
 
-      # `metadata` compiles the sixteen projects and `build` renders the site.
+      # `metadata` compiles the seventeen projects and `build` renders the site.
       # The run ends with warnings and still exits 0. Most of them are links in
       # the generated XML documentation to native C symbols that have no page
       # here; the rest are pre-existing duplicate-source and duplicated-member
