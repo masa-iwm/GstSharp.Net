@@ -171,7 +171,7 @@ public sealed class ClassEmitterTests
     }
 
     [Theory]
-    [InlineData("Gst", 35, 51, 5, 28, 18, 1435, 29, 23, 53)]
+    [InlineData("Gst", 35, 51, 5, 28, 18, 1435, 29, 23, 52)]
     [InlineData("GstBase", 11, 4, 0, 5, 0, 174, 31, 2, 5)]
     [InlineData("GstApp", 2, 2, 0, 8, 0, 62, 36, 8, 0)]
     [InlineData("GstAudio", 14, 17, 1, 2, 2, 213, 32, 0, 42)]
@@ -674,6 +674,29 @@ public sealed class ClassEmitterTests
     }
 
     [Fact]
+    public void TheSkipReportCarriesTheFieldsThatAreAnsweredElsewhere()
+    {
+        // A field the overlays name a member for is not a gap, so it is kept
+        // out of the ledger above and listed here with what answers it. The
+        // flow return of a pad probe is the one entry: the C function
+        // gst_pad_probe_info_get_flow_return reads that very field, and the
+        // generated pair is what a caller uses.
+        string report = Generated.SkipReport;
+
+        Assert.Equal(1, Generated.Census.ExposedFieldCount());
+        Assert.Contains("## Fields exposed elsewhere (1)\n", report, StringComparison.Ordinal);
+        Assert.Contains(
+            "### Gst (1)\n\n- `PadProbeInfo.flow_ret` — GetFlowReturn\n",
+            report,
+            StringComparison.Ordinal);
+        Assert.DoesNotContain("- `PadProbeInfo.flow_ret` — Other", report, StringComparison.Ordinal);
+
+        // The accessor is not emitted either, which is what lets an entry
+        // answer a name a hand written member already carries.
+        Assert.DoesNotContain("public Gst.FlowReturn FlowRet", Source("PadProbeInfo.cs"), StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void TheCommittedSkipReportIsUpToDate()
     {
         string committed = File.ReadAllText(
@@ -688,18 +711,20 @@ public sealed class ClassEmitterTests
     [Fact]
     public void TheCommittedOverlaysCarryNoStaleEntry()
     {
-        // Each of the three names an overlay entry that matched nothing: an
+        // Each of the four names an overlay entry that matched nothing: an
         // array correction on no array (GEN0020), a hand bound ledger entry
         // the run never saw skipped (GEN0023), an annotation override on no
-        // callable, parameter or signal argument (GEN0024). Every one of them
-        // describes a gir that has moved on, and every one of them is a
-        // warning, which the verbs do not fail on - so this is what holds the
-        // committed overlays to them.
+        // callable, parameter or signal argument (GEN0024), a field skip on no
+        // field of an emitted record (GEN0025). Every one of them describes a
+        // gir that has moved on, and every one of them is a warning, which the
+        // verbs do not fail on - so this is what holds the committed overlays
+        // to them.
         foreach (Diagnostic diagnostic in Generated.Diagnostics)
         {
             Assert.NotEqual("GEN0020", diagnostic.Code);
             Assert.NotEqual("GEN0023", diagnostic.Code);
             Assert.NotEqual("GEN0024", diagnostic.Code);
+            Assert.NotEqual("GEN0025", diagnostic.Code);
         }
     }
 

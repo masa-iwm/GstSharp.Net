@@ -125,6 +125,57 @@ internal sealed class ArrayOverride
 }
 
 /// <summary>
+/// A record field the ledger must not count as a missing binding, because
+/// something else already hands the same value out.
+/// </summary>
+/// <remarks>
+/// <para>
+/// A field is not a callable, so no skip reason describes one and the hand
+/// bound list cannot name one either: the field ledger of the skip report is
+/// where a field that carries API in C and none in C# is counted. An entry here
+/// says the second half is not true after all, and moves the field into a
+/// section of its own instead of leaving it among the ones nothing reads.
+/// </para>
+/// <para>
+/// It also keeps the generator from emitting an accessor for the field, which
+/// is what makes it the answer to a name a hand written member already carries:
+/// two declarations of one name in a partial class do not compile, and the hand
+/// written one is the one that shipped.
+/// </para>
+/// <para>
+/// Exactly one of the two has to be stated, and the check is exclusive: an
+/// entry that states neither says nothing about the field, and one that states
+/// both says two different things about who answers it. Either way the ledger
+/// would go quiet on the strength of a claim nothing can check, so neither is
+/// applied and both are reported as stale.
+/// </para>
+/// </remarks>
+internal sealed class FieldSkip
+{
+    /// <summary>
+    /// Gets or sets the generated member that answers the same value, for
+    /// example <c>GetFlowReturn</c> for <c>GstPadProbeInfo.flow_ret</c>.
+    /// </summary>
+    public string? ExposedBy { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether a hand written member under
+    /// <c>src/&lt;Project&gt;/Custom/</c> answers the field.
+    /// </summary>
+    public bool? HandBound { get; set; }
+
+    /// <summary>Gets what the ledger reports the field under.</summary>
+    internal string Reason =>
+        ExposedBy is { Length: > 0 } member ? member : "hand written";
+
+    /// <summary>
+    /// Gets a value indicating whether the entry states exactly one of the two
+    /// halves, which is the only shape that says who answers the field.
+    /// </summary>
+    internal bool IsStated => (ExposedBy is { Length: > 0 }) ^ (HandBound == true);
+}
+
+/// <summary>
 /// Per platform availability of a native symbol.
 /// </summary>
 internal sealed class PlatformSupport
@@ -181,6 +232,13 @@ internal sealed class PlatformSupport
 /// or the <c>elementType</c> of that array, which is how a C function that
 /// counts its elements off another argument gets a span rather than staying
 /// unbound. It never turns a bare pointer into an array.</description></item>
+/// <item><description><c>fieldSkips</c>: the <c>c:type</c> of a record and the
+/// gir name of one of its fields (<c>GstPadProbeInfo.flow_ret</c>), naming the
+/// member that answers the same value. A field of a reserved ABI union is
+/// addressed by the field alone, the same way its accessor is named. It keeps
+/// the field off the ledger of unbound fields and keeps the generator from
+/// emitting an accessor for it; a key that matches no field is reported as
+/// stale.</description></item>
 /// <item><description><c>forceOpaque</c>: qualified gir name of a record
 /// (<c>Gst.DebugCategory</c>) that must be wrapped behind a pointer rather
 /// than copied by value.</description></item>
@@ -208,6 +266,7 @@ internal sealed class Overlays
     private readonly Dictionary<string, ArrayOverride> _arrayOverrides;
     private readonly Dictionary<string, PlatformSupport> _platforms;
     private readonly Dictionary<string, string> _returnTypes;
+    private readonly Dictionary<string, FieldSkip> _fieldSkips;
 
     private Overlays(
         HashSet<string> skip,
@@ -217,7 +276,8 @@ internal sealed class Overlays
         Dictionary<string, AnnotationOverride> annotations,
         Dictionary<string, ArrayOverride> arrayOverrides,
         Dictionary<string, PlatformSupport> platforms,
-        Dictionary<string, string> returnTypes)
+        Dictionary<string, string> returnTypes,
+        Dictionary<string, FieldSkip> fieldSkips)
     {
         _skip = skip;
         _handBound = handBound;
@@ -227,6 +287,7 @@ internal sealed class Overlays
         _arrayOverrides = arrayOverrides;
         _platforms = platforms;
         _returnTypes = returnTypes;
+        _fieldSkips = fieldSkips;
     }
 
     /// <summary>Gets an overlay set without any correction.</summary>
@@ -238,7 +299,8 @@ internal sealed class Overlays
         new Dictionary<string, AnnotationOverride>(StringComparer.Ordinal),
         new Dictionary<string, ArrayOverride>(StringComparer.Ordinal),
         new Dictionary<string, PlatformSupport>(StringComparer.Ordinal),
-        new Dictionary<string, string>(StringComparer.Ordinal));
+        new Dictionary<string, string>(StringComparer.Ordinal),
+        new Dictionary<string, FieldSkip>(StringComparer.Ordinal));
 
     /// <summary>Gets the skipped identifiers, ordered for reporting.</summary>
     internal IReadOnlyCollection<string> SkippedIdentifiers => _skip;
@@ -266,6 +328,12 @@ internal sealed class Overlays
     /// report the ones no array matched.
     /// </summary>
     internal IReadOnlyCollection<string> ArrayOverrideKeys => _arrayOverrides.Keys;
+
+    /// <summary>
+    /// Gets the keys of every declared field skip, so that a run can report the
+    /// ones no field of an emitted record matched.
+    /// </summary>
+    internal IReadOnlyCollection<string> FieldSkipKeys => _fieldSkips.Keys;
 
     /// <summary>
     /// Loads <c>fixups.json</c> and <c>platform-symbols.json</c> from an overlay
@@ -328,6 +396,12 @@ internal sealed class Overlays
             returnTypes[entry.Key] = entry.Value;
         }
 
+        Dictionary<string, FieldSkip> fieldSkips = new(StringComparer.Ordinal);
+        foreach (KeyValuePair<string, FieldSkip> entry in fixups.FieldSkips ?? [])
+        {
+            fieldSkips[entry.Key] = entry.Value;
+        }
+
         return new Overlays(
             skip,
             handBound,
@@ -336,7 +410,8 @@ internal sealed class Overlays
             annotations,
             arrayOverrides,
             symbols,
-            returnTypes);
+            returnTypes,
+            fieldSkips);
     }
 
     /// <summary>Tests whether a symbol is skipped by the overlays.</summary>
@@ -390,6 +465,15 @@ internal sealed class Overlays
     internal ArrayOverride? GetArrayOverride(string key) =>
         _arrayOverrides.TryGetValue(key, out ArrayOverride? value) ? value : null;
 
+    /// <summary>Looks up the member that answers a record field.</summary>
+    /// <param name="key">
+    /// The <c>c:type</c> of the record and the gir name of the field, for
+    /// example <c>GstPadProbeInfo.flow_ret</c>.
+    /// </param>
+    /// <returns>The entry, or <see langword="null"/> when there is none.</returns>
+    internal FieldSkip? GetFieldSkip(string key) =>
+        _fieldSkips.TryGetValue(key, out FieldSkip? value) ? value : null;
+
     /// <summary>Looks up the platform availability of a native symbol.</summary>
     /// <param name="cIdentifier">The <c>c:identifier</c> of the symbol.</param>
     /// <returns>The availability, or <see langword="null"/> when the symbol is portable.</returns>
@@ -423,6 +507,8 @@ internal sealed class Overlays
         public Dictionary<string, ArrayOverride>? ArrayOverrides { get; set; }
 
         public Dictionary<string, string>? ReturnTypeOverrides { get; set; }
+
+        public Dictionary<string, FieldSkip>? FieldSkips { get; set; }
     }
 
     private sealed class PlatformSymbolsFile

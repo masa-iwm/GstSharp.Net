@@ -1160,6 +1160,14 @@ internal sealed class RecordEmitter
         List<Accessor> accessors = [];
         foreach (LayoutField field in layout)
         {
+            // A field something else already answers carries no accessor of its
+            // own: the overlays name the member that does, and two declarations
+            // of one name in a partial class do not compile.
+            if (IsExposedElsewhere(record, field.Field))
+            {
+                continue;
+            }
+
             // A fixed size field is storage rather than a value the type map
             // has a spelling for, so it is answered as the inline array the
             // mirror lays it out with. The storage type is promoted to the
@@ -1311,7 +1319,8 @@ internal sealed class RecordEmitter
             + typeName + RawSuffix + "*)Handle)->" + unionField.PascalName + ")->";
         foreach (LayoutField member in members)
         {
-            if (ValueAccessor(ns, cast, member) is { } accessor)
+            if (!IsExposedElsewhere(record, member.Field)
+                && ValueAccessor(ns, cast, member) is { } accessor)
             {
                 accessors.Add(accessor);
             }
@@ -1319,6 +1328,28 @@ internal sealed class RecordEmitter
 
         return members;
     }
+
+    /// <summary>
+    /// Tests whether the overlays name something that answers a field, which is
+    /// what keeps the generator from emitting an accessor of its own for it.
+    /// </summary>
+    /// <param name="record">The declaring record.</param>
+    /// <param name="field">The field to test.</param>
+    /// <returns><see langword="true"/> when the field is answered elsewhere.</returns>
+    private bool IsExposedElsewhere(GirRecord record, GirField field) =>
+        _overlays.GetFieldSkip(FieldSkipKey(record, field)) is { IsStated: true };
+
+    /// <summary>Names one field the way the overlays address it.</summary>
+    /// <param name="record">The declaring record.</param>
+    /// <param name="field">The field to name.</param>
+    /// <returns>The <c>c:type</c> of the record and the gir name of the field.</returns>
+    /// <remarks>
+    /// A field of a reserved ABI union is addressed by the record it grows and
+    /// the field itself, with the union and its structure transparent, which is
+    /// the same shape the accessor of one is named after.
+    /// </remarks>
+    private static string FieldSkipKey(GirRecord record, GirField field) =>
+        CTypeOf(record) + "." + field.Name;
 
     /// <summary>
     /// Reports the fields of a record that carry API in C and none in C#.
@@ -1370,8 +1401,16 @@ internal sealed class RecordEmitter
             // underscore prefixed field of the corpus is reserved space or an
             // implementation detail of GObject, and the gir is inconsistent
             // about annotating them (GstWebRTCICECandidate._gst_reserved
-            // carries neither private nor readable="0").
+            // carries neither private nor readable="0"). The overlays are asked
+            // behind this rather than in front of it, so that an entry naming a
+            // field the ledger never counted is reported as stale instead of
+            // claiming a binding for reserved space.
             if (IsHidden(field) || field.Name.StartsWith('_'))
+            {
+                continue;
+            }
+
+            if (ReportExposedField(module, record, field))
             {
                 continue;
             }
@@ -1416,7 +1455,7 @@ internal sealed class RecordEmitter
     {
         foreach (GirField member in union.Records[0].Fields)
         {
-            if (bound.Contains(member.Name))
+            if (bound.Contains(member.Name) || ReportExposedField(module, record, member))
             {
                 continue;
             }
@@ -1431,6 +1470,26 @@ internal sealed class RecordEmitter
 
             _census.DroppedField(module.GirNamespace, record.Name + "." + member.Name, reason);
         }
+    }
+
+    /// <summary>
+    /// Reports a field the overlays say something else answers, which keeps it
+    /// out of the ledger of the fields nothing binds.
+    /// </summary>
+    /// <param name="module">The module being emitted.</param>
+    /// <param name="record">The declaring record.</param>
+    /// <param name="field">The field to report.</param>
+    /// <returns><see langword="true"/> when the field was reported here.</returns>
+    private bool ReportExposedField(ModuleInfo module, GirRecord record, GirField field)
+    {
+        string key = FieldSkipKey(record, field);
+        if (_overlays.GetFieldSkip(key) is not { IsStated: true } skip)
+        {
+            return false;
+        }
+
+        _census.ExposedField(module.GirNamespace, record.Name + "." + field.Name, key, skip.Reason);
+        return true;
     }
 
     /// <summary>

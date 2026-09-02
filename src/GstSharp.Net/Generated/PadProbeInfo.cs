@@ -69,17 +69,6 @@ public sealed unsafe partial class PadProbeInfo
         }
     }
 
-    /// <summary>The <c>flow_ret</c> field of <c>GstPadProbeInfo</c>.</summary>
-    public Gst.FlowReturn FlowRet
-    {
-        get
-        {
-            Gst.FlowReturn value = ((PadProbeInfoRaw.ABIMembers*)&((PadProbeInfoRaw*)Handle)->ABI)->FlowRet;
-            System.GC.KeepAlive(this);
-            return value;
-        }
-    }
-
     /// <summary>Wraps a native <c>GstPadProbeInfo</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
     /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>
@@ -381,17 +370,5 @@ internal unsafe struct PadProbeInfoRaw
     internal struct ABIArray
     {
         private nint _element0;
-    }
-
-    /// <summary>The fields the <c>ABI</c> union lays over the space it reserves.</summary>
-    /// <remarks>
-    /// They start where the union starts, so this is read by reinterpreting
-    /// <see cref="ABI"/> rather than by an offset of its own.
-    /// </remarks>
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct ABIMembers
-    {
-        /// <summary>The <c>flow_ret</c> field.</summary>
-        internal Gst.FlowReturn FlowRet;
     }
 }

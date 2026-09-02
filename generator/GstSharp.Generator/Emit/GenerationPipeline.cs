@@ -168,6 +168,31 @@ internal static class GenerationPipeline
                 + "the entry is stale.");
         }
 
+        // A field skip the run never matched names a field that no longer
+        // exists, one of a record that is not emitted, or a misspelling; an
+        // entry that states neither an exposing member nor that the field is
+        // hand written says nothing about it at all, and one that states both
+        // says two different things about who answers it. Any of the three
+        // would leave the ledger quiet about a field on the strength of a claim
+        // nothing checks, which is what the report exists to prevent.
+        List<string> staleFields = [];
+        foreach (string key in overlays.FieldSkipKeys)
+        {
+            if (!census.FieldSkipKeys.Contains(key) || overlays.GetFieldSkip(key) is not { IsStated: true })
+            {
+                staleFields.Add(key);
+            }
+        }
+
+        staleFields.Sort(StringComparer.Ordinal);
+        foreach (string key in staleFields)
+        {
+            diagnostics.Warn(
+                "GEN0025",
+                $"The field skip '{key}' matched no field of an emitted record, or states neither "
+                + "'exposedBy' nor 'handBound', or states both; the entry is stale.");
+        }
+
         // A hand bound entry the run never saw skipped names a symbol that is
         // generated after all, or one that no longer exists, or a misspelling.
         // Any of the three makes the ledger claim something about the bindings

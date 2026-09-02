@@ -851,13 +851,15 @@ public sealed class AbiProbeTests
     /// </summary>
     /// <remarks>
     /// The size is derived from where the union lands rather than written out
-    /// twice, which is what keeps the two data models on one statement.
+    /// twice, which is what keeps the two data models on one statement. Only
+    /// the reserve is mirrored: <c>flow_ret</c> is answered by
+    /// <c>GetFlowReturn</c>, so the overlays register it as a field skip and
+    /// the mirror declares nothing over the space.
     /// </remarks>
     [Fact]
     public unsafe void PadProbeInfoRawMatchesTheHeaderLayout()
     {
         PadProbeInfoRaw raw = default;
-        PadProbeInfoRaw.ABIMembers abi = default;
         bool windows = OperatingSystem.IsWindows();
 
         _output.WriteLine(Format("PadProbeInfoRaw", Unsafe.SizeOf<PadProbeInfoRaw>()));
@@ -869,11 +871,14 @@ public sealed class AbiProbeTests
         Assert.Equal(windows ? 24L : 32L, Offset(&raw, &raw.Size));
         Assert.Equal(windows ? 32L : 40L, Offset(&raw, &raw.ABI));
 
+        // Where the union lands, and how large the structure is, are read off
+        // the projected layout as well: the header constants above say what the
+        // ABI is, and these two say the mirror agrees with itself whichever
+        // width a gulong has.
+        Assert.Equal(Offset(&raw, &raw.Size) + 8, Offset(&raw, &raw.ABI));
         Assert.Equal(
             Offset(&raw, &raw.ABI) + (4 * sizeof(nint)),
             Unsafe.SizeOf<PadProbeInfoRaw>());
-
-        Assert.Equal(0L, Offset(&abi, &abi.FlowRet));
     }
 
     /// <summary>

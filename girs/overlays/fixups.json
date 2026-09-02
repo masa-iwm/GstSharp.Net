@@ -453,5 +453,10 @@
     "gst_ntp_clock_new": "Gst.Net.NtpClock",
     "gst_pipeline_new": "Gst.Pipeline",
     "gst_ptp_clock_new": "Gst.Net.PtpClock"
+  },
+  "$comment-field-skips": "Record fields that carry API in C and are answered by something other than an accessor of their own, keyed by the c:type of the record and the gir name of the field. A field of a reserved ABI union is addressed by the record it grows, with the union and the structure inside it transparent, the same way its accessor would be named. The entry keeps the field out of the field ledger of the skip report and keeps the generator from emitting an accessor for it, which is what makes it the answer to a name a hand written member already carries. Exactly one of 'exposedBy' and 'handBound' has to be stated, and the check is exclusive; a key that matches no field of an emitted record, an entry that states neither, and an entry that states both are all reported as GEN0025.",
+  "$comment-field-skip-flow-ret": "GstPadProbeInfo.flow_ret is the value a blocking probe hands back to the pad, and gst_pad_probe_info_get_flow_return reads that very field through a C function; both halves of the pair are generated, as PadProbeInfo.GetFlowReturn and .SetFlowReturn. An accessor over the mirror would be a second spelling of one value, and the C function is the half that stays right if the field ever moves inside the union.",
+  "fieldSkips": {
+    "GstPadProbeInfo.flow_ret": { "exposedBy": "GetFlowReturn" }
   }
 }

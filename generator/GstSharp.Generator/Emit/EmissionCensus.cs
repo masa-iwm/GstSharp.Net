@@ -28,6 +28,11 @@ internal sealed class EmissionCensus
     private readonly SortedDictionary<string, SortedDictionary<string, string>> _droppedFields =
         new(StringComparer.Ordinal);
 
+    private readonly SortedDictionary<string, SortedDictionary<string, string>> _exposedFields =
+        new(StringComparer.Ordinal);
+
+    private readonly SortedSet<string> _fieldSkips = new(StringComparer.Ordinal);
+
     /// <summary>Initializes a new instance of the <see cref="EmissionCensus"/> class.</summary>
     /// <param name="overlays">
     /// The overlays, read for the hand bound ledger. A census built without
@@ -40,6 +45,12 @@ internal sealed class EmissionCensus
     /// the ones it never saw can be reported as stale.
     /// </summary>
     internal IReadOnlySet<string> HandBoundSymbols => _handBound;
+
+    /// <summary>
+    /// Gets the field skip keys the run matched against a field of an emitted
+    /// record, so that the ones it never matched can be reported as stale.
+    /// </summary>
+    internal IReadOnlySet<string> FieldSkipKeys => _fieldSkips;
 
     /// <summary>Counts one emitted member.</summary>
     /// <param name="module">The gir namespace of the module.</param>
@@ -136,6 +147,39 @@ internal sealed class EmissionCensus
         }
 
         fields[field] = reason;
+    }
+
+    /// <summary>
+    /// Records one field that the overlays say something else already hands
+    /// out.
+    /// </summary>
+    /// <param name="module">The gir namespace of the module.</param>
+    /// <param name="field">The field, spelled <c>Record.field</c> in gir names.</param>
+    /// <param name="key">The overlay key that matched, for the stale report.</param>
+    /// <param name="reason">The member that answers it, or that it is hand written.</param>
+    internal void ExposedField(string module, string field, string key, string reason)
+    {
+        _fieldSkips.Add(key);
+        if (!_exposedFields.TryGetValue(module, out SortedDictionary<string, string>? fields))
+        {
+            fields = new SortedDictionary<string, string>(StringComparer.Ordinal);
+            _exposedFields.Add(module, fields);
+        }
+
+        fields[field] = reason;
+    }
+
+    /// <summary>Reads back the number of record fields another member answers.</summary>
+    /// <returns>The count over the whole run.</returns>
+    internal int ExposedFieldCount()
+    {
+        int total = 0;
+        foreach (SortedDictionary<string, string> fields in _exposedFields.Values)
+        {
+            total += fields.Count;
+        }
+
+        return total;
     }
 
     /// <summary>Reads back the number of record fields the run left unbound.</summary>
@@ -238,7 +282,9 @@ internal sealed class EmissionCensus
     /// exception being the members of a reserved ABI union, which stand for the
     /// single line the union itself used to occupy. A field a hand written
     /// member reads through stays listed, the same way a hand bound entry point
-    /// stays on the skip list: what is measured is the generated surface.
+    /// stays on the skip list - what is measured is the generated surface -
+    /// unless the overlays register it under <c>fieldSkips</c>, which is the
+    /// statement that moves it into the section below.
     /// </remarks>
     private void WriteFieldLedger(CodeWriter writer)
     {
@@ -254,11 +300,50 @@ internal sealed class EmissionCensus
         writer.WriteLine("union the mirror lays out is listed member by member instead, under the name of");
         writer.WriteLine("the member alone, and a member the gir keeps to the C implementation is listed");
         writer.WriteLine("as `Private` rather than left out. A field a hand written member reads through,");
-        writer.WriteLine("such as the `finfo` of `GstVideoInfo`, stays listed as well: the ledger measures");
+        writer.WriteLine("such as the `finfo` of `GstVideoInfo`, stays listed as well - the ledger measures");
         writer.WriteLine("what the generator binds, the same convention the hand bound entry points above");
-        writer.WriteLine("follow.");
+        writer.WriteLine("follow - unless the overlays register it under `fieldSkips`, which moves it into");
+        writer.WriteLine("the section below.");
 
         foreach ((string module, SortedDictionary<string, string> fields) in _droppedFields)
+        {
+            writer.WriteLine();
+            writer.WriteLine(string.Create(CultureInfo.InvariantCulture, $"### {module} ({fields.Count})"));
+            writer.WriteLine();
+            foreach ((string field, string reason) in fields)
+            {
+                writer.WriteLine("- `" + field + "` — " + reason);
+            }
+        }
+
+        WriteExposedFields(writer);
+    }
+
+    /// <summary>
+    /// Writes the record fields that carry API in C and are answered by
+    /// something other than an accessor of their own.
+    /// </summary>
+    /// <param name="writer">The target writer.</param>
+    /// <remarks>
+    /// These are the entries of <c>fieldSkips</c> in the overlays. They are kept
+    /// out of the ledger above, because a field a member of the same wrapper
+    /// hands out is not a gap; they are listed all the same, with what answers
+    /// them, so that the claim is a line a review can check rather than a
+    /// silence.
+    /// </remarks>
+    private void WriteExposedFields(CodeWriter writer)
+    {
+        writer.WriteLine();
+        writer.WriteLine(string.Create(
+            CultureInfo.InvariantCulture,
+            $"## Fields exposed elsewhere ({ExposedFieldCount()})"));
+        writer.WriteLine();
+        writer.WriteLine("Public record fields that another member of the binding answers, with the");
+        writer.WriteLine("member that answers them. They are declared in `girs/overlays/fixups.json`");
+        writer.WriteLine("under `fieldSkips` and are left out of the ledger above: what is measured");
+        writer.WriteLine("there is what the bindings do not cover, and these are covered.");
+
+        foreach ((string module, SortedDictionary<string, string> fields) in _exposedFields)
         {
             writer.WriteLine();
             writer.WriteLine(string.Create(CultureInfo.InvariantCulture, $"### {module} ({fields.Count})"));

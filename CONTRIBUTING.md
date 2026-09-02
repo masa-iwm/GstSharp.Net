@@ -150,7 +150,7 @@ the day it is written, and an entry the generator never sees skipped — because
 the symbol is generated after all, or no longer exists, or is misspelt — is
 reported as `GEN0023`. That is a warning, so `generate` and `verify` still exit
 zero on it; what it fails is the test suite, which asserts that a run over the
-committed overlays reports no `GEN0020`, `GEN0023` or `GEN0024`.
+committed overlays reports no `GEN0020`, `GEN0023`, `GEN0024` or `GEN0025`.
 
 A hand bound consumer keeps its callback type generated: a `<callback>` whose
 only consumers are on the `handBound` ledger is emitted all the same, so the
@@ -165,7 +165,20 @@ out, and the census tests freeze its totals like every other count. A field
 counts as bound when a wrapper declares an accessor for it, or when a value
 projected structure declares it as a typed public field; one that is projected
 onto a raw address, and one that only a hand written member reads through, stay
-listed, because what the section measures is the generated surface.
+listed, because what the section measures is the generated surface - unless the
+field is registered under `fieldSkips`, which is the one statement that takes it
+off this ledger.
+
+A field is not a callable, so the `handBound` array above cannot name one. The
+ledger for a field that another member of the binding does answer is the
+`fieldSkips` object of `girs/overlays/fixups.json`, keyed by the `c:type` of the
+record and the gir name of the field — `GstPadProbeInfo.flow_ret` — and stating
+either the generated member that hands the same value out (`exposedBy`) or that
+a hand written one does (`handBound`). An entry moves the field into the
+`## Fields exposed elsewhere` section of the report and keeps the generator from
+emitting an accessor for it, which is what makes it the answer to a name a
+`Custom/` member already carries. A key that matches no field of an emitted
+record, or an entry that states neither half, is reported as `GEN0025`.
 
 Never bump a number you cannot account for. Census drift that nobody asked for
 is a bug in the change — typically an accidental skip: an overlay entry that

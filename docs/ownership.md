@@ -207,7 +207,9 @@ A public field the generator binds nothing for is listed in the `## Fields`
 section of `girs/skip-report.md`, under the shape that kept it out. A field a
 hand written member reads through stays listed there, the same way a hand bound
 entry point stays on the skip list: what the ledger measures is the generated
-surface.
+surface. The exception is a field registered under `fieldSkips` in
+`girs/overlays/fixups.json`, which names what does answer it and moves it to the
+`## Fields exposed elsewhere` section of the same report.
 
 ## Calls that consume their argument
 

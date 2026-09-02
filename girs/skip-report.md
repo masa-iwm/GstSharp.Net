@@ -1137,9 +1137,10 @@ once, under its own name, because the record ends where it sits; a reserved ABI
 union the mirror lays out is listed member by member instead, under the name of
 the member alone, and a member the gir keeps to the C implementation is listed
 as `Private` rather than left out. A field a hand written member reads through,
-such as the `finfo` of `GstVideoInfo`, stays listed as well: the ledger measures
+such as the `finfo` of `GstVideoInfo`, stays listed as well - the ledger measures
 what the generator binds, the same convention the hand bound entry points above
-follow.
+follow - unless the overlays register it under `fieldSkips`, which moves it into
+the section below.
 
 ### GES (1)
 
@@ -1436,3 +1437,14 @@ follow.
 - `WebRTCICECandidateStats.url` — Pointer
 - `WebRTCICECandidateStats.username_fragment` — Pointer
 - `WebRTCSessionDescription.sdp` — Pointer
+
+## Fields exposed elsewhere (1)
+
+Public record fields that another member of the binding answers, with the
+member that answers them. They are declared in `girs/overlays/fixups.json`
+under `fieldSkips` and are left out of the ledger above: what is measured
+there is what the bindings do not cover, and these are covered.
+
+### Gst (1)
+
+- `PadProbeInfo.flow_ret` — GetFlowReturn
