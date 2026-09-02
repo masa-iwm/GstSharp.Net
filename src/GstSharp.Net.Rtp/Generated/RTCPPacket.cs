@@ -843,13 +843,15 @@ public unsafe partial struct RTCPPacket
     /// <param name="type">The <c>type</c> argument.</param>
     /// <param name="data">result entry data</param>
     /// <returns>%TRUE if there was valid data.</returns>
-    public bool SdesCopyEntry(Gst.Rtp.RTCPSDESType type, out byte[]? data)
+    public bool SdesCopyEntry(out Gst.Rtp.RTCPSDESType type, out byte[]? data)
     {
+        int typeNative = default;
         byte lenNative = default;
         nint dataNative = default;
         fixed (Gst.Rtp.RTCPPacket* self = &this)
         {
-            int nativeResult = GstRtcpPacketSdesCopyEntry(self, (int)type, &lenNative, &dataNative);
+            int nativeResult = GstRtcpPacketSdesCopyEntry(self, &typeNative, &lenNative, &dataNative);
+            type = (Gst.Rtp.RTCPSDESType)typeNative;
             data = null;
             if (dataNative != 0)
             {
@@ -914,13 +916,15 @@ public unsafe partial struct RTCPPacket
     /// <param name="type">The <c>type</c> argument.</param>
     /// <param name="data">result entry data</param>
     /// <returns>%TRUE if there was valid data.</returns>
-    public bool SdesGetEntry(Gst.Rtp.RTCPSDESType type, out byte[]? data)
+    public bool SdesGetEntry(out Gst.Rtp.RTCPSDESType type, out byte[]? data)
     {
+        int typeNative = default;
         byte lenNative = default;
         nint dataNative = default;
         fixed (Gst.Rtp.RTCPPacket* self = &this)
         {
-            int nativeResult = GstRtcpPacketSdesGetEntry(self, (int)type, &lenNative, &dataNative);
+            int nativeResult = GstRtcpPacketSdesGetEntry(self, &typeNative, &lenNative, &dataNative);
+            type = (Gst.Rtp.RTCPSDESType)typeNative;
             data = null;
             if (dataNative != 0)
             {
@@ -1783,7 +1787,7 @@ public unsafe partial struct RTCPPacket
 
     /// <summary>The <c>gst_rtcp_packet_sdes_copy_entry</c> entry point.</summary>
     [LibraryImport("GstRtp", EntryPoint = "gst_rtcp_packet_sdes_copy_entry")]
-    private static partial int GstRtcpPacketSdesCopyEntry(Gst.Rtp.RTCPPacket* packet, int type, byte* len, nint* data);
+    private static partial int GstRtcpPacketSdesCopyEntry(Gst.Rtp.RTCPPacket* packet, int* type, byte* len, nint* data);
 
     /// <summary>The <c>gst_rtcp_packet_sdes_first_entry</c> entry point.</summary>
     [LibraryImport("GstRtp", EntryPoint = "gst_rtcp_packet_sdes_first_entry")]
@@ -1795,7 +1799,7 @@ public unsafe partial struct RTCPPacket
 
     /// <summary>The <c>gst_rtcp_packet_sdes_get_entry</c> entry point.</summary>
     [LibraryImport("GstRtp", EntryPoint = "gst_rtcp_packet_sdes_get_entry")]
-    private static partial int GstRtcpPacketSdesGetEntry(Gst.Rtp.RTCPPacket* packet, int type, byte* len, nint* data);
+    private static partial int GstRtcpPacketSdesGetEntry(Gst.Rtp.RTCPPacket* packet, int* type, byte* len, nint* data);
 
     /// <summary>The <c>gst_rtcp_packet_sdes_get_item_count</c> entry point.</summary>
     [LibraryImport("GstRtp", EntryPoint = "gst_rtcp_packet_sdes_get_item_count")]

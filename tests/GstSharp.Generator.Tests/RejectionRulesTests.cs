@@ -525,7 +525,41 @@ public sealed class RejectionRulesTests
                   </parameter>
                 </parameters>
               </method>
+              <method name="get_kind" c:identifier="gst_packet_get_kind">
+                <return-value transfer-ownership="none">
+                  <type name="none" c:type="void"/>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="packet" transfer-ownership="none">
+                    <type name="Packet" c:type="GstPacket*"/>
+                  </instance-parameter>
+                  <parameter name="kind" transfer-ownership="none">
+                    <type name="Kind" c:type="GstKind*"/>
+                  </parameter>
+                </parameters>
+              </method>
+              <method name="get_mask" c:identifier="gst_packet_get_mask">
+                <return-value transfer-ownership="none">
+                  <type name="none" c:type="void"/>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="packet" transfer-ownership="none">
+                    <type name="Packet" c:type="GstPacket*"/>
+                  </instance-parameter>
+                  <parameter name="mask" transfer-ownership="none">
+                    <type name="Mask" c:type="GstMask*"/>
+                  </parameter>
+                </parameters>
+              </method>
             </class>
+            <enumeration name="Kind" c:type="GstKind">
+              <member name="cname" value="0" c:identifier="GST_KIND_CNAME"/>
+              <member name="tool" value="1" c:identifier="GST_KIND_TOOL"/>
+            </enumeration>
+            <bitfield name="Mask" c:type="GstMask">
+              <member name="none" value="0" c:identifier="GST_MASK_NONE"/>
+              <member name="all" value="1" c:identifier="GST_MASK_ALL"/>
+            </bitfield>
         """;
 
     private static readonly Lazy<FixtureRun> LazyPointerToPointerRun = new(
@@ -1169,6 +1203,49 @@ public sealed class RejectionRulesTests
         Assert.Contains("int* isIpv4", source, StringComparison.Ordinal);
         Assert.Contains("int isIpv4Native = isIpv4 ? 1 : 0;", source, StringComparison.Ordinal);
         Assert.Contains("isIpv4 = isIpv4Native != 0;", source, StringComparison.Ordinal);
+        Assert.DoesNotContain(run.Result.Diagnostics, diagnostic => diagnostic.Code == "GEN0017");
+    }
+
+    [Fact]
+    public void ADirectionOverrideReachesAPointerToAnEnumeration()
+    {
+        // The gst_rtcp_packet_sdes_get_entry shape: the C body is
+        // `if (type) *type = item_type;`, and the gir types the parameter as
+        // the bare enumeration with the star in the c:type alone. The out
+        // projection is a local of the integer the enumeration is emitted over,
+        // which is the width the C declaration names, so the correction is the
+        // one a scalar already takes.
+        FixtureRun run = RunScalarWithOverlay(
+            """
+            {
+              "annotationOverrides": { "gst_packet_get_kind#kind": { "direction": "out" } }
+            }
+            """);
+
+        string source = run.File("Packet.cs");
+
+        Assert.Contains("public void GetKind(out Gst.Kind kind)", source, StringComparison.Ordinal);
+        Assert.Contains("int* kind", source, StringComparison.Ordinal);
+        Assert.DoesNotContain(run.Result.Diagnostics, diagnostic => diagnostic.Code == "GEN0017");
+    }
+
+    [Fact]
+    public void ADirectionOverrideReachesAPointerToABitfield()
+    {
+        // The other half of the same mapping: a bitfield is emitted as a
+        // [Flags] enumeration over the same integer, so it is corrected with
+        // the enumeration rather than left behind by it.
+        FixtureRun run = RunScalarWithOverlay(
+            """
+            {
+              "annotationOverrides": { "gst_packet_get_mask#mask": { "direction": "out" } }
+            }
+            """);
+
+        string source = run.File("Packet.cs");
+
+        Assert.Contains("public void GetMask(out Gst.Mask mask)", source, StringComparison.Ordinal);
+        Assert.Contains("int* mask", source, StringComparison.Ordinal);
         Assert.DoesNotContain(run.Result.Diagnostics, diagnostic => diagnostic.Code == "GEN0017");
     }
 

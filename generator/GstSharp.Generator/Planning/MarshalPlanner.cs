@@ -1872,7 +1872,8 @@ internal sealed class MarshalPlanner
 
     /// <summary>
     /// Applies the <c>direction</c> correction of the overlays to a parameter
-    /// the gir spells as a bare pointer to a plain structure or to a scalar.
+    /// the gir spells as a bare pointer to a plain structure, to a scalar or to
+    /// an enumeration.
     /// </summary>
     /// <param name="callable">The callable being planned.</param>
     /// <param name="parameter">The parameter being projected.</param>
@@ -1908,8 +1909,13 @@ internal sealed class MarshalPlanner
     /// whose address is what the callee was handed all along, so nothing about
     /// its size or its layout is in doubt. The star of the <c>c:type</c> is the
     /// evidence that the C side writes through it, so a scalar whose
-    /// <c>c:type</c> carries none keeps the value it is; an enumeration and a
-    /// bitfield are refused as well, having no case that asks for it. A handle,
+    /// <c>c:type</c> carries none keeps the value it is. An enumeration and a
+    /// bitfield come with it, for the same reason and with the same evidence:
+    /// the out projection of one is a local of the underlying integer the
+    /// enumeration is emitted over, and the member converts it back on the way
+    /// out — which is what moves the <c>type</c> of
+    /// <c>gst_rtcp_packet_sdes_get_entry</c> from a value the caller invents to
+    /// the entry type the packet really carries. A handle,
     /// a string or an array has an out projection of its own with a conversion
     /// on either side of the call, and turning one into a bare pointer to
     /// managed storage would hand native code the address of something whose
@@ -1945,24 +1951,26 @@ internal sealed class MarshalPlanner
         // parameter plans as the ordinary handle it always was, and the
         // redirect clears caller-allocates with it, so nothing downstream still
         // believes the member produces storage. `out` and `ref` stay what they
-        // were, the two halves of a pointer to a plain structure, to a GValue
-        // or to a scalar; the star of the c:type is what says the callee writes
-        // through the parameter, so a scalar without one keeps its value
-        // projection.
+        // were, the two halves of a pointer to a plain structure, to a GValue,
+        // to a scalar or to an enumeration; the star of the c:type is what says
+        // the callee writes through the parameter, so a scalar without one
+        // keeps its value projection.
         bool corrected = effective is not GirArrayRef
             && effective.IsPointer
             && (overridden == ArgumentDirection.In
                 ? mapped.Kind is MarshalKind.Boxed or MarshalKind.OpaqueRecord or MarshalKind.MiniObject
                 : mapped.Kind is MarshalKind.PlainStruct or MarshalKind.GValue
-                    or MarshalKind.Blittable or MarshalKind.Boolean);
+                    or MarshalKind.Blittable or MarshalKind.Boolean
+                    or MarshalKind.Enum or MarshalKind.Flags);
 
         if (!corrected)
         {
             _diagnostics.Warn(
                 "GEN0017",
                 $"The direction override of '{AnnotationKeyOf(callable)}#{parameter.Name}' is ignored: only a "
-                + "pointer to a plain structure, to a GValue or to a scalar can be re-planned as an out or a ref "
-                + "parameter, and only a pointer to a record can be re-planned as an in parameter.");
+                + "pointer to a plain structure, to a GValue, to a scalar or to an enumeration can be "
+                + "re-planned as an out or a ref parameter, and only a pointer to a record can be re-planned "
+                + "as an in parameter.");
             return declared;
         }
 

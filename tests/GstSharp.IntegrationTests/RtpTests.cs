@@ -288,6 +288,45 @@ public sealed class RtpTests
     }
 
     /// <summary>
+    /// The entry type of an SDES item is a value the packet carries and the
+    /// caller reads back: <c>gst_rtcp_packet_sdes_get_entry</c> writes it
+    /// through a <c>GstRTCPSDESType*</c> the gir spells with no direction, so
+    /// the member takes it as an <see langword="out"/> parameter.
+    /// </summary>
+    [Fact]
+    public void SdesEntryAnswersItsTypeAndItsData()
+    {
+        using Gst.Buffer buffer = RTCPBuffer.New(Mtu);
+
+        Assert.True(RTCPBuffer.MapBuffer(buffer, MapFlags.Read | MapFlags.Write, out RTCPBuffer rtcp));
+        Assert.True(rtcp.AddPacket(RTCPType.Sdes, out RTCPPacket sdes));
+        Assert.True(sdes.SdesAddItem(0x0BADF00D));
+        Assert.True(sdes.SdesAddEntry(RTCPSDESType.Cname, "gstsharp@test"u8));
+        Assert.True(rtcp.Unmap());
+
+        Assert.True(RTCPBuffer.MapBuffer(buffer, MapFlags.Read, out RTCPBuffer reread));
+        Assert.True(reread.GetFirstPacket(out RTCPPacket packet));
+        Assert.Equal(RTCPType.Sdes, packet.GetPacketType());
+        Assert.True(packet.SdesFirstItem());
+        Assert.Equal(0x0BADF00Du, packet.SdesGetSsrc());
+        Assert.True(packet.SdesFirstEntry());
+
+        // The borrowed read and the owned copy answer the same entry type,
+        // which is what the direction correction of #type made readable at all.
+        Assert.True(packet.SdesGetEntry(out RTCPSDESType borrowedType, out byte[]? borrowed));
+        Assert.Equal(RTCPSDESType.Cname, borrowedType);
+        Assert.Equal("gstsharp@test", Encoding.ASCII.GetString(borrowed!));
+
+        Assert.True(packet.SdesCopyEntry(out RTCPSDESType copiedType, out byte[]? copied));
+        Assert.Equal(RTCPSDESType.Cname, copiedType);
+        Assert.Equal("gstsharp@test", Encoding.ASCII.GetString(copied!));
+
+        Assert.False(packet.SdesNextEntry());
+        _output.WriteLine($"sdes items = {packet.SdesGetItemCount()}");
+        Assert.True(reread.Unmap());
+    }
+
+    /// <summary>
     /// The four byte name of an APP packet is exactly four ASCII characters,
     /// because the library copies four bytes and reads no terminator.
     /// </summary>
