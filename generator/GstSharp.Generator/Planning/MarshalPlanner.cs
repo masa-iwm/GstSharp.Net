@@ -678,6 +678,9 @@ internal sealed class MarshalPlanner
             Arguments = arguments,
             Return = returnPlan,
             Throws = callable.Throws,
+            ObsoleteMessage = AnnotationKeyOf(callable) is { } annotationKey
+                ? AnnotationOverrideFor(annotationKey)?.Obsolete
+                : null,
             InstanceType = form == CallableForm.ExtensionMethod ? context.OwnerType : null,
             InstanceConsumption = consumption,
             InstanceIsBorrowable = context.OwnerKind == TypeKind.MiniObject,

@@ -1,3 +1,4 @@
+using GstSharp.Generator.Semantic;
 using Xunit;
 
 namespace GstSharp.Generator.Tests;
@@ -5,7 +6,9 @@ namespace GstSharp.Generator.Tests;
 /// <summary>
 /// What a deprecated gir symbol does to the emitted output: it is bound like
 /// any other one, it carries an <c>[Obsolete]</c> attribute, and everything the
-/// generator writes around it still compiles under warnings as errors.
+/// generator writes around it still compiles under warnings as errors. The last
+/// three tests cover the other source of that attribute, the <c>obsolete</c>
+/// message of an annotation override.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -251,4 +254,132 @@ public sealed class DeprecationTests
               </property>
             </class>
         """;
+
+    /// <summary>
+    /// A member the overlays call obsolete carries the message they state, and
+    /// the entry counts as read: a key that is only ever looked up for a
+    /// parameter would leave a callable keyed entry reported as stale.
+    /// </summary>
+    [Fact]
+    public void AnOverlayMessageMarksTheMemberObsolete()
+    {
+        FixtureRun run = RunWithOverlay(
+            Extension(string.Empty, string.Empty),
+            """
+            {
+              "annotationOverrides": {
+                "gst_extension_get_transports": { "obsolete": "Use the out overload." }
+              }
+            }
+            """);
+
+        Assert.Contains(
+            """
+                [Obsolete("Use the out overload.")]
+                public int GetTransports()
+            """,
+            run.File("Extension.cs"),
+            StringComparison.Ordinal);
+
+        Assert.DoesNotContain(
+            run.Result.Diagnostics,
+            static diagnostic => string.Equals(diagnostic.Code, "GEN0024", StringComparison.Ordinal));
+    }
+
+    /// <summary>
+    /// The message replaces the one the gir deprecation would write rather than
+    /// joining it: a second <c>[Obsolete]</c> attribute on one member does not
+    /// compile.
+    /// </summary>
+    [Fact]
+    public void AnOverlayMessageReplacesTheGirDeprecation()
+    {
+        FixtureRun run = RunWithOverlay(
+            Extension(Since120, "<doc-deprecated xml:space=\"preserve\">Gone upstream.</doc-deprecated>"),
+            """
+            {
+              "annotationOverrides": {
+                "gst_extension_get_transports": { "obsolete": "Use the out overload." }
+              }
+            }
+            """);
+
+        string source = run.File("Extension.cs");
+
+        Assert.Contains(
+            """
+                [Obsolete("Use the out overload.")]
+                public int GetTransports()
+            """,
+            source,
+            StringComparison.Ordinal);
+        Assert.Equal(1, source.Split("[Obsolete(").Length - 1);
+    }
+
+    /// <summary>
+    /// A message on a name this run bound nothing for is stale like every other
+    /// annotation correction that matched nothing.
+    /// </summary>
+    [Fact]
+    public void AnOverlayMessageOnAnUnknownNameIsReportedAsStale()
+    {
+        FixtureRun run = RunWithOverlay(
+            Extension(string.Empty, string.Empty),
+            """
+            {
+              "annotationOverrides": {
+                "gst_extension_get_nothing": { "obsolete": "Use the out overload." }
+              }
+            }
+            """);
+
+        Assert.Contains(
+            run.Result.Diagnostics,
+            static diagnostic => string.Equals(diagnostic.Code, "GEN0024", StringComparison.Ordinal)
+                && diagnostic.Message.Contains("gst_extension_get_nothing", StringComparison.Ordinal));
+    }
+
+    /// <summary>
+    /// A class with one method, which is all a message keyed on a callable
+    /// needs. It carries no property, because a property that delegates to the
+    /// method would have to inherit an attribute the gir knows nothing about.
+    /// </summary>
+    /// <param name="deprecation">The deprecation attributes of the method.</param>
+    /// <param name="deprecationDoc">The <c>doc-deprecated</c> element of the method.</param>
+    /// <returns>The body of the fixture namespace.</returns>
+    private static string Extension(string deprecation, string deprecationDoc) =>
+        $"""
+            <class name="Extension" c:type="GstExtension" parent="GObject.Object" glib:type-name="GstExtension" glib:get-type="gst_extension_get_type">
+              <method name="get_transports" c:identifier="gst_extension_get_transports" {deprecation}>
+                {deprecationDoc}
+                <return-value transfer-ownership="none">
+                  <type name="gint" c:type="gint"/>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="self" transfer-ownership="none">
+                    <type name="Extension" c:type="GstExtension*"/>
+                  </instance-parameter>
+                </parameters>
+              </method>
+            </class>
+        """;
+
+    /// <summary>Runs the generator over a body with overlays the test wrote.</summary>
+    /// <param name="body">The body of the fixture namespace.</param>
+    /// <param name="fixups">The content of <c>fixups.json</c>.</param>
+    /// <returns>The run.</returns>
+    private static FixtureRun RunWithOverlay(string body, string fixups)
+    {
+        string directory = Path.Combine(Path.GetTempPath(), "GstSharp.Generator.Tests", Path.GetRandomFileName());
+        Directory.CreateDirectory(directory);
+        try
+        {
+            File.WriteAllText(Path.Combine(directory, "fixups.json"), fixups);
+            return Fixture.Run(body, Overlays.Load(directory));
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
+    }
 }

@@ -179,9 +179,20 @@ internal static class XmlDocWriter
             message = string.Create(CultureInfo.InvariantCulture, $"{message} (deprecated since {version})");
         }
 
+        WriteObsolete(writer, message);
+    }
+
+    /// <summary>Writes an <c>[Obsolete]</c> attribute with a given message.</summary>
+    /// <param name="writer">The target writer.</param>
+    /// <param name="message">The message of the attribute.</param>
+    /// <remarks>
+    /// The attribute is always a warning: an <c>error</c> of it would take the
+    /// member out of the surface the series promises, which is exactly what the
+    /// member is kept for.
+    /// </remarks>
+    internal static void WriteObsolete(CodeWriter writer, string message) =>
         writer.WriteLine("[Obsolete(\"" + message.Replace("\\", "\\\\", StringComparison.Ordinal)
             .Replace("\"", "\\\"", StringComparison.Ordinal) + "\")]");
-    }
 
     /// <summary>Escapes the characters that are special in XML.</summary>
     /// <param name="text">The raw text.</param>

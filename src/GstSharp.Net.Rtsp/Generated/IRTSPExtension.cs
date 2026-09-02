@@ -85,6 +85,7 @@ public static unsafe partial class RTSPExtensionExtensions
     /// <param name="protocols">The <c>protocols</c> argument.</param>
     /// <param name="transport">The <c>transport</c> argument.</param>
     /// <returns>The result of <c>gst_rtsp_extension_get_transports</c>.</returns>
+    [Obsolete("This overload cannot receive the transport string, because the library writes a gchar* through the parameter; use the GetTransports overload with an out parameter. It will be removed in 1.30.")]
     public static Gst.Rtsp.RTSPResult GetTransports(this Gst.Rtsp.IRTSPExtension ext, Gst.Rtsp.RTSPLowerTrans protocols, string transport)
     {
         ArgumentNullException.ThrowIfNull(ext);

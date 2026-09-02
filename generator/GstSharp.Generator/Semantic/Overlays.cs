@@ -88,6 +88,23 @@ internal sealed class AnnotationOverride
     /// freshly initialized list into a second owner for nothing.
     /// </remarks>
     public bool? DiscardReturn { get; set; }
+
+    /// <summary>
+    /// Gets or sets the message of an <c>[Obsolete]</c> attribute the emitted
+    /// member carries.
+    /// </summary>
+    /// <remarks>
+    /// It is keyed on the bare <c>c:identifier</c> of the callable, because it
+    /// describes the member rather than any one argument of it. What it exists
+    /// for is a member that shipped in a shape the binding cannot correct: the
+    /// promise of a stable series keeps the published signature alive, so the
+    /// working shape is written by hand beside it and the generated one is
+    /// marked here. The attribute is a warning and never an error - the member
+    /// still compiles, which is the whole point of keeping it - and the gir
+    /// deprecation, where a callable carries one, is what the message replaces:
+    /// two attributes on one member do not compile.
+    /// </remarks>
+    public string? Obsolete { get; set; }
 }
 
 /// <summary>
@@ -280,8 +297,13 @@ internal sealed class PlatformSupport
 /// <c>discardReturn</c> on <c>#return</c> to drop a return value the caller
 /// already holds, and the <c>scope</c> of a callback parameter whose gir
 /// annotation does not describe how long the library keeps the function it is
-/// handed. A signal argument is addressed by the GObject spelling of its
-/// signal instead, <c>GES.Project::error-loading-asset#error</c>, the key
+/// handed. On the bare identifier, with no suffix, it may state
+/// <c>obsolete</c>, the message of an <c>[Obsolete]</c> attribute the emitted
+/// member carries, which is how a member that shipped in a shape the binding
+/// cannot correct without breaking the series is marked while the corrected
+/// shape is written by hand beside it. A signal argument is addressed by the
+/// GObject spelling of its signal instead,
+/// <c>GES.Project::error-loading-asset#error</c>, the key
 /// <c>rename</c> uses for the event of the same signal; only <c>nullable</c>
 /// is read there, because a signal argument has no direction, no array, no
 /// callback scope and no discardable return.</description></item>

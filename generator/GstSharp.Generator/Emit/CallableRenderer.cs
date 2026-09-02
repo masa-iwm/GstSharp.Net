@@ -251,7 +251,20 @@ internal static class CallableRenderer
     internal static void WriteMember(CodeWriter writer, MarshalPlan plan)
     {
         WriteDocumentation(writer, plan);
-        XmlDocWriter.WriteObsolete(writer, plan.Callable);
+
+        // A member carries at most one [Obsolete], so the message the overlays
+        // state replaces the one the gir deprecation would write rather than
+        // joining it. What states one is a member whose shipped shape the
+        // binding cannot correct inside the series, which is a fact about this
+        // binding and not about the C function.
+        if (plan.ObsoleteMessage is { Length: > 0 } obsolete)
+        {
+            XmlDocWriter.WriteObsolete(writer, obsolete);
+        }
+        else
+        {
+            XmlDocWriter.WriteObsolete(writer, plan.Callable);
+        }
 
         string hiding = plan.IsNew ? "new " : string.Empty;
         string modifiers = plan.IsOverride

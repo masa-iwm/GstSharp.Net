@@ -114,7 +114,10 @@ All of these must pass before a change is merged:
    A failure here is rarely a mistake in the check. It means the change removed
    or reshaped something already published, and that waits for `1.30`: keep the
    old member, add the new one beside it, and mark the old one `[Obsolete]` if
-   it should stop being used. Do not reach for
+   it should stop being used. On a generated member that attribute comes from
+   the `obsolete` message of an `annotationOverrides` entry keyed on the bare
+   `c:identifier`, and the new shape is hand written in `Custom/` beside it;
+   neither half is a hand edit of a generated file. Do not reach for
    `/p:ApiCompatGenerateSuppressionFile=true`, which the error message offers —
    a suppression file would make the promise unenforced rather than kept.
 

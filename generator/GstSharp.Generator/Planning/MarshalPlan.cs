@@ -538,6 +538,16 @@ internal sealed class MarshalPlan
     /// <summary>Gets a value indicating whether the callable reports errors through a <c>GError</c>.</summary>
     internal bool Throws { get; init; }
 
+    /// <summary>
+    /// Gets the message of the <c>[Obsolete]</c> attribute the overlays put on
+    /// the member, or <see langword="null"/> when they put none there.
+    /// </summary>
+    /// <remarks>
+    /// It replaces the attribute the gir deprecation of the callable would
+    /// write, because a member carries at most one of them.
+    /// </remarks>
+    internal string? ObsoleteMessage { get; init; }
+
     /// <summary>Gets the C# type of the instance, for an extension method.</summary>
     internal string? InstanceType { get; init; }
 

@@ -1,3 +1,4 @@
+using Gst;
 using Gst.Gio;
 using Gst.Rtsp;
 using Xunit;
@@ -165,5 +166,66 @@ public sealed class RtspTests
                 Assert.Equal(RTSPResult.Ok, connection.Free());
             }
         }
+    }
+
+    /// <summary>
+    /// The hand written <c>GetTransports</c> reads the string the C function
+    /// writes through its <c>gchar**</c>, and answers <see langword="null"/>
+    /// where nothing wrote one.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <c>gst_rtsp_extension_get_transports</c> is a vfunc dispatcher that
+    /// leaves the destination untouched when the extension implements no
+    /// <c>get_transports</c>
+    /// (<c>gst-plugins-base/gst-libs/gst/rtsp/gstrtspextension.c:169-180</c>),
+    /// which is the case for every implementation the GStreamer tree still
+    /// carries: <c>rtspwms</c> fills five slots of the interface and not this
+    /// one (<c>gst-plugins-ugly/gst/asfdemux/gstrtspwms.c:235-239</c>). What
+    /// this measures is therefore the marshalling and the contract around it —
+    /// the call is made, <see cref="RTSPResult.Ok"/> comes back and the out
+    /// parameter is written before the member returns — and not an extension
+    /// that names a transport, which nothing installable can produce.
+    /// </para>
+    /// <para>
+    /// The shipped overload takes a <see cref="string"/> and cannot receive
+    /// that destination at all, which is why it is obsolete and why this test
+    /// does not call it.
+    /// </para>
+    /// <para>
+    /// <c>rtspwms</c> comes with <c>gst-plugins-ugly</c>, so an installation
+    /// that carries only the core and the good plugins skips this test rather
+    /// than failing it.
+    /// </para>
+    /// </remarks>
+    [RequiresElementFact("rtspwms")]
+    public void AnExtensionThatImplementsNoTransportReaderAnswersNoTransport()
+    {
+        using Element extension = ElementFactory.Make("rtspwms", null)
+            ?? throw new InvalidOperationException("rtspwms is what the fact gated on.");
+
+        // The element implements GstRTSPExtension in C; nothing generated
+        // declares a managed type for that, because no gir type does, so the
+        // handle is carried into the interface by a shim. GetTransports reads
+        // the handle and nothing else of it.
+        ExtensionOf shim = new(extension.Handle);
+
+        Assert.Equal(
+            RTSPResult.Ok,
+            shim.GetTransports(RTSPLowerTrans.Udp | RTSPLowerTrans.Tcp, out string? transport));
+        Assert.Null(transport);
+
+        GC.KeepAlive(extension);
+    }
+
+    /// <summary>
+    /// An element that implements <c>GstRTSPExtension</c> in C, seen as the
+    /// interface.
+    /// </summary>
+    /// <param name="handle">The native instance.</param>
+    private sealed class ExtensionOf(nint handle) : IRTSPExtension
+    {
+        /// <summary>Gets the native instance that implements the interface.</summary>
+        public nint Handle { get; } = handle;
     }
 }
