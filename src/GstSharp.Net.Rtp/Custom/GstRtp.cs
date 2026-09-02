@@ -14,12 +14,12 @@ namespace Gst.Rtp;
 /// <see cref="RTPBaseAudioPayload"/> derived from it, the depayloader base
 /// class <see cref="RTPBaseDepayload"/> and the header extension
 /// <see cref="RTPHeaderExtension"/>. Nothing else of the module carries an
-/// entry: the mapping structures and the payload table —
-/// <see cref="RTPBuffer"/>, <see cref="RTCPBuffer"/>,
-/// <see cref="RTCPPacket"/> and <see cref="RTPPayloadInfo"/> — are plain
-/// structures the caller declares as values, and
-/// <see cref="RTPSourceMeta"/> is a buffer meta that only the calls of this
-/// module ever produce.
+/// entry: the mapping structures — <see cref="RTPBuffer"/>,
+/// <see cref="RTCPBuffer"/> and <see cref="RTCPPacket"/> — are plain
+/// structures the caller declares as values, <see cref="RTPPayloadInfo"/> is
+/// one row of the static payload table and the two lookups that hand a row out
+/// are not bound, and <see cref="RTPSourceMeta"/> is a buffer meta that only
+/// the calls of this module ever produce.
 /// </para>
 /// <para>
 /// An application that leaves every call to another binding assembly therefore

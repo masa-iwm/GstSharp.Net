@@ -16,9 +16,13 @@
 // "RTP mapped structures":
 //
 //   * RTPBuffer and RTCPBuffer are the plain C structures, not scopes. Each one
-//     here is a local variable, mapped once and unmapped exactly once, and it
-//     is never copied: it is not passed to a helper, not stored in a field and
-//     not captured in a lambda. The RTCP half is written and read in a single
+//     here is a local variable, mapped once and unmapped exactly once on every
+//     path -- the RTP header is copied into locals and unmapped before it is
+//     printed, and each RTCP mapping is a "try" whose "finally" unmaps the same
+//     local, so a console write that throws cannot skip an unmap. None of them
+//     is ever copied: none is passed to a helper, stored in a field or captured
+//     in a lambda, and a "finally" naming the local it mapped is not a copy
+//     either. The RTCP half is written and read in a single
 //     method for that reason -- AddPacket writes the address of the RTCPBuffer
 //     variable into the packet, and Unmap resizes the buffer through it, so a
 //     copy in another stack frame would be a dangling one.
@@ -260,8 +264,11 @@ internal static class Dump
     /// <remarks>
     /// The mapped structure is a local of this method and is read here: it is
     /// deliberately not handed to a printing helper, because passing it would
-    /// copy it. The buffer is a <c>using</c> declaration of this method, so its
-    /// disposal -- the use that keeps it reachable -- comes after the unmap.
+    /// copy it. Its six header fields are read into locals and the mapping is
+    /// released before anything is printed, so a console write that throws
+    /// cannot skip the unmap. The buffer is a <c>using</c> declaration of this
+    /// method, so its disposal -- the use that keeps it reachable -- comes
+    /// after the unmap.
     /// </remarks>
     private static bool Read(Sample sample, Session session)
     {
@@ -278,15 +285,26 @@ internal static class Dump
             return false;
         }
 
-        Console.WriteLine(string.Create(
-            CultureInfo.InvariantCulture,
-            $"rtp:         seq={rtp.GetSeq(),5}  ts={rtp.GetTimestamp(),10}  ssrc=0x{rtp.GetSsrc():X8}  "
-            + $"pt={rtp.GetPayloadType(),3}  marker={(rtp.GetMarker() ? "1" : "0")}  "
-            + $"payload={rtp.GetPayloadLen()} bytes"));
-
-        session.Add(rtp.GetTimestamp(), rtp.GetSsrc(), rtp.GetPayloadLen());
+        // Read first, unmap, print afterwards: a console write can throw, and
+        // an unmap that a throw jumped over would leave the mapping alive into
+        // the disposal of the buffer below.
+        ushort seq = rtp.GetSeq();
+        uint timestamp = rtp.GetTimestamp();
+        uint ssrc = rtp.GetSsrc();
+        byte payloadType = rtp.GetPayloadType();
+        bool marker = rtp.GetMarker();
+        uint payloadLen = rtp.GetPayloadLen();
 
         rtp.Unmap();
+
+        Console.WriteLine(string.Create(
+            CultureInfo.InvariantCulture,
+            $"rtp:         seq={seq,5}  ts={timestamp,10}  ssrc=0x{ssrc:X8}  "
+            + $"pt={payloadType,3}  marker={(marker ? "1" : "0")}  "
+            + $"payload={payloadLen} bytes"));
+
+        session.Add(timestamp, ssrc, payloadLen);
+
         return true;
     }
 
@@ -300,7 +318,11 @@ internal static class Dump
     /// Everything happens in this one method on purpose. The packets borrow the
     /// address of the <c>RTCPBuffer</c> variable, and <c>Unmap</c> resizes the
     /// buffer through it, so neither the structure nor a packet may leave this
-    /// frame.
+    /// frame. Each mapped region is a <c>try</c> whose <c>finally</c> unmaps
+    /// the very local it mapped -- not a copy of it -- so a console write that
+    /// throws still releases the mapping, and it does so before the
+    /// <c>using</c> declaration of the buffer disposes it at the end of the
+    /// method.
     /// </remarks>
     private static int Rtcp(Session session)
     {
@@ -314,28 +336,38 @@ internal static class Dump
             return 1;
         }
 
-        if (!rtcp.AddPacket(RTCPType.Sr, out RTCPPacket sr))
+        // Every exit of the block below runs the finally, which unmaps the very
+        // local that was mapped; its answer is read afterwards, because a
+        // return may not stand in a finally.
+        bool written;
+
+        try
         {
-            Console.Error.WriteLine("RtpPacketDump: the sender report did not fit into the MTU.");
-            rtcp.Unmap();
-            return 1;
+            if (!rtcp.AddPacket(RTCPType.Sr, out RTCPPacket sr))
+            {
+                Console.Error.WriteLine("RtpPacketDump: the sender report did not fit into the MTU.");
+                return 1;
+            }
+
+            // The sender report says what this sender sent: the SSRC and the RTP
+            // timestamp of the last packet the run saw, and the packet and octet
+            // counts it added up.
+            sr.SrSetSenderInfo(session.Ssrc, Ntp(), session.Timestamp, session.Packets, session.Octets);
+
+            if (!rtcp.AddPacket(RTCPType.Sdes, out RTCPPacket sdes)
+                || !sdes.SdesAddItem(session.Ssrc)
+                || !sdes.SdesAddEntry(RTCPSDESType.Cname, Cname))
+            {
+                Console.Error.WriteLine("RtpPacketDump: the SDES item did not fit into the MTU.");
+                return 1;
+            }
+        }
+        finally
+        {
+            written = rtcp.Unmap();
         }
 
-        // The sender report says what this sender sent: the SSRC and the RTP
-        // timestamp of the last packet the run saw, and the packet and octet
-        // counts it added up.
-        sr.SrSetSenderInfo(session.Ssrc, Ntp(), session.Timestamp, session.Packets, session.Octets);
-
-        if (!rtcp.AddPacket(RTCPType.Sdes, out RTCPPacket sdes)
-            || !sdes.SdesAddItem(session.Ssrc)
-            || !sdes.SdesAddEntry(RTCPSDESType.Cname, Cname))
-        {
-            Console.Error.WriteLine("RtpPacketDump: the SDES item did not fit into the MTU.");
-            rtcp.Unmap();
-            return 1;
-        }
-
-        if (!rtcp.Unmap())
+        if (!written)
         {
             Console.Error.WriteLine("RtpPacketDump: the written RTCP buffer could not be unmapped.");
             return 1;
@@ -349,29 +381,38 @@ internal static class Dump
             return 1;
         }
 
-        Console.WriteLine(string.Create(
-            CultureInfo.InvariantCulture,
-            $"rtcp:        {reread.GetPacketCount()} packets, ssrc=0x{session.Ssrc:X8}, "
-            + $"ts={session.Timestamp}, packets={session.Packets}, octets={session.Octets}"));
+        bool read;
 
-        if (reread.GetFirstPacket(out RTCPPacket packet))
+        try
         {
-            do
-            {
-                // The length of an RTCP packet is the header field RFC 3550
-                // defines: the size in 32 bit words, not counting the first
-                // one, which is (length + 1) * 4 bytes on the wire.
-                ushort words = packet.GetLength();
+            Console.WriteLine(string.Create(
+                CultureInfo.InvariantCulture,
+                $"rtcp:        {reread.GetPacketCount()} packets, ssrc=0x{session.Ssrc:X8}, "
+                + $"ts={session.Timestamp}, packets={session.Packets}, octets={session.Octets}"));
 
-                Console.WriteLine(string.Create(
-                    CultureInfo.InvariantCulture,
-                    $"packet:      type={packet.GetPacketType(),-5} length={words} words "
-                    + $"({(words + 1) * 4} bytes)"));
+            if (reread.GetFirstPacket(out RTCPPacket packet))
+            {
+                do
+                {
+                    // The length of an RTCP packet is the header field RFC 3550
+                    // defines: the size in 32 bit words, not counting the first
+                    // one, which is (length + 1) * 4 bytes on the wire.
+                    ushort words = packet.GetLength();
+
+                    Console.WriteLine(string.Create(
+                        CultureInfo.InvariantCulture,
+                        $"packet:      type={packet.GetPacketType(),-5} length={words} words "
+                        + $"({(words + 1) * 4} bytes)"));
+                }
+                while (packet.MoveToNext());
             }
-            while (packet.MoveToNext());
+        }
+        finally
+        {
+            read = reread.Unmap();
         }
 
-        if (!reread.Unmap())
+        if (!read)
         {
             Console.Error.WriteLine("RtpPacketDump: the read RTCP buffer could not be unmapped.");
             return 1;
@@ -391,10 +432,15 @@ internal static class Dump
         // DateTimeOffset and not DateTime: Gst and Gst.GLib both declare a
         // DateTime of their own, so the name is ambiguous in this file.
         TimeSpan since = DateTimeOffset.UtcNow - new DateTimeOffset(1900, 1, 1, 0, 0, 0, TimeSpan.Zero);
-        ulong seconds = (ulong)since.TotalSeconds;
-        ulong fraction = (ulong)((since.TotalSeconds - seconds) * 4294967296.0);
 
-        return (seconds << 32) | (fraction & 0xFFFFFFFF);
+        // Ticks and not TotalSeconds: the total is near four billion seconds,
+        // and a double of that size has no bits left for the low half of the
+        // fraction. The remainder is under ten million, so the shift fits.
+        ulong seconds = (ulong)(since.Ticks / TimeSpan.TicksPerSecond);
+        ulong fraction =
+            ((ulong)(since.Ticks % TimeSpan.TicksPerSecond) << 32) / (ulong)TimeSpan.TicksPerSecond;
+
+        return (seconds << 32) | fraction;
     }
 
     /// <summary>
