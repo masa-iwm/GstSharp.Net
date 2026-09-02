@@ -102,7 +102,10 @@ internal sealed class AnnotationOverride
     /// marked here. The attribute is a warning and never an error - the member
     /// still compiles, which is the whole point of keeping it - and the gir
     /// deprecation, where a callable carries one, is what the message replaces:
-    /// two attributes on one member do not compile.
+    /// two attributes on one member do not compile. The key must not name an
+    /// accessor that a generated property delegates to, because the property
+    /// body would then call an obsolete member and fail the warning-free build
+    /// with CS0618.
     /// </remarks>
     public string? Obsolete { get; set; }
 }
