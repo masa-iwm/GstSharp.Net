@@ -782,7 +782,11 @@ wrapper the mapping came from has to stay alive until after the unmap - the
 library stores the raw pointer and takes no reference of it
 (`rtp->buffer = buffer` and `rtcp->buffer = buffer`, nothing else), so
 disposing the wrapper before the unmap leaves the mapping pointing at a freed
-`GstBuffer`.
+`GstBuffer`. Garbage collection is the same hazard without a `Dispose` in
+sight: a wrapper that nothing references any more - a buffer obtained inline as
+the argument of `MapBuffer`, for one - is finalizable the moment that call
+returns, and its finalizer drops the reference while the mapping is still in
+use. Keep the wrapper in a variable that outlives the unmap.
 
 `Gst.Rtp.RTCPPacket` borrows the address of the `RTCPBuffer` it was taken from:
 `GetFirstPacket` and `AddPacket` write that address into the packet, the

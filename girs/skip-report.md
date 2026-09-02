@@ -893,27 +893,6 @@ disappears shows up here as an added line.
 - `gst_rtp_buffer_get_extension_data`
 - `gst_rtp_buffer_get_payload`
 
-### OverlaySkip (18)
-
-- `gst_rtcp_packet_xr_get_dlrr_block`
-- `gst_rtcp_packet_xr_get_prt_by_seq`
-- `gst_rtcp_packet_xr_get_prt_info`
-- `gst_rtcp_packet_xr_get_rle_info`
-- `gst_rtcp_packet_xr_get_rle_nth_chunk`
-- `gst_rtcp_packet_xr_get_rrt`
-- `gst_rtcp_packet_xr_get_summary_info`
-- `gst_rtcp_packet_xr_get_summary_jitter`
-- `gst_rtcp_packet_xr_get_summary_pkt`
-- `gst_rtcp_packet_xr_get_summary_ttl`
-- `gst_rtcp_packet_xr_get_voip_burst_metrics`
-- `gst_rtcp_packet_xr_get_voip_configuration_params`
-- `gst_rtcp_packet_xr_get_voip_delay_metrics`
-- `gst_rtcp_packet_xr_get_voip_jitter_buffer_params`
-- `gst_rtcp_packet_xr_get_voip_metrics_ssrc`
-- `gst_rtcp_packet_xr_get_voip_packet_metrics`
-- `gst_rtcp_packet_xr_get_voip_quality_metrics`
-- `gst_rtcp_packet_xr_get_voip_signal_metrics`
-
 ### UnsupportedSignature (8)
 
 - `GstRtp.RTPBaseDepayload:extensions`

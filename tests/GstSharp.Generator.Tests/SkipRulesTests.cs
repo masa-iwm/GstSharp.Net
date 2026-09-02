@@ -220,13 +220,12 @@ public sealed class SkipRulesTests
         // generated, and these two are the ones whose hand written declaration
         // stays the source of truth, so the emitter is told not to declare them
         // a second time.
-        // The RTP group is the newest and is twenty two entries. Eighteen of
-        // them are the gst_rtcp_packet_xr_get_* readers of an XR report block,
-        // which answer through fifty one out parameters the gir types as the
-        // bare scalars they point at: generated from that shape the member
-        // would pass the value where the C function writes through the pointer,
-        // and a direction override does not reach a scalar, so they wait for
-        // the planner rule that will. The other four have a shape the generator
+        // The RTP group is the newest and is four entries. The eighteen
+        // gst_rtcp_packet_xr_get_* readers of an XR report block were the rest
+        // of it until the direction correction learned to reach a pointer to a
+        // scalar, which is the shape their fifty one out parameters have: they
+        // are generated now, with the direction the gir omits stated in the
+        // overlays. The four that stay have a shape the generator
         // binds and binds wrongly: gst_rtcp_packet_app_get_name and
         // gst_rtcp_packet_app_set_name read and write four bytes that are not a
         // C string, and gst_buffer_add_rtp_source_meta and
@@ -326,24 +325,6 @@ public sealed class SkipRulesTests
                 "gst_query_parse_nth_allocation_param",
                 "gst_rtcp_packet_app_get_name",
                 "gst_rtcp_packet_app_set_name",
-                "gst_rtcp_packet_xr_get_dlrr_block",
-                "gst_rtcp_packet_xr_get_prt_by_seq",
-                "gst_rtcp_packet_xr_get_prt_info",
-                "gst_rtcp_packet_xr_get_rle_info",
-                "gst_rtcp_packet_xr_get_rle_nth_chunk",
-                "gst_rtcp_packet_xr_get_rrt",
-                "gst_rtcp_packet_xr_get_summary_info",
-                "gst_rtcp_packet_xr_get_summary_jitter",
-                "gst_rtcp_packet_xr_get_summary_pkt",
-                "gst_rtcp_packet_xr_get_summary_ttl",
-                "gst_rtcp_packet_xr_get_voip_burst_metrics",
-                "gst_rtcp_packet_xr_get_voip_configuration_params",
-                "gst_rtcp_packet_xr_get_voip_delay_metrics",
-                "gst_rtcp_packet_xr_get_voip_jitter_buffer_params",
-                "gst_rtcp_packet_xr_get_voip_metrics_ssrc",
-                "gst_rtcp_packet_xr_get_voip_packet_metrics",
-                "gst_rtcp_packet_xr_get_voip_quality_metrics",
-                "gst_rtcp_packet_xr_get_voip_signal_metrics",
                 "gst_rtp_source_meta_set_ssrc",
                 "gst_rtsp_auth_credentials_free",
                 "gst_rtsp_range_free",

@@ -1127,6 +1127,156 @@ public unsafe partial struct RTCPPacket
         }
     }
 
+    /// <summary>Parse the extended report block for DLRR report block type.</summary>
+    /// <remarks>
+    /// <para>
+    /// Mutates this instance; call it on a variable, not on a copy returned by a
+    /// property.
+    /// </para>
+    /// </remarks>
+    /// <param name="nth">The <c>nth</c> argument.</param>
+    /// <param name="ssrc">The <c>ssrc</c> argument.</param>
+    /// <param name="lastRr">The <c>lastRr</c> argument.</param>
+    /// <param name="delay">The <c>delay</c> argument.</param>
+    /// <returns>%TRUE if the report block is correctly parsed.</returns>
+    public bool XrGetDlrrBlock(uint nth, out uint ssrc, out uint lastRr, out uint delay)
+    {
+        uint ssrcNative = default;
+        uint lastRrNative = default;
+        uint delayNative = default;
+        fixed (Gst.Rtp.RTCPPacket* self = &this)
+        {
+            int nativeResult = GstRtcpPacketXrGetDlrrBlock(self, nth, &ssrcNative, &lastRrNative, &delayNative);
+            ssrc = ssrcNative;
+            lastRr = lastRrNative;
+            delay = delayNative;
+            return nativeResult != 0;
+        }
+    }
+
+    /// <summary>Retrieve the packet receipt time of @seq which ranges in [begin_seq, end_seq).</summary>
+    /// <remarks>
+    /// <para>
+    /// Mutates this instance; call it on a variable, not on a copy returned by a
+    /// property.
+    /// </para>
+    /// </remarks>
+    /// <param name="seq">The <c>seq</c> argument.</param>
+    /// <param name="receiptTime">The <c>receiptTime</c> argument.</param>
+    /// <returns>%TRUE if the report block returns the receipt time correctly.</returns>
+    public bool XrGetPrtBySeq(ushort seq, out uint receiptTime)
+    {
+        uint receiptTimeNative = default;
+        fixed (Gst.Rtp.RTCPPacket* self = &this)
+        {
+            int nativeResult = GstRtcpPacketXrGetPrtBySeq(self, seq, &receiptTimeNative);
+            receiptTime = receiptTimeNative;
+            return nativeResult != 0;
+        }
+    }
+
+    /// <summary>Parse the Packet Recept Times Report Block from a XR @packet</summary>
+    /// <remarks>
+    /// <para>
+    /// Mutates this instance; call it on a variable, not on a copy returned by a
+    /// property.
+    /// </para>
+    /// </remarks>
+    /// <param name="ssrc">The <c>ssrc</c> argument.</param>
+    /// <param name="thinning">The <c>thinning</c> argument.</param>
+    /// <param name="beginSeq">The <c>beginSeq</c> argument.</param>
+    /// <param name="endSeq">The <c>endSeq</c> argument.</param>
+    /// <returns>%TRUE if the report block is correctly parsed.</returns>
+    public bool XrGetPrtInfo(out uint ssrc, out byte thinning, out ushort beginSeq, out ushort endSeq)
+    {
+        uint ssrcNative = default;
+        byte thinningNative = default;
+        ushort beginSeqNative = default;
+        ushort endSeqNative = default;
+        fixed (Gst.Rtp.RTCPPacket* self = &this)
+        {
+            int nativeResult = GstRtcpPacketXrGetPrtInfo(self, &ssrcNative, &thinningNative, &beginSeqNative, &endSeqNative);
+            ssrc = ssrcNative;
+            thinning = thinningNative;
+            beginSeq = beginSeqNative;
+            endSeq = endSeqNative;
+            return nativeResult != 0;
+        }
+    }
+
+    /// <summary>Parse the extended report block for Loss RLE and Duplicated LRE block type.</summary>
+    /// <remarks>
+    /// <para>
+    /// Mutates this instance; call it on a variable, not on a copy returned by a
+    /// property.
+    /// </para>
+    /// </remarks>
+    /// <param name="ssrc">The <c>ssrc</c> argument.</param>
+    /// <param name="thinning">The <c>thinning</c> argument.</param>
+    /// <param name="beginSeq">The <c>beginSeq</c> argument.</param>
+    /// <param name="endSeq">The <c>endSeq</c> argument.</param>
+    /// <param name="chunkCount">The <c>chunkCount</c> argument.</param>
+    /// <returns>%TRUE if the report block is correctly parsed.</returns>
+    public bool XrGetRleInfo(out uint ssrc, out byte thinning, out ushort beginSeq, out ushort endSeq, out uint chunkCount)
+    {
+        uint ssrcNative = default;
+        byte thinningNative = default;
+        ushort beginSeqNative = default;
+        ushort endSeqNative = default;
+        uint chunkCountNative = default;
+        fixed (Gst.Rtp.RTCPPacket* self = &this)
+        {
+            int nativeResult = GstRtcpPacketXrGetRleInfo(self, &ssrcNative, &thinningNative, &beginSeqNative, &endSeqNative, &chunkCountNative);
+            ssrc = ssrcNative;
+            thinning = thinningNative;
+            beginSeq = beginSeqNative;
+            endSeq = endSeqNative;
+            chunkCount = chunkCountNative;
+            return nativeResult != 0;
+        }
+    }
+
+    /// <summary>Retrieve actual chunk data.</summary>
+    /// <remarks>
+    /// <para>
+    /// Mutates this instance; call it on a variable, not on a copy returned by a
+    /// property.
+    /// </para>
+    /// </remarks>
+    /// <param name="nth">The <c>nth</c> argument.</param>
+    /// <param name="chunk">The <c>chunk</c> argument.</param>
+    /// <returns>%TRUE if the report block returns chunk correctly.</returns>
+    public bool XrGetRleNthChunk(uint nth, out ushort chunk)
+    {
+        ushort chunkNative = default;
+        fixed (Gst.Rtp.RTCPPacket* self = &this)
+        {
+            int nativeResult = GstRtcpPacketXrGetRleNthChunk(self, nth, &chunkNative);
+            chunk = chunkNative;
+            return nativeResult != 0;
+        }
+    }
+
+    /// <summary>The <c>gst_rtcp_packet_xr_get_rrt</c> function.</summary>
+    /// <remarks>
+    /// <para>
+    /// Mutates this instance; call it on a variable, not on a copy returned by a
+    /// property.
+    /// </para>
+    /// </remarks>
+    /// <param name="timestamp">The <c>timestamp</c> argument.</param>
+    /// <returns>%TRUE if the report block returns the reference time correctly.</returns>
+    public bool XrGetRrt(out ulong timestamp)
+    {
+        ulong timestampNative = default;
+        fixed (Gst.Rtp.RTCPPacket* self = &this)
+        {
+            int nativeResult = GstRtcpPacketXrGetRrt(self, &timestampNative);
+            timestamp = timestampNative;
+            return nativeResult != 0;
+        }
+    }
+
     /// <summary>Get the ssrc field of the XR @packet.</summary>
     /// <remarks>
     /// <para>
@@ -1141,6 +1291,324 @@ public unsafe partial struct RTCPPacket
         {
             uint nativeResult = GstRtcpPacketXrGetSsrc(self);
             return nativeResult;
+        }
+    }
+
+    /// <summary>Extract a basic information from static summary report block of XR @packet.</summary>
+    /// <remarks>
+    /// <para>
+    /// Mutates this instance; call it on a variable, not on a copy returned by a
+    /// property.
+    /// </para>
+    /// </remarks>
+    /// <param name="ssrc">The <c>ssrc</c> argument.</param>
+    /// <param name="beginSeq">The <c>beginSeq</c> argument.</param>
+    /// <param name="endSeq">The <c>endSeq</c> argument.</param>
+    /// <returns>%TRUE if the report block is correctly parsed.</returns>
+    public bool XrGetSummaryInfo(out uint ssrc, out ushort beginSeq, out ushort endSeq)
+    {
+        uint ssrcNative = default;
+        ushort beginSeqNative = default;
+        ushort endSeqNative = default;
+        fixed (Gst.Rtp.RTCPPacket* self = &this)
+        {
+            int nativeResult = GstRtcpPacketXrGetSummaryInfo(self, &ssrcNative, &beginSeqNative, &endSeqNative);
+            ssrc = ssrcNative;
+            beginSeq = beginSeqNative;
+            endSeq = endSeqNative;
+            return nativeResult != 0;
+        }
+    }
+
+    /// <summary>
+    /// Extract jitter information from the statistics summary. If the jitter flag in
+    /// a block header is set as zero, all of jitters will be zero.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Mutates this instance; call it on a variable, not on a copy returned by a
+    /// property.
+    /// </para>
+    /// </remarks>
+    /// <param name="minJitter">The <c>minJitter</c> argument.</param>
+    /// <param name="maxJitter">The <c>maxJitter</c> argument.</param>
+    /// <param name="meanJitter">The <c>meanJitter</c> argument.</param>
+    /// <param name="devJitter">The <c>devJitter</c> argument.</param>
+    /// <returns>%TRUE if the report block is correctly parsed.</returns>
+    public bool XrGetSummaryJitter(out uint minJitter, out uint maxJitter, out uint meanJitter, out uint devJitter)
+    {
+        uint minJitterNative = default;
+        uint maxJitterNative = default;
+        uint meanJitterNative = default;
+        uint devJitterNative = default;
+        fixed (Gst.Rtp.RTCPPacket* self = &this)
+        {
+            int nativeResult = GstRtcpPacketXrGetSummaryJitter(self, &minJitterNative, &maxJitterNative, &meanJitterNative, &devJitterNative);
+            minJitter = minJitterNative;
+            maxJitter = maxJitterNative;
+            meanJitter = meanJitterNative;
+            devJitter = devJitterNative;
+            return nativeResult != 0;
+        }
+    }
+
+    /// <summary>
+    /// Get the number of lost or duplicate packets. If the flag in a block header
+    /// is set as zero, @lost_packets or @dup_packets will be zero.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Mutates this instance; call it on a variable, not on a copy returned by a
+    /// property.
+    /// </para>
+    /// </remarks>
+    /// <param name="lostPackets">The <c>lostPackets</c> argument.</param>
+    /// <param name="dupPackets">The <c>dupPackets</c> argument.</param>
+    /// <returns>%TRUE if the report block is correctly parsed.</returns>
+    public bool XrGetSummaryPkt(out uint lostPackets, out uint dupPackets)
+    {
+        uint lostPacketsNative = default;
+        uint dupPacketsNative = default;
+        fixed (Gst.Rtp.RTCPPacket* self = &this)
+        {
+            int nativeResult = GstRtcpPacketXrGetSummaryPkt(self, &lostPacketsNative, &dupPacketsNative);
+            lostPackets = lostPacketsNative;
+            dupPackets = dupPacketsNative;
+            return nativeResult != 0;
+        }
+    }
+
+    /// <summary>Extract the value of ttl for ipv4, or hop limit for ipv6.</summary>
+    /// <remarks>
+    /// <para>
+    /// Mutates this instance; call it on a variable, not on a copy returned by a
+    /// property.
+    /// </para>
+    /// </remarks>
+    /// <param name="isIpv4">The <c>isIpv4</c> argument.</param>
+    /// <param name="minTtl">The <c>minTtl</c> argument.</param>
+    /// <param name="maxTtl">The <c>maxTtl</c> argument.</param>
+    /// <param name="meanTtl">The <c>meanTtl</c> argument.</param>
+    /// <param name="devTtl">The <c>devTtl</c> argument.</param>
+    /// <returns>%TRUE if the report block is correctly parsed.</returns>
+    public bool XrGetSummaryTtl(out bool isIpv4, out byte minTtl, out byte maxTtl, out byte meanTtl, out byte devTtl)
+    {
+        int isIpv4Native = default;
+        byte minTtlNative = default;
+        byte maxTtlNative = default;
+        byte meanTtlNative = default;
+        byte devTtlNative = default;
+        fixed (Gst.Rtp.RTCPPacket* self = &this)
+        {
+            int nativeResult = GstRtcpPacketXrGetSummaryTtl(self, &isIpv4Native, &minTtlNative, &maxTtlNative, &meanTtlNative, &devTtlNative);
+            isIpv4 = isIpv4Native != 0;
+            minTtl = minTtlNative;
+            maxTtl = maxTtlNative;
+            meanTtl = meanTtlNative;
+            devTtl = devTtlNative;
+            return nativeResult != 0;
+        }
+    }
+
+    /// <summary>The <c>gst_rtcp_packet_xr_get_voip_burst_metrics</c> function.</summary>
+    /// <remarks>
+    /// <para>
+    /// Mutates this instance; call it on a variable, not on a copy returned by a
+    /// property.
+    /// </para>
+    /// </remarks>
+    /// <param name="burstDensity">The <c>burstDensity</c> argument.</param>
+    /// <param name="gapDensity">The <c>gapDensity</c> argument.</param>
+    /// <param name="burstDuration">The <c>burstDuration</c> argument.</param>
+    /// <param name="gapDuration">The <c>gapDuration</c> argument.</param>
+    /// <returns>%TRUE if the report block is correctly parsed.</returns>
+    public bool XrGetVoipBurstMetrics(out byte burstDensity, out byte gapDensity, out ushort burstDuration, out ushort gapDuration)
+    {
+        byte burstDensityNative = default;
+        byte gapDensityNative = default;
+        ushort burstDurationNative = default;
+        ushort gapDurationNative = default;
+        fixed (Gst.Rtp.RTCPPacket* self = &this)
+        {
+            int nativeResult = GstRtcpPacketXrGetVoipBurstMetrics(self, &burstDensityNative, &gapDensityNative, &burstDurationNative, &gapDurationNative);
+            burstDensity = burstDensityNative;
+            gapDensity = gapDensityNative;
+            burstDuration = burstDurationNative;
+            gapDuration = gapDurationNative;
+            return nativeResult != 0;
+        }
+    }
+
+    /// <summary>The <c>gst_rtcp_packet_xr_get_voip_configuration_params</c> function.</summary>
+    /// <remarks>
+    /// <para>
+    /// Mutates this instance; call it on a variable, not on a copy returned by a
+    /// property.
+    /// </para>
+    /// </remarks>
+    /// <param name="gmin">The <c>gmin</c> argument.</param>
+    /// <param name="rxConfig">The <c>rxConfig</c> argument.</param>
+    /// <returns>%TRUE if the report block is correctly parsed.</returns>
+    public bool XrGetVoipConfigurationParams(out byte gmin, out byte rxConfig)
+    {
+        byte gminNative = default;
+        byte rxConfigNative = default;
+        fixed (Gst.Rtp.RTCPPacket* self = &this)
+        {
+            int nativeResult = GstRtcpPacketXrGetVoipConfigurationParams(self, &gminNative, &rxConfigNative);
+            gmin = gminNative;
+            rxConfig = rxConfigNative;
+            return nativeResult != 0;
+        }
+    }
+
+    /// <summary>The <c>gst_rtcp_packet_xr_get_voip_delay_metrics</c> function.</summary>
+    /// <remarks>
+    /// <para>
+    /// Mutates this instance; call it on a variable, not on a copy returned by a
+    /// property.
+    /// </para>
+    /// </remarks>
+    /// <param name="roundtripDelay">The <c>roundtripDelay</c> argument.</param>
+    /// <param name="endSystemDelay">The <c>endSystemDelay</c> argument.</param>
+    /// <returns>%TRUE if the report block is correctly parsed.</returns>
+    public bool XrGetVoipDelayMetrics(out ushort roundtripDelay, out ushort endSystemDelay)
+    {
+        ushort roundtripDelayNative = default;
+        ushort endSystemDelayNative = default;
+        fixed (Gst.Rtp.RTCPPacket* self = &this)
+        {
+            int nativeResult = GstRtcpPacketXrGetVoipDelayMetrics(self, &roundtripDelayNative, &endSystemDelayNative);
+            roundtripDelay = roundtripDelayNative;
+            endSystemDelay = endSystemDelayNative;
+            return nativeResult != 0;
+        }
+    }
+
+    /// <summary>The <c>gst_rtcp_packet_xr_get_voip_jitter_buffer_params</c> function.</summary>
+    /// <remarks>
+    /// <para>
+    /// Mutates this instance; call it on a variable, not on a copy returned by a
+    /// property.
+    /// </para>
+    /// </remarks>
+    /// <param name="jbNominal">The <c>jbNominal</c> argument.</param>
+    /// <param name="jbMaximum">The <c>jbMaximum</c> argument.</param>
+    /// <param name="jbAbsMax">The <c>jbAbsMax</c> argument.</param>
+    /// <returns>%TRUE if the report block is correctly parsed.</returns>
+    public bool XrGetVoipJitterBufferParams(out ushort jbNominal, out ushort jbMaximum, out ushort jbAbsMax)
+    {
+        ushort jbNominalNative = default;
+        ushort jbMaximumNative = default;
+        ushort jbAbsMaxNative = default;
+        fixed (Gst.Rtp.RTCPPacket* self = &this)
+        {
+            int nativeResult = GstRtcpPacketXrGetVoipJitterBufferParams(self, &jbNominalNative, &jbMaximumNative, &jbAbsMaxNative);
+            jbNominal = jbNominalNative;
+            jbMaximum = jbMaximumNative;
+            jbAbsMax = jbAbsMaxNative;
+            return nativeResult != 0;
+        }
+    }
+
+    /// <summary>The <c>gst_rtcp_packet_xr_get_voip_metrics_ssrc</c> function.</summary>
+    /// <remarks>
+    /// <para>
+    /// Mutates this instance; call it on a variable, not on a copy returned by a
+    /// property.
+    /// </para>
+    /// </remarks>
+    /// <param name="ssrc">The <c>ssrc</c> argument.</param>
+    /// <returns>%TRUE if the report block is correctly parsed.</returns>
+    public bool XrGetVoipMetricsSsrc(out uint ssrc)
+    {
+        uint ssrcNative = default;
+        fixed (Gst.Rtp.RTCPPacket* self = &this)
+        {
+            int nativeResult = GstRtcpPacketXrGetVoipMetricsSsrc(self, &ssrcNative);
+            ssrc = ssrcNative;
+            return nativeResult != 0;
+        }
+    }
+
+    /// <summary>The <c>gst_rtcp_packet_xr_get_voip_packet_metrics</c> function.</summary>
+    /// <remarks>
+    /// <para>
+    /// Mutates this instance; call it on a variable, not on a copy returned by a
+    /// property.
+    /// </para>
+    /// </remarks>
+    /// <param name="lossRate">The <c>lossRate</c> argument.</param>
+    /// <param name="discardRate">The <c>discardRate</c> argument.</param>
+    /// <returns>%TRUE if the report block is correctly parsed.</returns>
+    public bool XrGetVoipPacketMetrics(out byte lossRate, out byte discardRate)
+    {
+        byte lossRateNative = default;
+        byte discardRateNative = default;
+        fixed (Gst.Rtp.RTCPPacket* self = &this)
+        {
+            int nativeResult = GstRtcpPacketXrGetVoipPacketMetrics(self, &lossRateNative, &discardRateNative);
+            lossRate = lossRateNative;
+            discardRate = discardRateNative;
+            return nativeResult != 0;
+        }
+    }
+
+    /// <summary>The <c>gst_rtcp_packet_xr_get_voip_quality_metrics</c> function.</summary>
+    /// <remarks>
+    /// <para>
+    /// Mutates this instance; call it on a variable, not on a copy returned by a
+    /// property.
+    /// </para>
+    /// </remarks>
+    /// <param name="rFactor">The <c>rFactor</c> argument.</param>
+    /// <param name="extRFactor">The <c>extRFactor</c> argument.</param>
+    /// <param name="mosLq">The <c>mosLq</c> argument.</param>
+    /// <param name="mosCq">The <c>mosCq</c> argument.</param>
+    /// <returns>%TRUE if the report block is correctly parsed.</returns>
+    public bool XrGetVoipQualityMetrics(out byte rFactor, out byte extRFactor, out byte mosLq, out byte mosCq)
+    {
+        byte rFactorNative = default;
+        byte extRFactorNative = default;
+        byte mosLqNative = default;
+        byte mosCqNative = default;
+        fixed (Gst.Rtp.RTCPPacket* self = &this)
+        {
+            int nativeResult = GstRtcpPacketXrGetVoipQualityMetrics(self, &rFactorNative, &extRFactorNative, &mosLqNative, &mosCqNative);
+            rFactor = rFactorNative;
+            extRFactor = extRFactorNative;
+            mosLq = mosLqNative;
+            mosCq = mosCqNative;
+            return nativeResult != 0;
+        }
+    }
+
+    /// <summary>The <c>gst_rtcp_packet_xr_get_voip_signal_metrics</c> function.</summary>
+    /// <remarks>
+    /// <para>
+    /// Mutates this instance; call it on a variable, not on a copy returned by a
+    /// property.
+    /// </para>
+    /// </remarks>
+    /// <param name="signalLevel">The <c>signalLevel</c> argument.</param>
+    /// <param name="noiseLevel">The <c>noiseLevel</c> argument.</param>
+    /// <param name="rerl">The <c>rerl</c> argument.</param>
+    /// <param name="gmin">The <c>gmin</c> argument.</param>
+    /// <returns>%TRUE if the report block is correctly parsed.</returns>
+    public bool XrGetVoipSignalMetrics(out byte signalLevel, out byte noiseLevel, out byte rerl, out byte gmin)
+    {
+        byte signalLevelNative = default;
+        byte noiseLevelNative = default;
+        byte rerlNative = default;
+        byte gminNative = default;
+        fixed (Gst.Rtp.RTCPPacket* self = &this)
+        {
+            int nativeResult = GstRtcpPacketXrGetVoipSignalMetrics(self, &signalLevelNative, &noiseLevelNative, &rerlNative, &gminNative);
+            signalLevel = signalLevelNative;
+            noiseLevel = noiseLevelNative;
+            rerl = rerlNative;
+            gmin = gminNative;
+            return nativeResult != 0;
         }
     }
 
@@ -1369,9 +1837,81 @@ public unsafe partial struct RTCPPacket
     [LibraryImport("GstRtp", EntryPoint = "gst_rtcp_packet_xr_get_block_type")]
     private static partial int GstRtcpPacketXrGetBlockType(Gst.Rtp.RTCPPacket* packet);
 
+    /// <summary>The <c>gst_rtcp_packet_xr_get_dlrr_block</c> entry point.</summary>
+    [LibraryImport("GstRtp", EntryPoint = "gst_rtcp_packet_xr_get_dlrr_block")]
+    private static partial int GstRtcpPacketXrGetDlrrBlock(Gst.Rtp.RTCPPacket* packet, uint nth, uint* ssrc, uint* lastRr, uint* delay);
+
+    /// <summary>The <c>gst_rtcp_packet_xr_get_prt_by_seq</c> entry point.</summary>
+    [LibraryImport("GstRtp", EntryPoint = "gst_rtcp_packet_xr_get_prt_by_seq")]
+    private static partial int GstRtcpPacketXrGetPrtBySeq(Gst.Rtp.RTCPPacket* packet, ushort seq, uint* receiptTime);
+
+    /// <summary>The <c>gst_rtcp_packet_xr_get_prt_info</c> entry point.</summary>
+    [LibraryImport("GstRtp", EntryPoint = "gst_rtcp_packet_xr_get_prt_info")]
+    private static partial int GstRtcpPacketXrGetPrtInfo(Gst.Rtp.RTCPPacket* packet, uint* ssrc, byte* thinning, ushort* beginSeq, ushort* endSeq);
+
+    /// <summary>The <c>gst_rtcp_packet_xr_get_rle_info</c> entry point.</summary>
+    [LibraryImport("GstRtp", EntryPoint = "gst_rtcp_packet_xr_get_rle_info")]
+    private static partial int GstRtcpPacketXrGetRleInfo(Gst.Rtp.RTCPPacket* packet, uint* ssrc, byte* thinning, ushort* beginSeq, ushort* endSeq, uint* chunkCount);
+
+    /// <summary>The <c>gst_rtcp_packet_xr_get_rle_nth_chunk</c> entry point.</summary>
+    [LibraryImport("GstRtp", EntryPoint = "gst_rtcp_packet_xr_get_rle_nth_chunk")]
+    private static partial int GstRtcpPacketXrGetRleNthChunk(Gst.Rtp.RTCPPacket* packet, uint nth, ushort* chunk);
+
+    /// <summary>The <c>gst_rtcp_packet_xr_get_rrt</c> entry point.</summary>
+    [LibraryImport("GstRtp", EntryPoint = "gst_rtcp_packet_xr_get_rrt")]
+    private static partial int GstRtcpPacketXrGetRrt(Gst.Rtp.RTCPPacket* packet, ulong* timestamp);
+
     /// <summary>The <c>gst_rtcp_packet_xr_get_ssrc</c> entry point.</summary>
     [LibraryImport("GstRtp", EntryPoint = "gst_rtcp_packet_xr_get_ssrc")]
     private static partial uint GstRtcpPacketXrGetSsrc(Gst.Rtp.RTCPPacket* packet);
+
+    /// <summary>The <c>gst_rtcp_packet_xr_get_summary_info</c> entry point.</summary>
+    [LibraryImport("GstRtp", EntryPoint = "gst_rtcp_packet_xr_get_summary_info")]
+    private static partial int GstRtcpPacketXrGetSummaryInfo(Gst.Rtp.RTCPPacket* packet, uint* ssrc, ushort* beginSeq, ushort* endSeq);
+
+    /// <summary>The <c>gst_rtcp_packet_xr_get_summary_jitter</c> entry point.</summary>
+    [LibraryImport("GstRtp", EntryPoint = "gst_rtcp_packet_xr_get_summary_jitter")]
+    private static partial int GstRtcpPacketXrGetSummaryJitter(Gst.Rtp.RTCPPacket* packet, uint* minJitter, uint* maxJitter, uint* meanJitter, uint* devJitter);
+
+    /// <summary>The <c>gst_rtcp_packet_xr_get_summary_pkt</c> entry point.</summary>
+    [LibraryImport("GstRtp", EntryPoint = "gst_rtcp_packet_xr_get_summary_pkt")]
+    private static partial int GstRtcpPacketXrGetSummaryPkt(Gst.Rtp.RTCPPacket* packet, uint* lostPackets, uint* dupPackets);
+
+    /// <summary>The <c>gst_rtcp_packet_xr_get_summary_ttl</c> entry point.</summary>
+    [LibraryImport("GstRtp", EntryPoint = "gst_rtcp_packet_xr_get_summary_ttl")]
+    private static partial int GstRtcpPacketXrGetSummaryTtl(Gst.Rtp.RTCPPacket* packet, int* isIpv4, byte* minTtl, byte* maxTtl, byte* meanTtl, byte* devTtl);
+
+    /// <summary>The <c>gst_rtcp_packet_xr_get_voip_burst_metrics</c> entry point.</summary>
+    [LibraryImport("GstRtp", EntryPoint = "gst_rtcp_packet_xr_get_voip_burst_metrics")]
+    private static partial int GstRtcpPacketXrGetVoipBurstMetrics(Gst.Rtp.RTCPPacket* packet, byte* burstDensity, byte* gapDensity, ushort* burstDuration, ushort* gapDuration);
+
+    /// <summary>The <c>gst_rtcp_packet_xr_get_voip_configuration_params</c> entry point.</summary>
+    [LibraryImport("GstRtp", EntryPoint = "gst_rtcp_packet_xr_get_voip_configuration_params")]
+    private static partial int GstRtcpPacketXrGetVoipConfigurationParams(Gst.Rtp.RTCPPacket* packet, byte* gmin, byte* rxConfig);
+
+    /// <summary>The <c>gst_rtcp_packet_xr_get_voip_delay_metrics</c> entry point.</summary>
+    [LibraryImport("GstRtp", EntryPoint = "gst_rtcp_packet_xr_get_voip_delay_metrics")]
+    private static partial int GstRtcpPacketXrGetVoipDelayMetrics(Gst.Rtp.RTCPPacket* packet, ushort* roundtripDelay, ushort* endSystemDelay);
+
+    /// <summary>The <c>gst_rtcp_packet_xr_get_voip_jitter_buffer_params</c> entry point.</summary>
+    [LibraryImport("GstRtp", EntryPoint = "gst_rtcp_packet_xr_get_voip_jitter_buffer_params")]
+    private static partial int GstRtcpPacketXrGetVoipJitterBufferParams(Gst.Rtp.RTCPPacket* packet, ushort* jbNominal, ushort* jbMaximum, ushort* jbAbsMax);
+
+    /// <summary>The <c>gst_rtcp_packet_xr_get_voip_metrics_ssrc</c> entry point.</summary>
+    [LibraryImport("GstRtp", EntryPoint = "gst_rtcp_packet_xr_get_voip_metrics_ssrc")]
+    private static partial int GstRtcpPacketXrGetVoipMetricsSsrc(Gst.Rtp.RTCPPacket* packet, uint* ssrc);
+
+    /// <summary>The <c>gst_rtcp_packet_xr_get_voip_packet_metrics</c> entry point.</summary>
+    [LibraryImport("GstRtp", EntryPoint = "gst_rtcp_packet_xr_get_voip_packet_metrics")]
+    private static partial int GstRtcpPacketXrGetVoipPacketMetrics(Gst.Rtp.RTCPPacket* packet, byte* lossRate, byte* discardRate);
+
+    /// <summary>The <c>gst_rtcp_packet_xr_get_voip_quality_metrics</c> entry point.</summary>
+    [LibraryImport("GstRtp", EntryPoint = "gst_rtcp_packet_xr_get_voip_quality_metrics")]
+    private static partial int GstRtcpPacketXrGetVoipQualityMetrics(Gst.Rtp.RTCPPacket* packet, byte* rFactor, byte* extRFactor, byte* mosLq, byte* mosCq);
+
+    /// <summary>The <c>gst_rtcp_packet_xr_get_voip_signal_metrics</c> entry point.</summary>
+    [LibraryImport("GstRtp", EntryPoint = "gst_rtcp_packet_xr_get_voip_signal_metrics")]
+    private static partial int GstRtcpPacketXrGetVoipSignalMetrics(Gst.Rtp.RTCPPacket* packet, byte* signalLevel, byte* noiseLevel, byte* rerl, byte* gmin);
 
     /// <summary>The <c>gst_rtcp_packet_xr_next_rb</c> entry point.</summary>
     [LibraryImport("GstRtp", EntryPoint = "gst_rtcp_packet_xr_next_rb")]

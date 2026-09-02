@@ -88,6 +88,135 @@ public sealed class RtpTests
     }
 
     /// <summary>
+    /// The eighteen XR readers are the only part of the RTCP surface with no
+    /// writer beside it, so the extended report is assembled here as the bytes
+    /// RFC 3611 describes and read back through the members. The two blocks
+    /// cover all five C out types the readers use: <c>guint64</c> for the
+    /// reference time, and <c>guint32</c>, <c>guint16</c>, <c>guint8</c> and
+    /// <c>gboolean</c> for the statistics summary.
+    /// </summary>
+    [Fact]
+    public void RtcpXrReadersParseAHandBuiltExtendedReport()
+    {
+        // The compound has to start with a report packet: validation masks the
+        // first header with GST_RTCP_VALID_MASK (0xc000 | 0x2000 | 0xfe,
+        // gstrtcpbuffer.h:260) and compares it to GST_RTCP_VALID_VALUE, which
+        // only a version 2, unpadded SR or RR matches, so a buffer that leads
+        // with the XR packet is refused before any of this is reached. The
+        // minimal RR is a header of RC=0 and a sender SSRC.
+        byte[] compound =
+        [
+            // RR: V=2, RC=0, PT=201, length 1 word beyond the first.
+            0x80, 0xC9, 0x00, 0x01,
+            0x0B, 0xAD, 0xF0, 0x0D,
+
+            // XR: V=2, PT=207, length 14 words beyond the first - the header,
+            // the sender SSRC, the twelve byte RRT block and the forty byte
+            // statistics summary block are sixty bytes together.
+            0x80, 0xCF, 0x00, 0x0E,
+            0x0B, 0xAD, 0xF0, 0x0D,
+
+            // Receiver Reference Time: BT=4, reserved, block length 2 words,
+            // which is what gst_rtcp_packet_xr_get_rrt insists on
+            // (gstrtcpbuffer.c:3095-3096) before it reads the NTP timestamp
+            // four bytes past the block header (:3100-3105).
+            0x04, 0x00, 0x00, 0x02,
+            0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88,
+
+            // Statistics Summary: BT=6, flags, block length 9 words. The flag
+            // byte is data[1] of the block: bit 7 gates the lost count and bit
+            // 6 the duplicate count (gstrtcpbuffer.c:3234-3250), bit 5 gates
+            // all four jitters (:3288-3301), and bits 4-3 are the TTL/hop
+            // limit mode, of which 1 means IPv4 and 2 IPv6
+            // (:3355-3361). 0xE8 sets all three flags and mode 1.
+            0x06, 0xE8, 0x00, 0x09,
+
+            // ssrc, begin_seq, end_seq (gstrtcpbuffer.c:3187-3201).
+            0xDE, 0xAD, 0xBE, 0xEF,
+            0x00, 0x64, 0x00, 0xC8,
+
+            // lost and duplicate packets, twelve bytes past the block header
+            // (gstrtcpbuffer.c:3234-3250).
+            0x00, 0x00, 0x00, 0x0A,
+            0x00, 0x00, 0x00, 0x03,
+
+            // min, max, mean and deviation jitter, twenty bytes past it
+            // (gstrtcpbuffer.c:3304-3318).
+            0x00, 0x00, 0x00, 0x01,
+            0x00, 0x00, 0x00, 0x09,
+            0x00, 0x00, 0x00, 0x04,
+            0x00, 0x00, 0x00, 0x02,
+
+            // min, max, mean and deviation TTL, thirty six bytes past it
+            // (gstrtcpbuffer.c:3364-3375).
+            0x10, 0x40, 0x20, 0x08,
+        ];
+
+        using Gst.Buffer buffer = Gst.Buffer.NewMemdup(compound);
+
+        Assert.True(RTCPBuffer.Validate(buffer));
+        Assert.True(RTCPBuffer.MapBuffer(buffer, MapFlags.Read, out RTCPBuffer rtcp));
+
+        Assert.True(rtcp.GetFirstPacket(out RTCPPacket packet));
+        Assert.Equal(RTCPType.Rr, packet.GetPacketType());
+
+        Assert.True(packet.MoveToNext());
+        Assert.Equal(RTCPType.Xr, packet.GetPacketType());
+        Assert.Equal(0x0BADF00DU, packet.XrGetSsrc());
+
+        // The cursor of the report blocks starts eight bytes into the packet,
+        // past the header and the sender SSRC (gstrtcpbuffer.c:2750).
+        Assert.True(packet.XrFirstRb());
+        Assert.Equal(RTCPXRType.Rrt, packet.XrGetBlockType());
+        Assert.True(packet.XrGetRrt(out ulong timestamp));
+        Assert.Equal(0x1122334455667788UL, timestamp);
+
+        // The next block starts (block_len + 1) * 4 bytes on
+        // (gstrtcpbuffer.c:2788-2791), which is the twelve bytes of the RRT.
+        Assert.True(packet.XrNextRb());
+        Assert.Equal(RTCPXRType.Ssumm, packet.XrGetBlockType());
+
+        Assert.True(packet.XrGetSummaryInfo(out uint summarySsrc, out ushort beginSeq, out ushort endSeq));
+        Assert.Equal(0xDEADBEEFU, summarySsrc);
+        Assert.Equal(100, beginSeq);
+        Assert.Equal(200, endSeq);
+
+        Assert.True(packet.XrGetSummaryPkt(out uint lostPackets, out uint dupPackets));
+        Assert.Equal(10U, lostPackets);
+        Assert.Equal(3U, dupPackets);
+
+        Assert.True(packet.XrGetSummaryJitter(
+            out uint minJitter,
+            out uint maxJitter,
+            out uint meanJitter,
+            out uint devJitter));
+        Assert.Equal(1U, minJitter);
+        Assert.Equal(9U, maxJitter);
+        Assert.Equal(4U, meanJitter);
+        Assert.Equal(2U, devJitter);
+
+        // The mode of the flag byte, not a field of its own: the reader answers
+        // TRUE for mode 1 and FALSE for mode 2, and refuses a block whose mode
+        // is above 2 (gstrtcpbuffer.c:3355-3361).
+        Assert.True(packet.XrGetSummaryTtl(
+            out bool isIpv4,
+            out byte minTtl,
+            out byte maxTtl,
+            out byte meanTtl,
+            out byte devTtl));
+        Assert.True(isIpv4);
+        Assert.Equal(16, minTtl);
+        Assert.Equal(64, maxTtl);
+        Assert.Equal(32, meanTtl);
+        Assert.Equal(8, devTtl);
+
+        Assert.False(packet.XrNextRb());
+        Assert.False(packet.MoveToNext());
+
+        Assert.True(rtcp.Unmap());
+    }
+
+    /// <summary>
     /// A compound RTCP buffer built through the packet cursor reads back as the
     /// four packets it was written as, with the hand written name, data and FCI
     /// members answering what was put in.
