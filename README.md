@@ -220,6 +220,7 @@ never end up with half an MSVC and half a MinGW GStreamer.
 | `samples/GstDiscoverer` | A port of `gst-discoverer-1.0`, synchronous path: `DiscoverUri` per URI, the result and duration, the topology walk with its container recursion, the per-stream blocks for audio, video and subtitles, `--verbose` tags and `--toc`. Its output is byte for byte the C tool's on generated media; its header comment says why `-a` is absent and what a failed discovery cannot report. | `dotnet run --project samples/GstDiscoverer -- <file-or-uri>` |
 | `samples/GstInspect` | A partial port of `gst-inspect-1.0`: the registry census, and the element page as far as the bound surface reaches — factory and plugin details, the type hierarchy, pad templates with their caps, URI handling and the property listing. Every page ends with a note naming the sections it does not print, and its header says what each of them would need. | `dotnet run --project samples/GstInspect -- fakesink` |
 | `samples/GstTranscode` | Transcoding one URI into another against a serialized `GstEncodingProfile`, on the route the transcoder documents as the recommended one: `RunAsync` plus a polled API bus, with no main loop and no signal adapter. It is also where the hand-written `ParseError` earns its keep — the imported one aborts the process on an error that carries no details. | `dotnet run --project samples/GstTranscode -- file:///in.ogg file:///out.ogg` |
+| `samples/GstPlay` | A port of `gst-play-1.0`'s user experience onto the `Gst.Play.Play` object: a playlist, the keyboard controls, `--volume`, `--audiosink`/`--videosink`, `--visualization` and `--list-visualizations`, with the API bus read by a timed pop rather than watched from a main loop. It writes the two sink properties on the playbin that `GetPipeline()` answers, the way the C tool does; `PlayVideoOverlayVideoRenderer`, the other way to place the video, is for a GUI application that has a window handle to embed it in. Headless is the default — nothing reads the keyboard without `--interactive`. | `dotnet run --project samples/GstPlay -- --duration 10 <file-or-uri>` |
 | `samples/AotSmoke` | The NativeAOT gate: initialise, make an element, release it, with zero trimming warnings. | `dotnet publish samples/AotSmoke -r win-x64 -c Release /p:PublishAot=true` |
 
 `PlaybinPlayer`, `AppSinkSpans` and `AppSrcPush` also take
@@ -242,6 +243,16 @@ It needs the `uritranscodebin` and `transcodebin` elements of the `transcode`
 plugin of gst-plugins-bad at run time, which ship separately from the
 `libgsttranscoder-1.0` library the module imports from; without them the
 sample says so and stops rather than reporting a transcoding failure.
+
+`GstPlay` takes a playlist of URIs or paths and these options of its own:
+`--volume <0..1>`, `--audiosink <factory>` and `--videosink <factory>`,
+`--visualization <name>` beside `--list-visualizations`, `--duration <seconds>`
+to bound an unattended run, and `--interactive` to read the keyboard (press `k`
+for the list of keys). Its header comment says which keys the C tool puts
+elsewhere and what it leaves out. Cycling tracks goes through the index-based
+setters, which upstream deprecated in 1.26 and the generator therefore marks
+`[Obsolete]`; they are the only ones that exist on the 1.24 floor, so the sample
+calls them under a `#pragma warning disable CS0618`.
 
 ### The official tutorials
 

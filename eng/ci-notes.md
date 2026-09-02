@@ -403,6 +403,10 @@ dotnet run --project samples/tutorials/BasicTutorial08 --no-restore -- --headles
 dotnet run --project samples/tutorials/BasicTutorial09 --no-restore -- tutorial-media.ogg
 dotnet run --project samples/tutorials/BasicTutorial13 --no-restore -- --headless --keys SsPNNPDq tutorial-media.ogg
 
+# the gst-play port, against the same generated ogg
+dotnet run --project samples/GstPlay --no-restore -- --duration 2 --videosink fakesink --audiosink fakesink tutorial-media.ogg
+dotnet run --project samples/GstPlay --no-restore -- --list-visualizations
+
 # the AOT gates (Windows)
 ./eng/aot-gate.ps1 -Project samples/AotSmoke -Rid win-x64
 ./eng/aot-gate.ps1 -Project samples/AppSinkSpans -Rid win-x64 -Property InvariantGlobalization=true -RunArguments '--mode','pull'

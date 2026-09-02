@@ -15,6 +15,7 @@
     <Project Path="samples/GstDiscoverer/GstDiscoverer.csproj" />
     <Project Path="samples/GstInspect/GstInspect.csproj" />
     <Project Path="samples/GstLaunch/GstLaunch.csproj" />
+    <Project Path="samples/GstPlay/GstPlay.csproj" />
     <Project Path="samples/GstTranscode/GstTranscode.csproj" />
     <Project Path="samples/GstTypefind/GstTypefind.csproj" />
     <Project Path="samples/PlaybinPlayer/PlaybinPlayer.csproj" />

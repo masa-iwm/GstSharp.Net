@@ -309,6 +309,20 @@ jobs:
           dotnet run --project samples/GstDiscoverer --no-restore -- --fail-on-error typefind-sample.wav
           dotnet run --project samples/GstDiscoverer --no-restore -- --fail-on-error --verbose --toc tutorial-media.ogg
 
+      # The gst-play port, backed by the Play object of GstSharp.Net.Play rather
+      # than by a playbin of its own. It runs against the ogg the tutorial step
+      # made, which is the file with both an audio and a video stream in it, so
+      # that both sinks and the media info summary have something to report.
+      # --duration bounds the run and the two fakesinks keep it headless, which
+      # is what makes the line an exit code gate; the second line proves the
+      # hand-written visualization enumeration on an installation that has the
+      # bad plugins. playbin3 comes from gst-plugins-base, which this job
+      # installs.
+      - name: GstPlay
+        run: |
+          dotnet run --project samples/GstPlay --no-restore -- --duration 2 --videosink fakesink --audiosink fakesink tutorial-media.ogg
+          dotnet run --project samples/GstPlay --no-restore -- --list-visualizations
+
       # The inspect-lite port, run the two ways it can be run. The census walks
       # the whole registry and needs no plugin in particular; the element page
       # is asked for fakesink, which is in the core elements every leg has, and
@@ -435,6 +449,14 @@ jobs:
           dotnet run --project samples/GstLaunch --no-restore -- -q audiotestsrc num-buffers=50 ! wavenc ! filesink location=typefind-sample.wav
           dotnet run --project samples/GstTypefind --no-restore -- --fail-on-unknown typefind-sample.wav
 
+      # Same port as the Linux leg; see the comments there. The media here is
+      # the wav the step above made rather than the ogg, which only the Linux
+      # leg builds.
+      - name: GstPlay
+        run: |
+          dotnet run --project samples/GstPlay --no-restore -- --duration 2 --videosink fakesink --audiosink fakesink typefind-sample.wav
+          dotnet run --project samples/GstPlay --no-restore -- --list-visualizations
+
       - name: GstDeviceMonitor
         run: dotnet run --project samples/GstDeviceMonitor --no-restore
 
@@ -543,6 +565,14 @@ jobs:
         run: |
           dotnet run --project samples/GstLaunch --no-restore -- -q audiotestsrc num-buffers=50 ! wavenc ! filesink location=typefind-sample.wav
           dotnet run --project samples/GstTypefind --no-restore -- --fail-on-unknown typefind-sample.wav
+
+      # Same port as the Linux leg; see the comments there. This is also where
+      # libgstplay-1.0-0.dll, the "lib" prefixed MinGW file name of the module,
+      # is loaded outside the test suite.
+      - name: GstPlay
+        run: |
+          dotnet run --project samples/GstPlay --no-restore -- --duration 2 --videosink fakesink --audiosink fakesink typefind-sample.wav
+          dotnet run --project samples/GstPlay --no-restore -- --list-visualizations
 
       # Same two runs as the Linux leg; see the comments there.
       - name: GstInspect
