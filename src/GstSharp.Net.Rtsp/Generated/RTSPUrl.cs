@@ -41,12 +41,69 @@ public sealed unsafe partial class RTSPUrl : Gst.GObject.Boxed
         }
     }
 
+    /// <summary>the user</summary>
+    public string? User
+    {
+        get
+        {
+            string? value = Gst.Interop.GMarshal.PtrToStringUtf8(((RTSPUrlRaw*)Handle)->User);
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>the password</summary>
+    public string? Passwd
+    {
+        get
+        {
+            string? value = Gst.Interop.GMarshal.PtrToStringUtf8(((RTSPUrlRaw*)Handle)->Passwd);
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>the host</summary>
+    public string Host
+    {
+        get
+        {
+            string value = Gst.Interop.GMarshal.PtrToStringUtf8(((RTSPUrlRaw*)Handle)->Host)
+                ?? throw new System.InvalidOperationException("The 'host' field of GstRTSPUrl is null.");
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
     /// <summary>the port</summary>
     public ushort Port
     {
         get
         {
             ushort value = ((RTSPUrlRaw*)Handle)->Port;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>the absolute path</summary>
+    public string Abspath
+    {
+        get
+        {
+            string value = Gst.Interop.GMarshal.PtrToStringUtf8(((RTSPUrlRaw*)Handle)->Abspath)
+                ?? throw new System.InvalidOperationException("The 'abspath' field of GstRTSPUrl is null.");
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>additional query parameters</summary>
+    public string? Query
+    {
+        get
+        {
+            string? value = Gst.Interop.GMarshal.PtrToStringUtf8(((RTSPUrlRaw*)Handle)->Query);
             System.GC.KeepAlive(this);
             return value;
         }

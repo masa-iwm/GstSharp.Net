@@ -30,6 +30,30 @@ public sealed unsafe partial class VideoFormatInfo
         }
     }
 
+    /// <summary>string representation of the format</summary>
+    public string Name
+    {
+        get
+        {
+            string value = Gst.Interop.GMarshal.PtrToStringUtf8(((VideoFormatInfoRaw*)Handle)->Name)
+                ?? throw new System.InvalidOperationException("The 'name' field of GstVideoFormatInfo is null.");
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>use readable description of the format</summary>
+    public string Description
+    {
+        get
+        {
+            string value = Gst.Interop.GMarshal.PtrToStringUtf8(((VideoFormatInfoRaw*)Handle)->Description)
+                ?? throw new System.InvalidOperationException("The 'description' field of GstVideoFormatInfo is null.");
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
     /// <summary>#GstVideoFormatFlags</summary>
     public Gst.Video.VideoFormatFlags Flags
     {

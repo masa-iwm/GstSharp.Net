@@ -22,4 +22,26 @@ public partial struct FormatDefinition
 
     /// <summary>A quark for the nick</summary>
     public Gst.GLib.Quark Quark;
+
+    /// <summary>A short nick of the format</summary>
+    public string Nick
+    {
+        get
+        {
+            string value = Gst.Interop.GMarshal.PtrToStringUtf8(NickPtr)
+                ?? throw new System.InvalidOperationException("The 'nick' field of GstFormatDefinition is null.");
+            return value;
+        }
+    }
+
+    /// <summary>A longer description of the format</summary>
+    public string Description
+    {
+        get
+        {
+            string value = Gst.Interop.GMarshal.PtrToStringUtf8(DescriptionPtr)
+                ?? throw new System.InvalidOperationException("The 'description' field of GstFormatDefinition is null.");
+            return value;
+        }
+    }
 }

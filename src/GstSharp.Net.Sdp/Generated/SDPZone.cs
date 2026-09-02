@@ -22,6 +22,28 @@ public sealed unsafe partial class SDPZone
     /// <param name="handle">The native instance.</param>
     internal SDPZone(nint handle) => Handle = handle;
 
+    /// <summary>the NTP time that a time zone adjustment happens</summary>
+    public string? Time
+    {
+        get
+        {
+            string? value = Gst.Interop.GMarshal.PtrToStringUtf8(((SDPZoneRaw*)Handle)->Time);
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>the offset from the time when the session was first scheduled</summary>
+    public string? TypedTime
+    {
+        get
+        {
+            string? value = Gst.Interop.GMarshal.PtrToStringUtf8(((SDPZoneRaw*)Handle)->TypedTime);
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
     /// <summary>Wraps a native <c>GstSDPZone</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
     /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>

@@ -33,6 +33,8 @@ internal sealed class EmissionCensus
 
     private readonly SortedSet<string> _fieldSkips = new(StringComparer.Ordinal);
 
+    private readonly SortedSet<string> _fieldAnnotations = new(StringComparer.Ordinal);
+
     /// <summary>Initializes a new instance of the <see cref="EmissionCensus"/> class.</summary>
     /// <param name="overlays">
     /// The overlays, read for the hand bound ledger. A census built without
@@ -51,6 +53,16 @@ internal sealed class EmissionCensus
     /// record, so that the ones it never matched can be reported as stale.
     /// </summary>
     internal IReadOnlySet<string> FieldSkipKeys => _fieldSkips;
+
+    /// <summary>
+    /// Gets the field annotation keys the run applied to a field of an emitted
+    /// record, so that the ones it never applied can be reported as stale.
+    /// </summary>
+    internal IReadOnlySet<string> FieldAnnotationKeys => _fieldAnnotations;
+
+    /// <summary>Records one field annotation the run applied.</summary>
+    /// <param name="key">The overlay key that matched, for the stale report.</param>
+    internal void AnnotatedField(string key) => _fieldAnnotations.Add(key);
 
     /// <summary>Counts one emitted member.</summary>
     /// <param name="module">The gir namespace of the module.</param>

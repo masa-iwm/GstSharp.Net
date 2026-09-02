@@ -1126,7 +1126,7 @@ disappears shows up here as an added line.
 - `gst_webrtc_ice_get_local_candidates`
 - `gst_webrtc_ice_get_remote_candidates`
 
-## Fields (266)
+## Fields (203)
 
 Public record fields that carry API in C and none in C#, with the shape that
 kept them out. A field is bound when a wrapper declares an accessor for it, or
@@ -1146,7 +1146,7 @@ the section below.
 
 - `FrameCompositionMeta.meta` — EmbeddedStruct
 
-### Gst (82)
+### Gst (70)
 
 - `Buffer.mini_object` — EmbeddedStruct
 - `Buffer.pool` — Pointer
@@ -1156,8 +1156,6 @@ the section below.
 - `CustomMeta.meta` — EmbeddedStruct
 - `CustomMeta.structure` — Pointer
 - `Event.mini_object` — EmbeddedStruct
-- `FormatDefinition.description` — Pointer
-- `FormatDefinition.nick` — Pointer
 - `Iterator.copy` — Callback
 - `Iterator.free` — Callback
 - `Iterator.item` — Callback
@@ -1200,15 +1198,7 @@ the section below.
 - `ParamSpecFraction.parent_instance` — EmbeddedStruct
 - `ParentBufferMeta.buffer` — Pointer
 - `ParentBufferMeta.parent` — EmbeddedStruct
-- `PluginDesc.description` — Pointer
-- `PluginDesc.license` — Pointer
-- `PluginDesc.name` — Pointer
-- `PluginDesc.origin` — Pointer
-- `PluginDesc.package` — Pointer
 - `PluginDesc.plugin_init` — Callback
-- `PluginDesc.release_datetime` — Pointer
-- `PluginDesc.source` — Pointer
-- `PluginDesc.version` — Pointer
 - `Promise.parent` — EmbeddedStruct
 - `ProtectionMeta.info` — Pointer
 - `ProtectionMeta.meta` — EmbeddedStruct
@@ -1217,8 +1207,6 @@ the section below.
 - `ReferenceTimestampMeta.parent` — EmbeddedStruct
 - `ReferenceTimestampMeta.reference` — Pointer
 - `StaticCaps.caps` — Pointer
-- `StaticCaps.string` — Pointer
-- `StaticPadTemplate.name_template` — Pointer
 - `StaticPadTemplate.static_caps` — EmbeddedStruct
 - `TagList.mini_object` — EmbeddedStruct
 - `TypeFind.data` — Pointer
@@ -1231,7 +1219,7 @@ the section below.
 - `ValueTable.hash` — Callback
 - `ValueTable.serialize` — Callback
 
-### GstAudio (24)
+### GstAudio (22)
 
 - `AudioBuffer.buffer` — Pointer
 - `AudioBuffer.info` — EmbeddedStruct
@@ -1243,8 +1231,6 @@ the section below.
 - `AudioDownmixMeta.matrix` — Pointer
 - `AudioDownmixMeta.meta` — EmbeddedStruct
 - `AudioDownmixMeta.to_position` — Pointer
-- `AudioFormatInfo.description` — Pointer
-- `AudioFormatInfo.name` — Pointer
 - `AudioFormatInfo.pack_func` — Callback
 - `AudioFormatInfo.unpack_func` — Callback
 - `AudioInfo.finfo` — Pointer
@@ -1274,31 +1260,16 @@ the section below.
 - `NetControlMessageMeta.message` — Pointer
 - `NetControlMessageMeta.meta` — EmbeddedStruct
 
-### GstPlay (2)
+### GstRtsp (6)
 
-- `PlayVisualization.description` — Pointer
-- `PlayVisualization.name` — Pointer
-
-### GstRtsp (16)
-
-- `RTSPAuthCredential.authorization` — Pointer
 - `RTSPAuthCredential.params` — Pointer
-- `RTSPAuthParam.name` — Pointer
-- `RTSPAuthParam.value` — Pointer
 - `RTSPMessage.type_data` — Union
 - `RTSPTransport.client_port` — EmbeddedStruct
-- `RTSPTransport.destination` — Pointer
 - `RTSPTransport.interleaved` — EmbeddedStruct
 - `RTSPTransport.port` — EmbeddedStruct
 - `RTSPTransport.server_port` — EmbeddedStruct
-- `RTSPTransport.source` — Pointer
-- `RTSPUrl.abspath` — Pointer
-- `RTSPUrl.host` — Pointer
-- `RTSPUrl.passwd` — Pointer
-- `RTSPUrl.query` — Pointer
-- `RTSPUrl.user` — Pointer
 
-### GstSdp (58)
+### GstSdp (33)
 
 - `MIKEYMessage.map_info` — Pointer
 - `MIKEYMessage.payloads` — Pointer
@@ -1317,49 +1288,24 @@ the section below.
 - `MIKEYPayloadSPParam.val` — Pointer
 - `MIKEYPayloadT.pt` — EmbeddedStruct
 - `MIKEYPayloadT.ts_value` — Pointer
-- `SDPAttribute.key` — Pointer
-- `SDPAttribute.value` — Pointer
-- `SDPBandwidth.bwtype` — Pointer
-- `SDPConnection.address` — Pointer
-- `SDPConnection.addrtype` — Pointer
-- `SDPConnection.nettype` — Pointer
-- `SDPKey.data` — Pointer
-- `SDPKey.type` — Pointer
 - `SDPMedia.attributes` — Pointer
 - `SDPMedia.bandwidths` — Pointer
 - `SDPMedia.connections` — Pointer
 - `SDPMedia.fmts` — Pointer
-- `SDPMedia.information` — Pointer
 - `SDPMedia.key` — EmbeddedStruct
-- `SDPMedia.media` — Pointer
-- `SDPMedia.proto` — Pointer
 - `SDPMessage.attributes` — Pointer
 - `SDPMessage.bandwidths` — Pointer
 - `SDPMessage.connection` — EmbeddedStruct
 - `SDPMessage.emails` — Pointer
-- `SDPMessage.information` — Pointer
 - `SDPMessage.key` — EmbeddedStruct
 - `SDPMessage.medias` — Pointer
 - `SDPMessage.origin` — EmbeddedStruct
 - `SDPMessage.phones` — Pointer
-- `SDPMessage.session_name` — Pointer
 - `SDPMessage.times` — Pointer
-- `SDPMessage.uri` — Pointer
-- `SDPMessage.version` — Pointer
 - `SDPMessage.zones` — Pointer
-- `SDPOrigin.addr` — Pointer
-- `SDPOrigin.addrtype` — Pointer
-- `SDPOrigin.nettype` — Pointer
-- `SDPOrigin.sess_id` — Pointer
-- `SDPOrigin.sess_version` — Pointer
-- `SDPOrigin.username` — Pointer
 - `SDPTime.repeat` — Pointer
-- `SDPTime.start` — Pointer
-- `SDPTime.stop` — Pointer
-- `SDPZone.time` — Pointer
-- `SDPZone.typed_time` — Pointer
 
-### GstVideo (59)
+### GstVideo (57)
 
 - `AncillaryMeta.data` — Pointer
 - `AncillaryMeta.meta` — EmbeddedStruct
@@ -1383,8 +1329,6 @@ the section below.
 - `VideoCodecState.info` — EmbeddedStruct
 - `VideoCodecState.mastering_display_info` — Pointer
 - `VideoCropMeta.meta` — EmbeddedStruct
-- `VideoFormatInfo.description` — Pointer
-- `VideoFormatInfo.name` — Pointer
 - `VideoFormatInfo.pack_func` — Callback
 - `VideoFormatInfo.tile_info` — InlineArray(struct element)
 - `VideoFormatInfo.unpack_func` — Callback
@@ -1421,24 +1365,14 @@ the section below.
 - `VideoTimeCodeMeta.meta` — EmbeddedStruct
 - `VideoTimeCodeMeta.tc` — EmbeddedStruct
 
-### GstWebRTC (14)
+### GstWebRTC (4)
 
-- `WebRTCICECandidate.candidate` — Pointer
-- `WebRTCICECandidate.sdp_mid` — Pointer
 - `WebRTCICECandidate.stats` — Pointer
 - `WebRTCICECandidatePair.local` — Pointer
 - `WebRTCICECandidatePair.remote` — Pointer
-- `WebRTCICECandidateStats.foundation` — Pointer
-- `WebRTCICECandidateStats.ipaddr` — Pointer
-- `WebRTCICECandidateStats.proto` — Pointer
-- `WebRTCICECandidateStats.related_address` — Pointer
-- `WebRTCICECandidateStats.relay_proto` — Pointer
-- `WebRTCICECandidateStats.type` — Pointer
-- `WebRTCICECandidateStats.url` — Pointer
-- `WebRTCICECandidateStats.username_fragment` — Pointer
 - `WebRTCSessionDescription.sdp` — Pointer
 
-## Fields exposed elsewhere (1)
+## Fields exposed elsewhere (3)
 
 Public record fields that another member of the binding answers, with the
 member that answers them. They are declared in `girs/overlays/fixups.json`
@@ -1448,3 +1382,8 @@ there is what the bindings do not cover, and these are covered.
 ### Gst (1)
 
 - `PadProbeInfo.flow_ret` — GetFlowReturn
+
+### GstPlay (2)
+
+- `PlayVisualization.description` — hand written
+- `PlayVisualization.name` — hand written

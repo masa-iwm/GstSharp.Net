@@ -18,6 +18,42 @@ public sealed unsafe partial class SDPConnection
     /// <param name="handle">The native instance.</param>
     internal SDPConnection(nint handle) => Handle = handle;
 
+    /// <summary>
+    /// the type of network. "IN" is defined to have the meaning
+    ///    "Internet".
+    /// </summary>
+    public string? Nettype
+    {
+        get
+        {
+            string? value = Gst.Interop.GMarshal.PtrToStringUtf8(((SDPConnectionRaw*)Handle)->Nettype);
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>the type of @address.</summary>
+    public string? Addrtype
+    {
+        get
+        {
+            string? value = Gst.Interop.GMarshal.PtrToStringUtf8(((SDPConnectionRaw*)Handle)->Addrtype);
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>the address</summary>
+    public string? Address
+    {
+        get
+        {
+            string? value = Gst.Interop.GMarshal.PtrToStringUtf8(((SDPConnectionRaw*)Handle)->Address);
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
     /// <summary>the time to live of the address</summary>
     public uint Ttl
     {

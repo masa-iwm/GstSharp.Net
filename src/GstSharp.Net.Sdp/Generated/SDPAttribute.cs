@@ -18,6 +18,28 @@ public sealed unsafe partial class SDPAttribute
     /// <param name="handle">The native instance.</param>
     internal SDPAttribute(nint handle) => Handle = handle;
 
+    /// <summary>the attribute key</summary>
+    public string? Key
+    {
+        get
+        {
+            string? value = Gst.Interop.GMarshal.PtrToStringUtf8(((SDPAttributeRaw*)Handle)->Key);
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>the attribute value or NULL when it was a property attribute</summary>
+    public string? Value
+    {
+        get
+        {
+            string? value = Gst.Interop.GMarshal.PtrToStringUtf8(((SDPAttributeRaw*)Handle)->Value);
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
     /// <summary>Wraps a native <c>GstSDPAttribute</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
     /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>

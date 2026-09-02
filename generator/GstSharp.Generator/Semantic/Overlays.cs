@@ -176,6 +176,41 @@ internal sealed class FieldSkip
 }
 
 /// <summary>
+/// A correction of a record field that no gir annotation carries.
+/// </summary>
+/// <remarks>
+/// <para>
+/// A gir never states the nullability of a <c>&lt;field&gt;</c>: the attribute
+/// exists on parameters and on return values only. A field that is projected
+/// onto a reference - a string, or the wrapper of what a pointer points at - is
+/// therefore nullable by default, because that is what the corpus says about
+/// every one of them, and a non nullable one is a claim about the C
+/// implementation that has to be made by hand.
+/// </para>
+/// <para>
+/// <c>nullable: false</c> is the only thing an entry says, and it is the only
+/// thing it may say: the default is already the other answer, so an entry that
+/// states nothing, or that states <c>nullable: true</c>, changes nothing and is
+/// reported as stale. Each entry carries a <c>$comment</c> with the C file and
+/// line the claim rests on, which is ignored here and read by the reviewer.
+/// </para>
+/// </remarks>
+internal sealed class FieldAnnotation
+{
+    /// <summary>
+    /// Gets or sets a value indicating whether the field may hold the null
+    /// pointer. Only <see langword="false"/> is applied.
+    /// </summary>
+    public bool? Nullable { get; set; }
+
+    /// <summary>
+    /// Gets a value indicating whether the entry states the one correction it
+    /// can state, which is the only shape that changes what is emitted.
+    /// </summary>
+    internal bool IsStated => Nullable == false;
+}
+
+/// <summary>
 /// Per platform availability of a native symbol.
 /// </summary>
 internal sealed class PlatformSupport
@@ -239,6 +274,12 @@ internal sealed class PlatformSupport
 /// the field off the ledger of unbound fields and keeps the generator from
 /// emitting an accessor for it; a key that matches no field is reported as
 /// stale.</description></item>
+/// <item><description><c>fieldAnnotations</c>: keyed like <c>fieldSkips</c>
+/// and stating what no gir annotation carries about a record field. Today that
+/// is <c>nullable</c>, which is only ever read as <c>false</c>: it says the
+/// field never holds the null pointer, and the accessor of it is emitted
+/// non nullable. An entry that states nothing, or that states the default, is
+/// reported as stale.</description></item>
 /// <item><description><c>forceOpaque</c>: qualified gir name of a record
 /// (<c>Gst.DebugCategory</c>) that must be wrapped behind a pointer rather
 /// than copied by value.</description></item>
@@ -267,6 +308,7 @@ internal sealed class Overlays
     private readonly Dictionary<string, PlatformSupport> _platforms;
     private readonly Dictionary<string, string> _returnTypes;
     private readonly Dictionary<string, FieldSkip> _fieldSkips;
+    private readonly Dictionary<string, FieldAnnotation> _fieldAnnotations;
 
     private Overlays(
         HashSet<string> skip,
@@ -277,7 +319,8 @@ internal sealed class Overlays
         Dictionary<string, ArrayOverride> arrayOverrides,
         Dictionary<string, PlatformSupport> platforms,
         Dictionary<string, string> returnTypes,
-        Dictionary<string, FieldSkip> fieldSkips)
+        Dictionary<string, FieldSkip> fieldSkips,
+        Dictionary<string, FieldAnnotation> fieldAnnotations)
     {
         _skip = skip;
         _handBound = handBound;
@@ -288,6 +331,7 @@ internal sealed class Overlays
         _platforms = platforms;
         _returnTypes = returnTypes;
         _fieldSkips = fieldSkips;
+        _fieldAnnotations = fieldAnnotations;
     }
 
     /// <summary>Gets an overlay set without any correction.</summary>
@@ -300,7 +344,8 @@ internal sealed class Overlays
         new Dictionary<string, ArrayOverride>(StringComparer.Ordinal),
         new Dictionary<string, PlatformSupport>(StringComparer.Ordinal),
         new Dictionary<string, string>(StringComparer.Ordinal),
-        new Dictionary<string, FieldSkip>(StringComparer.Ordinal));
+        new Dictionary<string, FieldSkip>(StringComparer.Ordinal),
+        new Dictionary<string, FieldAnnotation>(StringComparer.Ordinal));
 
     /// <summary>Gets the skipped identifiers, ordered for reporting.</summary>
     internal IReadOnlyCollection<string> SkippedIdentifiers => _skip;
@@ -334,6 +379,12 @@ internal sealed class Overlays
     /// ones no field of an emitted record matched.
     /// </summary>
     internal IReadOnlyCollection<string> FieldSkipKeys => _fieldSkips.Keys;
+
+    /// <summary>
+    /// Gets the keys of every declared field annotation, so that a run can
+    /// report the ones no field of an emitted record matched.
+    /// </summary>
+    internal IReadOnlyCollection<string> FieldAnnotationKeys => _fieldAnnotations.Keys;
 
     /// <summary>
     /// Loads <c>fixups.json</c> and <c>platform-symbols.json</c> from an overlay
@@ -402,6 +453,12 @@ internal sealed class Overlays
             fieldSkips[entry.Key] = entry.Value;
         }
 
+        Dictionary<string, FieldAnnotation> fieldAnnotations = new(StringComparer.Ordinal);
+        foreach (KeyValuePair<string, FieldAnnotation> entry in fixups.FieldAnnotations ?? [])
+        {
+            fieldAnnotations[entry.Key] = entry.Value;
+        }
+
         return new Overlays(
             skip,
             handBound,
@@ -411,7 +468,8 @@ internal sealed class Overlays
             arrayOverrides,
             symbols,
             returnTypes,
-            fieldSkips);
+            fieldSkips,
+            fieldAnnotations);
     }
 
     /// <summary>Tests whether a symbol is skipped by the overlays.</summary>
@@ -474,6 +532,15 @@ internal sealed class Overlays
     internal FieldSkip? GetFieldSkip(string key) =>
         _fieldSkips.TryGetValue(key, out FieldSkip? value) ? value : null;
 
+    /// <summary>Looks up the correction of a record field.</summary>
+    /// <param name="key">
+    /// The <c>c:type</c> of the record and the gir name of the field, for
+    /// example <c>GstRTSPUrl.host</c>.
+    /// </param>
+    /// <returns>The entry, or <see langword="null"/> when there is none.</returns>
+    internal FieldAnnotation? GetFieldAnnotation(string key) =>
+        _fieldAnnotations.TryGetValue(key, out FieldAnnotation? value) ? value : null;
+
     /// <summary>Looks up the platform availability of a native symbol.</summary>
     /// <param name="cIdentifier">The <c>c:identifier</c> of the symbol.</param>
     /// <returns>The availability, or <see langword="null"/> when the symbol is portable.</returns>
@@ -509,6 +576,8 @@ internal sealed class Overlays
         public Dictionary<string, string>? ReturnTypeOverrides { get; set; }
 
         public Dictionary<string, FieldSkip>? FieldSkips { get; set; }
+
+        public Dictionary<string, FieldAnnotation>? FieldAnnotations { get; set; }
     }
 
     private sealed class PlatformSymbolsFile

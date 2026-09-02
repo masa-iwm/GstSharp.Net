@@ -20,6 +20,20 @@ public sealed unsafe partial class WebRTCICECandidateStats : Gst.GObject.Boxed
     {
     }
 
+    /// <summary>
+    /// A string containing the address of the candidate. This value may be
+    ///          an IPv4 address, an IPv6 address, or a fully-qualified domain name
+    /// </summary>
+    public string? Ipaddr
+    {
+        get
+        {
+            string? value = Gst.Interop.GMarshal.PtrToStringUtf8(((WebRTCICECandidateStatsRaw*)Handle)->Ipaddr);
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
     /// <summary>The network port number used by the candidate</summary>
     public uint Port
     {
@@ -45,6 +59,43 @@ public sealed unsafe partial class WebRTCICECandidateStats : Gst.GObject.Boxed
         }
     }
 
+    /// <summary>The candidate type</summary>
+    public string? Type
+    {
+        get
+        {
+            string? value = Gst.Interop.GMarshal.PtrToStringUtf8(((WebRTCICECandidateStatsRaw*)Handle)->Type);
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>
+    /// A string specifying the protocol (tcp or udp) used to transmit data
+    ///         on the @port
+    /// </summary>
+    public string Proto
+    {
+        get
+        {
+            string value = Gst.Interop.GMarshal.PtrToStringUtf8(((WebRTCICECandidateStatsRaw*)Handle)->Proto)
+                ?? throw new System.InvalidOperationException("The 'proto' field of GstWebRTCICECandidateStats is null.");
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>The <c>relay_proto</c> field of <c>GstWebRTCICECandidateStats</c>.</summary>
+    public string? RelayProto
+    {
+        get
+        {
+            string? value = Gst.Interop.GMarshal.PtrToStringUtf8(((WebRTCICECandidateStatsRaw*)Handle)->RelayProto);
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
     /// <summary>The candidate's priority, corresponding to RTCIceCandidate.priority</summary>
     public uint Prio
     {
@@ -56,12 +107,59 @@ public sealed unsafe partial class WebRTCICECandidateStats : Gst.GObject.Boxed
         }
     }
 
+    /// <summary>
+    /// For local candidates, the url property is the URL of the ICE server
+    ///       from which the candidate was received
+    /// </summary>
+    public string? Url
+    {
+        get
+        {
+            string? value = Gst.Interop.GMarshal.PtrToStringUtf8(((WebRTCICECandidateStatsRaw*)Handle)->Url);
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>The <c>foundation</c> field of <c>GstWebRTCICECandidateStats</c>.</summary>
+    public string? Foundation
+    {
+        get
+        {
+            string? value = Gst.Interop.GMarshal.PtrToStringUtf8(((WebRTCICECandidateStatsRaw.ABIMembers*)&((WebRTCICECandidateStatsRaw*)Handle)->ABI)->Foundation);
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>The <c>related_address</c> field of <c>GstWebRTCICECandidateStats</c>.</summary>
+    public string? RelatedAddress
+    {
+        get
+        {
+            string? value = Gst.Interop.GMarshal.PtrToStringUtf8(((WebRTCICECandidateStatsRaw.ABIMembers*)&((WebRTCICECandidateStatsRaw*)Handle)->ABI)->RelatedAddress);
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
     /// <summary>The <c>related_port</c> field of <c>GstWebRTCICECandidateStats</c>.</summary>
     public uint RelatedPort
     {
         get
         {
             uint value = ((WebRTCICECandidateStatsRaw.ABIMembers*)&((WebRTCICECandidateStatsRaw*)Handle)->ABI)->RelatedPort;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>The <c>username_fragment</c> field of <c>GstWebRTCICECandidateStats</c>.</summary>
+    public string? UsernameFragment
+    {
+        get
+        {
+            string? value = Gst.Interop.GMarshal.PtrToStringUtf8(((WebRTCICECandidateStatsRaw.ABIMembers*)&((WebRTCICECandidateStatsRaw*)Handle)->ABI)->UsernameFragment);
             System.GC.KeepAlive(this);
             return value;
         }

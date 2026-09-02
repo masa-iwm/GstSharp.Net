@@ -24,6 +24,20 @@ public sealed unsafe partial class WebRTCICECandidate : Gst.GObject.Boxed
     }
 
     /// <summary>
+    /// String carrying the candidate-attribute as defined in
+    ///   section 15.1 of RFC5245
+    /// </summary>
+    public string? Candidate
+    {
+        get
+        {
+            string? value = Gst.Interop.GMarshal.PtrToStringUtf8(((WebRTCICECandidateRaw*)Handle)->Candidate);
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>
     /// The assigned network component of the candidate (1 for RTP
     ///   2 for RTCP).
     /// </summary>
@@ -32,6 +46,20 @@ public sealed unsafe partial class WebRTCICECandidate : Gst.GObject.Boxed
         get
         {
             int value = ((WebRTCICECandidateRaw*)Handle)->Component;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>
+    /// The media stream "identification-tag" defined in [RFC5888] for the
+    ///   media component this candidate is associated with.
+    /// </summary>
+    public string? SdpMid
+    {
+        get
+        {
+            string? value = Gst.Interop.GMarshal.PtrToStringUtf8(((WebRTCICECandidateRaw*)Handle)->SdpMid);
             System.GC.KeepAlive(this);
             return value;
         }

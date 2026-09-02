@@ -19,6 +19,30 @@ public sealed unsafe partial class RTSPAuthParam : Gst.GObject.Boxed
     {
     }
 
+    /// <summary>The name of the parameter</summary>
+    public string Name
+    {
+        get
+        {
+            string value = Gst.Interop.GMarshal.PtrToStringUtf8(((RTSPAuthParamRaw*)Handle)->Name)
+                ?? throw new System.InvalidOperationException("The 'name' field of GstRTSPAuthParam is null.");
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>The value of the parameter</summary>
+    public string Value
+    {
+        get
+        {
+            string value = Gst.Interop.GMarshal.PtrToStringUtf8(((RTSPAuthParamRaw*)Handle)->Value)
+                ?? throw new System.InvalidOperationException("The 'value' field of GstRTSPAuthParam is null.");
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
     /// <summary>Wraps a native <c>GstRTSPAuthParam</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
     /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>

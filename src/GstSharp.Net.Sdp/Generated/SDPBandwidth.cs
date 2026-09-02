@@ -21,6 +21,17 @@ public sealed unsafe partial class SDPBandwidth
     /// <param name="handle">The native instance.</param>
     internal SDPBandwidth(nint handle) => Handle = handle;
 
+    /// <summary>the bandwidth modifier type</summary>
+    public string? Bwtype
+    {
+        get
+        {
+            string? value = Gst.Interop.GMarshal.PtrToStringUtf8(((SDPBandwidthRaw*)Handle)->Bwtype);
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
     /// <summary>the bandwidth in kilobits per second</summary>
     public uint Bandwidth
     {

@@ -30,6 +30,30 @@ public sealed unsafe partial class AudioFormatInfo
         }
     }
 
+    /// <summary>string representation of the format</summary>
+    public string Name
+    {
+        get
+        {
+            string value = Gst.Interop.GMarshal.PtrToStringUtf8(((AudioFormatInfoRaw*)Handle)->Name)
+                ?? throw new System.InvalidOperationException("The 'name' field of GstAudioFormatInfo is null.");
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>user readable description of the format</summary>
+    public string Description
+    {
+        get
+        {
+            string value = Gst.Interop.GMarshal.PtrToStringUtf8(((AudioFormatInfoRaw*)Handle)->Description)
+                ?? throw new System.InvalidOperationException("The 'description' field of GstAudioFormatInfo is null.");
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
     /// <summary>#GstAudioFormatFlags</summary>
     public Gst.Audio.AudioFormatFlags Flags
     {

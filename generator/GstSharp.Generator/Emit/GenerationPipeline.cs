@@ -193,6 +193,30 @@ internal static class GenerationPipeline
                 + "'exposedBy' nor 'handBound', or states both; the entry is stale.");
         }
 
+        // A field annotation the run never applied names a field that no longer
+        // exists, one of a record that is not emitted, or a misspelling; an
+        // entry that states nothing, or that states the default the emitters
+        // already use, corrects nothing. Either way the overlays would carry a
+        // claim about the C implementation that nothing acts on, which reads as
+        // a decision that was taken when none was.
+        List<string> staleAnnotatedFields = [];
+        foreach (string key in overlays.FieldAnnotationKeys)
+        {
+            if (!census.FieldAnnotationKeys.Contains(key))
+            {
+                staleAnnotatedFields.Add(key);
+            }
+        }
+
+        staleAnnotatedFields.Sort(StringComparer.Ordinal);
+        foreach (string key in staleAnnotatedFields)
+        {
+            diagnostics.Warn(
+                "GEN0026",
+                $"The field annotation '{key}' was applied to no field of an emitted record, or states "
+                + "nothing beyond the default; the entry is stale.");
+        }
+
         // A hand bound entry the run never saw skipped names a symbol that is
         // generated after all, or one that no longer exists, or a misspelling.
         // Any of the three makes the ledger claim something about the bindings

@@ -29,6 +29,17 @@ public sealed unsafe partial class RTSPAuthCredential : Gst.GObject.Boxed
         }
     }
 
+    /// <summary>The authorization for the basic schem</summary>
+    public string? Authorization
+    {
+        get
+        {
+            string? value = Gst.Interop.GMarshal.PtrToStringUtf8(((RTSPAuthCredentialRaw*)Handle)->Authorization);
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
     /// <summary>Wraps a native <c>GstRTSPAuthCredential</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
     /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>

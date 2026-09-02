@@ -22,6 +22,50 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     {
     }
 
+    /// <summary>the protocol version</summary>
+    public string? Version
+    {
+        get
+        {
+            string? value = Gst.Interop.GMarshal.PtrToStringUtf8(((SDPMessageRaw*)Handle)->Version);
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>session name</summary>
+    public string? SessionName
+    {
+        get
+        {
+            string? value = Gst.Interop.GMarshal.PtrToStringUtf8(((SDPMessageRaw*)Handle)->SessionName);
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>session information</summary>
+    public string? Information
+    {
+        get
+        {
+            string? value = Gst.Interop.GMarshal.PtrToStringUtf8(((SDPMessageRaw*)Handle)->Information);
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>URI of description</summary>
+    public string? Uri
+    {
+        get
+        {
+            string? value = Gst.Interop.GMarshal.PtrToStringUtf8(((SDPMessageRaw*)Handle)->Uri);
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
     /// <summary>Wraps a native <c>GstSDPMessage</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
     /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>

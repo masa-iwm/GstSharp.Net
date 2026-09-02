@@ -23,6 +23,17 @@ public sealed unsafe partial class StaticCaps
     /// <param name="handle">The native instance.</param>
     internal StaticCaps(nint handle) => Handle = handle;
 
+    /// <summary>a string describing a caps</summary>
+    public string? String
+    {
+        get
+        {
+            string? value = Gst.Interop.GMarshal.PtrToStringUtf8(((StaticCapsRaw*)Handle)->String);
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
     /// <summary>Wraps a native <c>GstStaticCaps</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
     /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>

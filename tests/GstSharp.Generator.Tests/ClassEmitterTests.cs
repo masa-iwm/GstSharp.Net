@@ -171,16 +171,16 @@ public sealed class ClassEmitterTests
     }
 
     [Theory]
-    [InlineData("Gst", 35, 51, 5, 28, 18, 1435, 29, 23, 52)]
+    [InlineData("Gst", 35, 51, 5, 28, 18, 1435, 29, 23, 64)]
     [InlineData("GstBase", 11, 4, 0, 5, 0, 174, 31, 2, 5)]
     [InlineData("GstApp", 2, 2, 0, 8, 0, 62, 36, 8, 0)]
-    [InlineData("GstAudio", 14, 17, 1, 2, 2, 213, 32, 0, 42)]
-    [InlineData("GstVideo", 12, 42, 5, 0, 10, 383, 14, 2, 101)]
+    [InlineData("GstAudio", 14, 17, 1, 2, 2, 213, 32, 0, 44)]
+    [InlineData("GstVideo", 12, 42, 5, 0, 10, 383, 14, 2, 103)]
     [InlineData("GstPbutils", 14, 1, 0, 0, 1, 179, 5, 5, 0)]
-    [InlineData("GstSdp", 1, 21, 0, 0, 0, 164, 0, 0, 26)]
-    [InlineData("GstWebRTC", 9, 4, 0, 1, 2, 37, 38, 7, 8)]
+    [InlineData("GstSdp", 1, 21, 0, 0, 0, 164, 0, 0, 51)]
+    [InlineData("GstWebRTC", 9, 4, 0, 1, 2, 37, 38, 7, 18)]
     [InlineData("GstNet", 5, 3, 0, 1, 0, 25, 17, 0, 2)]
-    [InlineData("GstRtsp", 1, 10, 1, 1, 2, 114, 0, 1, 14)]
+    [InlineData("GstRtsp", 1, 10, 1, 1, 2, 114, 0, 1, 24)]
     [InlineData("GstAllocators", 6, 0, 1, 0, 0, 23, 1, 0, 0)]
     [InlineData("GstTag", 3, 0, 1, 0, 0, 46, 0, 0, 0)]
     [InlineData("GstTranscoder", 2, 0, 0, 0, 3, 26, 9, 6, 0)]
@@ -475,7 +475,12 @@ public sealed class ClassEmitterTests
         // a mirror and are therefore emitted with the unsafe modifier the
         // counting here keys on.
         Assert.Equal(168, classes);
-        Assert.Equal(123, records);
+
+        // 125 rather than 123 since the string accessors landed: GstSdp.SDPKey
+        // and GstSdp.SDPOrigin declare no callable that reads a handle, so the
+        // accessors of their string fields are the first members of either to
+        // dereference the mirror.
+        Assert.Equal(125, records);
     }
 
     [Fact]
@@ -587,18 +592,18 @@ public sealed class ClassEmitterTests
     }
 
     [Theory]
-    [InlineData("Gst", 82)]
+    [InlineData("Gst", 70)]
     [InlineData("GstBase", 6)]
-    [InlineData("GstAudio", 24)]
-    [InlineData("GstVideo", 59)]
-    [InlineData("GstSdp", 58)]
-    [InlineData("GstWebRTC", 14)]
+    [InlineData("GstAudio", 22)]
+    [InlineData("GstVideo", 57)]
+    [InlineData("GstSdp", 33)]
+    [InlineData("GstWebRTC", 4)]
     [InlineData("GstNet", 4)]
-    [InlineData("GstRtsp", 16)]
+    [InlineData("GstRtsp", 6)]
     [InlineData("GstAllocators", 0)]
     [InlineData("GstTag", 0)]
     [InlineData("GstTranscoder", 0)]
-    [InlineData("GstPlay", 2)]
+    [InlineData("GstPlay", 0)]
     [InlineData("GES", 1)]
     [InlineData("GstApp", 0)]
     [InlineData("GstPbutils", 0)]
@@ -608,8 +613,8 @@ public sealed class ClassEmitterTests
         // exists because a field has no skip reason of its own: without it a
         // record whose methods are bound reads as fully bound however many of
         // its fields are missing, which is how the fixed size fields of
-        // GstVideoInfo went unnoticed. GstApp and GstPbutils declare no record
-        // field that is left out at all.
+        // GstVideoInfo went unnoticed. GstApp, GstPbutils and GstPlay declare no
+        // record field that is left out at all.
         Assert.Equal(fields, Generated.Census.DroppedFieldCount(module));
     }
 
@@ -618,9 +623,9 @@ public sealed class ClassEmitterTests
     {
         string report = Generated.SkipReport;
 
-        Assert.Equal(266, Generated.Census.DroppedFieldCount());
-        Assert.Contains("## Fields (266)\n", report, StringComparison.Ordinal);
-        Assert.Contains("### GstVideo (59)\n", report, StringComparison.Ordinal);
+        Assert.Equal(203, Generated.Census.DroppedFieldCount());
+        Assert.Contains("## Fields (203)\n", report, StringComparison.Ordinal);
+        Assert.Contains("### GstVideo (57)\n", report, StringComparison.Ordinal);
 
         // One entry per shape that keeps a field out. The fixed size fields of
         // GstVideoInfo are bound and are therefore absent; the ones whose
@@ -630,17 +635,14 @@ public sealed class ClassEmitterTests
         Assert.Contains("- `Iterator.next` \u2014 Callback\n", report, StringComparison.Ordinal);
         // The variant union of GstRTSPMessage still stops the layout and is
         // still listed under its own name. A reserved ABI union is laid out
-        // instead, so what is listed of one is its members: the strings behind
-        // the reserve of GstWebRTCICECandidateStats under the shape that keeps
-        // them out, and the four members GstVideoCodecFrame keeps to its own
-        // implementation as Private.
+        // instead, so what is listed of one is its members: none of the
+        // strings behind the reserve of GstWebRTCICECandidateStats, which the
+        // accessors of a string read, and the four members GstVideoCodecFrame
+        // keeps to its own implementation as Private.
         Assert.Contains("- `RTSPMessage.type_data` \u2014 Union\n", report, StringComparison.Ordinal);
         Assert.DoesNotContain("- `VideoInfo.ABI`", report, StringComparison.Ordinal);
         Assert.DoesNotContain("- `VideoInfo.multiview_mode`", report, StringComparison.Ordinal);
-        Assert.Contains(
-            "- `WebRTCICECandidateStats.foundation` \u2014 Pointer\n",
-            report,
-            StringComparison.Ordinal);
+        Assert.DoesNotContain("- `WebRTCICECandidateStats.foundation`", report, StringComparison.Ordinal);
         Assert.Contains("- `VideoCodecFrame.ts` \u2014 Private\n", report, StringComparison.Ordinal);
         Assert.Contains(
             "- `VideoFormatInfo.tile_info` \u2014 InlineArray(struct element)\n",
@@ -657,10 +659,12 @@ public sealed class ClassEmitterTests
         // GstRTSPTimeRange embeds four GstRTSPTime by value and hands all four
         // out. A field that lands on a machine address is not bound, and
         // neither is one that only a hand written member reads through, which
-        // is what keeps the two ends of the rule from drifting.
+        // is what keeps the two ends of the rule from drifting. The nick of a
+        // format definition is off the ledger all the same: the address stayed
+        // where it is and the string accessor beside it is what binds it.
         Assert.DoesNotContain("- `RTSPTimeRange.min`", report, StringComparison.Ordinal);
         Assert.DoesNotContain("- `VideoMetaTransformMatrix.in_rectangle`", report, StringComparison.Ordinal);
-        Assert.Contains("- `FormatDefinition.nick` \u2014 Pointer\n", report, StringComparison.Ordinal);
+        Assert.DoesNotContain("- `FormatDefinition.nick`", report, StringComparison.Ordinal);
         Assert.Contains("- `VideoMetaTransform.in_info` \u2014 Pointer\n", report, StringComparison.Ordinal);
         Assert.Contains("- `VideoInfo.finfo` \u2014 Pointer\n", report, StringComparison.Ordinal);
         Assert.Contains("- `AudioInfo.finfo` \u2014 Pointer\n", report, StringComparison.Ordinal);
@@ -678,15 +682,21 @@ public sealed class ClassEmitterTests
     {
         // A field the overlays name a member for is not a gap, so it is kept
         // out of the ledger above and listed here with what answers it. The
-        // flow return of a pad probe is the one entry: the C function
+        // flow return of a pad probe is one: the C function
         // gst_pad_probe_info_get_flow_return reads that very field, and the
-        // generated pair is what a caller uses.
+        // generated pair is what a caller uses. The name and the description of
+        // a visualization are the other two, which shipped hand written.
         string report = Generated.SkipReport;
 
-        Assert.Equal(1, Generated.Census.ExposedFieldCount());
-        Assert.Contains("## Fields exposed elsewhere (1)\n", report, StringComparison.Ordinal);
+        Assert.Equal(3, Generated.Census.ExposedFieldCount());
+        Assert.Contains("## Fields exposed elsewhere (3)\n", report, StringComparison.Ordinal);
         Assert.Contains(
             "### Gst (1)\n\n- `PadProbeInfo.flow_ret` — GetFlowReturn\n",
+            report,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "### GstPlay (2)\n\n- `PlayVisualization.description` — hand written\n"
+            + "- `PlayVisualization.name` — hand written\n",
             report,
             StringComparison.Ordinal);
         Assert.DoesNotContain("- `PadProbeInfo.flow_ret` — Other", report, StringComparison.Ordinal);

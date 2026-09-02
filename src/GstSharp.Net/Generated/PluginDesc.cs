@@ -49,6 +49,108 @@ public sealed unsafe partial class PluginDesc
         }
     }
 
+    /// <summary>a unique name of the plugin</summary>
+    public string Name
+    {
+        get
+        {
+            string value = Gst.Interop.GMarshal.PtrToStringUtf8(((PluginDescRaw*)Handle)->Name)
+                ?? throw new System.InvalidOperationException("The 'name' field of GstPluginDesc is null.");
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>description of plugin</summary>
+    public string Description
+    {
+        get
+        {
+            string value = Gst.Interop.GMarshal.PtrToStringUtf8(((PluginDescRaw*)Handle)->Description)
+                ?? throw new System.InvalidOperationException("The 'description' field of GstPluginDesc is null.");
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>version of the plugin</summary>
+    public string Version
+    {
+        get
+        {
+            string value = Gst.Interop.GMarshal.PtrToStringUtf8(((PluginDescRaw*)Handle)->Version)
+                ?? throw new System.InvalidOperationException("The 'version' field of GstPluginDesc is null.");
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>effective license of plugin</summary>
+    public string License
+    {
+        get
+        {
+            string value = Gst.Interop.GMarshal.PtrToStringUtf8(((PluginDescRaw*)Handle)->License)
+                ?? throw new System.InvalidOperationException("The 'license' field of GstPluginDesc is null.");
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>source module plugin belongs to</summary>
+    public string Source
+    {
+        get
+        {
+            string value = Gst.Interop.GMarshal.PtrToStringUtf8(((PluginDescRaw*)Handle)->Source)
+                ?? throw new System.InvalidOperationException("The 'source' field of GstPluginDesc is null.");
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>shipped package plugin belongs to</summary>
+    public string Package
+    {
+        get
+        {
+            string value = Gst.Interop.GMarshal.PtrToStringUtf8(((PluginDescRaw*)Handle)->Package)
+                ?? throw new System.InvalidOperationException("The 'package' field of GstPluginDesc is null.");
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>URL to provider of plugin</summary>
+    public string Origin
+    {
+        get
+        {
+            string value = Gst.Interop.GMarshal.PtrToStringUtf8(((PluginDescRaw*)Handle)->Origin)
+                ?? throw new System.InvalidOperationException("The 'origin' field of GstPluginDesc is null.");
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>
+    /// date time string in ISO 8601
+    ///     format (or rather, a subset thereof), or %NULL. Allowed are the
+    ///     following formats: "YYYY-MM-DD" and "YYY-MM-DDTHH:MMZ" (with
+    ///     'T' a separator and 'Z' indicating UTC/Zulu time). This field
+    ///     should be set via the GST_PACKAGE_RELEASE_DATETIME
+    ///     preprocessor macro.
+    /// </summary>
+    public string? ReleaseDatetime
+    {
+        get
+        {
+            string? value = Gst.Interop.GMarshal.PtrToStringUtf8(((PluginDescRaw*)Handle)->ReleaseDatetime);
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
     /// <summary>Wraps a native <c>GstPluginDesc</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
     /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>

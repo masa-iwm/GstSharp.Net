@@ -189,6 +189,15 @@ internal sealed class RecordEmitter
                     }
                 }
 
+                // A field that lands on a bare pointer binds nothing on its
+                // own, so the structure declares the typed accessors of what
+                // its pointers point at beside them, exactly as a wrapper does.
+                accessors = BuildStructAccessors(ns, record, layout);
+                foreach (Accessor accessor in accessors)
+                {
+                    boundFields.Add(accessor.Field.Name);
+                }
+
                 break;
 
             case TypeKind.MiniObject:
@@ -241,7 +250,13 @@ internal sealed class RecordEmitter
         // reported as colliding rather than the field silently losing.
         if (accessors.Count > 0)
         {
-            accessors = KeepUnclaimedAccessors(module, qualifiedName, kind, typeName, accessors);
+            accessors = KeepUnclaimedAccessors(
+                module,
+                qualifiedName,
+                kind,
+                typeName,
+                kind == TypeKind.PlainStruct ? layout : null,
+                accessors);
         }
 
         // The members of a reserved ABI union are only declared when an
@@ -281,7 +296,7 @@ internal sealed class RecordEmitter
             switch (kind)
             {
                 case TypeKind.PlainStruct:
-                    WriteStruct(writer, module, record, typeName, layout!, surface);
+                    WriteStruct(writer, module, record, typeName, layout!, accessors, surface);
                     break;
 
                 case TypeKind.MiniObject:
@@ -702,6 +717,7 @@ internal sealed class RecordEmitter
         GirRecord record,
         string typeName,
         IReadOnlyList<LayoutField> layout,
+        IReadOnlyList<Accessor> accessors,
         TypeSurface surface)
     {
         XmlDocWriter.Write(writer, record.Doc, FallbackSummary(record, "structure"), record);
@@ -740,6 +756,7 @@ internal sealed class RecordEmitter
                 inline);
         }
 
+        WriteAccessors(writer, record, accessors);
         ClassEmitter.WriteMembers(writer, surface, module, first: false);
         writer.CloseBlock();
     }
@@ -1042,8 +1059,21 @@ internal sealed class RecordEmitter
         writer.OpenBlock();
         writer.WriteLine("get");
         writer.OpenBlock();
-        writer.WriteLine(accessor.TypeName + " value = " + accessor.Expression + ";");
-        writer.WriteLine("System.GC.KeepAlive(this);");
+        if (accessor.NullFallback is { } fallback)
+        {
+            writer.WriteLine(accessor.TypeName + " value = " + accessor.Expression);
+            writer.WriteLine("    ?? " + fallback + ";");
+        }
+        else
+        {
+            writer.WriteLine(accessor.TypeName + " value = " + accessor.Expression + ";");
+        }
+
+        if (accessor.KeepAlive)
+        {
+            writer.WriteLine("System.GC.KeepAlive(this);");
+        }
+
         writer.WriteLine("return value;");
         writer.CloseBlock();
         writer.CloseBlock();
@@ -1080,6 +1110,11 @@ internal sealed class RecordEmitter
     /// <param name="qualifiedName">The gir name of the record, for the report.</param>
     /// <param name="kind">The classification of the record.</param>
     /// <param name="typeName">The C# name of the wrapper.</param>
+    /// <param name="fields">
+    /// The laid out fields of a value projected structure, whose names sit in
+    /// the same declaration space, or <see langword="null"/> for a wrapper,
+    /// whose storage is a mirror of its own.
+    /// </param>
     /// <param name="accessors">The accessors of the layout, in field order.</param>
     /// <returns>The accessors that keep their name.</returns>
     /// <remarks>
@@ -1094,9 +1129,18 @@ internal sealed class RecordEmitter
         string qualifiedName,
         TypeKind kind,
         string typeName,
+        IReadOnlyList<LayoutField>? fields,
         IReadOnlyList<Accessor> accessors)
     {
         HashSet<string> used = new(ReservedNames(kind, typeName), StringComparer.Ordinal);
+
+        // A value projected structure carries its fields in the declaration
+        // space its accessors go into, so the storage claims its name first.
+        foreach (LayoutField field in fields ?? [])
+        {
+            used.Add(field.Name);
+        }
+
         List<Accessor> kept = [];
         foreach (Accessor accessor in accessors)
         {
@@ -1193,6 +1237,10 @@ internal sealed class RecordEmitter
             {
                 accessors.Add(accessor);
             }
+            else if (PointerAccessor(ns, record, cast, field, keepAlive: true) is { } indirect)
+            {
+                accessors.Add(indirect);
+            }
         }
 
         unionMembers = UnionMemberAccessors(ns, record, typeName, layout, accessors);
@@ -1264,6 +1312,152 @@ internal sealed class RecordEmitter
     }
 
     /// <summary>
+    /// Plans the get only properties a value projected structure reads its own
+    /// storage through. Only the fields that land on a pointer are answered
+    /// here: everything else is a public field of the structure already, and a
+    /// property of the same name would not compile beside it.
+    /// </summary>
+    /// <param name="ns">The gir namespace of the record.</param>
+    /// <param name="record">The record being emitted.</param>
+    /// <param name="layout">Its laid out fields.</param>
+    /// <returns>The accessors, in field order.</returns>
+    /// <remarks>
+    /// The pointer itself stays where it is. It is public API that shipped, and
+    /// it is the only way to reach an address the type map has no spelling for,
+    /// so the typed accessor is added beside it under the name the gir gives
+    /// the field and the storage keeps the Ptr suffix.
+    /// </remarks>
+    private List<Accessor> BuildStructAccessors(
+        GirNamespace ns,
+        GirRecord record,
+        IReadOnlyList<LayoutField> layout)
+    {
+        List<Accessor> accessors = [];
+        foreach (LayoutField field in layout)
+        {
+            if (IsExposedElsewhere(record, field.Field))
+            {
+                continue;
+            }
+
+            if (PointerAccessor(ns, record, string.Empty, field, keepAlive: false) is { } accessor)
+            {
+                accessors.Add(accessor);
+            }
+        }
+
+        return accessors;
+    }
+
+    /// <summary>
+    /// Plans the get only property of a field that holds the address of
+    /// something the binding can hand out.
+    /// </summary>
+    /// <param name="ns">The gir namespace of the record.</param>
+    /// <param name="record">The declaring record, which the overlays are keyed by.</param>
+    /// <param name="cast">
+    /// The expression that reads the storage, ending in <c>-&gt;</c>, or the
+    /// empty string when the structure is the storage.
+    /// </param>
+    /// <param name="field">The field to read.</param>
+    /// <param name="keepAlive">Whether the read has to keep the instance reachable.</param>
+    /// <returns>The accessor, or <see langword="null"/> when the pointee has no projection.</returns>
+    /// <remarks>
+    /// A string is copied out of the structure on every read, which is what
+    /// makes the property safe to hold on to: the storage belongs to the C
+    /// structure and may be freed or replaced with it.
+    /// </remarks>
+    private Accessor? PointerAccessor(
+        GirNamespace ns,
+        GirRecord record,
+        string cast,
+        LayoutField field,
+        bool keepAlive)
+    {
+        if (field.IsPrivate
+            || field.InlineArray is not null
+            || field.Field.Type is not { IsPointer: true } type)
+        {
+            return null;
+        }
+
+        if (MappedPointee(ns, type) is not { } mapped
+            || mapped.Kind is not (MarshalKind.Utf8String or MarshalKind.FilenameString))
+        {
+            return null;
+        }
+
+        string expression = "Gst.Interop.GMarshal.PtrToStringUtf8(" + cast + field.PascalName + ")";
+        return IsNonNullable(record, field.Field)
+            ? new Accessor(
+                field.Field,
+                field.ValueName,
+                "string",
+                expression,
+                KeepAlive: keepAlive,
+                NullFallback: NullFallback(record, field.Field))
+            : new Accessor(field.Field, field.ValueName, "string?", expression, KeepAlive: keepAlive);
+    }
+
+    /// <summary>
+    /// Maps what a pointer field points at, without reporting a name the run
+    /// cannot resolve.
+    /// </summary>
+    /// <param name="ns">The gir namespace of the record.</param>
+    /// <param name="type">The type of the field.</param>
+    /// <returns>The mapping, or <see langword="null"/> when there is none.</returns>
+    /// <remarks>
+    /// An unresolved name is a fault in a signature, where the type map reports
+    /// it as GEN0001 and falls back to an address. Here it is not: a field
+    /// whose pointee this run cannot name keeps the address it already has and
+    /// stays on the ledger, which says the same thing without a diagnostic that
+    /// nothing can act on.
+    /// </remarks>
+    private MappedType? MappedPointee(GirNamespace ns, GirTypeRef type)
+    {
+        if (type.Name is not { } name)
+        {
+            return null;
+        }
+
+        return Repository.IsPrimitive(_repository.ResolveAliasedName(name, ns))
+            || _repository.Resolve(name, ns) is not null
+                ? _types.Map(type, ns)
+                : null;
+    }
+
+    /// <summary>
+    /// Tests whether the overlays state that a field never holds the null
+    /// pointer, and records that the entry was applied.
+    /// </summary>
+    /// <param name="record">The declaring record.</param>
+    /// <param name="field">The field to test.</param>
+    /// <returns><see langword="true"/> when the accessor is non nullable.</returns>
+    private bool IsNonNullable(GirRecord record, GirField field)
+    {
+        string key = FieldSkipKey(record, field);
+        if (_overlays.GetFieldAnnotation(key) is not { IsStated: true })
+        {
+            return false;
+        }
+
+        _census.AnnotatedField(key);
+        return true;
+    }
+
+    /// <summary>
+    /// Spells what a non nullable accessor throws when the field holds the null
+    /// pointer after all, which is the accessor form of the check a non
+    /// nullable return of a call carries.
+    /// </summary>
+    /// <param name="record">The declaring record.</param>
+    /// <param name="field">The field being read.</param>
+    /// <returns>The throw expression.</returns>
+    private static string NullFallback(GirRecord record, GirField field) =>
+        "throw new System.InvalidOperationException(\"The '" + field.Name + "' field of "
+            + CTypeOf(record) + " is null.\")";
+
+    /// <summary>
     /// Lays out the members of the reserved ABI union of a record and adds an
     /// accessor for every one of them that is projected onto a value.
     /// </summary>
@@ -1319,10 +1513,18 @@ internal sealed class RecordEmitter
             + typeName + RawSuffix + "*)Handle)->" + unionField.PascalName + ")->";
         foreach (LayoutField member in members)
         {
-            if (!IsExposedElsewhere(record, member.Field)
-                && ValueAccessor(ns, cast, member) is { } accessor)
+            if (IsExposedElsewhere(record, member.Field))
+            {
+                continue;
+            }
+
+            if (ValueAccessor(ns, cast, member) is { } accessor)
             {
                 accessors.Add(accessor);
+            }
+            else if (PointerAccessor(ns, record, cast, member, keepAlive: true) is { } indirect)
+            {
+                accessors.Add(indirect);
             }
         }
 
@@ -1660,7 +1862,8 @@ internal sealed class RecordEmitter
             }
 
             GirField field = record.Fields[i];
-            string pascalName = PublicFieldName(ns, owner, field, typeName, barePointer: false);
+            string valueName = PublicFieldName(ns, owner, field, typeName, barePointer: false);
+            string pascalName = valueName;
 
             FieldProjection? projection = Project(ns, field, pascalName, publicSurface);
             if (projection is null)
@@ -1693,6 +1896,7 @@ internal sealed class RecordEmitter
                 field,
                 hidden ? _names.PrivateFieldName(ns, owner, field) : pascalName,
                 pascalName,
+                valueName,
                 projection.TypeName,
                 hidden,
                 projection.InlineArray,
@@ -1785,6 +1989,7 @@ internal sealed class RecordEmitter
         InlineArrayInfo inline = new(pascalName + "Array", NativeInt, length);
         return new LayoutField(
             new GirField { Name = union.Name },
+            pascalName,
             pascalName,
             pascalName,
             inline.TypeName,
@@ -2106,6 +2311,13 @@ internal sealed class RecordEmitter
     /// <param name="Field">The gir field.</param>
     /// <param name="Name">The name the field is emitted under.</param>
     /// <param name="PascalName">The name the field carries when it is not private.</param>
+    /// <param name="ValueName">
+    /// The name an accessor of the value behind the field carries. It differs
+    /// from <paramref name="PascalName"/> for a public field of a value
+    /// projected record that lands on a bare pointer: the field itself takes
+    /// the Ptr suffix and the accessor of what it points at keeps the name the
+    /// gir gives it.
+    /// </param>
     /// <param name="TypeName">The C# type of the field.</param>
     /// <param name="IsPrivate">Whether the field is private to the C implementation.</param>
     /// <param name="InlineArray">The inline storage type, for a fixed size array.</param>
@@ -2126,6 +2338,7 @@ internal sealed class RecordEmitter
         GirField Field,
         string Name,
         string PascalName,
+        string ValueName,
         string TypeName,
         bool IsPrivate,
         InlineArrayInfo? InlineArray,
@@ -2144,10 +2357,22 @@ internal sealed class RecordEmitter
     /// the mirror, because a public property cannot answer an internal type;
     /// the mirror then spells its own field with the promoted name.
     /// </param>
+    /// <param name="KeepAlive">
+    /// Whether the read has to keep the declaring instance reachable. A wrapper
+    /// reads through a handle it owns and does; a value projected structure
+    /// holds the storage itself and does not, and asking would box it.
+    /// </param>
+    /// <param name="NullFallback">
+    /// What the property throws when the expression answers the null pointer,
+    /// for a member whose type says it never does. This is the accessor form of
+    /// the check a non nullable return of a call carries.
+    /// </param>
     private sealed record Accessor(
         GirField Field,
         string Name,
         string TypeName,
         string Expression,
-        InlineArrayInfo? InlineArray = null);
+        InlineArrayInfo? InlineArray = null,
+        bool KeepAlive = true,
+        string? NullFallback = null);
 }

@@ -12,7 +12,7 @@ namespace Gst.Sdp;
 /// (their username and the address of the user's host) plus a session id and
 /// session version number.
 /// </summary>
-public sealed partial class SDPOrigin
+public sealed unsafe partial class SDPOrigin
 {
     /// <summary>The native instance.</summary>
     internal nint Handle;
@@ -20,6 +20,85 @@ public sealed partial class SDPOrigin
     /// <summary>Wraps a native <c>GstSDPOrigin</c>.</summary>
     /// <param name="handle">The native instance.</param>
     internal SDPOrigin(nint handle) => Handle = handle;
+
+    /// <summary>
+    /// the user's login on the originating host, or it is "-"
+    ///    if the originating host does not support the concept of user ids.
+    /// </summary>
+    public string? Username
+    {
+        get
+        {
+            string? value = Gst.Interop.GMarshal.PtrToStringUtf8(((SDPOriginRaw*)Handle)->Username);
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>
+    /// is a numeric string such that the tuple of @username, @sess_id,
+    ///    @nettype, @addrtype and @addr form a globally unique identifier for the
+    ///    session.
+    /// </summary>
+    public string? SessId
+    {
+        get
+        {
+            string? value = Gst.Interop.GMarshal.PtrToStringUtf8(((SDPOriginRaw*)Handle)->SessId);
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>a version number for this announcement</summary>
+    public string? SessVersion
+    {
+        get
+        {
+            string? value = Gst.Interop.GMarshal.PtrToStringUtf8(((SDPOriginRaw*)Handle)->SessVersion);
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>
+    /// the type of network. "IN" is defined to have the meaning
+    ///    "Internet".
+    /// </summary>
+    public string? Nettype
+    {
+        get
+        {
+            string? value = Gst.Interop.GMarshal.PtrToStringUtf8(((SDPOriginRaw*)Handle)->Nettype);
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>the type of @addr.</summary>
+    public string? Addrtype
+    {
+        get
+        {
+            string? value = Gst.Interop.GMarshal.PtrToStringUtf8(((SDPOriginRaw*)Handle)->Addrtype);
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>
+    /// the globally unique address of the machine from which the session was
+    ///     created.
+    /// </summary>
+    public string? Addr
+    {
+        get
+        {
+            string? value = Gst.Interop.GMarshal.PtrToStringUtf8(((SDPOriginRaw*)Handle)->Addr);
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
 
     /// <summary>Wraps a native <c>GstSDPOrigin</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>

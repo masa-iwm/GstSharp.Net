@@ -21,6 +21,34 @@ public sealed unsafe partial class SDPTime
     /// <param name="handle">The native instance.</param>
     internal SDPTime(nint handle) => Handle = handle;
 
+    /// <summary>
+    /// start time for the conference. The value is the decimal
+    ///     representation of Network Time Protocol (NTP) time values in seconds
+    /// </summary>
+    public string? Start
+    {
+        get
+        {
+            string? value = Gst.Interop.GMarshal.PtrToStringUtf8(((SDPTimeRaw*)Handle)->Start);
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>
+    /// stop time for the conference. The value is the decimal
+    ///     representation of Network Time Protocol (NTP) time values in seconds
+    /// </summary>
+    public string? Stop
+    {
+        get
+        {
+            string? value = Gst.Interop.GMarshal.PtrToStringUtf8(((SDPTimeRaw*)Handle)->Stop);
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
     /// <summary>Wraps a native <c>GstSDPTime</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
     /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>

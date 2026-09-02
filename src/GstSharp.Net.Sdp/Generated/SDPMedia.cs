@@ -18,6 +18,17 @@ public sealed unsafe partial class SDPMedia
     /// <param name="handle">The native instance.</param>
     internal SDPMedia(nint handle) => Handle = handle;
 
+    /// <summary>the media type</summary>
+    public string? Media
+    {
+        get
+        {
+            string? value = Gst.Interop.GMarshal.PtrToStringUtf8(((SDPMediaRaw*)Handle)->Media);
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
     /// <summary>the transport port to which the media stream will be sent</summary>
     public uint Port
     {
@@ -35,6 +46,28 @@ public sealed unsafe partial class SDPMedia
         get
         {
             uint value = ((SDPMediaRaw*)Handle)->NumPorts;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>the transport protocol</summary>
+    public string? Proto
+    {
+        get
+        {
+            string? value = Gst.Interop.GMarshal.PtrToStringUtf8(((SDPMediaRaw*)Handle)->Proto);
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>the media title</summary>
+    public string? Information
+    {
+        get
+        {
+            string? value = Gst.Interop.GMarshal.PtrToStringUtf8(((SDPMediaRaw*)Handle)->Information);
             System.GC.KeepAlive(this);
             return value;
         }

@@ -18,6 +18,18 @@ public sealed unsafe partial class StaticPadTemplate
     /// <param name="handle">The native instance.</param>
     internal StaticPadTemplate(nint handle) => Handle = handle;
 
+    /// <summary>the name of the template</summary>
+    public string NameTemplate
+    {
+        get
+        {
+            string value = Gst.Interop.GMarshal.PtrToStringUtf8(((StaticPadTemplateRaw*)Handle)->NameTemplate)
+                ?? throw new System.InvalidOperationException("The 'name_template' field of GstStaticPadTemplate is null.");
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
     /// <summary>the direction of the template</summary>
     public Gst.PadDirection Direction
     {

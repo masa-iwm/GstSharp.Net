@@ -52,6 +52,28 @@ public sealed unsafe partial class RTSPTransport
         }
     }
 
+    /// <summary>the destination ip/hostname</summary>
+    public string? Destination
+    {
+        get
+        {
+            string? value = Gst.Interop.GMarshal.PtrToStringUtf8(((RTSPTransportRaw*)Handle)->Destination);
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>the source ip/hostname</summary>
+    public string? Source
+    {
+        get
+        {
+            string? value = Gst.Interop.GMarshal.PtrToStringUtf8(((RTSPTransportRaw*)Handle)->Source);
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
     /// <summary>the number of layers</summary>
     public uint Layers
     {

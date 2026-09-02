@@ -11,7 +11,7 @@ namespace Gst.Sdp;
 /// The contents of the SDP "k=" field which is used to convey encryption
 /// keys.
 /// </summary>
-public sealed partial class SDPKey
+public sealed unsafe partial class SDPKey
 {
     /// <summary>The native instance.</summary>
     internal nint Handle;
@@ -19,6 +19,28 @@ public sealed partial class SDPKey
     /// <summary>Wraps a native <c>GstSDPKey</c>.</summary>
     /// <param name="handle">The native instance.</param>
     internal SDPKey(nint handle) => Handle = handle;
+
+    /// <summary>the encryption type</summary>
+    public string? Type
+    {
+        get
+        {
+            string? value = Gst.Interop.GMarshal.PtrToStringUtf8(((SDPKeyRaw*)Handle)->Type);
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>the encryption data</summary>
+    public string? Data
+    {
+        get
+        {
+            string? value = Gst.Interop.GMarshal.PtrToStringUtf8(((SDPKeyRaw*)Handle)->Data);
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
 
     /// <summary>Wraps a native <c>GstSDPKey</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
