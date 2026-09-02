@@ -744,20 +744,29 @@ public sealed class ClassEmitterTests
     [Fact]
     public void TheCommittedOverlaysCarryNoStaleEntry()
     {
-        // Each of the four names an overlay entry that matched nothing: an
+        // Each of the five names an overlay entry that matched nothing: an
         // array correction on no array (GEN0020), a hand bound ledger entry
         // the run never saw skipped (GEN0023), an annotation override on no
         // callable, parameter or signal argument (GEN0024), a field skip on no
-        // field of an emitted record (GEN0025). Every one of them describes a
-        // gir that has moved on, and every one of them is a warning, which the
-        // verbs do not fail on - so this is what holds the committed overlays
-        // to them.
+        // field of an emitted record (GEN0025), a field annotation that
+        // corrected no field (GEN0026). Every one of them describes a gir that
+        // has moved on, and every one of them is a warning, which the verbs do
+        // not fail on - so this is what holds the committed overlays to them.
+        //
+        // GEN0026 is the one that goes wrong most quietly. A stale
+        // 'nullable: false' key - a field a gir refresh renamed or removed -
+        // stops being applied, and the accessor that was a non nullable string
+        // becomes a 'string?'. Nothing else moves: the field is still bound, so
+        // no census number changes and no ledger line appears, and the first
+        // report of it would be the surface check failing on a package that is
+        // already being published.
         foreach (Diagnostic diagnostic in Generated.Diagnostics)
         {
             Assert.NotEqual("GEN0020", diagnostic.Code);
             Assert.NotEqual("GEN0023", diagnostic.Code);
             Assert.NotEqual("GEN0024", diagnostic.Code);
             Assert.NotEqual("GEN0025", diagnostic.Code);
+            Assert.NotEqual("GEN0026", diagnostic.Code);
         }
     }
 

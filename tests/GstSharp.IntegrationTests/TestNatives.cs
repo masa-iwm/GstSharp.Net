@@ -255,4 +255,23 @@ internal static unsafe partial class TestNatives
     /// </remarks>
     [LibraryImport("GObject", EntryPoint = "g_object_new_with_properties")]
     internal static partial nint ObjectNewWithProperties(nuint objectType, uint count, nint names, nint values);
+
+    /// <summary>Reads the registry entry of a format.</summary>
+    /// <param name="format">The format to describe.</param>
+    /// <returns>
+    /// The address of the <c>GstFormatDefinition</c> the registry keeps, or
+    /// <c>0</c> for a format that is not registered. The storage belongs to the
+    /// registry and lives as long as the process.
+    /// </returns>
+    /// <remarks>
+    /// The binding does not offer this one: the return is a pointer to a plain
+    /// structure, which the planner refuses because there is no projection of a
+    /// bare address into one that it can check
+    /// (<c>UnsupportedSignature</c> in <c>girs/skip-report.md</c>). It is the
+    /// only producer of a <c>GstFormatDefinition</c> in the C API that hands one
+    /// out singly, so it is what the accessors of its two string fields are
+    /// measured against.
+    /// </remarks>
+    [LibraryImport("Gst", EntryPoint = "gst_format_get_details")]
+    internal static partial nint FormatGetDetails(int format);
 }

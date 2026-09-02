@@ -311,11 +311,13 @@ internal sealed class EmissionCensus
         writer.WriteLine("once, under its own name, because the record ends where it sits; a reserved ABI");
         writer.WriteLine("union the mirror lays out is listed member by member instead, under the name of");
         writer.WriteLine("the member alone, and a member the gir keeps to the C implementation is listed");
-        writer.WriteLine("as `Private` rather than left out. A field a hand written member reads through,");
-        writer.WriteLine("such as the `finfo` of `GstVideoInfo`, stays listed as well - the ledger measures");
-        writer.WriteLine("what the generator binds, the same convention the hand bound entry points above");
-        writer.WriteLine("follow - unless the overlays register it under `fieldSkips`, which moves it into");
-        writer.WriteLine("the section below.");
+        writer.WriteLine("as `Private` rather than left out. A field a hand written member reads through");
+        writer.WriteLine("stays listed as well - the ledger measures what the generator binds, the same");
+        writer.WriteLine("convention the hand bound entry points above follow - unless the overlays");
+        writer.WriteLine("register it under `fieldSkips`, which moves it into the section below. A field");
+        writer.WriteLine("the overlays hold back under `fieldAnnotations` with `accessor: false` stays");
+        writer.WriteLine("here under its own shape and is meant to: the entry says why the binding leaves");
+        writer.WriteLine("it unbound, and this ledger is where that is counted.");
 
         foreach ((string module, SortedDictionary<string, string> fields) in _droppedFields)
         {

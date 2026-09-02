@@ -150,7 +150,8 @@ the day it is written, and an entry the generator never sees skipped — because
 the symbol is generated after all, or no longer exists, or is misspelt — is
 reported as `GEN0023`. That is a warning, so `generate` and `verify` still exit
 zero on it; what it fails is the test suite, which asserts that a run over the
-committed overlays reports no `GEN0020`, `GEN0023`, `GEN0024` or `GEN0025`.
+committed overlays reports no `GEN0020`, `GEN0023`, `GEN0024`, `GEN0025` or
+`GEN0026`.
 
 A hand bound consumer keeps its callback type generated: a `<callback>` whose
 only consumers are on the `handBound` ledger is emitted all the same, so the
@@ -179,6 +180,25 @@ a hand written one does (`handBound`). An entry moves the field into the
 emitting an accessor for it, which is what makes it the answer to a name a
 `Custom/` member already carries. A key that matches no field of an emitted
 record, or an entry that states neither half, is reported as `GEN0025`.
+
+What no gir annotation carries about a field goes in the `fieldAnnotations`
+object of the same file, keyed the same way. Exactly one of two corrections has
+to be stated. `nullable: false` says the field never holds the null pointer,
+which a gir cannot spell on a `<field>` at all — the attribute exists on
+parameters and on return values only — so a field projected onto a reference is
+nullable unless an entry says otherwise, and one that says so emits the accessor
+non nullable and reports the null pointer as an `InvalidOperationException`
+rather than handing it out. `accessor: false` holds the field back from the
+accessors altogether: the pointer stays on the mirror and the field stays on the
+`## Fields` ledger under its own shape. The reason belongs in the `$comment` of
+the entry rather than in a key of its own, because it differs per field — a
+pointer the library replaces or clears while a consumer holds the structure,
+whose reference a `transfer none` projection takes after the read and therefore
+possibly too late; an accessor whose name a member that shipped already carries;
+or a field a wave deliberately left for the next one. Every entry cites the C
+file and line its claim rests on in the same `$comment`. A key that matches no
+field an accessor would be emitted for, an entry that states neither correction
+or only the default, and one that states both are reported as `GEN0026`.
 
 Never bump a number you cannot account for. Census drift that nobody asked for
 is a bug in the change — typically an accidental skip: an overlay entry that

@@ -300,7 +300,7 @@ internal sealed class PlatformSupport
 /// emitting an accessor for it; a key that matches no field is reported as
 /// stale.</description></item>
 /// <item><description><c>fieldAnnotations</c>: keyed like <c>fieldSkips</c>
-/// and stating what no gir annotation carries about a record field. Today that
+/// and stating what no gir annotation carries about a record field. Today
 /// that is <c>nullable</c>, read only as <c>false</c>, which says the field
 /// never holds the null pointer and emits the accessor of it non nullable, and
 /// <c>accessor</c>, read only as <c>false</c>, which holds the field back from

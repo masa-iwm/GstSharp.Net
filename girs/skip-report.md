@@ -1136,11 +1136,13 @@ interop layer and stays listed. A union the layout stops in front of is listed
 once, under its own name, because the record ends where it sits; a reserved ABI
 union the mirror lays out is listed member by member instead, under the name of
 the member alone, and a member the gir keeps to the C implementation is listed
-as `Private` rather than left out. A field a hand written member reads through,
-such as the `finfo` of `GstVideoInfo`, stays listed as well - the ledger measures
-what the generator binds, the same convention the hand bound entry points above
-follow - unless the overlays register it under `fieldSkips`, which moves it into
-the section below.
+as `Private` rather than left out. A field a hand written member reads through
+stays listed as well - the ledger measures what the generator binds, the same
+convention the hand bound entry points above follow - unless the overlays
+register it under `fieldSkips`, which moves it into the section below. A field
+the overlays hold back under `fieldAnnotations` with `accessor: false` stays
+here under its own shape and is meant to: the entry says why the binding leaves
+it unbound, and this ledger is where that is counted.
 
 ### GES (1)
 

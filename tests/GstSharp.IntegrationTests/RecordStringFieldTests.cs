@@ -83,6 +83,34 @@ public sealed class RecordStringFieldTests
     }
 
     /// <summary>
+    /// A format definition is a value projected structure, so its two strings
+    /// are read off the storage the caller holds rather than through a handle.
+    /// The rows of the registry are built from string literals, which is why
+    /// the overlays state both non nullable.
+    /// </summary>
+    [Fact]
+    public unsafe void AFormatDefinitionDescribesItselfByNickAndDescription()
+    {
+        // The binding hands no GstFormatDefinition out - the return of
+        // gst_format_get_details is a pointer to a plain structure, which the
+        // planner refuses - so the test calls the C function and reads the
+        // structure the registry keeps for the life of the process.
+        nint details = TestNatives.FormatGetDetails((int)Format.Bytes);
+
+        Assert.NotEqual(nint.Zero, details);
+
+        FormatDefinition definition = *(FormatDefinition*)details;
+
+        Assert.Equal(Format.Bytes, definition.Value);
+        Assert.Equal("bytes", definition.Nick);
+        Assert.NotEmpty(definition.Description);
+
+        // The address the registry filled in is still there beside the
+        // accessor: the raw field is public API that shipped and is left alone.
+        Assert.NotEqual(nint.Zero, definition.NickPtr);
+    }
+
+    /// <summary>
     /// A parsed RTSP URL fills its host and its absolute path on every
     /// successful parse and leaves the optional parts NULL, which is exactly
     /// the split the overlays state.
