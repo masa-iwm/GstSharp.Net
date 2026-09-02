@@ -183,10 +183,12 @@ so the binding zeroes it before the call and reads a null pointer back as
 
 ## Fields a wrapper reads
 
-A generated field accessor is a get-only property that reads through the handle
-of the wrapper. It hands out a **copy** of what the field holds and owns
-nothing; a disposed wrapper refuses it rather than dereferencing the null
-pointer. Two shapes are worth spelling out.
+A generated field accessor reads through the handle of the wrapper at the
+moment it is called, so it answers what the library has put there rather than a
+snapshot; a disposed wrapper refuses it rather than dereferencing the null
+pointer. A scalar field is a get-only property that hands out a copy and owns
+nothing. Five further shapes are worth spelling out, because each says
+something different about what the caller is left holding.
 
 * **A fixed size field is answered as inline storage.** `VideoInfo.Stride`,
   `VideoInfo.Offset` and `VideoFormatInfo.Depth` hand out a struct nested in
@@ -194,22 +196,70 @@ pointer. Two shapes are worth spelling out.
   out parameter of a caller allocated array uses. What comes back is a copy of
   the elements, so writing into it changes nothing native: the fields are set
   through the calls that own them, `VideoInfo.SetFormat` and `VideoInfo.Align`.
-* **A wrapper handed out for a field is borrowed.** `VideoInfo.FormatInfo` and
-  `AudioInfo.FormatInfo` point at the per format description the library keeps
-  for the life of the process. The wrapper takes no part in its ownership,
-  there is nothing to dispose, and what it reads says nothing about the
-  `VideoInfo` it came from, which may have moved on to another format by then.
-  There is always one to hand out, so the property is not nullable: an instance
-  that carries no description is a zeroed block of memory and is reported as an
-  `InvalidOperationException`.
+* **A string is copied on read.** `RTSPUrl.Host`, `PluginDesc.Name` and the
+  strings of a session description hand out a managed string built from the
+  UTF-8 the field points at. Nothing is borrowed and nothing is freed: the
+  storage belongs to the C structure and is released or replaced with it, while
+  what comes back is the caller's and outlives it. A string field is nullable
+  unless `fieldAnnotations` in `girs/overlays/fixups.json` states otherwise
+  with the C file and line the claim rests on, because no gir spells `nullable`
+  on a field at all; a non-nullable one reports the null pointer as an
+  `InvalidOperationException` rather than handing it out.
+* **A wrapper handed out for a field is projected the way a `transfer none`
+  return of the same type is**, which is what decides both the ownership and
+  the shape of the member.
+  * A **`GObject`** is interned, so the field is a **property** and the wrapper
+    it answers is the same instance every other lookup of that object hands
+    out. It owns a reference of its own and stays valid after the structure the
+    field sits in is gone; leave it to the garbage collector unless this code
+    created the object. `Memory.Allocator` and `CollectData.Pad` are these.
+  * An **opaque record** owns nothing, so the field is a **property** as well
+    and the wrapper is a borrow. `VideoInfo.FormatInfo` and
+    `AudioInfo.FormatInfo` point at the per format description the library
+    keeps for the life of the process. There is nothing to dispose, and what it
+    reads says nothing about the `VideoInfo` it came from, which may have moved
+    on to another format by then. There is always one to hand out, so the
+    property is not nullable: an instance that carries no description is a
+    zeroed block of memory and is reported as an `InvalidOperationException`.
+  * A **mini object or a boxed value** comes back owning a reference of its
+    own — a mini object is referenced, a boxed value copied — so the caller
+    disposes what a read produced and the member is a **`Get` method**, the
+    same rule the generated properties follow. `Memory.GetParent()` and
+    `VideoMeta.GetBuffer()` are these.
+* **The read has to happen while the structure means what the caller thinks.**
+  A structure the library only fills for the length of one call holds nothing
+  outside it: `MapInfo.GetMemory()` answers the mapped memory between
+  `Gst.Memory.Map` and `Gst.Memory.Unmap` and nothing afterwards, and
+  `VideoMetaTransform.GetInInfo()` answers the info of the transform inside the
+  `GstMetaTransformFunction` it was handed to and nothing afterwards. What the
+  read produces is the caller's and survives the scope; reading after it does
+  not.
+* **An embedded record is copied.** A structure another one embeds by value is
+  handed out as a copy of itself: a plain structure by the assignment, as
+  `RTSPTransport.ClientPort` and `VideoInfo.Colorimetry` do, and a boxed value
+  through `g_boxed_copy`, as `VideoInfoDmaDrm.GetVinfo()` does, which is why
+  that one is a `Get` method the caller disposes. Either way the copy outlives
+  the structure it came out of and writing into it changes nothing native. An
+  embedded record whose wrapper owns nothing is not handed out at all: it would
+  be a borrow of storage the declaring record owns, with no lifetime this
+  document could state for it.
 
 A public field the generator binds nothing for is listed in the `## Fields`
-section of `girs/skip-report.md`, under the shape that kept it out. A field a
-hand written member reads through stays listed there, the same way a hand bound
-entry point stays on the skip list: what the ledger measures is the generated
-surface. The exception is a field registered under `fieldSkips` in
-`girs/overlays/fixups.json`, which names what does answer it and moves it to the
-`## Fields exposed elsewhere` section of the same report.
+section of `girs/skip-report.md`, under the shape that kept it out, or — when
+no shape accounts for it — under the cause: `HandWritten` for a wrapper the
+generator is never asked for accessors of, `NoLayout` for a record whose mirror
+collapsed, `CrossNamespaceEnum` for an enumeration this run does not emit. A
+field a hand written member reads through stays listed there, the same way a
+hand bound entry point stays on the skip list: what the ledger measures is the
+generated surface. There are two exceptions. A field registered under
+`fieldSkips` in `girs/overlays/fixups.json` names what does answer it and moves
+to the `## Fields exposed elsewhere` section of the same report. A field
+registered under `fieldAnnotations` with `accessor: false` stays on the ledger
+under its own shape and is deliberately left unbound; the `$comment` of the
+entry says why, which today is a pointer the library replaces or clears while a
+consumer holds the structure — the reference a `transfer none` projection takes
+is taken after the read and can be taken too late, and the C API answers those
+fields through accessors that read under the lock the field is written under.
 
 ## Calls that consume their argument
 
