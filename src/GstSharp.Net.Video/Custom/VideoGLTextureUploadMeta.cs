@@ -65,8 +65,14 @@ public sealed unsafe partial class VideoGLTextureUploadMeta
         // span is the caller's own storage rather than something to read past
         // the end of this one from.
         uint* block = stackalloc uint[MaxTextures];
+
+        // The zeroing is written out rather than left to .locals init, so that
+        // a future [SkipLocalsInit] cannot hand the vfunc the stack's leavings
+        // as the texture identifiers it does not copy over.
+        Span<uint> textures = new(block, MaxTextures);
+        textures.Clear();
         int copied = (int)Math.Min(declared, (uint)MaxTextures);
-        textureIds[..copied].CopyTo(new Span<uint>(block, copied));
+        textureIds[..copied].CopyTo(textures);
 
         int nativeResult = VideoGLTextureUploadMetaNative.Upload(Handle, block);
         GC.KeepAlive(this);

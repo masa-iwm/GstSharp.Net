@@ -525,6 +525,19 @@ public sealed class RejectionRulesTests
                   </parameter>
                 </parameters>
               </method>
+              <method name="get_flavour" c:identifier="gst_packet_get_flavour">
+                <return-value transfer-ownership="none">
+                  <type name="none" c:type="void"/>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="packet" transfer-ownership="none">
+                    <type name="Packet" c:type="GstPacket*"/>
+                  </instance-parameter>
+                  <parameter name="flavour" transfer-ownership="none">
+                    <type name="Kind" c:type="GstKind"/>
+                  </parameter>
+                </parameters>
+              </method>
               <method name="get_kind" c:identifier="gst_packet_get_kind">
                 <return-value transfer-ownership="none">
                   <type name="none" c:type="void"/>
@@ -1299,6 +1312,14 @@ public sealed class RejectionRulesTests
 
         Assert.DoesNotContain("gst_packet_get_ssrc", source, StringComparison.Ordinal);
         Assert.Contains("public void GetCount(uint count)", source, StringComparison.Ordinal);
+        // The seven refusals of the fixture share the count: the five
+        // members whose parameter is a pointer to a scalar, an enumeration
+        // or a bitfield, the setter whose callback type can no longer be
+        // planned, and the skew-requested signal. The callback type itself
+        // is not in the number - the census counts callables, and a
+        // callback type that is never claimed is simply not emitted. A
+        // refusal that lands under another reason moves the number.
+        Assert.Equal(7, run.Result.Census.SkippedCount("Gst", SkipReason.UnsupportedSignature));
     }
 
     [Fact]
@@ -1318,6 +1339,7 @@ public sealed class RejectionRulesTests
         Assert.DoesNotContain("SlavingFunc", callbacks, StringComparison.Ordinal);
         Assert.Contains("public delegate void ReadyFunc(", callbacks, StringComparison.Ordinal);
         Assert.Contains("public void SetReadyFunction(", source, StringComparison.Ordinal);
+        Assert.Equal(7, run.Result.Census.SkippedCount("Gst", SkipReason.UnsupportedSignature));
     }
 
     [Fact]
@@ -1333,6 +1355,7 @@ public sealed class RejectionRulesTests
 
         Assert.DoesNotContain("SkewRequested", source, StringComparison.Ordinal);
         Assert.Contains("CountChanged", source, StringComparison.Ordinal);
+        Assert.Equal(7, run.Result.Census.SkippedCount("Gst", SkipReason.UnsupportedSignature));
     }
 
     [Fact]
@@ -1397,6 +1420,32 @@ public sealed class RejectionRulesTests
             run.Result.Diagnostics,
             diagnostic => diagnostic.Code == "GEN0017" && diagnostic.Message.Contains(
                 "gst_packet_get_count#count",
+                StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void ADirectionOverrideDoesNotUnlockAnEnumerationPassedByValue()
+    {
+        // The enumeration reads the star the same way a scalar does, so the
+        // control is the same one: a parameter whose c:type carries no star is
+        // a value the callee reads, whatever the overlays say about its
+        // direction, and correcting it onto an out would hand the callee an
+        // address where it expects a member of the enumeration.
+        FixtureRun run = RunScalarWithOverlay(
+            """
+            {
+              "annotationOverrides": { "gst_packet_get_flavour#flavour": { "direction": "out" } }
+            }
+            """);
+
+        Assert.Contains(
+            "public void GetFlavour(Gst.Kind flavour)",
+            run.File("Packet.cs"),
+            StringComparison.Ordinal);
+        Assert.Contains(
+            run.Result.Diagnostics,
+            diagnostic => diagnostic.Code == "GEN0017" && diagnostic.Message.Contains(
+                "gst_packet_get_flavour#flavour",
                 StringComparison.Ordinal));
     }
 

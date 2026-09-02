@@ -696,6 +696,11 @@ again, so `SetFunction`, `SetCompareFunction`, `SetEventFunction`,
 `SetFlushFunction` and `SetQueryFunction` keep it alive for the life of the
 process. Install those once, at construction; a call per buffer or per state
 change leaks a handle each time. Their documentation says so on the parameter.
+`Gst.Audio.AudioBaseSink.SetCustomSlavingCallback` is annotated `notified`
+and degrades to `forever` on a replace and on a clear: the library discards
+the previous notification along with the previous callback
+(`gstaudiobasesink.c:761-765`) and runs only the last one it was left with,
+at dispose (`:315-316`).
 
 A callback parameter the gir marks `nullable` is a `Gst.Foo?` and is not
 guarded: the absence of a function is a value the C side acts on, not a mistake.

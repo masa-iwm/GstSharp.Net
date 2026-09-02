@@ -181,9 +181,13 @@ public unsafe partial class AudioBaseSink
     /// This passes <c>NULL</c> for the callback, its state and the
     /// notification, which is what the C documentation describes
     /// (<c>gstaudiobasesink.c:748-750</c>). The state of the handler that was
-    /// installed is <em>not</em> released by this call: the C function
-    /// overwrites the trio without running the notification it replaces, and
-    /// only the disposal of the sink runs it (<c>:315-316</c>).
+    /// installed is <em>never</em> released: the C function overwrites all
+    /// three slots without running the notification it replaces
+    /// (<c>:761-765</c>), so the notification slot is <c>NULL</c> afterwards
+    /// and the disposal of the sink, which runs whatever notification it finds
+    /// there (<c>:315-316</c>), runs nothing. The handle installed by
+    /// <see cref="SetCustomSlavingCallback(AudioBaseSinkCustomSlavingHandler)"/>
+    /// stays alive for the life of the process.
     /// </remarks>
     public void ClearCustomSlavingCallback()
     {

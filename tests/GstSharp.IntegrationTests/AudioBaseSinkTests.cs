@@ -184,6 +184,10 @@ public sealed unsafe class AudioBaseSinkTests
             (AudioBaseSinkCustomSlavingHandler)null!));
 
         sink.SetCustomSlavingCallback(static (s, etime, itime, reason) => 0);
+
+        // The handle the install left behind is leaked on purpose: the C setter
+        // overwrites the notification along with the callback, so the clear
+        // leaves nothing for the disposal below to run.
         sink.ClearCustomSlavingCallback();
     }
 
