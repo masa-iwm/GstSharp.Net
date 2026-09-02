@@ -181,6 +181,7 @@ public sealed class ClassEmitterTests
     [InlineData("GstWebRTC", 9, 4, 0, 1, 2, 37, 38, 7, 21)]
     [InlineData("GstNet", 5, 3, 0, 1, 0, 25, 17, 0, 4)]
     [InlineData("GstRtsp", 1, 10, 1, 1, 2, 114, 0, 1, 28)]
+    [InlineData("GstRtp", 5, 5, 0, 0, 0, 168, 21, 2, 9)]
     [InlineData("GstAllocators", 6, 0, 1, 0, 0, 23, 1, 0, 0)]
     [InlineData("GstTag", 3, 0, 1, 0, 0, 46, 0, 0, 0)]
     [InlineData("GstTranscoder", 2, 0, 0, 0, 3, 26, 9, 6, 0)]
@@ -226,6 +227,7 @@ public sealed class ClassEmitterTests
     [InlineData("GstWebRTC", 0, 2, 0, 0, 3, 0)]
     [InlineData("GstNet", 0, 3, 0, 0, 0, 0)]
     [InlineData("GstRtsp", 0, 13, 0, 0, 13, 0)]
+    [InlineData("GstRtp", 0, 24, 1, 2, 8, 0)]
     [InlineData("GstAllocators", 0, 0, 0, 0, 1, 0)]
     [InlineData("GstTag", 0, 0, 0, 0, 0, 0)]
     [InlineData("GstTranscoder", 0, 7, 0, 0, 0, 0)]
@@ -474,14 +476,15 @@ public sealed class ClassEmitterTests
         // Gst.ValueTable to GstSdp.MIKEYPayloadT, now read their fields through
         // a mirror and are therefore emitted with the unsafe modifier the
         // counting here keys on.
-        Assert.Equal(168, classes);
+        Assert.Equal(172, classes);
 
-        // 126 rather than 123 since the field accessors of a string and of a
+        // 127 rather than 123 since the field accessors of a string and of a
         // handle landed: GstSdp.SDPKey, GstSdp.SDPOrigin and
         // GstVideo.VideoCodecState declare no callable that reads a handle, so
         // the accessors of their fields are the first members of each to
-        // dereference the mirror.
-        Assert.Equal(126, records);
+        // dereference the mirror. The last one is Gst.Rtp.RTPSourceMeta, the
+        // only sealed class the RTP module emits.
+        Assert.Equal(127, records);
     }
 
     [Fact]
@@ -601,6 +604,7 @@ public sealed class ClassEmitterTests
     [InlineData("GstWebRTC", 0)]
     [InlineData("GstNet", 2)]
     [InlineData("GstRtsp", 2)]
+    [InlineData("GstRtp", 3)]
     [InlineData("GstAllocators", 0)]
     [InlineData("GstTag", 0)]
     [InlineData("GstTranscoder", 0)]
@@ -624,8 +628,8 @@ public sealed class ClassEmitterTests
     {
         string report = Generated.SkipReport;
 
-        Assert.Equal(163, Generated.Census.DroppedFieldCount());
-        Assert.Contains("## Fields (163)\n", report, StringComparison.Ordinal);
+        Assert.Equal(166, Generated.Census.DroppedFieldCount());
+        Assert.Contains("## Fields (166)\n", report, StringComparison.Ordinal);
         Assert.Contains("### GstVideo (42)\n", report, StringComparison.Ordinal);
 
         // One entry per shape that keeps a field out. The fixed size fields of
@@ -909,6 +913,7 @@ public sealed class ClassEmitterTests
     [InlineData("GstWebRTC", 0, 0, 4, 0, 4, 0, 3)]
     [InlineData("GstNet", 0, 0, 1, 0, 0, 0, 0)]
     [InlineData("GstRtsp", 7, 0, 3, 0, 0, 0, 2)]
+    [InlineData("GstRtp", 18, 0, 0, 0, 4, 0, 6)]
     [InlineData("GstAllocators", 0, 0, 0, 0, 0, 0, 0)]
     [InlineData("GstTag", 0, 0, 0, 0, 0, 0, 0)]
     [InlineData("GstTranscoder", 0, 0, 0, 0, 0, 0, 4)]
@@ -961,6 +966,7 @@ public sealed class ClassEmitterTests
     [InlineData("GstWebRTC", "GstSharp.Net.WebRTC")]
     [InlineData("GstNet", "GstSharp.Net.Net")]
     [InlineData("GstRtsp", "GstSharp.Net.Rtsp")]
+    [InlineData("GstRtp", "GstSharp.Net.Rtp")]
     [InlineData("GstAllocators", "GstSharp.Net.Allocators")]
     [InlineData("GstTag", "GstSharp.Net.Tag")]
     [InlineData("GstTranscoder", "GstSharp.Net.Transcoder")]

@@ -179,6 +179,11 @@ internal static class NativeNames
                 "libgstrtsp-1.0.0.dylib",
                 "gstrtsp-1.0-0.dll",
                 "libgstrtsp-1.0-0.dll"),
+            ["GstRtp"] = new(
+                "libgstrtp-1.0.so.0",
+                "libgstrtp-1.0.0.dylib",
+                "gstrtp-1.0-0.dll",
+                "libgstrtp-1.0-0.dll"),
             ["GstAllocators"] = new(
                 "libgstallocators-1.0.so.0",
                 "libgstallocators-1.0.0.dylib",

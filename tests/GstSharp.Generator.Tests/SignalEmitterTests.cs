@@ -498,6 +498,7 @@ public sealed class SignalEmitterTests
     [InlineData("GstWebRTC", 7)]
     [InlineData("GstNet", 0)]
     [InlineData("GstRtsp", 1)]
+    [InlineData("GstRtp", 2)]
     [InlineData("GstAllocators", 0)]
     [InlineData("GstTag", 0)]
     [InlineData("GstTranscoder", 6)]
@@ -534,30 +535,35 @@ public sealed class SignalEmitterTests
             removers += file.Content.Split("    public static void Remove").Length - 1;
         }
 
-        // A hundred and two signals are emitted over the fifteen modules.
-        // Ninety eight are events of a class; the remaining four belong to a
+        // A hundred and four signals are emitted over the sixteen modules.
+        // A hundred are events of a class; the remaining four belong to a
         // gir interface and are a pair of extension methods instead. The
         // editing services are thirty five of them, and all thirty five are
         // events: the one signal of a GES interface,
         // GESMetaContainer::notify-meta, carries a GValue and is not bound.
         // The six of the transcoder and the thirteen of the play are the
         // signals of GstTranscoderSignalAdapter and GstPlaySignalAdapter,
-        // which are classes as well. The
+        // which are classes as well. The two of the RTP module are the
+        // request-extension of GstRTPBasePayload and the one of
+        // GstRTPBaseDepayload; the four signals beside them, add-extension and
+        // clear-extensions on each of the two classes, carry action="1" and
+        // are skipped on that rule, since an action signal is a call API and
+        // not a notification. The
         // adder and remover counts carry matches that are not a signal pair at
         // all: Gst.ITagSetter's AddTagValue extension, and the AddAllSchemas,
         // AddSchema, RemoveAllSchemas and RemoveSchema extensions of
         // Gst.Tag.ITagXmpWriter, methods whose names the pattern cannot tell
         // from a subscription adder or remover.
-        Assert.Equal(98, events);
+        Assert.Equal(100, events);
         Assert.Equal(7, adders);
         Assert.Equal(6, removers);
-        Assert.Equal(102, trampolines);
+        Assert.Equal(104, trampolines);
 
         string[] withSignals =
         [
             "GstSharp.Net", "GstSharp.Net.Base", "GstSharp.Net.App", "GstSharp.Net.Video", "GstSharp.Net.Pbutils",
-            "GstSharp.Net.WebRTC", "GstSharp.Net.Rtsp", "GstSharp.Net.Transcoder", "GstSharp.Net.Play",
-            "GstSharp.Net.GES",
+            "GstSharp.Net.WebRTC", "GstSharp.Net.Rtsp", "GstSharp.Net.Rtp", "GstSharp.Net.Transcoder",
+            "GstSharp.Net.Play", "GstSharp.Net.GES",
         ];
 
         foreach (string module in withSignals)

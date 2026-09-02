@@ -65,6 +65,7 @@ internal static class ModuleMap
         new ModuleInfo("GstWebRTC", "Gst.WebRTC", "GstSharp.Net.WebRTC", "GstWebRTC", IsGenerated: true),
         new ModuleInfo("GstNet", "Gst.Net", "GstSharp.Net.Net", "GstNet", IsGenerated: true),
         new ModuleInfo("GstRtsp", "Gst.Rtsp", "GstSharp.Net.Rtsp", "GstRtsp", IsGenerated: true),
+        new ModuleInfo("GstRtp", "Gst.Rtp", "GstSharp.Net.Rtp", "GstRtp", IsGenerated: true),
         new ModuleInfo("GstAllocators", "Gst.Allocators", "GstSharp.Net.Allocators", "GstAllocators", IsGenerated: true),
         new ModuleInfo("GstTag", "Gst.Tag", "GstSharp.Net.Tag", "GstTag", IsGenerated: true),
         new ModuleInfo("GstTranscoder", "Gst.Transcoder", "GstSharp.Net.Transcoder", "GstTranscoder", IsGenerated: true),

@@ -1815,6 +1815,107 @@ public sealed class AbiProbeTests
         Assert.Equal((long)sizeof(nint), Offset(&raw, &raw.Description));
     }
 
+    /// <summary>
+    /// <c>struct _GstRTPBuffer</c> of <c>gstrtpbuffer.h</c>: the buffer pointer
+    /// at 0, <c>state</c> at 8 with four bytes of padding behind it, the four
+    /// <c>gpointer data</c> at 16, the four <c>gsize size</c> at 48 and the four
+    /// <c>GstMapInfo map</c> of 104 bytes each at 80, for 496 bytes.
+    /// </summary>
+    [Fact]
+    public unsafe void RtpBufferMatchesTheHeaderLayout()
+    {
+        Gst.Rtp.RTPBuffer raw = default;
+
+        _output.WriteLine(Format("RTPBuffer", Unsafe.SizeOf<Gst.Rtp.RTPBuffer>()));
+        Assert.Equal(496, Unsafe.SizeOf<Gst.Rtp.RTPBuffer>());
+
+        Assert.Equal(0L, Offset(&raw, &raw.BufferPtr));
+        Assert.Equal(8L, Offset(&raw, &raw.State));
+        Assert.Equal(16L, Offset(&raw, &raw.Data));
+        Assert.Equal(48L, Offset(&raw, &raw.Size));
+        Assert.Equal(80L, Offset(&raw, &raw.Map));
+    }
+
+    /// <summary>
+    /// <c>struct _GstRTCPBuffer</c> of <c>gstrtcpbuffer.h</c>: the buffer
+    /// pointer at 0 and one <c>GstMapInfo</c> at 8, for 112 bytes.
+    /// </summary>
+    [Fact]
+    public unsafe void RtcpBufferMatchesTheHeaderLayout()
+    {
+        Gst.Rtp.RTCPBuffer raw = default;
+
+        _output.WriteLine(Format("RTCPBuffer", Unsafe.SizeOf<Gst.Rtp.RTCPBuffer>()));
+        Assert.Equal(112, Unsafe.SizeOf<Gst.Rtp.RTCPBuffer>());
+
+        Assert.Equal(0L, Offset(&raw, &raw.BufferPtr));
+        Assert.Equal(8L, Offset(&raw, &raw.Map));
+    }
+
+    /// <summary>
+    /// <c>struct _GstRTCPPacket</c> of <c>gstrtcpbuffer.h</c>: the two public
+    /// fields <c>rtcp</c> at 0 and <c>offset</c> at 8, followed by the seven
+    /// private fields the header declares - <c>padding</c> at 12, <c>count</c>
+    /// at 16, <c>type</c> at 20, <c>length</c> at 24 and the three navigation
+    /// offsets at 28, 32 and 36 - for 40 bytes. The structure is public in C so
+    /// that it can be stack allocated, which is what the binding does with it.
+    /// </summary>
+    [Fact]
+    public unsafe void RtcpPacketMatchesTheHeaderLayout()
+    {
+        Gst.Rtp.RTCPPacket raw = default;
+
+        _output.WriteLine(Format("RTCPPacket", Unsafe.SizeOf<Gst.Rtp.RTCPPacket>()));
+        Assert.Equal(40, Unsafe.SizeOf<Gst.Rtp.RTCPPacket>());
+
+        Assert.Equal(0L, Offset(&raw, &raw.RtcpPtr));
+        Assert.Equal(8L, Offset(&raw, &raw.Offset));
+    }
+
+    /// <summary>
+    /// <c>struct _GstRTPPayloadInfo</c> of <c>gstrtppayloads.h</c>: the
+    /// <c>guint8 payload_type</c> at 0 with seven bytes of padding behind it,
+    /// <c>media</c> at 8, <c>encoding_name</c> at 16, <c>clock_rate</c> at 24,
+    /// <c>encoding_parameters</c> at 32, <c>bitrate</c> at 40 and
+    /// <c>GST_PADDING</c> at 48, for 80 bytes.
+    /// </summary>
+    [Fact]
+    public unsafe void RtpPayloadInfoMatchesTheHeaderLayout()
+    {
+        Gst.Rtp.RTPPayloadInfo raw = default;
+
+        _output.WriteLine(Format("RTPPayloadInfo", Unsafe.SizeOf<Gst.Rtp.RTPPayloadInfo>()));
+        Assert.Equal(80, Unsafe.SizeOf<Gst.Rtp.RTPPayloadInfo>());
+
+        Assert.Equal(0L, Offset(&raw, &raw.PayloadType));
+        Assert.Equal(8L, Offset(&raw, &raw.MediaPtr));
+        Assert.Equal(16L, Offset(&raw, &raw.EncodingNamePtr));
+        Assert.Equal(24L, Offset(&raw, &raw.ClockRate));
+        Assert.Equal(32L, Offset(&raw, &raw.EncodingParametersPtr));
+        Assert.Equal(40L, Offset(&raw, &raw.Bitrate));
+    }
+
+    /// <summary>
+    /// <c>struct _GstRTPSourceMeta</c> of <c>gstrtpmeta.h</c>: the
+    /// <c>GstMeta</c> of 16 bytes at 0, <c>ssrc</c> at 16, <c>ssrc_valid</c> at
+    /// 20, the fifteen <c>guint32 csrc</c> at 24 and <c>csrc_count</c> at 84,
+    /// for 88 bytes.
+    /// </summary>
+    [Fact]
+    public unsafe void RtpSourceMetaRawMatchesTheHeaderLayout()
+    {
+        Gst.Rtp.RTPSourceMetaRaw raw = default;
+
+        _output.WriteLine(Format("RTPSourceMetaRaw", Unsafe.SizeOf<Gst.Rtp.RTPSourceMetaRaw>()));
+        Assert.Equal(88, Unsafe.SizeOf<Gst.Rtp.RTPSourceMetaRaw>());
+
+        Assert.Equal(0L, Offset(&raw, &raw.Meta));
+        Assert.Equal(16L, Offset(&raw, &raw.Ssrc));
+        Assert.Equal(20L, Offset(&raw, &raw.SsrcValid));
+        Assert.Equal(24L, Offset(&raw, &raw.Csrc));
+        Assert.Equal(84L, Offset(&raw, &raw.CsrcCount));
+    }
+
     private static unsafe long Offset(void* start, void* field) => (byte*)field - (byte*)start;
 
     private static string Format(string name, int size) =>

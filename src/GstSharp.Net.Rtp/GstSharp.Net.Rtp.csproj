@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>Gst.Rtp</RootNamespace>
+    <Description>GstRtp for GstSharp.Net: the RTP and RTCP buffer helpers of gst-plugins-base, the payloader and depayloader base classes and the RTP header extension API.</Description>
+
+    <!-- This package has never been published, so there is no baseline on
+         nuget.org to compare it against; the restore of the gate would fail on
+         a version that does not exist. Remove this line after the next patch
+         release has shipped the package, exactly as #39 did for the modules
+         before it. -->
+    <EnablePackageValidation>false</EnablePackageValidation>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../GstSharp.Net/GstSharp.Net.csproj" />
+
+    <!-- GstRTPBaseAudioPayload hands its input adapter out, so the surface of
+         this module names Gst.Base.Adapter. -->
+    <ProjectReference Include="../GstSharp.Net.Base/GstSharp.Net.Base.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The ABI probes of the integration tests read the raw mirrors of this
+         module, which are internal: nothing outside the binding has a reason
+         to know the native layout of a record. -->
+    <InternalsVisibleTo Include="GstSharp.IntegrationTests" />
+  </ItemGroup>
+
+</Project>

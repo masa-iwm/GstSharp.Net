@@ -158,8 +158,9 @@ internal sealed class CallbackPlan
 /// The in parameter side of the same shape - a
 /// <c>&lt;type name="guint32" c:type="const guint32*"/&gt;</c> with no
 /// direction, which would pass the number where the C function dereferences a
-/// pointer - is knowingly not refused yet, because two published members
-/// project it and removing them is a source break reserved for an
+/// pointer - is knowingly not refused yet, because two published members, one
+/// in GstAudio and one in GstVideo, project that shape and removing them is a
+/// source break reserved for an
 /// <c>[Obsolete]</c> bridge. See
 /// <see cref="IsPointerToScalar"/>.</description></item>
 /// <item><description>A parameter the gir spells as a pointer to one value and
@@ -1805,8 +1806,9 @@ internal sealed class MarshalPlanner
     /// anything bound behind a handle each carry a star of their own and have
     /// a marshalling that reads it. An <c>&lt;array&gt;</c> is excluded as
     /// well: a block of scalars is exactly what the array plans project, and a
-    /// gir that means an array and forgets to say so is corrected through
-    /// <c>arrayOverrides</c> rather than here.
+    /// gir that means an array and forgets to say so has to be corrected in the
+    /// gir itself, since <c>arrayOverrides</c> only refines an
+    /// <c>&lt;array&gt;</c> that is already there.
     /// </para>
     /// <para>
     /// The test is general and only the return side acts on it today: the in
@@ -1818,6 +1820,12 @@ internal sealed class MarshalPlanner
     /// <c>gst_video_gl_texture_upload_meta_upload</c>, through the
     /// <c>guint*</c> of its <c>texture_id</c>. Removing them is a source break
     /// reserved for an <c>[Obsolete]</c> bridge rather than for this rule.
+    /// </para>
+    /// <para>
+    /// The star is looked for with <c>Contains('*')</c> and not through
+    /// <c>GirTypeRef.IsPointer</c>, which reads the last character only: a
+    /// <c>c:type</c> that carries a qualifier after the star would hide it from
+    /// the shorter test.
     /// </para>
     /// </remarks>
     private static bool IsPointerToScalar(GirTypeRef type, MappedType mapped)

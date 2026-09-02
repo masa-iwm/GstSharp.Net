@@ -843,6 +843,92 @@ disappears shows up here as an added line.
 - `gst_play_get_subtitle_streams`
 - `gst_play_get_video_streams`
 
+## GstRtp
+
+### ActionSignal (4)
+
+- `GstRtp.RTPBaseDepayload::add-extension`
+- `GstRtp.RTPBaseDepayload::clear-extensions`
+- `GstRtp.RTPBasePayload::add-extension`
+- `GstRtp.RTPBasePayload::clear-extensions`
+
+### HandBound (6)
+
+- `gst_buffer_add_rtp_source_meta`
+- `gst_rtcp_packet_app_get_data`
+- `gst_rtcp_packet_app_get_name`
+- `gst_rtcp_packet_app_set_name`
+- `gst_rtcp_packet_fb_get_fci`
+- `gst_rtp_source_meta_set_ssrc`
+
+### MovedTo (24)
+
+- `gst_rtcp_buffer_map`
+- `gst_rtcp_buffer_new`
+- `gst_rtcp_buffer_new_copy_data`
+- `gst_rtcp_buffer_new_take_data`
+- `gst_rtcp_buffer_validate`
+- `gst_rtcp_buffer_validate_data`
+- `gst_rtcp_buffer_validate_data_reduced`
+- `gst_rtcp_buffer_validate_reduced`
+- `gst_rtp_buffer_allocate_data`
+- `gst_rtp_buffer_calc_header_len`
+- `gst_rtp_buffer_calc_packet_len`
+- `gst_rtp_buffer_calc_payload_len`
+- `gst_rtp_buffer_compare_seqnum`
+- `gst_rtp_buffer_default_clock_rate`
+- `gst_rtp_buffer_ext_timestamp`
+- `gst_rtp_buffer_get_extension_onebyte_header_from_bytes`
+- `gst_rtp_buffer_map`
+- `gst_rtp_buffer_new_allocate`
+- `gst_rtp_buffer_new_allocate_len`
+- `gst_rtp_buffer_new_copy_data`
+- `gst_rtp_buffer_new_take_data`
+- `gst_rtp_payload_info_for_name`
+- `gst_rtp_payload_info_for_pt`
+- `gst_rtp_source_meta_get_info`
+
+### NotIntrospectable (2)
+
+- `gst_rtp_buffer_get_extension_data`
+- `gst_rtp_buffer_get_payload`
+
+### OverlaySkip (18)
+
+- `gst_rtcp_packet_xr_get_dlrr_block`
+- `gst_rtcp_packet_xr_get_prt_by_seq`
+- `gst_rtcp_packet_xr_get_prt_info`
+- `gst_rtcp_packet_xr_get_rle_info`
+- `gst_rtcp_packet_xr_get_rle_nth_chunk`
+- `gst_rtcp_packet_xr_get_rrt`
+- `gst_rtcp_packet_xr_get_summary_info`
+- `gst_rtcp_packet_xr_get_summary_jitter`
+- `gst_rtcp_packet_xr_get_summary_pkt`
+- `gst_rtcp_packet_xr_get_summary_ttl`
+- `gst_rtcp_packet_xr_get_voip_burst_metrics`
+- `gst_rtcp_packet_xr_get_voip_configuration_params`
+- `gst_rtcp_packet_xr_get_voip_delay_metrics`
+- `gst_rtcp_packet_xr_get_voip_jitter_buffer_params`
+- `gst_rtcp_packet_xr_get_voip_metrics_ssrc`
+- `gst_rtcp_packet_xr_get_voip_packet_metrics`
+- `gst_rtcp_packet_xr_get_voip_quality_metrics`
+- `gst_rtcp_packet_xr_get_voip_signal_metrics`
+
+### UnsupportedSignature (8)
+
+- `GstRtp.RTPBaseDepayload:extensions`
+- `GstRtp.RTPBasePayload:extensions`
+- `gst_rtp_buffer_get_extension_bytes`
+- `gst_rtp_buffer_get_extension_onebyte_header_from_bytes`
+- `gst_rtp_buffer_get_payload_bytes`
+- `gst_rtp_buffer_new_take_data`
+- `gst_rtp_payload_info_for_name`
+- `gst_rtp_payload_info_for_pt`
+
+### VarArgs (1)
+
+- `gst_rtp_base_payload_set_outcaps`
+
 ## GstRtsp
 
 ### HandBound (1)
@@ -1126,7 +1212,7 @@ disappears shows up here as an added line.
 - `gst_webrtc_ice_get_local_candidates`
 - `gst_webrtc_ice_get_remote_candidates`
 
-## Fields (163)
+## Fields (166)
 
 Public record fields that carry API in C and none in C#, with the shape that
 kept them out. A field is bound when a wrapper declares an accessor for it, or
@@ -1244,6 +1330,12 @@ it unbound, and this ledger is where that is counted.
 
 - `NetAddressMeta.meta` — EmbeddedStruct
 - `NetControlMessageMeta.meta` — EmbeddedStruct
+
+### GstRtp (3)
+
+- `RTCPPacket.rtcp` — Pointer
+- `RTPBuffer.data` — InlineArray(pointer element)
+- `RTPSourceMeta.meta` — EmbeddedStruct
 
 ### GstRtsp (2)
 

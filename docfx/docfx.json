@@ -15,6 +15,7 @@
             "GstSharp.Net.Net/GstSharp.Net.Net.csproj",
             "GstSharp.Net.Pbutils/GstSharp.Net.Pbutils.csproj",
             "GstSharp.Net.Play/GstSharp.Net.Play.csproj",
+            "GstSharp.Net.Rtp/GstSharp.Net.Rtp.csproj",
             "GstSharp.Net.Rtsp/GstSharp.Net.Rtsp.csproj",
             "GstSharp.Net.Sdp/GstSharp.Net.Sdp.csproj",
             "GstSharp.Net.Tag/GstSharp.Net.Tag.csproj",

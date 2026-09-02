@@ -220,6 +220,19 @@ public sealed class SkipRulesTests
         // generated, and these two are the ones whose hand written declaration
         // stays the source of truth, so the emitter is told not to declare them
         // a second time.
+        // The RTP group is the newest and is twenty two entries. Eighteen of
+        // them are the gst_rtcp_packet_xr_get_* readers of an XR report block,
+        // which answer through fifty one out parameters the gir types as the
+        // bare scalars they point at: generated from that shape the member
+        // would pass the value where the C function writes through the pointer,
+        // and a direction override does not reach a scalar, so they wait for
+        // the planner rule that will. The other four have a shape the generator
+        // binds and binds wrongly: gst_rtcp_packet_app_get_name and
+        // gst_rtcp_packet_app_set_name read and write four bytes that are not a
+        // C string, and gst_buffer_add_rtp_source_meta and
+        // gst_rtp_source_meta_set_ssrc take a nullable guint32* the gir spells
+        // as a value. All four are hand written in src/GstSharp.Net.Rtp/Custom
+        // beside the two guint8* returns the planner already refuses.
         Assert.Equal(
             [
                 "Gst.BusSyncHandler",
@@ -251,6 +264,7 @@ public sealed class SkipRulesTests
                 "gst_audio_ring_buffer_commit",
                 "gst_audio_ring_buffer_read",
                 "gst_buffer_add_audio_meta",
+                "gst_buffer_add_rtp_source_meta",
                 "gst_buffer_add_video_gl_texture_upload_meta",
                 "gst_buffer_extract",
                 "gst_buffer_foreach_meta",
@@ -310,6 +324,27 @@ public sealed class SkipRulesTests
                 "gst_promise_reply",
                 "gst_query_new_custom",
                 "gst_query_parse_nth_allocation_param",
+                "gst_rtcp_packet_app_get_name",
+                "gst_rtcp_packet_app_set_name",
+                "gst_rtcp_packet_xr_get_dlrr_block",
+                "gst_rtcp_packet_xr_get_prt_by_seq",
+                "gst_rtcp_packet_xr_get_prt_info",
+                "gst_rtcp_packet_xr_get_rle_info",
+                "gst_rtcp_packet_xr_get_rle_nth_chunk",
+                "gst_rtcp_packet_xr_get_rrt",
+                "gst_rtcp_packet_xr_get_summary_info",
+                "gst_rtcp_packet_xr_get_summary_jitter",
+                "gst_rtcp_packet_xr_get_summary_pkt",
+                "gst_rtcp_packet_xr_get_summary_ttl",
+                "gst_rtcp_packet_xr_get_voip_burst_metrics",
+                "gst_rtcp_packet_xr_get_voip_configuration_params",
+                "gst_rtcp_packet_xr_get_voip_delay_metrics",
+                "gst_rtcp_packet_xr_get_voip_jitter_buffer_params",
+                "gst_rtcp_packet_xr_get_voip_metrics_ssrc",
+                "gst_rtcp_packet_xr_get_voip_packet_metrics",
+                "gst_rtcp_packet_xr_get_voip_quality_metrics",
+                "gst_rtcp_packet_xr_get_voip_signal_metrics",
+                "gst_rtp_source_meta_set_ssrc",
                 "gst_rtsp_auth_credentials_free",
                 "gst_rtsp_range_free",
                 "gst_rtsp_range_parse",
@@ -357,6 +392,10 @@ public sealed class SkipRulesTests
         // dropped moves the measured gap, which is a decision rather than a
         // detail, and an entry the generator never sees skipped is reported as
         // GEN0023 instead of quietly overstating what is bound.
+        // The six newest are the RTP module's: the two guint8* returns the
+        // planner refuses on their shape, the two four byte APP name calls and
+        // the two nullable guint32* ssrc calls, all six written by hand in
+        // src/GstSharp.Net.Rtp/Custom.
         Assert.Equal(
             [
                 "GstWebRTC.WebRTCDataChannel::on-message-data",
@@ -377,6 +416,7 @@ public sealed class SkipRulesTests
                 "gst_audio_buffer_unmap",
                 "gst_audio_ring_buffer_read",
                 "gst_buffer_add_audio_meta",
+                "gst_buffer_add_rtp_source_meta",
                 "gst_buffer_copy",
                 "gst_buffer_extract",
                 "gst_buffer_foreach_meta",
@@ -432,6 +472,11 @@ public sealed class SkipRulesTests
                 "gst_promise_reply",
                 "gst_query_new_custom",
                 "gst_query_parse_nth_allocation_param",
+                "gst_rtcp_packet_app_get_data",
+                "gst_rtcp_packet_app_get_name",
+                "gst_rtcp_packet_app_set_name",
+                "gst_rtcp_packet_fb_get_fci",
+                "gst_rtp_source_meta_set_ssrc",
                 "gst_rtsp_transport_parse",
                 "gst_structure_get_value",
                 "gst_structure_set_value",

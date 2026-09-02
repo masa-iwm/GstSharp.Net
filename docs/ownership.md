@@ -767,6 +767,42 @@ audio one that is a correctness requirement rather than a convenience:
 nothing would stop the collector from finalizing a wrapper whose last use was
 the call that produced the mapping.
 
+## RTP mapped structures
+
+`Gst.Rtp.RTPBuffer` and `Gst.Rtp.RTCPBuffer` are not scopes: they are the plain
+structures the C API declares, and the binding hands them out as they are.
+Declare one as a local variable, map it once with `RTPBuffer.MapBuffer` or
+`RTCPBuffer.MapBuffer`, and unmap it exactly once when it is done. Never copy
+one, store it in a field or capture it in a lambda or an `async` method: the
+generated members pin the variable for the duration of a single call, and the
+internal `ensure_buffers` of `gstrtpbuffer.c`, which `SetExtensionData` and the
+`AddExtension*` members reach, unmaps and remaps through the very structure it
+is handed, so a call made on a copy unmaps a second time. The `Gst.Buffer`
+wrapper the mapping came from has to stay alive until after the unmap - the
+library stores the raw pointer and takes no reference of it
+(`rtp->buffer = buffer` and `rtcp->buffer = buffer`, nothing else), so
+disposing the wrapper before the unmap leaves the mapping pointing at a freed
+`GstBuffer`.
+
+`Gst.Rtp.RTCPPacket` borrows the address of the `RTCPBuffer` it was taken from:
+`GetFirstPacket` and `AddPacket` write that address into the packet, the
+writing members update the size of the mapping through it and `Unmap` resizes
+the buffer from it. A packet is therefore usable only inside the scope where
+its `RTCPBuffer` variable lives, and never after the unmap. `MapBuffer` for
+RTCP requires `Gst.MapFlags.Read` to be among the flags - a write only mapping
+raises a critical and answers `false` - so build a compound packet with
+`Gst.MapFlags.Read | Gst.MapFlags.Write`. The spans that `FbGetFci` and
+`AppGetData` hand out point into the mapped buffer as well, and any change to
+the packet list of that buffer invalidates them.
+
+Calling a header accessor on an `RTPBuffer` that was never mapped is not a
+managed error: the C side dereferences `rtp->data[0]` without a guard and the
+process crashes. Use the structure only after `MapBuffer` has answered `true`.
+The RTCP half is guarded - every member answers `false` or `0` for an unmapped
+structure - and so is
+`Gst.Rtp.RTPHeaderExtension.GetSdpCapsFieldName`, which raises a critical and
+answers `null` until `SetId` has been called.
+
 ## The GType registry
 
 Every binding assembly fills a `GType` to managed-type registry from a

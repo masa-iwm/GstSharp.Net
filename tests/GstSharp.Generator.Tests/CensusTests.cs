@@ -26,6 +26,7 @@ public sealed class CensusTests
     [InlineData("GstNet", 4, 10, 0, 0, 0, 1, 0, 6, 16)]
     [InlineData("GstSdp", 0, 21, 0, 13, 0, 0, 0, 7, 12)]
     [InlineData("GstRtsp", 0, 13, 1, 10, 5, 1, 0, 1, 32)]
+    [InlineData("GstRtp", 4, 12, 0, 6, 4, 0, 0, 52, 36)]
     [InlineData("GstWebRTC", 9, 13, 0, 23, 0, 1, 0, 0, 2)]
     [InlineData("GstAllocators", 5, 6, 1, 0, 1, 0, 0, 5, 9)]
     [InlineData("GstTag", 2, 5, 1, 2, 1, 0, 0, 40, 40)]
@@ -74,6 +75,7 @@ public sealed class CensusTests
     [InlineData("GstNet", 0)]
     [InlineData("GstSdp", 0)]
     [InlineData("GstRtsp", 1)]
+    [InlineData("GstRtp", 6)]
     [InlineData("GstWebRTC", 12)]
     [InlineData("GstAllocators", 0)]
     [InlineData("GstTag", 0)]
@@ -107,7 +109,8 @@ public sealed class CensusTests
         string[] expected =
         [
             "GES", "GLib", "GModule", "GObject", "Gio", "Gst", "GstAllocators", "GstApp", "GstAudio", "GstBase",
-            "GstNet", "GstPbutils", "GstPlay", "GstRtsp", "GstSdp", "GstTag", "GstTranscoder", "GstVideo",
+            "GstNet", "GstPbutils", "GstPlay", "GstRtp", "GstRtsp", "GstSdp", "GstTag", "GstTranscoder",
+            "GstVideo",
             "GstWebRTC",
         ];
 
