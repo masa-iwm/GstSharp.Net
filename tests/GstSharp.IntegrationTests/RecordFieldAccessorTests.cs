@@ -319,6 +319,32 @@ public sealed class RecordFieldAccessorTests
     }
 
     /// <summary>
+    /// An enumeration another generated module declares reaches the mirror as
+    /// the integer it is projected onto, because the mirror is interop storage,
+    /// and the accessor hands the enumeration itself out. The clipping meta of
+    /// the audio module carries a <see cref="Gst.Format"/> of the core module,
+    /// which is the one field of the corpus with that shape.
+    /// </summary>
+    [Fact]
+    public void AnAudioClippingMetaAnswersTheFormatOfTheCoreModule()
+    {
+        using Buffer buffer = AbiProbeTests.NewBuffer();
+
+        AudioClippingMeta clipping = AudioGlobal.BufferAddAudioClippingMeta(
+            buffer,
+            Gst.Format.Default,
+            32,
+            64);
+
+        _output.WriteLine(FormattableString.Invariant(
+            $"gst_buffer_add_audio_clipping_meta: format={clipping.Format} start={clipping.Start} end={clipping.End}"));
+
+        Assert.Equal(Gst.Format.Default, clipping.Format);
+        Assert.Equal(32ul, clipping.Start);
+        Assert.Equal(64ul, clipping.End);
+    }
+
+    /// <summary>
     /// A field accessor of a boxed record reads through the handle of the
     /// wrapper, which a disposed wrapper refuses to hand out. Without that the
     /// read would dereference the null pointer.

@@ -14,10 +14,11 @@ internal sealed record FixtureRun(GenerationResult Result)
 {
     /// <summary>Gets the content of one generated file of the <c>Gst</c> module.</summary>
     /// <param name="name">The file name below <c>Generated</c>, for example <c>Element.cs</c>.</param>
+    /// <param name="project">The project directory the module writes into.</param>
     /// <returns>The generated source text.</returns>
-    internal string File(string name)
+    internal string File(string name, string project = "GstSharp.Net")
     {
-        string path = "GstSharp.Net/Generated/" + name;
+        string path = project + "/Generated/" + name;
         foreach (GeneratedFile file in Result.Files)
         {
             if (string.Equals(file.RelativePath, path, StringComparison.Ordinal))

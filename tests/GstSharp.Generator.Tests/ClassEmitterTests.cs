@@ -174,7 +174,7 @@ public sealed class ClassEmitterTests
     [InlineData("Gst", 35, 51, 5, 28, 18, 1435, 29, 23, 69)]
     [InlineData("GstBase", 11, 4, 0, 5, 0, 174, 31, 2, 7)]
     [InlineData("GstApp", 2, 2, 0, 8, 0, 62, 36, 8, 0)]
-    [InlineData("GstAudio", 14, 17, 1, 2, 2, 213, 32, 0, 44)]
+    [InlineData("GstAudio", 14, 17, 1, 2, 2, 213, 32, 0, 45)]
     [InlineData("GstVideo", 12, 42, 5, 0, 10, 383, 14, 2, 115)]
     [InlineData("GstPbutils", 14, 1, 0, 0, 1, 179, 5, 5, 0)]
     [InlineData("GstSdp", 1, 21, 0, 0, 0, 164, 0, 0, 51)]
@@ -595,7 +595,7 @@ public sealed class ClassEmitterTests
     [Theory]
     [InlineData("Gst", 60)]
     [InlineData("GstBase", 4)]
-    [InlineData("GstAudio", 20)]
+    [InlineData("GstAudio", 19)]
     [InlineData("GstVideo", 42)]
     [InlineData("GstSdp", 33)]
     [InlineData("GstWebRTC", 0)]
@@ -624,8 +624,8 @@ public sealed class ClassEmitterTests
     {
         string report = Generated.SkipReport;
 
-        Assert.Equal(164, Generated.Census.DroppedFieldCount());
-        Assert.Contains("## Fields (164)\n", report, StringComparison.Ordinal);
+        Assert.Equal(163, Generated.Census.DroppedFieldCount());
+        Assert.Contains("## Fields (163)\n", report, StringComparison.Ordinal);
         Assert.Contains("### GstVideo (42)\n", report, StringComparison.Ordinal);
 
         // One entry per shape that keeps a field out. The fixed size fields of
@@ -678,6 +678,17 @@ public sealed class ClassEmitterTests
             "- `MapInfo.user_data` \u2014 InlineArray(pointer element)\n",
             report,
             StringComparison.Ordinal);
+
+        // The catch all is split by the cause a field reaches it through: a
+        // wrapper the generator never asks for accessors, and a record whose
+        // mirror collapsed and has no storage to read one out of.
+        Assert.DoesNotContain("\u2014 Other\n", report, StringComparison.Ordinal);
+        Assert.Contains("- `MiniObject.type` \u2014 HandWritten\n", report, StringComparison.Ordinal);
+        Assert.Contains("- `ParamSpecFraction.min_num` \u2014 NoLayout\n", report, StringComparison.Ordinal);
+
+        // An enumeration another generated module declares is handed out typed,
+        // so the field it sits on is bound rather than counted.
+        Assert.DoesNotContain("- `AudioClippingMeta.format`", report, StringComparison.Ordinal);
 
         // Padding is off the ledger whether or not the gir annotates it.
         Assert.DoesNotContain("_gst_reserved", report, StringComparison.Ordinal);

@@ -1126,7 +1126,7 @@ disappears shows up here as an added line.
 - `gst_webrtc_ice_get_local_candidates`
 - `gst_webrtc_ice_get_remote_candidates`
 
-## Fields (164)
+## Fields (163)
 
 Public record fields that carry API in C and none in C#, with the shape that
 kept them out. A field is bound when a wrapper declares an accessor for it, or
@@ -1175,19 +1175,19 @@ the section below.
 - `MetaInfo.transform_func` — Callback
 - `MiniObject.copy` — Callback
 - `MiniObject.dispose` — Callback
-- `MiniObject.flags` — Other
+- `MiniObject.flags` — HandWritten
 - `MiniObject.free` — Callback
-- `MiniObject.lockstate` — Other
-- `MiniObject.refcount` — Other
-- `MiniObject.type` — Other
+- `MiniObject.lockstate` — HandWritten
+- `MiniObject.refcount` — HandWritten
+- `MiniObject.type` — HandWritten
 - `ParamSpecArray.element_spec` — Pointer
 - `ParamSpecArray.parent_instance` — EmbeddedStruct
-- `ParamSpecFraction.def_den` — Other
-- `ParamSpecFraction.def_num` — Other
-- `ParamSpecFraction.max_den` — Other
-- `ParamSpecFraction.max_num` — Other
-- `ParamSpecFraction.min_den` — Other
-- `ParamSpecFraction.min_num` — Other
+- `ParamSpecFraction.def_den` — NoLayout
+- `ParamSpecFraction.def_num` — NoLayout
+- `ParamSpecFraction.max_den` — NoLayout
+- `ParamSpecFraction.max_num` — NoLayout
+- `ParamSpecFraction.min_den` — NoLayout
+- `ParamSpecFraction.min_num` — NoLayout
 - `ParamSpecFraction.parent_instance` — EmbeddedStruct
 - `ParentBufferMeta.parent` — EmbeddedStruct
 - `PluginDesc.plugin_init` — Callback
@@ -1209,12 +1209,11 @@ the section below.
 - `ValueTable.hash` — Callback
 - `ValueTable.serialize` — Callback
 
-### GstAudio (20)
+### GstAudio (19)
 
 - `AudioBuffer.info` — EmbeddedStruct
 - `AudioBuffer.planes` — Pointer
 - `AudioCdSrcTrack.tags` — Pointer
-- `AudioClippingMeta.format` — Other
 - `AudioClippingMeta.meta` — EmbeddedStruct
 - `AudioDownmixMeta.from_position` — Pointer
 - `AudioDownmixMeta.matrix` — Pointer

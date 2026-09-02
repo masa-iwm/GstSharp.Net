@@ -243,7 +243,7 @@ internal sealed class RecordEmitter
                 break;
         }
 
-        ReportDroppedFields(module, ns, record, boundFields, layout);
+        ReportDroppedFields(module, ns, record, boundFields, layout, handWritten);
 
         // The accessors claim their names before anything the gir declares is
         // planned, so that a method named after a field is the member that is
@@ -1327,13 +1327,26 @@ internal sealed class RecordEmitter
 
             case MarshalKind.Enum:
             case MarshalKind.Flags:
-                // The mirror only spells the enumeration out when it is
-                // generated next to the record; otherwise the field holds
-                // the underlying integer and there is nothing to expose.
                 if (string.Equals(field.TypeName, mapped.PublicType, StringComparison.Ordinal))
                 {
                     publicType = mapped.PublicType;
                     expression = raw;
+                    break;
+                }
+
+                // The mirror only spells an enumeration out when it is
+                // generated next to the record; one of another module reaches
+                // the layout as the underlying integer, because a mirror is
+                // interop storage and the integer is what crosses. The accessor
+                // still hands the enumeration out, as long as this run emits
+                // it: the module that declares it is one of the references of
+                // the module being emitted, which is what every signature that
+                // names a type of another module already relies on.
+                if (mapped.Symbol is { } symbol
+                    && MarshalPlanner.IsEmitted(symbol, _overlays, _classifier))
+                {
+                    publicType = mapped.PublicType;
+                    expression = "(" + mapped.PublicType + ")" + raw;
                 }
 
                 break;
@@ -1895,7 +1908,8 @@ internal sealed class RecordEmitter
         GirNamespace ns,
         GirRecord record,
         IReadOnlySet<string> bound,
-        IReadOnlyList<LayoutField>? layout)
+        IReadOnlyList<LayoutField>? layout,
+        bool handWritten)
     {
         foreach (GirField field in record.Fields)
         {
@@ -1919,7 +1933,10 @@ internal sealed class RecordEmitter
 
             if (DroppedFieldReason(ns, field, bound) is { } reason)
             {
-                _census.DroppedField(module.GirNamespace, record.Name + "." + field.Name, reason);
+                _census.DroppedField(
+                    module.GirNamespace,
+                    record.Name + "." + field.Name,
+                    Refine(ns, field, reason, layout, handWritten));
             }
         }
 
@@ -1928,7 +1945,7 @@ internal sealed class RecordEmitter
         {
             if (ReferenceEquals(union, projected))
             {
-                ReportDroppedUnionMembers(module, ns, record, union, bound);
+                ReportDroppedUnionMembers(module, ns, record, union, bound, layout, handWritten);
                 continue;
             }
 
@@ -1953,7 +1970,9 @@ internal sealed class RecordEmitter
         GirNamespace ns,
         GirRecord record,
         GirUnion union,
-        IReadOnlySet<string> bound)
+        IReadOnlySet<string> bound,
+        IReadOnlyList<LayoutField>? layout,
+        bool handWritten)
     {
         foreach (GirField member in union.Records[0].Fields)
         {
@@ -1968,7 +1987,7 @@ internal sealed class RecordEmitter
             // stood for it.
             string reason = IsHidden(member)
                 ? "Private"
-                : DroppedFieldReason(ns, member, bound) ?? "Other";
+                : Refine(ns, member, DroppedFieldReason(ns, member, bound) ?? OtherReason, layout, handWritten);
 
             _census.DroppedField(module.GirNamespace, record.Name + "." + member.Name, reason);
         }
@@ -1995,6 +2014,68 @@ internal sealed class RecordEmitter
     }
 
     /// <summary>
+    /// The reason a field carries when nothing more precise is known about it.
+    /// It is the one <see cref="Refine"/> reads, because it is the only one
+    /// that names no shape and therefore measures nothing.
+    /// </summary>
+    private const string OtherReason = "Other";
+
+    /// <summary>
+    /// Names why a field that no shape accounts for went unbound, so that the
+    /// ledger measures a cause rather than a catch all.
+    /// </summary>
+    /// <param name="ns">The gir namespace of the record.</param>
+    /// <param name="field">The field being reported.</param>
+    /// <param name="reason">What the shape of the field said.</param>
+    /// <param name="layout">The laid out fields of the record, if any.</param>
+    /// <param name="handWritten">Whether the wrapper of the record is hand written.</param>
+    /// <returns>The reason the ledger reports.</returns>
+    /// <remarks>
+    /// <para>
+    /// Only the catch all is refined; every other reason already names a shape.
+    /// The order is the order of the causes: a hand written wrapper is never
+    /// asked for accessors at all, a record whose mirror collapsed has no
+    /// storage to read one out of, and only then does the type of the field
+    /// have anything to say. What is left over is a field this rule has no
+    /// account of, which is what the catch all is for.
+    /// </para>
+    /// <para>
+    /// An enumeration is the one type that reaches the catch all on its own
+    /// account, because the accessors only spell one out when this run emits
+    /// it; one of the GLib stack, whose runtime layer is hand written, has no
+    /// generated name to hand out and the field keeps the integer it is
+    /// projected onto.
+    /// </para>
+    /// </remarks>
+    private string Refine(
+        GirNamespace ns,
+        GirField field,
+        string reason,
+        IReadOnlyList<LayoutField>? layout,
+        bool handWritten)
+    {
+        if (!string.Equals(reason, OtherReason, StringComparison.Ordinal))
+        {
+            return reason;
+        }
+
+        if (handWritten)
+        {
+            return "HandWritten";
+        }
+
+        if (layout is null)
+        {
+            return "NoLayout";
+        }
+
+        return field.Type is { } type
+            && MappedPointee(ns, type) is { Kind: MarshalKind.Enum or MarshalKind.Flags }
+                ? "CrossNamespaceEnum"
+                : OtherReason;
+    }
+
+    /// <summary>
     /// Names the shape that kept a field out of the generated surface.
     /// </summary>
     /// <param name="ns">The gir namespace of the record.</param>
@@ -2017,14 +2098,14 @@ internal sealed class RecordEmitter
 
         if (field.Type is not { } type)
         {
-            return "Other";
+            return OtherReason;
         }
 
         if (type is GirArrayRef { FixedSize: not null } array)
         {
             if (array.ElementType is not { } element)
             {
-                return "Other";
+                return OtherReason;
             }
 
             if (element.IsPointer || _types.Map(element, ns).Kind == MarshalKind.Pointer)
@@ -2032,7 +2113,7 @@ internal sealed class RecordEmitter
                 return "InlineArray(pointer element)";
             }
 
-            return IsValueElement(ns, type) ? "Other" : "InlineArray(struct element)";
+            return IsValueElement(ns, type) ? OtherReason : "InlineArray(struct element)";
         }
 
         // An array without a fixed size decays to a pointer in the C structure,
@@ -2066,7 +2147,7 @@ internal sealed class RecordEmitter
             return "Pointer";
         }
 
-        return "Other";
+        return OtherReason;
     }
 
     /// <summary>

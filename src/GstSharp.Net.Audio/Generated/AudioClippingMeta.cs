@@ -34,6 +34,17 @@ public sealed unsafe partial class AudioClippingMeta
     /// <param name="handle">The native instance.</param>
     internal AudioClippingMeta(nint handle) => Handle = handle;
 
+    /// <summary>GstFormat of @start and @stop, GST_FORMAT_DEFAULT is samples</summary>
+    public Gst.Format Format
+    {
+        get
+        {
+            Gst.Format value = (Gst.Format)((AudioClippingMetaRaw*)Handle)->Format;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
     /// <summary>Amount of audio to clip from start of buffer</summary>
     public ulong Start
     {
