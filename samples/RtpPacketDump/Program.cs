@@ -96,13 +96,15 @@ internal static class Dump
                 return 2;
             }
 
-            // GstApp.Initialize rather than GstSharp.Initialize: only a call
-            // into GstSharp.Net.App runs the module initialiser that puts
-            // GstAppSink into the type registry, without which the cast of the
-            // sink below is silently null. GstSharp.Net.Rtp needs no such call
-            // here -- nothing in this sample looks a GstRtp GType up through
-            // the registry, and the first RTPBuffer.MapBuffer is itself the
-            // call that runs that assembly's module initialiser.
+            // One entry point per binding assembly this sample uses, rather
+            // than GstSharp.Initialize: only a call into GstSharp.Net.App runs
+            // the module initialiser that puts GstAppSink into the type
+            // registry, without which the cast of the sink below is silently
+            // null. GstRtp.Initialize says the same for GstSharp.Net.Rtp; here
+            // the first RTPBuffer.MapBuffer would run that module initialiser
+            // anyway, but nothing would say so, and a cast to a payloader base
+            // class added later would be the silently null one.
+            GstRtp.Initialize();
             GstApp.Initialize();
 
             Console.WriteLine($"version:     {GstSharp.NativeVersion.Description}");
