@@ -391,6 +391,78 @@ public sealed class RejectionRulesTests
 
     private static readonly Lazy<FixtureRun> LazyRun = new(static () => Fixture.Run(Body), isThreadSafe: true);
 
+    /// <summary>
+    /// A namespace that answers a scalar through a pointer typed
+    /// <c>&lt;type&gt;</c> twice - from a method and from a callback - which is
+    /// the <c>gst_rtcp_packet_fb_get_fci</c> shape and is refused; beside the
+    /// two projections the refusal must leave alone: an out parameter of the
+    /// same spelling and a returned <c>gpointer</c>.
+    /// </summary>
+    private const string PointerToScalarBody =
+        """
+            <callback name="FciFunc" c:type="GstFciFunc">
+              <return-value transfer-ownership="none">
+                <type name="guint8" c:type="guint8*"/>
+              </return-value>
+              <parameters>
+                <parameter name="user_data" transfer-ownership="none" nullable="1" closure="0">
+                  <type name="gpointer" c:type="gpointer"/>
+                </parameter>
+              </parameters>
+            </callback>
+            <class name="Packet" c:type="GstPacket" parent="GObject.InitiallyUnowned" glib:type-name="GstPacket" glib:get-type="gst_packet_get_type">
+              <method name="get_fci" c:identifier="gst_packet_get_fci">
+                <return-value transfer-ownership="none">
+                  <type name="guint8" c:type="guint8*"/>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="packet" transfer-ownership="none">
+                    <type name="Packet" c:type="GstPacket*"/>
+                  </instance-parameter>
+                </parameters>
+              </method>
+              <method name="set_fci_function" c:identifier="gst_packet_set_fci_function">
+                <return-value transfer-ownership="none">
+                  <type name="none" c:type="void"/>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="packet" transfer-ownership="none">
+                    <type name="Packet" c:type="GstPacket*"/>
+                  </instance-parameter>
+                  <parameter name="func" transfer-ownership="none" scope="async" closure="1">
+                    <type name="FciFunc" c:type="GstFciFunc"/>
+                  </parameter>
+                  <parameter name="user_data" transfer-ownership="none" nullable="1">
+                    <type name="gpointer" c:type="gpointer"/>
+                  </parameter>
+                </parameters>
+              </method>
+              <method name="get_ssrc" c:identifier="gst_packet_get_ssrc">
+                <return-value transfer-ownership="none">
+                  <type name="none" c:type="void"/>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="packet" transfer-ownership="none">
+                    <type name="Packet" c:type="GstPacket*"/>
+                  </instance-parameter>
+                  <parameter name="ssrc" direction="out" transfer-ownership="none">
+                    <type name="guint32" c:type="guint32*"/>
+                  </parameter>
+                </parameters>
+              </method>
+              <method name="get_user_data" c:identifier="gst_packet_get_user_data">
+                <return-value transfer-ownership="none" nullable="1">
+                  <type name="gpointer" c:type="gpointer"/>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="packet" transfer-ownership="none">
+                    <type name="Packet" c:type="GstPacket*"/>
+                  </instance-parameter>
+                </parameters>
+              </method>
+            </class>
+        """;
+
     private static readonly Lazy<FixtureRun> LazyPointerToPointerRun = new(
         static () => Fixture.Run(PointerToPointerBody),
         isThreadSafe: true);
@@ -402,6 +474,12 @@ public sealed class RejectionRulesTests
     private static FixtureRun Run => LazyRun.Value;
 
     private static FixtureRun PointerToPointerRun => LazyPointerToPointerRun.Value;
+
+    private static readonly Lazy<FixtureRun> LazyPointerToScalarRun = new(
+        static () => Fixture.Run(PointerToScalarBody),
+        isThreadSafe: true);
+
+    private static FixtureRun PointerToScalarRun => LazyPointerToScalarRun.Value;
 
     private static FixtureRun HandlerRun => LazyHandlerRun.Value;
 
@@ -733,6 +811,63 @@ public sealed class RejectionRulesTests
         Assert.Contains(
             "public event System.EventHandler<Gst.Player.VisualizationChangedSignalArgs> VisualizationChanged",
             source,
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AReturnedPointerToAScalarIsRejected()
+    {
+        // gst_rtcp_packet_fb_get_fci is the shape: the gir answers the block of
+        // feedback control information through a
+        // <type name="guint8" c:type="guint8*"/>, so the member would answer a
+        // byte and the pointer the C function returns would be truncated to its
+        // lowest byte - a warning free binding that answers a number nobody can
+        // use. The <type> names the scalar and only the c:type says it is an
+        // address, which is why nothing but this rule sees it.
+        FixtureRun run = PointerToScalarRun;
+
+        Assert.DoesNotContain("gst_packet_get_fci", run.File("Packet.cs"), StringComparison.Ordinal);
+
+        // The two refusals of the fixture - this one and the callback return -
+        // share the count.
+        Assert.Equal(2, run.Result.Census.SkippedCount("Gst", SkipReason.UnsupportedSignature));
+    }
+
+    [Fact]
+    public void ACallbackThatReturnsAPointerToAScalarIsRejected()
+    {
+        // The same value coming the other way. A trampoline hands the return of
+        // a handler back to the library, so a guint8 standing for a guint8*
+        // would be read as an address there; the delegate is refused, and the
+        // method that installs it goes with it.
+        FixtureRun run = PointerToScalarRun;
+
+        Assert.DoesNotContain("gst_packet_set_fci_function", run.File("Packet.cs"), StringComparison.Ordinal);
+        Assert.False(run.HasFile("Callbacks.cs"));
+        Assert.Equal(2, run.Result.Census.SkippedCount("Gst", SkipReason.UnsupportedSignature));
+    }
+
+    [Fact]
+    public void AnOutPointerToAScalarIsStillBound()
+    {
+        // The out direction is the one this shape has a projection for, and it
+        // is spelled with exactly the same star: the refusal is made on the
+        // return side alone, so nothing about an out parameter moves.
+        Assert.Contains(
+            "public void GetSsrc(out uint ssrc)",
+            PointerToScalarRun.File("Packet.cs"),
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AReturnedPointerIsStillBound()
+    {
+        // A gpointer is a pointer on purpose - it carries no star in its c:type
+        // and is not a scalar the binding passes by value - so the rule leaves
+        // the whole untyped pointer surface alone.
+        Assert.Contains(
+            "public nint GetUserData()",
+            PointerToScalarRun.File("Packet.cs"),
             StringComparison.Ordinal);
     }
 

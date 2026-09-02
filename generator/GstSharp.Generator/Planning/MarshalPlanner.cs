@@ -148,6 +148,20 @@ internal sealed class CallbackPlan
 /// <c>&lt;type c:type="GstPlayVisualization**"/&gt;</c> with no array
 /// annotation, is the shape. See
 /// <see cref="IsPointerToHandlePointer"/>.</description></item>
+/// <item><description>A returned value whose <c>&lt;type&gt;</c> names a
+/// scalar the binding passes by value while its <c>c:type</c> carries a star is
+/// refused, whether the return is a member's or a callback's. Such a gir
+/// describes an address and not a value: <c>gst_rtcp_packet_fb_get_fci</c>
+/// answers a <c>guint8*</c> through a
+/// <c>&lt;type name="guint8" c:type="guint8*"/&gt;</c>, so the member would
+/// answer a <c>byte</c> and the pointer would be truncated to its lowest byte.
+/// The in parameter side of the same shape - a
+/// <c>&lt;type name="guint32" c:type="const guint32*"/&gt;</c> with no
+/// direction, which would pass the number where the C function dereferences a
+/// pointer - is knowingly not refused yet, because two published members
+/// project it and removing them is a source break reserved for an
+/// <c>[Obsolete]</c> bridge. See
+/// <see cref="IsPointerToScalar"/>.</description></item>
 /// <item><description>A parameter the gir spells as a pointer to one value and
 /// the C function fills with several is only bound when the overlays state how
 /// many: <c>gst_video_format_info_component</c> writes four <c>gint</c> through
@@ -1760,6 +1774,68 @@ internal sealed class MarshalPlanner
     }
 
     /// <summary>
+    /// Tests whether a value is a scalar the binding passes by value while its
+    /// <c>c:type</c> says it is a pointer, which is a shape no marshalling
+    /// covers.
+    /// </summary>
+    /// <param name="type">The type of the value, with the array corrections applied.</param>
+    /// <param name="mapped">Its mapping.</param>
+    /// <returns><see langword="true"/> when the value cannot be bound.</returns>
+    /// <remarks>
+    /// <para>
+    /// A pointer typed scalar cannot be projected: the value would stand where
+    /// C means an address. The two shapes the rule was written for are both in
+    /// GstRtp. <c>gst_rtcp_packet_fb_get_fci</c> and
+    /// <c>gst_rtcp_packet_app_get_data</c> answer a <c>guint8*</c> through a
+    /// <c>&lt;type name="guint8" c:type="guint8*"/&gt;</c>, so the return would
+    /// be a <c>byte</c> and the pointer would be truncated to its lowest byte;
+    /// <c>gst_buffer_add_rtp_source_meta</c> and
+    /// <c>gst_rtp_source_meta_set_ssrc</c> spell their <c>ssrc</c> as a
+    /// nullable <c>&lt;type name="guint32" c:type="const guint32*"/&gt;</c>
+    /// with no direction and no array annotation, so the member would hand the
+    /// number itself to a C function that dereferences it. Both would compile
+    /// and neither would be a binding.
+    /// </para>
+    /// <para>
+    /// Only the kinds <see cref="PlanScalar"/> itself passes by value are
+    /// named, which is what makes the rule the exact complement of the
+    /// projection this shape would otherwise fall into. <c>gpointer</c> and
+    /// <c>gconstpointer</c> are pointers on purpose and are excluded with the
+    /// rest; a string, a <c>GValue</c>, a <c>GError</c>, a <c>GDate</c> and
+    /// anything bound behind a handle each carry a star of their own and have
+    /// a marshalling that reads it. An <c>&lt;array&gt;</c> is excluded as
+    /// well: a block of scalars is exactly what the array plans project, and a
+    /// gir that means an array and forgets to say so is corrected through
+    /// <c>arrayOverrides</c> rather than here.
+    /// </para>
+    /// <para>
+    /// The test is general and only the return side acts on it today: the in
+    /// parameter side of the same shape is knowingly not refused yet, because
+    /// two published members project it -
+    /// <c>gst_audio_base_sink_set_custom_slaving_callback</c>, through the
+    /// <c>GstClockTimeDiff*</c> of
+    /// <c>GstAudioBaseSinkCustomSlavingCallback#requested_skew</c>, and
+    /// <c>gst_video_gl_texture_upload_meta_upload</c>, through the
+    /// <c>guint*</c> of its <c>texture_id</c>. Removing them is a source break
+    /// reserved for an <c>[Obsolete]</c> bridge rather than for this rule.
+    /// </para>
+    /// </remarks>
+    private static bool IsPointerToScalar(GirTypeRef type, MappedType mapped)
+    {
+        if (type is GirArrayRef || !(type.CType?.Contains('*', StringComparison.Ordinal) ?? false))
+        {
+            return false;
+        }
+
+        return mapped.Kind switch
+        {
+            MarshalKind.Blittable or MarshalKind.Boolean or MarshalKind.GType or MarshalKind.Quark
+                or MarshalKind.Enum or MarshalKind.Flags => true,
+            _ => false,
+        };
+    }
+
+    /// <summary>
     /// Tests whether the callable answers a <c>gboolean</c> the member hands
     /// on, which is what says that a caller allocated out parameter is only
     /// filled on success.
@@ -1996,6 +2072,20 @@ internal sealed class MarshalPlanner
         bool redirectedDestination = false,
         bool inbound = false)
     {
+        // A pointer typed scalar cannot be projected: the value would be read
+        // where C hands an address over, and a returned pointer would be
+        // truncated to the width of the scalar. The refusal is made on the
+        // return side alone for now, which is every return PlanScalar plans -
+        // a method, a function, a constructor, a virtual method invoker and a
+        // signal all reach it with `isReturn`, and a callback return is
+        // refused where it is planned, because it reaches PlanScalar without
+        // the flag. The in parameter side of the same shape is knowingly not
+        // refused yet; IsPointerToScalar says why.
+        if (isReturn && IsPointerToScalar(type, mapped))
+        {
+            return null;
+        }
+
         bool byPointer = direction != ArgumentDirection.In;
         string pointerSuffix = byPointer ? "*" : string.Empty;
 
@@ -3708,6 +3798,16 @@ internal sealed class MarshalPlanner
         }
         else
         {
+            // The same refusal, in front of the value a trampoline hands back.
+            // A callback return reaches PlanScalar without `isReturn` - the
+            // flag steers the GValue, the GDate and the handle plans, and
+            // setting it here would move projections this rule is not about -
+            // so the test is made here instead.
+            if (IsPointerToScalar(callback.ReturnValue.Type, returnMapped))
+            {
+                return null;
+            }
+
             ArgumentPlan? scalar = PlanScalar(
                 callback.ReturnValue.Type,
                 returnMapped,
