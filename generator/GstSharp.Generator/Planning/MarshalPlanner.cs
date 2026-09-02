@@ -137,12 +137,13 @@ internal sealed class CallbackPlan
 /// <c>ref</c>, and the local becomes the caller's own storage. The correction
 /// is refused for anything but a pointer to a plain struct, because every other
 /// out shape needs a projection of its own.</description></item>
-/// <item><description>An <c>in</c> parameter whose <c>c:type</c> ends in two
+/// <item><description>An inbound argument whose <c>c:type</c> ends in two
 /// stars and whose <c>&lt;type&gt;</c> names something bound behind a handle is
-/// refused. A handle argument crosses as the pointer the wrapper holds, so the
-/// member would hand one level of indirection too few over and the callee would
-/// read the object as if it were a pointer;
-/// <c>gst_play_visualizations_free</c>, whose gir writes a plain
+/// refused, whether it is the <c>in</c> parameter of a callable, the argument
+/// of a callback or the argument of a signal. A handle argument crosses as the
+/// pointer the wrapper holds, so the member would hand one level of
+/// indirection too few over and the callee would read the object as if it were
+/// a pointer; <c>gst_play_visualizations_free</c>, whose gir writes a plain
 /// <c>&lt;type c:type="GstPlayVisualization**"/&gt;</c> with no array
 /// annotation, is the shape. See
 /// <see cref="IsPointerToHandlePointer"/>.</description></item>
@@ -1681,12 +1682,13 @@ internal sealed class MarshalPlanner
     }
 
     /// <summary>
-    /// Tests whether an in parameter is a pointer to a pointer to something
-    /// that is bound behind a handle, which is a shape no marshalling covers.
+    /// Tests whether an inbound argument is a pointer to a pointer to
+    /// something that is bound behind a handle, which is a shape no
+    /// marshalling covers.
     /// </summary>
-    /// <param name="effective">The type of the parameter, with the array corrections applied.</param>
+    /// <param name="effective">The type of the argument, with the array corrections applied.</param>
     /// <param name="mapped">Its mapping.</param>
-    /// <returns><see langword="true"/> when the parameter cannot be bound.</returns>
+    /// <returns><see langword="true"/> when the argument cannot be bound.</returns>
     /// <remarks>
     /// <para>
     /// A handle argument crosses as the pointer the wrapper holds. A
@@ -1702,6 +1704,13 @@ internal sealed class MarshalPlanner
     /// call.
     /// </para>
     /// <para>
+    /// All three inbound entry points are guarded, because each reaches
+    /// <c>PlanScalar</c> on its own: the <c>in</c> parameter of a callable, the
+    /// argument of a callback and the argument of a signal. A trampoline hands
+    /// its delegate what native code passed, so a handler would read the shape
+    /// wrongly exactly the way a callee does.
+    /// </para>
+    /// <para>
     /// Only the <c>in</c> direction is refused, and only for the kinds the
     /// handle plan covers. An <c>out</c> parameter of the same <c>c:type</c> is
     /// the ordinary pointer the callee writes the handle back through and keeps
@@ -1711,7 +1720,8 @@ internal sealed class MarshalPlanner
     /// handle are all spelled with two stars as well and each has a
     /// marshalling of its own, reached before this test. A gir that means an
     /// array and forgets to say so is corrected through <c>arrayOverrides</c>
-    /// rather than here.
+    /// rather than here. A callback and a signal refuse every direction but
+    /// <c>in</c> before they reach this test at all.
     /// </para>
     /// </remarks>
     private static bool IsPointerToHandlePointer(GirTypeRef effective, MappedType mapped)
@@ -3474,6 +3484,18 @@ internal sealed class MarshalPlanner
             }
 
             MappedType mapped = _types.Map(parameter.Type, context.Namespace);
+
+            // The same refusal, in front of the projection a callback argument
+            // goes through. Nothing is recorded through Reject either: a
+            // callable whose plan comes back null is ledgered as
+            // UnsupportedSignature already, and TryPlanCallback caches the
+            // refusal, so a field written here would only reach the first site
+            // that hands the type over.
+            if (IsPointerToHandlePointer(parameter.Type, mapped))
+            {
+                return null;
+            }
+
             ArgumentPlan? argument = PlanScalar(
                 parameter.Type,
                 mapped,
@@ -3675,6 +3697,18 @@ internal sealed class MarshalPlanner
         MappedType mapped = _types.Map(parameter.Type, context.Namespace);
         bool nullable = AnnotationOverrideFor(signalKey + "#" + parameter.Name)?.Nullable
             ?? parameter.IsNullable;
+
+        // The refusal that PlanParameter applies to the in parameter of a
+        // callable, hoisted in front of the projection a signal argument goes
+        // through: a handler receives the pointer the emitter passes exactly
+        // as a method passes one, so two stars are as wrong here as there.
+        // Nothing is recorded through Reject, because TryPlanSignal has
+        // already set the reason this would record - an argument it cannot
+        // plan takes the signal out as UnsupportedSignature.
+        if (IsPointerToHandlePointer(parameter.Type, mapped))
+        {
+            return null;
+        }
 
         ArgumentPlan? argument = PlanScalar(
             parameter.Type,

@@ -294,15 +294,116 @@ public sealed class RejectionRulesTests
             </class>
         """;
 
+    /// <summary>
+    /// A namespace that carries the same pointer to a pointer on the inbound
+    /// side: as the argument of a callback and as the argument of a signal,
+    /// which are the two entry points a method parameter does not go through,
+    /// each next to the single star spelling that must keep binding.
+    /// </summary>
+    private const string HandlerBody =
+        """
+            <record name="Visualization" c:type="GstVisualization" glib:type-name="GstVisualization" glib:get-type="gst_visualization_get_type">
+              <field name="name" writable="1">
+                <type name="utf8" c:type="const gchar*"/>
+              </field>
+            </record>
+            <callback name="VisualizationsFunc" c:type="GstVisualizationsFunc">
+              <return-value transfer-ownership="none">
+                <type name="none" c:type="void"/>
+              </return-value>
+              <parameters>
+                <parameter name="viss" transfer-ownership="none">
+                  <type name="Visualization" c:type="GstVisualization**"/>
+                </parameter>
+                <parameter name="user_data" transfer-ownership="none" nullable="1" closure="1">
+                  <type name="gpointer" c:type="gpointer"/>
+                </parameter>
+              </parameters>
+            </callback>
+            <callback name="VisualizationFunc" c:type="GstVisualizationFunc">
+              <return-value transfer-ownership="none">
+                <type name="none" c:type="void"/>
+              </return-value>
+              <parameters>
+                <parameter name="vis" transfer-ownership="none">
+                  <type name="Visualization" c:type="GstVisualization*"/>
+                </parameter>
+                <parameter name="user_data" transfer-ownership="none" nullable="1" closure="1">
+                  <type name="gpointer" c:type="gpointer"/>
+                </parameter>
+              </parameters>
+            </callback>
+            <class name="Player" c:type="GstPlayer" parent="GObject.InitiallyUnowned" glib:type-name="GstPlayer" glib:get-type="gst_player_get_type">
+              <method name="watch_visualizations" c:identifier="gst_player_watch_visualizations">
+                <return-value transfer-ownership="none">
+                  <type name="none" c:type="void"/>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="player" transfer-ownership="none">
+                    <type name="Player" c:type="GstPlayer*"/>
+                  </instance-parameter>
+                  <parameter name="func" transfer-ownership="none" scope="call" closure="1">
+                    <type name="VisualizationsFunc" c:type="GstVisualizationsFunc"/>
+                  </parameter>
+                  <parameter name="user_data" transfer-ownership="none" nullable="1">
+                    <type name="gpointer" c:type="gpointer"/>
+                  </parameter>
+                </parameters>
+              </method>
+              <method name="watch_visualization" c:identifier="gst_player_watch_visualization">
+                <return-value transfer-ownership="none">
+                  <type name="none" c:type="void"/>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="player" transfer-ownership="none">
+                    <type name="Player" c:type="GstPlayer*"/>
+                  </instance-parameter>
+                  <parameter name="func" transfer-ownership="none" scope="call" closure="1">
+                    <type name="VisualizationFunc" c:type="GstVisualizationFunc"/>
+                  </parameter>
+                  <parameter name="user_data" transfer-ownership="none" nullable="1">
+                    <type name="gpointer" c:type="gpointer"/>
+                  </parameter>
+                </parameters>
+              </method>
+              <glib:signal name="visualizations-changed" when="last">
+                <return-value transfer-ownership="none">
+                  <type name="none" c:type="void"/>
+                </return-value>
+                <parameters>
+                  <parameter name="viss" transfer-ownership="none">
+                    <type name="Visualization" c:type="GstVisualization**"/>
+                  </parameter>
+                </parameters>
+              </glib:signal>
+              <glib:signal name="visualization-changed" when="last">
+                <return-value transfer-ownership="none">
+                  <type name="none" c:type="void"/>
+                </return-value>
+                <parameters>
+                  <parameter name="vis" transfer-ownership="none">
+                    <type name="Visualization" c:type="GstVisualization*"/>
+                  </parameter>
+                </parameters>
+              </glib:signal>
+            </class>
+        """;
+
     private static readonly Lazy<FixtureRun> LazyRun = new(static () => Fixture.Run(Body), isThreadSafe: true);
 
     private static readonly Lazy<FixtureRun> LazyPointerToPointerRun = new(
         static () => Fixture.Run(PointerToPointerBody),
         isThreadSafe: true);
 
+    private static readonly Lazy<FixtureRun> LazyHandlerRun = new(
+        static () => Fixture.Run(HandlerBody),
+        isThreadSafe: true);
+
     private static FixtureRun Run => LazyRun.Value;
 
     private static FixtureRun PointerToPointerRun => LazyPointerToPointerRun.Value;
+
+    private static FixtureRun HandlerRun => LazyHandlerRun.Value;
 
     [Fact]
     public void ACallerAllocatedHandleIsRejected()
@@ -575,6 +676,62 @@ public sealed class RejectionRulesTests
             StringComparison.Ordinal);
         Assert.Contains(
             "public void SetVisualization(Gst.Visualization vis)",
+            source,
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ACallbackPointerToAHandlePointerIsRejected()
+    {
+        // The same shape on the inbound side. A trampoline hands the delegate
+        // what the caller passed, so a c:type of two stars would be projected
+        // as if the pointer to the block were the record itself, and every
+        // handler of the delegate would read one level of indirection too far.
+        // The whole callback type is refused, which takes the method that hands
+        // it over with it: nothing else can be done with a delegate whose
+        // signature cannot be spelled.
+        FixtureRun run = HandlerRun;
+
+        Assert.DoesNotContain(
+            "gst_player_watch_visualizations",
+            run.File("Player.cs"),
+            StringComparison.Ordinal);
+        Assert.DoesNotContain("VisualizationsFunc", run.File("Callbacks.cs"), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ASignalPointerToAHandlePointerIsRejected()
+    {
+        // A signal argument reaches the handler the same way a callback
+        // argument does, so the refusal is the same one: the event, its
+        // arguments class and its trampoline are all left out rather than
+        // emitted around a wrong pointer.
+        string source = HandlerRun.File("Player.cs");
+
+        Assert.DoesNotContain("VisualizationsChanged", source, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void APlainHandleCallbackAndSignalArgumentStillBind()
+    {
+        // What keeps the refusal narrow on this side as well: a single star is
+        // the ordinary handle argument of a delegate and of an event, and both
+        // still bind.
+        FixtureRun run = HandlerRun;
+
+        Assert.Contains(
+            "public delegate void VisualizationFunc(Gst.Visualization vis);",
+            run.File("Callbacks.cs"),
+            StringComparison.Ordinal);
+
+        string source = run.File("Player.cs");
+
+        Assert.Contains(
+            "public void WatchVisualization(Gst.VisualizationFunc func)",
+            source,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "public event System.EventHandler<Gst.Player.VisualizationChangedSignalArgs> VisualizationChanged",
             source,
             StringComparison.Ordinal);
     }
