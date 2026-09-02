@@ -75,16 +75,6 @@ public sealed unsafe partial class VideoGLTextureUploadMeta
     internal static VideoGLTextureUploadMeta? FromNative(nint handle) =>
         handle == 0 ? null : new(handle);
 
-    /// <summary>Uploads the buffer which owns the meta to a specific texture ID.</summary>
-    /// <param name="textureId">The <c>textureId</c> argument.</param>
-    /// <returns>%TRUE if uploading succeeded, %FALSE otherwise.</returns>
-    public bool Upload(uint textureId)
-    {
-        int nativeResult = GstVideoGlTextureUploadMetaUpload(Handle, textureId);
-        System.GC.KeepAlive(this);
-        return nativeResult != 0;
-    }
-
     /// <summary>The <c>gst_video_gl_texture_upload_meta_get_info</c> function.</summary>
     /// <returns>The result of <c>gst_video_gl_texture_upload_meta_get_info</c>.</returns>
     public static Gst.MetaInfo GetInfo()
@@ -93,10 +83,6 @@ public sealed unsafe partial class VideoGLTextureUploadMeta
         return Gst.MetaInfo.FromNative(nativeResult)
             ?? throw new InvalidOperationException("gst_video_gl_texture_upload_meta_get_info returned no value.");
     }
-
-    /// <summary>The <c>gst_video_gl_texture_upload_meta_upload</c> entry point.</summary>
-    [LibraryImport("GstVideo", EntryPoint = "gst_video_gl_texture_upload_meta_upload")]
-    private static partial int GstVideoGlTextureUploadMetaUpload(nint meta, uint textureId);
 
     /// <summary>The <c>gst_video_gl_texture_upload_meta_get_info</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_gl_texture_upload_meta_get_info")]

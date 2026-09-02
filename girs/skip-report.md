@@ -610,8 +610,9 @@ disappears shows up here as an added line.
 
 ## GstAudio
 
-### HandBound (4)
+### HandBound (5)
 
+- `gst_audio_base_sink_set_custom_slaving_callback`
 - `gst_audio_buffer_map`
 - `gst_audio_buffer_unmap`
 - `gst_audio_ring_buffer_read`
@@ -1009,12 +1010,13 @@ disappears shows up here as an added line.
 
 ## GstVideo
 
-### HandBound (4)
+### HandBound (5)
 
 - `gst_video_codec_frame_set_user_data`
 - `gst_video_frame_map`
 - `gst_video_frame_map_id`
 - `gst_video_frame_unmap`
+- `gst_video_gl_texture_upload_meta_upload`
 
 ### LifetimePrimitive (10)
 

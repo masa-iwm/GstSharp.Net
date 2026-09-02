@@ -551,7 +551,85 @@ public sealed class RejectionRulesTests
                   </parameter>
                 </parameters>
               </method>
+              <method name="set_slaving_function" c:identifier="gst_packet_set_slaving_function">
+                <return-value transfer-ownership="none">
+                  <type name="none" c:type="void"/>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="packet" transfer-ownership="none">
+                    <type name="Packet" c:type="GstPacket*"/>
+                  </instance-parameter>
+                  <parameter name="func" transfer-ownership="none" scope="async" closure="1">
+                    <type name="SlavingFunc" c:type="GstSlavingFunc"/>
+                  </parameter>
+                  <parameter name="user_data" transfer-ownership="none" nullable="1">
+                    <type name="gpointer" c:type="gpointer"/>
+                  </parameter>
+                </parameters>
+              </method>
+              <method name="set_ready_function" c:identifier="gst_packet_set_ready_function">
+                <return-value transfer-ownership="none">
+                  <type name="none" c:type="void"/>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="packet" transfer-ownership="none">
+                    <type name="Packet" c:type="GstPacket*"/>
+                  </instance-parameter>
+                  <parameter name="func" transfer-ownership="none" scope="async" closure="1">
+                    <type name="ReadyFunc" c:type="GstReadyFunc"/>
+                  </parameter>
+                  <parameter name="user_data" transfer-ownership="none" nullable="1">
+                    <type name="gpointer" c:type="gpointer"/>
+                  </parameter>
+                </parameters>
+              </method>
+              <glib:signal name="skew-requested" when="last">
+                <return-value transfer-ownership="none">
+                  <type name="none" c:type="void"/>
+                </return-value>
+                <parameters>
+                  <parameter name="skew" transfer-ownership="none">
+                    <type name="guint" c:type="guint*"/>
+                  </parameter>
+                </parameters>
+              </glib:signal>
+              <glib:signal name="count-changed" when="last">
+                <return-value transfer-ownership="none">
+                  <type name="none" c:type="void"/>
+                </return-value>
+                <parameters>
+                  <parameter name="count" transfer-ownership="none">
+                    <type name="guint" c:type="guint"/>
+                  </parameter>
+                </parameters>
+              </glib:signal>
             </class>
+            <callback name="SlavingFunc" c:type="GstSlavingFunc">
+              <return-value transfer-ownership="none">
+                <type name="none" c:type="void"/>
+              </return-value>
+              <parameters>
+                <parameter name="skew" transfer-ownership="none">
+                  <type name="gint64" c:type="gint64*"/>
+                </parameter>
+                <parameter name="user_data" transfer-ownership="none" nullable="1" closure="1">
+                  <type name="gpointer" c:type="gpointer"/>
+                </parameter>
+              </parameters>
+            </callback>
+            <callback name="ReadyFunc" c:type="GstReadyFunc">
+              <return-value transfer-ownership="none">
+                <type name="none" c:type="void"/>
+              </return-value>
+              <parameters>
+                <parameter name="ready" transfer-ownership="none">
+                  <type name="gint64" c:type="gint64"/>
+                </parameter>
+                <parameter name="user_data" transfer-ownership="none" nullable="1" closure="1">
+                  <type name="gpointer" c:type="gpointer"/>
+                </parameter>
+              </parameters>
+            </callback>
             <enumeration name="Kind" c:type="GstKind">
               <member name="cname" value="0" c:identifier="GST_KIND_CNAME"/>
               <member name="tool" value="1" c:identifier="GST_KIND_TOOL"/>
@@ -1204,6 +1282,57 @@ public sealed class RejectionRulesTests
         Assert.Contains("int isIpv4Native = isIpv4 ? 1 : 0;", source, StringComparison.Ordinal);
         Assert.Contains("isIpv4 = isIpv4Native != 0;", source, StringComparison.Ordinal);
         Assert.DoesNotContain(run.Result.Diagnostics, diagnostic => diagnostic.Code == "GEN0017");
+    }
+
+    [Fact]
+    public void AnInPointerToAScalarParameterIsRejected()
+    {
+        // The in half of the refusal, on a member. The gir of
+        // gst_rtp_source_meta_set_ssrc has this shape - a scalar with the star
+        // in the c:type alone and no direction - so the member would have
+        // handed the number itself to a C function that dereferences it. The
+        // parameter whose c:type carries no star is the control: it is a value
+        // the callee reads and it stays bound.
+        FixtureRun run = RunScalarWithOverlay("{}");
+
+        string source = run.File("Packet.cs");
+
+        Assert.DoesNotContain("gst_packet_get_ssrc", source, StringComparison.Ordinal);
+        Assert.Contains("public void GetCount(uint count)", source, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ACallbackArgumentThatIsAPointerToAScalarIsRejected()
+    {
+        // GstAudioBaseSinkCustomSlavingCallback is the shape: the C caller
+        // passes the address of the skew it reads back, and the trampoline
+        // would hand that address to the delegate as a number. The callback
+        // type goes, and the method that installs it goes with it; the
+        // callback whose scalar carries no star is the control.
+        FixtureRun run = RunScalarWithOverlay("{}");
+
+        string source = run.File("Packet.cs");
+        string callbacks = run.File("Callbacks.cs");
+
+        Assert.DoesNotContain("gst_packet_set_slaving_function", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("SlavingFunc", callbacks, StringComparison.Ordinal);
+        Assert.Contains("public delegate void ReadyFunc(", callbacks, StringComparison.Ordinal);
+        Assert.Contains("public void SetReadyFunction(", source, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ASignalArgumentThatIsAPointerToAScalarIsRejected()
+    {
+        // No signal of the corpus carries the shape, which is exactly why the
+        // branch is exercised here: a handler is handed the address the
+        // emitter passes and not the value at it, so the signal is refused and
+        // the one beside it, whose argument is a plain guint, is not.
+        FixtureRun run = RunScalarWithOverlay("{}");
+
+        string source = run.File("Packet.cs");
+
+        Assert.DoesNotContain("SkewRequested", source, StringComparison.Ordinal);
+        Assert.Contains("CountChanged", source, StringComparison.Ordinal);
     }
 
     [Fact]

@@ -126,29 +126,6 @@ public unsafe partial class AudioBaseSink : Gst.Base.BaseSink
         System.GC.KeepAlive(this);
     }
 
-    /// <summary>
-    /// Sets the custom slaving callback. This callback will
-    /// be invoked if the slave-method property is set to
-    /// GST_AUDIO_BASE_SINK_SLAVE_CUSTOM and the audio sink
-    /// receives and plays samples.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// Setting the callback to NULL causes the sink to
-    /// behave as if the GST_AUDIO_BASE_SINK_SLAVE_NONE
-    /// method were used.
-    /// </para>
-    /// </remarks>
-    /// <param name="callback">a #GstAudioBaseSinkCustomSlavingCallback</param>
-    public void SetCustomSlavingCallback(Gst.Audio.AudioBaseSinkCustomSlavingCallback callback)
-    {
-        ArgumentNullException.ThrowIfNull(callback);
-        nint instanceHandle = Handle;
-        Gst.Interop.CallbackHandle callbackState = Gst.Interop.CallbackHandle.Alloc(callback);
-        GstAudioBaseSinkSetCustomSlavingCallback(instanceHandle, Gst.Audio.AudioBaseSinkCustomSlavingCallbackTrampoline.Pointer, callbackState.UserData, (nint)Gst.Interop.CallbackHandle.DestroyNotify);
-        System.GC.KeepAlive(this);
-    }
-
     /// <summary>Controls how long the sink will wait before creating a discontinuity.</summary>
     /// <param name="discontWait">The <c>discontWait</c> argument.</param>
     public void SetDiscontWait(Gst.ClockTime discontWait)
@@ -342,10 +319,6 @@ public unsafe partial class AudioBaseSink : Gst.Base.BaseSink
     /// <summary>The <c>gst_audio_base_sink_set_alignment_threshold</c> entry point.</summary>
     [LibraryImport("GstAudio", EntryPoint = "gst_audio_base_sink_set_alignment_threshold")]
     private static partial void GstAudioBaseSinkSetAlignmentThreshold(nint sink, ulong alignmentThreshold);
-
-    /// <summary>The <c>gst_audio_base_sink_set_custom_slaving_callback</c> entry point.</summary>
-    [LibraryImport("GstAudio", EntryPoint = "gst_audio_base_sink_set_custom_slaving_callback")]
-    private static partial void GstAudioBaseSinkSetCustomSlavingCallback(nint sink, nint callback, nint userData, nint notify);
 
     /// <summary>The <c>gst_audio_base_sink_set_discont_wait</c> entry point.</summary>
     [LibraryImport("GstAudio", EntryPoint = "gst_audio_base_sink_set_discont_wait")]

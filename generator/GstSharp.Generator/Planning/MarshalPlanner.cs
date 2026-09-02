@@ -158,10 +158,10 @@ internal sealed class CallbackPlan
 /// The in parameter side of the same shape - a
 /// <c>&lt;type name="guint32" c:type="const guint32*"/&gt;</c> with no
 /// direction, which would pass the number where the C function dereferences a
-/// pointer - is knowingly not refused yet, because two published members, one
-/// in GstAudio and one in GstVideo, project that shape and removing them is a
-/// source break reserved for an
-/// <c>[Obsolete]</c> bridge. See
+/// pointer - is refused with it, on a member, on a callback argument and on a
+/// signal argument alike; a parameter the overlays correct onto an out or a
+/// ref direction is a pointer to the caller's own storage by then and is not
+/// reached by the rule. See
 /// <see cref="IsPointerToScalar"/>.</description></item>
 /// <item><description>A parameter the gir spells as a pointer to one value and
 /// the C function fills with several is only bound when the overlays state how
@@ -1693,6 +1693,15 @@ internal sealed class MarshalPlanner
             return Reject(SkipReason.UnsupportedSignature);
         }
 
+        // The in half of the pointer to a scalar refusal. The direction is the
+        // corrected one, so a parameter the overlays moved onto an out or a
+        // ref has left the shape behind by now; what is left is a gir that
+        // spells an address and a projection that would pass the value.
+        if (direction == ArgumentDirection.In && IsPointerToScalar(effective, mapped))
+        {
+            return Reject(SkipReason.UnsupportedSignature);
+        }
+
         return PlanScalar(
             effective,
             mapped,
@@ -1811,15 +1820,24 @@ internal sealed class MarshalPlanner
     /// <c>&lt;array&gt;</c> that is already there.
     /// </para>
     /// <para>
-    /// The test is general and only the return side acts on it today: the in
-    /// parameter side of the same shape is knowingly not refused yet, because
-    /// two published members project it -
-    /// <c>gst_audio_base_sink_set_custom_slaving_callback</c>, through the
-    /// <c>GstClockTimeDiff*</c> of
-    /// <c>GstAudioBaseSinkCustomSlavingCallback#requested_skew</c>, and
-    /// <c>gst_video_gl_texture_upload_meta_upload</c>, through the
-    /// <c>guint*</c> of its <c>texture_id</c>. Removing them is a source break
-    /// reserved for an <c>[Obsolete]</c> bridge rather than for this rule.
+    /// The test is applied to a returned value and to an inbound one alike: to
+    /// the return of a member and of a callback, and to the in parameter of a
+    /// member, of a callback and of a signal. The two published members that
+    /// projected the in shape are hand written now -
+    /// <c>gst_audio_base_sink_set_custom_slaving_callback</c>, whose
+    /// <c>GstAudioBaseSinkCustomSlavingCallback</c> carries a
+    /// <c>GstClockTimeDiff*</c> that the trampoline handed on as a number, and
+    /// <c>gst_video_gl_texture_upload_meta_upload</c>, whose <c>texture_id</c>
+    /// is a <c>guint*</c> the C function reads four elements out of - and each
+    /// keeps an <c>[Obsolete]</c> bridge in <c>Custom/</c> beside the member
+    /// that works.
+    /// </para>
+    /// <para>
+    /// The direction is read after the overlays have corrected it, which is
+    /// what keeps the rule off a parameter the C function writes through: an
+    /// <c>out</c> or a <c>ref</c> correction makes the argument the caller's
+    /// own storage and its address is what the callee wanted, so the shape is
+    /// no longer the one this refuses.
     /// </para>
     /// <para>
     /// The star is looked for with <c>Contains('*')</c> and not through
@@ -2100,13 +2118,15 @@ internal sealed class MarshalPlanner
     {
         // A pointer typed scalar cannot be projected: the value would be read
         // where C hands an address over, and a returned pointer would be
-        // truncated to the width of the scalar. The refusal is made on the
-        // return side alone for now, which is every return PlanScalar plans -
-        // a method, a function, a constructor, a virtual method invoker and a
-        // signal all reach it with `isReturn`, and a callback return is
-        // refused where it is planned, because it reaches PlanScalar without
-        // the flag. The in parameter side of the same shape is knowingly not
-        // refused yet; IsPointerToScalar says why.
+        // truncated to the width of the scalar. The refusal is made here for
+        // every return PlanScalar plans - a method, a function, a constructor,
+        // a virtual method invoker and a signal all reach it with `isReturn`,
+        // and a callback return is refused where it is planned, because it
+        // reaches PlanScalar without the flag. The in parameter side is
+        // refused by the three callers that project one rather than here:
+        // PlanParameter has to read the direction the overlays corrected
+        // first, and a caller allocated out reaches this method with an `in`
+        // direction of its own.
         if (isReturn && IsPointerToScalar(type, mapped))
         {
             return null;
@@ -3694,6 +3714,17 @@ internal sealed class MarshalPlanner
                 return null;
             }
 
+            // The pointer to a scalar refusal, in front of the same
+            // projection. A trampoline is handed the address the C caller
+            // means and would pass its lowest bytes on as a number, which is
+            // what GstAudioBaseSinkCustomSlavingCallback#requested_skew did.
+            // The overlays cannot correct a callback parameter onto an out
+            // direction, so there is no corrected direction to read here.
+            if (IsPointerToScalar(parameter.Type, mapped))
+            {
+                return null;
+            }
+
             ArgumentPlan? argument = PlanScalar(
                 parameter.Type,
                 mapped,
@@ -3914,6 +3945,15 @@ internal sealed class MarshalPlanner
         // already set the reason this would record - an argument it cannot
         // plan takes the signal out as UnsupportedSignature.
         if (IsPointerToHandlePointer(parameter.Type, mapped))
+        {
+            return null;
+        }
+
+        // And the pointer to a scalar refusal beside it, for the same reason:
+        // a handler is handed the address the emitter passes and not the value
+        // at it. No signal of the corpus carries the shape today; the rule is
+        // here so that the three inbound paths answer the same gir alike.
+        if (IsPointerToScalar(parameter.Type, mapped))
         {
             return null;
         }

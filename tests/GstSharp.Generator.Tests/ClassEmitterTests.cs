@@ -174,8 +174,8 @@ public sealed class ClassEmitterTests
     [InlineData("Gst", 35, 51, 5, 28, 18, 1435, 29, 23, 69)]
     [InlineData("GstBase", 11, 4, 0, 5, 0, 174, 31, 2, 7)]
     [InlineData("GstApp", 2, 2, 0, 8, 0, 62, 36, 8, 0)]
-    [InlineData("GstAudio", 14, 17, 1, 2, 2, 213, 32, 0, 45)]
-    [InlineData("GstVideo", 12, 42, 5, 0, 10, 383, 14, 2, 115)]
+    [InlineData("GstAudio", 14, 17, 1, 1, 2, 212, 32, 0, 45)]
+    [InlineData("GstVideo", 12, 42, 5, 0, 10, 382, 14, 2, 115)]
     [InlineData("GstPbutils", 14, 1, 0, 0, 1, 179, 5, 5, 0)]
     [InlineData("GstSdp", 1, 21, 0, 0, 0, 164, 0, 0, 51)]
     [InlineData("GstWebRTC", 9, 4, 0, 1, 2, 37, 38, 7, 21)]
@@ -584,11 +584,12 @@ public sealed class ClassEmitterTests
         // and in any module.
         Assert.Contains("### HandBound (47)\n", report, StringComparison.Ordinal);
         Assert.Contains(
-            "### HandBound (4)\n\n"
+            "### HandBound (5)\n\n"
             + "- `gst_video_codec_frame_set_user_data`\n"
             + "- `gst_video_frame_map`\n"
             + "- `gst_video_frame_map_id`\n"
-            + "- `gst_video_frame_unmap`\n",
+            + "- `gst_video_frame_unmap`\n"
+            + "- `gst_video_gl_texture_upload_meta_upload`\n",
             report,
             StringComparison.Ordinal);
 
@@ -886,8 +887,8 @@ public sealed class ClassEmitterTests
     /// gst_play_message_parse_error_missing_plugin and
     /// gst_play_message_parse_warning_missing_plugin are declared twice. That
     /// is the whole of the difference: Gst counts 50 hand bound declarations
-    /// against the 47 symbols of the report, GstAudio 5 against 4, GstVideo 6
-    /// against 4, GstRtsp 2 against 1, GstTranscoder 4 against 2 and GstPlay
+    /// against the 47 symbols of the report, GstAudio 6 against 5, GstVideo 7
+    /// against 5, GstRtsp 2 against 1, GstTranscoder 4 against 2 and GstPlay
     /// 16 against 14, and every other module counts the same on both sides.
     /// All eleven are on the skip list, so both of their declarations are
     /// rejected as an overlay skip and the ledger claims both; a twin that is
@@ -906,8 +907,8 @@ public sealed class ClassEmitterTests
     [InlineData("Gst", 28, 0, 21, 0, 0, 5, 50)]
     [InlineData("GstBase", 2, 0, 4, 0, 0, 2, 2)]
     [InlineData("GstApp", 0, 0, 2, 0, 9, 2, 5)]
-    [InlineData("GstAudio", 9, 0, 4, 0, 0, 0, 5)]
-    [InlineData("GstVideo", 10, 0, 10, 0, 0, 0, 6)]
+    [InlineData("GstAudio", 9, 0, 4, 0, 0, 0, 6)]
+    [InlineData("GstVideo", 10, 0, 10, 0, 0, 0, 7)]
     [InlineData("GstPbutils", 1, 0, 1, 0, 0, 1, 2)]
     [InlineData("GstSdp", 4, 0, 1, 0, 0, 0, 0)]
     [InlineData("GstWebRTC", 0, 0, 4, 0, 4, 0, 3)]
