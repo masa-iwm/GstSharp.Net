@@ -25,6 +25,11 @@ public sealed unsafe partial class SDPTime
     /// start time for the conference. The value is the decimal
     ///     representation of Network Time Protocol (NTP) time values in seconds
     /// </summary>
+    /// <remarks>
+    /// The string is copied out of the structure on every read. The storage
+    /// belongs to the C structure and is released or replaced with it, so what
+    /// comes back here is the caller's and outlives it.
+    /// </remarks>
     public string? Start
     {
         get
@@ -39,6 +44,11 @@ public sealed unsafe partial class SDPTime
     /// stop time for the conference. The value is the decimal
     ///     representation of Network Time Protocol (NTP) time values in seconds
     /// </summary>
+    /// <remarks>
+    /// The string is copied out of the structure on every read. The storage
+    /// belongs to the C structure and is released or replaced with it, so what
+    /// comes back here is the caller's and outlives it.
+    /// </remarks>
     public string? Stop
     {
         get

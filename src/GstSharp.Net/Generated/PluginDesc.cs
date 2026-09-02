@@ -50,6 +50,11 @@ public sealed unsafe partial class PluginDesc
     }
 
     /// <summary>a unique name of the plugin</summary>
+    /// <remarks>
+    /// The string is copied out of the structure on every read. The storage
+    /// belongs to the C structure and is released or replaced with it, so what
+    /// comes back here is the caller's and outlives it.
+    /// </remarks>
     public string Name
     {
         get
@@ -62,6 +67,11 @@ public sealed unsafe partial class PluginDesc
     }
 
     /// <summary>description of plugin</summary>
+    /// <remarks>
+    /// The string is copied out of the structure on every read. The storage
+    /// belongs to the C structure and is released or replaced with it, so what
+    /// comes back here is the caller's and outlives it.
+    /// </remarks>
     public string Description
     {
         get
@@ -74,6 +84,11 @@ public sealed unsafe partial class PluginDesc
     }
 
     /// <summary>version of the plugin</summary>
+    /// <remarks>
+    /// The string is copied out of the structure on every read. The storage
+    /// belongs to the C structure and is released or replaced with it, so what
+    /// comes back here is the caller's and outlives it.
+    /// </remarks>
     public string Version
     {
         get
@@ -86,6 +101,11 @@ public sealed unsafe partial class PluginDesc
     }
 
     /// <summary>effective license of plugin</summary>
+    /// <remarks>
+    /// The string is copied out of the structure on every read. The storage
+    /// belongs to the C structure and is released or replaced with it, so what
+    /// comes back here is the caller's and outlives it.
+    /// </remarks>
     public string License
     {
         get
@@ -98,6 +118,11 @@ public sealed unsafe partial class PluginDesc
     }
 
     /// <summary>source module plugin belongs to</summary>
+    /// <remarks>
+    /// The string is copied out of the structure on every read. The storage
+    /// belongs to the C structure and is released or replaced with it, so what
+    /// comes back here is the caller's and outlives it.
+    /// </remarks>
     public string Source
     {
         get
@@ -110,6 +135,11 @@ public sealed unsafe partial class PluginDesc
     }
 
     /// <summary>shipped package plugin belongs to</summary>
+    /// <remarks>
+    /// The string is copied out of the structure on every read. The storage
+    /// belongs to the C structure and is released or replaced with it, so what
+    /// comes back here is the caller's and outlives it.
+    /// </remarks>
     public string Package
     {
         get
@@ -122,6 +152,11 @@ public sealed unsafe partial class PluginDesc
     }
 
     /// <summary>URL to provider of plugin</summary>
+    /// <remarks>
+    /// The string is copied out of the structure on every read. The storage
+    /// belongs to the C structure and is released or replaced with it, so what
+    /// comes back here is the caller's and outlives it.
+    /// </remarks>
     public string Origin
     {
         get
@@ -141,6 +176,11 @@ public sealed unsafe partial class PluginDesc
     ///     should be set via the GST_PACKAGE_RELEASE_DATETIME
     ///     preprocessor macro.
     /// </summary>
+    /// <remarks>
+    /// The string is copied out of the structure on every read. The storage
+    /// belongs to the C structure and is released or replaced with it, so what
+    /// comes back here is the caller's and outlives it.
+    /// </remarks>
     public string? ReleaseDatetime
     {
         get

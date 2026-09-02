@@ -52,6 +52,25 @@ public sealed unsafe partial class ReferenceTimestampMeta
     /// <param name="handle">The native instance.</param>
     internal ReferenceTimestampMeta(nint handle) => Handle = handle;
 
+    /// <summary>Reads the <c>reference</c> field of <c>GstReferenceTimestampMeta</c>.</summary>
+    /// <remarks>
+    /// The value is read out of the structure at the moment of the call. What
+    /// comes back owns a reference of its own - a mini object is referenced, a
+    /// boxed value copied - so the caller disposes it, which is why this is a
+    /// method rather than a property.
+    /// 
+    /// A structure the library only fills for the length of one call, such as a
+    /// mapping or a metadata transform, holds nothing outside it: the read has
+    /// to happen while the structure describes what the caller expects.
+    /// </remarks>
+    /// <returns>identifier for the timestamp reference.</returns>
+    public Gst.Caps? GetReference()
+    {
+        Gst.Caps? value = Gst.Caps.FromNative(((ReferenceTimestampMetaRaw*)Handle)->Reference, Gst.Interop.Transfer.None);
+        System.GC.KeepAlive(this);
+        return value;
+    }
+
     /// <summary>timestamp</summary>
     public Gst.ClockTime Timestamp
     {

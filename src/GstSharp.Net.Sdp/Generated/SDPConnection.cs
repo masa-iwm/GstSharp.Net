@@ -22,6 +22,11 @@ public sealed unsafe partial class SDPConnection
     /// the type of network. "IN" is defined to have the meaning
     ///    "Internet".
     /// </summary>
+    /// <remarks>
+    /// The string is copied out of the structure on every read. The storage
+    /// belongs to the C structure and is released or replaced with it, so what
+    /// comes back here is the caller's and outlives it.
+    /// </remarks>
     public string? Nettype
     {
         get
@@ -33,6 +38,11 @@ public sealed unsafe partial class SDPConnection
     }
 
     /// <summary>the type of @address.</summary>
+    /// <remarks>
+    /// The string is copied out of the structure on every read. The storage
+    /// belongs to the C structure and is released or replaced with it, so what
+    /// comes back here is the caller's and outlives it.
+    /// </remarks>
     public string? Addrtype
     {
         get
@@ -44,6 +54,11 @@ public sealed unsafe partial class SDPConnection
     }
 
     /// <summary>the address</summary>
+    /// <remarks>
+    /// The string is copied out of the structure on every read. The storage
+    /// belongs to the C structure and is released or replaced with it, so what
+    /// comes back here is the caller's and outlives it.
+    /// </remarks>
     public string? Address
     {
         get

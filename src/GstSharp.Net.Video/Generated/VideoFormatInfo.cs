@@ -31,6 +31,11 @@ public sealed unsafe partial class VideoFormatInfo
     }
 
     /// <summary>string representation of the format</summary>
+    /// <remarks>
+    /// The string is copied out of the structure on every read. The storage
+    /// belongs to the C structure and is released or replaced with it, so what
+    /// comes back here is the caller's and outlives it.
+    /// </remarks>
     public string Name
     {
         get
@@ -43,6 +48,11 @@ public sealed unsafe partial class VideoFormatInfo
     }
 
     /// <summary>use readable description of the format</summary>
+    /// <remarks>
+    /// The string is copied out of the structure on every read. The storage
+    /// belongs to the C structure and is released or replaced with it, so what
+    /// comes back here is the caller's and outlives it.
+    /// </remarks>
     public string Description
     {
         get

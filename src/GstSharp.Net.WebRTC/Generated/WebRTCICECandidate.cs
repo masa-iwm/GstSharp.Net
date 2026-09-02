@@ -27,6 +27,11 @@ public sealed unsafe partial class WebRTCICECandidate : Gst.GObject.Boxed
     /// String carrying the candidate-attribute as defined in
     ///   section 15.1 of RFC5245
     /// </summary>
+    /// <remarks>
+    /// The string is copied out of the structure on every read. The storage
+    /// belongs to the C structure and is released or replaced with it, so what
+    /// comes back here is the caller's and outlives it.
+    /// </remarks>
     public string? Candidate
     {
         get
@@ -55,6 +60,11 @@ public sealed unsafe partial class WebRTCICECandidate : Gst.GObject.Boxed
     /// The media stream "identification-tag" defined in [RFC5888] for the
     ///   media component this candidate is associated with.
     /// </summary>
+    /// <remarks>
+    /// The string is copied out of the structure on every read. The storage
+    /// belongs to the C structure and is released or replaced with it, so what
+    /// comes back here is the caller's and outlives it.
+    /// </remarks>
     public string? SdpMid
     {
         get
@@ -77,6 +87,26 @@ public sealed unsafe partial class WebRTCICECandidate : Gst.GObject.Boxed
             System.GC.KeepAlive(this);
             return value;
         }
+    }
+
+    /// <summary>Reads the <c>stats</c> field of <c>GstWebRTCICECandidate</c>.</summary>
+    /// <remarks>
+    /// The value is read out of the structure at the moment of the call. What
+    /// comes back owns a reference of its own - a mini object is referenced, a
+    /// boxed value copied - so the caller disposes it, which is why this is a
+    /// method rather than a property.
+    /// 
+    /// A structure the library only fills for the length of one call, such as a
+    /// mapping or a metadata transform, holds nothing outside it: the read has
+    /// to happen while the structure describes what the caller expects.
+    /// </remarks>
+    /// <returns>The #GstWebRTCICECandidateStats associated to this candidate.</returns>
+    public Gst.WebRTC.WebRTCICECandidateStats GetStats()
+    {
+        Gst.WebRTC.WebRTCICECandidateStats value = Gst.WebRTC.WebRTCICECandidateStats.FromNative(((WebRTCICECandidateRaw*)Handle)->Stats, Gst.Interop.Transfer.None)
+            ?? throw new System.InvalidOperationException("The 'stats' field of GstWebRTCICECandidate is null.");
+        System.GC.KeepAlive(this);
+        return value;
     }
 
     /// <summary>Wraps a native <c>GstWebRTCICECandidate</c>, mapping the null pointer onto <see langword="null"/>.</summary>

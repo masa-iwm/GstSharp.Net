@@ -22,6 +22,11 @@ public sealed unsafe partial class SDPBandwidth
     internal SDPBandwidth(nint handle) => Handle = handle;
 
     /// <summary>the bandwidth modifier type</summary>
+    /// <remarks>
+    /// The string is copied out of the structure on every read. The storage
+    /// belongs to the C structure and is released or replaced with it, so what
+    /// comes back here is the caller's and outlives it.
+    /// </remarks>
     public string? Bwtype
     {
         get

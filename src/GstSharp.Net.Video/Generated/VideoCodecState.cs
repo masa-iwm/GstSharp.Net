@@ -23,7 +23,7 @@ namespace Gst.Video;
 /// gst_video_encoder_set_output_state() methods.
 /// </para>
 /// </remarks>
-public sealed partial class VideoCodecState : Gst.GObject.Boxed
+public sealed unsafe partial class VideoCodecState : Gst.GObject.Boxed
 {
     /// <summary>Wraps a native <c>GstVideoCodecState</c>.</summary>
     /// <param name="handle">The native instance.</param>
@@ -31,6 +31,28 @@ public sealed partial class VideoCodecState : Gst.GObject.Boxed
     internal VideoCodecState(nint handle, Gst.Interop.Transfer transfer)
         : base(handle, new Gst.GObject.GType(GetGType()), transfer)
     {
+    }
+
+    /// <summary>Reads the <c>codec_data</c> field of <c>GstVideoCodecState</c>.</summary>
+    /// <remarks>
+    /// The value is read out of the structure at the moment of the call. What
+    /// comes back owns a reference of its own - a mini object is referenced, a
+    /// boxed value copied - so the caller disposes it, which is why this is a
+    /// method rather than a property.
+    /// 
+    /// A structure the library only fills for the length of one call, such as a
+    /// mapping or a metadata transform, holds nothing outside it: the read has
+    /// to happen while the structure describes what the caller expects.
+    /// </remarks>
+    /// <returns>
+    /// a #GstBuffer corresponding to the
+    ///     'codec_data' field of a stream, or NULL.
+    /// </returns>
+    public Gst.Buffer? GetCodecData()
+    {
+        Gst.Buffer? value = Gst.Buffer.FromNative(((VideoCodecStateRaw*)Handle)->CodecData, Gst.Interop.Transfer.None);
+        System.GC.KeepAlive(this);
+        return value;
     }
 
     /// <summary>Wraps a native <c>GstVideoCodecState</c>, mapping the null pointer onto <see langword="null"/>.</summary>

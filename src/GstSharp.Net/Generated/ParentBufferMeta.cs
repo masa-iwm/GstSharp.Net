@@ -30,6 +30,25 @@ public sealed unsafe partial class ParentBufferMeta
     /// <param name="handle">The native instance.</param>
     internal ParentBufferMeta(nint handle) => Handle = handle;
 
+    /// <summary>Reads the <c>buffer</c> field of <c>GstParentBufferMeta</c>.</summary>
+    /// <remarks>
+    /// The value is read out of the structure at the moment of the call. What
+    /// comes back owns a reference of its own - a mini object is referenced, a
+    /// boxed value copied - so the caller disposes it, which is why this is a
+    /// method rather than a property.
+    /// 
+    /// A structure the library only fills for the length of one call, such as a
+    /// mapping or a metadata transform, holds nothing outside it: the read has
+    /// to happen while the structure describes what the caller expects.
+    /// </remarks>
+    /// <returns>the #GstBuffer on which a reference is being held.</returns>
+    public Gst.Buffer? GetBuffer()
+    {
+        Gst.Buffer? value = Gst.Buffer.FromNative(((ParentBufferMetaRaw*)Handle)->Buffer, Gst.Interop.Transfer.None);
+        System.GC.KeepAlive(this);
+        return value;
+    }
+
     /// <summary>Wraps a native <c>GstParentBufferMeta</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
     /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>

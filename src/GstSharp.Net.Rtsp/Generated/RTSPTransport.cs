@@ -53,6 +53,11 @@ public sealed unsafe partial class RTSPTransport
     }
 
     /// <summary>the destination ip/hostname</summary>
+    /// <remarks>
+    /// The string is copied out of the structure on every read. The storage
+    /// belongs to the C structure and is released or replaced with it, so what
+    /// comes back here is the caller's and outlives it.
+    /// </remarks>
     public string? Destination
     {
         get
@@ -64,6 +69,11 @@ public sealed unsafe partial class RTSPTransport
     }
 
     /// <summary>the source ip/hostname</summary>
+    /// <remarks>
+    /// The string is copied out of the structure on every read. The storage
+    /// belongs to the C structure and is released or replaced with it, so what
+    /// comes back here is the caller's and outlives it.
+    /// </remarks>
     public string? Source
     {
         get

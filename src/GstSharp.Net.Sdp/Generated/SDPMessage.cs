@@ -23,6 +23,11 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     }
 
     /// <summary>the protocol version</summary>
+    /// <remarks>
+    /// The string is copied out of the structure on every read. The storage
+    /// belongs to the C structure and is released or replaced with it, so what
+    /// comes back here is the caller's and outlives it.
+    /// </remarks>
     public string? Version
     {
         get
@@ -34,6 +39,11 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     }
 
     /// <summary>session name</summary>
+    /// <remarks>
+    /// The string is copied out of the structure on every read. The storage
+    /// belongs to the C structure and is released or replaced with it, so what
+    /// comes back here is the caller's and outlives it.
+    /// </remarks>
     public string? SessionName
     {
         get
@@ -45,6 +55,11 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     }
 
     /// <summary>session information</summary>
+    /// <remarks>
+    /// The string is copied out of the structure on every read. The storage
+    /// belongs to the C structure and is released or replaced with it, so what
+    /// comes back here is the caller's and outlives it.
+    /// </remarks>
     public string? Information
     {
         get
@@ -56,6 +71,11 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     }
 
     /// <summary>URI of description</summary>
+    /// <remarks>
+    /// The string is copied out of the structure on every read. The storage
+    /// belongs to the C structure and is released or replaced with it, so what
+    /// comes back here is the caller's and outlives it.
+    /// </remarks>
     public string? Uri
     {
         get

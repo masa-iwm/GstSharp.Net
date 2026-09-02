@@ -18,6 +18,50 @@ public sealed unsafe partial class CollectData
     /// <param name="handle">The native instance.</param>
     internal CollectData(nint handle) => Handle = handle;
 
+    /// <summary>owner #GstCollectPads</summary>
+    /// <remarks>
+    /// The object is read out of the structure at the moment of the call. The
+    /// wrapper owns a reference of its own and stays valid afterwards; it is
+    /// the instance every other lookup of the same object hands out, so
+    /// disposing it releases the reference for all of them.
+    /// 
+    /// A structure the library only fills for the length of one call, such as a
+    /// mapping or a metadata transform, holds nothing outside it: the read has
+    /// to happen while the structure describes what the caller expects.
+    /// </remarks>
+    public Gst.Base.CollectPads Collect
+    {
+        get
+        {
+            Gst.Base.CollectPads value = Gst.GObject.Object.FromNative<Gst.Base.CollectPads>(((CollectDataRaw*)Handle)->Collect, Gst.Interop.Transfer.None)
+                ?? throw new System.InvalidOperationException("The 'collect' field of GstCollectData is null.");
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>#GstPad managed by this data</summary>
+    /// <remarks>
+    /// The object is read out of the structure at the moment of the call. The
+    /// wrapper owns a reference of its own and stays valid afterwards; it is
+    /// the instance every other lookup of the same object hands out, so
+    /// disposing it releases the reference for all of them.
+    /// 
+    /// A structure the library only fills for the length of one call, such as a
+    /// mapping or a metadata transform, holds nothing outside it: the read has
+    /// to happen while the structure describes what the caller expects.
+    /// </remarks>
+    public Gst.Pad Pad
+    {
+        get
+        {
+            Gst.Pad value = Gst.GObject.Object.FromNative<Gst.Pad>(((CollectDataRaw*)Handle)->Pad, Gst.Interop.Transfer.None)
+                ?? throw new System.InvalidOperationException("The 'pad' field of GstCollectData is null.");
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
     /// <summary>position in the buffer</summary>
     public uint Pos
     {

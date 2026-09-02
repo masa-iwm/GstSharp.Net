@@ -21,6 +21,11 @@ public sealed unsafe partial class SDPKey
     internal SDPKey(nint handle) => Handle = handle;
 
     /// <summary>the encryption type</summary>
+    /// <remarks>
+    /// The string is copied out of the structure on every read. The storage
+    /// belongs to the C structure and is released or replaced with it, so what
+    /// comes back here is the caller's and outlives it.
+    /// </remarks>
     public string? Type
     {
         get
@@ -32,6 +37,11 @@ public sealed unsafe partial class SDPKey
     }
 
     /// <summary>the encryption data</summary>
+    /// <remarks>
+    /// The string is copied out of the structure on every read. The storage
+    /// belongs to the C structure and is released or replaced with it, so what
+    /// comes back here is the caller's and outlives it.
+    /// </remarks>
     public string? Data
     {
         get

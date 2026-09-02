@@ -2870,7 +2870,21 @@ internal static class CallableRenderer
             ? "Gst.Interop.GMarshal.PtrToStringUtf8AndFree(" + source + ")"
             : "Gst.Interop.GMarshal.PtrToStringUtf8(" + source + ")";
 
-    private static string HandleConversion(HandleFlavor flavor, string type, string source, GirTransfer transfer) =>
+    /// <summary>
+    /// Wraps a raw handle, by the flavour of its wrapper and by what the C side
+    /// transfers along with it.
+    /// </summary>
+    /// <param name="flavor">How a handle of the type is wrapped.</param>
+    /// <param name="type">The C# type of the wrapper, without the question mark.</param>
+    /// <param name="source">The expression holding the raw handle.</param>
+    /// <param name="transfer">What is transferred along with it.</param>
+    /// <returns>The conversion expression.</returns>
+    /// <remarks>
+    /// The field accessors of a record read this as well: a field that holds a
+    /// handle is projected the way a <c>transfer none</c> return of the same
+    /// type is, so that the two never drift apart.
+    /// </remarks>
+    internal static string HandleConversion(HandleFlavor flavor, string type, string source, GirTransfer transfer) =>
         flavor switch
         {
             HandleFlavor.GObject => "Gst.GObject.Object.FromNative<" + type + ">(" + source + ", "

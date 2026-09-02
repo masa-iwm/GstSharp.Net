@@ -27,6 +27,44 @@ public unsafe partial struct VideoMetaTransform
     /// <summary>the output #GstVideoInfo</summary>
     public nint OutInfoPtr;
 
+    /// <summary>Reads the <c>in_info</c> field of <c>GstVideoMetaTransform</c>.</summary>
+    /// <remarks>
+    /// The value is read out of the structure at the moment of the call. What
+    /// comes back owns a reference of its own - a mini object is referenced, a
+    /// boxed value copied - so the caller disposes it, which is why this is a
+    /// method rather than a property.
+    /// 
+    /// A structure the library only fills for the length of one call, such as a
+    /// mapping or a metadata transform, holds nothing outside it: the read has
+    /// to happen while the structure describes what the caller expects.
+    /// </remarks>
+    /// <returns>the input #GstVideoInfo</returns>
+    public Gst.Video.VideoInfo GetInInfo()
+    {
+        Gst.Video.VideoInfo value = Gst.Video.VideoInfo.FromNative(InInfoPtr, Gst.Interop.Transfer.None)
+            ?? throw new System.InvalidOperationException("The 'in_info' field of GstVideoMetaTransform is null.");
+        return value;
+    }
+
+    /// <summary>Reads the <c>out_info</c> field of <c>GstVideoMetaTransform</c>.</summary>
+    /// <remarks>
+    /// The value is read out of the structure at the moment of the call. What
+    /// comes back owns a reference of its own - a mini object is referenced, a
+    /// boxed value copied - so the caller disposes it, which is why this is a
+    /// method rather than a property.
+    /// 
+    /// A structure the library only fills for the length of one call, such as a
+    /// mapping or a metadata transform, holds nothing outside it: the read has
+    /// to happen while the structure describes what the caller expects.
+    /// </remarks>
+    /// <returns>the output #GstVideoInfo</returns>
+    public Gst.Video.VideoInfo GetOutInfo()
+    {
+        Gst.Video.VideoInfo value = Gst.Video.VideoInfo.FromNative(OutInfoPtr, Gst.Interop.Transfer.None)
+            ?? throw new System.InvalidOperationException("The 'out_info' field of GstVideoMetaTransform is null.");
+        return value;
+    }
+
     /// <summary>Get the #GQuark for the "gst-video-scale" metadata transform operation.</summary>
     /// <returns>a #GQuark</returns>
     public static Gst.GLib.Quark ScaleGetQuark()

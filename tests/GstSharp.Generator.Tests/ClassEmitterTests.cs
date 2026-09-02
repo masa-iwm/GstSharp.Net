@@ -171,15 +171,15 @@ public sealed class ClassEmitterTests
     }
 
     [Theory]
-    [InlineData("Gst", 35, 51, 5, 28, 18, 1435, 29, 23, 64)]
-    [InlineData("GstBase", 11, 4, 0, 5, 0, 174, 31, 2, 5)]
+    [InlineData("Gst", 35, 51, 5, 28, 18, 1435, 29, 23, 69)]
+    [InlineData("GstBase", 11, 4, 0, 5, 0, 174, 31, 2, 7)]
     [InlineData("GstApp", 2, 2, 0, 8, 0, 62, 36, 8, 0)]
     [InlineData("GstAudio", 14, 17, 1, 2, 2, 213, 32, 0, 44)]
-    [InlineData("GstVideo", 12, 42, 5, 0, 10, 383, 14, 2, 103)]
+    [InlineData("GstVideo", 12, 42, 5, 0, 10, 383, 14, 2, 111)]
     [InlineData("GstPbutils", 14, 1, 0, 0, 1, 179, 5, 5, 0)]
     [InlineData("GstSdp", 1, 21, 0, 0, 0, 164, 0, 0, 51)]
-    [InlineData("GstWebRTC", 9, 4, 0, 1, 2, 37, 38, 7, 18)]
-    [InlineData("GstNet", 5, 3, 0, 1, 0, 25, 17, 0, 2)]
+    [InlineData("GstWebRTC", 9, 4, 0, 1, 2, 37, 38, 7, 21)]
+    [InlineData("GstNet", 5, 3, 0, 1, 0, 25, 17, 0, 4)]
     [InlineData("GstRtsp", 1, 10, 1, 1, 2, 114, 0, 1, 24)]
     [InlineData("GstAllocators", 6, 0, 1, 0, 0, 23, 1, 0, 0)]
     [InlineData("GstTag", 3, 0, 1, 0, 0, 46, 0, 0, 0)]
@@ -476,11 +476,12 @@ public sealed class ClassEmitterTests
         // counting here keys on.
         Assert.Equal(168, classes);
 
-        // 125 rather than 123 since the string accessors landed: GstSdp.SDPKey
-        // and GstSdp.SDPOrigin declare no callable that reads a handle, so the
-        // accessors of their string fields are the first members of either to
+        // 126 rather than 123 since the field accessors of a string and of a
+        // handle landed: GstSdp.SDPKey, GstSdp.SDPOrigin and
+        // GstVideo.VideoCodecState declare no callable that reads a handle, so
+        // the accessors of their fields are the first members of each to
         // dereference the mirror.
-        Assert.Equal(125, records);
+        Assert.Equal(126, records);
     }
 
     [Fact]
@@ -592,13 +593,13 @@ public sealed class ClassEmitterTests
     }
 
     [Theory]
-    [InlineData("Gst", 70)]
-    [InlineData("GstBase", 6)]
-    [InlineData("GstAudio", 22)]
-    [InlineData("GstVideo", 57)]
+    [InlineData("Gst", 60)]
+    [InlineData("GstBase", 4)]
+    [InlineData("GstAudio", 20)]
+    [InlineData("GstVideo", 47)]
     [InlineData("GstSdp", 33)]
-    [InlineData("GstWebRTC", 4)]
-    [InlineData("GstNet", 4)]
+    [InlineData("GstWebRTC", 0)]
+    [InlineData("GstNet", 2)]
     [InlineData("GstRtsp", 6)]
     [InlineData("GstAllocators", 0)]
     [InlineData("GstTag", 0)]
@@ -613,8 +614,8 @@ public sealed class ClassEmitterTests
         // exists because a field has no skip reason of its own: without it a
         // record whose methods are bound reads as fully bound however many of
         // its fields are missing, which is how the fixed size fields of
-        // GstVideoInfo went unnoticed. GstApp, GstPbutils and GstPlay declare no
-        // record field that is left out at all.
+        // GstVideoInfo went unnoticed. GstApp, GstPbutils, GstPlay and GstWebRTC
+        // declare no record field that is left out at all.
         Assert.Equal(fields, Generated.Census.DroppedFieldCount(module));
     }
 
@@ -623,13 +624,17 @@ public sealed class ClassEmitterTests
     {
         string report = Generated.SkipReport;
 
-        Assert.Equal(203, Generated.Census.DroppedFieldCount());
-        Assert.Contains("## Fields (203)\n", report, StringComparison.Ordinal);
-        Assert.Contains("### GstVideo (57)\n", report, StringComparison.Ordinal);
+        Assert.Equal(173, Generated.Census.DroppedFieldCount());
+        Assert.Contains("## Fields (173)\n", report, StringComparison.Ordinal);
+        Assert.Contains("### GstVideo (47)\n", report, StringComparison.Ordinal);
 
         // One entry per shape that keeps a field out. The fixed size fields of
         // GstVideoInfo are bound and are therefore absent; the ones whose
         // elements are pointers or structures are not.
+        // The pool of a buffer is the shape the overlays hold back rather than
+        // bind: gst_buffer_pool_release_buffer clears the field and releases
+        // the pool afterwards, so a read followed by a reference can reference
+        // a pool that is already gone.
         Assert.Contains("- `Buffer.pool` \u2014 Pointer\n", report, StringComparison.Ordinal);
         Assert.Contains("- `Buffer.mini_object` \u2014 EmbeddedStruct\n", report, StringComparison.Ordinal);
         Assert.Contains("- `Iterator.next` \u2014 Callback\n", report, StringComparison.Ordinal);
@@ -665,9 +670,9 @@ public sealed class ClassEmitterTests
         Assert.DoesNotContain("- `RTSPTimeRange.min`", report, StringComparison.Ordinal);
         Assert.DoesNotContain("- `VideoMetaTransformMatrix.in_rectangle`", report, StringComparison.Ordinal);
         Assert.DoesNotContain("- `FormatDefinition.nick`", report, StringComparison.Ordinal);
-        Assert.Contains("- `VideoMetaTransform.in_info` \u2014 Pointer\n", report, StringComparison.Ordinal);
-        Assert.Contains("- `VideoInfo.finfo` \u2014 Pointer\n", report, StringComparison.Ordinal);
-        Assert.Contains("- `AudioInfo.finfo` \u2014 Pointer\n", report, StringComparison.Ordinal);
+        Assert.DoesNotContain("- `VideoMetaTransform.in_info`", report, StringComparison.Ordinal);
+        Assert.DoesNotContain("- `VideoInfo.finfo` \u2014 Pointer", report, StringComparison.Ordinal);
+        Assert.DoesNotContain("- `AudioInfo.finfo` \u2014 Pointer", report, StringComparison.Ordinal);
         Assert.Contains(
             "- `MapInfo.user_data` \u2014 InlineArray(pointer element)\n",
             report,
@@ -684,14 +689,20 @@ public sealed class ClassEmitterTests
         // out of the ledger above and listed here with what answers it. The
         // flow return of a pad probe is one: the C function
         // gst_pad_probe_info_get_flow_return reads that very field, and the
-        // generated pair is what a caller uses. The name and the description of
-        // a visualization are the other two, which shipped hand written.
+        // generated pair is what a caller uses. The others are the fields a
+        // hand written member of Custom/ reads through and the ones a generated
+        // C accessor already answers.
         string report = Generated.SkipReport;
 
-        Assert.Equal(3, Generated.Census.ExposedFieldCount());
-        Assert.Contains("## Fields exposed elsewhere (3)\n", report, StringComparison.Ordinal);
+        Assert.Equal(13, Generated.Census.ExposedFieldCount());
+        Assert.Contains("## Fields exposed elsewhere (13)\n", report, StringComparison.Ordinal);
         Assert.Contains(
-            "### Gst (1)\n\n- `PadProbeInfo.flow_ret` — GetFlowReturn\n",
+            "### Gst (6)\n\n- `CustomMeta.structure` — GetStructure\n"
+            + "- `Message.src` — hand written\n"
+            + "- `Meta.info` — hand written\n"
+            + "- `PadProbeInfo.data` — GetBuffer, GetBufferList, GetEvent and GetQuery\n"
+            + "- `PadProbeInfo.flow_ret` — GetFlowReturn\n"
+            + "- `StaticCaps.caps` — Get\n",
             report,
             StringComparison.Ordinal);
         Assert.Contains(

@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using GstSharp.Generator.GirParsing.Model;
 using GstSharp.Generator.Semantic;
 
@@ -1468,20 +1469,31 @@ internal sealed class MarshalPlanner
     /// </summary>
     /// <param name="symbol">The symbol to test.</param>
     /// <returns><see langword="true"/> when the type exists in the output.</returns>
-    private bool IsEmitted(GirSymbol symbol)
+    private bool IsEmitted(GirSymbol symbol) => IsEmitted(symbol, _overlays, _classifier);
+
+    /// <summary>
+    /// Tests whether this run emits a wrapper of a symbol, without a planner to
+    /// ask. The record emitter needs the same answer for the fields that hold a
+    /// handle, and there is one rule for both.
+    /// </summary>
+    /// <param name="symbol">The symbol to test.</param>
+    /// <param name="overlays">The overlay configuration.</param>
+    /// <param name="classifier">The type classifier.</param>
+    /// <returns><see langword="true"/> when the run emits the type.</returns>
+    internal static bool IsEmitted(GirSymbol symbol, Overlays overlays, Classifier classifier)
     {
         // Any module of the run may declare the type: GstAppSink returns a
         // Gst.FlowReturn and takes a Gst.Caps, and both are generated. Only the
         // GLib stack, whose runtime layer is hand written, is out of reach.
         if (ModuleMap.Find(symbol.Namespace.Name) is not { IsGenerated: true }
-            || _overlays.IsSkipped(symbol.QualifiedName)
+            || overlays.IsSkipped(symbol.QualifiedName)
             || !symbol.Declaration.IsIntrospectable
             || (symbol.Declaration is GirRecord record && Classifier.IsPrivateShell(record)))
         {
             return false;
         }
 
-        return _classifier.Classify(symbol.Declaration) is TypeKind.GObjectClass or TypeKind.MiniObject
+        return classifier.Classify(symbol.Declaration) is TypeKind.GObjectClass or TypeKind.MiniObject
             or TypeKind.Boxed or TypeKind.PlainStruct or TypeKind.OpaqueRecord or TypeKind.EnumType
             or TypeKind.FlagsType or TypeKind.Interface or TypeKind.Callback;
     }
@@ -2434,6 +2446,73 @@ internal sealed class MarshalPlanner
             Transfer = transfer,
             IsNullable = true,
         };
+    }
+
+    /// <summary>
+    /// Names the wrapper a pointer is projected onto and the flavour it is
+    /// wrapped with, for the positions that need nothing but the type: a
+    /// returned handle the caller does not take over, and the field of a record
+    /// that holds one.
+    /// </summary>
+    /// <param name="mapped">The mapping of what the pointer points at.</param>
+    /// <param name="overlays">The overlay configuration.</param>
+    /// <param name="classifier">The type classifier.</param>
+    /// <param name="publicType">The C# type of the wrapper.</param>
+    /// <param name="flavor">How a handle of it is wrapped.</param>
+    /// <returns><see langword="true"/> when the pointee has a wrapper.</returns>
+    /// <remarks>
+    /// This is the head of <see cref="PlanHandle"/>, which the record emitter
+    /// reaches without a planner: a field that holds a handle is projected the
+    /// way a <c>transfer none</c> return of the same type is, and there is one
+    /// place that decides what that type is. What is left out here is
+    /// everything about a position that a field has none of - direction, caller
+    /// allocated storage, and the transfer, which is always <c>none</c> for a
+    /// field the structure keeps.
+    /// </remarks>
+    internal static bool TryProjectHandle(
+        MappedType mapped,
+        Overlays overlays,
+        Classifier classifier,
+        [NotNullWhen(true)] out string? publicType,
+        out HandleFlavor flavor)
+    {
+        publicType = null;
+        flavor = HandleFlavor.None;
+        if (mapped.Symbol is not { } symbol || UnusableTypes.Contains(mapped.PublicType))
+        {
+            return false;
+        }
+
+        if (RuntimeTypes.TryGetValue(symbol.QualifiedName, out RuntimeHandle? runtimeType))
+        {
+            // A borrowed only wrapper carries its Handle and nothing else, so
+            // there is no factory to adopt what the field holds with.
+            if (runtimeType.BorrowedOnly)
+            {
+                return false;
+            }
+
+            publicType = runtimeType.PublicType;
+            flavor = runtimeType.Flavor;
+            return true;
+        }
+
+        if (mapped.Kind is not (MarshalKind.GObject or MarshalKind.Interface or MarshalKind.MiniObject
+                or MarshalKind.Boxed or MarshalKind.OpaqueRecord)
+            || !IsEmitted(symbol, overlays, classifier))
+        {
+            return false;
+        }
+
+        publicType = mapped.PublicType;
+        flavor = mapped.Kind switch
+        {
+            MarshalKind.GObject or MarshalKind.Interface => HandleFlavor.GObject,
+            MarshalKind.OpaqueRecord => HandleFlavor.Opaque,
+            _ => HandleFlavor.Wrapper,
+        };
+
+        return true;
     }
 
     private ArgumentPlan? PlanHandle(

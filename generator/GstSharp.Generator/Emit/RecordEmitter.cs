@@ -1006,7 +1006,19 @@ internal sealed class RecordEmitter
         foreach (Accessor accessor in accessors)
         {
             writer.WriteLine();
-            XmlDocWriter.Write(writer, accessor.Field.Doc, FallbackSummary(record, accessor.Field), accessor.Field);
+            XmlDocWriter.Write(
+                writer,
+                accessor.IsMethod ? null : accessor.Field.Doc,
+                accessor.IsMethod
+                    ? "Reads the <c>" + accessor.Field.Name + "</c> field of <c>" + CTypeOf(record) + "</c>."
+                    : FallbackSummary(record, accessor.Field),
+                accessor.Field,
+                accessor.Remarks);
+            if (accessor.IsMethod)
+            {
+                XmlDocWriter.WriteReturns(writer, accessor.Field.Doc, FallbackSummary(record, accessor.Field));
+            }
+
             XmlDocWriter.WriteObsolete(writer, accessor.Field);
             WriteAccessor(writer, accessor);
         }
@@ -1055,10 +1067,29 @@ internal sealed class RecordEmitter
     /// </remarks>
     private static void WriteAccessor(CodeWriter writer, Accessor accessor)
     {
+        if (accessor.IsMethod)
+        {
+            writer.WriteLine("public " + accessor.TypeName + " " + accessor.Name + "()");
+            writer.OpenBlock();
+            WriteAccessorBody(writer, accessor);
+            writer.CloseBlock();
+            return;
+        }
+
         writer.WriteLine("public " + accessor.TypeName + " " + accessor.Name);
         writer.OpenBlock();
         writer.WriteLine("get");
         writer.OpenBlock();
+        WriteAccessorBody(writer, accessor);
+        writer.CloseBlock();
+        writer.CloseBlock();
+    }
+
+    /// <summary>Writes the read of one accessor, whichever form it takes.</summary>
+    /// <param name="writer">The target writer.</param>
+    /// <param name="accessor">The accessor to write.</param>
+    private static void WriteAccessorBody(CodeWriter writer, Accessor accessor)
+    {
         if (accessor.NullFallback is { } fallback)
         {
             writer.WriteLine(accessor.TypeName + " value = " + accessor.Expression);
@@ -1075,8 +1106,6 @@ internal sealed class RecordEmitter
         }
 
         writer.WriteLine("return value;");
-        writer.CloseBlock();
-        writer.CloseBlock();
     }
 
     /// <summary>
@@ -1312,6 +1341,63 @@ internal sealed class RecordEmitter
     }
 
     /// <summary>
+    /// What a string accessor states beyond the gir: the read copies, so the
+    /// value outlives the structure it came out of.
+    /// </summary>
+    private static readonly string[] StringRemarks =
+    [
+        "The string is copied out of the structure on every read. The storage",
+        "belongs to the C structure and is released or replaced with it, so what",
+        "comes back here is the caller's and outlives it.",
+    ];
+
+    /// <summary>
+    /// What an owning accessor states beyond the gir: why it is a method, and
+    /// that the caller releases what it hands out.
+    /// </summary>
+    private static readonly string[] OwnedRemarks =
+    [
+        "The value is read out of the structure at the moment of the call. What",
+        "comes back owns a reference of its own - a mini object is referenced, a",
+        "boxed value copied - so the caller disposes it, which is why this is a",
+        "method rather than a property.",
+        "",
+        "A structure the library only fills for the length of one call, such as a",
+        "mapping or a metadata transform, holds nothing outside it: the read has",
+        "to happen while the structure describes what the caller expects.",
+    ];
+
+    /// <summary>
+    /// What a borrowed accessor states beyond the gir, by the flavour of the
+    /// wrapper it hands out.
+    /// </summary>
+    /// <param name="flavor">How a handle of the type is wrapped.</param>
+    /// <returns>The lines of the remark.</returns>
+    private static string[] BorrowedRemarks(HandleFlavor flavor) => flavor == HandleFlavor.GObject
+        ?
+        [
+            "The object is read out of the structure at the moment of the call. The",
+            "wrapper owns a reference of its own and stays valid afterwards; it is",
+            "the instance every other lookup of the same object hands out, so",
+            "disposing it releases the reference for all of them.",
+            "",
+            "A structure the library only fills for the length of one call, such as a",
+            "mapping or a metadata transform, holds nothing outside it: the read has",
+            "to happen while the structure describes what the caller expects.",
+        ]
+        :
+        [
+            "The value is borrowed from the structure that declares the field: the",
+            "wrapper of an opaque record takes no part in the ownership of what it",
+            "points at, there is nothing to dispose, and it is only good for as long",
+            "as the structure that holds the field is.",
+            "",
+            "A structure the library only fills for the length of one call, such as a",
+            "mapping or a metadata transform, holds nothing outside it: the read has",
+            "to happen while the structure describes what the caller expects.",
+        ];
+
+    /// <summary>
     /// Plans the get only properties a value projected structure reads its own
     /// storage through. Only the fields that land on a pointer are answered
     /// here: everything else is a public field of the structure already, and a
@@ -1363,9 +1449,20 @@ internal sealed class RecordEmitter
     /// <param name="keepAlive">Whether the read has to keep the instance reachable.</param>
     /// <returns>The accessor, or <see langword="null"/> when the pointee has no projection.</returns>
     /// <remarks>
+    /// <para>
     /// A string is copied out of the structure on every read, which is what
     /// makes the property safe to hold on to: the storage belongs to the C
     /// structure and may be freed or replaced with it.
+    /// </para>
+    /// <para>
+    /// A handle is projected the way a <c>transfer none</c> return of the same
+    /// type is, through the very expression a call site would get, so a field
+    /// and a getter of it never hand out two different things. The flavour of
+    /// the wrapper decides the form: a <c>GObject</c> is interned and an opaque
+    /// record owns nothing, so both are properties, while a mini object and a
+    /// boxed value come back owning a reference of their own and are read
+    /// through a <c>Get</c> method instead.
+    /// </para>
     /// </remarks>
     private Accessor? PointerAccessor(
         GirNamespace ns,
@@ -1381,22 +1478,70 @@ internal sealed class RecordEmitter
             return null;
         }
 
-        if (MappedPointee(ns, type) is not { } mapped
-            || mapped.Kind is not (MarshalKind.Utf8String or MarshalKind.FilenameString))
+        // A pointer to a pointer is not the thing it names: GstRTSPAuthParam**
+        // is a NULL terminated array of them, and wrapping the address of the
+        // array as if it were one element reads the wrong memory. It is the
+        // same refusal the planner makes of an argument of that shape.
+        if (type.CType?.EndsWith("**", StringComparison.Ordinal) ?? false)
         {
             return null;
         }
 
-        string expression = "Gst.Interop.GMarshal.PtrToStringUtf8(" + cast + field.PascalName + ")";
-        return IsNonNullable(record, field.Field)
-            ? new Accessor(
-                field.Field,
-                field.ValueName,
+        if (MappedPointee(ns, type) is not { } mapped)
+        {
+            return null;
+        }
+
+        string raw = cast + field.PascalName;
+        if (mapped.Kind is MarshalKind.Utf8String or MarshalKind.FilenameString)
+        {
+            return Read(
                 "string",
-                expression,
-                KeepAlive: keepAlive,
-                NullFallback: NullFallback(record, field.Field))
-            : new Accessor(field.Field, field.ValueName, "string?", expression, KeepAlive: keepAlive);
+                "Gst.Interop.GMarshal.PtrToStringUtf8(" + raw + ")",
+                isMethod: false,
+                StringRemarks);
+        }
+
+        if (!MarshalPlanner.TryProjectHandle(mapped, _overlays, _classifier, out string? wrapper, out HandleFlavor flavor))
+        {
+            return null;
+        }
+
+        // A GObject is interned and an opaque wrapper owns nothing, so reading
+        // either twice hands out the same thing twice and a property says that.
+        // A mini object is referenced and a boxed value is copied, so every
+        // read produces a resource the caller has to release, which is what a
+        // Get method is for.
+        bool owning = flavor is HandleFlavor.Wrapper or HandleFlavor.ParamSpec;
+        return Read(
+            wrapper,
+            CallableRenderer.HandleConversion(flavor, wrapper, raw, GirTransfer.None),
+            owning,
+            owning ? OwnedRemarks : BorrowedRemarks(flavor));
+
+        // The overlays are asked here rather than in front of the projection,
+        // so that an entry on a field that hands out nothing anyway is reported
+        // as stale instead of reading as a decision that was acted on.
+        Accessor? Read(string publicType, string expression, bool isMethod, IReadOnlyList<string> remarks) =>
+            SuppressesAccessor(record, field.Field) ? null
+            : IsNonNullable(record, field.Field)
+                ? new Accessor(
+                    field.Field,
+                    isMethod ? "Get" + field.ValueName : field.ValueName,
+                    publicType,
+                    expression,
+                    KeepAlive: keepAlive,
+                    NullFallback: NullFallback(record, field.Field),
+                    IsMethod: isMethod,
+                    Remarks: remarks)
+                : new Accessor(
+                    field.Field,
+                    isMethod ? "Get" + field.ValueName : field.ValueName,
+                    publicType + "?",
+                    expression,
+                    KeepAlive: keepAlive,
+                    IsMethod: isMethod,
+                    Remarks: remarks);
     }
 
     /// <summary>
@@ -1424,6 +1569,35 @@ internal sealed class RecordEmitter
             || _repository.Resolve(name, ns) is not null
                 ? _types.Map(type, ns)
                 : null;
+    }
+
+    /// <summary>
+    /// Tests whether the overlays hold a field back from the accessors, and
+    /// records that the entry was applied.
+    /// </summary>
+    /// <param name="record">The declaring record.</param>
+    /// <param name="field">The field to test.</param>
+    /// <returns><see langword="true"/> when no accessor is emitted for it.</returns>
+    /// <remarks>
+    /// This is asked once the shape of the field says an accessor would be
+    /// emitted, so that an entry on a field that hands out nothing anyway is
+    /// reported as stale rather than reading as a decision that was acted on.
+    /// The overlays carry the reason: a pointer the library replaces or clears
+    /// while a consumer holds the structure, whose reference a
+    /// <c>transfer none</c> projection takes after the read and therefore
+    /// possibly too late; a name a member that shipped already carries; or a
+    /// field a wave left for the next one.
+    /// </remarks>
+    private bool SuppressesAccessor(GirRecord record, GirField field)
+    {
+        string key = FieldSkipKey(record, field);
+        if (_overlays.GetFieldAnnotation(key) is not { SuppressesAccessor: true })
+        {
+            return false;
+        }
+
+        _census.AnnotatedField(key);
+        return true;
     }
 
     /// <summary>
@@ -2363,9 +2537,19 @@ internal sealed class RecordEmitter
     /// holds the storage itself and does not, and asking would box it.
     /// </param>
     /// <param name="NullFallback">
-    /// What the property throws when the expression answers the null pointer,
+    /// What the accessor throws when the expression answers the null pointer,
     /// for a member whose type says it never does. This is the accessor form of
     /// the check a non nullable return of a call carries.
+    /// </param>
+    /// <param name="IsMethod">
+    /// Whether the accessor is emitted as a <c>Get</c> method rather than as a
+    /// property. A wrapper that owns a reference of its own has to be one: a
+    /// property read is not a place a caller sees a resource being produced,
+    /// which is the rule the generated properties follow as well.
+    /// </param>
+    /// <param name="Remarks">
+    /// Generator authored lines that state what the gir does not: what the
+    /// caller owns of the value, and how long it is good for.
     /// </param>
     private sealed record Accessor(
         GirField Field,
@@ -2374,5 +2558,7 @@ internal sealed class RecordEmitter
         string Expression,
         InlineArrayInfo? InlineArray = null,
         bool KeepAlive = true,
-        string? NullFallback = null);
+        string? NullFallback = null,
+        bool IsMethod = false,
+        IReadOnlyList<string>? Remarks = null);
 }

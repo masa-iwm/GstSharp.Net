@@ -24,6 +24,11 @@ public sealed unsafe partial class StaticCaps
     internal StaticCaps(nint handle) => Handle = handle;
 
     /// <summary>a string describing a caps</summary>
+    /// <remarks>
+    /// The string is copied out of the structure on every read. The storage
+    /// belongs to the C structure and is released or replaced with it, so what
+    /// comes back here is the caller's and outlives it.
+    /// </remarks>
     public string? String
     {
         get

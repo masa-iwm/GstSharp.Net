@@ -20,6 +20,11 @@ public sealed unsafe partial class RTSPAuthParam : Gst.GObject.Boxed
     }
 
     /// <summary>The name of the parameter</summary>
+    /// <remarks>
+    /// The string is copied out of the structure on every read. The storage
+    /// belongs to the C structure and is released or replaced with it, so what
+    /// comes back here is the caller's and outlives it.
+    /// </remarks>
     public string Name
     {
         get
@@ -32,6 +37,11 @@ public sealed unsafe partial class RTSPAuthParam : Gst.GObject.Boxed
     }
 
     /// <summary>The value of the parameter</summary>
+    /// <remarks>
+    /// The string is copied out of the structure on every read. The storage
+    /// belongs to the C structure and is released or replaced with it, so what
+    /// comes back here is the caller's and outlives it.
+    /// </remarks>
     public string Value
     {
         get

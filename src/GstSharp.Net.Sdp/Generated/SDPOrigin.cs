@@ -25,6 +25,11 @@ public sealed unsafe partial class SDPOrigin
     /// the user's login on the originating host, or it is "-"
     ///    if the originating host does not support the concept of user ids.
     /// </summary>
+    /// <remarks>
+    /// The string is copied out of the structure on every read. The storage
+    /// belongs to the C structure and is released or replaced with it, so what
+    /// comes back here is the caller's and outlives it.
+    /// </remarks>
     public string? Username
     {
         get
@@ -40,6 +45,11 @@ public sealed unsafe partial class SDPOrigin
     ///    @nettype, @addrtype and @addr form a globally unique identifier for the
     ///    session.
     /// </summary>
+    /// <remarks>
+    /// The string is copied out of the structure on every read. The storage
+    /// belongs to the C structure and is released or replaced with it, so what
+    /// comes back here is the caller's and outlives it.
+    /// </remarks>
     public string? SessId
     {
         get
@@ -51,6 +61,11 @@ public sealed unsafe partial class SDPOrigin
     }
 
     /// <summary>a version number for this announcement</summary>
+    /// <remarks>
+    /// The string is copied out of the structure on every read. The storage
+    /// belongs to the C structure and is released or replaced with it, so what
+    /// comes back here is the caller's and outlives it.
+    /// </remarks>
     public string? SessVersion
     {
         get
@@ -65,6 +80,11 @@ public sealed unsafe partial class SDPOrigin
     /// the type of network. "IN" is defined to have the meaning
     ///    "Internet".
     /// </summary>
+    /// <remarks>
+    /// The string is copied out of the structure on every read. The storage
+    /// belongs to the C structure and is released or replaced with it, so what
+    /// comes back here is the caller's and outlives it.
+    /// </remarks>
     public string? Nettype
     {
         get
@@ -76,6 +96,11 @@ public sealed unsafe partial class SDPOrigin
     }
 
     /// <summary>the type of @addr.</summary>
+    /// <remarks>
+    /// The string is copied out of the structure on every read. The storage
+    /// belongs to the C structure and is released or replaced with it, so what
+    /// comes back here is the caller's and outlives it.
+    /// </remarks>
     public string? Addrtype
     {
         get
@@ -90,6 +115,11 @@ public sealed unsafe partial class SDPOrigin
     /// the globally unique address of the machine from which the session was
     ///     created.
     /// </summary>
+    /// <remarks>
+    /// The string is copied out of the structure on every read. The storage
+    /// belongs to the C structure and is released or replaced with it, so what
+    /// comes back here is the caller's and outlives it.
+    /// </remarks>
     public string? Addr
     {
         get

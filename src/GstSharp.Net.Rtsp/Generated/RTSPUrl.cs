@@ -42,6 +42,11 @@ public sealed unsafe partial class RTSPUrl : Gst.GObject.Boxed
     }
 
     /// <summary>the user</summary>
+    /// <remarks>
+    /// The string is copied out of the structure on every read. The storage
+    /// belongs to the C structure and is released or replaced with it, so what
+    /// comes back here is the caller's and outlives it.
+    /// </remarks>
     public string? User
     {
         get
@@ -53,6 +58,11 @@ public sealed unsafe partial class RTSPUrl : Gst.GObject.Boxed
     }
 
     /// <summary>the password</summary>
+    /// <remarks>
+    /// The string is copied out of the structure on every read. The storage
+    /// belongs to the C structure and is released or replaced with it, so what
+    /// comes back here is the caller's and outlives it.
+    /// </remarks>
     public string? Passwd
     {
         get
@@ -64,6 +74,11 @@ public sealed unsafe partial class RTSPUrl : Gst.GObject.Boxed
     }
 
     /// <summary>the host</summary>
+    /// <remarks>
+    /// The string is copied out of the structure on every read. The storage
+    /// belongs to the C structure and is released or replaced with it, so what
+    /// comes back here is the caller's and outlives it.
+    /// </remarks>
     public string Host
     {
         get
@@ -87,6 +102,11 @@ public sealed unsafe partial class RTSPUrl : Gst.GObject.Boxed
     }
 
     /// <summary>the absolute path</summary>
+    /// <remarks>
+    /// The string is copied out of the structure on every read. The storage
+    /// belongs to the C structure and is released or replaced with it, so what
+    /// comes back here is the caller's and outlives it.
+    /// </remarks>
     public string Abspath
     {
         get
@@ -99,6 +119,11 @@ public sealed unsafe partial class RTSPUrl : Gst.GObject.Boxed
     }
 
     /// <summary>additional query parameters</summary>
+    /// <remarks>
+    /// The string is copied out of the structure on every read. The storage
+    /// belongs to the C structure and is released or replaced with it, so what
+    /// comes back here is the caller's and outlives it.
+    /// </remarks>
     public string? Query
     {
         get

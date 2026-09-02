@@ -1126,7 +1126,7 @@ disappears shows up here as an added line.
 - `gst_webrtc_ice_get_local_candidates`
 - `gst_webrtc_ice_get_remote_candidates`
 
-## Fields (203)
+## Fields (173)
 
 Public record fields that carry API in C and none in C#, with the shape that
 kept them out. A field is bound when a wrapper declares an accessor for it, or
@@ -1146,7 +1146,7 @@ the section below.
 
 - `FrameCompositionMeta.meta` — EmbeddedStruct
 
-### Gst (70)
+### Gst (60)
 
 - `Buffer.mini_object` — EmbeddedStruct
 - `Buffer.pool` — Pointer
@@ -1154,7 +1154,6 @@ the section below.
 - `ByteArrayInterface.resize` — Callback
 - `Caps.mini_object` — EmbeddedStruct
 - `CustomMeta.meta` — EmbeddedStruct
-- `CustomMeta.structure` — Pointer
 - `Event.mini_object` — EmbeddedStruct
 - `Iterator.copy` — Callback
 - `Iterator.free` — Callback
@@ -1165,14 +1164,9 @@ the section below.
 - `Iterator.pushed` — Pointer
 - `Iterator.resync` — Callback
 - `MapInfo.data` — Pointer
-- `MapInfo.memory` — Pointer
 - `MapInfo.user_data` — InlineArray(pointer element)
-- `Memory.allocator` — Pointer
 - `Memory.mini_object` — EmbeddedStruct
-- `Memory.parent` — Pointer
 - `Message.mini_object` — EmbeddedStruct
-- `Message.src` — Pointer
-- `Meta.info` — Pointer
 - `MetaInfo.clear_func` — Callback
 - `MetaInfo.deserialize_func` — Callback
 - `MetaInfo.free_func` — Callback
@@ -1186,7 +1180,6 @@ the section below.
 - `MiniObject.lockstate` — Other
 - `MiniObject.refcount` — Other
 - `MiniObject.type` — Other
-- `PadProbeInfo.data` — Pointer
 - `ParamSpecArray.element_spec` — Pointer
 - `ParamSpecArray.parent_instance` — EmbeddedStruct
 - `ParamSpecFraction.def_den` — Other
@@ -1196,7 +1189,6 @@ the section below.
 - `ParamSpecFraction.min_den` — Other
 - `ParamSpecFraction.min_num` — Other
 - `ParamSpecFraction.parent_instance` — EmbeddedStruct
-- `ParentBufferMeta.buffer` — Pointer
 - `ParentBufferMeta.parent` — EmbeddedStruct
 - `PluginDesc.plugin_init` — Callback
 - `Promise.parent` — EmbeddedStruct
@@ -1205,8 +1197,6 @@ the section below.
 - `Query.mini_object` — EmbeddedStruct
 - `ReferenceTimestampMeta.info` — Pointer
 - `ReferenceTimestampMeta.parent` — EmbeddedStruct
-- `ReferenceTimestampMeta.reference` — Pointer
-- `StaticCaps.caps` — Pointer
 - `StaticPadTemplate.static_caps` — EmbeddedStruct
 - `TagList.mini_object` — EmbeddedStruct
 - `TypeFind.data` — Pointer
@@ -1219,9 +1209,8 @@ the section below.
 - `ValueTable.hash` — Callback
 - `ValueTable.serialize` — Callback
 
-### GstAudio (22)
+### GstAudio (20)
 
-- `AudioBuffer.buffer` — Pointer
 - `AudioBuffer.info` — EmbeddedStruct
 - `AudioBuffer.planes` — Pointer
 - `AudioCdSrcTrack.tags` — Pointer
@@ -1233,7 +1222,6 @@ the section below.
 - `AudioDownmixMeta.to_position` — Pointer
 - `AudioFormatInfo.pack_func` — Callback
 - `AudioFormatInfo.unpack_func` — Callback
-- `AudioInfo.finfo` — Pointer
 - `AudioLevelMeta.meta` — EmbeddedStruct
 - `AudioMeta.info` — EmbeddedStruct
 - `AudioMeta.meta` — EmbeddedStruct
@@ -1244,20 +1232,16 @@ the section below.
 - `DsdPlaneOffsetMeta.meta` — EmbeddedStruct
 - `DsdPlaneOffsetMeta.offsets` — Pointer
 
-### GstBase (6)
+### GstBase (4)
 
 - `BaseParseFrame.buffer` — Pointer
 - `BaseParseFrame.out_buffer` — Pointer
 - `CollectData.buffer` — Pointer
-- `CollectData.collect` — Pointer
-- `CollectData.pad` — Pointer
 - `CollectData.segment` — EmbeddedStruct
 
-### GstNet (4)
+### GstNet (2)
 
-- `NetAddressMeta.addr` — Pointer
 - `NetAddressMeta.meta` — EmbeddedStruct
-- `NetControlMessageMeta.message` — Pointer
 - `NetControlMessageMeta.meta` — EmbeddedStruct
 
 ### GstRtsp (6)
@@ -1305,7 +1289,7 @@ the section below.
 - `SDPMessage.zones` — Pointer
 - `SDPTime.repeat` — Pointer
 
-### GstVideo (57)
+### GstVideo (47)
 
 - `AncillaryMeta.data` — Pointer
 - `AncillaryMeta.meta` — EmbeddedStruct
@@ -1314,7 +1298,6 @@ the section below.
 - `VideoBarMeta.meta` — EmbeddedStruct
 - `VideoCaptionMeta.data` — Pointer
 - `VideoCaptionMeta.meta` — EmbeddedStruct
-- `VideoCodecAlphaMeta.buffer` — Pointer
 - `VideoCodecAlphaMeta.meta` — EmbeddedStruct
 - `VideoCodecFrame.input_buffer` — Pointer
 - `VideoCodecFrame.num_subframes` — Private
@@ -1324,7 +1307,6 @@ the section below.
 - `VideoCodecFrame.ts2` — Private
 - `VideoCodecState.allocation_caps` — Pointer
 - `VideoCodecState.caps` — Pointer
-- `VideoCodecState.codec_data` — Pointer
 - `VideoCodecState.content_light_level` — Pointer
 - `VideoCodecState.info` — EmbeddedStruct
 - `VideoCodecState.mastering_display_info` — Pointer
@@ -1332,26 +1314,18 @@ the section below.
 - `VideoFormatInfo.pack_func` — Callback
 - `VideoFormatInfo.tile_info` — InlineArray(struct element)
 - `VideoFormatInfo.unpack_func` — Callback
-- `VideoFrame.buffer` — Pointer
 - `VideoFrame.data` — InlineArray(pointer element)
 - `VideoFrame.info` — EmbeddedStruct
 - `VideoFrame.map` — InlineArray(struct element)
 - `VideoFrame.meta` — Pointer
 - `VideoGLTextureUploadMeta.meta` — EmbeddedStruct
 - `VideoInfo.colorimetry` — EmbeddedStruct
-- `VideoInfo.finfo` — Pointer
 - `VideoInfoDmaDrm.vinfo` — EmbeddedStruct
 - `VideoMeta.alignment` — EmbeddedStruct
-- `VideoMeta.buffer` — Pointer
 - `VideoMeta.map` — Callback
 - `VideoMeta.meta` — EmbeddedStruct
 - `VideoMeta.unmap` — Callback
-- `VideoMetaTransform.in_info` — Pointer
-- `VideoMetaTransform.out_info` — Pointer
-- `VideoMetaTransformMatrix.in_info` — Pointer
-- `VideoMetaTransformMatrix.out_info` — Pointer
 - `VideoOverlayCompositionMeta.meta` — EmbeddedStruct
-- `VideoOverlayCompositionMeta.overlay` — Pointer
 - `VideoRegionOfInterestMeta.meta` — EmbeddedStruct
 - `VideoRegionOfInterestMeta.params` — Pointer
 - `VideoResampler.n_taps` — Pointer
@@ -1365,25 +1339,37 @@ the section below.
 - `VideoTimeCodeMeta.meta` — EmbeddedStruct
 - `VideoTimeCodeMeta.tc` — EmbeddedStruct
 
-### GstWebRTC (4)
-
-- `WebRTCICECandidate.stats` — Pointer
-- `WebRTCICECandidatePair.local` — Pointer
-- `WebRTCICECandidatePair.remote` — Pointer
-- `WebRTCSessionDescription.sdp` — Pointer
-
-## Fields exposed elsewhere (3)
+## Fields exposed elsewhere (13)
 
 Public record fields that another member of the binding answers, with the
 member that answers them. They are declared in `girs/overlays/fixups.json`
 under `fieldSkips` and are left out of the ledger above: what is measured
 there is what the bindings do not cover, and these are covered.
 
-### Gst (1)
+### Gst (6)
 
+- `CustomMeta.structure` — GetStructure
+- `Message.src` — hand written
+- `Meta.info` — hand written
+- `PadProbeInfo.data` — GetBuffer, GetBufferList, GetEvent and GetQuery
 - `PadProbeInfo.flow_ret` — GetFlowReturn
+- `StaticCaps.caps` — Get
+
+### GstAudio (2)
+
+- `AudioBuffer.buffer` — hand written
+- `AudioInfo.finfo` — hand written
 
 ### GstPlay (2)
 
 - `PlayVisualization.description` — hand written
 - `PlayVisualization.name` — hand written
+
+### GstVideo (2)
+
+- `VideoFrame.buffer` — hand written
+- `VideoInfo.finfo` — hand written
+
+### GstWebRTC (1)
+
+- `WebRTCSessionDescription.sdp` — hand written

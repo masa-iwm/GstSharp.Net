@@ -18,6 +18,25 @@ public sealed unsafe partial class VideoOverlayCompositionMeta
     /// <param name="handle">The native instance.</param>
     internal VideoOverlayCompositionMeta(nint handle) => Handle = handle;
 
+    /// <summary>Reads the <c>overlay</c> field of <c>GstVideoOverlayCompositionMeta</c>.</summary>
+    /// <remarks>
+    /// The value is read out of the structure at the moment of the call. What
+    /// comes back owns a reference of its own - a mini object is referenced, a
+    /// boxed value copied - so the caller disposes it, which is why this is a
+    /// method rather than a property.
+    /// 
+    /// A structure the library only fills for the length of one call, such as a
+    /// mapping or a metadata transform, holds nothing outside it: the read has
+    /// to happen while the structure describes what the caller expects.
+    /// </remarks>
+    /// <returns>the attached #GstVideoOverlayComposition</returns>
+    public Gst.Video.VideoOverlayComposition? GetOverlay()
+    {
+        Gst.Video.VideoOverlayComposition? value = Gst.Video.VideoOverlayComposition.FromNative(((VideoOverlayCompositionMetaRaw*)Handle)->Overlay, Gst.Interop.Transfer.None);
+        System.GC.KeepAlive(this);
+        return value;
+    }
+
     /// <summary>Wraps a native <c>GstVideoOverlayCompositionMeta</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
     /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>
