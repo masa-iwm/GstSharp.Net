@@ -308,38 +308,48 @@ public sealed class VideoTimeCodeTests
 
     /// <summary>
     /// A timecode answers the frame rate, the flags and the daily jam it was
-    /// configured with, and the jam comes back owning a reference of its own.
+    /// configured with, and the jam comes back owning a reference of its own,
+    /// so it outlives the timecode it was read from.
     /// </summary>
     [Fact]
     public void ATimeCodeAnswersTheConfigurationItWasBuiltWith()
     {
         GDateTime? jam = GDateTime.FromUnixUtc(1_755_000_000L);
         Assert.NotNull(jam);
+        long instant = jam.ToUnix();
 
-        using (jam)
-        {
-            using VideoTimeCode code = VideoTimeCode.New(
-                30000, 1001, jam, VideoTimeCodeFlags.DropFrame, 0, 0, 0, 0, 0);
+        VideoTimeCode code = VideoTimeCode.New(
+            30000, 1001, jam, VideoTimeCodeFlags.DropFrame, 0, 0, 0, 0, 0);
 
-            Assert.Equal(30000u, code.FpsN);
-            Assert.Equal(1001u, code.FpsD);
-            Assert.Equal(VideoTimeCodeFlags.DropFrame, code.Flags);
+        Assert.Equal(30000u, code.FpsN);
+        Assert.Equal(1001u, code.FpsD);
+        Assert.Equal(VideoTimeCodeFlags.DropFrame, code.Flags);
 
-            GDateTime? copy = code.GetLatestDailyJam();
-            Assert.NotNull(copy);
-            Assert.Equal(jam.ToUnix(), copy.ToUnix());
+        GDateTime? first = code.GetLatestDailyJam();
+        Assert.NotNull(first);
+        Assert.Equal(instant, first.ToUnix());
 
-            // The copy owns a reference of its own, so releasing it leaves the
-            // timecode holding the one it took when it was built. Reading the
-            // jam back through the timecode is what a borrowed copy would have
-            // made a use after free.
-            copy.Dispose();
+        // The copy owns a reference of its own, so releasing it leaves the
+        // timecode holding the one it took when it was built. Reading the jam
+        // back through the timecode is what a borrowed copy would have made a
+        // use after free.
+        first.Dispose();
 
-            Assert.False(jam.IsDisposed);
-            using GDateTime? back = code.ToDateTime();
-            Assert.NotNull(back);
-            Assert.Equal(jam.ToUnix(), back.ToUnix());
-        }
+        using GDateTime? back = code.ToDateTime();
+        Assert.NotNull(back);
+        Assert.Equal(instant, back.ToUnix());
+
+        // The other end of the same contract: the instant stays valid after
+        // the timecode is gone. Both references the copy does not hold are
+        // released before it is read, so a borrowed one would be reading the
+        // GDateTime the timecode unreferenced on the way out.
+        using GDateTime? copy = code.GetLatestDailyJam();
+        Assert.NotNull(copy);
+
+        code.Dispose();
+        jam.Dispose();
+
+        Assert.Equal(instant, copy.ToUnix());
     }
 
     /// <summary>
