@@ -181,6 +181,31 @@ A lookup that finds nothing answers `false` and leaves **both** out parameters
 so the binding zeroes it before the call and reads a null pointer back as
 `null`; there is no stale value to guard against and no wrapper to dispose.
 
+What comes back is the derived class that matches the native one:
+`ParamSpec.FromNative` reads `G_PARAM_SPEC_TYPE` and hands out a
+`ParamSpecInt`, a `ParamSpecEnum` or one of their siblings, so a caller can
+pattern match on it and read the range or the table it carries. That changes
+nothing about the reference: a derived wrapper owns exactly the one reference
+the base class owns, and `Dispose` is the same call on all of them. The public
+constructor `ParamSpec(nint, Transfer)` still wraps in `ParamSpec` itself, and
+is the one shape that does not look at the type of what it is given.
+
+One member of a specification lends what it answers, one hands a wrapper over,
+and the two tables own nothing at all:
+
+* `DefaultValue` is **borrowed**. The `GValue` behind the `ValueView` belongs to
+  the specification, which builds it once and keeps it, so the view is valid
+  only while the wrapper holds its reference and only for reading. Copy it into
+  a `Value` of your own to keep it or to write to it — writing through the view
+  would change what every later reader of that specification sees.
+* `RedirectTarget` is **handed over**. C lends its reference; the wrapper takes
+  one of its own, as everything a member hands out does, and the caller
+  disposes it.
+* `GType.GetEnumValues` and `GType.GetFlagsValues` own nothing at all. They
+  reference count the class of the type for the duration of the call, copy the
+  names and the nicknames out of it, and release it before they return, so what
+  the caller is left with points at no native storage.
+
 ## Fields a wrapper reads
 
 A generated field accessor reads through the handle of the wrapper at the

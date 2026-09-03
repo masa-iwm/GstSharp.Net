@@ -581,7 +581,7 @@ public partial class Object : IDisposable
 
             for (uint i = 0; i < count; i++)
             {
-                result[i] = new ParamSpec(properties[i], Transfer.None);
+                result[i] = ParamSpec.FromNative(properties[i], Transfer.None);
             }
 
             return result;

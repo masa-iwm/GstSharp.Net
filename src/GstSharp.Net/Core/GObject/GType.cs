@@ -134,6 +134,18 @@ public readonly struct GType : IEquatable<GType>
     /// </summary>
     public GType Fundamental => new(GObjectNative.TypeFundamental(Value));
 
+    /// <summary>
+    /// Gets a value indicating whether this is a GObject interface rather than
+    /// a class.
+    /// </summary>
+    /// <remarks>
+    /// An interface type has no class in the sense the rest of the type system
+    /// uses the word, so a member that reaches for one — <c>g_type_class_ref</c>
+    /// and everything built on it — is a programming error on an interface
+    /// rather than an empty answer.
+    /// </remarks>
+    public bool IsInterface => Fundamental == Interface;
+
     /// <summary>Compares two types for equality.</summary>
     /// <param name="left">The first type.</param>
     /// <param name="right">The second type.</param>
@@ -166,6 +178,165 @@ public readonly struct GType : IEquatable<GType>
     /// <param name="other">The type to test against.</param>
     /// <returns><see langword="true"/> when the types are compatible.</returns>
     public bool IsA(GType other) => GObjectNative.TypeIsA(Value, other.Value) != 0;
+
+    /// <summary>
+    /// Lists the members of an enumeration type.
+    /// </summary>
+    /// <returns>
+    /// The members, in the order the type declares them, or an empty array when
+    /// the type declares none.
+    /// </returns>
+    /// <exception cref="InvalidOperationException">
+    /// This type is not an enumeration.
+    /// </exception>
+    /// <remarks>
+    /// The table lives in the class of the type, which this reference counts
+    /// for the duration of the call and releases before it returns: the strings
+    /// that come back are copies, so nothing the caller holds points into a
+    /// class it no longer keeps alive.
+    /// </remarks>
+    public unsafe EnumValue[] GetEnumValues()
+    {
+        if (Fundamental != Enum)
+        {
+            throw new InvalidOperationException(
+                $"{Name} is not an enumeration type, so it has no members to list.");
+        }
+
+        nint klass = GObjectNative.TypeClassRef(Value);
+        if (klass == nint.Zero)
+        {
+            return [];
+        }
+
+        try
+        {
+            // struct _GEnumClass: the GTypeClass at 0, minimum at 8, maximum at
+            // 12, n_values at 16 and the values at 24. One GEnumValue is the
+            // gint at 0 and the two strings at 8 and 16, for 24 bytes.
+            uint count = *(uint*)((byte*)klass + 16);
+            byte* values = *(byte**)((byte*)klass + 24);
+            if (values == null || count == 0)
+            {
+                return [];
+            }
+
+            EnumValue[] result = new EnumValue[count];
+            for (uint i = 0; i < count; i++)
+            {
+                byte* entry = values + (i * 24);
+                result[i] = new EnumValue(
+                    *(int*)entry,
+                    GMarshal.PtrToStringUtf8(*(nint*)(entry + 8)) ?? string.Empty,
+                    GMarshal.PtrToStringUtf8(*(nint*)(entry + 16)));
+            }
+
+            return result;
+        }
+        finally
+        {
+            GObjectNative.TypeClassUnref(klass);
+        }
+    }
+
+    /// <summary>
+    /// Lists the members of a flags type.
+    /// </summary>
+    /// <returns>
+    /// The members, in the order the type declares them, or an empty array when
+    /// the type declares none.
+    /// </returns>
+    /// <exception cref="InvalidOperationException">
+    /// This type is not a set of flags.
+    /// </exception>
+    /// <remarks>
+    /// The table lives in the class of the type, which this reference counts
+    /// for the duration of the call and releases before it returns: the strings
+    /// that come back are copies, so nothing the caller holds points into a
+    /// class it no longer keeps alive.
+    /// </remarks>
+    public unsafe FlagsValue[] GetFlagsValues()
+    {
+        if (Fundamental != Flags)
+        {
+            throw new InvalidOperationException(
+                $"{Name} is not a flags type, so it has no members to list.");
+        }
+
+        nint klass = GObjectNative.TypeClassRef(Value);
+        if (klass == nint.Zero)
+        {
+            return [];
+        }
+
+        try
+        {
+            // struct _GFlagsClass: the GTypeClass at 0, mask at 8, n_values at
+            // 12 and the values at 16. One GFlagsValue is the guint at 0 and
+            // the two strings at 8 and 16, for 24 bytes.
+            uint count = *(uint*)((byte*)klass + 12);
+            byte* values = *(byte**)((byte*)klass + 16);
+            if (values == null || count == 0)
+            {
+                return [];
+            }
+
+            FlagsValue[] result = new FlagsValue[count];
+            for (uint i = 0; i < count; i++)
+            {
+                byte* entry = values + (i * 24);
+                result[i] = new FlagsValue(
+                    *(uint*)entry,
+                    GMarshal.PtrToStringUtf8(*(nint*)(entry + 8)) ?? string.Empty,
+                    GMarshal.PtrToStringUtf8(*(nint*)(entry + 16)));
+            }
+
+            return result;
+        }
+        finally
+        {
+            GObjectNative.TypeClassUnref(klass);
+        }
+    }
+
+    /// <summary>
+    /// Lists the GObject interfaces this type implements.
+    /// </summary>
+    /// <returns>
+    /// The interface types, or an empty array when the type implements none —
+    /// which is also the answer for a type that has no instances at all, such
+    /// as an enumeration or an interface itself.
+    /// </returns>
+    /// <remarks>
+    /// The inherited interfaces are listed too: GObject copies the entries of a
+    /// parent into every child, so this is the same list <c>gst-inspect-1.0</c>
+    /// prints under "Implemented Interfaces". The prerequisites of an interface
+    /// are not listed.
+    /// </remarks>
+    public unsafe GType[] GetInterfaces()
+    {
+        uint count = 0;
+        nint interfaces = GObjectNative.TypeInterfaces(Value, &count);
+        if (interfaces == nint.Zero)
+        {
+            return [];
+        }
+
+        try
+        {
+            GType[] result = new GType[count];
+            for (uint i = 0; i < count; i++)
+            {
+                result[i] = new GType(((nuint*)interfaces)[i]);
+            }
+
+            return result;
+        }
+        finally
+        {
+            GMarshal.Free(interfaces);
+        }
+    }
 
     /// <inheritdoc/>
     public bool Equals(GType other) => Value == other.Value;

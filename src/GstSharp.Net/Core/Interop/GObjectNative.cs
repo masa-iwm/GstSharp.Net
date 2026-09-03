@@ -141,6 +141,38 @@ internal static unsafe partial class GObjectNative
     [LibraryImport("GObject", EntryPoint = "g_param_spec_get_name")]
     internal static partial nint ParamSpecGetName(nint pspec);
 
+    /// <summary>
+    /// Reads the nickname of a specification. The string belongs to the
+    /// specification and is never null: GObject falls back to the nickname of
+    /// the redirect target and then to the name.
+    /// </summary>
+    [LibraryImport("GObject", EntryPoint = "g_param_spec_get_nick")]
+    internal static partial nint ParamSpecGetNick(nint pspec);
+
+    /// <summary>
+    /// Reads the description of a specification. The string belongs to the
+    /// specification and may be null, which is what a property installed
+    /// without one answers.
+    /// </summary>
+    [LibraryImport("GObject", EntryPoint = "g_param_spec_get_blurb")]
+    internal static partial nint ParamSpecGetBlurb(nint pspec);
+
+    /// <summary>
+    /// Reads the specification a <c>GParamSpecOverride</c> stands for, and null
+    /// for every other class of specification. The reference is not the
+    /// caller's.
+    /// </summary>
+    [LibraryImport("GObject", EntryPoint = "g_param_spec_get_redirect_target")]
+    internal static partial nint ParamSpecGetRedirectTarget(nint pspec);
+
+    /// <summary>
+    /// Reads the default value of a property. The value belongs to the
+    /// specification, is built once on first use and lives as long as the
+    /// specification does, so it is borrowed rather than copied.
+    /// </summary>
+    [LibraryImport("GObject", EntryPoint = "g_param_spec_get_default_value")]
+    internal static partial GValueNative* ParamSpecGetDefaultValue(nint pspec);
+
     [LibraryImport("GObject", EntryPoint = "g_param_spec_ref_sink")]
     internal static partial nint ParamSpecRefSink(nint pspec);
 

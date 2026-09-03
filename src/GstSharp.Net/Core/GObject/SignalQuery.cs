@@ -197,6 +197,75 @@ public readonly struct SignalQuery : IEquatable<SignalQuery>
     }
 
     /// <summary>
+    /// Describes the signals one type declares.
+    /// </summary>
+    /// <param name="type">The type to list the signals of.</param>
+    /// <returns>
+    /// The description of every signal the type declares, or an empty array
+    /// when it declares none.
+    /// </returns>
+    /// <remarks>
+    /// <para>
+    /// Only the signals of <paramref name="type"/> itself are listed, which is
+    /// what <c>g_signal_list_ids</c> answers: the signals a type inherits are
+    /// declared by its ancestors, so walk <see cref="GType.Parent"/> yourself
+    /// to collect them all. That is also how the C tools read: what
+    /// <c>gst-inspect-1.0</c> prints under "Element Signals" is the walk from
+    /// the type of the element up to — and not including — <c>GstElement</c>,
+    /// because the signals of <c>GstElement</c>, <c>GstObject</c> and
+    /// <c>GObject</c> are the same for everything and are left out on purpose.
+    /// </para>
+    /// <para>
+    /// Signals are registered when the class of the type is first built, so the
+    /// class is reference counted here for the duration of the call: a type
+    /// whose class had never been built would otherwise answer that it has no
+    /// signals at all. An interface type has no class and is listed without
+    /// that step.
+    /// </para>
+    /// </remarks>
+    public static unsafe SignalQuery[] List(GType type)
+    {
+        if (!type.IsValid)
+        {
+            return [];
+        }
+
+        nint klass = type.IsInterface ? nint.Zero : GObjectNative.TypeClassRef(type.Value);
+
+        try
+        {
+            uint count = 0;
+            nint ids = GObjectNative.SignalListIds(type.Value, &count);
+            if (ids == nint.Zero)
+            {
+                return [];
+            }
+
+            try
+            {
+                SignalQuery[] result = new SignalQuery[count];
+                for (uint i = 0; i < count; i++)
+                {
+                    result[i] = FromId(((uint*)ids)[i]);
+                }
+
+                return result;
+            }
+            finally
+            {
+                GMarshal.Free(ids);
+            }
+        }
+        finally
+        {
+            if (klass != nint.Zero)
+            {
+                GObjectNative.TypeClassUnref(klass);
+            }
+        }
+    }
+
+    /// <summary>
     /// Reads the type of one argument of the signal.
     /// </summary>
     /// <param name="index">

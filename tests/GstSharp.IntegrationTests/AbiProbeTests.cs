@@ -2,6 +2,7 @@ extern alias gstsharp;
 
 using System.Globalization;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using Gst;
 using Gst.GObject;
 using Gst.Interop;
@@ -2040,6 +2041,298 @@ public sealed class AbiProbeTests
 
         Assert.Equal(0L, Offset(&raw, &raw.IsIpv6));
         Assert.Equal(8L, Offset(&raw, &raw.ServerIpPtr));
+    }
+
+    /// <summary>
+    /// The public size of every <c>GParamSpec</c> class the binding reads
+    /// fields out of, as the library itself reports it. The offsets the derived
+    /// wrappers use are the offsets of those fields inside these structures, so
+    /// a size that drifted would be the first sign that a read moved onto
+    /// something else.
+    /// </summary>
+    [Fact]
+    public void ParamSpecInstanceSizesMatchTheHeaderLayout()
+    {
+        // GParamSpec itself: the GTypeInstance, name, the padded flags,
+        // value_type, owner_type, _nick, _blurb and qdata take a slot each, and
+        // ref_count and param_id share the ninth.
+        AssertInstanceSize("GParam", 72);
+
+        // One own field of one, two or four bytes, padded up to a slot.
+        AssertInstanceSize("GParamBoolean", 80);
+        AssertInstanceSize("GParamChar", 80);
+        AssertInstanceSize("GParamUChar", 80);
+        AssertInstanceSize("GParamUnichar", 80);
+        AssertInstanceSize("GParamGType", 80);
+
+        // Three 4 byte fields, or a pointer and a padded 4 byte field.
+        AssertInstanceSize("GParamInt", 88);
+        AssertInstanceSize("GParamUInt", 88);
+        AssertInstanceSize("GParamEnum", 88);
+        AssertInstanceSize("GParamFlags", 88);
+
+        // Four 4 byte fields.
+        AssertInstanceSize("GParamFloat", 88);
+
+        // Three 8 byte fields.
+        AssertInstanceSize("GParamInt64", 96);
+        AssertInstanceSize("GParamUInt64", 96);
+
+        // Four 8 byte fields.
+        AssertInstanceSize("GParamDouble", 104);
+
+        // Four pointers and two bits of bitfield, padded up to a slot.
+        AssertInstanceSize("GParamString", 104);
+
+        // Three C longs, which are 4 bytes wide on Windows and 8 everywhere
+        // else, padded up to a slot: 88 on Windows and 96 on the rest.
+        uint expected = (uint)((72 + (3 * Unsafe.SizeOf<CLong>()) + 7) / 8 * 8);
+        AssertInstanceSize("GParamLong", expected);
+        AssertInstanceSize("GParamULong", expected);
+    }
+
+    /// <summary>
+    /// Every derived wrapper reads back exactly what the specification was
+    /// built with, which is what proves the offsets it reads at. The
+    /// specifications are made here rather than borrowed from an element,
+    /// because no set of core elements declares a property of every kind.
+    /// </summary>
+    [Fact]
+    public void ParamSpecFieldsReadBackWhatTheySpecifyWhenBuilt()
+    {
+        using (ParamSpec spec = ParamSpec.FromNative(
+            ParamSpecNatives.Boolean("b", "b", "b", 1, ParamSpecNatives.ReadWrite), Transfer.None))
+        {
+            Assert.True(Assert.IsType<ParamSpecBoolean>(spec).Default);
+        }
+
+        using (ParamSpec spec = ParamSpec.FromNative(
+            ParamSpecNatives.Char("c", "c", "c", -8, 9, -3, ParamSpecNatives.ReadWrite), Transfer.None))
+        {
+            ParamSpecChar typed = Assert.IsType<ParamSpecChar>(spec);
+            Assert.Equal((sbyte)-8, typed.Minimum);
+            Assert.Equal((sbyte)9, typed.Maximum);
+            Assert.Equal((sbyte)-3, typed.Default);
+        }
+
+        using (ParamSpec spec = ParamSpec.FromNative(
+            ParamSpecNatives.UChar("c", "c", "c", 8, 200, 17, ParamSpecNatives.ReadWrite), Transfer.None))
+        {
+            ParamSpecUChar typed = Assert.IsType<ParamSpecUChar>(spec);
+            Assert.Equal((byte)8, typed.Minimum);
+            Assert.Equal((byte)200, typed.Maximum);
+            Assert.Equal((byte)17, typed.Default);
+        }
+
+        using (ParamSpec spec = ParamSpec.FromNative(
+            ParamSpecNatives.Int("i", "i", "i", -5, 500, 7, ParamSpecNatives.ReadWrite), Transfer.None))
+        {
+            ParamSpecInt typed = Assert.IsType<ParamSpecInt>(spec);
+            Assert.Equal(-5, typed.Minimum);
+            Assert.Equal(500, typed.Maximum);
+            Assert.Equal(7, typed.Default);
+        }
+
+        using (ParamSpec spec = ParamSpec.FromNative(
+            ParamSpecNatives.UInt("u", "u", "u", 5, uint.MaxValue, 11, ParamSpecNatives.ReadWrite), Transfer.None))
+        {
+            ParamSpecUInt typed = Assert.IsType<ParamSpecUInt>(spec);
+            Assert.Equal(5u, typed.Minimum);
+            Assert.Equal(uint.MaxValue, typed.Maximum);
+            Assert.Equal(11u, typed.Default);
+        }
+
+        using (ParamSpec spec = ParamSpec.FromNative(
+            ParamSpecNatives.Long(
+                "l",
+                "l",
+                "l",
+                new CLong(-1000),
+                new CLong(1000),
+                new CLong(13),
+                ParamSpecNatives.ReadWrite),
+            Transfer.None))
+        {
+            ParamSpecLong typed = Assert.IsType<ParamSpecLong>(spec);
+            Assert.Equal(-1000L, typed.Minimum);
+            Assert.Equal(1000L, typed.Maximum);
+            Assert.Equal(13L, typed.Default);
+        }
+
+        using (ParamSpec spec = ParamSpec.FromNative(
+            ParamSpecNatives.ULong(
+                "l",
+                "l",
+                "l",
+                new CULong(10),
+                new CULong(1000),
+                new CULong(19),
+                ParamSpecNatives.ReadWrite),
+            Transfer.None))
+        {
+            ParamSpecULong typed = Assert.IsType<ParamSpecULong>(spec);
+            Assert.Equal(10uL, typed.Minimum);
+            Assert.Equal(1000uL, typed.Maximum);
+            Assert.Equal(19uL, typed.Default);
+        }
+
+        using (ParamSpec spec = ParamSpec.FromNative(
+            ParamSpecNatives.Int64("q", "q", "q", long.MinValue, long.MaxValue, -42, ParamSpecNatives.ReadWrite),
+            Transfer.None))
+        {
+            ParamSpecInt64 typed = Assert.IsType<ParamSpecInt64>(spec);
+            Assert.Equal(long.MinValue, typed.Minimum);
+            Assert.Equal(long.MaxValue, typed.Maximum);
+            Assert.Equal(-42L, typed.Default);
+        }
+
+        using (ParamSpec spec = ParamSpec.FromNative(
+            ParamSpecNatives.UInt64("q", "q", "q", 3, ulong.MaxValue, 42, ParamSpecNatives.ReadWrite), Transfer.None))
+        {
+            ParamSpecUInt64 typed = Assert.IsType<ParamSpecUInt64>(spec);
+            Assert.Equal(3uL, typed.Minimum);
+            Assert.Equal(ulong.MaxValue, typed.Maximum);
+            Assert.Equal(42uL, typed.Default);
+        }
+
+        using (ParamSpec spec = ParamSpec.FromNative(
+            ParamSpecNatives.Float("f", "f", "f", -1.5f, 2.5f, 0.25f, ParamSpecNatives.ReadWrite), Transfer.None))
+        {
+            ParamSpecFloat typed = Assert.IsType<ParamSpecFloat>(spec);
+            Assert.Equal(-1.5f, typed.Minimum);
+            Assert.Equal(2.5f, typed.Maximum);
+            Assert.Equal(0.25f, typed.Default);
+            Assert.True(typed.Epsilon > 0f);
+        }
+
+        using (ParamSpec spec = ParamSpec.FromNative(
+            ParamSpecNatives.Double("d", "d", "d", -1.5, 2.5, 0.125, ParamSpecNatives.ReadWrite), Transfer.None))
+        {
+            ParamSpecDouble typed = Assert.IsType<ParamSpecDouble>(spec);
+            Assert.Equal(-1.5, typed.Minimum);
+            Assert.Equal(2.5, typed.Maximum);
+            Assert.Equal(0.125, typed.Default);
+            Assert.True(typed.Epsilon > 0d);
+        }
+
+        using (ParamSpec spec = ParamSpec.FromNative(
+            ParamSpecNatives.Unichar("w", "w", "w", 0x1F600, ParamSpecNatives.ReadWrite), Transfer.None))
+        {
+            Assert.Equal(0x1F600u, Assert.IsType<ParamSpecUnichar>(spec).Default);
+        }
+
+        using (ParamSpec spec = ParamSpec.FromNative(
+            ParamSpecNatives.String("s", "s", "s", "written", ParamSpecNatives.ReadWrite), Transfer.None))
+        {
+            Assert.Equal("written", Assert.IsType<ParamSpecString>(spec).Default);
+        }
+
+        using (ParamSpec spec = ParamSpec.FromNative(
+            ParamSpecNatives.String("s", "s", "s", null, ParamSpecNatives.ReadWrite), Transfer.None))
+        {
+            Assert.Null(Assert.IsType<ParamSpecString>(spec).Default);
+        }
+
+        using (ParamSpec spec = ParamSpec.FromNative(
+            ParamSpecNatives.Enum(
+                "e",
+                "e",
+                "e",
+                GType.FromName("GstState").Value,
+                (int)State.Playing,
+                ParamSpecNatives.ReadWrite),
+            Transfer.None))
+        {
+            ParamSpecEnum typed = Assert.IsType<ParamSpecEnum>(spec);
+            Assert.Equal((int)State.Playing, typed.Default);
+            Assert.Contains(typed.Values, member => member.Nick == "playing");
+        }
+
+        using (ParamSpec spec = ParamSpec.FromNative(
+            ParamSpecNatives.Flags(
+                "g",
+                "g",
+                "g",
+                GType.FromName("GstSeekFlags").Value,
+                (uint)SeekFlags.Flush,
+                ParamSpecNatives.ReadWrite),
+            Transfer.None))
+        {
+            ParamSpecFlags typed = Assert.IsType<ParamSpecFlags>(spec);
+            Assert.Equal((uint)SeekFlags.Flush, typed.Default);
+            Assert.Contains(typed.Values, member => member.Nick == "flush");
+        }
+
+        GType element = GType.FromName("GstElement");
+        using (ParamSpec spec = ParamSpec.FromNative(
+            ParamSpecNatives.GType("t", "t", "t", element.Value, ParamSpecNatives.ReadWrite), Transfer.None))
+        {
+            Assert.Equal(element, Assert.IsType<ParamSpecGType>(spec).IsAType);
+        }
+    }
+
+    /// <summary>
+    /// <c>struct _GstObject</c> of <c>gstobject.h</c>: the <c>GObject</c> at 0
+    /// (24 bytes), the <c>GMutex lock</c> at 24, <c>name</c> at 32,
+    /// <c>parent</c> at 40 and <c>guint32 flags</c> at 48, followed by the
+    /// control bindings, the control rate, the last synchronisation time and
+    /// one reserved pointer, for 88 bytes. The offset of <c>flags</c> is what
+    /// <c>Gst.Object.Flags</c> reads, and it is probed here against bits the
+    /// library itself set.
+    /// </summary>
+    [Fact]
+    public void GstObjectFlagsReadTheFieldTheLibraryWrote()
+    {
+        AssertInstanceSize("GstObject", 88);
+
+        using Element sink = Assert.IsAssignableFrom<Element>(ElementFactory.Make("fakesink", "flagged-sink"));
+        using Element source = Assert.IsAssignableFrom<Element>(ElementFactory.Make("fakesrc", "flagged-src"));
+
+        _output.WriteLine(FormattableString.Invariant(
+            $"fakesink flags = 0x{sink.Flags:x8}, fakesrc flags = 0x{source.Flags:x8}"));
+
+        Assert.True(sink.IsFlagSet((uint)ElementFlags.Sink));
+        Assert.False(sink.IsFlagSet((uint)ElementFlags.Source));
+        Assert.True(source.IsFlagSet((uint)ElementFlags.Source));
+        Assert.False(source.IsFlagSet((uint)ElementFlags.Sink));
+
+        // GST_OBJECT_FLAG_IS_SET asks for every bit of what it is given, and
+        // asking for no bit at all is true in C as it is here.
+        Assert.True(sink.IsFlagSet(0));
+    }
+
+    /// <summary>
+    /// <c>struct _GEnumClass</c> is the <c>GTypeClass</c> at 0, the minimum and
+    /// the maximum at 8 and 12, <c>n_values</c> at 16 and the values at 24, for
+    /// 32 bytes; <c>struct _GFlagsClass</c> is the <c>GTypeClass</c> at 0, the
+    /// mask at 8, <c>n_values</c> at 12 and the values at 16, for 24. Those are
+    /// the offsets <c>GType.GetEnumValues</c> and <c>GType.GetFlagsValues</c>
+    /// read at.
+    /// </summary>
+    [Fact]
+    public void EnumAndFlagsClassSizesMatchTheHeaderLayout()
+    {
+        AssertClassSize("GstState", 32, GType.FromName("GstState").Value);
+        AssertClassSize("GstSeekFlags", 24, GType.FromName("GstSeekFlags").Value);
+    }
+
+    /// <summary>
+    /// Asserts that the library allocates exactly as many bytes for an instance
+    /// of a type as the header says.
+    /// </summary>
+    /// <param name="typeName">The registered name of the type.</param>
+    /// <param name="expected">The size the header declares.</param>
+    private void AssertInstanceSize(string typeName, uint expected)
+    {
+        GType type = GType.FromName(typeName);
+        Assert.True(type.IsValid, $"{typeName} is not a registered type.");
+
+        GObjectNative.TypeQuery(type.Value, out GTypeQuery query);
+
+        _output.WriteLine(FormattableString.Invariant(
+            $"g_type_query({typeName}): instance_size={query.InstanceSize}, header={expected}"));
+
+        Assert.Equal(expected, query.InstanceSize);
     }
 
     private static unsafe long Offset(void* start, void* field) => (byte*)field - (byte*)start;

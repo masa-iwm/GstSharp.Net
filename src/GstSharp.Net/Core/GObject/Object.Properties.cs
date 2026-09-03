@@ -300,7 +300,7 @@ public partial class Object
         // to be alive for as long as the object is.
         GC.KeepAlive(this);
 
-        return pspec == nint.Zero ? null : new ParamSpec(pspec, Transfer.None);
+        return pspec == nint.Zero ? null : ParamSpec.FromNative(pspec, Transfer.None);
     }
 
     /// <summary>
