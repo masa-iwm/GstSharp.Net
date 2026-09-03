@@ -96,6 +96,12 @@ public readonly struct SignalQuery : IEquatable<SignalQuery>
     /// </summary>
     private const nuint StaticScope = 1;
 
+    /// <summary>
+    /// The value of <c>G_TYPE_FLAG_INSTANTIATABLE</c>, which is the flag
+    /// <c>G_TYPE_IS_INSTANTIATABLE</c> tests.
+    /// </summary>
+    private const uint Instantiatable = 1 << 1;
+
     private const int NameLimit = 40;
 
     private readonly GSignalQuery _query;
@@ -219,8 +225,16 @@ public readonly struct SignalQuery : IEquatable<SignalQuery>
     /// Signals are registered when the class of the type is first built, so the
     /// class is reference counted here for the duration of the call: a type
     /// whose class had never been built would otherwise answer that it has no
-    /// signals at all. An interface type has no class and is listed without
-    /// that step.
+    /// signals at all. An interface type has no class, and its default vtable
+    /// is reference counted instead, because that is what runs the
+    /// <c>base_init</c> a signal such as the <c>child-added</c> of
+    /// <c>GstChildProxy</c> is registered in.
+    /// </para>
+    /// <para>
+    /// Only an instantiatable type and an interface can carry signals, so
+    /// anything else — a fundamental such as <c>gint</c>, an enumeration, a
+    /// boxed type — answers the empty array without asking GObject, which would
+    /// log a critical for the question.
     /// </para>
     /// </remarks>
     public static unsafe SignalQuery[] List(GType type)
@@ -230,7 +244,14 @@ public readonly struct SignalQuery : IEquatable<SignalQuery>
             return [];
         }
 
-        nint klass = type.IsInterface ? nint.Zero : GObjectNative.TypeClassRef(type.Value);
+        bool isInterface = type.IsInterface;
+        if (!isInterface && GObjectNative.TypeTestFlags(type.Value, Instantiatable) == 0)
+        {
+            return [];
+        }
+
+        nint vtable = isInterface ? GObjectNative.DefaultInterfaceRef(type.Value) : nint.Zero;
+        nint klass = isInterface ? nint.Zero : GObjectNative.TypeClassRef(type.Value);
 
         try
         {
@@ -261,6 +282,11 @@ public readonly struct SignalQuery : IEquatable<SignalQuery>
             if (klass != nint.Zero)
             {
                 GObjectNative.TypeClassUnref(klass);
+            }
+
+            if (vtable != nint.Zero)
+            {
+                GObjectNative.DefaultInterfaceUnref(vtable);
             }
         }
     }

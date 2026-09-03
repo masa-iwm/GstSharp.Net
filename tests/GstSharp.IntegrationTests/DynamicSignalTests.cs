@@ -120,8 +120,10 @@ public sealed class DynamicSignalTests
             Assert.Same(sink, sender);
 
             // notify carries the parameter specification of the property that
-            // changed, borrowed for the duration of this call.
-            ParamSpec specification = Assert.IsType<ParamSpec>(Assert.Single(args));
+            // changed, borrowed for the duration of this call and handed out
+            // as the class that matches it: the name of a GstObject is a
+            // GParamString.
+            ParamSpec specification = Assert.IsType<ParamSpecString>(Assert.Single(args));
             changed = specification.Name;
             return null;
         });

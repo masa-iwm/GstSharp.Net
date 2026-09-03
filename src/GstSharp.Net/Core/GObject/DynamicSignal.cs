@@ -241,7 +241,7 @@ internal static unsafe class DynamicSignalClosure
                 return null;
             }
 
-            ParamSpec wrapper = new(specification, Transfer.None);
+            ParamSpec wrapper = ParamSpec.FromNative(specification, Transfer.None);
             (borrowed ??= []).Add(wrapper);
             return wrapper;
         }

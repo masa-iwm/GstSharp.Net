@@ -149,6 +149,22 @@ internal static partial class ParamSpecNatives
     [LibraryImport("GObject", EntryPoint = "g_param_spec_gtype", StringMarshalling = StringMarshalling.Utf8)]
     internal static partial nint GType(string name, string nick, string blurb, nuint isAType, uint flags);
 
+    /// <summary>
+    /// Builds a specification of an untyped pointer, which the binding wraps in
+    /// <c>Gst.GObject.ParamSpec</c> itself: <c>GParamSpecPointer</c> declares
+    /// nothing beyond the base class, so there is no derived class for it.
+    /// </summary>
+    [LibraryImport("GObject", EntryPoint = "g_param_spec_pointer", StringMarshalling = StringMarshalling.Utf8)]
+    internal static partial nint Pointer(string name, string nick, string blurb, uint flags);
+
+    /// <summary>
+    /// Builds a specification that stands for another one. The result floats,
+    /// as everything here does, and it takes a reference of its own on what it
+    /// overrides, so the caller keeps owning that.
+    /// </summary>
+    [LibraryImport("GObject", EntryPoint = "g_param_spec_override", StringMarshalling = StringMarshalling.Utf8)]
+    internal static partial nint Override(string name, nint overridden);
+
     [LibraryImport("Gst", EntryPoint = "gst_param_spec_fraction", StringMarshalling = StringMarshalling.Utf8)]
     internal static partial nint Fraction(
         string name,

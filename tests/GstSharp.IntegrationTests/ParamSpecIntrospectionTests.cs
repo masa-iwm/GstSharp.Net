@@ -216,5 +216,165 @@ public sealed class ParamSpecIntrospectionTests
 
         // An invalid type has nothing to list and is not an error.
         Assert.Empty(SignalQuery.List(GType.Invalid));
+
+        // Neither has a type that could not carry a signal in the first place:
+        // g_signal_list_ids refuses one that is neither instantiatable nor an
+        // interface, so it is never asked.
+        Assert.Empty(SignalQuery.List(GType.Int));
+
+        // An enumeration is registered and still carries none, which only says
+        // something once the type really is there to be asked about.
+        GType format = GType.FromName("GstFormat");
+        Assert.True(format.IsValid);
+        Assert.Empty(SignalQuery.List(format));
+    }
+
+    /// <summary>
+    /// An interface lists the signals it declares even though it has no class:
+    /// its default vtable is built first, which is what runs the
+    /// <c>base_init</c> the registration lives in.
+    /// </summary>
+    [Fact]
+    public void AnInterfaceListsTheSignalsItDeclares()
+    {
+        SignalQuery[] childProxy = SignalQuery.List(GType.FromName("GstChildProxy"));
+
+        Assert.Contains(childProxy, signal => signal.Name == "child-added");
+        Assert.Contains(childProxy, signal => signal.Name == "child-removed");
+    }
+
+    /// <summary>
+    /// The range and the default of an unsigned property of a real element are
+    /// the ones the plugin installed, which is what <c>gst-inspect-1.0</c>
+    /// prints for it.
+    /// </summary>
+    [Fact]
+    public void AnUnsignedPropertyCarriesTheRangeThePluginInstalled()
+    {
+        using Element identity = Assert.IsAssignableFrom<Element>(ElementFactory.Make("identity", "described-uint"));
+
+        using ParamSpec? found = identity.FindProperty("sleep-time");
+        ParamSpecUInt spec = Assert.IsType<ParamSpecUInt>(found);
+
+        // gstidentity.c: g_param_spec_uint (0, G_MAXUINT, DEFAULT_SLEEP_TIME).
+        Assert.Equal(GType.UInt, spec.ValueType);
+        Assert.Equal(0u, spec.Minimum);
+        Assert.Equal(uint.MaxValue, spec.Maximum);
+        Assert.Equal(0u, spec.Default);
+        Assert.InRange(spec.Default, spec.Minimum, spec.Maximum);
+        Assert.Equal(0u, spec.DefaultValue.GetUInt());
+    }
+
+    /// <summary>
+    /// A property whose values are nanoseconds is a 64 bit unsigned one, and
+    /// its default is a real quantity rather than zero.
+    /// </summary>
+    [Fact]
+    public void ATimePropertyCarriesItsDefaultAsAQuantity()
+    {
+        using Element queue = Assert.IsAssignableFrom<Element>(ElementFactory.Make("queue", "described-uint64"));
+
+        using ParamSpec? found = queue.FindProperty("max-size-time");
+        ParamSpecUInt64 spec = Assert.IsType<ParamSpecUInt64>(found);
+
+        // gstqueue.c: g_param_spec_uint64 (0, G_MAXUINT64, DEFAULT_MAX_SIZE_TIME),
+        // and DEFAULT_MAX_SIZE_TIME is GST_SECOND.
+        Assert.Equal(GType.UInt64, spec.ValueType);
+        Assert.Equal(0uL, spec.Minimum);
+        Assert.Equal(ulong.MaxValue, spec.Maximum);
+        Assert.Equal(1_000_000_000uL, spec.Default);
+        Assert.InRange(spec.Default, spec.Minimum, spec.Maximum);
+        Assert.Equal(1_000_000_000uL, spec.DefaultValue.GetUInt64());
+    }
+
+    /// <summary>
+    /// A signed property of a source element reads the same way, which is what
+    /// makes the three kinds interchangeable to a caller that pattern matches.
+    /// </summary>
+    [Fact]
+    public void ASignedPropertyOfASourceCarriesItsRange()
+    {
+        using Element source = Assert.IsAssignableFrom<Element>(ElementFactory.Make("fakesrc", "described-int"));
+
+        using ParamSpec? found = source.FindProperty("datarate");
+        ParamSpecInt spec = Assert.IsType<ParamSpecInt>(found);
+
+        // gstfakesrc.c: g_param_spec_int (0, G_MAXINT, DEFAULT_DATARATE).
+        Assert.Equal(GType.Int, spec.ValueType);
+        Assert.Equal(0, spec.Minimum);
+        Assert.Equal(int.MaxValue, spec.Maximum);
+        Assert.Equal(0, spec.Default);
+        Assert.InRange(spec.Default, spec.Minimum, spec.Maximum);
+    }
+
+    /// <summary>
+    /// A class the binding declares no derived class for is handed out as
+    /// <see cref="ParamSpec"/> itself rather than refused.
+    /// </summary>
+    [Fact]
+    public void AnUnknownClassIsWrappedInTheBaseClass()
+    {
+        nint native = ParamSpecNatives.Pointer(
+            "an-opaque-pointer",
+            "Opaque",
+            "A pointer nothing describes",
+            ParamSpecNatives.ReadWrite);
+
+        using ParamSpec spec = ParamSpec.FromNative(native, Transfer.None);
+
+        Assert.Equal(typeof(ParamSpec), spec.GetType());
+        Assert.Equal("GParamPointer", spec.NativeType.Name);
+        Assert.Equal(GType.Pointer, spec.ValueType);
+    }
+
+    /// <summary>
+    /// Wrapping the null pointer is refused: unlike an object, a specification
+    /// is never optional where one is wrapped.
+    /// </summary>
+    [Fact]
+    public void WrappingNothingIsRefused() =>
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => ParamSpec.FromNative(nint.Zero, Transfer.None));
+
+    /// <summary>
+    /// An override stands for the specification it was built over, which is the
+    /// one case where <see cref="ParamSpec.RedirectTarget"/> answers.
+    /// </summary>
+    [Fact]
+    public void AnOverrideRedirectsToWhatItStandsFor()
+    {
+        nint nativeOverridden = ParamSpecNatives.String(
+            "overridden-name",
+            "Overridden",
+            "The specification the override stands for",
+            "a default",
+            ParamSpecNatives.ReadWrite);
+
+        // Both constructors hand out a floating specification, and FromNative
+        // sinks it: each wrapper owns exactly one reference. g_param_spec_override
+        // takes a reference of its own on what it overrides, so disposing the
+        // wrapper of the original does not invalidate the redirect target.
+        using ParamSpec overridden = ParamSpec.FromNative(nativeOverridden, Transfer.None);
+
+        nint nativeOverride = ParamSpecNatives.Override("overriding-name", overridden.Handle);
+        using ParamSpec spec = ParamSpec.FromNative(nativeOverride, Transfer.None);
+
+        Assert.Equal("GParamOverride", spec.NativeType.Name);
+        Assert.Equal("overriding-name", spec.Name);
+
+        // The redirect target is a wrapper of its own, holding its own
+        // reference, so it is disposed here.
+        using ParamSpec? target = spec.RedirectTarget;
+        ParamSpecString redirected = Assert.IsType<ParamSpecString>(target);
+
+        Assert.Equal(overridden.Handle, redirected.Handle);
+        Assert.Equal("overridden-name", redirected.Name);
+        Assert.Equal("a default", redirected.Default);
+
+        // The value type of an override is the one of what it stands for, and
+        // its nickname falls back to that of the target.
+        Assert.Equal(GType.String, spec.ValueType);
+        Assert.Equal("Overridden", spec.Nick);
+        Assert.Null(overridden.RedirectTarget);
     }
 }

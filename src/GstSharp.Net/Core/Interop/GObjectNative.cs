@@ -99,6 +99,24 @@ internal static unsafe partial class GObjectNative
     [LibraryImport("GObject", EntryPoint = "g_type_class_peek")]
     internal static partial nint TypeClassPeek(nuint type);
 
+    /// <summary>
+    /// Builds the default vtable of an interface type, which is what runs its
+    /// <c>base_init</c> and so registers the signals it declares.
+    /// </summary>
+    [LibraryImport("GObject", EntryPoint = "g_type_default_interface_ref")]
+    internal static partial nint DefaultInterfaceRef(nuint type);
+
+    /// <summary>Releases what <see cref="DefaultInterfaceRef"/> returned.</summary>
+    [LibraryImport("GObject", EntryPoint = "g_type_default_interface_unref")]
+    internal static partial void DefaultInterfaceUnref(nint gInterface);
+
+    /// <summary>
+    /// Tests the flags of a type, that is what <c>G_TYPE_IS_INSTANTIATABLE</c>
+    /// and its siblings expand to.
+    /// </summary>
+    [LibraryImport("GObject", EntryPoint = "g_type_test_flags")]
+    internal static partial int TypeTestFlags(nuint type, uint flags);
+
     [LibraryImport("GObject", EntryPoint = "g_type_name")]
     internal static partial nint TypeName(nuint type);
 

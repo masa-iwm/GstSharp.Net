@@ -184,9 +184,9 @@ public class ParamSpec : IDisposable
     /// puts beside it, for example <c>Number of buffers</c>.
     /// </summary>
     /// <remarks>
-    /// GObject never answers nothing here. A specification installed without a
-    /// nickname falls back to the nickname of its redirect target, and then to
-    /// <see cref="Name"/>.
+    /// GObject always answers a nickname here. A specification installed
+    /// without one falls back to the nickname of its redirect target, and then
+    /// to <see cref="Name"/>.
     /// </remarks>
     public string Nick
     {
