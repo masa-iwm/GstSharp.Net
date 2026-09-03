@@ -56,7 +56,7 @@
          forever. 1.30.0 is the release that is allowed to break compilation,
          and the first 1.30 package starts the anchor over. -->
     <EnablePackageValidation>true</EnablePackageValidation>
-    <PackageValidationBaselineVersion>1.28.5</PackageValidationBaselineVersion>
+    <PackageValidationBaselineVersion>1.28.6</PackageValidationBaselineVersion>
   </PropertyGroup>
 
   <PropertyGroup Label="Package metadata">

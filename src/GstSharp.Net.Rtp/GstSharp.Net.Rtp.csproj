@@ -3,13 +3,6 @@
   <PropertyGroup>
     <RootNamespace>Gst.Rtp</RootNamespace>
     <Description>GstRtp for GstSharp.Net: the RTP and RTCP buffer helpers of gst-plugins-base, the payloader and depayloader base classes and the RTP header extension API.</Description>
-
-    <!-- This package has never been published, so there is no baseline on
-         nuget.org to compare it against; the restore of the gate would fail on
-         a version that does not exist. Remove this line after the next patch
-         release has shipped the package, exactly as #39 did for the modules
-         before it. -->
-    <EnablePackageValidation>false</EnablePackageValidation>
   </PropertyGroup>
 
   <ItemGroup>
