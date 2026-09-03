@@ -278,6 +278,26 @@ public sealed class RecordEmitterTests
         """;
 
     /// <summary>
+    /// Inline storage that arrived after the support floor, beside storage that
+    /// was always there.
+    /// </summary>
+    private const string LateInlineArrayFixture =
+        """
+            <record name="Histogram" c:type="GstHistogram" opaque="1">
+              <field name="totals" writable="1">
+                <array zero-terminated="0" fixed-size="2">
+                  <type name="guint" c:type="guint"/>
+                </array>
+              </field>
+              <field name="bins" writable="1" version="1.26">
+                <array zero-terminated="0" fixed-size="3">
+                  <type name="guint" c:type="guint"/>
+                </array>
+              </field>
+            </record>
+        """;
+
+    /// <summary>
     /// Fields that take up space in the mirror but carry no value to read: a
     /// vtable slot, a pointer and a fixed size array.
     /// </summary>
@@ -879,9 +899,36 @@ public sealed class RecordEmitterTests
         // close reads differently from one it has not got round to.
         FixtureRun run = Fixture.Run(EmbeddedRecordFixture);
 
-        Assert.Contains("- `VideoCropMeta.height` — ", run.Result.SkipReport, StringComparison.Ordinal);
-        Assert.Contains(", since 1.26\n", run.Result.SkipReport, StringComparison.Ordinal);
+        Assert.Contains(
+            "- `VideoCropMeta.height` — Other, since 1.26\n",
+            run.Result.SkipReport,
+            StringComparison.Ordinal);
         Assert.DoesNotContain("- `VideoCropMeta.x`", run.Result.SkipReport, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void InlineStorageThatArrivedAfterTheSupportFloorCarriesNoAccessor()
+    {
+        // A fixed size field is read out of the structure the same way a scalar
+        // one is, so the floor holds for it too: an older library allocates the
+        // structure without the storage, and the elements the property would
+        // copy out sit past the end of it. The storage stays in the mirror,
+        // where only the interop layer reaches it, and it goes on the ledger
+        // with the version that put it there.
+        FixtureRun run = Fixture.Run(LateInlineArrayFixture);
+        string source = run.File("Histogram.cs");
+
+        Assert.Contains("internal Gst.Histogram.TotalsArray Totals;", source, StringComparison.Ordinal);
+        Assert.Contains("public Gst.Histogram.TotalsArray Totals\n", source, StringComparison.Ordinal);
+
+        Assert.Contains("internal BinsArray Bins;", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("public Gst.Histogram.BinsArray Bins", source, StringComparison.Ordinal);
+
+        Assert.Contains(
+            "- `Histogram.bins` — Other, since 1.26\n",
+            run.Result.SkipReport,
+            StringComparison.Ordinal);
+        Assert.DoesNotContain("- `Histogram.totals`", run.Result.SkipReport, StringComparison.Ordinal);
     }
 
     [Fact]

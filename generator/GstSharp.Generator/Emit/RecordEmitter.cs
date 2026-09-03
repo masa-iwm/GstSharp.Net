@@ -1246,10 +1246,13 @@ internal sealed class RecordEmitter
             // mirror lays it out with. The storage type is promoted to the
             // wrapper, where it is public and reachable, and the property
             // hands out a copy of the elements the way an out parameter of a
-            // caller allocated array does.
+            // caller allocated array does. Storage that arrived after the
+            // support floor is read past the end of the structure an older
+            // library allocates, the same as any other late field, so it stays
+            // in the mirror and on the ledger.
             if (!field.IsPrivate && field.InlineArray is { } inline)
             {
-                if (IsValueElement(ns, field.Field.Type))
+                if (!IsAboveFloor(field) && IsValueElement(ns, field.Field.Type))
                 {
                     accessors.Add(new Accessor(
                         field.Field,
