@@ -38,9 +38,10 @@ public sealed unsafe partial class VideoGLTextureUploadMeta
     /// </para>
     /// <para>
     /// No element of the GStreamer 1.28 tree implements the upload function,
-    /// and the call that attaches the metadata item is a deprecated closure
-    /// path this binding does not bind, so an item can only reach managed code
-    /// attached to a buffer by a native element.
+    /// and the call that attaches the metadata item takes a user data copy and
+    /// a user data free callback the gir gives no closure index, a shape this
+    /// binding does not bind, so an item can only reach managed code attached
+    /// to a buffer by a native element.
     /// </para>
     /// </remarks>
     /// <exception cref="ArgumentException">
