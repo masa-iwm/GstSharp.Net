@@ -60,7 +60,7 @@
   </PropertyGroup>
 
   <PropertyGroup Label="Package metadata">
-    <VersionPrefix>1.28.5</VersionPrefix>
+    <VersionPrefix>1.28.6</VersionPrefix>
     <Authors>GstSharp.Net contributors</Authors>
     <Company>GstSharp.Net</Company>
     <Product>GstSharp.Net</Product>
