@@ -45,9 +45,10 @@ public unsafe partial class RTSPMountPoints
     /// it and the argument is disposed when the member returns — is wrong here
     /// for one reason: a media factory is the hook point of a server.
     /// <see cref="Gst.GObject.Object.Dispose()"/> runs <c>DisconnectAll</c>, so
-    /// the consuming shape would silently strip the <c>media-configure</c>
+    /// the consuming shape would silently strip the <c>media-constructed</c>
     /// handler that the <c>test-launch</c> arrangement connects immediately
-    /// before this call, and the server would then build unconfigured media.
+    /// before this call — or the <c>media-configure</c> one connected the same
+    /// way — and the server would then build unconfigured media.
     /// </para>
     /// <para>
     /// The native reference count is left exactly where the C call leaves it

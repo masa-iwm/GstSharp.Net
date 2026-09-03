@@ -87,7 +87,8 @@ internal static class RtspServerSample
             factory.SetLaunch(options.Launch);
             factory.SetShared(true);
 
-            // Connected before the mount, the way test-launch.c does it. The
+            // Connected before the mount, the way test-launch.c connects its
+            // own media-constructed handler. The
             // hand written AddFactory is what makes that hold: it mints the
             // reference the C call consumes and leaves this wrapper - and this
             // handler with it - alive. See docs/ownership.md.
@@ -181,8 +182,10 @@ internal static class RtspServerSample
         // 2. Close every connection. The close itself completes later, on the
         //    thread of the client. The filter answers the clients it was asked
         //    to reference, not the ones it removed, so the count is taken
-        //    first, with the null filter that only lists them.
-        int clients = server.ClientFilter(null).Count;
+        //    first, with the null filter that only lists them. That list is
+        //    built with transfer full, so every wrapper in it is disposed on
+        //    the spot rather than at the next collection.
+        int clients = DisposeAll(server.ClientFilter(null));
         server.ClientFilter(static (_, _) => RTSPFilterResult.Remove);
 
         // 3. Drop the sessions: closing a client does not remove its session,
@@ -191,10 +194,13 @@ internal static class RtspServerSample
         using RTSPSessionPool? sessionPool = server.GetSessionPool();
         sessionPool?.Filter(static (_, _) => RTSPFilterResult.Remove);
 
-        // 4. Wait for the asynchronous half of the close, while still
-        //    iterating the context the clients were dispatched on.
+        // 4. Wait for the asynchronous half of the close, disposing what each
+        //    poll answers. The clients were dispatched on a thread of the pool
+        //    and finish closing there, so what Pump does for this loop is
+        //    drain the pending releases of the wrappers minted on that thread,
+        //    and dispatch whatever is left on the sample's own context.
         Stopwatch elapsed = Stopwatch.StartNew();
-        while (server.ClientFilter(null).Count > 0)
+        while (DisposeAll(server.ClientFilter(null)) > 0)
         {
             if (elapsed.Elapsed > ShutdownDeadline)
             {
@@ -240,15 +246,34 @@ internal static class RtspServerSample
     }
 
     /// <summary>
+    /// Disposes every wrapper of a transfer full list and answers how many
+    /// there were.
+    /// </summary>
+    /// <typeparam name="T">The wrapper type of the list.</typeparam>
+    /// <param name="owned">The list a filter answered.</param>
+    /// <returns>The number of items the list held.</returns>
+    private static int DisposeAll<T>(IReadOnlyList<T> owned)
+        where T : Gst.GObject.Object
+    {
+        foreach (T item in owned)
+        {
+            item.Dispose();
+        }
+
+        return owned.Count;
+    }
+
+    /// <summary>
     /// Notes a media the factory has just configured.
     /// </summary>
     /// <param name="sender">The factory of the mount point.</param>
     /// <param name="arguments">The media that was configured.</param>
     /// <remarks>
     /// This runs on a thread of the pool with the lock of the media held, so
-    /// it must not call <c>Lock()</c>, <c>Construct()</c> or <c>Prepare()</c>,
-    /// and it asks the media nothing at all, because the calls that would
-    /// answer take that same lock.
+    /// it must not call <c>Lock()</c>, <c>Construct()</c> or <c>Prepare()</c>.
+    /// Configuring and querying the media is what the signal exists for and is
+    /// allowed: the ordinary accessors take the media's <c>priv-&gt;lock</c>,
+    /// not the <c>global_lock</c> the emission holds. This handler only counts.
     /// </remarks>
     private static void OnMediaConfigure(object? sender, RTSPMediaFactory.MediaConfigureSignalArgs arguments)
         => Console.WriteLine(string.Create(

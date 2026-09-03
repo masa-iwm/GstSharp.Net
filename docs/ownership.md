@@ -975,10 +975,15 @@ that same media lock the moment the handler gives control back.
 `media-configure` (`:1624`) is emitted with both held, so `Lock()` blocks in
 the handler itself. `HandleMessage` is
 emitted under the media's `state_lock` (`rtsp-media.c:3705`), and that one is a
-`GRecMutex` (`:128`), so `Prepare()` does not deadlock on it — it re-enters,
+`GRecMutex` (`:128`), so `Prepare()` does not deadlock on it — it re-enters and
+is punished by the media's state instead. While the media is still preparing it
 drops the lock and waits for the preroll messages (`:4243`) that the very bus
-watch it is running inside would have to deliver, and hangs there instead. The
-rule is the same in all three cases; only the way it is punished differs.
+watch it is running inside would have to deliver, and hangs there. Once the
+media is prepared or suspended it returns `TRUE` at once (`:4208-4210`,
+`:4260-4267`) — having already incremented the prepare count (`:4206`), which
+only a matching `Unprepare()` brings back down, so the media then outlives the
+sessions that were meant to own it. The rule is the same in all three cases;
+only the way it is punished differs.
 
 Shutting a server down is an ordered five steps, and the binding offers no
 single call for it because the middle of it is application shaped. First

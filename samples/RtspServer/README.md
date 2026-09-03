@@ -51,9 +51,10 @@ what each step is for:
 3. `SessionPool.Filter` answering `Remove`: a closing client does not remove
    its session, and it is the session going away that unprepares the media and
    stops its pipeline.
-4. Iterate the context until `ClientFilter(null)` is empty, which is the
-   asynchronous half of step 2, with a deadline so that a stuck client is a
-   non-zero exit code rather than a hang.
+4. Poll `ClientFilter(null)` until it is empty, disposing what each poll
+   answers — the list is transfer full — which is the asynchronous half of
+   step 2, with a deadline so that a stuck client is a non-zero exit code
+   rather than a hang.
 
 `RTSPThreadPool.Cleanup()` is deliberately not called: it joins every thread of
 the process-wide pool and blocks forever if a client is still closing.
@@ -62,12 +63,15 @@ The server is attached to a `MainContext` of the sample's own, which the main
 thread iterates without blocking. That is the arrangement the other samples
 here use — the application owns its thread and no main loop runs behind its
 back — and it is what makes the shutdown expressible: `Detach` needs the exact
-context `Attach` was given, and step 4 needs a context that is still being
-iterated after the server has stopped accepting.
+context `Attach` was given, and the loop of step 4 keeps calling `Pump`, which
+drains the pending releases of the wrappers the pool threads minted and
+dispatches whatever is left on that context.
 
 `MediaConfigure` is connected to the factory **before** the factory is mounted,
-the way `test-launch.c` connects it. That only holds because
-`RTSPMountPoints.AddFactory` is written by hand to leave the factory wrapper
-alive; the generated consuming shape would dispose it and disconnect the
-handler. The handler runs with the lock of the media held, so it asks the media
-nothing — see `docs/ownership.md`.
+the way `test-launch.c` connects its own `media-constructed` handler. That only
+holds because `RTSPMountPoints.AddFactory` is written by hand to leave the
+factory wrapper alive; the generated consuming shape would dispose it and
+disconnect the handler. The handler runs with the lock of the media held, so it
+must not call `Lock()`, `Construct()` or `Prepare()`; configuring and querying
+the media — what the signal exists for — is allowed, because the ordinary
+accessors take a different mutex. See `docs/ownership.md`.
