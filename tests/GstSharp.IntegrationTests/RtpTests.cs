@@ -466,4 +466,83 @@ public sealed class RtpTests
             payloader.EmitSignal("add-extension", extension);
         }
     }
+
+    /// <summary>
+    /// The hand bound NTP-56 setter writes the low seven bytes of an NTP time
+    /// big endian, and the generated getter reads the same value back.
+    /// </summary>
+    [Fact]
+    public void Ntp56HeaderExtensionRoundTrips()
+    {
+        // Below 2^56, because the setter writes seven bytes and drops the top
+        // byte of a full 64 bit value (gstrtphdrext.c:122-125).
+        const ulong Ntp = 0x00_11_22_33_44_55_66_77;
+
+        Span<byte> data = stackalloc byte[7];
+
+        Assert.True(RtpGlobal.RtpHdrextSetNtp56(data, Ntp));
+        Assert.Equal(
+            new byte[] { 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77 },
+            data.ToArray());
+
+        Assert.True(RtpGlobal.RtpHdrextGetNtp56(data, out ulong read));
+        Assert.Equal(Ntp, read);
+    }
+
+    /// <summary>
+    /// The hand bound NTP-64 setter writes the whole NTP time big endian, and
+    /// the generated getter reads the same value back.
+    /// </summary>
+    [Fact]
+    public void Ntp64HeaderExtensionRoundTrips()
+    {
+        const ulong Ntp = 0x89_AB_CD_EF_01_23_45_67;
+
+        Span<byte> data = stackalloc byte[8];
+
+        Assert.True(RtpGlobal.RtpHdrextSetNtp64(data, Ntp));
+        Assert.Equal(
+            new byte[] { 0x89, 0xAB, 0xCD, 0xEF, 0x01, 0x23, 0x45, 0x67 },
+            data.ToArray());
+
+        Assert.True(RtpGlobal.RtpHdrextGetNtp64(data, out ulong read));
+        Assert.Equal(Ntp, read);
+    }
+
+    /// <summary>
+    /// Both NTP setters answer false for a block shorter than the extension
+    /// and leave every byte of it alone.
+    /// </summary>
+    /// <remarks>
+    /// The C answers FALSE for the same case through a
+    /// <c>g_return_val_if_fail</c> (<c>gstrtphdrext.c</c>:72, :120); the
+    /// binding checks the length before the call, so the answer arrives
+    /// without the critical.
+    /// </remarks>
+    [Fact]
+    public void NtpHeaderExtensionSettersRefuseAShortBlock()
+    {
+        const byte Sentinel = 0xAA;
+
+        Span<byte> short56 = stackalloc byte[6];
+        short56.Fill(Sentinel);
+        Assert.False(RtpGlobal.RtpHdrextSetNtp56(short56, 0x0123456789ABCDUL));
+
+        Span<byte> short64 = stackalloc byte[7];
+        short64.Fill(Sentinel);
+        Assert.False(RtpGlobal.RtpHdrextSetNtp64(short64, 0x0123456789ABCDEFUL));
+
+        Assert.False(RtpGlobal.RtpHdrextSetNtp56(Span<byte>.Empty, 0));
+        Assert.False(RtpGlobal.RtpHdrextSetNtp64(Span<byte>.Empty, 0));
+
+        foreach (byte value in short56)
+        {
+            Assert.Equal(Sentinel, value);
+        }
+
+        foreach (byte value in short64)
+        {
+            Assert.Equal(Sentinel, value);
+        }
+    }
 }
