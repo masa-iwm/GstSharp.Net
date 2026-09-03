@@ -18,6 +18,11 @@
          module, which are internal: nothing outside the binding has a reason
          to know the native layout of a record. -->
     <InternalsVisibleTo Include="GstSharp.IntegrationTests" />
+
+    <!-- The RTSP server binds messages, connections, URLs and transports of
+         this module, and the generated code reaches their internal handles and
+         FromNative factories directly. -->
+    <InternalsVisibleTo Include="GstSharp.Net.RtspServer" />
   </ItemGroup>
 
 </Project>

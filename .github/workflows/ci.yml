@@ -178,6 +178,9 @@ jobs:
       # same reason: alsasink is the audio sink the AudioBaseSink tests build
       # theirs out of, Ubuntu ships neither it nor pulsesink in the base plugin
       # package, and without it all four of those tests skipped here too.
+      # libgstrtspserver-1.0-0 is the library of the RTSP server, which apt
+      # ships apart from the core packages: the module registration test loads
+      # it on this leg and has no skip path.
       # What this leg now promises is asserted rather than
       # assumed; see the integration test step below.
       - name: Install GStreamer
@@ -188,6 +191,7 @@ jobs:
             libgstreamer-plugins-base1.0-0 \
             libgstreamer-plugins-bad1.0-0 \
             libges-1.0-0 \
+            libgstrtspserver-1.0-0 \
             gstreamer1.0-plugins-base \
             gstreamer1.0-plugins-good \
             gstreamer1.0-plugins-bad \
@@ -570,12 +574,15 @@ jobs:
           # little else; the plugins themselves are not under test and would
           # pull in fifty more packages. The editing services have no such
           # split: one package carries libges-1.0-0.dll together with the nle
-          # and ges plugins, and the GES tests need both halves.
+          # and ges plugins, and the GES tests need both halves. The RTSP
+          # server is a package of its own as well, and it carries the
+          # libgstrtspserver-1.0-0.dll the GstRtspServer module imports from.
           install: >-
             mingw-w64-x86_64-gstreamer
             mingw-w64-x86_64-gst-plugins-base
             mingw-w64-x86_64-gst-plugins-good
             mingw-w64-x86_64-gst-plugins-bad-libs
+            mingw-w64-x86_64-gst-rtsp-server
             mingw-w64-x86_64-gst-editing-services
 
       # The planner walks PATH, recognizes the msys64 root inside the entry and

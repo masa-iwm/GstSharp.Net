@@ -235,6 +235,23 @@ public sealed class SkipRulesTests
         // gpointer beside its size, which no array override may turn into an
         // array. All six are hand written in src/GstSharp.Net.Rtp/Custom
         // beside the two guint8* returns the planner already refuses.
+        // The RTSP server group is six entries. gst_rtsp_client_set_send_func
+        // and gst_rtsp_client_set_send_messages_func are unreachable on every
+        // path that exists: the attach of a client installs the send functions
+        // of the server over whatever was there, and the client-connected
+        // signal that would hand a caller the client fires before that attach,
+        // so the first call always reaches its g_assert and the second is
+        // overwritten a moment later. gst_rtsp_token_writable_structure hands
+        // the structure of a token out to be written through, which a value
+        // projection cannot carry; the typed setters are the writing path.
+        // gst_rtsp_thread_pool_get_thread and gst_rtsp_thread_new mint a
+        // GstRTSPThread whose loop is only ever stopped by
+        // gst_rtsp_thread_stop, the release the LifetimePrimitive rule keeps
+        // out, so a wrapper that only unrefs on Dispose leaks one OS thread per
+        // call. gst_rtsp_mount_points_add_factory consumes the factory it is
+        // handed, and the generated shape would dispose the wrapper whose
+        // signal handlers the caller has just attached; it is hand written in
+        // src/GstSharp.Net.RtspServer/Custom.
         Assert.Equal(
             [
                 "Gst.BusSyncHandler",
@@ -333,8 +350,14 @@ public sealed class SkipRulesTests
                 "gst_rtp_hdrext_set_ntp_64",
                 "gst_rtp_source_meta_set_ssrc",
                 "gst_rtsp_auth_credentials_free",
+                "gst_rtsp_client_set_send_func",
+                "gst_rtsp_client_set_send_messages_func",
+                "gst_rtsp_mount_points_add_factory",
                 "gst_rtsp_range_free",
                 "gst_rtsp_range_parse",
+                "gst_rtsp_thread_new",
+                "gst_rtsp_thread_pool_get_thread",
+                "gst_rtsp_token_writable_structure",
                 "gst_rtsp_transport_init",
                 "gst_rtsp_transport_parse",
                 "gst_sdp_media_init",
@@ -384,6 +407,11 @@ public sealed class SkipRulesTests
         // planner refuses on their shape, the two four byte APP name calls and
         // the two nullable guint32* ssrc calls, all six written by hand in
         // src/GstSharp.Net.Rtp/Custom.
+        // The newest entry is the RTSP server's gst_rtsp_mount_points_add_factory,
+        // which consumes the media factory it is handed and would take the
+        // wrapper the caller keeps its signal handlers on down with it, so
+        // src/GstSharp.Net.RtspServer/Custom takes a reference of its own and
+        // hands that one over.
         Assert.Equal(
             [
                 "GstWebRTC.WebRTCDataChannel::on-message-data",
@@ -468,6 +496,7 @@ public sealed class SkipRulesTests
                 "gst_rtp_hdrext_set_ntp_56",
                 "gst_rtp_hdrext_set_ntp_64",
                 "gst_rtp_source_meta_set_ssrc",
+                "gst_rtsp_mount_points_add_factory",
                 "gst_rtsp_transport_parse",
                 "gst_structure_get_value",
                 "gst_structure_set_value",

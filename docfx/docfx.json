@@ -17,6 +17,7 @@
             "GstSharp.Net.Play/GstSharp.Net.Play.csproj",
             "GstSharp.Net.Rtp/GstSharp.Net.Rtp.csproj",
             "GstSharp.Net.Rtsp/GstSharp.Net.Rtsp.csproj",
+            "GstSharp.Net.RtspServer/GstSharp.Net.RtspServer.csproj",
             "GstSharp.Net.Sdp/GstSharp.Net.Sdp.csproj",
             "GstSharp.Net.Tag/GstSharp.Net.Tag.csproj",
             "GstSharp.Net.Transcoder/GstSharp.Net.Transcoder.csproj",

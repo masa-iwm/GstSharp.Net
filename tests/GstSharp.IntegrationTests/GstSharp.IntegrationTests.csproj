@@ -31,6 +31,7 @@
     <ProjectReference Include="../../src/GstSharp.Net.Net/GstSharp.Net.Net.csproj" />
     <ProjectReference Include="../../src/GstSharp.Net.Rtp/GstSharp.Net.Rtp.csproj" />
     <ProjectReference Include="../../src/GstSharp.Net.Rtsp/GstSharp.Net.Rtsp.csproj" />
+    <ProjectReference Include="../../src/GstSharp.Net.RtspServer/GstSharp.Net.RtspServer.csproj" />
     <ProjectReference Include="../../src/GstSharp.Net.Tag/GstSharp.Net.Tag.csproj" />
     <ProjectReference Include="../../src/GstSharp.Net.Transcoder/GstSharp.Net.Transcoder.csproj" />
     <ProjectReference Include="../../src/GstSharp.Net.GES/GstSharp.Net.GES.csproj" />

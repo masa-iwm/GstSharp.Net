@@ -64,8 +64,8 @@ AppSinkSpans gate.
 ### Windows, MinGW flavor — MSYS2
 
 `msys2/setup-msys2@v2` with `mingw-w64-x86_64-gstreamer`,
-`-gst-plugins-base`, `-gst-plugins-good`, `-gst-plugins-bad-libs` and
-`-gst-editing-services`. It was chosen over the official
+`-gst-plugins-base`, `-gst-plugins-good`, `-gst-plugins-bad-libs`,
+`-gst-editing-services` and `-gst-rtsp-server`. It was chosen over the official
 MinGW installer because the two Windows jobs then cover different code:
 
 * the MSVC job covers the environment-variable branch and the `gstreamer-1.0-0.dll`
@@ -92,7 +92,7 @@ Runtime packages only:
 
 ```
 libgstreamer1.0-0 libgstreamer-plugins-base1.0-0 libgstreamer-plugins-bad1.0-0
-libges-1.0-0
+libges-1.0-0 libgstrtspserver-1.0-0
 gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad
 gstreamer1.0-nice gstreamer1.0-tools
 ```
@@ -106,8 +106,9 @@ unversioned `.so` symlinks, which nothing here uses.
 plugin sets. Every binding assembly registers its types from a module
 initialiser, and `TypeRegistry.Freeze` resolves them all, so a library a module
 names has to be there even when no test builds an element out of it:
-`libgstwebrtc-1.0.so.0` comes from the bad libraries package and
-`libges-1.0.so.0` from `libges-1.0-0`. The latter earns its place twice — it
+`libgstwebrtc-1.0.so.0` comes from the bad libraries package,
+`libges-1.0.so.0` from `libges-1.0-0` and `libgstrtspserver-1.0.so.0` from
+`libgstrtspserver-1.0-0`. The latter earns its place twice — it
 ships the `nle` and `ges` plugins beside the library, and `ges_init` fails
 outright when the non linear engine is not in the registry ("The `nle` plugin is
 missing", which is the library's own wording).
@@ -336,7 +337,7 @@ deploy to.
   `configure-pages` is not needed when the artifact is uploaded that way.
 * `concurrency: pages` with `cancel-in-progress: false`, so that two pushes in
   a row queue rather than interrupt a half-finished deployment.
-* **No restore step.** `docfx metadata` compiles the seventeen packable projects
+* **No restore step.** `docfx metadata` compiles the eighteen packable projects
   through MSBuild and restores them itself, so the workflow goes straight from
   `dotnet tool restore` (docfx is pinned in `.config/dotnet-tools.json`) to
   `dotnet docfx docfx/docfx.json`.

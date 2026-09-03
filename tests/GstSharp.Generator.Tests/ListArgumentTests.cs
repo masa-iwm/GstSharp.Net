@@ -443,7 +443,7 @@ public sealed class ListArgumentTests
     }
 
     /// <summary>
-    /// The singly linked twin differs in one literal. No module of the sixteen
+    /// The singly linked twin differs in one literal. No module of the seventeen
     /// declares a <c>GSList</c> parameter, so this fixture is the only thing
     /// that keeps the arm alive.
     /// </summary>

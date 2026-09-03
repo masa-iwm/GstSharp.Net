@@ -182,6 +182,7 @@ public sealed class ClassEmitterTests
     [InlineData("GstNet", 5, 3, 0, 1, 0, 25, 17, 0, 4)]
     [InlineData("GstRtsp", 1, 10, 1, 1, 2, 114, 0, 1, 28)]
     [InlineData("GstRtp", 5, 5, 0, 0, 0, 184, 21, 2, 9)]
+    [InlineData("GstRtspServer", 19, 6, 0, 8, 0, 374, 58, 19, 21)]
     [InlineData("GstAllocators", 6, 0, 1, 0, 0, 23, 1, 0, 0)]
     [InlineData("GstTag", 3, 0, 1, 0, 0, 46, 0, 0, 0)]
     [InlineData("GstTranscoder", 2, 0, 0, 0, 3, 26, 9, 6, 0)]
@@ -228,6 +229,7 @@ public sealed class ClassEmitterTests
     [InlineData("GstNet", 0, 3, 0, 0, 0, 0)]
     [InlineData("GstRtsp", 0, 13, 0, 0, 13, 0)]
     [InlineData("GstRtp", 0, 24, 1, 2, 8, 0)]
+    [InlineData("GstRtspServer", 2, 1, 1, 3, 46, 0)]
     [InlineData("GstAllocators", 0, 0, 0, 0, 1, 0)]
     [InlineData("GstTag", 0, 0, 0, 0, 0, 0)]
     [InlineData("GstTranscoder", 0, 7, 0, 0, 0, 0)]
@@ -475,16 +477,23 @@ public sealed class ClassEmitterTests
         // record landed: sixteen wrappers whose gir declares no callable, from
         // Gst.ValueTable to GstSdp.MIKEYPayloadT, now read their fields through
         // a mirror and are therefore emitted with the unsafe modifier the
-        // counting here keys on.
-        Assert.Equal(172, classes);
+        // counting here keys on. The eighteen the RTSP server adds are its
+        // classes: the nineteenth it emits is RtspServerGlobal, the static
+        // holder of the namespace level calls, whose declaration carries the
+        // static modifier the pattern here does not match.
+        Assert.Equal(190, classes);
 
         // 127 rather than 123 since the field accessors of a string and of a
         // handle landed: GstSdp.SDPKey, GstSdp.SDPOrigin and
         // GstVideo.VideoCodecState declare no callable that reads a handle, so
         // the accessors of their fields are the first members of each to
         // dereference the mirror. The last one is Gst.Rtp.RTPSourceMeta, the
-        // only sealed class the RTP module emits.
-        Assert.Equal(127, records);
+        // only sealed class the RTP module emits. The four the RTSP server adds
+        // are RTSPAddress, RTSPPermissions, RTSPThread and RTSPToken, the boxed
+        // and mini object records it wraps behind a mirror of their native
+        // layout; RTSPContext and SDPInfo are plain structures and are counted
+        // by neither half of this test.
+        Assert.Equal(131, records);
     }
 
     [Fact]
@@ -556,7 +565,10 @@ public sealed class ClassEmitterTests
             guards += file.Content.Split("// The call failed and transferred a value all the same.").Length - 1;
         }
 
-        Assert.Equal(12, guards);
+        // Thirteen since the RTSP server landed: RTSPServer.CreateSocket takes
+        // a GError and answers a GSocket it owns, which is the transferred
+        // handle shape.
+        Assert.Equal(13, guards);
     }
 
     [Fact]
@@ -606,6 +618,7 @@ public sealed class ClassEmitterTests
     [InlineData("GstNet", 2)]
     [InlineData("GstRtsp", 2)]
     [InlineData("GstRtp", 3)]
+    [InlineData("GstRtspServer", 5)]
     [InlineData("GstAllocators", 0)]
     [InlineData("GstTag", 0)]
     [InlineData("GstTranscoder", 0)]
@@ -629,8 +642,8 @@ public sealed class ClassEmitterTests
     {
         string report = Generated.SkipReport;
 
-        Assert.Equal(147, Generated.Census.DroppedFieldCount());
-        Assert.Contains("## Fields (147)\n", report, StringComparison.Ordinal);
+        Assert.Equal(152, Generated.Census.DroppedFieldCount());
+        Assert.Contains("## Fields (152)\n", report, StringComparison.Ordinal);
         Assert.Contains("### GstVideo (33)\n", report, StringComparison.Ordinal);
 
         // One entry per shape that keeps a field out. The fixed size fields of
@@ -867,6 +880,84 @@ public sealed class ClassEmitterTests
     private static bool HasFile(string fileName) =>
         Generated.Files.Any(file => file.RelativePath.EndsWith("/" + fileName, StringComparison.Ordinal));
 
+    /// <summary>
+    /// The overlay entries of the RTSP server, read off the surface they
+    /// produce rather than off the file that asks for them.
+    /// </summary>
+    [Fact]
+    public void TheRtspServerOverlaysReachTheEmittedSurface()
+    {
+        // The three returns that answer NULL on ordinary input are nullable,
+        // so a caller reads the answer instead of catching an exception.
+        Assert.Contains(
+            "public Gst.RtspServer.RTSPMediaFactory? Match(string path, out int matched)",
+            SourceOf("GstSharp.Net.RtspServer/Generated/RTSPMountPoints.cs"),
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "public Gst.Structure? GetRole(string role)",
+            SourceOf("GstSharp.Net.RtspServer/Generated/RTSPPermissions.cs"),
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "public string? GetUri()",
+            SourceOf("GstSharp.Net.RtspServer/Generated/RTSPMediaFactoryURI.cs"),
+            StringComparison.Ordinal);
+
+        // gst_rtsp_media_new takes its element with transfer none after the
+        // correction, so the wrapper the caller passed stays alive.
+        string media = SourceOf("GstSharp.Net.RtspServer/Generated/RTSPMedia.cs");
+        Assert.Contains(
+            "public static Gst.RtspServer.RTSPMedia New(Gst.Element element)",
+            media,
+            StringComparison.Ordinal);
+        Assert.DoesNotContain("element.Dispose();", media, StringComparison.Ordinal);
+
+        // The three ONVIF factories are narrowed onto the type they construct.
+        Assert.Contains(
+            "public static new Gst.RtspServer.RTSPOnvifServer New()",
+            SourceOf("GstSharp.Net.RtspServer/Generated/RTSPOnvifServer.cs"),
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "public static new Gst.RtspServer.RTSPOnvifClient New()",
+            SourceOf("GstSharp.Net.RtspServer/Generated/RTSPOnvifClient.cs"),
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "public static new Gst.RtspServer.RTSPOnvifMediaFactory New()",
+            SourceOf("GstSharp.Net.RtspServer/Generated/RTSPOnvifMediaFactory.cs"),
+            StringComparison.Ordinal);
+
+        // The renamed signal and the method whose name it had taken both
+        // stand, and the two send function setters are gone.
+        string client = SourceOf("GstSharp.Net.RtspServer/Generated/RTSPClient.cs");
+        Assert.Contains(
+            "> SendingMessage",
+            client,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "public Gst.Rtsp.RTSPResult SendMessage(",
+            client,
+            StringComparison.Ordinal);
+        Assert.DoesNotContain("public void SetSendFunc(", client, StringComparison.Ordinal);
+        Assert.DoesNotContain("public void SetSendMessagesFunc(", client, StringComparison.Ordinal);
+
+        // The rest of the skip group leaves no member behind either.
+        Assert.DoesNotContain(
+            "public void AddFactory(",
+            SourceOf("GstSharp.Net.RtspServer/Generated/RTSPMountPoints.cs"),
+            StringComparison.Ordinal);
+        Assert.DoesNotContain(
+            "WritableStructure",
+            SourceOf("GstSharp.Net.RtspServer/Generated/RTSPToken.cs"),
+            StringComparison.Ordinal);
+        Assert.DoesNotContain(
+            "public Gst.RtspServer.RTSPThread? GetThread(",
+            SourceOf("GstSharp.Net.RtspServer/Generated/RTSPThreadPool.cs"),
+            StringComparison.Ordinal);
+        Assert.DoesNotContain(
+            "public static Gst.RtspServer.RTSPThread New(",
+            SourceOf("GstSharp.Net.RtspServer/Generated/RTSPThread.cs"),
+            StringComparison.Ordinal);
+    }
+
     private static string SourceOf(string path)
     {
         foreach (GeneratedFile file in Generated.Files)
@@ -945,6 +1036,7 @@ public sealed class ClassEmitterTests
     [InlineData("GstNet", 0, 0, 1, 0, 0, 0, 0)]
     [InlineData("GstRtsp", 7, 0, 3, 0, 0, 0, 2)]
     [InlineData("GstRtp", 0, 0, 0, 0, 4, 0, 8)]
+    [InlineData("GstRtspServer", 5, 0, 2, 0, 0, 0, 1)]
     [InlineData("GstAllocators", 0, 0, 0, 0, 0, 0, 0)]
     [InlineData("GstTag", 0, 0, 0, 0, 0, 0, 0)]
     [InlineData("GstTranscoder", 0, 0, 0, 0, 0, 0, 4)]
@@ -998,6 +1090,7 @@ public sealed class ClassEmitterTests
     [InlineData("GstNet", "GstSharp.Net.Net")]
     [InlineData("GstRtsp", "GstSharp.Net.Rtsp")]
     [InlineData("GstRtp", "GstSharp.Net.Rtp")]
+    [InlineData("GstRtspServer", "GstSharp.Net.RtspServer")]
     [InlineData("GstAllocators", "GstSharp.Net.Allocators")]
     [InlineData("GstTag", "GstSharp.Net.Tag")]
     [InlineData("GstTranscoder", "GstSharp.Net.Transcoder")]

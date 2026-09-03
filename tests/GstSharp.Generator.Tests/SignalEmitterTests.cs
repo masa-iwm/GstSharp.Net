@@ -499,6 +499,7 @@ public sealed class SignalEmitterTests
     [InlineData("GstNet", 0)]
     [InlineData("GstRtsp", 1)]
     [InlineData("GstRtp", 2)]
+    [InlineData("GstRtspServer", 19)]
     [InlineData("GstAllocators", 0)]
     [InlineData("GstTag", 0)]
     [InlineData("GstTranscoder", 6)]
@@ -535,11 +536,11 @@ public sealed class SignalEmitterTests
             removers += file.Content.Split("    public static void Remove").Length - 1;
         }
 
-        // A hundred and four signals are emitted over the sixteen modules.
-        // A hundred are events of a class; the remaining four belong to a
-        // gir interface and are a pair of extension methods instead. The
-        // editing services are thirty five of them, and all thirty five are
-        // events: the one signal of a GES interface,
+        // A hundred and twenty three signals are emitted over the seventeen
+        // modules. A hundred and nineteen are events of a class; the remaining
+        // four belong to a gir interface and are a pair of extension methods
+        // instead. The editing services are thirty five of them, and all
+        // thirty five are events: the one signal of a GES interface,
         // GESMetaContainer::notify-meta, carries a GValue and is not bound.
         // The six of the transcoder and the thirteen of the play are the
         // signals of GstTranscoderSignalAdapter and GstPlaySignalAdapter,
@@ -548,21 +549,26 @@ public sealed class SignalEmitterTests
         // GstRTPBaseDepayload; the four signals beside them, add-extension and
         // clear-extensions on each of the two classes, carry action="1" and
         // are skipped on that rule, since an action signal is a call API and
-        // not a notification. The
-        // adder and remover counts carry matches that are not a signal pair at
-        // all: Gst.ITagSetter's AddTagValue extension, and the AddAllSchemas,
-        // AddSchema, RemoveAllSchemas and RemoveSchema extensions of
-        // Gst.Tag.ITagXmpWriter, methods whose names the pattern cannot tell
-        // from a subscription adder or remover.
-        Assert.Equal(100, events);
+        // not a notification. The nineteen of the RTSP server are the ones its
+        // classes declare that carry no GstRTSPContext: the twenty two request
+        // signals of GstRTSPClient all carry one, which a trampoline has
+        // nothing to wrap, and send-message is the one whose C# name the method
+        // beside it had taken, so the rename of fixups.json makes the event
+        // SendingMessage. The adder and remover counts carry matches that are
+        // not a signal pair at all: Gst.ITagSetter's AddTagValue extension, and
+        // the AddAllSchemas, AddSchema, RemoveAllSchemas and RemoveSchema
+        // extensions of Gst.Tag.ITagXmpWriter, methods whose names the pattern
+        // cannot tell from a subscription adder or remover.
+        Assert.Equal(119, events);
         Assert.Equal(7, adders);
         Assert.Equal(6, removers);
-        Assert.Equal(104, trampolines);
+        Assert.Equal(123, trampolines);
 
         string[] withSignals =
         [
             "GstSharp.Net", "GstSharp.Net.Base", "GstSharp.Net.App", "GstSharp.Net.Video", "GstSharp.Net.Pbutils",
-            "GstSharp.Net.WebRTC", "GstSharp.Net.Rtsp", "GstSharp.Net.Rtp", "GstSharp.Net.Transcoder",
+            "GstSharp.Net.WebRTC", "GstSharp.Net.Rtsp", "GstSharp.Net.Rtp", "GstSharp.Net.RtspServer",
+            "GstSharp.Net.Transcoder",
             "GstSharp.Net.Play", "GstSharp.Net.GES",
         ];
 

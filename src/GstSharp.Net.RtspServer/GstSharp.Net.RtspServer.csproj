@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>Gst.RtspServer</RootNamespace>
+    <Description>GstRtspServer for GstSharp.Net: the RTSP server, its clients, sessions, mount points, media factories and streams, including the ONVIF variants.</Description>
+
+    <!-- This package has never been published, so there is no baseline on
+         nuget.org to compare it against; the restore of the gate would fail on
+         a version that does not exist. Remove this line after the next patch
+         release has shipped the package, exactly as #39 and #55 did for the
+         modules before it. -->
+    <EnablePackageValidation>false</EnablePackageValidation>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../GstSharp.Net/GstSharp.Net.csproj" />
+
+    <!-- A client hands its connection, messages and URLs out and a stream takes
+         an RTSP transport, so the surface of this module names Gst.Rtsp. -->
+    <ProjectReference Include="../GstSharp.Net.Rtsp/GstSharp.Net.Rtsp.csproj" />
+
+    <!-- A media describes itself as a session description and a factory is
+         asked to fill one in, so the surface names Gst.Sdp.SDPMessage. -->
+    <ProjectReference Include="../GstSharp.Net.Sdp/GstSharp.Net.Sdp.csproj" />
+
+    <!-- A media publishes its clock through a network time provider, so the
+         surface names Gst.Net.NetTimeProvider. -->
+    <ProjectReference Include="../GstSharp.Net.Net/GstSharp.Net.Net.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The ABI probes of the integration tests read the raw mirrors of this
+         module, which are internal: nothing outside the binding has a reason
+         to know the native layout of a record. -->
+    <InternalsVisibleTo Include="GstSharp.IntegrationTests" />
+  </ItemGroup>
+
+</Project>

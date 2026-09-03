@@ -96,7 +96,7 @@ jobs:
       # it) must fail the publish, not ship an unintended set.
       - name: Check the package count
         run: |
-          expected=17
+          expected=18
           actual=$(ls artifacts/dist/*.nupkg | wc -l)
           if [[ "$actual" -ne "$expected" ]]; then
             echo "::error::Expected $expected packages, found $actual:"

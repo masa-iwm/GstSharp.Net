@@ -962,6 +962,93 @@ disappears shows up here as an added line.
 - `gst_rtsp_message_parse_auth_credentials`
 - `gst_rtsp_message_take_body`
 
+## GstRtspServer
+
+### HandBound (1)
+
+- `gst_rtsp_mount_points_add_factory`
+
+### LifetimePrimitive (2)
+
+- `gst_rtsp_address_free`
+- `gst_rtsp_thread_stop`
+
+### MovedTo (1)
+
+- `gst_rtsp_context_get_current`
+
+### NotIntrospectable (3)
+
+- `gst_rtsp_context_get_current`
+- `gst_rtsp_permissions_add_role_valist`
+- `gst_rtsp_token_new_valist`
+
+### OverlaySkip (5)
+
+- `gst_rtsp_client_set_send_func`
+- `gst_rtsp_client_set_send_messages_func`
+- `gst_rtsp_thread_new`
+- `gst_rtsp_thread_pool_get_thread`
+- `gst_rtsp_token_writable_structure`
+
+### ShadowedBy (2)
+
+- `gst_rtsp_permissions_add_role`
+- `gst_rtsp_token_new`
+
+### UnsupportedSignature (46)
+
+- `GstRtspServer.RTSPClient::announce-request`
+- `GstRtspServer.RTSPClient::check-requirements`
+- `GstRtspServer.RTSPClient::describe-request`
+- `GstRtspServer.RTSPClient::get-parameter-request`
+- `GstRtspServer.RTSPClient::handle-response`
+- `GstRtspServer.RTSPClient::options-request`
+- `GstRtspServer.RTSPClient::pause-request`
+- `GstRtspServer.RTSPClient::play-request`
+- `GstRtspServer.RTSPClient::pre-announce-request`
+- `GstRtspServer.RTSPClient::pre-describe-request`
+- `GstRtspServer.RTSPClient::pre-get-parameter-request`
+- `GstRtspServer.RTSPClient::pre-options-request`
+- `GstRtspServer.RTSPClient::pre-pause-request`
+- `GstRtspServer.RTSPClient::pre-play-request`
+- `GstRtspServer.RTSPClient::pre-record-request`
+- `GstRtspServer.RTSPClient::pre-set-parameter-request`
+- `GstRtspServer.RTSPClient::pre-setup-request`
+- `GstRtspServer.RTSPClient::pre-teardown-request`
+- `GstRtspServer.RTSPClient::record-request`
+- `GstRtspServer.RTSPClient::set-parameter-request`
+- `GstRtspServer.RTSPClient::setup-request`
+- `GstRtspServer.RTSPClient::teardown-request`
+- `gst_rtsp_auth_get_tls_authentication_mode`
+- `gst_rtsp_auth_set_tls_authentication_mode`
+- `gst_rtsp_client_set_connection`
+- `gst_rtsp_media_complete_pipeline`
+- `gst_rtsp_media_set_state`
+- `gst_rtsp_server_create_source`
+- `gst_rtsp_server_io_func`
+- `gst_rtsp_session_is_expired`
+- `gst_rtsp_session_media_get_transports`
+- `gst_rtsp_session_media_set_transport`
+- `gst_rtsp_session_next_timeout`
+- `gst_rtsp_session_pool_create_watch`
+- `gst_rtsp_stream_add_multicast_client_address`
+- `gst_rtsp_stream_allocate_udp_sockets`
+- `gst_rtsp_stream_get_multicast_address`
+- `gst_rtsp_stream_get_rtcp_multicast_socket`
+- `gst_rtsp_stream_get_rtcp_socket`
+- `gst_rtsp_stream_get_rtp_multicast_socket`
+- `gst_rtsp_stream_get_rtp_socket`
+- `gst_rtsp_stream_get_server_port`
+- `gst_rtsp_stream_transport_new`
+- `gst_rtsp_stream_transport_set_callbacks`
+- `gst_rtsp_stream_transport_set_list_callbacks`
+- `gst_rtsp_stream_transport_set_transport`
+
+### VarArgs (1)
+
+- `gst_rtsp_media_factory_add_role`
+
 ## GstSdp
 
 ### LifetimePrimitive (1)
@@ -1195,7 +1282,7 @@ disappears shows up here as an added line.
 - `gst_webrtc_ice_get_local_candidates`
 - `gst_webrtc_ice_get_remote_candidates`
 
-## Fields (147)
+## Fields (152)
 
 Public record fields that carry API in C and none in C#, with the shape that
 kept them out. A field is bound when a wrapper declares an accessor for it, or
@@ -1311,6 +1398,14 @@ it unbound, and this ledger is where that is counted.
 
 - `RTSPAuthCredential.params` — Pointer
 - `RTSPMessage.type_data` — Union
+
+### GstRtspServer (5)
+
+- `RTSPPermissions.mini_object` — EmbeddedStruct
+- `RTSPThread.context` — Pointer
+- `RTSPThread.loop` — Pointer
+- `RTSPThread.mini_object` — EmbeddedStruct
+- `RTSPToken.mini_object` — EmbeddedStruct
 
 ### GstSdp (33)
 
