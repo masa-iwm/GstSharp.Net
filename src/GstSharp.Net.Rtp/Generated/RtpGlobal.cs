@@ -145,34 +145,6 @@ public static unsafe partial class RtpGlobal
         }
     }
 
-    /// <summary>
-    /// Writes the NTP time in @ntptime to the format required for the NTP-56 header
-    /// extension. @data must hold at least #GST_RTP_HDREXT_NTP_56_SIZE bytes.
-    /// </summary>
-    /// <param name="data">The <c>data</c> argument.</param>
-    /// <param name="size">The <c>size</c> argument.</param>
-    /// <param name="ntptime">The <c>ntptime</c> argument.</param>
-    /// <returns>%TRUE on success.</returns>
-    public static bool RtpHdrextSetNtp56(nint data, uint size, ulong ntptime)
-    {
-        int nativeResult = GstRtpHdrextSetNtp56(data, size, ntptime);
-        return nativeResult != 0;
-    }
-
-    /// <summary>
-    /// Writes the NTP time in @ntptime to the format required for the NTP-64 header
-    /// extension. @data must hold at least #GST_RTP_HDREXT_NTP_64_SIZE bytes.
-    /// </summary>
-    /// <param name="data">The <c>data</c> argument.</param>
-    /// <param name="size">The <c>size</c> argument.</param>
-    /// <param name="ntptime">The <c>ntptime</c> argument.</param>
-    /// <returns>%TRUE on success.</returns>
-    public static bool RtpHdrextSetNtp64(nint data, uint size, ulong ntptime)
-    {
-        int nativeResult = GstRtpHdrextSetNtp64(data, size, ntptime);
-        return nativeResult != 0;
-    }
-
     /// <summary>The <c>gst_rtp_source_meta_api_get_type</c> function.</summary>
     /// <returns>The result of <c>gst_rtp_source_meta_api_get_type</c>.</returns>
     public static Gst.GObject.GType RtpSourceMetaApiGetType()
@@ -212,14 +184,6 @@ public static unsafe partial class RtpGlobal
     /// <summary>The <c>gst_rtp_hdrext_get_ntp_64</c> entry point.</summary>
     [LibraryImport("GstRtp", EntryPoint = "gst_rtp_hdrext_get_ntp_64")]
     private static partial int GstRtpHdrextGetNtp64(byte* data, uint size, ulong* ntptime);
-
-    /// <summary>The <c>gst_rtp_hdrext_set_ntp_56</c> entry point.</summary>
-    [LibraryImport("GstRtp", EntryPoint = "gst_rtp_hdrext_set_ntp_56")]
-    private static partial int GstRtpHdrextSetNtp56(nint data, uint size, ulong ntptime);
-
-    /// <summary>The <c>gst_rtp_hdrext_set_ntp_64</c> entry point.</summary>
-    [LibraryImport("GstRtp", EntryPoint = "gst_rtp_hdrext_set_ntp_64")]
-    private static partial int GstRtpHdrextSetNtp64(nint data, uint size, ulong ntptime);
 
     /// <summary>The <c>gst_rtp_source_meta_api_get_type</c> entry point.</summary>
     [LibraryImport("GstRtp", EntryPoint = "gst_rtp_source_meta_api_get_type")]

@@ -220,17 +220,20 @@ public sealed class SkipRulesTests
         // generated, and these two are the ones whose hand written declaration
         // stays the source of truth, so the emitter is told not to declare them
         // a second time.
-        // The RTP group is the newest and is four entries. The eighteen
+        // The RTP group is the newest and is six entries. The eighteen
         // gst_rtcp_packet_xr_get_* readers of an XR report block were the rest
         // of it until the direction correction learned to reach a pointer to a
         // scalar, which is the shape their fifty one out parameters have: they
         // are generated now, with the direction the gir omits stated in the
-        // overlays. The four that stay have a shape the generator
+        // overlays. The six that stay have a shape the generator
         // binds and binds wrongly: gst_rtcp_packet_app_get_name and
         // gst_rtcp_packet_app_set_name read and write four bytes that are not a
-        // C string, and gst_buffer_add_rtp_source_meta and
+        // C string, gst_buffer_add_rtp_source_meta and
         // gst_rtp_source_meta_set_ssrc take a nullable guint32* the gir spells
-        // as a value. All four are hand written in src/GstSharp.Net.Rtp/Custom
+        // as a value, and gst_rtp_hdrext_set_ntp_56 and
+        // gst_rtp_hdrext_set_ntp_64 write into a block the gir spells as a bare
+        // gpointer beside its size, which no array override may turn into an
+        // array. All six are hand written in src/GstSharp.Net.Rtp/Custom
         // beside the two guint8* returns the planner already refuses.
         Assert.Equal(
             [
@@ -326,6 +329,8 @@ public sealed class SkipRulesTests
                 "gst_query_parse_nth_allocation_param",
                 "gst_rtcp_packet_app_get_name",
                 "gst_rtcp_packet_app_set_name",
+                "gst_rtp_hdrext_set_ntp_56",
+                "gst_rtp_hdrext_set_ntp_64",
                 "gst_rtp_source_meta_set_ssrc",
                 "gst_rtsp_auth_credentials_free",
                 "gst_rtsp_range_free",
@@ -460,6 +465,8 @@ public sealed class SkipRulesTests
                 "gst_rtcp_packet_app_get_name",
                 "gst_rtcp_packet_app_set_name",
                 "gst_rtcp_packet_fb_get_fci",
+                "gst_rtp_hdrext_set_ntp_56",
+                "gst_rtp_hdrext_set_ntp_64",
                 "gst_rtp_source_meta_set_ssrc",
                 "gst_rtsp_transport_parse",
                 "gst_structure_get_value",

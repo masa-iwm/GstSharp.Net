@@ -853,13 +853,15 @@ disappears shows up here as an added line.
 - `GstRtp.RTPBasePayload::add-extension`
 - `GstRtp.RTPBasePayload::clear-extensions`
 
-### HandBound (6)
+### HandBound (8)
 
 - `gst_buffer_add_rtp_source_meta`
 - `gst_rtcp_packet_app_get_data`
 - `gst_rtcp_packet_app_get_name`
 - `gst_rtcp_packet_app_set_name`
 - `gst_rtcp_packet_fb_get_fci`
+- `gst_rtp_hdrext_set_ntp_56`
+- `gst_rtp_hdrext_set_ntp_64`
 - `gst_rtp_source_meta_set_ssrc`
 
 ### MovedTo (24)
