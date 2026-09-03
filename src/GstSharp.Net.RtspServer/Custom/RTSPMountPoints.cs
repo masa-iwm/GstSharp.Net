@@ -38,9 +38,10 @@ public unsafe partial class RTSPMountPoints
     /// <remarks>
     /// <para>
     /// This is <c>gst_rtsp_mount_points_add_factory</c>, and it is written by
-    /// hand because <b>it is the one place in this binding where a
+    /// hand because <b>it is the one place in this module where a
     /// <c>transfer-ownership="full"</c> GObject argument does not consume its
-    /// wrapper</b>. The usual rule — the call is handed a reference minted for
+    /// wrapper</b> — the second such place in the binding, after
+    /// <c>new Play(renderer)</c>. The usual rule — the call is handed a reference minted for
     /// it and the argument is disposed when the member returns — is wrong here
     /// for one reason: a media factory is the hook point of a server.
     /// <see cref="Gst.GObject.Object.Dispose()"/> runs <c>DisconnectAll</c>, so
@@ -59,10 +60,12 @@ public unsafe partial class RTSPMountPoints
     /// with the wrapper, as it does for a borrowing call.
     /// </para>
     /// <code>
-    /// using RTSPMediaFactory factory = RTSPMediaFactory.New();
-    /// factory.SetLaunch("( audiotestsrc ! audioconvert ! rtpL16pay name=pay0 pt=96 )");
-    /// factory.MediaConfigure += (_, e) => Configure(e.Object);
-    /// mounts.AddFactory("/test", factory);
+    /// // Not a using: the field outlives the method, because the mount keeps
+    /// // calling the handler below for as long as the server runs.
+    /// _factory = RTSPMediaFactory.New();
+    /// _factory.SetLaunch("( audiotestsrc ! audioconvert ! rtpL16pay name=pay0 pt=96 )");
+    /// _factory.MediaConfigure += (_, e) => Configure(e.Object);
+    /// mounts.AddFactory("/test", _factory);
     /// </code>
     /// <para>
     /// Disposing the factory afterwards is a caller's choice and not a
@@ -78,9 +81,10 @@ public unsafe partial class RTSPMountPoints
     /// </exception>
     /// <exception cref="ArgumentException">
     /// <paramref name="path"/> does not begin with <c>/</c>. The C function
-    /// answers such a path with a <c>g_return_if_fail</c>, which returns before
-    /// it has taken the factory, so the check has to happen on this side of the
-    /// call for the reference not to be minted and then dropped by nobody.
+    /// answers such a path with a <c>g_return_if_fail</c>
+    /// (<c>rtsp-mount-points.c:354</c>), which returns before it has taken the
+    /// factory, so the check has to happen on this side of the call for the
+    /// reference not to be minted and then dropped by nobody.
     /// </exception>
     /// <exception cref="ObjectDisposedException">
     /// This wrapper was disposed, or <paramref name="factory"/> was.
@@ -91,9 +95,9 @@ public unsafe partial class RTSPMountPoints
         ArgumentNullException.ThrowIfNull(factory);
 
         // gst_rtsp_mount_points_add_factory refuses anything else before it
-        // reaches the factory (rtsp-mount-points.c: g_return_if_fail on
-        // path[0] == '/'), and a refusal that early would leave the reference
-        // minted below with no owner at all.
+        // reaches the factory (rtsp-mount-points.c:354, g_return_if_fail on
+        // path != NULL && path[0] == '/'), and a refusal that early would leave
+        // the reference minted below with no owner at all.
         if (path.Length == 0 || path[0] != '/')
         {
             throw new ArgumentException("A mount point has to begin with '/'.", nameof(path));

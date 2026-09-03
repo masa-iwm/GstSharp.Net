@@ -1916,6 +1916,132 @@ public sealed class AbiProbeTests
         Assert.Equal(84L, Offset(&raw, &raw.CsrcCount));
     }
 
+    /// <summary>
+    /// <c>struct _GstRTSPAddress</c> of <c>rtsp-address-pool.h</c>: the pool
+    /// pointer at 0, <c>address</c> at 8, the <c>guint16 port</c> at 16, the
+    /// <c>gint n_ports</c> at 20, the <c>guint8 ttl</c> at 24 with seven bytes
+    /// of padding behind it and the private <c>priv</c> at 32, for 40 bytes.
+    /// </summary>
+    [Fact]
+    public unsafe void RtspAddressRawMatchesTheHeaderLayout()
+    {
+        Gst.RtspServer.RTSPAddressRaw raw = default;
+
+        _output.WriteLine(Format("RTSPAddressRaw", Unsafe.SizeOf<Gst.RtspServer.RTSPAddressRaw>()));
+        Assert.Equal(40, Unsafe.SizeOf<Gst.RtspServer.RTSPAddressRaw>());
+
+        Assert.Equal(0L, Offset(&raw, &raw.Pool));
+        Assert.Equal(8L, Offset(&raw, &raw.Address));
+        Assert.Equal(16L, Offset(&raw, &raw.Port));
+        Assert.Equal(20L, Offset(&raw, &raw.NPorts));
+        Assert.Equal(24L, Offset(&raw, &raw.Ttl));
+        Assert.Equal(32L, Offset(&raw, &raw.Priv));
+    }
+
+    /// <summary>
+    /// <c>struct _GstRTSPPermissions</c> of <c>rtsp-permissions.h</c>: an
+    /// opaque mini object, so the <c>GstMiniObject</c> of 64 bytes at 0 is the
+    /// whole structure.
+    /// </summary>
+    [Fact]
+    public unsafe void RtspPermissionsRawMatchesTheHeaderLayout()
+    {
+        Gst.RtspServer.RTSPPermissionsRaw raw = default;
+
+        _output.WriteLine(Format("RTSPPermissionsRaw", Unsafe.SizeOf<Gst.RtspServer.RTSPPermissionsRaw>()));
+        Assert.Equal(64, Unsafe.SizeOf<Gst.RtspServer.RTSPPermissionsRaw>());
+
+        Assert.Equal(0L, Offset(&raw, &raw.MiniObject));
+    }
+
+    /// <summary>
+    /// <c>struct _GstRTSPToken</c> of <c>rtsp-token.h</c>: like the
+    /// permissions, an opaque mini object of 64 bytes and nothing else.
+    /// </summary>
+    [Fact]
+    public unsafe void RtspTokenRawMatchesTheHeaderLayout()
+    {
+        Gst.RtspServer.RTSPTokenRaw raw = default;
+
+        _output.WriteLine(Format("RTSPTokenRaw", Unsafe.SizeOf<Gst.RtspServer.RTSPTokenRaw>()));
+        Assert.Equal(64, Unsafe.SizeOf<Gst.RtspServer.RTSPTokenRaw>());
+
+        Assert.Equal(0L, Offset(&raw, &raw.MiniObject));
+    }
+
+    /// <summary>
+    /// <c>struct _GstRTSPThread</c> of <c>rtsp-thread-pool.h</c>: the
+    /// <c>GstMiniObject</c> of 64 bytes at 0, the <c>GstRTSPThreadType type</c>
+    /// at 64 with four bytes of padding behind it, <c>context</c> at 72 and
+    /// <c>loop</c> at 80, for 88 bytes.
+    /// </summary>
+    [Fact]
+    public unsafe void RtspThreadRawMatchesTheHeaderLayout()
+    {
+        Gst.RtspServer.RTSPThreadRaw raw = default;
+
+        _output.WriteLine(Format("RTSPThreadRaw", Unsafe.SizeOf<Gst.RtspServer.RTSPThreadRaw>()));
+        Assert.Equal(88, Unsafe.SizeOf<Gst.RtspServer.RTSPThreadRaw>());
+
+        Assert.Equal(0L, Offset(&raw, &raw.MiniObject));
+        Assert.Equal(64L, Offset(&raw, &raw.Type));
+        Assert.Equal(72L, Offset(&raw, &raw.Context));
+        Assert.Equal(80L, Offset(&raw, &raw.Loop));
+    }
+
+    /// <summary>
+    /// <c>struct _GstRTSPContext</c> of <c>rtsp-context.h</c>: fifteen public
+    /// members - the five pointers <c>server</c>, <c>conn</c>, <c>client</c>,
+    /// <c>request</c> and <c>uri</c> at 0 to 32, the <c>GstRTSPMethod method</c>
+    /// at 40 with four bytes of padding behind it, then <c>auth</c>,
+    /// <c>token</c>, <c>session</c>, <c>sessmedia</c>, <c>factory</c>,
+    /// <c>media</c>, <c>stream</c>, <c>response</c> and <c>trans</c> from 48 to
+    /// 112 - followed by the three private reserved pointers at 120, for 144
+    /// bytes. The structure is public in C, which is why the binding mirrors it
+    /// rather than treating it as opaque.
+    /// </summary>
+    [Fact]
+    public unsafe void RtspContextMatchesTheHeaderLayout()
+    {
+        Gst.RtspServer.RTSPContext raw = default;
+
+        _output.WriteLine(Format("RTSPContext", Unsafe.SizeOf<Gst.RtspServer.RTSPContext>()));
+        Assert.Equal(144, Unsafe.SizeOf<Gst.RtspServer.RTSPContext>());
+
+        Assert.Equal(0L, Offset(&raw, &raw.ServerPtr));
+        Assert.Equal(8L, Offset(&raw, &raw.ConnPtr));
+        Assert.Equal(16L, Offset(&raw, &raw.ClientPtr));
+        Assert.Equal(24L, Offset(&raw, &raw.RequestPtr));
+        Assert.Equal(32L, Offset(&raw, &raw.UriPtr));
+        Assert.Equal(40L, Offset(&raw, &raw.Method));
+        Assert.Equal(48L, Offset(&raw, &raw.AuthPtr));
+        Assert.Equal(56L, Offset(&raw, &raw.TokenPtr));
+        Assert.Equal(64L, Offset(&raw, &raw.SessionPtr));
+        Assert.Equal(72L, Offset(&raw, &raw.SessmediaPtr));
+        Assert.Equal(80L, Offset(&raw, &raw.FactoryPtr));
+        Assert.Equal(88L, Offset(&raw, &raw.MediaPtr));
+        Assert.Equal(96L, Offset(&raw, &raw.StreamPtr));
+        Assert.Equal(104L, Offset(&raw, &raw.ResponsePtr));
+        Assert.Equal(112L, Offset(&raw, &raw.TransPtr));
+    }
+
+    /// <summary>
+    /// The anonymous <c>GstSDPInfo</c> typedef of <c>rtsp-sdp.h</c>: the
+    /// <c>gboolean is_ipv6</c> at 0 with four bytes of padding behind it and
+    /// <c>server_ip</c> at 8, for 16 bytes.
+    /// </summary>
+    [Fact]
+    public unsafe void SdpInfoMatchesTheHeaderLayout()
+    {
+        Gst.RtspServer.SDPInfo raw = default;
+
+        _output.WriteLine(Format("SDPInfo", Unsafe.SizeOf<Gst.RtspServer.SDPInfo>()));
+        Assert.Equal(16, Unsafe.SizeOf<Gst.RtspServer.SDPInfo>());
+
+        Assert.Equal(0L, Offset(&raw, &raw.IsIpv6));
+        Assert.Equal(8L, Offset(&raw, &raw.ServerIpPtr));
+    }
+
     private static unsafe long Offset(void* start, void* field) => (byte*)field - (byte*)start;
 
     private static string Format(string name, int size) =>

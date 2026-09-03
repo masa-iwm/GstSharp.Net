@@ -108,9 +108,9 @@ initialiser, and `TypeRegistry.Freeze` resolves them all, so a library a module
 names has to be there even when no test builds an element out of it:
 `libgstwebrtc-1.0.so.0` comes from the bad libraries package,
 `libges-1.0.so.0` from `libges-1.0-0` and `libgstrtspserver-1.0.so.0` from
-`libgstrtspserver-1.0-0`. The latter earns its place twice — it
-ships the `nle` and `ges` plugins beside the library, and `ges_init` fails
-outright when the non linear engine is not in the registry ("The `nle` plugin is
+`libgstrtspserver-1.0-0`. `libges-1.0-0` earns its place twice — it ships
+the `nle` and `ges` plugins beside the library, and `ges_init` fails outright
+when the non linear engine is not in the registry ("The `nle` plugin is
 missing", which is the library's own wording).
 
 This is also the only leg that installs the bad *plugins*, and it does so for

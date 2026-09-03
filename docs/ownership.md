@@ -917,9 +917,10 @@ after the SSRC and the sequence pair, before you call it.
 
 ## RTSP server
 
-`RTSPMountPoints.AddFactory` is the one call in this binding whose C half takes
+`RTSPMountPoints.AddFactory` is the one call of this module whose C half takes
 a `transfer-ownership="full"` GObject over and whose wrapper survives it
-anyway. It is written by hand for that reason: the generated consuming shape
+anyway — the second such call in the binding, after `new Play(renderer)`
+above. It is written by hand for that reason: the generated consuming shape
 disposes the argument, and `Dispose` runs `DisconnectAll`, so mounting a
 factory would strip the `MediaConfigure` and `MediaConstructed` handlers a
 caller had just connected to it — the exact arrangement `test-launch.c` uses,
@@ -932,27 +933,52 @@ consuming rule above still holds everywhere else in the module, including
 `RTSPSessionMedia.New` and `RTSPMedia.Prepare`, whose arguments — a socket, an
 internal media, a thread — are handed over and not expected back.
 
+`RTSPMedia.New` reads the other way round. Its generated XML documentation
+repeats the gir remark "Ownership is taken of @element", but the binding hands
+the element over with transfer none, because the C constructor takes a
+reference of its own (`gst_object_ref_sink` on the `element` property,
+`rtsp-media.c:695-696`) and a wrapper of this binding never holds a floating
+reference for it to sink. The caller's element wrapper therefore stays valid
+after the call and is disposed by its owner as usual.
+
 `RTSPMediaFactory.Construct` answers a media that is **locked**. That is the C
 contract and not an accident of the binding: the factory hands a shared media
 out with `gst_rtsp_media_lock` held so that the caller can finish configuring it
 before another request reaches it. Call `Unlock()` on the media before the next
 request arrives, or the server deadlocks on the second client. The same applies
 to a media obtained from `Construct` in a test or a tool that never runs a
-server: the lock is a recursive mutex on the media, and leaving it held makes
-every later call that takes it hang.
+server. The lock is a plain, non-recursive `GMutex` (`priv->global_lock`,
+`rtsp-media.c:100`, taken by `gst_rtsp_media_lock` at `:4520`), so leaving it
+held makes every later call that takes it hang — including a second `Lock()`
+from the very thread that already holds it, which deadlocks outright rather
+than nesting.
 
 **No signal of this module is marshalled to the thread that called `Attach`.**
-By default the thread pool gives every client a thread of its own, so
+By default the thread pool gives all clients **one shared thread** — its
+`max-threads` is 1 (`rtsp-thread-pool.c:201`) and the client branch recycles the
+thread at the head of the queue once that many exist (`:455-468`) — so
 `MediaConfigure`, `MediaConstructed`, `NewStream`, `Prepared` and the request
-signals of `RTSPClient` run on a client thread, while `ClientConnected` runs on
+signals of `RTSPClient` run on a pool thread and never on the thread that called
+`Attach`, while `ClientConnected` runs on
 whichever thread iterates the attached context and `HandleMessage` runs on a
 media thread. `RTSPThreadPool.SetMaxThreads(0)` collapses that: a client is then
 attached to the context of the source that is dispatching it, which is the
 server's own, and iterating that context is the only thing that drives the
 server. Handlers of `MediaConfigure`, `MediaConstructed` and `HandleMessage`
 run with a C lock held and **must not call `Lock()`, `Construct()` or
-`Prepare()`** — the first deadlocks against the media lock the emission holds,
-the other two against the factory and state locks.
+`Prepare()`**. Which lock stops which call differs per signal.
+`media-constructed` is emitted before the media is locked but under the
+factory's `medias_lock` (`rtsp-media-factory.c:1576`, emitted at `:1612`,
+`gst_rtsp_media_lock` only at `:1617`), so `Construct()` deadlocks on that
+plain mutex and `Lock()` returns — and then deadlocks the factory, which takes
+that same media lock the moment the handler gives control back.
+`media-configure` (`:1624`) is emitted with both held, so `Lock()` blocks in
+the handler itself. `HandleMessage` is
+emitted under the media's `state_lock` (`rtsp-media.c:3705`), and that one is a
+`GRecMutex` (`:128`), so `Prepare()` does not deadlock on it — it re-enters,
+drops the lock and waits for the preroll messages (`:4243`) that the very bus
+watch it is running inside would have to deliver, and hangs there instead. The
+rule is the same in all three cases; only the way it is punished differs.
 
 Shutting a server down is an ordered five steps, and the binding offers no
 single call for it because the middle of it is application shaped. First
@@ -962,15 +988,23 @@ context only. Then `ClientFilter` answering `Remove` for every client, which
 closes the connections; then `SessionPool.Filter` answering `Remove`, because a
 closing client does not remove its session and `Cleanup()` only expires the
 timed out ones, and it is the session going away that unprepares the media and
-stops the pipeline. Then poll `ClientFilter(null)` until it is empty, because
-the close of a client completes asynchronously on the client's own thread; only
+stops the pipeline. A filter answering `Remove` answers no list — only
+`RTSPFilterResult.Ref`, and a `null` filter function, put an item in the list
+either call returns — but that list is built with transfer full, so the
+wrappers in it hold native references and have to be disposed for the client or
+session to go away on the spot rather than at the next collection. Then poll
+`ClientFilter(null)` until it is empty, disposing what each poll answers,
+because the close of a client completes asynchronously on the client's own
+thread; only
 then, and only if the process is ending, `RTSPThreadPool.Cleanup()`, which joins
 every pool thread and blocks forever if it is called while a client is still
 closing. `gst_rtsp_server_create_source` is not bound — `Attach` and `Detach`
 are the pair that replaces it. Disposing the server instead of detaching it is a
 safe no-op with the wrong effect: the attached source and every managed client
 hold a native reference of their own, so the server keeps serving while the
-wrapper's handlers are disconnected and the handle to detach it by is gone.
+wrapper's handlers are disconnected. `Detach` reads this wrapper's handle like
+every other instance member, so after the `Dispose` it throws
+`ObjectDisposedException` instead: detach first, dispose second.
 
 `RTSPClient.GetConnection` and `RTSPStreamTransport.GetTransport` answer
 **borrowed** wrappers over memory the binding does not own. The connection is

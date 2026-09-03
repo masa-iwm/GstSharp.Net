@@ -15,7 +15,8 @@ public partial class RTSPServer
     /// </summary>
     /// <param name="sourceId">
     /// The identifier <see cref="Attach"/> answered. <see cref="Attach"/>
-    /// answers 0 on failure, and 0 is never a valid source identifier.
+    /// answers 0 on failure, and 0 is never a valid source identifier, so it
+    /// is refused here rather than passed on.
     /// </param>
     /// <param name="context">
     /// <b>The very context that was passed to <see cref="Attach"/>.</b>
@@ -62,15 +63,39 @@ public partial class RTSPServer
     /// managed client holds another, so
     /// <see cref="Gst.GObject.Object.Dispose()"/> while attached only gives up
     /// this wrapper's part: it strips the handlers this wrapper connected and
-    /// leaves the server serving, with no handle left to detach it by. That is
-    /// safe, and it is never what was meant.
+    /// leaves the server serving. This member reads this wrapper's handle like
+    /// every other instance member, so it then throws instead of detaching:
+    /// detach first, dispose second. That order is safe, and the other one is
+    /// never what was meant.
+    /// </para>
+    /// <para>
+    /// The lists <see cref="ClientFilter"/> and
+    /// <see cref="RTSPSessionPool.Filter"/> answer are transfer full: a filter
+    /// answering <see cref="RTSPFilterResult.Remove"/> puts nothing in them,
+    /// but a <see langword="null"/> filter function references every item, so
+    /// the wrappers the poll answers hold native references and are disposed
+    /// for the client or session to go away on the spot.
     /// </para>
     /// </remarks>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// <paramref name="sourceId"/> is 0. Both GLib entry points guard the
+    /// identifier (<c>g_return_val_if_fail (tag &gt; 0, FALSE)</c> in
+    /// <c>g_source_remove</c>, <c>gmain.c:2710</c>, and
+    /// <c>(source_id &gt; 0, NULL)</c> in
+    /// <c>g_main_context_find_source_by_id</c>, <c>:2557</c>), so passing it on
+    /// would only log a critical.
+    /// </exception>
     /// <exception cref="ObjectDisposedException">
-    /// <paramref name="context"/> was disposed.
+    /// This wrapper was disposed, or <paramref name="context"/> was.
     /// </exception>
     public bool Detach(uint sourceId, Gst.GLib.MainContext? context = null)
     {
+        ArgumentOutOfRangeException.ThrowIfZero(sourceId);
+
+        // Read like every other instance member does, so that detaching
+        // through a disposed wrapper is an error rather than a surprise.
+        _ = Handle;
+
         if (context is null)
         {
             return GSourceRemove(sourceId) != 0;

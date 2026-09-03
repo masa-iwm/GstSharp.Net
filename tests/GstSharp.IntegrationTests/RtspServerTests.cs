@@ -51,6 +51,12 @@ public sealed unsafe class RtspServerTests
     /// <summary>How long any wait here is allowed to take.</summary>
     private static readonly TimeSpan Deadline = TimeSpan.FromSeconds(30);
 
+    /// <summary>
+    /// How long something that is expected <b>not</b> to finish is given to
+    /// prove it. Short, because it is paid on every run of the test.
+    /// </summary>
+    private static readonly TimeSpan HeldWait = TimeSpan.FromMilliseconds(200);
+
     private readonly ITestOutputHelper _output;
 
     /// <summary>Initialises one test.</summary>
@@ -150,6 +156,15 @@ public sealed unsafe class RtspServerTests
     /// caller holds, and a second construct on a shared factory only returns
     /// once <see cref="RTSPMedia.Unlock"/> has been called.
     /// </summary>
+    /// <remarks>
+    /// The second construct is issued from a thread of its own, because the
+    /// point of the test is that it blocks: the cached branch of
+    /// <c>gst_rtsp_media_factory_construct</c> takes the media lock
+    /// (<c>rtsp-media-factory.c:1587</c>), and that lock is a plain,
+    /// non-recursive <c>GMutex</c> (<c>rtsp-media.c:100</c>), so on the test
+    /// thread a regression here would be a hang the runner reports as a
+    /// timeout rather than a red test. Both waits below are bounded.
+    /// </remarks>
     [RequiresElementFact("rtpL16pay")]
     public void ConstructAnswersALockedMediaThatUnlockReleases()
     {
@@ -165,12 +180,38 @@ public sealed unsafe class RtspServerTests
         RTSPMedia? first = factory.Construct(parsed);
         Assert.NotNull(first);
 
-        // Without this the next construct of the shared media blocks on the
-        // media lock the factory took on the caller's behalf, and a server in
-        // this state serves exactly one client.
-        first.Unlock();
+        System.Threading.Tasks.Task<RTSPMedia?> secondTask =
+            System.Threading.Tasks.Task.Run(() => factory.Construct(parsed));
 
-        RTSPMedia? second = factory.Construct(parsed);
+        try
+        {
+            // Held: the second construct cannot get past the media lock. Wait
+            // rethrows a faulted task, so this observes the task as well.
+            Assert.False(
+                secondTask.Wait(HeldWait),
+                "the second construct returned while the first media was still locked.");
+        }
+        finally
+        {
+            // Releasing it is the caller's to do, here and everywhere: a server
+            // that leaves it held serves exactly one client.
+            first.Unlock();
+        }
+
+        bool returned = secondTask.Wait(Deadline);
+
+        if (!returned)
+        {
+            // Nothing else can free the lock now, so the task is left to
+            // itself - but not with an exception nobody ever looks at.
+            _ = secondTask.ContinueWith(
+                static task => _ = task.Exception,
+                System.Threading.Tasks.TaskScheduler.Default);
+        }
+
+        Assert.True(returned, "the second construct never returned after Unlock.");
+
+        RTSPMedia? second = secondTask.Result;
         Assert.NotNull(second);
         Assert.Same(first, second);
         second.Unlock();
@@ -237,11 +278,16 @@ public sealed unsafe class RtspServerTests
     [Fact]
     public void TheOnvifConstructorsAnswerTheOnvifTypes()
     {
-        using RTSPOnvifServer server = RTSPOnvifServer.New();
-        Assert.IsType<RTSPOnvifServer>(server);
+        // Held as the base type on purpose: an ONVIF typed local would make the
+        // assertion restate its own declaration. What is checked is the runtime
+        // type the constructor answered and the GType it was mapped from.
+        using RTSPServer server = RTSPOnvifServer.New();
+        Assert.Equal(typeof(RTSPOnvifServer), server.GetType());
+        Assert.Equal("GstRTSPOnvifServer", server.NativeType.Name);
 
-        using RTSPOnvifMediaFactory factory = RTSPOnvifMediaFactory.New();
-        Assert.IsType<RTSPOnvifMediaFactory>(factory);
+        using RTSPMediaFactory factory = RTSPOnvifMediaFactory.New();
+        Assert.Equal(typeof(RTSPOnvifMediaFactory), factory.GetType());
+        Assert.Equal("GstRTSPOnvifMediaFactory", factory.NativeType.Name);
     }
 
     /// <summary>
@@ -297,6 +343,9 @@ public sealed unsafe class RtspServerTests
         Element client = Gst.Global.ParseLaunch(
             $"rtspsrc location=rtsp://127.0.0.1:{port}/test latency=0 ! fakesink sync=false");
 
+        System.Threading.Tasks.Task<StateChangeReturn>? down = null;
+        bool lowered = false;
+
         try
         {
             Assert.NotEqual(StateChangeReturn.Failure, client.SetState(State.Playing));
@@ -315,33 +364,80 @@ public sealed unsafe class RtspServerTests
             // server can still answer. rtspsrc joins its own task on the way
             // to NULL, and that task is waiting for this thread's pump, so
             // the state change cannot be made from this thread.
-            System.Threading.Tasks.Task<StateChangeReturn> down = System.Threading.Tasks.Task.Run(() => client.SetState(State.Null));
-            Assert.True(PumpUntil(context, () => down.IsCompleted), "rtspsrc never reached NULL.");
+            down = System.Threading.Tasks.Task.Run(() => client.SetState(State.Null));
+            lowered = PumpUntil(context, () => down.IsCompleted);
+
+            if (!lowered)
+            {
+                // The pump has stopped, so this cannot finish a state change
+                // that is waiting for it; it is a short bound that observes the
+                // task when it did fail, not a wait for the answer.
+                try
+                {
+                    down.Wait(HeldWait);
+                }
+                catch (AggregateException)
+                {
+                    // The assertion below is the failure that gets reported.
+                }
+            }
+
+            Assert.True(lowered, "rtspsrc never reached NULL.");
             Assert.NotEqual(StateChangeReturn.Failure, down.Result);
         }
         finally
         {
-            client.Dispose();
+            // Only once the state change is over: this wrapper holds the
+            // pipeline's only reference and Dispose releases it there and then,
+            // so disposing under a running SetState frees the pipeline out from
+            // under the call.
+            if (lowered)
+            {
+                client.Dispose();
+            }
         }
 
         // 1. Stop accepting.
         Assert.True(server.Detach(sourceId, context));
 
-        // 2. Close every connection. The close itself completes later.
-        server.ClientFilter((_, _) => RTSPFilterResult.Remove);
+        // 2. Close every connection. The close itself completes later. A
+        //    filter answering Remove answers no list: only Ref, and a null
+        //    filter function, put anything in one.
+        Assert.Empty(server.ClientFilter((_, _) => RTSPFilterResult.Remove));
 
         // 3. Drop the sessions: a closing client does not remove its session,
         //    and it is the session going away that unprepares the media.
         using RTSPSessionPool? sessionPool = server.GetSessionPool();
         Assert.NotNull(sessionPool);
-        sessionPool.Filter((_, _) => RTSPFilterResult.Remove);
+        Assert.Empty(sessionPool.Filter((_, _) => RTSPFilterResult.Remove));
 
-        // 4. Wait for the asynchronous half of the close.
+        // 4. Wait for the asynchronous half of the close. A null filter
+        //    function references every client it answers, so each poll hands
+        //    out owning wrappers that are disposed for the client to go away
+        //    when the list says it has.
         Assert.True(
-            PumpUntil(context, () => server.ClientFilter(null).Count == 0),
+            PumpUntil(context, () => DisposeAll(server.ClientFilter(null)) == 0),
             "a client was still managed after the filter removed it.");
 
         Assert.Equal(0u, sessionPool.GetNSessions());
+    }
+
+    /// <summary>
+    /// Disposes every wrapper of a transfer full list and answers how many
+    /// there were.
+    /// </summary>
+    /// <typeparam name="T">The wrapper type of the list.</typeparam>
+    /// <param name="owned">The list a filter answered.</param>
+    /// <returns>The number of items the list held.</returns>
+    private static int DisposeAll<T>(IReadOnlyList<T> owned)
+        where T : Gst.GObject.Object
+    {
+        foreach (T item in owned)
+        {
+            item.Dispose();
+        }
+
+        return owned.Count;
     }
 
     /// <summary>
