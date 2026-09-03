@@ -41,6 +41,19 @@ internal static unsafe partial class GstNative
     [LibraryImport("Gst", EntryPoint = "gst_version_string")]
     internal static partial nint VersionString();
 
+    /// <summary>
+    /// Registers and answers the type of a <c>GstParamSpecFraction</c>, which
+    /// is how the binding learns the type without reaching for a data symbol.
+    /// </summary>
+    [LibraryImport("Gst", EntryPoint = "gst_param_spec_fraction_get_type")]
+    internal static partial nuint ParamSpecFractionGetType();
+
+    /// <summary>
+    /// Registers and answers the type of a <c>GstParamSpecArray</c>.
+    /// </summary>
+    [LibraryImport("Gst", EntryPoint = "gst_param_spec_array_get_type")]
+    internal static partial nuint ParamSpecArrayGetType();
+
     [LibraryImport("Gst", EntryPoint = "gst_mini_object_ref")]
     internal static partial nint MiniObjectRef(nint miniObject);
 

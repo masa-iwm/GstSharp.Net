@@ -55,6 +55,12 @@ internal enum ParamSpecKind
 
     /// <summary><c>GParamSpecGType</c>.</summary>
     GType,
+
+    /// <summary><c>GstParamSpecFraction</c>.</summary>
+    Fraction,
+
+    /// <summary><c>GstParamSpecArray</c>.</summary>
+    Array,
 }
 
 /// <summary>
@@ -139,5 +145,12 @@ internal static class ParamSpecKinds
         (GType.FromName("GParamFlags").Value, ParamSpecKind.Flags),
         (GType.FromName("GParamString").Value, ParamSpecKind.String),
         (GType.FromName("GParamGType").Value, ParamSpecKind.GType),
+
+        // The two GStreamer types are asked of their own get_type functions
+        // rather than of g_type_from_name, because those register the type as
+        // well: a process that has not touched a fraction property yet has not
+        // registered it, and the name would resolve to nothing.
+        (GstNative.ParamSpecFractionGetType(), ParamSpecKind.Fraction),
+        (GstNative.ParamSpecArrayGetType(), ParamSpecKind.Array),
     ];
 }

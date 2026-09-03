@@ -2904,13 +2904,13 @@ internal static class CallableRenderer
                 + TransferLiteral(transfer) + ")",
             HandleFlavor.Opaque => type + ".FromNative(" + source + ")",
 
-            // The runtime wrapper of a GParamSpec is constructed rather than
-            // interned or made by a typed factory, and its constructor refuses
-            // the null pointer, so the null test the other flavours perform
-            // inside their factory is written out here. The parentheses matter:
-            // the caller may append a `?? throw` or an `is { }` to what comes
-            // back, and both bind tighter than the conditional.
-            HandleFlavor.ParamSpec => "(" + source + " == 0 ? null : new " + type + "(" + source + ", "
+            // The factory of a GParamSpec picks the derived class that matches
+            // G_PARAM_SPEC_TYPE, and it refuses the null pointer rather than
+            // mapping it onto null the way the other flavours do, so the null
+            // test is written out here. The parentheses matter: the caller may
+            // append a `?? throw` or an `is { }` to what comes back, and both
+            // bind tighter than the conditional.
+            HandleFlavor.ParamSpec => "(" + source + " == 0 ? null : " + type + ".FromNative(" + source + ", "
                 + TransferLiteral(transfer) + "))",
             _ => type + ".FromNative(" + source + ", " + TransferLiteral(transfer) + ")",
         };

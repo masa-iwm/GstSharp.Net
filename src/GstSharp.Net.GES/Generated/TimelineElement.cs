@@ -467,7 +467,7 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
         int nativeResult = GesTimelineElementLookupChild(Handle, propNameScope.Pointer, &childNative, &pspecNative);
         System.GC.KeepAlive(this);
         child = Gst.GObject.Object.FromNative<Gst.GObject.Object>(childNative, Gst.Interop.Transfer.Full);
-        pspec = (pspecNative == 0 ? null : new Gst.GObject.ParamSpec(pspecNative, Gst.Interop.Transfer.Full));
+        pspec = (pspecNative == 0 ? null : Gst.GObject.ParamSpec.FromNative(pspecNative, Gst.Interop.Transfer.Full));
         return nativeResult != 0;
     }
 
@@ -1020,7 +1020,7 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
 
             Gst.GObject.Object propObjectValue = Gst.GObject.Object.FromNative<Gst.GObject.Object>(propObject, Gst.Interop.Transfer.None)
                 ?? throw new InvalidOperationException("The child-property-added signal of GESTimelineElement passed no prop_object.");
-            using Gst.GObject.ParamSpec propValue = new Gst.GObject.ParamSpec(prop, Gst.Interop.Transfer.None);
+            using Gst.GObject.ParamSpec propValue = Gst.GObject.ParamSpec.FromNative(prop, Gst.Interop.Transfer.None);
             handler(
                 Gst.GObject.Object.FromNative(instance, Gst.Interop.Transfer.None),
                 new GES.TimelineElement.ChildPropertyAddedSignalArgs(propObjectValue, propValue));
@@ -1084,7 +1084,7 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
 
             Gst.GObject.Object propObjectValue = Gst.GObject.Object.FromNative<Gst.GObject.Object>(propObject, Gst.Interop.Transfer.None)
                 ?? throw new InvalidOperationException("The child-property-removed signal of GESTimelineElement passed no prop_object.");
-            using Gst.GObject.ParamSpec propValue = new Gst.GObject.ParamSpec(prop, Gst.Interop.Transfer.None);
+            using Gst.GObject.ParamSpec propValue = Gst.GObject.ParamSpec.FromNative(prop, Gst.Interop.Transfer.None);
             handler(
                 Gst.GObject.Object.FromNative(instance, Gst.Interop.Transfer.None),
                 new GES.TimelineElement.ChildPropertyRemovedSignalArgs(propObjectValue, propValue));
@@ -1154,7 +1154,7 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
 
             Gst.GObject.Object propObjectValue = Gst.GObject.Object.FromNative<Gst.GObject.Object>(propObject, Gst.Interop.Transfer.None)
                 ?? throw new InvalidOperationException("The deep-notify signal of GESTimelineElement passed no prop_object.");
-            using Gst.GObject.ParamSpec propValue = new Gst.GObject.ParamSpec(prop, Gst.Interop.Transfer.None);
+            using Gst.GObject.ParamSpec propValue = Gst.GObject.ParamSpec.FromNative(prop, Gst.Interop.Transfer.None);
             handler(
                 Gst.GObject.Object.FromNative(instance, Gst.Interop.Transfer.None),
                 new GES.TimelineElement.DeepNotifySignalArgs(propObjectValue, propValue));

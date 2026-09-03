@@ -2089,6 +2089,28 @@ public sealed class AbiProbeTests
         uint expected = (uint)((72 + (3 * Unsafe.SizeOf<CLong>()) + 7) / 8 * 8);
         AssertInstanceSize("GParamLong", expected);
         AssertInstanceSize("GParamULong", expected);
+
+        // The two GStreamer classes: six 4 byte fields, and one pointer. Both
+        // types are registered by their first use, so a specification of each
+        // is built before they are asked for by name.
+        using (ParamSpec fraction = ParamSpec.FromNative(
+            ParamSpecNatives.Fraction("r", "r", "r", 0, 1, 100, 1, 30, 1, ParamSpecNatives.ReadWrite),
+            Transfer.None))
+        using (ParamSpec array = ParamSpec.FromNative(
+            ParamSpecNatives.Array(
+                "a",
+                "a",
+                "a",
+                ParamSpecNatives.Int("e", "e", "e", 0, 9, 0, ParamSpecNatives.ReadWrite),
+                ParamSpecNatives.ReadWrite),
+            Transfer.None))
+        {
+            Assert.IsType<Gst.ParamSpecFraction>(fraction);
+            Assert.IsType<Gst.ParamSpecArray>(array);
+        }
+
+        AssertInstanceSize("GstParamFraction", 96);
+        AssertInstanceSize("GstParamArray", 80);
     }
 
     /// <summary>
@@ -2268,6 +2290,43 @@ public sealed class AbiProbeTests
             ParamSpecNatives.GType("t", "t", "t", element.Value, ParamSpecNatives.ReadWrite), Transfer.None))
         {
             Assert.Equal(element, Assert.IsType<ParamSpecGType>(spec).IsAType);
+        }
+
+        using (ParamSpec spec = ParamSpec.FromNative(
+            ParamSpecNatives.Fraction("r", "r", "r", 1, 2, 100, 3, 30, 4, ParamSpecNatives.ReadWrite),
+            Transfer.None))
+        {
+            Gst.ParamSpecFraction typed = Assert.IsType<Gst.ParamSpecFraction>(spec);
+            Assert.Equal(1, typed.MinimumNumerator);
+            Assert.Equal(2, typed.MinimumDenominator);
+            Assert.Equal(100, typed.MaximumNumerator);
+            Assert.Equal(3, typed.MaximumDenominator);
+            Assert.Equal(30, typed.DefaultNumerator);
+            Assert.Equal(4, typed.DefaultDenominator);
+        }
+
+        // gst_param_spec_array takes the floating reference of the
+        // specification of the elements, so it is handed the raw pointer.
+        using (ParamSpec spec = ParamSpec.FromNative(
+            ParamSpecNatives.Array(
+                "a",
+                "a",
+                "a",
+                ParamSpecNatives.Int("e", "e", "e", -2, 8, 5, ParamSpecNatives.ReadWrite),
+                ParamSpecNatives.ReadWrite),
+            Transfer.None))
+        {
+            using ParamSpec? element1 = Assert.IsType<Gst.ParamSpecArray>(spec).ElementSpec;
+            ParamSpecInt typed = Assert.IsType<ParamSpecInt>(element1);
+            Assert.Equal(-2, typed.Minimum);
+            Assert.Equal(8, typed.Maximum);
+            Assert.Equal(5, typed.Default);
+        }
+
+        using (ParamSpec spec = ParamSpec.FromNative(
+            ParamSpecNatives.Array("a", "a", "a", nint.Zero, ParamSpecNatives.ReadWrite), Transfer.None))
+        {
+            Assert.Null(Assert.IsType<Gst.ParamSpecArray>(spec).ElementSpec);
         }
     }
 

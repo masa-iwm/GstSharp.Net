@@ -199,7 +199,7 @@ public unsafe partial class StreamCollection : Gst.Object
 
             Gst.Stream propStreamValue = Gst.GObject.Object.FromNative<Gst.Stream>(propStream, Gst.Interop.Transfer.None)
                 ?? throw new InvalidOperationException("The stream-notify signal of GstStreamCollection passed no prop_stream.");
-            using Gst.GObject.ParamSpec propValue = new Gst.GObject.ParamSpec(prop, Gst.Interop.Transfer.None);
+            using Gst.GObject.ParamSpec propValue = Gst.GObject.ParamSpec.FromNative(prop, Gst.Interop.Transfer.None);
             handler(
                 Gst.GObject.Object.FromNative(instance, Gst.Interop.Transfer.None),
                 new Gst.StreamCollection.StreamNotifySignalArgs(propStreamValue, propValue));

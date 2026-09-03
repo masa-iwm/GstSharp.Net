@@ -198,9 +198,11 @@ and the two tables own nothing at all:
   only while the wrapper holds its reference and only for reading. Copy it into
   a `Value` of your own to keep it or to write to it — writing through the view
   would change what every later reader of that specification sees.
-* `RedirectTarget` is **handed over**. C lends its reference; the wrapper takes
-  one of its own, as everything a member hands out does, and the caller
-  disposes it.
+* `RedirectTarget` and `ParamSpecArray.ElementSpec` are **handed over**. C
+  lends its reference in both cases; the wrapper takes one of its own, as
+  everything a member hands out does, and the caller disposes it. The array
+  holds a reference of its own on the specification of its elements, so what
+  comes back outlives the wrapper it was read from either way.
 * `GType.GetEnumValues` and `GType.GetFlagsValues` own nothing at all. They
   reference count the class of the type for the duration of the call, copy the
   names and the nicknames out of it, and release it before they return, so what

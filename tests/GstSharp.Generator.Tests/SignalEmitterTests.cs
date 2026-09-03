@@ -482,7 +482,7 @@ public sealed class SignalEmitterTests
 
         Assert.Contains("public Gst.GObject.ParamSpec Prop { get; }", source, StringComparison.Ordinal);
         Assert.Contains(
-            "using Gst.GObject.ParamSpec propValue = new Gst.GObject.ParamSpec(prop, Gst.Interop.Transfer.None);",
+            "using Gst.GObject.ParamSpec propValue = Gst.GObject.ParamSpec.FromNative(prop, Gst.Interop.Transfer.None);",
             source,
             StringComparison.Ordinal);
     }

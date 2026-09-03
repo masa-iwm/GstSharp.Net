@@ -193,7 +193,7 @@ public static unsafe partial class ChildProxyExtensions
         int nativeResult = GstChildProxyLookup(@object.Handle, nameScope.Pointer, &targetNative, &pspecNative);
         System.GC.KeepAlive(@object);
         target = Gst.GObject.Object.FromNative<Gst.GObject.Object>(targetNative, Gst.Interop.Transfer.Full);
-        pspec = (pspecNative == 0 ? null : new Gst.GObject.ParamSpec(pspecNative, Gst.Interop.Transfer.None));
+        pspec = (pspecNative == 0 ? null : Gst.GObject.ParamSpec.FromNative(pspecNative, Gst.Interop.Transfer.None));
         return nativeResult != 0;
     }
 

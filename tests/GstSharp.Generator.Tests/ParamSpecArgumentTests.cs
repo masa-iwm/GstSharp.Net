@@ -138,7 +138,7 @@ public sealed class ParamSpecArgumentTests
                 nint pspecNative = default;
                 int nativeResult = GstHolderLookup(Handle, &pspecNative);
                 System.GC.KeepAlive(this);
-                pspec = (pspecNative == 0 ? null : new Gst.GObject.ParamSpec(pspecNative, Gst.Interop.Transfer.None));
+                pspec = (pspecNative == 0 ? null : Gst.GObject.ParamSpec.FromNative(pspecNative, Gst.Interop.Transfer.None));
                 return nativeResult != 0;
             }
             """,
@@ -160,7 +160,7 @@ public sealed class ParamSpecArgumentTests
                 nint pspecNative = default;
                 int nativeResult = GstHolderSteal(Handle, &pspecNative);
                 System.GC.KeepAlive(this);
-                pspec = (pspecNative == 0 ? null : new Gst.GObject.ParamSpec(pspecNative, Gst.Interop.Transfer.Full));
+                pspec = (pspecNative == 0 ? null : Gst.GObject.ParamSpec.FromNative(pspecNative, Gst.Interop.Transfer.Full));
                 return nativeResult != 0;
             }
             """,

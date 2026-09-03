@@ -653,9 +653,9 @@ internal static class SignalEmitter
                 HandleFlavor.GObject => "Gst.GObject.Object.FromNative<" + type + ">("
                     + argument.Name + ", Gst.Interop.Transfer.None)",
                 HandleFlavor.ParamSpec => argument.IsNullable
-                    ? argument.Name + " == 0 ? null : new " + type + "(" + argument.Name
+                    ? argument.Name + " == 0 ? null : " + type + ".FromNative(" + argument.Name
                         + ", Gst.Interop.Transfer.None)"
-                    : "new " + type + "(" + argument.Name + ", Gst.Interop.Transfer.None)",
+                    : type + ".FromNative(" + argument.Name + ", Gst.Interop.Transfer.None)",
                 HandleFlavor.Opaque => type + ".FromNative(" + argument.Name + ")",
                 _ => type + ".FromNative(" + argument.Name + ", Gst.Interop.Transfer.None)",
             },

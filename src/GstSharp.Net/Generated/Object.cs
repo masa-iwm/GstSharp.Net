@@ -643,7 +643,7 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
 
             Gst.Object propObjectValue = Gst.GObject.Object.FromNative<Gst.Object>(propObject, Gst.Interop.Transfer.None)
                 ?? throw new InvalidOperationException("The deep-notify signal of GstObject passed no prop_object.");
-            using Gst.GObject.ParamSpec propValue = new Gst.GObject.ParamSpec(prop, Gst.Interop.Transfer.None);
+            using Gst.GObject.ParamSpec propValue = Gst.GObject.ParamSpec.FromNative(prop, Gst.Interop.Transfer.None);
             handler(
                 Gst.GObject.Object.FromNative(instance, Gst.Interop.Transfer.None),
                 new Gst.Object.DeepNotifySignalArgs(propObjectValue, propValue));

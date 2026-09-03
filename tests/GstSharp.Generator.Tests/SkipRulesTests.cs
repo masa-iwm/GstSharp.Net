@@ -255,6 +255,8 @@ public sealed class SkipRulesTests
         Assert.Equal(
             [
                 "Gst.BusSyncHandler",
+                "Gst.ParamSpecArray",
+                "Gst.ParamSpecFraction",
                 "GstBase.BitReader",
                 "GstBase.BitWriter",
                 "GstBase.ByteReader",

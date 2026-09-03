@@ -148,4 +148,25 @@ internal static partial class ParamSpecNatives
 
     [LibraryImport("GObject", EntryPoint = "g_param_spec_gtype", StringMarshalling = StringMarshalling.Utf8)]
     internal static partial nint GType(string name, string nick, string blurb, nuint isAType, uint flags);
+
+    [LibraryImport("Gst", EntryPoint = "gst_param_spec_fraction", StringMarshalling = StringMarshalling.Utf8)]
+    internal static partial nint Fraction(
+        string name,
+        string nick,
+        string blurb,
+        int minimumNumerator,
+        int minimumDenominator,
+        int maximumNumerator,
+        int maximumDenominator,
+        int defaultNumerator,
+        int defaultDenominator,
+        uint flags);
+
+    /// <summary>
+    /// Builds a specification of an array of values. The specification of the
+    /// elements is consumed: the array takes the floating reference of what it
+    /// is handed, so the caller must not wrap it.
+    /// </summary>
+    [LibraryImport("Gst", EntryPoint = "gst_param_spec_array", StringMarshalling = StringMarshalling.Utf8)]
+    internal static partial nint Array(string name, string nick, string blurb, nint elementSpec, uint flags);
 }

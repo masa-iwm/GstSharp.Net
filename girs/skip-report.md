@@ -1282,7 +1282,7 @@ disappears shows up here as an added line.
 - `gst_webrtc_ice_get_local_candidates`
 - `gst_webrtc_ice_get_remote_candidates`
 
-## Fields (152)
+## Fields (143)
 
 Public record fields that carry API in C and none in C#, with the shape that
 kept them out. A field is bound when a wrapper declares an accessor for it, or
@@ -1304,7 +1304,7 @@ it unbound, and this ledger is where that is counted.
 
 - `FrameCompositionMeta.meta` — EmbeddedStruct
 
-### Gst (58)
+### Gst (49)
 
 - `Buffer.mini_object` — EmbeddedStruct
 - `ByteArrayInterface.data` — Pointer
@@ -1337,15 +1337,6 @@ it unbound, and this ledger is where that is counted.
 - `MiniObject.lockstate` — HandWritten
 - `MiniObject.refcount` — HandWritten
 - `MiniObject.type` — HandWritten
-- `ParamSpecArray.element_spec` — Pointer
-- `ParamSpecArray.parent_instance` — EmbeddedStruct
-- `ParamSpecFraction.def_den` — NoLayout
-- `ParamSpecFraction.def_num` — NoLayout
-- `ParamSpecFraction.max_den` — NoLayout
-- `ParamSpecFraction.max_num` — NoLayout
-- `ParamSpecFraction.min_den` — NoLayout
-- `ParamSpecFraction.min_num` — NoLayout
-- `ParamSpecFraction.parent_instance` — EmbeddedStruct
 - `ParentBufferMeta.parent` — EmbeddedStruct
 - `PluginDesc.plugin_init` — Callback
 - `Promise.parent` — EmbeddedStruct

@@ -171,7 +171,7 @@ public sealed class ClassEmitterTests
     }
 
     [Theory]
-    [InlineData("Gst", 35, 51, 5, 28, 18, 1435, 29, 23, 71)]
+    [InlineData("Gst", 35, 49, 5, 28, 18, 1435, 29, 23, 71)]
     [InlineData("GstBase", 11, 4, 0, 5, 0, 174, 31, 2, 10)]
     [InlineData("GstApp", 2, 2, 0, 8, 0, 62, 36, 8, 0)]
     [InlineData("GstAudio", 14, 17, 1, 1, 2, 212, 32, 0, 48)]
@@ -609,7 +609,7 @@ public sealed class ClassEmitterTests
     }
 
     [Theory]
-    [InlineData("Gst", 58)]
+    [InlineData("Gst", 49)]
     [InlineData("GstBase", 0)]
     [InlineData("GstAudio", 15)]
     [InlineData("GstVideo", 33)]
@@ -642,8 +642,8 @@ public sealed class ClassEmitterTests
     {
         string report = Generated.SkipReport;
 
-        Assert.Equal(152, Generated.Census.DroppedFieldCount());
-        Assert.Contains("## Fields (152)\n", report, StringComparison.Ordinal);
+        Assert.Equal(143, Generated.Census.DroppedFieldCount());
+        Assert.Contains("## Fields (143)\n", report, StringComparison.Ordinal);
         Assert.Contains("### GstVideo (33)\n", report, StringComparison.Ordinal);
 
         // One entry per shape that keeps a field out. The fixed size fields of
@@ -701,10 +701,12 @@ public sealed class ClassEmitterTests
 
         // The catch all is split by the cause a field reaches it through: a
         // wrapper the generator never asks for accessors, and a record whose
-        // mirror collapsed and has no storage to read one out of.
+        // mirror collapsed and has no storage to read one out of. The second
+        // half is empty since the two GstParamSpec shells were skipped: their
+        // fields were the only ones the generator had no layout for.
         Assert.DoesNotContain("\u2014 Other\n", report, StringComparison.Ordinal);
+        Assert.DoesNotContain("\u2014 NoLayout\n", report, StringComparison.Ordinal);
         Assert.Contains("- `MiniObject.type` \u2014 HandWritten\n", report, StringComparison.Ordinal);
-        Assert.Contains("- `ParamSpecFraction.min_num` \u2014 NoLayout\n", report, StringComparison.Ordinal);
 
         // An enumeration another generated module declares is handed out typed,
         // so the field it sits on is bound rather than counted.
