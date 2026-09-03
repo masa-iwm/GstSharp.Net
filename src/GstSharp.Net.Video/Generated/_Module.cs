@@ -34,4 +34,15 @@ internal static unsafe partial class GstVideoModule
         new Gst.Interop.ModuleTypeEntry(&Gst.Video.VideoVBIEncoder.GetGType, &Gst.Video.VideoVBIEncoder.CreateWrapper),
         new Gst.Interop.ModuleTypeEntry(&Gst.Video.VideoVBIParser.GetGType, &Gst.Video.VideoVBIParser.CreateWrapper),
     ];
+
+    /// <summary>Builds the interface table of the module.</summary>
+    /// <returns>One entry per generated GObject interface of the module.</returns>
+    internal static Gst.Interop.ModuleInterfaceEntry[] CreateInterfaceEntries() =>
+    [
+        new Gst.Interop.ModuleInterfaceEntry(typeof(Gst.Video.IColorBalance), &Gst.Video.ColorBalanceExtensions.GetGType, &Gst.Video.ColorBalanceExtensions.CreateAdapter),
+        new Gst.Interop.ModuleInterfaceEntry(typeof(Gst.Video.INavigation), &Gst.Video.NavigationExtensions.GetGType, &Gst.Video.NavigationExtensions.CreateAdapter),
+        new Gst.Interop.ModuleInterfaceEntry(typeof(Gst.Video.IVideoDirection), &Gst.Video.VideoDirectionExtensions.GetGType, &Gst.Video.VideoDirectionExtensions.CreateAdapter),
+        new Gst.Interop.ModuleInterfaceEntry(typeof(Gst.Video.IVideoOrientation), &Gst.Video.VideoOrientationExtensions.GetGType, &Gst.Video.VideoOrientationExtensions.CreateAdapter),
+        new Gst.Interop.ModuleInterfaceEntry(typeof(Gst.Video.IVideoOverlay), &Gst.Video.VideoOverlayExtensions.GetGType, &Gst.Video.VideoOverlayExtensions.CreateAdapter),
+    ];
 }

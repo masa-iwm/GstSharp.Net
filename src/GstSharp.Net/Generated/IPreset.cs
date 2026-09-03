@@ -279,4 +279,27 @@ public static unsafe partial class PresetExtensions
     /// <summary>The <c>gst_preset_set_app_dir</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_preset_set_app_dir")]
     private static partial int GstPresetSetAppDir(byte* appDir);
+
+    /// <summary>Returns the <c>GType</c> that GObject registered <c>GstPreset</c> under.</summary>
+    /// <returns>The type of the instances of this wrapper.</returns>
+    [LibraryImport("Gst", EntryPoint = "gst_preset_get_type")]
+    internal static partial nuint GetGType();
+
+    /// <summary>Presents a <see cref="Gst.GObject.Object"/> as <see cref="Gst.IPreset"/>, once the runtime has checked the type.</summary>
+    internal sealed class Adapter : Gst.IPreset
+    {
+        private readonly Gst.GObject.Object _owner;
+
+        /// <summary>Initialises the view of an object.</summary>
+        /// <param name="owner">The wrapper that the view reads its handle from.</param>
+        internal Adapter(Gst.GObject.Object owner) => _owner = owner;
+
+        /// <inheritdoc/>
+        public nint Handle => _owner.Handle;
+    }
+
+    /// <summary>Creates the view of an object, for the type registry.</summary>
+    /// <param name="owner">The wrapper to present as the interface.</param>
+    /// <returns>The new view.</returns>
+    internal static object CreateAdapter(Gst.GObject.Object owner) => new Adapter(owner);
 }

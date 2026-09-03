@@ -217,6 +217,64 @@ public partial class Object : IDisposable
     public GType NativeType => TypeRegistry.GetInstanceType(_handle);
 
     /// <summary>
+    /// Casts to a GObject interface that the native instance implements but
+    /// the class of this wrapper does not declare, such as the <c>volume</c>
+    /// element and <c>Gst.Audio.IStreamVolume</c>.
+    /// </summary>
+    /// <typeparam name="T">
+    /// The interface to cast to. A class, or any other type that is not an
+    /// interface, is answered with <c>this as T</c>.
+    /// </typeparam>
+    /// <returns>
+    /// A view of this object as <typeparamref name="T"/>, or
+    /// <see langword="null"/> when the instance does not implement it. The
+    /// view keeps this wrapper alive and shares its handle, so disposing this
+    /// wrapper makes the view throw.
+    /// </returns>
+    /// <exception cref="InvalidOperationException">
+    /// <typeparamref name="T"/> is a GObject interface of a module that has
+    /// not been initialised.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">The wrapper was disposed.</exception>
+    public T? As<T>()
+        where T : class
+    {
+        // A wrapper whose class declares the interface answers on its own, so
+        // bin.As<IChildProxy>() is the bin and not an adapter around it.
+        if (this is T self)
+        {
+            return self;
+        }
+
+        nint handle = Handle;
+        if (!TypeRegistry.TryGetInterface(typeof(T), out ModuleInterfaceEntry entry))
+        {
+            // Only an interface can be registered, so an unregistered one means
+            // the module of T was never initialised; anything else is simply a
+            // type this object is not.
+            if (typeof(T).IsInterface)
+            {
+                throw new InvalidOperationException(
+                    $"{typeof(T)} is not a GObject interface of an initialised module. " +
+                    "Call the module's Initialize method first.");
+            }
+
+            return null;
+        }
+
+        bool implements =
+            GObjectNative.TypeIsA(TypeRegistry.GetInstanceType(handle).Value, entry.GetNativeType()) != 0;
+        GC.KeepAlive(this);
+        return implements ? (T)Adapt(entry, this) : null;
+    }
+
+    /// <summary>Calls the adapter factory of an interface entry.</summary>
+    /// <param name="entry">The entry of the interface.</param>
+    /// <param name="owner">The wrapper to present as the interface.</param>
+    /// <returns>The view of <paramref name="owner"/>.</returns>
+    private static unsafe object Adapt(ModuleInterfaceEntry entry, Object owner) => entry.Adapt(owner);
+
+    /// <summary>
     /// Returns the wrapper of a native object, creating it when it does not
     /// exist yet.
     /// </summary>

@@ -141,6 +141,15 @@ using (pipeline)
 Order matters: a pipeline that is still `PLAYING` when its last reference goes
 away leaves its streaming threads running. Set it to `NULL` first.
 
+`Object.As<T>()` owns nothing of its own. When the wrapper class does not
+declare the interface, the cast hands back a small view that holds a strong
+reference to the wrapper it came from and reads the handle through it, so the
+view keeps the wrapper alive and takes no reference of its own on the native
+object. The lifetime stays the wrapper's: there is nothing to dispose on a
+view, and disposing the wrapper makes every view of it throw
+`ObjectDisposedException`. When the wrapper class does declare the interface,
+the cast is the wrapper itself and there is no view at all.
+
 ## Parameter specifications
 
 `Gst.GObject.ParamSpec` wraps a `GParamSpec`, the description of one property.

@@ -176,6 +176,19 @@ Two entries worth thinking about before you add them:
   binding types, so that `Gst.Object.GetControlBinding` keeps answering what it
   always answered.
 
+A module also names its GObject interfaces, through the third argument of
+`NativeModule`: `new NativeModule("GstAudio", CreateEntries(),
+CreateInterfaceEntries())`. That second table is what `Object.As<T>()` resolves
+against. A wrapper is chosen by the type of the instance, so an element whose
+exact type has no wrapper of its own is wrapped as the nearest registered
+ancestor — `volume` becomes a `Gst.Audio.AudioFilter` — and the interfaces of
+the instance appear nowhere in that class. `element.As<Gst.Audio.IStreamVolume>()`
+asks the running library instead: it returns a view of the same object when the
+instance implements the interface, `null` when it does not, and throws when the
+module that binds the interface was never initialised. An interface the wrapper
+class does declare, as `Gst.Bin` declares `Gst.IChildProxy`, is answered with
+the wrapper itself.
+
 ### 3. The wrapper classes
 
 A wrapper derives from one of the runtime base classes, whose `(nint, Transfer)`

@@ -25,4 +25,10 @@ internal static unsafe partial class GstBaseModule
         new Gst.Interop.ModuleTypeEntry(&Gst.Base.FlowCombiner.GetGType, &Gst.Base.FlowCombiner.CreateWrapper),
         new Gst.Interop.ModuleTypeEntry(&Gst.Base.PushSrc.GetGType, &Gst.Base.PushSrc.CreateWrapper),
     ];
+
+    /// <summary>Builds the interface table of the module.</summary>
+    /// <returns>One entry per generated GObject interface of the module.</returns>
+    internal static Gst.Interop.ModuleInterfaceEntry[] CreateInterfaceEntries() =>
+    [
+    ];
 }

@@ -114,4 +114,27 @@ public static unsafe partial class ExtractableExtensions
     /// <summary>The <c>ges_extractable_set_asset</c> entry point.</summary>
     [LibraryImport("GES", EntryPoint = "ges_extractable_set_asset")]
     private static partial int GesExtractableSetAsset(nint self, nint asset);
+
+    /// <summary>Returns the <c>GType</c> that GObject registered <c>GESExtractable</c> under.</summary>
+    /// <returns>The type of the instances of this wrapper.</returns>
+    [LibraryImport("GES", EntryPoint = "ges_extractable_get_type")]
+    internal static partial nuint GetGType();
+
+    /// <summary>Presents a <see cref="Gst.GObject.Object"/> as <see cref="GES.IExtractable"/>, once the runtime has checked the type.</summary>
+    internal sealed class Adapter : GES.IExtractable
+    {
+        private readonly Gst.GObject.Object _owner;
+
+        /// <summary>Initialises the view of an object.</summary>
+        /// <param name="owner">The wrapper that the view reads its handle from.</param>
+        internal Adapter(Gst.GObject.Object owner) => _owner = owner;
+
+        /// <inheritdoc/>
+        public nint Handle => _owner.Handle;
+    }
+
+    /// <summary>Creates the view of an object, for the type registry.</summary>
+    /// <param name="owner">The wrapper to present as the interface.</param>
+    /// <returns>The new view.</returns>
+    internal static object CreateAdapter(Gst.GObject.Object owner) => new Adapter(owner);
 }

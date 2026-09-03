@@ -30,4 +30,11 @@ internal static unsafe partial class GstAudioModule
         new Gst.Interop.ModuleTypeEntry(&Gst.Audio.AudioStreamAlign.GetGType, &Gst.Audio.AudioStreamAlign.CreateWrapper),
         new Gst.Interop.ModuleTypeEntry(&Gst.Audio.DsdInfo.GetGType, &Gst.Audio.DsdInfo.CreateWrapper),
     ];
+
+    /// <summary>Builds the interface table of the module.</summary>
+    /// <returns>One entry per generated GObject interface of the module.</returns>
+    internal static Gst.Interop.ModuleInterfaceEntry[] CreateInterfaceEntries() =>
+    [
+        new Gst.Interop.ModuleInterfaceEntry(typeof(Gst.Audio.IStreamVolume), &Gst.Audio.StreamVolumeExtensions.GetGType, &Gst.Audio.StreamVolumeExtensions.CreateAdapter),
+    ];
 }

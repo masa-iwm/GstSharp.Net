@@ -27,4 +27,10 @@ internal static unsafe partial class GstPbutilsModule
         new Gst.Interop.ModuleTypeEntry(&Gst.Pbutils.EncodingVideoProfile.GetGType, &Gst.Pbutils.EncodingVideoProfile.CreateWrapper),
         new Gst.Interop.ModuleTypeEntry(&Gst.Pbutils.InstallPluginsContext.GetGType, &Gst.Pbutils.InstallPluginsContext.CreateWrapper),
     ];
+
+    /// <summary>Builds the interface table of the module.</summary>
+    /// <returns>One entry per generated GObject interface of the module.</returns>
+    internal static Gst.Interop.ModuleInterfaceEntry[] CreateInterfaceEntries() =>
+    [
+    ];
 }

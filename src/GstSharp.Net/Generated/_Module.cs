@@ -70,4 +70,15 @@ internal static unsafe partial class GstModule
         new Gst.Interop.ModuleTypeEntry(&Gst.TypeFindFactory.GetGType, &Gst.TypeFindFactory.CreateWrapper),
         new Gst.Interop.ModuleTypeEntry(&Gst.Uri.GetGType, &Gst.Uri.CreateWrapper),
     ];
+
+    /// <summary>Builds the interface table of the module.</summary>
+    /// <returns>One entry per generated GObject interface of the module.</returns>
+    internal static Gst.Interop.ModuleInterfaceEntry[] CreateInterfaceEntries() =>
+    [
+        new Gst.Interop.ModuleInterfaceEntry(typeof(Gst.IChildProxy), &Gst.ChildProxyExtensions.GetGType, &Gst.ChildProxyExtensions.CreateAdapter),
+        new Gst.Interop.ModuleInterfaceEntry(typeof(Gst.IPreset), &Gst.PresetExtensions.GetGType, &Gst.PresetExtensions.CreateAdapter),
+        new Gst.Interop.ModuleInterfaceEntry(typeof(Gst.ITagSetter), &Gst.TagSetterExtensions.GetGType, &Gst.TagSetterExtensions.CreateAdapter),
+        new Gst.Interop.ModuleInterfaceEntry(typeof(Gst.ITocSetter), &Gst.TocSetterExtensions.GetGType, &Gst.TocSetterExtensions.CreateAdapter),
+        new Gst.Interop.ModuleInterfaceEntry(typeof(Gst.IURIHandler), &Gst.URIHandlerExtensions.GetGType, &Gst.URIHandlerExtensions.CreateAdapter),
+    ];
 }

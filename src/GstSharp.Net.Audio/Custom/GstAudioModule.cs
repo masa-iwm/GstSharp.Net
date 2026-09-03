@@ -30,6 +30,6 @@ internal static partial class GstAudioModule
     internal static void Initialize()
     {
         NativeLoader.EnsureRegistered(typeof(GstAudioModule).Assembly);
-        TypeRegistry.RegisterModule(new NativeModule("GstAudio", CreateEntries()));
+        TypeRegistry.RegisterModule(new NativeModule("GstAudio", CreateEntries(), CreateInterfaceEntries()));
     }
 }

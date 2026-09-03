@@ -15,4 +15,11 @@ internal static unsafe partial class GstTagModule
         new Gst.Interop.ModuleTypeEntry(&Gst.Tag.TagDemux.GetGType, &Gst.Tag.TagDemux.CreateWrapper),
         new Gst.Interop.ModuleTypeEntry(&Gst.Tag.TagMux.GetGType, &Gst.Tag.TagMux.CreateWrapper),
     ];
+
+    /// <summary>Builds the interface table of the module.</summary>
+    /// <returns>One entry per generated GObject interface of the module.</returns>
+    internal static Gst.Interop.ModuleInterfaceEntry[] CreateInterfaceEntries() =>
+    [
+        new Gst.Interop.ModuleInterfaceEntry(typeof(Gst.Tag.ITagXmpWriter), &Gst.Tag.TagXmpWriterExtensions.GetGType, &Gst.Tag.TagXmpWriterExtensions.CreateAdapter),
+    ];
 }

@@ -73,4 +73,12 @@ internal static unsafe partial class GESModule
         new Gst.Interop.ModuleTypeEntry(&GES.XmlFormatter.GetGType, &GES.XmlFormatter.CreateWrapper),
     ];
     #pragma warning restore CS0618
+
+    /// <summary>Builds the interface table of the module.</summary>
+    /// <returns>One entry per generated GObject interface of the module.</returns>
+    internal static Gst.Interop.ModuleInterfaceEntry[] CreateInterfaceEntries() =>
+    [
+        new Gst.Interop.ModuleInterfaceEntry(typeof(GES.IExtractable), &GES.ExtractableExtensions.GetGType, &GES.ExtractableExtensions.CreateAdapter),
+        new Gst.Interop.ModuleInterfaceEntry(typeof(GES.IMetaContainer), &GES.MetaContainerExtensions.GetGType, &GES.MetaContainerExtensions.CreateAdapter),
+    ];
 }

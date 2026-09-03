@@ -14,6 +14,19 @@ namespace GstSharp.Generator.Emit;
 internal sealed record RegistryEntry(string TypeName, bool IsDeprecated);
 
 /// <summary>
+/// One row of the interface table of a module.
+/// </summary>
+/// <param name="InterfaceName">
+/// The fully qualified name of the generated interface, for example
+/// <c>Gst.Audio.IStreamVolume</c>.
+/// </param>
+/// <param name="ExtensionsName">
+/// The fully qualified name of the extension class that carries the
+/// <c>GetGType</c> import and the adapter of the interface.
+/// </param>
+internal sealed record InterfaceRegistryEntry(string InterfaceName, string ExtensionsName);
+
+/// <summary>
 /// Emits the type table that a generated module hands to
 /// <c>Gst.GObject.TypeRegistry</c>.
 /// </summary>
@@ -39,11 +52,20 @@ internal sealed class RegistryEmitter
     /// <param name="module">The module to emit.</param>
     /// <param name="ns">The gir namespace of the module.</param>
     /// <param name="types">The registered wrappers.</param>
+    /// <param name="interfaces">The registered GObject interfaces.</param>
     /// <returns>The generated file.</returns>
-    internal GeneratedFile Emit(ModuleInfo module, GirNamespace ns, IReadOnlyList<RegistryEntry> types)
+    internal GeneratedFile Emit(
+        ModuleInfo module,
+        GirNamespace ns,
+        IReadOnlyList<RegistryEntry> types,
+        IReadOnlyList<InterfaceRegistryEntry> interfaces)
     {
         List<RegistryEntry> ordered = [.. types];
         ordered.Sort(static (left, right) => string.CompareOrdinal(left.TypeName, right.TypeName));
+
+        List<InterfaceRegistryEntry> orderedInterfaces = [.. interfaces];
+        orderedInterfaces.Sort(
+            static (left, right) => string.CompareOrdinal(left.InterfaceName, right.InterfaceName));
 
         bool anyDeprecated = false;
         foreach (RegistryEntry entry in ordered)
@@ -93,6 +115,19 @@ internal sealed class RegistryEmitter
             writer.WriteLine("#pragma warning restore CS0618");
         }
 
+        writer.WriteLine();
+        writer.WriteLine("/// <summary>Builds the interface table of the module.</summary>");
+        writer.WriteLine("/// <returns>One entry per generated GObject interface of the module.</returns>");
+        writer.WriteLine("internal static Gst.Interop.ModuleInterfaceEntry[] CreateInterfaceEntries() =>");
+        writer.WriteLine("[");
+        foreach (InterfaceRegistryEntry entry in orderedInterfaces)
+        {
+            writer.WriteLine(
+                "    new Gst.Interop.ModuleInterfaceEntry(typeof(" + entry.InterfaceName + "), &"
+                + entry.ExtensionsName + ".GetGType, &" + entry.ExtensionsName + ".CreateAdapter),");
+        }
+
+        writer.WriteLine("];");
         writer.CloseBlock();
 
         return new GeneratedFile(module.ProjectDirectory + "/Generated/" + FileName, writer.ToSource());

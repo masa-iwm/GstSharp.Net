@@ -111,4 +111,27 @@ public static unsafe partial class URIHandlerExtensions
     /// <summary>The <c>gst_uri_handler_set_uri</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_uri_handler_set_uri")]
     private static partial int GstUriHandlerSetUri(nint handler, byte* uri, nint* error);
+
+    /// <summary>Returns the <c>GType</c> that GObject registered <c>GstURIHandler</c> under.</summary>
+    /// <returns>The type of the instances of this wrapper.</returns>
+    [LibraryImport("Gst", EntryPoint = "gst_uri_handler_get_type")]
+    internal static partial nuint GetGType();
+
+    /// <summary>Presents a <see cref="Gst.GObject.Object"/> as <see cref="Gst.IURIHandler"/>, once the runtime has checked the type.</summary>
+    internal sealed class Adapter : Gst.IURIHandler
+    {
+        private readonly Gst.GObject.Object _owner;
+
+        /// <summary>Initialises the view of an object.</summary>
+        /// <param name="owner">The wrapper that the view reads its handle from.</param>
+        internal Adapter(Gst.GObject.Object owner) => _owner = owner;
+
+        /// <inheritdoc/>
+        public nint Handle => _owner.Handle;
+    }
+
+    /// <summary>Creates the view of an object, for the type registry.</summary>
+    /// <param name="owner">The wrapper to present as the interface.</param>
+    /// <returns>The new view.</returns>
+    internal static object CreateAdapter(Gst.GObject.Object owner) => new Adapter(owner);
 }

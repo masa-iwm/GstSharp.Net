@@ -36,18 +36,26 @@ internal sealed class InterfaceEmitter
     private readonly SurfaceBuilder _surfaces;
     private readonly Overlays _overlays;
     private readonly EmissionCensus _census;
+    private readonly List<InterfaceRegistryEntry> _registry;
 
     /// <summary>Initializes a new instance of the <see cref="InterfaceEmitter"/> class.</summary>
     /// <param name="names">The name mapper.</param>
     /// <param name="surfaces">The member builder.</param>
     /// <param name="overlays">The overlay configuration.</param>
     /// <param name="census">The census of the run.</param>
-    internal InterfaceEmitter(NameMapper names, SurfaceBuilder surfaces, Overlays overlays, EmissionCensus census)
+    /// <param name="registry">The interface table of the module being emitted.</param>
+    internal InterfaceEmitter(
+        NameMapper names,
+        SurfaceBuilder surfaces,
+        Overlays overlays,
+        EmissionCensus census,
+        List<InterfaceRegistryEntry> registry)
     {
         _names = names;
         _surfaces = surfaces;
         _overlays = overlays;
         _census = census;
+        _registry = registry;
     }
 
     /// <summary>Emits every generated interface of one module.</summary>
@@ -113,12 +121,19 @@ internal sealed class InterfaceEmitter
         writer.WriteLine("nint Handle { get; }");
         writer.CloseBlock();
 
-        if (!surface.IsEmpty)
+        string qualifiedTypeName = module.ClrNamespace + "." + typeName;
+        bool hasTypeFunction = declaration.GlibGetType is { Length: > 0 };
+        if (!surface.IsEmpty || hasTypeFunction)
         {
             writer.WriteLine();
             writer.WriteLine(
                 "/// <summary>The methods of <c>" + CTypeOf(declaration) + "</c>.</summary>");
-            writer.WriteLine("public static unsafe partial class " + extensionsName);
+
+            // An interface without a single bound method still needs the class
+            // to hold its type function and its adapter, and an empty class of
+            // internal members adds nothing to the public surface.
+            writer.WriteLine(
+                (surface.IsEmpty ? "internal" : "public") + " static unsafe partial class " + extensionsName);
             writer.OpenBlock();
             ClassEmitter.WriteMembers(
                 writer,
@@ -126,11 +141,68 @@ internal sealed class InterfaceEmitter
                 module,
                 first: true,
                 CTypeOf(declaration),
-                module.ClrNamespace + "." + typeName);
+                qualifiedTypeName);
+            if (hasTypeFunction)
+            {
+                if (!surface.IsEmpty)
+                {
+                    writer.WriteLine();
+                }
+
+                WriteCast(writer, module, declaration, qualifiedTypeName);
+                _registry.Add(
+                    new InterfaceRegistryEntry(
+                        qualifiedTypeName,
+                        module.ClrNamespace + "." + extensionsName));
+            }
+
             writer.CloseBlock();
         }
 
         _census.Emitted(module.GirNamespace, "interface");
         return new GeneratedFile(module.ProjectDirectory + "/Generated/" + typeName + ".cs", writer.ToSource());
+    }
+
+    /// <summary>
+    /// Writes what <c>Gst.GObject.Object.As</c> needs of an interface: the
+    /// import of its type function, and the adapter that presents a wrapper
+    /// whose native instance implements the interface as that interface.
+    /// </summary>
+    /// <param name="writer">The target writer.</param>
+    /// <param name="module">The module being emitted.</param>
+    /// <param name="declaration">The gir interface.</param>
+    /// <param name="qualifiedTypeName">The C# name of the generated interface.</param>
+    private static void WriteCast(
+        CodeWriter writer,
+        ModuleInfo module,
+        GirInterface declaration,
+        string qualifiedTypeName)
+    {
+        ClassEmitter.WriteTypeFunction(
+            writer,
+            module,
+            declaration.GlibGetType,
+            CTypeOf(declaration),
+            hidesBase: false);
+        writer.WriteLine();
+        writer.WriteLine(
+            "/// <summary>Presents a <see cref=\"Gst.GObject.Object\"/> as <see cref=\""
+            + qualifiedTypeName + "\"/>, once the runtime has checked the type.</summary>");
+        writer.WriteLine("internal sealed class Adapter : " + qualifiedTypeName);
+        writer.OpenBlock();
+        writer.WriteLine("private readonly Gst.GObject.Object _owner;");
+        writer.WriteLine();
+        writer.WriteLine("/// <summary>Initialises the view of an object.</summary>");
+        writer.WriteLine("/// <param name=\"owner\">The wrapper that the view reads its handle from.</param>");
+        writer.WriteLine("internal Adapter(Gst.GObject.Object owner) => _owner = owner;");
+        writer.WriteLine();
+        writer.WriteLine("/// <inheritdoc/>");
+        writer.WriteLine("public nint Handle => _owner.Handle;");
+        writer.CloseBlock();
+        writer.WriteLine();
+        writer.WriteLine("/// <summary>Creates the view of an object, for the type registry.</summary>");
+        writer.WriteLine("/// <param name=\"owner\">The wrapper to present as the interface.</param>");
+        writer.WriteLine("/// <returns>The new view.</returns>");
+        writer.WriteLine("internal static object CreateAdapter(Gst.GObject.Object owner) => new Adapter(owner);");
     }
 }

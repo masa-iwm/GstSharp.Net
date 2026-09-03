@@ -15,4 +15,10 @@ internal static unsafe partial class GstTranscoderModule
         new Gst.Interop.ModuleTypeEntry(&Gst.Transcoder.Transcoder.GetGType, &Gst.Transcoder.Transcoder.CreateWrapper),
         new Gst.Interop.ModuleTypeEntry(&Gst.Transcoder.TranscoderSignalAdapter.GetGType, &Gst.Transcoder.TranscoderSignalAdapter.CreateWrapper),
     ];
+
+    /// <summary>Builds the interface table of the module.</summary>
+    /// <returns>One entry per generated GObject interface of the module.</returns>
+    internal static Gst.Interop.ModuleInterfaceEntry[] CreateInterfaceEntries() =>
+    [
+    ];
 }

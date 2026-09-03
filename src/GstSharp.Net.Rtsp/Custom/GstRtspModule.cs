@@ -30,6 +30,6 @@ internal static partial class GstRtspModule
     internal static void Initialize()
     {
         NativeLoader.EnsureRegistered(typeof(GstRtspModule).Assembly);
-        TypeRegistry.RegisterModule(new NativeModule("GstRtsp", CreateEntries()));
+        TypeRegistry.RegisterModule(new NativeModule("GstRtsp", CreateEntries(), CreateInterfaceEntries()));
     }
 }

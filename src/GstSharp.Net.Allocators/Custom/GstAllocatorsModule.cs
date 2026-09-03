@@ -30,6 +30,6 @@ internal static partial class GstAllocatorsModule
     internal static void Initialize()
     {
         NativeLoader.EnsureRegistered(typeof(GstAllocatorsModule).Assembly);
-        TypeRegistry.RegisterModule(new NativeModule("GstAllocators", CreateEntries()));
+        TypeRegistry.RegisterModule(new NativeModule("GstAllocators", CreateEntries(), CreateInterfaceEntries()));
     }
 }

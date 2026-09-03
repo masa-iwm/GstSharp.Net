@@ -16,4 +16,10 @@ internal static unsafe partial class GstSdpModule
         new Gst.Interop.ModuleTypeEntry(&Gst.Sdp.MIKEYPayload.GetGType, &Gst.Sdp.MIKEYPayload.CreateWrapper),
         new Gst.Interop.ModuleTypeEntry(&Gst.Sdp.SDPMessage.GetGType, &Gst.Sdp.SDPMessage.CreateWrapper),
     ];
+
+    /// <summary>Builds the interface table of the module.</summary>
+    /// <returns>One entry per generated GObject interface of the module.</returns>
+    internal static Gst.Interop.ModuleInterfaceEntry[] CreateInterfaceEntries() =>
+    [
+    ];
 }

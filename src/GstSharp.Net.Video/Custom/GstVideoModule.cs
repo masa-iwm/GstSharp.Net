@@ -30,6 +30,6 @@ internal static partial class GstVideoModule
     internal static void Initialize()
     {
         NativeLoader.EnsureRegistered(typeof(GstVideoModule).Assembly);
-        TypeRegistry.RegisterModule(new NativeModule("GstVideo", CreateEntries()));
+        TypeRegistry.RegisterModule(new NativeModule("GstVideo", CreateEntries(), CreateInterfaceEntries()));
     }
 }

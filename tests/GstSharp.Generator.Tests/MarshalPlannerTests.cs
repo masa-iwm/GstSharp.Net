@@ -1680,8 +1680,14 @@ public sealed class MarshalPlannerTests
             source,
             StringComparison.Ordinal);
 
-        // An interface has no instances of its own, so it is not registered.
-        Assert.DoesNotContain("Gst.ISizer", source, StringComparison.Ordinal);
+        // An interface has no instances of its own, so it is not in the type
+        // table; it is in the interface table that Object.As resolves against.
+        Assert.DoesNotContain("ModuleTypeEntry(&Gst.Sizer", source, StringComparison.Ordinal);
+        Assert.Contains(
+            "new Gst.Interop.ModuleInterfaceEntry(typeof(Gst.ISizer), "
+            + "&Gst.SizerExtensions.GetGType, &Gst.SizerExtensions.CreateAdapter),",
+            source,
+            StringComparison.Ordinal);
     }
 
     [Fact]

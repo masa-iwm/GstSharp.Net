@@ -114,4 +114,27 @@ public static unsafe partial class StreamVolumeExtensions
     /// <summary>The <c>gst_stream_volume_convert_volume</c> entry point.</summary>
     [LibraryImport("GstAudio", EntryPoint = "gst_stream_volume_convert_volume")]
     private static partial double GstStreamVolumeConvertVolume(int from, int to, double val);
+
+    /// <summary>Returns the <c>GType</c> that GObject registered <c>GstStreamVolume</c> under.</summary>
+    /// <returns>The type of the instances of this wrapper.</returns>
+    [LibraryImport("GstAudio", EntryPoint = "gst_stream_volume_get_type")]
+    internal static partial nuint GetGType();
+
+    /// <summary>Presents a <see cref="Gst.GObject.Object"/> as <see cref="Gst.Audio.IStreamVolume"/>, once the runtime has checked the type.</summary>
+    internal sealed class Adapter : Gst.Audio.IStreamVolume
+    {
+        private readonly Gst.GObject.Object _owner;
+
+        /// <summary>Initialises the view of an object.</summary>
+        /// <param name="owner">The wrapper that the view reads its handle from.</param>
+        internal Adapter(Gst.GObject.Object owner) => _owner = owner;
+
+        /// <inheritdoc/>
+        public nint Handle => _owner.Handle;
+    }
+
+    /// <summary>Creates the view of an object, for the type registry.</summary>
+    /// <param name="owner">The wrapper to present as the interface.</param>
+    /// <returns>The new view.</returns>
+    internal static object CreateAdapter(Gst.GObject.Object owner) => new Adapter(owner);
 }

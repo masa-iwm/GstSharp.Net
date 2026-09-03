@@ -303,7 +303,14 @@ internal static class GenerationPipeline
             registry,
             shared.Inherited);
 
-        InterfaceEmitter interfaceEmitter = new(shared.Names, surfaces, shared.Overlays, shared.Census);
+        List<InterfaceRegistryEntry> interfaceRegistry = [];
+        InterfaceEmitter interfaceEmitter = new(
+            shared.Names,
+            surfaces,
+            shared.Overlays,
+            shared.Census,
+            interfaceRegistry);
+
         CallbackEmitter callbackEmitter = new(planner, shared.Census);
         RegistryEmitter registryEmitter = new();
 
@@ -342,7 +349,7 @@ internal static class GenerationPipeline
             files.Add(SignalEmitter.EmitConnections(module, ns));
         }
 
-        files.Add(registryEmitter.Emit(module, ns, registry));
+        files.Add(registryEmitter.Emit(module, ns, registry, interfaceRegistry));
         return files;
     }
 

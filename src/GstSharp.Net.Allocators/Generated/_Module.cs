@@ -18,4 +18,11 @@ internal static unsafe partial class GstAllocatorsModule
         new Gst.Interop.ModuleTypeEntry(&Gst.Allocators.ShmAllocator.GetGType, &Gst.Allocators.ShmAllocator.CreateWrapper),
         new Gst.Interop.ModuleTypeEntry(&Gst.Allocators.UdmabufAllocator.GetGType, &Gst.Allocators.UdmabufAllocator.CreateWrapper),
     ];
+
+    /// <summary>Builds the interface table of the module.</summary>
+    /// <returns>One entry per generated GObject interface of the module.</returns>
+    internal static Gst.Interop.ModuleInterfaceEntry[] CreateInterfaceEntries() =>
+    [
+        new Gst.Interop.ModuleInterfaceEntry(typeof(Gst.Allocators.IPhysMemoryAllocator), &Gst.Allocators.PhysMemoryAllocatorExtensions.GetGType, &Gst.Allocators.PhysMemoryAllocatorExtensions.CreateAdapter),
+    ];
 }

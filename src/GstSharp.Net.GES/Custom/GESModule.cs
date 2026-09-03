@@ -37,6 +37,6 @@ internal static partial class GESModule
     internal static void Initialize()
     {
         NativeLoader.EnsureRegistered(typeof(GESModule).Assembly);
-        TypeRegistry.RegisterModule(new NativeModule("GES", CreateEntries()));
+        TypeRegistry.RegisterModule(new NativeModule("GES", CreateEntries(), CreateInterfaceEntries()));
     }
 }

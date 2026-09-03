@@ -134,4 +134,27 @@ public static unsafe partial class TagXmpWriterExtensions
     /// <summary>The <c>gst_tag_xmp_writer_tag_list_to_xmp_buffer</c> entry point.</summary>
     [LibraryImport("GstTag", EntryPoint = "gst_tag_xmp_writer_tag_list_to_xmp_buffer")]
     private static partial nint GstTagXmpWriterTagListToXmpBuffer(nint config, nint taglist, int readOnly);
+
+    /// <summary>Returns the <c>GType</c> that GObject registered <c>GstTagXmpWriter</c> under.</summary>
+    /// <returns>The type of the instances of this wrapper.</returns>
+    [LibraryImport("GstTag", EntryPoint = "gst_tag_xmp_writer_get_type")]
+    internal static partial nuint GetGType();
+
+    /// <summary>Presents a <see cref="Gst.GObject.Object"/> as <see cref="Gst.Tag.ITagXmpWriter"/>, once the runtime has checked the type.</summary>
+    internal sealed class Adapter : Gst.Tag.ITagXmpWriter
+    {
+        private readonly Gst.GObject.Object _owner;
+
+        /// <summary>Initialises the view of an object.</summary>
+        /// <param name="owner">The wrapper that the view reads its handle from.</param>
+        internal Adapter(Gst.GObject.Object owner) => _owner = owner;
+
+        /// <inheritdoc/>
+        public nint Handle => _owner.Handle;
+    }
+
+    /// <summary>Creates the view of an object, for the type registry.</summary>
+    /// <param name="owner">The wrapper to present as the interface.</param>
+    /// <returns>The new view.</returns>
+    internal static object CreateAdapter(Gst.GObject.Object owner) => new Adapter(owner);
 }

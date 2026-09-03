@@ -286,4 +286,27 @@ public static unsafe partial class RTSPExtensionExtensions
     /// <summary>The <c>gst_rtsp_extension_stream_select</c> entry point.</summary>
     [LibraryImport("GstRtsp", EntryPoint = "gst_rtsp_extension_stream_select")]
     private static partial int GstRtspExtensionStreamSelect(nint ext, nint url);
+
+    /// <summary>Returns the <c>GType</c> that GObject registered <c>GstRTSPExtension</c> under.</summary>
+    /// <returns>The type of the instances of this wrapper.</returns>
+    [LibraryImport("GstRtsp", EntryPoint = "gst_rtsp_extension_get_type")]
+    internal static partial nuint GetGType();
+
+    /// <summary>Presents a <see cref="Gst.GObject.Object"/> as <see cref="Gst.Rtsp.IRTSPExtension"/>, once the runtime has checked the type.</summary>
+    internal sealed class Adapter : Gst.Rtsp.IRTSPExtension
+    {
+        private readonly Gst.GObject.Object _owner;
+
+        /// <summary>Initialises the view of an object.</summary>
+        /// <param name="owner">The wrapper that the view reads its handle from.</param>
+        internal Adapter(Gst.GObject.Object owner) => _owner = owner;
+
+        /// <inheritdoc/>
+        public nint Handle => _owner.Handle;
+    }
+
+    /// <summary>Creates the view of an object, for the type registry.</summary>
+    /// <param name="owner">The wrapper to present as the interface.</param>
+    /// <returns>The new view.</returns>
+    internal static object CreateAdapter(Gst.GObject.Object owner) => new Adapter(owner);
 }

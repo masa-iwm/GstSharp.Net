@@ -34,7 +34,7 @@ internal static partial class GstModule
         // The generated type table of the module replaces the empty one as soon
         // as the class emitter lands; registering an empty module keeps the
         // registration path exercised until then.
-        TypeRegistry.RegisterModule(new NativeModule("Gst", CreateEntries()));
+        TypeRegistry.RegisterModule(new NativeModule("Gst", CreateEntries(), CreateInterfaceEntries()));
 
         // The Gio wrappers are hand written and ship in this assembly, so their
         // table has no module initialiser of its own to be registered from.

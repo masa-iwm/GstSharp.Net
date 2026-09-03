@@ -17,4 +17,11 @@ internal static unsafe partial class GstRtspModule
         new Gst.Interop.ModuleTypeEntry(&Gst.Rtsp.RTSPMessage.GetGType, &Gst.Rtsp.RTSPMessage.CreateWrapper),
         new Gst.Interop.ModuleTypeEntry(&Gst.Rtsp.RTSPUrl.GetGType, &Gst.Rtsp.RTSPUrl.CreateWrapper),
     ];
+
+    /// <summary>Builds the interface table of the module.</summary>
+    /// <returns>One entry per generated GObject interface of the module.</returns>
+    internal static Gst.Interop.ModuleInterfaceEntry[] CreateInterfaceEntries() =>
+    [
+        new Gst.Interop.ModuleInterfaceEntry(typeof(Gst.Rtsp.IRTSPExtension), &Gst.Rtsp.RTSPExtensionExtensions.GetGType, &Gst.Rtsp.RTSPExtensionExtensions.CreateAdapter),
+    ];
 }

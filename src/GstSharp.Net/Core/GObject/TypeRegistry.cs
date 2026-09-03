@@ -52,6 +52,9 @@ public static class TypeRegistry
     private static readonly ConcurrentDictionary<nuint, bool> MiniObjectTypes = new();
 
     private static FrozenDictionary<nuint, TypeEntry> _types = FrozenDictionary<nuint, TypeEntry>.Empty;
+    private static FrozenDictionary<Type, ModuleInterfaceEntry> _interfaces =
+        FrozenDictionary<Type, ModuleInterfaceEntry>.Empty;
+
     private static volatile bool _frozen;
 
     /// <summary>
@@ -136,9 +139,21 @@ public static class TypeRegistry
         lock (Sync)
         {
             Dictionary<nuint, TypeEntry> map = [];
+            Dictionary<Type, ModuleInterfaceEntry> interfaces = [];
 
             foreach (NativeModule module in Modules)
             {
+                foreach (ModuleInterfaceEntry entry in module.Interfaces)
+                {
+                    // The interface table is keyed by the managed interface, so
+                    // building it needs no native call: the get_type function of
+                    // an entry is only called when a cast asks for it.
+                    if (entry.IsValid && entry.InterfaceType is { } interfaceType)
+                    {
+                        interfaces[interfaceType] = entry;
+                    }
+                }
+
                 foreach (ModuleTypeEntry entry in module.Types)
                 {
                     if (!entry.IsValid)
@@ -171,6 +186,7 @@ public static class TypeRegistry
             }
 
             _types = map.ToFrozenDictionary();
+            _interfaces = interfaces.ToFrozenDictionary();
             _frozen = true;
         }
     }
@@ -383,6 +399,21 @@ public static class TypeRegistry
             // often a streaming thread of GStreamer.
             ExceptionTrap.Report(exception);
         }
+    }
+
+    /// <summary>
+    /// Looks a generated GObject interface up.
+    /// </summary>
+    /// <param name="interfaceType">The managed interface to look up.</param>
+    /// <param name="entry">The entry of the interface.</param>
+    /// <returns>
+    /// <see langword="true"/> when a registered module binds
+    /// <paramref name="interfaceType"/>.
+    /// </returns>
+    internal static bool TryGetInterface(Type interfaceType, out ModuleInterfaceEntry entry)
+    {
+        EnsureFrozen();
+        return _interfaces.TryGetValue(interfaceType, out entry);
     }
 
     private static FrozenDictionary<nuint, TypeEntry> EnsureFrozen()

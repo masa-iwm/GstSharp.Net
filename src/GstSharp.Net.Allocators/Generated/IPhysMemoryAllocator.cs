@@ -14,3 +14,30 @@ public interface IPhysMemoryAllocator
     /// <summary>Gets the native instance that implements the interface.</summary>
     nint Handle { get; }
 }
+
+/// <summary>The methods of <c>GstPhysMemoryAllocator</c>.</summary>
+internal static unsafe partial class PhysMemoryAllocatorExtensions
+{
+    /// <summary>Returns the <c>GType</c> that GObject registered <c>GstPhysMemoryAllocator</c> under.</summary>
+    /// <returns>The type of the instances of this wrapper.</returns>
+    [LibraryImport("GstAllocators", EntryPoint = "gst_phys_memory_allocator_get_type")]
+    internal static partial nuint GetGType();
+
+    /// <summary>Presents a <see cref="Gst.GObject.Object"/> as <see cref="Gst.Allocators.IPhysMemoryAllocator"/>, once the runtime has checked the type.</summary>
+    internal sealed class Adapter : Gst.Allocators.IPhysMemoryAllocator
+    {
+        private readonly Gst.GObject.Object _owner;
+
+        /// <summary>Initialises the view of an object.</summary>
+        /// <param name="owner">The wrapper that the view reads its handle from.</param>
+        internal Adapter(Gst.GObject.Object owner) => _owner = owner;
+
+        /// <inheritdoc/>
+        public nint Handle => _owner.Handle;
+    }
+
+    /// <summary>Creates the view of an object, for the type registry.</summary>
+    /// <param name="owner">The wrapper to present as the interface.</param>
+    /// <returns>The new view.</returns>
+    internal static object CreateAdapter(Gst.GObject.Object owner) => new Adapter(owner);
+}

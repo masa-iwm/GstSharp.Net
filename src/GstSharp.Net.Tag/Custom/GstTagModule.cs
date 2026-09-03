@@ -30,6 +30,6 @@ internal static partial class GstTagModule
     internal static void Initialize()
     {
         NativeLoader.EnsureRegistered(typeof(GstTagModule).Assembly);
-        TypeRegistry.RegisterModule(new NativeModule("GstTag", CreateEntries()));
+        TypeRegistry.RegisterModule(new NativeModule("GstTag", CreateEntries(), CreateInterfaceEntries()));
     }
 }

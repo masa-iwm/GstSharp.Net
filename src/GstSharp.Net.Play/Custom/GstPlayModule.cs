@@ -30,6 +30,6 @@ internal static partial class GstPlayModule
     internal static void Initialize()
     {
         NativeLoader.EnsureRegistered(typeof(GstPlayModule).Assembly);
-        TypeRegistry.RegisterModule(new NativeModule("GstPlay", CreateEntries()));
+        TypeRegistry.RegisterModule(new NativeModule("GstPlay", CreateEntries(), CreateInterfaceEntries()));
     }
 }
