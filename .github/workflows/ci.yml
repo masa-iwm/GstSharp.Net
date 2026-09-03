@@ -250,7 +250,7 @@ jobs:
       # upload step already takes.
       - name: Test against the installation
         env:
-          GSTSHARP_REQUIRED_ELEMENTS: webrtcbin,nicesrc,dtlssrtpenc,audiomixer,theoraenc,theoradec,vorbisenc,uritranscodebin,transcodebin,oggmux,rtpL16pay,alsasink
+          GSTSHARP_REQUIRED_ELEMENTS: webrtcbin,nicesrc,dtlssrtpenc,audiomixer,theoraenc,theoradec,vorbisenc,uritranscodebin,transcodebin,oggmux,rtpL16pay,rtspsrc,alsasink
         run: dotnet test tests/GstSharp.IntegrationTests --no-restore --logger "trx;LogFileName=integration.trx" --results-directory artifacts/test-results --blame-hang --blame-hang-timeout 5m --blame-hang-dump-type mini
 
       # The whole consumer path without AOT: parse a pipeline, cast the sink
@@ -374,6 +374,22 @@ jobs:
       # neither a display nor a sound card to give them.
       - name: PlaybinPlayer
         run: dotnet run --project samples/PlaybinPlayer --no-restore -- --timeout 30
+
+      # The test-launch port: an RTSP server that mounts one factory, serves it
+      # and stops itself again in the order docs/ownership.md prescribes. No
+      # client is attached, so what the step gates is the server half, which is
+      # the part this binding owns by hand: the mounted factory survives the
+      # mount with its handler on it, Attach answers a source, Detach takes it
+      # off the sample's own context again and the wait for the clients to
+      # finish closing ends. Nothing of the launch line is instantiated without
+      # a client, so no plugin beyond the RTSP server library itself is needed
+      # here; a real client playing a real mount is what the integration tests
+      # do. --timeout 5 is what ends the step, since the sample serves until
+      # Ctrl-C otherwise, and --port 0 lets the operating system pick the
+      # port so the step never collides with whatever else the runner has
+      # bound.
+      - name: RtspServer
+        run: dotnet run --project samples/RtspServer --no-restore -- --port 0 --timeout 5
 
       # The inspect-lite port, run the two ways it can be run. The census walks
       # the whole registry and needs no plugin in particular; the element page
@@ -519,6 +535,10 @@ jobs:
       - name: PlaybinPlayer
         run: dotnet run --project samples/PlaybinPlayer --no-restore -- --timeout 30
 
+      # Same run as the Linux leg; see the comments there.
+      - name: RtspServer
+        run: dotnet run --project samples/RtspServer --no-restore -- --port 0 --timeout 5
+
       - name: GstDeviceMonitor
         run: dotnet run --project samples/GstDeviceMonitor --no-restore
 
@@ -648,6 +668,10 @@ jobs:
       # Same run as the Linux leg; see the comments there.
       - name: PlaybinPlayer
         run: dotnet run --project samples/PlaybinPlayer --no-restore -- --timeout 30
+
+      # Same run as the Linux leg; see the comments there.
+      - name: RtspServer
+        run: dotnet run --project samples/RtspServer --no-restore -- --port 0 --timeout 5
 
       # Same two runs as the Linux leg; see the comments there.
       - name: GstInspect

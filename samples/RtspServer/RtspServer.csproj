@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>GstSharp.Samples.RtspServer</RootNamespace>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/GstSharp.Net/GstSharp.Net.csproj" />
+
+    <!-- The server, its mount points and its media factories. The Rtsp, Sdp
+         and Net packages the module needs come with it. -->
+    <ProjectReference Include="../../src/GstSharp.Net.RtspServer/GstSharp.Net.RtspServer.csproj" />
+  </ItemGroup>
+
+</Project>

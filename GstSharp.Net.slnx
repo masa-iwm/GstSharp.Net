@@ -20,6 +20,7 @@
     <Project Path="samples/GstTypefind/GstTypefind.csproj" />
     <Project Path="samples/PlaybinPlayer/PlaybinPlayer.csproj" />
     <Project Path="samples/RtpPacketDump/RtpPacketDump.csproj" />
+    <Project Path="samples/RtspServer/RtspServer.csproj" />
   </Folder>
   <Folder Name="/samples/tutorials/">
     <Project Path="samples/tutorials/BasicTutorial01/BasicTutorial01.csproj" />
