@@ -378,7 +378,20 @@ public sealed class MiniObjectValueTests
         try
         {
             Assert.NotEqual(StateChangeReturn.Failure, pipeline.SetState(State.Paused));
-            pipeline.GetState(out State _, out State _, ClockTime.None);
+
+            // Bounded: ClockTime.None would wait for a preroll that a broken
+            // installation never delivers, and hang the whole test run with it.
+            StateChangeReturn reached = pipeline.GetState(
+                out State _,
+                out State _,
+                ClockTime.FromSeconds(10));
+
+            Assert.NotEqual(StateChangeReturn.Failure, reached);
+
+            if (reached == StateChangeReturn.Async)
+            {
+                Assert.Fail("the pipeline did not reach PAUSED within 10 seconds");
+            }
 
             Assert.True(fired.Wait(TimeSpan.FromSeconds(10)));
         }

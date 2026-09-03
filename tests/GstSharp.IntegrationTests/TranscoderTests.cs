@@ -74,9 +74,33 @@ public sealed class TranscoderTests
 
         using TranscodeFiles files = TranscodeFiles.Create();
 
-        using Transcoder transcoder = Transcoder.New(files.SourceUri, files.DestinationUri, OggVorbis);
+        // Not disposed through `using`: gst_transcoder_run blocks, and a run
+        // that never comes back would otherwise be disposed under the thread
+        // still standing in it. The transcoder is disposed on the path that
+        // completed and left alone on the path that did not.
+        Transcoder transcoder = Transcoder.New(files.SourceUri, files.DestinationUri, OggVorbis);
 
-        Assert.True(transcoder.Run(), "gst_transcoder_run reported a failure");
+        // The synchronous run has no upper bound of its own: a pipeline that
+        // never reaches its end of stream keeps the call, and with it the whole
+        // test run, for good. It is therefore made on a thread of its own and
+        // waited for with the patience the asynchronous fact gives the same
+        // transcoding.
+        //
+        // Spelled out, because `Task` is Gst.Task in this file.
+        System.Threading.Tasks.Task<bool> run = System.Threading.Tasks.Task.Run(transcoder.Run);
+
+        if (!run.Wait(Patience))
+        {
+            Assert.Fail(
+                $"gst_transcoder_run did not come back within {Patience.TotalSeconds} seconds; the transcoder is "
+                + "left undisposed, because the run that hangs still holds it");
+        }
+
+        // The result is read through the awaiter rather than through Result, so
+        // that a GException the run raised arrives as itself.
+        Assert.True(run.GetAwaiter().GetResult(), "gst_transcoder_run reported a failure");
+
+        transcoder.Dispose();
 
         FileInfo written = new(files.DestinationPath);
         Assert.True(written.Exists, "the transcoder wrote no destination file");
