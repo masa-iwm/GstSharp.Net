@@ -67,6 +67,26 @@ public sealed class InterfaceEmitterTests
     }
 
     [Fact]
+    public void TheInterfaceTableIsOrderedByTheNameOfTheInterface()
+    {
+        // The order is ordinal and not the order of the gir, so that a run of
+        // the generator produces the same file every time.
+        string source = Source("GstSharp.Net.Video/Generated/_Module.cs");
+
+        int colorBalance = source.IndexOf("IColorBalance", StringComparison.Ordinal);
+        int navigation = source.IndexOf("INavigation", StringComparison.Ordinal);
+        int direction = source.IndexOf("IVideoDirection", StringComparison.Ordinal);
+        int orientation = source.IndexOf("IVideoOrientation", StringComparison.Ordinal);
+        int overlay = source.IndexOf("IVideoOverlay", StringComparison.Ordinal);
+
+        Assert.True(colorBalance >= 0 && navigation >= 0 && direction >= 0 && orientation >= 0 && overlay >= 0);
+        Assert.True(colorBalance < navigation);
+        Assert.True(navigation < direction);
+        Assert.True(direction < orientation);
+        Assert.True(orientation < overlay);
+    }
+
+    [Fact]
     public void AModuleWithoutInterfacesRegistersAnEmptyTable()
     {
         Assert.Contains(

@@ -15,11 +15,11 @@ public interface IPlayVideoRenderer
     nint Handle { get; }
 }
 
-/// <summary>The methods of <c>GstPlayVideoRenderer</c>.</summary>
+/// <summary>The type function and adapter of <c>GstPlayVideoRenderer</c>.</summary>
 internal static unsafe partial class PlayVideoRendererExtensions
 {
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstPlayVideoRenderer</c> under.</summary>
-    /// <returns>The type of the instances of this wrapper.</returns>
+    /// <returns>The type of the <c>GstPlayVideoRenderer</c> interface.</returns>
     [LibraryImport("GstPlay", EntryPoint = "gst_play_video_renderer_get_type")]
     internal static partial nuint GetGType();
 

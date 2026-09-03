@@ -18,11 +18,11 @@ public interface IVideoDirection
     nint Handle { get; }
 }
 
-/// <summary>The methods of <c>GstVideoDirection</c>.</summary>
+/// <summary>The type function and adapter of <c>GstVideoDirection</c>.</summary>
 internal static unsafe partial class VideoDirectionExtensions
 {
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstVideoDirection</c> under.</summary>
-    /// <returns>The type of the instances of this wrapper.</returns>
+    /// <returns>The type of the <c>GstVideoDirection</c> interface.</returns>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_direction_get_type")]
     internal static partial nuint GetGType();
 

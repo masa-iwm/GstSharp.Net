@@ -456,7 +456,7 @@ public static unsafe partial class VideoOverlayExtensions
     private static partial int GstVideoOverlaySetProperty(nint @object, int lastPropId, uint propertyId, Gst.GObject.GValueNative* value);
 
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstVideoOverlay</c> under.</summary>
-    /// <returns>The type of the instances of this wrapper.</returns>
+    /// <returns>The type of the <c>GstVideoOverlay</c> interface.</returns>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_overlay_get_type")]
     internal static partial nuint GetGType();
 

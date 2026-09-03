@@ -113,7 +113,7 @@ public static unsafe partial class URIHandlerExtensions
     private static partial int GstUriHandlerSetUri(nint handler, byte* uri, nint* error);
 
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstURIHandler</c> under.</summary>
-    /// <returns>The type of the instances of this wrapper.</returns>
+    /// <returns>The type of the <c>GstURIHandler</c> interface.</returns>
     [LibraryImport("Gst", EntryPoint = "gst_uri_handler_get_type")]
     internal static partial nuint GetGType();
 

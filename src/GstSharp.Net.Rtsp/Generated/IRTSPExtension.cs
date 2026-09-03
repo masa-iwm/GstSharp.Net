@@ -288,7 +288,7 @@ public static unsafe partial class RTSPExtensionExtensions
     private static partial int GstRtspExtensionStreamSelect(nint ext, nint url);
 
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstRTSPExtension</c> under.</summary>
-    /// <returns>The type of the instances of this wrapper.</returns>
+    /// <returns>The type of the <c>GstRTSPExtension</c> interface.</returns>
     [LibraryImport("GstRtsp", EntryPoint = "gst_rtsp_extension_get_type")]
     internal static partial nuint GetGType();
 

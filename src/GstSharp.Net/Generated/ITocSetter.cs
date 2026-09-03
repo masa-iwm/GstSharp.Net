@@ -92,7 +92,7 @@ public static unsafe partial class TocSetterExtensions
     private static partial void GstTocSetterSetToc(nint setter, nint toc);
 
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstTocSetter</c> under.</summary>
-    /// <returns>The type of the instances of this wrapper.</returns>
+    /// <returns>The type of the <c>GstTocSetter</c> interface.</returns>
     [LibraryImport("Gst", EntryPoint = "gst_toc_setter_get_type")]
     internal static partial nuint GetGType();
 

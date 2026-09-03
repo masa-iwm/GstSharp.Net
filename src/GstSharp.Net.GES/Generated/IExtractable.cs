@@ -116,7 +116,7 @@ public static unsafe partial class ExtractableExtensions
     private static partial int GesExtractableSetAsset(nint self, nint asset);
 
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GESExtractable</c> under.</summary>
-    /// <returns>The type of the instances of this wrapper.</returns>
+    /// <returns>The type of the <c>GESExtractable</c> interface.</returns>
     [LibraryImport("GES", EntryPoint = "ges_extractable_get_type")]
     internal static partial nuint GetGType();
 

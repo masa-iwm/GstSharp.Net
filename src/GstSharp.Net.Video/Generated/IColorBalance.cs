@@ -215,7 +215,7 @@ public static unsafe partial class ColorBalanceExtensions
     private static partial void GstColorBalanceValueChanged(nint balance, nint channel, int value);
 
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstColorBalance</c> under.</summary>
-    /// <returns>The type of the instances of this wrapper.</returns>
+    /// <returns>The type of the <c>GstColorBalance</c> interface.</returns>
     [LibraryImport("GstVideo", EntryPoint = "gst_color_balance_get_type")]
     internal static partial nuint GetGType();
 

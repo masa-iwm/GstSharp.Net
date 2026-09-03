@@ -916,16 +916,22 @@ internal sealed class ClassEmitter
     /// its own type function, so a derived one hides the one it inherits and has
     /// to say so.
     /// </param>
+    /// <param name="returns">
+    /// What the <c>returns</c> line of the documentation says. A type function
+    /// of an interface answers for the interface itself and not for the
+    /// instances of a wrapper, so it words it differently.
+    /// </param>
     internal static void WriteTypeFunction(
         CodeWriter writer,
         ModuleInfo module,
         string? getType,
         string cType,
-        bool hidesBase)
+        bool hidesBase,
+        string returns = "The type of the instances of this wrapper.")
     {
         writer.WriteLine(
             "/// <summary>Returns the <c>GType</c> that GObject registered <c>" + cType + "</c> under.</summary>");
-        writer.WriteLine("/// <returns>The type of the instances of this wrapper.</returns>");
+        writer.WriteLine("/// <returns>" + returns + "</returns>");
         writer.WriteLine("[LibraryImport(\"" + module.NativeLibrary + "\", EntryPoint = \"" + getType + "\")]");
         writer.WriteLine("internal static " + (hidesBase ? "new " : string.Empty) + "partial nuint GetGType();");
     }

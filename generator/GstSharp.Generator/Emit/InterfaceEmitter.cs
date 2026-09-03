@@ -127,7 +127,9 @@ internal sealed class InterfaceEmitter
         {
             writer.WriteLine();
             writer.WriteLine(
-                "/// <summary>The methods of <c>" + CTypeOf(declaration) + "</c>.</summary>");
+                surface.IsEmpty
+                    ? "/// <summary>The type function and adapter of <c>" + CTypeOf(declaration) + "</c>.</summary>"
+                    : "/// <summary>The methods of <c>" + CTypeOf(declaration) + "</c>.</summary>");
 
             // An interface without a single bound method still needs the class
             // to hold its type function and its adapter, and an empty class of
@@ -183,7 +185,8 @@ internal sealed class InterfaceEmitter
             module,
             declaration.GlibGetType,
             CTypeOf(declaration),
-            hidesBase: false);
+            hidesBase: false,
+            returns: "The type of the <c>" + CTypeOf(declaration) + "</c> interface.");
         writer.WriteLine();
         writer.WriteLine(
             "/// <summary>Presents a <see cref=\"Gst.GObject.Object\"/> as <see cref=\""

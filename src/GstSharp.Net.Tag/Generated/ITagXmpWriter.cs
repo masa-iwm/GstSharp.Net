@@ -136,7 +136,7 @@ public static unsafe partial class TagXmpWriterExtensions
     private static partial nint GstTagXmpWriterTagListToXmpBuffer(nint config, nint taglist, int readOnly);
 
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstTagXmpWriter</c> under.</summary>
-    /// <returns>The type of the instances of this wrapper.</returns>
+    /// <returns>The type of the <c>GstTagXmpWriter</c> interface.</returns>
     [LibraryImport("GstTag", EntryPoint = "gst_tag_xmp_writer_get_type")]
     internal static partial nuint GetGType();
 

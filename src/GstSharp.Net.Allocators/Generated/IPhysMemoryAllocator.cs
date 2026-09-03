@@ -15,11 +15,11 @@ public interface IPhysMemoryAllocator
     nint Handle { get; }
 }
 
-/// <summary>The methods of <c>GstPhysMemoryAllocator</c>.</summary>
+/// <summary>The type function and adapter of <c>GstPhysMemoryAllocator</c>.</summary>
 internal static unsafe partial class PhysMemoryAllocatorExtensions
 {
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstPhysMemoryAllocator</c> under.</summary>
-    /// <returns>The type of the instances of this wrapper.</returns>
+    /// <returns>The type of the <c>GstPhysMemoryAllocator</c> interface.</returns>
     [LibraryImport("GstAllocators", EntryPoint = "gst_phys_memory_allocator_get_type")]
     internal static partial nuint GetGType();
 

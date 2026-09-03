@@ -1007,7 +1007,7 @@ public static unsafe partial class NavigationExtensions
     private static partial void GstNavigationQuerySetCommandsv(nint query, int nCmds, Gst.Video.NavigationCommand* cmds);
 
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstNavigation</c> under.</summary>
-    /// <returns>The type of the instances of this wrapper.</returns>
+    /// <returns>The type of the <c>GstNavigation</c> interface.</returns>
     [LibraryImport("GstVideo", EntryPoint = "gst_navigation_get_type")]
     internal static partial nuint GetGType();
 

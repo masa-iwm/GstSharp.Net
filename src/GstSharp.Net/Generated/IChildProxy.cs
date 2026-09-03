@@ -400,7 +400,7 @@ public static unsafe partial class ChildProxyExtensions
     private static partial void GstChildProxySetProperty(nint @object, byte* name, Gst.GObject.GValueNative* value);
 
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstChildProxy</c> under.</summary>
-    /// <returns>The type of the instances of this wrapper.</returns>
+    /// <returns>The type of the <c>GstChildProxy</c> interface.</returns>
     [LibraryImport("Gst", EntryPoint = "gst_child_proxy_get_type")]
     internal static partial nuint GetGType();
 

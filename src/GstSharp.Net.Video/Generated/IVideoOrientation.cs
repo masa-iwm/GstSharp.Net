@@ -179,7 +179,7 @@ public static unsafe partial class VideoOrientationExtensions
     private static partial int GstVideoOrientationFromTag(nint taglist, int* method);
 
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstVideoOrientation</c> under.</summary>
-    /// <returns>The type of the instances of this wrapper.</returns>
+    /// <returns>The type of the <c>GstVideoOrientation</c> interface.</returns>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_orientation_get_type")]
     internal static partial nuint GetGType();
 

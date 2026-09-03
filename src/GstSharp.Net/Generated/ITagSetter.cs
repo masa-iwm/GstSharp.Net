@@ -196,7 +196,7 @@ public static unsafe partial class TagSetterExtensions
     private static partial void GstTagSetterSetTagMergeMode(nint setter, int mode);
 
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstTagSetter</c> under.</summary>
-    /// <returns>The type of the instances of this wrapper.</returns>
+    /// <returns>The type of the <c>GstTagSetter</c> interface.</returns>
     [LibraryImport("Gst", EntryPoint = "gst_tag_setter_get_type")]
     internal static partial nuint GetGType();
 

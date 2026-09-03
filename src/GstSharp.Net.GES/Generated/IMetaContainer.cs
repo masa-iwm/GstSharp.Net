@@ -1142,7 +1142,7 @@ public static unsafe partial class MetaContainerExtensions
     private static partial int GesMetaContainerSetUint64(nint container, byte* metaItem, ulong value);
 
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GESMetaContainer</c> under.</summary>
-    /// <returns>The type of the instances of this wrapper.</returns>
+    /// <returns>The type of the <c>GESMetaContainer</c> interface.</returns>
     [LibraryImport("GES", EntryPoint = "ges_meta_container_get_type")]
     internal static partial nuint GetGType();
 
