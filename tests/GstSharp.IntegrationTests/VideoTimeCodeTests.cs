@@ -250,4 +250,55 @@ public sealed class VideoTimeCodeTests
         Assert.Null(VideoGlobal.BufferAddVideoTimeCodeMetaFull(
             buffer, 25, 1, null, VideoTimeCodeFlags.None, 1, 2, 3, 30, 0));
     }
+
+    /// <summary>
+    /// The timecode a metadata item embeds is handed out as a copy of itself,
+    /// with the daily jam it carries referenced along with it.
+    /// </summary>
+    [Fact]
+    public void TheTimeCodeMetaHandsOutACopyOfWhatItWasAddedWith()
+    {
+        using Buffer buffer = Assert.IsType<Buffer>(Buffer.NewAllocate(null, 16, null));
+
+        using VideoTimeCode plain = VideoTimeCode.New(
+            25, 1, null, VideoTimeCodeFlags.None, 1, 2, 3, 4, 0);
+
+        VideoTimeCodeMeta? withoutJam = VideoGlobal.BufferAddVideoTimeCodeMeta(buffer, plain);
+        Assert.NotNull(withoutJam);
+
+        using (VideoTimeCode copied = withoutJam.GetTc())
+        {
+            Assert.Equal(1u, copied.Hours);
+            Assert.Equal(2u, copied.Minutes);
+            Assert.Equal(3u, copied.Seconds);
+            Assert.Equal(4u, copied.Frames);
+        }
+
+        GDateTime? jam = GDateTime.FromUnixUtc(1_755_000_000L);
+        Assert.NotNull(jam);
+
+        using (jam)
+        {
+            using VideoTimeCode dated = VideoTimeCode.New(
+                25, 1, jam, VideoTimeCodeFlags.None, 5, 6, 7, 8, 0);
+
+            VideoTimeCodeMeta? withJam = VideoGlobal.BufferAddVideoTimeCodeMeta(buffer, dated);
+            Assert.NotNull(withJam);
+
+            // The copy references a daily jam of its own, so the one the call
+            // was handed is untouched by it.
+            using (VideoTimeCode copied = withJam.GetTc())
+            {
+                Assert.Equal(5u, copied.Hours);
+                Assert.Equal(8u, copied.Frames);
+                Assert.False(jam.IsDisposed);
+            }
+
+            // Disposing that copy leaves the item reading the same value,
+            // because what the item holds is a structure of its own.
+            using VideoTimeCode again = withJam.GetTc();
+            Assert.Equal(5u, again.Hours);
+            Assert.Equal(6u, again.Minutes);
+        }
+    }
 }

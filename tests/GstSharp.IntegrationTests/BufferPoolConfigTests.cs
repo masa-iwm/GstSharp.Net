@@ -89,6 +89,39 @@ public sealed class BufferPoolConfigTests
     }
 
     [Fact]
+    public void ABufferNamesThePoolItWasAcquiredFrom()
+    {
+        using BufferPool pool = BufferPool.New();
+        using Caps caps = Caps.NewEmptySimple("video/x-raw");
+
+        Structure config = pool.GetConfig();
+        BufferPool.ConfigSetParams(config, caps, size: 64, minBuffers: 1, maxBuffers: 2);
+        Assert.True(pool.SetConfig(config));
+        Assert.True(pool.SetActive(true));
+
+        Assert.Equal(FlowReturn.Ok, pool.AcquireBuffer(out Gst.Buffer? pooled, default));
+
+        using (pooled)
+        {
+            Assert.NotNull(pooled);
+
+            // The field holds a reference of its own and the wrapper of a
+            // GObject is interned, so the read answers the very instance the
+            // pool was created as.
+            BufferPool? answered = pooled.Pool;
+            Assert.NotNull(answered);
+            Assert.Same(pool, answered);
+        }
+
+        // A buffer no pool handed out says so with null: that is the normal
+        // state of a buffer rather than a failure to read the field.
+        using Gst.Buffer plain = Gst.Buffer.New();
+        Assert.Null(plain.Pool);
+
+        Assert.True(pool.SetActive(false));
+    }
+
+    [Fact]
     public void ARefusedConfigurationIsConsumedAsWell()
     {
         using BufferPool pool = BufferPool.New();

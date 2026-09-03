@@ -205,6 +205,50 @@ public sealed class VideoCodecFrameTests
     }
 
     /// <summary>
+    /// The buffers a codec frame names and the caps its output state carries,
+    /// read where the C contract puts them: inside the call the decoder made,
+    /// on its streaming thread, under the stream lock it holds.
+    /// </summary>
+    /// <remarks>
+    /// The negotiation the probe rides on is the moment the output state exists
+    /// and the frame is still on the decoder's list, so it is the one place a
+    /// read of either is inside the window. The two HDR pointers are the
+    /// nullable path of the copy: a Theora stream carries no HDR metadata, and
+    /// <see langword="null"/> is what says so.
+    /// </remarks>
+    [RequiresElementFact("videotestsrc", "theoraenc", "theoradec", "fakesink")]
+    public void AFrameNamesItsInputBufferAndTheOutputStateItsCaps()
+    {
+        RunThroughTheDecoder(decoder =>
+        {
+            using VideoCodecFrame frame = Assert.IsType<VideoCodecFrame>(decoder.GetOldestFrame());
+
+            // The decoder assigned the input before it handed the frame to the
+            // subclass, and the subclass has produced no output yet.
+            using Gst.Buffer? input = frame.GetInputBuffer();
+            Assert.NotNull(input);
+            Assert.True(input.GetSize() > 0);
+
+            Assert.Null(frame.GetOutputBuffer());
+
+            using VideoCodecState state = Assert.IsType<VideoCodecState>(decoder.GetOutputState());
+
+            using Caps? caps = state.GetCaps();
+            Assert.NotNull(caps);
+            Assert.Equal("video/x-raw", caps.GetStructure(0).GetName());
+
+            // The allocation caps are written on a negotiation of their own, so
+            // whichever of the two answers this is, it is an answer.
+            state.GetAllocationCaps()?.Dispose();
+
+            // No HDR metadata on this stream: the copy answers null rather than
+            // a zeroed structure.
+            Assert.Null(state.ContentLightLevel);
+            Assert.Null(state.MasteringDisplayInfo);
+        });
+    }
+
+    /// <summary>
     /// Runs the pipeline to the end of its stream and calls
     /// <paramref name="onFirstCaps"/> from the downstream event probe of the
     /// decoder's src pad, on the first CAPS event.

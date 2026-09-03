@@ -443,6 +443,67 @@ public sealed class BufferMetaTests
         }
     }
 
+    /// <summary>
+    /// The embedded info of an audio meta, whose accessor is named after the
+    /// type it hands out because <c>GetInfo</c> is the metadata registration.
+    /// </summary>
+    [Fact]
+    public void AudioMetaCopiesOutTheInfoItWasAddedWith()
+    {
+        using AudioInfo info = NewNonInterleavedInfo();
+        using Buffer buffer = Assert.IsType<Buffer>(Buffer.NewAllocate(null, 400, null));
+
+        AudioMeta? meta = AudioGlobal.BufferAddAudioMeta(buffer, info, samples: 100);
+        Assert.NotNull(meta);
+
+        using AudioInfo copied = meta.GetAudioInfo();
+
+        Assert.Equal(info.Format, copied.Format);
+        Assert.Equal(info.Rate, copied.Rate);
+        Assert.Equal(info.Channels, copied.Channels);
+        Assert.Equal(info.Layout, copied.Layout);
+
+        // The copy is the caller's: disposing it leaves the meta reading the
+        // same values, because what it holds is a structure of its own.
+        copied.Dispose();
+
+        using AudioInfo again = meta.GetAudioInfo();
+        Assert.Equal(info.Rate, again.Rate);
+    }
+
+    /// <summary>
+    /// The structure of a protection meta, under the name of its type for the
+    /// same reason.
+    /// </summary>
+    [Fact]
+    public void ProtectionMetaCopiesOutTheStructureItWasAddedWith()
+    {
+        using Buffer buffer = Buffer.New();
+        Structure info = Structure.NewEmpty("application/x-cenc");
+
+        using (Gst.GObject.Value value = Gst.GObject.Value.New(Gst.GObject.GType.UInt))
+        {
+            value.SetUInt(16u);
+            info.SetValue("iv_size", value);
+        }
+
+        ProtectionMeta meta = buffer.AddProtectionMeta(info);
+
+        using Structure? copied = meta.GetStructure();
+        Assert.NotNull(copied);
+        Assert.Equal("application/x-cenc", copied.GetName());
+        Assert.True(copied.GetUint("iv_size", out uint size));
+        Assert.Equal(16u, size);
+
+        // Disposing the copy frees a structure of the caller's own, so the one
+        // the meta owns is still there to be read again.
+        copied.Dispose();
+
+        using Structure? second = meta.GetStructure();
+        Assert.NotNull(second);
+        Assert.Equal("application/x-cenc", second.GetName());
+    }
+
     private static Buffer NewBufferWithThreeTimestamps(Caps reference)
     {
         Buffer buffer = Buffer.New();
