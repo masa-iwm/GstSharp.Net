@@ -89,7 +89,15 @@ public sealed class TranscoderTests
         // Spelled out, because `Task` is Gst.Task in this file.
         System.Threading.Tasks.Task<bool> run = System.Threading.Tasks.Task.Run(transcoder.Run);
 
-        if (!run.Wait(Patience))
+        // The wait is a WhenAny rather than Task.Wait, because Wait rethrows a
+        // faulted run as an AggregateException, which would hide the exception
+        // the read below is there to surface.
+        System.Threading.Tasks.Task completed = System.Threading.Tasks.Task
+            .WhenAny(run, System.Threading.Tasks.Task.Delay(Patience))
+            .GetAwaiter()
+            .GetResult();
+
+        if (!ReferenceEquals(completed, run))
         {
             Assert.Fail(
                 $"gst_transcoder_run did not come back within {Patience.TotalSeconds} seconds; the transcoder is "

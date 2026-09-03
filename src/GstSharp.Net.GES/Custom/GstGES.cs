@@ -31,7 +31,9 @@ namespace GES;
 /// <see href="https://github.com/masa-iwm/GstSharp.Net/blob/main/docs/ownership.md#the-gtype-registry">The GType registry</see>.
 /// <c>GstSharp.Initialize</c> closes that hole on its own, by sweeping the
 /// assemblies that are loaded and running their module initialisers, and it
-/// keeps doing so for assemblies that are loaded later.
+/// keeps doing so for assemblies that are loaded later. The sweep reaches
+/// assemblies, not wrappers: a wrapper the registry built before this assembly
+/// was loaded keeps the type it was created with.
 /// </para>
 /// <para>
 /// What it cannot do is initialise the editing services, and that is the second

@@ -1470,8 +1470,8 @@ internal sealed class MarshalPlanner
         {
             _diagnostics.Warn(
                 "GEN0017",
-                $"The {string.Join(", ", ignored)} override of '{key}' is ignored: {path} is planned on its own "
-                + "path and takes no correction but nullable.");
+                $"Of the correction of '{key}', {string.Join(", ", ignored)} is ignored: {path} is planned "
+                + "on its own path and takes no correction but nullable.");
         }
 
         return overlay.Nullable ?? declared;

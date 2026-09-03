@@ -230,20 +230,24 @@ jobs:
       # that installs the plugins.
       #
       # --blame-hang names the test that stopped making progress: without it a
-      # hung leg is killed by timeout-minutes, and a cancelled job runs none of
-      # its upload steps, so the run ends with a red job and no culprit. The
-      # per-test budget is five minutes on every leg. It is far above what any
-      # test of this suite needs - the slowest of them bound their own waits at
-      # sixty seconds - and far below what is left of the thirty minute job
-      # once the installation, the build, the runtime tests and the samples
-      # have had their share, so the dump is written and uploaded rather than
-      # cut short by the job cap. The sequence file and the dump land in
-      # --results-directory, which is the directory the upload step already
-      # takes.
+      # hung leg is killed by timeout-minutes, and the upload steps are gated
+      # on `if: ${{ failure() }}`, which a cancellation by the job cap does not
+      # satisfy - an always() step would still run, a failure() one does not -
+      # so the run ends with a red job and no culprit. The per-test budget is
+      # five minutes on every leg. The integration step finishes in well under
+      # a minute on all three of them - around twenty seconds on the last green
+      # run - so five minutes per test is a hang rather than a slow test, and
+      # it still leaves the thirty minute job cap room for the dump to be
+      # written and uploaded. The dump is a mini one: the sequence file already
+      # names the test, a mini dump keeps every thread stack, which is what a
+      # hang is read from, and a full dump of a process with GStreamer loaded
+      # is large enough to slow the upload down for nothing. The sequence file
+      # and the dump land in --results-directory, which is the directory the
+      # upload step already takes.
       - name: Test against the installation
         env:
           GSTSHARP_REQUIRED_ELEMENTS: webrtcbin,nicesrc,dtlssrtpenc,audiomixer,theoraenc,theoradec,vorbisenc,uritranscodebin,transcodebin,oggmux,rtpL16pay,alsasink
-        run: dotnet test tests/GstSharp.IntegrationTests --no-restore --logger "trx;LogFileName=integration.trx" --results-directory artifacts/test-results --blame-hang --blame-hang-timeout 5m
+        run: dotnet test tests/GstSharp.IntegrationTests --no-restore --logger "trx;LogFileName=integration.trx" --results-directory artifacts/test-results --blame-hang --blame-hang-timeout 5m --blame-hang-dump-type mini
 
       # The whole consumer path without AOT: parse a pipeline, cast the sink
       # through the GType registry, read every frame through a span.
@@ -477,7 +481,7 @@ jobs:
         run: dotnet test tests/GstSharp.Core.Tests --no-restore --logger "trx;LogFileName=core.trx" --results-directory artifacts/test-results
 
       - name: Test against the installation
-        run: dotnet test tests/GstSharp.IntegrationTests --no-restore --logger "trx;LogFileName=integration.trx" --results-directory artifacts/test-results --blame-hang --blame-hang-timeout 5m
+        run: dotnet test tests/GstSharp.IntegrationTests --no-restore --logger "trx;LogFileName=integration.trx" --results-directory artifacts/test-results --blame-hang --blame-hang-timeout 5m --blame-hang-dump-type mini
 
       - name: AppSinkSpans
         run: dotnet run --project samples/AppSinkSpans --no-restore -- --mode pull
@@ -598,7 +602,7 @@ jobs:
         run: dotnet test tests/GstSharp.Core.Tests --no-restore --logger "trx;LogFileName=core.trx" --results-directory artifacts/test-results
 
       - name: Test against the installation
-        run: dotnet test tests/GstSharp.IntegrationTests --no-restore --logger "trx;LogFileName=integration.trx" --results-directory artifacts/test-results --blame-hang --blame-hang-timeout 5m
+        run: dotnet test tests/GstSharp.IntegrationTests --no-restore --logger "trx;LogFileName=integration.trx" --results-directory artifacts/test-results --blame-hang --blame-hang-timeout 5m --blame-hang-dump-type mini
 
       # Also the diagnostic of this job: the sample prints which flavor and
       # which directory the loader pinned, so a detection change shows up in
