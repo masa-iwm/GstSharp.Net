@@ -175,7 +175,7 @@ public sealed class ClassEmitterTests
     [InlineData("GstBase", 11, 4, 0, 5, 0, 174, 31, 2, 7)]
     [InlineData("GstApp", 2, 2, 0, 8, 0, 62, 36, 8, 0)]
     [InlineData("GstAudio", 14, 17, 1, 1, 2, 212, 32, 0, 45)]
-    [InlineData("GstVideo", 12, 42, 5, 0, 10, 382, 14, 2, 115)]
+    [InlineData("GstVideo", 12, 42, 5, 0, 10, 382, 14, 2, 117)]
     [InlineData("GstPbutils", 14, 1, 0, 0, 1, 179, 5, 5, 0)]
     [InlineData("GstSdp", 1, 21, 0, 0, 0, 164, 0, 0, 51)]
     [InlineData("GstWebRTC", 9, 4, 0, 1, 2, 37, 38, 7, 21)]
@@ -600,7 +600,7 @@ public sealed class ClassEmitterTests
     [InlineData("Gst", 60)]
     [InlineData("GstBase", 4)]
     [InlineData("GstAudio", 19)]
-    [InlineData("GstVideo", 42)]
+    [InlineData("GstVideo", 40)]
     [InlineData("GstSdp", 33)]
     [InlineData("GstWebRTC", 0)]
     [InlineData("GstNet", 2)]
@@ -629,9 +629,9 @@ public sealed class ClassEmitterTests
     {
         string report = Generated.SkipReport;
 
-        Assert.Equal(166, Generated.Census.DroppedFieldCount());
-        Assert.Contains("## Fields (166)\n", report, StringComparison.Ordinal);
-        Assert.Contains("### GstVideo (42)\n", report, StringComparison.Ordinal);
+        Assert.Equal(164, Generated.Census.DroppedFieldCount());
+        Assert.Contains("## Fields (164)\n", report, StringComparison.Ordinal);
+        Assert.Contains("### GstVideo (40)\n", report, StringComparison.Ordinal);
 
         // One entry per shape that keeps a field out. The fixed size fields of
         // GstVideoInfo are bound and are therefore absent; the ones whose
@@ -694,6 +694,20 @@ public sealed class ClassEmitterTests
         // An enumeration another generated module declares is handed out typed,
         // so the field it sits on is bound rather than counted.
         Assert.DoesNotContain("- `AudioClippingMeta.format`", report, StringComparison.Ordinal);
+
+        // A pointer to a plain structure is copied out on read rather than left
+        // on the ledger, which is what binds the HDR metadata of a codec state.
+        Assert.DoesNotContain("- `VideoCodecState.content_light_level`", report, StringComparison.Ordinal);
+        Assert.DoesNotContain("- `VideoCodecState.mastering_display_info`", report, StringComparison.Ordinal);
+
+        // A field that arrived after the support floor carries no accessor
+        // whatever its shape, because the structure of an older library is not
+        // long enough to hold it; the line says which version put it there.
+        Assert.Contains(
+            "- `ReferenceTimestampMeta.info` \u2014 Pointer, since 1.28\n",
+            report,
+            StringComparison.Ordinal);
+        Assert.Contains("- `ValueTable.hash` \u2014 Callback, since 1.28\n", report, StringComparison.Ordinal);
 
         // Padding is off the ledger whether or not the gir annotates it.
         Assert.DoesNotContain("_gst_reserved", report, StringComparison.Ordinal);

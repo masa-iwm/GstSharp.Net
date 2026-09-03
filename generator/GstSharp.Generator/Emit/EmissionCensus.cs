@@ -35,6 +35,12 @@ internal sealed class EmissionCensus
 
     private readonly SortedSet<string> _fieldAnnotations = new(StringComparer.Ordinal);
 
+    /// <summary>
+    /// The field annotation keys whose <c>name</c> is the one the field derives
+    /// anyway, which corrects nothing.
+    /// </summary>
+    private readonly SortedSet<string> _redundantFieldNames = new(StringComparer.Ordinal);
+
     /// <summary>Initializes a new instance of the <see cref="EmissionCensus"/> class.</summary>
     /// <param name="overlays">
     /// The overlays, read for the hand bound ledger. A census built without
@@ -63,6 +69,16 @@ internal sealed class EmissionCensus
     /// <summary>Records one field annotation the run applied.</summary>
     /// <param name="key">The overlay key that matched, for the stale report.</param>
     internal void AnnotatedField(string key) => _fieldAnnotations.Add(key);
+
+    /// <summary>
+    /// Gets the field annotation keys that named the member the field already
+    /// derives, so that a name which renames nothing can be reported.
+    /// </summary>
+    internal IReadOnlySet<string> RedundantFieldNames => _redundantFieldNames;
+
+    /// <summary>Records one field annotation whose name is the derived one.</summary>
+    /// <param name="key">The overlay key that named it, for the stale report.</param>
+    internal void RedundantFieldName(string key) => _redundantFieldNames.Add(key);
 
     /// <summary>Counts one emitted member.</summary>
     /// <param name="module">The gir namespace of the module.</param>

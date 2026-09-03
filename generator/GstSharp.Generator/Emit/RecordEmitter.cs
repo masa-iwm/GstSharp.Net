@@ -1262,7 +1262,7 @@ internal sealed class RecordEmitter
                 continue;
             }
 
-            if (ValueAccessor(ns, cast, field) is { } accessor)
+            if (ValueAccessor(ns, record, cast, field) is { } accessor)
             {
                 accessors.Add(accessor);
             }
@@ -1288,11 +1288,12 @@ internal sealed class RecordEmitter
     /// <param name="cast">The expression that reads the mirror, ending in <c>-&gt;</c>.</param>
     /// <param name="field">The field to read.</param>
     /// <returns>The accessor, or <see langword="null"/> when the field carries no value.</returns>
-    private Accessor? ValueAccessor(GirNamespace ns, string cast, LayoutField field)
+    private Accessor? ValueAccessor(GirNamespace ns, GirRecord record, string cast, LayoutField field)
     {
         // Private fields, inline storage and embedded structures carry no API;
         // pointers wait for the emitters that wrap what they point at.
-        if (field.IsPrivate
+        if (IsAboveFloor(field)
+            || field.IsPrivate
             || field.InlineArray is not null
             || field.Field.Type is not { } type
             || type.IsPointer)
@@ -1354,7 +1355,7 @@ internal sealed class RecordEmitter
 
         return publicType is null || expression is null
             ? null
-            : new Accessor(field.Field, field.PascalName, publicType, expression);
+            : new Accessor(field.Field, Stem(record, field.Field, field.PascalName), publicType, expression);
     }
 
     /// <summary>
@@ -1415,6 +1416,19 @@ internal sealed class RecordEmitter
         "The structure is embedded in the one this wrapper points at, so the read",
         "copies it out. What comes back is the caller's and changes nothing native;",
         "the fields are written through the calls that own them.",
+        "</para>",
+    ];
+
+    /// <summary>
+    /// What the accessor of a pointer to a plain structure states beyond the
+    /// gir: that the read copies, and what the null pointer means.
+    /// </summary>
+    private static readonly string[] PointedValueRemarks =
+    [
+        "<para>",
+        "The structure the pointer addresses is copied out at the moment of the",
+        "call, so what comes back is the caller's and writing into it changes",
+        "nothing native. A null answer is the structure saying it carries none.",
         "</para>",
     ];
 
@@ -1539,7 +1553,8 @@ internal sealed class RecordEmitter
         LayoutField field,
         bool keepAlive)
     {
-        if (field.IsPrivate
+        if (IsAboveFloor(field)
+            || field.IsPrivate
             || field.InlineArray is not null
             || field.Field.Type is not { IsPointer: true } type)
         {
@@ -1570,6 +1585,25 @@ internal sealed class RecordEmitter
                 StringRemarks);
         }
 
+        // A pointer to a plain structure has no wrapper to project: the type is
+        // a value, and the address is the library's own storage. What a reader
+        // wants of one is the value it holds, so the accessor copies it out and
+        // answers null when the pointer is not set, the same shape an embedded
+        // plain structure is handed out in. Only a wrapper class reads this
+        // way; a value projected structure keeps the address it already
+        // publishes, which is API that shipped.
+        if (keepAlive && PlainStructPointee(ns, type) is { } pointee)
+        {
+            return SuppressesAccessor(record, field.Field)
+                ? null
+                : new Accessor(
+                    field.Field,
+                    Stem(record, field.Field, field.ValueName),
+                    pointee + "?",
+                    raw + " == 0 ? null : *(" + pointee + "*)" + raw,
+                    Remarks: PointedValueRemarks);
+        }
+
         if (!MarshalPlanner.TryProjectHandle(mapped, _overlays, _classifier, out string? wrapper, out HandleFlavor flavor))
         {
             return null;
@@ -1598,7 +1632,7 @@ internal sealed class RecordEmitter
             : IsNonNullable(record, field.Field)
                 ? new Accessor(
                     field.Field,
-                    isMethod ? "Get" + field.ValueName : field.ValueName,
+                    Member(isMethod),
                     publicType,
                     expression,
                     KeepAlive: keepAlive,
@@ -1607,12 +1641,18 @@ internal sealed class RecordEmitter
                     Remarks: remarks)
                 : new Accessor(
                     field.Field,
-                    isMethod ? "Get" + field.ValueName : field.ValueName,
+                    Member(isMethod),
                     publicType + "?",
                     expression,
                     KeepAlive: keepAlive,
                     IsMethod: isMethod,
                     Remarks: remarks);
+
+        string Member(bool isMethod)
+        {
+            string stem = Stem(record, field.Field, field.ValueName);
+            return isMethod ? "Get" + stem : stem;
+        }
     }
 
     /// <summary>
@@ -1652,7 +1692,8 @@ internal sealed class RecordEmitter
     /// </remarks>
     private Accessor? EmbeddedAccessor(GirNamespace ns, GirRecord record, string cast, LayoutField field)
     {
-        if (field.IsPrivate
+        if (IsAboveFloor(field)
+            || field.IsPrivate
             || field.InlineArray is not null
             || field.Union is not null
             || field.Field.Type is not { IsPointer: false } type
@@ -1674,7 +1715,7 @@ internal sealed class RecordEmitter
                 ? null
                 : new Accessor(
                     field.Field,
-                    field.ValueName,
+                    Stem(record, field.Field, field.ValueName),
                     publicType,
                     cast + field.PascalName,
                     Remarks: EmbeddedValueRemarks);
@@ -1702,7 +1743,7 @@ internal sealed class RecordEmitter
 
         return new Accessor(
             field.Field,
-            "Get" + field.ValueName,
+            "Get" + Stem(record, field.Field, field.ValueName),
             wrapper,
             CallableRenderer.HandleConversion(
                 flavor,
@@ -1742,6 +1783,61 @@ internal sealed class RecordEmitter
     }
 
     /// <summary>
+    /// Tests whether a field arrived after the oldest GStreamer the binding
+    /// supports, which is what keeps every accessor off it.
+    /// </summary>
+    /// <param name="field">The field to test.</param>
+    /// <returns><see langword="true"/> when no accessor may read it.</returns>
+    /// <remarks>
+    /// A structure that grew a field is allocated at the size the library on
+    /// the machine has, so on an older one the storage the field sits in
+    /// belongs to something else or does not exist: reading it is out of
+    /// bounds, and the read is a field access with nothing to fail on. A member
+    /// that arrived late is documented with the version it needs and fails
+    /// loudly when it is missing; a field cannot, so it stays unbound and stays
+    /// on the ledger with the version that put it there. No overlay lifts this:
+    /// what would lift it is a version the binding asks the library for at run
+    /// time.
+    /// </remarks>
+    private static bool IsAboveFloor(LayoutField field) =>
+        Availability.SinceVersion(field.Field) is not null;
+
+    /// <summary>
+    /// Names what a pointer field points at when that is a plain structure this
+    /// run emits by value.
+    /// </summary>
+    /// <param name="ns">The gir namespace of the record.</param>
+    /// <param name="type">The type of the field.</param>
+    /// <returns>
+    /// The C# name of the pointee, or <see langword="null"/> when it is not a
+    /// plain structure of a generated module.
+    /// </returns>
+    /// <remarks>
+    /// The layout has to be complete, for the same reason it has to be for an
+    /// embedded one: a prefix is shorter than the C structure, so a copy of it
+    /// would read a value that stops in the middle of what the library wrote.
+    /// </remarks>
+    private string? PlainStructPointee(GirNamespace ns, GirTypeRef type)
+    {
+        if (type is GirArrayRef
+            || type.Name is null
+            || _repository.Resolve(type.Name, ns) is not { } symbol
+            || _repository.ResolveAlias(symbol) is not { Declaration: GirRecord pointee } resolved
+            || ModuleMap.Find(resolved.Namespace.Name) is not { IsGenerated: true } module
+            || !pointee.IsIntrospectable
+            || _overlays.IsSkipped(resolved.QualifiedName)
+            || _classifier.Classify(pointee) != TypeKind.PlainStruct)
+        {
+            return null;
+        }
+
+        string typeName = _names.TypeName(resolved);
+        return HasCompleteLayout(resolved.Namespace, pointee, typeName)
+            ? module.ClrNamespace + "." + typeName
+            : null;
+    }
+
+    /// <summary>
     /// Tests whether the overlays hold a field back from the accessors, and
     /// records that the entry was applied.
     /// </summary>
@@ -1768,6 +1864,39 @@ internal sealed class RecordEmitter
 
         _census.AnnotatedField(key);
         return true;
+    }
+
+    /// <summary>
+    /// Names the member a field is read through, which the overlays may state
+    /// in place of the one the name of the field derives.
+    /// </summary>
+    /// <param name="record">The declaring record.</param>
+    /// <param name="field">The field being read.</param>
+    /// <param name="derived">The stem the name of the field derives.</param>
+    /// <returns>The stem the member is named after.</returns>
+    /// <remarks>
+    /// The stem is what the property is called and what the <c>Get</c> method
+    /// is called after, so the rule that decides between the two is untouched
+    /// by an entry: only the name it works on changes. A name equal to the
+    /// derived one renames nothing and is recorded for the stale report rather
+    /// than applied.
+    /// </remarks>
+    private string Stem(GirRecord record, GirField field, string derived)
+    {
+        string key = FieldSkipKey(record, field);
+        if (_overlays.GetFieldAnnotation(key) is not { IsStated: true, Name: { Length: > 0 } name })
+        {
+            return derived;
+        }
+
+        if (string.Equals(name, derived, StringComparison.Ordinal))
+        {
+            _census.RedundantFieldName(key);
+            return derived;
+        }
+
+        _census.AnnotatedField(key);
+        return name;
     }
 
     /// <summary>
@@ -1865,7 +1994,7 @@ internal sealed class RecordEmitter
                 continue;
             }
 
-            if (ValueAccessor(ns, cast, member) is { } accessor)
+            if (ValueAccessor(ns, record, cast, member) is { } accessor)
             {
                 accessors.Add(accessor);
             }
@@ -1970,7 +2099,7 @@ internal sealed class RecordEmitter
                 _census.DroppedField(
                     module.GirNamespace,
                     record.Name + "." + field.Name,
-                    Refine(ns, field, reason, layout, handWritten));
+                    WithSince(field, Refine(ns, field, reason, layout, handWritten)));
             }
         }
 
@@ -2021,7 +2150,9 @@ internal sealed class RecordEmitter
             // stood for it.
             string reason = IsHidden(member)
                 ? "Private"
-                : Refine(ns, member, DroppedFieldReason(ns, member, bound) ?? OtherReason, layout, handWritten);
+                : WithSince(
+                    member,
+                    Refine(ns, member, DroppedFieldReason(ns, member, bound) ?? OtherReason, layout, handWritten));
 
             _census.DroppedField(module.GirNamespace, record.Name + "." + member.Name, reason);
         }
@@ -2108,6 +2239,22 @@ internal sealed class RecordEmitter
                 ? "CrossNamespaceEnum"
                 : OtherReason;
     }
+
+    /// <summary>
+    /// Adds the version a field arrived in to the shape that kept it off the
+    /// generated surface, for the fields that arrived after the support floor.
+    /// </summary>
+    /// <param name="field">The field being reported.</param>
+    /// <param name="reason">What the ledger reports it under.</param>
+    /// <returns>The reason, with the version when there is one to state.</returns>
+    /// <remarks>
+    /// The shape alone would read as a gap the binding could close, and this
+    /// one it cannot: an accessor of a field the library on an older machine
+    /// does not have reads past the end of the structure. The line says which
+    /// version put it there, so a reader of the ledger can tell the two apart.
+    /// </remarks>
+    private static string WithSince(GirField field, string reason) =>
+        Availability.SinceVersion(field) is { } version ? reason + ", since " + version : reason;
 
     /// <summary>
     /// Names the shape that kept a field out of the generated surface.

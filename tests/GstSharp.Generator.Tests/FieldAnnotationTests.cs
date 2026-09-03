@@ -146,6 +146,116 @@ public sealed class FieldAnnotationTests
         Assert.Contains("public string? Name\n", run.File("Widget.cs"), StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void ANameEntryRenamesTheMemberTheFieldIsReadThrough()
+    {
+        // The name of the field is the name of the member until something that
+        // shipped carries it, which is what the entry answers.
+        FixtureRun run = RunWithOverlay(
+            """
+            { "fieldAnnotations": { "GstWidget.title": { "name": "Label", "$comment": "gstwidget.c:5" } } }
+            """);
+        string source = run.File("Widget.cs");
+
+        Assert.Contains("public string? Label\n", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("public string? Title\n", source, StringComparison.Ordinal);
+        Assert.DoesNotContain(run.Result.Diagnostics, static d => d.Code == "GEN0026");
+    }
+
+    [Fact]
+    public void ANameAndANullabilityAreStatedTogether()
+    {
+        // They say two different things about one accessor, so an entry may
+        // carry both.
+        FixtureRun run = RunWithOverlay(
+            """
+            {
+              "fieldAnnotations": {
+                "GstWidget.title": { "name": "Label", "nullable": false, "$comment": "gstwidget.c:6" }
+              }
+            }
+            """);
+
+        Assert.Contains("public string Label\n", run.File("Widget.cs"), StringComparison.Ordinal);
+        Assert.DoesNotContain(run.Result.Diagnostics, static d => d.Code == "GEN0026");
+    }
+
+    [Fact]
+    public void ANameThatIsTheDerivedOneIsReported()
+    {
+        FixtureRun run = RunWithOverlay(
+            """
+            { "fieldAnnotations": { "GstWidget.title": { "name": "Title", "$comment": "gstwidget.c:7" } } }
+            """);
+
+        Diagnostic stale = Assert.Single(run.Result.Diagnostics, static d => d.Code == "GEN0026");
+        Assert.Contains("names the member the field derives anyway", stale.Message, StringComparison.Ordinal);
+        Assert.Contains("public string? Title\n", run.File("Widget.cs"), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AnEmptyNameIsReported()
+    {
+        FixtureRun run = RunWithOverlay(
+            """
+            { "fieldAnnotations": { "GstWidget.title": { "name": "", "$comment": "gstwidget.c:8" } } }
+            """);
+
+        Diagnostic stale = Assert.Single(run.Result.Diagnostics, static d => d.Code == "GEN0026");
+        Assert.Contains("states an empty 'name'", stale.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ANameOnAFieldThatCarriesNoAccessorIsReported()
+    {
+        // Nothing reads a field the gir keeps to the C implementation, so there
+        // is no member for the entry to name.
+        FixtureRun run = RunWithOverlay(
+            """
+            { "fieldAnnotations": { "GstWidget.priv": { "name": "Secret", "$comment": "gstwidget.c:9" } } }
+            """);
+
+        Diagnostic stale = Assert.Single(run.Result.Diagnostics, static d => d.Code == "GEN0026");
+        Assert.Contains("was applied to no field of an emitted record", stale.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void HoldingAFieldBackExcludesBothOtherCorrections()
+    {
+        // A field that carries no accessor has neither a nullability to correct
+        // nor a member to name, so an entry that states one beside the other
+        // says two things only one of which can be acted on.
+        FixtureRun named = RunWithOverlay(
+            """
+            {
+              "fieldAnnotations": {
+                "GstWidget.title": { "accessor": false, "name": "Label", "$comment": "gstwidget.c:10" }
+              }
+            }
+            """);
+        FixtureRun nullable = RunWithOverlay(
+            """
+            {
+              "fieldAnnotations": {
+                "GstWidget.title": { "accessor": false, "nullable": false, "$comment": "gstwidget.c:11" }
+              }
+            }
+            """);
+
+        Assert.Contains(
+            "'accessor: false' beside 'name'",
+            Assert.Single(named.Result.Diagnostics, static d => d.Code == "GEN0026").Message,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "'accessor: false' beside 'nullable'",
+            Assert.Single(nullable.Result.Diagnostics, static d => d.Code == "GEN0026").Message,
+            StringComparison.Ordinal);
+
+        // Neither entry is acted on: what is emitted is what the field derives.
+        Assert.Contains("public string? Title\n", named.File("Widget.cs"), StringComparison.Ordinal);
+        Assert.Contains("public string? Title\n", nullable.File("Widget.cs"), StringComparison.Ordinal);
+    }
+
     private static FixtureRun RunWithOverlay(string fixups)
     {
         string directory = Path.Combine(Path.GetTempPath(), "GstSharp.Generator.Tests", Path.GetRandomFileName());

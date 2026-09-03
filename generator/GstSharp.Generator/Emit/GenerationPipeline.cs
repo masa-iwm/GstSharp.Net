@@ -199,22 +199,31 @@ internal static class GenerationPipeline
         // already use, corrects nothing. Either way the overlays would carry a
         // claim about the C implementation that nothing acts on, which reads as
         // a decision that was taken when none was.
-        List<string> staleAnnotatedFields = [];
+        List<(string Key, string Fault)> staleAnnotatedFields = [];
         foreach (string key in overlays.FieldAnnotationKeys)
         {
-            if (!census.FieldAnnotationKeys.Contains(key))
+            // The shape of the entry is read first, so that one that cannot be
+            // acted on at all is reported for what is wrong with it rather than
+            // for the run never having applied it, which is only the
+            // consequence.
+            if (overlays.GetFieldAnnotation(key)?.ShapeFault is { } fault)
             {
-                staleAnnotatedFields.Add(key);
+                staleAnnotatedFields.Add((key, fault));
+            }
+            else if (census.RedundantFieldNames.Contains(key))
+            {
+                staleAnnotatedFields.Add((key, "names the member the field derives anyway"));
+            }
+            else if (!census.FieldAnnotationKeys.Contains(key))
+            {
+                staleAnnotatedFields.Add((key, "was applied to no field of an emitted record"));
             }
         }
 
-        staleAnnotatedFields.Sort(StringComparer.Ordinal);
-        foreach (string key in staleAnnotatedFields)
+        staleAnnotatedFields.Sort(static (left, right) => StringComparer.Ordinal.Compare(left.Key, right.Key));
+        foreach ((string key, string fault) in staleAnnotatedFields)
         {
-            diagnostics.Warn(
-                "GEN0026",
-                $"The field annotation '{key}' was applied to no field of an emitted record, or states "
-                + "nothing beyond the default; the entry is stale.");
+            diagnostics.Warn("GEN0026", $"The field annotation '{key}' {fault}; the entry is stale.");
         }
 
         // A hand bound entry the run never saw skipped names a symbol that is

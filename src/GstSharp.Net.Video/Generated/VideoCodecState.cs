@@ -71,6 +71,42 @@ public sealed unsafe partial class VideoCodecState : Gst.GObject.Boxed
         return value;
     }
 
+    /// <summary>Mastering display color volume information (HDR metadata) for the stream.</summary>
+    /// <remarks>
+    /// <para>
+    /// The structure the pointer addresses is copied out at the moment of the
+    /// call, so what comes back is the caller's and writing into it changes
+    /// nothing native. A null answer is the structure saying it carries none.
+    /// </para>
+    /// </remarks>
+    public Gst.Video.VideoMasteringDisplayInfo? MasteringDisplayInfo
+    {
+        get
+        {
+            Gst.Video.VideoMasteringDisplayInfo? value = ((VideoCodecStateRaw*)Handle)->MasteringDisplayInfo == 0 ? null : *(Gst.Video.VideoMasteringDisplayInfo*)((VideoCodecStateRaw*)Handle)->MasteringDisplayInfo;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
+    /// <summary>Content light level information for the stream.</summary>
+    /// <remarks>
+    /// <para>
+    /// The structure the pointer addresses is copied out at the moment of the
+    /// call, so what comes back is the caller's and writing into it changes
+    /// nothing native. A null answer is the structure saying it carries none.
+    /// </para>
+    /// </remarks>
+    public Gst.Video.VideoContentLightLevel? ContentLightLevel
+    {
+        get
+        {
+            Gst.Video.VideoContentLightLevel? value = ((VideoCodecStateRaw*)Handle)->ContentLightLevel == 0 ? null : *(Gst.Video.VideoContentLightLevel*)((VideoCodecStateRaw*)Handle)->ContentLightLevel;
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
     /// <summary>Wraps a native <c>GstVideoCodecState</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
     /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>

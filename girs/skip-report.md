@@ -1193,7 +1193,7 @@ disappears shows up here as an added line.
 - `gst_webrtc_ice_get_local_candidates`
 - `gst_webrtc_ice_get_remote_candidates`
 
-## Fields (166)
+## Fields (164)
 
 Public record fields that carry API in C and none in C#, with the shape that
 kept them out. A field is bound when a wrapper declares an accessor for it, or
@@ -1264,7 +1264,7 @@ it unbound, and this ledger is where that is counted.
 - `ProtectionMeta.info` — Pointer
 - `ProtectionMeta.meta` — EmbeddedStruct
 - `Query.mini_object` — EmbeddedStruct
-- `ReferenceTimestampMeta.info` — Pointer
+- `ReferenceTimestampMeta.info` — Pointer, since 1.28
 - `ReferenceTimestampMeta.parent` — EmbeddedStruct
 - `StaticPadTemplate.static_caps` — EmbeddedStruct
 - `TagList.mini_object` — EmbeddedStruct
@@ -1275,7 +1275,7 @@ it unbound, and this ledger is where that is counted.
 - `ValueTable.compare` — Callback
 - `ValueTable.deserialize` — Callback
 - `ValueTable.deserialize_with_pspec` — Callback
-- `ValueTable.hash` — Callback
+- `ValueTable.hash` — Callback, since 1.28
 - `ValueTable.serialize` — Callback
 
 ### GstAudio (19)
@@ -1359,7 +1359,7 @@ it unbound, and this ledger is where that is counted.
 - `SDPMessage.zones` — Pointer
 - `SDPTime.repeat` — Pointer
 
-### GstVideo (42)
+### GstVideo (40)
 
 - `AncillaryMeta.data` — Pointer
 - `AncillaryMeta.meta` — EmbeddedStruct
@@ -1377,8 +1377,6 @@ it unbound, and this ledger is where that is counted.
 - `VideoCodecFrame.ts2` — Private
 - `VideoCodecState.allocation_caps` — Pointer
 - `VideoCodecState.caps` — Pointer
-- `VideoCodecState.content_light_level` — Pointer
-- `VideoCodecState.mastering_display_info` — Pointer
 - `VideoCropMeta.meta` — EmbeddedStruct
 - `VideoFormatInfo.pack_func` — Callback
 - `VideoFormatInfo.tile_info` — InlineArray(struct element)

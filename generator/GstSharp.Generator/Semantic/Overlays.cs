@@ -208,24 +208,27 @@ internal sealed class FieldSkip
 /// implementation that has to be made by hand.
 /// </para>
 /// <para>
-/// <c>nullable: false</c> is one of the two corrections an entry may state. The
-/// other is <c>accessor: false</c>, which holds a field back from the accessors
+/// <c>nullable: false</c> is one of the three corrections an entry may state.
+/// <c>name</c> is the second: the stem the member that reads the field is named
+/// after, for a field whose own name is taken by a member that shipped. The
+/// third is <c>accessor: false</c>, which holds a field back from the accessors
 /// altogether: the pointer stays on the mirror and the field stays on the
 /// ledger under the shape that keeps it there. The reason belongs in the
 /// <c>$comment</c> of the entry rather than in a key of its own, because it
-/// differs per field: a pointer the library replaces or clears under whoever is
-/// reading it, where the reference a <c>transfer none</c> projection takes is
-/// taken after the read and can therefore be taken too late; an accessor whose
-/// name a member that shipped already carries, where the accessor is the one
-/// that yields; or a field a wave deliberately left for the next one.
+/// differs per field: a pointer whose consumer contract the binding cannot
+/// state, a wrapper the surface has no way of reaching, or storage the library
+/// is handed rather than owns.
 /// </para>
 /// <para>
-/// Exactly one of the two has to be stated, and the check is exclusive: the
-/// default is already the other answer to <c>nullable</c>, so an entry that
-/// states nothing or that states <c>nullable: true</c> corrects nothing, and
-/// one that states both says two things about a field only one of which can
-/// be acted on. Each entry carries a <c>$comment</c> with the C file and line
-/// the claim rests on, which is ignored here and read by the reviewer.
+/// <c>accessor: false</c> is exclusive of the other two: a field that carries
+/// no accessor has neither a nullability to correct nor a member to name.
+/// <c>nullable</c> and <c>name</c> may be stated together, because they say
+/// two different things about one accessor. An entry that states nothing, that
+/// states the default the emitters already use, that spells an empty
+/// <c>name</c>, or that spells the name the field derives anyway corrects
+/// nothing and is reported. Each entry carries a <c>$comment</c> with the C
+/// file and line the claim rests on, which is ignored here and read by the
+/// reviewer.
 /// </para>
 /// </remarks>
 internal sealed class FieldAnnotation
@@ -243,16 +246,40 @@ internal sealed class FieldAnnotation
     public bool? Accessor { get; set; }
 
     /// <summary>
-    /// Gets a value indicating whether the entry states exactly one of the two
-    /// corrections, which is the only shape that changes what is emitted.
+    /// Gets or sets the stem the member that reads the field is named after, in
+    /// place of the one the name of the field derives.
     /// </summary>
-    internal bool IsStated => (Nullable == false) ^ (Accessor == false);
+    public string? Name { get; set; }
 
     /// <summary>
     /// Gets a value indicating whether the field is held back from the
     /// accessors.
     /// </summary>
-    internal bool SuppressesAccessor => IsStated && Accessor == false;
+    internal bool SuppressesAccessor => Accessor == false && Nullable is null && Name is null;
+
+    /// <summary>
+    /// Gets a value indicating whether the entry states a correction that
+    /// changes what is emitted.
+    /// </summary>
+    internal bool IsStated =>
+        SuppressesAccessor || (Accessor != false && ((Nullable == false) || Name is { Length: > 0 }));
+
+    /// <summary>
+    /// Gets what is wrong with the shape of the entry, read off the entry alone
+    /// and without asking what this run made of it.
+    /// </summary>
+    internal string? ShapeFault =>
+        Accessor == false && Nullable is not null
+            ? "states 'accessor: false' beside 'nullable', and a field that carries no accessor has no "
+                + "nullability to correct"
+            : Accessor == false && Name is not null
+                ? "states 'accessor: false' beside 'name', and a field that carries no accessor has no "
+                    + "member to name"
+                : Name is { Length: 0 }
+                    ? "states an empty 'name'"
+                    : IsStated
+                        ? null
+                        : "states nothing beyond the default";
 }
 
 /// <summary>
@@ -327,11 +354,15 @@ internal sealed class PlatformSupport
 /// <item><description><c>fieldAnnotations</c>: keyed like <c>fieldSkips</c>
 /// and stating what no gir annotation carries about a record field. Today
 /// that is <c>nullable</c>, read only as <c>false</c>, which says the field
-/// never holds the null pointer and emits the accessor of it non nullable, and
-/// <c>accessor</c>, read only as <c>false</c>, which holds the field back from
-/// the accessors and leaves it on the ledger. Exactly one of the two has to be
-/// stated; an entry that states neither, that states the default, or that
-/// states both is reported as stale.</description></item>
+/// never holds the null pointer and emits the accessor of it non nullable;
+/// <c>name</c>, the stem the member that reads the field is named after in
+/// place of the one the field name derives, subject to the same rule that
+/// decides between a property and a <c>Get</c> method; and <c>accessor</c>,
+/// read only as <c>false</c>, which holds the field back from the accessors
+/// and leaves it on the ledger. <c>accessor: false</c> excludes the other
+/// two, which may be stated together; an entry that states nothing, that
+/// states the default, that spells an empty name or one the field derives
+/// anyway is reported as stale.</description></item>
 /// <item><description><c>forceOpaque</c>: qualified gir name of a record
 /// (<c>Gst.DebugCategory</c>) that must be wrapped behind a pointer rather
 /// than copied by value.</description></item>

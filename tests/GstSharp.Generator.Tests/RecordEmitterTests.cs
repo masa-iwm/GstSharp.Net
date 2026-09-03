@@ -253,6 +253,31 @@ public sealed class RecordEmitterTests
         """;
 
     /// <summary>
+    /// A plain structure a pointer field addresses, on a wrapper and on a value
+    /// projected record: the same field shape read through a handle and read
+    /// out of storage the caller holds.
+    /// </summary>
+    private const string PointedPlainStructFixture =
+        """
+            <record name="ContentLightLevel" c:type="GstContentLightLevel">
+              <field name="max_content_light_level" writable="1">
+                <type name="guint16" c:type="guint16"/>
+              </field>
+            </record>
+            <record name="CodecState" c:type="GstCodecState" glib:type-name="GstCodecState" glib:get-type="gst_codec_state_get_type">
+              <field name="content_light_level" writable="1">
+                <doc xml:space="preserve">content light level of the stream</doc>
+                <type name="ContentLightLevel" c:type="GstContentLightLevel*"/>
+              </field>
+            </record>
+            <record name="CodecFrame" c:type="GstCodecFrame">
+              <field name="content_light_level" writable="1">
+                <type name="ContentLightLevel" c:type="GstContentLightLevel*"/>
+              </field>
+            </record>
+        """;
+
+    /// <summary>
     /// Fields that take up space in the mirror but carry no value to read: a
     /// vtable slot, a pointer and a fixed size array.
     /// </summary>
@@ -799,20 +824,64 @@ public sealed class RecordEmitterTests
     }
 
     [Fact]
-    public void AFieldThatArrivedLateSaysWhichGStreamerItNeeds()
+    public void APointerToAPlainStructureIsCopiedOutOfTheAddressItHolds()
     {
-        string source = EmitFixture(EmbeddedRecordFixture, "VideoCropMeta");
+        // There is no wrapper to project: the pointee is a value, and the
+        // address is the library's own storage. The read answers the value, or
+        // null when the structure carries none.
+        string source = EmitFixture(PointedPlainStructFixture, "CodecState");
 
+        Assert.Contains("public Gst.ContentLightLevel? ContentLightLevel\n", source, StringComparison.Ordinal);
         Assert.Contains(
-            """
-                /// <summary>The <c>height</c> field of <c>GstVideoCropMeta</c>.</summary>
-                /// <remarks>
-                /// <para>Available since GStreamer 1.26.</para>
-                /// </remarks>
-                public uint Height
-            """,
+            "Gst.ContentLightLevel? value = ((CodecStateRaw*)Handle)->ContentLightLevel == 0 ? null "
+            + ": *(Gst.ContentLightLevel*)((CodecStateRaw*)Handle)->ContentLightLevel;",
             source,
             StringComparison.Ordinal);
+        Assert.Contains(
+            "The structure the pointer addresses is copied out at the moment of the",
+            source,
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AValueProjectedRecordKeepsTheAddressOfAPlainStructureItPointsAt()
+    {
+        // The pointer of a value projected structure is public API that
+        // shipped, and the structure is storage the caller holds rather than a
+        // handle into the library's, so the address stays what it hands out.
+        string source = EmitFixture(PointedPlainStructFixture, "CodecFrame");
+
+        Assert.Contains("public nint ContentLightLevelPtr;", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("Gst.ContentLightLevel?", source, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AFieldThatArrivedAfterTheSupportFloorCarriesNoAccessor()
+    {
+        // A library older than the version the field arrived in allocates the
+        // structure without it, so the read would be past the end of the
+        // storage; unlike a late entry point, a field access has nothing to
+        // fail on. The storage stays in the mirror, where only the interop
+        // layer reaches it, and the field beside it keeps its accessor.
+        FixtureRun run = Fixture.Run(EmbeddedRecordFixture);
+        string source = run.File("VideoCropMeta.cs");
+
+        Assert.Contains("internal uint Height;", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("public uint Height", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("Available since GStreamer 1.26.", source, StringComparison.Ordinal);
+        Assert.Contains("public uint X\n", source, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AFieldThatArrivedAfterTheSupportFloorSaysSoOnTheLedger()
+    {
+        // The ledger line carries the version, so a field the binding cannot
+        // close reads differently from one it has not got round to.
+        FixtureRun run = Fixture.Run(EmbeddedRecordFixture);
+
+        Assert.Contains("- `VideoCropMeta.height` — ", run.Result.SkipReport, StringComparison.Ordinal);
+        Assert.Contains(", since 1.26\n", run.Result.SkipReport, StringComparison.Ordinal);
+        Assert.DoesNotContain("- `VideoCropMeta.x`", run.Result.SkipReport, StringComparison.Ordinal);
     }
 
     [Fact]
