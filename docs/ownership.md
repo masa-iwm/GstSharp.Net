@@ -266,16 +266,15 @@ generated surface. There are two exceptions. A field registered under
 to the `## Fields exposed elsewhere` section of the same report. A field
 registered under `fieldAnnotations` with `accessor: false` stays on the ledger
 under its own shape and is deliberately left unbound; the `$comment` of the
-entry says why, and four reasons remain. `Iterator.pushed` is a pointer the
+entry says why, and three reasons remain. `Iterator.pushed` is a pointer the
 header keeps to the implementation of the structure, where the boxed copy an
 accessor takes would alias a child the owner frees. `AudioCdSrcTrack.tags` is
 storage the user fills and hands to the library, which takes it over and then
 refuses to write a list a reference of ours made unwritable. The six `pt` of
 the derived MIKEY payloads are the header a derived record embeds, whose
-wrapper nothing on this surface can reach. `VideoTimeCodeConfig.latest_daily_jam`
-is held out with the rest of backlog #20.
+wrapper nothing on this surface can reach.
 
-A fifth reason is not an entry at all. A field the gir marks with a `version`
+A fourth reason is not an entry at all. A field the gir marks with a `version`
 newer than the oldest GStreamer the binding supports gets no accessor from the
 generator, whatever its shape, and its ledger line says which version put it
 there — `ReferenceTimestampMeta.info — Pointer, since 1.28`. The library on an

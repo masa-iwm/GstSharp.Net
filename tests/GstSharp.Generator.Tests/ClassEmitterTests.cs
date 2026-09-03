@@ -600,7 +600,7 @@ public sealed class ClassEmitterTests
     [InlineData("Gst", 58)]
     [InlineData("GstBase", 0)]
     [InlineData("GstAudio", 15)]
-    [InlineData("GstVideo", 35)]
+    [InlineData("GstVideo", 33)]
     [InlineData("GstSdp", 33)]
     [InlineData("GstWebRTC", 0)]
     [InlineData("GstNet", 2)]
@@ -629,9 +629,9 @@ public sealed class ClassEmitterTests
     {
         string report = Generated.SkipReport;
 
-        Assert.Equal(149, Generated.Census.DroppedFieldCount());
-        Assert.Contains("## Fields (149)\n", report, StringComparison.Ordinal);
-        Assert.Contains("### GstVideo (35)\n", report, StringComparison.Ordinal);
+        Assert.Equal(147, Generated.Census.DroppedFieldCount());
+        Assert.Contains("## Fields (147)\n", report, StringComparison.Ordinal);
+        Assert.Contains("### GstVideo (33)\n", report, StringComparison.Ordinal);
 
         // One entry per shape that keeps a field out. The fixed size fields of
         // GstVideoInfo are bound and are therefore absent; the ones whose
@@ -727,8 +727,8 @@ public sealed class ClassEmitterTests
         // C accessor already answers.
         string report = Generated.SkipReport;
 
-        Assert.Equal(16, Generated.Census.ExposedFieldCount());
-        Assert.Contains("## Fields exposed elsewhere (16)\n", report, StringComparison.Ordinal);
+        Assert.Equal(18, Generated.Census.ExposedFieldCount());
+        Assert.Contains("## Fields exposed elsewhere (18)\n", report, StringComparison.Ordinal);
         Assert.Contains(
             "### Gst (6)\n\n- `CustomMeta.structure` — GetStructure\n"
             + "- `Message.src` — hand written\n"

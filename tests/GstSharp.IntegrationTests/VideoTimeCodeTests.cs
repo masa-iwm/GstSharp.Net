@@ -7,8 +7,9 @@ using GDateTime = Gst.GLib.DateTime;
 namespace GstSharp.IntegrationTests;
 
 /// <summary>
-/// The eight <c>GstVideoTimeCode</c> members that speak <c>GDateTime</c>, and
-/// the buffer metadata constructor beside them.
+/// The eight <c>GstVideoTimeCode</c> members that speak <c>GDateTime</c>, the
+/// buffer metadata constructor beside them, and the readers of the
+/// configuration a timecode embeds.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -303,5 +304,70 @@ public sealed class VideoTimeCodeTests
             using GDateTime? when = again.ToDateTime();
             Assert.NotNull(when);
         }
+    }
+
+    /// <summary>
+    /// A timecode answers the frame rate, the flags and the daily jam it was
+    /// configured with, and the jam comes back owning a reference of its own.
+    /// </summary>
+    [Fact]
+    public void ATimeCodeAnswersTheConfigurationItWasBuiltWith()
+    {
+        GDateTime? jam = GDateTime.FromUnixUtc(1_755_000_000L);
+        Assert.NotNull(jam);
+
+        using (jam)
+        {
+            using VideoTimeCode code = VideoTimeCode.New(
+                30000, 1001, jam, VideoTimeCodeFlags.DropFrame, 0, 0, 0, 0, 0);
+
+            Assert.Equal(30000u, code.FpsN);
+            Assert.Equal(1001u, code.FpsD);
+            Assert.Equal(VideoTimeCodeFlags.DropFrame, code.Flags);
+
+            GDateTime? copy = code.GetLatestDailyJam();
+            Assert.NotNull(copy);
+            Assert.Equal(jam.ToUnix(), copy.ToUnix());
+
+            // The copy owns a reference of its own, so releasing it leaves the
+            // timecode holding the one it took when it was built. Reading the
+            // jam back through the timecode is what a borrowed copy would have
+            // made a use after free.
+            copy.Dispose();
+
+            Assert.False(jam.IsDisposed);
+            using GDateTime? back = code.ToDateTime();
+            Assert.NotNull(back);
+            Assert.Equal(jam.ToUnix(), back.ToUnix());
+        }
+    }
+
+    /// <summary>
+    /// A timecode built without a daily jam carries none to hand out.
+    /// </summary>
+    [Fact]
+    public void ATimeCodeWithoutADailyJamHandsOutNone()
+    {
+        using VideoTimeCode code = VideoTimeCode.New(
+            25, 1, null, VideoTimeCodeFlags.None, 1, 2, 3, 4, 0);
+
+        Assert.Equal(25u, code.FpsN);
+        Assert.Null(code.GetLatestDailyJam());
+    }
+
+    /// <summary>
+    /// The configuration is read through the handle, so a disposed timecode
+    /// refuses it rather than dereferencing the null pointer.
+    /// </summary>
+    [Fact]
+    public void ADisposedTimeCodeRefusesItsConfiguration()
+    {
+        VideoTimeCode code = VideoTimeCode.New(
+            25, 1, null, VideoTimeCodeFlags.None, 1, 2, 3, 4, 0);
+
+        code.Dispose();
+
+        Assert.Throws<ObjectDisposedException>(() => _ = code.FpsN);
+        Assert.Throws<ObjectDisposedException>(() => _ = code.GetLatestDailyJam());
     }
 }

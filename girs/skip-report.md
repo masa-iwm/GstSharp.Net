@@ -1193,7 +1193,7 @@ disappears shows up here as an added line.
 - `gst_webrtc_ice_get_local_candidates`
 - `gst_webrtc_ice_get_remote_candidates`
 
-## Fields (149)
+## Fields (147)
 
 Public record fields that carry API in C and none in C#, with the shape that
 kept them out. A field is bound when a wrapper declares an accessor for it, or
@@ -1346,7 +1346,7 @@ it unbound, and this ledger is where that is counted.
 - `SDPMessage.zones` — Pointer
 - `SDPTime.repeat` — Pointer
 
-### GstVideo (35)
+### GstVideo (33)
 
 - `AncillaryMeta.data` — Pointer
 - `AncillaryMeta.meta` — EmbeddedStruct
@@ -1380,11 +1380,9 @@ it unbound, and this ledger is where that is counted.
 - `VideoResampler.taps` — Pointer
 - `VideoSEIUserDataUnregisteredMeta.data` — Pointer
 - `VideoSEIUserDataUnregisteredMeta.meta` — EmbeddedStruct
-- `VideoTimeCode.config` — EmbeddedStruct
-- `VideoTimeCodeConfig.latest_daily_jam` — Pointer
 - `VideoTimeCodeMeta.meta` — EmbeddedStruct
 
-## Fields exposed elsewhere (16)
+## Fields exposed elsewhere (18)
 
 Public record fields that another member of the binding answers, with the
 member that answers them. They are declared in `girs/overlays/fixups.json`
@@ -1415,11 +1413,13 @@ there is what the bindings do not cover, and these are covered.
 - `PlayVisualization.description` — hand written
 - `PlayVisualization.name` — hand written
 
-### GstVideo (3)
+### GstVideo (5)
 
 - `VideoFrame.buffer` — hand written
 - `VideoFrame.info` — hand written
 - `VideoInfo.finfo` — hand written
+- `VideoTimeCode.config` — hand written
+- `VideoTimeCodeConfig.latest_daily_jam` — hand written
 
 ### GstWebRTC (1)
 
