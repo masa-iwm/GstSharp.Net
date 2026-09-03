@@ -204,7 +204,11 @@ something different about what the caller is left holding.
   unless `fieldAnnotations` in `girs/overlays/fixups.json` states otherwise
   with the C file and line the claim rests on, because no gir spells `nullable`
   on a field at all; a non-nullable one reports the null pointer as an
-  `InvalidOperationException` rather than handing it out.
+  `InvalidOperationException` rather than handing it out. The same table states
+  a `name` when the member a field is read through would carry the name of one
+  that shipped: `ProtectionMeta.GetStructure()` and `AudioMeta.GetAudioInfo()`
+  are named after the type they hand out, because `GetInfo()` on both is the
+  older binding of the metadata registration and answers something else.
 * **A wrapper handed out for a field is projected the way a `transfer none`
   return of the same type is**, which is what decides both the ownership and
   the shape of the member.
@@ -237,12 +241,18 @@ something different about what the caller is left holding.
 * **An embedded record is copied.** A structure another one embeds by value is
   handed out as a copy of itself: a plain structure by the assignment, as
   `RTSPTransport.ClientPort` and `VideoInfo.Colorimetry` do, and a boxed value
-  through `g_boxed_copy`, as `VideoInfoDmaDrm.GetVinfo()` does, which is why
-  that one is a `Get` method the caller disposes. Either way the copy outlives
-  the structure it came out of and writing into it changes nothing native. An
-  embedded record whose wrapper owns nothing is not handed out at all: it would
-  be a borrow of storage the declaring record owns, with no lifetime this
-  document could state for it.
+  through `g_boxed_copy`, as `VideoInfoDmaDrm.GetVinfo()` and
+  `CollectData.GetSegment()` do, which is why those are `Get` methods the
+  caller disposes. Either way the copy outlives the structure it came out of
+  and writing into it changes nothing native. An embedded record whose wrapper
+  owns nothing is not handed out at all: it would be a borrow of storage the
+  declaring record owns, with no lifetime this document could state for it. A
+  **pointer to a plain structure** is copied out the same way and is nullable,
+  because the null pointer is the structure saying it carries none:
+  `VideoCodecState.ContentLightLevel` and `.MasteringDisplayInfo` answer the
+  HDR metadata of a stream that has some and `null` for one that has not. Only
+  a wrapper reads a pointer this way; a value projected structure keeps the
+  address it publishes, which is why `RTCPPacket.RtcpPtr` is still a `nint`.
 
 A public field the generator binds nothing for is listed in the `## Fields`
 section of `girs/skip-report.md`, under the shape that kept it out, or — when
@@ -256,10 +266,53 @@ generated surface. There are two exceptions. A field registered under
 to the `## Fields exposed elsewhere` section of the same report. A field
 registered under `fieldAnnotations` with `accessor: false` stays on the ledger
 under its own shape and is deliberately left unbound; the `$comment` of the
-entry says why, which today is a pointer the library replaces or clears while a
-consumer holds the structure — the reference a `transfer none` projection takes
-is taken after the read and can be taken too late, and the C API answers those
-fields through accessors that read under the lock the field is written under.
+entry says why, and four reasons remain. `Iterator.pushed` is a pointer the
+header keeps to the implementation of the structure, where the boxed copy an
+accessor takes would alias a child the owner frees. `AudioCdSrcTrack.tags` is
+storage the user fills and hands to the library, which takes it over and then
+refuses to write a list a reference of ours made unwritable. The six `pt` of
+the derived MIKEY payloads are the header a derived record embeds, whose
+wrapper nothing on this surface can reach. `VideoTimeCodeConfig.latest_daily_jam`
+is held out with the rest of backlog #20.
+
+A fifth reason is not an entry at all. A field the gir marks with a `version`
+newer than the oldest GStreamer the binding supports gets no accessor from the
+generator, whatever its shape, and its ledger line says which version put it
+there — `ReferenceTimestampMeta.info — Pointer, since 1.28`. The library on an
+older machine allocates the structure without that field, so the read would be
+past the end of it, and unlike a late entry point a field access has nothing to
+fail on. No overlay lifts this; what would lift it is a version the binding
+asks the library for at run time.
+
+## Fields the library rewrites
+
+A field accessor reads at the moment of the call, which is the same raw read a
+C subclass performs on the same structure. What comes back owns its reference,
+so it stays valid — but what it names is only the value the structure held
+during the window the C contract gives it, and the window is a place as much as
+a time. The read has to happen where C reads the field: on the streaming thread
+that handed the structure over, inside the callback or virtual method that did,
+under the lock that call holds — `STREAM_LOCK` for a codec frame, a codec state
+or collect data, `OBJECT_LOCK` inside `acquire` for a ring buffer spec. A read
+from another thread, or from a structure fetched outside that call, is outside
+the contract even inside the window. Every one of these is nullable, and `null`
+is a normal answer for each.
+
+* `Buffer.Pool` — as long as the buffer reference lives: the field holds a
+  strong reference and only the disposal of the buffer clears it, at a
+  reference count of zero.
+* `AudioRingBufferSpec.GetCaps()` — inside the `acquire` vfunc, or until the
+  next `parse_caps` or `release` (`gstaudioringbuffer.c:496`, `:943`).
+* `BaseParseFrame.GetBuffer()` and `GetOutBuffer()` — until the subclass calls
+  finish or push, or `handle_frame` returns (`gstbaseparse.c:2397`, `:2627`,
+  `:2814`).
+* `VideoCodecFrame.GetInputBuffer()` — until the last frame unref, or the next
+  subframe re-delivery (`gstvideodecoder.h:217-219`).
+* `VideoCodecFrame.GetOutputBuffer()` — until `finish_frame`, `finish_subframe`
+  or the frame is freed (`gstvideodecoder.c:3546`, `:2881`).
+* `VideoCodecState.GetCaps()` and `GetAllocationCaps()` — until the element's
+  next negotiation, or the last state unref (`gstvideodecoder.c:4517`,
+  `:4533`).
 
 ## Calls that consume their argument
 

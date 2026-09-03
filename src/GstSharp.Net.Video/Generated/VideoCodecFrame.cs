@@ -83,6 +83,51 @@ public sealed unsafe partial class VideoCodecFrame : Gst.GObject.Boxed
         }
     }
 
+    /// <summary>Reads the <c>input_buffer</c> field of <c>GstVideoCodecFrame</c>.</summary>
+    /// <remarks>
+    /// <para>
+    /// The value is read out of the structure at the moment of the call. What
+    /// comes back owns a reference of its own - a mini object is referenced, a
+    /// boxed value copied - so the caller disposes it, which is why this is a
+    /// method rather than a property.
+    /// </para>
+    /// </remarks>
+    /// <returns>
+    /// the input #GstBuffer that created this frame. The buffer is owned
+    ///           by the frame and references to the frame instead of the buffer should
+    ///           be kept.
+    /// </returns>
+    public Gst.Buffer? GetInputBuffer()
+    {
+        Gst.Buffer? value = Gst.Buffer.FromNative(((VideoCodecFrameRaw*)Handle)->InputBuffer, Gst.Interop.Transfer.None);
+        System.GC.KeepAlive(this);
+        return value;
+    }
+
+    /// <summary>Reads the <c>output_buffer</c> field of <c>GstVideoCodecFrame</c>.</summary>
+    /// <remarks>
+    /// <para>
+    /// The value is read out of the structure at the moment of the call. What
+    /// comes back owns a reference of its own - a mini object is referenced, a
+    /// boxed value copied - so the caller disposes it, which is why this is a
+    /// method rather than a property.
+    /// </para>
+    /// </remarks>
+    /// <returns>
+    /// the output #GstBuffer. Implementations should set this either
+    ///           directly, or by using the
+    ///           gst_video_decoder_allocate_output_frame() or
+    ///           gst_video_decoder_allocate_output_buffer() methods. The buffer is
+    ///           owned by the frame and references to the frame instead of the
+    ///           buffer should be kept.
+    /// </returns>
+    public Gst.Buffer? GetOutputBuffer()
+    {
+        Gst.Buffer? value = Gst.Buffer.FromNative(((VideoCodecFrameRaw*)Handle)->OutputBuffer, Gst.Interop.Transfer.None);
+        System.GC.KeepAlive(this);
+        return value;
+    }
+
     /// <summary>Running time when the frame will be used.</summary>
     public Gst.ClockTime Deadline
     {

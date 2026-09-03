@@ -51,6 +51,23 @@ public sealed unsafe partial class VideoCodecState : Gst.GObject.Boxed
         return value;
     }
 
+    /// <summary>Reads the <c>caps</c> field of <c>GstVideoCodecState</c>.</summary>
+    /// <remarks>
+    /// <para>
+    /// The value is read out of the structure at the moment of the call. What
+    /// comes back owns a reference of its own - a mini object is referenced, a
+    /// boxed value copied - so the caller disposes it, which is why this is a
+    /// method rather than a property.
+    /// </para>
+    /// </remarks>
+    /// <returns>The #GstCaps used in the caps negotiation of the pad.</returns>
+    public Gst.Caps? GetCaps()
+    {
+        Gst.Caps? value = Gst.Caps.FromNative(((VideoCodecStateRaw*)Handle)->Caps, Gst.Interop.Transfer.None);
+        System.GC.KeepAlive(this);
+        return value;
+    }
+
     /// <summary>Reads the <c>codec_data</c> field of <c>GstVideoCodecState</c>.</summary>
     /// <remarks>
     /// <para>
@@ -67,6 +84,26 @@ public sealed unsafe partial class VideoCodecState : Gst.GObject.Boxed
     public Gst.Buffer? GetCodecData()
     {
         Gst.Buffer? value = Gst.Buffer.FromNative(((VideoCodecStateRaw*)Handle)->CodecData, Gst.Interop.Transfer.None);
+        System.GC.KeepAlive(this);
+        return value;
+    }
+
+    /// <summary>Reads the <c>allocation_caps</c> field of <c>GstVideoCodecState</c>.</summary>
+    /// <remarks>
+    /// <para>
+    /// The value is read out of the structure at the moment of the call. What
+    /// comes back owns a reference of its own - a mini object is referenced, a
+    /// boxed value copied - so the caller disposes it, which is why this is a
+    /// method rather than a property.
+    /// </para>
+    /// </remarks>
+    /// <returns>
+    /// The #GstCaps for allocation query and pool
+    ///     negotiation. Since: 1.10
+    /// </returns>
+    public Gst.Caps? GetAllocationCaps()
+    {
+        Gst.Caps? value = Gst.Caps.FromNative(((VideoCodecStateRaw*)Handle)->AllocationCaps, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(this);
         return value;
     }

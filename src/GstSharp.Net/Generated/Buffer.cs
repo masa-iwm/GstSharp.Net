@@ -128,6 +128,25 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     {
     }
 
+    /// <summary>pointer to the pool owner of the buffer</summary>
+    /// <remarks>
+    /// <para>
+    /// The object is read out of the structure at the moment of the call. The
+    /// wrapper owns a reference of its own and stays valid afterwards; it is
+    /// the instance every other lookup of the same object hands out, so
+    /// disposing it releases the reference for all of them.
+    /// </para>
+    /// </remarks>
+    public Gst.BufferPool? Pool
+    {
+        get
+        {
+            Gst.BufferPool? value = Gst.GObject.Object.FromNative<Gst.BufferPool>(((BufferRaw*)Handle)->Pool, Gst.Interop.Transfer.None);
+            System.GC.KeepAlive(this);
+            return value;
+        }
+    }
+
     /// <summary>
     /// presentation timestamp of the buffer, can be #GST_CLOCK_TIME_NONE when the
     ///     pts is not known or relevant. The pts contains the timestamp when the

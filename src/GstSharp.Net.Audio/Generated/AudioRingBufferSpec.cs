@@ -25,6 +25,23 @@ public sealed unsafe partial class AudioRingBufferSpec
     /// <param name="handle">The native instance.</param>
     internal AudioRingBufferSpec(nint handle) => Handle = handle;
 
+    /// <summary>Reads the <c>caps</c> field of <c>GstAudioRingBufferSpec</c>.</summary>
+    /// <remarks>
+    /// <para>
+    /// The value is read out of the structure at the moment of the call. What
+    /// comes back owns a reference of its own - a mini object is referenced, a
+    /// boxed value copied - so the caller disposes it, which is why this is a
+    /// method rather than a property.
+    /// </para>
+    /// </remarks>
+    /// <returns>The caps that generated the Spec.</returns>
+    public Gst.Caps? GetCaps()
+    {
+        Gst.Caps? value = Gst.Caps.FromNative(((AudioRingBufferSpecRaw*)Handle)->Caps, Gst.Interop.Transfer.None);
+        System.GC.KeepAlive(this);
+        return value;
+    }
+
     /// <summary>the sample type</summary>
     public Gst.Audio.AudioRingBufferFormatType Type
     {
@@ -34,6 +51,24 @@ public sealed unsafe partial class AudioRingBufferSpec
             System.GC.KeepAlive(this);
             return value;
         }
+    }
+
+    /// <summary>Reads the <c>info</c> field of <c>GstAudioRingBufferSpec</c>.</summary>
+    /// <remarks>
+    /// <para>
+    /// The structure is embedded in the one this wrapper points at. What comes
+    /// back is a copy of it that the caller owns and disposes, so it stays good
+    /// after the structure it was copied out of is gone, and writing into it
+    /// changes nothing native.
+    /// </para>
+    /// </remarks>
+    /// <returns>the #GstAudioInfo</returns>
+    public Gst.Audio.AudioInfo GetInfo()
+    {
+        Gst.Audio.AudioInfo value = Gst.Audio.AudioInfo.FromNative((nint)(&((AudioRingBufferSpecRaw*)Handle)->Info), Gst.Interop.Transfer.None)
+            ?? throw new System.InvalidOperationException("The 'info' field of GstAudioRingBufferSpec is null.");
+        System.GC.KeepAlive(this);
+        return value;
     }
 
     /// <summary>the latency in microseconds</summary>

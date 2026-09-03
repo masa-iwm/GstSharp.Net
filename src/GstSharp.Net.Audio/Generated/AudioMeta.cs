@@ -23,6 +23,24 @@ public sealed unsafe partial class AudioMeta
     /// <param name="handle">The native instance.</param>
     internal AudioMeta(nint handle) => Handle = handle;
 
+    /// <summary>Reads the <c>info</c> field of <c>GstAudioMeta</c>.</summary>
+    /// <remarks>
+    /// <para>
+    /// The structure is embedded in the one this wrapper points at. What comes
+    /// back is a copy of it that the caller owns and disposes, so it stays good
+    /// after the structure it was copied out of is gone, and writing into it
+    /// changes nothing native.
+    /// </para>
+    /// </remarks>
+    /// <returns>the audio properties of the buffer</returns>
+    public Gst.Audio.AudioInfo GetAudioInfo()
+    {
+        Gst.Audio.AudioInfo value = Gst.Audio.AudioInfo.FromNative((nint)(&((AudioMetaRaw*)Handle)->Info), Gst.Interop.Transfer.None)
+            ?? throw new System.InvalidOperationException("The 'info' field of GstAudioMeta is null.");
+        System.GC.KeepAlive(this);
+        return value;
+    }
+
     /// <summary>the number of valid samples in the buffer</summary>
     public nuint Samples
     {

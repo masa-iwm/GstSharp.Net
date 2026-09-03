@@ -28,6 +28,40 @@ public sealed unsafe partial class BaseParseFrame : Gst.GObject.Boxed
     {
     }
 
+    /// <summary>Reads the <c>buffer</c> field of <c>GstBaseParseFrame</c>.</summary>
+    /// <remarks>
+    /// <para>
+    /// The value is read out of the structure at the moment of the call. What
+    /// comes back owns a reference of its own - a mini object is referenced, a
+    /// boxed value copied - so the caller disposes it, which is why this is a
+    /// method rather than a property.
+    /// </para>
+    /// </remarks>
+    /// <returns>input data to be parsed for frames.</returns>
+    public Gst.Buffer? GetBuffer()
+    {
+        Gst.Buffer? value = Gst.Buffer.FromNative(((BaseParseFrameRaw*)Handle)->Buffer, Gst.Interop.Transfer.None);
+        System.GC.KeepAlive(this);
+        return value;
+    }
+
+    /// <summary>Reads the <c>out_buffer</c> field of <c>GstBaseParseFrame</c>.</summary>
+    /// <remarks>
+    /// <para>
+    /// The value is read out of the structure at the moment of the call. What
+    /// comes back owns a reference of its own - a mini object is referenced, a
+    /// boxed value copied - so the caller disposes it, which is why this is a
+    /// method rather than a property.
+    /// </para>
+    /// </remarks>
+    /// <returns>output data.</returns>
+    public Gst.Buffer? GetOutBuffer()
+    {
+        Gst.Buffer? value = Gst.Buffer.FromNative(((BaseParseFrameRaw*)Handle)->OutBuffer, Gst.Interop.Transfer.None);
+        System.GC.KeepAlive(this);
+        return value;
+    }
+
     /// <summary>
     /// a combination of input and output #GstBaseParseFrameFlags that
     ///  convey additional context to subclass or allow subclass to tune

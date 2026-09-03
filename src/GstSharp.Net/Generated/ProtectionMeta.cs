@@ -21,6 +21,23 @@ public sealed unsafe partial class ProtectionMeta
     /// <param name="handle">The native instance.</param>
     internal ProtectionMeta(nint handle) => Handle = handle;
 
+    /// <summary>Reads the <c>info</c> field of <c>GstProtectionMeta</c>.</summary>
+    /// <remarks>
+    /// <para>
+    /// The value is read out of the structure at the moment of the call. What
+    /// comes back owns a reference of its own - a mini object is referenced, a
+    /// boxed value copied - so the caller disposes it, which is why this is a
+    /// method rather than a property.
+    /// </para>
+    /// </remarks>
+    /// <returns>the cryptographic information needed to decrypt the sample.</returns>
+    public Gst.Structure? GetStructure()
+    {
+        Gst.Structure? value = Gst.Structure.FromNative(((ProtectionMetaRaw*)Handle)->Info, Gst.Interop.Transfer.None);
+        System.GC.KeepAlive(this);
+        return value;
+    }
+
     /// <summary>Wraps a native <c>GstProtectionMeta</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
     /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>

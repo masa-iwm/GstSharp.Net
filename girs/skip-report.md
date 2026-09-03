@@ -1193,7 +1193,7 @@ disappears shows up here as an added line.
 - `gst_webrtc_ice_get_local_candidates`
 - `gst_webrtc_ice_get_remote_candidates`
 
-## Fields (164)
+## Fields (149)
 
 Public record fields that carry API in C and none in C#, with the shape that
 kept them out. A field is bound when a wrapper declares an accessor for it, or
@@ -1215,10 +1215,9 @@ it unbound, and this ledger is where that is counted.
 
 - `FrameCompositionMeta.meta` — EmbeddedStruct
 
-### Gst (60)
+### Gst (58)
 
 - `Buffer.mini_object` — EmbeddedStruct
-- `Buffer.pool` — Pointer
 - `ByteArrayInterface.data` — Pointer
 - `ByteArrayInterface.resize` — Callback
 - `Caps.mini_object` — EmbeddedStruct
@@ -1261,7 +1260,6 @@ it unbound, and this ledger is where that is counted.
 - `ParentBufferMeta.parent` — EmbeddedStruct
 - `PluginDesc.plugin_init` — Callback
 - `Promise.parent` — EmbeddedStruct
-- `ProtectionMeta.info` — Pointer
 - `ProtectionMeta.meta` — EmbeddedStruct
 - `Query.mini_object` — EmbeddedStruct
 - `ReferenceTimestampMeta.info` — Pointer, since 1.28
@@ -1278,9 +1276,8 @@ it unbound, and this ledger is where that is counted.
 - `ValueTable.hash` — Callback, since 1.28
 - `ValueTable.serialize` — Callback
 
-### GstAudio (19)
+### GstAudio (15)
 
-- `AudioBuffer.info` — EmbeddedStruct
 - `AudioBuffer.planes` — Pointer
 - `AudioCdSrcTrack.tags` — Pointer
 - `AudioClippingMeta.meta` — EmbeddedStruct
@@ -1291,21 +1288,11 @@ it unbound, and this ledger is where that is counted.
 - `AudioFormatInfo.pack_func` — Callback
 - `AudioFormatInfo.unpack_func` — Callback
 - `AudioLevelMeta.meta` — EmbeddedStruct
-- `AudioMeta.info` — EmbeddedStruct
 - `AudioMeta.meta` — EmbeddedStruct
 - `AudioMeta.offsets` — Pointer
-- `AudioRingBufferSpec.caps` — Pointer
-- `AudioRingBufferSpec.info` — EmbeddedStruct
 - `AudioSinkClassExtension.clear_all` — Callback
 - `DsdPlaneOffsetMeta.meta` — EmbeddedStruct
 - `DsdPlaneOffsetMeta.offsets` — Pointer
-
-### GstBase (4)
-
-- `BaseParseFrame.buffer` — Pointer
-- `BaseParseFrame.out_buffer` — Pointer
-- `CollectData.buffer` — Pointer
-- `CollectData.segment` — EmbeddedStruct
 
 ### GstNet (2)
 
@@ -1359,7 +1346,7 @@ it unbound, and this ledger is where that is counted.
 - `SDPMessage.zones` — Pointer
 - `SDPTime.repeat` — Pointer
 
-### GstVideo (40)
+### GstVideo (35)
 
 - `AncillaryMeta.data` — Pointer
 - `AncillaryMeta.meta` — EmbeddedStruct
@@ -1369,14 +1356,10 @@ it unbound, and this ledger is where that is counted.
 - `VideoCaptionMeta.data` — Pointer
 - `VideoCaptionMeta.meta` — EmbeddedStruct
 - `VideoCodecAlphaMeta.meta` — EmbeddedStruct
-- `VideoCodecFrame.input_buffer` — Pointer
 - `VideoCodecFrame.num_subframes` — Private
-- `VideoCodecFrame.output_buffer` — Pointer
 - `VideoCodecFrame.subframes_processed` — Private
 - `VideoCodecFrame.ts` — Private
 - `VideoCodecFrame.ts2` — Private
-- `VideoCodecState.allocation_caps` — Pointer
-- `VideoCodecState.caps` — Pointer
 - `VideoCropMeta.meta` — EmbeddedStruct
 - `VideoFormatInfo.pack_func` — Callback
 - `VideoFormatInfo.tile_info` — InlineArray(struct element)
@@ -1400,9 +1383,8 @@ it unbound, and this ledger is where that is counted.
 - `VideoTimeCode.config` — EmbeddedStruct
 - `VideoTimeCodeConfig.latest_daily_jam` — Pointer
 - `VideoTimeCodeMeta.meta` — EmbeddedStruct
-- `VideoTimeCodeMeta.tc` — EmbeddedStruct
 
-## Fields exposed elsewhere (14)
+## Fields exposed elsewhere (16)
 
 Public record fields that another member of the binding answers, with the
 member that answers them. They are declared in `girs/overlays/fixups.json`
@@ -1418,10 +1400,15 @@ there is what the bindings do not cover, and these are covered.
 - `PadProbeInfo.flow_ret` — GetFlowReturn
 - `StaticCaps.caps` — Get
 
-### GstAudio (2)
+### GstAudio (3)
 
 - `AudioBuffer.buffer` — hand written
+- `AudioBuffer.info` — hand written
 - `AudioInfo.finfo` — hand written
+
+### GstBase (1)
+
+- `CollectData.buffer` — CollectPads.Peek
 
 ### GstPlay (2)
 

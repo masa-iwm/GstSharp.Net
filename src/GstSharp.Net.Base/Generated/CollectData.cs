@@ -69,6 +69,24 @@ public sealed unsafe partial class CollectData
         }
     }
 
+    /// <summary>Reads the <c>segment</c> field of <c>GstCollectData</c>.</summary>
+    /// <remarks>
+    /// <para>
+    /// The structure is embedded in the one this wrapper points at. What comes
+    /// back is a copy of it that the caller owns and disposes, so it stays good
+    /// after the structure it was copied out of is gone, and writing into it
+    /// changes nothing native.
+    /// </para>
+    /// </remarks>
+    /// <returns>last segment received.</returns>
+    public Gst.Segment GetSegment()
+    {
+        Gst.Segment value = Gst.Segment.FromNative((nint)(&((CollectDataRaw*)Handle)->Segment), Gst.Interop.Transfer.None)
+            ?? throw new System.InvalidOperationException("The 'segment' field of GstCollectData is null.");
+        System.GC.KeepAlive(this);
+        return value;
+    }
+
     /// <summary>The <c>dts</c> field of <c>GstCollectData</c>.</summary>
     public long Dts
     {

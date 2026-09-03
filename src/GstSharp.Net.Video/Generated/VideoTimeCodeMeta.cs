@@ -24,6 +24,24 @@ public sealed unsafe partial class VideoTimeCodeMeta
     /// <param name="handle">The native instance.</param>
     internal VideoTimeCodeMeta(nint handle) => Handle = handle;
 
+    /// <summary>Reads the <c>tc</c> field of <c>GstVideoTimeCodeMeta</c>.</summary>
+    /// <remarks>
+    /// <para>
+    /// The structure is embedded in the one this wrapper points at. What comes
+    /// back is a copy of it that the caller owns and disposes, so it stays good
+    /// after the structure it was copied out of is gone, and writing into it
+    /// changes nothing native.
+    /// </para>
+    /// </remarks>
+    /// <returns>the GstVideoTimeCode to attach</returns>
+    public Gst.Video.VideoTimeCode GetTc()
+    {
+        Gst.Video.VideoTimeCode value = Gst.Video.VideoTimeCode.FromNative((nint)(&((VideoTimeCodeMetaRaw*)Handle)->Tc), Gst.Interop.Transfer.None)
+            ?? throw new System.InvalidOperationException("The 'tc' field of GstVideoTimeCodeMeta is null.");
+        System.GC.KeepAlive(this);
+        return value;
+    }
+
     /// <summary>Wraps a native <c>GstVideoTimeCodeMeta</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
     /// <returns>The wrapper, or <see langword="null"/> when <paramref name="handle"/> is <c>0</c>.</returns>
