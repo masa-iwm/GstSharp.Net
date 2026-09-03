@@ -285,13 +285,10 @@ public sealed class VideoTimeCodeTests
             VideoTimeCodeMeta? withJam = VideoGlobal.BufferAddVideoTimeCodeMeta(buffer, dated);
             Assert.NotNull(withJam);
 
-            // The copy references a daily jam of its own, so the one the call
-            // was handed is untouched by it.
             using (VideoTimeCode copied = withJam.GetTc())
             {
                 Assert.Equal(5u, copied.Hours);
                 Assert.Equal(8u, copied.Frames);
-                Assert.False(jam.IsDisposed);
             }
 
             // Disposing that copy leaves the item reading the same value,
@@ -299,6 +296,12 @@ public sealed class VideoTimeCodeTests
             using VideoTimeCode again = withJam.GetTc();
             Assert.Equal(5u, again.Hours);
             Assert.Equal(6u, again.Minutes);
+
+            // The daily jam is the part a copy has to reference rather than
+            // take: converting needs it, and the copy that was disposed above
+            // would have carried it off if the copy had stolen it.
+            using GDateTime? when = again.ToDateTime();
+            Assert.NotNull(when);
         }
     }
 }

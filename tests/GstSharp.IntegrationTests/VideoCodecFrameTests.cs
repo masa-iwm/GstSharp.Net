@@ -235,11 +235,14 @@ public sealed class VideoCodecFrameTests
 
             using Caps? caps = state.GetCaps();
             Assert.NotNull(caps);
-            Assert.Equal("video/x-raw", caps.GetStructure(0).GetName());
+            using Structure structure = caps.GetStructure(0);
+            Assert.Equal("video/x-raw", structure.GetName());
 
-            // The allocation caps are written on a negotiation of their own, so
-            // whichever of the two answers this is, it is an answer.
-            state.GetAllocationCaps()?.Dispose();
+            // The negotiation this probe rides on fills the allocation caps in
+            // before it sets the caps on the pad that raises the event
+            // (gstvideodecoder.c:4533 precedes :4569), so by here they are set.
+            using Caps? allocation = state.GetAllocationCaps();
+            Assert.NotNull(allocation);
 
             // No HDR metadata on this stream: the copy answers null rather than
             // a zeroed structure.

@@ -295,12 +295,21 @@ that handed the structure over, inside the callback or virtual method that did,
 under the lock that call holds — `STREAM_LOCK` for a codec frame, a codec state
 or collect data, `OBJECT_LOCK` inside `acquire` for a ring buffer spec. A read
 from another thread, or from a structure fetched outside that call, is outside
-the contract even inside the window. Every one of these is nullable, and `null`
-is a normal answer for each.
+the contract even inside the window. Every one of these is nullable, and for
+most of them `null` is a normal answer inside the window too: a buffer no pool
+handed out, an output buffer the subclass has not produced yet, allocation caps
+no negotiation has written. `VideoCodecFrame.GetInputBuffer()` is the one
+exception — the base class assigns the input buffer before it hands the frame
+to `handle_frame` (`gstvideodecoder.c:3436-3447` called from `:2500`,
+`gstvideoencoder.c:1532`), so inside that call it is never `null`. It answers
+`null` only on a frame the assignment has not reached yet, or one a subclass
+has taken the buffer out of itself.
 
 * `Buffer.Pool` — as long as the buffer reference lives: the field holds a
-  strong reference and only the disposal of the buffer clears it, at a
-  reference count of zero.
+  strong reference (`gstbufferpool.c:1285`), and the only thing that clears it
+  is the compare and exchange in `gst_buffer_pool_release_buffer`
+  (`gstbufferpool.c:1373`), which `_gst_buffer_dispose` reaches
+  (`gstbuffer.c:802`) at a reference count of zero.
 * `AudioRingBufferSpec.GetCaps()` — inside the `acquire` vfunc, or until the
   next `parse_caps` or `release` (`gstaudioringbuffer.c:496`, `:943`).
 * `BaseParseFrame.GetBuffer()` and `GetOutBuffer()` — until the subclass calls
@@ -309,7 +318,7 @@ is a normal answer for each.
 * `VideoCodecFrame.GetInputBuffer()` — until the last frame unref, or the next
   subframe re-delivery (`gstvideodecoder.h:217-219`).
 * `VideoCodecFrame.GetOutputBuffer()` — until `finish_frame`, `finish_subframe`
-  or the frame is freed (`gstvideodecoder.c:3546`, `:2881`).
+  or the frame is freed (`gstvideodecoder.c:3546`, `gstvideoencoder.c:2881`).
 * `VideoCodecState.GetCaps()` and `GetAllocationCaps()` — until the element's
   next negotiation, or the last state unref (`gstvideodecoder.c:4517`,
   `:4533`).

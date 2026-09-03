@@ -456,7 +456,7 @@ public sealed class BufferMetaTests
         AudioMeta? meta = AudioGlobal.BufferAddAudioMeta(buffer, info, samples: 100);
         Assert.NotNull(meta);
 
-        using AudioInfo copied = meta.GetAudioInfo();
+        AudioInfo copied = meta.GetAudioInfo();
 
         Assert.Equal(info.Format, copied.Format);
         Assert.Equal(info.Rate, copied.Rate);
@@ -489,7 +489,7 @@ public sealed class BufferMetaTests
 
         ProtectionMeta meta = buffer.AddProtectionMeta(info);
 
-        using Structure? copied = meta.GetStructure();
+        Structure? copied = meta.GetStructure();
         Assert.NotNull(copied);
         Assert.Equal("application/x-cenc", copied.GetName());
         Assert.True(copied.GetUint("iv_size", out uint size));
