@@ -878,6 +878,43 @@ structure - and so is
 `Gst.Rtp.RTPHeaderExtension.GetSdpCapsFieldName`, which raises a critical and
 answers `null` until `SetId` has been called.
 
+The RTCP extended report readers trust the block length field of the block they
+stand on. `XrFirstRb` checks that field against the packet in the wrong unit -
+`offset = 8 + (block_len * 1) + 4` against `packet->length << 2`
+(`gstrtcpbuffer.c:2753-2760`), words against bytes - and so accepts a first
+block about four times longer than the packet. `XrNextRb` measures only the
+block it leaves: it advances by `(block_len + 1) * 4` and refuses when that
+lands outside the packet (`:2791-2797`), so the block it stops on goes
+unmeasured until the next `XrNextRb`, after the readers have run. No other
+guard uses that field: `XrGetBlockType` and `XrGetBlockLength` check only that
+the block header word is inside the packet (`:2827`, `:2876`), and the packet
+walk (`:444`) and `RTCPBuffer.Validate` (`:118-121`) bound packets, not blocks.
+Every per-item reader bounds its read on that field alone - the fixed size ones
+require an exact length (`XrGetRrt` 2 words, `:3095`; the four `XrGetSummary*`
+9, `:3182`, `:3228`, `:3282`, `:3349`; the eight `XrGetVoip*` 8, `:3398`
+through `:3683`), the indexed ones derive their range from it
+(`XrGetRleNthChunk` takes any index below the `(block_len - 2) * 2` chunks
+`XrGetRleInfo` computes, `:2919` and `:2967`; `XrGetDlrrBlock` any `nth` with
+`nth * 3 < block_len`, `:3136`, and then reads three words, so a length that
+is not a multiple of three lets the last sub-block run past the block). A
+block that claims more words than the packet has left is read to the length it
+claims - a 16-bit field reaches about 256 KB - into the next packet of the
+compound or, for the last packet, past the end of the mapped buffer: garbage or
+an access violation, never a managed error.
+
+A consumer that reads XR blocks from a peer it does not trust does the bounds
+check itself. `GetLength()` is the packet length in 32-bit words minus one, so
+`GetLength() - 1` words remain after the SSRC and each block consumes
+`XrGetBlockLength() + 1` of them; subtract as you walk and call the per-item
+readers only while the block `XrFirstRb` or `XrNextRb` stopped on still fits,
+and for a DLRR block only when `XrGetBlockLength()` is a multiple of three.
+`XrGetPrtBySeq` needs a second check: it indexes by `(seq - begin_seq) * 4`
+from the block start (`:3070`) and its only length test is the three word
+minimum of `XrGetPrtInfo` (`:3010`), so an honest length with an oversized
+sequence range overreads even when the walk passes - require
+`endSeq - beginSeq` to be at most `XrGetBlockLength() - 2`, the words left
+after the SSRC and the sequence pair, before you call it.
+
 ## The GType registry
 
 Every binding assembly fills a `GType` to managed-type registry from a
