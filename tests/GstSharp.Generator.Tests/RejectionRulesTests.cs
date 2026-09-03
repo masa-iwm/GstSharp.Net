@@ -1018,8 +1018,11 @@ public sealed class RejectionRulesTests
 
         Assert.DoesNotContain("gst_packet_get_fci", run.File("Packet.cs"), StringComparison.Ordinal);
 
-        // The two refusals of the fixture - this one and the callback return -
-        // share the count.
+        // The two refusals of the fixture share the count: this member and
+        // gst_packet_set_fci_function, the setter that hands the callback over.
+        // The callback type itself is not in the number - the census counts
+        // callables, and a callback type that no member claims is simply not
+        // emitted.
         Assert.Equal(2, run.Result.Census.SkippedCount("Gst", SkipReason.UnsupportedSignature));
     }
 

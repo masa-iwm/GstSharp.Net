@@ -36,7 +36,10 @@ namespace Gst.WebRTC;
 /// <c>GstSharp.Initialize</c> also sweeps the assemblies that are loaded and
 /// runs their module initialisers, and it keeps doing so for assemblies that
 /// are loaded later, so an application that never names this class is covered
-/// as well. Calling this one is the deterministic way to say it.
+/// as well. Calling this one is the deterministic way to say it. The sweep
+/// reaches the assemblies that are loaded at the time of the lookup, and a
+/// wrapper the registry built before this assembly was loaded keeps the type it
+/// got.
 /// </para>
 /// </remarks>
 public static class GstWebRTC
