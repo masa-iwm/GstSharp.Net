@@ -1384,6 +1384,99 @@ internal sealed class MarshalPlanner
     private bool NullableOf(GirCallable callable, GirParameter parameter) =>
         OverrideOf(callable, parameter)?.Nullable ?? parameter.IsNullable;
 
+    /// <summary>
+    /// Reads the nullability of an inbound argument - one a callback or a
+    /// signal handler receives - and reports whatever else its correction
+    /// carries as ignored.
+    /// </summary>
+    /// <param name="callable">The callback being planned.</param>
+    /// <param name="parameter">The parameter to look up.</param>
+    /// <param name="path">What the key names, for the diagnostic.</param>
+    /// <returns>The effective nullability.</returns>
+    private bool InboundNullableOf(GirCallable callable, GirParameter parameter, string path) =>
+        AnnotationKeyOf(callable) is { } identifier
+            ? InboundNullableOf(identifier + "#" + parameter.Name, parameter.IsNullable, path)
+            : parameter.IsNullable;
+
+    /// <summary>
+    /// Reads the nullability of an inbound argument by key, and reports
+    /// whatever else the correction carries as ignored.
+    /// </summary>
+    /// <param name="key">The annotation key of the parameter.</param>
+    /// <param name="declared">The nullability the gir states.</param>
+    /// <param name="path">What the key names, for the diagnostic.</param>
+    /// <returns>The effective nullability.</returns>
+    /// <remarks>
+    /// An argument a callback or a signal hands over is planned on a path of
+    /// its own, which reads nothing but the nullable flag of a correction:
+    /// there is no direction to correct on a parameter that is inbound by
+    /// construction, no array, no caller allocated storage, no callback scope
+    /// and no return to discard, and an <c>obsolete</c> message belongs to a
+    /// callable rather than to one of its parameters. Reading the key is what
+    /// keeps it out of the stale report, so a field that is silently unread
+    /// would otherwise look consumed while nothing acted on it; this says so
+    /// instead.
+    /// </remarks>
+    private bool InboundNullableOf(string key, bool declared, string path)
+    {
+        AnnotationOverride? overlay = AnnotationOverrideFor(key);
+        if (overlay is null)
+        {
+            return declared;
+        }
+
+        List<string> ignored = [];
+        if (overlay.Transfer is not null)
+        {
+            ignored.Add("transfer");
+        }
+
+        if (overlay.Optional is not null)
+        {
+            ignored.Add("optional");
+        }
+
+        if (overlay.CallerAllocates is not null)
+        {
+            ignored.Add("callerAllocates");
+        }
+
+        if (overlay.Direction is not null)
+        {
+            ignored.Add("direction");
+        }
+
+        if (overlay.FixedArraySize is not null)
+        {
+            ignored.Add("fixedArraySize");
+        }
+
+        if (overlay.Scope is not null)
+        {
+            ignored.Add("scope");
+        }
+
+        if (overlay.DiscardReturn is not null)
+        {
+            ignored.Add("discardReturn");
+        }
+
+        if (overlay.Obsolete is not null)
+        {
+            ignored.Add("obsolete");
+        }
+
+        if (ignored.Count > 0)
+        {
+            _diagnostics.Warn(
+                "GEN0017",
+                $"The {string.Join(", ", ignored)} override of '{key}' is ignored: {path} is planned on its own "
+                + "path and takes no correction but nullable.");
+        }
+
+        return overlay.Nullable ?? declared;
+    }
+
     private bool CallerAllocatesOf(GirCallable callable, GirParameter parameter) =>
         OverrideOf(callable, parameter)?.CallerAllocates ?? parameter.IsCallerAllocates;
 
@@ -3731,7 +3824,7 @@ internal sealed class MarshalPlanner
                 NameMapper.ParameterName(parameter.Name),
                 ArgumentDirection.In,
                 parameter.Transfer,
-                NullableOf(callback, parameter),
+                InboundNullableOf(callback, parameter, "a callback parameter"),
                 context,
                 inbound: true);
 
@@ -3919,8 +4012,8 @@ internal sealed class MarshalPlanner
     /// an annotation override describes something a signal argument does not
     /// have - a direction, an array, a callback scope, a discardable return -
     /// so a key that carries one of those is read for its nullable flag and
-    /// otherwise ignored. A key that matches nothing is reported as GEN0024,
-    /// as it is for a callable.
+    /// the rest of it is reported as GEN0017. A key that matches nothing is
+    /// reported as GEN0024, as it is for a callable.
     /// </remarks>
     private ArgumentPlan? PlanSignalArgument(GirParameter parameter, PlanningContext context, string signalKey)
     {
@@ -3934,8 +4027,10 @@ internal sealed class MarshalPlanner
 
         string name = NameMapper.ParameterName(parameter.Name);
         MappedType mapped = _types.Map(parameter.Type, context.Namespace);
-        bool nullable = AnnotationOverrideFor(signalKey + "#" + parameter.Name)?.Nullable
-            ?? parameter.IsNullable;
+        bool nullable = InboundNullableOf(
+            signalKey + "#" + parameter.Name,
+            parameter.IsNullable,
+            "a signal parameter");
 
         // The refusal that PlanParameter applies to the in parameter of a
         // callable, hoisted in front of the projection a signal argument goes
