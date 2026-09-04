@@ -220,6 +220,22 @@ internal sealed class VfuncEmitter
             if (_emittedSlots.TryGetValue(parent.QualifiedName, out HashSet<string>? names))
             {
                 inherited.UnionWith(names);
+                continue;
+            }
+
+            // Everything the `new` rule decides is read out of this set, and a
+            // parent that has not been emitted yet leaves it empty rather than
+            // wrong: the member would be written without `new` and, worse, the
+            // return type collision below would not be seen. A subclassable
+            // parent is always emitted first - modules in dependency order,
+            // classes parent first within one - and a class whose own slots are
+            // all skipped still has an entry, so a miss here is an ordering bug
+            // of this generator and nothing a gir can cause.
+            if (parent.IsSubclassable)
+            {
+                throw new InvalidOperationException(
+                    $"'{model.QualifiedName}' is emitted before its parent '{parent.QualifiedName}'; "
+                    + "the subclassing surface has to be written parent first.");
             }
         }
 
