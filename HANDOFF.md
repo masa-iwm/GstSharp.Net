@@ -58,7 +58,10 @@ dotnet run --project generator/GstSharp.Generator -- generate \
 ```
 
 Both scratch trees exist already with the 7 wave-1 classes in the allowlist.
-The 9 mirrors it produces (`Gst`: Object, Element, Bin; `Gst.Base`: BaseSrc,
+Running it twice over the same tree produces byte-identical output (checked
+with `diff -r` over both `Generated/` trees).
+
+The 10 files it produces (`Gst`: Object, Element, Bin; `Gst.Base`: BaseSrc,
 PushSrc, BaseSink, BaseTransform, Aggregator, + 2 registries) were read and match
 the stage-1 shape. They have **not been compiled** — that only happens in the
 swap commit.
@@ -128,6 +131,15 @@ native→managed renderer), then write `PlanVirtualMethod` per brief step (b).
    (BaseParse, AudioDecoder, AudioEncoder, VideoDecoder, VideoEncoder) and both
    nullable/direction fixes belong to the wave that allowlists those classes.
    Do **not** exempt vfunc keys from the stale check to work around this.
+   Even those four land only if `PlanVirtualMethod` *reads* the correction
+   before it decides the slot is plannable: `BaseSink::fixate` needs an owned
+   MiniObject return, `request_new_pad` a transfer-none GObject return, and
+   `event` / `submit_input_buffer` the adopt bucket. Check where
+   `AnnotationKeyOf` is read relative to the null-return paths of
+   `PlanSignalArgument` before assuming a correction is consumed.
+   Related: GEN0030 checks a `vfuncDefaults` key against the model, not against
+   what was emitted, so a default stated for a slot that also appears in
+   `skipVirtuals` passes quietly.
 2. **"Byte-identical" means the signatures, not the file bytes.** The stage-1
    files carry hand-written prose no generator reproduces; the mechanism the
    spec names is the package-validation baseline plus the diff gate, which see
