@@ -58,7 +58,8 @@ internal static partial class Smoke
             ObjectUnref(element);
 
             if (!RunManagedSubclass() || !RunManagedPipeline() || !RunManagedAudioAndVideoSinks()
-                || !RunManagedAudioEncoder() || !RunBindingModule() || !RunPropertiesByName())
+                || !RunManagedAudioEncoder() || !RunBindingModule() || !RunPropertiesByName()
+                || !RunPadChainFunction())
             {
                 return 1;
             }
@@ -410,6 +411,42 @@ internal static partial class Smoke
     /// and the wrapper read goes through the type registry with one. Neither is
     /// a build warning when it fails, so both are asked here.
     /// </remarks>
+    /// <summary>
+    /// Drives a managed chain function, whose trampoline recovers the delegate
+    /// from the pad it is called with rather than from a user data pointer.
+    /// </summary>
+    /// <returns>Whether the buffer reached the handler.</returns>
+    private static bool RunPadChainFunction()
+    {
+        using Pad pad = Pad.New("sink", PadDirection.Sink);
+        int seen = 0;
+        pad.SetChainFunction((_, _, buffer) =>
+        {
+            seen += (int)buffer.GetSize();
+            return FlowReturn.Ok;
+        });
+
+        if (!pad.SetActive(true))
+        {
+            Console.Error.WriteLine("AotSmoke: the pad did not activate.");
+            return false;
+        }
+
+        // A pad warns about data that arrives before the stream has been
+        // opened, so the sample opens it the way an element would.
+        pad.SendEvent(Event.NewStreamStart("aot-smoke"));
+        using Segment segment = Segment.New();
+        segment.Init(Format.Time);
+        pad.SendEvent(Event.NewSegment(segment));
+
+        using Gst.Buffer buffer = Gst.Buffer.NewAllocate(null, 8, null)
+            ?? throw new InvalidOperationException("gst_buffer_new_allocate returned NULL.");
+        FlowReturn flow = pad.Chain(buffer);
+        Console.WriteLine(string.Create(CultureInfo.InvariantCulture, $"chain:       {flow}, {seen} byte(s)"));
+        pad.SetChainFunction(null);
+        return flow == FlowReturn.Ok && seen == 8;
+    }
+
     private static bool RunPropertiesByName()
     {
         using Element sink = ElementFactory.Make("fakesink", "properties")
