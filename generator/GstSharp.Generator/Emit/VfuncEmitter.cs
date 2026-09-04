@@ -1350,9 +1350,13 @@ internal sealed class VfuncEmitter
         switch (plan.ReturnBucket)
         {
             case VfuncReturnBucket.OwnedGObject:
-            case VfuncReturnBucket.OwnedMiniObject:
                 note.Add("A returned object is handed to the caller with one added reference; the");
                 note.Add("wrapper keeps its own.");
+                break;
+            case VfuncReturnBucket.OwnedMiniObject:
+                note.Add("The object you return is handed to the element; copy or ref it first if");
+                note.Add("you need it afterwards. The wrapper is detached by the return and throws");
+                note.Add("from then on, exactly like the wrapper of an argument the slot consumed.");
                 break;
             case VfuncReturnBucket.BorrowedHandle:
                 note.Add("The answer is borrowed: no reference is added for the caller, so the");
@@ -1599,8 +1603,12 @@ internal sealed class VfuncEmitter
             source + " is null ? nint.Zero : " + source + ".Handle",
         VfuncReturnBucket.OwnedGObject =>
             source + " is null ? nint.Zero : Gst.Interop.GObjectNative.ObjectRef(" + source + ".Handle)",
+        // A mini object is handed over rather than referenced a second time:
+        // the wrapper gives its own reference to the caller of the slot and is
+        // detached, so a buffer an override produced is writable downstream and
+        // a pooled one is back in its pool when the slot returns.
         VfuncReturnBucket.OwnedMiniObject =>
-            source + " is null ? nint.Zero : Gst.GstNative.MiniObjectRef(" + source + ".Handle)",
+            source + " is null ? nint.Zero : " + source + ".HandOver()",
         _ => source,
     };
 

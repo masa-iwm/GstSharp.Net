@@ -120,8 +120,9 @@ public unsafe partial class AudioBaseSink
     /// </param>
     /// <returns>
     /// What <c>payload</c> answers.
-    /// A returned object is handed to the caller with one added reference; the
-    /// wrapper keeps its own.
+    /// The object you return is handed to the element; copy or ref it first if
+    /// you need it afterwards. The wrapper is detached by the return and throws
+    /// from then on, exactly like the wrapper of an argument the slot consumed.
     /// </returns>
     protected virtual Gst.Buffer? OnPayload(Gst.Buffer buffer) =>
         ChainUpPayload(buffer);
@@ -156,8 +157,9 @@ public unsafe partial class AudioBaseSink
     /// </param>
     /// <returns>
     /// What <c>payload</c> answers.
-    /// A returned object is handed to the caller with one added reference; the
-    /// wrapper keeps its own.
+    /// The object you return is handed to the element; copy or ref it first if
+    /// you need it afterwards. The wrapper is detached by the return and throws
+    /// from then on, exactly like the wrapper of an argument the slot consumed.
     /// </returns>
     protected Gst.Buffer? ChainUpPayload(Gst.Buffer buffer)
     {
@@ -242,7 +244,7 @@ public unsafe partial class AudioBaseSink
 
             using Gst.Buffer? bufferValue = buffer == nint.Zero ? null : Gst.Buffer.Borrow(buffer);
             Gst.Buffer? result = managed.OnPayload(bufferValue!);
-            return result is null ? nint.Zero : Gst.GstNative.MiniObjectRef(result.Handle);
+            return result is null ? nint.Zero : result.HandOver();
         }
         catch (Exception exception)
         {

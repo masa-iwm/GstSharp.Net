@@ -256,8 +256,9 @@ public unsafe partial class BaseTransform
     /// </param>
     /// <returns>
     /// What <c>transform_caps</c> answers.
-    /// A returned object is handed to the caller with one added reference; the
-    /// wrapper keeps its own.
+    /// The object you return is handed to the element; copy or ref it first if
+    /// you need it afterwards. The wrapper is detached by the return and throws
+    /// from then on, exactly like the wrapper of an argument the slot consumed.
     /// </returns>
     protected virtual Gst.Caps? OnTransformCaps(Gst.PadDirection direction, Gst.Caps caps, Gst.Caps? filter) =>
         ChainUpTransformCaps(direction, caps, filter);
@@ -275,8 +276,9 @@ public unsafe partial class BaseTransform
     /// </param>
     /// <returns>
     /// What <c>fixate_caps</c> answers.
-    /// A returned object is handed to the caller with one added reference; the
-    /// wrapper keeps its own.
+    /// The object you return is handed to the element; copy or ref it first if
+    /// you need it afterwards. The wrapper is detached by the return and throws
+    /// from then on, exactly like the wrapper of an argument the slot consumed.
     /// Answering <see langword="null"/> is not allowed: the caller of the slot does
     /// not check for it. A null answer is reported through the exception trap and
     /// the slot answers a value the caller fails cleanly on.
@@ -582,8 +584,9 @@ public unsafe partial class BaseTransform
     /// </param>
     /// <returns>
     /// What <c>transform_caps</c> answers.
-    /// A returned object is handed to the caller with one added reference; the
-    /// wrapper keeps its own.
+    /// The object you return is handed to the element; copy or ref it first if
+    /// you need it afterwards. The wrapper is detached by the return and throws
+    /// from then on, exactly like the wrapper of an argument the slot consumed.
     /// </returns>
     protected Gst.Caps? ChainUpTransformCaps(Gst.PadDirection direction, Gst.Caps caps, Gst.Caps? filter)
     {
@@ -609,8 +612,9 @@ public unsafe partial class BaseTransform
     /// </param>
     /// <returns>
     /// What <c>fixate_caps</c> answers.
-    /// A returned object is handed to the caller with one added reference; the
-    /// wrapper keeps its own.
+    /// The object you return is handed to the element; copy or ref it first if
+    /// you need it afterwards. The wrapper is detached by the return and throws
+    /// from then on, exactly like the wrapper of an argument the slot consumed.
     /// Answering <see langword="null"/> is not allowed: the caller of the slot does
     /// not check for it. A null answer is reported through the exception trap and
     /// the slot answers a value the caller fails cleanly on.
@@ -1306,7 +1310,7 @@ public unsafe partial class BaseTransform
             using Gst.Caps? capsValue = caps == nint.Zero ? null : Gst.Caps.Borrow(caps);
             using Gst.Caps? filterValue = filter == nint.Zero ? null : Gst.Caps.Borrow(filter);
             Gst.Caps? result = managed.OnTransformCaps((Gst.PadDirection)direction, capsValue!, filterValue);
-            return result is null ? nint.Zero : Gst.GstNative.MiniObjectRef(result.Handle);
+            return result is null ? nint.Zero : result.HandOver();
         }
         catch (Exception exception)
         {
@@ -1334,7 +1338,7 @@ public unsafe partial class BaseTransform
                     "OnFixateCaps answered null, which fixate_caps does not allow.");
             }
 
-            return result is null ? nint.Zero : Gst.GstNative.MiniObjectRef(result.Handle);
+            return result is null ? nint.Zero : result.HandOver();
         }
         catch (Exception exception)
         {

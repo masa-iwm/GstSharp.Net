@@ -219,8 +219,9 @@ public unsafe partial class BaseSink
     /// </param>
     /// <returns>
     /// What <c>get_caps</c> answers.
-    /// A returned object is handed to the caller with one added reference; the
-    /// wrapper keeps its own.
+    /// The object you return is handed to the element; copy or ref it first if
+    /// you need it afterwards. The wrapper is detached by the return and throws
+    /// from then on, exactly like the wrapper of an argument the slot consumed.
     /// </returns>
     protected virtual Gst.Caps? OnGetCaps(Gst.Caps? filter) =>
         ChainUpGetCaps(filter);
@@ -245,8 +246,9 @@ public unsafe partial class BaseSink
     /// </param>
     /// <returns>
     /// What <c>fixate</c> answers.
-    /// A returned object is handed to the caller with one added reference; the
-    /// wrapper keeps its own.
+    /// The object you return is handed to the element; copy or ref it first if
+    /// you need it afterwards. The wrapper is detached by the return and throws
+    /// from then on, exactly like the wrapper of an argument the slot consumed.
     /// </returns>
     protected virtual Gst.Caps? OnFixate(Gst.Caps caps) =>
         ChainUpFixate(caps);
@@ -413,8 +415,9 @@ public unsafe partial class BaseSink
     /// </param>
     /// <returns>
     /// What <c>get_caps</c> answers.
-    /// A returned object is handed to the caller with one added reference; the
-    /// wrapper keeps its own.
+    /// The object you return is handed to the element; copy or ref it first if
+    /// you need it afterwards. The wrapper is detached by the return and throws
+    /// from then on, exactly like the wrapper of an argument the slot consumed.
     /// </returns>
     protected Gst.Caps? ChainUpGetCaps(Gst.Caps? filter)
     {
@@ -448,8 +451,9 @@ public unsafe partial class BaseSink
     /// </param>
     /// <returns>
     /// What <c>fixate</c> answers.
-    /// A returned object is handed to the caller with one added reference; the
-    /// wrapper keeps its own.
+    /// The object you return is handed to the element; copy or ref it first if
+    /// you need it afterwards. The wrapper is detached by the return and throws
+    /// from then on, exactly like the wrapper of an argument the slot consumed.
     /// </returns>
     protected Gst.Caps? ChainUpFixate(Gst.Caps caps)
     {
@@ -940,7 +944,7 @@ public unsafe partial class BaseSink
 
             using Gst.Caps? filterValue = filter == nint.Zero ? null : Gst.Caps.Borrow(filter);
             Gst.Caps? result = managed.OnGetCaps(filterValue);
-            return result is null ? nint.Zero : Gst.GstNative.MiniObjectRef(result.Handle);
+            return result is null ? nint.Zero : result.HandOver();
         }
         catch (Exception exception)
         {
@@ -981,7 +985,7 @@ public unsafe partial class BaseSink
 
             using Gst.Caps? capsValue = Gst.Caps.FromNative(caps, Gst.Interop.Transfer.Full);
             Gst.Caps? result = managed.OnFixate(capsValue!);
-            return result is null ? nint.Zero : Gst.GstNative.MiniObjectRef(result.Handle);
+            return result is null ? nint.Zero : result.HandOver();
         }
         catch (Exception exception)
         {

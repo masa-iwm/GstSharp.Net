@@ -85,6 +85,19 @@ travel in:
   `gst_object_set_parent` sinks it and the element becomes its only owner.
   Keep no reference of your own to what such a slot answers; read it back
   from the element instead.
+* **A mini object the slot answers.** The buffer of `Aggregator.OnClip`, the
+  caps of `BaseTransform.OnTransformCaps`, the buffer of
+  `AudioBaseSink.OnPayload`: the wrapper you return is *handed over*, not
+  referenced a second time. The element takes the reference the wrapper held
+  and the wrapper is detached, so it throws from then on exactly like the
+  wrapper of a consumed argument — copy or ref the object first if you need it
+  afterwards. That is what keeps a buffer an override produced writable
+  downstream and a pooled one out of the finalizer queue. Answering the very
+  mini object the slot lent you is allowed: a borrowed wrapper has no reference
+  to give away, so one is minted for the element and the borrow stays what it
+  was. A returned **GObject** is the other way round — the wrapper is interned
+  and the toggle ref owns its reference, so the element gets one of its own and
+  the wrapper goes on working.
 
 A record with no reference count of its own — a video frame, a ring buffer
 specification, a metadata item — is lent as a bare pointer holder: the

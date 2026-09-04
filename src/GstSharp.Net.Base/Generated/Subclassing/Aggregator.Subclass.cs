@@ -296,8 +296,9 @@ public unsafe partial class Aggregator
     /// </param>
     /// <returns>
     /// a #GstBuffer.
-    /// A returned object is handed to the caller with one added reference; the
-    /// wrapper keeps its own.
+    /// The object you return is handed to the element; copy or ref it first if
+    /// you need it afterwards. The wrapper is detached by the return and throws
+    /// from then on, exactly like the wrapper of an argument the slot consumed.
     /// </returns>
     protected virtual Gst.Buffer? OnClip(Gst.Base.AggregatorPad aggregatorPad, Gst.Buffer buf) =>
         ChainUpClip(aggregatorPad, buf);
@@ -462,8 +463,9 @@ public unsafe partial class Aggregator
     /// </param>
     /// <returns>
     /// the fixated caps #GstCaps.
-    /// A returned object is handed to the caller with one added reference; the
-    /// wrapper keeps its own.
+    /// The object you return is handed to the element; copy or ref it first if
+    /// you need it afterwards. The wrapper is detached by the return and throws
+    /// from then on, exactly like the wrapper of an argument the slot consumed.
     /// Answering <see langword="null"/> is not allowed: the caller of the slot does
     /// not check for it. A null answer is reported through the exception trap and
     /// the slot answers a value the caller fails cleanly on.
@@ -590,8 +592,9 @@ public unsafe partial class Aggregator
     ///   or a #GstBufferList. The contents of its info structure is subclass-dependent,
     ///   and documented on a subclass basis. The buffers held by the sample are
     ///   not writable.
-    /// A returned object is handed to the caller with one added reference; the
-    /// wrapper keeps its own.
+    /// The object you return is handed to the element; copy or ref it first if
+    /// you need it afterwards. The wrapper is detached by the return and throws
+    /// from then on, exactly like the wrapper of an argument the slot consumed.
     /// </returns>
     protected virtual Gst.Sample? OnPeekNextSample(Gst.Base.AggregatorPad aggregatorPad) =>
         ChainUpPeekNextSample(aggregatorPad);
@@ -617,8 +620,9 @@ public unsafe partial class Aggregator
     /// </param>
     /// <returns>
     /// a #GstBuffer.
-    /// A returned object is handed to the caller with one added reference; the
-    /// wrapper keeps its own.
+    /// The object you return is handed to the element; copy or ref it first if
+    /// you need it afterwards. The wrapper is detached by the return and throws
+    /// from then on, exactly like the wrapper of an argument the slot consumed.
     /// </returns>
     protected Gst.Buffer? ChainUpClip(Gst.Base.AggregatorPad aggregatorPad, Gst.Buffer buf)
     {
@@ -816,8 +820,9 @@ public unsafe partial class Aggregator
     /// </param>
     /// <returns>
     /// the fixated caps #GstCaps.
-    /// A returned object is handed to the caller with one added reference; the
-    /// wrapper keeps its own.
+    /// The object you return is handed to the element; copy or ref it first if
+    /// you need it afterwards. The wrapper is detached by the return and throws
+    /// from then on, exactly like the wrapper of an argument the slot consumed.
     /// Answering <see langword="null"/> is not allowed: the caller of the slot does
     /// not check for it. A null answer is reported through the exception trap and
     /// the slot answers a value the caller fails cleanly on.
@@ -977,8 +982,9 @@ public unsafe partial class Aggregator
     ///   or a #GstBufferList. The contents of its info structure is subclass-dependent,
     ///   and documented on a subclass basis. The buffers held by the sample are
     ///   not writable.
-    /// A returned object is handed to the caller with one added reference; the
-    /// wrapper keeps its own.
+    /// The object you return is handed to the element; copy or ref it first if
+    /// you need it afterwards. The wrapper is detached by the return and throws
+    /// from then on, exactly like the wrapper of an argument the slot consumed.
     /// </returns>
     protected Gst.Sample? ChainUpPeekNextSample(Gst.Base.AggregatorPad aggregatorPad)
     {
@@ -1339,7 +1345,7 @@ public unsafe partial class Aggregator
             Gst.Base.AggregatorPad? aggregatorPadValue = Gst.GObject.Object.FromNative<Gst.Base.AggregatorPad>(aggregatorPad, Gst.Interop.Transfer.None);
             using Gst.Buffer? bufValue = Gst.Buffer.FromNative(buf, Gst.Interop.Transfer.Full);
             Gst.Buffer? result = managed.OnClip(aggregatorPadValue!, bufValue!);
-            return result is null ? nint.Zero : Gst.GstNative.MiniObjectRef(result.Handle);
+            return result is null ? nint.Zero : result.HandOver();
         }
         catch (Exception exception)
         {
@@ -1603,7 +1609,7 @@ public unsafe partial class Aggregator
                     "OnFixateSrcCaps answered null, which fixate_src_caps does not allow.");
             }
 
-            return result is null ? nint.Zero : Gst.GstNative.MiniObjectRef(result.Handle);
+            return result is null ? nint.Zero : result.HandOver();
         }
         catch (Exception exception)
         {
@@ -1767,7 +1773,7 @@ public unsafe partial class Aggregator
 
             Gst.Base.AggregatorPad? aggregatorPadValue = Gst.GObject.Object.FromNative<Gst.Base.AggregatorPad>(aggregatorPad, Gst.Interop.Transfer.None);
             Gst.Sample? result = managed.OnPeekNextSample(aggregatorPadValue!);
-            return result is null ? nint.Zero : Gst.GstNative.MiniObjectRef(result.Handle);
+            return result is null ? nint.Zero : result.HandOver();
         }
         catch (Exception exception)
         {

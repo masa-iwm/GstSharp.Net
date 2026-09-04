@@ -384,10 +384,18 @@ transfer annotations, e.g. `change_state` takes
 * Out parameters (`get_state`'s `GstState *state, *pending`): write-back
   through pointers, the same plan shapes `MarshalPlanner` already produces
   for generated methods, mirrored.
-* **Transfer-full returns**: a managed override that returns a wrapper does
-  not give up the wrapper's own reference (the toggle ref owns it). The
-  trampoline takes an extra `g_object_ref` (or `gst_mini_object_ref`) on the
-  handle before returning it to native code. For floating-capable returns
+* **Transfer-full returns**: the two families answer differently. A returned
+  **GObject** keeps its wrapper's own reference (the toggle ref owns it) and
+  the trampoline takes an extra `g_object_ref` on the handle before returning
+  it. A returned **mini object** is *handed over*: the trampoline detaches the
+  wrapper and passes the reference it held on, minting nothing, so the buffer
+  an override produced is writable downstream and a pooled one is back in its
+  pool when the slot returns instead of waiting for a finalizer. The wrapper
+  throws from then on, exactly like the wrapper of an argument the slot
+  consumed, and an override that needs the object afterwards copies or refs it
+  first. A wrapper that only *borrows* the mini object has no reference to give
+  away and gets one minted for the caller, which is what an override answering
+  the very object it was lent relies on. For floating-capable returns
   (`request_new_pad` returning a fresh `Pad`), the same
   `IsFloating`/ref-sink reasoning as `Object`'s constructor applies and must
   be spelled per slot.

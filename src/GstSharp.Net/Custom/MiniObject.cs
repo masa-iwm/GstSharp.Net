@@ -177,6 +177,43 @@ public abstract class MiniObject : IDisposable
     }
 
     /// <summary>
+    /// Hands the reference of the wrapper to native code and detaches the
+    /// wrapper, which is what a virtual method does with the mini object an
+    /// override answered.
+    /// </summary>
+    /// <returns>The handle, carrying the reference the caller takes over.</returns>
+    /// <remarks>
+    /// <para>
+    /// The slot of a class struct answers a mini object transfer full, and the
+    /// override that produced one has no use for it afterwards: the buffer, the
+    /// caps or the event it built belongs to whoever called the slot. Handing
+    /// the wrapper's own reference over rather than minting a second one is
+    /// what keeps the object writable downstream and what returns a pooled
+    /// buffer to its pool without waiting for a collection.
+    /// </para>
+    /// <para>
+    /// The wrapper is detached by the call, so using it afterwards throws, the
+    /// same way a wrapper of an argument the slot consumed does. A wrapper that
+    /// only borrows the object owns no reference to hand over and gets one
+    /// minted for the caller instead, which is what an override that answers
+    /// the very mini object it was lent relies on.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="ObjectDisposedException">The wrapper was disposed.</exception>
+    internal nint HandOver()
+    {
+        nint handle = Handle;
+        if (_borrowed)
+        {
+            return GstNative.MiniObjectRef(handle);
+        }
+
+        _ = Interlocked.Exchange(ref _handle, nint.Zero);
+        GC.SuppressFinalize(this);
+        return handle;
+    }
+
+    /// <summary>
     /// Releases the reference of the wrapper.
     /// </summary>
     public void Dispose()
