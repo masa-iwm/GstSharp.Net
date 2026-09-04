@@ -97,6 +97,8 @@ internal static class GenerationPipeline
         // Overlays.Empty is shared by every fixture of the test suite.
         HashSet<string> consumedArrayOverrides = new(StringComparer.Ordinal);
         HashSet<string> consumedAnnotationOverrides = new(StringComparer.Ordinal);
+        HashSet<string> consumedInstanceKeyedCallbacks = new(StringComparer.Ordinal);
+        HashSet<string> consumedDocNotes = new(StringComparer.Ordinal);
 
         List<GeneratedFile> files = [];
         foreach (ModuleInfo module in ModuleMap.Modules)
@@ -129,6 +131,8 @@ internal static class GenerationPipeline
                     inherited,
                     consumedArrayOverrides,
                     consumedAnnotationOverrides,
+                    consumedInstanceKeyedCallbacks,
+                    consumedDocNotes,
                     subclasses,
                     emittedVirtuals),
                 module,
@@ -177,6 +181,45 @@ internal static class GenerationPipeline
                 "GEN0024",
                 $"The annotation override '{key}' matched no callable, parameter or signal argument; "
                 + "the entry is stale.");
+        }
+
+        // An instance keyed entry the run never read names a callback that no
+        // longer exists or one no module emits, which would leave a callback
+        // whose state has nowhere to live looking as though it were handled.
+        List<string> staleInstanceKeyed = [];
+        foreach (string key in overlays.InstanceKeyedCallbackKeys)
+        {
+            if (!consumedInstanceKeyedCallbacks.Contains(key))
+            {
+                staleInstanceKeyed.Add(key);
+            }
+        }
+
+        staleInstanceKeyed.Sort(StringComparer.Ordinal);
+        foreach (string key in staleInstanceKeyed)
+        {
+            diagnostics.Warn(
+                "GEN0041",
+                $"The instance keyed callback '{key}' names no emitted callback; the entry is stale.");
+        }
+
+        // And the notes, for the same reason: a note keyed by an identifier the
+        // run never planned is a sentence nothing says.
+        List<string> staleDocNotes = [];
+        foreach (string key in overlays.DocNoteKeys)
+        {
+            if (!consumedDocNotes.Contains(key))
+            {
+                staleDocNotes.Add(key);
+            }
+        }
+
+        staleDocNotes.Sort(StringComparer.Ordinal);
+        foreach (string key in staleDocNotes)
+        {
+            diagnostics.Warn(
+                "GEN0042",
+                $"The documentation note '{key}' names no planned callable; the entry is stale.");
         }
 
         // A field skip the run never matched names a field that no longer
@@ -281,7 +324,9 @@ internal static class GenerationPipeline
             shared.SkipRules,
             shared.Diagnostics,
             shared.ConsumedArrayOverrides,
-            shared.ConsumedAnnotationOverrides);
+            shared.ConsumedAnnotationOverrides,
+            shared.ConsumedInstanceKeyedCallbacks,
+            shared.ConsumedDocNotes);
 
         SurfaceBuilder surfaces = new(
             planner,
@@ -398,6 +443,14 @@ internal static class GenerationPipeline
     /// The keys of the annotation corrections the run has read, shared for the
     /// same reason.
     /// </param>
+    /// <param name="ConsumedInstanceKeyedCallbacks">
+    /// The keys of the instance keyed callback entries the run has read,
+    /// shared for the same reason.
+    /// </param>
+    /// <param name="ConsumedDocNotes">
+    /// The keys of the documentation notes the run has attached, shared for
+    /// the same reason.
+    /// </param>
     private sealed record ModuleEmitters(
         Repository Repository,
         Classifier Classifier,
@@ -411,6 +464,8 @@ internal static class GenerationPipeline
         Dictionary<string, List<string>> Inherited,
         HashSet<string> ConsumedArrayOverrides,
         HashSet<string> ConsumedAnnotationOverrides,
+        HashSet<string> ConsumedInstanceKeyedCallbacks,
+        HashSet<string> ConsumedDocNotes,
         SubclassModel Subclasses,
         Dictionary<string, HashSet<string>> EmittedVirtuals);
 

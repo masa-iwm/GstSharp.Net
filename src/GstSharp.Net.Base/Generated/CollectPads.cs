@@ -300,6 +300,65 @@ public unsafe partial class CollectPads : Gst.Object
         return nativeResult != 0;
     }
 
+    /// <summary>
+    /// Set the callback function and user data that will be called with
+    /// the oldest buffer when all pads have been collected, or %NULL on EOS.
+    /// If a buffer is passed, the callback owns a reference and must unref
+    /// it.
+    /// </summary>
+    /// <remarks>
+    /// <para>MT safe.</para>
+    /// <para>
+    /// The callback is installed for the lifetime of the object. Replacing it
+    /// does not release the state of the previous one, so a call per buffer or
+    /// per state change leaks.
+    /// </para>
+    /// </remarks>
+    /// <param name="func">
+    /// the function to set
+    /// The binding keeps the state of this callback alive for the life of the
+    /// process: the library stores the function pointer and calls it from a
+    /// streaming thread, and it offers no destroy notification to release the
+    /// state again. One handle is leaked per call — install the callback once,
+    /// at construction.
+    /// </param>
+    public void SetBufferFunction(Gst.Base.CollectPadsBufferFunction func)
+    {
+        ArgumentNullException.ThrowIfNull(func);
+        nint instanceHandle = Handle;
+        Gst.Interop.CallbackHandle funcState = Gst.Interop.CallbackHandle.Alloc(func);
+        GstCollectPadsSetBufferFunction(instanceHandle, Gst.Base.CollectPadsBufferFunctionTrampoline.Pointer, funcState.UserData);
+        System.GC.KeepAlive(this);
+    }
+
+    /// <summary>
+    /// Install a clipping function that is called right after a buffer is received
+    /// on a pad managed by @pads. See #GstCollectPadsClipFunction for more info.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The callback is installed for the lifetime of the object. Replacing it
+    /// does not release the state of the previous one, so a call per buffer or
+    /// per state change leaks.
+    /// </para>
+    /// </remarks>
+    /// <param name="clipfunc">
+    /// clip function to install
+    /// The binding keeps the state of this callback alive for the life of the
+    /// process: the library stores the function pointer and calls it from a
+    /// streaming thread, and it offers no destroy notification to release the
+    /// state again. One handle is leaked per call — install the callback once,
+    /// at construction.
+    /// </param>
+    public void SetClipFunction(Gst.Base.CollectPadsClipFunction clipfunc)
+    {
+        ArgumentNullException.ThrowIfNull(clipfunc);
+        nint instanceHandle = Handle;
+        Gst.Interop.CallbackHandle clipfuncState = Gst.Interop.CallbackHandle.Alloc(clipfunc);
+        GstCollectPadsSetClipFunction(instanceHandle, Gst.Base.CollectPadsClipFunctionTrampoline.Pointer, clipfuncState.UserData);
+        System.GC.KeepAlive(this);
+    }
+
     /// <summary>Set the timestamp comparison function.</summary>
     /// <remarks>
     /// <para>MT safe.</para>
@@ -604,6 +663,14 @@ public unsafe partial class CollectPads : Gst.Object
     /// <summary>The <c>gst_collect_pads_remove_pad</c> entry point.</summary>
     [LibraryImport("GstBase", EntryPoint = "gst_collect_pads_remove_pad")]
     private static partial int GstCollectPadsRemovePad(nint pads, nint pad);
+
+    /// <summary>The <c>gst_collect_pads_set_buffer_function</c> entry point.</summary>
+    [LibraryImport("GstBase", EntryPoint = "gst_collect_pads_set_buffer_function")]
+    private static partial void GstCollectPadsSetBufferFunction(nint pads, nint func, nint userData);
+
+    /// <summary>The <c>gst_collect_pads_set_clip_function</c> entry point.</summary>
+    [LibraryImport("GstBase", EntryPoint = "gst_collect_pads_set_clip_function")]
+    private static partial void GstCollectPadsSetClipFunction(nint pads, nint clipfunc, nint userData);
 
     /// <summary>The <c>gst_collect_pads_set_compare_function</c> entry point.</summary>
     [LibraryImport("GstBase", EntryPoint = "gst_collect_pads_set_compare_function")]

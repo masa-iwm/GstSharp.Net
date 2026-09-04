@@ -9,6 +9,138 @@ using System.Runtime.InteropServices;
 
 namespace Gst.Base;
 
+/// <summary>
+/// A function that will be called when a (considered oldest) buffer can be muxed.
+/// If all pads have reached EOS, this function is called with %NULL @buffer
+/// and %NULL @data.
+/// </summary>
+/// <param name="pads">the #GstCollectPads that triggered the callback</param>
+/// <param name="data">the #GstCollectData of pad that has received the buffer</param>
+/// <param name="buffer">
+/// the #GstBuffer
+/// The handler takes ownership of it: it is released when the handler returns, unless the
+/// handler handed it on to a member that consumes it. Copy it to keep it beyond the call.
+/// </param>
+/// <returns>%GST_FLOW_OK for success</returns>
+public delegate Gst.FlowReturn CollectPadsBufferFunction(Gst.Base.CollectPads pads, Gst.Base.CollectData data, Gst.Buffer buffer);
+
+/// <summary>The native entry point of <see cref="Gst.Base.CollectPadsBufferFunction"/>.</summary>
+internal static unsafe class CollectPadsBufferFunctionTrampoline
+{
+    /// <summary>Gets the address that is handed to native code.</summary>
+    internal static nint Pointer => (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, nint, int>)&Invoke;
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static int Invoke(nint pads, nint data, nint buffer, nint userData)
+    {
+        try
+        {
+            using Gst.Buffer bufferValue = Gst.Buffer.FromNative(buffer, Gst.Interop.Transfer.Full)
+                ?? throw new InvalidOperationException("GstCollectPadsBufferFunction passed no buffer.");
+
+            if (Gst.Interop.CallbackHandle.GetState<Gst.Base.CollectPadsBufferFunction>(userData) is not { } callback)
+            {
+                return (int)Gst.FlowReturn.Error;
+            }
+
+            Gst.Base.CollectPads padsValue = Gst.GObject.Object.FromNative<Gst.Base.CollectPads>(pads, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("GstCollectPadsBufferFunction passed no pads.");
+            Gst.Base.CollectData dataValue = Gst.Base.CollectData.FromNative(data)
+                ?? throw new InvalidOperationException("GstCollectPadsBufferFunction passed no data.");
+            return (int)callback(padsValue, dataValue, bufferValue);
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+            return (int)Gst.FlowReturn.Error;
+        }
+    }
+}
+
+/// <summary>
+/// A function that will be called when @inbuffer is received on the pad managed
+/// by @data in the collectpad object @pads.
+/// </summary>
+/// <remarks>
+/// <para>
+/// The function should use the segment of @data and the negotiated media type on
+/// the pad to perform clipping of @inbuffer.
+/// </para>
+/// <para>
+/// This function takes ownership of @inbuffer and should output a buffer in
+/// @outbuffer or return %NULL in @outbuffer if the buffer should be dropped.
+/// </para>
+/// </remarks>
+/// <param name="pads">a #GstCollectPads</param>
+/// <param name="data">a #GstCollectData</param>
+/// <param name="inbuffer">
+/// the input #GstBuffer
+/// The handler takes ownership of it: it is released when the handler returns, unless the
+/// handler handed it on to a member that consumes it. Copy it to keep it beyond the call.
+/// </param>
+/// <param name="outbuffer">
+/// the output #GstBuffer
+/// What the handler leaves here is handed to the caller with one added reference; the
+/// wrapper keeps its own. It is only read when the handler answered success.
+/// </param>
+/// <returns>a #GstFlowReturn that corresponds to the result of clipping.</returns>
+public delegate Gst.FlowReturn CollectPadsClipFunction(Gst.Base.CollectPads pads, Gst.Base.CollectData data, Gst.Buffer inbuffer, out Gst.Buffer? outbuffer);
+
+/// <summary>The native entry point of <see cref="Gst.Base.CollectPadsClipFunction"/>.</summary>
+internal static unsafe class CollectPadsClipFunctionTrampoline
+{
+    /// <summary>Gets the address that is handed to native code.</summary>
+    internal static nint Pointer => (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, nint*, nint, int>)&Invoke;
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static int Invoke(nint pads, nint data, nint inbuffer, nint* outbuffer, nint userData)
+    {
+        try
+        {
+            *outbuffer = nint.Zero;
+            using Gst.Buffer inbufferValue = Gst.Buffer.FromNative(inbuffer, Gst.Interop.Transfer.Full)
+                ?? throw new InvalidOperationException("GstCollectPadsClipFunction passed no inbuffer.");
+            Gst.Buffer? outbufferValue = null;
+
+            if (Gst.Interop.CallbackHandle.GetState<Gst.Base.CollectPadsClipFunction>(userData) is not { } callback)
+            {
+                return (int)Gst.FlowReturn.Error;
+            }
+
+            Gst.Base.CollectPads padsValue = Gst.GObject.Object.FromNative<Gst.Base.CollectPads>(pads, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("GstCollectPadsClipFunction passed no pads.");
+            Gst.Base.CollectData dataValue = Gst.Base.CollectData.FromNative(data)
+                ?? throw new InvalidOperationException("GstCollectPadsClipFunction passed no data.");
+            try
+            {
+                Gst.FlowReturn result = callback(padsValue, dataValue, inbufferValue, out outbufferValue);
+
+                if (result == Gst.FlowReturn.Ok)
+                {
+                    nint outbufferHandle = outbufferValue is null ? nint.Zero : outbufferValue.Handle;
+                    if (outbufferHandle != nint.Zero)
+                    {
+                        Gst.GstNative.MiniObjectRef(outbufferHandle);
+                    }
+
+                    *outbuffer = outbufferHandle;
+                }
+
+                return (int)result;
+            }
+            finally
+            {
+                outbufferValue?.Dispose();
+            }
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+            return (int)Gst.FlowReturn.Error;
+        }
+    }
+}
+
 /// <summary>A function for comparing two timestamps of buffers or newsegments collected on one pad.</summary>
 /// <param name="pads">the #GstCollectPads that is comparing the timestamps</param>
 /// <param name="data1">the first #GstCollectData</param>

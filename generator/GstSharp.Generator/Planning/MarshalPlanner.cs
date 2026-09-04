@@ -76,6 +76,13 @@ internal sealed class CallbackPlan
     /// therefore leave alone.
     /// </summary>
     internal bool UsedOutsideAsync { get; set; }
+
+    /// <summary>
+    /// Gets the storage slot of the instance the callback is installed on,
+    /// when the callback carries no <c>user_data</c> of its own and its
+    /// trampoline recovers the managed delegate from the instance instead.
+    /// </summary>
+    internal string? InstanceSlot { get; init; }
 }
 
 /// <summary>
@@ -392,6 +399,16 @@ internal sealed class MarshalPlanner
     private readonly HashSet<string> _consumedAnnotationOverrides;
 
     /// <summary>
+    /// The keys of the instance keyed callback entries this run has read, and
+    /// the keys of the documentation notes it has attached, both shared across
+    /// the modules of a run the way the corrections above are.
+    /// </summary>
+    private readonly HashSet<string> _consumedInstanceKeyedCallbacks;
+
+    /// <summary>The keys of the documentation notes this run has attached.</summary>
+    private readonly HashSet<string> _consumedDocNotes;
+
+    /// <summary>
     /// The callback uses the callable that is being planned has claimed, and
     /// the scope each of them claimed it under. Claiming a use decides how the
     /// shared trampoline of the callback type ends, so it is only written to
@@ -427,6 +444,14 @@ internal sealed class MarshalPlanner
     /// The set the annotation corrections that were read are recorded in,
     /// shared across the modules of a run for the same reason.
     /// </param>
+    /// <param name="consumedInstanceKeyedCallbacks">
+    /// The set the instance keyed callback entries that were read are recorded
+    /// in, shared for the same reason.
+    /// </param>
+    /// <param name="consumedDocNotes">
+    /// The set the documentation notes that were attached are recorded in,
+    /// shared for the same reason.
+    /// </param>
     internal MarshalPlanner(
         Repository repository,
         Classifier classifier,
@@ -436,7 +461,9 @@ internal sealed class MarshalPlanner
         SkipRules skipRules,
         DiagnosticBag diagnostics,
         HashSet<string>? consumedArrayOverrides = null,
-        HashSet<string>? consumedAnnotationOverrides = null)
+        HashSet<string>? consumedAnnotationOverrides = null,
+        HashSet<string>? consumedInstanceKeyedCallbacks = null,
+        HashSet<string>? consumedDocNotes = null)
     {
         _repository = repository;
         _classifier = classifier;
@@ -448,6 +475,9 @@ internal sealed class MarshalPlanner
         _consumedArrayOverrides = consumedArrayOverrides ?? new HashSet<string>(StringComparer.Ordinal);
         _consumedAnnotationOverrides =
             consumedAnnotationOverrides ?? new HashSet<string>(StringComparer.Ordinal);
+        _consumedInstanceKeyedCallbacks =
+            consumedInstanceKeyedCallbacks ?? new HashSet<string>(StringComparer.Ordinal);
+        _consumedDocNotes = consumedDocNotes ?? new HashSet<string>(StringComparer.Ordinal);
     }
 
     /// <summary>
@@ -720,6 +750,7 @@ internal sealed class MarshalPlanner
             ObsoleteMessage = AnnotationKeyOf(callable) is { } annotationKey
                 ? AnnotationOverrideFor(annotationKey)?.Obsolete
                 : null,
+            DocNote = DocNoteFor(callable.CIdentifier),
             InstanceType = form == CallableForm.ExtensionMethod ? context.OwnerType : null,
             InstanceConsumption = consumption,
             InstanceIsBorrowable = context.OwnerKind == TypeKind.MiniObject,
@@ -1309,6 +1340,37 @@ internal sealed class MarshalPlanner
         }
 
         return correction;
+    }
+
+    /// <summary>
+    /// Reads the storage slot an instance keyed callback occupies, and records
+    /// that the entry was read.
+    /// </summary>
+    /// <param name="qualifiedName">The qualified gir name of the callback.</param>
+    /// <returns>The slot, or <see langword="null"/> when the callback is not keyed by its instance.</returns>
+    private string? InstanceKeyedSlotFor(string qualifiedName)
+    {
+        if (!_overlays.TryGetInstanceKeyedSlot(qualifiedName, out string? slot))
+        {
+            return null;
+        }
+
+        _consumedInstanceKeyedCallbacks.Add(qualifiedName);
+        return slot;
+    }
+
+    /// <summary>Reads the documentation note of a callable, and records that it was read.</summary>
+    /// <param name="cIdentifier">The <c>c:identifier</c> of the callable, when it has one.</param>
+    /// <returns>The note, or <see langword="null"/>.</returns>
+    private string? DocNoteFor(string? cIdentifier)
+    {
+        if (cIdentifier is null || !_overlays.TryGetDocNote(cIdentifier, out string? note))
+        {
+            return null;
+        }
+
+        _consumedDocNotes.Add(cIdentifier);
+        return note;
     }
 
     /// <summary>Reads the annotation correction of one parameter, if there is one.</summary>
@@ -2847,12 +2909,19 @@ internal sealed class MarshalPlanner
             publicType = mapped.PublicType;
         }
 
-        if (direction == ArgumentDirection.Ref)
+        // A handle a callable works on in place has no managed shape: a caller
+        // that hands a wrapper in and is given another one back would hold both
+        // halves of a reference the C function moved. A callback is the other
+        // direction and does have one - the trampoline hands the handler the
+        // value it was given and writes back what the handler left, which is
+        // what GstPadGetRangeFunction fills its buffer through - so the refusal
+        // is made for the outbound side alone.
+        if (direction == ArgumentDirection.Ref && !inbound)
         {
             return null;
         }
 
-        if (direction == ArgumentDirection.Out)
+        if (direction is ArgumentDirection.Out or ArgumentDirection.Ref)
         {
             // The callee writes a whole C structure into storage the caller
             // provides. A handle is one pointer wide in C#, and a GstVideoFrame
@@ -3271,11 +3340,22 @@ internal sealed class MarshalPlanner
             return null;
         }
 
+        // The state of an instance keyed callback is filed under the instance
+        // and released by the destroy notification the setter takes, so a site
+        // that offers neither has nowhere to put it and no way to take it out
+        // again. All eleven pad setters of this shape are the _full ones, which
+        // take both.
+        if (plan.InstanceSlot is not null && (parameter.ClosureIndex is null || parameter.DestroyIndex is null))
+        {
+            return Reject(SkipReason.UnsupportedSignature);
+        }
+
         _pendingCallbacks.Add((plan, selfFreeing));
         return new ArgumentPlan
         {
             Source = parameter,
             Kind = ArgumentKind.Callback,
+            InstanceSlot = plan.InstanceSlot,
             Name = name,
             PublicType = nullable ? plan.DelegateType + "?" : plan.DelegateType,
             IsNullable = nullable,
@@ -3810,6 +3890,7 @@ internal sealed class MarshalPlanner
         }
 
         string name = _names.TypeName(symbol);
+        string? instanceSlot = InstanceKeyedSlotFor(symbol.QualifiedName);
         List<ArgumentPlan> arguments = [];
         bool sawUserData = false;
 
@@ -3823,12 +3904,77 @@ internal sealed class MarshalPlanner
                 continue;
             }
 
+            MappedType mapped = _types.Map(parameter.Type, context.Namespace);
+
+            // A handle the callback hands back through a pointer to a pointer.
+            // The gir spells the parameter in, because it states no direction
+            // at all, so the overlays say which of the two shapes it is and the
+            // shape decides what the trampoline writes. `inout` is the in place
+            // parameter of GstPadGetRangeFunction: the caller passes the buffer
+            // to fill in a local of its own and requires the very same one back
+            // (gstpad.c:5084, :5127), so the handler is handed a borrowed
+            // wrapper and only a handle that differs is referenced. `out` is
+            // the produced buffer of GstCollectPadsClipFunction, which the
+            // handler leaves NULL when it drops the input.
+            // An inout the gir states on its own is not enough. What the caller
+            // does with what it finds there differs per callback:
+            // gst_buffer_list_foreach takes the value over and releases the one
+            // it had, while gst_pad_get_range requires the very buffer it
+            // passed back and takes a reference of its own for anything else.
+            // One projection cannot be both, so the in place shape is bound
+            // only where the overlays state it and the ones nobody has read the
+            // C of stay unsupported.
+            ArgumentDirection? handedBack = ParseDirection(OverrideOf(callback, parameter)?.Direction)
+                ?? (parameter.Direction == GirDirection.Out ? ArgumentDirection.Out : null);
+            // A direction on anything but a pointer to a handle pointer is left
+            // to the in path, which reports it as ignored: there is no out
+            // projection of a value a trampoline is handed by value, and a
+            // correction that was weighed reads differently from one that
+            // silently took a callback out of the bindings.
+            if (handedBack is ArgumentDirection.Out or ArgumentDirection.Ref
+                && IsPointerToHandlePointer(parameter.Type, mapped))
+            {
+                ArgumentPlan? produced = PlanScalar(
+                    parameter.Type,
+                    mapped,
+                    NameMapper.ParameterName(parameter.Name),
+                    handedBack.Value,
+                    TransferOf(callback, parameter),
+                    nullable: true,
+                    context,
+                    inbound: true);
+
+                // Only a mini object is handed back this way: the reference the
+                // caller ends up with is minted with gst_mini_object_ref, and a
+                // boxed value would need a copy of its own type instead.
+                if (produced is not { Kind: ArgumentKind.Handle, Flavor: HandleFlavor.Wrapper }
+                    || _repository.Resolve(parameter.Type.Name, context.Namespace) is not { } producedSymbol
+                    || _classifier.Classify(producedSymbol.Declaration) != TypeKind.MiniObject)
+                {
+                    return null;
+                }
+
+                arguments.Add(new ArgumentPlan
+                {
+                    Source = produced.Source,
+                    Kind = produced.Kind,
+                    Name = produced.Name,
+                    PublicType = produced.PublicType,
+                    RawType = produced.RawType,
+                    Direction = produced.Direction,
+                    Transfer = produced.Transfer,
+                    Flavor = produced.Flavor,
+                    IsNullable = true,
+                    ConsumedFamily = ConsumedFamily.MiniObject,
+                    Doc = parameter.Doc,
+                });
+                continue;
+            }
+
             if (parameter.Direction != GirDirection.In || parameter.Type is GirArrayRef)
             {
                 return null;
             }
-
-            MappedType mapped = _types.Map(parameter.Type, context.Namespace);
 
             // The same refusal, in front of the projection a callback argument
             // goes through. Nothing is recorded through Reject either: a
@@ -3861,6 +4007,31 @@ internal sealed class MarshalPlanner
                 InboundNullableOf(callback, parameter, "a callback parameter"),
                 context,
                 inbound: true);
+
+            // A handle the callback is handed with transfer full is adopted:
+            // the reference travels into the handler, which is what
+            // GstPadChainFunction does with its buffer. PlanScalar answers the
+            // consuming kind for it, which is the contract of an argument this
+            // code passes out; inbound it is the same reference read the other
+            // way round, so the plan is restated as a handle the trampoline
+            // scopes and gives back when the handler returns.
+            if (argument is { Kind: ArgumentKind.ConsumedHandle, Direction: ArgumentDirection.In })
+            {
+                argument = new ArgumentPlan
+                {
+                    Source = argument.Source,
+                    Kind = ArgumentKind.Handle,
+                    Name = argument.Name,
+                    PublicType = argument.PublicType,
+                    RawType = argument.RawType,
+                    Direction = ArgumentDirection.In,
+                    Transfer = argument.Transfer,
+                    Flavor = argument.Flavor,
+                    ConsumedFamily = argument.ConsumedFamily,
+                    IsNullable = argument.IsNullable,
+                    Doc = argument.Doc,
+                };
+            }
 
             // A GValue a callback is handed points into storage that the
             // caller of the callback owns and keeps, which the owning
@@ -3951,12 +4122,14 @@ internal sealed class MarshalPlanner
                 };
             }
 
-            // A handle the callback receives is only borrowed; taking ownership
-            // of it would free what the caller still uses. The consuming kind
-            // is a contract for arguments this code passes in, not for ones a
-            // trampoline receives, so it is rejected here as well.
-            if (argument.Kind == ArgumentKind.ConsumedHandle
-                || (argument.Kind == ArgumentKind.Handle && argument.Transfer == GirTransfer.Full))
+            // The consuming kind is a contract for arguments this code passes
+            // in, not for ones a trampoline receives, so it is rejected here.
+            // A handle the callback is handed with transfer full is not: the
+            // reference travels into the handler, which is what
+            // GstPadChainFunction does with its buffer, and the trampoline
+            // scopes the wrapper so that the reference is given back when the
+            // handler returns, whether it returned or threw.
+            if (argument.Kind == ArgumentKind.ConsumedHandle)
             {
                 return null;
             }
@@ -3964,7 +4137,18 @@ internal sealed class MarshalPlanner
             arguments.Add(argument);
         }
 
-        if (!sawUserData)
+        // A callback whose own signature carries no user_data has no channel a
+        // trampoline could read its state out of, unless the overlays name the
+        // slot of the instance it is installed on: the state is then filed
+        // under that instance and that slot, and the trampoline is handed the
+        // instance as its first argument.
+        if (!sawUserData && instanceSlot is null)
+        {
+            return null;
+        }
+
+        if (instanceSlot is not null
+            && arguments is not [{ Kind: ArgumentKind.Handle, Direction: ArgumentDirection.In }, ..])
         {
             return null;
         }
@@ -4002,18 +4186,34 @@ internal sealed class MarshalPlanner
                 callback.ReturnValue.IsNullable,
                 context);
 
+            // A handle is answered only when the callback owns what it hands
+            // back and the wrapper of it can detach: a boxed value hands its
+            // pointer over, which is what GstPadIterIntLinkFunction does with
+            // the iterator it builds. Anything borrowed would leave the caller
+            // freeing what the handler still holds.
+            bool handsOverBoxed = scalar is
+                    { Kind: ArgumentKind.Handle or ArgumentKind.ConsumedHandle, Flavor: HandleFlavor.Wrapper }
+                && callback.ReturnValue.Transfer == GirTransfer.Full
+                && _repository.Resolve(callback.ReturnValue.Type.Name, context.Namespace)
+                    is { } returnSymbol
+                && _classifier.Classify(returnSymbol.Declaration) == TypeKind.Boxed;
+
             if (scalar is null
-                || scalar.Kind is not (ArgumentKind.Value or ArgumentKind.Boolean or ArgumentKind.Enumeration
-                    or ArgumentKind.Wrapper or ArgumentKind.Pointer))
+                || (scalar.Kind is not (ArgumentKind.Value or ArgumentKind.Boolean or ArgumentKind.Enumeration
+                    or ArgumentKind.Wrapper or ArgumentKind.Pointer)
+                    && !handsOverBoxed))
             {
                 return null;
             }
 
             returnPlan = new ReturnPlan
             {
-                Kind = scalar.Kind,
+                Kind = handsOverBoxed ? ArgumentKind.Handle : scalar.Kind,
                 PublicType = scalar.PublicType,
-                RawType = scalar.RawType,
+                RawType = handsOverBoxed ? NativeInt : scalar.RawType,
+                Flavor = scalar.Flavor,
+                Transfer = scalar.Transfer,
+                IsNullable = scalar.IsNullable,
                 EnumConverter = scalar.EnumConverter,
                 Doc = callback.ReturnValue.Doc,
             };
@@ -4027,6 +4227,7 @@ internal sealed class MarshalPlanner
             TrampolineType = context.Module.ClrNamespace + "." + name + "Trampoline",
             Arguments = arguments,
             Return = returnPlan,
+            InstanceSlot = instanceSlot,
         };
     }
 

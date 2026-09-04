@@ -429,7 +429,7 @@ disappears shows up here as an added line.
 
 - `gst_bus_add_watch`
 
-### UnsupportedSignature (64)
+### UnsupportedSignature (53)
 
 - `Gst.Bus:enable-async`
 - `gst_buffer_list_foreach`
@@ -464,17 +464,6 @@ disappears shows up here as an added line.
 - `gst_mini_object_weak_unref`
 - `gst_object_get_g_value_array`
 - `gst_object_replace`
-- `gst_pad_set_activate_function_full`
-- `gst_pad_set_activatemode_function_full`
-- `gst_pad_set_chain_function_full`
-- `gst_pad_set_chain_list_function_full`
-- `gst_pad_set_event_full_function_full`
-- `gst_pad_set_event_function_full`
-- `gst_pad_set_getrange_function_full`
-- `gst_pad_set_iterate_internal_links_function_full`
-- `gst_pad_set_link_function_full`
-- `gst_pad_set_query_function_full`
-- `gst_pad_set_unlink_function_full`
 - `gst_pad_sticky_events_foreach`
 - `gst_param_spec_array`
 - `gst_param_spec_fraction`
@@ -737,12 +726,10 @@ disappears shows up here as an added line.
 - `GstBase.BaseSink:last-sample`
 - `GstBase.BaseSink:stats`
 
-### UnsupportedSignature (6)
+### UnsupportedSignature (4)
 
 - `gst_adapter_copy_bytes`
 - `gst_base_sink_do_preroll`
-- `gst_collect_pads_set_buffer_function`
-- `gst_collect_pads_set_clip_function`
 - `gst_type_find_helper_get_range`
 - `gst_type_find_helper_get_range_full`
 

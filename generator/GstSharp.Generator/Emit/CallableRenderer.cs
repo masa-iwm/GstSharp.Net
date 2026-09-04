@@ -30,6 +30,29 @@ internal static class CallableRenderer
     private const string ResultLocal = "nativeResult";
 
     /// <summary>The local that holds the raw handle of the instance.</summary>
+    /// <summary>What a handler is told about an argument whose reference it is handed.</summary>
+    private static readonly string[] AdoptedCallbackArgumentNote =
+    [
+        "The handler takes ownership of it: it is released when the handler returns, unless the",
+        "handler handed it on to a member that consumes it. Copy it to keep it beyond the call.",
+    ];
+
+    /// <summary>What a handler is told about an argument it fills in.</summary>
+    private static readonly string[] ProducedCallbackArgumentNote =
+    [
+        "What the handler leaves here is handed to the caller with one added reference; the",
+        "wrapper keeps its own. It is only read when the handler answered success.",
+    ];
+
+    /// <summary>What a handler is told about an argument it works on in place.</summary>
+    private static readonly string[] InPlaceCallbackArgumentNote =
+    [
+        "The caller may have passed a buffer to fill, which arrives here borrowed and must be",
+        "answered unchanged; leaving another one hands that one over with one added reference.",
+        "Answering null after a success is corrected to an error, because the caller does not",
+        "test what it is given.",
+    ];
+
     private const string InstanceLocal = "instanceHandle";
 
     /// <summary>The local that holds the reference minted for a call that takes the instance over.</summary>
@@ -388,7 +411,8 @@ internal static class CallableRenderer
                     writer,
                     DocName(argument.Name),
                     argument.Doc,
-                    "The <c>" + (argument.Source?.Name ?? argument.Name) + "</c> argument.");
+                    "The <c>" + (argument.Source?.Name ?? argument.Name) + "</c> argument.",
+                    CallbackParamNote(argument));
             }
         }
 
@@ -407,7 +431,13 @@ internal static class CallableRenderer
                 continue;
             }
 
-            string prefix = argument.Direction == ArgumentDirection.Ref ? "ref " : string.Empty;
+            string prefix = argument.Direction switch
+            {
+                ArgumentDirection.Ref => "ref ",
+                ArgumentDirection.Out => "out ",
+                _ => string.Empty,
+            };
+
             parameters.Add(prefix + argument.PublicType + " " + argument.Name);
         }
 
@@ -416,6 +446,27 @@ internal static class CallableRenderer
             + "(" + string.Join(", ", parameters) + ");");
         writer.WriteLine();
         WriteTrampoline(writer, plan);
+    }
+
+    /// <summary>
+    /// Returns what the ownership of a callback argument obliges the handler to,
+    /// which the gir of the callback does not state.
+    /// </summary>
+    /// <param name="argument">The argument being documented.</param>
+    /// <returns>The lines, or <see langword="null"/> when there is nothing to add.</returns>
+    private static IReadOnlyList<string>? CallbackParamNote(ArgumentPlan argument)
+    {
+        if (IsAdopted(argument))
+        {
+            return AdoptedCallbackArgumentNote;
+        }
+
+        return argument.Direction switch
+        {
+            ArgumentDirection.Out => ProducedCallbackArgumentNote,
+            ArgumentDirection.Ref => InPlaceCallbackArgumentNote,
+            _ => null,
+        };
     }
 
     /// <summary>
@@ -1542,7 +1593,40 @@ internal static class CallableRenderer
             lines.Add("</para>");
         }
 
+        // The note the overlays carry is written last, so that what a reader of
+        // the member has to know beyond its marshalling closes the remarks.
+        if (plan.DocNote is { } docNote)
+        {
+            lines.Add("<para>");
+            lines.AddRange(WrapNote(XmlDocWriter.Escape(docNote)));
+            lines.Add("</para>");
+        }
+
         return lines.Count == 0 ? null : lines;
+    }
+
+    /// <summary>Breaks a sentence into lines short enough for a documentation comment.</summary>
+    /// <param name="text">The sentence.</param>
+    /// <returns>The lines, at least one.</returns>
+    private static List<string> WrapNote(string text)
+    {
+        const int Width = 88;
+        List<string> lines = [];
+        string rest = text;
+        while (rest.Length > Width)
+        {
+            int split = rest.LastIndexOf(' ', Width);
+            if (split <= 0)
+            {
+                break;
+            }
+
+            lines.Add(rest[..split]);
+            rest = rest[(split + 1)..];
+        }
+
+        lines.Add(rest);
+        return lines;
     }
 
     /// <summary>
@@ -2655,10 +2739,19 @@ internal static class CallableRenderer
             // default handle carries the null user data the call site passes
             // along, and freeing it is a no-op.
             case ArgumentKind.Callback:
+                // A callback that carries no user_data of its own is filed
+                // under the instance and the slot the setter writes, before the
+                // setter runs: the library may call it from another thread the
+                // moment it returns. The handle the table minted is still what
+                // travels as the user_data, so that the destroy notification
+                // finds the entry it has to take out again.
                 writer.WriteLine(
                     "Gst.Interop.CallbackHandle " + name + "State = "
-                    + (argument.IsNullable ? name + " is null ? default : " : string.Empty)
-                    + "Gst.Interop.CallbackHandle.Alloc(" + name + ");");
+                    + (argument.InstanceSlot is { } slot
+                        ? "Gst.Interop.InstanceKeyedCallbacks.Install(" + InstanceLocal + ", \"" + slot + "\", "
+                            + name + ");"
+                        : (argument.IsNullable ? name + " is null ? default : " : string.Empty)
+                            + "Gst.Interop.CallbackHandle.Alloc(" + name + ");"));
                 return;
 
             case ArgumentKind.Span:
@@ -2761,7 +2854,9 @@ internal static class CallableRenderer
                 // nothing for the callee to notify: handing it a notification
                 // over a null user data would free a handle that never was.
                 ArgumentPlan owner = plan.Arguments[argument.OwnerArgument ?? 0];
-                string notify = "(nint)Gst.Interop.CallbackHandle.DestroyNotify";
+                string notify = owner.InstanceSlot is null
+                    ? "(nint)Gst.Interop.CallbackHandle.DestroyNotify"
+                    : "(nint)Gst.Interop.InstanceKeyedCallbacks.DestroyNotify";
                 return owner.IsNullable ? owner.Name + " is null ? 0 : " + notify : notify;
             }
 
@@ -3198,9 +3293,10 @@ internal static class CallableRenderer
         CodeWriter writer,
         ArgumentPlan argument,
         string expression,
-        string message)
+        string message,
+        string prefix = "")
     {
-        string declaration = argument.PublicType + " " + argument.Name + "Value = " + expression;
+        string declaration = prefix + argument.PublicType + " " + argument.Name + "Value = " + expression;
         if (argument.IsNullable)
         {
             writer.WriteLine(declaration + ";");
@@ -3210,6 +3306,15 @@ internal static class CallableRenderer
         writer.WriteLine(declaration);
         writer.WriteLine("    ?? throw new InvalidOperationException(\"" + message + "\");");
     }
+
+    /// <summary>
+    /// Tests whether a callback argument is a handle whose reference travels
+    /// into the handler.
+    /// </summary>
+    /// <param name="argument">The argument to test.</param>
+    /// <returns><see langword="true"/> when the trampoline adopts it.</returns>
+    private static bool IsAdopted(ArgumentPlan argument) =>
+        argument is { Kind: ArgumentKind.Handle, Direction: ArgumentDirection.In, Transfer: GirTransfer.Full };
 
     private static void WriteTrampoline(CodeWriter writer, CallbackPlan plan)
     {
@@ -3247,6 +3352,15 @@ internal static class CallableRenderer
             }
         }
 
+        List<ArgumentPlan> handedBack = [];
+        foreach (ArgumentPlan argument in plan.Arguments)
+        {
+            if (argument.Direction is ArgumentDirection.Out or ArgumentDirection.Ref)
+            {
+                handedBack.Add(argument);
+            }
+        }
+
         // A callback of the async scope is invoked once and nothing else ever
         // releases its state, so the trampoline frees the handle it was called
         // through. The outer scope covers the early return of a state that
@@ -3261,9 +3375,74 @@ internal static class CallableRenderer
         writer.WriteLine("try");
         writer.OpenBlock();
 
+        // What the handler produces is cleared first, so that a trap - which
+        // answers the failure value from outside this scope - leaves the caller
+        // with the null pointer rather than with whatever its storage held. An
+        // in place parameter is left alone instead: the caller of
+        // gst_pad_get_range requires the very buffer it passed back, and
+        // clearing it would break that check rather than honour it.
+        foreach (ArgumentPlan argument in handedBack)
+        {
+            if (argument.Direction == ArgumentDirection.Out)
+            {
+                writer.WriteLine("*" + argument.Name + " = nint.Zero;");
+            }
+        }
+
+        // The arguments whose reference travels into the handler are scoped
+        // before the state is looked up: a lookup that finds nothing still has
+        // to give back what native code handed over.
+        HashSet<string> declared = new(StringComparer.Ordinal);
+        foreach (ArgumentPlan argument in plan.Arguments)
+        {
+            if (argument.Direction == ArgumentDirection.Out)
+            {
+                writer.WriteLine(argument.PublicType + " " + argument.Name + "Value = null;");
+                declared.Add(argument.Name);
+                continue;
+            }
+
+            if (argument.Direction == ArgumentDirection.Ref)
+            {
+                writer.WriteLine("nint " + argument.Name + "Entry = *" + argument.Name + ";");
+                writer.WriteLine(
+                    argument.PublicType + " " + argument.Name + "Value = " + argument.Name
+                    + "Entry == nint.Zero ? null : " + TrimNullable(argument.PublicType) + ".Borrow("
+                    + argument.Name + "Entry);");
+                declared.Add(argument.Name);
+                continue;
+            }
+
+            if (IsAdopted(argument))
+            {
+                WriteCallbackLocal(
+                    writer,
+                    argument,
+                    HandleConversion(
+                        argument.Flavor,
+                        TrimNullable(argument.PublicType),
+                        argument.Name,
+                        argument.Transfer),
+                    NullMessage(plan, argument),
+                    "using ");
+                declared.Add(argument.Name);
+            }
+        }
+
+        if (declared.Count > 0)
+        {
+            writer.WriteLine();
+        }
+
+        // A callback whose own signature carries no user_data is filed under
+        // the instance it was installed on and the slot of that instance it
+        // occupies, which is the first argument the library calls it with.
         writer.WriteLine(
-            "if (Gst.Interop.CallbackHandle.GetState<" + plan.DelegateType + ">(" + userData
-            + ") is not { } callback)");
+            plan.InstanceSlot is { } slot
+                ? "if (Gst.Interop.InstanceKeyedCallbacks.Lookup<" + plan.DelegateType + ">("
+                    + plan.Arguments[0].Name + ", \"" + slot + "\") is not { } callback)"
+                : "if (Gst.Interop.CallbackHandle.GetState<" + plan.DelegateType + ">(" + userData
+                    + ") is not { } callback)");
         writer.OpenBlock();
         writer.WriteLine(plan.Return.IsVoid ? "return;" : "return " + FailureLiteral(plan.Return) + ";");
         writer.CloseBlock();
@@ -3274,6 +3453,19 @@ internal static class CallableRenderer
         {
             if (argument.Kind == ArgumentKind.UserData)
             {
+                continue;
+            }
+
+            if (declared.Contains(argument.Name))
+            {
+                arguments.Add(
+                    (argument.Direction switch
+                    {
+                        ArgumentDirection.Out => "out ",
+                        ArgumentDirection.Ref => "ref ",
+                        _ => string.Empty,
+                    })
+                    + argument.Name + "Value");
                 continue;
             }
 
@@ -3325,21 +3517,30 @@ internal static class CallableRenderer
         }
 
         string invocation = "callback(" + string.Join(", ", arguments) + ")";
-        if (plan.Return.IsVoid)
+        if (handedBack.Count > 0)
         {
-            writer.WriteLine(invocation + ";");
+            writer.WriteLine("try");
+            writer.OpenBlock();
         }
-        else
-        {
-            ArgumentPlan projection = new()
-            {
-                Kind = plan.Return.Kind,
-                Name = ConvertedLocal,
-                PublicType = plan.Return.PublicType,
-                RawType = plan.Return.RawType,
-            };
 
-            writer.WriteLine("return " + ToNative(projection, invocation) + ";");
+        WriteCallbackInvocation(writer, plan, invocation, handedBack);
+
+        if (handedBack.Count > 0)
+        {
+            writer.CloseBlock();
+            writer.WriteLine("finally");
+            writer.OpenBlock();
+
+            // The wrapper the handler left behind gives its own reference back;
+            // the one that was minted above is the caller's. A borrowed wrapper
+            // of an in place parameter the handler did not touch owns nothing,
+            // so disposing it is a no-op.
+            foreach (ArgumentPlan argument in handedBack)
+            {
+                writer.WriteLine(argument.Name + "Value?.Dispose();");
+            }
+
+            writer.CloseBlock();
         }
 
         writer.CloseBlock();
@@ -3364,5 +3565,111 @@ internal static class CallableRenderer
 
         writer.CloseBlock();
         writer.CloseBlock();
+    }
+
+    /// <summary>
+    /// Writes the invocation of the handler, what it hands back through a
+    /// pointer, and the value the trampoline answers.
+    /// </summary>
+    /// <param name="writer">The target writer.</param>
+    /// <param name="plan">The callback being written.</param>
+    /// <param name="invocation">The call of the handler.</param>
+    /// <param name="handedBack">The arguments the handler fills in.</param>
+    private static void WriteCallbackInvocation(
+        CodeWriter writer,
+        CallbackPlan plan,
+        string invocation,
+        IReadOnlyList<ArgumentPlan> handedBack)
+    {
+        if (plan.Return.IsVoid)
+        {
+            writer.WriteLine(invocation + ";");
+            return;
+        }
+
+        // A handle the handler owns is handed on with the reference it holds:
+        // the wrapper detaches and the caller of the callback frees what it
+        // gets, which is what gst_iterator_free does to the answer of
+        // GstPadIterIntLinkFunction.
+        if (plan.Return.Kind == ArgumentKind.Handle)
+        {
+            writer.WriteLine(plan.Return.PublicType + " " + ConvertedLocal + " = " + invocation + ";");
+            writer.WriteLine(
+                plan.Return.PublicType.EndsWith('?')
+                    ? "return " + ConvertedLocal + " is null ? nint.Zero : " + ConvertedLocal + ".HandOver();"
+                    : "return " + ConvertedLocal + ".HandOver();");
+            return;
+        }
+
+        ArgumentPlan projection = new()
+        {
+            Kind = plan.Return.Kind,
+            Name = ConvertedLocal,
+            PublicType = plan.Return.PublicType,
+            RawType = plan.Return.RawType,
+            EnumConverter = plan.Return.EnumConverter,
+        };
+
+        if (handedBack.Count == 0)
+        {
+            writer.WriteLine("return " + ToNative(projection, invocation) + ";");
+            return;
+        }
+
+        writer.WriteLine(plan.Return.PublicType + " " + ConvertedLocal + " = " + invocation + ";");
+
+        // Nothing the handler produced is read unless it said the invocation
+        // succeeded: the C contract of every one of these leaves the storage
+        // undefined for any other answer.
+        bool guarded = string.Equals(plan.Return.PublicType, "Gst.FlowReturn", StringComparison.Ordinal);
+        writer.WriteLine();
+        if (guarded)
+        {
+            writer.WriteLine("if (" + ConvertedLocal + " == Gst.FlowReturn.Ok)");
+            writer.OpenBlock();
+        }
+
+        foreach (ArgumentPlan argument in handedBack)
+        {
+            string handle = argument.Name + "Handle";
+            writer.WriteLine(
+                "nint " + handle + " = " + argument.Name + "Value is null ? nint.Zero : " + argument.Name
+                + "Value.Handle;");
+
+            // An in place parameter that came back empty is a success the C
+            // caller cannot act on: gst_pad_get_range dereferences what it is
+            // given without testing it, so the answer is corrected here rather
+            // than passed on.
+            if (argument.Direction == ArgumentDirection.Ref)
+            {
+                writer.WriteLine("if (" + handle + " == nint.Zero)");
+                writer.OpenBlock();
+                writer.WriteLine("return " + FailureLiteral(plan.Return) + ";");
+                writer.CloseBlock();
+                writer.WriteLine();
+            }
+
+            // The reference the caller ends up with is minted here; the wrapper
+            // keeps its own and gives it back in the finally. A value the
+            // handler left where it found it carries no new reference, which is
+            // what the in place contract of the C caller means.
+            writer.WriteLine(
+                argument.Direction == ArgumentDirection.Ref
+                    ? "if (" + handle + " != " + argument.Name + "Entry)"
+                    : "if (" + handle + " != nint.Zero)");
+            writer.OpenBlock();
+            writer.WriteLine("Gst.GstNative.MiniObjectRef(" + handle + ");");
+            writer.CloseBlock();
+            writer.WriteLine();
+            writer.WriteLine("*" + argument.Name + " = " + handle + ";");
+        }
+
+        if (guarded)
+        {
+            writer.CloseBlock();
+        }
+
+        writer.WriteLine();
+        writer.WriteLine("return " + ToNative(projection, ConvertedLocal) + ";");
     }
 }

@@ -540,6 +540,311 @@ internal static unsafe class ObjectCallAsyncFuncTrampoline
 }
 
 /// <summary>
+/// This function is called when the pad is activated during the element
+/// READY to PAUSED state change. By default this function will call the
+/// activate function that puts the pad in push mode but elements can
+/// override this function to activate the pad in pull mode if they wish.
+/// </summary>
+/// <param name="pad">a #GstPad</param>
+/// <param name="parent">the parent of @pad</param>
+/// <returns>%TRUE if the pad could be activated.</returns>
+public delegate bool PadActivateFunction(Gst.Pad pad, Gst.Object parent);
+
+/// <summary>The native entry point of <see cref="Gst.PadActivateFunction"/>.</summary>
+internal static unsafe class PadActivateFunctionTrampoline
+{
+    /// <summary>Gets the address that is handed to native code.</summary>
+    internal static nint Pointer => (nint)(delegate* unmanaged[Cdecl]<nint, nint, int>)&Invoke;
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static int Invoke(nint pad, nint parent)
+    {
+        try
+        {
+            if (Gst.Interop.InstanceKeyedCallbacks.Lookup<Gst.PadActivateFunction>(pad, "activate") is not { } callback)
+            {
+                return default;
+            }
+
+            Gst.Pad padValue = Gst.GObject.Object.FromNative<Gst.Pad>(pad, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("GstPadActivateFunction passed no pad.");
+            Gst.Object parentValue = Gst.GObject.Object.FromNative<Gst.Object>(parent, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("GstPadActivateFunction passed no parent.");
+            return callback(padValue, parentValue) ? 1 : 0;
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+            return default;
+        }
+    }
+}
+
+/// <summary>The prototype of the push and pull activate functions.</summary>
+/// <param name="pad">a #GstPad</param>
+/// <param name="parent">the parent of @pad</param>
+/// <param name="mode">the requested activation mode of @pad</param>
+/// <param name="active">activate or deactivate the pad.</param>
+/// <returns>%TRUE if the pad could be activated or deactivated.</returns>
+public delegate bool PadActivateModeFunction(Gst.Pad pad, Gst.Object parent, Gst.PadMode mode, bool active);
+
+/// <summary>The native entry point of <see cref="Gst.PadActivateModeFunction"/>.</summary>
+internal static unsafe class PadActivateModeFunctionTrampoline
+{
+    /// <summary>Gets the address that is handed to native code.</summary>
+    internal static nint Pointer => (nint)(delegate* unmanaged[Cdecl]<nint, nint, int, int, int>)&Invoke;
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static int Invoke(nint pad, nint parent, int mode, int active)
+    {
+        try
+        {
+            if (Gst.Interop.InstanceKeyedCallbacks.Lookup<Gst.PadActivateModeFunction>(pad, "activatemode") is not { } callback)
+            {
+                return default;
+            }
+
+            Gst.Pad padValue = Gst.GObject.Object.FromNative<Gst.Pad>(pad, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("GstPadActivateModeFunction passed no pad.");
+            Gst.Object parentValue = Gst.GObject.Object.FromNative<Gst.Object>(parent, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("GstPadActivateModeFunction passed no parent.");
+            return callback(padValue, parentValue, (Gst.PadMode)mode, active != 0) ? 1 : 0;
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+            return default;
+        }
+    }
+}
+
+/// <summary>
+/// A function that will be called on sinkpads when chaining buffers.
+/// The function typically processes the data contained in the buffer and
+/// either consumes the data or passes it on to the internally linked pad(s).
+/// </summary>
+/// <remarks>
+/// <para>
+/// The implementer of this function receives a refcount to @buffer and should
+/// gst_buffer_unref() when the buffer is no longer needed.
+/// </para>
+/// <para>
+/// When a chain function detects an error in the data stream, it must post an
+/// error on the bus and return an appropriate #GstFlowReturn value.
+/// </para>
+/// </remarks>
+/// <param name="pad">the sink #GstPad that performed the chain.</param>
+/// <param name="parent">
+/// the parent of @pad. If the #GST_PAD_FLAG_NEED_PARENT
+///          flag is set, @parent is guaranteed to be not-%NULL and remain valid
+///          during the execution of this function.
+/// </param>
+/// <param name="buffer">
+/// the #GstBuffer that is chained, not %NULL.
+/// The handler takes ownership of it: it is released when the handler returns, unless the
+/// handler handed it on to a member that consumes it. Copy it to keep it beyond the call.
+/// </param>
+/// <returns>#GST_FLOW_OK for success</returns>
+public delegate Gst.FlowReturn PadChainFunction(Gst.Pad pad, Gst.Object? parent, Gst.Buffer buffer);
+
+/// <summary>The native entry point of <see cref="Gst.PadChainFunction"/>.</summary>
+internal static unsafe class PadChainFunctionTrampoline
+{
+    /// <summary>Gets the address that is handed to native code.</summary>
+    internal static nint Pointer => (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, int>)&Invoke;
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static int Invoke(nint pad, nint parent, nint buffer)
+    {
+        try
+        {
+            using Gst.Buffer bufferValue = Gst.Buffer.FromNative(buffer, Gst.Interop.Transfer.Full)
+                ?? throw new InvalidOperationException("GstPadChainFunction passed no buffer.");
+
+            if (Gst.Interop.InstanceKeyedCallbacks.Lookup<Gst.PadChainFunction>(pad, "chain") is not { } callback)
+            {
+                return (int)Gst.FlowReturn.Error;
+            }
+
+            Gst.Pad padValue = Gst.GObject.Object.FromNative<Gst.Pad>(pad, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("GstPadChainFunction passed no pad.");
+            Gst.Object? parentValue = Gst.GObject.Object.FromNative<Gst.Object>(parent, Gst.Interop.Transfer.None);
+            return (int)callback(padValue, parentValue, bufferValue);
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+            return (int)Gst.FlowReturn.Error;
+        }
+    }
+}
+
+/// <summary>
+/// A function that will be called on sinkpads when chaining buffer lists.
+/// The function typically processes the data contained in the buffer list and
+/// either consumes the data or passes it on to the internally linked pad(s).
+/// </summary>
+/// <remarks>
+/// <para>
+/// The implementer of this function receives a refcount to @list and
+/// should gst_buffer_list_unref() when the list is no longer needed.
+/// </para>
+/// <para>
+/// When a chainlist function detects an error in the data stream, it must
+/// post an error on the bus and return an appropriate #GstFlowReturn value.
+/// </para>
+/// </remarks>
+/// <param name="pad">the sink #GstPad that performed the chain.</param>
+/// <param name="parent">
+/// the parent of @pad. If the #GST_PAD_FLAG_NEED_PARENT
+///          flag is set, @parent is guaranteed to be not-%NULL and remain valid
+///          during the execution of this function.
+/// </param>
+/// <param name="list">
+/// the #GstBufferList that is chained, not %NULL.
+/// The handler takes ownership of it: it is released when the handler returns, unless the
+/// handler handed it on to a member that consumes it. Copy it to keep it beyond the call.
+/// </param>
+/// <returns>#GST_FLOW_OK for success</returns>
+public delegate Gst.FlowReturn PadChainListFunction(Gst.Pad pad, Gst.Object? parent, Gst.BufferList list);
+
+/// <summary>The native entry point of <see cref="Gst.PadChainListFunction"/>.</summary>
+internal static unsafe class PadChainListFunctionTrampoline
+{
+    /// <summary>Gets the address that is handed to native code.</summary>
+    internal static nint Pointer => (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, int>)&Invoke;
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static int Invoke(nint pad, nint parent, nint list)
+    {
+        try
+        {
+            using Gst.BufferList listValue = Gst.BufferList.FromNative(list, Gst.Interop.Transfer.Full)
+                ?? throw new InvalidOperationException("GstPadChainListFunction passed no list.");
+
+            if (Gst.Interop.InstanceKeyedCallbacks.Lookup<Gst.PadChainListFunction>(pad, "chain_list") is not { } callback)
+            {
+                return (int)Gst.FlowReturn.Error;
+            }
+
+            Gst.Pad padValue = Gst.GObject.Object.FromNative<Gst.Pad>(pad, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("GstPadChainListFunction passed no pad.");
+            Gst.Object? parentValue = Gst.GObject.Object.FromNative<Gst.Object>(parent, Gst.Interop.Transfer.None);
+            return (int)callback(padValue, parentValue, listValue);
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+            return (int)Gst.FlowReturn.Error;
+        }
+    }
+}
+
+/// <summary>Function signature to handle an event for the pad.</summary>
+/// <remarks>
+/// <para>
+/// This variant is for specific elements that will take into account the
+/// last downstream flow return (from a pad push), in which case they can
+/// return it.
+/// </para>
+/// </remarks>
+/// <param name="pad">the #GstPad to handle the event.</param>
+/// <param name="parent">
+/// the parent of @pad. If the #GST_PAD_FLAG_NEED_PARENT
+///          flag is set, @parent is guaranteed to be not-%NULL and remain valid
+///          during the execution of this function.
+/// </param>
+/// <param name="event">
+/// the #GstEvent to handle.
+/// The handler takes ownership of it: it is released when the handler returns, unless the
+/// handler handed it on to a member that consumes it. Copy it to keep it beyond the call.
+/// </param>
+/// <returns>
+/// %GST_FLOW_OK if the event was handled properly, or any other
+/// #GstFlowReturn dependent on downstream state.
+/// </returns>
+public delegate Gst.FlowReturn PadEventFullFunction(Gst.Pad pad, Gst.Object? parent, Gst.Event @event);
+
+/// <summary>The native entry point of <see cref="Gst.PadEventFullFunction"/>.</summary>
+internal static unsafe class PadEventFullFunctionTrampoline
+{
+    /// <summary>Gets the address that is handed to native code.</summary>
+    internal static nint Pointer => (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, int>)&Invoke;
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static int Invoke(nint pad, nint parent, nint @event)
+    {
+        try
+        {
+            using Gst.Event @eventValue = Gst.Event.FromNative(@event, Gst.Interop.Transfer.Full)
+                ?? throw new InvalidOperationException("GstPadEventFullFunction passed no event.");
+
+            if (Gst.Interop.InstanceKeyedCallbacks.Lookup<Gst.PadEventFullFunction>(pad, "event") is not { } callback)
+            {
+                return (int)Gst.FlowReturn.Error;
+            }
+
+            Gst.Pad padValue = Gst.GObject.Object.FromNative<Gst.Pad>(pad, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("GstPadEventFullFunction passed no pad.");
+            Gst.Object? parentValue = Gst.GObject.Object.FromNative<Gst.Object>(parent, Gst.Interop.Transfer.None);
+            return (int)callback(padValue, parentValue, @eventValue);
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+            return (int)Gst.FlowReturn.Error;
+        }
+    }
+}
+
+/// <summary>Function signature to handle an event for the pad.</summary>
+/// <param name="pad">the #GstPad to handle the event.</param>
+/// <param name="parent">
+/// the parent of @pad. If the #GST_PAD_FLAG_NEED_PARENT
+///          flag is set, @parent is guaranteed to be not-%NULL and remain valid
+///          during the execution of this function.
+/// </param>
+/// <param name="event">
+/// the #GstEvent to handle.
+/// The handler takes ownership of it: it is released when the handler returns, unless the
+/// handler handed it on to a member that consumes it. Copy it to keep it beyond the call.
+/// </param>
+/// <returns>%TRUE if the pad could handle the event.</returns>
+public delegate bool PadEventFunction(Gst.Pad pad, Gst.Object? parent, Gst.Event @event);
+
+/// <summary>The native entry point of <see cref="Gst.PadEventFunction"/>.</summary>
+internal static unsafe class PadEventFunctionTrampoline
+{
+    /// <summary>Gets the address that is handed to native code.</summary>
+    internal static nint Pointer => (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, int>)&Invoke;
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static int Invoke(nint pad, nint parent, nint @event)
+    {
+        try
+        {
+            using Gst.Event @eventValue = Gst.Event.FromNative(@event, Gst.Interop.Transfer.Full)
+                ?? throw new InvalidOperationException("GstPadEventFunction passed no event.");
+
+            if (Gst.Interop.InstanceKeyedCallbacks.Lookup<Gst.PadEventFunction>(pad, "event") is not { } callback)
+            {
+                return default;
+            }
+
+            Gst.Pad padValue = Gst.GObject.Object.FromNative<Gst.Pad>(pad, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("GstPadEventFunction passed no pad.");
+            Gst.Object? parentValue = Gst.GObject.Object.FromNative<Gst.Object>(parent, Gst.Interop.Transfer.None);
+            return callback(padValue, parentValue, @eventValue) ? 1 : 0;
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+            return default;
+        }
+    }
+}
+
+/// <summary>
 /// A forward function is called for all internally linked pads, see
 /// gst_pad_forward().
 /// </summary>
@@ -566,6 +871,213 @@ internal static unsafe class PadForwardFunctionTrampoline
             Gst.Pad padValue = Gst.GObject.Object.FromNative<Gst.Pad>(pad, Gst.Interop.Transfer.None)
                 ?? throw new InvalidOperationException("GstPadForwardFunction passed no pad.");
             return callback(padValue) ? 1 : 0;
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+            return default;
+        }
+    }
+}
+
+/// <summary>
+/// This function will be called on source pads when a peer element
+/// request a buffer at the specified @offset and @length. If this function
+/// returns #GST_FLOW_OK, the result buffer will be stored in @buffer. The
+/// contents of @buffer is invalid for any other return value.
+/// </summary>
+/// <remarks>
+/// <para>
+/// This function is installed on a source pad with
+/// gst_pad_set_getrange_function() and can only be called on source pads after
+/// they are successfully activated with gst_pad_activate_mode() with the
+/// #GST_PAD_MODE_PULL.
+/// </para>
+/// <para>
+/// @offset and @length are always given in byte units. @offset must normally be a value
+/// between 0 and the length in bytes of the data available on @pad. The
+/// length (duration in bytes) can be retrieved with a #GST_QUERY_DURATION or with a
+/// #GST_QUERY_SEEKING.
+/// </para>
+/// <para>
+/// Any @offset larger or equal than the length will make the function return
+/// #GST_FLOW_EOS, which corresponds to EOS. In this case @buffer does not
+/// contain a valid buffer.
+/// </para>
+/// <para>
+/// The buffer size of @buffer will only be smaller than @length when @offset is
+/// near the end of the stream. In all other cases, the size of @buffer must be
+/// exactly the requested size.
+/// </para>
+/// <para>
+/// It is allowed to call this function with a 0 @length and valid @offset, in
+/// which case @buffer will contain a 0-sized buffer and the function returns
+/// #GST_FLOW_OK.
+/// </para>
+/// <para>
+/// When this function is called with a -1 @offset, the sequentially next buffer
+/// of length @length in the stream is returned.
+/// </para>
+/// <para>
+/// When this function is called with a -1 @length, a buffer with a default
+/// optimal length is returned in @buffer. The length might depend on the value
+/// of @offset.
+/// </para>
+/// </remarks>
+/// <param name="pad">the src #GstPad to perform the getrange on.</param>
+/// <param name="parent">
+/// the parent of @pad. If the #GST_PAD_FLAG_NEED_PARENT
+///          flag is set, @parent is guaranteed to be not-%NULL and remain valid
+///          during the execution of this function.
+/// </param>
+/// <param name="offset">the offset of the range</param>
+/// <param name="length">the length of the range</param>
+/// <param name="buffer">
+/// a memory location to hold the result buffer, cannot be %NULL.
+/// The caller may have passed a buffer to fill, which arrives here borrowed and must be
+/// answered unchanged; leaving another one hands that one over with one added reference.
+/// Answering null after a success is corrected to an error, because the caller does not
+/// test what it is given.
+/// </param>
+/// <returns>
+/// #GST_FLOW_OK for success and a valid buffer in @buffer. Any other
+/// return value leaves @buffer undefined.
+/// </returns>
+public delegate Gst.FlowReturn PadGetRangeFunction(Gst.Pad pad, Gst.Object? parent, ulong offset, uint length, ref Gst.Buffer? buffer);
+
+/// <summary>The native entry point of <see cref="Gst.PadGetRangeFunction"/>.</summary>
+internal static unsafe class PadGetRangeFunctionTrampoline
+{
+    /// <summary>Gets the address that is handed to native code.</summary>
+    internal static nint Pointer => (nint)(delegate* unmanaged[Cdecl]<nint, nint, ulong, uint, nint*, int>)&Invoke;
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static int Invoke(nint pad, nint parent, ulong offset, uint length, nint* buffer)
+    {
+        try
+        {
+            nint bufferEntry = *buffer;
+            Gst.Buffer? bufferValue = bufferEntry == nint.Zero ? null : Gst.Buffer.Borrow(bufferEntry);
+
+            if (Gst.Interop.InstanceKeyedCallbacks.Lookup<Gst.PadGetRangeFunction>(pad, "getrange") is not { } callback)
+            {
+                return (int)Gst.FlowReturn.Error;
+            }
+
+            Gst.Pad padValue = Gst.GObject.Object.FromNative<Gst.Pad>(pad, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("GstPadGetRangeFunction passed no pad.");
+            Gst.Object? parentValue = Gst.GObject.Object.FromNative<Gst.Object>(parent, Gst.Interop.Transfer.None);
+            try
+            {
+                Gst.FlowReturn result = callback(padValue, parentValue, offset, length, ref bufferValue);
+
+                if (result == Gst.FlowReturn.Ok)
+                {
+                    nint bufferHandle = bufferValue is null ? nint.Zero : bufferValue.Handle;
+                    if (bufferHandle == nint.Zero)
+                    {
+                        return (int)Gst.FlowReturn.Error;
+                    }
+
+                    if (bufferHandle != bufferEntry)
+                    {
+                        Gst.GstNative.MiniObjectRef(bufferHandle);
+                    }
+
+                    *buffer = bufferHandle;
+                }
+
+                return (int)result;
+            }
+            finally
+            {
+                bufferValue?.Dispose();
+            }
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+            return (int)Gst.FlowReturn.Error;
+        }
+    }
+}
+
+/// <summary>The signature of the internal pad link iterator function.</summary>
+/// <param name="pad">The #GstPad to query.</param>
+/// <param name="parent">
+/// the parent of @pad. If the #GST_PAD_FLAG_NEED_PARENT
+///          flag is set, @parent is guaranteed to be not-%NULL and remain valid
+///          during the execution of this function.
+/// </param>
+/// <returns>
+/// a new #GstIterator that will iterate over all pads that are
+/// linked to the given pad on the inside of the parent element.
+/// </returns>
+public delegate Gst.Iterator PadIterIntLinkFunction(Gst.Pad pad, Gst.Object? parent);
+
+/// <summary>The native entry point of <see cref="Gst.PadIterIntLinkFunction"/>.</summary>
+internal static unsafe class PadIterIntLinkFunctionTrampoline
+{
+    /// <summary>Gets the address that is handed to native code.</summary>
+    internal static nint Pointer => (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint>)&Invoke;
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static nint Invoke(nint pad, nint parent)
+    {
+        try
+        {
+            if (Gst.Interop.InstanceKeyedCallbacks.Lookup<Gst.PadIterIntLinkFunction>(pad, "iterate_internal_links") is not { } callback)
+            {
+                return default;
+            }
+
+            Gst.Pad padValue = Gst.GObject.Object.FromNative<Gst.Pad>(pad, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("GstPadIterIntLinkFunction passed no pad.");
+            Gst.Object? parentValue = Gst.GObject.Object.FromNative<Gst.Object>(parent, Gst.Interop.Transfer.None);
+            Gst.Iterator result = callback(padValue, parentValue);
+            return result.HandOver();
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+            return default;
+        }
+    }
+}
+
+/// <summary>Function signature to handle a new link on the pad.</summary>
+/// <param name="pad">the #GstPad that is linked.</param>
+/// <param name="parent">
+/// the parent of @pad. If the #GST_PAD_FLAG_NEED_PARENT
+///          flag is set, @parent is guaranteed to be not-%NULL and remain valid
+///          during the execution of this function.
+/// </param>
+/// <param name="peer">the peer #GstPad of the link</param>
+/// <returns>the result of the link with the specified peer.</returns>
+public delegate Gst.PadLinkReturn PadLinkFunction(Gst.Pad pad, Gst.Object? parent, Gst.Pad peer);
+
+/// <summary>The native entry point of <see cref="Gst.PadLinkFunction"/>.</summary>
+internal static unsafe class PadLinkFunctionTrampoline
+{
+    /// <summary>Gets the address that is handed to native code.</summary>
+    internal static nint Pointer => (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, int>)&Invoke;
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static int Invoke(nint pad, nint parent, nint peer)
+    {
+        try
+        {
+            if (Gst.Interop.InstanceKeyedCallbacks.Lookup<Gst.PadLinkFunction>(pad, "link") is not { } callback)
+            {
+                return default;
+            }
+
+            Gst.Pad padValue = Gst.GObject.Object.FromNative<Gst.Pad>(pad, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("GstPadLinkFunction passed no pad.");
+            Gst.Object? parentValue = Gst.GObject.Object.FromNative<Gst.Object>(parent, Gst.Interop.Transfer.None);
+            Gst.Pad peerValue = Gst.GObject.Object.FromNative<Gst.Pad>(peer, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("GstPadLinkFunction passed no peer.");
+            return (int)callback(padValue, parentValue, peerValue);
         }
         catch (Exception exception)
         {
@@ -613,6 +1125,91 @@ internal static unsafe class PadProbeCallbackTrampoline
         {
             Gst.Interop.ExceptionTrap.Report(exception);
             return default;
+        }
+    }
+}
+
+/// <summary>The signature of the query function.</summary>
+/// <param name="pad">the #GstPad to query.</param>
+/// <param name="parent">
+/// the parent of @pad. If the #GST_PAD_FLAG_NEED_PARENT
+///          flag is set, @parent is guaranteed to be not-%NULL and remain valid
+///          during the execution of this function.
+/// </param>
+/// <param name="query">the #GstQuery object to execute</param>
+/// <returns>%TRUE if the query could be performed.</returns>
+public delegate bool PadQueryFunction(Gst.Pad pad, Gst.Object? parent, Gst.Query query);
+
+/// <summary>The native entry point of <see cref="Gst.PadQueryFunction"/>.</summary>
+internal static unsafe class PadQueryFunctionTrampoline
+{
+    /// <summary>Gets the address that is handed to native code.</summary>
+    internal static nint Pointer => (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, int>)&Invoke;
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static int Invoke(nint pad, nint parent, nint query)
+    {
+        try
+        {
+            if (Gst.Interop.InstanceKeyedCallbacks.Lookup<Gst.PadQueryFunction>(pad, "query") is not { } callback)
+            {
+                return default;
+            }
+
+            Gst.Pad padValue = Gst.GObject.Object.FromNative<Gst.Pad>(pad, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("GstPadQueryFunction passed no pad.");
+            Gst.Object? parentValue = Gst.GObject.Object.FromNative<Gst.Object>(parent, Gst.Interop.Transfer.None);
+            Gst.Query queryValue = Gst.Query.FromNative(query, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("GstPadQueryFunction passed no query.");
+            return callback(padValue, parentValue, queryValue) ? 1 : 0;
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+            return default;
+        }
+    }
+}
+
+/// <summary>Function signature to handle a unlinking the pad prom its peer.</summary>
+/// <remarks>
+/// <para>
+/// The pad's lock is already held when the unlink function is called, so most
+/// pad functions cannot be called from within the callback.
+/// </para>
+/// </remarks>
+/// <param name="pad">the #GstPad that is linked.</param>
+/// <param name="parent">
+/// the parent of @pad. If the #GST_PAD_FLAG_NEED_PARENT
+///          flag is set, @parent is guaranteed to be not-%NULL and remain valid
+///          during the execution of this function.
+/// </param>
+public delegate void PadUnlinkFunction(Gst.Pad pad, Gst.Object? parent);
+
+/// <summary>The native entry point of <see cref="Gst.PadUnlinkFunction"/>.</summary>
+internal static unsafe class PadUnlinkFunctionTrampoline
+{
+    /// <summary>Gets the address that is handed to native code.</summary>
+    internal static nint Pointer => (nint)(delegate* unmanaged[Cdecl]<nint, nint, void>)&Invoke;
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static void Invoke(nint pad, nint parent)
+    {
+        try
+        {
+            if (Gst.Interop.InstanceKeyedCallbacks.Lookup<Gst.PadUnlinkFunction>(pad, "unlink") is not { } callback)
+            {
+                return;
+            }
+
+            Gst.Pad padValue = Gst.GObject.Object.FromNative<Gst.Pad>(pad, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("GstPadUnlinkFunction passed no pad.");
+            Gst.Object? parentValue = Gst.GObject.Object.FromNative<Gst.Object>(parent, Gst.Interop.Transfer.None);
+            callback(padValue, parentValue);
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
         }
     }
 }

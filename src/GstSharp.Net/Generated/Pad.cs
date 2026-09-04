@@ -1400,6 +1400,48 @@ public unsafe partial class Pad : Gst.Object
     }
 
     /// <summary>
+    /// Sets the given activate function for @pad. The activate function will
+    /// dispatch to gst_pad_activate_mode() to perform the actual activation.
+    /// Only makes sense to set on sink pads.
+    /// </summary>
+    /// <remarks>
+    /// <para>Call this function if your sink pad can start a pull-based task.</para>
+    /// <para>
+    /// GStreamer reads this function pointer without holding a lock (gstpad.c:4590-4594), so
+    /// replacing or unsetting the handler while the pad is running races an invocation that is
+    /// already under way: the handler being replaced may still be executing when this returns.
+    /// </para>
+    /// </remarks>
+    /// <param name="activate">the #GstPadActivateFunction to set.</param>
+    public void SetActivateFunction(Gst.PadActivateFunction? activate)
+    {
+        nint instanceHandle = Handle;
+        Gst.Interop.CallbackHandle activateState = Gst.Interop.InstanceKeyedCallbacks.Install(instanceHandle, "activate", activate);
+        GstPadSetActivateFunctionFull(instanceHandle, activate is null ? 0 : Gst.PadActivateFunctionTrampoline.Pointer, activateState.UserData, activate is null ? 0 : (nint)Gst.Interop.InstanceKeyedCallbacks.DestroyNotify);
+        System.GC.KeepAlive(this);
+    }
+
+    /// <summary>
+    /// Sets the given activate_mode function for the pad. An activate_mode function
+    /// prepares the element for data passing.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// GStreamer reads this function pointer without holding a lock (gstpad.c:4590-4594), so
+    /// replacing or unsetting the handler while the pad is running races an invocation that is
+    /// already under way: the handler being replaced may still be executing when this returns.
+    /// </para>
+    /// </remarks>
+    /// <param name="activatemode">the #GstPadActivateModeFunction to set.</param>
+    public void SetActivatemodeFunction(Gst.PadActivateModeFunction? activatemode)
+    {
+        nint instanceHandle = Handle;
+        Gst.Interop.CallbackHandle activatemodeState = Gst.Interop.InstanceKeyedCallbacks.Install(instanceHandle, "activatemode", activatemode);
+        GstPadSetActivatemodeFunctionFull(instanceHandle, activatemode is null ? 0 : Gst.PadActivateModeFunctionTrampoline.Pointer, activatemodeState.UserData, activatemode is null ? 0 : (nint)Gst.Interop.InstanceKeyedCallbacks.DestroyNotify);
+        System.GC.KeepAlive(this);
+    }
+
+    /// <summary>
     /// Activates or deactivates the given pad.
     /// Normally called from within core state change functions.
     /// </summary>
@@ -1424,6 +1466,47 @@ public unsafe partial class Pad : Gst.Object
     }
 
     /// <summary>
+    /// Sets the given chain function for the pad. The chain function is called to
+    /// process a #GstBuffer input buffer. see #GstPadChainFunction for more details.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// GStreamer reads this function pointer without holding a lock (gstpad.c:4590-4594), so
+    /// replacing or unsetting the handler while the pad is running races an invocation that is
+    /// already under way: the handler being replaced may still be executing when this returns.
+    /// </para>
+    /// </remarks>
+    /// <param name="chain">the #GstPadChainFunction to set.</param>
+    public void SetChainFunction(Gst.PadChainFunction? chain)
+    {
+        nint instanceHandle = Handle;
+        Gst.Interop.CallbackHandle chainState = Gst.Interop.InstanceKeyedCallbacks.Install(instanceHandle, "chain", chain);
+        GstPadSetChainFunctionFull(instanceHandle, chain is null ? 0 : Gst.PadChainFunctionTrampoline.Pointer, chainState.UserData, chain is null ? 0 : (nint)Gst.Interop.InstanceKeyedCallbacks.DestroyNotify);
+        System.GC.KeepAlive(this);
+    }
+
+    /// <summary>
+    /// Sets the given chain list function for the pad. The chainlist function is
+    /// called to process a #GstBufferList input buffer list. See
+    /// #GstPadChainListFunction for more details.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// GStreamer reads this function pointer without holding a lock (gstpad.c:4590-4594), so
+    /// replacing or unsetting the handler while the pad is running races an invocation that is
+    /// already under way: the handler being replaced may still be executing when this returns.
+    /// </para>
+    /// </remarks>
+    /// <param name="chainlist">the #GstPadChainListFunction to set.</param>
+    public void SetChainListFunction(Gst.PadChainListFunction? chainlist)
+    {
+        nint instanceHandle = Handle;
+        Gst.Interop.CallbackHandle chainlistState = Gst.Interop.InstanceKeyedCallbacks.Install(instanceHandle, "chain_list", chainlist);
+        GstPadSetChainListFunctionFull(instanceHandle, chainlist is null ? 0 : Gst.PadChainListFunctionTrampoline.Pointer, chainlistState.UserData, chainlist is null ? 0 : (nint)Gst.Interop.InstanceKeyedCallbacks.DestroyNotify);
+        System.GC.KeepAlive(this);
+    }
+
+    /// <summary>
     /// Set the given private data gpointer on the pad.
     /// This function can only be used by the element that owns the pad.
     /// No locking is performed in this function.
@@ -1432,6 +1515,123 @@ public unsafe partial class Pad : Gst.Object
     public void SetElementPrivate(nint priv)
     {
         GstPadSetElementPrivate(Handle, priv);
+        System.GC.KeepAlive(this);
+    }
+
+    /// <summary>Sets the given event handler for the pad.</summary>
+    /// <remarks>
+    /// <para>
+    /// This writes the same storage as SetEventFunction (gstpad.c:1933-1937, :1979-1984): a pad
+    /// carries one of the two handlers, not both, and the later call releases the state of the
+    /// earlier one. Unsetting this handler leaves the wrapper
+    /// gst_pad_set_event_full_function_full installed as the plain event function
+    /// (gstpad.c:1981-1982), which dereferences the full function pointer it has just cleared,
+    /// so follow SetEventFullFunction(null) with SetEventFunction(null) to take both off the
+    /// pad. GStreamer reads this function pointer without holding a lock (gstpad.c:4590-4594),
+    /// so replacing or unsetting the handler while the pad is running races an invocation that
+    /// is already under way: the handler being replaced may still be executing when this
+    /// returns.
+    /// </para>
+    /// </remarks>
+    /// <param name="event">the #GstPadEventFullFunction to set.</param>
+    public void SetEventFullFunction(Gst.PadEventFullFunction? @event)
+    {
+        nint instanceHandle = Handle;
+        Gst.Interop.CallbackHandle @eventState = Gst.Interop.InstanceKeyedCallbacks.Install(instanceHandle, "event", @event);
+        GstPadSetEventFullFunctionFull(instanceHandle, @event is null ? 0 : Gst.PadEventFullFunctionTrampoline.Pointer, @eventState.UserData, @event is null ? 0 : (nint)Gst.Interop.InstanceKeyedCallbacks.DestroyNotify);
+        System.GC.KeepAlive(this);
+    }
+
+    /// <summary>Sets the given event handler for the pad.</summary>
+    /// <remarks>
+    /// <para>
+    /// This writes the same storage as SetEventFullFunction (gstpad.c:1933-1937, :1979-1984): a
+    /// pad carries one of the two handlers, not both, and the later call releases the state of
+    /// the earlier one. Installing this handler while a full event handler is installed does
+    /// not take that one out of the pad (gstpad.c:1935 leaves the full function pointer alone)
+    /// and gst_pad_send_event_unchecked prefers it (gstpad.c:6170), so the handler set here is
+    /// never reached: unset the full one first. GStreamer reads this function pointer without
+    /// holding a lock (gstpad.c:4590-4594), so replacing or unsetting the handler while the pad
+    /// is running races an invocation that is already under way: the handler being replaced may
+    /// still be executing when this returns.
+    /// </para>
+    /// </remarks>
+    /// <param name="event">the #GstPadEventFunction to set.</param>
+    public void SetEventFunction(Gst.PadEventFunction? @event)
+    {
+        nint instanceHandle = Handle;
+        Gst.Interop.CallbackHandle @eventState = Gst.Interop.InstanceKeyedCallbacks.Install(instanceHandle, "event", @event);
+        GstPadSetEventFunctionFull(instanceHandle, @event is null ? 0 : Gst.PadEventFunctionTrampoline.Pointer, @eventState.UserData, @event is null ? 0 : (nint)Gst.Interop.InstanceKeyedCallbacks.DestroyNotify);
+        System.GC.KeepAlive(this);
+    }
+
+    /// <summary>
+    /// Sets the given getrange function for the pad. The getrange function is
+    /// called to produce a new #GstBuffer to start the processing pipeline. see
+    /// #GstPadGetRangeFunction for a description of the getrange function.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// GStreamer reads this function pointer without holding a lock (gstpad.c:4590-4594), so
+    /// replacing or unsetting the handler while the pad is running races an invocation that is
+    /// already under way: the handler being replaced may still be executing when this returns.
+    /// </para>
+    /// </remarks>
+    /// <param name="get">the #GstPadGetRangeFunction to set.</param>
+    public void SetGetrangeFunction(Gst.PadGetRangeFunction? get)
+    {
+        nint instanceHandle = Handle;
+        Gst.Interop.CallbackHandle getState = Gst.Interop.InstanceKeyedCallbacks.Install(instanceHandle, "getrange", get);
+        GstPadSetGetrangeFunctionFull(instanceHandle, get is null ? 0 : Gst.PadGetRangeFunctionTrampoline.Pointer, getState.UserData, get is null ? 0 : (nint)Gst.Interop.InstanceKeyedCallbacks.DestroyNotify);
+        System.GC.KeepAlive(this);
+    }
+
+    /// <summary>Sets the given internal link iterator function for the pad.</summary>
+    /// <remarks>
+    /// <para>
+    /// GStreamer reads this function pointer without holding a lock (gstpad.c:4590-4594), so
+    /// replacing or unsetting the handler while the pad is running races an invocation that is
+    /// already under way: the handler being replaced may still be executing when this returns.
+    /// </para>
+    /// </remarks>
+    /// <param name="iterintlink">the #GstPadIterIntLinkFunction to set.</param>
+    public void SetIterateInternalLinksFunction(Gst.PadIterIntLinkFunction? iterintlink)
+    {
+        nint instanceHandle = Handle;
+        Gst.Interop.CallbackHandle iterintlinkState = Gst.Interop.InstanceKeyedCallbacks.Install(instanceHandle, "iterate_internal_links", iterintlink);
+        GstPadSetIterateInternalLinksFunctionFull(instanceHandle, iterintlink is null ? 0 : Gst.PadIterIntLinkFunctionTrampoline.Pointer, iterintlinkState.UserData, iterintlink is null ? 0 : (nint)Gst.Interop.InstanceKeyedCallbacks.DestroyNotify);
+        System.GC.KeepAlive(this);
+    }
+
+    /// <summary>
+    /// Sets the given link function for the pad. It will be called when
+    /// the pad is linked with another pad.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The return value #GST_PAD_LINK_OK should be used when the connection can be
+    /// made.
+    /// </para>
+    /// <para>
+    /// The return value #GST_PAD_LINK_REFUSED should be used when the connection
+    /// cannot be made for some reason.
+    /// </para>
+    /// <para>
+    /// If @link is installed on a source pad, it should call the #GstPadLinkFunction
+    /// of the peer sink pad, if present.
+    /// </para>
+    /// <para>
+    /// GStreamer reads this function pointer without holding a lock (gstpad.c:4590-4594), so
+    /// replacing or unsetting the handler while the pad is running races an invocation that is
+    /// already under way: the handler being replaced may still be executing when this returns.
+    /// </para>
+    /// </remarks>
+    /// <param name="link">the #GstPadLinkFunction to set.</param>
+    public void SetLinkFunction(Gst.PadLinkFunction? link)
+    {
+        nint instanceHandle = Handle;
+        Gst.Interop.CallbackHandle linkState = Gst.Interop.InstanceKeyedCallbacks.Install(instanceHandle, "link", link);
+        GstPadSetLinkFunctionFull(instanceHandle, link is null ? 0 : Gst.PadLinkFunctionTrampoline.Pointer, linkState.UserData, link is null ? 0 : (nint)Gst.Interop.InstanceKeyedCallbacks.DestroyNotify);
         System.GC.KeepAlive(this);
     }
 
@@ -1445,6 +1645,51 @@ public unsafe partial class Pad : Gst.Object
     public void SetOffset(long offset)
     {
         GstPadSetOffset(Handle, offset);
+        System.GC.KeepAlive(this);
+    }
+
+    /// <summary>Set the given query function for the pad.</summary>
+    /// <remarks>
+    /// <para>
+    /// GStreamer reads this function pointer without holding a lock (gstpad.c:4590-4594), so
+    /// replacing or unsetting the handler while the pad is running races an invocation that is
+    /// already under way: the handler being replaced may still be executing when this returns.
+    /// </para>
+    /// </remarks>
+    /// <param name="query">the #GstPadQueryFunction to set.</param>
+    public void SetQueryFunction(Gst.PadQueryFunction? query)
+    {
+        nint instanceHandle = Handle;
+        Gst.Interop.CallbackHandle queryState = Gst.Interop.InstanceKeyedCallbacks.Install(instanceHandle, "query", query);
+        GstPadSetQueryFunctionFull(instanceHandle, query is null ? 0 : Gst.PadQueryFunctionTrampoline.Pointer, queryState.UserData, query is null ? 0 : (nint)Gst.Interop.InstanceKeyedCallbacks.DestroyNotify);
+        System.GC.KeepAlive(this);
+    }
+
+    /// <summary>
+    /// Sets the given unlink function for the pad. It will be called
+    /// when the pad is unlinked.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Note that the pad's lock is already held when the unlink
+    /// function is called, so most pad functions cannot be called
+    /// from within the callback.
+    /// </para>
+    /// <para>
+    /// The object lock of the pad is already held when the unlink function runs
+    /// (gstpad.c:2109-2121), so most other members of Gst.Pad must not be called from the
+    /// handler. GStreamer reads this function pointer without holding a lock
+    /// (gstpad.c:4590-4594), so replacing or unsetting the handler while the pad is running
+    /// races an invocation that is already under way: the handler being replaced may still be
+    /// executing when this returns.
+    /// </para>
+    /// </remarks>
+    /// <param name="unlink">the #GstPadUnlinkFunction to set.</param>
+    public void SetUnlinkFunction(Gst.PadUnlinkFunction? unlink)
+    {
+        nint instanceHandle = Handle;
+        Gst.Interop.CallbackHandle unlinkState = Gst.Interop.InstanceKeyedCallbacks.Install(instanceHandle, "unlink", unlink);
+        GstPadSetUnlinkFunctionFull(instanceHandle, unlink is null ? 0 : Gst.PadUnlinkFunctionTrampoline.Pointer, unlinkState.UserData, unlink is null ? 0 : (nint)Gst.Interop.InstanceKeyedCallbacks.DestroyNotify);
         System.GC.KeepAlive(this);
     }
 
@@ -1964,17 +2209,61 @@ public unsafe partial class Pad : Gst.Object
     [LibraryImport("Gst", EntryPoint = "gst_pad_remove_probe")]
     private static partial void GstPadRemoveProbe(nint pad, System.Runtime.InteropServices.CULong id);
 
+    /// <summary>The <c>gst_pad_set_activate_function_full</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_pad_set_activate_function_full")]
+    private static partial void GstPadSetActivateFunctionFull(nint pad, nint activate, nint userData, nint notify);
+
+    /// <summary>The <c>gst_pad_set_activatemode_function_full</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_pad_set_activatemode_function_full")]
+    private static partial void GstPadSetActivatemodeFunctionFull(nint pad, nint activatemode, nint userData, nint notify);
+
     /// <summary>The <c>gst_pad_set_active</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_pad_set_active")]
     private static partial int GstPadSetActive(nint pad, int active);
+
+    /// <summary>The <c>gst_pad_set_chain_function_full</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_pad_set_chain_function_full")]
+    private static partial void GstPadSetChainFunctionFull(nint pad, nint chain, nint userData, nint notify);
+
+    /// <summary>The <c>gst_pad_set_chain_list_function_full</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_pad_set_chain_list_function_full")]
+    private static partial void GstPadSetChainListFunctionFull(nint pad, nint chainlist, nint userData, nint notify);
 
     /// <summary>The <c>gst_pad_set_element_private</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_pad_set_element_private")]
     private static partial void GstPadSetElementPrivate(nint pad, nint priv);
 
+    /// <summary>The <c>gst_pad_set_event_full_function_full</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_pad_set_event_full_function_full")]
+    private static partial void GstPadSetEventFullFunctionFull(nint pad, nint @event, nint userData, nint notify);
+
+    /// <summary>The <c>gst_pad_set_event_function_full</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_pad_set_event_function_full")]
+    private static partial void GstPadSetEventFunctionFull(nint pad, nint @event, nint userData, nint notify);
+
+    /// <summary>The <c>gst_pad_set_getrange_function_full</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_pad_set_getrange_function_full")]
+    private static partial void GstPadSetGetrangeFunctionFull(nint pad, nint get, nint userData, nint notify);
+
+    /// <summary>The <c>gst_pad_set_iterate_internal_links_function_full</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_pad_set_iterate_internal_links_function_full")]
+    private static partial void GstPadSetIterateInternalLinksFunctionFull(nint pad, nint iterintlink, nint userData, nint notify);
+
+    /// <summary>The <c>gst_pad_set_link_function_full</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_pad_set_link_function_full")]
+    private static partial void GstPadSetLinkFunctionFull(nint pad, nint link, nint userData, nint notify);
+
     /// <summary>The <c>gst_pad_set_offset</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_pad_set_offset")]
     private static partial void GstPadSetOffset(nint pad, long offset);
+
+    /// <summary>The <c>gst_pad_set_query_function_full</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_pad_set_query_function_full")]
+    private static partial void GstPadSetQueryFunctionFull(nint pad, nint query, nint userData, nint notify);
+
+    /// <summary>The <c>gst_pad_set_unlink_function_full</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_pad_set_unlink_function_full")]
+    private static partial void GstPadSetUnlinkFunctionFull(nint pad, nint unlink, nint userData, nint notify);
 
     /// <summary>The <c>gst_pad_start_task</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_pad_start_task")]

@@ -460,6 +460,13 @@ internal sealed class ArgumentPlan
     /// <summary>Gets the trampoline holder of a callback argument.</summary>
     internal string? TrampolineType { get; init; }
 
+    /// <summary>
+    /// Gets the storage slot of the instance a callback that carries no
+    /// <c>user_data</c> of its own is filed under, which the call site writes
+    /// before it hands the callback over.
+    /// </summary>
+    internal string? InstanceSlot { get; init; }
+
     /// <summary>Gets the lifetime of a callback argument.</summary>
     internal GirScope Scope { get; init; }
 
@@ -562,6 +569,13 @@ internal sealed class MarshalPlan
     /// write, because a member carries at most one of them.
     /// </remarks>
     internal string? ObsoleteMessage { get; init; }
+
+    /// <summary>
+    /// Gets the hand written sentence the documentation of the member carries,
+    /// for a part of its contract that neither the gir nor the marshalling
+    /// states, or <see langword="null"/> when it carries none.
+    /// </summary>
+    internal string? DocNote { get; init; }
 
     /// <summary>Gets the C# type of the instance, for an extension method.</summary>
     internal string? InstanceType { get; init; }

@@ -371,6 +371,21 @@ internal sealed class PlatformSupport
 /// the type that declares the member, which is what turns
 /// <c>gst_pipeline_new</c> from a factory of <c>Gst.Element</c> into one of
 /// <c>Gst.Pipeline</c>.</description></item>
+/// <item><description><c>instanceKeyedCallbacks</c>: qualified gir name of a
+/// callback (<c>Gst.PadChainFunction</c>) mapped onto the name of the storage
+/// slot the setter writes (<c>chain</c>). It names a callback whose own C
+/// signature carries no <c>user_data</c> parameter, so that its trampoline
+/// recovers the managed delegate from the instance it is handed as its first
+/// argument and the slot instead. Two callbacks that share one slot -
+/// <c>Gst.PadEventFunction</c> and <c>Gst.PadEventFullFunction</c>, which
+/// gst_pad_set_event_function_full and gst_pad_set_event_full_function_full
+/// both write to <c>eventdata</c> - state the same slot name and are mutually
+/// exclusive per instance.</description></item>
+/// <item><description><c>docNotes</c>: <c>c:identifier</c> of a callable mapped
+/// onto a sentence its generated documentation carries, for a part of its
+/// contract that neither the gir nor the marshalling states. It is the
+/// counterpart of <c>vfuncDocNotes</c> for a member rather than a
+/// slot.</description></item>
 /// </list>
 /// </remarks>
 internal sealed class Overlays
@@ -400,6 +415,8 @@ internal sealed class Overlays
     private readonly Dictionary<string, string> _vfuncDocNotes;
     private readonly HashSet<string> _vfuncSpans;
     private readonly Dictionary<string, string> _vfuncFailureValues;
+    private readonly Dictionary<string, string> _instanceKeyedCallbacks;
+    private readonly Dictionary<string, string> _docNotes;
 
     private Overlays(
         HashSet<string> skip,
@@ -419,7 +436,9 @@ internal sealed class Overlays
         Dictionary<string, string> vfuncNonNullReturns,
         Dictionary<string, string> vfuncDocNotes,
         HashSet<string> vfuncSpans,
-        Dictionary<string, string> vfuncFailureValues)
+        Dictionary<string, string> vfuncFailureValues,
+        Dictionary<string, string> instanceKeyedCallbacks,
+        Dictionary<string, string> docNotes)
     {
         _skip = skip;
         _handBound = handBound;
@@ -439,6 +458,8 @@ internal sealed class Overlays
         _vfuncDocNotes = vfuncDocNotes;
         _vfuncSpans = vfuncSpans;
         _vfuncFailureValues = vfuncFailureValues;
+        _instanceKeyedCallbacks = instanceKeyedCallbacks;
+        _docNotes = docNotes;
     }
 
     /// <summary>Gets an overlay set without any correction.</summary>
@@ -460,6 +481,8 @@ internal sealed class Overlays
         new Dictionary<string, string>(StringComparer.Ordinal),
         new Dictionary<string, string>(StringComparer.Ordinal),
         new HashSet<string>(StringComparer.Ordinal),
+        new Dictionary<string, string>(StringComparer.Ordinal),
+        new Dictionary<string, string>(StringComparer.Ordinal),
         new Dictionary<string, string>(StringComparer.Ordinal));
 
     /// <summary>Gets the skipped identifiers, ordered for reporting.</summary>
@@ -536,6 +559,12 @@ internal sealed class Overlays
 
     /// <summary>Gets the slots that answer their own value when an override threw.</summary>
     internal IReadOnlyCollection<string> VfuncFailureValueKeys => _vfuncFailureValues.Keys;
+
+    /// <summary>Gets the callbacks whose state is keyed by the instance they are installed on.</summary>
+    internal IReadOnlyCollection<string> InstanceKeyedCallbackKeys => _instanceKeyedCallbacks.Keys;
+
+    /// <summary>Gets the callables that carry a hand written note in their documentation.</summary>
+    internal IReadOnlyCollection<string> DocNoteKeys => _docNotes.Keys;
 
     /// <summary>
     /// Loads <c>fixups.json</c> and <c>platform-symbols.json</c> from an overlay
@@ -652,6 +681,18 @@ internal sealed class Overlays
             vfuncFailureValues[entry.Key] = entry.Value;
         }
 
+        Dictionary<string, string> instanceKeyedCallbacks = new(StringComparer.Ordinal);
+        foreach (KeyValuePair<string, string> entry in fixups.InstanceKeyedCallbacks ?? [])
+        {
+            instanceKeyedCallbacks[entry.Key] = entry.Value;
+        }
+
+        Dictionary<string, string> docNotes = new(StringComparer.Ordinal);
+        foreach (KeyValuePair<string, string> entry in fixups.DocNotes ?? [])
+        {
+            docNotes[entry.Key] = entry.Value;
+        }
+
         HashSet<string> vfuncIdentityBuffers = new(StringComparer.Ordinal);
         foreach (string key in fixups.VfuncIdentityBuffers ?? [])
         {
@@ -676,7 +717,9 @@ internal sealed class Overlays
             vfuncNonNullReturns,
             vfuncDocNotes,
             vfuncSpans,
-            vfuncFailureValues);
+            vfuncFailureValues,
+            instanceKeyedCallbacks,
+            docNotes);
     }
 
     /// <summary>Tests whether a symbol is skipped by the overlays.</summary>
@@ -856,6 +899,27 @@ internal sealed class Overlays
     internal bool TryGetVfuncDocNote(string key, [NotNullWhen(true)] out string? note) =>
         _vfuncDocNotes.TryGetValue(key, out note);
 
+    /// <summary>
+    /// Looks up the storage slot a callback that carries no <c>user_data</c>
+    /// occupies on the instance it is installed on.
+    /// </summary>
+    /// <param name="key">The qualified gir name of the callback.</param>
+    /// <param name="slot">Receives the slot name.</param>
+    /// <returns>Whether the callback is keyed by its instance.</returns>
+    internal bool TryGetInstanceKeyedSlot(string key, [NotNullWhen(true)] out string? slot) =>
+        _instanceKeyedCallbacks.TryGetValue(key, out slot);
+
+    /// <summary>
+    /// Looks up the hand written note the documentation of a callable carries,
+    /// for the part of its contract that neither the gir nor the marshalling
+    /// states.
+    /// </summary>
+    /// <param name="key">The <c>c:identifier</c> of the callable.</param>
+    /// <param name="note">Receives the sentence.</param>
+    /// <returns>Whether the callable has a note.</returns>
+    internal bool TryGetDocNote(string key, [NotNullWhen(true)] out string? note) =>
+        _docNotes.TryGetValue(key, out note);
+
     /// <summary>Looks up the platform availability of a native symbol.</summary>
     /// <param name="cIdentifier">The <c>c:identifier</c> of the symbol.</param>
     /// <returns>The availability, or <see langword="null"/> when the symbol is portable.</returns>
@@ -909,6 +973,10 @@ internal sealed class Overlays
         public List<string>? VfuncSpans { get; set; }
 
         public Dictionary<string, string>? VfuncFailureValues { get; set; }
+
+        public Dictionary<string, string>? InstanceKeyedCallbacks { get; set; }
+
+        public Dictionary<string, string>? DocNotes { get; set; }
     }
 
     private sealed class PlatformSymbolsFile
