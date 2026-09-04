@@ -250,7 +250,7 @@ jobs:
       # upload step already takes.
       - name: Test against the installation
         env:
-          GSTSHARP_REQUIRED_ELEMENTS: webrtcbin,nicesrc,dtlssrtpenc,audiomixer,theoraenc,theoradec,vorbisenc,uritranscodebin,transcodebin,oggmux,rtpL16pay,rtspsrc,alsasink
+          GSTSHARP_REQUIRED_ELEMENTS: webrtcbin,nicesrc,dtlssrtpenc,audiomixer,theoraenc,theoradec,vorbisenc,uritranscodebin,transcodebin,oggmux,rtpL16pay,rtspsrc,alsasink,volume
         run: dotnet test tests/GstSharp.IntegrationTests --no-restore --logger "trx;LogFileName=integration.trx" --results-directory artifacts/test-results --blame-hang --blame-hang-timeout 5m --blame-hang-dump-type mini
 
       # The whole consumer path without AOT: parse a pipeline, cast the sink
