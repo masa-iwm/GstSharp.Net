@@ -927,7 +927,9 @@ touched.
   instance init** (`Gst.Bin` needs none) — `src`
   for `BaseSrc`, `PushSrc`, `Aggregator`, `AudioBaseSrc` and `AudioSrc`,
   `sink` for `BaseSink`, `AudioBaseSink`, `AudioSink` and `VideoSink`, both
-  for `BaseTransform`, `AudioFilter` and `VideoFilter` — because their
+  for `BaseTransform`, `AudioFilter`, `VideoFilter`, `BaseParse`,
+  `AudioDecoder`, `AudioEncoder`, `VideoDecoder` and `VideoEncoder` — because
+  their
   instance init creates the pads from them. `DefineSubclass` checks for
   them once the class is initialised and fails with a message rather than
   letting `g_object_new` produce a half built element.
@@ -1016,14 +1018,13 @@ The six slots that lend a boxed record by pointer — `BaseSrc::do_seek` and
 and the `set_info` of `VideoSink` and `VideoFilter` — are bound: the wrapper
 they are handed borrows the value rather than copying it, so what the override
 writes lands in the record the caller owns. The borrow lasts for the call and
-no longer (see below).
+no longer, which is the boxed-borrow rule above.
 
 ### Slots a subclass has to declare
 
 Most slots have an answer for a NULL parent that the element survives, and
-`DefineSubclass` accepts a registration without them. Fourteen slots on
-eleven classes do not, and the registration says so before it takes the type
-name:
+`DefineSubclass` accepts a registration without them. Fourteen slots on ten
+classes do not, and the registration says so before it takes the type name:
 
 | Class | Slot | Why |
 | --- | --- | --- |

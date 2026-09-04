@@ -18,9 +18,10 @@
          drop. -->
     <ProjectReference Include="../../src/GstSharp.Net.Controller/GstSharp.Net.Controller.csproj" />
     <!-- The managed audio and video sinks derive from GstAudioSink and
-         GstVideoSink: their trampolines, and with them the span the write slot
-         of an audio sink is handed, only reach the ahead of time compiler
-         through these two modules. -->
+         GstVideoSink, and the managed encoder from GstAudioEncoder: their
+         trampolines, and with them the span the write slot of an audio sink is
+         handed and the null buffer a codec is drained with, only reach the
+         ahead of time compiler through these two modules. -->
     <ProjectReference Include="../../src/GstSharp.Net.Audio/GstSharp.Net.Audio.csproj" />
     <ProjectReference Include="../../src/GstSharp.Net.Video/GstSharp.Net.Video.csproj" />
   </ItemGroup>
