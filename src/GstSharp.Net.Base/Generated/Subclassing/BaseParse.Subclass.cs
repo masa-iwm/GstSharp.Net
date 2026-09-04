@@ -227,7 +227,10 @@ public unsafe partial class BaseParse
     /// The <c>frame</c> argument.
     /// The caller lends this for the duration of the call and reads back what the
     /// override wrote into it. The wrapper stops meaning anything once the call
-    /// returns, so copy what has to outlive it before then.
+    /// returns: Copy() is what gives a wrapper of your own to anything that has to
+    /// outlive it - a copy of the value, or a reference of its own to the same one
+    /// when the boxed type is reference counted, as a codec frame and a codec
+    /// state are.
     /// </param>
     /// <param name="skipsize">The <c>skipsize</c> argument.</param>
     /// <returns>What <c>handle_frame</c> answers.</returns>
@@ -246,7 +249,10 @@ public unsafe partial class BaseParse
     /// The <c>frame</c> argument.
     /// The caller lends this for the duration of the call and reads back what the
     /// override wrote into it. The wrapper stops meaning anything once the call
-    /// returns, so copy what has to outlive it before then.
+    /// returns: Copy() is what gives a wrapper of your own to anything that has to
+    /// outlive it - a copy of the value, or a reference of its own to the same one
+    /// when the boxed type is reference counted, as a codec frame and a codec
+    /// state are.
     /// </param>
     /// <returns>What <c>pre_push_frame</c> answers.</returns>
     protected virtual Gst.FlowReturn OnPrePushFrame(Gst.Base.BaseParseFrame frame) =>
@@ -402,7 +408,10 @@ public unsafe partial class BaseParse
     /// The <c>frame</c> argument.
     /// The caller lends this for the duration of the call and reads back what the
     /// override wrote into it. The wrapper stops meaning anything once the call
-    /// returns, so copy what has to outlive it before then.
+    /// returns: Copy() is what gives a wrapper of your own to anything that has to
+    /// outlive it - a copy of the value, or a reference of its own to the same one
+    /// when the boxed type is reference counted, as a codec frame and a codec
+    /// state are.
     /// </param>
     /// <param name="skipsize">The <c>skipsize</c> argument.</param>
     /// <returns>What <c>handle_frame</c> answers.</returns>
@@ -422,7 +431,10 @@ public unsafe partial class BaseParse
     /// The <c>frame</c> argument.
     /// The caller lends this for the duration of the call and reads back what the
     /// override wrote into it. The wrapper stops meaning anything once the call
-    /// returns, so copy what has to outlive it before then.
+    /// returns: Copy() is what gives a wrapper of your own to anything that has to
+    /// outlive it - a copy of the value, or a reference of its own to the same one
+    /// when the boxed type is reference counted, as a codec frame and a codec
+    /// state are.
     /// </param>
     /// <returns>What <c>pre_push_frame</c> answers.</returns>
     protected Gst.FlowReturn ChainUpPrePushFrame(Gst.Base.BaseParseFrame frame)

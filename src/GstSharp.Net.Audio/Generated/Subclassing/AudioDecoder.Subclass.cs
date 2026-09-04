@@ -454,8 +454,11 @@ public unsafe partial class AudioDecoder
     /// The object you return is handed to the element; copy or ref it first if
     /// you need it afterwards. The wrapper is detached by the return and throws
     /// from then on, exactly like the wrapper of an argument the slot consumed.
+    /// Answering <see langword="null"/> is not allowed: the caller of the slot does
+    /// not check for it. A null answer is reported through the exception trap and
+    /// the slot answers a value the caller fails cleanly on.
     /// </returns>
-    protected virtual Gst.Caps? OnGetcaps(Gst.Caps? filter) =>
+    protected virtual Gst.Caps OnGetcaps(Gst.Caps? filter) =>
         ChainUpGetcaps(filter);
 
     /// <summary>
@@ -729,11 +732,16 @@ public unsafe partial class AudioDecoder
     /// The object you return is handed to the element; copy or ref it first if
     /// you need it afterwards. The wrapper is detached by the return and throws
     /// from then on, exactly like the wrapper of an argument the slot consumed.
+    /// Answering <see langword="null"/> is not allowed: the caller of the slot does
+    /// not check for it. A null answer is reported through the exception trap and
+    /// the slot answers a value the caller fails cleanly on.
     /// </returns>
-    protected Gst.Caps? ChainUpGetcaps(Gst.Caps? filter)
+    protected Gst.Caps ChainUpGetcaps(Gst.Caps? filter)
     {
         nint resultNative = ChainUpGetcaps(Handle, filter is null ? nint.Zero : filter.Handle);
-        Gst.Caps? result = Gst.Caps.FromNative(resultNative, Gst.Interop.Transfer.Full);
+        Gst.Caps result = Gst.Caps.FromNative(resultNative, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException(
+                "getcaps answered null below the managed override.");
         GC.KeepAlive(this);
         GC.KeepAlive(filter);
         return result;
@@ -1393,12 +1401,18 @@ public unsafe partial class AudioDecoder
 
             using Gst.Caps? filterValue = filter == nint.Zero ? null : Gst.Caps.Borrow(filter);
             Gst.Caps? result = managed.OnGetcaps(filterValue);
+            if (result is null)
+            {
+                throw new InvalidOperationException(
+                    "OnGetcaps answered null, which getcaps does not allow.");
+            }
+
             return result is null ? nint.Zero : result.HandOver();
         }
         catch (Exception exception)
         {
             Gst.Interop.ExceptionTrap.Report(exception);
-            return nint.Zero;
+            return Gst.GstNative.CapsNewEmpty();
         }
     }
 

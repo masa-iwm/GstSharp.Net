@@ -42,4 +42,31 @@ public sealed partial class VideoCodecFrame
 
         GC.KeepAlive(this);
     }
+
+    /// <summary>Takes a wrapper of this frame that its caller owns.</summary>
+    /// <returns>
+    /// A wrapper holding its own reference to the same frame, which its owner
+    /// has to dispose.
+    /// </returns>
+    /// <remarks>
+    /// <para>
+    /// This is the <c>g_boxed_copy</c> of the boxed type, which for
+    /// <c>GstVideoCodecFrame</c> is <c>gst_video_codec_frame_ref</c>: the answer
+    /// is not a copy of the frame but a second reference to the very same one,
+    /// so what is written through one wrapper is read back through the other.
+    /// </para>
+    /// <para>
+    /// This is what a slot that is lent a frame — <c>handle_frame</c> of a
+    /// decoder, <c>parse</c> — calls to keep it past the call, since the wrapper
+    /// the override is handed stops meaning anything when the slot returns.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="ObjectDisposedException">The wrapper was disposed.</exception>
+    public VideoCodecFrame Copy()
+    {
+        nint copy = Gst.Interop.GObjectNative.BoxedCopy(BoxedType.Value, Handle);
+        GC.KeepAlive(this);
+        return FromNative(copy, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_video_codec_frame_ref returned no value.");
+    }
 }

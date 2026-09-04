@@ -91,7 +91,10 @@ public unsafe partial class VideoSink
     /// The <c>info</c> argument.
     /// The caller lends this for the duration of the call and reads back what the
     /// override wrote into it. The wrapper stops meaning anything once the call
-    /// returns, so copy what has to outlive it before then.
+    /// returns: Copy() is what gives a wrapper of your own to anything that has to
+    /// outlive it - a copy of the value, or a reference of its own to the same one
+    /// when the boxed type is reference counted, as a codec frame and a codec
+    /// state are.
     /// </param>
     /// <returns>What <c>set_info</c> answers.</returns>
     protected virtual bool OnSetInfo(Gst.Caps caps, Gst.Video.VideoInfo info) =>
@@ -121,7 +124,10 @@ public unsafe partial class VideoSink
     /// The <c>info</c> argument.
     /// The caller lends this for the duration of the call and reads back what the
     /// override wrote into it. The wrapper stops meaning anything once the call
-    /// returns, so copy what has to outlive it before then.
+    /// returns: Copy() is what gives a wrapper of your own to anything that has to
+    /// outlive it - a copy of the value, or a reference of its own to the same one
+    /// when the boxed type is reference counted, as a codec frame and a codec
+    /// state are.
     /// </param>
     /// <returns>What <c>set_info</c> answers.</returns>
     protected bool ChainUpSetInfo(Gst.Caps caps, Gst.Video.VideoInfo info)

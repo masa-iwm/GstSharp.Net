@@ -370,7 +370,10 @@ public unsafe partial class BaseTransform
     /// The <c>params</c> argument.
     /// The caller lends this for the duration of the call and reads back what the
     /// override wrote into it. The wrapper stops meaning anything once the call
-    /// returns, so copy what has to outlive it before then.
+    /// returns: Copy() is what gives a wrapper of your own to anything that has to
+    /// outlive it - a copy of the value, or a reference of its own to the same one
+    /// when the boxed type is reference counted, as a codec frame and a codec
+    /// state are.
     /// </param>
     /// <returns>What <c>filter_meta</c> answers.</returns>
     protected virtual bool OnFilterMeta(Gst.Query query, Gst.GObject.GType api, Gst.Structure @params) =>
@@ -743,7 +746,10 @@ public unsafe partial class BaseTransform
     /// The <c>params</c> argument.
     /// The caller lends this for the duration of the call and reads back what the
     /// override wrote into it. The wrapper stops meaning anything once the call
-    /// returns, so copy what has to outlive it before then.
+    /// returns: Copy() is what gives a wrapper of your own to anything that has to
+    /// outlive it - a copy of the value, or a reference of its own to the same one
+    /// when the boxed type is reference counted, as a codec frame and a codec
+    /// state are.
     /// </param>
     /// <returns>What <c>filter_meta</c> answers.</returns>
     protected bool ChainUpFilterMeta(Gst.Query query, Gst.GObject.GType api, Gst.Structure @params)

@@ -87,7 +87,10 @@ public unsafe partial class VideoFilter
     /// The <c>inInfo</c> argument.
     /// The caller lends this for the duration of the call and reads back what the
     /// override wrote into it. The wrapper stops meaning anything once the call
-    /// returns, so copy what has to outlive it before then.
+    /// returns: Copy() is what gives a wrapper of your own to anything that has to
+    /// outlive it - a copy of the value, or a reference of its own to the same one
+    /// when the boxed type is reference counted, as a codec frame and a codec
+    /// state are.
     /// </param>
     /// <param name="outcaps">
     /// The <c>outcaps</c> argument.
@@ -97,7 +100,10 @@ public unsafe partial class VideoFilter
     /// The <c>outInfo</c> argument.
     /// The caller lends this for the duration of the call and reads back what the
     /// override wrote into it. The wrapper stops meaning anything once the call
-    /// returns, so copy what has to outlive it before then.
+    /// returns: Copy() is what gives a wrapper of your own to anything that has to
+    /// outlive it - a copy of the value, or a reference of its own to the same one
+    /// when the boxed type is reference counted, as a codec frame and a codec
+    /// state are.
     /// </param>
     /// <returns>What <c>set_info</c> answers.</returns>
     protected virtual bool OnSetInfo(Gst.Caps incaps, Gst.Video.VideoInfo inInfo, Gst.Caps outcaps, Gst.Video.VideoInfo outInfo) =>
@@ -140,7 +146,10 @@ public unsafe partial class VideoFilter
     /// The <c>inInfo</c> argument.
     /// The caller lends this for the duration of the call and reads back what the
     /// override wrote into it. The wrapper stops meaning anything once the call
-    /// returns, so copy what has to outlive it before then.
+    /// returns: Copy() is what gives a wrapper of your own to anything that has to
+    /// outlive it - a copy of the value, or a reference of its own to the same one
+    /// when the boxed type is reference counted, as a codec frame and a codec
+    /// state are.
     /// </param>
     /// <param name="outcaps">
     /// The <c>outcaps</c> argument.
@@ -150,7 +159,10 @@ public unsafe partial class VideoFilter
     /// The <c>outInfo</c> argument.
     /// The caller lends this for the duration of the call and reads back what the
     /// override wrote into it. The wrapper stops meaning anything once the call
-    /// returns, so copy what has to outlive it before then.
+    /// returns: Copy() is what gives a wrapper of your own to anything that has to
+    /// outlive it - a copy of the value, or a reference of its own to the same one
+    /// when the boxed type is reference counted, as a codec frame and a codec
+    /// state are.
     /// </param>
     /// <returns>What <c>set_info</c> answers.</returns>
     protected bool ChainUpSetInfo(Gst.Caps incaps, Gst.Video.VideoInfo inInfo, Gst.Caps outcaps, Gst.Video.VideoInfo outInfo)

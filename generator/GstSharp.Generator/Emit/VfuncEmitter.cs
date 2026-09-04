@@ -1594,7 +1594,10 @@ internal sealed class VfuncEmitter
             case VfuncBucket.BorrowBoxed:
                 note.Add("The caller lends this for the duration of the call and reads back what the");
                 note.Add("override wrote into it. The wrapper stops meaning anything once the call");
-                note.Add("returns, so copy what has to outlive it before then.");
+                note.Add("returns: Copy() is what gives a wrapper of your own to anything that has to");
+                note.Add("outlive it - a copy of the value, or a reference of its own to the same one");
+                note.Add("when the boxed type is reference counted, as a codec frame and a codec");
+                note.Add("state are.");
                 break;
             case VfuncBucket.Span:
                 note.Add("The memory belongs to the caller and is only valid while the call runs.");

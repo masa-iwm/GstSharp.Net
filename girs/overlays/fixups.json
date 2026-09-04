@@ -787,12 +787,15 @@
     "GstAudio.AudioSrc::read": "This runs on the thread of the ring buffer. Answer the number of bytes read into the block, and leave the timestamp at Gst.ClockTime.None unless the device gives one.",
     "GstBase.PushSrc::create": "Answering Ok without a buffer is not a way to produce nothing: the base class posts an element error on the bus for a NULL buffer, so a source with nothing to hand out answers a flow result that says so - Eos, Flushing or an error."
   },
-  "$comment-vfunc-non-null-returns": "The slots whose caller dereferences the answer without checking it for NULL, with the value the trampoline answers when the managed override answered none. gst_base_transform_fixate_caps and gst_aggregator_default_update_src_caps both hand the answer straight to gst_caps_is_fixed / gst_pad_set_caps, and the aggregator has already consumed the input by then, so a NULL would be a crash or a lost buffer rather than a failed negotiation. The managed member therefore answers a non nullable type, and an override that answers null anyway is reported through the exception trap while the slot answers empty caps, on which negotiation fails cleanly.",
+  "$comment-vfunc-non-null-returns": "The slots whose caller dereferences the answer without checking it for NULL, with the value the trampoline answers when the managed override answered none. gst_base_transform_fixate_caps and gst_aggregator_default_update_src_caps both hand the answer straight to gst_caps_is_fixed / gst_pad_set_caps, and the aggregator has already consumed the input by then, so a NULL would be a crash or a lost buffer rather than a failed negotiation. The managed member therefore answers a non nullable type, and an override that answers null anyway is reported through the exception trap while the slot answers empty caps, on which negotiation fails cleanly. The four codec getcaps slots have that shape one level down: gstaudioencoder.c:1822-1824, gstaudiodecoder.c:2879-2881, gstvideodecoder.c:2143-2145 and gstvideoencoder.c:949-951 all answer the caps query with gst_query_set_caps_result followed by an unconditional gst_caps_unref, so a NULL answer would unref NULL and hand the peer a NULL result.",
   "vfuncNonNullReturns": {
+    "GstAudio.AudioDecoder::getcaps": "Gst.GstNative.CapsNewEmpty()",
     "GstAudio.AudioEncoder::getcaps": "Gst.GstNative.CapsNewEmpty()",
     "GstBase.Aggregator::fixate_src_caps": "Gst.GstNative.CapsNewEmpty()",
     "GstBase.BaseParse::get_sink_caps": "Gst.GstNative.CapsNewEmpty()",
-    "GstBase.BaseTransform::fixate_caps": "Gst.GstNative.CapsNewEmpty()"
+    "GstBase.BaseTransform::fixate_caps": "Gst.GstNative.CapsNewEmpty()",
+    "GstVideo.VideoDecoder::getcaps": "Gst.GstNative.CapsNewEmpty()",
+    "GstVideo.VideoEncoder::getcaps": "Gst.GstNative.CapsNewEmpty()"
   },
   "$comment-vfunc-identity-buffers": "The buffer a slot hands back may be the very one it was given, and the caller compares the two pointers: gst_base_src_get_range only unrefs the buffer it passed in when the slot answered a different one, and gst_base_transform_default_prepare_output_buffer explicitly allows *outbuf == inbuf for an in-place transform. A reference taken on an unchanged answer would therefore never be released, so the trampoline of a parameter listed here only mints one when the handle really changed.",
   "vfuncIdentityBuffers": [

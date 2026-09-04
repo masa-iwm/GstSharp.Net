@@ -35,9 +35,14 @@ internal static partial class AudioDecoderDefaults
 /// the chain-up of a managed encoder.
 /// </summary>
 /// <remarks>
-/// gstaudioencoder.c falls back to
-/// <c>gst_audio_encoder_proxy_getcaps (enc, NULL, filter)</c>, and its caller
-/// unrefs the answer without checking it for NULL.
+/// This reproduces <c>gst_audio_encoder_getcaps_default</c>, which is
+/// <c>gst_audio_encoder_proxy_getcaps (enc, NULL, filter)</c> and whose caller
+/// unrefs the answer without checking it for NULL. The class_init of
+/// <c>GstAudioEncoder</c> installs that function into the slot itself
+/// (gstaudioencoder.c:400), so the parent slot of a managed encoder derived
+/// straight from it is never NULL: this default is only reached through a NULL
+/// parent slot somewhere in a managed chain, and is kept as the answer for that
+/// case.
 /// </remarks>
 internal static partial class AudioEncoderDefaults
 {

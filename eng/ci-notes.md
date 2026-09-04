@@ -122,10 +122,13 @@ adding another one: `webrtcbin` is findable without it and cannot leave the NULL
 state, because it builds its transports out of `nicesrc` and `nicesink`.
 
 The other side of that decision is `RequiredElementsTests`. The job sets
-`GSTSHARP_REQUIRED_ELEMENTS=webrtcbin,nicesrc,dtlssrtpenc` on its integration
-test step, and the test fails when any of them is missing from the registry.
-Without it, a package that stopped shipping one of the three would turn the
-WebRTC tests back into skips and nothing would be red. The variable is unset
+`GSTSHARP_REQUIRED_ELEMENTS` on its integration test step and the test fails
+when any element named there is missing from the registry. The value in
+`ci.yml` is the single source of truth for that list; what follows only records
+what it stood at when this was written:
+`webrtcbin,nicesrc,dtlssrtpenc,audiomixer,theoraenc,theoradec,vorbisenc,uritranscodebin,transcodebin,oggmux,rtpL16pay,rtspsrc,alsasink,volume,videoconvert,rawaudioparse,vorbisdec`.
+Without it, a package that stopped shipping one of them would turn the tests
+that gate on it back into skips and nothing would be red. The variable is unset
 everywhere else, where the test asserts nothing: it is the promise of a leg that
 installs a plugin set on purpose, not a switch.
 
