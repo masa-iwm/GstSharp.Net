@@ -34,7 +34,8 @@ public sealed unsafe class SubclassNativeConstructionTests
     /// An element an element factory made of a type that states its wrapper is
     /// the managed type itself: its override runs, no ancestor wrapper is
     /// reported, and the wrapper ends up owning the single reference a C#
-    /// created element owns.
+    /// created element owns — one that is sunk, and that the object really
+    /// goes away with.
     /// </summary>
     [Fact]
     public void AFactoryMadeElementIsWrappedAsItsManagedType()
@@ -43,17 +44,21 @@ public sealed unsafe class SubclassNativeConstructionTests
 
         using FallbackWatch watch = new(ProbeFactoryElement.RegisteredType);
 
-        using Element? element = ElementFactory.Make(ProbeFactoryElement.FactoryName, "made");
+        Element? element = ElementFactory.Make(ProbeFactoryElement.FactoryName, "made");
 
         Assert.NotNull(element);
 
         ProbeFactoryElement managed = Assert.IsType<ProbeFactoryElement>(element);
+        nint handle = managed.Handle;
 
         // The factory hands out a floating reference, the fabrication adopts
         // the instance and the caller of FromNative owns the reference it was
         // given: what is left is the toggle reference of the wrapper, which is
-        // the end state of an element C# created itself.
-        Assert.Equal(1u, RefCountOf(managed.Handle));
+        // the end state of an element C# created itself. One reference and the
+        // floating flag still set would be that state's look-alike, and the
+        // count alone cannot tell the two apart.
+        Assert.Equal(1u, RefCountOf(handle));
+        Assert.Equal(0, GObjectNative.ObjectIsFloating(handle));
 
         Assert.Equal(StateChangeReturn.Success, managed.SetState(State.Ready));
         Assert.Equal(StateChangeReturn.Success, managed.SetState(State.Null));
@@ -65,8 +70,114 @@ public sealed unsafe class SubclassNativeConstructionTests
             [StateChange.NullToReady, StateChange.ReadyToNull],
             managed.Transitions);
 
-        Assert.Equal(1u, RefCountOf(managed.Handle));
+        Assert.Equal(1u, RefCountOf(handle));
+        Assert.Equal(0, GObjectNative.ObjectIsFloating(handle));
         Assert.Empty(watch.Reported);
+
+        // And the one reference really is the wrapper's: disposing it frees the
+        // element. A count cannot say that — an element that was left immortal
+        // by an unref too few reads exactly the same — so the object is asked
+        // to say it itself.
+        WeakProbe.Arm(handle);
+        managed.Dispose();
+
+        Assert.Equal(1, WeakProbe.Freed);
+    }
+
+    /// <summary>
+    /// The path the whole stage exists for: an element named in a pipeline
+    /// description, whose wrapper no C# code ever asks for. GStreamer creates
+    /// the instance, starts its task, and the first managed code it reaches is
+    /// the <c>create</c> trampoline on that task's thread — which is where the
+    /// wrapper is fabricated, exactly once, for the instance the bin holds.
+    /// </summary>
+    [Fact]
+    public void AnElementAPipelineDescriptionNamedIsFabricatedOnItsStreamingThread()
+    {
+        Assert.True(ProbeFactoryPushSrc.IsRegistered);
+
+        ProbeFactoryPushSrc.Reset();
+
+        using FallbackWatch watch = new(ProbeFactoryPushSrc.RegisteredType);
+
+        // Nothing in this description is a managed API call on the instance:
+        // gst_parse_launch asks the factory for it and puts it in a bin.
+        Pipeline pipeline = Assert.IsAssignableFrom<Pipeline>(Global.ParseLaunch(
+            ProbeFactoryPushSrc.FactoryName + " name=src ! fakesink name=sink"));
+
+        nint handle;
+        ProbeFactoryPushSrc managed;
+
+        try
+        {
+            Assert.Equal(0, ProbeFactoryPushSrc.WrappersBuilt);
+
+            Bus bus = pipeline.GetBus();
+
+            Assert.NotEqual(StateChangeReturn.Failure, pipeline.SetState(State.Playing));
+
+            using Message? message = BusPump.WaitFor(bus, MessageType.Eos | MessageType.Error, BusTimeout);
+
+            // Every wait here is bounded: a source that never ends has to make
+            // the test red rather than hold the suite.
+            Assert.NotNull(message);
+            Assert.Equal(MessageType.Eos, message.Type);
+
+            // One instance, one wrapper. A second one would mean the gate let
+            // two threads through, or that a lookup missed what was interned.
+            Assert.Equal(1, ProbeFactoryPushSrc.WrappersBuilt);
+
+            managed = Assert.IsType<ProbeFactoryPushSrc>(ProbeFactoryPushSrc.LastWrapper);
+
+            _output.WriteLine(FormattableString.Invariant(
+                $"test thread {Environment.CurrentManagedThreadId}, wrapper thread {ProbeFactoryPushSrc.WrapperThreadId}, create thread {managed.CreateThreadId}, produced {managed.Produced}"));
+
+            // The fabrication happened where GStreamer was, not where the test
+            // is: this is the streaming thread the whole ledger is written for.
+            Assert.NotEqual(0, ProbeFactoryPushSrc.WrapperThreadId);
+            Assert.NotEqual(Environment.CurrentManagedThreadId, ProbeFactoryPushSrc.WrapperThreadId);
+            Assert.Equal(ProbeFactoryPushSrc.WrapperThreadId, managed.CreateThreadId);
+
+            // The override really ran for this instance, over and over.
+            Assert.Equal(ProbeFactoryPushSrc.BufferCount, managed.Produced);
+
+            // Asking the bin for the element by name is a transfer full call on
+            // the application thread: it finds the wrapper the streaming thread
+            // built rather than making a second one, and settles the reference
+            // it was handed.
+            // It is not disposed here: it is the very wrapper this test still
+            // needs, and a GObject wrapper is interned rather than owned.
+            Element? found = pipeline.GetByName("src");
+
+            Assert.NotNull(found);
+            Assert.Same(managed, found);
+
+            handle = managed.Handle;
+
+            // The bin holds one reference and the wrapper holds the toggle
+            // reference; get_by_name handed out a third, which the settle
+            // dropped again. The instance is sunk, which is what the factory
+            // path leaves behind.
+            Assert.Equal(2u, RefCountOf(handle));
+            Assert.Equal(0, GObjectNative.ObjectIsFloating(handle));
+
+            // And the managed type is the type it arrived as: no ancestor
+            // wrapper was ever built for it.
+            Assert.Empty(watch.Reported);
+        }
+        finally
+        {
+            pipeline.SetState(State.Null);
+        }
+
+        // Both wrappers of the element have to go before the element can: the
+        // bin releases it when the pipeline does, and the fabricated wrapper
+        // holds the toggle reference until it is disposed.
+        WeakProbe.Arm(handle);
+        managed.Dispose();
+        pipeline.Dispose();
+
+        Assert.Equal(1, WeakProbe.Freed);
     }
 
     /// <summary>
@@ -211,6 +322,78 @@ public sealed unsafe class SubclassNativeConstructionTests
         Assert.Equal(typeof(Pad), third.GetType());
 
         Assert.True(again.Unlink(peer));
+    }
+
+    /// <summary>
+    /// A dispose that has begun but has not written its marker yet is already
+    /// enough to refuse a fabrication: the flag of the wrapper goes up first,
+    /// and while the table still carries that wrapper no second one is built
+    /// for the instance.
+    /// </summary>
+    /// <remarks>
+    /// This is the window between the two, held open on one thread by the seam
+    /// the runtime keeps for it, so that the refusal can be asserted instead of
+    /// raced for.
+    /// </remarks>
+    [Fact]
+    public void AFabricationIsRefusedWhileADisposeIsUnderWay()
+    {
+        using ProbeManagedPadSrc source = new();
+        using Element? sink = ElementFactory.Make("fakesink", "half-disposed-sink");
+
+        Assert.NotNull(sink);
+
+        Pad? pad = source.GetStaticPad("src");
+
+        Assert.NotNull(pad);
+
+        ProbeManagedPad managed = Assert.IsType<ProbeManagedPad>(pad);
+        nint handle = managed.Handle;
+        int built = ProbeManagedPad.WrappersBuilt;
+
+        // The flag is set and nothing else: the toggle reference is still
+        // installed, the wrapper is still interned, and no marker has been
+        // written on the instance.
+        managed.SimulateInterruptedDispose();
+
+        try
+        {
+            Assert.False(GObjectObject.WasSubclassDisposed(handle));
+
+            // The lookup the trampolines use answers nothing, which is what
+            // makes a slot chain up...
+            Assert.Null(GObjectObject.TryGetOrFabricate(handle));
+
+            // ...and it answers nothing by refusing, not by building a second
+            // wrapper that would then hold a toggle reference of its own.
+            Assert.Equal(built, ProbeManagedPad.WrappersBuilt);
+
+            // Reaching the pad again hands out the ancestor wrapper, as it does
+            // after a finished dispose, and still fabricates nothing.
+            using Pad? again = source.GetStaticPad("src");
+
+            Assert.NotNull(again);
+            Assert.Equal(handle, again.Handle);
+            Assert.Equal(typeof(Pad), again.GetType());
+            Assert.Equal(built, ProbeManagedPad.WrappersBuilt);
+
+            using Pad? peer = sink.GetStaticPad("sink");
+
+            Assert.NotNull(peer);
+
+            // The same through a real slot: linking fires the linked closure of
+            // the pad, which reaches no managed pad and chains up.
+            Assert.Equal(PadLinkReturn.Ok, again.Link(peer));
+            Assert.Equal(built, ProbeManagedPad.WrappersBuilt);
+            Assert.Equal(0, managed.LinkedCalls);
+            Assert.True(again.Unlink(peer));
+        }
+        finally
+        {
+            // Dispose would return on the flag, so the half done release is
+            // finished through the other half of the seam.
+            managed.CompleteInterruptedDispose();
+        }
     }
 
     /// <summary>

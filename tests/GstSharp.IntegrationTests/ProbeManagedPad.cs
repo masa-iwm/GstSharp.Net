@@ -18,6 +18,8 @@ internal sealed class ProbeManagedPad : Pad, IManagedSubclass<ProbeManagedPad>
         null,
         LinkedOverride);
 
+    private static int _wrappersBuilt;
+
     private int _linked;
 
     private ProbeManagedPad(SubclassCtorArgs args)
@@ -31,13 +33,27 @@ internal sealed class ProbeManagedPad : Pad, IManagedSubclass<ProbeManagedPad>
     /// <summary>Gets the registration of the pad.</summary>
     internal static SubclassType Registration => Definition;
 
+    /// <summary>
+    /// Gets how many wrappers of this type were fabricated in this process.
+    /// </summary>
+    /// <remarks>
+    /// A count that does not move is how a test says "nothing was fabricated
+    /// here", which no other observation of the pad can say.
+    /// </remarks>
+    internal static int WrappersBuilt => Volatile.Read(ref _wrappersBuilt);
+
     /// <summary>Gets how often the <c>linked</c> override ran for this pad.</summary>
     internal int LinkedCalls => Volatile.Read(ref _linked);
 
     /// <summary>Builds the wrapper of an instance native code created.</summary>
     /// <param name="args">What the runtime says about the instance.</param>
     /// <returns>The wrapper, which adopts the instance.</returns>
-    public static ProbeManagedPad CreateWrapper(SubclassCtorArgs args) => new(args);
+    public static ProbeManagedPad CreateWrapper(SubclassCtorArgs args)
+    {
+        ProbeManagedPad wrapper = new(args);
+        _ = Interlocked.Increment(ref _wrappersBuilt);
+        return wrapper;
+    }
 
     /// <inheritdoc/>
     protected override void OnLinked(Pad peer)
