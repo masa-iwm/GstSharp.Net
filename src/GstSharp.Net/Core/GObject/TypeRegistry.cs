@@ -274,6 +274,16 @@ public static class TypeRegistry
             return false;
         }
 
+        if (Object.IsInterningLockHeld)
+        {
+            // The gate of a fabrication is always taken before the interning
+            // lock. This thread holds that lock, which means it came through
+            // Gst.GObject.Object.FromNative - which tried to fabricate before
+            // it took it - so there is nothing left to do here and the order of
+            // the two locks stays the same everywhere.
+            return false;
+        }
+
         wrapper = Object.Fabricate(handle, factory);
 
         if (transfer == Transfer.Full)

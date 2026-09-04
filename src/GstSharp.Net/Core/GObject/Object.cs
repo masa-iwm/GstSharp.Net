@@ -458,6 +458,21 @@ public partial class Object : IDisposable
     internal static void ArmAdopt(nint handle) => t_adopting = handle;
 
     /// <summary>
+    /// Gets whether this thread holds the interning lock, in which case it must
+    /// not start a fabrication.
+    /// </summary>
+    /// <remarks>
+    /// The gate of a fabrication is taken before the interning lock, because
+    /// the factory it runs ends in the constructor below, which takes that lock
+    /// itself. <see cref="FromNative(nint, Transfer)"/> therefore fabricates
+    /// before it takes the lock, and the branch that
+    /// <see cref="TypeRegistry.TryCreateWrapper(nint, Transfer, out object?)"/>
+    /// carries for its direct callers is skipped while the lock is held, so
+    /// that the two are never taken in the other order.
+    /// </remarks>
+    internal static bool IsInterningLockHeld => System.Threading.Monitor.IsEntered(Sync);
+
+    /// <summary>
     /// Returns the live wrapper of a native object, and builds the one of a
     /// managed subclass when there is none.
     /// </summary>
