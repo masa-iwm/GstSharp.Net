@@ -931,7 +931,7 @@ public partial class Object : IDisposable
             Object sender = FromNative(instance, Transfer.None)
                 ?? throw new InvalidOperationException("The notify signal passed no instance.");
 
-            using ParamSpec property = new(pspec, Transfer.None);
+            using ParamSpec property = ParamSpec.FromNative(pspec, Transfer.None);
             handler(sender, property);
         }
         catch (Exception exception)

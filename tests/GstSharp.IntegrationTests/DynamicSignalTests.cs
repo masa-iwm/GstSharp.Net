@@ -143,6 +143,40 @@ public sealed class DynamicSignalTests
     }
 
     /// <summary>
+    /// The typed notify path hands the handler the derived class of the
+    /// specification too, not the base <see cref="ParamSpec"/>.
+    /// </summary>
+    [Fact]
+    public void NotifyHandlerReceivesTheDerivedSpecification()
+    {
+        using Element sink = Assert.IsAssignableFrom<Element>(ElementFactory.Make("fakesink", "notified"));
+
+        int fired = 0;
+        string? changed = null;
+
+        ulong handler = sink.AddNotifyHandler("name", (sender, property) =>
+        {
+            fired++;
+            Assert.Same(sink, sender);
+
+            // The name of a GstObject is a GParamString, so the handler has to
+            // see the derived wrapper rather than the base class.
+            ParamSpec specification = Assert.IsType<ParamSpecString>(property);
+            changed = specification.Name;
+        });
+
+        Assert.NotEqual(0uL, handler);
+
+        Rename(sink, "notified-again");
+
+        Assert.Equal(1, fired);
+        Assert.Equal("name", changed);
+
+        sink.RemoveHandler(handler);
+        Assert.False(SignalRegistry.IsConnected(sink.Handle, handler));
+    }
+
+    /// <summary>
     /// What a dynamic handler returns is converted against the return type of
     /// the signal and reaches the code that emitted it.
     /// </summary>
