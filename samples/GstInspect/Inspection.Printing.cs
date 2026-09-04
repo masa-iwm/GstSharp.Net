@@ -470,11 +470,15 @@ internal sealed partial class Inspection
     /// <param name="property">The property to describe.</param>
     /// <param name="value">The value the property was read as.</param>
     /// <remarks>
-    /// The order of the tests is the C tool's, except that a fraction and a
-    /// <c>GstValueArray</c> are recognised before a boxed value rather than
-    /// after: their GStreamer specification classes do not derive from
-    /// <c>GParamSpecBoxed</c>, which is what the C tool tests, while their
-    /// value types are boxed, which is what is reachable here.
+    /// The order of the tests is the C tool's, except that a fraction, a
+    /// <c>GstValueArray</c> and a <c>GValueArray</c> are recognised before a
+    /// boxed value rather than after: their specification classes do not
+    /// derive from <c>GParamSpecBoxed</c>, which is what the C tool tests,
+    /// while their value types are boxed, which is what a test on the value
+    /// would see. The <c>GValueArray</c> one is a test on the class of the
+    /// specification, the way <c>G_IS_PARAM_SPEC_VALUE_ARRAY</c> is: a
+    /// <c>GParamSpecBoxed</c> whose value type happens to be a
+    /// <c>GValueArray</c> is a boxed value to the C tool.
     /// </remarks>
     private static void AppendOtherValue(StringBuilder text, ParamSpec property, in Value value)
     {
@@ -570,6 +574,15 @@ internal sealed partial class Inspection
             return;
         }
 
+        if (string.Equals(property.NativeType.Name, "GParamValueArray", StringComparison.Ordinal))
+        {
+            // GParamSpecValueArray::element_spec has no binding, so the type of
+            // the members is left off; the C tool prints it when the
+            // specification carries one.
+            text.Append(PropertyIndent).Append("Array of GValues");
+            return;
+        }
+
         GType fundamental = type.Fundamental;
 
         if (fundamental == GType.Object)
@@ -582,11 +595,17 @@ internal sealed partial class Inspection
         {
             text.Append(PropertyIndent).Append($"Boxed pointer of type \"{name}\"");
 
-            if (string.Equals(name, "GstStructure", StringComparison.Ordinal)
-                && value.GetBoxed<Structure>() is { } structure)
+            if (string.Equals(name, "GstStructure", StringComparison.Ordinal))
             {
-                text.Append('\n');
-                AppendFields(text, structure, 12, PropertyValuePrefix);
+                // The copy g_boxed_copy made for the wrapper is the caller's,
+                // so it is released once its fields have been printed.
+                using Structure? structure = value.GetBoxed<Structure>();
+
+                if (structure is not null)
+                {
+                    text.Append('\n');
+                    AppendFields(text, structure, 12, PropertyValuePrefix);
+                }
             }
 
             return;
@@ -597,15 +616,6 @@ internal sealed partial class Inspection
             text.Append(PropertyIndent).Append(type == GType.Pointer
                 ? "Pointer."
                 : $"Pointer of type \"{name}\".");
-            return;
-        }
-
-        if (string.Equals(name, "GValueArray", StringComparison.Ordinal))
-        {
-            // GParamSpecValueArray::element_spec has no binding, so the type of
-            // the members is left off; the C tool prints it when the
-            // specification carries one.
-            text.Append(PropertyIndent).Append("Array of GValues");
             return;
         }
 

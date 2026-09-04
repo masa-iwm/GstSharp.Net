@@ -51,7 +51,6 @@ internal sealed partial class Discovery
     {
         _options = options;
         _discoverer = discoverer;
-        Verbose = options.Verbose;
     }
 
     /// <summary>
@@ -133,6 +132,10 @@ internal sealed partial class Discovery
     /// <returns>The exit code.</returns>
     private static int Discover(Options options)
     {
+        // The global, written once from the command line before the first page
+        // is printed, rather than from a constructor that runs per URI.
+        Verbose = options.Verbose;
+
         Discoverer discoverer;
 
         try

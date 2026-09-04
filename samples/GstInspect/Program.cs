@@ -48,12 +48,16 @@
 //
 //   * GParamSpecValueArray::element_spec has no binding, so a property holding
 //     a GValueArray is printed as "Array of GValues" without the type of its
-//     members. GstValueArray, which is what GStreamer elements actually use, is
-//     printed in full.
+//     members: audiofirfilter, vp8enc and audiointerleave are the ones
+//     measured. GstValueArray, which is what GStreamer elements actually use,
+//     is printed in full.
 //
-//   * A field of a caps structure that is itself a caps or a structure is
-//     printed as its serialization rather than recursed into:
-//     gst_value_get_caps and gst_value_get_structure are not bound.
+//   * A field of a caps structure that is itself a caps, a structure or a
+//     GstUniqueList of either is printed as its serialization rather than
+//     recursed into: gst_value_get_caps and gst_value_get_structure, which
+//     every one of those branches ends in, are not bound. ssdtensordec, whose
+//     "tensors" field is a structure of lists of caps, is the element that
+//     shows it.
 //
 // Per-operating-system behavior in the C source, and what became of it:
 //
