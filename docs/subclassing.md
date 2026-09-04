@@ -1,8 +1,7 @@
 # GObject subclassing in GstSharp.Net — design
 
-Status: **approved design**; stages 0, 1 and 2a of §10 have shipped, and so
-have the classes of stage 2b; its instance-keyed callbacks and stage 3 have
-not. §11 is the guide to what shipped; everything before it is the design the
+Status: **approved design**; stages 0, 1, 2a and 2b of §10 have shipped;
+stage 3 has not. §11 is the guide to what shipped; everything before it is the design the
 implementation follows.
 Scope: class-struct ABI, vfunc overrides, managed type registration.
 Audience: contributors to the runtime (`src/GstSharp.Net/Core`) and the
@@ -825,17 +824,37 @@ Fourteen classes are subclassable: `Gst.Element`, `Gst.Bin`,
 `AudioFilter`, and `GstVideo.VideoSink`, `VideoFilter`. §11 lists their
 slots.
 
-**Stage 2b — the rest of the allowlist and the instance-keyed callbacks.**
-`GstBase.BaseParse` and the four codec bases (`AudioDecoder`,
-`AudioEncoder`, `VideoDecoder`, `VideoEncoder`) have landed, together with
-the boxed borrow that un-skipped the six `set_info`-shaped slots. What is
-left of the stage is the **instance-keyed callback**
-mechanism the pad functions need: `gst_pad_set_chain_function_full` and its
-ten siblings take a callback with no closure argument, so the runtime keys
-them by their first argument - the pad - in a table the `_full` notify
-releases. The analyzer that checks that an `OnX` override and the
-`XOverride` declaration of the same type come in pairs is the
-`GST0003`/`GST0004` pair.
+**Stage 2b — the rest of the allowlist and the instance-keyed callbacks
+(landed).** `GstBase.BaseParse` and the four codec bases (`AudioDecoder`,
+`AudioEncoder`, `VideoDecoder`, `VideoEncoder`) landed first, together with
+the boxed borrow that un-skipped the six `set_info`-shaped slots. The
+**instance-keyed callback** mechanism the pad functions need landed with
+them: `gst_pad_set_chain_function_full` and its ten siblings take a callback
+whose own C signature carries no closure argument — gstpad.c:4605 calls
+`chainfunc (pad, parent, buffer)`, and the `user_data` the setter took stays
+on the pad — so `Gst.Interop.InstanceKeyedCallbacks` files the delegate under
+the pad and the storage slot of the pad the setter writes, and the
+`GDestroyNotify` the same setter takes removes the entry again. Replacement
+and `gst_pad_finalize` therefore release the state exactly when C says they
+do, and the entry is only removed while the key still names the very handle
+being released, because C installs the new function after notifying the old
+one and holds no lock in between (gstpad.c:1820-1835, :772-791). The slot
+names live in the `instanceKeyedCallbacks` overlay; `event` and `event_full`
+share one slot, so a pad carries one of the two and the later call wins.
+
+Three shapes of the callback path landed with the mechanism and are what
+also un-skipped `gst_collect_pads_set_buffer_function` and
+`gst_collect_pads_set_clip_function`, whose callbacks do carry a
+`user_data`: a handle a callback is handed with `transfer full`, which the
+trampoline scopes and releases when the handler returns; a handle the
+handler fills in through a `GstBuffer**`, which the caller is given with one
+added reference; and the in place buffer of `GstPadGetRangeFunction`, which
+arrives borrowed and is only referenced when the handler answers another one
+— a success with no buffer is corrected to an error there, because
+gst_pad_get_range does not test what it is given (gstpad.c:5127).
+
+The analyzer that checks that an `OnX` override and the `XOverride`
+declaration of the same type come in pairs is the `GST0003`/`GST0004` pair.
 
 **Stage 3 — breadth.**
 Native-initiated construction via static abstract `CreateWrapper` factories

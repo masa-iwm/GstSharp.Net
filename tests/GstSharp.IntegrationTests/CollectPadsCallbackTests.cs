@@ -90,6 +90,64 @@ public sealed partial class CollectPadsCallbackTests
         }
     }
 
+    [Fact]
+    public void ABufferFunctionOwnsTheBufferAndAClipFunctionReplacesIt()
+    {
+        using CollectPads pads = CollectPads.New();
+        using Pad pad = Pad.New("sink", PadDirection.Sink);
+
+        int clipped = 0;
+        int collected = 0;
+        nint clippedIn = 0;
+
+        // The clip function is handed the buffer that arrived, owns it, and
+        // answers the one the collection keeps. Dropping the input and
+        // answering a fresh buffer is what a real clipper does at a segment
+        // boundary, and it exercises both halves of the ownership.
+        pads.SetClipFunction((CollectPads _, CollectData _, Buffer inbuffer, out Buffer? outbuffer) =>
+        {
+            clipped++;
+            clippedIn = inbuffer.Handle;
+            outbuffer = Buffer.New();
+            return FlowReturn.Ok;
+        });
+
+        pads.SetBufferFunction((_, _, buffer) =>
+        {
+            collected++;
+            Assert.NotEqual(nint.Zero, buffer.Handle);
+            Assert.NotEqual(clippedIn, buffer.Handle);
+            return FlowReturn.Eos;
+        });
+
+        nint data = CollectPadsAddPad(pads.Handle, pad.Handle, CollectDataSize, 0, lockPad: 1);
+        Assert.NotEqual(0, data);
+        GC.KeepAlive(pads);
+        GC.KeepAlive(pad);
+
+        Assert.True(pad.SetActive(true));
+        pads.Start();
+        try
+        {
+            Assert.True(pad.SendEvent(Event.NewStreamStart("collect-pads-clip-test")));
+
+            using Segment segment = Segment.New();
+            segment.Init(Format.Time);
+            Assert.True(pad.SendEvent(Event.NewSegment(segment)));
+
+            Assert.Equal(FlowReturn.Eos, pad.Chain(Buffer.New()));
+            // The collection clips on the way in and again when it pops the
+            // buffer it kept, so the clip function runs at least once per
+            // buffer rather than exactly once.
+            Assert.True(clipped >= 1, $"clip function ran {clipped} time(s)");
+            Assert.Equal(1, collected);
+        }
+        finally
+        {
+            pads.Stop();
+        }
+    }
+
     /// <summary>
     /// Installs the collect function from a frame of its own, so that no local
     /// of the test keeps the delegate alive.

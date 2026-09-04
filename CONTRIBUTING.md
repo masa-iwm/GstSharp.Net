@@ -239,6 +239,20 @@ gets mirrors as well. The other seven address a single slot, keyed
   caught an override, for a slot whose caller reads something other than a
   failure into the zero of the return type.
 
+Two more keys address a callback type and a member rather than a slot:
+
+* `instanceKeyedCallbacks` — the qualified gir name of a callback whose own C
+  signature carries no `user_data`, mapped onto the storage slot of the
+  instance the setter writes. The trampoline recovers the managed delegate
+  from that slot and from the instance it is handed as its first argument;
+  two callbacks that share one slot are mutually exclusive per instance. An
+  entry that names no emitted callback is reported as `GEN0041`.
+* `docNotes` — the part of the contract of a member that neither the gir nor
+  the marshalling states, keyed by `c:identifier` and appended to the
+  generated documentation as one paragraph. It is the counterpart of
+  `vfuncDocNotes` for a member; an entry that names no planned callable is
+  reported as `GEN0042`.
+
 Every entry cites the C file and line its claim rests on in a `$comment` or in
 the `$comment-` block of the key. An entry that names no slot or no parameter
 of the emitted surface is reported as `GEN0029` through `GEN0031` and
