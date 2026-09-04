@@ -41,6 +41,61 @@ public sealed class AbiProbeTests
     public AbiProbeTests(ITestOutputHelper output) => _output = output;
 
     /// <summary>
+    /// The class struct registry of every module that emits one. A module that
+    /// gains mirrors is one entry here and nothing else.
+    /// </summary>
+    private static readonly Func<ClassStructProbe[]>[] Registries =
+    [
+        Gst.ClassStructRegistry.CreateEntries,
+        Gst.Base.ClassStructRegistry.CreateEntries,
+    ];
+
+    /// <summary>
+    /// Gets the C name of every mirrored class struct of the run, which is what
+    /// the size theory is parameterised by.
+    /// </summary>
+    /// <remarks>
+    /// The rows are the names alone: <c>ClassStructProbe</c> carries a function
+    /// pointer, which xunit cannot serialise into a test case, so the theory
+    /// looks the row up by name instead of being handed one.
+    /// </remarks>
+    public static TheoryData<string> MirroredClassStructs
+    {
+        get
+        {
+            TheoryData<string> data = [];
+            foreach (Func<ClassStructProbe[]> registry in Registries)
+            {
+                foreach (ClassStructProbe entry in registry())
+                {
+                    data.Add(entry.CName);
+                }
+            }
+
+            return data;
+        }
+    }
+
+    /// <summary>Looks one registry row up by its C name.</summary>
+    /// <param name="cName">The C name of the class struct.</param>
+    /// <returns>The row.</returns>
+    private static ClassStructProbe Probe(string cName)
+    {
+        foreach (Func<ClassStructProbe[]> registry in Registries)
+        {
+            foreach (ClassStructProbe entry in registry())
+            {
+                if (string.Equals(entry.CName, cName, StringComparison.Ordinal))
+                {
+                    return entry;
+                }
+            }
+        }
+
+        throw new InvalidOperationException($"No mirrored class struct is named '{cName}'.");
+    }
+
+    /// <summary>
     /// <c>struct _GstMiniObject</c> of <c>gstminiobject.h</c>: <c>GType type</c>
     /// at 0 (8 bytes), <c>gint refcount</c> at 8, <c>gint lockstate</c> at 12,
     /// <c>guint flags</c> at 16, 4 bytes of padding, the three function
@@ -332,6 +387,32 @@ public sealed class AbiProbeTests
             $"g_type_query(GstElement): class_size={query.ClassSize} instance_size={query.InstanceSize}"));
 
         Assert.Equal((uint)Unsafe.SizeOf<ElementClassRaw>(), query.ClassSize);
+    }
+
+    /// <summary>
+    /// The same measurement as above, made once for every mirror the run
+    /// emitted rather than once per hand written probe: a class that joins the
+    /// <c>subclassable</c> allowlist joins this theory with it.
+    /// </summary>
+    /// <param name="cName">The C name of the class struct, as the registry rows name it.</param>
+    /// <remarks>
+    /// The size is the one measurement that covers a whole class struct at
+    /// once. A slot the mirror declares too narrow, one it leaves out and one
+    /// it invents all move it, so this catches every drift the per slot offsets
+    /// above would need a new assertion for.
+    /// </remarks>
+    [Theory]
+    [MemberData(nameof(MirroredClassStructs))]
+    public unsafe void EveryMirrorHasTheSizeTheRunningLibraryReports(string cName)
+    {
+        ClassStructProbe entry = Probe(cName);
+
+        GObjectNative.TypeQuery(entry.GetGType(), out GTypeQuery query);
+
+        _output.WriteLine(FormattableString.Invariant(
+            $"{cName}: mirror={entry.Size} class_size={query.ClassSize} slots={entry.Slots.Length}"));
+
+        Assert.Equal((uint)entry.Size, query.ClassSize);
     }
 
     /// <summary>
