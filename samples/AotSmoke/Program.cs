@@ -59,7 +59,7 @@ internal static partial class Smoke
 
             if (!RunManagedSubclass() || !RunManagedPipeline() || !RunManagedAudioAndVideoSinks()
                 || !RunManagedAudioEncoder() || !RunBindingModule() || !RunPropertiesByName()
-                || !RunPadChainFunction())
+                || !RunPadChainFunction() || !RunFactoryMadeManagedElement())
             {
                 return 1;
             }
@@ -390,6 +390,49 @@ internal static partial class Smoke
         if (!answered || Math.Abs(middle - 0.5) > 1e-9 || source.Count != 2)
         {
             Console.Error.WriteLine("AotSmoke: the binding module did not interpolate as expected.");
+            return false;
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Registers a managed subclass as an element factory and makes one through
+    /// that factory, so that the ahead of time compiler has to keep the path
+    /// that wraps an instance GStreamer created: the static abstract
+    /// <c>CreateWrapper</c> of the subclass, instantiated for its own type.
+    /// </summary>
+    /// <returns>
+    /// <see langword="true"/> when the factory answered the managed type and
+    /// its override ran.
+    /// </returns>
+    private static bool RunFactoryMadeManagedElement()
+    {
+        if (!ManagedFactoryElement.RegisterFactory())
+        {
+            Console.Error.WriteLine("AotSmoke: the managed element factory could not be registered.");
+            return false;
+        }
+
+        using Element? made = ElementFactory.Make(ManagedFactoryElement.FactoryName, "made");
+
+        if (made is not ManagedFactoryElement managed)
+        {
+            Console.Error.WriteLine(
+                $"AotSmoke: the factory answered {made?.GetType().Name ?? "nothing"} instead of the managed type.");
+            return false;
+        }
+
+        StateChangeReturn up = managed.SetState(State.Ready);
+        StateChangeReturn down = managed.SetState(State.Null);
+
+        Console.WriteLine(string.Create(
+            CultureInfo.InvariantCulture,
+            $"fabricated:  {ManagedFactoryElement.RegisteredType.Name}, {managed.Transitions} managed change_state calls"));
+
+        if (up != StateChangeReturn.Success || down != StateChangeReturn.Success || managed.Transitions != 2)
+        {
+            Console.Error.WriteLine("AotSmoke: the fabricated wrapper did not receive its state changes.");
             return false;
         }
 
