@@ -653,7 +653,7 @@ Generator specifics for stage 2:
   shapes — the same reality that produced the `skip` list for methods);
   the overlay grows a `skipVirtuals` list keyed
   `"Gst.Element::set_bus"`-style if needed. What landed is that list plus
-  five more keys, all documented in
+  six more keys, all documented in
   [`CONTRIBUTING.md`](../CONTRIBUTING.md): `vfuncDefaults` (what a chain-up
   answers for a NULL parent slot), `vfuncIdentityBuffers` (a buffer that may
   be handed back unchanged), `vfuncNonNullReturns` (a slot whose caller
