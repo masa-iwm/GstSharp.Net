@@ -1523,14 +1523,13 @@ public unsafe partial class Pad : Gst.Object
     /// <para>
     /// This writes the same storage as SetEventFunction (gstpad.c:1933-1937, :1979-1984): a pad
     /// carries one of the two handlers, not both, and the later call releases the state of the
-    /// earlier one. Unsetting this handler leaves the wrapper
-    /// gst_pad_set_event_full_function_full installed as the plain event function
-    /// (gstpad.c:1981-1982), which dereferences the full function pointer it has just cleared,
-    /// so follow SetEventFullFunction(null) with SetEventFunction(null) to take both off the
-    /// pad. GStreamer reads this function pointer without holding a lock (gstpad.c:4590-4594),
-    /// so replacing or unsetting the handler while the pad is running races an invocation that
-    /// is already under way: the handler being replaced may still be executing when this
-    /// returns.
+    /// earlier one. Unsetting this handler leaves the event_wrap wrapper this setter installed
+    /// as the plain event function of the pad (gstpad.c:1981-1982), and that wrapper
+    /// dereferences the full function pointer the same call has just cleared, so follow
+    /// SetEventFullFunction(null) with SetEventFunction(null) to take both off the pad.
+    /// GStreamer reads this function pointer without holding a lock (gstpad.c:4590-4594), so
+    /// replacing or unsetting the handler while the pad is running races an invocation that is
+    /// already under way: the handler being replaced may still be executing when this returns.
     /// </para>
     /// </remarks>
     /// <param name="event">the #GstPadEventFullFunction to set.</param>
