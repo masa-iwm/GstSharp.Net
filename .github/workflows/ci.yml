@@ -404,44 +404,16 @@ jobs:
           dotnet run --project samples/GstInspect --no-restore -- fakesink
 
       # The gate the sample exists for: the page it prints has to be the page
-      # the real tool prints, byte for byte. Both read the same installation,
-      # so the plugin filename and the version line agree by construction and
-      # nothing is normalised away except the line ending, which the Windows
-      # leg needs and which costs nothing here. LC_ALL=C is what keeps the
-      # translated strings of the C tool -- "readable", "writable" -- in the
-      # English catalogue the port writes, and GST_DEBUG is cleared so that a
-      # debug line of the library cannot land in the middle of the page.
-      # Only stdout is compared: the C tool writes a GST_ERROR to stderr for a
-      # property of type long, and that is not part of the page.
-      #
-      # The four elements are four shapes of page: fakesink has signals, an
-      # enumeration table and a structure valued property whose fields are
-      # expanded, identity has a float range and a flags table, videotestsrc
-      # has several enumeration tables and the widest property listing of the
-      # four, and capsfilter has a caps valued property. All four come from the
-      # core and base plugins every leg installs.
+      # the real tool prints, byte for byte. What is compared, why these four
+      # elements, and why the diff is skipped rather than failed on a leg whose
+      # gst-inspect-1.0 predates the 1.28.3 page format the port reproduces is
+      # written down in the script, which the three native legs share. In
+      # practice the diff runs on the legs whose gst-inspect-1.0 is 1.28.3 or
+      # newer -- macOS and the Windows MinGW leg today -- and is skipped with a
+      # warning elsewhere, this leg among them: it installs the tool of the
+      # distribution, which is older than that.
       - name: GstInspect against gst-inspect-1.0
-        run: |
-          # The runners give a plain "bash -e" on Linux and macOS, which lets
-          # a failing gst-inspect-1.0 hide behind the pipe into tr and turns
-          # the diff into a comparison of two error messages.
-          set -o pipefail
-          unset GST_DEBUG
-          export LC_ALL=C
-          # Out of the checkout, so that the pages cannot show up in the git
-          # status a later step reads.
-          pages=$(mktemp -d)
-          status=0
-          for element in fakesink identity videotestsrc capsfilter; do
-            gst-inspect-1.0 --no-colors "$element" | tr -d '\r' > "$pages/expected-$element.txt"
-            dotnet run --project samples/GstInspect --no-restore --no-build -- "$element" \
-              | tr -d '\r' > "$pages/actual-$element.txt"
-            if ! diff -u "$pages/expected-$element.txt" "$pages/actual-$element.txt"; then
-              echo "::error::gst-inspect-1.0 and samples/GstInspect disagree about $element"
-              status=1
-            fi
-          done
-          exit $status
+        run: .github/scripts/gst-inspect-diff.sh
 
       # The Linux half of the NativeAOT promise. Both AOT gates used to run on
       # win-x64 alone, which left the ILC toolchain, the native link and the
@@ -588,29 +560,11 @@ jobs:
           dotnet run --project samples/GstInspect --no-restore
           dotnet run --project samples/GstInspect --no-restore -- fakesink
 
-      # Same diff as the Linux leg; see the comments there.
+      # Same script as the Linux leg; see the comments there and in the script.
+      # This leg's gst-inspect-1.0 is newer than 1.28.3, so the diff really
+      # runs here rather than being skipped.
       - name: GstInspect against gst-inspect-1.0
-        run: |
-          # The runners give a plain "bash -e" on Linux and macOS, which lets
-          # a failing gst-inspect-1.0 hide behind the pipe into tr and turns
-          # the diff into a comparison of two error messages.
-          set -o pipefail
-          unset GST_DEBUG
-          export LC_ALL=C
-          # Out of the checkout, so that the pages cannot show up in the git
-          # status a later step reads.
-          pages=$(mktemp -d)
-          status=0
-          for element in fakesink identity videotestsrc capsfilter; do
-            gst-inspect-1.0 --no-colors "$element" | tr -d '\r' > "$pages/expected-$element.txt"
-            dotnet run --project samples/GstInspect --no-restore --no-build -- "$element" \
-              | tr -d '\r' > "$pages/actual-$element.txt"
-            if ! diff -u "$pages/expected-$element.txt" "$pages/actual-$element.txt"; then
-              echo "::error::gst-inspect-1.0 and samples/GstInspect disagree about $element"
-              status=1
-            fi
-          done
-          exit $status
+        run: .github/scripts/gst-inspect-diff.sh
 
       - name: Upload test results
         if: ${{ failure() }}
@@ -743,32 +697,14 @@ jobs:
           dotnet run --project samples/GstInspect --no-restore
           dotnet run --project samples/GstInspect --no-restore -- fakesink
 
-      # Same diff as the Linux leg; see the comments there.
+      # Same script as the Linux leg; see the comments there and in the script.
+      # The MinGW gst-inspect-1.0 of this leg is 1.28.3 or newer, so the diff
+      # really runs here rather than being skipped.
       - name: GstInspect against gst-inspect-1.0
-        # The runners default to pwsh on Windows, and this body is a shell
+        # The runners default to pwsh on Windows, and the script is a shell
         # script; Git Bash is on the image.
         shell: bash
-        run: |
-          # The runners give a plain "bash -e" on Linux and macOS, which lets
-          # a failing gst-inspect-1.0 hide behind the pipe into tr and turns
-          # the diff into a comparison of two error messages.
-          set -o pipefail
-          unset GST_DEBUG
-          export LC_ALL=C
-          # Out of the checkout, so that the pages cannot show up in the git
-          # status a later step reads.
-          pages=$(mktemp -d)
-          status=0
-          for element in fakesink identity videotestsrc capsfilter; do
-            gst-inspect-1.0 --no-colors "$element" | tr -d '\r' > "$pages/expected-$element.txt"
-            dotnet run --project samples/GstInspect --no-restore --no-build -- "$element" \
-              | tr -d '\r' > "$pages/actual-$element.txt"
-            if ! diff -u "$pages/expected-$element.txt" "$pages/actual-$element.txt"; then
-              echo "::error::gst-inspect-1.0 and samples/GstInspect disagree about $element"
-              status=1
-            fi
-          done
-          exit $status
+        run: .github/scripts/gst-inspect-diff.sh
 
       # No GstDeviceMonitor on this leg: no device provider comes up on it.
       # The practical Windows providers, wasapi2 among them, live in the bad
