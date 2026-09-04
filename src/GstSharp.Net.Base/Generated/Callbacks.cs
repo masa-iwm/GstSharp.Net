@@ -218,7 +218,7 @@ internal static unsafe class CollectPadsEventFunctionTrampoline
                 ?? throw new InvalidOperationException("GstCollectPadsEventFunction passed no pads.");
             Gst.Base.CollectData padValue = Gst.Base.CollectData.FromNative(pad)
                 ?? throw new InvalidOperationException("GstCollectPadsEventFunction passed no pad.");
-            Gst.Event @eventValue = Gst.Event.FromNative(@event, Gst.Interop.Transfer.None)
+            Gst.Event @eventValue = Gst.Event.Borrow(@event)
                 ?? throw new InvalidOperationException("GstCollectPadsEventFunction passed no event.");
             return callback(padsValue, padValue, @eventValue) ? 1 : 0;
         }
@@ -333,7 +333,7 @@ internal static unsafe class CollectPadsQueryFunctionTrampoline
                 ?? throw new InvalidOperationException("GstCollectPadsQueryFunction passed no pads.");
             Gst.Base.CollectData padValue = Gst.Base.CollectData.FromNative(pad)
                 ?? throw new InvalidOperationException("GstCollectPadsQueryFunction passed no pad.");
-            Gst.Query queryValue = Gst.Query.FromNative(query, Gst.Interop.Transfer.None)
+            Gst.Query queryValue = Gst.Query.Borrow(query)
                 ?? throw new InvalidOperationException("GstCollectPadsQueryFunction passed no query.");
             return callback(padsValue, padValue, queryValue) ? 1 : 0;
         }

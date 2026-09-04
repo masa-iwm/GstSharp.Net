@@ -3313,6 +3313,21 @@ internal static class CallableRenderer
     /// </summary>
     /// <param name="argument">The argument to test.</param>
     /// <returns><see langword="true"/> when the trampoline adopts it.</returns>
+    /// <summary>
+    /// Tests whether a callback argument is a mini object the handler only
+    /// borrows for the invocation.
+    /// </summary>
+    /// <param name="argument">The argument to test.</param>
+    /// <returns><see langword="true"/> when the wrapper takes no reference.</returns>
+    private static bool BorrowsMiniObject(ArgumentPlan argument) =>
+        argument is
+        {
+            Kind: ArgumentKind.Handle,
+            Direction: ArgumentDirection.In,
+            Transfer: GirTransfer.None,
+            ConsumedFamily: ConsumedFamily.MiniObject,
+        };
+
     private static bool IsAdopted(ArgumentPlan argument) =>
         argument is { Kind: ArgumentKind.Handle, Direction: ArgumentDirection.In, Transfer: GirTransfer.Full };
 
@@ -3479,11 +3494,13 @@ internal static class CallableRenderer
                     WriteCallbackLocal(
                         writer,
                         argument,
-                        HandleConversion(
-                            argument.Flavor,
-                            TrimNullable(argument.PublicType),
-                            argument.Name,
-                            argument.Transfer),
+                        BorrowsMiniObject(argument)
+                            ? TrimNullable(argument.PublicType) + ".Borrow(" + argument.Name + ")"
+                            : HandleConversion(
+                                argument.Flavor,
+                                TrimNullable(argument.PublicType),
+                                argument.Name,
+                                argument.Transfer),
                         NullMessage(plan, argument));
                     arguments.Add(argument.Name + "Value");
                     break;

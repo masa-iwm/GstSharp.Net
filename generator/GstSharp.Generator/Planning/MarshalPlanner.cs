@@ -4122,6 +4122,34 @@ internal sealed class MarshalPlanner
                 };
             }
 
+            // A mini object a callback is handed without a transfer is borrowed
+            // rather than referenced. A reference of its own would be correct
+            // for the lifetime and wrong for what the handler is there to do:
+            // gst_query_set_duration and every other writer of a mini object
+            // refuses a value whose reference count is above one, so a query
+            // function that took a reference could not answer the query it was
+            // called for. The wrapper is only valid while the invocation runs,
+            // which is what the C contract of an untransferred argument says.
+            if (argument is { Kind: ArgumentKind.Handle, Direction: ArgumentDirection.In, Transfer: GirTransfer.None }
+                && _repository.Resolve(parameter.Type.Name, context.Namespace) is { } borrowedSymbol
+                && _classifier.Classify(borrowedSymbol.Declaration) == TypeKind.MiniObject)
+            {
+                argument = new ArgumentPlan
+                {
+                    Source = argument.Source,
+                    Kind = argument.Kind,
+                    Name = argument.Name,
+                    PublicType = argument.PublicType,
+                    RawType = argument.RawType,
+                    Direction = ArgumentDirection.In,
+                    Transfer = argument.Transfer,
+                    Flavor = argument.Flavor,
+                    ConsumedFamily = ConsumedFamily.MiniObject,
+                    IsNullable = argument.IsNullable,
+                    Doc = argument.Doc,
+                };
+            }
+
             // The consuming kind is a contract for arguments this code passes
             // in, not for ones a trampoline receives, so it is rejected here.
             // A handle the callback is handed with transfer full is not: the

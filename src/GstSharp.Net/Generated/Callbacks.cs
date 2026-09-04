@@ -47,7 +47,7 @@ internal static unsafe class BusFuncTrampoline
 
             Gst.Bus busValue = Gst.GObject.Object.FromNative<Gst.Bus>(bus, Gst.Interop.Transfer.None)
                 ?? throw new InvalidOperationException("GstBusFunc passed no bus.");
-            Gst.Message messageValue = Gst.Message.FromNative(message, Gst.Interop.Transfer.None)
+            Gst.Message messageValue = Gst.Message.Borrow(message)
                 ?? throw new InvalidOperationException("GstBusFunc passed no message.");
             return callback(busValue, messageValue) ? 1 : 0;
         }
@@ -292,11 +292,11 @@ internal static unsafe class CustomMetaTransformFunctionTrampoline
                 return default;
             }
 
-            Gst.Buffer transbufValue = Gst.Buffer.FromNative(transbuf, Gst.Interop.Transfer.None)
+            Gst.Buffer transbufValue = Gst.Buffer.Borrow(transbuf)
                 ?? throw new InvalidOperationException("GstCustomMetaTransformFunction passed no transbuf.");
             Gst.CustomMeta metaValue = Gst.CustomMeta.FromNative(meta)
                 ?? throw new InvalidOperationException("GstCustomMetaTransformFunction passed no meta.");
-            Gst.Buffer bufferValue = Gst.Buffer.FromNative(buffer, Gst.Interop.Transfer.None)
+            Gst.Buffer bufferValue = Gst.Buffer.Borrow(buffer)
                 ?? throw new InvalidOperationException("GstCustomMetaTransformFunction passed no buffer.");
             return callback(transbufValue, metaValue, bufferValue, new Gst.GLib.Quark(type), data) ? 1 : 0;
         }
@@ -548,7 +548,7 @@ internal static unsafe class ObjectCallAsyncFuncTrampoline
 /// <param name="pad">a #GstPad</param>
 /// <param name="parent">the parent of @pad</param>
 /// <returns>%TRUE if the pad could be activated.</returns>
-public delegate bool PadActivateFunction(Gst.Pad pad, Gst.Object parent);
+public delegate bool PadActivateFunction(Gst.Pad pad, Gst.Object? parent);
 
 /// <summary>The native entry point of <see cref="Gst.PadActivateFunction"/>.</summary>
 internal static unsafe class PadActivateFunctionTrampoline
@@ -568,8 +568,7 @@ internal static unsafe class PadActivateFunctionTrampoline
 
             Gst.Pad padValue = Gst.GObject.Object.FromNative<Gst.Pad>(pad, Gst.Interop.Transfer.None)
                 ?? throw new InvalidOperationException("GstPadActivateFunction passed no pad.");
-            Gst.Object parentValue = Gst.GObject.Object.FromNative<Gst.Object>(parent, Gst.Interop.Transfer.None)
-                ?? throw new InvalidOperationException("GstPadActivateFunction passed no parent.");
+            Gst.Object? parentValue = Gst.GObject.Object.FromNative<Gst.Object>(parent, Gst.Interop.Transfer.None);
             return callback(padValue, parentValue) ? 1 : 0;
         }
         catch (Exception exception)
@@ -586,7 +585,7 @@ internal static unsafe class PadActivateFunctionTrampoline
 /// <param name="mode">the requested activation mode of @pad</param>
 /// <param name="active">activate or deactivate the pad.</param>
 /// <returns>%TRUE if the pad could be activated or deactivated.</returns>
-public delegate bool PadActivateModeFunction(Gst.Pad pad, Gst.Object parent, Gst.PadMode mode, bool active);
+public delegate bool PadActivateModeFunction(Gst.Pad pad, Gst.Object? parent, Gst.PadMode mode, bool active);
 
 /// <summary>The native entry point of <see cref="Gst.PadActivateModeFunction"/>.</summary>
 internal static unsafe class PadActivateModeFunctionTrampoline
@@ -606,8 +605,7 @@ internal static unsafe class PadActivateModeFunctionTrampoline
 
             Gst.Pad padValue = Gst.GObject.Object.FromNative<Gst.Pad>(pad, Gst.Interop.Transfer.None)
                 ?? throw new InvalidOperationException("GstPadActivateModeFunction passed no pad.");
-            Gst.Object parentValue = Gst.GObject.Object.FromNative<Gst.Object>(parent, Gst.Interop.Transfer.None)
-                ?? throw new InvalidOperationException("GstPadActivateModeFunction passed no parent.");
+            Gst.Object? parentValue = Gst.GObject.Object.FromNative<Gst.Object>(parent, Gst.Interop.Transfer.None);
             return callback(padValue, parentValue, (Gst.PadMode)mode, active != 0) ? 1 : 0;
         }
         catch (Exception exception)
@@ -1159,7 +1157,7 @@ internal static unsafe class PadQueryFunctionTrampoline
             Gst.Pad padValue = Gst.GObject.Object.FromNative<Gst.Pad>(pad, Gst.Interop.Transfer.None)
                 ?? throw new InvalidOperationException("GstPadQueryFunction passed no pad.");
             Gst.Object? parentValue = Gst.GObject.Object.FromNative<Gst.Object>(parent, Gst.Interop.Transfer.None);
-            Gst.Query queryValue = Gst.Query.FromNative(query, Gst.Interop.Transfer.None)
+            Gst.Query queryValue = Gst.Query.Borrow(query)
                 ?? throw new InvalidOperationException("GstPadQueryFunction passed no query.");
             return callback(padValue, parentValue, queryValue) ? 1 : 0;
         }
@@ -1345,7 +1343,7 @@ internal static unsafe class PromiseChangeFuncTrampoline
                 return;
             }
 
-            Gst.Promise promiseValue = Gst.Promise.FromNative(promise, Gst.Interop.Transfer.None)
+            Gst.Promise promiseValue = Gst.Promise.Borrow(promise)
                 ?? throw new InvalidOperationException("GstPromiseChangeFunc passed no promise.");
             callback(promiseValue);
         }
@@ -1643,7 +1641,7 @@ internal static unsafe class TagForeachFuncTrampoline
                 return;
             }
 
-            Gst.TagList listValue = Gst.TagList.FromNative(list, Gst.Interop.Transfer.None)
+            Gst.TagList listValue = Gst.TagList.Borrow(list)
                 ?? throw new InvalidOperationException("GstTagForeachFunc passed no list.");
             string tagValue = Gst.Interop.GMarshal.PtrToStringUtf8((nint)tag)
                 ?? throw new InvalidOperationException("GstTagForeachFunc passed no tag.");

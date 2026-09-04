@@ -202,7 +202,7 @@ internal static unsafe class AppSinkProposeAllocationCallbackTrampoline
 
             Gst.App.AppSink appsinkValue = Gst.GObject.Object.FromNative<Gst.App.AppSink>(appsink, Gst.Interop.Transfer.None)
                 ?? throw new InvalidOperationException("GstAppSinkProposeAllocationCallback passed no appsink.");
-            Gst.Query queryValue = Gst.Query.FromNative(query, Gst.Interop.Transfer.None)
+            Gst.Query queryValue = Gst.Query.Borrow(query)
                 ?? throw new InvalidOperationException("GstAppSinkProposeAllocationCallback passed no query.");
             return callback(appsinkValue, queryValue) ? 1 : 0;
         }
