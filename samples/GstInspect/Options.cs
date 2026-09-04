@@ -49,12 +49,6 @@ internal sealed class Options
     internal bool Help { get; private set; }
 
     /// <summary>
-    /// Gets a value indicating whether the sections this port does not cover
-    /// are listed at the end of an element page.
-    /// </summary>
-    internal bool ShowCoverage { get; private set; } = true;
-
-    /// <summary>
     /// Gets the element to inspect, if one was named. Nothing means the census.
     /// </summary>
     internal IReadOnlyList<string> Names => _names;
@@ -81,14 +75,10 @@ internal sealed class Options
         Sample Options:
               --native-path=DIRECTORY      Where to load the native GStreamer from
               --flavor=msvc|mingw          Which Windows build of GStreamer to load
-              --no-coverage-note           Leave out the line that names the sections of
-                                           gst-inspect-1.0 this port does not print. Not a
-                                           gst-inspect option
 
         Without an element name the registry census is printed, one line per
         feature, and the totals underneath. With one, the page of that element is
-        printed -- the sections of it this port covers, which the coverage note at
-        the end of the page names.
+        printed, section by section, as gst-inspect-1.0 prints it.
         """;
 
     /// <summary>
@@ -132,10 +122,6 @@ internal sealed class Options
             {
                 case "-h" or "--help":
                     options.Help = true;
-                    break;
-
-                case "--no-coverage-note":
-                    options.ShowCoverage = false;
                     break;
 
                 case "--native-path":

@@ -104,8 +104,8 @@ internal sealed partial class Inspection
     }
 
     /// <summary>
-    /// Prints the page of one element, the way <c>print_element_info</c> does
-    /// for the sections this port covers.
+    /// Prints the page of one element, the way <c>print_element_info</c>
+    /// does.
     /// </summary>
     /// <param name="name">The name of the element factory.</param>
     /// <returns>The exit code.</returns>
@@ -139,10 +139,16 @@ internal sealed partial class Inspection
         }
 
         PrintHierarchy(element);
+        PrintInterfaces(element);
+        PrintElementFlags(element);
         PrintPadTemplates(element, factory);
-        PrintUriHandling(factory);
+        PrintClocking(element);
+        PrintUriHandling(element);
+        PrintPads(element);
         PrintProperties(element);
-        PrintCoverageNote();
+        PrintSignals(element);
+        PrintChildren(element);
+        PrintPresets(element);
 
         return ExitNoError;
     }

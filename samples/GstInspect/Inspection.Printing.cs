@@ -31,14 +31,26 @@ internal sealed partial class Inspection
     /// The metadata of an element factory, in the order the C tool prints it.
     /// </summary>
     /// <remarks>
-    /// <c>gst_element_factory_get_metadata_keys</c> returns a <c>gchar**</c> and
-    /// is not bound, so the keys are named rather than enumerated. These are the
-    /// ones <c>gst_element_class_set_metadata</c> takes and the ones every
-    /// element has; a factory that carries a key of its own has that key left
-    /// out here and printed by the C tool.
+    /// The keys are the ones <c>gst_element_factory_get_metadata_keys</c>
+    /// reports, in the order the factory stores them, so a factory that carries
+    /// a key of its own has it printed too.
     /// </remarks>
-    private static readonly string[] MetadataKeys =
-        ["long-name", "klass", "description", "author", "doc-uri", "icon-name"];
+    private const string DocUriKey = "doc-uri";
+
+    /// <summary>The indentation everything under the name of a property is written at.</summary>
+    /// <remarks>
+    /// <c>print_object_properties_info</c> runs inside one <c>push_indent</c>
+    /// and pushes eleven more for the lines under the name, and <c>n_print</c>
+    /// writes two spaces per level.
+    /// </remarks>
+    private static readonly string PropertyIndent = new(' ', 2 * 12);
+
+    /// <summary>
+    /// The prefix <c>print_object_properties_info</c> hands to
+    /// <c>print_caps</c> and to <c>print_field</c> for a caps valued or a
+    /// structure valued property.
+    /// </summary>
+    private static readonly string PropertyValuePrefix = new(' ', 27);
 
     /// <summary>
     /// The modules whose plugins have generated documentation, which is how the
@@ -63,12 +75,10 @@ internal sealed partial class Inspection
     /// <param name="plugin">The plugin the feature belongs to.</param>
     /// <param name="feature">The feature to print.</param>
     /// <remarks>
-    /// A feature that is not an element factory is printed with its GObject type
-    /// name in parentheses, which is the C tool's third branch. Its second
-    /// branch, the one that prints the file extensions of a typefind factory,
-    /// needs <c>gst_type_find_factory_get_extensions</c> — a <c>gchar**</c>
-    /// return that is not bound — so a typefind factory takes the third branch
-    /// here and comes out as <c>(GstTypeFindFactory)</c>.
+    /// The three branches of the C tool are an element factory, a typefind
+    /// factory — whose file extensions follow a single space rather than the
+    /// two an element factory gets — and anything else, printed with its
+    /// GObject type name in parentheses.
     /// </remarks>
     private static void PrintFeatureLine(Plugin plugin, PluginFeature feature)
     {
@@ -76,6 +86,15 @@ internal sealed partial class Inspection
         {
             Console.WriteLine(
                 $"{plugin.GetName()}:  {factory.GetName()}: {factory.GetMetadata("long-name")}");
+            return;
+        }
+
+        if (feature is TypeFindFactory typefind)
+        {
+            string[]? extensions = typefind.GetExtensions();
+
+            Console.WriteLine($"{plugin.GetName()}: {feature.GetName()}: "
+                + (extensions is null ? "no extensions" : string.Join(", ", extensions)));
             return;
         }
 
@@ -97,15 +116,17 @@ internal sealed partial class Inspection
 
         bool seenDocUri = false;
 
-        foreach (string key in MetadataKeys)
+        foreach (string key in factory.GetMetadataKeys() ?? [])
         {
-            if (factory.GetMetadata(key) is not { } value)
-            {
-                continue;
-            }
+            string shown = Capitalize(key);
 
-            seenDocUri = seenDocUri || string.Equals(key, "doc-uri", StringComparison.Ordinal);
-            Line(1, $"{Capitalize(key),-25}{value}");
+            // The C tool uppercases the first letter of the key in place before
+            // it compares the key against "doc-uri", so the comparison never
+            // matches and the documentation URL is built even for a factory
+            // that carries a doc-uri of its own. The quirk is reproduced rather
+            // than fixed, because this page is diffed against that tool.
+            seenDocUri = seenDocUri || string.Equals(shown, DocUriKey, StringComparison.Ordinal);
+            Line(1, $"{shown,-25}{factory.GetMetadata(key)}");
         }
 
         if (!seenDocUri && plugin is not null && !factory.GetSkipDocumentation()
@@ -264,56 +285,49 @@ internal sealed partial class Inspection
     /// Prints what the element can do with URIs, the way
     /// <c>print_uri_handler_info</c> does.
     /// </summary>
-    /// <param name="factory">The factory of the element.</param>
-    /// <remarks>
-    /// The C tool asks the element, this asks its factory: the registry knows
-    /// the URI type of every element without loading one, and
-    /// <c>gst_uri_handler_get_uri_type</c> on an element that is not a handler
-    /// answers <c>GST_URI_UNKNOWN</c>, which is what the factory answers too.
-    /// The list of protocols underneath needs
-    /// <c>gst_uri_handler_get_protocols</c>, another <c>gchar**</c> return that
-    /// is not bound, so it is missing from this page.
-    /// </remarks>
-    private static void PrintUriHandling(ElementFactory factory)
+    /// <param name="element">The element to describe.</param>
+    private static void PrintUriHandling(Element element)
     {
-        // The blank line the clocking section would have printed. See the
-        // coverage note.
-        Line(0, string.Empty);
-
-        string? type = factory.GetUriType() switch
-        {
-            URIType.Src => "source",
-            URIType.Sink => "sink",
-            _ => null,
-        };
-
-        if (type is null)
+        if (element.As<IURIHandler>() is not { } handler)
         {
             Line(0, "Element has no URI handling capabilities.");
             return;
         }
 
+        string type = handler.GetUriType() switch
+        {
+            URIType.Src => "source",
+            URIType.Sink => "sink",
+            _ => "unknown",
+        };
+
+        string[]? protocols = handler.GetProtocols();
+
+        Line(0, string.Empty);
         Line(0, "URI handling capabilities:");
         Line(1, $"Element can act as {type}.");
+
+        if (protocols is { Length: > 0 })
+        {
+            Line(1, "Supported URI protocols:");
+
+            foreach (string protocol in protocols)
+            {
+                Line(2, protocol);
+            }
+        }
+        else
+        {
+            Line(1, "No supported URI protocols");
+        }
     }
 
     /// <summary>
     /// Prints the properties of the element, the way
-    /// <c>print_object_properties_info</c> does for what is reachable.
+    /// <c>print_element_properties_info</c> does.
     /// </summary>
     /// <param name="element">The element to describe.</param>
-    /// <remarks>
-    /// Three columns of the C layout are missing and all three are the same
-    /// gap: <c>GParamSpec</c> introspection beyond name, type and flags is not
-    /// bound. The description after the name is
-    /// <c>g_param_spec_get_blurb</c>; the range of a numeric property is a
-    /// field of the <c>GParamSpec</c> subtype; the table under an enumeration
-    /// or a flags property is a walk of its <c>GEnumClass</c>. The name, the
-    /// flags, the type and the value are printed in their C columns, and the
-    /// value is read off a freshly built element, which is exactly what the C
-    /// tool prints as the default for a readable property.
-    /// </remarks>
-    private void PrintProperties(Element element)
+    private static void PrintProperties(Element element)
     {
         Console.WriteLine();
         Line(0, "Element Properties:");
@@ -324,18 +338,14 @@ internal sealed partial class Inspection
 
         try
         {
+            foreach (ParamSpec property in properties)
+            {
+                PrintProperty(element, property);
+            }
+
             if (properties.Count == 0)
             {
                 Line(1, "none");
-                return;
-            }
-
-            foreach (ParamSpec property in properties)
-            {
-                Line(1, $"{property.Name,-20}:");
-                Line(12, $"flags: {FlagsOf(property.Flags)}");
-                Line(12, DescribeValue(element, property));
-                Line(1, string.Empty);
             }
         }
         finally
@@ -348,29 +358,401 @@ internal sealed partial class Inspection
     }
 
     /// <summary>
-    /// Names the sections of <c>gst-inspect-1.0</c> that this page leaves out.
+    /// Prints one property, which is the body of the loop of
+    /// <c>print_object_properties_info</c>.
     /// </summary>
+    /// <param name="element">The element the property belongs to.</param>
+    /// <param name="property">The property to print.</param>
     /// <remarks>
-    /// A page that silently dropped half a tool's sections would read like the
-    /// whole of it. The note is the honest alternative, and
-    /// <c>--no-coverage-note</c> takes it off for a run that is being compared
-    /// against the C tool line by line.
+    /// The C tool reads the value off the element when the property is
+    /// readable and falls back to <c>g_param_value_set_default</c> when it is
+    /// not; <see cref="ParamSpec.DefaultValue"/> is that default, copied here
+    /// because the value itself belongs to the specification.
     /// </remarks>
-    private void PrintCoverageNote()
+    private static void PrintProperty(Element element, ParamSpec property)
     {
-        if (!_options.ShowCoverage)
+        bool readable = (property.Flags & ParamFlags.Readable) != 0;
+
+        Line(1, $"{property.Name,-20}: {property.Blurb ?? "(null)"}");
+
+        using Value value = readable
+            ? element.GetProperty(property.Name)
+            : property.DefaultValue.ToValue();
+
+        StringBuilder text = new();
+        text.Append(PropertyIndent).Append("flags: ").Append(FlagsOf(property.Flags)).Append('\n');
+        AppendValue(text, property, value);
+        text.Append(readable ? "\n" : " Write only\n");
+        Write(text);
+
+        Line(1, string.Empty);
+    }
+
+    /// <summary>
+    /// Appends the type, the range and the default of one property, which is
+    /// the <c>switch</c> of <c>print_object_properties_info</c>.
+    /// </summary>
+    /// <param name="text">The block being built.</param>
+    /// <param name="property">The property to describe.</param>
+    /// <param name="value">The value the property was read as.</param>
+    private static void AppendValue(StringBuilder text, ParamSpec property, in Value value)
+    {
+        GType type = value.Type;
+
+        if (type == GType.String)
         {
+            string? content = value.GetString();
+
+            text.Append(PropertyIndent).Append("String. ")
+                .Append(content is null ? "Default: null" : $"Default: \"{content}\"");
             return;
         }
 
-        Console.WriteLine();
-        Line(0, "Sections of gst-inspect-1.0 this port does not print: Element Flags,");
-        Line(0, "Implemented Interfaces, Clocking Interaction, Pads, Element Signals,");
-        Line(0, "Children and Presets; inside the sections above, property descriptions,");
-        Line(0, "numeric ranges, enumeration and flags tables, the fields of a structure");
-        Line(0, "valued property, and the list of supported URI protocols. The header of");
-        Line(0, "samples/GstInspect says what each of them needs. Blank lines that belong");
-        Line(0, "to a section that is not printed are not printed either.");
+        if (type == GType.Boolean)
+        {
+            text.Append(PropertyIndent)
+                .Append(value.GetBoolean() ? "Boolean. Default: true" : "Boolean. Default: false");
+            return;
+        }
+
+        if (type == GType.ULong && property is ParamSpecULong pulong)
+        {
+            AppendRange(text, "Unsigned Long", pulong.Minimum, pulong.Maximum, (ulong)value.GetULong());
+            return;
+        }
+
+        if (type == GType.Long && property is ParamSpecLong plong)
+        {
+            AppendRange(text, "Long", plong.Minimum, plong.Maximum, (long)value.GetLong());
+            return;
+        }
+
+        if (type == GType.UInt && property is ParamSpecUInt puint)
+        {
+            AppendRange(text, "Unsigned Integer", puint.Minimum, puint.Maximum, value.GetUInt());
+            return;
+        }
+
+        if (type == GType.Int && property is ParamSpecInt pint)
+        {
+            AppendRange(text, "Integer", pint.Minimum, pint.Maximum, value.GetInt());
+            return;
+        }
+
+        if (type == GType.UInt64 && property is ParamSpecUInt64 puint64)
+        {
+            AppendRange(text, "Unsigned Integer64", puint64.Minimum, puint64.Maximum, value.GetUInt64());
+            return;
+        }
+
+        if (type == GType.Int64 && property is ParamSpecInt64 pint64)
+        {
+            AppendRange(text, "Integer64", pint64.Minimum, pint64.Maximum, value.GetInt64());
+            return;
+        }
+
+        if (type == GType.Float && property is ParamSpecFloat pfloat)
+        {
+            AppendFloatRange(text, "Float", pfloat.Minimum, pfloat.Maximum, value.GetFloat());
+            return;
+        }
+
+        if (type == GType.Double && property is ParamSpecDouble pdouble)
+        {
+            AppendFloatRange(text, "Double", pdouble.Minimum, pdouble.Maximum, value.GetDouble());
+            return;
+        }
+
+        AppendOtherValue(text, property, value);
+    }
+
+    /// <summary>
+    /// Appends the branches the <c>default:</c> label of
+    /// <c>print_object_properties_info</c> covers.
+    /// </summary>
+    /// <param name="text">The block being built.</param>
+    /// <param name="property">The property to describe.</param>
+    /// <param name="value">The value the property was read as.</param>
+    /// <remarks>
+    /// The order of the tests is the C tool's, except that a fraction and a
+    /// <c>GstValueArray</c> are recognised before a boxed value rather than
+    /// after: their GStreamer specification classes do not derive from
+    /// <c>GParamSpecBoxed</c>, which is what the C tool tests, while their
+    /// value types are boxed, which is what is reachable here.
+    /// </remarks>
+    private static void AppendOtherValue(StringBuilder text, ParamSpec property, in Value value)
+    {
+        GType type = property.ValueType;
+        string name = type.Name;
+
+        if (string.Equals(name, "GstCaps", StringComparison.Ordinal))
+        {
+            using Caps? caps = value.GetMiniObject<Caps>();
+
+            if (caps is null)
+            {
+                text.Append(PropertyIndent).Append("Caps (NULL)");
+            }
+            else
+            {
+                AppendCaps(text, caps, 12, PropertyValuePrefix, string.Empty);
+            }
+
+            return;
+        }
+
+        if (property is ParamSpecEnum penum)
+        {
+            int current = value.GetEnum();
+            EnumValue[] values = penum.Values;
+            string nick = string.Empty;
+
+            foreach (EnumValue member in values)
+            {
+                if (member.Value == current)
+                {
+                    nick = member.Nick ?? string.Empty;
+                }
+            }
+
+            text.Append(PropertyIndent).Append(string.Create(
+                CultureInfo.InvariantCulture,
+                $"Enum \"{name}\" Default: {current}, \"{nick}\""));
+
+            foreach (EnumValue member in values)
+            {
+                text.Append('\n').Append(PropertyIndent).Append(string.Create(
+                    CultureInfo.InvariantCulture,
+                    $"   ({member.Value}): {member.Nick ?? string.Empty,-16} - {member.Name}"));
+            }
+
+            return;
+        }
+
+        if (property is ParamSpecFlags pflags)
+        {
+            uint current = value.GetFlags();
+            FlagsValue[] values = pflags.Values;
+
+            text.Append(PropertyIndent).Append(string.Create(
+                CultureInfo.InvariantCulture,
+                $"Flags \"{name}\" Default: 0x{current:x8}, \"{FlagsToString(values, current)}\""));
+
+            foreach (FlagsValue member in values)
+            {
+                text.Append('\n').Append(PropertyIndent).Append(string.Create(
+                    CultureInfo.InvariantCulture,
+                    $"   (0x{member.Value:x8}): {member.Nick ?? string.Empty,-16} - {member.Name}"));
+            }
+
+            return;
+        }
+
+        if (property is ParamSpecFraction fraction)
+        {
+            text.Append(PropertyIndent).Append(string.Create(
+                CultureInfo.InvariantCulture,
+                $"Fraction. Range: {fraction.MinimumNumerator}/{fraction.MinimumDenominator} - "
+                + $"{fraction.MaximumNumerator}/{fraction.MaximumDenominator} Default: "
+                + $"{Global.ValueGetFractionNumerator(value)}/{Global.ValueGetFractionDenominator(value)} "));
+            return;
+        }
+
+        if (property is ParamSpecArray array)
+        {
+            if (string.Equals(value.Type.Name, "GstValueArray", StringComparison.Ordinal))
+            {
+                text.Append(PropertyIndent)
+                    .Append($"Default: \"{Global.ValueSerialize(value)}\"").Append('\n');
+            }
+
+            using ParamSpec? member = array.ElementSpec;
+
+            text.Append(PropertyIndent).Append(member is null
+                ? "GstValueArray of GValues"
+                : $"GstValueArray of GValues of type \"{member.ValueType.Name}\"");
+            return;
+        }
+
+        GType fundamental = type.Fundamental;
+
+        if (fundamental == GType.Object)
+        {
+            text.Append(PropertyIndent).Append($"Object of type \"{name}\"");
+            return;
+        }
+
+        if (fundamental == GType.Boxed)
+        {
+            text.Append(PropertyIndent).Append($"Boxed pointer of type \"{name}\"");
+
+            if (string.Equals(name, "GstStructure", StringComparison.Ordinal)
+                && value.GetBoxed<Structure>() is { } structure)
+            {
+                text.Append('\n');
+                AppendFields(text, structure, 12, PropertyValuePrefix);
+            }
+
+            return;
+        }
+
+        if (fundamental == GType.Pointer)
+        {
+            text.Append(PropertyIndent).Append(type == GType.Pointer
+                ? "Pointer."
+                : $"Pointer of type \"{name}\".");
+            return;
+        }
+
+        if (string.Equals(name, "GValueArray", StringComparison.Ordinal))
+        {
+            // GParamSpecValueArray::element_spec has no binding, so the type of
+            // the members is left off; the C tool prints it when the
+            // specification carries one.
+            text.Append(PropertyIndent).Append("Array of GValues");
+            return;
+        }
+
+        text.Append(PropertyIndent).Append(string.Create(
+            CultureInfo.InvariantCulture,
+            $"Unknown type {(long)type.Value} \"{name}\""));
+    }
+
+    /// <summary>Appends the range and the default of an integral property.</summary>
+    /// <typeparam name="T">The kind of number the property holds.</typeparam>
+    /// <param name="text">The block being built.</param>
+    /// <param name="kind">The name the C tool gives the type.</param>
+    /// <param name="minimum">The smallest value the property accepts.</param>
+    /// <param name="maximum">The largest value the property accepts.</param>
+    /// <param name="current">The value the property was read as.</param>
+    /// <remarks>
+    /// The trailing space is the C tool's: every one of these branches ends its
+    /// format string with one.
+    /// </remarks>
+    private static void AppendRange<T>(StringBuilder text, string kind, T minimum, T maximum, T current)
+        where T : IFormattable =>
+        text.Append(PropertyIndent).Append(string.Create(
+            CultureInfo.InvariantCulture,
+            $"{kind}. Range: {minimum} - {maximum} Default: {current} "));
+
+    /// <summary>
+    /// Appends the range and the default of a floating point property, whose
+    /// numbers the C tool writes with <c>%15.7g</c>.
+    /// </summary>
+    /// <param name="text">The block being built.</param>
+    /// <param name="kind">The name the C tool gives the type.</param>
+    /// <param name="minimum">The smallest value the property accepts.</param>
+    /// <param name="maximum">The largest value the property accepts.</param>
+    /// <param name="current">The value the property was read as.</param>
+    private static void AppendFloatRange(
+        StringBuilder text,
+        string kind,
+        double minimum,
+        double maximum,
+        double current) =>
+        text.Append(PropertyIndent).Append(
+            $"{kind}. Range: {Printf15G(minimum)} - {Printf15G(maximum)} Default: {Printf15G(current)} ");
+
+    /// <summary>Writes a number the way C's <c>printf ("%15.7g")</c> does.</summary>
+    /// <param name="value">The number to write.</param>
+    /// <returns>The number, right aligned in fifteen columns.</returns>
+    /// <remarks>
+    /// .NET's <c>G7</c> is not the same format: it writes an uppercase exponent
+    /// of three digits and switches to the exponent form at another magnitude.
+    /// C picks that form when the decimal exponent is below -4 or at least the
+    /// precision, writes at least two exponent digits, and drops the trailing
+    /// zeros of either form.
+    /// </remarks>
+    private static string Printf15G(double value)
+    {
+        const int Precision = 7;
+
+        if (double.IsNaN(value))
+        {
+            return "nan".PadLeft(15);
+        }
+
+        if (double.IsInfinity(value))
+        {
+            return (value < 0 ? "-inf" : "inf").PadLeft(15);
+        }
+
+        string scientific = value.ToString("E6", CultureInfo.InvariantCulture);
+        int marker = scientific.IndexOf('E', StringComparison.Ordinal);
+        int exponent = int.Parse(scientific[(marker + 1)..], NumberStyles.Integer, CultureInfo.InvariantCulture);
+
+        if (exponent < -4 || exponent >= Precision)
+        {
+            string mantissa = TrimTrailingZeros(scientific[..marker]);
+            string digits = Math.Abs(exponent).ToString("00", CultureInfo.InvariantCulture);
+
+            return $"{mantissa}e{(exponent < 0 ? '-' : '+')}{digits}".PadLeft(15);
+        }
+
+        int decimals = Math.Max(0, Precision - 1 - exponent);
+
+        return TrimTrailingZeros(value.ToString(
+            "F" + decimals.ToString(CultureInfo.InvariantCulture),
+            CultureInfo.InvariantCulture)).PadLeft(15);
+    }
+
+    /// <summary>Drops the trailing zeros of a decimal fraction, as <c>%g</c> does.</summary>
+    /// <param name="text">The number written out.</param>
+    /// <returns>The number without a trailing run of zeros or a bare point.</returns>
+    private static string TrimTrailingZeros(string text)
+    {
+        if (!text.Contains('.', StringComparison.Ordinal))
+        {
+            return text;
+        }
+
+        string trimmed = text.TrimEnd('0');
+
+        return trimmed.EndsWith('.') ? trimmed[..^1] : trimmed;
+    }
+
+    /// <summary>Spells a set of flags the way <c>flags_to_string</c> does.</summary>
+    /// <param name="values">The members of the flags type.</param>
+    /// <param name="flags">The set to spell.</param>
+    /// <returns>The nicks, joined with a plus sign.</returns>
+    /// <remarks>
+    /// An exact match wins outright; otherwise the members are taken from the
+    /// highest down, greedily, and what does not decompose at all is
+    /// <c>(none)</c>.
+    /// </remarks>
+    private static string FlagsToString(FlagsValue[] values, uint flags)
+    {
+        foreach (FlagsValue member in values)
+        {
+            if (member.Value == flags)
+            {
+                return member.Nick ?? string.Empty;
+            }
+        }
+
+        StringBuilder text = new();
+        uint left = flags;
+
+        for (int i = values.Length - 1; i >= 0; i--)
+        {
+            if (values[i].Value != 0 && (left & values[i].Value) == values[i].Value)
+            {
+                if (text.Length > 0)
+                {
+                    text.Append('+');
+                }
+
+                text.Append(values[i].Nick ?? string.Empty);
+                left -= values[i].Value;
+
+                if (left == 0)
+                {
+                    break;
+                }
+            }
+        }
+
+        return text.Length == 0 ? "(none)" : text.ToString();
     }
 
     /// <summary>
@@ -382,15 +764,30 @@ internal sealed partial class Inspection
     /// <param name="fieldName">The name of the field the caps came from.</param>
     private static void PrintCaps(Caps caps, int depth, string prefix, string fieldName)
     {
+        StringBuilder text = new();
+        AppendCaps(text, caps, depth, prefix, fieldName);
+        Write(text);
+    }
+
+    /// <summary>
+    /// Appends one caps to a block, the way <c>print_caps</c> writes one.
+    /// </summary>
+    /// <param name="text">The block being built.</param>
+    /// <param name="caps">The caps to print.</param>
+    /// <param name="depth">The indentation.</param>
+    /// <param name="prefix">The prefix every line carries.</param>
+    /// <param name="fieldName">The name of the field the caps came from.</param>
+    private static void AppendCaps(StringBuilder text, Caps caps, int depth, string prefix, string fieldName)
+    {
         if (caps.IsAny())
         {
-            Line(depth, prefix + "ANY");
+            AppendLine(text, depth, prefix + "ANY");
             return;
         }
 
         if (caps.IsEmpty())
         {
-            Line(depth, prefix + "EMPTY");
+            AppendLine(text, depth, prefix + "EMPTY");
             return;
         }
 
@@ -403,21 +800,25 @@ internal sealed partial class Inspection
 
             if (features is not null && IsWorthPrinting(features))
             {
-                Line(depth, $"{prefix}{fieldName}{structure.GetName()}({features})");
+                AppendLine(text, depth, $"{prefix}{fieldName}{structure.GetName()}({features})");
             }
             else
             {
-                Line(depth, $"{prefix}{fieldName}{(fieldName.Length > 0 ? ": " : string.Empty)}{structure.GetName()}");
+                AppendLine(
+                    text,
+                    depth,
+                    $"{prefix}{fieldName}{(fieldName.Length > 0 ? ": " : string.Empty)}{structure.GetName()}");
             }
 
-            PrintFields(structure, depth, prefix);
+            AppendFields(text, structure, depth, prefix);
         }
     }
 
     /// <summary>
-    /// Prints the fields of one structure of a caps, the way
-    /// <c>print_field</c> does for the values that are reachable.
+    /// Appends the fields of one structure to a block, the way
+    /// <c>print_field</c> writes them for the values that are reachable.
     /// </summary>
+    /// <param name="text">The block being built.</param>
     /// <param name="structure">The structure to print.</param>
     /// <param name="depth">The indentation.</param>
     /// <param name="prefix">The prefix every line carries.</param>
@@ -431,7 +832,7 @@ internal sealed partial class Inspection
     /// <c>gst_value_get_caps</c> and <c>gst_value_get_structure</c>, which are
     /// not bound.
     /// </remarks>
-    private static void PrintFields(Structure structure, int depth, string prefix)
+    private static void AppendFields(StringBuilder text, Structure structure, int depth, string prefix)
     {
         int fields = structure.NFields();
 
@@ -444,7 +845,7 @@ internal sealed partial class Inspection
             // is renamed.
             string typeName = value.Type == GType.String ? "string" : value.Type.Name;
 
-            Line(depth, $"{prefix}  {field,15}: {Global.ValueSerialize(value)} ({typeName})");
+            AppendLine(text, depth, $"{prefix}  {field,15}: {Global.ValueSerialize(value)} ({typeName})");
         }
     }
 
@@ -476,12 +877,22 @@ internal sealed partial class Inspection
     /// <param name="flags">The flags of the property.</param>
     /// <returns>The comma separated list.</returns>
     /// <remarks>
-    /// The GStreamer half of the bits — controllable, the three mutable-in-state
-    /// bits and conditionally available — are not members of
+    /// <para>
+    /// The GStreamer half of the bits — controllable, the three
+    /// mutable-in-state bits and conditionally available — are not members of
     /// <see cref="ParamFlags"/>, which lists what GObject itself defines, so
     /// they are named by their bit here. They are
     /// <c>1 &lt;&lt; (G_PARAM_USER_SHIFT + n)</c> out of
     /// <c>gst/gstparamspecs.h</c>.
+    /// </para>
+    /// <para>
+    /// The C tool tracks a <c>first_flag</c> to decide whether a separator is
+    /// needed, but writes one unconditionally for controllable, conditionally
+    /// available and the mutable-in-state bits. A property that is neither
+    /// readable nor writable and carries one of those therefore begins its list
+    /// with a comma. The quirk is reproduced rather than fixed, because this
+    /// page is diffed against that tool.
+    /// </para>
     /// </remarks>
     private static string FlagsOf(ParamFlags flags)
     {
@@ -493,48 +904,54 @@ internal sealed partial class Inspection
         const uint ConditionallyAvailable = 1u << 14;
 
         uint bits = (uint)flags;
-        List<string> named = [];
+        StringBuilder text = new();
+        bool first = true;
 
         if ((flags & ParamFlags.Readable) != 0)
         {
-            named.Add("readable");
+            text.Append("readable");
+            first = false;
         }
 
         if ((flags & ParamFlags.Writable) != 0)
         {
-            named.Add("writable");
+            text.Append(first ? string.Empty : ", ").Append("writable");
+            first = false;
         }
 
         if ((flags & ParamFlags.Deprecated) != 0)
         {
-            named.Add("deprecated");
+            text.Append(first ? string.Empty : ", ").Append("deprecated");
+            first = false;
         }
 
         if ((bits & Controllable) != 0)
         {
-            named.Add("controllable");
+            text.Append(", controllable");
+            first = false;
         }
 
         if ((bits & ConditionallyAvailable) != 0)
         {
-            named.Add("conditionally available");
+            text.Append(", conditionally available");
+            first = false;
         }
 
         if ((flags & ParamFlags.ConstructOnly) != 0)
         {
-            named.Add("can be set only at object construction time");
+            text.Append(", can be set only at object construction time");
         }
         else if ((bits & MutablePlaying) != 0)
         {
-            named.Add("changeable in NULL, READY, PAUSED or PLAYING state");
+            text.Append(", changeable in NULL, READY, PAUSED or PLAYING state");
         }
         else if ((bits & MutablePaused) != 0)
         {
-            named.Add("changeable only in NULL, READY or PAUSED state");
+            text.Append(", changeable only in NULL, READY or PAUSED state");
         }
         else if ((bits & MutableReady) != 0)
         {
-            named.Add("changeable only in NULL or READY state");
+            text.Append(", changeable only in NULL or READY state");
         }
 
         const uint Known = (uint)(ParamFlags.Construct | ParamFlags.ConstructOnly | ParamFlags.LaxValidation
@@ -544,132 +961,13 @@ internal sealed partial class Inspection
 
         if ((bits & ~Known) != 0)
         {
-            named.Add("0x" + (bits & ~Known).ToString("x", CultureInfo.InvariantCulture));
+            text.Append(first ? string.Empty : ", ")
+                .Append("0x")
+                .Append((bits & ~Known).ToString("x", CultureInfo.InvariantCulture));
         }
 
-        return string.Join(", ", named);
+        return text.ToString();
     }
-
-    /// <summary>
-    /// Describes the type of a property and the value a fresh element has.
-    /// </summary>
-    /// <param name="element">The element the property belongs to.</param>
-    /// <param name="property">The property to describe.</param>
-    /// <returns>The line the C tool writes under the flags.</returns>
-    private static string DescribeValue(Element element, ParamSpec property)
-    {
-        GType type = property.ValueType;
-        string typeName = type.Name;
-
-        // A property that cannot be read has no value to show: the C tool falls
-        // back to g_param_value_set_default, which needs a GParamSpec accessor
-        // that is not bound.
-        if ((property.Flags & ParamFlags.Readable) == 0)
-        {
-            return NameOfType(type) + " (write only)";
-        }
-
-        using Value value = element.GetProperty(property.Name);
-
-        if (type == GType.String)
-        {
-            return value.GetString() is { } text ? $"String. Default: \"{text}\"" : "String. Default: null";
-        }
-
-        if (type == GType.Boolean)
-        {
-            return $"Boolean. Default: {(value.GetBoolean() ? "true" : "false")}";
-        }
-
-        if (type == GType.Int)
-        {
-            return string.Create(CultureInfo.InvariantCulture, $"Integer. Default: {value.GetInt()}");
-        }
-
-        if (type == GType.UInt)
-        {
-            return string.Create(CultureInfo.InvariantCulture, $"Unsigned Integer. Default: {value.GetUInt()}");
-        }
-
-        if (type == GType.Int64)
-        {
-            return string.Create(CultureInfo.InvariantCulture, $"Integer64. Default: {value.GetInt64()}");
-        }
-
-        if (type == GType.UInt64)
-        {
-            return string.Create(CultureInfo.InvariantCulture, $"Unsigned Integer64. Default: {value.GetUInt64()}");
-        }
-
-        if (type == GType.Long)
-        {
-            return string.Create(CultureInfo.InvariantCulture, $"Long. Default: {value.GetLong()}");
-        }
-
-        if (type == GType.ULong)
-        {
-            return string.Create(CultureInfo.InvariantCulture, $"Unsigned Long. Default: {value.GetULong()}");
-        }
-
-        if (type == GType.Float)
-        {
-            return string.Create(CultureInfo.InvariantCulture, $"Float. Default: {value.GetFloat()}");
-        }
-
-        if (type == GType.Double)
-        {
-            return string.Create(CultureInfo.InvariantCulture, $"Double. Default: {value.GetDouble()}");
-        }
-
-        GType fundamental = type.Fundamental;
-
-        if (fundamental == GType.Enum)
-        {
-            return string.Create(CultureInfo.InvariantCulture, $"Enum \"{typeName}\" Default: {value.GetEnum()}");
-        }
-
-        if (fundamental == GType.Flags)
-        {
-            return string.Create(
-                CultureInfo.InvariantCulture,
-                $"Flags \"{typeName}\" Default: 0x{value.GetFlags():x8}");
-        }
-
-        if (fundamental == GType.Object)
-        {
-            return $"Object of type \"{typeName}\"";
-        }
-
-        if (fundamental == GType.Boxed)
-        {
-            return $"Boxed pointer of type \"{typeName}\"";
-        }
-
-        if (fundamental == GType.Pointer)
-        {
-            return string.Equals(typeName, "gpointer", StringComparison.Ordinal)
-                ? "Pointer."
-                : $"Pointer of type \"{typeName}\".";
-        }
-
-        return string.Create(CultureInfo.InvariantCulture, $"Unknown type {type.Value} \"{typeName}\"");
-    }
-
-    /// <summary>
-    /// Names the type of a property that could not be read.
-    /// </summary>
-    /// <param name="type">The type of the values of the property.</param>
-    /// <returns>The name the C tool would have used.</returns>
-    private static string NameOfType(GType type) =>
-        type == GType.String ? "String."
-        : type == GType.Boolean ? "Boolean."
-        : type == GType.Int ? "Integer."
-        : type == GType.UInt ? "Unsigned Integer."
-        : type == GType.Int64 ? "Integer64."
-        : type == GType.UInt64 ? "Unsigned Integer64."
-        : type == GType.Float ? "Float."
-        : type == GType.Double ? "Double."
-        : $"\"{type.Name}\"";
 
     /// <summary>
     /// Names a rank the way <c>get_rank_name</c> does.
@@ -758,4 +1056,22 @@ internal sealed partial class Inspection
     /// </remarks>
     private static void Line(int depth, string text) =>
         Console.WriteLine(new string(' ', 2 * depth) + text);
+
+    /// <summary>Appends one line at an indentation to a block.</summary>
+    /// <param name="block">The block being built.</param>
+    /// <param name="depth">How many levels to indent by.</param>
+    /// <param name="text">The line.</param>
+    private static void AppendLine(StringBuilder block, int depth, string text) =>
+        block.Append(' ', 2 * depth).Append(text).Append('\n');
+
+    /// <summary>Writes a block whose lines are separated by a single newline.</summary>
+    /// <param name="block">The block to write.</param>
+    /// <remarks>
+    /// A block is built with <c>\n</c>, because a section of the C tool is one
+    /// run of <c>g_print</c> calls that decide for themselves where a line ends;
+    /// the platform's line break is put back here so that the whole page has
+    /// one ending.
+    /// </remarks>
+    private static void Write(StringBuilder block) =>
+        Console.Write(block.Replace("\n", Environment.NewLine).ToString());
 }
