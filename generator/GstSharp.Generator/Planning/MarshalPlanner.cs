@@ -4371,7 +4371,8 @@ internal sealed class MarshalPlanner
         bool identity = _overlays.IsIdentityBuffer(overlayKey + "#" + parameter.Name);
         if (direction != ArgumentDirection.In)
         {
-            return PlanProducedArgument(argument, mapped, direction, transfer, identity, planned);
+            return PlanProducedArgument(
+                argument, mapped, direction, transfer, identity, parameter.IsOptional, planned);
         }
 
         VfuncBucket? bucket = argument.Kind switch
@@ -4513,6 +4514,7 @@ internal sealed class MarshalPlanner
     /// <param name="direction">How the argument is passed.</param>
     /// <param name="transfer">The effective ownership transfer.</param>
     /// <param name="identity">Whether the overlays call the argument identity preserving.</param>
+    /// <param name="optional">Whether the caller may pass no storage for it.</param>
     /// <param name="planned">The arguments planned before this one.</param>
     /// <returns>The argument, or <see langword="null"/> when it is not supported.</returns>
     private static VfuncArgument? PlanProducedArgument(
@@ -4521,6 +4523,7 @@ internal sealed class MarshalPlanner
         ArgumentDirection direction,
         GirTransfer transfer,
         bool identity,
+        bool optional,
         IReadOnlyList<VfuncArgument> planned)
     {
         if (argument.Kind is ArgumentKind.Value or ArgumentKind.Boolean
@@ -4529,7 +4532,7 @@ internal sealed class MarshalPlanner
             // Nothing is produced but a copy, so an identity claim about it
             // would be meaningless and a transfer says nothing either.
             return direction == ArgumentDirection.Out
-                ? new VfuncArgument(argument, VfuncBucket.OutScalar)
+                ? new VfuncArgument(argument, VfuncBucket.OutScalar, IsOptional: optional)
                 : null;
         }
 
@@ -4548,12 +4551,12 @@ internal sealed class MarshalPlanner
 
         if (direction == ArgumentDirection.Ref)
         {
-            return new VfuncArgument(argument, VfuncBucket.InOutHandle, identity);
+            return new VfuncArgument(argument, VfuncBucket.InOutHandle, identity, IsOptional: optional);
         }
 
         if (!identity)
         {
-            return new VfuncArgument(argument, VfuncBucket.OutHandle);
+            return new VfuncArgument(argument, VfuncBucket.OutHandle, IsOptional: optional);
         }
 
         // An out parameter has no value of its own on entry to compare with, so
@@ -4567,7 +4570,8 @@ internal sealed class MarshalPlanner
                     argument.PublicType.TrimEnd('?'),
                     StringComparison.Ordinal))
             {
-                return new VfuncArgument(argument, VfuncBucket.OutHandle, true, candidate.Argument.Name);
+                return new VfuncArgument(
+                    argument, VfuncBucket.OutHandle, true, candidate.Argument.Name, IsOptional: optional);
             }
         }
 

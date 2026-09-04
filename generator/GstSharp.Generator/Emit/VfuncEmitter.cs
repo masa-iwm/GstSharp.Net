@@ -926,19 +926,30 @@ internal sealed class VfuncEmitter
 
         foreach (VfuncArgument argument in plan.Arguments)
         {
-            if (argument.Bucket == VfuncBucket.OutHandle)
+            if (argument.Bucket is not (VfuncBucket.OutHandle or VfuncBucket.OutScalar))
             {
-                writer.WriteLine("*" + argument.Argument.Name + " = default;");
+                continue;
             }
-            else if (argument.Bucket == VfuncBucket.OutScalar)
+
+            ArgumentPlan value = argument.Argument;
+            string written = argument.Bucket == VfuncBucket.OutHandle
+                ? "default"
+                : NoValues.TryGetValue(Bare(value.PublicType), out string? none)
+                    ? ToNativeScalar(value, none)
+                    : "default";
+
+            // The same rule as the write back: the caller may have asked for
+            // nothing here, and this branch runs before any managed code did.
+            if (argument.IsOptional)
             {
-                ArgumentPlan value = argument.Argument;
-                writer.WriteLine(
-                    "*" + value.Name + " = "
-                    + (NoValues.TryGetValue(Bare(value.PublicType), out string? none)
-                        ? ToNativeScalar(value, none)
-                        : "default")
-                    + ";");
+                writer.WriteLine("if (" + value.Name + " != null)");
+                writer.OpenBlock();
+                writer.WriteLine("*" + value.Name + " = " + written + ";");
+                writer.CloseBlock();
+            }
+            else
+            {
+                writer.WriteLine("*" + value.Name + " = " + written + ";");
             }
         }
 
@@ -1216,9 +1227,27 @@ internal sealed class VfuncEmitter
     {
         ArgumentPlan value = argument.Argument;
         string local = value.Name + "Value";
+
+        // A caller that wants less than the slot produces passes no storage for
+        // the rest - gst_element_get_state (element, NULL, NULL, timeout) is the
+        // routine call - so an optional argument is written only when there is
+        // somewhere to write it. The reference of a handle nobody asked for is
+        // not minted either: nothing would ever release it.
+        bool guarded = argument.IsOptional;
+        if (guarded)
+        {
+            writer.WriteLine("if (" + value.Name + " != null)");
+            writer.OpenBlock();
+        }
+
         if (argument.Bucket == VfuncBucket.OutScalar)
         {
             writer.WriteLine("*" + value.Name + " = " + ToNativeScalar(value, local) + ";");
+            if (guarded)
+            {
+                writer.CloseBlock();
+            }
+
             return;
         }
 
@@ -1240,6 +1269,10 @@ internal sealed class VfuncEmitter
         writer.WriteLine(MintExpression(value, handle) + ";");
         writer.CloseBlock();
         writer.WriteLine("*" + value.Name + " = " + handle + ";");
+        if (guarded)
+        {
+            writer.CloseBlock();
+        }
     }
 
     /// <summary>

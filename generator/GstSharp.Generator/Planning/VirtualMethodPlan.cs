@@ -113,12 +113,19 @@ internal enum VfuncReturnBucket
 /// The span whose elements a <see cref="VfuncBucket.SpanCount"/> argument
 /// counts, or <see langword="null"/> when the argument counts nothing.
 /// </param>
+/// <param name="IsOptional">
+/// Whether the caller of the slot may pass no storage at all, which the gir
+/// spells <c>optional="1"</c> on a produced argument. A slot that writes
+/// through such a pointer without looking at it crashes the process the first
+/// time somebody asks for less than the slot produces.
+/// </param>
 internal sealed record VfuncArgument(
     ArgumentPlan Argument,
     VfuncBucket Bucket,
     bool IsIdentity = false,
     string? IdentityReference = null,
-    string? CountOf = null);
+    string? CountOf = null,
+    bool IsOptional = false);
 
 /// <summary>
 /// Everything the emitter needs to write one <c>&lt;virtual-method&gt;</c>: the

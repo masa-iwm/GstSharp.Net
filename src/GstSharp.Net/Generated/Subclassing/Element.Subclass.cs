@@ -637,8 +637,14 @@ public unsafe partial class Element
 
         if (slot is null)
         {
-            *state = default;
-            *pending = default;
+            if (state != null)
+            {
+                *state = default;
+            }
+            if (pending != null)
+            {
+                *pending = default;
+            }
             throw new InvalidOperationException(
                 "Element.get_state has no parent implementation; override OnGetState.");
         }
@@ -851,8 +857,14 @@ public unsafe partial class Element
             try
             {
                 Gst.StateChangeReturn result = managed.OnGetState(out stateValue, out pendingValue, new Gst.ClockTime(timeout));
-                *state = (int)stateValue;
-                *pending = (int)pendingValue;
+                if (state != null)
+                {
+                    *state = (int)stateValue;
+                }
+                if (pending != null)
+                {
+                    *pending = (int)pendingValue;
+                }
                 return (int)(result);
             }
             finally
