@@ -345,15 +345,16 @@ public partial class Object : IDisposable
 
         DrainPendingReleases();
 
-        // The fabrication of a managed subclass takes a gate of its own, and
-        // that gate is always taken before Sync: the factory it runs ends in
+        // The interned lookup and the fabrication of a managed subclass are
+        // asked together and before Sync: the gate of a fabrication is always
+        // taken outside the interning lock, because the factory it runs ends in
         // this constructor, which takes Sync itself.
         if (TypeRegistry.TryFabricate(handle, out Object? fabricated))
         {
             // The reference this call was handed is settled once the wrapper
             // exists: the wrapper owns the object through its toggle reference
             // from here on.
-            TypeRegistry.SettleFabricated(handle, transfer);
+            TypeRegistry.SettleHandedReference(handle, transfer);
             return fabricated;
         }
 
@@ -370,17 +371,12 @@ public partial class Object : IDisposable
                 known.TryGetTarget(out Object? existing) &&
                 !existing.IsDisposed)
             {
-                if (transfer == Transfer.Full)
-                {
-                    // The wrapper already owns the object through its toggle
-                    // reference, so the one that came with the call is dropped.
-                    if (IsFloating(handle))
-                    {
-                        GObjectNative.ObjectRefSink(handle);
-                    }
-
-                    GObjectNative.ObjectUnref(handle);
-                }
+                // The wrapper already owns the object through its toggle
+                // reference, so the reference that came with the call is
+                // settled here, by the same rule a fabricated wrapper settles
+                // its own: a floating instance is sunk whatever the annotation
+                // says, and a full reference is dropped.
+                TypeRegistry.SettleHandedReference(handle, transfer);
 
                 return existing;
             }
@@ -448,6 +444,30 @@ public partial class Object : IDisposable
                 ? existing
                 : null;
     }
+
+    /// <summary>
+    /// Gets whether the interning table still carries a wrapper of an object
+    /// that has already been disposed.
+    /// </summary>
+    /// <param name="handle">The object to ask about.</param>
+    /// <returns>
+    /// <see langword="true"/> while a disposed wrapper of
+    /// <paramref name="handle"/> is still interned.
+    /// </returns>
+    /// <remarks>
+    /// <see cref="Dispose(bool)"/> sets the flag of the wrapper first, writes
+    /// the marker on the instance next, and only then removes the entry, so
+    /// this answers exactly the window in which the marker is not there yet and
+    /// the entry is: the window in which a fabrication would otherwise build a
+    /// second wrapper for an instance whose wrapper is going away. Together
+    /// with the marker the two cover the whole timeline, and neither of them
+    /// needs the interning lock or a native call.
+    /// </remarks>
+    internal static bool HasDisposedInterned(nint handle) =>
+        handle != nint.Zero &&
+        Wrappers.TryGetValue(handle, out ToggleRef? known) &&
+        known.TryGetTarget(out Object? existing) &&
+        existing.IsDisposed;
 
     /// <summary>
     /// Tells the constructor of this thread that the instance it is about to
@@ -530,7 +550,29 @@ public partial class Object : IDisposable
                     return interned;
                 }
 
-                Object wrapper = factory(SubclassCtorArgs.Adopt(handle));
+                Object wrapper;
+
+                try
+                {
+                    wrapper = factory(SubclassCtorArgs.Adopt(handle));
+                }
+                catch
+                {
+                    // The base constructor interns the wrapper before the body
+                    // of the subclass runs, so a body that throws leaves a
+                    // live, toggle-holding wrapper behind that nobody will ever
+                    // be handed. Releasing it here is what the caller could not
+                    // do; the instance goes back to the state it was found in,
+                    // and the marker that Dispose writes on it makes every
+                    // later slot chain up, which is the rule for a disposed
+                    // wrapper anyway.
+                    if (TryGetInterned(handle) is { } stray && stray._handle == handle)
+                    {
+                        stray.Dispose();
+                    }
+
+                    throw;
+                }
 
                 if (wrapper._handle != handle)
                 {

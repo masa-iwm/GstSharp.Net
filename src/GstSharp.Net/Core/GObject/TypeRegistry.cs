@@ -227,24 +227,36 @@ public static class TypeRegistry
     }
 
     /// <summary>
-    /// Builds the wrapper of an instance of a managed subclass that native code
-    /// created, when there is one to build.
+    /// Answers the live wrapper of an instance, and builds the one of a managed
+    /// subclass that native code created when there is none.
     /// </summary>
     /// <param name="handle">The instance to wrap.</param>
     /// <param name="wrapper">The wrapper, new or the one that was interned.</param>
     /// <returns>
-    /// <see langword="true"/> when the exact type of the instance is a managed
-    /// subclass with a factory and nothing suppresses the fabrication.
+    /// <see langword="true"/> when the instance already has a live wrapper, or
+    /// when its exact type is a managed subclass with a factory and nothing
+    /// suppresses the fabrication.
     /// </returns>
     /// <remarks>
+    /// <para>
+    /// The interning table is consulted before the type of the instance is
+    /// read, so an instance that is already wrapped costs one dictionary lookup
+    /// and nothing else: no type read, no native call, no gate. That is what
+    /// every vfunc argument of a managed element is on a streaming thread. The
+    /// wrapper of a hit is settled by the caller exactly like a fresh one, so
+    /// that both answers carry the same ownership rule.
+    /// </para>
     /// <para>
     /// Nothing is fabricated while an instance of the type is being constructed
     /// on this thread — the constructor of the wrapper is about to install the
     /// toggle reference — and nothing is fabricated for an instance whose
     /// wrapper was disposed, which gave up its part in the lifetime of the
-    /// object for good. Both cases answer <see langword="false"/>, and the
-    /// caller falls back to the ancestor wrapper or to chaining up, exactly as
-    /// before.
+    /// object for good. A dispose that is under way is covered as well: the
+    /// wrapper sets its flag before it writes the marker on the instance, so a
+    /// table entry whose wrapper is already disposed answers for the window in
+    /// which the marker is not there yet. All of these answer
+    /// <see langword="false"/>, and the caller falls back to the ancestor
+    /// wrapper or to chaining up, exactly as before.
     /// </para>
     /// <para>
     /// Nothing here adjusts references beyond the one the wrapper takes for
@@ -263,24 +275,37 @@ public static class TypeRegistry
             return false;
         }
 
-        GType type = GetInstanceType(handle);
-        if (!SubclassFactories.TryGetValue(type.Value, out Func<SubclassCtorArgs, Object>? factory))
-        {
-            return false;
-        }
-
-        if (SubclassRegistry.IsConstructing(type) || Object.WasSubclassDisposed(handle))
-        {
-            return false;
-        }
-
         if (Object.IsInterningLockHeld)
         {
             // The gate of a fabrication is always taken before the interning
             // lock. This thread holds that lock, which means it came through
             // Gst.GObject.Object.FromNative - which tried to fabricate before
             // it took it - so there is nothing left to do here and the order of
-            // the two locks stays the same everywhere.
+            // the two locks stays the same everywhere. This is asked before
+            // anything below because it is also what keeps every native call
+            // here - the qdata read - out from under that lock.
+            return false;
+        }
+
+        if (Object.TryGetInterned(handle) is { } interned)
+        {
+            wrapper = interned;
+            return true;
+        }
+
+        GType type = GetInstanceType(handle);
+        if (!SubclassFactories.TryGetValue(type.Value, out Func<SubclassCtorArgs, Object>? factory))
+        {
+            return false;
+        }
+
+        if (SubclassRegistry.IsConstructing(type) || Object.HasDisposedInterned(handle))
+        {
+            return false;
+        }
+
+        if (Object.WasSubclassDisposed(handle))
+        {
             return false;
         }
 
@@ -289,21 +314,22 @@ public static class TypeRegistry
     }
 
     /// <summary>
-    /// Settles the reference a fabricated wrapper was handed by the call it
-    /// came out of.
+    /// Settles the reference a call was handed for an object that a wrapper
+    /// already owns.
     /// </summary>
     /// <param name="handle">The instance that was wrapped.</param>
     /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
     /// <remarks>
-    /// The fabricated wrapper owns the object through its own toggle reference,
-    /// so a <see cref="Transfer.Full"/> reference is dropped the same way an
-    /// interned hit drops it. A floating instance is sunk first whatever the
-    /// annotation says: "transfer floating" is spelled <c>none</c> in the gir,
-    /// which is how <c>gst_element_factory_make</c> arrives here, and the
-    /// wrapper a constructor builds itself sinks such an instance as well. What
-    /// is left either way is the single reference the toggle reference holds.
+    /// The wrapper — the one that was just fabricated, or the one that was
+    /// interned already — owns the object through its own toggle reference, so
+    /// a <see cref="Transfer.Full"/> reference is dropped. A floating instance
+    /// is sunk first whatever the annotation says: "transfer floating" is
+    /// spelled <c>none</c> in the gir, which is how
+    /// <c>gst_element_factory_make</c> arrives here, and the wrapper a
+    /// constructor builds itself sinks such an instance as well. What is left
+    /// either way is the single reference the toggle reference holds.
     /// </remarks>
-    internal static void SettleFabricated(nint handle, Transfer transfer)
+    internal static void SettleHandedReference(nint handle, Transfer transfer)
     {
         if (GObjectNative.ObjectIsFloating(handle) != 0)
         {
@@ -363,7 +389,7 @@ public static class TypeRegistry
             // where it is settled: doing it in the caller would leak one for
             // whoever calls this directly rather than through
             // Gst.GObject.Object.FromNative.
-            SettleFabricated(handle, transfer);
+            SettleHandedReference(handle, transfer);
             wrapper = fabricated;
             return true;
         }
