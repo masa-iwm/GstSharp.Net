@@ -1778,6 +1778,78 @@ public sealed class AbiProbeTests
     /// </summary>
     /// <param name="instance">The object to read.</param>
     /// <returns>The class of the instance.</returns>
+    /// <summary>
+    /// The slot a managed <c>GstBin</c> subclass overrides holds what the
+    /// library put there. <c>change_state</c> is the one every bin inherits
+    /// from <c>GstElement</c> and that <c>GstBin</c> installs its own
+    /// implementation of, so a mirror whose offsets had drifted would read a
+    /// data field here instead of a function.
+    /// </summary>
+    [Fact]
+    public unsafe void TheBinStateSlotHoldsWhatTheLibraryPutThere()
+    {
+        nint klass = GObjectNative.TypeClassRef(Bin.GetGType());
+
+        try
+        {
+            Gst.ElementClassRaw* element = (Gst.ElementClassRaw*)klass;
+
+            _output.WriteLine(FormattableString.Invariant(
+                $"GstBin: change_state=0x{element->ChangeState:x} query=0x{element->Query:x}"));
+
+            Assert.NotEqual(nint.Zero, element->ChangeState);
+
+            // GstBin answers queries of its own as well, which is the slot a
+            // managed bin hides when it overrides it.
+            Assert.NotEqual(nint.Zero, element->Query);
+        }
+        finally
+        {
+            GObjectNative.TypeClassUnref(klass);
+        }
+    }
+
+    /// <summary>
+    /// The <c>transform</c> slot of a real filter is where the mirror says it
+    /// is. <c>audioconvert</c> converts out of place, so it installs the slot
+    /// a managed filter declares with <c>TransformOverride</c>.
+    /// </summary>
+    [RequiresElementFact("audioconvert")]
+    public unsafe void TheTransformSlotOfAFilterHoldsWhatTheLibraryPutThere()
+    {
+        using Element filter = ElementFactory.Make("audioconvert", null)
+            ?? throw new InvalidOperationException("audioconvert is part of the base plugins.");
+
+        Gst.Base.BaseTransformClassRaw* concrete = (Gst.Base.BaseTransformClassRaw*)ClassOf(filter);
+
+        _output.WriteLine(string.Create(
+            CultureInfo.InvariantCulture,
+            $"audioconvert: transform=0x{concrete->Transform:x} transform_ip=0x{concrete->TransformIp:x}"));
+
+        Assert.NotEqual(nint.Zero, concrete->Transform);
+        Assert.NotEqual(nint.Zero, concrete->TransformCaps);
+    }
+
+    /// <summary>
+    /// The <c>aggregate</c> slot of a real aggregator is where the mirror says
+    /// it is. It is the slot a managed aggregator has to declare, because the
+    /// base class calls it unguarded.
+    /// </summary>
+    [RequiresElementFact("audiomixer")]
+    public unsafe void TheAggregateSlotOfAnAggregatorHoldsWhatTheLibraryPutThere()
+    {
+        using Element mixer = ElementFactory.Make("audiomixer", null)
+            ?? throw new InvalidOperationException("audiomixer is required by the CI leg that runs this.");
+
+        Gst.Base.AggregatorClassRaw* concrete = (Gst.Base.AggregatorClassRaw*)ClassOf(mixer);
+
+        _output.WriteLine(FormattableString.Invariant(
+            $"audiomixer: aggregate=0x{concrete->Aggregate:x} sink_query=0x{concrete->SinkQuery:x}"));
+
+        Assert.NotEqual(nint.Zero, concrete->Aggregate);
+        Assert.NotEqual(nint.Zero, concrete->SinkQuery);
+    }
+
     private static unsafe nint ClassOf(Gst.GObject.Object instance) => *(nint*)instance.Handle;
 
     /// <summary>
