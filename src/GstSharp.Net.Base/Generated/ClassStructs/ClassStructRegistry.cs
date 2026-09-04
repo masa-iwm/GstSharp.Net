@@ -129,5 +129,23 @@ internal static unsafe class ClassStructRegistry
                 new Gst.GObject.ClassSlotProbe("finish_buffer_list", Gst.Base.AggregatorClassRaw.FinishBufferListOffset),
                 new Gst.GObject.ClassSlotProbe("peek_next_sample", Gst.Base.AggregatorClassRaw.PeekNextSampleOffset),
             ]),
+        new Gst.GObject.ClassStructProbe(
+            "GstBaseParseClass",
+            &Gst.Base.BaseParse.GetGType,
+            Unsafe.SizeOf<Gst.Base.BaseParseClassRaw>(),
+            [
+                new Gst.GObject.ClassSlotProbe("start", Gst.Base.BaseParseClassRaw.StartOffset),
+                new Gst.GObject.ClassSlotProbe("stop", Gst.Base.BaseParseClassRaw.StopOffset),
+                new Gst.GObject.ClassSlotProbe("set_sink_caps", Gst.Base.BaseParseClassRaw.SetSinkCapsOffset),
+                new Gst.GObject.ClassSlotProbe("handle_frame", Gst.Base.BaseParseClassRaw.HandleFrameOffset),
+                new Gst.GObject.ClassSlotProbe("pre_push_frame", Gst.Base.BaseParseClassRaw.PrePushFrameOffset),
+                new Gst.GObject.ClassSlotProbe("convert", Gst.Base.BaseParseClassRaw.ConvertOffset),
+                new Gst.GObject.ClassSlotProbe("sink_event", Gst.Base.BaseParseClassRaw.SinkEventOffset),
+                new Gst.GObject.ClassSlotProbe("src_event", Gst.Base.BaseParseClassRaw.SrcEventOffset),
+                new Gst.GObject.ClassSlotProbe("get_sink_caps", Gst.Base.BaseParseClassRaw.GetSinkCapsOffset),
+                new Gst.GObject.ClassSlotProbe("detect", Gst.Base.BaseParseClassRaw.DetectOffset),
+                new Gst.GObject.ClassSlotProbe("sink_query", Gst.Base.BaseParseClassRaw.SinkQueryOffset),
+                new Gst.GObject.ClassSlotProbe("src_query", Gst.Base.BaseParseClassRaw.SrcQueryOffset),
+            ]),
     ];
 }

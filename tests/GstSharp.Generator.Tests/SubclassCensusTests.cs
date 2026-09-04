@@ -31,10 +31,10 @@ public sealed class SubclassCensusTests
     /// <param name="vfuncs">The slots those mirrors give an <c>OnX</c> member.</param>
     [Theory]
     [InlineData("Gst", 3, 17)]
-    [InlineData("GstBase", 5, 84)]
+    [InlineData("GstBase", 6, 96)]
     [InlineData("GstApp", 0, 0)]
-    [InlineData("GstAudio", 5, 20)]
-    [InlineData("GstVideo", 2, 5)]
+    [InlineData("GstAudio", 7, 55)]
+    [InlineData("GstVideo", 4, 45)]
     [InlineData("GstPbutils", 0, 0)]
     [InlineData("GstSdp", 0, 0)]
     [InlineData("GstWebRTC", 0, 0)]
@@ -56,11 +56,11 @@ public sealed class SubclassCensusTests
     }
 
     /// <summary>
-    /// The run as a whole: fifteen mirrors and a hundred and twenty six slots, the
+    /// The run as a whole: twenty mirrors and two hundred and thirteen slots, the
     /// numbers the release notes and <c>docs/subclassing.md</c> quote.
     /// </summary>
     [Fact]
-    public void TheRunEmitsFifteenMirrorsAndAHundredAndTwentySixSlots()
+    public void TheRunEmitsTwentyMirrorsAndTwoHundredAndThirteenSlots()
     {
         EmissionCensus census = Generated.Census;
         int mirrors = 0;
@@ -71,8 +71,8 @@ public sealed class SubclassCensusTests
             slots += census.EmittedCount(module, "vfunc");
         }
 
-        Assert.Equal(15, mirrors);
-        Assert.Equal(126, slots);
+        Assert.Equal(20, mirrors);
+        Assert.Equal(213, slots);
     }
 
     /// <summary>

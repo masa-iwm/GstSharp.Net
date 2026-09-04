@@ -81,8 +81,48 @@ internal sealed class VfuncEmitter
                         + "and the element produces nothing without saying why"),
                 ]),
             ["GstAudio.AudioFilter"] = new(["sink", "src"], []),
+            ["GstAudio.AudioDecoder"] = new(
+                ["sink", "src"],
+                [
+                    new(
+                        "handle_frame",
+                        "the base class calls it for every buffer it parsed out of the stream and for the "
+                        + "drain at the end of it, unguarded - a decoder without it decodes nothing"),
+                ]),
+            ["GstAudio.AudioEncoder"] = new(
+                ["sink", "src"],
+                [
+                    new(
+                        "handle_frame",
+                        "the base class calls it for every block of samples and for the drain at the end of "
+                        + "the stream, unguarded - an encoder without it encodes nothing"),
+                ]),
+            ["GstBase.BaseParse"] = new(
+                ["sink", "src"],
+                [
+                    new(
+                        "handle_frame",
+                        "the base class calls it for every frame it collected, unguarded - it is where the "
+                        + "framing a parser exists for is decided"),
+                ]),
             ["GstVideo.VideoSink"] = new(["sink"], []),
             ["GstVideo.VideoFilter"] = new(["sink", "src"], []),
+            ["GstVideo.VideoDecoder"] = new(
+                ["sink", "src"],
+                [
+                    new(
+                        "handle_frame",
+                        "the base class calls it for every frame it gathered, unguarded - a decoder without "
+                        + "it decodes nothing"),
+                ]),
+            ["GstVideo.VideoEncoder"] = new(
+                ["sink", "src"],
+                [
+                    new(
+                        "handle_frame",
+                        "the base class calls it for every frame it was handed, unguarded - an encoder "
+                        + "without it encodes nothing"),
+                ]),
         };
 
     /// <summary>

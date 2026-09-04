@@ -1350,10 +1350,10 @@ public sealed class RecordEmitterTests
 
     [Theory]
     [InlineData("GstSharp.Net", 120)]
-    [InlineData("GstSharp.Net.Base", 30)]
+    [InlineData("GstSharp.Net.Base", 32)]
     [InlineData("GstSharp.Net.App", 8)]
-    [InlineData("GstSharp.Net.Audio", 48)]
-    [InlineData("GstSharp.Net.Video", 77)]
+    [InlineData("GstSharp.Net.Audio", 52)]
+    [InlineData("GstSharp.Net.Video", 81)]
     [InlineData("GstSharp.Net.Pbutils", 19)]
     [InlineData("GstSharp.Net.Sdp", 24)]
     [InlineData("GstSharp.Net.WebRTC", 19)]
