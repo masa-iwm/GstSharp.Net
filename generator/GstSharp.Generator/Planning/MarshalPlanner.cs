@@ -4207,6 +4207,13 @@ internal sealed class MarshalPlanner
         "boxed parameter lent by pointer; Boxed has no borrow mode, and a copy would hide "
         + "writes the caller reads back";
 
+    /// <summary>
+    /// What the skip ledger prints for a slot whose <c>inout</c> handle the
+    /// caller gives up on entry and takes back on exit.
+    /// </summary>
+    private const string InOutHandOverReason =
+        "inout parameter that hands over ownership: adopt-on-entry/detach-on-exit is Stage 2b";
+
     internal VirtualMethodPlan? PlanVirtualMethod(
         GirVirtualMethod method,
         string slotMember,
@@ -4372,7 +4379,7 @@ internal sealed class MarshalPlanner
         if (direction != ArgumentDirection.In)
         {
             return PlanProducedArgument(
-                argument, mapped, direction, transfer, identity, parameter.IsOptional, planned);
+                argument, mapped, direction, transfer, identity, parameter.IsOptional, planned, ref reason);
         }
 
         VfuncBucket? bucket = argument.Kind switch
@@ -4516,6 +4523,7 @@ internal sealed class MarshalPlanner
     /// <param name="identity">Whether the overlays call the argument identity preserving.</param>
     /// <param name="optional">Whether the caller may pass no storage for it.</param>
     /// <param name="planned">The arguments planned before this one.</param>
+    /// <param name="reason">Set to what the skip ledger prints for a refusal of its own.</param>
     /// <returns>The argument, or <see langword="null"/> when it is not supported.</returns>
     private static VfuncArgument? PlanProducedArgument(
         ArgumentPlan argument,
@@ -4524,7 +4532,8 @@ internal sealed class MarshalPlanner
         GirTransfer transfer,
         bool identity,
         bool optional,
-        IReadOnlyList<VfuncArgument> planned)
+        IReadOnlyList<VfuncArgument> planned,
+        ref string reason)
     {
         if (argument.Kind is ArgumentKind.Value or ArgumentKind.Boolean
             or ArgumentKind.Enumeration or ArgumentKind.Wrapper)
@@ -4551,6 +4560,20 @@ internal sealed class MarshalPlanner
 
         if (direction == ArgumentDirection.Ref)
         {
+            // The caller of such a slot gives its reference up on entry and
+            // takes over whatever the slot leaves behind. The trampoline
+            // borrows the value it finds and the chain-up mints one on the way
+            // out, which is right only while the two are the same handle: an
+            // override that really replaces the value would leak the reference
+            // the caller gave up. Adopting on entry and detaching on exit is
+            // the projection that shape needs, and no slot of this stage has
+            // it, so it is refused until the stage that writes it.
+            if (!identity)
+            {
+                reason = InOutHandOverReason;
+                return null;
+            }
+
             return new VfuncArgument(argument, VfuncBucket.InOutHandle, identity, IsOptional: optional);
         }
 

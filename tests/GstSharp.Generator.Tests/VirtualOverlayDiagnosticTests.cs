@@ -43,7 +43,7 @@ public sealed class VirtualOverlayDiagnosticTests
                   <instance-parameter name="widget" transfer-ownership="none">
                     <type name="Widget" c:type="GstWidget*"/>
                   </instance-parameter>
-                  <parameter name="buf" direction="inout" caller-allocates="0" transfer-ownership="full">
+                  <parameter name="buf" direction="out" caller-allocates="0" transfer-ownership="full">
                     <type name="Gst.Buffer" c:type="GstBuffer**"/>
                   </parameter>
                 </parameters>
@@ -62,7 +62,7 @@ public sealed class VirtualOverlayDiagnosticTests
                     <parameter name="widget" transfer-ownership="none">
                       <type name="Widget" c:type="GstWidget*"/>
                     </parameter>
-                    <parameter name="buf" direction="inout" caller-allocates="0" transfer-ownership="full">
+                    <parameter name="buf" direction="out" caller-allocates="0" transfer-ownership="full">
                       <type name="Gst.Buffer" c:type="GstBuffer**"/>
                     </parameter>
                   </parameters>
@@ -165,6 +165,14 @@ public sealed class VirtualOverlayDiagnosticTests
               </field>
             </record>
         """;
+
+    /// <summary>
+    /// The same slot with the buffer passed <c>inout</c> and transfer full: the
+    /// caller gives its reference up on entry and takes over what the slot
+    /// leaves, which is the third inout shape the planner refuses.
+    /// </summary>
+    private static readonly string BodyWithAnInOutHandOver =
+        Body.Replace("direction=\"out\"", "direction=\"inout\"", StringComparison.Ordinal);
 
     private const string Allowlist = "\"subclassable\": [\"Gst.Widget\"]";
 
@@ -276,6 +284,27 @@ public sealed class VirtualOverlayDiagnosticTests
         Assert.Equal(DiagnosticSeverity.Error, error.Severity);
         Assert.Contains("stride", error.Message, StringComparison.Ordinal);
         Assert.Contains("glong", error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AnInOutHandleThatHandsOwnershipOverIsRefused()
+    {
+        // The trampoline borrows what it finds in the pointer and the chain-up
+        // mints on the way out, which only adds up while the two are the same
+        // handle. An override that really replaces the value would leak the
+        // reference the caller gave up, so the slot leaves the surface with a
+        // reason instead of being emitted wrong.
+        FixtureRun run = Run(BodyWithAnInOutHandOver, "{ " + Allowlist + " }");
+
+        Assert.Equal(0, run.Result.Census.EmittedCount("Gst", "vfunc"));
+        Assert.Equal(
+            new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                ["Gst.Widget::prepare"] =
+                    "inout parameter that hands over ownership: "
+                    + "adopt-on-entry/detach-on-exit is Stage 2b",
+            },
+            run.Result.Census.SkippedVirtuals("Gst"));
     }
 
     [Fact]
