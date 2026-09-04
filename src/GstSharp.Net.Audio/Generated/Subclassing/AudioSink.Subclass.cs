@@ -136,17 +136,34 @@ public unsafe partial class AudioSink
         ArgumentNullException.ThrowIfNull(configureClass);
         ArgumentNullException.ThrowIfNull(overrides);
 
-        bool declared = false;
+        bool declaredPrepare = false;
         foreach (Gst.GObject.VfuncOverride candidate in overrides)
         {
-            if (candidate.Function == WriteOverride.Function)
+            if (candidate.Function == PrepareOverride.Function)
             {
-                declared = true;
+                declaredPrepare = true;
                 break;
             }
         }
 
-        if (!declared)
+        if (!declaredPrepare)
+        {
+            throw new ArgumentException(
+                "A managed GstAudioSink has to declare PrepareOverride: the ring buffer cannot be acquired without it - gst_audio_sink_ring_buffer_acquire starts out with a failure and only the slot turns it into a success.",
+                nameof(overrides));
+        }
+
+        bool declaredWrite = false;
+        foreach (Gst.GObject.VfuncOverride candidate in overrides)
+        {
+            if (candidate.Function == WriteOverride.Function)
+            {
+                declaredWrite = true;
+                break;
+            }
+        }
+
+        if (!declaredWrite)
         {
             throw new ArgumentException(
                 "A managed GstAudioSink has to declare WriteOverride: the thread of the ring buffer stops before it starts when the slot is NULL, and the element plays nothing without saying why.",

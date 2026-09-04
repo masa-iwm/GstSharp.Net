@@ -244,17 +244,17 @@ public unsafe partial class Aggregator
         ArgumentNullException.ThrowIfNull(configureClass);
         ArgumentNullException.ThrowIfNull(overrides);
 
-        bool declared = false;
+        bool declaredAggregate = false;
         foreach (Gst.GObject.VfuncOverride candidate in overrides)
         {
             if (candidate.Function == AggregateOverride.Function)
             {
-                declared = true;
+                declaredAggregate = true;
                 break;
             }
         }
 
-        if (!declared)
+        if (!declaredAggregate)
         {
             throw new ArgumentException(
                 "A managed GstAggregator has to declare AggregateOverride: the base class calls the slot unguarded.",

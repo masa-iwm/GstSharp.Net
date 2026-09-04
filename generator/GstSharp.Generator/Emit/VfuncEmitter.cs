@@ -33,32 +33,46 @@ internal sealed class VfuncEmitter
     private static readonly Dictionary<string, SubclassBaseRule> BaseRules =
         new(StringComparer.Ordinal)
         {
-            ["GstBase.BaseSrc"] = new(["src"], null),
-            ["GstBase.PushSrc"] = new(["src"], null),
-            ["GstBase.BaseSink"] = new(["sink"], null),
-            ["GstBase.BaseTransform"] = new(["sink", "src"], null),
-            ["GstBase.Aggregator"] = new(["src"], "aggregate"),
+            ["GstBase.BaseSrc"] = new(["src"], []),
+            ["GstBase.PushSrc"] = new(["src"], []),
+            ["GstBase.BaseSink"] = new(["sink"], []),
+            ["GstBase.BaseTransform"] = new(["sink", "src"], []),
+            ["GstBase.Aggregator"] = new(["src"], [new("aggregate", null)]),
             ["GstAudio.AudioBaseSink"] = new(
                 ["sink"],
-                "create_ringbuffer",
-                "without a ring buffer the element cannot leave the NULL state"),
+                [new("create_ringbuffer", "without a ring buffer the element cannot leave the NULL state")]),
             ["GstAudio.AudioBaseSrc"] = new(
                 ["src"],
-                "create_ringbuffer",
-                "without a ring buffer the element cannot leave the NULL state"),
+                [new("create_ringbuffer", "without a ring buffer the element cannot leave the NULL state")]),
             ["GstAudio.AudioSink"] = new(
                 ["sink"],
-                "write",
-                "the thread of the ring buffer stops before it starts when the slot is NULL, "
-                + "and the element plays nothing without saying why"),
+                [
+                    new(
+                        "prepare",
+                        "the ring buffer cannot be acquired without it - "
+                        + "gst_audio_sink_ring_buffer_acquire starts out with a failure and only the slot "
+                        + "turns it into a success"),
+                    new(
+                        "write",
+                        "the thread of the ring buffer stops before it starts when the slot is NULL, "
+                        + "and the element plays nothing without saying why"),
+                ]),
             ["GstAudio.AudioSrc"] = new(
                 ["src"],
-                "read",
-                "the thread of the ring buffer stops before it starts when the slot is NULL, "
-                + "and the element produces nothing without saying why"),
-            ["GstAudio.AudioFilter"] = new(["sink", "src"], null),
-            ["GstVideo.VideoSink"] = new(["sink"], null),
-            ["GstVideo.VideoFilter"] = new(["sink", "src"], null),
+                [
+                    new(
+                        "prepare",
+                        "the ring buffer cannot be acquired without it - "
+                        + "gst_audio_src_ring_buffer_acquire starts out with a failure and only the slot "
+                        + "turns it into a success"),
+                    new(
+                        "read",
+                        "the thread of the ring buffer stops before it starts when the slot is NULL, "
+                        + "and the element produces nothing without saying why"),
+                ]),
+            ["GstAudio.AudioFilter"] = new(["sink", "src"], []),
+            ["GstVideo.VideoSink"] = new(["sink"], []),
+            ["GstVideo.VideoFilter"] = new(["sink", "src"], []),
         };
 
     /// <summary>
@@ -330,24 +344,28 @@ internal sealed class VfuncEmitter
             hides |= parent.IsSubclassable;
         }
 
-        string? required = null;
-        if (rule?.RequiredOverride is { } slot)
+        List<(string Name, string? Reason)> required = [];
+        foreach (RequiredSlot slot in rule?.Required ?? [])
         {
+            string? name = null;
             foreach (VirtualMethodPlan plan in plans)
             {
-                if (string.Equals(plan.Method.Name, slot, StringComparison.Ordinal))
+                if (string.Equals(plan.Method.Name, slot.Slot, StringComparison.Ordinal))
                 {
-                    required = plan.Name;
+                    name = plan.Name;
                 }
             }
 
-            if (required is null)
+            if (name is null)
             {
                 _diagnostics.Warn(
                     "GEN0034",
-                    $"The class '{model.QualifiedName}' requires an override of '{slot}', which is not part of "
-                    + "the emitted surface; the registration cannot check for it.");
+                    $"The class '{model.QualifiedName}' requires an override of '{slot.Slot}', which is not part "
+                    + "of the emitted surface; the registration cannot check for it.");
+                continue;
             }
+
+            required.Add((name, slot.Reason));
         }
 
         writer.WriteLine("/// <summary>Registers a managed subclass of <c>" + cName + "</c> with GObject.</summary>");
@@ -374,7 +392,7 @@ internal sealed class VfuncEmitter
         writer.WriteLine("/// </exception>");
 
         string declaration = "public static " + (hides ? "new " : string.Empty) + "Gst.GObject.SubclassType DefineSubclass(";
-        if (!mandatory && required is null)
+        if (!mandatory && required.Count == 0)
         {
             writer.WriteLine(declaration);
             writer.WriteLine("    string typeName,");
@@ -395,26 +413,30 @@ internal sealed class VfuncEmitter
             writer.WriteLine("ArgumentNullException.ThrowIfNull(configureClass);");
         }
 
-        if (required is not null)
+        if (required.Count > 0)
         {
             writer.WriteLine("ArgumentNullException.ThrowIfNull(overrides);");
+        }
+
+        foreach ((string name, string? reason) in required)
+        {
             writer.WriteLine();
-            writer.WriteLine("bool declared = false;");
+            writer.WriteLine("bool declared" + name + " = false;");
             writer.WriteLine("foreach (Gst.GObject.VfuncOverride candidate in overrides)");
             writer.OpenBlock();
-            writer.WriteLine("if (candidate.Function == " + required + "Override.Function)");
+            writer.WriteLine("if (candidate.Function == " + name + "Override.Function)");
             writer.OpenBlock();
-            writer.WriteLine("declared = true;");
+            writer.WriteLine("declared" + name + " = true;");
             writer.WriteLine("break;");
             writer.CloseBlock();
             writer.CloseBlock();
             writer.WriteLine();
-            writer.WriteLine("if (!declared)");
+            writer.WriteLine("if (!declared" + name + ")");
             writer.OpenBlock();
             writer.WriteLine("throw new ArgumentException(");
             writer.WriteLine(
-                "    \"A managed " + cName + " has to declare " + required + "Override: "
-                + (rule!.RequiredReason ?? "the base class calls the slot unguarded") + ".\",");
+                "    \"A managed " + cName + " has to declare " + name + "Override: "
+                + (reason ?? "the base class calls the slot unguarded") + ".\",");
             writer.WriteLine("    nameof(overrides));");
             writer.CloseBlock();
         }
@@ -1582,17 +1604,20 @@ internal sealed class VfuncEmitter
 
     /// <summary>The registration facts of one base class that no gir states.</summary>
     /// <param name="PadTemplates">The pad templates the class initialiser has to add.</param>
-    /// <param name="RequiredOverride">
-    /// The gir name of the slot a subclass has to declare, or
-    /// <see langword="null"/> when every slot has a documented default.
-    /// </param>
-    /// <param name="RequiredReason">
-    /// Why the slot has to be declared, as the sentence the registration throws
-    /// with. It says "the base class calls the slot unguarded" when it is not
-    /// given, which is the reason a required slot usually has.
+    /// <param name="Required">
+    /// The slots a subclass has to declare, empty when every slot of the class
+    /// has an answer for a NULL parent that the element survives.
     /// </param>
     private sealed record SubclassBaseRule(
         IReadOnlyList<string> PadTemplates,
-        string? RequiredOverride,
-        string? RequiredReason = null);
+        IReadOnlyList<RequiredSlot> Required);
+
+    /// <summary>One slot a subclass of a base class has to declare.</summary>
+    /// <param name="Slot">The gir name of the slot.</param>
+    /// <param name="Reason">
+    /// Why it has to be declared, as the sentence the registration throws with.
+    /// It says "the base class calls the slot unguarded" when it is not given,
+    /// which is the reason a required slot usually has.
+    /// </param>
+    private sealed record RequiredSlot(string Slot, string? Reason);
 }

@@ -109,17 +109,34 @@ public unsafe partial class AudioSrc
         ArgumentNullException.ThrowIfNull(configureClass);
         ArgumentNullException.ThrowIfNull(overrides);
 
-        bool declared = false;
+        bool declaredPrepare = false;
         foreach (Gst.GObject.VfuncOverride candidate in overrides)
         {
-            if (candidate.Function == ReadOverride.Function)
+            if (candidate.Function == PrepareOverride.Function)
             {
-                declared = true;
+                declaredPrepare = true;
                 break;
             }
         }
 
-        if (!declared)
+        if (!declaredPrepare)
+        {
+            throw new ArgumentException(
+                "A managed GstAudioSrc has to declare PrepareOverride: the ring buffer cannot be acquired without it - gst_audio_src_ring_buffer_acquire starts out with a failure and only the slot turns it into a success.",
+                nameof(overrides));
+        }
+
+        bool declaredRead = false;
+        foreach (Gst.GObject.VfuncOverride candidate in overrides)
+        {
+            if (candidate.Function == ReadOverride.Function)
+            {
+                declaredRead = true;
+                break;
+            }
+        }
+
+        if (!declaredRead)
         {
             throw new ArgumentException(
                 "A managed GstAudioSrc has to declare ReadOverride: the thread of the ring buffer stops before it starts when the slot is NULL, and the element produces nothing without saying why.",

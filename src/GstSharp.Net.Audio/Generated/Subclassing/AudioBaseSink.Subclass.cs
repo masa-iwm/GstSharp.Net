@@ -64,17 +64,17 @@ public unsafe partial class AudioBaseSink
         ArgumentNullException.ThrowIfNull(configureClass);
         ArgumentNullException.ThrowIfNull(overrides);
 
-        bool declared = false;
+        bool declaredCreateRingbuffer = false;
         foreach (Gst.GObject.VfuncOverride candidate in overrides)
         {
             if (candidate.Function == CreateRingbufferOverride.Function)
             {
-                declared = true;
+                declaredCreateRingbuffer = true;
                 break;
             }
         }
 
-        if (!declared)
+        if (!declaredCreateRingbuffer)
         {
             throw new ArgumentException(
                 "A managed GstAudioBaseSink has to declare CreateRingbufferOverride: without a ring buffer the element cannot leave the NULL state.",
