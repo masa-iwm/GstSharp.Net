@@ -158,7 +158,51 @@ public unsafe partial class Element
         string typeName,
         Action<Gst.GObject.ClassConfig>? configureClass,
         params Gst.GObject.VfuncOverride[] overrides) =>
-        Gst.GObject.SubclassType.Define(new Gst.GObject.GType(GetGType()), typeName, configureClass, overrides);
+        DefineSubclassCore(typeName, configureClass, overrides, null);
+
+    /// <summary>Registers a managed subclass of <c>GstElement</c> with GObject.</summary>
+    /// <typeparam name="TSelf">
+    /// The subclass itself, which states how its wrapper is built.
+    /// </typeparam>
+    /// <param name="typeName">The <c>GType</c> name, unique in the process.</param>
+    /// <param name="configureClass">
+    /// Describes the class while it is being initialised.
+    /// </param>
+    /// <param name="overrides">The slots the subclass takes over.</param>
+    /// <returns>The registration.</returns>
+    /// <remarks>
+    /// An instance of the registered type that native code creates - one an element
+    /// factory made, a pad a base class built from a template - is wrapped as
+    /// <typeparamref name="TSelf"/> through
+    /// <see cref="Gst.GObject.IManagedSubclass{TSelf}.CreateWrapper"/>, so the overrides
+    /// of the subclass run for it. The non generic overload registers no such factory
+    /// and its instances arrive as the nearest wrapped ancestor.
+    /// </remarks>
+    /// <exception cref="System.ArgumentNullException">An argument is <see langword="null"/>.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The type name is not a legal <c>GType</c> name, or a declared slot belongs to a
+    /// class that <c>GstElement</c> does not derive from.
+    /// </exception>
+    /// <exception cref="System.InvalidOperationException">
+    /// The type name is taken, or the class initialiser failed.
+    /// </exception>
+    public static Gst.GObject.SubclassType DefineSubclass<TSelf>(
+        string typeName,
+        Action<Gst.GObject.ClassConfig>? configureClass,
+        params Gst.GObject.VfuncOverride[] overrides)
+        where TSelf : Element, Gst.GObject.IManagedSubclass<TSelf> =>
+        DefineSubclassCore(typeName, configureClass, overrides, static args => TSelf.CreateWrapper(args));
+
+    private static Gst.GObject.SubclassType DefineSubclassCore(
+        string typeName,
+        Action<Gst.GObject.ClassConfig>? configureClass,
+        Gst.GObject.VfuncOverride[] overrides,
+        Func<Gst.GObject.SubclassCtorArgs, Gst.GObject.Object>? wrapFactory)
+    {
+        Gst.GObject.SubclassType type = Gst.GObject.SubclassType.Define(
+            new Gst.GObject.GType(GetGType()), typeName, configureClass, overrides, wrapFactory);
+        return type;
+    }
 
     /// <summary>
     /// Retrieves a request pad from the element according to the provided template.
@@ -812,7 +856,7 @@ public unsafe partial class Element
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(element) is not Element managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(element) is not Element managed)
             {
                 return ChainUpRequestNewPad(element, templ, name, caps);
             }
@@ -834,7 +878,7 @@ public unsafe partial class Element
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(element) is not Element managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(element) is not Element managed)
             {
                 ChainUpReleasePad(element, pad);
                 return;
@@ -854,7 +898,7 @@ public unsafe partial class Element
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(element) is not Element managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(element) is not Element managed)
             {
                 return (int)(ChainUpGetState(element, state, pending, timeout));
             }
@@ -891,7 +935,7 @@ public unsafe partial class Element
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(element) is not Element managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(element) is not Element managed)
             {
                 return (int)(ChainUpSetState(element, state));
             }
@@ -910,7 +954,7 @@ public unsafe partial class Element
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(element) is not Element managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(element) is not Element managed)
             {
                 return (int)(ChainUpChangeState(element, transition));
             }
@@ -929,7 +973,7 @@ public unsafe partial class Element
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(element) is not Element managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(element) is not Element managed)
             {
                 ChainUpStateChanged(element, oldstate, newstate, pending);
                 return;
@@ -948,7 +992,7 @@ public unsafe partial class Element
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(element) is not Element managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(element) is not Element managed)
             {
                 ChainUpSetBus(element, bus);
                 return;
@@ -968,7 +1012,7 @@ public unsafe partial class Element
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(element) is not Element managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(element) is not Element managed)
             {
                 return ChainUpProvideClock(element);
             }
@@ -988,7 +1032,7 @@ public unsafe partial class Element
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(element) is not Element managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(element) is not Element managed)
             {
                 return (ChainUpSetClock(element, clock)) ? 1 : 0;
             }
@@ -1008,7 +1052,7 @@ public unsafe partial class Element
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(element) is not Element managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(element) is not Element managed)
             {
                 return (ChainUpSendEvent(element, @event)) ? 1 : 0;
             }
@@ -1028,7 +1072,7 @@ public unsafe partial class Element
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(element) is not Element managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(element) is not Element managed)
             {
                 return (ChainUpQuery(element, query)) ? 1 : 0;
             }
@@ -1048,7 +1092,7 @@ public unsafe partial class Element
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(element) is not Element managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(element) is not Element managed)
             {
                 return (ChainUpPostMessage(element, message)) ? 1 : 0;
             }
@@ -1068,7 +1112,7 @@ public unsafe partial class Element
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(element) is not Element managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(element) is not Element managed)
             {
                 ChainUpSetContext(element, context);
                 return;

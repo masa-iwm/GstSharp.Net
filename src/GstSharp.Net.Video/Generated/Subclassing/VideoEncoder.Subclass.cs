@@ -212,7 +212,48 @@ public unsafe partial class VideoEncoder
     public static new Gst.GObject.SubclassType DefineSubclass(
         string typeName,
         Action<Gst.GObject.ClassConfig> configureClass,
+        params Gst.GObject.VfuncOverride[] overrides) =>
+        DefineSubclassCore(typeName, configureClass, overrides, null);
+
+    /// <summary>Registers a managed subclass of <c>GstVideoEncoder</c> with GObject.</summary>
+    /// <typeparam name="TSelf">
+    /// The subclass itself, which states how its wrapper is built.
+    /// </typeparam>
+    /// <param name="typeName">The <c>GType</c> name, unique in the process.</param>
+    /// <param name="configureClass">
+    /// Describes the class while it is being initialised.
+    /// It <b>has to</b> add a pad template named <c>sink</c> and one named <c>src</c>.
+    /// </param>
+    /// <param name="overrides">The slots the subclass takes over.</param>
+    /// <returns>The registration.</returns>
+    /// <remarks>
+    /// An instance of the registered type that native code creates - one an element
+    /// factory made, a pad a base class built from a template - is wrapped as
+    /// <typeparamref name="TSelf"/> through
+    /// <see cref="Gst.GObject.IManagedSubclass{TSelf}.CreateWrapper"/>, so the overrides
+    /// of the subclass run for it. The non generic overload registers no such factory
+    /// and its instances arrive as the nearest wrapped ancestor.
+    /// </remarks>
+    /// <exception cref="System.ArgumentNullException">An argument is <see langword="null"/>.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The type name is not a legal <c>GType</c> name, or a declared slot belongs to a
+    /// class that <c>GstVideoEncoder</c> does not derive from.
+    /// </exception>
+    /// <exception cref="System.InvalidOperationException">
+    /// The type name is taken, or the class initialiser failed.
+    /// </exception>
+    public static new Gst.GObject.SubclassType DefineSubclass<TSelf>(
+        string typeName,
+        Action<Gst.GObject.ClassConfig> configureClass,
         params Gst.GObject.VfuncOverride[] overrides)
+        where TSelf : VideoEncoder, Gst.GObject.IManagedSubclass<TSelf> =>
+        DefineSubclassCore(typeName, configureClass, overrides, static args => TSelf.CreateWrapper(args));
+
+    private static Gst.GObject.SubclassType DefineSubclassCore(
+        string typeName,
+        Action<Gst.GObject.ClassConfig> configureClass,
+        Gst.GObject.VfuncOverride[] overrides,
+        Func<Gst.GObject.SubclassCtorArgs, Gst.GObject.Object>? wrapFactory)
     {
         ArgumentNullException.ThrowIfNull(configureClass);
         ArgumentNullException.ThrowIfNull(overrides);
@@ -234,7 +275,8 @@ public unsafe partial class VideoEncoder
                 nameof(overrides));
         }
 
-        Gst.GObject.SubclassType type = Gst.GObject.SubclassType.Define(new Gst.GObject.GType(GetGType()), typeName, configureClass, overrides);
+        Gst.GObject.SubclassType type = Gst.GObject.SubclassType.Define(
+            new Gst.GObject.GType(GetGType()), typeName, configureClass, overrides, wrapFactory);
         type.RequirePadTemplate("sink");
         type.RequirePadTemplate("src");
         return type;
@@ -1076,7 +1118,7 @@ public unsafe partial class VideoEncoder
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(encoder) is not VideoEncoder managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(encoder) is not VideoEncoder managed)
             {
                 return (ChainUpOpen(encoder)) ? 1 : 0;
             }
@@ -1095,7 +1137,7 @@ public unsafe partial class VideoEncoder
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(encoder) is not VideoEncoder managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(encoder) is not VideoEncoder managed)
             {
                 return (ChainUpClose(encoder)) ? 1 : 0;
             }
@@ -1114,7 +1156,7 @@ public unsafe partial class VideoEncoder
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(encoder) is not VideoEncoder managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(encoder) is not VideoEncoder managed)
             {
                 return (ChainUpStart(encoder)) ? 1 : 0;
             }
@@ -1133,7 +1175,7 @@ public unsafe partial class VideoEncoder
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(encoder) is not VideoEncoder managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(encoder) is not VideoEncoder managed)
             {
                 return (ChainUpStop(encoder)) ? 1 : 0;
             }
@@ -1152,7 +1194,7 @@ public unsafe partial class VideoEncoder
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(encoder) is not VideoEncoder managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(encoder) is not VideoEncoder managed)
             {
                 return (ChainUpSetFormat(encoder, state)) ? 1 : 0;
             }
@@ -1172,7 +1214,7 @@ public unsafe partial class VideoEncoder
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(encoder) is not VideoEncoder managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(encoder) is not VideoEncoder managed)
             {
                 return (int)(ChainUpHandleFrame(encoder, frame));
             }
@@ -1192,7 +1234,7 @@ public unsafe partial class VideoEncoder
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(encoder) is not VideoEncoder managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(encoder) is not VideoEncoder managed)
             {
                 return (ChainUpReset(encoder, hard)) ? 1 : 0;
             }
@@ -1211,7 +1253,7 @@ public unsafe partial class VideoEncoder
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(encoder) is not VideoEncoder managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(encoder) is not VideoEncoder managed)
             {
                 return (int)(ChainUpFinish(encoder));
             }
@@ -1230,7 +1272,7 @@ public unsafe partial class VideoEncoder
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(encoder) is not VideoEncoder managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(encoder) is not VideoEncoder managed)
             {
                 return (int)(ChainUpPrePush(encoder, frame));
             }
@@ -1250,7 +1292,7 @@ public unsafe partial class VideoEncoder
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(enc) is not VideoEncoder managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(enc) is not VideoEncoder managed)
             {
                 return ChainUpGetcaps(enc, filter);
             }
@@ -1277,7 +1319,7 @@ public unsafe partial class VideoEncoder
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(encoder) is not VideoEncoder managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(encoder) is not VideoEncoder managed)
             {
                 return (ChainUpSinkEvent(encoder, @event)) ? 1 : 0;
             }
@@ -1297,7 +1339,7 @@ public unsafe partial class VideoEncoder
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(encoder) is not VideoEncoder managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(encoder) is not VideoEncoder managed)
             {
                 return (ChainUpSrcEvent(encoder, @event)) ? 1 : 0;
             }
@@ -1317,7 +1359,7 @@ public unsafe partial class VideoEncoder
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(encoder) is not VideoEncoder managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(encoder) is not VideoEncoder managed)
             {
                 return (ChainUpNegotiate(encoder)) ? 1 : 0;
             }
@@ -1336,7 +1378,7 @@ public unsafe partial class VideoEncoder
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(encoder) is not VideoEncoder managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(encoder) is not VideoEncoder managed)
             {
                 return (ChainUpDecideAllocation(encoder, query)) ? 1 : 0;
             }
@@ -1356,7 +1398,7 @@ public unsafe partial class VideoEncoder
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(encoder) is not VideoEncoder managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(encoder) is not VideoEncoder managed)
             {
                 return (ChainUpProposeAllocation(encoder, query)) ? 1 : 0;
             }
@@ -1376,7 +1418,7 @@ public unsafe partial class VideoEncoder
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(encoder) is not VideoEncoder managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(encoder) is not VideoEncoder managed)
             {
                 return (ChainUpFlush(encoder)) ? 1 : 0;
             }
@@ -1395,7 +1437,7 @@ public unsafe partial class VideoEncoder
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(encoder) is not VideoEncoder managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(encoder) is not VideoEncoder managed)
             {
                 return (ChainUpSinkQuery(encoder, query)) ? 1 : 0;
             }
@@ -1415,7 +1457,7 @@ public unsafe partial class VideoEncoder
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(encoder) is not VideoEncoder managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(encoder) is not VideoEncoder managed)
             {
                 return (ChainUpSrcQuery(encoder, query)) ? 1 : 0;
             }
@@ -1435,7 +1477,7 @@ public unsafe partial class VideoEncoder
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(encoder) is not VideoEncoder managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(encoder) is not VideoEncoder managed)
             {
                 return (ChainUpTransformMeta(encoder, frame, meta)) ? 1 : 0;
             }

@@ -700,6 +700,7 @@
   "subclassable": [
     "Gst.Bin",
     "Gst.Element",
+    "Gst.Pad",
     "GstAudio.AudioBaseSink",
     "GstAudio.AudioBaseSrc",
     "GstAudio.AudioDecoder",
@@ -708,6 +709,7 @@
     "GstAudio.AudioSink",
     "GstAudio.AudioSrc",
     "GstBase.Aggregator",
+    "GstBase.AggregatorPad",
     "GstBase.BaseParse",
     "GstBase.BaseSink",
     "GstBase.BaseSrc",
@@ -727,8 +729,7 @@
     "Gst.Element::no_more_pads": "signal class closure: read by g_signal at emission time, never called through the class pointer by the base class; managed code subscribes to the signal instead",
     "Gst.Element::pad_added": "signal class closure: read by g_signal at emission time, never called through the class pointer by the base class; managed code subscribes to the signal instead",
     "Gst.Element::pad_removed": "signal class closure: read by g_signal at emission time, never called through the class pointer by the base class; managed code subscribes to the signal instead",
-    "GstAudio.AudioSink::stop": "name collides with the BaseSink stop slot (different return type); a disambiguated managed name needs a naming decision",
-    "GstBase.Aggregator::create_new_pad": "Pad subclassing is Stage 3: needs a Pad ClassConfig and construct properties"
+    "GstAudio.AudioSink::stop": "name collides with the BaseSink stop slot (different return type); a disambiguated managed name needs a naming decision"
   },
   "$comment-vfunc-defaults": "What a chain-up does when the parent class leaves the slot NULL, which is the behaviour the base class documents for that case. Every entry was read out of the C implementation of 1.28.6 - the guard around the call and the value the caller falls back to - and the per class tables of the stage-2 verification pass name the line. A value that opens with { is a statement block the null branch consists of, written out verbatim, which is how a slot that hands one of its arguments back says so; everything else is an expression the branch answers. A handle is answered raw, because the static chain-up hands handles on without a wrapper. A slot with no entry has no value a chain-up could invent: Gst.Element::change_state is never NULL in any class of the chain; Gst.Bin::handle_message and every other void slot is a no-op the emitter writes by itself; GstBase.BaseTransform::get_unit_size and GstBase.Aggregator::aggregate are called unguarded, so a subclass has to implement them; GstBase.BaseTransform::transform_ip is the one entry that is a reading rather than a fallback the base class takes: gstbasetransform.c:2201-2219 leaves GST_FLOW_OK for a NULL slot in passthrough mode and never calls the slot outside of it, where it dispatches to transform or answers NOT_SUPPORTED, so Ok is the answer of a chain-up that says 'the buffer is unchanged' and not a C default. And GstBase.BaseSink::render_list answers no value at all when it is NULL - the base class splits the list and pushes every buffer through render instead, which is a dispatch strategy and not a result.",
   "vfuncDefaults": {
@@ -801,6 +802,7 @@
     "GstAudio.AudioDecoder::handle_frame": "This slot has no implementation below it - the base class calls it unguarded - so a managed decoder has to declare it, which DefineSubclass checks for. A null buffer is the drain: the stream ended, and whatever is still held has to be pushed out.",
     "GstAudio.AudioDecoder::parse": "The base class only calls this when the slot is set, guarding its one call site with if (klass->parse), so a chain-up reaches nothing and throws; an override implements the parsing rather than extending one.",
     "GstAudio.AudioEncoder::handle_frame": "This slot has no implementation below it - the base class calls it unguarded - so a managed encoder has to declare it, which DefineSubclass checks for. A null buffer is the drain: the stream ended, and whatever is still held has to be pushed out.",
+    "GstBase.Aggregator::create_new_pad": "The pad is answered floating: gst_aggregator_request_new_pad hands it straight to gst_element_add_pad, which sinks it and becomes its owner, which is why the answer is not referenced on the way out. Build it with NewInstance and the direction, name and template of the request, and read it back from the element instead of keeping a reference of your own. gstaggregator.c:2217-2283, 2325-2337.",
     "GstBase.Aggregator::aggregate": "This slot has no implementation below it - the base class calls it unguarded - so a managed aggregator has to declare it, which DefineSubclass checks for.",
     "GstBase.BaseParse::detect": "The base class only calls this when the slot is set - it reads priv->detecting = (klass->detect != NULL) once and skips the detection phase entirely otherwise - so a chain-up reaches nothing and throws; an override implements the detection rather than extending one.",
     "GstBase.BaseParse::handle_frame": "This slot has no implementation below it - the base class calls it unguarded for every frame - so a managed parser has to declare it, which DefineSubclass checks for.",

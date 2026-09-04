@@ -212,11 +212,53 @@ public unsafe partial class BaseSrc
     public static new Gst.GObject.SubclassType DefineSubclass(
         string typeName,
         Action<Gst.GObject.ClassConfig> configureClass,
+        params Gst.GObject.VfuncOverride[] overrides) =>
+        DefineSubclassCore(typeName, configureClass, overrides, null);
+
+    /// <summary>Registers a managed subclass of <c>GstBaseSrc</c> with GObject.</summary>
+    /// <typeparam name="TSelf">
+    /// The subclass itself, which states how its wrapper is built.
+    /// </typeparam>
+    /// <param name="typeName">The <c>GType</c> name, unique in the process.</param>
+    /// <param name="configureClass">
+    /// Describes the class while it is being initialised.
+    /// It <b>has to</b> add a pad template named <c>src</c>.
+    /// </param>
+    /// <param name="overrides">The slots the subclass takes over.</param>
+    /// <returns>The registration.</returns>
+    /// <remarks>
+    /// An instance of the registered type that native code creates - one an element
+    /// factory made, a pad a base class built from a template - is wrapped as
+    /// <typeparamref name="TSelf"/> through
+    /// <see cref="Gst.GObject.IManagedSubclass{TSelf}.CreateWrapper"/>, so the overrides
+    /// of the subclass run for it. The non generic overload registers no such factory
+    /// and its instances arrive as the nearest wrapped ancestor.
+    /// </remarks>
+    /// <exception cref="System.ArgumentNullException">An argument is <see langword="null"/>.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The type name is not a legal <c>GType</c> name, or a declared slot belongs to a
+    /// class that <c>GstBaseSrc</c> does not derive from.
+    /// </exception>
+    /// <exception cref="System.InvalidOperationException">
+    /// The type name is taken, or the class initialiser failed.
+    /// </exception>
+    public static new Gst.GObject.SubclassType DefineSubclass<TSelf>(
+        string typeName,
+        Action<Gst.GObject.ClassConfig> configureClass,
         params Gst.GObject.VfuncOverride[] overrides)
+        where TSelf : BaseSrc, Gst.GObject.IManagedSubclass<TSelf> =>
+        DefineSubclassCore(typeName, configureClass, overrides, static args => TSelf.CreateWrapper(args));
+
+    private static Gst.GObject.SubclassType DefineSubclassCore(
+        string typeName,
+        Action<Gst.GObject.ClassConfig> configureClass,
+        Gst.GObject.VfuncOverride[] overrides,
+        Func<Gst.GObject.SubclassCtorArgs, Gst.GObject.Object>? wrapFactory)
     {
         ArgumentNullException.ThrowIfNull(configureClass);
 
-        Gst.GObject.SubclassType type = Gst.GObject.SubclassType.Define(new Gst.GObject.GType(GetGType()), typeName, configureClass, overrides);
+        Gst.GObject.SubclassType type = Gst.GObject.SubclassType.Define(
+            new Gst.GObject.GType(GetGType()), typeName, configureClass, overrides, wrapFactory);
         type.RequirePadTemplate("src");
         return type;
     }
@@ -1044,7 +1086,7 @@ public unsafe partial class BaseSrc
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(src) is not BaseSrc managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(src) is not BaseSrc managed)
             {
                 return ChainUpGetCaps(src, filter);
             }
@@ -1065,7 +1107,7 @@ public unsafe partial class BaseSrc
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(src) is not BaseSrc managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(src) is not BaseSrc managed)
             {
                 return (ChainUpNegotiate(src)) ? 1 : 0;
             }
@@ -1084,7 +1126,7 @@ public unsafe partial class BaseSrc
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(src) is not BaseSrc managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(src) is not BaseSrc managed)
             {
                 return ChainUpFixate(src, caps);
             }
@@ -1105,7 +1147,7 @@ public unsafe partial class BaseSrc
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(src) is not BaseSrc managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(src) is not BaseSrc managed)
             {
                 return (ChainUpSetCaps(src, caps)) ? 1 : 0;
             }
@@ -1125,7 +1167,7 @@ public unsafe partial class BaseSrc
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(src) is not BaseSrc managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(src) is not BaseSrc managed)
             {
                 return (ChainUpDecideAllocation(src, query)) ? 1 : 0;
             }
@@ -1145,7 +1187,7 @@ public unsafe partial class BaseSrc
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(src) is not BaseSrc managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(src) is not BaseSrc managed)
             {
                 return (ChainUpStart(src)) ? 1 : 0;
             }
@@ -1164,7 +1206,7 @@ public unsafe partial class BaseSrc
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(src) is not BaseSrc managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(src) is not BaseSrc managed)
             {
                 return (ChainUpStop(src)) ? 1 : 0;
             }
@@ -1183,7 +1225,7 @@ public unsafe partial class BaseSrc
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(src) is not BaseSrc managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(src) is not BaseSrc managed)
             {
                 ChainUpGetTimes(src, buffer, start, end);
                 return;
@@ -1214,7 +1256,7 @@ public unsafe partial class BaseSrc
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(src) is not BaseSrc managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(src) is not BaseSrc managed)
             {
                 return (ChainUpGetSize(src, size)) ? 1 : 0;
             }
@@ -1243,7 +1285,7 @@ public unsafe partial class BaseSrc
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(src) is not BaseSrc managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(src) is not BaseSrc managed)
             {
                 return (ChainUpIsSeekable(src)) ? 1 : 0;
             }
@@ -1262,7 +1304,7 @@ public unsafe partial class BaseSrc
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(src) is not BaseSrc managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(src) is not BaseSrc managed)
             {
                 return (ChainUpPrepareSeekSegment(src, seek, segment)) ? 1 : 0;
             }
@@ -1283,7 +1325,7 @@ public unsafe partial class BaseSrc
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(src) is not BaseSrc managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(src) is not BaseSrc managed)
             {
                 return (ChainUpDoSeek(src, segment)) ? 1 : 0;
             }
@@ -1303,7 +1345,7 @@ public unsafe partial class BaseSrc
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(src) is not BaseSrc managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(src) is not BaseSrc managed)
             {
                 return (ChainUpUnlock(src)) ? 1 : 0;
             }
@@ -1322,7 +1364,7 @@ public unsafe partial class BaseSrc
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(src) is not BaseSrc managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(src) is not BaseSrc managed)
             {
                 return (ChainUpUnlockStop(src)) ? 1 : 0;
             }
@@ -1341,7 +1383,7 @@ public unsafe partial class BaseSrc
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(src) is not BaseSrc managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(src) is not BaseSrc managed)
             {
                 return (ChainUpQuery(src, query)) ? 1 : 0;
             }
@@ -1361,7 +1403,7 @@ public unsafe partial class BaseSrc
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(src) is not BaseSrc managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(src) is not BaseSrc managed)
             {
                 return (ChainUpEvent(src, @event)) ? 1 : 0;
             }
@@ -1381,7 +1423,7 @@ public unsafe partial class BaseSrc
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(src) is not BaseSrc managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(src) is not BaseSrc managed)
             {
                 return (int)(ChainUpCreate(src, offset, size, buf));
             }
@@ -1421,7 +1463,7 @@ public unsafe partial class BaseSrc
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(src) is not BaseSrc managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(src) is not BaseSrc managed)
             {
                 return (int)(ChainUpAlloc(src, offset, size, buf));
             }
@@ -1460,7 +1502,7 @@ public unsafe partial class BaseSrc
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(src) is not BaseSrc managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(src) is not BaseSrc managed)
             {
                 return (int)(ChainUpFill(src, offset, size, buf));
             }

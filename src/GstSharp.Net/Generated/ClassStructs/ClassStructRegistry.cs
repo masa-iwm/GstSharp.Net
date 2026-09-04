@@ -57,5 +57,13 @@ internal static unsafe class ClassStructRegistry
                 new Gst.GObject.ClassSlotProbe("deep_element_added", Gst.BinClassRaw.DeepElementAddedOffset),
                 new Gst.GObject.ClassSlotProbe("deep_element_removed", Gst.BinClassRaw.DeepElementRemovedOffset),
             ]),
+        new Gst.GObject.ClassStructProbe(
+            "GstPadClass",
+            &Gst.Pad.GetGType,
+            Unsafe.SizeOf<Gst.PadClassRaw>(),
+            [
+                new Gst.GObject.ClassSlotProbe("linked", Gst.PadClassRaw.LinkedOffset),
+                new Gst.GObject.ClassSlotProbe("unlinked", Gst.PadClassRaw.UnlinkedOffset),
+            ]),
     ];
 }

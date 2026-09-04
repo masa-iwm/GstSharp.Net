@@ -203,7 +203,48 @@ public unsafe partial class AudioDecoder
     public static new Gst.GObject.SubclassType DefineSubclass(
         string typeName,
         Action<Gst.GObject.ClassConfig> configureClass,
+        params Gst.GObject.VfuncOverride[] overrides) =>
+        DefineSubclassCore(typeName, configureClass, overrides, null);
+
+    /// <summary>Registers a managed subclass of <c>GstAudioDecoder</c> with GObject.</summary>
+    /// <typeparam name="TSelf">
+    /// The subclass itself, which states how its wrapper is built.
+    /// </typeparam>
+    /// <param name="typeName">The <c>GType</c> name, unique in the process.</param>
+    /// <param name="configureClass">
+    /// Describes the class while it is being initialised.
+    /// It <b>has to</b> add a pad template named <c>sink</c> and one named <c>src</c>.
+    /// </param>
+    /// <param name="overrides">The slots the subclass takes over.</param>
+    /// <returns>The registration.</returns>
+    /// <remarks>
+    /// An instance of the registered type that native code creates - one an element
+    /// factory made, a pad a base class built from a template - is wrapped as
+    /// <typeparamref name="TSelf"/> through
+    /// <see cref="Gst.GObject.IManagedSubclass{TSelf}.CreateWrapper"/>, so the overrides
+    /// of the subclass run for it. The non generic overload registers no such factory
+    /// and its instances arrive as the nearest wrapped ancestor.
+    /// </remarks>
+    /// <exception cref="System.ArgumentNullException">An argument is <see langword="null"/>.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The type name is not a legal <c>GType</c> name, or a declared slot belongs to a
+    /// class that <c>GstAudioDecoder</c> does not derive from.
+    /// </exception>
+    /// <exception cref="System.InvalidOperationException">
+    /// The type name is taken, or the class initialiser failed.
+    /// </exception>
+    public static new Gst.GObject.SubclassType DefineSubclass<TSelf>(
+        string typeName,
+        Action<Gst.GObject.ClassConfig> configureClass,
         params Gst.GObject.VfuncOverride[] overrides)
+        where TSelf : AudioDecoder, Gst.GObject.IManagedSubclass<TSelf> =>
+        DefineSubclassCore(typeName, configureClass, overrides, static args => TSelf.CreateWrapper(args));
+
+    private static Gst.GObject.SubclassType DefineSubclassCore(
+        string typeName,
+        Action<Gst.GObject.ClassConfig> configureClass,
+        Gst.GObject.VfuncOverride[] overrides,
+        Func<Gst.GObject.SubclassCtorArgs, Gst.GObject.Object>? wrapFactory)
     {
         ArgumentNullException.ThrowIfNull(configureClass);
         ArgumentNullException.ThrowIfNull(overrides);
@@ -225,7 +266,8 @@ public unsafe partial class AudioDecoder
                 nameof(overrides));
         }
 
-        Gst.GObject.SubclassType type = Gst.GObject.SubclassType.Define(new Gst.GObject.GType(GetGType()), typeName, configureClass, overrides);
+        Gst.GObject.SubclassType type = Gst.GObject.SubclassType.Define(
+            new Gst.GObject.GType(GetGType()), typeName, configureClass, overrides, wrapFactory);
         type.RequirePadTemplate("sink");
         type.RequirePadTemplate("src");
         return type;
@@ -1043,7 +1085,7 @@ public unsafe partial class AudioDecoder
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(dec) is not AudioDecoder managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(dec) is not AudioDecoder managed)
             {
                 return (ChainUpStart(dec)) ? 1 : 0;
             }
@@ -1062,7 +1104,7 @@ public unsafe partial class AudioDecoder
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(dec) is not AudioDecoder managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(dec) is not AudioDecoder managed)
             {
                 return (ChainUpStop(dec)) ? 1 : 0;
             }
@@ -1081,7 +1123,7 @@ public unsafe partial class AudioDecoder
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(dec) is not AudioDecoder managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(dec) is not AudioDecoder managed)
             {
                 return (ChainUpSetFormat(dec, caps)) ? 1 : 0;
             }
@@ -1101,7 +1143,7 @@ public unsafe partial class AudioDecoder
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(dec) is not AudioDecoder managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(dec) is not AudioDecoder managed)
             {
                 return (int)(ChainUpParse(dec, adapter, offset, length));
             }
@@ -1133,7 +1175,7 @@ public unsafe partial class AudioDecoder
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(dec) is not AudioDecoder managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(dec) is not AudioDecoder managed)
             {
                 return (int)(ChainUpHandleFrame(dec, buffer));
             }
@@ -1153,7 +1195,7 @@ public unsafe partial class AudioDecoder
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(dec) is not AudioDecoder managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(dec) is not AudioDecoder managed)
             {
                 ChainUpFlush(dec, hard);
                 return;
@@ -1172,7 +1214,7 @@ public unsafe partial class AudioDecoder
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(dec) is not AudioDecoder managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(dec) is not AudioDecoder managed)
             {
                 return (int)(ChainUpPrePush(dec, buffer));
             }
@@ -1217,7 +1259,7 @@ public unsafe partial class AudioDecoder
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(dec) is not AudioDecoder managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(dec) is not AudioDecoder managed)
             {
                 return (ChainUpSinkEvent(dec, @event)) ? 1 : 0;
             }
@@ -1237,7 +1279,7 @@ public unsafe partial class AudioDecoder
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(dec) is not AudioDecoder managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(dec) is not AudioDecoder managed)
             {
                 return (ChainUpSrcEvent(dec, @event)) ? 1 : 0;
             }
@@ -1257,7 +1299,7 @@ public unsafe partial class AudioDecoder
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(dec) is not AudioDecoder managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(dec) is not AudioDecoder managed)
             {
                 return (ChainUpOpen(dec)) ? 1 : 0;
             }
@@ -1276,7 +1318,7 @@ public unsafe partial class AudioDecoder
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(dec) is not AudioDecoder managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(dec) is not AudioDecoder managed)
             {
                 return (ChainUpClose(dec)) ? 1 : 0;
             }
@@ -1295,7 +1337,7 @@ public unsafe partial class AudioDecoder
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(dec) is not AudioDecoder managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(dec) is not AudioDecoder managed)
             {
                 return (ChainUpNegotiate(dec)) ? 1 : 0;
             }
@@ -1314,7 +1356,7 @@ public unsafe partial class AudioDecoder
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(dec) is not AudioDecoder managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(dec) is not AudioDecoder managed)
             {
                 return (ChainUpDecideAllocation(dec, query)) ? 1 : 0;
             }
@@ -1334,7 +1376,7 @@ public unsafe partial class AudioDecoder
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(dec) is not AudioDecoder managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(dec) is not AudioDecoder managed)
             {
                 return (ChainUpProposeAllocation(dec, query)) ? 1 : 0;
             }
@@ -1354,7 +1396,7 @@ public unsafe partial class AudioDecoder
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(dec) is not AudioDecoder managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(dec) is not AudioDecoder managed)
             {
                 return (ChainUpSinkQuery(dec, query)) ? 1 : 0;
             }
@@ -1374,7 +1416,7 @@ public unsafe partial class AudioDecoder
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(dec) is not AudioDecoder managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(dec) is not AudioDecoder managed)
             {
                 return (ChainUpSrcQuery(dec, query)) ? 1 : 0;
             }
@@ -1394,7 +1436,7 @@ public unsafe partial class AudioDecoder
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(dec) is not AudioDecoder managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(dec) is not AudioDecoder managed)
             {
                 return ChainUpGetcaps(dec, filter);
             }
@@ -1421,7 +1463,7 @@ public unsafe partial class AudioDecoder
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(enc) is not AudioDecoder managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(enc) is not AudioDecoder managed)
             {
                 return (ChainUpTransformMeta(enc, outbuf, meta, inbuf)) ? 1 : 0;
             }

@@ -1240,7 +1240,7 @@ disappears shows up here as an added line.
 - `gst_webrtc_ice_get_local_candidates`
 - `gst_webrtc_ice_get_remote_candidates`
 
-## Virtuals (9)
+## Virtuals (8)
 
 The class struct slots of a subclassable class that carry no `OnX` member, with
 the reason. `UnsupportedSignature` is the planner refusing a shape; every other
@@ -1260,10 +1260,6 @@ out, so what is listed here is the managed surface and not the ABI.
 ### GstAudio (1)
 
 - `GstAudio.AudioSink::stop` — name collides with the BaseSink stop slot (different return type); a disambiguated managed name needs a naming decision
-
-### GstBase (1)
-
-- `GstBase.Aggregator::create_new_pad` — Pad subclassing is Stage 3: needs a Pad ClassConfig and construct properties
 
 ## Fields (143)
 

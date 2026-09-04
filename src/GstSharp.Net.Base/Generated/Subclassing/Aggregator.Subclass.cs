@@ -131,6 +131,15 @@ public unsafe partial class Aggregator
         (nint)(delegate* unmanaged[Cdecl]<nint, ulong>)&GetNextTimeTrampoline);
 
     /// <summary>
+    /// Gets the declaration of <c>GstAggregator.create_new_pad</c>, for a subclass that
+    /// overrides <see cref="OnCreateNewPad"/>.
+    /// </summary>
+    public static Gst.GObject.VfuncOverride CreateNewPadOverride { get; } = new(
+        &GetGType,
+        Gst.Base.AggregatorClassRaw.CreateNewPadOffset,
+        (nint)(delegate* unmanaged[Cdecl]<nint, nint, byte*, nint, nint>)&CreateNewPadTrampoline);
+
+    /// <summary>
     /// Gets the declaration of <c>GstAggregator.update_src_caps</c>, for a subclass that
     /// overrides <see cref="OnUpdateSrcCaps"/>.
     /// </summary>
@@ -239,7 +248,48 @@ public unsafe partial class Aggregator
     public static new Gst.GObject.SubclassType DefineSubclass(
         string typeName,
         Action<Gst.GObject.ClassConfig> configureClass,
+        params Gst.GObject.VfuncOverride[] overrides) =>
+        DefineSubclassCore(typeName, configureClass, overrides, null);
+
+    /// <summary>Registers a managed subclass of <c>GstAggregator</c> with GObject.</summary>
+    /// <typeparam name="TSelf">
+    /// The subclass itself, which states how its wrapper is built.
+    /// </typeparam>
+    /// <param name="typeName">The <c>GType</c> name, unique in the process.</param>
+    /// <param name="configureClass">
+    /// Describes the class while it is being initialised.
+    /// It <b>has to</b> add a pad template named <c>src</c>.
+    /// </param>
+    /// <param name="overrides">The slots the subclass takes over.</param>
+    /// <returns>The registration.</returns>
+    /// <remarks>
+    /// An instance of the registered type that native code creates - one an element
+    /// factory made, a pad a base class built from a template - is wrapped as
+    /// <typeparamref name="TSelf"/> through
+    /// <see cref="Gst.GObject.IManagedSubclass{TSelf}.CreateWrapper"/>, so the overrides
+    /// of the subclass run for it. The non generic overload registers no such factory
+    /// and its instances arrive as the nearest wrapped ancestor.
+    /// </remarks>
+    /// <exception cref="System.ArgumentNullException">An argument is <see langword="null"/>.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The type name is not a legal <c>GType</c> name, or a declared slot belongs to a
+    /// class that <c>GstAggregator</c> does not derive from.
+    /// </exception>
+    /// <exception cref="System.InvalidOperationException">
+    /// The type name is taken, or the class initialiser failed.
+    /// </exception>
+    public static new Gst.GObject.SubclassType DefineSubclass<TSelf>(
+        string typeName,
+        Action<Gst.GObject.ClassConfig> configureClass,
         params Gst.GObject.VfuncOverride[] overrides)
+        where TSelf : Aggregator, Gst.GObject.IManagedSubclass<TSelf> =>
+        DefineSubclassCore(typeName, configureClass, overrides, static args => TSelf.CreateWrapper(args));
+
+    private static Gst.GObject.SubclassType DefineSubclassCore(
+        string typeName,
+        Action<Gst.GObject.ClassConfig> configureClass,
+        Gst.GObject.VfuncOverride[] overrides,
+        Func<Gst.GObject.SubclassCtorArgs, Gst.GObject.Object>? wrapFactory)
     {
         ArgumentNullException.ThrowIfNull(configureClass);
         ArgumentNullException.ThrowIfNull(overrides);
@@ -261,7 +311,8 @@ public unsafe partial class Aggregator
                 nameof(overrides));
         }
 
-        Gst.GObject.SubclassType type = Gst.GObject.SubclassType.Define(new Gst.GObject.GType(GetGType()), typeName, configureClass, overrides);
+        Gst.GObject.SubclassType type = Gst.GObject.SubclassType.Define(
+            new Gst.GObject.GType(GetGType()), typeName, configureClass, overrides, wrapFactory);
         type.RequirePadTemplate("src");
         return type;
     }
@@ -439,6 +490,36 @@ public unsafe partial class Aggregator
     /// <returns>What <c>get_next_time</c> answers.</returns>
     protected virtual Gst.ClockTime OnGetNextTime() =>
         ChainUpGetNextTime();
+
+    /// <summary>
+    /// Called when a new pad needs to be created. Allows subclass that
+    /// don't have a single sink pad template to provide a pad based
+    /// on the provided information.
+    /// </summary>
+    /// <remarks>
+    /// <para>The pad is answered floating: gst_aggregator_request_new_pad hands it straight to
+    /// gst_element_add_pad, which sinks it and becomes its owner, which is why the answer is
+    /// not referenced on the way out. Build it with NewInstance and the direction, name and
+    /// template of the request, and read it back from the element instead of keeping a
+    /// reference of your own. gstaggregator.c:2217-2283, 2325-2337.</para>
+    /// </remarks>
+    /// <param name="templ">
+    /// The <c>templ</c> argument.
+    /// The element lends this for the duration of the call. Keeping the wrapper is
+    /// safe: a GObject wrapper is interned and its reference outlives the call.
+    /// </param>
+    /// <param name="reqName">The <c>reqName</c> argument.</param>
+    /// <param name="caps">
+    /// The <c>caps</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <returns>
+    /// a new #GstAggregatorPad.
+    /// The answer is borrowed: no reference is added for the caller, so the
+    /// override has to keep the object alive by other means.
+    /// </returns>
+    protected virtual Gst.Base.AggregatorPad? OnCreateNewPad(Gst.PadTemplate templ, string? reqName, Gst.Caps? caps) =>
+        ChainUpCreateNewPad(templ, reqName, caps);
 
     /// <summary>Runs <c>GstAggregator.update_src_caps</c>.</summary>
     /// <param name="caps">
@@ -797,6 +878,42 @@ public unsafe partial class Aggregator
     {
         Gst.ClockTime result = ChainUpGetNextTime(Handle);
         GC.KeepAlive(this);
+        return result;
+    }
+
+    /// <summary>Runs the implementation of <c>create_new_pad</c> below the managed override.</summary>
+    /// <remarks>
+    /// <para>The pad is answered floating: gst_aggregator_request_new_pad hands it straight to
+    /// gst_element_add_pad, which sinks it and becomes its owner, which is why the answer is
+    /// not referenced on the way out. Build it with NewInstance and the direction, name and
+    /// template of the request, and read it back from the element instead of keeping a
+    /// reference of your own. gstaggregator.c:2217-2283, 2325-2337.</para>
+    /// </remarks>
+    /// <param name="templ">
+    /// The <c>templ</c> argument.
+    /// The element lends this for the duration of the call. Keeping the wrapper is
+    /// safe: a GObject wrapper is interned and its reference outlives the call.
+    /// </param>
+    /// <param name="reqName">The <c>reqName</c> argument.</param>
+    /// <param name="caps">
+    /// The <c>caps</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <returns>
+    /// a new #GstAggregatorPad.
+    /// The answer is borrowed: no reference is added for the caller, so the
+    /// override has to keep the object alive by other means.
+    /// </returns>
+    protected Gst.Base.AggregatorPad? ChainUpCreateNewPad(Gst.PadTemplate templ, string? reqName, Gst.Caps? caps)
+    {
+        ArgumentNullException.ThrowIfNull(templ);
+        System.Span<byte> reqNameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope reqNameScope = Gst.Interop.GMarshal.StackUtf8(reqName, reqNameBuffer);
+        nint resultNative = ChainUpCreateNewPad(Handle, templ.Handle, reqNameScope.Pointer, caps is null ? nint.Zero : caps.Handle);
+        Gst.Base.AggregatorPad? result = Gst.GObject.Object.FromNative<Gst.Base.AggregatorPad>(resultNative, Gst.Interop.Transfer.None);
+        GC.KeepAlive(this);
+        GC.KeepAlive(templ);
+        GC.KeepAlive(caps);
         return result;
     }
 
@@ -1177,6 +1294,20 @@ public unsafe partial class Aggregator
         return new Gst.ClockTime(slot(aggregator));
     }
 
+    private static nint ChainUpCreateNewPad(nint self, nint templ, byte* reqName, nint caps)
+    {
+        delegate* unmanaged[Cdecl]<nint, nint, byte*, nint, nint> slot =
+            (delegate* unmanaged[Cdecl]<nint, nint, byte*, nint, nint>)ParentClassOf(self)->CreateNewPad;
+
+        if (slot is null)
+        {
+            throw new InvalidOperationException(
+                "Aggregator.create_new_pad has no parent implementation; override OnCreateNewPad.");
+        }
+
+        return slot(self, templ, reqName, caps);
+    }
+
     private static Gst.FlowReturn ChainUpUpdateSrcCaps(nint self, nint caps, nint* ret)
     {
         delegate* unmanaged[Cdecl]<nint, nint, nint*, int> slot =
@@ -1332,7 +1463,7 @@ public unsafe partial class Aggregator
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(aggregator) is not Aggregator managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(aggregator) is not Aggregator managed)
             {
                 return (int)(ChainUpFlush(aggregator));
             }
@@ -1351,7 +1482,7 @@ public unsafe partial class Aggregator
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(aggregator) is not Aggregator managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(aggregator) is not Aggregator managed)
             {
                 return ChainUpClip(aggregator, aggregatorPad, buf);
             }
@@ -1373,7 +1504,7 @@ public unsafe partial class Aggregator
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(aggregator) is not Aggregator managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(aggregator) is not Aggregator managed)
             {
                 return (int)(ChainUpFinishBuffer(aggregator, buffer));
             }
@@ -1393,7 +1524,7 @@ public unsafe partial class Aggregator
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(aggregator) is not Aggregator managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(aggregator) is not Aggregator managed)
             {
                 return (ChainUpSinkEvent(aggregator, aggregatorPad, @event)) ? 1 : 0;
             }
@@ -1414,7 +1545,7 @@ public unsafe partial class Aggregator
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(aggregator) is not Aggregator managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(aggregator) is not Aggregator managed)
             {
                 return (ChainUpSinkQuery(aggregator, aggregatorPad, query)) ? 1 : 0;
             }
@@ -1435,7 +1566,7 @@ public unsafe partial class Aggregator
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(aggregator) is not Aggregator managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(aggregator) is not Aggregator managed)
             {
                 return (ChainUpSrcEvent(aggregator, @event)) ? 1 : 0;
             }
@@ -1455,7 +1586,7 @@ public unsafe partial class Aggregator
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(aggregator) is not Aggregator managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(aggregator) is not Aggregator managed)
             {
                 return (ChainUpSrcQuery(aggregator, query)) ? 1 : 0;
             }
@@ -1475,7 +1606,7 @@ public unsafe partial class Aggregator
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(aggregator) is not Aggregator managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(aggregator) is not Aggregator managed)
             {
                 return (ChainUpSrcActivate(aggregator, mode, active)) ? 1 : 0;
             }
@@ -1494,7 +1625,7 @@ public unsafe partial class Aggregator
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(aggregator) is not Aggregator managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(aggregator) is not Aggregator managed)
             {
                 return (int)(ChainUpAggregate(aggregator, timeout));
             }
@@ -1513,7 +1644,7 @@ public unsafe partial class Aggregator
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(aggregator) is not Aggregator managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(aggregator) is not Aggregator managed)
             {
                 return (ChainUpStop(aggregator)) ? 1 : 0;
             }
@@ -1532,7 +1663,7 @@ public unsafe partial class Aggregator
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(aggregator) is not Aggregator managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(aggregator) is not Aggregator managed)
             {
                 return (ChainUpStart(aggregator)) ? 1 : 0;
             }
@@ -1551,7 +1682,7 @@ public unsafe partial class Aggregator
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(aggregator) is not Aggregator managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(aggregator) is not Aggregator managed)
             {
                 return (ChainUpGetNextTime(aggregator)).Nanoseconds;
             }
@@ -1566,11 +1697,33 @@ public unsafe partial class Aggregator
     }
 
     [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static nint CreateNewPadTrampoline(nint self, nint templ, byte* reqName, nint caps)
+    {
+        try
+        {
+            if (Gst.GObject.Object.TryGetOrFabricate(self) is not Aggregator managed)
+            {
+                return ChainUpCreateNewPad(self, templ, reqName, caps);
+            }
+
+            Gst.PadTemplate? templValue = Gst.GObject.Object.FromNative<Gst.PadTemplate>(templ, Gst.Interop.Transfer.None);
+            using Gst.Caps? capsValue = caps == nint.Zero ? null : Gst.Caps.Borrow(caps);
+            Gst.Base.AggregatorPad? result = managed.OnCreateNewPad(templValue!, Gst.Interop.GMarshal.PtrToStringUtf8((nint)reqName), capsValue);
+            return result is null ? nint.Zero : result.Handle;
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+            return nint.Zero;
+        }
+    }
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
     private static int UpdateSrcCapsTrampoline(nint self, nint caps, nint* ret)
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(self) is not Aggregator managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(self) is not Aggregator managed)
             {
                 return (int)(ChainUpUpdateSrcCaps(self, caps, ret));
             }
@@ -1610,7 +1763,7 @@ public unsafe partial class Aggregator
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(self) is not Aggregator managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(self) is not Aggregator managed)
             {
                 return ChainUpFixateSrcCaps(self, caps);
             }
@@ -1637,7 +1790,7 @@ public unsafe partial class Aggregator
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(self) is not Aggregator managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(self) is not Aggregator managed)
             {
                 return (ChainUpNegotiatedSrcCaps(self, caps)) ? 1 : 0;
             }
@@ -1657,7 +1810,7 @@ public unsafe partial class Aggregator
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(self) is not Aggregator managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(self) is not Aggregator managed)
             {
                 return (ChainUpDecideAllocation(self, query)) ? 1 : 0;
             }
@@ -1677,7 +1830,7 @@ public unsafe partial class Aggregator
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(self) is not Aggregator managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(self) is not Aggregator managed)
             {
                 return (ChainUpProposeAllocation(self, pad, decideQuery, query)) ? 1 : 0;
             }
@@ -1699,7 +1852,7 @@ public unsafe partial class Aggregator
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(self) is not Aggregator managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(self) is not Aggregator managed)
             {
                 return (ChainUpNegotiate(self)) ? 1 : 0;
             }
@@ -1718,7 +1871,7 @@ public unsafe partial class Aggregator
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(aggregator) is not Aggregator managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(aggregator) is not Aggregator managed)
             {
                 return (int)(ChainUpSinkEventPreQueue(aggregator, aggregatorPad, @event));
             }
@@ -1739,7 +1892,7 @@ public unsafe partial class Aggregator
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(aggregator) is not Aggregator managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(aggregator) is not Aggregator managed)
             {
                 return (ChainUpSinkQueryPreQueue(aggregator, aggregatorPad, query)) ? 1 : 0;
             }
@@ -1760,7 +1913,7 @@ public unsafe partial class Aggregator
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(aggregator) is not Aggregator managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(aggregator) is not Aggregator managed)
             {
                 return (int)(ChainUpFinishBufferList(aggregator, bufferlist));
             }
@@ -1780,7 +1933,7 @@ public unsafe partial class Aggregator
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(aggregator) is not Aggregator managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(aggregator) is not Aggregator managed)
             {
                 return ChainUpPeekNextSample(aggregator, aggregatorPad);
             }

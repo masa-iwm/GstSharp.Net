@@ -405,12 +405,25 @@ internal sealed class VfuncEmitter
     {
         BaseRules.TryGetValue(model.QualifiedName, out SubclassBaseRule? rule);
         bool mandatory = rule is { PadTemplates.Count: > 0 };
-        string configure = mandatory ? "Action<Gst.GObject.ClassConfig>" : "Action<Gst.GObject.ClassConfig>?";
         bool hides = false;
-        for (ClassStructModel? parent = model.Parent; parent is not null; parent = parent.Parent)
+        bool element = false;
+        for (ClassStructModel? ancestor = model; ancestor is not null; ancestor = ancestor.Parent)
         {
-            hides |= parent.IsSubclassable;
+            element |= string.Equals(ancestor.QualifiedName, "Gst.Element", StringComparison.Ordinal);
+            if (ancestor != model)
+            {
+                hides |= ancestor.IsSubclassable;
+            }
         }
+
+        // A GstElementClass is what carries the metadata and the pad templates,
+        // so a class that is not an element - Gst.Pad and what derives from it -
+        // is configured through the GObject level facade instead. The
+        // registration reads the same fact off the parent type and hands the
+        // matching one out.
+        string facade = element ? "Gst.GObject.ClassConfig" : "Gst.GObject.ObjectClassConfig";
+        string configure = mandatory ? "Action<" + facade + ">" : "Action<" + facade + ">?";
+        string type = model.Owner.Name;
 
         List<(string Name, string? Reason)> required = [];
         foreach (RequiredSlot slot in rule?.Required ?? [])
@@ -436,45 +449,31 @@ internal sealed class VfuncEmitter
             required.Add((name, slot.Reason));
         }
 
-        writer.WriteLine("/// <summary>Registers a managed subclass of <c>" + cName + "</c> with GObject.</summary>");
-        writer.WriteLine("/// <param name=\"typeName\">The <c>GType</c> name, unique in the process.</param>");
-        writer.WriteLine("/// <param name=\"configureClass\">");
-        writer.WriteLine("/// Describes the class while it is being initialised.");
-        if (mandatory)
-        {
-            writer.WriteLine(
-                "/// It <b>has to</b> add a pad template named " + TemplateList(rule!.PadTemplates) + ".");
-        }
-
-        writer.WriteLine("/// </param>");
-        writer.WriteLine("/// <param name=\"overrides\">The slots the subclass takes over.</param>");
-        writer.WriteLine("/// <returns>The registration.</returns>");
+        WriteDefineSubclassDoc(writer, cName, rule, mandatory, generic: false);
         writer.WriteLine(
-            "/// <exception cref=\"System.ArgumentNullException\">An argument is <see langword=\"null\"/>.</exception>");
-        writer.WriteLine("/// <exception cref=\"System.ArgumentException\">");
-        writer.WriteLine("/// The type name is not a legal <c>GType</c> name, or a declared slot belongs to a");
-        writer.WriteLine("/// class that <c>" + cName + "</c> does not derive from.");
-        writer.WriteLine("/// </exception>");
-        writer.WriteLine("/// <exception cref=\"System.InvalidOperationException\">");
-        writer.WriteLine("/// The type name is taken, or the class initialiser failed.");
-        writer.WriteLine("/// </exception>");
+            "public static " + (hides ? "new " : string.Empty) + "Gst.GObject.SubclassType DefineSubclass(");
+        writer.WriteLine("    string typeName,");
+        writer.WriteLine("    " + configure + " configureClass,");
+        writer.WriteLine("    params Gst.GObject.VfuncOverride[] overrides) =>");
+        writer.WriteLine("    DefineSubclassCore(typeName, configureClass, overrides, null);");
 
-        string declaration = "public static " + (hides ? "new " : string.Empty) + "Gst.GObject.SubclassType DefineSubclass(";
-        if (!mandatory && required.Count == 0)
-        {
-            writer.WriteLine(declaration);
-            writer.WriteLine("    string typeName,");
-            writer.WriteLine("    " + configure + " configureClass,");
-            writer.WriteLine("    params Gst.GObject.VfuncOverride[] overrides) =>");
-            writer.WriteLine(
-                "    Gst.GObject.SubclassType.Define(new Gst.GObject.GType(GetGType()), typeName, configureClass, overrides);");
-            return;
-        }
-
-        writer.WriteLine(declaration);
+        writer.WriteLine();
+        WriteDefineSubclassDoc(writer, cName, rule, mandatory, generic: true);
+        writer.WriteLine(
+            "public static " + (hides ? "new " : string.Empty) + "Gst.GObject.SubclassType DefineSubclass<TSelf>(");
         writer.WriteLine("    string typeName,");
         writer.WriteLine("    " + configure + " configureClass,");
         writer.WriteLine("    params Gst.GObject.VfuncOverride[] overrides)");
+        writer.WriteLine("    where TSelf : " + type + ", Gst.GObject.IManagedSubclass<TSelf> =>");
+        writer.WriteLine(
+            "    DefineSubclassCore(typeName, configureClass, overrides, static args => TSelf.CreateWrapper(args));");
+
+        writer.WriteLine();
+        writer.WriteLine("private static Gst.GObject.SubclassType DefineSubclassCore(");
+        writer.WriteLine("    string typeName,");
+        writer.WriteLine("    " + configure + " configureClass,");
+        writer.WriteLine("    Gst.GObject.VfuncOverride[] overrides,");
+        writer.WriteLine("    Func<Gst.GObject.SubclassCtorArgs, Gst.GObject.Object>? wrapFactory)");
         writer.OpenBlock();
         if (mandatory)
         {
@@ -509,9 +508,13 @@ internal sealed class VfuncEmitter
             writer.CloseBlock();
         }
 
-        writer.WriteLine();
-        writer.WriteLine(
-            "Gst.GObject.SubclassType type = Gst.GObject.SubclassType.Define(new Gst.GObject.GType(GetGType()), typeName, configureClass, overrides);");
+        if (mandatory || required.Count > 0)
+        {
+            writer.WriteLine();
+        }
+
+        writer.WriteLine("Gst.GObject.SubclassType type = Gst.GObject.SubclassType.Define(");
+        writer.WriteLine("    new Gst.GObject.GType(GetGType()), typeName, configureClass, overrides, wrapFactory);");
         foreach (string template in rule?.PadTemplates ?? [])
         {
             writer.WriteLine("type.RequirePadTemplate(\"" + template + "\");");
@@ -519,6 +522,64 @@ internal sealed class VfuncEmitter
 
         writer.WriteLine("return type;");
         writer.CloseBlock();
+    }
+
+    /// <summary>
+    /// Writes the documentation the two public registration overloads share.
+    /// </summary>
+    /// <param name="writer">The writer of the file.</param>
+    /// <param name="cName">The C name of the class being registered.</param>
+    /// <param name="rule">The per class facts of the class, or null.</param>
+    /// <param name="mandatory">Whether the class initialiser is required.</param>
+    /// <param name="generic">Whether the overload takes the subclass itself.</param>
+    private static void WriteDefineSubclassDoc(
+        CodeWriter writer,
+        string cName,
+        SubclassBaseRule? rule,
+        bool mandatory,
+        bool generic)
+    {
+        writer.WriteLine("/// <summary>Registers a managed subclass of <c>" + cName + "</c> with GObject.</summary>");
+        if (generic)
+        {
+            writer.WriteLine("/// <typeparam name=\"TSelf\">");
+            writer.WriteLine("/// The subclass itself, which states how its wrapper is built.");
+            writer.WriteLine("/// </typeparam>");
+        }
+
+        writer.WriteLine("/// <param name=\"typeName\">The <c>GType</c> name, unique in the process.</param>");
+        writer.WriteLine("/// <param name=\"configureClass\">");
+        writer.WriteLine("/// Describes the class while it is being initialised.");
+        if (mandatory)
+        {
+            writer.WriteLine(
+                "/// It <b>has to</b> add a pad template named " + TemplateList(rule!.PadTemplates) + ".");
+        }
+
+        writer.WriteLine("/// </param>");
+        writer.WriteLine("/// <param name=\"overrides\">The slots the subclass takes over.</param>");
+        writer.WriteLine("/// <returns>The registration.</returns>");
+        if (generic)
+        {
+            writer.WriteLine("/// <remarks>");
+            writer.WriteLine("/// An instance of the registered type that native code creates - one an element");
+            writer.WriteLine("/// factory made, a pad a base class built from a template - is wrapped as");
+            writer.WriteLine("/// <typeparamref name=\"TSelf\"/> through");
+            writer.WriteLine("/// <see cref=\"Gst.GObject.IManagedSubclass{TSelf}.CreateWrapper\"/>, so the overrides");
+            writer.WriteLine("/// of the subclass run for it. The non generic overload registers no such factory");
+            writer.WriteLine("/// and its instances arrive as the nearest wrapped ancestor.");
+            writer.WriteLine("/// </remarks>");
+        }
+
+        writer.WriteLine(
+            "/// <exception cref=\"System.ArgumentNullException\">An argument is <see langword=\"null\"/>.</exception>");
+        writer.WriteLine("/// <exception cref=\"System.ArgumentException\">");
+        writer.WriteLine("/// The type name is not a legal <c>GType</c> name, or a declared slot belongs to a");
+        writer.WriteLine("/// class that <c>" + cName + "</c> does not derive from.");
+        writer.WriteLine("/// </exception>");
+        writer.WriteLine("/// <exception cref=\"System.InvalidOperationException\">");
+        writer.WriteLine("/// The type name is taken, or the class initialiser failed.");
+        writer.WriteLine("/// </exception>");
     }
 
     private static string TemplateList(IReadOnlyList<string> templates)
@@ -1120,7 +1181,7 @@ internal sealed class VfuncEmitter
         writer.WriteLine("try");
         writer.OpenBlock();
         writer.WriteLine(
-            "if (Gst.GObject.Object.TryGetInterned(" + plan.InstanceName + ") is not " + type + " managed)");
+            "if (Gst.GObject.Object.TryGetOrFabricate(" + plan.InstanceName + ") is not " + type + " managed)");
         writer.OpenBlock();
         string fallback = "ChainUp" + plan.Name + "(" + string.Join(", ", forward) + ")";
         if (plan.Return.IsVoid)

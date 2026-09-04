@@ -50,11 +50,53 @@ public unsafe partial class AudioFilter
     public static new Gst.GObject.SubclassType DefineSubclass(
         string typeName,
         Action<Gst.GObject.ClassConfig> configureClass,
+        params Gst.GObject.VfuncOverride[] overrides) =>
+        DefineSubclassCore(typeName, configureClass, overrides, null);
+
+    /// <summary>Registers a managed subclass of <c>GstAudioFilter</c> with GObject.</summary>
+    /// <typeparam name="TSelf">
+    /// The subclass itself, which states how its wrapper is built.
+    /// </typeparam>
+    /// <param name="typeName">The <c>GType</c> name, unique in the process.</param>
+    /// <param name="configureClass">
+    /// Describes the class while it is being initialised.
+    /// It <b>has to</b> add a pad template named <c>sink</c> and one named <c>src</c>.
+    /// </param>
+    /// <param name="overrides">The slots the subclass takes over.</param>
+    /// <returns>The registration.</returns>
+    /// <remarks>
+    /// An instance of the registered type that native code creates - one an element
+    /// factory made, a pad a base class built from a template - is wrapped as
+    /// <typeparamref name="TSelf"/> through
+    /// <see cref="Gst.GObject.IManagedSubclass{TSelf}.CreateWrapper"/>, so the overrides
+    /// of the subclass run for it. The non generic overload registers no such factory
+    /// and its instances arrive as the nearest wrapped ancestor.
+    /// </remarks>
+    /// <exception cref="System.ArgumentNullException">An argument is <see langword="null"/>.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The type name is not a legal <c>GType</c> name, or a declared slot belongs to a
+    /// class that <c>GstAudioFilter</c> does not derive from.
+    /// </exception>
+    /// <exception cref="System.InvalidOperationException">
+    /// The type name is taken, or the class initialiser failed.
+    /// </exception>
+    public static new Gst.GObject.SubclassType DefineSubclass<TSelf>(
+        string typeName,
+        Action<Gst.GObject.ClassConfig> configureClass,
         params Gst.GObject.VfuncOverride[] overrides)
+        where TSelf : AudioFilter, Gst.GObject.IManagedSubclass<TSelf> =>
+        DefineSubclassCore(typeName, configureClass, overrides, static args => TSelf.CreateWrapper(args));
+
+    private static Gst.GObject.SubclassType DefineSubclassCore(
+        string typeName,
+        Action<Gst.GObject.ClassConfig> configureClass,
+        Gst.GObject.VfuncOverride[] overrides,
+        Func<Gst.GObject.SubclassCtorArgs, Gst.GObject.Object>? wrapFactory)
     {
         ArgumentNullException.ThrowIfNull(configureClass);
 
-        Gst.GObject.SubclassType type = Gst.GObject.SubclassType.Define(new Gst.GObject.GType(GetGType()), typeName, configureClass, overrides);
+        Gst.GObject.SubclassType type = Gst.GObject.SubclassType.Define(
+            new Gst.GObject.GType(GetGType()), typeName, configureClass, overrides, wrapFactory);
         type.RequirePadTemplate("sink");
         type.RequirePadTemplate("src");
         return type;
@@ -122,7 +164,7 @@ public unsafe partial class AudioFilter
     {
         try
         {
-            if (Gst.GObject.Object.TryGetInterned(filter) is not AudioFilter managed)
+            if (Gst.GObject.Object.TryGetOrFabricate(filter) is not AudioFilter managed)
             {
                 return (ChainUpSetup(filter, info)) ? 1 : 0;
             }

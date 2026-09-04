@@ -130,6 +130,14 @@ internal static unsafe class ClassStructRegistry
                 new Gst.GObject.ClassSlotProbe("peek_next_sample", Gst.Base.AggregatorClassRaw.PeekNextSampleOffset),
             ]),
         new Gst.GObject.ClassStructProbe(
+            "GstAggregatorPadClass",
+            &Gst.Base.AggregatorPad.GetGType,
+            Unsafe.SizeOf<Gst.Base.AggregatorPadClassRaw>(),
+            [
+                new Gst.GObject.ClassSlotProbe("flush", Gst.Base.AggregatorPadClassRaw.FlushOffset),
+                new Gst.GObject.ClassSlotProbe("skip_buffer", Gst.Base.AggregatorPadClassRaw.SkipBufferOffset),
+            ]),
+        new Gst.GObject.ClassStructProbe(
             "GstBaseParseClass",
             &Gst.Base.BaseParse.GetGType,
             Unsafe.SizeOf<Gst.Base.BaseParseClassRaw>(),

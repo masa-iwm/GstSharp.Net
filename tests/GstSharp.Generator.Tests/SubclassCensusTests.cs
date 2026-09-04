@@ -30,8 +30,8 @@ public sealed class SubclassCensusTests
     /// <param name="classStructs">The mirrored class structs.</param>
     /// <param name="vfuncs">The slots those mirrors give an <c>OnX</c> member.</param>
     [Theory]
-    [InlineData("Gst", 3, 17)]
-    [InlineData("GstBase", 6, 96)]
+    [InlineData("Gst", 4, 19)]
+    [InlineData("GstBase", 7, 99)]
     [InlineData("GstApp", 0, 0)]
     [InlineData("GstAudio", 7, 55)]
     [InlineData("GstVideo", 4, 45)]
@@ -56,11 +56,12 @@ public sealed class SubclassCensusTests
     }
 
     /// <summary>
-    /// The run as a whole: twenty mirrors and two hundred and thirteen slots, the
-    /// numbers the release notes and <c>docs/subclassing.md</c> quote.
+    /// The run as a whole: twenty two mirrors and two hundred and eighteen
+    /// slots, the numbers the release notes and <c>docs/subclassing.md</c>
+    /// quote.
     /// </summary>
     [Fact]
-    public void TheRunEmitsTwentyMirrorsAndTwoHundredAndThirteenSlots()
+    public void TheRunEmitsTwentyTwoMirrorsAndTwoHundredAndEighteenSlots()
     {
         EmissionCensus census = Generated.Census;
         int mirrors = 0;
@@ -71,8 +72,8 @@ public sealed class SubclassCensusTests
             slots += census.EmittedCount(module, "vfunc");
         }
 
-        Assert.Equal(20, mirrors);
-        Assert.Equal(213, slots);
+        Assert.Equal(22, mirrors);
+        Assert.Equal(218, slots);
     }
 
     /// <summary>
@@ -102,13 +103,7 @@ public sealed class SubclassCensusTests
             },
             census.SkippedVirtuals("Gst"));
 
-        Assert.Equal(
-            new Dictionary<string, string>(StringComparer.Ordinal)
-            {
-                ["GstBase.Aggregator::create_new_pad"] =
-                    "Pad subclassing is Stage 3: needs a Pad ClassConfig and construct properties",
-            },
-            census.SkippedVirtuals("GstBase"));
+        Assert.Empty(census.SkippedVirtuals("GstBase"));
 
         Assert.Equal(
             new Dictionary<string, string>(StringComparer.Ordinal)
@@ -121,6 +116,6 @@ public sealed class SubclassCensusTests
 
         Assert.Empty(census.SkippedVirtuals("GstVideo"));
 
-        Assert.Equal(9, census.SkippedVirtualCount());
+        Assert.Equal(8, census.SkippedVirtualCount());
     }
 }
