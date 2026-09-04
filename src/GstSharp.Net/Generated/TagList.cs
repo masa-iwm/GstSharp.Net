@@ -25,6 +25,25 @@ public sealed unsafe partial class TagList : Gst.MiniObject
     {
     }
 
+    /// <summary>Wraps a <c>GstTagList</c> that GStreamer keeps owning, for the length of one call.</summary>
+    /// <param name="handle">The mini object that is lent to managed code.</param>
+    /// <returns>The wrapper, which holds no reference of its own.</returns>
+    /// <remarks>
+    /// This is how the override of a virtual method receives a <c>transfer none</c>
+    /// mini object. The wrapper takes no reference, so the object stays as writable
+    /// as GStreamer handed it over, and disposing the wrapper only detaches it: a
+    /// wrapper kept past the call throws instead of releasing a reference it never
+    /// took. See <see cref="Gst.Interop.Borrowed"/>.
+    /// </remarks>
+    internal static TagList Borrow(nint handle) => new(new Gst.Interop.Borrowed(handle));
+
+    /// <summary>Wraps a <c>GstTagList</c> the caller keeps owning.</summary>
+    /// <param name="borrowed">The mini object that is lent to managed code.</param>
+    private TagList(Gst.Interop.Borrowed borrowed)
+        : base(borrowed)
+    {
+    }
+
     /// <summary>Wraps a native <c>GstTagList</c>, mapping the null pointer onto <see langword="null"/>.</summary>
     /// <param name="handle">The native instance, or <c>0</c>.</param>
     /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>

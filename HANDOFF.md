@@ -42,8 +42,9 @@ mirror emitter and the ABI registry; see `git log` for their messages.
   reference minted for it would be one nobody releases. The instance chain-up
   also reads its own handle before it mints anything.
 
-80 slots are emitted (Gst 15, GstBase 65) and 29 are listed in the ledger:
-8 named by `skipVirtuals`, 21 `UnsupportedSignature`.
+100 slots are emitted (Gst 17, GstBase 83) and 9 are listed in the ledger:
+8 named by `skipVirtuals`, 1 `UnsupportedSignature`
+(`BaseTransform::transform_meta`, the one that lends a `GstMeta`).
 
 ## Remaining (brief steps h–j)
 
@@ -62,14 +63,13 @@ Tests and docs only. Nothing of the generator is left to write for wave 1.
 
 ## Findings that the next agent needs
 
-1. **A transfer-none mini object parameter is only bindable for `Gst.Buffer`
-   and `Gst.Caps`**, the two wrappers that have the hand written
-   `internal static T Borrow(nint)` plus its private `Borrowed` constructor.
-   `MarshalPlanner.BorrowableMiniObjects` is that list. It is what auto-skips
-   most of the 21: every slot that lends a `GstEvent`, `GstQuery`,
-   `GstBufferList`, `GstContext` or `GstSample`. Generating `Borrow` on every
-   mini object wrapper would unlock them in one change and is the single
-   highest-value follow-up of the wave.
+1. **Done in wave 1**: every generated mini object wrapper carries
+   `internal static T Borrow(nint)` and its private `Borrowed` constructor, so a
+   transfer-none mini object parameter is bindable whatever its type. That
+   unlocked 20 of the 21 `UnsupportedSignature` slots. Two class structs
+   redeclare a slot of their parent (`GstBaseSrcClass.query` and
+   `GstBaseSinkClass.query` over `GstElementClass.query`), which the emitter
+   answers with the `new` modifier, keyed on the managed shape of the member.
 2. `HandleFlavor.Opaque` is refused as well (`GstMeta` in
    `BaseTransform::transform_meta`): its wrapper has neither a transfer taking
    `FromNative` nor a `Dispose`, so the borrow has no shape.

@@ -4,30 +4,13 @@ using Gst.Interop;
 namespace Gst;
 
 /// <content>
-/// The two corners of the caps surface the generator does not emit: the borrow
-/// a vfunc override receives, and <c>gst_caps_fixate</c>, the one conversion of
-/// its family that does not always consume what it is given. See
+/// The one corner of the caps surface the generator does not emit:
+/// <c>gst_caps_fixate</c>, the one conversion of its family that does not
+/// always consume what it is given. See
 /// <see href="https://github.com/masa-iwm/GstSharp.Net/blob/main/docs/ownership.md#calls-that-consume-the-instance-they-are-called-on">Calls that consume the instance they are called on</see>.
 /// </content>
 public sealed partial class Caps
 {
-    /// <summary>
-    /// Wraps caps that GStreamer keeps owning, for the length of one call.
-    /// </summary>
-    /// <param name="handle">The caps that are lent to managed code.</param>
-    /// <remarks>
-    /// This is how a vfunc override receives <c>transfer none</c> caps. The
-    /// wrapper takes no reference of its own and disposing it only detaches it,
-    /// so caps that outlive the call throw instead of releasing a reference
-    /// that was never taken. See <see cref="Gst.Interop.Borrowed"/>.
-    /// </remarks>
-    internal static Caps Borrow(nint handle) => new(new Gst.Interop.Borrowed(handle));
-
-    private Caps(Gst.Interop.Borrowed borrowed)
-        : base(borrowed)
-    {
-    }
-
     /// <summary>
     /// Fixates the caps: keeps their first structure, replaces every range and
     /// list in it by one value, and answers the result.

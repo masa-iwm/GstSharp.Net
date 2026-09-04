@@ -247,11 +247,22 @@ internal sealed class SurfaceBuilder
         "SetProperty",
     ];
 
-    /// <summary>Names that a generated mini object wrapper inherits.</summary>
+    /// <summary>
+    /// The name of the borrow a generated mini object wrapper declares, which
+    /// is how the override of a virtual method receives an object GStreamer
+    /// keeps owning.
+    /// </summary>
+    internal const string BorrowName = "Borrow";
+
+    /// <summary>
+    /// Names that a generated mini object wrapper inherits or declares beyond
+    /// <see cref="WrapperNames"/>.
+    /// </summary>
     internal static readonly IReadOnlyList<string> MiniObjectNames =
     [
         "AdoptWritable",
         "BeginMakeWritable",
+        BorrowName,
         "IsWritable",
         "MakeWritableHandle",
     ];

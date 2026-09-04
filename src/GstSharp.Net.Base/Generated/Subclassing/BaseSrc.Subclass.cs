@@ -59,6 +59,15 @@ public unsafe partial class BaseSrc
         (nint)(delegate* unmanaged[Cdecl]<nint, nint, int>)&SetCapsTrampoline);
 
     /// <summary>
+    /// Gets the declaration of <c>GstBaseSrc.decide_allocation</c>, for a subclass that
+    /// overrides <see cref="OnDecideAllocation"/>.
+    /// </summary>
+    public static Gst.GObject.VfuncOverride DecideAllocationOverride { get; } = new(
+        &GetGType,
+        Gst.Base.BaseSrcClassRaw.DecideAllocationOffset,
+        (nint)(delegate* unmanaged[Cdecl]<nint, nint, int>)&DecideAllocationTrampoline);
+
+    /// <summary>
     /// Gets the declaration of <c>GstBaseSrc.start</c>, for a subclass that
     /// overrides <see cref="OnStart"/>.
     /// </summary>
@@ -104,6 +113,15 @@ public unsafe partial class BaseSrc
         (nint)(delegate* unmanaged[Cdecl]<nint, int>)&IsSeekableTrampoline);
 
     /// <summary>
+    /// Gets the declaration of <c>GstBaseSrc.prepare_seek_segment</c>, for a subclass that
+    /// overrides <see cref="OnPrepareSeekSegment"/>.
+    /// </summary>
+    public static Gst.GObject.VfuncOverride PrepareSeekSegmentOverride { get; } = new(
+        &GetGType,
+        Gst.Base.BaseSrcClassRaw.PrepareSeekSegmentOffset,
+        (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, int>)&PrepareSeekSegmentTrampoline);
+
+    /// <summary>
     /// Gets the declaration of <c>GstBaseSrc.do_seek</c>, for a subclass that
     /// overrides <see cref="OnDoSeek"/>.
     /// </summary>
@@ -129,6 +147,24 @@ public unsafe partial class BaseSrc
         &GetGType,
         Gst.Base.BaseSrcClassRaw.UnlockStopOffset,
         (nint)(delegate* unmanaged[Cdecl]<nint, int>)&UnlockStopTrampoline);
+
+    /// <summary>
+    /// Gets the declaration of <c>GstBaseSrc.query</c>, for a subclass that
+    /// overrides <see cref="OnQuery"/>.
+    /// </summary>
+    public static new Gst.GObject.VfuncOverride QueryOverride { get; } = new(
+        &GetGType,
+        Gst.Base.BaseSrcClassRaw.QueryOffset,
+        (nint)(delegate* unmanaged[Cdecl]<nint, nint, int>)&QueryTrampoline);
+
+    /// <summary>
+    /// Gets the declaration of <c>GstBaseSrc.event</c>, for a subclass that
+    /// overrides <see cref="OnEvent"/>.
+    /// </summary>
+    public static Gst.GObject.VfuncOverride EventOverride { get; } = new(
+        &GetGType,
+        Gst.Base.BaseSrcClassRaw.EventOffset,
+        (nint)(delegate* unmanaged[Cdecl]<nint, nint, int>)&EventTrampoline);
 
     /// <summary>
     /// Gets the declaration of <c>GstBaseSrc.create</c>, for a subclass that
@@ -208,6 +244,12 @@ public unsafe partial class BaseSrc
     protected virtual bool OnSetCaps(Gst.Caps caps) =>
         ChainUpSetCaps(caps);
 
+    /// <summary>Runs <c>GstBaseSrc.decide_allocation</c>.</summary>
+    /// <param name="query">The argument the slot carries under this name.</param>
+    /// <returns>What the slot answers.</returns>
+    protected virtual bool OnDecideAllocation(Gst.Query query) =>
+        ChainUpDecideAllocation(query);
+
     /// <summary>Runs <c>GstBaseSrc.start</c>.</summary>
     /// <returns>What the slot answers.</returns>
     protected virtual bool OnStart() =>
@@ -236,6 +278,13 @@ public unsafe partial class BaseSrc
     protected virtual bool OnIsSeekable() =>
         ChainUpIsSeekable();
 
+    /// <summary>Runs <c>GstBaseSrc.prepare_seek_segment</c>.</summary>
+    /// <param name="seek">The argument the slot carries under this name.</param>
+    /// <param name="segment">The argument the slot carries under this name.</param>
+    /// <returns>What the slot answers.</returns>
+    protected virtual bool OnPrepareSeekSegment(Gst.Event seek, Gst.Segment segment) =>
+        ChainUpPrepareSeekSegment(seek, segment);
+
     /// <summary>Runs <c>GstBaseSrc.do_seek</c>.</summary>
     /// <param name="segment">The argument the slot carries under this name.</param>
     /// <returns>What the slot answers.</returns>
@@ -251,6 +300,24 @@ public unsafe partial class BaseSrc
     /// <returns>What the slot answers.</returns>
     protected virtual bool OnUnlockStop() =>
         ChainUpUnlockStop();
+
+    /// <summary>Runs <c>GstBaseSrc.query</c>.</summary>
+    /// <param name="query">The argument the slot carries under this name.</param>
+    /// <returns>What the slot answers.</returns>
+    /// <remarks>
+    /// This hides the member of the same shape a base class carries. The two are
+    /// different class struct slots and <c>query</c> here is the one that
+    /// runs for an instance of this type, so the hidden one is not overridden
+    /// from a subclass of this class.
+    /// </remarks>
+    protected new virtual bool OnQuery(Gst.Query query) =>
+        ChainUpQuery(query);
+
+    /// <summary>Runs <c>GstBaseSrc.event</c>.</summary>
+    /// <param name="event">The argument the slot carries under this name.</param>
+    /// <returns>What the slot answers.</returns>
+    protected virtual bool OnEvent(Gst.Event @event) =>
+        ChainUpEvent(@event);
 
     /// <summary>Runs <c>GstBaseSrc.create</c>.</summary>
     /// <param name="offset">The argument the slot carries under this name.</param>
@@ -323,6 +390,18 @@ public unsafe partial class BaseSrc
         return result;
     }
 
+    /// <summary>Runs the implementation of <c>decide_allocation</c> below the managed override.</summary>
+    /// <param name="query">The argument the slot carries under this name.</param>
+    /// <returns>What the slot answers.</returns>
+    protected bool ChainUpDecideAllocation(Gst.Query query)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+        bool result = ChainUpDecideAllocation(Handle, query.Handle);
+        GC.KeepAlive(this);
+        GC.KeepAlive(query);
+        return result;
+    }
+
     /// <summary>Runs the implementation of <c>start</c> below the managed override.</summary>
     /// <returns>What the slot answers.</returns>
     protected bool ChainUpStart()
@@ -378,6 +457,21 @@ public unsafe partial class BaseSrc
         return result;
     }
 
+    /// <summary>Runs the implementation of <c>prepare_seek_segment</c> below the managed override.</summary>
+    /// <param name="seek">The argument the slot carries under this name.</param>
+    /// <param name="segment">The argument the slot carries under this name.</param>
+    /// <returns>What the slot answers.</returns>
+    protected bool ChainUpPrepareSeekSegment(Gst.Event seek, Gst.Segment segment)
+    {
+        ArgumentNullException.ThrowIfNull(seek);
+        ArgumentNullException.ThrowIfNull(segment);
+        bool result = ChainUpPrepareSeekSegment(Handle, seek.Handle, segment.Handle);
+        GC.KeepAlive(this);
+        GC.KeepAlive(seek);
+        GC.KeepAlive(segment);
+        return result;
+    }
+
     /// <summary>Runs the implementation of <c>do_seek</c> below the managed override.</summary>
     /// <param name="segment">The argument the slot carries under this name.</param>
     /// <returns>What the slot answers.</returns>
@@ -405,6 +499,36 @@ public unsafe partial class BaseSrc
     {
         bool result = ChainUpUnlockStop(Handle);
         GC.KeepAlive(this);
+        return result;
+    }
+
+    /// <summary>Runs the implementation of <c>query</c> below the managed override.</summary>
+    /// <param name="query">The argument the slot carries under this name.</param>
+    /// <returns>What the slot answers.</returns>
+    /// <remarks>
+    /// This hides the member of the same shape a base class carries. The two are
+    /// different class struct slots and <c>query</c> here is the one that
+    /// runs for an instance of this type, so the hidden one is not overridden
+    /// from a subclass of this class.
+    /// </remarks>
+    protected new bool ChainUpQuery(Gst.Query query)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+        bool result = ChainUpQuery(Handle, query.Handle);
+        GC.KeepAlive(this);
+        GC.KeepAlive(query);
+        return result;
+    }
+
+    /// <summary>Runs the implementation of <c>event</c> below the managed override.</summary>
+    /// <param name="event">The argument the slot carries under this name.</param>
+    /// <returns>What the slot answers.</returns>
+    protected bool ChainUpEvent(Gst.Event @event)
+    {
+        ArgumentNullException.ThrowIfNull(@event);
+        bool result = ChainUpEvent(Handle, @event.Handle);
+        GC.KeepAlive(this);
+        GC.KeepAlive(@event);
         return result;
     }
 
@@ -512,6 +636,20 @@ public unsafe partial class BaseSrc
         return slot(src, caps) != 0;
     }
 
+    private static bool ChainUpDecideAllocation(nint src, nint query)
+    {
+        delegate* unmanaged[Cdecl]<nint, nint, int> slot =
+            (delegate* unmanaged[Cdecl]<nint, nint, int>)ParentClassOf(src)->DecideAllocation;
+
+        if (slot is null)
+        {
+            throw new InvalidOperationException(
+                "BaseSrc.decide_allocation has no parent implementation; override OnDecideAllocation.");
+        }
+
+        return slot(src, query) != 0;
+    }
+
     private static bool ChainUpStart(nint src)
     {
         delegate* unmanaged[Cdecl]<nint, int> slot =
@@ -581,6 +719,20 @@ public unsafe partial class BaseSrc
         return slot(src) != 0;
     }
 
+    private static bool ChainUpPrepareSeekSegment(nint src, nint seek, nint segment)
+    {
+        delegate* unmanaged[Cdecl]<nint, nint, nint, int> slot =
+            (delegate* unmanaged[Cdecl]<nint, nint, nint, int>)ParentClassOf(src)->PrepareSeekSegment;
+
+        if (slot is null)
+        {
+            throw new InvalidOperationException(
+                "BaseSrc.prepare_seek_segment has no parent implementation; override OnPrepareSeekSegment.");
+        }
+
+        return slot(src, seek, segment) != 0;
+    }
+
     private static bool ChainUpDoSeek(nint src, nint segment)
     {
         delegate* unmanaged[Cdecl]<nint, nint, int> slot =
@@ -621,6 +773,34 @@ public unsafe partial class BaseSrc
         }
 
         return slot(src) != 0;
+    }
+
+    private static bool ChainUpQuery(nint src, nint query)
+    {
+        delegate* unmanaged[Cdecl]<nint, nint, int> slot =
+            (delegate* unmanaged[Cdecl]<nint, nint, int>)ParentClassOf(src)->Query;
+
+        if (slot is null)
+        {
+            throw new InvalidOperationException(
+                "BaseSrc.query has no parent implementation; override OnQuery.");
+        }
+
+        return slot(src, query) != 0;
+    }
+
+    private static bool ChainUpEvent(nint src, nint @event)
+    {
+        delegate* unmanaged[Cdecl]<nint, nint, int> slot =
+            (delegate* unmanaged[Cdecl]<nint, nint, int>)ParentClassOf(src)->Event;
+
+        if (slot is null)
+        {
+            throw new InvalidOperationException(
+                "BaseSrc.event has no parent implementation; override OnEvent.");
+        }
+
+        return slot(src, @event) != 0;
     }
 
     private static Gst.FlowReturn ChainUpCreate(nint src, ulong offset, uint size, nint* buf)
@@ -759,6 +939,26 @@ public unsafe partial class BaseSrc
     }
 
     [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static int DecideAllocationTrampoline(nint src, nint query)
+    {
+        try
+        {
+            if (Gst.GObject.Object.TryGetInterned(src) is not BaseSrc managed)
+            {
+                return (ChainUpDecideAllocation(src, query)) ? 1 : 0;
+            }
+
+            using Gst.Query? queryValue = query == nint.Zero ? null : Gst.Query.Borrow(query);
+            return (managed.OnDecideAllocation(queryValue!)) ? 1 : 0;
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+            return default;
+        }
+    }
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
     private static int StartTrampoline(nint src)
     {
         try
@@ -876,6 +1076,27 @@ public unsafe partial class BaseSrc
     }
 
     [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static int PrepareSeekSegmentTrampoline(nint src, nint seek, nint segment)
+    {
+        try
+        {
+            if (Gst.GObject.Object.TryGetInterned(src) is not BaseSrc managed)
+            {
+                return (ChainUpPrepareSeekSegment(src, seek, segment)) ? 1 : 0;
+            }
+
+            using Gst.Event? seekValue = seek == nint.Zero ? null : Gst.Event.Borrow(seek);
+            using Gst.Segment? segmentValue = Gst.Segment.FromNative(segment, Gst.Interop.Transfer.None);
+            return (managed.OnPrepareSeekSegment(seekValue!, segmentValue!)) ? 1 : 0;
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+            return default;
+        }
+    }
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
     private static int DoSeekTrampoline(nint src, nint segment)
     {
         try
@@ -925,6 +1146,46 @@ public unsafe partial class BaseSrc
             }
 
             return (managed.OnUnlockStop()) ? 1 : 0;
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+            return default;
+        }
+    }
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static int QueryTrampoline(nint src, nint query)
+    {
+        try
+        {
+            if (Gst.GObject.Object.TryGetInterned(src) is not BaseSrc managed)
+            {
+                return (ChainUpQuery(src, query)) ? 1 : 0;
+            }
+
+            using Gst.Query? queryValue = query == nint.Zero ? null : Gst.Query.Borrow(query);
+            return (managed.OnQuery(queryValue!)) ? 1 : 0;
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+            return default;
+        }
+    }
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static int EventTrampoline(nint src, nint @event)
+    {
+        try
+        {
+            if (Gst.GObject.Object.TryGetInterned(src) is not BaseSrc managed)
+            {
+                return (ChainUpEvent(src, @event)) ? 1 : 0;
+            }
+
+            using Gst.Event? @eventValue = @event == nint.Zero ? null : Gst.Event.Borrow(@event);
+            return (managed.OnEvent(@eventValue!)) ? 1 : 0;
         }
         catch (Exception exception)
         {

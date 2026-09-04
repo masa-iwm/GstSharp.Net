@@ -315,18 +315,6 @@ internal sealed class MarshalPlanner
         "Gst.MiniObject",
     };
 
-    /// <summary>
-    /// The mini object wrappers that can be built over a handle without taking
-    /// a reference, which a transfer none parameter of a virtual method needs
-    /// (<c>Gst.Interop.Borrowed</c>). The borrow is a hand written constructor
-    /// per type, so a slot that lends any other mini object stays out of the
-    /// surface until the wrapper of that type has one.
-    /// </summary>
-    private static readonly HashSet<string> BorrowableMiniObjects = new(StringComparer.Ordinal)
-    {
-        "Gst.Buffer", "Gst.Caps",
-    };
-
     /// <summary>The names a signal trampoline uses for its own parameters and locals.</summary>
     private static readonly HashSet<string> TrampolineLocals = new(StringComparer.Ordinal)
     {
@@ -4354,13 +4342,10 @@ internal sealed class MarshalPlanner
                 HandleFlavor.GObject => VfuncBucket.BorrowGObject,
 
                 // A mini object the slot only borrows is handed over without a
-                // reference, which the wrapper of the type has to offer: the
-                // borrow needs a constructor of its own, and only the types
-                // listed here have one.
+                // reference, which every generated mini object wrapper offers
+                // as its `Borrow` (`Gst.Interop.Borrowed`).
                 HandleFlavor.Wrapper when mapped.Kind == MarshalKind.MiniObject =>
-                    BorrowableMiniObjects.Contains(argument.PublicType.TrimEnd('?'))
-                        ? VfuncBucket.BorrowMiniObject
-                        : null,
+                    VfuncBucket.BorrowMiniObject,
                 HandleFlavor.Wrapper => VfuncBucket.BorrowWrapper,
                 _ => null,
             },

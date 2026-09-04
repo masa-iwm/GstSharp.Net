@@ -128,6 +128,25 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     {
     }
 
+    /// <summary>Wraps a <c>GstBuffer</c> that GStreamer keeps owning, for the length of one call.</summary>
+    /// <param name="handle">The mini object that is lent to managed code.</param>
+    /// <returns>The wrapper, which holds no reference of its own.</returns>
+    /// <remarks>
+    /// This is how the override of a virtual method receives a <c>transfer none</c>
+    /// mini object. The wrapper takes no reference, so the object stays as writable
+    /// as GStreamer handed it over, and disposing the wrapper only detaches it: a
+    /// wrapper kept past the call throws instead of releasing a reference it never
+    /// took. See <see cref="Gst.Interop.Borrowed"/>.
+    /// </remarks>
+    internal static Buffer Borrow(nint handle) => new(new Gst.Interop.Borrowed(handle));
+
+    /// <summary>Wraps a <c>GstBuffer</c> the caller keeps owning.</summary>
+    /// <param name="borrowed">The mini object that is lent to managed code.</param>
+    private Buffer(Gst.Interop.Borrowed borrowed)
+        : base(borrowed)
+    {
+    }
+
     /// <summary>pointer to the pool owner of the buffer</summary>
     /// <remarks>
     /// <para>

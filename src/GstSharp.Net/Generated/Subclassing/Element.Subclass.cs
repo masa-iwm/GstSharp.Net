@@ -113,6 +113,15 @@ public unsafe partial class Element
         (nint)(delegate* unmanaged[Cdecl]<nint, nint, int>)&SendEventTrampoline);
 
     /// <summary>
+    /// Gets the declaration of <c>GstElement.query</c>, for a subclass that
+    /// overrides <see cref="OnQuery"/>.
+    /// </summary>
+    public static Gst.GObject.VfuncOverride QueryOverride { get; } = new(
+        &GetGType,
+        Gst.ElementClassRaw.QueryOffset,
+        (nint)(delegate* unmanaged[Cdecl]<nint, nint, int>)&QueryTrampoline);
+
+    /// <summary>
     /// Gets the declaration of <c>GstElement.post_message</c>, for a subclass that
     /// overrides <see cref="OnPostMessage"/>.
     /// </summary>
@@ -120,6 +129,15 @@ public unsafe partial class Element
         &GetGType,
         Gst.ElementClassRaw.PostMessageOffset,
         (nint)(delegate* unmanaged[Cdecl]<nint, nint, int>)&PostMessageTrampoline);
+
+    /// <summary>
+    /// Gets the declaration of <c>GstElement.set_context</c>, for a subclass that
+    /// overrides <see cref="OnSetContext"/>.
+    /// </summary>
+    public static Gst.GObject.VfuncOverride SetContextOverride { get; } = new(
+        &GetGType,
+        Gst.ElementClassRaw.SetContextOffset,
+        (nint)(delegate* unmanaged[Cdecl]<nint, nint, void>)&SetContextTrampoline);
 
     /// <summary>Registers a managed subclass of <c>GstElement</c> with GObject.</summary>
     /// <param name="typeName">The <c>GType</c> name, unique in the process.</param>
@@ -204,11 +222,22 @@ public unsafe partial class Element
     protected virtual bool OnSendEvent(Gst.Event @event) =>
         ChainUpSendEvent(@event);
 
+    /// <summary>Runs <c>GstElement.query</c>.</summary>
+    /// <param name="query">The argument the slot carries under this name.</param>
+    /// <returns>What the slot answers.</returns>
+    protected virtual bool OnQuery(Gst.Query query) =>
+        ChainUpQuery(query);
+
     /// <summary>Runs <c>GstElement.post_message</c>.</summary>
     /// <param name="message">The argument the slot carries under this name.</param>
     /// <returns>What the slot answers.</returns>
     protected virtual bool OnPostMessage(Gst.Message message) =>
         ChainUpPostMessage(message);
+
+    /// <summary>Runs <c>GstElement.set_context</c>.</summary>
+    /// <param name="context">The argument the slot carries under this name.</param>
+    protected virtual void OnSetContext(Gst.Context context) =>
+        ChainUpSetContext(context);
 
     /// <summary>Runs the implementation of <c>request_new_pad</c> below the managed override.</summary>
     /// <param name="templ">The argument the slot carries under this name.</param>
@@ -327,6 +356,18 @@ public unsafe partial class Element
         return result;
     }
 
+    /// <summary>Runs the implementation of <c>query</c> below the managed override.</summary>
+    /// <param name="query">The argument the slot carries under this name.</param>
+    /// <returns>What the slot answers.</returns>
+    protected bool ChainUpQuery(Gst.Query query)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+        bool result = ChainUpQuery(Handle, query.Handle);
+        GC.KeepAlive(this);
+        GC.KeepAlive(query);
+        return result;
+    }
+
     /// <summary>Runs the implementation of <c>post_message</c> below the managed override.</summary>
     /// <param name="message">The argument the slot carries under this name.</param>
     /// <returns>What the slot answers.</returns>
@@ -340,6 +381,16 @@ public unsafe partial class Element
         GC.KeepAlive(this);
         message.Dispose();
         return result;
+    }
+
+    /// <summary>Runs the implementation of <c>set_context</c> below the managed override.</summary>
+    /// <param name="context">The argument the slot carries under this name.</param>
+    protected void ChainUpSetContext(Gst.Context context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        ChainUpSetContext(Handle, context.Handle);
+        GC.KeepAlive(this);
+        GC.KeepAlive(context);
     }
 
     private static Gst.Pad? ChainUpRequestNewPad(nint element, nint templ, byte* name, nint caps)
@@ -482,6 +533,20 @@ public unsafe partial class Element
         return slot(element, @event) != 0;
     }
 
+    private static bool ChainUpQuery(nint element, nint query)
+    {
+        delegate* unmanaged[Cdecl]<nint, nint, int> slot =
+            (delegate* unmanaged[Cdecl]<nint, nint, int>)ParentClassOf(element)->Query;
+
+        if (slot is null)
+        {
+            throw new InvalidOperationException(
+                "Element.query has no parent implementation; override OnQuery.");
+        }
+
+        return slot(element, query) != 0;
+    }
+
     private static bool ChainUpPostMessage(nint element, nint message)
     {
         delegate* unmanaged[Cdecl]<nint, nint, int> slot =
@@ -495,6 +560,19 @@ public unsafe partial class Element
         }
 
         return slot(element, message) != 0;
+    }
+
+    private static void ChainUpSetContext(nint element, nint context)
+    {
+        delegate* unmanaged[Cdecl]<nint, nint, void> slot =
+            (delegate* unmanaged[Cdecl]<nint, nint, void>)ParentClassOf(element)->SetContext;
+
+        if (slot is null)
+        {
+            return;
+        }
+
+        slot(element, context);
     }
 
     /// <summary>
@@ -719,6 +797,26 @@ public unsafe partial class Element
     }
 
     [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static int QueryTrampoline(nint element, nint query)
+    {
+        try
+        {
+            if (Gst.GObject.Object.TryGetInterned(element) is not Element managed)
+            {
+                return (ChainUpQuery(element, query)) ? 1 : 0;
+            }
+
+            using Gst.Query? queryValue = query == nint.Zero ? null : Gst.Query.Borrow(query);
+            return (managed.OnQuery(queryValue!)) ? 1 : 0;
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+            return default;
+        }
+    }
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
     private static int PostMessageTrampoline(nint element, nint message)
     {
         try
@@ -735,6 +833,26 @@ public unsafe partial class Element
         {
             Gst.Interop.ExceptionTrap.Report(exception);
             return default;
+        }
+    }
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static void SetContextTrampoline(nint element, nint context)
+    {
+        try
+        {
+            if (Gst.GObject.Object.TryGetInterned(element) is not Element managed)
+            {
+                ChainUpSetContext(element, context);
+                return;
+            }
+
+            using Gst.Context? contextValue = context == nint.Zero ? null : Gst.Context.Borrow(context);
+            managed.OnSetContext(contextValue!);
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
         }
     }
 }

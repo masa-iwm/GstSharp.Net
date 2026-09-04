@@ -169,6 +169,7 @@ internal sealed class VfuncEmitter
         foreach (VirtualMethodPlan plan in plans)
         {
             _ = mine.Add(plan.Name);
+            _ = mine.Add(SignatureOf(plan));
         }
 
         _emittedSlots[model.QualifiedName] = mine;
@@ -204,13 +205,13 @@ internal sealed class VfuncEmitter
         foreach (VirtualMethodPlan plan in plans)
         {
             writer.WriteLine();
-            WriteVirtual(writer, plan, cName);
+            WriteVirtual(writer, plan, cName, inherited.Contains(SignatureOf(plan)));
         }
 
         foreach (VirtualMethodPlan plan in plans)
         {
             writer.WriteLine();
-            WriteInstanceChainUp(writer, plan);
+            WriteInstanceChainUp(writer, plan, inherited.Contains(SignatureOf(plan)));
         }
 
         foreach (VirtualMethodPlan plan in plans)
@@ -396,25 +397,76 @@ internal sealed class VfuncEmitter
         return string.Join(" and one named ", quoted);
     }
 
-    private static void WriteVirtual(CodeWriter writer, VirtualMethodPlan plan, string cName)
+    private static void WriteVirtual(CodeWriter writer, VirtualMethodPlan plan, string cName, bool hides)
     {
         writer.WriteLine("/// <summary>Runs <c>" + cName + "." + plan.Method.Name + "</c>.</summary>");
         WriteParameterDocs(writer, plan);
         WriteReturnDoc(writer, plan);
+        if (hides)
+        {
+            WriteHidingRemark(writer, plan);
+        }
+
         writer.WriteLine(
-            "protected virtual " + ReturnType(plan) + " On" + plan.Name + "(" + PublicParameters(plan) + ") =>");
+            "protected " + (hides ? "new " : string.Empty) + "virtual " + ReturnType(plan) + " On" + plan.Name
+            + "(" + PublicParameters(plan) + ") =>");
         writer.WriteLine("    ChainUp" + plan.Name + "(" + PublicArguments(plan) + ");");
     }
 
-    private static void WriteInstanceChainUp(CodeWriter writer, VirtualMethodPlan plan)
+    /// <summary>
+    /// Writes the note that a member of the same shape further up is hidden:
+    /// a class struct that redeclares the slot of its parent, such as
+    /// <c>GstBaseSrcClass.query</c> over <c>GstElementClass.query</c>, is a
+    /// second slot and not an override of the first one.
+    /// </summary>
+    /// <param name="writer">Where the note is written.</param>
+    /// <param name="plan">The slot being written.</param>
+    private static void WriteHidingRemark(CodeWriter writer, VirtualMethodPlan plan)
+    {
+        writer.WriteLine("/// <remarks>");
+        writer.WriteLine("/// This hides the member of the same shape a base class carries. The two are");
+        writer.WriteLine(
+            "/// different class struct slots and <c>" + plan.Method.Name + "</c> here is the one that");
+        writer.WriteLine("/// runs for an instance of this type, so the hidden one is not overridden");
+        writer.WriteLine("/// from a subclass of this class.");
+        writer.WriteLine("/// </remarks>");
+    }
+
+    /// <summary>
+    /// Builds the key that says whether a base class already carries the very
+    /// member a slot declares: the managed name and the parameter types, with
+    /// the parameter names dropped, because C# hides by shape. An <c>out</c>
+    /// and a <c>ref</c> parameter share a shape, so they share a key.
+    /// </summary>
+    /// <param name="plan">The slot being written.</param>
+    /// <returns>The key.</returns>
+    private static string SignatureOf(VirtualMethodPlan plan)
+    {
+        List<string> parts = [];
+        foreach (VfuncArgument argument in plan.Arguments)
+        {
+            string modifier = Modifier(argument);
+            parts.Add((modifier.Length == 0 ? string.Empty : "ref ") + PublicType(argument));
+        }
+
+        return plan.Name + "(" + string.Join(", ", parts) + ")";
+    }
+
+    private static void WriteInstanceChainUp(CodeWriter writer, VirtualMethodPlan plan, bool hides)
     {
         writer.WriteLine(
             "/// <summary>Runs the implementation of <c>" + plan.Method.Name
             + "</c> below the managed override.</summary>");
         WriteParameterDocs(writer, plan);
         WriteReturnDoc(writer, plan);
+        if (hides)
+        {
+            WriteHidingRemark(writer, plan);
+        }
+
         writer.WriteLine(
-            "protected " + ReturnType(plan) + " ChainUp" + plan.Name + "(" + PublicParameters(plan) + ")");
+            "protected " + (hides ? "new " : string.Empty) + ReturnType(plan) + " ChainUp" + plan.Name
+            + "(" + PublicParameters(plan) + ")");
         writer.OpenBlock();
 
         foreach (VfuncArgument argument in plan.Arguments)

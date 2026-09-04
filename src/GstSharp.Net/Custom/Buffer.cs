@@ -3,24 +3,6 @@ namespace Gst;
 public sealed partial class Buffer
 {
     /// <summary>
-    /// Wraps a buffer that GStreamer keeps owning, for the length of one call.
-    /// </summary>
-    /// <param name="handle">The buffer that is lent to managed code.</param>
-    /// <remarks>
-    /// This is how a vfunc override receives a <c>transfer none</c> buffer. The
-    /// wrapper takes no reference of its own, so the buffer stays as writable
-    /// as GStreamer handed it over and an in place override can map it for
-    /// writing; disposing the wrapper only detaches it. See
-    /// <see cref="Gst.Interop.Borrowed"/>.
-    /// </remarks>
-    internal static Buffer Borrow(nint handle) => new(new Gst.Interop.Borrowed(handle));
-
-    private Buffer(Gst.Interop.Borrowed borrowed)
-        : base(borrowed)
-    {
-    }
-
-    /// <summary>
     /// Creates a buffer over memory the caller owns, without copying it.
     /// </summary>
     /// <param name="flags">

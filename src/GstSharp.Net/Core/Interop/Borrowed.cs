@@ -8,8 +8,8 @@ namespace Gst.Interop;
 /// <para>
 /// This is the one exception to the rule of <c>docs/ownership.md</c> that every
 /// mini object wrapper owns a reference of its own, and it exists for the
-/// reverse direction only: a vfunc override receives the buffer or the caps
-/// that GStreamer is holding, uses it while the call runs, and never keeps it.
+/// reverse direction only: a vfunc override receives the mini object that
+/// GStreamer is holding, uses it while the call runs, and never keeps it.
 /// A wrapper built from this takes no reference and releases none; disposing it
 /// only detaches it, so a wrapper that outlives the call throws
 /// <see cref="System.ObjectDisposedException"/> instead of touching an object

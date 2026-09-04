@@ -68,6 +68,15 @@ public unsafe partial class BaseSink
         (nint)(delegate* unmanaged[Cdecl]<nint, nint, ulong*, ulong*, void>)&GetTimesTrampoline);
 
     /// <summary>
+    /// Gets the declaration of <c>GstBaseSink.propose_allocation</c>, for a subclass that
+    /// overrides <see cref="OnProposeAllocation"/>.
+    /// </summary>
+    public static Gst.GObject.VfuncOverride ProposeAllocationOverride { get; } = new(
+        &GetGType,
+        Gst.Base.BaseSinkClassRaw.ProposeAllocationOffset,
+        (nint)(delegate* unmanaged[Cdecl]<nint, nint, int>)&ProposeAllocationTrampoline);
+
+    /// <summary>
     /// Gets the declaration of <c>GstBaseSink.start</c>, for a subclass that
     /// overrides <see cref="OnStart"/>.
     /// </summary>
@@ -104,6 +113,15 @@ public unsafe partial class BaseSink
         (nint)(delegate* unmanaged[Cdecl]<nint, int>)&UnlockStopTrampoline);
 
     /// <summary>
+    /// Gets the declaration of <c>GstBaseSink.query</c>, for a subclass that
+    /// overrides <see cref="OnQuery"/>.
+    /// </summary>
+    public static new Gst.GObject.VfuncOverride QueryOverride { get; } = new(
+        &GetGType,
+        Gst.Base.BaseSinkClassRaw.QueryOffset,
+        (nint)(delegate* unmanaged[Cdecl]<nint, nint, int>)&QueryTrampoline);
+
+    /// <summary>
     /// Gets the declaration of <c>GstBaseSink.event</c>, for a subclass that
     /// overrides <see cref="OnEvent"/>.
     /// </summary>
@@ -113,6 +131,15 @@ public unsafe partial class BaseSink
         (nint)(delegate* unmanaged[Cdecl]<nint, nint, int>)&EventTrampoline);
 
     /// <summary>
+    /// Gets the declaration of <c>GstBaseSink.wait_event</c>, for a subclass that
+    /// overrides <see cref="OnWaitEvent"/>.
+    /// </summary>
+    public static Gst.GObject.VfuncOverride WaitEventOverride { get; } = new(
+        &GetGType,
+        Gst.Base.BaseSinkClassRaw.WaitEventOffset,
+        (nint)(delegate* unmanaged[Cdecl]<nint, nint, int>)&WaitEventTrampoline);
+
+    /// <summary>
     /// Gets the declaration of <c>GstBaseSink.prepare</c>, for a subclass that
     /// overrides <see cref="OnPrepare"/>.
     /// </summary>
@@ -120,6 +147,15 @@ public unsafe partial class BaseSink
         &GetGType,
         Gst.Base.BaseSinkClassRaw.PrepareOffset,
         (nint)(delegate* unmanaged[Cdecl]<nint, nint, int>)&PrepareTrampoline);
+
+    /// <summary>
+    /// Gets the declaration of <c>GstBaseSink.prepare_list</c>, for a subclass that
+    /// overrides <see cref="OnPrepareList"/>.
+    /// </summary>
+    public static Gst.GObject.VfuncOverride PrepareListOverride { get; } = new(
+        &GetGType,
+        Gst.Base.BaseSinkClassRaw.PrepareListOffset,
+        (nint)(delegate* unmanaged[Cdecl]<nint, nint, int>)&PrepareListTrampoline);
 
     /// <summary>
     /// Gets the declaration of <c>GstBaseSink.preroll</c>, for a subclass that
@@ -138,6 +174,15 @@ public unsafe partial class BaseSink
         &GetGType,
         Gst.Base.BaseSinkClassRaw.RenderOffset,
         (nint)(delegate* unmanaged[Cdecl]<nint, nint, int>)&RenderTrampoline);
+
+    /// <summary>
+    /// Gets the declaration of <c>GstBaseSink.render_list</c>, for a subclass that
+    /// overrides <see cref="OnRenderList"/>.
+    /// </summary>
+    public static Gst.GObject.VfuncOverride RenderListOverride { get; } = new(
+        &GetGType,
+        Gst.Base.BaseSinkClassRaw.RenderListOffset,
+        (nint)(delegate* unmanaged[Cdecl]<nint, nint, int>)&RenderListTrampoline);
 
     /// <summary>Registers a managed subclass of <c>GstBaseSink</c> with GObject.</summary>
     /// <param name="typeName">The <c>GType</c> name, unique in the process.</param>
@@ -198,6 +243,12 @@ public unsafe partial class BaseSink
     protected virtual void OnGetTimes(Gst.Buffer buffer, out Gst.ClockTime start, out Gst.ClockTime end) =>
         ChainUpGetTimes(buffer, out start, out end);
 
+    /// <summary>Runs <c>GstBaseSink.propose_allocation</c>.</summary>
+    /// <param name="query">The argument the slot carries under this name.</param>
+    /// <returns>What the slot answers.</returns>
+    protected virtual bool OnProposeAllocation(Gst.Query query) =>
+        ChainUpProposeAllocation(query);
+
     /// <summary>Runs <c>GstBaseSink.start</c>.</summary>
     /// <returns>What the slot answers.</returns>
     protected virtual bool OnStart() =>
@@ -218,17 +269,41 @@ public unsafe partial class BaseSink
     protected virtual bool OnUnlockStop() =>
         ChainUpUnlockStop();
 
+    /// <summary>Runs <c>GstBaseSink.query</c>.</summary>
+    /// <param name="query">The argument the slot carries under this name.</param>
+    /// <returns>What the slot answers.</returns>
+    /// <remarks>
+    /// This hides the member of the same shape a base class carries. The two are
+    /// different class struct slots and <c>query</c> here is the one that
+    /// runs for an instance of this type, so the hidden one is not overridden
+    /// from a subclass of this class.
+    /// </remarks>
+    protected new virtual bool OnQuery(Gst.Query query) =>
+        ChainUpQuery(query);
+
     /// <summary>Runs <c>GstBaseSink.event</c>.</summary>
     /// <param name="event">The argument the slot carries under this name.</param>
     /// <returns>What the slot answers.</returns>
     protected virtual bool OnEvent(Gst.Event @event) =>
         ChainUpEvent(@event);
 
+    /// <summary>Runs <c>GstBaseSink.wait_event</c>.</summary>
+    /// <param name="event">The argument the slot carries under this name.</param>
+    /// <returns>What the slot answers.</returns>
+    protected virtual Gst.FlowReturn OnWaitEvent(Gst.Event @event) =>
+        ChainUpWaitEvent(@event);
+
     /// <summary>Runs <c>GstBaseSink.prepare</c>.</summary>
     /// <param name="buffer">The argument the slot carries under this name.</param>
     /// <returns>What the slot answers.</returns>
     protected virtual Gst.FlowReturn OnPrepare(Gst.Buffer buffer) =>
         ChainUpPrepare(buffer);
+
+    /// <summary>Runs <c>GstBaseSink.prepare_list</c>.</summary>
+    /// <param name="bufferList">The argument the slot carries under this name.</param>
+    /// <returns>What the slot answers.</returns>
+    protected virtual Gst.FlowReturn OnPrepareList(Gst.BufferList bufferList) =>
+        ChainUpPrepareList(bufferList);
 
     /// <summary>Runs <c>GstBaseSink.preroll</c>.</summary>
     /// <param name="buffer">The argument the slot carries under this name.</param>
@@ -241,6 +316,12 @@ public unsafe partial class BaseSink
     /// <returns>What the slot answers.</returns>
     protected virtual Gst.FlowReturn OnRender(Gst.Buffer buffer) =>
         ChainUpRender(buffer);
+
+    /// <summary>Runs <c>GstBaseSink.render_list</c>.</summary>
+    /// <param name="bufferList">The argument the slot carries under this name.</param>
+    /// <returns>What the slot answers.</returns>
+    protected virtual Gst.FlowReturn OnRenderList(Gst.BufferList bufferList) =>
+        ChainUpRenderList(bufferList);
 
     /// <summary>Runs the implementation of <c>get_caps</c> below the managed override.</summary>
     /// <param name="filter">The argument the slot carries under this name.</param>
@@ -306,6 +387,18 @@ public unsafe partial class BaseSink
         end = new Gst.ClockTime(endNative);
     }
 
+    /// <summary>Runs the implementation of <c>propose_allocation</c> below the managed override.</summary>
+    /// <param name="query">The argument the slot carries under this name.</param>
+    /// <returns>What the slot answers.</returns>
+    protected bool ChainUpProposeAllocation(Gst.Query query)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+        bool result = ChainUpProposeAllocation(Handle, query.Handle);
+        GC.KeepAlive(this);
+        GC.KeepAlive(query);
+        return result;
+    }
+
     /// <summary>Runs the implementation of <c>start</c> below the managed override.</summary>
     /// <returns>What the slot answers.</returns>
     protected bool ChainUpStart()
@@ -342,6 +435,24 @@ public unsafe partial class BaseSink
         return result;
     }
 
+    /// <summary>Runs the implementation of <c>query</c> below the managed override.</summary>
+    /// <param name="query">The argument the slot carries under this name.</param>
+    /// <returns>What the slot answers.</returns>
+    /// <remarks>
+    /// This hides the member of the same shape a base class carries. The two are
+    /// different class struct slots and <c>query</c> here is the one that
+    /// runs for an instance of this type, so the hidden one is not overridden
+    /// from a subclass of this class.
+    /// </remarks>
+    protected new bool ChainUpQuery(Gst.Query query)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+        bool result = ChainUpQuery(Handle, query.Handle);
+        GC.KeepAlive(this);
+        GC.KeepAlive(query);
+        return result;
+    }
+
     /// <summary>Runs the implementation of <c>event</c> below the managed override.</summary>
     /// <param name="event">The argument the slot carries under this name.</param>
     /// <returns>What the slot answers.</returns>
@@ -357,6 +468,18 @@ public unsafe partial class BaseSink
         return result;
     }
 
+    /// <summary>Runs the implementation of <c>wait_event</c> below the managed override.</summary>
+    /// <param name="event">The argument the slot carries under this name.</param>
+    /// <returns>What the slot answers.</returns>
+    protected Gst.FlowReturn ChainUpWaitEvent(Gst.Event @event)
+    {
+        ArgumentNullException.ThrowIfNull(@event);
+        Gst.FlowReturn result = ChainUpWaitEvent(Handle, @event.Handle);
+        GC.KeepAlive(this);
+        GC.KeepAlive(@event);
+        return result;
+    }
+
     /// <summary>Runs the implementation of <c>prepare</c> below the managed override.</summary>
     /// <param name="buffer">The argument the slot carries under this name.</param>
     /// <returns>What the slot answers.</returns>
@@ -366,6 +489,18 @@ public unsafe partial class BaseSink
         Gst.FlowReturn result = ChainUpPrepare(Handle, buffer.Handle);
         GC.KeepAlive(this);
         GC.KeepAlive(buffer);
+        return result;
+    }
+
+    /// <summary>Runs the implementation of <c>prepare_list</c> below the managed override.</summary>
+    /// <param name="bufferList">The argument the slot carries under this name.</param>
+    /// <returns>What the slot answers.</returns>
+    protected Gst.FlowReturn ChainUpPrepareList(Gst.BufferList bufferList)
+    {
+        ArgumentNullException.ThrowIfNull(bufferList);
+        Gst.FlowReturn result = ChainUpPrepareList(Handle, bufferList.Handle);
+        GC.KeepAlive(this);
+        GC.KeepAlive(bufferList);
         return result;
     }
 
@@ -390,6 +525,18 @@ public unsafe partial class BaseSink
         Gst.FlowReturn result = ChainUpRender(Handle, buffer.Handle);
         GC.KeepAlive(this);
         GC.KeepAlive(buffer);
+        return result;
+    }
+
+    /// <summary>Runs the implementation of <c>render_list</c> below the managed override.</summary>
+    /// <param name="bufferList">The argument the slot carries under this name.</param>
+    /// <returns>What the slot answers.</returns>
+    protected Gst.FlowReturn ChainUpRenderList(Gst.BufferList bufferList)
+    {
+        ArgumentNullException.ThrowIfNull(bufferList);
+        Gst.FlowReturn result = ChainUpRenderList(Handle, bufferList.Handle);
+        GC.KeepAlive(this);
+        GC.KeepAlive(bufferList);
         return result;
     }
 
@@ -464,6 +611,20 @@ public unsafe partial class BaseSink
         slot(sink, buffer, start, end);
     }
 
+    private static bool ChainUpProposeAllocation(nint sink, nint query)
+    {
+        delegate* unmanaged[Cdecl]<nint, nint, int> slot =
+            (delegate* unmanaged[Cdecl]<nint, nint, int>)ParentClassOf(sink)->ProposeAllocation;
+
+        if (slot is null)
+        {
+            throw new InvalidOperationException(
+                "BaseSink.propose_allocation has no parent implementation; override OnProposeAllocation.");
+        }
+
+        return slot(sink, query) != 0;
+    }
+
     private static bool ChainUpStart(nint sink)
     {
         delegate* unmanaged[Cdecl]<nint, int> slot =
@@ -518,6 +679,20 @@ public unsafe partial class BaseSink
         return slot(sink) != 0;
     }
 
+    private static bool ChainUpQuery(nint sink, nint query)
+    {
+        delegate* unmanaged[Cdecl]<nint, nint, int> slot =
+            (delegate* unmanaged[Cdecl]<nint, nint, int>)ParentClassOf(sink)->Query;
+
+        if (slot is null)
+        {
+            throw new InvalidOperationException(
+                "BaseSink.query has no parent implementation; override OnQuery.");
+        }
+
+        return slot(sink, query) != 0;
+    }
+
     private static bool ChainUpEvent(nint sink, nint @event)
     {
         delegate* unmanaged[Cdecl]<nint, nint, int> slot =
@@ -533,6 +708,20 @@ public unsafe partial class BaseSink
         return slot(sink, @event) != 0;
     }
 
+    private static Gst.FlowReturn ChainUpWaitEvent(nint sink, nint @event)
+    {
+        delegate* unmanaged[Cdecl]<nint, nint, int> slot =
+            (delegate* unmanaged[Cdecl]<nint, nint, int>)ParentClassOf(sink)->WaitEvent;
+
+        if (slot is null)
+        {
+            throw new InvalidOperationException(
+                "BaseSink.wait_event has no parent implementation; override OnWaitEvent.");
+        }
+
+        return (Gst.FlowReturn)slot(sink, @event);
+    }
+
     private static Gst.FlowReturn ChainUpPrepare(nint sink, nint buffer)
     {
         delegate* unmanaged[Cdecl]<nint, nint, int> slot =
@@ -545,6 +734,20 @@ public unsafe partial class BaseSink
         }
 
         return (Gst.FlowReturn)slot(sink, buffer);
+    }
+
+    private static Gst.FlowReturn ChainUpPrepareList(nint sink, nint bufferList)
+    {
+        delegate* unmanaged[Cdecl]<nint, nint, int> slot =
+            (delegate* unmanaged[Cdecl]<nint, nint, int>)ParentClassOf(sink)->PrepareList;
+
+        if (slot is null)
+        {
+            throw new InvalidOperationException(
+                "BaseSink.prepare_list has no parent implementation; override OnPrepareList.");
+        }
+
+        return (Gst.FlowReturn)slot(sink, bufferList);
     }
 
     private static Gst.FlowReturn ChainUpPreroll(nint sink, nint buffer)
@@ -571,6 +774,20 @@ public unsafe partial class BaseSink
         }
 
         return (Gst.FlowReturn)slot(sink, buffer);
+    }
+
+    private static Gst.FlowReturn ChainUpRenderList(nint sink, nint bufferList)
+    {
+        delegate* unmanaged[Cdecl]<nint, nint, int> slot =
+            (delegate* unmanaged[Cdecl]<nint, nint, int>)ParentClassOf(sink)->RenderList;
+
+        if (slot is null)
+        {
+            throw new InvalidOperationException(
+                "BaseSink.render_list has no parent implementation; override OnRenderList.");
+        }
+
+        return (Gst.FlowReturn)slot(sink, bufferList);
     }
 
     /// <summary>
@@ -697,6 +914,26 @@ public unsafe partial class BaseSink
     }
 
     [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static int ProposeAllocationTrampoline(nint sink, nint query)
+    {
+        try
+        {
+            if (Gst.GObject.Object.TryGetInterned(sink) is not BaseSink managed)
+            {
+                return (ChainUpProposeAllocation(sink, query)) ? 1 : 0;
+            }
+
+            using Gst.Query? queryValue = query == nint.Zero ? null : Gst.Query.Borrow(query);
+            return (managed.OnProposeAllocation(queryValue!)) ? 1 : 0;
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+            return default;
+        }
+    }
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
     private static int StartTrampoline(nint sink)
     {
         try
@@ -773,6 +1010,26 @@ public unsafe partial class BaseSink
     }
 
     [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static int QueryTrampoline(nint sink, nint query)
+    {
+        try
+        {
+            if (Gst.GObject.Object.TryGetInterned(sink) is not BaseSink managed)
+            {
+                return (ChainUpQuery(sink, query)) ? 1 : 0;
+            }
+
+            using Gst.Query? queryValue = query == nint.Zero ? null : Gst.Query.Borrow(query);
+            return (managed.OnQuery(queryValue!)) ? 1 : 0;
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+            return default;
+        }
+    }
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
     private static int EventTrampoline(nint sink, nint @event)
     {
         try
@@ -793,6 +1050,26 @@ public unsafe partial class BaseSink
     }
 
     [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static int WaitEventTrampoline(nint sink, nint @event)
+    {
+        try
+        {
+            if (Gst.GObject.Object.TryGetInterned(sink) is not BaseSink managed)
+            {
+                return (int)(ChainUpWaitEvent(sink, @event));
+            }
+
+            using Gst.Event? @eventValue = @event == nint.Zero ? null : Gst.Event.Borrow(@event);
+            return (int)(managed.OnWaitEvent(@eventValue!));
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+            return (int)Gst.FlowReturn.Error;
+        }
+    }
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
     private static int PrepareTrampoline(nint sink, nint buffer)
     {
         try
@@ -804,6 +1081,26 @@ public unsafe partial class BaseSink
 
             using Gst.Buffer? bufferValue = buffer == nint.Zero ? null : Gst.Buffer.Borrow(buffer);
             return (int)(managed.OnPrepare(bufferValue!));
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+            return (int)Gst.FlowReturn.Error;
+        }
+    }
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static int PrepareListTrampoline(nint sink, nint bufferList)
+    {
+        try
+        {
+            if (Gst.GObject.Object.TryGetInterned(sink) is not BaseSink managed)
+            {
+                return (int)(ChainUpPrepareList(sink, bufferList));
+            }
+
+            using Gst.BufferList? bufferListValue = bufferList == nint.Zero ? null : Gst.BufferList.Borrow(bufferList);
+            return (int)(managed.OnPrepareList(bufferListValue!));
         }
         catch (Exception exception)
         {
@@ -844,6 +1141,26 @@ public unsafe partial class BaseSink
 
             using Gst.Buffer? bufferValue = buffer == nint.Zero ? null : Gst.Buffer.Borrow(buffer);
             return (int)(managed.OnRender(bufferValue!));
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+            return (int)Gst.FlowReturn.Error;
+        }
+    }
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static int RenderListTrampoline(nint sink, nint bufferList)
+    {
+        try
+        {
+            if (Gst.GObject.Object.TryGetInterned(sink) is not BaseSink managed)
+            {
+                return (int)(ChainUpRenderList(sink, bufferList));
+            }
+
+            using Gst.BufferList? bufferListValue = bufferList == nint.Zero ? null : Gst.BufferList.Borrow(bufferList);
+            return (int)(managed.OnRenderList(bufferListValue!));
         }
         catch (Exception exception)
         {

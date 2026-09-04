@@ -516,6 +516,40 @@ internal sealed class RecordEmitter
         writer.CloseBlock();
     }
 
+    /// <summary>
+    /// Writes the borrow of a mini object wrapper: the way a virtual method
+    /// override receives an object that GStreamer keeps owning.
+    /// </summary>
+    /// <param name="writer">Where the members are written.</param>
+    /// <param name="record">The gir record the wrapper stands for.</param>
+    /// <param name="typeName">The name of the wrapper.</param>
+    private static void WriteBorrow(CodeWriter writer, GirRecord record, string typeName)
+    {
+        string cType = CTypeOf(record);
+        writer.WriteLine();
+        writer.WriteLine(
+            "/// <summary>Wraps a <c>" + cType
+            + "</c> that GStreamer keeps owning, for the length of one call.</summary>");
+        writer.WriteLine("/// <param name=\"handle\">The mini object that is lent to managed code.</param>");
+        writer.WriteLine("/// <returns>The wrapper, which holds no reference of its own.</returns>");
+        writer.WriteLine("/// <remarks>");
+        writer.WriteLine("/// This is how the override of a virtual method receives a <c>transfer none</c>");
+        writer.WriteLine("/// mini object. The wrapper takes no reference, so the object stays as writable");
+        writer.WriteLine("/// as GStreamer handed it over, and disposing the wrapper only detaches it: a");
+        writer.WriteLine("/// wrapper kept past the call throws instead of releasing a reference it never");
+        writer.WriteLine("/// took. See <see cref=\"Gst.Interop.Borrowed\"/>.");
+        writer.WriteLine("/// </remarks>");
+        writer.WriteLine(
+            "internal static " + typeName + " " + SurfaceBuilder.BorrowName + "(nint handle) => new(new Gst.Interop.Borrowed(handle));");
+        writer.WriteLine();
+        writer.WriteLine("/// <summary>Wraps a <c>" + cType + "</c> the caller keeps owning.</summary>");
+        writer.WriteLine("/// <param name=\"borrowed\">The mini object that is lent to managed code.</param>");
+        writer.WriteLine("private " + typeName + "(Gst.Interop.Borrowed borrowed)");
+        writer.WriteLine("    : base(borrowed)");
+        writer.OpenBlock();
+        writer.CloseBlock();
+    }
+
     private static void WriteFromNative(CodeWriter writer, GirRecord record, string typeName)
     {
         writer.WriteLine(
@@ -889,6 +923,7 @@ internal sealed class RecordEmitter
         writer.OpenBlock();
 
         WriteWrapperConstructor(writer, record, typeName, "base(handle, transfer)");
+        WriteBorrow(writer, record, typeName);
 
         WriteAccessors(writer, record, accessors);
 

@@ -59,6 +59,15 @@ public unsafe partial class Aggregator
         (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, int>)&SinkEventTrampoline);
 
     /// <summary>
+    /// Gets the declaration of <c>GstAggregator.sink_query</c>, for a subclass that
+    /// overrides <see cref="OnSinkQuery"/>.
+    /// </summary>
+    public static Gst.GObject.VfuncOverride SinkQueryOverride { get; } = new(
+        &GetGType,
+        Gst.Base.AggregatorClassRaw.SinkQueryOffset,
+        (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, int>)&SinkQueryTrampoline);
+
+    /// <summary>
     /// Gets the declaration of <c>GstAggregator.src_event</c>, for a subclass that
     /// overrides <see cref="OnSrcEvent"/>.
     /// </summary>
@@ -66,6 +75,15 @@ public unsafe partial class Aggregator
         &GetGType,
         Gst.Base.AggregatorClassRaw.SrcEventOffset,
         (nint)(delegate* unmanaged[Cdecl]<nint, nint, int>)&SrcEventTrampoline);
+
+    /// <summary>
+    /// Gets the declaration of <c>GstAggregator.src_query</c>, for a subclass that
+    /// overrides <see cref="OnSrcQuery"/>.
+    /// </summary>
+    public static Gst.GObject.VfuncOverride SrcQueryOverride { get; } = new(
+        &GetGType,
+        Gst.Base.AggregatorClassRaw.SrcQueryOffset,
+        (nint)(delegate* unmanaged[Cdecl]<nint, nint, int>)&SrcQueryTrampoline);
 
     /// <summary>
     /// Gets the declaration of <c>GstAggregator.src_activate</c>, for a subclass that
@@ -140,6 +158,24 @@ public unsafe partial class Aggregator
         (nint)(delegate* unmanaged[Cdecl]<nint, nint, int>)&NegotiatedSrcCapsTrampoline);
 
     /// <summary>
+    /// Gets the declaration of <c>GstAggregator.decide_allocation</c>, for a subclass that
+    /// overrides <see cref="OnDecideAllocation"/>.
+    /// </summary>
+    public static Gst.GObject.VfuncOverride DecideAllocationOverride { get; } = new(
+        &GetGType,
+        Gst.Base.AggregatorClassRaw.DecideAllocationOffset,
+        (nint)(delegate* unmanaged[Cdecl]<nint, nint, int>)&DecideAllocationTrampoline);
+
+    /// <summary>
+    /// Gets the declaration of <c>GstAggregator.propose_allocation</c>, for a subclass that
+    /// overrides <see cref="OnProposeAllocation"/>.
+    /// </summary>
+    public static Gst.GObject.VfuncOverride ProposeAllocationOverride { get; } = new(
+        &GetGType,
+        Gst.Base.AggregatorClassRaw.ProposeAllocationOffset,
+        (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, nint, int>)&ProposeAllocationTrampoline);
+
+    /// <summary>
     /// Gets the declaration of <c>GstAggregator.negotiate</c>, for a subclass that
     /// overrides <see cref="OnNegotiate"/>.
     /// </summary>
@@ -156,6 +192,15 @@ public unsafe partial class Aggregator
         &GetGType,
         Gst.Base.AggregatorClassRaw.SinkEventPreQueueOffset,
         (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, int>)&SinkEventPreQueueTrampoline);
+
+    /// <summary>
+    /// Gets the declaration of <c>GstAggregator.sink_query_pre_queue</c>, for a subclass that
+    /// overrides <see cref="OnSinkQueryPreQueue"/>.
+    /// </summary>
+    public static Gst.GObject.VfuncOverride SinkQueryPreQueueOverride { get; } = new(
+        &GetGType,
+        Gst.Base.AggregatorClassRaw.SinkQueryPreQueueOffset,
+        (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, int>)&SinkQueryPreQueueTrampoline);
 
     /// <summary>
     /// Gets the declaration of <c>GstAggregator.finish_buffer_list</c>, for a subclass that
@@ -246,11 +291,24 @@ public unsafe partial class Aggregator
     protected virtual bool OnSinkEvent(Gst.Base.AggregatorPad aggregatorPad, Gst.Event @event) =>
         ChainUpSinkEvent(aggregatorPad, @event);
 
+    /// <summary>Runs <c>GstAggregator.sink_query</c>.</summary>
+    /// <param name="aggregatorPad">The argument the slot carries under this name.</param>
+    /// <param name="query">The argument the slot carries under this name.</param>
+    /// <returns>What the slot answers.</returns>
+    protected virtual bool OnSinkQuery(Gst.Base.AggregatorPad aggregatorPad, Gst.Query query) =>
+        ChainUpSinkQuery(aggregatorPad, query);
+
     /// <summary>Runs <c>GstAggregator.src_event</c>.</summary>
     /// <param name="event">The argument the slot carries under this name.</param>
     /// <returns>What the slot answers.</returns>
     protected virtual bool OnSrcEvent(Gst.Event @event) =>
         ChainUpSrcEvent(@event);
+
+    /// <summary>Runs <c>GstAggregator.src_query</c>.</summary>
+    /// <param name="query">The argument the slot carries under this name.</param>
+    /// <returns>What the slot answers.</returns>
+    protected virtual bool OnSrcQuery(Gst.Query query) =>
+        ChainUpSrcQuery(query);
 
     /// <summary>Runs <c>GstAggregator.src_activate</c>.</summary>
     /// <param name="mode">The argument the slot carries under this name.</param>
@@ -299,6 +357,20 @@ public unsafe partial class Aggregator
     protected virtual bool OnNegotiatedSrcCaps(Gst.Caps caps) =>
         ChainUpNegotiatedSrcCaps(caps);
 
+    /// <summary>Runs <c>GstAggregator.decide_allocation</c>.</summary>
+    /// <param name="query">The argument the slot carries under this name.</param>
+    /// <returns>What the slot answers.</returns>
+    protected virtual bool OnDecideAllocation(Gst.Query query) =>
+        ChainUpDecideAllocation(query);
+
+    /// <summary>Runs <c>GstAggregator.propose_allocation</c>.</summary>
+    /// <param name="pad">The argument the slot carries under this name.</param>
+    /// <param name="decideQuery">The argument the slot carries under this name.</param>
+    /// <param name="query">The argument the slot carries under this name.</param>
+    /// <returns>What the slot answers.</returns>
+    protected virtual bool OnProposeAllocation(Gst.Base.AggregatorPad pad, Gst.Query decideQuery, Gst.Query query) =>
+        ChainUpProposeAllocation(pad, decideQuery, query);
+
     /// <summary>Runs <c>GstAggregator.negotiate</c>.</summary>
     /// <returns>What the slot answers.</returns>
     protected virtual bool OnNegotiate() =>
@@ -310,6 +382,13 @@ public unsafe partial class Aggregator
     /// <returns>What the slot answers.</returns>
     protected virtual Gst.FlowReturn OnSinkEventPreQueue(Gst.Base.AggregatorPad aggregatorPad, Gst.Event @event) =>
         ChainUpSinkEventPreQueue(aggregatorPad, @event);
+
+    /// <summary>Runs <c>GstAggregator.sink_query_pre_queue</c>.</summary>
+    /// <param name="aggregatorPad">The argument the slot carries under this name.</param>
+    /// <param name="query">The argument the slot carries under this name.</param>
+    /// <returns>What the slot answers.</returns>
+    protected virtual bool OnSinkQueryPreQueue(Gst.Base.AggregatorPad aggregatorPad, Gst.Query query) =>
+        ChainUpSinkQueryPreQueue(aggregatorPad, query);
 
     /// <summary>Runs <c>GstAggregator.finish_buffer_list</c>.</summary>
     /// <param name="bufferlist">The argument the slot carries under this name.</param>
@@ -383,6 +462,21 @@ public unsafe partial class Aggregator
         return result;
     }
 
+    /// <summary>Runs the implementation of <c>sink_query</c> below the managed override.</summary>
+    /// <param name="aggregatorPad">The argument the slot carries under this name.</param>
+    /// <param name="query">The argument the slot carries under this name.</param>
+    /// <returns>What the slot answers.</returns>
+    protected bool ChainUpSinkQuery(Gst.Base.AggregatorPad aggregatorPad, Gst.Query query)
+    {
+        ArgumentNullException.ThrowIfNull(aggregatorPad);
+        ArgumentNullException.ThrowIfNull(query);
+        bool result = ChainUpSinkQuery(Handle, aggregatorPad.Handle, query.Handle);
+        GC.KeepAlive(this);
+        GC.KeepAlive(aggregatorPad);
+        GC.KeepAlive(query);
+        return result;
+    }
+
     /// <summary>Runs the implementation of <c>src_event</c> below the managed override.</summary>
     /// <param name="event">The argument the slot carries under this name.</param>
     /// <returns>What the slot answers.</returns>
@@ -395,6 +489,18 @@ public unsafe partial class Aggregator
         bool result = ChainUpSrcEvent(instance, @eventNative);
         GC.KeepAlive(this);
         @event.Dispose();
+        return result;
+    }
+
+    /// <summary>Runs the implementation of <c>src_query</c> below the managed override.</summary>
+    /// <param name="query">The argument the slot carries under this name.</param>
+    /// <returns>What the slot answers.</returns>
+    protected bool ChainUpSrcQuery(Gst.Query query)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+        bool result = ChainUpSrcQuery(Handle, query.Handle);
+        GC.KeepAlive(this);
+        GC.KeepAlive(query);
         return result;
     }
 
@@ -488,6 +594,36 @@ public unsafe partial class Aggregator
         return result;
     }
 
+    /// <summary>Runs the implementation of <c>decide_allocation</c> below the managed override.</summary>
+    /// <param name="query">The argument the slot carries under this name.</param>
+    /// <returns>What the slot answers.</returns>
+    protected bool ChainUpDecideAllocation(Gst.Query query)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+        bool result = ChainUpDecideAllocation(Handle, query.Handle);
+        GC.KeepAlive(this);
+        GC.KeepAlive(query);
+        return result;
+    }
+
+    /// <summary>Runs the implementation of <c>propose_allocation</c> below the managed override.</summary>
+    /// <param name="pad">The argument the slot carries under this name.</param>
+    /// <param name="decideQuery">The argument the slot carries under this name.</param>
+    /// <param name="query">The argument the slot carries under this name.</param>
+    /// <returns>What the slot answers.</returns>
+    protected bool ChainUpProposeAllocation(Gst.Base.AggregatorPad pad, Gst.Query decideQuery, Gst.Query query)
+    {
+        ArgumentNullException.ThrowIfNull(pad);
+        ArgumentNullException.ThrowIfNull(decideQuery);
+        ArgumentNullException.ThrowIfNull(query);
+        bool result = ChainUpProposeAllocation(Handle, pad.Handle, decideQuery.Handle, query.Handle);
+        GC.KeepAlive(this);
+        GC.KeepAlive(pad);
+        GC.KeepAlive(decideQuery);
+        GC.KeepAlive(query);
+        return result;
+    }
+
     /// <summary>Runs the implementation of <c>negotiate</c> below the managed override.</summary>
     /// <returns>What the slot answers.</returns>
     protected bool ChainUpNegotiate()
@@ -512,6 +648,21 @@ public unsafe partial class Aggregator
         GC.KeepAlive(this);
         GC.KeepAlive(aggregatorPad);
         @event.Dispose();
+        return result;
+    }
+
+    /// <summary>Runs the implementation of <c>sink_query_pre_queue</c> below the managed override.</summary>
+    /// <param name="aggregatorPad">The argument the slot carries under this name.</param>
+    /// <param name="query">The argument the slot carries under this name.</param>
+    /// <returns>What the slot answers.</returns>
+    protected bool ChainUpSinkQueryPreQueue(Gst.Base.AggregatorPad aggregatorPad, Gst.Query query)
+    {
+        ArgumentNullException.ThrowIfNull(aggregatorPad);
+        ArgumentNullException.ThrowIfNull(query);
+        bool result = ChainUpSinkQueryPreQueue(Handle, aggregatorPad.Handle, query.Handle);
+        GC.KeepAlive(this);
+        GC.KeepAlive(aggregatorPad);
+        GC.KeepAlive(query);
         return result;
     }
 
@@ -601,6 +752,20 @@ public unsafe partial class Aggregator
         return slot(aggregator, aggregatorPad, @event) != 0;
     }
 
+    private static bool ChainUpSinkQuery(nint aggregator, nint aggregatorPad, nint query)
+    {
+        delegate* unmanaged[Cdecl]<nint, nint, nint, int> slot =
+            (delegate* unmanaged[Cdecl]<nint, nint, nint, int>)ParentClassOf(aggregator)->SinkQuery;
+
+        if (slot is null)
+        {
+            throw new InvalidOperationException(
+                "Aggregator.sink_query has no parent implementation; override OnSinkQuery.");
+        }
+
+        return slot(aggregator, aggregatorPad, query) != 0;
+    }
+
     private static bool ChainUpSrcEvent(nint aggregator, nint @event)
     {
         delegate* unmanaged[Cdecl]<nint, nint, int> slot =
@@ -614,6 +779,20 @@ public unsafe partial class Aggregator
         }
 
         return slot(aggregator, @event) != 0;
+    }
+
+    private static bool ChainUpSrcQuery(nint aggregator, nint query)
+    {
+        delegate* unmanaged[Cdecl]<nint, nint, int> slot =
+            (delegate* unmanaged[Cdecl]<nint, nint, int>)ParentClassOf(aggregator)->SrcQuery;
+
+        if (slot is null)
+        {
+            throw new InvalidOperationException(
+                "Aggregator.src_query has no parent implementation; override OnSrcQuery.");
+        }
+
+        return slot(aggregator, query) != 0;
     }
 
     private static bool ChainUpSrcActivate(nint aggregator, int mode, int active)
@@ -730,6 +909,34 @@ public unsafe partial class Aggregator
         return slot(self, caps) != 0;
     }
 
+    private static bool ChainUpDecideAllocation(nint self, nint query)
+    {
+        delegate* unmanaged[Cdecl]<nint, nint, int> slot =
+            (delegate* unmanaged[Cdecl]<nint, nint, int>)ParentClassOf(self)->DecideAllocation;
+
+        if (slot is null)
+        {
+            throw new InvalidOperationException(
+                "Aggregator.decide_allocation has no parent implementation; override OnDecideAllocation.");
+        }
+
+        return slot(self, query) != 0;
+    }
+
+    private static bool ChainUpProposeAllocation(nint self, nint pad, nint decideQuery, nint query)
+    {
+        delegate* unmanaged[Cdecl]<nint, nint, nint, nint, int> slot =
+            (delegate* unmanaged[Cdecl]<nint, nint, nint, nint, int>)ParentClassOf(self)->ProposeAllocation;
+
+        if (slot is null)
+        {
+            throw new InvalidOperationException(
+                "Aggregator.propose_allocation has no parent implementation; override OnProposeAllocation.");
+        }
+
+        return slot(self, pad, decideQuery, query) != 0;
+    }
+
     private static bool ChainUpNegotiate(nint self)
     {
         delegate* unmanaged[Cdecl]<nint, int> slot =
@@ -757,6 +964,20 @@ public unsafe partial class Aggregator
         }
 
         return (Gst.FlowReturn)slot(aggregator, aggregatorPad, @event);
+    }
+
+    private static bool ChainUpSinkQueryPreQueue(nint aggregator, nint aggregatorPad, nint query)
+    {
+        delegate* unmanaged[Cdecl]<nint, nint, nint, int> slot =
+            (delegate* unmanaged[Cdecl]<nint, nint, nint, int>)ParentClassOf(aggregator)->SinkQueryPreQueue;
+
+        if (slot is null)
+        {
+            throw new InvalidOperationException(
+                "Aggregator.sink_query_pre_queue has no parent implementation; override OnSinkQueryPreQueue.");
+        }
+
+        return slot(aggregator, aggregatorPad, query) != 0;
     }
 
     private static Gst.FlowReturn ChainUpFinishBufferList(nint aggregator, nint bufferlist)
@@ -881,6 +1102,27 @@ public unsafe partial class Aggregator
     }
 
     [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static int SinkQueryTrampoline(nint aggregator, nint aggregatorPad, nint query)
+    {
+        try
+        {
+            if (Gst.GObject.Object.TryGetInterned(aggregator) is not Aggregator managed)
+            {
+                return (ChainUpSinkQuery(aggregator, aggregatorPad, query)) ? 1 : 0;
+            }
+
+            Gst.Base.AggregatorPad? aggregatorPadValue = Gst.GObject.Object.FromNative<Gst.Base.AggregatorPad>(aggregatorPad, Gst.Interop.Transfer.None);
+            using Gst.Query? queryValue = query == nint.Zero ? null : Gst.Query.Borrow(query);
+            return (managed.OnSinkQuery(aggregatorPadValue!, queryValue!)) ? 1 : 0;
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+            return default;
+        }
+    }
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
     private static int SrcEventTrampoline(nint aggregator, nint @event)
     {
         try
@@ -892,6 +1134,26 @@ public unsafe partial class Aggregator
 
             using Gst.Event? @eventValue = Gst.Event.FromNative(@event, Gst.Interop.Transfer.Full);
             return (managed.OnSrcEvent(@eventValue!)) ? 1 : 0;
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+            return default;
+        }
+    }
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static int SrcQueryTrampoline(nint aggregator, nint query)
+    {
+        try
+        {
+            if (Gst.GObject.Object.TryGetInterned(aggregator) is not Aggregator managed)
+            {
+                return (ChainUpSrcQuery(aggregator, query)) ? 1 : 0;
+            }
+
+            using Gst.Query? queryValue = query == nint.Zero ? null : Gst.Query.Borrow(query);
+            return (managed.OnSrcQuery(queryValue!)) ? 1 : 0;
         }
         catch (Exception exception)
         {
@@ -1078,6 +1340,48 @@ public unsafe partial class Aggregator
     }
 
     [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static int DecideAllocationTrampoline(nint self, nint query)
+    {
+        try
+        {
+            if (Gst.GObject.Object.TryGetInterned(self) is not Aggregator managed)
+            {
+                return (ChainUpDecideAllocation(self, query)) ? 1 : 0;
+            }
+
+            using Gst.Query? queryValue = query == nint.Zero ? null : Gst.Query.Borrow(query);
+            return (managed.OnDecideAllocation(queryValue!)) ? 1 : 0;
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+            return default;
+        }
+    }
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static int ProposeAllocationTrampoline(nint self, nint pad, nint decideQuery, nint query)
+    {
+        try
+        {
+            if (Gst.GObject.Object.TryGetInterned(self) is not Aggregator managed)
+            {
+                return (ChainUpProposeAllocation(self, pad, decideQuery, query)) ? 1 : 0;
+            }
+
+            Gst.Base.AggregatorPad? padValue = Gst.GObject.Object.FromNative<Gst.Base.AggregatorPad>(pad, Gst.Interop.Transfer.None);
+            using Gst.Query? decideQueryValue = decideQuery == nint.Zero ? null : Gst.Query.Borrow(decideQuery);
+            using Gst.Query? queryValue = query == nint.Zero ? null : Gst.Query.Borrow(query);
+            return (managed.OnProposeAllocation(padValue!, decideQueryValue!, queryValue!)) ? 1 : 0;
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+            return default;
+        }
+    }
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
     private static int NegotiateTrampoline(nint self)
     {
         try
@@ -1114,6 +1418,27 @@ public unsafe partial class Aggregator
         {
             Gst.Interop.ExceptionTrap.Report(exception);
             return (int)Gst.FlowReturn.Error;
+        }
+    }
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static int SinkQueryPreQueueTrampoline(nint aggregator, nint aggregatorPad, nint query)
+    {
+        try
+        {
+            if (Gst.GObject.Object.TryGetInterned(aggregator) is not Aggregator managed)
+            {
+                return (ChainUpSinkQueryPreQueue(aggregator, aggregatorPad, query)) ? 1 : 0;
+            }
+
+            Gst.Base.AggregatorPad? aggregatorPadValue = Gst.GObject.Object.FromNative<Gst.Base.AggregatorPad>(aggregatorPad, Gst.Interop.Transfer.None);
+            using Gst.Query? queryValue = query == nint.Zero ? null : Gst.Query.Borrow(query);
+            return (managed.OnSinkQueryPreQueue(aggregatorPadValue!, queryValue!)) ? 1 : 0;
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+            return default;
         }
     }
 

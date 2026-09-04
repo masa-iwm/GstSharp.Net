@@ -59,6 +59,42 @@ public unsafe partial class BaseTransform
         (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, int>)&SetCapsTrampoline);
 
     /// <summary>
+    /// Gets the declaration of <c>GstBaseTransform.query</c>, for a subclass that
+    /// overrides <see cref="OnQuery"/>.
+    /// </summary>
+    public static new Gst.GObject.VfuncOverride QueryOverride { get; } = new(
+        &GetGType,
+        Gst.Base.BaseTransformClassRaw.QueryOffset,
+        (nint)(delegate* unmanaged[Cdecl]<nint, int, nint, int>)&QueryTrampoline);
+
+    /// <summary>
+    /// Gets the declaration of <c>GstBaseTransform.decide_allocation</c>, for a subclass that
+    /// overrides <see cref="OnDecideAllocation"/>.
+    /// </summary>
+    public static Gst.GObject.VfuncOverride DecideAllocationOverride { get; } = new(
+        &GetGType,
+        Gst.Base.BaseTransformClassRaw.DecideAllocationOffset,
+        (nint)(delegate* unmanaged[Cdecl]<nint, nint, int>)&DecideAllocationTrampoline);
+
+    /// <summary>
+    /// Gets the declaration of <c>GstBaseTransform.filter_meta</c>, for a subclass that
+    /// overrides <see cref="OnFilterMeta"/>.
+    /// </summary>
+    public static Gst.GObject.VfuncOverride FilterMetaOverride { get; } = new(
+        &GetGType,
+        Gst.Base.BaseTransformClassRaw.FilterMetaOffset,
+        (nint)(delegate* unmanaged[Cdecl]<nint, nint, nuint, nint, int>)&FilterMetaTrampoline);
+
+    /// <summary>
+    /// Gets the declaration of <c>GstBaseTransform.propose_allocation</c>, for a subclass that
+    /// overrides <see cref="OnProposeAllocation"/>.
+    /// </summary>
+    public static Gst.GObject.VfuncOverride ProposeAllocationOverride { get; } = new(
+        &GetGType,
+        Gst.Base.BaseTransformClassRaw.ProposeAllocationOffset,
+        (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, int>)&ProposeAllocationTrampoline);
+
+    /// <summary>
     /// Gets the declaration of <c>GstBaseTransform.transform_size</c>, for a subclass that
     /// overrides <see cref="OnTransformSize"/>.
     /// </summary>
@@ -234,6 +270,34 @@ public unsafe partial class BaseTransform
     protected virtual bool OnSetCaps(Gst.Caps inCaps, Gst.Caps outCaps) =>
         ChainUpSetCaps(inCaps, outCaps);
 
+    /// <summary>Runs <c>GstBaseTransform.query</c>.</summary>
+    /// <param name="direction">The argument the slot carries under this name.</param>
+    /// <param name="query">The argument the slot carries under this name.</param>
+    /// <returns>What the slot answers.</returns>
+    protected virtual bool OnQuery(Gst.PadDirection direction, Gst.Query query) =>
+        ChainUpQuery(direction, query);
+
+    /// <summary>Runs <c>GstBaseTransform.decide_allocation</c>.</summary>
+    /// <param name="query">The argument the slot carries under this name.</param>
+    /// <returns>What the slot answers.</returns>
+    protected virtual bool OnDecideAllocation(Gst.Query query) =>
+        ChainUpDecideAllocation(query);
+
+    /// <summary>Runs <c>GstBaseTransform.filter_meta</c>.</summary>
+    /// <param name="query">The argument the slot carries under this name.</param>
+    /// <param name="api">The argument the slot carries under this name.</param>
+    /// <param name="params">The argument the slot carries under this name.</param>
+    /// <returns>What the slot answers.</returns>
+    protected virtual bool OnFilterMeta(Gst.Query query, Gst.GObject.GType api, Gst.Structure @params) =>
+        ChainUpFilterMeta(query, api, @params);
+
+    /// <summary>Runs <c>GstBaseTransform.propose_allocation</c>.</summary>
+    /// <param name="decideQuery">The argument the slot carries under this name.</param>
+    /// <param name="query">The argument the slot carries under this name.</param>
+    /// <returns>What the slot answers.</returns>
+    protected virtual bool OnProposeAllocation(Gst.Query decideQuery, Gst.Query query) =>
+        ChainUpProposeAllocation(decideQuery, query);
+
     /// <summary>Runs <c>GstBaseTransform.transform_size</c>.</summary>
     /// <param name="direction">The argument the slot carries under this name.</param>
     /// <param name="caps">The argument the slot carries under this name.</param>
@@ -378,6 +442,62 @@ public unsafe partial class BaseTransform
         GC.KeepAlive(this);
         GC.KeepAlive(inCaps);
         GC.KeepAlive(outCaps);
+        return result;
+    }
+
+    /// <summary>Runs the implementation of <c>query</c> below the managed override.</summary>
+    /// <param name="direction">The argument the slot carries under this name.</param>
+    /// <param name="query">The argument the slot carries under this name.</param>
+    /// <returns>What the slot answers.</returns>
+    protected bool ChainUpQuery(Gst.PadDirection direction, Gst.Query query)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+        bool result = ChainUpQuery(Handle, (int)direction, query.Handle);
+        GC.KeepAlive(this);
+        GC.KeepAlive(query);
+        return result;
+    }
+
+    /// <summary>Runs the implementation of <c>decide_allocation</c> below the managed override.</summary>
+    /// <param name="query">The argument the slot carries under this name.</param>
+    /// <returns>What the slot answers.</returns>
+    protected bool ChainUpDecideAllocation(Gst.Query query)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+        bool result = ChainUpDecideAllocation(Handle, query.Handle);
+        GC.KeepAlive(this);
+        GC.KeepAlive(query);
+        return result;
+    }
+
+    /// <summary>Runs the implementation of <c>filter_meta</c> below the managed override.</summary>
+    /// <param name="query">The argument the slot carries under this name.</param>
+    /// <param name="api">The argument the slot carries under this name.</param>
+    /// <param name="params">The argument the slot carries under this name.</param>
+    /// <returns>What the slot answers.</returns>
+    protected bool ChainUpFilterMeta(Gst.Query query, Gst.GObject.GType api, Gst.Structure @params)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+        ArgumentNullException.ThrowIfNull(@params);
+        bool result = ChainUpFilterMeta(Handle, query.Handle, api.Value, @params.Handle);
+        GC.KeepAlive(this);
+        GC.KeepAlive(query);
+        GC.KeepAlive(@params);
+        return result;
+    }
+
+    /// <summary>Runs the implementation of <c>propose_allocation</c> below the managed override.</summary>
+    /// <param name="decideQuery">The argument the slot carries under this name.</param>
+    /// <param name="query">The argument the slot carries under this name.</param>
+    /// <returns>What the slot answers.</returns>
+    protected bool ChainUpProposeAllocation(Gst.Query decideQuery, Gst.Query query)
+    {
+        ArgumentNullException.ThrowIfNull(decideQuery);
+        ArgumentNullException.ThrowIfNull(query);
+        bool result = ChainUpProposeAllocation(Handle, decideQuery.Handle, query.Handle);
+        GC.KeepAlive(this);
+        GC.KeepAlive(decideQuery);
+        GC.KeepAlive(query);
         return result;
     }
 
@@ -613,6 +733,62 @@ public unsafe partial class BaseTransform
         }
 
         return slot(trans, inCaps, outCaps) != 0;
+    }
+
+    private static bool ChainUpQuery(nint trans, int direction, nint query)
+    {
+        delegate* unmanaged[Cdecl]<nint, int, nint, int> slot =
+            (delegate* unmanaged[Cdecl]<nint, int, nint, int>)ParentClassOf(trans)->Query;
+
+        if (slot is null)
+        {
+            throw new InvalidOperationException(
+                "BaseTransform.query has no parent implementation; override OnQuery.");
+        }
+
+        return slot(trans, direction, query) != 0;
+    }
+
+    private static bool ChainUpDecideAllocation(nint trans, nint query)
+    {
+        delegate* unmanaged[Cdecl]<nint, nint, int> slot =
+            (delegate* unmanaged[Cdecl]<nint, nint, int>)ParentClassOf(trans)->DecideAllocation;
+
+        if (slot is null)
+        {
+            throw new InvalidOperationException(
+                "BaseTransform.decide_allocation has no parent implementation; override OnDecideAllocation.");
+        }
+
+        return slot(trans, query) != 0;
+    }
+
+    private static bool ChainUpFilterMeta(nint trans, nint query, nuint api, nint @params)
+    {
+        delegate* unmanaged[Cdecl]<nint, nint, nuint, nint, int> slot =
+            (delegate* unmanaged[Cdecl]<nint, nint, nuint, nint, int>)ParentClassOf(trans)->FilterMeta;
+
+        if (slot is null)
+        {
+            throw new InvalidOperationException(
+                "BaseTransform.filter_meta has no parent implementation; override OnFilterMeta.");
+        }
+
+        return slot(trans, query, api, @params) != 0;
+    }
+
+    private static bool ChainUpProposeAllocation(nint trans, nint decideQuery, nint query)
+    {
+        delegate* unmanaged[Cdecl]<nint, nint, nint, int> slot =
+            (delegate* unmanaged[Cdecl]<nint, nint, nint, int>)ParentClassOf(trans)->ProposeAllocation;
+
+        if (slot is null)
+        {
+            throw new InvalidOperationException(
+                "BaseTransform.propose_allocation has no parent implementation; override OnProposeAllocation.");
+        }
+
+        return slot(trans, decideQuery, query) != 0;
     }
 
     private static bool ChainUpTransformSize(nint trans, int direction, nint caps, nuint size, nint othercaps, nuint* othersize)
@@ -888,6 +1064,88 @@ public unsafe partial class BaseTransform
             using Gst.Caps? inCapsValue = inCaps == nint.Zero ? null : Gst.Caps.Borrow(inCaps);
             using Gst.Caps? outCapsValue = outCaps == nint.Zero ? null : Gst.Caps.Borrow(outCaps);
             return (managed.OnSetCaps(inCapsValue!, outCapsValue!)) ? 1 : 0;
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+            return default;
+        }
+    }
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static int QueryTrampoline(nint trans, int direction, nint query)
+    {
+        try
+        {
+            if (Gst.GObject.Object.TryGetInterned(trans) is not BaseTransform managed)
+            {
+                return (ChainUpQuery(trans, direction, query)) ? 1 : 0;
+            }
+
+            using Gst.Query? queryValue = query == nint.Zero ? null : Gst.Query.Borrow(query);
+            return (managed.OnQuery((Gst.PadDirection)direction, queryValue!)) ? 1 : 0;
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+            return default;
+        }
+    }
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static int DecideAllocationTrampoline(nint trans, nint query)
+    {
+        try
+        {
+            if (Gst.GObject.Object.TryGetInterned(trans) is not BaseTransform managed)
+            {
+                return (ChainUpDecideAllocation(trans, query)) ? 1 : 0;
+            }
+
+            using Gst.Query? queryValue = query == nint.Zero ? null : Gst.Query.Borrow(query);
+            return (managed.OnDecideAllocation(queryValue!)) ? 1 : 0;
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+            return default;
+        }
+    }
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static int FilterMetaTrampoline(nint trans, nint query, nuint api, nint @params)
+    {
+        try
+        {
+            if (Gst.GObject.Object.TryGetInterned(trans) is not BaseTransform managed)
+            {
+                return (ChainUpFilterMeta(trans, query, api, @params)) ? 1 : 0;
+            }
+
+            using Gst.Query? queryValue = query == nint.Zero ? null : Gst.Query.Borrow(query);
+            using Gst.Structure? @paramsValue = Gst.Structure.FromNative(@params, Gst.Interop.Transfer.None);
+            return (managed.OnFilterMeta(queryValue!, new Gst.GObject.GType(api), @paramsValue!)) ? 1 : 0;
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+            return default;
+        }
+    }
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static int ProposeAllocationTrampoline(nint trans, nint decideQuery, nint query)
+    {
+        try
+        {
+            if (Gst.GObject.Object.TryGetInterned(trans) is not BaseTransform managed)
+            {
+                return (ChainUpProposeAllocation(trans, decideQuery, query)) ? 1 : 0;
+            }
+
+            using Gst.Query? decideQueryValue = decideQuery == nint.Zero ? null : Gst.Query.Borrow(decideQuery);
+            using Gst.Query? queryValue = query == nint.Zero ? null : Gst.Query.Borrow(query);
+            return (managed.OnProposeAllocation(decideQueryValue!, queryValue!)) ? 1 : 0;
         }
         catch (Exception exception)
         {

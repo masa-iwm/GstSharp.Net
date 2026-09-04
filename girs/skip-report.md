@@ -1282,14 +1282,14 @@ disappears shows up here as an added line.
 - `gst_webrtc_ice_get_local_candidates`
 - `gst_webrtc_ice_get_remote_candidates`
 
-## Virtuals (29)
+## Virtuals (9)
 
 The class struct slots of a subclassable class that carry no `OnX` member, with
 the reason. `UnsupportedSignature` is the planner refusing a shape; every other
 reason is the statement of an overlay entry. The mirror still lays every slot
 out, so what is listed here is the managed surface and not the ABI.
 
-### Gst (9)
+### Gst (7)
 
 - `Gst.Bin::deep_element_added` — signal class closure: read by g_signal at emission time, never called through the class pointer by the base class; managed code subscribes to the signal instead
 - `Gst.Bin::deep_element_removed` — signal class closure: read by g_signal at emission time, never called through the class pointer by the base class; managed code subscribes to the signal instead
@@ -1298,30 +1298,10 @@ out, so what is listed here is the managed surface and not the ABI.
 - `Gst.Element::no_more_pads` — signal class closure: read by g_signal at emission time, never called through the class pointer by the base class; managed code subscribes to the signal instead
 - `Gst.Element::pad_added` — signal class closure: read by g_signal at emission time, never called through the class pointer by the base class; managed code subscribes to the signal instead
 - `Gst.Element::pad_removed` — signal class closure: read by g_signal at emission time, never called through the class pointer by the base class; managed code subscribes to the signal instead
-- `Gst.Element::query` — UnsupportedSignature
-- `Gst.Element::set_context` — UnsupportedSignature
 
-### GstBase (20)
+### GstBase (2)
 
 - `GstBase.Aggregator::create_new_pad` — Pad subclassing is Stage 3: needs a Pad ClassConfig and construct properties
-- `GstBase.Aggregator::decide_allocation` — UnsupportedSignature
-- `GstBase.Aggregator::propose_allocation` — UnsupportedSignature
-- `GstBase.Aggregator::sink_query` — UnsupportedSignature
-- `GstBase.Aggregator::sink_query_pre_queue` — UnsupportedSignature
-- `GstBase.Aggregator::src_query` — UnsupportedSignature
-- `GstBase.BaseSink::prepare_list` — UnsupportedSignature
-- `GstBase.BaseSink::propose_allocation` — UnsupportedSignature
-- `GstBase.BaseSink::query` — UnsupportedSignature
-- `GstBase.BaseSink::render_list` — UnsupportedSignature
-- `GstBase.BaseSink::wait_event` — UnsupportedSignature
-- `GstBase.BaseSrc::decide_allocation` — UnsupportedSignature
-- `GstBase.BaseSrc::event` — UnsupportedSignature
-- `GstBase.BaseSrc::prepare_seek_segment` — UnsupportedSignature
-- `GstBase.BaseSrc::query` — UnsupportedSignature
-- `GstBase.BaseTransform::decide_allocation` — UnsupportedSignature
-- `GstBase.BaseTransform::filter_meta` — UnsupportedSignature
-- `GstBase.BaseTransform::propose_allocation` — UnsupportedSignature
-- `GstBase.BaseTransform::query` — UnsupportedSignature
 - `GstBase.BaseTransform::transform_meta` — UnsupportedSignature
 
 ## Fields (143)
