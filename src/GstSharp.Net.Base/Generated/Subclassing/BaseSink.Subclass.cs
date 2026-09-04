@@ -400,6 +400,11 @@ public unsafe partial class BaseSink
     /// Same as @render but used with buffer lists instead of
     ///     buffers.
     /// </summary>
+    /// <remarks>
+    /// <para>There is no implementation below this one: when the slot is NULL the base class splits
+    /// the list itself and pushes every buffer through render, which is a dispatch strategy and
+    /// not a value, so a chain-up throws. An override renders every buffer of the list itself.</para>
+    /// </remarks>
     /// <param name="bufferList">
     /// The <c>bufferList</c> argument.
     /// The element lends this for the duration of the call; keep a copy to retain it.
@@ -664,6 +669,11 @@ public unsafe partial class BaseSink
     }
 
     /// <summary>Runs the implementation of <c>render_list</c> below the managed override.</summary>
+    /// <remarks>
+    /// <para>There is no implementation below this one: when the slot is NULL the base class splits
+    /// the list itself and pushes every buffer through render, which is a dispatch strategy and
+    /// not a value, so a chain-up throws. An override renders every buffer of the list itself.</para>
+    /// </remarks>
     /// <param name="bufferList">
     /// The <c>bufferList</c> argument.
     /// The element lends this for the duration of the call; keep a copy to retain it.

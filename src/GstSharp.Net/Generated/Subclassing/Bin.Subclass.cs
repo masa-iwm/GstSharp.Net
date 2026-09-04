@@ -82,7 +82,8 @@ public unsafe partial class Bin
     /// <summary>Method to add an element to the bin.</summary>
     /// <param name="element">
     /// The <c>element</c> argument.
-    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// The element lends this for the duration of the call. Keeping the wrapper is
+    /// safe: a GObject wrapper is interned and its reference outlives the call.
     /// </param>
     /// <returns>%TRUE if the @element was added</returns>
     protected virtual bool OnAddElement(Gst.Element element) =>
@@ -91,7 +92,8 @@ public unsafe partial class Bin
     /// <summary>Method to remove an element from the bin.</summary>
     /// <param name="element">
     /// The <c>element</c> argument.
-    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// The element lends this for the duration of the call. Keeping the wrapper is
+    /// safe: a GObject wrapper is interned and its reference outlives the call.
     /// </param>
     /// <returns>%TRUE if the @element was removed</returns>
     protected virtual bool OnRemoveElement(Gst.Element element) =>
@@ -119,7 +121,8 @@ public unsafe partial class Bin
     /// <summary>Runs the implementation of <c>add_element</c> below the managed override.</summary>
     /// <param name="element">
     /// The <c>element</c> argument.
-    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// The element lends this for the duration of the call. Keeping the wrapper is
+    /// safe: a GObject wrapper is interned and its reference outlives the call.
     /// </param>
     /// <returns>%TRUE if the @element was added</returns>
     protected bool ChainUpAddElement(Gst.Element element)
@@ -134,7 +137,8 @@ public unsafe partial class Bin
     /// <summary>Runs the implementation of <c>remove_element</c> below the managed override.</summary>
     /// <param name="element">
     /// The <c>element</c> argument.
-    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// The element lends this for the duration of the call. Keeping the wrapper is
+    /// safe: a GObject wrapper is interned and its reference outlives the call.
     /// </param>
     /// <returns>%TRUE if the @element was removed</returns>
     protected bool ChainUpRemoveElement(Gst.Element element)

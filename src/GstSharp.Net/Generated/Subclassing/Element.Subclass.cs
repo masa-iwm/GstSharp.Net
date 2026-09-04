@@ -172,7 +172,8 @@ public unsafe partial class Element
     /// </remarks>
     /// <param name="templ">
     /// The <c>templ</c> argument.
-    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// The element lends this for the duration of the call. Keeping the wrapper is
+    /// safe: a GObject wrapper is interned and its reference outlives the call.
     /// </param>
     /// <param name="name">The <c>name</c> argument.</param>
     /// <param name="caps">
@@ -191,7 +192,8 @@ public unsafe partial class Element
     /// <summary>called when a request pad is to be released</summary>
     /// <param name="pad">
     /// The <c>pad</c> argument.
-    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// The element lends this for the duration of the call. Keeping the wrapper is
+    /// safe: a GObject wrapper is interned and its reference outlives the call.
     /// </param>
     protected virtual void OnReleasePad(Gst.Pad pad) =>
         ChainUpReleasePad(pad);
@@ -285,7 +287,8 @@ public unsafe partial class Element
     /// </remarks>
     /// <param name="bus">
     /// The <c>bus</c> argument.
-    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// The element lends this for the duration of the call. Keeping the wrapper is
+    /// safe: a GObject wrapper is interned and its reference outlives the call.
     /// </param>
     protected virtual void OnSetBus(Gst.Bus? bus) =>
         ChainUpSetBus(bus);
@@ -311,7 +314,8 @@ public unsafe partial class Element
     /// </summary>
     /// <param name="clock">
     /// The <c>clock</c> argument.
-    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// The element lends this for the duration of the call. Keeping the wrapper is
+    /// safe: a GObject wrapper is interned and its reference outlives the call.
     /// </param>
     /// <returns>
     /// %TRUE if the element accepted the clock. An element can refuse a
@@ -397,7 +401,8 @@ public unsafe partial class Element
     /// </remarks>
     /// <param name="templ">
     /// The <c>templ</c> argument.
-    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// The element lends this for the duration of the call. Keeping the wrapper is
+    /// safe: a GObject wrapper is interned and its reference outlives the call.
     /// </param>
     /// <param name="name">The <c>name</c> argument.</param>
     /// <param name="caps">
@@ -426,7 +431,8 @@ public unsafe partial class Element
     /// <summary>Runs the implementation of <c>release_pad</c> below the managed override.</summary>
     /// <param name="pad">
     /// The <c>pad</c> argument.
-    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// The element lends this for the duration of the call. Keeping the wrapper is
+    /// safe: a GObject wrapper is interned and its reference outlives the call.
     /// </param>
     protected void ChainUpReleasePad(Gst.Pad pad)
     {
@@ -490,7 +496,8 @@ public unsafe partial class Element
     /// <summary>Runs the implementation of <c>set_bus</c> below the managed override.</summary>
     /// <param name="bus">
     /// The <c>bus</c> argument.
-    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// The element lends this for the duration of the call. Keeping the wrapper is
+    /// safe: a GObject wrapper is interned and its reference outlives the call.
     /// </param>
     protected void ChainUpSetBus(Gst.Bus? bus)
     {
@@ -517,7 +524,8 @@ public unsafe partial class Element
     /// <summary>Runs the implementation of <c>set_clock</c> below the managed override.</summary>
     /// <param name="clock">
     /// The <c>clock</c> argument.
-    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// The element lends this for the duration of the call. Keeping the wrapper is
+    /// safe: a GObject wrapper is interned and its reference outlives the call.
     /// </param>
     /// <returns>
     /// %TRUE if the element accepted the clock. An element can refuse a

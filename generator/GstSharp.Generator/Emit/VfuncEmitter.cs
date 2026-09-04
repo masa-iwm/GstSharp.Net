@@ -1392,7 +1392,14 @@ internal sealed class VfuncEmitter
         List<string> note = [];
         switch (argument.Bucket)
         {
+            // A GObject wrapper is the one borrow that may simply be kept: it
+            // is interned and owns a reference of its own, which the toggle
+            // reference keeps for as long as the wrapper lives. There is no
+            // copy of an element to make either.
             case VfuncBucket.BorrowGObject:
+                note.Add("The element lends this for the duration of the call. Keeping the wrapper is");
+                note.Add("safe: a GObject wrapper is interned and its reference outlives the call.");
+                break;
             case VfuncBucket.BorrowMiniObject:
             case VfuncBucket.BorrowWrapper:
                 note.Add("The element lends this for the duration of the call; keep a copy to retain it.");

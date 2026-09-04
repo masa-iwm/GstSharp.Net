@@ -174,6 +174,25 @@ public sealed class VirtualOverlayDiagnosticTests
     private static readonly string BodyWithAnInOutHandOver =
         Body.Replace("direction=\"out\"", "direction=\"inout\"", StringComparison.Ordinal);
 
+    /// <summary>
+    /// The same class struct carrying a field of a type the mirror has no
+    /// layout for, which is what an unknown record embedded by value looks
+    /// like.
+    /// </summary>
+    private const string BodyWithAnUnmappableField =
+        """
+            <class name="Widget" c:type="GstWidget" parent="GObject.Object" glib:type-name="GstWidget" glib:get-type="gst_widget_get_type" glib:type-struct="WidgetClass">
+            </class>
+            <record name="WidgetClass" c:type="GstWidgetClass" glib:is-gtype-struct-for="Widget">
+              <field name="parent_class">
+                <type name="GObject.ObjectClass" c:type="GObjectClass"/>
+              </field>
+              <field name="palette" writable="1">
+                <type name="Gadgetry" c:type="GstGadgetry"/>
+              </field>
+            </record>
+        """;
+
     private const string Allowlist = "\"subclassable\": [\"Gst.Widget\"]";
 
     [Fact]
@@ -305,6 +324,20 @@ public sealed class VirtualOverlayDiagnosticTests
                     + "adopt-on-entry/detach-on-exit is Stage 2b",
             },
             run.Result.Census.SkippedVirtuals("Gst"));
+    }
+
+    [Fact]
+    public void AClassStructFieldTheMirrorCannotLayOutIsReported()
+    {
+        // A warning and not an error: the field is mirrored as a pointer, which
+        // is the right width for most of what reaches here, and the ABI probes
+        // measure the offsets that follow it against the running library. What
+        // it must not do is pass unnoticed.
+        FixtureRun run = Run(BodyWithAnUnmappableField, "{ " + Allowlist + " }");
+
+        Diagnostic unmappable = Assert.Single(run.Result.Diagnostics, static d => d.Code == "GEN0032");
+        Assert.Equal(DiagnosticSeverity.Warning, unmappable.Severity);
+        Assert.Contains("palette", unmappable.Message, StringComparison.Ordinal);
     }
 
     [Fact]

@@ -287,7 +287,8 @@ public unsafe partial class Aggregator
     /// </summary>
     /// <param name="aggregatorPad">
     /// The <c>aggregatorPad</c> argument.
-    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// The element lends this for the duration of the call. Keeping the wrapper is
+    /// safe: a GObject wrapper is interned and its reference outlives the call.
     /// </param>
     /// <param name="buf">
     /// The <c>buf</c> argument.
@@ -323,7 +324,8 @@ public unsafe partial class Aggregator
     /// </summary>
     /// <param name="aggregatorPad">
     /// The <c>aggregatorPad</c> argument.
-    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// The element lends this for the duration of the call. Keeping the wrapper is
+    /// safe: a GObject wrapper is interned and its reference outlives the call.
     /// </param>
     /// <param name="event">
     /// The <c>event</c> argument.
@@ -341,7 +343,8 @@ public unsafe partial class Aggregator
     /// </summary>
     /// <param name="aggregatorPad">
     /// The <c>aggregatorPad</c> argument.
-    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// The element lends this for the duration of the call. Keeping the wrapper is
+    /// safe: a GObject wrapper is interned and its reference outlives the call.
     /// </param>
     /// <param name="query">
     /// The <c>query</c> argument.
@@ -506,7 +509,8 @@ public unsafe partial class Aggregator
     /// </summary>
     /// <param name="pad">
     /// The <c>pad</c> argument.
-    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// The element lends this for the duration of the call. Keeping the wrapper is
+    /// safe: a GObject wrapper is interned and its reference outlives the call.
     /// </param>
     /// <param name="decideQuery">
     /// The <c>decideQuery</c> argument.
@@ -535,7 +539,8 @@ public unsafe partial class Aggregator
     /// </summary>
     /// <param name="aggregatorPad">
     /// The <c>aggregatorPad</c> argument.
-    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// The element lends this for the duration of the call. Keeping the wrapper is
+    /// safe: a GObject wrapper is interned and its reference outlives the call.
     /// </param>
     /// <param name="event">
     /// The <c>event</c> argument.
@@ -553,7 +558,8 @@ public unsafe partial class Aggregator
     /// </summary>
     /// <param name="aggregatorPad">
     /// The <c>aggregatorPad</c> argument.
-    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// The element lends this for the duration of the call. Keeping the wrapper is
+    /// safe: a GObject wrapper is interned and its reference outlives the call.
     /// </param>
     /// <param name="query">
     /// The <c>query</c> argument.
@@ -585,7 +591,8 @@ public unsafe partial class Aggregator
     /// </summary>
     /// <param name="aggregatorPad">
     /// The <c>aggregatorPad</c> argument.
-    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// The element lends this for the duration of the call. Keeping the wrapper is
+    /// safe: a GObject wrapper is interned and its reference outlives the call.
     /// </param>
     /// <returns>
     /// The sample that is about to be aggregated. It may hold a #GstBuffer
@@ -611,7 +618,8 @@ public unsafe partial class Aggregator
     /// <summary>Runs the implementation of <c>clip</c> below the managed override.</summary>
     /// <param name="aggregatorPad">
     /// The <c>aggregatorPad</c> argument.
-    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// The element lends this for the duration of the call. Keeping the wrapper is
+    /// safe: a GObject wrapper is interned and its reference outlives the call.
     /// </param>
     /// <param name="buf">
     /// The <c>buf</c> argument.
@@ -661,7 +669,8 @@ public unsafe partial class Aggregator
     /// <summary>Runs the implementation of <c>sink_event</c> below the managed override.</summary>
     /// <param name="aggregatorPad">
     /// The <c>aggregatorPad</c> argument.
-    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// The element lends this for the duration of the call. Keeping the wrapper is
+    /// safe: a GObject wrapper is interned and its reference outlives the call.
     /// </param>
     /// <param name="event">
     /// The <c>event</c> argument.
@@ -686,7 +695,8 @@ public unsafe partial class Aggregator
     /// <summary>Runs the implementation of <c>sink_query</c> below the managed override.</summary>
     /// <param name="aggregatorPad">
     /// The <c>aggregatorPad</c> argument.
-    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// The element lends this for the duration of the call. Keeping the wrapper is
+    /// safe: a GObject wrapper is interned and its reference outlives the call.
     /// </param>
     /// <param name="query">
     /// The <c>query</c> argument.
@@ -875,7 +885,8 @@ public unsafe partial class Aggregator
     /// <summary>Runs the implementation of <c>propose_allocation</c> below the managed override.</summary>
     /// <param name="pad">
     /// The <c>pad</c> argument.
-    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// The element lends this for the duration of the call. Keeping the wrapper is
+    /// safe: a GObject wrapper is interned and its reference outlives the call.
     /// </param>
     /// <param name="decideQuery">
     /// The <c>decideQuery</c> argument.
@@ -910,7 +921,8 @@ public unsafe partial class Aggregator
     /// <summary>Runs the implementation of <c>sink_event_pre_queue</c> below the managed override.</summary>
     /// <param name="aggregatorPad">
     /// The <c>aggregatorPad</c> argument.
-    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// The element lends this for the duration of the call. Keeping the wrapper is
+    /// safe: a GObject wrapper is interned and its reference outlives the call.
     /// </param>
     /// <param name="event">
     /// The <c>event</c> argument.
@@ -935,7 +947,8 @@ public unsafe partial class Aggregator
     /// <summary>Runs the implementation of <c>sink_query_pre_queue</c> below the managed override.</summary>
     /// <param name="aggregatorPad">
     /// The <c>aggregatorPad</c> argument.
-    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// The element lends this for the duration of the call. Keeping the wrapper is
+    /// safe: a GObject wrapper is interned and its reference outlives the call.
     /// </param>
     /// <param name="query">
     /// The <c>query</c> argument.
@@ -975,7 +988,8 @@ public unsafe partial class Aggregator
     /// <summary>Runs the implementation of <c>peek_next_sample</c> below the managed override.</summary>
     /// <param name="aggregatorPad">
     /// The <c>aggregatorPad</c> argument.
-    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// The element lends this for the duration of the call. Keeping the wrapper is
+    /// safe: a GObject wrapper is interned and its reference outlives the call.
     /// </param>
     /// <returns>
     /// The sample that is about to be aggregated. It may hold a #GstBuffer
