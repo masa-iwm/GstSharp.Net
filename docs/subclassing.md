@@ -569,6 +569,11 @@ The rules the fabrication follows:
   subclass instance sets a marker on the instance itself, and a marked instance
   is never fabricated again. It arrives as its nearest wrapped ancestor and its
   slots chain up, which is the same answer the surface gave before stage 3a.
+  The marker is written by `Dispose` only. A wrapper the collector took —
+  which can only happen while the toggle reference was the last reference,
+  so the state it carried was already unobservable — is rebuilt with default
+  state on the next contact; keep a reference to an instance whose managed
+  state matters.
 * **`CreateWrapper` runs on streaming threads, under GStreamer's locks.** It
   must forward its arguments to the constructor of the subclass and do nothing
   else: no property access, no pad operation, no waiting. It is also checked —
@@ -764,8 +769,11 @@ document spells it out because the failure modes are subtle:
 * **Vfunc reentrancy is safe against collection**: a vfunc call implies the
   caller holds a native reference to the instance, which implies the toggle
   ref is in strong mode, which implies `TryGetInterned` finds a live
-  wrapper. The only windows without a wrapper are construction (§5.2) and
-  after `Dispose` — both covered by the chain-up rule (§4.1).
+  wrapper. The only windows without a wrapper are construction (§5.2),
+  after `Dispose`, and after the collector took a wrapper whose toggle
+  reference was the last reference — the first two are covered by the
+  chain-up rule (§4.1), the third by re-fabrication with default state for a
+  `DefineSubclass<TSelf>` type (§5.4).
 * **Dispose doctrine extends unchanged**: GObject wrappers are never
   disposed except one's own pipeline after `SetState(Null)`. Disposing a
   managed subclass instance that native code still drives does not crash —
