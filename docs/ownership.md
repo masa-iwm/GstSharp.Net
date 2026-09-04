@@ -884,6 +884,19 @@ structure on a copy transform and discards every other one. The call site hands
 the library the null function pointer, a null `user_data` and no destroy
 notification, so no `GCHandle` is allocated for a callback that is not there.
 
+A handle a callback *receives* follows the transfer the gir states: one marked
+`transfer full` is adopted, and the wrapper releases it when the handler
+returns unless the handler handed it on to a member that consumes it, while one
+that transfers nothing is wrapped without taking anything over. `Gst.Buffer`,
+`Gst.BufferList`, `Gst.Event` and `Gst.Query` are the four the wrapper borrows
+outright rather than referencing: every writer of a mini object refuses a value
+that more than one reference names, so a `PadQueryFunction` that took a
+reference of its own could not answer the query it was called for. The price is
+that those four wrappers are only valid while the invocation runs — copy what
+has to outlive it. Every other untransferred mini object a callback is handed —
+a `Gst.Message` on a bus watch, a `Gst.TagList` in a tag walk — keeps a
+reference, so a handler may file the wrapper away and read it later.
+
 ### Memory the caller lends to the pipeline
 
 `Gst.Buffer.NewWrappedFull` and `Gst.Memory.NewWrapped` are the reverse

@@ -47,7 +47,7 @@ internal static unsafe class BusFuncTrampoline
 
             Gst.Bus busValue = Gst.GObject.Object.FromNative<Gst.Bus>(bus, Gst.Interop.Transfer.None)
                 ?? throw new InvalidOperationException("GstBusFunc passed no bus.");
-            Gst.Message messageValue = Gst.Message.Borrow(message)
+            Gst.Message messageValue = Gst.Message.FromNative(message, Gst.Interop.Transfer.None)
                 ?? throw new InvalidOperationException("GstBusFunc passed no message.");
             return callback(busValue, messageValue) ? 1 : 0;
         }
@@ -1343,7 +1343,7 @@ internal static unsafe class PromiseChangeFuncTrampoline
                 return;
             }
 
-            Gst.Promise promiseValue = Gst.Promise.Borrow(promise)
+            Gst.Promise promiseValue = Gst.Promise.FromNative(promise, Gst.Interop.Transfer.None)
                 ?? throw new InvalidOperationException("GstPromiseChangeFunc passed no promise.");
             callback(promiseValue);
         }
@@ -1641,7 +1641,7 @@ internal static unsafe class TagForeachFuncTrampoline
                 return;
             }
 
-            Gst.TagList listValue = Gst.TagList.Borrow(list)
+            Gst.TagList listValue = Gst.TagList.FromNative(list, Gst.Interop.Transfer.None)
                 ?? throw new InvalidOperationException("GstTagForeachFunc passed no list.");
             string tagValue = Gst.Interop.GMarshal.PtrToStringUtf8((nint)tag)
                 ?? throw new InvalidOperationException("GstTagForeachFunc passed no tag.");

@@ -346,6 +346,30 @@ internal sealed class MarshalPlanner
         "Gst.MiniObject",
     };
 
+    /// <summary>
+    /// The mini objects a callback handler is expected to write, which are
+    /// therefore borrowed rather than referenced when a callback is handed one
+    /// without a transfer.
+    /// </summary>
+    /// <remarks>
+    /// A mini object refuses every writer while more than one reference names
+    /// it, so a wrapper that took one of its own would hand the handler a value
+    /// it cannot act on: gst_query_set_duration is the writer this was found
+    /// through, and gst_buffer_add_meta, gst_buffer_list_insert and the setters
+    /// of an event are the others a handler of the corpus reaches for. The
+    /// borrow costs the handler the right to keep the wrapper past the
+    /// invocation, which is what the C contract of an untransferred argument
+    /// already says; every other mini object keeps the reference, so a handler
+    /// that files a bus message away still holds a wrapper that is valid.
+    /// </remarks>
+    private static readonly HashSet<string> WritableInCallbacks = new(StringComparer.Ordinal)
+    {
+        "Gst.Buffer",
+        "Gst.BufferList",
+        "Gst.Event",
+        "Gst.Query",
+    };
+
     /// <summary>The names a signal trampoline uses for its own parameters and locals.</summary>
     private static readonly HashSet<string> TrampolineLocals = new(StringComparer.Ordinal)
     {
@@ -4122,17 +4146,27 @@ internal sealed class MarshalPlanner
                 };
             }
 
-            // A mini object a callback is handed without a transfer is borrowed
-            // rather than referenced. A reference of its own would be correct
-            // for the lifetime and wrong for what the handler is there to do:
-            // gst_query_set_duration and every other writer of a mini object
-            // refuses a value whose reference count is above one, so a query
-            // function that took a reference could not answer the query it was
-            // called for. The wrapper is only valid while the invocation runs,
-            // which is what the C contract of an untransferred argument says.
+            // The four mini objects a handler is expected to write are borrowed
+            // rather than referenced. Every writer of a mini object refuses a
+            // value whose reference count is above one - gst_query_set_duration
+            // is the one this was found through - so a query function that took
+            // a reference of its own could not answer the query it was called
+            // for, and the same holds for the buffer of a metadata transform
+            // and for the event of a collection. The wrapper is then only valid
+            // while the invocation runs, which is what the C contract of an
+            // untransferred argument says anyway.
+            //
+            // Everything else keeps the reference: a handler that files what it
+            // was handed away - a bus watch that queues its messages is the
+            // routine case - holds a wrapper that stays valid, and nothing
+            // writes a message, a tag list, a promise or a caps in place from
+            // inside a callback. The set is by name rather than by kind because
+            // it is a statement about what handlers of these types do, not
+            // about the mini object machinery.
             if (argument is { Kind: ArgumentKind.Handle, Direction: ArgumentDirection.In, Transfer: GirTransfer.None }
                 && _repository.Resolve(parameter.Type.Name, context.Namespace) is { } borrowedSymbol
-                && _classifier.Classify(borrowedSymbol.Declaration) == TypeKind.MiniObject)
+                && _classifier.Classify(borrowedSymbol.Declaration) == TypeKind.MiniObject
+                && WritableInCallbacks.Contains(borrowedSymbol.QualifiedName))
             {
                 argument = new ArgumentPlan
                 {
