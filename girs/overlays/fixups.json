@@ -354,6 +354,10 @@
     "Gst.ControlBinding:name": "PropertyName",
     "Gst.Element::no-more-pads": "NoMorePadsSignal",
     "Gst.PadTemplate::pad-created": "PadCreatedSignal",
+    "GstBase.BaseTransform::set_caps#incaps": "inCaps",
+    "GstBase.BaseTransform::set_caps#outcaps": "outCaps",
+    "GstBase.BaseTransform::transform_ip#buf": "buffer",
+    "GstBase.PushSrc::create#buf": "buffer",
     "GstRtp.RTPPayload.1016": "Fs1016",
     "GstRtsp.RTSPVersion.1_0": "V1_0",
     "GstRtsp.RTSPVersion.1_1": "V1_1",
@@ -402,6 +406,11 @@
   "$comment-rtsp-server-annotations": "Four GstRtspServer annotations that do not describe the C implementation, verified against GStreamer 1.28.6. Three of them state a return the C answers NULL for on ordinary input, which the planner turns into an InvalidOperationException on an answer a caller has to be able to read: gst_rtsp_mount_points_match answers NULL for a path nothing is mounted on (rtsp-mount-points.c:244, :296-300), gst_rtsp_permissions_get_role answers NULL for a role the permissions do not carry (rtsp-permissions.c:337), and gst_rtsp_media_factory_uri_get_uri answers the DEFAULT_URI of NULL until a URI has been set (rtsp-media-factory-uri.c:53). The fourth is an ownership lie: gst_rtsp_media_new declares its element transfer full while the C gst_object_ref_sinks it (rtsp-media.c:695-696, :1048), and a wrapper of this binding never holds a floating reference, so that ref_sink is a reference the media takes for itself. The consuming shape the gir asks for would leak that one reference and dispose the element wrapper the caller is still holding, and transfer none is what the C does.",
   "annotationOverrides": {
     "GES.Project::error-loading-asset#error": { "nullable": true },
+    "Gst.Element::request_new_pad#return": { "transfer": "none", "$comment": "gstelement.c:1094-1108 - gst_element_request_pad hands the pad the subclass answered straight back to the caller without a reference of its own, and every in-tree implementation answers a pad it has already added to the element with gst_element_add_pad, which is the reference the element keeps. The gir calls it transfer full, which would make every caller of RequestPad own a reference nobody minted." },
+    "GstBase.BaseSink::event#event": { "transfer": "full", "$comment": "gstbasesink.c - gst_base_sink_event and the default implementation both gst_event_unref the event on every path, so the slot consumes the reference it is handed. The gir says none, which would make an override that chains up release an event the base class also releases." },
+    "GstBase.BaseSink::fixate#caps": { "transfer": "full", "$comment": "gstbasesink.c - gst_base_sink_default_fixate answers gst_caps_fixate (caps), which consumes the caps it is given; the caller of the slot hands over its own reference. The gir says none on a parameter the slot both consumes and returns a value derived from." },
+    "GstBase.BaseTransform::submit_input_buffer#input": { "transfer": "full", "$comment": "gstbasetransform.c - gst_base_transform_default_submit_input_buffer stores the buffer in trans->priv->queued_buf or unrefs it on every early return, so the slot owns the buffer from the moment it is called. The gir says none." },
+    "GstBase.PushSrc::create#buf": { "direction": "out", "$comment": "gstbasesrc.c - GstPushSrc only ever advertises push scheduling, so the buffer pointer the base class passes is always NULL on entry and the slot produces rather than replaces. The gir spells the parameter inout, which it is on GstBaseSrc::create, where pull scheduling really does hand a buffer in to be filled." },
     "GstCapsFilterMapFunc#features": { "nullable": true },
     "GstCapsForeachFunc#features": { "nullable": true },
     "GstCapsMapFunc#features": { "nullable": true },
@@ -632,5 +641,48 @@
     "GstWebRTCICECandidatePair.local": { "nullable": false, "$comment": "gst-plugins-bad/gst-libs/gst/webrtc/nice/nicetransport.c:426-438 - a pair is only allocated for a selected pair and both members are filled at once." },
     "GstWebRTCICECandidatePair.remote": { "nullable": false, "$comment": "gst-plugins-bad/gst-libs/gst/webrtc/nice/nicetransport.c:436-438, filled with the local candidate." },
     "GstWebRTCICECandidateStats.proto": { "nullable": false, "$comment": "gst-plugins-bad/gst-libs/gst/webrtc/nice/nicetransport.c:339-340 and nice/nice.c:1209-1210 assign the literal \"udp\" or \"tcp\" unconditionally; the claim rests on GStreamer's own code, not on a libnice header." }
-  }
+  },
+  "$comment-subclassable": "The classes a managed subclass may derive from. It is an allowlist rather than everything the girs declare: a class here gets a class struct mirror, a generated *.Subclass.cs with one OnX member per bindable slot, and its whole parent chain gets mirrors as well, because a mirror embeds the one of its parent by value. A class that is only on the chain - Gst.Object - gets the mirror and no managed surface. Wave 1 is the Gst and GstBase leg; the GstAudio and GstVideo classes of the frozen specification follow in the same stage.",
+  "subclassable": [
+    "Gst.Bin",
+    "Gst.Element",
+    "GstBase.Aggregator",
+    "GstBase.BaseSink",
+    "GstBase.BaseSrc",
+    "GstBase.BaseTransform",
+    "GstBase.PushSrc"
+  ],
+  "$comment-skip-virtuals": "The slots of a subclassable class that carry no managed surface, with the reason the skip ledger prints. The mirror still lays every one of them out - a class struct is an ABI and not a menu - so what is removed is the OnX member, its chain-up and its trampoline. A slot the planner cannot project is not listed here: it is reported by the run as UnsupportedSignature, so a shape that becomes bindable stops being skipped without anybody editing this file.",
+  "skipVirtuals": {
+    "Gst.Bin::deep_element_added": "signal class closure: read by g_signal at emission time, never called through the class pointer by the base class; managed code subscribes to the signal instead",
+    "Gst.Bin::deep_element_removed": "signal class closure: read by g_signal at emission time, never called through the class pointer by the base class; managed code subscribes to the signal instead",
+    "Gst.Bin::element_added": "signal class closure: read by g_signal at emission time, never called through the class pointer by the base class; managed code subscribes to the signal instead",
+    "Gst.Bin::element_removed": "signal class closure: read by g_signal at emission time, never called through the class pointer by the base class; managed code subscribes to the signal instead",
+    "Gst.Element::no_more_pads": "signal class closure: read by g_signal at emission time, never called through the class pointer by the base class; managed code subscribes to the signal instead",
+    "Gst.Element::pad_added": "signal class closure: read by g_signal at emission time, never called through the class pointer by the base class; managed code subscribes to the signal instead",
+    "Gst.Element::pad_removed": "signal class closure: read by g_signal at emission time, never called through the class pointer by the base class; managed code subscribes to the signal instead",
+    "GstBase.Aggregator::create_new_pad": "Pad subclassing is Stage 3: needs a Pad ClassConfig and construct properties"
+  },
+  "$comment-vfunc-defaults": "What a chain-up answers when the parent class leaves the slot NULL, as a C# expression. A slot with no entry has no documented default and its chain-up throws instead of inventing one, which is how a required slot states that a subclass has to implement it. Every value here was read out of the hand written stage-1 surface before it was deleted, so the members that shipped answer what they always answered. Gst.Element::change_state and Gst.Bin::handle_message deliberately have none: change_state is never NULL in any class of the chain, and handle_message is void and releases the message it was handed, which an expression cannot say.",
+  "vfuncDefaults": {
+    "GstBase.BaseSink::preroll": "Gst.FlowReturn.Ok",
+    "GstBase.BaseSink::render": "Gst.FlowReturn.Ok",
+    "GstBase.BaseSink::set_caps": "true",
+    "GstBase.BaseSink::start": "true",
+    "GstBase.BaseSink::stop": "true",
+    "GstBase.BaseSrc::is_seekable": "false",
+    "GstBase.BaseSrc::set_caps": "true",
+    "GstBase.BaseSrc::start": "true",
+    "GstBase.BaseSrc::stop": "true",
+    "GstBase.BaseTransform::set_caps": "true",
+    "GstBase.BaseTransform::start": "true",
+    "GstBase.BaseTransform::stop": "true",
+    "GstBase.BaseTransform::transform_ip": "Gst.FlowReturn.Ok",
+    "GstBase.PushSrc::create": "Gst.FlowReturn.NotSupported"
+  },
+  "$comment-vfunc-identity-buffers": "The buffer a slot hands back may be the very one it was given, and the caller compares the two pointers: gst_base_src_get_range only unrefs the buffer it passed in when the slot answered a different one, and gst_base_transform_default_prepare_output_buffer explicitly allows *outbuf == inbuf for an in-place transform. A reference taken on an unchanged answer would therefore never be released, so the trampoline of a parameter listed here only mints one when the handle really changed.",
+  "vfuncIdentityBuffers": [
+    "GstBase.BaseSrc::create#buf",
+    "GstBase.BaseTransform::prepare_output_buffer#outbuf"
+  ]
 }

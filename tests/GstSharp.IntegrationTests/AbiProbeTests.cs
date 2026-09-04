@@ -282,20 +282,20 @@ public sealed class AbiProbeTests
 
         _output.WriteLine(Format("GTypeClassRaw", Unsafe.SizeOf<GTypeClassRaw>()));
         _output.WriteLine(Format("GObjectClassRaw", Unsafe.SizeOf<GObjectClassRaw>()));
-        _output.WriteLine(Format("GstObjectClassRaw", Unsafe.SizeOf<GstObjectClassRaw>()));
+        _output.WriteLine(Format("ObjectClassRaw", Unsafe.SizeOf<Gst.ObjectClassRaw>()));
         _output.WriteLine(Format("ElementClassRaw", Unsafe.SizeOf<ElementClassRaw>()));
 
         Assert.Equal(8, Unsafe.SizeOf<GTypeClassRaw>());
         Assert.Equal(136, Unsafe.SizeOf<GObjectClassRaw>());
-        Assert.Equal(184, Unsafe.SizeOf<GstObjectClassRaw>());
+        Assert.Equal(184, Unsafe.SizeOf<Gst.ObjectClassRaw>());
         Assert.Equal(488, Unsafe.SizeOf<ElementClassRaw>());
 
         Assert.Equal(0L, Offset(&raw, &raw.ParentClass));
         Assert.Equal(184L, Offset(&raw, &raw.Metadata));
-        Assert.Equal(192L, Offset(&raw, &raw.ElementFactory));
-        Assert.Equal(200L, Offset(&raw, &raw.PadTemplates));
-        Assert.Equal(208L, Offset(&raw, &raw.PadTemplateCount));
-        Assert.Equal(212L, Offset(&raw, &raw.PadTemplateCookie));
+        Assert.Equal(192L, Offset(&raw, &raw.Elementfactory));
+        Assert.Equal(200L, Offset(&raw, &raw.Padtemplates));
+        Assert.Equal(208L, Offset(&raw, &raw.Numpadtemplates));
+        Assert.Equal(212L, Offset(&raw, &raw.PadTemplCookie));
         Assert.Equal(216L, Offset(&raw, &raw.PadAdded));
         Assert.Equal(224L, Offset(&raw, &raw.PadRemoved));
         Assert.Equal(232L, Offset(&raw, &raw.NoMorePads));

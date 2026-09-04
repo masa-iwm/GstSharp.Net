@@ -481,7 +481,10 @@ public sealed class ClassEmitterTests
         // classes: the nineteenth it emits is RtspServerGlobal, the static
         // holder of the namespace level calls, whose declaration carries the
         // static modifier the pattern here does not match.
-        Assert.Equal(190, classes);
+        // Seven more since the subclassing surface landed: the `*.Subclass.cs`
+        // partial of each allowlisted class opens with the same
+        // `public unsafe partial class` the counting keys on.
+        Assert.Equal(197, classes);
 
         // 127 rather than 123 since the field accessors of a string and of a
         // handle landed: GstSdp.SDPKey, GstSdp.SDPOrigin and
