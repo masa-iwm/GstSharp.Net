@@ -493,7 +493,8 @@ internal sealed class VfuncEmitter
         bool mints = false;
         foreach (VfuncArgument argument in plan.Arguments)
         {
-            mints |= argument.Bucket is VfuncBucket.Adopt or VfuncBucket.InOutHandle;
+            mints |= argument.Bucket == VfuncBucket.Adopt
+                || (argument.Bucket == VfuncBucket.InOutHandle && !argument.IsIdentity);
         }
 
         string instance = "Handle";
@@ -525,6 +526,11 @@ internal sealed class VfuncEmitter
                 case VfuncBucket.InOutHandle:
                     writer.WriteLine(
                         "nint " + local + " = " + value.Name + " is null ? nint.Zero : " + value.Name + ".Handle;");
+                    if (argument.IsIdentity)
+                    {
+                        writer.WriteLine("nint " + value.Name + "Entry = " + local + ";");
+                    }
+
                     raw.Add("&" + local);
                     break;
                 default:
@@ -540,6 +546,16 @@ internal sealed class VfuncEmitter
         {
             if (argument.Bucket is VfuncBucket.Adopt or VfuncBucket.InOutHandle)
             {
+                // An identity preserving inout handle is neither owned nor
+                // consumed by the slot: the caller keeps the reference of the
+                // value on entry and releases the answer only when the two
+                // differ, so a reference minted for the parent is one nobody
+                // gives back.
+                if (argument.Bucket == VfuncBucket.InOutHandle && argument.IsIdentity)
+                {
+                    continue;
+                }
+
                 string local = argument.Argument.Name + "Native";
                 string mint = MintExpression(argument.Argument, local);
                 if (argument.Bucket == VfuncBucket.InOutHandle)
@@ -592,15 +608,36 @@ internal sealed class VfuncEmitter
                     writer.WriteLine(value.Name + " = " + FromNativeScalar(value, local) + ";");
                     break;
                 case VfuncBucket.OutHandle:
+                    // An identity preserving answer names the very handle the
+                    // slot was given, which carries no reference of its own:
+                    // the wrapper of the input is handed back instead of a
+                    // second one that would claim the caller's reference.
                     writer.WriteLine(
                         value.Name + " = " + local + " == nint.Zero ? null : "
+                        + (argument.IsIdentity && argument.IdentityReference is { } reference
+                            ? local + " == " + HandleOf(plan, reference) + " ? " + reference + " : "
+                            : string.Empty)
                         + AdoptExpression(value, local) + ";");
                     break;
                 case VfuncBucket.InOutHandle:
+                    if (argument.IsIdentity)
+                    {
+                        // The parent left the handle alone, so the wrapper the
+                        // caller holds still names it and still owns whatever
+                        // reference it owned.
+                        writer.WriteLine("if (" + local + " != " + value.Name + "Entry)");
+                        writer.OpenBlock();
+                    }
+
                     writer.WriteLine(value.Name + "?.Dispose();");
                     writer.WriteLine(
                         value.Name + " = " + local + " == nint.Zero ? null : "
                         + AdoptExpression(value, local) + ";");
+                    if (argument.IsIdentity)
+                    {
+                        writer.CloseBlock();
+                    }
+
                     break;
                 default:
                     break;
@@ -1106,6 +1143,27 @@ internal sealed class VfuncEmitter
         value.Flavor == HandleFlavor.GObject
             ? "Gst.Interop.GObjectNative.ObjectUnref(" + handle + ")"
             : "Gst.GstNative.MiniObjectUnref(" + handle + ")";
+
+    /// <summary>
+    /// The expression that reads the raw handle of the argument an identity
+    /// preserving answer is compared with.
+    /// </summary>
+    /// <param name="plan">The slot being written.</param>
+    /// <param name="name">The C# name of the argument.</param>
+    /// <returns>The expression.</returns>
+    private static string HandleOf(VirtualMethodPlan plan, string name)
+    {
+        foreach (VfuncArgument argument in plan.Arguments)
+        {
+            if (string.Equals(argument.Argument.Name, name, StringComparison.Ordinal)
+                && argument.Argument.PublicType.EndsWith('?'))
+            {
+                return "(" + name + " is null ? nint.Zero : " + name + ".Handle)";
+            }
+        }
+
+        return name + ".Handle";
+    }
 
     private static string AdoptExpression(ArgumentPlan value, string handle) =>
         value.Flavor == HandleFlavor.GObject

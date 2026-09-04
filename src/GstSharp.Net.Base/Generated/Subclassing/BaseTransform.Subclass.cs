@@ -595,7 +595,7 @@ public unsafe partial class BaseTransform
         Gst.FlowReturn result = ChainUpPrepareOutputBuffer(Handle, input.Handle, &outbufNative);
         GC.KeepAlive(this);
         GC.KeepAlive(input);
-        outbuf = outbufNative == nint.Zero ? null : Gst.Buffer.FromNative(outbufNative, Gst.Interop.Transfer.Full);
+        outbuf = outbufNative == nint.Zero ? null : outbufNative == input.Handle ? input : Gst.Buffer.FromNative(outbufNative, Gst.Interop.Transfer.Full);
         return result;
     }
 

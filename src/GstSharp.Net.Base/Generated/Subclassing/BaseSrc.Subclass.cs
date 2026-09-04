@@ -539,16 +539,15 @@ public unsafe partial class BaseSrc
     /// <returns>What the slot answers.</returns>
     protected Gst.FlowReturn ChainUpCreate(ulong offset, uint size, ref Gst.Buffer? buf)
     {
-        nint instance = Handle;
         nint bufNative = buf is null ? nint.Zero : buf.Handle;
-        if (bufNative != nint.Zero)
-        {
-            Gst.GstNative.MiniObjectRef(bufNative);
-        }
-        Gst.FlowReturn result = ChainUpCreate(instance, offset, size, &bufNative);
+        nint bufEntry = bufNative;
+        Gst.FlowReturn result = ChainUpCreate(Handle, offset, size, &bufNative);
         GC.KeepAlive(this);
-        buf?.Dispose();
-        buf = bufNative == nint.Zero ? null : Gst.Buffer.FromNative(bufNative, Gst.Interop.Transfer.Full);
+        if (bufNative != bufEntry)
+        {
+            buf?.Dispose();
+            buf = bufNative == nint.Zero ? null : Gst.Buffer.FromNative(bufNative, Gst.Interop.Transfer.Full);
+        }
         return result;
     }
 
