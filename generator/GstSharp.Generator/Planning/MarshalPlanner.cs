@@ -4245,7 +4245,16 @@ internal sealed class MarshalPlanner
                 "result",
                 ArgumentDirection.In,
                 callback.ReturnValue.Transfer,
-                callback.ReturnValue.IsNullable,
+
+                // The value a trampoline answers takes a nullable correction the
+                // same way an argument it is handed does: the gir of
+                // GstPadIterIntLinkFunction promises an iterator that a handler
+                // with no internal links has none of, and a handler that has to
+                // answer one anyway would throw where C writes NULL.
+                InboundNullableOf(
+                    (AnnotationKeyOf(callback) ?? callback.Name) + "#return",
+                    callback.ReturnValue.IsNullable,
+                    "a callback return value"),
                 context);
 
             // A handle is answered only when the callback owns what it hands

@@ -268,9 +268,21 @@ internal static unsafe class ClockCallbackTrampoline
 /// the metadata on @transbuf.
 /// </para>
 /// </remarks>
-/// <param name="transbuf">a #GstBuffer</param>
+/// <param name="transbuf">
+/// a #GstBuffer
+/// The wrapper owns nothing and is only valid while the invocation runs, which is what
+/// lets the handler write to it: a value that more than one reference names refuses
+/// every writer. Copy what has to outlive the call; the wrapper is disposed when the
+/// handler returns and throws afterwards.
+/// </param>
 /// <param name="meta">a #GstCustomMeta</param>
-/// <param name="buffer">a #GstBuffer</param>
+/// <param name="buffer">
+/// a #GstBuffer
+/// The wrapper owns nothing and is only valid while the invocation runs, which is what
+/// lets the handler write to it: a value that more than one reference names refuses
+/// every writer. Copy what has to outlive the call; the wrapper is disposed when the
+/// handler returns and throws afterwards.
+/// </param>
 /// <param name="type">the transform type</param>
 /// <param name="data">transform specific data.</param>
 /// <returns>%TRUE if the transform could be performed</returns>
@@ -292,11 +304,11 @@ internal static unsafe class CustomMetaTransformFunctionTrampoline
                 return default;
             }
 
-            Gst.Buffer transbufValue = Gst.Buffer.Borrow(transbuf)
+            using Gst.Buffer transbufValue = Gst.Buffer.Borrow(transbuf)
                 ?? throw new InvalidOperationException("GstCustomMetaTransformFunction passed no transbuf.");
             Gst.CustomMeta metaValue = Gst.CustomMeta.FromNative(meta)
                 ?? throw new InvalidOperationException("GstCustomMetaTransformFunction passed no meta.");
-            Gst.Buffer bufferValue = Gst.Buffer.Borrow(buffer)
+            using Gst.Buffer bufferValue = Gst.Buffer.Borrow(buffer)
                 ?? throw new InvalidOperationException("GstCustomMetaTransformFunction passed no buffer.");
             return callback(transbufValue, metaValue, bufferValue, new Gst.GLib.Quark(type), data) ? 1 : 0;
         }
@@ -972,7 +984,7 @@ internal static unsafe class PadGetRangeFunctionTrampoline
                 if (result == Gst.FlowReturn.Ok)
                 {
                     nint bufferHandle = bufferValue is null ? nint.Zero : bufferValue.Handle;
-                    if (bufferHandle == nint.Zero)
+                    if (bufferHandle == nint.Zero || (bufferEntry != nint.Zero && bufferHandle != bufferEntry))
                     {
                         return (int)Gst.FlowReturn.Error;
                     }
@@ -1011,7 +1023,7 @@ internal static unsafe class PadGetRangeFunctionTrampoline
 /// a new #GstIterator that will iterate over all pads that are
 /// linked to the given pad on the inside of the parent element.
 /// </returns>
-public delegate Gst.Iterator PadIterIntLinkFunction(Gst.Pad pad, Gst.Object? parent);
+public delegate Gst.Iterator? PadIterIntLinkFunction(Gst.Pad pad, Gst.Object? parent);
 
 /// <summary>The native entry point of <see cref="Gst.PadIterIntLinkFunction"/>.</summary>
 internal static unsafe class PadIterIntLinkFunctionTrampoline
@@ -1032,8 +1044,8 @@ internal static unsafe class PadIterIntLinkFunctionTrampoline
             Gst.Pad padValue = Gst.GObject.Object.FromNative<Gst.Pad>(pad, Gst.Interop.Transfer.None)
                 ?? throw new InvalidOperationException("GstPadIterIntLinkFunction passed no pad.");
             Gst.Object? parentValue = Gst.GObject.Object.FromNative<Gst.Object>(parent, Gst.Interop.Transfer.None);
-            Gst.Iterator result = callback(padValue, parentValue);
-            return result.HandOver();
+            Gst.Iterator? result = callback(padValue, parentValue);
+            return result is null ? nint.Zero : result.HandOver();
         }
         catch (Exception exception)
         {
@@ -1067,7 +1079,7 @@ internal static unsafe class PadLinkFunctionTrampoline
         {
             if (Gst.Interop.InstanceKeyedCallbacks.Lookup<Gst.PadLinkFunction>(pad, "link") is not { } callback)
             {
-                return default;
+                return (int)Gst.PadLinkReturn.Refused;
             }
 
             Gst.Pad padValue = Gst.GObject.Object.FromNative<Gst.Pad>(pad, Gst.Interop.Transfer.None)
@@ -1080,7 +1092,7 @@ internal static unsafe class PadLinkFunctionTrampoline
         catch (Exception exception)
         {
             Gst.Interop.ExceptionTrap.Report(exception);
-            return default;
+            return (int)Gst.PadLinkReturn.Refused;
         }
     }
 }
@@ -1134,7 +1146,13 @@ internal static unsafe class PadProbeCallbackTrampoline
 ///          flag is set, @parent is guaranteed to be not-%NULL and remain valid
 ///          during the execution of this function.
 /// </param>
-/// <param name="query">the #GstQuery object to execute</param>
+/// <param name="query">
+/// the #GstQuery object to execute
+/// The wrapper owns nothing and is only valid while the invocation runs, which is what
+/// lets the handler write to it: a value that more than one reference names refuses
+/// every writer. Copy what has to outlive the call; the wrapper is disposed when the
+/// handler returns and throws afterwards.
+/// </param>
 /// <returns>%TRUE if the query could be performed.</returns>
 public delegate bool PadQueryFunction(Gst.Pad pad, Gst.Object? parent, Gst.Query query);
 
@@ -1157,7 +1175,7 @@ internal static unsafe class PadQueryFunctionTrampoline
             Gst.Pad padValue = Gst.GObject.Object.FromNative<Gst.Pad>(pad, Gst.Interop.Transfer.None)
                 ?? throw new InvalidOperationException("GstPadQueryFunction passed no pad.");
             Gst.Object? parentValue = Gst.GObject.Object.FromNative<Gst.Object>(parent, Gst.Interop.Transfer.None);
-            Gst.Query queryValue = Gst.Query.Borrow(query)
+            using Gst.Query queryValue = Gst.Query.Borrow(query)
                 ?? throw new InvalidOperationException("GstPadQueryFunction passed no query.");
             return callback(padValue, parentValue, queryValue) ? 1 : 0;
         }

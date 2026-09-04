@@ -397,21 +397,6 @@ internal static partial class Smoke
     }
 
     /// <summary>
-    /// Reads and writes properties by name, which is the route to every element
-    /// that no <c>.gir</c> file describes.
-    /// </summary>
-    /// <returns>
-    /// <see langword="true"/> when every property answered what was written to
-    /// it.
-    /// </returns>
-    /// <remarks>
-    /// The pair is generic over the managed type of the property, and generic
-    /// code is where ILC has the most room to leave something behind: the
-    /// enumeration read goes through <c>Enum.ToObject</c> over a type argument,
-    /// and the wrapper read goes through the type registry with one. Neither is
-    /// a build warning when it fails, so both are asked here.
-    /// </remarks>
-    /// <summary>
     /// Drives a managed chain function, whose trampoline recovers the delegate
     /// from the pad it is called with rather than from a user data pointer.
     /// </summary>
@@ -447,6 +432,21 @@ internal static partial class Smoke
         return flow == FlowReturn.Ok && seen == 8;
     }
 
+    /// <summary>
+    /// Reads and writes properties by name, which is the route to every element
+    /// that no <c>.gir</c> file describes.
+    /// </summary>
+    /// <returns>
+    /// <see langword="true"/> when every property answered what was written to
+    /// it.
+    /// </returns>
+    /// <remarks>
+    /// The pair is generic over the managed type of the property, and generic
+    /// code is where ILC has the most room to leave something behind: the
+    /// enumeration read goes through <c>Enum.ToObject</c> over a type argument,
+    /// and the wrapper read goes through the type registry with one. Neither is
+    /// a build warning when it fails, so both are asked here.
+    /// </remarks>
     private static bool RunPropertiesByName()
     {
         using Element sink = ElementFactory.Make("fakesink", "properties")

@@ -1433,7 +1433,7 @@ public unsafe partial class Pad : Gst.Object
     /// </para>
     /// </remarks>
     /// <param name="activatemode">the #GstPadActivateModeFunction to set.</param>
-    public void SetActivatemodeFunction(Gst.PadActivateModeFunction? activatemode)
+    public void SetActivateModeFunction(Gst.PadActivateModeFunction? activatemode)
     {
         nint instanceHandle = Handle;
         Gst.Interop.CallbackHandle activatemodeState = Gst.Interop.InstanceKeyedCallbacks.Install(instanceHandle, "activatemode", activatemode);
@@ -1574,13 +1574,19 @@ public unsafe partial class Pad : Gst.Object
     /// </summary>
     /// <remarks>
     /// <para>
-    /// GStreamer reads this function pointer without holding a lock (gstpad.c:4590-4594), so
-    /// replacing or unsetting the handler while the pad is running races an invocation that is
-    /// already under way: the handler being replaced may still be executing when this returns.
+    /// The handler is lent the buffer the puller supplied and must answer that very buffer:
+    /// gst_pad_get_range asserts it (gstpad.c:5127) and answers its own error without releasing
+    /// what it was handed, so a handler that replaces a lent buffer, or that answers success
+    /// with none at all, is reported to the puller as GST_FLOW_ERROR rather than passed on. A
+    /// puller that supplied no buffer - which is every caller of the managed Pad.GetRange and
+    /// Pad.PullRange - leaves the handler free to produce one. GStreamer reads this function
+    /// pointer without holding a lock (gstpad.c:4590-4594), so replacing or unsetting the
+    /// handler while the pad is running races an invocation that is already under way: the
+    /// handler being replaced may still be executing when this returns.
     /// </para>
     /// </remarks>
     /// <param name="get">the #GstPadGetRangeFunction to set.</param>
-    public void SetGetrangeFunction(Gst.PadGetRangeFunction? get)
+    public void SetGetRangeFunction(Gst.PadGetRangeFunction? get)
     {
         nint instanceHandle = Handle;
         Gst.Interop.CallbackHandle getState = Gst.Interop.InstanceKeyedCallbacks.Install(instanceHandle, "getrange", get);

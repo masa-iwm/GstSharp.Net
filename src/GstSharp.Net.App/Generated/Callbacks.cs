@@ -180,7 +180,13 @@ internal static unsafe class AppSinkNewSampleCallbackTrampoline
 /// <para>Available since GStreamer 1.28.</para>
 /// </remarks>
 /// <param name="appsink">a #GstAppSink</param>
-/// <param name="query">An ALLOCATION query</param>
+/// <param name="query">
+/// An ALLOCATION query
+/// The wrapper owns nothing and is only valid while the invocation runs, which is what
+/// lets the handler write to it: a value that more than one reference names refuses
+/// every writer. Copy what has to outlive the call; the wrapper is disposed when the
+/// handler returns and throws afterwards.
+/// </param>
 /// <returns>%TRUE when the query has been handled.</returns>
 public delegate bool AppSinkProposeAllocationCallback(Gst.App.AppSink appsink, Gst.Query query);
 
@@ -202,7 +208,7 @@ internal static unsafe class AppSinkProposeAllocationCallbackTrampoline
 
             Gst.App.AppSink appsinkValue = Gst.GObject.Object.FromNative<Gst.App.AppSink>(appsink, Gst.Interop.Transfer.None)
                 ?? throw new InvalidOperationException("GstAppSinkProposeAllocationCallback passed no appsink.");
-            Gst.Query queryValue = Gst.Query.Borrow(query)
+            using Gst.Query queryValue = Gst.Query.Borrow(query)
                 ?? throw new InvalidOperationException("GstAppSinkProposeAllocationCallback passed no query.");
             return callback(appsinkValue, queryValue) ? 1 : 0;
         }

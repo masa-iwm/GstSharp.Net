@@ -849,9 +849,15 @@ also un-skipped `gst_collect_pads_set_buffer_function` and
 trampoline scopes and releases when the handler returns; a handle the
 handler fills in through a `GstBuffer**`, which the caller is given with one
 added reference; and the in place buffer of `GstPadGetRangeFunction`, which
-arrives borrowed and is only referenced when the handler answers another one
-— a success with no buffer is corrected to an error there, because
-gst_pad_get_range does not test what it is given (gstpad.c:5127).
+arrives borrowed and must be answered unchanged — a success with no buffer,
+and a success with a buffer other than the one that was lent, are both
+corrected to `GST_FLOW_ERROR` there, because gst_pad_get_range asserts the
+identity and answers its own error without releasing what it handed over
+(gstpad.c:5127). What a handler produces through a plain `out` is handed on
+whatever it answered, because its caller reads the storage before the answer
+(gstcollectpads.c:2170-2181), and a `GstCollectPadsBufferFunction` is called
+with no data and no buffer once every pad has reached EOS
+(gstcollectpads.c:1540), so both of those are nullable.
 
 The analyzer that checks that an `OnX` override and the `XOverride`
 declaration of the same type come in pairs is the `GST0003`/`GST0004` pair.

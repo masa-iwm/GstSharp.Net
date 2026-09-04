@@ -29,7 +29,6 @@ internal static class CallableRenderer
     /// <summary>The local that holds the raw return value.</summary>
     private const string ResultLocal = "nativeResult";
 
-    /// <summary>The local that holds the raw handle of the instance.</summary>
     /// <summary>What a handler is told about an argument whose reference it is handed.</summary>
     private static readonly string[] AdoptedCallbackArgumentNote =
     [
@@ -41,7 +40,17 @@ internal static class CallableRenderer
     private static readonly string[] ProducedCallbackArgumentNote =
     [
         "What the handler leaves here is handed to the caller with one added reference; the",
-        "wrapper keeps its own. It is only read when the handler answered success.",
+        "wrapper keeps its own. Leaving none is an answer in its own right and reaches the",
+        "caller as the null pointer, whatever the handler returned.",
+    ];
+
+    /// <summary>What a handler is told about a value it may write but not keep.</summary>
+    private static readonly string[] BorrowedCallbackArgumentNote =
+    [
+        "The wrapper owns nothing and is only valid while the invocation runs, which is what",
+        "lets the handler write to it: a value that more than one reference names refuses",
+        "every writer. Copy what has to outlive the call; the wrapper is disposed when the",
+        "handler returns and throws afterwards.",
     ];
 
     /// <summary>What a handler is told about an argument it works on in place.</summary>
@@ -53,6 +62,7 @@ internal static class CallableRenderer
         "test what it is given.",
     ];
 
+    /// <summary>The local that holds the raw handle of the instance.</summary>
     private const string InstanceLocal = "instanceHandle";
 
     /// <summary>The local that holds the reference minted for a call that takes the instance over.</summary>
@@ -459,6 +469,11 @@ internal static class CallableRenderer
         if (IsAdopted(argument))
         {
             return AdoptedCallbackArgumentNote;
+        }
+
+        if (BorrowsMiniObject(argument))
+        {
+            return BorrowedCallbackArgumentNote;
         }
 
         return argument.Direction switch
@@ -1832,15 +1847,22 @@ internal static class CallableRenderer
     /// The default of an enumeration is its zero member, and the zero member of
     /// <c>GstFlowReturn</c> is <c>GST_FLOW_OK</c>: reporting that after the
     /// handler threw tells the pipeline that a buffer it never got was
-    /// accepted. The rule is to use the error member of the enumeration when it
-    /// has one; <c>GstFlowReturn</c> is the only enumeration this milestone
-    /// returns from a trampoline, so it is the only one spelled out.
+    /// accepted. The rule is to use the refusing member of the enumeration when
+    /// it has one, which the default of the type is not: GST_FLOW_OK and
+    /// GST_PAD_LINK_OK are both zero, so a trampoline that answered the default
+    /// would report what it trapped as a success and, for a link function,
+    /// permit the link it never ran. The two enumerations a trampoline of this
+    /// corpus answers are spelled out; everything else answers the default,
+    /// which is the failure of a boolean and of a pointer.
     /// </remarks>
-    internal static string FailureLiteral(ReturnPlan value) =>
-        value.Kind == ArgumentKind.Enumeration
-        && string.Equals(value.PublicType, "Gst.FlowReturn", StringComparison.Ordinal)
-            ? "(" + value.RawType + ")Gst.FlowReturn.Error"
-            : "default";
+    internal static string FailureLiteral(ReturnPlan value) => value.Kind == ArgumentKind.Enumeration
+        ? value.PublicType switch
+        {
+            "Gst.FlowReturn" => "(" + value.RawType + ")Gst.FlowReturn.Error",
+            "Gst.PadLinkReturn" => "(" + value.RawType + ")Gst.PadLinkReturn.Refused",
+            _ => "default",
+        }
+        : "default";
 
     private static void WriteBody(CodeWriter writer, MarshalPlan plan)
     {
@@ -3308,12 +3330,6 @@ internal static class CallableRenderer
     }
 
     /// <summary>
-    /// Tests whether a callback argument is a handle whose reference travels
-    /// into the handler.
-    /// </summary>
-    /// <param name="argument">The argument to test.</param>
-    /// <returns><see langword="true"/> when the trampoline adopts it.</returns>
-    /// <summary>
     /// Tests whether a callback argument is a mini object the handler only
     /// borrows for the invocation.
     /// </summary>
@@ -3328,6 +3344,12 @@ internal static class CallableRenderer
             ConsumedFamily: ConsumedFamily.MiniObject,
         };
 
+    /// <summary>
+    /// Tests whether a callback argument is a handle whose reference travels
+    /// into the handler.
+    /// </summary>
+    /// <param name="argument">The argument to test.</param>
+    /// <returns><see langword="true"/> when the trampoline adopts it.</returns>
     private static bool IsAdopted(ArgumentPlan argument) =>
         argument is { Kind: ArgumentKind.Handle, Direction: ArgumentDirection.In, Transfer: GirTransfer.Full };
 
@@ -3491,6 +3513,11 @@ internal static class CallableRenderer
                     break;
 
                 case ArgumentKind.Handle:
+                    // A borrowed wrapper is scoped by the invocation, exactly as
+                    // a class struct slot scopes the one it is handed: disposing
+                    // it detaches rather than unreferences, so a handler that
+                    // filed the wrapper away meets ObjectDisposedException
+                    // instead of reading what the caller has since released.
                     WriteCallbackLocal(
                         writer,
                         argument,
@@ -3501,7 +3528,8 @@ internal static class CallableRenderer
                                 TrimNullable(argument.PublicType),
                                 argument.Name,
                                 argument.Transfer),
-                        NullMessage(plan, argument));
+                        NullMessage(plan, argument),
+                        BorrowsMiniObject(argument) ? "using " : string.Empty);
                     arguments.Add(argument.Name + "Value");
                     break;
 
@@ -3635,10 +3663,17 @@ internal static class CallableRenderer
 
         writer.WriteLine(plan.Return.PublicType + " " + ConvertedLocal + " = " + invocation + ";");
 
-        // Nothing the handler produced is read unless it said the invocation
-        // succeeded: the C contract of every one of these leaves the storage
-        // undefined for any other answer.
-        bool guarded = string.Equals(plan.Return.PublicType, "Gst.FlowReturn", StringComparison.Ordinal);
+        // An in place parameter is read only when the handler said the
+        // invocation succeeded, which is what its caller does with it:
+        // gst_pad_get_range_unchecked jumps past the buffer it was filling for
+        // any other answer. A produced parameter is read either way, because
+        // its caller reads the storage before it reads the answer:
+        // gst_collect_pads_clip_running_time tests outbuf first and treats a
+        // NULL as a buffer the handler dropped (gstcollectpads.c:2170-2181), so
+        // a guard here would turn an answer the handler gave into one it did
+        // not.
+        bool guarded = string.Equals(plan.Return.PublicType, "Gst.FlowReturn", StringComparison.Ordinal)
+            && handedBack.Any(static argument => argument.Direction == ArgumentDirection.Ref);
         writer.WriteLine();
         if (guarded)
         {
@@ -3656,10 +3691,17 @@ internal static class CallableRenderer
             // An in place parameter that came back empty is a success the C
             // caller cannot act on: gst_pad_get_range dereferences what it is
             // given without testing it, so the answer is corrected here rather
-            // than passed on.
+            // than passed on. A handler that answered another value than the one
+            // it was lent is corrected the same way: the caller asserts that the
+            // two are the same and answers its own error without releasing what
+            // it was handed (gstpad.c:5127), so a reference minted here would be
+            // one nobody gives back. Neither correction writes the storage, and
+            // the wrapper the handler left is released by the finally below.
             if (argument.Direction == ArgumentDirection.Ref)
             {
-                writer.WriteLine("if (" + handle + " == nint.Zero)");
+                writer.WriteLine(
+                    "if (" + handle + " == nint.Zero || (" + argument.Name + "Entry != nint.Zero && "
+                    + handle + " != " + argument.Name + "Entry))");
                 writer.OpenBlock();
                 writer.WriteLine("return " + FailureLiteral(plan.Return) + ";");
                 writer.CloseBlock();

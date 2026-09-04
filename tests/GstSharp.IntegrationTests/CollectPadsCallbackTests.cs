@@ -115,7 +115,10 @@ public sealed partial class CollectPadsCallbackTests
         pads.SetBufferFunction((_, _, buffer) =>
         {
             collected++;
-            Assert.NotEqual(nint.Zero, buffer.Handle);
+
+            // A buffer completes the collection here; only the call that
+            // reports the end of every stream carries none.
+            Assert.NotNull(buffer);
             Assert.NotEqual(clippedIn, buffer.Handle);
             return FlowReturn.Eos;
         });
@@ -141,6 +144,103 @@ public sealed partial class CollectPadsCallbackTests
             // buffer rather than exactly once.
             Assert.True(clipped >= 1, $"clip function ran {clipped} time(s)");
             Assert.Equal(1, collected);
+        }
+        finally
+        {
+            pads.Stop();
+        }
+    }
+
+    [Fact]
+    public void ABufferFunctionIsCalledWithNoDataAndNoBufferAtTheEndOfEveryStream()
+    {
+        using CollectPads pads = CollectPads.New();
+        using Pad pad = Pad.New("sink", PadDirection.Sink);
+
+        int calls = 0;
+        bool sawEnd = false;
+
+        // Once every pad has reached EOS the collection calls the function with
+        // no collect data and no buffer (gstcollectpads.c:1540), which is how
+        // the end of the collection is reported rather than an error.
+        pads.SetBufferFunction((_, data, buffer) =>
+        {
+            calls++;
+            sawEnd = data is null && buffer is null;
+            return FlowReturn.Eos;
+        });
+
+        nint data = CollectPadsAddPad(pads.Handle, pad.Handle, CollectDataSize, 0, lockPad: 1);
+        Assert.NotEqual(0, data);
+        GC.KeepAlive(pads);
+        GC.KeepAlive(pad);
+
+        Assert.True(pad.SetActive(true));
+        pads.Start();
+        try
+        {
+            Assert.True(pad.SendEvent(Event.NewStreamStart("collect-pads-eos-test")));
+
+            using Segment segment = Segment.New();
+            segment.Init(Format.Time);
+            Assert.True(pad.SendEvent(Event.NewSegment(segment)));
+            Assert.True(pad.SendEvent(Event.NewEos()));
+
+            Assert.Equal(1, calls);
+            Assert.True(sawEnd, "the buffer function was not called with the end of the collection");
+        }
+        finally
+        {
+            pads.Stop();
+        }
+    }
+
+    [Fact]
+    public void AClipFunctionThatAnswersNoBufferDropsIt()
+    {
+        using CollectPads pads = CollectPads.New();
+        using Pad pad = Pad.New("sink", PadDirection.Sink);
+
+        int clipped = 0;
+        int collected = 0;
+
+        // A clip function that leaves no buffer has dropped the one it was
+        // given, which the collection reads before it reads the answer: the
+        // chain returns OK and nothing is ever collected.
+        pads.SetClipFunction((CollectPads _, CollectData _, Buffer _, out Buffer? outbuffer) =>
+        {
+            clipped++;
+            outbuffer = null;
+            return FlowReturn.Ok;
+        });
+
+        pads.SetBufferFunction((_, _, _) =>
+        {
+            collected++;
+            return FlowReturn.Eos;
+        });
+
+        nint data = CollectPadsAddPad(pads.Handle, pad.Handle, CollectDataSize, 0, lockPad: 1);
+        Assert.NotEqual(0, data);
+        GC.KeepAlive(pads);
+        GC.KeepAlive(pad);
+
+        Assert.True(pad.SetActive(true));
+        pads.Start();
+        try
+        {
+            Assert.True(pad.SendEvent(Event.NewStreamStart("collect-pads-drop-test")));
+
+            using Segment segment = Segment.New();
+            segment.Init(Format.Time);
+            Assert.True(pad.SendEvent(Event.NewSegment(segment)));
+
+            // The collection clips on the way in and again when it looks for a
+            // buffer to collect, so the count is a floor rather than an exact
+            // number; what matters is that nothing was ever collected.
+            Assert.Equal(FlowReturn.Ok, pad.Chain(Buffer.New()));
+            Assert.True(clipped >= 1, $"clip function ran {clipped} time(s)");
+            Assert.Equal(0, collected);
         }
         finally
         {

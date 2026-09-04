@@ -186,7 +186,7 @@ public sealed unsafe partial class PadFunctionTests
     public void AGetRangeFunctionProducesTheBufferThePullerReceives()
     {
         using Pad pad = Pad.New("src", PadDirection.Src);
-        pad.SetGetrangeFunction((Pad _, Gst.Object? _, ulong offset, uint length, ref Buffer? buffer) =>
+        pad.SetGetRangeFunction((Pad _, Gst.Object? _, ulong offset, uint length, ref Buffer? buffer) =>
         {
             buffer = Buffer.New();
             _ = offset;
@@ -194,7 +194,7 @@ public sealed unsafe partial class PadFunctionTests
             return FlowReturn.Ok;
         });
 
-        pad.SetActivatemodeFunction((_, _, mode, _) => mode == PadMode.Pull);
+        pad.SetActivateModeFunction((_, _, mode, _) => mode == PadMode.Pull);
         Assert.True(pad.ActivateMode(PadMode.Pull, true));
 
         Assert.Equal(FlowReturn.Ok, pad.GetRange(0, 4, out Buffer? answered));
@@ -211,7 +211,7 @@ public sealed unsafe partial class PadFunctionTests
         using Pad pad = Pad.New("src", PadDirection.Src);
         nint lent = 0;
 
-        pad.SetGetrangeFunction((Pad _, Gst.Object? _, ulong _, uint _, ref Buffer? buffer) =>
+        pad.SetGetRangeFunction((Pad _, Gst.Object? _, ulong _, uint _, ref Buffer? buffer) =>
         {
             lent = buffer is null ? 0 : buffer.Handle;
 
@@ -220,7 +220,7 @@ public sealed unsafe partial class PadFunctionTests
             return FlowReturn.Ok;
         });
 
-        pad.SetActivatemodeFunction((_, _, mode, _) => mode == PadMode.Pull);
+        pad.SetActivateModeFunction((_, _, mode, _) => mode == PadMode.Pull);
         Assert.True(pad.ActivateMode(PadMode.Pull, true));
 
         using Buffer mine = Buffer.New();
@@ -238,17 +238,80 @@ public sealed unsafe partial class PadFunctionTests
     public void AGetRangeFunctionThatAnswersNoBufferIsCorrectedToAnError()
     {
         using Pad pad = Pad.New("src", PadDirection.Src);
-        pad.SetGetrangeFunction((Pad _, Gst.Object? _, ulong _, uint _, ref Buffer? buffer) =>
+        pad.SetGetRangeFunction((Pad _, Gst.Object? _, ulong _, uint _, ref Buffer? buffer) =>
         {
             buffer = null;
             return FlowReturn.Ok;
         });
 
-        pad.SetActivatemodeFunction((_, _, mode, _) => mode == PadMode.Pull);
+        pad.SetActivateModeFunction((_, _, mode, _) => mode == PadMode.Pull);
         Assert.True(pad.ActivateMode(PadMode.Pull, true));
 
         Assert.Equal(FlowReturn.Error, pad.GetRange(0, 4, out Buffer? answered));
         Assert.Null(answered);
+    }
+
+    [Fact]
+    public void AGetRangeFunctionThatReplacesTheBufferItWasLentIsCorrectedToAnError()
+    {
+        using Pad pad = Pad.New("src", PadDirection.Src);
+        pad.SetGetRangeFunction((Pad _, Gst.Object? _, ulong _, uint _, ref Buffer? buffer) =>
+        {
+            // The puller supplied a buffer to fill, and gst_pad_get_range
+            // asserts that it gets that very one back. Answering another is a
+            // contract the caller reports as an error without releasing what it
+            // handed over, so the trampoline answers it instead.
+            buffer = Buffer.New();
+            return FlowReturn.Ok;
+        });
+
+        pad.SetActivateModeFunction((_, _, mode, _) => mode == PadMode.Pull);
+        Assert.True(pad.ActivateMode(PadMode.Pull, true));
+
+        using Buffer mine = Buffer.New();
+        nint handle = mine.Handle;
+        nint answered = handle;
+        Assert.Equal((int)FlowReturn.Error, PadGetRange(pad.Handle, 0, 0, &answered));
+
+        // The storage is left alone and the buffer that was lent keeps the one
+        // reference the test holds; the buffer the handler made is released
+        // with its wrapper.
+        Assert.Equal(handle, answered);
+        Assert.Equal(1, Refcount(handle));
+    }
+
+    [Fact]
+    public void AGetRangeFunctionThatThrowsLeavesTheBufferItWasLentAlone()
+    {
+        using Pad pad = Pad.New("src", PadDirection.Src);
+        pad.SetGetRangeFunction(
+            (Pad _, Gst.Object? _, ulong _, uint _, ref Buffer? buffer) =>
+                throw new InvalidOperationException("getrange"));
+
+        pad.SetActivateModeFunction((_, _, mode, _) => mode == PadMode.Pull);
+        Assert.True(pad.ActivateMode(PadMode.Pull, true));
+
+        using Buffer mine = Buffer.New();
+        nint handle = mine.Handle;
+        nint answered = handle;
+        Assert.Equal((int)FlowReturn.Error, PadGetRange(pad.Handle, 0, 0, &answered));
+        Assert.Equal(handle, answered);
+        Assert.Equal(1, Refcount(handle));
+    }
+
+    [Fact]
+    public void ALinkFunctionThatThrowsRefusesTheLink()
+    {
+        using Pad src = Pad.New("src", PadDirection.Src);
+        using Pad sink = Pad.New("sink", PadDirection.Sink);
+
+        src.SetLinkFunction((_, _, _) => throw new InvalidOperationException("link"));
+
+        // GST_PAD_LINK_OK is the zero of the enumeration, so a trampoline that
+        // answered the default of its return type would permit a link its
+        // handler never approved.
+        Assert.Equal(PadLinkReturn.Refused, src.Link(sink));
+        Assert.False(src.IsLinked());
     }
 
     [Fact]

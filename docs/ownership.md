@@ -892,8 +892,11 @@ that transfers nothing is wrapped without taking anything over. `Gst.Buffer`,
 outright rather than referencing: every writer of a mini object refuses a value
 that more than one reference names, so a `PadQueryFunction` that took a
 reference of its own could not answer the query it was called for. The price is
-that those four wrappers are only valid while the invocation runs — copy what
-has to outlive it. Every other untransferred mini object a callback is handed —
+that those four wrappers are only valid while the invocation runs: the
+trampoline disposes them when the handler returns, exactly as a class struct
+slot does, so a handler that filed one away meets an
+`ObjectDisposedException` rather than a released pointer. Copy what has to
+outlive the call. Every other untransferred mini object a callback is handed —
 a `Gst.Message` on a bus watch, a `Gst.TagList` in a tag walk — keeps a
 reference, so a handler may file the wrapper away and read it later.
 

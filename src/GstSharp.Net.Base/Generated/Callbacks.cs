@@ -22,7 +22,7 @@ namespace Gst.Base;
 /// handler handed it on to a member that consumes it. Copy it to keep it beyond the call.
 /// </param>
 /// <returns>%GST_FLOW_OK for success</returns>
-public delegate Gst.FlowReturn CollectPadsBufferFunction(Gst.Base.CollectPads pads, Gst.Base.CollectData data, Gst.Buffer buffer);
+public delegate Gst.FlowReturn CollectPadsBufferFunction(Gst.Base.CollectPads pads, Gst.Base.CollectData? data, Gst.Buffer? buffer);
 
 /// <summary>The native entry point of <see cref="Gst.Base.CollectPadsBufferFunction"/>.</summary>
 internal static unsafe class CollectPadsBufferFunctionTrampoline
@@ -35,8 +35,7 @@ internal static unsafe class CollectPadsBufferFunctionTrampoline
     {
         try
         {
-            using Gst.Buffer bufferValue = Gst.Buffer.FromNative(buffer, Gst.Interop.Transfer.Full)
-                ?? throw new InvalidOperationException("GstCollectPadsBufferFunction passed no buffer.");
+            using Gst.Buffer? bufferValue = Gst.Buffer.FromNative(buffer, Gst.Interop.Transfer.Full);
 
             if (Gst.Interop.CallbackHandle.GetState<Gst.Base.CollectPadsBufferFunction>(userData) is not { } callback)
             {
@@ -45,8 +44,7 @@ internal static unsafe class CollectPadsBufferFunctionTrampoline
 
             Gst.Base.CollectPads padsValue = Gst.GObject.Object.FromNative<Gst.Base.CollectPads>(pads, Gst.Interop.Transfer.None)
                 ?? throw new InvalidOperationException("GstCollectPadsBufferFunction passed no pads.");
-            Gst.Base.CollectData dataValue = Gst.Base.CollectData.FromNative(data)
-                ?? throw new InvalidOperationException("GstCollectPadsBufferFunction passed no data.");
+            Gst.Base.CollectData? dataValue = Gst.Base.CollectData.FromNative(data);
             return (int)callback(padsValue, dataValue, bufferValue);
         }
         catch (Exception exception)
@@ -81,7 +79,8 @@ internal static unsafe class CollectPadsBufferFunctionTrampoline
 /// <param name="outbuffer">
 /// the output #GstBuffer
 /// What the handler leaves here is handed to the caller with one added reference; the
-/// wrapper keeps its own. It is only read when the handler answered success.
+/// wrapper keeps its own. Leaving none is an answer in its own right and reaches the
+/// caller as the null pointer, whatever the handler returned.
 /// </param>
 /// <returns>a #GstFlowReturn that corresponds to the result of clipping.</returns>
 public delegate Gst.FlowReturn CollectPadsClipFunction(Gst.Base.CollectPads pads, Gst.Base.CollectData data, Gst.Buffer inbuffer, out Gst.Buffer? outbuffer);
@@ -115,16 +114,13 @@ internal static unsafe class CollectPadsClipFunctionTrampoline
             {
                 Gst.FlowReturn result = callback(padsValue, dataValue, inbufferValue, out outbufferValue);
 
-                if (result == Gst.FlowReturn.Ok)
+                nint outbufferHandle = outbufferValue is null ? nint.Zero : outbufferValue.Handle;
+                if (outbufferHandle != nint.Zero)
                 {
-                    nint outbufferHandle = outbufferValue is null ? nint.Zero : outbufferValue.Handle;
-                    if (outbufferHandle != nint.Zero)
-                    {
-                        Gst.GstNative.MiniObjectRef(outbufferHandle);
-                    }
-
-                    *outbuffer = outbufferHandle;
+                    Gst.GstNative.MiniObjectRef(outbufferHandle);
                 }
+
+                *outbuffer = outbufferHandle;
 
                 return (int)result;
             }
@@ -194,7 +190,13 @@ internal static unsafe class CollectPadsCompareFunctionTrampoline
 /// </summary>
 /// <param name="pads">the #GstCollectPads that triggered the callback</param>
 /// <param name="pad">the #GstPad that received an event</param>
-/// <param name="event">the #GstEvent received</param>
+/// <param name="event">
+/// the #GstEvent received
+/// The wrapper owns nothing and is only valid while the invocation runs, which is what
+/// lets the handler write to it: a value that more than one reference names refuses
+/// every writer. Copy what has to outlive the call; the wrapper is disposed when the
+/// handler returns and throws afterwards.
+/// </param>
 /// <returns>%TRUE if the pad could handle the event</returns>
 public delegate bool CollectPadsEventFunction(Gst.Base.CollectPads pads, Gst.Base.CollectData pad, Gst.Event @event);
 
@@ -218,7 +220,7 @@ internal static unsafe class CollectPadsEventFunctionTrampoline
                 ?? throw new InvalidOperationException("GstCollectPadsEventFunction passed no pads.");
             Gst.Base.CollectData padValue = Gst.Base.CollectData.FromNative(pad)
                 ?? throw new InvalidOperationException("GstCollectPadsEventFunction passed no pad.");
-            Gst.Event @eventValue = Gst.Event.Borrow(@event)
+            using Gst.Event @eventValue = Gst.Event.Borrow(@event)
                 ?? throw new InvalidOperationException("GstCollectPadsEventFunction passed no event.");
             return callback(padsValue, padValue, @eventValue) ? 1 : 0;
         }
@@ -309,7 +311,13 @@ internal static unsafe class CollectPadsFunctionTrampoline
 /// </summary>
 /// <param name="pads">the #GstCollectPads that triggered the callback</param>
 /// <param name="pad">the #GstPad that received an event</param>
-/// <param name="query">the #GstEvent received</param>
+/// <param name="query">
+/// the #GstEvent received
+/// The wrapper owns nothing and is only valid while the invocation runs, which is what
+/// lets the handler write to it: a value that more than one reference names refuses
+/// every writer. Copy what has to outlive the call; the wrapper is disposed when the
+/// handler returns and throws afterwards.
+/// </param>
 /// <returns>%TRUE if the pad could handle the event</returns>
 public delegate bool CollectPadsQueryFunction(Gst.Base.CollectPads pads, Gst.Base.CollectData pad, Gst.Query query);
 
@@ -333,7 +341,7 @@ internal static unsafe class CollectPadsQueryFunctionTrampoline
                 ?? throw new InvalidOperationException("GstCollectPadsQueryFunction passed no pads.");
             Gst.Base.CollectData padValue = Gst.Base.CollectData.FromNative(pad)
                 ?? throw new InvalidOperationException("GstCollectPadsQueryFunction passed no pad.");
-            Gst.Query queryValue = Gst.Query.Borrow(query)
+            using Gst.Query queryValue = Gst.Query.Borrow(query)
                 ?? throw new InvalidOperationException("GstCollectPadsQueryFunction passed no query.");
             return callback(padsValue, padValue, queryValue) ? 1 : 0;
         }
