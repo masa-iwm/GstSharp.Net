@@ -75,15 +75,20 @@ internal sealed partial class Discovery
                 break;
 
             case DiscovererResult.MissingPlugins:
-                // The C tool follows this with one indented line per installer
-                // detail, out of
-                // gst_discoverer_info_get_missing_elements_installer_details.
-                // That call is bound, but those lines are not ported, so the
-                // headline is all this prints. An unhandled URI scheme, the
-                // usual way to reach this result, does not get here at all: it
-                // posts an error on the bus and arrives as an exception
-                // instead. See the remarks on Analyze.
+                // Not reachable, and measured: a run that ends here also fills
+                // the GError -- "Your GStreamer installation is missing a
+                // plug-in" -- which Discoverer.DiscoverUri raises before the
+                // information object is wrapped, so Analyze prints the error
+                // lines instead. The installer details are printed the way the
+                // C tool prints them for the day a non raising discovery
+                // arrives. See the remarks on Analyze.
                 Console.WriteLine("Missing plugins");
+
+                foreach (string detail in info.GetMissingElementsInstallerDetails() ?? [])
+                {
+                    Console.WriteLine($" ({detail})");
+                }
+
                 break;
 
             default:
@@ -524,17 +529,40 @@ internal sealed partial class Discovery
     /// <param name="caps">The caps to print.</param>
     /// <returns>The <c>gst_caps_to_string</c> spelling.</returns>
     /// <remarks>
-    /// The C <c>caps_to_string</c> has a second half that this does not port:
-    /// without <c>--verbose</c> it copies the caps and strips every field whose
-    /// value is a <c>GstBuffer</c>, so that a codec_data blob does not fill the
-    /// screen. That filter is <c>gst_structure_filter_and_map_in_place_id_str</c>,
-    /// which is bound but is not used here, so caps printed without
-    /// <c>--verbose</c> keep their buffers. It is reachable in one case only:
-    /// caps that are not fixed, because fixed ones are printed as a codec
-    /// description instead and
-    /// <c>--verbose</c> turns the stripping off in the C tool as well.
+    /// <para>
+    /// Without <c>--verbose</c> the C tool copies the caps and strips every
+    /// field whose value is a <c>GstBuffer</c> first, so that a codec_data blob
+    /// does not fill the screen. The copy is what makes the caps writable,
+    /// which the filter needs, and it is what keeps the caller's caps
+    /// untouched.
+    /// </para>
+    /// <para>
+    /// One shape of field is kept where the C tool would drop it: an array
+    /// whose members are all buffers. Walking into an array needs
+    /// <c>gst_value_array_get_size</c> and <c>gst_value_array_get_value</c>,
+    /// which are not bound, so an array is always kept — which is what the C
+    /// tool does for an array that holds anything else.
+    /// </para>
     /// </remarks>
-    private static string CapsToString(Caps caps) => caps.ToString();
+    private static string CapsToString(Caps caps)
+    {
+        if (Verbose)
+        {
+            return caps.ToString();
+        }
+
+        using Caps stripped = caps.Copy();
+
+        stripped.MapInPlace(static (features, structure) =>
+        {
+            structure.FilterAndMapInPlaceIdStr(static (fieldname, value) =>
+                !string.Equals(value.Type.Name, "GstBuffer", StringComparison.Ordinal));
+
+            return true;
+        });
+
+        return stripped.ToString();
+    }
 
     /// <summary>
     /// Names the speaker positions of an audio stream, the way

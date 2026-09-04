@@ -40,21 +40,22 @@
 //     printed by the C tool and not by this one. And an unplayable URI scheme,
 //     which the C tool reports as "Missing plugins" followed by the installer
 //     detail of the missing element, is reported here as the error message that
-//     came with it -- so the branch that would print those details is out of
-//     reach here. This port stops at the "Missing plugins" headline and does
-//     not walk gst_discoverer_info_get_missing_elements_installer_details,
-//     which is bound but unused: the error path releases the information
-//     object, so there is none left to ask. A result that arrives without an
-//     error message on the bus is returned normally and is reported line for
-//     line.
+//     came with it. That was measured against the C tool on the same file with
+//     one decoder ranked out: the C tool prints "Missing plugins" and the
+//     installer detail, this prints the error. The headline branch does walk
+//     gst_discoverer_info_get_missing_elements_installer_details and print one
+//     " (detail)" line per entry, as the C tool does, but nothing reaches it
+//     until the binding offers a discovery that reports the GError instead of
+//     raising it.
 //
-//   * Caps printed without --verbose keep their buffers. The C caps_to_string
-//     strips every field holding a GstBuffer first, through
-//     gst_structure_filter_and_map_in_place_id_str, which is bound but is not
-//     used here -- the stripping was never ported. The
-//     branch is only reachable for caps that are not fixed -- fixed caps are
-//     printed as a codec description instead, and --verbose turns the stripping
-//     off in the C tool too -- so nothing in a normal run differs.
+//   * Caps printed without --verbose have their buffers stripped, as the C
+//     caps_to_string strips them, through gst_caps_map_in_place and
+//     gst_structure_filter_and_map_in_place_id_str over a copy. One shape of
+//     field survives here that the C tool would drop: an array whose members
+//     are all buffers, because walking into a GstValueArray needs two calls
+//     that are not bound. The whole branch is only reachable for caps that are
+//     not fixed -- fixed caps are printed as a codec description instead, and
+//     --verbose turns the stripping off in the C tool too.
 //
 //   * The speaker layout of an audio stream is computed rather than read.
 //     gst_audio_channel_positions_from_mask is not bound and the GEnumClass
