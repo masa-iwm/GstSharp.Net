@@ -285,6 +285,23 @@ internal sealed class EmissionCensus
             ? categories.GetValueOrDefault(category)
             : 0;
 
+    /// <summary>Reads back the virtual method ledger of one module.</summary>
+    /// <param name="module">The gir namespace of the module.</param>
+    /// <returns>
+    /// The slots the module left out, keyed by the <c>Namespace.Class::slot</c>
+    /// the ledger names them with and carrying the reason each is absent; an
+    /// empty map when the module left none out.
+    /// </returns>
+    /// <remarks>
+    /// A count alone would not catch a slot that leaves the surface while
+    /// another joins it, so the tests freeze the keys and their reasons rather
+    /// than the length of the list.
+    /// </remarks>
+    internal IReadOnlyDictionary<string, string> SkippedVirtuals(string module) =>
+        _skippedVirtuals.TryGetValue(module, out SortedDictionary<string, string>? slots)
+            ? slots
+            : new SortedDictionary<string, string>(StringComparer.Ordinal);
+
     /// <summary>Reads back the number of callables skipped for one reason.</summary>
     /// <param name="module">The gir namespace of the module.</param>
     /// <param name="reason">The reason to read.</param>
