@@ -29,9 +29,22 @@
 // What is not reachable, and what it costs:
 //
 //   * A pad template whose pads have a GType of their own gets a "Type:" line
-//     and a "Pad Properties" section from the C tool. GST_PAD_TEMPLATE_GTYPE
-//     reads a field of GstPadTemplate that has no accessor to bind, so neither
-//     is printed.
+//     and a "Pad Properties" section from the C tool, printed by the same
+//     function as the element properties with a class and no instance. Two
+//     things are missing for it: GST_PAD_TEMPLATE_GTYPE, which reads a field
+//     of GstPadTemplate, and g_object_class_list_properties on a class that
+//     has no instance -- the binding lists the properties of an object. So
+//     neither line is printed, and the page of an element whose pads are its
+//     own class is short by that block: multiqueue, input-selector,
+//     compositor, matroskamux, rtpbin and webrtcbin are the ones measured. The
+//     four elements the CI diff covers have plain GstPads.
+//
+//   * A metadata value that is not ASCII comes out differently under Windows:
+//     the C tool hands its page to a stdout that transliterates -- "Dröge"
+//     becomes "Dr?ge" -- and this writes the UTF-8 the library gave it, which
+//     is what the C tool itself writes on Linux and macOS. Measured on
+//     audioresample, spectrum, compositor and decodebin; the four elements the
+//     CI diff covers have ASCII metadata.
 //
 //   * GParamSpecValueArray::element_spec has no binding, so a property holding
 //     a GValueArray is printed as "Array of GValues" without the type of its
