@@ -26,7 +26,7 @@ public unsafe partial class PushSrc
     /// Gets the declaration of <c>GstPushSrc.create</c>, for a subclass that
     /// overrides <see cref="OnCreate"/>.
     /// </summary>
-    public static Gst.GObject.VfuncOverride CreateOverride { get; } = new(
+    public static new Gst.GObject.VfuncOverride CreateOverride { get; } = new(
         &GetGType,
         Gst.Base.PushSrcClassRaw.CreateOffset,
         (nint)(delegate* unmanaged[Cdecl]<nint, nint*, int>)&CreateTrampoline);

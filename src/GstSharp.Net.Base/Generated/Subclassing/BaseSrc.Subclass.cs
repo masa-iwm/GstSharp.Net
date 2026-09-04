@@ -131,6 +131,15 @@ public unsafe partial class BaseSrc
         (nint)(delegate* unmanaged[Cdecl]<nint, int>)&UnlockStopTrampoline);
 
     /// <summary>
+    /// Gets the declaration of <c>GstBaseSrc.create</c>, for a subclass that
+    /// overrides <see cref="OnCreate"/>.
+    /// </summary>
+    public static Gst.GObject.VfuncOverride CreateOverride { get; } = new(
+        &GetGType,
+        Gst.Base.BaseSrcClassRaw.CreateOffset,
+        (nint)(delegate* unmanaged[Cdecl]<nint, ulong, uint, nint*, int>)&CreateTrampoline);
+
+    /// <summary>
     /// Gets the declaration of <c>GstBaseSrc.alloc</c>, for a subclass that
     /// overrides <see cref="OnAlloc"/>.
     /// </summary>
@@ -242,6 +251,14 @@ public unsafe partial class BaseSrc
     /// <returns>What the slot answers.</returns>
     protected virtual bool OnUnlockStop() =>
         ChainUpUnlockStop();
+
+    /// <summary>Runs <c>GstBaseSrc.create</c>.</summary>
+    /// <param name="offset">The argument the slot carries under this name.</param>
+    /// <param name="size">The argument the slot carries under this name.</param>
+    /// <param name="buf">The argument the slot carries under this name.</param>
+    /// <returns>What the slot answers.</returns>
+    protected virtual Gst.FlowReturn OnCreate(ulong offset, uint size, ref Gst.Buffer? buf) =>
+        ChainUpCreate(offset, size, ref buf);
 
     /// <summary>Runs <c>GstBaseSrc.alloc</c>.</summary>
     /// <param name="offset">The argument the slot carries under this name.</param>
@@ -387,6 +404,25 @@ public unsafe partial class BaseSrc
     {
         bool result = ChainUpUnlockStop(Handle);
         GC.KeepAlive(this);
+        return result;
+    }
+
+    /// <summary>Runs the implementation of <c>create</c> below the managed override.</summary>
+    /// <param name="offset">The argument the slot carries under this name.</param>
+    /// <param name="size">The argument the slot carries under this name.</param>
+    /// <param name="buf">The argument the slot carries under this name.</param>
+    /// <returns>What the slot answers.</returns>
+    protected Gst.FlowReturn ChainUpCreate(ulong offset, uint size, ref Gst.Buffer? buf)
+    {
+        nint bufNative = buf is null ? nint.Zero : buf.Handle;
+        if (bufNative != nint.Zero)
+        {
+            Gst.GstNative.MiniObjectRef(bufNative);
+        }
+        Gst.FlowReturn result = ChainUpCreate(Handle, offset, size, &bufNative);
+        GC.KeepAlive(this);
+        buf?.Dispose();
+        buf = bufNative == nint.Zero ? null : Gst.Buffer.FromNative(bufNative, Gst.Interop.Transfer.Full);
         return result;
     }
 
@@ -583,6 +619,20 @@ public unsafe partial class BaseSrc
         }
 
         return slot(src) != 0;
+    }
+
+    private static Gst.FlowReturn ChainUpCreate(nint src, ulong offset, uint size, nint* buf)
+    {
+        delegate* unmanaged[Cdecl]<nint, ulong, uint, nint*, int> slot =
+            (delegate* unmanaged[Cdecl]<nint, ulong, uint, nint*, int>)ParentClassOf(src)->Create;
+
+        if (slot is null)
+        {
+            throw new InvalidOperationException(
+                "BaseSrc.create has no parent implementation; override OnCreate.");
+        }
+
+        return (Gst.FlowReturn)slot(src, offset, size, buf);
     }
 
     private static Gst.FlowReturn ChainUpAlloc(nint src, ulong offset, uint size, nint* buf)
@@ -878,6 +928,42 @@ public unsafe partial class BaseSrc
         {
             Gst.Interop.ExceptionTrap.Report(exception);
             return default;
+        }
+    }
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static int CreateTrampoline(nint src, ulong offset, uint size, nint* buf)
+    {
+        try
+        {
+            if (Gst.GObject.Object.TryGetInterned(src) is not BaseSrc managed)
+            {
+                return (int)(ChainUpCreate(src, offset, size, buf));
+            }
+
+            nint bufEntry = *buf;
+            Gst.Buffer? bufValue = bufEntry == nint.Zero ? null : Gst.Buffer.Borrow(bufEntry);
+
+            try
+            {
+                Gst.FlowReturn result = managed.OnCreate(offset, size, ref bufValue);
+                nint bufHandle = bufValue is null ? nint.Zero : bufValue.Handle;
+                if (bufHandle != nint.Zero && bufHandle != bufEntry)
+                {
+                    Gst.GstNative.MiniObjectRef(bufHandle);
+                }
+                *buf = bufHandle;
+                return (int)(result);
+            }
+            finally
+            {
+                bufValue?.Dispose();
+            }
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+            return (int)Gst.FlowReturn.Error;
         }
     }
 

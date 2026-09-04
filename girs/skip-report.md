@@ -1282,7 +1282,7 @@ disappears shows up here as an added line.
 - `gst_webrtc_ice_get_local_candidates`
 - `gst_webrtc_ice_get_remote_candidates`
 
-## Virtuals (30)
+## Virtuals (29)
 
 The class struct slots of a subclassable class that carry no `OnX` member, with
 the reason. `UnsupportedSignature` is the planner refusing a shape; every other
@@ -1301,7 +1301,7 @@ out, so what is listed here is the managed surface and not the ABI.
 - `Gst.Element::query` — UnsupportedSignature
 - `Gst.Element::set_context` — UnsupportedSignature
 
-### GstBase (21)
+### GstBase (20)
 
 - `GstBase.Aggregator::create_new_pad` — Pad subclassing is Stage 3: needs a Pad ClassConfig and construct properties
 - `GstBase.Aggregator::decide_allocation` — UnsupportedSignature
@@ -1314,7 +1314,6 @@ out, so what is listed here is the managed surface and not the ABI.
 - `GstBase.BaseSink::query` — UnsupportedSignature
 - `GstBase.BaseSink::render_list` — UnsupportedSignature
 - `GstBase.BaseSink::wait_event` — UnsupportedSignature
-- `GstBase.BaseSrc::create` — UnsupportedSignature
 - `GstBase.BaseSrc::decide_allocation` — UnsupportedSignature
 - `GstBase.BaseSrc::event` — UnsupportedSignature
 - `GstBase.BaseSrc::prepare_seek_segment` — UnsupportedSignature

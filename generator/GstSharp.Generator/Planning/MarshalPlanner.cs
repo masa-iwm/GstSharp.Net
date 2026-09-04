@@ -4312,11 +4312,17 @@ internal sealed class MarshalPlanner
             return null;
         }
 
+        // An inout handle is planned as the out one it has the same native
+        // shape as - a pointer to one handle - because the forward planner
+        // refuses a ref handle outright: a method that replaces the wrapper it
+        // was handed has no projection, while a slot that replaces the handle
+        // it was handed does, and the difference is the direction the ownership
+        // travels in.
         ArgumentPlan? argument = PlanScalar(
             parameter.Type,
             mapped,
             name,
-            direction,
+            direction == ArgumentDirection.Ref ? ArgumentDirection.Out : direction,
             transfer,
             nullable,
             context,
@@ -4393,7 +4399,10 @@ internal sealed class MarshalPlanner
         // Only a mini object or a GObject travels back through a pointer: the
         // trampoline has to mint the reference the caller takes over, and those
         // are the two families the runtime has a minting function for.
-        if (argument.Kind != ArgumentKind.Handle
+        // A produced handle is spelled as a consumed one when the gir calls the
+        // parameter inout and transfer full, which is the same projection an
+        // in parameter the call takes over gets.
+        if (argument.Kind is not (ArgumentKind.Handle or ArgumentKind.ConsumedHandle)
             || transfer != GirTransfer.Full
             || mapped.Kind is not (MarshalKind.MiniObject or MarshalKind.GObject))
         {
