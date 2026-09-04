@@ -9,7 +9,8 @@ merged.
 * **c7eb44b "Pair class struct slots with their virtual methods"** — the
   parser/semantic half of brief step (a). Build green, 0 warnings; generated
   output unchanged (`verify` clean), because the allowlist is empty.
-  * `generator/GstSharp.Generator/Semantic/ClassStructModel.cs` (new):
+  * `generator/GstSharp.Generator/Semantic/ClassStructModel.cs` (new, and
+    **not called from anywhere yet**):
     `ClassStructMember(GirField, GirVirtualMethod?)`, `ClassStructModel`
     (namespace, owner class, type-struct record, members in ABI order,
     `IsSubclassable`, `Parent`, `Slots`, `KeyOf(vfuncName)`) and
@@ -20,11 +21,19 @@ merged.
     the class by name. Emission order is parents first, gir document order.
     New diagnostics: **GEN0027** (a `subclassable` entry matched no class),
     **GEN0028** (an allowlisted class declares no class struct record).
+    `SubclassModel.Build` has to be called from `GenerationPipeline` right
+    after `Overlays.Load` and **before any emitter plans a callable**: the
+    `OverlayKey` stamp is what lets `annotationOverrides` address a vfunc, so a
+    build that happens inside the new emitter instead would leave the 13
+    GIR-WRONG corrections silently unapplied and reported stale.
   * `Semantic/Overlays.cs`: the four new keys — `subclassable` (string[]),
     `skipVirtuals` (string[]), `vfuncDefaults` (map key → C# expression),
     `vfuncIdentityBuffers` (string[] `Ns.Class::vfunc#param`) — with
     `IsSubclassable`, `IsVirtualSkipped`, `TryGetVfuncDefault`,
     `IsIdentityBuffer` and the four `*Keys` collections for stale reporting.
+    **The stale reporting itself is not wired**: `GenerationPipeline` has to
+    grow GEN0029-31 next to the existing GEN0024, or a misspelled
+    `vfuncDefaults` key silently turns a slot into a throwing required one.
   * `GirParsing/Model/GirCallable.cs`: `GirVirtualMethod.OverlayKey`, stamped by
     the pairing pass; `Planning/MarshalPlanner.cs` `AnnotationKeyOf` falls back
     to it, so `annotationOverrides` addresses a vfunc as
@@ -59,8 +68,10 @@ Next command: read `generator/GstSharp.Generator/Planning/MarshalPlanner.cs`
 
 ## Open questions the next agent must resolve
 
-1. **Three stage-1 parameter names do not match the gir** (checked against
-   `girs/reference/GstBase-1.0.gir`, per class):
+1. **Three stage-1 parameter names do not match the gir** (checked per class
+   against `girs/reference/GstBase-1.0.gir`; `Gst-1.0.gir` was checked too and
+   `Element::change_state` = `transition` and `Bin::handle_message` =
+   `message` both match, so the three below are the whole list):
    `BaseTransform::set_caps` gir `incaps`/`outcaps` vs shipped
    `inCaps`/`outCaps`; `BaseTransform::transform_ip` gir `buf` vs shipped
    `buffer`; `PushSrc::create` gir `buf` vs shipped `buffer`.
@@ -70,6 +81,9 @@ Next command: read `generator/GstSharp.Generator/Planning/MarshalPlanner.cs`
    fifth overlay key — extending the existing `rename` map to the address
    `Ns.Class::vfunc#param` is the consistent shape. The frozen spec does not
    mention this; it is a decision for the orchestrator, not the impl agent.
+   Not verified: whether `NameMapper` spells the emitted members `TransformIp`
+   and `IsSeekable` rather than `TransformIP`/`Isseekable`. The same gate
+   catches it, but check before emitting.
 2. **`Bin::handle_message` has no expressible default.** It is void and
    *consumes* its message; the stage-1 null-slot branch unrefs the message
    (Bin.Subclass.cs:145-157). A `vfuncDefaults` C# expression cannot carry a
@@ -80,14 +94,18 @@ Next command: read `generator/GstSharp.Generator/Planning/MarshalPlanner.cs`
    slots the C verification marks "Y, never null", or a fabricated
    `vfuncDefaults` entry is added. The first keeps the emitted body
    byte-identical to stage-1.
-4. **`Aggregator::aggregate` is required at instance-init time**, not only at
+4. **`Aggregator::aggregate` is checked at instance-init time**, not only at
    call time: `gst_aggregator_init` opens with
-   `g_return_if_fail (klass->aggregate != NULL)` (gstaggregator.c:3186). A
-   managed aggregator that does not declare `AggregateOverride` therefore
-   fails during `g_object_new`, before any ChainUp could throw the
-   `InvalidOperationException` of brief step (d). The step (i) test has to
-   assert the construction failure instead, or override `aggregate` and assert
-   the ChainUp throw on a different required slot.
+   `g_return_if_fail (klass->aggregate != NULL)` (gstaggregator.c:3186),
+   before `self->priv` is assigned at :3188. A `g_return_if_fail` does not
+   fail `g_object_new`: it logs a GLib CRITICAL and returns early, so a
+   managed aggregator that declares no `AggregateOverride` is constructed with
+   a NULL private and crashes on first use, and aborts outright under
+   `G_DEBUG=fatal-criticals`. No ChainUp of `aggregate` is ever reached, so
+   the "required slot throws `InvalidOperationException`" test of brief step
+   (d) cannot be written on this slot. Write it on another required slot, or
+   assert the CRITICAL with whatever the suite already uses for GLib
+   criticals, and declare `AggregateOverride` in every aggregator fixture.
 5. **Aggregator pad templates: "src" only is confirmed.**
    `gst_aggregator_init` looks up exactly one template,
    `gst_element_class_get_pad_template (klass, "src")` with a
