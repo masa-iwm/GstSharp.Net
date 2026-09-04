@@ -6,121 +6,156 @@ merged.
 
 ## Done
 
-* **c7eb44b "Pair class struct slots with their virtual methods"** — the
-  parser/semantic half of brief step (a). Build green, 0 warnings; generated
-  output unchanged (`verify` clean), because the allowlist is empty.
-  * `generator/GstSharp.Generator/Semantic/ClassStructModel.cs` (new, and
-    **not called from anywhere yet**):
-    `ClassStructMember(GirField, GirVirtualMethod?)`, `ClassStructModel`
-    (namespace, owner class, type-struct record, members in ABI order,
-    `IsSubclassable`, `Parent`, `Slots`, `KeyOf(vfuncName)`) and
-    `SubclassModel.Build(Repository, Overlays, DiagnosticBag)`, which walks the
-    parent chain of every allowlisted class (stopping at the `GObject`
-    namespace, whose mirrors stay hand written in Core), resolves each
-    `glib:type-struct` record and pairs its fields with the virtual methods of
-    the class by name. Emission order is parents first, gir document order.
-    New diagnostics: **GEN0027** (a `subclassable` entry matched no class),
-    **GEN0028** (an allowlisted class declares no class struct record).
-    `SubclassModel.Build` has to be called from `GenerationPipeline` right
-    after `Overlays.Load` and **before any emitter plans a callable**: the
-    `OverlayKey` stamp is what lets `annotationOverrides` address a vfunc, so a
-    build that happens inside the new emitter instead would leave the 13
-    GIR-WRONG corrections silently unapplied and reported stale.
-  * `Semantic/Overlays.cs`: the four new keys — `subclassable` (string[]),
-    `skipVirtuals` (string[]), `vfuncDefaults` (map key → C# expression),
-    `vfuncIdentityBuffers` (string[] `Ns.Class::vfunc#param`) — with
-    `IsSubclassable`, `IsVirtualSkipped`, `TryGetVfuncDefault`,
-    `IsIdentityBuffer` and the four `*Keys` collections for stale reporting.
-    **The stale reporting itself is not wired**: `GenerationPipeline` has to
-    grow GEN0029-31 next to the existing GEN0024, or a misspelled
-    `vfuncDefaults` key silently turns a slot into a throwing required one.
-  * `GirParsing/Model/GirCallable.cs`: `GirVirtualMethod.OverlayKey`, stamped by
-    the pairing pass; `Planning/MarshalPlanner.cs` `AnnotationKeyOf` falls back
-    to it, so `annotationOverrides` addresses a vfunc as
-    `Gst.Element::request_new_pad#return` with no other change.
-* Stage-1 sources copied to `C:\src\_scratch\e5s2\stage1-before\` (6
-  `*.Subclass.cs` + `Core.ClassStructs.cs` + `Base.ClassStructs.cs`) and the
-  16 chain-up defaults + pad template names transcribed into
-  `C:\src\_scratch\e5s2\notes-wave1.md`.
+Five commits, all green (build 0 warnings, `verify` clean, 1731 tests pass,
+AotSmoke publishes with 0 IL/AOT warnings). Generated output is still
+**unchanged**, because the committed `subclassable` allowlist is still empty.
+
+* **c7eb44b "Pair class struct slots with their virtual methods"** — brief step
+  (a), landed by the previous agent. `Semantic/ClassStructModel.cs`
+  (`ClassStructMember`, `ClassStructModel`, `SubclassModel.Build`), the four
+  new overlay keys in `Semantic/Overlays.cs`, `GirVirtualMethod.OverlayKey` and
+  the `AnnotationKeyOf` fallback in `Planning/MarshalPlanner.cs`.
+  Diagnostics GEN0027 (stale `subclassable`), GEN0028 (allowlisted class with
+  no class struct).
+* **899689c "Build the class struct model before anything is emitted"** —
+  `SubclassModel.Build` now runs in `GenerationPipeline.Execute`, right after
+  the classification pass and before `TypeMap`, and the model is carried to
+  every module in `ModuleEmitters.Subclasses`. New:
+  `ReportStaleVirtualKeys` → **GEN0029** (`skipVirtuals`), **GEN0030**
+  (`vfuncDefaults`), **GEN0031** (`vfuncIdentityBuffers`), each checked against
+  `SubclassModel.VirtualMethodKeys` / `.VirtualMethodParameterKeys` (slots of
+  *subclassable* classes only, so a key naming a chain-only class such as
+  `Gst.Object` is stale by construction).
+  `NameMapper.VirtualMethodParameterName(overlayKey, girName)` reads the
+  existing `rename` map at `Ns.Class::vfunc#param` (orchestrator decision).
+  `rename` has no stale reporting, so those 4 entries can land whenever.
+* **ed0e8c6 "Emit the mirror of a class struct"** — `Emit/ClassStructEmitter.cs`,
+  wired into `EmitModule` before `RecordEmitter`. One file per mirrored class at
+  `src/<Project>/Generated/ClassStructs/<Class>ClassRaw.cs`, census category
+  **`"class struct"`**. Also moved `ClassSlot` from
+  `src/GstSharp.Net.Base/Custom/ClassStructs.cs` to
+  `src/GstSharp.Net/Core/GObject/ClassStructs.cs` (namespace `Gst.GObject`), because
+  a generated mirror in the `Gst` module cannot reach a helper of the Base module.
+  The Base mirrors still compile: that file already has `using Gst.GObject;`.
+* **4a64caf "Let the mirrors describe themselves to the ABI probes"** — per
+  module `Generated/ClassStructs/ClassStructRegistry.cs` with
+  `internal static Gst.GObject.ClassStructProbe[] CreateEntries()`, plus the two
+  hand written runtime rows `ClassStructProbe` / `ClassSlotProbe` appended to
+  `src/GstSharp.Net/Core/GObject/ClassStructs.cs`. A row carries the C name, the
+  managed `&<Wrapper>.GetGType`, `Unsafe.SizeOf<...ClassRaw>()` and every
+  own slot as `(gir name, Offset)`.
+
+### How the emitters were verified without the swap
+
+A scratch gir tree with a filled allowlist, generated into a scratch copy of
+`src/`; the committed `girs/` stays allowlist-empty so `verify` is clean:
+
+```sh
+cp -r girs C:/src/_scratch/e5s2/girs-scratch      # then add "subclassable" to overlays/fixups.json
+cp -r src  C:/src/_scratch/e5s2/out-src
+dotnet run --project generator/GstSharp.Generator -- generate \
+    --gir-dir C:/src/_scratch/e5s2/girs-scratch --out-dir C:/src/_scratch/e5s2/out-src
+```
+
+Both scratch trees exist already with the 7 wave-1 classes in the allowlist.
+The 9 mirrors it produces (`Gst`: Object, Element, Bin; `Gst.Base`: BaseSrc,
+PushSrc, BaseSink, BaseTransform, Aggregator, + 2 registries) were read and match
+the stage-1 shape. They have **not been compiled** — that only happens in the
+swap commit.
 
 ## Remaining (brief steps b–j)
 
-Nothing of the emitters, planner, overlay *data*, tests or docs is written.
+Nothing of the planner, the vfunc emitter, the overlay *data*, the census
+values, the tests or the docs is written.
 
-**Sequencing that keeps every commit green** (advisor-checked): the generated
-mirrors and `*.Subclass.cs` cannot coexist with the stage-1 hand-written ones
-(duplicate type and member names), and deleting the stage-1 mirrors breaks the
-stage-1 subclass partials. So there is exactly one atomic swap commit:
-allowlist filled + `annotationOverrides`/`vfuncDefaults` data added + stage-1
-files deleted + regenerate + AbiProbeTests renames, all at once. Everything
-before it is generator code with `subclassable` still absent, which emits
-nothing and leaves `verify` clean. Do not start the swap with less than ~40
-tool calls of budget left.
+**Sequencing that keeps every commit green** (unchanged): generated mirrors and
+`*.Subclass.cs` cannot coexist with the stage-1 hand-written ones. So there is
+exactly one atomic swap commit: allowlist + `vfuncDefaults` + `skipVirtuals` +
+the 4 `rename` entries + the 4 `annotationOverrides` + stage-1 file deletions +
+regenerate + `AbiProbeTests` renames, all at once. Do not start it with less
+than ~40 tool calls of budget left.
 
-Also note: adding the 13 GIR-WRONG `annotationOverrides` before the vfunc
-planner consumes them produces 13 stale-key **GEN0024** warnings, so that data
-belongs in the swap commit too, not earlier.
+Files the swap deletes: `src/GstSharp.Net/Custom/{Element,Bin}.Subclass.cs`,
+`src/GstSharp.Net.Base/Custom/{BaseSrc,PushSrc,BaseSink,BaseTransform}.Subclass.cs`,
+`src/GstSharp.Net.Base/Custom/ClassStructs.cs` (whole file — `ClassSlot` already
+moved out), and the `GstObjectClassRaw`/`ElementClassRaw`/`BinClassRaw` part of
+`src/GstSharp.Net/Core/GObject/ClassStructs.cs` (keep `GTypeClassRaw`,
+`GObjectClassRaw`, `ClassSlot`, `ClassStructProbe`, `ClassSlotProbe`).
+The only other consumer is `tests/GstSharp.IntegrationTests/AbiProbeTests.cs`
+(`Gst.GObject.GstObjectClassRaw` → `Gst.ObjectClassRaw`, `Gst.Base.*ClassRaw` →
+unchanged names in the same namespace). `SubclassRegistry.cs` names
+`ElementClassRaw` in a doc comment only.
 
-Next command: read `generator/GstSharp.Generator/Planning/MarshalPlanner.cs`
-`PlanSignalArgument` / `PlanSignalReturn` / `PlanCallbackCore` (anchors
-:3765-3830 and :4088-4177) and `Emit/SignalEmitter.cs`, then write
-`PlanVirtualMethod` per brief step (b).
+### Next command
 
-## Open questions the next agent must resolve
+Read `Planning/MarshalPlan.cs` (601 lines, the `ArgumentPlan`/`ScalarPlan`
+vocabulary) and `Emit/SignalEmitter.cs` (697 lines, the closest existing
+native→managed renderer), then write `PlanVirtualMethod` per brief step (b).
 
-1. **Three stage-1 parameter names do not match the gir** (checked per class
-   against `girs/reference/GstBase-1.0.gir`; `Gst-1.0.gir` was checked too and
-   `Element::change_state` = `transition` and `Bin::handle_message` =
-   `message` both match, so the three below are the whole list):
-   `BaseTransform::set_caps` gir `incaps`/`outcaps` vs shipped
-   `inCaps`/`outCaps`; `BaseTransform::transform_ip` gir `buf` vs shipped
-   `buffer`; `PushSrc::create` gir `buf` vs shipped `buffer`.
-   (`BaseSink::preroll`/`render` = `buffer` and `BaseSrc::set_caps` = `caps`
-   do match.) Public parameter names are part of the frozen stage-1 surface
-   and package validation flags a rename, so byte-identical emission needs a
-   fifth overlay key — extending the existing `rename` map to the address
-   `Ns.Class::vfunc#param` is the consistent shape. The frozen spec does not
-   mention this; it is a decision for the orchestrator, not the impl agent.
-   Not verified: whether `NameMapper` spells the emitted members `TransformIp`
-   and `IsSeekable` rather than `TransformIP`/`Isseekable`. The same gate
-   catches it, but check before emitting.
-2. **`Bin::handle_message` has no expressible default.** It is void and
-   *consumes* its message; the stage-1 null-slot branch unrefs the message
-   (Bin.Subclass.cs:145-157). A `vfuncDefaults` C# expression cannot carry a
-   side effect, so the emitter must release consumed parameters on the
-   null-slot path independently of the overlay.
-3. **`Element::change_state` has no null branch at all** in stage-1 (the slot
-   is never null in any class). Either the emitter omits the null check for
-   slots the C verification marks "Y, never null", or a fabricated
-   `vfuncDefaults` entry is added. The first keeps the emitted body
-   byte-identical to stage-1.
-4. **`Aggregator::aggregate` is checked at instance-init time**, not only at
-   call time: `gst_aggregator_init` opens with
-   `g_return_if_fail (klass->aggregate != NULL)` (gstaggregator.c:3186),
-   before `self->priv` is assigned at :3188. A `g_return_if_fail` does not
-   fail `g_object_new`: it logs a GLib CRITICAL and returns early, so a
-   managed aggregator that declares no `AggregateOverride` is constructed with
-   a NULL private and crashes on first use, and aborts outright under
-   `G_DEBUG=fatal-criticals`. No ChainUp of `aggregate` is ever reached, so
-   the "required slot throws `InvalidOperationException`" test of brief step
-   (d) cannot be written on this slot. Write it on another required slot, or
-   assert the CRITICAL with whatever the suite already uses for GLib
-   criticals, and declare `AggregateOverride` in every aggregator fixture.
-5. **Aggregator pad templates: "src" only is confirmed.**
-   `gst_aggregator_init` looks up exactly one template,
-   `gst_element_class_get_pad_template (klass, "src")` with a
-   `g_return_if_fail` (gstaggregator.c:3192-3194); no sink template is
-   required at init, sink pads arrive through `request_new_pad`.
-6. **Annotation carriers.** The pairing attaches the correction to the virtual
-   method only. The `<record><field><callback>` carrier is inert for the
-   mirror — an `nint` slot has no annotation — so the "both carriers" wording
-   of the spec is satisfied by correcting the one carrier the generator reads.
-7. **`Gst.Object`'s mirror is named `ObjectClassRaw` under the `<Class>ClassRaw`
-   rule**, where stage-1 calls it `GstObjectClassRaw`; it is internal, but
-   `tests/GstSharp.IntegrationTests/AbiProbeTests.cs` names it and must be
-   updated in the swap commit. `Gst.Object`'s gir parent is
-   `GObject.InitiallyUnowned`, so the chain walker must map both
-   `GObject.ObjectClass` and `GObject.InitiallyUnownedClass` onto the
-   hand-written `Gst.GObject.GObjectClassRaw`.
-8. **`new` on `DefineSubclass`**: emit `new` iff a transitive parent is in the
-   allowlist (Element none, everything else `new`, including Aggregator).
+## Decisions already taken (do not re-litigate)
+
+1. Return-value annotation address is `Ns.Class::vfunc#return`; the
+   `<virtual-method>` is the only carrier the generator reads.
+2. Parameter renames go through `rename` at `Ns.Class::vfunc#param`. The four
+   entries the frozen surface needs (checked against the gir):
+   `GstBase.BaseTransform::set_caps#incaps` → `inCaps`,
+   `#outcaps` → `outCaps`, `GstBase.BaseTransform::transform_ip#buf` →
+   `buffer`, `GstBase.PushSrc::create#buf` → `buffer`.
+3. `SubclassBaseRules` gains `RequiredOverrides`; `DefineSubclass` throws
+   `ArgumentException` **before** registration when one is missing
+   (`Aggregator` → `AggregateOverride`). The "NULL parent slot throws
+   `InvalidOperationException`" test uses `BaseTransform::transform`, not
+   `Aggregator::aggregate`.
+4. The null-slot check is emitted for **every** slot, uniformly.
+   Non-void: the `vfuncDefaults` expression if present, else `throw new
+   InvalidOperationException("<Class>.<vfunc> has no parent implementation;
+   override On<Vfunc>")`. Void: consume every adopted (transfer-full) parameter
+   and return — that is what reproduces stage-1 `Bin::handle_message`. No
+   `vfuncDefaults` entry for `change_state` or `handle_message`.
+5. Wave-1 allowlist is the 7 Gst/GstBase classes. `Gst.Object` is mirrored on
+   the chain with no vfunc surface. GObject-2.0 mirrors stay hand written.
+
+## Findings this session that change the plan
+
+1. **Only 4 of the 13 `annotationOverrides` can land in wave 1.**
+   `tests/GstSharp.Generator.Tests/ClassEmitterTests.cs:815-819` asserts the
+   real-gir run emits no GEN0024, and an annotation correction addressing a
+   vfunc of a class that is not allowlisted is never read, hence stale. The
+   four that are in wave-1 scope: `Gst.Element::request_new_pad#return` →
+   `none`, `GstBase.BaseSink::fixate#caps` → `full`,
+   `GstBase.BaseSink::event#event` → `full`,
+   `GstBase.BaseTransform::submit_input_buffer#input` → `full`. The other nine
+   (BaseParse, AudioDecoder, AudioEncoder, VideoDecoder, VideoEncoder) and both
+   nullable/direction fixes belong to the wave that allowlists those classes.
+   Do **not** exempt vfunc keys from the stale check to work around this.
+2. **"Byte-identical" means the signatures, not the file bytes.** The stage-1
+   files carry hand-written prose no generator reproduces; the mechanism the
+   spec names is the package-validation baseline plus the diff gate, which see
+   public/protected signatures, parameter names, `new` and nullability.
+3. **`ClassSlot` was in the Base module, not in Core** (repo-survey.md §1 says
+   `Core/GObject/ClassStructs.cs:387`; it was
+   `src/GstSharp.Net.Base/Custom/ClassStructs.cs:387`). Moved, see ed0e8c6.
+4. **Mirror data-field names drift from stage-1** where the gir runs words
+   together: `elementfactory` → `Elementfactory` (stage-1 `ElementFactory`),
+   `padtemplates` → `Padtemplates`, `numpadtemplates` → `Numpadtemplates`,
+   `pad_templ_cookie` → `PadTemplCookie` (stage-1 `PadTemplateCookie`). These
+   members are `internal` and nothing outside the mirror reads them, so the
+   divergence costs nothing; add `rename`-style handling only if a reviewer
+   asks.
+5. **`Gst.Object`'s mirror is `Gst.ObjectClassRaw`**, in namespace `Gst`
+   (the module's CLR namespace), where stage-1 had `Gst.GObject.GstObjectClassRaw`.
+   All generated mirrors live in the module namespace, so the Base ones stay
+   `Gst.Base.BaseSrcClassRaw` etc. — same spelling as stage-1.
+6. `DefineSubclass` needs `new` iff a transitive parent is allowlisted: Element
+   no, everything else yes (Bin, BaseSrc, PushSrc, BaseSink, BaseTransform,
+   Aggregator).
+7. The wrappers of all 7 classes are already `abstract`/non-sealed `partial`,
+   so the generated `*.Subclass.cs` partial compiles without a ClassEmitter
+   change.
+
+## Open questions
+
+* Nothing blocking. The one judgement call left is whether `VfuncEmitter`
+  renders its `ChainUp` bodies from the forward `MarshalPlan` or from a small
+  purpose-built set of per-bucket snippets; `CallableRenderer` was not
+  investigated far enough to say whether its native call target is pluggable.
