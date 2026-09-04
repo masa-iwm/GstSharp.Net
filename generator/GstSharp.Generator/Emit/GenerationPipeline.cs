@@ -329,6 +329,8 @@ internal static class GenerationPipeline
             files.Add(enumFile);
         }
 
+        ClassStructEmitter classStructEmitter = new(shared.Repository, shared.Census, shared.Diagnostics);
+        files.AddRange(classStructEmitter.Emit(module, ns, shared.Subclasses));
         files.AddRange(recordEmitter.Emit(module, ns));
         files.AddRange(classEmitter.Emit(module, ns));
         files.AddRange(interfaceEmitter.Emit(module, ns));

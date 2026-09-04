@@ -374,26 +374,3 @@ internal struct BaseTransformClassRaw
         private nint _element0;
     }
 }
-
-/// <summary>
-/// Measures where a slot sits inside a class struct.
-/// </summary>
-/// <remarks>
-/// The offsets a subclass declares its overrides with are measured from the
-/// mirrors rather than written out as literals, so that a declaration can never
-/// drift from the mirror; the mirrors themselves are what the ABI probes pin to
-/// the C headers and to the running library.
-/// </remarks>
-internal static class ClassSlot
-{
-    /// <summary>Returns the byte offset of a slot within its class struct.</summary>
-    /// <typeparam name="TClass">The class struct.</typeparam>
-    /// <param name="origin">The start of the struct.</param>
-    /// <param name="slot">The slot to measure.</param>
-    /// <returns>The offset in bytes.</returns>
-    internal static int OffsetOf<TClass>(ref TClass origin, ref nint slot)
-        where TClass : struct =>
-        (int)Unsafe.ByteOffset(
-            ref Unsafe.As<TClass, byte>(ref origin),
-            ref Unsafe.As<nint, byte>(ref slot));
-}
