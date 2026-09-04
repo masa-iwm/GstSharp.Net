@@ -315,6 +315,18 @@ internal sealed class MarshalPlanner
         "Gst.MiniObject",
     };
 
+    /// <summary>
+    /// The mini object wrappers that can be built over a handle without taking
+    /// a reference, which a transfer none parameter of a virtual method needs
+    /// (<c>Gst.Interop.Borrowed</c>). The borrow is a hand written constructor
+    /// per type, so a slot that lends any other mini object stays out of the
+    /// surface until the wrapper of that type has one.
+    /// </summary>
+    private static readonly HashSet<string> BorrowableMiniObjects = new(StringComparer.Ordinal)
+    {
+        "Gst.Buffer", "Gst.Caps",
+    };
+
     /// <summary>The names a signal trampoline uses for its own parameters and locals.</summary>
     private static readonly HashSet<string> TrampolineLocals = new(StringComparer.Ordinal)
     {
@@ -4179,5 +4191,311 @@ internal sealed class MarshalPlanner
             Flavor = scalar.Flavor,
             Doc = value.Doc,
         };
+    }
+    /// <summary>
+    /// Plans one <c>&lt;virtual-method&gt;</c> of a subclassable class: the
+    /// trampoline native code calls and the chain-up that reaches the parent
+    /// slot.
+    /// </summary>
+    /// <param name="method">The slot to plan.</param>
+    /// <param name="slotMember">The name of the mirror field the slot lives in.</param>
+    /// <param name="context">The module that is being emitted.</param>
+    /// <returns>
+    /// The plan, or <see langword="null"/> when the signature is not one the
+    /// binding can project, which takes the slot out of the surface as
+    /// <c>UnsupportedSignature</c>.
+    /// </returns>
+    /// <remarks>
+    /// The shape is the inbound one a signal handler is planned in, widened by
+    /// the two things a signal never has: a parameter whose ownership the call
+    /// gives up, and a parameter the call produces. Everything else it refuses,
+    /// so a slot whose signature nothing in the corpus has taught the planner
+    /// yet is reported rather than emitted.
+    /// </remarks>
+    internal VirtualMethodPlan? PlanVirtualMethod(
+        GirVirtualMethod method,
+        string slotMember,
+        PlanningContext context)
+    {
+        if (method.Throws || method.OverlayKey is not { } overlayKey)
+        {
+            return null;
+        }
+
+        string name = NameMapper.ToPascalCase(method.Name);
+        string instance = NameMapper.ParameterName(method.InstanceParameter?.Name ?? "instance");
+        HashSet<string> taken = new(TrampolineLocals, StringComparer.Ordinal)
+        {
+            instance,
+            "managed",
+            "result",
+            "parent",
+            "slot",
+        };
+
+        List<VfuncArgument> arguments = [];
+        foreach (GirParameter parameter in method.Parameters)
+        {
+            VfuncArgument? argument = PlanVirtualMethodArgument(overlayKey, parameter, arguments, context);
+            if (argument is null || !taken.Add(argument.Argument.Name))
+            {
+                return null;
+            }
+
+            arguments.Add(argument);
+        }
+
+        if (PlanVirtualMethodReturn(method, context) is not { } planned)
+        {
+            return null;
+        }
+
+        return new VirtualMethodPlan
+        {
+            Method = method,
+            OverlayKey = overlayKey,
+            Name = name,
+            SlotMember = slotMember,
+            InstanceName = instance,
+            Arguments = arguments,
+            Return = planned.Return,
+            ReturnBucket = planned.Bucket,
+            NullSlotDefault = _overlays.TryGetVfuncDefault(overlayKey, out string? expression) ? expression : null,
+        };
+    }
+
+    /// <summary>Plans one argument of a virtual method.</summary>
+    /// <param name="overlayKey">The key the overlays address the slot by.</param>
+    /// <param name="parameter">The parameter to plan.</param>
+    /// <param name="planned">The arguments planned so far, which an identity out parameter refers back to.</param>
+    /// <param name="context">The module that is being emitted.</param>
+    /// <returns>The argument, or <see langword="null"/> when it is not supported.</returns>
+    private VfuncArgument? PlanVirtualMethodArgument(
+        string overlayKey,
+        GirParameter parameter,
+        IReadOnlyList<VfuncArgument> planned,
+        PlanningContext context)
+    {
+        if (parameter.IsVarArgs || parameter.Type.IsVarArgs || parameter.Type is GirArrayRef)
+        {
+            return null;
+        }
+
+        // The direction is read here rather than through the shared correction,
+        // which only re-plans a pointer to a plain value: a handle the gir
+        // spells inout and the C implementation only writes - GstPushSrc has no
+        // buffer to hand over in push scheduling - is corrected onto an out
+        // parameter, and that is a handle.
+        ArgumentDirection direction = parameter.Direction switch
+        {
+            GirDirection.Out => ArgumentDirection.Out,
+            GirDirection.InOut => ArgumentDirection.Ref,
+            _ => ArgumentDirection.In,
+        };
+
+        AnnotationOverride? correction = AnnotationOverrideFor(overlayKey + "#" + parameter.Name);
+        if (ParseDirection(correction?.Direction) is { } corrected)
+        {
+            direction = corrected;
+        }
+
+        GirTransfer transfer = ParseTransfer(correction?.Transfer) ?? parameter.Transfer;
+        bool nullable = correction?.Nullable ?? parameter.IsNullable;
+        string name = _names.VirtualMethodParameterName(overlayKey, parameter.Name);
+        MappedType mapped = _types.Map(parameter.Type, context.Namespace);
+
+        // Only refused for an argument the slot receives: a produced argument
+        // is a pointer to one value by construction.
+        if (direction == ArgumentDirection.In
+            && (IsPointerToHandlePointer(parameter.Type, mapped) || IsPointerToScalar(parameter.Type, mapped)))
+        {
+            return null;
+        }
+
+        ArgumentPlan? argument = PlanScalar(
+            parameter.Type,
+            mapped,
+            name,
+            direction,
+            transfer,
+            nullable,
+            context,
+            inbound: true);
+
+        if (argument is null)
+        {
+            return null;
+        }
+
+        bool identity = _overlays.IsIdentityBuffer(overlayKey + "#" + parameter.Name);
+        if (direction != ArgumentDirection.In)
+        {
+            return PlanProducedArgument(argument, mapped, direction, transfer, identity, planned);
+        }
+
+        VfuncBucket? bucket = argument.Kind switch
+        {
+            ArgumentKind.Value or ArgumentKind.Boolean or ArgumentKind.Enumeration
+                or ArgumentKind.Wrapper or ArgumentKind.Pointer or ArgumentKind.Utf8 => VfuncBucket.Cast,
+            ArgumentKind.Handle when transfer == GirTransfer.Full => VfuncBucket.Adopt,
+            ArgumentKind.Handle => argument.Flavor switch
+            {
+                HandleFlavor.GObject => VfuncBucket.BorrowGObject,
+
+                // A mini object the slot only borrows is handed over without a
+                // reference, which the wrapper of the type has to offer: the
+                // borrow needs a constructor of its own, and only the types
+                // listed here have one.
+                HandleFlavor.Wrapper when mapped.Kind == MarshalKind.MiniObject =>
+                    BorrowableMiniObjects.Contains(argument.PublicType.TrimEnd('?'))
+                        ? VfuncBucket.BorrowMiniObject
+                        : null,
+                HandleFlavor.Wrapper or HandleFlavor.Opaque => VfuncBucket.BorrowWrapper,
+                _ => null,
+            },
+            _ => null,
+        };
+
+        return bucket is { } value ? new VfuncArgument(argument, value) : null;
+    }
+
+    /// <summary>Plans an argument the slot produces or replaces.</summary>
+    /// <param name="argument">The marshalling the scalar planner produced.</param>
+    /// <param name="mapped">The projection of the gir type.</param>
+    /// <param name="direction">How the argument is passed.</param>
+    /// <param name="transfer">The effective ownership transfer.</param>
+    /// <param name="identity">Whether the overlays call the argument identity preserving.</param>
+    /// <param name="planned">The arguments planned before this one.</param>
+    /// <returns>The argument, or <see langword="null"/> when it is not supported.</returns>
+    private static VfuncArgument? PlanProducedArgument(
+        ArgumentPlan argument,
+        MappedType mapped,
+        ArgumentDirection direction,
+        GirTransfer transfer,
+        bool identity,
+        IReadOnlyList<VfuncArgument> planned)
+    {
+        if (argument.Kind is ArgumentKind.Value or ArgumentKind.Boolean
+            or ArgumentKind.Enumeration or ArgumentKind.Wrapper)
+        {
+            // Nothing is produced but a copy, so an identity claim about it
+            // would be meaningless and a transfer says nothing either.
+            return direction == ArgumentDirection.Out
+                ? new VfuncArgument(argument, VfuncBucket.OutScalar)
+                : null;
+        }
+
+        // Only a mini object or a GObject travels back through a pointer: the
+        // trampoline has to mint the reference the caller takes over, and those
+        // are the two families the runtime has a minting function for.
+        if (argument.Kind != ArgumentKind.Handle
+            || transfer != GirTransfer.Full
+            || mapped.Kind is not (MarshalKind.MiniObject or MarshalKind.GObject))
+        {
+            return null;
+        }
+
+        if (direction == ArgumentDirection.Ref)
+        {
+            return new VfuncArgument(argument, VfuncBucket.InOutHandle, identity);
+        }
+
+        if (!identity)
+        {
+            return new VfuncArgument(argument, VfuncBucket.OutHandle);
+        }
+
+        // An out parameter has no value of its own on entry to compare with, so
+        // the handle the answer is measured against is the one the slot was
+        // handed: the first argument of the same projected type.
+        foreach (VfuncArgument candidate in planned)
+        {
+            if (candidate.Argument.Direction == ArgumentDirection.In
+                && string.Equals(
+                    candidate.Argument.PublicType.TrimEnd('?'),
+                    argument.PublicType.TrimEnd('?'),
+                    StringComparison.Ordinal))
+            {
+                return new VfuncArgument(argument, VfuncBucket.OutHandle, true, candidate.Argument.Name);
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>Plans the value a virtual method answers.</summary>
+    /// <param name="method">The slot being planned.</param>
+    /// <param name="context">The module that is being emitted.</param>
+    /// <returns>The plan, or <see langword="null"/> when the value is not supported.</returns>
+    private (ReturnPlan Return, VfuncReturnBucket Bucket)? PlanVirtualMethodReturn(
+        GirVirtualMethod method,
+        PlanningContext context)
+    {
+        GirReturnValue value = method.ReturnValue;
+        MappedType mapped = _types.Map(value.Type, context.Namespace);
+        if (mapped.Kind == MarshalKind.Void)
+        {
+            return (
+                new ReturnPlan
+                {
+                    Kind = ArgumentKind.Void,
+                    PublicType = "void",
+                    RawType = "void",
+                    Doc = value.Doc,
+                },
+                VfuncReturnBucket.Void);
+        }
+
+        GirTransfer transfer = TransferOf(method);
+        ArgumentPlan? scalar = PlanScalar(
+            value.Type,
+            mapped,
+            "result",
+            ArgumentDirection.In,
+            transfer,
+            value.IsNullable,
+            context,
+            isReturn: true);
+
+        if (scalar is null)
+        {
+            return null;
+        }
+
+        VfuncReturnBucket? bucket = scalar.Kind switch
+        {
+            ArgumentKind.Value or ArgumentKind.Boolean or ArgumentKind.Enumeration
+                or ArgumentKind.Wrapper or ArgumentKind.Pointer => VfuncReturnBucket.Cast,
+
+            // The wrapper the override answered keeps its own reference, so an
+            // owned answer is referenced once more on the way out and a
+            // borrowed one is handed over as it is.
+            ArgumentKind.Handle when transfer != GirTransfer.Full => VfuncReturnBucket.BorrowedHandle,
+            ArgumentKind.Handle => mapped.Kind switch
+            {
+                MarshalKind.GObject => VfuncReturnBucket.OwnedGObject,
+                MarshalKind.MiniObject => VfuncReturnBucket.OwnedMiniObject,
+                _ => null,
+            },
+            _ => null,
+        };
+
+        if (bucket is not { } kind)
+        {
+            return null;
+        }
+
+        return (
+            new ReturnPlan
+            {
+                Kind = scalar.Kind,
+                PublicType = scalar.PublicType,
+                RawType = scalar.RawType,
+                Transfer = transfer,
+                IsNullable = scalar.IsNullable,
+                Flavor = scalar.Flavor,
+                Doc = value.Doc,
+            },
+            kind);
     }
 }
