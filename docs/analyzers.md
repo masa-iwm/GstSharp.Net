@@ -83,12 +83,13 @@ internal sealed class MySource : PushSrc
 
 **Declared vfunc slot is not overridden.**
 
-The converse: `<X>Override` appears in the `overrides` argument while the
-class does not override `On<X>`. The slot is patched all the same, so the
-element pays a managed transition that only chains up — and on the slots
-GStreamer reads for presence, such as `BaseSrc.alloc`, `BaseSrc.fill` or
-`BaseTransform.transform_ip`, a slot that exists changes what the base class
-does, even when the implementation behind it does nothing of its own.
+The converse: `<X>Override` appears in the `overrides` argument while neither
+the class nor a class between it and the wrapped base overrides `On<X>`. The
+slot is patched all the same, so the element pays a managed transition that
+only chains up — and on the slots GStreamer reads for presence, such as
+`BaseSrc.alloc`, `BaseSrc.fill` or `BaseTransform.transform_ip`, a slot that
+exists changes what the base class does, even when the implementation behind
+it does nothing of its own.
 
 Fix: override the method, or drop the declaration.
 
@@ -111,3 +112,11 @@ Anything else — a local, a helper call, a spread — silences both directions
 rather than guessing, and a `DefineSubclass` call outside a class that derives
 from the class it registers against, such as the negative registration tests,
 is never looked at.
+
+The override may live in a base class between the declaring class and the
+wrapped base: the search walks that stretch of the hierarchy, so an
+intermediate abstract class carrying the implementation pairs with a leaf that
+declares the slot. Because the pairing is by name stem, a slot whose managed
+name hides a parent slot of the same stem — `AudioSink.PrepareOverride` over
+`BaseSink.PrepareOverride` — is paired by that stem, and either `OnPrepare`
+satisfies either declaration.

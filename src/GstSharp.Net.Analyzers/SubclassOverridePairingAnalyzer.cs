@@ -27,6 +27,11 @@ namespace Gst.Analyzers;
 /// collection expression of plain property references. Anything else — a local,
 /// a helper call, a spread — silences both directions rather than guessing.
 /// </para>
+/// <para>
+/// The overrides are looked for on the class holding the registration call and
+/// on every class between it and the class the call was resolved on, so an
+/// override that sits on an intermediate managed class still pairs.
+/// </para>
 /// </remarks>
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public sealed class SubclassOverridePairingAnalyzer : DiagnosticAnalyzer
@@ -138,7 +143,7 @@ public sealed class SubclassOverridePairingAnalyzer : DiagnosticAnalyzer
             return;
         }
 
-        ReportPairing(context, subclass, elements);
+        ReportPairing(context, subclass, target.ContainingType, elements);
     }
 
     /// <summary>
@@ -230,10 +235,12 @@ public sealed class SubclassOverridePairingAnalyzer : DiagnosticAnalyzer
     /// </summary>
     /// <param name="context">The analysis context to report through.</param>
     /// <param name="subclass">The class the registration call sits in.</param>
+    /// <param name="baseType">The class the registration method belongs to.</param>
     /// <param name="elements">The declared slots, in source order.</param>
     private static void ReportPairing(
         OperationAnalysisContext context,
         INamedTypeSymbol subclass,
+        INamedTypeSymbol? baseType,
         List<IOperation> elements)
     {
         var declared = new HashSet<string>(System.StringComparer.Ordinal);
@@ -246,26 +253,37 @@ public sealed class SubclassOverridePairingAnalyzer : DiagnosticAnalyzer
         var overridden = new HashSet<string>(System.StringComparer.Ordinal);
 
         // The merged symbol members, so that a partial declaration in another
-        // file is seen. A managed subclass cannot itself be subclassed, so the
-        // search never has to walk further up.
-        foreach (ISymbol member in subclass.GetMembers())
+        // file is seen, and every managed class between the registering one and
+        // the wrapped base, so that an override placed on an intermediate class
+        // still pairs. The walk stops at the base itself: its own "On" methods
+        // are the virtuals being overridden, not overrides of a subclass.
+        for (INamedTypeSymbol? current = subclass;
+            current is not null && !SymbolEqualityComparer.Default.Equals(current, baseType);
+            current = current.BaseType)
         {
-            if (member is not IMethodSymbol { IsOverride: true } method
-                || StemOf(method.Name, OnPrefix, prefix: true) is not { } stem)
+            foreach (ISymbol member in current.GetMembers())
             {
-                continue;
-            }
+                if (member is not IMethodSymbol { IsOverride: true } method
+                    || StemOf(method.Name, OnPrefix, prefix: true) is not { } stem)
+                {
+                    continue;
+                }
 
-            overridden.Add(stem);
+                overridden.Add(stem);
 
-            if (!declared.Contains(stem) && method.Locations.Length > 0)
-            {
-                context.ReportDiagnostic(Diagnostic.Create(
-                    OverrideWithoutDeclarationRule,
-                    method.Locations[0],
-                    subclass.Name,
-                    method.Name,
-                    stem + OverrideSuffix));
+                // An intermediate class can come from another assembly, whose
+                // location the diagnostic cannot point at.
+                if (!declared.Contains(stem)
+                    && method.Locations.Length > 0
+                    && method.Locations[0].IsInSource)
+                {
+                    context.ReportDiagnostic(Diagnostic.Create(
+                        OverrideWithoutDeclarationRule,
+                        method.Locations[0],
+                        subclass.Name,
+                        method.Name,
+                        stem + OverrideSuffix));
+                }
             }
         }
 

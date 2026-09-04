@@ -30,7 +30,7 @@ internal enum ReferenceUse
 }
 
 /// <summary>
-/// The shared, deliberately pragmatic facts both ownership rules are built on.
+/// The shared, deliberately pragmatic facts the analyzers are built on.
 /// </summary>
 /// <remarks>
 /// The analysis is a CA2000-style approximation, not a dataflow solver: it
@@ -40,7 +40,7 @@ internal enum ReferenceUse
 /// </remarks>
 internal static class OwnershipFacts
 {
-    /// <summary>The category both rules are reported under.</summary>
+    /// <summary>The category the analyzers report under.</summary>
     internal const string Category = "GstSharp.Reliability";
 
     /// <summary>The metadata name of the mini object base class.</summary>

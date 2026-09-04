@@ -19,9 +19,7 @@ internal sealed class ManagedSink : BaseSink
         GTypeName,
         ConfigureClass,
         RenderOverride,
-        SetCapsOverride,
-        StartOverride,
-        StopOverride);
+        SetCapsOverride);
 
     private readonly List<byte> _rendered = [];
 

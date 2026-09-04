@@ -158,6 +158,116 @@ public sealed class SubclassOverridePairingAnalyzerTests
             """);
 
     [Fact]
+    public Task OverrideInAnotherPartialDeclaration_IsReportedThere() =>
+        VerifyAsync(
+            """
+            internal sealed partial class Managed : Gst.FakeSrc
+            {
+                private static readonly Gst.GObject.SubclassType Definition =
+                    DefineSubclass("managed", null);
+            }
+            """,
+            """
+            internal sealed partial class Managed
+            {
+                protected override int {|GST0003:OnX|}() => 1;
+            }
+            """);
+
+    [Fact]
+    public Task ExplicitArrayArgument_IsRead() =>
+        VerifyAsync("""
+            internal sealed class Managed : Gst.FakeSrc
+            {
+                private static readonly Gst.GObject.SubclassType Definition =
+                    DefineSubclass(
+                        "managed",
+                        null,
+                        new Gst.GObject.VfuncOverride[] { XOverride, {|GST0004:YOverride|} });
+
+                protected override int OnX() => 1;
+            }
+            """);
+
+    [Fact]
+    public Task TwoRegistrationCalls_AreBothEvaluated() =>
+        VerifyAsync("""
+            internal sealed class Managed : Gst.FakeSrc
+            {
+                private static readonly Gst.GObject.SubclassType First =
+                    DefineSubclass("first", null, XOverride);
+
+                private static readonly Gst.GObject.SubclassType Second =
+                    DefineSubclass("second", null, {|GST0004:YOverride|});
+
+                protected override int {|GST0003:OnX|}() => 1;
+            }
+            """);
+
+    [Fact]
+    public Task OverrideOnAnIntermediateClass_IsSilent() =>
+        VerifyAsync("""
+            internal abstract class Mid : Gst.FakeSrc
+            {
+                protected override int OnX() => 1;
+            }
+
+            internal sealed class Leaf : Mid
+            {
+                private static readonly Gst.GObject.SubclassType Definition =
+                    DefineSubclass("leaf", null, XOverride);
+            }
+            """);
+
+    [Fact]
+    public Task NoOverrideAnywhereInTheChain_IsReported() =>
+        VerifyAsync("""
+            internal abstract class Mid : Gst.FakeSrc
+            {
+            }
+
+            internal sealed class Leaf : Mid
+            {
+                private static readonly Gst.GObject.SubclassType Definition =
+                    DefineSubclass("leaf", null, {|GST0004:XOverride|});
+            }
+            """);
+
+    [Fact]
+    public Task TypeQualifiedSlotReference_IsRead() =>
+        VerifyAsync("""
+            internal sealed class Managed : Gst.FakeSrc
+            {
+                private static readonly Gst.GObject.SubclassType Definition =
+                    DefineSubclass("managed", null, {|GST0004:Gst.FakeSrc.XOverride|});
+            }
+            """);
+
+    [Fact]
+    public Task CallInAStaticConstructor_KeysOnTheClass() =>
+        VerifyAsync("""
+            internal sealed class Managed : Gst.FakeSrc
+            {
+                private static readonly Gst.GObject.SubclassType Definition;
+
+                static Managed()
+                {
+                    Definition = DefineSubclass("managed", null, {|GST0004:XOverride|});
+                }
+            }
+            """);
+
+    [Fact]
+    public Task CallInALambda_KeysOnTheClass() =>
+        VerifyAsync("""
+            internal sealed class Managed : Gst.FakeSrc
+            {
+                private static readonly System.Func<Gst.GObject.SubclassType> Factory =
+                    () => DefineSubclass("managed", null, {|GST0004:XOverride|});
+            }
+            """);
+
+    [Fact]
     public Task CollectionExpression_IsRead() =>
         VerifyAsync("""
             internal sealed class Managed : Gst.FakeSrc

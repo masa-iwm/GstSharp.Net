@@ -821,8 +821,8 @@ mechanism the pad functions need: `gst_pad_set_chain_function_full` and its
 ten siblings take a callback with no closure argument, so the runtime keys
 them by their first argument - the pad - in a table the `_full` notify
 releases. The analyzer that checks that an `OnX` override and the
-`XOverride` declaration of the same type come in pairs is `GST0003` and
-`GST0004`.
+`XOverride` declaration of the same type come in pairs is the
+`GST0003`/`GST0004` pair.
 
 **Stage 3 — breadth.**
 Native-initiated construction via static abstract `CreateWrapper` factories
