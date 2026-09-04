@@ -23,6 +23,15 @@ public unsafe partial class VideoFilter
     }
 
     /// <summary>
+    /// Gets the declaration of <c>GstVideoFilter.set_info</c>, for a subclass that
+    /// overrides <see cref="OnSetInfo"/>.
+    /// </summary>
+    public static Gst.GObject.VfuncOverride SetInfoOverride { get; } = new(
+        &GetGType,
+        Gst.Video.VideoFilterClassRaw.SetInfoOffset,
+        (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, nint, nint, int>)&SetInfoTrampoline);
+
+    /// <summary>
     /// Gets the declaration of <c>GstVideoFilter.transform_frame</c>, for a subclass that
     /// overrides <see cref="OnTransformFrame"/>.
     /// </summary>
@@ -69,6 +78,31 @@ public unsafe partial class VideoFilter
         return type;
     }
 
+    /// <summary>function to be called with the negotiated caps and video infos</summary>
+    /// <param name="incaps">
+    /// The <c>incaps</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <param name="inInfo">
+    /// The <c>inInfo</c> argument.
+    /// The caller lends this for the duration of the call and reads back what the
+    /// override wrote into it. The wrapper stops meaning anything once the call
+    /// returns, so copy what has to outlive it before then.
+    /// </param>
+    /// <param name="outcaps">
+    /// The <c>outcaps</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <param name="outInfo">
+    /// The <c>outInfo</c> argument.
+    /// The caller lends this for the duration of the call and reads back what the
+    /// override wrote into it. The wrapper stops meaning anything once the call
+    /// returns, so copy what has to outlive it before then.
+    /// </param>
+    /// <returns>What <c>set_info</c> answers.</returns>
+    protected virtual bool OnSetInfo(Gst.Caps incaps, Gst.Video.VideoInfo inInfo, Gst.Caps outcaps, Gst.Video.VideoInfo outInfo) =>
+        ChainUpSetInfo(incaps, inInfo, outcaps, outInfo);
+
     /// <summary>transform a video frame</summary>
     /// <param name="inframe">
     /// The <c>inframe</c> argument.
@@ -96,6 +130,43 @@ public unsafe partial class VideoFilter
     /// <returns>What <c>transform_frame_ip</c> answers.</returns>
     protected virtual Gst.FlowReturn OnTransformFrameIp(Gst.Video.VideoFrame frame) =>
         ChainUpTransformFrameIp(frame);
+
+    /// <summary>Runs the implementation of <c>set_info</c> below the managed override.</summary>
+    /// <param name="incaps">
+    /// The <c>incaps</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <param name="inInfo">
+    /// The <c>inInfo</c> argument.
+    /// The caller lends this for the duration of the call and reads back what the
+    /// override wrote into it. The wrapper stops meaning anything once the call
+    /// returns, so copy what has to outlive it before then.
+    /// </param>
+    /// <param name="outcaps">
+    /// The <c>outcaps</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <param name="outInfo">
+    /// The <c>outInfo</c> argument.
+    /// The caller lends this for the duration of the call and reads back what the
+    /// override wrote into it. The wrapper stops meaning anything once the call
+    /// returns, so copy what has to outlive it before then.
+    /// </param>
+    /// <returns>What <c>set_info</c> answers.</returns>
+    protected bool ChainUpSetInfo(Gst.Caps incaps, Gst.Video.VideoInfo inInfo, Gst.Caps outcaps, Gst.Video.VideoInfo outInfo)
+    {
+        ArgumentNullException.ThrowIfNull(incaps);
+        ArgumentNullException.ThrowIfNull(inInfo);
+        ArgumentNullException.ThrowIfNull(outcaps);
+        ArgumentNullException.ThrowIfNull(outInfo);
+        bool result = ChainUpSetInfo(Handle, incaps.Handle, inInfo.Handle, outcaps.Handle, outInfo.Handle);
+        GC.KeepAlive(this);
+        GC.KeepAlive(incaps);
+        GC.KeepAlive(inInfo);
+        GC.KeepAlive(outcaps);
+        GC.KeepAlive(outInfo);
+        return result;
+    }
 
     /// <summary>Runs the implementation of <c>transform_frame</c> below the managed override.</summary>
     /// <param name="inframe">
@@ -139,6 +210,20 @@ public unsafe partial class VideoFilter
         return result;
     }
 
+    private static bool ChainUpSetInfo(nint filter, nint incaps, nint inInfo, nint outcaps, nint outInfo)
+    {
+        delegate* unmanaged[Cdecl]<nint, nint, nint, nint, nint, int> slot =
+            (delegate* unmanaged[Cdecl]<nint, nint, nint, nint, nint, int>)ParentClassOf(filter)->SetInfo;
+
+        if (slot is null)
+        {
+            throw new InvalidOperationException(
+                "VideoFilter.set_info has no parent implementation; override OnSetInfo.");
+        }
+
+        return slot(filter, incaps, inInfo, outcaps, outInfo) != 0;
+    }
+
     private static Gst.FlowReturn ChainUpTransformFrame(nint filter, nint inframe, nint outframe)
     {
         delegate* unmanaged[Cdecl]<nint, nint, nint, int> slot =
@@ -173,6 +258,29 @@ public unsafe partial class VideoFilter
     /// <returns>The parent class of the managed subclass.</returns>
     private static Gst.Video.VideoFilterClassRaw* ParentClassOf(nint instance) =>
         (Gst.Video.VideoFilterClassRaw*)Gst.GObject.SubclassRegistry.DescriptorFor(instance).ParentClass;
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static int SetInfoTrampoline(nint filter, nint incaps, nint inInfo, nint outcaps, nint outInfo)
+    {
+        try
+        {
+            if (Gst.GObject.Object.TryGetInterned(filter) is not VideoFilter managed)
+            {
+                return (ChainUpSetInfo(filter, incaps, inInfo, outcaps, outInfo)) ? 1 : 0;
+            }
+
+            using Gst.Caps? incapsValue = incaps == nint.Zero ? null : Gst.Caps.Borrow(incaps);
+            using Gst.Video.VideoInfo? inInfoValue = inInfo == nint.Zero ? null : Gst.Video.VideoInfo.Borrow(inInfo);
+            using Gst.Caps? outcapsValue = outcaps == nint.Zero ? null : Gst.Caps.Borrow(outcaps);
+            using Gst.Video.VideoInfo? outInfoValue = outInfo == nint.Zero ? null : Gst.Video.VideoInfo.Borrow(outInfo);
+            return (managed.OnSetInfo(incapsValue!, inInfoValue!, outcapsValue!, outInfoValue!)) ? 1 : 0;
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+            return default;
+        }
+    }
 
     [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
     private static int TransformFrameTrampoline(nint filter, nint inframe, nint outframe)

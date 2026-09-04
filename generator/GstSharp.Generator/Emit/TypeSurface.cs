@@ -276,6 +276,8 @@ internal sealed class SurfaceBuilder
     [
         "AdoptWritable",
         "BeginMakeWritable",
+        BorrowName,
+        "HandOver",
     ];
 
     private readonly MarshalPlanner _planner;

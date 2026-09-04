@@ -4223,6 +4223,7 @@ internal sealed class MarshalPlanner
             Doc = value.Doc,
         };
     }
+
     /// <summary>
     /// Plans one <c>&lt;virtual-method&gt;</c> of a subclassable class: the
     /// trampoline native code calls and the chain-up that reaches the parent
@@ -4243,20 +4244,6 @@ internal sealed class MarshalPlanner
     /// so a slot whose signature nothing in the corpus has taught the planner
     /// yet is reported rather than emitted.
     /// </remarks>
-    /// <summary>
-    /// What the skip ledger prints for a slot that lends a boxed instance.
-    /// </summary>
-    private const string BoxedParameterReason =
-        "boxed parameter lent by pointer; Boxed has no borrow mode, and a copy would hide "
-        + "writes the caller reads back";
-
-    /// <summary>
-    /// What the skip ledger prints for a slot whose <c>inout</c> handle the
-    /// caller gives up on entry and takes back on exit.
-    /// </summary>
-    private const string InOutHandOverReason =
-        "inout parameter that hands over ownership: adopt-on-entry/detach-on-exit is Stage 2b";
-
     internal VirtualMethodPlan? PlanVirtualMethod(
         GirVirtualMethod method,
         string slotMember,
@@ -4434,7 +4421,9 @@ internal sealed class MarshalPlanner
             // the runtime can mint a reference for is adopted, because the
             // chain-up has to hand the parent slot one of its own.
             ArgumentKind.Handle or ArgumentKind.ConsumedHandle when transfer == GirTransfer.Full =>
-                mapped.Kind is MarshalKind.MiniObject or MarshalKind.GObject ? VfuncBucket.Adopt : null,
+                mapped.Kind is MarshalKind.MiniObject or MarshalKind.GObject or MarshalKind.Boxed
+                    ? VfuncBucket.Adopt
+                    : null,
             ArgumentKind.Handle => argument.Flavor switch
             {
                 HandleFlavor.GObject => VfuncBucket.BorrowGObject,
@@ -4446,11 +4435,11 @@ internal sealed class MarshalPlanner
                     VfuncBucket.BorrowMiniObject,
 
                 // A boxed wrapper of the binding takes a g_boxed_copy of what
-                // it is handed, so a slot would be given a copy of the value
-                // its caller holds and every write the override made would be
-                // lost. There is no borrow mode for a boxed instance, so the
-                // slot leaves the surface instead of pretending to work.
-                HandleFlavor.Wrapper when mapped.Kind == MarshalKind.Boxed => null,
+                // it is handed, which would give the slot a copy of the value
+                // its caller holds and lose every write the override made. The
+                // lent value is wrapped by a true borrow instead - no copy, no
+                // free - which the trampoline invalidates when the call returns.
+                HandleFlavor.Wrapper when mapped.Kind == MarshalKind.Boxed => VfuncBucket.BorrowBoxed,
                 HandleFlavor.Wrapper => VfuncBucket.BorrowWrapper,
 
                 // An opaque record has no ownership at all - its wrapper only
@@ -4465,15 +4454,9 @@ internal sealed class MarshalPlanner
             _ => null,
         };
 
-        if (bucket is null
-            && transfer != GirTransfer.Full
-            && argument.Flavor == HandleFlavor.Wrapper
-            && mapped.Kind == MarshalKind.Boxed)
-        {
-            reason = BoxedParameterReason;
-        }
-
-        return bucket is { } value ? new VfuncArgument(argument, value) : null;
+        return bucket is { } value
+            ? new VfuncArgument(argument, value, IsBoxed: mapped.Kind == MarshalKind.Boxed)
+            : null;
     }
 
     /// <summary>Plans a block of elements a slot is handed with a count beside it.</summary>
@@ -4603,21 +4586,18 @@ internal sealed class MarshalPlanner
 
         if (direction == ArgumentDirection.Ref)
         {
-            // The caller of such a slot gives its reference up on entry and
-            // takes over whatever the slot leaves behind. The trampoline
-            // borrows the value it finds and the chain-up mints one on the way
-            // out, which is right only while the two are the same handle: an
-            // override that really replaces the value would leak the reference
-            // the caller gave up. Adopting on entry and detaching on exit is
-            // the projection that shape needs, and no slot of this stage has
-            // it, so it is refused until the stage that writes it.
-            if (!identity)
-            {
-                reason = InOutHandOverReason;
-                return null;
-            }
-
-            return new VfuncArgument(argument, VfuncBucket.InOutHandle, identity, IsOptional: optional);
+            // Two shapes share the inout spelling. The caller of an identity
+            // preserving one keeps the reference of the value on entry and only
+            // releases the answer when the two differ, so the trampoline
+            // borrows what it finds and mints on the way out. The caller of the
+            // other one gives its reference up on entry and takes over whatever
+            // the slot leaves behind, which is the adopt on entry, hand over on
+            // exit projection.
+            return new VfuncArgument(
+                argument,
+                identity ? VfuncBucket.InOutHandle : VfuncBucket.InOutHandOver,
+                identity,
+                IsOptional: optional);
         }
 
         if (!identity)

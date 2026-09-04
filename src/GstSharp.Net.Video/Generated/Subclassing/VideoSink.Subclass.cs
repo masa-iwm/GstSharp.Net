@@ -31,6 +31,15 @@ public unsafe partial class VideoSink
         Gst.Video.VideoSinkClassRaw.ShowFrameOffset,
         (nint)(delegate* unmanaged[Cdecl]<nint, nint, int>)&ShowFrameTrampoline);
 
+    /// <summary>
+    /// Gets the declaration of <c>GstVideoSink.set_info</c>, for a subclass that
+    /// overrides <see cref="OnSetInfo"/>.
+    /// </summary>
+    public static Gst.GObject.VfuncOverride SetInfoOverride { get; } = new(
+        &GetGType,
+        Gst.Video.VideoSinkClassRaw.SetInfoOffset,
+        (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, int>)&SetInfoTrampoline);
+
     /// <summary>Registers a managed subclass of <c>GstVideoSink</c> with GObject.</summary>
     /// <param name="typeName">The <c>GType</c> name, unique in the process.</param>
     /// <param name="configureClass">
@@ -73,6 +82,21 @@ public unsafe partial class VideoSink
     protected virtual Gst.FlowReturn OnShowFrame(Gst.Buffer buf) =>
         ChainUpShowFrame(buf);
 
+    /// <summary>Notifies the subclass of changed #GstVideoInfo.</summary>
+    /// <param name="caps">
+    /// The <c>caps</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <param name="info">
+    /// The <c>info</c> argument.
+    /// The caller lends this for the duration of the call and reads back what the
+    /// override wrote into it. The wrapper stops meaning anything once the call
+    /// returns, so copy what has to outlive it before then.
+    /// </param>
+    /// <returns>What <c>set_info</c> answers.</returns>
+    protected virtual bool OnSetInfo(Gst.Caps caps, Gst.Video.VideoInfo info) =>
+        ChainUpSetInfo(caps, info);
+
     /// <summary>Runs the implementation of <c>show_frame</c> below the managed override.</summary>
     /// <param name="buf">
     /// The <c>buf</c> argument.
@@ -88,6 +112,29 @@ public unsafe partial class VideoSink
         return result;
     }
 
+    /// <summary>Runs the implementation of <c>set_info</c> below the managed override.</summary>
+    /// <param name="caps">
+    /// The <c>caps</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <param name="info">
+    /// The <c>info</c> argument.
+    /// The caller lends this for the duration of the call and reads back what the
+    /// override wrote into it. The wrapper stops meaning anything once the call
+    /// returns, so copy what has to outlive it before then.
+    /// </param>
+    /// <returns>What <c>set_info</c> answers.</returns>
+    protected bool ChainUpSetInfo(Gst.Caps caps, Gst.Video.VideoInfo info)
+    {
+        ArgumentNullException.ThrowIfNull(caps);
+        ArgumentNullException.ThrowIfNull(info);
+        bool result = ChainUpSetInfo(Handle, caps.Handle, info.Handle);
+        GC.KeepAlive(this);
+        GC.KeepAlive(caps);
+        GC.KeepAlive(info);
+        return result;
+    }
+
     private static Gst.FlowReturn ChainUpShowFrame(nint videoSink, nint buf)
     {
         delegate* unmanaged[Cdecl]<nint, nint, int> slot =
@@ -99,6 +146,20 @@ public unsafe partial class VideoSink
         }
 
         return (Gst.FlowReturn)slot(videoSink, buf);
+    }
+
+    private static bool ChainUpSetInfo(nint videoSink, nint caps, nint info)
+    {
+        delegate* unmanaged[Cdecl]<nint, nint, nint, int> slot =
+            (delegate* unmanaged[Cdecl]<nint, nint, nint, int>)ParentClassOf(videoSink)->SetInfo;
+
+        if (slot is null)
+        {
+            throw new InvalidOperationException(
+                "VideoSink.set_info has no parent implementation; override OnSetInfo.");
+        }
+
+        return slot(videoSink, caps, info) != 0;
     }
 
     /// <summary>
@@ -127,6 +188,27 @@ public unsafe partial class VideoSink
         {
             Gst.Interop.ExceptionTrap.Report(exception);
             return (int)Gst.FlowReturn.Error;
+        }
+    }
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static int SetInfoTrampoline(nint videoSink, nint caps, nint info)
+    {
+        try
+        {
+            if (Gst.GObject.Object.TryGetInterned(videoSink) is not VideoSink managed)
+            {
+                return (ChainUpSetInfo(videoSink, caps, info)) ? 1 : 0;
+            }
+
+            using Gst.Caps? capsValue = caps == nint.Zero ? null : Gst.Caps.Borrow(caps);
+            using Gst.Video.VideoInfo? infoValue = info == nint.Zero ? null : Gst.Video.VideoInfo.Borrow(info);
+            return (managed.OnSetInfo(capsValue!, infoValue!)) ? 1 : 0;
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+            return default;
         }
     }
 }

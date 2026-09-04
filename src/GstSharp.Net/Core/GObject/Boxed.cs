@@ -8,6 +8,7 @@ namespace Gst.GObject;
 /// </summary>
 public abstract class Boxed : IDisposable
 {
+    private readonly bool _borrowed;
     private nint _handle;
 
     /// <summary>
@@ -52,6 +53,45 @@ public abstract class Boxed : IDisposable
     }
 
     /// <summary>
+    /// Wraps a boxed value that the caller keeps owning, for the length of one
+    /// call.
+    /// </summary>
+    /// <param name="borrowed">The value that is lent to managed code.</param>
+    /// <param name="boxedType">The boxed type of the value.</param>
+    /// <remarks>
+    /// <para>
+    /// This is the reverse direction only: the override of a virtual method is
+    /// handed the very instance the caller of the slot holds, writes to it, and
+    /// never keeps it. A <c>g_boxed_copy</c> would hand the override a copy the
+    /// caller never reads back, which is why a lent boxed value is wrapped
+    /// without one. See <see cref="Gst.Interop.Borrowed"/>.
+    /// </para>
+    /// <para>
+    /// The wrapper owns nothing, so disposing it only detaches it: a wrapper
+    /// used after the call it was made for throws
+    /// <see cref="ObjectDisposedException"/> instead of freeing a value it does
+    /// not own.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// The lent handle is <see cref="nint.Zero"/>.
+    /// </exception>
+    internal Boxed(Borrowed borrowed, GType boxedType)
+    {
+        if (borrowed.Handle == nint.Zero)
+        {
+            throw new ArgumentOutOfRangeException(nameof(borrowed), "A boxed handle must not be null.");
+        }
+
+        BoxedType = boxedType;
+        _borrowed = true;
+        _handle = borrowed.Handle;
+
+        // There is nothing to free, so there is nothing for the finalizer to do.
+        GC.SuppressFinalize(this);
+    }
+
+    /// <summary>
     /// Releases the boxed value if the wrapper was not disposed.
     /// </summary>
     ~Boxed() => Dispose(disposing: false);
@@ -77,6 +117,34 @@ public abstract class Boxed : IDisposable
     /// Gets a value indicating whether the wrapper still holds a value.
     /// </summary>
     public bool IsDisposed => _handle == nint.Zero;
+
+    /// <summary>
+    /// Gives the value of the wrapper up to a call that takes it over, and
+    /// returns the handle to hand that call.
+    /// </summary>
+    /// <returns>The value the call is given.</returns>
+    /// <remarks>
+    /// This is the boxed half of the hand over a mini object wrapper performs:
+    /// the wrapper hands its own value over rather than copying it, and is left
+    /// detached, so using it afterwards throws. A wrapper that only borrows its
+    /// value owns nothing to hand over and gets a <c>g_boxed_copy</c> made for
+    /// the call instead, which for a boxed type whose copy raises a reference
+    /// count — the shape every codec frame and codec state has — is the very
+    /// reference the call expects.
+    /// </remarks>
+    /// <exception cref="ObjectDisposedException">The wrapper was disposed.</exception>
+    internal nint HandOver()
+    {
+        nint handle = Handle;
+        if (_borrowed)
+        {
+            return GObjectNative.BoxedCopy(BoxedType.Value, handle);
+        }
+
+        _ = Interlocked.Exchange(ref _handle, nint.Zero);
+        GC.SuppressFinalize(this);
+        return handle;
+    }
 
     /// <summary>
     /// Releases the boxed value.
@@ -145,7 +213,10 @@ public abstract class Boxed : IDisposable
     protected virtual void Dispose(bool disposing)
     {
         nint handle = Interlocked.Exchange(ref _handle, nint.Zero);
-        if (handle != nint.Zero)
+
+        // A borrowed wrapper owns no value: disposing it invalidates it and
+        // leaves what it pointed at to the caller of the slot that lent it.
+        if (handle != nint.Zero && !_borrowed)
         {
             GObjectNative.BoxedFree(BoxedType.Value, handle);
         }

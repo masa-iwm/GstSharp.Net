@@ -169,7 +169,7 @@ public sealed class VirtualOverlayDiagnosticTests
     /// <summary>
     /// The same slot with the buffer passed <c>inout</c> and transfer full: the
     /// caller gives its reference up on entry and takes over what the slot
-    /// leaves, which is the third inout shape the planner refuses.
+    /// leaves, which is the third inout shape.
     /// </summary>
     private static readonly string BodyWithAnInOutHandOver =
         Body.Replace("direction=\"out\"", "direction=\"inout\"", StringComparison.Ordinal);
@@ -306,24 +306,20 @@ public sealed class VirtualOverlayDiagnosticTests
     }
 
     [Fact]
-    public void AnInOutHandleThatHandsOwnershipOverIsRefused()
+    public void AnInOutHandleThatHandsOwnershipOverIsEmitted()
     {
-        // The trampoline borrows what it finds in the pointer and the chain-up
-        // mints on the way out, which only adds up while the two are the same
-        // handle. An override that really replaces the value would leak the
-        // reference the caller gave up, so the slot leaves the surface with a
-        // reason instead of being emitted wrong.
+        // The caller gives its reference up on entry and takes over whatever
+        // the slot leaves behind, which is the adopt on entry, hand over on
+        // exit projection: the trampoline owns what it was handed and the
+        // wrapper the override left is handed on without a second reference.
         FixtureRun run = Run(BodyWithAnInOutHandOver, "{ " + Allowlist + " }");
 
-        Assert.Equal(0, run.Result.Census.EmittedCount("Gst", "vfunc"));
-        Assert.Equal(
-            new Dictionary<string, string>(StringComparer.Ordinal)
-            {
-                ["Gst.Widget::prepare"] =
-                    "inout parameter that hands over ownership: "
-                    + "adopt-on-entry/detach-on-exit is Stage 2b",
-            },
-            run.Result.Census.SkippedVirtuals("Gst"));
+        Assert.Equal(1, run.Result.Census.EmittedCount("Gst", "vfunc"));
+        Assert.Empty(run.Result.Census.SkippedVirtuals("Gst"));
+
+        string source = run.File("Subclassing/Widget.Subclass.cs");
+        Assert.Contains("OnPrepare(ref ", source, StringComparison.Ordinal);
+        Assert.Contains("HandOver()", source, StringComparison.Ordinal);
     }
 
     [Fact]

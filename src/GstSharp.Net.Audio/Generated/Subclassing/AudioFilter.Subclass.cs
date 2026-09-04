@@ -3,6 +3,9 @@
 
 #nullable enable
 
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+
 namespace Gst.Audio;
 
 /// <content>The subclassing surface of <c>GstAudioFilter</c>.</content>
@@ -18,6 +21,15 @@ public unsafe partial class AudioFilter
         : this(args.HandleFor(GetGType()), args.Transfer)
     {
     }
+
+    /// <summary>
+    /// Gets the declaration of <c>GstAudioFilter.setup</c>, for a subclass that
+    /// overrides <see cref="OnSetup"/>.
+    /// </summary>
+    public static Gst.GObject.VfuncOverride SetupOverride { get; } = new(
+        &GetGType,
+        Gst.Audio.AudioFilterClassRaw.SetupOffset,
+        (nint)(delegate* unmanaged[Cdecl]<nint, nint, int>)&SetupTrampoline);
 
     /// <summary>Registers a managed subclass of <c>GstAudioFilter</c> with GObject.</summary>
     /// <param name="typeName">The <c>GType</c> name, unique in the process.</param>
@@ -46,5 +58,76 @@ public unsafe partial class AudioFilter
         type.RequirePadTemplate("sink");
         type.RequirePadTemplate("src");
         return type;
+    }
+
+    /// <summary>virtual function called whenever the format changes</summary>
+    /// <param name="info">
+    /// The <c>info</c> argument.
+    /// The caller lends this for the duration of the call and reads back what the
+    /// override wrote into it. The wrapper stops meaning anything once the call
+    /// returns, so copy what has to outlive it before then.
+    /// </param>
+    /// <returns>What <c>setup</c> answers.</returns>
+    protected virtual bool OnSetup(Gst.Audio.AudioInfo info) =>
+        ChainUpSetup(info);
+
+    /// <summary>Runs the implementation of <c>setup</c> below the managed override.</summary>
+    /// <param name="info">
+    /// The <c>info</c> argument.
+    /// The caller lends this for the duration of the call and reads back what the
+    /// override wrote into it. The wrapper stops meaning anything once the call
+    /// returns, so copy what has to outlive it before then.
+    /// </param>
+    /// <returns>What <c>setup</c> answers.</returns>
+    protected bool ChainUpSetup(Gst.Audio.AudioInfo info)
+    {
+        ArgumentNullException.ThrowIfNull(info);
+        bool result = ChainUpSetup(Handle, info.Handle);
+        GC.KeepAlive(this);
+        GC.KeepAlive(info);
+        return result;
+    }
+
+    private static bool ChainUpSetup(nint filter, nint info)
+    {
+        delegate* unmanaged[Cdecl]<nint, nint, int> slot =
+            (delegate* unmanaged[Cdecl]<nint, nint, int>)ParentClassOf(filter)->Setup;
+
+        if (slot is null)
+        {
+            throw new InvalidOperationException(
+                "AudioFilter.setup has no parent implementation; override OnSetup.");
+        }
+
+        return slot(filter, info) != 0;
+    }
+
+    /// <summary>
+    /// Returns the class the registration captured, which is the one an override
+    /// chains up through.
+    /// </summary>
+    /// <param name="instance">The native <c>GstAudioFilter</c>.</param>
+    /// <returns>The parent class of the managed subclass.</returns>
+    private static Gst.Audio.AudioFilterClassRaw* ParentClassOf(nint instance) =>
+        (Gst.Audio.AudioFilterClassRaw*)Gst.GObject.SubclassRegistry.DescriptorFor(instance).ParentClass;
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static int SetupTrampoline(nint filter, nint info)
+    {
+        try
+        {
+            if (Gst.GObject.Object.TryGetInterned(filter) is not AudioFilter managed)
+            {
+                return (ChainUpSetup(filter, info)) ? 1 : 0;
+            }
+
+            using Gst.Audio.AudioInfo? infoValue = info == nint.Zero ? null : Gst.Audio.AudioInfo.Borrow(info);
+            return (managed.OnSetup(infoValue!)) ? 1 : 0;
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+            return default;
+        }
     }
 }

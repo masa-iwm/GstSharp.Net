@@ -29,6 +29,14 @@ internal enum VfuncBucket
     BorrowWrapper,
 
     /// <summary>
+    /// A boxed value the call lends, wrapped by a true borrow that takes no
+    /// copy (<c>Gst.Interop.Borrowed</c>), because the caller of the slot reads
+    /// back what the override wrote. The wrapper is invalidated when the call
+    /// returns, so nothing managed can reach the value afterwards.
+    /// </summary>
+    BorrowBoxed,
+
+    /// <summary>
     /// An opaque record the call lends, whose wrapper is a bare pointer holder
     /// and therefore takes no part in the ownership of what it points at. The
     /// pointer is usually a stack address of the caller, so the wrapper is only
@@ -54,6 +62,15 @@ internal enum VfuncBucket
     /// borrowed and the value on exit is written back.
     /// </summary>
     InOutHandle,
+
+    /// <summary>
+    /// A handle the caller gives up on entry and takes back on exit: the
+    /// trampoline adopts what it is handed, and hands whatever the override
+    /// left behind back without a reference of its own. An override that
+    /// replaced the value leaves the wrapper of the value on entry to be
+    /// disposed by the trampoline.
+    /// </summary>
+    InOutHandOver,
 
     /// <summary>
     /// A block of elements the call is given as a pointer with a count beside
@@ -119,13 +136,20 @@ internal enum VfuncReturnBucket
 /// through such a pointer without looking at it crashes the process the first
 /// time somebody asks for less than the slot produces.
 /// </param>
+/// <param name="IsBoxed">
+/// Whether the handle is a boxed value rather than a mini object or a GObject,
+/// which decides how a lent one is wrapped and how an owned one is handed on:
+/// a boxed value is copied and freed through its <c>GType</c> instead of
+/// through a reference count of its own.
+/// </param>
 internal sealed record VfuncArgument(
     ArgumentPlan Argument,
     VfuncBucket Bucket,
     bool IsIdentity = false,
     string? IdentityReference = null,
     string? CountOf = null,
-    bool IsOptional = false);
+    bool IsOptional = false,
+    bool IsBoxed = false);
 
 /// <summary>
 /// Everything the emitter needs to write one <c>&lt;virtual-method&gt;</c>: the

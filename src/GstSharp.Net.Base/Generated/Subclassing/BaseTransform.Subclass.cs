@@ -77,6 +77,15 @@ public unsafe partial class BaseTransform
         (nint)(delegate* unmanaged[Cdecl]<nint, nint, int>)&DecideAllocationTrampoline);
 
     /// <summary>
+    /// Gets the declaration of <c>GstBaseTransform.filter_meta</c>, for a subclass that
+    /// overrides <see cref="OnFilterMeta"/>.
+    /// </summary>
+    public static Gst.GObject.VfuncOverride FilterMetaOverride { get; } = new(
+        &GetGType,
+        Gst.Base.BaseTransformClassRaw.FilterMetaOffset,
+        (nint)(delegate* unmanaged[Cdecl]<nint, nint, nuint, nint, int>)&FilterMetaTrampoline);
+
+    /// <summary>
     /// Gets the declaration of <c>GstBaseTransform.propose_allocation</c>, for a subclass that
     /// overrides <see cref="OnProposeAllocation"/>.
     /// </summary>
@@ -346,6 +355,26 @@ public unsafe partial class BaseTransform
     /// <returns>What <c>decide_allocation</c> answers.</returns>
     protected virtual bool OnDecideAllocation(Gst.Query query) =>
         ChainUpDecideAllocation(query);
+
+    /// <summary>
+    /// Return %TRUE if the metadata API should be proposed in the
+    ///               upstream allocation query. The default implementation is %NULL
+    ///               and will cause all metadata to be removed.
+    /// </summary>
+    /// <param name="query">
+    /// The <c>query</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <param name="api">The <c>api</c> argument.</param>
+    /// <param name="params">
+    /// The <c>params</c> argument.
+    /// The caller lends this for the duration of the call and reads back what the
+    /// override wrote into it. The wrapper stops meaning anything once the call
+    /// returns, so copy what has to outlive it before then.
+    /// </param>
+    /// <returns>What <c>filter_meta</c> answers.</returns>
+    protected virtual bool OnFilterMeta(Gst.Query query, Gst.GObject.GType api, Gst.Structure @params) =>
+        ChainUpFilterMeta(query, api, @params);
 
     /// <summary>
     /// Propose buffer allocation parameters for upstream elements.
@@ -701,6 +730,30 @@ public unsafe partial class BaseTransform
         bool result = ChainUpDecideAllocation(Handle, query.Handle);
         GC.KeepAlive(this);
         GC.KeepAlive(query);
+        return result;
+    }
+
+    /// <summary>Runs the implementation of <c>filter_meta</c> below the managed override.</summary>
+    /// <param name="query">
+    /// The <c>query</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <param name="api">The <c>api</c> argument.</param>
+    /// <param name="params">
+    /// The <c>params</c> argument.
+    /// The caller lends this for the duration of the call and reads back what the
+    /// override wrote into it. The wrapper stops meaning anything once the call
+    /// returns, so copy what has to outlive it before then.
+    /// </param>
+    /// <returns>What <c>filter_meta</c> answers.</returns>
+    protected bool ChainUpFilterMeta(Gst.Query query, Gst.GObject.GType api, Gst.Structure @params)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+        ArgumentNullException.ThrowIfNull(@params);
+        bool result = ChainUpFilterMeta(Handle, query.Handle, api.Value, @params.Handle);
+        GC.KeepAlive(this);
+        GC.KeepAlive(query);
+        GC.KeepAlive(@params);
         return result;
     }
 
@@ -1076,6 +1129,20 @@ public unsafe partial class BaseTransform
         return slot(trans, query) != 0;
     }
 
+    private static bool ChainUpFilterMeta(nint trans, nint query, nuint api, nint @params)
+    {
+        delegate* unmanaged[Cdecl]<nint, nint, nuint, nint, int> slot =
+            (delegate* unmanaged[Cdecl]<nint, nint, nuint, nint, int>)ParentClassOf(trans)->FilterMeta;
+
+        if (slot is null)
+        {
+            throw new InvalidOperationException(
+                "BaseTransform.filter_meta has no parent implementation; override OnFilterMeta.");
+        }
+
+        return slot(trans, query, api, @params) != 0;
+    }
+
     private static bool ChainUpProposeAllocation(nint trans, nint decideQuery, nint query)
     {
         delegate* unmanaged[Cdecl]<nint, nint, nint, int> slot =
@@ -1420,6 +1487,27 @@ public unsafe partial class BaseTransform
 
             using Gst.Query? queryValue = query == nint.Zero ? null : Gst.Query.Borrow(query);
             return (managed.OnDecideAllocation(queryValue!)) ? 1 : 0;
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+            return default;
+        }
+    }
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static int FilterMetaTrampoline(nint trans, nint query, nuint api, nint @params)
+    {
+        try
+        {
+            if (Gst.GObject.Object.TryGetInterned(trans) is not BaseTransform managed)
+            {
+                return (ChainUpFilterMeta(trans, query, api, @params)) ? 1 : 0;
+            }
+
+            using Gst.Query? queryValue = query == nint.Zero ? null : Gst.Query.Borrow(query);
+            using Gst.Structure? @paramsValue = @params == nint.Zero ? null : Gst.Structure.Borrow(@params);
+            return (managed.OnFilterMeta(queryValue!, new Gst.GObject.GType(api), @paramsValue!)) ? 1 : 0;
         }
         catch (Exception exception)
         {

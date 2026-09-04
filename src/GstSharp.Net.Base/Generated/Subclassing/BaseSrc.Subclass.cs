@@ -113,6 +113,24 @@ public unsafe partial class BaseSrc
         (nint)(delegate* unmanaged[Cdecl]<nint, int>)&IsSeekableTrampoline);
 
     /// <summary>
+    /// Gets the declaration of <c>GstBaseSrc.prepare_seek_segment</c>, for a subclass that
+    /// overrides <see cref="OnPrepareSeekSegment"/>.
+    /// </summary>
+    public static Gst.GObject.VfuncOverride PrepareSeekSegmentOverride { get; } = new(
+        &GetGType,
+        Gst.Base.BaseSrcClassRaw.PrepareSeekSegmentOffset,
+        (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, int>)&PrepareSeekSegmentTrampoline);
+
+    /// <summary>
+    /// Gets the declaration of <c>GstBaseSrc.do_seek</c>, for a subclass that
+    /// overrides <see cref="OnDoSeek"/>.
+    /// </summary>
+    public static Gst.GObject.VfuncOverride DoSeekOverride { get; } = new(
+        &GetGType,
+        Gst.Base.BaseSrcClassRaw.DoSeekOffset,
+        (nint)(delegate* unmanaged[Cdecl]<nint, nint, int>)&DoSeekTrampoline);
+
+    /// <summary>
     /// Gets the declaration of <c>GstBaseSrc.unlock</c>, for a subclass that
     /// overrides <see cref="OnUnlock"/>.
     /// </summary>
@@ -307,6 +325,39 @@ public unsafe partial class BaseSrc
     /// <returns>What <c>is_seekable</c> answers.</returns>
     protected virtual bool OnIsSeekable() =>
         ChainUpIsSeekable();
+
+    /// <summary>
+    /// Prepare the #GstSegment that will be passed to the
+    ///   #GstBaseSrcClass::do_seek vmethod for executing a seek
+    ///   request. Sub-classes should override this if they support seeking in
+    ///   formats other than the configured native format. By default, it tries to
+    ///   convert the seek arguments to the configured native format and prepare a
+    ///   segment in that format.
+    /// </summary>
+    /// <param name="seek">
+    /// The <c>seek</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <param name="segment">
+    /// The <c>segment</c> argument.
+    /// The caller lends this for the duration of the call and reads back what the
+    /// override wrote into it. The wrapper stops meaning anything once the call
+    /// returns, so copy what has to outlive it before then.
+    /// </param>
+    /// <returns>What <c>prepare_seek_segment</c> answers.</returns>
+    protected virtual bool OnPrepareSeekSegment(Gst.Event seek, Gst.Segment segment) =>
+        ChainUpPrepareSeekSegment(seek, segment);
+
+    /// <summary>Perform seeking on the resource to the indicated segment.</summary>
+    /// <param name="segment">
+    /// The <c>segment</c> argument.
+    /// The caller lends this for the duration of the call and reads back what the
+    /// override wrote into it. The wrapper stops meaning anything once the call
+    /// returns, so copy what has to outlive it before then.
+    /// </param>
+    /// <returns>What <c>do_seek</c> answers.</returns>
+    protected virtual bool OnDoSeek(Gst.Segment segment) =>
+        ChainUpDoSeek(segment);
 
     /// <summary>
     /// Unlock any pending access to the resource. Subclasses should unblock
@@ -543,6 +594,46 @@ public unsafe partial class BaseSrc
     {
         bool result = ChainUpIsSeekable(Handle);
         GC.KeepAlive(this);
+        return result;
+    }
+
+    /// <summary>Runs the implementation of <c>prepare_seek_segment</c> below the managed override.</summary>
+    /// <param name="seek">
+    /// The <c>seek</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <param name="segment">
+    /// The <c>segment</c> argument.
+    /// The caller lends this for the duration of the call and reads back what the
+    /// override wrote into it. The wrapper stops meaning anything once the call
+    /// returns, so copy what has to outlive it before then.
+    /// </param>
+    /// <returns>What <c>prepare_seek_segment</c> answers.</returns>
+    protected bool ChainUpPrepareSeekSegment(Gst.Event seek, Gst.Segment segment)
+    {
+        ArgumentNullException.ThrowIfNull(seek);
+        ArgumentNullException.ThrowIfNull(segment);
+        bool result = ChainUpPrepareSeekSegment(Handle, seek.Handle, segment.Handle);
+        GC.KeepAlive(this);
+        GC.KeepAlive(seek);
+        GC.KeepAlive(segment);
+        return result;
+    }
+
+    /// <summary>Runs the implementation of <c>do_seek</c> below the managed override.</summary>
+    /// <param name="segment">
+    /// The <c>segment</c> argument.
+    /// The caller lends this for the duration of the call and reads back what the
+    /// override wrote into it. The wrapper stops meaning anything once the call
+    /// returns, so copy what has to outlive it before then.
+    /// </param>
+    /// <returns>What <c>do_seek</c> answers.</returns>
+    protected bool ChainUpDoSeek(Gst.Segment segment)
+    {
+        ArgumentNullException.ThrowIfNull(segment);
+        bool result = ChainUpDoSeek(Handle, segment.Handle);
+        GC.KeepAlive(this);
+        GC.KeepAlive(segment);
         return result;
     }
 
@@ -801,6 +892,34 @@ public unsafe partial class BaseSrc
         }
 
         return slot(src) != 0;
+    }
+
+    private static bool ChainUpPrepareSeekSegment(nint src, nint seek, nint segment)
+    {
+        delegate* unmanaged[Cdecl]<nint, nint, nint, int> slot =
+            (delegate* unmanaged[Cdecl]<nint, nint, nint, int>)ParentClassOf(src)->PrepareSeekSegment;
+
+        if (slot is null)
+        {
+            throw new InvalidOperationException(
+                "BaseSrc.prepare_seek_segment has no parent implementation; override OnPrepareSeekSegment.");
+        }
+
+        return slot(src, seek, segment) != 0;
+    }
+
+    private static bool ChainUpDoSeek(nint src, nint segment)
+    {
+        delegate* unmanaged[Cdecl]<nint, nint, int> slot =
+            (delegate* unmanaged[Cdecl]<nint, nint, int>)ParentClassOf(src)->DoSeek;
+
+        if (slot is null)
+        {
+            throw new InvalidOperationException(
+                "BaseSrc.do_seek has no parent implementation; override OnDoSeek.");
+        }
+
+        return slot(src, segment) != 0;
     }
 
     private static bool ChainUpUnlock(nint src)
@@ -1118,6 +1237,47 @@ public unsafe partial class BaseSrc
             }
 
             return (managed.OnIsSeekable()) ? 1 : 0;
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+            return default;
+        }
+    }
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static int PrepareSeekSegmentTrampoline(nint src, nint seek, nint segment)
+    {
+        try
+        {
+            if (Gst.GObject.Object.TryGetInterned(src) is not BaseSrc managed)
+            {
+                return (ChainUpPrepareSeekSegment(src, seek, segment)) ? 1 : 0;
+            }
+
+            using Gst.Event? seekValue = seek == nint.Zero ? null : Gst.Event.Borrow(seek);
+            using Gst.Segment? segmentValue = segment == nint.Zero ? null : Gst.Segment.Borrow(segment);
+            return (managed.OnPrepareSeekSegment(seekValue!, segmentValue!)) ? 1 : 0;
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+            return default;
+        }
+    }
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static int DoSeekTrampoline(nint src, nint segment)
+    {
+        try
+        {
+            if (Gst.GObject.Object.TryGetInterned(src) is not BaseSrc managed)
+            {
+                return (ChainUpDoSeek(src, segment)) ? 1 : 0;
+            }
+
+            using Gst.Segment? segmentValue = segment == nint.Zero ? null : Gst.Segment.Borrow(segment);
+            return (managed.OnDoSeek(segmentValue!)) ? 1 : 0;
         }
         catch (Exception exception)
         {

@@ -31,10 +31,10 @@ public sealed class SubclassCensusTests
     /// <param name="vfuncs">The slots those mirrors give an <c>OnX</c> member.</param>
     [Theory]
     [InlineData("Gst", 3, 17)]
-    [InlineData("GstBase", 5, 81)]
+    [InlineData("GstBase", 5, 84)]
     [InlineData("GstApp", 0, 0)]
-    [InlineData("GstAudio", 5, 19)]
-    [InlineData("GstVideo", 2, 3)]
+    [InlineData("GstAudio", 5, 20)]
+    [InlineData("GstVideo", 2, 5)]
     [InlineData("GstPbutils", 0, 0)]
     [InlineData("GstSdp", 0, 0)]
     [InlineData("GstWebRTC", 0, 0)]
@@ -56,11 +56,11 @@ public sealed class SubclassCensusTests
     }
 
     /// <summary>
-    /// The run as a whole: fifteen mirrors and a hundred and twenty slots, the
+    /// The run as a whole: fifteen mirrors and a hundred and twenty six slots, the
     /// numbers the release notes and <c>docs/subclassing.md</c> quote.
     /// </summary>
     [Fact]
-    public void TheRunEmitsFifteenMirrorsAndAHundredAndTwentySlots()
+    public void TheRunEmitsFifteenMirrorsAndAHundredAndTwentySixSlots()
     {
         EmissionCensus census = Generated.Census;
         int mirrors = 0;
@@ -72,7 +72,7 @@ public sealed class SubclassCensusTests
         }
 
         Assert.Equal(15, mirrors);
-        Assert.Equal(120, slots);
+        Assert.Equal(126, slots);
     }
 
     /// <summary>
@@ -89,10 +89,6 @@ public sealed class SubclassCensusTests
         const string ClassClosure =
             "signal class closure: read by g_signal at emission time, never called through the class "
             + "pointer by the base class; managed code subscribes to the signal instead";
-        const string Boxed =
-            "boxed parameter lent by pointer; Boxed has no borrow mode, and a copy would hide "
-            + "writes the caller reads back";
-
         Assert.Equal(
             new Dictionary<string, string>(StringComparer.Ordinal)
             {
@@ -111,30 +107,20 @@ public sealed class SubclassCensusTests
             {
                 ["GstBase.Aggregator::create_new_pad"] =
                     "Pad subclassing is Stage 3: needs a Pad ClassConfig and construct properties",
-                ["GstBase.BaseSrc::do_seek"] = Boxed,
-                ["GstBase.BaseSrc::prepare_seek_segment"] = Boxed,
-                ["GstBase.BaseTransform::filter_meta"] = Boxed,
             },
             census.SkippedVirtuals("GstBase"));
 
         Assert.Equal(
             new Dictionary<string, string>(StringComparer.Ordinal)
             {
-                ["GstAudio.AudioFilter::setup"] = Boxed,
                 ["GstAudio.AudioSink::stop"] =
                     "name collides with the BaseSink stop slot (different return type); "
                     + "a disambiguated managed name needs a naming decision",
             },
             census.SkippedVirtuals("GstAudio"));
 
-        Assert.Equal(
-            new Dictionary<string, string>(StringComparer.Ordinal)
-            {
-                ["GstVideo.VideoFilter::set_info"] = Boxed,
-                ["GstVideo.VideoSink::set_info"] = Boxed,
-            },
-            census.SkippedVirtuals("GstVideo"));
+        Assert.Empty(census.SkippedVirtuals("GstVideo"));
 
-        Assert.Equal(15, census.SkippedVirtualCount());
+        Assert.Equal(9, census.SkippedVirtualCount());
     }
 }

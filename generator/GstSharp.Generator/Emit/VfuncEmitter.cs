@@ -295,7 +295,7 @@ internal sealed class VfuncEmitter
         foreach (VirtualMethodPlan plan in plans)
         {
             writer.WriteLine();
-            WriteInstanceChainUp(writer, plan, inherited.Contains(SignatureOf(plan)));
+            WriteInstanceChainUp(writer, plan, model, inherited.Contains(SignatureOf(plan)));
         }
 
         foreach (VirtualMethodPlan plan in plans)
@@ -626,7 +626,11 @@ internal sealed class VfuncEmitter
         return plan.Name + "(" + string.Join(", ", parts) + ")";
     }
 
-    private static void WriteInstanceChainUp(CodeWriter writer, VirtualMethodPlan plan, bool hides)
+    private static void WriteInstanceChainUp(
+        CodeWriter writer,
+        VirtualMethodPlan plan,
+        ClassStructModel model,
+        bool hides)
     {
         XmlDocWriter.Write(
             writer,
@@ -664,17 +668,50 @@ internal sealed class VfuncEmitter
         }
 
         bool mints = false;
+        bool handsOver = false;
         foreach (VfuncArgument argument in plan.Arguments)
         {
-            mints |= argument.Bucket == VfuncBucket.Adopt
+            mints |= (argument.Bucket == VfuncBucket.Adopt && !argument.IsBoxed)
                 || (argument.Bucket == VfuncBucket.InOutHandle && !argument.IsIdentity);
+            handsOver |= argument.Bucket == VfuncBucket.InOutHandOver;
         }
 
         string instance = "Handle";
-        if (mints)
+        if (mints || handsOver)
         {
             instance = "instance";
             writer.WriteLine("nint instance = Handle;");
+        }
+
+        // The value of an inout argument is handed over to the parent slot, and
+        // a parent that has none would leave the caller with nothing where it
+        // handed a value in. The slot is therefore read before anything is
+        // given up, and the documented default answered with the argument
+        // untouched.
+        if (handsOver)
+        {
+            writer.WriteLine(
+                "if ((" + FunctionPointerType(plan) + ")ParentClassOf(" + instance + ")->" + plan.SlotMember
+                + " is null)");
+            writer.OpenBlock();
+            if (plan.Return.IsVoid)
+            {
+                writer.WriteLine("return;");
+            }
+            else if (plan.NullSlotDefault is { } fallback && !fallback.TrimStart().StartsWith('{'))
+            {
+                writer.WriteLine("return " + fallback + ";");
+            }
+            else
+            {
+                writer.WriteLine("throw new InvalidOperationException(");
+                writer.WriteLine(
+                    "    \"" + model.Owner.Name + "." + plan.Method.Name
+                    + " has no parent implementation; override On" + plan.Name + ".\");");
+            }
+
+            writer.CloseBlock();
+            writer.WriteLine();
         }
 
         List<string> raw = [];
@@ -699,8 +736,18 @@ internal sealed class VfuncEmitter
                     raw.Add("checked((" + value.RawType + ")" + argument.CountOf + ".Length)");
                     break;
                 case VfuncBucket.Adopt:
-                    writer.WriteLine("nint " + local + " = " + value.Name + ".Handle;");
+                    // A boxed value has no reference to mint: the wrapper hands
+                    // its own value over and is left detached, which is what
+                    // the parent slot takes over.
+                    writer.WriteLine(
+                        "nint " + local + " = " + value.Name + (argument.IsBoxed ? ".HandOver();" : ".Handle;"));
                     raw.Add(local);
+                    break;
+                case VfuncBucket.InOutHandOver:
+                    writer.WriteLine(
+                        "nint " + local + " = " + value.Name + " is null ? nint.Zero : " + value.Name
+                        + ".HandOver();");
+                    raw.Add("&" + local);
                     break;
                 case VfuncBucket.OutScalar:
                     writer.WriteLine(value.RawType.TrimEnd('*') + " " + local + " = default;");
@@ -731,7 +778,8 @@ internal sealed class VfuncEmitter
         // leaving a reference behind that nothing releases.
         foreach (VfuncArgument argument in plan.Arguments)
         {
-            if (argument.Bucket is VfuncBucket.Adopt or VfuncBucket.InOutHandle)
+            if (argument.Bucket is VfuncBucket.Adopt or VfuncBucket.InOutHandle && !argument.IsBoxed)
+
             {
                 // An identity preserving inout handle is neither owned nor
                 // consumed by the slot: the caller keeps the reference of the
@@ -792,7 +840,7 @@ internal sealed class VfuncEmitter
         foreach (VfuncArgument argument in plan.Arguments)
         {
             if (argument.Bucket is VfuncBucket.BorrowGObject or VfuncBucket.BorrowMiniObject
-                or VfuncBucket.BorrowWrapper or VfuncBucket.BorrowOpaque)
+                or VfuncBucket.BorrowBoxed or VfuncBucket.BorrowWrapper or VfuncBucket.BorrowOpaque)
             {
                 writer.WriteLine("GC.KeepAlive(" + argument.Argument.Name + ");");
             }
@@ -805,7 +853,21 @@ internal sealed class VfuncEmitter
             switch (argument.Bucket)
             {
                 case VfuncBucket.Adopt:
-                    writer.WriteLine(value.Name + ".Dispose();");
+                    // The wrapper of a boxed value handed its value over
+                    // already and is detached; there is nothing to dispose.
+                    if (!argument.IsBoxed)
+                    {
+                        writer.WriteLine(value.Name + ".Dispose();");
+                    }
+
+                    break;
+                case VfuncBucket.InOutHandOver:
+                    // The wrapper the caller passed in is detached, so what the
+                    // parent slot left behind is wrapped afresh: the reference
+                    // the caller gave up is the one the new wrapper owns.
+                    writer.WriteLine(
+                        value.Name + " = " + local + " == nint.Zero ? null : "
+                        + AdoptExpression(value, local) + ";");
                     break;
                 case VfuncBucket.OutScalar:
                     writer.WriteLine(value.Name + " = " + FromNativeScalar(value, local) + ";");
@@ -936,7 +998,8 @@ internal sealed class VfuncEmitter
         {
             if (argument.Bucket == VfuncBucket.Adopt)
             {
-                writer.WriteLine(ReleaseExpression(argument.Argument, argument.Argument.Name) + ";");
+                writer.WriteLine(
+                    ReleaseExpression(argument.Argument, argument.Argument.Name, argument.IsBoxed) + ";");
             }
         }
 
@@ -1073,6 +1136,7 @@ internal sealed class VfuncEmitter
                     call.Add(NullAssert(value, local));
                     break;
                 case VfuncBucket.BorrowMiniObject:
+                case VfuncBucket.BorrowBoxed:
                     writer.WriteLine(
                         "using " + Nullable(value.PublicType) + " " + local + " = " + value.Name
                         + " == nint.Zero ? null : " + Bare(value.PublicType) + ".Borrow(" + value.Name + ");");
@@ -1123,6 +1187,19 @@ internal sealed class VfuncEmitter
                     call.Add("ref " + local);
                     produced.Add(argument);
                     break;
+                case VfuncBucket.InOutHandOver:
+                    // The caller gave its reference up on entry, so the wrapper
+                    // owns it and is not scoped by a using: what the override
+                    // leaves behind is handed back with that reference, and the
+                    // wrapper of a value it replaced is disposed below.
+                    writer.WriteLine(
+                        Nullable(value.PublicType) + " " + local + " = " + AdoptExpression(value, "*" + value.Name)
+                        + ";");
+                    writer.WriteLine(Nullable(value.PublicType) + " " + value.Name + "Entry = " + local + ";");
+                    writer.WriteLine("bool " + value.Name + "HandedOver = false;");
+                    call.Add("ref " + local);
+                    produced.Add(argument);
+                    break;
                 default:
                     break;
             }
@@ -1155,10 +1232,25 @@ internal sealed class VfuncEmitter
             writer.WriteLine(ReturnType(plan) + " result = " + invocation + ";");
         }
 
+        // What an inout hand over argument leaves behind is written back
+        // whatever the override answered: the caller of such a slot releases
+        // what it finds there on the failure path too, and the value it handed
+        // in is gone either way.
+        foreach (VfuncArgument argument in produced)
+        {
+            if (argument.Bucket == VfuncBucket.InOutHandOver)
+            {
+                string name = argument.Argument.Name;
+                writer.WriteLine(
+                    "*" + name + " = " + name + "Value is null ? nint.Zero : " + name + "Value.HandOver();");
+                writer.WriteLine(name + "HandedOver = true;");
+            }
+        }
+
         bool guarded = false;
         foreach (VfuncArgument argument in produced)
         {
-            guarded |= argument.Bucket != VfuncBucket.OutScalar;
+            guarded |= argument.Bucket is VfuncBucket.OutHandle or VfuncBucket.InOutHandle;
         }
 
         guarded &= string.Equals(Bare(plan.Return.PublicType), "Gst.FlowReturn", StringComparison.Ordinal);
@@ -1171,6 +1263,11 @@ internal sealed class VfuncEmitter
 
         foreach (VfuncArgument argument in produced)
         {
+            if (argument.Bucket == VfuncBucket.InOutHandOver)
+            {
+                continue;
+            }
+
             if (!guarded || argument.Bucket != VfuncBucket.OutScalar)
             {
                 WriteWriteBack(writer, argument);
@@ -1199,10 +1296,40 @@ internal sealed class VfuncEmitter
         writer.OpenBlock();
         foreach (VfuncArgument argument in produced)
         {
-            if (argument.Bucket != VfuncBucket.OutScalar)
+            if (argument.Bucket == VfuncBucket.OutScalar)
             {
-                writer.WriteLine(argument.Argument.Name + "Value?.Dispose();");
+                continue;
             }
+
+            string name = argument.Argument.Name;
+            if (argument.Bucket != VfuncBucket.InOutHandOver)
+            {
+                writer.WriteLine(name + "Value?.Dispose();");
+                continue;
+            }
+
+            // The override threw before anything was handed back: the caller
+            // reads a null where it handed a value in, and the reference it
+            // gave up is released here rather than at the next collection.
+            writer.WriteLine("if (!" + name + "HandedOver)");
+            writer.OpenBlock();
+            writer.WriteLine("*" + name + " = nint.Zero;");
+            writer.WriteLine("if (" + name + "Value is { IsDisposed: false })");
+            writer.OpenBlock();
+            writer.WriteLine(name + "Value.Dispose();");
+            writer.CloseBlock();
+            writer.CloseBlock();
+            writer.WriteLine();
+
+            // An override that answered a different value left the one it was
+            // given to the trampoline. Releasing it here rather than leaving it
+            // to the finalizer is what returns a pooled buffer to its pool.
+            writer.WriteLine(
+                "if (" + name + "Entry is { IsDisposed: false } && !ReferenceEquals(" + name + "Entry, "
+                + name + "Value))");
+            writer.OpenBlock();
+            writer.WriteLine(name + "Entry.Dispose();");
+            writer.CloseBlock();
         }
 
         writer.CloseBlock();
@@ -1420,6 +1547,15 @@ internal sealed class VfuncEmitter
             case VfuncBucket.BorrowWrapper:
                 note.Add("The element lends this for the duration of the call; keep a copy to retain it.");
                 break;
+
+            // The wrapper of a lent boxed value holds no copy of it, so what the
+            // override writes is what the caller reads back, and the wrapper is
+            // invalidated when the call returns.
+            case VfuncBucket.BorrowBoxed:
+                note.Add("The caller lends this for the duration of the call and reads back what the");
+                note.Add("override wrote into it. The wrapper stops meaning anything once the call");
+                note.Add("returns, so copy what has to outlive it before then.");
+                break;
             case VfuncBucket.Span:
                 note.Add("The memory belongs to the caller and is only valid while the call runs.");
                 break;
@@ -1436,6 +1572,13 @@ internal sealed class VfuncEmitter
             case VfuncBucket.InOutHandle:
                 note.Add("What the override leaves here is handed to the caller with one added");
                 note.Add("reference; the wrapper keeps its own.");
+                break;
+
+            case VfuncBucket.InOutHandOver:
+                note.Add("The caller gives its reference up: the wrapper handed in owns it, and");
+                note.Add("whatever the override leaves here is handed on with that reference rather");
+                note.Add("than a second one. A wrapper that was replaced or handed on is detached, so");
+                note.Add("using it afterwards throws; reference it first to keep it.");
                 break;
             default:
                 break;
@@ -1508,20 +1651,21 @@ internal sealed class VfuncEmitter
     private static string Modifier(VfuncArgument argument) => argument.Bucket switch
     {
         VfuncBucket.OutScalar or VfuncBucket.OutHandle => "out ",
-        VfuncBucket.InOutHandle => "ref ",
+        VfuncBucket.InOutHandle or VfuncBucket.InOutHandOver => "ref ",
         _ => string.Empty,
     };
 
     private static string PublicType(VfuncArgument argument) => argument.Bucket switch
     {
-        VfuncBucket.OutHandle or VfuncBucket.InOutHandle => Nullable(argument.Argument.PublicType),
+        VfuncBucket.OutHandle or VfuncBucket.InOutHandle or VfuncBucket.InOutHandOver =>
+            Nullable(argument.Argument.PublicType),
         VfuncBucket.OutScalar => Bare(argument.Argument.PublicType),
         _ => argument.Argument.PublicType,
     };
 
     private static bool NeedsNullCheck(VfuncArgument argument) =>
         argument.Bucket is VfuncBucket.Adopt or VfuncBucket.BorrowGObject or VfuncBucket.BorrowMiniObject
-            or VfuncBucket.BorrowWrapper or VfuncBucket.BorrowOpaque
+            or VfuncBucket.BorrowBoxed or VfuncBucket.BorrowWrapper or VfuncBucket.BorrowOpaque
         && !argument.Argument.PublicType.EndsWith('?');
 
     private static string FunctionPointerType(VirtualMethodPlan plan)
@@ -1541,8 +1685,8 @@ internal sealed class VfuncEmitter
         ArgumentPlan value = argument.Argument;
         return argument.Bucket switch
         {
-            VfuncBucket.BorrowGObject or VfuncBucket.BorrowMiniObject or VfuncBucket.BorrowWrapper
-                or VfuncBucket.BorrowOpaque =>
+            VfuncBucket.BorrowGObject or VfuncBucket.BorrowMiniObject or VfuncBucket.BorrowBoxed
+                or VfuncBucket.BorrowWrapper or VfuncBucket.BorrowOpaque =>
                 value.PublicType.EndsWith('?')
                     ? value.Name + " is null ? nint.Zero : " + value.Name + ".Handle"
                     : value.Name + ".Handle",
@@ -1640,10 +1784,12 @@ internal sealed class VfuncEmitter
             ? "Gst.Interop.GObjectNative.ObjectRef(" + handle + ")"
             : "Gst.GstNative.MiniObjectRef(" + handle + ")";
 
-    private static string ReleaseExpression(ArgumentPlan value, string handle) =>
-        value.Flavor == HandleFlavor.GObject
-            ? "Gst.Interop.GObjectNative.ObjectUnref(" + handle + ")"
-            : "Gst.GstNative.MiniObjectUnref(" + handle + ")";
+    private static string ReleaseExpression(ArgumentPlan value, string handle, bool boxed = false) =>
+        boxed
+            ? "Gst.Interop.GObjectNative.BoxedFree(" + Bare(value.PublicType) + ".GetGType(), " + handle + ")"
+            : value.Flavor == HandleFlavor.GObject
+                ? "Gst.Interop.GObjectNative.ObjectUnref(" + handle + ")"
+                : "Gst.GstNative.MiniObjectUnref(" + handle + ")";
 
     /// <summary>
     /// The expression that reads the raw handle of the argument an identity

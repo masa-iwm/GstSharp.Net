@@ -523,29 +523,47 @@ internal sealed class RecordEmitter
     /// <param name="writer">Where the members are written.</param>
     /// <param name="record">The gir record the wrapper stands for.</param>
     /// <param name="typeName">The name of the wrapper.</param>
-    private static void WriteBorrow(CodeWriter writer, GirRecord record, string typeName)
+    private static void WriteBorrow(CodeWriter writer, GirRecord record, string typeName, bool boxed = false)
     {
         string cType = CTypeOf(record);
         writer.WriteLine();
         writer.WriteLine(
             "/// <summary>Wraps a <c>" + cType
             + "</c> that GStreamer keeps owning, for the length of one call.</summary>");
-        writer.WriteLine("/// <param name=\"handle\">The mini object that is lent to managed code.</param>");
-        writer.WriteLine("/// <returns>The wrapper, which holds no reference of its own.</returns>");
+        writer.WriteLine(
+            "/// <param name=\"handle\">The " + (boxed ? "value" : "mini object") + " that is lent to managed code.</param>");
+        writer.WriteLine(
+            "/// <returns>The wrapper, which holds "
+            + (boxed ? "nothing" : "no reference") + " of its own.</returns>");
         writer.WriteLine("/// <remarks>");
-        writer.WriteLine("/// This is how the override of a virtual method receives a <c>transfer none</c>");
-        writer.WriteLine("/// mini object. The wrapper takes no reference, so the object stays as writable");
-        writer.WriteLine("/// as GStreamer handed it over, and disposing the wrapper only detaches it: a");
-        writer.WriteLine("/// wrapper kept past the call throws instead of releasing a reference it never");
-        writer.WriteLine("/// took. See <see cref=\"Gst.Interop.Borrowed\"/>.");
+        if (boxed)
+        {
+            writer.WriteLine("/// This is how the override of a virtual method receives a <c>transfer none</c>");
+            writer.WriteLine("/// boxed value. No <c>g_boxed_copy</c> is taken, so every write the override");
+            writer.WriteLine("/// makes lands in the instance the caller of the slot reads back, and disposing");
+            writer.WriteLine("/// the wrapper only detaches it: a wrapper kept past the call throws instead of");
+            writer.WriteLine("/// freeing a value it never owned. See <see cref=\"Gst.Interop.Borrowed\"/>.");
+        }
+        else
+        {
+            writer.WriteLine("/// This is how the override of a virtual method receives a <c>transfer none</c>");
+            writer.WriteLine("/// mini object. The wrapper takes no reference, so the object stays as writable");
+            writer.WriteLine("/// as GStreamer handed it over, and disposing the wrapper only detaches it: a");
+            writer.WriteLine("/// wrapper kept past the call throws instead of releasing a reference it never");
+            writer.WriteLine("/// took. See <see cref=\"Gst.Interop.Borrowed\"/>.");
+        }
+
         writer.WriteLine("/// </remarks>");
         writer.WriteLine(
             "internal static " + typeName + " " + SurfaceBuilder.BorrowName + "(nint handle) => new(new Gst.Interop.Borrowed(handle));");
         writer.WriteLine();
         writer.WriteLine("/// <summary>Wraps a <c>" + cType + "</c> the caller keeps owning.</summary>");
-        writer.WriteLine("/// <param name=\"borrowed\">The mini object that is lent to managed code.</param>");
+        writer.WriteLine(
+            "/// <param name=\"borrowed\">The " + (boxed ? "value" : "mini object")
+            + " that is lent to managed code.</param>");
         writer.WriteLine("private " + typeName + "(Gst.Interop.Borrowed borrowed)");
-        writer.WriteLine("    : base(borrowed)");
+        writer.WriteLine(
+            "    : base(borrowed" + (boxed ? ", new Gst.GObject.GType(GetGType())" : string.Empty) + ")");
         writer.OpenBlock();
         writer.CloseBlock();
     }
@@ -955,6 +973,7 @@ internal sealed class RecordEmitter
             record,
             typeName,
             "base(handle, new Gst.GObject.GType(GetGType()), transfer)");
+        WriteBorrow(writer, record, typeName, boxed: true);
 
         WriteAccessors(writer, record, accessors);
 

@@ -19,6 +19,25 @@ public sealed unsafe partial class RTSPAddress : Gst.GObject.Boxed
     {
     }
 
+    /// <summary>Wraps a <c>GstRTSPAddress</c> that GStreamer keeps owning, for the length of one call.</summary>
+    /// <param name="handle">The value that is lent to managed code.</param>
+    /// <returns>The wrapper, which holds nothing of its own.</returns>
+    /// <remarks>
+    /// This is how the override of a virtual method receives a <c>transfer none</c>
+    /// boxed value. No <c>g_boxed_copy</c> is taken, so every write the override
+    /// makes lands in the instance the caller of the slot reads back, and disposing
+    /// the wrapper only detaches it: a wrapper kept past the call throws instead of
+    /// freeing a value it never owned. See <see cref="Gst.Interop.Borrowed"/>.
+    /// </remarks>
+    internal static RTSPAddress Borrow(nint handle) => new(new Gst.Interop.Borrowed(handle));
+
+    /// <summary>Wraps a <c>GstRTSPAddress</c> the caller keeps owning.</summary>
+    /// <param name="borrowed">The value that is lent to managed code.</param>
+    private RTSPAddress(Gst.Interop.Borrowed borrowed)
+        : base(borrowed, new Gst.GObject.GType(GetGType()))
+    {
+    }
+
     /// <summary>the #GstRTSPAddressPool owner of this address</summary>
     /// <remarks>
     /// <para>
