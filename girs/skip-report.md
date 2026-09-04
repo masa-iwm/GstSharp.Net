@@ -996,30 +996,9 @@ disappears shows up here as an added line.
 - `gst_rtsp_permissions_add_role`
 - `gst_rtsp_token_new`
 
-### UnsupportedSignature (46)
+### UnsupportedSignature (25)
 
-- `GstRtspServer.RTSPClient::announce-request`
 - `GstRtspServer.RTSPClient::check-requirements`
-- `GstRtspServer.RTSPClient::describe-request`
-- `GstRtspServer.RTSPClient::get-parameter-request`
-- `GstRtspServer.RTSPClient::handle-response`
-- `GstRtspServer.RTSPClient::options-request`
-- `GstRtspServer.RTSPClient::pause-request`
-- `GstRtspServer.RTSPClient::play-request`
-- `GstRtspServer.RTSPClient::pre-announce-request`
-- `GstRtspServer.RTSPClient::pre-describe-request`
-- `GstRtspServer.RTSPClient::pre-get-parameter-request`
-- `GstRtspServer.RTSPClient::pre-options-request`
-- `GstRtspServer.RTSPClient::pre-pause-request`
-- `GstRtspServer.RTSPClient::pre-play-request`
-- `GstRtspServer.RTSPClient::pre-record-request`
-- `GstRtspServer.RTSPClient::pre-set-parameter-request`
-- `GstRtspServer.RTSPClient::pre-setup-request`
-- `GstRtspServer.RTSPClient::pre-teardown-request`
-- `GstRtspServer.RTSPClient::record-request`
-- `GstRtspServer.RTSPClient::set-parameter-request`
-- `GstRtspServer.RTSPClient::setup-request`
-- `GstRtspServer.RTSPClient::teardown-request`
 - `gst_rtsp_auth_get_tls_authentication_mode`
 - `gst_rtsp_auth_set_tls_authentication_mode`
 - `gst_rtsp_client_set_connection`

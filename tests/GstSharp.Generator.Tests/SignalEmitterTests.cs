@@ -499,7 +499,7 @@ public sealed class SignalEmitterTests
     [InlineData("GstNet", 0)]
     [InlineData("GstRtsp", 1)]
     [InlineData("GstRtp", 2)]
-    [InlineData("GstRtspServer", 19)]
+    [InlineData("GstRtspServer", 40)]
     [InlineData("GstAllocators", 0)]
     [InlineData("GstTag", 0)]
     [InlineData("GstTranscoder", 6)]
@@ -537,7 +537,7 @@ public sealed class SignalEmitterTests
         }
 
         // A hundred and twenty three signals are emitted over the seventeen
-        // modules. A hundred and nineteen are events of a class; the remaining
+        // modules. A hundred and forty are events of a class; the remaining
         // four belong to a gir interface and are a pair of extension methods
         // instead. The editing services are thirty five of them, and all
         // thirty five are events: the one signal of a GES interface,
@@ -549,20 +549,21 @@ public sealed class SignalEmitterTests
         // GstRTPBaseDepayload; the four signals beside them, add-extension and
         // clear-extensions on each of the two classes, carry action="1" and
         // are skipped on that rule, since an action signal is a call API and
-        // not a notification. The nineteen of the RTSP server are the ones its
-        // classes declare that carry no GstRTSPContext: the twenty two request
-        // signals of GstRTSPClient all carry one, which a trampoline has
-        // nothing to wrap, and send-message is the one whose C# name the method
-        // beside it had taken, so the rename of fixups.json makes the event
-        // SendingMessage. The adder and remover counts carry matches that are
+        // not a notification. The forty of the RTSP server are the nineteen
+        // that carry no GstRTSPContext plus the twenty one request signals of
+        // GstRTSPClient, whose context is copied out of the emission into the
+        // arguments; the twenty second, check-requirements, stays skipped for
+        // the array of strings beside its context. send-message is the one
+        // whose C# name the method beside it had taken, so the rename of
+        // fixups.json makes the event SendingMessage. The adder and remover counts carry matches that are
         // not a signal pair at all: Gst.ITagSetter's AddTagValue extension, and
         // the AddAllSchemas, AddSchema, RemoveAllSchemas and RemoveSchema
         // extensions of Gst.Tag.ITagXmpWriter, methods whose names the pattern
         // cannot tell from a subscription adder or remover.
-        Assert.Equal(119, events);
+        Assert.Equal(140, events);
         Assert.Equal(7, adders);
         Assert.Equal(6, removers);
-        Assert.Equal(123, trampolines);
+        Assert.Equal(144, trampolines);
 
         string[] withSignals =
         [
@@ -696,6 +697,67 @@ public sealed class SignalEmitterTests
             StringComparison.Ordinal);
         Assert.Contains(
             "add => Gst.App.SignalConnections.Add(this, \"new-sample\", ",
+            source,
+            StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// A namespace whose one signal carries a plain structure, the shape the
+    /// request signals of <c>GstRTSPClient</c> have.
+    /// </summary>
+    private const string PlainStructSignalFixture =
+        """
+            <record name="RequestInfo" c:type="GstRequestInfo">
+              <field name="method" writable="1">
+                <type name="gint" c:type="gint"/>
+              </field>
+              <field name="uri" writable="1">
+                <type name="gpointer" c:type="gpointer"/>
+              </field>
+            </record>
+            <class name="Element" c:type="GstElement" parent="GObject.Object" glib:type-name="GstElement" glib:get-type="gst_element_get_type">
+              <glib:signal name="describe-request" when="last">
+                <return-value transfer-ownership="none">
+                  <type name="none" c:type="void"/>
+                </return-value>
+                <parameters>
+                  <parameter name="ctx" transfer-ownership="none">
+                    <doc xml:space="preserve">the context of the request</doc>
+                    <type name="RequestInfo"/>
+                  </parameter>
+                </parameters>
+              </glib:signal>
+            </class>
+        """;
+
+    [Fact]
+    public void APlainStructArgumentIsCopiedOutOfTheEmission()
+    {
+        FixtureRun run = Fixture.Run(PlainStructSignalFixture);
+        string source = run.File("Element.cs");
+
+        // The gir of a signal parameter states no c:type, so the pointer the
+        // marshaller of GObject passes is not spelled there; the trampoline
+        // takes it all the same, and the handler is handed the value at it.
+        Assert.Contains(
+            "private static void DescribeRequestTrampoline(nint instance, Gst.RequestInfo* ctx, nint userData)",
+            source,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "(nint)(delegate* unmanaged[Cdecl]<nint, Gst.RequestInfo*, nint, void>)&DescribeRequestTrampoline",
+            source,
+            StringComparison.Ordinal);
+        Assert.Contains("Gst.RequestInfo ctxValue = *ctx;", source, StringComparison.Ordinal);
+        Assert.Contains("internal DescribeRequestSignalArgs(Gst.RequestInfo ctx)", source, StringComparison.Ordinal);
+        Assert.Contains("public Gst.RequestInfo Ctx { get; }", source, StringComparison.Ordinal);
+
+        // The copy outlives the emission, the pointers in it do not, and the
+        // property says so.
+        Assert.Contains(
+            "/// A read only snapshot: the structure is copied out of the storage the\n"
+            + "        /// emitter holds, so writing to it changes nothing the emission reads\n"
+            + "        /// back. Every pointer inside it is borrowed for the length of the\n"
+            + "        /// handler and must not be kept past it.",
             source,
             StringComparison.Ordinal);
     }

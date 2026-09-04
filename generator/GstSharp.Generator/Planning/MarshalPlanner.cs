@@ -4066,10 +4066,20 @@ internal sealed class MarshalPlanner
         if (argument is null
             || argument.Kind is not (ArgumentKind.Value or ArgumentKind.Boolean or ArgumentKind.Enumeration
                 or ArgumentKind.Wrapper or ArgumentKind.Pointer or ArgumentKind.Utf8 or ArgumentKind.Handle
-                or ArgumentKind.GError))
+                or ArgumentKind.GError or ArgumentKind.PlainStruct))
         {
             return null;
         }
+
+        // A plain structure reaches a handler as the address of the storage the
+        // emitter holds: the marshaller of GObject passes a pointer for every
+        // structure it carries. The gir of a signal parameter states no c:type,
+        // so PlanScalar saw no star and planned the by value form; the raw type
+        // is restated here as the pointer the trampoline is really called with,
+        // and the emitter copies what is at it into the value the handler sees.
+        string rawType = argument.Kind == ArgumentKind.PlainStruct
+            ? argument.PublicType + "*"
+            : argument.RawType;
 
         return new ArgumentPlan
         {
@@ -4077,7 +4087,7 @@ internal sealed class MarshalPlanner
             Kind = argument.Kind,
             Name = argument.Name,
             PublicType = argument.PublicType,
-            RawType = argument.RawType,
+            RawType = rawType,
             Transfer = argument.Transfer,
             Flavor = argument.Flavor,
             IsNullable = argument.IsNullable,

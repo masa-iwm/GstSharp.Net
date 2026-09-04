@@ -423,6 +423,105 @@ public sealed unsafe class RtspServerTests
     }
 
     /// <summary>
+    /// The context a request signal of <see cref="RTSPClient"/> carries is the
+    /// one of the request being answered: <c>describe-request</c> fires on the
+    /// <c>DESCRIBE</c> of a real client, with the method and the url of that
+    /// request in the structure the handler is handed.
+    /// </summary>
+    /// <remarks>
+    /// The structure is a copy of what the emitter holds, so the fields are
+    /// read while the handler runs: the pointers in it - the url among them -
+    /// are borrowed from the emission and mean nothing after it. A client is
+    /// only reachable through <c>client-connected</c>, which the server raises
+    /// before the first request of that client is parsed.
+    /// </remarks>
+    [RequiresElementFact("rtspsrc", "rtpL16pay")]
+    public void ADescribeRequestCarriesTheContextOfTheRequest()
+    {
+        using MainContext context = MainContext.New();
+        using RTSPServer server = RTSPServer.New();
+
+        server.SetAddress("127.0.0.1");
+        server.SetService("0");
+
+        using RTSPThreadPool? threadPool = server.GetThreadPool();
+        Assert.NotNull(threadPool);
+        threadPool.SetMaxThreads(0);
+
+        using RTSPMountPoints? mounts = server.GetMountPoints();
+        Assert.NotNull(mounts);
+
+        using RTSPMediaFactory factory = RTSPMediaFactory.New();
+        factory.SetLaunch(Launch);
+        factory.SetShared(true);
+        mounts.AddFactory("/test", factory);
+
+        int described = 0;
+        int method = 0;
+        string? path = null;
+
+        server.ClientConnected += (_, connected) =>
+            connected.Object.DescribeRequest += (_, request) =>
+            {
+                RTSPContext ctx = request.Ctx;
+                method = ctx.Method;
+
+                using RTSPUrl? uri = ctx.GetUri();
+                path = uri?.Abspath;
+                Interlocked.Increment(ref described);
+            };
+
+        uint sourceId = server.Attach(context);
+        Assert.True(sourceId > 0, "Attach answered 0, which is its failure.");
+
+        int port = server.GetBoundPort();
+        Assert.True(port > 0, $"bound port {port} is not a port.");
+
+        Element client = Gst.Global.ParseLaunch(
+            $"rtspsrc location=rtsp://127.0.0.1:{port}/test latency=0 ! fakesink sync=false");
+
+        System.Threading.Tasks.Task<StateChangeReturn>? down = null;
+        bool lowered = false;
+
+        try
+        {
+            Assert.NotEqual(StateChangeReturn.Failure, client.SetState(State.Playing));
+
+            Assert.True(
+                PumpUntil(context, () => Volatile.Read(ref described) > 0),
+                "describe-request never fired: no client described the mount.");
+
+            // GST_RTSP_DESCRIBE. The method is an int on the structure because
+            // GstRTSPMethod belongs to another module than the one that
+            // declares the field.
+            Assert.Equal((int)RTSPMethod.Describe, method);
+            Assert.Equal("/test", path);
+
+            down = System.Threading.Tasks.Task.Run(() => client.SetState(State.Null));
+            lowered = PumpUntil(context, () => down.IsCompleted);
+            Assert.True(lowered, "rtspsrc never reached NULL.");
+        }
+        finally
+        {
+            if (lowered)
+            {
+                client.Dispose();
+            }
+        }
+
+        Assert.True(server.Detach(sourceId, context));
+        Assert.Empty(server.ClientFilter((_, _) => RTSPFilterResult.Remove));
+
+        using RTSPSessionPool? sessionPool = server.GetSessionPool();
+        Assert.NotNull(sessionPool);
+        Assert.Empty(sessionPool.Filter((_, _) => RTSPFilterResult.Remove));
+
+        Assert.True(
+            PumpUntil(context, () => DisposeAll(server.ClientFilter(null)) == 0),
+            "a client was still managed after the filter removed it.");
+    }
+
+    /// <summary>
     /// Disposes every wrapper of a transfer full list and answers how many
     /// there were.
     /// </summary>

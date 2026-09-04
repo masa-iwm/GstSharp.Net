@@ -363,6 +363,61 @@ public unsafe partial class RTSPClient : Gst.GObject.Object
         }
     }
 
+    /// <summary>The arguments of the <c>announce-request</c> signal of <c>GstRTSPClient</c>.</summary>
+    public sealed class AnnounceRequestSignalArgs : System.EventArgs
+    {
+        /// <summary>Initializes a new instance of the <see cref="AnnounceRequestSignalArgs"/> class.</summary>
+        /// <param name="ctx">a #GstRTSPContext</param>
+        internal AnnounceRequestSignalArgs(Gst.RtspServer.RTSPContext ctx)
+        {
+            Ctx = ctx;
+        }
+
+        /// <summary>a #GstRTSPContext</summary>
+        /// <remarks>
+        /// A read only snapshot: the structure is copied out of the storage the
+        /// emitter holds, so writing to it changes nothing the emission reads
+        /// back. Every pointer inside it is borrowed for the length of the
+        /// handler and must not be kept past it.
+        /// </remarks>
+        public Gst.RtspServer.RTSPContext Ctx { get; }
+    }
+
+    /// <summary>Raised for the <c>announce-request</c> signal of <c>GstRTSPClient</c>.</summary>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
+    public event System.EventHandler<Gst.RtspServer.RTSPClient.AnnounceRequestSignalArgs> AnnounceRequest
+    {
+        add => Gst.RtspServer.SignalConnections.Add(this, "announce-request", (nint)(delegate* unmanaged[Cdecl]<nint, Gst.RtspServer.RTSPContext*, nint, void>)&AnnounceRequestTrampoline, value);
+        remove => Gst.RtspServer.SignalConnections.Remove(this, "announce-request", value);
+    }
+
+    /// <summary>The native handler of the <c>announce-request</c> signal of <c>GstRTSPClient</c>.</summary>
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
+    private static void AnnounceRequestTrampoline(nint instance, Gst.RtspServer.RTSPContext* ctx, nint userData)
+    {
+        try
+        {
+            if (Gst.Interop.CallbackHandle.GetState<System.EventHandler<Gst.RtspServer.RTSPClient.AnnounceRequestSignalArgs>>(userData) is not { } handler)
+            {
+                return;
+            }
+
+            Gst.RtspServer.RTSPContext ctxValue = *ctx;
+            handler(
+                Gst.GObject.Object.FromNative(instance, Gst.Interop.Transfer.None),
+                new Gst.RtspServer.RTSPClient.AnnounceRequestSignalArgs(ctxValue));
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+        }
+    }
+
     /// <summary>Raised for the <c>closed</c> signal of <c>GstRTSPClient</c>.</summary>
     /// <remarks>
     /// The handler is remembered on the wrapper it was added to and has to be
@@ -390,6 +445,171 @@ public unsafe partial class RTSPClient : Gst.GObject.Object
             handler(
                 Gst.GObject.Object.FromNative(instance, Gst.Interop.Transfer.None),
                 System.EventArgs.Empty);
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+        }
+    }
+
+    /// <summary>The arguments of the <c>describe-request</c> signal of <c>GstRTSPClient</c>.</summary>
+    public sealed class DescribeRequestSignalArgs : System.EventArgs
+    {
+        /// <summary>Initializes a new instance of the <see cref="DescribeRequestSignalArgs"/> class.</summary>
+        /// <param name="ctx">a #GstRTSPContext</param>
+        internal DescribeRequestSignalArgs(Gst.RtspServer.RTSPContext ctx)
+        {
+            Ctx = ctx;
+        }
+
+        /// <summary>a #GstRTSPContext</summary>
+        /// <remarks>
+        /// A read only snapshot: the structure is copied out of the storage the
+        /// emitter holds, so writing to it changes nothing the emission reads
+        /// back. Every pointer inside it is borrowed for the length of the
+        /// handler and must not be kept past it.
+        /// </remarks>
+        public Gst.RtspServer.RTSPContext Ctx { get; }
+    }
+
+    /// <summary>Raised for the <c>describe-request</c> signal of <c>GstRTSPClient</c>.</summary>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
+    public event System.EventHandler<Gst.RtspServer.RTSPClient.DescribeRequestSignalArgs> DescribeRequest
+    {
+        add => Gst.RtspServer.SignalConnections.Add(this, "describe-request", (nint)(delegate* unmanaged[Cdecl]<nint, Gst.RtspServer.RTSPContext*, nint, void>)&DescribeRequestTrampoline, value);
+        remove => Gst.RtspServer.SignalConnections.Remove(this, "describe-request", value);
+    }
+
+    /// <summary>The native handler of the <c>describe-request</c> signal of <c>GstRTSPClient</c>.</summary>
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
+    private static void DescribeRequestTrampoline(nint instance, Gst.RtspServer.RTSPContext* ctx, nint userData)
+    {
+        try
+        {
+            if (Gst.Interop.CallbackHandle.GetState<System.EventHandler<Gst.RtspServer.RTSPClient.DescribeRequestSignalArgs>>(userData) is not { } handler)
+            {
+                return;
+            }
+
+            Gst.RtspServer.RTSPContext ctxValue = *ctx;
+            handler(
+                Gst.GObject.Object.FromNative(instance, Gst.Interop.Transfer.None),
+                new Gst.RtspServer.RTSPClient.DescribeRequestSignalArgs(ctxValue));
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+        }
+    }
+
+    /// <summary>The arguments of the <c>get-parameter-request</c> signal of <c>GstRTSPClient</c>.</summary>
+    public sealed class GetParameterRequestSignalArgs : System.EventArgs
+    {
+        /// <summary>Initializes a new instance of the <see cref="GetParameterRequestSignalArgs"/> class.</summary>
+        /// <param name="ctx">a #GstRTSPContext</param>
+        internal GetParameterRequestSignalArgs(Gst.RtspServer.RTSPContext ctx)
+        {
+            Ctx = ctx;
+        }
+
+        /// <summary>a #GstRTSPContext</summary>
+        /// <remarks>
+        /// A read only snapshot: the structure is copied out of the storage the
+        /// emitter holds, so writing to it changes nothing the emission reads
+        /// back. Every pointer inside it is borrowed for the length of the
+        /// handler and must not be kept past it.
+        /// </remarks>
+        public Gst.RtspServer.RTSPContext Ctx { get; }
+    }
+
+    /// <summary>Raised for the <c>get-parameter-request</c> signal of <c>GstRTSPClient</c>.</summary>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
+    public event System.EventHandler<Gst.RtspServer.RTSPClient.GetParameterRequestSignalArgs> GetParameterRequest
+    {
+        add => Gst.RtspServer.SignalConnections.Add(this, "get-parameter-request", (nint)(delegate* unmanaged[Cdecl]<nint, Gst.RtspServer.RTSPContext*, nint, void>)&GetParameterRequestTrampoline, value);
+        remove => Gst.RtspServer.SignalConnections.Remove(this, "get-parameter-request", value);
+    }
+
+    /// <summary>The native handler of the <c>get-parameter-request</c> signal of <c>GstRTSPClient</c>.</summary>
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
+    private static void GetParameterRequestTrampoline(nint instance, Gst.RtspServer.RTSPContext* ctx, nint userData)
+    {
+        try
+        {
+            if (Gst.Interop.CallbackHandle.GetState<System.EventHandler<Gst.RtspServer.RTSPClient.GetParameterRequestSignalArgs>>(userData) is not { } handler)
+            {
+                return;
+            }
+
+            Gst.RtspServer.RTSPContext ctxValue = *ctx;
+            handler(
+                Gst.GObject.Object.FromNative(instance, Gst.Interop.Transfer.None),
+                new Gst.RtspServer.RTSPClient.GetParameterRequestSignalArgs(ctxValue));
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+        }
+    }
+
+    /// <summary>The arguments of the <c>handle-response</c> signal of <c>GstRTSPClient</c>.</summary>
+    public sealed class HandleResponseSignalArgs : System.EventArgs
+    {
+        /// <summary>Initializes a new instance of the <see cref="HandleResponseSignalArgs"/> class.</summary>
+        /// <param name="ctx">a #GstRTSPContext</param>
+        internal HandleResponseSignalArgs(Gst.RtspServer.RTSPContext ctx)
+        {
+            Ctx = ctx;
+        }
+
+        /// <summary>a #GstRTSPContext</summary>
+        /// <remarks>
+        /// A read only snapshot: the structure is copied out of the storage the
+        /// emitter holds, so writing to it changes nothing the emission reads
+        /// back. Every pointer inside it is borrowed for the length of the
+        /// handler and must not be kept past it.
+        /// </remarks>
+        public Gst.RtspServer.RTSPContext Ctx { get; }
+    }
+
+    /// <summary>Raised for the <c>handle-response</c> signal of <c>GstRTSPClient</c>.</summary>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
+    public event System.EventHandler<Gst.RtspServer.RTSPClient.HandleResponseSignalArgs> HandleResponse
+    {
+        add => Gst.RtspServer.SignalConnections.Add(this, "handle-response", (nint)(delegate* unmanaged[Cdecl]<nint, Gst.RtspServer.RTSPContext*, nint, void>)&HandleResponseTrampoline, value);
+        remove => Gst.RtspServer.SignalConnections.Remove(this, "handle-response", value);
+    }
+
+    /// <summary>The native handler of the <c>handle-response</c> signal of <c>GstRTSPClient</c>.</summary>
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
+    private static void HandleResponseTrampoline(nint instance, Gst.RtspServer.RTSPContext* ctx, nint userData)
+    {
+        try
+        {
+            if (Gst.Interop.CallbackHandle.GetState<System.EventHandler<Gst.RtspServer.RTSPClient.HandleResponseSignalArgs>>(userData) is not { } handler)
+            {
+                return;
+            }
+
+            Gst.RtspServer.RTSPContext ctxValue = *ctx;
+            handler(
+                Gst.GObject.Object.FromNative(instance, Gst.Interop.Transfer.None),
+                new Gst.RtspServer.RTSPClient.HandleResponseSignalArgs(ctxValue));
         }
         catch (Exception exception)
         {
@@ -447,6 +667,237 @@ public unsafe partial class RTSPClient : Gst.GObject.Object
         }
     }
 
+    /// <summary>The arguments of the <c>options-request</c> signal of <c>GstRTSPClient</c>.</summary>
+    public sealed class OptionsRequestSignalArgs : System.EventArgs
+    {
+        /// <summary>Initializes a new instance of the <see cref="OptionsRequestSignalArgs"/> class.</summary>
+        /// <param name="ctx">a #GstRTSPContext</param>
+        internal OptionsRequestSignalArgs(Gst.RtspServer.RTSPContext ctx)
+        {
+            Ctx = ctx;
+        }
+
+        /// <summary>a #GstRTSPContext</summary>
+        /// <remarks>
+        /// A read only snapshot: the structure is copied out of the storage the
+        /// emitter holds, so writing to it changes nothing the emission reads
+        /// back. Every pointer inside it is borrowed for the length of the
+        /// handler and must not be kept past it.
+        /// </remarks>
+        public Gst.RtspServer.RTSPContext Ctx { get; }
+    }
+
+    /// <summary>Raised for the <c>options-request</c> signal of <c>GstRTSPClient</c>.</summary>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
+    public event System.EventHandler<Gst.RtspServer.RTSPClient.OptionsRequestSignalArgs> OptionsRequest
+    {
+        add => Gst.RtspServer.SignalConnections.Add(this, "options-request", (nint)(delegate* unmanaged[Cdecl]<nint, Gst.RtspServer.RTSPContext*, nint, void>)&OptionsRequestTrampoline, value);
+        remove => Gst.RtspServer.SignalConnections.Remove(this, "options-request", value);
+    }
+
+    /// <summary>The native handler of the <c>options-request</c> signal of <c>GstRTSPClient</c>.</summary>
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
+    private static void OptionsRequestTrampoline(nint instance, Gst.RtspServer.RTSPContext* ctx, nint userData)
+    {
+        try
+        {
+            if (Gst.Interop.CallbackHandle.GetState<System.EventHandler<Gst.RtspServer.RTSPClient.OptionsRequestSignalArgs>>(userData) is not { } handler)
+            {
+                return;
+            }
+
+            Gst.RtspServer.RTSPContext ctxValue = *ctx;
+            handler(
+                Gst.GObject.Object.FromNative(instance, Gst.Interop.Transfer.None),
+                new Gst.RtspServer.RTSPClient.OptionsRequestSignalArgs(ctxValue));
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+        }
+    }
+
+    /// <summary>The arguments of the <c>pause-request</c> signal of <c>GstRTSPClient</c>.</summary>
+    public sealed class PauseRequestSignalArgs : System.EventArgs
+    {
+        /// <summary>Initializes a new instance of the <see cref="PauseRequestSignalArgs"/> class.</summary>
+        /// <param name="ctx">a #GstRTSPContext</param>
+        internal PauseRequestSignalArgs(Gst.RtspServer.RTSPContext ctx)
+        {
+            Ctx = ctx;
+        }
+
+        /// <summary>a #GstRTSPContext</summary>
+        /// <remarks>
+        /// A read only snapshot: the structure is copied out of the storage the
+        /// emitter holds, so writing to it changes nothing the emission reads
+        /// back. Every pointer inside it is borrowed for the length of the
+        /// handler and must not be kept past it.
+        /// </remarks>
+        public Gst.RtspServer.RTSPContext Ctx { get; }
+    }
+
+    /// <summary>Raised for the <c>pause-request</c> signal of <c>GstRTSPClient</c>.</summary>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
+    public event System.EventHandler<Gst.RtspServer.RTSPClient.PauseRequestSignalArgs> PauseRequest
+    {
+        add => Gst.RtspServer.SignalConnections.Add(this, "pause-request", (nint)(delegate* unmanaged[Cdecl]<nint, Gst.RtspServer.RTSPContext*, nint, void>)&PauseRequestTrampoline, value);
+        remove => Gst.RtspServer.SignalConnections.Remove(this, "pause-request", value);
+    }
+
+    /// <summary>The native handler of the <c>pause-request</c> signal of <c>GstRTSPClient</c>.</summary>
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
+    private static void PauseRequestTrampoline(nint instance, Gst.RtspServer.RTSPContext* ctx, nint userData)
+    {
+        try
+        {
+            if (Gst.Interop.CallbackHandle.GetState<System.EventHandler<Gst.RtspServer.RTSPClient.PauseRequestSignalArgs>>(userData) is not { } handler)
+            {
+                return;
+            }
+
+            Gst.RtspServer.RTSPContext ctxValue = *ctx;
+            handler(
+                Gst.GObject.Object.FromNative(instance, Gst.Interop.Transfer.None),
+                new Gst.RtspServer.RTSPClient.PauseRequestSignalArgs(ctxValue));
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+        }
+    }
+
+    /// <summary>The arguments of the <c>play-request</c> signal of <c>GstRTSPClient</c>.</summary>
+    public sealed class PlayRequestSignalArgs : System.EventArgs
+    {
+        /// <summary>Initializes a new instance of the <see cref="PlayRequestSignalArgs"/> class.</summary>
+        /// <param name="ctx">a #GstRTSPContext</param>
+        internal PlayRequestSignalArgs(Gst.RtspServer.RTSPContext ctx)
+        {
+            Ctx = ctx;
+        }
+
+        /// <summary>a #GstRTSPContext</summary>
+        /// <remarks>
+        /// A read only snapshot: the structure is copied out of the storage the
+        /// emitter holds, so writing to it changes nothing the emission reads
+        /// back. Every pointer inside it is borrowed for the length of the
+        /// handler and must not be kept past it.
+        /// </remarks>
+        public Gst.RtspServer.RTSPContext Ctx { get; }
+    }
+
+    /// <summary>Raised for the <c>play-request</c> signal of <c>GstRTSPClient</c>.</summary>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
+    public event System.EventHandler<Gst.RtspServer.RTSPClient.PlayRequestSignalArgs> PlayRequest
+    {
+        add => Gst.RtspServer.SignalConnections.Add(this, "play-request", (nint)(delegate* unmanaged[Cdecl]<nint, Gst.RtspServer.RTSPContext*, nint, void>)&PlayRequestTrampoline, value);
+        remove => Gst.RtspServer.SignalConnections.Remove(this, "play-request", value);
+    }
+
+    /// <summary>The native handler of the <c>play-request</c> signal of <c>GstRTSPClient</c>.</summary>
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
+    private static void PlayRequestTrampoline(nint instance, Gst.RtspServer.RTSPContext* ctx, nint userData)
+    {
+        try
+        {
+            if (Gst.Interop.CallbackHandle.GetState<System.EventHandler<Gst.RtspServer.RTSPClient.PlayRequestSignalArgs>>(userData) is not { } handler)
+            {
+                return;
+            }
+
+            Gst.RtspServer.RTSPContext ctxValue = *ctx;
+            handler(
+                Gst.GObject.Object.FromNative(instance, Gst.Interop.Transfer.None),
+                new Gst.RtspServer.RTSPClient.PlayRequestSignalArgs(ctxValue));
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+        }
+    }
+
+    /// <summary>The arguments of the <c>pre-announce-request</c> signal of <c>GstRTSPClient</c>.</summary>
+    public sealed class PreAnnounceRequestSignalArgs : System.EventArgs
+    {
+        /// <summary>Initializes a new instance of the <see cref="PreAnnounceRequestSignalArgs"/> class.</summary>
+        /// <param name="ctx">a #GstRTSPContext</param>
+        internal PreAnnounceRequestSignalArgs(Gst.RtspServer.RTSPContext ctx)
+        {
+            Ctx = ctx;
+        }
+
+        /// <summary>a #GstRTSPContext</summary>
+        /// <remarks>
+        /// A read only snapshot: the structure is copied out of the storage the
+        /// emitter holds, so writing to it changes nothing the emission reads
+        /// back. Every pointer inside it is borrowed for the length of the
+        /// handler and must not be kept past it.
+        /// </remarks>
+        public Gst.RtspServer.RTSPContext Ctx { get; }
+    }
+
+    /// <summary>The handler of the <c>pre-announce-request</c> signal of <c>GstRTSPClient</c>.</summary>
+    /// <param name="sender">The instance that emitted the signal.</param>
+    /// <param name="args">The arguments of the signal.</param>
+    /// <returns>
+    /// a #GstRTSPStatusCode, GST_RTSP_STS_OK in case of success,
+    ///          otherwise an appropriate return code
+    /// </returns>
+    public delegate Gst.Rtsp.RTSPStatusCode PreAnnounceRequestHandler(object? sender, Gst.RtspServer.RTSPClient.PreAnnounceRequestSignalArgs args);
+
+    /// <summary>Raised for the <c>pre-announce-request</c> signal of <c>GstRTSPClient</c>.</summary>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
+    public event Gst.RtspServer.RTSPClient.PreAnnounceRequestHandler PreAnnounceRequest
+    {
+        add => Gst.RtspServer.SignalConnections.Add(this, "pre-announce-request", (nint)(delegate* unmanaged[Cdecl]<nint, Gst.RtspServer.RTSPContext*, nint, int>)&PreAnnounceRequestTrampoline, value);
+        remove => Gst.RtspServer.SignalConnections.Remove(this, "pre-announce-request", value);
+    }
+
+    /// <summary>The native handler of the <c>pre-announce-request</c> signal of <c>GstRTSPClient</c>.</summary>
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
+    private static int PreAnnounceRequestTrampoline(nint instance, Gst.RtspServer.RTSPContext* ctx, nint userData)
+    {
+        try
+        {
+            if (Gst.Interop.CallbackHandle.GetState<Gst.RtspServer.RTSPClient.PreAnnounceRequestHandler>(userData) is not { } handler)
+            {
+                return default;
+            }
+
+            Gst.RtspServer.RTSPContext ctxValue = *ctx;
+            Gst.Rtsp.RTSPStatusCode result = handler(
+                Gst.GObject.Object.FromNative(instance, Gst.Interop.Transfer.None),
+                new Gst.RtspServer.RTSPClient.PreAnnounceRequestSignalArgs(ctxValue));
+            return (int)result;
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+            return default;
+        }
+    }
+
     /// <summary>
     /// Provide a way for an application to be notified when a connection is closed,
     /// before the client's sessions are cleaned up.
@@ -480,6 +931,655 @@ public unsafe partial class RTSPClient : Gst.GObject.Object
             handler(
                 Gst.GObject.Object.FromNative(instance, Gst.Interop.Transfer.None),
                 System.EventArgs.Empty);
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+        }
+    }
+
+    /// <summary>The arguments of the <c>pre-describe-request</c> signal of <c>GstRTSPClient</c>.</summary>
+    public sealed class PreDescribeRequestSignalArgs : System.EventArgs
+    {
+        /// <summary>Initializes a new instance of the <see cref="PreDescribeRequestSignalArgs"/> class.</summary>
+        /// <param name="ctx">a #GstRTSPContext</param>
+        internal PreDescribeRequestSignalArgs(Gst.RtspServer.RTSPContext ctx)
+        {
+            Ctx = ctx;
+        }
+
+        /// <summary>a #GstRTSPContext</summary>
+        /// <remarks>
+        /// A read only snapshot: the structure is copied out of the storage the
+        /// emitter holds, so writing to it changes nothing the emission reads
+        /// back. Every pointer inside it is borrowed for the length of the
+        /// handler and must not be kept past it.
+        /// </remarks>
+        public Gst.RtspServer.RTSPContext Ctx { get; }
+    }
+
+    /// <summary>The handler of the <c>pre-describe-request</c> signal of <c>GstRTSPClient</c>.</summary>
+    /// <param name="sender">The instance that emitted the signal.</param>
+    /// <param name="args">The arguments of the signal.</param>
+    /// <returns>
+    /// a #GstRTSPStatusCode, GST_RTSP_STS_OK in case of success,
+    ///          otherwise an appropriate return code
+    /// </returns>
+    public delegate Gst.Rtsp.RTSPStatusCode PreDescribeRequestHandler(object? sender, Gst.RtspServer.RTSPClient.PreDescribeRequestSignalArgs args);
+
+    /// <summary>Raised for the <c>pre-describe-request</c> signal of <c>GstRTSPClient</c>.</summary>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
+    public event Gst.RtspServer.RTSPClient.PreDescribeRequestHandler PreDescribeRequest
+    {
+        add => Gst.RtspServer.SignalConnections.Add(this, "pre-describe-request", (nint)(delegate* unmanaged[Cdecl]<nint, Gst.RtspServer.RTSPContext*, nint, int>)&PreDescribeRequestTrampoline, value);
+        remove => Gst.RtspServer.SignalConnections.Remove(this, "pre-describe-request", value);
+    }
+
+    /// <summary>The native handler of the <c>pre-describe-request</c> signal of <c>GstRTSPClient</c>.</summary>
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
+    private static int PreDescribeRequestTrampoline(nint instance, Gst.RtspServer.RTSPContext* ctx, nint userData)
+    {
+        try
+        {
+            if (Gst.Interop.CallbackHandle.GetState<Gst.RtspServer.RTSPClient.PreDescribeRequestHandler>(userData) is not { } handler)
+            {
+                return default;
+            }
+
+            Gst.RtspServer.RTSPContext ctxValue = *ctx;
+            Gst.Rtsp.RTSPStatusCode result = handler(
+                Gst.GObject.Object.FromNative(instance, Gst.Interop.Transfer.None),
+                new Gst.RtspServer.RTSPClient.PreDescribeRequestSignalArgs(ctxValue));
+            return (int)result;
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+            return default;
+        }
+    }
+
+    /// <summary>The arguments of the <c>pre-get-parameter-request</c> signal of <c>GstRTSPClient</c>.</summary>
+    public sealed class PreGetParameterRequestSignalArgs : System.EventArgs
+    {
+        /// <summary>Initializes a new instance of the <see cref="PreGetParameterRequestSignalArgs"/> class.</summary>
+        /// <param name="ctx">a #GstRTSPContext</param>
+        internal PreGetParameterRequestSignalArgs(Gst.RtspServer.RTSPContext ctx)
+        {
+            Ctx = ctx;
+        }
+
+        /// <summary>a #GstRTSPContext</summary>
+        /// <remarks>
+        /// A read only snapshot: the structure is copied out of the storage the
+        /// emitter holds, so writing to it changes nothing the emission reads
+        /// back. Every pointer inside it is borrowed for the length of the
+        /// handler and must not be kept past it.
+        /// </remarks>
+        public Gst.RtspServer.RTSPContext Ctx { get; }
+    }
+
+    /// <summary>The handler of the <c>pre-get-parameter-request</c> signal of <c>GstRTSPClient</c>.</summary>
+    /// <param name="sender">The instance that emitted the signal.</param>
+    /// <param name="args">The arguments of the signal.</param>
+    /// <returns>
+    /// a #GstRTSPStatusCode, GST_RTSP_STS_OK in case of success,
+    ///          otherwise an appropriate return code
+    /// </returns>
+    public delegate Gst.Rtsp.RTSPStatusCode PreGetParameterRequestHandler(object? sender, Gst.RtspServer.RTSPClient.PreGetParameterRequestSignalArgs args);
+
+    /// <summary>Raised for the <c>pre-get-parameter-request</c> signal of <c>GstRTSPClient</c>.</summary>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
+    public event Gst.RtspServer.RTSPClient.PreGetParameterRequestHandler PreGetParameterRequest
+    {
+        add => Gst.RtspServer.SignalConnections.Add(this, "pre-get-parameter-request", (nint)(delegate* unmanaged[Cdecl]<nint, Gst.RtspServer.RTSPContext*, nint, int>)&PreGetParameterRequestTrampoline, value);
+        remove => Gst.RtspServer.SignalConnections.Remove(this, "pre-get-parameter-request", value);
+    }
+
+    /// <summary>The native handler of the <c>pre-get-parameter-request</c> signal of <c>GstRTSPClient</c>.</summary>
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
+    private static int PreGetParameterRequestTrampoline(nint instance, Gst.RtspServer.RTSPContext* ctx, nint userData)
+    {
+        try
+        {
+            if (Gst.Interop.CallbackHandle.GetState<Gst.RtspServer.RTSPClient.PreGetParameterRequestHandler>(userData) is not { } handler)
+            {
+                return default;
+            }
+
+            Gst.RtspServer.RTSPContext ctxValue = *ctx;
+            Gst.Rtsp.RTSPStatusCode result = handler(
+                Gst.GObject.Object.FromNative(instance, Gst.Interop.Transfer.None),
+                new Gst.RtspServer.RTSPClient.PreGetParameterRequestSignalArgs(ctxValue));
+            return (int)result;
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+            return default;
+        }
+    }
+
+    /// <summary>The arguments of the <c>pre-options-request</c> signal of <c>GstRTSPClient</c>.</summary>
+    public sealed class PreOptionsRequestSignalArgs : System.EventArgs
+    {
+        /// <summary>Initializes a new instance of the <see cref="PreOptionsRequestSignalArgs"/> class.</summary>
+        /// <param name="ctx">a #GstRTSPContext</param>
+        internal PreOptionsRequestSignalArgs(Gst.RtspServer.RTSPContext ctx)
+        {
+            Ctx = ctx;
+        }
+
+        /// <summary>a #GstRTSPContext</summary>
+        /// <remarks>
+        /// A read only snapshot: the structure is copied out of the storage the
+        /// emitter holds, so writing to it changes nothing the emission reads
+        /// back. Every pointer inside it is borrowed for the length of the
+        /// handler and must not be kept past it.
+        /// </remarks>
+        public Gst.RtspServer.RTSPContext Ctx { get; }
+    }
+
+    /// <summary>The handler of the <c>pre-options-request</c> signal of <c>GstRTSPClient</c>.</summary>
+    /// <param name="sender">The instance that emitted the signal.</param>
+    /// <param name="args">The arguments of the signal.</param>
+    /// <returns>
+    /// a #GstRTSPStatusCode, GST_RTSP_STS_OK in case of success,
+    ///          otherwise an appropriate return code
+    /// </returns>
+    public delegate Gst.Rtsp.RTSPStatusCode PreOptionsRequestHandler(object? sender, Gst.RtspServer.RTSPClient.PreOptionsRequestSignalArgs args);
+
+    /// <summary>Raised for the <c>pre-options-request</c> signal of <c>GstRTSPClient</c>.</summary>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
+    public event Gst.RtspServer.RTSPClient.PreOptionsRequestHandler PreOptionsRequest
+    {
+        add => Gst.RtspServer.SignalConnections.Add(this, "pre-options-request", (nint)(delegate* unmanaged[Cdecl]<nint, Gst.RtspServer.RTSPContext*, nint, int>)&PreOptionsRequestTrampoline, value);
+        remove => Gst.RtspServer.SignalConnections.Remove(this, "pre-options-request", value);
+    }
+
+    /// <summary>The native handler of the <c>pre-options-request</c> signal of <c>GstRTSPClient</c>.</summary>
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
+    private static int PreOptionsRequestTrampoline(nint instance, Gst.RtspServer.RTSPContext* ctx, nint userData)
+    {
+        try
+        {
+            if (Gst.Interop.CallbackHandle.GetState<Gst.RtspServer.RTSPClient.PreOptionsRequestHandler>(userData) is not { } handler)
+            {
+                return default;
+            }
+
+            Gst.RtspServer.RTSPContext ctxValue = *ctx;
+            Gst.Rtsp.RTSPStatusCode result = handler(
+                Gst.GObject.Object.FromNative(instance, Gst.Interop.Transfer.None),
+                new Gst.RtspServer.RTSPClient.PreOptionsRequestSignalArgs(ctxValue));
+            return (int)result;
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+            return default;
+        }
+    }
+
+    /// <summary>The arguments of the <c>pre-pause-request</c> signal of <c>GstRTSPClient</c>.</summary>
+    public sealed class PrePauseRequestSignalArgs : System.EventArgs
+    {
+        /// <summary>Initializes a new instance of the <see cref="PrePauseRequestSignalArgs"/> class.</summary>
+        /// <param name="ctx">a #GstRTSPContext</param>
+        internal PrePauseRequestSignalArgs(Gst.RtspServer.RTSPContext ctx)
+        {
+            Ctx = ctx;
+        }
+
+        /// <summary>a #GstRTSPContext</summary>
+        /// <remarks>
+        /// A read only snapshot: the structure is copied out of the storage the
+        /// emitter holds, so writing to it changes nothing the emission reads
+        /// back. Every pointer inside it is borrowed for the length of the
+        /// handler and must not be kept past it.
+        /// </remarks>
+        public Gst.RtspServer.RTSPContext Ctx { get; }
+    }
+
+    /// <summary>The handler of the <c>pre-pause-request</c> signal of <c>GstRTSPClient</c>.</summary>
+    /// <param name="sender">The instance that emitted the signal.</param>
+    /// <param name="args">The arguments of the signal.</param>
+    /// <returns>
+    /// a #GstRTSPStatusCode, GST_RTSP_STS_OK in case of success,
+    ///          otherwise an appropriate return code
+    /// </returns>
+    public delegate Gst.Rtsp.RTSPStatusCode PrePauseRequestHandler(object? sender, Gst.RtspServer.RTSPClient.PrePauseRequestSignalArgs args);
+
+    /// <summary>Raised for the <c>pre-pause-request</c> signal of <c>GstRTSPClient</c>.</summary>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
+    public event Gst.RtspServer.RTSPClient.PrePauseRequestHandler PrePauseRequest
+    {
+        add => Gst.RtspServer.SignalConnections.Add(this, "pre-pause-request", (nint)(delegate* unmanaged[Cdecl]<nint, Gst.RtspServer.RTSPContext*, nint, int>)&PrePauseRequestTrampoline, value);
+        remove => Gst.RtspServer.SignalConnections.Remove(this, "pre-pause-request", value);
+    }
+
+    /// <summary>The native handler of the <c>pre-pause-request</c> signal of <c>GstRTSPClient</c>.</summary>
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
+    private static int PrePauseRequestTrampoline(nint instance, Gst.RtspServer.RTSPContext* ctx, nint userData)
+    {
+        try
+        {
+            if (Gst.Interop.CallbackHandle.GetState<Gst.RtspServer.RTSPClient.PrePauseRequestHandler>(userData) is not { } handler)
+            {
+                return default;
+            }
+
+            Gst.RtspServer.RTSPContext ctxValue = *ctx;
+            Gst.Rtsp.RTSPStatusCode result = handler(
+                Gst.GObject.Object.FromNative(instance, Gst.Interop.Transfer.None),
+                new Gst.RtspServer.RTSPClient.PrePauseRequestSignalArgs(ctxValue));
+            return (int)result;
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+            return default;
+        }
+    }
+
+    /// <summary>The arguments of the <c>pre-play-request</c> signal of <c>GstRTSPClient</c>.</summary>
+    public sealed class PrePlayRequestSignalArgs : System.EventArgs
+    {
+        /// <summary>Initializes a new instance of the <see cref="PrePlayRequestSignalArgs"/> class.</summary>
+        /// <param name="ctx">a #GstRTSPContext</param>
+        internal PrePlayRequestSignalArgs(Gst.RtspServer.RTSPContext ctx)
+        {
+            Ctx = ctx;
+        }
+
+        /// <summary>a #GstRTSPContext</summary>
+        /// <remarks>
+        /// A read only snapshot: the structure is copied out of the storage the
+        /// emitter holds, so writing to it changes nothing the emission reads
+        /// back. Every pointer inside it is borrowed for the length of the
+        /// handler and must not be kept past it.
+        /// </remarks>
+        public Gst.RtspServer.RTSPContext Ctx { get; }
+    }
+
+    /// <summary>The handler of the <c>pre-play-request</c> signal of <c>GstRTSPClient</c>.</summary>
+    /// <param name="sender">The instance that emitted the signal.</param>
+    /// <param name="args">The arguments of the signal.</param>
+    /// <returns>
+    /// a #GstRTSPStatusCode, GST_RTSP_STS_OK in case of success,
+    ///          otherwise an appropriate return code
+    /// </returns>
+    public delegate Gst.Rtsp.RTSPStatusCode PrePlayRequestHandler(object? sender, Gst.RtspServer.RTSPClient.PrePlayRequestSignalArgs args);
+
+    /// <summary>Raised for the <c>pre-play-request</c> signal of <c>GstRTSPClient</c>.</summary>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
+    public event Gst.RtspServer.RTSPClient.PrePlayRequestHandler PrePlayRequest
+    {
+        add => Gst.RtspServer.SignalConnections.Add(this, "pre-play-request", (nint)(delegate* unmanaged[Cdecl]<nint, Gst.RtspServer.RTSPContext*, nint, int>)&PrePlayRequestTrampoline, value);
+        remove => Gst.RtspServer.SignalConnections.Remove(this, "pre-play-request", value);
+    }
+
+    /// <summary>The native handler of the <c>pre-play-request</c> signal of <c>GstRTSPClient</c>.</summary>
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
+    private static int PrePlayRequestTrampoline(nint instance, Gst.RtspServer.RTSPContext* ctx, nint userData)
+    {
+        try
+        {
+            if (Gst.Interop.CallbackHandle.GetState<Gst.RtspServer.RTSPClient.PrePlayRequestHandler>(userData) is not { } handler)
+            {
+                return default;
+            }
+
+            Gst.RtspServer.RTSPContext ctxValue = *ctx;
+            Gst.Rtsp.RTSPStatusCode result = handler(
+                Gst.GObject.Object.FromNative(instance, Gst.Interop.Transfer.None),
+                new Gst.RtspServer.RTSPClient.PrePlayRequestSignalArgs(ctxValue));
+            return (int)result;
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+            return default;
+        }
+    }
+
+    /// <summary>The arguments of the <c>pre-record-request</c> signal of <c>GstRTSPClient</c>.</summary>
+    public sealed class PreRecordRequestSignalArgs : System.EventArgs
+    {
+        /// <summary>Initializes a new instance of the <see cref="PreRecordRequestSignalArgs"/> class.</summary>
+        /// <param name="ctx">a #GstRTSPContext</param>
+        internal PreRecordRequestSignalArgs(Gst.RtspServer.RTSPContext ctx)
+        {
+            Ctx = ctx;
+        }
+
+        /// <summary>a #GstRTSPContext</summary>
+        /// <remarks>
+        /// A read only snapshot: the structure is copied out of the storage the
+        /// emitter holds, so writing to it changes nothing the emission reads
+        /// back. Every pointer inside it is borrowed for the length of the
+        /// handler and must not be kept past it.
+        /// </remarks>
+        public Gst.RtspServer.RTSPContext Ctx { get; }
+    }
+
+    /// <summary>The handler of the <c>pre-record-request</c> signal of <c>GstRTSPClient</c>.</summary>
+    /// <param name="sender">The instance that emitted the signal.</param>
+    /// <param name="args">The arguments of the signal.</param>
+    /// <returns>
+    /// a #GstRTSPStatusCode, GST_RTSP_STS_OK in case of success,
+    ///          otherwise an appropriate return code
+    /// </returns>
+    public delegate Gst.Rtsp.RTSPStatusCode PreRecordRequestHandler(object? sender, Gst.RtspServer.RTSPClient.PreRecordRequestSignalArgs args);
+
+    /// <summary>Raised for the <c>pre-record-request</c> signal of <c>GstRTSPClient</c>.</summary>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
+    public event Gst.RtspServer.RTSPClient.PreRecordRequestHandler PreRecordRequest
+    {
+        add => Gst.RtspServer.SignalConnections.Add(this, "pre-record-request", (nint)(delegate* unmanaged[Cdecl]<nint, Gst.RtspServer.RTSPContext*, nint, int>)&PreRecordRequestTrampoline, value);
+        remove => Gst.RtspServer.SignalConnections.Remove(this, "pre-record-request", value);
+    }
+
+    /// <summary>The native handler of the <c>pre-record-request</c> signal of <c>GstRTSPClient</c>.</summary>
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
+    private static int PreRecordRequestTrampoline(nint instance, Gst.RtspServer.RTSPContext* ctx, nint userData)
+    {
+        try
+        {
+            if (Gst.Interop.CallbackHandle.GetState<Gst.RtspServer.RTSPClient.PreRecordRequestHandler>(userData) is not { } handler)
+            {
+                return default;
+            }
+
+            Gst.RtspServer.RTSPContext ctxValue = *ctx;
+            Gst.Rtsp.RTSPStatusCode result = handler(
+                Gst.GObject.Object.FromNative(instance, Gst.Interop.Transfer.None),
+                new Gst.RtspServer.RTSPClient.PreRecordRequestSignalArgs(ctxValue));
+            return (int)result;
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+            return default;
+        }
+    }
+
+    /// <summary>The arguments of the <c>pre-set-parameter-request</c> signal of <c>GstRTSPClient</c>.</summary>
+    public sealed class PreSetParameterRequestSignalArgs : System.EventArgs
+    {
+        /// <summary>Initializes a new instance of the <see cref="PreSetParameterRequestSignalArgs"/> class.</summary>
+        /// <param name="ctx">a #GstRTSPContext</param>
+        internal PreSetParameterRequestSignalArgs(Gst.RtspServer.RTSPContext ctx)
+        {
+            Ctx = ctx;
+        }
+
+        /// <summary>a #GstRTSPContext</summary>
+        /// <remarks>
+        /// A read only snapshot: the structure is copied out of the storage the
+        /// emitter holds, so writing to it changes nothing the emission reads
+        /// back. Every pointer inside it is borrowed for the length of the
+        /// handler and must not be kept past it.
+        /// </remarks>
+        public Gst.RtspServer.RTSPContext Ctx { get; }
+    }
+
+    /// <summary>The handler of the <c>pre-set-parameter-request</c> signal of <c>GstRTSPClient</c>.</summary>
+    /// <param name="sender">The instance that emitted the signal.</param>
+    /// <param name="args">The arguments of the signal.</param>
+    /// <returns>
+    /// a #GstRTSPStatusCode, GST_RTSP_STS_OK in case of success,
+    ///          otherwise an appropriate return code
+    /// </returns>
+    public delegate Gst.Rtsp.RTSPStatusCode PreSetParameterRequestHandler(object? sender, Gst.RtspServer.RTSPClient.PreSetParameterRequestSignalArgs args);
+
+    /// <summary>Raised for the <c>pre-set-parameter-request</c> signal of <c>GstRTSPClient</c>.</summary>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
+    public event Gst.RtspServer.RTSPClient.PreSetParameterRequestHandler PreSetParameterRequest
+    {
+        add => Gst.RtspServer.SignalConnections.Add(this, "pre-set-parameter-request", (nint)(delegate* unmanaged[Cdecl]<nint, Gst.RtspServer.RTSPContext*, nint, int>)&PreSetParameterRequestTrampoline, value);
+        remove => Gst.RtspServer.SignalConnections.Remove(this, "pre-set-parameter-request", value);
+    }
+
+    /// <summary>The native handler of the <c>pre-set-parameter-request</c> signal of <c>GstRTSPClient</c>.</summary>
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
+    private static int PreSetParameterRequestTrampoline(nint instance, Gst.RtspServer.RTSPContext* ctx, nint userData)
+    {
+        try
+        {
+            if (Gst.Interop.CallbackHandle.GetState<Gst.RtspServer.RTSPClient.PreSetParameterRequestHandler>(userData) is not { } handler)
+            {
+                return default;
+            }
+
+            Gst.RtspServer.RTSPContext ctxValue = *ctx;
+            Gst.Rtsp.RTSPStatusCode result = handler(
+                Gst.GObject.Object.FromNative(instance, Gst.Interop.Transfer.None),
+                new Gst.RtspServer.RTSPClient.PreSetParameterRequestSignalArgs(ctxValue));
+            return (int)result;
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+            return default;
+        }
+    }
+
+    /// <summary>The arguments of the <c>pre-setup-request</c> signal of <c>GstRTSPClient</c>.</summary>
+    public sealed class PreSetupRequestSignalArgs : System.EventArgs
+    {
+        /// <summary>Initializes a new instance of the <see cref="PreSetupRequestSignalArgs"/> class.</summary>
+        /// <param name="ctx">a #GstRTSPContext</param>
+        internal PreSetupRequestSignalArgs(Gst.RtspServer.RTSPContext ctx)
+        {
+            Ctx = ctx;
+        }
+
+        /// <summary>a #GstRTSPContext</summary>
+        /// <remarks>
+        /// A read only snapshot: the structure is copied out of the storage the
+        /// emitter holds, so writing to it changes nothing the emission reads
+        /// back. Every pointer inside it is borrowed for the length of the
+        /// handler and must not be kept past it.
+        /// </remarks>
+        public Gst.RtspServer.RTSPContext Ctx { get; }
+    }
+
+    /// <summary>The handler of the <c>pre-setup-request</c> signal of <c>GstRTSPClient</c>.</summary>
+    /// <param name="sender">The instance that emitted the signal.</param>
+    /// <param name="args">The arguments of the signal.</param>
+    /// <returns>
+    /// a #GstRTSPStatusCode, GST_RTSP_STS_OK in case of success,
+    ///          otherwise an appropriate return code
+    /// </returns>
+    public delegate Gst.Rtsp.RTSPStatusCode PreSetupRequestHandler(object? sender, Gst.RtspServer.RTSPClient.PreSetupRequestSignalArgs args);
+
+    /// <summary>Raised for the <c>pre-setup-request</c> signal of <c>GstRTSPClient</c>.</summary>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
+    public event Gst.RtspServer.RTSPClient.PreSetupRequestHandler PreSetupRequest
+    {
+        add => Gst.RtspServer.SignalConnections.Add(this, "pre-setup-request", (nint)(delegate* unmanaged[Cdecl]<nint, Gst.RtspServer.RTSPContext*, nint, int>)&PreSetupRequestTrampoline, value);
+        remove => Gst.RtspServer.SignalConnections.Remove(this, "pre-setup-request", value);
+    }
+
+    /// <summary>The native handler of the <c>pre-setup-request</c> signal of <c>GstRTSPClient</c>.</summary>
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
+    private static int PreSetupRequestTrampoline(nint instance, Gst.RtspServer.RTSPContext* ctx, nint userData)
+    {
+        try
+        {
+            if (Gst.Interop.CallbackHandle.GetState<Gst.RtspServer.RTSPClient.PreSetupRequestHandler>(userData) is not { } handler)
+            {
+                return default;
+            }
+
+            Gst.RtspServer.RTSPContext ctxValue = *ctx;
+            Gst.Rtsp.RTSPStatusCode result = handler(
+                Gst.GObject.Object.FromNative(instance, Gst.Interop.Transfer.None),
+                new Gst.RtspServer.RTSPClient.PreSetupRequestSignalArgs(ctxValue));
+            return (int)result;
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+            return default;
+        }
+    }
+
+    /// <summary>The arguments of the <c>pre-teardown-request</c> signal of <c>GstRTSPClient</c>.</summary>
+    public sealed class PreTeardownRequestSignalArgs : System.EventArgs
+    {
+        /// <summary>Initializes a new instance of the <see cref="PreTeardownRequestSignalArgs"/> class.</summary>
+        /// <param name="ctx">a #GstRTSPContext</param>
+        internal PreTeardownRequestSignalArgs(Gst.RtspServer.RTSPContext ctx)
+        {
+            Ctx = ctx;
+        }
+
+        /// <summary>a #GstRTSPContext</summary>
+        /// <remarks>
+        /// A read only snapshot: the structure is copied out of the storage the
+        /// emitter holds, so writing to it changes nothing the emission reads
+        /// back. Every pointer inside it is borrowed for the length of the
+        /// handler and must not be kept past it.
+        /// </remarks>
+        public Gst.RtspServer.RTSPContext Ctx { get; }
+    }
+
+    /// <summary>The handler of the <c>pre-teardown-request</c> signal of <c>GstRTSPClient</c>.</summary>
+    /// <param name="sender">The instance that emitted the signal.</param>
+    /// <param name="args">The arguments of the signal.</param>
+    /// <returns>
+    /// a #GstRTSPStatusCode, GST_RTSP_STS_OK in case of success,
+    ///          otherwise an appropriate return code
+    /// </returns>
+    public delegate Gst.Rtsp.RTSPStatusCode PreTeardownRequestHandler(object? sender, Gst.RtspServer.RTSPClient.PreTeardownRequestSignalArgs args);
+
+    /// <summary>Raised for the <c>pre-teardown-request</c> signal of <c>GstRTSPClient</c>.</summary>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
+    public event Gst.RtspServer.RTSPClient.PreTeardownRequestHandler PreTeardownRequest
+    {
+        add => Gst.RtspServer.SignalConnections.Add(this, "pre-teardown-request", (nint)(delegate* unmanaged[Cdecl]<nint, Gst.RtspServer.RTSPContext*, nint, int>)&PreTeardownRequestTrampoline, value);
+        remove => Gst.RtspServer.SignalConnections.Remove(this, "pre-teardown-request", value);
+    }
+
+    /// <summary>The native handler of the <c>pre-teardown-request</c> signal of <c>GstRTSPClient</c>.</summary>
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
+    private static int PreTeardownRequestTrampoline(nint instance, Gst.RtspServer.RTSPContext* ctx, nint userData)
+    {
+        try
+        {
+            if (Gst.Interop.CallbackHandle.GetState<Gst.RtspServer.RTSPClient.PreTeardownRequestHandler>(userData) is not { } handler)
+            {
+                return default;
+            }
+
+            Gst.RtspServer.RTSPContext ctxValue = *ctx;
+            Gst.Rtsp.RTSPStatusCode result = handler(
+                Gst.GObject.Object.FromNative(instance, Gst.Interop.Transfer.None),
+                new Gst.RtspServer.RTSPClient.PreTeardownRequestSignalArgs(ctxValue));
+            return (int)result;
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+            return default;
+        }
+    }
+
+    /// <summary>The arguments of the <c>record-request</c> signal of <c>GstRTSPClient</c>.</summary>
+    public sealed class RecordRequestSignalArgs : System.EventArgs
+    {
+        /// <summary>Initializes a new instance of the <see cref="RecordRequestSignalArgs"/> class.</summary>
+        /// <param name="ctx">a #GstRTSPContext</param>
+        internal RecordRequestSignalArgs(Gst.RtspServer.RTSPContext ctx)
+        {
+            Ctx = ctx;
+        }
+
+        /// <summary>a #GstRTSPContext</summary>
+        /// <remarks>
+        /// A read only snapshot: the structure is copied out of the storage the
+        /// emitter holds, so writing to it changes nothing the emission reads
+        /// back. Every pointer inside it is borrowed for the length of the
+        /// handler and must not be kept past it.
+        /// </remarks>
+        public Gst.RtspServer.RTSPContext Ctx { get; }
+    }
+
+    /// <summary>Raised for the <c>record-request</c> signal of <c>GstRTSPClient</c>.</summary>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
+    public event System.EventHandler<Gst.RtspServer.RTSPClient.RecordRequestSignalArgs> RecordRequest
+    {
+        add => Gst.RtspServer.SignalConnections.Add(this, "record-request", (nint)(delegate* unmanaged[Cdecl]<nint, Gst.RtspServer.RTSPContext*, nint, void>)&RecordRequestTrampoline, value);
+        remove => Gst.RtspServer.SignalConnections.Remove(this, "record-request", value);
+    }
+
+    /// <summary>The native handler of the <c>record-request</c> signal of <c>GstRTSPClient</c>.</summary>
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
+    private static void RecordRequestTrampoline(nint instance, Gst.RtspServer.RTSPContext* ctx, nint userData)
+    {
+        try
+        {
+            if (Gst.Interop.CallbackHandle.GetState<System.EventHandler<Gst.RtspServer.RTSPClient.RecordRequestSignalArgs>>(userData) is not { } handler)
+            {
+                return;
+            }
+
+            Gst.RtspServer.RTSPContext ctxValue = *ctx;
+            handler(
+                Gst.GObject.Object.FromNative(instance, Gst.Interop.Transfer.None),
+                new Gst.RtspServer.RTSPClient.RecordRequestSignalArgs(ctxValue));
         }
         catch (Exception exception)
         {
@@ -542,6 +1642,171 @@ public unsafe partial class RTSPClient : Gst.GObject.Object
             handler(
                 Gst.GObject.Object.FromNative(instance, Gst.Interop.Transfer.None),
                 new Gst.RtspServer.RTSPClient.SendingMessageSignalArgs(sessionValue, messageValue));
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+        }
+    }
+
+    /// <summary>The arguments of the <c>set-parameter-request</c> signal of <c>GstRTSPClient</c>.</summary>
+    public sealed class SetParameterRequestSignalArgs : System.EventArgs
+    {
+        /// <summary>Initializes a new instance of the <see cref="SetParameterRequestSignalArgs"/> class.</summary>
+        /// <param name="ctx">a #GstRTSPContext</param>
+        internal SetParameterRequestSignalArgs(Gst.RtspServer.RTSPContext ctx)
+        {
+            Ctx = ctx;
+        }
+
+        /// <summary>a #GstRTSPContext</summary>
+        /// <remarks>
+        /// A read only snapshot: the structure is copied out of the storage the
+        /// emitter holds, so writing to it changes nothing the emission reads
+        /// back. Every pointer inside it is borrowed for the length of the
+        /// handler and must not be kept past it.
+        /// </remarks>
+        public Gst.RtspServer.RTSPContext Ctx { get; }
+    }
+
+    /// <summary>Raised for the <c>set-parameter-request</c> signal of <c>GstRTSPClient</c>.</summary>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
+    public event System.EventHandler<Gst.RtspServer.RTSPClient.SetParameterRequestSignalArgs> SetParameterRequest
+    {
+        add => Gst.RtspServer.SignalConnections.Add(this, "set-parameter-request", (nint)(delegate* unmanaged[Cdecl]<nint, Gst.RtspServer.RTSPContext*, nint, void>)&SetParameterRequestTrampoline, value);
+        remove => Gst.RtspServer.SignalConnections.Remove(this, "set-parameter-request", value);
+    }
+
+    /// <summary>The native handler of the <c>set-parameter-request</c> signal of <c>GstRTSPClient</c>.</summary>
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
+    private static void SetParameterRequestTrampoline(nint instance, Gst.RtspServer.RTSPContext* ctx, nint userData)
+    {
+        try
+        {
+            if (Gst.Interop.CallbackHandle.GetState<System.EventHandler<Gst.RtspServer.RTSPClient.SetParameterRequestSignalArgs>>(userData) is not { } handler)
+            {
+                return;
+            }
+
+            Gst.RtspServer.RTSPContext ctxValue = *ctx;
+            handler(
+                Gst.GObject.Object.FromNative(instance, Gst.Interop.Transfer.None),
+                new Gst.RtspServer.RTSPClient.SetParameterRequestSignalArgs(ctxValue));
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+        }
+    }
+
+    /// <summary>The arguments of the <c>setup-request</c> signal of <c>GstRTSPClient</c>.</summary>
+    public sealed class SetupRequestSignalArgs : System.EventArgs
+    {
+        /// <summary>Initializes a new instance of the <see cref="SetupRequestSignalArgs"/> class.</summary>
+        /// <param name="ctx">a #GstRTSPContext</param>
+        internal SetupRequestSignalArgs(Gst.RtspServer.RTSPContext ctx)
+        {
+            Ctx = ctx;
+        }
+
+        /// <summary>a #GstRTSPContext</summary>
+        /// <remarks>
+        /// A read only snapshot: the structure is copied out of the storage the
+        /// emitter holds, so writing to it changes nothing the emission reads
+        /// back. Every pointer inside it is borrowed for the length of the
+        /// handler and must not be kept past it.
+        /// </remarks>
+        public Gst.RtspServer.RTSPContext Ctx { get; }
+    }
+
+    /// <summary>Raised for the <c>setup-request</c> signal of <c>GstRTSPClient</c>.</summary>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
+    public event System.EventHandler<Gst.RtspServer.RTSPClient.SetupRequestSignalArgs> SetupRequest
+    {
+        add => Gst.RtspServer.SignalConnections.Add(this, "setup-request", (nint)(delegate* unmanaged[Cdecl]<nint, Gst.RtspServer.RTSPContext*, nint, void>)&SetupRequestTrampoline, value);
+        remove => Gst.RtspServer.SignalConnections.Remove(this, "setup-request", value);
+    }
+
+    /// <summary>The native handler of the <c>setup-request</c> signal of <c>GstRTSPClient</c>.</summary>
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
+    private static void SetupRequestTrampoline(nint instance, Gst.RtspServer.RTSPContext* ctx, nint userData)
+    {
+        try
+        {
+            if (Gst.Interop.CallbackHandle.GetState<System.EventHandler<Gst.RtspServer.RTSPClient.SetupRequestSignalArgs>>(userData) is not { } handler)
+            {
+                return;
+            }
+
+            Gst.RtspServer.RTSPContext ctxValue = *ctx;
+            handler(
+                Gst.GObject.Object.FromNative(instance, Gst.Interop.Transfer.None),
+                new Gst.RtspServer.RTSPClient.SetupRequestSignalArgs(ctxValue));
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+        }
+    }
+
+    /// <summary>The arguments of the <c>teardown-request</c> signal of <c>GstRTSPClient</c>.</summary>
+    public sealed class TeardownRequestSignalArgs : System.EventArgs
+    {
+        /// <summary>Initializes a new instance of the <see cref="TeardownRequestSignalArgs"/> class.</summary>
+        /// <param name="ctx">a #GstRTSPContext</param>
+        internal TeardownRequestSignalArgs(Gst.RtspServer.RTSPContext ctx)
+        {
+            Ctx = ctx;
+        }
+
+        /// <summary>a #GstRTSPContext</summary>
+        /// <remarks>
+        /// A read only snapshot: the structure is copied out of the storage the
+        /// emitter holds, so writing to it changes nothing the emission reads
+        /// back. Every pointer inside it is borrowed for the length of the
+        /// handler and must not be kept past it.
+        /// </remarks>
+        public Gst.RtspServer.RTSPContext Ctx { get; }
+    }
+
+    /// <summary>Raised for the <c>teardown-request</c> signal of <c>GstRTSPClient</c>.</summary>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
+    public event System.EventHandler<Gst.RtspServer.RTSPClient.TeardownRequestSignalArgs> TeardownRequest
+    {
+        add => Gst.RtspServer.SignalConnections.Add(this, "teardown-request", (nint)(delegate* unmanaged[Cdecl]<nint, Gst.RtspServer.RTSPContext*, nint, void>)&TeardownRequestTrampoline, value);
+        remove => Gst.RtspServer.SignalConnections.Remove(this, "teardown-request", value);
+    }
+
+    /// <summary>The native handler of the <c>teardown-request</c> signal of <c>GstRTSPClient</c>.</summary>
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
+    private static void TeardownRequestTrampoline(nint instance, Gst.RtspServer.RTSPContext* ctx, nint userData)
+    {
+        try
+        {
+            if (Gst.Interop.CallbackHandle.GetState<System.EventHandler<Gst.RtspServer.RTSPClient.TeardownRequestSignalArgs>>(userData) is not { } handler)
+            {
+                return;
+            }
+
+            Gst.RtspServer.RTSPContext ctxValue = *ctx;
+            handler(
+                Gst.GObject.Object.FromNative(instance, Gst.Interop.Transfer.None),
+                new Gst.RtspServer.RTSPClient.TeardownRequestSignalArgs(ctxValue));
         }
         catch (Exception exception)
         {
