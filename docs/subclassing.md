@@ -945,8 +945,8 @@ touched.
   not. A `transfer full` parameter — the message of `Bin.OnHandleMessage` — is
   owned by the override, and chaining up passes it on.
 * **An in/out mini object that is owned both ways is the third form.** The
-  buffer of `AudioEncoder.OnPrePush`, `AudioDecoder.OnPrePush` and
-  `VideoEncoder.OnPrePush` reaches the override as a `ref Gst.Buffer?` that is
+  buffer of `AudioEncoder.OnPrePush` and `AudioDecoder.OnPrePush` reaches the
+  override as a `ref Gst.Buffer?` that is
   `transfer full` in *and* out: the reference the caller held is handed to the
   override, and whatever the override leaves in the handle is handed back.
   Leaving it alone hands the very buffer on, assigning another one releases
@@ -960,9 +960,17 @@ touched.
   `BaseSrc.OnDoSeek` and `OnPrepareSeekSegment`, and the frames of
   `BaseParse.OnHandleFrame` all wrap the caller's value directly rather than a
   copy, which is what makes an override's writes land where the caller reads
-  them. The wrapper is detached when the trampoline returns: keeping it and
+  them. The codec classes lend the same way: the `VideoCodecState` of
+  `VideoDecoder.OnSetFormat` and `VideoEncoder.OnSetFormat`, the
+  `VideoCodecFrame` of `VideoEncoder.OnPrePush`, the `OnTransformMeta` of both
+  video codecs and `VideoDecoder.OnParse`, the `AudioInfo` of
+  `AudioEncoder.OnSetFormat`, and the `BaseParseFrame` of
+  `BaseParse.OnPrePushFrame`. The wrapper is detached when the trampoline
+  returns: keeping it and
   reading through it afterwards throws `ObjectDisposedException`. Whatever has
-  to outlive the call is read out or copied during it.
+  to outlive the call is read out during it, or kept through `Copy()`, which
+  for the reference counted `VideoCodecFrame` and `VideoCodecState` hands back
+  a wrapper holding its own reference to the same value.
 * **Exceptions never reach a native frame.** Each slot answers its documented
   error value and reports the exception through
   `GstSharp.UnhandledCallbackException`: `StateChangeReturn.Failure` for

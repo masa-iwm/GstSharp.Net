@@ -210,8 +210,8 @@ jobs:
         run: dotnet test tests/GstSharp.Core.Tests --no-restore --logger "trx;LogFileName=core.trx" --results-directory artifacts/test-results
 
       # GSTSHARP_REQUIRED_ELEMENTS is the promise this leg makes about its
-      # installation, and RequiredElementsTests is what holds it to it: these
-      # twelve factories are the ones the tests gate on with RequiresElementFact
+      # installation, and RequiredElementsTests is what holds it to it: the
+      # factories listed here are the ones the tests gate on with RequiresElementFact
       # that only a plugin set this leg installs on purpose provides — three for WebRTC,
       # audiomixer for the only boxed valued property the integration suite
       # writes, theoraenc and vorbisenc for the two encoders whose set_headers
@@ -250,7 +250,7 @@ jobs:
       # upload step already takes.
       - name: Test against the installation
         env:
-          GSTSHARP_REQUIRED_ELEMENTS: webrtcbin,nicesrc,dtlssrtpenc,audiomixer,theoraenc,theoradec,vorbisenc,uritranscodebin,transcodebin,oggmux,rtpL16pay,rtspsrc,alsasink,volume,videoconvert,rawaudioparse,vorbisdec
+          GSTSHARP_REQUIRED_ELEMENTS: webrtcbin,nicesrc,dtlssrtpenc,audiomixer,theoraenc,theoradec,vorbisenc,uritranscodebin,transcodebin,oggmux,rtpL16pay,rtspsrc,alsasink,volume,videoconvert,rawaudioparse,vorbisdec,audioconvert
         run: dotnet test tests/GstSharp.IntegrationTests --no-restore --logger "trx;LogFileName=integration.trx" --results-directory artifacts/test-results --blame-hang --blame-hang-timeout 5m --blame-hang-dump-type mini
 
       # The whole consumer path without AOT: parse a pipeline, cast the sink

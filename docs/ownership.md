@@ -454,9 +454,8 @@ A slot of a class struct is the same boundary read the other way round, and two
 of its shapes have no equivalent among ordinary calls.
 
 The **third form** is an in/out mini object that is `transfer full` in both
-directions: `AudioEncoder.OnPrePush`, `AudioDecoder.OnPrePush` and
-`VideoEncoder.OnPrePush` are handed a `ref Gst.Buffer?` whose reference the
-caller has given up, and whatever is in the handle when the override returns is
+directions: `AudioEncoder.OnPrePush` and `AudioDecoder.OnPrePush` are handed a
+`ref Gst.Buffer?` whose reference the caller has given up, and whatever is in the handle when the override returns is
 what the caller takes over. Leaving it alone hands the very buffer on and costs
 no reference; assigning another buffer releases the one that came in; setting
 it to `null` drops it. The wrapper that ends up in the handle is detached by
@@ -471,12 +470,19 @@ the C code hands a slot a `GstAudioInfo`, a `GstVideoInfo`, a `GstSegment` or a
 wrapper is built over that very value rather than over a copy of it — that is
 what makes `AudioFilter.OnSetup`, `VideoFilter.OnSetInfo`,
 `VideoSink.OnSetInfo`, `BaseSrc.OnDoSeek`, `BaseSrc.OnPrepareSeekSegment` and
-`BaseParse.OnHandleFrame` able to change what their caller reads. The wrapper
+`BaseParse.OnHandleFrame` able to change what their caller reads. The codec
+classes lend the same way: the `VideoCodecState` of `VideoDecoder.OnSetFormat`
+and `VideoEncoder.OnSetFormat`, the `VideoCodecFrame` of
+`VideoEncoder.OnPrePush`, the `OnTransformMeta` of both video codecs and
+`VideoDecoder.OnParse`, the `AudioInfo` of `AudioEncoder.OnSetFormat`, and the
+`BaseParseFrame` of `BaseParse.OnPrePushFrame`. The wrapper
 owns nothing and frees nothing; the trampoline detaches it when the override
 returns, so reading through a wrapper that was kept past the call throws
 `ObjectDisposedException` rather than reading memory the library has since
-reused. Anything that has to outlive the call is read out of the value, or
-copied, while the call is running.
+reused. Anything that has to outlive the call is read out of the value while
+the call is running, or kept through `Copy()` — which for the reference counted
+`VideoCodecFrame` and `VideoCodecState` hands back a wrapper holding its own
+reference to the same value rather than a copy of it.
 
 ## Calls that consume the instance they are called on
 

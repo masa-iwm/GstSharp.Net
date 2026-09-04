@@ -241,6 +241,64 @@ public sealed unsafe class SubclassCodecTests
     }
 
     /// <summary>
+    /// A <c>pre_push</c> override that chains up hands the buffer on unchanged:
+    /// the parent slot of a direct subclass is NULL, so the chain-up answers
+    /// <see cref="FlowReturn.Ok"/> before it hands anything over, the wrapper
+    /// stays attached, and the reference the slot was lent is the one it
+    /// answers with.
+    /// </summary>
+    [Fact]
+    public void ThePrePushOverrideThatChainsUpHandsTheBufferOn()
+    {
+        using ProbeAudioEncoder encoder = new() { PrePush = PrePushBehaviour.ChainUp };
+
+        nint mine = TestNatives.BufferNewAllocate(nint.Zero, 4, nint.Zero);
+        _ = TestNatives.MiniObjectRef(mine);
+        Assert.Equal(2, Refcount(mine));
+
+        nint buf = mine;
+        FlowReturn flow = CallPrePush(encoder, &buf);
+
+        _output.WriteLine(FormattableString.Invariant(
+            $"pre_push chain-up: flow={flow}, lent=0x{mine:x}, answered=0x{buf:x}, refcount={Refcount(mine)}"));
+
+        // The NULL parent slot is answered for, and nothing was consumed.
+        Assert.Equal(FlowReturn.Ok, flow);
+        Assert.Equal(mine, buf);
+        Assert.Equal(2, Refcount(mine));
+
+        TestNatives.MiniObjectUnref(mine);
+        TestNatives.MiniObjectUnref(mine);
+    }
+
+    /// <summary>
+    /// The same chain-up inside a running pipeline: every buffer the encoder
+    /// hands to <c>pre_push</c> and chains up with still reaches the sink.
+    /// </summary>
+    [Fact]
+    public void AManagedAudioEncoderThatChainsUpPrePushStillPushesEveryBuffer()
+    {
+        using Pipeline pipeline = Pipeline.New("managed-audio-encoder-chain-up");
+        using ProbeAudioEncoder encoder = new() { PrePush = PrePushBehaviour.ChainUp };
+        using ProbeAnySink sink = new();
+        Element source = ElementFactory.Make("audiotestsrc", "chain-up-source")
+            ?? throw new InvalidOperationException("audiotestsrc is part of the base plugins.");
+
+        source.SetProperty("num-buffers", 10);
+        Assert.True(pipeline.AddMany(source, encoder, sink));
+        Assert.True(source.Link(encoder));
+        Assert.True(encoder.Link(sink));
+
+        RunToEos(pipeline);
+
+        _output.WriteLine(FormattableString.Invariant(
+            $"pre_push chain-up pipeline: encoded={encoder.Encoded}, rendered={sink.Rendered}"));
+
+        Assert.True(encoder.Encoded > 0);
+        Assert.Equal(encoder.Encoded, sink.Rendered);
+    }
+
+    /// <summary>
     /// A <c>pre_push</c> override that answers a buffer of its own releases the
     /// one it was lent: the third form takes the reference in and hands another
     /// one out.

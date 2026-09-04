@@ -19,6 +19,9 @@ internal enum PrePushBehaviour
 
     /// <summary>Throw, so the trap answers for the override.</summary>
     Throw,
+
+    /// <summary>Hand the buffer to the parent slot and answer what it answers.</summary>
+    ChainUp,
 }
 
 /// <summary>
@@ -142,6 +145,9 @@ internal sealed class ProbeAudioEncoder : AudioEncoder
 
             case PrePushBehaviour.Throw:
                 throw new InvalidOperationException("The managed encoder refuses this buffer.");
+
+            case PrePushBehaviour.ChainUp:
+                return ChainUpPrePush(ref buffer);
 
             default:
                 break;
