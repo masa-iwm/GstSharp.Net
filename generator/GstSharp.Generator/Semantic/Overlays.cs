@@ -392,6 +392,10 @@ internal sealed class Overlays
     private readonly Dictionary<string, string> _returnTypes;
     private readonly Dictionary<string, FieldSkip> _fieldSkips;
     private readonly Dictionary<string, FieldAnnotation> _fieldAnnotations;
+    private readonly HashSet<string> _subclassable;
+    private readonly HashSet<string> _skipVirtuals;
+    private readonly Dictionary<string, string> _vfuncDefaults;
+    private readonly HashSet<string> _vfuncIdentityBuffers;
 
     private Overlays(
         HashSet<string> skip,
@@ -403,7 +407,11 @@ internal sealed class Overlays
         Dictionary<string, PlatformSupport> platforms,
         Dictionary<string, string> returnTypes,
         Dictionary<string, FieldSkip> fieldSkips,
-        Dictionary<string, FieldAnnotation> fieldAnnotations)
+        Dictionary<string, FieldAnnotation> fieldAnnotations,
+        HashSet<string> subclassable,
+        HashSet<string> skipVirtuals,
+        Dictionary<string, string> vfuncDefaults,
+        HashSet<string> vfuncIdentityBuffers)
     {
         _skip = skip;
         _handBound = handBound;
@@ -415,6 +423,10 @@ internal sealed class Overlays
         _returnTypes = returnTypes;
         _fieldSkips = fieldSkips;
         _fieldAnnotations = fieldAnnotations;
+        _subclassable = subclassable;
+        _skipVirtuals = skipVirtuals;
+        _vfuncDefaults = vfuncDefaults;
+        _vfuncIdentityBuffers = vfuncIdentityBuffers;
     }
 
     /// <summary>Gets an overlay set without any correction.</summary>
@@ -428,7 +440,11 @@ internal sealed class Overlays
         new Dictionary<string, PlatformSupport>(StringComparer.Ordinal),
         new Dictionary<string, string>(StringComparer.Ordinal),
         new Dictionary<string, FieldSkip>(StringComparer.Ordinal),
-        new Dictionary<string, FieldAnnotation>(StringComparer.Ordinal));
+        new Dictionary<string, FieldAnnotation>(StringComparer.Ordinal),
+        new HashSet<string>(StringComparer.Ordinal),
+        new HashSet<string>(StringComparer.Ordinal),
+        new Dictionary<string, string>(StringComparer.Ordinal),
+        new HashSet<string>(StringComparer.Ordinal));
 
     /// <summary>Gets the skipped identifiers, ordered for reporting.</summary>
     internal IReadOnlyCollection<string> SkippedIdentifiers => _skip;
@@ -468,6 +484,30 @@ internal sealed class Overlays
     /// report the ones no field of an emitted record matched.
     /// </summary>
     internal IReadOnlyCollection<string> FieldAnnotationKeys => _fieldAnnotations.Keys;
+
+    /// <summary>
+    /// Gets the qualified gir names of the classes a managed subclass may
+    /// derive from, so that a run can report the ones no class matched.
+    /// </summary>
+    internal IReadOnlyCollection<string> SubclassableClasses => _subclassable;
+
+    /// <summary>
+    /// Gets the keys of every declared virtual method skip, so that a run can
+    /// report the ones no slot of a subclassable class matched.
+    /// </summary>
+    internal IReadOnlyCollection<string> SkippedVirtualKeys => _skipVirtuals;
+
+    /// <summary>
+    /// Gets the keys of every declared chain-up default, so that a run can
+    /// report the ones no emitted slot matched.
+    /// </summary>
+    internal IReadOnlyCollection<string> VfuncDefaultKeys => _vfuncDefaults.Keys;
+
+    /// <summary>
+    /// Gets the keys of every declared identity preserving buffer, so that a
+    /// run can report the ones no emitted parameter matched.
+    /// </summary>
+    internal IReadOnlyCollection<string> VfuncIdentityBufferKeys => _vfuncIdentityBuffers;
 
     /// <summary>
     /// Loads <c>fixups.json</c> and <c>platform-symbols.json</c> from an overlay
@@ -542,6 +582,30 @@ internal sealed class Overlays
             fieldAnnotations[entry.Key] = entry.Value;
         }
 
+        HashSet<string> subclassable = new(StringComparer.Ordinal);
+        foreach (string qualifiedName in fixups.Subclassable ?? [])
+        {
+            subclassable.Add(qualifiedName);
+        }
+
+        HashSet<string> skipVirtuals = new(StringComparer.Ordinal);
+        foreach (string key in fixups.SkipVirtuals ?? [])
+        {
+            skipVirtuals.Add(key);
+        }
+
+        Dictionary<string, string> vfuncDefaults = new(StringComparer.Ordinal);
+        foreach (KeyValuePair<string, string> entry in fixups.VfuncDefaults ?? [])
+        {
+            vfuncDefaults[entry.Key] = entry.Value;
+        }
+
+        HashSet<string> vfuncIdentityBuffers = new(StringComparer.Ordinal);
+        foreach (string key in fixups.VfuncIdentityBuffers ?? [])
+        {
+            vfuncIdentityBuffers.Add(key);
+        }
+
         return new Overlays(
             skip,
             handBound,
@@ -552,7 +616,11 @@ internal sealed class Overlays
             symbols,
             returnTypes,
             fieldSkips,
-            fieldAnnotations);
+            fieldAnnotations,
+            subclassable,
+            skipVirtuals,
+            vfuncDefaults,
+            vfuncIdentityBuffers);
     }
 
     /// <summary>Tests whether a symbol is skipped by the overlays.</summary>
@@ -624,6 +692,64 @@ internal sealed class Overlays
     internal FieldAnnotation? GetFieldAnnotation(string key) =>
         _fieldAnnotations.TryGetValue(key, out FieldAnnotation? value) ? value : null;
 
+    /// <summary>
+    /// Tests whether a class may be derived from by a managed subclass, which
+    /// is what makes the generator emit its class struct mirror and its
+    /// virtual method surface.
+    /// </summary>
+    /// <param name="qualifiedName">The qualified gir name of the class.</param>
+    /// <returns><see langword="true"/> when the class is listed.</returns>
+    /// <remarks>
+    /// The list is an allowlist rather than everything the girs declare: a
+    /// class struct mirror is emitted for every parent of a listed class as
+    /// well, because the mirror of a subclassable class embeds them, but only
+    /// the listed ones get a managed surface.
+    /// </remarks>
+    internal bool IsSubclassable(string qualifiedName) => _subclassable.Contains(qualifiedName);
+
+    /// <summary>Tests whether one virtual method is kept out of the surface.</summary>
+    /// <param name="key">The slot, as <c>Gst.Element::pad_added</c>.</param>
+    /// <returns><see langword="true"/> when the slot is listed.</returns>
+    /// <remarks>
+    /// The mirror still lays the slot out — a class struct is an ABI and not a
+    /// menu — so what a skip removes is the <c>OnX</c> member, its trampoline
+    /// and its chain-up helper.
+    /// </remarks>
+    internal bool IsVirtualSkipped(string key) => _skipVirtuals.Contains(key);
+
+    /// <summary>
+    /// Looks up what a chain-up answers when the parent class leaves the slot
+    /// null.
+    /// </summary>
+    /// <param name="key">The slot, as <c>GstBase.BaseSrc::start</c>.</param>
+    /// <param name="expression">
+    /// The C# expression the chain-up returns, which may name the parameters of
+    /// the chain-up helper.
+    /// </param>
+    /// <returns><see langword="true"/> when a default is declared.</returns>
+    /// <remarks>
+    /// A slot with no entry has no documented default, so its chain-up throws
+    /// rather than inventing one: those are the slots a subclass has to
+    /// implement, which is what the base class states by calling them
+    /// unguarded.
+    /// </remarks>
+    internal bool TryGetVfuncDefault(string key, [NotNullWhen(true)] out string? expression) =>
+        _vfuncDefaults.TryGetValue(key, out expression);
+
+    /// <summary>
+    /// Tests whether a buffer parameter may be handed back unchanged instead of
+    /// as a new reference.
+    /// </summary>
+    /// <param name="key">The parameter, as <c>GstBase.BaseSrc::create#buf</c>.</param>
+    /// <returns><see langword="true"/> when the parameter is listed.</returns>
+    /// <remarks>
+    /// The caller of such a slot compares the pointer it gets back with the one
+    /// it passed in and only releases the input when the two differ, so a
+    /// reference taken on the way out of an override that hands back what it
+    /// was given would never be released.
+    /// </remarks>
+    internal bool IsIdentityBuffer(string key) => _vfuncIdentityBuffers.Contains(key);
+
     /// <summary>Looks up the platform availability of a native symbol.</summary>
     /// <param name="cIdentifier">The <c>c:identifier</c> of the symbol.</param>
     /// <returns>The availability, or <see langword="null"/> when the symbol is portable.</returns>
@@ -661,6 +787,14 @@ internal sealed class Overlays
         public Dictionary<string, FieldSkip>? FieldSkips { get; set; }
 
         public Dictionary<string, FieldAnnotation>? FieldAnnotations { get; set; }
+
+        public List<string>? Subclassable { get; set; }
+
+        public List<string>? SkipVirtuals { get; set; }
+
+        public Dictionary<string, string>? VfuncDefaults { get; set; }
+
+        public List<string>? VfuncIdentityBuffers { get; set; }
     }
 
     private sealed class PlatformSymbolsFile

@@ -1257,10 +1257,15 @@ internal sealed class MarshalPlanner
     /// nothing else — so it is addressed by that type, which is the name of the
     /// C typedef and is what a correction of the gir has to name. The two
     /// cannot collide: an identifier is <c>snake_case</c> and a callback type
-    /// is <c>CamelCase</c>.
+    /// is <c>CamelCase</c>. A virtual method has neither, and is addressed by
+    /// the qualified name of its class and its own, <c>Gst.Element::set_bus</c>,
+    /// which the semantic layer stamps onto it when it pairs the slot with the
+    /// field of the class struct.
     /// </remarks>
     private static string? AnnotationKeyOf(GirCallable callable) =>
-        callable.CIdentifier ?? (callable as GirCallback)?.CType;
+        callable.CIdentifier
+        ?? (callable as GirCallback)?.CType
+        ?? (callable as GirVirtualMethod)?.OverlayKey;
 
     /// <summary>Reads one annotation correction and records that it was read.</summary>
     /// <param name="key">The key to look up.</param>

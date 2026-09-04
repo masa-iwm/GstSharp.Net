@@ -180,6 +180,23 @@ internal sealed class GirVirtualMethod : GirCallable
 
     /// <summary>Gets the name of the method that invokes this vfunc, if any.</summary>
     internal string? Invoker { get; init; }
+
+    /// <summary>
+    /// Gets or sets the key the overlays address this slot by, which is the
+    /// qualified name of the declaring class and the gir name of the slot, as
+    /// in <c>Gst.Element::request_new_pad</c>.
+    /// </summary>
+    /// <remarks>
+    /// A <c>&lt;virtual-method&gt;</c> carries no <c>c:identifier</c>, so it
+    /// has nothing an annotation correction could name until the class it was
+    /// read from is known. The semantic layer knows that and writes the key
+    /// here once, in the same pass that pairs the slot with the field of the
+    /// class struct; the planner then reads it the way it reads the identifier
+    /// of a function. The spelling is the one a signal argument already uses,
+    /// <c>Ns.Type::member</c>, with <c>#parameter</c> or <c>#return</c>
+    /// appended for the member of the slot an entry corrects.
+    /// </remarks>
+    internal string? OverlayKey { get; set; }
 }
 
 /// <summary>
