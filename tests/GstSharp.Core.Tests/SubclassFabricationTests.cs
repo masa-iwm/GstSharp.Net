@@ -48,7 +48,7 @@ public class SubclassFabricationTests
     [Fact]
     public void NothingIsFabricatedForANullHandle()
     {
-        Assert.False(TypeRegistry.TryFabricate(nint.Zero, Transfer.None, out Gst.GObject.Object? wrapper));
+        Assert.False(TypeRegistry.TryFabricate(nint.Zero, out Gst.GObject.Object? wrapper));
         Assert.Null(wrapper);
         Assert.Null(Gst.GObject.Object.TryGetOrFabricate(nint.Zero));
     }
@@ -59,7 +59,7 @@ public class SubclassFabricationTests
         // The table of the managed subclasses is asked before the type of the
         // instance is read, so a handle that stands for nothing is answered
         // without being dereferenced.
-        Assert.False(TypeRegistry.TryFabricate(Sentinel, Transfer.None, out Gst.GObject.Object? wrapper));
+        Assert.False(TypeRegistry.TryFabricate(Sentinel, out Gst.GObject.Object? wrapper));
         Assert.Null(wrapper);
     }
 

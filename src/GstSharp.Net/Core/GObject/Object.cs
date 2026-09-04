@@ -348,8 +348,12 @@ public partial class Object : IDisposable
         // The fabrication of a managed subclass takes a gate of its own, and
         // that gate is always taken before Sync: the factory it runs ends in
         // this constructor, which takes Sync itself.
-        if (TypeRegistry.TryFabricate(handle, transfer, out Object? fabricated))
+        if (TypeRegistry.TryFabricate(handle, out Object? fabricated))
         {
+            // The reference this call was handed is settled once the wrapper
+            // exists: the wrapper owns the object through its toggle reference
+            // from here on.
+            TypeRegistry.SettleFabricated(handle, transfer);
             return fabricated;
         }
 
@@ -499,7 +503,7 @@ public partial class Object : IDisposable
             return interned;
         }
 
-        return TypeRegistry.TryFabricate(handle, Transfer.None, out Object? fabricated) ? fabricated : null;
+        return TypeRegistry.TryFabricate(handle, out Object? fabricated) ? fabricated : null;
     }
 
     /// <summary>

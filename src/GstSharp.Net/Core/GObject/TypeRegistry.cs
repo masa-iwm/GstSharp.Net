@@ -231,7 +231,6 @@ public static class TypeRegistry
     /// created, when there is one to build.
     /// </summary>
     /// <param name="handle">The instance to wrap.</param>
-    /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
     /// <param name="wrapper">The wrapper, new or the one that was interned.</param>
     /// <returns>
     /// <see langword="true"/> when the exact type of the instance is a managed
@@ -248,13 +247,14 @@ public static class TypeRegistry
     /// before.
     /// </para>
     /// <para>
-    /// The reference that came with the call is adjusted here rather than by
-    /// the caller: the fabricated wrapper owns the object through its own
-    /// toggle reference either way, so a <see cref="Transfer.Full"/> reference
-    /// is dropped the same way an interned hit drops it.
+    /// Nothing here adjusts references beyond the one the wrapper takes for
+    /// itself, and nothing here sinks: the instance belongs to whoever created
+    /// it. A caller that was handed a reference of its own — which is
+    /// <see cref="TryCreateWrapper(nint, Transfer, out object?)"/>, never a
+    /// trampoline — settles it afterwards.
     /// </para>
     /// </remarks>
-    internal static bool TryFabricate(nint handle, Transfer transfer, out Object? wrapper)
+    internal static bool TryFabricate(nint handle, out Object? wrapper)
     {
         wrapper = null;
 
@@ -285,21 +285,35 @@ public static class TypeRegistry
         }
 
         wrapper = Object.Fabricate(handle, factory);
+        return true;
+    }
 
-        if (transfer == Transfer.Full)
+    /// <summary>
+    /// Settles the reference a fabricated wrapper was handed by the call it
+    /// came out of.
+    /// </summary>
+    /// <param name="handle">The instance that was wrapped.</param>
+    /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
+    /// <remarks>
+    /// The fabricated wrapper owns the object through its own toggle reference,
+    /// so a <see cref="Transfer.Full"/> reference is dropped the same way an
+    /// interned hit drops it. A floating instance is sunk first whatever the
+    /// annotation says: "transfer floating" is spelled <c>none</c> in the gir,
+    /// which is how <c>gst_element_factory_make</c> arrives here, and the
+    /// wrapper a constructor builds itself sinks such an instance as well. What
+    /// is left either way is the single reference the toggle reference holds.
+    /// </remarks>
+    internal static void SettleFabricated(nint handle, Transfer transfer)
+    {
+        if (GObjectNative.ObjectIsFloating(handle) != 0)
         {
-            // The wrapper owns the object through its toggle reference, so the
-            // reference that came with the call is dropped. Sinking a floating
-            // one first is what makes the unref the last one that was ours.
-            if (GObjectNative.ObjectIsFloating(handle) != 0)
-            {
-                GObjectNative.ObjectRefSink(handle);
-            }
-
+            GObjectNative.ObjectRefSink(handle);
             GObjectNative.ObjectUnref(handle);
         }
-
-        return true;
+        else if (transfer == Transfer.Full)
+        {
+            GObjectNative.ObjectUnref(handle);
+        }
     }
 
     /// <summary>
@@ -342,8 +356,13 @@ public static class TypeRegistry
             return false;
         }
 
-        if (TryFabricate(handle, transfer, out Object? fabricated))
+        if (TryFabricate(handle, out Object? fabricated))
         {
+            // This is the entry point that was handed a reference, so this is
+            // where it is settled: doing it in the caller would leak one for
+            // whoever calls this directly rather than through
+            // Gst.GObject.Object.FromNative.
+            SettleFabricated(handle, transfer);
             wrapper = fabricated;
             return true;
         }
