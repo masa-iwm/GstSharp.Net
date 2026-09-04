@@ -54,6 +54,20 @@ internal enum VfuncBucket
     /// borrowed and the value on exit is written back.
     /// </summary>
     InOutHandle,
+
+    /// <summary>
+    /// A block of elements the call is given as a pointer with a count beside
+    /// it, projected onto one span. The memory belongs to the caller for the
+    /// duration of the call and to nobody afterwards.
+    /// </summary>
+    Span,
+
+    /// <summary>
+    /// The parameter that counts the elements of a <see cref="Span"/>. It is
+    /// part of the slot and not of the managed member, whose span carries the
+    /// count in its length.
+    /// </summary>
+    SpanCount,
 }
 
 /// <summary>
@@ -95,11 +109,16 @@ internal enum VfuncReturnBucket
 /// the value the pointer held on entry, which is what an <em>inout</em>
 /// argument compares with.
 /// </param>
+/// <param name="CountOf">
+/// The span whose elements a <see cref="VfuncBucket.SpanCount"/> argument
+/// counts, or <see langword="null"/> when the argument counts nothing.
+/// </param>
 internal sealed record VfuncArgument(
     ArgumentPlan Argument,
     VfuncBucket Bucket,
     bool IsIdentity = false,
-    string? IdentityReference = null);
+    string? IdentityReference = null,
+    string? CountOf = null);
 
 /// <summary>
 /// Everything the emitter needs to write one <c>&lt;virtual-method&gt;</c>: the
@@ -153,6 +172,14 @@ internal sealed class VirtualMethodPlan
     /// Named by the overlay key <c>vfuncNonNullReturns</c>.
     /// </summary>
     internal string? NonNullReturn { get; init; }
+
+    /// <summary>
+    /// Gets the C# expression a trampoline answers when the managed override
+    /// threw, or <see langword="null"/> when the zero of the return type is a
+    /// failure the caller of the slot reads as one. Named by the overlay key
+    /// <c>vfuncFailureValues</c>.
+    /// </summary>
+    internal string? FailureValue { get; init; }
 
     /// <summary>
     /// Gets the hand written sentence the documentation of the slot carries, or

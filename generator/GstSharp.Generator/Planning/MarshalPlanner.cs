@@ -4230,15 +4230,34 @@ internal sealed class MarshalPlanner
             "slot",
         };
 
-        List<VfuncArgument> arguments = [];
-        foreach (GirParameter parameter in method.Parameters)
+        // A block of bytes the gir counts by another parameter is one
+        // argument to the managed override and two to the slot, so the counting
+        // parameter is read before the loop and then only carried.
+        Dictionary<int, string> counts = [];
+        for (int index = 0; index < method.Parameters.Count; index++)
         {
-            VfuncArgument? argument = PlanVirtualMethodArgument(
-                overlayKey,
-                parameter,
-                arguments,
-                context,
-                ref reason);
+            if (method.Parameters[index].Type is GirArrayRef { LengthParameterIndex: int counted }
+                && counted >= 0
+                && counted < method.Parameters.Count)
+            {
+                counts[counted] = _names.VirtualMethodParameterName(
+                    overlayKey,
+                    method.Parameters[index].Name ?? "data");
+            }
+        }
+
+        List<VfuncArgument> arguments = [];
+        for (int index = 0; index < method.Parameters.Count; index++)
+        {
+            GirParameter parameter = method.Parameters[index];
+            VfuncArgument? argument = counts.ContainsKey(index)
+                ? PlanVirtualMethodCount(overlayKey, parameter, counts[index], context)
+                : PlanVirtualMethodArgument(
+                    overlayKey,
+                    parameter,
+                    arguments,
+                    context,
+                    ref reason);
 
             if (argument is null || !taken.Add(argument.Argument.Name))
             {
@@ -4265,6 +4284,7 @@ internal sealed class MarshalPlanner
             ReturnBucket = planned.Bucket,
             NullSlotDefault = _overlays.TryGetVfuncDefault(overlayKey, out string? expression) ? expression : null,
             NonNullReturn = _overlays.TryGetVfuncNonNullReturn(overlayKey, out string? failure) ? failure : null,
+            FailureValue = _overlays.TryGetVfuncFailureValue(overlayKey, out string? trapped) ? trapped : null,
             DocNote = _overlays.TryGetVfuncDocNote(overlayKey, out string? note) ? note : null,
         };
     }
@@ -4286,9 +4306,14 @@ internal sealed class MarshalPlanner
         PlanningContext context,
         ref string reason)
     {
-        if (parameter.IsVarArgs || parameter.Type.IsVarArgs || parameter.Type is GirArrayRef)
+        if (parameter.IsVarArgs || parameter.Type.IsVarArgs)
         {
             return null;
+        }
+
+        if (parameter.Type is GirArrayRef array)
+        {
+            return PlanVirtualMethodSpan(overlayKey, parameter, array, context);
         }
 
         // The direction is read here rather than through the shared correction,
@@ -4398,6 +4423,88 @@ internal sealed class MarshalPlanner
         }
 
         return bucket is { } value ? new VfuncArgument(argument, value) : null;
+    }
+
+    /// <summary>Plans a block of elements a slot is handed with a count beside it.</summary>
+    /// <param name="overlayKey">The key the overlays address the slot by.</param>
+    /// <param name="parameter">The parameter to plan.</param>
+    /// <param name="array">The counted array the gir declares.</param>
+    /// <param name="context">The module that is being emitted.</param>
+    /// <returns>The argument, or <see langword="null"/> when it is not supported.</returns>
+    /// <remarks>
+    /// The pair is projected the way the forward planner projects it for a
+    /// method: one span, with the count read off its length. It is the shape
+    /// <c>GstAudioSink::write</c> and <c>GstAudioSrc::read</c> are declared in,
+    /// and the only thing the gir leaves unsaid is which way the bytes travel,
+    /// because a <c>gpointer</c> carries no constness - that is the overlay key
+    /// <c>vfuncSpans</c>.
+    /// </remarks>
+    private VfuncArgument? PlanVirtualMethodSpan(
+        string overlayKey,
+        GirParameter parameter,
+        GirArrayRef array,
+        PlanningContext context)
+    {
+        if (array.LengthParameterIndex is null
+            || parameter.Direction is GirDirection.Out or GirDirection.InOut
+            || parameter.Transfer is GirTransfer.Full or GirTransfer.Container)
+        {
+            return null;
+        }
+
+        MappedType mapped = _types.Map(array, context.Namespace);
+        if (mapped.ElementType is not { } element || ArrayElementType(element) is not { } elementType)
+        {
+            return null;
+        }
+
+        string name = _names.VirtualMethodParameterName(overlayKey, parameter.Name ?? "data");
+        bool readOnly = _overlays.IsReadOnlySpan(overlayKey + "#" + parameter.Name);
+        return new VfuncArgument(
+            new ArgumentPlan
+            {
+                Source = parameter,
+                Kind = ArgumentKind.Span,
+                Name = name,
+                PublicType = (readOnly ? "System.ReadOnlySpan<" : "System.Span<") + elementType + ">",
+                RawType = elementType + "*",
+                Direction = ArgumentDirection.In,
+                ElementType = elementType,
+            },
+            VfuncBucket.Span);
+    }
+
+    /// <summary>Plans the parameter that counts the elements of a block.</summary>
+    /// <param name="overlayKey">The key the overlays address the slot by.</param>
+    /// <param name="parameter">The counting parameter.</param>
+    /// <param name="span">The name the block it counts carries.</param>
+    /// <param name="context">The module that is being emitted.</param>
+    /// <returns>The argument, or <see langword="null"/> when it is not a plain count.</returns>
+    private VfuncArgument? PlanVirtualMethodCount(
+        string overlayKey,
+        GirParameter parameter,
+        string span,
+        PlanningContext context)
+    {
+        if (parameter.Direction is GirDirection.Out or GirDirection.InOut)
+        {
+            return null;
+        }
+
+        MappedType mapped = _types.Map(parameter.Type, context.Namespace);
+        ArgumentPlan? argument = PlanScalar(
+            parameter.Type,
+            mapped,
+            _names.VirtualMethodParameterName(overlayKey, parameter.Name ?? "length"),
+            ArgumentDirection.In,
+            GirTransfer.None,
+            nullable: false,
+            context,
+            inbound: true);
+
+        return argument is { Kind: ArgumentKind.Value }
+            ? new VfuncArgument(argument, VfuncBucket.SpanCount, CountOf: span)
+            : null;
     }
 
     /// <summary>Plans an argument the slot produces or replaces.</summary>

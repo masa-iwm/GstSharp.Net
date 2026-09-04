@@ -398,6 +398,8 @@ internal sealed class Overlays
     private readonly HashSet<string> _vfuncIdentityBuffers;
     private readonly Dictionary<string, string> _vfuncNonNullReturns;
     private readonly Dictionary<string, string> _vfuncDocNotes;
+    private readonly HashSet<string> _vfuncSpans;
+    private readonly Dictionary<string, string> _vfuncFailureValues;
 
     private Overlays(
         HashSet<string> skip,
@@ -415,7 +417,9 @@ internal sealed class Overlays
         Dictionary<string, string> vfuncDefaults,
         HashSet<string> vfuncIdentityBuffers,
         Dictionary<string, string> vfuncNonNullReturns,
-        Dictionary<string, string> vfuncDocNotes)
+        Dictionary<string, string> vfuncDocNotes,
+        HashSet<string> vfuncSpans,
+        Dictionary<string, string> vfuncFailureValues)
     {
         _skip = skip;
         _handBound = handBound;
@@ -433,6 +437,8 @@ internal sealed class Overlays
         _vfuncIdentityBuffers = vfuncIdentityBuffers;
         _vfuncNonNullReturns = vfuncNonNullReturns;
         _vfuncDocNotes = vfuncDocNotes;
+        _vfuncSpans = vfuncSpans;
+        _vfuncFailureValues = vfuncFailureValues;
     }
 
     /// <summary>Gets an overlay set without any correction.</summary>
@@ -452,6 +458,8 @@ internal sealed class Overlays
         new Dictionary<string, string>(StringComparer.Ordinal),
         new HashSet<string>(StringComparer.Ordinal),
         new Dictionary<string, string>(StringComparer.Ordinal),
+        new Dictionary<string, string>(StringComparer.Ordinal),
+        new HashSet<string>(StringComparer.Ordinal),
         new Dictionary<string, string>(StringComparer.Ordinal));
 
     /// <summary>Gets the skipped identifiers, ordered for reporting.</summary>
@@ -522,6 +530,12 @@ internal sealed class Overlays
 
     /// <summary>Gets the slots that carry a hand written note in their documentation.</summary>
     internal IReadOnlyCollection<string> VfuncDocNoteKeys => _vfuncDocNotes.Keys;
+
+    /// <summary>Gets the block parameters the slot behind them only reads.</summary>
+    internal IReadOnlyCollection<string> VfuncSpanKeys => _vfuncSpans;
+
+    /// <summary>Gets the slots that answer their own value when an override threw.</summary>
+    internal IReadOnlyCollection<string> VfuncFailureValueKeys => _vfuncFailureValues.Keys;
 
     /// <summary>
     /// Loads <c>fixups.json</c> and <c>platform-symbols.json</c> from an overlay
@@ -626,6 +640,18 @@ internal sealed class Overlays
             vfuncNonNullReturns[entry.Key] = entry.Value;
         }
 
+        HashSet<string> vfuncSpans = new(StringComparer.Ordinal);
+        foreach (string key in fixups.VfuncSpans ?? [])
+        {
+            vfuncSpans.Add(key);
+        }
+
+        Dictionary<string, string> vfuncFailureValues = new(StringComparer.Ordinal);
+        foreach (KeyValuePair<string, string> entry in fixups.VfuncFailureValues ?? [])
+        {
+            vfuncFailureValues[entry.Key] = entry.Value;
+        }
+
         HashSet<string> vfuncIdentityBuffers = new(StringComparer.Ordinal);
         foreach (string key in fixups.VfuncIdentityBuffers ?? [])
         {
@@ -648,7 +674,9 @@ internal sealed class Overlays
             vfuncDefaults,
             vfuncIdentityBuffers,
             vfuncNonNullReturns,
-            vfuncDocNotes);
+            vfuncDocNotes,
+            vfuncSpans,
+            vfuncFailureValues);
     }
 
     /// <summary>Tests whether a symbol is skipped by the overlays.</summary>
@@ -785,6 +813,30 @@ internal sealed class Overlays
     internal bool IsIdentityBuffer(string key) => _vfuncIdentityBuffers.Contains(key);
 
     /// <summary>
+    /// Tests whether the slot behind a block parameter only reads it, which
+    /// makes the parameter a <c>ReadOnlySpan</c> instead of a <c>Span</c>.
+    /// </summary>
+    /// <param name="key">The parameter, as <c>GstAudio.AudioSink::write#data</c>.</param>
+    /// <returns><see langword="true"/> when the parameter is listed.</returns>
+    /// <remarks>
+    /// The gir spells such a block as an array counted by another parameter,
+    /// and the constness of the C declaration is the only thing that would say
+    /// which way the data travels - which a <c>gpointer</c> does not say.
+    /// </remarks>
+    internal bool IsReadOnlySpan(string key) => _vfuncSpans.Contains(key);
+
+    /// <summary>
+    /// Looks up what a trampoline answers when the managed override threw, for
+    /// a slot whose caller reads more into the zero of the return type than
+    /// "it failed".
+    /// </summary>
+    /// <param name="key">The slot, as <c>GstAudio.AudioSink::write</c>.</param>
+    /// <param name="failure">Receives the C# expression.</param>
+    /// <returns>Whether the slot declares a failure value of its own.</returns>
+    internal bool TryGetVfuncFailureValue(string key, [NotNullWhen(true)] out string? failure) =>
+        _vfuncFailureValues.TryGetValue(key, out failure);
+
+    /// <summary>
     /// Looks up the value a trampoline answers for a slot whose caller does not
     /// tolerate a NULL answer, when the managed override answered none.
     /// </summary>
@@ -853,6 +905,10 @@ internal sealed class Overlays
         public Dictionary<string, string>? VfuncNonNullReturns { get; set; }
 
         public Dictionary<string, string>? VfuncDocNotes { get; set; }
+
+        public List<string>? VfuncSpans { get; set; }
+
+        public Dictionary<string, string>? VfuncFailureValues { get; set; }
     }
 
     private sealed class PlatformSymbolsFile

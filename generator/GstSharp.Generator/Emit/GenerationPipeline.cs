@@ -453,6 +453,17 @@ internal static class GenerationPipeline
             subclasses.VirtualMethodKeys,
             "The non null return '{0}' names no slot of a subclassable class; the entry is stale.");
         Report(
+            "GEN0038",
+            overlays.VfuncFailureValueKeys,
+            subclasses.VirtualMethodKeys,
+            "The virtual method failure value '{0}' names no slot of a subclassable class; the entry is stale.");
+        Report(
+            "GEN0039",
+            overlays.VfuncSpanKeys,
+            subclasses.VirtualMethodParameterKeys,
+            "The read only block '{0}' names no parameter of a slot of a subclassable class; "
+            + "the entry is stale.");
+        Report(
             "GEN0031",
             overlays.VfuncIdentityBufferKeys,
             subclasses.VirtualMethodParameterKeys,

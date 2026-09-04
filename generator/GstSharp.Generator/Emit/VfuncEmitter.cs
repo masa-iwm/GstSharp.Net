@@ -492,6 +492,11 @@ internal sealed class VfuncEmitter
         List<string> parts = [];
         foreach (VfuncArgument argument in plan.Arguments)
         {
+            if (argument.Bucket == VfuncBucket.SpanCount)
+            {
+                continue;
+            }
+
             string modifier = Modifier(argument);
             parts.Add((modifier.Length == 0 ? string.Empty : "ref ") + PublicType(argument));
         }
@@ -551,12 +556,26 @@ internal sealed class VfuncEmitter
         }
 
         List<string> raw = [];
+        int pinned = 0;
         foreach (VfuncArgument argument in plan.Arguments)
         {
             ArgumentPlan value = argument.Argument;
             string local = value.Name + "Native";
             switch (argument.Bucket)
             {
+                // The block is pinned for the call: the parent slot is handed
+                // the address of the elements, and the caller of the chain-up
+                // may well have named a managed array.
+                case VfuncBucket.Span:
+                    writer.WriteLine(
+                        "fixed (" + value.ElementType + "* " + local + " = " + value.Name + ")");
+                    writer.OpenBlock();
+                    pinned++;
+                    raw.Add(local);
+                    break;
+                case VfuncBucket.SpanCount:
+                    raw.Add("checked((" + value.RawType + ")" + argument.CountOf + ".Length)");
+                    break;
                 case VfuncBucket.Adopt:
                     writer.WriteLine("nint " + local + " = " + value.Name + ".Handle;");
                     raw.Add(local);
@@ -709,6 +728,11 @@ internal sealed class VfuncEmitter
         if (!plan.Return.IsVoid)
         {
             writer.WriteLine("return result;");
+        }
+
+        for (int block = 0; block < pinned; block++)
+        {
+            writer.CloseBlock();
         }
 
         writer.CloseBlock();
@@ -933,6 +957,14 @@ internal sealed class VfuncEmitter
                         + ".FromNative(" + value.Name + ");");
                     call.Add(NullAssert(value, local));
                     break;
+                case VfuncBucket.Span:
+                    writer.WriteLine(
+                        value.PublicType + " " + local + " = new(" + value.Name + ", checked((int)"
+                        + CountNameOf(plan, value.Name) + "));");
+                    call.Add(local);
+                    break;
+                case VfuncBucket.SpanCount:
+                    break;
                 case VfuncBucket.Adopt:
                     writer.WriteLine(
                         "using " + Nullable(value.PublicType) + " " + local + " = " + Bare(value.PublicType)
@@ -1147,6 +1179,11 @@ internal sealed class VfuncEmitter
     {
         foreach (VfuncArgument argument in plan.Arguments)
         {
+            if (argument.Bucket == VfuncBucket.SpanCount)
+            {
+                continue;
+            }
+
             ArgumentPlan value = argument.Argument;
             XmlDocWriter.WriteParam(
                 writer,
@@ -1217,6 +1254,9 @@ internal sealed class VfuncEmitter
             case VfuncBucket.BorrowWrapper:
                 note.Add("The element lends this for the duration of the call; keep a copy to retain it.");
                 break;
+            case VfuncBucket.Span:
+                note.Add("The memory belongs to the caller and is only valid while the call runs.");
+                break;
             case VfuncBucket.BorrowOpaque:
                 note.Add("The wrapper only holds the pointer the call was given, which is usually an");
                 note.Add("address on the stack of the caller: it stops meaning anything once the call");
@@ -1250,6 +1290,11 @@ internal sealed class VfuncEmitter
         List<string> parts = [];
         foreach (VfuncArgument argument in plan.Arguments)
         {
+            if (argument.Bucket == VfuncBucket.SpanCount)
+            {
+                continue;
+            }
+
             parts.Add(Modifier(argument) + PublicType(argument) + " " + argument.Argument.Name);
         }
 
@@ -1454,6 +1499,14 @@ internal sealed class VfuncEmitter
 
     private static string FailureValue(VirtualMethodPlan plan)
     {
+        // The zero of a return type does not always read as a failure: the ring
+        // buffer thread of an audio sink loops on a write that answered zero
+        // bytes, so a slot may name what a trapped exception answers instead.
+        if (plan.FailureValue is { } declared)
+        {
+            return declared;
+        }
+
         if (plan.NonNullReturn is { } failure)
         {
             return failure;
@@ -1472,6 +1525,24 @@ internal sealed class VfuncEmitter
         }
 
         return "default";
+    }
+
+    /// <summary>Finds the argument that counts the elements of one block.</summary>
+    /// <param name="plan">The slot being written.</param>
+    /// <param name="span">The name of the block.</param>
+    /// <returns>The name of the counting argument.</returns>
+    private static string CountNameOf(VirtualMethodPlan plan, string span)
+    {
+        foreach (VfuncArgument argument in plan.Arguments)
+        {
+            if (argument.Bucket == VfuncBucket.SpanCount
+                && string.Equals(argument.CountOf, span, StringComparison.Ordinal))
+            {
+                return argument.Argument.Name;
+            }
+        }
+
+        return span + "Length";
     }
 
     private static string NullAssert(ArgumentPlan value, string local) =>
