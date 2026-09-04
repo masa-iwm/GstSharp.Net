@@ -422,11 +422,15 @@ jobs:
       # core and base plugins every leg installs.
       - name: GstInspect against gst-inspect-1.0
         run: |
+          # The runners give a plain "bash -e" on Linux and macOS, which lets
+          # a failing gst-inspect-1.0 hide behind the pipe into tr and turns
+          # the diff into a comparison of two error messages.
+          set -o pipefail
           unset GST_DEBUG
           export LC_ALL=C
           # Out of the checkout, so that the pages cannot show up in the git
           # status a later step reads.
-          pages="${RUNNER_TEMP:-/tmp}"
+          pages=$(mktemp -d)
           status=0
           for element in fakesink identity videotestsrc capsfilter; do
             gst-inspect-1.0 --no-colors "$element" | tr -d '\r' > "$pages/expected-$element.txt"
@@ -587,11 +591,15 @@ jobs:
       # Same diff as the Linux leg; see the comments there.
       - name: GstInspect against gst-inspect-1.0
         run: |
+          # The runners give a plain "bash -e" on Linux and macOS, which lets
+          # a failing gst-inspect-1.0 hide behind the pipe into tr and turns
+          # the diff into a comparison of two error messages.
+          set -o pipefail
           unset GST_DEBUG
           export LC_ALL=C
           # Out of the checkout, so that the pages cannot show up in the git
           # status a later step reads.
-          pages="${RUNNER_TEMP:-/tmp}"
+          pages=$(mktemp -d)
           status=0
           for element in fakesink identity videotestsrc capsfilter; do
             gst-inspect-1.0 --no-colors "$element" | tr -d '\r' > "$pages/expected-$element.txt"
@@ -741,11 +749,15 @@ jobs:
         # script; Git Bash is on the image.
         shell: bash
         run: |
+          # The runners give a plain "bash -e" on Linux and macOS, which lets
+          # a failing gst-inspect-1.0 hide behind the pipe into tr and turns
+          # the diff into a comparison of two error messages.
+          set -o pipefail
           unset GST_DEBUG
           export LC_ALL=C
           # Out of the checkout, so that the pages cannot show up in the git
           # status a later step reads.
-          pages="${RUNNER_TEMP:-/tmp}"
+          pages=$(mktemp -d)
           status=0
           for element in fakesink identity videotestsrc capsfilter; do
             gst-inspect-1.0 --no-colors "$element" | tr -d '\r' > "$pages/expected-$element.txt"

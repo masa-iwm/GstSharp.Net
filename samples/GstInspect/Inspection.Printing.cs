@@ -28,13 +28,9 @@ internal sealed partial class Inspection
     private const string DocBaseUrl = "https://gstreamer.freedesktop.org/documentation";
 
     /// <summary>
-    /// The metadata of an element factory, in the order the C tool prints it.
+    /// The metadata key of the documentation URL of a factory, which decides
+    /// whether one is built.
     /// </summary>
-    /// <remarks>
-    /// The keys are the ones <c>gst_element_factory_get_metadata_keys</c>
-    /// reports, in the order the factory stores them, so a factory that carries
-    /// a key of its own has it printed too.
-    /// </remarks>
     private const string DocUriKey = "doc-uri";
 
     /// <summary>The indentation everything under the name of a property is written at.</summary>

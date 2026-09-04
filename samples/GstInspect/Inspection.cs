@@ -172,16 +172,18 @@ internal sealed partial class Inspection
 
         int pluginCount = 0;
         int featureCount = 0;
+        int blacklistCount = 0;
 
         foreach (Plugin plugin in plugins)
         {
             pluginCount++;
 
-            // The blacklisted plugins the C tool counts separately and leaves
-            // out are not distinguishable here: GST_PLUGIN_FLAG_BLACKLISTED is
-            // a bit of the GstObject flags field, which has no binding. A
-            // blacklisted plugin has no features, so it costs one line of
-            // nothing rather than a wrong line.
+            if (plugin.IsFlagSet((uint)PluginFlags.Blacklisted))
+            {
+                blacklistCount++;
+                continue;
+            }
+
             List<PluginFeature> features = [.. registry.GetFeatureListByPlugin(plugin.GetName())];
             features.Sort(static (left, right) => string.CompareOrdinal(left.GetName(), right.GetName()));
 
@@ -192,10 +194,14 @@ internal sealed partial class Inspection
             }
         }
 
+        string blacklist = blacklistCount == 0
+            ? string.Empty
+            : $" ({Plural(blacklistCount, "blacklist entry", "blacklist entries")} not shown)";
+
         Console.WriteLine();
         Console.WriteLine(string.Create(
             CultureInfo.InvariantCulture,
-            $"Total count: {Plural(pluginCount, "plugin")}, {Plural(featureCount, "feature")}"));
+            $"Total count: {Plural(pluginCount, "plugin")}{blacklist}, {Plural(featureCount, "feature")}"));
 
         return ExitNoError;
     }
@@ -205,7 +211,12 @@ internal sealed partial class Inspection
     /// </summary>
     /// <param name="count">How many there are.</param>
     /// <param name="noun">What they are.</param>
+    /// <param name="plural">
+    /// What more than one of them are, when adding an <c>s</c> is not enough.
+    /// </param>
     /// <returns>The counted noun.</returns>
-    private static string Plural(int count, string noun) =>
-        string.Create(CultureInfo.InvariantCulture, $"{count} {noun}{(count == 1 ? string.Empty : "s")}");
+    private static string Plural(int count, string noun, string? plural = null) =>
+        string.Create(
+            CultureInfo.InvariantCulture,
+            $"{count} {(count == 1 ? noun : plural ?? noun + "s")}");
 }

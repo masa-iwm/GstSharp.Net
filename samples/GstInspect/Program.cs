@@ -55,12 +55,6 @@
 //     printed as its serialization rather than recursed into:
 //     gst_value_get_caps and gst_value_get_structure are not bound.
 //
-//   * A blacklisted plugin is counted by the C tool and left out of the
-//     listing. GST_PLUGIN_FLAG_BLACKLISTED is a bit of the GstObject flags word
-//     of a GstPlugin, which the binding reaches for a GstElement only, so this
-//     counts it like any other plugin -- it has no features, so it adds nothing
-//     to the listing and one to the plugin count.
-//
 // Per-operating-system behavior in the C source, and what became of it:
 //
 //   * The pager. redirect_stdout() forks "less" (or $PAGER) and re-points

@@ -10,7 +10,10 @@ using Gst.GObject;
 /// </content>
 internal sealed partial class Inspection
 {
-    /// <summary>The bit of <c>GST_ELEMENT_FLAG_LOCKED_STATE</c>.</summary>
+    /// <summary>
+    /// The flags of an element and their labels, in the order
+    /// <c>print_element_flags</c> tests them.
+    /// </summary>
     private static readonly (uint Bit, string Name)[] ElementFlagNames =
     [
         ((uint)ElementFlags.LockedState, "LOCKED_STATE"),
