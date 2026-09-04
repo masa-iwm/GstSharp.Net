@@ -580,6 +580,11 @@ internal sealed class VfuncEmitter
         {
             writer.WriteLine(call + ";");
         }
+        else if (AnswersHandle(plan))
+        {
+            writer.WriteLine(plan.Return.RawType + " resultNative = " + call + ";");
+            writer.WriteLine(ReturnType(plan) + " result = " + WrapReturn(plan, "resultNative") + ";");
+        }
         else
         {
             writer.WriteLine(ReturnType(plan) + " result = " + call + ";");
@@ -663,8 +668,9 @@ internal sealed class VfuncEmitter
             arguments.Add(argument.Argument.Name);
         }
 
+        bool raw = AnswersHandle(plan);
         writer.WriteLine(
-            "private static " + ReturnType(plan) + " ChainUp" + plan.Name + "("
+            "private static " + (raw ? plan.Return.RawType : ReturnType(plan)) + " ChainUp" + plan.Name + "("
             + string.Join(", ", parameters) + ")");
         writer.OpenBlock();
         writer.WriteLine(pointer + " slot =");
@@ -717,7 +723,7 @@ internal sealed class VfuncEmitter
         }
         else
         {
-            writer.WriteLine("return " + FromNativeReturn(plan, call) + ";");
+            writer.WriteLine("return " + (raw ? call : FromNativeReturn(plan, call)) + ";");
         }
 
         writer.CloseBlock();
@@ -761,6 +767,13 @@ internal sealed class VfuncEmitter
         {
             writer.WriteLine(fallback + ";");
             writer.WriteLine("return;");
+        }
+        else if (AnswersHandle(plan))
+        {
+            // No wrapper is built here: the answer of the parent slot is
+            // already what the caller of the slot expects, with the reference
+            // count the parent left behind.
+            writer.WriteLine("return " + fallback + ";");
         }
         else
         {
@@ -1010,6 +1023,18 @@ internal sealed class VfuncEmitter
         return string.Join(", ", parts);
     }
 
+    /// <summary>
+    /// Whether the value a slot answers is a handle, which the static chain-up
+    /// hands on raw: nothing but the protected instance member is allowed to
+    /// build a wrapper, because a wrapper nobody holds gives its reference back
+    /// only when the finalizer runs.
+    /// </summary>
+    /// <param name="plan">The slot.</param>
+    /// <returns>Whether the answer is a handle.</returns>
+    private static bool AnswersHandle(VirtualMethodPlan plan) =>
+        plan.ReturnBucket is VfuncReturnBucket.OwnedGObject or VfuncReturnBucket.OwnedMiniObject
+            or VfuncReturnBucket.BorrowedHandle;
+
     /// <summary>The C# type the managed members of a slot answer.</summary>
     /// <param name="plan">The slot.</param>
     /// <returns>The type, which is nullable for every handle a slot may leave NULL.</returns>
@@ -1099,6 +1124,15 @@ internal sealed class VfuncEmitter
         VfuncReturnBucket.BorrowedHandle => AdoptExpressionBorrowed(plan, call),
         _ => AdoptReturn(plan, call),
     };
+
+    /// <summary>Builds the wrapper the protected chain-up hands a managed caller.</summary>
+    /// <param name="plan">The slot being written.</param>
+    /// <param name="handle">The raw handle the parent slot answered.</param>
+    /// <returns>The expression.</returns>
+    private static string WrapReturn(VirtualMethodPlan plan, string handle) =>
+        plan.ReturnBucket == VfuncReturnBucket.BorrowedHandle
+            ? AdoptExpressionBorrowed(plan, handle)
+            : AdoptReturn(plan, handle);
 
     private static string AdoptExpressionBorrowed(VirtualMethodPlan plan, string call)
     {

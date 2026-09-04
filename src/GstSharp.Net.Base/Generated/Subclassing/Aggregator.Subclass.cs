@@ -422,7 +422,8 @@ public unsafe partial class Aggregator
         nint instance = Handle;
         nint bufNative = buf.Handle;
         Gst.GstNative.MiniObjectRef(bufNative);
-        Gst.Buffer? result = ChainUpClip(instance, aggregatorPad.Handle, bufNative);
+        nint resultNative = ChainUpClip(instance, aggregatorPad.Handle, bufNative);
+        Gst.Buffer? result = Gst.Buffer.FromNative(resultNative, Gst.Interop.Transfer.Full);
         GC.KeepAlive(this);
         GC.KeepAlive(aggregatorPad);
         buf.Dispose();
@@ -576,7 +577,8 @@ public unsafe partial class Aggregator
         nint instance = Handle;
         nint capsNative = caps.Handle;
         Gst.GstNative.MiniObjectRef(capsNative);
-        Gst.Caps? result = ChainUpFixateSrcCaps(instance, capsNative);
+        nint resultNative = ChainUpFixateSrcCaps(instance, capsNative);
+        Gst.Caps? result = Gst.Caps.FromNative(resultNative, Gst.Interop.Transfer.Full);
         GC.KeepAlive(this);
         caps.Dispose();
         return result;
@@ -687,7 +689,8 @@ public unsafe partial class Aggregator
     protected Gst.Sample? ChainUpPeekNextSample(Gst.Base.AggregatorPad aggregatorPad)
     {
         ArgumentNullException.ThrowIfNull(aggregatorPad);
-        Gst.Sample? result = ChainUpPeekNextSample(Handle, aggregatorPad.Handle);
+        nint resultNative = ChainUpPeekNextSample(Handle, aggregatorPad.Handle);
+        Gst.Sample? result = Gst.Sample.FromNative(resultNative, Gst.Interop.Transfer.Full);
         GC.KeepAlive(this);
         GC.KeepAlive(aggregatorPad);
         return result;
@@ -707,7 +710,7 @@ public unsafe partial class Aggregator
         return (Gst.FlowReturn)slot(aggregator);
     }
 
-    private static Gst.Buffer? ChainUpClip(nint aggregator, nint aggregatorPad, nint buf)
+    private static nint ChainUpClip(nint aggregator, nint aggregatorPad, nint buf)
     {
         delegate* unmanaged[Cdecl]<nint, nint, nint, nint> slot =
             (delegate* unmanaged[Cdecl]<nint, nint, nint, nint>)ParentClassOf(aggregator)->Clip;
@@ -719,7 +722,7 @@ public unsafe partial class Aggregator
                 "Aggregator.clip has no parent implementation; override OnClip.");
         }
 
-        return Gst.Buffer.FromNative(slot(aggregator, aggregatorPad, buf), Gst.Interop.Transfer.Full);
+        return slot(aggregator, aggregatorPad, buf);
     }
 
     private static Gst.FlowReturn ChainUpFinishBuffer(nint aggregator, nint buffer)
@@ -880,7 +883,7 @@ public unsafe partial class Aggregator
         return (Gst.FlowReturn)slot(self, caps, ret);
     }
 
-    private static Gst.Caps? ChainUpFixateSrcCaps(nint self, nint caps)
+    private static nint ChainUpFixateSrcCaps(nint self, nint caps)
     {
         delegate* unmanaged[Cdecl]<nint, nint, nint> slot =
             (delegate* unmanaged[Cdecl]<nint, nint, nint>)ParentClassOf(self)->FixateSrcCaps;
@@ -892,7 +895,7 @@ public unsafe partial class Aggregator
                 "Aggregator.fixate_src_caps has no parent implementation; override OnFixateSrcCaps.");
         }
 
-        return Gst.Caps.FromNative(slot(self, caps), Gst.Interop.Transfer.Full);
+        return slot(self, caps);
     }
 
     private static bool ChainUpNegotiatedSrcCaps(nint self, nint caps)
@@ -995,7 +998,7 @@ public unsafe partial class Aggregator
         return (Gst.FlowReturn)slot(aggregator, bufferlist);
     }
 
-    private static Gst.Sample? ChainUpPeekNextSample(nint aggregator, nint aggregatorPad)
+    private static nint ChainUpPeekNextSample(nint aggregator, nint aggregatorPad)
     {
         delegate* unmanaged[Cdecl]<nint, nint, nint> slot =
             (delegate* unmanaged[Cdecl]<nint, nint, nint>)ParentClassOf(aggregator)->PeekNextSample;
@@ -1006,7 +1009,7 @@ public unsafe partial class Aggregator
                 "Aggregator.peek_next_sample has no parent implementation; override OnPeekNextSample.");
         }
 
-        return Gst.Sample.FromNative(slot(aggregator, aggregatorPad), Gst.Interop.Transfer.Full);
+        return slot(aggregator, aggregatorPad);
     }
 
     /// <summary>
@@ -1044,8 +1047,7 @@ public unsafe partial class Aggregator
         {
             if (Gst.GObject.Object.TryGetInterned(aggregator) is not Aggregator managed)
             {
-                Gst.Buffer? chained = ChainUpClip(aggregator, aggregatorPad, buf);
-                return chained is null ? nint.Zero : Gst.GstNative.MiniObjectRef(chained.Handle);
+                return ChainUpClip(aggregator, aggregatorPad, buf);
             }
 
             Gst.Base.AggregatorPad? aggregatorPadValue = Gst.GObject.Object.FromNative<Gst.Base.AggregatorPad>(aggregatorPad, Gst.Interop.Transfer.None);
@@ -1304,8 +1306,7 @@ public unsafe partial class Aggregator
         {
             if (Gst.GObject.Object.TryGetInterned(self) is not Aggregator managed)
             {
-                Gst.Caps? chained = ChainUpFixateSrcCaps(self, caps);
-                return chained is null ? nint.Zero : Gst.GstNative.MiniObjectRef(chained.Handle);
+                return ChainUpFixateSrcCaps(self, caps);
             }
 
             using Gst.Caps? capsValue = Gst.Caps.FromNative(caps, Gst.Interop.Transfer.Full);
@@ -1469,8 +1470,7 @@ public unsafe partial class Aggregator
         {
             if (Gst.GObject.Object.TryGetInterned(aggregator) is not Aggregator managed)
             {
-                Gst.Sample? chained = ChainUpPeekNextSample(aggregator, aggregatorPad);
-                return chained is null ? nint.Zero : Gst.GstNative.MiniObjectRef(chained.Handle);
+                return ChainUpPeekNextSample(aggregator, aggregatorPad);
             }
 
             Gst.Base.AggregatorPad? aggregatorPadValue = Gst.GObject.Object.FromNative<Gst.Base.AggregatorPad>(aggregatorPad, Gst.Interop.Transfer.None);

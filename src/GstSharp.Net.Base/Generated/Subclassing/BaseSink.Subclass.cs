@@ -328,7 +328,8 @@ public unsafe partial class BaseSink
     /// <returns>What the slot answers.</returns>
     protected Gst.Caps? ChainUpGetCaps(Gst.Caps? filter)
     {
-        Gst.Caps? result = ChainUpGetCaps(Handle, filter is null ? nint.Zero : filter.Handle);
+        nint resultNative = ChainUpGetCaps(Handle, filter is null ? nint.Zero : filter.Handle);
+        Gst.Caps? result = Gst.Caps.FromNative(resultNative, Gst.Interop.Transfer.Full);
         GC.KeepAlive(this);
         GC.KeepAlive(filter);
         return result;
@@ -355,7 +356,8 @@ public unsafe partial class BaseSink
         nint instance = Handle;
         nint capsNative = caps.Handle;
         Gst.GstNative.MiniObjectRef(capsNative);
-        Gst.Caps? result = ChainUpFixate(instance, capsNative);
+        nint resultNative = ChainUpFixate(instance, capsNative);
+        Gst.Caps? result = Gst.Caps.FromNative(resultNative, Gst.Interop.Transfer.Full);
         GC.KeepAlive(this);
         caps.Dispose();
         return result;
@@ -540,7 +542,7 @@ public unsafe partial class BaseSink
         return result;
     }
 
-    private static Gst.Caps? ChainUpGetCaps(nint sink, nint filter)
+    private static nint ChainUpGetCaps(nint sink, nint filter)
     {
         delegate* unmanaged[Cdecl]<nint, nint, nint> slot =
             (delegate* unmanaged[Cdecl]<nint, nint, nint>)ParentClassOf(sink)->GetCaps;
@@ -551,7 +553,7 @@ public unsafe partial class BaseSink
                 "BaseSink.get_caps has no parent implementation; override OnGetCaps.");
         }
 
-        return Gst.Caps.FromNative(slot(sink, filter), Gst.Interop.Transfer.Full);
+        return slot(sink, filter);
     }
 
     private static bool ChainUpSetCaps(nint sink, nint caps)
@@ -567,7 +569,7 @@ public unsafe partial class BaseSink
         return slot(sink, caps) != 0;
     }
 
-    private static Gst.Caps? ChainUpFixate(nint sink, nint caps)
+    private static nint ChainUpFixate(nint sink, nint caps)
     {
         delegate* unmanaged[Cdecl]<nint, nint, nint> slot =
             (delegate* unmanaged[Cdecl]<nint, nint, nint>)ParentClassOf(sink)->Fixate;
@@ -579,7 +581,7 @@ public unsafe partial class BaseSink
                 "BaseSink.fixate has no parent implementation; override OnFixate.");
         }
 
-        return Gst.Caps.FromNative(slot(sink, caps), Gst.Interop.Transfer.Full);
+        return slot(sink, caps);
     }
 
     private static bool ChainUpActivatePull(nint sink, int active)
@@ -806,8 +808,7 @@ public unsafe partial class BaseSink
         {
             if (Gst.GObject.Object.TryGetInterned(sink) is not BaseSink managed)
             {
-                Gst.Caps? chained = ChainUpGetCaps(sink, filter);
-                return chained is null ? nint.Zero : Gst.GstNative.MiniObjectRef(chained.Handle);
+                return ChainUpGetCaps(sink, filter);
             }
 
             using Gst.Caps? filterValue = filter == nint.Zero ? null : Gst.Caps.Borrow(filter);
@@ -848,8 +849,7 @@ public unsafe partial class BaseSink
         {
             if (Gst.GObject.Object.TryGetInterned(sink) is not BaseSink managed)
             {
-                Gst.Caps? chained = ChainUpFixate(sink, caps);
-                return chained is null ? nint.Zero : Gst.GstNative.MiniObjectRef(chained.Handle);
+                return ChainUpFixate(sink, caps);
             }
 
             using Gst.Caps? capsValue = Gst.Caps.FromNative(caps, Gst.Interop.Transfer.Full);

@@ -249,7 +249,8 @@ public unsafe partial class Element
         ArgumentNullException.ThrowIfNull(templ);
         System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
-        Gst.Pad? result = ChainUpRequestNewPad(Handle, templ.Handle, nameScope.Pointer, caps is null ? nint.Zero : caps.Handle);
+        nint resultNative = ChainUpRequestNewPad(Handle, templ.Handle, nameScope.Pointer, caps is null ? nint.Zero : caps.Handle);
+        Gst.Pad? result = Gst.GObject.Object.FromNative<Gst.Pad>(resultNative, Gst.Interop.Transfer.None);
         GC.KeepAlive(this);
         GC.KeepAlive(templ);
         GC.KeepAlive(caps);
@@ -325,7 +326,8 @@ public unsafe partial class Element
     /// <returns>What the slot answers.</returns>
     protected Gst.Clock? ChainUpProvideClock()
     {
-        Gst.Clock? result = ChainUpProvideClock(Handle);
+        nint resultNative = ChainUpProvideClock(Handle);
+        Gst.Clock? result = Gst.GObject.Object.FromNative<Gst.Clock>(resultNative, Gst.Interop.Transfer.Full);
         GC.KeepAlive(this);
         return result;
     }
@@ -393,7 +395,7 @@ public unsafe partial class Element
         GC.KeepAlive(context);
     }
 
-    private static Gst.Pad? ChainUpRequestNewPad(nint element, nint templ, byte* name, nint caps)
+    private static nint ChainUpRequestNewPad(nint element, nint templ, byte* name, nint caps)
     {
         delegate* unmanaged[Cdecl]<nint, nint, byte*, nint, nint> slot =
             (delegate* unmanaged[Cdecl]<nint, nint, byte*, nint, nint>)ParentClassOf(element)->RequestNewPad;
@@ -404,7 +406,7 @@ public unsafe partial class Element
                 "Element.request_new_pad has no parent implementation; override OnRequestNewPad.");
         }
 
-        return Gst.GObject.Object.FromNative<Gst.Pad>(slot(element, templ, name, caps), Gst.Interop.Transfer.None);
+        return slot(element, templ, name, caps);
     }
 
     private static void ChainUpReleasePad(nint element, nint pad)
@@ -490,7 +492,7 @@ public unsafe partial class Element
         slot(element, bus);
     }
 
-    private static Gst.Clock? ChainUpProvideClock(nint element)
+    private static nint ChainUpProvideClock(nint element)
     {
         delegate* unmanaged[Cdecl]<nint, nint> slot =
             (delegate* unmanaged[Cdecl]<nint, nint>)ParentClassOf(element)->ProvideClock;
@@ -501,7 +503,7 @@ public unsafe partial class Element
                 "Element.provide_clock has no parent implementation; override OnProvideClock.");
         }
 
-        return Gst.GObject.Object.FromNative<Gst.Clock>(slot(element), Gst.Interop.Transfer.Full);
+        return slot(element);
     }
 
     private static bool ChainUpSetClock(nint element, nint clock)
@@ -591,8 +593,7 @@ public unsafe partial class Element
         {
             if (Gst.GObject.Object.TryGetInterned(element) is not Element managed)
             {
-                Gst.Pad? chained = ChainUpRequestNewPad(element, templ, name, caps);
-                return chained is null ? nint.Zero : chained.Handle;
+                return ChainUpRequestNewPad(element, templ, name, caps);
             }
 
             Gst.PadTemplate? templValue = Gst.GObject.Object.FromNative<Gst.PadTemplate>(templ, Gst.Interop.Transfer.None);
@@ -742,8 +743,7 @@ public unsafe partial class Element
         {
             if (Gst.GObject.Object.TryGetInterned(element) is not Element managed)
             {
-                Gst.Clock? chained = ChainUpProvideClock(element);
-                return chained is null ? nint.Zero : Gst.Interop.GObjectNative.ObjectRef(chained.Handle);
+                return ChainUpProvideClock(element);
             }
 
             Gst.Clock? result = managed.OnProvideClock();

@@ -391,7 +391,8 @@ public unsafe partial class BaseTransform
     {
         ArgumentNullException.ThrowIfNull(caps);
         ArgumentNullException.ThrowIfNull(filter);
-        Gst.Caps? result = ChainUpTransformCaps(Handle, (int)direction, caps.Handle, filter.Handle);
+        nint resultNative = ChainUpTransformCaps(Handle, (int)direction, caps.Handle, filter.Handle);
+        Gst.Caps? result = Gst.Caps.FromNative(resultNative, Gst.Interop.Transfer.Full);
         GC.KeepAlive(this);
         GC.KeepAlive(caps);
         GC.KeepAlive(filter);
@@ -410,7 +411,8 @@ public unsafe partial class BaseTransform
         nint instance = Handle;
         nint othercapsNative = othercaps.Handle;
         Gst.GstNative.MiniObjectRef(othercapsNative);
-        Gst.Caps? result = ChainUpFixateCaps(instance, (int)direction, caps.Handle, othercapsNative);
+        nint resultNative = ChainUpFixateCaps(instance, (int)direction, caps.Handle, othercapsNative);
+        Gst.Caps? result = Gst.Caps.FromNative(resultNative, Gst.Interop.Transfer.Full);
         GC.KeepAlive(this);
         GC.KeepAlive(caps);
         othercaps.Dispose();
@@ -679,7 +681,7 @@ public unsafe partial class BaseTransform
         return result;
     }
 
-    private static Gst.Caps? ChainUpTransformCaps(nint trans, int direction, nint caps, nint filter)
+    private static nint ChainUpTransformCaps(nint trans, int direction, nint caps, nint filter)
     {
         delegate* unmanaged[Cdecl]<nint, int, nint, nint, nint> slot =
             (delegate* unmanaged[Cdecl]<nint, int, nint, nint, nint>)ParentClassOf(trans)->TransformCaps;
@@ -690,10 +692,10 @@ public unsafe partial class BaseTransform
                 "BaseTransform.transform_caps has no parent implementation; override OnTransformCaps.");
         }
 
-        return Gst.Caps.FromNative(slot(trans, direction, caps, filter), Gst.Interop.Transfer.Full);
+        return slot(trans, direction, caps, filter);
     }
 
-    private static Gst.Caps? ChainUpFixateCaps(nint trans, int direction, nint caps, nint othercaps)
+    private static nint ChainUpFixateCaps(nint trans, int direction, nint caps, nint othercaps)
     {
         delegate* unmanaged[Cdecl]<nint, int, nint, nint, nint> slot =
             (delegate* unmanaged[Cdecl]<nint, int, nint, nint, nint>)ParentClassOf(trans)->FixateCaps;
@@ -705,7 +707,7 @@ public unsafe partial class BaseTransform
                 "BaseTransform.fixate_caps has no parent implementation; override OnFixateCaps.");
         }
 
-        return Gst.Caps.FromNative(slot(trans, direction, caps, othercaps), Gst.Interop.Transfer.Full);
+        return slot(trans, direction, caps, othercaps);
     }
 
     private static bool ChainUpAcceptCaps(nint trans, int direction, nint caps)
@@ -992,8 +994,7 @@ public unsafe partial class BaseTransform
         {
             if (Gst.GObject.Object.TryGetInterned(trans) is not BaseTransform managed)
             {
-                Gst.Caps? chained = ChainUpTransformCaps(trans, direction, caps, filter);
-                return chained is null ? nint.Zero : Gst.GstNative.MiniObjectRef(chained.Handle);
+                return ChainUpTransformCaps(trans, direction, caps, filter);
             }
 
             using Gst.Caps? capsValue = caps == nint.Zero ? null : Gst.Caps.Borrow(caps);
@@ -1015,8 +1016,7 @@ public unsafe partial class BaseTransform
         {
             if (Gst.GObject.Object.TryGetInterned(trans) is not BaseTransform managed)
             {
-                Gst.Caps? chained = ChainUpFixateCaps(trans, direction, caps, othercaps);
-                return chained is null ? nint.Zero : Gst.GstNative.MiniObjectRef(chained.Handle);
+                return ChainUpFixateCaps(trans, direction, caps, othercaps);
             }
 
             using Gst.Caps? capsValue = caps == nint.Zero ? null : Gst.Caps.Borrow(caps);
