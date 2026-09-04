@@ -322,6 +322,11 @@ Two standing rules that outlive a single release and are easy to miss:
   removes the property and the comment, and moves
   `PackageValidationBaselineVersion` forward to the version that shipped it.
   Until that happens, such a package is one the surface check does not cover.
+* **Move the analyzer rules the release ships from
+  `src/GstSharp.Net.Analyzers/AnalyzerReleases.Unshipped.md` to
+  `AnalyzerReleases.Shipped.md` under a `## Release <version>` heading** before
+  the tag, so the release-tracking convention matches what the package carries
+  (GST0001-GST0004 are all still listed as unshipped as of 2026-09-04).
 
 ## Docs
 
