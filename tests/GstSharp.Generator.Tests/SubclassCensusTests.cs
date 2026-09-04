@@ -31,7 +31,7 @@ public sealed class SubclassCensusTests
     /// <param name="vfuncs">The slots those mirrors give an <c>OnX</c> member.</param>
     [Theory]
     [InlineData("Gst", 3, 17)]
-    [InlineData("GstBase", 5, 80)]
+    [InlineData("GstBase", 5, 81)]
     [InlineData("GstApp", 0, 0)]
     [InlineData("GstAudio", 0, 0)]
     [InlineData("GstVideo", 0, 0)]
@@ -56,16 +56,16 @@ public sealed class SubclassCensusTests
     }
 
     /// <summary>
-    /// The run as a whole: eight mirrors and ninety-seven slots, the numbers
+    /// The run as a whole: eight mirrors and ninety-eight slots, the numbers
     /// the release notes and <c>docs/subclassing.md</c> quote.
     /// </summary>
     [Fact]
-    public void TheRunEmitsEightMirrorsAndNinetySevenSlots()
+    public void TheRunEmitsEightMirrorsAndNinetyEightSlots()
     {
         EmissionCensus census = Generated.Census;
 
         Assert.Equal(8, census.EmittedCount("Gst", "class struct") + census.EmittedCount("GstBase", "class struct"));
-        Assert.Equal(97, census.EmittedCount("Gst", "vfunc") + census.EmittedCount("GstBase", "vfunc"));
+        Assert.Equal(98, census.EmittedCount("Gst", "vfunc") + census.EmittedCount("GstBase", "vfunc"));
     }
 
     /// <summary>
@@ -107,14 +107,9 @@ public sealed class SubclassCensusTests
                 ["GstBase.BaseSrc::do_seek"] = Boxed,
                 ["GstBase.BaseSrc::prepare_seek_segment"] = Boxed,
                 ["GstBase.BaseTransform::filter_meta"] = Boxed,
-
-                // The planner refusing a shape, not an overlay entry: the meta
-                // is an opaque record whose wrapper has no transfer taking
-                // constructor.
-                ["GstBase.BaseTransform::transform_meta"] = "UnsupportedSignature",
             },
             census.SkippedVirtuals("GstBase"));
 
-        Assert.Equal(12, census.SkippedVirtualCount());
+        Assert.Equal(11, census.SkippedVirtualCount());
     }
 }

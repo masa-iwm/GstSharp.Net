@@ -641,7 +641,7 @@ internal sealed class VfuncEmitter
         foreach (VfuncArgument argument in plan.Arguments)
         {
             if (argument.Bucket is VfuncBucket.BorrowGObject or VfuncBucket.BorrowMiniObject
-                or VfuncBucket.BorrowWrapper)
+                or VfuncBucket.BorrowWrapper or VfuncBucket.BorrowOpaque)
             {
                 writer.WriteLine("GC.KeepAlive(" + argument.Argument.Name + ");");
             }
@@ -915,6 +915,12 @@ internal sealed class VfuncEmitter
                     writer.WriteLine(
                         "using " + Nullable(value.PublicType) + " " + local + " = " + Bare(value.PublicType)
                         + ".FromNative(" + value.Name + ", Gst.Interop.Transfer.None);");
+                    call.Add(NullAssert(value, local));
+                    break;
+                case VfuncBucket.BorrowOpaque:
+                    writer.WriteLine(
+                        Nullable(value.PublicType) + " " + local + " = " + Bare(value.PublicType)
+                        + ".FromNative(" + value.Name + ");");
                     call.Add(NullAssert(value, local));
                     break;
                 case VfuncBucket.Adopt:
@@ -1201,6 +1207,11 @@ internal sealed class VfuncEmitter
             case VfuncBucket.BorrowWrapper:
                 note.Add("The element lends this for the duration of the call; keep a copy to retain it.");
                 break;
+            case VfuncBucket.BorrowOpaque:
+                note.Add("The wrapper only holds the pointer the call was given, which is usually an");
+                note.Add("address on the stack of the caller: it stops meaning anything once the call");
+                note.Add("returns, so read what is needed out of it before then.");
+                break;
             case VfuncBucket.Adopt:
                 note.Add("The override takes ownership of it: chain up to hand it on, or it is");
                 note.Add("released when the override returns. Copy it to keep it beyond the call.");
@@ -1284,7 +1295,7 @@ internal sealed class VfuncEmitter
 
     private static bool NeedsNullCheck(VfuncArgument argument) =>
         argument.Bucket is VfuncBucket.Adopt or VfuncBucket.BorrowGObject or VfuncBucket.BorrowMiniObject
-            or VfuncBucket.BorrowWrapper
+            or VfuncBucket.BorrowWrapper or VfuncBucket.BorrowOpaque
         && !argument.Argument.PublicType.EndsWith('?');
 
     private static string FunctionPointerType(VirtualMethodPlan plan)
@@ -1304,7 +1315,8 @@ internal sealed class VfuncEmitter
         ArgumentPlan value = argument.Argument;
         return argument.Bucket switch
         {
-            VfuncBucket.BorrowGObject or VfuncBucket.BorrowMiniObject or VfuncBucket.BorrowWrapper =>
+            VfuncBucket.BorrowGObject or VfuncBucket.BorrowMiniObject or VfuncBucket.BorrowWrapper
+                or VfuncBucket.BorrowOpaque =>
                 value.PublicType.EndsWith('?')
                     ? value.Name + " is null ? nint.Zero : " + value.Name + ".Handle"
                     : value.Name + ".Handle",

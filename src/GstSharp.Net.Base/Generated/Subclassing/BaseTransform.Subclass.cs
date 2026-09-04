@@ -158,6 +158,15 @@ public unsafe partial class BaseTransform
         (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, int>)&CopyMetadataTrampoline);
 
     /// <summary>
+    /// Gets the declaration of <c>GstBaseTransform.transform_meta</c>, for a subclass that
+    /// overrides <see cref="OnTransformMeta"/>.
+    /// </summary>
+    public static Gst.GObject.VfuncOverride TransformMetaOverride { get; } = new(
+        &GetGType,
+        Gst.Base.BaseTransformClassRaw.TransformMetaOffset,
+        (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, nint, int>)&TransformMetaTrampoline);
+
+    /// <summary>
     /// Gets the declaration of <c>GstBaseTransform.before_transform</c>, for a subclass that
     /// overrides <see cref="OnBeforeTransform"/>.
     /// </summary>
@@ -460,6 +469,30 @@ public unsafe partial class BaseTransform
     /// <returns>What <c>copy_metadata</c> answers.</returns>
     protected virtual bool OnCopyMetadata(Gst.Buffer input, Gst.Buffer outbuf) =>
         ChainUpCopyMetadata(input, outbuf);
+
+    /// <summary>
+    /// Optional. Transform the metadata on the input buffer to the
+    ///                  output buffer. By default this method copies all meta without
+    ///                  tags. Subclasses can implement this method and return %TRUE if
+    ///                  the metadata is to be copied.
+    /// </summary>
+    /// <param name="outbuf">
+    /// The <c>outbuf</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <param name="meta">
+    /// The <c>meta</c> argument.
+    /// The wrapper only holds the pointer the call was given, which is usually an
+    /// address on the stack of the caller: it stops meaning anything once the call
+    /// returns, so read what is needed out of it before then.
+    /// </param>
+    /// <param name="inbuf">
+    /// The <c>inbuf</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <returns>What <c>transform_meta</c> answers.</returns>
+    protected virtual bool OnTransformMeta(Gst.Buffer outbuf, Gst.Meta meta, Gst.Buffer inbuf) =>
+        ChainUpTransformMeta(outbuf, meta, inbuf);
 
     /// <summary>
     /// Optional.
@@ -839,6 +872,35 @@ public unsafe partial class BaseTransform
         return result;
     }
 
+    /// <summary>Runs the implementation of <c>transform_meta</c> below the managed override.</summary>
+    /// <param name="outbuf">
+    /// The <c>outbuf</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <param name="meta">
+    /// The <c>meta</c> argument.
+    /// The wrapper only holds the pointer the call was given, which is usually an
+    /// address on the stack of the caller: it stops meaning anything once the call
+    /// returns, so read what is needed out of it before then.
+    /// </param>
+    /// <param name="inbuf">
+    /// The <c>inbuf</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <returns>What <c>transform_meta</c> answers.</returns>
+    protected bool ChainUpTransformMeta(Gst.Buffer outbuf, Gst.Meta meta, Gst.Buffer inbuf)
+    {
+        ArgumentNullException.ThrowIfNull(outbuf);
+        ArgumentNullException.ThrowIfNull(meta);
+        ArgumentNullException.ThrowIfNull(inbuf);
+        bool result = ChainUpTransformMeta(Handle, outbuf.Handle, meta.Handle, inbuf.Handle);
+        GC.KeepAlive(this);
+        GC.KeepAlive(outbuf);
+        GC.KeepAlive(meta);
+        GC.KeepAlive(inbuf);
+        return result;
+    }
+
     /// <summary>Runs the implementation of <c>before_transform</c> below the managed override.</summary>
     /// <param name="buffer">
     /// The <c>buffer</c> argument.
@@ -1139,6 +1201,20 @@ public unsafe partial class BaseTransform
         }
 
         return slot(trans, input, outbuf) != 0;
+    }
+
+    private static bool ChainUpTransformMeta(nint trans, nint outbuf, nint meta, nint inbuf)
+    {
+        delegate* unmanaged[Cdecl]<nint, nint, nint, nint, int> slot =
+            (delegate* unmanaged[Cdecl]<nint, nint, nint, nint, int>)ParentClassOf(trans)->TransformMeta;
+
+        if (slot is null)
+        {
+            throw new InvalidOperationException(
+                "BaseTransform.transform_meta has no parent implementation; override OnTransformMeta.");
+        }
+
+        return slot(trans, outbuf, meta, inbuf) != 0;
     }
 
     private static void ChainUpBeforeTransform(nint trans, nint buffer)
@@ -1563,6 +1639,28 @@ public unsafe partial class BaseTransform
             using Gst.Buffer? inputValue = input == nint.Zero ? null : Gst.Buffer.Borrow(input);
             using Gst.Buffer? outbufValue = outbuf == nint.Zero ? null : Gst.Buffer.Borrow(outbuf);
             return (managed.OnCopyMetadata(inputValue!, outbufValue!)) ? 1 : 0;
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+            return default;
+        }
+    }
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static int TransformMetaTrampoline(nint trans, nint outbuf, nint meta, nint inbuf)
+    {
+        try
+        {
+            if (Gst.GObject.Object.TryGetInterned(trans) is not BaseTransform managed)
+            {
+                return (ChainUpTransformMeta(trans, outbuf, meta, inbuf)) ? 1 : 0;
+            }
+
+            using Gst.Buffer? outbufValue = outbuf == nint.Zero ? null : Gst.Buffer.Borrow(outbuf);
+            Gst.Meta? metaValue = Gst.Meta.FromNative(meta);
+            using Gst.Buffer? inbufValue = inbuf == nint.Zero ? null : Gst.Buffer.Borrow(inbuf);
+            return (managed.OnTransformMeta(outbufValue!, metaValue!, inbufValue!)) ? 1 : 0;
         }
         catch (Exception exception)
         {

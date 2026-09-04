@@ -4376,6 +4376,14 @@ internal sealed class MarshalPlanner
                 // slot leaves the surface instead of pretending to work.
                 HandleFlavor.Wrapper when mapped.Kind == MarshalKind.Boxed => null,
                 HandleFlavor.Wrapper => VfuncBucket.BorrowWrapper,
+
+                // An opaque record has no ownership at all - its wrapper only
+                // holds the pointer - so lending one is the whole projection.
+                // The pointer a slot is handed is regularly a stack address of
+                // the caller, which is why the documentation of the argument
+                // says the wrapper stops being meaningful when the call
+                // returns.
+                HandleFlavor.Opaque => VfuncBucket.BorrowOpaque,
                 _ => null,
             },
             _ => null,

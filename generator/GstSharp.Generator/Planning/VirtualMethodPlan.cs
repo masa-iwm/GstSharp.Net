@@ -29,6 +29,14 @@ internal enum VfuncBucket
     BorrowWrapper,
 
     /// <summary>
+    /// An opaque record the call lends, whose wrapper is a bare pointer holder
+    /// and therefore takes no part in the ownership of what it points at. The
+    /// pointer is usually a stack address of the caller, so the wrapper is only
+    /// meaningful while the call runs.
+    /// </summary>
+    BorrowOpaque,
+
+    /// <summary>
     /// A handle the call gives up: the trampoline adopts it with
     /// <c>Transfer.Full</c> and the chain-up hands the parent slot a value
     /// minted for it.
