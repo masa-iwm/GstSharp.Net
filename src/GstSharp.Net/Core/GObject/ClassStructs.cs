@@ -305,3 +305,45 @@ internal static class ClassSlot
             ref Unsafe.As<TClass, byte>(ref origin),
             ref Unsafe.As<nint, byte>(ref slot));
 }
+
+/// <summary>One slot of a mirrored class struct, as the ABI probes read it.</summary>
+/// <param name="Name">The name the gir gives the slot, for example <c>change_state</c>.</param>
+/// <param name="Offset">The byte offset the mirror measured for it.</param>
+internal readonly record struct ClassSlotProbe(string Name, int Offset);
+
+/// <summary>
+/// One mirrored class struct, as the ABI probes read it.
+/// </summary>
+/// <remarks>
+/// The generated mirrors describe themselves here so that the probe of the
+/// integration tests is written once rather than once per class: a class that
+/// joins the allowlist joins the probe with it, which is what keeps the two
+/// from drifting apart.
+/// </remarks>
+internal readonly unsafe struct ClassStructProbe
+{
+    /// <summary>Initialises a new row.</summary>
+    /// <param name="cName">The C name of the class struct.</param>
+    /// <param name="getGType">The <c>get_type</c> function of the class it belongs to.</param>
+    /// <param name="size">The size the mirror occupies.</param>
+    /// <param name="slots">The overridable slots of the class itself.</param>
+    internal ClassStructProbe(string cName, delegate*<nuint> getGType, int size, ClassSlotProbe[] slots)
+    {
+        CName = cName;
+        GetGType = getGType;
+        Size = size;
+        Slots = slots;
+    }
+
+    /// <summary>Gets the C name of the class struct, for example <c>GstElementClass</c>.</summary>
+    internal string CName { get; }
+
+    /// <summary>Gets the <c>get_type</c> function of the class the struct belongs to.</summary>
+    internal delegate*<nuint> GetGType { get; }
+
+    /// <summary>Gets the size of the mirror, which <c>g_type_query</c> has to agree with.</summary>
+    internal int Size { get; }
+
+    /// <summary>Gets the overridable slots the class declares itself.</summary>
+    internal ClassSlotProbe[] Slots { get; }
+}
