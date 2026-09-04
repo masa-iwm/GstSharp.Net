@@ -48,15 +48,14 @@ mirror emitter and the ABI registry; see `git log` for their messages.
 
 ## Remaining (brief steps h–j)
 
-Tests and docs only. Nothing of the generator is left to write for wave 1.
+Docs only, plus the generic ABI theory. Nothing of the generator is left to
+write for wave 1.
 
-* **New tests** per spec §3: one dispatch + chain-up + exception test per new
-  class; `Aggregator::aggregate` as a required override, `BaseSrc::create`
-  with the same and with a different handle, `BaseTransform::prepare_output_buffer`
-  identity, `sink_event` adopt → chain-up pass-through, `request_new_pad`
-  borrowed return. The generic ABI theory over `ClassStructRegistry.CreateEntries()`
-  (spec 0.8) is also unwritten; `AbiProbeTests` still asserts the mirrors one
-  by one.
+* **New tests**: written (`SubclassAggregatorTests`,
+  `SubclassBufferOwnershipTests`, `SubclassEventQueryPadTests`, three slot
+  content rows in `AbiProbeTests`). What is still open is the generic ABI
+  theory over `ClassStructRegistry.CreateEntries()` (spec 0.8): `AbiProbeTests`
+  asserts the mirrors one by one.
 * **docs**: `docs/subclassing.md` §7/§10 still describe stage 2 as future work,
   and §4.4 still shows the hand written chain-up sketch. The release note line
   of spec §5 is unwritten.
