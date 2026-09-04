@@ -58,6 +58,43 @@ public partial class Object : IDisposable
     private static readonly ConcurrentDictionary<nint, ToggleRef> ToggleRefs = new();
 
     private static readonly ConcurrentQueue<PendingRelease> PendingReleases = new();
+
+    /// <summary>
+    /// The gates that make the fabrication of a wrapper for one native instance
+    /// a single winner, keyed by that instance.
+    /// </summary>
+    /// <remarks>
+    /// A streaming thread running a trampoline and an application thread
+    /// running <see cref="FromNative(nint, Transfer)"/> can reach the same
+    /// unwrapped instance of a managed subclass at once, and the second
+    /// constructor would refuse to wrap an object that is wrapped already -
+    /// inside a reverse P/Invoke, under NativeAOT, that ends the process. The
+    /// gate makes "look the interned wrapper up, and build one when there is
+    /// none" one step. It is per instance rather than global so that a factory
+    /// of one object never waits for the factory of another, and it is taken
+    /// <em>outside</em> <see cref="Sync"/> everywhere, which is the order the
+    /// constructor takes them in.
+    /// </remarks>
+    private static readonly ConcurrentDictionary<nint, System.Threading.Lock> FabricationGates = new();
+
+    /// <summary>
+    /// The instance the constructor of this thread is adopting: one native code
+    /// created, owns, and may still hold floating.
+    /// </summary>
+    /// <remarks>
+    /// The constructor chain of a subclass cannot carry an extra argument, so
+    /// the one bit that separates adoption from the ordinary wrapping travels
+    /// on the thread, armed by
+    /// <see cref="SubclassCtorArgs.HandleFor(nuint)"/> and consumed - and
+    /// cleared, whatever happens next - by the constructor below. Nothing can
+    /// run in between: the argument is evaluated in the base call of the
+    /// constructor it arms.
+    /// </remarks>
+    [ThreadStatic]
+    private static nint t_adopting;
+
+    /// <summary>The quark of the disposed marker, resolved on first use.</summary>
+    private static uint _disposedQuark;
     private static readonly object Sync = new();
 
     private static long _nextToggleId;
@@ -123,6 +160,13 @@ public partial class Object : IDisposable
     /// </exception>
     protected unsafe Object(nint handle, Transfer transfer)
     {
+        // Consumed and cleared before anything can throw, so that a factory
+        // that failed halfway leaves no armed handle behind for the next
+        // constructor on this thread to pick up.
+        nint adopting = t_adopting;
+        t_adopting = nint.Zero;
+        bool adopted = adopting != nint.Zero && adopting == handle;
+
         if (handle == nint.Zero)
         {
             throw new ArgumentOutOfRangeException(nameof(handle), "An object handle must not be null.");
@@ -148,7 +192,18 @@ public partial class Object : IDisposable
                     "GObject wrappers are interned and a second one would install a second toggle reference.");
             }
 
-            if (IsFloating(handle))
+            if (adopted)
+            {
+                // The instance belongs to whoever created it - a factory, a
+                // base class building its pad - and may still be floating.
+                // Sinking it here would take an ownership that the caller of
+                // gst_element_factory_create_with_properties is about to
+                // complain about, so the wrapper only takes a reference of its
+                // own; the reference below is what the toggle reference ends
+                // up holding. See docs/subclassing.md §5.4.
+                GObjectNative.ObjectRef(handle);
+            }
+            else if (IsFloating(handle))
             {
                 // Turns the floating reference into one that we own, whether it
                 // came with the call or not.
@@ -290,6 +345,14 @@ public partial class Object : IDisposable
 
         DrainPendingReleases();
 
+        // The fabrication of a managed subclass takes a gate of its own, and
+        // that gate is always taken before Sync: the factory it runs ends in
+        // this constructor, which takes Sync itself.
+        if (TypeRegistry.TryFabricate(handle, transfer, out Object? fabricated))
+        {
+            return fabricated;
+        }
+
         lock (Sync)
         {
             // A disposed wrapper is deliberately not handed out: it has given
@@ -380,6 +443,149 @@ public partial class Object : IDisposable
             !existing.IsDisposed
                 ? existing
                 : null;
+    }
+
+    /// <summary>
+    /// Tells the constructor of this thread that the instance it is about to
+    /// wrap is one native code created and still owns.
+    /// </summary>
+    /// <param name="handle">The instance being adopted.</param>
+    /// <remarks>
+    /// The constructor consumes and clears this whatever happens next, and only
+    /// takes the adopting branch when the handle it was armed with is the one
+    /// it is given.
+    /// </remarks>
+    internal static void ArmAdopt(nint handle) => t_adopting = handle;
+
+    /// <summary>
+    /// Returns the live wrapper of a native object, and builds the one of a
+    /// managed subclass when there is none.
+    /// </summary>
+    /// <param name="handle">The object to look up, may be <see cref="nint.Zero"/>.</param>
+    /// <returns>
+    /// The interned wrapper, the wrapper that was just built, or
+    /// <see langword="null"/> when the instance is not one of a managed
+    /// subclass that stated how its wrapper is built, when an instance of that
+    /// type is being constructed on this thread, or when its wrapper was
+    /// disposed.
+    /// </returns>
+    /// <remarks>
+    /// This is the lookup the generated trampolines use.
+    /// <see cref="TryGetInterned"/> is the pure search, which answers nothing
+    /// for an instance native code created and which is why an element a
+    /// factory made used to reach the implementation below the managed override
+    /// instead of the override. Everything that is not fabricated here still
+    /// chains up. See <c>docs/subclassing.md</c> §5.4.
+    /// </remarks>
+    internal static Object? TryGetOrFabricate(nint handle)
+    {
+        if (TryGetInterned(handle) is { } interned)
+        {
+            return interned;
+        }
+
+        return TypeRegistry.TryFabricate(handle, Transfer.None, out Object? fabricated) ? fabricated : null;
+    }
+
+    /// <summary>
+    /// Builds the wrapper of an instance of a managed subclass, at most once
+    /// per instance.
+    /// </summary>
+    /// <param name="handle">The instance to wrap, which native code owns.</param>
+    /// <param name="factory">The factory the subclass handed to its definition.</param>
+    /// <returns>The wrapper, new or the one another thread interned first.</returns>
+    /// <exception cref="InvalidOperationException">
+    /// The factory answered a wrapper of another object, which is what ignoring
+    /// its arguments looks like from here.
+    /// </exception>
+    internal static Object Fabricate(nint handle, Func<SubclassCtorArgs, Object> factory)
+    {
+        System.Threading.Lock gate = FabricationGates.GetOrAdd(handle, static _ => new System.Threading.Lock());
+
+        try
+        {
+            lock (gate)
+            {
+                if (TryGetInterned(handle) is { } interned)
+                {
+                    return interned;
+                }
+
+                Object wrapper = factory(SubclassCtorArgs.Adopt(handle));
+
+                if (wrapper._handle != handle)
+                {
+                    // The factory built an instance of its own instead of
+                    // wrapping the one it was given, which leaves the instance
+                    // native code is holding unwrapped and hands out an object
+                    // nobody asked for. The stray one is released here; the
+                    // failure is the caller's.
+                    wrapper.Dispose();
+
+                    throw new InvalidOperationException(
+                        "The factory of a managed subclass answered a wrapper of another object. "
+                        + "CreateWrapper has to hand the arguments it is given to the constructor of the "
+                        + "subclass and do nothing else. See docs/subclassing.md §5.4.");
+                }
+
+                return wrapper;
+            }
+        }
+        finally
+        {
+            // The gate is only needed until the wrapper is interned: whoever
+            // arrives afterwards finds it in the table, whether through this
+            // gate or through a fresh one.
+            _ = FabricationGates.TryRemove(handle, out _);
+        }
+    }
+
+    /// <summary>
+    /// Tells whether the wrapper of a managed subclass instance was disposed.
+    /// </summary>
+    /// <param name="handle">The instance to ask about.</param>
+    /// <returns>
+    /// <see langword="true"/> when a wrapper of this instance gave up its part
+    /// in the lifetime of the object.
+    /// </returns>
+    /// <remarks>
+    /// The marker is a word attached to the object itself rather than an entry
+    /// of a managed table: the wrapper is gone by then, and the object outlives
+    /// it. Disposing the wrapper of a managed subclass is therefore final -
+    /// every slot that fires afterwards chains up, and nothing is fabricated
+    /// for it again. See <c>docs/subclassing.md</c> §5.4.
+    /// </remarks>
+    internal static bool WasSubclassDisposed(nint handle) =>
+        handle != nint.Zero && GObjectNative.ObjectGetQdata(handle, DisposedQuark()) != nint.Zero;
+
+    /// <summary>
+    /// Marks the object of a disposed managed subclass wrapper.
+    /// </summary>
+    /// <param name="handle">The instance to mark.</param>
+    private static void MarkSubclassDisposed(nint handle) =>
+        GObjectNative.ObjectSetQdata(handle, DisposedQuark(), 1);
+
+    /// <summary>
+    /// Answers the quark of the marker, resolving it once.
+    /// </summary>
+    /// <returns>The quark of <c>gstsharp-managed-disposed</c>.</returns>
+    private static unsafe uint DisposedQuark()
+    {
+        uint quark = _disposedQuark;
+        if (quark != 0)
+        {
+            return quark;
+        }
+
+        Span<byte> buffer = stackalloc byte[GMarshal.StackBufferSize];
+        using Utf8Scope scope = GMarshal.StackUtf8("gstsharp-managed-disposed", buffer);
+
+        // g_quark_from_string copies the name, so the buffer it was read out of
+        // is allowed to be the stack. Resolving it twice answers the same
+        // quark, which is why the race is not worth a lock.
+        quark = GLibNative.QuarkFromString(scope.Pointer);
+        _disposedQuark = quark;
+        return quark;
     }
 
     /// <summary>
@@ -797,6 +1003,17 @@ public partial class Object : IDisposable
 
         if (disposing)
         {
+            if (SubclassRegistry.Find(_handle) is not null)
+            {
+                // The object outlives this wrapper, and nothing is to be
+                // fabricated for it again: a slot that fires from here on finds
+                // no wrapper and chains up, which is the window after Dispose
+                // that §4.1 describes. The marker is written while the toggle
+                // reference is still installed, so the object is certainly
+                // alive.
+                MarkSubclassDisposed(_handle);
+            }
+
             DisconnectAll();
             Release(_handle, toggleRef);
             return;

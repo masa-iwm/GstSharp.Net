@@ -51,6 +51,20 @@ public static class TypeRegistry
     /// </summary>
     private static readonly ConcurrentDictionary<nuint, bool> MiniObjectTypes = new();
 
+    /// <summary>
+    /// The factories of the managed subclasses that native code may create
+    /// instances of, keyed by the type they were registered as.
+    /// </summary>
+    /// <remarks>
+    /// This table is separate from the frozen one of the modules and is never
+    /// rebuilt: a managed subclass is registered after the native libraries are
+    /// loaded, so its type is a resolved <c>GType</c> and not a <c>get_type</c>
+    /// function that still has to be called, and a registration lives for the
+    /// process. The lookup is exact, because a managed subclass cannot be
+    /// derived from.
+    /// </remarks>
+    private static readonly ConcurrentDictionary<nuint, Func<SubclassCtorArgs, Object>> SubclassFactories = new();
+
     private static FrozenDictionary<nuint, TypeEntry> _types = FrozenDictionary<nuint, TypeEntry>.Empty;
     private static FrozenDictionary<Type, ModuleInterfaceEntry> _interfaces =
         FrozenDictionary<Type, ModuleInterfaceEntry>.Empty;
@@ -192,6 +206,93 @@ public static class TypeRegistry
     }
 
     /// <summary>
+    /// Registers the factory that builds the wrapper of a managed subclass, so
+    /// that an instance native code created is wrapped as the type it actually
+    /// is.
+    /// </summary>
+    /// <param name="type">The type of the managed subclass.</param>
+    /// <param name="factory">The factory the subclass handed to its definition.</param>
+    /// <remarks>
+    /// The registration is made by <see cref="SubclassRegistry.Register"/> and
+    /// stays for the process, like the type itself. It is consulted before the
+    /// walk up the ancestry of an instance, so a registered managed subclass
+    /// never falls back to an ancestor wrapper and never raises
+    /// <see cref="Fallback"/>.
+    /// </remarks>
+    internal static void RegisterSubclass(GType type, Func<SubclassCtorArgs, Object> factory)
+    {
+        ArgumentNullException.ThrowIfNull(factory);
+
+        SubclassFactories[type.Value] = factory;
+    }
+
+    /// <summary>
+    /// Builds the wrapper of an instance of a managed subclass that native code
+    /// created, when there is one to build.
+    /// </summary>
+    /// <param name="handle">The instance to wrap.</param>
+    /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
+    /// <param name="wrapper">The wrapper, new or the one that was interned.</param>
+    /// <returns>
+    /// <see langword="true"/> when the exact type of the instance is a managed
+    /// subclass with a factory and nothing suppresses the fabrication.
+    /// </returns>
+    /// <remarks>
+    /// <para>
+    /// Nothing is fabricated while an instance of the type is being constructed
+    /// on this thread — the constructor of the wrapper is about to install the
+    /// toggle reference — and nothing is fabricated for an instance whose
+    /// wrapper was disposed, which gave up its part in the lifetime of the
+    /// object for good. Both cases answer <see langword="false"/>, and the
+    /// caller falls back to the ancestor wrapper or to chaining up, exactly as
+    /// before.
+    /// </para>
+    /// <para>
+    /// The reference that came with the call is adjusted here rather than by
+    /// the caller: the fabricated wrapper owns the object through its own
+    /// toggle reference either way, so a <see cref="Transfer.Full"/> reference
+    /// is dropped the same way an interned hit drops it.
+    /// </para>
+    /// </remarks>
+    internal static bool TryFabricate(nint handle, Transfer transfer, out Object? wrapper)
+    {
+        wrapper = null;
+
+        if (handle == nint.Zero || SubclassFactories.IsEmpty)
+        {
+            return false;
+        }
+
+        GType type = GetInstanceType(handle);
+        if (!SubclassFactories.TryGetValue(type.Value, out Func<SubclassCtorArgs, Object>? factory))
+        {
+            return false;
+        }
+
+        if (SubclassRegistry.IsConstructing(type) || Object.WasSubclassDisposed(handle))
+        {
+            return false;
+        }
+
+        wrapper = Object.Fabricate(handle, factory);
+
+        if (transfer == Transfer.Full)
+        {
+            // The wrapper owns the object through its toggle reference, so the
+            // reference that came with the call is dropped. Sinking a floating
+            // one first is what makes the unref the last one that was ours.
+            if (GObjectNative.ObjectIsFloating(handle) != 0)
+            {
+                GObjectNative.ObjectRefSink(handle);
+            }
+
+            GObjectNative.ObjectUnref(handle);
+        }
+
+        return true;
+    }
+
+    /// <summary>
     /// Reads the type of a native instance.
     /// </summary>
     /// <param name="handle">The <c>GTypeInstance</c> to inspect.</param>
@@ -229,6 +330,12 @@ public static class TypeRegistry
         if (handle == nint.Zero)
         {
             return false;
+        }
+
+        if (TryFabricate(handle, transfer, out Object? fabricated))
+        {
+            wrapper = fabricated;
+            return true;
         }
 
         FrozenDictionary<nuint, TypeEntry> types = EnsureFrozen();

@@ -36,13 +36,14 @@ namespace Gst.GObject;
 /// own facade next to this one.
 /// </para>
 /// </remarks>
-public sealed unsafe class ClassConfig
+public sealed unsafe class ClassConfig : ObjectClassConfig
 {
-    private readonly nint _elementClass;
-
     /// <summary>Wraps the class that is being initialised.</summary>
     /// <param name="elementClass">The <c>GstElementClass</c> under construction.</param>
-    internal ClassConfig(nint elementClass) => _elementClass = elementClass;
+    internal ClassConfig(nint elementClass)
+        : base(elementClass)
+    {
+    }
 
     /// <summary>
     /// Describes the element, which is what <c>gst-inspect-1.0</c> and
@@ -80,7 +81,7 @@ public sealed unsafe class ClassConfig
         using Utf8Scope authorScope = GMarshal.StackUtf8(author, authorBuffer);
 
         GstNative.ElementClassSetMetadata(
-            _elementClass,
+            GClass,
             longnameScope.Pointer,
             classificationScope.Pointer,
             descriptionScope.Pointer,
@@ -118,7 +119,7 @@ public sealed unsafe class ClassConfig
     {
         ArgumentNullException.ThrowIfNull(template);
 
-        GstNative.ElementClassAddPadTemplate(_elementClass, template.Handle);
+        GstNative.ElementClassAddPadTemplate(GClass, template.Handle);
         GC.KeepAlive(template);
     }
 }

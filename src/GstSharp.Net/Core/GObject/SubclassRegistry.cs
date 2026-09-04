@@ -61,11 +61,17 @@ internal sealed class SubclassDescriptor
     /// that is being initialised, for the class level configuration that
     /// GStreamer needs (metadata, pad templates). See §5.5.
     /// </param>
+    /// <param name="wrapFactory">
+    /// Builds the wrapper of an instance native code created, or
+    /// <see langword="null"/> for a subclass that is only ever constructed from
+    /// managed code. See §5.4.
+    /// </param>
     internal SubclassDescriptor(
         GType parentType,
         string typeName,
         VfuncSlot[] slots,
-        Action<ClassConfig>? classInitializer = null)
+        Action<ObjectClassConfig>? classInitializer = null,
+        Func<SubclassCtorArgs, Object>? wrapFactory = null)
     {
         ArgumentException.ThrowIfNullOrEmpty(typeName);
         ArgumentNullException.ThrowIfNull(slots);
@@ -74,6 +80,7 @@ internal sealed class SubclassDescriptor
         TypeName = typeName;
         _slots = slots;
         ClassInitializer = classInitializer;
+        WrapFactory = wrapFactory;
     }
 
     /// <summary>Gets the type the subclass derives from.</summary>
@@ -83,7 +90,14 @@ internal sealed class SubclassDescriptor
     internal string TypeName { get; }
 
     /// <summary>Gets the hook that runs at the end of <c>class_init</c>.</summary>
-    internal Action<ClassConfig>? ClassInitializer { get; }
+    internal Action<ObjectClassConfig>? ClassInitializer { get; }
+
+    /// <summary>
+    /// Gets the factory that builds the wrapper of an instance native code
+    /// created, or <see langword="null"/> when the subclass was defined without
+    /// one.
+    /// </summary>
+    internal Func<SubclassCtorArgs, Object>? WrapFactory { get; }
 
     /// <summary>Gets the vfunc slots the subclass takes over.</summary>
     internal ReadOnlySpan<VfuncSlot> Slots => _slots;
@@ -159,17 +173,49 @@ internal sealed class SubclassDescriptor
 /// </remarks>
 public readonly struct SubclassCtorArgs
 {
-    internal SubclassCtorArgs(nint handle) => Handle = handle;
+    private readonly bool _adopted;
+
+    internal SubclassCtorArgs(nint handle)
+    {
+        Handle = handle;
+        _adopted = false;
+    }
+
+    private SubclassCtorArgs(nint handle, bool adopted)
+    {
+        Handle = handle;
+        _adopted = adopted;
+    }
 
     /// <summary>Gets the new instance.</summary>
     internal nint Handle { get; }
 
     /// <summary>
-    /// Gets how ownership is transferred, which is always
-    /// <see cref="Transfer.Full"/>: <c>g_object_new</c> hands its reference to
-    /// the caller, and a floating one is sunk by the wrapper's constructor.
+    /// Gets whether the instance is one native code built and still owns.
     /// </summary>
-    internal Transfer Transfer => Transfer.Full;
+    internal bool IsAdopted => _adopted;
+
+    /// <summary>
+    /// Gets how ownership is transferred: <c>g_object_new</c> hands its
+    /// reference to the caller, and a floating one is sunk by the wrapper's
+    /// constructor, while an adopted instance belongs to whoever created it and
+    /// is only referenced by the wrapper.
+    /// </summary>
+    internal Transfer Transfer => _adopted ? Transfer.None : Transfer.Full;
+
+    /// <summary>
+    /// Wraps an instance native code created and still owns, for the factory of
+    /// <see cref="IManagedSubclass{TSelf}"/>.
+    /// </summary>
+    /// <param name="handle">The instance to adopt.</param>
+    /// <returns>The arguments of the wrapper's constructor.</returns>
+    /// <remarks>
+    /// The wrapper takes a reference of its own and sinks nothing: the
+    /// instance may still be floating, and whoever created it — a factory, a
+    /// base class building its pad — is the one that sinks it. See
+    /// <c>docs/subclassing.md</c> §5.4 and <c>docs/ownership.md</c>.
+    /// </remarks>
+    internal static SubclassCtorArgs Adopt(nint handle) => new(handle, adopted: true);
 
     /// <summary>
     /// Gets the new instance, once it is known to be of the type the wrapper
@@ -202,6 +248,17 @@ public readonly struct SubclassCtorArgs
 
         if (!actual.IsA(new GType(requiredType)))
         {
+            if (_adopted)
+            {
+                // An adopted instance belongs to native code, which is still
+                // holding it: destroying it here would pull it out from under
+                // its owner. Nothing was taken, so nothing is given back.
+                throw new ArgumentException(
+                    $"An instance of {actual.Name} cannot be wrapped as {new GType(requiredType).Name}. The " +
+                    "factory of the managed subclass was handed an instance of an unrelated type.",
+                    nameof(requiredType));
+            }
+
             if (GObjectNative.ObjectIsFloating(Handle) != 0)
             {
                 // g_object_new hands out a floating reference for anything
@@ -217,6 +274,16 @@ public readonly struct SubclassCtorArgs
                 "registration these arguments came from derives from a different class than the wrapper being " +
                 "constructed.",
                 nameof(requiredType));
+        }
+
+        if (_adopted)
+        {
+            // The constructor of Gst.GObject.Object is reached through the
+            // constructor chain of the subclass, which cannot carry an extra
+            // argument, so the one bit it needs travels on the thread. It is
+            // consumed and cleared there unconditionally: nothing else can run
+            // between the evaluation of this argument and that constructor.
+            Object.ArmAdopt(Handle);
         }
 
         return Handle;
@@ -258,6 +325,23 @@ internal static unsafe class SubclassRegistry
     private static readonly ConcurrentDictionary<nuint, SubclassDescriptor> ByType = new();
 
     private static long _nextClassDataId;
+
+    /// <summary>
+    /// The types whose instances are being constructed on this thread, innermost
+    /// last.
+    /// </summary>
+    /// <remarks>
+    /// <c>g_object_new</c> returns into the constructor of the wrapper, which
+    /// is where the toggle reference is installed; a wrapper fabricated for the
+    /// same instance in between would install a second one and the constructor
+    /// would refuse to wrap an object that is wrapped already. Every slot that
+    /// fires while a type is on this stack therefore finds no wrapper and
+    /// chains up, which is the construction window rule of
+    /// <c>docs/subclassing.md</c> §4.1 unchanged. <c>g_object_new</c> is
+    /// synchronous, so the window belongs to one thread and so does the stack.
+    /// </remarks>
+    [ThreadStatic]
+    private static List<nuint>? t_constructing;
 
     /// <summary>
     /// Registers a managed subclass with GObject.
@@ -360,6 +444,16 @@ internal static unsafe class SubclassRegistry
             descriptor.SetRegisteredType(new GType(type));
             ByType[type] = descriptor;
 
+            // From here on an instance of this type that turns up without a
+            // wrapper is built into the managed subclass rather than into a
+            // wrapper of the nearest registered ancestor. A subclass defined
+            // without a factory keeps the ancestor behaviour, which is what
+            // TypeRegistry.Fallback reports.
+            if (descriptor.WrapFactory is { } wrapFactory)
+            {
+                TypeRegistry.RegisterSubclass(new GType(type), wrapFactory);
+            }
+
             // Referencing the class runs class_init now rather than when the
             // first instance is created: the parent class is captured and the
             // slots are patched before anything can construct an instance, and
@@ -403,13 +497,197 @@ internal static unsafe class SubclassRegistry
             throw new ArgumentException("An instance needs a valid type.", nameof(type));
         }
 
-        nint handle = GObjectNative.ObjectNewWithProperties(type.Value, 0, null, null);
+        return new SubclassCtorArgs(Construct(type, 0, null, null));
+    }
+
+    /// <summary>
+    /// Creates an instance of a managed subclass and gives it its properties
+    /// while it is being built.
+    /// </summary>
+    /// <param name="type">The type to instantiate.</param>
+    /// <param name="properties">The properties to give the new instance, by name.</param>
+    /// <returns>The arguments of the wrapper's constructor.</returns>
+    /// <remarks>
+    /// The values are converted the way
+    /// <c>Gst.ElementFactory.MakeWithProperties</c> converts them, each one into
+    /// the type its specification declares. A specification a managed subclass
+    /// installed itself is refused: <c>g_object_set_property</c> dispatches to
+    /// the class that owns it, and while the instance is being built there is
+    /// no wrapper the managed implementation could run on.
+    /// </remarks>
+    /// <exception cref="ArgumentNullException"><paramref name="properties"/> is null.</exception>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="type"/> is invalid, the type has no property of one of
+    /// the given names, one of them cannot be written, one of them belongs to a
+    /// managed subclass, or one of the values does not fit.
+    /// </exception>
+    /// <exception cref="InvalidOperationException">GObject returned no instance.</exception>
+    internal static SubclassCtorArgs NewInstance(GType type, IReadOnlyDictionary<string, object?> properties)
+    {
+        ArgumentNullException.ThrowIfNull(properties);
+
+        if (!type.IsValid)
+        {
+            throw new ArgumentException("An instance needs a valid type.", nameof(type));
+        }
+
+        int count = properties.Count;
+        if (count == 0)
+        {
+            return NewInstance(type);
+        }
+
+        string[] names = new string[count];
+        GValueNative[] values = new GValueNative[count];
+
+        // The specifications belong to the class and are borrowed, so the class
+        // is held for as long as they are read. The class of a managed subclass
+        // exists already - the registration referenced it - and referencing it
+        // again is what makes that independent of the order of the calls.
+        nint gClass = GObjectNative.TypeClassRef(type.Value);
+
+        try
+        {
+            Span<byte> buffer = stackalloc byte[GMarshal.StackBufferSize];
+            int index = 0;
+
+            foreach (KeyValuePair<string, object?> property in properties)
+            {
+                using Utf8Scope scope = GMarshal.StackUtf8(property.Key, buffer);
+                nint pspec = GObjectNative.ObjectClassFindProperty(gClass, scope.Pointer);
+
+                if (pspec == nint.Zero)
+                {
+                    throw new ArgumentException(
+                        $"\"{property.Key}\" is not a property of {type.Name}.",
+                        nameof(properties));
+                }
+
+                if ((ParamSpec.FlagsOf(pspec) & ParamFlags.Writable) == 0)
+                {
+                    throw new ArgumentException(
+                        $"The property \"{property.Key}\" of {type.Name} cannot be written.",
+                        nameof(properties));
+                }
+
+                GType owner = ParamSpec.OwnerTypeOf(pspec);
+                if (Find(owner) is not null)
+                {
+                    throw new ArgumentException(
+                        $"The property \"{property.Key}\" belongs to the managed subclass {owner.Name}, so it " +
+                        "cannot be given a value while the instance is being built: GObject dispatches the " +
+                        "write to the class that owns the property, and the wrapper that would serve it does " +
+                        "not exist yet. Write it after construction instead.",
+                        nameof(properties));
+                }
+
+                names[index] = property.Key;
+
+                GType declared = ParamSpec.ValueTypeOf(pspec);
+
+                try
+                {
+                    // The converted value moves into the array, which owns it
+                    // from here on and is what unsets it again in the exit
+                    // below.
+                    values[index] = Value.CreateFor(property.Value, declared).NativeValue;
+                }
+                catch (ArgumentException exception)
+                {
+                    throw new ArgumentException(
+                        $"The property \"{property.Key}\" of {type.Name} holds {declared.Name}: " +
+                        exception.Message,
+                        nameof(properties),
+                        exception);
+                }
+
+                index++;
+            }
+
+            using StrvScope nameScope = GMarshal.AllocStrv(names);
+
+            fixed (GValueNative* first = values)
+            {
+                return new SubclassCtorArgs(Construct(type, (uint)count, (byte**)nameScope.Pointer, first));
+            }
+        }
+        finally
+        {
+            for (int i = 0; i < values.Length; i++)
+            {
+                if (values[i].TypeValue != GType.InvalidValue)
+                {
+                    GObjectNative.ValueUnset(ref values[i]);
+                }
+            }
+
+            GObjectNative.TypeClassUnref(gClass);
+        }
+    }
+
+    /// <summary>
+    /// Tells whether an instance of a type is being constructed on this thread.
+    /// </summary>
+    /// <param name="type">The exact type of the instance in question.</param>
+    /// <returns>
+    /// <see langword="true"/> while a <c>g_object_new</c> of that type has not
+    /// returned into the constructor of its wrapper yet.
+    /// </returns>
+    internal static bool IsConstructing(GType type)
+    {
+        List<nuint>? constructing = t_constructing;
+        if (constructing is null)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < constructing.Count; i++)
+        {
+            if (constructing[i] == type.Value)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Runs <c>g_object_new_with_properties</c> with the type on the
+    /// construction stack of the thread.
+    /// </summary>
+    /// <param name="type">The type to instantiate.</param>
+    /// <param name="count">The number of properties.</param>
+    /// <param name="names">The property names, or <see langword="null"/>.</param>
+    /// <param name="values">The property values, or <see langword="null"/>.</param>
+    /// <returns>The new instance.</returns>
+    /// <remarks>
+    /// <c>g_object_new_with_properties</c> is used rather than
+    /// <c>g_object_new</c>: the latter is variadic, and calling a variadic
+    /// entry point through a fixed signature is not portable.
+    /// </remarks>
+    /// <exception cref="InvalidOperationException">GObject returned no instance.</exception>
+    private static nint Construct(GType type, uint count, byte** names, GValueNative* values)
+    {
+        List<nuint> constructing = t_constructing ??= [];
+        constructing.Add(type.Value);
+
+        nint handle;
+        try
+        {
+            handle = GObjectNative.ObjectNewWithProperties(type.Value, count, names, values);
+        }
+        finally
+        {
+            constructing.RemoveAt(constructing.Count - 1);
+        }
+
         if (handle == nint.Zero)
         {
             throw new InvalidOperationException($"g_object_new returned nothing for {type.Name}.");
         }
 
-        return new SubclassCtorArgs(handle);
+        return handle;
     }
 
     /// <summary>
@@ -478,7 +756,15 @@ internal static unsafe class SubclassRegistry
 
             if (descriptor.ClassInitializer is { } configure)
             {
-                configure(new ClassConfig(gClass));
+                // A GstElementClass is what carries the metadata and the pad
+                // templates, so the richer facade is only handed out for a
+                // class that has those fields; Gst.Pad and its subclasses get
+                // the GObject level one, which the generated DefineSubclass of
+                // such a class asks for by its parameter type.
+                configure(
+                    descriptor.ParentType.IsA(new GType(Gst.Element.GetGType()))
+                        ? new ClassConfig(gClass)
+                        : new ObjectClassConfig(gClass));
             }
         }
         catch (Exception exception)

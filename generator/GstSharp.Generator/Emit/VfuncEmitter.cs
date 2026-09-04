@@ -366,7 +366,7 @@ internal sealed class VfuncEmitter
     {
         writer.WriteLine("/// <summary>");
         writer.WriteLine("/// Constructs the managed subclass that");
-        writer.WriteLine("/// <see cref=\"Gst.GObject.SubclassType.NewInstance\"/> created an instance of.");
+        writer.WriteLine("/// <see cref=\"Gst.GObject.SubclassType.NewInstance()\"/> created an instance of.");
         writer.WriteLine("/// </summary>");
         writer.WriteLine("/// <param name=\"args\">The instance, as the registration handed it out.</param>");
         writer.WriteLine(

@@ -41,6 +41,18 @@ internal static unsafe partial class GObjectNative
         delegate* unmanaged[Cdecl]<nint, nint, int, void> notify,
         nint data);
 
+    /// <summary>
+    /// Attaches a word to an object under a quark. The runtime uses it for one
+    /// marker only — that the wrapper of a managed subclass was disposed — and
+    /// passes no destroy notification, so nothing managed is kept alive by it.
+    /// </summary>
+    [LibraryImport("GObject", EntryPoint = "g_object_set_qdata")]
+    internal static partial void ObjectSetQdata(nint instance, uint quark, nint data);
+
+    /// <summary>Reads back what <see cref="ObjectSetQdata"/> attached.</summary>
+    [LibraryImport("GObject", EntryPoint = "g_object_get_qdata")]
+    internal static partial nint ObjectGetQdata(nint instance, uint quark);
+
     [LibraryImport("GObject", EntryPoint = "g_object_get_property")]
     internal static partial void ObjectGetProperty(nint instance, byte* name, ref GValueNative value);
 

@@ -63,6 +63,63 @@ public readonly unsafe struct VfuncOverride
 }
 
 /// <summary>
+/// A managed subclass that native code may create instances of, which states
+/// how its wrapper is built.
+/// </summary>
+/// <typeparam name="TSelf">The subclass itself.</typeparam>
+/// <remarks>
+/// <para>
+/// A subclass that is defined through the generic <c>DefineSubclass&lt;TSelf&gt;</c>
+/// overload hands this factory to the registry, and the registry uses it
+/// whenever an instance of the type turns up without a wrapper: an element a
+/// factory created, a pad a base class built from a template in its instance
+/// init, a pad an aggregator asked for. Without it such an instance is wrapped
+/// as the nearest registered ancestor, which is what a subclass defined through
+/// the non generic overload keeps doing.
+/// </para>
+/// <para>
+/// <b><see cref="CreateWrapper"/> runs on whichever thread native code created
+/// the instance on — a streaming thread of GStreamer, under the locks of
+/// GStreamer — and must do nothing but hand the arguments to the constructor
+/// of the subclass.</b> Setting a property, touching a pad or waiting for
+/// anything else are all ways to deadlock the pipeline. The arguments have to
+/// be forwarded: a factory that ignores them and answers a freshly constructed
+/// instance is detected after the fact and reported as an
+/// <see cref="InvalidOperationException"/>. The implicit implementation of a
+/// static abstract member is <see langword="public"/> <see langword="static"/>:
+/// </para>
+/// <code>
+/// internal sealed class CounterSrc : PushSrc, IManagedSubclass&lt;CounterSrc&gt;
+/// {
+///     private static readonly SubclassType Type = DefineSubclass&lt;CounterSrc&gt;(
+///         "DemoCounterSrc", ConfigureClass, CreateOverride);
+///
+///     public CounterSrc()
+///         : this(Type.NewInstance())
+///     {
+///     }
+///
+///     private CounterSrc(SubclassCtorArgs args)
+///         : base(args)
+///     {
+///     }
+///
+///     public static CounterSrc CreateWrapper(SubclassCtorArgs args) =&gt; new(args);
+/// }
+/// </code>
+/// </remarks>
+public interface IManagedSubclass<TSelf>
+    where TSelf : Object, IManagedSubclass<TSelf>
+{
+    /// <summary>
+    /// Builds the wrapper of an instance native code created.
+    /// </summary>
+    /// <param name="args">The instance, on its way into the constructor.</param>
+    /// <returns>The wrapper, which has to be constructed from <paramref name="args"/>.</returns>
+    static abstract TSelf CreateWrapper(SubclassCtorArgs args);
+}
+
+/// <summary>
 /// A managed subclass of a wrapped GObject type, as it was registered with
 /// GObject.
 /// </summary>
@@ -120,6 +177,39 @@ public sealed class SubclassType
     public SubclassCtorArgs NewInstance() => SubclassRegistry.NewInstance(GType);
 
     /// <summary>
+    /// Creates an instance of the managed subclass and gives it its properties
+    /// while it is being built.
+    /// </summary>
+    /// <param name="properties">
+    /// The properties to give the new instance, by name. An empty dictionary
+    /// is allowed and creates the instance with its defaults.
+    /// </param>
+    /// <returns>The arguments of the wrapper's constructor.</returns>
+    /// <remarks>
+    /// <para>
+    /// This is the only way to give a construct only property its value: a
+    /// <c>GstPad</c> takes its <c>direction</c> that way, and nothing can write
+    /// it afterwards. The values are converted the way
+    /// <c>Gst.ElementFactory.MakeWithProperties</c> converts them, each one
+    /// into the type its specification declares.
+    /// </para>
+    /// <para>
+    /// A property a managed subclass installed itself is refused: GObject
+    /// dispatches a write to the class that owns the specification, and while
+    /// the instance is being built there is no wrapper to dispatch it to.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="ArgumentNullException"><paramref name="properties"/> is <see langword="null"/>.</exception>
+    /// <exception cref="ArgumentException">
+    /// The type has no property of one of the given names, one of them cannot
+    /// be written, one of them belongs to a managed subclass, or one of the
+    /// values does not fit the type its property declares.
+    /// </exception>
+    /// <exception cref="InvalidOperationException">GObject returned no instance.</exception>
+    public SubclassCtorArgs NewInstance(IReadOnlyDictionary<string, object?> properties) =>
+        SubclassRegistry.NewInstance(GType, properties);
+
+    /// <summary>
     /// Registers a managed subclass with GObject and runs its
     /// <c>class_init</c>.
     /// </summary>
@@ -133,6 +223,11 @@ public sealed class SubclassType
     /// <see langword="null"/>.
     /// </param>
     /// <param name="overrides">The slots the subclass takes over.</param>
+    /// <param name="wrapFactory">
+    /// Builds the wrapper of an instance native code created, or
+    /// <see langword="null"/> for a subclass that is only ever constructed from
+    /// managed code.
+    /// </param>
     /// <returns>The registration.</returns>
     /// <exception cref="ArgumentNullException">
     /// <paramref name="typeName"/> or <paramref name="overrides"/> is
@@ -149,7 +244,39 @@ public sealed class SubclassType
         GType parent,
         string typeName,
         Action<ClassConfig>? configureClass,
-        VfuncOverride[] overrides)
+        VfuncOverride[] overrides,
+        Func<SubclassCtorArgs, Object>? wrapFactory = null) =>
+        Define(
+            parent,
+            typeName,
+            configureClass is null ? null : config => configureClass((ClassConfig)config),
+            overrides,
+            wrapFactory);
+
+    /// <summary>
+    /// Registers a managed subclass whose class initialiser is given the
+    /// <c>GObject</c> level facade, which is every subclassable class that is
+    /// not an element.
+    /// </summary>
+    /// <param name="parent">The type to derive from.</param>
+    /// <param name="typeName">The <c>GType</c> name, unique in the process.</param>
+    /// <param name="configureClass">
+    /// Configures the class while it is being initialised, or
+    /// <see langword="null"/>.
+    /// </param>
+    /// <param name="overrides">The slots the subclass takes over.</param>
+    /// <param name="wrapFactory">
+    /// Builds the wrapper of an instance native code created, or
+    /// <see langword="null"/> for a subclass that is only ever constructed from
+    /// managed code.
+    /// </param>
+    /// <returns>The registration.</returns>
+    internal static SubclassType Define(
+        GType parent,
+        string typeName,
+        Action<ObjectClassConfig>? configureClass,
+        VfuncOverride[] overrides,
+        Func<SubclassCtorArgs, Object>? wrapFactory = null)
     {
         ArgumentNullException.ThrowIfNull(typeName);
         ArgumentNullException.ThrowIfNull(overrides);
@@ -194,7 +321,7 @@ public sealed class SubclassType
             slots[i] = new VfuncSlot(declared.Offset, declared.Function);
         }
 
-        SubclassDescriptor descriptor = new(parent, typeName, slots, configureClass);
+        SubclassDescriptor descriptor = new(parent, typeName, slots, configureClass, wrapFactory);
 
         return new SubclassType(descriptor, SubclassRegistry.Register(descriptor));
     }

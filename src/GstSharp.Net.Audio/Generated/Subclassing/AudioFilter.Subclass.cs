@@ -13,7 +13,7 @@ public unsafe partial class AudioFilter
 {
     /// <summary>
     /// Constructs the managed subclass that
-    /// <see cref="Gst.GObject.SubclassType.NewInstance"/> created an instance of.
+    /// <see cref="Gst.GObject.SubclassType.NewInstance()"/> created an instance of.
     /// </summary>
     /// <param name="args">The instance, as the registration handed it out.</param>
     /// <exception cref="System.ArgumentException">The instance is not a <c>GstAudioFilter</c>.</exception>
