@@ -63,7 +63,34 @@ its own, and it is released when the override returns. Using one afterwards thro
 keeping the data means copying it. Disposing such a wrapper early is harmless,
 and `MakeWritable` on one throws: it would release a reference the wrapper does
 not own. See
-[`docs/subclassing.md`](subclassing.md#11-using-it-stage-1).
+[`docs/subclassing.md`](subclassing.md#11-using-it).
+
+Three shapes sit beside that borrow, one per direction the ownership can
+travel in:
+
+* **A parameter the slot takes over.** The message of `Bin.OnHandleMessage`,
+  the event of `BaseSink.OnEvent`, the caps of `BaseSrc.OnFixate`: the
+  override owns the wrapper it is given, chaining up hands the ownership on
+  and returning without chaining up releases it. Copy it to keep it beyond
+  the call. The documentation of the parameter says which of the two it is.
+* **A buffer the slot may hand back unchanged.** `BaseSrc.OnCreate` is given
+  the buffer downstream provided and `BaseTransform.OnPrepareOutputBuffer`
+  the input buffer, and answering that very wrapper is what filling or
+  transforming in place looks like. The caller compares the two pointers and
+  only releases the one it passed in when they differ, so the binding takes
+  no reference for an answer that did not change.
+* **A floating object the caller sinks.** The ring buffer of
+  `AudioBaseSink.OnCreateRingbuffer` and `AudioBaseSrc.OnCreateRingbuffer` is
+  answered *without* a reference being added, because
+  `gst_object_set_parent` sinks it and the element becomes its only owner.
+  Keep no reference of your own to what such a slot answers; read it back
+  from the element instead.
+
+A record with no reference count of its own — a video frame, a ring buffer
+specification, a metadata item — is lent as a bare pointer holder: the
+wrapper takes no part in the ownership of what it points at, and the pointer
+is regularly an address on the stack of the caller, so it stops meaning
+anything once the call returns.
 
 ## Metadata items and the buffer that owns them
 

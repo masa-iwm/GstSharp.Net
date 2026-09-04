@@ -135,11 +135,15 @@ When the move is intended, update the expectations:
 1. Regenerate, as above. The `generate` verb prints the new census, one line per
    module and category, and rewrites `girs/skip-report.md`.
 2. Fix the `[InlineData]` rows of the failing theory. The expectations live in
-   two files: `tests/GstSharp.Generator.Tests/CensusTests.cs` for what the gir
+   three files: `tests/GstSharp.Generator.Tests/CensusTests.cs` for what the gir
    files declare — classes, records, interfaces, enumerations, bitfields,
-   callbacks, aliases, constants, functions and signals per namespace — and
+   callbacks, aliases, constants, functions and signals per namespace —
    `tests/GstSharp.Generator.Tests/ClassEmitterTests.cs` for what a run emitted
-   and what it skipped, per module and per skip reason.
+   and what it skipped, per module and per skip reason, and
+   `tests/GstSharp.Generator.Tests/SubclassCensusTests.cs` for the subclassing
+   surface: the `class struct` mirrors and the `vfunc` slots per module, and
+   the `Virtuals` ledger with the reason of every slot that carries no managed
+   member.
 3. Commit the regenerated sources, `girs/skip-report.md` and the new counts as
    one change, and say in the pull request which numbers moved and why.
 
@@ -202,6 +206,43 @@ or a field a wave deliberately left for the next one. Every entry cites the C
 file and line its claim rests on in the same `$comment`. A key that matches no
 field an accessor would be emitted for, an entry that states neither correction
 or only the default, and one that states both are reported as `GEN0026`.
+
+## The overlay keys of the subclassing surface
+
+`girs/overlays/fixups.json` steers what a subclassable class emits through
+seven keys, each documented by a `$comment-` entry beside it. `subclassable`
+is the allowlist itself: a class named there gets a class struct mirror, one
+`OnX` member per bindable slot and a registration, and its whole parent chain
+gets mirrors as well. The other six address a single slot, keyed
+`Ns.Class::vfunc`, or a single parameter of one, keyed
+`Ns.Class::vfunc#param`:
+
+* `skipVirtuals` — the slots that carry no managed member, with the reason the
+  `Virtuals` section of `girs/skip-report.md` prints. A slot the planner
+  cannot project is *not* listed here: the run reports it as
+  `UnsupportedSignature` on its own, so a shape that becomes bindable stops
+  being skipped without anybody editing the file.
+* `vfuncDefaults` — what a chain-up answers when the parent class leaves the
+  slot NULL, which is the behaviour the base class documents for that case. A
+  slot with no entry has no value a chain-up could invent and throws instead.
+* `vfuncIdentityBuffers` — a buffer parameter the slot may hand back
+  unchanged, whose caller compares the two pointers.
+* `vfuncNonNullReturns` — a slot whose caller dereferences the answer without
+  checking it, with the value the trampoline substitutes for a null one.
+* `vfuncDocNotes` — the part of the contract of a slot that neither the gir
+  nor the marshalling states, as one sentence appended to the generated
+  documentation.
+* `vfuncSpans` — a counted block of elements the slot only reads, which makes
+  the parameter a `ReadOnlySpan` instead of a `Span`; the gir counts the block
+  by the parameter beside it either way.
+* `vfuncFailureValues` — what a trampoline answers when the exception trap
+  caught an override, for a slot whose caller reads something other than a
+  failure into the zero of the return type.
+
+Every entry cites the C file and line its claim rests on in a `$comment` or in
+the `$comment-` block of the key. An entry that names no slot or no parameter
+of the emitted surface is reported as `GEN0029` through `GEN0031` and
+`GEN0036` through `GEN0039`.
 
 Never bump a number you cannot account for. Census drift that nobody asked for
 is a bug in the change — typically an accidental skip: an overlay entry that

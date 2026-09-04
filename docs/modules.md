@@ -294,7 +294,7 @@ Two things to get right when you attach there:
 
 **Managed subclassing is separate and is closed to modules.**
 `DefineSubclass` — deriving a *new* `GType` from `Gst.Element` and friends in C#
-— is public and documented in [`docs/subclassing.md`](subclassing.md#11-using-it-stage-1),
+— is public and documented in [`docs/subclassing.md`](subclassing.md#11-using-it),
 but its closed set of base classes is the one that ships in `GstSharp.Net` and
 `GstSharp.Net.Base`. A module cannot add a base class to that set.
 

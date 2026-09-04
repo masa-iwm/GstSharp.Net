@@ -321,15 +321,17 @@ reason in
 [`girs/skip-report.md`](https://github.com/masa-iwm/GstSharp.Net/blob/main/girs/skip-report.md).
 The gaps worth naming here:
 
-* **Subclassing is limited to a closed set of base classes.** A C# type can
-  derive from `Gst.Element`, `Gst.Bin`, `Gst.Base.BaseSrc`,
-  `Gst.Base.PushSrc`, `Gst.Base.BaseSink` or `Gst.Base.BaseTransform`, override
-  a curated set of vfuncs and be called back through the native vtable. What is
-  not there yet: the rest of the vfuncs, properties and signals on managed
+* **Subclassing is limited to an allowlist of base classes.** A C# type can
+  derive from `Gst.Element`, `Gst.Bin`, `Gst.Base.BaseSrc`, `PushSrc`,
+  `BaseSink`, `BaseTransform`, `Aggregator`, `Gst.Audio.AudioBaseSink`,
+  `AudioBaseSrc`, `AudioSink`, `AudioSrc`, `AudioFilter`, or
+  `Gst.Video.VideoSink`, `VideoFilter`, override the vfuncs of the class and
+  be called back through the native vtable. What is not there yet: the parser
+  and codec base classes, the pad functions, properties and signals on managed
   types, and construction from native code — an element registered this way
   cannot be built by `gst_element_factory_make` or named in a pipeline
   description. See
-  [`docs/subclassing.md`](https://github.com/masa-iwm/GstSharp.Net/blob/main/docs/subclassing.md#11-using-it-stage-1).
+  [`docs/subclassing.md`](https://github.com/masa-iwm/GstSharp.Net/blob/main/docs/subclassing.md#11-using-it).
 * **Writing GValue-typed structures is incomplete.** Reading is covered —
   `Value.GetBoxed<T>()` for a boxed value and `Value.GetMiniObject<T>()` for a
   caps, a tag list or a sample — and building a `GValue` for every fundamental

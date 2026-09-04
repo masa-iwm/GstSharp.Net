@@ -30,7 +30,14 @@ The classes that matter, in order:
    `PushSrcClass` in `GstBase-1.0.gir`) — custom sources. Key vfuncs:
    `create`, `fill`, `alloc`, `start`, `stop`, `is_seekable`, `get_size`,
    `unlock`, `unlock_stop`, `set_caps`, `get_caps`, `fixate`, `query`,
-   `event`, `do_seek`.
+   `event`. `do_seek` and `prepare_seek_segment` are **not** bindable: they
+   lend a `GstSegment` by pointer for the slot to write into, and a boxed
+   wrapper of this binding takes a copy of what it is handed, so every write
+   the override made would be lost. The same rule keeps
+   `BaseTransform::filter_meta`, `AudioFilter::setup` and the `set_info` of
+   the video classes out of the surface; §11 lists them. A record with no
+   boxed type behind it - a video frame, a ring buffer specification - has no
+   copy to make and is lent as it is.
 3. **`GstBase.BaseSink`** (`BaseSinkClass`) — custom sinks: `render`,
    `preroll`, `render_list`, `set_caps`, `get_caps`, `start`, `stop`,
    `unlock`, `unlock_stop`, `propose_allocation`, `query`, `event`.
@@ -390,7 +397,10 @@ transfer annotations, e.g. `change_state` takes
 `ClassInit` captures `g_type_class_peek_parent(gClass)` into the descriptor
 (§3.3). One **static** chain-up core per slot reads the parent's slot
 through the class-struct mirror and calls it as a raw function pointer; the
-trampoline fallback (§4.1) and a `protected` instance wrapper both call it:
+trampoline fallback (§4.1) and a `protected` instance wrapper both call it.
+The generator writes both out of the same plan the trampoline is written
+from, so the sketch below is what the emitted code looks like and not
+something anybody types:
 
 ```csharp
 // Static core: shared by the trampoline's no-wrapper fallback and the
@@ -617,11 +627,12 @@ there is no MSVC/MinGW layout divergence to manage (`CLong` not needed).
 | `GObjectNative` imports (`g_type_register_static`, `g_type_query`, `g_type_class_peek_parent`, `g_type_class_ref/unref`, `g_object_new`) | 0 | hand-written (Core/Interop) |
 | `GTypeInfo` / `GTypeQuery` blittable mirrors | 0 | hand-written (Core/GObject) |
 | `SubclassRegistry`, `SubclassDescriptor`, shared `ClassInit`/`InstanceInit`, `Object.TryGetInterned` | 0 | hand-written (Core/GObject) |
-| `ElementClassRaw`, `BaseSrcClassRaw`, … for the closed set | 0–1 | hand-written; **replaced by generated** in stage 2 |
-| Subclass bases: `protected` ctor, `OnX` virtuals, `ChainUpX` helpers, vfunc trampolines, `ClassConfig` glue | 1 | hand-written `Custom/` partials |
-| Class-struct mirrors for an **allowlisted** set of classes | 2 | generated (`ClassStructEmitter`, new) |
-| Typed vfunc surface (`OnX` + trampoline + chain-up) from `<virtual-method>` | 2 | generated, reusing `MarshalPlanner` plans in reverse (the `SignalEmitter` trampolines are the proof the reverse direction fits the planner) |
-| Analyzer: override/declaration consistency | 2 | `GstSharp.Net.Analyzers` |
+| `ElementClassRaw`, `BaseSrcClassRaw`, … for the closed set | 0–1 | was hand-written; **deleted** in stage 2a, generated since |
+| Subclass bases: `protected` ctor, `OnX` virtuals, `ChainUpX` helpers, vfunc trampolines, `ClassConfig` glue | 1 | was hand-written `Custom/` partials; **generated** since stage 2a |
+| Class-struct mirrors for an **allowlisted** set of classes | 2a | generated (`ClassStructEmitter`) |
+| Typed vfunc surface (`OnX` + trampoline + chain-up) from `<virtual-method>` | 2a | generated (`VfuncEmitter`), reusing `MarshalPlanner` plans in reverse (the `SignalEmitter` trampolines are the proof the reverse direction fits the planner) |
+| Per module `ClassStructRegistry` for the ABI probes | 2a | generated (`ClassStructEmitter`) |
+| Analyzer: override/declaration consistency | 2b | `GstSharp.Net.Analyzers` |
 | Wrap factories via static abstract interface members, interface `interface_init` | 3 | generated + runtime |
 
 Generator specifics for stage 2:
@@ -641,7 +652,15 @@ Generator specifics for stage 2:
 * Per-vfunc skip must exist from day one (some vfuncs have un-marshallable
   shapes — the same reality that produced the `skip` list for methods);
   the overlay grows a `skipVirtuals` list keyed
-  `"Gst.Element::set_bus"`-style if needed.
+  `"Gst.Element::set_bus"`-style if needed. What landed is that list plus
+  five more keys, all documented in
+  [`CONTRIBUTING.md`](../CONTRIBUTING.md): `vfuncDefaults` (what a chain-up
+  answers for a NULL parent slot), `vfuncIdentityBuffers` (a buffer that may
+  be handed back unchanged), `vfuncNonNullReturns` (a slot whose caller
+  dereferences the answer), `vfuncDocNotes` (the part of a contract only the
+  C implementation states), `vfuncSpans` (a counted block the slot only
+  reads) and `vfuncFailureValues` (what a trapped exception answers when the
+  zero of the return type means something else).
 * **Census**: new emission categories (class-struct mirrors, vfunc
   trampolines, subclass bases) get fixed counts in `EmissionCensus` /
   `CensusTests` — the existing gate against silent scope drift.
@@ -769,17 +788,32 @@ vfunc set, `ClassConfig` with `SetMetadata` and `AddPadTemplate`
 producing buffers and a managed `BaseSink` consuming them, run in AotSmoke.
 Docs page derived from this design document.
 
-**Stage 2 — generator-emitted vfunc surface.**
-New `ClassStructEmitter` behind a `"subclassable"` overlay allowlist:
-generated `*ClassRaw` mirrors (transitive parent chain), generated `OnX` /
-trampoline / chain-up members reusing `MarshalPlanner`, per-vfunc skip
-overlay, census categories, analyzer for declaration/override consistency.
-Stage-1 hand-written mirrors are deleted in the same change (the diff gate
-keeps the swap honest). The stage-1 **public** surface is frozen: the
-sixteen curated `OnX`/`ChainUpX`/`XOverride` members keep their shipped
-signatures and their marshalling semantics (including the true-borrow
-amendment of §4.3) — the generator either emits them byte-identically or
-skips them through the per-vfunc overlay and generates only new slots.
+**Stage 2a — generator-emitted vfunc surface (landed).**
+`ClassStructEmitter` and `VfuncEmitter` behind the `"subclassable"` overlay
+allowlist: generated `*ClassRaw` mirrors (transitive parent chain), a
+generated per module `ClassStructRegistry` the ABI probes walk, generated
+`OnX` / trampoline / chain-up members reusing `MarshalPlanner` in reverse,
+the per-vfunc overlay keys of §7, and the census categories `class struct`
+and `vfunc` with a `Virtuals` section in `girs/skip-report.md`. The
+stage-1 hand-written mirrors and subclass partials were deleted in the same
+change, and the sixteen curated `OnX`/`ChainUpX`/`XOverride` members of
+stage 1 came out of the generator byte-identically — the package validation
+baseline is what held that.
+
+Fourteen classes are subclassable: `Gst.Element`, `Gst.Bin`,
+`GstBase.BaseSrc`, `PushSrc`, `BaseSink`, `BaseTransform`, `Aggregator`,
+`GstAudio.AudioBaseSink`, `AudioBaseSrc`, `AudioSink`, `AudioSrc`,
+`AudioFilter`, and `GstVideo.VideoSink`, `VideoFilter`. §11 lists their
+slots.
+
+**Stage 2b — the rest of the allowlist and the instance-keyed callbacks.**
+`GstBase.BaseParse`, the four codec bases (`AudioDecoder`, `AudioEncoder`,
+`VideoDecoder`, `VideoEncoder`), and the **instance-keyed callback**
+mechanism the pad functions need: `gst_pad_set_chain_function_full` and its
+ten siblings take a callback with no closure argument, so the runtime keys
+them by their first argument - the pad - in a table the `_full` notify
+releases. The analyzer that checks that an `OnX` override and the
+`XOverride` declaration of the same type come in pairs lands with it.
 
 **Stage 3 — breadth.**
 Native-initiated construction via static abstract `CreateWrapper` factories
@@ -795,13 +829,16 @@ compiling unchanged.
 
 ---
 
-## 11. Using it (stage 1)
+## 11. Using it
 
-What shipped is a **closed set of subclassable base classes**: `Gst.Element`,
-`Gst.Bin`, `Gst.Base.BaseSrc`, `Gst.Base.PushSrc`, `Gst.Base.BaseSink` and
-`Gst.Base.BaseTransform`. Each one carries three things — a `DefineSubclass`
-that registers a managed type, a `protected` constructor that builds instances
-of it, and, per bound vfunc, an `OnX` virtual with a matching `ChainUpX`.
+What ships is a **generated surface for an allowlist of fourteen base
+classes**: `Gst.Element`, `Gst.Bin`, `Gst.Base.BaseSrc`, `PushSrc`,
+`BaseSink`, `BaseTransform`, `Aggregator`, `Gst.Audio.AudioBaseSink`,
+`AudioBaseSrc`, `AudioSink`, `AudioSrc`, `AudioFilter`, and
+`Gst.Video.VideoSink`, `VideoFilter`. Each one carries three things — a
+`DefineSubclass` that registers a managed type, a `protected` constructor
+that builds instances of it, and, per bound vfunc, an `OnX` virtual with a
+matching `ChainUpX` and an `XOverride` declaration.
 
 ### A source in thirty lines
 
@@ -858,13 +895,15 @@ touched.
   rewrites buffers in place". A declaration without an override costs a managed
   transition that chains up — harmless except on those presence-sensitive
   slots. An override without a declaration is never called. The analyzer that
-  checks the pairing is stage 2.
+  checks the pairing is stage 2b.
 * **A slot belongs to the class that hands it out.** Passing
   `BaseSink.RenderOverride` to `PushSrc.DefineSubclass` is refused: the offset
   only means anything inside `GstBaseSinkClass`.
-* **Pad templates are mandatory for the GstBase bases** — `src` for `BaseSrc`
-  and `PushSrc`, `sink` for `BaseSink`, both for `BaseTransform` — because
-  their instance init creates the pads from them. `DefineSubclass` checks for
+* **Pad templates are mandatory for every base below `Gst.Element`** — `src`
+  for `BaseSrc`, `PushSrc`, `Aggregator`, `AudioBaseSrc` and `AudioSrc`,
+  `sink` for `BaseSink`, `AudioBaseSink`, `AudioSink` and `VideoSink`, both
+  for `BaseTransform`, `AudioFilter` and `VideoFilter` — because their
+  instance init creates the pads from them. `DefineSubclass` checks for
   them once the class is initialised and fails with a message rather than
   letting `g_object_new` produce a half built element.
 * **Build pad templates outside `class_init`.** It runs under the GObject type
@@ -883,26 +922,64 @@ touched.
   `GstSharp.UnhandledCallbackException`: `StateChangeReturn.Failure` for
   `OnChangeState`, `FlowReturn.Error` for `OnCreate`, `OnRender`, `OnPreroll`
   and `OnTransformIp`, `false` for the lifecycle and caps slots, and a dropped
-  message for `OnHandleMessage`. The chain-up does not run afterwards.
+  message for `OnHandleMessage`. The chain-up does not run afterwards. Two
+  slots answer something other than the zero of their type, because their
+  caller reads more into it than a failure: `AudioSink.OnWrite` answers `-1`
+  and `AudioSrc.OnRead` the whole range of its unsigned answer, both of which
+  the thread of the ring buffer reads as the error it is, while a zero would
+  make it ask for the same block again.
 
 ### The vfuncs that are bound
 
+One row per class, in the order the class struct lays the slots out. A slot
+a class inherits is overridden through the base class that declares it, so a
+managed `VideoSink` overrides `render` through `BaseSink.RenderOverride` and
+`show_frame` through `VideoSink.ShowFrameOverride`.
+
 | Base | Slots |
 | --- | --- |
-| `Gst.Element` | `change_state` |
-| `Gst.Bin` | `handle_message` |
-| `Gst.Base.BaseSrc` | `start`, `stop`, `is_seekable`, `set_caps` |
-| `Gst.Base.PushSrc` | `create` |
-| `Gst.Base.BaseSink` | `start`, `stop`, `set_caps`, `preroll`, `render` |
-| `Gst.Base.BaseTransform` | `start`, `stop`, `set_caps`, `transform_ip` |
+| `Gst.Element` | `request_new_pad`, `release_pad`, `get_state`, `set_state`, `change_state`, `state_changed`, `set_bus`, `provide_clock`, `set_clock`, `send_event`, `query`, `post_message`, `set_context` |
+| `Gst.Bin` | `add_element`, `remove_element`, `handle_message`, `do_latency` |
+| `Gst.Base.BaseSrc` | `get_caps`, `negotiate`, `fixate`, `set_caps`, `decide_allocation`, `start`, `stop`, `get_times`, `get_size`, `is_seekable`, `unlock`, `unlock_stop`, `query`, `event`, `create`, `alloc`, `fill` |
+| `Gst.Base.PushSrc` | `create`, `alloc`, `fill` |
+| `Gst.Base.BaseSink` | `get_caps`, `set_caps`, `fixate`, `activate_pull`, `get_times`, `propose_allocation`, `start`, `stop`, `unlock`, `unlock_stop`, `query`, `event`, `wait_event`, `prepare`, `prepare_list`, `preroll`, `render`, `render_list` |
+| `Gst.Base.BaseTransform` | `transform_caps`, `fixate_caps`, `accept_caps`, `set_caps`, `query`, `decide_allocation`, `propose_allocation`, `transform_size`, `get_unit_size`, `start`, `stop`, `sink_event`, `src_event`, `prepare_output_buffer`, `copy_metadata`, `transform_meta`, `before_transform`, `transform`, `transform_ip`, `submit_input_buffer`, `generate_output` |
+| `Gst.Base.Aggregator` | `flush`, `clip`, `finish_buffer`, `sink_event`, `sink_query`, `src_event`, `src_query`, `src_activate`, `aggregate`, `stop`, `start`, `get_next_time`, `update_src_caps`, `fixate_src_caps`, `negotiated_src_caps`, `decide_allocation`, `propose_allocation`, `negotiate`, `sink_event_pre_queue`, `sink_query_pre_queue`, `finish_buffer_list`, `peek_next_sample` |
+| `Gst.Audio.AudioBaseSink` | `create_ringbuffer`, `payload` |
+| `Gst.Audio.AudioBaseSrc` | `create_ringbuffer` |
+| `Gst.Audio.AudioSink` | `open`, `prepare`, `unprepare`, `close`, `write`, `delay`, `reset`, `pause`, `resume`, `stop` |
+| `Gst.Audio.AudioSrc` | `open`, `prepare`, `unprepare`, `close`, `read`, `delay`, `reset` |
+| `Gst.Audio.AudioFilter` | none of its own; a managed audio filter overrides `GstBaseTransform` |
+| `Gst.Video.VideoSink` | `show_frame` |
+| `Gst.Video.VideoFilter` | `transform_frame`, `transform_frame_ip` |
 
-Everything else is stage 2, and the omissions that will be missed first are
-`unlock` / `unlock_stop` (so a managed source must not block in `OnCreate`),
-`BaseSrc.fill` (filling a buffer the pipeline provided), `query` and `event`,
-`BaseTransform.transform` with the caps negotiation slots that an out of place
-filter needs, and `request_new_pad`.
+Fourteen slots of those classes carry no `OnX` member. Seven are the signal
+class closures of `Element` and `Bin`, which the base library never calls
+through the class pointer — subscribing to the signal is the same hook.
+`Aggregator::create_new_pad` waits for pad subclassing, which needs a
+`ClassConfig` for `GstPad` and construct properties. The remaining six lend a
+boxed record by pointer — `BaseSrc::do_seek` and `prepare_seek_segment`,
+`BaseTransform::filter_meta`, `AudioFilter::setup`, and the `set_info` of
+`VideoSink` and `VideoFilter` — which a boxed wrapper of this binding cannot
+project, because it copies what it is handed and the copy is where the
+override's writes would stay. `girs/skip-report.md` lists all fourteen with
+their reason.
 
-### The limits of stage 1
+### Slots a subclass has to declare
+
+Most slots have an answer for a NULL parent that the element survives, and
+`DefineSubclass` accepts a registration without them. Six do not, and the
+registration says so before it takes the type name:
+
+| Class | Slot | Why |
+| --- | --- | --- |
+| `Aggregator` | `aggregate` | the base class calls it unguarded |
+| `AudioBaseSink`, `AudioBaseSrc` | `create_ringbuffer` | without a ring buffer the element cannot leave the NULL state |
+| `AudioSink`, `AudioSrc` | `prepare`, `unprepare` | acquiring and releasing the ring buffer start out with a failure that only the slot turns into a success |
+| `AudioSink` | `write` | the thread of the ring buffer stops before it starts when the slot is NULL |
+| `AudioSrc` | `read` | the same |
+
+### The limits
 
 * **A managed subclass cannot be derived from by another managed subclass.**
   One level only: the chain-up resolves the parent class of the registration,
