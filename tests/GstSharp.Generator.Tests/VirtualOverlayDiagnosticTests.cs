@@ -99,6 +99,73 @@ public sealed class VirtualOverlayDiagnosticTests
             </record>
         """;
 
+    /// <summary>
+    /// A class and a subclass of it that declare a slot of the same name and
+    /// the same parameters answering different types: the shape the managed
+    /// <c>new</c> member must never be written for.
+    /// </summary>
+    private const string BodyWithAReturnTypeCollision =
+        """
+            <class name="Widget" c:type="GstWidget" parent="GObject.Object" glib:type-name="GstWidget" glib:get-type="gst_widget_get_type" glib:type-struct="WidgetClass">
+              <virtual-method name="polish">
+                <return-value transfer-ownership="none">
+                  <type name="gboolean" c:type="gboolean"/>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="widget" transfer-ownership="none">
+                    <type name="Widget" c:type="GstWidget*"/>
+                  </instance-parameter>
+                </parameters>
+              </virtual-method>
+            </class>
+            <record name="WidgetClass" c:type="GstWidgetClass" glib:is-gtype-struct-for="Widget">
+              <field name="parent_class">
+                <type name="GObject.ObjectClass" c:type="GObjectClass"/>
+              </field>
+              <field name="polish">
+                <callback name="polish">
+                  <return-value transfer-ownership="none">
+                    <type name="gboolean" c:type="gboolean"/>
+                  </return-value>
+                  <parameters>
+                    <parameter name="widget" transfer-ownership="none">
+                      <type name="Widget" c:type="GstWidget*"/>
+                    </parameter>
+                  </parameters>
+                </callback>
+              </field>
+            </record>
+            <class name="Gadget" c:type="GstGadget" parent="Widget" glib:type-name="GstGadget" glib:get-type="gst_gadget_get_type" glib:type-struct="GadgetClass">
+              <virtual-method name="polish">
+                <return-value transfer-ownership="none">
+                  <type name="none" c:type="void"/>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="gadget" transfer-ownership="none">
+                    <type name="Gadget" c:type="GstGadget*"/>
+                  </instance-parameter>
+                </parameters>
+              </virtual-method>
+            </class>
+            <record name="GadgetClass" c:type="GstGadgetClass" glib:is-gtype-struct-for="Gadget">
+              <field name="parent_class">
+                <type name="WidgetClass" c:type="GstWidgetClass"/>
+              </field>
+              <field name="polish">
+                <callback name="polish">
+                  <return-value transfer-ownership="none">
+                    <type name="none" c:type="void"/>
+                  </return-value>
+                  <parameters>
+                    <parameter name="gadget" transfer-ownership="none">
+                      <type name="Gadget" c:type="GstGadget*"/>
+                    </parameter>
+                  </parameters>
+                </callback>
+              </field>
+            </record>
+        """;
+
     private const string Allowlist = "\"subclassable\": [\"Gst.Widget\"]";
 
     [Fact]
@@ -209,6 +276,25 @@ public sealed class VirtualOverlayDiagnosticTests
         Assert.Equal(DiagnosticSeverity.Error, error.Severity);
         Assert.Contains("stride", error.Message, StringComparison.Ordinal);
         Assert.Contains("glong", error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ASlotThatHidesAnInheritedMemberWithAnotherReturnTypeStopsTheRun()
+    {
+        // GstAudioSink::stop against GstBaseSink::stop, in miniature. C# would
+        // compile the pair, so nothing below the generator catches it: the
+        // subclass member would answer nothing where the one it hides answers a
+        // bool, and which of the two runs depends on the static type the caller
+        // holds. The run stops until the slot is skipped or renamed.
+        FixtureRun run = Run(
+            BodyWithAReturnTypeCollision,
+            """{ "subclassable": ["Gst.Widget", "Gst.Gadget"] }""",
+            allowErrors: true);
+
+        Diagnostic error = Assert.Single(run.Result.Diagnostics, static d => d.Code == "GEN0040");
+        Assert.Equal(DiagnosticSeverity.Error, error.Severity);
+        Assert.Contains("Gst.Gadget::polish", error.Message, StringComparison.Ordinal);
+        Assert.Contains("bool", error.Message, StringComparison.Ordinal);
     }
 
     private static FixtureRun Run(string body, string fixups, bool allowErrors = false)

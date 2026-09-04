@@ -242,7 +242,11 @@ gets mirrors as well. The other seven address a single slot, keyed
 Every entry cites the C file and line its claim rests on in a `$comment` or in
 the `$comment-` block of the key. An entry that names no slot or no parameter
 of the emitted surface is reported as `GEN0029` through `GEN0031` and
-`GEN0036` through `GEN0039`.
+`GEN0036` through `GEN0039`. A slot whose managed member would hide an
+inherited one of the same name and the same parameters while answering another
+type is `GEN0040`, an error: C# accepts such a pair and the override that runs
+then depends on the static type the caller holds, so the slot needs a
+`skipVirtuals` entry or a managed name of its own.
 
 Never bump a number you cannot account for. Census drift that nobody asked for
 is a bug in the change — typically an accidental skip: an overlay entry that

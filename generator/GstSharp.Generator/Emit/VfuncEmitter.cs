@@ -227,6 +227,8 @@ internal sealed class VfuncEmitter
         {
             _ = mine.Add(plan.Name);
             _ = mine.Add(SignatureOf(plan));
+            _ = mine.Add(AnsweredSignatureOf(plan));
+            ReportReturnTypeCollision(model, plan, inherited);
         }
 
         _emittedSlots[model.QualifiedName] = mine;
@@ -540,6 +542,57 @@ internal sealed class VfuncEmitter
     /// </summary>
     /// <param name="plan">The slot being written.</param>
     /// <returns>The key.</returns>
+    /// <summary>
+    /// The signature of a slot with the type it answers appended, which is what
+    /// separates a member that may hide an inherited one from a member that
+    /// only looks like it.
+    /// </summary>
+    /// <param name="plan">The slot.</param>
+    /// <returns>The rendering.</returns>
+    private static string AnsweredSignatureOf(VirtualMethodPlan plan) =>
+        SignatureOf(plan) + " : " + ReturnType(plan);
+
+    /// <summary>
+    /// Reports the one collision the <c>new</c> rule must never paper over: a
+    /// slot whose managed member has the name and the parameters of an
+    /// inherited one but answers something else. C# allows <c>new</c> to change
+    /// the return type, so the two members would compile and the element would
+    /// run whichever one the static type of the caller picked - the base class
+    /// calling through its own slot would reach the wrong override. There is no
+    /// mechanical way out: the slot needs a managed name of its own, which is a
+    /// decision, so the run stops instead.
+    /// </summary>
+    /// <param name="model">The class being emitted.</param>
+    /// <param name="plan">The slot being emitted.</param>
+    /// <param name="inherited">The signatures the ancestors of the class emitted.</param>
+    private void ReportReturnTypeCollision(
+        ClassStructModel model,
+        VirtualMethodPlan plan,
+        HashSet<string> inherited)
+    {
+        if (!inherited.Contains(SignatureOf(plan)) || inherited.Contains(AnsweredSignatureOf(plan)))
+        {
+            return;
+        }
+
+        string prefix = SignatureOf(plan) + " : ";
+        string answered = "another type";
+        foreach (string entry in inherited)
+        {
+            if (entry.StartsWith(prefix, StringComparison.Ordinal))
+            {
+                answered = entry[prefix.Length..];
+            }
+        }
+
+        _diagnostics.Error(
+            "GEN0040",
+            $"The slot '{model.KeyOf(plan.Method.Name)}' would be emitted as 'On{plan.Name}' answering "
+            + $"'{ReturnType(plan)}', which hides an inherited member of the same parameters answering "
+            + $"'{answered}'. A managed name cannot carry both; skip the slot through 'skipVirtuals' or "
+            + "give it a name of its own.");
+    }
+
     private static string SignatureOf(VirtualMethodPlan plan)
     {
         List<string> parts = [];
