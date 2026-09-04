@@ -108,10 +108,50 @@ internal sealed class SubclassModel
     {
         ClassStructs = classStructs;
         _byQualifiedName = byQualifiedName;
+
+        HashSet<string> slotKeys = new(StringComparer.Ordinal);
+        HashSet<string> parameterKeys = new(StringComparer.Ordinal);
+        foreach (ClassStructModel model in classStructs)
+        {
+            if (!model.IsSubclassable)
+            {
+                continue;
+            }
+
+            foreach (ClassStructMember slot in model.Slots)
+            {
+                string key = model.KeyOf(slot.Method!.Name);
+                _ = slotKeys.Add(key);
+                foreach (GirParameter parameter in slot.Method.Parameters)
+                {
+                    _ = parameterKeys.Add(key + "#" + parameter.Name);
+                }
+            }
+        }
+
+        VirtualMethodKeys = slotKeys;
+        VirtualMethodParameterKeys = parameterKeys;
     }
 
     /// <summary>Gets an empty model, for a run with no allowlist.</summary>
     internal static SubclassModel Empty { get; } = new([], new Dictionary<string, ClassStructModel>(StringComparer.Ordinal));
+
+    /// <summary>
+    /// Gets the keys of every slot a subclassable class has, which is what an
+    /// overlay entry addressing a virtual method may name.
+    /// </summary>
+    /// <remarks>
+    /// The slots of a class that is only on the parent chain are left out: they
+    /// get no managed surface, so an entry naming one states nothing about the
+    /// run.
+    /// </remarks>
+    internal IReadOnlySet<string> VirtualMethodKeys { get; }
+
+    /// <summary>
+    /// Gets the keys of every parameter of those slots, in the
+    /// <c>Ns.Class::vfunc#parameter</c> spelling.
+    /// </summary>
+    internal IReadOnlySet<string> VirtualMethodParameterKeys { get; }
 
     /// <summary>
     /// Gets every mirrored class struct, parents before the classes that embed

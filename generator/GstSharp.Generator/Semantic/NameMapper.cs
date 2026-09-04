@@ -180,6 +180,25 @@ internal sealed class NameMapper
     /// <returns>The C# identifier.</returns>
     internal static string ParameterName(string girName) => EscapeIdentifier(ToCamelCase(girName));
 
+    /// <summary>Maps the C# name of a parameter of a virtual method.</summary>
+    /// <param name="overlayKey">
+    /// The key of the slot, in the <c>Ns.Class::vfunc</c> spelling.
+    /// </param>
+    /// <param name="girName">The verbatim gir name of the parameter.</param>
+    /// <returns>The C# identifier.</returns>
+    /// <remarks>
+    /// The name of a parameter of a virtual method is public surface, because
+    /// the <c>OnX</c> method it becomes can be called with named arguments.
+    /// Several of them are abbreviations the camel casing cannot expand —
+    /// <c>incaps</c> is two words run together, <c>buf</c> is one word cut
+    /// short — so the <c>rename</c> overlay addresses them one by one, at
+    /// <c>Ns.Class::vfunc#parameter</c>.
+    /// </remarks>
+    internal string VirtualMethodParameterName(string overlayKey, string girName) =>
+        _overlays.TryGetRename(overlayKey + "#" + girName, out string? renamed)
+            ? renamed
+            : ParameterName(girName);
+
     /// <summary>
     /// The suffix that a public field of a value projected record carries when
     /// the field is projected onto a bare pointer.

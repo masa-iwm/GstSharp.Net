@@ -76,6 +76,14 @@ internal static class GenerationPipeline
             }
         }
 
+        // The class structs are paired with their virtual methods before any
+        // emitter plans a callable: the pairing is what stamps a virtual method
+        // with the key an annotation correction addresses it by, so a model
+        // built later would leave those corrections unapplied and, worse,
+        // reported stale.
+        SubclassModel subclasses = SubclassModel.Build(repository, overlays, diagnostics);
+        ReportStaleVirtualKeys(subclasses, overlays, diagnostics);
+
         TypeMap types = new(repository, classifier, names, diagnostics);
         SkipRules skipRules = new(overlays);
         EmissionCensus census = new(overlays);
@@ -119,7 +127,8 @@ internal static class GenerationPipeline
                     enumEmitter,
                     inherited,
                     consumedArrayOverrides,
-                    consumedAnnotationOverrides),
+                    consumedAnnotationOverrides,
+                    subclasses),
                 module,
                 ns));
         }
@@ -389,5 +398,60 @@ internal static class GenerationPipeline
         EnumEmitter Enums,
         Dictionary<string, List<string>> Inherited,
         HashSet<string> ConsumedArrayOverrides,
-        HashSet<string> ConsumedAnnotationOverrides);
+        HashSet<string> ConsumedAnnotationOverrides,
+        SubclassModel Subclasses);
+
+    /// <summary>
+    /// Reports the overlay entries about virtual methods that name no slot of
+    /// a subclassable class.
+    /// </summary>
+    /// <param name="subclasses">The class structs of the run.</param>
+    /// <param name="overlays">The corrections to check.</param>
+    /// <param name="diagnostics">Where a stale entry is reported.</param>
+    /// <remarks>
+    /// A misspelled key is worse here than elsewhere: a <c>vfuncDefaults</c>
+    /// entry that lands nowhere silently turns a slot with a documented default
+    /// into one whose chain-up throws, and a <c>skipVirtuals</c> entry that
+    /// lands nowhere silently emits a slot the ledger claims was left out.
+    /// </remarks>
+    private static void ReportStaleVirtualKeys(
+        SubclassModel subclasses,
+        Overlays overlays,
+        DiagnosticBag diagnostics)
+    {
+        Report(
+            "GEN0029",
+            overlays.SkippedVirtualKeys,
+            subclasses.VirtualMethodKeys,
+            "The skipped virtual method '{0}' names no slot of a subclassable class; the entry is stale.");
+        Report(
+            "GEN0030",
+            overlays.VfuncDefaultKeys,
+            subclasses.VirtualMethodKeys,
+            "The virtual method default '{0}' names no slot of a subclassable class; the entry is stale.");
+        Report(
+            "GEN0031",
+            overlays.VfuncIdentityBufferKeys,
+            subclasses.VirtualMethodParameterKeys,
+            "The identity buffer '{0}' names no parameter of a slot of a subclassable class; "
+            + "the entry is stale.");
+
+        void Report(string code, IReadOnlyCollection<string> keys, IReadOnlySet<string> known, string message)
+        {
+            List<string> stale = [];
+            foreach (string key in keys)
+            {
+                if (!known.Contains(key))
+                {
+                    stale.Add(key);
+                }
+            }
+
+            stale.Sort(StringComparer.Ordinal);
+            foreach (string key in stale)
+            {
+                diagnostics.Warn(code, string.Format(System.Globalization.CultureInfo.InvariantCulture, message, key));
+            }
+        }
+    }
 }
