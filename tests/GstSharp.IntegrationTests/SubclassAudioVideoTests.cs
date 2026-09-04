@@ -10,8 +10,7 @@ namespace GstSharp.IntegrationTests;
 /// The generated subclassing surface of the audio and video base classes: an
 /// audio sink that counts what the ring buffer writes, an audio source that
 /// fills it with silence, a video sink that counts frames, and the two filters
-/// whose own slot is not bindable and which override their base transform
-/// instead.
+/// that override the in place transform of their base class.
 /// </summary>
 [Collection(GstCollection.Name)]
 public sealed class SubclassAudioVideoTests

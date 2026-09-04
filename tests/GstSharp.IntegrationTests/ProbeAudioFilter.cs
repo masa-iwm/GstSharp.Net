@@ -6,10 +6,10 @@ using Gst.GObject;
 namespace GstSharp.IntegrationTests;
 
 /// <summary>
-/// A managed audio filter. Its own slot, <c>setup</c>, is not part of the
-/// surface - it lends a boxed audio info, which has no borrow mode - so what
-/// the class overrides is the in place transform of <c>GstBaseTransform</c>,
-/// which is what an audio filter is for.
+/// A managed audio filter. It overrides both its own slot, <c>setup</c>,
+/// which is lent the negotiated audio info for the length of the call, and the
+/// in place transform of <c>GstBaseTransform</c>, which is what an audio
+/// filter is for.
 /// </summary>
 internal sealed class ProbeAudioFilter : AudioFilter
 {
@@ -23,6 +23,7 @@ internal sealed class ProbeAudioFilter : AudioFilter
     private static readonly SubclassType Definition = DefineSubclass(
         GTypeName,
         ConfigureClass,
+        SetupOverride,
         BaseTransform.TransformIpOverride);
 
     private int _transformed;
@@ -40,6 +41,30 @@ internal sealed class ProbeAudioFilter : AudioFilter
 
     /// <summary>Gets how many bytes those buffers carried.</summary>
     internal long Bytes => Interlocked.Read(ref _bytes);
+
+    /// <summary>Gets the sample rate the info lent to <c>setup</c> carried.</summary>
+    internal int SetupRate { get; private set; }
+
+    /// <summary>Gets the channel count the info lent to <c>setup</c> carried.</summary>
+    internal int SetupChannels { get; private set; }
+
+    /// <summary>
+    /// Gets the wrapper of the info <c>setup</c> was lent, kept past the end
+    /// of the call on purpose: the borrow is scoped to the call, so the
+    /// wrapper is detached by the time a test looks at it.
+    /// </summary>
+    internal Gst.Audio.AudioInfo? EscapedInfo { get; private set; }
+
+    /// <inheritdoc/>
+    protected override bool OnSetup(Gst.Audio.AudioInfo info)
+    {
+        ArgumentNullException.ThrowIfNull(info);
+
+        SetupRate = info.Rate;
+        SetupChannels = info.Channels;
+        EscapedInfo = info;
+        return true;
+    }
 
     /// <inheritdoc/>
     protected override FlowReturn OnTransformIp(Gst.Buffer buf)
