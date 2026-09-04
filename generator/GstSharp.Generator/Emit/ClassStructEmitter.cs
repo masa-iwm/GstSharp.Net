@@ -334,10 +334,19 @@ internal sealed class ClassStructEmitter
                 return "ulong";
             case "gsize":
                 return "nuint";
-            case "gssize" or "glong":
+            case "gssize":
                 return "nint";
-            case "gulong":
-                return "nuint";
+
+            // A C long is 32 bits wide on Windows and 64 on every other target
+            // of this binding, so no single managed type mirrors it and a guess
+            // would shift every field behind it. No class struct of the
+            // allowlist has one; this says so rather than laying one out wrong.
+            case "glong" or "gulong":
+                _diagnostics.Error(
+                    "GEN0035",
+                    $"The class struct field '{fieldName}' has the type '{name}', whose width differs between "
+                    + "Windows and the other targets; the mirror has no type for it.");
+                return "nint";
             case "gfloat":
                 return "float";
             case "gdouble":
