@@ -310,7 +310,7 @@ public unsafe partial class BaseParse
     /// not check for it. A null answer is reported through the exception trap and
     /// the slot answers a value the caller fails cleanly on.
     /// </returns>
-    protected virtual Gst.Caps OnGetSinkCaps(Gst.Caps filter) =>
+    protected virtual Gst.Caps OnGetSinkCaps(Gst.Caps? filter) =>
         ChainUpGetSinkCaps(filter);
 
     /// <summary>
@@ -501,10 +501,9 @@ public unsafe partial class BaseParse
     /// not check for it. A null answer is reported through the exception trap and
     /// the slot answers a value the caller fails cleanly on.
     /// </returns>
-    protected Gst.Caps ChainUpGetSinkCaps(Gst.Caps filter)
+    protected Gst.Caps ChainUpGetSinkCaps(Gst.Caps? filter)
     {
-        ArgumentNullException.ThrowIfNull(filter);
-        nint resultNative = ChainUpGetSinkCaps(Handle, filter.Handle);
+        nint resultNative = ChainUpGetSinkCaps(Handle, filter is null ? nint.Zero : filter.Handle);
         Gst.Caps result = Gst.Caps.FromNative(resultNative, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException(
                 "get_sink_caps answered null below the managed override.");
@@ -939,7 +938,7 @@ public unsafe partial class BaseParse
             }
 
             using Gst.Caps? filterValue = filter == nint.Zero ? null : Gst.Caps.Borrow(filter);
-            Gst.Caps? result = managed.OnGetSinkCaps(filterValue!);
+            Gst.Caps? result = managed.OnGetSinkCaps(filterValue);
             if (result is null)
             {
                 throw new InvalidOperationException(

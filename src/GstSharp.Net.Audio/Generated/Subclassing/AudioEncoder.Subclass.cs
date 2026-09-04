@@ -348,7 +348,7 @@ public unsafe partial class AudioEncoder
     /// not check for it. A null answer is reported through the exception trap and
     /// the slot answers a value the caller fails cleanly on.
     /// </returns>
-    protected virtual Gst.Caps OnGetcaps(Gst.Caps filter) =>
+    protected virtual Gst.Caps OnGetcaps(Gst.Caps? filter) =>
         ChainUpGetcaps(filter);
 
     /// <summary>
@@ -600,10 +600,9 @@ public unsafe partial class AudioEncoder
     /// not check for it. A null answer is reported through the exception trap and
     /// the slot answers a value the caller fails cleanly on.
     /// </returns>
-    protected Gst.Caps ChainUpGetcaps(Gst.Caps filter)
+    protected Gst.Caps ChainUpGetcaps(Gst.Caps? filter)
     {
-        ArgumentNullException.ThrowIfNull(filter);
-        nint resultNative = ChainUpGetcaps(Handle, filter.Handle);
+        nint resultNative = ChainUpGetcaps(Handle, filter is null ? nint.Zero : filter.Handle);
         Gst.Caps result = Gst.Caps.FromNative(resultNative, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException(
                 "getcaps answered null below the managed override.");
@@ -1167,7 +1166,7 @@ public unsafe partial class AudioEncoder
             }
 
             using Gst.Caps? filterValue = filter == nint.Zero ? null : Gst.Caps.Borrow(filter);
-            Gst.Caps? result = managed.OnGetcaps(filterValue!);
+            Gst.Caps? result = managed.OnGetcaps(filterValue);
             if (result is null)
             {
                 throw new InvalidOperationException(

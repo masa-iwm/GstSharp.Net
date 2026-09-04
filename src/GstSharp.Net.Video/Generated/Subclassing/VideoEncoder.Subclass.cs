@@ -359,7 +359,7 @@ public unsafe partial class VideoEncoder
     /// you need it afterwards. The wrapper is detached by the return and throws
     /// from then on, exactly like the wrapper of an argument the slot consumed.
     /// </returns>
-    protected virtual Gst.Caps? OnGetcaps(Gst.Caps filter) =>
+    protected virtual Gst.Caps? OnGetcaps(Gst.Caps? filter) =>
         ChainUpGetcaps(filter);
 
     /// <summary>
@@ -618,10 +618,9 @@ public unsafe partial class VideoEncoder
     /// you need it afterwards. The wrapper is detached by the return and throws
     /// from then on, exactly like the wrapper of an argument the slot consumed.
     /// </returns>
-    protected Gst.Caps? ChainUpGetcaps(Gst.Caps filter)
+    protected Gst.Caps? ChainUpGetcaps(Gst.Caps? filter)
     {
-        ArgumentNullException.ThrowIfNull(filter);
-        nint resultNative = ChainUpGetcaps(Handle, filter.Handle);
+        nint resultNative = ChainUpGetcaps(Handle, filter is null ? nint.Zero : filter.Handle);
         Gst.Caps? result = Gst.Caps.FromNative(resultNative, Gst.Interop.Transfer.Full);
         GC.KeepAlive(this);
         GC.KeepAlive(filter);
@@ -1231,7 +1230,7 @@ public unsafe partial class VideoEncoder
             }
 
             using Gst.Caps? filterValue = filter == nint.Zero ? null : Gst.Caps.Borrow(filter);
-            Gst.Caps? result = managed.OnGetcaps(filterValue!);
+            Gst.Caps? result = managed.OnGetcaps(filterValue);
             return result is null ? nint.Zero : result.HandOver();
         }
         catch (Exception exception)
