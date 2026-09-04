@@ -599,6 +599,16 @@ there is no MSVC/MinGW layout divergence to manage (`CLong` not needed).
      `change_state`; a wrong offset reads a null or unrelated field).
      Similar known-non-null slots exist for `BaseSrcClass.create` on
      `pushsrc`-derived types, etc.
+   * A slot-content probe reads the class of a real element, so it names one.
+     Those elements are the promise the Linux CI leg makes through
+     `GSTSHARP_REQUIRED_ELEMENTS` in `.github/workflows/ci.yml`; the probes of
+     the subclassable base classes use `audioconvert` (`BaseTransform`),
+     `audiomixer` (`Aggregator`), `alsasink` (`AudioSink`), `videoconvert`
+     (`VideoFilter`), `rawaudioparse` (`BaseParse`), `vorbisdec` (`AudioDecoder`),
+     `vorbisenc` (`AudioEncoder`), `theoradec` (`VideoDecoder`) and
+     `theoraenc` (`VideoEncoder`). Everywhere else `[RequiresElementFact]`
+     skips the probe when the plugin is absent, so a leg that does not list an
+     element loses the probe instead of failing.
 3. **The end-to-end probe is a test subclass** (stage 0): register a managed
    `Element` subclass overriding `change_state`, run it through
    NULL→READY→NULL inside a `Gst.Pipeline`, assert the override fired with

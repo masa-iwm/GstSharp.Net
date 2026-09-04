@@ -1983,6 +1983,104 @@ public sealed class AbiProbeTests
         Assert.NotEqual(nint.Zero, concrete->TransformFrame);
     }
 
+    /// <summary>
+    /// The <c>handle_frame</c> slot of a real parser is where the mirror says
+    /// it is. It is the slot a managed parser has to declare, because the base
+    /// class calls it for every candidate frame unguarded.
+    /// </summary>
+    [RequiresElementFact("rawaudioparse")]
+    public unsafe void TheHandleFrameSlotOfAParserHoldsWhatTheLibraryPutThere()
+    {
+        using Element parser = ElementFactory.Make("rawaudioparse", null)
+            ?? throw new InvalidOperationException("rawaudioparse is required by the CI leg that runs this.");
+
+        Gst.Base.BaseParseClassRaw* concrete = (Gst.Base.BaseParseClassRaw*)ClassOf(parser);
+
+        _output.WriteLine(string.Create(
+            CultureInfo.InvariantCulture,
+            $"rawaudioparse: handle_frame=0x{concrete->HandleFrame:x} set_sink_caps=0x{concrete->SetSinkCaps:x}"));
+
+        Assert.NotEqual(nint.Zero, concrete->HandleFrame);
+    }
+
+    /// <summary>
+    /// The <c>handle_frame</c> slot of a real audio decoder is where the
+    /// mirror says it is. It is the slot a managed audio decoder has to
+    /// declare, because the base class calls it for every block of coded data
+    /// and for the drain at the end of the stream.
+    /// </summary>
+    [RequiresElementFact("vorbisdec")]
+    public unsafe void TheHandleFrameSlotOfAnAudioDecoderHoldsWhatTheLibraryPutThere()
+    {
+        using Element decoder = ElementFactory.Make("vorbisdec", null)
+            ?? throw new InvalidOperationException("vorbisdec is required by the CI leg that runs this.");
+
+        Gst.Audio.AudioDecoderClassRaw* concrete = (Gst.Audio.AudioDecoderClassRaw*)ClassOf(decoder);
+
+        _output.WriteLine(string.Create(
+            CultureInfo.InvariantCulture,
+            $"vorbisdec: handle_frame=0x{concrete->HandleFrame:x} set_format=0x{concrete->SetFormat:x}"));
+
+        Assert.NotEqual(nint.Zero, concrete->HandleFrame);
+    }
+
+    /// <summary>
+    /// The <c>handle_frame</c> slot of a real audio encoder is where the
+    /// mirror says it is.
+    /// </summary>
+    [RequiresElementFact("vorbisenc")]
+    public unsafe void TheHandleFrameSlotOfAnAudioEncoderHoldsWhatTheLibraryPutThere()
+    {
+        using Element encoder = ElementFactory.Make("vorbisenc", null)
+            ?? throw new InvalidOperationException("vorbisenc is required by the CI leg that runs this.");
+
+        Gst.Audio.AudioEncoderClassRaw* concrete = (Gst.Audio.AudioEncoderClassRaw*)ClassOf(encoder);
+
+        _output.WriteLine(string.Create(
+            CultureInfo.InvariantCulture,
+            $"vorbisenc: handle_frame=0x{concrete->HandleFrame:x} set_format=0x{concrete->SetFormat:x}"));
+
+        Assert.NotEqual(nint.Zero, concrete->HandleFrame);
+    }
+
+    /// <summary>
+    /// The <c>handle_frame</c> slot of a real video decoder is where the
+    /// mirror says it is.
+    /// </summary>
+    [RequiresElementFact("theoradec")]
+    public unsafe void TheHandleFrameSlotOfAVideoDecoderHoldsWhatTheLibraryPutThere()
+    {
+        using Element decoder = ElementFactory.Make("theoradec", null)
+            ?? throw new InvalidOperationException("theoradec is required by the CI leg that runs this.");
+
+        Gst.Video.VideoDecoderClassRaw* concrete = (Gst.Video.VideoDecoderClassRaw*)ClassOf(decoder);
+
+        _output.WriteLine(string.Create(
+            CultureInfo.InvariantCulture,
+            $"theoradec: handle_frame=0x{concrete->HandleFrame:x} set_format=0x{concrete->SetFormat:x}"));
+
+        Assert.NotEqual(nint.Zero, concrete->HandleFrame);
+    }
+
+    /// <summary>
+    /// The <c>handle_frame</c> slot of a real video encoder is where the
+    /// mirror says it is.
+    /// </summary>
+    [RequiresElementFact("theoraenc")]
+    public unsafe void TheHandleFrameSlotOfAVideoEncoderHoldsWhatTheLibraryPutThere()
+    {
+        using Element encoder = ElementFactory.Make("theoraenc", null)
+            ?? throw new InvalidOperationException("theoraenc is required by the CI leg that runs this.");
+
+        Gst.Video.VideoEncoderClassRaw* concrete = (Gst.Video.VideoEncoderClassRaw*)ClassOf(encoder);
+
+        _output.WriteLine(string.Create(
+            CultureInfo.InvariantCulture,
+            $"theoraenc: handle_frame=0x{concrete->HandleFrame:x} set_format=0x{concrete->SetFormat:x}"));
+
+        Assert.NotEqual(nint.Zero, concrete->HandleFrame);
+    }
+
     private static unsafe nint ClassOf(Gst.GObject.Object instance) => *(nint*)instance.Handle;
 
     /// <summary>
