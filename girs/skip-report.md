@@ -1282,7 +1282,7 @@ disappears shows up here as an added line.
 - `gst_webrtc_ice_get_local_candidates`
 - `gst_webrtc_ice_get_remote_candidates`
 
-## Virtuals (9)
+## Virtuals (12)
 
 The class struct slots of a subclassable class that carry no `OnX` member, with
 the reason. `UnsupportedSignature` is the planner refusing a shape; every other
@@ -1299,9 +1299,12 @@ out, so what is listed here is the managed surface and not the ABI.
 - `Gst.Element::pad_added` — signal class closure: read by g_signal at emission time, never called through the class pointer by the base class; managed code subscribes to the signal instead
 - `Gst.Element::pad_removed` — signal class closure: read by g_signal at emission time, never called through the class pointer by the base class; managed code subscribes to the signal instead
 
-### GstBase (2)
+### GstBase (5)
 
 - `GstBase.Aggregator::create_new_pad` — Pad subclassing is Stage 3: needs a Pad ClassConfig and construct properties
+- `GstBase.BaseSrc::do_seek` — boxed parameter passed by pointer and read back by the caller; Boxed has no borrow mode
+- `GstBase.BaseSrc::prepare_seek_segment` — boxed parameter passed by pointer and read back by the caller; Boxed has no borrow mode
+- `GstBase.BaseTransform::filter_meta` — boxed parameter passed by pointer and read back by the caller; Boxed has no borrow mode
 - `GstBase.BaseTransform::transform_meta` — UnsupportedSignature
 
 ## Fields (143)

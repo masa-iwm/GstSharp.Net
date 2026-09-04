@@ -4200,11 +4200,19 @@ internal sealed class MarshalPlanner
     /// so a slot whose signature nothing in the corpus has taught the planner
     /// yet is reported rather than emitted.
     /// </remarks>
+    /// <summary>
+    /// What the skip ledger prints for a slot that lends a boxed instance.
+    /// </summary>
+    private const string BoxedParameterReason =
+        "boxed parameter passed by pointer and read back by the caller; Boxed has no borrow mode";
+
     internal VirtualMethodPlan? PlanVirtualMethod(
         GirVirtualMethod method,
         string slotMember,
-        PlanningContext context)
+        PlanningContext context,
+        out string reason)
     {
+        reason = "UnsupportedSignature";
         if (method.Throws || method.OverlayKey is not { } overlayKey)
         {
             return null;
@@ -4224,7 +4232,13 @@ internal sealed class MarshalPlanner
         List<VfuncArgument> arguments = [];
         foreach (GirParameter parameter in method.Parameters)
         {
-            VfuncArgument? argument = PlanVirtualMethodArgument(overlayKey, parameter, arguments, context);
+            VfuncArgument? argument = PlanVirtualMethodArgument(
+                overlayKey,
+                parameter,
+                arguments,
+                context,
+                ref reason);
+
             if (argument is null || !taken.Add(argument.Argument.Name))
             {
                 return null;
@@ -4257,12 +4271,17 @@ internal sealed class MarshalPlanner
     /// <param name="parameter">The parameter to plan.</param>
     /// <param name="planned">The arguments planned so far, which an identity out parameter refers back to.</param>
     /// <param name="context">The module that is being emitted.</param>
+    /// <param name="reason">
+    /// Set to what the skip ledger prints when the argument is one the binding
+    /// refuses for a reason of its own rather than for an unseen shape.
+    /// </param>
     /// <returns>The argument, or <see langword="null"/> when it is not supported.</returns>
     private VfuncArgument? PlanVirtualMethodArgument(
         string overlayKey,
         GirParameter parameter,
         IReadOnlyList<VfuncArgument> planned,
-        PlanningContext context)
+        PlanningContext context,
+        ref string reason)
     {
         if (parameter.IsVarArgs || parameter.Type.IsVarArgs || parameter.Type is GirArrayRef)
         {
@@ -4346,11 +4365,26 @@ internal sealed class MarshalPlanner
                 // as its `Borrow` (`Gst.Interop.Borrowed`).
                 HandleFlavor.Wrapper when mapped.Kind == MarshalKind.MiniObject =>
                     VfuncBucket.BorrowMiniObject,
+
+                // A boxed wrapper of the binding takes a g_boxed_copy of what
+                // it is handed, so a slot would be given a copy of the value
+                // its caller holds and every write the override made would be
+                // lost. There is no borrow mode for a boxed instance, so the
+                // slot leaves the surface instead of pretending to work.
+                HandleFlavor.Wrapper when mapped.Kind == MarshalKind.Boxed => null,
                 HandleFlavor.Wrapper => VfuncBucket.BorrowWrapper,
                 _ => null,
             },
             _ => null,
         };
+
+        if (bucket is null
+            && transfer != GirTransfer.Full
+            && argument.Flavor == HandleFlavor.Wrapper
+            && mapped.Kind == MarshalKind.Boxed)
+        {
+            reason = BoxedParameterReason;
+        }
 
         return bucket is { } value ? new VfuncArgument(argument, value) : null;
     }

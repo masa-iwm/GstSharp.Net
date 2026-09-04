@@ -113,24 +113,6 @@ public unsafe partial class BaseSrc
         (nint)(delegate* unmanaged[Cdecl]<nint, int>)&IsSeekableTrampoline);
 
     /// <summary>
-    /// Gets the declaration of <c>GstBaseSrc.prepare_seek_segment</c>, for a subclass that
-    /// overrides <see cref="OnPrepareSeekSegment"/>.
-    /// </summary>
-    public static Gst.GObject.VfuncOverride PrepareSeekSegmentOverride { get; } = new(
-        &GetGType,
-        Gst.Base.BaseSrcClassRaw.PrepareSeekSegmentOffset,
-        (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, int>)&PrepareSeekSegmentTrampoline);
-
-    /// <summary>
-    /// Gets the declaration of <c>GstBaseSrc.do_seek</c>, for a subclass that
-    /// overrides <see cref="OnDoSeek"/>.
-    /// </summary>
-    public static Gst.GObject.VfuncOverride DoSeekOverride { get; } = new(
-        &GetGType,
-        Gst.Base.BaseSrcClassRaw.DoSeekOffset,
-        (nint)(delegate* unmanaged[Cdecl]<nint, nint, int>)&DoSeekTrampoline);
-
-    /// <summary>
     /// Gets the declaration of <c>GstBaseSrc.unlock</c>, for a subclass that
     /// overrides <see cref="OnUnlock"/>.
     /// </summary>
@@ -277,19 +259,6 @@ public unsafe partial class BaseSrc
     /// <returns>What the slot answers.</returns>
     protected virtual bool OnIsSeekable() =>
         ChainUpIsSeekable();
-
-    /// <summary>Runs <c>GstBaseSrc.prepare_seek_segment</c>.</summary>
-    /// <param name="seek">The argument the slot carries under this name.</param>
-    /// <param name="segment">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
-    protected virtual bool OnPrepareSeekSegment(Gst.Event seek, Gst.Segment segment) =>
-        ChainUpPrepareSeekSegment(seek, segment);
-
-    /// <summary>Runs <c>GstBaseSrc.do_seek</c>.</summary>
-    /// <param name="segment">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
-    protected virtual bool OnDoSeek(Gst.Segment segment) =>
-        ChainUpDoSeek(segment);
 
     /// <summary>Runs <c>GstBaseSrc.unlock</c>.</summary>
     /// <returns>What the slot answers.</returns>
@@ -456,33 +425,6 @@ public unsafe partial class BaseSrc
     {
         bool result = ChainUpIsSeekable(Handle);
         GC.KeepAlive(this);
-        return result;
-    }
-
-    /// <summary>Runs the implementation of <c>prepare_seek_segment</c> below the managed override.</summary>
-    /// <param name="seek">The argument the slot carries under this name.</param>
-    /// <param name="segment">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
-    protected bool ChainUpPrepareSeekSegment(Gst.Event seek, Gst.Segment segment)
-    {
-        ArgumentNullException.ThrowIfNull(seek);
-        ArgumentNullException.ThrowIfNull(segment);
-        bool result = ChainUpPrepareSeekSegment(Handle, seek.Handle, segment.Handle);
-        GC.KeepAlive(this);
-        GC.KeepAlive(seek);
-        GC.KeepAlive(segment);
-        return result;
-    }
-
-    /// <summary>Runs the implementation of <c>do_seek</c> below the managed override.</summary>
-    /// <param name="segment">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
-    protected bool ChainUpDoSeek(Gst.Segment segment)
-    {
-        ArgumentNullException.ThrowIfNull(segment);
-        bool result = ChainUpDoSeek(Handle, segment.Handle);
-        GC.KeepAlive(this);
-        GC.KeepAlive(segment);
         return result;
     }
 
@@ -718,34 +660,6 @@ public unsafe partial class BaseSrc
         }
 
         return slot(src) != 0;
-    }
-
-    private static bool ChainUpPrepareSeekSegment(nint src, nint seek, nint segment)
-    {
-        delegate* unmanaged[Cdecl]<nint, nint, nint, int> slot =
-            (delegate* unmanaged[Cdecl]<nint, nint, nint, int>)ParentClassOf(src)->PrepareSeekSegment;
-
-        if (slot is null)
-        {
-            throw new InvalidOperationException(
-                "BaseSrc.prepare_seek_segment has no parent implementation; override OnPrepareSeekSegment.");
-        }
-
-        return slot(src, seek, segment) != 0;
-    }
-
-    private static bool ChainUpDoSeek(nint src, nint segment)
-    {
-        delegate* unmanaged[Cdecl]<nint, nint, int> slot =
-            (delegate* unmanaged[Cdecl]<nint, nint, int>)ParentClassOf(src)->DoSeek;
-
-        if (slot is null)
-        {
-            throw new InvalidOperationException(
-                "BaseSrc.do_seek has no parent implementation; override OnDoSeek.");
-        }
-
-        return slot(src, segment) != 0;
     }
 
     private static bool ChainUpUnlock(nint src)
@@ -1066,47 +980,6 @@ public unsafe partial class BaseSrc
             }
 
             return (managed.OnIsSeekable()) ? 1 : 0;
-        }
-        catch (Exception exception)
-        {
-            Gst.Interop.ExceptionTrap.Report(exception);
-            return default;
-        }
-    }
-
-    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
-    private static int PrepareSeekSegmentTrampoline(nint src, nint seek, nint segment)
-    {
-        try
-        {
-            if (Gst.GObject.Object.TryGetInterned(src) is not BaseSrc managed)
-            {
-                return (ChainUpPrepareSeekSegment(src, seek, segment)) ? 1 : 0;
-            }
-
-            using Gst.Event? seekValue = seek == nint.Zero ? null : Gst.Event.Borrow(seek);
-            using Gst.Segment? segmentValue = Gst.Segment.FromNative(segment, Gst.Interop.Transfer.None);
-            return (managed.OnPrepareSeekSegment(seekValue!, segmentValue!)) ? 1 : 0;
-        }
-        catch (Exception exception)
-        {
-            Gst.Interop.ExceptionTrap.Report(exception);
-            return default;
-        }
-    }
-
-    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
-    private static int DoSeekTrampoline(nint src, nint segment)
-    {
-        try
-        {
-            if (Gst.GObject.Object.TryGetInterned(src) is not BaseSrc managed)
-            {
-                return (ChainUpDoSeek(src, segment)) ? 1 : 0;
-            }
-
-            using Gst.Segment? segmentValue = Gst.Segment.FromNative(segment, Gst.Interop.Transfer.None);
-            return (managed.OnDoSeek(segmentValue!)) ? 1 : 0;
         }
         catch (Exception exception)
         {

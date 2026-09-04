@@ -135,11 +135,12 @@ internal sealed class VfuncEmitter
             VirtualMethodPlan? plan = _planner.PlanVirtualMethod(
                 method,
                 ClassStructEmitter.MemberNameOf(slot.Field),
-                context);
+                context,
+                out string reason);
 
             if (plan is null)
             {
-                _census.SkippedVirtual(module.GirNamespace, key, "UnsupportedSignature");
+                _census.SkippedVirtual(module.GirNamespace, key, reason);
                 continue;
             }
 
