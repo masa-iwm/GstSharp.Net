@@ -88,6 +88,19 @@ public readonly unsafe struct VfuncOverride
 /// <see cref="InvalidOperationException"/>. The implicit implementation of a
 /// static abstract member is <see langword="public"/> <see langword="static"/>:
 /// </para>
+/// <para>
+/// The rule reaches further than the factory. The gate that makes one wrapper
+/// per instance is held for the whole call, and that call includes the field
+/// initialisers of the subclass and the body of the constructor that takes
+/// <see cref="SubclassCtorArgs"/> — field initialisers run before the arguments
+/// of the base call are even evaluated. <b>Both have to be empty or trivially
+/// cheap: no native call, no waiting, and above all no wrapping of another
+/// instance of a managed type.</b> Two constructors that each reach for the
+/// other's instance — the sibling pad of an element, say — take the two gates
+/// in opposite orders on two streaming threads. State that costs anything
+/// belongs in the parameterless constructor, after its <c>this(...)</c> call,
+/// or behind a lazy field.
+/// </para>
 /// <code>
 /// internal sealed class CounterSrc : PushSrc, IManagedSubclass&lt;CounterSrc&gt;
 /// {

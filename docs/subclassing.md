@@ -575,6 +575,22 @@ The rules the fabrication follows:
   the runtime compares the handle of the wrapper it got back with the one it
   asked for, and a wrapper of another instance is an `InvalidOperationException`
   with the wrong wrapper disposed.
+* **The gate covers the constructor too.** It is held for the whole factory
+  call, and that call is `CreateWrapper` *plus* the field initialisers of the
+  subclass — they run before the arguments of the `: base(...)` call are
+  evaluated — *plus* the body of the `(SubclassCtorArgs)` constructor. All
+  three have to be empty or trivially cheap, by the same rule: no native call,
+  no waiting, and **no wrapping of another instance of a managed type**. A
+  constructor that reaches for a sibling — `GetStaticPad` of another element of
+  the same type — takes gate(A) then gate(B) while another streaming thread
+  takes gate(B) then gate(A). State that costs anything goes into the
+  parameterless constructor, after its `this(...)` call, or behind a lazy
+  field. An analyzer for this is a stage 3b candidate; until then it is a rule.
+* **A constructor body that throws is cleaned up.** The base constructor interns
+  the wrapper before the derived body runs, so a body that throws would leave a
+  live, toggle-holding wrapper nobody is ever handed. The fabrication disposes
+  it and rethrows — which also writes the disposed marker, so the instance
+  chains up from then on, exactly as any other disposed wrapper leaves it.
 
 A type registered through the plain non generic `DefineSubclass` registers no
 factory and stays **C#-initiated-only**: a natively created instance of it falls
@@ -1030,6 +1046,15 @@ operation, no waiting. A `CreateWrapper` that builds a fresh instance instead
 of wrapping the one it was given is caught at run time with an
 `InvalidOperationException`; §5.4 has the whole rule set.
 
+The same holds for the constructor it hands them to. The per-instance gate is
+held for the whole call, so the field initialisers of the subclass — they run
+before the `: base(args)` arguments are evaluated — and the body of the
+`(SubclassCtorArgs)` constructor run inside it as well. Keep both empty:
+**wrapping another instance of a managed type there is how two streaming
+threads take the two gates in opposite orders.** Everything else belongs in the
+parameterless constructor, after its `this(...)` call, or behind a lazy field.
+`CounterSrc` above is the shape to copy — an empty body and no fields.
+
 ### An element other code can ask for by name
 
 `gst_element_register` puts the type in the registry under a factory name, and
@@ -1204,9 +1229,15 @@ the same hook — and `AudioSink::stop` shares its name with the `stop` of
 `BaseSink` and answers nothing where that one answers a `bool`, so no managed
 name can carry both. `girs/skip-report.md` lists all eight with their reason.
 
-`Gst.Pad`'s two slots are signal class closures too, but of the pad rather than
-of an element, and the base library does call them through the class pointer:
-`gst_pad_link` runs `linked` on both pads.
+`Gst.Pad`'s two slots are signal class closures too, and mechanically they are
+no different: `linked` and `unlinked` are declared with `g_signal_new (...,
+G_STRUCT_OFFSET (GstPadClass, linked), ...)` and reached by `g_signal_emit`,
+which is the same `G_STRUCT_OFFSET` construction `Element::pad_added` uses and
+the same emission that reads it. Subscribing to `Pad::linked` is therefore an
+equivalent hook, as it is for `Element`. They are bound anyway because they are
+the only two slots `GstPadClass` has, and a pad type has to be on the
+subclassing allowlist for a base class to be able to build one from a managed
+template at all.
 
 The six slots that lend a boxed record by pointer — `BaseSrc::do_seek` and
 `prepare_seek_segment`, `BaseTransform::filter_meta`, `AudioFilter::setup`,
