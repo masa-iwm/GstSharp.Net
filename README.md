@@ -227,7 +227,7 @@ never end up with half an MSVC and half a MinGW GStreamer.
 | `samples/GstInspect` | A full port of `gst-inspect-1.0`: the registry census, and every section of an element page — factory and plugin details, the type hierarchy, implemented interfaces, element flags, pad templates with their caps, clocking interaction, URI handling with its protocols, pads, the whole property listing with ranges, defaults and enumeration and flags tables, signals and action signals with their C signatures, children and presets. The one section it leaves out is the `Type:` line and the `Pad Properties` block of a pad template whose pads have a class of their own, which needs a field and a class walk the binding does not expose. The CI legs whose `gst-inspect-1.0` is 1.28.3 or newer — macOS and the Windows MinGW leg today; an older tool prints an older page format, so those legs skip the diff with a warning — diff it against the real tool on the same install and fail on any difference, so it reproduces that tool's quirks rather than fixing them; its header names the three quirks, and what else is out of reach. | `dotnet run --project samples/GstInspect -- fakesink` |
 | `samples/GstTranscode` | Transcoding one URI into another against a serialized `GstEncodingProfile`, on the route the transcoder documents as the recommended one: `RunAsync` plus a polled API bus, with no main loop and no signal adapter. It is also where the hand-written `ParseError` earns its keep — the imported one aborts the process on an error that carries no details. | `dotnet run --project samples/GstTranscode -- file:///in.ogg file:///out.ogg` |
 | `samples/GstPlay` | A port of `gst-play-1.0`'s user experience onto the `Gst.Play.Play` object: a playlist, the keyboard controls, `--volume`, `--audiosink`/`--videosink`, `--visualization` and `--list-visualizations`, with the API bus read by a timed pop rather than watched from a main loop. It writes the two sink properties on the playbin that `GetPipeline()` answers, the way the C tool does; `PlayVideoOverlayVideoRenderer`, the other way to place the video, is for a GUI application that has a window handle to embed it in. Headless is the default — nothing reads the keyboard without `--interactive`. | `dotnet run --project samples/GstPlay -- --duration 10 <file-or-uri>` |
-| `samples/AotSmoke` | The NativeAOT gate: initialise, make an element, release it, and run four managed subclasses - an element, a source and sink pair, a managed audio sink and a managed video sink - with zero trimming warnings. | `dotnet publish samples/AotSmoke -r win-x64 -c Release /p:PublishAot=true` |
+| `samples/AotSmoke` | The NativeAOT gate: initialise, make an element, release it, and run five managed subclasses - an element, a source and sink pair, a managed audio sink, a managed video sink and an element an element factory made - with zero trimming warnings. | `dotnet publish samples/AotSmoke -r win-x64 -c Release /p:PublishAot=true` |
 
 `PlaybinPlayer`, `AppSinkSpans` and `AppSrcPush` also take
 `--native-path <directory>`,
@@ -325,15 +325,15 @@ reason in
 The gaps worth naming here:
 
 * **Subclassing is limited to an allowlist of base classes.** A C# type can
-  derive from `Gst.Element`, `Gst.Bin`, `Gst.Base.BaseSrc`, `PushSrc`,
-  `BaseSink`, `BaseTransform`, `Aggregator`, `Gst.Audio.AudioBaseSink`,
-  `AudioBaseSrc`, `AudioSink`, `AudioSrc`, `AudioFilter`, or
-  `Gst.Video.VideoSink`, `VideoFilter`, override the vfuncs of the class and
-  be called back through the native vtable. What is not there yet: the parser
-  and codec base classes, the pad functions, properties and signals on managed
-  types, and construction from native code — an element registered this way
-  cannot be built by `gst_element_factory_make` or named in a pipeline
-  description. See
+  derive from one of twenty one classes — `Gst.Element`, `Gst.Bin`, `Gst.Pad`,
+  the `GstBase` sources, sinks, transforms, parsers and aggregators including
+  `AggregatorPad`, the `GstAudio` sinks, sources, filters and codecs, and the
+  `GstVideo` sinks, filters and codecs — override the vfuncs of the class and be
+  called back through the native vtable. A type that also states how its wrapper
+  is built can be registered with `gst_element_register` and made by
+  `gst_element_factory_make` or named in a pipeline description. What is not
+  there yet: properties, signals and interfaces on managed types, and the GES
+  classes. See
   [`docs/subclassing.md`](https://github.com/masa-iwm/GstSharp.Net/blob/main/docs/subclassing.md#11-using-it).
 * **Writing GValue-typed structures is incomplete.** Reading is covered —
   `Value.GetBoxed<T>()` for a boxed value and `Value.GetMiniObject<T>()` for a

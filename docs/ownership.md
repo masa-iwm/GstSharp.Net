@@ -182,6 +182,21 @@ using (pipeline)
 Order matters: a pipeline that is still `PLAYING` when its last reference goes
 away leaves its streaming threads running. Set it to `NULL` first.
 
+### Fabricated wrappers
+
+The wrapper of an instance of a managed subclass that native code created — an
+element an element factory made, a pad a base class built from its class
+template — is **fabricated** on first contact rather than constructed from C#.
+It owns nothing extra: the instance belongs to whoever created it, so the
+wrapper never sinks it and only takes the one reference its toggle reference
+holds. The reference the call that reached the instance was handed is settled
+exactly as it is for a wrapper that existed already: a `transfer full` one is
+dropped, and a floating instance is sunk first, which is what an element factory
+answers. What is left is the state a `new MyElement()` leaves behind — one
+reference, held by the wrapper — so nothing about the paragraphs above changes
+for a fabricated wrapper, including `Dispose`. See
+[`docs/subclassing.md`](subclassing.md) §5.4.
+
 `Object.As<T>()` owns nothing of its own. When the wrapper class does not
 declare the interface, the cast hands back a small view that holds a strong
 reference to the wrapper it came from and reads the handle through it, so the

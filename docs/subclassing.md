@@ -524,21 +524,62 @@ BaseTransform), then emitted by `ClassEmitter` for an allowlist once the
 shape is proven. This keeps stage 1 free of generator changes and keeps the
 public surface deliberate.
 
-### 5.4 Native-initiated construction (deferred, stage 3)
+### 5.4 Native-initiated construction (stage 3a, landed)
 
-`gst_element_register` + `gst_element_factory_make`, or GES instantiating a
-registered type by name, create the instance natively; the managed wrapper
-must be **fabricated** on first contact. That requires a wrap factory
-(`delegate*<nint, Transfer, object>` — the exact `ModuleTypeEntry.Factory`
-shape) for the user's type, which in turn requires user subclasses to expose
-a handle-based construction path — the natural NativeAOT-safe protocol is a
-static abstract interface member
-(`static abstract MySrc CreateWrapper(nint, Transfer)` on an
-`IManagedSubclass<TSelf>` constraint of the registration API). Until that
-lands, types without a factory are **C#-initiated-only**; a natively created
-instance of such a type would fall back to an ancestor wrapper
-(`TypeRegistry.Fallback` fires) and its vfuncs would permanently chain up —
-functional never, so stage 1 documents this loudly and stage 3 closes it.
+`gst_element_register` + `gst_element_factory_make`, a base class building its
+pad from a template that names a managed pad type, an `Aggregator` answering a
+requested pad: all of these create the instance natively, and the managed
+wrapper has to be **fabricated** on first contact. A subclass says how by
+implementing `IManagedSubclass<TSelf>` and registering through the generic
+`DefineSubclass<TSelf>` overload, which hands `TSelf.CreateWrapper` to
+`TypeRegistry.RegisterSubclass`. The call is a static abstract one, compiled
+per instantiation, so nothing reflects and NativeAOT keeps it.
+
+The rules the fabrication follows:
+
+* **It never sinks.** The instance belongs to whoever created it —
+  `gst_element_factory_create_with_properties` complains about a non floating
+  element, and `gst_object_set_parent`, `gst_element_add_pad` and
+  `ges_layer_add_clip_full` all sink for themselves. The wrapper therefore takes
+  a reference of its own and adopts the instance instead of sinking it. The
+  reference the *call* was handed is settled separately by the entry point that
+  was handed it: `Object.FromNative` drops a `Transfer.Full` one, and sinks a
+  floating instance whatever the annotation says, because "transfer floating" is
+  spelled `transfer-ownership="none"` in the gir and that is how
+  `gst_element_factory_make` arrives. A trampoline is handed nothing and settles
+  nothing.
+* **The toggle reference is installed before `g_object_new` returns.** The
+  instance already counts one reference from GObject's own instance init, and
+  the GType lock is not held across instance init, `set_property` or
+  `constructed`, so a fabrication that happens inside `g_object_new` — a pad a
+  base class builds from a managed template — is safe.
+* **One winner per instance.** Fabrication runs behind a gate keyed by the
+  handle, and that gate is always taken *outside* the interning lock of
+  `Object`: the factory ends in the `Object` constructor, which takes that lock
+  itself. Without the gate, a streaming thread and an application thread could
+  both build a wrapper for the same instance, and the loser's constructor would
+  throw about a double wrap inside a reverse P/Invoke, which is a process abort
+  under NativeAOT.
+* **A C#-initiated construction suppresses it.** `new MySrc()` reaches the
+  `Object` constructor only after `g_object_new` returned, so
+  `SubclassType.NewInstance` pushes the type onto a thread-static stack of types
+  being constructed and a fabrication for an instance of a type on that stack is
+  refused. What happens instead is what always happened: no wrapper, chain up.
+* **A disposed wrapper means chain up for ever.** Disposing the wrapper of a
+  subclass instance sets a marker on the instance itself, and a marked instance
+  is never fabricated again. It arrives as its nearest wrapped ancestor and its
+  slots chain up, which is the same answer the surface gave before stage 3a.
+* **`CreateWrapper` runs on streaming threads, under GStreamer's locks.** It
+  must forward its arguments to the constructor of the subclass and do nothing
+  else: no property access, no pad operation, no waiting. It is also checked —
+  the runtime compares the handle of the wrapper it got back with the one it
+  asked for, and a wrapper of another instance is an `InvalidOperationException`
+  with the wrong wrapper disposed.
+
+A type registered through the plain non generic `DefineSubclass` registers no
+factory and stays **C#-initiated-only**: a natively created instance of it falls
+back to an ancestor wrapper, `TypeRegistry.Fallback` reports it once, and its
+vfuncs chain up for ever.
 
 ### 5.5 Class configuration is part of registration
 
@@ -552,7 +593,13 @@ functional never, so stage 1 documents this loudly and stage 3 closes it.
 
 The `ClassInitializer` delegate on the descriptor (§3.3) receives a
 `ClassConfig` facade exposing exactly these operations, implemented over
-the raw `gClass` pointer. Because the runtime (`Core/`) and the `Gst`
+the raw `gClass` pointer. `ClassConfig` derives from `ObjectClassConfig`, the
+GObject level facade, which is what the class initialiser of a class that is
+*not* an element is given: `Gst.Pad` and `GstBase.AggregatorPad` have no
+metadata and no pad templates, so the generated `DefineSubclass` of such a
+class asks for an `Action<ObjectClassConfig>?` instead. Deriving rather than
+replacing is what keeps every `ClassConfig` call that was written before
+compiling unchanged. Because the runtime (`Core/`) and the `Gst`
 bindings share one assembly (`GstSharp.Net`), while `GstBase` bases live in
 `GstSharp.Net.Base`, the facade is extensible per module rather than
 hardcoded in Core.
@@ -752,10 +799,13 @@ document spells it out because the failure modes are subtle:
    managed code returning a pad it also keeps a wrapper for needs the
    extra-ref rule (§4.3) verified against `gst_element_request_pad`'s
    actual unref behavior in an integration test.
-5. **Native-initiated construction gap** (stage ≤ 2): a factory-made
-   instance of a managed type would be an ancestor-wrapped zombie (§5.4).
-   Ship stage 1 with the limitation documented and `TypeRegistry.Fallback`
-   as the diagnostic; close it in stage 3.
+5. **Native-initiated construction gap** — **closed in stage 3a.** A type
+   registered through `DefineSubclass<TSelf>` states how its wrapper is built,
+   and a factory-made instance of it arrives as the managed type with its
+   overrides running (§5.4). What is left of the gap is the deliberate half:
+   a type registered through the non generic `DefineSubclass` is still
+   C#-initiated-only, and `TypeRegistry.Fallback` is still the diagnostic that
+   names it.
 6. **GES dependency direction**: the GES module is bound and consumes only
    elements the native libraries instantiate, which needs nothing from this
    design. Authoring a custom GES source means GES instantiating a managed
@@ -862,31 +912,46 @@ with no data and no buffer once every pad has reached EOS
 The analyzer that checks that an `OnX` override and the `XOverride`
 declaration of the same type come in pairs is the `GST0003`/`GST0004` pair.
 
-**Stage 3 — breadth.**
-Native-initiated construction via static abstract `CreateWrapper` factories
-registered into `TypeRegistry` (needs the new
-`TypeRegistry.RegisterSubclass` entry point, §3.3);
-`g_type_add_interface_static` with `GstURIHandler` first; property/signal
-installation; `gst_element_register` for by-name construction (prerequisite
-for GES custom sources and for plugin-style use); then the GES wave can
-rely on all of it. The `CreateWrapper` constraint arrives as a new generic
-overload (or a separate entry point); the shipped non-generic
-`DefineSubclass` is never retrofitted with it, so stage-1 subclasses keep
-compiling unchanged.
+**Stage 3a — native-initiated construction and the two pad classes
+(landed).** `IManagedSubclass<TSelf>` and the generic `DefineSubclass<TSelf>`
+overload on every subclassable class, the `TypeRegistry.RegisterSubclass` entry
+point behind it, and the fabrication rules of §5.4. The non generic
+`DefineSubclass` was not retrofitted, so subclasses written before this keep
+compiling and keep their old behaviour. `SubclassType.NewInstance` gained the
+construction-property overload a `GstPad` needs, because `direction` is
+construct only; `ObjectClassConfig` arrived as the base of `ClassConfig` (§5.5);
+`Gst.Pad` and `GstBase.AggregatorPad` joined the allowlist, which is what
+un-skipped `Aggregator::create_new_pad`. Twenty one classes are subclassable,
+with twenty two class struct mirrors and 218 slots.
+
+**Stage 3b — properties, signals and interfaces.** `g_param_spec_*`
+construction, `ObjectClassConfig.InstallProperty` with
+`OnSetProperty`/`OnGetProperty`, `AddSignal` over the dynamic signal closure,
+and `g_type_add_interface_static` with `GstURIHandler` first. A property a
+managed type installs cannot be written while the instance is being built:
+GObject dispatches the write to the class that owns the property, and the
+wrapper that would serve it does not exist yet, which is why
+`NewInstance(properties)` refuses one.
+
+**Stage 3c — GES custom sources.** The seven GES classes on the allowlist, the
+named callback typedef slots (`create_track_element(s)`), and `OnCreateSource`
+with a sample and tests. It rests on stage 3a: GES constructs a managed type
+natively whenever a clip is copied, split or pasted.
 
 ---
 
 ## 11. Using it
 
-What ships is a **generated surface for an allowlist of nineteen base
-classes**: `Gst.Element`, `Gst.Bin`, `Gst.Base.BaseSrc`, `PushSrc`,
-`BaseSink`, `BaseTransform`, `BaseParse`, `Aggregator`,
+What ships is a **generated surface for an allowlist of twenty one base
+classes**: `Gst.Element`, `Gst.Bin`, `Gst.Pad`, `Gst.Base.BaseSrc`, `PushSrc`,
+`BaseSink`, `BaseTransform`, `BaseParse`, `Aggregator`, `AggregatorPad`,
 `Gst.Audio.AudioBaseSink`, `AudioBaseSrc`, `AudioSink`, `AudioSrc`,
 `AudioFilter`, `AudioDecoder`, `AudioEncoder`, and `Gst.Video.VideoSink`,
-`VideoFilter`, `VideoDecoder`, `VideoEncoder`. Each one carries three things — a
-`DefineSubclass` that registers a managed type, a `protected` constructor
-that builds instances of it, and, per bound vfunc, an `OnX` virtual with a
-matching `ChainUpX` and an `XOverride` declaration.
+`VideoFilter`, `VideoDecoder`, `VideoEncoder`. Each one carries four things — a
+`DefineSubclass` that registers a managed type, a `DefineSubclass<TSelf>` that
+also states how the wrapper of an instance native code created is built, a
+`protected` constructor, and, per bound vfunc, an `OnX` virtual with a matching
+`ChainUpX` and an `XOverride` declaration.
 
 ### A source in thirty lines
 
@@ -933,6 +998,98 @@ internal sealed class CounterSrc : PushSrc
 set the state. `GstSharp.Initialize()` (or `GstBase.Initialize()`) has to have
 run before the registration, which happens the first time `Definition` is
 touched.
+
+### Letting GStreamer create the instances
+
+A subclass that states how its wrapper is built implements
+`IManagedSubclass<TSelf>` and registers through `DefineSubclass<TSelf>`. From
+then on an instance GStreamer creates — through an element factory, or as the
+pad of a base class — arrives as the managed type with its overrides running:
+
+```csharp
+internal sealed class CounterSrc : PushSrc, IManagedSubclass<CounterSrc>
+{
+    private static readonly SubclassType Definition = DefineSubclass<CounterSrc>(
+        "MyAppCounterSrc", ConfigureClass, CreateOverride);
+
+    public CounterSrc() : this(Definition.NewInstance()) { }
+
+    private CounterSrc(SubclassCtorArgs args) : base(args) { }
+
+    internal static GType RegisteredType => Definition.GType;
+
+    // The implicit implementation of a static abstract member is public.
+    public static CounterSrc CreateWrapper(SubclassCtorArgs args) => new(args);
+}
+```
+
+`CreateWrapper` runs wherever GStreamer happens to create the instance —
+a streaming thread, inside `g_object_new`, under GStreamer's own locks. **Hand
+`args` to the constructor and do nothing else**: no property access, no pad
+operation, no waiting. A `CreateWrapper` that builds a fresh instance instead
+of wrapping the one it was given is caught at run time with an
+`InvalidOperationException`; §5.4 has the whole rule set.
+
+### An element other code can ask for by name
+
+`gst_element_register` puts the type in the registry under a factory name, and
+from there `ElementFactory.Make` — or a `gst_parse_launch` description, or
+`playbin` — creates it:
+
+```csharp
+Element.Register(null, "mycountersrc", (uint)Rank.None, CounterSrc.RegisteredType);
+
+using Element? made = ElementFactory.Make("mycountersrc", "counter");
+// made is a CounterSrc.
+```
+
+**Register with `Rank.None` unless the element really is a decoder or a sink
+that autoplugging should pick.** A non zero rank makes the type eligible for
+`decodebin` and `playbin`, which construct it on their own streaming threads
+whenever a stream matches — the managed type is then built without the
+application asking for it, and everything the class does has to be ready for
+that.
+
+### A managed pad type
+
+`Gst.Pad` and `GstBase.AggregatorPad` are subclassable, and both are classes
+whose instances GStreamer builds: a `GstBaseSrc` creates its pad from the class
+pad template during construction, and an aggregator creates a sink pad when one
+is requested. A pad template built with `PadTemplate.NewWithGtype` is what says
+which type to build, and `Aggregator.OnCreateNewPad` is what answers a
+requested one:
+
+```csharp
+internal sealed class CounterPad : AggregatorPad, IManagedSubclass<CounterPad>
+{
+    private static readonly SubclassType Definition = DefineSubclass<CounterPad>(
+        "MyAppCounterPad", null, FlushOverride);
+
+    private CounterPad(SubclassCtorArgs args) : base(args) { }
+
+    public static CounterPad CreateWrapper(SubclassCtorArgs args) => new(args);
+
+    internal static CounterPad New(string name, PadTemplate templ) =>
+        new(Definition.NewInstance(new Dictionary<string, object?>
+        {
+            ["name"] = name,
+            ["direction"] = PadDirection.Sink,
+            ["template"] = templ,
+        }));
+}
+```
+
+The dictionary overload of `NewInstance` is not a convenience: `GstPad:direction`
+is `CONSTRUCT_ONLY`, so it can only be given while the instance is being built.
+The names are resolved against the class, and a name the class does not have, a
+property that cannot be written and a property a managed type installed itself
+are all refused with an `ArgumentException` — the last one because GObject
+dispatches the write to the class that owns the property, whose wrapper does not
+exist yet.
+
+The class initialiser of a pad type is an `Action<ObjectClassConfig>?` rather
+than an `Action<ClassConfig>?` (§5.5), and `null` is a legal value for it, as it
+is for `Gst.Element` and `Gst.Bin`.
 
 ### The rules the surface enforces
 
@@ -1019,12 +1176,14 @@ managed `VideoSink` overrides `render` through `BaseSink.RenderOverride` and
 | --- | --- |
 | `Gst.Element` | `request_new_pad`, `release_pad`, `get_state`, `set_state`, `change_state`, `state_changed`, `set_bus`, `provide_clock`, `set_clock`, `send_event`, `query`, `post_message`, `set_context` |
 | `Gst.Bin` | `add_element`, `remove_element`, `handle_message`, `do_latency` |
+| `Gst.Pad` | `linked`, `unlinked` |
 | `Gst.Base.BaseSrc` | `get_caps`, `negotiate`, `fixate`, `set_caps`, `decide_allocation`, `start`, `stop`, `get_times`, `get_size`, `is_seekable`, `prepare_seek_segment`, `do_seek`, `unlock`, `unlock_stop`, `query`, `event`, `create`, `alloc`, `fill` |
 | `Gst.Base.PushSrc` | `create`, `alloc`, `fill` |
 | `Gst.Base.BaseSink` | `get_caps`, `set_caps`, `fixate`, `activate_pull`, `get_times`, `propose_allocation`, `start`, `stop`, `unlock`, `unlock_stop`, `query`, `event`, `wait_event`, `prepare`, `prepare_list`, `preroll`, `render`, `render_list` |
 | `Gst.Base.BaseTransform` | `transform_caps`, `fixate_caps`, `accept_caps`, `set_caps`, `query`, `decide_allocation`, `filter_meta`, `propose_allocation`, `transform_size`, `get_unit_size`, `start`, `stop`, `sink_event`, `src_event`, `prepare_output_buffer`, `copy_metadata`, `transform_meta`, `before_transform`, `transform`, `transform_ip`, `submit_input_buffer`, `generate_output` |
 | `Gst.Base.BaseParse` | `start`, `stop`, `set_sink_caps`, `handle_frame`, `pre_push_frame`, `convert`, `sink_event`, `src_event`, `get_sink_caps`, `detect`, `sink_query`, `src_query` |
 | `Gst.Base.Aggregator` | `flush`, `clip`, `finish_buffer`, `sink_event`, `sink_query`, `src_event`, `src_query`, `src_activate`, `aggregate`, `stop`, `start`, `get_next_time`, `update_src_caps`, `fixate_src_caps`, `negotiated_src_caps`, `decide_allocation`, `propose_allocation`, `negotiate`, `sink_event_pre_queue`, `sink_query_pre_queue`, `finish_buffer_list`, `peek_next_sample` |
+| `Gst.Base.AggregatorPad` | `flush`, `skip_buffer` |
 | `Gst.Audio.AudioBaseSink` | `create_ringbuffer`, `payload` |
 | `Gst.Audio.AudioBaseSrc` | `create_ringbuffer` |
 | `Gst.Audio.AudioSink` | `open`, `prepare`, `unprepare`, `close`, `write`, `delay`, `reset`, `pause`, `resume` |
@@ -1037,14 +1196,17 @@ managed `VideoSink` overrides `render` through `BaseSink.RenderOverride` and
 | `Gst.Video.VideoDecoder` | `open`, `close`, `start`, `stop`, `parse`, `set_format`, `reset`, `finish`, `handle_frame`, `sink_event`, `src_event`, `negotiate`, `decide_allocation`, `propose_allocation`, `flush`, `sink_query`, `src_query`, `getcaps`, `drain`, `transform_meta`, `handle_missing_data` |
 | `Gst.Video.VideoEncoder` | `open`, `close`, `start`, `stop`, `set_format`, `handle_frame`, `reset`, `finish`, `pre_push`, `getcaps`, `sink_event`, `src_event`, `negotiate`, `decide_allocation`, `propose_allocation`, `flush`, `sink_query`, `src_query`, `transform_meta` |
 
-Nine slots of those classes carry no `OnX` member. Seven are the signal
-class closures of `Element` and `Bin`, which the base library never calls
-through the class pointer — subscribing to the signal is the same hook.
-`Aggregator::create_new_pad` waits for pad subclassing, which needs a
-`ClassConfig` for `GstPad` and construct properties. `AudioSink::stop` shares
-its name with the `stop` of `BaseSink` and answers nothing where that one
-answers a `bool`, so no managed name can carry both. `girs/skip-report.md`
-lists all nine with their reason.
+`Aggregator::create_new_pad` is bound as well, and is what a managed sink pad
+type is answered from. Eight slots of those classes carry no `OnX` member:
+seven are the signal class closures of `Element` and `Bin`, which the base
+library never calls through the class pointer — subscribing to the signal is
+the same hook — and `AudioSink::stop` shares its name with the `stop` of
+`BaseSink` and answers nothing where that one answers a `bool`, so no managed
+name can carry both. `girs/skip-report.md` lists all eight with their reason.
+
+`Gst.Pad`'s two slots are signal class closures too, but of the pad rather than
+of an element, and the base library does call them through the class pointer:
+`gst_pad_link` runs `linked` on both pads.
 
 The six slots that lend a boxed record by pointer — `BaseSrc::do_seek` and
 `prepare_seek_segment`, `BaseTransform::filter_meta`, `AudioFilter::setup`,
@@ -1079,13 +1241,14 @@ classes do not, and the registration says so before it takes the type name:
   and a managed parent's slot would be the same trampoline (§4.4). The surface
   cannot express it — `DefineSubclass` always derives from the wrapped native
   class it is called on.
-* **C#-initiated construction only.** `new CounterSrc()` works;
-  `gst_element_factory_make("mycountersrc")` does not exist, and neither does
-  anything else that creates the instance natively — GES instantiating a type
-  by name, a `gst_parse_launch` description naming it, a plugin. A natively
-  created instance of a managed type would be wrapped as the closest registered
-  ancestor, `GstSharp.TypeFallback` would report it once, and its vfuncs would
-  chain up for ever: **functional never**. Closing this is stage 3 (§5.4).
+* **A type defined with the non generic `DefineSubclass` is
+  C#-initiated-only.** `new CounterSrc()` works, and so does anything that
+  creates the instance natively — an element factory, a `gst_parse_launch`
+  description, GES instantiating a type by name — but only for a type that was
+  defined with `DefineSubclass<TSelf>`. Without a wrapper factory the instance
+  is wrapped as the closest registered ancestor, `TypeRegistry.Fallback` reports
+  it once, and its vfuncs chain up for ever: **functional never**. The overload
+  is the whole difference, and the fallback is what diagnoses the mistake.
 * **No properties and no signals** on managed types, so a managed element
   cannot be configured with `g_object_set` or from a pipeline description.
 * **`GstAudioSink::stop` has no managed member.** Its name collides with
@@ -1094,10 +1257,11 @@ classes do not, and the registration says so before it takes the type name:
   a naming decision that has not been taken. The device is unblocked through
   `OnReset` instead, which is what `gst_audio_sink_ring_buffer_stop` falls back
   to when the slot is NULL (gstaudiosink.c:594-602).
-* **`GstAggregatorPad` cannot be subclassed**, so `Aggregator::create_new_pad`
-  has no managed member: a managed pad type needs a `ClassConfig` for `GstPad`
-  and construct properties, which is stage 3. A managed aggregator uses the
-  pads its templates request.
+* **A managed pad carries no properties or signals of its own** — that is the
+  bullet above, not a pad-specific limit. `Gst.Pad` and `GstBase.AggregatorPad`
+  are subclassable and `Aggregator.OnCreateNewPad` answers a managed pad; what
+  a pad type cannot do yet is install a property that a pipeline description
+  could set.
 * **No `dispose` or `finalize` override**, by design (§1): teardown belongs in
   the `READY` to `NULL` transition of `OnChangeState`, or in `OnStop`.
 * **Disposing a managed element that GStreamer still drives** does not crash,

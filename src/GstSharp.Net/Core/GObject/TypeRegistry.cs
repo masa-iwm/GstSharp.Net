@@ -344,8 +344,9 @@ public static class TypeRegistry
     /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
     /// <param name="wrapper">The new wrapper.</param>
     /// <returns>
-    /// <see langword="true"/> when the type of the instance, or one of the
-    /// types it derives from, is registered.
+    /// <see langword="true"/> when the type of the instance is a managed
+    /// subclass that stated how its wrapper is built, or when that type, or one
+    /// of the types it derives from, is registered by a module.
     /// </returns>
     public static unsafe bool TryCreateWrapper(nint handle, Transfer transfer, out object? wrapper)
     {
