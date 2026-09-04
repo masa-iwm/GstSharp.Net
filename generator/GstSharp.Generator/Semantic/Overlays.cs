@@ -396,6 +396,7 @@ internal sealed class Overlays
     private readonly Dictionary<string, string> _skipVirtuals;
     private readonly Dictionary<string, string> _vfuncDefaults;
     private readonly HashSet<string> _vfuncIdentityBuffers;
+    private readonly Dictionary<string, string> _vfuncNonNullReturns;
 
     private Overlays(
         HashSet<string> skip,
@@ -411,7 +412,8 @@ internal sealed class Overlays
         HashSet<string> subclassable,
         Dictionary<string, string> skipVirtuals,
         Dictionary<string, string> vfuncDefaults,
-        HashSet<string> vfuncIdentityBuffers)
+        HashSet<string> vfuncIdentityBuffers,
+        Dictionary<string, string> vfuncNonNullReturns)
     {
         _skip = skip;
         _handBound = handBound;
@@ -427,6 +429,7 @@ internal sealed class Overlays
         _skipVirtuals = skipVirtuals;
         _vfuncDefaults = vfuncDefaults;
         _vfuncIdentityBuffers = vfuncIdentityBuffers;
+        _vfuncNonNullReturns = vfuncNonNullReturns;
     }
 
     /// <summary>Gets an overlay set without any correction.</summary>
@@ -444,7 +447,8 @@ internal sealed class Overlays
         new HashSet<string>(StringComparer.Ordinal),
         new Dictionary<string, string>(StringComparer.Ordinal),
         new Dictionary<string, string>(StringComparer.Ordinal),
-        new HashSet<string>(StringComparer.Ordinal));
+        new HashSet<string>(StringComparer.Ordinal),
+        new Dictionary<string, string>(StringComparer.Ordinal));
 
     /// <summary>Gets the skipped identifiers, ordered for reporting.</summary>
     internal IReadOnlyCollection<string> SkippedIdentifiers => _skip;
@@ -508,6 +512,9 @@ internal sealed class Overlays
     /// run can report the ones no emitted parameter matched.
     /// </summary>
     internal IReadOnlyCollection<string> VfuncIdentityBufferKeys => _vfuncIdentityBuffers;
+
+    /// <summary>Gets the slots whose managed answer may not be null.</summary>
+    internal IReadOnlyCollection<string> VfuncNonNullReturnKeys => _vfuncNonNullReturns.Keys;
 
     /// <summary>
     /// Loads <c>fixups.json</c> and <c>platform-symbols.json</c> from an overlay
@@ -600,6 +607,12 @@ internal sealed class Overlays
             vfuncDefaults[entry.Key] = entry.Value;
         }
 
+        Dictionary<string, string> vfuncNonNullReturns = new(StringComparer.Ordinal);
+        foreach (KeyValuePair<string, string> entry in fixups.VfuncNonNullReturns ?? [])
+        {
+            vfuncNonNullReturns[entry.Key] = entry.Value;
+        }
+
         HashSet<string> vfuncIdentityBuffers = new(StringComparer.Ordinal);
         foreach (string key in fixups.VfuncIdentityBuffers ?? [])
         {
@@ -620,7 +633,8 @@ internal sealed class Overlays
             subclassable,
             skipVirtuals,
             vfuncDefaults,
-            vfuncIdentityBuffers);
+            vfuncIdentityBuffers,
+            vfuncNonNullReturns);
     }
 
     /// <summary>Tests whether a symbol is skipped by the overlays.</summary>
@@ -756,6 +770,16 @@ internal sealed class Overlays
     /// </remarks>
     internal bool IsIdentityBuffer(string key) => _vfuncIdentityBuffers.Contains(key);
 
+    /// <summary>
+    /// Looks up the value a trampoline answers for a slot whose caller does not
+    /// tolerate a NULL answer, when the managed override answered none.
+    /// </summary>
+    /// <param name="key">The key of the slot.</param>
+    /// <param name="failure">Receives the C# expression.</param>
+    /// <returns>Whether the answer of the slot may not be null.</returns>
+    internal bool TryGetVfuncNonNullReturn(string key, [NotNullWhen(true)] out string? failure) =>
+        _vfuncNonNullReturns.TryGetValue(key, out failure);
+
     /// <summary>Looks up the platform availability of a native symbol.</summary>
     /// <param name="cIdentifier">The <c>c:identifier</c> of the symbol.</param>
     /// <returns>The availability, or <see langword="null"/> when the symbol is portable.</returns>
@@ -801,6 +825,8 @@ internal sealed class Overlays
         public Dictionary<string, string>? VfuncDefaults { get; set; }
 
         public List<string>? VfuncIdentityBuffers { get; set; }
+
+        public Dictionary<string, string>? VfuncNonNullReturns { get; set; }
     }
 
     private sealed class PlatformSymbolsFile

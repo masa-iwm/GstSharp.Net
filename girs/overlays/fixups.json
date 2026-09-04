@@ -703,6 +703,11 @@
     "GstBase.PushSrc::create": "Gst.FlowReturn.NotSupported",
     "GstBase.PushSrc::fill": "Gst.FlowReturn.NotSupported"
   },
+  "$comment-vfunc-non-null-returns": "The slots whose caller dereferences the answer without checking it for NULL, with the value the trampoline answers when the managed override answered none. gst_base_transform_fixate_caps and gst_aggregator_default_update_src_caps both hand the answer straight to gst_caps_is_fixed / gst_pad_set_caps, and the aggregator has already consumed the input by then, so a NULL would be a crash or a lost buffer rather than a failed negotiation. The managed member therefore answers a non nullable type, and an override that answers null anyway is reported through the exception trap while the slot answers empty caps, on which negotiation fails cleanly.",
+  "vfuncNonNullReturns": {
+    "GstBase.Aggregator::fixate_src_caps": "Gst.GstNative.CapsNewEmpty()",
+    "GstBase.BaseTransform::fixate_caps": "Gst.GstNative.CapsNewEmpty()"
+  },
   "$comment-vfunc-identity-buffers": "The buffer a slot hands back may be the very one it was given, and the caller compares the two pointers: gst_base_src_get_range only unrefs the buffer it passed in when the slot answered a different one, and gst_base_transform_default_prepare_output_buffer explicitly allows *outbuf == inbuf for an in-place transform. A reference taken on an unchanged answer would therefore never be released, so the trampoline of a parameter listed here only mints one when the handle really changed.",
   "vfuncIdentityBuffers": [
     "GstBase.BaseSrc::create#buf",

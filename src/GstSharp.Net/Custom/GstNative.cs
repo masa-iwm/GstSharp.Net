@@ -54,6 +54,15 @@ internal static unsafe partial class GstNative
     [LibraryImport("Gst", EntryPoint = "gst_param_spec_array_get_type")]
     internal static partial nuint ParamSpecArrayGetType();
 
+    /// <summary>
+    /// Creates empty caps, which is what a slot answers when it has to answer
+    /// caps and the managed override answered none: negotiation fails on it
+    /// rather than on a NULL pointer the caller does not check for.
+    /// </summary>
+    /// <returns>The new caps, with one reference the caller takes over.</returns>
+    [LibraryImport("Gst", EntryPoint = "gst_caps_new_empty")]
+    internal static partial nint CapsNewEmpty();
+
     [LibraryImport("Gst", EntryPoint = "gst_mini_object_ref")]
     internal static partial nint MiniObjectRef(nint miniObject);
 

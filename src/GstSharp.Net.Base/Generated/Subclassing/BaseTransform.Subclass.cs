@@ -244,7 +244,7 @@ public unsafe partial class BaseTransform
     /// <param name="caps">The argument the slot carries under this name.</param>
     /// <param name="othercaps">The argument the slot carries under this name.</param>
     /// <returns>What the slot answers.</returns>
-    protected virtual Gst.Caps? OnFixateCaps(Gst.PadDirection direction, Gst.Caps caps, Gst.Caps othercaps) =>
+    protected virtual Gst.Caps OnFixateCaps(Gst.PadDirection direction, Gst.Caps caps, Gst.Caps othercaps) =>
         ChainUpFixateCaps(direction, caps, othercaps);
 
     /// <summary>Runs <c>GstBaseTransform.accept_caps</c>.</summary>
@@ -387,7 +387,7 @@ public unsafe partial class BaseTransform
     /// <param name="caps">The argument the slot carries under this name.</param>
     /// <param name="othercaps">The argument the slot carries under this name.</param>
     /// <returns>What the slot answers.</returns>
-    protected Gst.Caps? ChainUpFixateCaps(Gst.PadDirection direction, Gst.Caps caps, Gst.Caps othercaps)
+    protected Gst.Caps ChainUpFixateCaps(Gst.PadDirection direction, Gst.Caps caps, Gst.Caps othercaps)
     {
         ArgumentNullException.ThrowIfNull(caps);
         ArgumentNullException.ThrowIfNull(othercaps);
@@ -395,7 +395,9 @@ public unsafe partial class BaseTransform
         nint othercapsNative = othercaps.Handle;
         Gst.GstNative.MiniObjectRef(othercapsNative);
         nint resultNative = ChainUpFixateCaps(instance, (int)direction, caps.Handle, othercapsNative);
-        Gst.Caps? result = Gst.Caps.FromNative(resultNative, Gst.Interop.Transfer.Full);
+        Gst.Caps result = Gst.Caps.FromNative(resultNative, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException(
+                "fixate_caps answered null below the managed override.");
         GC.KeepAlive(this);
         GC.KeepAlive(caps);
         othercaps.Dispose();
@@ -974,12 +976,18 @@ public unsafe partial class BaseTransform
             using Gst.Caps? capsValue = caps == nint.Zero ? null : Gst.Caps.Borrow(caps);
             using Gst.Caps? othercapsValue = Gst.Caps.FromNative(othercaps, Gst.Interop.Transfer.Full);
             Gst.Caps? result = managed.OnFixateCaps((Gst.PadDirection)direction, capsValue!, othercapsValue!);
+            if (result is null)
+            {
+                throw new InvalidOperationException(
+                    "OnFixateCaps answered null, which fixate_caps does not allow.");
+            }
+
             return result is null ? nint.Zero : Gst.GstNative.MiniObjectRef(result.Handle);
         }
         catch (Exception exception)
         {
             Gst.Interop.ExceptionTrap.Report(exception);
-            return nint.Zero;
+            return Gst.GstNative.CapsNewEmpty();
         }
     }
 

@@ -348,7 +348,7 @@ public unsafe partial class Aggregator
     /// <summary>Runs <c>GstAggregator.fixate_src_caps</c>.</summary>
     /// <param name="caps">The argument the slot carries under this name.</param>
     /// <returns>What the slot answers.</returns>
-    protected virtual Gst.Caps? OnFixateSrcCaps(Gst.Caps caps) =>
+    protected virtual Gst.Caps OnFixateSrcCaps(Gst.Caps caps) =>
         ChainUpFixateSrcCaps(caps);
 
     /// <summary>Runs <c>GstAggregator.negotiated_src_caps</c>.</summary>
@@ -571,14 +571,16 @@ public unsafe partial class Aggregator
     /// <summary>Runs the implementation of <c>fixate_src_caps</c> below the managed override.</summary>
     /// <param name="caps">The argument the slot carries under this name.</param>
     /// <returns>What the slot answers.</returns>
-    protected Gst.Caps? ChainUpFixateSrcCaps(Gst.Caps caps)
+    protected Gst.Caps ChainUpFixateSrcCaps(Gst.Caps caps)
     {
         ArgumentNullException.ThrowIfNull(caps);
         nint instance = Handle;
         nint capsNative = caps.Handle;
         Gst.GstNative.MiniObjectRef(capsNative);
         nint resultNative = ChainUpFixateSrcCaps(instance, capsNative);
-        Gst.Caps? result = Gst.Caps.FromNative(resultNative, Gst.Interop.Transfer.Full);
+        Gst.Caps result = Gst.Caps.FromNative(resultNative, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException(
+                "fixate_src_caps answered null below the managed override.");
         GC.KeepAlive(this);
         caps.Dispose();
         return result;
@@ -1303,12 +1305,18 @@ public unsafe partial class Aggregator
 
             using Gst.Caps? capsValue = Gst.Caps.FromNative(caps, Gst.Interop.Transfer.Full);
             Gst.Caps? result = managed.OnFixateSrcCaps(capsValue!);
+            if (result is null)
+            {
+                throw new InvalidOperationException(
+                    "OnFixateSrcCaps answered null, which fixate_src_caps does not allow.");
+            }
+
             return result is null ? nint.Zero : Gst.GstNative.MiniObjectRef(result.Handle);
         }
         catch (Exception exception)
         {
             Gst.Interop.ExceptionTrap.Report(exception);
-            return nint.Zero;
+            return Gst.GstNative.CapsNewEmpty();
         }
     }
 

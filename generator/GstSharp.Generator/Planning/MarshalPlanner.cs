@@ -4263,6 +4263,7 @@ internal sealed class MarshalPlanner
             Return = planned.Return,
             ReturnBucket = planned.Bucket,
             NullSlotDefault = _overlays.TryGetVfuncDefault(overlayKey, out string? expression) ? expression : null,
+            NonNullReturn = _overlays.TryGetVfuncNonNullReturn(overlayKey, out string? failure) ? failure : null,
         };
     }
 

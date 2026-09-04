@@ -597,7 +597,18 @@ internal sealed class VfuncEmitter
         else if (AnswersHandle(plan))
         {
             writer.WriteLine(plan.Return.RawType + " resultNative = " + call + ";");
-            writer.WriteLine(ReturnType(plan) + " result = " + WrapReturn(plan, "resultNative") + ";");
+            if (plan.NonNullReturn is null)
+            {
+                writer.WriteLine(ReturnType(plan) + " result = " + WrapReturn(plan, "resultNative") + ";");
+            }
+            else
+            {
+                writer.WriteLine(
+                    ReturnType(plan) + " result = " + WrapReturn(plan, "resultNative"));
+                writer.WriteLine("    ?? throw new InvalidOperationException(");
+                writer.WriteLine(
+                    "        \"" + plan.Method.Name + " answered null below the managed override.\");");
+            }
         }
         else
         {
@@ -1007,6 +1018,21 @@ internal sealed class VfuncEmitter
         }
 
         writer.WriteLine(Nullable(plan.Return.PublicType) + " " + local + " = " + expression + ";");
+        if (plan.NonNullReturn is not null)
+        {
+            // The caller of the slot dereferences the answer without checking
+            // it, so an override that answered nothing is reported and the
+            // trampoline answers the failure value the overlay names.
+            writer.WriteLine("if (" + local + " is null)");
+            writer.OpenBlock();
+            writer.WriteLine("throw new InvalidOperationException(");
+            writer.WriteLine(
+                "    \"On" + plan.Name + " answered null, which " + plan.Method.Name
+                + " does not allow.\");");
+            writer.CloseBlock();
+            writer.WriteLine();
+        }
+
         writer.WriteLine("return " + ToNativeReturn(plan, local) + ";");
     }
 
@@ -1098,7 +1124,9 @@ internal sealed class VfuncEmitter
     private static string ReturnType(VirtualMethodPlan plan) =>
         plan.ReturnBucket is VfuncReturnBucket.Void or VfuncReturnBucket.Cast
             ? plan.Return.PublicType
-            : Nullable(plan.Return.PublicType);
+            : plan.NonNullReturn is null
+                ? Nullable(plan.Return.PublicType)
+                : Bare(plan.Return.PublicType);
 
     private static string Modifier(VfuncArgument argument) => argument.Bucket switch
     {
@@ -1264,6 +1292,11 @@ internal sealed class VfuncEmitter
 
     private static string FailureValue(VirtualMethodPlan plan)
     {
+        if (plan.NonNullReturn is { } failure)
+        {
+            return failure;
+        }
+
         if (plan.ReturnBucket is VfuncReturnBucket.BorrowedHandle or VfuncReturnBucket.OwnedGObject
             or VfuncReturnBucket.OwnedMiniObject)
         {

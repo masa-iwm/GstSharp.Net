@@ -137,4 +137,12 @@ internal sealed class VirtualMethodPlan
     /// default and the chain-up throws instead.
     /// </summary>
     internal string? NullSlotDefault { get; init; }
+
+    /// <summary>
+    /// Gets the C# expression a trampoline answers when the managed override
+    /// answered <see langword="null"/> and the caller of the slot does not
+    /// tolerate that, or <see langword="null"/> when a null answer is legal.
+    /// Named by the overlay key <c>vfuncNonNullReturns</c>.
+    /// </summary>
+    internal string? NonNullReturn { get; init; }
 }
