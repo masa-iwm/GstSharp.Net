@@ -699,7 +699,7 @@
     "GstBase.BaseTransform::stop": "true",
     "GstBase.BaseTransform::transform": "Gst.FlowReturn.NotSupported",
     "GstBase.BaseTransform::transform_ip": "Gst.FlowReturn.Ok",
-    "GstBase.PushSrc::alloc": "Gst.FlowReturn.NotSupported",
+    "GstBase.PushSrc::alloc": "{\n// gst_push_src_alloc falls back to gst_base_src_default_alloc, the pooled\n// allocation, when the GstPushSrcClass slot is NULL. No class of the library\n// sets that slot, so the chain-up has to reach that implementation itself.\nreturn Gst.Base.BaseSrcDefaults.Alloc(src, buf);\n}",
     "GstBase.PushSrc::create": "Gst.FlowReturn.NotSupported",
     "GstBase.PushSrc::fill": "Gst.FlowReturn.NotSupported"
   },

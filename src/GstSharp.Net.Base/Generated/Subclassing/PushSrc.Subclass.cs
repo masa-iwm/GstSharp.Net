@@ -187,8 +187,10 @@ public unsafe partial class PushSrc
 
         if (slot is null)
         {
-            *buf = default;
-            return Gst.FlowReturn.NotSupported;
+            // gst_push_src_alloc falls back to gst_base_src_default_alloc, the pooled
+            // allocation, when the GstPushSrcClass slot is NULL. No class of the library
+            // sets that slot, so the chain-up has to reach that implementation itself.
+            return Gst.Base.BaseSrcDefaults.Alloc(src, buf);
         }
 
         return (Gst.FlowReturn)slot(src, buf);
