@@ -185,4 +185,11 @@ internal static partial class ParamSpecNatives
     /// </summary>
     [LibraryImport("Gst", EntryPoint = "gst_param_spec_array", StringMarshalling = StringMarshalling.Utf8)]
     internal static partial nint Array(string name, string nick, string blurb, nint elementSpec, uint flags);
+
+    /// <summary>
+    /// Builds a specification of a <c>GValueArray</c>. As with
+    /// <see cref="Array"/> the specification of the members is consumed.
+    /// </summary>
+    [LibraryImport("GObject", EntryPoint = "g_param_spec_value_array", StringMarshalling = StringMarshalling.Utf8)]
+    internal static partial nint ValueArray(string name, string nick, string blurb, nint elementSpec, uint flags);
 }

@@ -112,8 +112,13 @@ internal sealed partial class Inspection
     private int PrintElement(string name)
     {
         // gst_element_factory_find loads the feature, which is the first half
-        // of what print_element_info does with gst_plugin_feature_load.
-        using ElementFactory? factory = ElementFactory.Find(name);
+        // of what print_element_info does with gst_plugin_feature_load. The
+        // factory and the plugin below are the registry's own objects, and a
+        // GObject wrapper is interned, so neither is disposed here: that would
+        // end the object for every holder in the process. The element is the
+        // one thing this page creates, and it is released. See
+        // docs/ownership.md.
+        ElementFactory? factory = ElementFactory.Find(name);
 
         if (factory is null)
         {
@@ -129,7 +134,7 @@ internal sealed partial class Inspection
             return ExitError;
         }
 
-        using Plugin? plugin = factory.GetPlugin();
+        Plugin? plugin = factory.GetPlugin();
 
         PrintFactoryDetails(factory, plugin);
 

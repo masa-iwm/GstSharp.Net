@@ -46,12 +46,6 @@
 //     audioresample, spectrum, compositor and decodebin; the four elements the
 //     CI diff covers have ASCII metadata.
 //
-//   * GParamSpecValueArray::element_spec has no binding, so a property holding
-//     a GValueArray is printed as "Array of GValues" without the type of its
-//     members: audiofirfilter, vp8enc and audiointerleave are the ones
-//     measured. GstValueArray, which is what GStreamer elements actually use,
-//     is printed in full.
-//
 //   * A field of a caps structure that is itself a caps, a structure or a
 //     GstUniqueList of either is printed as its serialization rather than
 //     recursed into: gst_value_get_caps and gst_value_get_structure, which

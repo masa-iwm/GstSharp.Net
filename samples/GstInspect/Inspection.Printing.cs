@@ -574,12 +574,13 @@ internal sealed partial class Inspection
             return;
         }
 
-        if (string.Equals(property.NativeType.Name, "GParamValueArray", StringComparison.Ordinal))
+        if (property is ParamSpecValueArray valueArray)
         {
-            // GParamSpecValueArray::element_spec has no binding, so the type of
-            // the members is left off; the C tool prints it when the
-            // specification carries one.
-            text.Append(PropertyIndent).Append("Array of GValues");
+            using ParamSpec? member = valueArray.ElementSpec;
+
+            text.Append(PropertyIndent).Append(member is null
+                ? "Array of GValues"
+                : $"Array of GValues of type \"{member.ValueType.Name}\"");
             return;
         }
 

@@ -348,6 +348,7 @@ public class ParamSpec : IDisposable
             ParamSpecKind.Flags => new ParamSpecFlags(handle, transfer),
             ParamSpecKind.String => new ParamSpecString(handle, transfer),
             ParamSpecKind.GType => new ParamSpecGType(handle, transfer),
+            ParamSpecKind.ValueArray => new ParamSpecValueArray(handle, transfer),
             ParamSpecKind.Fraction => new Gst.ParamSpecFraction(handle, transfer),
             ParamSpecKind.Array => new Gst.ParamSpecArray(handle, transfer),
             _ => new ParamSpec(handle, transfer),

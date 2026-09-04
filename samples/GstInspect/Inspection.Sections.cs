@@ -138,7 +138,10 @@ internal sealed partial class Inspection
 
                 Line(1, $"{direction}: '{pad.GetName()}'");
 
-                using PadTemplate? template = pad.GetPadTemplate();
+                // Not disposed: a GObject wrapper is interned, so disposing
+                // this one would end the template for the element that owns it
+                // as well. See docs/ownership.md.
+                PadTemplate? template = pad.GetPadTemplate();
 
                 if (template is not null)
                 {

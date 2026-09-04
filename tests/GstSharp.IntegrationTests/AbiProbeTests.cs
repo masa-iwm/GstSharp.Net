@@ -2387,6 +2387,11 @@ public sealed class AbiProbeTests
         // Four pointers and two bits of bitfield, padded up to a slot.
         AssertInstanceSize("GParamString", 104);
 
+        // The specification of one member and a count of them, padded up to a
+        // slot: the member sits directly behind the GParamSpec, which is where
+        // ParamSpecValueArray reads it.
+        AssertInstanceSize("GParamValueArray", 88);
+
         // Three C longs, which are 4 bytes wide on Windows and 8 everywhere
         // else, padded up to a slot: 88 on Windows and 96 on the rest.
         uint expected = (uint)((72 + (3 * Unsafe.SizeOf<CLong>()) + 7) / 8 * 8);
@@ -2630,6 +2635,32 @@ public sealed class AbiProbeTests
             ParamSpecNatives.Array("a", "a", "a", nint.Zero, ParamSpecNatives.ReadWrite), Transfer.None))
         {
             Assert.Null(Assert.IsType<Gst.ParamSpecArray>(spec).ElementSpec);
+        }
+
+        // GParamSpecValueArray has the layout GstParamSpecArray copied: the
+        // specification of one member sits right behind the GParamSpec, so the
+        // wrapper reads it at the same offset. g_param_spec_value_array takes
+        // the floating reference of that specification too.
+        using (ParamSpec spec = ParamSpec.FromNative(
+            ParamSpecNatives.ValueArray(
+                "v",
+                "v",
+                "v",
+                ParamSpecNatives.Double("m", "m", "m", -1.5, 7.5, 2.5, ParamSpecNatives.ReadWrite),
+                ParamSpecNatives.ReadWrite),
+            Transfer.None))
+        {
+            using ParamSpec? member = Assert.IsType<ParamSpecValueArray>(spec).ElementSpec;
+            ParamSpecDouble typed = Assert.IsType<ParamSpecDouble>(member);
+            Assert.Equal(-1.5, typed.Minimum);
+            Assert.Equal(7.5, typed.Maximum);
+            Assert.Equal(2.5, typed.Default);
+        }
+
+        using (ParamSpec spec = ParamSpec.FromNative(
+            ParamSpecNatives.ValueArray("v", "v", "v", nint.Zero, ParamSpecNatives.ReadWrite), Transfer.None))
+        {
+            Assert.Null(Assert.IsType<ParamSpecValueArray>(spec).ElementSpec);
         }
     }
 
