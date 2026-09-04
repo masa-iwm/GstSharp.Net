@@ -6,168 +6,80 @@ merged.
 
 ## Done
 
-Five commits, all green (build 0 warnings, `verify` clean, 1731 tests pass,
-AotSmoke publishes with 0 IL/AOT warnings). Generated output is still
-**unchanged**, because the committed `subclassable` allowlist is still empty.
+Nine commits. All gates green at `3db13dc`: `dotnet build` 0 warnings,
+generator twice byte-identical, `verify` clean (506 files), 1731 tests pass
+in all four projects, AotSmoke publishes with 0 IL/AOT warnings.
 
-* **c7eb44b "Pair class struct slots with their virtual methods"** — brief step
-  (a), landed by the previous agent. `Semantic/ClassStructModel.cs`
-  (`ClassStructMember`, `ClassStructModel`, `SubclassModel.Build`), the four
-  new overlay keys in `Semantic/Overlays.cs`, `GirVirtualMethod.OverlayKey` and
-  the `AnnotationKeyOf` fallback in `Planning/MarshalPlanner.cs`.
-  Diagnostics GEN0027 (stale `subclassable`), GEN0028 (allowlisted class with
-  no class struct).
-* **899689c "Build the class struct model before anything is emitted"** —
-  `SubclassModel.Build` now runs in `GenerationPipeline.Execute`, right after
-  the classification pass and before `TypeMap`, and the model is carried to
-  every module in `ModuleEmitters.Subclasses`. New:
-  `ReportStaleVirtualKeys` → **GEN0029** (`skipVirtuals`), **GEN0030**
-  (`vfuncDefaults`), **GEN0031** (`vfuncIdentityBuffers`), each checked against
-  `SubclassModel.VirtualMethodKeys` / `.VirtualMethodParameterKeys` (slots of
-  *subclassable* classes only, so a key naming a chain-only class such as
-  `Gst.Object` is stale by construction).
-  `NameMapper.VirtualMethodParameterName(overlayKey, girName)` reads the
-  existing `rename` map at `Ns.Class::vfunc#param` (orchestrator decision).
-  `rename` has no stale reporting, so those 4 entries can land whenever.
-* **ed0e8c6 "Emit the mirror of a class struct"** — `Emit/ClassStructEmitter.cs`,
-  wired into `EmitModule` before `RecordEmitter`. One file per mirrored class at
-  `src/<Project>/Generated/ClassStructs/<Class>ClassRaw.cs`, census category
-  **`"class struct"`**. Also moved `ClassSlot` from
-  `src/GstSharp.Net.Base/Custom/ClassStructs.cs` to
-  `src/GstSharp.Net/Core/GObject/ClassStructs.cs` (namespace `Gst.GObject`), because
-  a generated mirror in the `Gst` module cannot reach a helper of the Base module.
-  The Base mirrors still compile: that file already has `using Gst.GObject;`.
-* **4a64caf "Let the mirrors describe themselves to the ABI probes"** — per
-  module `Generated/ClassStructs/ClassStructRegistry.cs` with
-  `internal static Gst.GObject.ClassStructProbe[] CreateEntries()`, plus the two
-  hand written runtime rows `ClassStructProbe` / `ClassSlotProbe` appended to
-  `src/GstSharp.Net/Core/GObject/ClassStructs.cs`. A row carries the C name, the
-  managed `&<Wrapper>.GetGType`, `Unsafe.SizeOf<...ClassRaw>()` and every
-  own slot as `(gir name, Offset)`.
+The first five commits (c7eb44b … 4a64caf) are the class struct model, the
+mirror emitter and the ABI registry; see `git log` for their messages.
 
-### How the emitters were verified without the swap
+* **c0aa5de "Plan the marshalling of a virtual method"** —
+  `Planning/VirtualMethodPlan.cs` (`VfuncBucket`, `VfuncReturnBucket`,
+  `VfuncArgument`, `VirtualMethodPlan`) and `MarshalPlanner.PlanVirtualMethod`
+  / `PlanVirtualMethodArgument` / `PlanProducedArgument` /
+  `PlanVirtualMethodReturn`, modelled on `TryPlanSignal`. A shape it refuses
+  answers null, which is the auto-skip.
+* **0af2ad7 "Emit the subclassing surface of an allowlisted class"** —
+  `Emit/VfuncEmitter.cs` → `src/<Project>/Generated/Subclassing/<Class>.Subclass.cs`,
+  census category `"vfunc"`, the `SubclassBaseRules` table, `EmissionCensus.SkippedVirtual`
+  and the `## Virtuals` section of `girs/skip-report.md`. `skipVirtuals`
+  changed shape from `string[]` to a map key → reason so the ledger can print
+  it.
+* **933311b "Generate the subclassing surface of the Gst and GstBase leg"** —
+  the atomic swap: allowlist + the overlay data, the six hand written
+  `*.Subclass.cs` and both hand written mirror files deleted, the ABI probes
+  renamed onto `Gst.ObjectClassRaw` and the drifted field names, and the two
+  fixed counts in `RecordEmitterTests`/`ClassEmitterTests` updated.
+* **3db13dc "Plan the inout handle of a virtual method"** — an inout handle is
+  planned as the out one it shares its native shape with, which lands
+  `GstBase.BaseSrc::create` with the identity rule.
 
-A scratch gir tree with a filled allowlist, generated into a scratch copy of
-`src/`; the committed `girs/` stays allowlist-empty so `verify` is clean:
+79 slots are emitted (Gst 15, GstBase 64) and 29 are listed in the ledger:
+8 named by `skipVirtuals`, 21 `UnsupportedSignature`.
 
-```sh
-cp -r girs C:/src/_scratch/e5s2/girs-scratch      # then add "subclassable" to overlays/fixups.json
-cp -r src  C:/src/_scratch/e5s2/out-src
-dotnet run --project generator/GstSharp.Generator -- generate \
-    --gir-dir C:/src/_scratch/e5s2/girs-scratch --out-dir C:/src/_scratch/e5s2/out-src
-```
+## Remaining (brief steps h–j)
 
-Both scratch trees exist already with the 7 wave-1 classes in the allowlist.
-Running it twice over the same tree produces byte-identical output (checked
-with `diff -r` over both `Generated/` trees).
+Tests and docs only. Nothing of the generator is left to write for wave 1.
 
-The 10 files it produces (`Gst`: Object, Element, Bin; `Gst.Base`: BaseSrc,
-PushSrc, BaseSink, BaseTransform, Aggregator, + 2 registries) were read and match
-the stage-1 shape. They have **not been compiled** — that only happens in the
-swap commit.
+* **New tests** per spec §3: one dispatch + chain-up + exception test per new
+  class; `Aggregator::aggregate` as a required override, `BaseSrc::create`
+  with the same and with a different handle, `BaseTransform::prepare_output_buffer`
+  identity, `sink_event` adopt → chain-up pass-through, `request_new_pad`
+  borrowed return. The generic ABI theory over `ClassStructRegistry.CreateEntries()`
+  (spec 0.8) is also unwritten; `AbiProbeTests` still asserts the mirrors one
+  by one.
+* **docs**: `docs/subclassing.md` §7/§10 still describe stage 2 as future work,
+  and §4.4 still shows the hand written chain-up sketch. The release note line
+  of spec §5 is unwritten.
 
-## Remaining (brief steps b–j)
+## Findings that the next agent needs
 
-Nothing of the planner, the vfunc emitter, the overlay *data*, the census
-values, the tests or the docs is written.
-
-**Sequencing that keeps every commit green** (unchanged): generated mirrors and
-`*.Subclass.cs` cannot coexist with the stage-1 hand-written ones. So there is
-exactly one atomic swap commit: allowlist + `vfuncDefaults` + `skipVirtuals` +
-the 4 `rename` entries + the 4 `annotationOverrides` + stage-1 file deletions +
-regenerate + `AbiProbeTests` renames, all at once. Do not start it with less
-than ~40 tool calls of budget left.
-
-Files the swap deletes: `src/GstSharp.Net/Custom/{Element,Bin}.Subclass.cs`,
-`src/GstSharp.Net.Base/Custom/{BaseSrc,PushSrc,BaseSink,BaseTransform}.Subclass.cs`,
-`src/GstSharp.Net.Base/Custom/ClassStructs.cs` (whole file — `ClassSlot` already
-moved out), and the `GstObjectClassRaw`/`ElementClassRaw`/`BinClassRaw` part of
-`src/GstSharp.Net/Core/GObject/ClassStructs.cs` (keep `GTypeClassRaw`,
-`GObjectClassRaw`, `ClassSlot`, `ClassStructProbe`, `ClassSlotProbe`).
-The only other consumer is `tests/GstSharp.IntegrationTests/AbiProbeTests.cs`
-(`Gst.GObject.GstObjectClassRaw` → `Gst.ObjectClassRaw`, `Gst.Base.*ClassRaw` →
-unchanged names in the same namespace). `SubclassRegistry.cs` names
-`ElementClassRaw` in a doc comment only.
-
-### Next command
-
-Read `Planning/MarshalPlan.cs` (601 lines, the `ArgumentPlan`/`ScalarPlan`
-vocabulary) and `Emit/SignalEmitter.cs` (697 lines, the closest existing
-native→managed renderer), then write `PlanVirtualMethod` per brief step (b).
-
-## Decisions already taken (do not re-litigate)
-
-1. Return-value annotation address is `Ns.Class::vfunc#return`; the
-   `<virtual-method>` is the only carrier the generator reads.
-2. Parameter renames go through `rename` at `Ns.Class::vfunc#param`. The four
-   entries the frozen surface needs (checked against the gir):
-   `GstBase.BaseTransform::set_caps#incaps` → `inCaps`,
-   `#outcaps` → `outCaps`, `GstBase.BaseTransform::transform_ip#buf` →
-   `buffer`, `GstBase.PushSrc::create#buf` → `buffer`.
-3. `SubclassBaseRules` gains `RequiredOverrides`; `DefineSubclass` throws
-   `ArgumentException` **before** registration when one is missing
-   (`Aggregator` → `AggregateOverride`). The "NULL parent slot throws
-   `InvalidOperationException`" test uses `BaseTransform::transform`, not
-   `Aggregator::aggregate`.
-4. The null-slot check is emitted for **every** slot, uniformly.
-   Non-void: the `vfuncDefaults` expression if present, else `throw new
-   InvalidOperationException("<Class>.<vfunc> has no parent implementation;
-   override On<Vfunc>")`. Void: consume every adopted (transfer-full) parameter
-   and return — that is what reproduces stage-1 `Bin::handle_message`. No
-   `vfuncDefaults` entry for `change_state` or `handle_message`.
-5. Wave-1 allowlist is the 7 Gst/GstBase classes. `Gst.Object` is mirrored on
-   the chain with no vfunc surface. GObject-2.0 mirrors stay hand written.
-
-## Findings this session that change the plan
-
-1. **Only 4 of the 13 `annotationOverrides` can land in wave 1.**
-   `tests/GstSharp.Generator.Tests/ClassEmitterTests.cs:815-819` asserts the
-   real-gir run emits no GEN0024, and an annotation correction addressing a
-   vfunc of a class that is not allowlisted is never read, hence stale. The
-   four that are in wave-1 scope: `Gst.Element::request_new_pad#return` →
-   `none`, `GstBase.BaseSink::fixate#caps` → `full`,
-   `GstBase.BaseSink::event#event` → `full`,
-   `GstBase.BaseTransform::submit_input_buffer#input` → `full`. The other nine
-   (BaseParse, AudioDecoder, AudioEncoder, VideoDecoder, VideoEncoder) and both
-   nullable/direction fixes belong to the wave that allowlists those classes.
-   Do **not** exempt vfunc keys from the stale check to work around this.
-   Even those four land only if `PlanVirtualMethod` *reads* the correction
-   before it decides the slot is plannable: `BaseSink::fixate` needs an owned
-   MiniObject return, `request_new_pad` a transfer-none GObject return, and
-   `event` / `submit_input_buffer` the adopt bucket. Check where
-   `AnnotationKeyOf` is read relative to the null-return paths of
-   `PlanSignalArgument` before assuming a correction is consumed.
-   Related: GEN0030 checks a `vfuncDefaults` key against the model, not against
-   what was emitted, so a default stated for a slot that also appears in
-   `skipVirtuals` passes quietly.
-2. **"Byte-identical" means the signatures, not the file bytes.** The stage-1
-   files carry hand-written prose no generator reproduces; the mechanism the
-   spec names is the package-validation baseline plus the diff gate, which see
-   public/protected signatures, parameter names, `new` and nullability.
-3. **`ClassSlot` was in the Base module, not in Core** (repo-survey.md §1 says
-   `Core/GObject/ClassStructs.cs:387`; it was
-   `src/GstSharp.Net.Base/Custom/ClassStructs.cs:387`). Moved, see ed0e8c6.
-4. **Mirror data-field names drift from stage-1** where the gir runs words
-   together: `elementfactory` → `Elementfactory` (stage-1 `ElementFactory`),
-   `padtemplates` → `Padtemplates`, `numpadtemplates` → `Numpadtemplates`,
-   `pad_templ_cookie` → `PadTemplCookie` (stage-1 `PadTemplateCookie`). These
-   members are `internal` and nothing outside the mirror reads them, so the
-   divergence costs nothing; add `rename`-style handling only if a reviewer
-   asks.
-5. **`Gst.Object`'s mirror is `Gst.ObjectClassRaw`**, in namespace `Gst`
-   (the module's CLR namespace), where stage-1 had `Gst.GObject.GstObjectClassRaw`.
-   All generated mirrors live in the module namespace, so the Base ones stay
-   `Gst.Base.BaseSrcClassRaw` etc. — same spelling as stage-1.
-6. `DefineSubclass` needs `new` iff a transitive parent is allowlisted: Element
-   no, everything else yes (Bin, BaseSrc, PushSrc, BaseSink, BaseTransform,
-   Aggregator).
-7. The wrappers of all 7 classes are already `abstract`/non-sealed `partial`,
-   so the generated `*.Subclass.cs` partial compiles without a ClassEmitter
-   change.
-
-## Open questions
-
-* Nothing blocking. The one judgement call left is whether `VfuncEmitter`
-  renders its `ChainUp` bodies from the forward `MarshalPlan` or from a small
-  purpose-built set of per-bucket snippets; `CallableRenderer` was not
-  investigated far enough to say whether its native call target is pluggable.
+1. **A transfer-none mini object parameter is only bindable for `Gst.Buffer`
+   and `Gst.Caps`**, the two wrappers that have the hand written
+   `internal static T Borrow(nint)` plus its private `Borrowed` constructor.
+   `MarshalPlanner.BorrowableMiniObjects` is that list. It is what auto-skips
+   most of the 21: every slot that lends a `GstEvent`, `GstQuery`,
+   `GstBufferList`, `GstContext` or `GstSample`. Generating `Borrow` on every
+   mini object wrapper would unlock them in one change and is the single
+   highest-value follow-up of the wave.
+2. `HandleFlavor.Opaque` is refused as well (`GstMeta` in
+   `BaseTransform::transform_meta`): its wrapper has neither a transfer taking
+   `FromNative` nor a `Dispose`, so the borrow has no shape.
+3. The stage-1 `configureClass` is **non-nullable on BaseSrc, BaseSink and
+   BaseTransform too**, not only on PushSrc — `repo-survey.md` §2,
+   `notes-wave1.md` and spec 0.2 all say "nullable" for those three and are
+   wrong against the code. `SubclassBaseRules` therefore keys the
+   `ArgumentNullException.ThrowIfNull` on "requires at least one pad template",
+   which also gives Aggregator the non-nullable shape.
+4. A handle a slot answers is nullable in the managed surface
+   (`protected virtual Gst.Caps? OnFixate(...)`): the parent slot may leave the
+   pointer NULL and a chain-up hands that on. None of the frozen sixteen
+   answers a handle, so nothing shipped changed.
+5. `PlanScalar` refuses `ArgumentDirection.Ref` for a handle unconditionally
+   (`MarshalPlanner.cs`, the `if (direction == ArgumentDirection.Ref)` guard in
+   the handle branch). `PlanVirtualMethodArgument` works around it rather than
+   relaxing it, because the guard is right for a forward call.
+6. The emission census counts are asserted in
+   `RecordEmitterTests.EveryModuleEmitsItsOwnFiles` /
+   `TheRecordCensusIsStable` and `ClassEmitterTests` — `CensusTests` counts the
+   **gir** and needed no change.
