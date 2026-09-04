@@ -61,6 +61,26 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     }
 
     /// <summary>
+    /// Add multicast client address to stream. At this point, the sockets that
+    /// will stream RTP and RTCP data to @destination are supposed to be
+    /// allocated.
+    /// </summary>
+    /// <param name="destination">The <c>destination</c> argument.</param>
+    /// <param name="rtpPort">The <c>rtpPort</c> argument.</param>
+    /// <param name="rtcpPort">The <c>rtcpPort</c> argument.</param>
+    /// <param name="family">The <c>family</c> argument.</param>
+    /// <returns>%TRUE if @destination can be addedd and handled by @stream.</returns>
+    public bool AddMulticastClientAddress(string destination, uint rtpPort, uint rtcpPort, Gst.Gio.SocketFamily family)
+    {
+        ArgumentNullException.ThrowIfNull(destination);
+        System.Span<byte> destinationBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope destinationScope = Gst.Interop.GMarshal.StackUtf8(destination, destinationBuffer);
+        int nativeResult = GstRtspStreamAddMulticastClientAddress(Handle, destinationScope.Pointer, rtpPort, rtcpPort, Gst.Gio.SocketFamilyNative.ToNative(family));
+        System.GC.KeepAlive(this);
+        return nativeResult != 0;
+    }
+
+    /// <summary>
     /// Add the transport in @trans to @stream. The media of @stream will
     /// then also be send to the values configured in @trans. Adding the
     /// same transport twice will not add it a second time.
@@ -77,6 +97,20 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
         int nativeResult = GstRtspStreamAddTransport(Handle, trans.Handle);
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(trans);
+        return nativeResult != 0;
+    }
+
+    /// <summary>Allocates RTP and RTCP ports.</summary>
+    /// <param name="family">The <c>family</c> argument.</param>
+    /// <param name="transport">The <c>transport</c> argument.</param>
+    /// <param name="useClientSettings">The <c>useClientSettings</c> argument.</param>
+    /// <returns>%TRUE if the RTP and RTCP sockets have been succeccully allocated.</returns>
+    public bool AllocateUdpSockets(Gst.Gio.SocketFamily family, Gst.Rtsp.RTSPTransport transport, bool useClientSettings)
+    {
+        ArgumentNullException.ThrowIfNull(transport);
+        int nativeResult = GstRtspStreamAllocateUdpSockets(Handle, Gst.Gio.SocketFamilyNative.ToNative(family), transport.Handle, useClientSettings ? 1 : 0);
+        System.GC.KeepAlive(this);
+        System.GC.KeepAlive(transport);
         return nativeResult != 0;
     }
 
@@ -191,6 +225,24 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
         return nativeResult;
     }
 
+    /// <summary>
+    /// Get the multicast address of @stream for @family. The original
+    /// #GstRTSPAddress is cached and copy is returned, so freeing the return value
+    /// won't release the address from the pool.
+    /// </summary>
+    /// <param name="family">The <c>family</c> argument.</param>
+    /// <returns>
+    /// the #GstRTSPAddress of @stream
+    /// or %NULL when no address could be allocated. gst_rtsp_address_free()
+    /// after usage.
+    /// </returns>
+    public Gst.RtspServer.RTSPAddress? GetMulticastAddress(Gst.Gio.SocketFamily family)
+    {
+        nint nativeResult = GstRtspStreamGetMulticastAddress(Handle, Gst.Gio.SocketFamilyNative.ToNative(family));
+        System.GC.KeepAlive(this);
+        return Gst.RtspServer.RTSPAddress.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+    }
+
     /// <summary>Get all multicast client addresses that RTP data will be sent to</summary>
     /// <returns>A comma separated list of host:port pairs with destinations</returns>
     public string GetMulticastClientAddresses()
@@ -294,6 +346,61 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
         return new Gst.ClockTime(nativeResult);
     }
 
+    /// <summary>Get the multicast RTCP socket from @stream for a @family.</summary>
+    /// <param name="family">The <c>family</c> argument.</param>
+    /// <returns>
+    /// the multicast RTCP socket or %NULL if no
+    /// socket could be allocated for @family. Unref after usage
+    /// </returns>
+    public Gst.Gio.Socket? GetRtcpMulticastSocket(Gst.Gio.SocketFamily family)
+    {
+        nint nativeResult = GstRtspStreamGetRtcpMulticastSocket(Handle, Gst.Gio.SocketFamilyNative.ToNative(family));
+        System.GC.KeepAlive(this);
+        return Gst.GObject.Object.FromNative<Gst.Gio.Socket>(nativeResult, Gst.Interop.Transfer.Full);
+    }
+
+    /// <summary>Get the RTCP socket from @stream for a @family.</summary>
+    /// <remarks>
+    /// <para>@stream must be joined to a bin.</para>
+    /// </remarks>
+    /// <param name="family">The <c>family</c> argument.</param>
+    /// <returns>
+    /// the RTCP socket or %NULL if no
+    /// socket could be allocated for @family. Unref after usage
+    /// </returns>
+    public Gst.Gio.Socket? GetRtcpSocket(Gst.Gio.SocketFamily family)
+    {
+        nint nativeResult = GstRtspStreamGetRtcpSocket(Handle, Gst.Gio.SocketFamilyNative.ToNative(family));
+        System.GC.KeepAlive(this);
+        return Gst.GObject.Object.FromNative<Gst.Gio.Socket>(nativeResult, Gst.Interop.Transfer.Full);
+    }
+
+    /// <summary>Get the multicast RTP socket from @stream for a @family.</summary>
+    /// <param name="family">The <c>family</c> argument.</param>
+    /// <returns>the multicast RTP socket or %NULL if no</returns>
+    public Gst.Gio.Socket? GetRtpMulticastSocket(Gst.Gio.SocketFamily family)
+    {
+        nint nativeResult = GstRtspStreamGetRtpMulticastSocket(Handle, Gst.Gio.SocketFamilyNative.ToNative(family));
+        System.GC.KeepAlive(this);
+        return Gst.GObject.Object.FromNative<Gst.Gio.Socket>(nativeResult, Gst.Interop.Transfer.Full);
+    }
+
+    /// <summary>Get the RTP socket from @stream for a @family.</summary>
+    /// <remarks>
+    /// <para>@stream must be joined to a bin.</para>
+    /// </remarks>
+    /// <param name="family">The <c>family</c> argument.</param>
+    /// <returns>
+    /// the RTP socket or %NULL if no
+    /// socket could be allocated for @family. Unref after usage
+    /// </returns>
+    public Gst.Gio.Socket? GetRtpSocket(Gst.Gio.SocketFamily family)
+    {
+        nint nativeResult = GstRtspStreamGetRtpSocket(Handle, Gst.Gio.SocketFamilyNative.ToNative(family));
+        System.GC.KeepAlive(this);
+        return Gst.GObject.Object.FromNative<Gst.Gio.Socket>(nativeResult, Gst.Interop.Transfer.Full);
+    }
+
     /// <summary>
     /// Retrieve the current rtptime, seq and running-time. This is used to
     /// construct a RTPInfo reply header.
@@ -325,6 +432,20 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
         nint nativeResult = GstRtspStreamGetRtpsession(Handle);
         System.GC.KeepAlive(this);
         return Gst.GObject.Object.FromNative<Gst.GObject.Object>(nativeResult, Gst.Interop.Transfer.Full);
+    }
+
+    /// <summary>
+    /// Fill @server_port with the port pair used by the server. This function can
+    /// only be called when @stream has been joined.
+    /// </summary>
+    /// <param name="serverPort">The <c>serverPort</c> argument.</param>
+    /// <param name="family">The <c>family</c> argument.</param>
+    public void GetServerPort(out Gst.Rtsp.RTSPRange serverPort, Gst.Gio.SocketFamily family)
+    {
+        Gst.Rtsp.RTSPRange serverPortNative = default;
+        GstRtspStreamGetServerPort(Handle, &serverPortNative, Gst.Gio.SocketFamilyNative.ToNative(family));
+        System.GC.KeepAlive(this);
+        serverPort = serverPortNative;
     }
 
     /// <summary>Get the sinkpad associated with @stream.</summary>
@@ -1193,9 +1314,17 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     [LibraryImport("GstRtspServer", EntryPoint = "gst_rtsp_stream_new")]
     private static partial nint GstRtspStreamNew(uint idx, nint payloader, nint pad);
 
+    /// <summary>The <c>gst_rtsp_stream_add_multicast_client_address</c> entry point.</summary>
+    [LibraryImport("GstRtspServer", EntryPoint = "gst_rtsp_stream_add_multicast_client_address")]
+    private static partial int GstRtspStreamAddMulticastClientAddress(nint stream, byte* destination, uint rtpPort, uint rtcpPort, int family);
+
     /// <summary>The <c>gst_rtsp_stream_add_transport</c> entry point.</summary>
     [LibraryImport("GstRtspServer", EntryPoint = "gst_rtsp_stream_add_transport")]
     private static partial int GstRtspStreamAddTransport(nint stream, nint trans);
+
+    /// <summary>The <c>gst_rtsp_stream_allocate_udp_sockets</c> entry point.</summary>
+    [LibraryImport("GstRtspServer", EntryPoint = "gst_rtsp_stream_allocate_udp_sockets")]
+    private static partial int GstRtspStreamAllocateUdpSockets(nint stream, int family, nint transport, int useClientSettings);
 
     /// <summary>The <c>gst_rtsp_stream_complete_stream</c> entry point.</summary>
     [LibraryImport("GstRtspServer", EntryPoint = "gst_rtsp_stream_complete_stream")]
@@ -1241,6 +1370,10 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     [LibraryImport("GstRtspServer", EntryPoint = "gst_rtsp_stream_get_mtu")]
     private static partial uint GstRtspStreamGetMtu(nint stream);
 
+    /// <summary>The <c>gst_rtsp_stream_get_multicast_address</c> entry point.</summary>
+    [LibraryImport("GstRtspServer", EntryPoint = "gst_rtsp_stream_get_multicast_address")]
+    private static partial nint GstRtspStreamGetMulticastAddress(nint stream, int family);
+
     /// <summary>The <c>gst_rtsp_stream_get_multicast_client_addresses</c> entry point.</summary>
     [LibraryImport("GstRtspServer", EntryPoint = "gst_rtsp_stream_get_multicast_client_addresses")]
     private static partial nint GstRtspStreamGetMulticastClientAddresses(nint stream);
@@ -1281,6 +1414,22 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     [LibraryImport("GstRtspServer", EntryPoint = "gst_rtsp_stream_get_retransmission_time")]
     private static partial ulong GstRtspStreamGetRetransmissionTime(nint stream);
 
+    /// <summary>The <c>gst_rtsp_stream_get_rtcp_multicast_socket</c> entry point.</summary>
+    [LibraryImport("GstRtspServer", EntryPoint = "gst_rtsp_stream_get_rtcp_multicast_socket")]
+    private static partial nint GstRtspStreamGetRtcpMulticastSocket(nint stream, int family);
+
+    /// <summary>The <c>gst_rtsp_stream_get_rtcp_socket</c> entry point.</summary>
+    [LibraryImport("GstRtspServer", EntryPoint = "gst_rtsp_stream_get_rtcp_socket")]
+    private static partial nint GstRtspStreamGetRtcpSocket(nint stream, int family);
+
+    /// <summary>The <c>gst_rtsp_stream_get_rtp_multicast_socket</c> entry point.</summary>
+    [LibraryImport("GstRtspServer", EntryPoint = "gst_rtsp_stream_get_rtp_multicast_socket")]
+    private static partial nint GstRtspStreamGetRtpMulticastSocket(nint stream, int family);
+
+    /// <summary>The <c>gst_rtsp_stream_get_rtp_socket</c> entry point.</summary>
+    [LibraryImport("GstRtspServer", EntryPoint = "gst_rtsp_stream_get_rtp_socket")]
+    private static partial nint GstRtspStreamGetRtpSocket(nint stream, int family);
+
     /// <summary>The <c>gst_rtsp_stream_get_rtpinfo</c> entry point.</summary>
     [LibraryImport("GstRtspServer", EntryPoint = "gst_rtsp_stream_get_rtpinfo")]
     private static partial int GstRtspStreamGetRtpinfo(nint stream, uint* rtptime, uint* seq, uint* clockRate, ulong* runningTime);
@@ -1288,6 +1437,10 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     /// <summary>The <c>gst_rtsp_stream_get_rtpsession</c> entry point.</summary>
     [LibraryImport("GstRtspServer", EntryPoint = "gst_rtsp_stream_get_rtpsession")]
     private static partial nint GstRtspStreamGetRtpsession(nint stream);
+
+    /// <summary>The <c>gst_rtsp_stream_get_server_port</c> entry point.</summary>
+    [LibraryImport("GstRtspServer", EntryPoint = "gst_rtsp_stream_get_server_port")]
+    private static partial void GstRtspStreamGetServerPort(nint stream, Gst.Rtsp.RTSPRange* serverPort, int family);
 
     /// <summary>The <c>gst_rtsp_stream_get_sinkpad</c> entry point.</summary>
     [LibraryImport("GstRtspServer", EntryPoint = "gst_rtsp_stream_get_sinkpad")]

@@ -341,6 +341,19 @@ internal static class SignalEmitter
                 writer.WriteLine("/// </remarks>");
             }
 
+            if (argument.Argument.Kind == ArgumentKind.PlainStruct)
+            {
+                // The structure is copied out of the emission, so the fields
+                // are readable for as long as the arguments are held; what is
+                // behind the pointers among them is not.
+                writer.WriteLine("/// <remarks>");
+                writer.WriteLine("/// A read only snapshot: the structure is copied out of the storage the");
+                writer.WriteLine("/// emitter holds, so writing to it changes nothing the emission reads");
+                writer.WriteLine("/// back. Every pointer inside it is borrowed for the length of the");
+                writer.WriteLine("/// handler and must not be kept past it.");
+                writer.WriteLine("/// </remarks>");
+            }
+
             writer.WriteLine(
                 "public " + argument.Argument.PublicType + " " + argument.PropertyName + " { get; }");
         }
@@ -640,8 +653,16 @@ internal static class SignalEmitter
         return argument.Kind switch
         {
             ArgumentKind.Boolean => argument.Name + " != 0",
-            ArgumentKind.Enumeration => "(" + type + ")" + argument.Name,
+            ArgumentKind.Enumeration => argument.EnumConverter is { } fromNative
+                ? fromNative + ".FromNative(" + argument.Name + ")"
+                : "(" + type + ")" + argument.Name,
             ArgumentKind.Wrapper => "new " + type + "(" + argument.Name + ")",
+
+            // A plain structure arrives as the address of storage the emitter
+            // holds, and what the handler sees is a copy of the fields at it.
+            // The copy is a snapshot: every pointer inside it is borrowed from
+            // the emission and stops being good once the handler returns.
+            ArgumentKind.PlainStruct => "*" + argument.Name,
             ArgumentKind.Utf8 => "Gst.Interop.GMarshal.PtrToStringUtf8((nint)" + argument.Name + ")",
 
             // The error belongs to the emission and is freed once it returns,
@@ -670,7 +691,9 @@ internal static class SignalEmitter
     private static string ToNative(ReturnPlan value, string source) => value.Kind switch
     {
         ArgumentKind.Boolean => source + " ? 1 : 0",
-        ArgumentKind.Enumeration => "(" + value.RawType + ")" + source,
+        ArgumentKind.Enumeration => value.EnumConverter is { } toNative
+            ? toNative + ".ToNative(" + source + ")"
+            : "(" + value.RawType + ")" + source,
         ArgumentKind.Handle => source + " is null ? 0 : Gst.Interop.GObjectNative.ObjectRef("
             + source + ".Handle)",
 

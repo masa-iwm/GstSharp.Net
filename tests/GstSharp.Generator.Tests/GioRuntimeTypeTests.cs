@@ -45,6 +45,10 @@ public sealed class GioRuntimeTypeTests
               <member name="no_flags" value="0" c:identifier="G_TLS_CERTIFICATE_NO_FLAGS"/>
               <member name="validate_all" value="127" c:identifier="G_TLS_CERTIFICATE_VALIDATE_ALL"/>
             </bitfield>
+            <enumeration name="SocketFamily" c:type="GSocketFamily" glib:type-name="GSocketFamily" glib:get-type="g_socket_family_get_type">
+              <member name="invalid" value="0" c:identifier="G_SOCKET_FAMILY_INVALID"/>
+              <member name="ipv6" value="10" c:identifier="G_SOCKET_FAMILY_IPV6"/>
+            </enumeration>
           </namespace>
         """;
 
@@ -103,6 +107,39 @@ public sealed class GioRuntimeTypeTests
                   </instance-parameter>
                 </parameters>
               </method>
+              <method name="set_family" c:identifier="gst_connection_set_family">
+                <return-value transfer-ownership="none">
+                  <type name="none" c:type="void"/>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="connection" transfer-ownership="none">
+                    <type name="Connection" c:type="GstConnection*"/>
+                  </instance-parameter>
+                  <parameter name="family" transfer-ownership="none">
+                    <type name="Gio.SocketFamily" c:type="GSocketFamily"/>
+                  </parameter>
+                </parameters>
+              </method>
+              <method name="get_family" c:identifier="gst_connection_get_family">
+                <return-value transfer-ownership="none">
+                  <type name="Gio.SocketFamily" c:type="GSocketFamily"/>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="connection" transfer-ownership="none">
+                    <type name="Connection" c:type="GstConnection*"/>
+                  </instance-parameter>
+                </parameters>
+              </method>
+              <glib:signal name="family-changed" when="last">
+                <return-value transfer-ownership="none">
+                  <type name="none" c:type="void"/>
+                </return-value>
+                <parameters>
+                  <parameter name="family" transfer-ownership="none">
+                    <type name="Gio.SocketFamily" c:type="GSocketFamily"/>
+                  </parameter>
+                </parameters>
+              </glib:signal>
             </class>
         """;
 
@@ -233,6 +270,49 @@ public sealed class GioRuntimeTypeTests
         Assert.Equal("GstSharp.Net", gio.ProjectDirectory, StringComparer.Ordinal);
         Assert.Equal("Gio", gio.NativeLibrary, StringComparer.Ordinal);
         Assert.False(gio.IsGenerated);
+    }
+
+    /// <summary>
+    /// A <c>Gio</c> enumeration whose native numbers are not the ones of the
+    /// gir crosses through the converter of the runtime rather than through a
+    /// cast, in every direction the emitters convert in.
+    /// </summary>
+    /// <remarks>
+    /// <c>GSocketFamily</c> is defined from the <c>AF_*</c> constants of the
+    /// platform, so the number of <c>AF_INET6</c> differs per operating system
+    /// while the hand written enumeration keeps the one of the gir.
+    /// </remarks>
+    [Fact]
+    public void AConvertedGioEnumerationCrossesThroughTheConverterOfTheRuntime()
+    {
+        Assert.Equal(
+            """
+            public void SetFamily(Gst.Gio.SocketFamily family)
+            {
+                GstConnectionSetFamily(Handle, Gst.Gio.SocketFamilyNative.ToNative(family));
+                System.GC.KeepAlive(this);
+            }
+            """,
+            Run.Member("Connection.cs", "public void SetFamily("),
+            StringComparer.Ordinal);
+
+        Assert.Equal(
+            """
+            public Gst.Gio.SocketFamily GetFamily()
+            {
+                int nativeResult = GstConnectionGetFamily(Handle);
+                System.GC.KeepAlive(this);
+                return Gst.Gio.SocketFamilyNative.FromNative(nativeResult);
+            }
+            """,
+            Run.Member("Connection.cs", "public Gst.Gio.SocketFamily GetFamily("),
+            StringComparer.Ordinal);
+
+        // The handler of a signal is handed the converted value too.
+        Assert.Contains(
+            "Gst.Gio.SocketFamily familyValue = Gst.Gio.SocketFamilyNative.FromNative(family);",
+            Run.File("Connection.cs"),
+            StringComparison.Ordinal);
     }
 
     /// <summary>

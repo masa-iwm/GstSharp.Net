@@ -219,6 +219,18 @@ internal sealed class MarshalPlanner
     private sealed record RuntimeHandle(string PublicType, HandleFlavor Flavor, bool BorrowedOnly = false);
 
     /// <summary>
+    /// One enumeration of the hand written runtime that a generated signature
+    /// may name; see <see cref="RuntimeEnums"/>.
+    /// </summary>
+    /// <param name="PublicType">The fully qualified C# type of the enumeration.</param>
+    /// <param name="Converter">
+    /// The fully qualified static class whose <c>ToNative</c> and
+    /// <c>FromNative</c> the emitters call instead of casting, or
+    /// <see langword="null"/> when the managed numbers are the native ones.
+    /// </param>
+    private sealed record RuntimeEnum(string PublicType, string? Converter = null);
+
+    /// <summary>
     /// The qualified name of <c>GParamSpec</c>, which is a fundamental type of
     /// its own rather than a <c>GObject</c> or a record, and is therefore
     /// recognised by name where a handle is planned.
@@ -300,10 +312,22 @@ internal sealed class MarshalPlanner
     /// gir. <c>Gio.TlsCertificateFlags</c>, whose largest member is 127, is
     /// <see langword="int"/> on both sides.
     /// </para>
+    /// <para>
+    /// An entry may name a converter instead, for an enumeration whose native
+    /// numbers are not the ones of the gir. <c>GSocketFamily</c> is defined from
+    /// the <c>AF_*</c> constants of the platform, so <c>AF_INET6</c> is 23 on
+    /// Windows, 10 on Linux and 30 on the Apple platforms; the hand written
+    /// enumeration keeps the numbers of the gir and the converter reconciles
+    /// them at the boundary. Where an entry has one, every conversion of the
+    /// emitters is a call of its <c>ToNative</c> or <c>FromNative</c> rather
+    /// than a cast, and the array element position, which converts nothing,
+    /// refuses the type instead.
+    /// </para>
     /// </remarks>
-    private static readonly Dictionary<string, string> RuntimeEnums = new(StringComparer.Ordinal)
+    private static readonly Dictionary<string, RuntimeEnum> RuntimeEnums = new(StringComparer.Ordinal)
     {
-        ["Gio.TlsCertificateFlags"] = "Gst.Gio.TlsCertificateFlags",
+        ["Gio.TlsCertificateFlags"] = new("Gst.Gio.TlsCertificateFlags"),
+        ["Gio.SocketFamily"] = new("Gst.Gio.SocketFamily", "Gst.Gio.SocketFamilyNative"),
     };
 
     /// <summary>
@@ -2292,7 +2316,7 @@ internal sealed class MarshalPlanner
                 // The hand written enumerations come first, exactly as they do
                 // for a handle: their module emits nothing, so IsEmitted rejects
                 // them although the runtime declares them.
-                if (!RuntimeEnums.TryGetValue(enumeration.QualifiedName, out string? runtimeEnum)
+                if (!RuntimeEnums.TryGetValue(enumeration.QualifiedName, out RuntimeEnum? runtimeEnum)
                     && !IsEmitted(enumeration))
                 {
                     return null;
@@ -2302,9 +2326,10 @@ internal sealed class MarshalPlanner
                 {
                     Kind = ArgumentKind.Enumeration,
                     Name = name,
-                    PublicType = runtimeEnum ?? mapped.PublicType,
+                    PublicType = runtimeEnum?.PublicType ?? mapped.PublicType,
                     RawType = mapped.RawType + pointerSuffix,
                     Direction = direction,
+                    EnumConverter = runtimeEnum?.Converter,
                 };
 
             case MarshalKind.Utf8String:
@@ -3022,10 +3047,13 @@ internal sealed class MarshalPlanner
 
         // The hand written enumerations come first, exactly as they do in
         // PlanScalar: their module emits nothing, so IsEmitted rejects them
-        // although the runtime declares them.
-        if (RuntimeEnums.TryGetValue(enumeration.QualifiedName, out string? runtimeEnum))
+        // although the runtime declares them. One that needs a converter is
+        // refused here instead: an array crosses as a block of memory that no
+        // conversion is applied to, so the numbers in it would be the managed
+        // ones where the platform expects its own.
+        if (RuntimeEnums.TryGetValue(enumeration.QualifiedName, out RuntimeEnum? runtimeEnum))
         {
-            return runtimeEnum;
+            return runtimeEnum.Converter is null ? runtimeEnum.PublicType : null;
         }
 
         return IsEmitted(enumeration) ? element.PublicType : null;
@@ -3442,6 +3470,7 @@ internal sealed class MarshalPlanner
             Transfer = transfer,
             IsNullable = nullable,
             Flavor = scalar.Flavor,
+            EnumConverter = scalar.EnumConverter,
             Doc = value.Doc,
         };
     }
@@ -3916,6 +3945,7 @@ internal sealed class MarshalPlanner
                     Direction = ArgumentDirection.In,
                     Transfer = argument.Transfer,
                     Flavor = argument.Flavor,
+                    EnumConverter = argument.EnumConverter,
                     IsNullable = argument.IsNullable,
                     Doc = parameter.Doc,
                 };
@@ -3984,6 +4014,7 @@ internal sealed class MarshalPlanner
                 Kind = scalar.Kind,
                 PublicType = scalar.PublicType,
                 RawType = scalar.RawType,
+                EnumConverter = scalar.EnumConverter,
                 Doc = callback.ReturnValue.Doc,
             };
         }
@@ -4071,10 +4102,20 @@ internal sealed class MarshalPlanner
         if (argument is null
             || argument.Kind is not (ArgumentKind.Value or ArgumentKind.Boolean or ArgumentKind.Enumeration
                 or ArgumentKind.Wrapper or ArgumentKind.Pointer or ArgumentKind.Utf8 or ArgumentKind.Handle
-                or ArgumentKind.GError))
+                or ArgumentKind.GError or ArgumentKind.PlainStruct))
         {
             return null;
         }
+
+        // A plain structure reaches a handler as the address of the storage the
+        // emitter holds: the marshaller of GObject passes a pointer for every
+        // structure it carries. The gir of a signal parameter states no c:type,
+        // so PlanScalar saw no star and planned the by value form; the raw type
+        // is restated here as the pointer the trampoline is really called with,
+        // and the emitter copies what is at it into the value the handler sees.
+        string rawType = argument.Kind == ArgumentKind.PlainStruct
+            ? argument.PublicType + "*"
+            : argument.RawType;
 
         return new ArgumentPlan
         {
@@ -4082,9 +4123,10 @@ internal sealed class MarshalPlanner
             Kind = argument.Kind,
             Name = argument.Name,
             PublicType = argument.PublicType,
-            RawType = argument.RawType,
+            RawType = rawType,
             Transfer = argument.Transfer,
             Flavor = argument.Flavor,
+            EnumConverter = argument.EnumConverter,
             IsNullable = argument.IsNullable,
             Doc = parameter.Doc,
         };
@@ -4177,6 +4219,7 @@ internal sealed class MarshalPlanner
             Transfer = scalar.Transfer,
             IsNullable = scalar.IsNullable,
             Flavor = scalar.Flavor,
+            EnumConverter = scalar.EnumConverter,
             Doc = value.Doc,
         };
     }
