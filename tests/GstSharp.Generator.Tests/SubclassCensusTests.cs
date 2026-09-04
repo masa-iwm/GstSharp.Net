@@ -33,8 +33,8 @@ public sealed class SubclassCensusTests
     [InlineData("Gst", 3, 17)]
     [InlineData("GstBase", 5, 81)]
     [InlineData("GstApp", 0, 0)]
-    [InlineData("GstAudio", 0, 0)]
-    [InlineData("GstVideo", 0, 0)]
+    [InlineData("GstAudio", 5, 20)]
+    [InlineData("GstVideo", 2, 3)]
     [InlineData("GstPbutils", 0, 0)]
     [InlineData("GstSdp", 0, 0)]
     [InlineData("GstWebRTC", 0, 0)]
@@ -56,16 +56,23 @@ public sealed class SubclassCensusTests
     }
 
     /// <summary>
-    /// The run as a whole: eight mirrors and ninety-eight slots, the numbers
-    /// the release notes and <c>docs/subclassing.md</c> quote.
+    /// The run as a whole: fifteen mirrors and a hundred and twenty-one slots,
+    /// the numbers the release notes and <c>docs/subclassing.md</c> quote.
     /// </summary>
     [Fact]
-    public void TheRunEmitsEightMirrorsAndNinetyEightSlots()
+    public void TheRunEmitsFifteenMirrorsAndAHundredAndTwentyOneSlots()
     {
         EmissionCensus census = Generated.Census;
+        int mirrors = 0;
+        int slots = 0;
+        foreach (string module in new[] { "Gst", "GstBase", "GstAudio", "GstVideo" })
+        {
+            mirrors += census.EmittedCount(module, "class struct");
+            slots += census.EmittedCount(module, "vfunc");
+        }
 
-        Assert.Equal(8, census.EmittedCount("Gst", "class struct") + census.EmittedCount("GstBase", "class struct"));
-        Assert.Equal(98, census.EmittedCount("Gst", "vfunc") + census.EmittedCount("GstBase", "vfunc"));
+        Assert.Equal(15, mirrors);
+        Assert.Equal(121, slots);
     }
 
     /// <summary>
@@ -110,6 +117,21 @@ public sealed class SubclassCensusTests
             },
             census.SkippedVirtuals("GstBase"));
 
-        Assert.Equal(11, census.SkippedVirtualCount());
+        Assert.Equal(
+            new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                ["GstAudio.AudioFilter::setup"] = Boxed,
+            },
+            census.SkippedVirtuals("GstAudio"));
+
+        Assert.Equal(
+            new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                ["GstVideo.VideoFilter::set_info"] = Boxed,
+                ["GstVideo.VideoSink::set_info"] = Boxed,
+            },
+            census.SkippedVirtuals("GstVideo"));
+
+        Assert.Equal(14, census.SkippedVirtualCount());
     }
 }

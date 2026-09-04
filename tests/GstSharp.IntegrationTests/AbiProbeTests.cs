@@ -48,6 +48,8 @@ public sealed class AbiProbeTests
     [
         Gst.ClassStructRegistry.CreateEntries,
         Gst.Base.ClassStructRegistry.CreateEntries,
+        Gst.Audio.ClassStructRegistry.CreateEntries,
+        Gst.Video.ClassStructRegistry.CreateEntries,
     ];
 
     /// <summary>
@@ -1929,6 +1931,56 @@ public sealed class AbiProbeTests
 
         Assert.NotEqual(nint.Zero, concrete->Aggregate);
         Assert.NotEqual(nint.Zero, concrete->SinkQuery);
+    }
+
+    /// <summary>
+    /// The <c>write</c> slot of a real audio sink is where the mirror says it
+    /// is. It is the slot a managed audio sink has to declare, because the
+    /// thread of the ring buffer answers a NULL one by stopping; <c>alsasink</c>
+    /// is a <c>GstAudioSink</c> and installs it, and the class is read without
+    /// the element ever leaving the NULL state, so no device is opened.
+    /// </summary>
+    [RequiresElementFact("alsasink")]
+    public unsafe void TheWriteSlotOfAnAudioSinkHoldsWhatTheLibraryPutThere()
+    {
+        using Element sink = ElementFactory.Make("alsasink", null)
+            ?? throw new InvalidOperationException("alsasink is required by the CI leg that runs this.");
+
+        Gst.Audio.AudioSinkClassRaw* concrete = (Gst.Audio.AudioSinkClassRaw*)ClassOf(sink);
+
+        _output.WriteLine(string.Create(
+            CultureInfo.InvariantCulture,
+            $"alsasink: open=0x{concrete->Open:x} write=0x{concrete->Write:x} extension=0x{concrete->Extension:x}"));
+
+        Assert.NotEqual(nint.Zero, concrete->Open);
+        Assert.NotEqual(nint.Zero, concrete->Write);
+
+        // The last field of GstAudioSinkClass is no reserved array but a
+        // pointer the base class initialiser fills, which is only where the
+        // mirror says it is when every slot before it is too.
+        Assert.NotEqual(nint.Zero, concrete->Extension);
+    }
+
+    /// <summary>
+    /// The <c>transform_frame</c> slot of a real video filter is where the
+    /// mirror says it is. <c>videoconvert</c> converts out of place, so it
+    /// installs the slot a managed video filter declares with
+    /// <c>TransformFrameOverride</c>.
+    /// </summary>
+    [RequiresElementFact("videoconvert")]
+    public unsafe void TheTransformFrameSlotOfAVideoFilterHoldsWhatTheLibraryPutThere()
+    {
+        using Element filter = ElementFactory.Make("videoconvert", null)
+            ?? throw new InvalidOperationException("videoconvert is part of the base plugins.");
+
+        Gst.Video.VideoFilterClassRaw* concrete = (Gst.Video.VideoFilterClassRaw*)ClassOf(filter);
+
+        _output.WriteLine(string.Create(
+            CultureInfo.InvariantCulture,
+            $"videoconvert: set_info=0x{concrete->SetInfo:x} transform_frame=0x{concrete->TransformFrame:x}"));
+
+        Assert.NotEqual(nint.Zero, concrete->SetInfo);
+        Assert.NotEqual(nint.Zero, concrete->TransformFrame);
     }
 
     private static unsafe nint ClassOf(Gst.GObject.Object instance) => *(nint*)instance.Handle;

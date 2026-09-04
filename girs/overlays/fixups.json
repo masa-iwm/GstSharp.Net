@@ -646,11 +646,18 @@
   "subclassable": [
     "Gst.Bin",
     "Gst.Element",
+    "GstAudio.AudioBaseSink",
+    "GstAudio.AudioBaseSrc",
+    "GstAudio.AudioFilter",
+    "GstAudio.AudioSink",
+    "GstAudio.AudioSrc",
     "GstBase.Aggregator",
     "GstBase.BaseSink",
     "GstBase.BaseSrc",
     "GstBase.BaseTransform",
-    "GstBase.PushSrc"
+    "GstBase.PushSrc",
+    "GstVideo.VideoFilter",
+    "GstVideo.VideoSink"
   ],
   "$comment-skip-virtuals": "The slots of a subclassable class that carry no managed surface, with the reason the skip ledger prints. The mirror still lays every one of them out - a class struct is an ABI and not a menu - so what is removed is the OnX member, its chain-up and its trampoline. A slot the planner cannot project is not listed here: it is reported by the run as UnsupportedSignature, so a shape that becomes bindable stops being skipped without anybody editing this file.",
   "skipVirtuals": {
@@ -667,6 +674,19 @@
   "vfuncDefaults": {
     "Gst.Element::provide_clock": "nint.Zero",
     "Gst.Element::request_new_pad": "nint.Zero",
+    "GstAudio.AudioBaseSink::create_ringbuffer": "nint.Zero",
+    "GstAudio.AudioBaseSink::payload": "{\n// Payloading is what a sink does to data a device wants in another\n// shape, and there is nothing below the override that wants one: the\n// buffer is answered as it arrived, with the reference its caller takes\n// over. That is what gst_audio_base_sink_render does for a NULL slot -\n// it renders the buffer it already holds - and the gir says the same in\n// so many words: a reffed copy of the original buffer.\nreturn Gst.GstNative.MiniObjectRef(buffer);\n}",
+    "GstAudio.AudioBaseSrc::create_ringbuffer": "nint.Zero",
+    "GstAudio.AudioSink::close": "true",
+    "GstAudio.AudioSink::delay": "0u",
+    "GstAudio.AudioSink::open": "true",
+    "GstAudio.AudioSink::prepare": "true",
+    "GstAudio.AudioSink::unprepare": "true",
+    "GstAudio.AudioSrc::close": "true",
+    "GstAudio.AudioSrc::delay": "0u",
+    "GstAudio.AudioSrc::open": "true",
+    "GstAudio.AudioSrc::prepare": "true",
+    "GstAudio.AudioSrc::unprepare": "true",
     "GstBase.Aggregator::clip": "{\n// Nothing below the override clips, so the buffer is handed back as it\n// arrived, carrying the reference the caller gave up.\nreturn buf;\n}",
     "GstBase.Aggregator::decide_allocation": "true",
     "GstBase.Aggregator::flush": "Gst.FlowReturn.Ok",
@@ -701,7 +721,10 @@
     "GstBase.BaseTransform::transform_ip": "Gst.FlowReturn.Ok",
     "GstBase.PushSrc::alloc": "{\n// gst_push_src_alloc falls back to gst_base_src_default_alloc, the pooled\n// allocation, when the GstPushSrcClass slot is NULL. No class of the library\n// sets that slot, so the chain-up has to reach that implementation itself.\nreturn Gst.Base.BaseSrcDefaults.Alloc(src, buf);\n}",
     "GstBase.PushSrc::create": "Gst.FlowReturn.NotSupported",
-    "GstBase.PushSrc::fill": "Gst.FlowReturn.NotSupported"
+    "GstBase.PushSrc::fill": "Gst.FlowReturn.NotSupported",
+    "GstVideo.VideoFilter::transform_frame": "Gst.FlowReturn.Ok",
+    "GstVideo.VideoFilter::transform_frame_ip": "Gst.FlowReturn.Ok",
+    "GstVideo.VideoSink::show_frame": "Gst.FlowReturn.Ok"
   },
   "$comment-vfunc-doc-notes": "The part of the contract of a slot that neither the gir nor its marshalling states, as one sentence per slot appended to the remarks of the generated OnX and ChainUpX members. What belongs here is what a reader would otherwise have to read the C implementation to learn.",
   "vfuncDocNotes": {
@@ -711,6 +734,11 @@
     "GstBase.BaseSrc::create": "The buffer may be one downstream provided for the source to fill, in which case answering that very buffer is what filling it in place looks like.",
     "GstBase.BaseTransform::prepare_output_buffer": "Answering the input buffer is what an in place transform does, and the base implementation does exactly that whenever the input is writable.",
     "GstBase.BaseTransform::submit_input_buffer": "An override that does not chain up must fill queued_buf itself or generate_output has nothing to produce.",
+    "GstAudio.AudioBaseSink::create_ringbuffer": "The ring buffer is answered floating: the sink parents it and becomes its only owner, which is why the answer is not referenced on the way out. Keep no reference of your own to it - read it back from the element instead.",
+    "GstAudio.AudioBaseSink::payload": "Answering nothing fails the render: the sink posts an error on the bus and drops the buffer, so a sink with nothing to payload answers the buffer it was given.",
+    "GstAudio.AudioBaseSrc::create_ringbuffer": "The ring buffer is answered floating: the source parents it and becomes its only owner, which is why the answer is not referenced on the way out. Keep no reference of your own to it - read it back from the element instead.",
+    "GstAudio.AudioSink::write": "This runs on the thread of the ring buffer and is allowed to block until the whole block is written; pause, stop and reset have to unblock it. Answer the number of bytes written, which the base class subtracts before calling again, and a negative number for an error - answering zero while the ring buffer is started makes it call again with the same block.",
+    "GstAudio.AudioSrc::read": "This runs on the thread of the ring buffer. Answer the number of bytes read into the block, and leave the timestamp at Gst.ClockTime.None unless the device gives one.",
     "GstBase.PushSrc::create": "Answering Ok without a buffer is not a way to produce nothing: the base class posts an element error on the bus for a NULL buffer, so a source with nothing to hand out answers a flow result that says so - Eos, Flushing or an error."
   },
   "$comment-vfunc-non-null-returns": "The slots whose caller dereferences the answer without checking it for NULL, with the value the trampoline answers when the managed override answered none. gst_base_transform_fixate_caps and gst_aggregator_default_update_src_caps both hand the answer straight to gst_caps_is_fixed / gst_pad_set_caps, and the aggregator has already consumed the input by then, so a NULL would be a crash or a lost buffer rather than a failed negotiation. The managed member therefore answers a non nullable type, and an override that answers null anyway is reported through the exception trap while the slot answers empty caps, on which negotiation fails cleanly.",
@@ -722,5 +750,14 @@
   "vfuncIdentityBuffers": [
     "GstBase.BaseSrc::create#buf",
     "GstBase.BaseTransform::prepare_output_buffer#outbuf"
-  ]
+  ],
+  "$comment-vfunc-spans": "The blocks a slot only reads, which the projection cannot tell from the ones it writes: the gir counts both by the parameter beside them and spells both as a gpointer, and a gpointer carries no constness. A block listed here becomes a ReadOnlySpan and every other one a Span. gst_audio_sink_ring_buffer_thread reads the samples out of the block it hands to write (gstaudiosink.c:247), while gst_audio_src_ring_buffer_thread expects read to fill the one it hands over (gstaudiosrc.c:223).",
+  "vfuncSpans": [
+    "GstAudio.AudioSink::write#data"
+  ],
+  "$comment-vfunc-failure-values": "What a trampoline answers when the exception trap caught an override, for the slots whose caller reads something other than a failure into the zero of the return type. The ring buffer thread of an audio sink calls write again with the same block when it answered zero and the ring buffer is started (gstaudiosink.c:257-259), and the one of an audio source loops on a read that answered zero as long as the source runs (gstaudiosrc.c:234); both treat a negative count as the error it is, which for the unsigned answer of read is the whole range of the type.",
+  "vfuncFailureValues": {
+    "GstAudio.AudioSink::write": "-1",
+    "GstAudio.AudioSrc::read": "uint.MaxValue"
+  }
 }

@@ -38,6 +38,27 @@ internal sealed class VfuncEmitter
             ["GstBase.BaseSink"] = new(["sink"], null),
             ["GstBase.BaseTransform"] = new(["sink", "src"], null),
             ["GstBase.Aggregator"] = new(["src"], "aggregate"),
+            ["GstAudio.AudioBaseSink"] = new(
+                ["sink"],
+                "create_ringbuffer",
+                "without a ring buffer the element cannot leave the NULL state"),
+            ["GstAudio.AudioBaseSrc"] = new(
+                ["src"],
+                "create_ringbuffer",
+                "without a ring buffer the element cannot leave the NULL state"),
+            ["GstAudio.AudioSink"] = new(
+                ["sink"],
+                "write",
+                "the thread of the ring buffer stops before it starts when the slot is NULL, "
+                + "and the element plays nothing without saying why"),
+            ["GstAudio.AudioSrc"] = new(
+                ["src"],
+                "read",
+                "the thread of the ring buffer stops before it starts when the slot is NULL, "
+                + "and the element produces nothing without saying why"),
+            ["GstAudio.AudioFilter"] = new(["sink", "src"], null),
+            ["GstVideo.VideoSink"] = new(["sink"], null),
+            ["GstVideo.VideoFilter"] = new(["sink", "src"], null),
         };
 
     /// <summary>
@@ -392,8 +413,8 @@ internal sealed class VfuncEmitter
             writer.OpenBlock();
             writer.WriteLine("throw new ArgumentException(");
             writer.WriteLine(
-                "    \"A managed " + cName + " has to declare " + required
-                + "Override: the base class calls the slot unguarded.\",");
+                "    \"A managed " + cName + " has to declare " + required + "Override: "
+                + (rule!.RequiredReason ?? "the base class calls the slot unguarded") + ".\",");
             writer.WriteLine("    nameof(overrides));");
             writer.CloseBlock();
         }
@@ -1306,6 +1327,11 @@ internal sealed class VfuncEmitter
         List<string> parts = [];
         foreach (VfuncArgument argument in plan.Arguments)
         {
+            if (argument.Bucket == VfuncBucket.SpanCount)
+            {
+                continue;
+            }
+
             parts.Add(Modifier(argument) + argument.Argument.Name);
         }
 
@@ -1560,5 +1586,13 @@ internal sealed class VfuncEmitter
     /// The gir name of the slot a subclass has to declare, or
     /// <see langword="null"/> when every slot has a documented default.
     /// </param>
-    private sealed record SubclassBaseRule(IReadOnlyList<string> PadTemplates, string? RequiredOverride);
+    /// <param name="RequiredReason">
+    /// Why the slot has to be declared, as the sentence the registration throws
+    /// with. It says "the base class calls the slot unguarded" when it is not
+    /// given, which is the reason a required slot usually has.
+    /// </param>
+    private sealed record SubclassBaseRule(
+        IReadOnlyList<string> PadTemplates,
+        string? RequiredOverride,
+        string? RequiredReason = null);
 }

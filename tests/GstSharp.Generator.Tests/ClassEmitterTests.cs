@@ -484,7 +484,7 @@ public sealed class ClassEmitterTests
         // Seven more since the subclassing surface landed: the `*.Subclass.cs`
         // partial of each allowlisted class opens with the same
         // `public unsafe partial class` the counting keys on.
-        Assert.Equal(197, classes);
+        Assert.Equal(204, classes);
 
         // 127 rather than 123 since the field accessors of a string and of a
         // handle landed: GstSdp.SDPKey, GstSdp.SDPOrigin and
