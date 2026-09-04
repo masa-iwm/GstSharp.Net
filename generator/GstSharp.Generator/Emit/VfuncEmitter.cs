@@ -53,6 +53,19 @@ internal sealed class VfuncEmitter
             ["Gst.ClockReturn"] = "Gst.ClockReturn.Error",
         };
 
+    /// <summary>
+    /// The value a chain-up leaves in an <c>out</c> parameter when the parent
+    /// class left the slot NULL, for the types whose zero means something else
+    /// than "no value". A C caller pre-sets the storage to this before it
+    /// checks the slot, so a chain-up that wrote the zero of the type would say
+    /// "timestamp 0" where C says "no timestamp".
+    /// </summary>
+    private static readonly Dictionary<string, string> NoValues =
+        new(StringComparer.Ordinal)
+        {
+            ["Gst.ClockTime"] = "Gst.ClockTime.None",
+        };
+
     private readonly Dictionary<string, HashSet<string>> _emittedSlots;
     private readonly MarshalPlanner _planner;
     private readonly EmissionCensus _census;
@@ -680,6 +693,53 @@ internal sealed class VfuncEmitter
         writer.WriteLine();
         writer.WriteLine("if (slot is null)");
         writer.OpenBlock();
+        WriteNullSlotBranch(writer, plan, model);
+        writer.CloseBlock();
+        writer.WriteLine();
+        string call = "slot(" + string.Join(", ", arguments) + ")";
+        if (plan.Return.IsVoid)
+        {
+            writer.WriteLine(call + ";");
+        }
+        else
+        {
+            writer.WriteLine("return " + (raw ? call : FromNativeReturn(plan, call)) + ";");
+        }
+
+        writer.CloseBlock();
+    }
+
+    /// <summary>
+    /// Writes what a chain-up does when the parent class left the slot NULL,
+    /// which is the behaviour the base class documents for that case.
+    /// </summary>
+    /// <param name="writer">Where the branch is written.</param>
+    /// <param name="plan">The slot being written.</param>
+    /// <param name="model">The class struct of the class.</param>
+    /// <remarks>
+    /// An overlay default that opens with <c>{</c> is a statement block the
+    /// branch consists of, written out verbatim: a slot that hands one of its
+    /// arguments back, or that fills its <c>out</c> parameters with something
+    /// the emitter cannot derive, says so itself. Everything else is an
+    /// expression the branch answers after it has released what it was handed.
+    /// </remarks>
+    private static void WriteNullSlotBranch(CodeWriter writer, VirtualMethodPlan plan, ClassStructModel model)
+    {
+        if (plan.NullSlotDefault is { } block && block.TrimStart().StartsWith('{'))
+        {
+            string body = block.Trim();
+            body = body[1..^1].Replace("\r", string.Empty, StringComparison.Ordinal);
+            foreach (string line in body.Split('\n'))
+            {
+                string text = line.Trim();
+                if (text.Length > 0)
+                {
+                    writer.WriteLine(text);
+                }
+            }
+
+            return;
+        }
 
         // The reference a consuming slot would have taken over is released
         // here: nothing below the managed override exists to take it.
@@ -693,9 +753,19 @@ internal sealed class VfuncEmitter
 
         foreach (VfuncArgument argument in plan.Arguments)
         {
-            if (argument.Bucket is VfuncBucket.OutScalar or VfuncBucket.OutHandle)
+            if (argument.Bucket == VfuncBucket.OutHandle)
             {
                 writer.WriteLine("*" + argument.Argument.Name + " = default;");
+            }
+            else if (argument.Bucket == VfuncBucket.OutScalar)
+            {
+                ArgumentPlan value = argument.Argument;
+                writer.WriteLine(
+                    "*" + value.Name + " = "
+                    + (NoValues.TryGetValue(Bare(value.PublicType), out string? none)
+                        ? ToNativeScalar(value, none)
+                        : "default")
+                    + ";");
             }
         }
 
@@ -714,20 +784,6 @@ internal sealed class VfuncEmitter
                 "    \"" + model.Owner.Name + "." + plan.Method.Name
                 + " has no parent implementation; override On" + plan.Name + ".\");");
         }
-
-        writer.CloseBlock();
-        writer.WriteLine();
-        string call = "slot(" + string.Join(", ", arguments) + ")";
-        if (plan.Return.IsVoid)
-        {
-            writer.WriteLine(call + ";");
-        }
-        else
-        {
-            writer.WriteLine("return " + (raw ? call : FromNativeReturn(plan, call)) + ";");
-        }
-
-        writer.CloseBlock();
     }
 
     private static void WriteParentClassOf(CodeWriter writer, string mirror, string cName)

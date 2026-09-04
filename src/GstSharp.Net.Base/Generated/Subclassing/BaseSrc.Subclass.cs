@@ -626,8 +626,8 @@ public unsafe partial class BaseSrc
 
         if (slot is null)
         {
-            *start = default;
-            *end = default;
+            *start = Gst.ClockTime.None.Nanoseconds;
+            *end = Gst.ClockTime.None.Nanoseconds;
             return;
         }
 
@@ -642,8 +642,7 @@ public unsafe partial class BaseSrc
         if (slot is null)
         {
             *size = default;
-            throw new InvalidOperationException(
-                "BaseSrc.get_size has no parent implementation; override OnGetSize.");
+            return false;
         }
 
         return slot(src, size) != 0;
@@ -669,8 +668,7 @@ public unsafe partial class BaseSrc
 
         if (slot is null)
         {
-            throw new InvalidOperationException(
-                "BaseSrc.unlock has no parent implementation; override OnUnlock.");
+            return true;
         }
 
         return slot(src) != 0;
@@ -683,8 +681,7 @@ public unsafe partial class BaseSrc
 
         if (slot is null)
         {
-            throw new InvalidOperationException(
-                "BaseSrc.unlock_stop has no parent implementation; override OnUnlockStop.");
+            return true;
         }
 
         return slot(src) != 0;
@@ -754,8 +751,7 @@ public unsafe partial class BaseSrc
 
         if (slot is null)
         {
-            throw new InvalidOperationException(
-                "BaseSrc.fill has no parent implementation; override OnFill.");
+            return Gst.FlowReturn.NotSupported;
         }
 
         return (Gst.FlowReturn)slot(src, offset, size, buf);

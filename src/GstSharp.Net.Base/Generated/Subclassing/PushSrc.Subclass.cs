@@ -153,8 +153,7 @@ public unsafe partial class PushSrc
         if (slot is null)
         {
             *buf = default;
-            throw new InvalidOperationException(
-                "PushSrc.alloc has no parent implementation; override OnAlloc.");
+            return Gst.FlowReturn.NotSupported;
         }
 
         return (Gst.FlowReturn)slot(src, buf);
@@ -167,8 +166,7 @@ public unsafe partial class PushSrc
 
         if (slot is null)
         {
-            throw new InvalidOperationException(
-                "PushSrc.fill has no parent implementation; override OnFill.");
+            return Gst.FlowReturn.NotSupported;
         }
 
         return (Gst.FlowReturn)slot(src, buf);

@@ -703,8 +703,7 @@ public unsafe partial class Aggregator
 
         if (slot is null)
         {
-            throw new InvalidOperationException(
-                "Aggregator.flush has no parent implementation; override OnFlush.");
+            return Gst.FlowReturn.Ok;
         }
 
         return (Gst.FlowReturn)slot(aggregator);
@@ -717,9 +716,9 @@ public unsafe partial class Aggregator
 
         if (slot is null)
         {
-            Gst.GstNative.MiniObjectUnref(buf);
-            throw new InvalidOperationException(
-                "Aggregator.clip has no parent implementation; override OnClip.");
+            // Nothing below the override clips, so the buffer is handed back as it
+            // arrived, carrying the reference the caller gave up.
+            return buf;
         }
 
         return slot(aggregator, aggregatorPad, buf);
@@ -805,8 +804,7 @@ public unsafe partial class Aggregator
 
         if (slot is null)
         {
-            throw new InvalidOperationException(
-                "Aggregator.src_activate has no parent implementation; override OnSrcActivate.");
+            return true;
         }
 
         return slot(aggregator, mode, active) != 0;
@@ -833,8 +831,7 @@ public unsafe partial class Aggregator
 
         if (slot is null)
         {
-            throw new InvalidOperationException(
-                "Aggregator.stop has no parent implementation; override OnStop.");
+            return true;
         }
 
         return slot(aggregator) != 0;
@@ -847,8 +844,7 @@ public unsafe partial class Aggregator
 
         if (slot is null)
         {
-            throw new InvalidOperationException(
-                "Aggregator.start has no parent implementation; override OnStart.");
+            return true;
         }
 
         return slot(aggregator) != 0;
@@ -861,8 +857,7 @@ public unsafe partial class Aggregator
 
         if (slot is null)
         {
-            throw new InvalidOperationException(
-                "Aggregator.get_next_time has no parent implementation; override OnGetNextTime.");
+            return Gst.ClockTime.None;
         }
 
         return new Gst.ClockTime(slot(aggregator));
@@ -919,8 +914,7 @@ public unsafe partial class Aggregator
 
         if (slot is null)
         {
-            throw new InvalidOperationException(
-                "Aggregator.decide_allocation has no parent implementation; override OnDecideAllocation.");
+            return true;
         }
 
         return slot(self, query) != 0;
@@ -933,8 +927,7 @@ public unsafe partial class Aggregator
 
         if (slot is null)
         {
-            throw new InvalidOperationException(
-                "Aggregator.propose_allocation has no parent implementation; override OnProposeAllocation.");
+            return false;
         }
 
         return slot(self, pad, decideQuery, query) != 0;
@@ -1005,8 +998,7 @@ public unsafe partial class Aggregator
 
         if (slot is null)
         {
-            throw new InvalidOperationException(
-                "Aggregator.peek_next_sample has no parent implementation; override OnPeekNextSample.");
+            return nint.Zero;
         }
 
         return slot(aggregator, aggregatorPad);

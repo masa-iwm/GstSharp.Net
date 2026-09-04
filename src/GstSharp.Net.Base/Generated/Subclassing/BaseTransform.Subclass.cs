@@ -881,8 +881,7 @@ public unsafe partial class BaseTransform
 
         if (slot is null)
         {
-            throw new InvalidOperationException(
-                "BaseTransform.transform has no parent implementation; override OnTransform.");
+            return Gst.FlowReturn.NotSupported;
         }
 
         return (Gst.FlowReturn)slot(trans, inbuf, outbuf);

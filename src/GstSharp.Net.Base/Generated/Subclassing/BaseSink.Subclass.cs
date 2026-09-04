@@ -605,8 +605,8 @@ public unsafe partial class BaseSink
 
         if (slot is null)
         {
-            *start = default;
-            *end = default;
+            *start = Gst.ClockTime.None.Nanoseconds;
+            *end = Gst.ClockTime.None.Nanoseconds;
             return;
         }
 
@@ -620,8 +620,7 @@ public unsafe partial class BaseSink
 
         if (slot is null)
         {
-            throw new InvalidOperationException(
-                "BaseSink.propose_allocation has no parent implementation; override OnProposeAllocation.");
+            return false;
         }
 
         return slot(sink, query) != 0;
@@ -660,8 +659,7 @@ public unsafe partial class BaseSink
 
         if (slot is null)
         {
-            throw new InvalidOperationException(
-                "BaseSink.unlock has no parent implementation; override OnUnlock.");
+            return true;
         }
 
         return slot(sink) != 0;
@@ -674,8 +672,7 @@ public unsafe partial class BaseSink
 
         if (slot is null)
         {
-            throw new InvalidOperationException(
-                "BaseSink.unlock_stop has no parent implementation; override OnUnlockStop.");
+            return true;
         }
 
         return slot(sink) != 0;
@@ -731,8 +728,7 @@ public unsafe partial class BaseSink
 
         if (slot is null)
         {
-            throw new InvalidOperationException(
-                "BaseSink.prepare has no parent implementation; override OnPrepare.");
+            return Gst.FlowReturn.Ok;
         }
 
         return (Gst.FlowReturn)slot(sink, buffer);
@@ -745,8 +741,7 @@ public unsafe partial class BaseSink
 
         if (slot is null)
         {
-            throw new InvalidOperationException(
-                "BaseSink.prepare_list has no parent implementation; override OnPrepareList.");
+            return Gst.FlowReturn.Ok;
         }
 
         return (Gst.FlowReturn)slot(sink, bufferList);

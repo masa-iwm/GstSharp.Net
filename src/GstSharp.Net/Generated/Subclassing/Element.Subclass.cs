@@ -402,8 +402,7 @@ public unsafe partial class Element
 
         if (slot is null)
         {
-            throw new InvalidOperationException(
-                "Element.request_new_pad has no parent implementation; override OnRequestNewPad.");
+            return nint.Zero;
         }
 
         return slot(element, templ, name, caps);
@@ -499,8 +498,7 @@ public unsafe partial class Element
 
         if (slot is null)
         {
-            throw new InvalidOperationException(
-                "Element.provide_clock has no parent implementation; override OnProvideClock.");
+            return nint.Zero;
         }
 
         return slot(element);

@@ -148,14 +148,58 @@ public sealed unsafe class SubclassBufferOwnershipTests
     }
 
     /// <summary>
-    /// A slot that is declared but not overridden fails loudly. The default
-    /// <c>On</c> chains up, the parent class left the slot empty, and the
+    /// A slot the base class calls unguarded has no default a chain-up could
+    /// invent, so declaring it without overriding it fails loudly.
+    /// <c>get_unit_size</c> is one: <c>gst_base_transform_transform_size</c>
+    /// reads it with no NULL check. The default <c>On</c> chains up, the parent
+    /// class left the slot empty, and the
     /// <see cref="InvalidOperationException"/> that says so is reported through
-    /// <see cref="ExceptionTrap"/> and answered with
-    /// <see cref="FlowReturn.Error"/> — never with a silent success.
+    /// <see cref="ExceptionTrap"/> and answered with the failure value — never
+    /// with a silent success.
     /// </summary>
     [Fact]
     public void ADeclaredSlotWithNoOverrideBehindItFailsThroughTheTrap()
+    {
+        using ProbeUnimplementedTransform transform = new();
+        using Caps caps = Caps.NewAny();
+
+        List<Exception> reported = [];
+        void Collect(Exception exception) => reported.Add(exception);
+
+        int answered;
+        nuint size = 12345;
+        ExceptionTrap.UnhandledException += Collect;
+        try
+        {
+            Gst.Base.BaseTransformClassRaw* klass = (Gst.Base.BaseTransformClassRaw*)ClassOf(transform);
+            Assert.NotEqual(nint.Zero, klass->GetUnitSize);
+
+            answered = ((delegate* unmanaged[Cdecl]<nint, nint, nuint*, int>)klass->GetUnitSize)(
+                transform.Handle, caps.Handle, &size);
+        }
+        finally
+        {
+            ExceptionTrap.UnhandledException -= Collect;
+        }
+
+        _output.WriteLine($"answered={answered}, reported={reported.Count}");
+
+        Assert.Equal(0, answered);
+        Exception failure = Assert.Single(reported);
+        _output.WriteLine(failure.Message);
+        Assert.IsType<InvalidOperationException>(failure);
+        Assert.Contains("OnGetUnitSize", failure.Message, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// A slot the base class guards answers what the base class answers in its
+    /// place. <c>transform</c> is one: <c>gst_base_transform_default_generate_output</c>
+    /// answers <see cref="FlowReturn.NotSupported"/> when the slot is NULL, so
+    /// a chain-up that reaches no implementation answers the same rather than
+    /// throwing, and the buffers it was lent are untouched.
+    /// </summary>
+    [Fact]
+    public void AGuardedSlotWithNoOverrideBehindItAnswersTheDocumentedDefault()
     {
         using ProbeUnimplementedTransform transform = new();
 
@@ -182,11 +226,8 @@ public sealed unsafe class SubclassBufferOwnershipTests
 
         _output.WriteLine($"flow={flow}, reported={reported.Count}");
 
-        Assert.Equal(FlowReturn.Error, flow);
-        Exception failure = Assert.Single(reported);
-        _output.WriteLine(failure.Message);
-        Assert.IsType<InvalidOperationException>(failure);
-        Assert.Contains("OnTransform", failure.Message, StringComparison.Ordinal);
+        Assert.Equal(FlowReturn.NotSupported, flow);
+        Assert.Empty(reported);
 
         // The borrowed wrappers released nothing on the way out.
         Assert.Equal(1, Refcount(input));
@@ -338,7 +379,8 @@ internal sealed class ProbeUnimplementedTransform : BaseTransform
             config.AddPadTemplate(SinkTemplate);
             config.AddPadTemplate(SrcTemplate);
         },
-        TransformOverride);
+        TransformOverride,
+        GetUnitSizeOverride);
 
     /// <summary>Creates a managed filter.</summary>
     internal ProbeUnimplementedTransform()
