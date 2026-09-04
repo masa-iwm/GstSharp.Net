@@ -653,7 +653,9 @@ internal static class SignalEmitter
         return argument.Kind switch
         {
             ArgumentKind.Boolean => argument.Name + " != 0",
-            ArgumentKind.Enumeration => "(" + type + ")" + argument.Name,
+            ArgumentKind.Enumeration => argument.EnumConverter is { } fromNative
+                ? fromNative + ".FromNative(" + argument.Name + ")"
+                : "(" + type + ")" + argument.Name,
             ArgumentKind.Wrapper => "new " + type + "(" + argument.Name + ")",
 
             // A plain structure arrives as the address of storage the emitter
@@ -689,7 +691,9 @@ internal static class SignalEmitter
     private static string ToNative(ReturnPlan value, string source) => value.Kind switch
     {
         ArgumentKind.Boolean => source + " ? 1 : 0",
-        ArgumentKind.Enumeration => "(" + value.RawType + ")" + source,
+        ArgumentKind.Enumeration => value.EnumConverter is { } toNative
+            ? toNative + ".ToNative(" + source + ")"
+            : "(" + value.RawType + ")" + source,
         ArgumentKind.Handle => source + " is null ? 0 : Gst.Interop.GObjectNative.ObjectRef("
             + source + ".Handle)",
 

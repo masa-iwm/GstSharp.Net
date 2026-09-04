@@ -996,7 +996,7 @@ disappears shows up here as an added line.
 - `gst_rtsp_permissions_add_role`
 - `gst_rtsp_token_new`
 
-### UnsupportedSignature (25)
+### UnsupportedSignature (17)
 
 - `GstRtspServer.RTSPClient::check-requirements`
 - `gst_rtsp_auth_get_tls_authentication_mode`
@@ -1011,14 +1011,6 @@ disappears shows up here as an added line.
 - `gst_rtsp_session_media_set_transport`
 - `gst_rtsp_session_next_timeout`
 - `gst_rtsp_session_pool_create_watch`
-- `gst_rtsp_stream_add_multicast_client_address`
-- `gst_rtsp_stream_allocate_udp_sockets`
-- `gst_rtsp_stream_get_multicast_address`
-- `gst_rtsp_stream_get_rtcp_multicast_socket`
-- `gst_rtsp_stream_get_rtcp_socket`
-- `gst_rtsp_stream_get_rtp_multicast_socket`
-- `gst_rtsp_stream_get_rtp_socket`
-- `gst_rtsp_stream_get_server_port`
 - `gst_rtsp_stream_transport_new`
 - `gst_rtsp_stream_transport_set_callbacks`
 - `gst_rtsp_stream_transport_set_list_callbacks`

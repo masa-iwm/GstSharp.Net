@@ -369,6 +369,14 @@ internal sealed class ArgumentPlan
     internal HandleFlavor Flavor { get; init; }
 
     /// <summary>
+    /// Gets the static class whose <c>ToNative</c> and <c>FromNative</c> convert
+    /// an <see cref="ArgumentKind.Enumeration"/> whose native numbers are not
+    /// the ones of the gir. <see langword="null"/> when the value crosses as a
+    /// cast, which is every enumeration but the ones the runtime translates.
+    /// </summary>
+    internal string? EnumConverter { get; init; }
+
+    /// <summary>
     /// Gets what a <see cref="ArgumentKind.ConsumedHandle"/> argument hands the
     /// call: a reference for a mini object or a GObject, a copy for a boxed
     /// value. <see cref="ConsumedFamily.None"/> for every other kind.
@@ -481,6 +489,13 @@ internal sealed class ReturnPlan
 
     /// <summary>Gets the wrapper flavour of a handle.</summary>
     internal HandleFlavor Flavor { get; init; }
+
+    /// <summary>
+    /// Gets the static class whose <c>ToNative</c> and <c>FromNative</c> convert
+    /// an <see cref="ArgumentKind.Enumeration"/> whose native numbers are not
+    /// the ones of the gir; see <see cref="ArgumentPlan.EnumConverter"/>.
+    /// </summary>
+    internal string? EnumConverter { get; init; }
 
     /// <summary>Gets the element type of an array, on the public surface.</summary>
     internal string? ElementType { get; init; }

@@ -2829,7 +2829,9 @@ internal static class CallableRenderer
     private static string ToNative(ArgumentPlan argument, string name) => argument.Kind switch
     {
         ArgumentKind.Boolean => name + " ? 1 : 0",
-        ArgumentKind.Enumeration => "(" + Pointee(argument.RawType) + ")" + name,
+        ArgumentKind.Enumeration => argument.EnumConverter is { } toNative
+            ? toNative + ".ToNative(" + name + ")"
+            : "(" + Pointee(argument.RawType) + ")" + name,
         ArgumentKind.Wrapper => name + "." + WrapperConversion(argument.PublicType),
         _ => name,
     };
@@ -2841,7 +2843,9 @@ internal static class CallableRenderer
     private static string FromNative(ArgumentPlan argument, string source) => argument.Kind switch
     {
         ArgumentKind.Boolean => source + " != 0",
-        ArgumentKind.Enumeration => "(" + TrimNullable(argument.PublicType) + ")" + source,
+        ArgumentKind.Enumeration => argument.EnumConverter is { } fromNative
+            ? fromNative + ".FromNative(" + source + ")"
+            : "(" + TrimNullable(argument.PublicType) + ")" + source,
         ArgumentKind.Wrapper => "new " + TrimNullable(argument.PublicType) + "(" + source + ")",
         ArgumentKind.Utf8 => StringConversion(argument.Transfer, source),
         ArgumentKind.Handle => HandleConversion(argument.Flavor, TrimNullable(argument.PublicType), source, argument.Transfer),
@@ -3052,6 +3056,7 @@ internal static class CallableRenderer
             RawType = value.RawType,
             Transfer = value.Transfer,
             Flavor = value.Flavor,
+            EnumConverter = value.EnumConverter,
             IsNullable = value.IsNullable,
         };
 

@@ -522,6 +522,54 @@ public sealed unsafe class RtspServerTests
     }
 
     /// <summary>
+    /// The <see cref="RTSPStream"/> members that take a <c>GSocketFamily</c>
+    /// reach the library through the converter of the runtime, which is what
+    /// makes the same managed member mean the same family on every platform.
+    /// </summary>
+    /// <remarks>
+    /// The stream has allocated nothing yet, so the sockets are absent and the
+    /// server port is the zero range; what is under test is that the family
+    /// crosses at all, and that the library recognises the number it is given.
+    /// A family it does not know is refused with a warning, so a wrong
+    /// translation would not answer the range of the one that was asked for.
+    /// </remarks>
+    [RequiresElementFact("rtpL16pay")]
+    public void TheSocketFamilyOfAStreamCrossesThroughTheConverter()
+    {
+        using RTSPMediaFactory factory = RTSPMediaFactory.New();
+        factory.SetLaunch(Launch);
+
+        Assert.Equal(RTSPResult.Ok, RTSPUrl.Parse("rtsp://127.0.0.1:8554/test", out RTSPUrl? url));
+        Assert.NotNull(url);
+        using RTSPUrl parsed = url;
+
+        using RTSPMedia? media = factory.Construct(parsed);
+        Assert.NotNull(media);
+
+        try
+        {
+            Assert.Equal(1u, media.NStreams());
+
+            using RTSPStream? stream = media.GetStream(0);
+            Assert.NotNull(stream);
+
+            // Nothing is allocated before the setup of a client, so both
+            // families answer no socket rather than one of the wrong family.
+            Assert.Null(stream.GetRtpSocket(Gst.Gio.SocketFamily.Ipv4));
+            Assert.Null(stream.GetRtcpSocket(Gst.Gio.SocketFamily.Ipv6));
+            Assert.Null(stream.GetMulticastAddress(Gst.Gio.SocketFamily.Ipv4));
+
+            stream.GetServerPort(out RTSPRange serverPort, Gst.Gio.SocketFamily.Ipv4);
+            Assert.Equal(0, serverPort.Min);
+            Assert.Equal(0, serverPort.Max);
+        }
+        finally
+        {
+            media.Unlock();
+        }
+    }
+
+    /// <summary>
     /// Disposes every wrapper of a transfer full list and answers how many
     /// there were.
     /// </summary>
