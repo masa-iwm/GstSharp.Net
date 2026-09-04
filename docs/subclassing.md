@@ -1,8 +1,9 @@
 # GObject subclassing in GstSharp.Net — design
 
-Status: **approved design**; stages 0 and 1 of §10 have shipped, stages 2 and
-3 have not. §11 is the guide to what shipped; everything before it is the
-design the implementation follows.
+Status: **approved design**; stages 0, 1 and 2a of §10 have shipped, and so
+have the classes of stage 2b; its instance-keyed callbacks and stage 3 have
+not. §11 is the guide to what shipped; everything before it is the design the
+implementation follows.
 Scope: class-struct ABI, vfunc overrides, managed type registration.
 Audience: contributors to the runtime (`src/GstSharp.Net/Core`) and the
 generator (`generator/GstSharp.Generator`); §11 is for applications.
@@ -30,12 +31,12 @@ The classes that matter, in order:
    `PushSrcClass` in `GstBase-1.0.gir`) — custom sources. Key vfuncs:
    `create`, `fill`, `alloc`, `start`, `stop`, `is_seekable`, `get_size`,
    `unlock`, `unlock_stop`, `set_caps`, `get_caps`, `fixate`, `query`,
-   `event`. `do_seek` and `prepare_seek_segment` are **not** bindable: they
-   lend a `GstSegment` by pointer for the slot to write into, and a boxed
-   wrapper of this binding takes a copy of what it is handed, so every write
-   the override made would be lost. The same rule keeps
-   `BaseTransform::filter_meta`, `AudioFilter::setup` and the `set_info` of
-   the video classes out of the surface; §11 lists them. A record with no
+   `event`. `do_seek` and `prepare_seek_segment` lend a `GstSegment` by
+   pointer for the slot to write into; so do `BaseTransform::filter_meta`,
+   `AudioFilter::setup` and the `set_info` of the video classes. A boxed
+   wrapper that copied what it is handed would lose every write the override
+   made, so those slots are bound through a *borrowing* boxed wrapper instead,
+   which is detached again when the trampoline returns (§11). A record with no
    boxed type behind it - a video frame, a ring buffer specification - has no
    copy to make and is lent as it is.
 3. **`GstBase.BaseSink`** (`BaseSinkClass`) — custom sinks: `render`,
@@ -825,8 +826,10 @@ Fourteen classes are subclassable: `Gst.Element`, `Gst.Bin`,
 slots.
 
 **Stage 2b — the rest of the allowlist and the instance-keyed callbacks.**
-`GstBase.BaseParse`, the four codec bases (`AudioDecoder`, `AudioEncoder`,
-`VideoDecoder`, `VideoEncoder`), and the **instance-keyed callback**
+`GstBase.BaseParse` and the four codec bases (`AudioDecoder`,
+`AudioEncoder`, `VideoDecoder`, `VideoEncoder`) have landed, together with
+the boxed borrow that un-skipped the six `set_info`-shaped slots. What is
+left of the stage is the **instance-keyed callback**
 mechanism the pad functions need: `gst_pad_set_chain_function_full` and its
 ten siblings take a callback with no closure argument, so the runtime keys
 them by their first argument - the pad - in a table the `_full` notify
@@ -850,11 +853,12 @@ compiling unchanged.
 
 ## 11. Using it
 
-What ships is a **generated surface for an allowlist of fourteen base
+What ships is a **generated surface for an allowlist of nineteen base
 classes**: `Gst.Element`, `Gst.Bin`, `Gst.Base.BaseSrc`, `PushSrc`,
-`BaseSink`, `BaseTransform`, `Aggregator`, `Gst.Audio.AudioBaseSink`,
-`AudioBaseSrc`, `AudioSink`, `AudioSrc`, `AudioFilter`, and
-`Gst.Video.VideoSink`, `VideoFilter`. Each one carries three things — a
+`BaseSink`, `BaseTransform`, `BaseParse`, `Aggregator`,
+`Gst.Audio.AudioBaseSink`, `AudioBaseSrc`, `AudioSink`, `AudioSrc`,
+`AudioFilter`, `AudioDecoder`, `AudioEncoder`, and `Gst.Video.VideoSink`,
+`VideoFilter`, `VideoDecoder`, `VideoEncoder`. Each one carries three things — a
 `DefineSubclass` that registers a managed type, a `protected` constructor
 that builds instances of it, and, per bound vfunc, an `OnX` virtual with a
 matching `ChainUpX` and an `XOverride` declaration.
@@ -938,6 +942,25 @@ touched.
   the buffer of `OnTransformIp` writable, which a reference of our own would
   not. A `transfer full` parameter — the message of `Bin.OnHandleMessage` — is
   owned by the override, and chaining up passes it on.
+* **An in/out mini object that is owned both ways is the third form.** The
+  buffer of `AudioEncoder.OnPrePush`, `AudioDecoder.OnPrePush` and
+  `VideoEncoder.OnPrePush` reaches the override as a `ref Gst.Buffer?` that is
+  `transfer full` in *and* out: the reference the caller held is handed to the
+  override, and whatever the override leaves in the handle is handed back.
+  Leaving it alone hands the very buffer on, assigning another one releases
+  the first, and setting it to `null` drops the buffer. An override that
+  throws is the fourth case: the trap answers `FlowReturn.Error`, the handle
+  is cleared and the buffer is released, so nothing is leaked and the caller
+  is never left holding a pointer the override did not hand over.
+* **A boxed value lent to a slot is borrowed for the call and no longer.** The
+  `GstAudioInfo` of `AudioFilter.OnSetup`, the `GstVideoInfo` of
+  `VideoFilter.OnSetInfo` and `VideoSink.OnSetInfo`, the `GstSegment` of
+  `BaseSrc.OnDoSeek` and `OnPrepareSeekSegment`, and the frames of
+  `BaseParse.OnHandleFrame` all wrap the caller's value directly rather than a
+  copy, which is what makes an override's writes land where the caller reads
+  them. The wrapper is detached when the trampoline returns: keeping it and
+  reading through it afterwards throws `ObjectDisposedException`. Whatever has
+  to outlive the call is read out or copied during it.
 * **Exceptions never reach a native frame.** Each slot answers its documented
   error value and reports the exception through
   `GstSharp.UnhandledCallbackException`: `StateChangeReturn.Failure` for
@@ -961,39 +984,46 @@ managed `VideoSink` overrides `render` through `BaseSink.RenderOverride` and
 | --- | --- |
 | `Gst.Element` | `request_new_pad`, `release_pad`, `get_state`, `set_state`, `change_state`, `state_changed`, `set_bus`, `provide_clock`, `set_clock`, `send_event`, `query`, `post_message`, `set_context` |
 | `Gst.Bin` | `add_element`, `remove_element`, `handle_message`, `do_latency` |
-| `Gst.Base.BaseSrc` | `get_caps`, `negotiate`, `fixate`, `set_caps`, `decide_allocation`, `start`, `stop`, `get_times`, `get_size`, `is_seekable`, `unlock`, `unlock_stop`, `query`, `event`, `create`, `alloc`, `fill` |
+| `Gst.Base.BaseSrc` | `get_caps`, `negotiate`, `fixate`, `set_caps`, `decide_allocation`, `start`, `stop`, `get_times`, `get_size`, `is_seekable`, `prepare_seek_segment`, `do_seek`, `unlock`, `unlock_stop`, `query`, `event`, `create`, `alloc`, `fill` |
 | `Gst.Base.PushSrc` | `create`, `alloc`, `fill` |
 | `Gst.Base.BaseSink` | `get_caps`, `set_caps`, `fixate`, `activate_pull`, `get_times`, `propose_allocation`, `start`, `stop`, `unlock`, `unlock_stop`, `query`, `event`, `wait_event`, `prepare`, `prepare_list`, `preroll`, `render`, `render_list` |
-| `Gst.Base.BaseTransform` | `transform_caps`, `fixate_caps`, `accept_caps`, `set_caps`, `query`, `decide_allocation`, `propose_allocation`, `transform_size`, `get_unit_size`, `start`, `stop`, `sink_event`, `src_event`, `prepare_output_buffer`, `copy_metadata`, `transform_meta`, `before_transform`, `transform`, `transform_ip`, `submit_input_buffer`, `generate_output` |
+| `Gst.Base.BaseTransform` | `transform_caps`, `fixate_caps`, `accept_caps`, `set_caps`, `query`, `decide_allocation`, `filter_meta`, `propose_allocation`, `transform_size`, `get_unit_size`, `start`, `stop`, `sink_event`, `src_event`, `prepare_output_buffer`, `copy_metadata`, `transform_meta`, `before_transform`, `transform`, `transform_ip`, `submit_input_buffer`, `generate_output` |
+| `Gst.Base.BaseParse` | `start`, `stop`, `set_sink_caps`, `handle_frame`, `pre_push_frame`, `convert`, `sink_event`, `src_event`, `get_sink_caps`, `detect`, `sink_query`, `src_query` |
 | `Gst.Base.Aggregator` | `flush`, `clip`, `finish_buffer`, `sink_event`, `sink_query`, `src_event`, `src_query`, `src_activate`, `aggregate`, `stop`, `start`, `get_next_time`, `update_src_caps`, `fixate_src_caps`, `negotiated_src_caps`, `decide_allocation`, `propose_allocation`, `negotiate`, `sink_event_pre_queue`, `sink_query_pre_queue`, `finish_buffer_list`, `peek_next_sample` |
 | `Gst.Audio.AudioBaseSink` | `create_ringbuffer`, `payload` |
 | `Gst.Audio.AudioBaseSrc` | `create_ringbuffer` |
 | `Gst.Audio.AudioSink` | `open`, `prepare`, `unprepare`, `close`, `write`, `delay`, `reset`, `pause`, `resume` |
 | `Gst.Audio.AudioSrc` | `open`, `prepare`, `unprepare`, `close`, `read`, `delay`, `reset` |
-| `Gst.Audio.AudioFilter` | none of its own; a managed audio filter overrides `GstBaseTransform` |
-| `Gst.Video.VideoSink` | `show_frame` |
-| `Gst.Video.VideoFilter` | `transform_frame`, `transform_frame_ip` |
+| `Gst.Audio.AudioFilter` | `setup` |
+| `Gst.Audio.AudioDecoder` | `start`, `stop`, `set_format`, `parse`, `handle_frame`, `flush`, `pre_push`, `sink_event`, `src_event`, `open`, `close`, `negotiate`, `decide_allocation`, `propose_allocation`, `sink_query`, `src_query`, `getcaps`, `transform_meta` |
+| `Gst.Audio.AudioEncoder` | `start`, `stop`, `set_format`, `handle_frame`, `flush`, `pre_push`, `sink_event`, `src_event`, `getcaps`, `open`, `close`, `negotiate`, `decide_allocation`, `propose_allocation`, `transform_meta`, `sink_query`, `src_query` |
+| `Gst.Video.VideoSink` | `show_frame`, `set_info` |
+| `Gst.Video.VideoFilter` | `set_info`, `transform_frame`, `transform_frame_ip` |
+| `Gst.Video.VideoDecoder` | `open`, `close`, `start`, `stop`, `parse`, `set_format`, `reset`, `finish`, `handle_frame`, `sink_event`, `src_event`, `negotiate`, `decide_allocation`, `propose_allocation`, `flush`, `sink_query`, `src_query`, `getcaps`, `drain`, `transform_meta`, `handle_missing_data` |
+| `Gst.Video.VideoEncoder` | `open`, `close`, `start`, `stop`, `set_format`, `handle_frame`, `reset`, `finish`, `pre_push`, `getcaps`, `sink_event`, `src_event`, `negotiate`, `decide_allocation`, `propose_allocation`, `flush`, `sink_query`, `src_query`, `transform_meta` |
 
-Fifteen slots of those classes carry no `OnX` member. Seven are the signal
+Nine slots of those classes carry no `OnX` member. Seven are the signal
 class closures of `Element` and `Bin`, which the base library never calls
 through the class pointer — subscribing to the signal is the same hook.
 `Aggregator::create_new_pad` waits for pad subclassing, which needs a
 `ClassConfig` for `GstPad` and construct properties. `AudioSink::stop` shares
 its name with the `stop` of `BaseSink` and answers nothing where that one
-answers a `bool`, so no managed name can carry both. The remaining six lend a
-boxed record by pointer — `BaseSrc::do_seek` and `prepare_seek_segment`,
-`BaseTransform::filter_meta`, `AudioFilter::setup`, and the `set_info` of
-`VideoSink` and `VideoFilter` — which a boxed wrapper of this binding cannot
-project, because it copies what it is handed and the copy is where the
-override's writes would stay. `girs/skip-report.md` lists all fifteen with
-their reason.
+answers a `bool`, so no managed name can carry both. `girs/skip-report.md`
+lists all nine with their reason.
+
+The six slots that lend a boxed record by pointer — `BaseSrc::do_seek` and
+`prepare_seek_segment`, `BaseTransform::filter_meta`, `AudioFilter::setup`,
+and the `set_info` of `VideoSink` and `VideoFilter` — are bound: the wrapper
+they are handed borrows the value rather than copying it, so what the override
+writes lands in the record the caller owns. The borrow lasts for the call and
+no longer (see below).
 
 ### Slots a subclass has to declare
 
 Most slots have an answer for a NULL parent that the element survives, and
-`DefineSubclass` accepts a registration without them. Nine slots on six
-  classes do not, and the
-registration says so before it takes the type name:
+`DefineSubclass` accepts a registration without them. Fourteen slots on
+eleven classes do not, and the registration says so before it takes the type
+name:
 
 | Class | Slot | Why |
 | --- | --- | --- |
@@ -1002,6 +1032,7 @@ registration says so before it takes the type name:
 | `AudioSink`, `AudioSrc` | `prepare`, `unprepare` | acquiring and releasing the ring buffer start out with a failure that only the slot turns into a success |
 | `AudioSink` | `write` | the thread of the ring buffer stops before it starts when the slot is NULL |
 | `AudioSrc` | `read` | the same |
+| `BaseParse`, `AudioDecoder`, `AudioEncoder`, `VideoDecoder`, `VideoEncoder` | `handle_frame` | the base class calls it for every frame, and for the drain at the end of the stream, unguarded |
 
 ### The limits
 
@@ -1029,6 +1060,10 @@ registration says so before it takes the type name:
   a naming decision that has not been taken. The device is unblocked through
   `OnReset` instead, which is what `gst_audio_sink_ring_buffer_stop` falls back
   to when the slot is NULL (gstaudiosink.c:594-602).
+* **`GstAggregatorPad` cannot be subclassed**, so `Aggregator::create_new_pad`
+  has no managed member: a managed pad type needs a `ClassConfig` for `GstPad`
+  and construct properties, which is stage 3. A managed aggregator uses the
+  pads its templates request.
 * **No `dispose` or `finalize` override**, by design (§1): teardown belongs in
   the `READY` to `NULL` transition of `OnChangeState`, or in `OnStop`.
 * **Disposing a managed element that GStreamer still drives** does not crash,

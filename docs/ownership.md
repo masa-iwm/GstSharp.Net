@@ -448,6 +448,36 @@ payload and there is nothing to consume.
 stays the recommended shape — the analyzer sees the disposal, and an early
 return before the consuming call still releases the wrapper.
 
+## What a virtual method is handed
+
+A slot of a class struct is the same boundary read the other way round, and two
+of its shapes have no equivalent among ordinary calls.
+
+The **third form** is an in/out mini object that is `transfer full` in both
+directions: `AudioEncoder.OnPrePush`, `AudioDecoder.OnPrePush` and
+`VideoEncoder.OnPrePush` are handed a `ref Gst.Buffer?` whose reference the
+caller has given up, and whatever is in the handle when the override returns is
+what the caller takes over. Leaving it alone hands the very buffer on and costs
+no reference; assigning another buffer releases the one that came in; setting
+it to `null` drops it. The wrapper that ends up in the handle is detached by
+the hand-over, so it means nothing after the override returns. An override that
+throws is the fourth case, and the trampoline closes it: the trap answers
+`FlowReturn.Error`, the handle is cleared and the buffer that was handed in is
+released, so a failing override leaks nothing.
+
+A **boxed value lent to a slot is borrowed for the length of the call**. Where
+the C code hands a slot a `GstAudioInfo`, a `GstVideoInfo`, a `GstSegment` or a
+`GstBaseParseFrame` by pointer for the override to read *and write*, the
+wrapper is built over that very value rather than over a copy of it — that is
+what makes `AudioFilter.OnSetup`, `VideoFilter.OnSetInfo`,
+`VideoSink.OnSetInfo`, `BaseSrc.OnDoSeek`, `BaseSrc.OnPrepareSeekSegment` and
+`BaseParse.OnHandleFrame` able to change what their caller reads. The wrapper
+owns nothing and frees nothing; the trampoline detaches it when the override
+returns, so reading through a wrapper that was kept past the call throws
+`ObjectDisposedException` rather than reading memory the library has since
+reused. Anything that has to outlive the call is read out of the value, or
+copied, while the call is running.
+
 ## Calls that consume the instance they are called on
 
 A handful of C functions take the reference of the object they are called on

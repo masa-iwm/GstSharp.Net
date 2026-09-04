@@ -58,7 +58,7 @@ internal static partial class Smoke
             ObjectUnref(element);
 
             if (!RunManagedSubclass() || !RunManagedPipeline() || !RunManagedAudioAndVideoSinks()
-                || !RunBindingModule() || !RunPropertiesByName())
+                || !RunManagedAudioEncoder() || !RunBindingModule() || !RunPropertiesByName())
             {
                 return 1;
             }
@@ -236,12 +236,57 @@ internal static partial class Smoke
         return true;
     }
 
+    /// <summary>
+    /// Drives a managed <c>GstAudioEncoder</c>, which is the shape no sink of
+    /// the sample has: its <c>handle_frame</c> slot is called with the samples
+    /// the base class collected and once more with no buffer at all for the
+    /// drain, and its <c>set_format</c> slot is lent a <c>GstAudioInfo</c> that
+    /// only means anything for the length of the call.
+    /// </summary>
+    /// <returns><see langword="true"/> when the encoder coded and was drained.</returns>
+    private static bool RunManagedAudioEncoder()
+    {
+        const int Buffers = 5;
+
+        using ManagedAudioEncoder encoder = new();
+        Element? sink = ElementFactory.Make("fakesink", "encoded");
+
+        if (sink is null)
+        {
+            Console.Error.WriteLine("AotSmoke: fakesink is missing from the installation.");
+            return false;
+        }
+
+        using (sink)
+        {
+            Console.WriteLine($"audio encoder: {ManagedAudioEncoder.RegisteredType.Name}");
+
+            if (!RunSourceInto("audiotestsrc", sink, Buffers, encoder))
+            {
+                return false;
+            }
+        }
+
+        Console.WriteLine(string.Create(
+            CultureInfo.InvariantCulture,
+            $"encoded:     {encoder.Encoded} buffers at {encoder.Rate} Hz, {encoder.Drains} drain(s)"));
+
+        if (encoder.Encoded <= 0 || encoder.Rate <= 0 || encoder.Drains <= 0)
+        {
+            Console.Error.WriteLine("AotSmoke: the managed audio encoder coded nothing or was never drained.");
+            return false;
+        }
+
+        return true;
+    }
+
     /// <summary>Runs a bounded test source into one sink and waits for the end.</summary>
     /// <param name="factory">The factory of the test source.</param>
     /// <param name="sink">The managed sink.</param>
     /// <param name="buffers">How many buffers the source produces.</param>
+    /// <param name="through">An element to put between the source and the sink, if any.</param>
     /// <returns><see langword="true"/> when the stream ended on the bus.</returns>
-    private static bool RunSourceInto(string factory, Element sink, int buffers)
+    private static bool RunSourceInto(string factory, Element sink, int buffers, Element? through = null)
     {
         using Pipeline pipeline = Pipeline.New("aot-smoke-" + factory);
         Element? source = ElementFactory.Make(factory, "source");
@@ -256,9 +301,13 @@ internal static partial class Smoke
         count.SetInt(buffers);
         source.SetProperty("num-buffers", count);
 
-        if (!pipeline.AddMany(source, sink) || !source.Link(sink))
+        bool linked = through is null
+            ? pipeline.AddMany(source, sink) && source.Link(sink)
+            : pipeline.AddMany(source, through, sink) && source.Link(through) && through.Link(sink);
+
+        if (!linked)
         {
-            Console.Error.WriteLine($"AotSmoke: {factory} could not be linked to the managed sink.");
+            Console.Error.WriteLine($"AotSmoke: {factory} could not be linked to the managed element.");
             return false;
         }
 
@@ -296,6 +345,12 @@ internal static partial class Smoke
         // still holds is released with it; the managed wrapper of the sink
         // outlives both, which is what the counters are read from.
         _ = pipeline.Remove(sink);
+
+        if (through is not null)
+        {
+            _ = pipeline.Remove(through);
+        }
+
         return true;
     }
 
