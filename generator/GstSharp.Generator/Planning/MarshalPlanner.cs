@@ -4337,7 +4337,12 @@ internal sealed class MarshalPlanner
         {
             ArgumentKind.Value or ArgumentKind.Boolean or ArgumentKind.Enumeration
                 or ArgumentKind.Wrapper or ArgumentKind.Pointer or ArgumentKind.Utf8 => VfuncBucket.Cast,
-            ArgumentKind.Handle when transfer == GirTransfer.Full => VfuncBucket.Adopt,
+            // A handle the slot takes over reaches here as a consumed one,
+            // which is the projection a forward call gives it; only a family
+            // the runtime can mint a reference for is adopted, because the
+            // chain-up has to hand the parent slot one of its own.
+            ArgumentKind.Handle or ArgumentKind.ConsumedHandle when transfer == GirTransfer.Full =>
+                mapped.Kind is MarshalKind.MiniObject or MarshalKind.GObject ? VfuncBucket.Adopt : null,
             ArgumentKind.Handle => argument.Flavor switch
             {
                 HandleFlavor.GObject => VfuncBucket.BorrowGObject,
@@ -4350,7 +4355,7 @@ internal sealed class MarshalPlanner
                     BorrowableMiniObjects.Contains(argument.PublicType.TrimEnd('?'))
                         ? VfuncBucket.BorrowMiniObject
                         : null,
-                HandleFlavor.Wrapper or HandleFlavor.Opaque => VfuncBucket.BorrowWrapper,
+                HandleFlavor.Wrapper => VfuncBucket.BorrowWrapper,
                 _ => null,
             },
             _ => null,

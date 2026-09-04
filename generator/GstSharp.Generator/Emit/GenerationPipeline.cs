@@ -81,6 +81,7 @@ internal static class GenerationPipeline
         // with the key an annotation correction addresses it by, so a model
         // built later would leave those corrections unapplied and, worse,
         // reported stale.
+        Dictionary<string, HashSet<string>> emittedVirtuals = new(StringComparer.Ordinal);
         SubclassModel subclasses = SubclassModel.Build(repository, overlays, diagnostics);
         ReportStaleVirtualKeys(subclasses, overlays, diagnostics);
 
@@ -128,7 +129,8 @@ internal static class GenerationPipeline
                     inherited,
                     consumedArrayOverrides,
                     consumedAnnotationOverrides,
-                    subclasses),
+                    subclasses,
+                    emittedVirtuals),
                 module,
                 ns));
         }
@@ -331,6 +333,14 @@ internal static class GenerationPipeline
 
         ClassStructEmitter classStructEmitter = new(shared.Repository, shared.Census, shared.Diagnostics);
         files.AddRange(classStructEmitter.Emit(module, ns, shared.Subclasses));
+
+        VfuncEmitter vfuncEmitter = new(
+            planner,
+            shared.Census,
+            shared.Overlays,
+            shared.Diagnostics,
+            shared.EmittedVirtuals);
+        files.AddRange(vfuncEmitter.Emit(module, ns, shared.Subclasses));
         files.AddRange(recordEmitter.Emit(module, ns));
         files.AddRange(classEmitter.Emit(module, ns));
         files.AddRange(interfaceEmitter.Emit(module, ns));
@@ -401,7 +411,8 @@ internal static class GenerationPipeline
         Dictionary<string, List<string>> Inherited,
         HashSet<string> ConsumedArrayOverrides,
         HashSet<string> ConsumedAnnotationOverrides,
-        SubclassModel Subclasses);
+        SubclassModel Subclasses,
+        Dictionary<string, HashSet<string>> EmittedVirtuals);
 
     /// <summary>
     /// Reports the overlay entries about virtual methods that name no slot of

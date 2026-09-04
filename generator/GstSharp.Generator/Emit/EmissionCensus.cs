@@ -25,6 +25,10 @@ internal sealed class EmissionCensus
     private readonly SortedDictionary<string, SortedDictionary<string, SortedSet<string>>> _skippedSymbols =
         new(StringComparer.Ordinal);
 
+    /// <summary>The virtual methods left out of the surface, by module and slot.</summary>
+    private readonly SortedDictionary<string, SortedDictionary<string, string>> _skippedVirtuals =
+        new(StringComparer.Ordinal);
+
     private readonly SortedDictionary<string, SortedDictionary<string, string>> _droppedFields =
         new(StringComparer.Ordinal);
 
@@ -146,6 +150,47 @@ internal sealed class EmissionCensus
         }
 
         names.Add(symbol);
+    }
+
+    /// <summary>Records one virtual method the surface leaves out.</summary>
+    /// <param name="module">The gir namespace of the module.</param>
+    /// <param name="key">The slot, as <c>Gst.Element::pad_added</c>.</param>
+    /// <param name="reason">
+    /// Why it is absent: the prose of the <c>skipVirtuals</c> entry that named
+    /// it, or <c>UnsupportedSignature</c> when the planner refused the shape.
+    /// </param>
+    /// <remarks>
+    /// A slot is not a callable and has no <c>c:identifier</c>, so none of the
+    /// sections above would ever show one. The ledger is what keeps the
+    /// difference between a class struct that is fully bound and one whose
+    /// unbound half nobody wrote down.
+    /// </remarks>
+    internal void SkippedVirtual(string module, string key, string reason)
+    {
+        if (!_skippedVirtuals.TryGetValue(module, out SortedDictionary<string, string>? slots))
+        {
+            slots = new SortedDictionary<string, string>(StringComparer.Ordinal);
+            _skippedVirtuals.Add(module, slots);
+        }
+
+        slots[key] = reason;
+    }
+
+    /// <summary>Counts the virtual methods the run left out.</summary>
+    /// <param name="module">The module to count, or <see langword="null"/> for the run.</param>
+    /// <returns>The number of slots listed.</returns>
+    internal int SkippedVirtualCount(string? module = null)
+    {
+        int total = 0;
+        foreach ((string name, SortedDictionary<string, string> slots) in _skippedVirtuals)
+        {
+            if (module is null || string.Equals(name, module, StringComparison.Ordinal))
+            {
+                total += slots.Count;
+            }
+        }
+
+        return total;
     }
 
     /// <summary>Counts one record field that carries no binding.</summary>
@@ -291,8 +336,35 @@ internal sealed class EmissionCensus
             }
         }
 
+        WriteVirtualLedger(writer);
         WriteFieldLedger(writer);
         return writer.ToSource();
+    }
+
+    /// <summary>Writes the virtual methods the run left out of the subclassing surface.</summary>
+    /// <param name="writer">The target writer.</param>
+    private void WriteVirtualLedger(CodeWriter writer)
+    {
+        writer.WriteLine();
+        writer.WriteLine(string.Create(
+            CultureInfo.InvariantCulture,
+            $"## Virtuals ({SkippedVirtualCount()})"));
+        writer.WriteLine();
+        writer.WriteLine("The class struct slots of a subclassable class that carry no `OnX` member, with");
+        writer.WriteLine("the reason. `UnsupportedSignature` is the planner refusing a shape; every other");
+        writer.WriteLine("reason is the statement of an overlay entry. The mirror still lays every slot");
+        writer.WriteLine("out, so what is listed here is the managed surface and not the ABI.");
+
+        foreach ((string module, SortedDictionary<string, string> slots) in _skippedVirtuals)
+        {
+            writer.WriteLine();
+            writer.WriteLine(string.Create(CultureInfo.InvariantCulture, $"### {module} ({slots.Count})"));
+            writer.WriteLine();
+            foreach ((string key, string reason) in slots)
+            {
+                writer.WriteLine("- `" + key + "` — " + reason);
+            }
+        }
     }
 
     /// <summary>

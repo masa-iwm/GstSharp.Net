@@ -393,7 +393,7 @@ internal sealed class Overlays
     private readonly Dictionary<string, FieldSkip> _fieldSkips;
     private readonly Dictionary<string, FieldAnnotation> _fieldAnnotations;
     private readonly HashSet<string> _subclassable;
-    private readonly HashSet<string> _skipVirtuals;
+    private readonly Dictionary<string, string> _skipVirtuals;
     private readonly Dictionary<string, string> _vfuncDefaults;
     private readonly HashSet<string> _vfuncIdentityBuffers;
 
@@ -409,7 +409,7 @@ internal sealed class Overlays
         Dictionary<string, FieldSkip> fieldSkips,
         Dictionary<string, FieldAnnotation> fieldAnnotations,
         HashSet<string> subclassable,
-        HashSet<string> skipVirtuals,
+        Dictionary<string, string> skipVirtuals,
         Dictionary<string, string> vfuncDefaults,
         HashSet<string> vfuncIdentityBuffers)
     {
@@ -442,7 +442,7 @@ internal sealed class Overlays
         new Dictionary<string, FieldSkip>(StringComparer.Ordinal),
         new Dictionary<string, FieldAnnotation>(StringComparer.Ordinal),
         new HashSet<string>(StringComparer.Ordinal),
-        new HashSet<string>(StringComparer.Ordinal),
+        new Dictionary<string, string>(StringComparer.Ordinal),
         new Dictionary<string, string>(StringComparer.Ordinal),
         new HashSet<string>(StringComparer.Ordinal));
 
@@ -495,7 +495,7 @@ internal sealed class Overlays
     /// Gets the keys of every declared virtual method skip, so that a run can
     /// report the ones no slot of a subclassable class matched.
     /// </summary>
-    internal IReadOnlyCollection<string> SkippedVirtualKeys => _skipVirtuals;
+    internal IReadOnlyCollection<string> SkippedVirtualKeys => _skipVirtuals.Keys;
 
     /// <summary>
     /// Gets the keys of every declared chain-up default, so that a run can
@@ -588,10 +588,10 @@ internal sealed class Overlays
             subclassable.Add(qualifiedName);
         }
 
-        HashSet<string> skipVirtuals = new(StringComparer.Ordinal);
-        foreach (string key in fixups.SkipVirtuals ?? [])
+        Dictionary<string, string> skipVirtuals = new(StringComparer.Ordinal);
+        foreach (KeyValuePair<string, string> entry in fixups.SkipVirtuals ?? [])
         {
-            skipVirtuals.Add(key);
+            skipVirtuals[entry.Key] = entry.Value;
         }
 
         Dictionary<string, string> vfuncDefaults = new(StringComparer.Ordinal);
@@ -715,7 +715,13 @@ internal sealed class Overlays
     /// menu — so what a skip removes is the <c>OnX</c> member, its trampoline
     /// and its chain-up helper.
     /// </remarks>
-    internal bool IsVirtualSkipped(string key) => _skipVirtuals.Contains(key);
+    internal bool IsVirtualSkipped(string key) => _skipVirtuals.ContainsKey(key);
+
+    /// <summary>Reads why one virtual method is kept out of the surface.</summary>
+    /// <param name="key">The slot, as <c>Gst.Element::pad_added</c>.</param>
+    /// <returns>The reason the skip ledger prints.</returns>
+    internal string VirtualSkipReason(string key) =>
+        _skipVirtuals.TryGetValue(key, out string? reason) ? reason : "Manual";
 
     /// <summary>
     /// Looks up what a chain-up answers when the parent class leaves the slot
@@ -790,7 +796,7 @@ internal sealed class Overlays
 
         public List<string>? Subclassable { get; set; }
 
-        public List<string>? SkipVirtuals { get; set; }
+        public Dictionary<string, string>? SkipVirtuals { get; set; }
 
         public Dictionary<string, string>? VfuncDefaults { get; set; }
 
