@@ -343,9 +343,10 @@ public unsafe partial class BaseTransform
     {
         ArgumentNullException.ThrowIfNull(caps);
         ArgumentNullException.ThrowIfNull(othercaps);
+        nint instance = Handle;
         nint othercapsNative = othercaps.Handle;
         Gst.GstNative.MiniObjectRef(othercapsNative);
-        Gst.Caps? result = ChainUpFixateCaps(Handle, (int)direction, caps.Handle, othercapsNative);
+        Gst.Caps? result = ChainUpFixateCaps(instance, (int)direction, caps.Handle, othercapsNative);
         GC.KeepAlive(this);
         GC.KeepAlive(caps);
         othercaps.Dispose();
@@ -439,9 +440,10 @@ public unsafe partial class BaseTransform
     protected bool ChainUpSinkEvent(Gst.Event @event)
     {
         ArgumentNullException.ThrowIfNull(@event);
+        nint instance = Handle;
         nint @eventNative = @event.Handle;
         Gst.GstNative.MiniObjectRef(@eventNative);
-        bool result = ChainUpSinkEvent(Handle, @eventNative);
+        bool result = ChainUpSinkEvent(instance, @eventNative);
         GC.KeepAlive(this);
         @event.Dispose();
         return result;
@@ -453,9 +455,10 @@ public unsafe partial class BaseTransform
     protected bool ChainUpSrcEvent(Gst.Event @event)
     {
         ArgumentNullException.ThrowIfNull(@event);
+        nint instance = Handle;
         nint @eventNative = @event.Handle;
         Gst.GstNative.MiniObjectRef(@eventNative);
-        bool result = ChainUpSrcEvent(Handle, @eventNative);
+        bool result = ChainUpSrcEvent(instance, @eventNative);
         GC.KeepAlive(this);
         @event.Dispose();
         return result;
@@ -535,9 +538,10 @@ public unsafe partial class BaseTransform
     protected Gst.FlowReturn ChainUpSubmitInputBuffer(bool isDiscont, Gst.Buffer input)
     {
         ArgumentNullException.ThrowIfNull(input);
+        nint instance = Handle;
         nint inputNative = input.Handle;
         Gst.GstNative.MiniObjectRef(inputNative);
-        Gst.FlowReturn result = ChainUpSubmitInputBuffer(Handle, isDiscont ? 1 : 0, inputNative);
+        Gst.FlowReturn result = ChainUpSubmitInputBuffer(instance, isDiscont ? 1 : 0, inputNative);
         GC.KeepAlive(this);
         input.Dispose();
         return result;
@@ -1047,12 +1051,16 @@ public unsafe partial class BaseTransform
             try
             {
                 Gst.FlowReturn result = managed.OnPrepareOutputBuffer(inputValue!, out outbufValue);
-                nint outbufHandle = outbufValue is null ? nint.Zero : outbufValue.Handle;
-                if (outbufHandle != nint.Zero && outbufHandle != input)
+
+                if (result == Gst.FlowReturn.Ok)
                 {
-                    Gst.GstNative.MiniObjectRef(outbufHandle);
+                    nint outbufHandle = outbufValue is null ? nint.Zero : outbufValue.Handle;
+                    if (outbufHandle != nint.Zero && outbufHandle != input)
+                    {
+                        Gst.GstNative.MiniObjectRef(outbufHandle);
+                    }
+                    *outbuf = outbufHandle;
                 }
-                *outbuf = outbufHandle;
                 return (int)(result);
             }
             finally
@@ -1184,12 +1192,16 @@ public unsafe partial class BaseTransform
             try
             {
                 Gst.FlowReturn result = managed.OnGenerateOutput(out outbufValue);
-                nint outbufHandle = outbufValue is null ? nint.Zero : outbufValue.Handle;
-                if (outbufHandle != nint.Zero)
+
+                if (result == Gst.FlowReturn.Ok)
                 {
-                    Gst.GstNative.MiniObjectRef(outbufHandle);
+                    nint outbufHandle = outbufValue is null ? nint.Zero : outbufValue.Handle;
+                    if (outbufHandle != nint.Zero)
+                    {
+                        Gst.GstNative.MiniObjectRef(outbufHandle);
+                    }
+                    *outbuf = outbufHandle;
                 }
-                *outbuf = outbufHandle;
                 return (int)(result);
             }
             finally

@@ -6,7 +6,9 @@ merged.
 
 ## Done
 
-Nine commits. All gates green at `3db13dc`: `dotnet build` 0 warnings,
+Fourteen commits on top of `main`, six of them this session. All gates green:
+`dotnet build` 0 warnings, `dotnet pack` of both packages 0 CP diagnostics
+against the 1.28.6 baseline,
 generator twice byte-identical, `verify` clean (506 files), 1731 tests pass
 in all four projects, AotSmoke publishes with 0 IL/AOT warnings.
 
@@ -33,8 +35,14 @@ mirror emitter and the ABI registry; see `git log` for their messages.
 * **3db13dc "Plan the inout handle of a virtual method"** — an inout handle is
   planned as the out one it shares its native shape with, which lands
   `GstBase.BaseSrc::create` with the identity rule.
+* **"Hand a produced handle over only on success"** — the write-back of a
+  handle a `GstFlowReturn` slot produces is guarded by
+  `if (result == Gst.FlowReturn.Ok)`, which is what stage-1 `PushSrc` spelled
+  by hand: the caller does not read the pointer on any other answer, so a
+  reference minted for it would be one nobody releases. The instance chain-up
+  also reads its own handle before it mints anything.
 
-79 slots are emitted (Gst 15, GstBase 64) and 29 are listed in the ledger:
+80 slots are emitted (Gst 15, GstBase 65) and 29 are listed in the ledger:
 8 named by `skipVirtuals`, 21 `UnsupportedSignature`.
 
 ## Remaining (brief steps h–j)
@@ -79,7 +87,11 @@ Tests and docs only. Nothing of the generator is left to write for wave 1.
    (`MarshalPlanner.cs`, the `if (direction == ArgumentDirection.Ref)` guard in
    the handle branch). `PlanVirtualMethodArgument` works around it rather than
    relaxing it, because the guard is right for a forward call.
-6. The emission census counts are asserted in
+6. `Gst.MiniObject.Dispose` is idempotent (`Interlocked.Exchange` of the
+   handle), so the identity path disposing the very wrapper an outer `using`
+   also disposes - `prepare_output_buffer` answering its `input` - is safe. The
+   identity test of step (h) is what pins that.
+7. The emission census counts are asserted in
    `RecordEmitterTests.EveryModuleEmitsItsOwnFiles` /
    `TheRecordCensusIsStable` and `ClassEmitterTests` — `CensusTests` counts the
    **gir** and needed no change.

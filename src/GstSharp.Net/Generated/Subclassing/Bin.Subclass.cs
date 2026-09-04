@@ -130,9 +130,10 @@ public unsafe partial class Bin
     protected void ChainUpHandleMessage(Gst.Message message)
     {
         ArgumentNullException.ThrowIfNull(message);
+        nint instance = Handle;
         nint messageNative = message.Handle;
         Gst.GstNative.MiniObjectRef(messageNative);
-        ChainUpHandleMessage(Handle, messageNative);
+        ChainUpHandleMessage(instance, messageNative);
         GC.KeepAlive(this);
         message.Dispose();
     }

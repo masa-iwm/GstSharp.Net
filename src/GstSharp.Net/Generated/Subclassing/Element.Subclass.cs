@@ -318,9 +318,10 @@ public unsafe partial class Element
     protected bool ChainUpSendEvent(Gst.Event @event)
     {
         ArgumentNullException.ThrowIfNull(@event);
+        nint instance = Handle;
         nint @eventNative = @event.Handle;
         Gst.GstNative.MiniObjectRef(@eventNative);
-        bool result = ChainUpSendEvent(Handle, @eventNative);
+        bool result = ChainUpSendEvent(instance, @eventNative);
         GC.KeepAlive(this);
         @event.Dispose();
         return result;
@@ -332,9 +333,10 @@ public unsafe partial class Element
     protected bool ChainUpPostMessage(Gst.Message message)
     {
         ArgumentNullException.ThrowIfNull(message);
+        nint instance = Handle;
         nint messageNative = message.Handle;
         Gst.GstNative.MiniObjectRef(messageNative);
-        bool result = ChainUpPostMessage(Handle, messageNative);
+        bool result = ChainUpPostMessage(instance, messageNative);
         GC.KeepAlive(this);
         message.Dispose();
         return result;

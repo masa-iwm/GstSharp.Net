@@ -302,9 +302,10 @@ public unsafe partial class BaseSrc
     protected Gst.Caps? ChainUpFixate(Gst.Caps caps)
     {
         ArgumentNullException.ThrowIfNull(caps);
+        nint instance = Handle;
         nint capsNative = caps.Handle;
         Gst.GstNative.MiniObjectRef(capsNative);
-        Gst.Caps? result = ChainUpFixate(Handle, capsNative);
+        Gst.Caps? result = ChainUpFixate(instance, capsNative);
         GC.KeepAlive(this);
         caps.Dispose();
         return result;
@@ -414,12 +415,13 @@ public unsafe partial class BaseSrc
     /// <returns>What the slot answers.</returns>
     protected Gst.FlowReturn ChainUpCreate(ulong offset, uint size, ref Gst.Buffer? buf)
     {
+        nint instance = Handle;
         nint bufNative = buf is null ? nint.Zero : buf.Handle;
         if (bufNative != nint.Zero)
         {
             Gst.GstNative.MiniObjectRef(bufNative);
         }
-        Gst.FlowReturn result = ChainUpCreate(Handle, offset, size, &bufNative);
+        Gst.FlowReturn result = ChainUpCreate(instance, offset, size, &bufNative);
         GC.KeepAlive(this);
         buf?.Dispose();
         buf = bufNative == nint.Zero ? null : Gst.Buffer.FromNative(bufNative, Gst.Interop.Transfer.Full);
@@ -947,12 +949,16 @@ public unsafe partial class BaseSrc
             try
             {
                 Gst.FlowReturn result = managed.OnCreate(offset, size, ref bufValue);
-                nint bufHandle = bufValue is null ? nint.Zero : bufValue.Handle;
-                if (bufHandle != nint.Zero && bufHandle != bufEntry)
+
+                if (result == Gst.FlowReturn.Ok)
                 {
-                    Gst.GstNative.MiniObjectRef(bufHandle);
+                    nint bufHandle = bufValue is null ? nint.Zero : bufValue.Handle;
+                    if (bufHandle != nint.Zero && bufHandle != bufEntry)
+                    {
+                        Gst.GstNative.MiniObjectRef(bufHandle);
+                    }
+                    *buf = bufHandle;
                 }
-                *buf = bufHandle;
                 return (int)(result);
             }
             finally
@@ -982,12 +988,16 @@ public unsafe partial class BaseSrc
             try
             {
                 Gst.FlowReturn result = managed.OnAlloc(offset, size, out bufValue);
-                nint bufHandle = bufValue is null ? nint.Zero : bufValue.Handle;
-                if (bufHandle != nint.Zero)
+
+                if (result == Gst.FlowReturn.Ok)
                 {
-                    Gst.GstNative.MiniObjectRef(bufHandle);
+                    nint bufHandle = bufValue is null ? nint.Zero : bufValue.Handle;
+                    if (bufHandle != nint.Zero)
+                    {
+                        Gst.GstNative.MiniObjectRef(bufHandle);
+                    }
+                    *buf = bufHandle;
                 }
-                *buf = bufHandle;
                 return (int)(result);
             }
             finally

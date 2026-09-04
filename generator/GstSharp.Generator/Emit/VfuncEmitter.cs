@@ -438,6 +438,19 @@ internal sealed class VfuncEmitter
             }
         }
 
+        bool mints = false;
+        foreach (VfuncArgument argument in plan.Arguments)
+        {
+            mints |= argument.Bucket is VfuncBucket.Adopt or VfuncBucket.InOutHandle;
+        }
+
+        string instance = "Handle";
+        if (mints)
+        {
+            instance = "instance";
+            writer.WriteLine("nint instance = Handle;");
+        }
+
         List<string> raw = [];
         foreach (VfuncArgument argument in plan.Arguments)
         {
@@ -491,11 +504,9 @@ internal sealed class VfuncEmitter
             }
         }
 
-        string call = "ChainUp" + plan.Name + "(Handle, " + string.Join(", ", raw) + ")";
-        if (raw.Count == 0)
-        {
-            call = "ChainUp" + plan.Name + "(Handle)";
-        }
+        string call = raw.Count == 0
+            ? "ChainUp" + plan.Name + "(" + instance + ")"
+            : "ChainUp" + plan.Name + "(" + instance + ", " + string.Join(", ", raw) + ")";
 
         if (plan.Return.IsVoid)
         {
@@ -771,9 +782,38 @@ internal sealed class VfuncEmitter
             writer.WriteLine(ReturnType(plan) + " result = " + invocation + ";");
         }
 
+        bool guarded = false;
         foreach (VfuncArgument argument in produced)
         {
-            WriteWriteBack(writer, argument);
+            guarded |= argument.Bucket != VfuncBucket.OutScalar;
+        }
+
+        guarded &= string.Equals(Bare(plan.Return.PublicType), "Gst.FlowReturn", StringComparison.Ordinal);
+        if (guarded)
+        {
+            writer.WriteLine();
+            writer.WriteLine("if (result == Gst.FlowReturn.Ok)");
+            writer.OpenBlock();
+        }
+
+        foreach (VfuncArgument argument in produced)
+        {
+            if (!guarded || argument.Bucket != VfuncBucket.OutScalar)
+            {
+                WriteWriteBack(writer, argument);
+            }
+        }
+
+        if (guarded)
+        {
+            writer.CloseBlock();
+            foreach (VfuncArgument argument in produced)
+            {
+                if (argument.Bucket == VfuncBucket.OutScalar)
+                {
+                    WriteWriteBack(writer, argument);
+                }
+            }
         }
 
         if (!plan.Return.IsVoid)

@@ -271,9 +271,10 @@ public unsafe partial class BaseSink
     protected Gst.Caps? ChainUpFixate(Gst.Caps caps)
     {
         ArgumentNullException.ThrowIfNull(caps);
+        nint instance = Handle;
         nint capsNative = caps.Handle;
         Gst.GstNative.MiniObjectRef(capsNative);
-        Gst.Caps? result = ChainUpFixate(Handle, capsNative);
+        Gst.Caps? result = ChainUpFixate(instance, capsNative);
         GC.KeepAlive(this);
         caps.Dispose();
         return result;
@@ -347,9 +348,10 @@ public unsafe partial class BaseSink
     protected bool ChainUpEvent(Gst.Event @event)
     {
         ArgumentNullException.ThrowIfNull(@event);
+        nint instance = Handle;
         nint @eventNative = @event.Handle;
         Gst.GstNative.MiniObjectRef(@eventNative);
-        bool result = ChainUpEvent(Handle, @eventNative);
+        bool result = ChainUpEvent(instance, @eventNative);
         GC.KeepAlive(this);
         @event.Dispose();
         return result;

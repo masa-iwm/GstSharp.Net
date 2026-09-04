@@ -198,12 +198,16 @@ public unsafe partial class PushSrc
             try
             {
                 Gst.FlowReturn result = managed.OnCreate(out bufferValue);
-                nint bufferHandle = bufferValue is null ? nint.Zero : bufferValue.Handle;
-                if (bufferHandle != nint.Zero)
+
+                if (result == Gst.FlowReturn.Ok)
                 {
-                    Gst.GstNative.MiniObjectRef(bufferHandle);
+                    nint bufferHandle = bufferValue is null ? nint.Zero : bufferValue.Handle;
+                    if (bufferHandle != nint.Zero)
+                    {
+                        Gst.GstNative.MiniObjectRef(bufferHandle);
+                    }
+                    *buffer = bufferHandle;
                 }
-                *buffer = bufferHandle;
                 return (int)(result);
             }
             finally
@@ -233,12 +237,16 @@ public unsafe partial class PushSrc
             try
             {
                 Gst.FlowReturn result = managed.OnAlloc(out bufValue);
-                nint bufHandle = bufValue is null ? nint.Zero : bufValue.Handle;
-                if (bufHandle != nint.Zero)
+
+                if (result == Gst.FlowReturn.Ok)
                 {
-                    Gst.GstNative.MiniObjectRef(bufHandle);
+                    nint bufHandle = bufValue is null ? nint.Zero : bufValue.Handle;
+                    if (bufHandle != nint.Zero)
+                    {
+                        Gst.GstNative.MiniObjectRef(bufHandle);
+                    }
+                    *buf = bufHandle;
                 }
-                *buf = bufHandle;
                 return (int)(result);
             }
             finally

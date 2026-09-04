@@ -340,9 +340,10 @@ public unsafe partial class Aggregator
     {
         ArgumentNullException.ThrowIfNull(aggregatorPad);
         ArgumentNullException.ThrowIfNull(buf);
+        nint instance = Handle;
         nint bufNative = buf.Handle;
         Gst.GstNative.MiniObjectRef(bufNative);
-        Gst.Buffer? result = ChainUpClip(Handle, aggregatorPad.Handle, bufNative);
+        Gst.Buffer? result = ChainUpClip(instance, aggregatorPad.Handle, bufNative);
         GC.KeepAlive(this);
         GC.KeepAlive(aggregatorPad);
         buf.Dispose();
@@ -355,9 +356,10 @@ public unsafe partial class Aggregator
     protected Gst.FlowReturn ChainUpFinishBuffer(Gst.Buffer buffer)
     {
         ArgumentNullException.ThrowIfNull(buffer);
+        nint instance = Handle;
         nint bufferNative = buffer.Handle;
         Gst.GstNative.MiniObjectRef(bufferNative);
-        Gst.FlowReturn result = ChainUpFinishBuffer(Handle, bufferNative);
+        Gst.FlowReturn result = ChainUpFinishBuffer(instance, bufferNative);
         GC.KeepAlive(this);
         buffer.Dispose();
         return result;
@@ -371,9 +373,10 @@ public unsafe partial class Aggregator
     {
         ArgumentNullException.ThrowIfNull(aggregatorPad);
         ArgumentNullException.ThrowIfNull(@event);
+        nint instance = Handle;
         nint @eventNative = @event.Handle;
         Gst.GstNative.MiniObjectRef(@eventNative);
-        bool result = ChainUpSinkEvent(Handle, aggregatorPad.Handle, @eventNative);
+        bool result = ChainUpSinkEvent(instance, aggregatorPad.Handle, @eventNative);
         GC.KeepAlive(this);
         GC.KeepAlive(aggregatorPad);
         @event.Dispose();
@@ -386,9 +389,10 @@ public unsafe partial class Aggregator
     protected bool ChainUpSrcEvent(Gst.Event @event)
     {
         ArgumentNullException.ThrowIfNull(@event);
+        nint instance = Handle;
         nint @eventNative = @event.Handle;
         Gst.GstNative.MiniObjectRef(@eventNative);
-        bool result = ChainUpSrcEvent(Handle, @eventNative);
+        bool result = ChainUpSrcEvent(instance, @eventNative);
         GC.KeepAlive(this);
         @event.Dispose();
         return result;
@@ -463,9 +467,10 @@ public unsafe partial class Aggregator
     protected Gst.Caps? ChainUpFixateSrcCaps(Gst.Caps caps)
     {
         ArgumentNullException.ThrowIfNull(caps);
+        nint instance = Handle;
         nint capsNative = caps.Handle;
         Gst.GstNative.MiniObjectRef(capsNative);
-        Gst.Caps? result = ChainUpFixateSrcCaps(Handle, capsNative);
+        Gst.Caps? result = ChainUpFixateSrcCaps(instance, capsNative);
         GC.KeepAlive(this);
         caps.Dispose();
         return result;
@@ -500,9 +505,10 @@ public unsafe partial class Aggregator
     {
         ArgumentNullException.ThrowIfNull(aggregatorPad);
         ArgumentNullException.ThrowIfNull(@event);
+        nint instance = Handle;
         nint @eventNative = @event.Handle;
         Gst.GstNative.MiniObjectRef(@eventNative);
-        Gst.FlowReturn result = ChainUpSinkEventPreQueue(Handle, aggregatorPad.Handle, @eventNative);
+        Gst.FlowReturn result = ChainUpSinkEventPreQueue(instance, aggregatorPad.Handle, @eventNative);
         GC.KeepAlive(this);
         GC.KeepAlive(aggregatorPad);
         @event.Dispose();
@@ -515,9 +521,10 @@ public unsafe partial class Aggregator
     protected Gst.FlowReturn ChainUpFinishBufferList(Gst.BufferList bufferlist)
     {
         ArgumentNullException.ThrowIfNull(bufferlist);
+        nint instance = Handle;
         nint bufferlistNative = bufferlist.Handle;
         Gst.GstNative.MiniObjectRef(bufferlistNative);
-        Gst.FlowReturn result = ChainUpFinishBufferList(Handle, bufferlistNative);
+        Gst.FlowReturn result = ChainUpFinishBufferList(instance, bufferlistNative);
         GC.KeepAlive(this);
         bufferlist.Dispose();
         return result;
@@ -1004,12 +1011,16 @@ public unsafe partial class Aggregator
             try
             {
                 Gst.FlowReturn result = managed.OnUpdateSrcCaps(capsValue!, out retValue);
-                nint retHandle = retValue is null ? nint.Zero : retValue.Handle;
-                if (retHandle != nint.Zero)
+
+                if (result == Gst.FlowReturn.Ok)
                 {
-                    Gst.GstNative.MiniObjectRef(retHandle);
+                    nint retHandle = retValue is null ? nint.Zero : retValue.Handle;
+                    if (retHandle != nint.Zero)
+                    {
+                        Gst.GstNative.MiniObjectRef(retHandle);
+                    }
+                    *ret = retHandle;
                 }
-                *ret = retHandle;
                 return (int)(result);
             }
             finally
