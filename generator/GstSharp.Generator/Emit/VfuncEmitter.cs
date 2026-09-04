@@ -53,6 +53,11 @@ internal sealed class VfuncEmitter
                         + "gst_audio_sink_ring_buffer_acquire starts out with a failure and only the slot "
                         + "turns it into a success"),
                     new(
+                        "unprepare",
+                        "the ring buffer cannot be released without it - "
+                        + "gst_audio_sink_ring_buffer_release starts out with a failure the same way, and a "
+                        + "ring buffer that is never released is still acquired when it is finalized"),
+                    new(
                         "write",
                         "the thread of the ring buffer stops before it starts when the slot is NULL, "
                         + "and the element plays nothing without saying why"),
@@ -65,6 +70,11 @@ internal sealed class VfuncEmitter
                         "the ring buffer cannot be acquired without it - "
                         + "gst_audio_src_ring_buffer_acquire starts out with a failure and only the slot "
                         + "turns it into a success"),
+                    new(
+                        "unprepare",
+                        "the ring buffer cannot be released without it - "
+                        + "gst_audio_src_ring_buffer_release starts out with a failure the same way, and a "
+                        + "ring buffer that is never released is still acquired when it is finalized"),
                     new(
                         "read",
                         "the thread of the ring buffer stops before it starts when the slot is NULL, "

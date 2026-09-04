@@ -153,6 +153,23 @@ public unsafe partial class AudioSink
                 nameof(overrides));
         }
 
+        bool declaredUnprepare = false;
+        foreach (Gst.GObject.VfuncOverride candidate in overrides)
+        {
+            if (candidate.Function == UnprepareOverride.Function)
+            {
+                declaredUnprepare = true;
+                break;
+            }
+        }
+
+        if (!declaredUnprepare)
+        {
+            throw new ArgumentException(
+                "A managed GstAudioSink has to declare UnprepareOverride: the ring buffer cannot be released without it - gst_audio_sink_ring_buffer_release starts out with a failure the same way, and a ring buffer that is never released is still acquired when it is finalized.",
+                nameof(overrides));
+        }
+
         bool declaredWrite = false;
         foreach (Gst.GObject.VfuncOverride candidate in overrides)
         {

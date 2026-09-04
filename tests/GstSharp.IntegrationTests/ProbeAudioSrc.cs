@@ -27,6 +27,7 @@ internal sealed class ProbeAudioSrc : AudioSrc
         OpenOverride,
         PrepareOverride,
         ReadOverride,
+        UnprepareOverride,
         CloseOverride);
 
     private long _read;
@@ -77,6 +78,9 @@ internal sealed class ProbeAudioSrc : AudioSrc
         timestamp = ClockTime.None;
         return (uint)data.Length;
     }
+
+    /// <inheritdoc/>
+    protected override bool OnUnprepare() => ChainUpUnprepare();
 
     /// <inheritdoc/>
     protected override bool OnClose() => ChainUpClose();

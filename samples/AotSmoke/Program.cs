@@ -57,7 +57,8 @@ internal static partial class Smoke
             ObjectRefSink(element);
             ObjectUnref(element);
 
-            if (!RunManagedSubclass() || !RunManagedPipeline() || !RunBindingModule() || !RunPropertiesByName())
+            if (!RunManagedSubclass() || !RunManagedPipeline() || !RunManagedAudioAndVideoSinks()
+                || !RunBindingModule() || !RunPropertiesByName())
             {
                 return 1;
             }
@@ -191,6 +192,110 @@ internal static partial class Smoke
             return false;
         }
 
+        return true;
+    }
+
+    /// <summary>
+    /// Drives a managed <c>GstAudioSink</c> and a managed <c>GstVideoSink</c>
+    /// with the test sources of the base plugins, so that the ahead of time
+    /// compiler keeps the trampolines of <c>GstSharp.Net.Audio</c> and
+    /// <c>GstSharp.Net.Video</c> as well.
+    /// </summary>
+    /// <returns><see langword="true"/> when both sinks saw what was sent.</returns>
+    /// <remarks>
+    /// The audio sink is the only element of the sample whose slot is handed a
+    /// raw pointer with a count beside it: the write of an audio sink is
+    /// projected onto a span the trampoline builds over memory the ring buffer
+    /// owns, and nothing else in the smoke test reaches that shape.
+    /// </remarks>
+    private static bool RunManagedAudioAndVideoSinks()
+    {
+        const int Buffers = 5;
+
+        using ManagedAudioSink audio = new();
+        using ManagedVideoSink video = new();
+
+        Console.WriteLine($"audio sink:  {ManagedAudioSink.RegisteredType.Name}");
+        Console.WriteLine($"video sink:  {ManagedVideoSink.RegisteredType.Name}");
+
+        if (!RunSourceInto("audiotestsrc", audio, Buffers) || !RunSourceInto("videotestsrc", video, Buffers))
+        {
+            return false;
+        }
+
+        Console.WriteLine(string.Create(
+            CultureInfo.InvariantCulture,
+            $"written:     {audio.Written} bytes, shown {video.Shown} frames"));
+
+        if (audio.Written <= 0 || video.Shown <= 0)
+        {
+            Console.Error.WriteLine("AotSmoke: the managed audio or video sink saw nothing.");
+            return false;
+        }
+
+        return true;
+    }
+
+    /// <summary>Runs a bounded test source into one sink and waits for the end.</summary>
+    /// <param name="factory">The factory of the test source.</param>
+    /// <param name="sink">The managed sink.</param>
+    /// <param name="buffers">How many buffers the source produces.</param>
+    /// <returns><see langword="true"/> when the stream ended on the bus.</returns>
+    private static bool RunSourceInto(string factory, Element sink, int buffers)
+    {
+        using Pipeline pipeline = Pipeline.New("aot-smoke-" + factory);
+        Element? source = ElementFactory.Make(factory, "source");
+
+        if (source is null)
+        {
+            Console.Error.WriteLine($"AotSmoke: {factory} is missing from the installation.");
+            return false;
+        }
+
+        using Gst.GObject.Value count = Gst.GObject.Value.New(Gst.GObject.GType.Int);
+        count.SetInt(buffers);
+        source.SetProperty("num-buffers", count);
+
+        if (!pipeline.AddMany(source, sink) || !source.Link(sink))
+        {
+            Console.Error.WriteLine($"AotSmoke: {factory} could not be linked to the managed sink.");
+            return false;
+        }
+
+        Bus bus = pipeline.GetBus();
+        MessageType seen = MessageType.Unknown;
+
+        try
+        {
+            pipeline.SetState(State.Playing);
+
+            for (int slice = 0; slice < 100 && seen == MessageType.Unknown; slice++)
+            {
+                using Message? message = bus.TimedPopFiltered(
+                    ClockTime.FromMilliseconds(100),
+                    MessageType.Eos | MessageType.Error);
+
+                seen = message?.Type ?? MessageType.Unknown;
+                GstSharp.DrainPendingReleases();
+            }
+        }
+        finally
+        {
+            pipeline.SetState(State.Null);
+        }
+
+        Console.WriteLine(string.Create(CultureInfo.InvariantCulture, $"{factory,-12} bus: {seen}"));
+
+        if (seen != MessageType.Eos)
+        {
+            Console.Error.WriteLine($"AotSmoke: the {factory} pipeline did not run to its end.");
+            return false;
+        }
+
+        // The pipeline is taken down before it is disposed, so the sink it
+        // still holds is released with it; the managed wrapper of the sink
+        // outlives both, which is what the counters are read from.
+        _ = pipeline.Remove(sink);
         return true;
     }
 

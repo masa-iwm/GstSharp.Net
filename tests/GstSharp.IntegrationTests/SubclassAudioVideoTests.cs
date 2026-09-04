@@ -193,7 +193,8 @@ public sealed class SubclassAudioVideoTests
                 TypeName,
                 _ => { },
                 AudioSink.OpenOverride,
-                AudioSink.PrepareOverride));
+                AudioSink.PrepareOverride,
+                AudioSink.UnprepareOverride));
 
         _output.WriteLine(error.Message);
         Assert.Contains("WriteOverride", error.Message, StringComparison.Ordinal);
