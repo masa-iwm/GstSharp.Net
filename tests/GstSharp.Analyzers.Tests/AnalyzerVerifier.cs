@@ -12,12 +12,12 @@ internal static class AnalyzerVerifier<TAnalyzer>
     where TAnalyzer : DiagnosticAnalyzer, new()
 {
     /// <summary>
-    /// Compiles <paramref name="source"/> together with the stubs and asserts
+    /// Compiles <paramref name="sources"/> together with the stubs and asserts
     /// that the analyzer reports exactly the diagnostics the markup declares.
     /// </summary>
-    /// <param name="source">The snippet, with <c>{|GST0001:...|}</c> style markup.</param>
+    /// <param name="sources">The snippets, with <c>{|GST0001:...|}</c> style markup.</param>
     /// <returns>A task that completes when the verification is done.</returns>
-    internal static async Task VerifyAsync(string source)
+    internal static async Task VerifyAsync(params string[] sources)
     {
         var test = new CSharpAnalyzerTest<TAnalyzer, DefaultVerifier>
         {
@@ -26,9 +26,14 @@ internal static class AnalyzerVerifier<TAnalyzer>
             ReferenceAssemblies = ReferenceAssemblies.NetStandard.NetStandard20,
             TestState =
             {
-                Sources = { source, GstStubs.Source },
+                Sources = { GstStubs.Source },
             },
         };
+
+        foreach (string source in sources)
+        {
+            test.TestState.Sources.Add(source);
+        }
 
         await test.RunAsync();
     }

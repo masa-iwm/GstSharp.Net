@@ -821,7 +821,8 @@ mechanism the pad functions need: `gst_pad_set_chain_function_full` and its
 ten siblings take a callback with no closure argument, so the runtime keys
 them by their first argument - the pad - in a table the `_full` notify
 releases. The analyzer that checks that an `OnX` override and the
-`XOverride` declaration of the same type come in pairs lands with it.
+`XOverride` declaration of the same type come in pairs is `GST0003` and
+`GST0004`.
 
 **Stage 3 — breadth.**
 Native-initiated construction via static abstract `CreateWrapper` factories
@@ -902,8 +903,9 @@ touched.
   buffers", `BaseTransform.TransformIpOverride` what says "this element
   rewrites buffers in place". A declaration without an override costs a managed
   transition that chains up — harmless except on those presence-sensitive
-  slots. An override without a declaration is never called. The analyzer that
-  checks the pairing is stage 2b.
+  slots. An override without a declaration is never called. `GST0003` reports an
+  override without a declaration and `GST0004` a declaration without an
+  override.
 * **A slot belongs to the class that hands it out.** Passing
   `BaseSink.RenderOverride` to `PushSrc.DefineSubclass` is refused: the offset
   only means anything inside `GstBaseSinkClass`.

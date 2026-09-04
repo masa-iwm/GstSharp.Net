@@ -1,12 +1,15 @@
 # GstSharp.Net analyzers
 
 The `GstSharp.Net.Analyzers` assembly ships as an analyzer asset inside the
-binding packages and flags the two leak classes that GStreamer applications
-hit most often. Both rules follow the mini object half of the binding's
-ownership policy: every `MiniObject` or `Boxed` wrapper handed to user code
-owns a reference of its own and must be disposed. GObject wrappers are
-interned and shared, are not covered by these rules, and are normally left to
-the collector — see [ownership and lifetime](ownership.md).
+binding packages and carries two pairs of rules. `GST0001` and `GST0002` flag
+the two leak classes that GStreamer applications hit most often; they follow
+the mini object half of the binding's ownership policy, where every
+`MiniObject` or `Boxed` wrapper handed to user code owns a reference of its
+own and must be disposed. GObject wrappers are interned and shared, are not
+covered by those rules, and are normally left to the collector — see
+[ownership and lifetime](ownership.md). `GST0003` and `GST0004` check the
+other contract the compiler cannot see on its own: that a subclass declares
+exactly the vfunc slots it overrides — see [subclassing](subclassing.md).
 
 ## GST0001
 
@@ -51,3 +54,60 @@ buffer.Map(MapFlags.Read);                        // GST0002
 
 Passing the scope to another method counts as consumption (the callee may
 dispose it).
+
+## GST0003
+
+**Overridden vfunc is not declared in DefineSubclass.**
+
+A class that derives from a subclassable binding class overrides `On<X>`, but
+the `overrides` argument of its `DefineSubclass` call does not name
+`<X>Override`. Only declared slots are patched into the class structure, so
+the override is dead code and GStreamer keeps calling the implementation of
+the base class.
+
+Fix: add the declaration, or delete the override.
+
+```csharp
+internal sealed class MySource : PushSrc
+{
+    private static readonly SubclassType Definition =
+        DefineSubclass("MySource", ConfigureClass, CreateOverride, StartOverride);
+
+    protected override FlowReturn OnCreate(out Gst.Buffer? buffer) { ... }  // ok
+    protected override bool OnStart() { ... }                              // ok
+    protected override bool OnStop() { ... }                               // GST0003
+}
+```
+
+## GST0004
+
+**Declared vfunc slot is not overridden.**
+
+The converse: `<X>Override` appears in the `overrides` argument while the
+class does not override `On<X>`. The slot is patched all the same, so the
+element pays a managed transition that only chains up — and on the slots
+GStreamer reads for presence, such as `BaseSrc.alloc`, `BaseSrc.fill` or
+`BaseTransform.transform_ip`, a slot that exists changes what the base class
+does, even when the implementation behind it does nothing of its own.
+
+Fix: override the method, or drop the declaration.
+
+```csharp
+internal sealed class MySink : BaseSink
+{
+    private static readonly SubclassType Definition =
+        DefineSubclass("MySink", ConfigureClass, RenderOverride, PrepareOverride);  // GST0004 on PrepareOverride
+
+    protected override FlowReturn OnRender(Gst.Buffer buffer) { ... }
+}
+```
+
+Both rules pair a declaration with an override by name stem alone —
+`<Stem>Override` against `On<Stem>` — because the class and the offset a
+`VfuncOverride` carries only resolve at run time. They therefore only read an
+`overrides` argument written out at the call site, as separate arguments, an
+array creation or a collection expression of plain property references.
+Anything else — a local, a helper call, a spread — silences both directions
+rather than guessing, and a `DefineSubclass` call outside a class that derives
+from the class it registers against, such as the negative registration tests,
+is never looked at.

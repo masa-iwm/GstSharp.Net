@@ -73,7 +73,42 @@ internal static class GstStubs
                     {
                     }
                 }
+
+                public readonly struct VfuncOverride
+                {
+                }
+
+                public sealed class ClassConfig
+                {
+                }
+
+                public sealed class SubclassType
+                {
+                }
             }
+
+        #nullable enable
+            /// <summary>
+            /// A stand-in for a subclassable base class, shaped like the generated
+            /// ".Subclass.cs" partials: a slot declaration property and an "On"
+            /// method per vfunc, plus the registration entry point.
+            /// </summary>
+            public class FakeSrc
+            {
+                public static GObject.VfuncOverride XOverride { get; } = default;
+
+                public static GObject.VfuncOverride YOverride { get; } = default;
+
+                public static GObject.SubclassType DefineSubclass(
+                    string typeName,
+                    System.Action<GObject.ClassConfig>? configureClass,
+                    params GObject.VfuncOverride[] overrides) => new GObject.SubclassType();
+
+                protected virtual int OnX() => 0;
+
+                protected virtual int OnY() => 0;
+            }
+        #nullable restore
 
             namespace Base
             {

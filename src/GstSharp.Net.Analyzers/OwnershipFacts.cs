@@ -49,6 +49,9 @@ internal static class OwnershipFacts
     /// <summary>The metadata name of the boxed value base class.</summary>
     internal const string BoxedMetadataName = "Gst.GObject.Boxed";
 
+    /// <summary>The metadata name of a vfunc slot declaration.</summary>
+    internal const string VfuncOverrideMetadataName = "Gst.GObject.VfuncOverride";
+
     /// <summary>The unqualified name of a buffer mapping scope.</summary>
     internal const string MapScopeName = "MapScope";
 
