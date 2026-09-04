@@ -101,7 +101,7 @@ internal sealed class VfuncEmitter
     /// <param name="module">The module being emitted.</param>
     /// <param name="ns">The gir namespace of the module.</param>
     /// <param name="subclasses">The class structs of the run.</param>
-    /// <returns>One file per allowlisted class that has at least one slot.</returns>
+    /// <returns>One file per allowlisted class.</returns>
     internal IReadOnlyList<GeneratedFile> Emit(ModuleInfo module, GirNamespace ns, SubclassModel subclasses)
     {
         List<GeneratedFile> files = [];
@@ -125,7 +125,14 @@ internal sealed class VfuncEmitter
     /// <param name="module">The module being emitted.</param>
     /// <param name="ns">The gir namespace of the module.</param>
     /// <param name="model">The class struct of the class.</param>
-    /// <returns>The file, or <see langword="null"/> when no slot survived the planner.</returns>
+    /// <returns>The file.</returns>
+    /// <remarks>
+    /// A class none of whose own slots survived the planner is emitted all the
+    /// same: <c>AudioFilter</c> declares one slot and it is not bindable, and
+    /// yet a managed audio filter is a useful thing that overrides the slots of
+    /// <c>BaseTransform</c> - which it can only do through a registration and a
+    /// constructor of its own.
+    /// </remarks>
     private GeneratedFile? EmitOne(ModuleInfo module, GirNamespace ns, ClassStructModel model)
     {
         PlanningContext context = new(
@@ -161,15 +168,6 @@ internal sealed class VfuncEmitter
             _census.Emitted(module.GirNamespace, Category);
         }
 
-        if (plans.Count == 0)
-        {
-            _diagnostics.Warn(
-                "GEN0033",
-                $"The subclassable class '{model.QualifiedName}' has no slot the planner could project; "
-                + "no subclassing surface is emitted for it.");
-            return null;
-        }
-
         HashSet<string> mine = new(StringComparer.Ordinal);
         HashSet<string> inherited = new(StringComparer.Ordinal);
         for (ClassStructModel? parent = model.Parent; parent is not null; parent = parent.Parent)
@@ -197,9 +195,18 @@ internal sealed class VfuncEmitter
         writer.WriteLine();
         writer.WriteLine("#nullable enable");
         writer.WriteLine();
-        writer.WriteLine("using System.Runtime.CompilerServices;");
-        writer.WriteLine("using System.Runtime.InteropServices;");
-        writer.WriteLine();
+
+        // A class whose own slots are all skipped still carries a
+        // registration, because a subclass of it overrides the slots of its
+        // parents; what it does not carry is a trampoline, and with it the
+        // attribute and the calling convention those two namespaces are for.
+        if (plans.Count > 0)
+        {
+            writer.WriteLine("using System.Runtime.CompilerServices;");
+            writer.WriteLine("using System.Runtime.InteropServices;");
+            writer.WriteLine();
+        }
+
         writer.WriteLine("namespace " + module.ClrNamespace + ";");
         writer.WriteLine();
         writer.WriteLine("/// <content>The subclassing surface of <c>" + cName + "</c>.</content>");
@@ -234,8 +241,11 @@ internal sealed class VfuncEmitter
             WriteStaticChainUp(writer, plan, model);
         }
 
-        writer.WriteLine();
-        WriteParentClassOf(writer, mirror, cName);
+        if (plans.Count > 0)
+        {
+            writer.WriteLine();
+            WriteParentClassOf(writer, mirror, cName);
+        }
 
         foreach (VirtualMethodPlan plan in plans)
         {
