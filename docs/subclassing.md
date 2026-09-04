@@ -947,22 +947,24 @@ managed `VideoSink` overrides `render` through `BaseSink.RenderOverride` and
 | `Gst.Base.Aggregator` | `flush`, `clip`, `finish_buffer`, `sink_event`, `sink_query`, `src_event`, `src_query`, `src_activate`, `aggregate`, `stop`, `start`, `get_next_time`, `update_src_caps`, `fixate_src_caps`, `negotiated_src_caps`, `decide_allocation`, `propose_allocation`, `negotiate`, `sink_event_pre_queue`, `sink_query_pre_queue`, `finish_buffer_list`, `peek_next_sample` |
 | `Gst.Audio.AudioBaseSink` | `create_ringbuffer`, `payload` |
 | `Gst.Audio.AudioBaseSrc` | `create_ringbuffer` |
-| `Gst.Audio.AudioSink` | `open`, `prepare`, `unprepare`, `close`, `write`, `delay`, `reset`, `pause`, `resume`, `stop` |
+| `Gst.Audio.AudioSink` | `open`, `prepare`, `unprepare`, `close`, `write`, `delay`, `reset`, `pause`, `resume` |
 | `Gst.Audio.AudioSrc` | `open`, `prepare`, `unprepare`, `close`, `read`, `delay`, `reset` |
 | `Gst.Audio.AudioFilter` | none of its own; a managed audio filter overrides `GstBaseTransform` |
 | `Gst.Video.VideoSink` | `show_frame` |
 | `Gst.Video.VideoFilter` | `transform_frame`, `transform_frame_ip` |
 
-Fourteen slots of those classes carry no `OnX` member. Seven are the signal
+Fifteen slots of those classes carry no `OnX` member. Seven are the signal
 class closures of `Element` and `Bin`, which the base library never calls
 through the class pointer — subscribing to the signal is the same hook.
 `Aggregator::create_new_pad` waits for pad subclassing, which needs a
-`ClassConfig` for `GstPad` and construct properties. The remaining six lend a
+`ClassConfig` for `GstPad` and construct properties. `AudioSink::stop` shares
+its name with the `stop` of `BaseSink` and answers nothing where that one
+answers a `bool`, so no managed name can carry both. The remaining six lend a
 boxed record by pointer — `BaseSrc::do_seek` and `prepare_seek_segment`,
 `BaseTransform::filter_meta`, `AudioFilter::setup`, and the `set_info` of
 `VideoSink` and `VideoFilter` — which a boxed wrapper of this binding cannot
 project, because it copies what it is handed and the copy is where the
-override's writes would stay. `girs/skip-report.md` lists all fourteen with
+override's writes would stay. `girs/skip-report.md` lists all fifteen with
 their reason.
 
 ### Slots a subclass has to declare
@@ -995,6 +997,12 @@ registration says so before it takes the type name:
   chain up for ever: **functional never**. Closing this is stage 3 (§5.4).
 * **No properties and no signals** on managed types, so a managed element
   cannot be configured with `g_object_set` or from a pipeline description.
+* **`GstAudioSink::stop` has no managed member.** Its name collides with
+  `BaseSink::stop`, which answers a `bool` where the audio one answers nothing,
+  and C# cannot give one name two return types; a disambiguated managed name is
+  a naming decision that has not been taken. The device is unblocked through
+  `OnReset` instead, which is what `gst_audio_sink_ring_buffer_stop` falls back
+  to when the slot is NULL (gstaudiosink.c:594-602).
 * **No `dispose` or `finalize` override**, by design (§1): teardown belongs in
   the `READY` to `NULL` transition of `OnChangeState`, or in `OnStop`.
 * **Disposing a managed element that GStreamer still drives** does not crash,

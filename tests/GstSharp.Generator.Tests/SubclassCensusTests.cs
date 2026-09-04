@@ -33,7 +33,7 @@ public sealed class SubclassCensusTests
     [InlineData("Gst", 3, 17)]
     [InlineData("GstBase", 5, 81)]
     [InlineData("GstApp", 0, 0)]
-    [InlineData("GstAudio", 5, 20)]
+    [InlineData("GstAudio", 5, 19)]
     [InlineData("GstVideo", 2, 3)]
     [InlineData("GstPbutils", 0, 0)]
     [InlineData("GstSdp", 0, 0)]
@@ -56,11 +56,11 @@ public sealed class SubclassCensusTests
     }
 
     /// <summary>
-    /// The run as a whole: fifteen mirrors and a hundred and twenty-one slots,
-    /// the numbers the release notes and <c>docs/subclassing.md</c> quote.
+    /// The run as a whole: fifteen mirrors and a hundred and twenty slots, the
+    /// numbers the release notes and <c>docs/subclassing.md</c> quote.
     /// </summary>
     [Fact]
-    public void TheRunEmitsFifteenMirrorsAndAHundredAndTwentyOneSlots()
+    public void TheRunEmitsFifteenMirrorsAndAHundredAndTwentySlots()
     {
         EmissionCensus census = Generated.Census;
         int mirrors = 0;
@@ -72,7 +72,7 @@ public sealed class SubclassCensusTests
         }
 
         Assert.Equal(15, mirrors);
-        Assert.Equal(121, slots);
+        Assert.Equal(120, slots);
     }
 
     /// <summary>
@@ -121,6 +121,9 @@ public sealed class SubclassCensusTests
             new Dictionary<string, string>(StringComparer.Ordinal)
             {
                 ["GstAudio.AudioFilter::setup"] = Boxed,
+                ["GstAudio.AudioSink::stop"] =
+                    "name collides with the BaseSink stop slot (different return type); "
+                    + "a disambiguated managed name needs a naming decision",
             },
             census.SkippedVirtuals("GstAudio"));
 
@@ -132,6 +135,6 @@ public sealed class SubclassCensusTests
             },
             census.SkippedVirtuals("GstVideo"));
 
-        Assert.Equal(14, census.SkippedVirtualCount());
+        Assert.Equal(15, census.SkippedVirtualCount());
     }
 }

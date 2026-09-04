@@ -1282,7 +1282,7 @@ disappears shows up here as an added line.
 - `gst_webrtc_ice_get_local_candidates`
 - `gst_webrtc_ice_get_remote_candidates`
 
-## Virtuals (14)
+## Virtuals (15)
 
 The class struct slots of a subclassable class that carry no `OnX` member, with
 the reason. `UnsupportedSignature` is the planner refusing a shape; every other
@@ -1299,9 +1299,10 @@ out, so what is listed here is the managed surface and not the ABI.
 - `Gst.Element::pad_added` — signal class closure: read by g_signal at emission time, never called through the class pointer by the base class; managed code subscribes to the signal instead
 - `Gst.Element::pad_removed` — signal class closure: read by g_signal at emission time, never called through the class pointer by the base class; managed code subscribes to the signal instead
 
-### GstAudio (1)
+### GstAudio (2)
 
 - `GstAudio.AudioFilter::setup` — boxed parameter lent by pointer; Boxed has no borrow mode, and a copy would hide writes the caller reads back
+- `GstAudio.AudioSink::stop` — name collides with the BaseSink stop slot (different return type); a disambiguated managed name needs a naming decision
 
 ### GstBase (4)
 

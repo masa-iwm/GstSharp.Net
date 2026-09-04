@@ -103,15 +103,6 @@ public unsafe partial class AudioSink
         Gst.Audio.AudioSinkClassRaw.ResumeOffset,
         (nint)(delegate* unmanaged[Cdecl]<nint, void>)&ResumeTrampoline);
 
-    /// <summary>
-    /// Gets the declaration of <c>GstAudioSink.stop</c>, for a subclass that
-    /// overrides <see cref="OnStop"/>.
-    /// </summary>
-    public static new Gst.GObject.VfuncOverride StopOverride { get; } = new(
-        &GetGType,
-        Gst.Audio.AudioSinkClassRaw.StopOffset,
-        (nint)(delegate* unmanaged[Cdecl]<nint, void>)&StopTrampoline);
-
     /// <summary>Registers a managed subclass of <c>GstAudioSink</c> with GObject.</summary>
     /// <param name="typeName">The <c>GType</c> name, unique in the process.</param>
     /// <param name="configureClass">
@@ -265,21 +256,6 @@ public unsafe partial class AudioSink
     protected virtual void OnResume() =>
         ChainUpResume();
 
-    /// <summary>
-    /// Stop the device and unblock write as fast as possible.
-    ///        Pending samples are flushed from the device.
-    ///        For retro compatibility, the audio sink will fallback
-    ///        to calling reset if this vmethod is not provided. Since: 1.18
-    /// </summary>
-    /// <remarks>
-    /// <para>This hides the member of the same shape a base class carries. The two are
-    /// different class struct slots and <c>stop</c> here is the one
-    /// that runs for an instance of this type, so the hidden one is not overridden
-    /// from a subclass of this class.</para>
-    /// </remarks>
-    protected new virtual void OnStop() =>
-        ChainUpStop();
-
     /// <summary>Runs the implementation of <c>open</c> below the managed override.</summary>
     /// <returns>What <c>open</c> answers.</returns>
     protected bool ChainUpOpen()
@@ -374,19 +350,6 @@ public unsafe partial class AudioSink
     protected void ChainUpResume()
     {
         ChainUpResume(Handle);
-        GC.KeepAlive(this);
-    }
-
-    /// <summary>Runs the implementation of <c>stop</c> below the managed override.</summary>
-    /// <remarks>
-    /// <para>This hides the member of the same shape a base class carries. The two are
-    /// different class struct slots and <c>stop</c> here is the one
-    /// that runs for an instance of this type, so the hidden one is not overridden
-    /// from a subclass of this class.</para>
-    /// </remarks>
-    protected new void ChainUpStop()
-    {
-        ChainUpStop(Handle);
         GC.KeepAlive(this);
     }
 
@@ -499,19 +462,6 @@ public unsafe partial class AudioSink
     {
         delegate* unmanaged[Cdecl]<nint, void> slot =
             (delegate* unmanaged[Cdecl]<nint, void>)ParentClassOf(sink)->Resume;
-
-        if (slot is null)
-        {
-            return;
-        }
-
-        slot(sink);
-    }
-
-    private static void ChainUpStop(nint sink)
-    {
-        delegate* unmanaged[Cdecl]<nint, void> slot =
-            (delegate* unmanaged[Cdecl]<nint, void>)ParentClassOf(sink)->Stop;
 
         if (slot is null)
         {
@@ -696,25 +646,6 @@ public unsafe partial class AudioSink
             }
 
             managed.OnResume();
-        }
-        catch (Exception exception)
-        {
-            Gst.Interop.ExceptionTrap.Report(exception);
-        }
-    }
-
-    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
-    private static void StopTrampoline(nint sink)
-    {
-        try
-        {
-            if (Gst.GObject.Object.TryGetInterned(sink) is not AudioSink managed)
-            {
-                ChainUpStop(sink);
-                return;
-            }
-
-            managed.OnStop();
         }
         catch (Exception exception)
         {
