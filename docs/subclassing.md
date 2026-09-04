@@ -907,7 +907,8 @@ touched.
 * **A slot belongs to the class that hands it out.** Passing
   `BaseSink.RenderOverride` to `PushSrc.DefineSubclass` is refused: the offset
   only means anything inside `GstBaseSinkClass`.
-* **Pad templates are mandatory for every base below `Gst.Element`** — `src`
+* **Pad templates are mandatory for every base that creates pads in its
+  instance init** (`Gst.Bin` needs none) — `src`
   for `BaseSrc`, `PushSrc`, `Aggregator`, `AudioBaseSrc` and `AudioSrc`,
   `sink` for `BaseSink`, `AudioBaseSink`, `AudioSink` and `VideoSink`, both
   for `BaseTransform`, `AudioFilter` and `VideoFilter` — because their
@@ -978,7 +979,8 @@ their reason.
 ### Slots a subclass has to declare
 
 Most slots have an answer for a NULL parent that the element survives, and
-`DefineSubclass` accepts a registration without them. Six do not, and the
+`DefineSubclass` accepts a registration without them. Nine slots on six
+  classes do not, and the
 registration says so before it takes the type name:
 
 | Class | Slot | Why |
@@ -991,6 +993,10 @@ registration says so before it takes the type name:
 
 ### The limits
 
+* **`AudioBaseSink` and `AudioBaseSrc` cannot be subclassed directly from
+  managed code yet.** Their required `create_ringbuffer` slot has to answer a
+  `GstAudioRingBuffer` subclass, and `AudioRingBuffer` is not subclassable;
+  derive from `AudioSink` / `AudioSrc`, which bring their own ring buffer.
 * **A managed subclass cannot be derived from by another managed subclass.**
   One level only: the chain-up resolves the parent class of the registration,
   and a managed parent's slot would be the same trampoline (§4.4). The surface
