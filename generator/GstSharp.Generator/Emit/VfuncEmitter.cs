@@ -413,14 +413,15 @@ internal sealed class VfuncEmitter
 
     private static void WriteVirtual(CodeWriter writer, VirtualMethodPlan plan, string cName, bool hides)
     {
-        writer.WriteLine("/// <summary>Runs <c>" + cName + "." + plan.Method.Name + "</c>.</summary>");
+        XmlDocWriter.Write(
+            writer,
+            plan.Method.Doc,
+            "Runs <c>" + cName + "." + plan.Method.Name + "</c>.",
+            plan.Method,
+            Remarks(plan, hides));
+
         WriteParameterDocs(writer, plan);
         WriteReturnDoc(writer, plan);
-        if (hides)
-        {
-            WriteHidingRemark(writer, plan);
-        }
-
         writer.WriteLine(
             "protected " + (hides ? "new " : string.Empty) + "virtual " + ReturnType(plan) + " On" + plan.Name
             + "(" + PublicParameters(plan) + ") =>");
@@ -428,22 +429,44 @@ internal sealed class VfuncEmitter
     }
 
     /// <summary>
-    /// Writes the note that a member of the same shape further up is hidden:
-    /// a class struct that redeclares the slot of its parent, such as
-    /// <c>GstBaseSrcClass.query</c> over <c>GstElementClass.query</c>, is a
-    /// second slot and not an override of the first one.
+    /// Builds the generator authored part of the remarks of a slot: the note
+    /// the overlays carry for it, and the note that a member of the same shape
+    /// further up is hidden - a class struct that redeclares the slot of its
+    /// parent, such as <c>GstBaseSrcClass.query</c> over
+    /// <c>GstElementClass.query</c>, is a second slot and not an override of
+    /// the first one.
     /// </summary>
-    /// <param name="writer">Where the note is written.</param>
     /// <param name="plan">The slot being written.</param>
-    private static void WriteHidingRemark(CodeWriter writer, VirtualMethodPlan plan)
+    /// <param name="hides">Whether a base class carries a member of the same shape.</param>
+    /// <returns>The lines, or <see langword="null"/> when there is nothing to add.</returns>
+    private static IReadOnlyList<string>? Remarks(VirtualMethodPlan plan, bool hides)
     {
-        writer.WriteLine("/// <remarks>");
-        writer.WriteLine("/// This hides the member of the same shape a base class carries. The two are");
-        writer.WriteLine(
-            "/// different class struct slots and <c>" + plan.Method.Name + "</c> here is the one that");
-        writer.WriteLine("/// runs for an instance of this type, so the hidden one is not overridden");
-        writer.WriteLine("/// from a subclass of this class.");
-        writer.WriteLine("/// </remarks>");
+        if (plan.DocNote is null && !hides)
+        {
+            return null;
+        }
+
+        List<string> lines = [];
+        if (plan.DocNote is { } note)
+        {
+            List<string> wrapped = Wrap(XmlDocWriter.Escape(note));
+            wrapped[0] = "<para>" + wrapped[0];
+            wrapped[^1] += "</para>";
+            lines.AddRange(wrapped);
+        }
+
+        if (hides)
+        {
+            lines.Add(
+                "<para>This hides the member of the same shape a base class carries. The two are");
+            lines.Add(
+                "different class struct slots and <c>" + plan.Method.Name + "</c> here is the one");
+            lines.Add(
+                "that runs for an instance of this type, so the hidden one is not overridden");
+            lines.Add("from a subclass of this class.</para>");
+        }
+
+        return lines;
     }
 
     /// <summary>
@@ -468,16 +491,15 @@ internal sealed class VfuncEmitter
 
     private static void WriteInstanceChainUp(CodeWriter writer, VirtualMethodPlan plan, bool hides)
     {
-        writer.WriteLine(
-            "/// <summary>Runs the implementation of <c>" + plan.Method.Name
-            + "</c> below the managed override.</summary>");
+        XmlDocWriter.Write(
+            writer,
+            null,
+            "Runs the implementation of <c>" + plan.Method.Name + "</c> below the managed override.",
+            null,
+            Remarks(plan, hides));
+
         WriteParameterDocs(writer, plan);
         WriteReturnDoc(writer, plan);
-        if (hides)
-        {
-            WriteHidingRemark(writer, plan);
-        }
-
         writer.WriteLine(
             "protected " + (hides ? "new " : string.Empty) + ReturnType(plan) + " ChainUp" + plan.Name
             + "(" + PublicParameters(plan) + ")");
@@ -1066,22 +1088,140 @@ internal sealed class VfuncEmitter
         writer.WriteLine("*" + value.Name + " = " + handle + ";");
     }
 
+    /// <summary>
+    /// Breaks a sentence into lines short enough for the documentation comment,
+    /// so that what the overlays carry as one string does not become a line no
+    /// editor of this repository would leave alone.
+    /// </summary>
+    /// <param name="text">The sentence.</param>
+    /// <returns>The lines, at least one.</returns>
+    private static List<string> Wrap(string text)
+    {
+        const int Width = 88;
+        List<string> lines = [];
+        string current = string.Empty;
+        foreach (string word in text.Split(' ', StringSplitOptions.RemoveEmptyEntries))
+        {
+            if (current.Length == 0)
+            {
+                current = word;
+            }
+            else if (current.Length + 1 + word.Length <= Width)
+            {
+                current = current + " " + word;
+            }
+            else
+            {
+                lines.Add(current);
+                current = word;
+            }
+        }
+
+        lines.Add(current);
+        return lines;
+    }
+
+    /// <summary>
+    /// Writes the documentation of every argument: what the gir says about it,
+    /// followed by the sentence its marshalling bucket owes the reader.
+    /// </summary>
+    /// <param name="writer">The target writer.</param>
+    /// <param name="plan">The slot being written.</param>
     private static void WriteParameterDocs(CodeWriter writer, VirtualMethodPlan plan)
     {
         foreach (VfuncArgument argument in plan.Arguments)
         {
-            writer.WriteLine(
-                "/// <param name=\"" + DocName(argument.Argument.Name)
-                + "\">The argument the slot carries under this name.</param>");
+            ArgumentPlan value = argument.Argument;
+            XmlDocWriter.WriteParam(
+                writer,
+                DocName(value.Name),
+                value.Doc ?? value.Source?.Doc,
+                "The <c>" + (value.Source?.Name ?? DocName(value.Name)) + "</c> argument.",
+                OwnershipNote(argument));
         }
     }
 
+    /// <summary>
+    /// Writes the documentation of the value the slot answers: what the gir
+    /// says about it, followed by what the override owes the caller.
+    /// </summary>
+    /// <param name="writer">The target writer.</param>
+    /// <param name="plan">The slot being written.</param>
     private static void WriteReturnDoc(CodeWriter writer, VirtualMethodPlan plan)
     {
-        if (!plan.Return.IsVoid)
+        if (plan.Return.IsVoid)
         {
-            writer.WriteLine("/// <returns>What the slot answers.</returns>");
+            return;
         }
+
+        List<string> note = [];
+        switch (plan.ReturnBucket)
+        {
+            case VfuncReturnBucket.OwnedGObject:
+            case VfuncReturnBucket.OwnedMiniObject:
+                note.Add("A returned object is handed to the caller with one added reference; the");
+                note.Add("wrapper keeps its own.");
+                break;
+            case VfuncReturnBucket.BorrowedHandle:
+                note.Add("The answer is borrowed: no reference is added for the caller, so the");
+                note.Add("override has to keep the object alive by other means.");
+                break;
+            default:
+                break;
+        }
+
+        if (plan.NonNullReturn is not null)
+        {
+            note.Add("Answering <see langword=\"null\"/> is not allowed: the caller of the slot does");
+            note.Add("not check for it. A null answer is reported through the exception trap and");
+            note.Add("the slot answers a value the caller fails cleanly on.");
+        }
+
+        XmlDocWriter.WriteReturns(
+            writer,
+            plan.Return.Doc,
+            "What <c>" + plan.Method.Name + "</c> answers.",
+            note.Count == 0 ? null : note);
+    }
+
+    /// <summary>
+    /// The sentence the marshalling of an argument owes the reader, which no
+    /// gir states: who owns what the override is handed, and what the caller
+    /// does with what it writes back.
+    /// </summary>
+    /// <param name="argument">The argument being documented.</param>
+    /// <returns>The lines, or <see langword="null"/> when there is nothing to say.</returns>
+    private static IReadOnlyList<string>? OwnershipNote(VfuncArgument argument)
+    {
+        List<string> note = [];
+        switch (argument.Bucket)
+        {
+            case VfuncBucket.BorrowGObject:
+            case VfuncBucket.BorrowMiniObject:
+            case VfuncBucket.BorrowWrapper:
+                note.Add("The element lends this for the duration of the call; keep a copy to retain it.");
+                break;
+            case VfuncBucket.Adopt:
+                note.Add("The override takes ownership of it: chain up to hand it on, or it is");
+                note.Add("released when the override returns. Copy it to keep it beyond the call.");
+                break;
+            case VfuncBucket.OutHandle:
+            case VfuncBucket.InOutHandle:
+                note.Add("What the override leaves here is handed to the caller with one added");
+                note.Add("reference; the wrapper keeps its own.");
+                break;
+            default:
+                break;
+        }
+
+        if (argument.IsIdentity)
+        {
+            note.Add("Answering the very value that was handed in is allowed and is how an in");
+            note.Add("place implementation says so: the caller compares the two and takes no");
+            note.Add("second reference for an unchanged answer.");
+        }
+
+        return note.Count == 0 ? null : note;
     }
 
     private static string PublicParameters(VirtualMethodPlan plan)

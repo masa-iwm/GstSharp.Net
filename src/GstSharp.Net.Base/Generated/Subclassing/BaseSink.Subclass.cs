@@ -212,120 +212,210 @@ public unsafe partial class BaseSink
         return type;
     }
 
-    /// <summary>Runs <c>GstBaseSink.get_caps</c>.</summary>
-    /// <param name="filter">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <summary>Called to get sink pad caps from the subclass.</summary>
+    /// <param name="filter">
+    /// The <c>filter</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <returns>
+    /// What <c>get_caps</c> answers.
+    /// A returned object is handed to the caller with one added reference; the
+    /// wrapper keeps its own.
+    /// </returns>
     protected virtual Gst.Caps? OnGetCaps(Gst.Caps? filter) =>
         ChainUpGetCaps(filter);
 
-    /// <summary>Runs <c>GstBaseSink.set_caps</c>.</summary>
-    /// <param name="caps">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <summary>Notify subclass of changed caps</summary>
+    /// <param name="caps">
+    /// The <c>caps</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <returns>What <c>set_caps</c> answers.</returns>
     protected virtual bool OnSetCaps(Gst.Caps caps) =>
         ChainUpSetCaps(caps);
 
-    /// <summary>Runs <c>GstBaseSink.fixate</c>.</summary>
-    /// <param name="caps">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <summary>
+    /// Only useful in pull mode. Implement if you have
+    ///     ideas about what should be the default values for the caps you support.
+    /// </summary>
+    /// <param name="caps">
+    /// The <c>caps</c> argument.
+    /// The override takes ownership of it: chain up to hand it on, or it is
+    /// released when the override returns. Copy it to keep it beyond the call.
+    /// </param>
+    /// <returns>
+    /// What <c>fixate</c> answers.
+    /// A returned object is handed to the caller with one added reference; the
+    /// wrapper keeps its own.
+    /// </returns>
     protected virtual Gst.Caps? OnFixate(Gst.Caps caps) =>
         ChainUpFixate(caps);
 
-    /// <summary>Runs <c>GstBaseSink.activate_pull</c>.</summary>
-    /// <param name="active">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <summary>
+    /// Subclasses should override this when they can provide an
+    ///     alternate method of spawning a thread to drive the pipeline in pull mode.
+    ///     Should start or stop the pulling thread, depending on the value of the
+    ///     "active" argument. Called after actually activating the sink pad in pull
+    ///     mode. The default implementation starts a task on the sink pad.
+    /// </summary>
+    /// <param name="active">The <c>active</c> argument.</param>
+    /// <returns>What <c>activate_pull</c> answers.</returns>
     protected virtual bool OnActivatePull(bool active) =>
         ChainUpActivatePull(active);
 
-    /// <summary>Runs <c>GstBaseSink.get_times</c>.</summary>
-    /// <param name="buffer">The argument the slot carries under this name.</param>
-    /// <param name="start">The argument the slot carries under this name.</param>
-    /// <param name="end">The argument the slot carries under this name.</param>
+    /// <summary>Get the start and end times for syncing on this buffer.</summary>
+    /// <param name="buffer">
+    /// The <c>buffer</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <param name="start">The <c>start</c> argument.</param>
+    /// <param name="end">The <c>end</c> argument.</param>
     protected virtual void OnGetTimes(Gst.Buffer buffer, out Gst.ClockTime start, out Gst.ClockTime end) =>
         ChainUpGetTimes(buffer, out start, out end);
 
-    /// <summary>Runs <c>GstBaseSink.propose_allocation</c>.</summary>
-    /// <param name="query">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <summary>configure the allocation query</summary>
+    /// <param name="query">
+    /// The <c>query</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <returns>What <c>propose_allocation</c> answers.</returns>
     protected virtual bool OnProposeAllocation(Gst.Query query) =>
         ChainUpProposeAllocation(query);
 
-    /// <summary>Runs <c>GstBaseSink.start</c>.</summary>
-    /// <returns>What the slot answers.</returns>
+    /// <summary>Start processing. Ideal for opening resources in the subclass</summary>
+    /// <returns>What <c>start</c> answers.</returns>
     protected virtual bool OnStart() =>
         ChainUpStart();
 
-    /// <summary>Runs <c>GstBaseSink.stop</c>.</summary>
-    /// <returns>What the slot answers.</returns>
+    /// <summary>Stop processing. Subclasses should use this to close resources.</summary>
+    /// <returns>What <c>stop</c> answers.</returns>
     protected virtual bool OnStop() =>
         ChainUpStop();
 
-    /// <summary>Runs <c>GstBaseSink.unlock</c>.</summary>
-    /// <returns>What the slot answers.</returns>
+    /// <summary>
+    /// Unlock any pending access to the resource. Subclasses should
+    ///     unblock any blocked function ASAP and call gst_base_sink_wait_preroll()
+    /// </summary>
+    /// <returns>What <c>unlock</c> answers.</returns>
     protected virtual bool OnUnlock() =>
         ChainUpUnlock();
 
-    /// <summary>Runs <c>GstBaseSink.unlock_stop</c>.</summary>
-    /// <returns>What the slot answers.</returns>
+    /// <summary>
+    /// Clear the previous unlock request. Subclasses should clear
+    ///     any state they set during #GstBaseSinkClass::unlock, and be ready to
+    ///     continue where they left off after gst_base_sink_wait_preroll(),
+    ///     gst_base_sink_wait() or gst_wait_sink_wait_clock() return or
+    ///     #GstBaseSinkClass::render is called again.
+    /// </summary>
+    /// <returns>What <c>unlock_stop</c> answers.</returns>
     protected virtual bool OnUnlockStop() =>
         ChainUpUnlockStop();
 
-    /// <summary>Runs <c>GstBaseSink.query</c>.</summary>
-    /// <param name="query">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <summary>perform a #GstQuery on the element.</summary>
     /// <remarks>
-    /// This hides the member of the same shape a base class carries. The two are
-    /// different class struct slots and <c>query</c> here is the one that
-    /// runs for an instance of this type, so the hidden one is not overridden
-    /// from a subclass of this class.
+    /// <para>This hides the member of the same shape a base class carries. The two are
+    /// different class struct slots and <c>query</c> here is the one
+    /// that runs for an instance of this type, so the hidden one is not overridden
+    /// from a subclass of this class.</para>
     /// </remarks>
+    /// <param name="query">
+    /// The <c>query</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <returns>What <c>query</c> answers.</returns>
     protected new virtual bool OnQuery(Gst.Query query) =>
         ChainUpQuery(query);
 
-    /// <summary>Runs <c>GstBaseSink.event</c>.</summary>
-    /// <param name="event">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <summary>Override this to handle events arriving on the sink pad</summary>
+    /// <param name="event">
+    /// The <c>event</c> argument.
+    /// The override takes ownership of it: chain up to hand it on, or it is
+    /// released when the override returns. Copy it to keep it beyond the call.
+    /// </param>
+    /// <returns>What <c>event</c> answers.</returns>
     protected virtual bool OnEvent(Gst.Event @event) =>
         ChainUpEvent(@event);
 
-    /// <summary>Runs <c>GstBaseSink.wait_event</c>.</summary>
-    /// <param name="event">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <summary>
+    /// Override this to implement custom logic to wait for the event
+    ///     time (for events like EOS and GAP). Subclasses should always first
+    ///     chain up to the default implementation.
+    /// </summary>
+    /// <param name="event">
+    /// The <c>event</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <returns>What <c>wait_event</c> answers.</returns>
     protected virtual Gst.FlowReturn OnWaitEvent(Gst.Event @event) =>
         ChainUpWaitEvent(@event);
 
-    /// <summary>Runs <c>GstBaseSink.prepare</c>.</summary>
-    /// <param name="buffer">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <summary>
+    /// Called to prepare the buffer for @render and @preroll. This
+    ///     function is called before synchronisation is performed.
+    /// </summary>
+    /// <param name="buffer">
+    /// The <c>buffer</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <returns>What <c>prepare</c> answers.</returns>
     protected virtual Gst.FlowReturn OnPrepare(Gst.Buffer buffer) =>
         ChainUpPrepare(buffer);
 
-    /// <summary>Runs <c>GstBaseSink.prepare_list</c>.</summary>
-    /// <param name="bufferList">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <summary>
+    /// Called to prepare the buffer list for @render_list. This
+    ///     function is called before synchronisation is performed.
+    /// </summary>
+    /// <param name="bufferList">
+    /// The <c>bufferList</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <returns>What <c>prepare_list</c> answers.</returns>
     protected virtual Gst.FlowReturn OnPrepareList(Gst.BufferList bufferList) =>
         ChainUpPrepareList(bufferList);
 
-    /// <summary>Runs <c>GstBaseSink.preroll</c>.</summary>
-    /// <param name="buffer">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <summary>Called to present the preroll buffer if desired.</summary>
+    /// <param name="buffer">
+    /// The <c>buffer</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <returns>What <c>preroll</c> answers.</returns>
     protected virtual Gst.FlowReturn OnPreroll(Gst.Buffer buffer) =>
         ChainUpPreroll(buffer);
 
-    /// <summary>Runs <c>GstBaseSink.render</c>.</summary>
-    /// <param name="buffer">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <summary>
+    /// Called when a buffer should be presented or output, at the
+    ///     correct moment if the #GstBaseSink has been set to sync to the clock.
+    /// </summary>
+    /// <param name="buffer">
+    /// The <c>buffer</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <returns>What <c>render</c> answers.</returns>
     protected virtual Gst.FlowReturn OnRender(Gst.Buffer buffer) =>
         ChainUpRender(buffer);
 
-    /// <summary>Runs <c>GstBaseSink.render_list</c>.</summary>
-    /// <param name="bufferList">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <summary>
+    /// Same as @render but used with buffer lists instead of
+    ///     buffers.
+    /// </summary>
+    /// <param name="bufferList">
+    /// The <c>bufferList</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <returns>What <c>render_list</c> answers.</returns>
     protected virtual Gst.FlowReturn OnRenderList(Gst.BufferList bufferList) =>
         ChainUpRenderList(bufferList);
 
     /// <summary>Runs the implementation of <c>get_caps</c> below the managed override.</summary>
-    /// <param name="filter">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <param name="filter">
+    /// The <c>filter</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <returns>
+    /// What <c>get_caps</c> answers.
+    /// A returned object is handed to the caller with one added reference; the
+    /// wrapper keeps its own.
+    /// </returns>
     protected Gst.Caps? ChainUpGetCaps(Gst.Caps? filter)
     {
         nint resultNative = ChainUpGetCaps(Handle, filter is null ? nint.Zero : filter.Handle);
@@ -336,8 +426,11 @@ public unsafe partial class BaseSink
     }
 
     /// <summary>Runs the implementation of <c>set_caps</c> below the managed override.</summary>
-    /// <param name="caps">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <param name="caps">
+    /// The <c>caps</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <returns>What <c>set_caps</c> answers.</returns>
     protected bool ChainUpSetCaps(Gst.Caps caps)
     {
         ArgumentNullException.ThrowIfNull(caps);
@@ -348,8 +441,16 @@ public unsafe partial class BaseSink
     }
 
     /// <summary>Runs the implementation of <c>fixate</c> below the managed override.</summary>
-    /// <param name="caps">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <param name="caps">
+    /// The <c>caps</c> argument.
+    /// The override takes ownership of it: chain up to hand it on, or it is
+    /// released when the override returns. Copy it to keep it beyond the call.
+    /// </param>
+    /// <returns>
+    /// What <c>fixate</c> answers.
+    /// A returned object is handed to the caller with one added reference; the
+    /// wrapper keeps its own.
+    /// </returns>
     protected Gst.Caps? ChainUpFixate(Gst.Caps caps)
     {
         ArgumentNullException.ThrowIfNull(caps);
@@ -364,8 +465,8 @@ public unsafe partial class BaseSink
     }
 
     /// <summary>Runs the implementation of <c>activate_pull</c> below the managed override.</summary>
-    /// <param name="active">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <param name="active">The <c>active</c> argument.</param>
+    /// <returns>What <c>activate_pull</c> answers.</returns>
     protected bool ChainUpActivatePull(bool active)
     {
         bool result = ChainUpActivatePull(Handle, active ? 1 : 0);
@@ -374,9 +475,12 @@ public unsafe partial class BaseSink
     }
 
     /// <summary>Runs the implementation of <c>get_times</c> below the managed override.</summary>
-    /// <param name="buffer">The argument the slot carries under this name.</param>
-    /// <param name="start">The argument the slot carries under this name.</param>
-    /// <param name="end">The argument the slot carries under this name.</param>
+    /// <param name="buffer">
+    /// The <c>buffer</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <param name="start">The <c>start</c> argument.</param>
+    /// <param name="end">The <c>end</c> argument.</param>
     protected void ChainUpGetTimes(Gst.Buffer buffer, out Gst.ClockTime start, out Gst.ClockTime end)
     {
         ArgumentNullException.ThrowIfNull(buffer);
@@ -390,8 +494,11 @@ public unsafe partial class BaseSink
     }
 
     /// <summary>Runs the implementation of <c>propose_allocation</c> below the managed override.</summary>
-    /// <param name="query">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <param name="query">
+    /// The <c>query</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <returns>What <c>propose_allocation</c> answers.</returns>
     protected bool ChainUpProposeAllocation(Gst.Query query)
     {
         ArgumentNullException.ThrowIfNull(query);
@@ -402,7 +509,7 @@ public unsafe partial class BaseSink
     }
 
     /// <summary>Runs the implementation of <c>start</c> below the managed override.</summary>
-    /// <returns>What the slot answers.</returns>
+    /// <returns>What <c>start</c> answers.</returns>
     protected bool ChainUpStart()
     {
         bool result = ChainUpStart(Handle);
@@ -411,7 +518,7 @@ public unsafe partial class BaseSink
     }
 
     /// <summary>Runs the implementation of <c>stop</c> below the managed override.</summary>
-    /// <returns>What the slot answers.</returns>
+    /// <returns>What <c>stop</c> answers.</returns>
     protected bool ChainUpStop()
     {
         bool result = ChainUpStop(Handle);
@@ -420,7 +527,7 @@ public unsafe partial class BaseSink
     }
 
     /// <summary>Runs the implementation of <c>unlock</c> below the managed override.</summary>
-    /// <returns>What the slot answers.</returns>
+    /// <returns>What <c>unlock</c> answers.</returns>
     protected bool ChainUpUnlock()
     {
         bool result = ChainUpUnlock(Handle);
@@ -429,7 +536,7 @@ public unsafe partial class BaseSink
     }
 
     /// <summary>Runs the implementation of <c>unlock_stop</c> below the managed override.</summary>
-    /// <returns>What the slot answers.</returns>
+    /// <returns>What <c>unlock_stop</c> answers.</returns>
     protected bool ChainUpUnlockStop()
     {
         bool result = ChainUpUnlockStop(Handle);
@@ -438,14 +545,17 @@ public unsafe partial class BaseSink
     }
 
     /// <summary>Runs the implementation of <c>query</c> below the managed override.</summary>
-    /// <param name="query">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
     /// <remarks>
-    /// This hides the member of the same shape a base class carries. The two are
-    /// different class struct slots and <c>query</c> here is the one that
-    /// runs for an instance of this type, so the hidden one is not overridden
-    /// from a subclass of this class.
+    /// <para>This hides the member of the same shape a base class carries. The two are
+    /// different class struct slots and <c>query</c> here is the one
+    /// that runs for an instance of this type, so the hidden one is not overridden
+    /// from a subclass of this class.</para>
     /// </remarks>
+    /// <param name="query">
+    /// The <c>query</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <returns>What <c>query</c> answers.</returns>
     protected new bool ChainUpQuery(Gst.Query query)
     {
         ArgumentNullException.ThrowIfNull(query);
@@ -456,8 +566,12 @@ public unsafe partial class BaseSink
     }
 
     /// <summary>Runs the implementation of <c>event</c> below the managed override.</summary>
-    /// <param name="event">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <param name="event">
+    /// The <c>event</c> argument.
+    /// The override takes ownership of it: chain up to hand it on, or it is
+    /// released when the override returns. Copy it to keep it beyond the call.
+    /// </param>
+    /// <returns>What <c>event</c> answers.</returns>
     protected bool ChainUpEvent(Gst.Event @event)
     {
         ArgumentNullException.ThrowIfNull(@event);
@@ -471,8 +585,11 @@ public unsafe partial class BaseSink
     }
 
     /// <summary>Runs the implementation of <c>wait_event</c> below the managed override.</summary>
-    /// <param name="event">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <param name="event">
+    /// The <c>event</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <returns>What <c>wait_event</c> answers.</returns>
     protected Gst.FlowReturn ChainUpWaitEvent(Gst.Event @event)
     {
         ArgumentNullException.ThrowIfNull(@event);
@@ -483,8 +600,11 @@ public unsafe partial class BaseSink
     }
 
     /// <summary>Runs the implementation of <c>prepare</c> below the managed override.</summary>
-    /// <param name="buffer">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <param name="buffer">
+    /// The <c>buffer</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <returns>What <c>prepare</c> answers.</returns>
     protected Gst.FlowReturn ChainUpPrepare(Gst.Buffer buffer)
     {
         ArgumentNullException.ThrowIfNull(buffer);
@@ -495,8 +615,11 @@ public unsafe partial class BaseSink
     }
 
     /// <summary>Runs the implementation of <c>prepare_list</c> below the managed override.</summary>
-    /// <param name="bufferList">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <param name="bufferList">
+    /// The <c>bufferList</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <returns>What <c>prepare_list</c> answers.</returns>
     protected Gst.FlowReturn ChainUpPrepareList(Gst.BufferList bufferList)
     {
         ArgumentNullException.ThrowIfNull(bufferList);
@@ -507,8 +630,11 @@ public unsafe partial class BaseSink
     }
 
     /// <summary>Runs the implementation of <c>preroll</c> below the managed override.</summary>
-    /// <param name="buffer">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <param name="buffer">
+    /// The <c>buffer</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <returns>What <c>preroll</c> answers.</returns>
     protected Gst.FlowReturn ChainUpPreroll(Gst.Buffer buffer)
     {
         ArgumentNullException.ThrowIfNull(buffer);
@@ -519,8 +645,11 @@ public unsafe partial class BaseSink
     }
 
     /// <summary>Runs the implementation of <c>render</c> below the managed override.</summary>
-    /// <param name="buffer">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <param name="buffer">
+    /// The <c>buffer</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <returns>What <c>render</c> answers.</returns>
     protected Gst.FlowReturn ChainUpRender(Gst.Buffer buffer)
     {
         ArgumentNullException.ThrowIfNull(buffer);
@@ -531,8 +660,11 @@ public unsafe partial class BaseSink
     }
 
     /// <summary>Runs the implementation of <c>render_list</c> below the managed override.</summary>
-    /// <param name="bufferList">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <param name="bufferList">
+    /// The <c>bufferList</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <returns>What <c>render_list</c> answers.</returns>
     protected Gst.FlowReturn ChainUpRenderList(Gst.BufferList bufferList)
     {
         ArgumentNullException.ThrowIfNull(bufferList);

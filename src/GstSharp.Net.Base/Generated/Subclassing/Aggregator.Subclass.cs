@@ -266,144 +266,338 @@ public unsafe partial class Aggregator
         return type;
     }
 
-    /// <summary>Runs <c>GstAggregator.flush</c>.</summary>
-    /// <returns>What the slot answers.</returns>
+    /// <summary>
+    /// Optional.
+    ///                  Called after a successful flushing seek, once all the flush
+    ///                  stops have been received. Flush pad-specific data in
+    ///                  #GstAggregatorPad-&gt;flush.
+    /// </summary>
+    /// <returns>What <c>flush</c> answers.</returns>
     protected virtual Gst.FlowReturn OnFlush() =>
         ChainUpFlush();
 
-    /// <summary>Runs <c>GstAggregator.clip</c>.</summary>
-    /// <param name="aggregatorPad">The argument the slot carries under this name.</param>
-    /// <param name="buf">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <summary>
+    /// Called when a buffer is received on a sink pad, the task of
+    /// clipping it and translating it to the current segment falls
+    /// on the subclass. The function should use the segment of data
+    /// and the negotiated media type on the pad to perform
+    /// clipping of input buffer. This function takes ownership of
+    /// buf and should output a buffer or return NULL in
+    /// if the buffer should be dropped.
+    /// </summary>
+    /// <param name="aggregatorPad">
+    /// The <c>aggregatorPad</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <param name="buf">
+    /// The <c>buf</c> argument.
+    /// The override takes ownership of it: chain up to hand it on, or it is
+    /// released when the override returns. Copy it to keep it beyond the call.
+    /// </param>
+    /// <returns>
+    /// a #GstBuffer.
+    /// A returned object is handed to the caller with one added reference; the
+    /// wrapper keeps its own.
+    /// </returns>
     protected virtual Gst.Buffer? OnClip(Gst.Base.AggregatorPad aggregatorPad, Gst.Buffer buf) =>
         ChainUpClip(aggregatorPad, buf);
 
-    /// <summary>Runs <c>GstAggregator.finish_buffer</c>.</summary>
-    /// <param name="buffer">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <summary>
+    /// This method will push the provided output buffer downstream. If needed,
+    /// mandatory events such as stream-start, caps, and segment events will be
+    /// sent before pushing the buffer.
+    /// </summary>
+    /// <param name="buffer">
+    /// The <c>buffer</c> argument.
+    /// The override takes ownership of it: chain up to hand it on, or it is
+    /// released when the override returns. Copy it to keep it beyond the call.
+    /// </param>
+    /// <returns>What <c>finish_buffer</c> answers.</returns>
     protected virtual Gst.FlowReturn OnFinishBuffer(Gst.Buffer buffer) =>
         ChainUpFinishBuffer(buffer);
 
-    /// <summary>Runs <c>GstAggregator.sink_event</c>.</summary>
-    /// <param name="aggregatorPad">The argument the slot carries under this name.</param>
-    /// <param name="event">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <summary>
+    /// Called when an event is received on a sink pad, the subclass
+    /// should always chain up.
+    /// </summary>
+    /// <param name="aggregatorPad">
+    /// The <c>aggregatorPad</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <param name="event">
+    /// The <c>event</c> argument.
+    /// The override takes ownership of it: chain up to hand it on, or it is
+    /// released when the override returns. Copy it to keep it beyond the call.
+    /// </param>
+    /// <returns>What <c>sink_event</c> answers.</returns>
     protected virtual bool OnSinkEvent(Gst.Base.AggregatorPad aggregatorPad, Gst.Event @event) =>
         ChainUpSinkEvent(aggregatorPad, @event);
 
-    /// <summary>Runs <c>GstAggregator.sink_query</c>.</summary>
-    /// <param name="aggregatorPad">The argument the slot carries under this name.</param>
-    /// <param name="query">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <summary>
+    /// Optional.
+    ///                  Called when a query is received on a sink pad, the subclass
+    ///                  should always chain up.
+    /// </summary>
+    /// <param name="aggregatorPad">
+    /// The <c>aggregatorPad</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <param name="query">
+    /// The <c>query</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <returns>What <c>sink_query</c> answers.</returns>
     protected virtual bool OnSinkQuery(Gst.Base.AggregatorPad aggregatorPad, Gst.Query query) =>
         ChainUpSinkQuery(aggregatorPad, query);
 
-    /// <summary>Runs <c>GstAggregator.src_event</c>.</summary>
-    /// <param name="event">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <summary>
+    /// Called when an event is received on the src pad, the subclass
+    /// should always chain up.
+    /// </summary>
+    /// <param name="event">
+    /// The <c>event</c> argument.
+    /// The override takes ownership of it: chain up to hand it on, or it is
+    /// released when the override returns. Copy it to keep it beyond the call.
+    /// </param>
+    /// <returns>What <c>src_event</c> answers.</returns>
     protected virtual bool OnSrcEvent(Gst.Event @event) =>
         ChainUpSrcEvent(@event);
 
-    /// <summary>Runs <c>GstAggregator.src_query</c>.</summary>
-    /// <param name="query">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <summary>
+    /// Optional.
+    ///                  Called when a query is received on the src pad, the subclass
+    ///                  should always chain up.
+    /// </summary>
+    /// <param name="query">
+    /// The <c>query</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <returns>What <c>src_query</c> answers.</returns>
     protected virtual bool OnSrcQuery(Gst.Query query) =>
         ChainUpSrcQuery(query);
 
-    /// <summary>Runs <c>GstAggregator.src_activate</c>.</summary>
-    /// <param name="mode">The argument the slot carries under this name.</param>
-    /// <param name="active">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <summary>
+    /// Optional.
+    ///                  Called when the src pad is activated, it will start/stop its
+    ///                  pad task right after that call.
+    /// </summary>
+    /// <param name="mode">The <c>mode</c> argument.</param>
+    /// <param name="active">The <c>active</c> argument.</param>
+    /// <returns>What <c>src_activate</c> answers.</returns>
     protected virtual bool OnSrcActivate(Gst.PadMode mode, bool active) =>
         ChainUpSrcActivate(mode, active);
 
-    /// <summary>Runs <c>GstAggregator.aggregate</c>.</summary>
-    /// <param name="timeout">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <summary>
+    /// Mandatory.
+    ///                  Called when buffers are queued on all sinkpads. Classes
+    ///                  should iterate the GstElement-&gt;sinkpads and peek or steal
+    ///                  buffers from the #GstAggregatorPads. If the subclass returns
+    ///                  GST_FLOW_EOS, sending of the eos event will be taken care
+    ///                  of. Once / if a buffer has been constructed from the
+    ///                  aggregated buffers, the subclass should call _finish_buffer.
+    /// </summary>
+    /// <remarks>
+    /// <para>This slot has no implementation below it - the base class calls it unguarded - so a
+    /// managed aggregator has to declare it, which DefineSubclass checks for.</para>
+    /// </remarks>
+    /// <param name="timeout">The <c>timeout</c> argument.</param>
+    /// <returns>What <c>aggregate</c> answers.</returns>
     protected virtual Gst.FlowReturn OnAggregate(bool timeout) =>
         ChainUpAggregate(timeout);
 
-    /// <summary>Runs <c>GstAggregator.stop</c>.</summary>
-    /// <returns>What the slot answers.</returns>
+    /// <summary>
+    /// Optional.
+    ///                  Called when the element goes from PAUSED to READY.
+    ///                  The subclass should free all resources and reset its state.
+    /// </summary>
+    /// <returns>What <c>stop</c> answers.</returns>
     protected virtual bool OnStop() =>
         ChainUpStop();
 
-    /// <summary>Runs <c>GstAggregator.start</c>.</summary>
-    /// <returns>What the slot answers.</returns>
+    /// <summary>
+    /// Optional.
+    ///                  Called when the element goes from READY to PAUSED.
+    ///                  The subclass should get ready to process
+    ///                  aggregated buffers.
+    /// </summary>
+    /// <returns>What <c>start</c> answers.</returns>
     protected virtual bool OnStart() =>
         ChainUpStart();
 
-    /// <summary>Runs <c>GstAggregator.get_next_time</c>.</summary>
-    /// <returns>What the slot answers.</returns>
+    /// <summary>
+    /// Optional.
+    ///                  Called when the element needs to know the running time of the next
+    ///                  rendered buffer for live pipelines. This causes deadline
+    ///                  based aggregation to occur. Defaults to returning
+    ///                  GST_CLOCK_TIME_NONE causing the element to wait for buffers
+    ///                  on all sink pads before aggregating.
+    /// </summary>
+    /// <returns>What <c>get_next_time</c> answers.</returns>
     protected virtual Gst.ClockTime OnGetNextTime() =>
         ChainUpGetNextTime();
 
     /// <summary>Runs <c>GstAggregator.update_src_caps</c>.</summary>
-    /// <param name="caps">The argument the slot carries under this name.</param>
-    /// <param name="ret">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <param name="caps">
+    /// The <c>caps</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <param name="ret">
+    /// The <c>ret</c> argument.
+    /// What the override leaves here is handed to the caller with one added
+    /// reference; the wrapper keeps its own.
+    /// </param>
+    /// <returns>What <c>update_src_caps</c> answers.</returns>
     protected virtual Gst.FlowReturn OnUpdateSrcCaps(Gst.Caps caps, out Gst.Caps? ret) =>
         ChainUpUpdateSrcCaps(caps, out ret);
 
-    /// <summary>Runs <c>GstAggregator.fixate_src_caps</c>.</summary>
-    /// <param name="caps">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <summary>
+    /// Fixate and return the src pad caps provided. The function takes
+    /// ownership of @caps and returns a fixated version of
+    /// @caps. @caps is not guaranteed to be writable.
+    /// </summary>
+    /// <param name="caps">
+    /// The <c>caps</c> argument.
+    /// The override takes ownership of it: chain up to hand it on, or it is
+    /// released when the override returns. Copy it to keep it beyond the call.
+    /// </param>
+    /// <returns>
+    /// the fixated caps #GstCaps.
+    /// A returned object is handed to the caller with one added reference; the
+    /// wrapper keeps its own.
+    /// Answering <see langword="null"/> is not allowed: the caller of the slot does
+    /// not check for it. A null answer is reported through the exception trap and
+    /// the slot answers a value the caller fails cleanly on.
+    /// </returns>
     protected virtual Gst.Caps OnFixateSrcCaps(Gst.Caps caps) =>
         ChainUpFixateSrcCaps(caps);
 
-    /// <summary>Runs <c>GstAggregator.negotiated_src_caps</c>.</summary>
-    /// <param name="caps">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <summary>
+    /// Optional.
+    ///                       Notifies subclasses what caps format has been negotiated
+    /// </summary>
+    /// <param name="caps">
+    /// The <c>caps</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <returns>What <c>negotiated_src_caps</c> answers.</returns>
     protected virtual bool OnNegotiatedSrcCaps(Gst.Caps caps) =>
         ChainUpNegotiatedSrcCaps(caps);
 
-    /// <summary>Runs <c>GstAggregator.decide_allocation</c>.</summary>
-    /// <param name="query">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <summary>
+    /// Optional.
+    ///                     Allows the subclass to influence the allocation choices.
+    ///                     Setup the allocation parameters for allocating output
+    ///                     buffers. The passed in query contains the result of the
+    ///                     downstream allocation query.
+    /// </summary>
+    /// <param name="query">
+    /// The <c>query</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <returns>What <c>decide_allocation</c> answers.</returns>
     protected virtual bool OnDecideAllocation(Gst.Query query) =>
         ChainUpDecideAllocation(query);
 
-    /// <summary>Runs <c>GstAggregator.propose_allocation</c>.</summary>
-    /// <param name="pad">The argument the slot carries under this name.</param>
-    /// <param name="decideQuery">The argument the slot carries under this name.</param>
-    /// <param name="query">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <summary>
+    /// Optional.
+    ///                     Allows the subclass to handle the allocation query from upstream.
+    /// </summary>
+    /// <param name="pad">
+    /// The <c>pad</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <param name="decideQuery">
+    /// The <c>decideQuery</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <param name="query">
+    /// The <c>query</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <returns>What <c>propose_allocation</c> answers.</returns>
     protected virtual bool OnProposeAllocation(Gst.Base.AggregatorPad pad, Gst.Query decideQuery, Gst.Query query) =>
         ChainUpProposeAllocation(pad, decideQuery, query);
 
-    /// <summary>Runs <c>GstAggregator.negotiate</c>.</summary>
-    /// <returns>What the slot answers.</returns>
+    /// <summary>
+    /// Negotiates src pad caps with downstream elements.
+    /// Unmarks GST_PAD_FLAG_NEED_RECONFIGURE in any case. But marks it again
+    /// if #GstAggregatorClass::negotiate fails.
+    /// </summary>
+    /// <returns>%TRUE if the negotiation succeeded, else %FALSE.</returns>
     protected virtual bool OnNegotiate() =>
         ChainUpNegotiate();
 
-    /// <summary>Runs <c>GstAggregator.sink_event_pre_queue</c>.</summary>
-    /// <param name="aggregatorPad">The argument the slot carries under this name.</param>
-    /// <param name="event">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <summary>
+    /// Called when an event is received on a sink pad before queueing up
+    /// serialized events. The subclass should always chain up (Since: 1.18).
+    /// </summary>
+    /// <param name="aggregatorPad">
+    /// The <c>aggregatorPad</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <param name="event">
+    /// The <c>event</c> argument.
+    /// The override takes ownership of it: chain up to hand it on, or it is
+    /// released when the override returns. Copy it to keep it beyond the call.
+    /// </param>
+    /// <returns>What <c>sink_event_pre_queue</c> answers.</returns>
     protected virtual Gst.FlowReturn OnSinkEventPreQueue(Gst.Base.AggregatorPad aggregatorPad, Gst.Event @event) =>
         ChainUpSinkEventPreQueue(aggregatorPad, @event);
 
-    /// <summary>Runs <c>GstAggregator.sink_query_pre_queue</c>.</summary>
-    /// <param name="aggregatorPad">The argument the slot carries under this name.</param>
-    /// <param name="query">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <summary>
+    /// Optional.
+    ///                        Called when a query is received on a sink pad before queueing up
+    ///                        serialized queries. The subclass should always chain up (Since: 1.18).
+    /// </summary>
+    /// <param name="aggregatorPad">
+    /// The <c>aggregatorPad</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <param name="query">
+    /// The <c>query</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <returns>What <c>sink_query_pre_queue</c> answers.</returns>
     protected virtual bool OnSinkQueryPreQueue(Gst.Base.AggregatorPad aggregatorPad, Gst.Query query) =>
         ChainUpSinkQueryPreQueue(aggregatorPad, query);
 
-    /// <summary>Runs <c>GstAggregator.finish_buffer_list</c>.</summary>
-    /// <param name="bufferlist">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <summary>
+    /// This method will push the provided output buffer list downstream. If needed,
+    /// mandatory events such as stream-start, caps, and segment events will be
+    /// sent before pushing the buffer.
+    /// </summary>
+    /// <param name="bufferlist">
+    /// The <c>bufferlist</c> argument.
+    /// The override takes ownership of it: chain up to hand it on, or it is
+    /// released when the override returns. Copy it to keep it beyond the call.
+    /// </param>
+    /// <returns>What <c>finish_buffer_list</c> answers.</returns>
     protected virtual Gst.FlowReturn OnFinishBufferList(Gst.BufferList bufferlist) =>
         ChainUpFinishBufferList(bufferlist);
 
-    /// <summary>Runs <c>GstAggregator.peek_next_sample</c>.</summary>
-    /// <param name="aggregatorPad">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <summary>
+    /// Use this function to determine what input buffers will be aggregated
+    /// to produce the next output buffer. This should only be called from
+    /// a #GstAggregator::samples-selected handler, and can be used to precisely
+    /// control aggregating parameters for a given set of input samples.
+    /// </summary>
+    /// <param name="aggregatorPad">
+    /// The <c>aggregatorPad</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <returns>
+    /// The sample that is about to be aggregated. It may hold a #GstBuffer
+    ///   or a #GstBufferList. The contents of its info structure is subclass-dependent,
+    ///   and documented on a subclass basis. The buffers held by the sample are
+    ///   not writable.
+    /// A returned object is handed to the caller with one added reference; the
+    /// wrapper keeps its own.
+    /// </returns>
     protected virtual Gst.Sample? OnPeekNextSample(Gst.Base.AggregatorPad aggregatorPad) =>
         ChainUpPeekNextSample(aggregatorPad);
 
     /// <summary>Runs the implementation of <c>flush</c> below the managed override.</summary>
-    /// <returns>What the slot answers.</returns>
+    /// <returns>What <c>flush</c> answers.</returns>
     protected Gst.FlowReturn ChainUpFlush()
     {
         Gst.FlowReturn result = ChainUpFlush(Handle);
@@ -412,9 +606,20 @@ public unsafe partial class Aggregator
     }
 
     /// <summary>Runs the implementation of <c>clip</c> below the managed override.</summary>
-    /// <param name="aggregatorPad">The argument the slot carries under this name.</param>
-    /// <param name="buf">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <param name="aggregatorPad">
+    /// The <c>aggregatorPad</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <param name="buf">
+    /// The <c>buf</c> argument.
+    /// The override takes ownership of it: chain up to hand it on, or it is
+    /// released when the override returns. Copy it to keep it beyond the call.
+    /// </param>
+    /// <returns>
+    /// a #GstBuffer.
+    /// A returned object is handed to the caller with one added reference; the
+    /// wrapper keeps its own.
+    /// </returns>
     protected Gst.Buffer? ChainUpClip(Gst.Base.AggregatorPad aggregatorPad, Gst.Buffer buf)
     {
         ArgumentNullException.ThrowIfNull(aggregatorPad);
@@ -431,8 +636,12 @@ public unsafe partial class Aggregator
     }
 
     /// <summary>Runs the implementation of <c>finish_buffer</c> below the managed override.</summary>
-    /// <param name="buffer">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <param name="buffer">
+    /// The <c>buffer</c> argument.
+    /// The override takes ownership of it: chain up to hand it on, or it is
+    /// released when the override returns. Copy it to keep it beyond the call.
+    /// </param>
+    /// <returns>What <c>finish_buffer</c> answers.</returns>
     protected Gst.FlowReturn ChainUpFinishBuffer(Gst.Buffer buffer)
     {
         ArgumentNullException.ThrowIfNull(buffer);
@@ -446,9 +655,16 @@ public unsafe partial class Aggregator
     }
 
     /// <summary>Runs the implementation of <c>sink_event</c> below the managed override.</summary>
-    /// <param name="aggregatorPad">The argument the slot carries under this name.</param>
-    /// <param name="event">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <param name="aggregatorPad">
+    /// The <c>aggregatorPad</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <param name="event">
+    /// The <c>event</c> argument.
+    /// The override takes ownership of it: chain up to hand it on, or it is
+    /// released when the override returns. Copy it to keep it beyond the call.
+    /// </param>
+    /// <returns>What <c>sink_event</c> answers.</returns>
     protected bool ChainUpSinkEvent(Gst.Base.AggregatorPad aggregatorPad, Gst.Event @event)
     {
         ArgumentNullException.ThrowIfNull(aggregatorPad);
@@ -464,9 +680,15 @@ public unsafe partial class Aggregator
     }
 
     /// <summary>Runs the implementation of <c>sink_query</c> below the managed override.</summary>
-    /// <param name="aggregatorPad">The argument the slot carries under this name.</param>
-    /// <param name="query">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <param name="aggregatorPad">
+    /// The <c>aggregatorPad</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <param name="query">
+    /// The <c>query</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <returns>What <c>sink_query</c> answers.</returns>
     protected bool ChainUpSinkQuery(Gst.Base.AggregatorPad aggregatorPad, Gst.Query query)
     {
         ArgumentNullException.ThrowIfNull(aggregatorPad);
@@ -479,8 +701,12 @@ public unsafe partial class Aggregator
     }
 
     /// <summary>Runs the implementation of <c>src_event</c> below the managed override.</summary>
-    /// <param name="event">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <param name="event">
+    /// The <c>event</c> argument.
+    /// The override takes ownership of it: chain up to hand it on, or it is
+    /// released when the override returns. Copy it to keep it beyond the call.
+    /// </param>
+    /// <returns>What <c>src_event</c> answers.</returns>
     protected bool ChainUpSrcEvent(Gst.Event @event)
     {
         ArgumentNullException.ThrowIfNull(@event);
@@ -494,8 +720,11 @@ public unsafe partial class Aggregator
     }
 
     /// <summary>Runs the implementation of <c>src_query</c> below the managed override.</summary>
-    /// <param name="query">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <param name="query">
+    /// The <c>query</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <returns>What <c>src_query</c> answers.</returns>
     protected bool ChainUpSrcQuery(Gst.Query query)
     {
         ArgumentNullException.ThrowIfNull(query);
@@ -506,9 +735,9 @@ public unsafe partial class Aggregator
     }
 
     /// <summary>Runs the implementation of <c>src_activate</c> below the managed override.</summary>
-    /// <param name="mode">The argument the slot carries under this name.</param>
-    /// <param name="active">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <param name="mode">The <c>mode</c> argument.</param>
+    /// <param name="active">The <c>active</c> argument.</param>
+    /// <returns>What <c>src_activate</c> answers.</returns>
     protected bool ChainUpSrcActivate(Gst.PadMode mode, bool active)
     {
         bool result = ChainUpSrcActivate(Handle, (int)mode, active ? 1 : 0);
@@ -517,8 +746,12 @@ public unsafe partial class Aggregator
     }
 
     /// <summary>Runs the implementation of <c>aggregate</c> below the managed override.</summary>
-    /// <param name="timeout">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <remarks>
+    /// <para>This slot has no implementation below it - the base class calls it unguarded - so a
+    /// managed aggregator has to declare it, which DefineSubclass checks for.</para>
+    /// </remarks>
+    /// <param name="timeout">The <c>timeout</c> argument.</param>
+    /// <returns>What <c>aggregate</c> answers.</returns>
     protected Gst.FlowReturn ChainUpAggregate(bool timeout)
     {
         Gst.FlowReturn result = ChainUpAggregate(Handle, timeout ? 1 : 0);
@@ -527,7 +760,7 @@ public unsafe partial class Aggregator
     }
 
     /// <summary>Runs the implementation of <c>stop</c> below the managed override.</summary>
-    /// <returns>What the slot answers.</returns>
+    /// <returns>What <c>stop</c> answers.</returns>
     protected bool ChainUpStop()
     {
         bool result = ChainUpStop(Handle);
@@ -536,7 +769,7 @@ public unsafe partial class Aggregator
     }
 
     /// <summary>Runs the implementation of <c>start</c> below the managed override.</summary>
-    /// <returns>What the slot answers.</returns>
+    /// <returns>What <c>start</c> answers.</returns>
     protected bool ChainUpStart()
     {
         bool result = ChainUpStart(Handle);
@@ -545,7 +778,7 @@ public unsafe partial class Aggregator
     }
 
     /// <summary>Runs the implementation of <c>get_next_time</c> below the managed override.</summary>
-    /// <returns>What the slot answers.</returns>
+    /// <returns>What <c>get_next_time</c> answers.</returns>
     protected Gst.ClockTime ChainUpGetNextTime()
     {
         Gst.ClockTime result = ChainUpGetNextTime(Handle);
@@ -554,9 +787,16 @@ public unsafe partial class Aggregator
     }
 
     /// <summary>Runs the implementation of <c>update_src_caps</c> below the managed override.</summary>
-    /// <param name="caps">The argument the slot carries under this name.</param>
-    /// <param name="ret">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <param name="caps">
+    /// The <c>caps</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <param name="ret">
+    /// The <c>ret</c> argument.
+    /// What the override leaves here is handed to the caller with one added
+    /// reference; the wrapper keeps its own.
+    /// </param>
+    /// <returns>What <c>update_src_caps</c> answers.</returns>
     protected Gst.FlowReturn ChainUpUpdateSrcCaps(Gst.Caps caps, out Gst.Caps? ret)
     {
         ArgumentNullException.ThrowIfNull(caps);
@@ -569,8 +809,19 @@ public unsafe partial class Aggregator
     }
 
     /// <summary>Runs the implementation of <c>fixate_src_caps</c> below the managed override.</summary>
-    /// <param name="caps">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <param name="caps">
+    /// The <c>caps</c> argument.
+    /// The override takes ownership of it: chain up to hand it on, or it is
+    /// released when the override returns. Copy it to keep it beyond the call.
+    /// </param>
+    /// <returns>
+    /// the fixated caps #GstCaps.
+    /// A returned object is handed to the caller with one added reference; the
+    /// wrapper keeps its own.
+    /// Answering <see langword="null"/> is not allowed: the caller of the slot does
+    /// not check for it. A null answer is reported through the exception trap and
+    /// the slot answers a value the caller fails cleanly on.
+    /// </returns>
     protected Gst.Caps ChainUpFixateSrcCaps(Gst.Caps caps)
     {
         ArgumentNullException.ThrowIfNull(caps);
@@ -587,8 +838,11 @@ public unsafe partial class Aggregator
     }
 
     /// <summary>Runs the implementation of <c>negotiated_src_caps</c> below the managed override.</summary>
-    /// <param name="caps">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <param name="caps">
+    /// The <c>caps</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <returns>What <c>negotiated_src_caps</c> answers.</returns>
     protected bool ChainUpNegotiatedSrcCaps(Gst.Caps caps)
     {
         ArgumentNullException.ThrowIfNull(caps);
@@ -599,8 +853,11 @@ public unsafe partial class Aggregator
     }
 
     /// <summary>Runs the implementation of <c>decide_allocation</c> below the managed override.</summary>
-    /// <param name="query">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <param name="query">
+    /// The <c>query</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <returns>What <c>decide_allocation</c> answers.</returns>
     protected bool ChainUpDecideAllocation(Gst.Query query)
     {
         ArgumentNullException.ThrowIfNull(query);
@@ -611,10 +868,19 @@ public unsafe partial class Aggregator
     }
 
     /// <summary>Runs the implementation of <c>propose_allocation</c> below the managed override.</summary>
-    /// <param name="pad">The argument the slot carries under this name.</param>
-    /// <param name="decideQuery">The argument the slot carries under this name.</param>
-    /// <param name="query">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <param name="pad">
+    /// The <c>pad</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <param name="decideQuery">
+    /// The <c>decideQuery</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <param name="query">
+    /// The <c>query</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <returns>What <c>propose_allocation</c> answers.</returns>
     protected bool ChainUpProposeAllocation(Gst.Base.AggregatorPad pad, Gst.Query decideQuery, Gst.Query query)
     {
         ArgumentNullException.ThrowIfNull(pad);
@@ -629,7 +895,7 @@ public unsafe partial class Aggregator
     }
 
     /// <summary>Runs the implementation of <c>negotiate</c> below the managed override.</summary>
-    /// <returns>What the slot answers.</returns>
+    /// <returns>%TRUE if the negotiation succeeded, else %FALSE.</returns>
     protected bool ChainUpNegotiate()
     {
         bool result = ChainUpNegotiate(Handle);
@@ -638,9 +904,16 @@ public unsafe partial class Aggregator
     }
 
     /// <summary>Runs the implementation of <c>sink_event_pre_queue</c> below the managed override.</summary>
-    /// <param name="aggregatorPad">The argument the slot carries under this name.</param>
-    /// <param name="event">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <param name="aggregatorPad">
+    /// The <c>aggregatorPad</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <param name="event">
+    /// The <c>event</c> argument.
+    /// The override takes ownership of it: chain up to hand it on, or it is
+    /// released when the override returns. Copy it to keep it beyond the call.
+    /// </param>
+    /// <returns>What <c>sink_event_pre_queue</c> answers.</returns>
     protected Gst.FlowReturn ChainUpSinkEventPreQueue(Gst.Base.AggregatorPad aggregatorPad, Gst.Event @event)
     {
         ArgumentNullException.ThrowIfNull(aggregatorPad);
@@ -656,9 +929,15 @@ public unsafe partial class Aggregator
     }
 
     /// <summary>Runs the implementation of <c>sink_query_pre_queue</c> below the managed override.</summary>
-    /// <param name="aggregatorPad">The argument the slot carries under this name.</param>
-    /// <param name="query">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <param name="aggregatorPad">
+    /// The <c>aggregatorPad</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <param name="query">
+    /// The <c>query</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <returns>What <c>sink_query_pre_queue</c> answers.</returns>
     protected bool ChainUpSinkQueryPreQueue(Gst.Base.AggregatorPad aggregatorPad, Gst.Query query)
     {
         ArgumentNullException.ThrowIfNull(aggregatorPad);
@@ -671,8 +950,12 @@ public unsafe partial class Aggregator
     }
 
     /// <summary>Runs the implementation of <c>finish_buffer_list</c> below the managed override.</summary>
-    /// <param name="bufferlist">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <param name="bufferlist">
+    /// The <c>bufferlist</c> argument.
+    /// The override takes ownership of it: chain up to hand it on, or it is
+    /// released when the override returns. Copy it to keep it beyond the call.
+    /// </param>
+    /// <returns>What <c>finish_buffer_list</c> answers.</returns>
     protected Gst.FlowReturn ChainUpFinishBufferList(Gst.BufferList bufferlist)
     {
         ArgumentNullException.ThrowIfNull(bufferlist);
@@ -686,8 +969,18 @@ public unsafe partial class Aggregator
     }
 
     /// <summary>Runs the implementation of <c>peek_next_sample</c> below the managed override.</summary>
-    /// <param name="aggregatorPad">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <param name="aggregatorPad">
+    /// The <c>aggregatorPad</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <returns>
+    /// The sample that is about to be aggregated. It may hold a #GstBuffer
+    ///   or a #GstBufferList. The contents of its info structure is subclass-dependent,
+    ///   and documented on a subclass basis. The buffers held by the sample are
+    ///   not writable.
+    /// A returned object is handed to the caller with one added reference; the
+    /// wrapper keeps its own.
+    /// </returns>
     protected Gst.Sample? ChainUpPeekNextSample(Gst.Base.AggregatorPad aggregatorPad)
     {
         ArgumentNullException.ThrowIfNull(aggregatorPad);

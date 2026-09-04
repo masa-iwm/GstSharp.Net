@@ -703,6 +703,16 @@
     "GstBase.PushSrc::create": "Gst.FlowReturn.NotSupported",
     "GstBase.PushSrc::fill": "Gst.FlowReturn.NotSupported"
   },
+  "$comment-vfunc-doc-notes": "The part of the contract of a slot that neither the gir nor its marshalling states, as one sentence per slot appended to the remarks of the generated OnX and ChainUpX members. What belongs here is what a reader would otherwise have to read the C implementation to learn.",
+  "vfuncDocNotes": {
+    "Gst.Bin::handle_message": "The override takes the message over: chaining up passes it on and disposes it, and an override that does neither drops the message, which is what makes this the hook for swallowing or rewriting what children post. Copy the message to keep it beyond the call.",
+    "Gst.Element::request_new_pad": "The pad is answered borrowed: the override has to have added it to the element already, and the element keeps the reference the pad was created with.",
+    "GstBase.Aggregator::aggregate": "This slot has no implementation below it - the base class calls it unguarded - so a managed aggregator has to declare it, which DefineSubclass checks for.",
+    "GstBase.BaseSrc::create": "The buffer may be one downstream provided for the source to fill, in which case answering that very buffer is what filling it in place looks like.",
+    "GstBase.BaseTransform::prepare_output_buffer": "Answering the input buffer is what an in place transform does, and the base implementation does exactly that whenever the input is writable.",
+    "GstBase.BaseTransform::submit_input_buffer": "An override that does not chain up must fill queued_buf itself or generate_output has nothing to produce.",
+    "GstBase.PushSrc::create": "Answering Ok without a buffer is not a way to produce nothing: the base class posts an element error on the bus for a NULL buffer, so a source with nothing to hand out answers a flow result that says so - Eos, Flushing or an error."
+  },
   "$comment-vfunc-non-null-returns": "The slots whose caller dereferences the answer without checking it for NULL, with the value the trampoline answers when the managed override answered none. gst_base_transform_fixate_caps and gst_aggregator_default_update_src_caps both hand the answer straight to gst_caps_is_fixed / gst_pad_set_caps, and the aggregator has already consumed the input by then, so a NULL would be a crash or a lost buffer rather than a failed negotiation. The managed member therefore answers a non nullable type, and an override that answers null anyway is reported through the exception trap while the slot answers empty caps, on which negotiation fails cleanly.",
   "vfuncNonNullReturns": {
     "GstBase.Aggregator::fixate_src_caps": "Gst.GstNative.CapsNewEmpty()",

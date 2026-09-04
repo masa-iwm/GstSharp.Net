@@ -231,145 +231,327 @@ public unsafe partial class BaseTransform
         return type;
     }
 
-    /// <summary>Runs <c>GstBaseTransform.transform_caps</c>.</summary>
-    /// <param name="direction">The argument the slot carries under this name.</param>
-    /// <param name="caps">The argument the slot carries under this name.</param>
-    /// <param name="filter">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <summary>
+    /// Optional.  Given the pad in this direction and the given
+    ///                  caps, what caps are allowed on the other pad in this
+    ///                  element ?
+    /// </summary>
+    /// <param name="direction">The <c>direction</c> argument.</param>
+    /// <param name="caps">
+    /// The <c>caps</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <param name="filter">
+    /// The <c>filter</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <returns>
+    /// What <c>transform_caps</c> answers.
+    /// A returned object is handed to the caller with one added reference; the
+    /// wrapper keeps its own.
+    /// </returns>
     protected virtual Gst.Caps? OnTransformCaps(Gst.PadDirection direction, Gst.Caps caps, Gst.Caps filter) =>
         ChainUpTransformCaps(direction, caps, filter);
 
     /// <summary>Runs <c>GstBaseTransform.fixate_caps</c>.</summary>
-    /// <param name="direction">The argument the slot carries under this name.</param>
-    /// <param name="caps">The argument the slot carries under this name.</param>
-    /// <param name="othercaps">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <param name="direction">The <c>direction</c> argument.</param>
+    /// <param name="caps">
+    /// The <c>caps</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <param name="othercaps">
+    /// The <c>othercaps</c> argument.
+    /// The override takes ownership of it: chain up to hand it on, or it is
+    /// released when the override returns. Copy it to keep it beyond the call.
+    /// </param>
+    /// <returns>
+    /// What <c>fixate_caps</c> answers.
+    /// A returned object is handed to the caller with one added reference; the
+    /// wrapper keeps its own.
+    /// Answering <see langword="null"/> is not allowed: the caller of the slot does
+    /// not check for it. A null answer is reported through the exception trap and
+    /// the slot answers a value the caller fails cleanly on.
+    /// </returns>
     protected virtual Gst.Caps OnFixateCaps(Gst.PadDirection direction, Gst.Caps caps, Gst.Caps othercaps) =>
         ChainUpFixateCaps(direction, caps, othercaps);
 
-    /// <summary>Runs <c>GstBaseTransform.accept_caps</c>.</summary>
-    /// <param name="direction">The argument the slot carries under this name.</param>
-    /// <param name="caps">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <summary>
+    /// Optional.
+    ///                  Subclasses can override this method to check if @caps can be
+    ///                  handled by the element. The default implementation might not be
+    ///                  the most optimal way to check this in all cases.
+    /// </summary>
+    /// <param name="direction">The <c>direction</c> argument.</param>
+    /// <param name="caps">
+    /// The <c>caps</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <returns>What <c>accept_caps</c> answers.</returns>
     protected virtual bool OnAcceptCaps(Gst.PadDirection direction, Gst.Caps caps) =>
         ChainUpAcceptCaps(direction, caps);
 
-    /// <summary>Runs <c>GstBaseTransform.set_caps</c>.</summary>
-    /// <param name="inCaps">The argument the slot carries under this name.</param>
-    /// <param name="outCaps">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <summary>Allows the subclass to be notified of the actual caps set.</summary>
+    /// <param name="inCaps">
+    /// The <c>inCaps</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <param name="outCaps">
+    /// The <c>outCaps</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <returns>What <c>set_caps</c> answers.</returns>
     protected virtual bool OnSetCaps(Gst.Caps inCaps, Gst.Caps outCaps) =>
         ChainUpSetCaps(inCaps, outCaps);
 
-    /// <summary>Runs <c>GstBaseTransform.query</c>.</summary>
-    /// <param name="direction">The argument the slot carries under this name.</param>
-    /// <param name="query">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <summary>
+    /// Optional.
+    ///                  Handle a requested query. Subclasses that implement this
+    ///                  must chain up to the parent if they didn't handle the
+    ///                  query
+    /// </summary>
+    /// <param name="direction">The <c>direction</c> argument.</param>
+    /// <param name="query">
+    /// The <c>query</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <returns>What <c>query</c> answers.</returns>
     protected virtual bool OnQuery(Gst.PadDirection direction, Gst.Query query) =>
         ChainUpQuery(direction, query);
 
-    /// <summary>Runs <c>GstBaseTransform.decide_allocation</c>.</summary>
-    /// <param name="query">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <summary>
+    /// Setup the allocation parameters for allocating output
+    ///                    buffers. The passed in query contains the result of the
+    ///                    downstream allocation query. This function is only called
+    ///                    when not operating in passthrough mode. The default
+    ///                    implementation will remove all memory dependent metadata.
+    ///                    If there is a @filter_meta method implementation, it will
+    ///                    be called for all metadata API in the downstream query,
+    ///                    otherwise the metadata API is removed.
+    /// </summary>
+    /// <param name="query">
+    /// The <c>query</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <returns>What <c>decide_allocation</c> answers.</returns>
     protected virtual bool OnDecideAllocation(Gst.Query query) =>
         ChainUpDecideAllocation(query);
 
-    /// <summary>Runs <c>GstBaseTransform.propose_allocation</c>.</summary>
-    /// <param name="decideQuery">The argument the slot carries under this name.</param>
-    /// <param name="query">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <summary>
+    /// Propose buffer allocation parameters for upstream elements.
+    ///                      This function must be implemented if the element reads or
+    ///                      writes the buffer content. The query that was passed to
+    ///                      the decide_allocation is passed in this method (or %NULL
+    ///                      when the element is in passthrough mode). The default
+    ///                      implementation will pass the query downstream when in
+    ///                      passthrough mode and will copy all the filtered metadata
+    ///                      API in non-passthrough mode.
+    /// </summary>
+    /// <param name="decideQuery">
+    /// The <c>decideQuery</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <param name="query">
+    /// The <c>query</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <returns>What <c>propose_allocation</c> answers.</returns>
     protected virtual bool OnProposeAllocation(Gst.Query decideQuery, Gst.Query query) =>
         ChainUpProposeAllocation(decideQuery, query);
 
     /// <summary>Runs <c>GstBaseTransform.transform_size</c>.</summary>
-    /// <param name="direction">The argument the slot carries under this name.</param>
-    /// <param name="caps">The argument the slot carries under this name.</param>
-    /// <param name="size">The argument the slot carries under this name.</param>
-    /// <param name="othercaps">The argument the slot carries under this name.</param>
-    /// <param name="othersize">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <param name="direction">The <c>direction</c> argument.</param>
+    /// <param name="caps">
+    /// The <c>caps</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <param name="size">The <c>size</c> argument.</param>
+    /// <param name="othercaps">
+    /// The <c>othercaps</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <param name="othersize">The <c>othersize</c> argument.</param>
+    /// <returns>What <c>transform_size</c> answers.</returns>
     protected virtual bool OnTransformSize(Gst.PadDirection direction, Gst.Caps caps, nuint size, Gst.Caps othercaps, out nuint othersize) =>
         ChainUpTransformSize(direction, caps, size, othercaps, out othersize);
 
     /// <summary>Runs <c>GstBaseTransform.get_unit_size</c>.</summary>
-    /// <param name="caps">The argument the slot carries under this name.</param>
-    /// <param name="size">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <param name="caps">
+    /// The <c>caps</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <param name="size">The <c>size</c> argument.</param>
+    /// <returns>What <c>get_unit_size</c> answers.</returns>
     protected virtual bool OnGetUnitSize(Gst.Caps caps, out nuint size) =>
         ChainUpGetUnitSize(caps, out size);
 
-    /// <summary>Runs <c>GstBaseTransform.start</c>.</summary>
-    /// <returns>What the slot answers.</returns>
+    /// <summary>
+    /// Optional.
+    ///                  Called when the element starts processing.
+    ///                  Allows opening external resources.
+    /// </summary>
+    /// <returns>What <c>start</c> answers.</returns>
     protected virtual bool OnStart() =>
         ChainUpStart();
 
-    /// <summary>Runs <c>GstBaseTransform.stop</c>.</summary>
-    /// <returns>What the slot answers.</returns>
+    /// <summary>
+    /// Optional.
+    ///                  Called when the element stops processing.
+    ///                  Allows closing external resources.
+    /// </summary>
+    /// <returns>What <c>stop</c> answers.</returns>
     protected virtual bool OnStop() =>
         ChainUpStop();
 
     /// <summary>Runs <c>GstBaseTransform.sink_event</c>.</summary>
-    /// <param name="event">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <param name="event">
+    /// The <c>event</c> argument.
+    /// The override takes ownership of it: chain up to hand it on, or it is
+    /// released when the override returns. Copy it to keep it beyond the call.
+    /// </param>
+    /// <returns>What <c>sink_event</c> answers.</returns>
     protected virtual bool OnSinkEvent(Gst.Event @event) =>
         ChainUpSinkEvent(@event);
 
     /// <summary>Runs <c>GstBaseTransform.src_event</c>.</summary>
-    /// <param name="event">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <param name="event">
+    /// The <c>event</c> argument.
+    /// The override takes ownership of it: chain up to hand it on, or it is
+    /// released when the override returns. Copy it to keep it beyond the call.
+    /// </param>
+    /// <returns>What <c>src_event</c> answers.</returns>
     protected virtual bool OnSrcEvent(Gst.Event @event) =>
         ChainUpSrcEvent(@event);
 
     /// <summary>Runs <c>GstBaseTransform.prepare_output_buffer</c>.</summary>
-    /// <param name="input">The argument the slot carries under this name.</param>
-    /// <param name="outbuf">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <remarks>
+    /// <para>Answering the input buffer is what an in place transform does, and the base
+    /// implementation does exactly that whenever the input is writable.</para>
+    /// </remarks>
+    /// <param name="input">
+    /// The <c>input</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <param name="outbuf">
+    /// The <c>outbuf</c> argument.
+    /// What the override leaves here is handed to the caller with one added
+    /// reference; the wrapper keeps its own.
+    /// Answering the very value that was handed in is allowed and is how an in
+    /// place implementation says so: the caller compares the two and takes no
+    /// second reference for an unchanged answer.
+    /// </param>
+    /// <returns>What <c>prepare_output_buffer</c> answers.</returns>
     protected virtual Gst.FlowReturn OnPrepareOutputBuffer(Gst.Buffer input, out Gst.Buffer? outbuf) =>
         ChainUpPrepareOutputBuffer(input, out outbuf);
 
-    /// <summary>Runs <c>GstBaseTransform.copy_metadata</c>.</summary>
-    /// <param name="input">The argument the slot carries under this name.</param>
-    /// <param name="outbuf">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <summary>
+    /// Optional.
+    ///                 Copy the metadata from the input buffer to the output buffer.
+    ///                 The default implementation will copy the flags, timestamps and
+    ///                 offsets of the buffer.
+    /// </summary>
+    /// <param name="input">
+    /// The <c>input</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <param name="outbuf">
+    /// The <c>outbuf</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <returns>What <c>copy_metadata</c> answers.</returns>
     protected virtual bool OnCopyMetadata(Gst.Buffer input, Gst.Buffer outbuf) =>
         ChainUpCopyMetadata(input, outbuf);
 
-    /// <summary>Runs <c>GstBaseTransform.before_transform</c>.</summary>
-    /// <param name="buffer">The argument the slot carries under this name.</param>
+    /// <summary>
+    /// Optional.
+    ///                    This method is called right before the base class will
+    ///                    start processing. Dynamic properties or other delayed
+    ///                    configuration could be performed in this method.
+    /// </summary>
+    /// <param name="buffer">
+    /// The <c>buffer</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
     protected virtual void OnBeforeTransform(Gst.Buffer buffer) =>
         ChainUpBeforeTransform(buffer);
 
-    /// <summary>Runs <c>GstBaseTransform.transform</c>.</summary>
-    /// <param name="inbuf">The argument the slot carries under this name.</param>
-    /// <param name="outbuf">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <summary>
+    /// Required if the element does not operate in-place.
+    ///                  Transforms one incoming buffer to one outgoing buffer.
+    ///                  The function is allowed to change size/timestamp/duration
+    ///                  of the outgoing buffer.
+    /// </summary>
+    /// <param name="inbuf">
+    /// The <c>inbuf</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <param name="outbuf">
+    /// The <c>outbuf</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <returns>What <c>transform</c> answers.</returns>
     protected virtual Gst.FlowReturn OnTransform(Gst.Buffer inbuf, Gst.Buffer outbuf) =>
         ChainUpTransform(inbuf, outbuf);
 
-    /// <summary>Runs <c>GstBaseTransform.transform_ip</c>.</summary>
-    /// <param name="buffer">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <summary>
+    /// Required if the element operates in-place.
+    ///                  Transform the incoming buffer in-place.
+    /// </summary>
+    /// <param name="buffer">
+    /// The <c>buffer</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <returns>What <c>transform_ip</c> answers.</returns>
     protected virtual Gst.FlowReturn OnTransformIp(Gst.Buffer buffer) =>
         ChainUpTransformIp(buffer);
 
-    /// <summary>Runs <c>GstBaseTransform.submit_input_buffer</c>.</summary>
-    /// <param name="isDiscont">The argument the slot carries under this name.</param>
-    /// <param name="input">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <summary>
+    /// Function which accepts a new input buffer and pre-processes it.
+    ///                  The default implementation performs caps (re)negotiation, then
+    ///                  QoS if needed, and places the input buffer into the @queued_buf
+    ///                  member variable. If the buffer is dropped due to QoS, it returns
+    ///                  GST_BASE_TRANSFORM_FLOW_DROPPED. If this input buffer is not
+    ///                  contiguous with any previous input buffer, then @is_discont
+    ///                  is set to %TRUE. (Since: 1.6)
+    /// </summary>
+    /// <remarks>
+    /// <para>An override that does not chain up must fill queued_buf itself or generate_output has
+    /// nothing to produce.</para>
+    /// </remarks>
+    /// <param name="isDiscont">The <c>isDiscont</c> argument.</param>
+    /// <param name="input">
+    /// The <c>input</c> argument.
+    /// The override takes ownership of it: chain up to hand it on, or it is
+    /// released when the override returns. Copy it to keep it beyond the call.
+    /// </param>
+    /// <returns>What <c>submit_input_buffer</c> answers.</returns>
     protected virtual Gst.FlowReturn OnSubmitInputBuffer(bool isDiscont, Gst.Buffer input) =>
         ChainUpSubmitInputBuffer(isDiscont, input);
 
     /// <summary>Runs <c>GstBaseTransform.generate_output</c>.</summary>
-    /// <param name="outbuf">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <param name="outbuf">
+    /// The <c>outbuf</c> argument.
+    /// What the override leaves here is handed to the caller with one added
+    /// reference; the wrapper keeps its own.
+    /// </param>
+    /// <returns>What <c>generate_output</c> answers.</returns>
     protected virtual Gst.FlowReturn OnGenerateOutput(out Gst.Buffer? outbuf) =>
         ChainUpGenerateOutput(out outbuf);
 
     /// <summary>Runs the implementation of <c>transform_caps</c> below the managed override.</summary>
-    /// <param name="direction">The argument the slot carries under this name.</param>
-    /// <param name="caps">The argument the slot carries under this name.</param>
-    /// <param name="filter">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <param name="direction">The <c>direction</c> argument.</param>
+    /// <param name="caps">
+    /// The <c>caps</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <param name="filter">
+    /// The <c>filter</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <returns>
+    /// What <c>transform_caps</c> answers.
+    /// A returned object is handed to the caller with one added reference; the
+    /// wrapper keeps its own.
+    /// </returns>
     protected Gst.Caps? ChainUpTransformCaps(Gst.PadDirection direction, Gst.Caps caps, Gst.Caps filter)
     {
         ArgumentNullException.ThrowIfNull(caps);
@@ -383,10 +565,24 @@ public unsafe partial class BaseTransform
     }
 
     /// <summary>Runs the implementation of <c>fixate_caps</c> below the managed override.</summary>
-    /// <param name="direction">The argument the slot carries under this name.</param>
-    /// <param name="caps">The argument the slot carries under this name.</param>
-    /// <param name="othercaps">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <param name="direction">The <c>direction</c> argument.</param>
+    /// <param name="caps">
+    /// The <c>caps</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <param name="othercaps">
+    /// The <c>othercaps</c> argument.
+    /// The override takes ownership of it: chain up to hand it on, or it is
+    /// released when the override returns. Copy it to keep it beyond the call.
+    /// </param>
+    /// <returns>
+    /// What <c>fixate_caps</c> answers.
+    /// A returned object is handed to the caller with one added reference; the
+    /// wrapper keeps its own.
+    /// Answering <see langword="null"/> is not allowed: the caller of the slot does
+    /// not check for it. A null answer is reported through the exception trap and
+    /// the slot answers a value the caller fails cleanly on.
+    /// </returns>
     protected Gst.Caps ChainUpFixateCaps(Gst.PadDirection direction, Gst.Caps caps, Gst.Caps othercaps)
     {
         ArgumentNullException.ThrowIfNull(caps);
@@ -405,9 +601,12 @@ public unsafe partial class BaseTransform
     }
 
     /// <summary>Runs the implementation of <c>accept_caps</c> below the managed override.</summary>
-    /// <param name="direction">The argument the slot carries under this name.</param>
-    /// <param name="caps">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <param name="direction">The <c>direction</c> argument.</param>
+    /// <param name="caps">
+    /// The <c>caps</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <returns>What <c>accept_caps</c> answers.</returns>
     protected bool ChainUpAcceptCaps(Gst.PadDirection direction, Gst.Caps caps)
     {
         ArgumentNullException.ThrowIfNull(caps);
@@ -418,9 +617,15 @@ public unsafe partial class BaseTransform
     }
 
     /// <summary>Runs the implementation of <c>set_caps</c> below the managed override.</summary>
-    /// <param name="inCaps">The argument the slot carries under this name.</param>
-    /// <param name="outCaps">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <param name="inCaps">
+    /// The <c>inCaps</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <param name="outCaps">
+    /// The <c>outCaps</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <returns>What <c>set_caps</c> answers.</returns>
     protected bool ChainUpSetCaps(Gst.Caps inCaps, Gst.Caps outCaps)
     {
         ArgumentNullException.ThrowIfNull(inCaps);
@@ -433,9 +638,12 @@ public unsafe partial class BaseTransform
     }
 
     /// <summary>Runs the implementation of <c>query</c> below the managed override.</summary>
-    /// <param name="direction">The argument the slot carries under this name.</param>
-    /// <param name="query">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <param name="direction">The <c>direction</c> argument.</param>
+    /// <param name="query">
+    /// The <c>query</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <returns>What <c>query</c> answers.</returns>
     protected bool ChainUpQuery(Gst.PadDirection direction, Gst.Query query)
     {
         ArgumentNullException.ThrowIfNull(query);
@@ -446,8 +654,11 @@ public unsafe partial class BaseTransform
     }
 
     /// <summary>Runs the implementation of <c>decide_allocation</c> below the managed override.</summary>
-    /// <param name="query">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <param name="query">
+    /// The <c>query</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <returns>What <c>decide_allocation</c> answers.</returns>
     protected bool ChainUpDecideAllocation(Gst.Query query)
     {
         ArgumentNullException.ThrowIfNull(query);
@@ -458,9 +669,15 @@ public unsafe partial class BaseTransform
     }
 
     /// <summary>Runs the implementation of <c>propose_allocation</c> below the managed override.</summary>
-    /// <param name="decideQuery">The argument the slot carries under this name.</param>
-    /// <param name="query">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <param name="decideQuery">
+    /// The <c>decideQuery</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <param name="query">
+    /// The <c>query</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <returns>What <c>propose_allocation</c> answers.</returns>
     protected bool ChainUpProposeAllocation(Gst.Query decideQuery, Gst.Query query)
     {
         ArgumentNullException.ThrowIfNull(decideQuery);
@@ -473,12 +690,18 @@ public unsafe partial class BaseTransform
     }
 
     /// <summary>Runs the implementation of <c>transform_size</c> below the managed override.</summary>
-    /// <param name="direction">The argument the slot carries under this name.</param>
-    /// <param name="caps">The argument the slot carries under this name.</param>
-    /// <param name="size">The argument the slot carries under this name.</param>
-    /// <param name="othercaps">The argument the slot carries under this name.</param>
-    /// <param name="othersize">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <param name="direction">The <c>direction</c> argument.</param>
+    /// <param name="caps">
+    /// The <c>caps</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <param name="size">The <c>size</c> argument.</param>
+    /// <param name="othercaps">
+    /// The <c>othercaps</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <param name="othersize">The <c>othersize</c> argument.</param>
+    /// <returns>What <c>transform_size</c> answers.</returns>
     protected bool ChainUpTransformSize(Gst.PadDirection direction, Gst.Caps caps, nuint size, Gst.Caps othercaps, out nuint othersize)
     {
         ArgumentNullException.ThrowIfNull(caps);
@@ -493,9 +716,12 @@ public unsafe partial class BaseTransform
     }
 
     /// <summary>Runs the implementation of <c>get_unit_size</c> below the managed override.</summary>
-    /// <param name="caps">The argument the slot carries under this name.</param>
-    /// <param name="size">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <param name="caps">
+    /// The <c>caps</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <param name="size">The <c>size</c> argument.</param>
+    /// <returns>What <c>get_unit_size</c> answers.</returns>
     protected bool ChainUpGetUnitSize(Gst.Caps caps, out nuint size)
     {
         ArgumentNullException.ThrowIfNull(caps);
@@ -508,7 +734,7 @@ public unsafe partial class BaseTransform
     }
 
     /// <summary>Runs the implementation of <c>start</c> below the managed override.</summary>
-    /// <returns>What the slot answers.</returns>
+    /// <returns>What <c>start</c> answers.</returns>
     protected bool ChainUpStart()
     {
         bool result = ChainUpStart(Handle);
@@ -517,7 +743,7 @@ public unsafe partial class BaseTransform
     }
 
     /// <summary>Runs the implementation of <c>stop</c> below the managed override.</summary>
-    /// <returns>What the slot answers.</returns>
+    /// <returns>What <c>stop</c> answers.</returns>
     protected bool ChainUpStop()
     {
         bool result = ChainUpStop(Handle);
@@ -526,8 +752,12 @@ public unsafe partial class BaseTransform
     }
 
     /// <summary>Runs the implementation of <c>sink_event</c> below the managed override.</summary>
-    /// <param name="event">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <param name="event">
+    /// The <c>event</c> argument.
+    /// The override takes ownership of it: chain up to hand it on, or it is
+    /// released when the override returns. Copy it to keep it beyond the call.
+    /// </param>
+    /// <returns>What <c>sink_event</c> answers.</returns>
     protected bool ChainUpSinkEvent(Gst.Event @event)
     {
         ArgumentNullException.ThrowIfNull(@event);
@@ -541,8 +771,12 @@ public unsafe partial class BaseTransform
     }
 
     /// <summary>Runs the implementation of <c>src_event</c> below the managed override.</summary>
-    /// <param name="event">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <param name="event">
+    /// The <c>event</c> argument.
+    /// The override takes ownership of it: chain up to hand it on, or it is
+    /// released when the override returns. Copy it to keep it beyond the call.
+    /// </param>
+    /// <returns>What <c>src_event</c> answers.</returns>
     protected bool ChainUpSrcEvent(Gst.Event @event)
     {
         ArgumentNullException.ThrowIfNull(@event);
@@ -556,9 +790,23 @@ public unsafe partial class BaseTransform
     }
 
     /// <summary>Runs the implementation of <c>prepare_output_buffer</c> below the managed override.</summary>
-    /// <param name="input">The argument the slot carries under this name.</param>
-    /// <param name="outbuf">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <remarks>
+    /// <para>Answering the input buffer is what an in place transform does, and the base
+    /// implementation does exactly that whenever the input is writable.</para>
+    /// </remarks>
+    /// <param name="input">
+    /// The <c>input</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <param name="outbuf">
+    /// The <c>outbuf</c> argument.
+    /// What the override leaves here is handed to the caller with one added
+    /// reference; the wrapper keeps its own.
+    /// Answering the very value that was handed in is allowed and is how an in
+    /// place implementation says so: the caller compares the two and takes no
+    /// second reference for an unchanged answer.
+    /// </param>
+    /// <returns>What <c>prepare_output_buffer</c> answers.</returns>
     protected Gst.FlowReturn ChainUpPrepareOutputBuffer(Gst.Buffer input, out Gst.Buffer? outbuf)
     {
         ArgumentNullException.ThrowIfNull(input);
@@ -571,9 +819,15 @@ public unsafe partial class BaseTransform
     }
 
     /// <summary>Runs the implementation of <c>copy_metadata</c> below the managed override.</summary>
-    /// <param name="input">The argument the slot carries under this name.</param>
-    /// <param name="outbuf">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <param name="input">
+    /// The <c>input</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <param name="outbuf">
+    /// The <c>outbuf</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <returns>What <c>copy_metadata</c> answers.</returns>
     protected bool ChainUpCopyMetadata(Gst.Buffer input, Gst.Buffer outbuf)
     {
         ArgumentNullException.ThrowIfNull(input);
@@ -586,7 +840,10 @@ public unsafe partial class BaseTransform
     }
 
     /// <summary>Runs the implementation of <c>before_transform</c> below the managed override.</summary>
-    /// <param name="buffer">The argument the slot carries under this name.</param>
+    /// <param name="buffer">
+    /// The <c>buffer</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
     protected void ChainUpBeforeTransform(Gst.Buffer buffer)
     {
         ArgumentNullException.ThrowIfNull(buffer);
@@ -596,9 +853,15 @@ public unsafe partial class BaseTransform
     }
 
     /// <summary>Runs the implementation of <c>transform</c> below the managed override.</summary>
-    /// <param name="inbuf">The argument the slot carries under this name.</param>
-    /// <param name="outbuf">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <param name="inbuf">
+    /// The <c>inbuf</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <param name="outbuf">
+    /// The <c>outbuf</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <returns>What <c>transform</c> answers.</returns>
     protected Gst.FlowReturn ChainUpTransform(Gst.Buffer inbuf, Gst.Buffer outbuf)
     {
         ArgumentNullException.ThrowIfNull(inbuf);
@@ -611,8 +874,11 @@ public unsafe partial class BaseTransform
     }
 
     /// <summary>Runs the implementation of <c>transform_ip</c> below the managed override.</summary>
-    /// <param name="buffer">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <param name="buffer">
+    /// The <c>buffer</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <returns>What <c>transform_ip</c> answers.</returns>
     protected Gst.FlowReturn ChainUpTransformIp(Gst.Buffer buffer)
     {
         ArgumentNullException.ThrowIfNull(buffer);
@@ -623,9 +889,17 @@ public unsafe partial class BaseTransform
     }
 
     /// <summary>Runs the implementation of <c>submit_input_buffer</c> below the managed override.</summary>
-    /// <param name="isDiscont">The argument the slot carries under this name.</param>
-    /// <param name="input">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <remarks>
+    /// <para>An override that does not chain up must fill queued_buf itself or generate_output has
+    /// nothing to produce.</para>
+    /// </remarks>
+    /// <param name="isDiscont">The <c>isDiscont</c> argument.</param>
+    /// <param name="input">
+    /// The <c>input</c> argument.
+    /// The override takes ownership of it: chain up to hand it on, or it is
+    /// released when the override returns. Copy it to keep it beyond the call.
+    /// </param>
+    /// <returns>What <c>submit_input_buffer</c> answers.</returns>
     protected Gst.FlowReturn ChainUpSubmitInputBuffer(bool isDiscont, Gst.Buffer input)
     {
         ArgumentNullException.ThrowIfNull(input);
@@ -639,8 +913,12 @@ public unsafe partial class BaseTransform
     }
 
     /// <summary>Runs the implementation of <c>generate_output</c> below the managed override.</summary>
-    /// <param name="outbuf">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <param name="outbuf">
+    /// The <c>outbuf</c> argument.
+    /// What the override leaves here is handed to the caller with one added
+    /// reference; the wrapper keeps its own.
+    /// </param>
+    /// <returns>What <c>generate_output</c> answers.</returns>
     protected Gst.FlowReturn ChainUpGenerateOutput(out Gst.Buffer? outbuf)
     {
         nint outbufNative = nint.Zero;

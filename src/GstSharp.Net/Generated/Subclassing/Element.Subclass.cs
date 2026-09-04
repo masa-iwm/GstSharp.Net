@@ -160,90 +160,256 @@ public unsafe partial class Element
         params Gst.GObject.VfuncOverride[] overrides) =>
         Gst.GObject.SubclassType.Define(new Gst.GObject.GType(GetGType()), typeName, configureClass, overrides);
 
-    /// <summary>Runs <c>GstElement.request_new_pad</c>.</summary>
-    /// <param name="templ">The argument the slot carries under this name.</param>
-    /// <param name="name">The argument the slot carries under this name.</param>
-    /// <param name="caps">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <summary>
+    /// Retrieves a request pad from the element according to the provided template.
+    /// Pad templates can be looked up using
+    /// gst_element_factory_get_static_pad_templates().
+    /// </summary>
+    /// <remarks>
+    /// <para>The pad should be released with gst_element_release_request_pad().</para>
+    /// <para>The pad is answered borrowed: the override has to have added it to the element already,
+    /// and the element keeps the reference the pad was created with.</para>
+    /// </remarks>
+    /// <param name="templ">
+    /// The <c>templ</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <param name="name">The <c>name</c> argument.</param>
+    /// <param name="caps">
+    /// The <c>caps</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <returns>
+    /// requested #GstPad if found,
+    ///     otherwise %NULL.  Release after usage.
+    /// The answer is borrowed: no reference is added for the caller, so the
+    /// override has to keep the object alive by other means.
+    /// </returns>
     protected virtual Gst.Pad? OnRequestNewPad(Gst.PadTemplate templ, string? name, Gst.Caps? caps) =>
         ChainUpRequestNewPad(templ, name, caps);
 
-    /// <summary>Runs <c>GstElement.release_pad</c>.</summary>
-    /// <param name="pad">The argument the slot carries under this name.</param>
+    /// <summary>called when a request pad is to be released</summary>
+    /// <param name="pad">
+    /// The <c>pad</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
     protected virtual void OnReleasePad(Gst.Pad pad) =>
         ChainUpReleasePad(pad);
 
-    /// <summary>Runs <c>GstElement.get_state</c>.</summary>
-    /// <param name="state">The argument the slot carries under this name.</param>
-    /// <param name="pending">The argument the slot carries under this name.</param>
-    /// <param name="timeout">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <summary>Gets the state of the element.</summary>
+    /// <remarks>
+    /// <para>
+    /// For elements that performed an ASYNC state change, as reported by
+    /// gst_element_set_state(), this function will block up to the
+    /// specified timeout value for the state change to complete.
+    /// If the element completes the state change or goes into
+    /// an error, this function returns immediately with a return value of
+    /// %GST_STATE_CHANGE_SUCCESS or %GST_STATE_CHANGE_FAILURE respectively.
+    /// </para>
+    /// <para>
+    /// For elements that did not return %GST_STATE_CHANGE_ASYNC, this function
+    /// returns the current and pending state immediately.
+    /// </para>
+    /// <para>
+    /// This function returns %GST_STATE_CHANGE_NO_PREROLL if the element
+    /// successfully changed its state but is not able to provide data yet.
+    /// This mostly happens for live sources that only produce data in
+    /// %GST_STATE_PLAYING. While the state change return is equivalent to
+    /// %GST_STATE_CHANGE_SUCCESS, it is returned to the application to signal that
+    /// some sink elements might not be able to complete their state change because
+    /// an element is not producing data to complete the preroll. When setting the
+    /// element to playing, the preroll will complete and playback will start.
+    /// </para>
+    /// </remarks>
+    /// <param name="state">The <c>state</c> argument.</param>
+    /// <param name="pending">The <c>pending</c> argument.</param>
+    /// <param name="timeout">The <c>timeout</c> argument.</param>
+    /// <returns>
+    /// %GST_STATE_CHANGE_SUCCESS if the element has no more pending state
+    ///          and the last state change succeeded, %GST_STATE_CHANGE_ASYNC if the
+    ///          element is still performing a state change or
+    ///          %GST_STATE_CHANGE_FAILURE if the last state change failed.
+    /// </returns>
     protected virtual Gst.StateChangeReturn OnGetState(out Gst.State state, out Gst.State pending, Gst.ClockTime timeout) =>
         ChainUpGetState(out state, out pending, timeout);
 
-    /// <summary>Runs <c>GstElement.set_state</c>.</summary>
-    /// <param name="state">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <summary>
+    /// Sets the state of the element. This function will try to set the
+    /// requested state by going through all the intermediary states and calling
+    /// the class's state change function for each.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This function can return #GST_STATE_CHANGE_ASYNC, in which case the
+    /// element will perform the remainder of the state change asynchronously in
+    /// another thread.
+    /// An application can use gst_element_get_state() to wait for the completion
+    /// of the state change or it can wait for a %GST_MESSAGE_ASYNC_DONE or
+    /// %GST_MESSAGE_STATE_CHANGED on the bus.
+    /// </para>
+    /// <para>
+    /// State changes to %GST_STATE_READY or %GST_STATE_NULL never return
+    /// #GST_STATE_CHANGE_ASYNC.
+    /// </para>
+    /// </remarks>
+    /// <param name="state">The <c>state</c> argument.</param>
+    /// <returns>Result of the state change using #GstStateChangeReturn.</returns>
     protected virtual Gst.StateChangeReturn OnSetState(Gst.State state) =>
         ChainUpSetState(state);
 
-    /// <summary>Runs <c>GstElement.change_state</c>.</summary>
-    /// <param name="transition">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <summary>Perform @transition on @element.</summary>
+    /// <remarks>
+    /// <para>
+    /// This function must be called with STATE_LOCK held and is mainly used
+    /// internally.
+    /// </para>
+    /// </remarks>
+    /// <param name="transition">The <c>transition</c> argument.</param>
+    /// <returns>the #GstStateChangeReturn of the state transition.</returns>
     protected virtual Gst.StateChangeReturn OnChangeState(Gst.StateChange transition) =>
         ChainUpChangeState(transition);
 
-    /// <summary>Runs <c>GstElement.state_changed</c>.</summary>
-    /// <param name="oldstate">The argument the slot carries under this name.</param>
-    /// <param name="newstate">The argument the slot carries under this name.</param>
-    /// <param name="pending">The argument the slot carries under this name.</param>
+    /// <summary>called immediately after a new state was set.</summary>
+    /// <param name="oldstate">The <c>oldstate</c> argument.</param>
+    /// <param name="newstate">The <c>newstate</c> argument.</param>
+    /// <param name="pending">The <c>pending</c> argument.</param>
     protected virtual void OnStateChanged(Gst.State oldstate, Gst.State newstate, Gst.State pending) =>
         ChainUpStateChanged(oldstate, newstate, pending);
 
-    /// <summary>Runs <c>GstElement.set_bus</c>.</summary>
-    /// <param name="bus">The argument the slot carries under this name.</param>
+    /// <summary>
+    /// Sets the bus of the element. Increases the refcount on the bus.
+    /// For internal use only, unless you're testing elements.
+    /// </summary>
+    /// <remarks>
+    /// <para>MT safe.</para>
+    /// </remarks>
+    /// <param name="bus">
+    /// The <c>bus</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
     protected virtual void OnSetBus(Gst.Bus? bus) =>
         ChainUpSetBus(bus);
 
-    /// <summary>Runs <c>GstElement.provide_clock</c>.</summary>
-    /// <returns>What the slot answers.</returns>
+    /// <summary>
+    /// Get the clock provided by the given element.
+    /// &gt; An element is only required to provide a clock in the PAUSED
+    /// &gt; state. Some elements can provide a clock in other states.
+    /// </summary>
+    /// <returns>
+    /// the GstClock provided by the
+    /// element or %NULL if no clock could be provided.  Unref after usage.
+    /// A returned object is handed to the caller with one added reference; the
+    /// wrapper keeps its own.
+    /// </returns>
     protected virtual Gst.Clock? OnProvideClock() =>
         ChainUpProvideClock();
 
-    /// <summary>Runs <c>GstElement.set_clock</c>.</summary>
-    /// <param name="clock">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <summary>
+    /// Sets the clock for the element. This function increases the
+    /// refcount on the clock. Any previously set clock on the object
+    /// is unreffed.
+    /// </summary>
+    /// <param name="clock">
+    /// The <c>clock</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <returns>
+    /// %TRUE if the element accepted the clock. An element can refuse a
+    /// clock when it, for example, is not able to slave its internal clock to the
+    /// @clock or when it requires a specific clock to operate.
+    /// </returns>
     protected virtual bool OnSetClock(Gst.Clock? clock) =>
         ChainUpSetClock(clock);
 
-    /// <summary>Runs <c>GstElement.send_event</c>.</summary>
-    /// <param name="event">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <summary>
+    /// Sends an event to an element. If the element doesn't implement an
+    /// event handler, the event will be pushed on a random linked sink pad for
+    /// downstream events or a random linked source pad for upstream events.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This function takes ownership of the provided event so you should
+    /// gst_event_ref() it if you want to reuse the event after this call.
+    /// </para>
+    /// <para>MT safe.</para>
+    /// </remarks>
+    /// <param name="event">
+    /// The <c>event</c> argument.
+    /// The override takes ownership of it: chain up to hand it on, or it is
+    /// released when the override returns. Copy it to keep it beyond the call.
+    /// </param>
+    /// <returns>
+    /// %TRUE if the event was handled. Events that trigger a preroll (such
+    /// as flushing seeks and steps) will emit %GST_MESSAGE_ASYNC_DONE.
+    /// </returns>
     protected virtual bool OnSendEvent(Gst.Event @event) =>
         ChainUpSendEvent(@event);
 
-    /// <summary>Runs <c>GstElement.query</c>.</summary>
-    /// <param name="query">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <summary>Performs a query on the given element.</summary>
+    /// <remarks>
+    /// <para>
+    /// For elements that don't implement a query handler, this function
+    /// forwards the query to a random srcpad or to the peer of a
+    /// random linked sinkpad of this element.
+    /// </para>
+    /// <para>Please note that some queries might need a running pipeline to work.</para>
+    /// </remarks>
+    /// <param name="query">
+    /// The <c>query</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <returns>%TRUE if the query could be performed.</returns>
     protected virtual bool OnQuery(Gst.Query query) =>
         ChainUpQuery(query);
 
-    /// <summary>Runs <c>GstElement.post_message</c>.</summary>
-    /// <param name="message">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <summary>
+    /// Post a message on the element's #GstBus. This function takes ownership of the
+    /// message; if you want to access the message after this call, you should add an
+    /// additional reference before calling.
+    /// </summary>
+    /// <param name="message">
+    /// The <c>message</c> argument.
+    /// The override takes ownership of it: chain up to hand it on, or it is
+    /// released when the override returns. Copy it to keep it beyond the call.
+    /// </param>
+    /// <returns>
+    /// %TRUE if the message was successfully posted. The function returns
+    /// %FALSE if the element did not have a bus.
+    /// </returns>
     protected virtual bool OnPostMessage(Gst.Message message) =>
         ChainUpPostMessage(message);
 
-    /// <summary>Runs <c>GstElement.set_context</c>.</summary>
-    /// <param name="context">The argument the slot carries under this name.</param>
+    /// <summary>Sets the context of the element. Increases the refcount of the context.</summary>
+    /// <remarks>
+    /// <para>MT safe.</para>
+    /// </remarks>
+    /// <param name="context">
+    /// The <c>context</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
     protected virtual void OnSetContext(Gst.Context context) =>
         ChainUpSetContext(context);
 
     /// <summary>Runs the implementation of <c>request_new_pad</c> below the managed override.</summary>
-    /// <param name="templ">The argument the slot carries under this name.</param>
-    /// <param name="name">The argument the slot carries under this name.</param>
-    /// <param name="caps">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <remarks>
+    /// <para>The pad is answered borrowed: the override has to have added it to the element already,
+    /// and the element keeps the reference the pad was created with.</para>
+    /// </remarks>
+    /// <param name="templ">
+    /// The <c>templ</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <param name="name">The <c>name</c> argument.</param>
+    /// <param name="caps">
+    /// The <c>caps</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <returns>
+    /// requested #GstPad if found,
+    ///     otherwise %NULL.  Release after usage.
+    /// The answer is borrowed: no reference is added for the caller, so the
+    /// override has to keep the object alive by other means.
+    /// </returns>
     protected Gst.Pad? ChainUpRequestNewPad(Gst.PadTemplate templ, string? name, Gst.Caps? caps)
     {
         ArgumentNullException.ThrowIfNull(templ);
@@ -258,7 +424,10 @@ public unsafe partial class Element
     }
 
     /// <summary>Runs the implementation of <c>release_pad</c> below the managed override.</summary>
-    /// <param name="pad">The argument the slot carries under this name.</param>
+    /// <param name="pad">
+    /// The <c>pad</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
     protected void ChainUpReleasePad(Gst.Pad pad)
     {
         ArgumentNullException.ThrowIfNull(pad);
@@ -268,10 +437,15 @@ public unsafe partial class Element
     }
 
     /// <summary>Runs the implementation of <c>get_state</c> below the managed override.</summary>
-    /// <param name="state">The argument the slot carries under this name.</param>
-    /// <param name="pending">The argument the slot carries under this name.</param>
-    /// <param name="timeout">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <param name="state">The <c>state</c> argument.</param>
+    /// <param name="pending">The <c>pending</c> argument.</param>
+    /// <param name="timeout">The <c>timeout</c> argument.</param>
+    /// <returns>
+    /// %GST_STATE_CHANGE_SUCCESS if the element has no more pending state
+    ///          and the last state change succeeded, %GST_STATE_CHANGE_ASYNC if the
+    ///          element is still performing a state change or
+    ///          %GST_STATE_CHANGE_FAILURE if the last state change failed.
+    /// </returns>
     protected Gst.StateChangeReturn ChainUpGetState(out Gst.State state, out Gst.State pending, Gst.ClockTime timeout)
     {
         int stateNative = default;
@@ -284,8 +458,8 @@ public unsafe partial class Element
     }
 
     /// <summary>Runs the implementation of <c>set_state</c> below the managed override.</summary>
-    /// <param name="state">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <param name="state">The <c>state</c> argument.</param>
+    /// <returns>Result of the state change using #GstStateChangeReturn.</returns>
     protected Gst.StateChangeReturn ChainUpSetState(Gst.State state)
     {
         Gst.StateChangeReturn result = ChainUpSetState(Handle, (int)state);
@@ -294,8 +468,8 @@ public unsafe partial class Element
     }
 
     /// <summary>Runs the implementation of <c>change_state</c> below the managed override.</summary>
-    /// <param name="transition">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <param name="transition">The <c>transition</c> argument.</param>
+    /// <returns>the #GstStateChangeReturn of the state transition.</returns>
     protected Gst.StateChangeReturn ChainUpChangeState(Gst.StateChange transition)
     {
         Gst.StateChangeReturn result = ChainUpChangeState(Handle, (int)transition);
@@ -304,9 +478,9 @@ public unsafe partial class Element
     }
 
     /// <summary>Runs the implementation of <c>state_changed</c> below the managed override.</summary>
-    /// <param name="oldstate">The argument the slot carries under this name.</param>
-    /// <param name="newstate">The argument the slot carries under this name.</param>
-    /// <param name="pending">The argument the slot carries under this name.</param>
+    /// <param name="oldstate">The <c>oldstate</c> argument.</param>
+    /// <param name="newstate">The <c>newstate</c> argument.</param>
+    /// <param name="pending">The <c>pending</c> argument.</param>
     protected void ChainUpStateChanged(Gst.State oldstate, Gst.State newstate, Gst.State pending)
     {
         ChainUpStateChanged(Handle, (int)oldstate, (int)newstate, (int)pending);
@@ -314,7 +488,10 @@ public unsafe partial class Element
     }
 
     /// <summary>Runs the implementation of <c>set_bus</c> below the managed override.</summary>
-    /// <param name="bus">The argument the slot carries under this name.</param>
+    /// <param name="bus">
+    /// The <c>bus</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
     protected void ChainUpSetBus(Gst.Bus? bus)
     {
         ChainUpSetBus(Handle, bus is null ? nint.Zero : bus.Handle);
@@ -323,7 +500,12 @@ public unsafe partial class Element
     }
 
     /// <summary>Runs the implementation of <c>provide_clock</c> below the managed override.</summary>
-    /// <returns>What the slot answers.</returns>
+    /// <returns>
+    /// the GstClock provided by the
+    /// element or %NULL if no clock could be provided.  Unref after usage.
+    /// A returned object is handed to the caller with one added reference; the
+    /// wrapper keeps its own.
+    /// </returns>
     protected Gst.Clock? ChainUpProvideClock()
     {
         nint resultNative = ChainUpProvideClock(Handle);
@@ -333,8 +515,15 @@ public unsafe partial class Element
     }
 
     /// <summary>Runs the implementation of <c>set_clock</c> below the managed override.</summary>
-    /// <param name="clock">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <param name="clock">
+    /// The <c>clock</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <returns>
+    /// %TRUE if the element accepted the clock. An element can refuse a
+    /// clock when it, for example, is not able to slave its internal clock to the
+    /// @clock or when it requires a specific clock to operate.
+    /// </returns>
     protected bool ChainUpSetClock(Gst.Clock? clock)
     {
         bool result = ChainUpSetClock(Handle, clock is null ? nint.Zero : clock.Handle);
@@ -344,8 +533,15 @@ public unsafe partial class Element
     }
 
     /// <summary>Runs the implementation of <c>send_event</c> below the managed override.</summary>
-    /// <param name="event">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <param name="event">
+    /// The <c>event</c> argument.
+    /// The override takes ownership of it: chain up to hand it on, or it is
+    /// released when the override returns. Copy it to keep it beyond the call.
+    /// </param>
+    /// <returns>
+    /// %TRUE if the event was handled. Events that trigger a preroll (such
+    /// as flushing seeks and steps) will emit %GST_MESSAGE_ASYNC_DONE.
+    /// </returns>
     protected bool ChainUpSendEvent(Gst.Event @event)
     {
         ArgumentNullException.ThrowIfNull(@event);
@@ -359,8 +555,11 @@ public unsafe partial class Element
     }
 
     /// <summary>Runs the implementation of <c>query</c> below the managed override.</summary>
-    /// <param name="query">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <param name="query">
+    /// The <c>query</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <returns>%TRUE if the query could be performed.</returns>
     protected bool ChainUpQuery(Gst.Query query)
     {
         ArgumentNullException.ThrowIfNull(query);
@@ -371,8 +570,15 @@ public unsafe partial class Element
     }
 
     /// <summary>Runs the implementation of <c>post_message</c> below the managed override.</summary>
-    /// <param name="message">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <param name="message">
+    /// The <c>message</c> argument.
+    /// The override takes ownership of it: chain up to hand it on, or it is
+    /// released when the override returns. Copy it to keep it beyond the call.
+    /// </param>
+    /// <returns>
+    /// %TRUE if the message was successfully posted. The function returns
+    /// %FALSE if the element did not have a bus.
+    /// </returns>
     protected bool ChainUpPostMessage(Gst.Message message)
     {
         ArgumentNullException.ThrowIfNull(message);
@@ -386,7 +592,10 @@ public unsafe partial class Element
     }
 
     /// <summary>Runs the implementation of <c>set_context</c> below the managed override.</summary>
-    /// <param name="context">The argument the slot carries under this name.</param>
+    /// <param name="context">
+    /// The <c>context</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
     protected void ChainUpSetContext(Gst.Context context)
     {
         ArgumentNullException.ThrowIfNull(context);

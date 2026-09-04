@@ -397,6 +397,7 @@ internal sealed class Overlays
     private readonly Dictionary<string, string> _vfuncDefaults;
     private readonly HashSet<string> _vfuncIdentityBuffers;
     private readonly Dictionary<string, string> _vfuncNonNullReturns;
+    private readonly Dictionary<string, string> _vfuncDocNotes;
 
     private Overlays(
         HashSet<string> skip,
@@ -413,7 +414,8 @@ internal sealed class Overlays
         Dictionary<string, string> skipVirtuals,
         Dictionary<string, string> vfuncDefaults,
         HashSet<string> vfuncIdentityBuffers,
-        Dictionary<string, string> vfuncNonNullReturns)
+        Dictionary<string, string> vfuncNonNullReturns,
+        Dictionary<string, string> vfuncDocNotes)
     {
         _skip = skip;
         _handBound = handBound;
@@ -430,6 +432,7 @@ internal sealed class Overlays
         _vfuncDefaults = vfuncDefaults;
         _vfuncIdentityBuffers = vfuncIdentityBuffers;
         _vfuncNonNullReturns = vfuncNonNullReturns;
+        _vfuncDocNotes = vfuncDocNotes;
     }
 
     /// <summary>Gets an overlay set without any correction.</summary>
@@ -448,6 +451,7 @@ internal sealed class Overlays
         new Dictionary<string, string>(StringComparer.Ordinal),
         new Dictionary<string, string>(StringComparer.Ordinal),
         new HashSet<string>(StringComparer.Ordinal),
+        new Dictionary<string, string>(StringComparer.Ordinal),
         new Dictionary<string, string>(StringComparer.Ordinal));
 
     /// <summary>Gets the skipped identifiers, ordered for reporting.</summary>
@@ -515,6 +519,9 @@ internal sealed class Overlays
 
     /// <summary>Gets the slots whose managed answer may not be null.</summary>
     internal IReadOnlyCollection<string> VfuncNonNullReturnKeys => _vfuncNonNullReturns.Keys;
+
+    /// <summary>Gets the slots that carry a hand written note in their documentation.</summary>
+    internal IReadOnlyCollection<string> VfuncDocNoteKeys => _vfuncDocNotes.Keys;
 
     /// <summary>
     /// Loads <c>fixups.json</c> and <c>platform-symbols.json</c> from an overlay
@@ -607,6 +614,12 @@ internal sealed class Overlays
             vfuncDefaults[entry.Key] = entry.Value;
         }
 
+        Dictionary<string, string> vfuncDocNotes = new(StringComparer.Ordinal);
+        foreach (KeyValuePair<string, string> entry in fixups.VfuncDocNotes ?? [])
+        {
+            vfuncDocNotes[entry.Key] = entry.Value;
+        }
+
         Dictionary<string, string> vfuncNonNullReturns = new(StringComparer.Ordinal);
         foreach (KeyValuePair<string, string> entry in fixups.VfuncNonNullReturns ?? [])
         {
@@ -634,7 +647,8 @@ internal sealed class Overlays
             skipVirtuals,
             vfuncDefaults,
             vfuncIdentityBuffers,
-            vfuncNonNullReturns);
+            vfuncNonNullReturns,
+            vfuncDocNotes);
     }
 
     /// <summary>Tests whether a symbol is skipped by the overlays.</summary>
@@ -780,6 +794,16 @@ internal sealed class Overlays
     internal bool TryGetVfuncNonNullReturn(string key, [NotNullWhen(true)] out string? failure) =>
         _vfuncNonNullReturns.TryGetValue(key, out failure);
 
+    /// <summary>
+    /// Looks up the hand written note the documentation of a slot carries, for
+    /// the part of its contract that neither the gir nor the marshalling states.
+    /// </summary>
+    /// <param name="key">The key of the slot.</param>
+    /// <param name="note">Receives the sentence.</param>
+    /// <returns>Whether the slot has a note.</returns>
+    internal bool TryGetVfuncDocNote(string key, [NotNullWhen(true)] out string? note) =>
+        _vfuncDocNotes.TryGetValue(key, out note);
+
     /// <summary>Looks up the platform availability of a native symbol.</summary>
     /// <param name="cIdentifier">The <c>c:identifier</c> of the symbol.</param>
     /// <returns>The availability, or <see langword="null"/> when the symbol is portable.</returns>
@@ -827,6 +851,8 @@ internal sealed class Overlays
         public List<string>? VfuncIdentityBuffers { get; set; }
 
         public Dictionary<string, string>? VfuncNonNullReturns { get; set; }
+
+        public Dictionary<string, string>? VfuncDocNotes { get; set; }
     }
 
     private sealed class PlatformSymbolsFile

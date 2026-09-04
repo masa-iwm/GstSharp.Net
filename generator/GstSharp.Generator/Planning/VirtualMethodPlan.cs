@@ -145,4 +145,11 @@ internal sealed class VirtualMethodPlan
     /// Named by the overlay key <c>vfuncNonNullReturns</c>.
     /// </summary>
     internal string? NonNullReturn { get; init; }
+
+    /// <summary>
+    /// Gets the hand written sentence the documentation of the slot carries, or
+    /// <see langword="null"/> when it has none. Named by the overlay key
+    /// <c>vfuncDocNotes</c>.
+    /// </summary>
+    internal string? DocNote { get; init; }
 }

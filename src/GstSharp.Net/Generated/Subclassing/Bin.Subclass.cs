@@ -79,31 +79,49 @@ public unsafe partial class Bin
         params Gst.GObject.VfuncOverride[] overrides) =>
         Gst.GObject.SubclassType.Define(new Gst.GObject.GType(GetGType()), typeName, configureClass, overrides);
 
-    /// <summary>Runs <c>GstBin.add_element</c>.</summary>
-    /// <param name="element">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <summary>Method to add an element to the bin.</summary>
+    /// <param name="element">
+    /// The <c>element</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <returns>%TRUE if the @element was added</returns>
     protected virtual bool OnAddElement(Gst.Element element) =>
         ChainUpAddElement(element);
 
-    /// <summary>Runs <c>GstBin.remove_element</c>.</summary>
-    /// <param name="element">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <summary>Method to remove an element from the bin.</summary>
+    /// <param name="element">
+    /// The <c>element</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <returns>%TRUE if the @element was removed</returns>
     protected virtual bool OnRemoveElement(Gst.Element element) =>
         ChainUpRemoveElement(element);
 
-    /// <summary>Runs <c>GstBin.handle_message</c>.</summary>
-    /// <param name="message">The argument the slot carries under this name.</param>
+    /// <summary>Method to handle a message from the children.</summary>
+    /// <remarks>
+    /// <para>The override takes the message over: chaining up passes it on and disposes it, and an
+    /// override that does neither drops the message, which is what makes this the hook for
+    /// swallowing or rewriting what children post. Copy the message to keep it beyond the call.</para>
+    /// </remarks>
+    /// <param name="message">
+    /// The <c>message</c> argument.
+    /// The override takes ownership of it: chain up to hand it on, or it is
+    /// released when the override returns. Copy it to keep it beyond the call.
+    /// </param>
     protected virtual void OnHandleMessage(Gst.Message message) =>
         ChainUpHandleMessage(message);
 
     /// <summary>Runs <c>GstBin.do_latency</c>.</summary>
-    /// <returns>What the slot answers.</returns>
+    /// <returns>What <c>do_latency</c> answers.</returns>
     protected virtual bool OnDoLatency() =>
         ChainUpDoLatency();
 
     /// <summary>Runs the implementation of <c>add_element</c> below the managed override.</summary>
-    /// <param name="element">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <param name="element">
+    /// The <c>element</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <returns>%TRUE if the @element was added</returns>
     protected bool ChainUpAddElement(Gst.Element element)
     {
         ArgumentNullException.ThrowIfNull(element);
@@ -114,8 +132,11 @@ public unsafe partial class Bin
     }
 
     /// <summary>Runs the implementation of <c>remove_element</c> below the managed override.</summary>
-    /// <param name="element">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <param name="element">
+    /// The <c>element</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <returns>%TRUE if the @element was removed</returns>
     protected bool ChainUpRemoveElement(Gst.Element element)
     {
         ArgumentNullException.ThrowIfNull(element);
@@ -126,7 +147,16 @@ public unsafe partial class Bin
     }
 
     /// <summary>Runs the implementation of <c>handle_message</c> below the managed override.</summary>
-    /// <param name="message">The argument the slot carries under this name.</param>
+    /// <remarks>
+    /// <para>The override takes the message over: chaining up passes it on and disposes it, and an
+    /// override that does neither drops the message, which is what makes this the hook for
+    /// swallowing or rewriting what children post. Copy the message to keep it beyond the call.</para>
+    /// </remarks>
+    /// <param name="message">
+    /// The <c>message</c> argument.
+    /// The override takes ownership of it: chain up to hand it on, or it is
+    /// released when the override returns. Copy it to keep it beyond the call.
+    /// </param>
     protected void ChainUpHandleMessage(Gst.Message message)
     {
         ArgumentNullException.ThrowIfNull(message);
@@ -139,7 +169,7 @@ public unsafe partial class Bin
     }
 
     /// <summary>Runs the implementation of <c>do_latency</c> below the managed override.</summary>
-    /// <returns>What the slot answers.</returns>
+    /// <returns>What <c>do_latency</c> answers.</returns>
     protected bool ChainUpDoLatency()
     {
         bool result = ChainUpDoLatency(Handle);

@@ -77,27 +77,55 @@ public unsafe partial class PushSrc
         return type;
     }
 
-    /// <summary>Runs <c>GstPushSrc.create</c>.</summary>
-    /// <param name="buffer">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <summary>
+    /// Ask the subclass to create a buffer, the default implementation will call alloc if
+    /// no allocated @buf is provided and then call fill.
+    /// </summary>
+    /// <remarks>
+    /// <para>Answering Ok without a buffer is not a way to produce nothing: the base class posts an
+    /// element error on the bus for a NULL buffer, so a source with nothing to hand out answers
+    /// a flow result that says so - Eos, Flushing or an error.</para>
+    /// </remarks>
+    /// <param name="buffer">
+    /// The <c>buffer</c> argument.
+    /// What the override leaves here is handed to the caller with one added
+    /// reference; the wrapper keeps its own.
+    /// </param>
+    /// <returns>What <c>create</c> answers.</returns>
     protected virtual Gst.FlowReturn OnCreate(out Gst.Buffer? buffer) =>
         ChainUpCreate(out buffer);
 
-    /// <summary>Runs <c>GstPushSrc.alloc</c>.</summary>
-    /// <param name="buf">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <summary>Allocate memory for a buffer.</summary>
+    /// <param name="buf">
+    /// The <c>buf</c> argument.
+    /// What the override leaves here is handed to the caller with one added
+    /// reference; the wrapper keeps its own.
+    /// </param>
+    /// <returns>What <c>alloc</c> answers.</returns>
     protected virtual Gst.FlowReturn OnAlloc(out Gst.Buffer? buf) =>
         ChainUpAlloc(out buf);
 
-    /// <summary>Runs <c>GstPushSrc.fill</c>.</summary>
-    /// <param name="buf">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <summary>Ask the subclass to fill the buffer with data.</summary>
+    /// <param name="buf">
+    /// The <c>buf</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <returns>What <c>fill</c> answers.</returns>
     protected virtual Gst.FlowReturn OnFill(Gst.Buffer buf) =>
         ChainUpFill(buf);
 
     /// <summary>Runs the implementation of <c>create</c> below the managed override.</summary>
-    /// <param name="buffer">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <remarks>
+    /// <para>Answering Ok without a buffer is not a way to produce nothing: the base class posts an
+    /// element error on the bus for a NULL buffer, so a source with nothing to hand out answers
+    /// a flow result that says so - Eos, Flushing or an error.</para>
+    /// </remarks>
+    /// <param name="buffer">
+    /// The <c>buffer</c> argument.
+    /// What the override leaves here is handed to the caller with one added
+    /// reference; the wrapper keeps its own.
+    /// </param>
+    /// <returns>What <c>create</c> answers.</returns>
     protected Gst.FlowReturn ChainUpCreate(out Gst.Buffer? buffer)
     {
         nint bufferNative = nint.Zero;
@@ -108,8 +136,12 @@ public unsafe partial class PushSrc
     }
 
     /// <summary>Runs the implementation of <c>alloc</c> below the managed override.</summary>
-    /// <param name="buf">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <param name="buf">
+    /// The <c>buf</c> argument.
+    /// What the override leaves here is handed to the caller with one added
+    /// reference; the wrapper keeps its own.
+    /// </param>
+    /// <returns>What <c>alloc</c> answers.</returns>
     protected Gst.FlowReturn ChainUpAlloc(out Gst.Buffer? buf)
     {
         nint bufNative = nint.Zero;
@@ -120,8 +152,11 @@ public unsafe partial class PushSrc
     }
 
     /// <summary>Runs the implementation of <c>fill</c> below the managed override.</summary>
-    /// <param name="buf">The argument the slot carries under this name.</param>
-    /// <returns>What the slot answers.</returns>
+    /// <param name="buf">
+    /// The <c>buf</c> argument.
+    /// The element lends this for the duration of the call; keep a copy to retain it.
+    /// </param>
+    /// <returns>What <c>fill</c> answers.</returns>
     protected Gst.FlowReturn ChainUpFill(Gst.Buffer buf)
     {
         ArgumentNullException.ThrowIfNull(buf);

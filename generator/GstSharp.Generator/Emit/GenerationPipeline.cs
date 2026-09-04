@@ -443,6 +443,11 @@ internal static class GenerationPipeline
             subclasses.VirtualMethodKeys,
             "The virtual method default '{0}' names no slot of a subclassable class; the entry is stale.");
         Report(
+            "GEN0037",
+            overlays.VfuncDocNoteKeys,
+            subclasses.VirtualMethodKeys,
+            "The virtual method note '{0}' names no slot of a subclassable class; the entry is stale.");
+        Report(
             "GEN0036",
             overlays.VfuncNonNullReturnKeys,
             subclasses.VirtualMethodKeys,
