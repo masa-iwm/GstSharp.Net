@@ -135,8 +135,17 @@ internal static class Fixture
     /// <c>GObject</c>, for a fixture that has to resolve types of another
     /// module.
     /// </param>
+    /// <param name="allowErrors">
+    /// <see langword="true"/> for a fixture whose subject is an error
+    /// diagnostic, which the run would otherwise fail on before the test could
+    /// read it.
+    /// </param>
     /// <returns>The run.</returns>
-    internal static FixtureRun Run(string body, Overlays? overlays = null, string? extraNamespaces = null)
+    internal static FixtureRun Run(
+        string body,
+        Overlays? overlays = null,
+        string? extraNamespaces = null,
+        bool allowErrors = false)
     {
         GirRepository file = GirReader.ReadXml(
             $"""
@@ -153,9 +162,12 @@ internal static class Fixture
         Repository repository = Repository.FromRepositories([file]);
         GenerationResult result = GenerationPipeline.Execute(repository, overlays ?? Overlays.Empty);
 
-        foreach (Diagnostic diagnostic in result.Diagnostics)
+        if (!allowErrors)
         {
-            Assert.NotEqual(DiagnosticSeverity.Error, diagnostic.Severity);
+            foreach (Diagnostic diagnostic in result.Diagnostics)
+            {
+                Assert.NotEqual(DiagnosticSeverity.Error, diagnostic.Severity);
+            }
         }
 
         return new FixtureRun(result);
