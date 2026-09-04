@@ -83,7 +83,8 @@ public sealed class SubclassCensusTests
             "signal class closure: read by g_signal at emission time, never called through the class "
             + "pointer by the base class; managed code subscribes to the signal instead";
         const string Boxed =
-            "boxed parameter passed by pointer and read back by the caller; Boxed has no borrow mode";
+            "boxed parameter lent by pointer; Boxed has no borrow mode, and a copy would hide "
+            + "writes the caller reads back";
 
         Assert.Equal(
             new Dictionary<string, string>(StringComparer.Ordinal)

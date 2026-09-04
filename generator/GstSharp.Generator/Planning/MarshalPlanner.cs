@@ -4204,7 +4204,8 @@ internal sealed class MarshalPlanner
     /// What the skip ledger prints for a slot that lends a boxed instance.
     /// </summary>
     private const string BoxedParameterReason =
-        "boxed parameter passed by pointer and read back by the caller; Boxed has no borrow mode";
+        "boxed parameter lent by pointer; Boxed has no borrow mode, and a copy would hide "
+        + "writes the caller reads back";
 
     internal VirtualMethodPlan? PlanVirtualMethod(
         GirVirtualMethod method,

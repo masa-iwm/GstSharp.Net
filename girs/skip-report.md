@@ -1302,9 +1302,9 @@ out, so what is listed here is the managed surface and not the ABI.
 ### GstBase (5)
 
 - `GstBase.Aggregator::create_new_pad` — Pad subclassing is Stage 3: needs a Pad ClassConfig and construct properties
-- `GstBase.BaseSrc::do_seek` — boxed parameter passed by pointer and read back by the caller; Boxed has no borrow mode
-- `GstBase.BaseSrc::prepare_seek_segment` — boxed parameter passed by pointer and read back by the caller; Boxed has no borrow mode
-- `GstBase.BaseTransform::filter_meta` — boxed parameter passed by pointer and read back by the caller; Boxed has no borrow mode
+- `GstBase.BaseSrc::do_seek` — boxed parameter lent by pointer; Boxed has no borrow mode, and a copy would hide writes the caller reads back
+- `GstBase.BaseSrc::prepare_seek_segment` — boxed parameter lent by pointer; Boxed has no borrow mode, and a copy would hide writes the caller reads back
+- `GstBase.BaseTransform::filter_meta` — boxed parameter lent by pointer; Boxed has no borrow mode, and a copy would hide writes the caller reads back
 - `GstBase.BaseTransform::transform_meta` — UnsupportedSignature
 
 ## Fields (143)
