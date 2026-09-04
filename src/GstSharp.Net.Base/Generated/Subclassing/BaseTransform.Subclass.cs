@@ -259,7 +259,7 @@ public unsafe partial class BaseTransform
     /// A returned object is handed to the caller with one added reference; the
     /// wrapper keeps its own.
     /// </returns>
-    protected virtual Gst.Caps? OnTransformCaps(Gst.PadDirection direction, Gst.Caps caps, Gst.Caps filter) =>
+    protected virtual Gst.Caps? OnTransformCaps(Gst.PadDirection direction, Gst.Caps caps, Gst.Caps? filter) =>
         ChainUpTransformCaps(direction, caps, filter);
 
     /// <summary>Runs <c>GstBaseTransform.fixate_caps</c>.</summary>
@@ -364,7 +364,7 @@ public unsafe partial class BaseTransform
     /// The element lends this for the duration of the call; keep a copy to retain it.
     /// </param>
     /// <returns>What <c>propose_allocation</c> answers.</returns>
-    protected virtual bool OnProposeAllocation(Gst.Query decideQuery, Gst.Query query) =>
+    protected virtual bool OnProposeAllocation(Gst.Query? decideQuery, Gst.Query query) =>
         ChainUpProposeAllocation(decideQuery, query);
 
     /// <summary>Runs <c>GstBaseTransform.transform_size</c>.</summary>
@@ -585,11 +585,10 @@ public unsafe partial class BaseTransform
     /// A returned object is handed to the caller with one added reference; the
     /// wrapper keeps its own.
     /// </returns>
-    protected Gst.Caps? ChainUpTransformCaps(Gst.PadDirection direction, Gst.Caps caps, Gst.Caps filter)
+    protected Gst.Caps? ChainUpTransformCaps(Gst.PadDirection direction, Gst.Caps caps, Gst.Caps? filter)
     {
         ArgumentNullException.ThrowIfNull(caps);
-        ArgumentNullException.ThrowIfNull(filter);
-        nint resultNative = ChainUpTransformCaps(Handle, (int)direction, caps.Handle, filter.Handle);
+        nint resultNative = ChainUpTransformCaps(Handle, (int)direction, caps.Handle, filter is null ? nint.Zero : filter.Handle);
         Gst.Caps? result = Gst.Caps.FromNative(resultNative, Gst.Interop.Transfer.Full);
         GC.KeepAlive(this);
         GC.KeepAlive(caps);
@@ -711,11 +710,10 @@ public unsafe partial class BaseTransform
     /// The element lends this for the duration of the call; keep a copy to retain it.
     /// </param>
     /// <returns>What <c>propose_allocation</c> answers.</returns>
-    protected bool ChainUpProposeAllocation(Gst.Query decideQuery, Gst.Query query)
+    protected bool ChainUpProposeAllocation(Gst.Query? decideQuery, Gst.Query query)
     {
-        ArgumentNullException.ThrowIfNull(decideQuery);
         ArgumentNullException.ThrowIfNull(query);
-        bool result = ChainUpProposeAllocation(Handle, decideQuery.Handle, query.Handle);
+        bool result = ChainUpProposeAllocation(Handle, decideQuery is null ? nint.Zero : decideQuery.Handle, query.Handle);
         GC.KeepAlive(this);
         GC.KeepAlive(decideQuery);
         GC.KeepAlive(query);
@@ -1307,7 +1305,7 @@ public unsafe partial class BaseTransform
 
             using Gst.Caps? capsValue = caps == nint.Zero ? null : Gst.Caps.Borrow(caps);
             using Gst.Caps? filterValue = filter == nint.Zero ? null : Gst.Caps.Borrow(filter);
-            Gst.Caps? result = managed.OnTransformCaps((Gst.PadDirection)direction, capsValue!, filterValue!);
+            Gst.Caps? result = managed.OnTransformCaps((Gst.PadDirection)direction, capsValue!, filterValue);
             return result is null ? nint.Zero : Gst.GstNative.MiniObjectRef(result.Handle);
         }
         catch (Exception exception)
@@ -1438,7 +1436,7 @@ public unsafe partial class BaseTransform
 
             using Gst.Query? decideQueryValue = decideQuery == nint.Zero ? null : Gst.Query.Borrow(decideQuery);
             using Gst.Query? queryValue = query == nint.Zero ? null : Gst.Query.Borrow(query);
-            return (managed.OnProposeAllocation(decideQueryValue!, queryValue!)) ? 1 : 0;
+            return (managed.OnProposeAllocation(decideQueryValue, queryValue!)) ? 1 : 0;
         }
         catch (Exception exception)
         {

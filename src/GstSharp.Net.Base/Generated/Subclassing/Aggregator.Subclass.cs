@@ -515,7 +515,7 @@ public unsafe partial class Aggregator
     /// The element lends this for the duration of the call; keep a copy to retain it.
     /// </param>
     /// <returns>What <c>propose_allocation</c> answers.</returns>
-    protected virtual bool OnProposeAllocation(Gst.Base.AggregatorPad pad, Gst.Query decideQuery, Gst.Query query) =>
+    protected virtual bool OnProposeAllocation(Gst.Base.AggregatorPad pad, Gst.Query? decideQuery, Gst.Query query) =>
         ChainUpProposeAllocation(pad, decideQuery, query);
 
     /// <summary>
@@ -881,12 +881,11 @@ public unsafe partial class Aggregator
     /// The element lends this for the duration of the call; keep a copy to retain it.
     /// </param>
     /// <returns>What <c>propose_allocation</c> answers.</returns>
-    protected bool ChainUpProposeAllocation(Gst.Base.AggregatorPad pad, Gst.Query decideQuery, Gst.Query query)
+    protected bool ChainUpProposeAllocation(Gst.Base.AggregatorPad pad, Gst.Query? decideQuery, Gst.Query query)
     {
         ArgumentNullException.ThrowIfNull(pad);
-        ArgumentNullException.ThrowIfNull(decideQuery);
         ArgumentNullException.ThrowIfNull(query);
-        bool result = ChainUpProposeAllocation(Handle, pad.Handle, decideQuery.Handle, query.Handle);
+        bool result = ChainUpProposeAllocation(Handle, pad.Handle, decideQuery is null ? nint.Zero : decideQuery.Handle, query.Handle);
         GC.KeepAlive(this);
         GC.KeepAlive(pad);
         GC.KeepAlive(decideQuery);
@@ -1666,7 +1665,7 @@ public unsafe partial class Aggregator
             Gst.Base.AggregatorPad? padValue = Gst.GObject.Object.FromNative<Gst.Base.AggregatorPad>(pad, Gst.Interop.Transfer.None);
             using Gst.Query? decideQueryValue = decideQuery == nint.Zero ? null : Gst.Query.Borrow(decideQuery);
             using Gst.Query? queryValue = query == nint.Zero ? null : Gst.Query.Borrow(query);
-            return (managed.OnProposeAllocation(padValue!, decideQueryValue!, queryValue!)) ? 1 : 0;
+            return (managed.OnProposeAllocation(padValue!, decideQueryValue, queryValue!)) ? 1 : 0;
         }
         catch (Exception exception)
         {
