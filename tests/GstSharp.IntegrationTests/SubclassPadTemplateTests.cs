@@ -61,6 +61,7 @@ public sealed class SubclassPadTemplateTests
         // it, so an instance of it would never be wrapped as the subclass.
         GType type = GType.FromName(TypeName);
         Assert.True(type.IsValid);
+        Assert.False(TypeRegistry.HasSubclassFactory(type));
         Assert.Null(SubclassRegistry.Find(type));
 
         // Retrying the same name cannot re-register it, and says why it is
@@ -107,8 +108,11 @@ public sealed class SubclassPadTemplateTests
 
         // The wrap factory of the generic overload is registered as the last
         // step of a definition that succeeded, so this one left none behind.
+        // Asking the factory table is what pins the order: the descriptor is
+        // hidden by the captured failure either way.
         GType type = GType.FromName(TypeName);
         Assert.True(type.IsValid);
+        Assert.False(TypeRegistry.HasSubclassFactory(type));
         Assert.Null(SubclassRegistry.Find(type));
     }
 

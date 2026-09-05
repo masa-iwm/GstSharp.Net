@@ -227,6 +227,20 @@ public static class TypeRegistry
     }
 
     /// <summary>
+    /// Answers whether a type has a factory that builds the wrapper of a
+    /// managed subclass.
+    /// </summary>
+    /// <param name="type">The type to ask about.</param>
+    /// <returns><see langword="true"/> when a factory is registered for it.</returns>
+    /// <remarks>
+    /// The table is private and there is no other way to see it from outside:
+    /// the tests of a definition that failed ask this to prove that nothing
+    /// will be fabricated for the type that was left behind, which the
+    /// descriptor tables cannot answer.
+    /// </remarks>
+    internal static bool HasSubclassFactory(GType type) => SubclassFactories.ContainsKey(type.Value);
+
+    /// <summary>
     /// Answers the live wrapper of an instance, and builds the one of a managed
     /// subclass that native code created when there is none.
     /// </summary>

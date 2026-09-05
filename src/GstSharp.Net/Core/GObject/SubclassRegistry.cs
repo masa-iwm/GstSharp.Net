@@ -153,8 +153,8 @@ internal sealed class SubclassDescriptor
     internal nint ParentClass => Volatile.Read(ref _parentClass);
 
     /// <summary>
-    /// Gets what <c>class_init</c> threw, or <see langword="null"/> when it
-    /// succeeded.
+    /// Gets what stopped the definition after the type was registered, or
+    /// <see langword="null"/> when it completed.
     /// </summary>
     /// <remarks>
     /// <c>class_init</c> is called by GObject, so an exception cannot leave it;
@@ -162,7 +162,11 @@ internal sealed class SubclassDescriptor
     /// <see cref="SubclassRegistry.Register"/>. Without that, a class
     /// initialiser that failed would leave a registered type whose metadata and
     /// pad templates are missing, and the first symptom would be a
-    /// <c>g_return_if_fail</c> deep inside <c>g_object_new</c>.
+    /// <c>g_return_if_fail</c> deep inside <c>g_object_new</c>. The steps of
+    /// the registration that run outside <c>class_init</c> and after the type
+    /// exists record their failure here as well, through
+    /// <see cref="CaptureRegistrationFailure"/>, so that one field answers for
+    /// every way a definition can leave a type behind.
     /// </remarks>
     internal Exception? ClassInitFailure => Volatile.Read(ref _classInitFailure);
 
@@ -172,6 +176,22 @@ internal sealed class SubclassDescriptor
     /// <param name="failure">The exception the class initialiser raised.</param>
     internal void CaptureClassInitFailure(Exception failure) =>
         Interlocked.CompareExchange(ref _classInitFailure, failure, null);
+
+    /// <summary>
+    /// Remembers what stopped the definition after the type was registered but
+    /// outside <c>class_init</c>.
+    /// </summary>
+    /// <param name="failure">The exception the registration is about to throw.</param>
+    /// <remarks>
+    /// Attaching the interfaces and creating the class both happen after the
+    /// type exists and after the descriptor was published, so a failure there
+    /// leaves the same wreck a failed class initialiser does: a name that is
+    /// taken for the process and a descriptor that must not be handed out as
+    /// usable. Recording it the same way is what makes
+    /// <see cref="SubclassRegistry.Find(GType)"/> hide the type and the retry
+    /// under the same name say which failure took it.
+    /// </remarks>
+    internal void CaptureRegistrationFailure(Exception failure) => CaptureClassInitFailure(failure);
 
     /// <summary>
     /// Remembers the parent class of the first class that was initialised from
@@ -540,10 +560,17 @@ internal static unsafe class SubclassRegistry
 
                 if (GObjectNative.TypeIsA(type, interfaceType) == 0)
                 {
-                    throw new InvalidOperationException(
+                    // The descriptor is published already, so the failure is
+                    // recorded on it before it is thrown: an unusable type is
+                    // hidden from Find and named by the retry, exactly like a
+                    // class initialiser that failed.
+                    InvalidOperationException refused = new(
                         $"GObject refused to add {implementation.InterfaceType.Name} to " +
                         $"\"{descriptor.TypeName}\". The type stays registered: static GTypes cannot be " +
                         "unregistered.");
+
+                    descriptor.CaptureRegistrationFailure(refused);
+                    throw refused;
                 }
             }
 
@@ -555,8 +582,11 @@ internal static unsafe class SubclassRegistry
             // registration being immortal.
             if (GObjectNative.TypeClassRef(type) == nint.Zero)
             {
-                throw new InvalidOperationException(
+                InvalidOperationException noClass = new(
                     $"The class of \"{descriptor.TypeName}\" could not be created.");
+
+                descriptor.CaptureRegistrationFailure(noClass);
+                throw noClass;
             }
 
             if (descriptor.ClassInitFailure is { } failure)
@@ -802,9 +832,11 @@ internal static unsafe class SubclassRegistry
     /// <param name="type">The type to look up.</param>
     /// <returns>The descriptor, or <see langword="null"/> for a native type.</returns>
     /// <remarks>
-    /// A type whose class initialiser failed answers <see langword="null"/> as
-    /// well: its registration never completed, so the descriptor is a record of
-    /// the failure rather than a usable subclass.
+    /// A type whose definition failed after the name was taken answers
+    /// <see langword="null"/> as well: its registration never completed, so the
+    /// descriptor is a record of the failure rather than a usable subclass.
+    /// Chaining up is the one thing such a descriptor is still good for, and
+    /// <see cref="DescriptorFor"/> asks for it directly.
     /// </remarks>
     internal static SubclassDescriptor? Find(GType type) =>
         ByType.TryGetValue(type.Value, out SubclassDescriptor? descriptor) && descriptor.ClassInitFailure is null
@@ -834,10 +866,23 @@ internal static unsafe class SubclassRegistry
     /// The instance is not one of a registered managed subclass, so there is no
     /// captured parent class to chain up through.
     /// </exception>
-    internal static SubclassDescriptor DescriptorFor(nint instance) =>
-        Find(instance) ??
-        throw new InvalidOperationException(
-            $"{TypeRegistry.GetInstanceType(instance).Name} is not a registered managed subclass.");
+    /// <remarks>
+    /// The table is read directly rather than through <see cref="Find(GType)"/>:
+    /// a type whose definition failed is hidden from the surface, but its
+    /// class_init did run and the parent class was captured before anything
+    /// could fail, so a trampoline that fires for an instance of it - one
+    /// native code created by name - still has the class to chain up through.
+    /// Refusing here instead would answer such a call with an exception rather
+    /// than with the behaviour of the parent, which is what §4.1 asks for.
+    /// </remarks>
+    internal static SubclassDescriptor DescriptorFor(nint instance)
+    {
+        GType type = TypeRegistry.GetInstanceType(instance);
+
+        return ByType.TryGetValue(type.Value, out SubclassDescriptor? descriptor)
+            ? descriptor
+            : throw new InvalidOperationException($"{type.Name} is not a registered managed subclass.");
+    }
 
     /// <summary>
     /// Keeps the wrapper of a specification a managed subclass just installed.
