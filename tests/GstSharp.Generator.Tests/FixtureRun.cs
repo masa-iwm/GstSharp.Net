@@ -127,8 +127,8 @@ internal static class Fixture
           </namespace>
         """;
 
-    /// <summary>Runs the generator over a hand written <c>Gst</c> namespace.</summary>
-    /// <param name="body">The members of the <c>Gst</c> namespace.</param>
+    /// <summary>Runs the generator over a hand written namespace.</summary>
+    /// <param name="body">The members of that namespace.</param>
     /// <param name="overlays">The corrections to apply, if any.</param>
     /// <param name="extraNamespaces">
     /// Whole <c>namespace</c> elements to declare beside <c>Gst</c> and
@@ -140,17 +140,30 @@ internal static class Fixture
     /// diagnostic, which the run would otherwise fail on before the test could
     /// read it.
     /// </param>
+    /// <param name="namespaceName">
+    /// The gir namespace the body is declared in. It defaults to <c>Gst</c>;
+    /// a fixture whose subject is keyed by module - the required slots of the
+    /// subclassing surface, for one - names the module it needs instead.
+    /// </param>
+    /// <param name="identifierPrefixes">
+    /// The <c>c:identifier-prefixes</c> of that namespace. Every vendored gir
+    /// but the one of <c>GES</c> keeps the <c>Gst</c> prefix.
+    /// </param>
+    /// <param name="symbolPrefixes">The <c>c:symbol-prefixes</c> of that namespace.</param>
     /// <returns>The run.</returns>
     internal static FixtureRun Run(
         string body,
         Overlays? overlays = null,
         string? extraNamespaces = null,
-        bool allowErrors = false)
+        bool allowErrors = false,
+        string namespaceName = "Gst",
+        string identifierPrefixes = "Gst",
+        string symbolPrefixes = "gst")
     {
         GirRepository file = GirReader.ReadXml(
             $"""
             <repository xmlns="http://www.gtk.org/introspection/core/1.0" xmlns:c="http://www.gtk.org/introspection/c/1.0" xmlns:glib="http://www.gtk.org/introspection/glib/1.0" version="1.2">
-              <namespace name="Gst" version="1.0" c:identifier-prefixes="Gst" c:symbol-prefixes="gst">
+              <namespace name="{namespaceName}" version="1.0" c:identifier-prefixes="{identifierPrefixes}" c:symbol-prefixes="{symbolPrefixes}">
             {body}
               </namespace>
             {GObjectNamespace}
