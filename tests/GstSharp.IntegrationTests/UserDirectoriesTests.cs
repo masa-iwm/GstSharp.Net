@@ -1,13 +1,14 @@
 using Gst.GLib;
 using Xunit;
 
-namespace GstSharp.Core.Tests;
+namespace GstSharp.IntegrationTests;
 
 /// <summary>
 /// The per user directories GLib resolves, which are what an application joins
 /// its own cache path to.
 /// </summary>
-public class UserDirectoriesTests
+[Collection(GstCollection.Name)]
+public sealed class UserDirectoriesTests
 {
     /// <summary>
     /// GLib always resolves a cache directory, and it is an absolute path of
