@@ -402,10 +402,11 @@ transfer annotations, e.g. `change_state` takes
   first. A wrapper that only *borrows* the mini object has no reference to give
   away and gets one minted for the caller, which is what an override answering
   the very object it was lent relies on. For a **transfer-none** object return
-  (`create_ringbuffer`, `create_new_pad`, `create_source`, `request_new_pad`)
-  no reference is added on the way out, because the caller takes one of its own
-  from the answer — `gst_object_set_parent`, `gst_element_add_pad`,
-  `gst_bin_add` and `g_object_ref_sink` all do. What a managed override answers
+  (`create_ringbuffer`, `create_new_pad`, `create_source`, `request_new_pad`,
+  `paste`) no reference is added on the way out, because the caller takes one
+  of its own from the answer — `gst_object_set_parent`, `gst_element_add_pad`,
+  `gst_bin_add`, `gst_object_ref` (`request_new_pad`) and `g_object_ref_sink`
+  (`paste`) all do. What a managed override answers
   is never floating (the wrapper sank it when it was built), so that is a plain
   reference and element and wrapper co-own the object; the `vfuncDocNotes`
   entry of the slot spells out which call site takes it, and the generator
@@ -1404,7 +1405,7 @@ A managed `GES.VideoSource` answers the element behind it from
   exception, which the trampoline turns into one — leaves the track element
   holding an nleobject it no longer owns: the library references that object
   while it is still floating, releases it again when the source has no top bin
-  to give (`ges-track-element.c:1022`, `1066-1070`, `ges-source.c:203-208`),
+  to give (`ges-track-element.c:1022`, `1066-1070`, `ges-source.c:205-208`),
   the composition then sinks the one reference that is left and frees the
   object when the element is removed, and `ges_track_element_dispose` releases
   it once more — a use-after-free the process rarely survives (GES 1.28.6).

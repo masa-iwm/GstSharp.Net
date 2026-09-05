@@ -154,7 +154,7 @@ public unsafe partial class Clip
     /// <remarks>
     /// <para>Answer an element extracted from an asset - Asset.Request(subclassType.GType, null)
     /// followed by Extract&lt;T&gt;() - which owns the only reference to the element until
-    /// ges_container_add takes one of its own (ges-container.c:731), so do not dispose it
+    /// ges_container_add takes one of its own (ges-container.c:733), so do not dispose it
     /// before returning. The trampoline hands the handle on and moves no reference, so the
     /// wrapper you answer keeps the reference it owns. A child built with new has no asset: it
     /// never gets an nleobject, ges_layer_add_clip_full removes it from the clip again
@@ -177,7 +177,7 @@ public unsafe partial class Clip
     /// <remarks>
     /// <para>Answer an element extracted from an asset - Asset.Request(subclassType.GType, null)
     /// followed by Extract&lt;T&gt;() - which owns the only reference to the element until
-    /// ges_container_add takes one of its own (ges-container.c:731), so do not dispose it
+    /// ges_container_add takes one of its own (ges-container.c:733), so do not dispose it
     /// before returning. The trampoline hands the handle on and moves no reference, so the
     /// wrapper you answer keeps the reference it owns. A child built with new has no asset: it
     /// never gets an nleobject, ges_layer_add_clip_full removes it from the clip again

@@ -9,12 +9,12 @@ namespace GstSharp.Generator.Tests;
 /// </summary>
 /// <remarks>
 /// A correction to <c>transfer none</c> says the gir was wrong about who owns
-/// the answer, and the emitted note under the documentation then says the
-/// answer is borrowed. The gir sentence that tells the caller to release it
-/// would stand right above that note and contradict it, so it comes out with
-/// the annotation it belongs to. A gir that already said <c>none</c> is left
-/// alone: nothing corrected it, and the sentence is then the gir's own
-/// business.
+/// the answer, and the emitted note under the documentation then says that no
+/// reference is added on the way out. The gir sentence that tells the caller
+/// to release it would stand right above that note and contradict it, so it
+/// comes out with the annotation it belongs to. A gir that already said
+/// <c>none</c> is left alone: nothing corrected it, and the sentence is then
+/// the gir's own business.
 /// </remarks>
 public sealed class ReturnDocOwnershipTests
 {

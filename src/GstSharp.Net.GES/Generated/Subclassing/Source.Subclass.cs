@@ -174,7 +174,7 @@ public unsafe partial class Source
     /// </summary>
     /// <remarks>
     /// <para>The bin of the source adds the answer and takes a reference of its own (gst_bin_add
-    /// sinks it, ges-source.c:203, ges-audio-source.c:147 for an audio source), so the wrapper
+    /// sinks it, ges-source.c:205, ges-audio-source.c:148 for an audio source), so the wrapper
     /// keeps working and no reference is added on the way out. The trampoline hands the handle
     /// on and moves no reference, so a wrapper you answer keeps the reference it already owns
     /// and may be disposed after the call or read back from the track element instead of being
@@ -226,7 +226,7 @@ public unsafe partial class Source
     /// <summary>Runs the implementation of <c>create_source</c> below the managed override.</summary>
     /// <remarks>
     /// <para>The bin of the source adds the answer and takes a reference of its own (gst_bin_add
-    /// sinks it, ges-source.c:203, ges-audio-source.c:147 for an audio source), so the wrapper
+    /// sinks it, ges-source.c:205, ges-audio-source.c:148 for an audio source), so the wrapper
     /// keeps working and no reference is added on the way out. The trampoline hands the handle
     /// on and moves no reference, so a wrapper you answer keeps the reference it already owns
     /// and may be disposed after the call or read back from the track element instead of being

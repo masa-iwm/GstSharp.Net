@@ -125,6 +125,58 @@ public sealed class XmlDocLinkTests
     }
 
     [Fact]
+    public void AGStreamerPageWithoutAnAnchorIsTheAddressOfThePageAlone()
+    {
+        Assert.Equal(
+            """
+            /// <summary>The <a href="https://gstreamer.freedesktop.org/documentation/additional/design/synchronisation.html">design</a> of it.</summary>
+
+            """,
+            Write("The [design](additional/design/synchronisation.md) of it."),
+            StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public void AGStreamerPageThatNamesNoMarkdownFileIsPublishedUnderTheTargetItself()
+    {
+        // Only a target that names a Markdown file is rewritten to the page it
+        // is published as; anything else below additional/ is the address.
+        Assert.Equal(
+            """
+            /// <summary>The <a href="https://gstreamer.freedesktop.org/documentation/additional/design/synchronisation">design</a> of it.</summary>
+
+            """,
+            Write("The [design](additional/design/synchronisation) of it."),
+            StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public void AParenthesisInsideTheTargetIsNotALinkTheGirWroteWhole()
+    {
+        Assert.Equal(
+            """
+            /// <summary>See [the call](gst_pad_link(pad)) for it.</summary>
+
+            """,
+            Write("See [the call](gst_pad_link(pad)) for it."),
+            StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public void ABracketClosingInsideTheTextIsNotALinkTheGirWroteWhole()
+    {
+        // The first closing bracket ends the text, and what follows it is not
+        // the opening parenthesis of a target.
+        Assert.Equal(
+            """
+            /// <summary>See [a] b](c) for it.</summary>
+
+            """,
+            Write("See [a] b](c) for it."),
+            StringComparer.Ordinal);
+    }
+
+    [Fact]
     public void ASampleKeepsItsBracketsBecauseTheyAreProgramText()
     {
         Assert.Equal(

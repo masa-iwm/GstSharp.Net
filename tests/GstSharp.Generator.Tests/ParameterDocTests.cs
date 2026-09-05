@@ -13,14 +13,16 @@ namespace GstSharp.Generator.Tests;
 /// planned without it and was documented by naming the argument back at the
 /// reader. The documentation is attached at the one point every parameter of a
 /// callable passes through, so these tests read one of each kind out of the
-/// emitted member, and one parameter whose gir says nothing, which keeps the
-/// sentence the generator writes.
+/// emitted member, one parameter the gir documents over several lines, which
+/// comes out as the block form of the element, and one parameter whose gir
+/// says nothing, which keeps the sentence the generator writes.
 /// </remarks>
 public sealed class ParameterDocTests
 {
     /// <summary>
     /// One class with a method that takes a number, an enumeration member, an
-    /// object and a fourth parameter the gir documents nowhere.
+    /// object, a string the gir documents over two lines and a fifth parameter
+    /// the gir documents nowhere.
     /// </summary>
     private const string Body =
         """
@@ -48,6 +50,11 @@ public sealed class ParameterDocTests
                   <parameter name="peer" transfer-ownership="none">
                     <doc xml:space="preserve">the #GstWidget to configure against</doc>
                     <type name="Widget" c:type="GstWidget*"/>
+                  </parameter>
+                  <parameter name="title" transfer-ownership="none">
+                    <doc xml:space="preserve">the title to show, which the widget
+              copies</doc>
+                    <type name="utf8" c:type="const gchar*"/>
                   </parameter>
                   <parameter name="tag" transfer-ownership="none">
                     <type name="utf8" c:type="const gchar*"/>
@@ -88,6 +95,25 @@ public sealed class ParameterDocTests
 
         Assert.Contains(
             "<param name=\"peer\">the #GstWidget to configure against</param>",
+            source,
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AParameterDocumentedOverSeveralLinesKeepsTheLinesTheGirWrote()
+    {
+        string source = Fixture.Run(Body).File("Widget.cs");
+
+        // The gir wrote two lines and indented the second one; both are the
+        // lines that ship, so the element is opened and closed on lines of
+        // their own.
+        Assert.Contains(
+            """
+                /// <param name="title">
+                /// the title to show, which the widget
+                ///       copies
+                /// </param>
+            """,
             source,
             StringComparison.Ordinal);
     }

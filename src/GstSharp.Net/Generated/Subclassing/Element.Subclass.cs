@@ -259,7 +259,10 @@ public unsafe partial class Element
     /// <remarks>
     /// <para>The pad should be released with gst_element_release_request_pad().</para>
     /// <para>The pad is answered borrowed: the override has to have added it to the element already,
-    /// and the element keeps the reference the pad was created with.</para>
+    /// and the element keeps the reference the pad was created with. gst_element_request_pad
+    /// then references the answer once more for its own caller (gstelement.c:1157-1158), and
+    /// that reference is the caller's to drop: ReleaseRequestPad gives the pad back to the
+    /// element and does not unref it.</para>
     /// </remarks>
     /// <param name="templ">
     /// The <c>templ</c> argument.
@@ -488,7 +491,10 @@ public unsafe partial class Element
     /// <summary>Runs the implementation of <c>request_new_pad</c> below the managed override.</summary>
     /// <remarks>
     /// <para>The pad is answered borrowed: the override has to have added it to the element already,
-    /// and the element keeps the reference the pad was created with.</para>
+    /// and the element keeps the reference the pad was created with. gst_element_request_pad
+    /// then references the answer once more for its own caller (gstelement.c:1157-1158), and
+    /// that reference is the caller's to drop: ReleaseRequestPad gives the pad back to the
+    /// element and does not unref it.</para>
     /// </remarks>
     /// <param name="templ">
     /// The <c>templ</c> argument.
