@@ -173,28 +173,28 @@ public unsafe partial class Source
     /// subclass will return a decodebin, and we will append a volume.
     /// </summary>
     /// <remarks>
-    /// <para>The element is answered floating: gst_bin_add sinks it and the bin owns it from then on
-    /// (ges-source.c:203, ges-audio-source.c:147 for an audio source), which is why the answer
-    /// is not referenced on the way out. The trampoline hands the handle on and moves no
-    /// reference, so a wrapper you answer keeps the reference it already owns and may be
-    /// disposed after the call or read back from the track element instead of being kept.
-    /// Answer an element that has no parent: add_failure unrefs both the answer and the
-    /// nlesource when the bin refuses it (ges-track-element.c:1073-1078). Answering null, or
-    /// throwing, which the trampoline turns into a null answer, would leave the track element
-    /// with an nleobject it no longer owns: child_failure unrefs it while it is still floating
-    /// (ges-track-element.c:1022, 1066-1070), the composition sinks the last reference and
-    /// frees the object when the element is removed, and dispose unrefs it again. GES 1.28.6
-    /// does that; the binding therefore answers an identity element in place of a null one and
-    /// reports the substitution through the exception trap, so nothing feeds the substitute,
-    /// the source produces no data and the pipeline cannot preroll. Answer a real element, or
-    /// do not declare the slot. For a VideoSource or an AudioSource subclass no ancestor
-    /// implements the slot: there is nothing below to chain up to, and ChainUpCreateSource
-    /// throws.</para>
+    /// <para>The bin of the source adds the answer and takes a reference of its own (gst_bin_add
+    /// sinks it, ges-source.c:203, ges-audio-source.c:147 for an audio source), so the wrapper
+    /// keeps working and no reference is added on the way out. The trampoline hands the handle
+    /// on and moves no reference, so a wrapper you answer keeps the reference it already owns
+    /// and may be disposed after the call or read back from the track element instead of being
+    /// kept. Answer an element that has no parent yet and keep no extra reference to it:
+    /// add_failure unrefs both the answer and the nlesource when the bin refuses it
+    /// (ges-track-element.c:1073-1078). Answering null, or throwing, which the trampoline turns
+    /// into a null answer, would leave the track element with an nleobject it no longer owns:
+    /// child_failure unrefs it while it is still floating (ges-track-element.c:1022,
+    /// 1066-1070), the composition sinks the last reference and frees the object when the
+    /// element is removed, and dispose unrefs it again. GES 1.28.6 does that; the binding
+    /// therefore answers an identity element in place of a null one and reports the
+    /// substitution through the exception trap, so nothing feeds the substitute, the source
+    /// produces no data and the pipeline cannot preroll. Answer a real element, or do not
+    /// declare the slot. For a VideoSource or an AudioSource subclass no ancestor implements
+    /// the slot: there is nothing below to chain up to, and ChainUpCreateSource throws.</para>
     /// </remarks>
     /// <returns>
     /// The source element to use.
-    /// The answer is borrowed: no reference is added for the caller, so the
-    /// override has to keep the object alive by other means.
+    /// No reference is added on the way out: the base class takes one of its own
+    /// from the answer, which the remarks describe. Keep no extra reference to it.
     /// Answering <see langword="null"/> is not allowed: the caller of the slot does
     /// not check for it. A null answer is reported through the exception trap and
     /// the slot answers a value the caller fails cleanly on.
@@ -225,28 +225,28 @@ public unsafe partial class Source
 
     /// <summary>Runs the implementation of <c>create_source</c> below the managed override.</summary>
     /// <remarks>
-    /// <para>The element is answered floating: gst_bin_add sinks it and the bin owns it from then on
-    /// (ges-source.c:203, ges-audio-source.c:147 for an audio source), which is why the answer
-    /// is not referenced on the way out. The trampoline hands the handle on and moves no
-    /// reference, so a wrapper you answer keeps the reference it already owns and may be
-    /// disposed after the call or read back from the track element instead of being kept.
-    /// Answer an element that has no parent: add_failure unrefs both the answer and the
-    /// nlesource when the bin refuses it (ges-track-element.c:1073-1078). Answering null, or
-    /// throwing, which the trampoline turns into a null answer, would leave the track element
-    /// with an nleobject it no longer owns: child_failure unrefs it while it is still floating
-    /// (ges-track-element.c:1022, 1066-1070), the composition sinks the last reference and
-    /// frees the object when the element is removed, and dispose unrefs it again. GES 1.28.6
-    /// does that; the binding therefore answers an identity element in place of a null one and
-    /// reports the substitution through the exception trap, so nothing feeds the substitute,
-    /// the source produces no data and the pipeline cannot preroll. Answer a real element, or
-    /// do not declare the slot. For a VideoSource or an AudioSource subclass no ancestor
-    /// implements the slot: there is nothing below to chain up to, and ChainUpCreateSource
-    /// throws.</para>
+    /// <para>The bin of the source adds the answer and takes a reference of its own (gst_bin_add
+    /// sinks it, ges-source.c:203, ges-audio-source.c:147 for an audio source), so the wrapper
+    /// keeps working and no reference is added on the way out. The trampoline hands the handle
+    /// on and moves no reference, so a wrapper you answer keeps the reference it already owns
+    /// and may be disposed after the call or read back from the track element instead of being
+    /// kept. Answer an element that has no parent yet and keep no extra reference to it:
+    /// add_failure unrefs both the answer and the nlesource when the bin refuses it
+    /// (ges-track-element.c:1073-1078). Answering null, or throwing, which the trampoline turns
+    /// into a null answer, would leave the track element with an nleobject it no longer owns:
+    /// child_failure unrefs it while it is still floating (ges-track-element.c:1022,
+    /// 1066-1070), the composition sinks the last reference and frees the object when the
+    /// element is removed, and dispose unrefs it again. GES 1.28.6 does that; the binding
+    /// therefore answers an identity element in place of a null one and reports the
+    /// substitution through the exception trap, so nothing feeds the substitute, the source
+    /// produces no data and the pipeline cannot preroll. Answer a real element, or do not
+    /// declare the slot. For a VideoSource or an AudioSource subclass no ancestor implements
+    /// the slot: there is nothing below to chain up to, and ChainUpCreateSource throws.</para>
     /// </remarks>
     /// <returns>
     /// The source element to use.
-    /// The answer is borrowed: no reference is added for the caller, so the
-    /// override has to keep the object alive by other means.
+    /// No reference is added on the way out: the base class takes one of its own
+    /// from the answer, which the remarks describe. Keep no extra reference to it.
     /// Answering <see langword="null"/> is not allowed: the caller of the slot does
     /// not check for it. A null answer is reported through the exception trap and
     /// the slot answers a value the caller fails cleanly on.

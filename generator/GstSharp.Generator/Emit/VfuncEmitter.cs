@@ -285,6 +285,7 @@ internal sealed class VfuncEmitter
             _ = mine.Add(SignatureOf(plan));
             _ = mine.Add(AnsweredSignatureOf(plan));
             ReportReturnTypeCollision(model, plan, inherited);
+            ReportUndocumentedBorrow(model, plan);
         }
 
         _emittedSlots[model.QualifiedName] = mine;
@@ -770,6 +771,36 @@ internal sealed class VfuncEmitter
             + $"'{ReturnType(plan)}', which hides an inherited member of the same parameters answering "
             + $"'{answered}'. A managed name cannot carry both; skip the slot through 'skipVirtuals' or "
             + "give it a name of its own.");
+    }
+
+    /// <summary>
+    /// Reports a slot that answers a handle nobody references on the way out
+    /// and says nowhere who does reference it.
+    /// </summary>
+    /// <param name="model">The class being emitted.</param>
+    /// <param name="plan">The slot being emitted.</param>
+    /// <remarks>
+    /// The note the emitter writes for such a slot says the base class takes a
+    /// reference of its own and points at the remarks for how. That is a
+    /// promise about C code, and only the <c>vfuncDocNotes</c> entry of the
+    /// slot keeps it: it is where the call site, the function that references
+    /// the answer and the state the answer has to be in are written down. A gir
+    /// refresh that adds a slot of this shape would otherwise ship the note
+    /// over remarks that say nothing, so the run stops until the sentence is
+    /// written.
+    /// </remarks>
+    private void ReportUndocumentedBorrow(ClassStructModel model, VirtualMethodPlan plan)
+    {
+        if (plan.ReturnBucket != VfuncReturnBucket.BorrowedHandle || plan.DocNote is not null)
+        {
+            return;
+        }
+
+        _diagnostics.Error(
+            "GEN0044",
+            $"The slot '{model.KeyOf(plan.Method.Name)}' answers a borrowed handle and carries no "
+            + "'vfuncDocNotes' entry. The generated note says the base class takes a reference of its own; "
+            + "state in that entry which call site does, and what the override owes it.");
     }
 
     private static string SignatureOf(VirtualMethodPlan plan)
@@ -1730,8 +1761,8 @@ internal sealed class VfuncEmitter
                 note.Add("from then on, exactly like the wrapper of an argument the slot consumed.");
                 break;
             case VfuncReturnBucket.BorrowedHandle:
-                note.Add("The answer is borrowed: no reference is added for the caller, so the");
-                note.Add("override has to keep the object alive by other means.");
+                note.Add("No reference is added on the way out: the base class takes one of its own");
+                note.Add("from the answer, which the remarks describe. Keep no extra reference to it.");
                 break;
             default:
                 break;

@@ -79,12 +79,17 @@ travel in:
   transforming in place looks like. The caller compares the two pointers and
   only releases the one it passed in when they differ, so the binding takes
   no reference for an answer that did not change.
-* **A floating object the caller sinks.** The ring buffer of
-  `AudioBaseSink.OnCreateRingbuffer` and `AudioBaseSrc.OnCreateRingbuffer` is
-  answered *without* a reference being added, because
-  `gst_object_set_parent` sinks it and the element becomes its only owner.
-  Keep no reference of your own to what such a slot answers; read it back
-  from the element instead.
+* **An object the caller parents, adds or references.** The ring buffer of
+  `AudioBaseSink.OnCreateRingbuffer` and `AudioBaseSrc.OnCreateRingbuffer`, the
+  pad of `Aggregator.OnCreateNewPad`, the element of `Source.OnCreateSource`
+  and `TrackElement.OnCreateElement` are answered *without* a reference being
+  added on the way out, because the base class takes one of its own from the
+  answer: `gst_object_set_parent`, `gst_element_add_pad` and `gst_bin_add` all
+  `ref_sink` it. What a managed override answers is never floating — the
+  wrapper sank it when it was built — so that `ref_sink` is a plain reference
+  and element and wrapper co-own the object, which is the "returned GObject"
+  case below. Answer an object that has no parent yet, keep no extra reference
+  to it, and read it back from the element instead.
 * **A mini object the slot answers.** The buffer of `Aggregator.OnClip`, the
   caps of `BaseTransform.OnTransformCaps`, the buffer of
   `AudioBaseSink.OnPayload`: the wrapper you return is *handed over*, not

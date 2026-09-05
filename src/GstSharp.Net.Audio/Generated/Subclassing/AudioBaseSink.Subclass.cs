@@ -182,14 +182,15 @@ public unsafe partial class AudioBaseSink
     /// the returned buffer (see gst_object_set_parent()).
     /// </summary>
     /// <remarks>
-    /// <para>The ring buffer is answered floating: the sink parents it and becomes its only owner,
-    /// which is why the answer is not referenced on the way out. Keep no reference of your own
-    /// to it - read it back from the element instead.</para>
+    /// <para>The sink parents the answer and takes a reference of its own (gst_object_set_parent
+    /// sinks it, gstaudiobasesink.c:2289-2290), so the wrapper keeps working and no reference
+    /// is added on the way out. Answer a ring buffer that has no parent yet and keep no extra
+    /// reference to it - read it back from the element instead.</para>
     /// </remarks>
     /// <returns>
     /// The new ringbuffer of @sink.
-    /// The answer is borrowed: no reference is added for the caller, so the
-    /// override has to keep the object alive by other means.
+    /// No reference is added on the way out: the base class takes one of its own
+    /// from the answer, which the remarks describe. Keep no extra reference to it.
     /// </returns>
     protected virtual Gst.Audio.AudioRingBuffer? OnCreateRingbuffer() =>
         ChainUpCreateRingbuffer();
@@ -219,14 +220,15 @@ public unsafe partial class AudioBaseSink
 
     /// <summary>Runs the implementation of <c>create_ringbuffer</c> below the managed override.</summary>
     /// <remarks>
-    /// <para>The ring buffer is answered floating: the sink parents it and becomes its only owner,
-    /// which is why the answer is not referenced on the way out. Keep no reference of your own
-    /// to it - read it back from the element instead.</para>
+    /// <para>The sink parents the answer and takes a reference of its own (gst_object_set_parent
+    /// sinks it, gstaudiobasesink.c:2289-2290), so the wrapper keeps working and no reference
+    /// is added on the way out. Answer a ring buffer that has no parent yet and keep no extra
+    /// reference to it - read it back from the element instead.</para>
     /// </remarks>
     /// <returns>
     /// The new ringbuffer of @sink.
-    /// The answer is borrowed: no reference is added for the caller, so the
-    /// override has to keep the object alive by other means.
+    /// No reference is added on the way out: the base class takes one of its own
+    /// from the answer, which the remarks describe. Keep no extra reference to it.
     /// </returns>
     protected Gst.Audio.AudioRingBuffer? ChainUpCreateRingbuffer()
     {

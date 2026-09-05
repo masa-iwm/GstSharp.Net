@@ -274,8 +274,8 @@ public unsafe partial class Element
     /// <returns>
     /// requested #GstPad if found,
     ///     otherwise %NULL.
-    /// The answer is borrowed: no reference is added for the caller, so the
-    /// override has to keep the object alive by other means.
+    /// No reference is added on the way out: the base class takes one of its own
+    /// from the answer, which the remarks describe. Keep no extra reference to it.
     /// </returns>
     protected virtual Gst.Pad? OnRequestNewPad(Gst.PadTemplate templ, string? name, Gst.Caps? caps) =>
         ChainUpRequestNewPad(templ, name, caps);
@@ -503,8 +503,8 @@ public unsafe partial class Element
     /// <returns>
     /// requested #GstPad if found,
     ///     otherwise %NULL.
-    /// The answer is borrowed: no reference is added for the caller, so the
-    /// override has to keep the object alive by other means.
+    /// No reference is added on the way out: the base class takes one of its own
+    /// from the answer, which the remarks describe. Keep no extra reference to it.
     /// </returns>
     protected Gst.Pad? ChainUpRequestNewPad(Gst.PadTemplate templ, string? name, Gst.Caps? caps)
     {

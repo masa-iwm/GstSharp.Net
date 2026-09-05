@@ -545,11 +545,12 @@ public unsafe partial class Aggregator
     /// on the provided information.
     /// </summary>
     /// <remarks>
-    /// <para>The pad is answered floating: gst_aggregator_request_new_pad hands it straight to
-    /// gst_element_add_pad, which sinks it and becomes its owner, which is why the answer is
-    /// not referenced on the way out. Build it with NewInstance and the direction, name and
-    /// template of the request, and read it back from the element instead of keeping a
-    /// reference of your own. gstaggregator.c:2217-2283, 2325-2337.</para>
+    /// <para>The element adds the answer and takes a reference of its own:
+    /// gst_aggregator_request_new_pad hands the pad straight to gst_element_add_pad, which
+    /// sinks it, so the wrapper keeps working and no reference is added on the way out. Build
+    /// it with NewInstance and the direction, name and template of the request, answer a pad
+    /// that has no parent yet and keep no extra reference to it - read it back from the element
+    /// instead. gstaggregator.c:2217-2283, 2325-2337.</para>
     /// </remarks>
     /// <param name="templ">
     /// The <c>templ</c> argument.
@@ -563,8 +564,8 @@ public unsafe partial class Aggregator
     /// </param>
     /// <returns>
     /// a new #GstAggregatorPad.
-    /// The answer is borrowed: no reference is added for the caller, so the
-    /// override has to keep the object alive by other means.
+    /// No reference is added on the way out: the base class takes one of its own
+    /// from the answer, which the remarks describe. Keep no extra reference to it.
     /// </returns>
     protected virtual Gst.Base.AggregatorPad? OnCreateNewPad(Gst.PadTemplate templ, string? reqName, Gst.Caps? caps) =>
         ChainUpCreateNewPad(templ, reqName, caps);
@@ -931,11 +932,12 @@ public unsafe partial class Aggregator
 
     /// <summary>Runs the implementation of <c>create_new_pad</c> below the managed override.</summary>
     /// <remarks>
-    /// <para>The pad is answered floating: gst_aggregator_request_new_pad hands it straight to
-    /// gst_element_add_pad, which sinks it and becomes its owner, which is why the answer is
-    /// not referenced on the way out. Build it with NewInstance and the direction, name and
-    /// template of the request, and read it back from the element instead of keeping a
-    /// reference of your own. gstaggregator.c:2217-2283, 2325-2337.</para>
+    /// <para>The element adds the answer and takes a reference of its own:
+    /// gst_aggregator_request_new_pad hands the pad straight to gst_element_add_pad, which
+    /// sinks it, so the wrapper keeps working and no reference is added on the way out. Build
+    /// it with NewInstance and the direction, name and template of the request, answer a pad
+    /// that has no parent yet and keep no extra reference to it - read it back from the element
+    /// instead. gstaggregator.c:2217-2283, 2325-2337.</para>
     /// </remarks>
     /// <param name="templ">
     /// The <c>templ</c> argument.
@@ -949,8 +951,8 @@ public unsafe partial class Aggregator
     /// </param>
     /// <returns>
     /// a new #GstAggregatorPad.
-    /// The answer is borrowed: no reference is added for the caller, so the
-    /// override has to keep the object alive by other means.
+    /// No reference is added on the way out: the base class takes one of its own
+    /// from the answer, which the remarks describe. Keep no extra reference to it.
     /// </returns>
     protected Gst.Base.AggregatorPad? ChainUpCreateNewPad(Gst.PadTemplate templ, string? reqName, Gst.Caps? caps)
     {

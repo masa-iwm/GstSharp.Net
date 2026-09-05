@@ -401,10 +401,15 @@ transfer annotations, e.g. `change_state` takes
   consumed, and an override that needs the object afterwards copies or refs it
   first. A wrapper that only *borrows* the mini object has no reference to give
   away and gets one minted for the caller, which is what an override answering
-  the very object it was lent relies on. For floating-capable returns
-  (`request_new_pad` returning a fresh `Pad`), the same
-  `IsFloating`/ref-sink reasoning as `Object`'s constructor applies and must
-  be spelled per slot.
+  the very object it was lent relies on. For a **transfer-none** object return
+  (`create_ringbuffer`, `create_new_pad`, `create_source`, `request_new_pad`)
+  no reference is added on the way out, because the caller takes one of its own
+  from the answer — `gst_object_set_parent`, `gst_element_add_pad`,
+  `gst_bin_add` and `g_object_ref_sink` all do. What a managed override answers
+  is never floating (the wrapper sank it when it was built), so that is a plain
+  reference and element and wrapper co-own the object; the `vfuncDocNotes`
+  entry of the slot spells out which call site takes it, and the generator
+  refuses such a slot without one.
 
 ### 4.4 Chaining up
 

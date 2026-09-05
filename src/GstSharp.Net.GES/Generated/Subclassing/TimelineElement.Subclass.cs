@@ -469,6 +469,11 @@ public unsafe partial class TimelineElement
     /// the timeline at the given @paste_position, with @ref_element as a
     /// reference, which is the @self that was passed to @deep_copy.
     /// </summary>
+    /// <remarks>
+    /// <para>The caller takes a reference of its own from the answer (g_object_ref_sink,
+    /// ges-timeline-element.c:2416, ges-timeline.c:3324), so the wrapper keeps working and no
+    /// reference is added on the way out. Keep no extra reference to it.</para>
+    /// </remarks>
     /// <param name="refElement">
     /// The <c>refElement</c> argument.
     /// The element lends this for the duration of the call. Keeping the wrapper is
@@ -477,8 +482,8 @@ public unsafe partial class TimelineElement
     /// <param name="pastePosition">The <c>pastePosition</c> argument.</param>
     /// <returns>
     /// What <c>paste</c> answers.
-    /// The answer is borrowed: no reference is added for the caller, so the
-    /// override has to keep the object alive by other means.
+    /// No reference is added on the way out: the base class takes one of its own
+    /// from the answer, which the remarks describe. Keep no extra reference to it.
     /// </returns>
     protected virtual GES.TimelineElement? OnPaste(GES.TimelineElement refElement, Gst.ClockTime pastePosition) =>
         ChainUpPaste(refElement, pastePosition);
@@ -698,6 +703,11 @@ public unsafe partial class TimelineElement
     }
 
     /// <summary>Runs the implementation of <c>paste</c> below the managed override.</summary>
+    /// <remarks>
+    /// <para>The caller takes a reference of its own from the answer (g_object_ref_sink,
+    /// ges-timeline-element.c:2416, ges-timeline.c:3324), so the wrapper keeps working and no
+    /// reference is added on the way out. Keep no extra reference to it.</para>
+    /// </remarks>
     /// <param name="refElement">
     /// The <c>refElement</c> argument.
     /// The element lends this for the duration of the call. Keeping the wrapper is
@@ -706,8 +716,8 @@ public unsafe partial class TimelineElement
     /// <param name="pastePosition">The <c>pastePosition</c> argument.</param>
     /// <returns>
     /// What <c>paste</c> answers.
-    /// The answer is borrowed: no reference is added for the caller, so the
-    /// override has to keep the object alive by other means.
+    /// No reference is added on the way out: the base class takes one of its own
+    /// from the answer, which the remarks describe. Keep no extra reference to it.
     /// </returns>
     protected GES.TimelineElement? ChainUpPaste(GES.TimelineElement refElement, Gst.ClockTime pastePosition)
     {

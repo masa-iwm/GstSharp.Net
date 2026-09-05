@@ -178,29 +178,29 @@ public unsafe partial class TrackElement
     /// </remarks>
     /// <returns>
     /// the #NLEObject to use in the #nlecomposition
-    /// The answer is borrowed: no reference is added for the caller, so the
-    /// override has to keep the object alive by other means.
+    /// No reference is added on the way out: the base class takes one of its own
+    /// from the answer, which the remarks describe. Keep no extra reference to it.
     /// </returns>
     protected virtual Gst.Element? OnCreateGnlObject() =>
         ChainUpCreateGnlObject();
 
     /// <summary>Runs <c>GESTrackElement.create_element</c>.</summary>
     /// <remarks>
-    /// <para>The same rules as GES.Source::create_source: the element is answered floating, the
-    /// consumer adds it to the bin (ges-track-element.c:1026-1038), which sinks it and owns it,
-    /// and the answer is not referenced on the way out. Answer an element that has no parent.
-    /// Answering null, or throwing, which the trampoline turns into a null answer, would leave
-    /// the nleobject of the track element over-released and freed while dispose still unrefs it
-    /// (ges-track-element.c:1022, 1066-1070, and the composition sinks what is left) in GES
-    /// 1.28.6, so the binding answers an identity element in its place and reports the
-    /// substitution through the exception trap. Answer a real element, or do not declare the
-    /// slot.</para>
+    /// <para>The same rules as GES.Source::create_source: the bin of the nleobject adds the answer
+    /// and takes a reference of its own (gst_bin_add sinks it, ges-track-element.c:1026-1038),
+    /// so the wrapper keeps working and no reference is added on the way out. Answer an element
+    /// that has no parent yet and keep no extra reference to it. Answering null, or throwing,
+    /// which the trampoline turns into a null answer, would leave the nleobject of the track
+    /// element over-released and freed while dispose still unrefs it (ges-track-element.c:1022,
+    /// 1066-1070, and the composition sinks what is left) in GES 1.28.6, so the binding answers
+    /// an identity element in its place and reports the substitution through the exception
+    /// trap. Answer a real element, or do not declare the slot.</para>
     /// </remarks>
     /// <returns>
     /// the #GstElement that the underlying nleobject
     /// controls.
-    /// The answer is borrowed: no reference is added for the caller, so the
-    /// override has to keep the object alive by other means.
+    /// No reference is added on the way out: the base class takes one of its own
+    /// from the answer, which the remarks describe. Keep no extra reference to it.
     /// Answering <see langword="null"/> is not allowed: the caller of the slot does
     /// not check for it. A null answer is reported through the exception trap and
     /// the slot answers a value the caller fails cleanly on.
@@ -225,8 +225,8 @@ public unsafe partial class TrackElement
     /// </remarks>
     /// <returns>
     /// the #NLEObject to use in the #nlecomposition
-    /// The answer is borrowed: no reference is added for the caller, so the
-    /// override has to keep the object alive by other means.
+    /// No reference is added on the way out: the base class takes one of its own
+    /// from the answer, which the remarks describe. Keep no extra reference to it.
     /// </returns>
     protected Gst.Element? ChainUpCreateGnlObject()
     {
@@ -238,21 +238,21 @@ public unsafe partial class TrackElement
 
     /// <summary>Runs the implementation of <c>create_element</c> below the managed override.</summary>
     /// <remarks>
-    /// <para>The same rules as GES.Source::create_source: the element is answered floating, the
-    /// consumer adds it to the bin (ges-track-element.c:1026-1038), which sinks it and owns it,
-    /// and the answer is not referenced on the way out. Answer an element that has no parent.
-    /// Answering null, or throwing, which the trampoline turns into a null answer, would leave
-    /// the nleobject of the track element over-released and freed while dispose still unrefs it
-    /// (ges-track-element.c:1022, 1066-1070, and the composition sinks what is left) in GES
-    /// 1.28.6, so the binding answers an identity element in its place and reports the
-    /// substitution through the exception trap. Answer a real element, or do not declare the
-    /// slot.</para>
+    /// <para>The same rules as GES.Source::create_source: the bin of the nleobject adds the answer
+    /// and takes a reference of its own (gst_bin_add sinks it, ges-track-element.c:1026-1038),
+    /// so the wrapper keeps working and no reference is added on the way out. Answer an element
+    /// that has no parent yet and keep no extra reference to it. Answering null, or throwing,
+    /// which the trampoline turns into a null answer, would leave the nleobject of the track
+    /// element over-released and freed while dispose still unrefs it (ges-track-element.c:1022,
+    /// 1066-1070, and the composition sinks what is left) in GES 1.28.6, so the binding answers
+    /// an identity element in its place and reports the substitution through the exception
+    /// trap. Answer a real element, or do not declare the slot.</para>
     /// </remarks>
     /// <returns>
     /// the #GstElement that the underlying nleobject
     /// controls.
-    /// The answer is borrowed: no reference is added for the caller, so the
-    /// override has to keep the object alive by other means.
+    /// No reference is added on the way out: the base class takes one of its own
+    /// from the answer, which the remarks describe. Keep no extra reference to it.
     /// Answering <see langword="null"/> is not allowed: the caller of the slot does
     /// not check for it. A null answer is reported through the exception trap and
     /// the slot answers a value the caller fails cleanly on.

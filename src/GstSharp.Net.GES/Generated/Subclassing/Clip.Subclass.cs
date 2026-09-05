@@ -167,8 +167,8 @@ public unsafe partial class Clip
     /// The #GESTrackElement created
     /// by @clip, or %NULL if @clip can not provide a track element for the
     /// given @type or an error occurred.
-    /// The answer is borrowed: no reference is added for the caller, so the
-    /// override has to keep the object alive by other means.
+    /// No reference is added on the way out: the base class takes one of its own
+    /// from the answer, which the remarks describe. Keep no extra reference to it.
     /// </returns>
     protected virtual GES.TrackElement? OnCreateTrackElement(GES.TrackType type) =>
         ChainUpCreateTrackElement(type);
@@ -190,8 +190,8 @@ public unsafe partial class Clip
     /// The #GESTrackElement created
     /// by @clip, or %NULL if @clip can not provide a track element for the
     /// given @type or an error occurred.
-    /// The answer is borrowed: no reference is added for the caller, so the
-    /// override has to keep the object alive by other means.
+    /// No reference is added on the way out: the base class takes one of its own
+    /// from the answer, which the remarks describe. Keep no extra reference to it.
     /// </returns>
     protected GES.TrackElement? ChainUpCreateTrackElement(GES.TrackType type)
     {

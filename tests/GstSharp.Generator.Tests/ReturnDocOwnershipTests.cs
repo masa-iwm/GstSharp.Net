@@ -59,12 +59,21 @@ public sealed class ReturnDocOwnershipTests
 
     private const string Allowlist = "\"subclassable\": [\"Gst.Widget\"]";
 
+    /// <summary>
+    /// The ownership note the slot needs once the answer is borrowed: a slot
+    /// that hands a handle back without a reference has to say who does
+    /// reference it, or the run stops on GEN0044.
+    /// </summary>
+    private const string BorrowNote =
+        ", \"vfuncDocNotes\": { \"Gst.Widget::borrow\": "
+        + "\"The widget references the answer itself (gst_object_ref).\" }";
+
     [Fact]
     public void ACorrectedReturnLosesTheSentenceThatHandsItOver()
     {
         FixtureRun run = Run(
             Body,
-            "{ " + Allowlist + ", \"annotationOverrides\": "
+            "{ " + Allowlist + BorrowNote + ", \"annotationOverrides\": "
             + """{ "Gst.Widget::borrow#return": { "transfer": "none" } } }""");
 
         string source = run.File("Subclassing/Widget.Subclass.cs");
@@ -74,7 +83,7 @@ public sealed class ReturnDocOwnershipTests
         // What the value is stays the gir's to say; only the ownership sentence
         // goes, and the note the correction earned takes its place.
         Assert.Contains("the widget if found, otherwise %NULL.", source, StringComparison.Ordinal);
-        Assert.Contains("The answer is borrowed", source, StringComparison.Ordinal);
+        Assert.Contains("No reference is added on the way out", source, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -100,7 +109,7 @@ public sealed class ReturnDocOwnershipTests
     [Fact]
     public void AReturnTheGirItselfCallsBorrowedKeepsWhatItSays()
     {
-        FixtureRun run = Run(BorrowedBody, "{ " + Allowlist + " }");
+        FixtureRun run = Run(BorrowedBody, "{ " + Allowlist + BorrowNote + " }");
 
         string source = run.File("Subclassing/Widget.Subclass.cs");
 
