@@ -869,9 +869,10 @@ internal static unsafe class SubclassRegistry
     /// <remarks>
     /// The table is read directly rather than through <see cref="Find(GType)"/>:
     /// a type whose definition failed is hidden from the surface, but its
-    /// class_init did run and the parent class was captured before anything
-    /// could fail, so a trampoline that fires for an instance of it - one
-    /// native code created by name - still has the class to chain up through.
+    /// <c>class_init</c> runs - at the latest when the first instance is
+    /// created - and captures the parent class before anything in it can fail,
+    /// so a trampoline that fires for an instance of such a type - one native
+    /// code created by name - still has the class to chain up through.
     /// Refusing here instead would answer such a call with an exception rather
     /// than with the behaviour of the parent, which is what §4.1 asks for.
     /// </remarks>
