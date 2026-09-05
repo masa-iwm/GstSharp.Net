@@ -46,7 +46,7 @@ public sealed unsafe class SubclassCodecTests
         Assert.True(source.Link(parser));
         Assert.True(parser.Link(sink));
 
-        RunToEos(pipeline);
+        BusPump.RunToEos(pipeline, BusTimeout, _output);
 
         _output.WriteLine(
             FormattableString.Invariant($"managed parser: framed={parser.Framed}, fed back={parser.FedBack}, ")
@@ -91,7 +91,7 @@ public sealed unsafe class SubclassCodecTests
         Assert.True(source.Link(encoder));
         Assert.True(encoder.Link(sink));
 
-        RunToEos(pipeline);
+        BusPump.RunToEos(pipeline, BusTimeout, _output);
 
         _output.WriteLine(
             FormattableString.Invariant($"managed audio encoder: encoded={encoder.Encoded}, drains={encoder.Drains}, ")
@@ -130,7 +130,7 @@ public sealed unsafe class SubclassCodecTests
         Assert.True(source.Link(decoder));
         Assert.True(decoder.Link(sink));
 
-        RunToEos(pipeline);
+        BusPump.RunToEos(pipeline, BusTimeout, _output);
 
         _output.WriteLine(
             FormattableString.Invariant($"managed audio decoder: decoded={decoder.Decoded}, drains={decoder.Drains}, ")
@@ -162,7 +162,7 @@ public sealed unsafe class SubclassCodecTests
         Assert.True(source.Link(encoder));
         Assert.True(encoder.Link(sink));
 
-        RunToEos(pipeline);
+        BusPump.RunToEos(pipeline, BusTimeout, _output);
 
         _output.WriteLine(
             FormattableString.Invariant($"managed video encoder: encoded={encoder.Encoded}, released={encoder.Released}, ")
@@ -196,7 +196,7 @@ public sealed unsafe class SubclassCodecTests
         Assert.True(source.Link(decoder));
         Assert.True(decoder.Link(sink));
 
-        RunToEos(pipeline);
+        BusPump.RunToEos(pipeline, BusTimeout, _output);
 
         _output.WriteLine(
             FormattableString.Invariant($"managed video decoder: decoded={decoder.Decoded}, released={decoder.Released}, ")
@@ -289,7 +289,7 @@ public sealed unsafe class SubclassCodecTests
         Assert.True(source.Link(encoder));
         Assert.True(encoder.Link(sink));
 
-        RunToEos(pipeline);
+        BusPump.RunToEos(pipeline, BusTimeout, _output);
 
         _output.WriteLine(FormattableString.Invariant(
             $"pre_push chain-up pipeline: encoded={encoder.Encoded}, rendered={sink.Rendered}"));
@@ -417,7 +417,7 @@ public sealed unsafe class SubclassCodecTests
         Assert.True(source.Link(filter));
         Assert.True(filter.Link(sink));
 
-        RunToEos(pipeline);
+        BusPump.RunToEos(pipeline, BusTimeout, _output);
 
         _output.WriteLine(
             FormattableString.Invariant($"managed audio filter: rate={filter.SetupRate}, channels={filter.SetupChannels}, ")
@@ -487,33 +487,5 @@ public sealed unsafe class SubclassCodecTests
         _output.WriteLine(error.Message);
         Assert.Contains("HandleFrameOverride", error.Message, StringComparison.Ordinal);
         Assert.False(GType.FromName(typeName).IsValid);
-    }
-
-    private void RunToEos(Pipeline pipeline)
-    {
-        Bus bus = pipeline.GetBus();
-
-        try
-        {
-            Assert.NotEqual(StateChangeReturn.Failure, pipeline.SetState(State.Playing));
-
-            using Message? message = BusPump.WaitFor(bus, MessageType.Eos | MessageType.Error, BusTimeout);
-
-            Assert.NotNull(message);
-
-            if (message.Type == MessageType.Error)
-            {
-                (Gst.GLib.GException error, string? debug) = message.ParseError();
-
-                _output.WriteLine(FormattableString.Invariant($"bus error: {error.Message} ({debug})"));
-            }
-
-            _output.WriteLine(FormattableString.Invariant($"bus: {message.Type}"));
-            Assert.Equal(MessageType.Eos, message.Type);
-        }
-        finally
-        {
-            pipeline.SetState(State.Null);
-        }
     }
 }

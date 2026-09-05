@@ -41,7 +41,7 @@ public sealed class SubclassAudioVideoTests
         Assert.True(pipeline.AddMany(source, sink));
         Assert.True(source.Link(sink));
 
-        RunToEos(pipeline);
+        BusPump.RunToEos(pipeline, BusTimeout, _output);
 
         _output.WriteLine(FormattableString.Invariant(
             $"managed audio sink: written={sink.Written}, lifecycle={string.Join(", ", sink.Lifecycle)}"));
@@ -70,7 +70,7 @@ public sealed class SubclassAudioVideoTests
         Assert.True(pipeline.AddMany(source, sink));
         Assert.True(source.Link(sink));
 
-        RunToEos(pipeline);
+        BusPump.RunToEos(pipeline, BusTimeout, _output);
 
         _output.WriteLine(FormattableString.Invariant(
             $"managed audio source: read={source.Read}, opened={source.Opened}, segsize={source.Segsize}"));
@@ -99,7 +99,7 @@ public sealed class SubclassAudioVideoTests
         Assert.True(pipeline.AddMany(source, sink));
         Assert.True(source.Link(sink));
 
-        RunToEos(pipeline);
+        BusPump.RunToEos(pipeline, BusTimeout, _output);
 
         _output.WriteLine(FormattableString.Invariant(
             $"managed video sink: shown={sink.Shown}, bytes={sink.Bytes}"));
@@ -131,7 +131,7 @@ public sealed class SubclassAudioVideoTests
         Assert.True(source.Link(filter));
         Assert.True(filter.Link(sink));
 
-        RunToEos(pipeline);
+        BusPump.RunToEos(pipeline, BusTimeout, _output);
 
         _output.WriteLine(FormattableString.Invariant(
             $"managed video filter: transformed={filter.Transformed}, flags={filter.FrameFlags}"));
@@ -166,7 +166,7 @@ public sealed class SubclassAudioVideoTests
         Assert.True(source.Link(filter));
         Assert.True(filter.Link(sink));
 
-        RunToEos(pipeline);
+        BusPump.RunToEos(pipeline, BusTimeout, _output);
 
         _output.WriteLine(FormattableString.Invariant(
             $"managed audio filter: transformed={filter.Transformed}, bytes={filter.Bytes}"));
@@ -218,33 +218,5 @@ public sealed class SubclassAudioVideoTests
         _output.WriteLine(error.Message);
         Assert.Contains("CreateRingbufferOverride", error.Message, StringComparison.Ordinal);
         Assert.False(GType.FromName(TypeName).IsValid);
-    }
-
-    private void RunToEos(Pipeline pipeline)
-    {
-        Bus bus = pipeline.GetBus();
-
-        try
-        {
-            Assert.NotEqual(StateChangeReturn.Failure, pipeline.SetState(State.Playing));
-
-            using Message? message = BusPump.WaitFor(bus, MessageType.Eos | MessageType.Error, BusTimeout);
-
-            Assert.NotNull(message);
-
-            if (message.Type == MessageType.Error)
-            {
-                (Gst.GLib.GException error, string? debug) = message.ParseError();
-
-                _output.WriteLine(FormattableString.Invariant($"bus error: {error.Message} ({debug})"));
-            }
-
-            _output.WriteLine(FormattableString.Invariant($"bus: {message.Type}"));
-            Assert.Equal(MessageType.Eos, message.Type);
-        }
-        finally
-        {
-            pipeline.SetState(State.Null);
-        }
     }
 }

@@ -1,5 +1,7 @@
 using System.Diagnostics;
 using Gst;
+using Xunit;
+using Xunit.Abstractions;
 
 namespace GstSharp.IntegrationTests;
 
@@ -40,5 +42,44 @@ internal static class BusPump
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// Plays a pipeline until it says it reached the end of its stream, and
+    /// leaves it in the null state whatever it said.
+    /// </summary>
+    /// <param name="pipeline">The pipeline to play.</param>
+    /// <param name="timeout">How long to wait for the end of the stream.</param>
+    /// <param name="output">The output of the test, which every message is written to.</param>
+    /// <remarks>
+    /// The bus is transfer full - <c>gst_pipeline_get_bus</c> hands a reference
+    /// out - so the wrapper is the caller's and is disposed here.
+    /// </remarks>
+    internal static void RunToEos(Pipeline pipeline, TimeSpan timeout, ITestOutputHelper output)
+    {
+        using Bus bus = pipeline.GetBus();
+
+        try
+        {
+            Assert.NotEqual(StateChangeReturn.Failure, pipeline.SetState(State.Playing));
+
+            using Message? message = WaitFor(bus, MessageType.Eos | MessageType.Error, timeout);
+
+            Assert.NotNull(message);
+
+            if (message.Type == MessageType.Error)
+            {
+                (Gst.GLib.GException error, string? debug) = message.ParseError();
+
+                output.WriteLine(FormattableString.Invariant($"bus error: {error.Message} ({debug})"));
+            }
+
+            output.WriteLine(FormattableString.Invariant($"bus: {message.Type}"));
+            Assert.Equal(MessageType.Eos, message.Type);
+        }
+        finally
+        {
+            pipeline.SetState(State.Null);
+        }
     }
 }
