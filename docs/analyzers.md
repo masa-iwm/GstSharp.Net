@@ -119,8 +119,9 @@ The stem rule is what makes the pairing open-ended: it covers every slot a
 subclassable class declares, including the two `Gst.GObject.Object` itself
 contributes — `SetPropertyOverride` with `OnSetProperty(uint, ValueView,
 ParamSpec)` and `GetPropertyOverride` with `OnGetProperty(uint, ValueRef,
-ParamSpec)`, which every class that installs a property has to declare and
-override together.
+ParamSpec)`. A class that installs a writable property has to declare the first
+and a readable one the second, so those slots go through exactly the same
+pairing as a `BaseSrc` vfunc.
 
 The override may live in a base class between the declaring class and the
 wrapped base: the search walks that stretch of the hierarchy, so an
@@ -145,6 +146,9 @@ Fix: pass `args` to the constructor that takes it.
 ```csharp
 internal sealed class MySource : PushSrc, IManagedSubclass<MySource>
 {
+    private static readonly SubclassType Definition =
+        DefineSubclass<MySource>("MySource", ConfigureClass, CreateOverride);
+
     public MySource() : this(Definition.NewInstance()) { }
 
     private MySource(SubclassCtorArgs args) : base(args) { }
