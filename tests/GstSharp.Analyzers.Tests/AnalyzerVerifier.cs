@@ -18,8 +18,12 @@ internal static class AnalyzerVerifier<TAnalyzer>
     /// <param name="sources">The snippets, with <c>{|GST0001:...|}</c> style markup.</param>
     /// <returns>A task that completes when the verification is done.</returns>
     internal static Task VerifyAsync(params string[] sources) =>
-        // netstandard2.0 is enough for the stubs and resolves from the local
-        // package cache, which keeps the tests offline and deterministic.
+        // netstandard2.0 is enough for most of the stubs and resolves from the
+        // local package cache once it is there. Not every test can use it: a
+        // stub with a static abstract interface member does not compile against
+        // netstandard2.0 reference assemblies and asks for the Net80 set
+        // instead, which the first run of a clean machine fetches from
+        // nuget.org like any other package. Neither set is downloaded again.
         VerifyAsync(ReferenceAssemblies.NetStandard.NetStandard20, sources);
 
     /// <summary>

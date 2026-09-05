@@ -284,8 +284,13 @@ ordinary reference and nothing floats afterwards.
   whose reference count is 1. `Dispose` releases it, and a specification nothing
   else took a reference on is freed there.
 * Installing a specification on a class makes the class and GObject's pool take
-  references of their own, so the wrapper may be disposed right after the
-  install: what the class holds is untouched by that.
+  references of their own, and the runtime interns a long-lived wrapper of its
+  own for the property slots to hand out, so an installed specification is held
+  four times: once by the wrapper the caller built it with, once by the class
+  (`g_param_spec_ref_sink`), once by the pool, and once by that interned
+  wrapper. The caller's is theirs to dispose right after the install — three
+  references are left, the property answers as it did, and nothing the class
+  holds is touched by it.
 * `ParamSpecArray.New` likewise takes a reference of its own on the
   specification of its elements, so the wrapper that was passed in stays valid
   and is disposed by whoever created it.

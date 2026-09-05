@@ -58,8 +58,10 @@ they cannot get out of step with the binding that way, and no second package
 reports the same diagnostic twice. They are `GST0001` (a wrapper that owns a
 reference and never releases it), `GST0002` (a buffer mapping that is never
 released), `GST0003` (a subclass that overrides an `OnX` vfunc without
-declaring the matching slot in its `DefineSubclass` call) and `GST0004` (the
-converse, a declared slot with no override behind it); see
+declaring the matching slot in its `DefineSubclass` call), `GST0004` (the
+converse, a declared slot with no override behind it) and `GST0005` (a
+`CreateWrapper` that throws away the `SubclassCtorArgs` it was handed, so the
+wrapper it builds is not the one the runtime asked for); see
 [`docs/analyzers.md`](https://github.com/masa-iwm/GstSharp.Net/blob/main/docs/analyzers.md).
 They travel along the package dependency, so a project that references only a
 module package — `GstSharp.Net.Sdp`, say — gets them too. Every module clears
@@ -435,7 +437,7 @@ The API reference and these guides are published as a site at
 | Page | Contents |
 | --- | --- |
 | [`docs/ownership.md`](https://github.com/masa-iwm/GstSharp.Net/blob/main/docs/ownership.md) | Who owns a wrapper, who disposes it, and the GType registry. **Start here.** |
-| [`docs/analyzers.md`](https://github.com/masa-iwm/GstSharp.Net/blob/main/docs/analyzers.md) | `GST0001` to `GST0004`, what they catch and how to satisfy them. |
+| [`docs/analyzers.md`](https://github.com/masa-iwm/GstSharp.Net/blob/main/docs/analyzers.md) | `GST0001` to `GST0005`, what they catch and how to satisfy them. |
 | [`docs/gio-async.md`](https://github.com/masa-iwm/GstSharp.Net/blob/main/docs/gio-async.md) | How Gio's `*_async` / `*_finish` pairs become `Task`-returning methods. |
 | [`docs/subclassing.md`](https://github.com/masa-iwm/GstSharp.Net/blob/main/docs/subclassing.md) | Deriving from `Element`, `Bin` and the `GstBase` classes in C#: the guide is §11, the design is the rest. |
 | [`docs/modules.md`](https://github.com/masa-iwm/GstSharp.Net/blob/main/docs/modules.md) | Writing a binding module for a library this repository does not cover, from your own assembly. |

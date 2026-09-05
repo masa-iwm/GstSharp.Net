@@ -242,7 +242,7 @@ not wander into paths that wrap arbitrary objects.
 New `GObjectNative` imports needed: `g_type_register_static`,
 `g_type_query`, `g_type_class_peek_parent`, `g_type_class_ref`,
 `g_type_class_unref`, `g_object_new` (or `g_object_new_with_properties`),
-and later `g_type_add_interface_static`. All on the existing `"GObject"`
+and `g_type_add_interface_static`. All on the existing `"GObject"`
 logical library name (`NativeNames`).
 
 ### 3.4 NativeAOT constraints, restated as rules
@@ -722,7 +722,9 @@ wrapper the caller built is theirs to dispose.
 
 ### 5.7 Interfaces a subclass implements (stage 3b, landed)
 
-An interface is declared when the type is defined and nowhere else:
+An interface is declared once per type — declaring the same one twice in one
+registration is refused before the type exists — and it is declared when the
+type is defined and nowhere else:
 
 ```csharp
 private static readonly SubclassType Definition = DefineSubclass<FeedSrc>(
@@ -947,7 +949,12 @@ document spells it out because the failure modes are subtle:
   after `Dispose`, and after the collector took a wrapper whose toggle
   reference was the last reference — the first two are covered by the
   chain-up rule (§4.1), the third by re-fabrication with default state for a
-  `DefineSubclass<TSelf>` type (§5.4).
+  `DefineSubclass<TSelf>` type (§5.4). Since stage 3b that third window is
+  user-visible: the managed state behind an installed property lives on the
+  wrapper, so a wrapper that was collected and re-fabricated answers the
+  default of every property the type installed, and whatever was written into
+  it is gone. Keep a reference to a managed element whose properties anyone
+  reads.
 * **Dispose doctrine extends unchanged**: GObject wrappers are never
   disposed except one's own pipeline after `SetState(Null)`. Disposing a
   managed subclass instance that native code still drives does not crash —
@@ -1123,14 +1130,53 @@ construct only; `ObjectClassConfig` arrived as the base of `ClassConfig` (§5.5)
 un-skipped `Aggregator::create_new_pad`. Twenty one classes are subclassable,
 with twenty two class struct mirrors and 218 slots.
 
-**Stage 3b — properties, signals and interfaces.** `g_param_spec_*`
-construction, `ObjectClassConfig.InstallProperty` with
-`OnSetProperty`/`OnGetProperty`, `AddSignal` over the dynamic signal closure,
-and `g_type_add_interface_static` with `GstURIHandler` first. A property a
-managed type installs cannot be written while the instance is being built:
-GObject dispatches the write to the class that owns the property, and the
-wrapper that would serve it does not exist yet, which is why
+**Stage 3b — properties, signals and interfaces (landed).** `g_param_spec_*`
+construction (twenty one `New` factories, plus the `ParamSpecFraction` and
+`ParamSpecArray` of GStreamer), `ObjectClassConfig.InstallProperty` with the
+`OnSetProperty`/`OnGetProperty` overrides, `AddSignal` over the dynamic signal
+closure, and `g_type_add_interface_static` with `GstURIHandler` first. A
+property a managed type installs cannot be written while the instance is being
+built: GObject dispatches the write to the class that owns the property, and
+the wrapper that would serve it does not exist yet, which is why
 `NewInstance(properties)` refuses one.
+
+Improvements during the implementation, each of them a refusal or a rule the
+plan did not name:
+
+* **Interfaces are a Define-time declaration only.** `g_type_add_interface_static`
+  after `g_type_class_ref` is refused by GLib itself, so there is no
+  `ClassConfig.AddInterface` and there never will be one (§5.7). An interface
+  the *parent* implements is refused as well, which is stricter than GLib: it
+  would hand the subclass a copy of the parent's slots and no way to chain up
+  through them.
+* **Property dispatch has no chain up, and construct properties are refused.**
+  GObject dispatches a write to the class that owns the specification, so a
+  managed slot is reached only for a property the managed type installed and
+  there is nothing above it to call. A specification that asks for `CONSTRUCT`
+  or `CONSTRUCT_ONLY` — or one that is neither readable nor writable, which
+  GObject would only assert about — is refused before anything native runs.
+* **`TrueHandled` requires a boolean return.** `g_signal_accumulator_true_handled`
+  reads every answer with `g_value_get_boolean`, so a signal that answers
+  anything else criticals on every handler and never stops; `AddSignal` refuses
+  the combination instead.
+* **An installed specification is held four times and the caller's wrapper is
+  still theirs.** The install sinks it and GObject's pool takes a reference,
+  and the runtime interns one long-lived wrapper so the property slots have
+  something to hand out without leaking one per call. Disposing the wrapper the
+  property was installed from leaves three references and changes nothing about
+  the class.
+* **Protocol lists are pinned once per type.** `gst_uri_handler_get_protocols`
+  hands its array straight to the caller, so the vector can never be freed;
+  `URIHandlerImplementation.For<TSelf>()` caches it per type, and a second call
+  answers the same pointer rather than pinning another copy.
+* **`set_uri` synthesises the error a refusal owes.** `gst_uri_handler_set_uri`
+  makes none of its own and `gst_element_make_from_uri` reads the error of every
+  candidate that refused, so a handler that answers `false` without a reason
+  gets a `GST_URI_ERROR` written for it — and a wrapper that does not implement
+  the interface at all is told apart from an instance that has no wrapper.
+* **`GST0005`** reports an `IManagedSubclass<TSelf>.CreateWrapper` that throws
+  its `SubclassCtorArgs` away, which is the one mistake in the fabrication path
+  that compiles and then wraps the wrong instance.
 
 **Stage 3c — GES custom sources.** The seven GES classes on the allowlist, the
 named callback typedef slots (`create_track_element(s)`), and `OnCreateSource`
