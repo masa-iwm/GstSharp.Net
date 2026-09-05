@@ -367,7 +367,7 @@ public sealed class PbutilsTests
 
         Assert.True(PbutilsGlobal.CodecUtilsH264CapsSetLevelAndProfile(caps, H264HighLevel4Sps));
 
-        Structure structure = caps.GetStructure(0);
+        using Structure structure = caps.GetStructure(0);
 
         Assert.Equal("high", structure.GetString("profile"));
         Assert.Equal("4", structure.GetString("level"));

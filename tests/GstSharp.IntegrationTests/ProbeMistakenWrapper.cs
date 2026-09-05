@@ -29,6 +29,12 @@ internal sealed class ProbeMistakenWrapper : Element, IManagedSubclass<ProbeMist
     /// <summary>Gets the registration of the type.</summary>
     internal static SubclassType Registration => Definition;
 
+    // Ignoring the arguments is the mistake, and the mistake is the point: the
+    // tests pin what the runtime says when a wrapper factory builds a second
+    // instance instead of adopting the one it was handed. The rule is
+    // suppressed rather than obeyed so the probe keeps making it.
+#pragma warning disable GST0005
+
     /// <summary>
     /// Builds a wrapper of a native instance, wrongly: the arguments are what
     /// name the instance to wrap, and this builds another one.
@@ -36,4 +42,5 @@ internal sealed class ProbeMistakenWrapper : Element, IManagedSubclass<ProbeMist
     /// <param name="args">What the runtime says about the instance, ignored.</param>
     /// <returns>A wrapper of a different instance.</returns>
     public static ProbeMistakenWrapper CreateWrapper(SubclassCtorArgs args) => new();
+#pragma warning restore GST0005
 }

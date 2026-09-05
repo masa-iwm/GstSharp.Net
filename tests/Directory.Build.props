@@ -1,0 +1,18 @@
+<Project>
+
+  <!-- Every project below this directory, on top of the repository-wide
+       settings. -->
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+
+  <ItemGroup>
+
+    <!-- The test suites build with the analyzers as well, so a rule that fires
+         on the way the binding is used fires here first. Two projects are left
+         out: GstSharp.Analyzers.Tests references the analyzer as a library and
+         would load it twice, and GstSharp.Generator.Tests does not use the
+         binding at all. -->
+    <ProjectReference Include="$(MSBuildThisFileDirectory)../src/GstSharp.Net.Analyzers/GstSharp.Net.Analyzers.csproj" ReferenceOutputAssembly="false" OutputItemType="Analyzer" PrivateAssets="all"
+                      Condition="'$(MSBuildProjectName)' != 'GstSharp.Analyzers.Tests' and '$(MSBuildProjectName)' != 'GstSharp.Generator.Tests'" />
+  </ItemGroup>
+
+</Project>

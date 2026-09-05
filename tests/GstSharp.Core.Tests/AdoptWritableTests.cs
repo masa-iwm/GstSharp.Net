@@ -53,7 +53,7 @@ public class AdoptWritableTests
     [Fact]
     public void AMiniObjectWrapperFollowsTheObjectTheCallAnswered()
     {
-        ProbeMiniObject probe = new(Sentinel);
+        using ProbeMiniObject probe = new(Sentinel);
         nint replacement = Sentinel + 0x40;
 
         probe.Adopt(replacement);

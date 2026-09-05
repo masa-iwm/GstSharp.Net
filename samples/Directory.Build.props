@@ -1,0 +1,17 @@
+<Project>
+
+  <!-- Every project below this directory, on top of the repository-wide
+       settings. -->
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+
+  <ItemGroup>
+
+    <!-- The samples are the first consumer of the binding the repository can
+         hold to its own rules, so they build with the analyzers the package
+         ships. ReferenceOutputAssembly keeps the analyzer out of the
+         compilation references, OutputItemType makes the build run the rules,
+         and PrivateAssets keeps it out of the package dependencies. -->
+    <ProjectReference Include="$(MSBuildThisFileDirectory)../src/GstSharp.Net.Analyzers/GstSharp.Net.Analyzers.csproj" ReferenceOutputAssembly="false" OutputItemType="Analyzer" PrivateAssets="all" />
+  </ItemGroup>
+
+</Project>

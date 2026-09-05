@@ -13,6 +13,10 @@ exactly the vfunc slots it overrides. `GST0005` guards the other half of the
 subclassing contract, the factory that adopts an instance GStreamer created —
 see [subclassing](subclassing.md).
 
+The repository holds itself to the rules: every project under `samples/` and
+`tests/` builds with the analyzers applied, so a sample or a test that uses the
+binding the way the rules forbid fails the build like any other warning does.
+
 ## GST0001
 
 **GstSharp.Net wrapper is never disposed.**

@@ -379,8 +379,14 @@ internal sealed class ProbeUnimplementedTransform : BaseTransform
             config.AddPadTemplate(SinkTemplate);
             config.AddPadTemplate(SrcTemplate);
         },
+        // The diagnostic is what this probe is built to earn: it declares the
+        // two slots and implements neither, which is the shape the ownership
+        // tests read the base class through. Removing the declarations would
+        // remove the fixture, so the rule is suppressed here instead.
+#pragma warning disable GST0004
         TransformOverride,
         GetUnitSizeOverride);
+#pragma warning restore GST0004
 
     /// <summary>Creates a managed filter.</summary>
     internal ProbeUnimplementedTransform()

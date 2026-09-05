@@ -376,7 +376,7 @@ public sealed class AppSinkSimpleCallbacksTests
             // A second install replaces the first set. GStreamer releases the
             // one it held, so its slots are destroyed here, without any teardown
             // of the sink.
-            AppSinkSimpleCallbacks second = InstallCountingCallbacks(sink, out WeakReference secondProbe);
+            using AppSinkSimpleCallbacks second = InstallCountingCallbacks(sink, out WeakReference secondProbe);
             Assert.True(second.IsDisposed);
 
             for (int attempt = 0; attempt < 10 && firstProbe.IsAlive; attempt++)
