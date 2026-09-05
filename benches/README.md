@@ -50,13 +50,14 @@ runs that ask for no job of their own:
   process, there is no generated project to inherit anything.
 
 Both of those are the default only while `--job` is absent from the command
-line: BenchmarkDotNet falls back to the job the config marks as its default
-just when the command line named none, so `Program` adds it just then and
-otherwise hands the command line an untouched `DefaultConfig`. `--job short
---inProcess` (or `--job dry --inProcess`) is therefore the way to a rough
-answer in seconds, and the `--inProcess` has to travel with it: a job from the
-command line brings the out-of-process toolchain with it, and the generated
-child project underneath the repository comes back with it.
+line. A job the config marks as its default is the one that runs, whatever
+`--job` asks for; so the harness adds its in-process default only when the
+command line names no job, and otherwise hands BenchmarkDotNet an untouched
+`DefaultConfig`. `--job short --inProcess` (or `--job dry
+--inProcess`) is therefore the way to a rough answer in seconds, and the
+`--inProcess` has to travel with it: a job from the command line brings the
+out-of-process toolchain with it, and the generated child project underneath
+the repository comes back with it.
 
 Every class runs in the same process, so GStreamer is initialised once and the
 managed identity filter registers its `GType` once. Both live in

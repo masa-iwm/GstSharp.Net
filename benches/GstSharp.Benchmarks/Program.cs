@@ -27,11 +27,11 @@ public static class Program
         // `dotnet run` with no job on the command line reproduces what the
         // tables in benches/README.md were made from.
         //
-        // A job given on the command line wins instead: BenchmarkDotNet only
-        // falls back to the job marked as the default when the command line
-        // asked for none, so adding it unconditionally would swallow
-        // `--job short`. When one is asked for, the command line owns the job
-        // and has to carry `--inProcess` with it to keep the toolchain.
+        // A job the config marks as its default is the one that runs, whatever
+        // `--job` asks for; so the harness adds its in-process default only
+        // when the command line names no job. Adding it unconditionally
+        // swallowed `--job short`. When a job is named, the command line owns
+        // it and has to carry `--inProcess` to keep the toolchain.
         IConfig config = DefaultConfig.Instance;
 
         if (!args.Any(IsJobArgument))
