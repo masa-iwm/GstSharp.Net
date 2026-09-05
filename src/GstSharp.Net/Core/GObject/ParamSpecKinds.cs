@@ -56,6 +56,21 @@ internal enum ParamSpecKind
     /// <summary><c>GParamSpecGType</c>.</summary>
     GType,
 
+    /// <summary><c>GParamSpecParam</c>.</summary>
+    Param,
+
+    /// <summary><c>GParamSpecBoxed</c>.</summary>
+    Boxed,
+
+    /// <summary><c>GParamSpecPointer</c>.</summary>
+    Pointer,
+
+    /// <summary><c>GParamSpecObject</c>.</summary>
+    Object,
+
+    /// <summary><c>GParamSpecVariant</c>.</summary>
+    Variant,
+
     /// <summary><c>GstParamSpecFraction</c>.</summary>
     Fraction,
 
@@ -148,6 +163,11 @@ internal static class ParamSpecKinds
         (GType.FromName("GParamFlags").Value, ParamSpecKind.Flags),
         (GType.FromName("GParamString").Value, ParamSpecKind.String),
         (GType.FromName("GParamGType").Value, ParamSpecKind.GType),
+        (GType.FromName("GParamParam").Value, ParamSpecKind.Param),
+        (GType.FromName("GParamBoxed").Value, ParamSpecKind.Boxed),
+        (GType.FromName("GParamPointer").Value, ParamSpecKind.Pointer),
+        (GType.FromName("GParamObject").Value, ParamSpecKind.Object),
+        (GType.FromName("GParamVariant").Value, ParamSpecKind.Variant),
         (GType.FromName("GParamValueArray").Value, ParamSpecKind.ValueArray),
 
         // The two GStreamer types are asked of their own get_type functions

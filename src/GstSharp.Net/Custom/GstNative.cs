@@ -55,6 +55,32 @@ internal static unsafe partial class GstNative
     internal static partial nuint ParamSpecArrayGetType();
 
     /// <summary>
+    /// Builds the specification of a fraction property. The result is null when
+    /// the default lies outside the range, which GStreamer reports through
+    /// <c>g_critical</c> alone.
+    /// </summary>
+    [LibraryImport("Gst", EntryPoint = "gst_param_spec_fraction")]
+    internal static partial nint ParamSpecFraction(
+        byte* name,
+        byte* nick,
+        byte* blurb,
+        int minimumNumerator,
+        int minimumDenominator,
+        int maximumNumerator,
+        int maximumDenominator,
+        int defaultNumerator,
+        int defaultDenominator,
+        uint flags);
+
+    /// <summary>
+    /// Builds the specification of an array property. The specification of the
+    /// elements is referenced and sunk, so a caller that holds a reference of
+    /// its own keeps it.
+    /// </summary>
+    [LibraryImport("Gst", EntryPoint = "gst_param_spec_array")]
+    internal static partial nint ParamSpecArray(byte* name, byte* nick, byte* blurb, nint elementSpec, uint flags);
+
+    /// <summary>
     /// Creates empty caps, which is what a slot answers when it has to answer
     /// caps and the managed override answered none: negotiation fails on it
     /// rather than on a NULL pointer the caller does not check for.

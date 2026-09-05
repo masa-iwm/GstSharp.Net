@@ -209,6 +209,188 @@ internal static unsafe partial class GObjectNative
     [LibraryImport("GObject", EntryPoint = "g_param_spec_unref")]
     internal static partial void ParamSpecUnref(nint pspec);
 
+    /// <summary>
+    /// Answers whether a string may name a property. GObject terminates the
+    /// process on an invalid name inside every constructor below, because they
+    /// dereference the result of <c>g_param_spec_internal</c> without testing
+    /// it, so the managed side asks this first.
+    /// </summary>
+    [LibraryImport("GObject", EntryPoint = "g_param_spec_is_valid_name")]
+    internal static partial int ParamSpecIsValidName(byte* name);
+
+    /// <summary>
+    /// Answers whether a type may be carried by a <c>GValue</c>, which is what
+    /// a boxed property additionally requires of its type.
+    /// </summary>
+    [LibraryImport("GObject", EntryPoint = "g_type_check_is_value_type")]
+    internal static partial int TypeCheckIsValueType(nuint type);
+
+    [LibraryImport("GObject", EntryPoint = "g_param_spec_boolean")]
+    internal static partial nint ParamSpecBoolean(byte* name, byte* nick, byte* blurb, int defaultValue, uint flags);
+
+    [LibraryImport("GObject", EntryPoint = "g_param_spec_char")]
+    internal static partial nint ParamSpecChar(
+        byte* name,
+        byte* nick,
+        byte* blurb,
+        sbyte minimum,
+        sbyte maximum,
+        sbyte defaultValue,
+        uint flags);
+
+    [LibraryImport("GObject", EntryPoint = "g_param_spec_uchar")]
+    internal static partial nint ParamSpecUChar(
+        byte* name,
+        byte* nick,
+        byte* blurb,
+        byte minimum,
+        byte maximum,
+        byte defaultValue,
+        uint flags);
+
+    [LibraryImport("GObject", EntryPoint = "g_param_spec_int")]
+    internal static partial nint ParamSpecInt(
+        byte* name,
+        byte* nick,
+        byte* blurb,
+        int minimum,
+        int maximum,
+        int defaultValue,
+        uint flags);
+
+    [LibraryImport("GObject", EntryPoint = "g_param_spec_uint")]
+    internal static partial nint ParamSpecUInt(
+        byte* name,
+        byte* nick,
+        byte* blurb,
+        uint minimum,
+        uint maximum,
+        uint defaultValue,
+        uint flags);
+
+    [LibraryImport("GObject", EntryPoint = "g_param_spec_long")]
+    internal static partial nint ParamSpecLong(
+        byte* name,
+        byte* nick,
+        byte* blurb,
+        CLong minimum,
+        CLong maximum,
+        CLong defaultValue,
+        uint flags);
+
+    [LibraryImport("GObject", EntryPoint = "g_param_spec_ulong")]
+    internal static partial nint ParamSpecULong(
+        byte* name,
+        byte* nick,
+        byte* blurb,
+        CULong minimum,
+        CULong maximum,
+        CULong defaultValue,
+        uint flags);
+
+    [LibraryImport("GObject", EntryPoint = "g_param_spec_int64")]
+    internal static partial nint ParamSpecInt64(
+        byte* name,
+        byte* nick,
+        byte* blurb,
+        long minimum,
+        long maximum,
+        long defaultValue,
+        uint flags);
+
+    [LibraryImport("GObject", EntryPoint = "g_param_spec_uint64")]
+    internal static partial nint ParamSpecUInt64(
+        byte* name,
+        byte* nick,
+        byte* blurb,
+        ulong minimum,
+        ulong maximum,
+        ulong defaultValue,
+        uint flags);
+
+    [LibraryImport("GObject", EntryPoint = "g_param_spec_float")]
+    internal static partial nint ParamSpecFloat(
+        byte* name,
+        byte* nick,
+        byte* blurb,
+        float minimum,
+        float maximum,
+        float defaultValue,
+        uint flags);
+
+    [LibraryImport("GObject", EntryPoint = "g_param_spec_double")]
+    internal static partial nint ParamSpecDouble(
+        byte* name,
+        byte* nick,
+        byte* blurb,
+        double minimum,
+        double maximum,
+        double defaultValue,
+        uint flags);
+
+    [LibraryImport("GObject", EntryPoint = "g_param_spec_unichar")]
+    internal static partial nint ParamSpecUnichar(byte* name, byte* nick, byte* blurb, uint defaultValue, uint flags);
+
+    [LibraryImport("GObject", EntryPoint = "g_param_spec_enum")]
+    internal static partial nint ParamSpecEnum(
+        byte* name,
+        byte* nick,
+        byte* blurb,
+        nuint enumType,
+        int defaultValue,
+        uint flags);
+
+    [LibraryImport("GObject", EntryPoint = "g_param_spec_flags")]
+    internal static partial nint ParamSpecFlags(
+        byte* name,
+        byte* nick,
+        byte* blurb,
+        nuint flagsType,
+        uint defaultValue,
+        uint flags);
+
+    /// <summary>
+    /// Builds the specification of a string property. The default is copied by
+    /// GObject, so the buffer it is passed may be released once the call has
+    /// returned.
+    /// </summary>
+    [LibraryImport("GObject", EntryPoint = "g_param_spec_string")]
+    internal static partial nint ParamSpecString(byte* name, byte* nick, byte* blurb, byte* defaultValue, uint flags);
+
+    [LibraryImport("GObject", EntryPoint = "g_param_spec_param")]
+    internal static partial nint ParamSpecParam(byte* name, byte* nick, byte* blurb, nuint paramType, uint flags);
+
+    [LibraryImport("GObject", EntryPoint = "g_param_spec_boxed")]
+    internal static partial nint ParamSpecBoxed(byte* name, byte* nick, byte* blurb, nuint boxedType, uint flags);
+
+    [LibraryImport("GObject", EntryPoint = "g_param_spec_pointer")]
+    internal static partial nint ParamSpecPointer(byte* name, byte* nick, byte* blurb, uint flags);
+
+    [LibraryImport("GObject", EntryPoint = "g_param_spec_object")]
+    internal static partial nint ParamSpecObject(byte* name, byte* nick, byte* blurb, nuint objectType, uint flags);
+
+    /// <summary>
+    /// Builds the specification of a type property. <c>G_TYPE_NONE</c> as the
+    /// type stands for every type, which is how GObject spells "no bound".
+    /// </summary>
+    [LibraryImport("GObject", EntryPoint = "g_param_spec_gtype")]
+    internal static partial nint ParamSpecGType(byte* name, byte* nick, byte* blurb, nuint isAType, uint flags);
+
+    /// <summary>
+    /// Builds the specification of a variant property. The type is copied and a
+    /// default is referenced and sunk. Neither <c>GVariant</c> nor
+    /// <c>GVariantType</c> is bound, so nothing calls this yet; it is imported
+    /// beside its siblings so the set is complete.
+    /// </summary>
+    [LibraryImport("GObject", EntryPoint = "g_param_spec_variant")]
+    internal static partial nint ParamSpecVariant(
+        byte* name,
+        byte* nick,
+        byte* blurb,
+        nint type,
+        nint defaultValue,
+        uint flags);
+
     [LibraryImport("GObject", EntryPoint = "g_value_init")]
     internal static partial nint ValueInit(ref GValueNative value, nuint type);
 

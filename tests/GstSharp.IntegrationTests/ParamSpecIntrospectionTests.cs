@@ -314,17 +314,26 @@ public sealed class ParamSpecIntrospectionTests
     [Fact]
     public void AnUnknownClassIsWrappedInTheBaseClass()
     {
-        nint native = ParamSpecNatives.Pointer(
+        // GParamOverride is a class the binding declares no wrapper for: it
+        // stands for another specification rather than describing values of its
+        // own. A pointer specification, which used to stand here, now has a
+        // class of its own and is checked as that below.
+        nint nativePointer = ParamSpecNatives.Pointer(
             "an-opaque-pointer",
             "Opaque",
             "A pointer nothing describes",
             ParamSpecNatives.ReadWrite);
 
+        using ParamSpec pointer = ParamSpec.FromNative(nativePointer, Transfer.None);
+
+        nint native = ParamSpecNatives.Override("an-unknown-class", pointer.Handle);
         using ParamSpec spec = ParamSpec.FromNative(native, Transfer.None);
 
         Assert.Equal(typeof(ParamSpec), spec.GetType());
-        Assert.Equal("GParamPointer", spec.NativeType.Name);
-        Assert.Equal(GType.Pointer, spec.ValueType);
+        Assert.Equal("GParamOverride", spec.NativeType.Name);
+
+        Assert.IsType<ParamSpecPointer>(pointer);
+        Assert.Equal(GType.Pointer, pointer.ValueType);
     }
 
     /// <summary>
