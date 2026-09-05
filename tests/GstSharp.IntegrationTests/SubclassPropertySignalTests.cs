@@ -104,14 +104,30 @@ public sealed class SubclassPropertySignalTests
     /// the property slots hops to the thread that created the element.
     /// </summary>
     [Fact]
-    public async System.Threading.Tasks.Task APropertyIsWrittenOnTheThreadThatWrote()
+    public void APropertyIsWrittenOnTheThreadThatWrote()
     {
         using Element made = Made("threaded");
         ProbePropertyElement probe = Assert.IsType<ProbePropertyElement>(made);
 
+        // A dedicated thread, not the pool: xunit may run a Task.Run
+        // continuation inline on the test's own thread (seen on the macOS leg).
         int here = Environment.CurrentManagedThreadId;
-        await System.Threading.Tasks.Task.Run(() => probe.SetProperty("value", 11));
+        Exception? failure = null;
+        var writer = new System.Threading.Thread(() =>
+        {
+            try
+            {
+                probe.SetProperty("value", 11);
+            }
+            catch (Exception e)
+            {
+                failure = e;
+            }
+        });
+        writer.Start();
+        writer.Join();
 
+        Assert.Null(failure);
         Assert.Equal(11, probe.Value);
         Assert.NotEqual(here, probe.LastSetThreadId);
     }
