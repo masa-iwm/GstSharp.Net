@@ -15,10 +15,10 @@
 //
 // Examples:
 //
-//   GesLaunch +test-clip snow d=1 +test-clip smpte d=1
-//   GesLaunch --save-only project.xges +test-clip snow d=1
+//   GesLaunch +test-clip snow d=1.0 +test-clip smpte d=1.0
+//   GesLaunch --save-only project.xges +test-clip snow d=1.0
 //   GesLaunch -l project.xges --videosink fakesink --audiosink fakesink
-//   GesLaunch -o file:///tmp/out.ogg +test-clip snow d=1
+//   GesLaunch -o file:///tmp/out.ogg +test-clip snow d=1.0
 //
 // How the load is driven, which is the part of this sample worth reading:
 //

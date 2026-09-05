@@ -422,7 +422,7 @@ jobs:
       # only ever arrives because the sample iterates the default main context
       # itself - a sample that forgot to would hang here until the timeout.
       - name: GesLaunch (playback)
-        run: dotnet run --project samples/GesLaunch --no-restore -- --no-interactive --videosink fakesink --audiosink fakesink --timeout 30 +test-clip snow d=1 +test-clip smpte d=1
+        run: dotnet run --project samples/GesLaunch --no-restore -- --no-interactive --videosink fakesink --audiosink fakesink --timeout 30 +test-clip snow d=1.0 +test-clip smpte d=1.0
 
       # The informative path, which needs no pipeline at all: the transition
       # nicks are read out of the type system, so this is what proves the
@@ -437,7 +437,7 @@ jobs:
       # than passing quietly with an empty timeline.
       - name: GesLaunch (save and load a project)
         run: |
-          dotnet run --project samples/GesLaunch --no-restore -- --no-interactive --videosink fakesink --audiosink fakesink --timeout 30 --save-only ges-launch-saved.xges +test-clip snow d=1
+          dotnet run --project samples/GesLaunch --no-restore -- --no-interactive --videosink fakesink --audiosink fakesink --timeout 30 --save-only ges-launch-saved.xges +test-clip snow d=1.0
           dotnet run --project samples/GesLaunch --no-restore -- --no-interactive --videosink fakesink --audiosink fakesink --timeout 30 -l ges-launch-saved.xges
 
       # Rendering, on the only leg whose encoders are proven: theoraenc,
@@ -448,7 +448,7 @@ jobs:
       # turns "the render mode ran" into "the render mode produced media".
       - name: GesLaunch (render)
         run: |
-          dotnet run --project samples/GesLaunch --no-restore -- --no-interactive --videosink fakesink --audiosink fakesink --timeout 30 -o "file://$PWD/ges-render.ogg" +test-clip snow d=1
+          dotnet run --project samples/GesLaunch --no-restore -- --no-interactive --videosink fakesink --audiosink fakesink --timeout 30 -o "file://$PWD/ges-render.ogg" +test-clip snow d=1.0
           dotnet run --project samples/GstDiscoverer --no-restore -- --fail-on-error ges-render.ogg
 
       # The inspect-lite port, run the two ways it can be run. The census walks
@@ -619,14 +619,14 @@ jobs:
       # run stays on Linux, where the theora, vorbis and ogg elements it needs
       # are the ones CI already requires.
       - name: GesLaunch (playback)
-        run: dotnet run --project samples/GesLaunch --no-restore -- --no-interactive --videosink fakesink --audiosink fakesink --timeout 30 +test-clip snow d=1 +test-clip smpte d=1
+        run: dotnet run --project samples/GesLaunch --no-restore -- --no-interactive --videosink fakesink --audiosink fakesink --timeout 30 +test-clip snow d=1.0 +test-clip smpte d=1.0
 
       - name: GesLaunch (list transitions)
         run: dotnet run --project samples/GesLaunch --no-restore -- --no-interactive --timeout 30 --list-transitions
 
       - name: GesLaunch (save and load a project)
         run: |
-          dotnet run --project samples/GesLaunch --no-restore -- --no-interactive --videosink fakesink --audiosink fakesink --timeout 30 --save-only ges-launch-saved.xges +test-clip snow d=1
+          dotnet run --project samples/GesLaunch --no-restore -- --no-interactive --videosink fakesink --audiosink fakesink --timeout 30 --save-only ges-launch-saved.xges +test-clip snow d=1.0
           dotnet run --project samples/GesLaunch --no-restore -- --no-interactive --videosink fakesink --audiosink fakesink --timeout 30 -l ges-launch-saved.xges
 
       - name: GstDeviceMonitor
@@ -777,14 +777,17 @@ jobs:
       # run stays on Linux, where the theora, vorbis and ogg elements it needs
       # are the ones CI already requires.
       - name: GesLaunch (playback)
-        run: dotnet run --project samples/GesLaunch --no-restore -- --no-interactive --videosink fakesink --audiosink fakesink --timeout 30 +test-clip snow d=1 +test-clip smpte d=1
+        run: dotnet run --project samples/GesLaunch --no-restore -- --no-interactive --videosink fakesink --audiosink fakesink --timeout 30 +test-clip snow d=1.0 +test-clip smpte d=1.0
 
       - name: GesLaunch (list transitions)
         run: dotnet run --project samples/GesLaunch --no-restore -- --no-interactive --timeout 30 --list-transitions
 
       - name: GesLaunch (save and load a project)
+        # The runners default to pwsh on Windows, which only propagates the
+        # exit code of the last line; a save that failed would pass here.
+        shell: bash
         run: |
-          dotnet run --project samples/GesLaunch --no-restore -- --no-interactive --videosink fakesink --audiosink fakesink --timeout 30 --save-only ges-launch-saved.xges +test-clip snow d=1
+          dotnet run --project samples/GesLaunch --no-restore -- --no-interactive --videosink fakesink --audiosink fakesink --timeout 30 --save-only ges-launch-saved.xges +test-clip snow d=1.0
           dotnet run --project samples/GesLaunch --no-restore -- --no-interactive --videosink fakesink --audiosink fakesink --timeout 30 -l ges-launch-saved.xges
 
       # Same two runs as the Linux leg; see the comments there.
