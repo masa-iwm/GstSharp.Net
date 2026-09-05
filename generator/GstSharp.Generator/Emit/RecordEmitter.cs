@@ -1778,6 +1778,24 @@ internal sealed class RecordEmitter
                     Remarks: EmbeddedValueRemarks);
         }
 
+        // A mini object embedded by value is the header a derived record
+        // carries first, and the whole allocation is that mini object: the
+        // address of the field is the address of the record, so the accessor
+        // would be an identity cast. What it would say about itself is wrong
+        // twice over. The remark of an embedded record describes a copy the
+        // caller owns and may write into, which is what a boxed field yields,
+        // while a wrapper made from a mini object references the very object
+        // that declares the field - an alias whose writes are native writes and
+        // whose disposal unreferences the payload. The direction a reader needs
+        // is the other one, from the header to the variant it belongs to, and
+        // that one is hand bound: Custom/MikeyCasts.cs declares FromPayload on
+        // each of the six MIKEY payloads, which are the only fields of the
+        // corpus this refuses.
+        if (kind == TypeKind.MiniObject)
+        {
+            return null;
+        }
+
         // The mirror only embeds a wrapper by value when its own layout is
         // complete, so a field that is projected as one addresses the whole C
         // structure and nothing else has to be checked here.

@@ -397,22 +397,27 @@ generated surface. There are two exceptions. A field registered under
 to the `## Fields exposed elsewhere` section of the same report. A field
 registered under `fieldAnnotations` with `accessor: false` stays on the ledger
 under its own shape and is deliberately left unbound; the `$comment` of the
-entry says why, and three reasons remain. `Iterator.pushed` is a pointer the
+entry says why, and two reasons remain. `Iterator.pushed` is a pointer the
 header keeps to the implementation of the structure, where the boxed copy an
 accessor takes would alias a child the owner frees. `AudioCdSrcTrack.tags` is
 storage the user fills and hands to the library, which takes it over and then
-refuses to write a list a reference of ours made unwritable. The six `pt` of
-the derived MIKEY payloads are the header a derived record embeds, whose
-wrapper nothing on this surface can reach.
+refuses to write a list a reference of ours made unwritable.
 
-A fourth reason is not an entry at all. A field the gir marks with a `version`
-newer than the oldest GStreamer the binding supports gets no accessor from the
-generator, whatever its shape, and its ledger line says which version put it
-there — `ReferenceTimestampMeta.info — Pointer, since 1.28`. The library on an
-older machine allocates the structure without that field, so the read would be
-past the end of it, and unlike a late entry point a field access has nothing to
-fail on. No overlay lifts this; what would lift it is a version the binding
-asks the library for at run time.
+Two more reasons are not entries at all: the generator refuses them itself, and
+no overlay lifts either. A mini object a record embeds by value is one. It is
+the header a derived record carries first, so the field starts at the address
+of the record that declares it and an accessor for it would be an identity
+cast, described by the remark of an embedded record as a copy the caller owns —
+the opposite of the alias a mini object wrapper is. The six `pt` of the derived
+MIKEY payloads are the whole of that shape, and the direction a reader wants is
+the other one, `Custom/MikeyCasts.cs` declaring `FromPayload` on each of the
+six. A field the gir marks with a `version` newer than the oldest GStreamer the
+binding supports is the other. It gets no accessor whatever its shape, and its
+ledger line says which version put it there — `ReferenceTimestampMeta.info —
+Pointer, since 1.28`. The library on an older machine allocates the structure
+without that field, so the read would be past the end of it, and unlike a late
+entry point a field access has nothing to fail on. What would lift that one is
+a version the binding asks the library for at run time.
 
 ## Fields the library rewrites
 
