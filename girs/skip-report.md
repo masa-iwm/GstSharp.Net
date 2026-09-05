@@ -978,9 +978,8 @@ disappears shows up here as an added line.
 - `gst_rtsp_permissions_add_role`
 - `gst_rtsp_token_new`
 
-### UnsupportedSignature (17)
+### UnsupportedSignature (16)
 
-- `GstRtspServer.RTSPClient::check-requirements`
 - `gst_rtsp_auth_get_tls_authentication_mode`
 - `gst_rtsp_auth_set_tls_authentication_mode`
 - `gst_rtsp_client_set_connection`

@@ -499,7 +499,7 @@ public sealed class SignalEmitterTests
     [InlineData("GstNet", 0)]
     [InlineData("GstRtsp", 1)]
     [InlineData("GstRtp", 2)]
-    [InlineData("GstRtspServer", 40)]
+    [InlineData("GstRtspServer", 41)]
     [InlineData("GstAllocators", 0)]
     [InlineData("GstTag", 0)]
     [InlineData("GstTranscoder", 6)]
@@ -536,10 +536,10 @@ public sealed class SignalEmitterTests
             removers += file.Content.Split("    public static void Remove").Length - 1;
         }
 
-        // A hundred and twenty three signals are emitted over the seventeen
-        // modules. A hundred and forty are events of a class; the remaining
-        // four belong to a gir interface and are a pair of extension methods
-        // instead. The editing services are thirty five of them, and all
+        // A hundred and forty five signals are emitted over the seventeen
+        // modules. A hundred and forty one are events of a class; the
+        // remaining four belong to a gir interface and are a pair of extension
+        // methods instead. The editing services are thirty five of them, and all
         // thirty five are events: the one signal of a GES interface,
         // GESMetaContainer::notify-meta, carries a GValue and is not bound.
         // The six of the transcoder and the thirteen of the play are the
@@ -549,21 +549,22 @@ public sealed class SignalEmitterTests
         // GstRTPBaseDepayload; the four signals beside them, add-extension and
         // clear-extensions on each of the two classes, carry action="1" and
         // are skipped on that rule, since an action signal is a call API and
-        // not a notification. The forty of the RTSP server are the nineteen
-        // that carry no GstRTSPContext plus the twenty one request signals of
-        // GstRTSPClient, whose context is copied out of the emission into the
-        // arguments; the twenty second, check-requirements, stays skipped for
-        // the array of strings beside its context. send-message is the one
+        // not a notification. The forty one of the RTSP server are the
+        // nineteen that carry no GstRTSPContext plus the twenty two signals of
+        // GstRTSPClient whose context is copied out of the emission into the
+        // arguments; check-requirements is one of them, and the NULL
+        // terminated vector of strings beside its context is read out into an
+        // array the handler owns. send-message is the one
         // whose C# name the method beside it had taken, so the rename of
         // fixups.json makes the event SendingMessage. The adder and remover counts carry matches that are
         // not a signal pair at all: Gst.ITagSetter's AddTagValue extension, and
         // the AddAllSchemas, AddSchema, RemoveAllSchemas and RemoveSchema
         // extensions of Gst.Tag.ITagXmpWriter, methods whose names the pattern
         // cannot tell from a subscription adder or remover.
-        Assert.Equal(140, events);
+        Assert.Equal(141, events);
         Assert.Equal(7, adders);
         Assert.Equal(6, removers);
-        Assert.Equal(144, trampolines);
+        Assert.Equal(145, trampolines);
 
         string[] withSignals =
         [

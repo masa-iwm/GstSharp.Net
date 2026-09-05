@@ -831,9 +831,11 @@ public sealed class SkipRulesTests
         """;
 
     /// <summary>
-    /// One class with one signal the planner cannot bind: its argument is an
-    /// array, which a signal argument never is. It stands for the shape the
-    /// ledger has to name, a signal whose managed surface is hand written.
+    /// One class with one signal the planner cannot bind: its argument is a
+    /// fixed size array, which is one of the array shapes a signal argument
+    /// never is - only the NULL terminated vector of strings is planned. It
+    /// stands for the shape the ledger has to name, a signal whose managed
+    /// surface is hand written.
     /// </summary>
     private const string SignalBody =
         """
@@ -844,7 +846,7 @@ public sealed class SkipRulesTests
                 </return-value>
                 <parameters>
                   <parameter name="names" transfer-ownership="none">
-                    <array c:type="gchar**">
+                    <array c:type="gchar**" fixed-size="4">
                       <type name="utf8" c:type="gchar*"/>
                     </array>
                   </parameter>

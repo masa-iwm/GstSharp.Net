@@ -354,6 +354,18 @@ internal static class SignalEmitter
                 writer.WriteLine("/// </remarks>");
             }
 
+            if (argument.Argument.Kind == ArgumentKind.Strv)
+            {
+                // The vector the emitter passes is read out into managed
+                // strings, so the array outlives the emission and an emitter
+                // that passes none is not a null the handler has to test for.
+                writer.WriteLine("/// <remarks>");
+                writer.WriteLine("/// The strings are read out of the vector the emitter passes, so the array");
+                writer.WriteLine("/// is the handler's own and may be kept. An emission that carries no");
+                writer.WriteLine("/// vector is the empty array.");
+                writer.WriteLine("/// </remarks>");
+            }
+
             writer.WriteLine(
                 "public " + argument.Argument.PublicType + " " + argument.PropertyName + " { get; }");
         }
@@ -664,6 +676,14 @@ internal static class SignalEmitter
             // the emission and stops being good once the handler returns.
             ArgumentKind.PlainStruct => "*" + argument.Name,
             ArgumentKind.Utf8 => "Gst.Interop.GMarshal.PtrToStringUtf8((nint)" + argument.Name + ")",
+
+            // The vector belongs to the emission and nothing of it is freed
+            // here; what the handler sees is an array of managed strings read
+            // out of it while it is still there. An emitter that passes no
+            // vector at all answers the empty array rather than a null the
+            // handler would have to test for.
+            ArgumentKind.Strv => "Gst.Interop.GMarshal.StrvToArray((nint)" + argument.Name
+                + ", free: false) ?? []",
 
             // The error belongs to the emission and is freed once it returns,
             // so the three fields are copied here and the pointer is never

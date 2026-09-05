@@ -4378,8 +4378,7 @@ internal sealed class MarshalPlanner
     {
         if (parameter.IsVarArgs
             || parameter.Type.IsVarArgs
-            || parameter.Direction != GirDirection.In
-            || parameter.Type is GirArrayRef)
+            || parameter.Direction != GirDirection.In)
         {
             return null;
         }
@@ -4390,6 +4389,16 @@ internal sealed class MarshalPlanner
             signalKey + "#" + parameter.Name,
             parameter.IsNullable,
             "a signal parameter");
+
+        // The one container a handler is handed: a NULL terminated vector of
+        // strings, which is read out into an array of its own the way an
+        // inbound one of a callable is. Every other array shape stays refused,
+        // because reading it needs a length the emission states somewhere the
+        // trampoline cannot see, or an element the runtime has no reader for.
+        if (parameter.Type is GirArrayRef array)
+        {
+            return PlanSignalStrvArgument(parameter, array, mapped, name, context);
+        }
 
         // The refusal that PlanParameter applies to the in parameter of a
         // callable, hoisted in front of the projection a signal argument goes
@@ -4451,6 +4460,76 @@ internal sealed class MarshalPlanner
             Flavor = argument.Flavor,
             EnumConverter = argument.EnumConverter,
             IsNullable = argument.IsNullable,
+            Doc = parameter.Doc,
+        };
+    }
+
+    /// <summary>
+    /// Plans an array argument of a signal, which is supported in the one
+    /// shape the runtime can read without a length: a NULL terminated vector
+    /// of strings the emission lends the handler.
+    /// </summary>
+    /// <param name="parameter">The gir parameter.</param>
+    /// <param name="array">The array the parameter declares.</param>
+    /// <param name="mapped">The mapping of the parameter.</param>
+    /// <param name="name">The C# name of the argument.</param>
+    /// <param name="context">The module that is being emitted.</param>
+    /// <returns>The plan, or <see langword="null"/> when the array is not supported.</returns>
+    /// <remarks>
+    /// <para>
+    /// The shape is decided by the planner of an array argument rather than
+    /// here, so that a signal answers the same gir a method does: only what it
+    /// plans as a string vector the callee borrows is accepted, and a length
+    /// counted array, a fixed size one, a pointer array and every element the
+    /// runtime has no reader for fall out with it. A vector the emission would
+    /// hand over is refused too — a handler owns nothing it is passed, and
+    /// there is no place in an emission that would free it.
+    /// </para>
+    /// <para>
+    /// What the handler sees is an array of its own, decoded out of the
+    /// vector while the emission holds it, so nothing of it is borrowed past
+    /// the handler and the null pointer needs no spelling of its own: it
+    /// arrives as the empty array. The argument is therefore not nullable
+    /// whatever the annotation says, which is the one thing this differs from
+    /// the plan it is derived from.
+    /// </para>
+    /// </remarks>
+    private ArgumentPlan? PlanSignalStrvArgument(
+        GirParameter parameter,
+        GirArrayRef array,
+        MappedType mapped,
+        string name,
+        PlanningContext context)
+    {
+        ArgumentPlan? argument = PlanArrayArgument(
+            parameter,
+            array,
+            mapped,
+            name,
+            ArgumentDirection.In,
+            parameter.Transfer,
+            nullable: false,
+            index: 0,
+            context,
+            offset: 0,
+            callerAllocates: false,
+            lengthIsOverridden: false);
+
+        if (argument is not { Kind: ArgumentKind.Strv, Transfer: GirTransfer.None })
+        {
+            return null;
+        }
+
+        return new ArgumentPlan
+        {
+            Source = parameter,
+            Kind = ArgumentKind.Strv,
+            Name = argument.Name,
+            PublicType = "string[]",
+            RawType = argument.RawType,
+            Direction = ArgumentDirection.In,
+            Transfer = GirTransfer.None,
+            IsNullable = false,
             Doc = parameter.Doc,
         };
     }

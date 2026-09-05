@@ -418,6 +418,90 @@ public unsafe partial class RTSPClient : Gst.GObject.Object
         }
     }
 
+    /// <summary>The arguments of the <c>check-requirements</c> signal of <c>GstRTSPClient</c>.</summary>
+    public sealed class CheckRequirementsSignalArgs : System.EventArgs
+    {
+        /// <summary>Initializes a new instance of the <see cref="CheckRequirementsSignalArgs"/> class.</summary>
+        /// <param name="ctx">a #GstRTSPContext</param>
+        /// <param name="arr">a NULL-terminated array of strings</param>
+        internal CheckRequirementsSignalArgs(Gst.RtspServer.RTSPContext ctx, string[] arr)
+        {
+            Ctx = ctx;
+            Arr = arr;
+        }
+
+        /// <summary>a #GstRTSPContext</summary>
+        /// <remarks>
+        /// A read only snapshot: the structure is copied out of the storage the
+        /// emitter holds, so writing to it changes nothing the emission reads
+        /// back. Every pointer inside it is borrowed for the length of the
+        /// handler and must not be kept past it.
+        /// </remarks>
+        public Gst.RtspServer.RTSPContext Ctx { get; }
+
+        /// <summary>a NULL-terminated array of strings</summary>
+        /// <remarks>
+        /// The strings are read out of the vector the emitter passes, so the array
+        /// is the handler's own and may be kept. An emission that carries no
+        /// vector is the empty array.
+        /// </remarks>
+        public string[] Arr { get; }
+    }
+
+    /// <summary>The handler of the <c>check-requirements</c> signal of <c>GstRTSPClient</c>.</summary>
+    /// <remarks>
+    /// The string the handler returns is copied into memory the emitting library
+    /// owns and frees. Returning <see langword="null"/> answers no value, and what
+    /// the emission makes of that is the contract of the signal, stated in its own
+    /// returns documentation.
+    /// </remarks>
+    /// <param name="sender">The instance that emitted the signal.</param>
+    /// <param name="args">The arguments of the signal.</param>
+    /// <returns>
+    /// a newly allocated string with comma-separated list of
+    ///          unsupported options. An empty string must be returned if
+    ///          all options are supported.
+    /// </returns>
+    public delegate string CheckRequirementsHandler(object? sender, Gst.RtspServer.RTSPClient.CheckRequirementsSignalArgs args);
+
+    /// <summary>Raised for the <c>check-requirements</c> signal of <c>GstRTSPClient</c>.</summary>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
+    public event Gst.RtspServer.RTSPClient.CheckRequirementsHandler CheckRequirements
+    {
+        add => Gst.RtspServer.SignalConnections.Add(this, "check-requirements", (nint)(delegate* unmanaged[Cdecl]<nint, Gst.RtspServer.RTSPContext*, nint*, nint, nint>)&CheckRequirementsTrampoline, value);
+        remove => Gst.RtspServer.SignalConnections.Remove(this, "check-requirements", value);
+    }
+
+    /// <summary>The native handler of the <c>check-requirements</c> signal of <c>GstRTSPClient</c>.</summary>
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
+    private static nint CheckRequirementsTrampoline(nint instance, Gst.RtspServer.RTSPContext* ctx, nint* arr, nint userData)
+    {
+        try
+        {
+            if (Gst.Interop.CallbackHandle.GetState<Gst.RtspServer.RTSPClient.CheckRequirementsHandler>(userData) is not { } handler)
+            {
+                return default;
+            }
+
+            Gst.RtspServer.RTSPContext ctxValue = *ctx;
+            string[] arrValue = Gst.Interop.GMarshal.StrvToArray((nint)arr, free: false) ?? [];
+            string result = handler(
+                Gst.GObject.Object.FromNative(instance, Gst.Interop.Transfer.None),
+                new Gst.RtspServer.RTSPClient.CheckRequirementsSignalArgs(ctxValue, arrValue));
+            return Gst.Interop.GMarshal.StringToUtf8Ptr(result);
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+            return default;
+        }
+    }
+
     /// <summary>Raised for the <c>closed</c> signal of <c>GstRTSPClient</c>.</summary>
     /// <remarks>
     /// The handler is remembered on the wrapper it was added to and has to be
