@@ -626,10 +626,12 @@ internal static class Launcher
     /// <para>
     /// The route is the <c>GValue</c> one and not <c>EncodingProfile.FromString</c>
     /// on purpose: <c>gst_encoding_profile_from_string</c> is only 1.26 and up,
-    /// while the deserializer it is a wrapper over is much older — the class
-    /// init of the type registers it with <c>gst_value_register</c>
-    /// (<c>encoding-profile.c:366-408</c>), so <c>gst_value_deserialize</c> into
-    /// a value of the profile type parses the same strings on every 1.x. It is
+    /// while the deserializer it is a wrapper over is much older —
+    /// <c>gst_encoding_profile_get_type</c> registers it with
+    /// <c>gst_value_register</c> (<c>encoding-profile.c:383-412</c>), so a
+    /// registered type always has its deserializer and
+    /// <c>gst_value_deserialize</c> into a value of the profile type parses the
+    /// same strings on every 1.x. It is
     /// the only path here, on every version, rather than a fallback behind a
     /// try/catch that only an old library would ever run and that nothing else
     /// would exercise.
@@ -671,14 +673,17 @@ internal static class Launcher
     /// <exception cref="InvalidOperationException">The type is not registered.</exception>
     /// <remarks>
     /// A type is registered with the type system by its own <c>get_type</c>, and
-    /// naming <see cref="EncodingProfile"/> in managed code does not call one:
-    /// the module initialiser of a binding assembly only runs before the first
-    /// call into that assembly. <see cref="GstPbutils.Initialize"/> is such a
-    /// call and hands the module to the type registry, and freezing the registry
-    /// resolves the <c>get_type</c> of every entry in it, which is where
-    /// <c>gst_encoding_profile_get_type</c> is finally run. Deserializing into a
-    /// value of an unregistered type would only warn and fail, which would read
-    /// here as an invalid format.
+    /// naming <see cref="EncodingProfile"/> in managed code does not call one.
+    /// <see cref="Gst.GObject.TypeRegistry.Freeze"/> is what runs the
+    /// <c>get_type</c> of every entry of every registered module, which is where
+    /// <c>gst_encoding_profile_get_type</c> is finally called. The managed
+    /// registry already holds the Pbutils module by then: the sweep
+    /// <c>GstGES.Initialize</c> runs takes in every loaded binding assembly and
+    /// keeps watching for later ones (<c>GstSharp.cs:261-277</c>), so the
+    /// <see cref="GstPbutils.Initialize"/> above it is belt and braces —
+    /// harmless, idempotent, and it says out loud which module has to be there.
+    /// Deserializing into a value of an unregistered type would only warn and
+    /// fail, which would read here as an invalid format.
     /// </remarks>
     private static Gst.GObject.GType EncodingProfileType()
     {
