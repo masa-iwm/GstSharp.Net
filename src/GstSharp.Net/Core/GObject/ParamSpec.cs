@@ -435,7 +435,6 @@ public class ParamSpec : IDisposable
     /// <c>GType</c> behind it, which is what puts <c>value_type</c> at three
     /// slots rather than at two and a half.
     /// </remarks>
-
     internal static unsafe ParamFlags FlagsOf(nint pspec) =>
         pspec == nint.Zero ? ParamFlags.None : (ParamFlags)(*(uint*)((byte*)pspec + (2 * sizeof(nint))));
 

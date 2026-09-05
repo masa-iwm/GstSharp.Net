@@ -322,17 +322,6 @@ public sealed class AbiProbeTests
     }
 
     /// <summary>
-    /// The class struct chain of <c>GstElement</c>:
-    /// <c>GTypeClass</c> is one <c>GType</c>, so 8 bytes; <c>GObjectClass</c>
-    /// adds <c>construct_properties</c>, eight slots, <c>flags</c>,
-    /// <c>n_construct_properties</c>, <c>pspecs</c>, <c>n_pspecs</c> and
-    /// <c>pdummy[3]</c>, for 136; <c>GstObjectClass</c> adds
-    /// <c>path_string_separator</c>, <c>deep_notify</c> and
-    /// <c>_gst_reserved[4]</c>, for 184; <c>GstElementClass</c> adds five data
-    /// fields (the two <c>guint</c> sized ones pack into one word), sixteen
-    /// slots and <c>_gst_reserved[18]</c>, for 488.
-    /// </summary>
-    /// <summary>
     /// The two property slots of <c>GObjectClass</c> sit where the overrides
     /// say they do. The total size already catches gross drift, but the
     /// overrides are written at a byte offset, so the offset is what has to be
@@ -383,6 +372,17 @@ public sealed class AbiProbeTests
         Assert.Equal(40, GstURIHandlerInterfaceRaw.SetUriOffset);
     }
 
+    /// <summary>
+    /// The class struct chain of <c>GstElement</c>:
+    /// <c>GTypeClass</c> is one <c>GType</c>, so 8 bytes; <c>GObjectClass</c>
+    /// adds <c>construct_properties</c>, eight slots, <c>flags</c>,
+    /// <c>n_construct_properties</c>, <c>pspecs</c>, <c>n_pspecs</c> and
+    /// <c>pdummy[3]</c>, for 136; <c>GstObjectClass</c> adds
+    /// <c>path_string_separator</c>, <c>deep_notify</c> and
+    /// <c>_gst_reserved[4]</c>, for 184; <c>GstElementClass</c> adds five data
+    /// fields (the two <c>guint</c> sized ones pack into one word), sixteen
+    /// slots and <c>_gst_reserved[18]</c>, for 488.
+    /// </summary>
     [Fact]
     public unsafe void ElementClassRawMatchesTheHeaderLayout()
     {

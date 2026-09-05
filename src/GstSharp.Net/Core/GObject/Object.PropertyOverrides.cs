@@ -24,9 +24,16 @@ namespace Gst.GObject;
 public partial class Object
 {
     /// <summary>
-    /// The log domain the runtime warns under, which is the one GObject itself
-    /// uses for <c>G_OBJECT_WARN_INVALID_PROPERTY_ID</c>.
+    /// The log domain the runtime warns under.
     /// </summary>
+    /// <remarks>
+    /// <c>G_OBJECT_WARN_INVALID_PROPERTY_ID</c> is a macro, so the domain it
+    /// warns under is the <c>G_LOG_DOMAIN</c> of whichever file expanded it —
+    /// the subclass's own, not GObject's. A managed subclass has no such
+    /// per-file domain, so the runtime names the one the macro carries when
+    /// GObject itself expands it, which is where a reader of the message will
+    /// look for it.
+    /// </remarks>
     private const string PropertyLogDomain = "GLib-GObject";
 
     private static readonly VfuncOverride SetPropertySlot = CreateSetPropertyOverride();
@@ -126,8 +133,11 @@ public partial class Object
     /// pipeline description is given its properties before the caller of
     /// <c>gst_parse_launch</c> sees it. The wrapper exists by then — the
     /// runtime builds it here if this is the first managed contact with the
-    /// instance — but nothing else about the object is finished, so a setter
-    /// should store the value and no more.
+    /// instance — and no lock of the runtime is held, so a setter may call
+    /// whatever it likes. What is <em>not</em> finished is the rest of the
+    /// world around the instance: it is not in a bin, it has no peers, and
+    /// nobody has been handed it yet. Store the value and leave anything that
+    /// needs a pipeline to the state change that brings one.
     /// </para>
     /// <para>
     /// Do not notify from here unless the specification carries
@@ -173,7 +183,21 @@ public partial class Object
 
     private static nuint DeclaringObjectType() => GObjectNative.ObjectGetType();
 
-    private static void WarnInvalidPropertyId(string operation, uint propertyId, ParamSpec pspec)
+    /// <summary>
+    /// Warns about an identifier no property of this object was installed with,
+    /// the way <c>G_OBJECT_WARN_INVALID_PROPERTY_ID</c> does.
+    /// </summary>
+    /// <param name="operation">Either <c>set</c> or <c>get</c>.</param>
+    /// <param name="propertyId">The identifier nothing claimed.</param>
+    /// <param name="pspec">The specification the slot was handed.</param>
+    /// <remarks>
+    /// The macro names the type of the specification and the type of the
+    /// <em>instance</em> (<c>G_OBJECT_TYPE_NAME</c>) — the offending element,
+    /// which is the one thing that lets a reader find it. The owner of the
+    /// specification is the class that installed it and is often not the same
+    /// type at all, so the instance is what is named here as well.
+    /// </remarks>
+    private void WarnInvalidPropertyId(string operation, uint propertyId, ParamSpec pspec)
     {
         ArgumentNullException.ThrowIfNull(pspec);
 
@@ -185,7 +209,7 @@ public partial class Object
                 propertyId,
                 pspec.Name,
                 ParamSpec.NativeTypeOf(pspec.Handle).Name,
-                pspec.OwnerType.Name,
+                NativeType.Name,
                 operation));
     }
 

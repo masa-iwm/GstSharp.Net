@@ -73,9 +73,10 @@ public class ObjectClassConfig
     /// <exception cref="ArgumentOutOfRangeException"><paramref name="propertyId"/> is zero.</exception>
     /// <exception cref="ArgumentException">
     /// The specification asks for <see cref="ParamFlags.Construct"/> or
-    /// <see cref="ParamFlags.ConstructOnly"/>, it has already been installed
-    /// somewhere, the identifier is one this class already used, or this class
-    /// already has a property of that name.
+    /// <see cref="ParamFlags.ConstructOnly"/>, it is neither
+    /// <see cref="ParamFlags.Readable"/> nor <see cref="ParamFlags.Writable"/>,
+    /// it has already been installed somewhere, the identifier is one this
+    /// class already used, or this class already has a property of that name.
     /// </exception>
     /// <exception cref="InvalidOperationException">
     /// The subclass did not declare
@@ -120,6 +121,22 @@ public class ObjectClassConfig
                 nameof(spec));
         }
 
+        if ((flags & (ParamFlags.Readable | ParamFlags.Writable)) == 0)
+        {
+            // validate_pspec_to_install (gobject.c:1126-1140) asserts on this
+            // and g_object_class_install_property answers nothing, so an
+            // install would be a silent no-op that still left this class with
+            // a specification it thinks it owns. The refusal comes before the
+            // identifier is taken and before anything native is called, so a
+            // caller may correct the flags and install the same specification.
+            throw new ArgumentException(
+                string.Format(
+                    CultureInfo.InvariantCulture,
+                    "The property '{0}' is neither readable nor writable, so nothing could ever reach it.",
+                    spec.Name),
+                nameof(spec));
+        }
+
         if (ParamSpec.ParamIdOf(spec.Handle) != 0)
         {
             throw new ArgumentException(
@@ -142,7 +159,12 @@ public class ObjectClassConfig
         }
 
         GType ownType = OwnType;
-        string canonical = Canonicalise(spec.Name);
+
+        // The name needs no canonicalisation of its own: g_param_spec_internal
+        // canonicalises it unless STATIC_NAME was asked for (gparam.c:476-479,
+        // and New strips the static flags), and the pool retries a lookup with
+        // the canonical form anyway (gparam.c:1110-1119).
+        string canonical = spec.Name;
 
         Span<byte> nameBuffer = stackalloc byte[GMarshal.StackBufferSize];
         using (Utf8Scope nameScope = GMarshal.StackUtf8(canonical, nameBuffer))
@@ -187,13 +209,6 @@ public class ObjectClassConfig
         // ever release.
         SubclassRegistry.RememberInstalledSpec(ownType, ParamSpec.FromNative(spec.Handle, Transfer.None));
     }
-
-    /// <summary>
-    /// Canonicalises a property name the way GObject does internally, so that
-    /// the duplicate check looks the name up in the form it will be stored
-    /// under.
-    /// </summary>
-    private static string Canonicalise(string name) => name.Replace('_', '-');
 
     /// <summary>
     /// Defines a signal on the class that is being initialised.

@@ -373,6 +373,31 @@ public sealed unsafe class ParamSpecConstructionTests
     }
 
     /// <summary>
+    /// A bound that is not a number is refused as the argument it is. NaN
+    /// compares false against everything, so it passes an ordinary range check
+    /// and the C constructor is the one that would refuse it — by answering
+    /// nothing at all.
+    /// </summary>
+    [Fact]
+    public void ABoundThatIsNotANumberIsRefused()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => ParamSpecFloat.New("nan-minimum", null, null, float.NaN, 1f, 0f, ReadWrite));
+
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => ParamSpecFloat.New("nan-default", null, null, 0f, 1f, float.NaN, ReadWrite));
+
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => ParamSpecDouble.New("nan-maximum", null, null, 0d, double.NaN, 0d, ReadWrite));
+
+        // An infinity is a number C accepts and orders like any other.
+        using ParamSpecDouble unbounded = ParamSpecDouble.New(
+            "unbounded", null, null, double.NegativeInfinity, double.PositiveInfinity, 0d, ReadWrite);
+
+        Assert.Equal(double.PositiveInfinity, unbounded.Maximum);
+    }
+
+    /// <summary>
     /// A term of a fraction GStreamer would refuse is refused here: a zero
     /// denominator makes <c>gst_value_set_fraction</c> leave the value it was to
     /// write at <c>0/1</c>, so the validation that follows it in C runs against

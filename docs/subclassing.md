@@ -590,7 +590,9 @@ The rules the fabrication follows:
   the same type — takes gate(A) then gate(B) while another streaming thread
   takes gate(B) then gate(A). State that costs anything goes into the
   parameterless constructor, after its `this(...)` call, or behind a lazy
-  field. An analyzer for this is a stage 3b candidate; until then it is a rule.
+  field. No analyzer checks it — `GST0005` is about a `CreateWrapper` that
+  throws its argument away, not about what a constructor body does — so it
+  stays a rule you keep.
 * **A constructor body that throws is cleaned up.** The base constructor interns
   the wrapper before the derived body runs, so a body that throws would leave a
   live, toggle-holding wrapper nobody is ever handed. The fabrication disposes
@@ -675,9 +677,21 @@ GObject checks nothing there.
 managed contact an instance ever has: `gst_parse_launch("… value=5 ! fakesink")`
 creates the element with `gst_element_factory_create_with_properties`, so the
 set_property slot runs before the caller of `ParseLaunch` has seen anything.
-The trampoline fabricates the wrapper there, on the calling thread, and the
-setter must behave like any other fabrication-time code: store the value, call
-nothing. A write from another thread stays on that thread; nothing hops.
+The trampoline fabricates the wrapper there, on the calling thread.
+
+What that window *is* is worth stating exactly, because it is not the
+fabrication-time window of §5.4. A plain property is not a construct property,
+so GObject sets it after `constructed` has run and just before `g_object_new`
+returns (gobject.c:2713-2721); `Object.Fabricate` releases the per-handle gate
+before the trampoline calls the setter, so **no gate and no lock of the runtime
+is held**, and a setter may call whatever it likes — `Notify(pspec)` above all,
+which is what an `ExplicitNotify` property requires of it. GObject may have
+frozen the notification queue for the duration of the call
+(gobject.c:2674-2681), in which case the notification is delivered when it
+thaws, a few lines later. What is *not* ready is everything around the
+instance: it is in no bin, it has no peers, and nobody has been handed it.
+Store the value; leave anything that needs a pipeline to the state change that
+brings one. A write from another thread stays on that thread; nothing hops.
 
 **No wrapper means warn and drop.** If `TryGetOrFabricate` answers nothing — an
 instance of the type being constructed on this thread, or a wrapper that was

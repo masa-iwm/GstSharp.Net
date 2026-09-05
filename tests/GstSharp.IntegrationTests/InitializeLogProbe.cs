@@ -51,6 +51,8 @@ internal static unsafe partial class InitializeLogProbe
 
     private static bool _capturing;
 
+    private static List<string>? _scope;
+
     /// <summary>
     /// Gets the criticals GLib logged while GStreamer was initialised.
     /// </summary>
@@ -72,6 +74,53 @@ internal static unsafe partial class InitializeLogProbe
     /// what makes an empty <see cref="InitializeCriticals"/> mean anything.
     /// </summary>
     internal static bool IsInstalled { get; private set; }
+
+    /// <summary>
+    /// Collects every message GLib writes while an action runs.
+    /// </summary>
+    /// <param name="action">What to run.</param>
+    /// <returns>The messages, formatted the way GLib formats them.</returns>
+    /// <remarks>
+    /// The writer of this probe is the only one the process may install, so a
+    /// test that wants to see a warning has to go through it. Unlike
+    /// <see cref="InitializeCriticals"/> this collects every level, because a
+    /// warning is not serious enough to be captured otherwise. The messages of
+    /// whatever else logs on another thread meanwhile land in the same list, so
+    /// assert on a predicate rather than on a single entry.
+    /// </remarks>
+    internal static IReadOnlyList<string> CaptureWhile(Action action)
+    {
+        ArgumentNullException.ThrowIfNull(action);
+
+        List<string> scope = [];
+
+        lock (Sync)
+        {
+            if (_scope is not null)
+            {
+                throw new InvalidOperationException("Only one capture may be open at a time.");
+            }
+
+            _scope = scope;
+        }
+
+        try
+        {
+            action();
+        }
+        finally
+        {
+            lock (Sync)
+            {
+                _scope = null;
+            }
+        }
+
+        lock (Sync)
+        {
+            return scope.ToArray();
+        }
+    }
 
     /// <summary>
     /// Installs the log writer, makes sure the Pbutils module is registered and
@@ -150,7 +199,14 @@ internal static unsafe partial class InitializeLogProbe
     {
         try
         {
-            if ((logLevel & Serious) != 0)
+            bool scoped;
+
+            lock (Sync)
+            {
+                scoped = _scope is not null;
+            }
+
+            if (scoped || (logLevel & Serious) != 0)
             {
                 Capture(logLevel, fields, fieldCount);
             }
@@ -167,7 +223,7 @@ internal static unsafe partial class InitializeLogProbe
     {
         lock (Sync)
         {
-            if (!_capturing)
+            if (!_capturing && _scope is null)
             {
                 return;
             }
@@ -178,10 +234,17 @@ internal static unsafe partial class InitializeLogProbe
 
         lock (Sync)
         {
-            if (_capturing && message is not null)
+            if (message is null)
+            {
+                return;
+            }
+
+            if (_capturing && (logLevel & Serious) != 0)
             {
                 Captured.Add(message);
             }
+
+            _scope?.Add(message);
         }
     }
 

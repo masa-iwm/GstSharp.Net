@@ -117,6 +117,36 @@ internal static unsafe class ParamSpecFactory
     internal static uint Sanitize(ParamFlags flags) => (uint)(flags & ~ParamFlags.StaticStrings);
 
     /// <summary>
+    /// Refuses a bound that is not a number.
+    /// </summary>
+    /// <param name="minimum">The smallest accepted value.</param>
+    /// <param name="maximum">The largest accepted value.</param>
+    /// <param name="defaultValue">The value of a property nothing wrote to.</param>
+    /// <exception cref="ArgumentOutOfRangeException">One of the three is NaN.</exception>
+    /// <remarks>
+    /// NaN compares false against everything, so it passes
+    /// <see cref="CheckRange{T}"/> — and the C constructor then fails its own
+    /// <c>g_return_val_if_fail</c> and answers nothing, which would surface as
+    /// an <see cref="InvalidOperationException"/> about the library refusing.
+    /// The argument is what is wrong, so it is named as one. Infinities are
+    /// left alone: C accepts them and they order like any other value.
+    /// </remarks>
+    internal static void RefuseNaN(double minimum, double maximum, double defaultValue)
+    {
+        Refuse(minimum, nameof(minimum));
+        Refuse(maximum, nameof(maximum));
+        Refuse(defaultValue, nameof(defaultValue));
+
+        static void Refuse(double value, string name)
+        {
+            if (double.IsNaN(value))
+            {
+                throw new ArgumentOutOfRangeException(name, value, "A bound of a property cannot be NaN.");
+            }
+        }
+    }
+
+    /// <summary>
     /// Refuses a range a default does not lie in, which the C constructors only
     /// assert.
     /// </summary>

@@ -293,10 +293,75 @@ public sealed class SubclassPropertySignalTests
         using Element made = Made("unknown-id");
         ProbePropertyElement probe = Assert.IsType<ProbePropertyElement>(made);
 
-        probe.WarnForUnknownId(4242, ProbePropertyElement.SpecOfValue);
+        // A specification of nobody's: what the warning has to name is the type
+        // of the *instance*, the way G_OBJECT_WARN_INVALID_PROPERTY_ID does, and
+        // a specification whose owner is the probe as well would not tell the
+        // two apart.
+        using ParamSpecInt orphan = ParamSpecInt.New("orphan", null, null, 0, 10, 0, ReadWrite);
+
+        IReadOnlyList<string> logged = InitializeLogProbe.CaptureWhile(
+            () => probe.WarnForUnknownId(4242, orphan));
+
+        if (InitializeLogProbe.IsInstalled)
+        {
+            Assert.Contains(
+                logged,
+                message => message.Contains("4242", StringComparison.Ordinal)
+                    && message.Contains("orphan", StringComparison.Ordinal)
+                    && message.Contains(ProbePropertyElement.GTypeName, StringComparison.Ordinal));
+        }
 
         probe.SetProperty("value", 6);
         Assert.Equal(6, probe.Value);
+    }
+
+    /// <summary>
+    /// A specification that is neither readable nor writable is refused before
+    /// anything native is called: GObject would assert and install nothing,
+    /// leaving the class with a property it believes it owns.
+    /// </summary>
+    [Fact]
+    public void APropertyThatIsNeitherReadableNorWritableIsRefused()
+    {
+        using ParamSpecInt spec =
+            ParamSpecInt.New("unreachable", null, null, 0, 10, 0, ParamFlags.ExplicitNotify);
+
+        ArgumentException failure = DefineAndCatch<ArgumentException>(
+            "GstSharpTestUnreachableProperty",
+            config => config.InstallProperty(1, spec));
+
+        Assert.Contains("neither readable nor writable", failure.Message, StringComparison.Ordinal);
+
+        // Nothing native ran: the specification still holds the single
+        // reference New sank, and no class claims it.
+        Assert.Equal(1u, RefCountOf(spec.Handle));
+        Assert.False(spec.OwnerType.IsValid);
+    }
+
+    /// <summary>
+    /// The wrapper the caller installed a property from may be disposed: the
+    /// class and the runtime hold references of their own, and the property
+    /// answers as it did.
+    /// </summary>
+    [Fact]
+    public void TheWrapperAPropertyWasInstalledFromMayBeDisposed()
+    {
+        nint specification = ProbeDisposableSpecElement.SpecificationHandle;
+
+        Assert.True(ProbeDisposableSpecElement.RegisteredType.IsValid);
+        Assert.Equal(4u, RefCountOf(specification));
+
+        ProbeDisposableSpecElement.DisposeSpecification();
+
+        // One reference gone, three left: the class, GObject's pool, and the
+        // long-lived wrapper the property slots hand out.
+        Assert.Equal(3u, RefCountOf(specification));
+
+        using ProbeDisposableSpecElement element = new();
+        element.SetProperty("value", 17);
+
+        Assert.Equal(17, element.Value);
+        Assert.Equal(17, element.GetProperty<int>("value"));
     }
 
     /// <summary>
@@ -419,6 +484,41 @@ public sealed class SubclassPropertySignalTests
             config => config.AddSignal("gstsharp-nowhere", SignalFlags.NoRecurse, GType.None, []));
 
         Assert.Contains("RunFirst", failure.Message, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// <c>TrueHandled</c> reads every answer as a boolean, so a signal that
+    /// returns anything else is refused rather than left to critical on every
+    /// emission.
+    /// </summary>
+    [Fact]
+    public void ATrueHandledSignalThatAnswersSomethingElseIsRefused()
+    {
+        ArgumentException failure = DefineAndCatch<ArgumentException>(
+            "GstSharpTestTrueHandledInt",
+            config => config.AddSignal(
+                "gstsharp-handled-int",
+                SignalFlags.RunLast,
+                GType.Int,
+                [],
+                null,
+                SignalAccumulator.TrueHandled));
+
+        Assert.Contains("return a boolean", failure.Message, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// A parameter a <c>GValue</c> cannot carry is refused: the emission would
+    /// collect it into one.
+    /// </summary>
+    [Fact]
+    public void ASignalParameterThatIsNotAValueTypeIsRefused()
+    {
+        ArgumentException failure = DefineAndCatch<ArgumentException>(
+            "GstSharpTestInvalidSignalParameter",
+            config => config.AddSignal("gstsharp-uncarried", SignalFlags.RunLast, GType.None, [GType.Invalid]));
+
+        Assert.Contains("A parameter type", failure.Message, StringComparison.Ordinal);
     }
 
     /// <summary>A signal that answers nothing cannot have an accumulator.</summary>

@@ -382,21 +382,6 @@ internal static unsafe partial class GObjectNative
     [LibraryImport("GObject", EntryPoint = "g_param_spec_gtype")]
     internal static partial nint ParamSpecGType(byte* name, byte* nick, byte* blurb, nuint isAType, uint flags);
 
-    /// <summary>
-    /// Builds the specification of a variant property. The type is copied and a
-    /// default is referenced and sunk. Neither <c>GVariant</c> nor
-    /// <c>GVariantType</c> is bound, so nothing calls this yet; it is imported
-    /// beside its siblings so the set is complete.
-    /// </summary>
-    [LibraryImport("GObject", EntryPoint = "g_param_spec_variant")]
-    internal static partial nint ParamSpecVariant(
-        byte* name,
-        byte* nick,
-        byte* blurb,
-        nint type,
-        nint defaultValue,
-        uint flags);
-
     [LibraryImport("GObject", EntryPoint = "g_value_init")]
     internal static partial nint ValueInit(ref GValueNative value, nuint type);
 

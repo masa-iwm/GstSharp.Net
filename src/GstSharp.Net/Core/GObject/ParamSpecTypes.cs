@@ -1042,8 +1042,9 @@ public sealed unsafe class ParamSpecFloat : ParamSpec
     /// contains a null character.
     /// </exception>
     /// <exception cref="ArgumentOutOfRangeException">
-    /// <paramref name="minimum"/> is larger than <paramref name="maximum"/>, or
-    /// <paramref name="defaultValue"/> lies outside the range.
+    /// <paramref name="minimum"/> is larger than <paramref name="maximum"/>,
+    /// <paramref name="defaultValue"/> lies outside the range, or one of the
+    /// three is NaN.
     /// </exception>
     /// <exception cref="InvalidOperationException">
     /// The library refused to build the specification and answered nothing.
@@ -1057,6 +1058,7 @@ public sealed unsafe class ParamSpecFloat : ParamSpec
         float defaultValue,
         ParamFlags flags)
     {
+        ParamSpecFactory.RefuseNaN(minimum, maximum, defaultValue);
         ParamSpecFactory.CheckRange(minimum, maximum, defaultValue);
 
         using ParamSpecFactory.Strings strings = ParamSpecFactory.Prepare(name, nick, blurb);
@@ -1167,8 +1169,9 @@ public sealed unsafe class ParamSpecDouble : ParamSpec
     /// contains a null character.
     /// </exception>
     /// <exception cref="ArgumentOutOfRangeException">
-    /// <paramref name="minimum"/> is larger than <paramref name="maximum"/>, or
-    /// <paramref name="defaultValue"/> lies outside the range.
+    /// <paramref name="minimum"/> is larger than <paramref name="maximum"/>,
+    /// <paramref name="defaultValue"/> lies outside the range, or one of the
+    /// three is NaN.
     /// </exception>
     /// <exception cref="InvalidOperationException">
     /// The library refused to build the specification and answered nothing.
@@ -1182,6 +1185,7 @@ public sealed unsafe class ParamSpecDouble : ParamSpec
         double defaultValue,
         ParamFlags flags)
     {
+        ParamSpecFactory.RefuseNaN(minimum, maximum, defaultValue);
         ParamSpecFactory.CheckRange(minimum, maximum, defaultValue);
 
         using ParamSpecFactory.Strings strings = ParamSpecFactory.Prepare(name, nick, blurb);
