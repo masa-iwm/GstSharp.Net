@@ -182,19 +182,28 @@ public static unsafe class URIHandlerImplementation
         int code = (int)URIError.BadUri;
         string message = fallback;
 
+        // The message and the domain are taken separately: a plain
+        // GException carries a reason and no domain, and losing the reason
+        // because of that would be the worst of both. What GLib would refuse -
+        // an empty message, or one with an embedded null - counts as no
+        // message at all, because g_error_new_literal answers NULL for it and
+        // a null error is the crash this method exists to prevent.
         if (failure is { } reported
-            && reported.Domain.Value != 0
             && !string.IsNullOrEmpty(reported.Message)
             && !reported.Message.Contains('\0', StringComparison.Ordinal))
         {
-            domain = reported.Domain.Value;
-            code = reported.Code;
             message = reported.Message;
+
+            if (reported.Domain.Value != 0)
+            {
+                domain = reported.Domain.Value;
+                code = reported.Code;
+            }
         }
 
         if (message.Contains('\0', StringComparison.Ordinal))
         {
-            message = fallback.Contains('\0', StringComparison.Ordinal) ? "The URI was refused." : fallback;
+            message = "The URI was refused.";
         }
 
         nint text = GMarshal.StringToUtf8Ptr(message);

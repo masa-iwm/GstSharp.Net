@@ -104,6 +104,24 @@ public sealed unsafe partial class SubclassUriHandlerTests
     }
 
     /// <summary>
+    /// A refusal that does name a reason keeps it. A handler author writes a
+    /// <c>GException</c> with a message and no domain, so the message is what
+    /// travels and the runtime supplies the <c>GST_URI_ERROR</c> around it.
+    /// </summary>
+    [Fact]
+    public void ARefusalThatNamesAReasonKeepsIt()
+    {
+        Assert.True(ProbeUriElement.IsRegistered);
+
+        GException error = Assert.Throws<GException>(
+            () => Element.MakeFromUri(URIType.Src, "gstsharptest://reason", null));
+
+        Assert.Equal(ProbeUriElement.StatedReason, error.Message);
+        Assert.Equal(URIErrorExtensions.Quark(), error.Domain);
+        Assert.Equal((int)URIError.BadUri, error.Code);
+    }
+
+    /// <summary>
     /// The same for a type that refuses everything, which is the candidate
     /// <c>gst_element_make_from_uri</c> would have dereferenced a null error
     /// for. Nothing crashes and the loop ends with the synthesised error.

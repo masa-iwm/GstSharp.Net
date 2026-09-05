@@ -23,6 +23,12 @@ internal sealed class ProbeUriElement : PushSrc, IManagedSubclass<ProbeUriElemen
     /// <summary>The part of a URI that makes the element refuse it.</summary>
     internal const string RefusedHost = "refused";
 
+    /// <summary>The part of a URI the element refuses with a reason of its own.</summary>
+    internal const string ReasonHost = "reason";
+
+    /// <summary>The reason the element gives for refusing <see cref="ReasonHost"/>.</summary>
+    internal const string StatedReason = "The feed is offline.";
+
     private const string MediaType = "application/x-gstsharp-uri-element";
 
     private static readonly PadTemplate SrcTemplate = NewSrcTemplate();
@@ -87,6 +93,14 @@ internal sealed class ProbeUriElement : PushSrc, IManagedSubclass<ProbeUriElemen
     {
         _ = Interlocked.Increment(ref _setUriCalls);
         error = null;
+
+        if (uri.Contains(ReasonHost, StringComparison.Ordinal))
+        {
+            // A reason without a domain is what a handler author writes; the
+            // runtime keeps the message and fills the domain in.
+            error = new GException(StatedReason);
+            return false;
+        }
 
         if (uri.Contains(RefusedHost, StringComparison.Ordinal))
         {
