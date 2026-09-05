@@ -23,6 +23,14 @@
     <!-- The managed identity filter of the trampoline benchmark derives from
          GstBaseTransform. -->
     <ProjectReference Include="../../src/GstSharp.Net.Base/GstSharp.Net.Base.csproj" />
+
+    <!-- The harness is a consumer of the binding like the samples are, so it
+         builds with the analyzers the package ships. ReferenceOutputAssembly
+         keeps the analyzer out of the compilation references, OutputItemType
+         makes the build run the rules, and PrivateAssets keeps it out of the
+         package dependencies. One project needs no Directory.Build.props of
+         its own for this. -->
+    <ProjectReference Include="../../src/GstSharp.Net.Analyzers/GstSharp.Net.Analyzers.csproj" ReferenceOutputAssembly="false" OutputItemType="Analyzer" PrivateAssets="all" />
   </ItemGroup>
 
 </Project>
