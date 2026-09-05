@@ -3590,45 +3590,6 @@ internal sealed class MarshalPlanner
     }
 
     /// <summary>
-    /// Plans a <c>GList</c> that a call hands back.
-    /// </summary>
-    /// <param name="value">The gir return value.</param>
-    /// <param name="mapped">Its mapping, whose element type carries the payload.</param>
-    /// <param name="transfer">What the call transfers along with the list.</param>
-    /// <returns>The plan, or <see langword="null"/> when the element is not supported.</returns>
-    /// <remarks>
-    /// <para>
-    /// Only the return position is planned here. A <c>GList</c> parameter is
-    /// built in managed code and handed over by
-    /// <see cref="PlanListArgument"/>, which is the mirror of this method and
-    /// carries the ownership rules of that direction. A <c>GSList</c> return is
-    /// skipped: the only one in a bound module carries an element this
-    /// projection would refuse anyway.
-    /// </para>
-    /// <para>
-    /// The element decides everything: a wrapper that the runtime can adopt
-    /// (a <c>GObject</c>, a mini object or a boxed record), an opaque record, or
-    /// a string. Anything else, a plain record above all, is refused, because
-    /// there is no projection of a bare pointer into it that the generator can
-    /// check. The list itself is never nullable on the public surface:
-    /// <c>NULL</c> is how C spells the empty list, so the member returns an
-    /// empty list rather than <see langword="null"/>.
-    /// </para>
-    /// <para>
-    /// <paramref name="transfer"/> is carried through unchanged and the emitter
-    /// reads both halves of it: <c>full</c> owns the spine and the elements,
-    /// <c>container</c> owns the spine alone, and <c>none</c> owns neither and
-    /// leaves the spine to the library. That second half is what bounds the
-    /// opaque element: the wrapper of an opaque record is a bare pointer holder
-    /// that owns nothing and is never disposed, so a list that hands its
-    /// elements over has nobody to release them and is refused. Only a list
-    /// whose elements stay the library's - <c>none</c> and <c>container</c> - is
-    /// planned, which is what <c>gst_element_factory_get_static_pad_templates</c>
-    /// returns: a <c>const GList</c> of the static pad templates the factory
-    /// keeps in its own storage.
-    /// </para>
-    /// </remarks>
-    /// <summary>
     /// The documentation of a return value, with the sentence that tells the
     /// caller to release it dropped when the overlays say the value is
     /// borrowed after all.
@@ -3669,6 +3630,45 @@ internal sealed class MarshalPlanner
         return stripped.Length == 0 ? null : stripped;
     }
 
+    /// <summary>
+    /// Plans a <c>GList</c> that a call hands back.
+    /// </summary>
+    /// <param name="value">The gir return value.</param>
+    /// <param name="mapped">Its mapping, whose element type carries the payload.</param>
+    /// <param name="transfer">What the call transfers along with the list.</param>
+    /// <returns>The plan, or <see langword="null"/> when the element is not supported.</returns>
+    /// <remarks>
+    /// <para>
+    /// Only the return position is planned here. A <c>GList</c> parameter is
+    /// built in managed code and handed over by
+    /// <see cref="PlanListArgument"/>, which is the mirror of this method and
+    /// carries the ownership rules of that direction. A <c>GSList</c> return is
+    /// skipped: the only one in a bound module carries an element this
+    /// projection would refuse anyway.
+    /// </para>
+    /// <para>
+    /// The element decides everything: a wrapper that the runtime can adopt
+    /// (a <c>GObject</c>, a mini object or a boxed record), an opaque record, or
+    /// a string. Anything else, a plain record above all, is refused, because
+    /// there is no projection of a bare pointer into it that the generator can
+    /// check. The list itself is never nullable on the public surface:
+    /// <c>NULL</c> is how C spells the empty list, so the member returns an
+    /// empty list rather than <see langword="null"/>.
+    /// </para>
+    /// <para>
+    /// <paramref name="transfer"/> is carried through unchanged and the emitter
+    /// reads both halves of it: <c>full</c> owns the spine and the elements,
+    /// <c>container</c> owns the spine alone, and <c>none</c> owns neither and
+    /// leaves the spine to the library. That second half is what bounds the
+    /// opaque element: the wrapper of an opaque record is a bare pointer holder
+    /// that owns nothing and is never disposed, so a list that hands its
+    /// elements over has nobody to release them and is refused. Only a list
+    /// whose elements stay the library's - <c>none</c> and <c>container</c> - is
+    /// planned, which is what <c>gst_element_factory_get_static_pad_templates</c>
+    /// returns: a <c>const GList</c> of the static pad templates the factory
+    /// keeps in its own storage.
+    /// </para>
+    /// </remarks>
     private ReturnPlan? PlanListReturn(GirReturnValue value, MappedType mapped, GirTransfer transfer)
     {
         if (mapped.ElementType is not { } element)
