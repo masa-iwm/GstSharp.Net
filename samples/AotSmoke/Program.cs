@@ -59,7 +59,8 @@ internal static partial class Smoke
 
             if (!RunManagedSubclass() || !RunManagedPipeline() || !RunManagedAudioAndVideoSinks()
                 || !RunManagedAudioEncoder() || !RunBindingModule() || !RunPropertiesByName()
-                || !RunPadChainFunction() || !RunFactoryMadeManagedElement())
+                || !RunPadChainFunction() || !RunFactoryMadeManagedElement()
+                || !RunManagedPropertySignalAndUri())
             {
                 return 1;
             }
@@ -520,6 +521,66 @@ internal static partial class Smoke
             name != "properties" || direction != PadDirection.Sink || stats is null)
         {
             Console.Error.WriteLine("AotSmoke: a property did not answer what was written to it.");
+            return false;
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Drives everything a managed type installs on its own class: a property
+    /// answered by the two property slots, a signal defined with a class
+    /// handler behind it, and the <c>GstURIHandler</c> the type was defined
+    /// with, resolved through <c>gst_element_make_from_uri</c>.
+    /// </summary>
+    /// <returns>
+    /// <see langword="true"/> when the property round tripped, the class
+    /// handler ran and the URI reached the managed handler.
+    /// </returns>
+    /// <remarks>
+    /// Each of the three is a path ILC could otherwise leave behind: the
+    /// property trampolines are <c>UnmanagedCallersOnly</c> entry points
+    /// nothing calls from managed code, the signal is emitted through the
+    /// dynamic closure and its meta marshaller, and the interface vtable is
+    /// filled in from an <c>interface_init</c> callback.
+    /// </remarks>
+    private static bool RunManagedPropertySignalAndUri()
+    {
+        if (!ManagedUriSource.RegisterFactory())
+        {
+            Console.Error.WriteLine("AotSmoke: the managed URI source factory could not be registered.");
+            return false;
+        }
+
+        using Element? made = ElementFactory.Make(ManagedUriSource.FactoryName, "installed");
+
+        if (made is not ManagedUriSource source)
+        {
+            Console.Error.WriteLine(
+                $"AotSmoke: the factory answered {made?.GetType().Name ?? "nothing"} instead of the managed type.");
+            return false;
+        }
+
+        source.SetProperty("value", 42);
+        int read = source.GetProperty<int>("value");
+
+        _ = source.EmitSignal(ManagedUriSource.ReadySignal, 7);
+
+        using Element? resolved = Element.MakeFromUri(
+            URIType.Src,
+            $"{ManagedUriSource.Protocol}://smoke",
+            null);
+
+        string? uri = (resolved as ManagedUriSource)?.Uri;
+
+        Console.WriteLine(string.Create(
+            CultureInfo.InvariantCulture,
+            $"installed:   value={read}/{source.Value}, signal={ManagedUriSource.ClassHandlerCalls}, uri={uri}"));
+
+        if (read != 42 || source.Value != 42 || ManagedUriSource.ClassHandlerCalls != 1
+            || uri != $"{ManagedUriSource.Protocol}://smoke")
+        {
+            Console.Error.WriteLine("AotSmoke: the property, the signal or the URI handler did not answer.");
             return false;
         }
 
