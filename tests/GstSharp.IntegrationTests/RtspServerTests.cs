@@ -312,7 +312,7 @@ public sealed unsafe class RtspServerTests
         server.SetAddress("127.0.0.1");
         server.SetService("0");
 
-        using RTSPThreadPool? threadPool = server.GetThreadPool();
+        RTSPThreadPool? threadPool = server.GetThreadPool();
         Assert.NotNull(threadPool);
 
         // Every client lands on the context of the source that dispatched it,
@@ -444,7 +444,7 @@ public sealed unsafe class RtspServerTests
         server.SetAddress("127.0.0.1");
         server.SetService("0");
 
-        using RTSPThreadPool? threadPool = server.GetThreadPool();
+        RTSPThreadPool? threadPool = server.GetThreadPool();
         Assert.NotNull(threadPool);
         threadPool.SetMaxThreads(0);
 
