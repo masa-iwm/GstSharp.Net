@@ -424,12 +424,12 @@ public sealed class GesSubclassTests
                 ProbeNullElementVideoSource child =
                     Assert.IsType<ProbeNullElementVideoSource>(Assert.Single(clip.GetChildren(false)));
 
-                // Neither wrapper is disposed here: the element is transfer
-                // none and belongs to the track element, and the factory is
-                // one of the objects the registry interns.
-                Gst.Element element = child.GetElement()
+                using Gst.Element element = child.GetElement()
                     ?? throw new InvalidOperationException("The track element was given no element.");
 
+                // The factory is not disposed with it: an element factory is
+                // one of the objects the registry interns, and user code never
+                // releases those.
                 Gst.ElementFactory factory = element.GetFactory()
                     ?? throw new InvalidOperationException("The substitute was built by no factory.");
 
