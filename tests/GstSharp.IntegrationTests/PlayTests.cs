@@ -689,7 +689,7 @@ public sealed class PlayTests
     /// <param name="play">The play to silence, before it is started.</param>
     private static void Silence(Play play)
     {
-        using Element pipeline = play.GetPipeline();
+        Element pipeline = play.GetPipeline();
         using Element sink = ElementFactory.Make("fakesink", null)
             ?? throw new InvalidOperationException("fakesink is missing");
 
@@ -722,7 +722,7 @@ public sealed class PlayTests
         // that reaches this leaves it at READY, which the stop sets, or at
         // NULL, which is where a play that was never started, one that
         // reported an error and one whose ready timeout expired sit.
-        using Element pipeline = play.GetPipeline();
+        Element pipeline = play.GetPipeline();
         pipeline.GetState(out State state, out State _, ClockTime.Zero);
         Assert.True(
             state <= State.Ready,

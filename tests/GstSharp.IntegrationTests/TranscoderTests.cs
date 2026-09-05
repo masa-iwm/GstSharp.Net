@@ -355,7 +355,7 @@ public sealed class TranscoderTests
         string destination = FormattableString.Invariant($"file:///gstsharp-unwritten-{Guid.NewGuid():N}.ogg");
 
         using Transcoder transcoder = Transcoder.New(source, destination, OggVorbis);
-        using Element? pipeline = transcoder.GetPipeline();
+        Element? pipeline = transcoder.GetPipeline();
 
         Assert.NotNull(pipeline);
         Assert.Equal("uritranscodebin", pipeline!.GetName());

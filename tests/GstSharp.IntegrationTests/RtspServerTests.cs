@@ -319,7 +319,7 @@ public sealed unsafe class RtspServerTests
         // which is the one below: this test thread drives the whole server.
         threadPool.SetMaxThreads(0);
 
-        using RTSPMountPoints? mounts = server.GetMountPoints();
+        RTSPMountPoints? mounts = server.GetMountPoints();
         Assert.NotNull(mounts);
 
         using RTSPMediaFactory factory = RTSPMediaFactory.New();
@@ -407,7 +407,7 @@ public sealed unsafe class RtspServerTests
 
         // 3. Drop the sessions: a closing client does not remove its session,
         //    and it is the session going away that unprepares the media.
-        using RTSPSessionPool? sessionPool = server.GetSessionPool();
+        RTSPSessionPool? sessionPool = server.GetSessionPool();
         Assert.NotNull(sessionPool);
         Assert.Empty(sessionPool.Filter((_, _) => RTSPFilterResult.Remove));
 
@@ -448,7 +448,7 @@ public sealed unsafe class RtspServerTests
         Assert.NotNull(threadPool);
         threadPool.SetMaxThreads(0);
 
-        using RTSPMountPoints? mounts = server.GetMountPoints();
+        RTSPMountPoints? mounts = server.GetMountPoints();
         Assert.NotNull(mounts);
 
         using RTSPMediaFactory factory = RTSPMediaFactory.New();
@@ -512,7 +512,7 @@ public sealed unsafe class RtspServerTests
         Assert.True(server.Detach(sourceId, context));
         Assert.Empty(server.ClientFilter((_, _) => RTSPFilterResult.Remove));
 
-        using RTSPSessionPool? sessionPool = server.GetSessionPool();
+        RTSPSessionPool? sessionPool = server.GetSessionPool();
         Assert.NotNull(sessionPool);
         Assert.Empty(sessionPool.Filter((_, _) => RTSPFilterResult.Remove));
 
