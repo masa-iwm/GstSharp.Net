@@ -88,7 +88,32 @@ internal static unsafe class DynamicSignalClosure
     /// closure that is never connected has to be sunk with
     /// <see cref="Sink"/>.
     /// </returns>
-    internal static nint Create(DynamicSignalHandler handler)
+    internal static nint Create(DynamicSignalHandler handler) => Create(handler, settle: true);
+
+    /// <summary>
+    /// Creates a floating closure that runs <paramref name="handler"/>, saying
+    /// how the instance of the emission is to be wrapped.
+    /// </summary>
+    /// <param name="handler">The handler to run.</param>
+    /// <param name="settle">
+    /// <see langword="true"/> for a closure that is connected to an object
+    /// somebody already owns, which is every handler an application connects;
+    /// <see langword="false"/> for the class closure of a signal a managed
+    /// subclass defines.
+    /// </param>
+    /// <returns>The new closure, which is floating.</returns>
+    /// <remarks>
+    /// The distinction is one of ownership. Wrapping the instance the usual way
+    /// settles the reference the wrapper was handed, which sinks a floating
+    /// object — and a wrapper the runtime built for an instance native code is
+    /// still constructing <em>is</em> floating until its parent sinks it. A
+    /// class closure can be reached inside that window, from a property setter
+    /// running under <c>g_object_new</c> for instance, so it looks the wrapper
+    /// up without settling anything: the instance of a signal a managed
+    /// subclass defined is always one of that subclass, so there is a wrapper
+    /// to find or to build.
+    /// </remarks>
+    internal static nint Create(DynamicSignalHandler handler, bool settle)
     {
         CallbackHandle state = CallbackHandle.Alloc(handler);
         nint closure = GObjectNative.ClosureNewSimple((uint)Unsafe.SizeOf<GClosureLayout>(), state.UserData);
@@ -102,7 +127,16 @@ internal static unsafe class DynamicSignalClosure
         // The state is released when the closure dies, whether that is because
         // the handler was disconnected or because the object was finalised.
         GObjectNative.ClosureAddFinalizeNotifier(closure, state.UserData, CallbackHandle.ClosureNotify);
-        GObjectNative.ClosureSetMetaMarshal(closure, state.UserData, &Invoke);
+
+        if (settle)
+        {
+            GObjectNative.ClosureSetMetaMarshal(closure, state.UserData, &Invoke);
+        }
+        else
+        {
+            GObjectNative.ClosureSetMetaMarshal(closure, state.UserData, &InvokeWithoutSettling);
+        }
+
         return closure;
     }
 
@@ -148,10 +182,45 @@ internal static unsafe class DynamicSignalClosure
         uint parameterCount,
         GValueNative* parameterValues,
         nint invocationHint,
-        nint marshalData)
+        nint marshalData) =>
+        Run(returnValue, parameterCount, parameterValues, marshalData, settle: true);
+
+    /// <summary>
+    /// The <c>GClosureMarshal</c> of a class closure, which resolves the
+    /// instance without settling the reference of its wrapper.
+    /// </summary>
+    /// <param name="closure">The closure that is being invoked.</param>
+    /// <param name="returnValue">The value to write the result into.</param>
+    /// <param name="parameterCount">The number of values, including the instance.</param>
+    /// <param name="parameterValues">The instance, followed by the arguments.</param>
+    /// <param name="invocationHint">The emission hint, which is not used.</param>
+    /// <param name="marshalData">The state of the handler.</param>
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static void InvokeWithoutSettling(
+        nint closure,
+        GValueNative* returnValue,
+        uint parameterCount,
+        GValueNative* parameterValues,
+        nint invocationHint,
+        nint marshalData) =>
+        Run(returnValue, parameterCount, parameterValues, marshalData, settle: false);
+
+    /// <summary>
+    /// Runs the handler of a closure, whichever of the two marshallers was
+    /// entered.
+    /// </summary>
+    /// <param name="returnValue">The value to write the result into.</param>
+    /// <param name="parameterCount">The number of values, including the instance.</param>
+    /// <param name="parameterValues">The instance, followed by the arguments.</param>
+    /// <param name="marshalData">The state of the handler.</param>
+    /// <param name="settle">Whether the instance is wrapped the settling way.</param>
+    private static void Run(
+        GValueNative* returnValue,
+        uint parameterCount,
+        GValueNative* parameterValues,
+        nint marshalData,
+        bool settle)
     {
-        _ = closure;
-        _ = invocationHint;
 
         List<IDisposable>? borrowed = null;
 
@@ -171,9 +240,11 @@ internal static unsafe class DynamicSignalClosure
             // handler takes it non-null, because an emission always has one, so
             // nothing to wrap it with is a gap in the registry that the trap of
             // this frame reports rather than a silent drop of the emission.
-            Object sender = Object.FromNative(
-                    GObjectNative.ValueGetObject(ref parameterValues[0]),
-                    Transfer.None)
+            nint instance = GObjectNative.ValueGetObject(ref parameterValues[0]);
+
+            Object sender = (settle
+                    ? Object.FromNative(instance, Transfer.None)
+                    : Object.TryGetOrFabricate(instance))
                 ?? throw new InvalidOperationException("The signal emission passed no instance.");
 
             int count = (int)parameterCount - 1;

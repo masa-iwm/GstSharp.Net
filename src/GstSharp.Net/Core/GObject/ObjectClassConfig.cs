@@ -32,6 +32,15 @@ public class ObjectClassConfig
 
     private readonly HashSet<uint> _propertyIds = [];
 
+    /// <summary>The flags that say when the class handler of a signal runs.</summary>
+    private const SignalFlags RunMask = SignalFlags.RunFirst | SignalFlags.RunLast | SignalFlags.RunCleanup;
+
+    /// <summary>
+    /// The bit that says a value of the type is borrowed for the emission,
+    /// which is not part of the type itself.
+    /// </summary>
+    private const nuint SignalTypeStaticScope = 1;
+
     /// <summary>Wraps the class that is being initialised.</summary>
     /// <param name="gClass">The <c>GObjectClass</c> under construction.</param>
     /// <remarks>
@@ -185,4 +194,207 @@ public class ObjectClassConfig
     /// under.
     /// </summary>
     private static string Canonicalise(string name) => name.Replace('_', '-');
+
+    /// <summary>
+    /// Defines a signal on the class that is being initialised.
+    /// </summary>
+    /// <param name="name">
+    /// The name of the signal, which has to be new in the whole ancestry of
+    /// this class.
+    /// </param>
+    /// <param name="flags">
+    /// When the class handler runs relative to the connected ones. At least one
+    /// of <see cref="SignalFlags.RunFirst"/>, <see cref="SignalFlags.RunLast"/>
+    /// and <see cref="SignalFlags.RunCleanup"/> has to be named.
+    /// </param>
+    /// <param name="returnType">
+    /// The type the emission answers, or <see cref="GType.None"/> for a signal
+    /// that answers nothing.
+    /// </param>
+    /// <param name="parameterTypes">The types of the arguments, without the instance.</param>
+    /// <param name="classHandler">
+    /// The class closure, which runs for every emission before or after the
+    /// connected handlers, or <see langword="null"/> for a signal that has
+    /// none.
+    /// </param>
+    /// <param name="accumulator">How the values of several handlers are folded.</param>
+    /// <returns>The identifier of the new signal.</returns>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="name"/> is <see langword="null"/> or empty, it is not a
+    /// valid signal name, a signal of that name already exists on this class or
+    /// one of its ancestors, no run flag was named, one of the types cannot be
+    /// carried in a <c>GValue</c>, or an accumulator was asked for that the
+    /// return type cannot serve.
+    /// </exception>
+    /// <exception cref="InvalidOperationException">GObject refused to create the signal.</exception>
+    /// <remarks>
+    /// <para>
+    /// The signal is emitted with <c>Object.EmitSignal</c> and subscribed to
+    /// with <c>Object.Connect</c>, exactly like a signal of a type GStreamer
+    /// itself defines: nothing about it is managed once it exists.
+    /// </para>
+    /// <para>
+    /// The class handler is invoked on the emitting thread, and it is given the
+    /// wrapper of the instance the signal was emitted on — the interned one, so
+    /// it is reference equal to whatever else holds that instance.
+    /// <see cref="SignalFlags.MustCollect"/> is dropped: it describes a
+    /// variadic collection this binding never performs.
+    /// </para>
+    /// </remarks>
+    public unsafe uint AddSignal(
+        string name,
+        SignalFlags flags,
+        GType returnType,
+        ReadOnlySpan<GType> parameterTypes,
+        DynamicSignalHandler? classHandler = null,
+        SignalAccumulator accumulator = SignalAccumulator.None)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(name);
+
+        GType ownType = OwnType;
+
+        Span<byte> nameBuffer = stackalloc byte[GMarshal.StackBufferSize];
+        using (Utf8Scope nameScope = GMarshal.StackUtf8(name, nameBuffer))
+        {
+            if (GObjectNative.SignalIsValidName(nameScope.Pointer) == 0)
+            {
+                throw new ArgumentException(
+                    string.Format(CultureInfo.InvariantCulture, "'{0}' is not a valid signal name.", name),
+                    nameof(name));
+            }
+
+            if (GObjectNative.SignalLookup(nameScope.Pointer, ownType.Value) != 0)
+            {
+                throw new ArgumentException(
+                    string.Format(
+                        CultureInfo.InvariantCulture,
+                        "'{0}' already has a signal called '{1}'.",
+                        ownType.Name,
+                        name),
+                    nameof(name));
+            }
+        }
+
+        if ((flags & RunMask) == 0)
+        {
+            throw new ArgumentException(
+                "A signal has to name one of RunFirst, RunLast and RunCleanup.",
+                nameof(flags));
+        }
+
+        if (returnType.Value == GType.None.Value)
+        {
+            if (accumulator != SignalAccumulator.None)
+            {
+                throw new ArgumentException(
+                    "A signal that returns nothing has nothing for an accumulator to fold.",
+                    nameof(accumulator));
+            }
+        }
+        else
+        {
+            RequireValueType(returnType, nameof(returnType), "The return type");
+        }
+
+        if (accumulator == SignalAccumulator.TrueHandled && returnType.Value != GType.Boolean.Value)
+        {
+            throw new ArgumentException(
+                "The TrueHandled accumulator reads the answer of every handler as a boolean, "
+                    + "so the signal has to return a boolean.",
+                nameof(accumulator));
+        }
+
+        for (int i = 0; i < parameterTypes.Length; i++)
+        {
+            RequireValueType(parameterTypes[i], nameof(parameterTypes), "A parameter type");
+        }
+
+        nint closure = classHandler is null ? nint.Zero : DynamicSignalClosure.Create(classHandler, settle: false);
+        uint signalId;
+
+        try
+        {
+            signalId = NewSignal(name, ownType, flags, returnType, parameterTypes, closure, accumulator);
+        }
+        catch
+        {
+            DynamicSignalClosure.Sink(closure);
+            throw;
+        }
+
+        if (signalId == 0)
+        {
+            // g_signal_newv only takes the closure over once every check has
+            // passed, so a refusal leaves it floating and this frame owning it.
+            DynamicSignalClosure.Sink(closure);
+
+            throw new InvalidOperationException(
+                string.Format(
+                    CultureInfo.InvariantCulture,
+                    "GObject refused to create the signal '{0}' on '{1}'.",
+                    name,
+                    ownType.Name));
+        }
+
+        return signalId;
+    }
+
+    /// <summary>
+    /// Calls <c>g_signal_newv</c> with the parameter types laid out the way it
+    /// wants them.
+    /// </summary>
+    private static unsafe uint NewSignal(
+        string name,
+        GType ownType,
+        SignalFlags flags,
+        GType returnType,
+        ReadOnlySpan<GType> parameterTypes,
+        nint closure,
+        SignalAccumulator accumulator)
+    {
+        nuint[]? types = parameterTypes.Length == 0 ? null : new nuint[parameterTypes.Length];
+
+        for (int i = 0; i < parameterTypes.Length; i++)
+        {
+            types![i] = parameterTypes[i].Value;
+        }
+
+        Span<byte> nameBuffer = stackalloc byte[GMarshal.StackBufferSize];
+        using Utf8Scope nameScope = GMarshal.StackUtf8(name, nameBuffer);
+
+        fixed (nuint* typePointer = types)
+        {
+            return GObjectNative.SignalNewV(
+                nameScope.Pointer,
+                ownType.Value,
+                (uint)(flags & ~SignalFlags.MustCollect),
+                closure,
+                SignalAccumulators.AddressOf(accumulator),
+                nint.Zero,
+                nint.Zero,
+                returnType.Value,
+                (uint)parameterTypes.Length,
+                typePointer);
+        }
+    }
+
+    /// <summary>
+    /// Refuses a type that no <c>GValue</c> can carry, which
+    /// <c>g_signal_newv</c> would only report as a critical.
+    /// </summary>
+    private static void RequireValueType(GType type, string parameterName, string what)
+    {
+        GType bare = new(type.Value & ~SignalTypeStaticScope);
+
+        if (GObjectNative.TypeCheckIsValueType(bare.Value) == 0)
+        {
+            throw new ArgumentException(
+                string.Format(
+                    CultureInfo.InvariantCulture,
+                    "{0}, '{1}', cannot be carried in a GValue.",
+                    what,
+                    bare.IsValid ? bare.Name : "an invalid type"),
+                parameterName);
+        }
+    }
 }
