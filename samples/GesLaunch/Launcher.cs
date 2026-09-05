@@ -58,8 +58,7 @@ internal static class Launcher
 
             if (options.ListTransitions)
             {
-                ListTransitions();
-                return 0;
+                return ListTransitions() ? 0 : 1;
             }
 
             return Load(options);
@@ -85,7 +84,11 @@ internal static class Launcher
     /// Prints the nick of every transition type, which is what
     /// <c>print_enum</c> of <c>utils.c:186-198</c> does.
     /// </summary>
-    private static void ListTransitions()
+    /// <returns>
+    /// <see langword="false"/> when the enumeration could not be read, so that
+    /// a run which printed nothing fails rather than exiting 0.
+    /// </returns>
+    private static bool ListTransitions()
     {
         Gst.GObject.GType type = Gst.GObject.GType.FromName("GESVideoStandardTransitionType");
 
@@ -102,13 +105,24 @@ internal static class Launcher
         if (!type.IsValid)
         {
             Console.Error.WriteLine("GesLaunch: the transition types are not registered.");
-            return;
+            return false;
         }
+
+        int printed = 0;
 
         foreach (Gst.GObject.EnumValue value in type.GetEnumValues())
         {
             Console.WriteLine(value.Nick ?? value.Name);
+            printed++;
         }
+
+        if (printed == 0)
+        {
+            Console.Error.WriteLine("GesLaunch: the transition types carry no values.");
+            return false;
+        }
+
+        return true;
     }
 
     /// <summary>
@@ -281,10 +295,17 @@ internal static class Launcher
                 return 1;
             }
 
-            // The order is the C tool's: the timeline is in the pipeline
-            // before the tracks are configured and before the mode is chosen,
-            // and the render mode reads the tracks it finds there.
-            SetUserOptions(timeline, options);
+            // The order is the C tool's: the user options and then the
+            // rendering details, both after the pipeline has the timeline
+            // (ges-launcher.c:932-937), and the commit and the state changes
+            // after those (ges-launcher.c:943-955). Nothing here depends on
+            // it - ges_pipeline_set_mode does its work on the tracks under an
+            // "if (pipeline->priv->timeline)" and is a no-op without one - so
+            // the order is kept only to stay readable next to the C.
+            if (!SetUserOptions(timeline, options))
+            {
+                return 1;
+            }
 
             if (!SetRenderingDetails(pipeline, project, options))
             {
@@ -384,7 +405,8 @@ internal static class Launcher
     /// </summary>
     /// <param name="timeline">The timeline that was loaded.</param>
     /// <param name="options">The command line.</param>
-    private static void SetUserOptions(Timeline timeline, Options options)
+    /// <returns><see langword="false"/> when an option could not be applied.</returns>
+    private static bool SetUserOptions(Timeline timeline, Options options)
     {
         // The track wrappers are interned: the timeline owns the tracks and
         // this only looks them up, so none of them is disposed here.
@@ -417,8 +439,10 @@ internal static class Launcher
 
                 if (restriction is null)
                 {
+                    // The C tool ends the run here: _set_track_restriction_caps
+                    // calls g_error at ges-launcher.c:349-353, which aborts.
                     Console.Error.WriteLine($"GesLaunch: \"{caps}\" are not caps.");
-                    continue;
+                    return false;
                 }
 
                 track.SetRestrictionCaps(restriction);
@@ -434,6 +458,8 @@ internal static class Launcher
         {
             Console.WriteLine("**Mixing is disabled for smart rendering to work**");
         }
+
+        return true;
     }
 
     /// <summary>
