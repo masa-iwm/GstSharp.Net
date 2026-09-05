@@ -1,8 +1,8 @@
 # GObject subclassing in GstSharp.Net — design
 
-Status: **approved design**; stages 0, 1, 2a and 2b of §10 have shipped;
-stage 3 has not. §11 is the guide to what shipped; everything before it is the design the
-implementation follows.
+Status: **approved design**; every stage of §10 — 0, 1, 2a, 2b, 3a, 3b and
+3c — has shipped. §11 is the guide to what shipped; everything before it is
+the design the implementation follows.
 Scope: class-struct ABI, vfunc overrides, managed type registration.
 Audience: contributors to the runtime (`src/GstSharp.Net/Core`) and the
 generator (`generator/GstSharp.Generator`); §11 is for applications.
@@ -357,10 +357,10 @@ Therefore: at registration the subclass **declares** the set of slots it
 overrides (a flags value or builder calls on the descriptor), and only those
 slots are written in `ClassInit`. The C# `OnX` virtual and the declaration
 are two statements of the same fact; keeping them in sync is a documented
-contract in stage 0/1, and a `GstSharp.Net.Analyzers` diagnostic
-("override of `OnChangeState` without declaring `ChangeState` in the
-registration", and the converse) is the planned guard once the surface
-settles (the repo already ships analyzers, GST0001/GST0002).
+contract in stage 0/1, and `GstSharp.Net.Analyzers` now guards it:
+**GST0003** reports an `OnX` override whose slot the registration does not
+declare, **GST0004** the converse — a declared slot with no override. See
+`docs/analyzers.md`.
 
 ### 4.3 Parameter marshalling
 
