@@ -112,9 +112,17 @@ public partial class Object : IDisposable
     /// <param name="handle">The object to wrap.</param>
     /// <param name="transfer">
     /// <see cref="Transfer.Full"/> when the caller hands a reference over,
-    /// <see cref="Transfer.None"/> when the wrapper has to take its own. A
-    /// floating reference is sunk in both cases, because the wrapper always
-    /// ends up owning a real reference.
+    /// <see cref="Transfer.None"/> when the wrapper has to take its own. On the
+    /// ordinary path — the one <see cref="FromNative(nint, Transfer)"/> and a
+    /// module's <c>CreateWrapper</c> factory reach — a floating reference is
+    /// sunk whichever of the two this is, because the wrapper always ends up
+    /// owning a real reference. Nothing is sunk when the runtime fabricates the
+    /// wrapper of an instance a native <c>g_object_new</c> is still
+    /// constructing: the instance belongs to whoever created it, the wrapper
+    /// only takes a reference of its own, and this parameter settles nothing.
+    /// See
+    /// <see href="https://github.com/masa-iwm/GstSharp.Net/blob/main/docs/subclassing.md">docs/subclassing.md</see>
+    /// §5.4.
     /// </param>
     /// <remarks>
     /// <para>
