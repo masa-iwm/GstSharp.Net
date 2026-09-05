@@ -51,8 +51,8 @@ The classes that matter, in order:
 
 A forward driver is **GES**: authoring a custom GES source ultimately needs a
 registered `GstElement` subclass. The GES module itself is already bound and
-works with the elements the libraries provide; what it cannot do until this
-design's stage 3 lands is instantiate a *managed* element by type name
+works with the elements the libraries provide; what it could not do until
+this design's stage 3a landed is instantiate a *managed* element by type name
 (§5.4), which is what a custom GES source amounts to.
 
 ### Non-goals (this design, all stages)
@@ -67,9 +67,9 @@ design's stage 3 lands is instantiate a *managed* element by type name
 * **Dynamic types** (`g_type_register_dynamic`, `GTypeModule`) and full
   GStreamer plugin authoring (`gst_plugin_register_static`,
   `gst_element_register` making the type constructible by factory name).
-  Plugin-style registration becomes possible once native-initiated
-  construction lands (stage 3), but shipping a loadable plugin is out of
-  scope for this design.
+  Plugin-style registration became possible when native-initiated
+  construction landed (stage 3a, §5.4), but shipping a loadable plugin is out
+  of scope for this design.
 * **Installing properties and signals** on managed types
   (`g_object_class_install_property`, `g_signal_newv`) — not needed for the
   first usable sources/sinks. (Landed in stage 3b, see §5.6.)
