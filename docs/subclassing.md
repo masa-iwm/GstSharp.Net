@@ -777,7 +777,11 @@ Three facts of the C interface show through:
   callers without copying, so it has to stay valid for as long as anyone can
   ask. `URIHandlerImplementation.For<TSelf>()` reads `Protocols` once, copies it
   into unmanaged memory and never releases it — the type is equally permanent.
-  Nothing else reads the property.
+  It is **one pin per type**: the vector is cached per `TSelf` and a second
+  call answers the pointer the first one pinned, so a declaration that is asked
+  for twice costs nothing. The validation does run on every call, so a wrong
+  declaration is refused however often it is made. Nothing else reads the
+  property.
 * **A refusal always carries an error.** `gst_uri_handler_set_uri` synthesises
   none of its own, and `gst_element_make_from_uri` reads the message of the
   error of every candidate that refused — a null one is a crash there whenever
