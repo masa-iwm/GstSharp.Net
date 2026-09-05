@@ -37,7 +37,8 @@ The classes that matter, in order:
    made, so those slots are bound through a *borrowing* boxed wrapper instead,
    which is detached again when the trampoline returns (§11). A record with no
    boxed type behind it - a video frame, a ring buffer specification - has no
-   copy to make and is lent as it is.
+   copy to make and is lent as it is, and its wrapper is detached the same way
+   when the trampoline returns (§11).
 3. **`GstBase.BaseSink`** (`BaseSinkClass`) — custom sinks: `render`,
    `preroll`, `render_list`, `set_caps`, `get_caps`, `start`, `stop`,
    `unlock`, `unlock_stop`, `propose_allocation`, `query`, `event`.

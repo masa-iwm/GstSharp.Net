@@ -106,6 +106,20 @@ public sealed class RtspClientRequirementsTests
         {
             Assert.True(server.Detach(sourceId, context));
         }
+
+        // Detaching only stops the server accepting. It holds a reference of
+        // its own to every client it took (rtsp-server.c:1110) and lets it go
+        // from the closed signal of that client (:1129), which the socket of
+        // the exchange being gone does not by itself deliver: the connection is
+        // closed here and the context is iterated until the server says it
+        // manages nobody. A filter answering Remove answers no list, and a null
+        // filter function hands out an owning wrapper per client. An OPTIONS
+        // request opens no session, so no session pool step is needed.
+        Assert.Empty(server.ClientFilter((_, _) => RTSPFilterResult.Remove));
+
+        Assert.True(
+            PumpUntil(context, () => DisposeAll(server.ClientFilter(null)) == 0),
+            "a client was still managed after the filter removed it.");
     }
 
     /// <summary>
@@ -158,6 +172,24 @@ public sealed class RtspClientRequirementsTests
         }
 
         return response.ToString();
+    }
+
+    /// <summary>
+    /// Disposes every wrapper of a transfer full list and answers how many
+    /// there were.
+    /// </summary>
+    /// <typeparam name="T">The wrapper type of the list.</typeparam>
+    /// <param name="owned">The list a filter answered.</param>
+    /// <returns>The number of items the list held.</returns>
+    private static int DisposeAll<T>(IReadOnlyList<T> owned)
+        where T : Gst.GObject.Object
+    {
+        foreach (T item in owned)
+        {
+            item.Dispose();
+        }
+
+        return owned.Count;
     }
 
     /// <summary>

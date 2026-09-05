@@ -188,13 +188,76 @@ public sealed unsafe class GesDeepCopyTests
             // closest registered ancestor rather than the managed class.
             Assert.IsNotType<PlainDeepCopyClip>(clip);
 
+            uint layerReferences = RefCountOf(layer.Handle);
+
             TimelineElement copied = clip.Copy(deep: true);
 
             Assert.NotNull(copied);
             Assert.Equal(0, PlainDeepCopyClip.Calls);
             Assert.Equal(Length, copied.Duration);
 
+            // What ran instead is the C implementation below the trampoline:
+            // GESClip::_deep_copy references the layer of the original onto the
+            // copy (ges-clip.c:2473) and ges_clip_dispose is what lets it go
+            // (:2578-2585), so the layer carries one reference more for as long
+            // as the copy lives. The property loop of the copy cannot account
+            // for it: layer is a read only property.
+            Assert.Equal(layerReferences + 1, RefCountOf(layer.Handle));
+
             copied.Dispose();
+
+            Assert.Equal(layerReferences, RefCountOf(layer.Handle));
+        }
+    }
+
+    /// <summary>
+    /// A copy no property carried anything onto reaches the trampoline
+    /// unresolved, and the trampoline is what builds its wrapper: the clip
+    /// installs no property and overrides neither property accessor, so nothing
+    /// managed sees the copy before the slot does. The wrapper the override is
+    /// handed is the one the caller gets back.
+    /// </summary>
+    [Fact]
+    public void ACopyNoPropertyResolvedIsFabricatedByTheTrampoline()
+    {
+        GstGES.Initialize();
+        FabricateDeepCopyClip.Reset();
+
+        using Timeline timeline = Timeline.NewAudioVideo();
+        using Layer layer = timeline.AppendLayer();
+
+        FabricateDeepCopyClip clip = FabricateDeepCopyClip.New();
+
+        using (clip)
+        {
+            Prepare(clip);
+            Assert.True(layer.AddClip(clip));
+
+            // Every wrapper of this type the process has built so far. The copy
+            // does not exist yet, so none of them is its.
+            int built = FabricateDeepCopyClip.WrappersBuilt;
+
+            TimelineElement copied = clip.Copy(deep: true);
+            FabricateDeepCopyClip copy = Assert.IsType<FabricateDeepCopyClip>(copied);
+
+            FabricateObservation seen = Assert.Single(FabricateDeepCopyClip.Observations);
+            _output.WriteLine(FormattableString.Invariant($"observed: {seen}"));
+
+            // Exactly one wrapper was built between the two, and the slot is
+            // the only managed code the copy reached: the trampoline fabricated
+            // it out of the adopted constructor.
+            Assert.Equal(built + 1, seen.WrappersBuilt);
+            Assert.True(seen.CopyIsManaged);
+
+            // Fabrication settles nothing either: the copy is still the
+            // caller's floating one, with the reference the wrapper took.
+            Assert.True(seen.IsFloating);
+            Assert.Equal(2u, seen.RefCount);
+
+            // And it is that wrapper the copy comes back as.
+            Assert.Same(copy, FabricateDeepCopyClip.CopySeen);
+
+            copy.Dispose();
         }
     }
 

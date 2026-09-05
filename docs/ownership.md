@@ -127,11 +127,14 @@ A wrapper whose handle is zero is dead, and that is the one convention the
 hand-written metadata surface shares: `RemoveMeta` zeroes the handle when, and
 only when, it answers `true`, and a honoured `Remove` does the same, after which
 every hand-written member — `Meta.Info`, `Meta.ApiType`, `Meta.Serialize` and
-every `FromMeta` cast — throws `ObjectDisposedException`. **The generated field
-accessors do not check it**: reading `Meta.Flags`, or a field of a typed record,
-through a wrapper of an item that was removed is undefined rather than an
-exception. A generator-side guard for the forced-opaque records would close that
-gap and is on the backlog.
+every `FromMeta` cast — throws `ObjectDisposedException`. **`Gst.Meta` says the
+same through its generated members**: it is one of the records
+`lentOpaqueRecords` names, so its handle sits behind the checking accessor that
+list gives a lent record, and `Meta.Flags` reads the item through it. **The
+typed `*Meta` records still read the field unchecked**: they are not on that
+list and keep a plain handle field, so reading `VideoMeta.Width` or
+`AudioMeta.Samples` through a wrapper of an item that was removed is undefined
+rather than an exception. Extending the guard to them is on the backlog.
 
 The converse holds as well: a removal the walk **refuses** leaves the wrapper
 alive. `MetaForeachAction.Remove` needs a writable buffer and an item that is not

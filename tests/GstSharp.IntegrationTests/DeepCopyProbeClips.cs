@@ -180,3 +180,97 @@ internal sealed class PlainDeepCopyClip : GES.SourceClip
         ChainUpDeepCopy(copy);
     }
 }
+
+/// <summary>
+/// What the override of a clip with no installed property observed about the
+/// copy it was handed.
+/// </summary>
+/// <param name="CopyIsManaged">Whether the copy arrived as the managed type.</param>
+/// <param name="IsFloating">Whether the copy was still floating.</param>
+/// <param name="RefCount">The reference count of the copy at that moment.</param>
+/// <param name="WrappersBuilt">How many wrappers the factory had built by then.</param>
+internal sealed record FabricateObservation(bool CopyIsManaged, bool IsFloating, uint RefCount, int WrappersBuilt);
+
+/// <summary>
+/// A managed <c>GESSourceClip</c> with a wrapper factory and no installed
+/// property, which is what makes the trampoline itself resolve the copy.
+/// </summary>
+/// <remarks>
+/// <see cref="DeepCopyProbeClip"/> installs a property and overrides
+/// <c>set_property</c>, so the property loop of
+/// <c>ges_timeline_element_copy</c> reaches managed code with the copy before
+/// the slot does and the wrapper is already interned when the trampoline runs.
+/// This type installs nothing and overrides neither accessor: the property loop
+/// stays inside the C class - <c>layer</c> is read only, and the writable
+/// properties of the base classes are handled there - so the trampoline of the
+/// slot is the only managed code the copy reaches, and the wrapper it hands the
+/// override is one it fabricated itself.
+/// </remarks>
+internal sealed unsafe class FabricateDeepCopyClip : GES.SourceClip, IManagedSubclass<FabricateDeepCopyClip>
+{
+    /// <summary>The <c>GType</c> name, unique in the process.</summary>
+    internal const string GTypeName = "GstSharpTestFabricateDeepCopyClip";
+
+    private static readonly SubclassType Definition = DefineSubclass<FabricateDeepCopyClip>(
+        GTypeName,
+        static _ => { },
+        DeepCopyOverride);
+
+    private FabricateDeepCopyClip(SubclassCtorArgs args)
+        : base(args)
+    {
+    }
+
+    /// <summary>Gets the registration of the clip.</summary>
+    internal static SubclassType Registration => Definition;
+
+    /// <summary>Gets how many wrappers the factory has built in this process.</summary>
+    internal static int WrappersBuilt { get; private set; }
+
+    /// <summary>Gets what every override observed, in order.</summary>
+    internal static List<FabricateObservation> Observations { get; } = [];
+
+    /// <summary>Gets the copy the last override was handed.</summary>
+    internal static GES.TimelineElement? CopySeen { get; private set; }
+
+    /// <summary>Builds a clip out of an asset for its own type.</summary>
+    /// <returns>The new clip, which has an asset.</returns>
+    internal static FabricateDeepCopyClip New()
+    {
+        GES.Asset asset = GES.Asset.Request(Definition.GType, null)
+            ?? throw new InvalidOperationException("The clip asset could not be requested.");
+
+        return asset.Extract<FabricateDeepCopyClip>();
+    }
+
+    /// <summary>Forgets what the previous test observed.</summary>
+    internal static void Reset()
+    {
+        Observations.Clear();
+        CopySeen = null;
+    }
+
+    /// <summary>Builds the wrapper of an instance native code created.</summary>
+    /// <param name="args">What the runtime says about the instance.</param>
+    /// <returns>The wrapper, which adopts the instance.</returns>
+    public static FabricateDeepCopyClip CreateWrapper(SubclassCtorArgs args)
+    {
+        WrappersBuilt++;
+        return new(args);
+    }
+
+    /// <inheritdoc/>
+    protected override void OnDeepCopy(GES.TimelineElement copy)
+    {
+        ArgumentNullException.ThrowIfNull(copy);
+
+        CopySeen = copy;
+        Observations.Add(new FabricateObservation(
+            copy is FabricateDeepCopyClip,
+            GObjectNative.ObjectIsFloating(copy.Handle) != 0,
+            *(uint*)(copy.Handle + sizeof(nint)),
+            WrappersBuilt));
+
+        ChainUpDeepCopy(copy);
+    }
+}

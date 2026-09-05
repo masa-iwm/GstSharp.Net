@@ -48,10 +48,14 @@ public sealed class SubclassAudioSinkStopTests
             Assert.Equal(MessageType.Eos, message.Type);
         }
 
-        // The ring buffer is still started here: the teardown has not begun,
-        // so neither the stop slot nor the fallback has run.
+        // The teardown has not begun here, so the stop slot has not run. The
+        // reset counter has: pausing the ring buffer of a sink that declares no
+        // pause slot falls back to reset (gstaudiosink.c:551-559), and this
+        // sink declares reset and no pause. That is what makes the counter live
+        // before the assertion below asks for it to be unchanged.
         Assert.NotEqual(StateChangeReturn.Failure, pipeline.SetState(State.Paused));
         int resetsBeforeTeardown = sink.CountOf("reset");
+        Assert.True(resetsBeforeTeardown >= 1, "pausing never reached the reset fallback.");
         Assert.Equal(0, sink.CountOf("stop"));
 
         // PAUSED to READY is where gst_audio_ring_buffer_release stops the
