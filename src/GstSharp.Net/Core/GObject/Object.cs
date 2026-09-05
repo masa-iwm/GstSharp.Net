@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Gst.Interop;
@@ -420,8 +420,15 @@ public partial class Object : IDisposable
     /// collide with the one the constructor is about to install. The doctrine
     /// is therefore that vfunc dispatch only ever dispatches to an interned
     /// live wrapper and otherwise chains up, which covers the construction
-    /// window and the window after <see cref="Dispose()"/> with one rule. See
-    /// <c>docs/subclassing.md</c> §4.1.
+    /// window and the window after <see cref="Dispose()"/> with one rule. It
+    /// is the rule for an instance C# is constructing, whose constructor is
+    /// about to install the toggle reference; an instance native code
+    /// constructs has no constructor waiting for it, and
+    /// <see cref="TryGetOrFabricate"/> - which is what the generated
+    /// trampolines call - builds the wrapper of a registered managed subclass
+    /// on the first slot that arrives, even one that arrives inside
+    /// <c>g_object_new</c>. See
+    /// <c>docs/subclassing.md</c> §4.1 and §5.4.
     /// </para>
     /// <para>
     /// The lookup takes no lock. It runs on whichever thread GStreamer calls a
