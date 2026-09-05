@@ -67,6 +67,12 @@ internal sealed class Options
     /// </summary>
     internal bool UseCache { get; private set; }
 
+    /// <summary>
+    /// Gets a value indicating whether the run prints the directory the
+    /// discoverer keeps its serialized reports in and stops there.
+    /// </summary>
+    internal bool PrintCacheDir { get; private set; }
+
     /// <summary>Gets how long one URI may take, in seconds.</summary>
     internal int TimeoutSeconds { get; private set; } = DefaultTimeoutSeconds;
 
@@ -97,6 +103,7 @@ internal sealed class Options
 
         Application Options:
               --use-cache                  Use GstDiscovererInfo from our cache.
+              --print-cache-dir            Print the directory of the discoverer cache.
           -t, --timeout=T                  Specify timeout (in seconds, default 10)
           -c, --toc                        Output TOC (chapters and editions)
           -v, --verbose                    Verbose properties
@@ -168,6 +175,10 @@ internal sealed class Options
 
                 case "--use-cache":
                     options.UseCache = true;
+                    break;
+
+                case "--print-cache-dir":
+                    options.PrintCacheDir = true;
                     break;
 
                 case "--fail-on-error":

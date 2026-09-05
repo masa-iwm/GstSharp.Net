@@ -98,6 +98,20 @@ internal sealed partial class Discovery
             return ExitUsage;
         }
 
+        if (options.PrintCacheDir)
+        {
+            // After the usage check and before any discovery, which is where
+            // the C tool has it: the option parser took the option out of the
+            // command line, so a run that asks for nothing else still has to
+            // name a URI to get this far, and none of the URIs is looked at.
+            Console.WriteLine();
+            Console.WriteLine("GstDiscoverer cache directory:");
+            Console.WriteLine();
+            Console.WriteLine($"    {Path.Combine(UserDirectories.CacheDir, "gstreamer-1.0", "discoverer")}");
+            Console.WriteLine();
+            return ExitNoError;
+        }
+
         try
         {
             return Discover(options);
