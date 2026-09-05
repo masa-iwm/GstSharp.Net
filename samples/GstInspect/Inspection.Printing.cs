@@ -374,8 +374,10 @@ internal sealed partial class Inspection
 
         try
         {
-            int printed = 0;
-
+            // No count and no "none": the C function prints the heading, the
+            // blank line and whatever survives the loop, so a class whose every
+            // property belongs to the hierarchy above it prints a heading with
+            // nothing under it.
             foreach (ParamSpec property in sorted)
             {
                 if (instance is null && IsInherited(property))
@@ -384,12 +386,6 @@ internal sealed partial class Inspection
                 }
 
                 PrintProperty(instance, property, depth + 1);
-                printed++;
-            }
-
-            if (printed == 0)
-            {
-                Line(depth + 1, "none");
             }
         }
         finally
