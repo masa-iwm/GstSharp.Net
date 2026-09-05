@@ -272,7 +272,7 @@ public unsafe partial class Element
     /// </param>
     /// <returns>
     /// requested #GstPad if found,
-    ///     otherwise %NULL.  Release after usage.
+    ///     otherwise %NULL.
     /// The answer is borrowed: no reference is added for the caller, so the
     /// override has to keep the object alive by other means.
     /// </returns>
@@ -501,7 +501,7 @@ public unsafe partial class Element
     /// </param>
     /// <returns>
     /// requested #GstPad if found,
-    ///     otherwise %NULL.  Release after usage.
+    ///     otherwise %NULL.
     /// The answer is borrowed: no reference is added for the caller, so the
     /// override has to keep the object alive by other means.
     /// </returns>

@@ -394,6 +394,16 @@ internal sealed class MarshalPlanner
         "free", "ref", "unref",
     };
 
+    /// <summary>
+    /// The sentences a gir return documentation ends with to say that the
+    /// caller owns what it was handed. They are dropped from a return an
+    /// overlay corrected to <c>transfer none</c>; see <see cref="ReturnDoc"/>.
+    /// </summary>
+    private static readonly string[] OwnershipSentences =
+    [
+        "Release after usage.",
+    ];
+
     private readonly Repository _repository;
     private readonly Classifier _classifier;
     private readonly NameMapper _names;
@@ -3489,7 +3499,7 @@ internal sealed class MarshalPlanner
                     ElementType = sizedElement,
                     FixedLength = returnedSize,
                     IsNullable = true,
-                    Doc = value.Doc,
+                    Doc = ReturnDoc(value, transfer),
                 };
             }
 
@@ -3507,7 +3517,7 @@ internal sealed class MarshalPlanner
                     RawType = NativeInt,
                     Transfer = transfer,
                     IsNullable = true,
-                    Doc = value.Doc,
+                    Doc = ReturnDoc(value, transfer),
                 };
             }
 
@@ -3526,7 +3536,7 @@ internal sealed class MarshalPlanner
                 ElementType = elementType,
                 LengthArgument = length + offset,
                 IsNullable = true,
-                Doc = value.Doc,
+                Doc = ReturnDoc(value, transfer),
             };
         }
 
@@ -3541,7 +3551,7 @@ internal sealed class MarshalPlanner
                 RawType = NativeInt,
                 Transfer = transfer,
                 IsNullable = nullable,
-                Doc = value.Doc,
+                Doc = ReturnDoc(value, transfer),
             };
         }
 
@@ -3575,7 +3585,7 @@ internal sealed class MarshalPlanner
             IsNullable = nullable,
             Flavor = scalar.Flavor,
             EnumConverter = scalar.EnumConverter,
-            Doc = value.Doc,
+            Doc = ReturnDoc(value, transfer),
         };
     }
 
@@ -3618,6 +3628,47 @@ internal sealed class MarshalPlanner
     /// keeps in its own storage.
     /// </para>
     /// </remarks>
+    /// <summary>
+    /// The documentation of a return value, with the sentence that tells the
+    /// caller to release it dropped when the overlays say the value is
+    /// borrowed after all.
+    /// </summary>
+    /// <param name="value">The gir return value.</param>
+    /// <param name="transfer">What the call really transfers, corrections applied.</param>
+    /// <returns>The documentation, or <see langword="null"/> when nothing of it survives.</returns>
+    /// <remarks>
+    /// An <c>annotationOverrides</c> entry that lowers a return to
+    /// <c>transfer none</c> says that the gir was wrong about the ownership,
+    /// and the emitters then write the borrowed note of that bucket under the
+    /// documentation. The gir sentence that hands the value over would stand
+    /// right above it and contradict it, so it comes out with the annotation
+    /// it belongs to. Only the sentence goes: what the value <em>is</em> is
+    /// still the gir's to say. A gir that already spelled <c>none</c> is left
+    /// alone, because nothing corrected it.
+    /// </remarks>
+    private static string? ReturnDoc(GirReturnValue value, GirTransfer transfer)
+    {
+        if (value.Doc is not { } doc
+            || transfer != GirTransfer.None
+            || transfer == value.Transfer)
+        {
+            return value.Doc;
+        }
+
+        string stripped = doc;
+        foreach (string sentence in OwnershipSentences)
+        {
+            int index = stripped.IndexOf(sentence, StringComparison.Ordinal);
+            if (index >= 0)
+            {
+                stripped = string.Concat(stripped.AsSpan(0, index), stripped.AsSpan(index + sentence.Length));
+            }
+        }
+
+        stripped = stripped.Trim();
+        return stripped.Length == 0 ? null : stripped;
+    }
+
     private ReturnPlan? PlanListReturn(GirReturnValue value, MappedType mapped, GirTransfer transfer)
     {
         if (mapped.ElementType is not { } element)
@@ -3671,7 +3722,7 @@ internal sealed class MarshalPlanner
             ElementKind = elementKind,
             Flavor = flavor,
             IsNullable = false,
-            Doc = value.Doc,
+            Doc = ReturnDoc(value, transfer),
         };
     }
 
@@ -4967,7 +5018,7 @@ internal sealed class MarshalPlanner
                 Transfer = transfer,
                 IsNullable = scalar.IsNullable,
                 Flavor = scalar.Flavor,
-                Doc = value.Doc,
+                Doc = ReturnDoc(value, transfer),
             },
             kind);
     }
