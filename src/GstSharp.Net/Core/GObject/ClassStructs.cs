@@ -16,6 +16,29 @@ internal struct GTypeClassRaw
     internal nuint GType;
 }
 
+/// <summary>The native layout of <c>GTypeInterface</c>.</summary>
+/// <remarks>
+/// Every interface vtable starts with this, which is how the one shared
+/// <c>interface_init</c> trampoline tells both which interface and which
+/// implementing type it is being called for: GLib fills the two fields in
+/// before it calls the hook.
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal struct GTypeInterfaceRaw
+{
+    /// <summary>The byte offset of the <c>g_type</c> field.</summary>
+    internal const int GTypeOffset = 0;
+
+    /// <summary>The byte offset of the <c>g_instance_type</c> field.</summary>
+    internal const int InstanceTypeOffset = 8;
+
+    /// <summary>The <c>g_type</c> field, the type of the interface.</summary>
+    internal nuint GType;
+
+    /// <summary>The <c>g_instance_type</c> field, the type that implements it.</summary>
+    internal nuint InstanceType;
+}
+
 /// <summary>The native layout of <c>GObjectClass</c>.</summary>
 /// <remarks>
 /// The callback slots are <see cref="nint"/> rather than typed function

@@ -259,12 +259,43 @@ public sealed class SubclassType
         Action<ClassConfig>? configureClass,
         VfuncOverride[] overrides,
         Func<SubclassCtorArgs, Object>? wrapFactory = null) =>
+        Define(parent, typeName, configureClass, overrides, wrapFactory, null);
+
+    /// <summary>
+    /// Registers a managed subclass of an element, with the optional parts of
+    /// the registration.
+    /// </summary>
+    /// <param name="parent">The type to derive from.</param>
+    /// <param name="typeName">The <c>GType</c> name, unique in the process.</param>
+    /// <param name="configureClass">
+    /// Configures the class while it is being initialised, or
+    /// <see langword="null"/>.
+    /// </param>
+    /// <param name="overrides">The slots the subclass takes over.</param>
+    /// <param name="wrapFactory">
+    /// Builds the wrapper of an instance native code created, or
+    /// <see langword="null"/> for a subclass that is only ever constructed from
+    /// managed code.
+    /// </param>
+    /// <param name="options">
+    /// The optional parts of the registration, such as the interfaces the
+    /// subclass implements, or <see langword="null"/> for none.
+    /// </param>
+    /// <returns>The registration.</returns>
+    internal static SubclassType Define(
+        GType parent,
+        string typeName,
+        Action<ClassConfig>? configureClass,
+        VfuncOverride[] overrides,
+        Func<SubclassCtorArgs, Object>? wrapFactory,
+        SubclassOptions? options) =>
         Define(
             parent,
             typeName,
             configureClass is null ? null : config => configureClass((ClassConfig)config),
             overrides,
-            wrapFactory);
+            wrapFactory,
+            options);
 
     /// <summary>
     /// Registers a managed subclass whose class initialiser is given the
@@ -289,7 +320,42 @@ public sealed class SubclassType
         string typeName,
         Action<ObjectClassConfig>? configureClass,
         VfuncOverride[] overrides,
-        Func<SubclassCtorArgs, Object>? wrapFactory = null)
+        Func<SubclassCtorArgs, Object>? wrapFactory = null) =>
+        Define(parent, typeName, configureClass, overrides, wrapFactory, null);
+
+    /// <summary>
+    /// Registers a managed subclass whose class initialiser is given the
+    /// <c>GObject</c> level facade, with the optional parts of the
+    /// registration.
+    /// </summary>
+    /// <param name="parent">The type to derive from.</param>
+    /// <param name="typeName">The <c>GType</c> name, unique in the process.</param>
+    /// <param name="configureClass">
+    /// Configures the class while it is being initialised, or
+    /// <see langword="null"/>.
+    /// </param>
+    /// <param name="overrides">The slots the subclass takes over.</param>
+    /// <param name="wrapFactory">
+    /// Builds the wrapper of an instance native code created, or
+    /// <see langword="null"/> for a subclass that is only ever constructed from
+    /// managed code.
+    /// </param>
+    /// <param name="options">
+    /// The optional parts of the registration, such as the interfaces the
+    /// subclass implements, or <see langword="null"/> for none.
+    /// </param>
+    /// <returns>The registration.</returns>
+    /// <exception cref="ArgumentException">
+    /// An interface is declared twice, or the parent type implements it
+    /// already.
+    /// </exception>
+    internal static SubclassType Define(
+        GType parent,
+        string typeName,
+        Action<ObjectClassConfig>? configureClass,
+        VfuncOverride[] overrides,
+        Func<SubclassCtorArgs, Object>? wrapFactory,
+        SubclassOptions? options)
     {
         ArgumentNullException.ThrowIfNull(typeName);
         ArgumentNullException.ThrowIfNull(overrides);
@@ -334,9 +400,78 @@ public sealed class SubclassType
             slots[i] = new VfuncSlot(declared.Offset, declared.Function);
         }
 
-        SubclassDescriptor descriptor = new(parent, typeName, slots, configureClass, wrapFactory);
+        InterfaceImplementation[] interfaces = ValidateInterfaces(parent, options);
+
+        SubclassDescriptor descriptor = new(parent, typeName, slots, configureClass, wrapFactory, interfaces);
 
         return new SubclassType(descriptor, SubclassRegistry.Register(descriptor));
+    }
+
+    /// <summary>
+    /// Checks the interfaces of a registration before the type exists.
+    /// </summary>
+    /// <param name="parent">The type being derived from.</param>
+    /// <param name="options">The optional parts of the registration, or null.</param>
+    /// <returns>The interfaces to attach, empty when there are none.</returns>
+    /// <remarks>
+    /// The checks run before the descriptor is built, so a rejected
+    /// registration leaves no <c>GType</c> behind: a static type cannot be
+    /// unregistered, and its name is taken for the life of the process.
+    /// </remarks>
+    /// <exception cref="ArgumentException">
+    /// An entry is null or names no type, an interface is declared twice, or
+    /// the parent type implements it already.
+    /// </exception>
+    private static InterfaceImplementation[] ValidateInterfaces(GType parent, SubclassOptions? options)
+    {
+        if (options is null || options.Interfaces.Count == 0)
+        {
+            return [];
+        }
+
+        InterfaceImplementation[] interfaces = new InterfaceImplementation[options.Interfaces.Count];
+
+        for (int i = 0; i < interfaces.Length; i++)
+        {
+            InterfaceImplementation implementation = options.Interfaces[i]
+                ?? throw new ArgumentException(
+                    "An entry of SubclassOptions.Interfaces is null.",
+                    nameof(options));
+
+            GType interfaceType = implementation.InterfaceType;
+            if (!interfaceType.IsValid)
+            {
+                throw new ArgumentException(
+                    "An entry of SubclassOptions.Interfaces names no interface type.",
+                    nameof(options));
+            }
+
+            for (int seen = 0; seen < i; seen++)
+            {
+                if (interfaces[seen].InterfaceType.Value == interfaceType.Value)
+                {
+                    throw new ArgumentException(
+                        $"{interfaceType.Name} is declared twice. Every interface is implemented once.",
+                        nameof(options));
+                }
+            }
+
+            // GLib would let the subclass re-add an interface an ancestor
+            // implements and hand it a copy of the ancestor's slots, but the
+            // managed side has no way to chain up through those, so what looks
+            // like an override would silently be a replacement. Refuse instead.
+            if (parent.IsA(interfaceType))
+            {
+                throw new ArgumentException(
+                    $"{parent.Name} implements {interfaceType.Name} already, and a managed subclass cannot " +
+                    "take an interface over from its parent.",
+                    nameof(options));
+            }
+
+            interfaces[i] = implementation;
+        }
+
+        return interfaces;
     }
 
     /// <summary>

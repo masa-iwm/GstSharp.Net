@@ -84,3 +84,35 @@ internal struct GTypeQuery
     /// <summary>The <c>instance_size</c> field, in bytes.</summary>
     internal uint InstanceSize;
 }
+
+/// <summary>
+/// The native layout of <c>GInterfaceInfo</c>, the description one interface is
+/// attached to a type with.
+/// </summary>
+/// <remarks>
+/// GLib copies the struct with <c>g_memdup2</c> while
+/// <c>g_type_add_interface_static</c> runs, so a caller may hand it a stack
+/// value. See <c>docs/subclassing.md</c> §5.7.
+/// </remarks>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct GInterfaceInfo
+{
+    /// <summary>
+    /// The <c>interface_init</c> field, called as <c>(g_iface, iface_data)</c>
+    /// once the class of the implementing type is initialised.
+    /// </summary>
+    internal delegate* unmanaged[Cdecl]<nint, nint, void> InterfaceInit;
+
+    /// <summary>
+    /// The <c>interface_finalize</c> field, always null: an interface vtable of
+    /// a static type is never finalized.
+    /// </summary>
+    internal delegate* unmanaged[Cdecl]<nint, nint, void> InterfaceFinalize;
+
+    /// <summary>
+    /// The <c>interface_data</c> field, handed back as the second argument of
+    /// <see cref="InterfaceInit"/>. The runtime passes none: the trampoline
+    /// reads the two types out of the vtable header instead.
+    /// </summary>
+    internal nint InterfaceData;
+}

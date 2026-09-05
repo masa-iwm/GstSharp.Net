@@ -96,6 +96,12 @@ internal static unsafe partial class GObjectNative
         GTypeInfo* info,
         int flags);
 
+    [LibraryImport("GObject", EntryPoint = "g_type_add_interface_static")]
+    internal static partial void TypeAddInterfaceStatic(
+        nuint instanceType,
+        nuint interfaceType,
+        GInterfaceInfo* info);
+
     [LibraryImport("GObject", EntryPoint = "g_type_query")]
     internal static partial void TypeQuery(nuint type, out GTypeQuery query);
 

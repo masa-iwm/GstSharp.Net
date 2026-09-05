@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Gst.Interop;
@@ -39,6 +40,7 @@ internal readonly record struct VfuncSlot(int Offset, nint Function);
 internal sealed class SubclassDescriptor
 {
     private readonly VfuncSlot[] _slots;
+    private readonly InterfaceImplementation[] _interfaces;
     private nint _parentClass;
     private nuint _registeredType;
     private Exception? _classInitFailure;
@@ -66,12 +68,18 @@ internal sealed class SubclassDescriptor
     /// <see langword="null"/> for a subclass that is only ever constructed from
     /// managed code. See §5.4.
     /// </param>
+    /// <param name="interfaces">
+    /// The GObject interfaces the subclass implements, which are attached
+    /// between the registration of the type and the reference to its class.
+    /// See §5.7.
+    /// </param>
     internal SubclassDescriptor(
         GType parentType,
         string typeName,
         VfuncSlot[] slots,
         Action<ObjectClassConfig>? classInitializer = null,
-        Func<SubclassCtorArgs, Object>? wrapFactory = null)
+        Func<SubclassCtorArgs, Object>? wrapFactory = null,
+        InterfaceImplementation[]? interfaces = null)
     {
         ArgumentException.ThrowIfNullOrEmpty(typeName);
         ArgumentNullException.ThrowIfNull(slots);
@@ -81,6 +89,7 @@ internal sealed class SubclassDescriptor
         _slots = slots;
         ClassInitializer = classInitializer;
         WrapFactory = wrapFactory;
+        _interfaces = interfaces ?? [];
     }
 
     /// <summary>Gets the type the subclass derives from.</summary>
@@ -101,6 +110,9 @@ internal sealed class SubclassDescriptor
 
     /// <summary>Gets the vfunc slots the subclass takes over.</summary>
     internal ReadOnlySpan<VfuncSlot> Slots => _slots;
+
+    /// <summary>Gets the GObject interfaces the subclass implements.</summary>
+    internal ReadOnlySpan<InterfaceImplementation> Interfaces => _interfaces;
 
     /// <summary>
     /// Gets the type the subclass was registered as, or
@@ -341,6 +353,22 @@ internal static unsafe class SubclassRegistry
     /// </remarks>
     private static readonly ConcurrentDictionary<(nuint Owner, nint Spec), ParamSpec> InstalledSpecs = new();
 
+    /// <summary>
+    /// The interface implementations of the managed subclasses, keyed by the
+    /// implementing type and the interface.
+    /// </summary>
+    /// <remarks>
+    /// The table is filled by <see cref="Register"/> before the interface is
+    /// attached, so that everything that runs later - <c>interface_init</c>,
+    /// and the slots that are asked about a type rather than about an instance,
+    /// such as the <c>get_type</c> and <c>get_protocols</c> of
+    /// <c>GstURIHandler</c> - can find the implementation from the two types
+    /// alone. Those slots run on whatever thread registers an element, outside
+    /// the lock the registration holds.
+    /// </remarks>
+    private static readonly ConcurrentDictionary<(nuint Instance, nuint Interface), InterfaceImplementation>
+        Interfaces = new();
+
     private static long _nextClassDataId;
 
     /// <summary>
@@ -469,6 +497,33 @@ internal static unsafe class SubclassRegistry
             if (descriptor.WrapFactory is { } wrapFactory)
             {
                 TypeRegistry.RegisterSubclass(new GType(type), wrapFactory);
+            }
+
+            // g_type_add_interface_static refuses a type whose class is being
+            // initialised, and referencing the class is what starts that, so
+            // this window - after the registration, before the class - is the
+            // only place an interface can still be attached. The table is
+            // filled first: interface_init runs inside TypeClassRef below and
+            // reads it, and so do the slots that answer for the type itself.
+            foreach (InterfaceImplementation implementation in descriptor.Interfaces)
+            {
+                nuint interfaceType = implementation.InterfaceType.Value;
+                Interfaces[(type, interfaceType)] = implementation;
+
+                // GLib copies the info with g_memdup2, so the stack value is
+                // enough. No finalize hook: the vtable lives for the process.
+                GInterfaceInfo interfaceInfo = default;
+                interfaceInfo.InterfaceInit = &InterfaceInit;
+
+                GObjectNative.TypeAddInterfaceStatic(type, interfaceType, &interfaceInfo);
+
+                if (GObjectNative.TypeIsA(type, interfaceType) == 0)
+                {
+                    throw new InvalidOperationException(
+                        $"GObject refused to add {implementation.InterfaceType.Name} to " +
+                        $"\"{descriptor.TypeName}\". The type stays registered: static GTypes cannot be " +
+                        "unregistered.");
+                }
             }
 
             // Referencing the class runs class_init now rather than when the
@@ -851,6 +906,70 @@ internal static unsafe class SubclassRegistry
         _ = instance;
         _ = gClass;
     }
+
+    /// <summary>
+    /// Fills the vtable of one interface of one managed subclass.
+    /// </summary>
+    /// <param name="iface">The vtable, whose header names both types.</param>
+    /// <param name="interfaceData">The <c>interface_data</c>, always null here.</param>
+    /// <remarks>
+    /// One trampoline serves every interface of every managed subclass: the
+    /// pair of types it has to dispatch on is written into the head of the
+    /// vtable by GLib before the hook is called, so no per registration data is
+    /// needed. It runs after the class initialiser of the implementing type, on
+    /// the thread that referenced the class - which is the thread inside
+    /// <see cref="Register"/> - and the class initialiser rules apply: nothing
+    /// here creates a wrapper.
+    /// </remarks>
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static void InterfaceInit(nint iface, nint interfaceData)
+    {
+        _ = interfaceData;
+
+        GTypeInterfaceRaw* header = (GTypeInterfaceRaw*)iface;
+        nuint instanceType = header->InstanceType;
+
+        try
+        {
+            if (!Interfaces.TryGetValue((instanceType, header->GType), out InterfaceImplementation? implementation))
+            {
+                throw new InvalidOperationException(
+                    "interface_init ran for a managed subclass whose interface is unknown.");
+            }
+
+            implementation.InitializeVTable((void*)iface, new GType(instanceType));
+        }
+        catch (Exception exception)
+        {
+            // Same contract as ClassInit: the exception cannot cross back into
+            // GObject, so it is kept on the descriptor and Register rethrows it
+            // as the failure of the Define call that started all this.
+            if (ByType.TryGetValue(instanceType, out SubclassDescriptor? failed))
+            {
+                failed.CaptureClassInitFailure(exception);
+            }
+
+            ExceptionTrap.Report(exception);
+        }
+    }
+
+    /// <summary>
+    /// Returns the implementation of one interface of one managed subclass.
+    /// </summary>
+    /// <param name="instanceType">The implementing type.</param>
+    /// <param name="interfaceType">The interface.</param>
+    /// <param name="implementation">The implementation, when there is one.</param>
+    /// <returns>Whether the type implements the interface through the binding.</returns>
+    /// <remarks>
+    /// This is how an interface slot that is handed a type rather than an
+    /// instance - <c>GstURIHandler.get_type</c> and <c>get_protocols</c> are
+    /// both of that shape - finds the managed side without a wrapper.
+    /// </remarks>
+    internal static bool TryGetInterface(
+        GType instanceType,
+        GType interfaceType,
+        [NotNullWhen(true)] out InterfaceImplementation? implementation) =>
+        Interfaces.TryGetValue((instanceType.Value, interfaceType.Value), out implementation);
 
     /// <summary>
     /// Rejects a name GObject would reject, with a message that says why.
