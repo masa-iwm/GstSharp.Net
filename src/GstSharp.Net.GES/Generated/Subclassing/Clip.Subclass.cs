@@ -154,11 +154,12 @@ public unsafe partial class Clip
     /// <para>Answer an element extracted from an asset - Asset.Request(subclassType.GType, null)
     /// followed by Extract&lt;T&gt;() - which owns the only reference to the element until
     /// ges_container_add takes one of its own (ges-container.c:731), so do not dispose it
-    /// before returning. A child built with new has no asset: it never gets an nleobject,
-    /// ges_layer_add_clip_full removes it from the clip again (ges-layer.c:781-800), and
-    /// splitting or pasting the clip aborts the process on g_assert (asset)
-    /// (ges-timeline-element.c:1675). A null answer is a clip with no child of that track type,
-    /// which is not an error.</para>
+    /// before returning. The trampoline hands the handle on and moves no reference, so the
+    /// wrapper you answer keeps the reference it owns. A child built with new has no asset: it
+    /// never gets an nleobject, ges_layer_add_clip_full removes it from the clip again
+    /// (ges-layer.c:781-800), and splitting or pasting the clip aborts the process on g_assert
+    /// (asset) (ges-timeline-element.c:1675). A null answer is a clip with no child of that
+    /// track type, which is not an error.</para>
     /// </remarks>
     /// <param name="type">The <c>type</c> argument.</param>
     /// <returns>
@@ -176,11 +177,12 @@ public unsafe partial class Clip
     /// <para>Answer an element extracted from an asset - Asset.Request(subclassType.GType, null)
     /// followed by Extract&lt;T&gt;() - which owns the only reference to the element until
     /// ges_container_add takes one of its own (ges-container.c:731), so do not dispose it
-    /// before returning. A child built with new has no asset: it never gets an nleobject,
-    /// ges_layer_add_clip_full removes it from the clip again (ges-layer.c:781-800), and
-    /// splitting or pasting the clip aborts the process on g_assert (asset)
-    /// (ges-timeline-element.c:1675). A null answer is a clip with no child of that track type,
-    /// which is not an error.</para>
+    /// before returning. The trampoline hands the handle on and moves no reference, so the
+    /// wrapper you answer keeps the reference it owns. A child built with new has no asset: it
+    /// never gets an nleobject, ges_layer_add_clip_full removes it from the clip again
+    /// (ges-layer.c:781-800), and splitting or pasting the clip aborts the process on g_assert
+    /// (asset) (ges-timeline-element.c:1675). A null answer is a clip with no child of that
+    /// track type, which is not an error.</para>
     /// </remarks>
     /// <param name="type">The <c>type</c> argument.</param>
     /// <returns>
