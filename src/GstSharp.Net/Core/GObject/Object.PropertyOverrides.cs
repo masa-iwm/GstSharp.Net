@@ -147,6 +147,16 @@ public partial class Object
     /// Do not notify from here unless the specification carries
     /// <see cref="ParamFlags.ExplicitNotify"/>; see <see cref="Notify"/>.
     /// </para>
+    /// <para>
+    /// <paramref name="pspec"/> is <b>borrowed</b> for the length of the call
+    /// and must not be disposed. It is not a wrapper that stops existing when
+    /// the call returns, the way a mini object lent to a vfunc does: for a
+    /// property the managed class installed it is the runtime's single
+    /// long-lived wrapper for that specification, the one every later call and
+    /// every <see cref="Notify"/> is handed. Disposing it empties that wrapper,
+    /// and the notification that follows fails inside a property slot, where
+    /// the exception goes to the exception trap rather than to the caller.
+    /// </para>
     /// </remarks>
     protected virtual void OnSetProperty(uint propertyId, ValueView value, ParamSpec pspec)
     {
@@ -170,7 +180,9 @@ public partial class Object
     /// <c>switch</c> calls <c>base.OnGetProperty(...)</c> to warn, and there is
     /// no chain up. Leaving <paramref name="value"/> untouched answers the
     /// default of its type, which is what GObject does for a property no class
-    /// claims.
+    /// claims. <paramref name="pspec"/> is borrowed on the same terms: it is
+    /// the long-lived wrapper the runtime keeps for the specification, and
+    /// disposing it breaks every later use of that property.
     /// </remarks>
     protected virtual void OnGetProperty(uint propertyId, ValueRef value, ParamSpec pspec)
     {
