@@ -1412,9 +1412,10 @@ A managed `GES.VideoSource` answers the element behind it from
   installed (§5.5) included. That is how state reaches the clip a split
   produced.
 * **The class data fields are inherited, not configured.** The mirrors lay the
-  unions of these class structs out by value, but the fields inside them —
-  `nleobject_factorytype`, `default_track_type`, `disable_scale_in_compositor`
-  — are layout only and no facade sets them. A direct subclass of
+  unions of these class structs out by value, but the data fields of the class
+  structs, in the unions and beside them — `nleobject_factorytype`,
+  `default_track_type`, `disable_scale_in_compositor` — are layout only and no
+  facade sets them. A direct subclass of
   `GES.Source` therefore inherits `nlesource` as its factory type and
   overrides `OnCreateElement`; `needs_converters`, `get_natural_size` and
   `create_filters` have no virtual method in the gir and stay opaque, so a

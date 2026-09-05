@@ -8,7 +8,8 @@
 //
 // It is headless and bounded: the source is a videotestsrc, the preview sink is
 // a fakesink and the clip is half a second long, so the run ends at the end of
-// stream on any machine that has the base plugins.
+// stream on any machine that has the nle and ges plugins and the base and good
+// plugin sets a video source bin is built from.
 //
 // Everything runs on this thread. The editing services assert the thread a
 // timeline and its tracks were created on, so a Task.Run around any of this

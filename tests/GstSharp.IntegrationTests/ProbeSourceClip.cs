@@ -67,9 +67,6 @@ internal sealed class ProbeSourceClip : GES.SourceClip, IManagedSubclass<ProbeSo
         return asset.Extract<ProbeSourceClip>();
     }
 
-    /// <summary>Forgets what the previous test observed.</summary>
-    internal static void Reset() => Volatile.Write(ref _wrappersBuilt, 0);
-
     /// <summary>Builds the wrapper of an instance native code created.</summary>
     /// <param name="args">What the runtime says about the instance.</param>
     /// <returns>The wrapper, which adopts the instance.</returns>

@@ -394,9 +394,9 @@ jobs:
       # The editing services with a managed clip and a managed source in the
       # timeline: what this gates is the child contract, since the clip is only
       # given a child if its create_track_element answered one the library could
-      # extract from an asset. It needs videotestsrc and fakesink and nothing
-      # else, and --timeout 20 is the deadline the half second clip has to reach
-      # the end of stream in.
+      # extract from an asset. It needs the nle and ges plugins and the base
+      # and good plugin sets a video source bin is built from, and --timeout 20
+      # is the deadline the half second clip has to reach the end of stream in.
       - name: GesCustomSource
         run: dotnet run --project samples/GesCustomSource --no-restore -- --timeout 20
 
