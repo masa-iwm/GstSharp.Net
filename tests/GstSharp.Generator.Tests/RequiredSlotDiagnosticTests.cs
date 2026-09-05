@@ -133,8 +133,7 @@ public sealed class RequiredSlotDiagnosticTests
             return Fixture.Run(
                 body,
                 Overlays.Load(directory),
-                namespaceName: "GstBase",
-                symbolPrefixes: "gst_base");
+                namespaceName: "GstBase");
         }
         finally
         {
