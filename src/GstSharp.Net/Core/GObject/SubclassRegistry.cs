@@ -485,14 +485,16 @@ internal static unsafe class SubclassRegistry
             nuint taken = GObjectNative.TypeFromName(name.Pointer);
             if (taken != GType.InvalidValue)
             {
-                // A definition whose class initialiser failed leaves the name
-                // taken - a static GType cannot be unregistered - so the retry
+                // A definition that failed after its type was registered -
+                // in the class initialiser, on a refused interface or on a
+                // class reference that came back null - leaves the name taken,
+                // because a static GType cannot be unregistered, so the retry
                 // lands here rather than on the original failure. Saying which
                 // failure that was is the difference between "unique per
                 // process" and the actual bug.
                 string hint = ByType.TryGetValue(taken, out SubclassDescriptor? previous)
                     && previous.ClassInitFailure is { } previousFailure
-                    ? " A previous DefineSubclass with this name failed in its class initialiser: "
+                    ? " A previous DefineSubclass with this name failed after the type had been registered: "
                         + previousFailure.Message
                     : string.Empty;
 

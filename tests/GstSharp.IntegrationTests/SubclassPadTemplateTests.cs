@@ -74,7 +74,7 @@ public sealed class SubclassPadTemplateTests
         _output.WriteLine(retry.Message);
         Assert.Contains("is taken already", retry.Message, StringComparison.Ordinal);
         Assert.Contains(
-            "A previous DefineSubclass with this name failed in its class initialiser:",
+            "A previous DefineSubclass with this name failed after the type had been registered:",
             retry.Message,
             StringComparison.Ordinal);
         Assert.Contains("\"src\" pad template", retry.Message, StringComparison.Ordinal);
