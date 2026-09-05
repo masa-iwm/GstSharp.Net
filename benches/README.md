@@ -66,9 +66,9 @@ Notes on reading them:
   only in the element in the middle; one operation is one run from `NULL` to
   the end of the stream and back. Everything around the middle is chosen so
   that the middle is what is left over. `fakesrc` hands out 64 byte buffers
-  without producing any content — under `videotestsrc` painting 320x240 the
-  per buffer dispatch is a fraction of a millisecond of rendering and cannot
-  be seen at all. `sync=false` on the sink keeps the number about dispatch
+  without producing any content — under `videotestsrc` the per buffer
+  dispatch is a small part of the roughly one millisecond each 320x240 frame
+  takes to paint, and cannot be seen at all. `sync=false` on the sink keeps the number about dispatch
   instead of about the clock. `signal-handoffs=false` stops the native
   `identity`, where that property is on by default, from emitting a signal
   per buffer that the managed filter has no counterpart for. 20,000 buffers
