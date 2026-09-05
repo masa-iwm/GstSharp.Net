@@ -264,9 +264,7 @@ internal sealed class Options
                     break;
 
                 case "--timeout":
-                    options.Timeout = TimeSpan.FromSeconds(double.Parse(
-                        ValueOf(arguments, ref i),
-                        CultureInfo.InvariantCulture));
+                    options.Timeout = ParseTimeout(ValueOf(arguments, ref i));
                     break;
 
                 case "--native-path":
@@ -362,6 +360,22 @@ internal sealed class Options
         return arguments[++index];
     }
 
+    /// <summary>Reads the value of the <c>--timeout</c> option.</summary>
+    /// <param name="value">What was written on the command line.</param>
+    /// <returns>How long the run may take.</returns>
+    /// <exception cref="OptionException">The value is not a number of seconds.</exception>
+    private static TimeSpan ParseTimeout(string value)
+    {
+        if (!double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out double seconds)
+            || double.IsNaN(seconds)
+            || seconds < 0.0)
+        {
+            throw new OptionException($"\"{value}\" is not a number of seconds.");
+        }
+
+        return TimeSpan.FromSeconds(seconds);
+    }
+
     /// <summary>Reads the value of the <c>-t</c> option.</summary>
     /// <param name="value">What was written on the command line.</param>
     /// <returns>The track types it names.</returns>
@@ -369,16 +383,33 @@ internal sealed class Options
     /// <remarks>
     /// The C tool hands the string to <c>gst_value_deserialize</c> against the
     /// flags type of <c>GESTrackType</c> (<c>utils.c:158-174</c>), which needs
-    /// the type to be registered already. The nicks and the separators are the
-    /// ones that deserializer accepts.
+    /// the type to be registered already. That deserializer is
+    /// <c>gst_value_gflags_str_to_flags</c> (<c>gstvalue.c:4575-4622</c>): it
+    /// separates the nicks with <c>+</c> and <c>/</c>, and a nick reached
+    /// through <c>/</c> names a flag that is deliberately *not* set - it only
+    /// goes into the mask, which deserializing a plain flags value throws
+    /// away. Both separators are read here for that reason. The <c>|</c> and
+    /// the <c>,</c> are not the deserializer's; they are accepted on top of it
+    /// because they are the separators every other tool in this repository
+    /// spells flags with.
     /// </remarks>
     private static TrackType ParseTrackTypes(string value)
     {
         TrackType types = 0;
 
-        foreach (string name in value.Split(['+', '|', ','], StringSplitOptions.RemoveEmptyEntries))
+        // A leading separator belongs to the term after it; anything else
+        // starts as if it had been written with a "+".
+        char separator = '+';
+
+        foreach (string term in Split(value))
         {
-            types |= name.Trim() switch
+            if (term.Length == 1 && (term[0] == '+' || term[0] == '/'))
+            {
+                separator = term[0];
+                continue;
+            }
+
+            TrackType type = term.Trim() switch
             {
                 "audio" => TrackType.Audio,
                 "video" => TrackType.Video,
@@ -387,9 +418,45 @@ internal sealed class Options
                 "unknown" => TrackType.Unknown,
                 string other => throw new OptionException($"\"{other}\" is not a track type."),
             };
+
+            if (separator == '+')
+            {
+                types |= type;
+            }
+
+            separator = '+';
         }
 
         return types;
+
+        // Yields the nicks and the "+" and "/" between them, so that the
+        // caller can tell which of the two introduced a nick.
+        static IEnumerable<string> Split(string value)
+        {
+            int start = 0;
+
+            for (int i = 0; i <= value.Length; i++)
+            {
+                bool end = i == value.Length;
+
+                if (!end && value[i] != '+' && value[i] != '/' && value[i] != '|' && value[i] != ',')
+                {
+                    continue;
+                }
+
+                if (i > start)
+                {
+                    yield return value[start..i];
+                }
+
+                if (!end && (value[i] == '+' || value[i] == '/'))
+                {
+                    yield return value[i].ToString();
+                }
+
+                start = i + 1;
+            }
+        }
     }
 
     /// <summary>Spells the <c>+track</c> keyword of a synthesized track.</summary>
