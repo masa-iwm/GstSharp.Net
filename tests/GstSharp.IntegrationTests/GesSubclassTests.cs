@@ -358,6 +358,113 @@ public sealed class GesSubclassTests
     }
 
     /// <summary>
+    /// A <c>create_element</c> override that answers no element is guarded the
+    /// same way one slot up: the trampoline reports the null answer and hands
+    /// the library an <c>identity</c> in its place.
+    /// </summary>
+    [Fact]
+    public void AnElementThatAnswersNothingIsGivenAnIdentity() =>
+        AssertARefusedElementIsGuarded(throws: false);
+
+    /// <summary>
+    /// An override that throws is the same answer one level down — the trap
+    /// turns it into a null one — and is guarded the same way.
+    /// </summary>
+    [Fact]
+    public void AnElementThatThrowsIsGivenAnIdentity() =>
+        AssertARefusedElementIsGuarded(throws: true);
+
+    /// <summary>
+    /// Adds a clip whose source refuses to build the element behind it and
+    /// asserts that the refusal was reported, substituted for and survived.
+    /// </summary>
+    /// <param name="throws">
+    /// Whether the override throws rather than answering nothing.
+    /// </param>
+    /// <remarks>
+    /// The twin of <see cref="AssertARefusedSourceIsGuarded"/> one slot down.
+    /// <c>GESSource</c> implements <c>create_element</c> itself and calls
+    /// <c>create_source</c> from there, so an override of the lower slot
+    /// replaces the whole of that: the element the track element is given is
+    /// the substitute itself rather than a top bin built around one.
+    /// </remarks>
+    private static void AssertARefusedElementIsGuarded(bool throws)
+    {
+        GstGES.Initialize();
+        ProbeNullElementVideoSource.Throws = throws;
+
+        List<Exception> reported = [];
+
+        void OnFailure(Exception exception)
+        {
+            lock (reported)
+            {
+                reported.Add(exception);
+            }
+        }
+
+        Gst.Interop.ExceptionTrap.UnhandledException += OnFailure;
+
+        try
+        {
+            using Timeline timeline = Timeline.NewAudioVideo();
+            using Layer layer = timeline.AppendLayer();
+
+            ProbeNullElementSourceClip clip = ProbeNullElementSourceClip.New();
+
+            using (clip)
+            {
+                PrepareForVideo(clip);
+
+                // The add succeeds because the slot answered an element after
+                // all: the nlesource is configured the way it is for a source
+                // that answered one itself.
+                Assert.True(layer.AddClip(clip));
+
+                ProbeNullElementVideoSource child =
+                    Assert.IsType<ProbeNullElementVideoSource>(Assert.Single(clip.GetChildren(false)));
+
+                // Neither wrapper is disposed here: the element is transfer
+                // none and belongs to the track element, and the factory is
+                // one of the objects the registry interns.
+                Gst.Element element = child.GetElement()
+                    ?? throw new InvalidOperationException("The track element was given no element.");
+
+                Gst.ElementFactory factory = element.GetFactory()
+                    ?? throw new InvalidOperationException("The substitute was built by no factory.");
+
+                Assert.Equal("identity", factory.GetName());
+
+                // The library built this wrapper; it holds the toggle reference
+                // until it is disposed, and the object has to die with the
+                // timeline rather than under a later drain.
+                child.Dispose();
+            }
+        }
+        finally
+        {
+            Gst.Interop.ExceptionTrap.UnhandledException -= OnFailure;
+            ProbeNullElementVideoSource.Throws = false;
+        }
+
+        GC.Collect();
+        GC.WaitForPendingFinalizers();
+        Gst.GObject.Object.DrainPendingReleases();
+
+        Exception only = Assert.Single(reported);
+        InvalidOperationException refusal = Assert.IsType<InvalidOperationException>(only);
+
+        if (throws)
+        {
+            Assert.Equal(ProbeNullElementVideoSource.RefusalMessage, refusal.Message);
+        }
+        else
+        {
+            Assert.Contains("answered null", refusal.Message, StringComparison.Ordinal);
+        }
+    }
+
+    /// <summary>
     /// Makes a clip a video-only clip of a known length, so that
     /// <c>create_track_element</c> is asked for the video track alone.
     /// </summary>
