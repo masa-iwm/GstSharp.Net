@@ -120,8 +120,9 @@ public unsafe partial class Source
     /// </remarks>
     /// <exception cref="System.ArgumentNullException">An argument is <see langword="null"/>.</exception>
     /// <exception cref="System.ArgumentException">
-    /// The type name is not a legal <c>GType</c> name, or a declared slot belongs to a
-    /// class that <c>GESSource</c> does not derive from.
+    /// The type name is not a legal <c>GType</c> name, a declared slot belongs to a
+    /// class that <c>GESSource</c> does not derive from, an interface is declared
+    /// twice, or the parent type implements it already.
     /// </exception>
     /// <exception cref="System.InvalidOperationException">
     /// The type name is taken, or the class initialiser failed.

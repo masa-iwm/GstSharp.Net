@@ -623,8 +623,21 @@ internal sealed class VfuncEmitter
         writer.WriteLine(
             "/// <exception cref=\"System.ArgumentNullException\">An argument is <see langword=\"null\"/>.</exception>");
         writer.WriteLine("/// <exception cref=\"System.ArgumentException\">");
-        writer.WriteLine("/// The type name is not a legal <c>GType</c> name, or a declared slot belongs to a");
-        writer.WriteLine("/// class that <c>" + cName + "</c> does not derive from.");
+        if (options)
+        {
+            // The interfaces arrive with the options and nowhere else, so the
+            // two conditions the validation of that list raises belong to this
+            // overload alone. SubclassType.Define documents the same pair.
+            writer.WriteLine("/// The type name is not a legal <c>GType</c> name, a declared slot belongs to a");
+            writer.WriteLine("/// class that <c>" + cName + "</c> does not derive from, an interface is declared");
+            writer.WriteLine("/// twice, or the parent type implements it already.");
+        }
+        else
+        {
+            writer.WriteLine("/// The type name is not a legal <c>GType</c> name, or a declared slot belongs to a");
+            writer.WriteLine("/// class that <c>" + cName + "</c> does not derive from.");
+        }
+
         writer.WriteLine("/// </exception>");
         writer.WriteLine("/// <exception cref=\"System.InvalidOperationException\">");
         writer.WriteLine("/// The type name is taken, or the class initialiser failed.");
