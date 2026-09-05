@@ -3,13 +3,6 @@
   <PropertyGroup>
     <RootNamespace>Gst.RtspServer</RootNamespace>
     <Description>GstRtspServer for GstSharp.Net: the RTSP server, its clients, sessions, mount points, media factories and streams, including the ONVIF variants.</Description>
-
-    <!-- This package has never been published, so there is no baseline on
-         nuget.org to compare it against; the restore of the gate would fail on
-         a version that does not exist. Remove this line after the next patch
-         release has shipped the package, exactly as #39 and #55 did for the
-         modules before it. -->
-    <EnablePackageValidation>false</EnablePackageValidation>
   </PropertyGroup>
 
   <ItemGroup>
