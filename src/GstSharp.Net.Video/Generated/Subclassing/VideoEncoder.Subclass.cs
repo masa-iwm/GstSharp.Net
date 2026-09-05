@@ -589,9 +589,10 @@ public unsafe partial class VideoEncoder
     /// </param>
     /// <param name="meta">
     /// The <c>meta</c> argument.
-    /// The wrapper only holds the pointer the call was given, which is usually an
-    /// address on the stack of the caller: it stops meaning anything once the call
-    /// returns, so read what is needed out of it before then.
+    /// The wrapper only holds the pointer the call was given, usually an address on
+    /// the stack of the caller, and is detached when the call returns: read what is
+    /// needed out of it before then; every member throws ObjectDisposedException
+    /// afterwards.
     /// </param>
     /// <returns>What <c>transform_meta</c> answers.</returns>
     protected virtual bool OnTransformMeta(Gst.Video.VideoCodecFrame frame, Gst.Meta meta) =>
@@ -866,9 +867,10 @@ public unsafe partial class VideoEncoder
     /// </param>
     /// <param name="meta">
     /// The <c>meta</c> argument.
-    /// The wrapper only holds the pointer the call was given, which is usually an
-    /// address on the stack of the caller: it stops meaning anything once the call
-    /// returns, so read what is needed out of it before then.
+    /// The wrapper only holds the pointer the call was given, usually an address on
+    /// the stack of the caller, and is detached when the call returns: read what is
+    /// needed out of it before then; every member throws ObjectDisposedException
+    /// afterwards.
     /// </param>
     /// <returns>What <c>transform_meta</c> answers.</returns>
     protected bool ChainUpTransformMeta(Gst.Video.VideoCodecFrame frame, Gst.Meta meta)
@@ -1530,7 +1532,16 @@ public unsafe partial class VideoEncoder
 
             using Gst.Video.VideoCodecFrame? frameValue = frame == nint.Zero ? null : Gst.Video.VideoCodecFrame.Borrow(frame);
             Gst.Meta? metaValue = Gst.Meta.FromNative(meta);
-            return (managed.OnTransformMeta(frameValue!, metaValue!)) ? 1 : 0;
+
+            try
+            {
+                bool result = managed.OnTransformMeta(frameValue!, metaValue!);
+                return (result) ? 1 : 0;
+            }
+            finally
+            {
+                metaValue?.Detach();
+            }
         }
         catch (Exception exception)
         {

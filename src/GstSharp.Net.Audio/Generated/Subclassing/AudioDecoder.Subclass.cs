@@ -562,9 +562,10 @@ public unsafe partial class AudioDecoder
     /// </param>
     /// <param name="meta">
     /// The <c>meta</c> argument.
-    /// The wrapper only holds the pointer the call was given, which is usually an
-    /// address on the stack of the caller: it stops meaning anything once the call
-    /// returns, so read what is needed out of it before then.
+    /// The wrapper only holds the pointer the call was given, usually an address on
+    /// the stack of the caller, and is detached when the call returns: read what is
+    /// needed out of it before then; every member throws ObjectDisposedException
+    /// afterwards.
     /// </param>
     /// <param name="inbuf">
     /// The <c>inbuf</c> argument.
@@ -842,9 +843,10 @@ public unsafe partial class AudioDecoder
     /// </param>
     /// <param name="meta">
     /// The <c>meta</c> argument.
-    /// The wrapper only holds the pointer the call was given, which is usually an
-    /// address on the stack of the caller: it stops meaning anything once the call
-    /// returns, so read what is needed out of it before then.
+    /// The wrapper only holds the pointer the call was given, usually an address on
+    /// the stack of the caller, and is detached when the call returns: read what is
+    /// needed out of it before then; every member throws ObjectDisposedException
+    /// afterwards.
     /// </param>
     /// <param name="inbuf">
     /// The <c>inbuf</c> argument.
@@ -1517,7 +1519,16 @@ public unsafe partial class AudioDecoder
             using Gst.Buffer? outbufValue = outbuf == nint.Zero ? null : Gst.Buffer.Borrow(outbuf);
             Gst.Meta? metaValue = Gst.Meta.FromNative(meta);
             using Gst.Buffer? inbufValue = inbuf == nint.Zero ? null : Gst.Buffer.Borrow(inbuf);
-            return (managed.OnTransformMeta(outbufValue!, metaValue!, inbufValue!)) ? 1 : 0;
+
+            try
+            {
+                bool result = managed.OnTransformMeta(outbufValue!, metaValue!, inbufValue!);
+                return (result) ? 1 : 0;
+            }
+            finally
+            {
+                metaValue?.Detach();
+            }
         }
         catch (Exception exception)
         {

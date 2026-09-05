@@ -245,6 +245,17 @@ gets mirrors as well. The other eight address a single slot, keyed
   drop stays the caller's. An entry that names no parameter of a slot, or one
   of another shape, is reported as `GEN0044`.
 
+One more key addresses a record rather than a slot:
+
+* `lentOpaqueRecords` — the opaque records a slot is lent one of. Their wrapper
+  holds nothing but the pointer, which is regularly an address on the stack of
+  the caller, so the trampoline detaches it when the call returns and every
+  member throws `ObjectDisposedException` afterwards. The list is stated rather
+  than derived because a run emits one module after the other, and the slots
+  that lend a record of the core module belong to modules reached long after
+  that record is written out. A record a slot lends and the list does not name
+  is `GEN0045`, an error; one that no slot lends is `GEN0046`.
+
 The `rename` table of the same file reaches a slot as well, under that same
 `Ns.Class::vfunc` key: a slot whose derived name is one an inherited member of
 another return type already carries has no managed spelling of its own, and
@@ -268,7 +279,7 @@ Two more keys address a callback type and a member rather than a slot:
 Every entry cites the C file and line its claim rests on in a `$comment` or in
 the `$comment-` block of the key. An entry that names no slot or no parameter
 of the emitted surface is reported as `GEN0029` through `GEN0031`,
-`GEN0036` through `GEN0039` and `GEN0044`. A slot whose managed member would hide an
+`GEN0036` through `GEN0039`, `GEN0044` and `GEN0046`. A slot whose managed member would hide an
 inherited one of the same name and the same parameters while answering another
 type is `GEN0040`, an error: C# accepts such a pair and the override that runs
 then depends on the static type the caller holds, so the slot needs a

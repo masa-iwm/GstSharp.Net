@@ -200,15 +200,17 @@ public unsafe partial class VideoFilter
     /// <summary>transform a video frame</summary>
     /// <param name="inframe">
     /// The <c>inframe</c> argument.
-    /// The wrapper only holds the pointer the call was given, which is usually an
-    /// address on the stack of the caller: it stops meaning anything once the call
-    /// returns, so read what is needed out of it before then.
+    /// The wrapper only holds the pointer the call was given, usually an address on
+    /// the stack of the caller, and is detached when the call returns: read what is
+    /// needed out of it before then; every member throws ObjectDisposedException
+    /// afterwards.
     /// </param>
     /// <param name="outframe">
     /// The <c>outframe</c> argument.
-    /// The wrapper only holds the pointer the call was given, which is usually an
-    /// address on the stack of the caller: it stops meaning anything once the call
-    /// returns, so read what is needed out of it before then.
+    /// The wrapper only holds the pointer the call was given, usually an address on
+    /// the stack of the caller, and is detached when the call returns: read what is
+    /// needed out of it before then; every member throws ObjectDisposedException
+    /// afterwards.
     /// </param>
     /// <returns>What <c>transform_frame</c> answers.</returns>
     protected virtual Gst.FlowReturn OnTransformFrame(Gst.Video.VideoFrame inframe, Gst.Video.VideoFrame outframe) =>
@@ -217,9 +219,10 @@ public unsafe partial class VideoFilter
     /// <summary>transform a video frame in place</summary>
     /// <param name="frame">
     /// The <c>frame</c> argument.
-    /// The wrapper only holds the pointer the call was given, which is usually an
-    /// address on the stack of the caller: it stops meaning anything once the call
-    /// returns, so read what is needed out of it before then.
+    /// The wrapper only holds the pointer the call was given, usually an address on
+    /// the stack of the caller, and is detached when the call returns: read what is
+    /// needed out of it before then; every member throws ObjectDisposedException
+    /// afterwards.
     /// </param>
     /// <returns>What <c>transform_frame_ip</c> answers.</returns>
     protected virtual Gst.FlowReturn OnTransformFrameIp(Gst.Video.VideoFrame frame) =>
@@ -271,15 +274,17 @@ public unsafe partial class VideoFilter
     /// <summary>Runs the implementation of <c>transform_frame</c> below the managed override.</summary>
     /// <param name="inframe">
     /// The <c>inframe</c> argument.
-    /// The wrapper only holds the pointer the call was given, which is usually an
-    /// address on the stack of the caller: it stops meaning anything once the call
-    /// returns, so read what is needed out of it before then.
+    /// The wrapper only holds the pointer the call was given, usually an address on
+    /// the stack of the caller, and is detached when the call returns: read what is
+    /// needed out of it before then; every member throws ObjectDisposedException
+    /// afterwards.
     /// </param>
     /// <param name="outframe">
     /// The <c>outframe</c> argument.
-    /// The wrapper only holds the pointer the call was given, which is usually an
-    /// address on the stack of the caller: it stops meaning anything once the call
-    /// returns, so read what is needed out of it before then.
+    /// The wrapper only holds the pointer the call was given, usually an address on
+    /// the stack of the caller, and is detached when the call returns: read what is
+    /// needed out of it before then; every member throws ObjectDisposedException
+    /// afterwards.
     /// </param>
     /// <returns>What <c>transform_frame</c> answers.</returns>
     protected Gst.FlowReturn ChainUpTransformFrame(Gst.Video.VideoFrame inframe, Gst.Video.VideoFrame outframe)
@@ -296,9 +301,10 @@ public unsafe partial class VideoFilter
     /// <summary>Runs the implementation of <c>transform_frame_ip</c> below the managed override.</summary>
     /// <param name="frame">
     /// The <c>frame</c> argument.
-    /// The wrapper only holds the pointer the call was given, which is usually an
-    /// address on the stack of the caller: it stops meaning anything once the call
-    /// returns, so read what is needed out of it before then.
+    /// The wrapper only holds the pointer the call was given, usually an address on
+    /// the stack of the caller, and is detached when the call returns: read what is
+    /// needed out of it before then; every member throws ObjectDisposedException
+    /// afterwards.
     /// </param>
     /// <returns>What <c>transform_frame_ip</c> answers.</returns>
     protected Gst.FlowReturn ChainUpTransformFrameIp(Gst.Video.VideoFrame frame)
@@ -394,7 +400,17 @@ public unsafe partial class VideoFilter
 
             Gst.Video.VideoFrame? inframeValue = Gst.Video.VideoFrame.FromNative(inframe);
             Gst.Video.VideoFrame? outframeValue = Gst.Video.VideoFrame.FromNative(outframe);
-            return (int)(managed.OnTransformFrame(inframeValue!, outframeValue!));
+
+            try
+            {
+                Gst.FlowReturn result = managed.OnTransformFrame(inframeValue!, outframeValue!);
+                return (int)(result);
+            }
+            finally
+            {
+                inframeValue?.Detach();
+                outframeValue?.Detach();
+            }
         }
         catch (Exception exception)
         {
@@ -414,7 +430,16 @@ public unsafe partial class VideoFilter
             }
 
             Gst.Video.VideoFrame? frameValue = Gst.Video.VideoFrame.FromNative(frame);
-            return (int)(managed.OnTransformFrameIp(frameValue!));
+
+            try
+            {
+                Gst.FlowReturn result = managed.OnTransformFrameIp(frameValue!);
+                return (int)(result);
+            }
+            finally
+            {
+                frameValue?.Detach();
+            }
         }
         catch (Exception exception)
         {

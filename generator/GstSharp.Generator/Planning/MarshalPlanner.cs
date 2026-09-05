@@ -446,6 +446,14 @@ internal sealed class MarshalPlanner
     private readonly HashSet<string> _consumedSiblingArguments;
 
     /// <summary>
+    /// The gir names of the opaque records this run has seen a slot lent, shared
+    /// across the modules of a run: the lenders of a record of the core module
+    /// are slots of modules that are planned long after that record is written
+    /// out, so the set is only complete at the end of the run.
+    /// </summary>
+    private readonly HashSet<string> _lentOpaqueRecords;
+
+    /// <summary>
     /// The callback uses the callable that is being planned has claimed, and
     /// the scope each of them claimed it under. Claiming a use decides how the
     /// shared trampoline of the callback type ends, so it is only written to
@@ -493,6 +501,10 @@ internal sealed class MarshalPlanner
     /// The set the sibling argument entries that matched a parameter of the
     /// shape they describe are recorded in, shared for the same reason.
     /// </param>
+    /// <param name="lentOpaqueRecords">
+    /// The set the opaque records a slot is lent are recorded in, shared for
+    /// the same reason.
+    /// </param>
     internal MarshalPlanner(
         Repository repository,
         Classifier classifier,
@@ -505,7 +517,8 @@ internal sealed class MarshalPlanner
         HashSet<string>? consumedAnnotationOverrides = null,
         HashSet<string>? consumedInstanceKeyedCallbacks = null,
         HashSet<string>? consumedDocNotes = null,
-        HashSet<string>? consumedSiblingArguments = null)
+        HashSet<string>? consumedSiblingArguments = null,
+        HashSet<string>? lentOpaqueRecords = null)
     {
         _repository = repository;
         _classifier = classifier;
@@ -522,6 +535,7 @@ internal sealed class MarshalPlanner
         _consumedDocNotes = consumedDocNotes ?? new HashSet<string>(StringComparer.Ordinal);
         _consumedSiblingArguments =
             consumedSiblingArguments ?? new HashSet<string>(StringComparer.Ordinal);
+        _lentOpaqueRecords = lentOpaqueRecords ?? new HashSet<string>(StringComparer.Ordinal);
     }
 
     /// <summary>
@@ -4880,7 +4894,7 @@ internal sealed class MarshalPlanner
                 // the caller, which is why the documentation of the argument
                 // says the wrapper stops being meaningful when the call
                 // returns.
-                HandleFlavor.Opaque => VfuncBucket.BorrowOpaque,
+                HandleFlavor.Opaque => RecordLentOpaque(mapped),
                 _ => null,
             },
             _ => null,
@@ -4889,6 +4903,28 @@ internal sealed class MarshalPlanner
         return bucket is { } value
             ? new VfuncArgument(argument, value, IsBoxed: mapped.Kind == MarshalKind.Boxed)
             : null;
+    }
+
+    /// <summary>
+    /// Notes that a slot is lent an opaque record, and answers the bucket that
+    /// says so.
+    /// </summary>
+    /// <param name="mapped">The type of the parameter.</param>
+    /// <returns><see cref="VfuncBucket.BorrowOpaque"/>.</returns>
+    /// <remarks>
+    /// The wrapper of the record has to forget its pointer when the call
+    /// returns, which is a decision about the record and not about the slot, so
+    /// the run collects the lenders and the end of it compares them with what
+    /// the overlays state.
+    /// </remarks>
+    private VfuncBucket RecordLentOpaque(MappedType mapped)
+    {
+        if (mapped.Symbol is { } symbol)
+        {
+            _ = _lentOpaqueRecords.Add(symbol.QualifiedName);
+        }
+
+        return VfuncBucket.BorrowOpaque;
     }
 
     /// <summary>Plans a block of elements a slot is handed with a count beside it.</summary>

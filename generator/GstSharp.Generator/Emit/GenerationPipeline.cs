@@ -100,6 +100,7 @@ internal static class GenerationPipeline
         HashSet<string> consumedInstanceKeyedCallbacks = new(StringComparer.Ordinal);
         HashSet<string> consumedDocNotes = new(StringComparer.Ordinal);
         HashSet<string> consumedSiblingArguments = new(StringComparer.Ordinal);
+        HashSet<string> lentOpaqueRecords = new(StringComparer.Ordinal);
 
         List<GeneratedFile> files = [];
         foreach (ModuleInfo module in ModuleMap.Modules)
@@ -135,6 +136,7 @@ internal static class GenerationPipeline
                     consumedInstanceKeyedCallbacks,
                     consumedDocNotes,
                     consumedSiblingArguments,
+                    lentOpaqueRecords,
                     subclasses,
                     emittedVirtuals),
                 module,
@@ -247,6 +249,50 @@ internal static class GenerationPipeline
                 + "the entry is stale.");
         }
 
+        // The wrapper of a lent opaque record forgets its pointer when the call
+        // returns, and that is a decision about the record: it is taken while
+        // the record is written out, long before the slots that lend it are
+        // planned. The list is therefore stated rather than derived, and both
+        // ways of it going wrong are reported here. A record a slot lends and
+        // the list does not name would keep a wrapper alive over an address
+        // that means nothing after the call, which is why that half is an
+        // error rather than a warning.
+        List<string> unlisted = [];
+        foreach (string name in lentOpaqueRecords)
+        {
+            if (!overlays.IsLentOpaqueRecord(name))
+            {
+                unlisted.Add(name);
+            }
+        }
+
+        unlisted.Sort(StringComparer.Ordinal);
+        foreach (string name in unlisted)
+        {
+            diagnostics.Error(
+                "GEN0045",
+                $"A virtual method is lent a '{name}', which 'lentOpaqueRecords' does not name, so its "
+                + "wrapper is not detached when the call returns. Add it to girs/overlays/fixups.json.");
+        }
+
+        List<string> unlent = [];
+        foreach (string name in overlays.LentOpaqueRecordKeys)
+        {
+            if (!lentOpaqueRecords.Contains(name))
+            {
+                unlent.Add(name);
+            }
+        }
+
+        unlent.Sort(StringComparer.Ordinal);
+        foreach (string name in unlent)
+        {
+            diagnostics.Warn(
+                "GEN0046",
+                $"The lent opaque record '{name}' is lent by no slot of a subclassable class; "
+                + "the entry is stale.");
+        }
+
         // A field skip the run never matched names a field that no longer
         // exists, one of a record that is not emitted, or a misspelling; an
         // entry that states neither an exposing member nor that the field is
@@ -352,7 +398,8 @@ internal static class GenerationPipeline
             shared.ConsumedAnnotationOverrides,
             shared.ConsumedInstanceKeyedCallbacks,
             shared.ConsumedDocNotes,
-            shared.ConsumedSiblingArguments);
+            shared.ConsumedSiblingArguments,
+            shared.LentOpaqueRecords);
 
         SurfaceBuilder surfaces = new(
             planner,
@@ -481,6 +528,10 @@ internal static class GenerationPipeline
     /// The keys of the sibling argument entries the run has matched, shared
     /// for the same reason.
     /// </param>
+    /// <param name="LentOpaqueRecords">
+    /// The gir names of the opaque records the run has seen a slot lent, shared
+    /// for the same reason.
+    /// </param>
     private sealed record ModuleEmitters(
         Repository Repository,
         Classifier Classifier,
@@ -497,6 +548,7 @@ internal static class GenerationPipeline
         HashSet<string> ConsumedInstanceKeyedCallbacks,
         HashSet<string> ConsumedDocNotes,
         HashSet<string> ConsumedSiblingArguments,
+        HashSet<string> LentOpaqueRecords,
         SubclassModel Subclasses,
         Dictionary<string, HashSet<string>> EmittedVirtuals);
 

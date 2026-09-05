@@ -415,6 +415,7 @@ internal sealed class Overlays
     private readonly Dictionary<string, string> _vfuncDocNotes;
     private readonly HashSet<string> _vfuncSpans;
     private readonly HashSet<string> _vfuncSiblingArguments;
+    private readonly HashSet<string> _lentOpaqueRecords;
     private readonly Dictionary<string, string> _vfuncFailureValues;
     private readonly Dictionary<string, string> _instanceKeyedCallbacks;
     private readonly Dictionary<string, string> _docNotes;
@@ -438,6 +439,7 @@ internal sealed class Overlays
         Dictionary<string, string> vfuncDocNotes,
         HashSet<string> vfuncSpans,
         HashSet<string> vfuncSiblingArguments,
+        HashSet<string> lentOpaqueRecords,
         Dictionary<string, string> vfuncFailureValues,
         Dictionary<string, string> instanceKeyedCallbacks,
         Dictionary<string, string> docNotes)
@@ -460,6 +462,7 @@ internal sealed class Overlays
         _vfuncDocNotes = vfuncDocNotes;
         _vfuncSpans = vfuncSpans;
         _vfuncSiblingArguments = vfuncSiblingArguments;
+        _lentOpaqueRecords = lentOpaqueRecords;
         _vfuncFailureValues = vfuncFailureValues;
         _instanceKeyedCallbacks = instanceKeyedCallbacks;
         _docNotes = docNotes;
@@ -483,6 +486,7 @@ internal sealed class Overlays
         new HashSet<string>(StringComparer.Ordinal),
         new Dictionary<string, string>(StringComparer.Ordinal),
         new Dictionary<string, string>(StringComparer.Ordinal),
+        new HashSet<string>(StringComparer.Ordinal),
         new HashSet<string>(StringComparer.Ordinal),
         new HashSet<string>(StringComparer.Ordinal),
         new Dictionary<string, string>(StringComparer.Ordinal),
@@ -566,6 +570,9 @@ internal sealed class Overlays
     /// own instance has.
     /// </summary>
     internal IReadOnlyCollection<string> VfuncSiblingArgumentKeys => _vfuncSiblingArguments;
+
+    /// <summary>Gets the opaque records that a virtual method is lent one of.</summary>
+    internal IReadOnlyCollection<string> LentOpaqueRecordKeys => _lentOpaqueRecords;
 
     /// <summary>Gets the slots that answer their own value when an override threw.</summary>
     internal IReadOnlyCollection<string> VfuncFailureValueKeys => _vfuncFailureValues.Keys;
@@ -691,6 +698,12 @@ internal sealed class Overlays
             vfuncSiblingArguments.Add(key);
         }
 
+        HashSet<string> lentOpaqueRecords = new(StringComparer.Ordinal);
+        foreach (string key in fixups.LentOpaqueRecords ?? [])
+        {
+            lentOpaqueRecords.Add(key);
+        }
+
         Dictionary<string, string> vfuncFailureValues = new(StringComparer.Ordinal);
         foreach (KeyValuePair<string, string> entry in fixups.VfuncFailureValues ?? [])
         {
@@ -734,6 +747,7 @@ internal sealed class Overlays
             vfuncDocNotes,
             vfuncSpans,
             vfuncSiblingArguments,
+            lentOpaqueRecords,
             vfuncFailureValues,
             instanceKeyedCallbacks,
             docNotes);
@@ -900,6 +914,19 @@ internal sealed class Overlays
     /// </remarks>
     internal bool IsSiblingArgument(string key) => _vfuncSiblingArguments.Contains(key);
 
+    /// <summary>Tests whether an opaque record is one a virtual method is lent.</summary>
+    /// <param name="qualifiedName">The record, as <c>GstVideo.VideoFrame</c>.</param>
+    /// <returns><see langword="true"/> when the record is listed.</returns>
+    /// <remarks>
+    /// The wrapper of such a record holds nothing but the pointer, and the
+    /// pointer is regularly an address on the stack of the caller of the slot,
+    /// so the trampoline forgets it when the call returns. The set is stated
+    /// here rather than derived, because the modules are planned and emitted one
+    /// after the other: the lenders of a record of the core module are slots of
+    /// modules that have not been reached when the core module is written out.
+    /// </remarks>
+    internal bool IsLentOpaqueRecord(string qualifiedName) => _lentOpaqueRecords.Contains(qualifiedName);
+
     /// <summary>
     /// Looks up what a trampoline answers when the managed override threw, for
     /// a slot whose caller reads more into the zero of the return type than
@@ -1005,6 +1032,8 @@ internal sealed class Overlays
         public List<string>? VfuncSpans { get; set; }
 
         public List<string>? VfuncSiblingArguments { get; set; }
+
+        public List<string>? LentOpaqueRecords { get; set; }
 
         public Dictionary<string, string>? VfuncFailureValues { get; set; }
 

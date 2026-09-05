@@ -231,21 +231,13 @@ public sealed unsafe partial class Meta
     /// <remarks>
     /// A metadata wrapper whose handle is zero is dead: the handle is zeroed
     /// exactly where the library frees the item, which is
-    /// <see cref="Gst.Buffer.RemoveMeta"/> on <see langword="true"/> and a
-    /// removal that <see cref="Gst.Buffer.ForeachMeta"/> honoured.
+    /// <see cref="Gst.Buffer.RemoveMeta"/> on <see langword="true"/>, a removal
+    /// that <see cref="Gst.Buffer.ForeachMeta"/> honoured, and the trampoline
+    /// of a slot that was lent the item detaching the wrapper it built. The
+    /// check itself lives in the generated accessor, which is where the third
+    /// of those put it; this name is what the members below read the item
+    /// through and says which exception they answer.
     /// </remarks>
     /// <exception cref="ObjectDisposedException">The item was removed from its buffer.</exception>
-    internal nint RequireHandle()
-    {
-        nint handle = Handle;
-
-        if (handle == 0)
-        {
-            throw new ObjectDisposedException(
-                nameof(Meta),
-                "The metadata item was removed from its buffer and freed with it.");
-        }
-
-        return handle;
-    }
+    internal nint RequireHandle() => Handle;
 }

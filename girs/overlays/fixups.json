@@ -864,6 +864,12 @@
   "vfuncSiblingArguments": [
     "GES.TimelineElement::deep_copy#copy"
   ],
+  "$comment-lent-opaque-records": "The opaque records a virtual method is lent one of. The wrapper of an opaque record is a bare pointer holder - the gir describes no way of releasing one - and the pointer a slot is lent is regularly an address on the stack of the caller: GstAudioRingBufferSpec is a field of the ring buffer the prepare slot is handed, and both GstVideoFrame arguments of the transform slots of a video filter are locals of gst_video_filter_transform_frame. The wrapper is therefore detached when the call returns, and every member of one that outlived the call throws ObjectDisposedException rather than reading an address that means nothing any more. The set is stated here rather than derived because a run plans and emits one module after the other: Gst.Meta is written out with the core module, and the slots that lend it - the transform_meta of the two audio codecs, of a base transform and of the two video codecs - belong to modules that are reached long afterwards. Both ways of the list going wrong are reported: a record a slot lends and this does not name is GEN0045, an error, and a record nothing lends is GEN0046.",
+  "lentOpaqueRecords": [
+    "Gst.Meta",
+    "GstAudio.AudioRingBufferSpec",
+    "GstVideo.VideoFrame"
+  ],
   "$comment-vfunc-failure-values": "What a trampoline answers when the exception trap caught an override, for the slots whose caller reads something other than a failure into the zero of the return type. The ring buffer thread of an audio sink calls write again with the same block when it answered zero and the ring buffer is started (gstaudiosink.c:257-259), and the one of an audio source loops on a read that answered zero as long as the source runs (gstaudiosrc.c:234); both treat a negative count as the error it is, which for the unsigned answer of read is the whole range of the type.",
   "vfuncFailureValues": {
     "GstAudio.AudioSink::write": "-1",

@@ -1288,6 +1288,12 @@ internal sealed class VfuncEmitter
     {
         List<string> call = [];
         List<VfuncArgument> produced = [];
+
+        // The wrapper of a lent opaque record holds nothing but the pointer it
+        // was handed, and that pointer is regularly an address on the stack of
+        // the caller. It is forgotten when the call returns, whatever the
+        // override did with the wrapper.
+        List<VfuncArgument> lent = [];
         foreach (VfuncArgument argument in plan.Arguments)
         {
             ArgumentPlan value = argument.Argument;
@@ -1337,6 +1343,7 @@ internal sealed class VfuncEmitter
                         Nullable(value.PublicType) + " " + local + " = " + Bare(value.PublicType)
                         + ".FromNative(" + value.Name + ");");
                     call.Add(NullAssert(value, local));
+                    lent.Add(argument);
                     break;
                 case VfuncBucket.Span:
                     writer.WriteLine(
@@ -1390,7 +1397,7 @@ internal sealed class VfuncEmitter
         }
 
         string invocation = "managed.On" + plan.Name + "(" + string.Join(", ", call) + ")";
-        if (produced.Count == 0)
+        if (produced.Count == 0 && lent.Count == 0)
         {
             if (plan.Return.IsVoid)
             {
@@ -1478,6 +1485,11 @@ internal sealed class VfuncEmitter
         writer.CloseBlock();
         writer.WriteLine("finally");
         writer.OpenBlock();
+        foreach (VfuncArgument argument in lent)
+        {
+            writer.WriteLine(argument.Argument.Name + "Value?.Detach();");
+        }
+
         foreach (VfuncArgument argument in produced)
         {
             if (argument.Bucket == VfuncBucket.OutScalar)
@@ -1757,9 +1769,10 @@ internal sealed class VfuncEmitter
                 note.Add("The memory belongs to the caller and is only valid while the call runs.");
                 break;
             case VfuncBucket.BorrowOpaque:
-                note.Add("The wrapper only holds the pointer the call was given, which is usually an");
-                note.Add("address on the stack of the caller: it stops meaning anything once the call");
-                note.Add("returns, so read what is needed out of it before then.");
+                note.Add("The wrapper only holds the pointer the call was given, usually an address on");
+                note.Add("the stack of the caller, and is detached when the call returns: read what is");
+                note.Add("needed out of it before then; every member throws ObjectDisposedException");
+                note.Add("afterwards.");
                 break;
             case VfuncBucket.Adopt:
                 note.Add("The override takes ownership of it: chain up to hand it on, or it is");

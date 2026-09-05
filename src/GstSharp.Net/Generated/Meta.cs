@@ -35,8 +35,26 @@ namespace Gst;
 /// </remarks>
 public sealed unsafe partial class Meta
 {
+    private nint _handle;
+
     /// <summary>The native instance.</summary>
-    internal nint Handle;
+    /// <exception cref="ObjectDisposedException">The call that lent this has returned.</exception>
+    internal nint Handle
+    {
+        get
+        {
+            ObjectDisposedException.ThrowIf(_handle == nint.Zero, this);
+            return _handle;
+        }
+
+        set => _handle = value;
+    }
+
+    /// <summary>
+    /// Forgets the pointer once the call that lent it returns; every member
+    /// throws <see cref="ObjectDisposedException"/> afterwards.
+    /// </summary>
+    internal void Detach() => _handle = nint.Zero;
 
     /// <summary>Wraps a native <c>GstMeta</c>.</summary>
     /// <param name="handle">The native instance.</param>

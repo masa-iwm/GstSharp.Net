@@ -103,7 +103,14 @@ A record with no reference count of its own — a video frame, a ring buffer
 specification, a metadata item — is lent as a bare pointer holder: the
 wrapper takes no part in the ownership of what it points at, and the pointer
 is regularly an address on the stack of the caller, so it stops meaning
-anything once the call returns.
+anything once the call returns. **The trampoline detaches such a wrapper when
+the call returns**, whatever the override did with it: read what is needed out
+of it before then, because every member of a wrapper that outlived the call
+throws `ObjectDisposedException` rather than reading an address that means
+nothing any more. It is the same detach a borrowed mini object gets from the
+`using` around it, and the three records it applies to are named by
+`lentOpaqueRecords` in `girs/overlays/fixups.json`; a record a slot lends and
+that list does not name fails the run with `GEN0045`.
 
 ## Metadata items and the buffer that owns them
 

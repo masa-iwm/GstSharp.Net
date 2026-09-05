@@ -1000,8 +1000,41 @@ internal sealed class RecordEmitter
             + "partial class " + typeName);
         writer.OpenBlock();
 
-        writer.WriteLine("/// <summary>The native instance.</summary>");
-        writer.WriteLine("internal nint Handle;");
+        if (_overlays.IsLentOpaqueRecord(module.GirNamespace + "." + record.Name))
+        {
+            // A slot is lent one of these, and the pointer it is lent is
+            // regularly an address on the stack of the caller: the trampoline
+            // forgets it when the call returns, so every member of a wrapper
+            // that outlived the call says so instead of reading an address
+            // that means nothing any more.
+            writer.WriteLine("private nint _handle;");
+            writer.WriteLine();
+            writer.WriteLine("/// <summary>The native instance.</summary>");
+            writer.WriteLine(
+                "/// <exception cref=\"ObjectDisposedException\">The call that lent this has returned.</exception>");
+            writer.WriteLine("internal nint Handle");
+            writer.OpenBlock();
+            writer.WriteLine("get");
+            writer.OpenBlock();
+            writer.WriteLine("ObjectDisposedException.ThrowIf(_handle == nint.Zero, this);");
+            writer.WriteLine("return _handle;");
+            writer.CloseBlock();
+            writer.WriteLine();
+            writer.WriteLine("set => _handle = value;");
+            writer.CloseBlock();
+            writer.WriteLine();
+            writer.WriteLine("/// <summary>");
+            writer.WriteLine("/// Forgets the pointer once the call that lent it returns; every member");
+            writer.WriteLine("/// throws <see cref=\"ObjectDisposedException\"/> afterwards.");
+            writer.WriteLine("/// </summary>");
+            writer.WriteLine("internal void Detach() => _handle = nint.Zero;");
+        }
+        else
+        {
+            writer.WriteLine("/// <summary>The native instance.</summary>");
+            writer.WriteLine("internal nint Handle;");
+        }
+
         writer.WriteLine();
         WriteWrapperConstructor(writer, record, typeName, baseCall: null);
 

@@ -262,9 +262,10 @@ public unsafe partial class AudioSrc
     /// <summary>configure device with format</summary>
     /// <param name="spec">
     /// The <c>spec</c> argument.
-    /// The wrapper only holds the pointer the call was given, which is usually an
-    /// address on the stack of the caller: it stops meaning anything once the call
-    /// returns, so read what is needed out of it before then.
+    /// The wrapper only holds the pointer the call was given, usually an address on
+    /// the stack of the caller, and is detached when the call returns: read what is
+    /// needed out of it before then; every member throws ObjectDisposedException
+    /// afterwards.
     /// </param>
     /// <returns>What <c>prepare</c> answers.</returns>
     protected virtual bool OnPrepare(Gst.Audio.AudioRingBufferSpec spec) =>
@@ -315,9 +316,10 @@ public unsafe partial class AudioSrc
     /// <summary>Runs the implementation of <c>prepare</c> below the managed override.</summary>
     /// <param name="spec">
     /// The <c>spec</c> argument.
-    /// The wrapper only holds the pointer the call was given, which is usually an
-    /// address on the stack of the caller: it stops meaning anything once the call
-    /// returns, so read what is needed out of it before then.
+    /// The wrapper only holds the pointer the call was given, usually an address on
+    /// the stack of the caller, and is detached when the call returns: read what is
+    /// needed out of it before then; every member throws ObjectDisposedException
+    /// afterwards.
     /// </param>
     /// <returns>What <c>prepare</c> answers.</returns>
     protected bool ChainUpPrepare(Gst.Audio.AudioRingBufferSpec spec)
@@ -518,7 +520,16 @@ public unsafe partial class AudioSrc
             }
 
             Gst.Audio.AudioRingBufferSpec? specValue = Gst.Audio.AudioRingBufferSpec.FromNative(spec);
-            return (managed.OnPrepare(specValue!)) ? 1 : 0;
+
+            try
+            {
+                bool result = managed.OnPrepare(specValue!);
+                return (result) ? 1 : 0;
+            }
+            finally
+            {
+                specValue?.Detach();
+            }
         }
         catch (Exception exception)
         {
