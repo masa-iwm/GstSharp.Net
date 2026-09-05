@@ -1151,7 +1151,7 @@ construction-property overload a `GstPad` needs, because `direction` is
 construct only; `ObjectClassConfig` arrived as the base of `ClassConfig` (§5.5);
 `Gst.Pad` and `GstBase.AggregatorPad` joined the allowlist, which is what
 un-skipped `Aggregator::create_new_pad`. Twenty eight classes are
-subclassable, with thirty class struct mirrors and 240 slots.
+subclassable, with thirty class struct mirrors and 241 slots.
 
 **Stage 3b — properties, signals and interfaces (landed).** `g_param_spec_*`
 construction (twenty `New` factories for the GObject kinds, plus the
@@ -1534,7 +1534,7 @@ managed `VideoSink` overrides `render` through `BaseSink.RenderOverride` and
 | `Gst.Base.AggregatorPad` | `flush`, `skip_buffer` |
 | `Gst.Audio.AudioBaseSink` | `create_ringbuffer`, `payload` |
 | `Gst.Audio.AudioBaseSrc` | `create_ringbuffer` |
-| `Gst.Audio.AudioSink` | `open`, `prepare`, `unprepare`, `close`, `write`, `delay`, `reset`, `pause`, `resume` |
+| `Gst.Audio.AudioSink` | `open`, `prepare`, `unprepare`, `close`, `write`, `delay`, `reset`, `pause`, `resume`, `stop` (as `OnStopDevice`) |
 | `Gst.Audio.AudioSrc` | `open`, `prepare`, `unprepare`, `close`, `read`, `delay`, `reset` |
 | `Gst.Audio.AudioFilter` | `setup` |
 | `Gst.Audio.AudioDecoder` | `start`, `stop`, `set_format`, `parse`, `handle_frame`, `flush`, `pre_push`, `sink_event`, `src_event`, `open`, `close`, `negotiate`, `decide_allocation`, `propose_allocation`, `sink_query`, `src_query`, `getcaps`, `transform_meta` |
@@ -1545,12 +1545,16 @@ managed `VideoSink` overrides `render` through `BaseSink.RenderOverride` and
 | `Gst.Video.VideoEncoder` | `open`, `close`, `start`, `stop`, `set_format`, `handle_frame`, `reset`, `finish`, `pre_push`, `getcaps`, `sink_event`, `src_event`, `negotiate`, `decide_allocation`, `propose_allocation`, `flush`, `sink_query`, `src_query`, `transform_meta` |
 
 `Aggregator::create_new_pad` is bound as well, and is what a managed sink pad
-type is answered from. Eight slots of those classes carry no `OnX` member:
-seven are the signal class closures of `Element` and `Bin`, which the base
+type is answered from. Seven slots of those classes carry no `OnX` member, and
+all seven are the signal class closures of `Element` and `Bin`, which the base
 library never calls through the class pointer — subscribing to the signal is
-the same hook — and `AudioSink::stop` shares its name with the `stop` of
-`BaseSink` and answers nothing where that one answers a `bool`, so no managed
-name can carry both. `girs/skip-report.md` lists all eight with their reason.
+the same hook. `girs/skip-report.md` lists them with their reason.
+
+`AudioSink::stop` is the one slot whose managed name is not the one its gir
+name derives. It shares that name with the `stop` of `BaseSink` and answers
+nothing where that one answers a `bool`, so no single managed name can carry
+both; the `rename` overlay gives it `StopDevice`, and the three members it
+carries are `OnStopDevice`, `ChainUpStopDevice` and `StopDeviceOverride`.
 
 `Gst.Pad`'s two slots are signal class closures too, and mechanically they are
 no different: `linked` and `unlinked` are declared with `g_signal_new (...,
@@ -1608,12 +1612,16 @@ classes do not, and the registration says so before it takes the type name:
   GObject delivers those before any wrapper exists (§5.6). Plain readable and
   writable properties are installed, are settable from a pipeline description,
   and notify like any other; signals are defined with `AddSignal`.
-* **`GstAudioSink::stop` has no managed member.** Its name collides with
+* **`GstAudioSink::stop` is `OnStopDevice`.** Its gir name collides with
   `BaseSink::stop`, which answers a `bool` where the audio one answers nothing,
-  and C# cannot give one name two return types; a disambiguated managed name is
-  a naming decision that has not been taken. The device is unblocked through
-  `OnReset` instead, which is what `gst_audio_sink_ring_buffer_stop` falls back
-  to when the slot is NULL (gstaudiosink.c:594-602).
+  so the slot is renamed rather than left out. It stops the device and unblocks
+  a pending `OnWrite` as fast as it can, runs on the thread that stops the ring
+  buffer under that ring buffer's object lock, and only for a ring buffer that
+  had started. Declaring `StopDeviceOverride` **replaces the `reset` fallback**:
+  `gst_audio_sink_ring_buffer_stop` calls the `reset` slot only when the `stop`
+  slot is NULL (gstaudiosink.c:594-602), so an override that relied on `OnReset`
+  running there calls it itself. Chaining up does not bring the fallback back —
+  the class slot is the trampoline, and there is no parent slot to reach.
 * **A managed pad installs properties and signals through the same facade** as
   everything else: `InstallProperty` and `AddSignal` live on
   `ObjectClassConfig`, which is what the class initialiser of `Gst.Pad` and

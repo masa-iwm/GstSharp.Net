@@ -1234,7 +1234,7 @@ disappears shows up here as an added line.
 - `gst_webrtc_ice_get_local_candidates`
 - `gst_webrtc_ice_get_remote_candidates`
 
-## Virtuals (22)
+## Virtuals (21)
 
 The class struct slots of a subclassable class that carry no `OnX` member, with
 the reason. `UnsupportedSignature` is the planner refusing a shape and
@@ -1269,10 +1269,6 @@ managed surface and not the ABI.
 - `Gst.Element::no_more_pads` — signal class closure: read by g_signal at emission time, never called through the class pointer by the base class; managed code subscribes to the signal instead
 - `Gst.Element::pad_added` — signal class closure: read by g_signal at emission time, never called through the class pointer by the base class; managed code subscribes to the signal instead
 - `Gst.Element::pad_removed` — signal class closure: read by g_signal at emission time, never called through the class pointer by the base class; managed code subscribes to the signal instead
-
-### GstAudio (1)
-
-- `GstAudio.AudioSink::stop` — name collides with the BaseSink stop slot (different return type); a disambiguated managed name needs a naming decision
 
 ## Fields (143)
 

@@ -4658,7 +4658,7 @@ internal sealed class MarshalPlanner
             return null;
         }
 
-        string name = NameMapper.ToPascalCase(method.Name);
+        string name = _names.VirtualMethodName(overlayKey, method.Name);
         string instance = NameMapper.ParameterName(method.InstanceParameter?.Name ?? "instance");
         HashSet<string> taken = new(TrampolineLocals, StringComparer.Ordinal)
         {

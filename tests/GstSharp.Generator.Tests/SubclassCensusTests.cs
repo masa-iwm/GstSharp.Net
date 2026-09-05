@@ -33,7 +33,7 @@ public sealed class SubclassCensusTests
     [InlineData("Gst", 4, 19)]
     [InlineData("GstBase", 7, 99)]
     [InlineData("GstApp", 0, 0)]
-    [InlineData("GstAudio", 7, 55)]
+    [InlineData("GstAudio", 7, 56)]
     [InlineData("GstVideo", 4, 45)]
     [InlineData("GstPbutils", 0, 0)]
     [InlineData("GstSdp", 0, 0)]
@@ -56,11 +56,11 @@ public sealed class SubclassCensusTests
     }
 
     /// <summary>
-    /// The run as a whole: thirty mirrors and two hundred and forty slots, the
-    /// numbers the release notes and <c>docs/subclassing.md</c> quote.
+    /// The run as a whole: thirty mirrors and two hundred and forty one slots,
+    /// the numbers the release notes and <c>docs/subclassing.md</c> quote.
     /// </summary>
     [Fact]
-    public void TheRunEmitsThirtyMirrorsAndTwoHundredAndFortySlots()
+    public void TheRunEmitsThirtyMirrorsAndTwoHundredAndFortyOneSlots()
     {
         EmissionCensus census = Generated.Census;
         int mirrors = 0;
@@ -72,7 +72,7 @@ public sealed class SubclassCensusTests
         }
 
         Assert.Equal(30, mirrors);
-        Assert.Equal(240, slots);
+        Assert.Equal(241, slots);
     }
 
     /// <summary>
@@ -104,14 +104,7 @@ public sealed class SubclassCensusTests
 
         Assert.Empty(census.SkippedVirtuals("GstBase"));
 
-        Assert.Equal(
-            new Dictionary<string, string>(StringComparer.Ordinal)
-            {
-                ["GstAudio.AudioSink::stop"] =
-                    "name collides with the BaseSink stop slot (different return type); "
-                    + "a disambiguated managed name needs a naming decision",
-            },
-            census.SkippedVirtuals("GstAudio"));
+        Assert.Empty(census.SkippedVirtuals("GstAudio"));
 
         Assert.Empty(census.SkippedVirtuals("GstVideo"));
 
@@ -149,6 +142,6 @@ public sealed class SubclassCensusTests
             },
             census.SkippedVirtuals("GES"));
 
-        Assert.Equal(22, census.SkippedVirtualCount());
+        Assert.Equal(21, census.SkippedVirtualCount());
     }
 }

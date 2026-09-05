@@ -103,6 +103,15 @@ public unsafe partial class AudioSink
         Gst.Audio.AudioSinkClassRaw.ResumeOffset,
         (nint)(delegate* unmanaged[Cdecl]<nint, void>)&ResumeTrampoline);
 
+    /// <summary>
+    /// Gets the declaration of <c>GstAudioSink.stop</c>, for a subclass that
+    /// overrides <see cref="OnStopDevice"/>.
+    /// </summary>
+    public static Gst.GObject.VfuncOverride StopDeviceOverride { get; } = new(
+        &GetGType,
+        Gst.Audio.AudioSinkClassRaw.StopOffset,
+        (nint)(delegate* unmanaged[Cdecl]<nint, void>)&StopDeviceTrampoline);
+
     /// <summary>Registers a managed subclass of <c>GstAudioSink</c> with GObject.</summary>
     /// <param name="typeName">The <c>GType</c> name, unique in the process.</param>
     /// <param name="configureClass">
@@ -345,6 +354,31 @@ public unsafe partial class AudioSink
     protected virtual void OnResume() =>
         ChainUpResume();
 
+    /// <summary>
+    /// Stop the device and unblock write as fast as possible.
+    ///        Pending samples are flushed from the device.
+    ///        For retro compatibility, the audio sink will fallback
+    ///        to calling reset if this vmethod is not provided. Since: 1.18
+    /// </summary>
+    /// <remarks>
+    /// <para>This stops the device and unblocks a write as fast as it can. It runs on the thread that
+    /// stops the ring buffer, under the object lock of the ring buffer
+    /// (gstaudioringbuffer.c:1364-1399), and only when the ring buffer leaves the started,
+    /// paused or errored state for the stopped one, so a ring buffer that never started never
+    /// reaches it. In the paths of the base class the writer thread has been stopped and joined
+    /// by then (gstaudiosink.c:471-478). The teardown from READY to NULL is stop, then
+    /// unprepare if the ring buffer was acquired, then close; after an open that failed none of
+    /// the three runs, and after a prepare that failed stop and unprepare are skipped while
+    /// close still runs. A caps change releases and re-acquires the ring buffer, so prepare may
+    /// follow stop again. Declaring StopDeviceOverride replaces the fallback the C code takes:
+    /// gst_audio_sink_ring_buffer_stop calls the reset slot only when the stop slot is NULL
+    /// (gstaudiosink.c:594-602), so an override that relied on OnReset running here calls it
+    /// itself. Chaining up does not bring the fallback back - the class slot is the trampoline,
+    /// and there is no parent slot to reach.</para>
+    /// </remarks>
+    protected virtual void OnStopDevice() =>
+        ChainUpStopDevice();
+
     /// <summary>Runs the implementation of <c>open</c> below the managed override.</summary>
     /// <returns>What <c>open</c> answers.</returns>
     protected bool ChainUpOpen()
@@ -439,6 +473,29 @@ public unsafe partial class AudioSink
     protected void ChainUpResume()
     {
         ChainUpResume(Handle);
+        GC.KeepAlive(this);
+    }
+
+    /// <summary>Runs the implementation of <c>stop</c> below the managed override.</summary>
+    /// <remarks>
+    /// <para>This stops the device and unblocks a write as fast as it can. It runs on the thread that
+    /// stops the ring buffer, under the object lock of the ring buffer
+    /// (gstaudioringbuffer.c:1364-1399), and only when the ring buffer leaves the started,
+    /// paused or errored state for the stopped one, so a ring buffer that never started never
+    /// reaches it. In the paths of the base class the writer thread has been stopped and joined
+    /// by then (gstaudiosink.c:471-478). The teardown from READY to NULL is stop, then
+    /// unprepare if the ring buffer was acquired, then close; after an open that failed none of
+    /// the three runs, and after a prepare that failed stop and unprepare are skipped while
+    /// close still runs. A caps change releases and re-acquires the ring buffer, so prepare may
+    /// follow stop again. Declaring StopDeviceOverride replaces the fallback the C code takes:
+    /// gst_audio_sink_ring_buffer_stop calls the reset slot only when the stop slot is NULL
+    /// (gstaudiosink.c:594-602), so an override that relied on OnReset running here calls it
+    /// itself. Chaining up does not bring the fallback back - the class slot is the trampoline,
+    /// and there is no parent slot to reach.</para>
+    /// </remarks>
+    protected void ChainUpStopDevice()
+    {
+        ChainUpStopDevice(Handle);
         GC.KeepAlive(this);
     }
 
@@ -551,6 +608,19 @@ public unsafe partial class AudioSink
     {
         delegate* unmanaged[Cdecl]<nint, void> slot =
             (delegate* unmanaged[Cdecl]<nint, void>)ParentClassOf(sink)->Resume;
+
+        if (slot is null)
+        {
+            return;
+        }
+
+        slot(sink);
+    }
+
+    private static void ChainUpStopDevice(nint sink)
+    {
+        delegate* unmanaged[Cdecl]<nint, void> slot =
+            (delegate* unmanaged[Cdecl]<nint, void>)ParentClassOf(sink)->Stop;
 
         if (slot is null)
         {
@@ -735,6 +805,25 @@ public unsafe partial class AudioSink
             }
 
             managed.OnResume();
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+        }
+    }
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static void StopDeviceTrampoline(nint sink)
+    {
+        try
+        {
+            if (Gst.GObject.Object.TryGetOrFabricate(sink) is not AudioSink managed)
+            {
+                ChainUpStopDevice(sink);
+                return;
+            }
+
+            managed.OnStopDevice();
         }
         catch (Exception exception)
         {

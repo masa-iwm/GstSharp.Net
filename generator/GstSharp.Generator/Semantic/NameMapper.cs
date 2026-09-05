@@ -165,8 +165,11 @@ internal sealed class NameMapper
     /// <returns>The C# event name, for example <c>PadAdded</c> for <c>pad-added</c>.</returns>
     /// <remarks>
     /// The rename key is the GObject spelling of a signal,
-    /// <c>Gst.Element::pad-added</c>, which can collide neither with the key of
-    /// a property (<c>Gst.Element:name</c>) nor with the one of a member.
+    /// <c>Gst.Element::pad-added</c>, which can collide with the key of
+    /// neither a property (<c>Gst.Element:name</c>) nor a member. It is the
+    /// spelling a virtual method is renamed by as well, so a signal whose name
+    /// carries no hyphen shares its key with a slot of the same name; nothing
+    /// in the corpus has such a pair.
     /// </remarks>
     internal string SignalName(GirNamespace declarationNamespace, GirTypeDeclaration owner, GirSignal signal) =>
         _overlays.TryGetRename(
@@ -179,6 +182,35 @@ internal sealed class NameMapper
     /// <param name="girName">The verbatim gir name.</param>
     /// <returns>The C# identifier.</returns>
     internal static string ParameterName(string girName) => EscapeIdentifier(ToCamelCase(girName));
+
+    /// <summary>Maps the C# name of a virtual method.</summary>
+    /// <param name="overlayKey">
+    /// The key of the slot, in the <c>Ns.Class::vfunc</c> spelling.
+    /// </param>
+    /// <param name="girName">The verbatim gir name of the slot.</param>
+    /// <returns>
+    /// The stem the <c>OnX</c>, <c>ChainUpX</c> and <c>XOverride</c> members
+    /// are named after.
+    /// </returns>
+    /// <remarks>
+    /// <para>
+    /// The stem a slot derives can be one an inherited member of another
+    /// return type already carries, and C# cannot give one name two return
+    /// types; the <c>rename</c> overlay is what gives the slot a name of its
+    /// own, at the same <c>Ns.Class::vfunc</c> key the <c>#parameter</c>
+    /// renames extend.
+    /// </para>
+    /// <para>
+    /// That key is the one a signal is renamed by as well, so a slot and a
+    /// signal of the same class would share an entry if their gir names
+    /// coincided. Nothing in the corpus has such a pair, and the hyphen nearly
+    /// every signal name carries is not something a slot name can hold.
+    /// </para>
+    /// </remarks>
+    internal string VirtualMethodName(string overlayKey, string girName) =>
+        _overlays.TryGetRename(overlayKey, out string? renamed)
+            ? renamed
+            : ToPascalCase(girName);
 
     /// <summary>Maps the C# name of a parameter of a virtual method.</summary>
     /// <param name="overlayKey">
