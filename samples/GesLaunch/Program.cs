@@ -99,6 +99,14 @@
 //     re-parents the profile tree (ges-launcher.c:773-811, 660-710); both are
 //     fully bound and both are a feature of their own rather than of this port.
 //
+//   * get_smart_profile (ges-launcher.c:508-577, called from :628-636), which
+//     is what --smart-rendering without --format tries before the extension of
+//     the output file: it reads the discoverer info of the uri clip assets of
+//     the timeline, turns the ones with enough streams for the tracks into a
+//     profile with gst_encoding_profile_from_discoverer and picks one of those.
+//     Same discoverer-driven class as --profile-from above, so this port goes
+//     straight to the extension.
+//
 //   * --embed-nesteds, which pulls nested timelines into the saved project.
 //
 //   * --set-scenario, --set-test-file, --enable-validate and

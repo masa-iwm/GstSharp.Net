@@ -482,7 +482,10 @@ internal static class Launcher
     /// <summary>
     /// Decides between preview and render, which is
     /// <c>_set_rendering_details</c> at <c>ges-launcher.c:589-747</c> without
-    /// its <c>--profile-from</c> and <c>--container-profile</c> branches.
+    /// its <c>--profile-from</c> and <c>--container-profile</c> branches and
+    /// without the <c>get_smart_profile</c> attempt that <c>--smart-rendering</c>
+    /// makes before the file extension (<c>ges-launcher.c:508-577</c>); see the
+    /// header of Program.cs.
     /// </summary>
     /// <param name="pipeline">The pipeline to configure.</param>
     /// <param name="project">The project, which may carry profiles of its own.</param>
