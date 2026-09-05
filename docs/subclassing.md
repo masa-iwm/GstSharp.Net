@@ -1046,6 +1046,14 @@ document spells it out because the failure modes are subtle:
     and the `set_property`/`get_property` overrides of §5.6. What stays out is
     construct properties, for the reason given there.
 
+    Property ids are one more thing that rests on the one-level rule — "a
+    managed subclass cannot be derived from by another managed subclass"
+    (§11, and the decision it comes from in §5.3). A managed class picks the
+    ids its own `ClassInit` installs, and `OnSetProperty` is reached for "a
+    property this very type installed"; with a managed type under a managed
+    type the two `ClassInit` runs would number their properties independently
+    and the child's ids would collide with the parent's.
+
 ---
 
 ## 10. Staged implementation plan
