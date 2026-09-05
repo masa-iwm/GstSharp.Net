@@ -21,34 +21,42 @@ and the samples use. The loader finds it the usual way; nothing has to be set.
 dotnet run --project benches/GstSharp.Benchmarks -c Release -- --filter '*'
 
 # one class
-dotnet run --project benches/GstSharp.Benchmarks -c Release -- --filter '*Trampoline*'
+dotnet run --project benches/GstSharp.Benchmarks -c Release -- \
+    --filter '*Trampoline*'
+
+# a quick rough answer, in seconds rather than minutes
+dotnet run --project benches/GstSharp.Benchmarks -c Release -- \
+    --filter '*' --job short --inProcess
 
 # what is there
 dotnet run --project benches/GstSharp.Benchmarks -c Release -- --list flat
 ```
 
-Two things about the configuration are deliberate and are set in code rather
-than left to the command line:
+Two things about the configuration are deliberate and are set in code, for the
+runs that ask for no job of their own:
 
 * **The default job is `Job.Default`** — BenchmarkDotNet's own warmup and
   iteration heuristics, which run until the measurement settles. A short job
   puts the whole suite under three minutes instead of twenty odd, and cannot
   see through the variance of a native library: the trampoline pair swung
-  between a ratio of 0.63 and 2.10 across five short runs of the same code. A harness that exists to catch a
-  regression has to settle before it is worth reading, so the time is spent.
-  It buys less than it should: on the default job the map pair settles and
-  the trampoline pair still does not, for the reason under the table below.
+  between a ratio of 0.63 and 2.10 across five short runs of the same code.
+  A harness that exists to catch a regression has to settle before it is
+  worth reading, so the time is spent. It buys less than it should: on the
+  default job the map pair settles and the trampoline pair still does not,
+  for the reason under the table below.
 * **The default toolchain is `InProcessEmitToolchain`.** The out-of-process
   default writes a generated child project underneath this repository, where
   it inherits `Directory.Build.props` and its `TreatWarningsAsErrors`. In
   process, there is no generated project to inherit anything.
 
-Passing `--job` on the command line **replaces** the default job and takes the
-in-process toolchain with it, which is why the commands above do not use it —
-`--job short` is the one to reach for when a rough answer is wanted quickly,
-and it has to be `--job short --inProcess` for the toolchain to survive. On its
-own `--inProcess` only asks for what is already in force, so `--filter` is the
-flag actually worth reaching for.
+Both of those are the default only while `--job` is absent from the command
+line: BenchmarkDotNet falls back to the job the config marks as its default
+just when the command line named none, so `Program` adds it just then and
+otherwise hands the command line an untouched `DefaultConfig`. `--job short
+--inProcess` (or `--job dry --inProcess`) is therefore the way to a rough
+answer in seconds, and the `--inProcess` has to travel with it: a job from the
+command line brings the out-of-process toolchain with it, and the generated
+child project underneath the repository comes back with it.
 
 Every class runs in the same process, so GStreamer is initialised once and the
 managed identity filter registers its `GType` once. Both live in
@@ -73,8 +81,9 @@ Notes on reading them:
   that the middle is what is left over. `fakesrc` hands out 64 byte buffers
   without producing any content — under `videotestsrc` the per buffer
   dispatch is a small part of the roughly one millisecond each 320x240 frame
-  takes to paint, and cannot be seen at all. `sync=false` on the sink keeps the number about dispatch
-  instead of about the clock. `signal-handoffs=false` stops the native
+  takes to paint, and cannot be seen at all. `sync=false` on the sink keeps
+  the number about dispatch instead of about the clock.
+  `signal-handoffs=false` stops the native
   `identity`, where that property is on by default, from emitting a signal
   per buffer that the managed filter has no counterpart for. 20,000 buffers
   is enough that the state cycle both rows share is a small part of one
