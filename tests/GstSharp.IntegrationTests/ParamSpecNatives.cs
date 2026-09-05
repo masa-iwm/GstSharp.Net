@@ -3,14 +3,16 @@ using System.Runtime.InteropServices;
 namespace GstSharp.IntegrationTests;
 
 /// <summary>
-/// The <c>g_param_spec_*</c> constructors, which the binding does not offer.
+/// The <c>g_param_spec_*</c> constructors, as the tests of
+/// <c>ParamSpec.FromNative</c> need them.
 /// </summary>
 /// <remarks>
-/// A specification a test installs itself is the only way to probe the derived
-/// classes exhaustively: the core elements of GStreamer declare properties of
-/// most kinds but not of all of them, and one that is declared nowhere could
-/// only be read against a value nothing wrote. Every constructor here hands out
-/// a floating specification, which <c>Gst.GObject.ParamSpec.FromNative</c> with
+/// The binding offers a <c>New</c> for every kind of specification now, but a
+/// <c>New</c> sinks what it built and hands out a wrapper of the matching
+/// derived class. These imports hand out the floating pointer itself, which is
+/// what a test of the wrapping needs: it decides which class to wrap in and
+/// which reference to take. Every constructor here hands out a floating
+/// specification, which <c>Gst.GObject.ParamSpec.FromNative</c> with
 /// <c>Transfer.None</c> sinks and then owns, so disposing the wrapper releases
 /// it.
 /// </remarks>
@@ -150,9 +152,10 @@ internal static partial class ParamSpecNatives
     internal static partial nint GType(string name, string nick, string blurb, nuint isAType, uint flags);
 
     /// <summary>
-    /// Builds a specification of an untyped pointer, which the binding wraps in
-    /// <c>Gst.GObject.ParamSpec</c> itself: <c>GParamSpecPointer</c> declares
-    /// nothing beyond the base class, so there is no derived class for it.
+    /// Builds a specification of an untyped pointer. <c>GParamSpecPointer</c>
+    /// declares nothing beyond the base class, and the binding wraps it in
+    /// <c>Gst.GObject.ParamSpecPointer</c> all the same, so that a pointer
+    /// property is handed out as itself rather than as the base class.
     /// </summary>
     [LibraryImport("GObject", EntryPoint = "g_param_spec_pointer", StringMarshalling = StringMarshalling.Utf8)]
     internal static partial nint Pointer(string name, string nick, string blurb, uint flags);

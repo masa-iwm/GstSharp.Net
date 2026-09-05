@@ -274,7 +274,7 @@ and the two tables own nothing at all:
   the caller is left with points at no native storage.
 
 A specification a `New` builds is owned the same way, and the ownership is
-settled inside the factory rather than left to the caller: every
+settled inside `New` rather than left to the caller: every
 `g_param_spec_*` constructor hands out a **floating** specification, and `New`
 wraps it with `Transfer.None`, which sinks it, so what comes back holds one
 ordinary reference and nothing floats afterwards.
@@ -291,7 +291,7 @@ ordinary reference and nothing floats afterwards.
   and is disposed by whoever created it.
 * The `G_PARAM_STATIC_*` flags are stripped silently. They would tell GObject to
   keep the caller's `name`, `nick` and `blurb` pointers, and those belong to
-  buffers the factory releases as soon as the call has returned; without them
+  buffers `New` releases as soon as the call has returned; without them
   GObject copies all three.
 * `ValueRef` is the **write** view a property implementation is handed:
   `get_property` is given somewhere to write its answer, and the view neither
