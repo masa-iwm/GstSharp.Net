@@ -118,7 +118,9 @@ public partial class Object
     /// </summary>
     /// <param name="propertyId">The identifier the property was installed with.</param>
     /// <param name="value">The new value, of the type of the property.</param>
-    /// <param name="pspec">The specification of the property.</param>
+    /// <param name="pspec">The specification of the property. It is the
+    /// runtime's own long-lived wrapper, borrowed for the call: do not dispose
+    /// it.</param>
     /// <remarks>
     /// <para>
     /// The method is reached only for a property this very type installed, so
@@ -159,7 +161,9 @@ public partial class Object
     /// The value to write the answer into, already initialised to the type of
     /// the property.
     /// </param>
-    /// <param name="pspec">The specification of the property.</param>
+    /// <param name="pspec">The specification of the property. It is the
+    /// runtime's own long-lived wrapper, borrowed for the call: do not dispose
+    /// it.</param>
     /// <remarks>
     /// As with <see cref="OnSetProperty"/>, the method is reached only for a
     /// property this very type installed, the default arm of the

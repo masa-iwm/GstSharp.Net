@@ -717,8 +717,10 @@ dropped — it describes a variadic collection this binding never performs.
 Specifications are owned as GObject owns them: `g_object_class_install_property`
 sinks the specification and the pool takes a reference of its own, and the
 runtime keeps one long-lived wrapper per installed specification so the property
-slots have something to hand out without leaking a reference per call. The
-wrapper the caller built is theirs to dispose.
+slots have something to hand out without leaking a reference per call. That
+wrapper is the one `OnSetProperty` and `OnGetProperty` receive; it is borrowed
+for the call and must not be disposed. The wrapper the caller built is theirs
+to dispose.
 
 ### 5.7 Interfaces a subclass implements (stage 3b, landed)
 
