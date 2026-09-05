@@ -389,9 +389,8 @@ internal sealed class Options
     /// through <c>/</c> names a flag that is deliberately *not* set - it only
     /// goes into the mask, which deserializing a plain flags value throws
     /// away. Both separators are read here for that reason. The <c>|</c> and
-    /// the <c>,</c> are not the deserializer's; they are accepted on top of it
-    /// because they are the separators every other tool in this repository
-    /// spells flags with.
+    /// the <c>,</c> are not the deserializer's; this sample accepted them
+    /// before the <c>/</c> was added and keeps doing so.
     /// </remarks>
     private static TrackType ParseTrackTypes(string value)
     {
