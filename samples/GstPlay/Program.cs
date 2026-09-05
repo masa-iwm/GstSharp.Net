@@ -110,11 +110,11 @@ internal static class Player
                 return 2;
             }
 
-            // The play is declared before the bus so that the bus wrapper is
-            // released first: disposing the play sets that bus flushing, and
-            // nothing may still be reading it by then.
+            // The play is this sample's own object and is disposed here. Its
+            // message bus is not: that wrapper is interned and belongs to the
+            // play, so it is left to the collector. See docs/ownership.md.
             using Play play = new();
-            using Bus bus = play.GetMessageBus();
+            Bus bus = play.GetMessageBus();
 
             Configure(play, options);
 

@@ -70,15 +70,17 @@ internal static class Transcode
             // on the API bus instead, which is why nothing here is a guard.
             using Transcoder transcoder = Transcoder.New(source, destination, profile);
 
-            using (Element? pipeline = transcoder.GetPipeline())
+            // The pipeline is the transcoder's own uritranscodebin, so the
+            // wrapper is interned and left to the collector like the message
+            // bus below it. See docs/ownership.md.
+            Element? pipeline = transcoder.GetPipeline();
+
+            if (pipeline is null)
             {
-                if (pipeline is null)
-                {
-                    Console.Error.WriteLine(
-                        "GstTranscode: uritranscodebin is not installed. Install the transcode "
-                        + "plugin of gst-plugins-bad.");
-                    return 1;
-                }
+                Console.Error.WriteLine(
+                    "GstTranscode: uritranscodebin is not installed. Install the transcode "
+                    + "plugin of gst-plugins-bad.");
+                return 1;
             }
 
             return Pump(transcoder);

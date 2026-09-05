@@ -76,7 +76,9 @@ internal static class RtspServerSample
             server.SetService(options.Port);
             server.ClientConnected += OnClientConnected;
 
-            using RTSPMountPoints? mounts = server.GetMountPoints();
+            // The mount points are the server's own and interned, so the
+            // wrapper is left to the collector. See docs/ownership.md.
+            RTSPMountPoints? mounts = server.GetMountPoints();
             if (mounts is null)
             {
                 Console.Error.WriteLine("RtspServer: the server has no mount points.");
@@ -191,7 +193,8 @@ internal static class RtspServerSample
         // 3. Drop the sessions: closing a client does not remove its session,
         //    and it is the session going away that unprepares the media and
         //    stops its pipeline.
-        using RTSPSessionPool? sessionPool = server.GetSessionPool();
+        //    The pool is the server's own, interned like the mount points.
+        RTSPSessionPool? sessionPool = server.GetSessionPool();
         sessionPool?.Filter(static (_, _) => RTSPFilterResult.Remove);
 
         // 4. Wait for the asynchronous half of the close, disposing what each

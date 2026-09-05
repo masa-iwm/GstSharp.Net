@@ -125,32 +125,25 @@ internal sealed partial class Inspection
             return;
         }
 
+        // The pads the iterator handed out are interned wrappers of the
+        // element's own pads and are left to the collector, like every wrapper
+        // this tool did not create. See docs/ownership.md.
         foreach (Pad pad in pads)
         {
-            try
+            string direction = pad.GetDirection() switch
             {
-                string direction = pad.GetDirection() switch
-                {
-                    PadDirection.Src => "SRC",
-                    PadDirection.Sink => "SINK",
-                    _ => "UNKNOWN",
-                };
+                PadDirection.Src => "SRC",
+                PadDirection.Sink => "SINK",
+                _ => "UNKNOWN",
+            };
 
-                Line(1, $"{direction}: '{pad.GetName()}'");
+            Line(1, $"{direction}: '{pad.GetName()}'");
 
-                // Not disposed: a GObject wrapper is interned, so disposing
-                // this one would end the template for the element that owns it
-                // as well. See docs/ownership.md.
-                PadTemplate? template = pad.GetPadTemplate();
+            PadTemplate? template = pad.GetPadTemplate();
 
-                if (template is not null)
-                {
-                    Line(2, $"Pad Template: '{NameTemplateOf(template)}'");
-                }
-            }
-            finally
+            if (template is not null)
             {
-                pad.Dispose();
+                Line(2, $"Pad Template: '{NameTemplateOf(template)}'");
             }
         }
     }
@@ -389,16 +382,11 @@ internal sealed partial class Inspection
         Line(0, string.Empty);
         Line(0, "Children:");
 
+        // Interned wrappers of the bin's own children, left to the collector
+        // for the same reason the pads above are. See docs/ownership.md.
         foreach (Element child in children)
         {
-            try
-            {
-                Line(1, child.GetName() ?? string.Empty);
-            }
-            finally
-            {
-                child.Dispose();
-            }
+            Line(1, child.GetName() ?? string.Empty);
         }
     }
 
