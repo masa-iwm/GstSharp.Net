@@ -936,6 +936,84 @@ public partial class Object : IDisposable
     }
 
     /// <summary>
+    /// Lists the properties of a class, without an instance of it.
+    /// </summary>
+    /// <param name="type">The class to ask, which has to derive from <c>GObject</c>.</param>
+    /// <returns>
+    /// One <see cref="ParamSpec"/> per property, in the order GObject reports
+    /// them, each of which the caller has to dispose.
+    /// </returns>
+    /// <remarks>
+    /// <para>
+    /// This is <c>g_object_class_list_properties</c> against a class this call
+    /// references for the length of the call, which is what makes it the
+    /// question to ask about a type nothing has an instance of: the pad type of
+    /// a request template, an abstract class, an element that would otherwise
+    /// have to be created first. The answer describes the class, so it carries
+    /// names, types and flags and no values — reading a value needs an object,
+    /// and <see cref="ListProperties()"/> is the overload that has one.
+    /// </para>
+    /// <para>
+    /// <b>Every specification is the caller's to dispose</b>, exactly as in the
+    /// instance overload: the wrapper takes a reference of its own, so it stays
+    /// valid after the class this call referenced is released again.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="type"/> does not derive from <c>GObject</c>: an
+    /// interface, a boxed type or an enumeration has no properties to list.
+    /// </exception>
+    public static unsafe ParamSpec[] ListProperties(GType type)
+    {
+        if (!type.IsA(GType.Object))
+        {
+            throw new ArgumentException(
+                $"{type.Name} does not derive from GObject, so it has no properties to list. Only a class "
+                + "type has them; an interface, a boxed type or an enumeration does not.",
+                nameof(type));
+        }
+
+        // A class no instance holds may not exist yet, and referencing it is
+        // what creates it and runs its class_init. The reference is released
+        // again below: nothing of the class is kept beyond the call, which is
+        // why every specification is wrapped with a reference of its own.
+        nint objectClass = GObjectNative.TypeClassRef(type.Value);
+        if (objectClass == nint.Zero)
+        {
+            return [];
+        }
+
+        try
+        {
+            nint* properties = GObjectNative.ObjectClassListProperties(objectClass, out uint count);
+            if (properties is null)
+            {
+                return [];
+            }
+
+            try
+            {
+                ParamSpec[] result = new ParamSpec[count];
+
+                for (uint i = 0; i < count; i++)
+                {
+                    result[i] = ParamSpec.FromNative(properties[i], Transfer.None);
+                }
+
+                return result;
+            }
+            finally
+            {
+                GLibNative.Free((nint)properties);
+            }
+        }
+        finally
+        {
+            GObjectNative.TypeClassUnref(objectClass);
+        }
+    }
+
+    /// <summary>
     /// Writes a property.
     /// </summary>
     /// <param name="name">The name of the property.</param>

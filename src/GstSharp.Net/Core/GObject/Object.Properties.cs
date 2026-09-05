@@ -275,7 +275,7 @@ public partial class Object
     /// <see cref="ParamSpec.ValueType"/> is the type a value has to fit. The
     /// question is about the class rather than the instance — every
     /// <c>fakesink</c> answers the same — and, as with
-    /// <see cref="ListProperties"/>, the specification that comes back holds a
+    /// <see cref="ListProperties()"/>, the specification that comes back holds a
     /// reference of its own: it stays valid whatever happens to the object, and
     /// it is the caller's to dispose.
     /// </para>
