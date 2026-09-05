@@ -617,7 +617,12 @@ vfuncs chain up for ever.
 * `gst_element_class_add_pad_template` — **mandatory** for the GstBase
   classes: `GstBaseSrc`'s instance init fetches the class's `"src"` pad
   template to create its pad; a `BaseSrc` subclass whose class has no such
-  template fails at instance init. Same for `BaseSink`'s `"sink"`.
+  template fails at instance init. Same for `BaseSink`'s `"sink"`. The names
+  such a base class needs travel into the registration and are checked at the
+  end of `class_init`, right after the class initialiser returned: a missing
+  one is captured as a class initialiser that failed and rethrown by
+  `DefineSubclass`, with the type name taken for the process like that of any
+  other static `GType`.
 
 The `ClassInitializer` delegate on the descriptor (§3.3) receives a
 `ClassConfig` facade exposing exactly these operations, implemented over
@@ -1453,9 +1458,11 @@ A managed `GES.VideoSource` answers the element behind it from
   for `BaseTransform`, `AudioFilter`, `VideoFilter`, `BaseParse`,
   `AudioDecoder`, `AudioEncoder`, `VideoDecoder` and `VideoEncoder` — because
   their
-  instance init creates the pads from them. `DefineSubclass` checks for
-  them once the class is initialised and fails with a message rather than
-  letting `g_object_new` produce a half built element.
+  instance init creates the pads from them. The check runs at the end of
+  `class_init`, so a missing template surfaces from `DefineSubclass` as a class
+  initialiser that failed — the type name stays taken, as it does for every
+  static `GType` — rather than letting `g_object_new` produce a half built
+  element.
 * **Build pad templates outside `class_init`.** It runs under the GObject type
   lock, and creating a wrapper there would take the interning lock of the
   binding under it — the reverse of the order every other path uses (§9,
