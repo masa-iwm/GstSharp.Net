@@ -114,7 +114,7 @@ public sealed unsafe class SubclassNativeConstructionTests
             {
                 Assert.Equal(0, ProbeFactoryPushSrc.WrappersBuilt);
 
-                Bus bus = pipeline.GetBus();
+                using Bus bus = pipeline.GetBus();
 
                 Assert.NotEqual(StateChangeReturn.Failure, pipeline.SetState(State.Playing));
 
@@ -448,7 +448,7 @@ public sealed unsafe class SubclassNativeConstructionTests
         Assert.Equal(PadLinkReturn.Ok, sourcePad.Link(managed));
         Assert.True(aggregator.Link(sink));
 
-        Bus bus = pipeline.GetBus();
+        using Bus bus = pipeline.GetBus();
 
         try
         {
