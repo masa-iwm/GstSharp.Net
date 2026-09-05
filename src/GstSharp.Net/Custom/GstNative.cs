@@ -138,4 +138,9 @@ internal static unsafe partial class GstNative
     /// <returns>The template, which the class keeps owning, or null.</returns>
     [LibraryImport("Gst", EntryPoint = "gst_element_class_get_pad_template")]
     internal static partial nint ElementClassGetPadTemplate(nint elementClass, byte* name);
+
+    /// <summary>Returns the type of the <c>GstURIHandler</c> interface.</summary>
+    /// <returns>The <c>GType</c> of the interface.</returns>
+    [LibraryImport("Gst", EntryPoint = "gst_uri_handler_get_type")]
+    internal static partial nuint UriHandlerGetType();
 }
