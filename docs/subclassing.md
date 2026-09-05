@@ -410,7 +410,7 @@ transfer annotations, e.g. `change_state` takes
   is never floating (the wrapper sank it when it was built), so that is a plain
   reference and element and wrapper co-own the object; the `vfuncDocNotes`
   entry of the slot spells out which call site takes it, and the generator
-  refuses such a slot without one.
+  refuses such a slot without one (`GEN0047`).
 
 ### 4.4 Chaining up
 
@@ -1439,10 +1439,12 @@ A managed `GES.VideoSource` answers the element behind it from
   then copies whatever a property does not hold. The `copy` it is handed is a
   fresh instance of the same managed type, and it is **not** an ordinary
   borrowed object: the base class created it, it is still floating, and the
-  caller drops that reference without ever sinking it. The wrapper therefore
-  takes no reference of its own, and the three must-nots follow — do not add
-  the copy to a container or a layer, do not paste it, and do not keep its
-  wrapper beyond the call, which only defers the copy's finalize. A subclass
+  caller drops that reference without ever sinking it. The wrapper settles
+  nothing: it references the copy the way any fabricated wrapper does and
+  leaves the caller's floating reference the caller's. The three must-nots
+  follow — do not add the copy to a container or a layer, do not paste it, and
+  do not keep its wrapper beyond the call, which only defers the copy's
+  finalize. A subclass
   defined with the non-generic `DefineSubclass`, which registers no wrapper
   factory, gets no `OnDeepCopy` call at all: the copy has no wrapper to
   fabricate, and the base class makes the copy alone.

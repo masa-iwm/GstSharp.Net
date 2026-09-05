@@ -206,7 +206,6 @@ public sealed class SiblingArgumentTests
             StringComparison.Ordinal);
     }
 
-
     /// <summary>
     /// One opaque record the slot is lent, and one sibling argument planned
     /// after it. The fallback the sibling resolution writes returns from the

@@ -447,13 +447,13 @@ public unsafe partial class TimelineElement
     /// ges_timeline_element_copy copies them before it reaches this slot
     /// (ges-timeline-element.c:1672, 1677-1691). What belongs here is the state that lives
     /// outside properties; chain up first, then copy it. The copy arrives floating and stays
-    /// floating: the caller still holds the only reference and drops it without ever sinking
-    /// it, so an override must not add it to a container or a layer, must not paste it, and
-    /// should not keep its wrapper beyond the call - a kept wrapper defers the finalize of the
-    /// copy and buys nothing. A subclass defined without a wrapper factory - the non-generic
-    /// DefineSubclass, which registers no IManagedSubclass&lt;TSelf&gt; - has no fabrication
-    /// for the copy, so no OnDeepCopy call is made at all for it and the base class makes the
-    /// copy alone.</para>
+    /// floating: the wrapper settles nothing and takes a reference of its own, so the caller
+    /// still holds its floating reference and drops it without ever sinking it. An override
+    /// must not add the copy to a container or a layer, must not paste it, and should not keep
+    /// its wrapper beyond the call - a kept wrapper defers the finalize of the copy and buys
+    /// nothing. A subclass defined without a wrapper factory - the non-generic DefineSubclass,
+    /// which registers no IManagedSubclass&lt;TSelf&gt; - has no fabrication for the copy, so
+    /// no OnDeepCopy call is made at all for it and the base class makes the copy alone.</para>
     /// </remarks>
     /// <param name="copy">
     /// The <c>copy</c> argument.
@@ -680,13 +680,13 @@ public unsafe partial class TimelineElement
     /// ges_timeline_element_copy copies them before it reaches this slot
     /// (ges-timeline-element.c:1672, 1677-1691). What belongs here is the state that lives
     /// outside properties; chain up first, then copy it. The copy arrives floating and stays
-    /// floating: the caller still holds the only reference and drops it without ever sinking
-    /// it, so an override must not add it to a container or a layer, must not paste it, and
-    /// should not keep its wrapper beyond the call - a kept wrapper defers the finalize of the
-    /// copy and buys nothing. A subclass defined without a wrapper factory - the non-generic
-    /// DefineSubclass, which registers no IManagedSubclass&lt;TSelf&gt; - has no fabrication
-    /// for the copy, so no OnDeepCopy call is made at all for it and the base class makes the
-    /// copy alone.</para>
+    /// floating: the wrapper settles nothing and takes a reference of its own, so the caller
+    /// still holds its floating reference and drops it without ever sinking it. An override
+    /// must not add the copy to a container or a layer, must not paste it, and should not keep
+    /// its wrapper beyond the call - a kept wrapper defers the finalize of the copy and buys
+    /// nothing. A subclass defined without a wrapper factory - the non-generic DefineSubclass,
+    /// which registers no IManagedSubclass&lt;TSelf&gt; - has no fabrication for the copy, so
+    /// no OnDeepCopy call is made at all for it and the base class makes the copy alone.</para>
     /// </remarks>
     /// <param name="copy">
     /// The <c>copy</c> argument.
