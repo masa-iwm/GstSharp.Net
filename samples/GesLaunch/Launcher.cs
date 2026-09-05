@@ -549,11 +549,11 @@ internal static class Launcher
                 if (format is null)
                 {
                     format = FileExtension(options.OutputUri);
-                    profile = created = format is null ? null : EncodingProfile.FromString(format);
+                    profile = created = format is null ? null : ParseEncodingProfile(format);
                 }
                 else
                 {
-                    profile = created = EncodingProfile.FromString(format);
+                    profile = created = ParseEncodingProfile(format);
 
                     if (profile is null)
                     {
@@ -569,7 +569,7 @@ internal static class Launcher
                         + "falling back to theora+vorbis in ogg.");
 
                     format = FallbackFormat;
-                    profile = created = EncodingProfile.FromString(format);
+                    profile = created = ParseEncodingProfile(format);
                 }
 
                 if (profile is null)
@@ -608,6 +608,93 @@ internal static class Launcher
         {
             created?.Dispose();
         }
+    }
+
+    /// <summary>
+    /// Parses one serialised encoding profile, which is what
+    /// <c>gst_encoding_profile_from_string</c> does for the C tool at
+    /// <c>ges-launcher.c:638</c>.
+    /// </summary>
+    /// <param name="format">The serialisation, such as
+    /// <c>application/ogg:audio/x-vorbis</c>.</param>
+    /// <returns>The profile, which the caller owns, or <see langword="null"/>
+    /// when the string is not a profile.</returns>
+    /// <exception cref="InvalidOperationException">
+    /// <c>GstEncodingProfile</c> is not registered with the type system.
+    /// </exception>
+    /// <remarks>
+    /// <para>
+    /// The route is the <c>GValue</c> one and not <c>EncodingProfile.FromString</c>
+    /// on purpose: <c>gst_encoding_profile_from_string</c> is only 1.26 and up,
+    /// while the deserializer it is a wrapper over is much older — the class
+    /// init of the type registers it with <c>gst_value_register</c>
+    /// (<c>encoding-profile.c:366-408</c>), so <c>gst_value_deserialize</c> into
+    /// a value of the profile type parses the same strings on every 1.x. It is
+    /// the only path here, on every version, rather than a fallback behind a
+    /// try/catch that only an old library would ever run and that nothing else
+    /// would exercise.
+    /// </para>
+    /// <para>
+    /// The deserializer <c>g_value_take_object</c>s the profile into the value,
+    /// which owns that reference; <c>GetObject</c> hands out the wrapper of the
+    /// type the registry knows for the instance — the container profile of a
+    /// serialisation that names a muxer — and takes a reference of its own, so
+    /// unsetting the value below leaves the caller holding one profile to
+    /// dispose.
+    /// </para>
+    /// </remarks>
+    private static EncodingProfile? ParseEncodingProfile(string format)
+    {
+        Gst.GObject.Value value = Gst.GObject.Value.New(EncodingProfileType());
+
+        try
+        {
+            if (!Global.ValueDeserialize(ref value, format))
+            {
+                return null;
+            }
+
+            return value.GetObject() as EncodingProfile
+                ?? throw new InvalidOperationException(
+                    "the deserialised profile did not come back as an encoding profile.");
+        }
+        finally
+        {
+            value.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Answers the type to deserialize a profile into.
+    /// </summary>
+    /// <returns>The <c>GstEncodingProfile</c> type.</returns>
+    /// <exception cref="InvalidOperationException">The type is not registered.</exception>
+    /// <remarks>
+    /// A type is registered with the type system by its own <c>get_type</c>, and
+    /// naming <see cref="EncodingProfile"/> in managed code does not call one:
+    /// the module initialiser of a binding assembly only runs before the first
+    /// call into that assembly. <see cref="GstPbutils.Initialize"/> is such a
+    /// call and hands the module to the type registry, and freezing the registry
+    /// resolves the <c>get_type</c> of every entry in it, which is where
+    /// <c>gst_encoding_profile_get_type</c> is finally run. Deserializing into a
+    /// value of an unregistered type would only warn and fail, which would read
+    /// here as an invalid format.
+    /// </remarks>
+    private static Gst.GObject.GType EncodingProfileType()
+    {
+        Gst.GObject.GType type = Gst.GObject.GType.FromName("GstEncodingProfile");
+
+        if (!type.IsValid)
+        {
+            GstPbutils.Initialize();
+            Gst.GObject.TypeRegistry.Freeze();
+
+            type = Gst.GObject.GType.FromName("GstEncodingProfile");
+        }
+
+        return type.IsValid
+            ? type
+            : throw new InvalidOperationException("GstEncodingProfile is not registered with the type system.");
     }
 
     /// <summary>
