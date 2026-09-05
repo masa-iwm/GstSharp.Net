@@ -229,6 +229,12 @@ internal sealed class ClassStructEmitter
                 continue;
             }
 
+            if (IsCallbackField(field, ns))
+            {
+                WriteOpaqueSlot(writer, module, model, field, name);
+                continue;
+            }
+
             writer.WriteLine(
                 "/// <summary>The <c>" + field.Name
                 + "</c> field, which carries data rather than an overridable slot.</summary>");
@@ -290,6 +296,59 @@ internal sealed class ClassStructEmitter
     /// </remarks>
     private static string ParentMirrorOf(ClassStructModel model) =>
         model.Parent is { } parent ? MirrorNameOf(parent) : "Gst.GObject.GObjectClassRaw";
+
+    /// <summary>
+    /// Tests whether a class struct field holds a function pointer, whether the
+    /// gir spells it as an inline <c>&lt;callback&gt;</c> or as a named callback
+    /// typedef.
+    /// </summary>
+    /// <param name="field">The field, as the gir spells it.</param>
+    /// <param name="ns">The namespace the field is declared in.</param>
+    /// <returns><see langword="true"/> when the field is a function pointer.</returns>
+    /// <remarks>
+    /// The two spellings mean the same thing to the C compiler and the mirror
+    /// treats them the same way, but only the inline one carries a signature
+    /// the pairing can read, which is why a field of either shape that is not
+    /// an overridable slot ends up here rather than in the data branch.
+    /// </remarks>
+    private bool IsCallbackField(GirField field, GirNamespace ns) =>
+        field.Callback is not null
+        || (field.Type is not GirArrayRef
+            && field.Type?.Name is { } name
+            && _repository.Resolve(name, ns) is { Kind: GirSymbolKind.Callback });
+
+    /// <summary>
+    /// Lays a function pointer field out that carries no managed surface, and
+    /// says so in the ledger.
+    /// </summary>
+    /// <param name="writer">The writer of the mirror.</param>
+    /// <param name="module">The module the class belongs to.</param>
+    /// <param name="model">The class struct being mirrored.</param>
+    /// <param name="field">The field, as the gir spells it.</param>
+    /// <param name="name">The C# name of the member.</param>
+    /// <remarks>
+    /// A slot the planner refused is listed by <c>VfuncEmitter</c>; this is the
+    /// other half of the same statement, for a field that never reached the
+    /// planner because no <c>&lt;virtual-method&gt;</c> stands beside it. The
+    /// two together are what makes the <c>## Virtuals</c> section of the skip
+    /// report the whole list of C slots without an <c>OnX</c> member.
+    /// </remarks>
+    private void WriteOpaqueSlot(
+        CodeWriter writer,
+        ModuleInfo module,
+        ClassStructModel model,
+        GirField field,
+        string name)
+    {
+        _census.SkippedVirtual(
+            module.GirNamespace,
+            model.KeyOf(field.Name),
+            nameof(SkipReason.OpaqueSlot));
+        writer.WriteLine(
+            "/// <summary>The <c>" + field.Name
+            + "</c> field, a function pointer no managed surface overrides.</summary>");
+        writer.WriteLine("internal nint " + name + ";");
+    }
 
     /// <summary>Spells a member name the way a private field is spelled.</summary>
     /// <param name="name">The Pascal cased member name.</param>

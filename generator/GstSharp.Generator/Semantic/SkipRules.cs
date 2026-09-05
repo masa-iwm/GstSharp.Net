@@ -96,6 +96,21 @@ internal enum SkipReason
     /// name says that something is produced.
     /// </summary>
     OwningProperty,
+
+    /// <summary>
+    /// A class struct field that holds a function pointer the managed surface
+    /// does not project, so the mirror lays it out as an opaque
+    /// <see langword="nint"/> and nothing overrides it. A field carrying a
+    /// named callback typedef with no <c>&lt;virtual-method&gt;</c> beside it
+    /// falls to this, so does an inline <c>&lt;callback&gt;</c> field with no
+    /// virtual method of the same name - the abstract sentinel
+    /// <c>GESVideoSourceClass::create_source</c> is one - and so does every
+    /// callback field inside a class struct <c>&lt;union&gt;</c>, because a
+    /// union member is laid out to keep the size right and is never given a
+    /// slot. The row states that the C slot exists and carries no <c>OnX</c>
+    /// member, which is what the ledger says about a slot the planner refused.
+    /// </summary>
+    OpaqueSlot,
 }
 
 /// <summary>
