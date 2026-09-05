@@ -265,7 +265,7 @@ internal sealed class SubclassModel
             Namespace = ns,
             Owner = declaration,
             TypeStruct = typeStruct,
-            Members = Pair(qualifiedName, declaration, typeStruct),
+            Members = Pair(repository, ns, qualifiedName, declaration, typeStruct),
             IsSubclassable = overlays.IsSubclassable(qualifiedName),
             Parent = parent,
         };
@@ -280,11 +280,24 @@ internal sealed class SubclassModel
     /// class, and stamps every paired method with the key the overlays address
     /// it by.
     /// </summary>
+    /// <param name="repository">The loaded girs, for resolving a field type.</param>
+    /// <param name="ns">The namespace declaring the class.</param>
     /// <param name="qualifiedName">The qualified gir name of the class.</param>
     /// <param name="declaration">The class.</param>
     /// <param name="typeStruct">The class struct record.</param>
     /// <returns>The members, in gir order.</returns>
+    /// <remarks>
+    /// A gir spells a function pointer field in one of two ways, and both are
+    /// slots: an inline <c>&lt;callback&gt;</c> carries the signature with the
+    /// field, and a <c>&lt;type&gt;</c> naming a callback typedef leaves it to
+    /// the <c>&lt;virtual-method&gt;</c> alone - which is how
+    /// <c>GESClipClass::create_track_element</c> is declared. The virtual
+    /// method is the carrier this generator reads in either case, so the second
+    /// spelling costs nothing but the resolution of the name.
+    /// </remarks>
     private static IReadOnlyList<ClassStructMember> Pair(
+        Repository repository,
+        GirNamespace ns,
         string qualifiedName,
         GirClass declaration,
         GirRecord typeStruct)
@@ -301,8 +314,13 @@ internal sealed class SubclassModel
         List<ClassStructMember> members = [];
         foreach (GirField field in typeStruct.Fields)
         {
+            bool isFunctionPointer = field.Callback is not null
+                || (field.Type is not GirArrayRef
+                    && field.Type?.Name is { } typeName
+                    && repository.Resolve(typeName, ns) is { Kind: GirSymbolKind.Callback });
+
             GirVirtualMethod? method = null;
-            if (field.Callback is not null && methods.TryGetValue(field.Name, out GirVirtualMethod? candidate))
+            if (isFunctionPointer && methods.TryGetValue(field.Name, out GirVirtualMethod? candidate))
             {
                 method = candidate;
                 method.OverlayKey = qualifiedName + "::" + method.Name;
