@@ -1,0 +1,966 @@
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
+using GES;
+using Gst;
+using Gst.GLib;
+using Gst.Interop;
+using Gst.Pbutils;
+
+/// <summary>
+/// The run of the sample: it builds or loads the project, waits for it to be
+/// loaded, and then saves, plays or renders the timeline it carries.
+/// </summary>
+internal static class Launcher
+{
+    /// <summary>The encoding profile the C tool falls back to.</summary>
+    private const string FallbackFormat = "application/ogg:video/x-theora:audio/x-vorbis";
+
+    /// <summary>How long one turn of the load-wait loop sleeps when nothing was pending.</summary>
+    private static readonly TimeSpan IdleWait = TimeSpan.FromMilliseconds(5);
+
+    /// <summary>
+    /// Runs the sample.
+    /// </summary>
+    /// <param name="arguments">The command line of the process.</param>
+    /// <returns>
+    /// 0 on end of stream and on the runs that only print or save, 1 on any
+    /// error, 2 when the run did not finish within the timeout.
+    /// </returns>
+    [SuppressMessage(
+        "Design",
+        "CA1031:Do not catch general exception types",
+        Justification = "The sample turns every failure into a message and a non zero exit code.")]
+    internal static int Run(string[] arguments)
+    {
+        try
+        {
+            Options options = Options.Parse(arguments);
+
+            if (options.Help)
+            {
+                Options.PrintUsage();
+                return 0;
+            }
+
+            // The C tool prints its own help and fails when it was given
+            // neither a project to load nor a description to build.
+            if (!options.ListTransitions && options.LoadPath is null && options.TimelineDescription is null)
+            {
+                Options.PrintUsage();
+                return 1;
+            }
+
+            // Initialising through the module rather than through GstSharp is
+            // what runs ges_init, which the project, the timeline and the
+            // formatter behind the "ges:" scheme all need.
+            GstGES.Initialize(options.Native);
+
+            if (options.ListTransitions)
+            {
+                ListTransitions();
+                return 0;
+            }
+
+            return Load(options);
+        }
+        catch (OptionException exception)
+        {
+            Console.Error.WriteLine($"GesLaunch: {exception.Message}");
+            Options.PrintUsage();
+            return 1;
+        }
+        catch (Exception exception)
+        {
+            Console.Error.WriteLine($"GesLaunch: {exception}");
+            return 1;
+        }
+        finally
+        {
+            GstSharp.DrainPendingReleases();
+        }
+    }
+
+    /// <summary>
+    /// Prints the nick of every transition type, which is what
+    /// <c>print_enum</c> of <c>utils.c:186-198</c> does.
+    /// </summary>
+    private static void ListTransitions()
+    {
+        Gst.GObject.GType type = Gst.GObject.GType.FromName("GESVideoStandardTransitionType");
+
+        if (!type.IsValid)
+        {
+            // The enumeration is registered with the type system the first time
+            // something asks for it, and nothing has yet. A transition clip is
+            // the cheapest thing that carries the type as a property.
+            using TransitionClip? probe = TransitionClip.New(VideoStandardTransitionType.Crossfade);
+
+            type = Gst.GObject.GType.FromName("GESVideoStandardTransitionType");
+        }
+
+        if (!type.IsValid)
+        {
+            Console.Error.WriteLine("GesLaunch: the transition types are not registered.");
+            return;
+        }
+
+        foreach (Gst.GObject.EnumValue value in type.GetEnumValues())
+        {
+            Console.WriteLine(value.Nick ?? value.Name);
+        }
+    }
+
+    /// <summary>
+    /// Creates the project, extracts its timeline and waits for the load to
+    /// finish, then hands over to the save or the playback.
+    /// </summary>
+    /// <param name="options">The command line.</param>
+    /// <returns>The exit code of the run.</returns>
+    private static int Load(Options options)
+    {
+        string uri = options.LoadPath is string load
+            ? EnsureUri(load)
+            : options.TimelineDescription!;
+
+        if (options.LoadPath is not null)
+        {
+            Console.WriteLine($"Loading project from : {uri}");
+        }
+
+        // The project is created here and is the asset of the timeline it
+        // extracts, so it is disposed here.
+        using Project project = Project.New(uri);
+
+        bool loaded = false;
+        string? failure = null;
+
+        // The handlers only record what happened. The library emits them from
+        // inside the load - "error-loading-asset" synchronously for a "ges:"
+        // description, everything else from the iteration below - and touching
+        // the timeline from there would run inside a load that has not
+        // finished.
+        project.Loaded += (_, _) => loaded = true;
+        project.ErrorLoading += (_, arguments) => failure ??= arguments.Error.Message;
+        project.ErrorLoadingAsset += (_, arguments) =>
+            failure ??= $"asset {arguments.Id}: {arguments.Error?.Message ?? "no reason given"}";
+
+        // The C tool has no relocation table either: an asset whose uri is
+        // gone stays gone, and the load reports it.
+        project.MissingUri += (_, _) => null;
+
+        Timeline extracted;
+
+        try
+        {
+            // The timeline is created by the extraction, so it is disposed
+            // here. A project that is not there, and a "ges:" description that
+            // cannot discover one of its clips, both report their error from
+            // inside this call and throw.
+            extracted = project.Extract<Timeline>();
+        }
+        catch (GException exception)
+        {
+            Console.Error.WriteLine();
+            Console.Error.WriteLine($"ERROR: Could not create timeline because: {exception.Message}");
+            Console.Error.WriteLine();
+            return 1;
+        }
+
+        using Timeline timeline = extracted;
+
+        Stopwatch elapsed = Stopwatch.StartNew();
+
+        // The load-wait loop. It iterates the *default* main context, without
+        // pushing one of its own, on the thread that called Extract; see the
+        // header of Program.cs for why all three of those matter.
+        while (!loaded && failure is null && Within(elapsed, options.Timeout))
+        {
+            if (!MainContext.Default.Iteration(mayBlock: false))
+            {
+                Thread.Sleep(IdleWait);
+            }
+        }
+
+        if (failure is not null)
+        {
+            Console.Error.WriteLine($"GesLaunch: error loading timeline: {failure}");
+            return 1;
+        }
+
+        if (!loaded)
+        {
+            Console.Error.WriteLine(string.Create(
+                CultureInfo.InvariantCulture,
+                $"GesLaunch: the project was not loaded within {options.Timeout.TotalSeconds:F0} s."));
+            return 2;
+        }
+
+        if (options.SavePath is not null || options.SaveOnlyPath is not null)
+        {
+            if (!Save(project, timeline, options))
+            {
+                return 1;
+            }
+        }
+
+        if (options.SaveOnlyPath is not null)
+        {
+            return 0;
+        }
+
+        return Play(project, timeline, options, elapsed);
+    }
+
+    /// <summary>
+    /// Saves the project, which is what the <c>loaded</c> handler of the C tool
+    /// does at <c>ges-launcher.c:887-916</c>.
+    /// </summary>
+    /// <param name="project">The project that was loaded.</param>
+    /// <param name="timeline">The timeline it carries.</param>
+    /// <param name="options">The command line.</param>
+    /// <returns><see langword="false"/> when the project was not saved.</returns>
+    private static bool Save(Project project, Timeline timeline, Options options)
+    {
+        string path = options.SavePath ?? options.SaveOnlyPath!;
+
+        // "+r" is the C tool's spelling of "back to where it came from".
+        string? uri = string.Equals(path, "+r", StringComparison.Ordinal)
+            ? project.GetUri()
+            : EnsureUri(path);
+
+        if (uri is null)
+        {
+            Console.Error.WriteLine($"GesLaunch: could not create a uri for \"{path}\".");
+            return false;
+        }
+
+        Console.WriteLine($"Saving project to {uri}");
+
+        if (!project.Save(timeline, uri, null, true))
+        {
+            Console.Error.WriteLine($"GesLaunch: the project was not saved to {uri}.");
+            return false;
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Builds the pipeline around the timeline and runs it to the end.
+    /// </summary>
+    /// <param name="project">The project the timeline came from.</param>
+    /// <param name="timeline">The timeline to play or to render.</param>
+    /// <param name="options">The command line.</param>
+    /// <param name="elapsed">How long the run has taken so far.</param>
+    /// <returns>The exit code of the run.</returns>
+    private static int Play(Project project, Timeline timeline, Options options, Stopwatch elapsed)
+    {
+        // The pipeline is created here and is disposed here, after it is back
+        // in NULL.
+        using GES.Pipeline pipeline = GES.Pipeline.New();
+
+        try
+        {
+            if (options.OutputUri is not null)
+            {
+                // No preview at all while rendering, which is what the C tool
+                // asks for at ges-launcher.c:1239-1240 before it builds
+                // anything else.
+                pipeline.SetMode(0);
+            }
+
+            if (!SetSinks(pipeline, options))
+            {
+                return 1;
+            }
+
+            if (!pipeline.SetTimeline(timeline))
+            {
+                Console.Error.WriteLine("GesLaunch: the pipeline refused the timeline.");
+                return 1;
+            }
+
+            // The order is the C tool's: the timeline is in the pipeline
+            // before the tracks are configured and before the mode is chosen,
+            // and the render mode reads the tracks it finds there.
+            SetUserOptions(timeline, options);
+
+            if (!SetRenderingDetails(pipeline, project, options))
+            {
+                return 1;
+            }
+
+            timeline.Commit();
+
+            // READY first, because the elements of the render bin are built on
+            // the way there and an error is reported before anything rolls.
+            if (pipeline.SetState(State.Ready) == StateChangeReturn.Failure
+                || pipeline.SetState(State.Playing) == StateChangeReturn.Failure)
+            {
+                Console.Error.WriteLine("GesLaunch: the pipeline refused to start.");
+                return 1;
+            }
+
+            return new Playback(pipeline, options).Run(elapsed);
+        }
+        finally
+        {
+            // Back to NULL before anything is released: a pipeline that is
+            // still PLAYING when its last reference goes away leaves its
+            // streaming threads running.
+            pipeline.SetState(State.Null);
+        }
+    }
+
+    /// <summary>
+    /// Sets the preview sinks, which is <c>ges-launcher.c:1262-1268</c> for
+    /// <c>-m</c> and <c>_set_sink</c> at <c>ges-launcher.c:1009-1028</c> for
+    /// <c>-v</c> and <c>-a</c>.
+    /// </summary>
+    /// <param name="pipeline">The pipeline that previews the timeline.</param>
+    /// <param name="options">The command line.</param>
+    /// <returns><see langword="false"/> when a sink could not be built.</returns>
+    private static bool SetSinks(GES.Pipeline pipeline, Options options)
+    {
+        if (options.Mute)
+        {
+            // The C tool names these two factories and has no fallback. It
+            // hands GES whatever gst_element_factory_make answered, including
+            // nothing; this reports the missing factory instead.
+            using Element? audio = ElementFactory.Make("fakeaudiosink", null);
+            using Element? video = ElementFactory.Make("fakevideosink", null);
+
+            if (audio is null || video is null)
+            {
+                Console.Error.WriteLine("GesLaunch: --mute needs fakeaudiosink and fakevideosink.");
+                return false;
+            }
+
+            pipeline.PreviewSetAudioSink(audio);
+            pipeline.PreviewSetVideoSink(video);
+        }
+
+        return SetSink(options.VideoSink, pipeline.PreviewSetVideoSink)
+            && SetSink(options.AudioSink, pipeline.PreviewSetAudioSink);
+    }
+
+    /// <summary>Builds one sink out of a description and hands it to the pipeline.</summary>
+    /// <param name="description">The description, or <see langword="null"/> for no sink.</param>
+    /// <param name="set">What the pipeline does with the sink.</param>
+    /// <returns><see langword="false"/> when the description could not be built.</returns>
+    private static bool SetSink(string? description, Action<Element?> set)
+    {
+        if (description is null)
+        {
+            return true;
+        }
+
+        try
+        {
+            // The bin is built here, so it is disposed here; the pipeline takes
+            // its own reference on it.
+            using Element sink = Global.ParseBinFromDescriptionFull(
+                description,
+                ghostUnlinkedPads: true,
+                null,
+                ParseFlags.NoSingleElementBins | ParseFlags.PlaceInBin);
+
+            set(sink);
+            return true;
+        }
+        catch (GException exception)
+        {
+            Console.Error.WriteLine(
+                $"GesLaunch: could not create the requested sink {description}: {exception.Message}");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Applies the track options to the loaded timeline, which is
+    /// <c>_timeline_set_user_options</c> at <c>ges-launcher.c:813-862</c>
+    /// without its <c>--profile-from</c> branch.
+    /// </summary>
+    /// <param name="timeline">The timeline that was loaded.</param>
+    /// <param name="options">The command line.</param>
+    private static void SetUserOptions(Timeline timeline, Options options)
+    {
+        // The track wrappers are interned: the timeline owns the tracks and
+        // this only looks them up, so none of them is disposed here.
+        foreach (Track track in timeline.GetTracks())
+        {
+            // Smart rendering cannot work in a track that mixes.
+            if (options.DisableMixing || options.SmartRendering)
+            {
+                track.SetMixing(false);
+            }
+
+            if ((track.TrackType & options.TrackTypes) == 0)
+            {
+                timeline.RemoveTrack(track);
+                continue;
+            }
+
+            string? caps = track.TrackType switch
+            {
+                TrackType.Video => options.VideoCaps,
+                TrackType.Audio => options.AudioCaps,
+                _ => null,
+            };
+
+            if (caps is not null)
+            {
+                // The caps are parsed here, so they are disposed here; the
+                // track takes its own reference.
+                using Caps? restriction = Caps.FromString(caps);
+
+                if (restriction is null)
+                {
+                    Console.Error.WriteLine($"GesLaunch: \"{caps}\" are not caps.");
+                    continue;
+                }
+
+                track.SetRestrictionCaps(restriction);
+            }
+
+            if (options.ForwardTags)
+            {
+                ForwardTags(track);
+            }
+        }
+
+        if (options.SmartRendering && !options.DisableMixing)
+        {
+            Console.WriteLine("**Mixing is disabled for smart rendering to work**");
+        }
+    }
+
+    /// <summary>
+    /// Lets the compositions of a track pass the tags of their sources on,
+    /// which is <c>_set_tracks_forward_tags</c> at <c>ges-launcher.c:380-410</c>.
+    /// </summary>
+    /// <param name="track">The track to open up.</param>
+    private static void ForwardTags(Track track)
+    {
+        // The iterator is created here and is disposed here; what it yields is
+        // owned by the track.
+        using Iterator compositions = track.IterateAllByElementFactoryName("nlecomposition");
+
+        foreach (Element composition in compositions.Items<Element>())
+        {
+            composition.SetProperty("drop-tags", false);
+        }
+    }
+
+    /// <summary>
+    /// Decides between preview and render, which is
+    /// <c>_set_rendering_details</c> at <c>ges-launcher.c:589-747</c> without
+    /// its <c>--profile-from</c> and <c>--container-profile</c> branches.
+    /// </summary>
+    /// <param name="pipeline">The pipeline to configure.</param>
+    /// <param name="project">The project, which may carry profiles of its own.</param>
+    /// <param name="options">The command line.</param>
+    /// <returns><see langword="false"/> when there is nothing to render with.</returns>
+    private static bool SetRenderingDetails(GES.Pipeline pipeline, Project project, Options options)
+    {
+        if (options.OutputUri is null)
+        {
+            pipeline.SetMode(GES.PipelineFlags.FullPreview);
+            return true;
+        }
+
+        EncodingProfile? profile = null;
+
+        // A profile the project carries is owned by the project; one parsed
+        // here is owned here. Only the second is disposed, which is what this
+        // flag is for.
+        EncodingProfile? created = null;
+
+        try
+        {
+            string? format = options.Format;
+
+            if (format is null)
+            {
+                // Not what -e reads like, but what the C tool does with it: it
+                // names one of the profiles the loaded project already carries.
+                IReadOnlyList<EncodingProfile> carried = project.ListEncodingProfiles();
+
+                if (carried.Count > 0)
+                {
+                    profile = carried[0];
+
+                    if (options.EncodingProfile is not null)
+                    {
+                        foreach (EncodingProfile candidate in carried)
+                        {
+                            if (string.Equals(candidate.GetName(), options.EncodingProfile, StringComparison.Ordinal))
+                            {
+                                profile = candidate;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (profile is null)
+            {
+                if (format is null)
+                {
+                    format = FileExtension(options.OutputUri);
+                    profile = created = format is null ? null : EncodingProfile.FromString(format);
+                }
+                else
+                {
+                    profile = created = EncodingProfile.FromString(format);
+
+                    if (profile is null)
+                    {
+                        Console.Error.WriteLine($"GesLaunch: invalid format specified: {format}");
+                        return false;
+                    }
+                }
+
+                if (profile is null)
+                {
+                    Console.Error.WriteLine(
+                        "GesLaunch: no format specified and none found from the output file extension, "
+                        + "falling back to theora+vorbis in ogg.");
+
+                    format = FallbackFormat;
+                    profile = created = EncodingProfile.FromString(format);
+                }
+
+                if (profile is null)
+                {
+                    Console.Error.WriteLine($"GesLaunch: could not find any encoding format for {format}");
+                    return false;
+                }
+
+                Console.WriteLine();
+                Console.WriteLine("Encoding details:");
+                Console.WriteLine("================");
+                Console.WriteLine($"  -> Output file: {options.OutputUri}");
+                Console.WriteLine($"  -> Profile: {profile.GetName() ?? format}");
+                Console.WriteLine();
+
+                project.AddEncodingProfile(profile);
+            }
+
+            string outputUri = EnsureUri(options.OutputUri);
+
+            if (!pipeline.SetRenderSettings(outputUri, profile))
+            {
+                Console.Error.WriteLine($"GesLaunch: the pipeline refused to render into {outputUri}.");
+                return false;
+            }
+
+            if (!pipeline.SetMode(options.SmartRendering ? GES.PipelineFlags.SmartRender : GES.PipelineFlags.Render))
+            {
+                Console.Error.WriteLine("GesLaunch: the pipeline refused the render mode.");
+                return false;
+            }
+
+            return true;
+        }
+        finally
+        {
+            created?.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Answers the extension of a location, which is
+    /// <c>get_file_extension</c> at <c>utils.c:269-288</c>.
+    /// </summary>
+    /// <param name="uri">The location to look at.</param>
+    /// <returns>The extension without its dot, or <see langword="null"/>.</returns>
+    private static string? FileExtension(string uri)
+    {
+        int dot = uri.LastIndexOf('.');
+
+        return dot <= 0 ? null : uri[(dot + 1)..];
+    }
+
+    /// <summary>
+    /// Turns a location into a uri, which is <c>ensure_uri</c> at
+    /// <c>utils.c:175-182</c>.
+    /// </summary>
+    /// <param name="location">A uri or a file name.</param>
+    /// <returns>The uri.</returns>
+    /// <exception cref="OptionException">The file name has no uri.</exception>
+    private static string EnsureUri(string location) =>
+        Gst.Uri.IsValid(location)
+            ? location
+            : Global.FilenameToUri(location)
+                ?? throw new OptionException($"could not create a uri for \"{location}\".");
+
+    /// <summary>Answers whether a bounded run still has time left.</summary>
+    /// <param name="elapsed">How long the run has taken.</param>
+    /// <param name="timeout">The bound, zero for none.</param>
+    /// <returns><see langword="true"/> while the run may go on.</returns>
+    private static bool Within(Stopwatch elapsed, TimeSpan timeout) =>
+        timeout <= TimeSpan.Zero || elapsed.Elapsed < timeout;
+
+    /// <summary>
+    /// The playing pipeline: the polled bus and, when a person is at the
+    /// terminal, the keyboard controls of <c>ges-launcher.c:1635-1697</c>.
+    /// </summary>
+    /// <param name="pipeline">The pipeline that is playing.</param>
+    /// <param name="options">The command line.</param>
+    private sealed class Playback(GES.Pipeline pipeline, Options options)
+    {
+        /// <summary>How long one poll of the bus waits.</summary>
+        private static readonly ClockTime PollInterval = ClockTime.FromMilliseconds(100);
+
+        /// <summary>How far the right arrow seeks, as a share of the duration.</summary>
+        private const double ForwardStep = 0.08;
+
+        /// <summary>How far the left arrow seeks, as a share of the duration.</summary>
+        private const double BackwardStep = -0.01;
+
+        /// <summary>The rate the last seek asked for.</summary>
+        private double _rate = 1.0;
+
+        /// <summary>The trick mode the last seek asked for.</summary>
+        private TrickMode _trickMode = TrickMode.None;
+
+        /// <summary>The state the keyboard last asked for.</summary>
+        private State _desiredState = State.Playing;
+
+        /// <summary>Whether the keyboard is read at all.</summary>
+        private readonly bool _interactive =
+            options.Interactive && options.OutputUri is null && !Console.IsInputRedirected;
+
+        /// <summary>
+        /// What a seek does to the buffers it asks for, the values of
+        /// <c>GstPlayTrickMode</c> the C tool cycles through with <c>t</c>.
+        /// </summary>
+        private enum TrickMode
+        {
+            /// <summary>Normal playback, trick modes disabled.</summary>
+            None,
+
+            /// <summary>Trick mode: default.</summary>
+            Default,
+
+            /// <summary>Trick mode: default, no audio.</summary>
+            DefaultNoAudio,
+
+            /// <summary>Trick mode: key frames only.</summary>
+            KeyUnits,
+
+            /// <summary>Trick mode: key frames only, no audio.</summary>
+            KeyUnitsNoAudio,
+
+            /// <summary>One past the last mode.</summary>
+            Last,
+        }
+
+        /// <summary>Polls the bus until the run ends.</summary>
+        /// <param name="elapsed">How long the run has taken so far.</param>
+        /// <returns>The exit code of the run.</returns>
+        internal int Run(Stopwatch elapsed)
+        {
+            // The bus wrapper is an interned GObject wrapper, shared with every
+            // other lookup of the same bus, so it is not disposed here.
+            Bus bus = pipeline.GetBus();
+
+            if (_interactive)
+            {
+                Console.WriteLine("Press 'k' to see a list of keyboard shortcuts.");
+            }
+
+            while (Within(elapsed, options.Timeout))
+            {
+                using (Message? message = bus.TimedPopFiltered(
+                    PollInterval,
+                    MessageType.Error | MessageType.Warning | MessageType.Eos))
+                {
+                    if (message is not null && Handle(message) is int code)
+                    {
+                        return code;
+                    }
+                }
+
+                GstSharp.DrainPendingReleases();
+
+                if (!ReadKey())
+                {
+                    return 0;
+                }
+            }
+
+            Console.Error.WriteLine(string.Create(
+                CultureInfo.InvariantCulture,
+                $"GesLaunch: the run did not finish within {options.Timeout.TotalSeconds:F0} s."));
+
+            return 2;
+        }
+
+        /// <summary>Acts on one message of the bus.</summary>
+        /// <param name="message">The message that was popped.</param>
+        /// <returns>The exit code when the run ends here, otherwise null.</returns>
+        private int? Handle(Message message)
+        {
+            switch (message.Type)
+            {
+                case MessageType.Eos:
+                    if (options.IgnoreEos)
+                    {
+                        return null;
+                    }
+
+                    Console.WriteLine();
+                    Console.WriteLine("Done");
+                    return 0;
+
+                case MessageType.Warning:
+                    (GException warning, string? warningDebug) = message.ParseWarning();
+                    Console.Error.WriteLine($"WARNING from element {message.SourceName ?? "?"}: {warning.Message}");
+                    Console.Error.WriteLine($"Debugging info: {warningDebug ?? "none"}");
+                    return null;
+
+                default:
+                    (GException error, string? debug) = message.ParseError();
+                    Console.Error.WriteLine($"ERROR from element {message.SourceName ?? "?"}: {error.Message}");
+                    Console.Error.WriteLine($"Debugging info: {debug ?? "none"}");
+                    return 1;
+            }
+        }
+
+        /// <summary>
+        /// Reads one key, when the run is interactive and a person is at the
+        /// terminal.
+        /// </summary>
+        /// <returns><see langword="false"/> when the key says to stop.</returns>
+        private bool ReadKey()
+        {
+            // KeyAvailable throws when stdin is a pipe rather than a console,
+            // which is what an unattended run has.
+            if (!_interactive || !Console.KeyAvailable)
+            {
+                return true;
+            }
+
+            ConsoleKeyInfo key = Console.ReadKey(intercept: true);
+
+            switch (key.Key)
+            {
+                case ConsoleKey.RightArrow:
+                    RelativeSeek(ForwardStep);
+                    return true;
+
+                case ConsoleKey.LeftArrow:
+                    RelativeSeek(BackwardStep);
+                    return true;
+
+                case ConsoleKey.Escape:
+                    return false;
+
+                default:
+                    return Act(char.ToLowerInvariant(key.KeyChar));
+            }
+        }
+
+        /// <summary>Acts on one printable key.</summary>
+        /// <param name="key">The character that was typed.</param>
+        /// <returns><see langword="false"/> when the key says to stop.</returns>
+        private bool Act(char key)
+        {
+            switch (key)
+            {
+                case 'k':
+                    PrintKeyboardHelp();
+                    break;
+
+                case ' ':
+                    TogglePaused();
+                    break;
+
+                case 'q':
+                    return false;
+
+                case '+':
+                    SetRelativeRate(Math.Abs(_rate) switch
+                    {
+                        < 2.0 => 0.1,
+                        < 4.0 => 0.5,
+                        _ => 1.0,
+                    });
+                    break;
+
+                case '-':
+                    SetRelativeRate(Math.Abs(_rate) switch
+                    {
+                        <= 2.0 => -0.1,
+                        <= 4.0 => -0.5,
+                        _ => -1.0,
+                    });
+                    break;
+
+                case 't':
+                    SwitchTrickMode();
+                    break;
+
+                case '0':
+                    Seek(0, _rate, _trickMode);
+                    break;
+
+                default:
+                    break;
+            }
+
+            return true;
+        }
+
+        /// <summary>Puts the pipeline into the state it is not in.</summary>
+        private void TogglePaused()
+        {
+            _desiredState = _desiredState == State.Playing ? State.Paused : State.Playing;
+            pipeline.SetState(_desiredState);
+        }
+
+        /// <summary>Seeks by a share of the duration.</summary>
+        /// <param name="share">How far to seek, between -1 and 1.</param>
+        private void RelativeSeek(double share)
+        {
+            if (!pipeline.QueryPosition(Format.Time, out long position)
+                || !pipeline.QueryDuration(Format.Time, out long duration))
+            {
+                Console.WriteLine();
+                Console.WriteLine("Could not seek.");
+                return;
+            }
+
+            long step = (long)(duration * share);
+
+            if (Math.Abs(step) < (long)ClockTime.NanosecondsPerSecond)
+            {
+                step = share < 0
+                    ? -(long)ClockTime.NanosecondsPerSecond
+                    : (long)ClockTime.NanosecondsPerSecond;
+            }
+
+            position += step;
+
+            if (position > duration)
+            {
+                return;
+            }
+
+            Seek(Math.Max(position, 0), _rate, _trickMode);
+        }
+
+        /// <summary>Changes the playback rate by a step.</summary>
+        /// <param name="step">What to add to the rate.</param>
+        private void SetRelativeRate(double step)
+        {
+            double rate = _rate + step;
+
+            if (!pipeline.QueryPosition(Format.Time, out long position) || !Seek(position, rate, _trickMode))
+            {
+                Console.WriteLine();
+                Console.WriteLine(string.Create(
+                    CultureInfo.InvariantCulture,
+                    $"Could not change playback rate to {rate:F2}."));
+                return;
+            }
+
+            Console.WriteLine(string.Create(CultureInfo.InvariantCulture, $"Playback rate: {rate:F2}"));
+        }
+
+        /// <summary>Moves to the next trick mode.</summary>
+        private void SwitchTrickMode()
+        {
+            TrickMode mode = _trickMode + 1;
+
+            if (mode == TrickMode.Last)
+            {
+                mode = TrickMode.None;
+            }
+
+            string description = mode switch
+            {
+                TrickMode.None => "normal playback, trick modes disabled",
+                TrickMode.Default => "trick mode: default",
+                TrickMode.DefaultNoAudio => "trick mode: default, no audio",
+                TrickMode.KeyUnits => "trick mode: key frames only",
+                _ => "trick mode: key frames only, no audio",
+            };
+
+            if (!pipeline.QueryPosition(Format.Time, out long position) || !Seek(position, _rate, mode))
+            {
+                Console.WriteLine();
+                Console.WriteLine($"Could not change trick mode to {description}.");
+                return;
+            }
+
+            Console.WriteLine(string.Create(CultureInfo.InvariantCulture, $"Rate: {_rate:F2} ({description})"));
+        }
+
+        /// <summary>
+        /// Sends the flushing seek of <c>play_do_seek</c> at
+        /// <c>ges-launcher.c:80-138</c>. The instant rate change of that
+        /// function is not reachable from the keyboard, which never asks for
+        /// the trick mode flag that turns it on.
+        /// </summary>
+        /// <param name="position">Where to seek to.</param>
+        /// <param name="rate">The rate to play at.</param>
+        /// <param name="mode">The trick mode to play in.</param>
+        /// <returns><see langword="false"/> when the pipeline refused the seek.</returns>
+        private bool Seek(long position, double rate, TrickMode mode)
+        {
+            if (rate == 0)
+            {
+                return false;
+            }
+
+            SeekFlags flags = SeekFlags.Flush | SeekFlags.Accurate | mode switch
+            {
+                TrickMode.Default => SeekFlags.Trickmode,
+                TrickMode.DefaultNoAudio => SeekFlags.Trickmode | SeekFlags.TrickmodeNoAudio,
+                TrickMode.KeyUnits => SeekFlags.TrickmodeKeyUnits,
+                TrickMode.KeyUnitsNoAudio => SeekFlags.TrickmodeKeyUnits | SeekFlags.TrickmodeNoAudio,
+                _ => SeekFlags.None,
+            };
+
+            // A backwards seek plays the segment that ends where the stream is
+            // from its beginning, which is what the negative rate reverses.
+            using Event seek = rate >= 0
+                ? Event.NewSeek(rate, Format.Time, flags, SeekType.Set, position, SeekType.Set, -1)
+                : Event.NewSeek(rate, Format.Time, flags, SeekType.Set, 0, SeekType.Set, position);
+
+            // SendEvent consumes the event. The `using` stays correct because
+            // Dispose is idempotent, and it is what releases the event on the
+            // paths that return before the send.
+            if (!pipeline.SendEvent(seek))
+            {
+                return false;
+            }
+
+            _rate = rate;
+            _trickMode = mode;
+            return true;
+        }
+
+        /// <summary>Prints the keys the run listens to.</summary>
+        private static void PrintKeyboardHelp()
+        {
+            Console.WriteLine();
+            Console.WriteLine("Interactive mode - keyboard controls:");
+            Console.WriteLine();
+            Console.WriteLine("        space  pause/unpause");
+            Console.WriteLine("     q or ESC  quit");
+            Console.WriteLine("            >  seek forward");
+            Console.WriteLine("            <  seek backward");
+            Console.WriteLine("            +  increase playback rate");
+            Console.WriteLine("            -  decrease playback rate");
+            Console.WriteLine("            t  enable/disable trick modes");
+            Console.WriteLine("            0  seek to beginning");
+            Console.WriteLine("            k  show keyboard shortcuts");
+            Console.WriteLine();
+        }
+    }
+}

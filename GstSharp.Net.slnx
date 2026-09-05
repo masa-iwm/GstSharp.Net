@@ -12,6 +12,7 @@
     <Project Path="samples/AppSinkSpans/AppSinkSpans.csproj" />
     <Project Path="samples/AppSrcPush/AppSrcPush.csproj" />
     <Project Path="samples/GesCustomSource/GesCustomSource.csproj" />
+    <Project Path="samples/GesLaunch/GesLaunch.csproj" />
     <Project Path="samples/GstDeviceMonitor/GstDeviceMonitor.csproj" />
     <Project Path="samples/GstDiscoverer/GstDiscoverer.csproj" />
     <Project Path="samples/GstInspect/GstInspect.csproj" />

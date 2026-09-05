@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>GstSharp.Samples.GesLaunch</RootNamespace>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/GstSharp.Net/GstSharp.Net.csproj" />
+
+    <!-- The editing services: the project that loads a timeline, the timeline
+         itself, its tracks and the pipeline that plays or renders it. -->
+    <ProjectReference Include="../../src/GstSharp.Net.GES/GstSharp.Net.GES.csproj" />
+
+    <!-- The encoding profile of a render run is parsed here rather than inside
+         a library, so the module is referenced directly instead of being
+         picked up through the editing services. -->
+    <ProjectReference Include="../../src/GstSharp.Net.Pbutils/GstSharp.Net.Pbutils.csproj" />
+  </ItemGroup>
+
+</Project>
