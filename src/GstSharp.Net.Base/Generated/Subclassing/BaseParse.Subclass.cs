@@ -260,9 +260,8 @@ public unsafe partial class BaseParse
         }
 
         Gst.GObject.SubclassType type = Gst.GObject.SubclassType.Define(
-            new Gst.GObject.GType(GetGType()), typeName, configureClass, overrides, wrapFactory, options);
-        type.RequirePadTemplate("sink");
-        type.RequirePadTemplate("src");
+            new Gst.GObject.GType(GetGType()), typeName, configureClass, overrides, wrapFactory, options,
+            requiredPadTemplates: new[] { "sink", "src" });
         return type;
     }
 

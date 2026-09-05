@@ -41,6 +41,7 @@ internal sealed class SubclassDescriptor
 {
     private readonly VfuncSlot[] _slots;
     private readonly InterfaceImplementation[] _interfaces;
+    private readonly string[] _requiredPadTemplates;
     private nint _parentClass;
     private nuint _registeredType;
     private Exception? _classInitFailure;
@@ -73,13 +74,19 @@ internal sealed class SubclassDescriptor
     /// between the registration of the type and the reference to its class.
     /// See §5.7.
     /// </param>
+    /// <param name="requiredPadTemplates">
+    /// The names of the pad templates the base class needs, checked at the end
+    /// of <c>class_init</c>, or <see langword="null"/> for a class that needs
+    /// none. See §5.5.
+    /// </param>
     internal SubclassDescriptor(
         GType parentType,
         string typeName,
         VfuncSlot[] slots,
         Action<ObjectClassConfig>? classInitializer = null,
         Func<SubclassCtorArgs, Object>? wrapFactory = null,
-        InterfaceImplementation[]? interfaces = null)
+        InterfaceImplementation[]? interfaces = null,
+        string[]? requiredPadTemplates = null)
     {
         ArgumentException.ThrowIfNullOrEmpty(typeName);
         ArgumentNullException.ThrowIfNull(slots);
@@ -90,6 +97,7 @@ internal sealed class SubclassDescriptor
         ClassInitializer = classInitializer;
         WrapFactory = wrapFactory;
         _interfaces = interfaces ?? [];
+        _requiredPadTemplates = requiredPadTemplates ?? [];
     }
 
     /// <summary>Gets the type the subclass derives from.</summary>
@@ -113,6 +121,17 @@ internal sealed class SubclassDescriptor
 
     /// <summary>Gets the GObject interfaces the subclass implements.</summary>
     internal ReadOnlySpan<InterfaceImplementation> Interfaces => _interfaces;
+
+    /// <summary>
+    /// Gets the names of the pad templates the base class needs, empty when it
+    /// needs none.
+    /// </summary>
+    /// <remarks>
+    /// The names are checked at the end of <c>class_init</c>, so a class
+    /// initialiser that forgot one fails the definition instead of leaving a
+    /// class whose instances cannot build their pads. See §5.5.
+    /// </remarks>
+    internal ReadOnlySpan<string> RequiredPadTemplates => _requiredPadTemplates;
 
     /// <summary>
     /// Gets the type the subclass was registered as, or
@@ -443,11 +462,23 @@ internal static unsafe class SubclassRegistry
             Span<byte> buffer = stackalloc byte[GMarshal.StackBufferSize];
             using Utf8Scope name = GMarshal.StackUtf8(descriptor.TypeName, buffer);
 
-            if (GObjectNative.TypeFromName(name.Pointer) != GType.InvalidValue)
+            nuint taken = GObjectNative.TypeFromName(name.Pointer);
+            if (taken != GType.InvalidValue)
             {
+                // A definition whose class initialiser failed leaves the name
+                // taken - a static GType cannot be unregistered - so the retry
+                // lands here rather than on the original failure. Saying which
+                // failure that was is the difference between "unique per
+                // process" and the actual bug.
+                string hint = ByType.TryGetValue(taken, out SubclassDescriptor? previous)
+                    && previous.ClassInitFailure is { } previousFailure
+                    ? " A previous DefineSubclass with this name failed in its class initialiser: "
+                        + previousFailure.Message
+                    : string.Empty;
+
                 throw new InvalidOperationException(
                     $"The type name \"{descriptor.TypeName}\" is taken already. GType names are unique per " +
-                    "process, so registering one twice is a caller bug.");
+                    "process, so registering one twice is a caller bug." + hint);
             }
 
             // The sizes come from the library that is loaded, not from the gir
@@ -488,16 +519,6 @@ internal static unsafe class SubclassRegistry
 
             descriptor.SetRegisteredType(new GType(type));
             ByType[type] = descriptor;
-
-            // From here on an instance of this type that turns up without a
-            // wrapper is built into the managed subclass rather than into a
-            // wrapper of the nearest registered ancestor. A subclass defined
-            // without a factory keeps the ancestor behaviour, which is what
-            // TypeRegistry.Fallback reports.
-            if (descriptor.WrapFactory is { } wrapFactory)
-            {
-                TypeRegistry.RegisterSubclass(new GType(type), wrapFactory);
-            }
 
             // g_type_add_interface_static refuses a type whose class is being
             // initialised, and referencing the class is what starts that, so
@@ -544,6 +565,19 @@ internal static unsafe class SubclassRegistry
                     $"The class initialiser of \"{descriptor.TypeName}\" failed, so the class is not usable. " +
                     "The type stays registered: static GTypes cannot be unregistered.",
                     failure);
+            }
+
+            // From here on an instance of this type that turns up without a
+            // wrapper is built into the managed subclass rather than into a
+            // wrapper of the nearest registered ancestor. A subclass defined
+            // without a factory keeps the ancestor behaviour, which is what
+            // TypeRegistry.Fallback reports. The registration is the last step
+            // of a definition that succeeded: a type whose class initialiser
+            // failed stays unpublished on the managed side, so nothing wraps an
+            // instance of a class that is not usable.
+            if (descriptor.WrapFactory is { } wrapFactory)
+            {
+                TypeRegistry.RegisterSubclass(new GType(type), wrapFactory);
             }
 
             return new GType(type);
@@ -767,8 +801,15 @@ internal static unsafe class SubclassRegistry
     /// </summary>
     /// <param name="type">The type to look up.</param>
     /// <returns>The descriptor, or <see langword="null"/> for a native type.</returns>
+    /// <remarks>
+    /// A type whose class initialiser failed answers <see langword="null"/> as
+    /// well: its registration never completed, so the descriptor is a record of
+    /// the failure rather than a usable subclass.
+    /// </remarks>
     internal static SubclassDescriptor? Find(GType type) =>
-        ByType.TryGetValue(type.Value, out SubclassDescriptor? descriptor) ? descriptor : null;
+        ByType.TryGetValue(type.Value, out SubclassDescriptor? descriptor) && descriptor.ClassInitFailure is null
+            ? descriptor
+            : null;
 
     /// <summary>
     /// Looks the descriptor of the managed subclass a native instance belongs
@@ -870,6 +911,8 @@ internal static unsafe class SubclassRegistry
                         ? new ClassConfig(gClass)
                         : new ObjectClassConfig(gClass));
             }
+
+            RequirePadTemplates(gClass, descriptor);
         }
         catch (Exception exception)
         {
@@ -883,6 +926,45 @@ internal static unsafe class SubclassRegistry
             }
 
             ExceptionTrap.Report(exception);
+        }
+    }
+
+    /// <summary>
+    /// Fails when the class initialiser did not add a pad template the base
+    /// class needs to create its pads.
+    /// </summary>
+    /// <param name="gClass">The class being initialised.</param>
+    /// <param name="descriptor">The registration the class belongs to.</param>
+    /// <remarks>
+    /// <c>GstBaseSrc</c> fetches the <c>src</c> template of its class in its
+    /// instance init, <c>GstBaseSink</c> the <c>sink</c> one and
+    /// <c>GstBaseTransform</c> both. Without them the failure is a
+    /// <c>g_return_if_fail</c> inside <c>g_object_new</c> and a half built
+    /// element. Checking here, at the end of <c>class_init</c>, turns it into
+    /// the failure of the definition that started the registration. See
+    /// <c>docs/subclassing.md</c> §5.5.
+    /// </remarks>
+    /// <exception cref="InvalidOperationException">A template is missing.</exception>
+    private static void RequirePadTemplates(nint gClass, SubclassDescriptor descriptor)
+    {
+        if (descriptor.RequiredPadTemplates.IsEmpty)
+        {
+            return;
+        }
+
+        Span<byte> buffer = stackalloc byte[GMarshal.StackBufferSize];
+
+        foreach (string name in descriptor.RequiredPadTemplates)
+        {
+            using Utf8Scope scope = GMarshal.StackUtf8(name, buffer);
+
+            if (GstNative.ElementClassGetPadTemplate(gClass, scope.Pointer) == nint.Zero)
+            {
+                throw new InvalidOperationException(
+                    $"\"{descriptor.TypeName}\" has no \"{name}\" pad template. The base class creates its pad " +
+                    "from that template when an instance is built, so the class initialiser has to add one " +
+                    "with ClassConfig.AddPadTemplate. See docs/subclassing.md §5.5.");
+            }
         }
     }
 

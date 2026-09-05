@@ -533,12 +533,28 @@ internal sealed class VfuncEmitter
             writer.WriteLine();
         }
 
+        IReadOnlyList<string> templates = rule?.PadTemplates ?? [];
+
         writer.WriteLine("Gst.GObject.SubclassType type = Gst.GObject.SubclassType.Define(");
-        writer.WriteLine(
-            "    new Gst.GObject.GType(GetGType()), typeName, configureClass, overrides, wrapFactory, options);");
-        foreach (string template in rule?.PadTemplates ?? [])
+
+        if (templates.Count == 0)
         {
-            writer.WriteLine("type.RequirePadTemplate(\"" + template + "\");");
+            writer.WriteLine(
+                "    new Gst.GObject.GType(GetGType()), typeName, configureClass, overrides, wrapFactory,"
+                + " options);");
+        }
+        else
+        {
+            // The names travel into the registration instead of being checked
+            // after it returned, so a class initialiser that forgot one fails
+            // the definition as a class initialiser that failed.
+            writer.WriteLine(
+                "    new Gst.GObject.GType(GetGType()), typeName, configureClass, overrides, wrapFactory, "
+                + "options,");
+            writer.WriteLine(
+                "    requiredPadTemplates: new[] { "
+                + string.Join(", ", templates.Select(static template => "\"" + template + "\""))
+                + " });");
         }
 
         writer.WriteLine("return type;");

@@ -281,6 +281,11 @@ public sealed class SubclassType
     /// The optional parts of the registration, such as the interfaces the
     /// subclass implements, or <see langword="null"/> for none.
     /// </param>
+    /// <param name="requiredPadTemplates">
+    /// The names of the pad templates the base class needs its class
+    /// initialiser to add, or <see langword="null"/> for a base class that
+    /// needs none.
+    /// </param>
     /// <returns>The registration.</returns>
     internal static SubclassType Define(
         GType parent,
@@ -288,14 +293,16 @@ public sealed class SubclassType
         Action<ClassConfig>? configureClass,
         VfuncOverride[] overrides,
         Func<SubclassCtorArgs, Object>? wrapFactory,
-        SubclassOptions? options) =>
+        SubclassOptions? options,
+        string[]? requiredPadTemplates = null) =>
         Define(
             parent,
             typeName,
             configureClass is null ? null : config => configureClass((ClassConfig)config),
             overrides,
             wrapFactory,
-            options);
+            options,
+            requiredPadTemplates);
 
     /// <summary>
     /// Registers a managed subclass whose class initialiser is given the
@@ -345,6 +352,12 @@ public sealed class SubclassType
     /// subclass implements, or <see langword="null"/> for none.
     /// </param>
     /// <returns>The registration.</returns>
+    /// <param name="requiredPadTemplates">
+    /// The names of the pad templates the base class needs its class
+    /// initialiser to add, or <see langword="null"/> for a base class that
+    /// needs none. They are checked at the end of <c>class_init</c>, so a
+    /// missing one fails this call as a class initialiser that failed.
+    /// </param>
     /// <exception cref="ArgumentException">
     /// An interface is declared twice, or the parent type implements it
     /// already.
@@ -355,7 +368,8 @@ public sealed class SubclassType
         Action<ObjectClassConfig>? configureClass,
         VfuncOverride[] overrides,
         Func<SubclassCtorArgs, Object>? wrapFactory,
-        SubclassOptions? options)
+        SubclassOptions? options,
+        string[]? requiredPadTemplates = null)
     {
         ArgumentNullException.ThrowIfNull(typeName);
         ArgumentNullException.ThrowIfNull(overrides);
@@ -402,7 +416,8 @@ public sealed class SubclassType
 
         InterfaceImplementation[] interfaces = ValidateInterfaces(parent, options);
 
-        SubclassDescriptor descriptor = new(parent, typeName, slots, configureClass, wrapFactory, interfaces);
+        SubclassDescriptor descriptor = new(
+            parent, typeName, slots, configureClass, wrapFactory, interfaces, requiredPadTemplates);
 
         return new SubclassType(descriptor, SubclassRegistry.Register(descriptor));
     }
@@ -487,37 +502,5 @@ public sealed class SubclassType
         }
 
         return interfaces;
-    }
-
-    /// <summary>
-    /// Fails when the class initialiser did not add a pad template that the
-    /// base class needs to create its pads.
-    /// </summary>
-    /// <param name="name">The name of the template, <c>src</c> or <c>sink</c>.</param>
-    /// <remarks>
-    /// <c>GstBaseSrc</c> fetches the <c>src</c> template of its class in its
-    /// instance init, <c>GstBaseSink</c> the <c>sink</c> one and
-    /// <c>GstBaseTransform</c> both. Without them the failure is a
-    /// <c>g_return_if_fail</c> inside <c>g_object_new</c> and a half built
-    /// element; checking here turns it into a message that says what is
-    /// missing. See <c>docs/subclassing.md</c> §5.5.
-    /// </remarks>
-    /// <exception cref="InvalidOperationException">The template is missing.</exception>
-    internal unsafe void RequirePadTemplate(string name)
-    {
-        // The class exists and is referenced for the process: the registration
-        // referenced it so that class_init ran there and then.
-        nint elementClass = GObjectNative.TypeClassPeek(GType.Value);
-
-        Span<byte> buffer = stackalloc byte[GMarshal.StackBufferSize];
-        using Utf8Scope scope = GMarshal.StackUtf8(name, buffer);
-
-        if (elementClass == nint.Zero || GstNative.ElementClassGetPadTemplate(elementClass, scope.Pointer) == nint.Zero)
-        {
-            throw new InvalidOperationException(
-                $"\"{Name}\" has no \"{name}\" pad template. The base class creates its pad from that template " +
-                "when an instance is built, so the class initialiser has to add one with " +
-                $"ClassConfig.AddPadTemplate. See docs/subclassing.md §5.5.");
-        }
     }
 }

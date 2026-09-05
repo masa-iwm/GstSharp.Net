@@ -305,8 +305,8 @@ public unsafe partial class BaseSrc
         ArgumentNullException.ThrowIfNull(configureClass);
 
         Gst.GObject.SubclassType type = Gst.GObject.SubclassType.Define(
-            new Gst.GObject.GType(GetGType()), typeName, configureClass, overrides, wrapFactory, options);
-        type.RequirePadTemplate("src");
+            new Gst.GObject.GType(GetGType()), typeName, configureClass, overrides, wrapFactory, options,
+            requiredPadTemplates: new[] { "src" });
         return type;
     }
 

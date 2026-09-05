@@ -152,8 +152,8 @@ public unsafe partial class VideoSink
         ArgumentNullException.ThrowIfNull(configureClass);
 
         Gst.GObject.SubclassType type = Gst.GObject.SubclassType.Define(
-            new Gst.GObject.GType(GetGType()), typeName, configureClass, overrides, wrapFactory, options);
-        type.RequirePadTemplate("sink");
+            new Gst.GObject.GType(GetGType()), typeName, configureClass, overrides, wrapFactory, options,
+            requiredPadTemplates: new[] { "sink" });
         return type;
     }
 
