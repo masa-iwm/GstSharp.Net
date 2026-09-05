@@ -316,7 +316,12 @@ Three load-bearing decisions in that shape:
   **Doctrine: vfunc dispatch only dispatches to an interned live wrapper;
   otherwise it chains up.** This single rule covers the construction window,
   the post-`Dispose` window, and vfuncs fired from `GObjectClass.constructed`
-  or property-setting during `g_object_new`.
+  or property-setting during `g_object_new`. It is the rule for an instance
+  C# is constructing, whose constructor is about to install the toggle
+  reference. An instance *native* code constructs has no such constructor
+  waiting for it, and stage 3a gave the dispatch a second step for it: the
+  wrapper of a registered managed subclass is fabricated on the first slot
+  that arrives, even one that arrives inside `g_object_new` (§5.4).
   An instance-`qdata` side channel (`g_object_set_qdata`) was considered as
   the lookup and rejected: it would duplicate what the interning table
   already is, cost a per-instance native write, and need a lifecycle of its
@@ -1378,9 +1383,9 @@ A managed `GES.VideoSource` answers the element behind it from
   reason; adding it to a layer requests one for it if it has none.
 * **`OnCreateSource` has to answer an element.** Answering `null` is a
   documented C shape whose failure is meant to surface at the state change,
-  but the half-built source that is left behind has no top bin and does not
-  survive the teardown of the timeline. Build the element, or do not declare
-  the slot.
+  and the source is left with no top bin at all (`ges-source.c:203-209`). In
+  testing, a process holding such a source did not survive the teardown of its
+  timeline. Build the element, or do not declare the slot.
 * **Everything runs on the application thread.** The editing services assert
   the thread a timeline and its tracks were created on, and every slot of
   these seven classes is called synchronously inside the call that changed the
