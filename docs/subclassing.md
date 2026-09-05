@@ -1017,11 +1017,10 @@ document spells it out because the failure modes are subtle:
    a type registered through the non generic `DefineSubclass` is still
    C#-initiated-only, and `TypeRegistry.Fallback` is still the diagnostic that
    names it.
-6. **GES dependency direction**: the GES module is bound and consumes only
-   elements the native libraries instantiate, which needs nothing from this
-   design. Authoring a custom GES source means GES instantiating a managed
-   type by GType name — which lands squarely on §5.4 and is therefore a
-   stage-3 deliverable, not an earlier one.
+6. **GES dependency direction** — **closed in stage 3c.** Authoring a custom
+   GES source means GES instantiating a managed type, which lands squarely on
+   §5.4. It does so by `GType` through an asset rather than by factory name,
+   and the child contract below is what makes that reachable from C#.
 7. **AotSmoke coverage**: the smoke sample currently exercises raw imports
    and core; a registered subclass must be added
    (`samples/AotSmoke`) so ILC reachability covers `UnmanagedCallersOnly`
@@ -1133,8 +1132,8 @@ compiling and keep their old behaviour. `SubclassType.NewInstance` gained the
 construction-property overload a `GstPad` needs, because `direction` is
 construct only; `ObjectClassConfig` arrived as the base of `ClassConfig` (§5.5);
 `Gst.Pad` and `GstBase.AggregatorPad` joined the allowlist, which is what
-un-skipped `Aggregator::create_new_pad`. Twenty one classes are subclassable,
-with twenty two class struct mirrors and 218 slots.
+un-skipped `Aggregator::create_new_pad`. Twenty eight classes are
+subclassable, with thirty class struct mirrors and 240 slots.
 
 **Stage 3b — properties, signals and interfaces (landed).** `g_param_spec_*`
 construction (twenty `New` factories for the GObject kinds, plus the
@@ -1184,21 +1183,30 @@ plan did not name:
   its `SubclassCtorArgs` away, which is the one mistake in the fabrication path
   that compiles and then wraps the wrong instance.
 
-**Stage 3c — GES custom sources.** The seven GES classes on the allowlist, the
-named callback typedef slots (`create_track_element(s)`), and `OnCreateSource`
-with a sample and tests. It rests on stage 3a: GES constructs a managed type
-natively whenever a clip is copied, split or pasted.
+**Stage 3c — GES custom sources (landed).** Seven classes of the editing
+services joined the allowlist — `GES.TimelineElement`, `TrackElement`,
+`Source`, `VideoSource`, `AudioSource`, `Clip` and `SourceClip` — which took
+`GES.Container` in with them as a mirror. `GESClipClass::create_track_element`
+is a slot the gir spells with a callback typedef rather than inline, and
+pairing it with the virtual method of the same name is what turned it into
+`OnCreateTrackElement`; the class structs behind these types carry unions, so
+the mirrors gained a by-value union block. `GES.Asset.Extract<T>()` is the one
+hand-written addition, because a managed track element may only be built
+through an asset. It rests on stage 3a: GES constructs a managed type natively
+whenever a clip is copied, split or pasted.
 
 ---
 
 ## 11. Using it
 
-What ships is a **generated surface for an allowlist of twenty one base
+What ships is a **generated surface for an allowlist of twenty eight base
 classes**: `Gst.Element`, `Gst.Bin`, `Gst.Pad`, `Gst.Base.BaseSrc`, `PushSrc`,
 `BaseSink`, `BaseTransform`, `BaseParse`, `Aggregator`, `AggregatorPad`,
 `Gst.Audio.AudioBaseSink`, `AudioBaseSrc`, `AudioSink`, `AudioSrc`,
-`AudioFilter`, `AudioDecoder`, `AudioEncoder`, and `Gst.Video.VideoSink`,
-`VideoFilter`, `VideoDecoder`, `VideoEncoder`. Each one carries four things — a
+`AudioFilter`, `AudioDecoder`, `AudioEncoder`, `Gst.Video.VideoSink`,
+`VideoFilter`, `VideoDecoder`, `VideoEncoder`, and, of the editing services,
+`GES.TimelineElement`, `TrackElement`, `Source`, `VideoSource`, `AudioSource`,
+`Clip` and `SourceClip`. Each one carries four things — a
 `DefineSubclass` that registers a managed type, a `DefineSubclass<TSelf>` that
 also states how the wrapper of an instance native code created is built, a
 `protected` constructor, and, per bound vfunc, an `OnX` virtual with a matching
@@ -1350,6 +1358,53 @@ exist yet.
 The class initialiser of a pad type is an `Action<ObjectClassConfig>?` rather
 than an `Action<ClassConfig>?` (§5.5), and `null` is a legal value for it, as it
 is for `Gst.Element` and `Gst.Bin`.
+
+### A source for the editing services
+
+A managed `GES.VideoSource` answers the element behind it from
+`OnCreateSource`, and a managed `GES.SourceClip` builds that source from
+`OnCreateTrackElement`. Six rules are particular to the editing services.
+
+* **A child is built through an asset, never with `new`.** The one supported
+  spelling is `GES.Asset.Request(type.GType, null)!.Extract<T>()`. What
+  `ges_asset_extract` adds over `g_object_new` is
+  `ges_extractable_set_asset`, and that call is what gives a track element the
+  `nleobject` behind it (`ges-asset.c:1588-1606`). A child built any other way
+  is not merely second class: no track will take it, so a layer asked to add
+  the clip removes the child again and answers `false`
+  (`ges-layer.c:781-808`), and copying it — which is what splitting and
+  pasting do — asserts inside the library and takes the process down
+  (`ges-timeline-element.c:1675`). The clip itself needs an asset for the same
+  reason; adding it to a layer requests one for it if it has none.
+* **`OnCreateSource` has to answer an element.** Answering `null` is a
+  documented C shape whose failure is meant to surface at the state change,
+  but the half-built source that is left behind has no top bin and does not
+  survive the teardown of the timeline. Build the element, or do not declare
+  the slot.
+* **Everything runs on the application thread.** The editing services assert
+  the thread a timeline and its tracks were created on, and every slot of
+  these seven classes is called synchronously inside the call that changed the
+  timeline. The exception is `GES.Source.OnSelectPad`, which is also called
+  from the thread that emits `pad-added` on the sub element — a streaming
+  thread for a source that adds pads dynamically.
+* **`OnSetMaxDuration` sees a half-built instance.** `max-duration` is a
+  `CONSTRUCT` property and is written inside `g_object_new`, before the name
+  is, so this one override — and only this one — runs on an instance whose
+  `Name` is still `null`. The wrapper is fabricated by that dispatch (§5.4).
+* **Copied state belongs in an installed property.** `deep_copy` is not bound,
+  and `ges_timeline_element_copy` copies every readable and writable property
+  of the class before it hands the copy back, the ones a managed type
+  installed (§5.5) included. That is how state reaches the clip a split
+  produced.
+* **The class data fields are inherited, not configured.** The mirrors lay the
+  unions of these class structs out by value, but the fields inside them —
+  `nleobject_factorytype`, `default_track_type`, `disable_scale_in_compositor`
+  — are layout only and no facade sets them. A direct subclass of
+  `GES.Source` therefore inherits `nlesource` as its factory type and
+  overrides `OnCreateElement`; `needs_converters`, `get_natural_size` and
+  `create_filters` have no virtual method in the gir and stay opaque, so a
+  managed `GES.VideoSource` gets the natural size of no source at all, which
+  is what the library does when the slot is `NULL`.
 
 ### The rules the surface enforces
 

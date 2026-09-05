@@ -327,17 +327,18 @@ reason in
 The gaps worth naming here:
 
 * **Subclassing is limited to an allowlist of base classes.** A C# type can
-  derive from one of twenty one classes — `Gst.Element`, `Gst.Bin`, `Gst.Pad`,
-  the `GstBase` sources, sinks, transforms, parsers and aggregators including
-  `AggregatorPad`, the `GstAudio` sinks, sources, filters and codecs, and the
-  `GstVideo` sinks, filters and codecs — override the vfuncs of the class and be
+  derive from one of twenty eight classes — `Gst.Element`, `Gst.Bin`,
+  `Gst.Pad`, the `GstBase` sources, sinks, transforms, parsers and aggregators
+  including `AggregatorPad`, the `GstAudio` sinks, sources, filters and codecs,
+  the `GstVideo` sinks, filters and codecs, and the timeline elements, sources
+  and clips of the editing services — override the vfuncs of the class and be
   called back through the native vtable. A type that also states how its wrapper
   is built can be registered with `gst_element_register` and made by
   `gst_element_factory_make` or named in a pipeline description. It can install
   properties, define signals and implement `GstURIHandler`, so
   `gst_element_make_from_uri` finds it. What is not there yet: construct
-  properties, interfaces other than `GstURIHandler`, defining a new interface
-  from managed code, and the GES classes. See
+  properties, interfaces other than `GstURIHandler`, and defining a new
+  interface from managed code. See
   [`docs/subclassing.md`](https://github.com/masa-iwm/GstSharp.Net/blob/main/docs/subclassing.md#11-using-it).
 * **Writing GValue-typed structures is incomplete.** Reading is covered —
   `Value.GetBoxed<T>()` for a boxed value and `Value.GetMiniObject<T>()` for a

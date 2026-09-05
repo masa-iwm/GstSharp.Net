@@ -197,6 +197,16 @@ reference, held by the wrapper — so nothing about the paragraphs above changes
 for a fabricated wrapper, including `Dispose`. See
 [`docs/subclassing.md`](subclassing.md) §5.4.
 
+`GES.Asset.Extract<T>()` is the one call of the binding that is handed a
+**floating** `GObject`. The editing services build the object with
+`g_object_new` and give it back without sinking it, so the wrapper sinks it and
+owns the single reference that exists; the asset is untouched and keeps
+describing what it described. The caller owns the result exactly as it owns a
+`new MyElement()`, which is what makes it safe to answer from
+`GES.Clip.OnCreateTrackElement`: the container that takes the child takes a
+reference of its own. Disposing it before the slot returns would leave the
+container with nothing.
+
 `Object.As<T>()` owns nothing of its own. When the wrapper class does not
 declare the interface, the cast hands back a small view that holds a strong
 reference to the wrapper it came from and reads the handle through it, so the
