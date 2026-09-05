@@ -77,9 +77,9 @@ Notes on reading them:
 
 x64, Windows, GStreamer 1.28.6 (MinGW), short job, in process. These are the
 numbers of one machine on one day and are here to show the shape of the
-output, not as a target anything is held to: the error columns are wide
-because a short run on a virtualised host is what produced them. Read the
-`Ratio` and `Allocated` columns, not the absolute times.
+output, not as a target anything is held to: three measured iterations is what
+makes the error columns as wide as they are. Read the `Ratio` and `Allocated`
+columns, not the absolute times.
 
 ```
 | Method          | Mean     | Error      | StdDev    | Ratio | RatioSD | Allocated | Alloc Ratio |
@@ -118,8 +118,8 @@ What that run says, and what it does not:
 
 * **Trampoline.** A managed `transform_ip` over 300 buffers cost about half as
   much again as the native `identity` — roughly half a microsecond per buffer
-  on this host — and allocated about 46 bytes per buffer, which is the managed
-  `Buffer` wrapper each call is handed.
+  on this host — and allocated about 46 bytes per buffer, consistent with one
+  managed `Buffer` wrapper per call.
 * **Properties.** Going through a name and a `GValue` is one to two orders of
   magnitude more expensive than the generated accessor. That is the whole
   argument for generating typed accessors, and the reason `SetProperty(string,
@@ -130,11 +130,12 @@ What that run says, and what it does not:
   takes the bin lock, `gst_pad_get_parent_element` is a field read).
 * **Map.** On this run the copy row landed *below* the mapped row, which only
   means the memcpy of 64 KiB is smaller than the noise of a three-iteration
-  run on a virtualised host: both rows are dominated by the pass over the
-  bytes, which both do. The honest reading of this pair on this hardware is
-  the `Allocated` column — neither path allocates, because the pooled array is
-  rented once — and not the ratio. A quiet machine is needed for the ratio to
-  say anything.
+  run: both rows are dominated by the pass over the bytes, which both do. The
+  honest reading of this pair on this hardware is the `Allocated` column —
+  neither path allocates anything, the `1 B` being what the diagnoser rounds
+  to on the in-process toolchain, because the pooled array is rented once —
+  and not the ratio. A quiet machine is needed for the ratio to say
+  anything.
 
 ## Artifacts
 

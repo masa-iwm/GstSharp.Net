@@ -116,34 +116,19 @@ public class ValueBenchmarks
 
     private int RoundtripInt()
     {
-        // A plain local rather than a using declaration: Value carries the
-        // GValue inline, and a read-only local would let the compiler mutate a
-        // defensive copy instead of this one.
-        Value value = Value.New(GType.Int);
+        using Value value = Value.New(GType.Int);
 
-        try
-        {
-            value.SetInt(this.number);
-            return value.GetInt();
-        }
-        finally
-        {
-            value.Dispose();
-        }
+        value.SetInt(this.number);
+
+        return value.GetInt();
     }
 
     private string? RoundtripString()
     {
-        Value value = Value.New(GType.String);
+        using Value value = Value.New(GType.String);
 
-        try
-        {
-            value.SetString(this.text);
-            return value.GetString();
-        }
-        finally
-        {
-            value.Dispose();
-        }
+        value.SetString(this.text);
+
+        return value.GetString();
     }
 }

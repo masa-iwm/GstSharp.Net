@@ -23,7 +23,7 @@ public static class Program
         // Directory.Build.props and its TreatWarningsAsErrors. Short runs,
         // because these benchmarks drive a native library and a full run buys
         // precision nobody reads. Both are the default job rather than a
-        // command line flag, so `dotnet run` reproduces what the table below
+        // command line flag, so `dotnet run` reproduces what the table in
         // benches/README.md was made from.
         IConfig config = DefaultConfig.Instance
             .AddJob(Job.ShortRun.WithToolchain(InProcessEmitToolchain.Instance).AsDefault());
