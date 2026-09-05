@@ -50,12 +50,12 @@
 //
 //   * Caps printed without --verbose have their buffers stripped, as the C
 //     caps_to_string strips them, through gst_caps_map_in_place and
-//     gst_structure_filter_and_map_in_place_id_str over a copy. One shape of
-//     field survives here that the C tool would drop: an array whose members
-//     are all buffers, because walking into a GstValueArray needs two calls
-//     that are not bound. The whole branch is only reachable for caps that are
-//     not fixed -- fixed caps are printed as a codec description instead, and
-//     --verbose turns the stripping off in the C tool too.
+//     gst_structure_filter_and_map_in_place_id_str over a copy, and the filter
+//     recurses into an array the way the C one does: a field whose members are
+//     all buffers, a streamheader being the one that occurs, goes as well. The
+//     whole branch is only reachable for caps that are not fixed -- fixed caps
+//     are printed as a codec description instead, and --verbose turns the
+//     stripping off in the C tool too.
 //
 //   * The speaker layout of an audio stream is computed rather than read.
 //     gst_audio_channel_positions_from_mask is not bound and the GEnumClass

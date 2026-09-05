@@ -537,11 +537,10 @@ internal sealed partial class Discovery
     /// untouched.
     /// </para>
     /// <para>
-    /// One shape of field is kept where the C tool would drop it: an array
-    /// whose members are all buffers. Walking into an array needs
-    /// <c>gst_value_array_get_size</c> and <c>gst_value_array_get_value</c>,
-    /// which are not bound, so an array is always kept — which is what the C
-    /// tool does for an array that holds anything else.
+    /// An array field goes the same way as a plain one: the C filter recurses
+    /// into a <c>GST_TYPE_ARRAY</c> and drops the field only when every member,
+    /// down to the last nesting, is a buffer — which is what a
+    /// <c>streamheader</c> is. An array that holds anything else is kept whole.
     /// </para>
     /// </remarks>
     private string CapsToString(Caps caps)
@@ -555,14 +554,77 @@ internal sealed partial class Discovery
 
         stripped.MapInPlace(static (features, structure) =>
         {
-            structure.FilterAndMapInPlaceIdStr(static (fieldname, value) =>
-                !string.Equals(value.Type.Name, "GstBuffer", StringComparison.Ordinal));
+            structure.FilterAndMapInPlaceIdStr(static (fieldname, value) => KeepsField(value));
 
             return true;
         });
 
         return stripped.ToString();
     }
+
+    /// <summary>
+    /// Answers whether a field survives the stripping, the way
+    /// <c>structure_remove_buffers_ip</c> decides it.
+    /// </summary>
+    /// <param name="value">The value of the field.</param>
+    /// <returns><see langword="true"/> when the field is kept.</returns>
+    private static bool KeepsField(ValueRef value)
+    {
+        if (IsBuffer(value.Type))
+        {
+            return false;
+        }
+
+        if (!IsArray(value.Type))
+        {
+            return true;
+        }
+
+        using Value array = value.ToValue();
+
+        return KeepsArray(array);
+    }
+
+    /// <summary>
+    /// Answers whether an array field survives: it does as soon as one member,
+    /// at any depth, is something other than a buffer. An empty array is
+    /// dropped, as the C loop drops it.
+    /// </summary>
+    /// <param name="array">The array the field holds.</param>
+    /// <returns><see langword="true"/> when the field is kept.</returns>
+    private static bool KeepsArray(in Value array)
+    {
+        uint size = Gst.ValueArray.GetSize(array);
+
+        for (uint index = 0; index < size; index++)
+        {
+            using Value member = Gst.ValueArray.GetValue(array, index);
+
+            if (IsBuffer(member.Type))
+            {
+                continue;
+            }
+
+            if (!IsArray(member.Type) || KeepsArray(member))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>Answers whether a type is <c>GstBuffer</c>.</summary>
+    /// <param name="type">The type of a value.</param>
+    /// <returns><see langword="true"/> for a buffer.</returns>
+    private static bool IsBuffer(GType type) =>
+        string.Equals(type.Name, "GstBuffer", StringComparison.Ordinal);
+
+    /// <summary>Answers whether a type is <c>GST_TYPE_ARRAY</c>.</summary>
+    /// <param name="type">The type of a value.</param>
+    /// <returns><see langword="true"/> for an array.</returns>
+    private static bool IsArray(GType type) =>
+        string.Equals(type.Name, "GstValueArray", StringComparison.Ordinal);
 
     /// <summary>
     /// Names the speaker positions of an audio stream, the way
