@@ -1,4 +1,5 @@
 using System.Buffers;
+using System.Runtime.InteropServices;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Configs;
 using Gst;
@@ -10,11 +11,21 @@ namespace GstSharp.Benchmarks;
 /// copying it out first.
 /// </summary>
 /// <remarks>
+/// <para>
 /// The buffer is 64 KiB and lives for the whole class, so what is measured is
 /// the mapping and the pass over the bytes, not an allocation. The copy variant
 /// reads the same bytes out of the same buffer into an array rented once from
 /// <see cref="ArrayPool{T}"/>, which is the cheapest a copy can be: the
 /// difference between the two rows is the copy itself.
+/// </para>
+/// <para>
+/// Both read rows sum the bytes eight at a time, through
+/// <see cref="MemoryMarshal.Cast{TFrom, TTo}(Span{TFrom})"/>, so that the pass
+/// over the bytes stays small next to what is being compared; a scalar
+/// <c>byte</c> loop over 64 KiB costs more than the map and the copy together
+/// and hides both. <see cref="MapOnly"/> is the same map and unmap with no pass
+/// at all, so the map itself has a number of its own.
+/// </para>
 /// </remarks>
 [MemoryDiagnoser]
 [CategoriesColumn]
@@ -62,39 +73,36 @@ public class MapBenchmarks
     }
 
     /// <summary>Sums the buffer through the mapped span, without copying.</summary>
-    /// <returns>The sum of the bytes.</returns>
+    /// <returns>The sum of the bytes, eight at a time.</returns>
     [Benchmark(Baseline = true)]
     [BenchmarkCategory(ReadCategory)]
-    public long ReadMappedSpan()
+    public ulong ReadMappedSpan()
     {
         using Gst.Buffer.MapScope map = this.buffer.Map(MapFlags.Read);
 
-        long total = 0;
-
-        foreach (byte value in map.Span)
-        {
-            total += value;
-        }
-
-        return total;
+        return Sum(map.Span);
     }
 
     /// <summary>Sums the buffer after copying it into a pooled array.</summary>
-    /// <returns>The sum of the bytes.</returns>
+    /// <returns>The sum of the bytes, eight at a time.</returns>
     [Benchmark]
     [BenchmarkCategory(ReadCategory)]
-    public long ReadCopiedToPooledArray()
+    public ulong ReadCopiedToPooledArray()
     {
         int copied = (int)this.buffer.Extract(0, this.scratch.AsSpan(0, Size));
 
-        long total = 0;
+        return Sum(this.scratch.AsSpan(0, copied));
+    }
 
-        foreach (byte value in this.scratch.AsSpan(0, copied))
-        {
-            total += value;
-        }
+    /// <summary>Maps the buffer for reading and unmaps it, reading nothing.</summary>
+    /// <returns>How many bytes the mapping covered.</returns>
+    [Benchmark]
+    [BenchmarkCategory(ReadCategory)]
+    public int MapOnly()
+    {
+        using Gst.Buffer.MapScope map = this.buffer.Map(MapFlags.Read);
 
-        return total;
+        return map.Span.Length;
     }
 
     /// <summary>Fills the buffer through a writable mapping.</summary>
@@ -108,5 +116,20 @@ public class MapBenchmarks
         map.Span.Fill(this.fill);
 
         return map.Span.Length;
+    }
+
+    /// <summary>Adds the span up as 64 bit lanes rather than byte by byte.</summary>
+    /// <param name="bytes">The bytes to sum; a multiple of eight bytes long.</param>
+    /// <returns>The sum of the lanes, which is not the sum of the bytes.</returns>
+    private static ulong Sum(ReadOnlySpan<byte> bytes)
+    {
+        ulong total = 0;
+
+        foreach (ulong lane in MemoryMarshal.Cast<byte, ulong>(bytes))
+        {
+            total += lane;
+        }
+
+        return total;
     }
 }
