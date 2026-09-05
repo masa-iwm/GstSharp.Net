@@ -332,6 +332,27 @@ public sealed class AbiProbeTests
     /// fields (the two <c>guint</c> sized ones pack into one word), sixteen
     /// slots and <c>_gst_reserved[18]</c>, for 488.
     /// </summary>
+    /// <summary>
+    /// The two property slots of <c>GObjectClass</c> sit where the overrides
+    /// say they do. The total size already catches gross drift, but the
+    /// overrides are written at a byte offset, so the offset is what has to be
+    /// asserted.
+    /// </summary>
+    [Fact]
+    public unsafe void GObjectClassRawMatchesTheHeaderLayout()
+    {
+        GObjectClassRaw raw = default;
+
+        _output.WriteLine(Format("GObjectClassRaw.set_property", GObjectClassRaw.SetPropertyOffset));
+        _output.WriteLine(Format("GObjectClassRaw.get_property", GObjectClassRaw.GetPropertyOffset));
+
+        Assert.Equal(136, Unsafe.SizeOf<GObjectClassRaw>());
+        Assert.Equal(24L, Offset(&raw, &raw.SetProperty));
+        Assert.Equal(32L, Offset(&raw, &raw.GetProperty));
+        Assert.Equal(24, GObjectClassRaw.SetPropertyOffset);
+        Assert.Equal(32, GObjectClassRaw.GetPropertyOffset);
+    }
+
     [Fact]
     public unsafe void ElementClassRawMatchesTheHeaderLayout()
     {
