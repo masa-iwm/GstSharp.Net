@@ -416,6 +416,41 @@ jobs:
       - name: GesCustomSource
         run: dotnet run --project samples/GesCustomSource --no-restore -- --timeout 20
 
+      # ges-launch-1.0 on the binding. This first run is the whole load path:
+      # the "ges:" description is parsed by the library's own formatter, the
+      # clips are synthetic so no media file is needed, and the "loaded" signal
+      # only ever arrives because the sample iterates the default main context
+      # itself - a sample that forgot to would hang here until the timeout.
+      - name: GesLaunch (playback)
+        run: dotnet run --project samples/GesLaunch --no-restore -- --no-interactive --videosink fakesink --audiosink fakesink --timeout 30 +test-clip snow d=1 +test-clip smpte d=1
+
+      # The informative path, which needs no pipeline at all: the transition
+      # nicks are read out of the type system, so this is what proves the
+      # enumeration is registered by the time the sample asks for it.
+      - name: GesLaunch (list transitions)
+        run: dotnet run --project samples/GesLaunch --no-restore -- --no-interactive --timeout 30 --list-transitions
+
+      # Save a project and load it again. Saving is the first GESProject.Save
+      # anywhere in this repository, and loading is the only path where the
+      # clips are built inside the main context iteration rather than inside
+      # the extraction - so a load that is not pumped fails this step rather
+      # than passing quietly with an empty timeline.
+      - name: GesLaunch (save and load a project)
+        run: |
+          dotnet run --project samples/GesLaunch --no-restore -- --no-interactive --videosink fakesink --audiosink fakesink --timeout 30 --save-only ges-launch-saved.xges +test-clip snow d=1
+          dotnet run --project samples/GesLaunch --no-restore -- --no-interactive --videosink fakesink --audiosink fakesink --timeout 30 -l ges-launch-saved.xges
+
+      # Rendering, on the only leg whose encoders are proven: theoraenc,
+      # vorbisenc and oggmux are in GSTSHARP_REQUIRED_ELEMENTS above, so the
+      # theora+vorbis in ogg the sample falls back to when neither --format nor
+      # the output extension names a profile is really installed here. The
+      # discoverer then has to accept the file that came out, which is what
+      # turns "the render mode ran" into "the render mode produced media".
+      - name: GesLaunch (render)
+        run: |
+          dotnet run --project samples/GesLaunch --no-restore -- --no-interactive --videosink fakesink --audiosink fakesink --timeout 30 -o "file://$PWD/ges-render.ogg" +test-clip snow d=1
+          dotnet run --project samples/GstDiscoverer --no-restore -- --fail-on-error ges-render.ogg
+
       # The inspect-lite port, run the two ways it can be run. The census walks
       # the whole registry and needs no plugin in particular; the element page
       # is asked for fakesink, which is in the core elements every leg has, and
@@ -580,6 +615,20 @@ jobs:
       - name: GesCustomSource
         run: dotnet run --project samples/GesCustomSource --no-restore -- --timeout 20
 
+      # Same three runs as the Linux leg; see the comments there. The render
+      # run stays on Linux, where the theora, vorbis and ogg elements it needs
+      # are the ones CI already requires.
+      - name: GesLaunch (playback)
+        run: dotnet run --project samples/GesLaunch --no-restore -- --no-interactive --videosink fakesink --audiosink fakesink --timeout 30 +test-clip snow d=1 +test-clip smpte d=1
+
+      - name: GesLaunch (list transitions)
+        run: dotnet run --project samples/GesLaunch --no-restore -- --no-interactive --timeout 30 --list-transitions
+
+      - name: GesLaunch (save and load a project)
+        run: |
+          dotnet run --project samples/GesLaunch --no-restore -- --no-interactive --videosink fakesink --audiosink fakesink --timeout 30 --save-only ges-launch-saved.xges +test-clip snow d=1
+          dotnet run --project samples/GesLaunch --no-restore -- --no-interactive --videosink fakesink --audiosink fakesink --timeout 30 -l ges-launch-saved.xges
+
       - name: GstDeviceMonitor
         run: dotnet run --project samples/GstDeviceMonitor --no-restore
 
@@ -723,6 +772,20 @@ jobs:
       # Same run as the Linux leg; see the comments there.
       - name: GesCustomSource
         run: dotnet run --project samples/GesCustomSource --no-restore -- --timeout 20
+
+      # Same three runs as the Linux leg; see the comments there. The render
+      # run stays on Linux, where the theora, vorbis and ogg elements it needs
+      # are the ones CI already requires.
+      - name: GesLaunch (playback)
+        run: dotnet run --project samples/GesLaunch --no-restore -- --no-interactive --videosink fakesink --audiosink fakesink --timeout 30 +test-clip snow d=1 +test-clip smpte d=1
+
+      - name: GesLaunch (list transitions)
+        run: dotnet run --project samples/GesLaunch --no-restore -- --no-interactive --timeout 30 --list-transitions
+
+      - name: GesLaunch (save and load a project)
+        run: |
+          dotnet run --project samples/GesLaunch --no-restore -- --no-interactive --videosink fakesink --audiosink fakesink --timeout 30 --save-only ges-launch-saved.xges +test-clip snow d=1
+          dotnet run --project samples/GesLaunch --no-restore -- --no-interactive --videosink fakesink --audiosink fakesink --timeout 30 -l ges-launch-saved.xges
 
       # Same two runs as the Linux leg; see the comments there.
       - name: GstInspect
