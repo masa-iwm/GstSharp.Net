@@ -542,12 +542,6 @@ disappears shows up here as an added line.
 - `gst_tracer_record_new`
 - `gst_type_find_suggest_simple`
 
-## GstAllocators
-
-### UnsupportedSignature (1)
-
-- `GstAllocators.DRMDumbAllocator:drm-device-path`
-
 ## GstApp
 
 ### ActionSignal (9)

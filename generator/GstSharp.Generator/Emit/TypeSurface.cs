@@ -904,7 +904,15 @@ internal sealed class SurfaceBuilder
                 return new ValueAccess("float", "holder.GetFloat()", "holder.SetFloat(value);", ValueOwnership.Plain);
             case "gdouble":
                 return new ValueAccess("double", "holder.GetDouble()", "holder.SetDouble(value);", ValueOwnership.Plain);
+            // A file name is a string the way a plain function argument
+            // already marshals one: what holds it is a GParamSpecString whose
+            // value type is G_TYPE_STRING, so the accessors of the runtime
+            // read and write the very bytes the library keeps. What sets a
+            // file name apart is the encoding of those bytes on the platform,
+            // which is a question about their content rather than about the
+            // projection that carries them.
             case "utf8":
+            case "filename":
                 return new ValueAccess("string?", "holder.GetString()", "holder.SetString(value);", ValueOwnership.Plain);
             case "GType":
                 return new ValueAccess(

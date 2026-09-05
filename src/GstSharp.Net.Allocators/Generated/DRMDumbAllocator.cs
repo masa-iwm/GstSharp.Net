@@ -107,6 +107,27 @@ public unsafe partial class DRMDumbAllocator : Gst.Allocator
         return nativeResult != 0;
     }
 
+    /// <summary>The <c>drm-device-path</c> property.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// <para>The property is construct-only and therefore read-only here.</para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class.
+    /// </exception>
+    public string? DrmDevicePath
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("drm-device-path");
+            return holder.GetString();
+        }
+    }
+
     /// <summary>The <c>drm-fd</c> property.</summary>
     /// <remarks>
     /// <para>
