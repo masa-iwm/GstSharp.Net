@@ -1390,12 +1390,14 @@ A managed `GES.VideoSource` answers the element behind it from
   object when the element is removed, and `ges_track_element_dispose` releases
   it once more — a use-after-free the process rarely survives (GES 1.28.6).
   The binding guards the slot: a null answer is reported through the exception
-  trap and an `identity` element is answered in its place, so the failure
-  surfaces at the state change the way an unlinked element does. The same
-  holds for `GES.TrackElement.OnCreateElement`. Answer a real element, or do
-  not declare the slot; and answer one that has no parent, because the library
-  releases both the answer and the nleobject when the bin refuses it
-  (`ges-track-element.c:1073-1078`).
+  trap and an `identity` element is answered in its place, so nothing feeds
+  the substitute, the source produces no data and the pipeline cannot preroll.
+  The same holds for `GES.TrackElement.OnCreateElement`. Answer a real
+  element, or do not declare the slot; and answer one that has no parent,
+  because the library releases both the answer and the nleobject when the bin
+  refuses it (`ges-track-element.c:1073-1078`). For a `GES.VideoSource` or a
+  `GES.AudioSource` subclass no ancestor implements the slot: there is nothing
+  below to chain up to, and `ChainUpCreateSource` throws.
 * **Everything runs on the application thread.** The editing services assert
   the thread a timeline and its tracks were created on, and every slot of
   these seven classes is called synchronously inside the call that changed the

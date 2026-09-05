@@ -184,8 +184,11 @@ public unsafe partial class Source
     /// (ges-track-element.c:1022, 1066-1070), the composition sinks the last reference and
     /// frees the object when the element is removed, and dispose unrefs it again. GES 1.28.6
     /// does that; the binding therefore answers an identity element in place of a null one and
-    /// reports the substitution through the exception trap, so the element fails at the state
-    /// change instead. Answer a real element, or do not declare the slot.</para>
+    /// reports the substitution through the exception trap, so nothing feeds the substitute,
+    /// the source produces no data and the pipeline cannot preroll. Answer a real element, or
+    /// do not declare the slot. For a VideoSource or an AudioSource subclass no ancestor
+    /// implements the slot: there is nothing below to chain up to, and ChainUpCreateSource
+    /// throws.</para>
     /// </remarks>
     /// <returns>
     /// The source element to use.
@@ -233,8 +236,11 @@ public unsafe partial class Source
     /// (ges-track-element.c:1022, 1066-1070), the composition sinks the last reference and
     /// frees the object when the element is removed, and dispose unrefs it again. GES 1.28.6
     /// does that; the binding therefore answers an identity element in place of a null one and
-    /// reports the substitution through the exception trap, so the element fails at the state
-    /// change instead. Answer a real element, or do not declare the slot.</para>
+    /// reports the substitution through the exception trap, so nothing feeds the substitute,
+    /// the source produces no data and the pipeline cannot preroll. Answer a real element, or
+    /// do not declare the slot. For a VideoSource or an AudioSource subclass no ancestor
+    /// implements the slot: there is nothing below to chain up to, and ChainUpCreateSource
+    /// throws.</para>
     /// </remarks>
     /// <returns>
     /// The source element to use.

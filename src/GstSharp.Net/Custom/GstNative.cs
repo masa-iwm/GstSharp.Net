@@ -100,13 +100,17 @@ internal static unsafe partial class GstNative
     /// keeps the reference counting of the normal path while a NULL would not.
     /// </summary>
     /// <param name="factoryName">
-    /// The name of the factory. Name one of the core elements, which
-    /// <c>gst_init</c> always registers, so that the answer cannot itself be
-    /// NULL for want of a plugin.
+    /// The name of the factory. Name one of the core elements: coreelements
+    /// is a plugin like any other, but every GStreamer installation ships it
+    /// and <c>gst_init</c> picks it up with the registry, so the answer is as
+    /// unlikely as it gets to be NULL for want of a plugin.
     /// </param>
     /// <param name="name">The name of the element, or <see langword="null"/> for a generated one.</param>
     /// <returns>
-    /// The new element, floating, with the one reference the caller takes over.
+    /// The new element, floating, with the one reference the caller takes
+    /// over, or <see cref="nint.Zero"/> when no factory of that name is
+    /// registered — which hands the slot the very null answer it is guarding
+    /// against.
     /// </returns>
     internal static nint ElementFactoryMakeRaw(string factoryName, string? name)
     {
