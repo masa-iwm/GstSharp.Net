@@ -110,72 +110,81 @@ public sealed unsafe class SubclassNativeConstructionTests
 
         try
         {
-            Assert.Equal(0, ProbeFactoryPushSrc.WrappersBuilt);
+            try
+            {
+                Assert.Equal(0, ProbeFactoryPushSrc.WrappersBuilt);
 
-            Bus bus = pipeline.GetBus();
+                Bus bus = pipeline.GetBus();
 
-            Assert.NotEqual(StateChangeReturn.Failure, pipeline.SetState(State.Playing));
+                Assert.NotEqual(StateChangeReturn.Failure, pipeline.SetState(State.Playing));
 
-            using Message? message = BusPump.WaitFor(bus, MessageType.Eos | MessageType.Error, BusTimeout);
+                using Message? message = BusPump.WaitFor(bus, MessageType.Eos | MessageType.Error, BusTimeout);
 
-            // Every wait here is bounded: a source that never ends has to make
-            // the test red rather than hold the suite.
-            Assert.NotNull(message);
-            Assert.Equal(MessageType.Eos, message.Type);
+                // Every wait here is bounded: a source that never ends has to make
+                // the test red rather than hold the suite.
+                Assert.NotNull(message);
+                Assert.Equal(MessageType.Eos, message.Type);
 
-            // One instance, one wrapper. A second one would mean the gate let
-            // two threads through, or that a lookup missed what was interned.
-            Assert.Equal(1, ProbeFactoryPushSrc.WrappersBuilt);
+                // One instance, one wrapper. A second one would mean the gate let
+                // two threads through, or that a lookup missed what was interned.
+                Assert.Equal(1, ProbeFactoryPushSrc.WrappersBuilt);
 
-            managed = Assert.IsType<ProbeFactoryPushSrc>(ProbeFactoryPushSrc.LastWrapper);
+                managed = Assert.IsType<ProbeFactoryPushSrc>(ProbeFactoryPushSrc.LastWrapper);
 
-            _output.WriteLine(FormattableString.Invariant(
-                $"test thread {Environment.CurrentManagedThreadId}, wrapper thread {ProbeFactoryPushSrc.WrapperThreadId}, create thread {managed.CreateThreadId}, produced {managed.Produced}"));
+                _output.WriteLine(FormattableString.Invariant(
+                    $"test thread {Environment.CurrentManagedThreadId}, wrapper thread {ProbeFactoryPushSrc.WrapperThreadId}, create thread {managed.CreateThreadId}, produced {managed.Produced}"));
 
-            // The fabrication happened where GStreamer was, not where the test
-            // is: this is the streaming thread the whole ledger is written for.
-            Assert.NotEqual(0, ProbeFactoryPushSrc.WrapperThreadId);
-            Assert.NotEqual(Environment.CurrentManagedThreadId, ProbeFactoryPushSrc.WrapperThreadId);
-            Assert.Equal(ProbeFactoryPushSrc.WrapperThreadId, managed.CreateThreadId);
+                // The fabrication happened where GStreamer was, not where the test
+                // is: this is the streaming thread the whole ledger is written for.
+                Assert.NotEqual(0, ProbeFactoryPushSrc.WrapperThreadId);
+                Assert.NotEqual(Environment.CurrentManagedThreadId, ProbeFactoryPushSrc.WrapperThreadId);
+                Assert.Equal(ProbeFactoryPushSrc.WrapperThreadId, managed.CreateThreadId);
 
-            // The override really ran for this instance, over and over.
-            Assert.Equal(ProbeFactoryPushSrc.BufferCount, managed.Produced);
+                // The override really ran for this instance, over and over.
+                Assert.Equal(ProbeFactoryPushSrc.BufferCount, managed.Produced);
 
-            // Asking the bin for the element by name is a transfer full call on
-            // the application thread: it finds the wrapper the streaming thread
-            // built rather than making a second one, and settles the reference
-            // it was handed.
-            // It is not disposed here: it is the very wrapper this test still
-            // needs, and a GObject wrapper is interned rather than owned.
-            Element? found = pipeline.GetByName("src");
+                // Asking the bin for the element by name is a transfer full call on
+                // the application thread: it finds the wrapper the streaming thread
+                // built rather than making a second one, and settles the reference
+                // it was handed.
+                // It is not disposed here: it is the very wrapper this test still
+                // needs, and a GObject wrapper is interned rather than owned.
+                Element? found = pipeline.GetByName("src");
 
-            Assert.NotNull(found);
-            Assert.Same(managed, found);
+                Assert.NotNull(found);
+                Assert.Same(managed, found);
 
-            handle = managed.Handle;
+                handle = managed.Handle;
 
-            // The bin holds one reference and the wrapper holds the toggle
-            // reference; get_by_name handed out a third, which the settle
-            // dropped again. The instance is sunk, which is what the factory
-            // path leaves behind.
-            Assert.Equal(2u, RefCountOf(handle));
-            Assert.Equal(0, GObjectNative.ObjectIsFloating(handle));
+                // The bin holds one reference and the wrapper holds the toggle
+                // reference; get_by_name handed out a third, which the settle
+                // dropped again. The instance is sunk, which is what the factory
+                // path leaves behind.
+                Assert.Equal(2u, RefCountOf(handle));
+                Assert.Equal(0, GObjectNative.ObjectIsFloating(handle));
 
-            // And the managed type is the type it arrived as: no ancestor
-            // wrapper was ever built for it.
-            Assert.Empty(watch.Reported);
+                // And the managed type is the type it arrived as: no ancestor
+                // wrapper was ever built for it.
+                Assert.Empty(watch.Reported);
+            }
+            finally
+            {
+                pipeline.SetState(State.Null);
+            }
+
+            // Both wrappers of the element have to go before the element can:
+            // the bin releases it when the pipeline does, and the fabricated
+            // wrapper holds the toggle reference until it is disposed.
+            WeakProbe.Arm(handle);
+            managed.Dispose();
         }
         finally
         {
-            pipeline.SetState(State.Null);
+            // The outer finally is what a using declaration cannot be here: the
+            // pipeline has to be released before the assertion below, and still
+            // released when one of the assertions above throws first.
+            pipeline.Dispose();
         }
-
-        // Both wrappers of the element have to go before the element can: the
-        // bin releases it when the pipeline does, and the fabricated wrapper
-        // holds the toggle reference until it is disposed.
-        WeakProbe.Arm(handle);
-        managed.Dispose();
-        pipeline.Dispose();
 
         Assert.Equal(1, WeakProbe.Freed);
     }
