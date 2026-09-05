@@ -52,6 +52,15 @@ internal static class OwnershipFacts
     /// <summary>The metadata name of a vfunc slot declaration.</summary>
     internal const string VfuncOverrideMetadataName = "Gst.GObject.VfuncOverride";
 
+    /// <summary>The metadata name of the managed subclass factory interface.</summary>
+    internal const string ManagedSubclassMetadataName = "Gst.GObject.IManagedSubclass`1";
+
+    /// <summary>The metadata name of the arguments of an adopting constructor.</summary>
+    internal const string SubclassCtorArgsMetadataName = "Gst.GObject.SubclassCtorArgs";
+
+    /// <summary>The name of the factory method of a managed subclass.</summary>
+    internal const string CreateWrapperName = "CreateWrapper";
+
     /// <summary>The unqualified name of a buffer mapping scope.</summary>
     internal const string MapScopeName = "MapScope";
 

@@ -1,7 +1,7 @@
 # GstSharp.Net analyzers
 
 The `GstSharp.Net.Analyzers` assembly ships as an analyzer asset inside the
-binding packages and carries two pairs of rules. `GST0001` and `GST0002` flag
+binding packages and carries five rules. `GST0001` and `GST0002` flag
 the two leak classes that GStreamer applications hit most often; they follow
 the mini object half of the binding's ownership policy, where every
 `MiniObject` or `Boxed` wrapper handed to user code owns a reference of its
@@ -9,7 +9,9 @@ own and must be disposed. GObject wrappers are interned and shared, are not
 covered by those rules, and are normally left to the collector — see
 [ownership and lifetime](ownership.md). `GST0003` and `GST0004` check the
 other contract the compiler cannot see on its own: that a subclass declares
-exactly the vfunc slots it overrides — see [subclassing](subclassing.md).
+exactly the vfunc slots it overrides. `GST0005` guards the other half of the
+subclassing contract, the factory that adopts an instance GStreamer created —
+see [subclassing](subclassing.md).
 
 ## GST0001
 
@@ -120,3 +122,34 @@ declares the slot. Because the pairing is by name stem, a slot whose managed
 name hides a parent slot of the same stem — `AudioSink.PrepareOverride` over
 `BaseSink.PrepareOverride` — is paired by that stem, and either `OnPrepare`
 satisfies either declaration.
+
+## GST0005
+
+**`CreateWrapper` ignores its `SubclassCtorArgs`.**
+
+An implementation of `IManagedSubclass<TSelf>.CreateWrapper` never reads the
+`args` parameter. That parameter is the instance GStreamer just created, on its
+way into the constructor: it carries the handle and how ownership is
+transferred. A wrapper built any other way does not adopt that instance, so the
+fabrication either fails or hands out a wrapper of a different handle.
+
+Fix: pass `args` to the constructor that takes it.
+
+```csharp
+internal sealed class MySource : PushSrc, IManagedSubclass<MySource>
+{
+    public MySource() : this(Definition.NewInstance()) { }
+
+    private MySource(SubclassCtorArgs args) : base(args) { }
+
+    public static MySource CreateWrapper(SubclassCtorArgs args) => new MySource(args);  // ok
+    // public static MySource CreateWrapper(SubclassCtorArgs args) => new MySource();   // GST0005
+}
+```
+
+The rule is syntactic: any reference to the parameter — passed to the
+constructor, forwarded to a helper, copied into a local, or only read from —
+silences it. It fires on the implementation the type contributes for the
+interface member, whether it was written implicitly or as an explicit
+implementation, and says nothing about a method named `CreateWrapper` on a type
+that does not implement `IManagedSubclass<TSelf>`.

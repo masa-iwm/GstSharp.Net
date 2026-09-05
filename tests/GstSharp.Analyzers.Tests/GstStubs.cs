@@ -85,6 +85,21 @@ internal static class GstStubs
                 public sealed class SubclassType
                 {
                 }
+
+                /// <summary>A stand-in for the wrapped GObject base class.</summary>
+                public class Object
+                {
+                }
+
+                /// <summary>
+                /// A stand-in for the arguments of an adopting constructor. The
+                /// handle is internal in the product too, and the stubs share a
+                /// compilation with the snippet, so a snippet may read it.
+                /// </summary>
+                public readonly struct SubclassCtorArgs
+                {
+                    internal nint Handle => 0;
+                }
             }
 
         #nullable enable
@@ -125,6 +140,27 @@ internal static class GstStubs
                         }
                     }
                 }
+            }
+        }
+        """;
+
+    /// <summary>
+    /// The factory contract, in a compilation unit of its own.
+    /// </summary>
+    /// <remarks>
+    /// A static abstract interface member needs a runtime that supports one, so
+    /// the tests that use this stub have to ask for .NET reference assemblies
+    /// instead of the netstandard2.0 ones the rest of the stubs compile against.
+    /// </remarks>
+    internal const string SubclassFactorySource = """
+        namespace Gst.GObject
+        {
+            /// <summary>A stand-in for the factory contract of a managed subclass.</summary>
+            /// <typeparam name="TSelf">The subclass itself.</typeparam>
+            public interface IManagedSubclass<TSelf>
+                where TSelf : Object, IManagedSubclass<TSelf>
+            {
+                static abstract TSelf CreateWrapper(SubclassCtorArgs args);
             }
         }
         """;

@@ -17,13 +17,23 @@ internal static class AnalyzerVerifier<TAnalyzer>
     /// </summary>
     /// <param name="sources">The snippets, with <c>{|GST0001:...|}</c> style markup.</param>
     /// <returns>A task that completes when the verification is done.</returns>
-    internal static async Task VerifyAsync(params string[] sources)
+    internal static Task VerifyAsync(params string[] sources) =>
+        // netstandard2.0 is enough for the stubs and resolves from the local
+        // package cache, which keeps the tests offline and deterministic.
+        VerifyAsync(ReferenceAssemblies.NetStandard.NetStandard20, sources);
+
+    /// <summary>
+    /// Compiles <paramref name="sources"/> together with the stubs against a
+    /// given set of reference assemblies.
+    /// </summary>
+    /// <param name="referenceAssemblies">The framework to compile against.</param>
+    /// <param name="sources">The snippets, with <c>{|GST0001:...|}</c> style markup.</param>
+    /// <returns>A task that completes when the verification is done.</returns>
+    internal static async Task VerifyAsync(ReferenceAssemblies referenceAssemblies, params string[] sources)
     {
         var test = new CSharpAnalyzerTest<TAnalyzer, DefaultVerifier>
         {
-            // netstandard2.0 is enough for the stubs and resolves from the local
-            // package cache, which keeps the tests offline and deterministic.
-            ReferenceAssemblies = ReferenceAssemblies.NetStandard.NetStandard20,
+            ReferenceAssemblies = referenceAssemblies,
             TestState =
             {
                 Sources = { GstStubs.Source },
