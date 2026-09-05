@@ -273,6 +273,30 @@ and the two tables own nothing at all:
   names and the nicknames out of it, and release it before they return, so what
   the caller is left with points at no native storage.
 
+A specification a `New` builds is owned the same way, and the ownership is
+settled inside the factory rather than left to the caller: every
+`g_param_spec_*` constructor hands out a **floating** specification, and `New`
+wraps it with `Transfer.None`, which sinks it, so what comes back holds one
+ordinary reference and nothing floats afterwards.
+
+* `ParamSpecInt.New` and its siblings — one per kind, plus
+  `Gst.ParamSpecFraction.New` and `Gst.ParamSpecArray.New` — answer a wrapper
+  whose reference count is 1. `Dispose` releases it, and a specification nothing
+  else took a reference on is freed there.
+* Installing a specification on a class makes the class and GObject's pool take
+  references of their own, so the wrapper may be disposed right after the
+  install: what the class holds is untouched by that.
+* `ParamSpecArray.New` likewise takes a reference of its own on the
+  specification of its elements, so the wrapper that was passed in stays valid
+  and is disposed by whoever created it.
+* The `G_PARAM_STATIC_*` flags are stripped silently. They would tell GObject to
+  keep the caller's `name`, `nick` and `blurb` pointers, and those belong to
+  buffers the factory releases as soon as the call has returned; without them
+  GObject copies all three.
+* `ValueRef` is the **write** view a property implementation is handed:
+  `get_property` is given somewhere to write its answer, and the view neither
+  owns the `GValue` nor may change its type.
+
 ## Fields a wrapper reads
 
 A generated field accessor reads through the handle of the wrapper at the
