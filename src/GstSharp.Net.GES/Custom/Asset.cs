@@ -91,6 +91,88 @@ public unsafe partial class Asset
         CancellationToken cancellationToken = default) =>
         new RequestState(extractableType, id, cancellationToken).Start();
 
+    /// <summary>
+    /// Extracts the object the asset describes, which is a new instance of the
+    /// extractable type of the asset.
+    /// </summary>
+    /// <typeparam name="T">
+    /// The wrapper type the result is wanted as, which has to be the managed
+    /// type of the extractable type of the asset or one of its base classes.
+    /// </typeparam>
+    /// <returns>The extracted object, which the caller owns.</returns>
+    /// <remarks>
+    /// <para>
+    /// This is the second half of the contract that builds a
+    /// <see cref="GES.TrackElement"/> of a managed type: request an asset for
+    /// the <c>GType</c> of the subclass and extract it. The default extraction
+    /// of the editing services is <c>g_object_new_with_properties</c> on the
+    /// extractable type followed by <c>ges_extractable_set_asset</c>
+    /// (<c>ges-asset.c:1588-1606</c>), and that second call is what gives a
+    /// track element its <c>nleobject</c>. An element built with <c>new</c>
+    /// instead has no asset and no <c>nleobject</c>: a layer that is asked to
+    /// add a clip with such a child removes the child again, and copying it —
+    /// which is what splitting and pasting do — asserts inside the library.
+    /// So an override of <c>GES.Clip.OnCreateTrackElement</c> answers what this
+    /// extracted, and nothing else:
+    /// </para>
+    /// <code>
+    /// GES.Asset asset = GES.Asset.Request(MySource.Registration.GType, null)!;
+    /// MySource child = asset.Extract&lt;MySource&gt;();
+    /// </code>
+    /// <para>
+    /// The library hands the instance back <em>floating</em>. The wrapper sinks
+    /// it and owns the one reference there is, so the child must not be
+    /// disposed before the slot that answers it returns: whoever consumes it —
+    /// <c>ges_container_add</c> — takes a reference of its own only then.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="Gst.GLib.GException">
+    /// The asset could not be extracted.
+    /// </exception>
+    /// <exception cref="InvalidCastException">
+    /// The extracted object is not a <typeparamref name="T"/>. The wrapper of
+    /// the object is disposed before this is thrown, because nothing else ever
+    /// held it.
+    /// </exception>
+    /// <exception cref="InvalidOperationException">
+    /// The library answered nothing and reported no error.
+    /// </exception>
+    public T Extract<T>()
+        where T : Gst.GObject.Object
+    {
+        nint errorNative = 0;
+        nint extracted = GesAssetExtract(Handle, &errorNative);
+        Gst.GLib.GException.ThrowIfSet(ref errorNative);
+
+        // The instance is floating on arrival, so Transfer.None is what settles
+        // it: the registry sinks the reference and hands it to the wrapper.
+        Gst.GObject.Object? wrapper =
+            Gst.GObject.Object.FromNative(extracted, Gst.Interop.Transfer.None);
+
+        if (wrapper is null)
+        {
+            throw new InvalidOperationException("ges_asset_extract returned no object.");
+        }
+
+        if (wrapper is T typed)
+        {
+            return typed;
+        }
+
+        // The wrapper holds the only reference to an object no caller asked
+        // for, which is the one case where disposing a wrapper is right.
+        Type actual = wrapper.GetType();
+        wrapper.Dispose();
+
+        throw new InvalidCastException(
+            FormattableString.Invariant(
+                $"The asset extracted a {actual} rather than a {typeof(T)}."));
+    }
+
+    /// <summary>The <c>ges_asset_extract</c> entry point.</summary>
+    [LibraryImport("GES", EntryPoint = "ges_asset_extract")]
+    private static partial nint GesAssetExtract(nint self, nint* error);
+
     /// <summary>The <c>ges_asset_request_async</c> entry point.</summary>
     [LibraryImport("GES", EntryPoint = "ges_asset_request_async")]
     private static partial void GesAssetRequestAsync(
