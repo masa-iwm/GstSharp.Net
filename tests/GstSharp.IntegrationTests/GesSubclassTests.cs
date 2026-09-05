@@ -57,6 +57,10 @@ public sealed class GesSubclassTests
             Assert.Same(clip.AnsweredChild, child);
             Assert.Equal(1, ProbeVideoSource.WrappersBuilt);
             Assert.Equal(TrackType.Video, child.TrackType);
+
+            // The library built this wrapper; it holds the toggle reference
+            // until it is disposed, so it goes before the timeline does.
+            child.Dispose();
         }
     }
 
@@ -90,7 +94,13 @@ public sealed class GesSubclassTests
             Assert.Equal("carried", copy.GetProperty<string>("probe-tag"));
 
             TimelineElement only = Assert.Single(copy.GetChildren(false));
-            _ = Assert.IsType<ProbeVideoSource>(only);
+            ProbeVideoSource copiedChild = Assert.IsType<ProbeVideoSource>(only);
+
+            // The library built this wrapper; it holds the toggle reference
+            // until it is disposed, so it goes before the timeline does.
+            copiedChild.Dispose();
+            copy.Dispose();
+            clip.AnsweredChild?.Dispose();
         }
     }
 
@@ -120,6 +130,9 @@ public sealed class GesSubclassTests
             Assert.Empty(clip.GetChildren(false));
             Assert.Empty(layer.GetClips());
             Assert.Null(clip.Layer);
+
+            // This one the test built, and no container kept it.
+            clip.AnsweredChild.Dispose();
         }
     }
 
@@ -154,6 +167,10 @@ public sealed class GesSubclassTests
             Assert.True(child.SetParentCalls > adopted);
             Assert.True(child.LastParentWasNull);
             Assert.Null(child.Parent);
+
+            // The library built this wrapper; it holds the toggle reference
+            // until it is disposed, so it goes before the timeline does.
+            child.Dispose();
         }
     }
 
@@ -230,6 +247,10 @@ public sealed class GesSubclassTests
             Assert.True(child.SetMaxDuration(ClockTime.FromSeconds(5)));
             Assert.True(child.MaxDurationCalls > before);
             Assert.Contains(child.Name, child.MaxDurationNames);
+
+            // The library built this wrapper; it holds the toggle reference
+            // until it is disposed, so it goes before the timeline does.
+            child.Dispose();
         }
     }
 
