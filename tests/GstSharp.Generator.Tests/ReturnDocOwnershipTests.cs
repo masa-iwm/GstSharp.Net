@@ -62,7 +62,7 @@ public sealed class ReturnDocOwnershipTests
     /// <summary>
     /// The ownership note the slot needs once the answer is borrowed: a slot
     /// that hands a handle back without a reference has to say who does
-    /// reference it, or the run stops on GEN0044.
+    /// reference it, or the run stops on GEN0047.
     /// </summary>
     private const string BorrowNote =
         ", \"vfuncDocNotes\": { \"Gst.Widget::borrow\": "

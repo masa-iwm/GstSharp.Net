@@ -797,7 +797,7 @@ internal sealed class VfuncEmitter
         }
 
         _diagnostics.Error(
-            "GEN0044",
+            "GEN0047",
             $"The slot '{model.KeyOf(plan.Method.Name)}' answers a borrowed handle and carries no "
             + "'vfuncDocNotes' entry. The generated note says the base class takes a reference of its own; "
             + "state in that entry which call site does, and what the override owes it.");

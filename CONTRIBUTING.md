@@ -278,14 +278,14 @@ Two more keys address a callback type and a member rather than a slot:
 
 Every entry cites the C file and line its claim rests on in a `$comment` or in
 the `$comment-` block of the key. An entry that names no slot or no parameter
-of the emitted surface is reported as `GEN0029` through `GEN0031`,
-`GEN0036` through `GEN0039`, `GEN0044` and `GEN0046`. A slot whose managed member would hide an
-inherited one of the same name and the same parameters while answering another
-type is `GEN0040`, an error: C# accepts such a pair and the override that runs
-then depends on the static type the caller holds, so the slot needs a
+of the emitted surface is reported as `GEN0029` through `GEN0031`, `GEN0036`
+through `GEN0039`, `GEN0044` and `GEN0046`. A slot whose managed member would
+hide an inherited one of the same name and the same parameters while answering
+another type is `GEN0040`, an error: C# accepts such a pair and the override
+that runs then depends on the static type the caller holds, so the slot needs a
 `skipVirtuals` entry or a managed name of its own. A slot that answers a handle
 nobody references on the way out and carries no `vfuncDocNotes` entry is
-`GEN0044`, an error as well: the note the generator writes for it says the base
+`GEN0047`, an error as well: the note the generator writes for it says the base
 class takes a reference of its own, and only that entry says which call site
 does that and what the override owes it.
 

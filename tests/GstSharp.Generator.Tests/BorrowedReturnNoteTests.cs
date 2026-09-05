@@ -67,7 +67,7 @@ public sealed class BorrowedReturnNoteTests
     {
         FixtureRun run = Run("{ " + Allowlist + " }", allowErrors: true);
 
-        Diagnostic error = Assert.Single(run.Result.Diagnostics, static d => d.Code == "GEN0044");
+        Diagnostic error = Assert.Single(run.Result.Diagnostics, static d => d.Code == "GEN0047");
 
         Assert.Equal(DiagnosticSeverity.Error, error.Severity);
         Assert.Contains("Gst.Widget::create_part", error.Message, StringComparison.Ordinal);
@@ -80,7 +80,7 @@ public sealed class BorrowedReturnNoteTests
             "{ " + Allowlist + ", \"vfuncDocNotes\": { \"Gst.Widget::create_part\": \"" + Note + "\" } }",
             allowErrors: false);
 
-        Assert.DoesNotContain(run.Result.Diagnostics, static d => d.Code == "GEN0044");
+        Assert.DoesNotContain(run.Result.Diagnostics, static d => d.Code == "GEN0047");
 
         string source = run.File("Subclassing/Widget.Subclass.cs");
 
