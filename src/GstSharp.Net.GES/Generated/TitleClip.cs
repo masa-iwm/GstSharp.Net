@@ -135,7 +135,7 @@ public unsafe partial class TitleClip : GES.SourceClip, GES.IExtractable, GES.IM
     }
 
     /// <summary>Sets the background of the text.</summary>
-    /// <param name="background">The <c>background</c> argument.</param>
+    /// <param name="background">The color @self is being set to</param>
     [Obsolete("use #ges_timeline_element_set_children_properties instead. See #GESTitleSource for more information about exposed properties (deprecated since 1.6)")]
     public void SetBackground(uint background)
     {
@@ -144,7 +144,7 @@ public unsafe partial class TitleClip : GES.SourceClip, GES.IExtractable, GES.IM
     }
 
     /// <summary>Sets the color of the text.</summary>
-    /// <param name="color">The <c>color</c> argument.</param>
+    /// <param name="color">The color @self is being set to</param>
     [Obsolete("use #ges_timeline_element_set_children_properties instead. See #GESTitleSource for more information about exposed properties (deprecated since 1.6)")]
     public void SetColor(uint color)
     {
@@ -153,7 +153,7 @@ public unsafe partial class TitleClip : GES.SourceClip, GES.IExtractable, GES.IM
     }
 
     /// <summary>Sets the pango font description of the text.</summary>
-    /// <param name="fontDesc">The <c>fontDesc</c> argument.</param>
+    /// <param name="fontDesc">the pango font description</param>
     [Obsolete("use #ges_timeline_element_set_children_properties instead. See #GESTitleSource for more information about exposed properties (deprecated since 1.6)")]
     public void SetFontDesc(string? fontDesc)
     {
@@ -164,7 +164,7 @@ public unsafe partial class TitleClip : GES.SourceClip, GES.IExtractable, GES.IM
     }
 
     /// <summary>Sets the horizontal aligment of the text.</summary>
-    /// <param name="halign">The <c>halign</c> argument.</param>
+    /// <param name="halign">#GESTextHAlign</param>
     [Obsolete("use #ges_timeline_element_set_children_properties instead. See #GESTitleSource for more information about exposed properties (deprecated since 1.6)")]
     public void SetHalignment(GES.TextHAlign halign)
     {
@@ -173,7 +173,10 @@ public unsafe partial class TitleClip : GES.SourceClip, GES.IExtractable, GES.IM
     }
 
     /// <summary>Sets the text this clip will render.</summary>
-    /// <param name="text">The <c>text</c> argument.</param>
+    /// <param name="text">
+    /// the text to render. an internal copy of this text will be
+    /// made.
+    /// </param>
     [Obsolete("use #ges_timeline_element_set_children_properties instead. See #GESTitleSource for more information about exposed properties (deprecated since 1.6)")]
     public void SetText(string? text)
     {
@@ -184,7 +187,7 @@ public unsafe partial class TitleClip : GES.SourceClip, GES.IExtractable, GES.IM
     }
 
     /// <summary>Sets the vertical aligment of the text.</summary>
-    /// <param name="valign">The <c>valign</c> argument.</param>
+    /// <param name="valign">#GESTextVAlign</param>
     [Obsolete("use #ges_timeline_element_set_children_properties instead. See #GESTitleSource for more information about exposed properties (deprecated since 1.6)")]
     public void SetValignment(GES.TextVAlign valign)
     {
@@ -193,7 +196,7 @@ public unsafe partial class TitleClip : GES.SourceClip, GES.IExtractable, GES.IM
     }
 
     /// <summary>Sets the horizontal position of the text.</summary>
-    /// <param name="position">The <c>position</c> argument.</param>
+    /// <param name="position">The horizontal position @self is being set to</param>
     [Obsolete("use #ges_timeline_element_set_children_properties instead. See #GESTitleSource for more information about exposed properties (deprecated since 1.6)")]
     public void SetXpos(double position)
     {
@@ -202,7 +205,7 @@ public unsafe partial class TitleClip : GES.SourceClip, GES.IExtractable, GES.IM
     }
 
     /// <summary>Sets the vertical position of the text.</summary>
-    /// <param name="position">The <c>position</c> argument.</param>
+    /// <param name="position">The vertical position @self is being set to</param>
     [Obsolete("use #ges_timeline_element_set_children_properties instead. See #GESTitleSource for more information about exposed properties (deprecated since 1.6)")]
     public void SetYpos(double position)
     {

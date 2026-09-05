@@ -108,7 +108,7 @@ public abstract unsafe partial class VideoEncoder : Gst.Element, Gst.IPreset
     /// Helper function that allocates a buffer to hold an encoded video frame
     /// for @encoder's current #GstVideoCodecState.
     /// </summary>
-    /// <param name="size">The <c>size</c> argument.</param>
+    /// <param name="size">size of the buffer</param>
     /// <returns>allocated buffer</returns>
     public Gst.Buffer AllocateOutputBuffer(nuint size)
     {
@@ -129,8 +129,8 @@ public abstract unsafe partial class VideoEncoder : Gst.Element, Gst.IPreset
     /// keep references to the frame, not the buffer.
     /// </para>
     /// </remarks>
-    /// <param name="frame">The <c>frame</c> argument.</param>
-    /// <param name="size">The <c>size</c> argument.</param>
+    /// <param name="frame">a #GstVideoCodecFrame</param>
+    /// <param name="size">size of the buffer</param>
     /// <returns>%GST_FLOW_OK if an output buffer could be allocated</returns>
     public Gst.FlowReturn AllocateOutputFrame(Gst.Video.VideoCodecFrame frame, nuint size)
     {
@@ -161,7 +161,7 @@ public abstract unsafe partial class VideoEncoder : Gst.Element, Gst.IPreset
     /// <para>Available since GStreamer 1.26.</para>
     /// </remarks>
     /// <param name="frame">
-    /// The <c>frame</c> argument.
+    /// a #GstVideoCodecFrame
     /// The call consumes it: <paramref name="frame"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// </param>
@@ -211,7 +211,7 @@ public abstract unsafe partial class VideoEncoder : Gst.Element, Gst.IPreset
     /// </para>
     /// </remarks>
     /// <param name="frame">
-    /// The <c>frame</c> argument.
+    /// an encoded #GstVideoCodecFrame
     /// The call consumes it: <paramref name="frame"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// </param>
@@ -250,7 +250,7 @@ public abstract unsafe partial class VideoEncoder : Gst.Element, Gst.IPreset
     /// will be pushed downstream.
     /// </para>
     /// </remarks>
-    /// <param name="frame">The <c>frame</c> argument.</param>
+    /// <param name="frame">a #GstVideoCodecFrame being encoded</param>
     /// <returns>a #GstFlowReturn resulting from pushing the buffer downstream.</returns>
     public Gst.FlowReturn FinishSubframe(Gst.Video.VideoCodecFrame frame)
     {
@@ -268,9 +268,13 @@ public abstract unsafe partial class VideoEncoder : Gst.Element, Gst.IPreset
     /// <remarks>
     /// <para>Unref the @allocator after use it.</para>
     /// </remarks>
-    /// <param name="allocator">The <c>allocator</c> argument.</param>
+    /// <param name="allocator">
+    /// the #GstAllocator
+    /// used
+    /// </param>
     /// <param name="params">
-    /// The <c>@params</c> argument.
+    /// the
+    /// #GstAllocationParams of @allocator
     /// The binding allocates the storage; on return the caller owns
     /// <paramref name="params"/> and disposes it.
     /// </param>
@@ -287,7 +291,7 @@ public abstract unsafe partial class VideoEncoder : Gst.Element, Gst.IPreset
     }
 
     /// <summary>Get a pending unfinished #GstVideoCodecFrame</summary>
-    /// <param name="frameNumber">The <c>frameNumber</c> argument.</param>
+    /// <param name="frameNumber">system_frame_number of a frame</param>
     /// <returns>pending unfinished #GstVideoCodecFrame identified by @frame_number.</returns>
     public Gst.Video.VideoCodecFrame? GetFrame(int frameNumber)
     {
@@ -319,8 +323,14 @@ public abstract unsafe partial class VideoEncoder : Gst.Element, Gst.IPreset
     /// Query the configured encoding latency. Results will be returned via
     /// @min_latency and @max_latency.
     /// </summary>
-    /// <param name="minLatency">The <c>minLatency</c> argument.</param>
-    /// <param name="maxLatency">The <c>maxLatency</c> argument.</param>
+    /// <param name="minLatency">
+    /// address of variable in which to store the
+    ///     configured minimum latency, or %NULL
+    /// </param>
+    /// <param name="maxLatency">
+    /// address of variable in which to store the
+    ///     configured maximum latency, or %NULL
+    /// </param>
     public void GetLatency(out Gst.ClockTime minLatency, out Gst.ClockTime maxLatency)
     {
         ulong minLatencyNative = default;
@@ -343,7 +353,7 @@ public abstract unsafe partial class VideoEncoder : Gst.Element, Gst.IPreset
     /// #GstVideoEncoder:qos is disabled this function returns #G_MAXINT64.
     /// </para>
     /// </remarks>
-    /// <param name="frame">The <c>frame</c> argument.</param>
+    /// <param name="frame">a #GstVideoCodecFrame</param>
     /// <returns>max decoding time.</returns>
     public long GetMaxEncodeTime(Gst.Video.VideoCodecFrame frame)
     {
@@ -408,8 +418,11 @@ public abstract unsafe partial class VideoEncoder : Gst.Element, Gst.IPreset
     /// </para>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="tags">The <c>tags</c> argument.</param>
-    /// <param name="mode">The <c>mode</c> argument.</param>
+    /// <param name="tags">
+    /// a #GstTagList to merge, or NULL to unset
+    ///     previously-set tags
+    /// </param>
+    /// <param name="mode">the #GstTagMergeMode to use, usually #GST_TAG_MERGE_REPLACE</param>
     public void MergeTags(Gst.TagList? tags, Gst.TagMergeMode mode)
     {
         GstVideoEncoderMergeTags(Handle, tags is null ? 0 : tags.Handle, (int)mode);
@@ -435,8 +448,8 @@ public abstract unsafe partial class VideoEncoder : Gst.Element, Gst.IPreset
     /// restricted to resolution/format/... combinations supported by downstream
     /// elements (e.g. muxers).
     /// </summary>
-    /// <param name="caps">The <c>caps</c> argument.</param>
-    /// <param name="filter">The <c>filter</c> argument.</param>
+    /// <param name="caps">initial caps</param>
+    /// <param name="filter">filter caps</param>
     /// <returns>a #GstCaps owned by caller</returns>
     public Gst.Caps ProxyGetcaps(Gst.Caps? caps, Gst.Caps? filter)
     {
@@ -466,7 +479,7 @@ public abstract unsafe partial class VideoEncoder : Gst.Element, Gst.IPreset
     /// <para>Available since GStreamer 1.26.</para>
     /// </remarks>
     /// <param name="frame">
-    /// The <c>frame</c> argument.
+    /// a #GstVideoCodecFrame
     /// The call consumes it: <paramref name="frame"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// </param>
@@ -490,7 +503,7 @@ public abstract unsafe partial class VideoEncoder : Gst.Element, Gst.IPreset
 
     /// <summary>Set the codec headers to be sent downstream whenever requested.</summary>
     /// <param name="headers">
-    /// The <c>headers</c> argument.
+    /// a list of #GstBuffer containing the codec header
     /// The call takes the list over. The binding hands it a native list of its own
     /// and one reference per element, and releases neither afterwards - the callee
     /// owns both from the moment the call is made, including when it answers false.
@@ -509,8 +522,8 @@ public abstract unsafe partial class VideoEncoder : Gst.Element, Gst.IPreset
     /// previously provided ones, this will also post a LATENCY message on the bus
     /// so the pipeline can reconfigure its global latency.
     /// </summary>
-    /// <param name="minLatency">The <c>minLatency</c> argument.</param>
-    /// <param name="maxLatency">The <c>maxLatency</c> argument.</param>
+    /// <param name="minLatency">minimum latency</param>
+    /// <param name="maxLatency">maximum latency</param>
     public void SetLatency(Gst.ClockTime minLatency, Gst.ClockTime maxLatency)
     {
         GstVideoEncoderSetLatency(Handle, minLatency.Nanoseconds, maxLatency.Nanoseconds);
@@ -522,7 +535,7 @@ public abstract unsafe partial class VideoEncoder : Gst.Element, Gst.IPreset
     /// events. Setting this to 0 will allow to handle every event, setting this to
     /// %GST_CLOCK_TIME_NONE causes force-keyunit events to be ignored.
     /// </summary>
-    /// <param name="interval">The <c>interval</c> argument.</param>
+    /// <param name="interval">minimum interval</param>
     public void SetMinForceKeyUnitInterval(Gst.ClockTime interval)
     {
         GstVideoEncoderSetMinForceKeyUnitInterval(Handle, interval.Nanoseconds);
@@ -536,7 +549,7 @@ public abstract unsafe partial class VideoEncoder : Gst.Element, Gst.IPreset
     /// is enough time to accommodate first DTS, which may be less than first PTS
     /// </para>
     /// </remarks>
-    /// <param name="minPts">The <c>minPts</c> argument.</param>
+    /// <param name="minPts">minimal PTS that will be passed to handle_frame</param>
     public void SetMinPts(Gst.ClockTime minPts)
     {
         GstVideoEncoderSetMinPts(Handle, minPts.Nanoseconds);
@@ -577,11 +590,11 @@ public abstract unsafe partial class VideoEncoder : Gst.Element, Gst.IPreset
     /// </para>
     /// </remarks>
     /// <param name="caps">
-    /// The <c>caps</c> argument.
+    /// the #GstCaps to use for the output
     /// The call consumes it: <paramref name="caps"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// </param>
-    /// <param name="reference">The <c>reference</c> argument.</param>
+    /// <param name="reference">An optional reference @GstVideoCodecState</param>
     /// <returns>the newly configured output state.</returns>
     /// <exception cref="ArgumentNullException">
     /// <paramref name="caps"/> is <see langword="null"/>.
@@ -604,7 +617,7 @@ public abstract unsafe partial class VideoEncoder : Gst.Element, Gst.IPreset
     }
 
     /// <summary>Configures @encoder to handle Quality-of-Service events from downstream.</summary>
-    /// <param name="enabled">The <c>enabled</c> argument.</param>
+    /// <param name="enabled">the new qos value.</param>
     public void SetQosEnabled(bool enabled)
     {
         GstVideoEncoderSetQosEnabled(Handle, enabled ? 1 : 0);

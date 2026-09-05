@@ -266,9 +266,12 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     /// <para>When @allocator is %NULL, the default memory allocator will be used.</para>
     /// <para>Note that when @size == 0, the buffer will not have memory associated with it.</para>
     /// </remarks>
-    /// <param name="allocator">The <c>allocator</c> argument.</param>
-    /// <param name="size">The <c>size</c> argument.</param>
-    /// <param name="params">The <c>@params</c> argument.</param>
+    /// <param name="allocator">
+    /// the #GstAllocator to use, or %NULL to use the
+    ///     default allocator
+    /// </param>
+    /// <param name="size">the size in bytes of the new buffer's data.</param>
+    /// <param name="params">optional parameters</param>
     /// <returns>a new #GstBuffer</returns>
     public static Gst.Buffer? NewAllocate(Gst.Allocator? allocator, nuint size, Gst.AllocationParams? @params)
     {
@@ -295,7 +298,7 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     /// Creates and adds a #GstCustomMeta for the desired @name. @name must have
     /// been successfully registered with gst_meta_register_custom().
     /// </summary>
-    /// <param name="name">The <c>name</c> argument.</param>
+    /// <param name="name">the registered name of the desired custom meta</param>
     /// <returns>The #GstCustomMeta that was added to the buffer</returns>
     public Gst.CustomMeta? AddCustomMeta(string name)
     {
@@ -308,8 +311,8 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     }
 
     /// <summary>Adds metadata for @info to @buffer using the parameters in @params.</summary>
-    /// <param name="info">The <c>info</c> argument.</param>
-    /// <param name="params">The <c>@params</c> argument.</param>
+    /// <param name="info">a #GstMetaInfo</param>
+    /// <param name="params">params for @info</param>
     /// <returns>the metadata for the api in @info on @buffer.</returns>
     public Gst.Meta? AddMeta(Gst.MetaInfo info, nint @params)
     {
@@ -324,7 +327,7 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     /// Adds a #GstParentBufferMeta to @buffer that holds a reference on
     /// @ref until the buffer is freed.
     /// </summary>
-    /// <param name="ref">The <c>@ref</c> argument.</param>
+    /// <param name="ref">a #GstBuffer to ref</param>
     /// <returns>The #GstParentBufferMeta that was added to the buffer</returns>
     public Gst.ParentBufferMeta? AddParentBufferMeta(Gst.Buffer @ref)
     {
@@ -347,7 +350,9 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     /// </para>
     /// </remarks>
     /// <param name="info">
-    /// The <c>info</c> argument.
+    /// a #GstStructure holding cryptographic
+    ///     information relating to the sample contained in @buffer. This
+    ///     function takes ownership of @info.
     /// The call consumes it: <paramref name="info"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// </param>
@@ -377,9 +382,9 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     /// optionally @duration based on a specific timestamp @reference. See the
     /// documentation of #GstReferenceTimestampMeta for details.
     /// </summary>
-    /// <param name="reference">The <c>reference</c> argument.</param>
-    /// <param name="timestamp">The <c>timestamp</c> argument.</param>
-    /// <param name="duration">The <c>duration</c> argument.</param>
+    /// <param name="reference">identifier for the timestamp reference.</param>
+    /// <param name="timestamp">timestamp</param>
+    /// <param name="duration">duration, or %GST_CLOCK_TIME_NONE</param>
     /// <returns>The #GstReferenceTimestampMeta that was added to the buffer</returns>
     public Gst.ReferenceTimestampMeta? AddReferenceTimestampMeta(Gst.Caps reference, Gst.ClockTime timestamp, Gst.ClockTime duration)
     {
@@ -413,7 +418,7 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     /// </para>
     /// </remarks>
     /// <param name="buf2">
-    /// The <c>buf2</c> argument.
+    /// the second source #GstBuffer to append.
     /// The call consumes it: <paramref name="buf2"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// </param>
@@ -459,7 +464,7 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     /// </para>
     /// </remarks>
     /// <param name="mem">
-    /// The <c>mem</c> argument.
+    /// a #GstMemory.
     /// The call consumes it: <paramref name="mem"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// </param>
@@ -504,12 +509,12 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     /// </para>
     /// </remarks>
     /// <param name="buf2">
-    /// The <c>buf2</c> argument.
+    /// the second source #GstBuffer to append.
     /// The call consumes it: <paramref name="buf2"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// </param>
-    /// <param name="offset">The <c>offset</c> argument.</param>
-    /// <param name="size">The <c>size</c> argument.</param>
+    /// <param name="offset">the offset in @buf2</param>
+    /// <param name="size">the size or -1 of @buf2</param>
     /// <returns>
     /// the new #GstBuffer that contains the memory
     ///     of the two source buffers.
@@ -554,10 +559,10 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     /// </para>
     /// <para>@flags indicate which fields will be copied.</para>
     /// </remarks>
-    /// <param name="src">The <c>src</c> argument.</param>
-    /// <param name="flags">The <c>flags</c> argument.</param>
-    /// <param name="offset">The <c>offset</c> argument.</param>
-    /// <param name="size">The <c>size</c> argument.</param>
+    /// <param name="src">a source #GstBuffer</param>
+    /// <param name="flags">flags indicating what metadata fields should be copied.</param>
+    /// <param name="offset">offset to copy from</param>
+    /// <param name="size">total size to copy. If -1, all data is copied.</param>
     /// <returns>%TRUE if the copying succeeded, %FALSE otherwise.</returns>
     public bool CopyInto(Gst.Buffer src, Gst.BufferCopyFlags flags, nuint offset, nuint size)
     {
@@ -578,9 +583,15 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     /// duration and offset end fields are also copied. If not they will be set
     /// to #GST_CLOCK_TIME_NONE and #GST_BUFFER_OFFSET_NONE.
     /// </summary>
-    /// <param name="flags">The <c>flags</c> argument.</param>
-    /// <param name="offset">The <c>offset</c> argument.</param>
-    /// <param name="size">The <c>size</c> argument.</param>
+    /// <param name="flags">the #GstBufferCopyFlags</param>
+    /// <param name="offset">
+    /// the offset into parent #GstBuffer at which the new sub-buffer
+    ///          begins.
+    /// </param>
+    /// <param name="size">
+    /// the size of the new #GstBuffer sub-buffer, in bytes. If -1, all
+    ///        data is copied.
+    /// </param>
     /// <returns>
     /// the new #GstBuffer or %NULL if copying
     ///     failed.
@@ -596,8 +607,8 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     /// Extracts a copy of at most @size bytes the data at @offset into
     /// newly-allocated memory. @dest must be freed using g_free() when done.
     /// </summary>
-    /// <param name="offset">The <c>offset</c> argument.</param>
-    /// <param name="size">The <c>size</c> argument.</param>
+    /// <param name="offset">the offset to extract</param>
+    /// <param name="size">the size to extract</param>
     /// <param name="dest">
     /// A pointer where
     ///  the destination array will be written. Might be %NULL if the size is 0.
@@ -618,7 +629,7 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     }
 
     /// <summary>Copies @size bytes from @src to @buffer at @offset.</summary>
-    /// <param name="offset">The <c>offset</c> argument.</param>
+    /// <param name="offset">the offset to fill</param>
     /// <param name="src">the source address</param>
     /// <returns>
     /// The amount of bytes copied. This value can be lower than @size
@@ -648,11 +659,11 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     /// </para>
     /// <para>@size can be -1 to get all the memory blocks after @idx.</para>
     /// </remarks>
-    /// <param name="offset">The <c>offset</c> argument.</param>
-    /// <param name="size">The <c>size</c> argument.</param>
-    /// <param name="idx">The <c>idx</c> argument.</param>
-    /// <param name="length">The <c>length</c> argument.</param>
-    /// <param name="skip">The <c>skip</c> argument.</param>
+    /// <param name="offset">an offset</param>
+    /// <param name="size">a size</param>
+    /// <param name="idx">pointer to index</param>
+    /// <param name="length">pointer to length</param>
+    /// <param name="skip">pointer to skip</param>
     /// <returns>
     /// %TRUE when @size bytes starting from @offset could be found in
     /// @buffer and @idx, @length and @skip will be filled.
@@ -683,7 +694,7 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     }
 
     /// <summary>Finds the first #GstCustomMeta on @buffer for the desired @name.</summary>
-    /// <param name="name">The <c>name</c> argument.</param>
+    /// <param name="name">the registered name of the custom meta to retrieve.</param>
     /// <returns>the #GstCustomMeta</returns>
     public Gst.CustomMeta? GetCustomMeta(string name)
     {
@@ -705,7 +716,7 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     }
 
     /// <summary>Gets the memory block at index @idx in @buffer.</summary>
-    /// <param name="idx">The <c>idx</c> argument.</param>
+    /// <param name="idx">an index</param>
     /// <returns>
     /// a #GstMemory that contains the data of the
     /// memory block at @idx.
@@ -724,8 +735,8 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     /// <remarks>
     /// <para>If @length is -1, all memory starting from @idx is merged.</para>
     /// </remarks>
-    /// <param name="idx">The <c>idx</c> argument.</param>
-    /// <param name="length">The <c>length</c> argument.</param>
+    /// <param name="idx">an index</param>
+    /// <param name="length">a length</param>
     /// <returns>
     /// a #GstMemory that contains the merged data of @length
     ///    blocks starting at @idx.
@@ -744,7 +755,7 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     /// given API use gst_buffer_iterate_meta() or gst_buffer_foreach_meta() instead
     /// and check the `meta-&gt;info.api` member for the API type.
     /// </summary>
-    /// <param name="api">The <c>api</c> argument.</param>
+    /// <param name="api">the #GType of an API</param>
     /// <returns>the metadata for @api on @buffer.</returns>
     public Gst.Meta? GetMeta(Gst.GObject.GType api)
     {
@@ -754,7 +765,7 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     }
 
     /// <summary>The <c>gst_buffer_get_n_meta</c> function.</summary>
-    /// <param name="apiType">The <c>apiType</c> argument.</param>
+    /// <param name="apiType">the #GType of an API</param>
     /// <returns>number of metas of type @api_type on @buffer.</returns>
     public uint GetNMeta(Gst.GObject.GType apiType)
     {
@@ -771,7 +782,7 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     /// <remarks>
     /// <para>Buffers can contain multiple #GstReferenceTimestampMeta metadata items.</para>
     /// </remarks>
-    /// <param name="reference">The <c>reference</c> argument.</param>
+    /// <param name="reference">a reference #GstCaps</param>
     /// <returns>
     /// the #GstReferenceTimestampMeta or %NULL when there
     /// is no such metadata on @buffer.
@@ -803,8 +814,8 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     /// buffer memory blocks with gst_buffer_resize().
     /// </para>
     /// </remarks>
-    /// <param name="offset">The <c>offset</c> argument.</param>
-    /// <param name="maxsize">The <c>maxsize</c> argument.</param>
+    /// <param name="offset">a pointer to the offset</param>
+    /// <param name="maxsize">a pointer to the maxsize</param>
     /// <returns>total size of the memory blocks in @buffer.</returns>
     public nuint GetSizes(out nuint offset, out nuint maxsize)
     {
@@ -828,10 +839,10 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     /// gst_buffer_resize_range().
     /// </para>
     /// </remarks>
-    /// <param name="idx">The <c>idx</c> argument.</param>
-    /// <param name="length">The <c>length</c> argument.</param>
-    /// <param name="offset">The <c>offset</c> argument.</param>
-    /// <param name="maxsize">The <c>maxsize</c> argument.</param>
+    /// <param name="idx">an index</param>
+    /// <param name="length">a length</param>
+    /// <param name="offset">a pointer to the offset</param>
+    /// <param name="maxsize">a pointer to the maxsize</param>
     /// <returns>total size of @length memory blocks starting at @idx in @buffer.</returns>
     public nuint GetSizesRange(uint idx, int length, out nuint offset, out nuint maxsize)
     {
@@ -845,7 +856,7 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     }
 
     /// <summary>Gives the status of a specific flag on a buffer.</summary>
-    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <param name="flags">the #GstBufferFlags flag to check.</param>
     /// <returns>%TRUE if all flags in @flags are found on @buffer.</returns>
     public bool HasFlags(Gst.BufferFlags flags)
     {
@@ -872,9 +883,9 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     /// declaration around the argument stays correct.
     /// </para>
     /// </remarks>
-    /// <param name="idx">The <c>idx</c> argument.</param>
+    /// <param name="idx">the index to add the memory at, or -1 to append it to the end</param>
     /// <param name="mem">
-    /// The <c>mem</c> argument.
+    /// a #GstMemory.
     /// The call consumes it: <paramref name="mem"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// </param>
@@ -918,8 +929,8 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     /// gst_buffer_is_writable() to check that if needed.
     /// </para>
     /// </remarks>
-    /// <param name="idx">The <c>idx</c> argument.</param>
-    /// <param name="length">The <c>length</c> argument.</param>
+    /// <param name="idx">an index</param>
+    /// <param name="length">a length, should not be 0</param>
     /// <returns>%TRUE if the memory range is writable</returns>
     public bool IsMemoryRangeWritable(uint idx, int length)
     {
@@ -945,8 +956,8 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     /// usage.
     /// </para>
     /// </remarks>
-    /// <param name="info">The <c>info</c> argument.</param>
-    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <param name="info">info about the mapping</param>
+    /// <param name="flags">flags for the mapping</param>
     /// <returns>%TRUE if the map succeeded and @info contains valid data.</returns>
     public bool Map(out Gst.MapInfo info, Gst.MapFlags flags)
     {
@@ -975,10 +986,10 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     /// </para>
     /// <para>The memory in @info should be unmapped with gst_buffer_unmap() after usage.</para>
     /// </remarks>
-    /// <param name="idx">The <c>idx</c> argument.</param>
-    /// <param name="length">The <c>length</c> argument.</param>
-    /// <param name="info">The <c>info</c> argument.</param>
-    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <param name="idx">an index</param>
+    /// <param name="length">a length</param>
+    /// <param name="info">info about the mapping</param>
+    /// <param name="flags">flags for the mapping</param>
     /// <returns>
     /// %TRUE if the map succeeded and @info contains valid
     /// data.
@@ -993,7 +1004,7 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     }
 
     /// <summary>Compares @size bytes starting from @offset in @buffer with the memory in @mem.</summary>
-    /// <param name="offset">The <c>offset</c> argument.</param>
+    /// <param name="offset">the offset in @buffer</param>
     /// <param name="mem">the memory to compare</param>
     /// <returns>0 if the memory is equal.</returns>
     public int Memcmp(nuint offset, System.ReadOnlySpan<byte> mem)
@@ -1007,9 +1018,9 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     }
 
     /// <summary>Fills @buf with @size bytes with @val starting from @offset.</summary>
-    /// <param name="offset">The <c>offset</c> argument.</param>
-    /// <param name="val">The <c>val</c> argument.</param>
-    /// <param name="size">The <c>size</c> argument.</param>
+    /// <param name="offset">the offset in @buffer</param>
+    /// <param name="val">the value to set</param>
+    /// <param name="size">the size to set</param>
     /// <returns>
     /// The amount of bytes filled. This value can be lower than @size
     ///    when @buffer did not contain enough data.
@@ -1038,7 +1049,7 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     /// the memory block in @buffer is removed, replaced or merged, typically with
     /// any call that modifies the memory in @buffer.
     /// </summary>
-    /// <param name="idx">The <c>idx</c> argument.</param>
+    /// <param name="idx">an index</param>
     /// <returns>
     /// the #GstMemory at @idx.
     /// The wrapper owns a reference of its own, which is a copy for a boxed type:
@@ -1070,7 +1081,7 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     /// </para>
     /// </remarks>
     /// <param name="mem">
-    /// The <c>mem</c> argument.
+    /// a #GstMemory.
     /// The call consumes it: <paramref name="mem"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// </param>
@@ -1099,7 +1110,7 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     }
 
     /// <summary>Removes the memory block in @b at index @i.</summary>
-    /// <param name="idx">The <c>idx</c> argument.</param>
+    /// <param name="idx">an index</param>
     public void RemoveMemory(uint idx)
     {
         GstBufferRemoveMemory(Handle, idx);
@@ -1110,8 +1121,8 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     /// <remarks>
     /// <para>@length can be -1, in which case all memory starting from @idx is removed.</para>
     /// </remarks>
-    /// <param name="idx">The <c>idx</c> argument.</param>
-    /// <param name="length">The <c>length</c> argument.</param>
+    /// <param name="idx">an index</param>
+    /// <param name="length">a length</param>
     public void RemoveMemoryRange(uint idx, int length)
     {
         GstBufferRemoveMemoryRange(Handle, idx, length);
@@ -1129,7 +1140,7 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     /// </para>
     /// </remarks>
     /// <param name="mem">
-    /// The <c>mem</c> argument.
+    /// a #GstMemory
     /// The call consumes it: <paramref name="mem"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// </param>
@@ -1160,9 +1171,9 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     /// declaration around the argument stays correct.
     /// </para>
     /// </remarks>
-    /// <param name="idx">The <c>idx</c> argument.</param>
+    /// <param name="idx">an index</param>
     /// <param name="mem">
-    /// The <c>mem</c> argument.
+    /// a #GstMemory
     /// The call consumes it: <paramref name="mem"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// </param>
@@ -1198,10 +1209,10 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     /// declaration around the argument stays correct.
     /// </para>
     /// </remarks>
-    /// <param name="idx">The <c>idx</c> argument.</param>
-    /// <param name="length">The <c>length</c> argument.</param>
+    /// <param name="idx">an index</param>
+    /// <param name="length">a length, should not be 0</param>
     /// <param name="mem">
-    /// The <c>mem</c> argument.
+    /// a #GstMemory
     /// The call consumes it: <paramref name="mem"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// </param>
@@ -1223,8 +1234,8 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     }
 
     /// <summary>Sets the offset and total size of the memory blocks in @buffer.</summary>
-    /// <param name="offset">The <c>offset</c> argument.</param>
-    /// <param name="size">The <c>size</c> argument.</param>
+    /// <param name="offset">the offset adjustment</param>
+    /// <param name="size">the new size or -1 to just adjust the offset</param>
     public void Resize(nint offset, nint size)
     {
         GstBufferResize(Handle, offset, size);
@@ -1235,10 +1246,10 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     /// Sets the total size of the @length memory blocks starting at @idx in
     /// @buffer
     /// </summary>
-    /// <param name="idx">The <c>idx</c> argument.</param>
-    /// <param name="length">The <c>length</c> argument.</param>
-    /// <param name="offset">The <c>offset</c> argument.</param>
-    /// <param name="size">The <c>size</c> argument.</param>
+    /// <param name="idx">an index</param>
+    /// <param name="length">a length</param>
+    /// <param name="offset">the offset adjustment</param>
+    /// <param name="size">the new size or -1 to just adjust the offset</param>
     /// <returns>%TRUE if resizing succeeded, %FALSE otherwise.</returns>
     public bool ResizeRange(uint idx, int length, nint offset, nint size)
     {
@@ -1248,7 +1259,7 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     }
 
     /// <summary>Sets one or more buffer flags on a buffer.</summary>
-    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <param name="flags">the #GstBufferFlags to set.</param>
     /// <returns>%TRUE if @flags were successfully set on buffer.</returns>
     public bool SetFlags(Gst.BufferFlags flags)
     {
@@ -1258,7 +1269,7 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     }
 
     /// <summary>Sets the total size of the memory blocks in @buffer.</summary>
-    /// <param name="size">The <c>size</c> argument.</param>
+    /// <param name="size">the new size</param>
     public void SetSize(nint size)
     {
         GstBufferSetSize(Handle, size);
@@ -1266,7 +1277,7 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     }
 
     /// <summary>Releases the memory previously mapped with gst_buffer_map().</summary>
-    /// <param name="info">The <c>info</c> argument.</param>
+    /// <param name="info">a #GstMapInfo</param>
     public void Unmap(Gst.MapInfo info)
     {
         Gst.MapInfo infoNative = info;
@@ -1275,7 +1286,7 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     }
 
     /// <summary>Clears one or more buffer flags.</summary>
-    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <param name="flags">the #GstBufferFlags to clear</param>
     /// <returns>true if @flags is successfully cleared from buffer.</returns>
     public bool UnsetFlags(Gst.BufferFlags flags)
     {

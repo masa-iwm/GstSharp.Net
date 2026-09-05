@@ -77,13 +77,19 @@ public sealed unsafe partial class AudioBuffer
     /// </para>
     /// </remarks>
     /// <param name="buffer">
-    /// The <c>buffer</c> argument.
+    /// The buffer to clip.
     /// The call consumes it: <paramref name="buffer"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// </param>
-    /// <param name="segment">The <c>segment</c> argument.</param>
-    /// <param name="rate">The <c>rate</c> argument.</param>
-    /// <param name="bpf">The <c>bpf</c> argument.</param>
+    /// <param name="segment">
+    /// Segment in %GST_FORMAT_TIME or %GST_FORMAT_DEFAULT to which
+    ///           the buffer should be clipped.
+    /// </param>
+    /// <param name="rate">sample rate.</param>
+    /// <param name="bpf">
+    /// size of one audio frame in bytes. This is the size of one sample *
+    /// number of channels.
+    /// </param>
     /// <returns>
     /// %NULL if the buffer is completely outside the configured segment,
     /// otherwise the clipped buffer is returned.
@@ -113,8 +119,8 @@ public sealed unsafe partial class AudioBuffer
     /// positions and the same positions, only in a different order.
     /// @buffer must be writable.
     /// </summary>
-    /// <param name="buffer">The <c>buffer</c> argument.</param>
-    /// <param name="format">The <c>format</c> argument.</param>
+    /// <param name="buffer">The buffer to reorder.</param>
+    /// <param name="format">The %GstAudioFormat of the buffer.</param>
     /// <param name="from">The channel positions in the buffer.</param>
     /// <param name="to">
     /// The channel positions to convert to.
@@ -170,13 +176,20 @@ public sealed unsafe partial class AudioBuffer
     /// </para>
     /// </remarks>
     /// <param name="buffer">
-    /// The <c>buffer</c> argument.
+    /// The buffer to truncate.
     /// The call consumes it: <paramref name="buffer"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// </param>
-    /// <param name="bpf">The <c>bpf</c> argument.</param>
-    /// <param name="trim">The <c>trim</c> argument.</param>
-    /// <param name="samples">The <c>samples</c> argument.</param>
+    /// <param name="bpf">
+    /// size of one audio frame in bytes. This is the size of one sample *
+    /// number of channels.
+    /// </param>
+    /// <param name="trim">the number of samples to remove from the beginning of the buffer</param>
+    /// <param name="samples">
+    /// the final number of samples that should exist in this buffer or -1
+    /// to use all the remaining samples if you are only removing samples from the
+    /// beginning.
+    /// </param>
     /// <returns>the truncated buffer</returns>
     /// <exception cref="ArgumentNullException">
     /// <paramref name="buffer"/> is <see langword="null"/>.

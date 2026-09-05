@@ -53,7 +53,7 @@ public unsafe partial class VideoTestSource : GES.VideoSource, GES.IExtractable,
     }
 
     /// <summary>Sets the source to use the given @pattern.</summary>
-    /// <param name="pattern">The <c>pattern</c> argument.</param>
+    /// <param name="pattern">a #GESVideoTestPattern</param>
     public void SetPattern(GES.VideoTestPattern pattern)
     {
         GesVideoTestSourceSetPattern(Handle, (int)pattern);

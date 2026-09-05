@@ -183,7 +183,7 @@ public unsafe partial class Timeline : Gst.Bin, GES.IExtractable, GES.IMetaConta
     }
 
     /// <summary>Creates a timeline from the given URI.</summary>
-    /// <param name="uri">The <c>uri</c> argument.</param>
+    /// <param name="uri">The URI to load from</param>
     /// <returns>
     /// A new timeline if the uri was loaded
     /// successfully, or %NULL if the uri could not be loaded.
@@ -216,7 +216,7 @@ public unsafe partial class Timeline : Gst.Bin, GES.IExtractable, GES.IMetaConta
     /// adding the clip would cause such an error.
     /// </para>
     /// </remarks>
-    /// <param name="layer">The <c>layer</c> argument.</param>
+    /// <param name="layer">The layer to add</param>
     /// <returns>%TRUE if @layer was properly added.</returns>
     [Obsolete("This method requires you to ensure the layer's #GESLayer:priority will be unique to the timeline. Use ges_timeline_append_layer() and ges_timeline_move_layer() instead. (deprecated since 1.18)")]
     public bool AddLayer(GES.Layer layer)
@@ -241,7 +241,7 @@ public unsafe partial class Timeline : Gst.Bin, GES.IExtractable, GES.IMetaConta
     /// that you avoid adding tracks to timelines that already contain clips.
     /// </para>
     /// </remarks>
-    /// <param name="track">The <c>track</c> argument.</param>
+    /// <param name="track">The track to add</param>
     /// <returns>%TRUE if @track was properly added.</returns>
     public bool AddTrack(GES.Track track)
     {
@@ -336,7 +336,10 @@ public unsafe partial class Timeline : Gst.Bin, GES.IExtractable, GES.IMetaConta
     ///   * #GESTimeline:auto-transition
     /// </para>
     /// </remarks>
-    /// <param name="disableEditApis">The <c>disableEditApis</c> argument.</param>
+    /// <param name="disableEditApis">
+    /// %TRUE to disable all the edit APIs so the user is in full
+    /// control of ensuring timeline state validity %FALSE otherwise.
+    /// </param>
     public void DisableEditApis(bool disableEditApis)
     {
         GesTimelineDisableEditApis(Handle, disableEditApis ? 1 : 0);
@@ -385,7 +388,7 @@ public unsafe partial class Timeline : Gst.Bin, GES.IExtractable, GES.IMetaConta
     }
 
     /// <summary>Gets the element contained in the timeline with the given name.</summary>
-    /// <param name="name">The <c>name</c> argument.</param>
+    /// <param name="name">The name of the element to find</param>
     /// <returns>
     /// The timeline element in @timeline
     /// with the given @name, or %NULL if it was not found.
@@ -404,7 +407,7 @@ public unsafe partial class Timeline : Gst.Bin, GES.IExtractable, GES.IMetaConta
     /// This method allows you to convert a timeline #GstClockTime into its
     /// corresponding #GESFrameNumber in the timeline's output.
     /// </summary>
-    /// <param name="timestamp">The <c>timestamp</c> argument.</param>
+    /// <param name="timestamp">The timestamp to get the corresponding frame number of</param>
     /// <returns>The frame number @timestamp corresponds to.</returns>
     public long GetFrameAt(Gst.ClockTime timestamp)
     {
@@ -419,7 +422,10 @@ public unsafe partial class Timeline : Gst.Bin, GES.IExtractable, GES.IMetaConta
     /// particular frame in the timeline's output, or as the edit position for
     /// an element within the timeline.
     /// </summary>
-    /// <param name="frameNumber">The <c>frameNumber</c> argument.</param>
+    /// <param name="frameNumber">
+    /// The frame number to get the corresponding timestamp of in the
+    ///                timeline coordinates
+    /// </param>
     /// <returns>The timestamp corresponding to @frame_number in the output of @self.</returns>
     public Gst.ClockTime GetFrameTime(long frameNumber)
     {
@@ -455,7 +461,7 @@ public unsafe partial class Timeline : Gst.Bin, GES.IExtractable, GES.IMetaConta
     /// Retrieve the layer whose index in the timeline matches the given
     /// priority.
     /// </summary>
-    /// <param name="priority">The <c>priority</c> argument.</param>
+    /// <param name="priority">The priority/index of the layer to find</param>
     /// <returns>
     /// The layer with the given
     /// @priority, or %NULL if none was found.
@@ -493,7 +499,7 @@ public unsafe partial class Timeline : Gst.Bin, GES.IExtractable, GES.IMetaConta
     /// Search for the #GstPad corresponding to the given timeline's track.
     /// You can link to this pad to receive the output data of the given track.
     /// </summary>
-    /// <param name="track">The <c>track</c> argument.</param>
+    /// <param name="track">A track</param>
     /// <returns>
     /// The pad corresponding to @track,
     /// or %NULL if there is an error.
@@ -517,7 +523,7 @@ public unsafe partial class Timeline : Gst.Bin, GES.IExtractable, GES.IMetaConta
     }
 
     /// <summary>Search for the #GESTrack corresponding to the given timeline's pad.</summary>
-    /// <param name="pad">The <c>pad</c> argument.</param>
+    /// <param name="pad">A pad</param>
     /// <returns>
     /// The track corresponding to @pad,
     /// or %NULL if there is an error.
@@ -563,7 +569,7 @@ public unsafe partial class Timeline : Gst.Bin, GES.IExtractable, GES.IMetaConta
     }
 
     /// <summary>Loads the contents of URI into the timeline.</summary>
-    /// <param name="uri">The <c>uri</c> argument.</param>
+    /// <param name="uri">The URI to load from</param>
     /// <returns>%TRUE if the timeline was loaded successfully from @uri.</returns>
     /// <exception cref="Gst.GLib.GException">The native call failed.</exception>
     public bool LoadFromUri(string uri)
@@ -585,8 +591,8 @@ public unsafe partial class Timeline : Gst.Bin, GES.IExtractable, GES.IMetaConta
     /// timeline. If @new_layer_priority is greater than the number of layers
     /// present in the timeline, it will become the lowest priority layer.
     /// </summary>
-    /// <param name="layer">The <c>layer</c> argument.</param>
-    /// <param name="newLayerPriority">The <c>newLayerPriority</c> argument.</param>
+    /// <param name="layer">A layer within @timeline, whose priority should be changed</param>
+    /// <param name="newLayerPriority">The new index for @layer</param>
     /// <returns>The result of <c>ges_timeline_move_layer</c>.</returns>
     public bool MoveLayer(GES.Layer layer, uint newLayerPriority)
     {
@@ -618,9 +624,15 @@ public unsafe partial class Timeline : Gst.Bin, GES.IExtractable, GES.IMetaConta
     /// </para>
     /// <para>See also ges_timeline_element_paste().</para>
     /// </remarks>
-    /// <param name="element">The <c>element</c> argument.</param>
-    /// <param name="position">The <c>position</c> argument.</param>
-    /// <param name="layerPriority">The <c>layerPriority</c> argument.</param>
+    /// <param name="element">The element to paste</param>
+    /// <param name="position">
+    /// The position in the timeline @element should be pasted to,
+    /// i.e. the #GESTimelineElement:start value for the pasted element.
+    /// </param>
+    /// <param name="layerPriority">
+    /// The layer into which the element should be pasted.
+    /// -1 means paste to the same layer from which @element has been copied from
+    /// </param>
     /// <returns>
     /// The newly created element, or
     /// %NULL if pasting fails.
@@ -635,7 +647,7 @@ public unsafe partial class Timeline : Gst.Bin, GES.IExtractable, GES.IMetaConta
     }
 
     /// <summary>Removes a layer from the timeline.</summary>
-    /// <param name="layer">The <c>layer</c> argument.</param>
+    /// <param name="layer">The layer to remove</param>
     /// <returns>%TRUE if @layer was properly removed.</returns>
     public bool RemoveLayer(GES.Layer layer)
     {
@@ -647,7 +659,7 @@ public unsafe partial class Timeline : Gst.Bin, GES.IExtractable, GES.IMetaConta
     }
 
     /// <summary>Remove a track from the timeline.</summary>
-    /// <param name="track">The <c>track</c> argument.</param>
+    /// <param name="track">The track to remove</param>
     /// <returns>%TRUE if @track was properly removed.</returns>
     public bool RemoveTrack(GES.Track track)
     {
@@ -663,9 +675,9 @@ public unsafe partial class Timeline : Gst.Bin, GES.IExtractable, GES.IMetaConta
     /// the method will attempt to save in the same format the timeline was
     /// loaded from, before defaulting to the formatter with highest rank.
     /// </summary>
-    /// <param name="uri">The <c>uri</c> argument.</param>
-    /// <param name="formatterAsset">The <c>formatterAsset</c> argument.</param>
-    /// <param name="overwrite">The <c>overwrite</c> argument.</param>
+    /// <param name="uri">The location to save to</param>
+    /// <param name="formatterAsset">The formatter asset to use, or %NULL</param>
+    /// <param name="overwrite">%TRUE to overwrite file if it exists</param>
     /// <returns>%TRUE if @timeline was successfully saved to @uri.</returns>
     /// <exception cref="Gst.GLib.GException">The native call failed.</exception>
     public bool SaveToUri(string uri, GES.Asset? formatterAsset, bool overwrite)
@@ -687,7 +699,10 @@ public unsafe partial class Timeline : Gst.Bin, GES.IExtractable, GES.IMetaConta
     /// layers to the same value. See ges_layer_set_auto_transition() if you
     /// wish to set the layer's #GESLayer:auto-transition individually.
     /// </summary>
-    /// <param name="autoTransition">The <c>autoTransition</c> argument.</param>
+    /// <param name="autoTransition">
+    /// Whether transitions should be automatically added
+    /// to @timeline's layers
+    /// </param>
     public void SetAutoTransition(bool autoTransition)
     {
         GesTimelineSetAutoTransition(Handle, autoTransition ? 1 : 0);
@@ -699,7 +714,7 @@ public unsafe partial class Timeline : Gst.Bin, GES.IExtractable, GES.IMetaConta
     /// will only effect future snappings and will not be used to snap the
     /// current element positions within the timeline.
     /// </summary>
-    /// <param name="snappingDistance">The <c>snappingDistance</c> argument.</param>
+    /// <param name="snappingDistance">The snapping distance to use (in nanoseconds)</param>
     public void SetSnappingDistance(Gst.ClockTime snappingDistance)
     {
         GesTimelineSetSnappingDistance(Handle, snappingDistance.Nanoseconds);

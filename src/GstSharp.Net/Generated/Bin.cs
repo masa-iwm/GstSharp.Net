@@ -171,7 +171,7 @@ public unsafe partial class Bin : Gst.Element, Gst.IChildProxy
     }
 
     /// <summary>Creates a new bin with the given name.</summary>
-    /// <param name="name">The <c>name</c> argument.</param>
+    /// <param name="name">the name of the new bin</param>
     /// <returns>a new #GstBin</returns>
     public static Gst.Bin New(string? name)
     {
@@ -199,7 +199,7 @@ public unsafe partial class Bin : Gst.Element, Gst.IChildProxy
     /// &gt; The bin or pipeline will not take care of this for you.
     /// </para>
     /// </remarks>
-    /// <param name="element">The <c>element</c> argument.</param>
+    /// <param name="element">the #GstElement to add</param>
     /// <returns>
     /// %TRUE if the element could be added, %FALSE if
     /// the bin does not want to accept the element.
@@ -220,7 +220,7 @@ public unsafe partial class Bin : Gst.Element, Gst.IChildProxy
     /// owns a reference to it and should use gst_object_unref() on the
     /// pad when it is not needed any longer.
     /// </summary>
-    /// <param name="direction">The <c>direction</c> argument.</param>
+    /// <param name="direction">whether to look for an unlinked source or sink pad</param>
     /// <returns>
     /// unlinked pad of the given
     /// direction.
@@ -239,7 +239,7 @@ public unsafe partial class Bin : Gst.Element, Gst.IChildProxy
     /// all elements that implement the interface, use
     /// gst_bin_iterate_all_by_interface(). This function recurses into child bins.
     /// </summary>
-    /// <param name="iface">The <c>iface</c> argument.</param>
+    /// <param name="iface">the #GType of an interface</param>
     /// <returns>
     /// A #GstElement inside the bin
     /// implementing the interface
@@ -255,7 +255,7 @@ public unsafe partial class Bin : Gst.Element, Gst.IChildProxy
     /// Gets the element with the given name from a bin. This
     /// function recurses into child bins.
     /// </summary>
-    /// <param name="name">The <c>name</c> argument.</param>
+    /// <param name="name">the element name to search for</param>
     /// <returns>
     /// the #GstElement with the given
     /// name
@@ -274,7 +274,7 @@ public unsafe partial class Bin : Gst.Element, Gst.IChildProxy
     /// Gets the element with the given name from this bin. If the
     /// element is not found, a recursion is performed on the parent bin.
     /// </summary>
-    /// <param name="name">The <c>name</c> argument.</param>
+    /// <param name="name">the element name to search for</param>
     /// <returns>
     /// the #GstElement with the given
     /// name
@@ -303,7 +303,7 @@ public unsafe partial class Bin : Gst.Element, Gst.IChildProxy
     /// The function recurses inside child bins. The iterator will yield a series of
     /// #GstElement.
     /// </summary>
-    /// <param name="factoryName">The <c>factoryName</c> argument.</param>
+    /// <param name="factoryName">the name of the #GstElementFactory</param>
     /// <returns>
     /// a #GstIterator of #GstElement
     ///     for all elements in the bin with the given element factory name
@@ -325,7 +325,7 @@ public unsafe partial class Bin : Gst.Element, Gst.IChildProxy
     /// The function recurses inside child bins. The iterator will yield a series
     /// of #GstElement.
     /// </summary>
-    /// <param name="iface">The <c>iface</c> argument.</param>
+    /// <param name="iface">the #GType of an interface</param>
     /// <returns>
     /// a #GstIterator of #GstElement
     ///     for all elements in the bin implementing the given interface
@@ -443,7 +443,7 @@ public unsafe partial class Bin : Gst.Element, Gst.IChildProxy
     /// before the element is removed from the bin.
     /// </para>
     /// </remarks>
-    /// <param name="element">The <c>element</c> argument.</param>
+    /// <param name="element">the #GstElement to remove</param>
     /// <returns>
     /// %TRUE if the element could be removed, %FALSE if
     /// the bin does not want to remove the element.
@@ -463,7 +463,7 @@ public unsafe partial class Bin : Gst.Element, Gst.IChildProxy
     /// When suppressed flags are set, those specified flags will
     /// not be propagated to the bin.
     /// </summary>
-    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <param name="flags">the #GstElementFlags to suppress</param>
     public void SetSuppressedFlags(Gst.ElementFlags flags)
     {
         GstBinSetSuppressedFlags(Handle, (int)flags);

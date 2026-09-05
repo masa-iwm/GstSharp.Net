@@ -64,7 +64,7 @@ public abstract unsafe partial class Container : GES.TimelineElement, GES.IExtra
     /// ges_timeline_element_set_child_property() on the container.
     /// </para>
     /// </remarks>
-    /// <param name="child">The <c>child</c> argument.</param>
+    /// <param name="child">The element to add as a child</param>
     /// <returns>%TRUE if @child was successfully added to @container.</returns>
     public bool Add(GES.TimelineElement child)
     {
@@ -90,16 +90,24 @@ public abstract unsafe partial class Container : GES.TimelineElement, GES.IExtra
     /// </para>
     /// </remarks>
     /// <param name="layers">
-    /// The <c>layers</c> argument.
+    /// A whitelist of layers
+    /// where the edit can be performed, %NULL allows all layers in the
+    /// timeline
     /// The call reads the list while it runs and copies whatever it keeps. A
     /// temporary native list is built for the call and released when it returns,
     /// and an empty sequence is passed as the null pointer, which is how C spells
     /// the empty list.
     /// </param>
-    /// <param name="newLayerPriority">The <c>newLayerPriority</c> argument.</param>
-    /// <param name="mode">The <c>mode</c> argument.</param>
-    /// <param name="edge">The <c>edge</c> argument.</param>
-    /// <param name="position">The <c>position</c> argument.</param>
+    /// <param name="newLayerPriority">
+    /// The priority/index of the layer @container should
+    /// be moved to. -1 means no move
+    /// </param>
+    /// <param name="mode">The edit mode</param>
+    /// <param name="edge">The edge of @container where the edit should occur</param>
+    /// <param name="position">
+    /// The edit position: a new location for the edge of @container
+    /// (in nanoseconds)
+    /// </param>
     /// <returns>%TRUE if the edit of @container completed, %FALSE on failure.</returns>
     [Obsolete("use #ges_timeline_element_edit instead. (deprecated since 1.18)")]
     public bool Edit(System.Collections.Generic.IEnumerable<GES.Layer>? layers, int newLayerPriority, GES.EditMode mode, GES.Edge edge, ulong position)
@@ -116,7 +124,7 @@ public abstract unsafe partial class Container : GES.TimelineElement, GES.IExtra
     /// children, then their children will be added to the list, in addition to
     /// themselves, and so on.
     /// </summary>
-    /// <param name="recursive">The <c>recursive</c> argument.</param>
+    /// <param name="recursive">Whether to recursively get children in @container</param>
     /// <returns>
     /// The list of
     /// #GESTimelineElement-s contained in @container.
@@ -142,7 +150,7 @@ public abstract unsafe partial class Container : GES.TimelineElement, GES.IExtra
     /// Removes a timeline element from the container. The element will no
     /// longer be controlled by the container.
     /// </summary>
-    /// <param name="child">The <c>child</c> argument.</param>
+    /// <param name="child">The child to remove</param>
     /// <returns>%TRUE if @child was successfully removed from @container.</returns>
     public bool Remove(GES.TimelineElement child)
     {
@@ -176,7 +184,7 @@ public abstract unsafe partial class Container : GES.TimelineElement, GES.IExtra
     /// </para>
     /// </remarks>
     /// <param name="containers">
-    /// The <c>containers</c> argument.
+    /// The #GESContainer-s to group
     /// The call reads the list while it runs and copies whatever it keeps. A
     /// temporary native list is built for the call and released when it returns,
     /// and an empty sequence is passed as the null pointer, which is how C spells

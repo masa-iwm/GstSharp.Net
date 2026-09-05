@@ -68,7 +68,7 @@ public unsafe partial class TestClip : GES.SourceClip, GES.IExtractable, GES.IMe
     }
 
     /// <summary>Creates a new #GESTestClip for the provided @nick.</summary>
-    /// <param name="nick">The <c>nick</c> argument.</param>
+    /// <param name="nick">the nickname for which to create the #GESTestClip</param>
     /// <returns>
     /// The newly created #GESTestClip,
     /// or %NULL if there was an error.
@@ -119,7 +119,7 @@ public unsafe partial class TestClip : GES.SourceClip, GES.IExtractable, GES.IMe
     }
 
     /// <summary>Sets the frequency to generate. See audiotestsrc element.</summary>
-    /// <param name="freq">The <c>freq</c> argument.</param>
+    /// <param name="freq">the frequency you want to use on @self</param>
     public void SetFrequency(double freq)
     {
         GesTestClipSetFrequency(Handle, freq);
@@ -127,7 +127,7 @@ public unsafe partial class TestClip : GES.SourceClip, GES.IExtractable, GES.IMe
     }
 
     /// <summary>Sets whether the audio track of this clip is muted or not.</summary>
-    /// <param name="mute">The <c>mute</c> argument.</param>
+    /// <param name="mute">%TRUE to mute the audio track, %FALSE to unmute it</param>
     public void SetMute(bool mute)
     {
         GesTestClipSetMute(Handle, mute ? 1 : 0);
@@ -135,7 +135,7 @@ public unsafe partial class TestClip : GES.SourceClip, GES.IExtractable, GES.IMe
     }
 
     /// <summary>Sets the volume of the test audio signal.</summary>
-    /// <param name="volume">The <c>volume</c> argument.</param>
+    /// <param name="volume">the volume of the audio signal you want to use on @self</param>
     public void SetVolume(double volume)
     {
         GesTestClipSetVolume(Handle, volume);
@@ -143,7 +143,7 @@ public unsafe partial class TestClip : GES.SourceClip, GES.IExtractable, GES.IMe
     }
 
     /// <summary>Sets which video pattern to display on @self.</summary>
-    /// <param name="vpattern">The <c>vpattern</c> argument.</param>
+    /// <param name="vpattern">the #GESVideoTestPattern to use on @self</param>
     public void SetVpattern(GES.VideoTestPattern vpattern)
     {
         GesTestClipSetVpattern(Handle, (int)vpattern);

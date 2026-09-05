@@ -71,7 +71,7 @@ public unsafe partial class ElementFactory : Gst.PluginFeature
     }
 
     /// <summary>Checks if the factory can sink all possible capabilities.</summary>
-    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <param name="caps">the caps to check</param>
     /// <returns>%TRUE if the caps are fully compatible.</returns>
     public bool CanSinkAllCaps(Gst.Caps caps)
     {
@@ -83,7 +83,7 @@ public unsafe partial class ElementFactory : Gst.PluginFeature
     }
 
     /// <summary>Checks if the factory can sink any possible capability.</summary>
-    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <param name="caps">the caps to check</param>
     /// <returns>%TRUE if the caps have a common subset.</returns>
     public bool CanSinkAnyCaps(Gst.Caps caps)
     {
@@ -95,7 +95,7 @@ public unsafe partial class ElementFactory : Gst.PluginFeature
     }
 
     /// <summary>Checks if the factory can src all possible capabilities.</summary>
-    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <param name="caps">the caps to check</param>
     /// <returns>%TRUE if the caps are fully compatible.</returns>
     public bool CanSrcAllCaps(Gst.Caps caps)
     {
@@ -107,7 +107,7 @@ public unsafe partial class ElementFactory : Gst.PluginFeature
     }
 
     /// <summary>Checks if the factory can src any possible capability.</summary>
-    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <param name="caps">the caps to check</param>
     /// <returns>%TRUE if the caps have a common subset.</returns>
     public bool CanSrcAnyCaps(Gst.Caps caps)
     {
@@ -123,7 +123,10 @@ public unsafe partial class ElementFactory : Gst.PluginFeature
     /// It will be given the name supplied, since all elements require a name as
     /// their first argument.
     /// </summary>
-    /// <param name="name">The <c>name</c> argument.</param>
+    /// <param name="name">
+    /// name of new element, or %NULL to automatically create
+    ///    a unique name
+    /// </param>
     /// <returns>
     /// new #GstElement or %NULL
     ///     if the element couldn't be created
@@ -154,7 +157,7 @@ public unsafe partial class ElementFactory : Gst.PluginFeature
     }
 
     /// <summary>Get the metadata on @factory with @key.</summary>
-    /// <param name="key">The <c>key</c> argument.</param>
+    /// <param name="key">a key</param>
     /// <returns>
     /// the metadata with @key on @factory or %NULL
     /// when there was no metadata with the given @key.
@@ -251,7 +254,7 @@ public unsafe partial class ElementFactory : Gst.PluginFeature
     }
 
     /// <summary>Check if @factory implements the interface with name @interfacename.</summary>
-    /// <param name="interfacename">The <c>interfacename</c> argument.</param>
+    /// <param name="interfacename">an interface name</param>
     /// <returns>%TRUE when @factory implement the interface.</returns>
     public bool HasInterface(string interfacename)
     {
@@ -264,7 +267,7 @@ public unsafe partial class ElementFactory : Gst.PluginFeature
     }
 
     /// <summary>Check if @factory is of the given types.</summary>
-    /// <param name="type">The <c>type</c> argument.</param>
+    /// <param name="type">a #GstElementFactoryListType</param>
     /// <returns>%TRUE if @factory is of @type.</returns>
     public bool ListIsType(ulong type)
     {
@@ -277,7 +280,7 @@ public unsafe partial class ElementFactory : Gst.PluginFeature
     /// Search for an element factory of the given name. Refs the returned
     /// element factory; caller is responsible for unreffing.
     /// </summary>
-    /// <param name="name">The <c>name</c> argument.</param>
+    /// <param name="name">name of factory to find</param>
     /// <returns>
     /// #GstElementFactory if found,
     /// %NULL otherwise
@@ -303,15 +306,16 @@ public unsafe partial class ElementFactory : Gst.PluginFeature
     /// </para>
     /// </remarks>
     /// <param name="list">
-    /// The <c>list</c> argument.
+    /// a #GList of
+    ///     #GstElementFactory to filter
     /// The call reads the list while it runs and copies whatever it keeps. A
     /// temporary native list is built for the call and released when it returns,
     /// and an empty sequence is passed as the null pointer, which is how C spells
     /// the empty list.
     /// </param>
-    /// <param name="caps">The <c>caps</c> argument.</param>
-    /// <param name="direction">The <c>direction</c> argument.</param>
-    /// <param name="subsetonly">The <c>subsetonly</c> argument.</param>
+    /// <param name="caps">a #GstCaps</param>
+    /// <param name="direction">a #GstPadDirection to filter on</param>
+    /// <param name="subsetonly">whether to filter on caps subsets or not.</param>
     /// <returns>
     /// a #GList of
     ///     #GstElementFactory elements that match the given requisites.
@@ -341,8 +345,8 @@ public unsafe partial class ElementFactory : Gst.PluginFeature
     /// with a rank greater or equal to @minrank will be returned.
     /// The list of factories is returned by decreasing rank.
     /// </summary>
-    /// <param name="type">The <c>type</c> argument.</param>
-    /// <param name="minrank">The <c>minrank</c> argument.</param>
+    /// <param name="type">a #GstElementFactoryListType</param>
+    /// <param name="minrank">Minimum rank</param>
     /// <returns>
     /// a #GList of
     ///     #GstElementFactory elements. Use gst_plugin_feature_list_free() after
@@ -370,8 +374,11 @@ public unsafe partial class ElementFactory : Gst.PluginFeature
     /// consisting of the element factory name and a number.
     /// If name is given, it will be given the name supplied.
     /// </summary>
-    /// <param name="factoryname">The <c>factoryname</c> argument.</param>
-    /// <param name="name">The <c>name</c> argument.</param>
+    /// <param name="factoryname">a named factory to instantiate</param>
+    /// <param name="name">
+    /// name of new element, or %NULL to automatically create
+    ///    a unique name
+    /// </param>
     /// <returns>
     /// new #GstElement or %NULL
     /// if unable to create element

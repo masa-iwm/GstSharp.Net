@@ -71,9 +71,9 @@ public sealed unsafe partial class AudioStreamAlign : Gst.GObject.Boxed
     /// gst_audio_stream_align_set_discont_wait().
     /// </para>
     /// </remarks>
-    /// <param name="rate">The <c>rate</c> argument.</param>
-    /// <param name="alignmentThreshold">The <c>alignmentThreshold</c> argument.</param>
-    /// <param name="discontWait">The <c>discontWait</c> argument.</param>
+    /// <param name="rate">a sample rate</param>
+    /// <param name="alignmentThreshold">a alignment threshold in nanoseconds</param>
+    /// <param name="discontWait">discont wait in nanoseconds</param>
     /// <returns>a new #GstAudioStreamAlign. free with gst_audio_stream_align_free().</returns>
     public static Gst.Audio.AudioStreamAlign New(int rate, Gst.ClockTime alignmentThreshold, Gst.ClockTime discontWait)
     {
@@ -172,12 +172,12 @@ public sealed unsafe partial class AudioStreamAlign : Gst.GObject.Boxed
     /// of the current one.
     /// </para>
     /// </remarks>
-    /// <param name="discont">The <c>discont</c> argument.</param>
-    /// <param name="timestamp">The <c>timestamp</c> argument.</param>
-    /// <param name="nSamples">The <c>nSamples</c> argument.</param>
-    /// <param name="outTimestamp">The <c>outTimestamp</c> argument.</param>
-    /// <param name="outDuration">The <c>outDuration</c> argument.</param>
-    /// <param name="outSamplePosition">The <c>outSamplePosition</c> argument.</param>
+    /// <param name="discont">if this data is considered to be discontinuous</param>
+    /// <param name="timestamp">a #GstClockTime of the start of the data</param>
+    /// <param name="nSamples">number of samples to process</param>
+    /// <param name="outTimestamp">output timestamp of the data</param>
+    /// <param name="outDuration">output duration of the data</param>
+    /// <param name="outSamplePosition">output sample position of the start of the data</param>
     /// <returns>%TRUE if a discontinuity was detected, %FALSE otherwise.</returns>
     public bool Process(bool discont, Gst.ClockTime timestamp, uint nSamples, out Gst.ClockTime outTimestamp, out Gst.ClockTime outDuration, out ulong outSamplePosition)
     {
@@ -193,7 +193,7 @@ public sealed unsafe partial class AudioStreamAlign : Gst.GObject.Boxed
     }
 
     /// <summary>Sets @alignment_treshold as new alignment threshold for the following processing.</summary>
-    /// <param name="alignmentThreshold">The <c>alignmentThreshold</c> argument.</param>
+    /// <param name="alignmentThreshold">a new alignment threshold</param>
     public void SetAlignmentThreshold(Gst.ClockTime alignmentThreshold)
     {
         GstAudioStreamAlignSetAlignmentThreshold(Handle, alignmentThreshold.Nanoseconds);
@@ -201,7 +201,7 @@ public sealed unsafe partial class AudioStreamAlign : Gst.GObject.Boxed
     }
 
     /// <summary>Sets @alignment_treshold as new discont wait for the following processing.</summary>
-    /// <param name="discontWait">The <c>discontWait</c> argument.</param>
+    /// <param name="discontWait">a new discont wait</param>
     public void SetDiscontWait(Gst.ClockTime discontWait)
     {
         GstAudioStreamAlignSetDiscontWait(Handle, discontWait.Nanoseconds);
@@ -212,7 +212,7 @@ public sealed unsafe partial class AudioStreamAlign : Gst.GObject.Boxed
     /// Sets @rate as new sample rate for the following processing. If the sample
     /// rate differs this implicitly marks the next data as discontinuous.
     /// </summary>
-    /// <param name="rate">The <c>rate</c> argument.</param>
+    /// <param name="rate">a new sample rate</param>
     public void SetRate(int rate)
     {
         GstAudioStreamAlignSetRate(Handle, rate);

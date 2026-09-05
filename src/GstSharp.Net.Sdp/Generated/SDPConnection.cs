@@ -118,11 +118,14 @@ public sealed unsafe partial class SDPConnection
     }
 
     /// <summary>Set the connection with the given parameters.</summary>
-    /// <param name="nettype">The <c>nettype</c> argument.</param>
-    /// <param name="addrtype">The <c>addrtype</c> argument.</param>
-    /// <param name="address">The <c>address</c> argument.</param>
-    /// <param name="ttl">The <c>ttl</c> argument.</param>
-    /// <param name="addrNumber">The <c>addrNumber</c> argument.</param>
+    /// <param name="nettype">
+    /// the type of network. "IN" is defined to have the meaning
+    /// "Internet".
+    /// </param>
+    /// <param name="addrtype">the type of address.</param>
+    /// <param name="address">the address</param>
+    /// <param name="ttl">the time to live of the address</param>
+    /// <param name="addrNumber">the number of layers</param>
     /// <returns>@GST_SDP_OK.</returns>
     public Gst.Sdp.SDPResult Set(string nettype, string addrtype, string address, uint ttl, uint addrNumber)
     {

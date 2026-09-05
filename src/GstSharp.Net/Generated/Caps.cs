@@ -117,7 +117,7 @@ public sealed unsafe partial class Caps : Gst.MiniObject
     /// Creates a new #GstCaps that contains one #GstStructure with name
     /// @media_type.
     /// </summary>
-    /// <param name="mediaType">The <c>mediaType</c> argument.</param>
+    /// <param name="mediaType">the media type of the structure</param>
     /// <returns>the new #GstCaps</returns>
     public static Gst.Caps NewEmptySimple(string mediaType)
     {
@@ -136,7 +136,7 @@ public sealed unsafe partial class Caps : Gst.MiniObject
     /// <remarks>
     /// <para>Available since GStreamer 1.26.</para>
     /// </remarks>
-    /// <param name="mediaType">The <c>mediaType</c> argument.</param>
+    /// <param name="mediaType">the media type of the structure</param>
     /// <returns>the new #GstCaps</returns>
     public static Gst.Caps NewIdStrEmptySimple(Gst.IdStr mediaType)
     {
@@ -162,7 +162,7 @@ public sealed unsafe partial class Caps : Gst.MiniObject
     /// </para>
     /// </remarks>
     /// <param name="caps2">
-    /// The <c>caps2</c> argument.
+    /// the #GstCaps to append
     /// The call consumes it: <paramref name="caps2"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// </param>
@@ -198,7 +198,7 @@ public sealed unsafe partial class Caps : Gst.MiniObject
     /// </para>
     /// </remarks>
     /// <param name="structure">
-    /// The <c>structure</c> argument.
+    /// the #GstStructure to append
     /// The call consumes it: <paramref name="structure"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// </param>
@@ -243,12 +243,12 @@ public sealed unsafe partial class Caps : Gst.MiniObject
     /// </para>
     /// </remarks>
     /// <param name="structure">
-    /// The <c>structure</c> argument.
+    /// the #GstStructure to append
     /// The call consumes it: <paramref name="structure"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// </param>
     /// <param name="features">
-    /// The <c>features</c> argument.
+    /// the #GstCapsFeatures to append
     /// The call consumes it: <paramref name="features"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// It may be <see langword="null"/>, which is the absence of a payload and leaves
@@ -280,7 +280,7 @@ public sealed unsafe partial class Caps : Gst.MiniObject
     /// Tries intersecting @caps1 and @caps2 and reports whether the result would not
     /// be empty
     /// </summary>
-    /// <param name="caps2">The <c>caps2</c> argument.</param>
+    /// <param name="caps2">a #GstCaps to intersect</param>
     /// <returns>%TRUE if intersection would be not empty</returns>
     public bool CanIntersect(Gst.Caps caps2)
     {
@@ -315,7 +315,7 @@ public sealed unsafe partial class Caps : Gst.MiniObject
     /// Creates a new #GstCaps and appends a copy of the nth structure
     /// contained in @caps.
     /// </summary>
-    /// <param name="nth">The <c>nth</c> argument.</param>
+    /// <param name="nth">the nth structure to copy</param>
     /// <returns>the new #GstCaps</returns>
     public Gst.Caps CopyNth(uint nth)
     {
@@ -389,7 +389,7 @@ public sealed unsafe partial class Caps : Gst.MiniObject
     /// gst_caps_features_add().
     /// </para>
     /// </remarks>
-    /// <param name="index">The <c>index</c> argument.</param>
+    /// <param name="index">the index of the structure</param>
     /// <returns>
     /// a pointer to the #GstCapsFeatures
     ///     corresponding to @index
@@ -426,7 +426,7 @@ public sealed unsafe partial class Caps : Gst.MiniObject
     /// gst_structure_set().
     /// </para>
     /// </remarks>
-    /// <param name="index">The <c>index</c> argument.</param>
+    /// <param name="index">the index of the structure</param>
     /// <returns>
     /// a pointer to the #GstStructure corresponding
     ///     to @index
@@ -454,9 +454,9 @@ public sealed unsafe partial class Caps : Gst.MiniObject
     /// </para>
     /// <para>Available since GStreamer 1.26.</para>
     /// </remarks>
-    /// <param name="field">The <c>field</c> argument.</param>
+    /// <param name="field">name of the field to set</param>
     /// <param name="value">
-    /// The <c>value</c> argument.
+    /// value to set the field to
     /// The callee copies what it keeps, so the caller keeps ownership of
     /// <paramref name="value"/> and still disposes it.
     /// </param>
@@ -484,7 +484,7 @@ public sealed unsafe partial class Caps : Gst.MiniObject
     /// Creates a new #GstCaps that contains all the formats that are common
     /// to both @caps1 and @caps2. Defaults to %GST_CAPS_INTERSECT_ZIG_ZAG mode.
     /// </summary>
-    /// <param name="caps2">The <c>caps2</c> argument.</param>
+    /// <param name="caps2">a #GstCaps to intersect</param>
     /// <returns>the new #GstCaps</returns>
     public Gst.Caps Intersect(Gst.Caps caps2)
     {
@@ -501,8 +501,8 @@ public sealed unsafe partial class Caps : Gst.MiniObject
     /// to both @caps1 and @caps2, the order is defined by the #GstCapsIntersectMode
     /// used.
     /// </summary>
-    /// <param name="caps2">The <c>caps2</c> argument.</param>
-    /// <param name="mode">The <c>mode</c> argument.</param>
+    /// <param name="caps2">a #GstCaps to intersect</param>
+    /// <param name="mode">The intersection algorithm/mode to use</param>
     /// <returns>the new #GstCaps</returns>
     public Gst.Caps IntersectFull(Gst.Caps caps2, Gst.CapsIntersectMode mode)
     {
@@ -519,7 +519,7 @@ public sealed unsafe partial class Caps : Gst.MiniObject
     /// every media format that is in the first is also contained in the
     /// second.  That is, @caps1 is a subset of @caps2.
     /// </summary>
-    /// <param name="caps2">The <c>caps2</c> argument.</param>
+    /// <param name="caps2">the #GstCaps to test</param>
     /// <returns>%TRUE if @caps1 is a subset of @caps2.</returns>
     public bool IsAlwaysCompatible(Gst.Caps caps2)
     {
@@ -549,7 +549,7 @@ public sealed unsafe partial class Caps : Gst.MiniObject
     }
 
     /// <summary>Checks if the given caps represent the same set of caps.</summary>
-    /// <param name="caps2">The <c>caps2</c> argument.</param>
+    /// <param name="caps2">another #GstCaps</param>
     /// <returns>%TRUE if both caps are equal.</returns>
     public bool IsEqual(Gst.Caps caps2)
     {
@@ -564,7 +564,7 @@ public sealed unsafe partial class Caps : Gst.MiniObject
     /// Tests if two #GstCaps are equal.  This function only works on fixed
     /// #GstCaps.
     /// </summary>
-    /// <param name="caps2">The <c>caps2</c> argument.</param>
+    /// <param name="caps2">the #GstCaps to test</param>
     /// <returns>%TRUE if the arguments represent the same format</returns>
     public bool IsEqualFixed(Gst.Caps caps2)
     {
@@ -589,7 +589,7 @@ public sealed unsafe partial class Caps : Gst.MiniObject
     }
 
     /// <summary>Checks if the given caps are exactly the same set of caps.</summary>
-    /// <param name="caps2">The <c>caps2</c> argument.</param>
+    /// <param name="caps2">another #GstCaps</param>
     /// <returns>%TRUE if both caps are strictly equal.</returns>
     public bool IsStrictlyEqual(Gst.Caps caps2)
     {
@@ -601,7 +601,7 @@ public sealed unsafe partial class Caps : Gst.MiniObject
     }
 
     /// <summary>Checks if all caps represented by @subset are also represented by @superset.</summary>
-    /// <param name="superset">The <c>superset</c> argument.</param>
+    /// <param name="superset">a potentially greater #GstCaps</param>
     /// <returns>%TRUE if @subset is a subset of @superset</returns>
     public bool IsSubset(Gst.Caps superset)
     {
@@ -616,7 +616,7 @@ public sealed unsafe partial class Caps : Gst.MiniObject
     /// Checks if @structure is a subset of @caps. See gst_caps_is_subset()
     /// for more information.
     /// </summary>
-    /// <param name="structure">The <c>structure</c> argument.</param>
+    /// <param name="structure">a potential #GstStructure subset of @caps</param>
     /// <returns>%TRUE if @structure is a subset of @caps</returns>
     public bool IsSubsetStructure(Gst.Structure structure)
     {
@@ -631,8 +631,8 @@ public sealed unsafe partial class Caps : Gst.MiniObject
     /// Checks if @structure is a subset of @caps. See gst_caps_is_subset()
     /// for more information.
     /// </summary>
-    /// <param name="structure">The <c>structure</c> argument.</param>
-    /// <param name="features">The <c>features</c> argument.</param>
+    /// <param name="structure">a potential #GstStructure subset of @caps</param>
+    /// <param name="features">a #GstCapsFeatures for @structure</param>
     /// <returns>%TRUE if @structure is a subset of @caps</returns>
     public bool IsSubsetStructureFull(Gst.Structure structure, Gst.CapsFeatures? features)
     {
@@ -755,7 +755,7 @@ public sealed unsafe partial class Caps : Gst.MiniObject
     /// </para>
     /// </remarks>
     /// <param name="caps2">
-    /// The <c>caps2</c> argument.
+    /// the #GstCaps to merge in
     /// The call consumes it: <paramref name="caps2"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// </param>
@@ -801,7 +801,7 @@ public sealed unsafe partial class Caps : Gst.MiniObject
     /// </para>
     /// </remarks>
     /// <param name="structure">
-    /// The <c>structure</c> argument.
+    /// the #GstStructure to merge
     /// The call consumes it: <paramref name="structure"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// </param>
@@ -856,12 +856,12 @@ public sealed unsafe partial class Caps : Gst.MiniObject
     /// </para>
     /// </remarks>
     /// <param name="structure">
-    /// The <c>structure</c> argument.
+    /// the #GstStructure to merge
     /// The call consumes it: <paramref name="structure"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// </param>
     /// <param name="features">
-    /// The <c>features</c> argument.
+    /// the #GstCapsFeatures to merge
     /// The call consumes it: <paramref name="features"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// It may be <see langword="null"/>, which is the absence of a payload and leaves
@@ -929,7 +929,7 @@ public sealed unsafe partial class Caps : Gst.MiniObject
     /// Removes the structure with the given index from the list of structures
     /// contained in @caps.
     /// </summary>
-    /// <param name="idx">The <c>idx</c> argument.</param>
+    /// <param name="idx">Index of the structure to remove</param>
     public void RemoveStructure(uint idx)
     {
         GstCapsRemoveStructure(Handle, idx);
@@ -949,7 +949,7 @@ public sealed unsafe partial class Caps : Gst.MiniObject
     /// as @flag.
     /// </para>
     /// </remarks>
-    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <param name="flags">a #GstSerializeFlags</param>
     /// <returns>a newly allocated string representing @caps.</returns>
     public string Serialize(Gst.SerializeFlags flags)
     {
@@ -970,9 +970,9 @@ public sealed unsafe partial class Caps : Gst.MiniObject
     /// <c>using</c> declaration around the argument stays correct.
     /// </para>
     /// </remarks>
-    /// <param name="index">The <c>index</c> argument.</param>
+    /// <param name="index">the index of the structure</param>
     /// <param name="features">
-    /// The <c>features</c> argument.
+    /// the #GstCapsFeatures to set
     /// The call consumes it: <paramref name="features"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// It may be <see langword="null"/>, which is the absence of a payload and leaves
@@ -1004,7 +1004,7 @@ public sealed unsafe partial class Caps : Gst.MiniObject
     /// </para>
     /// </remarks>
     /// <param name="features">
-    /// The <c>features</c> argument.
+    /// the #GstCapsFeatures to set
     /// The call consumes it: <paramref name="features"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// It may be <see langword="null"/>, which is the absence of a payload and leaves
@@ -1035,9 +1035,9 @@ public sealed unsafe partial class Caps : Gst.MiniObject
     /// and writes nothing otherwise.
     /// </para>
     /// </remarks>
-    /// <param name="field">The <c>field</c> argument.</param>
+    /// <param name="field">name of the field to set</param>
     /// <param name="value">
-    /// The <c>value</c> argument.
+    /// value to set the field to
     /// The callee copies what it keeps, so the caller keeps ownership of
     /// <paramref name="value"/> and still disposes it.
     /// </param>
@@ -1100,7 +1100,7 @@ public sealed unsafe partial class Caps : Gst.MiniObject
     /// Retrieves the structure with the given index from the list of structures
     /// contained in @caps. The caller becomes the owner of the returned structure.
     /// </summary>
-    /// <param name="index">The <c>index</c> argument.</param>
+    /// <param name="index">Index of the structure to retrieve</param>
     /// <returns>
     /// a pointer to the #GstStructure
     ///     corresponding to @index.
@@ -1117,7 +1117,7 @@ public sealed unsafe partial class Caps : Gst.MiniObject
     /// &gt; This function does not work reliably if optional properties for caps
     /// &gt; are included on one caps and omitted on the other.
     /// </summary>
-    /// <param name="subtrahend">The <c>subtrahend</c> argument.</param>
+    /// <param name="subtrahend">#GstCaps to subtract</param>
     /// <returns>the resulting caps</returns>
     public Gst.Caps Subtract(Gst.Caps subtrahend)
     {
@@ -1198,7 +1198,7 @@ public sealed unsafe partial class Caps : Gst.MiniObject
     /// when there were nested #GstCaps / #GstStructure deeper than one level.
     /// </para>
     /// </remarks>
-    /// <param name="string">The <c>@string</c> argument.</param>
+    /// <param name="string">a string to convert to #GstCaps</param>
     /// <returns>a newly allocated #GstCaps</returns>
     public static Gst.Caps? FromString(string @string)
     {

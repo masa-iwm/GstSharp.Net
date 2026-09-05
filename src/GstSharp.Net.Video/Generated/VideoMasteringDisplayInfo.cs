@@ -65,7 +65,7 @@ public unsafe partial struct VideoMasteringDisplayInfo
     /// and writes nothing otherwise.
     /// </para>
     /// </remarks>
-    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <param name="caps">a #GstCaps</param>
     /// <returns>%TRUE if @minfo was successfully set to @caps</returns>
     public readonly bool AddToCaps(Gst.Caps caps)
     {
@@ -91,7 +91,7 @@ public unsafe partial struct VideoMasteringDisplayInfo
     /// got. Read it only after the call answered <see langword="true"/>.
     /// </para>
     /// </remarks>
-    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <param name="caps">a #GstCaps</param>
     /// <returns>%TRUE if @caps has #GstVideoMasteringDisplayInfo and could be parsed</returns>
     public bool FromCaps(Gst.Caps caps)
     {
@@ -120,7 +120,7 @@ public unsafe partial struct VideoMasteringDisplayInfo
     }
 
     /// <summary>Checks equality between @minfo and @other.</summary>
-    /// <param name="other">The <c>other</c> argument.</param>
+    /// <param name="other">a #GstVideoMasteringDisplayInfo</param>
     /// <returns>%TRUE if @minfo and @other are equal.</returns>
     public readonly bool IsEqual(Gst.Video.VideoMasteringDisplayInfo other)
     {
@@ -151,8 +151,8 @@ public unsafe partial struct VideoMasteringDisplayInfo
     /// <paramref name="minfo"/> zeroed.
     /// </para>
     /// </remarks>
-    /// <param name="minfo">The <c>minfo</c> argument.</param>
-    /// <param name="mastering">The <c>mastering</c> argument.</param>
+    /// <param name="minfo">a #GstVideoMasteringDisplayInfo</param>
+    /// <param name="mastering">a #GstStructure representing #GstVideoMasteringDisplayInfo</param>
     /// <returns>%TRUE if @minfo was filled with @mastering</returns>
     public static bool FromString(out Gst.Video.VideoMasteringDisplayInfo minfo, string mastering)
     {

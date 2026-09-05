@@ -71,11 +71,11 @@ public sealed unsafe partial class AudioConverter : Gst.GObject.Boxed
     /// <c>using</c> declaration around the argument stays correct.
     /// </para>
     /// </remarks>
-    /// <param name="flags">The <c>flags</c> argument.</param>
-    /// <param name="inInfo">The <c>inInfo</c> argument.</param>
-    /// <param name="outInfo">The <c>outInfo</c> argument.</param>
+    /// <param name="flags">extra #GstAudioConverterFlags</param>
+    /// <param name="inInfo">a source #GstAudioInfo</param>
+    /// <param name="outInfo">a destination #GstAudioInfo</param>
     /// <param name="config">
-    /// The <c>config</c> argument.
+    /// a #GstStructure with configuration options
     /// The call consumes it: <paramref name="config"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// It may be <see langword="null"/>, which is the absence of a payload and leaves
@@ -106,7 +106,7 @@ public sealed unsafe partial class AudioConverter : Gst.GObject.Boxed
     /// perform allocation of the output buffer based on the result from
     /// gst_audio_converter_get_out_frames().
     /// </summary>
-    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <param name="flags">extra #GstAudioConverterFlags</param>
     /// <param name="in">input data</param>
     /// <param name="out">
     /// a pointer where
@@ -133,8 +133,8 @@ public sealed unsafe partial class AudioConverter : Gst.GObject.Boxed
     }
 
     /// <summary>Get the current configuration of @convert.</summary>
-    /// <param name="inRate">The <c>inRate</c> argument.</param>
-    /// <param name="outRate">The <c>outRate</c> argument.</param>
+    /// <param name="inRate">result input rate</param>
+    /// <param name="outRate">result output rate</param>
     /// <returns>
     ///   a #GstStructure that remains valid for as long as @convert is valid
     ///   or until gst_audio_converter_update_config() is called.
@@ -158,7 +158,7 @@ public sealed unsafe partial class AudioConverter : Gst.GObject.Boxed
     /// Calculate how many input frames are currently needed by @convert to produce
     /// @out_frames of output frames.
     /// </summary>
-    /// <param name="outFrames">The <c>outFrames</c> argument.</param>
+    /// <param name="outFrames">number of output frames</param>
     /// <returns>the number of input frames</returns>
     public nuint GetInFrames(nuint outFrames)
     {
@@ -186,7 +186,7 @@ public sealed unsafe partial class AudioConverter : Gst.GObject.Boxed
     /// Calculate how many output frames can be produced when @in_frames input
     /// frames are given to @convert.
     /// </summary>
-    /// <param name="inFrames">The <c>inFrames</c> argument.</param>
+    /// <param name="inFrames">number of input frames</param>
     /// <returns>the number of output frames</returns>
     public nuint GetOutFrames(nuint inFrames)
     {
@@ -257,10 +257,10 @@ public sealed unsafe partial class AudioConverter : Gst.GObject.Boxed
     /// <c>using</c> declaration around the argument stays correct.
     /// </para>
     /// </remarks>
-    /// <param name="inRate">The <c>inRate</c> argument.</param>
-    /// <param name="outRate">The <c>outRate</c> argument.</param>
+    /// <param name="inRate">input rate</param>
+    /// <param name="outRate">output rate</param>
     /// <param name="config">
-    /// The <c>config</c> argument.
+    /// a #GstStructure or %NULL
     /// The call consumes it: <paramref name="config"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// It may be <see langword="null"/>, which is the absence of a payload and leaves

@@ -71,8 +71,8 @@ public sealed unsafe partial class SDPBandwidth
     }
 
     /// <summary>Set bandwidth information in @bw.</summary>
-    /// <param name="bwtype">The <c>bwtype</c> argument.</param>
-    /// <param name="bandwidth">The <c>bandwidth</c> argument.</param>
+    /// <param name="bwtype">the bandwidth modifier type</param>
+    /// <param name="bandwidth">the bandwidth in kilobits per second</param>
     /// <returns>a #GstSDPResult.</returns>
     public Gst.Sdp.SDPResult Set(string bwtype, uint bandwidth)
     {

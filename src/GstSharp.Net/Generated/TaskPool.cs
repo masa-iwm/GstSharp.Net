@@ -85,7 +85,7 @@ public unsafe partial class TaskPool : Gst.Object
     /// @id.
     /// </para>
     /// </remarks>
-    /// <param name="id">The <c>id</c> argument.</param>
+    /// <param name="id">the id</param>
     public void DisposeHandle(nint id)
     {
         GstTaskPoolDisposeHandle(Handle, id);
@@ -103,7 +103,7 @@ public unsafe partial class TaskPool : Gst.Object
     /// @id.
     /// </para>
     /// </remarks>
-    /// <param name="id">The <c>id</c> argument.</param>
+    /// <param name="id">the id</param>
     public void Join(nint id)
     {
         GstTaskPoolJoin(Handle, id);

@@ -45,9 +45,9 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     /// @pad and has a payloader element @payloader if @pad is a source pad
     /// or a depayloader element @payloader if @pad is a sink pad.
     /// </summary>
-    /// <param name="idx">The <c>idx</c> argument.</param>
-    /// <param name="payloader">The <c>payloader</c> argument.</param>
-    /// <param name="pad">The <c>pad</c> argument.</param>
+    /// <param name="idx">an index</param>
+    /// <param name="payloader">a #GstElement</param>
+    /// <param name="pad">a #GstPad</param>
     /// <returns>a new #GstRTSPStream</returns>
     public static Gst.RtspServer.RTSPStream New(uint idx, Gst.Element payloader, Gst.Pad pad)
     {
@@ -65,10 +65,10 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     /// will stream RTP and RTCP data to @destination are supposed to be
     /// allocated.
     /// </summary>
-    /// <param name="destination">The <c>destination</c> argument.</param>
-    /// <param name="rtpPort">The <c>rtpPort</c> argument.</param>
-    /// <param name="rtcpPort">The <c>rtcpPort</c> argument.</param>
-    /// <param name="family">The <c>family</c> argument.</param>
+    /// <param name="destination">a multicast address to add</param>
+    /// <param name="rtpPort">RTP port</param>
+    /// <param name="rtcpPort">RTCP port</param>
+    /// <param name="family">socket family</param>
     /// <returns>%TRUE if @destination can be addedd and handled by @stream.</returns>
     public bool AddMulticastClientAddress(string destination, uint rtpPort, uint rtcpPort, Gst.Gio.SocketFamily family)
     {
@@ -89,7 +89,7 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     /// <para>@stream must be joined to a bin.</para>
     /// <para>@trans must contain a valid #GstRTSPTransport.</para>
     /// </remarks>
-    /// <param name="trans">The <c>trans</c> argument.</param>
+    /// <param name="trans">a #GstRTSPStreamTransport</param>
     /// <returns>%TRUE if @trans was added</returns>
     public bool AddTransport(Gst.RtspServer.RTSPStreamTransport trans)
     {
@@ -101,9 +101,9 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     }
 
     /// <summary>Allocates RTP and RTCP ports.</summary>
-    /// <param name="family">The <c>family</c> argument.</param>
-    /// <param name="transport">The <c>transport</c> argument.</param>
-    /// <param name="useClientSettings">The <c>useClientSettings</c> argument.</param>
+    /// <param name="family">protocol family</param>
+    /// <param name="transport">transport method</param>
+    /// <param name="useClientSettings">Whether to use client settings or not</param>
     /// <returns>%TRUE if the RTP and RTCP sockets have been succeccully allocated.</returns>
     public bool AllocateUdpSockets(Gst.Gio.SocketFamily family, Gst.Rtsp.RTSPTransport transport, bool useClientSettings)
     {
@@ -118,7 +118,7 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     /// Add a receiver and sender part to the pipeline based on the transport from
     /// SETUP.
     /// </summary>
-    /// <param name="transport">The <c>transport</c> argument.</param>
+    /// <param name="transport">a #GstRTSPTransport</param>
     /// <returns>%TRUE if the stream has been successfully updated.</returns>
     public bool CompleteStream(Gst.Rtsp.RTSPTransport transport)
     {
@@ -230,7 +230,7 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     /// #GstRTSPAddress is cached and copy is returned, so freeing the return value
     /// won't release the address from the pool.
     /// </summary>
-    /// <param name="family">The <c>family</c> argument.</param>
+    /// <param name="family">the #GSocketFamily</param>
     /// <returns>
     /// the #GstRTSPAddress of @stream
     /// or %NULL when no address could be allocated. gst_rtsp_address_free()
@@ -314,8 +314,8 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     }
 
     /// <summary>Retrieve the current rate and/or applied_rate.</summary>
-    /// <param name="rate">The <c>rate</c> argument.</param>
-    /// <param name="appliedRate">The <c>appliedRate</c> argument.</param>
+    /// <param name="rate">the configured rate</param>
+    /// <param name="appliedRate">the configured applied_rate</param>
     /// <returns>%TRUE if rate and/or applied_rate could be determined.</returns>
     public bool GetRates(out double rate, out double appliedRate)
     {
@@ -347,7 +347,7 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     }
 
     /// <summary>Get the multicast RTCP socket from @stream for a @family.</summary>
-    /// <param name="family">The <c>family</c> argument.</param>
+    /// <param name="family">the socket family</param>
     /// <returns>
     /// the multicast RTCP socket or %NULL if no
     /// socket could be allocated for @family. Unref after usage
@@ -363,7 +363,7 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     /// <remarks>
     /// <para>@stream must be joined to a bin.</para>
     /// </remarks>
-    /// <param name="family">The <c>family</c> argument.</param>
+    /// <param name="family">the socket family</param>
     /// <returns>
     /// the RTCP socket or %NULL if no
     /// socket could be allocated for @family. Unref after usage
@@ -376,7 +376,7 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     }
 
     /// <summary>Get the multicast RTP socket from @stream for a @family.</summary>
-    /// <param name="family">The <c>family</c> argument.</param>
+    /// <param name="family">the socket family</param>
     /// <returns>the multicast RTP socket or %NULL if no</returns>
     public Gst.Gio.Socket? GetRtpMulticastSocket(Gst.Gio.SocketFamily family)
     {
@@ -389,7 +389,7 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     /// <remarks>
     /// <para>@stream must be joined to a bin.</para>
     /// </remarks>
-    /// <param name="family">The <c>family</c> argument.</param>
+    /// <param name="family">the socket family</param>
     /// <returns>
     /// the RTP socket or %NULL if no
     /// socket could be allocated for @family. Unref after usage
@@ -405,10 +405,10 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     /// Retrieve the current rtptime, seq and running-time. This is used to
     /// construct a RTPInfo reply header.
     /// </summary>
-    /// <param name="rtptime">The <c>rtptime</c> argument.</param>
-    /// <param name="seq">The <c>seq</c> argument.</param>
-    /// <param name="clockRate">The <c>clockRate</c> argument.</param>
-    /// <param name="runningTime">The <c>runningTime</c> argument.</param>
+    /// <param name="rtptime">result RTP timestamp</param>
+    /// <param name="seq">result RTP seqnum</param>
+    /// <param name="clockRate">the clock rate</param>
+    /// <param name="runningTime">result running-time</param>
     /// <returns>%TRUE when rtptime, seq and running-time could be determined.</returns>
     public bool GetRtpinfo(out uint rtptime, out uint seq, out uint clockRate, out Gst.ClockTime runningTime)
     {
@@ -438,8 +438,8 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     /// Fill @server_port with the port pair used by the server. This function can
     /// only be called when @stream has been joined.
     /// </summary>
-    /// <param name="serverPort">The <c>serverPort</c> argument.</param>
-    /// <param name="family">The <c>family</c> argument.</param>
+    /// <param name="serverPort">result server port</param>
+    /// <param name="family">the port family to get</param>
     public void GetServerPort(out Gst.Rtsp.RTSPRange serverPort, Gst.Gio.SocketFamily family)
     {
         Gst.Rtsp.RTSPRange serverPortNative = default;
@@ -479,7 +479,7 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     /// Get the SSRC used by the RTP session of this stream. This function can only
     /// be called when @stream has been joined.
     /// </summary>
-    /// <param name="ssrc">The <c>ssrc</c> argument.</param>
+    /// <param name="ssrc">result ssrc</param>
     public void GetSsrc(out uint ssrc)
     {
         uint ssrcNative = default;
@@ -519,7 +519,7 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     }
 
     /// <summary>Parse and handle a KeyMgmt header.</summary>
-    /// <param name="keymgmt">The <c>keymgmt</c> argument.</param>
+    /// <param name="keymgmt">a keymgmt header</param>
     /// <returns>The result of <c>gst_rtsp_stream_handle_keymgmt</c>.</returns>
     public bool HandleKeymgmt(string keymgmt)
     {
@@ -532,7 +532,7 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     }
 
     /// <summary>Check if @stream has the control string @control.</summary>
-    /// <param name="control">The <c>control</c> argument.</param>
+    /// <param name="control">a control string</param>
     /// <returns>%TRUE is @stream has @control as the control string</returns>
     public bool HasControl(string? control)
     {
@@ -602,7 +602,7 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     }
 
     /// <summary>Check if @transport can be handled by stream</summary>
-    /// <param name="transport">The <c>transport</c> argument.</param>
+    /// <param name="transport">a #GstRTSPTransport</param>
     /// <returns>%TRUE if @transport can be handled by @stream.</returns>
     public bool IsTransportSupported(Gst.Rtsp.RTSPTransport transport)
     {
@@ -620,9 +620,9 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     /// added to @bin will be set to the state given in @state.
     /// </para>
     /// </remarks>
-    /// <param name="bin">The <c>bin</c> argument.</param>
-    /// <param name="rtpbin">The <c>rtpbin</c> argument.</param>
-    /// <param name="state">The <c>state</c> argument.</param>
+    /// <param name="bin">a #GstBin to join</param>
+    /// <param name="rtpbin">a rtpbin element in @bin</param>
+    /// <param name="state">the target state of the new elements</param>
     /// <returns>%TRUE on success.</returns>
     public bool JoinBin(Gst.Bin bin, Gst.Element rtpbin, Gst.State state)
     {
@@ -636,8 +636,8 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     }
 
     /// <summary>Remove the elements of @stream from @bin.</summary>
-    /// <param name="bin">The <c>bin</c> argument.</param>
-    /// <param name="rtpbin">The <c>rtpbin</c> argument.</param>
+    /// <param name="bin">a #GstBin</param>
+    /// <param name="rtpbin">a rtpbin #GstElement</param>
     /// <returns>%TRUE on success.</returns>
     public bool LeaveBin(Gst.Bin bin, Gst.Element rtpbin)
     {
@@ -654,7 +654,7 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     /// Query the position of the stream in %GST_FORMAT_TIME. This only considers
     /// the RTP parts of the pipeline and not the RTCP parts.
     /// </summary>
-    /// <param name="position">The <c>position</c> argument.</param>
+    /// <param name="position">current position of a #GstRTSPStream</param>
     /// <returns>%TRUE if the position could be queried</returns>
     public bool QueryPosition(out long position)
     {
@@ -669,7 +669,7 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     /// Query the stop of the stream in %GST_FORMAT_TIME. This only considers
     /// the RTP parts of the pipeline and not the RTCP parts.
     /// </summary>
-    /// <param name="stop">The <c>stop</c> argument.</param>
+    /// <param name="stop">current stop of a #GstRTSPStream</param>
     /// <returns>%TRUE if the stop could be queried</returns>
     public bool QueryStop(out long stop)
     {
@@ -695,7 +695,7 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     /// </para>
     /// </remarks>
     /// <param name="buffer">
-    /// The <c>buffer</c> argument.
+    /// a #GstBuffer
     /// The call consumes it: <paramref name="buffer"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// </param>
@@ -733,7 +733,7 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     /// </para>
     /// </remarks>
     /// <param name="buffer">
-    /// The <c>buffer</c> argument.
+    /// a #GstBuffer
     /// The call consumes it: <paramref name="buffer"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// </param>
@@ -764,7 +764,7 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     /// <para>@stream must be joined to a bin.</para>
     /// <para>@trans must contain a valid #GstRTSPTransport.</para>
     /// </remarks>
-    /// <param name="trans">The <c>trans</c> argument.</param>
+    /// <param name="trans">a #GstRTSPStreamTransport</param>
     /// <returns>%TRUE if @trans was removed</returns>
     public bool RemoveTransport(Gst.RtspServer.RTSPStreamTransport trans)
     {
@@ -776,7 +776,7 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     }
 
     /// <summary>Creating a rtxreceive bin</summary>
-    /// <param name="sessid">The <c>sessid</c> argument.</param>
+    /// <param name="sessid">the session id</param>
     /// <returns>a #GstElement.</returns>
     public Gst.Element? RequestAuxReceiver(uint sessid)
     {
@@ -786,7 +786,7 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     }
 
     /// <summary>Creating a rtxsend bin</summary>
-    /// <param name="sessid">The <c>sessid</c> argument.</param>
+    /// <param name="sessid">the session id</param>
     /// <returns>a #GstElement.</returns>
     public Gst.Element? RequestAuxSender(uint sessid)
     {
@@ -823,10 +823,10 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     /// #GstRTSPAddress is cached and copy is returned, so freeing the return value
     /// won't release the address from the pool.
     /// </summary>
-    /// <param name="address">The <c>address</c> argument.</param>
-    /// <param name="port">The <c>port</c> argument.</param>
-    /// <param name="nPorts">The <c>nPorts</c> argument.</param>
-    /// <param name="ttl">The <c>ttl</c> argument.</param>
+    /// <param name="address">an address</param>
+    /// <param name="port">a port</param>
+    /// <param name="nPorts">n_ports</param>
+    /// <param name="ttl">a TTL</param>
     /// <returns>
     /// the #GstRTSPAddress of @stream or %NULL when
     /// the address could not be reserved. gst_rtsp_address_free() after
@@ -852,7 +852,7 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     }
 
     /// <summary>configure @pool to be used as the address pool of @stream.</summary>
-    /// <param name="pool">The <c>pool</c> argument.</param>
+    /// <param name="pool">a #GstRTSPAddressPool</param>
     public void SetAddressPool(Gst.RtspServer.RTSPAddressPool? pool)
     {
         GstRtspStreamSetAddressPool(Handle, pool is null ? 0 : pool.Handle);
@@ -864,7 +864,7 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     /// Decide whether the multicast socket should be bound to a multicast address or
     /// INADDR_ANY.
     /// </summary>
-    /// <param name="bindMcastAddr">The <c>bindMcastAddr</c> argument.</param>
+    /// <param name="bindMcastAddr">the new value</param>
     public void SetBindMcastAddress(bool bindMcastAddr)
     {
         GstRtspStreamSetBindMcastAddress(Handle, bindMcastAddr ? 1 : 0);
@@ -872,7 +872,7 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     }
 
     /// <summary>Blocks or unblocks the dataflow on @stream.</summary>
-    /// <param name="blocked">The <c>blocked</c> argument.</param>
+    /// <param name="blocked">boolean indicating we should block or unblock</param>
     /// <returns>%TRUE on success</returns>
     public bool SetBlocked(bool blocked)
     {
@@ -885,7 +885,7 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     /// Set the size of the UDP transmission buffer (in bytes)
     /// Needs to be set before the stream is joined to a bin.
     /// </summary>
-    /// <param name="size">The <c>size</c> argument.</param>
+    /// <param name="size">the buffer size</param>
     public void SetBufferSize(uint size)
     {
         GstRtspStreamSetBufferSize(Handle, size);
@@ -899,7 +899,10 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     /// side of the stream sending to be either the 'server' or 'client' pair
     /// of a configured UDP transport.
     /// </summary>
-    /// <param name="clientSide">The <c>clientSide</c> argument.</param>
+    /// <param name="clientSide">
+    /// TRUE if this #GstRTSPStream is running on the 'client' side of
+    /// an RTSP connection.
+    /// </param>
     public void SetClientSide(bool clientSide)
     {
         GstRtspStreamSetClientSide(Handle, clientSide ? 1 : 0);
@@ -907,7 +910,7 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     }
 
     /// <summary>Set the control string in @stream.</summary>
-    /// <param name="control">The <c>control</c> argument.</param>
+    /// <param name="control">a control string</param>
     public void SetControl(string? control)
     {
         System.Span<byte> controlBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
@@ -917,7 +920,7 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     }
 
     /// <summary>Configure the dscp qos of the outgoing sockets to @dscp_qos.</summary>
-    /// <param name="dscpQos">The <c>dscpQos</c> argument.</param>
+    /// <param name="dscpQos">a new dscp qos value (0-63, or -1 to disable)</param>
     public void SetDscpQos(int dscpQos)
     {
         GstRtspStreamSetDscpQos(Handle, dscpQos);
@@ -925,7 +928,7 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     }
 
     /// <summary>Set the maximum time-to-live value of outgoing multicast packets.</summary>
-    /// <param name="ttl">The <c>ttl</c> argument.</param>
+    /// <param name="ttl">the new multicast ttl value</param>
     /// <returns>%TRUE if the requested ttl has been set successfully.</returns>
     public bool SetMaxMcastTtl(uint ttl)
     {
@@ -935,7 +938,7 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     }
 
     /// <summary>Configure the mtu in the payloader of @stream to @mtu.</summary>
-    /// <param name="mtu">The <c>mtu</c> argument.</param>
+    /// <param name="mtu">a new MTU</param>
     public void SetMtu(uint mtu)
     {
         GstRtspStreamSetMtu(Handle, mtu);
@@ -943,7 +946,7 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     }
 
     /// <summary>configure @multicast_iface to be used for @stream.</summary>
-    /// <param name="multicastIface">The <c>multicastIface</c> argument.</param>
+    /// <param name="multicastIface">a multicast interface name</param>
     public void SetMulticastIface(string? multicastIface)
     {
         System.Span<byte> multicastIfaceBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
@@ -953,7 +956,7 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     }
 
     /// <summary>Configure the allowed profiles for @stream.</summary>
-    /// <param name="profiles">The <c>profiles</c> argument.</param>
+    /// <param name="profiles">the new profiles</param>
     public void SetProfiles(Gst.Rtsp.RTSPProfile profiles)
     {
         GstRtspStreamSetProfiles(Handle, (int)profiles);
@@ -961,7 +964,7 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     }
 
     /// <summary>Configure the allowed lower transport for @stream.</summary>
-    /// <param name="protocols">The <c>protocols</c> argument.</param>
+    /// <param name="protocols">the new flags</param>
     public void SetProtocols(Gst.Rtsp.RTSPLowerTrans protocols)
     {
         GstRtspStreamSetProtocols(Handle, (int)protocols);
@@ -969,8 +972,8 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     }
 
     /// <summary>Configure a pt map between @pt and @caps.</summary>
-    /// <param name="pt">The <c>pt</c> argument.</param>
-    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <param name="pt">the pt</param>
+    /// <param name="caps">a #GstCaps</param>
     public void SetPtMap(uint pt, Gst.Caps caps)
     {
         ArgumentNullException.ThrowIfNull(caps);
@@ -980,7 +983,7 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     }
 
     /// <summary>Sets if and how the stream clock should be published according to RFC7273.</summary>
-    /// <param name="mode">The <c>mode</c> argument.</param>
+    /// <param name="mode">the clock publish mode</param>
     public void SetPublishClockMode(Gst.RtspServer.RTSPPublishClockMode mode)
     {
         GstRtspStreamSetPublishClockMode(Handle, (int)mode);
@@ -999,7 +1002,7 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     }
 
     /// <summary>Set the payload type (pt) for retransmission of this stream.</summary>
-    /// <param name="rtxPt">The <c>rtxPt</c> argument.</param>
+    /// <param name="rtxPt">a #guint</param>
     public void SetRetransmissionPt(uint rtxPt)
     {
         GstRtspStreamSetRetransmissionPt(Handle, rtxPt);
@@ -1007,7 +1010,7 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     }
 
     /// <summary>Set the amount of time to store retransmission packets.</summary>
-    /// <param name="time">The <c>time</c> argument.</param>
+    /// <param name="time">a #GstClockTime</param>
     public void SetRetransmissionTime(Gst.ClockTime time)
     {
         GstRtspStreamSetRetransmissionTime(Handle, time.Nanoseconds);
@@ -1118,8 +1121,8 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     /// for @ssrc existed, it will be replaced. If @crypto is %NULL, it will
     /// be removed from @stream.
     /// </summary>
-    /// <param name="ssrc">The <c>ssrc</c> argument.</param>
-    /// <param name="crypto">The <c>crypto</c> argument.</param>
+    /// <param name="ssrc">the SSRC</param>
+    /// <param name="crypto">a #GstCaps with crypto info</param>
     /// <returns>%TRUE if @crypto could be updated</returns>
     public bool UpdateCrypto(uint ssrc, Gst.Caps? crypto)
     {
@@ -1130,7 +1133,7 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     }
 
     /// <summary>Check if the requested multicast ttl value is allowed.</summary>
-    /// <param name="ttl">The <c>ttl</c> argument.</param>
+    /// <param name="ttl">a requested multicast ttl</param>
     /// <returns>TRUE if the requested ttl value is allowed.</returns>
     public bool VerifyMcastTtl(uint ttl)
     {

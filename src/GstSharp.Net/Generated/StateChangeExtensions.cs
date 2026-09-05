@@ -12,7 +12,7 @@ namespace Gst;
 public static unsafe partial class StateChangeExtensions
 {
     /// <summary>Gets a string representing the given state transition.</summary>
-    /// <param name="transition">The <c>transition</c> argument.</param>
+    /// <param name="transition">a #GstStateChange to get the name of.</param>
     /// <returns>
     /// a string with the name of the state
     ///    result.

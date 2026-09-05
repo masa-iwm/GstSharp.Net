@@ -101,8 +101,8 @@ public unsafe partial class BufferPool : Gst.Object
     /// <remarks>
     /// <para>@params can contain optional parameters to influence the allocation.</para>
     /// </remarks>
-    /// <param name="buffer">The <c>buffer</c> argument.</param>
-    /// <param name="params">The <c>@params</c> argument.</param>
+    /// <param name="buffer">a location for a #GstBuffer</param>
+    /// <param name="params">parameters.</param>
     /// <returns>
     /// a #GstFlowReturn such as %GST_FLOW_FLUSHING when the pool is
     /// inactive.
@@ -147,7 +147,7 @@ public unsafe partial class BufferPool : Gst.Object
     }
 
     /// <summary>Checks if the bufferpool supports @option.</summary>
-    /// <param name="option">The <c>option</c> argument.</param>
+    /// <param name="option">an option</param>
     /// <returns>%TRUE if the buffer pool contains @option.</returns>
     public bool HasOption(string option)
     {
@@ -186,7 +186,7 @@ public unsafe partial class BufferPool : Gst.Object
     /// they are all returned to the pool.
     /// </para>
     /// </remarks>
-    /// <param name="active">The <c>active</c> argument.</param>
+    /// <param name="active">the new active state</param>
     /// <returns>
     /// %FALSE when the pool was not configured or when preallocation of the
     /// buffers failed.
@@ -202,7 +202,7 @@ public unsafe partial class BufferPool : Gst.Object
     /// Enables or disables the flushing state of a @pool without freeing or
     /// allocating buffers.
     /// </summary>
-    /// <param name="flushing">The <c>flushing</c> argument.</param>
+    /// <param name="flushing">whether to start or stop flushing</param>
     public void SetFlushing(bool flushing)
     {
         GstBufferPoolSetFlushing(Handle, flushing ? 1 : 0);
@@ -216,8 +216,8 @@ public unsafe partial class BufferPool : Gst.Object
     /// <remarks>
     /// <para>The options supported by @pool can be retrieved with gst_buffer_pool_get_options().</para>
     /// </remarks>
-    /// <param name="config">The <c>config</c> argument.</param>
-    /// <param name="option">The <c>option</c> argument.</param>
+    /// <param name="config">a #GstBufferPool configuration</param>
+    /// <param name="option">an option to add</param>
     public static void ConfigAddOption(Gst.Structure config, string option)
     {
         ArgumentNullException.ThrowIfNull(config);
@@ -229,10 +229,10 @@ public unsafe partial class BufferPool : Gst.Object
     }
 
     /// <summary>Gets the @allocator and @params from @config.</summary>
-    /// <param name="config">The <c>config</c> argument.</param>
-    /// <param name="allocator">The <c>allocator</c> argument.</param>
+    /// <param name="config">a #GstBufferPool configuration</param>
+    /// <param name="allocator">a #GstAllocator, or %NULL</param>
     /// <param name="params">
-    /// The <c>@params</c> argument.
+    /// #GstAllocationParams, or %NULL
     /// The binding allocates the storage; on success the caller owns
     /// <paramref name="params"/> and disposes it. On failure it is
     /// <see langword="null"/>.
@@ -265,8 +265,8 @@ public unsafe partial class BufferPool : Gst.Object
     /// Parses an available @config and gets the option at @index of the options API
     /// array.
     /// </summary>
-    /// <param name="config">The <c>config</c> argument.</param>
-    /// <param name="index">The <c>index</c> argument.</param>
+    /// <param name="config">a #GstBufferPool configuration</param>
+    /// <param name="index">position in the option array to read</param>
     /// <returns>the option at @index.</returns>
     public static string? ConfigGetOption(Gst.Structure config, uint index)
     {
@@ -277,11 +277,11 @@ public unsafe partial class BufferPool : Gst.Object
     }
 
     /// <summary>Gets the configuration values from @config.</summary>
-    /// <param name="config">The <c>config</c> argument.</param>
-    /// <param name="caps">The <c>caps</c> argument.</param>
-    /// <param name="size">The <c>size</c> argument.</param>
-    /// <param name="minBuffers">The <c>minBuffers</c> argument.</param>
-    /// <param name="maxBuffers">The <c>maxBuffers</c> argument.</param>
+    /// <param name="config">a #GstBufferPool configuration</param>
+    /// <param name="caps">the caps of buffers</param>
+    /// <param name="size">the size of each buffer, not including prefix and padding</param>
+    /// <param name="minBuffers">the minimum amount of buffers to allocate.</param>
+    /// <param name="maxBuffers">the maximum amount of buffers to allocate or 0 for unlimited.</param>
     /// <returns>%TRUE if all parameters could be fetched.</returns>
     public static bool ConfigGetParams(Gst.Structure config, out Gst.Caps? caps, out uint size, out uint minBuffers, out uint maxBuffers)
     {
@@ -300,8 +300,8 @@ public unsafe partial class BufferPool : Gst.Object
     }
 
     /// <summary>Checks if @config contains @option.</summary>
-    /// <param name="config">The <c>config</c> argument.</param>
-    /// <param name="option">The <c>option</c> argument.</param>
+    /// <param name="config">a #GstBufferPool configuration</param>
+    /// <param name="option">an option</param>
     /// <returns>%TRUE if the options array contains @option.</returns>
     public static bool ConfigHasOption(Gst.Structure config, string option)
     {
@@ -318,7 +318,7 @@ public unsafe partial class BufferPool : Gst.Object
     /// Retrieves the number of values currently stored in the options array of the
     /// @config structure.
     /// </summary>
-    /// <param name="config">The <c>config</c> argument.</param>
+    /// <param name="config">a #GstBufferPool configuration</param>
     /// <returns>the options array size as a #guint.</returns>
     public static uint ConfigNOptions(Gst.Structure config)
     {
@@ -344,9 +344,9 @@ public unsafe partial class BufferPool : Gst.Object
     /// used values.
     /// </para>
     /// </remarks>
-    /// <param name="config">The <c>config</c> argument.</param>
-    /// <param name="allocator">The <c>allocator</c> argument.</param>
-    /// <param name="params">The <c>@params</c> argument.</param>
+    /// <param name="config">a #GstBufferPool configuration</param>
+    /// <param name="allocator">a #GstAllocator</param>
+    /// <param name="params">#GstAllocationParams</param>
     public static void ConfigSetAllocator(Gst.Structure config, Gst.Allocator? allocator, Gst.AllocationParams? @params)
     {
         ArgumentNullException.ThrowIfNull(config);
@@ -357,11 +357,11 @@ public unsafe partial class BufferPool : Gst.Object
     }
 
     /// <summary>Configures @config with the given parameters.</summary>
-    /// <param name="config">The <c>config</c> argument.</param>
-    /// <param name="caps">The <c>caps</c> argument.</param>
-    /// <param name="size">The <c>size</c> argument.</param>
-    /// <param name="minBuffers">The <c>minBuffers</c> argument.</param>
-    /// <param name="maxBuffers">The <c>maxBuffers</c> argument.</param>
+    /// <param name="config">a #GstBufferPool configuration</param>
+    /// <param name="caps">caps for the buffers</param>
+    /// <param name="size">the size of each buffer, not including prefix and padding</param>
+    /// <param name="minBuffers">the minimum amount of buffers to allocate.</param>
+    /// <param name="maxBuffers">the maximum amount of buffers to allocate or 0 for unlimited.</param>
     public static void ConfigSetParams(Gst.Structure config, Gst.Caps? caps, uint size, uint minBuffers, uint maxBuffers)
     {
         ArgumentNullException.ThrowIfNull(config);
@@ -380,11 +380,11 @@ public unsafe partial class BufferPool : Gst.Object
     /// won't check if size have changed, since changing the size is valid to adapt
     /// padding.
     /// </summary>
-    /// <param name="config">The <c>config</c> argument.</param>
-    /// <param name="caps">The <c>caps</c> argument.</param>
-    /// <param name="size">The <c>size</c> argument.</param>
-    /// <param name="minBuffers">The <c>minBuffers</c> argument.</param>
-    /// <param name="maxBuffers">The <c>maxBuffers</c> argument.</param>
+    /// <param name="config">a #GstBufferPool configuration</param>
+    /// <param name="caps">the excepted caps of buffers</param>
+    /// <param name="size">the expected size of each buffer, not including prefix and padding</param>
+    /// <param name="minBuffers">the expected minimum amount of buffers to allocate.</param>
+    /// <param name="maxBuffers">the expect maximum amount of buffers to allocate or 0 for unlimited.</param>
     /// <returns>%TRUE, if the parameters are valid in this context.</returns>
     public static bool ConfigValidateParams(Gst.Structure config, Gst.Caps? caps, uint size, uint minBuffers, uint maxBuffers)
     {

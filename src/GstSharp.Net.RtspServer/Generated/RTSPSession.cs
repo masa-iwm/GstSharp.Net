@@ -45,7 +45,7 @@ public unsafe partial class RTSPSession : Gst.GObject.Object
     }
 
     /// <summary>Create a new #GstRTSPSession instance with @sessionid.</summary>
-    /// <param name="sessionid">The <c>sessionid</c> argument.</param>
+    /// <param name="sessionid">a session id</param>
     /// <returns>a new #GstRTSPSession</returns>
     public static Gst.RtspServer.RTSPSession New(string sessionid)
     {
@@ -71,8 +71,8 @@ public unsafe partial class RTSPSession : Gst.GObject.Object
     /// Gets the session media for @path, increasing its reference count. @matched
     /// will contain the number of matched characters of @path.
     /// </summary>
-    /// <param name="path">The <c>path</c> argument.</param>
-    /// <param name="matched">The <c>matched</c> argument.</param>
+    /// <param name="path">the path for the media</param>
+    /// <param name="matched">the amount of matched characters</param>
     /// <returns>
     /// the configuration for @path in @sess,
     /// should be unreferenced when no longer needed.
@@ -155,8 +155,8 @@ public unsafe partial class RTSPSession : Gst.GObject.Object
     /// Gets the session media for @path. @matched will contain the number of matched
     /// characters of @path.
     /// </summary>
-    /// <param name="path">The <c>path</c> argument.</param>
-    /// <param name="matched">The <c>matched</c> argument.</param>
+    /// <param name="path">the path for the media</param>
+    /// <param name="matched">the amount of matched characters</param>
     /// <returns>the configuration for @path in @sess.</returns>
     public Gst.RtspServer.RTSPSessionMedia? GetMedia(string path, out int matched)
     {
@@ -192,7 +192,7 @@ public unsafe partial class RTSPSession : Gst.GObject.Object
     }
 
     /// <summary>Check if @session timeout out.</summary>
-    /// <param name="now">The <c>now</c> argument.</param>
+    /// <param name="now">the current monotonic time</param>
     /// <returns>%TRUE if @session timed out</returns>
     public bool IsExpiredUsec(long now)
     {
@@ -218,9 +218,9 @@ public unsafe partial class RTSPSession : Gst.GObject.Object
     /// declaration around the argument stays correct.
     /// </para>
     /// </remarks>
-    /// <param name="path">The <c>path</c> argument.</param>
+    /// <param name="path">the path for the media</param>
     /// <param name="media">
-    /// The <c>media</c> argument.
+    /// a #GstRTSPMedia
     /// The call consumes it: <paramref name="media"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// </param>
@@ -248,7 +248,7 @@ public unsafe partial class RTSPSession : Gst.GObject.Object
     }
 
     /// <summary>Get the amount of milliseconds till the session will expire.</summary>
-    /// <param name="now">The <c>now</c> argument.</param>
+    /// <param name="now">the current monotonic time</param>
     /// <returns>the amount of milliseconds since the session will time out.</returns>
     public int NextTimeoutUsec(long now)
     {
@@ -265,7 +265,7 @@ public unsafe partial class RTSPSession : Gst.GObject.Object
     }
 
     /// <summary>Release the managed @media in @sess, freeing the memory allocated by it.</summary>
-    /// <param name="media">The <c>media</c> argument.</param>
+    /// <param name="media">a #GstRTSPMedia</param>
     /// <returns>%TRUE if there are more media session left in @sess.</returns>
     public bool ReleaseMedia(Gst.RtspServer.RTSPSessionMedia media)
     {
@@ -280,7 +280,7 @@ public unsafe partial class RTSPSession : Gst.GObject.Object
     /// Configure @session for a timeout of @timeout seconds. The session will be
     /// cleaned up when there is no activity for @timeout seconds.
     /// </summary>
-    /// <param name="timeout">The <c>timeout</c> argument.</param>
+    /// <param name="timeout">the new timeout</param>
     public void SetTimeout(uint timeout)
     {
         GstRtspSessionSetTimeout(Handle, timeout);

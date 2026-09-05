@@ -70,7 +70,7 @@ public static unsafe partial class TocSetterExtensions
     /// unreffed before setting a new one.
     /// </summary>
     /// <param name="setter">a #GstTocSetter.</param>
-    /// <param name="toc">The <c>toc</c> argument.</param>
+    /// <param name="toc">a #GstToc to set.</param>
     public static void SetToc(this Gst.ITocSetter setter, Gst.Toc? toc)
     {
         ArgumentNullException.ThrowIfNull(setter);

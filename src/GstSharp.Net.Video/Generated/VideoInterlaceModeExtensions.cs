@@ -12,7 +12,7 @@ namespace Gst.Video;
 public static unsafe partial class VideoInterlaceModeExtensions
 {
     /// <summary>Convert @mode to a #GstVideoInterlaceMode</summary>
-    /// <param name="mode">The <c>mode</c> argument.</param>
+    /// <param name="mode">a mode</param>
     /// <returns>
     /// the #GstVideoInterlaceMode of @mode or
     ///    #GST_VIDEO_INTERLACE_MODE_PROGRESSIVE when @mode is not a valid
@@ -28,7 +28,7 @@ public static unsafe partial class VideoInterlaceModeExtensions
     }
 
     /// <summary>Convert @mode to its string representation.</summary>
-    /// <param name="mode">The <c>mode</c> argument.</param>
+    /// <param name="mode">a #GstVideoInterlaceMode</param>
     /// <returns>@mode as a string.</returns>
     public static string ToString(Gst.Video.VideoInterlaceMode mode)
     {

@@ -98,7 +98,7 @@ public unsafe partial class RTSPOnvifMediaFactory : Gst.RtspServer.RTSPMediaFact
     /// Set the configured/supported bandwidth of the ONVIF backchannel pipeline in
     /// bits per second.
     /// </summary>
-    /// <param name="bandwidth">The <c>bandwidth</c> argument.</param>
+    /// <param name="bandwidth">the bandwidth in bits per second</param>
     public void SetBackchannelBandwidth(uint bandwidth)
     {
         GstRtspOnvifMediaFactorySetBackchannelBandwidth(Handle, bandwidth);
@@ -128,7 +128,7 @@ public unsafe partial class RTSPOnvifMediaFactory : Gst.RtspServer.RTSPMediaFact
     /// prepare.
     /// </para>
     /// </remarks>
-    /// <param name="launch">The <c>launch</c> argument.</param>
+    /// <param name="launch">the launch description</param>
     public void SetBackchannelLaunch(string? launch)
     {
         System.Span<byte> launchBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
@@ -146,7 +146,7 @@ public unsafe partial class RTSPOnvifMediaFactory : Gst.RtspServer.RTSPMediaFact
     }
 
     /// <summary>Checks whether the client request requires backchannel.</summary>
-    /// <param name="factory">The <c>factory</c> argument.</param>
+    /// <param name="factory">a #GstRTSPMediaFactory</param>
     /// <param name="ctx">The <c>ctx</c> argument.</param>
     /// <returns>%TRUE if the client request requires backchannel.</returns>
     public static bool RequiresBackchannel(Gst.RtspServer.RTSPMediaFactory factory, Gst.RtspServer.RTSPContext ctx)

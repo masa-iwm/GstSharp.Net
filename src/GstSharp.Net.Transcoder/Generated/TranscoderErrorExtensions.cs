@@ -12,7 +12,7 @@ namespace Gst.Transcoder;
 public static unsafe partial class TranscoderErrorExtensions
 {
     /// <summary>Gets a string representing the given error.</summary>
-    /// <param name="error">The <c>error</c> argument.</param>
+    /// <param name="error">a #GstTranscoderError</param>
     /// <returns>a string with the given error.</returns>
     public static string GetName(Gst.Transcoder.TranscoderError error)
     {

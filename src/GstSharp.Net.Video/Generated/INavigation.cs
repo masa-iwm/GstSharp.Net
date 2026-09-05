@@ -48,7 +48,7 @@ public static unsafe partial class NavigationExtensions
 {
     /// <summary>Sends the indicated command to the navigation interface.</summary>
     /// <param name="navigation">The navigation interface instance</param>
-    /// <param name="command">The <c>command</c> argument.</param>
+    /// <param name="command">The command to issue</param>
     public static void SendCommand(this Gst.Video.INavigation navigation, Gst.Video.NavigationCommand command)
     {
         ArgumentNullException.ThrowIfNull(navigation);
@@ -80,7 +80,7 @@ public static unsafe partial class NavigationExtensions
     /// </remarks>
     /// <param name="navigation">The navigation interface instance</param>
     /// <param name="event">
-    /// The <c>@event</c> argument.
+    /// The event to send
     /// The call consumes it: <paramref name="event"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// </param>
@@ -104,8 +104,14 @@ public static unsafe partial class NavigationExtensions
 
     /// <summary>The <c>gst_navigation_send_key_event</c> function.</summary>
     /// <param name="navigation">The navigation interface instance</param>
-    /// <param name="event">The <c>@event</c> argument.</param>
-    /// <param name="key">The <c>key</c> argument.</param>
+    /// <param name="event">
+    /// The type of the key event. Recognised values are "key-press" and
+    /// "key-release"
+    /// </param>
+    /// <param name="key">
+    /// Character representation of the key. This is typically as produced
+    /// by XKeysymToString.
+    /// </param>
     public static void SendKeyEvent(this Gst.Video.INavigation navigation, string @event, string key)
     {
         ArgumentNullException.ThrowIfNull(navigation);
@@ -126,10 +132,16 @@ public static unsafe partial class NavigationExtensions
     /// implementing the #GstNavigation interface.
     /// </summary>
     /// <param name="navigation">The navigation interface instance</param>
-    /// <param name="event">The <c>@event</c> argument.</param>
-    /// <param name="button">The <c>button</c> argument.</param>
-    /// <param name="x">The <c>x</c> argument.</param>
-    /// <param name="y">The <c>y</c> argument.</param>
+    /// <param name="event">
+    /// The type of mouse event, as a text string. Recognised values are
+    /// "mouse-button-press", "mouse-button-release", "mouse-move" and "mouse-double-click".
+    /// </param>
+    /// <param name="button">
+    /// The button number of the button being pressed or released. Pass 0
+    /// for mouse-move events.
+    /// </param>
+    /// <param name="x">The x coordinate of the mouse event.</param>
+    /// <param name="y">The y coordinate of the mouse event.</param>
     public static void SendMouseEvent(this Gst.Video.INavigation navigation, string @event, int button, double x, double y)
     {
         ArgumentNullException.ThrowIfNull(navigation);
@@ -147,10 +159,10 @@ public static unsafe partial class NavigationExtensions
     /// implementing the #GstNavigation interface.
     /// </summary>
     /// <param name="navigation">The navigation interface instance</param>
-    /// <param name="x">The <c>x</c> argument.</param>
-    /// <param name="y">The <c>y</c> argument.</param>
-    /// <param name="deltaX">The <c>deltaX</c> argument.</param>
-    /// <param name="deltaY">The <c>deltaY</c> argument.</param>
+    /// <param name="x">The x coordinate of the mouse event.</param>
+    /// <param name="y">The y coordinate of the mouse event.</param>
+    /// <param name="deltaX">The delta_x coordinate of the mouse event.</param>
+    /// <param name="deltaY">The delta_y coordinate of the mouse event.</param>
     public static void SendMouseScrollEvent(this Gst.Video.INavigation navigation, double x, double y, double deltaX, double deltaY)
     {
         ArgumentNullException.ThrowIfNull(navigation);
@@ -159,9 +171,15 @@ public static unsafe partial class NavigationExtensions
     }
 
     /// <summary>Try to retrieve x and y coordinates of a #GstNavigation event.</summary>
-    /// <param name="event">The <c>@event</c> argument.</param>
-    /// <param name="x">The <c>x</c> argument.</param>
-    /// <param name="y">The <c>y</c> argument.</param>
+    /// <param name="event">The #GstEvent to inspect.</param>
+    /// <param name="x">
+    /// Pointer to a gdouble to receive the x coordinate of the
+    ///     navigation event.
+    /// </param>
+    /// <param name="y">
+    /// Pointer to a gdouble to receive the y coordinate of the
+    ///     navigation event.
+    /// </param>
     /// <returns>A boolean indicating success.</returns>
     public static bool EventGetCoordinates(Gst.Event @event, out double x, out double y)
     {
@@ -179,7 +197,7 @@ public static unsafe partial class NavigationExtensions
     /// Inspect a #GstEvent and return the #GstNavigationEventType of the event, or
     /// #GST_NAVIGATION_EVENT_INVALID if the event is not a #GstNavigation event.
     /// </summary>
-    /// <param name="event">The <c>@event</c> argument.</param>
+    /// <param name="event">A #GstEvent to inspect.</param>
     /// <returns>The result of <c>gst_navigation_event_get_type</c>.</returns>
     public static Gst.Video.NavigationEventType EventGetType(Gst.Event @event)
     {
@@ -190,7 +208,7 @@ public static unsafe partial class NavigationExtensions
     }
 
     /// <summary>Create a new navigation event given navigation command..</summary>
-    /// <param name="command">The <c>command</c> argument.</param>
+    /// <param name="command">The navigation command to use.</param>
     /// <returns>a new #GstEvent</returns>
     public static Gst.Event EventNewCommand(Gst.Video.NavigationCommand command)
     {
@@ -200,8 +218,11 @@ public static unsafe partial class NavigationExtensions
     }
 
     /// <summary>Create a new navigation event for the given key press.</summary>
-    /// <param name="key">The <c>key</c> argument.</param>
-    /// <param name="state">The <c>state</c> argument.</param>
+    /// <param name="key">A string identifying the key press.</param>
+    /// <param name="state">
+    /// a bit-mask representing the state of the modifier keys (e.g. Control,
+    /// Shift and Alt).
+    /// </param>
     /// <returns>a new #GstEvent</returns>
     public static Gst.Event EventNewKeyPress(string key, Gst.Video.NavigationModifierType state)
     {
@@ -214,8 +235,11 @@ public static unsafe partial class NavigationExtensions
     }
 
     /// <summary>Create a new navigation event for the given key release.</summary>
-    /// <param name="key">The <c>key</c> argument.</param>
-    /// <param name="state">The <c>state</c> argument.</param>
+    /// <param name="key">A string identifying the released key.</param>
+    /// <param name="state">
+    /// a bit-mask representing the state of the modifier keys (e.g. Control,
+    /// Shift and Alt).
+    /// </param>
     /// <returns>a new #GstEvent</returns>
     public static Gst.Event EventNewKeyRelease(string key, Gst.Video.NavigationModifierType state)
     {
@@ -228,10 +252,13 @@ public static unsafe partial class NavigationExtensions
     }
 
     /// <summary>Create a new navigation event for the given key mouse button press.</summary>
-    /// <param name="button">The <c>button</c> argument.</param>
-    /// <param name="x">The <c>x</c> argument.</param>
-    /// <param name="y">The <c>y</c> argument.</param>
-    /// <param name="state">The <c>state</c> argument.</param>
+    /// <param name="button">The number of the pressed mouse button.</param>
+    /// <param name="x">The x coordinate of the mouse cursor.</param>
+    /// <param name="y">The y coordinate of the mouse cursor.</param>
+    /// <param name="state">
+    /// a bit-mask representing the state of the modifier keys (e.g. Control,
+    /// Shift and Alt).
+    /// </param>
     /// <returns>a new #GstEvent</returns>
     public static Gst.Event EventNewMouseButtonPress(int button, double x, double y, Gst.Video.NavigationModifierType state)
     {
@@ -241,10 +268,13 @@ public static unsafe partial class NavigationExtensions
     }
 
     /// <summary>Create a new navigation event for the given key mouse button release.</summary>
-    /// <param name="button">The <c>button</c> argument.</param>
-    /// <param name="x">The <c>x</c> argument.</param>
-    /// <param name="y">The <c>y</c> argument.</param>
-    /// <param name="state">The <c>state</c> argument.</param>
+    /// <param name="button">The number of the released mouse button.</param>
+    /// <param name="x">The x coordinate of the mouse cursor.</param>
+    /// <param name="y">The y coordinate of the mouse cursor.</param>
+    /// <param name="state">
+    /// a bit-mask representing the state of the modifier keys (e.g. Control,
+    /// Shift and Alt).
+    /// </param>
     /// <returns>a new #GstEvent</returns>
     public static Gst.Event EventNewMouseButtonRelease(int button, double x, double y, Gst.Video.NavigationModifierType state)
     {
@@ -257,10 +287,13 @@ public static unsafe partial class NavigationExtensions
     /// <remarks>
     /// <para>Available since GStreamer 1.26.</para>
     /// </remarks>
-    /// <param name="button">The <c>button</c> argument.</param>
-    /// <param name="x">The <c>x</c> argument.</param>
-    /// <param name="y">The <c>y</c> argument.</param>
-    /// <param name="state">The <c>state</c> argument.</param>
+    /// <param name="button">The number of the pressed mouse button.</param>
+    /// <param name="x">The x coordinate of the mouse cursor.</param>
+    /// <param name="y">The y coordinate of the mouse cursor.</param>
+    /// <param name="state">
+    /// a bit-mask representing the state of the modifier keys (e.g. Control,
+    /// Shift and Alt).
+    /// </param>
     /// <returns>a new #GstEvent</returns>
     public static Gst.Event EventNewMouseDoubleClick(int button, double x, double y, Gst.Video.NavigationModifierType state)
     {
@@ -270,9 +303,12 @@ public static unsafe partial class NavigationExtensions
     }
 
     /// <summary>Create a new navigation event for the new mouse location.</summary>
-    /// <param name="x">The <c>x</c> argument.</param>
-    /// <param name="y">The <c>y</c> argument.</param>
-    /// <param name="state">The <c>state</c> argument.</param>
+    /// <param name="x">The x coordinate of the mouse cursor.</param>
+    /// <param name="y">The y coordinate of the mouse cursor.</param>
+    /// <param name="state">
+    /// a bit-mask representing the state of the modifier keys (e.g. Control,
+    /// Shift and Alt).
+    /// </param>
     /// <returns>a new #GstEvent</returns>
     public static Gst.Event EventNewMouseMove(double x, double y, Gst.Video.NavigationModifierType state)
     {
@@ -282,11 +318,14 @@ public static unsafe partial class NavigationExtensions
     }
 
     /// <summary>Create a new navigation event for the mouse scroll.</summary>
-    /// <param name="x">The <c>x</c> argument.</param>
-    /// <param name="y">The <c>y</c> argument.</param>
-    /// <param name="deltaX">The <c>deltaX</c> argument.</param>
-    /// <param name="deltaY">The <c>deltaY</c> argument.</param>
-    /// <param name="state">The <c>state</c> argument.</param>
+    /// <param name="x">The x coordinate of the mouse cursor.</param>
+    /// <param name="y">The y coordinate of the mouse cursor.</param>
+    /// <param name="deltaX">The x component of the scroll movement.</param>
+    /// <param name="deltaY">The y component of the scroll movement.</param>
+    /// <param name="state">
+    /// a bit-mask representing the state of the modifier keys (e.g. Control,
+    /// Shift and Alt).
+    /// </param>
     /// <returns>a new #GstEvent</returns>
     public static Gst.Event EventNewMouseScroll(double x, double y, double deltaX, double deltaY, Gst.Video.NavigationModifierType state)
     {
@@ -301,7 +340,10 @@ public static unsafe partial class NavigationExtensions
     /// this event might be sent when a swipe passes the threshold to be recognized
     /// as a gesture by the compositor.
     /// </summary>
-    /// <param name="state">The <c>state</c> argument.</param>
+    /// <param name="state">
+    /// a bit-mask representing the state of the modifier keys (e.g. Control,
+    /// Shift and Alt).
+    /// </param>
     /// <returns>a new #GstEvent</returns>
     public static Gst.Event EventNewTouchCancel(Gst.Video.NavigationModifierType state)
     {
@@ -311,11 +353,21 @@ public static unsafe partial class NavigationExtensions
     }
 
     /// <summary>Create a new navigation event for an added touch point.</summary>
-    /// <param name="identifier">The <c>identifier</c> argument.</param>
-    /// <param name="x">The <c>x</c> argument.</param>
-    /// <param name="y">The <c>y</c> argument.</param>
-    /// <param name="pressure">The <c>pressure</c> argument.</param>
-    /// <param name="state">The <c>state</c> argument.</param>
+    /// <param name="identifier">
+    /// A number uniquely identifying this touch point. It must stay
+    ///    unique to this touch point at least until an up event is sent for
+    ///    the same identifier, or all touch points are cancelled.
+    /// </param>
+    /// <param name="x">The x coordinate of the new touch point.</param>
+    /// <param name="y">The y coordinate of the new touch point.</param>
+    /// <param name="pressure">
+    /// Pressure data of the touch point, from 0.0 to 1.0, or NaN if no
+    ///    data is available.
+    /// </param>
+    /// <param name="state">
+    /// a bit-mask representing the state of the modifier keys (e.g. Control,
+    /// Shift and Alt).
+    /// </param>
     /// <returns>a new #GstEvent</returns>
     public static Gst.Event EventNewTouchDown(uint identifier, double x, double y, double pressure, Gst.Video.NavigationModifierType state)
     {
@@ -329,7 +381,10 @@ public static unsafe partial class NavigationExtensions
     /// frames signal that all previous down, motion and up events not followed by
     /// another touch frame event already should be considered simultaneous.
     /// </summary>
-    /// <param name="state">The <c>state</c> argument.</param>
+    /// <param name="state">
+    /// a bit-mask representing the state of the modifier keys (e.g. Control,
+    /// Shift and Alt).
+    /// </param>
     /// <returns>a new #GstEvent</returns>
     public static Gst.Event EventNewTouchFrame(Gst.Video.NavigationModifierType state)
     {
@@ -339,11 +394,20 @@ public static unsafe partial class NavigationExtensions
     }
 
     /// <summary>Create a new navigation event for a moved touch point.</summary>
-    /// <param name="identifier">The <c>identifier</c> argument.</param>
-    /// <param name="x">The <c>x</c> argument.</param>
-    /// <param name="y">The <c>y</c> argument.</param>
-    /// <param name="pressure">The <c>pressure</c> argument.</param>
-    /// <param name="state">The <c>state</c> argument.</param>
+    /// <param name="identifier">
+    /// A number uniquely identifying this touch point. It must
+    ///    correlate to exactly one previous touch_start event.
+    /// </param>
+    /// <param name="x">The x coordinate of the touch point.</param>
+    /// <param name="y">The y coordinate of the touch point.</param>
+    /// <param name="pressure">
+    /// Pressure data of the touch point, from 0.0 to 1.0, or NaN if no
+    ///    data is available.
+    /// </param>
+    /// <param name="state">
+    /// a bit-mask representing the state of the modifier keys (e.g. Control,
+    /// Shift and Alt).
+    /// </param>
     /// <returns>a new #GstEvent</returns>
     public static Gst.Event EventNewTouchMotion(uint identifier, double x, double y, double pressure, Gst.Video.NavigationModifierType state)
     {
@@ -353,10 +417,17 @@ public static unsafe partial class NavigationExtensions
     }
 
     /// <summary>Create a new navigation event for a removed touch point.</summary>
-    /// <param name="identifier">The <c>identifier</c> argument.</param>
-    /// <param name="x">The <c>x</c> argument.</param>
-    /// <param name="y">The <c>y</c> argument.</param>
-    /// <param name="state">The <c>state</c> argument.</param>
+    /// <param name="identifier">
+    /// A number uniquely identifying this touch point. It must
+    ///    correlate to exactly one previous down event, but can be reused
+    ///    after sending this event.
+    /// </param>
+    /// <param name="x">The x coordinate of the touch point.</param>
+    /// <param name="y">The y coordinate of the touch point.</param>
+    /// <param name="state">
+    /// a bit-mask representing the state of the modifier keys (e.g. Control,
+    /// Shift and Alt).
+    /// </param>
     /// <returns>a new #GstEvent</returns>
     public static Gst.Event EventNewTouchUp(uint identifier, double x, double y, Gst.Video.NavigationModifierType state)
     {
@@ -369,8 +440,11 @@ public static unsafe partial class NavigationExtensions
     /// Inspect a #GstNavigation command event and retrieve the enum value of the
     /// associated command.
     /// </summary>
-    /// <param name="event">The <c>@event</c> argument.</param>
-    /// <param name="command">The <c>command</c> argument.</param>
+    /// <param name="event">A #GstEvent to inspect.</param>
+    /// <param name="command">
+    /// Pointer to GstNavigationCommand to receive the
+    ///     type of the navigation event.
+    /// </param>
     /// <returns>TRUE if the navigation command could be extracted, otherwise FALSE.</returns>
     public static bool EventParseCommand(Gst.Event @event, out Gst.Video.NavigationCommand command)
     {
@@ -388,8 +462,12 @@ public static unsafe partial class NavigationExtensions
     /// [release](GST_NAVIGATION_KEY_PRESS) events are generated even if those states are
     /// present on all other related events
     /// </summary>
-    /// <param name="event">The <c>@event</c> argument.</param>
-    /// <param name="key">The <c>key</c> argument.</param>
+    /// <param name="event">A #GstEvent to inspect.</param>
+    /// <param name="key">
+    /// A pointer to a location to receive
+    ///     the string identifying the key press. The returned string is owned by the
+    ///     event, and valid only until the event is unreffed.
+    /// </param>
     /// <returns>The result of <c>gst_navigation_event_parse_key_event</c>.</returns>
     public static bool EventParseKeyEvent(Gst.Event @event, out string? key)
     {
@@ -402,8 +480,11 @@ public static unsafe partial class NavigationExtensions
     }
 
     /// <summary>The <c>gst_navigation_event_parse_modifier_state</c> function.</summary>
-    /// <param name="event">The <c>@event</c> argument.</param>
-    /// <param name="state">The <c>state</c> argument.</param>
+    /// <param name="event">The #GstEvent to modify.</param>
+    /// <param name="state">
+    /// a bit-mask representing the state of the modifier keys (e.g. Control,
+    /// Shift and Alt).
+    /// </param>
     /// <returns>
     /// TRUE if the event is a #GstNavigation event with associated
     /// modifiers state, otherwise FALSE.
@@ -423,10 +504,19 @@ public static unsafe partial class NavigationExtensions
     /// a mouse button release event. Determine which type the event is using
     /// gst_navigation_event_get_type() to retrieve the #GstNavigationEventType.
     /// </summary>
-    /// <param name="event">The <c>@event</c> argument.</param>
-    /// <param name="button">The <c>button</c> argument.</param>
-    /// <param name="x">The <c>x</c> argument.</param>
-    /// <param name="y">The <c>y</c> argument.</param>
+    /// <param name="event">A #GstEvent to inspect.</param>
+    /// <param name="button">
+    /// Pointer to a gint that will receive the button
+    ///     number associated with the event.
+    /// </param>
+    /// <param name="x">
+    /// Pointer to a gdouble to receive the x coordinate of the
+    ///     mouse button event.
+    /// </param>
+    /// <param name="y">
+    /// Pointer to a gdouble to receive the y coordinate of the
+    ///     mouse button event.
+    /// </param>
     /// <returns>
     /// TRUE if the button number and both coordinates could be extracted,
     ///     otherwise FALSE.
@@ -449,9 +539,15 @@ public static unsafe partial class NavigationExtensions
     /// Inspect a #GstNavigation mouse movement event and extract the coordinates
     /// of the event.
     /// </summary>
-    /// <param name="event">The <c>@event</c> argument.</param>
-    /// <param name="x">The <c>x</c> argument.</param>
-    /// <param name="y">The <c>y</c> argument.</param>
+    /// <param name="event">A #GstEvent to inspect.</param>
+    /// <param name="x">
+    /// Pointer to a gdouble to receive the x coordinate of the
+    ///     mouse movement.
+    /// </param>
+    /// <param name="y">
+    /// Pointer to a gdouble to receive the y coordinate of the
+    ///     mouse movement.
+    /// </param>
     /// <returns>TRUE if both coordinates could be extracted, otherwise FALSE.</returns>
     public static bool EventParseMouseMoveEvent(Gst.Event @event, out double x, out double y)
     {
@@ -469,11 +565,23 @@ public static unsafe partial class NavigationExtensions
     /// Inspect a #GstNavigation mouse scroll event and extract the coordinates
     /// of the event.
     /// </summary>
-    /// <param name="event">The <c>@event</c> argument.</param>
-    /// <param name="x">The <c>x</c> argument.</param>
-    /// <param name="y">The <c>y</c> argument.</param>
-    /// <param name="deltaX">The <c>deltaX</c> argument.</param>
-    /// <param name="deltaY">The <c>deltaY</c> argument.</param>
+    /// <param name="event">A #GstEvent to inspect.</param>
+    /// <param name="x">
+    /// Pointer to a gdouble to receive the x coordinate of the
+    ///     mouse movement.
+    /// </param>
+    /// <param name="y">
+    /// Pointer to a gdouble to receive the y coordinate of the
+    ///     mouse movement.
+    /// </param>
+    /// <param name="deltaX">
+    /// Pointer to a gdouble to receive the delta_x coordinate of the
+    ///     mouse movement.
+    /// </param>
+    /// <param name="deltaY">
+    /// Pointer to a gdouble to receive the delta_y coordinate of the
+    ///     mouse movement.
+    /// </param>
     /// <returns>TRUE if all coordinates could be extracted, otherwise FALSE.</returns>
     public static bool EventParseMouseScrollEvent(Gst.Event @event, out double x, out double y, out double deltaX, out double deltaY)
     {
@@ -496,11 +604,24 @@ public static unsafe partial class NavigationExtensions
     /// Determine which type the event is using gst_navigation_event_get_type()
     /// to retrieve the #GstNavigationEventType.
     /// </summary>
-    /// <param name="event">The <c>@event</c> argument.</param>
-    /// <param name="identifier">The <c>identifier</c> argument.</param>
-    /// <param name="x">The <c>x</c> argument.</param>
-    /// <param name="y">The <c>y</c> argument.</param>
-    /// <param name="pressure">The <c>pressure</c> argument.</param>
+    /// <param name="event">A #GstEvent to inspect.</param>
+    /// <param name="identifier">
+    /// Pointer to a guint that will receive the
+    ///     identifier unique to this touch point.
+    /// </param>
+    /// <param name="x">
+    /// Pointer to a gdouble that will receive the x
+    ///     coordinate of the touch event.
+    /// </param>
+    /// <param name="y">
+    /// Pointer to a gdouble that will receive the y
+    ///     coordinate of the touch event.
+    /// </param>
+    /// <param name="pressure">
+    /// Pointer to a gdouble that will receive the
+    ///     force of the touch event, in the range from 0.0 to 1.0. If pressure
+    ///     data is not available, NaN will be set instead.
+    /// </param>
     /// <returns>TRUE if all details could be extracted, otherwise FALSE.</returns>
     public static bool EventParseTouchEvent(Gst.Event @event, out uint identifier, out double x, out double y, out double pressure)
     {
@@ -519,10 +640,19 @@ public static unsafe partial class NavigationExtensions
     }
 
     /// <summary>Retrieve the details of a #GstNavigation touch-up event.</summary>
-    /// <param name="event">The <c>@event</c> argument.</param>
-    /// <param name="identifier">The <c>identifier</c> argument.</param>
-    /// <param name="x">The <c>x</c> argument.</param>
-    /// <param name="y">The <c>y</c> argument.</param>
+    /// <param name="event">A #GstEvent to inspect.</param>
+    /// <param name="identifier">
+    /// Pointer to a guint that will receive the
+    ///     identifier unique to this touch point.
+    /// </param>
+    /// <param name="x">
+    /// Pointer to a gdouble that will receive the x
+    ///     coordinate of the touch event.
+    /// </param>
+    /// <param name="y">
+    /// Pointer to a gdouble that will receive the y
+    ///     coordinate of the touch event.
+    /// </param>
     /// <returns>TRUE if all details could be extracted, otherwise FALSE.</returns>
     public static bool EventParseTouchUpEvent(Gst.Event @event, out uint identifier, out double x, out double y)
     {
@@ -542,9 +672,9 @@ public static unsafe partial class NavigationExtensions
     /// Try to set x and y coordinates on a #GstNavigation event. The event must
     /// be writable.
     /// </summary>
-    /// <param name="event">The <c>@event</c> argument.</param>
-    /// <param name="x">The <c>x</c> argument.</param>
-    /// <param name="y">The <c>y</c> argument.</param>
+    /// <param name="event">The #GstEvent to modify.</param>
+    /// <param name="x">The x coordinate to set.</param>
+    /// <param name="y">The y coordinate to set.</param>
     /// <returns>A boolean indicating success.</returns>
     public static bool EventSetCoordinates(Gst.Event @event, double x, double y)
     {
@@ -558,7 +688,7 @@ public static unsafe partial class NavigationExtensions
     /// Check a bus message to see if it is a #GstNavigation event, and return
     /// the #GstNavigationMessageType identifying the type of the message if so.
     /// </summary>
-    /// <param name="message">The <c>message</c> argument.</param>
+    /// <param name="message">A #GstMessage to inspect.</param>
     /// <returns>
     /// The type of the #GstMessage, or
     /// #GST_NAVIGATION_MESSAGE_INVALID if the message is not a #GstNavigation
@@ -578,9 +708,9 @@ public static unsafe partial class NavigationExtensions
     /// that the current angle, or current number of angles available in a
     /// multiangle video has changed.
     /// </summary>
-    /// <param name="src">The <c>src</c> argument.</param>
-    /// <param name="curAngle">The <c>curAngle</c> argument.</param>
-    /// <param name="nAngles">The <c>nAngles</c> argument.</param>
+    /// <param name="src">A #GstObject to set as source of the new message.</param>
+    /// <param name="curAngle">The currently selected angle.</param>
+    /// <param name="nAngles">The number of viewing angles now available.</param>
     /// <returns>The new #GstMessage.</returns>
     public static Gst.Message MessageNewAnglesChanged(Gst.Object src, uint curAngle, uint nAngles)
     {
@@ -595,7 +725,7 @@ public static unsafe partial class NavigationExtensions
     /// Creates a new #GstNavigation message with type
     /// #GST_NAVIGATION_MESSAGE_COMMANDS_CHANGED
     /// </summary>
-    /// <param name="src">The <c>src</c> argument.</param>
+    /// <param name="src">A #GstObject to set as source of the new message.</param>
     /// <returns>The new #GstMessage.</returns>
     public static Gst.Message MessageNewCommandsChanged(Gst.Object src)
     {
@@ -610,8 +740,8 @@ public static unsafe partial class NavigationExtensions
     /// Creates a new #GstNavigation message with type
     /// #GST_NAVIGATION_MESSAGE_EVENT.
     /// </summary>
-    /// <param name="src">The <c>src</c> argument.</param>
-    /// <param name="event">The <c>@event</c> argument.</param>
+    /// <param name="src">A #GstObject to set as source of the new message.</param>
+    /// <param name="event">A navigation #GstEvent</param>
     /// <returns>The new #GstMessage.</returns>
     public static Gst.Message MessageNewEvent(Gst.Object src, Gst.Event @event)
     {
@@ -628,8 +758,11 @@ public static unsafe partial class NavigationExtensions
     /// Creates a new #GstNavigation message with type
     /// #GST_NAVIGATION_MESSAGE_MOUSE_OVER.
     /// </summary>
-    /// <param name="src">The <c>src</c> argument.</param>
-    /// <param name="active">The <c>active</c> argument.</param>
+    /// <param name="src">A #GstObject to set as source of the new message.</param>
+    /// <param name="active">
+    /// %TRUE if the mouse has entered a clickable area of the display.
+    /// %FALSE if it over a non-clickable area.
+    /// </param>
     /// <returns>The new #GstMessage.</returns>
     public static Gst.Message MessageNewMouseOver(Gst.Object src, bool active)
     {
@@ -644,9 +777,15 @@ public static unsafe partial class NavigationExtensions
     /// Parse a #GstNavigation message of type GST_NAVIGATION_MESSAGE_ANGLES_CHANGED
     /// and extract the @cur_angle and @n_angles parameters.
     /// </summary>
-    /// <param name="message">The <c>message</c> argument.</param>
-    /// <param name="curAngle">The <c>curAngle</c> argument.</param>
-    /// <param name="nAngles">The <c>nAngles</c> argument.</param>
+    /// <param name="message">A #GstMessage to inspect.</param>
+    /// <param name="curAngle">
+    /// A pointer to a #guint to receive the new
+    ///     current angle number, or NULL
+    /// </param>
+    /// <param name="nAngles">
+    /// A pointer to a #guint to receive the new angle
+    ///     count, or NULL.
+    /// </param>
     /// <returns>%TRUE if the message could be successfully parsed. %FALSE if not.</returns>
     public static bool MessageParseAnglesChanged(Gst.Message message, out uint curAngle, out uint nAngles)
     {
@@ -665,8 +804,11 @@ public static unsafe partial class NavigationExtensions
     /// and extract contained #GstEvent. The caller must unref the @event when done
     /// with it.
     /// </summary>
-    /// <param name="message">The <c>message</c> argument.</param>
-    /// <param name="event">The <c>@event</c> argument.</param>
+    /// <param name="message">A #GstMessage to inspect.</param>
+    /// <param name="event">
+    /// a pointer to a #GstEvent to receive
+    ///     the contained navigation event.
+    /// </param>
     /// <returns>%TRUE if the message could be successfully parsed. %FALSE if not.</returns>
     public static bool MessageParseEvent(Gst.Message message, out Gst.Event? @event)
     {
@@ -683,8 +825,11 @@ public static unsafe partial class NavigationExtensions
     /// and extract the active/inactive flag. If the mouse over event is marked
     /// active, it indicates that the mouse is over a clickable area.
     /// </summary>
-    /// <param name="message">The <c>message</c> argument.</param>
-    /// <param name="active">The <c>active</c> argument.</param>
+    /// <param name="message">A #GstMessage to inspect.</param>
+    /// <param name="active">
+    /// A pointer to a gboolean to receive the
+    ///     active/inactive state, or NULL.
+    /// </param>
     /// <returns>%TRUE if the message could be successfully parsed. %FALSE if not.</returns>
     public static bool MessageParseMouseOver(Gst.Message message, out bool active)
     {
@@ -700,7 +845,7 @@ public static unsafe partial class NavigationExtensions
     /// Inspect a #GstQuery and return the #GstNavigationQueryType associated with
     /// it if it is a #GstNavigation query.
     /// </summary>
-    /// <param name="query">The <c>query</c> argument.</param>
+    /// <param name="query">The query to inspect</param>
     /// <returns>
     /// The #GstNavigationQueryType of the query, or
     /// #GST_NAVIGATION_QUERY_INVALID
@@ -743,9 +888,15 @@ public static unsafe partial class NavigationExtensions
     /// #guint pointed to by the @cur_angle variable, and the number of available
     /// angles into the #guint pointed to by the @n_angles variable.
     /// </summary>
-    /// <param name="query">The <c>query</c> argument.</param>
-    /// <param name="curAngle">The <c>curAngle</c> argument.</param>
-    /// <param name="nAngles">The <c>nAngles</c> argument.</param>
+    /// <param name="query">a #GstQuery</param>
+    /// <param name="curAngle">
+    /// Pointer to a #guint into which to store the
+    ///     currently selected angle value from the query, or NULL
+    /// </param>
+    /// <param name="nAngles">
+    /// Pointer to a #guint into which to store the
+    ///     number of angles value from the query, or NULL
+    /// </param>
     /// <returns>%TRUE if the query could be successfully parsed. %FALSE if not.</returns>
     public static bool QueryParseAngles(Gst.Query query, out uint curAngle, out uint nAngles)
     {
@@ -760,8 +911,8 @@ public static unsafe partial class NavigationExtensions
     }
 
     /// <summary>Parse the number of commands in the #GstNavigation commands @query.</summary>
-    /// <param name="query">The <c>query</c> argument.</param>
-    /// <param name="nCmds">The <c>nCmds</c> argument.</param>
+    /// <param name="query">a #GstQuery</param>
+    /// <param name="nCmds">the number of commands in this query.</param>
     /// <returns>%TRUE if the query could be successfully parsed. %FALSE if not.</returns>
     public static bool QueryParseCommandsLength(Gst.Query query, out uint nCmds)
     {
@@ -778,9 +929,9 @@ public static unsafe partial class NavigationExtensions
     /// it into @cmd. If the list contains less elements than @nth, @cmd will be
     /// set to #GST_NAVIGATION_COMMAND_INVALID.
     /// </summary>
-    /// <param name="query">The <c>query</c> argument.</param>
-    /// <param name="nth">The <c>nth</c> argument.</param>
-    /// <param name="cmd">The <c>cmd</c> argument.</param>
+    /// <param name="query">a #GstQuery</param>
+    /// <param name="nth">the nth command to retrieve.</param>
+    /// <param name="cmd">a pointer to store the nth command into.</param>
     /// <returns>%TRUE if the query could be successfully parsed. %FALSE if not.</returns>
     public static bool QueryParseCommandsNth(Gst.Query query, uint nth, out Gst.Video.NavigationCommand cmd)
     {
@@ -793,9 +944,9 @@ public static unsafe partial class NavigationExtensions
     }
 
     /// <summary>Set the #GstNavigation angles query result field in @query.</summary>
-    /// <param name="query">The <c>query</c> argument.</param>
-    /// <param name="curAngle">The <c>curAngle</c> argument.</param>
-    /// <param name="nAngles">The <c>nAngles</c> argument.</param>
+    /// <param name="query">a #GstQuery</param>
+    /// <param name="curAngle">the current viewing angle to set.</param>
+    /// <param name="nAngles">the number of viewing angles to set.</param>
     public static void QuerySetAngles(Gst.Query query, uint curAngle, uint nAngles)
     {
         ArgumentNullException.ThrowIfNull(query);
@@ -807,7 +958,7 @@ public static unsafe partial class NavigationExtensions
     /// Set the #GstNavigation command query result fields in @query. The number
     /// of commands passed must be equal to @n_commands.
     /// </summary>
-    /// <param name="query">The <c>query</c> argument.</param>
+    /// <param name="query">a #GstQuery</param>
     /// <param name="cmds">
     /// An array containing @n_cmds
     ///     @GstNavigationCommand values.

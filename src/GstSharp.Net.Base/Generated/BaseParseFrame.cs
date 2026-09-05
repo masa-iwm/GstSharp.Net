@@ -138,9 +138,13 @@ public sealed unsafe partial class BaseParseFrame : Gst.GObject.Boxed
     /// elements written in C should usually allocate the frame on the stack and
     /// then use gst_base_parse_frame_init() to initialise it.
     /// </summary>
-    /// <param name="buffer">The <c>buffer</c> argument.</param>
-    /// <param name="flags">The <c>flags</c> argument.</param>
-    /// <param name="overhead">The <c>overhead</c> argument.</param>
+    /// <param name="buffer">a #GstBuffer</param>
+    /// <param name="flags">the flags</param>
+    /// <param name="overhead">
+    /// number of bytes in this frame which should be counted as
+    ///     metadata overhead, ie. not used to calculate the average bitrate.
+    ///     Set to -1 to mark the entire frame as metadata. If in doubt, set to 0.
+    /// </param>
     /// <returns>
     /// a newly-allocated #GstBaseParseFrame. Free with
     ///     gst_base_parse_frame_free() when no longer needed.

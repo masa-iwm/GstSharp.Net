@@ -54,7 +54,7 @@ public unsafe partial class ClipAsset : GES.Asset, GES.IMetaContainer
     /// as, for example, the `in-point` or `max-duration` of a #GESClip.
     /// </para>
     /// </remarks>
-    /// <param name="frameNumber">The <c>frameNumber</c> argument.</param>
+    /// <param name="frameNumber">The frame number we want the internal time coordinate timestamp of</param>
     /// <returns>
     /// The timestamp corresponding to @frame_number in the element source, given
     /// in internal time coordinates, or #GST_CLOCK_TIME_NONE if the clip asset does not have a
@@ -68,8 +68,8 @@ public unsafe partial class ClipAsset : GES.Asset, GES.IMetaContainer
     }
 
     /// <summary>Result: %TRUE if @self has a natural framerate %FALSE otherwise</summary>
-    /// <param name="framerateN">The <c>framerateN</c> argument.</param>
-    /// <param name="framerateD">The <c>framerateD</c> argument.</param>
+    /// <param name="framerateN">The framerate numerator</param>
+    /// <param name="framerateD">The framerate denominator</param>
     /// <returns>The result of <c>ges_clip_asset_get_natural_framerate</c>.</returns>
     public bool GetNaturalFramerate(out int framerateN, out int framerateD)
     {
@@ -95,7 +95,7 @@ public unsafe partial class ClipAsset : GES.Asset, GES.IMetaContainer
     }
 
     /// <summary>Sets track types for which objects extracted from @self can create #GESTrackElement</summary>
-    /// <param name="supportedformats">The <c>supportedformats</c> argument.</param>
+    /// <param name="supportedformats">The track types supported by the GESClipAsset</param>
     public void SetSupportedFormats(GES.TrackType supportedformats)
     {
         GesClipAssetSetSupportedFormats(Handle, (int)supportedformats);

@@ -58,7 +58,7 @@ public unsafe partial class TransitionClip : GES.BaseTransitionClip, GES.IExtrac
     }
 
     /// <summary>Creates a new #GESTransitionClip.</summary>
-    /// <param name="vtype">The <c>vtype</c> argument.</param>
+    /// <param name="vtype">the type of transition to create</param>
     /// <returns>
     /// a newly created #GESTransitionClip,
     /// or %NULL if something went wrong.
@@ -70,7 +70,7 @@ public unsafe partial class TransitionClip : GES.BaseTransitionClip, GES.IExtrac
     }
 
     /// <summary>Creates a new #GESTransitionClip for the provided @nick.</summary>
-    /// <param name="nick">The <c>nick</c> argument.</param>
+    /// <param name="nick">a string representing the type of transition to create</param>
     /// <returns>
     /// The newly created #GESTransitionClip,
     /// or %NULL if something went wrong

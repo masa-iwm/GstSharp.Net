@@ -85,7 +85,10 @@ public unsafe partial class Pipeline : Gst.Pipeline, Gst.IChildProxy, Gst.Video.
     /// with gst_sample_get_caps().
     /// </para>
     /// </remarks>
-    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <param name="caps">
+    /// Some caps to specifying the desired format, or
+    /// #GST_CAPS_ANY to use the native format
+    /// </param>
     /// <returns>
     /// A sample of @self's current image preview in
     /// the format given by @caps, or %NULL if an error prevented fetching the
@@ -108,8 +111,14 @@ public unsafe partial class Pipeline : Gst.Pipeline, Gst.IChildProxy, Gst.Video.
     /// <remarks>
     /// <para>See ges_pipeline_get_thumbnail().</para>
     /// </remarks>
-    /// <param name="width">The <c>width</c> argument.</param>
-    /// <param name="height">The <c>height</c> argument.</param>
+    /// <param name="width">
+    /// The requested pixel width of the image, or -1 to use the native
+    /// size
+    /// </param>
+    /// <param name="height">
+    /// The requested pixel height of the image, or -1 to use the
+    /// native size
+    /// </param>
     /// <returns>
     /// A sample of @self's current image preview in
     /// the "RGB" format, scaled to @width and @height, or %NULL if an error
@@ -141,7 +150,7 @@ public unsafe partial class Pipeline : Gst.Pipeline, Gst.IChildProxy, Gst.Video.
     }
 
     /// <summary>Sets the #GESPipeline:audio-sink of the pipeline.</summary>
-    /// <param name="sink">The <c>sink</c> argument.</param>
+    /// <param name="sink">A audio sink for @self to use for preview</param>
     public void PreviewSetAudioSink(Gst.Element? sink)
     {
         GesPipelinePreviewSetAudioSink(Handle, sink is null ? 0 : sink.Handle);
@@ -150,7 +159,7 @@ public unsafe partial class Pipeline : Gst.Pipeline, Gst.IChildProxy, Gst.Video.
     }
 
     /// <summary>Sets the #GESPipeline:video-sink of the pipeline.</summary>
-    /// <param name="sink">The <c>sink</c> argument.</param>
+    /// <param name="sink">A video sink for @self to use for preview</param>
     public void PreviewSetVideoSink(Gst.Element? sink)
     {
         GesPipelinePreviewSetVideoSink(Handle, sink is null ? 0 : sink.Handle);
@@ -162,10 +171,16 @@ public unsafe partial class Pipeline : Gst.Pipeline, Gst.IChildProxy, Gst.Video.
     /// Saves the currently displayed image of the pipeline in preview to the
     /// given location, in the specified dimensions and format.
     /// </summary>
-    /// <param name="width">The <c>width</c> argument.</param>
-    /// <param name="height">The <c>height</c> argument.</param>
-    /// <param name="format">The <c>format</c> argument.</param>
-    /// <param name="location">The <c>location</c> argument.</param>
+    /// <param name="width">
+    /// The requested pixel width of the image, or -1 to use the native
+    /// size
+    /// </param>
+    /// <param name="height">
+    /// The requested pixel height of the image, or -1 to use the
+    /// native size
+    /// </param>
+    /// <param name="format">The desired mime type (for example, "image/jpeg")</param>
+    /// <param name="location">The path to save the thumbnail to</param>
     /// <returns>
     /// %TRUE if @self's current image preview was successfully saved
     /// to @location using the given @format, @height and @width.
@@ -200,7 +215,7 @@ public unsafe partial class Pipeline : Gst.Pipeline, Gst.IChildProxy, Gst.Video.
     /// &gt; otherwise.
     /// </para>
     /// </remarks>
-    /// <param name="mode">The <c>mode</c> argument.</param>
+    /// <param name="mode">The mode to set for @pipeline</param>
     /// <returns>%TRUE if the mode of @pipeline was successfully set to @mode.</returns>
     public bool SetMode(GES.PipelineFlags mode)
     {
@@ -219,8 +234,11 @@ public unsafe partial class Pipeline : Gst.Pipeline, Gst.IChildProxy, Gst.Video.
     /// #GES_PIPELINE_MODE_RENDER.
     /// </para>
     /// </remarks>
-    /// <param name="outputUri">The <c>outputUri</c> argument.</param>
-    /// <param name="profile">The <c>profile</c> argument.</param>
+    /// <param name="outputUri">
+    /// The URI to save the #GESPipeline:timeline rendering
+    /// result to
+    /// </param>
+    /// <param name="profile">The encoding to use for rendering the #GESPipeline:timeline</param>
     /// <returns>%TRUE if the settings were successfully set on @pipeline.</returns>
     public bool SetRenderSettings(string outputUri, Gst.Pbutils.EncodingProfile profile)
     {
@@ -245,7 +263,7 @@ public unsafe partial class Pipeline : Gst.Pipeline, Gst.IChildProxy, Gst.Video.
     /// it has been set.
     /// </para>
     /// </remarks>
-    /// <param name="timeline">The <c>timeline</c> argument.</param>
+    /// <param name="timeline">The timeline to set for @pipeline</param>
     /// <returns>%TRUE if @timeline was successfully given to @pipeline.</returns>
     public bool SetTimeline(GES.Timeline timeline)
     {

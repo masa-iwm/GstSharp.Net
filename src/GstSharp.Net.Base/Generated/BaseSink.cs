@@ -386,10 +386,10 @@ public abstract unsafe partial class BaseSink : Gst.Element
     /// </para>
     /// <para>This function is mostly used by subclasses.</para>
     /// </remarks>
-    /// <param name="live">The <c>live</c> argument.</param>
-    /// <param name="upstreamLive">The <c>upstreamLive</c> argument.</param>
-    /// <param name="minLatency">The <c>minLatency</c> argument.</param>
-    /// <param name="maxLatency">The <c>maxLatency</c> argument.</param>
+    /// <param name="live">if the sink is live</param>
+    /// <param name="upstreamLive">if an upstream element is live</param>
+    /// <param name="minLatency">the min latency of the upstream elements</param>
+    /// <param name="maxLatency">the max latency of the upstream elements</param>
     /// <returns>%TRUE if the query succeeded.</returns>
     public bool QueryLatency(out bool live, out bool upstreamLive, out Gst.ClockTime minLatency, out Gst.ClockTime maxLatency)
     {
@@ -412,7 +412,7 @@ public abstract unsafe partial class BaseSink : Gst.Element
     /// preroll buffer. This feature is useful if the sink does not synchronize
     /// against the clock or when it is dealing with sparse streams.
     /// </summary>
-    /// <param name="enabled">The <c>enabled</c> argument.</param>
+    /// <param name="enabled">the new async value.</param>
     public void SetAsyncEnabled(bool enabled)
     {
         GstBaseSinkSetAsyncEnabled(Handle, enabled ? 1 : 0);
@@ -423,7 +423,7 @@ public abstract unsafe partial class BaseSink : Gst.Element
     /// Set the number of bytes that the sink will pull when it is operating in pull
     /// mode.
     /// </summary>
-    /// <param name="blocksize">The <c>blocksize</c> argument.</param>
+    /// <param name="blocksize">the blocksize in bytes</param>
     public void SetBlocksize(uint blocksize)
     {
         GstBaseSinkSetBlocksize(Handle, blocksize);
@@ -431,7 +431,7 @@ public abstract unsafe partial class BaseSink : Gst.Element
     }
 
     /// <summary>Configure @sink to drop buffers which are outside the current segment</summary>
-    /// <param name="dropOutOfSegment">The <c>dropOutOfSegment</c> argument.</param>
+    /// <param name="dropOutOfSegment">drop buffers outside the segment</param>
     public void SetDropOutOfSegment(bool dropOutOfSegment)
     {
         GstBaseSinkSetDropOutOfSegment(Handle, dropOutOfSegment ? 1 : 0);
@@ -442,7 +442,7 @@ public abstract unsafe partial class BaseSink : Gst.Element
     /// Configures @sink to store the last received sample in the last-sample
     /// property.
     /// </summary>
-    /// <param name="enabled">The <c>enabled</c> argument.</param>
+    /// <param name="enabled">the new enable-last-sample value.</param>
     public void SetLastSampleEnabled(bool enabled)
     {
         GstBaseSinkSetLastSampleEnabled(Handle, enabled ? 1 : 0);
@@ -450,7 +450,7 @@ public abstract unsafe partial class BaseSink : Gst.Element
     }
 
     /// <summary>Set the maximum amount of bits per second that the sink will render.</summary>
-    /// <param name="maxBitrate">The <c>maxBitrate</c> argument.</param>
+    /// <param name="maxBitrate">the max_bitrate in bits per second</param>
     public void SetMaxBitrate(ulong maxBitrate)
     {
         GstBaseSinkSetMaxBitrate(Handle, maxBitrate);
@@ -463,7 +463,7 @@ public abstract unsafe partial class BaseSink : Gst.Element
     /// buffer timestamp and the current clock time. A value of -1 means
     /// an unlimited time.
     /// </summary>
-    /// <param name="maxLateness">The <c>maxLateness</c> argument.</param>
+    /// <param name="maxLateness">the new max lateness value.</param>
     public void SetMaxLateness(long maxLateness)
     {
         GstBaseSinkSetMaxLateness(Handle, maxLateness);
@@ -478,7 +478,7 @@ public abstract unsafe partial class BaseSink : Gst.Element
     /// <remarks>
     /// <para>This function is usually called by subclasses.</para>
     /// </remarks>
-    /// <param name="processingDeadline">The <c>processingDeadline</c> argument.</param>
+    /// <param name="processingDeadline">the new processing deadline in nanoseconds.</param>
     public void SetProcessingDeadline(Gst.ClockTime processingDeadline)
     {
         GstBaseSinkSetProcessingDeadline(Handle, processingDeadline.Nanoseconds);
@@ -486,7 +486,7 @@ public abstract unsafe partial class BaseSink : Gst.Element
     }
 
     /// <summary>Configures @sink to send Quality-of-Service events upstream.</summary>
-    /// <param name="enabled">The <c>enabled</c> argument.</param>
+    /// <param name="enabled">the new qos value.</param>
     public void SetQosEnabled(bool enabled)
     {
         GstBaseSinkSetQosEnabled(Handle, enabled ? 1 : 0);
@@ -506,7 +506,7 @@ public abstract unsafe partial class BaseSink : Gst.Element
     /// </para>
     /// <para>This function is usually called by subclasses.</para>
     /// </remarks>
-    /// <param name="delay">The <c>delay</c> argument.</param>
+    /// <param name="delay">the new delay</param>
     public void SetRenderDelay(Gst.ClockTime delay)
     {
         GstBaseSinkSetRenderDelay(Handle, delay.Nanoseconds);
@@ -520,7 +520,7 @@ public abstract unsafe partial class BaseSink : Gst.Element
     /// buffers will be used to schedule the exact render time of its
     /// contents.
     /// </summary>
-    /// <param name="sync">The <c>sync</c> argument.</param>
+    /// <param name="sync">the new sync value.</param>
     public void SetSync(bool sync)
     {
         GstBaseSinkSetSync(Handle, sync ? 1 : 0);
@@ -532,7 +532,7 @@ public abstract unsafe partial class BaseSink : Gst.Element
     /// can be used to control the maximum buffers per second that the sink
     /// will render.
     /// </summary>
-    /// <param name="throttle">The <c>throttle</c> argument.</param>
+    /// <param name="throttle">the throttle time in nanoseconds</param>
     public void SetThrottleTime(ulong throttle)
     {
         GstBaseSinkSetThrottleTime(Handle, throttle);
@@ -545,7 +545,7 @@ public abstract unsafe partial class BaseSink : Gst.Element
     /// rendering. This function can be used to fix playback of badly timestamped
     /// buffers.
     /// </summary>
-    /// <param name="offset">The <c>offset</c> argument.</param>
+    /// <param name="offset">the new offset</param>
     public void SetTsOffset(long offset)
     {
         GstBaseSinkSetTsOffset(Handle, offset);
@@ -569,8 +569,8 @@ public abstract unsafe partial class BaseSink : Gst.Element
     /// and will be adjusted with any latency and offset configured in the sink.
     /// </para>
     /// </remarks>
-    /// <param name="time">The <c>time</c> argument.</param>
-    /// <param name="jitter">The <c>jitter</c> argument.</param>
+    /// <param name="time">the running_time to be reached</param>
+    /// <param name="jitter">the jitter to be filled with time diff, or %NULL</param>
     /// <returns>#GstFlowReturn</returns>
     public Gst.FlowReturn Wait(Gst.ClockTime time, out long jitter)
     {
@@ -603,8 +603,8 @@ public abstract unsafe partial class BaseSink : Gst.Element
     /// sink.
     /// </para>
     /// </remarks>
-    /// <param name="time">The <c>time</c> argument.</param>
-    /// <param name="jitter">The <c>jitter</c> argument.</param>
+    /// <param name="time">the running_time to be reached</param>
+    /// <param name="jitter">the jitter to be filled with time diff, or %NULL</param>
     /// <returns>#GstClockReturn</returns>
     public Gst.ClockReturn WaitClock(Gst.ClockTime time, out long jitter)
     {

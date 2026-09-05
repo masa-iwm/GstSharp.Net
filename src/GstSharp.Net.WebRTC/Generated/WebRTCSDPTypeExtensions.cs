@@ -12,7 +12,7 @@ namespace Gst.WebRTC;
 public static unsafe partial class WebRTCSDPTypeExtensions
 {
     /// <summary>The <c>gst_webrtc_sdp_type_to_string</c> function.</summary>
-    /// <param name="type">The <c>type</c> argument.</param>
+    /// <param name="type">a #GstWebRTCSDPType</param>
     /// <returns>
     /// the string representation of @type or "unknown" when @type is not
     ///      recognized.

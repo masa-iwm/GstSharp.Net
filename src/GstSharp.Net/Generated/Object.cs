@@ -109,7 +109,7 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
     /// reference will be removed (see gst_object_ref_sink())
     /// </para>
     /// </remarks>
-    /// <param name="binding">The <c>binding</c> argument.</param>
+    /// <param name="binding">the #GstControlBinding that should be used</param>
     /// <returns>
     /// %FALSE if the given @binding has not been setup for this object or
     /// has been setup for a non suitable property, %TRUE otherwise.
@@ -148,14 +148,14 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
     /// <para>The default handler will simply print the error string using g_print.</para>
     /// </remarks>
     /// <param name="error">
-    /// The <c>error</c> argument.
+    /// the GError.
     /// The call is handed a temporary native error built from this value and
     /// releases it again when the call returns. The library copies whatever it
     /// keeps, so the exception object itself is never retained. It needs a
     /// registered error domain: an exception created without one — every
     /// constructor but <c>GException(Quark, int, string)</c> — is rejected.
     /// </param>
-    /// <param name="debug">The <c>debug</c> argument.</param>
+    /// <param name="debug">an additional debug information string, or %NULL</param>
     /// <exception cref="ArgumentException">
     /// <paramref name="error"/> carries no error domain, no message, or a message with an embedded null.
     /// </exception>
@@ -174,7 +174,7 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
     /// Gets the corresponding #GstControlBinding for the property. This should be
     /// unreferenced again after use.
     /// </summary>
-    /// <param name="propertyName">The <c>propertyName</c> argument.</param>
+    /// <param name="propertyName">name of the property</param>
     /// <returns>
     /// the #GstControlBinding for
     /// @property_name or %NULL if the property is not controlled.
@@ -287,8 +287,8 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
     }
 
     /// <summary>Gets the value for the given controlled property at the requested time.</summary>
-    /// <param name="propertyName">The <c>propertyName</c> argument.</param>
-    /// <param name="timestamp">The <c>timestamp</c> argument.</param>
+    /// <param name="propertyName">the name of the property to get</param>
+    /// <param name="timestamp">the time the control-change should be read from</param>
     /// <returns>
     /// the GValue of the property at the given time,
     /// or %NULL if the property isn't controlled.
@@ -318,7 +318,7 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
     /// Check if @object has an ancestor @ancestor somewhere up in
     /// the hierarchy. One can e.g. check if a #GstElement is inside a #GstPipeline.
     /// </summary>
-    /// <param name="ancestor">The <c>ancestor</c> argument.</param>
+    /// <param name="ancestor">a #GstObject to check as ancestor</param>
     /// <returns>%TRUE if @ancestor is an ancestor of @object.</returns>
     [Obsolete("Use gst_object_has_as_ancestor() instead. MT safe. Grabs and releases @object's locks.")]
     public bool HasAncestor(Gst.Object ancestor)
@@ -334,7 +334,7 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
     /// Check if @object has an ancestor @ancestor somewhere up in
     /// the hierarchy. One can e.g. check if a #GstElement is inside a #GstPipeline.
     /// </summary>
-    /// <param name="ancestor">The <c>ancestor</c> argument.</param>
+    /// <param name="ancestor">a #GstObject to check as ancestor</param>
     /// <returns>%TRUE if @ancestor is an ancestor of @object.</returns>
     public bool HasAsAncestor(Gst.Object ancestor)
     {
@@ -349,7 +349,7 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
     /// Check if @parent is the parent of @object.
     /// E.g. a #GstElement can check if it owns a given #GstPad.
     /// </summary>
-    /// <param name="parent">The <c>parent</c> argument.</param>
+    /// <param name="parent">a #GstObject to check as parent</param>
     /// <returns>
     /// %FALSE if either @object or @parent is %NULL. %TRUE if @parent is
     ///          the parent of @object. Otherwise %FALSE.
@@ -367,7 +367,7 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
     /// Removes the corresponding #GstControlBinding. If it was the
     /// last ref of the binding, it will be disposed.
     /// </summary>
-    /// <param name="binding">The <c>binding</c> argument.</param>
+    /// <param name="binding">the binding</param>
     /// <returns>%TRUE if the binding could be removed.</returns>
     public bool RemoveControlBinding(Gst.ControlBinding binding)
     {
@@ -383,8 +383,11 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
     /// some time, i.e. gst_object_sync_values() will do nothing for the
     /// property.
     /// </summary>
-    /// <param name="propertyName">The <c>propertyName</c> argument.</param>
-    /// <param name="disabled">The <c>disabled</c> argument.</param>
+    /// <param name="propertyName">property to disable</param>
+    /// <param name="disabled">
+    /// boolean that specifies whether to disable the controller
+    /// or not.
+    /// </param>
     public void SetControlBindingDisabled(string propertyName, bool disabled)
     {
         ArgumentNullException.ThrowIfNull(propertyName);
@@ -398,7 +401,10 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
     /// This function is used to disable all controlled properties of the @object for
     /// some time, i.e. gst_object_sync_values() will do nothing.
     /// </summary>
-    /// <param name="disabled">The <c>disabled</c> argument.</param>
+    /// <param name="disabled">
+    /// boolean that specifies whether to disable the controller
+    /// or not.
+    /// </param>
     public void SetControlBindingsDisabled(bool disabled)
     {
         GstObjectSetControlBindingsDisabled(Handle, disabled ? 1 : 0);
@@ -417,7 +423,7 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
     /// %GST_STATE_PLAYING.
     /// </para>
     /// </remarks>
-    /// <param name="controlRate">The <c>controlRate</c> argument.</param>
+    /// <param name="controlRate">the new control-rate in nanoseconds.</param>
     public void SetControlRate(Gst.ClockTime controlRate)
     {
         GstObjectSetControlRate(Handle, controlRate.Nanoseconds);
@@ -430,7 +436,7 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
     /// This function makes a copy of the provided name, so the caller
     /// retains ownership of the name it sent.
     /// </summary>
-    /// <param name="name">The <c>name</c> argument.</param>
+    /// <param name="name">new name of object</param>
     /// <returns>
     /// %TRUE if the name could be set. Since Objects that have
     /// a parent cannot be renamed, this function returns %FALSE in those
@@ -449,7 +455,7 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
     /// Sets the parent of @object to @parent. The object's reference count will
     /// be incremented, and any floating reference will be removed (see gst_object_ref_sink()).
     /// </summary>
-    /// <param name="parent">The <c>parent</c> argument.</param>
+    /// <param name="parent">new parent of object</param>
     /// <returns>
     /// %TRUE if @parent could be set or %FALSE when @object
     /// already had a parent or @object and @parent are the same.
@@ -488,7 +494,7 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
     /// Most probably the control sources are not setup correctly.
     /// </para>
     /// </remarks>
-    /// <param name="timestamp">The <c>timestamp</c> argument.</param>
+    /// <param name="timestamp">the time that should be processed</param>
     /// <returns>
     /// %TRUE if the controller values could be applied to the object
     /// properties, %FALSE otherwise
@@ -521,13 +527,14 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
     /// careful when passing a list with a locked object.
     /// </summary>
     /// <param name="list">
-    /// The <c>list</c> argument.
+    /// a list of #GstObject to
+    ///      check through
     /// The call reads the list while it runs and copies whatever it keeps. A
     /// temporary native list is built for the call and released when it returns,
     /// and an empty sequence is passed as the null pointer, which is how C spells
     /// the empty list.
     /// </param>
-    /// <param name="name">The <c>name</c> argument.</param>
+    /// <param name="name">the name to search for</param>
     /// <returns>
     /// %TRUE if a #GstObject named @name does not appear in @list,
     /// %FALSE if it does.
@@ -554,9 +561,9 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
     ///          path string.
     /// </para>
     /// </remarks>
-    /// <param name="object">The <c>@object</c> argument.</param>
-    /// <param name="orig">The <c>orig</c> argument.</param>
-    /// <param name="pspec">The <c>pspec</c> argument.</param>
+    /// <param name="object">the #GObject that signalled the notify.</param>
+    /// <param name="orig">a #GstObject that initiated the notify.</param>
+    /// <param name="pspec">a #GParamSpec of the property.</param>
     /// <param name="excludedProps">
     ///     a set of user-specified properties to exclude or %NULL to show
     ///     all changes.

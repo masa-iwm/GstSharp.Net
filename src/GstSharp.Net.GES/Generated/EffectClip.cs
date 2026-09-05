@@ -52,8 +52,8 @@ public unsafe partial class EffectClip : GES.BaseEffectClip, GES.IExtractable, G
     }
 
     /// <summary>Creates a new #GESEffectClip from the description of the bin.</summary>
-    /// <param name="videoBinDescription">The <c>videoBinDescription</c> argument.</param>
-    /// <param name="audioBinDescription">The <c>audioBinDescription</c> argument.</param>
+    /// <param name="videoBinDescription">The gst-launch like bin description of the effect</param>
+    /// <param name="audioBinDescription">The gst-launch like bin description of the effect</param>
     /// <returns>
     /// a newly created #GESEffectClip, or
     /// %NULL if something went wrong.

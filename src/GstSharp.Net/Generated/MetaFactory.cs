@@ -66,7 +66,7 @@ public unsafe partial class MetaFactory : Gst.PluginFeature
     /// <remarks>
     /// <para>Available since GStreamer 1.28.</para>
     /// </remarks>
-    /// <param name="factoryname">The <c>factoryname</c> argument.</param>
+    /// <param name="factoryname">The name of the #GstMetaInfo to load</param>
     /// <returns>A #GstMetaInfo or NULL if not found</returns>
     public static Gst.MetaInfo Load(string factoryname)
     {
@@ -82,8 +82,8 @@ public unsafe partial class MetaFactory : Gst.PluginFeature
     /// <remarks>
     /// <para>Available since GStreamer 1.28.</para>
     /// </remarks>
-    /// <param name="plugin">The <c>plugin</c> argument.</param>
-    /// <param name="metaInfo">The <c>metaInfo</c> argument.</param>
+    /// <param name="plugin">The #GstPlugin to register @meta_info for</param>
+    /// <param name="metaInfo">The #GstMetaInfo to register</param>
     /// <returns>The result of <c>gst_meta_factory_register</c>.</returns>
     public static bool Register(Gst.Plugin plugin, Gst.MetaInfo metaInfo)
     {

@@ -93,7 +93,7 @@ public unsafe partial class VideoTransition : GES.Transition, GES.IExtractable, 
     /// not make sense for the current transition type, it is cached
     /// for later use.
     /// </summary>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="value">The value of the border to set on @object</param>
     [Obsolete("Use ges_timeline_element_set_child_property instead. (deprecated since 1.20)")]
     public void SetBorder(uint value)
     {
@@ -107,7 +107,7 @@ public unsafe partial class VideoTransition : GES.Transition, GES.IExtractable, 
     /// not make sense for the current transition type, it is cached
     /// for later use.
     /// </summary>
-    /// <param name="inverted">The <c>inverted</c> argument.</param>
+    /// <param name="inverted">%TRUE if the transition should be inverted %FALSE otherwise</param>
     [Obsolete("Use ges_timeline_element_set_child_property instead. (deprecated since 1.20)")]
     public void SetInverted(bool inverted)
     {
@@ -116,7 +116,7 @@ public unsafe partial class VideoTransition : GES.Transition, GES.IExtractable, 
     }
 
     /// <summary>Sets the transition being used to @type.</summary>
-    /// <param name="type">The <c>type</c> argument.</param>
+    /// <param name="type">a #GESVideoStandardTransitionType</param>
     /// <returns>%TRUE if the transition type was properly changed, else %FALSE.</returns>
     public bool SetTransitionType(GES.VideoStandardTransitionType type)
     {

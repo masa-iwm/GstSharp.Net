@@ -110,7 +110,7 @@ public sealed unsafe partial class VideoInfoDmaDrm : Gst.GObject.Boxed
     /// @caps should be a dma drm caps. The gst_video_is_dma_drm_caps() can
     /// be used to verify it before calling this function.
     /// </summary>
-    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <param name="caps">a #GstCaps</param>
     /// <returns>
     /// A #GstVideoInfoDmaDrm,
     ///   or %NULL if @caps couldn't be parsed.
@@ -148,7 +148,7 @@ public sealed unsafe partial class VideoInfoDmaDrm : Gst.GObject.Boxed
     /// drm_fourcc field.
     /// </summary>
     /// <param name="info">
-    /// The <c>info</c> argument.
+    /// #GstVideoInfo
     /// The binding allocates the storage; on success the caller owns
     /// <paramref name="info"/> and disposes it. On failure it is
     /// <see langword="null"/>.
@@ -178,10 +178,10 @@ public sealed unsafe partial class VideoInfoDmaDrm : Gst.GObject.Boxed
     /// Fills @drm_info if @info's format has a valid drm format and @modifier is also
     /// valid
     /// </summary>
-    /// <param name="info">The <c>info</c> argument.</param>
-    /// <param name="modifier">The <c>modifier</c> argument.</param>
+    /// <param name="info">a #GstVideoInfo</param>
+    /// <param name="modifier">the associated modifier value.</param>
     /// <param name="drmInfo">
-    /// The <c>drmInfo</c> argument.
+    /// #GstVideoInfoDmaDrm
     /// The binding allocates the storage; on success the caller owns
     /// <paramref name="drmInfo"/> and disposes it. On failure it is
     /// <see langword="null"/>.

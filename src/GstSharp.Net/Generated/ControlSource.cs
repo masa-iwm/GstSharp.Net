@@ -59,8 +59,8 @@ public abstract unsafe partial class ControlSource : Gst.Object
     }
 
     /// <summary>Gets the value for this #GstControlSource at a given timestamp.</summary>
-    /// <param name="timestamp">The <c>timestamp</c> argument.</param>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="timestamp">the time for which the value should be returned</param>
+    /// <param name="value">the value</param>
     /// <returns>%FALSE if the value couldn't be returned, %TRUE otherwise.</returns>
     public bool ControlSourceGetValue(Gst.ClockTime timestamp, out double value)
     {
@@ -75,8 +75,8 @@ public abstract unsafe partial class ControlSource : Gst.Object
     /// Gets an array of values for for this #GstControlSource. Values that are
     /// undefined contain NANs.
     /// </summary>
-    /// <param name="timestamp">The <c>timestamp</c> argument.</param>
-    /// <param name="interval">The <c>interval</c> argument.</param>
+    /// <param name="timestamp">the first timestamp</param>
+    /// <param name="interval">the time steps</param>
     /// <param name="values">array to put control-values in</param>
     /// <returns>%TRUE if the given array could be filled, %FALSE otherwise</returns>
     public bool ControlSourceGetValueArray(Gst.ClockTime timestamp, Gst.ClockTime interval, System.Span<double> values)

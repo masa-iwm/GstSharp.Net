@@ -80,7 +80,7 @@ public sealed unsafe partial class InstallPluginsContext : Gst.GObject.Boxed
     /// --interaction=[show-confirm-search|hide-confirm-search] command line option.
     /// </para>
     /// </remarks>
-    /// <param name="confirmSearch">The <c>confirmSearch</c> argument.</param>
+    /// <param name="confirmSearch">whether to ask for confirmation before searching for plugins</param>
     public void SetConfirmSearch(bool confirmSearch)
     {
         GstInstallPluginsContextSetConfirmSearch(Handle, confirmSearch ? 1 : 0);
@@ -101,7 +101,7 @@ public sealed unsafe partial class InstallPluginsContext : Gst.GObject.Boxed
     /// --desktop-id= command line option.
     /// </para>
     /// </remarks>
-    /// <param name="desktopId">The <c>desktopId</c> argument.</param>
+    /// <param name="desktopId">the desktop file ID of the calling application</param>
     public void SetDesktopId(string desktopId)
     {
         ArgumentNullException.ThrowIfNull(desktopId);
@@ -135,7 +135,7 @@ public sealed unsafe partial class InstallPluginsContext : Gst.GObject.Boxed
     /// ]|
     /// </para>
     /// </remarks>
-    /// <param name="startupId">The <c>startupId</c> argument.</param>
+    /// <param name="startupId">the startup notification ID</param>
     public void SetStartupNotificationId(string startupId)
     {
         ArgumentNullException.ThrowIfNull(startupId);
@@ -173,7 +173,7 @@ public sealed unsafe partial class InstallPluginsContext : Gst.GObject.Boxed
     /// ]|
     /// </para>
     /// </remarks>
-    /// <param name="xid">The <c>xid</c> argument.</param>
+    /// <param name="xid">the XWindow ID (XID) of the top-level application</param>
     public void SetXid(uint xid)
     {
         GstInstallPluginsContextSetXid(Handle, xid);

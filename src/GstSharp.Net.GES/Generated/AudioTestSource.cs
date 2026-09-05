@@ -63,7 +63,7 @@ public unsafe partial class AudioTestSource : GES.AudioSource, GES.IExtractable,
     }
 
     /// <summary>Lets you set the frequency applied on the track element</summary>
-    /// <param name="freq">The <c>freq</c> argument.</param>
+    /// <param name="freq">The frequency you want to apply on @self</param>
     public void SetFreq(double freq)
     {
         GesAudioTestSourceSetFreq(Handle, freq);
@@ -71,7 +71,7 @@ public unsafe partial class AudioTestSource : GES.AudioSource, GES.IExtractable,
     }
 
     /// <summary>Sets the volume of the test audio signal.</summary>
-    /// <param name="volume">The <c>volume</c> argument.</param>
+    /// <param name="volume">The volume you want to apply on @self</param>
     public void SetVolume(double volume)
     {
         GesAudioTestSourceSetVolume(Handle, volume);

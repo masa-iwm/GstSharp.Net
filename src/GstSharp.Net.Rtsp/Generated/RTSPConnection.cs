@@ -39,8 +39,8 @@ public sealed unsafe partial class RTSPConnection
     /// <remarks>
     /// <para>Only applicable in HTTP tunnel mode.</para>
     /// </remarks>
-    /// <param name="key">The <c>key</c> argument.</param>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="key">HTTP header name</param>
+    /// <param name="value">HTTP header value</param>
     public void AddExtraHttpRequestHeader(string key, string value)
     {
         ArgumentNullException.ThrowIfNull(key);
@@ -81,7 +81,7 @@ public sealed unsafe partial class RTSPConnection
     /// <remarks>
     /// <para>This function can be cancelled with gst_rtsp_connection_flush().</para>
     /// </remarks>
-    /// <param name="timeout">The <c>timeout</c> argument.</param>
+    /// <param name="timeout">a timeout in microseconds</param>
     /// <returns>#GST_RTSP_OK when a connection could be made.</returns>
     public Gst.Rtsp.RTSPResult ConnectUsec(long timeout)
     {
@@ -100,8 +100,8 @@ public sealed unsafe partial class RTSPConnection
     /// <remarks>
     /// <para>This function can be cancelled with gst_rtsp_connection_flush().</para>
     /// </remarks>
-    /// <param name="timeout">The <c>timeout</c> argument.</param>
-    /// <param name="response">The <c>response</c> argument.</param>
+    /// <param name="timeout">a timeout in microseconds</param>
+    /// <param name="response">a #GstRTSPMessage</param>
     /// <returns>#GST_RTSP_OK when a connection could be made.</returns>
     public Gst.Rtsp.RTSPResult ConnectWithResponseUsec(long timeout, Gst.Rtsp.RTSPMessage response)
     {
@@ -127,7 +127,7 @@ public sealed unsafe partial class RTSPConnection
     /// @conn.
     /// </para>
     /// </remarks>
-    /// <param name="conn2">The <c>conn2</c> argument.</param>
+    /// <param name="conn2">a #GstRTSPConnection or %NULL</param>
     /// <returns>return GST_RTSP_OK on success.</returns>
     public Gst.Rtsp.RTSPResult DoTunnel(Gst.Rtsp.RTSPConnection? conn2)
     {
@@ -142,7 +142,7 @@ public sealed unsafe partial class RTSPConnection
     /// and future actions on @conn will return #GST_RTSP_EINTR until the connection
     /// is set to non-flushing mode again.
     /// </summary>
-    /// <param name="flush">The <c>flush</c> argument.</param>
+    /// <param name="flush">start or stop the flush</param>
     /// <returns>#GST_RTSP_OK.</returns>
     public Gst.Rtsp.RTSPResult Flush(bool flush)
     {
@@ -355,9 +355,9 @@ public sealed unsafe partial class RTSPConnection
     /// <para>@timeout can be 0, in which case this function might block forever.</para>
     /// <para>This function can be cancelled with gst_rtsp_connection_flush().</para>
     /// </remarks>
-    /// <param name="events">The <c>events</c> argument.</param>
-    /// <param name="revents">The <c>revents</c> argument.</param>
-    /// <param name="timeout">The <c>timeout</c> argument.</param>
+    /// <param name="events">a bitmask of #GstRTSPEvent flags to check</param>
+    /// <param name="revents">location for result flags</param>
+    /// <param name="timeout">a timeout in microseconds</param>
     /// <returns>#GST_RTSP_OK on success.</returns>
     public Gst.Rtsp.RTSPResult PollUsec(Gst.Rtsp.RTSPEvent events, out Gst.Rtsp.RTSPEvent revents, long timeout)
     {
@@ -377,7 +377,7 @@ public sealed unsafe partial class RTSPConnection
     /// <para>This function can be cancelled with gst_rtsp_connection_flush().</para>
     /// </remarks>
     /// <param name="data">the data to read</param>
-    /// <param name="timeout">The <c>timeout</c> argument.</param>
+    /// <param name="timeout">a timeout value in microseconds</param>
     /// <returns>#GST_RTSP_OK on success.</returns>
     public Gst.Rtsp.RTSPResult ReadUsec(System.Span<byte> data, long timeout)
     {
@@ -397,8 +397,8 @@ public sealed unsafe partial class RTSPConnection
     /// <remarks>
     /// <para>This function can be cancelled with gst_rtsp_connection_flush().</para>
     /// </remarks>
-    /// <param name="message">The <c>message</c> argument.</param>
-    /// <param name="timeout">The <c>timeout</c> argument.</param>
+    /// <param name="message">the message to read</param>
+    /// <param name="timeout">a timeout value or 0</param>
     /// <returns>#GST_RTSP_OK on success.</returns>
     public Gst.Rtsp.RTSPResult ReceiveUsec(Gst.Rtsp.RTSPMessage message, long timeout)
     {
@@ -426,8 +426,8 @@ public sealed unsafe partial class RTSPConnection
     /// <remarks>
     /// <para>This function can be cancelled with gst_rtsp_connection_flush().</para>
     /// </remarks>
-    /// <param name="message">The <c>message</c> argument.</param>
-    /// <param name="timeout">The <c>timeout</c> argument.</param>
+    /// <param name="message">the message to send</param>
+    /// <param name="timeout">a timeout value in microseconds</param>
     /// <returns>#GST_RTSP_OK on success.</returns>
     public Gst.Rtsp.RTSPResult SendUsec(Gst.Rtsp.RTSPMessage message, long timeout)
     {
@@ -460,9 +460,9 @@ public sealed unsafe partial class RTSPConnection
     /// Configure @conn for authentication mode @method with @user and @pass as the
     /// user and password respectively.
     /// </summary>
-    /// <param name="method">The <c>method</c> argument.</param>
-    /// <param name="user">The <c>user</c> argument.</param>
-    /// <param name="pass">The <c>pass</c> argument.</param>
+    /// <param name="method">authentication method</param>
+    /// <param name="user">the user</param>
+    /// <param name="pass">the password</param>
     /// <returns>#GST_RTSP_OK.</returns>
     public Gst.Rtsp.RTSPResult SetAuth(Gst.Rtsp.RTSPAuthMethod method, string user, string pass)
     {
@@ -484,8 +484,8 @@ public sealed unsafe partial class RTSPConnection
     /// in the WWW-Authenticate response header and can include realm, domain,
     /// nonce, opaque, stale, algorithm, qop as per RFC2617.
     /// </summary>
-    /// <param name="param">The <c>param</c> argument.</param>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="param">authentication directive</param>
+    /// <param name="value">value</param>
     public void SetAuthParam(string param, string value)
     {
         ArgumentNullException.ThrowIfNull(param);
@@ -503,7 +503,7 @@ public sealed unsafe partial class RTSPConnection
     /// Both requests and responses are validated. If content-length is
     /// exceeded, ENOMEM error will be returned.
     /// </summary>
-    /// <param name="limit">The <c>limit</c> argument.</param>
+    /// <param name="limit">Content-Length limit</param>
     public void SetContentLengthLimit(uint limit)
     {
         GstRtspConnectionSetContentLengthLimit(Handle, limit);
@@ -515,7 +515,7 @@ public sealed unsafe partial class RTSPConnection
     /// messages in addition to the RTSP messages. It will also disable the
     /// automatic handling of setting up an HTTP tunnel.
     /// </summary>
-    /// <param name="enable">The <c>enable</c> argument.</param>
+    /// <param name="enable">%TRUE to enable manual HTTP mode</param>
     public void SetHttpMode(bool enable)
     {
         GstRtspConnectionSetHttpMode(Handle, enable ? 1 : 0);
@@ -526,7 +526,10 @@ public sealed unsafe partial class RTSPConnection
     /// Set whether to ignore the x-server-ip-address header reply or not. If the
     /// header is ignored, the original address will be used instead.
     /// </summary>
-    /// <param name="ignore">The <c>ignore</c> argument.</param>
+    /// <param name="ignore">
+    /// %TRUE to ignore the x-server-ip-address header reply or %FALSE to
+    ///          comply with it (%FALSE is the default).
+    /// </param>
     public void SetIgnoreXServerReply(bool ignore)
     {
         GstRtspConnectionSetIgnoreXServerReply(Handle, ignore ? 1 : 0);
@@ -534,7 +537,7 @@ public sealed unsafe partial class RTSPConnection
     }
 
     /// <summary>Set the IP address of the server.</summary>
-    /// <param name="ip">The <c>ip</c> argument.</param>
+    /// <param name="ip">an ip address</param>
     public void SetIp(string ip)
     {
         ArgumentNullException.ThrowIfNull(ip);
@@ -545,8 +548,8 @@ public sealed unsafe partial class RTSPConnection
     }
 
     /// <summary>Set the proxy host and port.</summary>
-    /// <param name="host">The <c>host</c> argument.</param>
-    /// <param name="port">The <c>port</c> argument.</param>
+    /// <param name="host">the proxy host</param>
+    /// <param name="port">the proxy port</param>
     /// <returns>#GST_RTSP_OK.</returns>
     public Gst.Rtsp.RTSPResult SetProxy(string host, uint port)
     {
@@ -559,7 +562,7 @@ public sealed unsafe partial class RTSPConnection
     }
 
     /// <summary>Configure @conn to use the specified DSCP value.</summary>
-    /// <param name="qosDscp">The <c>qosDscp</c> argument.</param>
+    /// <param name="qosDscp">DSCP value</param>
     /// <returns>#GST_RTSP_OK on success.</returns>
     public Gst.Rtsp.RTSPResult SetQosDscp(uint qosDscp)
     {
@@ -575,7 +578,7 @@ public sealed unsafe partial class RTSPConnection
     /// <remarks>
     /// <para>The default value is %TRUE</para>
     /// </remarks>
-    /// <param name="remember">The <c>remember</c> argument.</param>
+    /// <param name="remember">%TRUE if the connection should remember the session id</param>
     public void SetRememberSessionId(bool remember)
     {
         GstRtspConnectionSetRememberSessionId(Handle, remember ? 1 : 0);
@@ -587,7 +590,7 @@ public sealed unsafe partial class RTSPConnection
     /// database will be used to verify the server's certificate in case it
     /// can't be verified with the default certificate database first.
     /// </summary>
-    /// <param name="database">The <c>database</c> argument.</param>
+    /// <param name="database">a #GTlsDatabase</param>
     public void SetTlsDatabase(Gst.Gio.TlsDatabase? database)
     {
         GstRtspConnectionSetTlsDatabase(Handle, database is null ? 0 : database.Handle);
@@ -600,7 +603,7 @@ public sealed unsafe partial class RTSPConnection
     /// database need to interact with the user. This will be used to prompt the
     /// user for passwords where necessary.
     /// </summary>
-    /// <param name="interaction">The <c>interaction</c> argument.</param>
+    /// <param name="interaction">a #GTlsInteraction</param>
     public void SetTlsInteraction(Gst.Gio.TlsInteraction? interaction)
     {
         GstRtspConnectionSetTlsInteraction(Handle, interaction is null ? 0 : interaction.Handle);
@@ -625,7 +628,7 @@ public sealed unsafe partial class RTSPConnection
     /// the only error flag set even if other problems exist with the certificate.
     /// </para>
     /// </remarks>
-    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <param name="flags">the validation flags.</param>
     /// <returns>
     /// TRUE if the validation flags are set correctly, or FALSE if
     /// @conn is NULL or is not a TLS connection.
@@ -641,7 +644,7 @@ public sealed unsafe partial class RTSPConnection
     /// Set the HTTP tunneling state of the connection. This must be configured before
     /// the @conn is connected.
     /// </summary>
-    /// <param name="tunneled">The <c>tunneled</c> argument.</param>
+    /// <param name="tunneled">the new state</param>
     public void SetTunneled(bool tunneled)
     {
         GstRtspConnectionSetTunneled(Handle, tunneled ? 1 : 0);
@@ -657,7 +660,7 @@ public sealed unsafe partial class RTSPConnection
     /// <para>This function can be cancelled with gst_rtsp_connection_flush().</para>
     /// </remarks>
     /// <param name="data">the data to write</param>
-    /// <param name="timeout">The <c>timeout</c> argument.</param>
+    /// <param name="timeout">a timeout value or 0</param>
     /// <returns>#GST_RTSP_OK on success.</returns>
     public Gst.Rtsp.RTSPResult WriteUsec(System.ReadOnlySpan<byte> data, long timeout)
     {
@@ -673,9 +676,9 @@ public sealed unsafe partial class RTSPConnection
     /// Accept a new connection on @socket and create a new #GstRTSPConnection for
     /// handling communication on new socket.
     /// </summary>
-    /// <param name="socket">The <c>socket</c> argument.</param>
-    /// <param name="conn">The <c>conn</c> argument.</param>
-    /// <param name="cancellable">The <c>cancellable</c> argument.</param>
+    /// <param name="socket">a socket</param>
+    /// <param name="conn">storage for a #GstRTSPConnection</param>
+    /// <param name="cancellable">a #GCancellable to cancel the operation</param>
     /// <returns>#GST_RTSP_OK when @conn contains a valid connection.</returns>
     public static Gst.Rtsp.RTSPResult Accept(Gst.Gio.Socket socket, out Gst.Rtsp.RTSPConnection? conn, Gst.Gio.Cancellable? cancellable)
     {
@@ -696,8 +699,8 @@ public sealed unsafe partial class RTSPConnection
     /// <remarks>
     /// <para>A copy of @url will be made.</para>
     /// </remarks>
-    /// <param name="url">The <c>url</c> argument.</param>
-    /// <param name="conn">The <c>conn</c> argument.</param>
+    /// <param name="url">a #GstRTSPUrl</param>
+    /// <param name="conn">storage for a #GstRTSPConnection</param>
     /// <returns>#GST_RTSP_OK when @conn contains a valid connection.</returns>
     public static Gst.Rtsp.RTSPResult Create(Gst.Rtsp.RTSPUrl url, out Gst.Rtsp.RTSPConnection? conn)
     {
@@ -714,11 +717,11 @@ public sealed unsafe partial class RTSPConnection
     /// socket @socket. The @initial_buffer contains zero terminated data already
     /// read from @socket which should be used before starting to read new data.
     /// </summary>
-    /// <param name="socket">The <c>socket</c> argument.</param>
-    /// <param name="ip">The <c>ip</c> argument.</param>
-    /// <param name="port">The <c>port</c> argument.</param>
-    /// <param name="initialBuffer">The <c>initialBuffer</c> argument.</param>
-    /// <param name="conn">The <c>conn</c> argument.</param>
+    /// <param name="socket">a #GSocket</param>
+    /// <param name="ip">the IP address of the other end</param>
+    /// <param name="port">the port used by the other end</param>
+    /// <param name="initialBuffer">data already read from @fd</param>
+    /// <param name="conn">storage for a #GstRTSPConnection</param>
     /// <returns>#GST_RTSP_OK when @conn contains a valid connection.</returns>
     public static Gst.Rtsp.RTSPResult CreateFromSocket(Gst.Gio.Socket socket, string ip, ushort port, string initialBuffer, out Gst.Rtsp.RTSPConnection? conn)
     {

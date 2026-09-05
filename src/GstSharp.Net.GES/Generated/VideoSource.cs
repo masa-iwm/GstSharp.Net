@@ -52,8 +52,8 @@ public abstract unsafe partial class VideoSource : GES.Source, GES.IExtractable,
     /// account.
     /// </para>
     /// </remarks>
-    /// <param name="width">The <c>width</c> argument.</param>
-    /// <param name="height">The <c>height</c> argument.</param>
+    /// <param name="width">The natural width of the underlying source</param>
+    /// <param name="height">The natural height of the underlying source</param>
     /// <returns>%TRUE if the object has a natural size, %FALSE otherwise.</returns>
     public bool GetNaturalSize(out int width, out int height)
     {

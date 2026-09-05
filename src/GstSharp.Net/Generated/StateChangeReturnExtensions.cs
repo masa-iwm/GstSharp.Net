@@ -15,7 +15,7 @@ public static unsafe partial class StateChangeReturnExtensions
     /// <remarks>
     /// <para>Available since GStreamer 1.28.</para>
     /// </remarks>
-    /// <param name="stateRet">The <c>stateRet</c> argument.</param>
+    /// <param name="stateRet">a #GstStateChangeReturn to get the name of.</param>
     /// <returns>
     /// a string with the name of the state
     ///    result.

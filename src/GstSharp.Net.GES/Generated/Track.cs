@@ -94,9 +94,9 @@ public unsafe partial class Track : Gst.Bin, GES.IMetaContainer, Gst.IChildProxy
     /// declaration around the argument stays correct.
     /// </para>
     /// </remarks>
-    /// <param name="type">The <c>type</c> argument.</param>
+    /// <param name="type">The #GESTrack:track-type for the track</param>
     /// <param name="caps">
-    /// The <c>caps</c> argument.
+    /// The #GESTrack:caps for the track
     /// The call consumes it: <paramref name="caps"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// </param>
@@ -119,7 +119,7 @@ public unsafe partial class Track : Gst.Bin, GES.IMetaContainer, Gst.IChildProxy
     }
 
     /// <summary>See ges_track_add_element(), which also gives an error.</summary>
-    /// <param name="object">The <c>@object</c> argument.</param>
+    /// <param name="object">The element to add</param>
     /// <returns>%TRUE if @object was successfully added to @track.</returns>
     public bool AddElement(GES.TrackElement @object)
     {
@@ -141,7 +141,7 @@ public unsafe partial class Track : Gst.Bin, GES.IMetaContainer, Gst.IChildProxy
     /// </para>
     /// <para>Note that a #GESTrackElement can only be added to one track.</para>
     /// </remarks>
-    /// <param name="object">The <c>@object</c> argument.</param>
+    /// <param name="object">The element to add</param>
     /// <returns>%TRUE if @object was successfully added to @track.</returns>
     /// <exception cref="Gst.GLib.GException">The native call failed.</exception>
     public bool AddElementFull(GES.TrackElement @object)
@@ -257,7 +257,7 @@ public unsafe partial class Track : Gst.Bin, GES.IMetaContainer, Gst.IChildProxy
     }
 
     /// <summary>See ges_track_remove_element_full(), which also returns an error.</summary>
-    /// <param name="object">The <c>@object</c> argument.</param>
+    /// <param name="object">The element to remove</param>
     /// <returns>%TRUE if @object was successfully removed from @track.</returns>
     public bool RemoveElement(GES.TrackElement @object)
     {
@@ -272,7 +272,7 @@ public unsafe partial class Track : Gst.Bin, GES.IMetaContainer, Gst.IChildProxy
     /// Removes the given track element from the track, which revokes
     /// ownership of the element.
     /// </summary>
-    /// <param name="object">The <c>@object</c> argument.</param>
+    /// <param name="object">The element to remove</param>
     /// <returns>%TRUE if @object was successfully removed from @track.</returns>
     /// <exception cref="Gst.GLib.GException">The native call failed.</exception>
     public bool RemoveElementFull(GES.TrackElement @object)
@@ -287,7 +287,7 @@ public unsafe partial class Track : Gst.Bin, GES.IMetaContainer, Gst.IChildProxy
     }
 
     /// <summary>Sets the #GESTrack:mixing for the track.</summary>
-    /// <param name="mixing">The <c>mixing</c> argument.</param>
+    /// <param name="mixing">Whether @track should be mixing</param>
     public void SetMixing(bool mixing)
     {
         GesTrackSetMixing(Handle, mixing ? 1 : 0);
@@ -301,7 +301,7 @@ public unsafe partial class Track : Gst.Bin, GES.IMetaContainer, Gst.IChildProxy
     /// &gt; using #GESPipeline:mode=#GES_PIPELINE_MODE_SMART_RENDER.
     /// </para>
     /// </remarks>
-    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <param name="caps">The new restriction-caps for @track</param>
     public void SetRestrictionCaps(Gst.Caps caps)
     {
         ArgumentNullException.ThrowIfNull(caps);
@@ -347,7 +347,7 @@ public unsafe partial class Track : Gst.Bin, GES.IMetaContainer, Gst.IChildProxy
     /// width=400".
     /// </para>
     /// </remarks>
-    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <param name="caps">The caps to update the restriction-caps with</param>
     public void UpdateRestrictionCaps(Gst.Caps caps)
     {
         ArgumentNullException.ThrowIfNull(caps);

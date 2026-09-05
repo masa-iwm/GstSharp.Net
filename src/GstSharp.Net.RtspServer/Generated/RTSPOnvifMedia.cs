@@ -73,7 +73,7 @@ public unsafe partial class RTSPOnvifMedia : Gst.RtspServer.RTSPMedia
     /// Set the configured/supported bandwidth of the ONVIF backchannel pipeline in
     /// bits per second.
     /// </summary>
-    /// <param name="bandwidth">The <c>bandwidth</c> argument.</param>
+    /// <param name="bandwidth">the bandwidth in bits per second</param>
     public void SetBackchannelBandwidth(uint bandwidth)
     {
         GstRtspOnvifMediaSetBackchannelBandwidth(Handle, bandwidth);

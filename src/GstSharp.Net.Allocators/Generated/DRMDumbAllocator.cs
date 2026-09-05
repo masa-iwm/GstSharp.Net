@@ -45,7 +45,7 @@ public unsafe partial class DRMDumbAllocator : Gst.Allocator
     /// function can fail if the path does not exist, is not a DRM device or if
     /// the DRM device doesnot support DUMB allocation.
     /// </summary>
-    /// <param name="drmDevicePath">The <c>drmDevicePath</c> argument.</param>
+    /// <param name="drmDevicePath">path to the DRM device to open</param>
     /// <returns>
     /// a new DRM Dumb allocator. Use gst_object_unref()
     ///   to release the allocator after usage.
@@ -64,7 +64,7 @@ public unsafe partial class DRMDumbAllocator : Gst.Allocator
     /// function can fail if the file descriptor is not a DRM device or if
     /// the DRM device does not support DUMB allocation.
     /// </summary>
-    /// <param name="drmFd">The <c>drmFd</c> argument.</param>
+    /// <param name="drmFd">file descriptor of the DRM device</param>
     /// <returns>
     /// a new DRM Dumb allocator. Use gst_object_unref()
     ///   to release the allocator after usage.
@@ -81,10 +81,10 @@ public unsafe partial class DRMDumbAllocator : Gst.Allocator
     /// pixel format. This @drm_fourcc is converted into a bpp (bit-per-pixel)
     /// number and the height is scaled according to the sub-sampling.
     /// </summary>
-    /// <param name="drmFourcc">The <c>drmFourcc</c> argument.</param>
-    /// <param name="width">The <c>width</c> argument.</param>
-    /// <param name="height">The <c>height</c> argument.</param>
-    /// <param name="outPitch">The <c>outPitch</c> argument.</param>
+    /// <param name="drmFourcc">the DRM format to allocate for</param>
+    /// <param name="width">padded width for this allocation</param>
+    /// <param name="height">padded height for this allocation</param>
+    /// <param name="outPitch">the pitch as returned by the driver</param>
     /// <returns>
     /// a new DRM Dumb #GstMemory. Use gst_memory_unref()
     ///   to release the memory after usage.

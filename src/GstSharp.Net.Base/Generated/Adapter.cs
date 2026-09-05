@@ -251,7 +251,7 @@ public unsafe partial class Adapter : Gst.GObject.Object
     /// <remarks>
     /// <para>See also: gst_adapter_map(), gst_adapter_unmap()</para>
     /// </remarks>
-    /// <param name="flush">The <c>flush</c> argument.</param>
+    /// <param name="flush">the number of bytes to flush</param>
     public void Flush(nuint flush)
     {
         GstAdapterFlush(Handle, flush);
@@ -270,7 +270,7 @@ public unsafe partial class Adapter : Gst.GObject.Object
     /// </para>
     /// <para>Free-function: gst_buffer_unref</para>
     /// </remarks>
-    /// <param name="nbytes">The <c>nbytes</c> argument.</param>
+    /// <param name="nbytes">the number of bytes to get</param>
     /// <returns>
     /// a #GstBuffer containing the first
     ///     @nbytes of the adapter, or %NULL if @nbytes bytes are not available.
@@ -295,7 +295,7 @@ public unsafe partial class Adapter : Gst.GObject.Object
     /// </para>
     /// <para>Free-function: gst_buffer_unref</para>
     /// </remarks>
-    /// <param name="nbytes">The <c>nbytes</c> argument.</param>
+    /// <param name="nbytes">the number of bytes to get</param>
     /// <returns>
     /// a #GstBuffer containing the first
     ///     @nbytes of the adapter, or %NULL if @nbytes bytes are not available.
@@ -319,7 +319,7 @@ public unsafe partial class Adapter : Gst.GObject.Object
     /// the list after usage.
     /// </para>
     /// </remarks>
-    /// <param name="nbytes">The <c>nbytes</c> argument.</param>
+    /// <param name="nbytes">the number of bytes to get</param>
     /// <returns>
     /// a #GstBufferList of buffers containing
     ///     the first @nbytes of the adapter, or %NULL if @nbytes bytes are not
@@ -343,7 +343,7 @@ public unsafe partial class Adapter : Gst.GObject.Object
     /// buffer in the list before freeing the list after usage.
     /// </para>
     /// </remarks>
-    /// <param name="nbytes">The <c>nbytes</c> argument.</param>
+    /// <param name="nbytes">the number of bytes to get</param>
     /// <returns>
     /// a #GList of
     ///     buffers containing the first @nbytes of the adapter, or %NULL if @nbytes
@@ -385,10 +385,13 @@ public unsafe partial class Adapter : Gst.GObject.Object
     /// for value.
     /// </para>
     /// </remarks>
-    /// <param name="mask">The <c>mask</c> argument.</param>
-    /// <param name="pattern">The <c>pattern</c> argument.</param>
-    /// <param name="offset">The <c>offset</c> argument.</param>
-    /// <param name="size">The <c>size</c> argument.</param>
+    /// <param name="mask">mask to apply to data before matching against @pattern</param>
+    /// <param name="pattern">pattern to match (after mask is applied)</param>
+    /// <param name="offset">
+    /// offset into the adapter data from which to start scanning, returns
+    ///          the last scanned position.
+    /// </param>
+    /// <param name="size">number of bytes to scan from offset</param>
     /// <returns>offset of the first match, or -1 if no match was found.</returns>
     public nint MaskedScanUint32(uint mask, uint pattern, nuint offset, nuint size)
     {
@@ -413,11 +416,14 @@ public unsafe partial class Adapter : Gst.GObject.Object
     /// enough data (offset+size bytes) in the adapter.
     /// </para>
     /// </remarks>
-    /// <param name="mask">The <c>mask</c> argument.</param>
-    /// <param name="pattern">The <c>pattern</c> argument.</param>
-    /// <param name="offset">The <c>offset</c> argument.</param>
-    /// <param name="size">The <c>size</c> argument.</param>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="mask">mask to apply to data before matching against @pattern</param>
+    /// <param name="pattern">pattern to match (after mask is applied)</param>
+    /// <param name="offset">
+    /// offset into the adapter data from which to start scanning, returns
+    ///          the last scanned position.
+    /// </param>
+    /// <param name="size">number of bytes to scan from offset</param>
+    /// <param name="value">pointer to uint32 to return matching data</param>
     /// <returns>offset of the first match, or -1 if no match was found.</returns>
     public nint MaskedScanUint32Peek(uint mask, uint pattern, nuint offset, nuint size, out uint value)
     {
@@ -453,7 +459,7 @@ public unsafe partial class Adapter : Gst.GObject.Object
     /// and distance returned are GST_CLOCK_TIME_NONE and 0 respectively.
     /// </para>
     /// </remarks>
-    /// <param name="distance">The <c>distance</c> argument.</param>
+    /// <param name="distance">pointer to location for distance, or %NULL</param>
     /// <returns>The previously seen dts.</returns>
     public Gst.ClockTime PrevDts(out ulong distance)
     {
@@ -477,8 +483,8 @@ public unsafe partial class Adapter : Gst.GObject.Object
     /// and distance returned are GST_CLOCK_TIME_NONE and 0 respectively.
     /// </para>
     /// </remarks>
-    /// <param name="offset">The <c>offset</c> argument.</param>
-    /// <param name="distance">The <c>distance</c> argument.</param>
+    /// <param name="offset">the offset in the adapter at which to get timestamp</param>
+    /// <param name="distance">pointer to location for distance, or %NULL</param>
     /// <returns>The previously seen dts at given offset.</returns>
     public Gst.ClockTime PrevDtsAtOffset(nuint offset, out ulong distance)
     {
@@ -502,7 +508,7 @@ public unsafe partial class Adapter : Gst.GObject.Object
     /// and distance returned are GST_BUFFER_OFFSET_NONE and 0 respectively.
     /// </para>
     /// </remarks>
-    /// <param name="distance">The <c>distance</c> argument.</param>
+    /// <param name="distance">pointer to a location for distance, or %NULL</param>
     /// <returns>The previous seen offset.</returns>
     public ulong PrevOffset(out ulong distance)
     {
@@ -526,7 +532,7 @@ public unsafe partial class Adapter : Gst.GObject.Object
     /// and distance returned are GST_CLOCK_TIME_NONE and 0 respectively.
     /// </para>
     /// </remarks>
-    /// <param name="distance">The <c>distance</c> argument.</param>
+    /// <param name="distance">pointer to location for distance, or %NULL</param>
     /// <returns>The previously seen pts.</returns>
     public Gst.ClockTime PrevPts(out ulong distance)
     {
@@ -550,8 +556,8 @@ public unsafe partial class Adapter : Gst.GObject.Object
     /// and distance returned are GST_CLOCK_TIME_NONE and 0 respectively.
     /// </para>
     /// </remarks>
-    /// <param name="offset">The <c>offset</c> argument.</param>
-    /// <param name="distance">The <c>distance</c> argument.</param>
+    /// <param name="offset">the offset in the adapter at which to get timestamp</param>
+    /// <param name="distance">pointer to location for distance, or %NULL</param>
     /// <returns>The previously seen pts at given offset.</returns>
     public Gst.ClockTime PrevPtsAtOffset(nuint offset, out ulong distance)
     {
@@ -588,7 +594,7 @@ public unsafe partial class Adapter : Gst.GObject.Object
     /// </para>
     /// </remarks>
     /// <param name="buf">
-    /// The <c>buf</c> argument.
+    /// a #GstBuffer to add to queue in the adapter
     /// The call consumes it: <paramref name="buf"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// </param>
@@ -644,7 +650,7 @@ public unsafe partial class Adapter : Gst.GObject.Object
     /// </para>
     /// <para>Free-function: gst_buffer_unref</para>
     /// </remarks>
-    /// <param name="nbytes">The <c>nbytes</c> argument.</param>
+    /// <param name="nbytes">the number of bytes to take</param>
     /// <returns>
     /// a #GstBuffer containing the first
     ///     @nbytes of the adapter, or %NULL if @nbytes bytes are not available.
@@ -687,7 +693,7 @@ public unsafe partial class Adapter : Gst.GObject.Object
     /// </para>
     /// <para>Free-function: gst_buffer_unref</para>
     /// </remarks>
-    /// <param name="nbytes">The <c>nbytes</c> argument.</param>
+    /// <param name="nbytes">the number of bytes to take</param>
     /// <returns>
     /// a #GstBuffer containing the first
     ///     @nbytes of the adapter, or %NULL if @nbytes bytes are not available.
@@ -712,7 +718,7 @@ public unsafe partial class Adapter : Gst.GObject.Object
     /// the list after usage.
     /// </para>
     /// </remarks>
-    /// <param name="nbytes">The <c>nbytes</c> argument.</param>
+    /// <param name="nbytes">the number of bytes to take</param>
     /// <returns>
     /// a #GstBufferList of buffers containing
     ///     the first @nbytes of the adapter, or %NULL if @nbytes bytes are not
@@ -737,7 +743,7 @@ public unsafe partial class Adapter : Gst.GObject.Object
     /// buffer in the list before freeing the list after usage.
     /// </para>
     /// </remarks>
-    /// <param name="nbytes">The <c>nbytes</c> argument.</param>
+    /// <param name="nbytes">the number of bytes to take</param>
     /// <returns>
     /// a #GList of
     ///     buffers containing the first @nbytes of the adapter, or %NULL if @nbytes

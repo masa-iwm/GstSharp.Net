@@ -80,7 +80,7 @@ public static unsafe partial class URIHandlerExtensions
 
     /// <summary>Tries to set the URI of the given handler.</summary>
     /// <param name="handler">A #GstURIHandler</param>
-    /// <param name="uri">The <c>uri</c> argument.</param>
+    /// <param name="uri">URI to set</param>
     /// <returns>%TRUE if the URI was set successfully, else %FALSE.</returns>
     /// <exception cref="Gst.GLib.GException">The native call failed.</exception>
     public static bool SetUri(this Gst.IURIHandler handler, string uri)

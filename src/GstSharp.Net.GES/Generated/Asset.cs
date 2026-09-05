@@ -243,7 +243,7 @@ public unsafe partial class Asset : Gst.GObject.Object, GES.IMetaContainer
     /// remove **all** proxies from the asset.
     /// </para>
     /// </remarks>
-    /// <param name="proxy">The <c>proxy</c> argument.</param>
+    /// <param name="proxy">A new default proxy for @asset</param>
     /// <returns>
     /// %TRUE if @proxy was successfully set as the default for
     /// @asset.
@@ -263,7 +263,7 @@ public unsafe partial class Asset : Gst.GObject.Object, GES.IMetaContainer
     /// default. If there are no other proxies, then the asset will no longer
     /// have a default #GESAsset:proxy.
     /// </summary>
-    /// <param name="proxy">The <c>proxy</c> argument.</param>
+    /// <param name="proxy">An existing proxy of @asset</param>
     /// <returns>
     /// %TRUE if @proxy was successfully removed from @asset's proxy
     /// list.
@@ -291,8 +291,14 @@ public unsafe partial class Asset : Gst.GObject.Object, GES.IMetaContainer
     /// ges_asset_request_async().
     /// </para>
     /// </remarks>
-    /// <param name="extractableType">The <c>extractableType</c> argument.</param>
-    /// <param name="id">The <c>id</c> argument.</param>
+    /// <param name="extractableType">
+    /// The #GESAsset:extractable-type of the asset that
+    /// needs reloading
+    /// </param>
+    /// <param name="id">
+    /// The #GESAsset:id of the asset asset that needs
+    /// reloading
+    /// </param>
     /// <returns>
     /// %TRUE if the specified asset exists in the cache and could be
     /// marked for reloading.
@@ -347,8 +353,8 @@ public unsafe partial class Asset : Gst.GObject.Object, GES.IMetaContainer
     /// want to wait for the request to finish.
     /// </para>
     /// </remarks>
-    /// <param name="extractableType">The <c>extractableType</c> argument.</param>
-    /// <param name="id">The <c>id</c> argument.</param>
+    /// <param name="extractableType">The #GESAsset:extractable-type of the asset</param>
+    /// <param name="id">The #GESAsset:id of the asset</param>
     /// <returns>
     /// A reference to the requested
     /// asset, or %NULL if an error occurred.

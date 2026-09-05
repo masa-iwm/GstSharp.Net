@@ -12,7 +12,7 @@ namespace Gst.Play;
 public static unsafe partial class PlayColorBalanceTypeExtensions
 {
     /// <summary>Gets a string representing the given color balance type.</summary>
-    /// <param name="type">The <c>type</c> argument.</param>
+    /// <param name="type">a #GstPlayColorBalanceType</param>
     /// <returns>
     /// a string with the name of the color
     ///   balance type.

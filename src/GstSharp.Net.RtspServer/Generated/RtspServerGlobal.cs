@@ -20,8 +20,8 @@ public static unsafe partial class RtspServerGlobal
     }
 
     /// <summary>Get parameters (not implemented yet)</summary>
-    /// <param name="client">The <c>client</c> argument.</param>
-    /// <param name="ctx">The <c>ctx</c> argument.</param>
+    /// <param name="client">a #GstRTSPClient</param>
+    /// <param name="ctx">a #GstRTSPContext</param>
     /// <returns>a #GstRTSPResult</returns>
     public static Gst.Rtsp.RTSPResult RtspParamsGet(Gst.RtspServer.RTSPClient client, Gst.RtspServer.RTSPContext ctx)
     {
@@ -33,8 +33,8 @@ public static unsafe partial class RtspServerGlobal
     }
 
     /// <summary>Set parameters (not implemented yet)</summary>
-    /// <param name="client">The <c>client</c> argument.</param>
-    /// <param name="ctx">The <c>ctx</c> argument.</param>
+    /// <param name="client">a #GstRTSPClient</param>
+    /// <param name="ctx">a #GstRTSPContext</param>
     /// <returns>a #GstRTSPResult</returns>
     public static Gst.Rtsp.RTSPResult RtspParamsSet(Gst.RtspServer.RTSPClient client, Gst.RtspServer.RTSPContext ctx)
     {
@@ -49,9 +49,9 @@ public static unsafe partial class RtspServerGlobal
     /// Add @media specific info to @sdp. @info is used to configure the connection
     /// information in the SDP.
     /// </summary>
-    /// <param name="sdp">The <c>sdp</c> argument.</param>
-    /// <param name="info">The <c>info</c> argument.</param>
-    /// <param name="media">The <c>media</c> argument.</param>
+    /// <param name="sdp">a #GstSDPMessage</param>
+    /// <param name="info">a #GstSDPInfo</param>
+    /// <param name="media">a #GstRTSPMedia</param>
     /// <returns>TRUE on success.</returns>
     public static bool RtspSdpFromMedia(Gst.Sdp.SDPMessage sdp, Gst.RtspServer.SDPInfo info, Gst.RtspServer.RTSPMedia media)
     {
@@ -65,9 +65,9 @@ public static unsafe partial class RtspServerGlobal
     }
 
     /// <summary>Add info from @stream to @sdp.</summary>
-    /// <param name="sdp">The <c>sdp</c> argument.</param>
-    /// <param name="info">The <c>info</c> argument.</param>
-    /// <param name="stream">The <c>stream</c> argument.</param>
+    /// <param name="sdp">a #GstSDPMessage</param>
+    /// <param name="info">a #GstSDPInfo</param>
+    /// <param name="stream">a #GstRTSPStream</param>
     /// <returns>TRUE on success.</returns>
     public static bool RtspSdpFromStream(Gst.Sdp.SDPMessage sdp, Gst.RtspServer.SDPInfo info, Gst.RtspServer.RTSPStream stream)
     {
@@ -81,11 +81,11 @@ public static unsafe partial class RtspServerGlobal
     }
 
     /// <summary>Creates a #GstSDPMedia from the parameters and stores it in @sdp.</summary>
-    /// <param name="sdp">The <c>sdp</c> argument.</param>
-    /// <param name="info">The <c>info</c> argument.</param>
-    /// <param name="stream">The <c>stream</c> argument.</param>
-    /// <param name="caps">The <c>caps</c> argument.</param>
-    /// <param name="profile">The <c>profile</c> argument.</param>
+    /// <param name="sdp">a #GstRTSPMessage</param>
+    /// <param name="info">a #GstSDPInfo</param>
+    /// <param name="stream">a #GstRTSPStream</param>
+    /// <param name="caps">a #GstCaps</param>
+    /// <param name="profile">a #GstRTSPProfile</param>
     /// <returns>%TRUE on success</returns>
     public static bool RtspSdpMakeMedia(Gst.Sdp.SDPMessage sdp, Gst.RtspServer.SDPInfo info, Gst.RtspServer.RTSPStream stream, Gst.Caps caps, Gst.Rtsp.RTSPProfile profile)
     {

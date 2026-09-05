@@ -68,10 +68,11 @@ public unsafe partial class ProxyPad : Gst.Pad
     /// declaration around the argument stays correct.
     /// </para>
     /// </remarks>
-    /// <param name="pad">The <c>pad</c> argument.</param>
-    /// <param name="parent">The <c>parent</c> argument.</param>
+    /// <param name="pad">a sink #GstPad, returns GST_FLOW_ERROR if not.</param>
+    /// <param name="parent">the parent of @pad or %NULL</param>
     /// <param name="buffer">
-    /// The <c>buffer</c> argument.
+    /// the #GstBuffer to send, return GST_FLOW_ERROR
+    ///     if not.
     /// The call consumes it: <paramref name="buffer"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// </param>
@@ -107,10 +108,11 @@ public unsafe partial class ProxyPad : Gst.Pad
     /// declaration around the argument stays correct.
     /// </para>
     /// </remarks>
-    /// <param name="pad">The <c>pad</c> argument.</param>
-    /// <param name="parent">The <c>parent</c> argument.</param>
+    /// <param name="pad">a sink #GstPad, returns GST_FLOW_ERROR if not.</param>
+    /// <param name="parent">the parent of @pad or %NULL</param>
     /// <param name="list">
-    /// The <c>list</c> argument.
+    /// the #GstBufferList to send, return GST_FLOW_ERROR
+    ///     if not.
     /// The call consumes it: <paramref name="list"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// </param>
@@ -137,11 +139,14 @@ public unsafe partial class ProxyPad : Gst.Pad
     }
 
     /// <summary>Invoke the default getrange function of the proxy pad.</summary>
-    /// <param name="pad">The <c>pad</c> argument.</param>
-    /// <param name="parent">The <c>parent</c> argument.</param>
-    /// <param name="offset">The <c>offset</c> argument.</param>
-    /// <param name="size">The <c>size</c> argument.</param>
-    /// <param name="buffer">The <c>buffer</c> argument.</param>
+    /// <param name="pad">a src #GstPad, returns #GST_FLOW_ERROR if not.</param>
+    /// <param name="parent">the parent of @pad</param>
+    /// <param name="offset">The start offset of the buffer</param>
+    /// <param name="size">The length of the buffer</param>
+    /// <param name="buffer">
+    /// a pointer to hold the #GstBuffer,
+    ///     returns #GST_FLOW_ERROR if %NULL.
+    /// </param>
     /// <returns>a #GstFlowReturn from the pad.</returns>
     public static Gst.FlowReturn GetrangeDefault(Gst.Pad pad, Gst.Object parent, ulong offset, uint size, out Gst.Buffer? buffer)
     {
@@ -156,8 +161,8 @@ public unsafe partial class ProxyPad : Gst.Pad
     }
 
     /// <summary>Invoke the default iterate internal links function of the proxy pad.</summary>
-    /// <param name="pad">The <c>pad</c> argument.</param>
-    /// <param name="parent">The <c>parent</c> argument.</param>
+    /// <param name="pad">the #GstPad to get the internal links of.</param>
+    /// <param name="parent">the parent of @pad or %NULL</param>
     /// <returns>
     /// a #GstIterator of #GstPad, or %NULL if @pad
     /// has no parent. Unref each returned pad with gst_object_unref().

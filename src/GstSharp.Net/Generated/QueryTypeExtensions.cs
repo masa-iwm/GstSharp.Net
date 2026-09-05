@@ -12,7 +12,7 @@ namespace Gst;
 public static unsafe partial class QueryTypeExtensions
 {
     /// <summary>Gets the #GstQueryTypeFlags associated with @type.</summary>
-    /// <param name="type">The <c>type</c> argument.</param>
+    /// <param name="type">a #GstQueryType</param>
     /// <returns>a #GstQueryTypeFlags.</returns>
     public static Gst.QueryTypeFlags GetFlags(Gst.QueryType type)
     {
@@ -21,7 +21,7 @@ public static unsafe partial class QueryTypeExtensions
     }
 
     /// <summary>Get a printable name for the given query type. Do not modify or free.</summary>
-    /// <param name="type">The <c>type</c> argument.</param>
+    /// <param name="type">the query type</param>
     /// <returns>a reference to the static name of the query.</returns>
     public static string GetName(Gst.QueryType type)
     {
@@ -31,7 +31,7 @@ public static unsafe partial class QueryTypeExtensions
     }
 
     /// <summary>Get the unique quark for the given query type.</summary>
-    /// <param name="type">The <c>type</c> argument.</param>
+    /// <param name="type">the query type</param>
     /// <returns>the quark associated with the query type</returns>
     public static Gst.GLib.Quark ToQuark(Gst.QueryType type)
     {

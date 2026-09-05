@@ -17,7 +17,7 @@ public static unsafe partial class InstallPluginsReturnExtensions
     /// should not be used for user messages. It is here only to assist
     /// in debugging.
     /// </summary>
-    /// <param name="ret">The <c>ret</c> argument.</param>
+    /// <param name="ret">the return status code</param>
     /// <returns>a descriptive string for the status code in @ret</returns>
     public static string GetName(Gst.Pbutils.InstallPluginsReturn ret)
     {

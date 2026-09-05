@@ -54,8 +54,8 @@ public unsafe partial class RTSPAddressPool : Gst.GObject.Object
     /// allocation. @n_ports consecutive ports will be allocated of which the first
     /// one can be found in @port.
     /// </summary>
-    /// <param name="flags">The <c>flags</c> argument.</param>
-    /// <param name="nPorts">The <c>nPorts</c> argument.</param>
+    /// <param name="flags">flags</param>
+    /// <param name="nPorts">the amount of ports</param>
     /// <returns>
     /// a #GstRTSPAddress that should be freed with
     /// gst_rtsp_address_free after use or %NULL when no address could be
@@ -82,11 +82,11 @@ public unsafe partial class RTSPAddressPool : Gst.GObject.Object
     /// </para>
     /// <para>When @ttl &gt; 0, @min_address and @max_address should be multicast addresses.</para>
     /// </remarks>
-    /// <param name="minAddress">The <c>minAddress</c> argument.</param>
-    /// <param name="maxAddress">The <c>maxAddress</c> argument.</param>
-    /// <param name="minPort">The <c>minPort</c> argument.</param>
-    /// <param name="maxPort">The <c>maxPort</c> argument.</param>
-    /// <param name="ttl">The <c>ttl</c> argument.</param>
+    /// <param name="minAddress">a minimum address to add</param>
+    /// <param name="maxAddress">a maximum address to add</param>
+    /// <param name="minPort">the minimum port</param>
+    /// <param name="maxPort">the maximum port</param>
+    /// <param name="ttl">a TTL or 0 for unicast addresses</param>
     /// <returns>%TRUE if the addresses could be added.</returns>
     public bool AddRange(string minAddress, string maxAddress, ushort minPort, ushort maxPort, byte ttl)
     {
@@ -138,11 +138,11 @@ public unsafe partial class RTSPAddressPool : Gst.GObject.Object
     /// should be a valid multicast address.
     /// </para>
     /// </remarks>
-    /// <param name="ipAddress">The <c>ipAddress</c> argument.</param>
-    /// <param name="port">The <c>port</c> argument.</param>
-    /// <param name="nPorts">The <c>nPorts</c> argument.</param>
-    /// <param name="ttl">The <c>ttl</c> argument.</param>
-    /// <param name="address">The <c>address</c> argument.</param>
+    /// <param name="ipAddress">The IP address to reserve</param>
+    /// <param name="port">The first port to reserve</param>
+    /// <param name="nPorts">The number of ports</param>
+    /// <param name="ttl">The requested ttl</param>
+    /// <param name="address">storage for a #GstRTSPAddress</param>
     /// <returns>
     /// #GST_RTSP_ADDRESS_POOL_OK if an address was reserved. The address
     /// is returned in @address and should be freed with gst_rtsp_address_free

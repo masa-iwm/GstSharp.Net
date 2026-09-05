@@ -40,8 +40,8 @@ public sealed unsafe partial class VideoChromaResample
     /// The resampler must be fed @n_lines at a time. The first line should be
     /// at @offset.
     /// </summary>
-    /// <param name="nLines">The <c>nLines</c> argument.</param>
-    /// <param name="offset">The <c>offset</c> argument.</param>
+    /// <param name="nLines">the number of input lines</param>
+    /// <param name="offset">the first line</param>
     public void GetInfo(out uint nLines, out int offset)
     {
         uint nLinesNative = default;

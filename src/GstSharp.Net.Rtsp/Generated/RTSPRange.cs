@@ -23,8 +23,8 @@ public unsafe partial struct RTSPRange
     /// Ranges containing the special value #GST_RTSP_TIME_NOW can not be
     /// converted as these are only valid for #GST_RTSP_RANGE_NPT.
     /// </summary>
-    /// <param name="range">The <c>range</c> argument.</param>
-    /// <param name="unit">The <c>unit</c> argument.</param>
+    /// <param name="range">a #GstRTSPTimeRange</param>
+    /// <param name="unit">the unit to convert the range into</param>
     /// <returns>%TRUE if the range could be converted</returns>
     public static bool ConvertUnits(ref Gst.Rtsp.RTSPTimeRange range, Gst.Rtsp.RTSPRangeUnit unit)
     {
@@ -45,9 +45,9 @@ public unsafe partial struct RTSPRange
     /// </para>
     /// <para>UTC times will be converted to nanoseconds since 1900.</para>
     /// </remarks>
-    /// <param name="range">The <c>range</c> argument.</param>
-    /// <param name="min">The <c>min</c> argument.</param>
-    /// <param name="max">The <c>max</c> argument.</param>
+    /// <param name="range">a #GstRTSPTimeRange</param>
+    /// <param name="min">result minimum #GstClockTime</param>
+    /// <param name="max">result maximum #GstClockTime</param>
     /// <returns>%TRUE on success.</returns>
     public static bool GetTimes(Gst.Rtsp.RTSPTimeRange range, out Gst.ClockTime min, out Gst.ClockTime max)
     {
@@ -61,7 +61,7 @@ public unsafe partial struct RTSPRange
     }
 
     /// <summary>Convert @range into a string representation.</summary>
-    /// <param name="range">The <c>range</c> argument.</param>
+    /// <param name="range">a #GstRTSPTimeRange</param>
     /// <returns>The string representation of @range. g_free() after usage.</returns>
     public static string? ToString(Gst.Rtsp.RTSPTimeRange range)
     {

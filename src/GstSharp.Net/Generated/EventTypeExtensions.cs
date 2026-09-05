@@ -12,7 +12,7 @@ namespace Gst;
 public static unsafe partial class EventTypeExtensions
 {
     /// <summary>Gets the #GstEventTypeFlags associated with @type.</summary>
-    /// <param name="type">The <c>type</c> argument.</param>
+    /// <param name="type">a #GstEventType</param>
     /// <returns>a #GstEventTypeFlags.</returns>
     public static Gst.EventTypeFlags GetFlags(Gst.EventType type)
     {
@@ -21,7 +21,7 @@ public static unsafe partial class EventTypeExtensions
     }
 
     /// <summary>Get a printable name for the given event type. Do not modify or free.</summary>
-    /// <param name="type">The <c>type</c> argument.</param>
+    /// <param name="type">the event type</param>
     /// <returns>a reference to the static name of the event.</returns>
     public static string GetName(Gst.EventType type)
     {
@@ -31,7 +31,7 @@ public static unsafe partial class EventTypeExtensions
     }
 
     /// <summary>Get the unique quark for the given event type.</summary>
-    /// <param name="type">The <c>type</c> argument.</param>
+    /// <param name="type">the event type</param>
     /// <returns>the quark associated with the event type</returns>
     public static Gst.GLib.Quark ToQuark(Gst.EventType type)
     {
@@ -44,7 +44,7 @@ public static unsafe partial class EventTypeExtensions
     /// represents the ordering of sticky events when re-sending them.
     /// A lower value represents a higher-priority event.
     /// </summary>
-    /// <param name="type">The <c>type</c> argument.</param>
+    /// <param name="type">a #GstEventType</param>
     /// <returns>an unsigned integer</returns>
     public static uint ToStickyOrdering(Gst.EventType type)
     {

@@ -41,7 +41,7 @@ public unsafe partial class RTSPStreamTransport : Gst.GObject.Object
     }
 
     /// <summary>Get the RTP-Info string for @trans and @start_time.</summary>
-    /// <param name="startTime">The <c>startTime</c> argument.</param>
+    /// <param name="startTime">a star time</param>
     /// <returns>
     /// the RTPInfo string for @trans
     /// and @start_time or %NULL when the RTP-Info could not be
@@ -123,9 +123,9 @@ public unsafe partial class RTSPStreamTransport : Gst.GObject.Object
     /// declaration around the argument stays correct.
     /// </para>
     /// </remarks>
-    /// <param name="channel">The <c>channel</c> argument.</param>
+    /// <param name="channel">a channel</param>
     /// <param name="buffer">
-    /// The <c>buffer</c> argument.
+    /// a #GstBuffer
     /// The call consumes it: <paramref name="buffer"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// </param>
@@ -152,7 +152,7 @@ public unsafe partial class RTSPStreamTransport : Gst.GObject.Object
     }
 
     /// <summary>Send @buffer to the installed RTCP callback for @trans.</summary>
-    /// <param name="buffer">The <c>buffer</c> argument.</param>
+    /// <param name="buffer">a #GstBuffer</param>
     /// <returns>%TRUE on success</returns>
     public bool SendRtcp(Gst.Buffer buffer)
     {
@@ -164,7 +164,7 @@ public unsafe partial class RTSPStreamTransport : Gst.GObject.Object
     }
 
     /// <summary>Send @buffer_list to the installed RTCP callback for @trans.</summary>
-    /// <param name="bufferList">The <c>bufferList</c> argument.</param>
+    /// <param name="bufferList">a #GstBuffer</param>
     /// <returns>%TRUE on success</returns>
     public bool SendRtcpList(Gst.BufferList bufferList)
     {
@@ -176,7 +176,7 @@ public unsafe partial class RTSPStreamTransport : Gst.GObject.Object
     }
 
     /// <summary>Send @buffer to the installed RTP callback for @trans.</summary>
-    /// <param name="buffer">The <c>buffer</c> argument.</param>
+    /// <param name="buffer">a #GstBuffer</param>
     /// <returns>%TRUE on success</returns>
     public bool SendRtp(Gst.Buffer buffer)
     {
@@ -188,7 +188,7 @@ public unsafe partial class RTSPStreamTransport : Gst.GObject.Object
     }
 
     /// <summary>Send @buffer_list to the installed RTP callback for @trans.</summary>
-    /// <param name="bufferList">The <c>bufferList</c> argument.</param>
+    /// <param name="bufferList">a #GstBufferList</param>
     /// <returns>%TRUE on success</returns>
     public bool SendRtpList(Gst.BufferList bufferList)
     {
@@ -200,7 +200,7 @@ public unsafe partial class RTSPStreamTransport : Gst.GObject.Object
     }
 
     /// <summary>Activate or deactivate datatransfer configured in @trans.</summary>
-    /// <param name="active">The <c>active</c> argument.</param>
+    /// <param name="active">new state of @trans</param>
     /// <returns>%TRUE when the state was changed.</returns>
     public bool SetActive(bool active)
     {
@@ -246,7 +246,7 @@ public unsafe partial class RTSPStreamTransport : Gst.GObject.Object
     }
 
     /// <summary>Set the timed out state of @trans to @timedout</summary>
-    /// <param name="timedout">The <c>timedout</c> argument.</param>
+    /// <param name="timedout">timed out value</param>
     public void SetTimedOut(bool timedout)
     {
         GstRtspStreamTransportSetTimedOut(Handle, timedout ? 1 : 0);
@@ -254,7 +254,7 @@ public unsafe partial class RTSPStreamTransport : Gst.GObject.Object
     }
 
     /// <summary>Set @url as the client url.</summary>
-    /// <param name="url">The <c>url</c> argument.</param>
+    /// <param name="url">a client #GstRTSPUrl</param>
     public void SetUrl(Gst.Rtsp.RTSPUrl? url)
     {
         GstRtspStreamTransportSetUrl(Handle, url is null ? 0 : url.Handle);

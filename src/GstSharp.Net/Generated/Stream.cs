@@ -62,10 +62,13 @@ public unsafe partial class Stream : Gst.Object
     /// Create a new #GstStream for the given @stream_id, @caps, @type
     /// and @flags
     /// </summary>
-    /// <param name="streamId">The <c>streamId</c> argument.</param>
-    /// <param name="caps">The <c>caps</c> argument.</param>
-    /// <param name="type">The <c>type</c> argument.</param>
-    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <param name="streamId">
+    /// the id for the new stream. If %NULL,
+    /// a new one will be automatically generated
+    /// </param>
+    /// <param name="caps">the #GstCaps of the stream</param>
+    /// <param name="type">the #GstStreamType of the stream</param>
+    /// <param name="flags">the #GstStreamFlags of the stream</param>
     /// <returns>The new #GstStream</returns>
     public static Gst.Stream New(string? streamId, Gst.Caps? caps, Gst.StreamType type, Gst.StreamFlags flags)
     {
@@ -126,7 +129,7 @@ public unsafe partial class Stream : Gst.Object
     }
 
     /// <summary>Set the caps for the #GstStream</summary>
-    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <param name="caps">a #GstCaps</param>
     public void SetCaps(Gst.Caps? caps)
     {
         GstStreamSetCaps(Handle, caps is null ? 0 : caps.Handle);
@@ -135,7 +138,7 @@ public unsafe partial class Stream : Gst.Object
     }
 
     /// <summary>Set the @flags for the @stream.</summary>
-    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <param name="flags">the flags to set on @stream</param>
     public void SetStreamFlags(Gst.StreamFlags flags)
     {
         GstStreamSetStreamFlags(Handle, (int)flags);
@@ -143,7 +146,7 @@ public unsafe partial class Stream : Gst.Object
     }
 
     /// <summary>Set the stream type of @stream</summary>
-    /// <param name="streamType">The <c>streamType</c> argument.</param>
+    /// <param name="streamType">the type to set on @stream</param>
     public void SetStreamType(Gst.StreamType streamType)
     {
         GstStreamSetStreamType(Handle, (int)streamType);
@@ -151,7 +154,7 @@ public unsafe partial class Stream : Gst.Object
     }
 
     /// <summary>Set the tags for the #GstStream</summary>
-    /// <param name="tags">The <c>tags</c> argument.</param>
+    /// <param name="tags">a #GstTagList</param>
     public void SetTags(Gst.TagList? tags)
     {
         GstStreamSetTags(Handle, tags is null ? 0 : tags.Handle);

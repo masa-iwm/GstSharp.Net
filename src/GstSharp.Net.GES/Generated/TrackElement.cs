@@ -84,7 +84,7 @@ public abstract unsafe partial class TrackElement : GES.TimelineElement, GES.IEx
     /// <remarks>
     /// <para>This is intended to be used by subclasses when constructing.</para>
     /// </remarks>
-    /// <param name="element">The <c>element</c> argument.</param>
+    /// <param name="element">The child object to retrieve properties from</param>
     /// <param name="wantedCategories">
     /// An array of element factory "klass" categories to whitelist, or %NULL
     /// to accept all categories
@@ -126,7 +126,10 @@ public abstract unsafe partial class TrackElement : GES.TimelineElement, GES.IEx
     /// in-point and out-point times, a new interpolated value will be placed.
     /// </para>
     /// </remarks>
-    /// <param name="propertyName">The <c>propertyName</c> argument.</param>
+    /// <param name="propertyName">
+    /// The name of the child property to clamp the control
+    /// source of
+    /// </param>
     public void ClampControlSource(string propertyName)
     {
         ArgumentNullException.ThrowIfNull(propertyName);
@@ -147,15 +150,20 @@ public abstract unsafe partial class TrackElement : GES.TimelineElement, GES.IEx
     /// </para>
     /// </remarks>
     /// <param name="layers">
-    /// The <c>layers</c> argument.
+    /// A whitelist of layers
+    /// where the edit can be performed, %NULL allows all layers in the
+    /// timeline
     /// The call reads the list while it runs and copies whatever it keeps. A
     /// temporary native list is built for the call and released when it returns,
     /// and an empty sequence is passed as the null pointer, which is how C spells
     /// the empty list.
     /// </param>
-    /// <param name="mode">The <c>mode</c> argument.</param>
-    /// <param name="edge">The <c>edge</c> argument.</param>
-    /// <param name="position">The <c>position</c> argument.</param>
+    /// <param name="mode">The edit mode</param>
+    /// <param name="edge">The edge of @object where the edit should occur</param>
+    /// <param name="position">
+    /// The edit position: a new location for the edge of @object
+    /// (in nanoseconds)
+    /// </param>
     /// <returns>%TRUE if the edit of @object completed, %FALSE on failure.</returns>
     [Obsolete("use #ges_timeline_element_edit instead. (deprecated since 1.18)")]
     public bool Edit(System.Collections.Generic.IEnumerable<GES.Layer>? layers, GES.EditMode mode, GES.Edge edge, ulong position)
@@ -185,7 +193,10 @@ public abstract unsafe partial class TrackElement : GES.TimelineElement, GES.IEx
     /// be the same name of the child property that was passed to
     /// ges_track_element_set_control_source().
     /// </summary>
-    /// <param name="propertyName">The <c>propertyName</c> argument.</param>
+    /// <param name="propertyName">
+    /// The name of the child property to return the control
+    /// binding of
+    /// </param>
     /// <returns>
     /// The control binding that was
     /// created for the specified child property of @object, or %NULL if
@@ -311,7 +322,10 @@ public abstract unsafe partial class TrackElement : GES.TimelineElement, GES.IEx
     /// be the same name of the child property that was passed to
     /// ges_track_element_set_control_source().
     /// </summary>
-    /// <param name="propertyName">The <c>propertyName</c> argument.</param>
+    /// <param name="propertyName">
+    /// The name of the child property to remove the control
+    /// binding from
+    /// </param>
     /// <returns>
     /// %TRUE if the control binding was removed from the specified
     /// child property of @object, or %FALSE if an error occurred.
@@ -327,7 +341,7 @@ public abstract unsafe partial class TrackElement : GES.TimelineElement, GES.IEx
     }
 
     /// <summary>Sets #GESTrackElement:active for the element.</summary>
-    /// <param name="active">The <c>active</c> argument.</param>
+    /// <param name="active">Whether @object should be active in its track</param>
     /// <returns>%TRUE if the property was *toggled*.</returns>
     public bool SetActive(bool active)
     {
@@ -340,7 +354,10 @@ public abstract unsafe partial class TrackElement : GES.TimelineElement, GES.IEx
     /// Sets #GESTrackElement:auto-clamp-control-sources. If set to %TRUE, this
     /// will immediately clamp all the control sources.
     /// </summary>
-    /// <param name="autoClamp">The <c>autoClamp</c> argument.</param>
+    /// <param name="autoClamp">
+    /// Whether to automatically clamp the control sources for the
+    /// child properties of @object
+    /// </param>
     public void SetAutoClampControlSources(bool autoClamp)
     {
         GesTrackElementSetAutoClampControlSources(Handle, autoClamp ? 1 : 0);
@@ -361,9 +378,12 @@ public abstract unsafe partial class TrackElement : GES.TimelineElement, GES.IEx
     /// gst_direct_control_binding_new_absolute() instead.
     /// </para>
     /// </remarks>
-    /// <param name="source">The <c>source</c> argument.</param>
-    /// <param name="propertyName">The <c>propertyName</c> argument.</param>
-    /// <param name="bindingType">The <c>bindingType</c> argument.</param>
+    /// <param name="source">The control source to bind the child property to</param>
+    /// <param name="propertyName">The name of the child property to control</param>
+    /// <param name="bindingType">
+    /// The type of binding to create ("direct" or
+    /// "direct-absolute")
+    /// </param>
     /// <returns>
     /// %TRUE if the specified child property could be bound to
     /// @source, or %FALSE if an error occurred.
@@ -389,7 +409,10 @@ public abstract unsafe partial class TrackElement : GES.TimelineElement, GES.IEx
     /// #GESTimelineElement:in-point of the element to 0 and its
     /// #GESTimelineElement:max-duration to #GST_CLOCK_TIME_NONE.
     /// </summary>
-    /// <param name="hasInternalSource">The <c>hasInternalSource</c> argument.</param>
+    /// <param name="hasInternalSource">
+    /// Whether the @object should be allowed to have its
+    /// 'internal time' properties set.
+    /// </param>
     /// <returns>
     /// %FALSE if @has_internal_source is forbidden for @object and
     /// %TRUE in any other case.
@@ -402,7 +425,7 @@ public abstract unsafe partial class TrackElement : GES.TimelineElement, GES.IEx
     }
 
     /// <summary>Sets the #GESTrackElement:track-type for the element.</summary>
-    /// <param name="type">The <c>type</c> argument.</param>
+    /// <param name="type">The new track-type for @object</param>
     public void SetTrackType(GES.TrackType type)
     {
         GesTrackElementSetTrackType(Handle, (int)type);

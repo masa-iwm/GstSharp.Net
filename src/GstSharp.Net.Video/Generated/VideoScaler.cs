@@ -44,16 +44,16 @@ public sealed unsafe partial class VideoScaler
     /// </para>
     /// <para>@x and @y are the coordinates in the destination image to process.</para>
     /// </remarks>
-    /// <param name="vscale">The <c>vscale</c> argument.</param>
-    /// <param name="format">The <c>format</c> argument.</param>
-    /// <param name="src">The <c>src</c> argument.</param>
-    /// <param name="srcStride">The <c>srcStride</c> argument.</param>
-    /// <param name="dest">The <c>dest</c> argument.</param>
-    /// <param name="destStride">The <c>destStride</c> argument.</param>
-    /// <param name="x">The <c>x</c> argument.</param>
-    /// <param name="y">The <c>y</c> argument.</param>
-    /// <param name="width">The <c>width</c> argument.</param>
-    /// <param name="height">The <c>height</c> argument.</param>
+    /// <param name="vscale">a vertical #GstVideoScaler</param>
+    /// <param name="format">a #GstVideoFormat for @srcs and @dest</param>
+    /// <param name="src">source pixels</param>
+    /// <param name="srcStride">source pixels stride</param>
+    /// <param name="dest">destination pixels</param>
+    /// <param name="destStride">destination pixels stride</param>
+    /// <param name="x">the horizontal destination offset</param>
+    /// <param name="y">the vertical destination offset</param>
+    /// <param name="width">the number of output pixels to scale</param>
+    /// <param name="height">the number of output lines to scale</param>
     public void _2d(Gst.Video.VideoScaler vscale, Gst.Video.VideoFormat format, nint src, int srcStride, nint dest, int destStride, uint x, uint y, uint width, uint height)
     {
         ArgumentNullException.ThrowIfNull(vscale);
@@ -79,8 +79,8 @@ public sealed unsafe partial class VideoScaler
     /// 2 to get the next input line.
     /// </para>
     /// </remarks>
-    /// <param name="outOffset">The <c>outOffset</c> argument.</param>
-    /// <param name="inOffset">The <c>inOffset</c> argument.</param>
+    /// <param name="outOffset">an output offset</param>
+    /// <param name="inOffset">result input offset</param>
     /// <returns>an array of @n_taps gdouble values with filter coefficients.</returns>
     public double[]? GetCoeff(uint outOffset, out uint inOffset)
     {
@@ -111,11 +111,11 @@ public sealed unsafe partial class VideoScaler
     /// Horizontally scale the pixels in @src to @dest, starting from @dest_offset
     /// for @width samples.
     /// </summary>
-    /// <param name="format">The <c>format</c> argument.</param>
-    /// <param name="src">The <c>src</c> argument.</param>
-    /// <param name="dest">The <c>dest</c> argument.</param>
-    /// <param name="destOffset">The <c>destOffset</c> argument.</param>
-    /// <param name="width">The <c>width</c> argument.</param>
+    /// <param name="format">a #GstVideoFormat for @src and @dest</param>
+    /// <param name="src">source pixels</param>
+    /// <param name="dest">destination pixels</param>
+    /// <param name="destOffset">the horizontal destination offset</param>
+    /// <param name="width">the number of pixels to scale</param>
     public void Horizontal(Gst.Video.VideoFormat format, nint src, nint dest, uint destOffset, uint width)
     {
         GstVideoScalerHorizontal(Handle, (int)format, src, dest, destOffset, width);
@@ -127,11 +127,11 @@ public sealed unsafe partial class VideoScaler
     /// @dest is the location of the target line at @dest_offset and
     /// @srcs are the input lines for @dest_offset.
     /// </summary>
-    /// <param name="format">The <c>format</c> argument.</param>
-    /// <param name="srcLines">The <c>srcLines</c> argument.</param>
-    /// <param name="dest">The <c>dest</c> argument.</param>
-    /// <param name="destOffset">The <c>destOffset</c> argument.</param>
-    /// <param name="width">The <c>width</c> argument.</param>
+    /// <param name="format">a #GstVideoFormat for @srcs and @dest</param>
+    /// <param name="srcLines">source pixels lines</param>
+    /// <param name="dest">destination pixels</param>
+    /// <param name="destOffset">the vertical destination offset</param>
+    /// <param name="width">the number of pixels to scale</param>
     public void Vertical(Gst.Video.VideoFormat format, nint srcLines, nint dest, uint destOffset, uint width)
     {
         GstVideoScalerVertical(Handle, (int)format, srcLines, dest, destOffset, width);

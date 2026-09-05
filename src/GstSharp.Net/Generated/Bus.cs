@@ -143,7 +143,7 @@ public unsafe partial class Bus : Gst.Object
     /// watch before you can set another type of watch.
     /// </para>
     /// </remarks>
-    /// <param name="priority">The <c>priority</c> argument.</param>
+    /// <param name="priority">The priority of the watch.</param>
     public void AddSignalWatchFull(int priority)
     {
         GstBusAddSignalWatchFull(Handle, priority);
@@ -178,7 +178,7 @@ public unsafe partial class Bus : Gst.Object
     /// @bus using gst_object_unref() after setting the bus watch.
     /// </para>
     /// </remarks>
-    /// <param name="priority">The <c>priority</c> argument.</param>
+    /// <param name="priority">The priority of the watch.</param>
     /// <param name="func">A function to call when a message is received.</param>
     /// <returns>The event source id or 0 if @bus already got an event source.</returns>
     public uint AddWatch(int priority, Gst.BusFunc func)
@@ -195,8 +195,8 @@ public unsafe partial class Bus : Gst.Object
     /// A helper #GstBusFunc that can be used to convert all asynchronous messages
     /// into signals.
     /// </summary>
-    /// <param name="message">The <c>message</c> argument.</param>
-    /// <param name="data">The <c>data</c> argument.</param>
+    /// <param name="message">the #GstMessage received</param>
+    /// <param name="data">user data</param>
     /// <returns>%TRUE</returns>
     public bool AsyncSignalFunc(Gst.Message message, nint data)
     {
@@ -326,8 +326,14 @@ public unsafe partial class Bus : Gst.Object
     /// from there.
     /// </para>
     /// </remarks>
-    /// <param name="events">The <c>events</c> argument.</param>
-    /// <param name="timeout">The <c>timeout</c> argument.</param>
+    /// <param name="events">
+    /// a mask of #GstMessageType, representing the set of message types to
+    /// poll for (note special handling of extended message types below)
+    /// </param>
+    /// <param name="timeout">
+    /// the poll timeout, as a #GstClockTime, or #GST_CLOCK_TIME_NONE to poll
+    /// indefinitely.
+    /// </param>
     /// <returns>
     /// the message that was received,
     ///     or %NULL if the poll timed out.
@@ -358,7 +364,7 @@ public unsafe partial class Bus : Gst.Object
     /// the bus, all messages will be discarded. It is not possible to use message
     /// enums beyond #GST_MESSAGE_EXTENDED in the @events mask.
     /// </summary>
-    /// <param name="types">The <c>types</c> argument.</param>
+    /// <param name="types">message types to take into account</param>
     /// <returns>
     /// the next #GstMessage matching
     ///     @type that is on the bus, or %NULL if the bus is empty or there
@@ -385,7 +391,7 @@ public unsafe partial class Bus : Gst.Object
     /// </para>
     /// </remarks>
     /// <param name="message">
-    /// The <c>message</c> argument.
+    /// the #GstMessage to post
     /// The call consumes it: <paramref name="message"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// </param>
@@ -429,7 +435,7 @@ public unsafe partial class Bus : Gst.Object
     /// references to the message origin objects. Will flush future messages until
     /// gst_bus_set_flushing() sets @flushing to %FALSE.
     /// </summary>
-    /// <param name="flushing">The <c>flushing</c> argument.</param>
+    /// <param name="flushing">whether or not to flush the bus</param>
     public void SetFlushing(bool flushing)
     {
         GstBusSetFlushing(Handle, flushing ? 1 : 0);
@@ -440,8 +446,8 @@ public unsafe partial class Bus : Gst.Object
     /// A helper #GstBusSyncHandler that can be used to convert all synchronous
     /// messages into signals.
     /// </summary>
-    /// <param name="message">The <c>message</c> argument.</param>
-    /// <param name="data">The <c>data</c> argument.</param>
+    /// <param name="message">the #GstMessage received</param>
+    /// <param name="data">user data</param>
     /// <returns>%GST_BUS_PASS</returns>
     public Gst.BusSyncReply SyncSignalHandler(Gst.Message message, nint data)
     {
@@ -460,7 +466,7 @@ public unsafe partial class Bus : Gst.Object
     /// posted on the bus.
     /// </para>
     /// </remarks>
-    /// <param name="timeout">The <c>timeout</c> argument.</param>
+    /// <param name="timeout">a timeout</param>
     /// <returns>
     /// the #GstMessage that is on the
     ///     bus after the specified timeout or %NULL if the bus is empty
@@ -485,8 +491,8 @@ public unsafe partial class Bus : Gst.Object
     /// matching message was posted on the bus.
     /// </para>
     /// </remarks>
-    /// <param name="timeout">The <c>timeout</c> argument.</param>
-    /// <param name="types">The <c>types</c> argument.</param>
+    /// <param name="timeout">a timeout in nanoseconds, or %GST_CLOCK_TIME_NONE to wait forever</param>
+    /// <param name="types">message types to take into account, %GST_MESSAGE_ANY for any type</param>
     /// <returns>
     /// a #GstMessage matching the
     ///     filter in @types, or %NULL if no matching message was found on

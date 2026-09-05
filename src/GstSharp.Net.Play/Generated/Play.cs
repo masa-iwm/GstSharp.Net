@@ -90,7 +90,7 @@ public unsafe partial class Play : Gst.Object
     }
 
     /// <summary>Retrieve the current value of the indicated @type.</summary>
-    /// <param name="type">The <c>type</c> argument.</param>
+    /// <param name="type">#GstPlayColorBalanceType</param>
     /// <returns>
     /// The current value of @type, between [0,1]. In case of
     ///   error -1 is returned.
@@ -306,8 +306,8 @@ public unsafe partial class Play : Gst.Object
     /// - pixel-aspect-ratio of type GST_TYPE_FRACTION
     ///  Except for GST_PLAY_THUMBNAIL_RAW_NATIVE format, if no config is set, pixel-aspect-ratio would be 1/1
     /// </summary>
-    /// <param name="format">The <c>format</c> argument.</param>
-    /// <param name="config">The <c>config</c> argument.</param>
+    /// <param name="format">output format of the video snapshot</param>
+    /// <param name="config">Additional configuration</param>
     /// <returns>Current video snapshot sample or %NULL on failure</returns>
     public Gst.Sample? GetVideoSnapshot(Gst.Play.PlaySnapshotFormat format, Gst.Structure? config)
     {
@@ -356,7 +356,7 @@ public unsafe partial class Play : Gst.Object
     /// Seeks the currently-playing stream to the absolute @position time
     /// in nanoseconds.
     /// </summary>
-    /// <param name="position">The <c>position</c> argument.</param>
+    /// <param name="position">position to seek in nanoseconds</param>
     public void Seek(Gst.ClockTime position)
     {
         GstPlaySeek(Handle, position.Nanoseconds);
@@ -364,7 +364,7 @@ public unsafe partial class Play : Gst.Object
     }
 
     /// <summary>The <c>gst_play_set_audio_track</c> function.</summary>
-    /// <param name="streamIndex">The <c>streamIndex</c> argument.</param>
+    /// <param name="streamIndex">stream index</param>
     /// <returns>%TRUE or %FALSE</returns>
     [Obsolete("Use gst_play_set_audio_track_id() instead. (deprecated since 1.26)")]
     public bool SetAudioTrack(int streamIndex)
@@ -375,7 +375,7 @@ public unsafe partial class Play : Gst.Object
     }
 
     /// <summary>Enable or disable the current audio track.</summary>
-    /// <param name="enabled">The <c>enabled</c> argument.</param>
+    /// <param name="enabled">TRUE or FALSE</param>
     public void SetAudioTrackEnabled(bool enabled)
     {
         GstPlaySetAudioTrackEnabled(Handle, enabled ? 1 : 0);
@@ -386,7 +386,7 @@ public unsafe partial class Play : Gst.Object
     /// <remarks>
     /// <para>Available since GStreamer 1.26.</para>
     /// </remarks>
-    /// <param name="streamId">The <c>streamId</c> argument.</param>
+    /// <param name="streamId">stream id</param>
     /// <returns>%TRUE or %FALSE</returns>
     public bool SetAudioTrackId(string? streamId)
     {
@@ -398,7 +398,7 @@ public unsafe partial class Play : Gst.Object
     }
 
     /// <summary>Sets audio-video-offset property by value of @offset</summary>
-    /// <param name="offset">The <c>offset</c> argument.</param>
+    /// <param name="offset">#gint64 in nanoseconds</param>
     public void SetAudioVideoOffset(long offset)
     {
         GstPlaySetAudioVideoOffset(Handle, offset);
@@ -409,8 +409,8 @@ public unsafe partial class Play : Gst.Object
     /// Sets the current value of the indicated channel @type to the passed
     /// value.
     /// </summary>
-    /// <param name="type">The <c>type</c> argument.</param>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="type">#GstPlayColorBalanceType</param>
+    /// <param name="value">The new value for the @type, ranged [0,1]</param>
     public void SetColorBalance(Gst.Play.PlayColorBalanceType type, double value)
     {
         GstPlaySetColorBalance(Handle, (int)type, value);
@@ -421,7 +421,7 @@ public unsafe partial class Play : Gst.Object
     /// Sets the current value of the indicated mode @type to the passed
     /// value.
     /// </summary>
-    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <param name="flags">The new value for the @type</param>
     public void SetMultiviewFlags(Gst.Video.VideoMultiviewFlags flags)
     {
         GstPlaySetMultiviewFlags(Handle, (int)flags);
@@ -432,7 +432,7 @@ public unsafe partial class Play : Gst.Object
     /// Sets the current value of the indicated mode @type to the passed
     /// value.
     /// </summary>
-    /// <param name="mode">The <c>mode</c> argument.</param>
+    /// <param name="mode">The new value for the @type</param>
     public void SetMultiviewMode(Gst.Video.VideoMultiviewFramePacking mode)
     {
         GstPlaySetMultiviewMode(Handle, (int)mode);
@@ -440,7 +440,7 @@ public unsafe partial class Play : Gst.Object
     }
 
     /// <summary>%TRUE if the currently-playing stream should be muted.</summary>
-    /// <param name="val">The <c>val</c> argument.</param>
+    /// <param name="val">Mute state the should be set</param>
     public void SetMute(bool val)
     {
         GstPlaySetMute(Handle, val ? 1 : 0);
@@ -448,7 +448,7 @@ public unsafe partial class Play : Gst.Object
     }
 
     /// <summary>Playback at specified rate</summary>
-    /// <param name="rate">The <c>rate</c> argument.</param>
+    /// <param name="rate">playback rate</param>
     public void SetRate(double rate)
     {
         GstPlaySetRate(Handle, rate);
@@ -456,7 +456,7 @@ public unsafe partial class Play : Gst.Object
     }
 
     /// <summary>The <c>gst_play_set_subtitle_track</c> function.</summary>
-    /// <param name="streamIndex">The <c>streamIndex</c> argument.</param>
+    /// <param name="streamIndex">stream index</param>
     /// <returns>%TRUE or %FALSE</returns>
     [Obsolete("Use gst_play_set_subtitle_track_id() instead. (deprecated since 1.26)")]
     public bool SetSubtitleTrack(int streamIndex)
@@ -467,7 +467,7 @@ public unsafe partial class Play : Gst.Object
     }
 
     /// <summary>Enable or disable the current subtitle track.</summary>
-    /// <param name="enabled">The <c>enabled</c> argument.</param>
+    /// <param name="enabled">TRUE or FALSE</param>
     public void SetSubtitleTrackEnabled(bool enabled)
     {
         GstPlaySetSubtitleTrackEnabled(Handle, enabled ? 1 : 0);
@@ -478,7 +478,7 @@ public unsafe partial class Play : Gst.Object
     /// <remarks>
     /// <para>Available since GStreamer 1.26.</para>
     /// </remarks>
-    /// <param name="streamId">The <c>streamId</c> argument.</param>
+    /// <param name="streamId">stream id</param>
     /// <returns>%TRUE or %FALSE</returns>
     public bool SetSubtitleTrackId(string? streamId)
     {
@@ -494,7 +494,7 @@ public unsafe partial class Play : Gst.Object
     /// gst_play_set_subtitle_track_enabled(@play, TRUE) so the subtitles are actually
     /// rendered.
     /// </summary>
-    /// <param name="uri">The <c>uri</c> argument.</param>
+    /// <param name="uri">subtitle URI</param>
     public void SetSubtitleUri(string? uri)
     {
         System.Span<byte> uriBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
@@ -504,7 +504,7 @@ public unsafe partial class Play : Gst.Object
     }
 
     /// <summary>Sets subtitle-video-offset property by value of @offset</summary>
-    /// <param name="offset">The <c>offset</c> argument.</param>
+    /// <param name="offset">#gint64 in nanoseconds</param>
     public void SetSubtitleVideoOffset(long offset)
     {
         GstPlaySetSubtitleVideoOffset(Handle, offset);
@@ -515,9 +515,9 @@ public unsafe partial class Play : Gst.Object
     /// <remarks>
     /// <para>Available since GStreamer 1.26.</para>
     /// </remarks>
-    /// <param name="audioStreamId">The <c>audioStreamId</c> argument.</param>
-    /// <param name="videoStreamId">The <c>videoStreamId</c> argument.</param>
-    /// <param name="subtitleStreamId">The <c>subtitleStreamId</c> argument.</param>
+    /// <param name="audioStreamId">audio stream id</param>
+    /// <param name="videoStreamId">video stream id</param>
+    /// <param name="subtitleStreamId">subtitle stream id</param>
     /// <returns>%TRUE or %FALSE</returns>
     public bool SetTrackIds(string? audioStreamId, string? videoStreamId, string? subtitleStreamId)
     {
@@ -533,7 +533,7 @@ public unsafe partial class Play : Gst.Object
     }
 
     /// <summary>Sets the next URI to play.</summary>
-    /// <param name="uri">The <c>uri</c> argument.</param>
+    /// <param name="uri">next URI to play.</param>
     public void SetUri(string? uri)
     {
         System.Span<byte> uriBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
@@ -543,7 +543,7 @@ public unsafe partial class Play : Gst.Object
     }
 
     /// <summary>The <c>gst_play_set_video_track</c> function.</summary>
-    /// <param name="streamIndex">The <c>streamIndex</c> argument.</param>
+    /// <param name="streamIndex">stream index</param>
     /// <returns>%TRUE or %FALSE</returns>
     [Obsolete("Use gst_play_set_video_track_id() instead. (deprecated since 1.26)")]
     public bool SetVideoTrack(int streamIndex)
@@ -554,7 +554,7 @@ public unsafe partial class Play : Gst.Object
     }
 
     /// <summary>Enable or disable the current video track.</summary>
-    /// <param name="enabled">The <c>enabled</c> argument.</param>
+    /// <param name="enabled">TRUE or FALSE</param>
     public void SetVideoTrackEnabled(bool enabled)
     {
         GstPlaySetVideoTrackEnabled(Handle, enabled ? 1 : 0);
@@ -565,7 +565,7 @@ public unsafe partial class Play : Gst.Object
     /// <remarks>
     /// <para>Available since GStreamer 1.26.</para>
     /// </remarks>
-    /// <param name="streamId">The <c>streamId</c> argument.</param>
+    /// <param name="streamId">stream id</param>
     /// <returns>%TRUE or %FALSE</returns>
     public bool SetVideoTrackId(string? streamId)
     {
@@ -577,7 +577,10 @@ public unsafe partial class Play : Gst.Object
     }
 
     /// <summary>The <c>gst_play_set_visualization</c> function.</summary>
-    /// <param name="name">The <c>name</c> argument.</param>
+    /// <param name="name">
+    /// visualization element obtained from
+    /// #gst_play_visualizations_get()
+    /// </param>
     /// <returns>
     /// %TRUE if the visualization was set correctly. Otherwise,
     /// %FALSE.
@@ -592,7 +595,7 @@ public unsafe partial class Play : Gst.Object
     }
 
     /// <summary>Enable or disable the visualization.</summary>
-    /// <param name="enabled">The <c>enabled</c> argument.</param>
+    /// <param name="enabled">TRUE or FALSE</param>
     public void SetVisualizationEnabled(bool enabled)
     {
         GstPlaySetVisualizationEnabled(Handle, enabled ? 1 : 0);
@@ -600,7 +603,7 @@ public unsafe partial class Play : Gst.Object
     }
 
     /// <summary>Sets the volume level of the stream as a percentage between 0 and 1.</summary>
-    /// <param name="val">The <c>val</c> argument.</param>
+    /// <param name="val">the new volume level, as a percentage between 0 and 1</param>
     public void SetVolume(double val)
     {
         GstPlaySetVolume(Handle, val);
@@ -621,7 +624,7 @@ public unsafe partial class Play : Gst.Object
     /// <remarks>
     /// <para>Available since GStreamer 1.28.</para>
     /// </remarks>
-    /// <param name="config">The <c>config</c> argument.</param>
+    /// <param name="config">a #GstPlay configuration</param>
     /// <returns>The looping mode.</returns>
     public static Gst.Play.PlayLoop ConfigGetLoop(Gst.Structure config)
     {
@@ -632,7 +635,7 @@ public unsafe partial class Play : Gst.Object
     }
 
     /// <summary>The <c>gst_play_config_get_pipeline_dump_in_error_details</c> function.</summary>
-    /// <param name="config">The <c>config</c> argument.</param>
+    /// <param name="config">a #GstPlay configuration</param>
     /// <returns>
     /// %TRUE if pipeline dumps are included in #GstPlay error message
     /// details.
@@ -646,7 +649,7 @@ public unsafe partial class Play : Gst.Object
     }
 
     /// <summary>The <c>gst_play_config_get_position_update_interval</c> function.</summary>
-    /// <param name="config">The <c>config</c> argument.</param>
+    /// <param name="config">a #GstPlay configuration</param>
     /// <returns>current position update interval in milliseconds</returns>
     public static uint ConfigGetPositionUpdateInterval(Gst.Structure config)
     {
@@ -657,7 +660,7 @@ public unsafe partial class Play : Gst.Object
     }
 
     /// <summary>The <c>gst_play_config_get_seek_accurate</c> function.</summary>
-    /// <param name="config">The <c>config</c> argument.</param>
+    /// <param name="config">a #GstPlay configuration</param>
     /// <returns>%TRUE if accurate seeking is enabled</returns>
     public static bool ConfigGetSeekAccurate(Gst.Structure config)
     {
@@ -671,7 +674,7 @@ public unsafe partial class Play : Gst.Object
     /// Return the user agent which has been configured using
     /// gst_play_config_set_user_agent() if any.
     /// </summary>
-    /// <param name="config">The <c>config</c> argument.</param>
+    /// <param name="config">a #GstPlay configuration</param>
     /// <returns>the configured agent, or %NULL</returns>
     public static string? ConfigGetUserAgent(Gst.Structure config)
     {
@@ -686,8 +689,8 @@ public unsafe partial class Play : Gst.Object
     /// <para>Looping is disabled by default.</para>
     /// <para>Available since GStreamer 1.28.</para>
     /// </remarks>
-    /// <param name="config">The <c>config</c> argument.</param>
-    /// <param name="loop">The <c>loop</c> argument.</param>
+    /// <param name="config">a #GstPlay configuration</param>
+    /// <param name="loop">#GstPlayLoop</param>
     public static void ConfigSetLoop(Gst.Structure config, Gst.Play.PlayLoop loop)
     {
         ArgumentNullException.ThrowIfNull(config);
@@ -703,8 +706,8 @@ public unsafe partial class Play : Gst.Object
     /// <remarks>
     /// <para>This option is disabled by default.</para>
     /// </remarks>
-    /// <param name="config">The <c>config</c> argument.</param>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="config">a #GstPlay configuration</param>
+    /// <param name="value">Include pipeline dumps in error details, or not.</param>
     public static void ConfigSetPipelineDumpInErrorDetails(Gst.Structure config, bool value)
     {
         ArgumentNullException.ThrowIfNull(config);
@@ -716,8 +719,8 @@ public unsafe partial class Play : Gst.Object
     /// Set desired interval in milliseconds between two position-updated messages.
     /// Pass 0 to stop updating the position.
     /// </summary>
-    /// <param name="config">The <c>config</c> argument.</param>
-    /// <param name="interval">The <c>interval</c> argument.</param>
+    /// <param name="config">a #GstPlay configuration</param>
+    /// <param name="interval">interval in ms</param>
     public static void ConfigSetPositionUpdateInterval(Gst.Structure config, uint interval)
     {
         ArgumentNullException.ThrowIfNull(config);
@@ -738,8 +741,8 @@ public unsafe partial class Play : Gst.Object
     /// </para>
     /// <para>Accurate seeking is disabled by default.</para>
     /// </remarks>
-    /// <param name="config">The <c>config</c> argument.</param>
-    /// <param name="accurate">The <c>accurate</c> argument.</param>
+    /// <param name="config">a #GstPlay configuration</param>
+    /// <param name="accurate">accurate seek or not</param>
     public static void ConfigSetSeekAccurate(Gst.Structure config, bool accurate)
     {
         ArgumentNullException.ThrowIfNull(config);
@@ -752,8 +755,8 @@ public unsafe partial class Play : Gst.Object
     /// to a server during playback. This is typically used when playing HTTP
     /// or RTSP streams.
     /// </summary>
-    /// <param name="config">The <c>config</c> argument.</param>
-    /// <param name="agent">The <c>agent</c> argument.</param>
+    /// <param name="config">a #GstPlay configuration</param>
+    /// <param name="agent">the string to use as user agent</param>
     public static void ConfigSetUserAgent(Gst.Structure config, string? agent)
     {
         ArgumentNullException.ThrowIfNull(config);
@@ -764,7 +767,7 @@ public unsafe partial class Play : Gst.Object
     }
 
     /// <summary>The <c>gst_play_is_play_message</c> function.</summary>
-    /// <param name="msg">The <c>msg</c> argument.</param>
+    /// <param name="msg">A #GstMessage</param>
     /// <returns>A #gboolean indicating whether the passed message represents a #GstPlay message or not.</returns>
     public static bool IsPlayMessage(Gst.Message msg)
     {

@@ -12,7 +12,7 @@ namespace Gst.Allocators;
 public static unsafe partial class AllocatorsGlobal
 {
     /// <summary>Return the file descriptor associated with @mem.</summary>
-    /// <param name="mem">The <c>mem</c> argument.</param>
+    /// <param name="mem">the memory to get the file descriptor</param>
     /// <returns>
     /// the file descriptor associated with the memory, or -1.  The file
     ///     descriptor is still owned by the GstMemory.  Use dup to take a copy
@@ -30,7 +30,7 @@ public static unsafe partial class AllocatorsGlobal
     /// Exports a DMABuf from the DRM Bumb buffer object. One can check if this
     /// feature is supported using gst_drm_dumb_allocator_has_prime_export();
     /// </summary>
-    /// <param name="mem">The <c>mem</c> argument.</param>
+    /// <param name="mem">the memory to export from</param>
     /// <returns>
     /// a #GstMemory from #GstDmaBufAllocator wrapping the exported dma-buf
     ///    file descriptor.
@@ -44,7 +44,7 @@ public static unsafe partial class AllocatorsGlobal
     }
 
     /// <summary>Return the DRM buffer object handle associated with @mem.</summary>
-    /// <param name="mem">The <c>mem</c> argument.</param>
+    /// <param name="mem">the memory to get the handle from</param>
     /// <returns>
     /// the DRM buffer object handle associated with the memory, or 0.
     ///     The handle is still owned by the GstMemory and cannot be used
@@ -63,7 +63,7 @@ public static unsafe partial class AllocatorsGlobal
     /// Get the fd from @mem. Call gst_is_fd_memory() to check if @mem has
     /// an fd.
     /// </summary>
-    /// <param name="mem">The <c>mem</c> argument.</param>
+    /// <param name="mem">#GstMemory</param>
     /// <returns>the fd of @mem or -1 when there is no fd on @mem</returns>
     public static int FdMemoryGetFd(Gst.Memory mem)
     {
@@ -74,7 +74,7 @@ public static unsafe partial class AllocatorsGlobal
     }
 
     /// <summary>Check if @mem is dmabuf memory.</summary>
-    /// <param name="mem">The <c>mem</c> argument.</param>
+    /// <param name="mem">the memory to be check</param>
     /// <returns>%TRUE if @mem is dmabuf memory, otherwise %FALSE</returns>
     public static bool IsDmabufMemory(Gst.Memory mem)
     {
@@ -85,7 +85,7 @@ public static unsafe partial class AllocatorsGlobal
     }
 
     /// <summary>The <c>gst_is_drm_dumb_memory</c> function.</summary>
-    /// <param name="mem">The <c>mem</c> argument.</param>
+    /// <param name="mem">the memory to be checked</param>
     /// <returns>%TRUE if @mem is DRM Dumb memory, otherwise %FALSE</returns>
     public static bool IsDrmDumbMemory(Gst.Memory mem)
     {
@@ -96,7 +96,7 @@ public static unsafe partial class AllocatorsGlobal
     }
 
     /// <summary>Check if @mem is memory backed by an fd</summary>
-    /// <param name="mem">The <c>mem</c> argument.</param>
+    /// <param name="mem">#GstMemory</param>
     /// <returns>
     /// %TRUE when @mem has an fd that can be retrieved with
     /// gst_fd_memory_get_fd().
@@ -110,7 +110,7 @@ public static unsafe partial class AllocatorsGlobal
     }
 
     /// <summary>The <c>gst_is_phys_memory</c> function.</summary>
-    /// <param name="mem">The <c>mem</c> argument.</param>
+    /// <param name="mem">a #GstMemory</param>
     /// <returns>whether the memory at @mem is backed by physical memory</returns>
     public static bool IsPhysMemory(Gst.Memory mem)
     {
@@ -121,7 +121,7 @@ public static unsafe partial class AllocatorsGlobal
     }
 
     /// <summary>The <c>gst_phys_memory_get_phys_addr</c> function.</summary>
-    /// <param name="mem">The <c>mem</c> argument.</param>
+    /// <param name="mem">a #GstMemory</param>
     /// <returns>Physical memory address that is backing @mem, or 0 if none</returns>
     public static nuint PhysMemoryGetPhysAddr(Gst.Memory mem)
     {

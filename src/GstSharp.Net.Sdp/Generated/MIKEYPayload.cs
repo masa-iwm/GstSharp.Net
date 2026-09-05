@@ -68,7 +68,7 @@ public sealed unsafe partial class MIKEYPayload : Gst.MiniObject
         handle == 0 ? null : new(handle, transfer);
 
     /// <summary>Make a new #GstMIKEYPayload with @type.</summary>
-    /// <param name="type">The <c>type</c> argument.</param>
+    /// <param name="type">a #GstMIKEYPayloadType</param>
     /// <returns>a new #GstMIKEYPayload or %NULL on failure.</returns>
     public static Gst.Sdp.MIKEYPayload? New(Gst.Sdp.MIKEYPayloadType type)
     {
@@ -87,7 +87,7 @@ public sealed unsafe partial class MIKEYPayload : Gst.MiniObject
     /// </para>
     /// </remarks>
     /// <param name="newpay">
-    /// The <c>newpay</c> argument.
+    /// a #GstMIKEYPayload to add
     /// The call consumes it: <paramref name="newpay"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// </param>
@@ -126,7 +126,7 @@ public sealed unsafe partial class MIKEYPayload : Gst.MiniObject
     /// Get the sub payload of @payload at @idx. @payload should be of type
     /// %GST_MIKEY_PT_KEMAC.
     /// </summary>
-    /// <param name="idx">The <c>idx</c> argument.</param>
+    /// <param name="idx">an index</param>
     /// <returns>
     /// the #GstMIKEYPayload at @idx.
     /// The wrapper owns a reference of its own, which is a copy for a boxed type:
@@ -141,7 +141,7 @@ public sealed unsafe partial class MIKEYPayload : Gst.MiniObject
     }
 
     /// <summary>Remove the sub payload at @idx in @payload.</summary>
-    /// <param name="idx">The <c>idx</c> argument.</param>
+    /// <param name="idx">the index to remove</param>
     /// <returns>%TRUE on success.</returns>
     public bool KemacRemoveSub(uint idx)
     {
@@ -154,8 +154,8 @@ public sealed unsafe partial class MIKEYPayload : Gst.MiniObject
     /// Set the KEMAC parameters. @payload should point to a %GST_MIKEY_PT_KEMAC
     /// payload.
     /// </summary>
-    /// <param name="encAlg">The <c>encAlg</c> argument.</param>
-    /// <param name="macAlg">The <c>macAlg</c> argument.</param>
+    /// <param name="encAlg">the #GstMIKEYEncAlg</param>
+    /// <param name="macAlg">a #GstMIKEYMacAlg</param>
     /// <returns>%TRUE on success</returns>
     public bool KemacSet(Gst.Sdp.MIKEYEncAlg encAlg, Gst.Sdp.MIKEYMacAlg macAlg)
     {
@@ -203,7 +203,7 @@ public sealed unsafe partial class MIKEYPayload : Gst.MiniObject
     /// Set @key_len bytes of @key_data of type @key_type as the key for the
     /// %GST_MIKEY_PT_KEY_DATA @payload.
     /// </summary>
-    /// <param name="keyType">The <c>keyType</c> argument.</param>
+    /// <param name="keyType">a #GstMIKEYKeyDataType</param>
     /// <param name="keyData">the key of type @key_type</param>
     /// <returns>%TRUE on success</returns>
     /// <exception cref="ArgumentException">
@@ -276,7 +276,7 @@ public sealed unsafe partial class MIKEYPayload : Gst.MiniObject
     /// Set the PKE values in @payload. @payload must be of type
     /// %GST_MIKEY_PT_PKE.
     /// </summary>
-    /// <param name="c">The <c>c</c> argument.</param>
+    /// <param name="c">envelope key cache indicator</param>
     /// <param name="data">the encrypted envelope key</param>
     /// <returns>%TRUE on success</returns>
     /// <exception cref="ArgumentException">
@@ -324,7 +324,7 @@ public sealed unsafe partial class MIKEYPayload : Gst.MiniObject
     /// Add a new parameter to the %GST_MIKEY_PT_SP @payload with @type, @len
     /// and @val.
     /// </summary>
-    /// <param name="type">The <c>type</c> argument.</param>
+    /// <param name="type">a type</param>
     /// <param name="val">@len bytes of data</param>
     /// <returns>%TRUE on success</returns>
     /// <exception cref="ArgumentException">
@@ -362,7 +362,7 @@ public sealed unsafe partial class MIKEYPayload : Gst.MiniObject
     /// Remove the Security Policy parameters from a %GST_MIKEY_PT_SP
     /// @payload at @idx.
     /// </summary>
-    /// <param name="idx">The <c>idx</c> argument.</param>
+    /// <param name="idx">an index</param>
     /// <returns>%TRUE on success</returns>
     public bool SpRemoveParam(uint idx)
     {
@@ -372,8 +372,8 @@ public sealed unsafe partial class MIKEYPayload : Gst.MiniObject
     }
 
     /// <summary>Set the Security Policy parameters for @payload.</summary>
-    /// <param name="policy">The <c>policy</c> argument.</param>
-    /// <param name="proto">The <c>proto</c> argument.</param>
+    /// <param name="policy">the policy number</param>
+    /// <param name="proto">a #GstMIKEYSecProto</param>
     /// <returns>%TRUE on success</returns>
     public bool SpSet(uint policy, Gst.Sdp.MIKEYSecProto proto)
     {

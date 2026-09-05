@@ -51,7 +51,7 @@ public static unsafe partial class MetaContainerExtensions
     /// ges_meta_container_metas_to_string().
     /// </summary>
     /// <param name="container">A #GESMetaContainer</param>
-    /// <param name="str">The <c>str</c> argument.</param>
+    /// <param name="str">A string to deserialize and add to @container</param>
     /// <returns>
     /// %TRUE if the fields in @str was successfully deserialized
     /// and added to @container.
@@ -74,9 +74,15 @@ public static unsafe partial class MetaContainerExtensions
     /// ges_meta_container_register_static_meta().
     /// </summary>
     /// <param name="container">A #GESMetaContainer</param>
-    /// <param name="metaItem">The <c>metaItem</c> argument.</param>
-    /// <param name="flags">The <c>flags</c> argument.</param>
-    /// <param name="type">The <c>type</c> argument.</param>
+    /// <param name="metaItem">The key for the @container field to check</param>
+    /// <param name="flags">
+    /// A destination to get the registered flags of
+    /// the field, or %NULL to ignore
+    /// </param>
+    /// <param name="type">
+    /// A destination to get the registered type of
+    /// the field, or %NULL to ignore
+    /// </param>
     /// <returns>
     /// %TRUE if the @meta_item field has been registered on
     /// @container.
@@ -102,8 +108,11 @@ public static unsafe partial class MetaContainerExtensions
     /// wrong type, the method will fail.
     /// </summary>
     /// <param name="container">A #GESMetaContainer</param>
-    /// <param name="metaItem">The <c>metaItem</c> argument.</param>
-    /// <param name="dest">The <c>dest</c> argument.</param>
+    /// <param name="metaItem">The key for the @container field to get</param>
+    /// <param name="dest">
+    /// Destination into which the value under @meta_item
+    /// should be copied.
+    /// </param>
     /// <returns>
     /// %TRUE if the boolean value under @meta_item was copied
     /// to @dest.
@@ -127,9 +136,10 @@ public static unsafe partial class MetaContainerExtensions
     /// wrong type, the method will fail.
     /// </summary>
     /// <param name="container">A #GESMetaContainer</param>
-    /// <param name="metaItem">The <c>metaItem</c> argument.</param>
+    /// <param name="metaItem">The key for the @container field to get</param>
     /// <param name="dest">
-    /// The <c>dest</c> argument.
+    /// Destination into which the value under @meta_item
+    /// should be copied.
     /// The date the call produced, or <see langword="null"/> when it produced
     /// none. A false answer always leaves it null, and on a generic value — a
     /// field of a structure or of a meta container — a true one may as well:
@@ -160,8 +170,11 @@ public static unsafe partial class MetaContainerExtensions
     /// wrong type, the method will fail.
     /// </summary>
     /// <param name="container">A #GESMetaContainer</param>
-    /// <param name="metaItem">The <c>metaItem</c> argument.</param>
-    /// <param name="dest">The <c>dest</c> argument.</param>
+    /// <param name="metaItem">The key for the @container field to get</param>
+    /// <param name="dest">
+    /// Destination into which the value under @meta_item
+    /// should be copied.
+    /// </param>
     /// <returns>
     /// %TRUE if the date time value under @meta_item was copied
     /// to @dest.
@@ -185,8 +198,11 @@ public static unsafe partial class MetaContainerExtensions
     /// wrong type, the method will fail.
     /// </summary>
     /// <param name="container">A #GESMetaContainer</param>
-    /// <param name="metaItem">The <c>metaItem</c> argument.</param>
-    /// <param name="dest">The <c>dest</c> argument.</param>
+    /// <param name="metaItem">The key for the @container field to get</param>
+    /// <param name="dest">
+    /// Destination into which the value under @meta_item
+    /// should be copied.
+    /// </param>
     /// <returns>
     /// %TRUE if the double value under @meta_item was copied
     /// to @dest.
@@ -210,8 +226,11 @@ public static unsafe partial class MetaContainerExtensions
     /// wrong type, the method will fail.
     /// </summary>
     /// <param name="container">A #GESMetaContainer</param>
-    /// <param name="metaItem">The <c>metaItem</c> argument.</param>
-    /// <param name="dest">The <c>dest</c> argument.</param>
+    /// <param name="metaItem">The key for the @container field to get</param>
+    /// <param name="dest">
+    /// Destination into which the value under @meta_item
+    /// should be copied.
+    /// </param>
     /// <returns>
     /// %TRUE if the float value under @meta_item was copied
     /// to @dest.
@@ -235,8 +254,11 @@ public static unsafe partial class MetaContainerExtensions
     /// wrong type, the method will fail.
     /// </summary>
     /// <param name="container">A #GESMetaContainer</param>
-    /// <param name="metaItem">The <c>metaItem</c> argument.</param>
-    /// <param name="dest">The <c>dest</c> argument.</param>
+    /// <param name="metaItem">The key for the @container field to get</param>
+    /// <param name="dest">
+    /// Destination into which the value under @meta_item
+    /// should be copied.
+    /// </param>
     /// <returns>
     /// %TRUE if the int value under @meta_item was copied
     /// to @dest.
@@ -260,8 +282,11 @@ public static unsafe partial class MetaContainerExtensions
     /// wrong type, the method will fail.
     /// </summary>
     /// <param name="container">A #GESMetaContainer</param>
-    /// <param name="metaItem">The <c>metaItem</c> argument.</param>
-    /// <param name="dest">The <c>dest</c> argument.</param>
+    /// <param name="metaItem">The key for the @container field to get</param>
+    /// <param name="dest">
+    /// Destination into which the value under @meta_item
+    /// should be copied.
+    /// </param>
     /// <returns>
     /// %TRUE if the int64 value under @meta_item was copied
     /// to @dest.
@@ -285,7 +310,7 @@ public static unsafe partial class MetaContainerExtensions
     /// wrong type, the method will fail.
     /// </summary>
     /// <param name="container">A #GESMetaContainer</param>
-    /// <param name="key">The <c>key</c> argument.</param>
+    /// <param name="key">The key for the @container field to get</param>
     /// <returns>
     /// A copy of the marker list value under @key,
     /// or %NULL if it could not be fetched.
@@ -303,7 +328,7 @@ public static unsafe partial class MetaContainerExtensions
 
     /// <summary>Gets the current value of the specified field of the meta container.</summary>
     /// <param name="container">A #GESMetaContainer</param>
-    /// <param name="key">The <c>key</c> argument.</param>
+    /// <param name="key">The key for the @container field to get</param>
     /// <returns>
     /// The value under @key, or %NULL if @container
     /// does not have the field set.
@@ -327,7 +352,7 @@ public static unsafe partial class MetaContainerExtensions
     /// wrong type, the method will fail.
     /// </summary>
     /// <param name="container">A #GESMetaContainer</param>
-    /// <param name="metaItem">The <c>metaItem</c> argument.</param>
+    /// <param name="metaItem">The key for the @container field to get</param>
     /// <returns>
     /// The string value under @meta_item, or %NULL
     /// if it could not be fetched.
@@ -349,8 +374,11 @@ public static unsafe partial class MetaContainerExtensions
     /// wrong type, the method will fail.
     /// </summary>
     /// <param name="container">A #GESMetaContainer</param>
-    /// <param name="metaItem">The <c>metaItem</c> argument.</param>
-    /// <param name="dest">The <c>dest</c> argument.</param>
+    /// <param name="metaItem">The key for the @container field to get</param>
+    /// <param name="dest">
+    /// Destination into which the value under @meta_item
+    /// should be copied.
+    /// </param>
     /// <returns>
     /// %TRUE if the uint value under @meta_item was copied
     /// to @dest.
@@ -374,8 +402,11 @@ public static unsafe partial class MetaContainerExtensions
     /// wrong type, the method will fail.
     /// </summary>
     /// <param name="container">A #GESMetaContainer</param>
-    /// <param name="metaItem">The <c>metaItem</c> argument.</param>
-    /// <param name="dest">The <c>dest</c> argument.</param>
+    /// <param name="metaItem">The key for the @container field to get</param>
+    /// <param name="dest">
+    /// Destination into which the value under @meta_item
+    /// should be copied.
+    /// </param>
     /// <returns>
     /// %TRUE if the uint64 value under @meta_item was copied
     /// to @dest.
@@ -413,10 +444,10 @@ public static unsafe partial class MetaContainerExtensions
     /// field only readable after calling this method.
     /// </summary>
     /// <param name="container">A #GESMetaContainer</param>
-    /// <param name="flags">The <c>flags</c> argument.</param>
-    /// <param name="metaItem">The <c>metaItem</c> argument.</param>
+    /// <param name="flags">Flags to be used for the registered field</param>
+    /// <param name="metaItem">The key for the @container field to register</param>
     /// <param name="value">
-    /// The <c>value</c> argument.
+    /// The value to set for the registered field
     /// The callee copies what it keeps, so the caller keeps ownership of
     /// <paramref name="value"/> and still disposes it.
     /// </param>
@@ -456,9 +487,9 @@ public static unsafe partial class MetaContainerExtensions
     /// readable after calling this method.
     /// </summary>
     /// <param name="container">A #GESMetaContainer</param>
-    /// <param name="flags">The <c>flags</c> argument.</param>
-    /// <param name="metaItem">The <c>metaItem</c> argument.</param>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="flags">Flags to be used for the registered field</param>
+    /// <param name="metaItem">The key for the @container field to register</param>
+    /// <param name="value">The value to set for the registered field</param>
     /// <returns>
     /// %TRUE if the @meta_item field was successfully registered on
     /// @container to only hold boolean typed values, with the given @flags,
@@ -483,10 +514,10 @@ public static unsafe partial class MetaContainerExtensions
     /// readable after calling this method.
     /// </summary>
     /// <param name="container">A #GESMetaContainer</param>
-    /// <param name="flags">The <c>flags</c> argument.</param>
-    /// <param name="metaItem">The <c>metaItem</c> argument.</param>
+    /// <param name="flags">Flags to be used for the registered field</param>
+    /// <param name="metaItem">The key for the @container field to register</param>
     /// <param name="value">
-    /// The <c>value</c> argument.
+    /// The value to set for the registered field
     /// The call is handed a temporary native date built from this value and
     /// releases it again when the call returns. The library copies whatever it
     /// keeps.
@@ -516,9 +547,9 @@ public static unsafe partial class MetaContainerExtensions
     /// readable after calling this method.
     /// </summary>
     /// <param name="container">A #GESMetaContainer</param>
-    /// <param name="flags">The <c>flags</c> argument.</param>
-    /// <param name="metaItem">The <c>metaItem</c> argument.</param>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="flags">Flags to be used for the registered field</param>
+    /// <param name="metaItem">The key for the @container field to register</param>
+    /// <param name="value">The value to set for the registered field</param>
     /// <returns>
     /// %TRUE if the @meta_item field was successfully registered on
     /// @container to only hold date time typed values, with the given @flags,
@@ -545,9 +576,9 @@ public static unsafe partial class MetaContainerExtensions
     /// readable after calling this method.
     /// </summary>
     /// <param name="container">A #GESMetaContainer</param>
-    /// <param name="flags">The <c>flags</c> argument.</param>
-    /// <param name="metaItem">The <c>metaItem</c> argument.</param>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="flags">Flags to be used for the registered field</param>
+    /// <param name="metaItem">The key for the @container field to register</param>
+    /// <param name="value">The value to set for the registered field</param>
     /// <returns>
     /// %TRUE if the @meta_item field was successfully registered on
     /// @container to only hold double typed values, with the given @flags,
@@ -572,9 +603,9 @@ public static unsafe partial class MetaContainerExtensions
     /// readable after calling this method.
     /// </summary>
     /// <param name="container">A #GESMetaContainer</param>
-    /// <param name="flags">The <c>flags</c> argument.</param>
-    /// <param name="metaItem">The <c>metaItem</c> argument.</param>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="flags">Flags to be used for the registered field</param>
+    /// <param name="metaItem">The key for the @container field to register</param>
+    /// <param name="value">The value to set for the registered field</param>
     /// <returns>
     /// %TRUE if the @meta_item field was successfully registered on
     /// @container to only hold float typed values, with the given @flags,
@@ -599,9 +630,9 @@ public static unsafe partial class MetaContainerExtensions
     /// readable after calling this method.
     /// </summary>
     /// <param name="container">A #GESMetaContainer</param>
-    /// <param name="flags">The <c>flags</c> argument.</param>
-    /// <param name="metaItem">The <c>metaItem</c> argument.</param>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="flags">Flags to be used for the registered field</param>
+    /// <param name="metaItem">The key for the @container field to register</param>
+    /// <param name="value">The value to set for the registered field</param>
     /// <returns>
     /// %TRUE if the @meta_item field was successfully registered on
     /// @container to only hold int typed values, with the given @flags,
@@ -626,9 +657,9 @@ public static unsafe partial class MetaContainerExtensions
     /// readable after calling this method.
     /// </summary>
     /// <param name="container">A #GESMetaContainer</param>
-    /// <param name="flags">The <c>flags</c> argument.</param>
-    /// <param name="metaItem">The <c>metaItem</c> argument.</param>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="flags">Flags to be used for the registered field</param>
+    /// <param name="metaItem">The key for the @container field to register</param>
+    /// <param name="value">The value to set for the registered field</param>
     /// <returns>
     /// %TRUE if the @meta_item field was successfully registered on
     /// @container to only hold int64 typed values, with the given @flags,
@@ -653,9 +684,9 @@ public static unsafe partial class MetaContainerExtensions
     /// readable after calling this method.
     /// </summary>
     /// <param name="container">A #GESMetaContainer</param>
-    /// <param name="flags">The <c>flags</c> argument.</param>
-    /// <param name="metaItem">The <c>metaItem</c> argument.</param>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="flags">Flags to be used for the registered field</param>
+    /// <param name="metaItem">The key for the @container field to register</param>
+    /// <param name="value">The value to set for the registered field</param>
     /// <returns>
     /// %TRUE if the @meta_item field was successfully registered on
     /// @container to only hold string typed values, with the given @flags,
@@ -683,9 +714,9 @@ public static unsafe partial class MetaContainerExtensions
     /// readable after calling this method.
     /// </summary>
     /// <param name="container">A #GESMetaContainer</param>
-    /// <param name="flags">The <c>flags</c> argument.</param>
-    /// <param name="metaItem">The <c>metaItem</c> argument.</param>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="flags">Flags to be used for the registered field</param>
+    /// <param name="metaItem">The key for the @container field to register</param>
+    /// <param name="value">The value to set for the registered field</param>
     /// <returns>
     /// %TRUE if the @meta_item field was successfully registered on
     /// @container to only hold uint typed values, with the given @flags,
@@ -710,9 +741,9 @@ public static unsafe partial class MetaContainerExtensions
     /// readable after calling this method.
     /// </summary>
     /// <param name="container">A #GESMetaContainer</param>
-    /// <param name="flags">The <c>flags</c> argument.</param>
-    /// <param name="metaItem">The <c>metaItem</c> argument.</param>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="flags">Flags to be used for the registered field</param>
+    /// <param name="metaItem">The key for the @container field to register</param>
+    /// <param name="value">The value to set for the registered field</param>
     /// <returns>
     /// %TRUE if the @meta_item field was successfully registered on
     /// @container to only hold uint64 typed values, with the given @flags,
@@ -749,9 +780,9 @@ public static unsafe partial class MetaContainerExtensions
     /// </para>
     /// </remarks>
     /// <param name="container">A #GESMetaContainer</param>
-    /// <param name="flags">The <c>flags</c> argument.</param>
-    /// <param name="metaItem">The <c>metaItem</c> argument.</param>
-    /// <param name="type">The <c>type</c> argument.</param>
+    /// <param name="flags">Flags to be used for the registered field</param>
+    /// <param name="metaItem">The key for the @container field to register</param>
+    /// <param name="type">The required value type for the registered field</param>
     /// <returns>
     /// %TRUE if the @meta_item field was successfully registered on
     /// @container to only hold @type values, with the given @flags.
@@ -772,8 +803,8 @@ public static unsafe partial class MetaContainerExtensions
     /// given boolean value.
     /// </summary>
     /// <param name="container">A #GESMetaContainer</param>
-    /// <param name="metaItem">The <c>metaItem</c> argument.</param>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="metaItem">The key for the @container field to set</param>
+    /// <param name="value">The value to set under @meta_item</param>
     /// <returns>%TRUE if @value was set under @meta_item for @container.</returns>
     public static bool SetBoolean(this GES.IMetaContainer container, string metaItem, bool value)
     {
@@ -791,9 +822,9 @@ public static unsafe partial class MetaContainerExtensions
     /// given date value.
     /// </summary>
     /// <param name="container">A #GESMetaContainer</param>
-    /// <param name="metaItem">The <c>metaItem</c> argument.</param>
+    /// <param name="metaItem">The key for the @container field to set</param>
     /// <param name="value">
-    /// The <c>value</c> argument.
+    /// The value to set under @meta_item
     /// The call is handed a temporary native date built from this value and
     /// releases it again when the call returns. The library copies whatever it
     /// keeps.
@@ -816,8 +847,8 @@ public static unsafe partial class MetaContainerExtensions
     /// given date time value.
     /// </summary>
     /// <param name="container">A #GESMetaContainer</param>
-    /// <param name="metaItem">The <c>metaItem</c> argument.</param>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="metaItem">The key for the @container field to set</param>
+    /// <param name="value">The value to set under @meta_item</param>
     /// <returns>%TRUE if @value was set under @meta_item for @container.</returns>
     public static bool SetDateTime(this GES.IMetaContainer container, string metaItem, Gst.DateTime value)
     {
@@ -837,8 +868,8 @@ public static unsafe partial class MetaContainerExtensions
     /// given double value.
     /// </summary>
     /// <param name="container">A #GESMetaContainer</param>
-    /// <param name="metaItem">The <c>metaItem</c> argument.</param>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="metaItem">The key for the @container field to set</param>
+    /// <param name="value">The value to set under @meta_item</param>
     /// <returns>%TRUE if @value was set under @meta_item for @container.</returns>
     public static bool SetDouble(this GES.IMetaContainer container, string metaItem, double value)
     {
@@ -856,8 +887,8 @@ public static unsafe partial class MetaContainerExtensions
     /// given float value.
     /// </summary>
     /// <param name="container">A #GESMetaContainer</param>
-    /// <param name="metaItem">The <c>metaItem</c> argument.</param>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="metaItem">The key for the @container field to set</param>
+    /// <param name="value">The value to set under @meta_item</param>
     /// <returns>%TRUE if @value was set under @meta_item for @container.</returns>
     public static bool SetFloat(this GES.IMetaContainer container, string metaItem, float value)
     {
@@ -875,8 +906,8 @@ public static unsafe partial class MetaContainerExtensions
     /// given int value.
     /// </summary>
     /// <param name="container">A #GESMetaContainer</param>
-    /// <param name="metaItem">The <c>metaItem</c> argument.</param>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="metaItem">The key for the @container field to set</param>
+    /// <param name="value">The value to set under @meta_item</param>
     /// <returns>%TRUE if @value was set under @meta_item for @container.</returns>
     public static bool SetInt(this GES.IMetaContainer container, string metaItem, int value)
     {
@@ -894,8 +925,8 @@ public static unsafe partial class MetaContainerExtensions
     /// given int64 value.
     /// </summary>
     /// <param name="container">A #GESMetaContainer</param>
-    /// <param name="metaItem">The <c>metaItem</c> argument.</param>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="metaItem">The key for the @container field to set</param>
+    /// <param name="value">The value to set under @meta_item</param>
     /// <returns>%TRUE if @value was set under @meta_item for @container.</returns>
     public static bool SetInt64(this GES.IMetaContainer container, string metaItem, long value)
     {
@@ -913,8 +944,8 @@ public static unsafe partial class MetaContainerExtensions
     /// given marker list value.
     /// </summary>
     /// <param name="container">A #GESMetaContainer</param>
-    /// <param name="metaItem">The <c>metaItem</c> argument.</param>
-    /// <param name="list">The <c>list</c> argument.</param>
+    /// <param name="metaItem">The key for the @container field to set</param>
+    /// <param name="list">The value to set under @meta_item</param>
     /// <returns>%TRUE if @value was set under @meta_item for @container.</returns>
     public static bool SetMarkerList(this GES.IMetaContainer container, string metaItem, GES.MarkerList list)
     {
@@ -934,8 +965,8 @@ public static unsafe partial class MetaContainerExtensions
     /// given string value.
     /// </summary>
     /// <param name="container">A #GESMetaContainer</param>
-    /// <param name="metaItem">The <c>metaItem</c> argument.</param>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="metaItem">The key for the @container field to set</param>
+    /// <param name="value">The value to set under @meta_item</param>
     /// <returns>%TRUE if @value was set under @meta_item for @container.</returns>
     public static bool SetString(this GES.IMetaContainer container, string metaItem, string value)
     {
@@ -956,8 +987,8 @@ public static unsafe partial class MetaContainerExtensions
     /// given uint value.
     /// </summary>
     /// <param name="container">A #GESMetaContainer</param>
-    /// <param name="metaItem">The <c>metaItem</c> argument.</param>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="metaItem">The key for the @container field to set</param>
+    /// <param name="value">The value to set under @meta_item</param>
     /// <returns>%TRUE if @value was set under @meta_item for @container.</returns>
     public static bool SetUint(this GES.IMetaContainer container, string metaItem, uint value)
     {
@@ -975,8 +1006,8 @@ public static unsafe partial class MetaContainerExtensions
     /// given uint64 value.
     /// </summary>
     /// <param name="container">A #GESMetaContainer</param>
-    /// <param name="metaItem">The <c>metaItem</c> argument.</param>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="metaItem">The key for the @container field to set</param>
+    /// <param name="value">The value to set under @meta_item</param>
     /// <returns>%TRUE if @value was set under @meta_item for @container.</returns>
     public static bool SetUint64(this GES.IMetaContainer container, string metaItem, ulong value)
     {

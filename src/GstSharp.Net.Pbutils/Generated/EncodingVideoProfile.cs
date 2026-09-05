@@ -55,10 +55,16 @@ public unsafe partial class EncodingVideoProfile : Gst.Pbutils.EncodingProfile
     /// gst_encoding_video_profile_set_variableframerate() documentation.
     /// </para>
     /// </remarks>
-    /// <param name="format">The <c>format</c> argument.</param>
-    /// <param name="preset">The <c>preset</c> argument.</param>
-    /// <param name="restriction">The <c>restriction</c> argument.</param>
-    /// <param name="presence">The <c>presence</c> argument.</param>
+    /// <param name="format">the #GstCaps</param>
+    /// <param name="preset">the preset(s) to use on the encoder, can be %NULL</param>
+    /// <param name="restriction">
+    /// the #GstCaps used to restrict the input to the encoder, can be
+    /// NULL. See gst_encoding_profile_get_restriction() for more details.
+    /// </param>
+    /// <param name="presence">
+    /// the number of time this stream must be used. 0 means any number of
+    ///  times (including never)
+    /// </param>
     /// <returns>the newly created #GstEncodingVideoProfile.</returns>
     public static Gst.Pbutils.EncodingVideoProfile New(Gst.Caps format, string? preset, Gst.Caps? restriction, uint presence)
     {
@@ -101,7 +107,7 @@ public unsafe partial class EncodingVideoProfile : Gst.Pbutils.EncodingProfile
     /// this value set to 1. If this video profile isn't part of a multi-pass profile,
     /// you may set it to 0 (the default value).
     /// </summary>
-    /// <param name="pass">The <c>pass</c> argument.</param>
+    /// <param name="pass">the pass number for this profile</param>
     public void SetPass(uint pass)
     {
         GstEncodingVideoProfileSetPass(Handle, pass);
@@ -114,7 +120,7 @@ public unsafe partial class EncodingVideoProfile : Gst.Pbutils.EncodingProfile
     /// be normalized by dropping/duplicating frames in order to produce a
     /// constance framerate.
     /// </summary>
-    /// <param name="variableframerate">The <c>variableframerate</c> argument.</param>
+    /// <param name="variableframerate">a boolean</param>
     public void SetVariableframerate(bool variableframerate)
     {
         GstEncodingVideoProfileSetVariableframerate(Handle, variableframerate ? 1 : 0);

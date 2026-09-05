@@ -18,7 +18,7 @@ public static unsafe partial class AudioGlobal
     /// called as a last resort when the specific channel map is unknown.
     /// </para>
     /// </remarks>
-    /// <param name="channels">The <c>channels</c> argument.</param>
+    /// <param name="channels">the number of channels</param>
     /// <returns>
     /// a fallback channel-mask for @channels or 0 when there is no
     /// mask and mono.
@@ -37,7 +37,7 @@ public static unsafe partial class AudioGlobal
     /// A partially valid @channel_mask with less bits set than the number
     /// of channels is considered valid.
     /// </summary>
-    /// <param name="channelMask">The <c>channelMask</c> argument.</param>
+    /// <param name="channelMask">The input channel_mask</param>
     /// <param name="position">
     /// The
     ///   %GstAudioChannelPosition&lt;!-- --&gt;s
@@ -60,8 +60,8 @@ public static unsafe partial class AudioGlobal
     /// </para>
     /// </remarks>
     /// <param name="position">The %GstAudioChannelPositions</param>
-    /// <param name="forceOrder">The <c>forceOrder</c> argument.</param>
-    /// <param name="channelMask">The <c>channelMask</c> argument.</param>
+    /// <param name="forceOrder">Only consider the GStreamer channel order.</param>
+    /// <param name="channelMask">the output channel mask</param>
     /// <returns>%TRUE if the channel positions are valid and could be converted.</returns>
     public static bool AudioChannelPositionsToMask(System.ReadOnlySpan<Gst.Audio.AudioChannelPosition> position, bool forceOrder, out ulong channelMask)
     {
@@ -126,7 +126,7 @@ public static unsafe partial class AudioGlobal
     /// The %GstAudioChannelPositions
     ///   to check.
     /// </param>
-    /// <param name="forceOrder">The <c>forceOrder</c> argument.</param>
+    /// <param name="forceOrder">Only consider the GStreamer channel order.</param>
     /// <returns>%TRUE if the channel positions are valid.</returns>
     public static bool AudioCheckValidChannelPositions(System.ReadOnlySpan<Gst.Audio.AudioChannelPosition> position, bool forceOrder)
     {
@@ -236,7 +236,7 @@ public static unsafe partial class AudioGlobal
     /// Calculated the size of the buffer expected by gst_audio_iec61937_payload() for
     /// payloading type from @spec.
     /// </summary>
-    /// <param name="spec">The <c>spec</c> argument.</param>
+    /// <param name="spec">the ringbufer spec</param>
     /// <returns>
     /// the size or 0 if the given @type is not supported or cannot be
     /// payloaded.
@@ -259,8 +259,8 @@ public static unsafe partial class AudioGlobal
     /// the destination buffer to store the
     ///       payloaded contents in. Should not overlap with @src
     /// </param>
-    /// <param name="spec">The <c>spec</c> argument.</param>
-    /// <param name="endianness">The <c>endianness</c> argument.</param>
+    /// <param name="spec">the ringbufer spec for @src</param>
+    /// <param name="endianness">the expected byte order of the payloaded data</param>
     /// <returns>
     /// transfer-full: %TRUE if the payloading was successful, %FALSE
     /// otherwise.
@@ -293,7 +293,7 @@ public static unsafe partial class AudioGlobal
     /// see gst_audio_formats_raw().
     /// </summary>
     /// <param name="formats">an array of raw #GstAudioFormat, or %NULL</param>
-    /// <param name="layout">The <c>layout</c> argument.</param>
+    /// <param name="layout">the layout of audio samples</param>
     /// <returns>an audio @GstCaps</returns>
     public static Gst.Caps AudioMakeRawCaps(System.ReadOnlySpan<Gst.Audio.AudioFormat> formats, Gst.Audio.AudioLayout layout)
     {
@@ -332,7 +332,7 @@ public static unsafe partial class AudioGlobal
     /// The pointer to
     ///   the memory.
     /// </param>
-    /// <param name="format">The <c>format</c> argument.</param>
+    /// <param name="format">The %GstAudioFormat of the buffer.</param>
     /// <param name="from">The channel positions in the buffer.</param>
     /// <param name="to">
     /// The channel positions to convert to.
@@ -376,7 +376,7 @@ public static unsafe partial class AudioGlobal
     /// The pointer to
     ///   the memory.
     /// </param>
-    /// <param name="bps">The <c>bps</c> argument.</param>
+    /// <param name="bps">The number of bytes per sample.</param>
     /// <param name="reorderMap">The channel reorder map.</param>
     public static void AudioReorderChannelsWithReorderMap(System.Span<byte> data, int bps, System.ReadOnlySpan<int> reorderMap)
     {
@@ -390,10 +390,10 @@ public static unsafe partial class AudioGlobal
     }
 
     /// <summary>Attaches #GstAudioClippingMeta metadata to @buffer with the given parameters.</summary>
-    /// <param name="buffer">The <c>buffer</c> argument.</param>
-    /// <param name="format">The <c>format</c> argument.</param>
-    /// <param name="start">The <c>start</c> argument.</param>
-    /// <param name="end">The <c>end</c> argument.</param>
+    /// <param name="buffer">a #GstBuffer</param>
+    /// <param name="format">GstFormat of @start and @stop, GST_FORMAT_DEFAULT is samples</param>
+    /// <param name="start">Amount of audio to clip from start of buffer</param>
+    /// <param name="end">Amount of  to clip from end of buffer</param>
     /// <returns>the #GstAudioClippingMeta on @buffer.</returns>
     public static Gst.Audio.AudioClippingMeta BufferAddAudioClippingMeta(Gst.Buffer buffer, Gst.Format format, ulong start, ulong end)
     {
@@ -405,9 +405,9 @@ public static unsafe partial class AudioGlobal
     }
 
     /// <summary>Attaches audio level information to @buffer. (RFC 6464)</summary>
-    /// <param name="buffer">The <c>buffer</c> argument.</param>
-    /// <param name="level">The <c>level</c> argument.</param>
-    /// <param name="voiceActivity">The <c>voiceActivity</c> argument.</param>
+    /// <param name="buffer">a #GstBuffer</param>
+    /// <param name="level">the -dBov from 0-127 (127 is silence).</param>
+    /// <param name="voiceActivity">whether the buffer contains voice activity.</param>
     /// <returns>the #GstAudioLevelMeta on @buffer.</returns>
     public static Gst.Audio.AudioLevelMeta? BufferAddAudioLevelMeta(Gst.Buffer buffer, byte level, bool voiceActivity)
     {
@@ -444,8 +444,8 @@ public static unsafe partial class AudioGlobal
     /// </para>
     /// <para>This meta is only needed for non-interleaved (= planar) DSD data.</para>
     /// </remarks>
-    /// <param name="buffer">The <c>buffer</c> argument.</param>
-    /// <param name="numBytesPerChannel">The <c>numBytesPerChannel</c> argument.</param>
+    /// <param name="buffer">a #GstBuffer</param>
+    /// <param name="numBytesPerChannel">Number of bytes per channel</param>
     /// <param name="offsets">
     /// the offsets (in bytes) where each channel plane starts
     ///   in the buffer
@@ -470,7 +470,7 @@ public static unsafe partial class AudioGlobal
     /// Find the #GstAudioDownmixMeta on @buffer for the given destination
     /// channel positions.
     /// </summary>
-    /// <param name="buffer">The <c>buffer</c> argument.</param>
+    /// <param name="buffer">a #GstBuffer</param>
     /// <param name="toPosition">
     /// the channel positions of
     ///   the destination
@@ -488,7 +488,7 @@ public static unsafe partial class AudioGlobal
     }
 
     /// <summary>Find the #GstAudioLevelMeta on @buffer.</summary>
-    /// <param name="buffer">The <c>buffer</c> argument.</param>
+    /// <param name="buffer">a #GstBuffer</param>
     /// <returns>
     /// the #GstAudioLevelMeta or %NULL when
     /// there is no such metadata on @buffer.

@@ -143,9 +143,9 @@ public abstract unsafe partial class Clock : Gst.Object
     /// clocks.
     /// </para>
     /// </remarks>
-    /// <param name="observationInternal">The <c>observationInternal</c> argument.</param>
-    /// <param name="observationExternal">The <c>observationExternal</c> argument.</param>
-    /// <param name="rSquared">The <c>rSquared</c> argument.</param>
+    /// <param name="observationInternal">a time on the internal clock</param>
+    /// <param name="observationExternal">a time on the external clock</param>
+    /// <param name="rSquared">a pointer to hold the result</param>
     /// <returns>
     /// %TRUE if enough observations were added to run the
     /// regression algorithm.
@@ -170,13 +170,13 @@ public abstract unsafe partial class Clock : Gst.Object
     /// with the values, or some modified version of them.
     /// </para>
     /// </remarks>
-    /// <param name="observationInternal">The <c>observationInternal</c> argument.</param>
-    /// <param name="observationExternal">The <c>observationExternal</c> argument.</param>
-    /// <param name="rSquared">The <c>rSquared</c> argument.</param>
-    /// <param name="internal">The <c>@internal</c> argument.</param>
-    /// <param name="external">The <c>external</c> argument.</param>
-    /// <param name="rateNum">The <c>rateNum</c> argument.</param>
-    /// <param name="rateDenom">The <c>rateDenom</c> argument.</param>
+    /// <param name="observationInternal">a time on the internal clock</param>
+    /// <param name="observationExternal">a time on the external clock</param>
+    /// <param name="rSquared">a pointer to hold the result</param>
+    /// <param name="internal">a location to store the internal time</param>
+    /// <param name="external">a location to store the external time</param>
+    /// <param name="rateNum">a location to store the rate numerator</param>
+    /// <param name="rateDenom">a location to store the rate denominator</param>
     /// <returns>
     /// %TRUE if enough observations were added to run the
     /// regression algorithm.
@@ -207,7 +207,7 @@ public abstract unsafe partial class Clock : Gst.Object
     /// <remarks>
     /// <para>This function is the reverse of gst_clock_unadjust_unlocked().</para>
     /// </remarks>
-    /// <param name="internal">The <c>@internal</c> argument.</param>
+    /// <param name="internal">a clock time</param>
     /// <returns>the converted time of the clock.</returns>
     public Gst.ClockTime AdjustUnlocked(Gst.ClockTime @internal)
     {
@@ -226,11 +226,14 @@ public abstract unsafe partial class Clock : Gst.Object
     /// <remarks>
     /// <para>Note: The @clock parameter is unused and can be NULL</para>
     /// </remarks>
-    /// <param name="internalTarget">The <c>internalTarget</c> argument.</param>
-    /// <param name="cinternal">The <c>cinternal</c> argument.</param>
-    /// <param name="cexternal">The <c>cexternal</c> argument.</param>
-    /// <param name="cnum">The <c>cnum</c> argument.</param>
-    /// <param name="cdenom">The <c>cdenom</c> argument.</param>
+    /// <param name="internalTarget">a clock time</param>
+    /// <param name="cinternal">a reference internal time</param>
+    /// <param name="cexternal">a reference external time</param>
+    /// <param name="cnum">
+    /// the numerator of the rate of the clock relative to its
+    ///        internal time
+    /// </param>
+    /// <param name="cdenom">the denominator of the rate of the clock</param>
     /// <returns>the converted time of the clock.</returns>
     public Gst.ClockTime AdjustWithCalibration(Gst.ClockTime internalTarget, Gst.ClockTime cinternal, Gst.ClockTime cexternal, Gst.ClockTime cnum, Gst.ClockTime cdenom)
     {
@@ -249,10 +252,10 @@ public abstract unsafe partial class Clock : Gst.Object
     /// caller is not interested in the values.
     /// </para>
     /// </remarks>
-    /// <param name="internal">The <c>@internal</c> argument.</param>
-    /// <param name="external">The <c>external</c> argument.</param>
-    /// <param name="rateNum">The <c>rateNum</c> argument.</param>
-    /// <param name="rateDenom">The <c>rateDenom</c> argument.</param>
+    /// <param name="internal">a location to store the internal time</param>
+    /// <param name="external">a location to store the external time</param>
+    /// <param name="rateNum">a location to store the rate numerator</param>
+    /// <param name="rateDenom">a location to store the rate denominator</param>
     public void GetCalibration(out Gst.ClockTime @internal, out Gst.ClockTime external, out Gst.ClockTime rateNum, out Gst.ClockTime rateDenom)
     {
         ulong @internalNative = default;
@@ -369,8 +372,8 @@ public abstract unsafe partial class Clock : Gst.Object
     /// The periodic notifications will start at time @start_time and
     /// will then be fired with the given @interval.
     /// </summary>
-    /// <param name="startTime">The <c>startTime</c> argument.</param>
-    /// <param name="interval">The <c>interval</c> argument.</param>
+    /// <param name="startTime">the requested start time</param>
+    /// <param name="interval">the requested interval</param>
     /// <returns>
     /// a #GstClockID that can be used to request the
     ///     time notification.
@@ -386,7 +389,7 @@ public abstract unsafe partial class Clock : Gst.Object
     /// Gets a #GstClockID from @clock to trigger a single shot
     /// notification at the requested time.
     /// </summary>
-    /// <param name="time">The <c>time</c> argument.</param>
+    /// <param name="time">the requested time</param>
     /// <returns>
     /// a #GstClockID that can be used to request the
     ///     time notification.
@@ -402,9 +405,9 @@ public abstract unsafe partial class Clock : Gst.Object
     /// Reinitializes the provided periodic @id to the provided start time and
     /// interval. Does not modify the reference count.
     /// </summary>
-    /// <param name="id">The <c>id</c> argument.</param>
-    /// <param name="startTime">The <c>startTime</c> argument.</param>
-    /// <param name="interval">The <c>interval</c> argument.</param>
+    /// <param name="id">a #GstClockID</param>
+    /// <param name="startTime">the requested start time</param>
+    /// <param name="interval">the requested interval</param>
     /// <returns>
     /// %TRUE if the GstClockID could be reinitialized to the provided
     /// @time, else %FALSE.
@@ -446,10 +449,13 @@ public abstract unsafe partial class Clock : Gst.Object
     /// until the clock catches up.
     /// </para>
     /// </remarks>
-    /// <param name="internal">The <c>@internal</c> argument.</param>
-    /// <param name="external">The <c>external</c> argument.</param>
-    /// <param name="rateNum">The <c>rateNum</c> argument.</param>
-    /// <param name="rateDenom">The <c>rateDenom</c> argument.</param>
+    /// <param name="internal">a reference internal time</param>
+    /// <param name="external">a reference external time</param>
+    /// <param name="rateNum">
+    /// the numerator of the rate of the clock relative to its
+    ///            internal time
+    /// </param>
+    /// <param name="rateDenom">the denominator of the rate of the clock</param>
     public void SetCalibration(Gst.ClockTime @internal, Gst.ClockTime external, Gst.ClockTime rateNum, Gst.ClockTime rateDenom)
     {
         GstClockSetCalibration(Handle, @internal.Nanoseconds, external.Nanoseconds, rateNum.Nanoseconds, rateDenom.Nanoseconds);
@@ -472,7 +478,7 @@ public abstract unsafe partial class Clock : Gst.Object
     /// and time offsets.
     /// </para>
     /// </remarks>
-    /// <param name="master">The <c>master</c> argument.</param>
+    /// <param name="master">a master #GstClock</param>
     /// <returns>
     /// %TRUE if the clock is capable of being slaved to a master clock.
     /// Trying to set a master on a clock without the
@@ -493,7 +499,7 @@ public abstract unsafe partial class Clock : Gst.Object
     /// of a clock can only be changed if the clock has the
     /// #GST_CLOCK_FLAG_CAN_SET_RESOLUTION flag set.
     /// </summary>
-    /// <param name="resolution">The <c>resolution</c> argument.</param>
+    /// <param name="resolution">The resolution to set</param>
     /// <returns>the new resolution of the clock.</returns>
     public Gst.ClockTime SetResolution(Gst.ClockTime resolution)
     {
@@ -512,7 +518,7 @@ public abstract unsafe partial class Clock : Gst.Object
     /// is set on the clock, and is intended to be called by subclasses only.
     /// </para>
     /// </remarks>
-    /// <param name="synced">The <c>synced</c> argument.</param>
+    /// <param name="synced">if the clock is synced</param>
     public void SetSynced(bool synced)
     {
         GstClockSetSynced(Handle, synced ? 1 : 0);
@@ -523,7 +529,7 @@ public abstract unsafe partial class Clock : Gst.Object
     /// Sets the amount of time, in nanoseconds, to sample master and slave
     /// clocks
     /// </summary>
-    /// <param name="timeout">The <c>timeout</c> argument.</param>
+    /// <param name="timeout">a timeout</param>
     public void SetTimeout(Gst.ClockTime timeout)
     {
         GstClockSetTimeout(Handle, timeout.Nanoseconds);
@@ -534,8 +540,8 @@ public abstract unsafe partial class Clock : Gst.Object
     /// Reinitializes the provided single shot @id to the provided time. Does not
     /// modify the reference count.
     /// </summary>
-    /// <param name="id">The <c>id</c> argument.</param>
-    /// <param name="time">The <c>time</c> argument.</param>
+    /// <param name="id">a #GstClockID</param>
+    /// <param name="time">The requested time.</param>
     /// <returns>
     /// %TRUE if the GstClockID could be reinitialized to the provided
     /// @time, else %FALSE.
@@ -556,7 +562,7 @@ public abstract unsafe partial class Clock : Gst.Object
     /// <remarks>
     /// <para>This function is the reverse of gst_clock_adjust_unlocked().</para>
     /// </remarks>
-    /// <param name="external">The <c>external</c> argument.</param>
+    /// <param name="external">an external clock time</param>
     /// <returns>the internal time of the clock corresponding to @external.</returns>
     public Gst.ClockTime UnadjustUnlocked(Gst.ClockTime external)
     {
@@ -574,11 +580,14 @@ public abstract unsafe partial class Clock : Gst.Object
     /// <remarks>
     /// <para>Note: The @clock parameter is unused and can be NULL</para>
     /// </remarks>
-    /// <param name="externalTarget">The <c>externalTarget</c> argument.</param>
-    /// <param name="cinternal">The <c>cinternal</c> argument.</param>
-    /// <param name="cexternal">The <c>cexternal</c> argument.</param>
-    /// <param name="cnum">The <c>cnum</c> argument.</param>
-    /// <param name="cdenom">The <c>cdenom</c> argument.</param>
+    /// <param name="externalTarget">a clock time</param>
+    /// <param name="cinternal">a reference internal time</param>
+    /// <param name="cexternal">a reference external time</param>
+    /// <param name="cnum">
+    /// the numerator of the rate of the clock relative to its
+    ///        internal time
+    /// </param>
+    /// <param name="cdenom">the denominator of the rate of the clock</param>
     /// <returns>the converted time of the clock.</returns>
     public Gst.ClockTime UnadjustWithCalibration(Gst.ClockTime externalTarget, Gst.ClockTime cinternal, Gst.ClockTime cexternal, Gst.ClockTime cnum, Gst.ClockTime cdenom)
     {
@@ -599,7 +608,7 @@ public abstract unsafe partial class Clock : Gst.Object
     /// is not set on the clock, or if the clock is already synced.
     /// </para>
     /// </remarks>
-    /// <param name="timeout">The <c>timeout</c> argument.</param>
+    /// <param name="timeout">timeout for waiting or %GST_CLOCK_TIME_NONE</param>
     /// <returns>%TRUE if waiting was successful, or %FALSE on timeout</returns>
     public bool WaitForSync(Gst.ClockTime timeout)
     {
@@ -612,8 +621,8 @@ public abstract unsafe partial class Clock : Gst.Object
     /// Compares the two #GstClockID instances. This function can be used
     /// as a GCompareFunc when sorting ids.
     /// </summary>
-    /// <param name="id1">The <c>id1</c> argument.</param>
-    /// <param name="id2">The <c>id2</c> argument.</param>
+    /// <param name="id1">A #GstClockID</param>
+    /// <param name="id2">A #GstClockID to compare with</param>
     /// <returns>negative value if `a &lt; b`; zero if `a = b`; positive value if `a &gt; b`</returns>
     public static int IdCompareFunc(nint id1, nint id2)
     {
@@ -622,7 +631,7 @@ public abstract unsafe partial class Clock : Gst.Object
     }
 
     /// <summary>This function returns the underlying clock.</summary>
-    /// <param name="id">The <c>id</c> argument.</param>
+    /// <param name="id">a #GstClockID</param>
     /// <returns>
     /// a #GstClock or %NULL when the
     ///     underlying clock has been freed.
@@ -634,7 +643,7 @@ public abstract unsafe partial class Clock : Gst.Object
     }
 
     /// <summary>Gets the time of the clock ID</summary>
-    /// <param name="id">The <c>id</c> argument.</param>
+    /// <param name="id">The #GstClockID to query</param>
     /// <returns>the time of the given clock id.</returns>
     public static Gst.ClockTime IdGetTime(nint id)
     {
@@ -643,7 +652,7 @@ public abstract unsafe partial class Clock : Gst.Object
     }
 
     /// <summary>Increases the refcount of given @id.</summary>
-    /// <param name="id">The <c>id</c> argument.</param>
+    /// <param name="id">The #GstClockID to ref</param>
     /// <returns>The same #GstClockID with increased refcount.</returns>
     public static nint IdRef(nint id)
     {
@@ -655,7 +664,7 @@ public abstract unsafe partial class Clock : Gst.Object
     /// Unrefs given @id. When the refcount reaches 0 the
     /// #GstClockID will be freed.
     /// </summary>
-    /// <param name="id">The <c>id</c> argument.</param>
+    /// <param name="id">The #GstClockID to unref</param>
     public static void IdUnref(nint id)
     {
         GstClockIdUnref(id);
@@ -667,7 +676,7 @@ public abstract unsafe partial class Clock : Gst.Object
     /// After this call, @id cannot be used anymore to receive sync or
     /// async notifications, you need to create a new #GstClockID.
     /// </summary>
-    /// <param name="id">The <c>id</c> argument.</param>
+    /// <param name="id">The id to unschedule</param>
     public static void IdUnschedule(nint id)
     {
         GstClockIdUnschedule(id);
@@ -679,8 +688,8 @@ public abstract unsafe partial class Clock : Gst.Object
     /// the underlying clock has been freed.  If this is the case, the @id is
     /// no longer usable and should be freed.
     /// </summary>
-    /// <param name="id">The <c>id</c> argument.</param>
-    /// <param name="clock">The <c>clock</c> argument.</param>
+    /// <param name="id">a #GstClockID to check</param>
+    /// <param name="clock">a #GstClock to compare against</param>
     /// <returns>whether the clock @id uses the same underlying #GstClock @clock.</returns>
     public static bool IdUsesClock(nint id, Gst.Clock clock)
     {
@@ -708,8 +717,11 @@ public abstract unsafe partial class Clock : Gst.Object
     /// before this function returned.
     /// </para>
     /// </remarks>
-    /// <param name="id">The <c>id</c> argument.</param>
-    /// <param name="jitter">The <c>jitter</c> argument.</param>
+    /// <param name="id">The #GstClockID to wait on</param>
+    /// <param name="jitter">
+    /// a pointer that will contain the jitter,
+    ///     can be %NULL.
+    /// </param>
     /// <returns>
     /// the result of the blocking wait. #GST_CLOCK_EARLY will be returned
     /// if the current clock time is past the time of @id, #GST_CLOCK_OK if

@@ -30,9 +30,9 @@ public static unsafe partial class Global
     /// <remarks>
     /// <para>Available since GStreamer 1.28.</para>
     /// </remarks>
-    /// <param name="major">The <c>major</c> argument.</param>
-    /// <param name="minor">The <c>minor</c> argument.</param>
-    /// <param name="micro">The <c>micro</c> argument.</param>
+    /// <param name="major">Major version number</param>
+    /// <param name="minor">Minor version number</param>
+    /// <param name="micro">Micro version number</param>
     /// <returns>
     /// %TRUE if the GStreamer version is greater or equal to
     /// @major\.@minor\.@micro, %FALSE otherwise. Also this function returns %FALSE
@@ -201,8 +201,8 @@ public static unsafe partial class Global
     /// Only one logger at a time is possible.
     /// </para>
     /// </remarks>
-    /// <param name="maxSizePerThread">The <c>maxSizePerThread</c> argument.</param>
-    /// <param name="threadTimeout">The <c>threadTimeout</c> argument.</param>
+    /// <param name="maxSizePerThread">Maximum size of log per thread in bytes</param>
+    /// <param name="threadTimeout">Timeout for threads in seconds</param>
     public static void DebugAddRingBufferLogger(uint maxSizePerThread, uint threadTimeout)
     {
         GstDebugAddRingBufferLogger(maxSizePerThread, threadTimeout);
@@ -213,8 +213,8 @@ public static unsafe partial class Global
     /// network of gstreamer elements that form the pipeline into a dot file.
     /// This data can be processed with graphviz to get an image.
     /// </summary>
-    /// <param name="bin">The <c>bin</c> argument.</param>
-    /// <param name="details">The <c>details</c> argument.</param>
+    /// <param name="bin">the top-level pipeline that should be analyzed</param>
+    /// <param name="details">type of #GstDebugGraphDetails to use</param>
     /// <returns>
     /// a string containing the pipeline in graphviz
     /// dot format.
@@ -240,9 +240,9 @@ public static unsafe partial class Global
     /// </code>
     /// </para>
     /// </remarks>
-    /// <param name="bin">The <c>bin</c> argument.</param>
-    /// <param name="details">The <c>details</c> argument.</param>
-    /// <param name="fileName">The <c>fileName</c> argument.</param>
+    /// <param name="bin">the top-level pipeline that should be analyzed</param>
+    /// <param name="details">type of #GstDebugGraphDetails to use</param>
+    /// <param name="fileName">output base filename (e.g. "myplayer")</param>
     public static void DebugBinToDotFile(Gst.Bin bin, Gst.DebugGraphDetails details, string fileName)
     {
         ArgumentNullException.ThrowIfNull(bin);
@@ -257,9 +257,9 @@ public static unsafe partial class Global
     /// This works like gst_debug_bin_to_dot_file(), but adds the current timestamp
     /// to the filename, so that it can be used to take multiple snapshots.
     /// </summary>
-    /// <param name="bin">The <c>bin</c> argument.</param>
-    /// <param name="details">The <c>details</c> argument.</param>
-    /// <param name="fileName">The <c>fileName</c> argument.</param>
+    /// <param name="bin">the top-level pipeline that should be analyzed</param>
+    /// <param name="details">type of #GstDebugGraphDetails to use</param>
+    /// <param name="fileName">output base filename (e.g. "myplayer")</param>
     public static void DebugBinToDotFileWithTs(Gst.Bin bin, Gst.DebugGraphDetails details, string fileName)
     {
         ArgumentNullException.ThrowIfNull(bin);
@@ -275,7 +275,7 @@ public static unsafe partial class Global
     /// terminals.
     /// You need to free the string after use.
     /// </summary>
-    /// <param name="colorinfo">The <c>colorinfo</c> argument.</param>
+    /// <param name="colorinfo">the color info</param>
     /// <returns>
     /// a string containing the color
     ///     definition
@@ -295,7 +295,7 @@ public static unsafe partial class Global
     /// <remarks>
     /// <para>This function returns 0 on non-windows machines.</para>
     /// </remarks>
-    /// <param name="colorinfo">The <c>colorinfo</c> argument.</param>
+    /// <param name="colorinfo">the color info</param>
     /// <returns>an integer containing the color definition</returns>
     public static int DebugConstructWinColor(uint colorinfo)
     {
@@ -320,7 +320,10 @@ public static unsafe partial class Global
     }
 
     /// <summary>The <c>gst_debug_get_stack_trace</c> function.</summary>
-    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <param name="flags">
+    /// A set of #GstStackTraceFlags to determine how the stack trace should
+    /// look like. Pass #GST_STACK_TRACE_SHOW_NONE to retrieve a minimal backtrace.
+    /// </param>
     /// <returns>
     /// a stack trace, if libunwind or glibc backtrace are
     /// present, else %NULL.
@@ -361,14 +364,17 @@ public static unsafe partial class Global
     /// gst_debug_remove_log_function(gst_debug_log_default);
     /// </para>
     /// </remarks>
-    /// <param name="category">The <c>category</c> argument.</param>
-    /// <param name="level">The <c>level</c> argument.</param>
-    /// <param name="file">The <c>file</c> argument.</param>
-    /// <param name="function">The <c>function</c> argument.</param>
-    /// <param name="line">The <c>line</c> argument.</param>
-    /// <param name="object">The <c>@object</c> argument.</param>
-    /// <param name="message">The <c>message</c> argument.</param>
-    /// <param name="userData">The <c>userData</c> argument.</param>
+    /// <param name="category">category to log</param>
+    /// <param name="level">level of the message</param>
+    /// <param name="file">the file that emitted the message, usually the __FILE__ identifier</param>
+    /// <param name="function">the function that emitted the message</param>
+    /// <param name="line">the line from that the message was emitted, usually __LINE__</param>
+    /// <param name="object">
+    /// the object this message relates to,
+    ///     or %NULL if none
+    /// </param>
+    /// <param name="message">the actual message</param>
+    /// <param name="userData">the FILE* to log to</param>
     public static void DebugLogDefault(Gst.DebugCategory category, Gst.DebugLevel level, string file, string function, int line, Gst.GObject.Object? @object, Gst.DebugMessage message, nint userData)
     {
         ArgumentNullException.ThrowIfNull(category);
@@ -392,13 +398,16 @@ public static unsafe partial class Global
     /// handlers to get a log output that is identical to what the default handler
     /// would write out.
     /// </summary>
-    /// <param name="category">The <c>category</c> argument.</param>
-    /// <param name="level">The <c>level</c> argument.</param>
-    /// <param name="file">The <c>file</c> argument.</param>
-    /// <param name="function">The <c>function</c> argument.</param>
-    /// <param name="line">The <c>line</c> argument.</param>
-    /// <param name="object">The <c>@object</c> argument.</param>
-    /// <param name="message">The <c>message</c> argument.</param>
+    /// <param name="category">category to log</param>
+    /// <param name="level">level of the message</param>
+    /// <param name="file">the file that emitted the message, usually the __FILE__ identifier</param>
+    /// <param name="function">the function that emitted the message</param>
+    /// <param name="line">the line from that the message was emitted, usually __LINE__</param>
+    /// <param name="object">
+    /// the object this message relates to,
+    ///     or %NULL if none
+    /// </param>
+    /// <param name="message">the actual message</param>
     /// <returns>The result of <c>gst_debug_log_get_line</c>.</returns>
     public static string DebugLogGetLine(Gst.DebugCategory category, Gst.DebugLevel level, string file, string function, int line, Gst.GObject.Object? @object, Gst.DebugMessage message)
     {
@@ -419,13 +428,16 @@ public static unsafe partial class Global
     }
 
     /// <summary>Logs the given message using the currently registered debugging handlers.</summary>
-    /// <param name="category">The <c>category</c> argument.</param>
-    /// <param name="level">The <c>level</c> argument.</param>
-    /// <param name="file">The <c>file</c> argument.</param>
-    /// <param name="function">The <c>function</c> argument.</param>
-    /// <param name="line">The <c>line</c> argument.</param>
-    /// <param name="id">The <c>id</c> argument.</param>
-    /// <param name="messageString">The <c>messageString</c> argument.</param>
+    /// <param name="category">category to log</param>
+    /// <param name="level">level of the message is in</param>
+    /// <param name="file">the file that emitted the message, usually the __FILE__ identifier</param>
+    /// <param name="function">the function that emitted the message</param>
+    /// <param name="line">the line from that the message was emitted, usually __LINE__</param>
+    /// <param name="id">
+    /// the identifier of the object this message relates to
+    ///    or %NULL if none
+    /// </param>
+    /// <param name="messageString">a message string</param>
     public static void DebugLogIdLiteral(Gst.DebugCategory category, Gst.DebugLevel level, string file, string function, int line, string? id, string messageString)
     {
         ArgumentNullException.ThrowIfNull(category);
@@ -453,13 +465,13 @@ public static unsafe partial class Global
     /// <para>@level &gt;= %GST_LEVEL_MEMDUMP is not supported.</para>
     /// <para>Available since GStreamer 1.28.</para>
     /// </remarks>
-    /// <param name="ctx">The <c>ctx</c> argument.</param>
-    /// <param name="level">The <c>level</c> argument.</param>
-    /// <param name="file">The <c>file</c> argument.</param>
-    /// <param name="function">The <c>function</c> argument.</param>
-    /// <param name="line">The <c>line</c> argument.</param>
-    /// <param name="id">The <c>id</c> argument.</param>
-    /// <param name="message">The <c>message</c> argument.</param>
+    /// <param name="ctx">a #GstLogContext</param>
+    /// <param name="level">level of the message</param>
+    /// <param name="file">the file that emitted the message, usually the __FILE__ identifier</param>
+    /// <param name="function">the function that emitted the message</param>
+    /// <param name="line">the line that emitted the message, usually the __LINE__ identifier</param>
+    /// <param name="id">the contextual ID of the message</param>
+    /// <param name="message">message string</param>
     public static void DebugLogIdLiteralWithContext(Gst.LogContext ctx, Gst.DebugLevel level, string file, string function, int line, string? id, string message)
     {
         ArgumentNullException.ThrowIfNull(ctx);
@@ -479,13 +491,16 @@ public static unsafe partial class Global
     }
 
     /// <summary>Logs the given message using the currently registered debugging handlers.</summary>
-    /// <param name="category">The <c>category</c> argument.</param>
-    /// <param name="level">The <c>level</c> argument.</param>
-    /// <param name="file">The <c>file</c> argument.</param>
-    /// <param name="function">The <c>function</c> argument.</param>
-    /// <param name="line">The <c>line</c> argument.</param>
-    /// <param name="object">The <c>@object</c> argument.</param>
-    /// <param name="messageString">The <c>messageString</c> argument.</param>
+    /// <param name="category">category to log</param>
+    /// <param name="level">level of the message is in</param>
+    /// <param name="file">the file that emitted the message, usually the __FILE__ identifier</param>
+    /// <param name="function">the function that emitted the message</param>
+    /// <param name="line">the line from that the message was emitted, usually __LINE__</param>
+    /// <param name="object">
+    /// the object this message relates to,
+    ///     or %NULL if none
+    /// </param>
+    /// <param name="messageString">a message string</param>
     public static void DebugLogLiteral(Gst.DebugCategory category, Gst.DebugLevel level, string file, string function, int line, Gst.GObject.Object? @object, string messageString)
     {
         ArgumentNullException.ThrowIfNull(category);
@@ -511,13 +526,16 @@ public static unsafe partial class Global
     /// <para>@level &gt;= %GST_LEVEL_MEMDUMP is not supported.</para>
     /// <para>Available since GStreamer 1.28.</para>
     /// </remarks>
-    /// <param name="ctx">The <c>ctx</c> argument.</param>
-    /// <param name="level">The <c>level</c> argument.</param>
-    /// <param name="file">The <c>file</c> argument.</param>
-    /// <param name="function">The <c>function</c> argument.</param>
-    /// <param name="line">The <c>line</c> argument.</param>
-    /// <param name="object">The <c>@object</c> argument.</param>
-    /// <param name="message">The <c>message</c> argument.</param>
+    /// <param name="ctx">a #GstLogContext</param>
+    /// <param name="level">level of the message</param>
+    /// <param name="file">the file that emitted the message, usually the __FILE__ identifier</param>
+    /// <param name="function">the function that emitted the message</param>
+    /// <param name="line">the line that emitted the message, usually the __LINE__ identifier</param>
+    /// <param name="object">
+    /// the object this message relates to,
+    ///     or %NULL if none
+    /// </param>
+    /// <param name="message">message string</param>
     public static void DebugLogLiteralWithContext(Gst.LogContext ctx, Gst.DebugLevel level, string file, string function, int line, Gst.GObject.Object? @object, string message)
     {
         ArgumentNullException.ThrowIfNull(ctx);
@@ -551,7 +569,7 @@ public static unsafe partial class Global
     /// </para>
     /// <para>Available since GStreamer 1.26.</para>
     /// </remarks>
-    /// <param name="ptr">The <c>ptr</c> argument.</param>
+    /// <param name="ptr">the object</param>
     /// <returns>
     /// a string containing a string
     ///     representation of the object
@@ -571,7 +589,7 @@ public static unsafe partial class Global
     /// </para>
     /// <para>Available since GStreamer 1.26.</para>
     /// </remarks>
-    /// <param name="segment">The <c>segment</c> argument.</param>
+    /// <param name="segment">the %GstSegment</param>
     /// <returns>
     /// a string containing a string
     ///     representation of the segment
@@ -594,7 +612,7 @@ public static unsafe partial class Global
     }
 
     /// <summary>Removes all registered instances of log functions with the given user data.</summary>
-    /// <param name="data">The <c>data</c> argument.</param>
+    /// <param name="data">user data of the log function to remove</param>
     /// <returns>How many instances of the function were removed</returns>
     public static uint DebugRemoveLogFunctionByData(nint data)
     {
@@ -632,7 +650,7 @@ public static unsafe partial class Global
     /// &gt; This function is not threadsafe. It makes sense to only call it
     /// during initialization.
     /// </summary>
-    /// <param name="active">The <c>active</c> argument.</param>
+    /// <param name="active">Whether to use debugging output or not</param>
     public static void DebugSetActive(bool active)
     {
         GstDebugSetActive(active ? 1 : 0);
@@ -642,7 +660,7 @@ public static unsafe partial class Global
     /// <remarks>
     /// <para>This function may be called before gst_init().</para>
     /// </remarks>
-    /// <param name="mode">The <c>mode</c> argument.</param>
+    /// <param name="mode">The coloring mode for debug output. See @GstDebugColorMode.</param>
     public static void DebugSetColorMode(Gst.DebugColorMode mode)
     {
         GstDebugSetColorMode((int)mode);
@@ -652,7 +670,10 @@ public static unsafe partial class Global
     /// <remarks>
     /// <para>This function may be called before gst_init().</para>
     /// </remarks>
-    /// <param name="mode">The <c>mode</c> argument.</param>
+    /// <param name="mode">
+    /// The coloring mode for debug output. One of the following:
+    /// "on", "auto", "off", "disable", "unix".
+    /// </param>
     public static void DebugSetColorModeFromString(string mode)
     {
         ArgumentNullException.ThrowIfNull(mode);
@@ -669,7 +690,7 @@ public static unsafe partial class Global
     /// <remarks>
     /// <para>This function may be called before gst_init().</para>
     /// </remarks>
-    /// <param name="colored">The <c>colored</c> argument.</param>
+    /// <param name="colored">Whether to use colored output or not</param>
     public static void DebugSetColored(bool colored)
     {
         GstDebugSetColored(colored ? 1 : 0);
@@ -682,7 +703,7 @@ public static unsafe partial class Global
     /// <remarks>
     /// <para>This function may be called before gst_init().</para>
     /// </remarks>
-    /// <param name="level">The <c>level</c> argument.</param>
+    /// <param name="level">level to set</param>
     public static void DebugSetDefaultThreshold(Gst.DebugLevel level)
     {
         GstDebugSetDefaultThreshold((int)level);
@@ -692,8 +713,8 @@ public static unsafe partial class Global
     /// Sets all categories which match the given glob style pattern to the given
     /// level.
     /// </summary>
-    /// <param name="name">The <c>name</c> argument.</param>
-    /// <param name="level">The <c>level</c> argument.</param>
+    /// <param name="name">name of the categories to set</param>
+    /// <param name="level">level to set them to</param>
     public static void DebugSetThresholdForName(string name, Gst.DebugLevel level)
     {
         ArgumentNullException.ThrowIfNull(name);
@@ -708,8 +729,15 @@ public static unsafe partial class Global
     /// the order matters when you use wild cards, e.g. `foosrc:6,*src:3,*:2` sets
     /// everything to log level 2.
     /// </summary>
-    /// <param name="list">The <c>list</c> argument.</param>
-    /// <param name="reset">The <c>reset</c> argument.</param>
+    /// <param name="list">
+    /// comma-separated list of "category:level" pairs to be used
+    ///     as debug logging levels
+    /// </param>
+    /// <param name="reset">
+    /// %TRUE to clear all previously-set debug levels before setting
+    ///     new thresholds
+    /// %FALSE if adding the threshold described by @list to the one already set.
+    /// </param>
     public static void DebugSetThresholdFromString(string list, bool reset)
     {
         ArgumentNullException.ThrowIfNull(list);
@@ -719,7 +747,7 @@ public static unsafe partial class Global
     }
 
     /// <summary>Resets all categories with the given name back to the default level.</summary>
-    /// <param name="name">The <c>name</c> argument.</param>
+    /// <param name="name">name of the categories to set</param>
     public static void DebugUnsetThresholdForName(string name)
     {
         ArgumentNullException.ThrowIfNull(name);
@@ -744,8 +772,8 @@ public static unsafe partial class Global
     }
 
     /// <summary>Registers a new #GstDynamicTypeFactory in the registry</summary>
-    /// <param name="plugin">The <c>plugin</c> argument.</param>
-    /// <param name="type">The <c>type</c> argument.</param>
+    /// <param name="plugin">The #GstPlugin to register @dyn_type for</param>
+    /// <param name="type">The #GType to register dynamically</param>
     /// <returns>The result of <c>gst_dynamic_type_register</c>.</returns>
     public static bool DynamicTypeRegister(Gst.Plugin plugin, Gst.GObject.GType type)
     {
@@ -756,8 +784,8 @@ public static unsafe partial class Global
     }
 
     /// <summary>Get a string describing the error message in the current locale.</summary>
-    /// <param name="domain">The <c>domain</c> argument.</param>
-    /// <param name="code">The <c>code</c> argument.</param>
+    /// <param name="domain">the GStreamer error domain this error belongs to.</param>
+    /// <param name="code">the error code belonging to the domain.</param>
     /// <returns>
     /// a newly allocated string describing
     ///     the error message (in UTF-8 encoding)
@@ -778,7 +806,7 @@ public static unsafe partial class Global
     /// <remarks>
     /// <para>On Windows @filename should be in UTF-8 encoding.</para>
     /// </remarks>
-    /// <param name="filename">The <c>filename</c> argument.</param>
+    /// <param name="filename">absolute or relative file name path</param>
     /// <returns>
     /// newly-allocated URI string, or NULL on error. The caller must
     ///   free the URI string with g_free() when no longer needed.
@@ -802,7 +830,7 @@ public static unsafe partial class Global
     }
 
     /// <summary>Gets a string representing the given flow return.</summary>
-    /// <param name="ret">The <c>ret</c> argument.</param>
+    /// <param name="ret">a #GstFlowReturn to get the name of.</param>
     /// <returns>a static string with the name of the flow return.</returns>
     public static string FlowGetName(Gst.FlowReturn ret)
     {
@@ -812,7 +840,7 @@ public static unsafe partial class Global
     }
 
     /// <summary>Get the unique quark for the given GstFlowReturn.</summary>
-    /// <param name="ret">The <c>ret</c> argument.</param>
+    /// <param name="ret">a #GstFlowReturn to get the quark of.</param>
     /// <returns>
     /// the quark associated with the flow return or 0 if an
     /// invalid return was specified.
@@ -884,8 +912,11 @@ public static unsafe partial class Global
     /// and want them all ghosted, you will have to create the ghost pads
     /// yourself).
     /// </summary>
-    /// <param name="binDescription">The <c>binDescription</c> argument.</param>
-    /// <param name="ghostUnlinkedPads">The <c>ghostUnlinkedPads</c> argument.</param>
+    /// <param name="binDescription">command line describing the bin</param>
+    /// <param name="ghostUnlinkedPads">
+    /// whether to automatically create ghost pads
+    ///     for unlinked source or sink pads within the bin
+    /// </param>
     /// <returns>
     /// a
     ///   newly-created bin, or %NULL if an error occurred.
@@ -914,10 +945,16 @@ public static unsafe partial class Global
     /// and want them all ghosted, you will have to create the ghost pads
     /// yourself).
     /// </summary>
-    /// <param name="binDescription">The <c>binDescription</c> argument.</param>
-    /// <param name="ghostUnlinkedPads">The <c>ghostUnlinkedPads</c> argument.</param>
-    /// <param name="context">The <c>context</c> argument.</param>
-    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <param name="binDescription">command line describing the bin</param>
+    /// <param name="ghostUnlinkedPads">
+    /// whether to automatically create ghost pads
+    ///     for unlinked source or sink pads within the bin
+    /// </param>
+    /// <param name="context">
+    /// a parse context allocated with
+    ///     gst_parse_context_new(), or %NULL
+    /// </param>
+    /// <param name="flags">parsing options, or #GST_PARSE_FLAG_NONE</param>
     /// <returns>
     /// a newly-created
     ///   element, which is guaranteed to be a bin unless
@@ -950,7 +987,7 @@ public static unsafe partial class Global
     /// use gst_parse_bin_from_description().
     /// </para>
     /// </remarks>
-    /// <param name="pipelineDescription">The <c>pipelineDescription</c> argument.</param>
+    /// <param name="pipelineDescription">the command line describing the pipeline</param>
     /// <returns>
     /// a new element on success, %NULL on
     ///   failure. If more than one toplevel element is specified by the
@@ -982,9 +1019,12 @@ public static unsafe partial class Global
     /// use gst_parse_bin_from_description_full().
     /// </para>
     /// </remarks>
-    /// <param name="pipelineDescription">The <c>pipelineDescription</c> argument.</param>
-    /// <param name="context">The <c>context</c> argument.</param>
-    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <param name="pipelineDescription">the command line describing the pipeline</param>
+    /// <param name="context">
+    /// a parse context allocated with
+    ///      gst_parse_context_new(), or %NULL
+    /// </param>
+    /// <param name="flags">parsing options, or #GST_PARSE_FLAG_NONE</param>
     /// <returns>
     /// a new element on success, %NULL on
     ///    failure. If more than one toplevel element is specified by the
@@ -1034,8 +1074,11 @@ public static unsafe partial class Global
     /// An error does not mean that the pipeline could not be constructed.
     /// </summary>
     /// <param name="argv">null-terminated array of arguments</param>
-    /// <param name="context">The <c>context</c> argument.</param>
-    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <param name="context">
+    /// a parse context allocated with
+    ///     gst_parse_context_new(), or %NULL
+    /// </param>
+    /// <param name="flags">parsing options, or #GST_PARSE_FLAG_NONE</param>
     /// <returns>
     /// a new element on success; on
     ///   failure, either %NULL or a partially-constructed bin or element will be
@@ -1140,7 +1183,7 @@ public static unsafe partial class Global
     /// Applications might want to disable/enable the SIGSEGV handling of
     /// the GStreamer core. See gst_segtrap_is_enabled() for more information.
     /// </summary>
-    /// <param name="enabled">The <c>enabled</c> argument.</param>
+    /// <param name="enabled">whether a custom SIGSEGV handler should be installed.</param>
     public static void SegtrapSetEnabled(bool enabled)
     {
         GstSegtrapSetEnabled(enabled ? 1 : 0);
@@ -1163,7 +1206,7 @@ public static unsafe partial class Global
     }
 
     /// <summary>Checks if the given type is already registered.</summary>
-    /// <param name="tag">The <c>tag</c> argument.</param>
+    /// <param name="tag">name of the tag</param>
     /// <returns>%TRUE if the type is already registered</returns>
     public static bool TagExists(string tag)
     {
@@ -1178,7 +1221,7 @@ public static unsafe partial class Global
     /// Returns the human-readable description of this tag, You must not change or
     /// free this string.
     /// </summary>
-    /// <param name="tag">The <c>tag</c> argument.</param>
+    /// <param name="tag">the tag</param>
     /// <returns>the human-readable description of this tag</returns>
     public static string TagGetDescription(string tag)
     {
@@ -1191,7 +1234,7 @@ public static unsafe partial class Global
     }
 
     /// <summary>Gets the flag of @tag.</summary>
-    /// <param name="tag">The <c>tag</c> argument.</param>
+    /// <param name="tag">the tag</param>
     /// <returns>the flag of this tag.</returns>
     public static Gst.TagFlag TagGetFlag(string tag)
     {
@@ -1206,7 +1249,7 @@ public static unsafe partial class Global
     /// Returns the human-readable name of this tag, You must not change or free
     /// this string.
     /// </summary>
-    /// <param name="tag">The <c>tag</c> argument.</param>
+    /// <param name="tag">the tag</param>
     /// <returns>the human-readable name of this tag</returns>
     public static string TagGetNick(string tag)
     {
@@ -1219,7 +1262,7 @@ public static unsafe partial class Global
     }
 
     /// <summary>Gets the #GType used for this tag.</summary>
-    /// <param name="tag">The <c>tag</c> argument.</param>
+    /// <param name="tag">the tag</param>
     /// <returns>the #GType of this tag</returns>
     public static Gst.GObject.GType TagGetType(string tag)
     {
@@ -1234,7 +1277,7 @@ public static unsafe partial class Global
     /// Checks if the given tag is fixed. A fixed tag can only contain one value.
     /// Unfixed tags can contain lists of values.
     /// </summary>
-    /// <param name="tag">The <c>tag</c> argument.</param>
+    /// <param name="tag">tag to check</param>
     /// <returns>%TRUE, if the given tag is fixed.</returns>
     public static bool TagIsFixed(string tag)
     {
@@ -1251,12 +1294,12 @@ public static unsafe partial class Global
     /// as a G_TYPE_STRING or this function will fail.
     /// </summary>
     /// <param name="dest">
-    /// The <c>dest</c> argument.
+    /// uninitialized GValue to store result in
     /// On success the caller owns the contents and disposes the value; on
     /// failure it is left empty, and disposing an empty value does nothing.
     /// </param>
     /// <param name="src">
-    /// The <c>src</c> argument.
+    /// GValue to copy from
     /// The callee copies what it keeps, so the caller keeps ownership of
     /// <paramref name="src"/> and still disposes it.
     /// </param>
@@ -1286,12 +1329,12 @@ public static unsafe partial class Global
     /// It creates a copy of the first value from the list.
     /// </summary>
     /// <param name="dest">
-    /// The <c>dest</c> argument.
+    /// uninitialized GValue to store result in
     /// On success the caller owns the contents and disposes the value; on
     /// failure it is left empty, and disposing an empty value does nothing.
     /// </param>
     /// <param name="src">
-    /// The <c>src</c> argument.
+    /// GValue to copy from
     /// The callee copies what it keeps, so the caller keeps ownership of
     /// <paramref name="src"/> and still disposes it.
     /// </param>
@@ -1352,8 +1395,8 @@ public static unsafe partial class Global
     /// Checks if @type is plugin API. See gst_type_mark_as_plugin_api() for
     /// details.
     /// </summary>
-    /// <param name="type">The <c>type</c> argument.</param>
-    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <param name="type">a GType</param>
+    /// <param name="flags">What #GstPluginAPIFlags the plugin was marked with</param>
     /// <returns>%TRUE if @type is plugin API or %FALSE otherwise.</returns>
     public static bool TypeIsPluginApi(Gst.GObject.GType type, out Gst.PluginAPIFlags flags)
     {
@@ -1379,8 +1422,8 @@ public static unsafe partial class Global
     /// the plugin that defines it.
     /// </para>
     /// </remarks>
-    /// <param name="type">The <c>type</c> argument.</param>
-    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <param name="type">a GType</param>
+    /// <param name="flags">a set of #GstPluginAPIFlags to further inform cache generation.</param>
     public static void TypeMarkAsPluginApi(Gst.GObject.GType type, Gst.PluginAPIFlags flags)
     {
         GstTypeMarkAsPluginApi(type.Value, (int)flags);
@@ -1418,7 +1461,7 @@ public static unsafe partial class Global
     }
 
     /// <summary>Returns smallest integral value not less than log2(v).</summary>
-    /// <param name="v">The <c>v</c> argument.</param>
+    /// <param name="v">a #guint32 value.</param>
     /// <returns>a computed #guint val.</returns>
     public static uint UtilCeilLog2(uint v)
     {
@@ -1430,9 +1473,9 @@ public static unsafe partial class Global
     /// Transforms a #gdouble to a fraction and simplifies
     /// the result.
     /// </summary>
-    /// <param name="src">The <c>src</c> argument.</param>
-    /// <param name="destN">The <c>destN</c> argument.</param>
-    /// <param name="destD">The <c>destD</c> argument.</param>
+    /// <param name="src">#gdouble to transform</param>
+    /// <param name="destN">pointer to a #gint to hold the result numerator</param>
+    /// <param name="destD">pointer to a #gint to hold the result denominator</param>
     public static void UtilDoubleToFraction(double src, out int destN, out int destD)
     {
         int destNNative = default;
@@ -1443,7 +1486,7 @@ public static unsafe partial class Global
     }
 
     /// <summary>Dumps the buffer memory into a hex representation. Useful for debugging.</summary>
-    /// <param name="buf">The <c>buf</c> argument.</param>
+    /// <param name="buf">a #GstBuffer whose memory to dump</param>
     public static void UtilDumpBuffer(Gst.Buffer buf)
     {
         ArgumentNullException.ThrowIfNull(buf);
@@ -1462,8 +1505,8 @@ public static unsafe partial class Global
     }
 
     /// <summary>Compares the given filenames using natural ordering.</summary>
-    /// <param name="a">The <c>a</c> argument.</param>
-    /// <param name="b">The <c>b</c> argument.</param>
+    /// <param name="a">a filename to compare with @b</param>
+    /// <param name="b">a filename to compare with @a</param>
     /// <returns>The result of <c>gst_util_filename_compare</c>.</returns>
     public static int UtilFilenameCompare(string a, string b)
     {
@@ -1481,7 +1524,7 @@ public static unsafe partial class Global
     /// <remarks>
     /// <para>Available since GStreamer 1.26.</para>
     /// </remarks>
-    /// <param name="v">The <c>v</c> argument.</param>
+    /// <param name="v">a #guint32 value.</param>
     /// <returns>a computed #guint val.</returns>
     public static uint UtilFloorLog2(uint v)
     {
@@ -1493,12 +1536,12 @@ public static unsafe partial class Global
     /// Adds the fractions @a_n/@a_d and @b_n/@b_d and stores
     /// the result in @res_n and @res_d.
     /// </summary>
-    /// <param name="aN">The <c>aN</c> argument.</param>
-    /// <param name="aD">The <c>aD</c> argument.</param>
-    /// <param name="bN">The <c>bN</c> argument.</param>
-    /// <param name="bD">The <c>bD</c> argument.</param>
-    /// <param name="resN">The <c>resN</c> argument.</param>
-    /// <param name="resD">The <c>resD</c> argument.</param>
+    /// <param name="aN">Numerator of first value</param>
+    /// <param name="aD">Denominator of first value</param>
+    /// <param name="bN">Numerator of second value</param>
+    /// <param name="bD">Denominator of second value</param>
+    /// <param name="resN">Pointer to #gint to hold the result numerator</param>
+    /// <param name="resD">Pointer to #gint to hold the result denominator</param>
     /// <returns>%FALSE on overflow, %TRUE otherwise.</returns>
     public static bool UtilFractionAdd(int aN, int aD, int bN, int bD, out int resN, out int resD)
     {
@@ -1514,10 +1557,10 @@ public static unsafe partial class Global
     /// Compares the fractions @a_n/@a_d and @b_n/@b_d and returns
     /// -1 if a &lt; b, 0 if a = b and 1 if a &gt; b.
     /// </summary>
-    /// <param name="aN">The <c>aN</c> argument.</param>
-    /// <param name="aD">The <c>aD</c> argument.</param>
-    /// <param name="bN">The <c>bN</c> argument.</param>
-    /// <param name="bD">The <c>bD</c> argument.</param>
+    /// <param name="aN">Numerator of first value</param>
+    /// <param name="aD">Denominator of first value</param>
+    /// <param name="bN">Numerator of second value</param>
+    /// <param name="bD">Denominator of second value</param>
     /// <returns>-1 if a &lt; b; 0 if a = b; 1 if a &gt; b.</returns>
     public static int UtilFractionCompare(int aN, int aD, int bN, int bD)
     {
@@ -1529,12 +1572,12 @@ public static unsafe partial class Global
     /// Multiplies the fractions @a_n/@a_d and @b_n/@b_d and stores
     /// the result in @res_n and @res_d.
     /// </summary>
-    /// <param name="aN">The <c>aN</c> argument.</param>
-    /// <param name="aD">The <c>aD</c> argument.</param>
-    /// <param name="bN">The <c>bN</c> argument.</param>
-    /// <param name="bD">The <c>bD</c> argument.</param>
-    /// <param name="resN">The <c>resN</c> argument.</param>
-    /// <param name="resD">The <c>resD</c> argument.</param>
+    /// <param name="aN">Numerator of first value</param>
+    /// <param name="aD">Denominator of first value</param>
+    /// <param name="bN">Numerator of second value</param>
+    /// <param name="bD">Denominator of second value</param>
+    /// <param name="resN">Pointer to #gint to hold the result numerator</param>
+    /// <param name="resD">Pointer to #gint to hold the result denominator</param>
     /// <returns>%FALSE on overflow, %TRUE otherwise.</returns>
     public static bool UtilFractionMultiply(int aN, int aD, int bN, int bD, out int resN, out int resD)
     {
@@ -1553,12 +1596,12 @@ public static unsafe partial class Global
     /// <remarks>
     /// <para>Available since GStreamer 1.26.</para>
     /// </remarks>
-    /// <param name="aN">The <c>aN</c> argument.</param>
-    /// <param name="aD">The <c>aD</c> argument.</param>
-    /// <param name="bN">The <c>bN</c> argument.</param>
-    /// <param name="bD">The <c>bD</c> argument.</param>
-    /// <param name="resN">The <c>resN</c> argument.</param>
-    /// <param name="resD">The <c>resD</c> argument.</param>
+    /// <param name="aN">Numerator of first value</param>
+    /// <param name="aD">Denominator of first value</param>
+    /// <param name="bN">Numerator of second value</param>
+    /// <param name="bD">Denominator of second value</param>
+    /// <param name="resN">Pointer to #gint to hold the result numerator</param>
+    /// <param name="resD">Pointer to #gint to hold the result denominator</param>
     /// <returns>%FALSE on overflow, %TRUE otherwise.</returns>
     public static bool UtilFractionMultiplyInt64(long aN, long aD, long bN, long bD, out long resN, out long resD)
     {
@@ -1571,9 +1614,9 @@ public static unsafe partial class Global
     }
 
     /// <summary>Transforms a fraction to a #gdouble.</summary>
-    /// <param name="srcN">The <c>srcN</c> argument.</param>
-    /// <param name="srcD">The <c>srcD</c> argument.</param>
-    /// <param name="dest">The <c>dest</c> argument.</param>
+    /// <param name="srcN">Fraction numerator as #gint</param>
+    /// <param name="srcD">Fraction denominator #gint</param>
+    /// <param name="dest">pointer to a #gdouble for the result</param>
     public static void UtilFractionToDouble(int srcN, int srcD, out double dest)
     {
         double destNative = default;
@@ -1582,7 +1625,7 @@ public static unsafe partial class Global
     }
 
     /// <summary>The <c>gst_util_gdouble_to_guint64</c> function.</summary>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="value">The #gdouble value to convert guint64 double</param>
     /// <returns>@value casted to #guint64</returns>
     public static ulong UtilGdoubleToGuint64(double value)
     {
@@ -1595,9 +1638,9 @@ public static unsafe partial class Global
     /// #GValueArray. This allow language bindings to get GST_TYPE_ARRAY
     /// properties which are otherwise not an accessible type.
     /// </summary>
-    /// <param name="object">The <c>@object</c> argument.</param>
-    /// <param name="name">The <c>name</c> argument.</param>
-    /// <param name="array">The <c>array</c> argument.</param>
+    /// <param name="object">the object to set the array to</param>
+    /// <param name="name">the name of the property to set</param>
+    /// <param name="array">a return #GValueArray</param>
     /// <returns>The result of <c>gst_util_get_object_array</c>.</returns>
     public static bool UtilGetObjectArray(Gst.GObject.Object @object, string name, out Gst.GObject.ValueArray? array)
     {
@@ -1627,8 +1670,8 @@ public static unsafe partial class Global
     /// Calculates the greatest common divisor of @a
     /// and @b.
     /// </summary>
-    /// <param name="a">The <c>a</c> argument.</param>
-    /// <param name="b">The <c>b</c> argument.</param>
+    /// <param name="a">First value as #gint</param>
+    /// <param name="b">Second value as #gint</param>
     /// <returns>Greatest common divisor of @a and @b</returns>
     public static int UtilGreatestCommonDivisor(int a, int b)
     {
@@ -1640,8 +1683,8 @@ public static unsafe partial class Global
     /// Calculates the greatest common divisor of @a
     /// and @b.
     /// </summary>
-    /// <param name="a">The <c>a</c> argument.</param>
-    /// <param name="b">The <c>b</c> argument.</param>
+    /// <param name="a">First value as #gint64</param>
+    /// <param name="b">Second value as #gint64</param>
     /// <returns>Greatest common divisor of @a and @b</returns>
     public static long UtilGreatestCommonDivisorInt64(long a, long b)
     {
@@ -1668,7 +1711,7 @@ public static unsafe partial class Global
     }
 
     /// <summary>The <c>gst_util_guint64_to_gdouble</c> function.</summary>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="value">The #guint64 value to convert to double</param>
     /// <returns>@value casted to #gdouble</returns>
     public static double UtilGuint64ToGdouble(ulong value)
     {
@@ -1680,8 +1723,8 @@ public static unsafe partial class Global
     /// <remarks>
     /// <para>The current implementation just returns (gint32)(@s1 - @s2).</para>
     /// </remarks>
-    /// <param name="s1">The <c>s1</c> argument.</param>
-    /// <param name="s2">The <c>s2</c> argument.</param>
+    /// <param name="s1">A sequence number.</param>
+    /// <param name="s2">Another sequence number.</param>
     /// <returns>
     /// A negative number if @s1 is before @s2, 0 if they are equal, or a
     /// positive number if @s1 is after @s2.
@@ -1723,9 +1766,9 @@ public static unsafe partial class Global
     /// @name or when @value cannot be converted to the type of the property.
     /// </para>
     /// </remarks>
-    /// <param name="object">The <c>@object</c> argument.</param>
-    /// <param name="name">The <c>name</c> argument.</param>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="object">the object to set the argument of</param>
+    /// <param name="name">the name of the argument to set</param>
+    /// <param name="value">the string value to set</param>
     public static void UtilSetObjectArg(Gst.GObject.Object @object, string name, string value)
     {
         ArgumentNullException.ThrowIfNull(@object);
@@ -1744,9 +1787,9 @@ public static unsafe partial class Global
     /// specified property name. This allow language bindings to set GST_TYPE_ARRAY
     /// properties which are otherwise not an accessible type.
     /// </summary>
-    /// <param name="object">The <c>@object</c> argument.</param>
-    /// <param name="name">The <c>name</c> argument.</param>
-    /// <param name="array">The <c>array</c> argument.</param>
+    /// <param name="object">the object to set the array to</param>
+    /// <param name="name">the name of the property to set</param>
+    /// <param name="array">a #GValueArray containing the values</param>
     /// <returns>The result of <c>gst_util_set_object_array</c>.</returns>
     public static bool UtilSetObjectArray(Gst.GObject.Object @object, string name, Gst.GObject.ValueArray array)
     {
@@ -1772,12 +1815,12 @@ public static unsafe partial class Global
     /// </para>
     /// </remarks>
     /// <param name="value">
-    /// The <c>value</c> argument.
+    /// the value to set
     /// The value has to be initialized with the type the call expects before
     /// the call; like the C API, the call raises a warning and does nothing
     /// otherwise.
     /// </param>
-    /// <param name="valueStr">The <c>valueStr</c> argument.</param>
+    /// <param name="valueStr">the string to get the value from</param>
     public static void UtilSetValueFromString(ref Gst.GObject.Value value, string valueStr)
     {
         ArgumentNullException.ThrowIfNull(valueStr);
@@ -1803,10 +1846,10 @@ public static unsafe partial class Global
     /// @n_terms and @threshold respectively seems to give nice results.
     /// </para>
     /// </remarks>
-    /// <param name="numerator">The <c>numerator</c> argument.</param>
-    /// <param name="denominator">The <c>denominator</c> argument.</param>
-    /// <param name="nTerms">The <c>nTerms</c> argument.</param>
-    /// <param name="threshold">The <c>threshold</c> argument.</param>
+    /// <param name="numerator">First value as #gint</param>
+    /// <param name="denominator">Second value as #gint</param>
+    /// <param name="nTerms">non-significative terms (typical value: 8)</param>
+    /// <param name="threshold">threshold (typical value: 333)</param>
     public static void UtilSimplifyFraction(ref int numerator, ref int denominator, uint nTerms, uint threshold)
     {
         int numeratorNative = numerator;
@@ -1826,9 +1869,9 @@ public static unsafe partial class Global
     /// greater than G_MAXUINT32.
     /// </para>
     /// </remarks>
-    /// <param name="val">The <c>val</c> argument.</param>
-    /// <param name="num">The <c>num</c> argument.</param>
-    /// <param name="denom">The <c>denom</c> argument.</param>
+    /// <param name="val">the number to scale</param>
+    /// <param name="num">the numerator of the scale ratio</param>
+    /// <param name="denom">the denominator of the scale ratio</param>
     /// <returns>
     /// @val * @num / @denom.  In the case of an overflow, this
     /// function returns G_MAXUINT64.  If the result is not exactly
@@ -1853,9 +1896,9 @@ public static unsafe partial class Global
     /// greater than G_MAXUINT32.
     /// </para>
     /// </remarks>
-    /// <param name="val">The <c>val</c> argument.</param>
-    /// <param name="num">The <c>num</c> argument.</param>
-    /// <param name="denom">The <c>denom</c> argument.</param>
+    /// <param name="val">the number to scale</param>
+    /// <param name="num">the numerator of the scale ratio</param>
+    /// <param name="denom">the denominator of the scale ratio</param>
     /// <returns>
     /// @val * @num / @denom.  In the case of an overflow, this
     /// function returns G_MAXUINT64.  If the result is not exactly
@@ -1875,9 +1918,9 @@ public static unsafe partial class Global
     /// underflows and without loss of precision.  @num must be non-negative and
     /// @denom must be positive.
     /// </summary>
-    /// <param name="val">The <c>val</c> argument.</param>
-    /// <param name="num">The <c>num</c> argument.</param>
-    /// <param name="denom">The <c>denom</c> argument.</param>
+    /// <param name="val">guint64 (such as a #GstClockTime) to scale.</param>
+    /// <param name="num">numerator of the scale factor.</param>
+    /// <param name="denom">denominator of the scale factor.</param>
     /// <returns>
     /// @val * @num / @denom.  In the case of an overflow, this
     /// function returns G_MAXUINT64.  If the result is not exactly
@@ -1897,9 +1940,9 @@ public static unsafe partial class Global
     /// underflows and without loss of precision.  @num must be non-negative and
     /// @denom must be positive.
     /// </summary>
-    /// <param name="val">The <c>val</c> argument.</param>
-    /// <param name="num">The <c>num</c> argument.</param>
-    /// <param name="denom">The <c>denom</c> argument.</param>
+    /// <param name="val">guint64 (such as a #GstClockTime) to scale.</param>
+    /// <param name="num">numerator of the scale factor.</param>
+    /// <param name="denom">denominator of the scale factor.</param>
     /// <returns>
     /// @val * @num / @denom.  In the case of an overflow, this
     /// function returns G_MAXUINT64.  If the result is not exactly
@@ -1919,9 +1962,9 @@ public static unsafe partial class Global
     /// underflows and without loss of precision.  @num must be non-negative and
     /// @denom must be positive.
     /// </summary>
-    /// <param name="val">The <c>val</c> argument.</param>
-    /// <param name="num">The <c>num</c> argument.</param>
-    /// <param name="denom">The <c>denom</c> argument.</param>
+    /// <param name="val">guint64 (such as a #GstClockTime) to scale.</param>
+    /// <param name="num">numerator of the scale factor.</param>
+    /// <param name="denom">denominator of the scale factor.</param>
     /// <returns>
     /// @val * @num / @denom.  In the case of an overflow, this
     /// function returns G_MAXUINT64.  If the result is not exactly
@@ -1946,9 +1989,9 @@ public static unsafe partial class Global
     /// greater than G_MAXUINT32.
     /// </para>
     /// </remarks>
-    /// <param name="val">The <c>val</c> argument.</param>
-    /// <param name="num">The <c>num</c> argument.</param>
-    /// <param name="denom">The <c>denom</c> argument.</param>
+    /// <param name="val">the number to scale</param>
+    /// <param name="num">the numerator of the scale ratio</param>
+    /// <param name="denom">the denominator of the scale ratio</param>
     /// <returns>
     /// @val * @num / @denom.  In the case of an overflow, this
     /// function returns G_MAXUINT64.  If the result is not exactly
@@ -1965,12 +2008,12 @@ public static unsafe partial class Global
 
     /// <summary>Determines if @value1 and @value2 can be compared.</summary>
     /// <param name="value1">
-    /// The <c>value1</c> argument.
+    /// a value to compare
     /// The callee copies what it keeps, so the caller keeps ownership of
     /// <paramref name="value1"/> and still disposes it.
     /// </param>
     /// <param name="value2">
-    /// The <c>value2</c> argument.
+    /// another value to compare
     /// The callee copies what it keeps, so the caller keeps ownership of
     /// <paramref name="value2"/> and still disposes it.
     /// </param>
@@ -2011,12 +2054,12 @@ public static unsafe partial class Global
     /// type.
     /// </summary>
     /// <param name="value1">
-    /// The <c>value1</c> argument.
+    /// a value to intersect
     /// The callee copies what it keeps, so the caller keeps ownership of
     /// <paramref name="value1"/> and still disposes it.
     /// </param>
     /// <param name="value2">
-    /// The <c>value2</c> argument.
+    /// another value to intersect
     /// The callee copies what it keeps, so the caller keeps ownership of
     /// <paramref name="value2"/> and still disposes it.
     /// </param>
@@ -2053,12 +2096,12 @@ public static unsafe partial class Global
 
     /// <summary>Checks if it's possible to subtract @subtrahend from @minuend.</summary>
     /// <param name="minuend">
-    /// The <c>minuend</c> argument.
+    /// the value to subtract from
     /// The callee copies what it keeps, so the caller keeps ownership of
     /// <paramref name="minuend"/> and still disposes it.
     /// </param>
     /// <param name="subtrahend">
-    /// The <c>subtrahend</c> argument.
+    /// the value to subtract
     /// The callee copies what it keeps, so the caller keeps ownership of
     /// <paramref name="subtrahend"/> and still disposes it.
     /// </param>
@@ -2103,12 +2146,12 @@ public static unsafe partial class Global
     /// be unioned, this function returns %TRUE.
     /// </summary>
     /// <param name="value1">
-    /// The <c>value1</c> argument.
+    /// a value to union
     /// The callee copies what it keeps, so the caller keeps ownership of
     /// <paramref name="value1"/> and still disposes it.
     /// </param>
     /// <param name="value2">
-    /// The <c>value2</c> argument.
+    /// another value to union
     /// The callee copies what it keeps, so the caller keeps ownership of
     /// <paramref name="value2"/> and still disposes it.
     /// </param>
@@ -2151,12 +2194,13 @@ public static unsafe partial class Global
     /// If the operation succeeds, %TRUE is returned, %FALSE otherwise.
     /// </summary>
     /// <param name="dest">
-    /// The <c>dest</c> argument.
+    /// #GValue to fill with contents of
+    ///     deserialization
     /// The value has to be initialized with the type the call expects before
     /// the call; like the C API, the call raises a warning and does nothing
     /// otherwise.
     /// </param>
-    /// <param name="src">The <c>src</c> argument.</param>
+    /// <param name="src">string to deserialize</param>
     /// <returns>%TRUE on success</returns>
     public static bool ValueDeserialize(ref Gst.GObject.Value dest, string src)
     {
@@ -2176,13 +2220,14 @@ public static unsafe partial class Global
     /// If the operation succeeds, %TRUE is returned, %FALSE otherwise.
     /// </summary>
     /// <param name="dest">
-    /// The <c>dest</c> argument.
+    /// #GValue to fill with contents of
+    ///     deserialization
     /// The value has to be initialized with the type the call expects before
     /// the call; like the C API, the call raises a warning and does nothing
     /// otherwise.
     /// </param>
-    /// <param name="src">The <c>src</c> argument.</param>
-    /// <param name="pspec">The <c>pspec</c> argument.</param>
+    /// <param name="src">string to deserialize</param>
+    /// <param name="pspec">the #GParamSpec describing the expected value</param>
     /// <returns>%TRUE on success</returns>
     public static bool ValueDeserializeWithPspec(ref Gst.GObject.Value dest, string src, Gst.GObject.ParamSpec? pspec)
     {
@@ -2204,12 +2249,12 @@ public static unsafe partial class Global
     /// If @src is already fixed, this function returns %FALSE.
     /// </summary>
     /// <param name="dest">
-    /// The <c>dest</c> argument.
+    /// the #GValue destination
     /// On success the caller owns the contents and disposes the value; on
     /// failure it is left empty, and disposing an empty value does nothing.
     /// </param>
     /// <param name="src">
-    /// The <c>src</c> argument.
+    /// the #GValue to fixate
     /// The callee copies what it keeps, so the caller keeps ownership of
     /// <paramref name="src"/> and still disposes it.
     /// </param>
@@ -2241,18 +2286,18 @@ public static unsafe partial class Global
     /// @product to the product of the two fractions.
     /// </summary>
     /// <param name="product">
-    /// The <c>product</c> argument.
+    /// a GValue initialized to #GST_TYPE_FRACTION
     /// The value has to be initialized with the type the call expects before
     /// the call; like the C API, the call raises a warning and does nothing
     /// otherwise.
     /// </param>
     /// <param name="factor1">
-    /// The <c>factor1</c> argument.
+    /// a GValue initialized to #GST_TYPE_FRACTION
     /// The callee copies what it keeps, so the caller keeps ownership of
     /// <paramref name="factor1"/> and still disposes it.
     /// </param>
     /// <param name="factor2">
-    /// The <c>factor2</c> argument.
+    /// a GValue initialized to #GST_TYPE_FRACTION
     /// The callee copies what it keeps, so the caller keeps ownership of
     /// <paramref name="factor2"/> and still disposes it.
     /// </param>
@@ -2292,18 +2337,18 @@ public static unsafe partial class Global
 
     /// <summary>Subtracts the @subtrahend from the @minuend and sets @dest to the result.</summary>
     /// <param name="dest">
-    /// The <c>dest</c> argument.
+    /// a GValue initialized to #GST_TYPE_FRACTION
     /// The value has to be initialized with the type the call expects before
     /// the call; like the C API, the call raises a warning and does nothing
     /// otherwise.
     /// </param>
     /// <param name="minuend">
-    /// The <c>minuend</c> argument.
+    /// a GValue initialized to #GST_TYPE_FRACTION
     /// The callee copies what it keeps, so the caller keeps ownership of
     /// <paramref name="minuend"/> and still disposes it.
     /// </param>
     /// <param name="subtrahend">
-    /// The <c>subtrahend</c> argument.
+    /// a GValue initialized to #GST_TYPE_FRACTION
     /// The callee copies what it keeps, so the caller keeps ownership of
     /// <paramref name="subtrahend"/> and still disposes it.
     /// </param>
@@ -2343,7 +2388,7 @@ public static unsafe partial class Global
 
     /// <summary>Gets the bitmask specified by @value.</summary>
     /// <param name="value">
-    /// The <c>value</c> argument.
+    /// a GValue initialized to #GST_TYPE_BITMASK
     /// The callee copies what it keeps, so the caller keeps ownership of
     /// <paramref name="value"/> and still disposes it.
     /// </param>
@@ -2372,7 +2417,7 @@ public static unsafe partial class Global
     /// before getting rid of the @value.
     /// </summary>
     /// <param name="value">
-    /// The <c>value</c> argument.
+    /// a GValue initialized to GST_TYPE_CAPS
     /// The callee copies what it keeps, so the caller keeps ownership of
     /// <paramref name="value"/> and still disposes it.
     /// </param>
@@ -2403,7 +2448,7 @@ public static unsafe partial class Global
 
     /// <summary>Gets the contents of @value.</summary>
     /// <param name="value">
-    /// The <c>value</c> argument.
+    /// a GValue initialized to GST_TYPE_CAPS_FEATURES
     /// The callee copies what it keeps, so the caller keeps ownership of
     /// <paramref name="value"/> and still disposes it.
     /// </param>
@@ -2434,7 +2479,7 @@ public static unsafe partial class Global
 
     /// <summary>Gets the maximum of the range specified by @value.</summary>
     /// <param name="value">
-    /// The <c>value</c> argument.
+    /// a GValue initialized to GST_TYPE_DOUBLE_RANGE
     /// The callee copies what it keeps, so the caller keeps ownership of
     /// <paramref name="value"/> and still disposes it.
     /// </param>
@@ -2459,7 +2504,7 @@ public static unsafe partial class Global
 
     /// <summary>Gets the minimum of the range specified by @value.</summary>
     /// <param name="value">
-    /// The <c>value</c> argument.
+    /// a GValue initialized to GST_TYPE_DOUBLE_RANGE
     /// The callee copies what it keeps, so the caller keeps ownership of
     /// <paramref name="value"/> and still disposes it.
     /// </param>
@@ -2484,7 +2529,7 @@ public static unsafe partial class Global
 
     /// <summary>Retrieve the flags field of a GstFlagSet @value.</summary>
     /// <param name="value">
-    /// The <c>value</c> argument.
+    /// a GValue initialized to #GST_TYPE_FLAG_SET
     /// The callee copies what it keeps, so the caller keeps ownership of
     /// <paramref name="value"/> and still disposes it.
     /// </param>
@@ -2509,7 +2554,7 @@ public static unsafe partial class Global
 
     /// <summary>Retrieve the mask field of a GstFlagSet @value.</summary>
     /// <param name="value">
-    /// The <c>value</c> argument.
+    /// a GValue initialized to #GST_TYPE_FLAG_SET
     /// The callee copies what it keeps, so the caller keeps ownership of
     /// <paramref name="value"/> and still disposes it.
     /// </param>
@@ -2534,7 +2579,7 @@ public static unsafe partial class Global
 
     /// <summary>Gets the denominator of the fraction specified by @value.</summary>
     /// <param name="value">
-    /// The <c>value</c> argument.
+    /// a GValue initialized to #GST_TYPE_FRACTION
     /// The callee copies what it keeps, so the caller keeps ownership of
     /// <paramref name="value"/> and still disposes it.
     /// </param>
@@ -2559,7 +2604,7 @@ public static unsafe partial class Global
 
     /// <summary>Gets the numerator of the fraction specified by @value.</summary>
     /// <param name="value">
-    /// The <c>value</c> argument.
+    /// a GValue initialized to #GST_TYPE_FRACTION
     /// The callee copies what it keeps, so the caller keeps ownership of
     /// <paramref name="value"/> and still disposes it.
     /// </param>
@@ -2584,7 +2629,7 @@ public static unsafe partial class Global
 
     /// <summary>Gets the maximum of the range specified by @value.</summary>
     /// <param name="value">
-    /// The <c>value</c> argument.
+    /// a GValue initialized to GST_TYPE_FRACTION_RANGE
     /// The callee copies what it keeps, so the caller keeps ownership of
     /// <paramref name="value"/> and still disposes it.
     /// </param>
@@ -2613,7 +2658,7 @@ public static unsafe partial class Global
 
     /// <summary>Gets the minimum of the range specified by @value.</summary>
     /// <param name="value">
-    /// The <c>value</c> argument.
+    /// a GValue initialized to GST_TYPE_FRACTION_RANGE
     /// The callee copies what it keeps, so the caller keeps ownership of
     /// <paramref name="value"/> and still disposes it.
     /// </param>
@@ -2642,7 +2687,7 @@ public static unsafe partial class Global
 
     /// <summary>Gets the maximum of the range specified by @value.</summary>
     /// <param name="value">
-    /// The <c>value</c> argument.
+    /// a GValue initialized to GST_TYPE_INT64_RANGE
     /// The callee copies what it keeps, so the caller keeps ownership of
     /// <paramref name="value"/> and still disposes it.
     /// </param>
@@ -2667,7 +2712,7 @@ public static unsafe partial class Global
 
     /// <summary>Gets the minimum of the range specified by @value.</summary>
     /// <param name="value">
-    /// The <c>value</c> argument.
+    /// a GValue initialized to GST_TYPE_INT64_RANGE
     /// The callee copies what it keeps, so the caller keeps ownership of
     /// <paramref name="value"/> and still disposes it.
     /// </param>
@@ -2692,7 +2737,7 @@ public static unsafe partial class Global
 
     /// <summary>Gets the step of the range specified by @value.</summary>
     /// <param name="value">
-    /// The <c>value</c> argument.
+    /// a GValue initialized to GST_TYPE_INT64_RANGE
     /// The callee copies what it keeps, so the caller keeps ownership of
     /// <paramref name="value"/> and still disposes it.
     /// </param>
@@ -2717,7 +2762,7 @@ public static unsafe partial class Global
 
     /// <summary>Gets the maximum of the range specified by @value.</summary>
     /// <param name="value">
-    /// The <c>value</c> argument.
+    /// a GValue initialized to GST_TYPE_INT_RANGE
     /// The callee copies what it keeps, so the caller keeps ownership of
     /// <paramref name="value"/> and still disposes it.
     /// </param>
@@ -2742,7 +2787,7 @@ public static unsafe partial class Global
 
     /// <summary>Gets the minimum of the range specified by @value.</summary>
     /// <param name="value">
-    /// The <c>value</c> argument.
+    /// a GValue initialized to GST_TYPE_INT_RANGE
     /// The callee copies what it keeps, so the caller keeps ownership of
     /// <paramref name="value"/> and still disposes it.
     /// </param>
@@ -2767,7 +2812,7 @@ public static unsafe partial class Global
 
     /// <summary>Gets the step of the range specified by @value.</summary>
     /// <param name="value">
-    /// The <c>value</c> argument.
+    /// a GValue initialized to GST_TYPE_INT_RANGE
     /// The callee copies what it keeps, so the caller keeps ownership of
     /// <paramref name="value"/> and still disposes it.
     /// </param>
@@ -2792,7 +2837,7 @@ public static unsafe partial class Global
 
     /// <summary>Gets the contents of @value.</summary>
     /// <param name="value">
-    /// The <c>value</c> argument.
+    /// a GValue initialized to GST_TYPE_STRUCTURE
     /// The callee copies what it keeps, so the caller keeps ownership of
     /// <paramref name="value"/> and still disposes it.
     /// </param>
@@ -2829,11 +2874,11 @@ public static unsafe partial class Global
     /// <para>Available since GStreamer 1.28.</para>
     /// </remarks>
     /// <param name="value">
-    /// The <c>value</c> argument.
+    /// a #GValue to hash
     /// The callee copies what it keeps, so the caller keeps ownership of
     /// <paramref name="value"/> and still disposes it.
     /// </param>
-    /// <param name="res">The <c>res</c> argument.</param>
+    /// <param name="res">a location to store the hash value</param>
     /// <returns>%TRUE, or %FALSE if @value cannot be hashed.</returns>
     /// <exception cref="ArgumentException">
     /// <paramref name="value"/> is empty.
@@ -2860,12 +2905,12 @@ public static unsafe partial class Global
     /// the contents from source to target.
     /// </summary>
     /// <param name="dest">
-    /// The <c>dest</c> argument.
+    /// the target value
     /// On success the caller owns the contents and disposes the value; on
     /// failure it is left empty, and disposing an empty value does nothing.
     /// </param>
     /// <param name="src">
-    /// The <c>src</c> argument.
+    /// the source value
     /// The callee copies what it keeps, so the caller keeps ownership of
     /// <paramref name="src"/> and still disposes it.
     /// </param>
@@ -2897,17 +2942,19 @@ public static unsafe partial class Global
     /// @dest is not modified.
     /// </summary>
     /// <param name="dest">
-    /// The <c>dest</c> argument.
+    ///   a uninitialized #GValue that will hold the calculated
+    ///   intersection value. May be %NULL if the resulting set if not
+    ///   needed.
     /// On success the caller owns the contents and disposes the value; on
     /// failure it is left empty, and disposing an empty value does nothing.
     /// </param>
     /// <param name="value1">
-    /// The <c>value1</c> argument.
+    /// a value to intersect
     /// The callee copies what it keeps, so the caller keeps ownership of
     /// <paramref name="value1"/> and still disposes it.
     /// </param>
     /// <param name="value2">
-    /// The <c>value2</c> argument.
+    /// another value to intersect
     /// The callee copies what it keeps, so the caller keeps ownership of
     /// <paramref name="value2"/> and still disposes it.
     /// </param>
@@ -2953,7 +3000,7 @@ public static unsafe partial class Global
     /// ranges) value.
     /// </summary>
     /// <param name="value">
-    /// The <c>value</c> argument.
+    /// the #GValue to check
     /// The callee copies what it keeps, so the caller keeps ownership of
     /// <paramref name="value"/> and still disposes it.
     /// </param>
@@ -2982,12 +3029,12 @@ public static unsafe partial class Global
     /// be a subset of @value2.
     /// </summary>
     /// <param name="value1">
-    /// The <c>value1</c> argument.
+    /// a #GValue
     /// The callee copies what it keeps, so the caller keeps ownership of
     /// <paramref name="value1"/> and still disposes it.
     /// </param>
     /// <param name="value2">
-    /// The <c>value2</c> argument.
+    /// a #GValue
     /// The callee copies what it keeps, so the caller keeps ownership of
     /// <paramref name="value2"/> and still disposes it.
     /// </param>
@@ -3026,7 +3073,7 @@ public static unsafe partial class Global
     /// Registers functions to perform calculations on #GValue items of a given
     /// type. Each type can only be added once.
     /// </summary>
-    /// <param name="table">The <c>table</c> argument.</param>
+    /// <param name="table">structure containing functions to register</param>
     public static void ValueRegister(Gst.ValueTable table)
     {
         ArgumentNullException.ThrowIfNull(table);
@@ -3036,12 +3083,12 @@ public static unsafe partial class Global
 
     /// <summary>Sets @value to the bitmask specified by @bitmask.</summary>
     /// <param name="value">
-    /// The <c>value</c> argument.
+    /// a GValue initialized to #GST_TYPE_BITMASK
     /// The value has to be initialized with the type the call expects before
     /// the call; like the C API, the call raises a warning and does nothing
     /// otherwise.
     /// </param>
-    /// <param name="bitmask">The <c>bitmask</c> argument.</param>
+    /// <param name="bitmask">the bitmask</param>
     public static void ValueSetBitmask(ref Gst.GObject.Value value, ulong bitmask)
     {
         fixed (Gst.GObject.GValueNative* valuePointer = &value.NativeValue)
@@ -3055,12 +3102,12 @@ public static unsafe partial class Global
     /// provided @caps will be taken by the @value.
     /// </summary>
     /// <param name="value">
-    /// The <c>value</c> argument.
+    /// a GValue initialized to GST_TYPE_CAPS
     /// The value has to be initialized with the type the call expects before
     /// the call; like the C API, the call raises a warning and does nothing
     /// otherwise.
     /// </param>
-    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <param name="caps">the caps to set the value to</param>
     public static void ValueSetCaps(ref Gst.GObject.Value value, Gst.Caps caps)
     {
         ArgumentNullException.ThrowIfNull(caps);
@@ -3073,12 +3120,12 @@ public static unsafe partial class Global
 
     /// <summary>Sets the contents of @value to @features.</summary>
     /// <param name="value">
-    /// The <c>value</c> argument.
+    /// a GValue initialized to GST_TYPE_CAPS_FEATURES
     /// The value has to be initialized with the type the call expects before
     /// the call; like the C API, the call raises a warning and does nothing
     /// otherwise.
     /// </param>
-    /// <param name="features">The <c>features</c> argument.</param>
+    /// <param name="features">the features to set the value to</param>
     public static void ValueSetCapsFeatures(ref Gst.GObject.Value value, Gst.CapsFeatures features)
     {
         ArgumentNullException.ThrowIfNull(features);
@@ -3091,13 +3138,13 @@ public static unsafe partial class Global
 
     /// <summary>Sets @value to the range specified by @start and @end.</summary>
     /// <param name="value">
-    /// The <c>value</c> argument.
+    /// a GValue initialized to GST_TYPE_DOUBLE_RANGE
     /// The value has to be initialized with the type the call expects before
     /// the call; like the C API, the call raises a warning and does nothing
     /// otherwise.
     /// </param>
-    /// <param name="start">The <c>start</c> argument.</param>
-    /// <param name="end">The <c>end</c> argument.</param>
+    /// <param name="start">the start of the range</param>
+    /// <param name="end">the end of the range</param>
     public static void ValueSetDoubleRange(ref Gst.GObject.Value value, double start, double end)
     {
         fixed (Gst.GObject.GValueNative* valuePointer = &value.NativeValue)
@@ -3112,13 +3159,13 @@ public static unsafe partial class Global
     /// which bits in the flag value have been set, and which are "don't care"
     /// </summary>
     /// <param name="value">
-    /// The <c>value</c> argument.
+    /// a GValue initialized to %GST_TYPE_FLAG_SET
     /// The value has to be initialized with the type the call expects before
     /// the call; like the C API, the call raises a warning and does nothing
     /// otherwise.
     /// </param>
-    /// <param name="flags">The <c>flags</c> argument.</param>
-    /// <param name="mask">The <c>mask</c> argument.</param>
+    /// <param name="flags">The value of the flags set or unset</param>
+    /// <param name="mask">The mask indicate which flags bits must match for comparisons</param>
     public static void ValueSetFlagset(ref Gst.GObject.Value value, uint flags, uint mask)
     {
         fixed (Gst.GObject.GValueNative* valuePointer = &value.NativeValue)
@@ -3133,13 +3180,13 @@ public static unsafe partial class Global
     /// and if necessary the sign is moved to the numerator.
     /// </summary>
     /// <param name="value">
-    /// The <c>value</c> argument.
+    /// a GValue initialized to #GST_TYPE_FRACTION
     /// The value has to be initialized with the type the call expects before
     /// the call; like the C API, the call raises a warning and does nothing
     /// otherwise.
     /// </param>
-    /// <param name="numerator">The <c>numerator</c> argument.</param>
-    /// <param name="denominator">The <c>denominator</c> argument.</param>
+    /// <param name="numerator">the numerator of the fraction</param>
+    /// <param name="denominator">the denominator of the fraction</param>
     public static void ValueSetFraction(ref Gst.GObject.Value value, int numerator, int denominator)
     {
         fixed (Gst.GObject.GValueNative* valuePointer = &value.NativeValue)
@@ -3150,18 +3197,18 @@ public static unsafe partial class Global
 
     /// <summary>Sets @value to the range specified by @start and @end.</summary>
     /// <param name="value">
-    /// The <c>value</c> argument.
+    /// a GValue initialized to GST_TYPE_FRACTION_RANGE
     /// The value has to be initialized with the type the call expects before
     /// the call; like the C API, the call raises a warning and does nothing
     /// otherwise.
     /// </param>
     /// <param name="start">
-    /// The <c>start</c> argument.
+    /// the start of the range (a GST_TYPE_FRACTION GValue)
     /// The callee copies what it keeps, so the caller keeps ownership of
     /// <paramref name="start"/> and still disposes it.
     /// </param>
     /// <param name="end">
-    /// The <c>end</c> argument.
+    /// the end of the range (a GST_TYPE_FRACTION GValue)
     /// The callee copies what it keeps, so the caller keeps ownership of
     /// <paramref name="end"/> and still disposes it.
     /// </param>
@@ -3202,15 +3249,15 @@ public static unsafe partial class Global
     /// and @numerator_end/@denominator_end.
     /// </summary>
     /// <param name="value">
-    /// The <c>value</c> argument.
+    /// a GValue initialized to GST_TYPE_FRACTION_RANGE
     /// The value has to be initialized with the type the call expects before
     /// the call; like the C API, the call raises a warning and does nothing
     /// otherwise.
     /// </param>
-    /// <param name="numeratorStart">The <c>numeratorStart</c> argument.</param>
-    /// <param name="denominatorStart">The <c>denominatorStart</c> argument.</param>
-    /// <param name="numeratorEnd">The <c>numeratorEnd</c> argument.</param>
-    /// <param name="denominatorEnd">The <c>denominatorEnd</c> argument.</param>
+    /// <param name="numeratorStart">the numerator start of the range</param>
+    /// <param name="denominatorStart">the denominator start of the range</param>
+    /// <param name="numeratorEnd">the numerator end of the range</param>
+    /// <param name="denominatorEnd">the denominator end of the range</param>
     public static void ValueSetFractionRangeFull(ref Gst.GObject.Value value, int numeratorStart, int denominatorStart, int numeratorEnd, int denominatorEnd)
     {
         fixed (Gst.GObject.GValueNative* valuePointer = &value.NativeValue)
@@ -3221,13 +3268,13 @@ public static unsafe partial class Global
 
     /// <summary>Sets @value to the range specified by @start and @end.</summary>
     /// <param name="value">
-    /// The <c>value</c> argument.
+    /// a GValue initialized to GST_TYPE_INT64_RANGE
     /// The value has to be initialized with the type the call expects before
     /// the call; like the C API, the call raises a warning and does nothing
     /// otherwise.
     /// </param>
-    /// <param name="start">The <c>start</c> argument.</param>
-    /// <param name="end">The <c>end</c> argument.</param>
+    /// <param name="start">the start of the range</param>
+    /// <param name="end">the end of the range</param>
     public static void ValueSetInt64Range(ref Gst.GObject.Value value, long start, long end)
     {
         fixed (Gst.GObject.GValueNative* valuePointer = &value.NativeValue)
@@ -3238,14 +3285,14 @@ public static unsafe partial class Global
 
     /// <summary>Sets @value to the range specified by @start, @end and @step.</summary>
     /// <param name="value">
-    /// The <c>value</c> argument.
+    /// a GValue initialized to GST_TYPE_INT64_RANGE
     /// The value has to be initialized with the type the call expects before
     /// the call; like the C API, the call raises a warning and does nothing
     /// otherwise.
     /// </param>
-    /// <param name="start">The <c>start</c> argument.</param>
-    /// <param name="end">The <c>end</c> argument.</param>
-    /// <param name="step">The <c>step</c> argument.</param>
+    /// <param name="start">the start of the range</param>
+    /// <param name="end">the end of the range</param>
+    /// <param name="step">the step of the range</param>
     public static void ValueSetInt64RangeStep(ref Gst.GObject.Value value, long start, long end, long step)
     {
         fixed (Gst.GObject.GValueNative* valuePointer = &value.NativeValue)
@@ -3256,13 +3303,13 @@ public static unsafe partial class Global
 
     /// <summary>Sets @value to the range specified by @start and @end.</summary>
     /// <param name="value">
-    /// The <c>value</c> argument.
+    /// a GValue initialized to GST_TYPE_INT_RANGE
     /// The value has to be initialized with the type the call expects before
     /// the call; like the C API, the call raises a warning and does nothing
     /// otherwise.
     /// </param>
-    /// <param name="start">The <c>start</c> argument.</param>
-    /// <param name="end">The <c>end</c> argument.</param>
+    /// <param name="start">the start of the range</param>
+    /// <param name="end">the end of the range</param>
     public static void ValueSetIntRange(ref Gst.GObject.Value value, int start, int end)
     {
         fixed (Gst.GObject.GValueNative* valuePointer = &value.NativeValue)
@@ -3273,14 +3320,14 @@ public static unsafe partial class Global
 
     /// <summary>Sets @value to the range specified by @start, @end and @step.</summary>
     /// <param name="value">
-    /// The <c>value</c> argument.
+    /// a GValue initialized to GST_TYPE_INT_RANGE
     /// The value has to be initialized with the type the call expects before
     /// the call; like the C API, the call raises a warning and does nothing
     /// otherwise.
     /// </param>
-    /// <param name="start">The <c>start</c> argument.</param>
-    /// <param name="end">The <c>end</c> argument.</param>
-    /// <param name="step">The <c>step</c> argument.</param>
+    /// <param name="start">the start of the range</param>
+    /// <param name="end">the end of the range</param>
+    /// <param name="step">the step of the range</param>
     public static void ValueSetIntRangeStep(ref Gst.GObject.Value value, int start, int end, int step)
     {
         fixed (Gst.GObject.GValueNative* valuePointer = &value.NativeValue)
@@ -3291,12 +3338,12 @@ public static unsafe partial class Global
 
     /// <summary>Sets the contents of @value to @structure.</summary>
     /// <param name="value">
-    /// The <c>value</c> argument.
+    /// a GValue initialized to GST_TYPE_STRUCTURE
     /// The value has to be initialized with the type the call expects before
     /// the call; like the C API, the call raises a warning and does nothing
     /// otherwise.
     /// </param>
-    /// <param name="structure">The <c>structure</c> argument.</param>
+    /// <param name="structure">the structure to set the value to</param>
     public static void ValueSetStructure(ref Gst.GObject.Value value, Gst.Structure structure)
     {
         ArgumentNullException.ThrowIfNull(structure);
@@ -3312,17 +3359,20 @@ public static unsafe partial class Global
     /// Note that this means subtraction as in sets, not as in mathematics.
     /// </summary>
     /// <param name="dest">
-    /// The <c>dest</c> argument.
+    /// the destination value
+    ///     for the result if the subtraction is not empty. May be %NULL,
+    ///     in which case the resulting set will not be computed, which can
+    ///     give a fair speedup.
     /// On success the caller owns the contents and disposes the value; on
     /// failure it is left empty, and disposing an empty value does nothing.
     /// </param>
     /// <param name="minuend">
-    /// The <c>minuend</c> argument.
+    /// the value to subtract from
     /// The callee copies what it keeps, so the caller keeps ownership of
     /// <paramref name="minuend"/> and still disposes it.
     /// </param>
     /// <param name="subtrahend">
-    /// The <c>subtrahend</c> argument.
+    /// the value to subtract
     /// The callee copies what it keeps, so the caller keeps ownership of
     /// <paramref name="subtrahend"/> and still disposes it.
     /// </param>
@@ -3363,17 +3413,17 @@ public static unsafe partial class Global
 
     /// <summary>Creates a GValue corresponding to the union of @value1 and @value2.</summary>
     /// <param name="dest">
-    /// The <c>dest</c> argument.
+    /// the destination value
     /// On success the caller owns the contents and disposes the value; on
     /// failure it is left empty, and disposing an empty value does nothing.
     /// </param>
     /// <param name="value1">
-    /// The <c>value1</c> argument.
+    /// a value to union
     /// The callee copies what it keeps, so the caller keeps ownership of
     /// <paramref name="value1"/> and still disposes it.
     /// </param>
     /// <param name="value2">
-    /// The <c>value2</c> argument.
+    /// another value to union
     /// The callee copies what it keeps, so the caller keeps ownership of
     /// <paramref name="value2"/> and still disposes it.
     /// </param>
@@ -3413,10 +3463,10 @@ public static unsafe partial class Global
     }
 
     /// <summary>Gets the version number of the GStreamer library.</summary>
-    /// <param name="major">The <c>major</c> argument.</param>
-    /// <param name="minor">The <c>minor</c> argument.</param>
-    /// <param name="micro">The <c>micro</c> argument.</param>
-    /// <param name="nano">The <c>nano</c> argument.</param>
+    /// <param name="major">pointer to a guint to store the major version number</param>
+    /// <param name="minor">pointer to a guint to store the minor version number</param>
+    /// <param name="micro">pointer to a guint to store the micro version number</param>
+    /// <param name="nano">pointer to a guint to store the nano version number</param>
     public static void Version(out uint major, out uint minor, out uint micro, out uint nano)
     {
         uint majorNative = default;

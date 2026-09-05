@@ -12,9 +12,9 @@ namespace Gst.Sdp;
 public static unsafe partial class SdpGlobal
 {
     /// <summary>Check if the given @addr is a multicast address.</summary>
-    /// <param name="nettype">The <c>nettype</c> argument.</param>
-    /// <param name="addrtype">The <c>addrtype</c> argument.</param>
-    /// <param name="addr">The <c>addr</c> argument.</param>
+    /// <param name="nettype">a network type</param>
+    /// <param name="addrtype">an address type</param>
+    /// <param name="addr">an address</param>
     /// <returns>TRUE when @addr is multicast.</returns>
     public static bool SdpAddressIsMulticast(string nettype, string addrtype, string addr)
     {
@@ -32,8 +32,8 @@ public static unsafe partial class SdpGlobal
     }
 
     /// <summary>Makes key management data</summary>
-    /// <param name="uri">The <c>uri</c> argument.</param>
-    /// <param name="base64">The <c>base64</c> argument.</param>
+    /// <param name="uri">a #gchar URI</param>
+    /// <param name="base64">a #gchar base64-encoded key data</param>
     /// <returns>a #gchar key-mgmt data,</returns>
     public static string SdpMakeKeymgmt(string uri, string base64)
     {

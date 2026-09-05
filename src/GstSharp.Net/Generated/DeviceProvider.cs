@@ -74,7 +74,7 @@ public abstract unsafe partial class DeviceProvider : Gst.Object
     /// will be removed (see gst_object_ref_sink()).
     /// </para>
     /// </remarks>
-    /// <param name="device">The <c>device</c> argument.</param>
+    /// <param name="device">a #GstDevice that has been added</param>
     public void DeviceAdd(Gst.Device device)
     {
         ArgumentNullException.ThrowIfNull(device);
@@ -90,8 +90,8 @@ public abstract unsafe partial class DeviceProvider : Gst.Object
     /// for MT. safety purposes so this is an "atomic" way of letting the application
     /// know when a device was modified.
     /// </summary>
-    /// <param name="device">The <c>device</c> argument.</param>
-    /// <param name="changedDevice">The <c>changedDevice</c> argument.</param>
+    /// <param name="device">the new version of @changed_device</param>
+    /// <param name="changedDevice">the old version of the device that has been updated</param>
     public void DeviceChanged(Gst.Device device, Gst.Device changedDevice)
     {
         ArgumentNullException.ThrowIfNull(device);
@@ -109,7 +109,7 @@ public abstract unsafe partial class DeviceProvider : Gst.Object
     /// <remarks>
     /// <para>This is for use by subclasses.</para>
     /// </remarks>
-    /// <param name="device">The <c>device</c> argument.</param>
+    /// <param name="device">a #GstDevice that has been removed</param>
     public void DeviceRemove(Gst.Device device)
     {
         ArgumentNullException.ThrowIfNull(device);
@@ -187,7 +187,7 @@ public abstract unsafe partial class DeviceProvider : Gst.Object
     }
 
     /// <summary>Get metadata with @key in @provider.</summary>
-    /// <param name="key">The <c>key</c> argument.</param>
+    /// <param name="key">the key to get</param>
     /// <returns>the metadata for @key.</returns>
     public string GetMetadata(string key)
     {
@@ -208,7 +208,7 @@ public abstract unsafe partial class DeviceProvider : Gst.Object
     /// device provider with @name to avoid duplicate devices.
     /// </para>
     /// </remarks>
-    /// <param name="name">The <c>name</c> argument.</param>
+    /// <param name="name">a provider factory name</param>
     public void HideProvider(string name)
     {
         ArgumentNullException.ThrowIfNull(name);
@@ -273,7 +273,7 @@ public abstract unsafe partial class DeviceProvider : Gst.Object
     /// all devices again.
     /// </para>
     /// </remarks>
-    /// <param name="name">The <c>name</c> argument.</param>
+    /// <param name="name">a provider factory name</param>
     public void UnhideProvider(string name)
     {
         ArgumentNullException.ThrowIfNull(name);
@@ -287,10 +287,13 @@ public abstract unsafe partial class DeviceProvider : Gst.Object
     /// Create a new device providerfactory capable of instantiating objects of the
     /// @type and add the factory to @plugin.
     /// </summary>
-    /// <param name="plugin">The <c>plugin</c> argument.</param>
-    /// <param name="name">The <c>name</c> argument.</param>
-    /// <param name="rank">The <c>rank</c> argument.</param>
-    /// <param name="type">The <c>type</c> argument.</param>
+    /// <param name="plugin">
+    /// #GstPlugin to register the device provider with, or %NULL for
+    ///     a static device provider.
+    /// </param>
+    /// <param name="name">name of device providers of this type</param>
+    /// <param name="rank">rank of device provider (higher rank means more importance when autoplugging)</param>
+    /// <param name="type">GType of device provider to register</param>
     /// <returns>%TRUE, if the registering succeeded, %FALSE on error</returns>
     public static bool Register(Gst.Plugin? plugin, string name, uint rank, Gst.GObject.GType type)
     {

@@ -204,7 +204,7 @@ public unsafe partial class DiscovererInfo : Gst.GObject.Object
     /// Finds the #GstDiscovererStreamInfo contained in @info that match the
     /// given @streamtype.
     /// </summary>
-    /// <param name="streamtype">The <c>streamtype</c> argument.</param>
+    /// <param name="streamtype">a #GType derived from #GstDiscovererStreamInfo</param>
     /// <returns>
     /// A #GList of
     /// matching #GstDiscovererStreamInfo. The caller should free it with

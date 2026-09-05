@@ -121,7 +121,7 @@ public unsafe partial class TitleSource : GES.VideoSource, GES.IExtractable, GES
     }
 
     /// <summary>Sets the color of the background</summary>
-    /// <param name="color">The <c>color</c> argument.</param>
+    /// <param name="color">the color @self is being set to</param>
     public void SetBackgroundColor(uint color)
     {
         GesTitleSourceSetBackgroundColor(Handle, color);
@@ -132,7 +132,7 @@ public unsafe partial class TitleSource : GES.VideoSource, GES.IExtractable, GES
     /// Set the pango font description this source will use to render
     /// the text.
     /// </summary>
-    /// <param name="fontDesc">The <c>fontDesc</c> argument.</param>
+    /// <param name="fontDesc">the pango font description</param>
     public void SetFontDesc(string? fontDesc)
     {
         System.Span<byte> fontDescBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
@@ -142,7 +142,7 @@ public unsafe partial class TitleSource : GES.VideoSource, GES.IExtractable, GES
     }
 
     /// <summary>Sets the vertical aligment of the text.</summary>
-    /// <param name="halign">The <c>halign</c> argument.</param>
+    /// <param name="halign">#GESTextHAlign</param>
     public void SetHalignment(GES.TextHAlign halign)
     {
         GesTitleSourceSetHalignment(Handle, (int)halign);
@@ -150,7 +150,10 @@ public unsafe partial class TitleSource : GES.VideoSource, GES.IExtractable, GES
     }
 
     /// <summary>Sets the text this track element will render.</summary>
-    /// <param name="text">The <c>text</c> argument.</param>
+    /// <param name="text">
+    /// the text to render. an internal copy of this text will be
+    /// made.
+    /// </param>
     [Obsolete("use ges_track_element_get/set_children_properties on the GESTrackElement instead")]
     public void SetText(string? text)
     {
@@ -161,7 +164,7 @@ public unsafe partial class TitleSource : GES.VideoSource, GES.IExtractable, GES
     }
 
     /// <summary>Sets the color of the text.</summary>
-    /// <param name="color">The <c>color</c> argument.</param>
+    /// <param name="color">the color @self is being set to</param>
     public void SetTextColor(uint color)
     {
         GesTitleSourceSetTextColor(Handle, color);
@@ -169,7 +172,7 @@ public unsafe partial class TitleSource : GES.VideoSource, GES.IExtractable, GES
     }
 
     /// <summary>Sets the vertical aligment of the text.</summary>
-    /// <param name="valign">The <c>valign</c> argument.</param>
+    /// <param name="valign">#GESTextVAlign</param>
     public void SetValignment(GES.TextVAlign valign)
     {
         GesTitleSourceSetValignment(Handle, (int)valign);
@@ -177,7 +180,7 @@ public unsafe partial class TitleSource : GES.VideoSource, GES.IExtractable, GES
     }
 
     /// <summary>Sets the horizontal position of the text.</summary>
-    /// <param name="position">The <c>position</c> argument.</param>
+    /// <param name="position">the horizontal position @self is being set to</param>
     public void SetXpos(double position)
     {
         GesTitleSourceSetXpos(Handle, position);
@@ -185,7 +188,7 @@ public unsafe partial class TitleSource : GES.VideoSource, GES.IExtractable, GES
     }
 
     /// <summary>Sets the vertical position of the text.</summary>
-    /// <param name="position">The <c>position</c> argument.</param>
+    /// <param name="position">the color @self is being set to</param>
     public void SetYpos(double position)
     {
         GesTitleSourceSetYpos(Handle, position);

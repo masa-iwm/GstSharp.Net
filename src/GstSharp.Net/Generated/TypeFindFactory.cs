@@ -94,7 +94,10 @@ public unsafe partial class TypeFindFactory : Gst.PluginFeature
     }
 
     /// <summary>Calls the #GstTypeFindFunction associated with this factory.</summary>
-    /// <param name="find">The <c>find</c> argument.</param>
+    /// <param name="find">
+    /// a properly setup #GstTypeFind entry. The get_data
+    ///     and suggest_type members must be set.
+    /// </param>
     public void CallFunction(Gst.TypeFind find)
     {
         ArgumentNullException.ThrowIfNull(find);

@@ -115,10 +115,10 @@ public unsafe partial class PadTemplate : Gst.Object
     /// Creates a new pad template with a name according to the given template
     /// and with the given arguments.
     /// </summary>
-    /// <param name="nameTemplate">The <c>nameTemplate</c> argument.</param>
-    /// <param name="direction">The <c>direction</c> argument.</param>
-    /// <param name="presence">The <c>presence</c> argument.</param>
-    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <param name="nameTemplate">the name template.</param>
+    /// <param name="direction">the #GstPadDirection of the template.</param>
+    /// <param name="presence">the #GstPadPresence of the pad.</param>
+    /// <param name="caps">a #GstCaps set for the template.</param>
     /// <returns>a new #GstPadTemplate.</returns>
     public static Gst.PadTemplate? New(string nameTemplate, Gst.PadDirection direction, Gst.PadPresence presence, Gst.Caps caps)
     {
@@ -132,8 +132,8 @@ public unsafe partial class PadTemplate : Gst.Object
     }
 
     /// <summary>Converts a #GstStaticPadTemplate into a #GstPadTemplate with a type.</summary>
-    /// <param name="padTemplate">The <c>padTemplate</c> argument.</param>
-    /// <param name="padType">The <c>padType</c> argument.</param>
+    /// <param name="padTemplate">the static pad template</param>
+    /// <param name="padType">The #GType of the pad to create</param>
     /// <returns>a new #GstPadTemplate.</returns>
     public static Gst.PadTemplate? NewFromStaticPadTemplateWithGtype(Gst.StaticPadTemplate padTemplate, Gst.GObject.GType padType)
     {
@@ -147,11 +147,11 @@ public unsafe partial class PadTemplate : Gst.Object
     /// Creates a new pad template with a name according to the given template
     /// and with the given arguments.
     /// </summary>
-    /// <param name="nameTemplate">The <c>nameTemplate</c> argument.</param>
-    /// <param name="direction">The <c>direction</c> argument.</param>
-    /// <param name="presence">The <c>presence</c> argument.</param>
-    /// <param name="caps">The <c>caps</c> argument.</param>
-    /// <param name="padType">The <c>padType</c> argument.</param>
+    /// <param name="nameTemplate">the name template.</param>
+    /// <param name="direction">the #GstPadDirection of the template.</param>
+    /// <param name="presence">the #GstPadPresence of the pad.</param>
+    /// <param name="caps">a #GstCaps set for the template.</param>
+    /// <param name="padType">The #GType of the pad to create</param>
     /// <returns>a new #GstPadTemplate.</returns>
     public static Gst.PadTemplate? NewWithGtype(string nameTemplate, Gst.PadDirection direction, Gst.PadPresence presence, Gst.Caps caps, Gst.GObject.GType padType)
     {
@@ -191,7 +191,7 @@ public unsafe partial class PadTemplate : Gst.Object
     }
 
     /// <summary>Emit the pad-created signal for this template when created by this pad.</summary>
-    /// <param name="pad">The <c>pad</c> argument.</param>
+    /// <param name="pad">the #GstPad that created it</param>
     public void PadCreated(Gst.Pad pad)
     {
         ArgumentNullException.ThrowIfNull(pad);
@@ -206,7 +206,7 @@ public unsafe partial class PadTemplate : Gst.Object
     /// into the documentation, element authors should use this method to
     /// expose "stable" caps to the reader.
     /// </summary>
-    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <param name="caps">the documented capabilities</param>
     public void SetDocumentationCaps(Gst.Caps caps)
     {
         ArgumentNullException.ThrowIfNull(caps);

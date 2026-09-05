@@ -53,9 +53,9 @@ public unsafe partial class DmaBufAllocator : Gst.Allocators.FdAllocator
     }
 
     /// <summary>Return a %GstMemory that wraps a dmabuf file descriptor.</summary>
-    /// <param name="allocator">The <c>allocator</c> argument.</param>
-    /// <param name="fd">The <c>fd</c> argument.</param>
-    /// <param name="size">The <c>size</c> argument.</param>
+    /// <param name="allocator">allocator to be used for this memory</param>
+    /// <param name="fd">dmabuf file descriptor</param>
+    /// <param name="size">memory size</param>
     /// <returns>
     /// a GstMemory based on @allocator.
     /// When the buffer will be released dmabuf allocator will close the @fd.
@@ -70,10 +70,10 @@ public unsafe partial class DmaBufAllocator : Gst.Allocators.FdAllocator
     }
 
     /// <summary>Return a %GstMemory that wraps a dmabuf file descriptor.</summary>
-    /// <param name="allocator">The <c>allocator</c> argument.</param>
-    /// <param name="fd">The <c>fd</c> argument.</param>
-    /// <param name="size">The <c>size</c> argument.</param>
-    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <param name="allocator">allocator to be used for this memory</param>
+    /// <param name="fd">dmabuf file descriptor</param>
+    /// <param name="size">memory size</param>
+    /// <param name="flags">extra #GstFdMemoryFlags</param>
     /// <returns>a GstMemory based on @allocator.</returns>
     public static Gst.Memory? AllocWithFlags(Gst.Allocator allocator, int fd, nuint size, Gst.Allocators.FdMemoryFlags flags)
     {

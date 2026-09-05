@@ -60,11 +60,18 @@ public unsafe partial class EncodingTarget : Gst.GObject.Object
     /// needed.
     /// </para>
     /// </remarks>
-    /// <param name="name">The <c>name</c> argument.</param>
-    /// <param name="category">The <c>category</c> argument.</param>
-    /// <param name="description">The <c>description</c> argument.</param>
+    /// <param name="name">The name of the target.</param>
+    /// <param name="category">
+    /// The name of the category to which this @target
+    /// belongs. For example: #GST_ENCODING_CATEGORY_DEVICE.
+    /// </param>
+    /// <param name="description">
+    /// A description of #GstEncodingTarget in the
+    /// current locale.
+    /// </param>
     /// <param name="profiles">
-    /// The <c>profiles</c> argument.
+    /// A #GList of
+    /// #GstEncodingProfile.
     /// The call reads the list while it runs and copies whatever it keeps. A
     /// temporary native list is built for the call and released when it returns,
     /// and an empty sequence is passed as the null pointer, which is how C spells
@@ -112,7 +119,7 @@ public unsafe partial class EncodingTarget : Gst.GObject.Object
     /// </para>
     /// </remarks>
     /// <param name="profile">
-    /// The <c>profile</c> argument.
+    /// the #GstEncodingProfile to add
     /// The call consumes it: <paramref name="profile"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// </param>
@@ -178,7 +185,7 @@ public unsafe partial class EncodingTarget : Gst.GObject.Object
     }
 
     /// <summary>The <c>gst_encoding_target_get_profile</c> function.</summary>
-    /// <param name="name">The <c>name</c> argument.</param>
+    /// <param name="name">the name of the profile to retrieve</param>
     /// <returns>The matching #GstEncodingProfile, or %NULL.</returns>
     public Gst.Pbutils.EncodingProfile? GetProfile(string name)
     {
@@ -225,7 +232,7 @@ public unsafe partial class EncodingTarget : Gst.GObject.Object
     }
 
     /// <summary>Saves the @target to the provided file location.</summary>
-    /// <param name="filepath">The <c>filepath</c> argument.</param>
+    /// <param name="filepath">the location to store the @target at.</param>
     /// <returns>%TRUE if the target was correctly saved, else %FALSE.</returns>
     /// <exception cref="Gst.GLib.GException">The native call failed.</exception>
     public bool SaveToFile(string filepath)
@@ -250,8 +257,15 @@ public unsafe partial class EncodingTarget : Gst.GObject.Object
     /// searched for.
     /// </para>
     /// </remarks>
-    /// <param name="name">The <c>name</c> argument.</param>
-    /// <param name="category">The <c>category</c> argument.</param>
+    /// <param name="name">
+    /// the name of the #GstEncodingTarget to load (automatically
+    /// converted to lower case internally as capital letters are not
+    /// valid for target names).
+    /// </param>
+    /// <param name="category">
+    /// the name of the target category, like
+    /// #GST_ENCODING_CATEGORY_DEVICE. Can be %NULL
+    /// </param>
     /// <returns>The #GstEncodingTarget if available, else %NULL.</returns>
     /// <exception cref="Gst.GLib.GException">The native call failed.</exception>
     public static Gst.Pbutils.EncodingTarget Load(string name, string? category)
@@ -275,7 +289,7 @@ public unsafe partial class EncodingTarget : Gst.GObject.Object
     }
 
     /// <summary>Opens the provided file and returns the contained #GstEncodingTarget.</summary>
-    /// <param name="filepath">The <c>filepath</c> argument.</param>
+    /// <param name="filepath">The file location to load the #GstEncodingTarget from</param>
     /// <returns>
     /// The #GstEncodingTarget contained in the file, else
     /// %NULL

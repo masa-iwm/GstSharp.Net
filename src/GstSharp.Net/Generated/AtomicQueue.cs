@@ -52,7 +52,7 @@ public sealed unsafe partial class AtomicQueue : Gst.GObject.Boxed
     /// Create a new atomic queue instance. @initial_size will be rounded up to the
     /// nearest power of 2 and used as the initial size of the queue.
     /// </summary>
-    /// <param name="initialSize">The <c>initialSize</c> argument.</param>
+    /// <param name="initialSize">initial queue size</param>
     /// <returns>a new #GstAtomicQueue</returns>
     public static Gst.AtomicQueue New(uint initialSize)
     {
@@ -95,7 +95,7 @@ public sealed unsafe partial class AtomicQueue : Gst.GObject.Boxed
     }
 
     /// <summary>Append @data to the tail of the queue.</summary>
-    /// <param name="data">The <c>data</c> argument.</param>
+    /// <param name="data">the data</param>
     public void Push(nint data)
     {
         GstAtomicQueuePush(Handle, data);

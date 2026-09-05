@@ -15,7 +15,7 @@ public static unsafe partial class VideoCaptionTypeExtensions
     /// Parses fixed Closed Caption #GstCaps and returns the corresponding caption
     /// type, or %GST_VIDEO_CAPTION_TYPE_UNKNOWN.
     /// </summary>
-    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <param name="caps">Fixed #GstCaps to parse</param>
     /// <returns>#GstVideoCaptionType.</returns>
     public static Gst.Video.VideoCaptionType FromCaps(Gst.Caps caps)
     {
@@ -26,7 +26,7 @@ public static unsafe partial class VideoCaptionTypeExtensions
     }
 
     /// <summary>Creates new caps corresponding to @type.</summary>
-    /// <param name="type">The <c>type</c> argument.</param>
+    /// <param name="type">#GstVideoCaptionType</param>
     /// <returns>new #GstCaps</returns>
     public static Gst.Caps ToCaps(Gst.Video.VideoCaptionType type)
     {

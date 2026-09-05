@@ -42,7 +42,7 @@ public static unsafe partial class TagXmpWriterExtensions
 
     /// <summary>Adds @schema to the list schemas</summary>
     /// <param name="config">a #GstTagXmpWriter</param>
-    /// <param name="schema">The <c>schema</c> argument.</param>
+    /// <param name="schema">the schema to be added</param>
     public static void AddSchema(this Gst.Tag.ITagXmpWriter config, string schema)
     {
         ArgumentNullException.ThrowIfNull(config);
@@ -55,7 +55,7 @@ public static unsafe partial class TagXmpWriterExtensions
 
     /// <summary>Checks if @schema is going to be used</summary>
     /// <param name="config">a #GstTagXmpWriter</param>
-    /// <param name="schema">The <c>schema</c> argument.</param>
+    /// <param name="schema">the schema to test</param>
     /// <returns>%TRUE if it is going to be used</returns>
     public static bool HasSchema(this Gst.Tag.ITagXmpWriter config, string schema)
     {
@@ -85,7 +85,7 @@ public static unsafe partial class TagXmpWriterExtensions
     /// the schema wasn't in the list
     /// </summary>
     /// <param name="config">a #GstTagXmpWriter</param>
-    /// <param name="schema">The <c>schema</c> argument.</param>
+    /// <param name="schema">the schema to remove</param>
     public static void RemoveSchema(this Gst.Tag.ITagXmpWriter config, string schema)
     {
         ArgumentNullException.ThrowIfNull(config);

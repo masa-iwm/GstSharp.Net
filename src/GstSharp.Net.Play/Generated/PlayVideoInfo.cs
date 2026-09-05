@@ -50,8 +50,8 @@ public unsafe partial class PlayVideoInfo : Gst.Play.PlayStreamInfo
     }
 
     /// <summary>The <c>gst_play_video_info_get_framerate</c> function.</summary>
-    /// <param name="fpsN">The <c>fpsN</c> argument.</param>
-    /// <param name="fpsD">The <c>fpsD</c> argument.</param>
+    /// <param name="fpsN">Numerator of frame rate</param>
+    /// <param name="fpsD">Denominator of frame rate</param>
     public void GetFramerate(out int fpsN, out int fpsD)
     {
         int fpsNNative = default;
@@ -81,8 +81,8 @@ public unsafe partial class PlayVideoInfo : Gst.Play.PlayStreamInfo
     }
 
     /// <summary>Returns the pixel aspect ratio in @par_n and @par_d</summary>
-    /// <param name="parN">The <c>parN</c> argument.</param>
-    /// <param name="parD">The <c>parD</c> argument.</param>
+    /// <param name="parN">numerator</param>
+    /// <param name="parD">denominator</param>
     public void GetPixelAspectRatio(out uint parN, out uint parD)
     {
         uint parNNative = default;

@@ -120,8 +120,8 @@ public sealed unsafe partial class NetTimePacket : Gst.GObject.Boxed
     /// <remarks>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="socket">The <c>socket</c> argument.</param>
-    /// <param name="destAddress">The <c>destAddress</c> argument.</param>
+    /// <param name="socket">socket to send the time packet on</param>
+    /// <param name="destAddress">address to send the time packet to</param>
     /// <returns>TRUE if successful, FALSE in case an error occurred.</returns>
     /// <exception cref="Gst.GLib.GException">The native call failed.</exception>
     public bool Send(Gst.Gio.Socket socket, Gst.Gio.SocketAddress destAddress)
@@ -165,8 +165,8 @@ public sealed unsafe partial class NetTimePacket : Gst.GObject.Boxed
     /// Receives a #GstNetTimePacket over a socket. Handles interrupted system
     /// calls, but otherwise returns NULL on error.
     /// </summary>
-    /// <param name="socket">The <c>socket</c> argument.</param>
-    /// <param name="srcAddress">The <c>srcAddress</c> argument.</param>
+    /// <param name="socket">socket to receive the time packet on</param>
+    /// <param name="srcAddress">address of variable to return sender address</param>
     /// <returns>
     /// a new #GstNetTimePacket, or NULL on error. Free
     ///    with gst_net_time_packet_free() when done.

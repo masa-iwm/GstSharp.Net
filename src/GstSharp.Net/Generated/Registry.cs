@@ -114,7 +114,7 @@ public unsafe partial class Registry : Gst.Object
     /// reference will be removed (see gst_object_ref_sink())
     /// </para>
     /// </remarks>
-    /// <param name="feature">The <c>feature</c> argument.</param>
+    /// <param name="feature">the feature to add</param>
     /// <returns>%TRUE on success.</returns>
     public bool AddFeature(Gst.PluginFeature feature)
     {
@@ -132,7 +132,7 @@ public unsafe partial class Registry : Gst.Object
     /// reference will be removed (see gst_object_ref_sink())
     /// </para>
     /// </remarks>
-    /// <param name="plugin">The <c>plugin</c> argument.</param>
+    /// <param name="plugin">the plugin to add</param>
     /// <returns>%TRUE on success.</returns>
     public bool AddPlugin(Gst.Plugin plugin)
     {
@@ -148,10 +148,10 @@ public unsafe partial class Registry : Gst.Object
     /// @registry and whether its version is at least the
     /// version required.
     /// </summary>
-    /// <param name="featureName">The <c>featureName</c> argument.</param>
-    /// <param name="minMajor">The <c>minMajor</c> argument.</param>
-    /// <param name="minMinor">The <c>minMinor</c> argument.</param>
-    /// <param name="minMicro">The <c>minMicro</c> argument.</param>
+    /// <param name="featureName">the name of the feature (e.g. "oggdemux")</param>
+    /// <param name="minMajor">the minimum major version number</param>
+    /// <param name="minMinor">the minimum minor version number</param>
+    /// <param name="minMicro">the minimum micro version number</param>
     /// <returns>
     /// %TRUE if the feature could be found and the version is
     /// the same as the required version or newer, and %FALSE otherwise.
@@ -173,7 +173,7 @@ public unsafe partial class Registry : Gst.Object
     /// returned (as a list with a single object).
     /// </summary>
     /// <param name="filter">the filter to use</param>
-    /// <param name="first">The <c>first</c> argument.</param>
+    /// <param name="first">only return first match</param>
     /// <returns>
     /// a #GList of
     ///     #GstPluginFeature. Use gst_plugin_feature_list_free() after usage.
@@ -206,8 +206,8 @@ public unsafe partial class Registry : Gst.Object
     }
 
     /// <summary>Find the pluginfeature with the given name and type in the registry.</summary>
-    /// <param name="name">The <c>name</c> argument.</param>
-    /// <param name="type">The <c>type</c> argument.</param>
+    /// <param name="name">the pluginfeature name to find</param>
+    /// <param name="type">the pluginfeature type to find</param>
     /// <returns>
     /// the pluginfeature with the
     ///     given name and type or %NULL if the plugin was not
@@ -227,7 +227,7 @@ public unsafe partial class Registry : Gst.Object
     /// Find the plugin with the given name in the registry.
     /// The plugin will be reffed; caller is responsible for unreffing.
     /// </summary>
-    /// <param name="name">The <c>name</c> argument.</param>
+    /// <param name="name">the plugin name to find</param>
     /// <returns>
     /// the plugin with the given name
     ///     or %NULL if the plugin was not found. gst_object_unref() after
@@ -244,7 +244,7 @@ public unsafe partial class Registry : Gst.Object
     }
 
     /// <summary>Retrieves a #GList of #GstPluginFeature of @type.</summary>
-    /// <param name="type">The <c>type</c> argument.</param>
+    /// <param name="type">a #GType.</param>
     /// <returns>
     /// a #GList of
     ///     #GstPluginFeature of @type. Use gst_plugin_feature_list_free() after use
@@ -267,7 +267,7 @@ public unsafe partial class Registry : Gst.Object
     }
 
     /// <summary>Retrieves a #GList of features of the plugin with name @name.</summary>
-    /// <param name="name">The <c>name</c> argument.</param>
+    /// <param name="name">a plugin name.</param>
     /// <returns>
     /// a #GList of
     ///     #GstPluginFeature. Use gst_plugin_feature_list_free() after usage.
@@ -333,7 +333,7 @@ public unsafe partial class Registry : Gst.Object
     /// Look up a plugin in the given registry with the given filename.
     /// If found, plugin is reffed.
     /// </summary>
-    /// <param name="filename">The <c>filename</c> argument.</param>
+    /// <param name="filename">the name of the file to look up</param>
     /// <returns>
     /// the #GstPlugin if found, or
     ///     %NULL if not.  gst_object_unref() after usage.
@@ -349,7 +349,7 @@ public unsafe partial class Registry : Gst.Object
     }
 
     /// <summary>Find a #GstPluginFeature with @name in @registry.</summary>
-    /// <param name="name">The <c>name</c> argument.</param>
+    /// <param name="name">a #GstPluginFeature name</param>
     /// <returns>
     /// a #GstPluginFeature with its refcount incremented,
     ///     use gst_object_unref() after usage.
@@ -372,7 +372,7 @@ public unsafe partial class Registry : Gst.Object
     /// will unref again.
     /// </summary>
     /// <param name="filter">the filter to use</param>
-    /// <param name="first">The <c>first</c> argument.</param>
+    /// <param name="first">only return first match</param>
     /// <returns>
     /// a #GList of #GstPlugin.
     ///     Use gst_plugin_list_free() after usage.
@@ -408,7 +408,7 @@ public unsafe partial class Registry : Gst.Object
     /// <remarks>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="feature">The <c>feature</c> argument.</param>
+    /// <param name="feature">the feature to remove</param>
     public void RemoveFeature(Gst.PluginFeature feature)
     {
         ArgumentNullException.ThrowIfNull(feature);
@@ -421,7 +421,7 @@ public unsafe partial class Registry : Gst.Object
     /// <remarks>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="plugin">The <c>plugin</c> argument.</param>
+    /// <param name="plugin">the plugin to remove</param>
     public void RemovePlugin(Gst.Plugin plugin)
     {
         ArgumentNullException.ThrowIfNull(plugin);
@@ -434,7 +434,7 @@ public unsafe partial class Registry : Gst.Object
     /// Scan the given path for plugins to add to the registry. The syntax of the
     /// path is specific to the registry.
     /// </summary>
-    /// <param name="path">The <c>path</c> argument.</param>
+    /// <param name="path">the path to scan</param>
     /// <returns>%TRUE if registry changed</returns>
     public bool ScanPath(string path)
     {
@@ -472,7 +472,7 @@ public unsafe partial class Registry : Gst.Object
     /// when rebuilding the registry. See gst_registry_fork_is_enabled() for more
     /// information.
     /// </summary>
-    /// <param name="enabled">The <c>enabled</c> argument.</param>
+    /// <param name="enabled">whether rebuilding the registry can use a temporary child helper process.</param>
     public static void ForkSetEnabled(bool enabled)
     {
         GstRegistryForkSetEnabled(enabled ? 1 : 0);

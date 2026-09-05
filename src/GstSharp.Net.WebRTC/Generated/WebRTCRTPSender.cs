@@ -48,7 +48,7 @@ public unsafe partial class WebRTCRTPSender : Gst.Object
     /// (Differentiated Services Code Point).
     /// This also sets the Traffic Class field of IPv6.
     /// </summary>
-    /// <param name="priority">The <c>priority</c> argument.</param>
+    /// <param name="priority">The priority of this sender</param>
     public void SetPriority(Gst.WebRTC.WebRTCPriorityType priority)
     {
         GstWebrtcRtpSenderSetPriority(Handle, (int)priority);

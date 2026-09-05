@@ -12,7 +12,7 @@ namespace Gst.Transcoder;
 public static unsafe partial class TranscoderStateExtensions
 {
     /// <summary>Gets a string representing the given state.</summary>
-    /// <param name="state">The <c>state</c> argument.</param>
+    /// <param name="state">a #GstTranscoderState</param>
     /// <returns>a string with the name of the state.</returns>
     public static string GetName(Gst.Transcoder.TranscoderState state)
     {

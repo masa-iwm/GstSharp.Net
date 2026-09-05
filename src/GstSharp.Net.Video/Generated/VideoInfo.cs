@@ -275,7 +275,7 @@ public sealed unsafe partial class VideoInfo : Gst.GObject.Boxed
     }
 
     /// <summary>Parse @caps to generate a #GstVideoInfo.</summary>
-    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <param name="caps">a #GstCaps</param>
     /// <returns>A #GstVideoInfo, or %NULL if @caps couldn't be parsed</returns>
     public static Gst.Video.VideoInfo? NewFromCaps(Gst.Caps caps)
     {
@@ -295,7 +295,7 @@ public sealed unsafe partial class VideoInfo : Gst.GObject.Boxed
     /// is required and @align will be updated with the new padding values.
     /// </para>
     /// </remarks>
-    /// <param name="align">The <c>align</c> argument.</param>
+    /// <param name="align">alignment parameters</param>
     /// <returns>
     /// %FALSE if alignment could not be applied, e.g. because the
     ///   size of a frame can't be represented as a 32 bit integer (Since: 1.12)
@@ -324,7 +324,7 @@ public sealed unsafe partial class VideoInfo : Gst.GObject.Boxed
     /// ones used to hold a single field, not the full frame.
     /// </para>
     /// </remarks>
-    /// <param name="align">The <c>align</c> argument.</param>
+    /// <param name="align">alignment parameters</param>
     /// <param name="planeSize">array used to store the plane sizes</param>
     /// <returns>
     /// %FALSE if alignment could not be applied, e.g. because the
@@ -347,10 +347,10 @@ public sealed unsafe partial class VideoInfo : Gst.GObject.Boxed
     /// raw video, GST_FORMAT_DEFAULT corresponds to video frames.  This
     /// function can be used to handle pad queries of the type GST_QUERY_CONVERT.
     /// </summary>
-    /// <param name="srcFormat">The <c>srcFormat</c> argument.</param>
-    /// <param name="srcValue">The <c>srcValue</c> argument.</param>
-    /// <param name="destFormat">The <c>destFormat</c> argument.</param>
-    /// <param name="destValue">The <c>destValue</c> argument.</param>
+    /// <param name="srcFormat">#GstFormat of the @src_value</param>
+    /// <param name="srcValue">value to convert</param>
+    /// <param name="destFormat">#GstFormat of the @dest_value</param>
+    /// <param name="destValue">pointer to destination value</param>
     /// <returns>TRUE if the conversion was successful.</returns>
     public bool Convert(Gst.Format srcFormat, long srcValue, Gst.Format destFormat, out long destValue)
     {
@@ -372,7 +372,7 @@ public sealed unsafe partial class VideoInfo : Gst.GObject.Boxed
     }
 
     /// <summary>Compares two #GstVideoInfo and returns whether they are equal or not</summary>
-    /// <param name="other">The <c>other</c> argument.</param>
+    /// <param name="other">a #GstVideoInfo</param>
     /// <returns>%TRUE if @info and @other are equal, else %FALSE.</returns>
     public bool IsEqual(Gst.Video.VideoInfo other)
     {
@@ -391,9 +391,9 @@ public sealed unsafe partial class VideoInfo : Gst.GObject.Boxed
     /// subsampled formats.
     /// </para>
     /// </remarks>
-    /// <param name="format">The <c>format</c> argument.</param>
-    /// <param name="width">The <c>width</c> argument.</param>
-    /// <param name="height">The <c>height</c> argument.</param>
+    /// <param name="format">the format</param>
+    /// <param name="width">a width</param>
+    /// <param name="height">a height</param>
     /// <returns>
     /// %FALSE if the returned video info is invalid, e.g. because the
     ///   size of a frame can't be represented as a 32 bit integer (Since: 1.12)
@@ -409,10 +409,10 @@ public sealed unsafe partial class VideoInfo : Gst.GObject.Boxed
     /// Same as #gst_video_info_set_format but also allowing to set the interlaced
     /// mode.
     /// </summary>
-    /// <param name="format">The <c>format</c> argument.</param>
-    /// <param name="mode">The <c>mode</c> argument.</param>
-    /// <param name="width">The <c>width</c> argument.</param>
-    /// <param name="height">The <c>height</c> argument.</param>
+    /// <param name="format">the format</param>
+    /// <param name="mode">a #GstVideoInterlaceMode</param>
+    /// <param name="width">a width</param>
+    /// <param name="height">a height</param>
     /// <returns>
     /// %FALSE if the returned video info is invalid, e.g. because the
     ///   size of a frame can't be represented as a 32 bit integer.

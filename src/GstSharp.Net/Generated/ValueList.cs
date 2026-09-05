@@ -23,13 +23,13 @@ public static unsafe partial class ValueList
 {
     /// <summary>Appends @append_value to the GstValueList in @value.</summary>
     /// <param name="value">
-    /// The <c>value</c> argument.
+    /// a #GValue of type #GST_TYPE_LIST
     /// The value has to be initialized with the type the call expects before
     /// the call; like the C API, the call raises a warning and does nothing
     /// otherwise.
     /// </param>
     /// <param name="appendValue">
-    /// The <c>appendValue</c> argument.
+    /// the value to append
     /// The callee copies what it keeps, so the caller keeps ownership of
     /// <paramref name="appendValue"/> and still disposes it.
     /// </param>
@@ -59,17 +59,17 @@ public static unsafe partial class ValueList
     /// @dest will be initialized to the type #GST_TYPE_LIST.
     /// </summary>
     /// <param name="dest">
-    /// The <c>dest</c> argument.
+    /// an uninitialized #GValue to take the result
     /// On success the caller owns the contents and disposes the value; on
     /// failure it is left empty, and disposing an empty value does nothing.
     /// </param>
     /// <param name="value1">
-    /// The <c>value1</c> argument.
+    /// a #GValue
     /// The callee copies what it keeps, so the caller keeps ownership of
     /// <paramref name="value1"/> and still disposes it.
     /// </param>
     /// <param name="value2">
-    /// The <c>value2</c> argument.
+    /// a #GValue
     /// The callee copies what it keeps, so the caller keeps ownership of
     /// <paramref name="value2"/> and still disposes it.
     /// </param>
@@ -108,7 +108,7 @@ public static unsafe partial class ValueList
 
     /// <summary>Gets the number of values contained in @value.</summary>
     /// <param name="value">
-    /// The <c>value</c> argument.
+    /// a #GValue of type #GST_TYPE_LIST
     /// The callee copies what it keeps, so the caller keeps ownership of
     /// <paramref name="value"/> and still disposes it.
     /// </param>
@@ -142,11 +142,11 @@ public static unsafe partial class ValueList
     /// </para>
     /// </remarks>
     /// <param name="value">
-    /// The <c>value</c> argument.
+    /// a #GValue of type #GST_TYPE_LIST
     /// The callee copies what it keeps, so the caller keeps ownership of
     /// <paramref name="value"/> and still disposes it.
     /// </param>
-    /// <param name="index">The <c>index</c> argument.</param>
+    /// <param name="index">index of value to get from the list</param>
     /// <returns>
     /// the value at the given index
     /// The value is a copy the caller owns: dispose it. It is empty when the
@@ -172,12 +172,12 @@ public static unsafe partial class ValueList
 
     /// <summary>Initializes and pre-allocates a #GValue of type #GST_TYPE_LIST.</summary>
     /// <param name="value">
-    /// The <c>value</c> argument.
+    /// A zero-filled (uninitialized) #GValue structure
     /// The value has to be empty, that is of type zero: the call initializes
     /// it. Like the C API, the call raises a critical on a value that already
     /// holds a type and leaves it untouched.
     /// </param>
-    /// <param name="prealloc">The <c>prealloc</c> argument.</param>
+    /// <param name="prealloc">The number of entries to pre-allocate in the list</param>
     public static void Init(ref Gst.GObject.Value value, uint prealloc)
     {
         fixed (Gst.GObject.GValueNative* valuePointer = &value.NativeValue)
@@ -203,17 +203,17 @@ public static unsafe partial class ValueList
     /// </para>
     /// </remarks>
     /// <param name="dest">
-    /// The <c>dest</c> argument.
+    /// an uninitialized #GValue to take the result
     /// On success the caller owns the contents and disposes the value; on
     /// failure it is left empty, and disposing an empty value does nothing.
     /// </param>
     /// <param name="value1">
-    /// The <c>value1</c> argument.
+    /// a #GValue
     /// The callee copies what it keeps, so the caller keeps ownership of
     /// <paramref name="value1"/> and still disposes it.
     /// </param>
     /// <param name="value2">
-    /// The <c>value2</c> argument.
+    /// a #GValue
     /// The callee copies what it keeps, so the caller keeps ownership of
     /// <paramref name="value2"/> and still disposes it.
     /// </param>
@@ -252,13 +252,13 @@ public static unsafe partial class ValueList
 
     /// <summary>Prepends @prepend_value to the GstValueList in @value.</summary>
     /// <param name="value">
-    /// The <c>value</c> argument.
+    /// a #GValue of type #GST_TYPE_LIST
     /// The value has to be initialized with the type the call expects before
     /// the call; like the C API, the call raises a warning and does nothing
     /// otherwise.
     /// </param>
     /// <param name="prependValue">
-    /// The <c>prependValue</c> argument.
+    /// the value to prepend
     /// The callee copies what it keeps, so the caller keeps ownership of
     /// <paramref name="prependValue"/> and still disposes it.
     /// </param>

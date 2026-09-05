@@ -80,7 +80,7 @@ public sealed unsafe partial class VideoFrame
     /// smaller than @src dimensions.
     /// </para>
     /// </remarks>
-    /// <param name="src">The <c>src</c> argument.</param>
+    /// <param name="src">a #GstVideoFrame</param>
     /// <returns>TRUE if the contents could be copied.</returns>
     public bool Copy(Gst.Video.VideoFrame src)
     {
@@ -98,8 +98,8 @@ public sealed unsafe partial class VideoFrame
     /// smaller than @src dimensions.
     /// </para>
     /// </remarks>
-    /// <param name="src">The <c>src</c> argument.</param>
-    /// <param name="plane">The <c>plane</c> argument.</param>
+    /// <param name="src">a #GstVideoFrame</param>
+    /// <param name="plane">a plane</param>
     /// <returns>TRUE if the contents could be copied.</returns>
     public bool CopyPlane(Gst.Video.VideoFrame src, uint plane)
     {

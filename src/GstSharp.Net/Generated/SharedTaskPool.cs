@@ -76,7 +76,7 @@ public unsafe partial class SharedTaskPool : Gst.TaskPool
     /// <remarks>
     /// <para>Setting @max_threads to 0 effectively freezes the pool.</para>
     /// </remarks>
-    /// <param name="maxThreads">The <c>maxThreads</c> argument.</param>
+    /// <param name="maxThreads">Maximum number of threads to spawn.</param>
     public void SetMaxThreads(uint maxThreads)
     {
         GstSharedTaskPoolSetMaxThreads(Handle, maxThreads);

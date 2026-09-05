@@ -272,7 +272,7 @@ public sealed class ClassEmitterTests
                 /// and writes nothing otherwise.
                 /// </para>
                 /// </remarks>
-                /// <param name="field">The <c>field</c> argument.</param>
+                /// <param name="field">name of the field to set</param>
             """,
             Source("Caps.cs"),
             StringComparison.Ordinal);
@@ -345,7 +345,7 @@ public sealed class ClassEmitterTests
         Assert.Contains(
             """
                 /// <param name="caps2">
-                /// The <c>caps2</c> argument.
+                /// the #GstCaps to append
                 /// The call consumes it: <paramref name="caps2"/> is disposed when this
                 /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
                 /// </param>

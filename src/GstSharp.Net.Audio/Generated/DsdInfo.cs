@@ -203,7 +203,7 @@ public sealed unsafe partial class DsdInfo : Gst.GObject.Boxed
     }
 
     /// <summary>Parse @caps to generate a #GstDsdInfo.</summary>
-    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <param name="caps">a #GstCaps</param>
     /// <returns>A #GstDsdInfo, or %NULL if @caps couldn't be parsed</returns>
     public static Gst.Audio.DsdInfo NewFromCaps(Gst.Caps caps)
     {
@@ -225,7 +225,7 @@ public sealed unsafe partial class DsdInfo : Gst.GObject.Boxed
     }
 
     /// <summary>Compares two #GstDsdInfo and returns whether they are equal or not</summary>
-    /// <param name="other">The <c>other</c> argument.</param>
+    /// <param name="other">a #GstDsdInfo</param>
     /// <returns>%TRUE if @info and @other are equal, else %FALSE.</returns>
     public bool IsEqual(Gst.Audio.DsdInfo other)
     {
@@ -240,9 +240,9 @@ public sealed unsafe partial class DsdInfo : Gst.GObject.Boxed
     /// <remarks>
     /// <para>Note: This initializes @info first, no values are preserved.</para>
     /// </remarks>
-    /// <param name="format">The <c>format</c> argument.</param>
-    /// <param name="rate">The <c>rate</c> argument.</param>
-    /// <param name="channels">The <c>channels</c> argument.</param>
+    /// <param name="format">the format</param>
+    /// <param name="rate">the DSD rate</param>
+    /// <param name="channels">the number of channels</param>
     /// <param name="positions">
     /// the channel positions
     /// The C declaration sizes this buffer at 64 elements; pass exactly 64, or an empty span for <c>NULL</c>.

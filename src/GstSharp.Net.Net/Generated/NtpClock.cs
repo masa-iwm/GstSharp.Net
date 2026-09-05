@@ -44,10 +44,10 @@ public unsafe partial class NtpClock : Gst.Net.NetClientClock
     /// Create a new #GstNtpClock that will report the time provided by
     /// the NTPv4 server on @remote_address and @remote_port.
     /// </summary>
-    /// <param name="name">The <c>name</c> argument.</param>
-    /// <param name="remoteAddress">The <c>remoteAddress</c> argument.</param>
-    /// <param name="remotePort">The <c>remotePort</c> argument.</param>
-    /// <param name="baseTime">The <c>baseTime</c> argument.</param>
+    /// <param name="name">a name for the clock</param>
+    /// <param name="remoteAddress">the address or hostname of the remote clock provider</param>
+    /// <param name="remotePort">the port of the remote clock provider</param>
+    /// <param name="baseTime">initial time of the clock</param>
     /// <returns>
     /// a new #GstClock that receives a time from the remote
     /// clock.

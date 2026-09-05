@@ -48,7 +48,7 @@ public static unsafe partial class PresetExtensions
 {
     /// <summary>Delete the given preset.</summary>
     /// <param name="preset">a #GObject that implements #GstPreset</param>
-    /// <param name="name">The <c>name</c> argument.</param>
+    /// <param name="name">preset name to remove</param>
     /// <returns>%TRUE for success, %FALSE if e.g. there is no preset with that @name</returns>
     public static bool DeletePreset(this Gst.IPreset preset, string name)
     {
@@ -66,9 +66,9 @@ public static unsafe partial class PresetExtensions
     /// something like e.g. "comment". Returned values need to be released when done.
     /// </summary>
     /// <param name="preset">a #GObject that implements #GstPreset</param>
-    /// <param name="name">The <c>name</c> argument.</param>
-    /// <param name="tag">The <c>tag</c> argument.</param>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="name">preset name</param>
+    /// <param name="tag">meta data item name</param>
+    /// <param name="value">value</param>
     /// <returns>
     /// %TRUE for success, %FALSE if e.g. there is no preset with that @name
     /// or no value for the given @tag
@@ -127,7 +127,7 @@ public static unsafe partial class PresetExtensions
 
     /// <summary>Load the given preset.</summary>
     /// <param name="preset">a #GObject that implements #GstPreset</param>
-    /// <param name="name">The <c>name</c> argument.</param>
+    /// <param name="name">preset name to load</param>
     /// <returns>%TRUE for success, %FALSE if e.g. there is no preset with that @name</returns>
     public static bool LoadPreset(this Gst.IPreset preset, string name)
     {
@@ -145,8 +145,8 @@ public static unsafe partial class PresetExtensions
     /// overwritten.
     /// </summary>
     /// <param name="preset">a #GObject that implements #GstPreset</param>
-    /// <param name="oldName">The <c>oldName</c> argument.</param>
-    /// <param name="newName">The <c>newName</c> argument.</param>
+    /// <param name="oldName">current preset name</param>
+    /// <param name="newName">new preset name</param>
     /// <returns>%TRUE for success, %FALSE if e.g. there is no preset with @old_name</returns>
     public static bool RenamePreset(this Gst.IPreset preset, string oldName, string newName)
     {
@@ -167,7 +167,7 @@ public static unsafe partial class PresetExtensions
     /// is already a preset by this @name it will be overwritten.
     /// </summary>
     /// <param name="preset">a #GObject that implements #GstPreset</param>
-    /// <param name="name">The <c>name</c> argument.</param>
+    /// <param name="name">preset name to save</param>
     /// <returns>%TRUE for success, %FALSE</returns>
     public static bool SavePreset(this Gst.IPreset preset, string name)
     {
@@ -186,9 +186,9 @@ public static unsafe partial class PresetExtensions
     /// @value will unset an existing value.
     /// </summary>
     /// <param name="preset">a #GObject that implements #GstPreset</param>
-    /// <param name="name">The <c>name</c> argument.</param>
-    /// <param name="tag">The <c>tag</c> argument.</param>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="name">preset name</param>
+    /// <param name="tag">meta data item name</param>
+    /// <param name="value">new value</param>
     /// <returns>%TRUE for success, %FALSE if e.g. there is no preset with that @name</returns>
     public static bool SetMeta(this Gst.IPreset preset, string name, string tag, string? value)
     {
@@ -225,7 +225,7 @@ public static unsafe partial class PresetExtensions
     /// looking for presets. Any presets in the application dir will shadow the
     /// system presets.
     /// </summary>
-    /// <param name="appDir">The <c>appDir</c> argument.</param>
+    /// <param name="appDir">the application specific preset dir</param>
     /// <returns>%TRUE for success, %FALSE if the dir already has been set</returns>
     public static bool SetAppDir(string appDir)
     {

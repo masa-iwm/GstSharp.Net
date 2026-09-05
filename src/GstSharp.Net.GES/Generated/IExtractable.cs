@@ -91,7 +91,7 @@ public static unsafe partial class ExtractableExtensions
     /// </para>
     /// </remarks>
     /// <param name="self">A #GESExtractable</param>
-    /// <param name="asset">The <c>asset</c> argument.</param>
+    /// <param name="asset">The asset to set</param>
     /// <returns>%TRUE if @asset could be successfully set on @self.</returns>
     public static bool SetAsset(this GES.IExtractable self, GES.Asset asset)
     {

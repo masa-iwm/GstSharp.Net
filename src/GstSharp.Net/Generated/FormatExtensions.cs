@@ -12,7 +12,7 @@ namespace Gst;
 public static unsafe partial class FormatExtensions
 {
     /// <summary>Return the format registered with the given nick.</summary>
-    /// <param name="nick">The <c>nick</c> argument.</param>
+    /// <param name="nick">The nick of the format</param>
     /// <returns>
     /// The format with @nick or GST_FORMAT_UNDEFINED
     /// if the format was not registered.
@@ -27,7 +27,7 @@ public static unsafe partial class FormatExtensions
     }
 
     /// <summary>Get a printable name for the given format. Do not modify or free.</summary>
-    /// <param name="format">The <c>format</c> argument.</param>
+    /// <param name="format">a #GstFormat</param>
     /// <returns>
     /// a reference to the static name of the format
     /// or %NULL if the format is unknown.
@@ -54,8 +54,8 @@ public static unsafe partial class FormatExtensions
     /// Create a new GstFormat based on the nick or return an
     /// already registered format with that nick.
     /// </summary>
-    /// <param name="nick">The <c>nick</c> argument.</param>
-    /// <param name="description">The <c>description</c> argument.</param>
+    /// <param name="nick">The nick of the new format</param>
+    /// <param name="description">The description of the new format</param>
     /// <returns>
     /// A new GstFormat or an already registered format
     /// with the same nick.
@@ -73,7 +73,7 @@ public static unsafe partial class FormatExtensions
     }
 
     /// <summary>Get the unique quark for the given format.</summary>
-    /// <param name="format">The <c>format</c> argument.</param>
+    /// <param name="format">a #GstFormat</param>
     /// <returns>
     /// the quark associated with the format or 0 if the format
     /// is unknown.

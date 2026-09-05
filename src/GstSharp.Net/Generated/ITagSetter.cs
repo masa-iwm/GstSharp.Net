@@ -66,10 +66,10 @@ public static unsafe partial class TagSetterExtensions
 {
     /// <summary>Adds the given tag / GValue pair on the setter using the given merge mode.</summary>
     /// <param name="setter">a #GstTagSetter</param>
-    /// <param name="mode">The <c>mode</c> argument.</param>
-    /// <param name="tag">The <c>tag</c> argument.</param>
+    /// <param name="mode">the mode to use</param>
+    /// <param name="tag">tag to set</param>
     /// <param name="value">
-    /// The <c>value</c> argument.
+    /// GValue to set for the tag
     /// The callee copies what it keeps, so the caller keeps ownership of
     /// <paramref name="value"/> and still disposes it.
     /// </param>
@@ -134,8 +134,8 @@ public static unsafe partial class TagSetterExtensions
 
     /// <summary>Merges the given list into the setter's list using the given mode.</summary>
     /// <param name="setter">a #GstTagSetter</param>
-    /// <param name="list">The <c>list</c> argument.</param>
-    /// <param name="mode">The <c>mode</c> argument.</param>
+    /// <param name="list">a tag list to merge from</param>
+    /// <param name="mode">the mode to merge with</param>
     public static void MergeTags(this Gst.ITagSetter setter, Gst.TagList list, Gst.TagMergeMode mode)
     {
         ArgumentNullException.ThrowIfNull(setter);
@@ -163,7 +163,7 @@ public static unsafe partial class TagSetterExtensions
     /// the tags set with this interface and discards tags from events.
     /// </summary>
     /// <param name="setter">a #GstTagSetter</param>
-    /// <param name="mode">The <c>mode</c> argument.</param>
+    /// <param name="mode">The mode with which tags are added</param>
     public static void SetTagMergeMode(this Gst.ITagSetter setter, Gst.TagMergeMode mode)
     {
         ArgumentNullException.ThrowIfNull(setter);

@@ -69,7 +69,7 @@ public abstract unsafe partial class RTPHeaderExtension : Gst.Element
     /// information given in the input @buffer.
     /// </para>
     /// </remarks>
-    /// <param name="inputMeta">The <c>inputMeta</c> argument.</param>
+    /// <param name="inputMeta">a #GstBuffer</param>
     /// <returns>the maximum size of the data written by this extension</returns>
     public nuint GetMaxSize(Gst.Buffer inputMeta)
     {
@@ -108,9 +108,12 @@ public abstract unsafe partial class RTPHeaderExtension : Gst.Element
     }
 
     /// <summary>Read the RTP header extension from @data.</summary>
-    /// <param name="readFlags">The <c>readFlags</c> argument.</param>
+    /// <param name="readFlags">
+    /// #GstRTPHeaderExtensionFlags for how the extension should
+    ///               be written
+    /// </param>
     /// <param name="data">location to read the rtp header extension from</param>
-    /// <param name="buffer">The <c>buffer</c> argument.</param>
+    /// <param name="buffer">a #GstBuffer to modify if necessary</param>
     /// <returns>whether the extension could be read from @data</returns>
     public bool Read(Gst.Rtp.RTPHeaderExtensionFlags readFlags, System.ReadOnlySpan<byte> data, Gst.Buffer buffer)
     {
@@ -134,7 +137,7 @@ public abstract unsafe partial class RTPHeaderExtension : Gst.Element
     /// by gst_sdp_media_attributes_to_caps().
     /// </para>
     /// </remarks>
-    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <param name="caps">the #GstCaps to configure this extension with</param>
     /// <returns>whether the @caps could be successfully set on @ext.</returns>
     public bool SetAttributesFromCaps(Gst.Caps caps)
     {
@@ -155,7 +158,7 @@ public abstract unsafe partial class RTPHeaderExtension : Gst.Element
     /// by gst_sdp_media_attributes_to_caps().
     /// </para>
     /// </remarks>
-    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <param name="caps">writable #GstCaps to modify</param>
     /// <returns>
     /// whether the configured attributes on @ext can successfully be set on
     /// 	@caps
@@ -180,7 +183,7 @@ public abstract unsafe partial class RTPHeaderExtension : Gst.Element
     /// advertised in @caps.
     /// </para>
     /// </remarks>
-    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <param name="caps">#GstCaps to write fields into</param>
     /// <param name="attributes">The <c>attributes</c> argument.</param>
     /// <returns>whether the @ext attributes could be set on @caps.</returns>
     public bool SetCapsFromAttributesHelper(Gst.Caps caps, string attributes)
@@ -201,7 +204,7 @@ public abstract unsafe partial class RTPHeaderExtension : Gst.Element
     /// direction will not be included in the caps (as it shouldn't be in the
     /// extmap line in the SDP).
     /// </summary>
-    /// <param name="direction">The <c>direction</c> argument.</param>
+    /// <param name="direction">The direction</param>
     public void SetDirection(Gst.Rtp.RTPHeaderExtensionDirection direction)
     {
         GstRtpHeaderExtensionSetDirection(Handle, (int)direction);
@@ -209,7 +212,7 @@ public abstract unsafe partial class RTPHeaderExtension : Gst.Element
     }
 
     /// <summary>sets the RTP extension id on @ext</summary>
-    /// <param name="extId">The <c>extId</c> argument.</param>
+    /// <param name="extId">The id of this extension</param>
     public void SetId(uint extId)
     {
         GstRtpHeaderExtensionSetId(Handle, extId);
@@ -220,7 +223,7 @@ public abstract unsafe partial class RTPHeaderExtension : Gst.Element
     /// Passes RTP payloader's sink (i.e. not payloaded) @caps to the header
     /// extension.
     /// </summary>
-    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <param name="caps">sink #GstCaps</param>
     /// <returns>Whether @caps could be read successfully</returns>
     public bool SetNonRtpSinkCaps(Gst.Caps caps)
     {
@@ -239,7 +242,7 @@ public abstract unsafe partial class RTPHeaderExtension : Gst.Element
     /// have the caps update applied. Applying the update also flips the internal
     /// "wants update" flag back to FALSE.
     /// </summary>
-    /// <param name="state">The <c>state</c> argument.</param>
+    /// <param name="state">TRUE if caps update is needed</param>
     public void SetWantsUpdateNonRtpSrcCaps(bool state)
     {
         GstRtpHeaderExtensionSetWantsUpdateNonRtpSrcCaps(Handle, state ? 1 : 0);
@@ -250,7 +253,7 @@ public abstract unsafe partial class RTPHeaderExtension : Gst.Element
     /// Updates depayloader src caps based on the information received in RTP header.
     /// @caps must be writable as this function may modify them.
     /// </summary>
-    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <param name="caps">src #GstCaps to modify</param>
     /// <returns>whether @caps were modified successfully</returns>
     public bool UpdateNonRtpSrcCaps(Gst.Caps caps)
     {
@@ -279,9 +282,12 @@ public abstract unsafe partial class RTPHeaderExtension : Gst.Element
     /// the @input_meta.  @data will be sized to be at least the value returned
     /// from gst_rtp_header_extension_get_max_size().
     /// </summary>
-    /// <param name="inputMeta">The <c>inputMeta</c> argument.</param>
-    /// <param name="writeFlags">The <c>writeFlags</c> argument.</param>
-    /// <param name="output">The <c>output</c> argument.</param>
+    /// <param name="inputMeta">the input #GstBuffer to read information from if necessary</param>
+    /// <param name="writeFlags">
+    /// #GstRTPHeaderExtensionFlags for how the extension should
+    ///               be written
+    /// </param>
+    /// <param name="output">output RTP #GstBuffer</param>
     /// <param name="data">location to write the rtp header extension into</param>
     /// <returns>the size of the data written, &lt; 0 on failure</returns>
     public nint Write(Gst.Buffer inputMeta, Gst.Rtp.RTPHeaderExtensionFlags writeFlags, Gst.Buffer output, System.Span<byte> data)
@@ -299,7 +305,7 @@ public abstract unsafe partial class RTPHeaderExtension : Gst.Element
     }
 
     /// <summary>The <c>gst_rtp_header_extension_create_from_uri</c> function.</summary>
-    /// <param name="uri">The <c>uri</c> argument.</param>
+    /// <param name="uri">the rtp header extension URI to search for</param>
     /// <returns>the #GstRTPHeaderExtension for @uri or %NULL</returns>
     public static Gst.Rtp.RTPHeaderExtension? CreateFromUri(string uri)
     {

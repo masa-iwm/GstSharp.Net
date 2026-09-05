@@ -41,7 +41,7 @@ public unsafe partial class CommandLineFormatter : GES.Formatter, GES.IExtractab
     }
 
     /// <summary>The <c>ges_command_line_formatter_get_timeline_uri</c> function.</summary>
-    /// <param name="timeline">The <c>timeline</c> argument.</param>
+    /// <param name="timeline">A GESTimeline to serialize</param>
     /// <returns>The result of <c>ges_command_line_formatter_get_timeline_uri</c>.</returns>
     public static string GetTimelineUri(GES.Timeline timeline)
     {

@@ -12,7 +12,7 @@ namespace Gst.Rtsp;
 public static unsafe partial class RtspGlobal
 {
     /// <summary>Convert @header to a #GstRTSPHeaderField.</summary>
-    /// <param name="header">The <c>header</c> argument.</param>
+    /// <param name="header">a header string</param>
     /// <returns>
     /// a #GstRTSPHeaderField for @header or #GST_RTSP_HDR_INVALID if the
     /// header field is unknown.
@@ -27,7 +27,7 @@ public static unsafe partial class RtspGlobal
     }
 
     /// <summary>Convert @method to a #GstRTSPMethod.</summary>
-    /// <param name="method">The <c>method</c> argument.</param>
+    /// <param name="method">a method</param>
     /// <returns>
     /// a #GstRTSPMethod for @method or #GST_RTSP_INVALID if the
     /// method is unknown.
@@ -48,13 +48,13 @@ public static unsafe partial class RtspGlobal
     /// <remarks>
     /// <para>Currently only supported algorithm "md5".</para>
     /// </remarks>
-    /// <param name="algorithm">The <c>algorithm</c> argument.</param>
-    /// <param name="method">The <c>method</c> argument.</param>
-    /// <param name="realm">The <c>realm</c> argument.</param>
-    /// <param name="username">The <c>username</c> argument.</param>
-    /// <param name="password">The <c>password</c> argument.</param>
-    /// <param name="uri">The <c>uri</c> argument.</param>
-    /// <param name="nonce">The <c>nonce</c> argument.</param>
+    /// <param name="algorithm">Hash algorithm to use, or %NULL for MD5</param>
+    /// <param name="method">Request method, e.g. PLAY</param>
+    /// <param name="realm">Realm</param>
+    /// <param name="username">Username</param>
+    /// <param name="password">Password</param>
+    /// <param name="uri">Original request URI</param>
+    /// <param name="nonce">Nonce</param>
     /// <returns>Authentication response or %NULL if unsupported</returns>
     public static string? RtspGenerateDigestAuthResponse(string? algorithm, string method, string realm, string username, string password, string uri, string nonce)
     {
@@ -93,11 +93,11 @@ public static unsafe partial class RtspGlobal
     /// </para>
     /// <para>Currently only supported algorithm "md5".</para>
     /// </remarks>
-    /// <param name="algorithm">The <c>algorithm</c> argument.</param>
-    /// <param name="method">The <c>method</c> argument.</param>
-    /// <param name="md5">The <c>md5</c> argument.</param>
-    /// <param name="uri">The <c>uri</c> argument.</param>
-    /// <param name="nonce">The <c>nonce</c> argument.</param>
+    /// <param name="algorithm">Hash algorithm to use, or %NULL for MD5</param>
+    /// <param name="method">Request method, e.g. PLAY</param>
+    /// <param name="md5">The md5 sum of username:realm:password</param>
+    /// <param name="uri">Original request URI</param>
+    /// <param name="nonce">Nonce</param>
     /// <returns>Authentication response or %NULL if unsupported</returns>
     public static string? RtspGenerateDigestAuthResponseFromMd5(string? algorithm, string method, string md5, string uri, string nonce)
     {
@@ -120,7 +120,7 @@ public static unsafe partial class RtspGlobal
     }
 
     /// <summary>Check whether @field may appear multiple times in a message.</summary>
-    /// <param name="field">The <c>field</c> argument.</param>
+    /// <param name="field">a #GstRTSPHeaderField</param>
     /// <returns>%TRUE if multiple headers are allowed.</returns>
     public static bool RtspHeaderAllowMultiple(Gst.Rtsp.RTSPHeaderField field)
     {
@@ -129,7 +129,7 @@ public static unsafe partial class RtspGlobal
     }
 
     /// <summary>Convert @field to a string.</summary>
-    /// <param name="field">The <c>field</c> argument.</param>
+    /// <param name="field">a #GstRTSPHeaderField</param>
     /// <returns>a string representation of @field.</returns>
     public static string? RtspHeaderAsText(Gst.Rtsp.RTSPHeaderField field)
     {
@@ -138,7 +138,7 @@ public static unsafe partial class RtspGlobal
     }
 
     /// <summary>Create a new initialized #GstRTSPMessage. Free with gst_rtsp_message_free().</summary>
-    /// <param name="msg">The <c>msg</c> argument.</param>
+    /// <param name="msg">a location for the new #GstRTSPMessage</param>
     /// <returns>a #GstRTSPResult.</returns>
     public static Gst.Rtsp.RTSPResult RtspMessageNew(out Gst.Rtsp.RTSPMessage? msg)
     {
@@ -152,8 +152,8 @@ public static unsafe partial class RtspGlobal
     /// Create a new data #GstRTSPMessage with @channel and store the
     /// result message in @msg. Free with gst_rtsp_message_free().
     /// </summary>
-    /// <param name="msg">The <c>msg</c> argument.</param>
-    /// <param name="channel">The <c>channel</c> argument.</param>
+    /// <param name="msg">a location for the new #GstRTSPMessage</param>
+    /// <param name="channel">the channel</param>
     /// <returns>a #GstRTSPResult.</returns>
     public static Gst.Rtsp.RTSPResult RtspMessageNewData(out Gst.Rtsp.RTSPMessage? msg, byte channel)
     {
@@ -167,9 +167,9 @@ public static unsafe partial class RtspGlobal
     /// Create a new #GstRTSPMessage with @method and @uri and store the result
     /// request message in @msg. Free with gst_rtsp_message_free().
     /// </summary>
-    /// <param name="msg">The <c>msg</c> argument.</param>
-    /// <param name="method">The <c>method</c> argument.</param>
-    /// <param name="uri">The <c>uri</c> argument.</param>
+    /// <param name="msg">a location for the new #GstRTSPMessage</param>
+    /// <param name="method">the request method to use</param>
+    /// <param name="uri">the uri of the request</param>
     /// <returns>a #GstRTSPResult.</returns>
     public static Gst.Rtsp.RTSPResult RtspMessageNewRequest(out Gst.Rtsp.RTSPMessage? msg, Gst.Rtsp.RTSPMethod method, string uri)
     {
@@ -193,10 +193,10 @@ public static unsafe partial class RtspGlobal
     /// response message.
     /// </para>
     /// </remarks>
-    /// <param name="msg">The <c>msg</c> argument.</param>
-    /// <param name="code">The <c>code</c> argument.</param>
-    /// <param name="reason">The <c>reason</c> argument.</param>
-    /// <param name="request">The <c>request</c> argument.</param>
+    /// <param name="msg">a location for the new #GstRTSPMessage</param>
+    /// <param name="code">the status code</param>
+    /// <param name="reason">the status reason or %NULL</param>
+    /// <param name="request">the request that triggered the response or %NULL</param>
     /// <returns>a #GstRTSPResult.</returns>
     public static Gst.Rtsp.RTSPResult RtspMessageNewResponse(out Gst.Rtsp.RTSPMessage? msg, Gst.Rtsp.RTSPStatusCode code, string? reason, Gst.Rtsp.RTSPMessage? request)
     {
@@ -210,7 +210,7 @@ public static unsafe partial class RtspGlobal
     }
 
     /// <summary>Convert @options to a string.</summary>
-    /// <param name="options">The <c>options</c> argument.</param>
+    /// <param name="options">one or more #GstRTSPMethod</param>
     /// <returns>a new string of @options. g_free() after usage.</returns>
     public static string RtspOptionsAsText(Gst.Rtsp.RTSPMethod options)
     {
@@ -223,7 +223,7 @@ public static unsafe partial class RtspGlobal
     /// Convert the comma separated list @options to a #GstRTSPMethod bitwise or
     /// of methods. This functions is the reverse of gst_rtsp_options_as_text().
     /// </summary>
-    /// <param name="options">The <c>options</c> argument.</param>
+    /// <param name="options">a comma separated list of options</param>
     /// <returns>a #GstRTSPMethod</returns>
     public static Gst.Rtsp.RTSPMethod RtspOptionsFromText(string options)
     {
@@ -235,7 +235,7 @@ public static unsafe partial class RtspGlobal
     }
 
     /// <summary>Convert @code to a string.</summary>
-    /// <param name="code">The <c>code</c> argument.</param>
+    /// <param name="code">a #GstRTSPStatusCode</param>
     /// <returns>a string representation of @code.</returns>
     public static string RtspStatusAsText(Gst.Rtsp.RTSPStatusCode code)
     {
@@ -245,7 +245,7 @@ public static unsafe partial class RtspGlobal
     }
 
     /// <summary>Convert @result in a human readable string.</summary>
-    /// <param name="result">The <c>result</c> argument.</param>
+    /// <param name="result">a #GstRTSPResult</param>
     /// <returns>a newly allocated string. g_free() after usage.</returns>
     public static string RtspStrresult(Gst.Rtsp.RTSPResult result)
     {

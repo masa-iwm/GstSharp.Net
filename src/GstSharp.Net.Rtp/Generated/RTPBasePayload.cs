@@ -46,9 +46,9 @@ public abstract unsafe partial class RTPBasePayload : Gst.Element
     /// @pad_len. If @payload has #GstRTPBasePayload:source-info %TRUE additional
     /// CSRCs may be allocated and filled with RTP source information.
     /// </summary>
-    /// <param name="payloadLen">The <c>payloadLen</c> argument.</param>
-    /// <param name="padLen">The <c>padLen</c> argument.</param>
-    /// <param name="csrcCount">The <c>csrcCount</c> argument.</param>
+    /// <param name="payloadLen">the length of the payload</param>
+    /// <param name="padLen">the amount of padding</param>
+    /// <param name="csrcCount">the minimum number of CSRC entries</param>
     /// <returns>
     /// A newly allocated buffer that can hold an RTP packet with given
     /// parameters.
@@ -66,7 +66,7 @@ public abstract unsafe partial class RTPBasePayload : Gst.Element
     /// will be automically added by gst_rtp_base_payload_allocate_output_buffer().
     /// If #GstRTPBasePayload:source-info is %FALSE the count will be 0.
     /// </summary>
-    /// <param name="buffer">The <c>buffer</c> argument.</param>
+    /// <param name="buffer">a #GstBuffer, typically the buffer to payload</param>
     /// <returns>The number of sources.</returns>
     public uint GetSourceCount(Gst.Buffer buffer)
     {
@@ -81,8 +81,8 @@ public abstract unsafe partial class RTPBasePayload : Gst.Element
     /// Check if the packet with @size and @duration would exceed the configured
     /// maximum size.
     /// </summary>
-    /// <param name="size">The <c>size</c> argument.</param>
-    /// <param name="duration">The <c>duration</c> argument.</param>
+    /// <param name="size">the size of the packet</param>
+    /// <param name="duration">the duration of the packet</param>
     /// <returns>
     /// %TRUE if the packet of @size and @duration would exceed the
     /// configured MTU or max_ptime.
@@ -121,7 +121,7 @@ public abstract unsafe partial class RTPBasePayload : Gst.Element
     /// </para>
     /// </remarks>
     /// <param name="buffer">
-    /// The <c>buffer</c> argument.
+    /// a #GstBuffer
     /// The call consumes it: <paramref name="buffer"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// </param>
@@ -159,7 +159,7 @@ public abstract unsafe partial class RTPBasePayload : Gst.Element
     /// </para>
     /// </remarks>
     /// <param name="list">
-    /// The <c>list</c> argument.
+    /// a #GstBufferList
     /// The call consumes it: <paramref name="list"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// </param>
@@ -187,10 +187,10 @@ public abstract unsafe partial class RTPBasePayload : Gst.Element
     /// of the payloader. Subclasses must call this method before calling
     /// gst_rtp_base_payload_push() or gst_rtp_base_payload_set_outcaps().
     /// </summary>
-    /// <param name="media">The <c>media</c> argument.</param>
-    /// <param name="dynamic">The <c>dynamic</c> argument.</param>
-    /// <param name="encodingName">The <c>encodingName</c> argument.</param>
-    /// <param name="clockRate">The <c>clockRate</c> argument.</param>
+    /// <param name="media">the media type (typically "audio" or "video")</param>
+    /// <param name="dynamic">if the payload type is dynamic</param>
+    /// <param name="encodingName">the encoding name</param>
+    /// <param name="clockRate">the clock rate of the media</param>
     public void SetOptions(string media, bool dynamic, string encodingName, uint clockRate)
     {
         ArgumentNullException.ThrowIfNull(media);
@@ -204,7 +204,7 @@ public abstract unsafe partial class RTPBasePayload : Gst.Element
     }
 
     /// <summary>Configure the output caps with the optional fields.</summary>
-    /// <param name="s">The <c>s</c> argument.</param>
+    /// <param name="s">a #GstStructure with the caps fields</param>
     /// <returns>%TRUE if the caps could be set.</returns>
     public bool SetOutcapsStructure(Gst.Structure? s)
     {
@@ -218,7 +218,7 @@ public abstract unsafe partial class RTPBasePayload : Gst.Element
     /// Enable or disable adding contributing sources to RTP packets from
     /// #GstRTPSourceMeta.
     /// </summary>
-    /// <param name="enable">The <c>enable</c> argument.</param>
+    /// <param name="enable">whether to add contributing sources to RTP packets</param>
     public void SetSourceInfoEnabled(bool enable)
     {
         GstRtpBasePayloadSetSourceInfoEnabled(Handle, enable ? 1 : 0);

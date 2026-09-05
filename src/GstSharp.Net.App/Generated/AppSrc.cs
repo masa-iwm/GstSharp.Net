@@ -195,8 +195,8 @@ public unsafe partial class AppSrc : Gst.Base.BaseSrc, Gst.IURIHandler
     }
 
     /// <summary>Retrieve the min and max latencies in @min and @max respectively.</summary>
-    /// <param name="min">The <c>min</c> argument.</param>
-    /// <param name="max">The <c>max</c> argument.</param>
+    /// <param name="min">the min latency</param>
+    /// <param name="max">the max latency</param>
     public void GetLatency(out ulong min, out ulong max)
     {
         ulong minNative = default;
@@ -289,7 +289,7 @@ public unsafe partial class AppSrc : Gst.Base.BaseSrc, Gst.IURIHandler
     /// </para>
     /// </remarks>
     /// <param name="bufferList">
-    /// The <c>bufferList</c> argument.
+    /// a #GstBufferList to push
     /// The call consumes it: <paramref name="bufferList"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// </param>
@@ -332,7 +332,10 @@ public unsafe partial class AppSrc : Gst.Base.BaseSrc, Gst.IURIHandler
     /// space becomes available in the queue.
     /// </para>
     /// </remarks>
-    /// <param name="sample">The <c>sample</c> argument.</param>
+    /// <param name="sample">
+    /// a #GstSample from which buffer and caps may be
+    /// extracted
+    /// </param>
     /// <returns>
     /// #GST_FLOW_OK when the buffer was successfully queued.
     /// #GST_FLOW_FLUSHING when @appsrc is not PAUSED or PLAYING.
@@ -353,7 +356,7 @@ public unsafe partial class AppSrc : Gst.Base.BaseSrc, Gst.IURIHandler
     /// only produce caps that match @caps. @caps must be fixed and the caps on the
     /// buffers must match the caps or left NULL.
     /// </summary>
-    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <param name="caps">caps to set</param>
     public new void SetCaps(Gst.Caps? caps)
     {
         GstAppSrcSetCaps(Handle, caps is null ? 0 : caps.Handle);
@@ -365,7 +368,7 @@ public unsafe partial class AppSrc : Gst.Base.BaseSrc, Gst.IURIHandler
     /// Set the duration of the stream in nanoseconds. A value of GST_CLOCK_TIME_NONE means that the duration is
     /// not known.
     /// </summary>
-    /// <param name="duration">The <c>duration</c> argument.</param>
+    /// <param name="duration">the duration to set</param>
     public void SetDuration(Gst.ClockTime duration)
     {
         GstAppSrcSetDuration(Handle, duration.Nanoseconds);
@@ -377,7 +380,7 @@ public unsafe partial class AppSrc : Gst.Base.BaseSrc, Gst.IURIHandler
     /// by default disabled because signal emission is expensive and unneeded when
     /// the application prefers to operate in pull mode.
     /// </summary>
-    /// <param name="emit">The <c>emit</c> argument.</param>
+    /// <param name="emit">the new state</param>
     public void SetEmitSignals(bool emit)
     {
         GstAppSrcSetEmitSignals(Handle, emit ? 1 : 0);
@@ -388,8 +391,8 @@ public unsafe partial class AppSrc : Gst.Base.BaseSrc, Gst.IURIHandler
     /// Configure the @min and @max latency in @src. If @min is set to -1, the
     /// default latency calculations for pseudo-live sources will be used.
     /// </summary>
-    /// <param name="min">The <c>min</c> argument.</param>
-    /// <param name="max">The <c>max</c> argument.</param>
+    /// <param name="min">the min latency</param>
+    /// <param name="max">the max latency</param>
     public void SetLatency(ulong min, ulong max)
     {
         GstAppSrcSetLatency(Handle, min, max);
@@ -402,7 +405,7 @@ public unsafe partial class AppSrc : Gst.Base.BaseSrc, Gst.IURIHandler
     /// full. The selected type defines whether to drop the oldest or new
     /// buffers.
     /// </summary>
-    /// <param name="leaky">The <c>leaky</c> argument.</param>
+    /// <param name="leaky">the #GstAppLeakyType</param>
     public void SetLeakyType(Gst.App.AppLeakyType leaky)
     {
         GstAppSrcSetLeakyType(Handle, (int)leaky);
@@ -414,7 +417,7 @@ public unsafe partial class AppSrc : Gst.Base.BaseSrc, Gst.IURIHandler
     /// After the maximum amount of buffers are queued, @appsrc will emit the
     /// "enough-data" signal.
     /// </summary>
-    /// <param name="max">The <c>max</c> argument.</param>
+    /// <param name="max">the maximum number of buffers to queue</param>
     public void SetMaxBuffers(ulong max)
     {
         GstAppSrcSetMaxBuffers(Handle, max);
@@ -426,7 +429,7 @@ public unsafe partial class AppSrc : Gst.Base.BaseSrc, Gst.IURIHandler
     /// After the maximum amount of bytes are queued, @appsrc will emit the
     /// "enough-data" signal.
     /// </summary>
-    /// <param name="max">The <c>max</c> argument.</param>
+    /// <param name="max">the maximum number of bytes to queue</param>
     public void SetMaxBytes(ulong max)
     {
         GstAppSrcSetMaxBytes(Handle, max);
@@ -438,7 +441,7 @@ public unsafe partial class AppSrc : Gst.Base.BaseSrc, Gst.IURIHandler
     /// After the maximum amount of time are queued, @appsrc will emit the
     /// "enough-data" signal.
     /// </summary>
-    /// <param name="max">The <c>max</c> argument.</param>
+    /// <param name="max">the maximum amonut of time to queue</param>
     public void SetMaxTime(Gst.ClockTime max)
     {
         GstAppSrcSetMaxTime(Handle, max.Nanoseconds);
@@ -449,7 +452,7 @@ public unsafe partial class AppSrc : Gst.Base.BaseSrc, Gst.IURIHandler
     /// Set the size of the stream in bytes. A value of -1 means that the size is
     /// not known.
     /// </summary>
-    /// <param name="size">The <c>size</c> argument.</param>
+    /// <param name="size">the size to set</param>
     public void SetSize(long size)
     {
         GstAppSrcSetSize(Handle, size);
@@ -463,7 +466,7 @@ public unsafe partial class AppSrc : Gst.Base.BaseSrc, Gst.IURIHandler
     /// <remarks>
     /// <para>A stream_type stream</para>
     /// </remarks>
-    /// <param name="type">The <c>type</c> argument.</param>
+    /// <param name="type">the new state</param>
     public void SetStreamType(Gst.App.AppStreamType type)
     {
         GstAppSrcSetStreamType(Handle, (int)type);

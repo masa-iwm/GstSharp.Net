@@ -84,8 +84,8 @@ public sealed unsafe partial class SDPTime
     }
 
     /// <summary>Set time information @start, @stop and @repeat in @t.</summary>
-    /// <param name="start">The <c>start</c> argument.</param>
-    /// <param name="stop">The <c>stop</c> argument.</param>
+    /// <param name="start">the start time</param>
+    /// <param name="stop">the stop time</param>
     /// <param name="repeat">the repeat times</param>
     /// <returns>a #GstSDPResult.</returns>
     public Gst.Sdp.SDPResult Set(string start, string stop, string[]? repeat)

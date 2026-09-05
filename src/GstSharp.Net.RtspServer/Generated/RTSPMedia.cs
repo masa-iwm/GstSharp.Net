@@ -55,7 +55,7 @@ public unsafe partial class RTSPMedia : Gst.GObject.Object
     /// <remarks>
     /// <para>Ownership is taken of @element.</para>
     /// </remarks>
-    /// <param name="element">The <c>element</c> argument.</param>
+    /// <param name="element">a #GstElement</param>
     /// <returns>a new #GstRTSPMedia object.</returns>
     public static Gst.RtspServer.RTSPMedia New(Gst.Element element)
     {
@@ -106,8 +106,8 @@ public unsafe partial class RTSPMedia : Gst.GObject.Object
     /// Create a new stream in @media that provides RTP data on @pad.
     /// @pad should be a pad of an element inside @media-&gt;element.
     /// </summary>
-    /// <param name="payloader">The <c>payloader</c> argument.</param>
-    /// <param name="pad">The <c>pad</c> argument.</param>
+    /// <param name="payloader">a #GstElement</param>
+    /// <param name="pad">a #GstPad</param>
     /// <returns>
     /// a new #GstRTSPStream that remains valid for as long
     /// as @media exists.
@@ -125,7 +125,7 @@ public unsafe partial class RTSPMedia : Gst.GObject.Object
     }
 
     /// <summary>Find a stream in @media with @control as the control uri.</summary>
-    /// <param name="control">The <c>control</c> argument.</param>
+    /// <param name="control">the control of the stream</param>
     /// <returns>
     /// the #GstRTSPStream with
     /// control uri @control or %NULL when a stream with that control did
@@ -302,8 +302,8 @@ public unsafe partial class RTSPMedia : Gst.GObject.Object
     /// Get the current range as a string. @media must be prepared with
     /// gst_rtsp_media_prepare ().
     /// </summary>
-    /// <param name="play">The <c>play</c> argument.</param>
-    /// <param name="unit">The <c>unit</c> argument.</param>
+    /// <param name="play">for the PLAY request</param>
+    /// <param name="unit">the unit to use for the string</param>
     /// <returns>The range as a string, g_free() after usage.</returns>
     public string? GetRangeString(bool play, Gst.Rtsp.RTSPRangeUnit unit)
     {
@@ -325,8 +325,8 @@ public unsafe partial class RTSPMedia : Gst.GObject.Object
     }
 
     /// <summary>Get the rate and applied_rate of the current segment.</summary>
-    /// <param name="rate">The <c>rate</c> argument.</param>
-    /// <param name="appliedRate">The <c>appliedRate</c> argument.</param>
+    /// <param name="rate">the rate of the current segment</param>
+    /// <param name="appliedRate">the applied_rate of the current segment</param>
     /// <returns>
     /// %FALSE if looking up the rate and applied rate failed. Otherwise
     /// %TRUE is returned and @rate and @applied_rate are set to the rate and
@@ -365,7 +365,7 @@ public unsafe partial class RTSPMedia : Gst.GObject.Object
     }
 
     /// <summary>Retrieve the stream with index @idx from @media.</summary>
-    /// <param name="idx">The <c>idx</c> argument.</param>
+    /// <param name="idx">the stream index</param>
     /// <returns>
     /// the #GstRTSPStream at index
     /// @idx or %NULL when a stream with that index did not exist.
@@ -390,8 +390,8 @@ public unsafe partial class RTSPMedia : Gst.GObject.Object
     /// Get the #GstNetTimeProvider for the clock used by @media. The time provider
     /// will listen on @address and @port for client time requests.
     /// </summary>
-    /// <param name="address">The <c>address</c> argument.</param>
-    /// <param name="port">The <c>port</c> argument.</param>
+    /// <param name="address">an address or %NULL</param>
+    /// <param name="port">a port or 0</param>
     /// <returns>the #GstNetTimeProvider of @media.</returns>
     public Gst.Net.NetTimeProvider? GetTimeProvider(string? address, ushort port)
     {
@@ -412,7 +412,7 @@ public unsafe partial class RTSPMedia : Gst.GObject.Object
     }
 
     /// <summary>Configure an SDP on @media for receiving streams</summary>
-    /// <param name="sdp">The <c>sdp</c> argument.</param>
+    /// <param name="sdp">a #GstSDPMessage</param>
     /// <returns>TRUE on success.</returns>
     public bool HandleSdp(Gst.Sdp.SDPMessage sdp)
     {
@@ -565,7 +565,8 @@ public unsafe partial class RTSPMedia : Gst.GObject.Object
     /// </para>
     /// </remarks>
     /// <param name="thread">
-    /// The <c>thread</c> argument.
+    /// a #GstRTSPThread to run the
+    ///   bus handler or %NULL
     /// The call consumes it: <paramref name="thread"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// It may be <see langword="null"/>, which is the absence of a payload and leaves
@@ -590,7 +591,7 @@ public unsafe partial class RTSPMedia : Gst.GObject.Object
     /// Seek the pipeline of @media to @range. @media must be prepared with
     /// gst_rtsp_media_prepare().
     /// </summary>
-    /// <param name="range">The <c>range</c> argument.</param>
+    /// <param name="range">a #GstRTSPTimeRange</param>
     /// <returns>%TRUE on success.</returns>
     public bool Seek(Gst.Rtsp.RTSPTimeRange range)
     {
@@ -604,8 +605,8 @@ public unsafe partial class RTSPMedia : Gst.GObject.Object
     /// Seek the pipeline of @media to @range with the given @flags.
     /// @media must be prepared with gst_rtsp_media_prepare().
     /// </summary>
-    /// <param name="range">The <c>range</c> argument.</param>
-    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <param name="range">a #GstRTSPTimeRange</param>
+    /// <param name="flags">The minimal set of #GstSeekFlags to use</param>
     /// <returns>%TRUE on success.</returns>
     public bool SeekFull(Gst.Rtsp.RTSPTimeRange range, Gst.SeekFlags flags)
     {
@@ -622,10 +623,10 @@ public unsafe partial class RTSPMedia : Gst.GObject.Object
     /// In order to perform the seek operation, the pipeline must contain all
     /// needed transport parts (transport sinks).
     /// </summary>
-    /// <param name="range">The <c>range</c> argument.</param>
-    /// <param name="flags">The <c>flags</c> argument.</param>
-    /// <param name="rate">The <c>rate</c> argument.</param>
-    /// <param name="trickmodeInterval">The <c>trickmodeInterval</c> argument.</param>
+    /// <param name="range">a #GstRTSPTimeRange</param>
+    /// <param name="flags">The minimal set of #GstSeekFlags to use</param>
+    /// <param name="rate">the rate to use in the seek</param>
+    /// <param name="trickmodeInterval">The trickmode interval to use for KEY_UNITS trick mode</param>
     /// <returns>%TRUE on success.</returns>
     public bool SeekTrickmode(Gst.Rtsp.RTSPTimeRange range, Gst.SeekFlags flags, double rate, Gst.ClockTime trickmodeInterval)
     {
@@ -652,7 +653,7 @@ public unsafe partial class RTSPMedia : Gst.GObject.Object
     }
 
     /// <summary>configure @pool to be used as the address pool of @media.</summary>
-    /// <param name="pool">The <c>pool</c> argument.</param>
+    /// <param name="pool">a #GstRTSPAddressPool</param>
     public void SetAddressPool(Gst.RtspServer.RTSPAddressPool? pool)
     {
         GstRtspMediaSetAddressPool(Handle, pool is null ? 0 : pool.Handle);
@@ -664,7 +665,7 @@ public unsafe partial class RTSPMedia : Gst.GObject.Object
     /// Decide whether the multicast socket should be bound to a multicast address or
     /// INADDR_ANY.
     /// </summary>
-    /// <param name="bindMcastAddr">The <c>bindMcastAddr</c> argument.</param>
+    /// <param name="bindMcastAddr">the new value</param>
     public void SetBindMcastAddress(bool bindMcastAddr)
     {
         GstRtspMediaSetBindMcastAddress(Handle, bindMcastAddr ? 1 : 0);
@@ -672,7 +673,7 @@ public unsafe partial class RTSPMedia : Gst.GObject.Object
     }
 
     /// <summary>Set the kernel UDP buffer size.</summary>
-    /// <param name="size">The <c>size</c> argument.</param>
+    /// <param name="size">the new value</param>
     public void SetBufferSize(uint size)
     {
         GstRtspMediaSetBufferSize(Handle, size);
@@ -680,7 +681,7 @@ public unsafe partial class RTSPMedia : Gst.GObject.Object
     }
 
     /// <summary>Configure the clock used for the media.</summary>
-    /// <param name="clock">The <c>clock</c> argument.</param>
+    /// <param name="clock">#GstClock to be used</param>
     public void SetClock(Gst.Clock? clock)
     {
         GstRtspMediaSetClock(Handle, clock is null ? 0 : clock.Handle);
@@ -697,7 +698,7 @@ public unsafe partial class RTSPMedia : Gst.GObject.Object
     }
 
     /// <summary>Configure the dscp qos of attached streams to @dscp_qos.</summary>
-    /// <param name="dscpQos">The <c>dscpQos</c> argument.</param>
+    /// <param name="dscpQos">a new dscp qos value (0-63, or -1 to disable)</param>
     public void SetDscpQos(int dscpQos)
     {
         GstRtspMediaSetDscpQos(Handle, dscpQos);
@@ -712,7 +713,7 @@ public unsafe partial class RTSPMedia : Gst.GObject.Object
     /// <remarks>
     /// <para>Note that this will only affect non-shared medias for now.</para>
     /// </remarks>
-    /// <param name="ensureKeyunitOnStart">The <c>ensureKeyunitOnStart</c> argument.</param>
+    /// <param name="ensureKeyunitOnStart">the new value</param>
     public void SetEnsureKeyunitOnStart(bool ensureKeyunitOnStart)
     {
         GstRtspMediaSetEnsureKeyunitOnStart(Handle, ensureKeyunitOnStart ? 1 : 0);
@@ -729,7 +730,7 @@ public unsafe partial class RTSPMedia : Gst.GObject.Object
     /// enabled.
     /// </para>
     /// </remarks>
-    /// <param name="timeout">The <c>timeout</c> argument.</param>
+    /// <param name="timeout">the new value</param>
     public void SetEnsureKeyunitOnStartTimeout(uint timeout)
     {
         GstRtspMediaSetEnsureKeyunitOnStartTimeout(Handle, timeout);
@@ -740,7 +741,7 @@ public unsafe partial class RTSPMedia : Gst.GObject.Object
     /// Set or unset if an EOS event will be sent to the pipeline for @media before
     /// it is unprepared.
     /// </summary>
-    /// <param name="eosShutdown">The <c>eosShutdown</c> argument.</param>
+    /// <param name="eosShutdown">the new value</param>
     public void SetEosShutdown(bool eosShutdown)
     {
         GstRtspMediaSetEosShutdown(Handle, eosShutdown ? 1 : 0);
@@ -748,7 +749,7 @@ public unsafe partial class RTSPMedia : Gst.GObject.Object
     }
 
     /// <summary>Configure the latency used for receiving media.</summary>
-    /// <param name="latency">The <c>latency</c> argument.</param>
+    /// <param name="latency">latency in milliseconds</param>
     public void SetLatency(uint latency)
     {
         GstRtspMediaSetLatency(Handle, latency);
@@ -756,7 +757,7 @@ public unsafe partial class RTSPMedia : Gst.GObject.Object
     }
 
     /// <summary>Set the maximum time-to-live value of outgoing multicast packets.</summary>
-    /// <param name="ttl">The <c>ttl</c> argument.</param>
+    /// <param name="ttl">the new multicast ttl value</param>
     /// <returns>%TRUE if the requested ttl has been set successfully.</returns>
     public bool SetMaxMcastTtl(uint ttl)
     {
@@ -766,7 +767,7 @@ public unsafe partial class RTSPMedia : Gst.GObject.Object
     }
 
     /// <summary>configure @multicast_iface to be used for @media.</summary>
-    /// <param name="multicastIface">The <c>multicastIface</c> argument.</param>
+    /// <param name="multicastIface">a multicast interface name</param>
     public void SetMulticastIface(string? multicastIface)
     {
         System.Span<byte> multicastIfaceBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
@@ -776,7 +777,7 @@ public unsafe partial class RTSPMedia : Gst.GObject.Object
     }
 
     /// <summary>Set @permissions on @media.</summary>
-    /// <param name="permissions">The <c>permissions</c> argument.</param>
+    /// <param name="permissions">a #GstRTSPPermissions</param>
     public void SetPermissions(Gst.RtspServer.RTSPPermissions? permissions)
     {
         GstRtspMediaSetPermissions(Handle, permissions is null ? 0 : permissions.Handle);
@@ -785,7 +786,7 @@ public unsafe partial class RTSPMedia : Gst.GObject.Object
     }
 
     /// <summary>Set the state of the pipeline managed by @media to @state</summary>
-    /// <param name="state">The <c>state</c> argument.</param>
+    /// <param name="state">the target state of the pipeline</param>
     public void SetPipelineState(Gst.State state)
     {
         GstRtspMediaSetPipelineState(Handle, (int)state);
@@ -793,7 +794,7 @@ public unsafe partial class RTSPMedia : Gst.GObject.Object
     }
 
     /// <summary>Configure the allowed lower transport for @media.</summary>
-    /// <param name="profiles">The <c>profiles</c> argument.</param>
+    /// <param name="profiles">the new flags</param>
     public void SetProfiles(Gst.Rtsp.RTSPProfile profiles)
     {
         GstRtspMediaSetProfiles(Handle, (int)profiles);
@@ -801,7 +802,7 @@ public unsafe partial class RTSPMedia : Gst.GObject.Object
     }
 
     /// <summary>Configure the allowed lower transport for @media.</summary>
-    /// <param name="protocols">The <c>protocols</c> argument.</param>
+    /// <param name="protocols">the new flags</param>
     public void SetProtocols(Gst.Rtsp.RTSPLowerTrans protocols)
     {
         GstRtspMediaSetProtocols(Handle, (int)protocols);
@@ -809,7 +810,7 @@ public unsafe partial class RTSPMedia : Gst.GObject.Object
     }
 
     /// <summary>Sets if and how the media clock should be published according to RFC7273.</summary>
-    /// <param name="mode">The <c>mode</c> argument.</param>
+    /// <param name="mode">the clock publish mode</param>
     public void SetPublishClockMode(Gst.RtspServer.RTSPPublishClockMode mode)
     {
         GstRtspMediaSetPublishClockMode(Handle, (int)mode);
@@ -828,7 +829,7 @@ public unsafe partial class RTSPMedia : Gst.GObject.Object
     }
 
     /// <summary>Set the amount of time to store retransmission packets.</summary>
-    /// <param name="time">The <c>time</c> argument.</param>
+    /// <param name="time">the new value</param>
     public void SetRetransmissionTime(Gst.ClockTime time)
     {
         GstRtspMediaSetRetransmissionTime(Handle, time.Nanoseconds);
@@ -839,7 +840,7 @@ public unsafe partial class RTSPMedia : Gst.GObject.Object
     /// Set or unset if the pipeline for @media can be reused after the pipeline has
     /// been unprepared.
     /// </summary>
-    /// <param name="reusable">The <c>reusable</c> argument.</param>
+    /// <param name="reusable">the new value</param>
     public void SetReusable(bool reusable)
     {
         GstRtspMediaSetReusable(Handle, reusable ? 1 : 0);
@@ -851,7 +852,7 @@ public unsafe partial class RTSPMedia : Gst.GObject.Object
     /// When @shared is %TRUE, client requests for this media will share the media
     /// pipeline.
     /// </summary>
-    /// <param name="shared">The <c>shared</c> argument.</param>
+    /// <param name="shared">the new value</param>
     public void SetShared(bool shared)
     {
         GstRtspMediaSetShared(Handle, shared ? 1 : 0);
@@ -862,7 +863,7 @@ public unsafe partial class RTSPMedia : Gst.GObject.Object
     /// Set or unset if the pipeline for @media should be stopped when a
     /// client disconnects without sending TEARDOWN.
     /// </summary>
-    /// <param name="stopOnDisconnect">The <c>stopOnDisconnect</c> argument.</param>
+    /// <param name="stopOnDisconnect">the new value</param>
     public void SetStopOnDisconnect(bool stopOnDisconnect)
     {
         GstRtspMediaSetStopOnDisconnect(Handle, stopOnDisconnect ? 1 : 0);
@@ -876,7 +877,7 @@ public unsafe partial class RTSPMedia : Gst.GObject.Object
     /// <remarks>
     /// <para>Media must be unprepared when setting the suspend mode.</para>
     /// </remarks>
-    /// <param name="mode">The <c>mode</c> argument.</param>
+    /// <param name="mode">the new #GstRTSPSuspendMode</param>
     public void SetSuspendMode(Gst.RtspServer.RTSPSuspendMode mode)
     {
         GstRtspMediaSetSuspendMode(Handle, (int)mode);
@@ -884,7 +885,7 @@ public unsafe partial class RTSPMedia : Gst.GObject.Object
     }
 
     /// <summary>Sets if the media pipeline can work in PLAY or RECORD mode</summary>
-    /// <param name="mode">The <c>mode</c> argument.</param>
+    /// <param name="mode">the new value</param>
     public void SetTransportMode(Gst.RtspServer.RTSPTransportMode mode)
     {
         GstRtspMediaSetTransportMode(Handle, (int)mode);
@@ -895,8 +896,8 @@ public unsafe partial class RTSPMedia : Gst.GObject.Object
     /// Add @media specific info to @sdp. @info is used to configure the connection
     /// information in the SDP.
     /// </summary>
-    /// <param name="sdp">The <c>sdp</c> argument.</param>
-    /// <param name="info">The <c>info</c> argument.</param>
+    /// <param name="sdp">a #GstSDPMessage</param>
+    /// <param name="info">a #GstSDPInfo</param>
     /// <returns>TRUE on success.</returns>
     public bool SetupSdp(Gst.Sdp.SDPMessage sdp, Gst.RtspServer.SDPInfo info)
     {
@@ -928,7 +929,7 @@ public unsafe partial class RTSPMedia : Gst.GObject.Object
     /// Set @pipeline as the #GstPipeline for @media. Ownership is
     /// taken of @pipeline.
     /// </summary>
-    /// <param name="pipeline">The <c>pipeline</c> argument.</param>
+    /// <param name="pipeline">a #GstPipeline</param>
     public void TakePipeline(Gst.Pipeline pipeline)
     {
         ArgumentNullException.ThrowIfNull(pipeline);
@@ -970,7 +971,7 @@ public unsafe partial class RTSPMedia : Gst.GObject.Object
     }
 
     /// <summary>Set @media to provide a #GstNetTimeProvider.</summary>
-    /// <param name="timeProvider">The <c>timeProvider</c> argument.</param>
+    /// <param name="timeProvider">if a #GstNetTimeProvider should be used</param>
     public void UseTimeProvider(bool timeProvider)
     {
         GstRtspMediaUseTimeProvider(Handle, timeProvider ? 1 : 0);

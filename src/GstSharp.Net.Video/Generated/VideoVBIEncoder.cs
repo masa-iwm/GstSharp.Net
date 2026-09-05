@@ -49,8 +49,8 @@ public sealed unsafe partial class VideoVBIEncoder : Gst.GObject.Boxed
         handle == 0 ? null : new(handle, transfer);
 
     /// <summary>Create a new #GstVideoVBIEncoder for the specified @format and @pixel_width.</summary>
-    /// <param name="format">The <c>format</c> argument.</param>
-    /// <param name="pixelWidth">The <c>pixelWidth</c> argument.</param>
+    /// <param name="format">a #GstVideoFormat</param>
+    /// <param name="pixelWidth">The width in pixel to use</param>
     /// <returns>
     /// The new #GstVideoVBIEncoder or %NULL if the @format and/or @pixel_width
     /// is not supported.
@@ -68,9 +68,12 @@ public sealed unsafe partial class VideoVBIEncoder : Gst.GObject.Boxed
     /// the parity check bits).
     /// </para>
     /// </remarks>
-    /// <param name="composite">The <c>composite</c> argument.</param>
-    /// <param name="dID">The <c>dID</c> argument.</param>
-    /// <param name="sDIDBlockNumber">The <c>sDIDBlockNumber</c> argument.</param>
+    /// <param name="composite">%TRUE if composite ADF should be created, component otherwise</param>
+    /// <param name="dID">The Data Identifier</param>
+    /// <param name="sDIDBlockNumber">
+    /// The Secondary Data Identifier (if type 2) or the Data
+    ///                     Block Number (if type 1)
+    /// </param>
     /// <param name="data">
     /// The user data content of the Ancillary packet.
     ///    Does not contain the ADF, DID, SDID nor CS.

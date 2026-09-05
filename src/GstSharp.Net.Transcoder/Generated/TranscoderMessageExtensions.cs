@@ -12,7 +12,7 @@ namespace Gst.Transcoder;
 public static unsafe partial class TranscoderMessageExtensions
 {
     /// <summary>Returns (transfer none): The message name</summary>
-    /// <param name="message">The <c>message</c> argument.</param>
+    /// <param name="message">a #GstTranscoderMessage</param>
     /// <returns>The result of <c>gst_transcoder_message_get_name</c>.</returns>
     public static string GetName(Gst.Transcoder.TranscoderMessage message)
     {
@@ -22,8 +22,8 @@ public static unsafe partial class TranscoderMessageExtensions
     }
 
     /// <summary>Parse the given duration @msg and extract the corresponding #GstClockTime</summary>
-    /// <param name="msg">The <c>msg</c> argument.</param>
-    /// <param name="duration">The <c>duration</c> argument.</param>
+    /// <param name="msg">A #GstMessage</param>
+    /// <param name="duration">the resulting duration</param>
     public static void ParseDuration(Gst.Message msg, out Gst.ClockTime duration)
     {
         ArgumentNullException.ThrowIfNull(msg);
@@ -34,8 +34,8 @@ public static unsafe partial class TranscoderMessageExtensions
     }
 
     /// <summary>Parse the given position @msg and extract the corresponding #GstClockTime</summary>
-    /// <param name="msg">The <c>msg</c> argument.</param>
-    /// <param name="position">The <c>position</c> argument.</param>
+    /// <param name="msg">A #GstMessage</param>
+    /// <param name="position">the resulting position</param>
     public static void ParsePosition(Gst.Message msg, out Gst.ClockTime position)
     {
         ArgumentNullException.ThrowIfNull(msg);
@@ -46,8 +46,8 @@ public static unsafe partial class TranscoderMessageExtensions
     }
 
     /// <summary>Parse the given state @msg and extract the corresponding #GstTranscoderState</summary>
-    /// <param name="msg">The <c>msg</c> argument.</param>
-    /// <param name="state">The <c>state</c> argument.</param>
+    /// <param name="msg">A #GstMessage</param>
+    /// <param name="state">the resulting state</param>
     public static void ParseState(Gst.Message msg, out Gst.Transcoder.TranscoderState state)
     {
         ArgumentNullException.ThrowIfNull(msg);

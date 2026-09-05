@@ -51,7 +51,7 @@ public unsafe partial class AudioClock : Gst.SystemClock
     /// calculated it will call @func with @user_data. When @func returns
     /// #GST_CLOCK_TIME_NONE, the clock will return the last reported time.
     /// </summary>
-    /// <param name="name">The <c>name</c> argument.</param>
+    /// <param name="name">the name of the clock</param>
     /// <param name="func">a function</param>
     /// <returns>a new #GstAudioClock casted to a #GstClock.</returns>
     public static Gst.Clock New(string name, Gst.Audio.AudioClockGetTimeFunc func)
@@ -67,7 +67,7 @@ public unsafe partial class AudioClock : Gst.SystemClock
     }
 
     /// <summary>Adjust @time with the internal offset of the audio clock.</summary>
-    /// <param name="time">The <c>time</c> argument.</param>
+    /// <param name="time">a #GstClockTime</param>
     /// <returns>@time adjusted with the internal offset.</returns>
     public Gst.ClockTime Adjust(Gst.ClockTime time)
     {
@@ -111,7 +111,7 @@ public unsafe partial class AudioClock : Gst.SystemClock
     /// future calls to internal_time will return an increasing result as required by
     /// the #GstClock object.
     /// </summary>
-    /// <param name="time">The <c>time</c> argument.</param>
+    /// <param name="time">a #GstClockTime</param>
     public void Reset(Gst.ClockTime time)
     {
         GstAudioClockReset(Handle, time.Nanoseconds);

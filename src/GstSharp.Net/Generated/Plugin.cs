@@ -97,7 +97,7 @@ public unsafe partial class Plugin : Gst.Object
     ///     @paths and/or the paths extracted from the environment variables in
     ///     @env_vars, or %NULL.
     /// </param>
-    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <param name="flags">optional flags, or #GST_PLUGIN_DEPENDENCY_FLAG_NONE</param>
     public void AddDependency(string[]? envVars, string[]? paths, string[]? names, Gst.PluginDependencyFlags flags)
     {
         using Gst.Interop.StrvScope envVarsScope = Gst.Interop.GMarshal.AllocStrv(envVars);
@@ -126,10 +126,21 @@ public unsafe partial class Plugin : Gst.Object
     /// arguments separated by predefined delimiters (see above).
     /// </para>
     /// </remarks>
-    /// <param name="envVars">The <c>envVars</c> argument.</param>
-    /// <param name="paths">The <c>paths</c> argument.</param>
-    /// <param name="names">The <c>names</c> argument.</param>
-    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <param name="envVars">
+    /// one or more environment variables (separated by ':', ';' or ','),
+    ///      or %NULL. Environment variable names may be followed by a path component
+    ///      which will be added to the content of the environment variable, e.g.
+    ///      "HOME/.mystuff/plugins:MYSTUFF_PLUGINS_PATH"
+    /// </param>
+    /// <param name="paths">
+    /// one ore more directory paths (separated by ':' or ';' or ','),
+    ///      or %NULL. Example: "/usr/lib/mystuff/plugins"
+    /// </param>
+    /// <param name="names">
+    /// one or more file names or file name suffixes (separated by commas),
+    ///      or %NULL
+    /// </param>
+    /// <param name="flags">optional flags, or #GST_PLUGIN_DEPENDENCY_FLAG_NONE</param>
     public void AddDependencySimple(string? envVars, string? paths, string? names, Gst.PluginDependencyFlags flags)
     {
         System.Span<byte> envVarsBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
@@ -143,7 +154,7 @@ public unsafe partial class Plugin : Gst.Object
     }
 
     /// <summary>The <c>gst_plugin_add_status_error</c> function.</summary>
-    /// <param name="message">The <c>message</c> argument.</param>
+    /// <param name="message">the status error message</param>
     public void AddStatusError(string message)
     {
         ArgumentNullException.ThrowIfNull(message);
@@ -154,7 +165,7 @@ public unsafe partial class Plugin : Gst.Object
     }
 
     /// <summary>The <c>gst_plugin_add_status_info</c> function.</summary>
-    /// <param name="message">The <c>message</c> argument.</param>
+    /// <param name="message">the status info message</param>
     public void AddStatusInfo(string message)
     {
         ArgumentNullException.ThrowIfNull(message);
@@ -165,7 +176,7 @@ public unsafe partial class Plugin : Gst.Object
     }
 
     /// <summary>The <c>gst_plugin_add_status_warning</c> function.</summary>
-    /// <param name="message">The <c>message</c> argument.</param>
+    /// <param name="message">the status warning message</param>
     public void AddStatusWarning(string message)
     {
         ArgumentNullException.ThrowIfNull(message);
@@ -371,7 +382,7 @@ public unsafe partial class Plugin : Gst.Object
     /// </para>
     /// </remarks>
     /// <param name="cacheData">
-    /// The <c>cacheData</c> argument.
+    /// a structure containing the data to cache
     /// The call consumes it: <paramref name="cacheData"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// </param>
@@ -394,7 +405,7 @@ public unsafe partial class Plugin : Gst.Object
     }
 
     /// <summary>Load the named plugin. Refs the plugin.</summary>
-    /// <param name="name">The <c>name</c> argument.</param>
+    /// <param name="name">name of plugin to load</param>
     /// <returns>
     /// a reference to a loaded plugin, or
     /// %NULL on error.
@@ -409,7 +420,7 @@ public unsafe partial class Plugin : Gst.Object
     }
 
     /// <summary>Loads the given plugin and refs it.  Caller needs to unref after use.</summary>
-    /// <param name="filename">The <c>filename</c> argument.</param>
+    /// <param name="filename">the plugin filename to load</param>
     /// <returns>
     /// a reference to the existing loaded GstPlugin, a
     /// reference to the newly-loaded GstPlugin, or %NULL if an error occurred.
@@ -446,19 +457,32 @@ public unsafe partial class Plugin : Gst.Object
     /// via gst_init_get_option_group()) before calling this function.
     /// </para>
     /// </remarks>
-    /// <param name="majorVersion">The <c>majorVersion</c> argument.</param>
-    /// <param name="minorVersion">The <c>minorVersion</c> argument.</param>
-    /// <param name="name">The <c>name</c> argument.</param>
-    /// <param name="description">The <c>description</c> argument.</param>
+    /// <param name="majorVersion">
+    /// the major version number of the GStreamer core that the
+    ///     plugin was compiled for, you can just use GST_VERSION_MAJOR here
+    /// </param>
+    /// <param name="minorVersion">
+    /// the minor version number of the GStreamer core that the
+    ///     plugin was compiled for, you can just use GST_VERSION_MINOR here
+    /// </param>
+    /// <param name="name">
+    /// a unique name of the plugin (ideally prefixed with an application- or
+    ///     library-specific namespace prefix in order to avoid name conflicts in
+    ///     case a similar plugin with the same name ever gets added to GStreamer)
+    /// </param>
+    /// <param name="description">description of the plugin</param>
     /// <param name="initFullFunc">
     /// pointer to the init function with user data
     ///     of this plugin.
     /// </param>
-    /// <param name="version">The <c>version</c> argument.</param>
-    /// <param name="license">The <c>license</c> argument.</param>
-    /// <param name="source">The <c>source</c> argument.</param>
-    /// <param name="package">The <c>package</c> argument.</param>
-    /// <param name="origin">The <c>origin</c> argument.</param>
+    /// <param name="version">version string of the plugin</param>
+    /// <param name="license">
+    /// effective license of plugin. Must be one of the approved licenses
+    ///     (see #GstPluginDesc above) or the plugin will not be registered.
+    /// </param>
+    /// <param name="source">source module plugin belongs to</param>
+    /// <param name="package">shipped package plugin belongs to</param>
+    /// <param name="origin">URL to provider of plugin</param>
     /// <returns>%TRUE if the plugin was registered correctly, otherwise %FALSE.</returns>
     public static bool RegisterStaticFull(int majorVersion, int minorVersion, string name, string description, Gst.PluginInitFullFunc initFullFunc, string version, string license, string source, string package, string origin)
     {

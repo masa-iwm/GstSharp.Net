@@ -52,7 +52,7 @@ public unsafe partial class UriClip : GES.SourceClip, GES.IExtractable, GES.IMet
     /// &gt; to make that operation happen **asynchronously**.
     /// </para>
     /// </remarks>
-    /// <param name="uri">The <c>uri</c> argument.</param>
+    /// <param name="uri">the URI the source should control</param>
     /// <returns>
     /// The newly created #GESUriClip, or
     /// %NULL if there was an error.
@@ -95,7 +95,7 @@ public unsafe partial class UriClip : GES.SourceClip, GES.IExtractable, GES.IMet
     }
 
     /// <summary>Sets whether the clip is a still image or not.</summary>
-    /// <param name="isImage">The <c>isImage</c> argument.</param>
+    /// <param name="isImage">%TRUE if @self is a still image, %FALSE otherwise</param>
     public void SetIsImage(bool isImage)
     {
         GesUriClipSetIsImage(Handle, isImage ? 1 : 0);
@@ -103,7 +103,7 @@ public unsafe partial class UriClip : GES.SourceClip, GES.IExtractable, GES.IMet
     }
 
     /// <summary>Sets whether the audio track of this clip is muted or not.</summary>
-    /// <param name="mute">The <c>mute</c> argument.</param>
+    /// <param name="mute">%TRUE to mute @self audio track, %FALSE to unmute it</param>
     public void SetMute(bool mute)
     {
         GesUriClipSetMute(Handle, mute ? 1 : 0);

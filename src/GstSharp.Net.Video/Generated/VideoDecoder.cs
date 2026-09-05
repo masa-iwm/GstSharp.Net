@@ -171,7 +171,7 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     }
 
     /// <summary>Removes next @n_bytes of input data and adds it to currently parsed frame.</summary>
-    /// <param name="nBytes">The <c>nBytes</c> argument.</param>
+    /// <param name="nBytes">the number of bytes to add</param>
     public void AddToFrame(int nBytes)
     {
         GstVideoDecoderAddToFrame(Handle, nBytes);
@@ -210,7 +210,7 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     /// keep references to the frame, not the buffer.
     /// </para>
     /// </remarks>
-    /// <param name="frame">The <c>frame</c> argument.</param>
+    /// <param name="frame">a #GstVideoCodecFrame</param>
     /// <returns>%GST_FLOW_OK if an output buffer could be allocated</returns>
     public Gst.FlowReturn AllocateOutputFrame(Gst.Video.VideoCodecFrame frame)
     {
@@ -225,8 +225,8 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     /// Same as #gst_video_decoder_allocate_output_frame except it allows passing
     /// #GstBufferPoolAcquireParams to the sub call gst_buffer_pool_acquire_buffer.
     /// </summary>
-    /// <param name="frame">The <c>frame</c> argument.</param>
-    /// <param name="params">The <c>@params</c> argument.</param>
+    /// <param name="frame">a #GstVideoCodecFrame</param>
+    /// <param name="params">a #GstBufferPoolAcquireParams</param>
     /// <returns>%GST_FLOW_OK if an output buffer could be allocated</returns>
     public Gst.FlowReturn AllocateOutputFrameWithParams(Gst.Video.VideoCodecFrame frame, Gst.BufferPoolAcquireParams @params)
     {
@@ -254,7 +254,7 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     /// </para>
     /// </remarks>
     /// <param name="frame">
-    /// The <c>frame</c> argument.
+    /// the #GstVideoCodecFrame to drop
     /// The call consumes it: <paramref name="frame"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// </param>
@@ -294,7 +294,7 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     /// </para>
     /// </remarks>
     /// <param name="frame">
-    /// The <c>frame</c> argument.
+    /// the #GstVideoCodecFrame
     /// The call consumes it: <paramref name="frame"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// </param>
@@ -340,7 +340,7 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     /// </para>
     /// </remarks>
     /// <param name="frame">
-    /// The <c>frame</c> argument.
+    /// a decoded #GstVideoCodecFrame
     /// The call consumes it: <paramref name="frame"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// </param>
@@ -381,7 +381,7 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     /// </para>
     /// </remarks>
     /// <param name="frame">
-    /// The <c>frame</c> argument.
+    /// the #GstVideoCodecFrame
     /// The call consumes it: <paramref name="frame"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// </param>
@@ -412,9 +412,13 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     /// <remarks>
     /// <para>Unref the @allocator after use it.</para>
     /// </remarks>
-    /// <param name="allocator">The <c>allocator</c> argument.</param>
+    /// <param name="allocator">
+    /// the #GstAllocator
+    /// used
+    /// </param>
     /// <param name="params">
-    /// The <c>@params</c> argument.
+    /// the
+    /// #GstAllocationParams of @allocator
     /// The binding allocates the storage; on return the caller owns
     /// <paramref name="params"/> and disposes it.
     /// </param>
@@ -452,7 +456,7 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     }
 
     /// <summary>Get a pending unfinished #GstVideoCodecFrame</summary>
-    /// <param name="frameNumber">The <c>frameNumber</c> argument.</param>
+    /// <param name="frameNumber">system_frame_number of a frame</param>
     /// <returns>pending unfinished #GstVideoCodecFrame identified by @frame_number.</returns>
     public Gst.Video.VideoCodecFrame? GetFrame(int frameNumber)
     {
@@ -484,7 +488,7 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     /// Queries the number of the last subframe received by
     /// the decoder baseclass in the @frame.
     /// </summary>
-    /// <param name="frame">The <c>frame</c> argument.</param>
+    /// <param name="frame">the #GstVideoCodecFrame to update</param>
     /// <returns>the current subframe index received in subframe mode, 1 otherwise.</returns>
     public uint GetInputSubframeIndex(Gst.Video.VideoCodecFrame frame)
     {
@@ -499,8 +503,14 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     /// Query the configured decoder latency. Results will be returned via
     /// @min_latency and @max_latency.
     /// </summary>
-    /// <param name="minLatency">The <c>minLatency</c> argument.</param>
-    /// <param name="maxLatency">The <c>maxLatency</c> argument.</param>
+    /// <param name="minLatency">
+    /// address of variable in which to store the
+    ///     configured minimum latency, or %NULL
+    /// </param>
+    /// <param name="maxLatency">
+    /// address of variable in which to store the
+    ///     configured mximum latency, or %NULL
+    /// </param>
     public void GetLatency(out Gst.ClockTime minLatency, out Gst.ClockTime maxLatency)
     {
         ulong minLatencyNative = default;
@@ -517,7 +527,7 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     /// In particular, a negative result means decoding in time is no longer possible
     /// and should therefore occur as soon/skippy as possible.
     /// </summary>
-    /// <param name="frame">The <c>frame</c> argument.</param>
+    /// <param name="frame">a #GstVideoCodecFrame</param>
     /// <returns>max decoding time.</returns>
     public long GetMaxDecodeTime(Gst.Video.VideoCodecFrame frame)
     {
@@ -604,7 +614,7 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     /// Queries the number of subframes in the frame processed by
     /// the decoder baseclass.
     /// </summary>
-    /// <param name="frame">The <c>frame</c> argument.</param>
+    /// <param name="frame">the #GstVideoCodecFrame to update</param>
     /// <returns>the current subframe processed received in subframe mode.</returns>
     public uint GetProcessedSubframeIndex(Gst.Video.VideoCodecFrame frame)
     {
@@ -655,7 +665,7 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     /// allowing to receive new frames from upstream elements. This method
     /// must be called in the subclass @handle_frame callback.
     /// </summary>
-    /// <param name="frame">The <c>frame</c> argument.</param>
+    /// <param name="frame">the #GstVideoCodecFrame to update</param>
     /// <returns>a #GstFlowReturn, usually GST_FLOW_OK.</returns>
     public Gst.FlowReturn HaveLastSubframe(Gst.Video.VideoCodecFrame frame)
     {
@@ -678,8 +688,11 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     /// </para>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="tags">The <c>tags</c> argument.</param>
-    /// <param name="mode">The <c>mode</c> argument.</param>
+    /// <param name="tags">
+    /// a #GstTagList to merge, or NULL to unset
+    ///     previously-set tags
+    /// </param>
+    /// <param name="mode">the #GstTagMergeMode to use, usually #GST_TAG_MERGE_REPLACE</param>
     public void MergeTags(Gst.TagList? tags, Gst.TagMergeMode mode)
     {
         GstVideoDecoderMergeTags(Handle, tags is null ? 0 : tags.Handle, (int)mode);
@@ -705,8 +718,8 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     /// restricted to resolution/format/... combinations supported by downstream
     /// elements.
     /// </summary>
-    /// <param name="caps">The <c>caps</c> argument.</param>
-    /// <param name="filter">The <c>filter</c> argument.</param>
+    /// <param name="caps">initial caps</param>
+    /// <param name="filter">filter caps</param>
     /// <returns>a #GstCaps owned by caller</returns>
     public Gst.Caps ProxyGetcaps(Gst.Caps? caps, Gst.Caps? filter)
     {
@@ -734,7 +747,7 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     /// </para>
     /// </remarks>
     /// <param name="frame">
-    /// The <c>frame</c> argument.
+    /// the #GstVideoCodecFrame to release
     /// The call consumes it: <paramref name="frame"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// </param>
@@ -786,8 +799,8 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     ///     before calling gst_video_decoder_finish_frame().
     /// </para>
     /// </remarks>
-    /// <param name="frame">The <c>frame</c> argument.</param>
-    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <param name="frame">a #GstVideoCodecFrame</param>
+    /// <param name="flags">#GstVideoDecoderRequestSyncPointFlags</param>
     public void RequestSyncPoint(Gst.Video.VideoCodecFrame frame, Gst.Video.VideoDecoderRequestSyncPointFlags flags)
     {
         ArgumentNullException.ThrowIfNull(frame);
@@ -797,7 +810,7 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     }
 
     /// <summary>Allows baseclass to perform byte to time estimated conversion.</summary>
-    /// <param name="enabled">The <c>enabled</c> argument.</param>
+    /// <param name="enabled">whether to enable byte to time conversion</param>
     public void SetEstimateRate(bool enabled)
     {
         GstVideoDecoderSetEstimateRate(Handle, enabled ? 1 : 0);
@@ -808,11 +821,11 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     /// Same as #gst_video_decoder_set_output_state() but also allows you to also set
     /// the interlacing mode.
     /// </summary>
-    /// <param name="fmt">The <c>fmt</c> argument.</param>
-    /// <param name="interlaceMode">The <c>interlaceMode</c> argument.</param>
-    /// <param name="width">The <c>width</c> argument.</param>
-    /// <param name="height">The <c>height</c> argument.</param>
-    /// <param name="reference">The <c>reference</c> argument.</param>
+    /// <param name="fmt">a #GstVideoFormat</param>
+    /// <param name="interlaceMode">A #GstVideoInterlaceMode</param>
+    /// <param name="width">The width in pixels</param>
+    /// <param name="height">The height in pixels</param>
+    /// <param name="reference">An optional reference #GstVideoCodecState</param>
     /// <returns>the newly configured output state.</returns>
     public Gst.Video.VideoCodecState? SetInterlacedOutputState(Gst.Video.VideoFormat fmt, Gst.Video.VideoInterlaceMode interlaceMode, uint width, uint height, Gst.Video.VideoCodecState? reference)
     {
@@ -828,8 +841,8 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     /// also post a LATENCY message on the bus so the pipeline can reconfigure its
     /// global latency.
     /// </summary>
-    /// <param name="minLatency">The <c>minLatency</c> argument.</param>
-    /// <param name="maxLatency">The <c>maxLatency</c> argument.</param>
+    /// <param name="minLatency">minimum latency</param>
+    /// <param name="maxLatency">maximum latency</param>
     public void SetLatency(Gst.ClockTime minLatency, Gst.ClockTime maxLatency)
     {
         GstVideoDecoderSetLatency(Handle, minLatency.Nanoseconds, maxLatency.Nanoseconds);
@@ -845,7 +858,7 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     /// <remarks>
     /// <para>The '-1' option was added in 1.4</para>
     /// </remarks>
-    /// <param name="num">The <c>num</c> argument.</param>
+    /// <param name="num">max tolerated errors</param>
     public void SetMaxErrors(int num)
     {
         GstVideoDecoderSetMaxErrors(Handle, num);
@@ -860,7 +873,7 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     /// is then expected being able to do so either by default
     /// or based on the input data.
     /// </summary>
-    /// <param name="enabled">The <c>enabled</c> argument.</param>
+    /// <param name="enabled">new state</param>
     public void SetNeedsFormat(bool enabled)
     {
         GstVideoDecoderSetNeedsFormat(Handle, enabled ? 1 : 0);
@@ -879,7 +892,7 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     /// point via the force-key-unit event.
     /// </para>
     /// </remarks>
-    /// <param name="enabled">The <c>enabled</c> argument.</param>
+    /// <param name="enabled">new state</param>
     public void SetNeedsSyncPoint(bool enabled)
     {
         GstVideoDecoderSetNeedsSyncPoint(Handle, enabled ? 1 : 0);
@@ -907,10 +920,10 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     /// from the next call to #gst_video_decoder_finish_frame().
     /// </para>
     /// </remarks>
-    /// <param name="fmt">The <c>fmt</c> argument.</param>
-    /// <param name="width">The <c>width</c> argument.</param>
-    /// <param name="height">The <c>height</c> argument.</param>
-    /// <param name="reference">The <c>reference</c> argument.</param>
+    /// <param name="fmt">a #GstVideoFormat</param>
+    /// <param name="width">The width in pixels</param>
+    /// <param name="height">The height in pixels</param>
+    /// <param name="reference">An optional reference #GstVideoCodecState</param>
     /// <returns>the newly configured output state.</returns>
     public Gst.Video.VideoCodecState? SetOutputState(Gst.Video.VideoFormat fmt, uint width, uint height, Gst.Video.VideoCodecState? reference)
     {
@@ -924,7 +937,7 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     /// Allows baseclass to consider input data as packetized or not. If the
     /// input is packetized, then the @parse method will not be called.
     /// </summary>
-    /// <param name="packetized">The <c>packetized</c> argument.</param>
+    /// <param name="packetized">whether the input data should be considered as packetized.</param>
     public void SetPacketized(bool packetized)
     {
         GstVideoDecoderSetPacketized(Handle, packetized ? 1 : 0);
@@ -952,7 +965,7 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     /// This method must be called during the decoder subclass @set_format call.
     /// </para>
     /// </remarks>
-    /// <param name="subframeMode">The <c>subframeMode</c> argument.</param>
+    /// <param name="subframeMode">whether the input data should be considered as subframes.</param>
     public void SetSubframeMode(bool subframeMode)
     {
         GstVideoDecoderSetSubframeMode(Handle, subframeMode ? 1 : 0);
@@ -970,7 +983,7 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     /// %GST_PAD_SET_ACCEPT_TEMPLATE
     /// </para>
     /// </remarks>
-    /// <param name="use">The <c>use</c> argument.</param>
+    /// <param name="use">if the default pad accept-caps query handling should be used</param>
     public void SetUseDefaultPadAcceptcaps(bool use)
     {
         GstVideoDecoderSetUseDefaultPadAcceptcaps(Handle, use ? 1 : 0);

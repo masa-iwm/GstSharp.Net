@@ -12,7 +12,7 @@ namespace Gst.Rtsp;
 public static unsafe partial class RTSPMethodExtensions
 {
     /// <summary>Convert @method to a string.</summary>
-    /// <param name="method">The <c>method</c> argument.</param>
+    /// <param name="method">a #GstRTSPMethod</param>
     /// <returns>a string representation of @method.</returns>
     public static string? AsText(Gst.Rtsp.RTSPMethod method)
     {

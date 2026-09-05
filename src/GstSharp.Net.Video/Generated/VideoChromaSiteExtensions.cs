@@ -12,7 +12,7 @@ namespace Gst.Video;
 public static unsafe partial class VideoChromaSiteExtensions
 {
     /// <summary>Convert @s to a #GstVideoChromaSite</summary>
-    /// <param name="s">The <c>s</c> argument.</param>
+    /// <param name="s">a chromasite string</param>
     /// <returns>
     /// a #GstVideoChromaSite or %GST_VIDEO_CHROMA_SITE_UNKNOWN when @s does
     /// not contain a valid chroma-site description.
@@ -27,7 +27,7 @@ public static unsafe partial class VideoChromaSiteExtensions
     }
 
     /// <summary>Converts @site to its string representation.</summary>
-    /// <param name="site">The <c>site</c> argument.</param>
+    /// <param name="site">a #GstVideoChromaSite</param>
     /// <returns>
     /// a string representation of @site
     ///          or %NULL if @site contains undefined value or

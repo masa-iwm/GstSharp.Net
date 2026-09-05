@@ -110,10 +110,10 @@ public unsafe partial struct VideoMetaTransformMatrix
     /// </para>
     /// <para>Available since GStreamer 1.28.</para>
     /// </remarks>
-    /// <param name="inInfo">The <c>inInfo</c> argument.</param>
-    /// <param name="inRectangle">The <c>inRectangle</c> argument.</param>
-    /// <param name="outInfo">The <c>outInfo</c> argument.</param>
-    /// <param name="outRectangle">The <c>outRectangle</c> argument.</param>
+    /// <param name="inInfo">The #GstVideoInfo of the input image</param>
+    /// <param name="inRectangle">the input #GstVideoRectangle</param>
+    /// <param name="outInfo">the output #GstVideoInfo</param>
+    /// <param name="outRectangle">the output #GstVideoRectangle</param>
     public void Init(Gst.Video.VideoInfo inInfo, Gst.Video.VideoRectangle inRectangle, Gst.Video.VideoInfo outInfo, Gst.Video.VideoRectangle outRectangle)
     {
         ArgumentNullException.ThrowIfNull(inInfo);
@@ -138,8 +138,8 @@ public unsafe partial struct VideoMetaTransformMatrix
     /// <remarks>
     /// <para>Available since GStreamer 1.28.</para>
     /// </remarks>
-    /// <param name="x">The <c>x</c> argument.</param>
-    /// <param name="y">The <c>y</c> argument.</param>
+    /// <param name="x">a non-NULL pointer to the X value of the coordinate</param>
+    /// <param name="y">a non-NULL pointer to the Y value of the coordinate</param>
     /// <returns>
     /// %FALSE if the point is outside of @transform.out_rectangle
     /// after the transformation has been applied
@@ -167,8 +167,8 @@ public unsafe partial struct VideoMetaTransformMatrix
     /// <remarks>
     /// <para>Available since GStreamer 1.28.</para>
     /// </remarks>
-    /// <param name="x">The <c>x</c> argument.</param>
-    /// <param name="y">The <c>y</c> argument.</param>
+    /// <param name="x">a non-NULL pointer to the X value of the coordinate</param>
+    /// <param name="y">a non-NULL pointer to the Y value of the coordinate</param>
     /// <returns>
     /// %FALSE if the point is outside of @transform.out_rectangle
     /// after the transformation has been applied
@@ -204,7 +204,7 @@ public unsafe partial struct VideoMetaTransformMatrix
     /// </para>
     /// <para>Available since GStreamer 1.28.</para>
     /// </remarks>
-    /// <param name="rect">The <c>rect</c> argument.</param>
+    /// <param name="rect">a rectangle in the coordinate of the original image</param>
     /// <returns>%FALSE is the output rectangle is not axis aligned</returns>
     public readonly bool Rectangle(ref Gst.Video.VideoRectangle rect)
     {
@@ -232,7 +232,7 @@ public unsafe partial struct VideoMetaTransformMatrix
     /// <para>Output rectangle will be clipped to fit inside @transform.out_rectangle.</para>
     /// <para>Available since GStreamer 1.28.</para>
     /// </remarks>
-    /// <param name="rect">The <c>rect</c> argument.</param>
+    /// <param name="rect">a rectangle in the coordinate of the original image</param>
     /// <returns>
     /// %FALSE if the output rectangle is not axis aligned or if
     ///  the rectangle is entirely outside of the out_rectangle.

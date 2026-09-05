@@ -238,7 +238,10 @@ public abstract unsafe partial class Clip : GES.Container, GES.IExtractable, GES
     /// clip, but this method is not intended to be used to create the core
     /// elements of the clip.
     /// </summary>
-    /// <param name="asset">The <c>asset</c> argument.</param>
+    /// <param name="asset">
+    /// An asset with #GES_TYPE_TRACK_ELEMENT as its
+    /// #GESAsset:extractable-type
+    /// </param>
     /// <returns>
     /// The newly created element, or
     /// %NULL if an error occurred.
@@ -281,8 +284,8 @@ public abstract unsafe partial class Clip : GES.Container, GES.IExtractable, GES
     /// a source to completely overlap another in the same track.
     /// </para>
     /// </remarks>
-    /// <param name="child">The <c>child</c> argument.</param>
-    /// <param name="track">The <c>track</c> argument.</param>
+    /// <param name="child">A child of @clip</param>
+    /// <param name="track">The track to add @child to</param>
     /// <returns>
     /// The element that was added to @track, either
     /// @child or a copy of child, or %NULL if the element could not be added.
@@ -319,8 +322,11 @@ public abstract unsafe partial class Clip : GES.Container, GES.IExtractable, GES
     /// would not be able to adapt itself once the effect is added.
     /// </para>
     /// </remarks>
-    /// <param name="effect">The <c>effect</c> argument.</param>
-    /// <param name="index">The <c>index</c> argument.</param>
+    /// <param name="effect">A top effect to add</param>
+    /// <param name="index">
+    /// The index to add @effect at, or -1 to add at the highest,
+    ///         see #ges_clip_get_top_effect_index for more information
+    /// </param>
     /// <returns>%TRUE if @effect was successfully added to @clip at @index.</returns>
     /// <exception cref="Gst.GLib.GException">The native call failed.</exception>
     public bool AddTopEffect(GES.BaseEffect effect, int index)
@@ -348,8 +354,14 @@ public abstract unsafe partial class Clip : GES.Container, GES.IExtractable, GES
     /// ges_clip_find_track_elements() if you wish to find all such elements.
     /// </para>
     /// </remarks>
-    /// <param name="track">The <c>track</c> argument.</param>
-    /// <param name="type">The <c>type</c> argument.</param>
+    /// <param name="track">
+    /// The track to search in, or %NULL to search in
+    /// all tracks
+    /// </param>
+    /// <param name="type">
+    /// The type of track element to search for, or `G_TYPE_NONE` to
+    /// match any type
+    /// </param>
     /// <returns>
     /// The element controlled by
     /// @clip, in @track, and of the given @type, or %NULL if no such element
@@ -386,9 +398,18 @@ public abstract unsafe partial class Clip : GES.Container, GES.IExtractable, GES
     /// elements of the given @type.
     /// </para>
     /// </remarks>
-    /// <param name="track">The <c>track</c> argument.</param>
-    /// <param name="trackType">The <c>trackType</c> argument.</param>
-    /// <param name="type">The <c>type</c> argument.</param>
+    /// <param name="track">
+    /// The track to search in, or %NULL to search in
+    /// all tracks
+    /// </param>
+    /// <param name="trackType">
+    /// The track-type of the track element to search for, or
+    /// #GES_TRACK_TYPE_UNKNOWN to match any track type
+    /// </param>
+    /// <param name="type">
+    /// The type of track element to search for, or %G_TYPE_NONE to
+    /// match any type
+    /// </param>
     /// <returns>
     /// A list of all
     /// the #GESTrackElement-s controlled by @clip, in @track or of the given
@@ -468,8 +489,11 @@ public abstract unsafe partial class Clip : GES.Container, GES.IExtractable, GES
     /// reverse.
     /// </para>
     /// </remarks>
-    /// <param name="child">The <c>child</c> argument.</param>
-    /// <param name="timelineTime">The <c>timelineTime</c> argument.</param>
+    /// <param name="child">
+    /// An #GESTrackElement:active child of @clip with a
+    /// #GESTrackElement:track
+    /// </param>
+    /// <param name="timelineTime">A time in the timeline time coordinates</param>
     /// <returns>
     /// The time in the internal coordinates of @child corresponding
     /// to @timeline_time, or #GST_CLOCK_TIME_NONE if the conversion could not
@@ -561,8 +585,11 @@ public abstract unsafe partial class Clip : GES.Container, GES.IExtractable, GES
     /// the same conversion, but using frame numbers.
     /// </para>
     /// </remarks>
-    /// <param name="child">The <c>child</c> argument.</param>
-    /// <param name="internalTime">The <c>internalTime</c> argument.</param>
+    /// <param name="child">
+    /// An #GESTrackElement:active child of @clip with a
+    /// #GESTrackElement:track
+    /// </param>
+    /// <param name="internalTime">A time in the internal time coordinates of @child</param>
     /// <returns>
     /// The time in the timeline coordinates corresponding to
     /// @internal_time, or #GST_CLOCK_TIME_NONE if the conversion could not be
@@ -596,7 +623,10 @@ public abstract unsafe partial class Clip : GES.Container, GES.IExtractable, GES
     /// with ges_clip_asset_get_frame_time().
     /// </para>
     /// </remarks>
-    /// <param name="frameNumber">The <c>frameNumber</c> argument.</param>
+    /// <param name="frameNumber">
+    /// The frame number to get the corresponding timestamp of
+    /// in the timeline coordinates
+    /// </param>
     /// <returns>
     /// The timestamp corresponding to @frame_number in the core
     /// children of @clip, in the timeline coordinates, or #GST_CLOCK_TIME_NONE
@@ -620,7 +650,7 @@ public abstract unsafe partial class Clip : GES.Container, GES.IExtractable, GES
     /// data **after** the other effect, i.e. output data will always flow from
     /// a higher index effect to a lower index effect.
     /// </summary>
-    /// <param name="effect">The <c>effect</c> argument.</param>
+    /// <param name="effect">The effect we want to get the index of</param>
     /// <returns>The index of @effect in @clip, or -1 if something went wrong.</returns>
     public int GetTopEffectIndex(GES.BaseEffect effect)
     {
@@ -691,7 +721,7 @@ public abstract unsafe partial class Clip : GES.Container, GES.IExtractable, GES
     }
 
     /// <summary>See ges_clip_move_to_layer_full(), which also gives an error.</summary>
-    /// <param name="layer">The <c>layer</c> argument.</param>
+    /// <param name="layer">The new layer</param>
     /// <returns>%TRUE if @clip was successfully moved to @layer.</returns>
     public bool MoveToLayer(GES.Layer layer)
     {
@@ -707,7 +737,7 @@ public abstract unsafe partial class Clip : GES.Container, GES.IExtractable, GES
     /// is first removed from its current layer before being added to the new
     /// layer.
     /// </summary>
-    /// <param name="layer">The <c>layer</c> argument.</param>
+    /// <param name="layer">The new layer</param>
     /// <returns>%TRUE if @clip was successfully moved to @layer.</returns>
     /// <exception cref="Gst.GLib.GException">The native call failed.</exception>
     public bool MoveToLayerFull(GES.Layer layer)
@@ -728,7 +758,7 @@ public abstract unsafe partial class Clip : GES.Container, GES.IExtractable, GES
     /// would not be able to adapt itself once the effect is removed.
     /// </para>
     /// </remarks>
-    /// <param name="effect">The <c>effect</c> argument.</param>
+    /// <param name="effect">The top effect to remove</param>
     /// <returns>%TRUE if @effect was successfully added to @clip at @index.</returns>
     /// <exception cref="Gst.GLib.GException">The native call failed.</exception>
     public bool RemoveTopEffect(GES.BaseEffect effect)
@@ -747,7 +777,7 @@ public abstract unsafe partial class Clip : GES.Container, GES.IExtractable, GES
     /// only be called by subclasses, which should be responsible for updating
     /// its value, rather than the user.
     /// </summary>
-    /// <param name="supportedformats">The <c>supportedformats</c> argument.</param>
+    /// <param name="supportedformats">The #GESTrackType-s supported by @clip</param>
     public void SetSupportedFormats(GES.TrackType supportedformats)
     {
         GesClipSetSupportedFormats(Handle, (int)supportedformats);
@@ -755,8 +785,8 @@ public abstract unsafe partial class Clip : GES.Container, GES.IExtractable, GES
     }
 
     /// <summary>See ges_clip_set_top_effect_index_full(), which also gives an error.</summary>
-    /// <param name="effect">The <c>effect</c> argument.</param>
-    /// <param name="newindex">The <c>newindex</c> argument.</param>
+    /// <param name="effect">An effect within @clip to move</param>
+    /// <param name="newindex">The index for @effect in @clip</param>
     /// <returns>%TRUE if @effect was successfully moved to @newindex.</returns>
     public bool SetTopEffectIndex(GES.BaseEffect effect, uint newindex)
     {
@@ -774,8 +804,8 @@ public abstract unsafe partial class Clip : GES.Container, GES.IExtractable, GES
     /// effects may be shifted in index accordingly to otherwise maintain the
     /// ordering.
     /// </summary>
-    /// <param name="effect">The <c>effect</c> argument.</param>
-    /// <param name="newindex">The <c>newindex</c> argument.</param>
+    /// <param name="effect">An effect within @clip to move</param>
+    /// <param name="newindex">The index for @effect in @clip</param>
     /// <returns>%TRUE if @effect was successfully moved to @newindex.</returns>
     /// <exception cref="Gst.GLib.GException">The native call failed.</exception>
     public bool SetTopEffectIndexFull(GES.BaseEffect effect, uint newindex)
@@ -803,7 +833,7 @@ public abstract unsafe partial class Clip : GES.Container, GES.IExtractable, GES
     }
 
     /// <summary>See ges_clip_split_full(), which also gives an error.</summary>
-    /// <param name="position">The <c>position</c> argument.</param>
+    /// <param name="position">The timeline position at which to perform the split</param>
     /// <returns>
     /// The newly created clip resulting
     /// from the splitting @clip, or %NULL if @clip can't be split.
@@ -849,7 +879,10 @@ public abstract unsafe partial class Clip : GES.Container, GES.IExtractable, GES
     /// but at a different #GESTimelineElement:in-point.
     /// </para>
     /// </remarks>
-    /// <param name="position">The <c>position</c> argument.</param>
+    /// <param name="position">
+    /// The timeline position at which to perform the split, between
+    /// the start and end of the clip
+    /// </param>
     /// <returns>
     /// The newly created clip resulting
     /// from the splitting @clip, or %NULL if @clip can't be split.

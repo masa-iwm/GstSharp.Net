@@ -61,12 +61,18 @@ public sealed unsafe partial class VideoOverlayRectangle : Gst.MiniObject
     /// and also many rendering libraries such as Cairo, for example.
     /// The pixel data buffer must have #GstVideoMeta set.
     /// </summary>
-    /// <param name="pixels">The <c>pixels</c> argument.</param>
-    /// <param name="renderX">The <c>renderX</c> argument.</param>
-    /// <param name="renderY">The <c>renderY</c> argument.</param>
-    /// <param name="renderWidth">The <c>renderWidth</c> argument.</param>
-    /// <param name="renderHeight">The <c>renderHeight</c> argument.</param>
-    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <param name="pixels">a #GstBuffer pointing to the pixel memory</param>
+    /// <param name="renderX">
+    /// the X co-ordinate on the video where the top-left corner of this
+    ///     overlay rectangle should be rendered to
+    /// </param>
+    /// <param name="renderY">
+    /// the Y co-ordinate on the video where the top-left corner of this
+    ///     overlay rectangle should be rendered to
+    /// </param>
+    /// <param name="renderWidth">the render width of this rectangle on the video</param>
+    /// <param name="renderHeight">the render height of this rectangle on the video</param>
+    /// <param name="flags">flags</param>
     /// <returns>
     /// a new #GstVideoOverlayRectangle. Unref with
     ///     gst_video_overlay_rectangle_unref() when no longer needed.
@@ -123,7 +129,13 @@ public sealed unsafe partial class VideoOverlayRectangle : Gst.MiniObject
     }
 
     /// <summary>The <c>gst_video_overlay_rectangle_get_pixels_argb</c> function.</summary>
-    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <param name="flags">
+    /// flags
+    ///    If a global_alpha value != 1 is set for the rectangle, the caller
+    ///    should set the #GST_VIDEO_OVERLAY_FORMAT_FLAG_GLOBAL_ALPHA flag
+    ///    if he wants to apply global-alpha himself. If the flag is not set
+    ///    global_alpha is applied internally before returning the pixel-data.
+    /// </param>
     /// <returns>
     /// a #GstBuffer holding the ARGB pixel data with
     ///    width and height of the render dimensions as per
@@ -143,7 +155,13 @@ public sealed unsafe partial class VideoOverlayRectangle : Gst.MiniObject
     }
 
     /// <summary>The <c>gst_video_overlay_rectangle_get_pixels_ayuv</c> function.</summary>
-    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <param name="flags">
+    /// flags
+    ///    If a global_alpha value != 1 is set for the rectangle, the caller
+    ///    should set the #GST_VIDEO_OVERLAY_FORMAT_FLAG_GLOBAL_ALPHA flag
+    ///    if he wants to apply global-alpha himself. If the flag is not set
+    ///    global_alpha is applied internally before returning the pixel-data.
+    /// </param>
     /// <returns>
     /// a #GstBuffer holding the AYUV pixel data with
     ///    width and height of the render dimensions as per
@@ -163,7 +181,13 @@ public sealed unsafe partial class VideoOverlayRectangle : Gst.MiniObject
     }
 
     /// <summary>The <c>gst_video_overlay_rectangle_get_pixels_raw</c> function.</summary>
-    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <param name="flags">
+    /// flags
+    ///    If a global_alpha value != 1 is set for the rectangle, the caller
+    ///    should set the #GST_VIDEO_OVERLAY_FORMAT_FLAG_GLOBAL_ALPHA flag
+    ///    if he wants to apply global-alpha himself. If the flag is not set
+    ///    global_alpha is applied internally before returning the pixel-data.
+    /// </param>
     /// <returns>
     /// a #GstBuffer holding the pixel data with
     ///    format as originally provided and specified in video meta with
@@ -189,7 +213,13 @@ public sealed unsafe partial class VideoOverlayRectangle : Gst.MiniObject
     /// need to be scaled to the render dimensions, which can be retrieved using
     /// gst_video_overlay_rectangle_get_render_rectangle().
     /// </summary>
-    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <param name="flags">
+    /// flags.
+    ///    If a global_alpha value != 1 is set for the rectangle, the caller
+    ///    should set the #GST_VIDEO_OVERLAY_FORMAT_FLAG_GLOBAL_ALPHA flag
+    ///    if he wants to apply global-alpha himself. If the flag is not set
+    ///    global_alpha is applied internally before returning the pixel-data.
+    /// </param>
     /// <returns>
     /// a #GstBuffer holding the ARGB pixel data with
     ///    #GstVideoMeta set. This function does not return a reference, the caller
@@ -212,7 +242,13 @@ public sealed unsafe partial class VideoOverlayRectangle : Gst.MiniObject
     /// need to be scaled to the render dimensions, which can be retrieved using
     /// gst_video_overlay_rectangle_get_render_rectangle().
     /// </summary>
-    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <param name="flags">
+    /// flags.
+    ///    If a global_alpha value != 1 is set for the rectangle, the caller
+    ///    should set the #GST_VIDEO_OVERLAY_FORMAT_FLAG_GLOBAL_ALPHA flag
+    ///    if he wants to apply global-alpha himself. If the flag is not set
+    ///    global_alpha is applied internally before returning the pixel-data.
+    /// </param>
     /// <returns>
     /// a #GstBuffer holding the AYUV pixel data with
     ///    #GstVideoMeta set. This function does not return a reference, the caller
@@ -235,7 +271,13 @@ public sealed unsafe partial class VideoOverlayRectangle : Gst.MiniObject
     /// need to be scaled to the render dimensions, which can be retrieved using
     /// gst_video_overlay_rectangle_get_render_rectangle().
     /// </summary>
-    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <param name="flags">
+    /// flags.
+    ///    If a global_alpha value != 1 is set for the rectangle, the caller
+    ///    should set the #GST_VIDEO_OVERLAY_FORMAT_FLAG_GLOBAL_ALPHA flag
+    ///    if he wants to apply global-alpha himself. If the flag is not set
+    ///    global_alpha is applied internally before returning the pixel-data.
+    /// </param>
     /// <returns>
     /// a #GstBuffer holding the pixel data with
     ///    #GstVideoMeta set. This function does not return a reference, the caller
@@ -256,10 +298,10 @@ public sealed unsafe partial class VideoOverlayRectangle : Gst.MiniObject
     /// Retrieves the render position and render dimension of the overlay
     /// rectangle on the video.
     /// </summary>
-    /// <param name="renderX">The <c>renderX</c> argument.</param>
-    /// <param name="renderY">The <c>renderY</c> argument.</param>
-    /// <param name="renderWidth">The <c>renderWidth</c> argument.</param>
-    /// <param name="renderHeight">The <c>renderHeight</c> argument.</param>
+    /// <param name="renderX">address where to store the X render offset</param>
+    /// <param name="renderY">address where to store the Y render offset</param>
+    /// <param name="renderWidth">address where to store the render width</param>
+    /// <param name="renderHeight">address where to store the render height</param>
     /// <returns>TRUE if valid render dimensions were retrieved.</returns>
     public bool GetRenderRectangle(out int renderX, out int renderY, out uint renderWidth, out uint renderHeight)
     {
@@ -316,7 +358,7 @@ public sealed unsafe partial class VideoOverlayRectangle : Gst.MiniObject
     /// gst_video_overlay_composition_copy().
     /// </para>
     /// </remarks>
-    /// <param name="globalAlpha">The <c>globalAlpha</c> argument.</param>
+    /// <param name="globalAlpha">Global alpha value (0 to 1.0)</param>
     public void SetGlobalAlpha(float globalAlpha)
     {
         GstVideoOverlayRectangleSetGlobalAlpha(Handle, globalAlpha);
@@ -337,10 +379,10 @@ public sealed unsafe partial class VideoOverlayRectangle : Gst.MiniObject
     /// gst_video_overlay_composition_copy().
     /// </para>
     /// </remarks>
-    /// <param name="renderX">The <c>renderX</c> argument.</param>
-    /// <param name="renderY">The <c>renderY</c> argument.</param>
-    /// <param name="renderWidth">The <c>renderWidth</c> argument.</param>
-    /// <param name="renderHeight">The <c>renderHeight</c> argument.</param>
+    /// <param name="renderX">render X position of rectangle on video</param>
+    /// <param name="renderY">render Y position of rectangle on video</param>
+    /// <param name="renderWidth">render width of rectangle</param>
+    /// <param name="renderHeight">render height of rectangle</param>
     public void SetRenderRectangle(int renderX, int renderY, uint renderWidth, uint renderHeight)
     {
         GstVideoOverlayRectangleSetRenderRectangle(Handle, renderX, renderY, renderWidth, renderHeight);

@@ -63,8 +63,8 @@ public unsafe partial struct RTCPBuffer
     /// property.
     /// </para>
     /// </remarks>
-    /// <param name="type">The <c>type</c> argument.</param>
-    /// <param name="packet">The <c>packet</c> argument.</param>
+    /// <param name="type">the #GstRTCPType of the new packet</param>
+    /// <param name="packet">pointer to new packet</param>
     /// <returns>
     /// %TRUE if the packet could be created. This function returns %FALSE
     /// if the max mtu is exceeded for the buffer.
@@ -90,7 +90,7 @@ public unsafe partial struct RTCPBuffer
     /// property.
     /// </para>
     /// </remarks>
-    /// <param name="packet">The <c>packet</c> argument.</param>
+    /// <param name="packet">a #GstRTCPPacket</param>
     /// <returns>TRUE if the packet existed in @rtcp.</returns>
     public bool GetFirstPacket(out Gst.Rtp.RTCPPacket packet)
     {
@@ -148,9 +148,9 @@ public unsafe partial struct RTCPBuffer
     /// Open @buffer for reading or writing, depending on @flags. The resulting RTCP
     /// buffer state is stored in @rtcp.
     /// </summary>
-    /// <param name="buffer">The <c>buffer</c> argument.</param>
-    /// <param name="flags">The <c>flags</c> argument.</param>
-    /// <param name="rtcp">The <c>rtcp</c> argument.</param>
+    /// <param name="buffer">a buffer with an RTCP packet</param>
+    /// <param name="flags">flags for the mapping</param>
+    /// <param name="rtcp">resulting #GstRTCPBuffer</param>
     /// <returns>The result of <c>gst_rtcp_buffer_map</c>.</returns>
     public static bool MapBuffer(Gst.Buffer buffer, Gst.MapFlags flags, out Gst.Rtp.RTCPBuffer rtcp)
     {
@@ -166,7 +166,7 @@ public unsafe partial struct RTCPBuffer
     /// Create a new buffer for constructing RTCP packets. The packet will have a
     /// maximum size of @mtu.
     /// </summary>
-    /// <param name="mtu">The <c>mtu</c> argument.</param>
+    /// <param name="mtu">the maximum mtu size.</param>
     /// <returns>A newly allocated buffer.</returns>
     public static Gst.Buffer New(uint mtu)
     {
@@ -213,7 +213,7 @@ public unsafe partial struct RTCPBuffer
     /// Check if the data pointed to by @buffer is a valid RTCP packet using
     /// gst_rtcp_buffer_validate_data().
     /// </summary>
-    /// <param name="buffer">The <c>buffer</c> argument.</param>
+    /// <param name="buffer">the buffer to validate</param>
     /// <returns>TRUE if @buffer is a valid RTCP packet.</returns>
     public static bool Validate(Gst.Buffer buffer)
     {
@@ -267,7 +267,7 @@ public unsafe partial struct RTCPBuffer
     /// Check if the data pointed to by @buffer is a valid RTCP packet using
     /// gst_rtcp_buffer_validate_reduced().
     /// </summary>
-    /// <param name="buffer">The <c>buffer</c> argument.</param>
+    /// <param name="buffer">the buffer to validate</param>
     /// <returns>TRUE if @buffer is a valid RTCP packet.</returns>
     public static bool ValidateReduced(Gst.Buffer buffer)
     {

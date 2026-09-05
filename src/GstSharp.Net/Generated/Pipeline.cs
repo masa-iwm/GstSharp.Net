@@ -100,7 +100,7 @@ public unsafe partial class Pipeline : Gst.Bin, Gst.IChildProxy
     }
 
     /// <summary>Create a new pipeline with the given name.</summary>
-    /// <param name="name">The <c>name</c> argument.</param>
+    /// <param name="name">name of new pipeline</param>
     /// <returns>newly created GstPipeline</returns>
     public static new Gst.Pipeline New(string? name)
     {
@@ -234,7 +234,10 @@ public unsafe partial class Pipeline : Gst.Bin, Gst.IChildProxy
     /// </para>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="autoFlush">The <c>autoFlush</c> argument.</param>
+    /// <param name="autoFlush">
+    /// whether or not to automatically flush the bus when
+    /// the pipeline goes from READY to NULL state
+    /// </param>
     public void SetAutoFlushBus(bool autoFlush)
     {
         GstPipelineSetAutoFlushBus(Handle, autoFlush ? 1 : 0);
@@ -255,7 +258,7 @@ public unsafe partial class Pipeline : Gst.Bin, Gst.IChildProxy
     /// </para>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="delay">The <c>delay</c> argument.</param>
+    /// <param name="delay">the delay</param>
     public void SetDelay(Gst.ClockTime delay)
     {
         GstPipelineSetDelay(Handle, delay.Nanoseconds);
@@ -274,7 +277,7 @@ public unsafe partial class Pipeline : Gst.Bin, Gst.IChildProxy
     /// the LATENCY query, will most likely cause the pipeline to fail.
     /// </para>
     /// </remarks>
-    /// <param name="latency">The <c>latency</c> argument.</param>
+    /// <param name="latency">latency to configure</param>
     public void SetLatency(Gst.ClockTime latency)
     {
         GstPipelineSetLatency(Handle, latency.Nanoseconds);
@@ -293,7 +296,7 @@ public unsafe partial class Pipeline : Gst.Bin, Gst.IChildProxy
     /// </para>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="clock">The <c>clock</c> argument.</param>
+    /// <param name="clock">the clock to use</param>
     public void UseClock(Gst.Clock? clock)
     {
         GstPipelineUseClock(Handle, clock is null ? 0 : clock.Handle);

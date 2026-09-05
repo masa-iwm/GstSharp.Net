@@ -60,7 +60,7 @@ public unsafe partial class RTSPClient : Gst.GObject.Object
     /// configured and the client is ready to start.
     /// </para>
     /// </remarks>
-    /// <param name="context">The <c>context</c> argument.</param>
+    /// <param name="context">a #GMainContext</param>
     /// <returns>the ID (greater than 0) for the source within the GMainContext.</returns>
     public uint Attach(Gst.GLib.MainContext? context)
     {
@@ -157,7 +157,7 @@ public unsafe partial class RTSPClient : Gst.GObject.Object
     }
 
     /// <summary>Let the client handle @message.</summary>
-    /// <param name="message">The <c>message</c> argument.</param>
+    /// <param name="message">an #GstRTSPMessage</param>
     /// <returns>a #GstRTSPResult.</returns>
     public Gst.Rtsp.RTSPResult HandleMessage(Gst.Rtsp.RTSPMessage message)
     {
@@ -172,8 +172,11 @@ public unsafe partial class RTSPClient : Gst.GObject.Object
     /// Send a message message to the remote end. @message must be a
     /// #GST_RTSP_MESSAGE_REQUEST or a #GST_RTSP_MESSAGE_RESPONSE.
     /// </summary>
-    /// <param name="session">The <c>session</c> argument.</param>
-    /// <param name="message">The <c>message</c> argument.</param>
+    /// <param name="session">
+    /// a #GstRTSPSession to send
+    ///   the message to or %NULL
+    /// </param>
+    /// <param name="message">The #GstRTSPMessage to send</param>
     /// <returns>The result of <c>gst_rtsp_client_send_message</c>.</returns>
     public Gst.Rtsp.RTSPResult SendMessage(Gst.RtspServer.RTSPSession? session, Gst.Rtsp.RTSPMessage message)
     {
@@ -236,7 +239,7 @@ public unsafe partial class RTSPClient : Gst.GObject.Object
     }
 
     /// <summary>configure @auth to be used as the authentication manager of @client.</summary>
-    /// <param name="auth">The <c>auth</c> argument.</param>
+    /// <param name="auth">a #GstRTSPAuth</param>
     public void SetAuth(Gst.RtspServer.RTSPAuth? auth)
     {
         GstRtspClientSetAuth(Handle, auth is null ? 0 : auth.Handle);
@@ -251,7 +254,7 @@ public unsafe partial class RTSPClient : Gst.GObject.Object
     /// limit with response status 413 Request Entity Too Large
     /// </para>
     /// </remarks>
-    /// <param name="limit">The <c>limit</c> argument.</param>
+    /// <param name="limit">Content-Length limit</param>
     public void SetContentLengthLimit(uint limit)
     {
         GstRtspClientSetContentLengthLimit(Handle, limit);
@@ -263,7 +266,7 @@ public unsafe partial class RTSPClient : Gst.GObject.Object
     /// to media streams. These mount points are usually inherited from the server that
     /// created the client but can be overriden later.
     /// </summary>
-    /// <param name="mounts">The <c>mounts</c> argument.</param>
+    /// <param name="mounts">a #GstRTSPMountPoints</param>
     public void SetMountPoints(Gst.RtspServer.RTSPMountPoints? mounts)
     {
         GstRtspClientSetMountPoints(Handle, mounts is null ? 0 : mounts.Handle);
@@ -276,7 +279,7 @@ public unsafe partial class RTSPClient : Gst.GObject.Object
     /// or allocate sessions. the sessionpool is usually inherited from the server
     /// that created the client but can be overridden later.
     /// </summary>
-    /// <param name="pool">The <c>pool</c> argument.</param>
+    /// <param name="pool">a #GstRTSPSessionPool</param>
     public void SetSessionPool(Gst.RtspServer.RTSPSessionPool? pool)
     {
         GstRtspClientSetSessionPool(Handle, pool is null ? 0 : pool.Handle);
@@ -285,7 +288,7 @@ public unsafe partial class RTSPClient : Gst.GObject.Object
     }
 
     /// <summary>configure @pool to be used as the thread pool of @client.</summary>
-    /// <param name="pool">The <c>pool</c> argument.</param>
+    /// <param name="pool">a #GstRTSPThreadPool</param>
     public void SetThreadPool(Gst.RtspServer.RTSPThreadPool? pool)
     {
         GstRtspClientSetThreadPool(Handle, pool is null ? 0 : pool.Handle);

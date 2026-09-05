@@ -19,7 +19,7 @@ public static unsafe partial class PbutilsGlobal
     /// @caps must be audio/mpeg caps with an "mpegversion" field of either 2 or 4.
     /// If mpegversion is 4, the "base-profile" field is also set in @caps.
     /// </summary>
-    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <param name="caps">the #GstCaps to which level and profile fields are to be added</param>
     /// <param name="audioConfig">
     /// a pointer to the AudioSpecificConfig
     ///                as specified in the Elementary Stream Descriptor (esds)
@@ -54,7 +54,7 @@ public static unsafe partial class PbutilsGlobal
     }
 
     /// <summary>Translates the sample rate to the index corresponding to it in AAC spec.</summary>
-    /// <param name="rate">The <c>rate</c> argument.</param>
+    /// <param name="rate">Sample rate</param>
     /// <returns>
     /// The AAC index for this sample rate, -1 if the rate is not a
     /// valid AAC sample rate.
@@ -148,7 +148,10 @@ public static unsafe partial class PbutilsGlobal
     /// Translates the sample rate index found in AAC headers to the actual sample
     /// rate.
     /// </summary>
-    /// <param name="srIdx">The <c>srIdx</c> argument.</param>
+    /// <param name="srIdx">
+    /// Sample rate index as from the AudioSpecificConfig (MPEG-4
+    ///          container) or ADTS frame header
+    /// </param>
     /// <returns>The sample rate if @sr_idx is valid, 0 otherwise.</returns>
     public static uint CodecUtilsAacGetSampleRateFromIndex(uint srIdx)
     {
@@ -160,7 +163,7 @@ public static unsafe partial class PbutilsGlobal
     /// <remarks>
     /// <para>Available since GStreamer 1.26.</para>
     /// </remarks>
-    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <param name="caps">a video/x-av1 #GstCaps</param>
     /// <returns>
     /// The AV1 Codec Configuration Record, or
     /// %NULL if there was an error.
@@ -177,7 +180,7 @@ public static unsafe partial class PbutilsGlobal
     /// <remarks>
     /// <para>Available since GStreamer 1.26.</para>
     /// </remarks>
-    /// <param name="av1c">The <c>av1c</c> argument.</param>
+    /// <param name="av1c">a #GstBuffer containing a AV1CodecConfigurationRecord</param>
     /// <returns>
     /// The parsed AV1 caps, or %NULL if there
     /// is an error
@@ -194,7 +197,7 @@ public static unsafe partial class PbutilsGlobal
     /// <remarks>
     /// <para>Available since GStreamer 1.26.</para>
     /// </remarks>
-    /// <param name="seqLevelIdx">The <c>seqLevelIdx</c> argument.</param>
+    /// <param name="seqLevelIdx">A seq_level_idx</param>
     /// <returns>the level string or %NULL if the seq_level_idx is unknown</returns>
     public static string? CodecUtilsAv1GetLevel(byte seqLevelIdx)
     {
@@ -206,7 +209,7 @@ public static unsafe partial class PbutilsGlobal
     /// <remarks>
     /// <para>Available since GStreamer 1.26.</para>
     /// </remarks>
-    /// <param name="level">The <c>level</c> argument.</param>
+    /// <param name="level">A level string from caps</param>
     /// <returns>the seq_level_idx or 31 (max-level) if the level is unknown</returns>
     public static byte CodecUtilsAv1GetSeqLevelIdx(string level)
     {
@@ -224,7 +227,7 @@ public static unsafe partial class PbutilsGlobal
     /// <remarks>
     /// <para>Registered codecs can be found at http://mp4ra.org/#/codecs</para>
     /// </remarks>
-    /// <param name="codecsField">The <c>codecsField</c> argument.</param>
+    /// <param name="codecsField">A mime codec string field</param>
     /// <returns>The corresponding #GstCaps or %NULL</returns>
     public static Gst.Caps? CodecUtilsCapsFromMimeCodec(string codecsField)
     {
@@ -243,7 +246,7 @@ public static unsafe partial class PbutilsGlobal
     /// </para>
     /// <para>Registered codecs can be found at http://mp4ra.org/#/codecs</para>
     /// </remarks>
-    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <param name="caps">A #GstCaps to convert to mime codec</param>
     /// <returns>a RFC 6381 compatible codec string or %NULL</returns>
     public static string? CodecUtilsCapsGetMimeCodec(Gst.Caps caps)
     {
@@ -258,7 +261,7 @@ public static unsafe partial class PbutilsGlobal
     /// gst_codec_utils_h264_get_level() and gst_codec_utils_h264_get_profile()
     /// for more details on the parameters.
     /// </summary>
-    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <param name="caps">the #GstCaps to which the level and profile are to be added</param>
     /// <param name="sps">Pointer to the sequence parameter set for the stream.</param>
     /// <returns>%TRUE if the level and profile could be set, %FALSE otherwise.</returns>
     public static bool CodecUtilsH264CapsSetLevelAndProfile(Gst.Caps caps, System.ReadOnlySpan<byte> sps)
@@ -289,7 +292,7 @@ public static unsafe partial class PbutilsGlobal
     }
 
     /// <summary>Transform a level string from the caps into the level_idc</summary>
-    /// <param name="level">The <c>level</c> argument.</param>
+    /// <param name="level">A level string from caps</param>
     /// <returns>the level_idc or 0 if the level is unknown</returns>
     public static byte CodecUtilsH264GetLevelIdc(string level)
     {
@@ -343,9 +346,9 @@ public static unsafe partial class PbutilsGlobal
     /// </para>
     /// </remarks>
     /// <param name="codecData">H264 AVCC extradata</param>
-    /// <param name="profile">The <c>profile</c> argument.</param>
-    /// <param name="flags">The <c>flags</c> argument.</param>
-    /// <param name="level">The <c>level</c> argument.</param>
+    /// <param name="profile">return location for h264 profile_idc or %NULL</param>
+    /// <param name="flags">return location for h264 constraint set flags or %NULL</param>
+    /// <param name="level">return location h264 level_idc or %NULL</param>
     /// <returns>%TRUE on success, %FALSE on failure</returns>
     public static bool CodecUtilsH264GetProfileFlagsLevel(System.ReadOnlySpan<byte> codecData, out byte profile, out byte flags, out byte level)
     {
@@ -368,7 +371,7 @@ public static unsafe partial class PbutilsGlobal
     /// gst_codec_utils_h265_get_tier() and gst_codec_utils_h265_get_profile()
     /// for more details on the parameters.
     /// </summary>
-    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <param name="caps">the #GstCaps to which the level, tier and profile are to be added</param>
     /// <param name="profileTierLevel">
     /// Pointer to the profile_tier_level
     ///   struct
@@ -405,7 +408,7 @@ public static unsafe partial class PbutilsGlobal
     }
 
     /// <summary>Transform a level string from the caps into the level_idc</summary>
-    /// <param name="level">The <c>level</c> argument.</param>
+    /// <param name="level">A level string from caps</param>
     /// <returns>the level_idc or 0 if the level is unknown</returns>
     public static byte CodecUtilsH265GetLevelIdc(string level)
     {
@@ -479,7 +482,7 @@ public static unsafe partial class PbutilsGlobal
     /// <remarks>
     /// <para>Available since GStreamer 1.26.</para>
     /// </remarks>
-    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <param name="caps">the #GstCaps to which the level, tier and profile are to be added</param>
     /// <param name="decoderConfiguration">Pointer to the VvcDecoderConfigurationRecord struct as defined in ISO/IEC 14496-15</param>
     /// <returns>%TRUE if the level, tier, profile could be set, %FALSE otherwise.</returns>
     public static bool CodecUtilsH266CapsSetLevelTierAndProfile(Gst.Caps caps, System.ReadOnlySpan<byte> decoderConfiguration)
@@ -515,7 +518,7 @@ public static unsafe partial class PbutilsGlobal
     /// <remarks>
     /// <para>Available since GStreamer 1.26.</para>
     /// </remarks>
-    /// <param name="level">The <c>level</c> argument.</param>
+    /// <param name="level">A level string from caps</param>
     /// <returns>the level_idc or 0 if the level is unknown</returns>
     public static byte CodecUtilsH266GetLevelIdc(string level)
     {
@@ -568,7 +571,7 @@ public static unsafe partial class PbutilsGlobal
     /// gst_codec_utils_mpeg4video_get_profile() for more details on the
     /// parameters.
     /// </summary>
-    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <param name="caps">the #GstCaps to which the level and profile are to be added</param>
     /// <param name="visObjSeq">
     /// Pointer to the visual object
     ///   sequence for the stream.
@@ -626,10 +629,10 @@ public static unsafe partial class PbutilsGlobal
     }
 
     /// <summary>Creates Opus caps from the given parameters.</summary>
-    /// <param name="rate">The <c>rate</c> argument.</param>
-    /// <param name="channelMappingFamily">The <c>channelMappingFamily</c> argument.</param>
-    /// <param name="streamCount">The <c>streamCount</c> argument.</param>
-    /// <param name="coupledCount">The <c>coupledCount</c> argument.</param>
+    /// <param name="rate">the sample rate</param>
+    /// <param name="channelMappingFamily">the channel mapping family</param>
+    /// <param name="streamCount">the number of independent streams</param>
+    /// <param name="coupledCount">the number of stereo streams</param>
     /// <param name="channelMapping">
     /// the mapping between the streams
     /// Its number of elements is passed to the C function as the <c>channels</c> argument.
@@ -660,8 +663,8 @@ public static unsafe partial class PbutilsGlobal
     /// Creates Opus caps from the given OpusHead @header and comment header
     /// @comments.
     /// </summary>
-    /// <param name="header">The <c>header</c> argument.</param>
-    /// <param name="comments">The <c>comments</c> argument.</param>
+    /// <param name="header">OpusHead header</param>
+    /// <param name="comments">Comment header or NULL</param>
     /// <returns>The #GstCaps.</returns>
     public static Gst.Caps? CodecUtilsOpusCreateCapsFromHeader(Gst.Buffer header, Gst.Buffer? comments)
     {
@@ -673,16 +676,16 @@ public static unsafe partial class PbutilsGlobal
     }
 
     /// <summary>Creates OpusHead header from the given parameters.</summary>
-    /// <param name="rate">The <c>rate</c> argument.</param>
-    /// <param name="channelMappingFamily">The <c>channelMappingFamily</c> argument.</param>
-    /// <param name="streamCount">The <c>streamCount</c> argument.</param>
-    /// <param name="coupledCount">The <c>coupledCount</c> argument.</param>
+    /// <param name="rate">the sample rate</param>
+    /// <param name="channelMappingFamily">the channel mapping family</param>
+    /// <param name="streamCount">the number of independent streams</param>
+    /// <param name="coupledCount">the number of stereo streams</param>
     /// <param name="channelMapping">
     /// the mapping between the streams
     /// Its number of elements is passed to the C function as the <c>channels</c> argument.
     /// </param>
-    /// <param name="preSkip">The <c>preSkip</c> argument.</param>
-    /// <param name="outputGain">The <c>outputGain</c> argument.</param>
+    /// <param name="preSkip">Pre-skip in 48kHz samples or 0</param>
+    /// <param name="outputGain">Output gain or 0</param>
     /// <returns>The #GstBuffer containing the OpusHead.</returns>
     /// <exception cref="ArgumentException">
     /// <paramref name="channelMapping"/> has more than 255 elements.
@@ -703,12 +706,12 @@ public static unsafe partial class PbutilsGlobal
     }
 
     /// <summary>Parses Opus caps and fills the different fields with defaults if possible.</summary>
-    /// <param name="caps">The <c>caps</c> argument.</param>
-    /// <param name="rate">The <c>rate</c> argument.</param>
-    /// <param name="channels">The <c>channels</c> argument.</param>
-    /// <param name="channelMappingFamily">The <c>channelMappingFamily</c> argument.</param>
-    /// <param name="streamCount">The <c>streamCount</c> argument.</param>
-    /// <param name="coupledCount">The <c>coupledCount</c> argument.</param>
+    /// <param name="caps">the #GstCaps to parse the data from</param>
+    /// <param name="rate">the sample rate</param>
+    /// <param name="channels">the number of channels</param>
+    /// <param name="channelMappingFamily">the channel mapping family</param>
+    /// <param name="streamCount">the number of independent streams</param>
+    /// <param name="coupledCount">the number of stereo streams</param>
     /// <param name="channelMapping">the mapping between the streams</param>
     /// <returns>%TRUE if parsing was successful, %FALSE otherwise.</returns>
     public static bool CodecUtilsOpusParseCaps(Gst.Caps caps, out uint rate, out byte channels, out byte channelMappingFamily, out byte streamCount, out byte coupledCount, out Gst.Pbutils.PbutilsGlobal.ChannelMappingArray channelMapping)
@@ -732,15 +735,15 @@ public static unsafe partial class PbutilsGlobal
     }
 
     /// <summary>Parses the OpusHead header.</summary>
-    /// <param name="header">The <c>header</c> argument.</param>
-    /// <param name="rate">The <c>rate</c> argument.</param>
-    /// <param name="channels">The <c>channels</c> argument.</param>
-    /// <param name="channelMappingFamily">The <c>channelMappingFamily</c> argument.</param>
-    /// <param name="streamCount">The <c>streamCount</c> argument.</param>
-    /// <param name="coupledCount">The <c>coupledCount</c> argument.</param>
+    /// <param name="header">the OpusHead #GstBuffer</param>
+    /// <param name="rate">the sample rate</param>
+    /// <param name="channels">the number of channels</param>
+    /// <param name="channelMappingFamily">the channel mapping family</param>
+    /// <param name="streamCount">the number of independent streams</param>
+    /// <param name="coupledCount">the number of stereo streams</param>
     /// <param name="channelMapping">the mapping between the streams</param>
-    /// <param name="preSkip">The <c>preSkip</c> argument.</param>
-    /// <param name="outputGain">The <c>outputGain</c> argument.</param>
+    /// <param name="preSkip">Pre-skip in 48kHz samples or 0</param>
+    /// <param name="outputGain">Output gain or 0</param>
     /// <returns>%TRUE if parsing was successful, %FALSE otherwise.</returns>
     public static bool CodecUtilsOpusParseHeader(Gst.Buffer header, out uint rate, out byte channels, out byte channelMappingFamily, out byte streamCount, out byte coupledCount, out Gst.Pbutils.PbutilsGlobal.ChannelMappingArray channelMapping, out ushort preSkip, out short outputGain)
     {
@@ -770,7 +773,10 @@ public static unsafe partial class PbutilsGlobal
     /// List all available #GstEncodingTarget for the specified category, or all categories
     /// if @categoryname is %NULL.
     /// </summary>
-    /// <param name="categoryname">The <c>categoryname</c> argument.</param>
+    /// <param name="categoryname">
+    /// The category, for ex: #GST_ENCODING_CATEGORY_DEVICE.
+    /// Can be %NULL.
+    /// </param>
     /// <returns>The list of #GstEncodingTarget</returns>
     public static System.Collections.Generic.IReadOnlyList<Gst.Pbutils.EncodingTarget> EncodingListAllTargets(string? categoryname)
     {
@@ -852,7 +858,7 @@ public static unsafe partial class PbutilsGlobal
     /// NULL-terminated array
     ///     of installer string details
     /// </param>
-    /// <param name="ctx">The <c>ctx</c> argument.</param>
+    /// <param name="ctx">a #GstInstallPluginsContext, or NULL</param>
     /// <returns>the result of the installation.</returns>
     public static Gst.Pbutils.InstallPluginsReturn InstallPluginsSync(string[] details, Gst.Pbutils.InstallPluginsContext? ctx)
     {
@@ -864,7 +870,7 @@ public static unsafe partial class PbutilsGlobal
     }
 
     /// <summary>Checks whether @msg is a missing plugins message.</summary>
-    /// <param name="msg">The <c>msg</c> argument.</param>
+    /// <param name="msg">a #GstMessage</param>
     /// <returns>%TRUE if @msg is a missing-plugins message, otherwise %FALSE.</returns>
     public static bool IsMissingPluginMessage(Gst.Message msg)
     {
@@ -887,7 +893,7 @@ public static unsafe partial class PbutilsGlobal
     /// missing.
     /// </para>
     /// </remarks>
-    /// <param name="decodeCaps">The <c>decodeCaps</c> argument.</param>
+    /// <param name="decodeCaps">the (fixed) caps for which a decoder element is needed</param>
     /// <returns>
     /// a newly-allocated detail string. Free string
     ///          with g_free() when not needed any longer.
@@ -906,8 +912,8 @@ public static unsafe partial class PbutilsGlobal
     /// that a decoder element for a particular set of (fixed) caps is missing.
     /// This function is mainly for use in plugins.
     /// </summary>
-    /// <param name="element">The <c>element</c> argument.</param>
-    /// <param name="decodeCaps">The <c>decodeCaps</c> argument.</param>
+    /// <param name="element">the #GstElement posting the message</param>
+    /// <param name="decodeCaps">the (fixed) caps for which a decoder element is needed</param>
     /// <returns>a new #GstMessage</returns>
     public static Gst.Message MissingDecoderMessageNew(Gst.Element element, Gst.Caps decodeCaps)
     {
@@ -933,7 +939,10 @@ public static unsafe partial class PbutilsGlobal
     /// missing.
     /// </para>
     /// </remarks>
-    /// <param name="factoryName">The <c>factoryName</c> argument.</param>
+    /// <param name="factoryName">
+    /// the name of the missing element (element factory),
+    ///            e.g. "videoscale" or "cdparanoiasrc"
+    /// </param>
     /// <returns>
     /// a newly-allocated detail string. Free string
     ///          with g_free() when not needed any longer.
@@ -953,8 +962,11 @@ public static unsafe partial class PbutilsGlobal
     /// that a certain required element is missing. This function is mainly for
     /// use in plugins.
     /// </summary>
-    /// <param name="element">The <c>element</c> argument.</param>
-    /// <param name="factoryName">The <c>factoryName</c> argument.</param>
+    /// <param name="element">the #GstElement posting the message</param>
+    /// <param name="factoryName">
+    /// the name of the missing element (element factory),
+    ///            e.g. "videoscale" or "cdparanoiasrc"
+    /// </param>
     /// <returns>a new #GstMessage</returns>
     public static Gst.Message MissingElementMessageNew(Gst.Element element, string factoryName)
     {
@@ -981,7 +993,7 @@ public static unsafe partial class PbutilsGlobal
     /// missing.
     /// </para>
     /// </remarks>
-    /// <param name="encodeCaps">The <c>encodeCaps</c> argument.</param>
+    /// <param name="encodeCaps">the (fixed) caps for which an encoder element is needed</param>
     /// <returns>
     /// a newly-allocated detail string. Free string
     ///          with g_free() when not needed any longer.
@@ -1000,8 +1012,8 @@ public static unsafe partial class PbutilsGlobal
     /// that an encoder element for a particular set of (fixed) caps is missing.
     /// This function is mainly for use in plugins.
     /// </summary>
-    /// <param name="element">The <c>element</c> argument.</param>
-    /// <param name="encodeCaps">The <c>encodeCaps</c> argument.</param>
+    /// <param name="element">the #GstElement posting the message</param>
+    /// <param name="encodeCaps">the (fixed) caps for which an encoder element is needed</param>
     /// <returns>a new #GstMessage</returns>
     public static Gst.Message MissingEncoderMessageNew(Gst.Element element, Gst.Caps encodeCaps)
     {
@@ -1026,7 +1038,7 @@ public static unsafe partial class PbutilsGlobal
     /// message
     /// </para>
     /// </remarks>
-    /// <param name="msg">The <c>msg</c> argument.</param>
+    /// <param name="msg">a missing-plugin #GstMessage of type #GST_MESSAGE_ELEMENT</param>
     /// <returns>
     /// a newly-allocated description string. Free
     ///          string with g_free() when not needed any longer.
@@ -1051,7 +1063,7 @@ public static unsafe partial class PbutilsGlobal
     /// installation mechanisms using one of the two above-mentioned functions.
     /// </para>
     /// </remarks>
-    /// <param name="msg">The <c>msg</c> argument.</param>
+    /// <param name="msg">a missing-plugin #GstMessage of type #GST_MESSAGE_ELEMENT</param>
     /// <returns>
     /// a newly-allocated detail string, or NULL on error. Free string
     ///          with g_free() when not needed any longer.
@@ -1068,7 +1080,7 @@ public static unsafe partial class PbutilsGlobal
     /// <remarks>
     /// <para>Available since GStreamer 1.26.</para>
     /// </remarks>
-    /// <param name="msg">The <c>msg</c> argument.</param>
+    /// <param name="msg">A missing-plugin #GstMessage of type #GST_MESSAGE_ELEMENT</param>
     /// <returns>The stream-id or %NULL if none is specified.</returns>
     public static string? MissingPluginMessageGetStreamId(Gst.Message msg)
     {
@@ -1082,8 +1094,8 @@ public static unsafe partial class PbutilsGlobal
     /// <remarks>
     /// <para>Available since GStreamer 1.26.</para>
     /// </remarks>
-    /// <param name="msg">The <c>msg</c> argument.</param>
-    /// <param name="streamId">The <c>streamId</c> argument.</param>
+    /// <param name="msg">A missing-plugin #GstMessage of type #GST_MESSAGE_ELEMENT</param>
+    /// <param name="streamId">The stream id for which an element is missing</param>
     public static void MissingPluginMessageSetStreamId(Gst.Message msg, string streamId)
     {
         ArgumentNullException.ThrowIfNull(msg);
@@ -1107,7 +1119,10 @@ public static unsafe partial class PbutilsGlobal
     /// missing.
     /// </para>
     /// </remarks>
-    /// <param name="protocol">The <c>protocol</c> argument.</param>
+    /// <param name="protocol">
+    /// the URI protocol the missing source needs to implement,
+    ///            e.g. "http" or "mms"
+    /// </param>
     /// <returns>
     /// a newly-allocated detail string. Free string
     ///          with g_free() when not needed any longer.
@@ -1127,8 +1142,11 @@ public static unsafe partial class PbutilsGlobal
     /// that a sink element for a particular URI protocol is missing. This
     /// function is mainly for use in plugins.
     /// </summary>
-    /// <param name="element">The <c>element</c> argument.</param>
-    /// <param name="protocol">The <c>protocol</c> argument.</param>
+    /// <param name="element">the #GstElement posting the message</param>
+    /// <param name="protocol">
+    /// the URI protocol the missing sink needs to implement,
+    ///            e.g. "http" or "smb"
+    /// </param>
     /// <returns>a new #GstMessage</returns>
     public static Gst.Message MissingUriSinkMessageNew(Gst.Element element, string protocol)
     {
@@ -1155,7 +1173,10 @@ public static unsafe partial class PbutilsGlobal
     /// missing.
     /// </para>
     /// </remarks>
-    /// <param name="protocol">The <c>protocol</c> argument.</param>
+    /// <param name="protocol">
+    /// the URI protocol the missing source needs to implement,
+    ///            e.g. "http" or "mms"
+    /// </param>
     /// <returns>
     /// a newly-allocated detail string. Free string
     ///          with g_free() when not needed any longer.
@@ -1175,8 +1196,11 @@ public static unsafe partial class PbutilsGlobal
     /// that a source element for a particular URI protocol is missing. This
     /// function is mainly for use in plugins.
     /// </summary>
-    /// <param name="element">The <c>element</c> argument.</param>
-    /// <param name="protocol">The <c>protocol</c> argument.</param>
+    /// <param name="element">the #GstElement posting the message</param>
+    /// <param name="protocol">
+    /// the URI protocol the missing source needs to implement,
+    ///            e.g. "http" or "mms"
+    /// </param>
     /// <returns>a new #GstMessage</returns>
     public static Gst.Message MissingUriSourceMessageNew(Gst.Element element, string protocol)
     {
@@ -1191,9 +1215,13 @@ public static unsafe partial class PbutilsGlobal
     }
 
     /// <summary>Adds a codec tag describing the format specified by @caps to @taglist.</summary>
-    /// <param name="taglist">The <c>taglist</c> argument.</param>
-    /// <param name="codecTag">The <c>codecTag</c> argument.</param>
-    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <param name="taglist">a #GstTagList</param>
+    /// <param name="codecTag">
+    /// a GStreamer codec tag such as #GST_TAG_AUDIO_CODEC,
+    ///             #GST_TAG_VIDEO_CODEC or #GST_TAG_CODEC. If none is specified,
+    ///             the function will attempt to detect the appropriate category.
+    /// </param>
+    /// <param name="caps">the (fixed) #GstCaps for which a codec tag should be added.</param>
     /// <returns>TRUE if a codec tag was added, FALSE otherwise.</returns>
     public static bool PbUtilsAddCodecDescriptionToTagList(Gst.TagList taglist, string? codecTag, Gst.Caps caps)
     {
@@ -1211,7 +1239,7 @@ public static unsafe partial class PbutilsGlobal
     /// Returns flags that describe the format of the caps if known. No flags are
     /// set for unknown caps.
     /// </summary>
-    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <param name="caps">the (fixed) #GstCaps for which flags are requested</param>
     /// <returns>
     /// #GstPbUtilsCapsDescriptionFlags that describe @caps, or no flags
     ///          if the caps are unknown.
@@ -1235,7 +1263,7 @@ public static unsafe partial class PbutilsGlobal
     /// gst_pb_utils_add_codec_description_to_tag_list().
     /// </para>
     /// </remarks>
-    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <param name="caps">the (fixed) #GstCaps for which an format description is needed</param>
     /// <returns>
     /// a newly-allocated description string, or NULL on error. Free
     ///          string with g_free() when not needed any longer.
@@ -1259,7 +1287,7 @@ public static unsafe partial class PbutilsGlobal
     /// a missing feature from a missing-plugin message.
     /// </para>
     /// </remarks>
-    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <param name="caps">the (fixed) #GstCaps for which an decoder description is needed</param>
     /// <returns>
     /// a newly-allocated description string. Free
     ///          string with g_free() when not needed any longer.
@@ -1284,7 +1312,7 @@ public static unsafe partial class PbutilsGlobal
     /// a missing feature from a missing-plugin message.
     /// </para>
     /// </remarks>
-    /// <param name="factoryName">The <c>factoryName</c> argument.</param>
+    /// <param name="factoryName">the name of the element, e.g. "giosrc"</param>
     /// <returns>
     /// a newly-allocated description string. Free
     ///          string with g_free() when not needed any longer.
@@ -1310,7 +1338,7 @@ public static unsafe partial class PbutilsGlobal
     /// a missing feature from a missing-plugin message.
     /// </para>
     /// </remarks>
-    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <param name="caps">the (fixed) #GstCaps for which an encoder description is needed</param>
     /// <returns>
     /// a newly-allocated description string. Free
     ///          string with g_free() when not needed any longer.
@@ -1325,7 +1353,7 @@ public static unsafe partial class PbutilsGlobal
     }
 
     /// <summary>Returns a possible file extension for the given caps, if known.</summary>
-    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <param name="caps">the (fixed) #GstCaps for which a file extension is needed</param>
     /// <returns>
     /// a newly-allocated file extension string, or NULL on error. Free
     ///          string with g_free() when not needed any longer.
@@ -1350,7 +1378,7 @@ public static unsafe partial class PbutilsGlobal
     /// a missing feature from a missing-plugin message.
     /// </para>
     /// </remarks>
-    /// <param name="protocol">The <c>protocol</c> argument.</param>
+    /// <param name="protocol">the protocol the sink element needs to handle, e.g. "http"</param>
     /// <returns>
     /// a newly-allocated description string. Free
     ///          string with g_free() when not needed any longer.
@@ -1377,7 +1405,7 @@ public static unsafe partial class PbutilsGlobal
     /// a missing feature from a missing-plugin message.
     /// </para>
     /// </remarks>
-    /// <param name="protocol">The <c>protocol</c> argument.</param>
+    /// <param name="protocol">the protocol the source element needs to handle, e.g. "http"</param>
     /// <returns>
     /// a newly-allocated description string. Free
     ///          string with g_free() when not needed any longer.
@@ -1409,10 +1437,10 @@ public static unsafe partial class PbutilsGlobal
     }
 
     /// <summary>Gets the version number of the GStreamer Plugins Base libraries.</summary>
-    /// <param name="major">The <c>major</c> argument.</param>
-    /// <param name="minor">The <c>minor</c> argument.</param>
-    /// <param name="micro">The <c>micro</c> argument.</param>
-    /// <param name="nano">The <c>nano</c> argument.</param>
+    /// <param name="major">pointer to a guint to store the major version number, or %NULL</param>
+    /// <param name="minor">pointer to a guint to store the minor version number, or %NULL</param>
+    /// <param name="micro">pointer to a guint to store the micro version number, or %NULL</param>
+    /// <param name="nano">pointer to a guint to store the nano version number, or %NULL</param>
     public static void PluginsBaseVersion(out uint major, out uint minor, out uint micro, out uint nano)
     {
         uint majorNative = default;

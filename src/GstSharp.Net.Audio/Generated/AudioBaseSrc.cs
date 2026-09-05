@@ -83,7 +83,7 @@ public unsafe partial class AudioBaseSrc : Gst.Base.PushSrc
     /// gst_element_provide_clock() will return a clock that reflects the datarate
     /// of @src. If @provide is %FALSE, gst_element_provide_clock() will return NULL.
     /// </summary>
-    /// <param name="provide">The <c>provide</c> argument.</param>
+    /// <param name="provide">new state</param>
     public void SetProvideClock(bool provide)
     {
         GstAudioBaseSrcSetProvideClock(Handle, provide ? 1 : 0);
@@ -91,7 +91,7 @@ public unsafe partial class AudioBaseSrc : Gst.Base.PushSrc
     }
 
     /// <summary>Controls how clock slaving will be performed in @src.</summary>
-    /// <param name="method">The <c>method</c> argument.</param>
+    /// <param name="method">the new slave method</param>
     public void SetSlaveMethod(Gst.Audio.AudioBaseSrcSlaveMethod method)
     {
         GstAudioBaseSrcSetSlaveMethod(Handle, (int)method);

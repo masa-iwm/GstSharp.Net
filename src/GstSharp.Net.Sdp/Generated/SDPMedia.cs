@@ -106,8 +106,8 @@ public sealed unsafe partial class SDPMedia
         handle == 0 ? null : new(handle);
 
     /// <summary>Add the attribute with @key and @value to @media.</summary>
-    /// <param name="key">The <c>key</c> argument.</param>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="key">a key</param>
+    /// <param name="value">a value</param>
     /// <returns>#GST_SDP_OK.</returns>
     public Gst.Sdp.SDPResult AddAttribute(string key, string? value)
     {
@@ -122,8 +122,8 @@ public sealed unsafe partial class SDPMedia
     }
 
     /// <summary>Add the bandwidth information with @bwtype and @bandwidth to @media.</summary>
-    /// <param name="bwtype">The <c>bwtype</c> argument.</param>
-    /// <param name="bandwidth">The <c>bandwidth</c> argument.</param>
+    /// <param name="bwtype">the bandwidth modifier type</param>
+    /// <param name="bandwidth">the bandwidth in kilobits per second</param>
     /// <returns>#GST_SDP_OK.</returns>
     public Gst.Sdp.SDPResult AddBandwidth(string bwtype, uint bandwidth)
     {
@@ -136,11 +136,14 @@ public sealed unsafe partial class SDPMedia
     }
 
     /// <summary>Add the given connection parameters to @media.</summary>
-    /// <param name="nettype">The <c>nettype</c> argument.</param>
-    /// <param name="addrtype">The <c>addrtype</c> argument.</param>
-    /// <param name="address">The <c>address</c> argument.</param>
-    /// <param name="ttl">The <c>ttl</c> argument.</param>
-    /// <param name="addrNumber">The <c>addrNumber</c> argument.</param>
+    /// <param name="nettype">
+    /// the type of network. "IN" is defined to have the meaning
+    /// "Internet".
+    /// </param>
+    /// <param name="addrtype">the type of address.</param>
+    /// <param name="address">the address</param>
+    /// <param name="ttl">the time to live of the address</param>
+    /// <param name="addrNumber">the number of layers</param>
     /// <returns>a #GstSDPResult.</returns>
     public Gst.Sdp.SDPResult AddConnection(string nettype, string addrtype, string address, uint ttl, uint addrNumber)
     {
@@ -159,7 +162,7 @@ public sealed unsafe partial class SDPMedia
     }
 
     /// <summary>Add the format information to @media.</summary>
-    /// <param name="format">The <c>format</c> argument.</param>
+    /// <param name="format">the format</param>
     /// <returns>#GST_SDP_OK.</returns>
     public Gst.Sdp.SDPResult AddFormat(string format)
     {
@@ -191,7 +194,7 @@ public sealed unsafe partial class SDPMedia
     }
 
     /// <summary>Mapping of attributes of #GstSDPMedia to #GstCaps</summary>
-    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <param name="caps">a #GstCaps</param>
     /// <returns>a #GstSDPResult.</returns>
     public Gst.Sdp.SDPResult AttributesToCaps(Gst.Caps caps)
     {
@@ -224,7 +227,7 @@ public sealed unsafe partial class SDPMedia
     /// Allocate a new copy of @media and store the result in @copy. The value in
     /// @copy should be release with gst_sdp_media_free function.
     /// </summary>
-    /// <param name="copy">The <c>copy</c> argument.</param>
+    /// <param name="copy">pointer to new #GstSDPMedia</param>
     /// <returns>a #GstSDPResult</returns>
     public Gst.Sdp.SDPResult Copy(out Gst.Sdp.SDPMedia? copy)
     {
@@ -258,7 +261,7 @@ public sealed unsafe partial class SDPMedia
     }
 
     /// <summary>Get the attribute at position @idx in @media.</summary>
-    /// <param name="idx">The <c>idx</c> argument.</param>
+    /// <param name="idx">an index</param>
     /// <returns>the #GstSDPAttribute at position @idx.</returns>
     public Gst.Sdp.SDPAttribute GetAttribute(uint idx)
     {
@@ -269,7 +272,7 @@ public sealed unsafe partial class SDPMedia
     }
 
     /// <summary>Get the first attribute value for @key in @media.</summary>
-    /// <param name="key">The <c>key</c> argument.</param>
+    /// <param name="key">a key</param>
     /// <returns>the first attribute value for @key.</returns>
     public string? GetAttributeVal(string key)
     {
@@ -282,8 +285,8 @@ public sealed unsafe partial class SDPMedia
     }
 
     /// <summary>Get the @nth attribute value for @key in @media.</summary>
-    /// <param name="key">The <c>key</c> argument.</param>
-    /// <param name="nth">The <c>nth</c> argument.</param>
+    /// <param name="key">a key</param>
+    /// <param name="nth">an index</param>
     /// <returns>the @nth attribute value.</returns>
     public string? GetAttributeValN(string key, uint nth)
     {
@@ -296,7 +299,7 @@ public sealed unsafe partial class SDPMedia
     }
 
     /// <summary>Get the bandwidth at position @idx in @media.</summary>
-    /// <param name="idx">The <c>idx</c> argument.</param>
+    /// <param name="idx">an index</param>
     /// <returns>the #GstSDPBandwidth at position @idx.</returns>
     public Gst.Sdp.SDPBandwidth GetBandwidth(uint idx)
     {
@@ -315,7 +318,7 @@ public sealed unsafe partial class SDPMedia
     /// Note that the extmap, ssrc and rid attributes are set only by gst_sdp_media_attributes_to_caps().
     /// </para>
     /// </remarks>
-    /// <param name="pt">The <c>pt</c> argument.</param>
+    /// <param name="pt">a payload type</param>
     /// <returns>a #GstCaps, or %NULL if an error happened</returns>
     public Gst.Caps? GetCapsFromMedia(int pt)
     {
@@ -325,7 +328,7 @@ public sealed unsafe partial class SDPMedia
     }
 
     /// <summary>Get the connection at position @idx in @media.</summary>
-    /// <param name="idx">The <c>idx</c> argument.</param>
+    /// <param name="idx">an index</param>
     /// <returns>the #GstSDPConnection at position @idx.</returns>
     public Gst.Sdp.SDPConnection GetConnection(uint idx)
     {
@@ -336,7 +339,7 @@ public sealed unsafe partial class SDPMedia
     }
 
     /// <summary>Get the format information at position @idx in @media.</summary>
-    /// <param name="idx">The <c>idx</c> argument.</param>
+    /// <param name="idx">an index</param>
     /// <returns>the format at position @idx.</returns>
     public string GetFormat(uint idx)
     {
@@ -408,8 +411,8 @@ public sealed unsafe partial class SDPMedia
     /// Insert the attribute to @media at @idx. When @idx is -1,
     /// the attribute is appended.
     /// </summary>
-    /// <param name="idx">The <c>idx</c> argument.</param>
-    /// <param name="attr">The <c>attr</c> argument.</param>
+    /// <param name="idx">an index</param>
+    /// <param name="attr">a #GstSDPAttribute</param>
     /// <returns>#GST_SDP_OK.</returns>
     public Gst.Sdp.SDPResult InsertAttribute(int idx, Gst.Sdp.SDPAttribute attr)
     {
@@ -424,8 +427,8 @@ public sealed unsafe partial class SDPMedia
     /// Insert the bandwidth information to @media at @idx. When @idx is -1,
     /// the bandwidth is appended.
     /// </summary>
-    /// <param name="idx">The <c>idx</c> argument.</param>
-    /// <param name="bw">The <c>bw</c> argument.</param>
+    /// <param name="idx">an index</param>
+    /// <param name="bw">a #GstSDPBandwidth</param>
     /// <returns>#GST_SDP_OK.</returns>
     public Gst.Sdp.SDPResult InsertBandwidth(int idx, Gst.Sdp.SDPBandwidth bw)
     {
@@ -440,8 +443,8 @@ public sealed unsafe partial class SDPMedia
     /// Insert the connection information to @media at @idx. When @idx is -1,
     /// the connection is appended.
     /// </summary>
-    /// <param name="idx">The <c>idx</c> argument.</param>
-    /// <param name="conn">The <c>conn</c> argument.</param>
+    /// <param name="idx">an index</param>
+    /// <param name="conn">a #GstSDPConnection</param>
     /// <returns>#GST_SDP_OK.</returns>
     public Gst.Sdp.SDPResult InsertConnection(int idx, Gst.Sdp.SDPConnection conn)
     {
@@ -456,8 +459,8 @@ public sealed unsafe partial class SDPMedia
     /// Insert the format information to @media at @idx. When @idx is -1,
     /// the format is appended.
     /// </summary>
-    /// <param name="idx">The <c>idx</c> argument.</param>
-    /// <param name="format">The <c>format</c> argument.</param>
+    /// <param name="idx">an index</param>
+    /// <param name="format">the format</param>
     /// <returns>#GST_SDP_OK.</returns>
     public Gst.Sdp.SDPResult InsertFormat(int idx, string format)
     {
@@ -473,7 +476,7 @@ public sealed unsafe partial class SDPMedia
     /// Creates a new #GstMIKEYMessage after parsing the key-mgmt attribute
     /// from a #GstSDPMedia.
     /// </summary>
-    /// <param name="mikey">The <c>mikey</c> argument.</param>
+    /// <param name="mikey">pointer to new #GstMIKEYMessage</param>
     /// <returns>a #GstSDPResult.</returns>
     public Gst.Sdp.SDPResult ParseKeymgmt(out Gst.Sdp.MIKEYMessage? mikey)
     {
@@ -485,7 +488,7 @@ public sealed unsafe partial class SDPMedia
     }
 
     /// <summary>Remove the attribute in @media at @idx.</summary>
-    /// <param name="idx">The <c>idx</c> argument.</param>
+    /// <param name="idx">an index</param>
     /// <returns>#GST_SDP_OK.</returns>
     public Gst.Sdp.SDPResult RemoveAttribute(uint idx)
     {
@@ -495,7 +498,7 @@ public sealed unsafe partial class SDPMedia
     }
 
     /// <summary>Remove the bandwidth information in @media at @idx.</summary>
-    /// <param name="idx">The <c>idx</c> argument.</param>
+    /// <param name="idx">an index</param>
     /// <returns>#GST_SDP_OK.</returns>
     public Gst.Sdp.SDPResult RemoveBandwidth(uint idx)
     {
@@ -505,7 +508,7 @@ public sealed unsafe partial class SDPMedia
     }
 
     /// <summary>Remove the connection information in @media at @idx.</summary>
-    /// <param name="idx">The <c>idx</c> argument.</param>
+    /// <param name="idx">an index</param>
     /// <returns>#GST_SDP_OK.</returns>
     public Gst.Sdp.SDPResult RemoveConnection(uint idx)
     {
@@ -515,7 +518,7 @@ public sealed unsafe partial class SDPMedia
     }
 
     /// <summary>Remove the format information in @media at @idx.</summary>
-    /// <param name="idx">The <c>idx</c> argument.</param>
+    /// <param name="idx">an index</param>
     /// <returns>#GST_SDP_OK.</returns>
     public Gst.Sdp.SDPResult RemoveFormat(uint idx)
     {
@@ -525,8 +528,8 @@ public sealed unsafe partial class SDPMedia
     }
 
     /// <summary>Replace the attribute in @media at @idx with @attr.</summary>
-    /// <param name="idx">The <c>idx</c> argument.</param>
-    /// <param name="attr">The <c>attr</c> argument.</param>
+    /// <param name="idx">an index</param>
+    /// <param name="attr">a #GstSDPAttribute</param>
     /// <returns>#GST_SDP_OK.</returns>
     public Gst.Sdp.SDPResult ReplaceAttribute(uint idx, Gst.Sdp.SDPAttribute attr)
     {
@@ -538,8 +541,8 @@ public sealed unsafe partial class SDPMedia
     }
 
     /// <summary>Replace the bandwidth information in @media at @idx with @bw.</summary>
-    /// <param name="idx">The <c>idx</c> argument.</param>
-    /// <param name="bw">The <c>bw</c> argument.</param>
+    /// <param name="idx">an index</param>
+    /// <param name="bw">a #GstSDPBandwidth</param>
     /// <returns>#GST_SDP_OK.</returns>
     public Gst.Sdp.SDPResult ReplaceBandwidth(uint idx, Gst.Sdp.SDPBandwidth bw)
     {
@@ -551,8 +554,8 @@ public sealed unsafe partial class SDPMedia
     }
 
     /// <summary>Replace the connection information in @media at @idx with @conn.</summary>
-    /// <param name="idx">The <c>idx</c> argument.</param>
-    /// <param name="conn">The <c>conn</c> argument.</param>
+    /// <param name="idx">an index</param>
+    /// <param name="conn">a #GstSDPConnection</param>
     /// <returns>#GST_SDP_OK.</returns>
     public Gst.Sdp.SDPResult ReplaceConnection(uint idx, Gst.Sdp.SDPConnection conn)
     {
@@ -564,8 +567,8 @@ public sealed unsafe partial class SDPMedia
     }
 
     /// <summary>Replace the format information in @media at @idx with @format.</summary>
-    /// <param name="idx">The <c>idx</c> argument.</param>
-    /// <param name="format">The <c>format</c> argument.</param>
+    /// <param name="idx">an index</param>
+    /// <param name="format">the format</param>
     /// <returns>#GST_SDP_OK.</returns>
     public Gst.Sdp.SDPResult ReplaceFormat(uint idx, string format)
     {
@@ -578,7 +581,7 @@ public sealed unsafe partial class SDPMedia
     }
 
     /// <summary>Set the media information of @media to @information.</summary>
-    /// <param name="information">The <c>information</c> argument.</param>
+    /// <param name="information">the media information</param>
     /// <returns>#GST_SDP_OK.</returns>
     public Gst.Sdp.SDPResult SetInformation(string information)
     {
@@ -591,8 +594,8 @@ public sealed unsafe partial class SDPMedia
     }
 
     /// <summary>Adds the encryption information to @media.</summary>
-    /// <param name="type">The <c>type</c> argument.</param>
-    /// <param name="data">The <c>data</c> argument.</param>
+    /// <param name="type">the encryption type</param>
+    /// <param name="data">the encryption data</param>
     /// <returns>a #GstSDPResult.</returns>
     public Gst.Sdp.SDPResult SetKey(string type, string data)
     {
@@ -608,7 +611,7 @@ public sealed unsafe partial class SDPMedia
     }
 
     /// <summary>Set the media description of @media to @med.</summary>
-    /// <param name="med">The <c>med</c> argument.</param>
+    /// <param name="med">the media description</param>
     /// <returns>#GST_SDP_OK.</returns>
     public Gst.Sdp.SDPResult SetMedia(string med)
     {
@@ -621,8 +624,8 @@ public sealed unsafe partial class SDPMedia
     }
 
     /// <summary>Set the port information in @media.</summary>
-    /// <param name="port">The <c>port</c> argument.</param>
-    /// <param name="numPorts">The <c>numPorts</c> argument.</param>
+    /// <param name="port">the port number</param>
+    /// <param name="numPorts">the number of ports</param>
     /// <returns>#GST_SDP_OK.</returns>
     public Gst.Sdp.SDPResult SetPortInfo(uint port, uint numPorts)
     {
@@ -632,7 +635,7 @@ public sealed unsafe partial class SDPMedia
     }
 
     /// <summary>Set the media transport protocol of @media to @proto.</summary>
-    /// <param name="proto">The <c>proto</c> argument.</param>
+    /// <param name="proto">the media transport protocol</param>
     /// <returns>#GST_SDP_OK.</returns>
     public Gst.Sdp.SDPResult SetProto(string proto)
     {
@@ -667,10 +670,13 @@ public sealed unsafe partial class SDPMedia
     /// <para>Available since GStreamer 1.28.</para>
     /// </remarks>
     /// <param name="media">
-    /// The <c>media</c> argument.
+    /// a #GstSDPMedia
     /// Must be an initialised instance; the call updates it in place.
     /// </param>
-    /// <param name="structure">The <c>structure</c> argument.</param>
+    /// <param name="structure">
+    /// a #GstStructure belonging to a #GstCaps SDP mapping, see also
+    /// `gst_sdp_media_get_caps_from_media()`
+    /// </param>
     /// <returns>a #GstSDPResult.</returns>
     public static Gst.Sdp.SDPResult AddMediaFromStructure(Gst.Sdp.SDPMedia media, Gst.Structure structure)
     {
@@ -683,7 +689,7 @@ public sealed unsafe partial class SDPMedia
     }
 
     /// <summary>Allocate a new GstSDPMedia and store the result in @media.</summary>
-    /// <param name="media">The <c>media</c> argument.</param>
+    /// <param name="media">pointer to new #GstSDPMedia</param>
     /// <returns>a #GstSDPResult.</returns>
     public static Gst.Sdp.SDPResult New(out Gst.Sdp.SDPMedia? media)
     {
@@ -703,10 +709,10 @@ public sealed unsafe partial class SDPMedia
     /// <para>Only the first #GstStructure of the @caps is used.</para>
     /// </remarks>
     /// <param name="media">
-    /// The <c>media</c> argument.
+    /// a #GstSDPMedia
     /// Must be an initialised instance; the call updates it in place.
     /// </param>
-    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <param name="caps">a #GstCaps</param>
     /// <returns>a #GstSDPResult.</returns>
     public static Gst.Sdp.SDPResult SetMediaFromCaps(Gst.Sdp.SDPMedia media, Gst.Caps caps)
     {

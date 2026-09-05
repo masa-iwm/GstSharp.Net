@@ -12,8 +12,8 @@ namespace Gst.Net;
 public static unsafe partial class NetGlobal
 {
     /// <summary>Attaches @addr as metadata in a #GstNetAddressMeta to @buffer.</summary>
-    /// <param name="buffer">The <c>buffer</c> argument.</param>
-    /// <param name="addr">The <c>addr</c> argument.</param>
+    /// <param name="buffer">a #GstBuffer</param>
+    /// <param name="addr">a @GSocketAddress to connect to @buffer</param>
     /// <returns>a #GstNetAddressMeta connected to @buffer</returns>
     public static Gst.Net.NetAddressMeta BufferAddNetAddressMeta(Gst.Buffer buffer, Gst.Gio.SocketAddress addr)
     {
@@ -27,8 +27,8 @@ public static unsafe partial class NetGlobal
     }
 
     /// <summary>Attaches @message as metadata in a #GstNetControlMessageMeta to @buffer.</summary>
-    /// <param name="buffer">The <c>buffer</c> argument.</param>
-    /// <param name="message">The <c>message</c> argument.</param>
+    /// <param name="buffer">a #GstBuffer</param>
+    /// <param name="message">a @GSocketControlMessage to attach to @buffer</param>
     /// <returns>a #GstNetControlMessageMeta connected to @buffer</returns>
     public static Gst.Net.NetControlMessageMeta BufferAddNetControlMessageMeta(Gst.Buffer buffer, Gst.Gio.SocketControlMessage message)
     {
@@ -42,7 +42,7 @@ public static unsafe partial class NetGlobal
     }
 
     /// <summary>Find the #GstNetAddressMeta on @buffer.</summary>
-    /// <param name="buffer">The <c>buffer</c> argument.</param>
+    /// <param name="buffer">a #GstBuffer</param>
     /// <returns>
     /// the #GstNetAddressMeta or %NULL when there
     /// is no such metadata on @buffer.
@@ -72,8 +72,8 @@ public static unsafe partial class NetGlobal
     }
 
     /// <summary>Configures IP_TOS value of socket, i.e. sets QoS DSCP.</summary>
-    /// <param name="socket">The <c>socket</c> argument.</param>
-    /// <param name="qosDscp">The <c>qosDscp</c> argument.</param>
+    /// <param name="socket">Socket to configure</param>
+    /// <param name="qosDscp">QoS DSCP value</param>
     /// <returns>TRUE if successful, FALSE in case an error occurred.</returns>
     public static bool NetUtilsSetSocketTos(Gst.Gio.Socket socket, int qosDscp)
     {
@@ -108,7 +108,7 @@ public static unsafe partial class NetGlobal
     /// parameters if it wasn't called before.
     /// </para>
     /// </remarks>
-    /// <param name="clockId">The <c>clockId</c> argument.</param>
+    /// <param name="clockId">PTP clock id of this process' clock or %GST_PTP_CLOCK_ID_NONE</param>
     /// <param name="interfaces">network interfaces to run the clock on</param>
     /// <returns>%TRUE if the GStreamer PTP clock subsystem could be initialized.</returns>
     public static bool PtpInit(ulong clockId, string[]? interfaces)
@@ -139,7 +139,7 @@ public static unsafe partial class NetGlobal
     /// parameters if it wasn't called before.
     /// </para>
     /// </remarks>
-    /// <param name="config">The <c>config</c> argument.</param>
+    /// <param name="config">Configuration for initializing the GStreamer PTP subsystem</param>
     /// <returns>%TRUE if the GStreamer PTP clock subsystem could be initialized.</returns>
     public static bool PtpInitFull(Gst.Structure config)
     {
@@ -192,7 +192,7 @@ public static unsafe partial class NetGlobal
     /// Removes a PTP statistics callback that was previously added with
     /// gst_ptp_statistics_callback_add().
     /// </summary>
-    /// <param name="id">The <c>id</c> argument.</param>
+    /// <param name="id">Callback id to remove</param>
     public static void PtpStatisticsCallbackRemove(System.Runtime.InteropServices.CULong id)
     {
         GstPtpStatisticsCallbackRemove(id);

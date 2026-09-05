@@ -59,7 +59,7 @@ public sealed unsafe partial class Poll
         handle == 0 ? null : new(handle);
 
     /// <summary>Add a file descriptor to the file descriptor set.</summary>
-    /// <param name="fd">The <c>fd</c> argument.</param>
+    /// <param name="fd">a file descriptor.</param>
     /// <returns>%TRUE if the file descriptor was successfully added to the set.</returns>
     public bool AddFd(ref Gst.PollFD fd)
     {
@@ -71,7 +71,7 @@ public sealed unsafe partial class Poll
     }
 
     /// <summary>Check if @fd in @set has data to be read.</summary>
-    /// <param name="fd">The <c>fd</c> argument.</param>
+    /// <param name="fd">a file descriptor.</param>
     /// <returns>%TRUE if the descriptor has data to be read.</returns>
     public bool FdCanRead(ref Gst.PollFD fd)
     {
@@ -83,7 +83,7 @@ public sealed unsafe partial class Poll
     }
 
     /// <summary>Check if @fd in @set can be used for writing.</summary>
-    /// <param name="fd">The <c>fd</c> argument.</param>
+    /// <param name="fd">a file descriptor.</param>
     /// <returns>%TRUE if the descriptor can be used for writing.</returns>
     public bool FdCanWrite(ref Gst.PollFD fd)
     {
@@ -101,8 +101,8 @@ public sealed unsafe partial class Poll
     /// <remarks>
     /// <para>Not implemented on Windows (will just return %FALSE there).</para>
     /// </remarks>
-    /// <param name="fd">The <c>fd</c> argument.</param>
-    /// <param name="active">The <c>active</c> argument.</param>
+    /// <param name="fd">a file descriptor.</param>
+    /// <param name="active">a new status.</param>
     /// <returns>%TRUE if the descriptor was successfully updated.</returns>
     public bool FdCtlPri(ref Gst.PollFD fd, bool active)
     {
@@ -117,8 +117,8 @@ public sealed unsafe partial class Poll
     /// Control whether the descriptor @fd in @set will be monitored for
     /// readability.
     /// </summary>
-    /// <param name="fd">The <c>fd</c> argument.</param>
-    /// <param name="active">The <c>active</c> argument.</param>
+    /// <param name="fd">a file descriptor.</param>
+    /// <param name="active">a new status.</param>
     /// <returns>%TRUE if the descriptor was successfully updated.</returns>
     public bool FdCtlRead(ref Gst.PollFD fd, bool active)
     {
@@ -133,8 +133,8 @@ public sealed unsafe partial class Poll
     /// Control whether the descriptor @fd in @set will be monitored for
     /// writability.
     /// </summary>
-    /// <param name="fd">The <c>fd</c> argument.</param>
-    /// <param name="active">The <c>active</c> argument.</param>
+    /// <param name="fd">a file descriptor.</param>
+    /// <param name="active">a new status.</param>
     /// <returns>%TRUE if the descriptor was successfully updated.</returns>
     public bool FdCtlWrite(ref Gst.PollFD fd, bool active)
     {
@@ -146,7 +146,7 @@ public sealed unsafe partial class Poll
     }
 
     /// <summary>Check if @fd in @set has closed the connection.</summary>
-    /// <param name="fd">The <c>fd</c> argument.</param>
+    /// <param name="fd">a file descriptor.</param>
     /// <returns>%TRUE if the connection was closed.</returns>
     public bool FdHasClosed(ref Gst.PollFD fd)
     {
@@ -158,7 +158,7 @@ public sealed unsafe partial class Poll
     }
 
     /// <summary>Check if @fd in @set has an error.</summary>
-    /// <param name="fd">The <c>fd</c> argument.</param>
+    /// <param name="fd">a file descriptor.</param>
     /// <returns>%TRUE if the descriptor has an error.</returns>
     public bool FdHasError(ref Gst.PollFD fd)
     {
@@ -173,7 +173,7 @@ public sealed unsafe partial class Poll
     /// <remarks>
     /// <para>Not implemented on Windows (will just return %FALSE there).</para>
     /// </remarks>
-    /// <param name="fd">The <c>fd</c> argument.</param>
+    /// <param name="fd">a file descriptor.</param>
     /// <returns>%TRUE if the descriptor has an exceptional condition.</returns>
     public bool FdHasPri(ref Gst.PollFD fd)
     {
@@ -197,7 +197,7 @@ public sealed unsafe partial class Poll
     /// the re-enabling operations.
     /// </para>
     /// </remarks>
-    /// <param name="fd">The <c>fd</c> argument.</param>
+    /// <param name="fd">a file descriptor.</param>
     public void FdIgnored(ref Gst.PollFD fd)
     {
         Gst.PollFD fdNative = fd;
@@ -234,7 +234,7 @@ public sealed unsafe partial class Poll
     }
 
     /// <summary>Remove a file descriptor from the file descriptor set.</summary>
-    /// <param name="fd">The <c>fd</c> argument.</param>
+    /// <param name="fd">a file descriptor.</param>
     /// <returns>%TRUE if the file descriptor was successfully removed from the set.</returns>
     public bool RemoveFd(ref Gst.PollFD fd)
     {
@@ -273,7 +273,7 @@ public sealed unsafe partial class Poll
     /// gst_poll_new().
     /// </para>
     /// </remarks>
-    /// <param name="controllable">The <c>controllable</c> argument.</param>
+    /// <param name="controllable">new controllable state.</param>
     /// <returns>%TRUE if the controllability of @set could be updated.</returns>
     public bool SetControllable(bool controllable)
     {
@@ -293,7 +293,7 @@ public sealed unsafe partial class Poll
     /// gst_poll_new().
     /// </para>
     /// </remarks>
-    /// <param name="flushing">The <c>flushing</c> argument.</param>
+    /// <param name="flushing">new flushing state.</param>
     public void SetFlushing(bool flushing)
     {
         GstPollSetFlushing(Handle, flushing ? 1 : 0);
@@ -316,7 +316,7 @@ public sealed unsafe partial class Poll
     /// simultaneously.
     /// </para>
     /// </remarks>
-    /// <param name="timeout">The <c>timeout</c> argument.</param>
+    /// <param name="timeout">a timeout in nanoseconds.</param>
     /// <returns>
     /// The number of #GstPollFD in @set that have activity or 0 when no
     /// activity was detected after @timeout. If an error occurs, -1 is returned

@@ -46,8 +46,8 @@ public sealed unsafe partial class TocEntry : Gst.GObject.Boxed
         handle == 0 ? null : new(handle, transfer);
 
     /// <summary>Create new #GstTocEntry structure.</summary>
-    /// <param name="type">The <c>type</c> argument.</param>
-    /// <param name="uid">The <c>uid</c> argument.</param>
+    /// <param name="type">entry type.</param>
+    /// <param name="uid">unique ID (UID) in the whole TOC.</param>
     /// <returns>newly allocated #GstTocEntry structure, free it with gst_toc_entry_unref().</returns>
     public static Gst.TocEntry New(Gst.TocEntryType type, string uid)
     {
@@ -74,8 +74,14 @@ public sealed unsafe partial class TocEntry : Gst.GObject.Boxed
     /// is not automatically applying the loop. The application can process this
     /// meta data and use it e.g. to send a seek-event to loop a section.
     /// </summary>
-    /// <param name="loopType">The <c>loopType</c> argument.</param>
-    /// <param name="repeatCount">The <c>repeatCount</c> argument.</param>
+    /// <param name="loopType">
+    /// the storage for the loop_type
+    ///             value, leave %NULL if not need.
+    /// </param>
+    /// <param name="repeatCount">
+    /// the storage for the repeat_count
+    ///                value, leave %NULL if not need.
+    /// </param>
     /// <returns>
     /// %TRUE if all non-%NULL storage pointers were filled with appropriate
     /// values, %FALSE otherwise.
@@ -109,8 +115,14 @@ public sealed unsafe partial class TocEntry : Gst.GObject.Boxed
     /// Get @start and @stop values from the @entry and write them into appropriate
     /// storages.
     /// </summary>
-    /// <param name="start">The <c>start</c> argument.</param>
-    /// <param name="stop">The <c>stop</c> argument.</param>
+    /// <param name="start">
+    /// the storage for the start value, leave
+    ///   %NULL if not need.
+    /// </param>
+    /// <param name="stop">
+    /// the storage for the stop value, leave
+    ///   %NULL if not need.
+    /// </param>
     /// <returns>
     /// %TRUE if all non-%NULL storage pointers were filled with appropriate
     /// values, %FALSE otherwise.
@@ -202,8 +214,8 @@ public sealed unsafe partial class TocEntry : Gst.GObject.Boxed
     }
 
     /// <summary>Merge @tags into the existing tags of @entry using @mode.</summary>
-    /// <param name="tags">The <c>tags</c> argument.</param>
-    /// <param name="mode">The <c>mode</c> argument.</param>
+    /// <param name="tags">A #GstTagList or %NULL</param>
+    /// <param name="mode">A #GstTagMergeMode</param>
     public void MergeTags(Gst.TagList? tags, Gst.TagMergeMode mode)
     {
         GstTocEntryMergeTags(Handle, tags is null ? 0 : tags.Handle, (int)mode);
@@ -212,8 +224,8 @@ public sealed unsafe partial class TocEntry : Gst.GObject.Boxed
     }
 
     /// <summary>Set @loop_type and @repeat_count values for the @entry.</summary>
-    /// <param name="loopType">The <c>loopType</c> argument.</param>
-    /// <param name="repeatCount">The <c>repeatCount</c> argument.</param>
+    /// <param name="loopType">loop_type value to set.</param>
+    /// <param name="repeatCount">repeat_count value to set.</param>
     public void SetLoop(Gst.TocLoopType loopType, int repeatCount)
     {
         GstTocEntrySetLoop(Handle, (int)loopType, repeatCount);
@@ -221,8 +233,8 @@ public sealed unsafe partial class TocEntry : Gst.GObject.Boxed
     }
 
     /// <summary>Set @start and @stop values for the @entry.</summary>
-    /// <param name="start">The <c>start</c> argument.</param>
-    /// <param name="stop">The <c>stop</c> argument.</param>
+    /// <param name="start">start value to set.</param>
+    /// <param name="stop">stop value to set.</param>
     public void SetStartStopTimes(long start, long stop)
     {
         GstTocEntrySetStartStopTimes(Handle, start, stop);
@@ -240,7 +252,7 @@ public sealed unsafe partial class TocEntry : Gst.GObject.Boxed
     /// </para>
     /// </remarks>
     /// <param name="tags">
-    /// The <c>tags</c> argument.
+    /// A #GstTagList or %NULL
     /// The call consumes it: <paramref name="tags"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// It may be <see langword="null"/>, which is the absence of a payload and leaves

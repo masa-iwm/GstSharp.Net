@@ -88,7 +88,7 @@ public sealed unsafe partial class Query : Gst.MiniObject
     /// <remarks>
     /// <para>Free-function: gst_query_unref()</para>
     /// </remarks>
-    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <param name="caps">a fixed #GstCaps</param>
     /// <returns>a new #GstQuery</returns>
     public static Gst.Query NewAcceptCaps(Gst.Caps caps)
     {
@@ -103,8 +103,8 @@ public sealed unsafe partial class Query : Gst.MiniObject
     /// <remarks>
     /// <para>Free-function: gst_query_unref()</para>
     /// </remarks>
-    /// <param name="caps">The <c>caps</c> argument.</param>
-    /// <param name="needPool">The <c>needPool</c> argument.</param>
+    /// <param name="caps">the negotiated caps</param>
+    /// <param name="needPool">return a pool</param>
     /// <returns>a new #GstQuery</returns>
     public static Gst.Query NewAllocation(Gst.Caps? caps, bool needPool)
     {
@@ -133,7 +133,7 @@ public sealed unsafe partial class Query : Gst.MiniObject
     /// <remarks>
     /// <para>Free-function: gst_query_unref()</para>
     /// </remarks>
-    /// <param name="format">The <c>format</c> argument.</param>
+    /// <param name="format">the default #GstFormat for the new query</param>
     /// <returns>a new #GstQuery</returns>
     public static Gst.Query NewBuffering(Gst.Format format)
     {
@@ -166,7 +166,7 @@ public sealed unsafe partial class Query : Gst.MiniObject
     /// </para>
     /// <para>Free-function: gst_query_unref()</para>
     /// </remarks>
-    /// <param name="filter">The <c>filter</c> argument.</param>
+    /// <param name="filter">a filter</param>
     /// <returns>a new #GstQuery</returns>
     public static Gst.Query NewCaps(Gst.Caps filter)
     {
@@ -181,7 +181,7 @@ public sealed unsafe partial class Query : Gst.MiniObject
     /// <remarks>
     /// <para>Free-function: gst_query_unref()</para>
     /// </remarks>
-    /// <param name="contextType">The <c>contextType</c> argument.</param>
+    /// <param name="contextType">Context type to query</param>
     /// <returns>a new #GstQuery</returns>
     public static Gst.Query NewContext(string contextType)
     {
@@ -201,9 +201,9 @@ public sealed unsafe partial class Query : Gst.MiniObject
     /// <remarks>
     /// <para>Free-function: gst_query_unref()</para>
     /// </remarks>
-    /// <param name="srcFormat">The <c>srcFormat</c> argument.</param>
-    /// <param name="value">The <c>value</c> argument.</param>
-    /// <param name="destFormat">The <c>destFormat</c> argument.</param>
+    /// <param name="srcFormat">the source #GstFormat for the new query</param>
+    /// <param name="value">the value to convert</param>
+    /// <param name="destFormat">the target #GstFormat</param>
     /// <returns>a #GstQuery</returns>
     public static Gst.Query NewConvert(Gst.Format srcFormat, long value, Gst.Format destFormat)
     {
@@ -232,7 +232,7 @@ public sealed unsafe partial class Query : Gst.MiniObject
     /// <remarks>
     /// <para>Free-function: gst_query_unref()</para>
     /// </remarks>
-    /// <param name="format">The <c>format</c> argument.</param>
+    /// <param name="format">the #GstFormat for this duration query</param>
     /// <returns>a new #GstQuery</returns>
     public static Gst.Query NewDuration(Gst.Format format)
     {
@@ -281,7 +281,7 @@ public sealed unsafe partial class Query : Gst.MiniObject
     /// <remarks>
     /// <para>Free-function: gst_query_unref()</para>
     /// </remarks>
-    /// <param name="format">The <c>format</c> argument.</param>
+    /// <param name="format">the default #GstFormat for the new query</param>
     /// <returns>a new #GstQuery</returns>
     public static Gst.Query NewPosition(Gst.Format format)
     {
@@ -309,7 +309,7 @@ public sealed unsafe partial class Query : Gst.MiniObject
     /// <remarks>
     /// <para>Free-function: gst_query_unref()</para>
     /// </remarks>
-    /// <param name="format">The <c>format</c> argument.</param>
+    /// <param name="format">the default #GstFormat for the new query</param>
     /// <returns>a new #GstQuery</returns>
     public static Gst.Query NewSeeking(Gst.Format format)
     {
@@ -326,7 +326,7 @@ public sealed unsafe partial class Query : Gst.MiniObject
     /// <remarks>
     /// <para>Free-function: gst_query_unref()</para>
     /// </remarks>
-    /// <param name="format">The <c>format</c> argument.</param>
+    /// <param name="format">the #GstFormat for the new query</param>
     /// <returns>a new #GstQuery</returns>
     public static Gst.Query NewSegment(Gst.Format format)
     {
@@ -364,8 +364,8 @@ public sealed unsafe partial class Query : Gst.MiniObject
     }
 
     /// <summary>Add @api with @params as one of the supported metadata API to @query.</summary>
-    /// <param name="api">The <c>api</c> argument.</param>
-    /// <param name="params">The <c>@params</c> argument.</param>
+    /// <param name="api">the metadata API</param>
+    /// <param name="params">API specific parameters</param>
     public void AddAllocationMeta(Gst.GObject.GType api, Gst.Structure? @params)
     {
         GstQueryAddAllocationMeta(Handle, api.Value, @params is null ? 0 : @params.Handle);
@@ -374,8 +374,8 @@ public sealed unsafe partial class Query : Gst.MiniObject
     }
 
     /// <summary>Add @allocator and its @params as a supported memory allocator.</summary>
-    /// <param name="allocator">The <c>allocator</c> argument.</param>
-    /// <param name="params">The <c>@params</c> argument.</param>
+    /// <param name="allocator">the memory allocator</param>
+    /// <param name="params">a #GstAllocationParams</param>
     public void AddAllocationParam(Gst.Allocator? allocator, Gst.AllocationParams? @params)
     {
         GstQueryAddAllocationParam(Handle, allocator is null ? 0 : allocator.Handle, @params is null ? 0 : @params.Handle);
@@ -385,10 +385,10 @@ public sealed unsafe partial class Query : Gst.MiniObject
     }
 
     /// <summary>Set the pool parameters in @query.</summary>
-    /// <param name="pool">The <c>pool</c> argument.</param>
-    /// <param name="size">The <c>size</c> argument.</param>
-    /// <param name="minBuffers">The <c>minBuffers</c> argument.</param>
-    /// <param name="maxBuffers">The <c>maxBuffers</c> argument.</param>
+    /// <param name="pool">the #GstBufferPool</param>
+    /// <param name="size">the buffer size</param>
+    /// <param name="minBuffers">the min buffers</param>
+    /// <param name="maxBuffers">the max buffers</param>
     public void AddAllocationPool(Gst.BufferPool? pool, uint size, uint minBuffers, uint maxBuffers)
     {
         GstQueryAddAllocationPool(Handle, pool is null ? 0 : pool.Handle, size, minBuffers, maxBuffers);
@@ -400,8 +400,8 @@ public sealed unsafe partial class Query : Gst.MiniObject
     /// Set the buffering-ranges array field in @query. The current last
     /// start position of the array should be inferior to @start.
     /// </summary>
-    /// <param name="start">The <c>start</c> argument.</param>
-    /// <param name="stop">The <c>stop</c> argument.</param>
+    /// <param name="start">start position of the range</param>
+    /// <param name="stop">stop position of the range</param>
     /// <returns>a #gboolean indicating if the range was added or not.</returns>
     public bool AddBufferingRange(long start, long stop)
     {
@@ -411,7 +411,7 @@ public sealed unsafe partial class Query : Gst.MiniObject
     }
 
     /// <summary>Add @mode as one of the supported scheduling modes to @query.</summary>
-    /// <param name="mode">The <c>mode</c> argument.</param>
+    /// <param name="mode">a #GstPadMode</param>
     public void AddSchedulingMode(Gst.PadMode mode)
     {
         GstQueryAddSchedulingMode(Handle, (int)mode);
@@ -423,8 +423,8 @@ public sealed unsafe partial class Query : Gst.MiniObject
     /// @index will contain the index where the requested API and the parameters
     /// can be found.
     /// </summary>
-    /// <param name="api">The <c>api</c> argument.</param>
-    /// <param name="index">The <c>index</c> argument.</param>
+    /// <param name="api">the metadata API</param>
+    /// <param name="index">the index</param>
     /// <returns>%TRUE when @api is in the list of metadata.</returns>
     public bool FindAllocationMeta(Gst.GObject.GType api, out uint index)
     {
@@ -529,7 +529,7 @@ public sealed unsafe partial class Query : Gst.MiniObject
     /// &gt; random access is supported, not only sequential pulls).
     /// </para>
     /// </remarks>
-    /// <param name="mode">The <c>mode</c> argument.</param>
+    /// <param name="mode">the scheduling mode</param>
     /// <returns>%TRUE when @mode is in the list of scheduling modes.</returns>
     public bool HasSchedulingMode(Gst.PadMode mode)
     {
@@ -542,8 +542,8 @@ public sealed unsafe partial class Query : Gst.MiniObject
     /// Check if @query has scheduling mode set and @flags is set in
     /// query scheduling flags.
     /// </summary>
-    /// <param name="mode">The <c>mode</c> argument.</param>
-    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <param name="mode">the scheduling mode</param>
+    /// <param name="flags">#GstSchedulingFlags</param>
     /// <returns>
     /// %TRUE when @mode is in the list of scheduling modes
     ///    and @flags are compatible with query flags.
@@ -611,7 +611,7 @@ public sealed unsafe partial class Query : Gst.MiniObject
     /// Get the caps from @query. The caps remains valid as long as @query remains
     /// valid.
     /// </summary>
-    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <param name="caps">A pointer to the caps</param>
     public void ParseAcceptCaps(out Gst.Caps? caps)
     {
         nint capsNative = default;
@@ -621,7 +621,7 @@ public sealed unsafe partial class Query : Gst.MiniObject
     }
 
     /// <summary>Parse the result from @query and store in @result.</summary>
-    /// <param name="result">The <c>result</c> argument.</param>
+    /// <param name="result">location for the result</param>
     public void ParseAcceptCapsResult(out bool result)
     {
         int resultNative = default;
@@ -641,8 +641,8 @@ public sealed unsafe partial class Query : Gst.MiniObject
     /// gst_query_parse_nth_allocation_pool().
     /// </para>
     /// </remarks>
-    /// <param name="caps">The <c>caps</c> argument.</param>
-    /// <param name="needPool">The <c>needPool</c> argument.</param>
+    /// <param name="caps">The #GstCaps</param>
+    /// <param name="needPool">Whether a #GstBufferPool is needed</param>
     public void ParseAllocation(out Gst.Caps? caps, out bool needPool)
     {
         nint capsNative = default;
@@ -654,7 +654,7 @@ public sealed unsafe partial class Query : Gst.MiniObject
     }
 
     /// <summary>Get the results of a bitrate query. See also gst_query_set_bitrate().</summary>
-    /// <param name="nominalBitrate">The <c>nominalBitrate</c> argument.</param>
+    /// <param name="nominalBitrate">The resulting bitrate in bits per second</param>
     public void ParseBitrate(out uint nominalBitrate)
     {
         uint nominalBitrateNative = default;
@@ -667,8 +667,8 @@ public sealed unsafe partial class Query : Gst.MiniObject
     /// Get the percentage of buffered data. This is a value between 0 and 100.
     /// The @busy indicator is %TRUE when the buffering is in progress.
     /// </summary>
-    /// <param name="busy">The <c>busy</c> argument.</param>
-    /// <param name="percent">The <c>percent</c> argument.</param>
+    /// <param name="busy">if buffering is busy, or %NULL</param>
+    /// <param name="percent">a buffering percent, or %NULL</param>
     public void ParseBufferingPercent(out bool busy, out int percent)
     {
         int busyNative = default;
@@ -684,10 +684,16 @@ public sealed unsafe partial class Query : Gst.MiniObject
     /// other results into the passed parameters, if the respective parameters
     /// are non-%NULL
     /// </summary>
-    /// <param name="format">The <c>format</c> argument.</param>
-    /// <param name="start">The <c>start</c> argument.</param>
-    /// <param name="stop">The <c>stop</c> argument.</param>
-    /// <param name="estimatedTotal">The <c>estimatedTotal</c> argument.</param>
+    /// <param name="format">
+    /// the format to set for the @segment_start
+    ///     and @segment_end values, or %NULL
+    /// </param>
+    /// <param name="start">the start to set, or %NULL</param>
+    /// <param name="stop">the stop to set, or %NULL</param>
+    /// <param name="estimatedTotal">
+    /// estimated total amount of download
+    ///     time remaining in milliseconds, or %NULL
+    /// </param>
     public void ParseBufferingRange(out Gst.Format format, out long start, out long stop, out long estimatedTotal)
     {
         int formatNative = default;
@@ -703,10 +709,13 @@ public sealed unsafe partial class Query : Gst.MiniObject
     }
 
     /// <summary>Extracts the buffering stats values from @query.</summary>
-    /// <param name="mode">The <c>mode</c> argument.</param>
-    /// <param name="avgIn">The <c>avgIn</c> argument.</param>
-    /// <param name="avgOut">The <c>avgOut</c> argument.</param>
-    /// <param name="bufferingLeft">The <c>bufferingLeft</c> argument.</param>
+    /// <param name="mode">a buffering mode, or %NULL</param>
+    /// <param name="avgIn">the average input rate, or %NULL</param>
+    /// <param name="avgOut">the average output rat, or %NULL</param>
+    /// <param name="bufferingLeft">
+    /// amount of buffering time left in
+    ///     milliseconds, or %NULL
+    /// </param>
     public void ParseBufferingStats(out Gst.BufferingMode mode, out int avgIn, out int avgOut, out long bufferingLeft)
     {
         int modeNative = default;
@@ -725,7 +734,7 @@ public sealed unsafe partial class Query : Gst.MiniObject
     /// Get the filter from the caps @query. The caps remains valid as long as
     /// @query remains valid.
     /// </summary>
-    /// <param name="filter">The <c>filter</c> argument.</param>
+    /// <param name="filter">A pointer to the caps filter</param>
     public void ParseCaps(out Gst.Caps? filter)
     {
         nint filterNative = default;
@@ -738,7 +747,7 @@ public sealed unsafe partial class Query : Gst.MiniObject
     /// Get the caps result from @query. The caps remains valid as long as
     /// @query remains valid.
     /// </summary>
-    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <param name="caps">A pointer to the caps</param>
     public void ParseCapsResult(out Gst.Caps? caps)
     {
         nint capsNative = default;
@@ -751,7 +760,7 @@ public sealed unsafe partial class Query : Gst.MiniObject
     /// Get the context from the context @query. The context remains valid as long as
     /// @query remains valid.
     /// </summary>
-    /// <param name="context">The <c>context</c> argument.</param>
+    /// <param name="context">A pointer to store the #GstContext</param>
     public void ParseContext(out Gst.Context? context)
     {
         nint contextNative = default;
@@ -761,7 +770,7 @@ public sealed unsafe partial class Query : Gst.MiniObject
     }
 
     /// <summary>Parse a context type from an existing GST_QUERY_CONTEXT query.</summary>
-    /// <param name="contextType">The <c>contextType</c> argument.</param>
+    /// <param name="contextType">the context type, or %NULL</param>
     /// <returns>a #gboolean indicating if the parsing succeeded.</returns>
     public bool ParseContextType(out string? contextType)
     {
@@ -776,10 +785,19 @@ public sealed unsafe partial class Query : Gst.MiniObject
     /// Parse a convert query answer. Any of @src_format, @src_value, @dest_format,
     /// and @dest_value may be %NULL, in which case that value is omitted.
     /// </summary>
-    /// <param name="srcFormat">The <c>srcFormat</c> argument.</param>
-    /// <param name="srcValue">The <c>srcValue</c> argument.</param>
-    /// <param name="destFormat">The <c>destFormat</c> argument.</param>
-    /// <param name="destValue">The <c>destValue</c> argument.</param>
+    /// <param name="srcFormat">
+    /// the storage for the #GstFormat of the
+    ///     source value, or %NULL
+    /// </param>
+    /// <param name="srcValue">the storage for the source value, or %NULL</param>
+    /// <param name="destFormat">
+    /// the storage for the #GstFormat of the
+    ///     destination value, or %NULL
+    /// </param>
+    /// <param name="destValue">
+    /// the storage for the destination value,
+    ///     or %NULL
+    /// </param>
     public void ParseConvert(out Gst.Format srcFormat, out long srcValue, out Gst.Format destFormat, out long destValue)
     {
         int srcFormatNative = default;
@@ -798,8 +816,11 @@ public sealed unsafe partial class Query : Gst.MiniObject
     /// Parse a duration query answer. Write the format of the duration into @format,
     /// and the value into @duration, if the respective variables are non-%NULL.
     /// </summary>
-    /// <param name="format">The <c>format</c> argument.</param>
-    /// <param name="duration">The <c>duration</c> argument.</param>
+    /// <param name="format">
+    /// the storage for the #GstFormat of the duration
+    ///     value, or %NULL.
+    /// </param>
+    /// <param name="duration">the storage for the total duration, or %NULL.</param>
     public void ParseDuration(out Gst.Format format, out long duration)
     {
         int formatNative = default;
@@ -811,9 +832,9 @@ public sealed unsafe partial class Query : Gst.MiniObject
     }
 
     /// <summary>Parse a latency query answer.</summary>
-    /// <param name="live">The <c>live</c> argument.</param>
-    /// <param name="minLatency">The <c>minLatency</c> argument.</param>
-    /// <param name="maxLatency">The <c>maxLatency</c> argument.</param>
+    /// <param name="live">storage for live or %NULL</param>
+    /// <param name="minLatency">the storage for the min latency or %NULL</param>
+    /// <param name="maxLatency">the storage for the max latency or %NULL</param>
     public void ParseLatency(out bool live, out Gst.ClockTime minLatency, out Gst.ClockTime maxLatency)
     {
         int liveNative = default;
@@ -827,7 +848,7 @@ public sealed unsafe partial class Query : Gst.MiniObject
     }
 
     /// <summary>Parse the number of formats in the formats @query.</summary>
-    /// <param name="nFormats">The <c>nFormats</c> argument.</param>
+    /// <param name="nFormats">the number of formats in this query.</param>
     public void ParseNFormats(out uint nFormats)
     {
         uint nFormatsNative = default;
@@ -840,8 +861,8 @@ public sealed unsafe partial class Query : Gst.MiniObject
     /// Parse an available query and get the metadata API
     /// at @index of the metadata API array.
     /// </summary>
-    /// <param name="index">The <c>index</c> argument.</param>
-    /// <param name="params">The <c>@params</c> argument.</param>
+    /// <param name="index">position in the metadata API array to read</param>
+    /// <param name="params">API specific parameters</param>
     /// <returns>a #GType of the metadata API at @index.</returns>
     public Gst.GObject.GType ParseNthAllocationMeta(uint index, out Gst.Structure? @params)
     {
@@ -856,11 +877,11 @@ public sealed unsafe partial class Query : Gst.MiniObject
     /// <remarks>
     /// <para>Unref @pool with gst_object_unref() when it's not needed any more.</para>
     /// </remarks>
-    /// <param name="index">The <c>index</c> argument.</param>
-    /// <param name="pool">The <c>pool</c> argument.</param>
-    /// <param name="size">The <c>size</c> argument.</param>
-    /// <param name="minBuffers">The <c>minBuffers</c> argument.</param>
-    /// <param name="maxBuffers">The <c>maxBuffers</c> argument.</param>
+    /// <param name="index">index to parse</param>
+    /// <param name="pool">the #GstBufferPool</param>
+    /// <param name="size">the buffer size</param>
+    /// <param name="minBuffers">the min buffers</param>
+    /// <param name="maxBuffers">the max buffers</param>
     public void ParseNthAllocationPool(uint index, out Gst.BufferPool? pool, out uint size, out uint minBuffers, out uint maxBuffers)
     {
         nint poolNative = default;
@@ -879,9 +900,9 @@ public sealed unsafe partial class Query : Gst.MiniObject
     /// Parse an available query and get the start and stop values stored
     /// at the @index of the buffered ranges array.
     /// </summary>
-    /// <param name="index">The <c>index</c> argument.</param>
-    /// <param name="start">The <c>start</c> argument.</param>
-    /// <param name="stop">The <c>stop</c> argument.</param>
+    /// <param name="index">position in the buffered-ranges array to read</param>
+    /// <param name="start">the start position to set, or %NULL</param>
+    /// <param name="stop">the stop position to set, or %NULL</param>
     /// <returns>a #gboolean indicating if the parsing succeeded.</returns>
     public bool ParseNthBufferingRange(uint index, out long start, out long stop)
     {
@@ -899,8 +920,8 @@ public sealed unsafe partial class Query : Gst.MiniObject
     /// @format. If the list contains less elements than @nth, @format will be
     /// set to GST_FORMAT_UNDEFINED.
     /// </summary>
-    /// <param name="nth">The <c>nth</c> argument.</param>
-    /// <param name="format">The <c>format</c> argument.</param>
+    /// <param name="nth">the nth format to retrieve.</param>
+    /// <param name="format">a pointer to store the nth format</param>
     public void ParseNthFormat(uint nth, out Gst.Format format)
     {
         int formatNative = default;
@@ -913,7 +934,7 @@ public sealed unsafe partial class Query : Gst.MiniObject
     /// Parse an available query and get the scheduling mode
     /// at @index of the scheduling modes array.
     /// </summary>
-    /// <param name="index">The <c>index</c> argument.</param>
+    /// <param name="index">position in the scheduling modes array to read</param>
     /// <returns>a #GstPadMode of the scheduling mode at @index.</returns>
     public Gst.PadMode ParseNthSchedulingMode(uint index)
     {
@@ -926,8 +947,11 @@ public sealed unsafe partial class Query : Gst.MiniObject
     /// Parse a position query, writing the format into @format, and the position
     /// into @cur, if the respective parameters are non-%NULL.
     /// </summary>
-    /// <param name="format">The <c>format</c> argument.</param>
-    /// <param name="cur">The <c>cur</c> argument.</param>
+    /// <param name="format">
+    /// the storage for the #GstFormat of the
+    ///     position values (may be %NULL)
+    /// </param>
+    /// <param name="cur">the storage for the current position (may be %NULL)</param>
     public void ParsePosition(out Gst.Format format, out long cur)
     {
         int formatNative = default;
@@ -939,10 +963,10 @@ public sealed unsafe partial class Query : Gst.MiniObject
     }
 
     /// <summary>Set the scheduling properties.</summary>
-    /// <param name="flags">The <c>flags</c> argument.</param>
-    /// <param name="minsize">The <c>minsize</c> argument.</param>
-    /// <param name="maxsize">The <c>maxsize</c> argument.</param>
-    /// <param name="align">The <c>align</c> argument.</param>
+    /// <param name="flags">#GstSchedulingFlags</param>
+    /// <param name="minsize">the suggested minimum size of pull requests</param>
+    /// <param name="maxsize">the suggested maximum size of pull requests:</param>
+    /// <param name="align">the suggested alignment of pull requests</param>
     public void ParseScheduling(out Gst.SchedulingFlags flags, out int minsize, out int maxsize, out int align)
     {
         int flagsNative = default;
@@ -962,10 +986,13 @@ public sealed unsafe partial class Query : Gst.MiniObject
     /// other results into the passed parameters, if the respective parameters
     /// are non-%NULL
     /// </summary>
-    /// <param name="format">The <c>format</c> argument.</param>
-    /// <param name="seekable">The <c>seekable</c> argument.</param>
-    /// <param name="segmentStart">The <c>segmentStart</c> argument.</param>
-    /// <param name="segmentEnd">The <c>segmentEnd</c> argument.</param>
+    /// <param name="format">
+    /// the format to set for the @segment_start
+    ///     and @segment_end values, or %NULL
+    /// </param>
+    /// <param name="seekable">the seekable flag to set, or %NULL</param>
+    /// <param name="segmentStart">the segment_start to set, or %NULL</param>
+    /// <param name="segmentEnd">the segment_end to set, or %NULL</param>
     public void ParseSeeking(out Gst.Format format, out bool seekable, out long segmentStart, out long segmentEnd)
     {
         int formatNative = default;
@@ -987,10 +1014,13 @@ public sealed unsafe partial class Query : Gst.MiniObject
     /// <remarks>
     /// <para>See gst_query_set_segment() for an explanation of the function arguments.</para>
     /// </remarks>
-    /// <param name="rate">The <c>rate</c> argument.</param>
-    /// <param name="format">The <c>format</c> argument.</param>
-    /// <param name="startValue">The <c>startValue</c> argument.</param>
-    /// <param name="stopValue">The <c>stopValue</c> argument.</param>
+    /// <param name="rate">the storage for the rate of the segment, or %NULL</param>
+    /// <param name="format">
+    /// the storage for the #GstFormat of the values,
+    ///     or %NULL
+    /// </param>
+    /// <param name="startValue">the storage for the start value, or %NULL</param>
+    /// <param name="stopValue">the storage for the stop value, or %NULL</param>
     public void ParseSegment(out double rate, out Gst.Format format, out long startValue, out long stopValue)
     {
         double rateNative = default;
@@ -1006,7 +1036,7 @@ public sealed unsafe partial class Query : Gst.MiniObject
     }
 
     /// <summary>Get the results of a selectable query. See also gst_query_set_selectable().</summary>
-    /// <param name="selectable">The <c>selectable</c> argument.</param>
+    /// <param name="selectable">The resulting stream selection capability</param>
     public void ParseSelectable(out bool selectable)
     {
         int selectableNative = default;
@@ -1020,7 +1050,10 @@ public sealed unsafe partial class Query : Gst.MiniObject
     /// allocated string, if the respective parameters are non-%NULL.
     /// Free the string with g_free() after usage.
     /// </summary>
-    /// <param name="uri">The <c>uri</c> argument.</param>
+    /// <param name="uri">
+    /// the storage for the current URI
+    ///     (may be %NULL)
+    /// </param>
     public void ParseUri(out string? uri)
     {
         nint uriNative = default;
@@ -1034,7 +1067,10 @@ public sealed unsafe partial class Query : Gst.MiniObject
     /// allocated string, if the respective parameters are non-%NULL.
     /// Free the string with g_free() after usage.
     /// </summary>
-    /// <param name="uri">The <c>uri</c> argument.</param>
+    /// <param name="uri">
+    /// the storage for the redirect URI
+    ///     (may be %NULL)
+    /// </param>
     public void ParseUriRedirection(out string? uri)
     {
         nint uriNative = default;
@@ -1049,7 +1085,10 @@ public sealed unsafe partial class Query : Gst.MiniObject
     /// applications should update their internal storage of the URI, otherwise
     /// they should make all future requests to the original URI.
     /// </summary>
-    /// <param name="permanent">The <c>permanent</c> argument.</param>
+    /// <param name="permanent">
+    /// if the URI redirection is permanent
+    ///     (may be %NULL)
+    /// </param>
     public void ParseUriRedirectionPermanent(out bool permanent)
     {
         int permanentNative = default;
@@ -1059,7 +1098,7 @@ public sealed unsafe partial class Query : Gst.MiniObject
     }
 
     /// <summary>Remove the metadata API at @index of the metadata API array.</summary>
-    /// <param name="index">The <c>index</c> argument.</param>
+    /// <param name="index">position in the metadata API array to remove</param>
     public void RemoveNthAllocationMeta(uint index)
     {
         GstQueryRemoveNthAllocationMeta(Handle, index);
@@ -1067,7 +1106,7 @@ public sealed unsafe partial class Query : Gst.MiniObject
     }
 
     /// <summary>Remove the allocation param at @index of the allocation param array.</summary>
-    /// <param name="index">The <c>index</c> argument.</param>
+    /// <param name="index">position in the allocation param array to remove</param>
     public void RemoveNthAllocationParam(uint index)
     {
         GstQueryRemoveNthAllocationParam(Handle, index);
@@ -1075,7 +1114,7 @@ public sealed unsafe partial class Query : Gst.MiniObject
     }
 
     /// <summary>Remove the allocation pool at @index of the allocation pool array.</summary>
-    /// <param name="index">The <c>index</c> argument.</param>
+    /// <param name="index">position in the allocation pool array to remove</param>
     public void RemoveNthAllocationPool(uint index)
     {
         GstQueryRemoveNthAllocationPool(Handle, index);
@@ -1083,7 +1122,7 @@ public sealed unsafe partial class Query : Gst.MiniObject
     }
 
     /// <summary>Set @result as the result for the @query.</summary>
-    /// <param name="result">The <c>result</c> argument.</param>
+    /// <param name="result">the result to set</param>
     public void SetAcceptCapsResult(bool result)
     {
         GstQuerySetAcceptCapsResult(Handle, result ? 1 : 0);
@@ -1095,7 +1134,7 @@ public sealed unsafe partial class Query : Gst.MiniObject
     /// bitrate expected over the length of the stream as advertised in file
     /// headers (or similar).
     /// </summary>
-    /// <param name="nominalBitrate">The <c>nominalBitrate</c> argument.</param>
+    /// <param name="nominalBitrate">the nominal bitrate in bits per second</param>
     public void SetBitrate(uint nominalBitrate)
     {
         GstQuerySetBitrate(Handle, nominalBitrate);
@@ -1106,8 +1145,8 @@ public sealed unsafe partial class Query : Gst.MiniObject
     /// Set the percentage of buffered data. This is a value between 0 and 100.
     /// The @busy indicator is %TRUE when the buffering is in progress.
     /// </summary>
-    /// <param name="busy">The <c>busy</c> argument.</param>
-    /// <param name="percent">The <c>percent</c> argument.</param>
+    /// <param name="busy">if buffering is busy</param>
+    /// <param name="percent">a buffering percent</param>
     public void SetBufferingPercent(bool busy, int percent)
     {
         GstQuerySetBufferingPercent(Handle, busy ? 1 : 0, percent);
@@ -1115,10 +1154,13 @@ public sealed unsafe partial class Query : Gst.MiniObject
     }
 
     /// <summary>Set the available query result fields in @query.</summary>
-    /// <param name="format">The <c>format</c> argument.</param>
-    /// <param name="start">The <c>start</c> argument.</param>
-    /// <param name="stop">The <c>stop</c> argument.</param>
-    /// <param name="estimatedTotal">The <c>estimatedTotal</c> argument.</param>
+    /// <param name="format">the format to set for the @start and @stop values</param>
+    /// <param name="start">the start to set</param>
+    /// <param name="stop">the stop to set</param>
+    /// <param name="estimatedTotal">
+    /// estimated total amount of download time remaining in
+    ///     milliseconds
+    /// </param>
     public void SetBufferingRange(Gst.Format format, long start, long stop, long estimatedTotal)
     {
         GstQuerySetBufferingRange(Handle, (int)format, start, stop, estimatedTotal);
@@ -1126,10 +1168,10 @@ public sealed unsafe partial class Query : Gst.MiniObject
     }
 
     /// <summary>Configures the buffering stats values in @query.</summary>
-    /// <param name="mode">The <c>mode</c> argument.</param>
-    /// <param name="avgIn">The <c>avgIn</c> argument.</param>
-    /// <param name="avgOut">The <c>avgOut</c> argument.</param>
-    /// <param name="bufferingLeft">The <c>bufferingLeft</c> argument.</param>
+    /// <param name="mode">a buffering mode</param>
+    /// <param name="avgIn">the average input rate</param>
+    /// <param name="avgOut">the average output rate</param>
+    /// <param name="bufferingLeft">amount of buffering time left in milliseconds</param>
     public void SetBufferingStats(Gst.BufferingMode mode, int avgIn, int avgOut, long bufferingLeft)
     {
         GstQuerySetBufferingStats(Handle, (int)mode, avgIn, avgOut, bufferingLeft);
@@ -1137,7 +1179,7 @@ public sealed unsafe partial class Query : Gst.MiniObject
     }
 
     /// <summary>Set the @caps result in @query.</summary>
-    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <param name="caps">A pointer to the caps</param>
     public void SetCapsResult(Gst.Caps? caps)
     {
         GstQuerySetCapsResult(Handle, caps is null ? 0 : caps.Handle);
@@ -1146,7 +1188,7 @@ public sealed unsafe partial class Query : Gst.MiniObject
     }
 
     /// <summary>Answer a context query by setting the requested context.</summary>
-    /// <param name="context">The <c>context</c> argument.</param>
+    /// <param name="context">the requested #GstContext</param>
     public void SetContext(Gst.Context? context)
     {
         GstQuerySetContext(Handle, context is null ? 0 : context.Handle);
@@ -1155,10 +1197,10 @@ public sealed unsafe partial class Query : Gst.MiniObject
     }
 
     /// <summary>Answer a convert query by setting the requested values.</summary>
-    /// <param name="srcFormat">The <c>srcFormat</c> argument.</param>
-    /// <param name="srcValue">The <c>srcValue</c> argument.</param>
-    /// <param name="destFormat">The <c>destFormat</c> argument.</param>
-    /// <param name="destValue">The <c>destValue</c> argument.</param>
+    /// <param name="srcFormat">the source #GstFormat</param>
+    /// <param name="srcValue">the source value</param>
+    /// <param name="destFormat">the destination #GstFormat</param>
+    /// <param name="destValue">the destination value</param>
     public void SetConvert(Gst.Format srcFormat, long srcValue, Gst.Format destFormat, long destValue)
     {
         GstQuerySetConvert(Handle, (int)srcFormat, srcValue, (int)destFormat, destValue);
@@ -1166,8 +1208,8 @@ public sealed unsafe partial class Query : Gst.MiniObject
     }
 
     /// <summary>Answer a duration query by setting the requested value in the given format.</summary>
-    /// <param name="format">The <c>format</c> argument.</param>
-    /// <param name="duration">The <c>duration</c> argument.</param>
+    /// <param name="format">the #GstFormat for the duration</param>
+    /// <param name="duration">the duration of the stream</param>
     public void SetDuration(Gst.Format format, long duration)
     {
         GstQuerySetDuration(Handle, (int)format, duration);
@@ -1192,9 +1234,9 @@ public sealed unsafe partial class Query : Gst.MiniObject
     }
 
     /// <summary>Answer a latency query by setting the requested values in the given format.</summary>
-    /// <param name="live">The <c>live</c> argument.</param>
-    /// <param name="minLatency">The <c>minLatency</c> argument.</param>
-    /// <param name="maxLatency">The <c>maxLatency</c> argument.</param>
+    /// <param name="live">if there is a live element upstream</param>
+    /// <param name="minLatency">the minimal latency of the upstream elements</param>
+    /// <param name="maxLatency">the maximal latency of the upstream elements</param>
     public void SetLatency(bool live, Gst.ClockTime minLatency, Gst.ClockTime maxLatency)
     {
         GstQuerySetLatency(Handle, live ? 1 : 0, minLatency.Nanoseconds, maxLatency.Nanoseconds);
@@ -1205,9 +1247,9 @@ public sealed unsafe partial class Query : Gst.MiniObject
     /// Parse an available query and get the allocator and its params
     /// at @index of the allocator array.
     /// </summary>
-    /// <param name="index">The <c>index</c> argument.</param>
-    /// <param name="allocator">The <c>allocator</c> argument.</param>
-    /// <param name="params">The <c>@params</c> argument.</param>
+    /// <param name="index">position in the allocator array to set</param>
+    /// <param name="allocator">new allocator to set</param>
+    /// <param name="params">parameters for the allocator</param>
     public void SetNthAllocationParam(uint index, Gst.Allocator? allocator, Gst.AllocationParams? @params)
     {
         GstQuerySetNthAllocationParam(Handle, index, allocator is null ? 0 : allocator.Handle, @params is null ? 0 : @params.Handle);
@@ -1217,11 +1259,11 @@ public sealed unsafe partial class Query : Gst.MiniObject
     }
 
     /// <summary>Set the pool parameters in @query.</summary>
-    /// <param name="index">The <c>index</c> argument.</param>
-    /// <param name="pool">The <c>pool</c> argument.</param>
-    /// <param name="size">The <c>size</c> argument.</param>
-    /// <param name="minBuffers">The <c>minBuffers</c> argument.</param>
-    /// <param name="maxBuffers">The <c>maxBuffers</c> argument.</param>
+    /// <param name="index">index to modify</param>
+    /// <param name="pool">the #GstBufferPool</param>
+    /// <param name="size">the buffer size</param>
+    /// <param name="minBuffers">the min buffers</param>
+    /// <param name="maxBuffers">the max buffers</param>
     public void SetNthAllocationPool(uint index, Gst.BufferPool? pool, uint size, uint minBuffers, uint maxBuffers)
     {
         GstQuerySetNthAllocationPool(Handle, index, pool is null ? 0 : pool.Handle, size, minBuffers, maxBuffers);
@@ -1230,8 +1272,8 @@ public sealed unsafe partial class Query : Gst.MiniObject
     }
 
     /// <summary>Answer a position query by setting the requested value in the given format.</summary>
-    /// <param name="format">The <c>format</c> argument.</param>
-    /// <param name="cur">The <c>cur</c> argument.</param>
+    /// <param name="format">the requested #GstFormat</param>
+    /// <param name="cur">the position to set</param>
     public void SetPosition(Gst.Format format, long cur)
     {
         GstQuerySetPosition(Handle, (int)format, cur);
@@ -1239,10 +1281,10 @@ public sealed unsafe partial class Query : Gst.MiniObject
     }
 
     /// <summary>Set the scheduling properties.</summary>
-    /// <param name="flags">The <c>flags</c> argument.</param>
-    /// <param name="minsize">The <c>minsize</c> argument.</param>
-    /// <param name="maxsize">The <c>maxsize</c> argument.</param>
-    /// <param name="align">The <c>align</c> argument.</param>
+    /// <param name="flags">#GstSchedulingFlags</param>
+    /// <param name="minsize">the suggested minimum size of pull requests</param>
+    /// <param name="maxsize">the suggested maximum size of pull requests</param>
+    /// <param name="align">the suggested alignment of pull requests</param>
     public void SetScheduling(Gst.SchedulingFlags flags, int minsize, int maxsize, int align)
     {
         GstQuerySetScheduling(Handle, (int)flags, minsize, maxsize, align);
@@ -1250,10 +1292,10 @@ public sealed unsafe partial class Query : Gst.MiniObject
     }
 
     /// <summary>Set the seeking query result fields in @query.</summary>
-    /// <param name="format">The <c>format</c> argument.</param>
-    /// <param name="seekable">The <c>seekable</c> argument.</param>
-    /// <param name="segmentStart">The <c>segmentStart</c> argument.</param>
-    /// <param name="segmentEnd">The <c>segmentEnd</c> argument.</param>
+    /// <param name="format">the format to set for the @segment_start and @segment_end values</param>
+    /// <param name="seekable">the seekable flag to set</param>
+    /// <param name="segmentStart">the segment_start to set</param>
+    /// <param name="segmentEnd">the segment_end to set</param>
     public void SetSeeking(Gst.Format format, bool seekable, long segmentStart, long segmentEnd)
     {
         GstQuerySetSeeking(Handle, (int)format, seekable ? 1 : 0, segmentStart, segmentEnd);
@@ -1276,10 +1318,10 @@ public sealed unsafe partial class Query : Gst.MiniObject
     /// @start_value.
     /// </para>
     /// </remarks>
-    /// <param name="rate">The <c>rate</c> argument.</param>
-    /// <param name="format">The <c>format</c> argument.</param>
-    /// <param name="startValue">The <c>startValue</c> argument.</param>
-    /// <param name="stopValue">The <c>stopValue</c> argument.</param>
+    /// <param name="rate">the rate of the segment</param>
+    /// <param name="format">the #GstFormat of the segment values (@start_value and @stop_value)</param>
+    /// <param name="startValue">the start value</param>
+    /// <param name="stopValue">the stop value</param>
     public void SetSegment(double rate, Gst.Format format, long startValue, long stopValue)
     {
         GstQuerySetSegment(Handle, rate, (int)format, startValue, stopValue);
@@ -1290,7 +1332,7 @@ public sealed unsafe partial class Query : Gst.MiniObject
     /// Set the results of a selectable query. If the element answering the query can
     /// handle stream selection, @selectable should be set to %TRUE.
     /// </summary>
-    /// <param name="selectable">The <c>selectable</c> argument.</param>
+    /// <param name="selectable">Whether the element can handle stream selection.</param>
     public void SetSelectable(bool selectable)
     {
         GstQuerySetSelectable(Handle, selectable ? 1 : 0);
@@ -1298,7 +1340,7 @@ public sealed unsafe partial class Query : Gst.MiniObject
     }
 
     /// <summary>Answer a URI query by setting the requested URI.</summary>
-    /// <param name="uri">The <c>uri</c> argument.</param>
+    /// <param name="uri">the URI to set</param>
     public void SetUri(string? uri)
     {
         System.Span<byte> uriBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
@@ -1308,7 +1350,7 @@ public sealed unsafe partial class Query : Gst.MiniObject
     }
 
     /// <summary>Answer a URI query by setting the requested URI redirection.</summary>
-    /// <param name="uri">The <c>uri</c> argument.</param>
+    /// <param name="uri">the URI to set</param>
     public void SetUriRedirection(string? uri)
     {
         System.Span<byte> uriBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
@@ -1321,7 +1363,7 @@ public sealed unsafe partial class Query : Gst.MiniObject
     /// Answer a URI query by setting the requested URI redirection
     /// to permanent or not.
     /// </summary>
-    /// <param name="permanent">The <c>permanent</c> argument.</param>
+    /// <param name="permanent">whether the redirect is permanent or not</param>
     public void SetUriRedirectionPermanent(bool permanent)
     {
         GstQuerySetUriRedirectionPermanent(Handle, permanent ? 1 : 0);

@@ -119,8 +119,8 @@ public unsafe partial class Pad : Gst.Object
     /// will be assigned.
     /// This function makes a copy of the name so you can safely free the name.
     /// </summary>
-    /// <param name="name">The <c>name</c> argument.</param>
-    /// <param name="direction">The <c>direction</c> argument.</param>
+    /// <param name="name">the name of the new pad.</param>
+    /// <param name="direction">the #GstPadDirection of the pad.</param>
     /// <returns>a new #GstPad.</returns>
     public static Gst.Pad New(string? name, Gst.PadDirection direction)
     {
@@ -137,8 +137,8 @@ public unsafe partial class Pad : Gst.Object
     /// will be assigned.
     /// This function makes a copy of the name so you can safely free the name.
     /// </summary>
-    /// <param name="templ">The <c>templ</c> argument.</param>
-    /// <param name="name">The <c>name</c> argument.</param>
+    /// <param name="templ">the #GstStaticPadTemplate to use</param>
+    /// <param name="name">the name of the pad</param>
     /// <returns>a new #GstPad.</returns>
     public static Gst.Pad NewFromStaticTemplate(Gst.StaticPadTemplate templ, string name)
     {
@@ -158,8 +158,8 @@ public unsafe partial class Pad : Gst.Object
     /// will be assigned.
     /// This function makes a copy of the name so you can safely free the name.
     /// </summary>
-    /// <param name="templ">The <c>templ</c> argument.</param>
-    /// <param name="name">The <c>name</c> argument.</param>
+    /// <param name="templ">the pad template to use</param>
+    /// <param name="name">the name of the pad</param>
     /// <returns>a new #GstPad.</returns>
     public static Gst.Pad NewFromTemplate(Gst.PadTemplate templ, string? name)
     {
@@ -179,8 +179,8 @@ public unsafe partial class Pad : Gst.Object
     /// <remarks>
     /// <para>If you don't know what this is, you probably don't want to call it.</para>
     /// </remarks>
-    /// <param name="mode">The <c>mode</c> argument.</param>
-    /// <param name="active">The <c>active</c> argument.</param>
+    /// <param name="mode">the requested activation mode</param>
+    /// <param name="active">whether or not the pad should be active.</param>
     /// <returns>%TRUE if the operation was successful.</returns>
     public bool ActivateMode(Gst.PadMode mode, bool active)
     {
@@ -203,7 +203,7 @@ public unsafe partial class Pad : Gst.Object
     /// added.
     /// </para>
     /// </remarks>
-    /// <param name="mask">The <c>mask</c> argument.</param>
+    /// <param name="mask">the probe mask</param>
     /// <param name="callback">
     /// #GstPadProbeCallback that will be called with
     ///           notifications of the pad state
@@ -228,7 +228,7 @@ public unsafe partial class Pad : Gst.Object
     /// Checks if the source pad and the sink pad are compatible so they can be
     /// linked.
     /// </summary>
-    /// <param name="sinkpad">The <c>sinkpad</c> argument.</param>
+    /// <param name="sinkpad">the sink #GstPad.</param>
     /// <returns>%TRUE if the pads can be linked.</returns>
     public bool CanLink(Gst.Pad sinkpad)
     {
@@ -266,7 +266,8 @@ public unsafe partial class Pad : Gst.Object
     /// </para>
     /// </remarks>
     /// <param name="buffer">
-    /// The <c>buffer</c> argument.
+    /// the #GstBuffer to send, return GST_FLOW_ERROR
+    ///     if not.
     /// The call consumes it: <paramref name="buffer"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// </param>
@@ -316,7 +317,8 @@ public unsafe partial class Pad : Gst.Object
     /// </para>
     /// </remarks>
     /// <param name="list">
-    /// The <c>list</c> argument.
+    /// the #GstBufferList to send, return GST_FLOW_ERROR
+    ///     if not.
     /// The call consumes it: <paramref name="list"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// </param>
@@ -374,8 +376,8 @@ public unsafe partial class Pad : Gst.Object
     /// preceded by 0's, such as by using the format \%03u instead of \%u.
     /// </para>
     /// </remarks>
-    /// <param name="parent">The <c>parent</c> argument.</param>
-    /// <param name="streamId">The <c>streamId</c> argument.</param>
+    /// <param name="parent">Parent #GstElement of @pad</param>
+    /// <param name="streamId">The stream-id</param>
     /// <returns>A stream-id for @pad. g_free() after usage.</returns>
     public string CreateStreamId(Gst.Element parent, string? streamId)
     {
@@ -407,9 +409,9 @@ public unsafe partial class Pad : Gst.Object
     /// declaration around the argument stays correct.
     /// </para>
     /// </remarks>
-    /// <param name="parent">The <c>parent</c> argument.</param>
+    /// <param name="parent">the parent of @pad or %NULL</param>
     /// <param name="event">
-    /// The <c>@event</c> argument.
+    /// the #GstEvent to handle.
     /// The call consumes it: <paramref name="event"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// </param>
@@ -633,9 +635,12 @@ public unsafe partial class Pad : Gst.Object
     /// </para>
     /// <para>This is a lowlevel function. Usually gst_pad_pull_range() is used.</para>
     /// </remarks>
-    /// <param name="offset">The <c>offset</c> argument.</param>
-    /// <param name="size">The <c>size</c> argument.</param>
-    /// <param name="buffer">The <c>buffer</c> argument.</param>
+    /// <param name="offset">The start offset of the buffer</param>
+    /// <param name="size">The length of the buffer</param>
+    /// <param name="buffer">
+    /// a pointer to hold the #GstBuffer,
+    ///     returns #GST_FLOW_ERROR if %NULL.
+    /// </param>
     /// <returns>a #GstFlowReturn from the pad.</returns>
     public Gst.FlowReturn GetRange(ulong offset, uint size, out Gst.Buffer? buffer)
     {
@@ -666,8 +671,8 @@ public unsafe partial class Pad : Gst.Object
     /// Returns a new reference of the sticky event of type @event_type
     /// from the event.
     /// </summary>
-    /// <param name="eventType">The <c>eventType</c> argument.</param>
-    /// <param name="idx">The <c>idx</c> argument.</param>
+    /// <param name="eventType">the #GstEventType that should be retrieved.</param>
+    /// <param name="idx">the index of the event</param>
     /// <returns>
     /// a #GstEvent of type
     /// @event_type or %NULL when no event of @event_type was on
@@ -823,7 +828,7 @@ public unsafe partial class Pad : Gst.Object
     /// <remarks>
     /// <para>The caller must free this iterator after use with gst_iterator_free().</para>
     /// </remarks>
-    /// <param name="parent">The <c>parent</c> argument.</param>
+    /// <param name="parent">the parent of @pad or %NULL</param>
     /// <returns>
     /// a #GstIterator of #GstPad, or %NULL if @pad
     /// has no parent. Unref each returned pad with gst_object_unref().
@@ -837,7 +842,7 @@ public unsafe partial class Pad : Gst.Object
     }
 
     /// <summary>Links the source pad and the sink pad.</summary>
-    /// <param name="sinkpad">The <c>sinkpad</c> argument.</param>
+    /// <param name="sinkpad">the sink #GstPad to link.</param>
     /// <returns>
     /// A result code indicating if the connection worked or
     ///          what went wrong.
@@ -862,8 +867,8 @@ public unsafe partial class Pad : Gst.Object
     /// </para>
     /// <para>MT Safe.</para>
     /// </remarks>
-    /// <param name="sinkpad">The <c>sinkpad</c> argument.</param>
-    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <param name="sinkpad">the sink #GstPad to link.</param>
+    /// <param name="flags">the checks to validate when linking</param>
     /// <returns>
     /// A result code indicating if the connection worked or
     ///          what went wrong.
@@ -888,7 +893,7 @@ public unsafe partial class Pad : Gst.Object
     /// ancestor, the link will fail.
     /// </para>
     /// </remarks>
-    /// <param name="sink">The <c>sink</c> argument.</param>
+    /// <param name="sink">a #GstPad</param>
     /// <returns>whether the link succeeded.</returns>
     public bool LinkMaybeGhosting(Gst.Pad sink)
     {
@@ -915,8 +920,8 @@ public unsafe partial class Pad : Gst.Object
     /// pads with safety checks applied.
     /// </para>
     /// </remarks>
-    /// <param name="sink">The <c>sink</c> argument.</param>
-    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <param name="sink">a #GstPad</param>
+    /// <param name="flags">some #GstPadLinkCheck flags</param>
     /// <returns>whether the link succeeded.</returns>
     public bool LinkMaybeGhostingFull(Gst.Pad sink, Gst.PadLinkCheck flags)
     {
@@ -972,7 +977,7 @@ public unsafe partial class Pad : Gst.Object
     /// the query structure.
     /// </para>
     /// </remarks>
-    /// <param name="query">The <c>query</c> argument.</param>
+    /// <param name="query">the #GstQuery to perform.</param>
     /// <returns>
     /// %TRUE if the query could be performed. This function returns %FALSE
     /// if @pad has no peer.
@@ -990,7 +995,7 @@ public unsafe partial class Pad : Gst.Object
     /// Check if the peer of @pad accepts @caps. If @pad has no peer, this function
     /// returns %TRUE.
     /// </summary>
-    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <param name="caps">a #GstCaps to check on the pad</param>
     /// <returns>%TRUE if the peer of @pad can accept the caps or @pad has no peer.</returns>
     public bool PeerQueryAcceptCaps(Gst.Caps caps)
     {
@@ -1014,7 +1019,7 @@ public unsafe partial class Pad : Gst.Object
     /// if it is not %NULL the returned caps will be a subset of @filter.
     /// </para>
     /// </remarks>
-    /// <param name="filter">The <c>filter</c> argument.</param>
+    /// <param name="filter">a #GstCaps filter, or %NULL.</param>
     /// <returns>
     /// the caps of the peer pad with incremented
     /// ref-count. When there is no peer pad, this function returns @filter or,
@@ -1033,10 +1038,10 @@ public unsafe partial class Pad : Gst.Object
     /// Queries the peer pad of a given sink pad to convert @src_val in @src_format
     /// to @dest_format.
     /// </summary>
-    /// <param name="srcFormat">The <c>srcFormat</c> argument.</param>
-    /// <param name="srcVal">The <c>srcVal</c> argument.</param>
-    /// <param name="destFormat">The <c>destFormat</c> argument.</param>
-    /// <param name="destVal">The <c>destVal</c> argument.</param>
+    /// <param name="srcFormat">a #GstFormat to convert from.</param>
+    /// <param name="srcVal">a value to convert.</param>
+    /// <param name="destFormat">the #GstFormat to convert to.</param>
+    /// <param name="destVal">a pointer to the result.</param>
     /// <returns>%TRUE if the query could be performed.</returns>
     public bool PeerQueryConvert(Gst.Format srcFormat, long srcVal, Gst.Format destFormat, out long destVal)
     {
@@ -1048,8 +1053,11 @@ public unsafe partial class Pad : Gst.Object
     }
 
     /// <summary>Queries the peer pad of a given sink pad for the total stream duration.</summary>
-    /// <param name="format">The <c>format</c> argument.</param>
-    /// <param name="duration">The <c>duration</c> argument.</param>
+    /// <param name="format">the #GstFormat requested</param>
+    /// <param name="duration">
+    /// a location in which to store the total
+    ///     duration, or %NULL.
+    /// </param>
     /// <returns>%TRUE if the query could be performed.</returns>
     public bool PeerQueryDuration(Gst.Format format, out long duration)
     {
@@ -1061,8 +1069,11 @@ public unsafe partial class Pad : Gst.Object
     }
 
     /// <summary>Queries the peer of a given sink pad for the stream position.</summary>
-    /// <param name="format">The <c>format</c> argument.</param>
-    /// <param name="cur">The <c>cur</c> argument.</param>
+    /// <param name="format">the #GstFormat requested</param>
+    /// <param name="cur">
+    /// a location in which to store the current
+    ///     position, or %NULL.
+    /// </param>
     /// <returns>%TRUE if the query could be performed.</returns>
     public bool PeerQueryPosition(Gst.Format format, out long cur)
     {
@@ -1084,7 +1095,7 @@ public unsafe partial class Pad : Gst.Object
     /// all opposite pads.
     /// </para>
     /// </remarks>
-    /// <param name="query">The <c>query</c> argument.</param>
+    /// <param name="query">an ACCEPT_CAPS #GstQuery.</param>
     /// <returns>%TRUE if @query could be executed</returns>
     public bool ProxyQueryAcceptCaps(Gst.Query query)
     {
@@ -1106,7 +1117,7 @@ public unsafe partial class Pad : Gst.Object
     /// the same caps.  Two such elements are tee and adder.
     /// </para>
     /// </remarks>
-    /// <param name="query">The <c>query</c> argument.</param>
+    /// <param name="query">a CAPS #GstQuery.</param>
     /// <returns>%TRUE if @query could be executed</returns>
     public bool ProxyQueryCaps(Gst.Query query)
     {
@@ -1149,9 +1160,12 @@ public unsafe partial class Pad : Gst.Object
     /// bytes. The caller should check the result buffer size to get the result size.
     /// </para>
     /// </remarks>
-    /// <param name="offset">The <c>offset</c> argument.</param>
-    /// <param name="size">The <c>size</c> argument.</param>
-    /// <param name="buffer">The <c>buffer</c> argument.</param>
+    /// <param name="offset">The start offset of the buffer</param>
+    /// <param name="size">The length of the buffer</param>
+    /// <param name="buffer">
+    /// a pointer to hold the #GstBuffer, returns
+    ///     GST_FLOW_ERROR if %NULL.
+    /// </param>
     /// <returns>a #GstFlowReturn from the peer pad.</returns>
     public Gst.FlowReturn PullRange(ulong offset, uint size, out Gst.Buffer? buffer)
     {
@@ -1186,7 +1200,8 @@ public unsafe partial class Pad : Gst.Object
     /// </para>
     /// </remarks>
     /// <param name="buffer">
-    /// The <c>buffer</c> argument.
+    /// the #GstBuffer to push returns GST_FLOW_ERROR
+    ///     if not.
     /// The call consumes it: <paramref name="buffer"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// </param>
@@ -1235,7 +1250,8 @@ public unsafe partial class Pad : Gst.Object
     /// </para>
     /// </remarks>
     /// <param name="list">
-    /// The <c>list</c> argument.
+    /// the #GstBufferList to push returns GST_FLOW_ERROR
+    ///     if not.
     /// The call consumes it: <paramref name="list"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// </param>
@@ -1272,7 +1288,7 @@ public unsafe partial class Pad : Gst.Object
     /// </para>
     /// <para>Please also note that some queries might need a running pipeline to work.</para>
     /// </remarks>
-    /// <param name="query">The <c>query</c> argument.</param>
+    /// <param name="query">the #GstQuery to perform.</param>
     /// <returns>%TRUE if the query could be performed.</returns>
     public bool Query(Gst.Query query)
     {
@@ -1284,7 +1300,7 @@ public unsafe partial class Pad : Gst.Object
     }
 
     /// <summary>Check if the given pad accepts the caps.</summary>
-    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <param name="caps">a #GstCaps to check on the pad</param>
     /// <returns>%TRUE if the pad can accept the caps.</returns>
     public bool QueryAcceptCaps(Gst.Caps caps)
     {
@@ -1316,7 +1332,7 @@ public unsafe partial class Pad : Gst.Object
     /// gst_caps_make_writable() before modifying the caps.
     /// </para>
     /// </remarks>
-    /// <param name="filter">The <c>filter</c> argument.</param>
+    /// <param name="filter">suggested #GstCaps, or %NULL</param>
     /// <returns>the caps of the pad with incremented ref-count.</returns>
     public Gst.Caps QueryCaps(Gst.Caps? filter)
     {
@@ -1328,10 +1344,10 @@ public unsafe partial class Pad : Gst.Object
     }
 
     /// <summary>Queries a pad to convert @src_val in @src_format to @dest_format.</summary>
-    /// <param name="srcFormat">The <c>srcFormat</c> argument.</param>
-    /// <param name="srcVal">The <c>srcVal</c> argument.</param>
-    /// <param name="destFormat">The <c>destFormat</c> argument.</param>
-    /// <param name="destVal">The <c>destVal</c> argument.</param>
+    /// <param name="srcFormat">a #GstFormat to convert from.</param>
+    /// <param name="srcVal">a value to convert.</param>
+    /// <param name="destFormat">the #GstFormat to convert to.</param>
+    /// <param name="destVal">a pointer to the result.</param>
     /// <returns>%TRUE if the query could be performed.</returns>
     public bool QueryConvert(Gst.Format srcFormat, long srcVal, Gst.Format destFormat, out long destVal)
     {
@@ -1349,8 +1365,8 @@ public unsafe partial class Pad : Gst.Object
     /// @pad, only one will be sent the query.
     /// Multi-sinkpad elements should implement custom query handlers.
     /// </summary>
-    /// <param name="parent">The <c>parent</c> argument.</param>
-    /// <param name="query">The <c>query</c> argument.</param>
+    /// <param name="parent">the parent of @pad or %NULL</param>
+    /// <param name="query">the #GstQuery to handle.</param>
     /// <returns>%TRUE if the query was performed successfully.</returns>
     public bool QueryDefault(Gst.Object? parent, Gst.Query query)
     {
@@ -1363,8 +1379,11 @@ public unsafe partial class Pad : Gst.Object
     }
 
     /// <summary>Queries a pad for the total stream duration.</summary>
-    /// <param name="format">The <c>format</c> argument.</param>
-    /// <param name="duration">The <c>duration</c> argument.</param>
+    /// <param name="format">the #GstFormat requested</param>
+    /// <param name="duration">
+    /// a location in which to store the total
+    ///     duration, or %NULL.
+    /// </param>
     /// <returns>%TRUE if the query could be performed.</returns>
     public bool QueryDuration(Gst.Format format, out long duration)
     {
@@ -1376,8 +1395,8 @@ public unsafe partial class Pad : Gst.Object
     }
 
     /// <summary>Queries a pad for the stream position.</summary>
-    /// <param name="format">The <c>format</c> argument.</param>
-    /// <param name="cur">The <c>cur</c> argument.</param>
+    /// <param name="format">the #GstFormat requested</param>
+    /// <param name="cur">A location in which to store the current position, or %NULL.</param>
     /// <returns>%TRUE if the query could be performed.</returns>
     public bool QueryPosition(Gst.Format format, out long cur)
     {
@@ -1392,7 +1411,7 @@ public unsafe partial class Pad : Gst.Object
     /// <remarks>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="id">The <c>id</c> argument.</param>
+    /// <param name="id">the probe id to remove</param>
     public void RemoveProbe(System.Runtime.InteropServices.CULong id)
     {
         GstPadRemoveProbe(Handle, id);
@@ -1456,7 +1475,7 @@ public unsafe partial class Pad : Gst.Object
     /// and a %FALSE argument.
     /// </para>
     /// </remarks>
-    /// <param name="active">The <c>active</c> argument.</param>
+    /// <param name="active">whether or not the pad should be active.</param>
     /// <returns>%TRUE if the operation was successful.</returns>
     public bool SetActive(bool active)
     {
@@ -1511,7 +1530,7 @@ public unsafe partial class Pad : Gst.Object
     /// This function can only be used by the element that owns the pad.
     /// No locking is performed in this function.
     /// </summary>
-    /// <param name="priv">The <c>priv</c> argument.</param>
+    /// <param name="priv">The private data to attach to the pad.</param>
     public void SetElementPrivate(nint priv)
     {
         GstPadSetElementPrivate(Handle, priv);
@@ -1623,7 +1642,7 @@ public unsafe partial class Pad : Gst.Object
     /// their running time adjusted. For that reason this is only reliable on
     /// source pads.
     /// </summary>
-    /// <param name="offset">The <c>offset</c> argument.</param>
+    /// <param name="offset">the offset</param>
     public void SetOffset(long offset)
     {
         GstPadSetOffset(Handle, offset);
@@ -1717,7 +1736,7 @@ public unsafe partial class Pad : Gst.Object
     }
 
     /// <summary>Store the sticky @event on @pad</summary>
-    /// <param name="event">The <c>@event</c> argument.</param>
+    /// <param name="event">a #GstEvent</param>
     /// <returns>
     /// #GST_FLOW_OK on success, #GST_FLOW_FLUSHING when the pad
     /// was flushing or #GST_FLOW_EOS when the pad was EOS.
@@ -1735,7 +1754,7 @@ public unsafe partial class Pad : Gst.Object
     /// Unlinks the source pad from the sink pad. Will emit the #GstPad::unlinked
     /// signal on both pads.
     /// </summary>
-    /// <param name="sinkpad">The <c>sinkpad</c> argument.</param>
+    /// <param name="sinkpad">the sink #GstPad to unlink.</param>
     /// <returns>
     /// %TRUE if the pads were unlinked. This function returns %FALSE if
     /// the pads were not linked together.
@@ -1768,7 +1787,7 @@ public unsafe partial class Pad : Gst.Object
     }
 
     /// <summary>Gets a string representing the given pad-link return.</summary>
-    /// <param name="ret">The <c>ret</c> argument.</param>
+    /// <param name="ret">a #GstPadLinkReturn to get the name of.</param>
     /// <returns>a static string with the name of the pad-link return.</returns>
     public static string LinkGetName(Gst.PadLinkReturn ret)
     {

@@ -53,10 +53,10 @@ public unsafe partial class FdAllocator : Gst.Allocator
     }
 
     /// <summary>Return a %GstMemory that wraps a generic file descriptor.</summary>
-    /// <param name="allocator">The <c>allocator</c> argument.</param>
-    /// <param name="fd">The <c>fd</c> argument.</param>
-    /// <param name="size">The <c>size</c> argument.</param>
-    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <param name="allocator">allocator to be used for this memory</param>
+    /// <param name="fd">file descriptor</param>
+    /// <param name="size">memory size</param>
+    /// <param name="flags">extra #GstFdMemoryFlags</param>
     /// <returns>
     /// a GstMemory based on @allocator.
     /// When the buffer will be released the allocator will close the @fd unless
@@ -75,12 +75,12 @@ public unsafe partial class FdAllocator : Gst.Allocator
     /// <remarks>
     /// <para>Available since GStreamer 1.28.</para>
     /// </remarks>
-    /// <param name="allocator">The <c>allocator</c> argument.</param>
-    /// <param name="fd">The <c>fd</c> argument.</param>
-    /// <param name="maxsize">The <c>maxsize</c> argument.</param>
-    /// <param name="offset">The <c>offset</c> argument.</param>
-    /// <param name="size">The <c>size</c> argument.</param>
-    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <param name="allocator">allocator to be used for this memory</param>
+    /// <param name="fd">file descriptor</param>
+    /// <param name="maxsize">the total size of the memory represented by @fd</param>
+    /// <param name="offset">the offset of valid data in the memory</param>
+    /// <param name="size">the size of valid data in the memory</param>
+    /// <param name="flags">extra #GstFdMemoryFlags</param>
     /// <returns>
     /// a GstMemory based on @allocator.
     /// When the buffer will be released the allocator will close the @fd unless

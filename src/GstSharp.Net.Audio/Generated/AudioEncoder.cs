@@ -143,7 +143,7 @@ public abstract unsafe partial class AudioEncoder : Gst.Element, Gst.IPreset
     /// Helper function that allocates a buffer to hold an encoded audio frame
     /// for @enc's current output format.
     /// </summary>
-    /// <param name="size">The <c>size</c> argument.</param>
+    /// <param name="size">size of the buffer</param>
     /// <returns>allocated buffer</returns>
     public Gst.Buffer AllocateOutputBuffer(nuint size)
     {
@@ -177,13 +177,13 @@ public abstract unsafe partial class AudioEncoder : Gst.Element, Gst.IPreset
     /// </para>
     /// </remarks>
     /// <param name="buffer">
-    /// The <c>buffer</c> argument.
+    /// encoded data
     /// The call consumes it: <paramref name="buffer"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// It may be <see langword="null"/>, which is the absence of a payload and leaves
     /// nothing to consume.
     /// </param>
-    /// <param name="samples">The <c>samples</c> argument.</param>
+    /// <param name="samples">number of samples (per channel) represented by encoded data</param>
     /// <returns>a #GstFlowReturn that should be escalated to caller (of caller)</returns>
     /// <exception cref="ObjectDisposedException">
     /// This wrapper or <paramref name="buffer"/> was disposed.
@@ -206,9 +206,13 @@ public abstract unsafe partial class AudioEncoder : Gst.Element, Gst.IPreset
     /// <remarks>
     /// <para>Unref the @allocator after use it.</para>
     /// </remarks>
-    /// <param name="allocator">The <c>allocator</c> argument.</param>
+    /// <param name="allocator">
+    /// the #GstAllocator
+    /// used
+    /// </param>
     /// <param name="params">
-    /// The <c>@params</c> argument.
+    /// the
+    /// #GstAllocationParams of @allocator
     /// The binding allocates the storage; on return the caller owns
     /// <paramref name="params"/> and disposes it.
     /// </param>
@@ -297,8 +301,8 @@ public abstract unsafe partial class AudioEncoder : Gst.Element, Gst.IPreset
     /// Sets the variables pointed to by @min and @max to the currently configured
     /// latency.
     /// </summary>
-    /// <param name="min">The <c>min</c> argument.</param>
-    /// <param name="max">The <c>max</c> argument.</param>
+    /// <param name="min">a pointer to storage to hold minimum latency</param>
+    /// <param name="max">a pointer to storage to hold maximum latency</param>
     public void GetLatency(out Gst.ClockTime min, out Gst.ClockTime max)
     {
         ulong minNative = default;
@@ -357,8 +361,11 @@ public abstract unsafe partial class AudioEncoder : Gst.Element, Gst.IPreset
     /// </para>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="tags">The <c>tags</c> argument.</param>
-    /// <param name="mode">The <c>mode</c> argument.</param>
+    /// <param name="tags">
+    /// a #GstTagList to merge, or NULL to unset
+    ///     previously-set tags
+    /// </param>
+    /// <param name="mode">the #GstTagMergeMode to use, usually #GST_TAG_MERGE_REPLACE</param>
     public void MergeTags(Gst.TagList? tags, Gst.TagMergeMode mode)
     {
         GstAudioEncoderMergeTags(Handle, tags is null ? 0 : tags.Handle, (int)mode);
@@ -384,8 +391,8 @@ public abstract unsafe partial class AudioEncoder : Gst.Element, Gst.IPreset
     /// restricted to channel/rate combinations supported by downstream elements
     /// (e.g. muxers).
     /// </summary>
-    /// <param name="caps">The <c>caps</c> argument.</param>
-    /// <param name="filter">The <c>filter</c> argument.</param>
+    /// <param name="caps">initial caps</param>
+    /// <param name="filter">filter caps</param>
     /// <returns>a #GstCaps owned by caller</returns>
     public Gst.Caps ProxyGetcaps(Gst.Caps? caps, Gst.Caps? filter)
     {
@@ -403,7 +410,7 @@ public abstract unsafe partial class AudioEncoder : Gst.Element, Gst.IPreset
     /// gst_audio_encoder_negotiate(). Setting to %NULL the allocation
     /// query will use the caps from the pad.
     /// </summary>
-    /// <param name="allocationCaps">The <c>allocationCaps</c> argument.</param>
+    /// <param name="allocationCaps">a #GstCaps or %NULL</param>
     public void SetAllocationCaps(Gst.Caps? allocationCaps)
     {
         GstAudioEncoderSetAllocationCaps(Handle, allocationCaps is null ? 0 : allocationCaps.Handle);
@@ -420,7 +427,7 @@ public abstract unsafe partial class AudioEncoder : Gst.Element, Gst.IPreset
     /// <remarks>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="enabled">The <c>enabled</c> argument.</param>
+    /// <param name="enabled">new state</param>
     public void SetDrainable(bool enabled)
     {
         GstAudioEncoderSetDrainable(Handle, enabled ? 1 : 0);
@@ -437,7 +444,7 @@ public abstract unsafe partial class AudioEncoder : Gst.Element, Gst.IPreset
     /// #GstAudioEncoderClass.set_format() is called.
     /// </para>
     /// </remarks>
-    /// <param name="num">The <c>num</c> argument.</param>
+    /// <param name="num">number of frames</param>
     public void SetFrameMax(int num)
     {
         GstAudioEncoderSetFrameMax(Handle, num);
@@ -458,7 +465,7 @@ public abstract unsafe partial class AudioEncoder : Gst.Element, Gst.IPreset
     /// #GstAudioEncoderClass.set_format() is called.
     /// </para>
     /// </remarks>
-    /// <param name="num">The <c>num</c> argument.</param>
+    /// <param name="num">number of samples per frame</param>
     public void SetFrameSamplesMax(int num)
     {
         GstAudioEncoderSetFrameSamplesMax(Handle, num);
@@ -479,7 +486,7 @@ public abstract unsafe partial class AudioEncoder : Gst.Element, Gst.IPreset
     /// #GstAudioEncoderClass.set_format() is called.
     /// </para>
     /// </remarks>
-    /// <param name="num">The <c>num</c> argument.</param>
+    /// <param name="num">number of samples per frame</param>
     public void SetFrameSamplesMin(int num)
     {
         GstAudioEncoderSetFrameSamplesMin(Handle, num);
@@ -495,7 +502,7 @@ public abstract unsafe partial class AudioEncoder : Gst.Element, Gst.IPreset
     /// <remarks>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="enabled">The <c>enabled</c> argument.</param>
+    /// <param name="enabled">new state</param>
     public void SetHardMin(bool enabled)
     {
         GstAudioEncoderSetHardMin(Handle, enabled ? 1 : 0);
@@ -512,7 +519,8 @@ public abstract unsafe partial class AudioEncoder : Gst.Element, Gst.IPreset
 
     /// <summary>Set the codec headers to be sent downstream whenever requested.</summary>
     /// <param name="headers">
-    /// The <c>headers</c> argument.
+    /// a list of
+    ///   #GstBuffer containing the codec header
     /// The call takes the list over. The binding hands it a native list of its own
     /// and one reference per element, and releases neither afterwards - the callee
     /// owns both from the moment the call is made, including when it answers false.
@@ -531,8 +539,8 @@ public abstract unsafe partial class AudioEncoder : Gst.Element, Gst.IPreset
     /// previously provided ones, this will also post a LATENCY message on the bus
     /// so the pipeline can reconfigure its global latency.
     /// </summary>
-    /// <param name="min">The <c>min</c> argument.</param>
-    /// <param name="max">The <c>max</c> argument.</param>
+    /// <param name="min">minimum latency</param>
+    /// <param name="max">maximum latency</param>
     public void SetLatency(Gst.ClockTime min, Gst.ClockTime max)
     {
         GstAudioEncoderSetLatency(Handle, min.Nanoseconds, max.Nanoseconds);
@@ -546,7 +554,7 @@ public abstract unsafe partial class AudioEncoder : Gst.Element, Gst.IPreset
     /// #GstAudioEncoderClass.set_format() is called.
     /// </para>
     /// </remarks>
-    /// <param name="num">The <c>num</c> argument.</param>
+    /// <param name="num">lookahead</param>
     public void SetLookahead(int num)
     {
         GstAudioEncoderSetLookahead(Handle, num);
@@ -557,7 +565,7 @@ public abstract unsafe partial class AudioEncoder : Gst.Element, Gst.IPreset
     /// <remarks>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="enabled">The <c>enabled</c> argument.</param>
+    /// <param name="enabled">new state</param>
     public void SetMarkGranule(bool enabled)
     {
         GstAudioEncoderSetMarkGranule(Handle, enabled ? 1 : 0);
@@ -565,7 +573,7 @@ public abstract unsafe partial class AudioEncoder : Gst.Element, Gst.IPreset
     }
 
     /// <summary>Configure output caps on the srcpad of @enc.</summary>
-    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <param name="caps">#GstCaps</param>
     /// <returns>%TRUE on success.</returns>
     public bool SetOutputFormat(Gst.Caps caps)
     {
@@ -580,7 +588,7 @@ public abstract unsafe partial class AudioEncoder : Gst.Element, Gst.IPreset
     /// <remarks>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="enabled">The <c>enabled</c> argument.</param>
+    /// <param name="enabled">new state</param>
     public void SetPerfectTimestamp(bool enabled)
     {
         GstAudioEncoderSetPerfectTimestamp(Handle, enabled ? 1 : 0);
@@ -591,7 +599,7 @@ public abstract unsafe partial class AudioEncoder : Gst.Element, Gst.IPreset
     /// <remarks>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="tolerance">The <c>tolerance</c> argument.</param>
+    /// <param name="tolerance">new tolerance</param>
     public void SetTolerance(Gst.ClockTime tolerance)
     {
         GstAudioEncoderSetTolerance(Handle, tolerance.Nanoseconds);

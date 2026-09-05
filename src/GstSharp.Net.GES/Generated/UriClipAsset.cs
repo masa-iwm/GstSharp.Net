@@ -108,7 +108,10 @@ public unsafe partial class UriClipAsset : GES.SourceClipAsset, GES.IMetaContain
     /// Creates a #GESUriClipAsset for @uri synchonously. You should avoid
     /// to use it in application, and rather create #GESUriClipAsset asynchronously
     /// </summary>
-    /// <param name="uri">The <c>uri</c> argument.</param>
+    /// <param name="uri">
+    /// The URI of the file for which to create a #GESUriClipAsset.
+    /// You can also use multi file uris for #GESMultiFileSource.
+    /// </param>
     /// <returns>
     /// A reference to the requested asset or %NULL if
     /// an error happened

@@ -141,7 +141,7 @@ public sealed unsafe partial class AudioInfo : Gst.GObject.Boxed
     }
 
     /// <summary>Parse @caps to generate a #GstAudioInfo.</summary>
-    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <param name="caps">a #GstCaps</param>
     /// <returns>A #GstAudioInfo, or %NULL if @caps couldn't be parsed</returns>
     public static Gst.Audio.AudioInfo? NewFromCaps(Gst.Caps caps)
     {
@@ -157,10 +157,10 @@ public sealed unsafe partial class AudioInfo : Gst.GObject.Boxed
     /// raw audio, GST_FORMAT_DEFAULT corresponds to audio frames.  This
     /// function can be used to handle pad queries of the type GST_QUERY_CONVERT.
     /// </summary>
-    /// <param name="srcFmt">The <c>srcFmt</c> argument.</param>
-    /// <param name="srcVal">The <c>srcVal</c> argument.</param>
-    /// <param name="destFmt">The <c>destFmt</c> argument.</param>
-    /// <param name="destVal">The <c>destVal</c> argument.</param>
+    /// <param name="srcFmt">#GstFormat of the @src_val</param>
+    /// <param name="srcVal">value to convert</param>
+    /// <param name="destFmt">#GstFormat of the @dest_val</param>
+    /// <param name="destVal">pointer to destination value</param>
     /// <returns>TRUE if the conversion was successful.</returns>
     public bool Convert(Gst.Format srcFmt, long srcVal, Gst.Format destFmt, out long destVal)
     {
@@ -182,7 +182,7 @@ public sealed unsafe partial class AudioInfo : Gst.GObject.Boxed
     }
 
     /// <summary>Compares two #GstAudioInfo and returns whether they are equal or not</summary>
-    /// <param name="other">The <c>other</c> argument.</param>
+    /// <param name="other">a #GstAudioInfo</param>
     /// <returns>%TRUE if @info and @other are equal, else %FALSE.</returns>
     public bool IsEqual(Gst.Audio.AudioInfo other)
     {
@@ -197,9 +197,9 @@ public sealed unsafe partial class AudioInfo : Gst.GObject.Boxed
     /// <remarks>
     /// <para>Note: This initializes @info first, no values are preserved.</para>
     /// </remarks>
-    /// <param name="format">The <c>format</c> argument.</param>
-    /// <param name="rate">The <c>rate</c> argument.</param>
-    /// <param name="channels">The <c>channels</c> argument.</param>
+    /// <param name="format">the format</param>
+    /// <param name="rate">the samplerate</param>
+    /// <param name="channels">the number of channels</param>
     /// <param name="position">
     /// the channel positions
     /// The C declaration sizes this buffer at 64 elements; pass exactly 64, or an empty span for <c>NULL</c>.

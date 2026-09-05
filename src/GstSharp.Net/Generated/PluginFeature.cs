@@ -50,9 +50,9 @@ public abstract unsafe partial class PluginFeature : Gst.Object
     /// the nano version from the string and do this check that way if needed.
     /// </para>
     /// </remarks>
-    /// <param name="minMajor">The <c>minMajor</c> argument.</param>
-    /// <param name="minMinor">The <c>minMinor</c> argument.</param>
-    /// <param name="minMicro">The <c>minMicro</c> argument.</param>
+    /// <param name="minMajor">minimum required major version</param>
+    /// <param name="minMinor">minimum required minor version</param>
+    /// <param name="minMicro">minimum required micro version</param>
     /// <returns>
     /// %TRUE if the plugin feature has at least
     ///  the required version, otherwise %FALSE.
@@ -132,7 +132,7 @@ public abstract unsafe partial class PluginFeature : Gst.Object
     /// Specifies a rank for a plugin feature, so that autoplugging uses
     /// the most appropriate feature.
     /// </summary>
-    /// <param name="rank">The <c>rank</c> argument.</param>
+    /// <param name="rank">rank value - higher number means more priority rank</param>
     public void SetRank(uint rank)
     {
         GstPluginFeatureSetRank(Handle, rank);
@@ -144,7 +144,8 @@ public abstract unsafe partial class PluginFeature : Gst.Object
     /// when done with the list.
     /// </summary>
     /// <param name="list">
-    /// The <c>list</c> argument.
+    /// list
+    ///     of #GstPluginFeature
     /// The call reads the list while it runs and copies whatever it keeps. A
     /// temporary native list is built for the call and released when it returns,
     /// and an empty sequence is passed as the null pointer, which is how C spells
@@ -173,7 +174,8 @@ public abstract unsafe partial class PluginFeature : Gst.Object
 
     /// <summary>Debug the plugin feature names in @list.</summary>
     /// <param name="list">
-    /// The <c>list</c> argument.
+    /// a #GList of
+    ///     plugin features
     /// The call reads the list while it runs and copies whatever it keeps. A
     /// temporary native list is built for the call and released when it returns,
     /// and an empty sequence is passed as the null pointer, which is how C spells
@@ -189,8 +191,8 @@ public abstract unsafe partial class PluginFeature : Gst.Object
     /// Compares the two given #GstPluginFeature instances. This function can be
     /// used as a #GCompareFunc when sorting by rank and then by name.
     /// </summary>
-    /// <param name="p1">The <c>p1</c> argument.</param>
-    /// <param name="p2">The <c>p2</c> argument.</param>
+    /// <param name="p1">a #GstPluginFeature</param>
+    /// <param name="p2">a #GstPluginFeature</param>
     /// <returns>
     /// negative value if the rank of p1 &gt; the rank of p2 or the ranks are
     /// equal but the name of p1 comes before the name of p2; zero if the rank

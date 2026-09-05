@@ -59,7 +59,7 @@ public unsafe partial class RTSPMediaFactoryURI : Gst.RtspServer.RTSPMediaFactor
     }
 
     /// <summary>Set the URI of the resource that will be streamed by this factory.</summary>
-    /// <param name="uri">The <c>uri</c> argument.</param>
+    /// <param name="uri">the uri the stream</param>
     public void SetUri(string uri)
     {
         ArgumentNullException.ThrowIfNull(uri);

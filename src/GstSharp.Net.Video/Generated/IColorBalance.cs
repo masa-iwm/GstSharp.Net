@@ -48,7 +48,7 @@ public static unsafe partial class ColorBalanceExtensions
     /// </para>
     /// </remarks>
     /// <param name="balance">A #GstColorBalance instance</param>
-    /// <param name="channel">The <c>channel</c> argument.</param>
+    /// <param name="channel">A #GstColorBalanceChannel instance</param>
     /// <returns>The current value of the channel.</returns>
     public static int GetValue(this Gst.Video.IColorBalance balance, Gst.Video.ColorBalanceChannel channel)
     {
@@ -98,8 +98,8 @@ public static unsafe partial class ColorBalanceExtensions
     /// </para>
     /// </remarks>
     /// <param name="balance">A #GstColorBalance instance</param>
-    /// <param name="channel">The <c>channel</c> argument.</param>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="channel">A #GstColorBalanceChannel instance</param>
+    /// <param name="value">The new value for the channel.</param>
     public static void SetValue(this Gst.Video.IColorBalance balance, Gst.Video.ColorBalanceChannel channel, int value)
     {
         ArgumentNullException.ThrowIfNull(balance);
@@ -116,8 +116,8 @@ public static unsafe partial class ColorBalanceExtensions
     /// channel object.
     /// </summary>
     /// <param name="balance">A #GstColorBalance instance</param>
-    /// <param name="channel">The <c>channel</c> argument.</param>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="channel">A #GstColorBalanceChannel whose value has changed</param>
+    /// <param name="value">The new value of the channel</param>
     public static void ValueChanged(this Gst.Video.IColorBalance balance, Gst.Video.ColorBalanceChannel channel, int value)
     {
         ArgumentNullException.ThrowIfNull(balance);

@@ -126,7 +126,7 @@ public abstract unsafe partial class Element : Gst.Object
     /// <para>The pad and the element should be unlocked when calling this function.</para>
     /// <para>This function will emit the #GstElement::pad-added signal on the element.</para>
     /// </remarks>
-    /// <param name="pad">The <c>pad</c> argument.</param>
+    /// <param name="pad">the #GstPad to add to the element.</param>
     /// <returns>
     /// %TRUE if the pad could be added. This function can fail when
     /// a pad with the same name already existed or the pad already had another
@@ -142,8 +142,11 @@ public abstract unsafe partial class Element : Gst.Object
     }
 
     /// <summary>The <c>gst_element_add_property_deep_notify_watch</c> function.</summary>
-    /// <param name="propertyName">The <c>propertyName</c> argument.</param>
-    /// <param name="includeValue">The <c>includeValue</c> argument.</param>
+    /// <param name="propertyName">
+    /// name of property to watch for changes, or
+    ///     NULL to watch all properties
+    /// </param>
+    /// <param name="includeValue">whether to include the new property value in the message</param>
     /// <returns>
     /// a watch id, which can be used in connection with
     ///     gst_element_remove_property_notify_watch() to remove the watch again.
@@ -158,8 +161,11 @@ public abstract unsafe partial class Element : Gst.Object
     }
 
     /// <summary>The <c>gst_element_add_property_notify_watch</c> function.</summary>
-    /// <param name="propertyName">The <c>propertyName</c> argument.</param>
-    /// <param name="includeValue">The <c>includeValue</c> argument.</param>
+    /// <param name="propertyName">
+    /// name of property to watch for changes, or
+    ///     NULL to watch all properties
+    /// </param>
+    /// <param name="includeValue">whether to include the new property value in the message</param>
     /// <returns>
     /// a watch id, which can be used in connection with
     ///     gst_element_remove_property_notify_watch() to remove the watch again.
@@ -205,7 +211,7 @@ public abstract unsafe partial class Element : Gst.Object
     /// internally.
     /// </para>
     /// </remarks>
-    /// <param name="transition">The <c>transition</c> argument.</param>
+    /// <param name="transition">the requested transition</param>
     /// <returns>the #GstStateChangeReturn of the state transition.</returns>
     public Gst.StateChangeReturn ChangeState(Gst.StateChange transition)
     {
@@ -232,7 +238,7 @@ public abstract unsafe partial class Element : Gst.Object
     /// </para>
     /// <para>This function must be called with STATE_LOCK held.</para>
     /// </remarks>
-    /// <param name="ret">The <c>ret</c> argument.</param>
+    /// <param name="ret">The previous state return value</param>
     /// <returns>The result of the commit state change.</returns>
     public Gst.StateChangeReturn ContinueState(Gst.StateChangeReturn ret)
     {
@@ -271,7 +277,7 @@ public abstract unsafe partial class Element : Gst.Object
     /// by using the format \%03u instead of \%u.
     /// </para>
     /// </remarks>
-    /// <param name="streamId">The <c>streamId</c> argument.</param>
+    /// <param name="streamId">The stream-id</param>
     /// <returns>A stream-id for @element.</returns>
     public string DecorateStreamId(string streamId)
     {
@@ -433,8 +439,8 @@ public abstract unsafe partial class Element : Gst.Object
     /// at the templates of @element.
     /// </para>
     /// </remarks>
-    /// <param name="pad">The <c>pad</c> argument.</param>
-    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <param name="pad">the #GstPad to find a compatible one for.</param>
+    /// <param name="caps">the #GstCaps to use as a filter.</param>
     /// <returns>
     /// the #GstPad to which a link
     ///   can be made, or %NULL if one cannot be found. gst_object_unref()
@@ -454,7 +460,10 @@ public abstract unsafe partial class Element : Gst.Object
     /// Retrieves a pad template from @element that is compatible with @compattempl.
     /// Pads from compatible templates can be linked together.
     /// </summary>
-    /// <param name="compattempl">The <c>compattempl</c> argument.</param>
+    /// <param name="compattempl">
+    /// the #GstPadTemplate to find a compatible
+    ///     template for
+    /// </param>
     /// <returns>
     /// a compatible #GstPadTemplate,
     ///   or %NULL if none was found. No unreferencing is necessary.
@@ -472,7 +481,7 @@ public abstract unsafe partial class Element : Gst.Object
     /// <remarks>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="contextType">The <c>contextType</c> argument.</param>
+    /// <param name="contextType">a name of a context to retrieve</param>
     /// <returns>A #GstContext or NULL</returns>
     public Gst.Context? GetContext(string contextType)
     {
@@ -485,7 +494,7 @@ public abstract unsafe partial class Element : Gst.Object
     }
 
     /// <summary>Gets the context with @context_type set on the element or NULL.</summary>
-    /// <param name="contextType">The <c>contextType</c> argument.</param>
+    /// <param name="contextType">a name of a context to retrieve</param>
     /// <returns>A #GstContext or NULL</returns>
     public Gst.Context? GetContextUnlocked(string contextType)
     {
@@ -563,7 +572,7 @@ public abstract unsafe partial class Element : Gst.Object
     }
 
     /// <summary>Get metadata with @key in @klass.</summary>
-    /// <param name="key">The <c>key</c> argument.</param>
+    /// <param name="key">the key to get</param>
     /// <returns>the metadata for @key.</returns>
     public string GetMetadata(string key)
     {
@@ -577,7 +586,7 @@ public abstract unsafe partial class Element : Gst.Object
     }
 
     /// <summary>Retrieves a padtemplate from @element with the given name.</summary>
-    /// <param name="name">The <c>name</c> argument.</param>
+    /// <param name="name">the name of the #GstPadTemplate to get.</param>
     /// <returns>
     /// the #GstPadTemplate with the
     ///     given name, or %NULL if none was found. No unreferencing is
@@ -623,7 +632,7 @@ public abstract unsafe partial class Element : Gst.Object
     /// gst_element_request_pad_simple() aims at making it more explicit it is
     /// a simplified gst_element_request_pad().
     /// </summary>
-    /// <param name="name">The <c>name</c> argument.</param>
+    /// <param name="name">the name of the request #GstPad to retrieve.</param>
     /// <returns>
     /// requested #GstPad if found,
     ///     otherwise %NULL.  Release after usage.
@@ -683,9 +692,18 @@ public abstract unsafe partial class Element : Gst.Object
     /// element to playing, the preroll will complete and playback will start.
     /// </para>
     /// </remarks>
-    /// <param name="state">The <c>state</c> argument.</param>
-    /// <param name="pending">The <c>pending</c> argument.</param>
-    /// <param name="timeout">The <c>timeout</c> argument.</param>
+    /// <param name="state">
+    /// a pointer to #GstState to hold the state.
+    ///     Can be %NULL.
+    /// </param>
+    /// <param name="pending">
+    /// a pointer to #GstState to hold the pending
+    ///     state. Can be %NULL.
+    /// </param>
+    /// <param name="timeout">
+    /// a #GstClockTime to specify the timeout for an async
+    ///           state change or %GST_CLOCK_TIME_NONE for infinite timeout.
+    /// </param>
     /// <returns>
     /// %GST_STATE_CHANGE_SUCCESS if the element has no more pending state
     ///          and the last state change succeeded, %GST_STATE_CHANGE_ASYNC if the
@@ -707,7 +725,7 @@ public abstract unsafe partial class Element : Gst.Object
     /// Retrieves a pad from @element by name. This version only retrieves
     /// already-existing (i.e. 'static') pads.
     /// </summary>
-    /// <param name="name">The <c>name</c> argument.</param>
+    /// <param name="name">the name of the static #GstPad to retrieve.</param>
     /// <returns>
     /// the requested #GstPad if
     ///     found, otherwise %NULL.  unref after usage.
@@ -805,7 +823,7 @@ public abstract unsafe partial class Element : Gst.Object
     /// gst_bin_add() before trying to link them.
     /// </para>
     /// </remarks>
-    /// <param name="dest">The <c>dest</c> argument.</param>
+    /// <param name="dest">the #GstElement containing the destination pad.</param>
     /// <returns>%TRUE if the elements could be linked, %FALSE otherwise.</returns>
     public bool Link(Gst.Element dest)
     {
@@ -829,8 +847,11 @@ public abstract unsafe partial class Element : Gst.Object
     /// gst_bin_add() before trying to link them.
     /// </para>
     /// </remarks>
-    /// <param name="dest">The <c>dest</c> argument.</param>
-    /// <param name="filter">The <c>filter</c> argument.</param>
+    /// <param name="dest">the #GstElement containing the destination pad.</param>
+    /// <param name="filter">
+    /// the #GstCaps to filter the link,
+    ///     or %NULL for no filter.
+    /// </param>
     /// <returns>%TRUE if the pads could be linked, %FALSE otherwise.</returns>
     public bool LinkFiltered(Gst.Element dest, Gst.Caps? filter)
     {
@@ -848,9 +869,15 @@ public abstract unsafe partial class Element : Gst.Object
     /// child of the parent of the other element.  If they have different
     /// parents, the link fails.
     /// </summary>
-    /// <param name="srcpadname">The <c>srcpadname</c> argument.</param>
-    /// <param name="dest">The <c>dest</c> argument.</param>
-    /// <param name="destpadname">The <c>destpadname</c> argument.</param>
+    /// <param name="srcpadname">
+    /// the name of the #GstPad in source element
+    ///     or %NULL for any pad.
+    /// </param>
+    /// <param name="dest">the #GstElement containing the destination pad.</param>
+    /// <param name="destpadname">
+    /// the name of the #GstPad in destination element,
+    /// or %NULL for any pad.
+    /// </param>
     /// <returns>%TRUE if the pads could be linked, %FALSE otherwise.</returns>
     public bool LinkPads(string? srcpadname, Gst.Element dest, string? destpadname)
     {
@@ -871,10 +898,19 @@ public abstract unsafe partial class Element : Gst.Object
     /// the other element. If they have different parents, the link fails. If @caps
     /// is not %NULL, makes sure that the caps of the link is a subset of @caps.
     /// </summary>
-    /// <param name="srcpadname">The <c>srcpadname</c> argument.</param>
-    /// <param name="dest">The <c>dest</c> argument.</param>
-    /// <param name="destpadname">The <c>destpadname</c> argument.</param>
-    /// <param name="filter">The <c>filter</c> argument.</param>
+    /// <param name="srcpadname">
+    /// the name of the #GstPad in source element
+    ///     or %NULL for any pad.
+    /// </param>
+    /// <param name="dest">the #GstElement containing the destination pad.</param>
+    /// <param name="destpadname">
+    /// the name of the #GstPad in destination element
+    ///     or %NULL for any pad.
+    /// </param>
+    /// <param name="filter">
+    /// the #GstCaps to filter the link,
+    ///     or %NULL for no filter.
+    /// </param>
     /// <returns>%TRUE if the pads could be linked, %FALSE otherwise.</returns>
     public bool LinkPadsFiltered(string? srcpadname, Gst.Element dest, string? destpadname, Gst.Caps? filter)
     {
@@ -904,10 +940,16 @@ public abstract unsafe partial class Element : Gst.Object
     /// </para>
     /// <para>This is a convenience function for gst_pad_link_full().</para>
     /// </remarks>
-    /// <param name="srcpadname">The <c>srcpadname</c> argument.</param>
-    /// <param name="dest">The <c>dest</c> argument.</param>
-    /// <param name="destpadname">The <c>destpadname</c> argument.</param>
-    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <param name="srcpadname">
+    /// the name of the #GstPad in source element
+    ///     or %NULL for any pad.
+    /// </param>
+    /// <param name="dest">the #GstElement containing the destination pad.</param>
+    /// <param name="destpadname">
+    /// the name of the #GstPad in destination element,
+    /// or %NULL for any pad.
+    /// </param>
+    /// <param name="flags">the #GstPadLinkCheck to be performed when linking pads.</param>
     /// <returns>%TRUE if the pads could be linked, %FALSE otherwise.</returns>
     public bool LinkPadsFull(string? srcpadname, Gst.Element dest, string? destpadname, Gst.PadLinkCheck flags)
     {
@@ -959,14 +1001,22 @@ public abstract unsafe partial class Element : Gst.Object
     /// </para>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="type">The <c>type</c> argument.</param>
-    /// <param name="domain">The <c>domain</c> argument.</param>
-    /// <param name="code">The <c>code</c> argument.</param>
-    /// <param name="text">The <c>text</c> argument.</param>
-    /// <param name="debug">The <c>debug</c> argument.</param>
-    /// <param name="file">The <c>file</c> argument.</param>
-    /// <param name="function">The <c>function</c> argument.</param>
-    /// <param name="line">The <c>line</c> argument.</param>
+    /// <param name="type">the #GstMessageType</param>
+    /// <param name="domain">the GStreamer GError domain this message belongs to</param>
+    /// <param name="code">the GError code belonging to the domain</param>
+    /// <param name="text">
+    /// an allocated text string to be used
+    ///            as a replacement for the default message connected to code,
+    ///            or %NULL
+    /// </param>
+    /// <param name="debug">
+    /// an allocated debug message to be
+    ///            used as a replacement for the default debugging information,
+    ///            or %NULL
+    /// </param>
+    /// <param name="file">the source code file where the error was generated</param>
+    /// <param name="function">the source code function where the error was generated</param>
+    /// <param name="line">the source code line where the error was generated</param>
     public void MessageFull(Gst.MessageType type, Gst.GLib.Quark domain, int code, string? text, string? debug, string file, string function, int line)
     {
         ArgumentNullException.ThrowIfNull(file);
@@ -997,16 +1047,24 @@ public abstract unsafe partial class Element : Gst.Object
     /// <c>using</c> declaration around the argument stays correct.
     /// </para>
     /// </remarks>
-    /// <param name="type">The <c>type</c> argument.</param>
-    /// <param name="domain">The <c>domain</c> argument.</param>
-    /// <param name="code">The <c>code</c> argument.</param>
-    /// <param name="text">The <c>text</c> argument.</param>
-    /// <param name="debug">The <c>debug</c> argument.</param>
-    /// <param name="file">The <c>file</c> argument.</param>
-    /// <param name="function">The <c>function</c> argument.</param>
-    /// <param name="line">The <c>line</c> argument.</param>
+    /// <param name="type">the #GstMessageType</param>
+    /// <param name="domain">the GStreamer GError domain this message belongs to</param>
+    /// <param name="code">the GError code belonging to the domain</param>
+    /// <param name="text">
+    /// an allocated text string to be used
+    ///            as a replacement for the default message connected to code,
+    ///            or %NULL
+    /// </param>
+    /// <param name="debug">
+    /// an allocated debug message to be
+    ///            used as a replacement for the default debugging information,
+    ///            or %NULL
+    /// </param>
+    /// <param name="file">the source code file where the error was generated</param>
+    /// <param name="function">the source code function where the error was generated</param>
+    /// <param name="line">the source code line where the error was generated</param>
     /// <param name="structure">
-    /// The <c>structure</c> argument.
+    /// optional details structure
     /// The call consumes it: <paramref name="structure"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// </param>
@@ -1078,7 +1136,7 @@ public abstract unsafe partial class Element : Gst.Object
     /// </para>
     /// <para>Please note that some queries might need a running pipeline to work.</para>
     /// </remarks>
-    /// <param name="query">The <c>query</c> argument.</param>
+    /// <param name="query">the #GstQuery.</param>
     /// <returns>%TRUE if the query could be performed.</returns>
     public bool Query(Gst.Query query)
     {
@@ -1090,10 +1148,10 @@ public abstract unsafe partial class Element : Gst.Object
     }
 
     /// <summary>Queries an element to convert @src_val in @src_format to @dest_format.</summary>
-    /// <param name="srcFormat">The <c>srcFormat</c> argument.</param>
-    /// <param name="srcVal">The <c>srcVal</c> argument.</param>
-    /// <param name="destFormat">The <c>destFormat</c> argument.</param>
-    /// <param name="destVal">The <c>destVal</c> argument.</param>
+    /// <param name="srcFormat">a #GstFormat to convert from.</param>
+    /// <param name="srcVal">a value to convert.</param>
+    /// <param name="destFormat">the #GstFormat to convert to.</param>
+    /// <param name="destVal">a pointer to the result.</param>
     /// <returns>%TRUE if the query could be performed.</returns>
     public bool QueryConvert(Gst.Format srcFormat, long srcVal, Gst.Format destFormat, out long destVal)
     {
@@ -1117,8 +1175,8 @@ public abstract unsafe partial class Element : Gst.Object
     /// using this function.
     /// </para>
     /// </remarks>
-    /// <param name="format">The <c>format</c> argument.</param>
-    /// <param name="duration">The <c>duration</c> argument.</param>
+    /// <param name="format">the #GstFormat requested</param>
+    /// <param name="duration">A location in which to store the total duration, or %NULL.</param>
     /// <returns>%TRUE if the query could be performed.</returns>
     public bool QueryDuration(Gst.Format format, out long duration)
     {
@@ -1143,8 +1201,11 @@ public abstract unsafe partial class Element : Gst.Object
     /// it in gst_element_query().
     /// </para>
     /// </remarks>
-    /// <param name="format">The <c>format</c> argument.</param>
-    /// <param name="cur">The <c>cur</c> argument.</param>
+    /// <param name="format">the #GstFormat requested</param>
+    /// <param name="cur">
+    /// a location in which to store the current
+    ///     position, or %NULL.
+    /// </param>
     /// <returns>%TRUE if the query could be performed.</returns>
     public bool QueryPosition(Gst.Format format, out long cur)
     {
@@ -1167,7 +1228,7 @@ public abstract unsafe partial class Element : Gst.Object
     /// </para>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="pad">The <c>pad</c> argument.</param>
+    /// <param name="pad">the #GstPad to release.</param>
     public void ReleaseRequestPad(Gst.Pad pad)
     {
         ArgumentNullException.ThrowIfNull(pad);
@@ -1196,7 +1257,7 @@ public abstract unsafe partial class Element : Gst.Object
     /// <para>The pad and the element should be unlocked when calling this function.</para>
     /// <para>This function will emit the #GstElement::pad-removed signal on the element.</para>
     /// </remarks>
-    /// <param name="pad">The <c>pad</c> argument.</param>
+    /// <param name="pad">the #GstPad to remove from the element.</param>
     /// <returns>
     /// %TRUE if the pad could be removed. Can return %FALSE if the
     /// pad does not belong to the provided element.
@@ -1211,7 +1272,7 @@ public abstract unsafe partial class Element : Gst.Object
     }
 
     /// <summary>The <c>gst_element_remove_property_notify_watch</c> function.</summary>
-    /// <param name="watchId">The <c>watchId</c> argument.</param>
+    /// <param name="watchId">watch id to remove</param>
     public void RemovePropertyNotifyWatch(System.Runtime.InteropServices.CULong watchId)
     {
         GstElementRemovePropertyNotifyWatch(Handle, watchId);
@@ -1226,9 +1287,15 @@ public abstract unsafe partial class Element : Gst.Object
     /// <remarks>
     /// <para>The pad should be released with gst_element_release_request_pad().</para>
     /// </remarks>
-    /// <param name="templ">The <c>templ</c> argument.</param>
-    /// <param name="name">The <c>name</c> argument.</param>
-    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <param name="templ">a #GstPadTemplate of which we want a pad of.</param>
+    /// <param name="name">
+    /// the name of the request #GstPad
+    /// to retrieve. Can be %NULL.
+    /// </param>
+    /// <param name="caps">
+    /// the caps of the pad we want to
+    /// request. Can be %NULL.
+    /// </param>
     /// <returns>
     /// requested #GstPad if found,
     ///     otherwise %NULL.  Release after usage.
@@ -1263,7 +1330,7 @@ public abstract unsafe partial class Element : Gst.Object
     /// functionality.
     /// </para>
     /// </remarks>
-    /// <param name="name">The <c>name</c> argument.</param>
+    /// <param name="name">the name of the request #GstPad to retrieve.</param>
     /// <returns>
     /// requested #GstPad if found,
     ///     otherwise %NULL.  Release after usage.
@@ -1286,13 +1353,13 @@ public abstract unsafe partial class Element : Gst.Object
     /// <remarks>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="rate">The <c>rate</c> argument.</param>
-    /// <param name="format">The <c>format</c> argument.</param>
-    /// <param name="flags">The <c>flags</c> argument.</param>
-    /// <param name="startType">The <c>startType</c> argument.</param>
-    /// <param name="start">The <c>start</c> argument.</param>
-    /// <param name="stopType">The <c>stopType</c> argument.</param>
-    /// <param name="stop">The <c>stop</c> argument.</param>
+    /// <param name="rate">The new playback rate</param>
+    /// <param name="format">The format of the seek values</param>
+    /// <param name="flags">The optional seek flags.</param>
+    /// <param name="startType">The type and flags for the new start position</param>
+    /// <param name="start">The value of the new start position</param>
+    /// <param name="stopType">The type and flags for the new stop position</param>
+    /// <param name="stop">The value of the new stop position</param>
     /// <returns>
     /// %TRUE if the event was handled. Flushing seeks will trigger a
     /// preroll, which will emit %GST_MESSAGE_ASYNC_DONE.
@@ -1324,9 +1391,17 @@ public abstract unsafe partial class Element : Gst.Object
     /// it receives the event in the READY state.
     /// </para>
     /// </remarks>
-    /// <param name="format">The <c>format</c> argument.</param>
-    /// <param name="seekFlags">The <c>seekFlags</c> argument.</param>
-    /// <param name="seekPos">The <c>seekPos</c> argument.</param>
+    /// <param name="format">a #GstFormat to execute the seek in, such as #GST_FORMAT_TIME</param>
+    /// <param name="seekFlags">
+    /// seek options; playback applications will usually want to use
+    ///            GST_SEEK_FLAG_FLUSH | GST_SEEK_FLAG_KEY_UNIT here
+    /// </param>
+    /// <param name="seekPos">
+    /// position to seek to (relative to the start); if you are doing
+    ///            a seek in #GST_FORMAT_TIME this value is in nanoseconds -
+    ///            multiply with #GST_SECOND to convert seconds to nanoseconds or
+    ///            with #GST_MSECOND to convert milliseconds to nanoseconds.
+    /// </param>
     /// <returns>
     /// %TRUE if the seek operation succeeded. Flushing seeks will trigger a
     /// preroll, which will emit %GST_MESSAGE_ASYNC_DONE.
@@ -1342,7 +1417,7 @@ public abstract unsafe partial class Element : Gst.Object
     /// <remarks>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="time">The <c>time</c> argument.</param>
+    /// <param name="time">the base time to set.</param>
     public void SetBaseTime(Gst.ClockTime time)
     {
         GstElementSetBaseTime(Handle, time.Nanoseconds);
@@ -1356,7 +1431,7 @@ public abstract unsafe partial class Element : Gst.Object
     /// <remarks>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="bus">The <c>bus</c> argument.</param>
+    /// <param name="bus">the #GstBus to set.</param>
     public void SetBus(Gst.Bus? bus)
     {
         GstElementSetBus(Handle, bus is null ? 0 : bus.Handle);
@@ -1369,7 +1444,7 @@ public abstract unsafe partial class Element : Gst.Object
     /// refcount on the clock. Any previously set clock on the object
     /// is unreffed.
     /// </summary>
-    /// <param name="clock">The <c>clock</c> argument.</param>
+    /// <param name="clock">the #GstClock to set for the element.</param>
     /// <returns>
     /// %TRUE if the element accepted the clock. An element can refuse a
     /// clock when it, for example, is not able to slave its internal clock to the
@@ -1387,7 +1462,7 @@ public abstract unsafe partial class Element : Gst.Object
     /// <remarks>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="context">The <c>context</c> argument.</param>
+    /// <param name="context">the #GstContext to set.</param>
     public void SetContext(Gst.Context context)
     {
         ArgumentNullException.ThrowIfNull(context);
@@ -1408,7 +1483,7 @@ public abstract unsafe partial class Element : Gst.Object
     /// </para>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="lockedState">The <c>lockedState</c> argument.</param>
+    /// <param name="lockedState">%TRUE to lock the element's state</param>
     /// <returns>
     /// %TRUE if the state was changed, %FALSE if bad parameters were given
     /// or the elements state-locking needed no change.
@@ -1436,7 +1511,7 @@ public abstract unsafe partial class Element : Gst.Object
     /// </para>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="time">The <c>time</c> argument.</param>
+    /// <param name="time">the base time to set.</param>
     public void SetStartTime(Gst.ClockTime time)
     {
         GstElementSetStartTime(Handle, time.Nanoseconds);
@@ -1462,7 +1537,7 @@ public abstract unsafe partial class Element : Gst.Object
     /// #GST_STATE_CHANGE_ASYNC.
     /// </para>
     /// </remarks>
-    /// <param name="state">The <c>state</c> argument.</param>
+    /// <param name="state">the element's new #GstState.</param>
     /// <returns>Result of the state change using #GstStateChangeReturn.</returns>
     public Gst.StateChangeReturn SetState(Gst.State state)
     {
@@ -1493,7 +1568,7 @@ public abstract unsafe partial class Element : Gst.Object
     /// requestpad, which has to be released using gst_element_release_request_pad().
     /// </para>
     /// </remarks>
-    /// <param name="dest">The <c>dest</c> argument.</param>
+    /// <param name="dest">the sink #GstElement to unlink.</param>
     public void Unlink(Gst.Element dest)
     {
         ArgumentNullException.ThrowIfNull(dest);
@@ -1506,9 +1581,9 @@ public abstract unsafe partial class Element : Gst.Object
     /// <remarks>
     /// <para>This is a convenience function for gst_pad_unlink().</para>
     /// </remarks>
-    /// <param name="srcpadname">The <c>srcpadname</c> argument.</param>
-    /// <param name="dest">The <c>dest</c> argument.</param>
-    /// <param name="destpadname">The <c>destpadname</c> argument.</param>
+    /// <param name="srcpadname">the name of the #GstPad in source element.</param>
+    /// <param name="dest">a #GstElement containing the destination pad.</param>
+    /// <param name="destpadname">the name of the #GstPad in destination element.</param>
     public void UnlinkPads(string srcpadname, Gst.Element dest, string destpadname)
     {
         ArgumentNullException.ThrowIfNull(srcpadname);
@@ -1524,9 +1599,9 @@ public abstract unsafe partial class Element : Gst.Object
     }
 
     /// <summary>Creates an element for handling the given URI.</summary>
-    /// <param name="type">The <c>type</c> argument.</param>
-    /// <param name="uri">The <c>uri</c> argument.</param>
-    /// <param name="elementname">The <c>elementname</c> argument.</param>
+    /// <param name="type">Whether to create a source or a sink</param>
+    /// <param name="uri">URI to create an element for</param>
+    /// <param name="elementname">Name of created element, can be %NULL.</param>
     /// <returns>
     /// a new element or %NULL if none
     /// could be created
@@ -1550,10 +1625,13 @@ public abstract unsafe partial class Element : Gst.Object
     /// Create a new elementfactory capable of instantiating objects of the
     /// @type and add the factory to @plugin.
     /// </summary>
-    /// <param name="plugin">The <c>plugin</c> argument.</param>
-    /// <param name="name">The <c>name</c> argument.</param>
-    /// <param name="rank">The <c>rank</c> argument.</param>
-    /// <param name="type">The <c>type</c> argument.</param>
+    /// <param name="plugin">
+    /// #GstPlugin to register the element with, or %NULL for
+    ///     a static element.
+    /// </param>
+    /// <param name="name">name of elements of this type</param>
+    /// <param name="rank">rank of element (higher rank means more importance when autoplugging)</param>
+    /// <param name="type">GType of element to register</param>
     /// <returns>%TRUE, if the registering succeeded, %FALSE on error</returns>
     public static bool Register(Gst.Plugin? plugin, string name, uint rank, Gst.GObject.GType type)
     {
@@ -1566,7 +1644,7 @@ public abstract unsafe partial class Element : Gst.Object
     }
 
     /// <summary>Gets a string representing the given state change result.</summary>
-    /// <param name="stateRet">The <c>stateRet</c> argument.</param>
+    /// <param name="stateRet">a #GstStateChangeReturn to get the name of.</param>
     /// <returns>
     /// a string with the name of the state
     ///    result.
@@ -1580,7 +1658,7 @@ public abstract unsafe partial class Element : Gst.Object
     }
 
     /// <summary>Gets a string representing the given state.</summary>
-    /// <param name="state">The <c>state</c> argument.</param>
+    /// <param name="state">a #GstState to get the name of.</param>
     /// <returns>a string with the name of the state.</returns>
     [Obsolete("Use gst_state_get_name() instead. (deprecated since 1.28)")]
     public static string StateGetName(Gst.State state)
@@ -1612,7 +1690,7 @@ public abstract unsafe partial class Element : Gst.Object
     /// </code>
     /// </para>
     /// </remarks>
-    /// <param name="type">The <c>type</c> argument.</param>
+    /// <param name="type">a #GType of element</param>
     public static void TypeSetSkipDocumentation(Gst.GObject.GType type)
     {
         GstElementTypeSetSkipDocumentation(type.Value);

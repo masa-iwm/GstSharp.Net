@@ -78,7 +78,10 @@ public sealed unsafe partial class VideoOverlayComposition : Gst.MiniObject
     /// <remarks>
     /// <para>Note that since 1.20 this allows to pass %NULL for @rectangle.</para>
     /// </remarks>
-    /// <param name="rectangle">The <c>rectangle</c> argument.</param>
+    /// <param name="rectangle">
+    /// a #GstVideoOverlayRectangle to add to the
+    ///     composition
+    /// </param>
     /// <returns>
     /// a new #GstVideoOverlayComposition. Unref with
     ///     gst_video_overlay_composition_unref() when no longer needed.
@@ -95,7 +98,10 @@ public sealed unsafe partial class VideoOverlayComposition : Gst.MiniObject
     /// Adds an overlay rectangle to an existing overlay composition object. This
     /// must be done right after creating the overlay composition.
     /// </summary>
-    /// <param name="rectangle">The <c>rectangle</c> argument.</param>
+    /// <param name="rectangle">
+    /// a #GstVideoOverlayRectangle to add to the
+    ///     composition
+    /// </param>
     public void AddRectangle(Gst.Video.VideoOverlayRectangle rectangle)
     {
         ArgumentNullException.ThrowIfNull(rectangle);
@@ -115,7 +121,10 @@ public sealed unsafe partial class VideoOverlayComposition : Gst.MiniObject
     /// mapped with flag GST_MAP_READWRITE.
     /// </para>
     /// </remarks>
-    /// <param name="videoBuf">The <c>videoBuf</c> argument.</param>
+    /// <param name="videoBuf">
+    /// a #GstVideoFrame containing raw video data in a
+    ///             supported format. It should be mapped using GST_MAP_READWRITE
+    /// </param>
     /// <returns>The result of <c>gst_video_overlay_composition_blend</c>.</returns>
     public bool Blend(Gst.Video.VideoFrame videoBuf)
     {
@@ -154,7 +163,7 @@ public sealed unsafe partial class VideoOverlayComposition : Gst.MiniObject
     }
 
     /// <summary>Returns the @n-th #GstVideoOverlayRectangle contained in @comp.</summary>
-    /// <param name="n">The <c>n</c> argument.</param>
+    /// <param name="n">number of the rectangle to get</param>
     /// <returns>
     /// the @n-th rectangle, or NULL if @n is out of
     ///     bounds. Will not return a new reference, the caller will need to

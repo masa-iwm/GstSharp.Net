@@ -41,9 +41,9 @@ public abstract unsafe partial class WebRTCICE : Gst.Object
     }
 
     /// <summary>The <c>gst_webrtc_ice_add_candidate</c> function.</summary>
-    /// <param name="stream">The <c>stream</c> argument.</param>
-    /// <param name="candidate">The <c>candidate</c> argument.</param>
-    /// <param name="promise">The <c>promise</c> argument.</param>
+    /// <param name="stream">The #GstWebRTCICEStream</param>
+    /// <param name="candidate">The ICE candidate</param>
+    /// <param name="promise">A #GstPromise for task notifications (Since: 1.24)</param>
     public void AddCandidate(Gst.WebRTC.WebRTCICEStream stream, string candidate, Gst.Promise? promise)
     {
         ArgumentNullException.ThrowIfNull(stream);
@@ -57,7 +57,7 @@ public abstract unsafe partial class WebRTCICE : Gst.Object
     }
 
     /// <summary>The <c>gst_webrtc_ice_add_stream</c> function.</summary>
-    /// <param name="sessionId">The <c>sessionId</c> argument.</param>
+    /// <param name="sessionId">The session id</param>
     /// <returns>The #GstWebRTCICEStream, or %NULL</returns>
     public Gst.WebRTC.WebRTCICEStream? AddStream(uint sessionId)
     {
@@ -67,7 +67,7 @@ public abstract unsafe partial class WebRTCICE : Gst.Object
     }
 
     /// <summary>The <c>gst_webrtc_ice_add_turn_server</c> function.</summary>
-    /// <param name="uri">The <c>uri</c> argument.</param>
+    /// <param name="uri">URI of the TURN server</param>
     /// <returns>FALSE on error, TRUE otherwise</returns>
     public bool AddTurnServer(string uri)
     {
@@ -86,7 +86,10 @@ public abstract unsafe partial class WebRTCICE : Gst.Object
     /// <remarks>
     /// <para>Available since GStreamer 1.28.</para>
     /// </remarks>
-    /// <param name="promise">The <c>promise</c> argument.</param>
+    /// <param name="promise">
+    /// a #GstPromise to be notified when the task is
+    /// complete.
+    /// </param>
     public void Close(Gst.Promise? promise)
     {
         GstWebrtcIceClose(Handle, promise is null ? 0 : promise.Handle);
@@ -95,8 +98,8 @@ public abstract unsafe partial class WebRTCICE : Gst.Object
     }
 
     /// <summary>The <c>gst_webrtc_ice_find_transport</c> function.</summary>
-    /// <param name="stream">The <c>stream</c> argument.</param>
-    /// <param name="component">The <c>component</c> argument.</param>
+    /// <param name="stream">The #GstWebRTCICEStream</param>
+    /// <param name="component">The #GstWebRTCICEComponent</param>
     /// <returns>The #GstWebRTCICETransport, or %NULL</returns>
     public Gst.WebRTC.WebRTCICETransport? FindTransport(Gst.WebRTC.WebRTCICEStream stream, Gst.WebRTC.WebRTCICEComponent component)
     {
@@ -108,7 +111,7 @@ public abstract unsafe partial class WebRTCICE : Gst.Object
     }
 
     /// <summary>The <c>gst_webrtc_ice_gather_candidates</c> function.</summary>
-    /// <param name="stream">The <c>stream</c> argument.</param>
+    /// <param name="stream">The #GstWebRTCICEStream</param>
     /// <returns>FALSE on error, TRUE otherwise</returns>
     public bool GatherCandidates(Gst.WebRTC.WebRTCICEStream stream)
     {
@@ -142,9 +145,9 @@ public abstract unsafe partial class WebRTCICE : Gst.Object
     }
 
     /// <summary>The <c>gst_webrtc_ice_get_selected_pair</c> function.</summary>
-    /// <param name="stream">The <c>stream</c> argument.</param>
-    /// <param name="localStats">The <c>localStats</c> argument.</param>
-    /// <param name="remoteStats">The <c>remoteStats</c> argument.</param>
+    /// <param name="stream">The #GstWebRTCICEStream</param>
+    /// <param name="localStats">A pointer to #GstWebRTCICECandidateStats for local candidate</param>
+    /// <param name="remoteStats">pointer to #GstWebRTCICECandidateStats for remote candidate</param>
     /// <returns>FALSE on failure, otherwise @local_stats @remote_stats will be set</returns>
     [Obsolete("Use gst_webrtc_ice_transport_get_selected_candidate_pair(). (deprecated since 1.28)")]
     public bool GetSelectedPair(Gst.WebRTC.WebRTCICEStream stream, out Gst.WebRTC.WebRTCICECandidateStats? localStats, out Gst.WebRTC.WebRTCICECandidateStats? remoteStats)
@@ -179,7 +182,7 @@ public abstract unsafe partial class WebRTCICE : Gst.Object
     }
 
     /// <summary>The <c>gst_webrtc_ice_set_force_relay</c> function.</summary>
-    /// <param name="forceRelay">The <c>forceRelay</c> argument.</param>
+    /// <param name="forceRelay">TRUE to enable force relay</param>
     public void SetForceRelay(bool forceRelay)
     {
         GstWebrtcIceSetForceRelay(Handle, forceRelay ? 1 : 0);
@@ -187,7 +190,10 @@ public abstract unsafe partial class WebRTCICE : Gst.Object
     }
 
     /// <summary>Set HTTP Proxy to be used when connecting to TURN server.</summary>
-    /// <param name="uri">The <c>uri</c> argument.</param>
+    /// <param name="uri">
+    /// URI of the HTTP proxy of the form
+    ///   http://[username:password@]hostname[:port][?alpn=&lt;alpn&gt;]
+    /// </param>
     public void SetHttpProxy(string uri)
     {
         ArgumentNullException.ThrowIfNull(uri);
@@ -198,7 +204,7 @@ public abstract unsafe partial class WebRTCICE : Gst.Object
     }
 
     /// <summary>The <c>gst_webrtc_ice_set_is_controller</c> function.</summary>
-    /// <param name="controller">The <c>controller</c> argument.</param>
+    /// <param name="controller">TRUE to set as controller</param>
     public void SetIsController(bool controller)
     {
         GstWebrtcIceSetIsController(Handle, controller ? 1 : 0);
@@ -206,9 +212,9 @@ public abstract unsafe partial class WebRTCICE : Gst.Object
     }
 
     /// <summary>The <c>gst_webrtc_ice_set_local_credentials</c> function.</summary>
-    /// <param name="stream">The <c>stream</c> argument.</param>
-    /// <param name="ufrag">The <c>ufrag</c> argument.</param>
-    /// <param name="pwd">The <c>pwd</c> argument.</param>
+    /// <param name="stream">The #GstWebRTCICEStream</param>
+    /// <param name="ufrag">ICE username</param>
+    /// <param name="pwd">ICE password</param>
     /// <returns>FALSE on error, TRUE otherwise</returns>
     public bool SetLocalCredentials(Gst.WebRTC.WebRTCICEStream stream, string ufrag, string pwd)
     {
@@ -237,9 +243,9 @@ public abstract unsafe partial class WebRTCICE : Gst.Object
     }
 
     /// <summary>The <c>gst_webrtc_ice_set_remote_credentials</c> function.</summary>
-    /// <param name="stream">The <c>stream</c> argument.</param>
-    /// <param name="ufrag">The <c>ufrag</c> argument.</param>
-    /// <param name="pwd">The <c>pwd</c> argument.</param>
+    /// <param name="stream">The #GstWebRTCICEStream</param>
+    /// <param name="ufrag">ICE username</param>
+    /// <param name="pwd">ICE password</param>
     /// <returns>FALSE on error, TRUE otherwise</returns>
     public bool SetRemoteCredentials(Gst.WebRTC.WebRTCICEStream stream, string ufrag, string pwd)
     {
@@ -257,7 +263,7 @@ public abstract unsafe partial class WebRTCICE : Gst.Object
     }
 
     /// <summary>The <c>gst_webrtc_ice_set_stun_server</c> function.</summary>
-    /// <param name="uri">The <c>uri</c> argument.</param>
+    /// <param name="uri">URI of the STUN server</param>
     public void SetStunServer(string? uri)
     {
         System.Span<byte> uriBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
@@ -267,8 +273,8 @@ public abstract unsafe partial class WebRTCICE : Gst.Object
     }
 
     /// <summary>The <c>gst_webrtc_ice_set_tos</c> function.</summary>
-    /// <param name="stream">The <c>stream</c> argument.</param>
-    /// <param name="tos">The <c>tos</c> argument.</param>
+    /// <param name="stream">The #GstWebRTCICEStream</param>
+    /// <param name="tos">ToS to be set</param>
     public void SetTos(Gst.WebRTC.WebRTCICEStream stream, uint tos)
     {
         ArgumentNullException.ThrowIfNull(stream);
@@ -278,7 +284,7 @@ public abstract unsafe partial class WebRTCICE : Gst.Object
     }
 
     /// <summary>The <c>gst_webrtc_ice_set_turn_server</c> function.</summary>
-    /// <param name="uri">The <c>uri</c> argument.</param>
+    /// <param name="uri">URI of the TURN sever</param>
     public void SetTurnServer(string? uri)
     {
         System.Span<byte> uriBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];

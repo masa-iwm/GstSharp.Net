@@ -179,9 +179,12 @@ public abstract unsafe partial class BaseSrc : Gst.Element
     /// <remarks>
     /// <para>Unref the @allocator after usage.</para>
     /// </remarks>
-    /// <param name="allocator">The <c>allocator</c> argument.</param>
+    /// <param name="allocator">
+    /// the #GstAllocator
+    /// used
+    /// </param>
     /// <param name="params">
-    /// The <c>@params</c> argument.
+    /// the #GstAllocationParams of @allocator
     /// The binding allocates the storage; on return the caller owns
     /// <paramref name="params"/> and disposes it.
     /// </param>
@@ -276,9 +279,9 @@ public abstract unsafe partial class BaseSrc : Gst.Element
     /// configured with gst_base_src_set_format()
     /// </para>
     /// </remarks>
-    /// <param name="start">The <c>start</c> argument.</param>
-    /// <param name="stop">The <c>stop</c> argument.</param>
-    /// <param name="time">The <c>time</c> argument.</param>
+    /// <param name="start">The new start value for the segment</param>
+    /// <param name="stop">Stop value for the new segment</param>
+    /// <param name="time">The new time value for the start of the new segment</param>
     /// <returns>%TRUE if preparation of the seamless segment succeeded.</returns>
     [Obsolete("Use gst_base_src_new_segment() (deprecated since 1.18)")]
     public bool NewSeamlessSegment(long start, long stop, long time)
@@ -303,7 +306,7 @@ public abstract unsafe partial class BaseSrc : Gst.Element
     /// should be configured via gst_base_src_set_format() before calling this method.
     /// </para>
     /// </remarks>
-    /// <param name="segment">The <c>segment</c> argument.</param>
+    /// <param name="segment">a pointer to a #GstSegment</param>
     /// <returns>%TRUE if preparation of new segment succeeded.</returns>
     public bool NewSegment(Gst.Segment segment)
     {
@@ -335,7 +338,7 @@ public abstract unsafe partial class BaseSrc : Gst.Element
     /// which can be useful to ensure events ordering.
     /// </para>
     /// </remarks>
-    /// <param name="segment">The <c>segment</c> argument.</param>
+    /// <param name="segment">a pointer to a #GstSegment</param>
     /// <returns>%TRUE if sending of new segment succeeded.</returns>
     public bool PushSegment(Gst.Segment segment)
     {
@@ -355,9 +358,9 @@ public abstract unsafe partial class BaseSrc : Gst.Element
     /// <remarks>
     /// <para>This function is mostly used by subclasses.</para>
     /// </remarks>
-    /// <param name="live">The <c>live</c> argument.</param>
-    /// <param name="minLatency">The <c>minLatency</c> argument.</param>
-    /// <param name="maxLatency">The <c>maxLatency</c> argument.</param>
+    /// <param name="live">if the source is live</param>
+    /// <param name="minLatency">the min latency of the source</param>
+    /// <param name="maxLatency">the max latency of the source</param>
     /// <returns>%TRUE if the query succeeded.</returns>
     public bool QueryLatency(out bool live, out Gst.ClockTime minLatency, out Gst.ClockTime maxLatency)
     {
@@ -378,7 +381,7 @@ public abstract unsafe partial class BaseSrc : Gst.Element
     /// different thread and are thus allowed to perform blocking operations. Any
     /// blocking operation should be unblocked with the unlock vmethod.
     /// </summary>
-    /// <param name="async">The <c>async</c> argument.</param>
+    /// <param name="async">new async mode</param>
     public void SetAsync(bool async)
     {
         GstBaseSrcSetAsync(Handle, async ? 1 : 0);
@@ -400,7 +403,7 @@ public abstract unsafe partial class BaseSrc : Gst.Element
     /// returns %GST_FLOW_EOS.
     /// </para>
     /// </remarks>
-    /// <param name="automaticEos">The <c>automaticEos</c> argument.</param>
+    /// <param name="automaticEos">automatic eos</param>
     public void SetAutomaticEos(bool automaticEos)
     {
         GstBaseSrcSetAutomaticEos(Handle, automaticEos ? 1 : 0);
@@ -411,7 +414,7 @@ public abstract unsafe partial class BaseSrc : Gst.Element
     /// Set the number of bytes that @src will push out with each buffer. When
     /// @blocksize is set to -1, a default length will be used.
     /// </summary>
-    /// <param name="blocksize">The <c>blocksize</c> argument.</param>
+    /// <param name="blocksize">the new blocksize in bytes</param>
     public void SetBlocksize(uint blocksize)
     {
         GstBaseSrcSetBlocksize(Handle, blocksize);
@@ -419,7 +422,7 @@ public abstract unsafe partial class BaseSrc : Gst.Element
     }
 
     /// <summary>Set new caps on the basesrc source pad.</summary>
-    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <param name="caps">a #GstCaps</param>
     /// <returns>%TRUE if the caps could be set</returns>
     public bool SetCaps(Gst.Caps caps)
     {
@@ -435,7 +438,7 @@ public abstract unsafe partial class BaseSrc : Gst.Element
     /// current running_time of the pipeline. This property is mostly useful for live
     /// sources.
     /// </summary>
-    /// <param name="timestamp">The <c>timestamp</c> argument.</param>
+    /// <param name="timestamp">enable or disable timestamping</param>
     public void SetDoTimestamp(bool timestamp)
     {
         GstBaseSrcSetDoTimestamp(Handle, timestamp ? 1 : 0);
@@ -447,7 +450,7 @@ public abstract unsafe partial class BaseSrc : Gst.Element
     /// read past current tracked size.  Otherwise, size is checked for upon each
     /// read.
     /// </summary>
-    /// <param name="dynamic">The <c>dynamic</c> argument.</param>
+    /// <param name="dynamic">new dynamic size mode</param>
     public void SetDynamicSize(bool dynamic)
     {
         GstBaseSrcSetDynamicSize(Handle, dynamic ? 1 : 0);
@@ -465,7 +468,7 @@ public abstract unsafe partial class BaseSrc : Gst.Element
     /// </para>
     /// <para>This function must only be called in states &lt; %GST_STATE_PAUSED.</para>
     /// </remarks>
-    /// <param name="format">The <c>format</c> argument.</param>
+    /// <param name="format">the format to use</param>
     public void SetFormat(Gst.Format format)
     {
         GstBaseSrcSetFormat(Handle, (int)format);
@@ -485,7 +488,7 @@ public abstract unsafe partial class BaseSrc : Gst.Element
     /// be GST_STATE_CHANGE_NO_PREROLL.
     /// </para>
     /// </remarks>
-    /// <param name="live">The <c>live</c> argument.</param>
+    /// <param name="live">new live-mode</param>
     public void SetLive(bool live)
     {
         GstBaseSrcSetLive(Handle, live ? 1 : 0);
@@ -498,7 +501,7 @@ public abstract unsafe partial class BaseSrc : Gst.Element
     /// operation completes either from the same thread or from an asynchronous
     /// helper thread.
     /// </summary>
-    /// <param name="ret">The <c>ret</c> argument.</param>
+    /// <param name="ret">a #GstFlowReturn</param>
     public void StartComplete(Gst.FlowReturn ret)
     {
         GstBaseSrcStartComplete(Handle, (int)ret);
@@ -544,7 +547,7 @@ public abstract unsafe partial class BaseSrc : Gst.Element
     /// </para>
     /// </remarks>
     /// <param name="bufferList">
-    /// The <c>bufferList</c> argument.
+    /// a #GstBufferList
     /// The call consumes it: <paramref name="bufferList"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// </param>

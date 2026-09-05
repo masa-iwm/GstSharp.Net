@@ -76,13 +76,13 @@ public sealed unsafe partial class DateTime : Gst.GObject.Boxed
     /// so on.
     /// </para>
     /// </remarks>
-    /// <param name="tzoffset">The <c>tzoffset</c> argument.</param>
-    /// <param name="year">The <c>year</c> argument.</param>
-    /// <param name="month">The <c>month</c> argument.</param>
-    /// <param name="day">The <c>day</c> argument.</param>
-    /// <param name="hour">The <c>hour</c> argument.</param>
-    /// <param name="minute">The <c>minute</c> argument.</param>
-    /// <param name="seconds">The <c>seconds</c> argument.</param>
+    /// <param name="tzoffset">Offset from UTC in hours.</param>
+    /// <param name="year">the gregorian year</param>
+    /// <param name="month">the gregorian month</param>
+    /// <param name="day">the day of the gregorian month</param>
+    /// <param name="hour">the hour of the day</param>
+    /// <param name="minute">the minute of the hour</param>
+    /// <param name="seconds">the second of the minute</param>
     /// <returns>
     /// the newly created #GstDateTime,
     /// or %NULL on error.
@@ -105,7 +105,7 @@ public sealed unsafe partial class DateTime : Gst.GObject.Boxed
     /// </para>
     /// </remarks>
     /// <param name="dt">
-    /// The <c>dt</c> argument.
+    /// the #GDateTime.
     /// The call consumes it: <paramref name="dt"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// It may be <see langword="null"/>, which is the absence of a payload and leaves
@@ -138,7 +138,7 @@ public sealed unsafe partial class DateTime : Gst.GObject.Boxed
     /// If no date is provided, it is assumed to be "today" in the timezone
     /// provided (if any), otherwise UTC.
     /// </summary>
-    /// <param name="string">The <c>@string</c> argument.</param>
+    /// <param name="string">ISO 8601-formatted datetime string.</param>
     /// <returns>
     /// a newly created #GstDateTime,
     /// or %NULL on error
@@ -156,7 +156,7 @@ public sealed unsafe partial class DateTime : Gst.GObject.Boxed
     /// Creates a new #GstDateTime using the time since Jan 1, 1970 specified by
     /// @secs. The #GstDateTime is in the local timezone.
     /// </summary>
-    /// <param name="secs">The <c>secs</c> argument.</param>
+    /// <param name="secs">seconds from the Unix epoch</param>
     /// <returns>
     /// the newly created #GstDateTime,
     /// or %NULL on error.
@@ -171,7 +171,7 @@ public sealed unsafe partial class DateTime : Gst.GObject.Boxed
     /// Creates a new #GstDateTime using the time since Jan 1, 1970 specified by
     /// @usecs. The #GstDateTime is in the local timezone.
     /// </summary>
-    /// <param name="usecs">The <c>usecs</c> argument.</param>
+    /// <param name="usecs">microseconds from the Unix epoch</param>
     /// <returns>
     /// a newly created #GstDateTime, or %NULL
     /// on error.
@@ -186,7 +186,7 @@ public sealed unsafe partial class DateTime : Gst.GObject.Boxed
     /// Creates a new #GstDateTime using the time since Jan 1, 1970 specified by
     /// @secs. The #GstDateTime is in the UTC timezone.
     /// </summary>
-    /// <param name="secs">The <c>secs</c> argument.</param>
+    /// <param name="secs">seconds from the Unix epoch</param>
     /// <returns>
     /// the newly created #GstDateTime,
     /// or %NULL on error.
@@ -201,7 +201,7 @@ public sealed unsafe partial class DateTime : Gst.GObject.Boxed
     /// Creates a new #GstDateTime using the time since Jan 1, 1970 specified by
     /// @usecs. The #GstDateTime is in UTC.
     /// </summary>
-    /// <param name="usecs">The <c>usecs</c> argument.</param>
+    /// <param name="usecs">microseconds from the Unix epoch</param>
     /// <returns>
     /// a newly created #GstDateTime, or %NULL
     /// on error.
@@ -235,12 +235,12 @@ public sealed unsafe partial class DateTime : Gst.GObject.Boxed
     /// case @minute and @seconds should also be -1.
     /// </para>
     /// </remarks>
-    /// <param name="year">The <c>year</c> argument.</param>
-    /// <param name="month">The <c>month</c> argument.</param>
-    /// <param name="day">The <c>day</c> argument.</param>
-    /// <param name="hour">The <c>hour</c> argument.</param>
-    /// <param name="minute">The <c>minute</c> argument.</param>
-    /// <param name="seconds">The <c>seconds</c> argument.</param>
+    /// <param name="year">the gregorian year</param>
+    /// <param name="month">the gregorian month, or -1</param>
+    /// <param name="day">the day of the gregorian month, or -1</param>
+    /// <param name="hour">the hour of the day, or -1</param>
+    /// <param name="minute">the minute of the hour, or -1</param>
+    /// <param name="seconds">the second of the minute, or -1</param>
     /// <returns>
     /// the newly created #GstDateTime,
     /// or %NULL on error.
@@ -283,7 +283,7 @@ public sealed unsafe partial class DateTime : Gst.GObject.Boxed
     /// <remarks>
     /// <para>@year should be from 1 to 9999.</para>
     /// </remarks>
-    /// <param name="year">The <c>year</c> argument.</param>
+    /// <param name="year">the gregorian year</param>
     /// <returns>
     /// the newly created #GstDateTime,
     /// or %NULL on error.
@@ -305,8 +305,8 @@ public sealed unsafe partial class DateTime : Gst.GObject.Boxed
     /// if @month == -1, then #GstDateTime will created only for @year.
     /// </para>
     /// </remarks>
-    /// <param name="year">The <c>year</c> argument.</param>
-    /// <param name="month">The <c>month</c> argument.</param>
+    /// <param name="year">the gregorian year</param>
+    /// <param name="month">the gregorian month</param>
     /// <returns>
     /// the newly created #GstDateTime,
     /// or %NULL on error.
@@ -333,9 +333,9 @@ public sealed unsafe partial class DateTime : Gst.GObject.Boxed
     /// so on.
     /// </para>
     /// </remarks>
-    /// <param name="year">The <c>year</c> argument.</param>
-    /// <param name="month">The <c>month</c> argument.</param>
-    /// <param name="day">The <c>day</c> argument.</param>
+    /// <param name="year">the gregorian year</param>
+    /// <param name="month">the gregorian month</param>
+    /// <param name="day">the day of the gregorian month</param>
     /// <returns>
     /// the newly created #GstDateTime,
     /// or %NULL on error.

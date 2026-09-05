@@ -48,7 +48,7 @@ public abstract unsafe partial class WebRTCDataChannel : Gst.GObject.Object
     }
 
     /// <summary>Send @str as a string message over @channel.</summary>
-    /// <param name="str">The <c>str</c> argument.</param>
+    /// <param name="str">a string or %NULL</param>
     [Obsolete("Use gst_webrtc_data_channel_send_string_full() instead (deprecated since 1.22)")]
     public void SendString(string? str)
     {
@@ -59,7 +59,7 @@ public abstract unsafe partial class WebRTCDataChannel : Gst.GObject.Object
     }
 
     /// <summary>Send @str as a string message over @channel.</summary>
-    /// <param name="str">The <c>str</c> argument.</param>
+    /// <param name="str">a string or %NULL</param>
     /// <returns>TRUE if @channel is open and data could be queued</returns>
     /// <exception cref="Gst.GLib.GException">The native call failed.</exception>
     public bool SendStringFull(string? str)

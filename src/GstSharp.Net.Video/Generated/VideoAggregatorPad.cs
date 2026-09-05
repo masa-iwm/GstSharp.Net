@@ -110,7 +110,7 @@ public unsafe partial class VideoAggregatorPad : Gst.Base.AggregatorPad
     }
 
     /// <summary>Allows selecting that this pad requires an output format with alpha</summary>
-    /// <param name="needsAlpha">The <c>needsAlpha</c> argument.</param>
+    /// <param name="needsAlpha">%TRUE if this pad requires alpha output</param>
     public void SetNeedsAlpha(bool needsAlpha)
     {
         GstVideoAggregatorPadSetNeedsAlpha(Handle, needsAlpha ? 1 : 0);

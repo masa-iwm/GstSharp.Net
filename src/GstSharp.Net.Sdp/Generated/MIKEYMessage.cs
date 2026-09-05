@@ -126,7 +126,7 @@ public sealed unsafe partial class MIKEYMessage : Gst.MiniObject
     ///  - Key Data Transport Payload
     ///  - Key Data Sub-Payload
     /// </summary>
-    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <param name="caps">a #GstCaps, including SRTP parameters (srtp/srtcp cipher, authorization, key data)</param>
     /// <returns>
     /// a #GstMIKEYMessage,
     /// or %NULL if there is no srtp information in the caps.
@@ -144,7 +144,7 @@ public sealed unsafe partial class MIKEYMessage : Gst.MiniObject
     /// parameters to decrypt and verify the data.
     /// </summary>
     /// <param name="data">bytes to read</param>
-    /// <param name="info">The <c>info</c> argument.</param>
+    /// <param name="info">#GstMIKEYDecryptInfo</param>
     /// <returns>
     /// a #GstMIKEYMessage on success or %NULL when parsing failed and
     /// @error will be set.
@@ -171,9 +171,9 @@ public sealed unsafe partial class MIKEYMessage : Gst.MiniObject
     }
 
     /// <summary>Add a Crypto policy for SRTP to @msg.</summary>
-    /// <param name="policy">The <c>policy</c> argument.</param>
-    /// <param name="ssrc">The <c>ssrc</c> argument.</param>
-    /// <param name="roc">The <c>roc</c> argument.</param>
+    /// <param name="policy">The security policy applied for the stream with @ssrc</param>
+    /// <param name="ssrc">the SSRC that must be used for the stream</param>
+    /// <param name="roc">current rollover counter</param>
     /// <returns>%TRUE on success</returns>
     public bool AddCsSrtp(byte policy, uint ssrc, uint roc)
     {
@@ -193,7 +193,7 @@ public sealed unsafe partial class MIKEYMessage : Gst.MiniObject
     /// </para>
     /// </remarks>
     /// <param name="payload">
-    /// The <c>payload</c> argument.
+    /// a #GstMIKEYPayload
     /// The call consumes it: <paramref name="payload"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// </param>
@@ -217,7 +217,7 @@ public sealed unsafe partial class MIKEYMessage : Gst.MiniObject
     }
 
     /// <summary>Add a new PKE payload to @msg with the given parameters.</summary>
-    /// <param name="c">The <c>c</c> argument.</param>
+    /// <param name="c">envelope key cache indicator</param>
     /// <param name="data">the encrypted envelope key</param>
     /// <returns>%TRUE on success</returns>
     /// <exception cref="ArgumentException">
@@ -262,7 +262,7 @@ public sealed unsafe partial class MIKEYMessage : Gst.MiniObject
     }
 
     /// <summary>Add a new RAND payload to @msg with @len random bytes.</summary>
-    /// <param name="len">The <c>len</c> argument.</param>
+    /// <param name="len">length</param>
     /// <returns>%TRUE on success</returns>
     public bool AddRandLen(byte len)
     {
@@ -294,8 +294,8 @@ public sealed unsafe partial class MIKEYMessage : Gst.MiniObject
     }
 
     /// <summary>Find the @nth occurrence of the payload with @type in @msg.</summary>
-    /// <param name="type">The <c>type</c> argument.</param>
-    /// <param name="nth">The <c>nth</c> argument.</param>
+    /// <param name="type">a #GstMIKEYPayloadType</param>
+    /// <param name="nth">payload to find</param>
     /// <returns>
     /// the @nth #GstMIKEYPayload of @type.
     /// The wrapper owns a reference of its own, which is a copy for a boxed type:
@@ -328,7 +328,7 @@ public sealed unsafe partial class MIKEYMessage : Gst.MiniObject
     }
 
     /// <summary>Get the #GstMIKEYPayload at @idx in @msg</summary>
-    /// <param name="idx">The <c>idx</c> argument.</param>
+    /// <param name="idx">an index</param>
     /// <returns>
     /// the #GstMIKEYPayload at @idx. The payload
     /// remains valid for as long as it is part of @msg.
@@ -347,8 +347,8 @@ public sealed unsafe partial class MIKEYMessage : Gst.MiniObject
     /// <remarks>
     /// <para>When @idx is -1, the policy will be appended.</para>
     /// </remarks>
-    /// <param name="idx">The <c>idx</c> argument.</param>
-    /// <param name="map">The <c>map</c> argument.</param>
+    /// <param name="idx">the index to insert at</param>
+    /// <param name="map">the map info</param>
     /// <returns>%TRUE on success</returns>
     public bool InsertCsSrtp(int idx, Gst.Sdp.MIKEYMapSRTP map)
     {
@@ -371,9 +371,9 @@ public sealed unsafe partial class MIKEYMessage : Gst.MiniObject
     /// declaration around the argument stays correct.
     /// </para>
     /// </remarks>
-    /// <param name="idx">The <c>idx</c> argument.</param>
+    /// <param name="idx">an index</param>
     /// <param name="payload">
-    /// The <c>payload</c> argument.
+    /// a #GstMIKEYPayload
     /// The call consumes it: <paramref name="payload"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// </param>
@@ -397,7 +397,7 @@ public sealed unsafe partial class MIKEYMessage : Gst.MiniObject
     }
 
     /// <summary>Remove the SRTP policy at @idx.</summary>
-    /// <param name="idx">The <c>idx</c> argument.</param>
+    /// <param name="idx">the index to remove</param>
     /// <returns>%TRUE on success</returns>
     public bool RemoveCsSrtp(int idx)
     {
@@ -407,7 +407,7 @@ public sealed unsafe partial class MIKEYMessage : Gst.MiniObject
     }
 
     /// <summary>Remove the payload in @msg at @idx</summary>
-    /// <param name="idx">The <c>idx</c> argument.</param>
+    /// <param name="idx">an index</param>
     /// <returns>%TRUE on success</returns>
     public bool RemovePayload(uint idx)
     {
@@ -417,8 +417,8 @@ public sealed unsafe partial class MIKEYMessage : Gst.MiniObject
     }
 
     /// <summary>Replace a Crypto Session map for SRTP in @msg at @idx with @map.</summary>
-    /// <param name="idx">The <c>idx</c> argument.</param>
-    /// <param name="map">The <c>map</c> argument.</param>
+    /// <param name="idx">the index to insert at</param>
+    /// <param name="map">the map info</param>
     /// <returns>%TRUE on success</returns>
     public bool ReplaceCsSrtp(int idx, Gst.Sdp.MIKEYMapSRTP map)
     {
@@ -438,9 +438,9 @@ public sealed unsafe partial class MIKEYMessage : Gst.MiniObject
     /// declaration around the argument stays correct.
     /// </para>
     /// </remarks>
-    /// <param name="idx">The <c>idx</c> argument.</param>
+    /// <param name="idx">an index</param>
     /// <param name="payload">
-    /// The <c>payload</c> argument.
+    /// a #GstMIKEYPayload
     /// The call consumes it: <paramref name="payload"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// </param>
@@ -464,12 +464,12 @@ public sealed unsafe partial class MIKEYMessage : Gst.MiniObject
     }
 
     /// <summary>Set the information in @msg.</summary>
-    /// <param name="version">The <c>version</c> argument.</param>
-    /// <param name="type">The <c>type</c> argument.</param>
-    /// <param name="v">The <c>v</c> argument.</param>
-    /// <param name="prfFunc">The <c>prfFunc</c> argument.</param>
-    /// <param name="cSBId">The <c>cSBId</c> argument.</param>
-    /// <param name="mapType">The <c>mapType</c> argument.</param>
+    /// <param name="version">a version</param>
+    /// <param name="type">a #GstMIKEYType</param>
+    /// <param name="v">verify flag</param>
+    /// <param name="prfFunc">the #GstMIKEYPRFFunc function to use</param>
+    /// <param name="cSBId">the Crypto Session Bundle id</param>
+    /// <param name="mapType">the #GstMIKEYMapType</param>
     /// <returns>%TRUE on success</returns>
     public bool SetInfo(byte version, Gst.Sdp.MIKEYType type, bool v, Gst.Sdp.MIKEYPRFFunc prfFunc, uint cSBId, Gst.Sdp.MIKEYMapType mapType)
     {
@@ -479,7 +479,9 @@ public sealed unsafe partial class MIKEYMessage : Gst.MiniObject
     }
 
     /// <summary>The <c>gst_mikey_message_to_caps</c> function.</summary>
-    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <param name="caps">
+    /// a #GstCaps to be filled with SRTP parameters (srtp/srtcp cipher, authorization, key data)
+    /// </param>
     /// <returns>%TRUE on success</returns>
     public bool ToCaps(Gst.Caps caps)
     {

@@ -71,11 +71,24 @@ public unsafe partial class Layer : Gst.GObject.InitiallyUnowned, GES.IExtractab
     }
 
     /// <summary>See ges_layer_add_asset_full(), which also gives an error.</summary>
-    /// <param name="asset">The <c>asset</c> argument.</param>
-    /// <param name="start">The <c>start</c> argument.</param>
-    /// <param name="inpoint">The <c>inpoint</c> argument.</param>
-    /// <param name="duration">The <c>duration</c> argument.</param>
-    /// <param name="trackTypes">The <c>trackTypes</c> argument.</param>
+    /// <param name="asset">The asset to extract the new clip from</param>
+    /// <param name="start">
+    /// The #GESTimelineElement:start value to set on the new clip
+    /// If `start == #GST_CLOCK_TIME_NONE`, it will be added to the end
+    /// of @layer, i.e. it will be set to @layer's duration
+    /// </param>
+    /// <param name="inpoint">
+    /// The #GESTimelineElement:in-point value to set on the new
+    /// clip
+    /// </param>
+    /// <param name="duration">
+    /// The #GESTimelineElement:duration value to set on the new
+    /// clip
+    /// </param>
+    /// <param name="trackTypes">
+    /// The #GESClip:supported-formats to set on the the new
+    /// clip, or #GES_TRACK_TYPE_UNKNOWN to use the default
+    /// </param>
     /// <returns>The newly created clip.</returns>
     public GES.Clip? AddAsset(GES.Asset asset, Gst.ClockTime start, Gst.ClockTime inpoint, Gst.ClockTime duration, GES.TrackType trackTypes)
     {
@@ -90,11 +103,24 @@ public unsafe partial class Layer : Gst.GObject.InitiallyUnowned, GES.IExtractab
     /// Extracts a new clip from an asset and adds it to the layer with
     /// the given properties.
     /// </summary>
-    /// <param name="asset">The <c>asset</c> argument.</param>
-    /// <param name="start">The <c>start</c> argument.</param>
-    /// <param name="inpoint">The <c>inpoint</c> argument.</param>
-    /// <param name="duration">The <c>duration</c> argument.</param>
-    /// <param name="trackTypes">The <c>trackTypes</c> argument.</param>
+    /// <param name="asset">The asset to extract the new clip from</param>
+    /// <param name="start">
+    /// The #GESTimelineElement:start value to set on the new clip
+    /// If `start == #GST_CLOCK_TIME_NONE`, it will be added to the end
+    /// of @layer, i.e. it will be set to @layer's duration
+    /// </param>
+    /// <param name="inpoint">
+    /// The #GESTimelineElement:in-point value to set on the new
+    /// clip
+    /// </param>
+    /// <param name="duration">
+    /// The #GESTimelineElement:duration value to set on the new
+    /// clip
+    /// </param>
+    /// <param name="trackTypes">
+    /// The #GESClip:supported-formats to set on the the new
+    /// clip, or #GES_TRACK_TYPE_UNKNOWN to use the default
+    /// </param>
     /// <returns>The newly created clip.</returns>
     /// <exception cref="Gst.GLib.GException">The native call failed.</exception>
     public GES.Clip AddAssetFull(GES.Asset asset, Gst.ClockTime start, Gst.ClockTime inpoint, Gst.ClockTime duration, GES.TrackType trackTypes)
@@ -110,7 +136,7 @@ public unsafe partial class Layer : Gst.GObject.InitiallyUnowned, GES.IExtractab
     }
 
     /// <summary>See ges_layer_add_clip_full(), which also gives an error.</summary>
-    /// <param name="clip">The <c>clip</c> argument.</param>
+    /// <param name="clip">The clip to add</param>
     /// <returns>
     /// %TRUE if @clip was properly added to @layer, or %FALSE
     /// if @layer refused to add @clip.
@@ -135,7 +161,7 @@ public unsafe partial class Layer : Gst.GObject.InitiallyUnowned, GES.IExtractab
     /// compositional rules (see #GESTimelineElement).
     /// </para>
     /// </remarks>
-    /// <param name="clip">The <c>clip</c> argument.</param>
+    /// <param name="clip">The clip to add</param>
     /// <returns>
     /// %TRUE if @clip was properly added to @layer, or %FALSE
     /// if @layer refused to add @clip.
@@ -156,7 +182,7 @@ public unsafe partial class Layer : Gst.GObject.InitiallyUnowned, GES.IExtractab
     /// Gets whether the layer is active for the given track. See
     /// ges_layer_set_active_for_tracks().
     /// </summary>
-    /// <param name="track">The <c>track</c> argument.</param>
+    /// <param name="track">The #GESTrack to check if @layer is currently active for</param>
     /// <returns>%TRUE if @layer is active for @track, or %FALSE otherwise.</returns>
     public bool GetActiveForTrack(GES.Track track)
     {
@@ -199,8 +225,8 @@ public unsafe partial class Layer : Gst.GObject.InitiallyUnowned, GES.IExtractab
     }
 
     /// <summary>Gets the clips within the layer that appear between @start and @end.</summary>
-    /// <param name="start">The <c>start</c> argument.</param>
-    /// <param name="end">The <c>end</c> argument.</param>
+    /// <param name="start">Start of the interval</param>
+    /// <param name="end">End of the interval</param>
     /// <returns>
     /// A list of #GESClip-s
     /// that intersect the interval `[start, end)` in @layer.
@@ -276,7 +302,7 @@ public unsafe partial class Layer : Gst.GObject.InitiallyUnowned, GES.IExtractab
     }
 
     /// <summary>Removes the given clip from the layer.</summary>
-    /// <param name="clip">The <c>clip</c> argument.</param>
+    /// <param name="clip">The clip to remove</param>
     /// <returns>
     /// %TRUE if @clip was removed from @layer, or %FALSE if the
     /// operation failed.
@@ -311,9 +337,11 @@ public unsafe partial class Layer : Gst.GObject.InitiallyUnowned, GES.IExtractab
     /// makes the call answer false (ges-layer.c:1089).
     /// </para>
     /// </remarks>
-    /// <param name="active">The <c>active</c> argument.</param>
+    /// <param name="active">Whether elements in @tracks should be active or not</param>
     /// <param name="tracks">
-    /// The <c>tracks</c> argument.
+    /// The list of
+    /// tracks @layer should be (de-)active in, or %NULL to include all the tracks
+    /// in the @layer's timeline
     /// The call reads the list while it runs and copies whatever it keeps. A
     /// temporary native list is built for the call and released when it returns,
     /// and an empty sequence is passed as the null pointer, which is how C spells
@@ -336,7 +364,10 @@ public unsafe partial class Layer : Gst.GObject.InitiallyUnowned, GES.IExtractab
     /// to keep #GESTimeline:auto-transition as %FALSE for the corresponding
     /// timeline).
     /// </summary>
-    /// <param name="autoTransition">The <c>autoTransition</c> argument.</param>
+    /// <param name="autoTransition">
+    /// Whether transitions should be automatically added to
+    /// the layer
+    /// </param>
     public void SetAutoTransition(bool autoTransition)
     {
         GesLayerSetAutoTransition(Handle, autoTransition ? 1 : 0);
@@ -344,7 +375,7 @@ public unsafe partial class Layer : Gst.GObject.InitiallyUnowned, GES.IExtractab
     }
 
     /// <summary>Sets the layer to the given priority. See #GESLayer:priority.</summary>
-    /// <param name="priority">The <c>priority</c> argument.</param>
+    /// <param name="priority">The priority to set</param>
     [Obsolete("use #ges_timeline_move_layer instead. This deprecation means that you will not need to handle layer priorities at all yourself, GES will make sure there is never 'gaps' between layer priorities. (deprecated since 1.16.0)")]
     public void SetPriority(uint priority)
     {

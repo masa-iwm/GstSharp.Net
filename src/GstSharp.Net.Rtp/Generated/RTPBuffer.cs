@@ -90,7 +90,7 @@ public unsafe partial struct RTPBuffer
     /// property.
     /// </para>
     /// </remarks>
-    /// <param name="id">The <c>id</c> argument.</param>
+    /// <param name="id">The ID of the header extension (between 1 and 14).</param>
     /// <param name="data">location for data</param>
     /// <returns>%TRUE if header extension could be added</returns>
     public bool AddExtensionOnebyteHeader(byte id, System.ReadOnlySpan<byte> data)
@@ -120,8 +120,8 @@ public unsafe partial struct RTPBuffer
     /// property.
     /// </para>
     /// </remarks>
-    /// <param name="appbits">The <c>appbits</c> argument.</param>
-    /// <param name="id">The <c>id</c> argument.</param>
+    /// <param name="appbits">Application specific bits</param>
+    /// <param name="id">The ID of the header extension</param>
     /// <param name="data">location for data</param>
     /// <returns>%TRUE if header extension could be added</returns>
     public bool AddExtensionTwobytesHeader(byte appbits, byte id, System.ReadOnlySpan<byte> data)
@@ -143,7 +143,7 @@ public unsafe partial struct RTPBuffer
     /// property.
     /// </para>
     /// </remarks>
-    /// <param name="idx">The <c>idx</c> argument.</param>
+    /// <param name="idx">the index of the CSRC to get</param>
     /// <returns>the CSRC at index @idx in host order.</returns>
     public uint GetCsrc(byte idx)
     {
@@ -198,8 +198,8 @@ public unsafe partial struct RTPBuffer
     /// property.
     /// </para>
     /// </remarks>
-    /// <param name="id">The <c>id</c> argument.</param>
-    /// <param name="nth">The <c>nth</c> argument.</param>
+    /// <param name="id">The ID of the header extension to be read (between 1 and 14).</param>
+    /// <param name="nth">Read the nth extension packet with the requested ID</param>
     /// <param name="data">  location for data</param>
     /// <returns>TRUE if @buffer had the requested header extension</returns>
     public bool GetExtensionOnebyteHeader(byte id, uint nth, out byte[]? data)
@@ -229,9 +229,9 @@ public unsafe partial struct RTPBuffer
     /// property.
     /// </para>
     /// </remarks>
-    /// <param name="appbits">The <c>appbits</c> argument.</param>
-    /// <param name="id">The <c>id</c> argument.</param>
-    /// <param name="nth">The <c>nth</c> argument.</param>
+    /// <param name="appbits">Application specific bits</param>
+    /// <param name="id">The ID of the header extension to be read (between 1 and 14).</param>
+    /// <param name="nth">Read the nth extension packet with the requested ID</param>
     /// <param name="data">  location for data</param>
     /// <returns>TRUE if @buffer had the requested header extension</returns>
     public bool GetExtensionTwobytesHeader(out byte appbits, byte id, uint nth, out byte[]? data)
@@ -374,8 +374,8 @@ public unsafe partial struct RTPBuffer
     /// property.
     /// </para>
     /// </remarks>
-    /// <param name="offset">The <c>offset</c> argument.</param>
-    /// <param name="len">The <c>len</c> argument.</param>
+    /// <param name="offset">the offset in the payload</param>
+    /// <param name="len">the length in the payload</param>
     /// <returns>A new buffer with the specified data of the payload.</returns>
     public Gst.Buffer? GetPayloadSubbuffer(uint offset, uint len)
     {
@@ -482,7 +482,7 @@ public unsafe partial struct RTPBuffer
     /// property.
     /// </para>
     /// </remarks>
-    /// <param name="len">The <c>len</c> argument.</param>
+    /// <param name="len">the new amount of padding</param>
     public void PadTo(uint len)
     {
         fixed (Gst.Rtp.RTPBuffer* self = &this)
@@ -521,8 +521,8 @@ public unsafe partial struct RTPBuffer
     /// property.
     /// </para>
     /// </remarks>
-    /// <param name="idx">The <c>idx</c> argument.</param>
-    /// <param name="csrc">The <c>csrc</c> argument.</param>
+    /// <param name="idx">the CSRC index to set</param>
+    /// <param name="csrc">the CSRC in host order to set at @idx</param>
     public void SetCsrc(byte idx, uint csrc)
     {
         fixed (Gst.Rtp.RTPBuffer* self = &this)
@@ -538,7 +538,7 @@ public unsafe partial struct RTPBuffer
     /// property.
     /// </para>
     /// </remarks>
-    /// <param name="extension">The <c>extension</c> argument.</param>
+    /// <param name="extension">the new extension</param>
     public void SetExtension(bool extension)
     {
         fixed (Gst.Rtp.RTPBuffer* self = &this)
@@ -559,8 +559,11 @@ public unsafe partial struct RTPBuffer
     /// property.
     /// </para>
     /// </remarks>
-    /// <param name="bits">The <c>bits</c> argument.</param>
-    /// <param name="length">The <c>length</c> argument.</param>
+    /// <param name="bits">the bits specific for the extension</param>
+    /// <param name="length">
+    /// the length that counts the number of 32-bit words in
+    /// the extension, excluding the extension header ( therefore zero is a valid length)
+    /// </param>
     /// <returns>True if done.</returns>
     public bool SetExtensionData(ushort bits, ushort length)
     {
@@ -578,7 +581,7 @@ public unsafe partial struct RTPBuffer
     /// property.
     /// </para>
     /// </remarks>
-    /// <param name="marker">The <c>marker</c> argument.</param>
+    /// <param name="marker">the new marker</param>
     public void SetMarker(bool marker)
     {
         fixed (Gst.Rtp.RTPBuffer* self = &this)
@@ -597,7 +600,7 @@ public unsafe partial struct RTPBuffer
     /// property.
     /// </para>
     /// </remarks>
-    /// <param name="len">The <c>len</c> argument.</param>
+    /// <param name="len">the new packet length</param>
     public void SetPacketLen(uint len)
     {
         fixed (Gst.Rtp.RTPBuffer* self = &this)
@@ -613,7 +616,7 @@ public unsafe partial struct RTPBuffer
     /// property.
     /// </para>
     /// </remarks>
-    /// <param name="padding">The <c>padding</c> argument.</param>
+    /// <param name="padding">the new padding</param>
     public void SetPadding(bool padding)
     {
         fixed (Gst.Rtp.RTPBuffer* self = &this)
@@ -629,7 +632,7 @@ public unsafe partial struct RTPBuffer
     /// property.
     /// </para>
     /// </remarks>
-    /// <param name="payloadType">The <c>payloadType</c> argument.</param>
+    /// <param name="payloadType">the new type</param>
     public void SetPayloadType(byte payloadType)
     {
         fixed (Gst.Rtp.RTPBuffer* self = &this)
@@ -645,7 +648,7 @@ public unsafe partial struct RTPBuffer
     /// property.
     /// </para>
     /// </remarks>
-    /// <param name="seq">The <c>seq</c> argument.</param>
+    /// <param name="seq">the new sequence number</param>
     public void SetSeq(ushort seq)
     {
         fixed (Gst.Rtp.RTPBuffer* self = &this)
@@ -661,7 +664,7 @@ public unsafe partial struct RTPBuffer
     /// property.
     /// </para>
     /// </remarks>
-    /// <param name="ssrc">The <c>ssrc</c> argument.</param>
+    /// <param name="ssrc">the new SSRC</param>
     public void SetSsrc(uint ssrc)
     {
         fixed (Gst.Rtp.RTPBuffer* self = &this)
@@ -677,7 +680,7 @@ public unsafe partial struct RTPBuffer
     /// property.
     /// </para>
     /// </remarks>
-    /// <param name="timestamp">The <c>timestamp</c> argument.</param>
+    /// <param name="timestamp">the new timestamp</param>
     public void SetTimestamp(uint timestamp)
     {
         fixed (Gst.Rtp.RTPBuffer* self = &this)
@@ -693,7 +696,7 @@ public unsafe partial struct RTPBuffer
     /// property.
     /// </para>
     /// </remarks>
-    /// <param name="version">The <c>version</c> argument.</param>
+    /// <param name="version">the new version</param>
     public void SetVersion(byte version)
     {
         fixed (Gst.Rtp.RTPBuffer* self = &this)
@@ -724,10 +727,10 @@ public unsafe partial struct RTPBuffer
     /// If @pad_len is &gt;0, the padding bit will be set. All other RTP header fields
     /// will be set to 0/FALSE.
     /// </summary>
-    /// <param name="buffer">The <c>buffer</c> argument.</param>
-    /// <param name="payloadLen">The <c>payloadLen</c> argument.</param>
-    /// <param name="padLen">The <c>padLen</c> argument.</param>
-    /// <param name="csrcCount">The <c>csrcCount</c> argument.</param>
+    /// <param name="buffer">a #GstBuffer</param>
+    /// <param name="payloadLen">the length of the payload</param>
+    /// <param name="padLen">the amount of padding</param>
+    /// <param name="csrcCount">the number of CSRC entries</param>
     public static void AllocateData(Gst.Buffer buffer, uint payloadLen, byte padLen, byte csrcCount)
     {
         ArgumentNullException.ThrowIfNull(buffer);
@@ -739,7 +742,7 @@ public unsafe partial struct RTPBuffer
     /// Calculate the header length of an RTP packet with @csrc_count CSRC entries.
     /// An RTP packet can have at most 15 CSRC entries.
     /// </summary>
-    /// <param name="csrcCount">The <c>csrcCount</c> argument.</param>
+    /// <param name="csrcCount">the number of CSRC entries</param>
     /// <returns>The length of an RTP header with @csrc_count CSRC entries.</returns>
     public static uint CalcHeaderLen(byte csrcCount)
     {
@@ -751,9 +754,9 @@ public unsafe partial struct RTPBuffer
     /// Calculate the total length of an RTP packet with a payload size of @payload_len,
     /// a padding of @pad_len and a @csrc_count CSRC entries.
     /// </summary>
-    /// <param name="payloadLen">The <c>payloadLen</c> argument.</param>
-    /// <param name="padLen">The <c>padLen</c> argument.</param>
-    /// <param name="csrcCount">The <c>csrcCount</c> argument.</param>
+    /// <param name="payloadLen">the length of the payload</param>
+    /// <param name="padLen">the amount of padding</param>
+    /// <param name="csrcCount">the number of CSRC entries</param>
     /// <returns>The total length of an RTP header with given parameters.</returns>
     public static uint CalcPacketLen(uint payloadLen, byte padLen, byte csrcCount)
     {
@@ -765,9 +768,9 @@ public unsafe partial struct RTPBuffer
     /// Calculate the length of the payload of an RTP packet with size @packet_len,
     /// a padding of @pad_len and a @csrc_count CSRC entries.
     /// </summary>
-    /// <param name="packetLen">The <c>packetLen</c> argument.</param>
-    /// <param name="padLen">The <c>padLen</c> argument.</param>
-    /// <param name="csrcCount">The <c>csrcCount</c> argument.</param>
+    /// <param name="packetLen">the length of the total RTP packet</param>
+    /// <param name="padLen">the amount of padding</param>
+    /// <param name="csrcCount">the number of CSRC entries</param>
     /// <returns>The length of the payload of an RTP packet  with given parameters.</returns>
     public static uint CalcPayloadLen(uint packetLen, byte padLen, byte csrcCount)
     {
@@ -779,8 +782,8 @@ public unsafe partial struct RTPBuffer
     /// Compare two sequence numbers, taking care of wraparounds. This function
     /// returns the difference between @seqnum1 and @seqnum2.
     /// </summary>
-    /// <param name="seqnum1">The <c>seqnum1</c> argument.</param>
-    /// <param name="seqnum2">The <c>seqnum2</c> argument.</param>
+    /// <param name="seqnum1">a sequence number</param>
+    /// <param name="seqnum2">a sequence number</param>
     /// <returns>
     /// a negative value if @seqnum1 is bigger than @seqnum2, 0 if they
     /// are equal or a positive value if @seqnum1 is smaller than @segnum2.
@@ -792,7 +795,7 @@ public unsafe partial struct RTPBuffer
     }
 
     /// <summary>Get the default clock-rate for the static payload type @payload_type.</summary>
-    /// <param name="payloadType">The <c>payloadType</c> argument.</param>
+    /// <param name="payloadType">the static payload type</param>
     /// <returns>
     /// the default clock rate or -1 if the payload type is not static or
     /// the clock-rate is undefined.
@@ -816,8 +819,8 @@ public unsafe partial struct RTPBuffer
     ///   - timestamp unwraparound making sure that the returned value is properly decreased.
     /// </para>
     /// </remarks>
-    /// <param name="exttimestamp">The <c>exttimestamp</c> argument.</param>
-    /// <param name="timestamp">The <c>timestamp</c> argument.</param>
+    /// <param name="exttimestamp">a previous extended timestamp</param>
+    /// <param name="timestamp">a new timestamp</param>
     /// <returns>The extended timestamp of @timestamp or 0 if the result can't go anywhere backwards.</returns>
     public static ulong ExtTimestamp(ref ulong exttimestamp, uint timestamp)
     {
@@ -828,9 +831,9 @@ public unsafe partial struct RTPBuffer
     }
 
     /// <summary>Map the contents of @buffer into @rtp.</summary>
-    /// <param name="buffer">The <c>buffer</c> argument.</param>
-    /// <param name="flags">The <c>flags</c> argument.</param>
-    /// <param name="rtp">The <c>rtp</c> argument.</param>
+    /// <param name="buffer">a #GstBuffer</param>
+    /// <param name="flags">#GstMapFlags</param>
+    /// <param name="rtp">a #GstRTPBuffer</param>
     /// <returns>%TRUE if @buffer could be mapped.</returns>
     public static bool MapBuffer(Gst.Buffer buffer, Gst.MapFlags flags, out Gst.Rtp.RTPBuffer rtp)
     {
@@ -847,9 +850,9 @@ public unsafe partial struct RTPBuffer
     /// @csrc_count CSRCs, a payload length of @payload_len and padding of @pad_len.
     /// All other RTP header fields will be set to 0/FALSE.
     /// </summary>
-    /// <param name="payloadLen">The <c>payloadLen</c> argument.</param>
-    /// <param name="padLen">The <c>padLen</c> argument.</param>
-    /// <param name="csrcCount">The <c>csrcCount</c> argument.</param>
+    /// <param name="payloadLen">the length of the payload</param>
+    /// <param name="padLen">the amount of padding</param>
+    /// <param name="csrcCount">the number of CSRC entries</param>
     /// <returns>
     /// A newly allocated buffer that can hold an RTP packet with given
     /// parameters.
@@ -867,9 +870,9 @@ public unsafe partial struct RTPBuffer
     /// @csrc_count and can be calculated with gst_rtp_buffer_calc_payload_len().
     /// All RTP header fields will be set to 0/FALSE.
     /// </summary>
-    /// <param name="packetLen">The <c>packetLen</c> argument.</param>
-    /// <param name="padLen">The <c>padLen</c> argument.</param>
-    /// <param name="csrcCount">The <c>csrcCount</c> argument.</param>
+    /// <param name="packetLen">the total length of the packet</param>
+    /// <param name="padLen">the amount of padding</param>
+    /// <param name="csrcCount">the number of CSRC entries</param>
     /// <returns>A newly allocated buffer that can hold an RTP packet of @packet_len.</returns>
     public static Gst.Buffer NewAllocateLen(uint packetLen, byte padLen, byte csrcCount)
     {

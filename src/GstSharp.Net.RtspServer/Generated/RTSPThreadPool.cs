@@ -66,7 +66,7 @@ public unsafe partial class RTSPThreadPool : Gst.GObject.Object
     /// A value of 0 will use the pool mainloop, a value of -1 will use an
     /// unlimited number of threads.
     /// </summary>
-    /// <param name="maxThreads">The <c>maxThreads</c> argument.</param>
+    /// <param name="maxThreads">maximum threads</param>
     public void SetMaxThreads(int maxThreads)
     {
         GstRtspThreadPoolSetMaxThreads(Handle, maxThreads);

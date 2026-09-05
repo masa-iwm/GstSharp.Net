@@ -115,7 +115,7 @@ public unsafe partial class TextOverlayClip : GES.OverlayClip, GES.IExtractable,
     }
 
     /// <summary>Sets the color of the text.</summary>
-    /// <param name="color">The <c>color</c> argument.</param>
+    /// <param name="color">The color @self is being set to</param>
     public void SetColor(uint color)
     {
         GesTextOverlayClipSetColor(Handle, color);
@@ -123,7 +123,7 @@ public unsafe partial class TextOverlayClip : GES.OverlayClip, GES.IExtractable,
     }
 
     /// <summary>Sets the pango font description of the text</summary>
-    /// <param name="fontDesc">The <c>fontDesc</c> argument.</param>
+    /// <param name="fontDesc">the pango font description</param>
     public void SetFontDesc(string? fontDesc)
     {
         System.Span<byte> fontDescBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
@@ -133,7 +133,7 @@ public unsafe partial class TextOverlayClip : GES.OverlayClip, GES.IExtractable,
     }
 
     /// <summary>Sets the horizontal aligment of the text.</summary>
-    /// <param name="halign">The <c>halign</c> argument.</param>
+    /// <param name="halign">#GESTextHAlign</param>
     public void SetHalign(GES.TextHAlign halign)
     {
         GesTextOverlayClipSetHalign(Handle, (int)halign);
@@ -141,7 +141,10 @@ public unsafe partial class TextOverlayClip : GES.OverlayClip, GES.IExtractable,
     }
 
     /// <summary>Sets the text this clip will render.</summary>
-    /// <param name="text">The <c>text</c> argument.</param>
+    /// <param name="text">
+    /// the text to render. an internal copy of this text will be
+    /// made.
+    /// </param>
     public void SetText(string? text)
     {
         System.Span<byte> textBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
@@ -151,7 +154,7 @@ public unsafe partial class TextOverlayClip : GES.OverlayClip, GES.IExtractable,
     }
 
     /// <summary>Sets the vertical aligment of the text.</summary>
-    /// <param name="valign">The <c>valign</c> argument.</param>
+    /// <param name="valign">#GESTextVAlign</param>
     public void SetValign(GES.TextVAlign valign)
     {
         GesTextOverlayClipSetValign(Handle, (int)valign);
@@ -159,7 +162,7 @@ public unsafe partial class TextOverlayClip : GES.OverlayClip, GES.IExtractable,
     }
 
     /// <summary>Sets the horizontal position of the text.</summary>
-    /// <param name="position">The <c>position</c> argument.</param>
+    /// <param name="position">The horizontal position @self is being set to</param>
     public void SetXpos(double position)
     {
         GesTextOverlayClipSetXpos(Handle, position);
@@ -167,7 +170,7 @@ public unsafe partial class TextOverlayClip : GES.OverlayClip, GES.IExtractable,
     }
 
     /// <summary>Sets the vertical position of the text.</summary>
-    /// <param name="position">The <c>position</c> argument.</param>
+    /// <param name="position">The vertical position @self is being set to</param>
     public void SetYpos(double position)
     {
         GesTextOverlayClipSetYpos(Handle, position);

@@ -120,15 +120,15 @@ public sealed unsafe partial class VideoTimeCode : Gst.GObject.Boxed
     /// the caller keeps the value it passes and disposes it as usual.
     /// </para>
     /// </remarks>
-    /// <param name="fpsN">The <c>fpsN</c> argument.</param>
-    /// <param name="fpsD">The <c>fpsD</c> argument.</param>
-    /// <param name="latestDailyJam">The <c>latestDailyJam</c> argument.</param>
-    /// <param name="flags">The <c>flags</c> argument.</param>
-    /// <param name="hours">The <c>hours</c> argument.</param>
-    /// <param name="minutes">The <c>minutes</c> argument.</param>
-    /// <param name="seconds">The <c>seconds</c> argument.</param>
-    /// <param name="frames">The <c>frames</c> argument.</param>
-    /// <param name="fieldCount">The <c>fieldCount</c> argument.</param>
+    /// <param name="fpsN">Numerator of the frame rate</param>
+    /// <param name="fpsD">Denominator of the frame rate</param>
+    /// <param name="latestDailyJam">The latest daily jam of the #GstVideoTimeCode</param>
+    /// <param name="flags">#GstVideoTimeCodeFlags</param>
+    /// <param name="hours">the hours field of #GstVideoTimeCode</param>
+    /// <param name="minutes">the minutes field of #GstVideoTimeCode</param>
+    /// <param name="seconds">the seconds field of #GstVideoTimeCode</param>
+    /// <param name="frames">the frames field of #GstVideoTimeCode</param>
+    /// <param name="fieldCount">Interlaced video field count</param>
     /// <returns>
     /// a new #GstVideoTimeCode with the given values.
     /// The values are not checked for being in a valid range. To see if your
@@ -162,11 +162,11 @@ public sealed unsafe partial class VideoTimeCode : Gst.GObject.Boxed
     /// that you would get %NULL instead in that case.
     /// </para>
     /// </remarks>
-    /// <param name="fpsN">The <c>fpsN</c> argument.</param>
-    /// <param name="fpsD">The <c>fpsD</c> argument.</param>
-    /// <param name="dt">The <c>dt</c> argument.</param>
-    /// <param name="flags">The <c>flags</c> argument.</param>
-    /// <param name="fieldCount">The <c>fieldCount</c> argument.</param>
+    /// <param name="fpsN">Numerator of the frame rate</param>
+    /// <param name="fpsD">Denominator of the frame rate</param>
+    /// <param name="dt">#GDateTime to convert</param>
+    /// <param name="flags">#GstVideoTimeCodeFlags</param>
+    /// <param name="fieldCount">Interlaced video field count</param>
     /// <returns>the #GstVideoTimeCode representation of @dt.</returns>
     public static Gst.Video.VideoTimeCode NewFromDateTime(uint fpsN, uint fpsD, Gst.GLib.DateTime dt, Gst.Video.VideoTimeCodeFlags flags, uint fieldCount)
     {
@@ -181,11 +181,11 @@ public sealed unsafe partial class VideoTimeCode : Gst.GObject.Boxed
     /// The resulting config-&gt;latest_daily_jam is set to
     /// midnight, and timecode is set to the given time.
     /// </summary>
-    /// <param name="fpsN">The <c>fpsN</c> argument.</param>
-    /// <param name="fpsD">The <c>fpsD</c> argument.</param>
-    /// <param name="dt">The <c>dt</c> argument.</param>
-    /// <param name="flags">The <c>flags</c> argument.</param>
-    /// <param name="fieldCount">The <c>fieldCount</c> argument.</param>
+    /// <param name="fpsN">Numerator of the frame rate</param>
+    /// <param name="fpsD">Denominator of the frame rate</param>
+    /// <param name="dt">#GDateTime to convert</param>
+    /// <param name="flags">#GstVideoTimeCodeFlags</param>
+    /// <param name="fieldCount">Interlaced video field count</param>
     /// <returns>
     /// the #GstVideoTimeCode representation of @dt, or %NULL if
     ///   no valid timecode could be created.
@@ -199,7 +199,7 @@ public sealed unsafe partial class VideoTimeCode : Gst.GObject.Boxed
     }
 
     /// <summary>The <c>gst_video_time_code_new_from_string</c> function.</summary>
-    /// <param name="tcStr">The <c>tcStr</c> argument.</param>
+    /// <param name="tcStr">The string that represents the #GstVideoTimeCode</param>
     /// <returns>
     /// a new #GstVideoTimeCode from the given string or %NULL
     ///   if the string could not be passed.
@@ -217,7 +217,7 @@ public sealed unsafe partial class VideoTimeCode : Gst.GObject.Boxed
     /// Adds or subtracts @frames amount of frames to @tc. tc needs to
     /// contain valid data, as verified by gst_video_time_code_is_valid().
     /// </summary>
-    /// <param name="frames">The <c>frames</c> argument.</param>
+    /// <param name="frames">How many frames to add or subtract</param>
     public void AddFrames(long frames)
     {
         GstVideoTimeCodeAddFrames(Handle, frames);
@@ -233,7 +233,12 @@ public sealed unsafe partial class VideoTimeCode : Gst.GObject.Boxed
     /// adding ("00:09:00;02", "00:01:00:00") will return "00:10:00;00"
     /// because this time we can have an exact minute.
     /// </summary>
-    /// <param name="tcInter">The <c>tcInter</c> argument.</param>
+    /// <param name="tcInter">
+    /// The #GstVideoTimeCodeInterval to add to @tc.
+    /// The interval must contain valid values, except that for drop-frame
+    /// timecode, it may also contain timecodes which would normally
+    /// be dropped. These are then corrected to the next reasonable timecode.
+    /// </param>
     /// <returns>
     /// A new #GstVideoTimeCode with @tc_inter added or %NULL
     ///   if the interval can't be added.
@@ -262,7 +267,7 @@ public sealed unsafe partial class VideoTimeCode : Gst.GObject.Boxed
     /// taken into account. Otherwise, it is assumed that the daily jam of both
     /// @tc1 and @tc2 was at the same time. Both time codes must be valid.
     /// </summary>
-    /// <param name="tc2">The <c>tc2</c> argument.</param>
+    /// <param name="tc2">another valid #GstVideoTimeCode</param>
     /// <returns>1 if @tc1 is after @tc2, -1 if @tc1 is before @tc2, 0 otherwise.</returns>
     public int Compare(Gst.Video.VideoTimeCode tc2)
     {
@@ -315,15 +320,15 @@ public sealed unsafe partial class VideoTimeCode : Gst.GObject.Boxed
     /// the caller keeps the value it passes and disposes it as usual.
     /// </para>
     /// </remarks>
-    /// <param name="fpsN">The <c>fpsN</c> argument.</param>
-    /// <param name="fpsD">The <c>fpsD</c> argument.</param>
-    /// <param name="latestDailyJam">The <c>latestDailyJam</c> argument.</param>
-    /// <param name="flags">The <c>flags</c> argument.</param>
-    /// <param name="hours">The <c>hours</c> argument.</param>
-    /// <param name="minutes">The <c>minutes</c> argument.</param>
-    /// <param name="seconds">The <c>seconds</c> argument.</param>
-    /// <param name="frames">The <c>frames</c> argument.</param>
-    /// <param name="fieldCount">The <c>fieldCount</c> argument.</param>
+    /// <param name="fpsN">Numerator of the frame rate</param>
+    /// <param name="fpsD">Denominator of the frame rate</param>
+    /// <param name="latestDailyJam">The latest daily jam of the #GstVideoTimeCode</param>
+    /// <param name="flags">#GstVideoTimeCodeFlags</param>
+    /// <param name="hours">the hours field of #GstVideoTimeCode</param>
+    /// <param name="minutes">the minutes field of #GstVideoTimeCode</param>
+    /// <param name="seconds">the seconds field of #GstVideoTimeCode</param>
+    /// <param name="frames">the frames field of #GstVideoTimeCode</param>
+    /// <param name="fieldCount">Interlaced video field count</param>
     public void Init(uint fpsN, uint fpsD, Gst.GLib.DateTime? latestDailyJam, Gst.Video.VideoTimeCodeFlags flags, uint hours, uint minutes, uint seconds, uint frames, uint fieldCount)
     {
         GstVideoTimeCodeInit(Handle, fpsN, fpsD, latestDailyJam is null ? 0 : latestDailyJam.Handle, (int)flags, hours, minutes, seconds, frames, fieldCount);
@@ -341,11 +346,11 @@ public sealed unsafe partial class VideoTimeCode : Gst.GObject.Boxed
     /// for being able to handle invalid parameters.
     /// </para>
     /// </remarks>
-    /// <param name="fpsN">The <c>fpsN</c> argument.</param>
-    /// <param name="fpsD">The <c>fpsD</c> argument.</param>
-    /// <param name="dt">The <c>dt</c> argument.</param>
-    /// <param name="flags">The <c>flags</c> argument.</param>
-    /// <param name="fieldCount">The <c>fieldCount</c> argument.</param>
+    /// <param name="fpsN">Numerator of the frame rate</param>
+    /// <param name="fpsD">Denominator of the frame rate</param>
+    /// <param name="dt">#GDateTime to convert</param>
+    /// <param name="flags">#GstVideoTimeCodeFlags</param>
+    /// <param name="fieldCount">Interlaced video field count</param>
     public void InitFromDateTime(uint fpsN, uint fpsD, Gst.GLib.DateTime dt, Gst.Video.VideoTimeCodeFlags flags, uint fieldCount)
     {
         ArgumentNullException.ThrowIfNull(dt);
@@ -358,11 +363,11 @@ public sealed unsafe partial class VideoTimeCode : Gst.GObject.Boxed
     /// The resulting config-&gt;latest_daily_jam is set to
     /// midnight, and timecode is set to the given time.
     /// </summary>
-    /// <param name="fpsN">The <c>fpsN</c> argument.</param>
-    /// <param name="fpsD">The <c>fpsD</c> argument.</param>
-    /// <param name="dt">The <c>dt</c> argument.</param>
-    /// <param name="flags">The <c>flags</c> argument.</param>
-    /// <param name="fieldCount">The <c>fieldCount</c> argument.</param>
+    /// <param name="fpsN">Numerator of the frame rate</param>
+    /// <param name="fpsD">Denominator of the frame rate</param>
+    /// <param name="dt">#GDateTime to convert</param>
+    /// <param name="flags">#GstVideoTimeCodeFlags</param>
+    /// <param name="fieldCount">Interlaced video field count</param>
     /// <returns>%TRUE if @tc could be correctly initialized to a valid timecode</returns>
     public bool InitFromDateTimeFull(uint fpsN, uint fpsD, Gst.GLib.DateTime dt, Gst.Video.VideoTimeCodeFlags flags, uint fieldCount)
     {

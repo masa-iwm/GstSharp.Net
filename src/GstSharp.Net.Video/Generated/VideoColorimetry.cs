@@ -44,7 +44,7 @@ public unsafe partial struct VideoColorimetry
     /// this instance exactly as it was.
     /// </para>
     /// </remarks>
-    /// <param name="color">The <c>color</c> argument.</param>
+    /// <param name="color">a colorimetry string</param>
     /// <returns>%TRUE if @color points to valid colorimetry info.</returns>
     public bool FromString(string color)
     {
@@ -59,7 +59,7 @@ public unsafe partial struct VideoColorimetry
     }
 
     /// <summary>Compare the 2 colorimetry sets for equality</summary>
-    /// <param name="other">The <c>other</c> argument.</param>
+    /// <param name="other">another #GstVideoColorimetry</param>
     /// <returns>%TRUE if @cinfo and @other are equal.</returns>
     public readonly bool IsEqual(Gst.Video.VideoColorimetry other)
     {
@@ -72,9 +72,9 @@ public unsafe partial struct VideoColorimetry
     }
 
     /// <summary>Compare the 2 colorimetry sets for functionally equality</summary>
-    /// <param name="bitdepth">The <c>bitdepth</c> argument.</param>
-    /// <param name="other">The <c>other</c> argument.</param>
-    /// <param name="otherBitdepth">The <c>otherBitdepth</c> argument.</param>
+    /// <param name="bitdepth">bitdepth of a format associated with @cinfo</param>
+    /// <param name="other">another #GstVideoColorimetry</param>
+    /// <param name="otherBitdepth">bitdepth of a format associated with @other</param>
     /// <returns>%TRUE if @cinfo and @other are equivalent.</returns>
     public readonly bool IsEquivalent(uint bitdepth, Gst.Video.VideoColorimetry other, uint otherBitdepth)
     {
@@ -90,7 +90,7 @@ public unsafe partial struct VideoColorimetry
     /// Check if the colorimetry information in @info matches that of the
     /// string @color.
     /// </summary>
-    /// <param name="color">The <c>color</c> argument.</param>
+    /// <param name="color">a colorimetry string</param>
     /// <returns>
     /// %TRUE if @color conveys the same colorimetry info as the color
     /// information in @info.

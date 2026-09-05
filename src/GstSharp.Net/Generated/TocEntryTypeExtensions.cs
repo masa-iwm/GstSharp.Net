@@ -12,7 +12,7 @@ namespace Gst;
 public static unsafe partial class TocEntryTypeExtensions
 {
     /// <summary>Converts @type to a string representation.</summary>
-    /// <param name="type">The <c>type</c> argument.</param>
+    /// <param name="type">a #GstTocEntryType.</param>
     /// <returns>
     /// Returns a human-readable string for @type. This string is
     ///    only for debugging purpose and should not be displayed in a user

@@ -194,8 +194,8 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     /// <remarks>
     /// <para>Free-function: gst_structure_free</para>
     /// </remarks>
-    /// <param name="string">The <c>@string</c> argument.</param>
-    /// <param name="end">The <c>end</c> argument.</param>
+    /// <param name="string">a string representation of a #GstStructure.</param>
+    /// <param name="end">pointer to store the end of the string in.</param>
     /// <returns>
     /// a new #GstStructure or %NULL
     ///     when the string could not be parsed. Free with
@@ -217,7 +217,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     /// <para>See gst_structure_set_name() for constraints on the @name parameter.</para>
     /// <para>Free-function: gst_structure_free</para>
     /// </remarks>
-    /// <param name="name">The <c>name</c> argument.</param>
+    /// <param name="name">name of new structure</param>
     /// <returns>a new, empty #GstStructure</returns>
     public static Gst.Structure NewEmpty(string name)
     {
@@ -243,7 +243,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     /// </para>
     /// <para>Free-function: gst_structure_free</para>
     /// </remarks>
-    /// <param name="string">The <c>@string</c> argument.</param>
+    /// <param name="string">a string representation of a #GstStructure</param>
     /// <returns>
     /// a new #GstStructure or %NULL
     ///     when the string could not be parsed. Free with
@@ -262,7 +262,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     /// <remarks>
     /// <para>Free-function: gst_structure_free</para>
     /// </remarks>
-    /// <param name="quark">The <c>quark</c> argument.</param>
+    /// <param name="quark">name of new structure</param>
     /// <returns>a new, empty #GstStructure</returns>
     [Obsolete("Use gst_structure_new_id_str_empty(). (deprecated since 1.26)")]
     public static Gst.Structure NewIdEmpty(Gst.GLib.Quark quark)
@@ -277,7 +277,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     /// <para>Free-function: gst_structure_free</para>
     /// <para>Available since GStreamer 1.26.</para>
     /// </remarks>
-    /// <param name="name">The <c>name</c> argument.</param>
+    /// <param name="name">name of new structure</param>
     /// <returns>a new, empty #GstStructure</returns>
     public static Gst.Structure NewIdStrEmpty(Gst.IdStr name)
     {
@@ -292,7 +292,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     /// Tries intersecting @struct1 and @struct2 and reports whether the result
     /// would not be empty.
     /// </summary>
-    /// <param name="struct2">The <c>struct2</c> argument.</param>
+    /// <param name="struct2">a #GstStructure</param>
     /// <returns>%TRUE if intersection would not be empty</returns>
     public bool CanIntersect(Gst.Structure struct2)
     {
@@ -403,7 +403,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     }
 
     /// <summary>Fixates a #GstStructure by changing the given field with its fixated value.</summary>
-    /// <param name="fieldName">The <c>fieldName</c> argument.</param>
+    /// <param name="fieldName">a field in @structure</param>
     /// <returns>%TRUE if the structure field could be fixated</returns>
     public bool FixateField(string fieldName)
     {
@@ -419,8 +419,8 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     /// Fixates a #GstStructure by changing the given @field_name field to the given
     /// @target boolean if that field is not fixed yet.
     /// </summary>
-    /// <param name="fieldName">The <c>fieldName</c> argument.</param>
-    /// <param name="target">The <c>target</c> argument.</param>
+    /// <param name="fieldName">a field in @structure</param>
+    /// <param name="target">the target value of the fixation</param>
     /// <returns>%TRUE if the structure could be fixated</returns>
     public bool FixateFieldBoolean(string fieldName, bool target)
     {
@@ -436,8 +436,8 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     /// Fixates a #GstStructure by changing the given field to the nearest
     /// double to @target that is a subset of the existing field.
     /// </summary>
-    /// <param name="fieldName">The <c>fieldName</c> argument.</param>
-    /// <param name="target">The <c>target</c> argument.</param>
+    /// <param name="fieldName">a field in @structure</param>
+    /// <param name="target">the target value of the fixation</param>
     /// <returns>%TRUE if the structure could be fixated</returns>
     public bool FixateFieldNearestDouble(string fieldName, double target)
     {
@@ -454,9 +454,9 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     /// fraction to @target_numerator/@target_denominator that is a subset
     /// of the existing field.
     /// </summary>
-    /// <param name="fieldName">The <c>fieldName</c> argument.</param>
-    /// <param name="targetNumerator">The <c>targetNumerator</c> argument.</param>
-    /// <param name="targetDenominator">The <c>targetDenominator</c> argument.</param>
+    /// <param name="fieldName">a field in @structure</param>
+    /// <param name="targetNumerator">The numerator of the target value of the fixation</param>
+    /// <param name="targetDenominator">The denominator of the target value of the fixation</param>
     /// <returns>%TRUE if the structure could be fixated</returns>
     public bool FixateFieldNearestFraction(string fieldName, int targetNumerator, int targetDenominator)
     {
@@ -472,8 +472,8 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     /// Fixates a #GstStructure by changing the given field to the nearest
     /// integer to @target that is a subset of the existing field.
     /// </summary>
-    /// <param name="fieldName">The <c>fieldName</c> argument.</param>
-    /// <param name="target">The <c>target</c> argument.</param>
+    /// <param name="fieldName">a field in @structure</param>
+    /// <param name="target">the target value of the fixation</param>
     /// <returns>%TRUE if the structure could be fixated</returns>
     public bool FixateFieldNearestInt(string fieldName, int target)
     {
@@ -489,8 +489,8 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     /// Fixates a #GstStructure by changing the given @field_name field to the given
     /// @target string if that field is not fixed yet.
     /// </summary>
-    /// <param name="fieldName">The <c>fieldName</c> argument.</param>
-    /// <param name="target">The <c>target</c> argument.</param>
+    /// <param name="fieldName">a field in @structure</param>
+    /// <param name="target">the target value of the fixation</param>
     /// <returns>%TRUE if the structure could be fixated</returns>
     public bool FixateFieldString(string fieldName, string target)
     {
@@ -585,8 +585,8 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     /// allocated #GValueArray and return it through @array. Be aware that this is
     /// slower then getting the #GValue directly.
     /// </summary>
-    /// <param name="fieldname">The <c>fieldname</c> argument.</param>
-    /// <param name="array">The <c>array</c> argument.</param>
+    /// <param name="fieldname">the name of a field</param>
+    /// <param name="array">a pointer to a #GValueArray</param>
     /// <returns>
     /// %TRUE if the value could be set correctly. If there was no field
     /// with @fieldname or the existing field did not contain a %GST_TYPE_ARRAY,
@@ -609,8 +609,8 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     /// given field.  Caller is responsible for making sure the field exists
     /// and has the correct type.
     /// </summary>
-    /// <param name="fieldname">The <c>fieldname</c> argument.</param>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="fieldname">the name of a field</param>
+    /// <param name="value">a pointer to a #gboolean to set</param>
     /// <returns>
     /// %TRUE if the value could be set correctly. If there was no field
     /// with @fieldname or the existing field did not contain a boolean, this
@@ -636,8 +636,8 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     /// <remarks>
     /// <para>Available since GStreamer 1.28.</para>
     /// </remarks>
-    /// <param name="fieldname">The <c>fieldname</c> argument.</param>
-    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <param name="fieldname">the name of the field</param>
+    /// <param name="caps">a pointer to a pointer on caps</param>
     /// <returns>
     /// %TRUE if could be set correctly. If there was no field with
     /// @fieldname or the existing field did not contain a caps, this function return
@@ -660,8 +660,8 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     /// of the given field.  Caller is responsible for making sure the field exists
     /// and has the correct type.
     /// </summary>
-    /// <param name="fieldname">The <c>fieldname</c> argument.</param>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="fieldname">the name of a field</param>
+    /// <param name="value">a pointer to a #GstClockTime to set</param>
     /// <returns>
     /// %TRUE if the value could be set correctly. If there was no field
     /// with @fieldname or the existing field did not contain a #GstClockTime, this
@@ -692,9 +692,9 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     /// copy of the string).
     /// </para>
     /// </remarks>
-    /// <param name="fieldname">The <c>fieldname</c> argument.</param>
+    /// <param name="fieldname">the name of a field</param>
     /// <param name="value">
-    /// The <c>value</c> argument.
+    /// a pointer to a #GDate to set
     /// The date the call produced, or <see langword="null"/> when it produced
     /// none. A false answer always leaves it null, and on a generic value — a
     /// field of a structure or of a meta container — a true one may as well:
@@ -732,8 +732,8 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     /// which doesn't return a copy of the string).
     /// </para>
     /// </remarks>
-    /// <param name="fieldname">The <c>fieldname</c> argument.</param>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="fieldname">the name of a field</param>
+    /// <param name="value">a pointer to a #GstDateTime to set</param>
     /// <returns>
     /// %TRUE if the value could be set correctly. If there was no field
     /// with @fieldname or the existing field did not contain a data, this function
@@ -756,8 +756,8 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     /// given field.  Caller is responsible for making sure the field exists
     /// and has the correct type.
     /// </summary>
-    /// <param name="fieldname">The <c>fieldname</c> argument.</param>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="fieldname">the name of a field</param>
+    /// <param name="value">a pointer to a gdouble to set</param>
     /// <returns>
     /// %TRUE if the value could be set correctly. If there was no field
     /// with @fieldname or the existing field did not contain a double, this
@@ -780,9 +780,9 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     /// given field.  Caller is responsible for making sure the field exists,
     /// has the correct type and that the enumtype is correct.
     /// </summary>
-    /// <param name="fieldname">The <c>fieldname</c> argument.</param>
-    /// <param name="enumtype">The <c>enumtype</c> argument.</param>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="fieldname">the name of a field</param>
+    /// <param name="enumtype">the enum type of a field</param>
+    /// <param name="value">a pointer to an int to set</param>
     /// <returns>
     /// %TRUE if the value could be set correctly. If there was no field
     /// with @fieldname or the existing field did not contain an enum of the given
@@ -805,7 +805,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     /// value it contains.  If the field is not found, G_TYPE_INVALID is
     /// returned.
     /// </summary>
-    /// <param name="fieldname">The <c>fieldname</c> argument.</param>
+    /// <param name="fieldname">the name of the field</param>
     /// <returns>the #GValue of the field</returns>
     public Gst.GObject.GType GetFieldType(string fieldname)
     {
@@ -822,9 +822,9 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     /// given field. Caller is responsible for making sure the field exists,
     /// has the correct type and that the flagstype is correct.
     /// </summary>
-    /// <param name="fieldname">The <c>fieldname</c> argument.</param>
-    /// <param name="flagsType">The <c>flagsType</c> argument.</param>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="fieldname">the name of a field</param>
+    /// <param name="flagsType">the flags type of a field</param>
+    /// <param name="value">a pointer to an unsigned int to set</param>
     /// <returns>
     /// %TRUE if the value could be set correctly. If there was no field
     /// with @fieldname or the existing field did not contain flags or
@@ -846,9 +846,9 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     /// Read the GstFlagSet flags and mask out of the structure into the
     /// provided pointers.
     /// </summary>
-    /// <param name="fieldname">The <c>fieldname</c> argument.</param>
-    /// <param name="valueFlags">The <c>valueFlags</c> argument.</param>
-    /// <param name="valueMask">The <c>valueMask</c> argument.</param>
+    /// <param name="fieldname">the name of a field</param>
+    /// <param name="valueFlags">a pointer to a guint for the flags field</param>
+    /// <param name="valueMask">a pointer to a guint for the mask field</param>
     /// <returns>
     /// %TRUE if the values could be set correctly. If there was no field
     /// with @fieldname or the existing field did not contain a GstFlagSet, this
@@ -873,9 +873,9 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     /// corresponding to the value of the given field.  Caller is responsible
     /// for making sure the field exists and has the correct type.
     /// </summary>
-    /// <param name="fieldname">The <c>fieldname</c> argument.</param>
-    /// <param name="valueNumerator">The <c>valueNumerator</c> argument.</param>
-    /// <param name="valueDenominator">The <c>valueDenominator</c> argument.</param>
+    /// <param name="fieldname">the name of a field</param>
+    /// <param name="valueNumerator">a pointer to an int to set</param>
+    /// <param name="valueDenominator">a pointer to an int to set</param>
     /// <returns>
     /// %TRUE if the values could be set correctly. If there was no field
     /// with @fieldname or the existing field did not contain a GstFraction, this
@@ -900,8 +900,8 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     /// given field.  Caller is responsible for making sure the field exists
     /// and has the correct type.
     /// </summary>
-    /// <param name="fieldname">The <c>fieldname</c> argument.</param>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="fieldname">the name of a field</param>
+    /// <param name="value">a pointer to an int to set</param>
     /// <returns>
     /// %TRUE if the value could be set correctly. If there was no field
     /// with @fieldname or the existing field did not contain an int, this function
@@ -924,8 +924,8 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     /// given field. Caller is responsible for making sure the field exists
     /// and has the correct type.
     /// </summary>
-    /// <param name="fieldname">The <c>fieldname</c> argument.</param>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="fieldname">the name of a field</param>
+    /// <param name="value">a pointer to a #gint64 to set</param>
     /// <returns>
     /// %TRUE if the value could be set correctly. If there was no field
     /// with @fieldname or the existing field did not contain a #gint64, this function
@@ -949,8 +949,8 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     /// allocated GValueArray and return it through @array. Be aware that this is
     /// slower then getting the #GValue directly.
     /// </summary>
-    /// <param name="fieldname">The <c>fieldname</c> argument.</param>
-    /// <param name="array">The <c>array</c> argument.</param>
+    /// <param name="fieldname">the name of a field</param>
+    /// <param name="array">a pointer to a #GValueArray</param>
     /// <returns>
     /// %TRUE if the value could be set correctly. If there was no field
     /// with @fieldname or the existing field did not contain a %GST_TYPE_LIST, this
@@ -1017,7 +1017,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     /// call to a gst_structure_*() function with the given structure.
     /// </para>
     /// </remarks>
-    /// <param name="fieldname">The <c>fieldname</c> argument.</param>
+    /// <param name="fieldname">the name of a field</param>
     /// <returns>
     /// a pointer to the string or %NULL when the
     /// field did not exist or did not contain a string.
@@ -1037,8 +1037,8 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     /// given field.  Caller is responsible for making sure the field exists
     /// and has the correct type.
     /// </summary>
-    /// <param name="fieldname">The <c>fieldname</c> argument.</param>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="fieldname">the name of a field</param>
+    /// <param name="value">a pointer to a uint to set</param>
     /// <returns>
     /// %TRUE if the value could be set correctly. If there was no field
     /// with @fieldname or the existing field did not contain a uint, this function
@@ -1061,8 +1061,8 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     /// given field. Caller is responsible for making sure the field exists
     /// and has the correct type.
     /// </summary>
-    /// <param name="fieldname">The <c>fieldname</c> argument.</param>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="fieldname">the name of a field</param>
+    /// <param name="value">a pointer to a #guint64 to set</param>
     /// <returns>
     /// %TRUE if the value could be set correctly. If there was no field
     /// with @fieldname or the existing field did not contain a #guint64, this function
@@ -1081,7 +1081,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     }
 
     /// <summary>Check if @structure contains a field named @fieldname.</summary>
-    /// <param name="fieldname">The <c>fieldname</c> argument.</param>
+    /// <param name="fieldname">the name of a field</param>
     /// <returns>%TRUE if the structure contains a field with the given name</returns>
     public bool HasField(string fieldname)
     {
@@ -1094,8 +1094,8 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     }
 
     /// <summary>Check if @structure contains a field named @fieldname and with GType @type.</summary>
-    /// <param name="fieldname">The <c>fieldname</c> argument.</param>
-    /// <param name="type">The <c>type</c> argument.</param>
+    /// <param name="fieldname">the name of a field</param>
+    /// <param name="type">the type of a value</param>
     /// <returns>%TRUE if the structure contains a field with the given name and type</returns>
     public bool HasFieldTyped(string fieldname, Gst.GObject.GType type)
     {
@@ -1108,7 +1108,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     }
 
     /// <summary>Checks if the structure has the given name</summary>
-    /// <param name="name">The <c>name</c> argument.</param>
+    /// <param name="name">structure name to check for</param>
     /// <returns>%TRUE if @name matches the name of the structure.</returns>
     public bool HasName(string name)
     {
@@ -1121,7 +1121,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     }
 
     /// <summary>Get the value of the field with GQuark @field.</summary>
-    /// <param name="field">The <c>field</c> argument.</param>
+    /// <param name="field">the #GQuark of the field to get</param>
     /// <returns>
     /// the #GValue corresponding to the field with the given
     /// name identifier.
@@ -1136,7 +1136,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     }
 
     /// <summary>Check if @structure contains a field named @field.</summary>
-    /// <param name="field">The <c>field</c> argument.</param>
+    /// <param name="field">#GQuark of the field name</param>
     /// <returns>%TRUE if the structure contains a field with the given name</returns>
     [Obsolete("Use gst_structure_id_str_has_field(). (deprecated since 1.26)")]
     public bool IdHasField(Gst.GLib.Quark field)
@@ -1147,8 +1147,8 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     }
 
     /// <summary>Check if @structure contains a field named @field and with GType @type.</summary>
-    /// <param name="field">The <c>field</c> argument.</param>
-    /// <param name="type">The <c>type</c> argument.</param>
+    /// <param name="field">#GQuark of the field name</param>
+    /// <param name="type">the type of a value</param>
     /// <returns>%TRUE if the structure contains a field with the given name and type</returns>
     [Obsolete("Use gst_structure_id_str_has_field_typed(). (deprecated since 1.26)")]
     public bool IdHasFieldTyped(Gst.GLib.Quark field, Gst.GObject.GType type)
@@ -1169,9 +1169,9 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     /// and writes nothing otherwise.
     /// </para>
     /// </remarks>
-    /// <param name="field">The <c>field</c> argument.</param>
+    /// <param name="field">a #GQuark representing a field</param>
     /// <param name="value">
-    /// The <c>value</c> argument.
+    /// the new value of the field
     /// The callee copies what it keeps, so the caller keeps ownership of
     /// <paramref name="value"/> and still disposes it.
     /// </param>
@@ -1202,7 +1202,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     /// <remarks>
     /// <para>Available since GStreamer 1.26.</para>
     /// </remarks>
-    /// <param name="fieldname">The <c>fieldname</c> argument.</param>
+    /// <param name="fieldname">the name of the field</param>
     /// <returns>the #GValue of the field</returns>
     public Gst.GObject.GType IdStrGetFieldType(Gst.IdStr fieldname)
     {
@@ -1217,7 +1217,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     /// <remarks>
     /// <para>Available since GStreamer 1.26.</para>
     /// </remarks>
-    /// <param name="fieldname">The <c>fieldname</c> argument.</param>
+    /// <param name="fieldname">the name of the field to get</param>
     /// <returns>
     /// the #GValue corresponding to the field with the given
     /// name.
@@ -1237,7 +1237,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     /// <remarks>
     /// <para>Available since GStreamer 1.26.</para>
     /// </remarks>
-    /// <param name="fieldname">The <c>fieldname</c> argument.</param>
+    /// <param name="fieldname">the name of a field</param>
     /// <returns>%TRUE if the structure contains a field with the given name</returns>
     public bool IdStrHasField(Gst.IdStr fieldname)
     {
@@ -1252,8 +1252,8 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     /// <remarks>
     /// <para>Available since GStreamer 1.26.</para>
     /// </remarks>
-    /// <param name="fieldname">The <c>fieldname</c> argument.</param>
-    /// <param name="type">The <c>type</c> argument.</param>
+    /// <param name="fieldname">the name of a field</param>
+    /// <param name="type">the type of a value</param>
     /// <returns>%TRUE if the structure contains a field with the given name and type</returns>
     public bool IdStrHasFieldTyped(Gst.IdStr fieldname, Gst.GObject.GType type)
     {
@@ -1271,7 +1271,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     /// <remarks>
     /// <para>Available since GStreamer 1.26.</para>
     /// </remarks>
-    /// <param name="index">The <c>index</c> argument.</param>
+    /// <param name="index">the index to get the name of</param>
     /// <returns>
     /// the name of the given field number
     /// The wrapper owns a reference of its own, which is a copy for a boxed type:
@@ -1293,7 +1293,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     /// <remarks>
     /// <para>Available since GStreamer 1.26.</para>
     /// </remarks>
-    /// <param name="fieldname">The <c>fieldname</c> argument.</param>
+    /// <param name="fieldname">the name of the field to remove</param>
     public void IdStrRemoveField(Gst.IdStr fieldname)
     {
         ArgumentNullException.ThrowIfNull(fieldname);
@@ -1314,9 +1314,9 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     /// </para>
     /// <para>Available since GStreamer 1.26.</para>
     /// </remarks>
-    /// <param name="fieldname">The <c>fieldname</c> argument.</param>
+    /// <param name="fieldname">the name of the field to set</param>
     /// <param name="value">
-    /// The <c>value</c> argument.
+    /// the new value of the field
     /// The callee copies what it keeps, so the caller keeps ownership of
     /// <paramref name="value"/> and still disposes it.
     /// </param>
@@ -1341,7 +1341,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     }
 
     /// <summary>Intersects @struct1 and @struct2 and returns the intersection.</summary>
-    /// <param name="struct2">The <c>struct2</c> argument.</param>
+    /// <param name="struct2">a #GstStructure</param>
     /// <returns>Intersection of @struct1 and @struct2</returns>
     public Gst.Structure? Intersect(Gst.Structure struct2)
     {
@@ -1353,7 +1353,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     }
 
     /// <summary>Tests if the two #GstStructure are equal.</summary>
-    /// <param name="structure2">The <c>structure2</c> argument.</param>
+    /// <param name="structure2">a #GstStructure.</param>
     /// <returns>%TRUE if the two structures have the same name and field.</returns>
     public bool IsEqual(Gst.Structure structure2)
     {
@@ -1369,7 +1369,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     /// structure name and for all fields that are existing in @superset,
     /// @subset has a value that is a subset of the value in @superset.
     /// </summary>
-    /// <param name="superset">The <c>superset</c> argument.</param>
+    /// <param name="superset">a potentially greater #GstStructure</param>
     /// <returns>%TRUE if @subset is a subset of @superset</returns>
     public bool IsSubset(Gst.Structure superset)
     {
@@ -1489,7 +1489,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     }
 
     /// <summary>Get the name of the given field number, counting from 0 onwards.</summary>
-    /// <param name="index">The <c>index</c> argument.</param>
+    /// <param name="index">the index to get the name of</param>
     /// <returns>the name of the given field number</returns>
     public string NthFieldName(uint index)
     {
@@ -1510,7 +1510,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     /// Removes the field with the given name.  If the field with the given
     /// name does not exist, the structure is unchanged.
     /// </summary>
-    /// <param name="fieldname">The <c>fieldname</c> argument.</param>
+    /// <param name="fieldname">the name of the field to remove</param>
     public void RemoveField(string fieldname)
     {
         ArgumentNullException.ThrowIfNull(fieldname);
@@ -1535,7 +1535,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     /// </para>
     /// <para>Free-function: g_free</para>
     /// </remarks>
-    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <param name="flags">The flags to use to serialize structure</param>
     /// <returns>
     /// a pointer to string allocated by g_malloc().
     ///     g_free() after usage.
@@ -1553,7 +1553,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     /// Alias for gst_structure_serialize() but with nullable annotation because it
     /// can return %NULL when %GST_SERIALIZE_FLAG_STRICT flag is set.
     /// </summary>
-    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <param name="flags">The flags to use to serialize structure</param>
     /// <returns>
     /// a pointer to string allocated by g_malloc().
     ///     g_free() after usage.
@@ -1577,8 +1577,8 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     /// and writes nothing otherwise.
     /// </para>
     /// </remarks>
-    /// <param name="fieldname">The <c>fieldname</c> argument.</param>
-    /// <param name="array">The <c>array</c> argument.</param>
+    /// <param name="fieldname">the name of a field</param>
+    /// <param name="array">a pointer to a #GValueArray</param>
     public void SetArray(string fieldname, Gst.GObject.ValueArray array)
     {
         ArgumentNullException.ThrowIfNull(fieldname);
@@ -1602,8 +1602,8 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     /// and writes nothing otherwise.
     /// </para>
     /// </remarks>
-    /// <param name="fieldname">The <c>fieldname</c> argument.</param>
-    /// <param name="array">The <c>array</c> argument.</param>
+    /// <param name="fieldname">the name of a field</param>
+    /// <param name="array">a pointer to a #GValueArray</param>
     public void SetList(string fieldname, Gst.GObject.ValueArray array)
     {
         ArgumentNullException.ThrowIfNull(fieldname);
@@ -1620,7 +1620,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     /// provided is copied before being used. It must not be empty, start with a
     /// letter and can be followed by letters, numbers and any of "/-_.:".
     /// </summary>
-    /// <param name="name">The <c>name</c> argument.</param>
+    /// <param name="name">the new name of the structure</param>
     public void SetName(string name)
     {
         ArgumentNullException.ThrowIfNull(name);
@@ -1638,7 +1638,7 @@ public sealed unsafe partial class Structure : Gst.GObject.Boxed
     /// <remarks>
     /// <para>Available since GStreamer 1.26.</para>
     /// </remarks>
-    /// <param name="name">The <c>name</c> argument.</param>
+    /// <param name="name">the new name of the structure</param>
     public void SetNameIdStr(Gst.IdStr name)
     {
         ArgumentNullException.ThrowIfNull(name);

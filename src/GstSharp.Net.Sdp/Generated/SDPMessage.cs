@@ -121,8 +121,8 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
         handle == 0 ? null : new(handle, transfer);
 
     /// <summary>Add the attribute with @key and @value to @msg.</summary>
-    /// <param name="key">The <c>key</c> argument.</param>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="key">the key</param>
+    /// <param name="value">the value</param>
     /// <returns>@GST_SDP_OK.</returns>
     public Gst.Sdp.SDPResult AddAttribute(string key, string? value)
     {
@@ -137,8 +137,8 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     }
 
     /// <summary>Add the specified bandwidth information to @msg.</summary>
-    /// <param name="bwtype">The <c>bwtype</c> argument.</param>
-    /// <param name="bandwidth">The <c>bandwidth</c> argument.</param>
+    /// <param name="bwtype">the bandwidth modifier type</param>
+    /// <param name="bandwidth">the bandwidth in kilobits per second</param>
     /// <returns>a #GstSDPResult.</returns>
     public Gst.Sdp.SDPResult AddBandwidth(string bwtype, uint bandwidth)
     {
@@ -151,7 +151,7 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     }
 
     /// <summary>Add @email to the list of emails in @msg.</summary>
-    /// <param name="email">The <c>email</c> argument.</param>
+    /// <param name="email">an email</param>
     /// <returns>a #GstSDPResult.</returns>
     public Gst.Sdp.SDPResult AddEmail(string email)
     {
@@ -168,7 +168,7 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     /// the contents of @media so that @media will have to be reinitialized with
     /// gst_sdp_media_init() before it can be used again.
     /// </summary>
-    /// <param name="media">The <c>media</c> argument.</param>
+    /// <param name="media">a #GstSDPMedia to add</param>
     /// <returns>a #GstSDPResult.</returns>
     public Gst.Sdp.SDPResult AddMedia(Gst.Sdp.SDPMedia media)
     {
@@ -180,7 +180,7 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     }
 
     /// <summary>Add @phone to the list of phones in @msg.</summary>
-    /// <param name="phone">The <c>phone</c> argument.</param>
+    /// <param name="phone">a phone</param>
     /// <returns>a #GstSDPResult.</returns>
     public Gst.Sdp.SDPResult AddPhone(string phone)
     {
@@ -193,8 +193,8 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     }
 
     /// <summary>Add time information @start and @stop to @msg.</summary>
-    /// <param name="start">The <c>start</c> argument.</param>
-    /// <param name="stop">The <c>stop</c> argument.</param>
+    /// <param name="start">the start time</param>
+    /// <param name="stop">the stop time</param>
     /// <param name="repeat">the repeat times</param>
     /// <returns>a #GstSDPResult.</returns>
     public Gst.Sdp.SDPResult AddTime(string start, string stop, string[]? repeat)
@@ -212,8 +212,8 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     }
 
     /// <summary>Add time zone information to @msg.</summary>
-    /// <param name="adjTime">The <c>adjTime</c> argument.</param>
-    /// <param name="typedTime">The <c>typedTime</c> argument.</param>
+    /// <param name="adjTime">the NTP time that a time zone adjustment happens</param>
+    /// <param name="typedTime">the offset from the time when the session was first scheduled</param>
     /// <returns>a #GstSDPResult.</returns>
     public Gst.Sdp.SDPResult AddZone(string adjTime, string typedTime)
     {
@@ -248,7 +248,7 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     }
 
     /// <summary>Mapping of attributes of #GstSDPMessage to #GstCaps</summary>
-    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <param name="caps">a #GstCaps</param>
     /// <returns>a #GstSDPResult.</returns>
     public Gst.Sdp.SDPResult AttributesToCaps(Gst.Caps caps)
     {
@@ -272,7 +272,7 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     /// Allocate a new copy of @msg and store the result in @copy. The value in
     /// @copy should be release with gst_sdp_message_free function.
     /// </summary>
-    /// <param name="copy">The <c>copy</c> argument.</param>
+    /// <param name="copy">pointer to new #GstSDPMessage</param>
     /// <returns>a #GstSDPResult</returns>
     public Gst.Sdp.SDPResult Copy(out Gst.Sdp.SDPMessage? copy)
     {
@@ -302,7 +302,7 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     }
 
     /// <summary>Get the attribute at position @idx in @msg.</summary>
-    /// <param name="idx">The <c>idx</c> argument.</param>
+    /// <param name="idx">the index</param>
     /// <returns>the #GstSDPAttribute at position @idx.</returns>
     public Gst.Sdp.SDPAttribute GetAttribute(uint idx)
     {
@@ -313,7 +313,7 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     }
 
     /// <summary>Get the first attribute with key @key in @msg.</summary>
-    /// <param name="key">The <c>key</c> argument.</param>
+    /// <param name="key">the key</param>
     /// <returns>the attribute value of the first attribute with @key.</returns>
     public string? GetAttributeVal(string key)
     {
@@ -326,8 +326,8 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     }
 
     /// <summary>Get the @nth attribute with key @key in @msg.</summary>
-    /// <param name="key">The <c>key</c> argument.</param>
-    /// <param name="nth">The <c>nth</c> argument.</param>
+    /// <param name="key">the key</param>
+    /// <param name="nth">the index</param>
     /// <returns>the attribute value of the @nth attribute with @key.</returns>
     public string? GetAttributeValN(string key, uint nth)
     {
@@ -340,7 +340,7 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     }
 
     /// <summary>Get the bandwidth at index @idx from @msg.</summary>
-    /// <param name="idx">The <c>idx</c> argument.</param>
+    /// <param name="idx">the bandwidth index</param>
     /// <returns>a #GstSDPBandwidth.</returns>
     public Gst.Sdp.SDPBandwidth GetBandwidth(uint idx)
     {
@@ -361,7 +361,7 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     }
 
     /// <summary>Get the email with number @idx from @msg.</summary>
-    /// <param name="idx">The <c>idx</c> argument.</param>
+    /// <param name="idx">an email index</param>
     /// <returns>the email at position @idx.</returns>
     public string GetEmail(uint idx)
     {
@@ -392,7 +392,7 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     }
 
     /// <summary>Get the media description at index @idx in @msg.</summary>
-    /// <param name="idx">The <c>idx</c> argument.</param>
+    /// <param name="idx">the index</param>
     /// <returns>a #GstSDPMedia.</returns>
     public Gst.Sdp.SDPMedia GetMedia(uint idx)
     {
@@ -413,7 +413,7 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     }
 
     /// <summary>Get the phone with number @idx from @msg.</summary>
-    /// <param name="idx">The <c>idx</c> argument.</param>
+    /// <param name="idx">a phone index</param>
     /// <returns>the phone at position @idx.</returns>
     public string GetPhone(uint idx)
     {
@@ -434,7 +434,7 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     }
 
     /// <summary>Get time information with index @idx from @msg.</summary>
-    /// <param name="idx">The <c>idx</c> argument.</param>
+    /// <param name="idx">the time index</param>
     /// <returns>a #GstSDPTime.</returns>
     public Gst.Sdp.SDPTime GetTime(uint idx)
     {
@@ -465,7 +465,7 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     }
 
     /// <summary>Get time zone information with index @idx from @msg.</summary>
-    /// <param name="idx">The <c>idx</c> argument.</param>
+    /// <param name="idx">the zone index</param>
     /// <returns>a #GstSDPZone.</returns>
     public Gst.Sdp.SDPZone GetZone(uint idx)
     {
@@ -480,8 +480,8 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     /// at index @idx.
     /// When -1 is given as @idx, the attribute is inserted at the end.
     /// </summary>
-    /// <param name="idx">The <c>idx</c> argument.</param>
-    /// <param name="attr">The <c>attr</c> argument.</param>
+    /// <param name="idx">an index</param>
+    /// <param name="attr">a #GstSDPAttribute</param>
     /// <returns>a #GstSDPResult.</returns>
     public Gst.Sdp.SDPResult InsertAttribute(int idx, Gst.Sdp.SDPAttribute attr)
     {
@@ -497,8 +497,8 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     /// at index @idx.
     /// When -1 is given as @idx, the bandwidth is inserted at the end.
     /// </summary>
-    /// <param name="idx">The <c>idx</c> argument.</param>
-    /// <param name="bw">The <c>bw</c> argument.</param>
+    /// <param name="idx">an index</param>
+    /// <param name="bw">the bandwidth</param>
     /// <returns>a #GstSDPResult.</returns>
     public Gst.Sdp.SDPResult InsertBandwidth(int idx, Gst.Sdp.SDPBandwidth bw)
     {
@@ -513,8 +513,8 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     /// Insert @email into the array of emails in @msg at index @idx.
     /// When -1 is given as @idx, the email is inserted at the end.
     /// </summary>
-    /// <param name="idx">The <c>idx</c> argument.</param>
-    /// <param name="email">The <c>email</c> argument.</param>
+    /// <param name="idx">an index</param>
+    /// <param name="email">an email</param>
     /// <returns>a #GstSDPResult.</returns>
     public Gst.Sdp.SDPResult InsertEmail(int idx, string email)
     {
@@ -530,8 +530,8 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     /// Insert @phone into the array of phone numbers in @msg at index @idx.
     /// When -1 is given as @idx, the phone is inserted at the end.
     /// </summary>
-    /// <param name="idx">The <c>idx</c> argument.</param>
-    /// <param name="phone">The <c>phone</c> argument.</param>
+    /// <param name="idx">a phone index</param>
+    /// <param name="phone">a phone</param>
     /// <returns>a #GstSDPResult.</returns>
     public Gst.Sdp.SDPResult InsertPhone(int idx, string phone)
     {
@@ -548,8 +548,8 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     /// at index @idx.
     /// When -1 is given as @idx, the times are inserted at the end.
     /// </summary>
-    /// <param name="idx">The <c>idx</c> argument.</param>
-    /// <param name="t">The <c>t</c> argument.</param>
+    /// <param name="idx">an index</param>
+    /// <param name="t">a #GstSDPTime</param>
     /// <returns>a #GstSDPResult.</returns>
     public Gst.Sdp.SDPResult InsertTime(int idx, Gst.Sdp.SDPTime t)
     {
@@ -565,8 +565,8 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     /// at index @idx.
     /// When -1 is given as @idx, the zone is inserted at the end.
     /// </summary>
-    /// <param name="idx">The <c>idx</c> argument.</param>
-    /// <param name="zone">The <c>zone</c> argument.</param>
+    /// <param name="idx">an index</param>
+    /// <param name="zone">a #GstSDPZone</param>
     /// <returns>a #GstSDPResult.</returns>
     public Gst.Sdp.SDPResult InsertZone(int idx, Gst.Sdp.SDPZone zone)
     {
@@ -590,7 +590,7 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     /// Creates a new #GstMIKEYMessage after parsing the key-mgmt attribute
     /// from a #GstSDPMessage.
     /// </summary>
-    /// <param name="mikey">The <c>mikey</c> argument.</param>
+    /// <param name="mikey">pointer to new #GstMIKEYMessage</param>
     /// <returns>a #GstSDPResult.</returns>
     public Gst.Sdp.SDPResult ParseKeymgmt(out Gst.Sdp.MIKEYMessage? mikey)
     {
@@ -611,7 +611,7 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     }
 
     /// <summary>Remove the attribute in @msg at index @idx.</summary>
-    /// <param name="idx">The <c>idx</c> argument.</param>
+    /// <param name="idx">the index</param>
     /// <returns>a #GstSDPResult.</returns>
     public Gst.Sdp.SDPResult RemoveAttribute(uint idx)
     {
@@ -621,7 +621,7 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     }
 
     /// <summary>Remove the bandwidth information in @msg at index @idx.</summary>
-    /// <param name="idx">The <c>idx</c> argument.</param>
+    /// <param name="idx">the bandwidth index</param>
     /// <returns>a #GstSDPResult.</returns>
     public Gst.Sdp.SDPResult RemoveBandwidth(uint idx)
     {
@@ -631,7 +631,7 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     }
 
     /// <summary>Remove the email in @msg at index @idx.</summary>
-    /// <param name="idx">The <c>idx</c> argument.</param>
+    /// <param name="idx">an email index</param>
     /// <returns>a #GstSDPResult.</returns>
     public Gst.Sdp.SDPResult RemoveEmail(uint idx)
     {
@@ -641,7 +641,7 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     }
 
     /// <summary>Remove the media at @idx from the array of medias in @msg if found.</summary>
-    /// <param name="idx">The <c>idx</c> argument.</param>
+    /// <param name="idx">the media index</param>
     /// <returns>
     /// #GST_SDP_OK when the specified media is found at @idx and removed,
     /// #GST_SDP_EINVAL otherwise.
@@ -654,7 +654,7 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     }
 
     /// <summary>Remove the phone number in @msg at index @idx.</summary>
-    /// <param name="idx">The <c>idx</c> argument.</param>
+    /// <param name="idx">a phone index</param>
     /// <returns>a #GstSDPResult.</returns>
     public Gst.Sdp.SDPResult RemovePhone(uint idx)
     {
@@ -664,7 +664,7 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     }
 
     /// <summary>Remove the time information in @msg at index @idx.</summary>
-    /// <param name="idx">The <c>idx</c> argument.</param>
+    /// <param name="idx">the index</param>
     /// <returns>a #GstSDPResult.</returns>
     public Gst.Sdp.SDPResult RemoveTime(uint idx)
     {
@@ -674,7 +674,7 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     }
 
     /// <summary>Remove the zone information in @msg at index @idx.</summary>
-    /// <param name="idx">The <c>idx</c> argument.</param>
+    /// <param name="idx">the index</param>
     /// <returns>a #GstSDPResult.</returns>
     public Gst.Sdp.SDPResult RemoveZone(uint idx)
     {
@@ -684,8 +684,8 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     }
 
     /// <summary>Replace the attribute in @msg at index @idx with @attr.</summary>
-    /// <param name="idx">The <c>idx</c> argument.</param>
-    /// <param name="attr">The <c>attr</c> argument.</param>
+    /// <param name="idx">the index</param>
+    /// <param name="attr">a #GstSDPAttribute</param>
     /// <returns>a #GstSDPResult.</returns>
     public Gst.Sdp.SDPResult ReplaceAttribute(uint idx, Gst.Sdp.SDPAttribute attr)
     {
@@ -697,8 +697,8 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     }
 
     /// <summary>Replace the bandwidth information in @msg at index @idx with @bw.</summary>
-    /// <param name="idx">The <c>idx</c> argument.</param>
-    /// <param name="bw">The <c>bw</c> argument.</param>
+    /// <param name="idx">the bandwidth index</param>
+    /// <param name="bw">the bandwidth</param>
     /// <returns>a #GstSDPResult.</returns>
     public Gst.Sdp.SDPResult ReplaceBandwidth(uint idx, Gst.Sdp.SDPBandwidth bw)
     {
@@ -710,8 +710,8 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     }
 
     /// <summary>Replace the email in @msg at index @idx with @email.</summary>
-    /// <param name="idx">The <c>idx</c> argument.</param>
-    /// <param name="email">The <c>email</c> argument.</param>
+    /// <param name="idx">an email index</param>
+    /// <param name="email">an email</param>
     /// <returns>a #GstSDPResult.</returns>
     public Gst.Sdp.SDPResult ReplaceEmail(uint idx, string email)
     {
@@ -724,8 +724,8 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     }
 
     /// <summary>Replace the phone number in @msg at index @idx with @phone.</summary>
-    /// <param name="idx">The <c>idx</c> argument.</param>
-    /// <param name="phone">The <c>phone</c> argument.</param>
+    /// <param name="idx">a phone index</param>
+    /// <param name="phone">a phone</param>
     /// <returns>a #GstSDPResult.</returns>
     public Gst.Sdp.SDPResult ReplacePhone(uint idx, string phone)
     {
@@ -738,8 +738,8 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     }
 
     /// <summary>Replace the time information in @msg at index @idx with @t.</summary>
-    /// <param name="idx">The <c>idx</c> argument.</param>
-    /// <param name="t">The <c>t</c> argument.</param>
+    /// <param name="idx">the index</param>
+    /// <param name="t">a #GstSDPTime</param>
     /// <returns>a #GstSDPResult.</returns>
     public Gst.Sdp.SDPResult ReplaceTime(uint idx, Gst.Sdp.SDPTime t)
     {
@@ -751,8 +751,8 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     }
 
     /// <summary>Replace the zone information in @msg at index @idx with @zone.</summary>
-    /// <param name="idx">The <c>idx</c> argument.</param>
-    /// <param name="zone">The <c>zone</c> argument.</param>
+    /// <param name="idx">the index</param>
+    /// <param name="zone">a #GstSDPZone</param>
     /// <returns>a #GstSDPResult.</returns>
     public Gst.Sdp.SDPResult ReplaceZone(uint idx, Gst.Sdp.SDPZone zone)
     {
@@ -764,11 +764,14 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     }
 
     /// <summary>Configure the SDP connection in @msg with the given parameters.</summary>
-    /// <param name="nettype">The <c>nettype</c> argument.</param>
-    /// <param name="addrtype">The <c>addrtype</c> argument.</param>
-    /// <param name="address">The <c>address</c> argument.</param>
-    /// <param name="ttl">The <c>ttl</c> argument.</param>
-    /// <param name="addrNumber">The <c>addrNumber</c> argument.</param>
+    /// <param name="nettype">
+    /// the type of network. "IN" is defined to have the meaning
+    /// "Internet".
+    /// </param>
+    /// <param name="addrtype">the type of address.</param>
+    /// <param name="address">the address</param>
+    /// <param name="ttl">the time to live of the address</param>
+    /// <param name="addrNumber">the number of layers</param>
     /// <returns>a #GstSDPResult.</returns>
     public Gst.Sdp.SDPResult SetConnection(string nettype, string addrtype, string address, uint ttl, uint addrNumber)
     {
@@ -787,7 +790,7 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     }
 
     /// <summary>Set the information in @msg.</summary>
-    /// <param name="information">The <c>information</c> argument.</param>
+    /// <param name="information">the information</param>
     /// <returns>a #GstSDPResult.</returns>
     public Gst.Sdp.SDPResult SetInformation(string information)
     {
@@ -800,8 +803,8 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     }
 
     /// <summary>Adds the encryption information to @msg.</summary>
-    /// <param name="type">The <c>type</c> argument.</param>
-    /// <param name="data">The <c>data</c> argument.</param>
+    /// <param name="type">the encryption type</param>
+    /// <param name="data">the encryption data</param>
     /// <returns>a #GstSDPResult.</returns>
     public Gst.Sdp.SDPResult SetKey(string type, string data)
     {
@@ -817,12 +820,12 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     }
 
     /// <summary>Configure the SDP origin in @msg with the given parameters.</summary>
-    /// <param name="username">The <c>username</c> argument.</param>
-    /// <param name="sessId">The <c>sessId</c> argument.</param>
-    /// <param name="sessVersion">The <c>sessVersion</c> argument.</param>
-    /// <param name="nettype">The <c>nettype</c> argument.</param>
-    /// <param name="addrtype">The <c>addrtype</c> argument.</param>
-    /// <param name="addr">The <c>addr</c> argument.</param>
+    /// <param name="username">the user name</param>
+    /// <param name="sessId">a session id</param>
+    /// <param name="sessVersion">a session version</param>
+    /// <param name="nettype">a network type</param>
+    /// <param name="addrtype">an address type</param>
+    /// <param name="addr">an address</param>
     /// <returns>#GST_SDP_OK.</returns>
     public Gst.Sdp.SDPResult SetOrigin(string username, string sessId, string sessVersion, string nettype, string addrtype, string addr)
     {
@@ -850,7 +853,7 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     }
 
     /// <summary>Set the session name in @msg.</summary>
-    /// <param name="sessionName">The <c>sessionName</c> argument.</param>
+    /// <param name="sessionName">the session name</param>
     /// <returns>a #GstSDPResult.</returns>
     public Gst.Sdp.SDPResult SetSessionName(string sessionName)
     {
@@ -863,7 +866,7 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     }
 
     /// <summary>Set the URI in @msg.</summary>
-    /// <param name="uri">The <c>uri</c> argument.</param>
+    /// <param name="uri">the URI</param>
     /// <returns>a #GstSDPResult.</returns>
     public Gst.Sdp.SDPResult SetUri(string uri)
     {
@@ -876,7 +879,7 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     }
 
     /// <summary>Set the version in @msg.</summary>
-    /// <param name="version">The <c>version</c> argument.</param>
+    /// <param name="version">the version</param>
     /// <returns>a #GstSDPResult.</returns>
     public Gst.Sdp.SDPResult SetVersion(string version)
     {
@@ -924,8 +927,8 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     /// <para> \@scheme:///[#type=value *[&amp;type=value]]</para>
     /// <para> Where each value is url encoded.</para>
     /// </remarks>
-    /// <param name="scheme">The <c>scheme</c> argument.</param>
-    /// <param name="msg">The <c>msg</c> argument.</param>
+    /// <param name="scheme">the uri scheme</param>
+    /// <param name="msg">the #GstSDPMessage</param>
     /// <returns>a uri for @msg.</returns>
     public static string AsUri(string scheme, Gst.Sdp.SDPMessage msg)
     {
@@ -940,7 +943,7 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     }
 
     /// <summary>Allocate a new GstSDPMessage and store the result in @msg.</summary>
-    /// <param name="msg">The <c>msg</c> argument.</param>
+    /// <param name="msg">pointer to new #GstSDPMessage</param>
     /// <returns>a #GstSDPResult.</returns>
     public static Gst.Sdp.SDPResult New(out Gst.Sdp.SDPMessage? msg)
     {
@@ -951,8 +954,8 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     }
 
     /// <summary>Parse @text and create a new SDPMessage from these.</summary>
-    /// <param name="text">The <c>text</c> argument.</param>
-    /// <param name="msg">The <c>msg</c> argument.</param>
+    /// <param name="text">A dynamically allocated string representing the SDP description</param>
+    /// <param name="msg">pointer to new #GstSDPMessage</param>
     /// <returns>a #GstSDPResult.</returns>
     public static Gst.Sdp.SDPResult NewFromText(string text, out Gst.Sdp.SDPMessage? msg)
     {
@@ -970,7 +973,7 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     /// @msg.
     /// </summary>
     /// <param name="data">the start of the buffer</param>
-    /// <param name="msg">The <c>msg</c> argument.</param>
+    /// <param name="msg">the result #GstSDPMessage</param>
     /// <returns>#GST_SDP_OK on success.</returns>
     public static Gst.Sdp.SDPResult ParseBuffer(System.ReadOnlySpan<byte> data, Gst.Sdp.SDPMessage msg)
     {
@@ -995,8 +998,8 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     ///  http://tools.ietf.org/html/draft-fujikawa-sdp-url-01
     /// </para>
     /// </remarks>
-    /// <param name="uri">The <c>uri</c> argument.</param>
-    /// <param name="msg">The <c>msg</c> argument.</param>
+    /// <param name="uri">the start of the uri</param>
+    /// <param name="msg">the result #GstSDPMessage</param>
     /// <returns>#GST_SDP_OK on success.</returns>
     public static Gst.Sdp.SDPResult ParseUri(string uri, Gst.Sdp.SDPMessage msg)
     {

@@ -58,9 +58,9 @@ public sealed unsafe partial class RTSPPermissions : Gst.MiniObject
     }
 
     /// <summary>Add a new @permission for @role to @permissions with the access in @allowed.</summary>
-    /// <param name="role">The <c>role</c> argument.</param>
-    /// <param name="permission">The <c>permission</c> argument.</param>
-    /// <param name="allowed">The <c>allowed</c> argument.</param>
+    /// <param name="role">a role</param>
+    /// <param name="permission">the permission</param>
+    /// <param name="allowed">whether the role has this permission or not</param>
     public void AddPermissionForRole(string role, string permission, bool allowed)
     {
         ArgumentNullException.ThrowIfNull(role);
@@ -77,7 +77,7 @@ public sealed unsafe partial class RTSPPermissions : Gst.MiniObject
     /// Add a new @role to @permissions without any permissions. You can add
     /// permissions for the role with gst_rtsp_permissions_add_permission_for_role().
     /// </summary>
-    /// <param name="role">The <c>role</c> argument.</param>
+    /// <param name="role">a role</param>
     public void AddRole(string role)
     {
         ArgumentNullException.ThrowIfNull(role);
@@ -109,7 +109,7 @@ public sealed unsafe partial class RTSPPermissions : Gst.MiniObject
     }
 
     /// <summary>Get all permissions for @role in @permissions.</summary>
-    /// <param name="role">The <c>role</c> argument.</param>
+    /// <param name="role">a role</param>
     /// <returns>
     /// the structure with permissions for @role. It
     /// remains valid for as long as @permissions is valid.
@@ -128,8 +128,8 @@ public sealed unsafe partial class RTSPPermissions : Gst.MiniObject
     }
 
     /// <summary>Check if @role in @permissions is given permission for @permission.</summary>
-    /// <param name="role">The <c>role</c> argument.</param>
-    /// <param name="permission">The <c>permission</c> argument.</param>
+    /// <param name="role">a role</param>
+    /// <param name="permission">a permission</param>
     /// <returns>%TRUE if @role is allowed @permission.</returns>
     public bool IsAllowed(string role, string permission)
     {
@@ -145,7 +145,7 @@ public sealed unsafe partial class RTSPPermissions : Gst.MiniObject
     }
 
     /// <summary>Remove all permissions for @role in @permissions.</summary>
-    /// <param name="role">The <c>role</c> argument.</param>
+    /// <param name="role">a role</param>
     public void RemoveRole(string role)
     {
         ArgumentNullException.ThrowIfNull(role);

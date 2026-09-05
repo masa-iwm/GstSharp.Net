@@ -16,7 +16,7 @@ public static unsafe partial class VideoFormatExtensions
     /// If the FOURCC cannot be represented by #GstVideoFormat,
     /// #GST_VIDEO_FORMAT_UNKNOWN is returned.
     /// </summary>
-    /// <param name="fourcc">The <c>fourcc</c> argument.</param>
+    /// <param name="fourcc">a FOURCC value representing raw YUV video</param>
     /// <returns>the #GstVideoFormat describing the FOURCC value</returns>
     public static Gst.Video.VideoFormat FromFourcc(uint fourcc)
     {
@@ -25,13 +25,16 @@ public static unsafe partial class VideoFormatExtensions
     }
 
     /// <summary>Find the #GstVideoFormat for the given parameters.</summary>
-    /// <param name="depth">The <c>depth</c> argument.</param>
-    /// <param name="bpp">The <c>bpp</c> argument.</param>
-    /// <param name="endianness">The <c>endianness</c> argument.</param>
-    /// <param name="redMask">The <c>redMask</c> argument.</param>
-    /// <param name="greenMask">The <c>greenMask</c> argument.</param>
-    /// <param name="blueMask">The <c>blueMask</c> argument.</param>
-    /// <param name="alphaMask">The <c>alphaMask</c> argument.</param>
+    /// <param name="depth">the amount of bits used for a pixel</param>
+    /// <param name="bpp">
+    /// the amount of bits used to store a pixel. This value is bigger than
+    ///   @depth
+    /// </param>
+    /// <param name="endianness">the endianness of the masks, #G_LITTLE_ENDIAN or #G_BIG_ENDIAN</param>
+    /// <param name="redMask">the red mask</param>
+    /// <param name="greenMask">the green mask</param>
+    /// <param name="blueMask">the blue mask</param>
+    /// <param name="alphaMask">the alpha mask, or 0 if no alpha mask</param>
     /// <returns>
     /// a #GstVideoFormat or GST_VIDEO_FORMAT_UNKNOWN when the parameters to
     /// not specify a known format.
@@ -43,7 +46,7 @@ public static unsafe partial class VideoFormatExtensions
     }
 
     /// <summary>Convert the @format string to its #GstVideoFormat.</summary>
-    /// <param name="format">The <c>format</c> argument.</param>
+    /// <param name="format">a format string</param>
     /// <returns>
     /// the #GstVideoFormat for @format or GST_VIDEO_FORMAT_UNKNOWN when the
     /// string is not a known format.
@@ -58,7 +61,7 @@ public static unsafe partial class VideoFormatExtensions
     }
 
     /// <summary>Get the #GstVideoFormatInfo for @format</summary>
-    /// <param name="format">The <c>format</c> argument.</param>
+    /// <param name="format">a #GstVideoFormat</param>
     /// <returns>The #GstVideoFormatInfo for @format.</returns>
     public static Gst.Video.VideoFormatInfo GetInfo(Gst.Video.VideoFormat format)
     {
@@ -71,8 +74,8 @@ public static unsafe partial class VideoFormatExtensions
     /// Get the default palette of @format. This the palette used in the pack
     /// function for paletted formats.
     /// </summary>
-    /// <param name="format">The <c>format</c> argument.</param>
-    /// <param name="size">The <c>size</c> argument.</param>
+    /// <param name="format">a #GstVideoFormat</param>
+    /// <param name="size">size of the palette in bytes</param>
     /// <returns>
     /// the default palette of @format or %NULL when
     /// @format does not have a palette.
@@ -90,7 +93,7 @@ public static unsafe partial class VideoFormatExtensions
     /// a few YUV formats have corresponding FOURCC values.  If @format has
     /// no corresponding FOURCC value, 0 is returned.
     /// </summary>
-    /// <param name="format">The <c>format</c> argument.</param>
+    /// <param name="format">a #GstVideoFormat video format</param>
     /// <returns>the FOURCC corresponding to @format</returns>
     public static uint ToFourcc(Gst.Video.VideoFormat format)
     {
@@ -105,7 +108,7 @@ public static unsafe partial class VideoFormatExtensions
     /// versions were printing a critical warning and returned %NULL.
     /// </para>
     /// </remarks>
-    /// <param name="format">The <c>format</c> argument.</param>
+    /// <param name="format">a #GstVideoFormat video format</param>
     /// <returns>the name corresponding to @format</returns>
     public static string ToString(Gst.Video.VideoFormat format)
     {

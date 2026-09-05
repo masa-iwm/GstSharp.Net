@@ -47,10 +47,16 @@ public unsafe partial class EncodingAudioProfile : Gst.Pbutils.EncodingProfile
     /// safely freed/unreferenced after calling this method.
     /// </para>
     /// </remarks>
-    /// <param name="format">The <c>format</c> argument.</param>
-    /// <param name="preset">The <c>preset</c> argument.</param>
-    /// <param name="restriction">The <c>restriction</c> argument.</param>
-    /// <param name="presence">The <c>presence</c> argument.</param>
+    /// <param name="format">the #GstCaps</param>
+    /// <param name="preset">the preset(s) to use on the encoder, can be %NULL</param>
+    /// <param name="restriction">
+    /// the #GstCaps used to restrict the input to the encoder, can be
+    /// NULL. See gst_encoding_profile_get_restriction() for more details.
+    /// </param>
+    /// <param name="presence">
+    /// the number of time this stream must be used. 0 means any number of
+    ///  times (including never)
+    /// </param>
     /// <returns>the newly created #GstEncodingAudioProfile.</returns>
     public static Gst.Pbutils.EncodingAudioProfile New(Gst.Caps format, string? preset, Gst.Caps? restriction, uint presence)
     {

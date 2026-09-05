@@ -50,7 +50,7 @@ public unsafe partial class RTSPMountPoints : Gst.GObject.Object
     }
 
     /// <summary>Make a path string from @url.</summary>
-    /// <param name="url">The <c>url</c> argument.</param>
+    /// <param name="url">a #GstRTSPUrl</param>
     /// <returns>a path string for @url, g_free() after usage.</returns>
     public string? MakePath(Gst.Rtsp.RTSPUrl url)
     {
@@ -68,8 +68,8 @@ public unsafe partial class RTSPMountPoints : Gst.GObject.Object
     /// the amount of characters that matched is returned in @matched.
     /// </para>
     /// </remarks>
-    /// <param name="path">The <c>path</c> argument.</param>
-    /// <param name="matched">The <c>matched</c> argument.</param>
+    /// <param name="path">a mount point</param>
+    /// <param name="matched">the amount of @path matched</param>
     /// <returns>
     /// the #GstRTSPMediaFactory for @path.
     /// g_object_unref() after usage.
@@ -87,7 +87,7 @@ public unsafe partial class RTSPMountPoints : Gst.GObject.Object
     }
 
     /// <summary>Remove the #GstRTSPMediaFactory associated with @path in @mounts.</summary>
-    /// <param name="path">The <c>path</c> argument.</param>
+    /// <param name="path">a mount point</param>
     public void RemoveFactory(string path)
     {
         ArgumentNullException.ThrowIfNull(path);

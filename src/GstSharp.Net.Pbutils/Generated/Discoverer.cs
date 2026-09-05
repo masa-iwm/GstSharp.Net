@@ -60,7 +60,10 @@ public unsafe partial class Discoverer : Gst.GObject.Object
     }
 
     /// <summary>Creates a new #GstDiscoverer with the provided timeout.</summary>
-    /// <param name="timeout">The <c>timeout</c> argument.</param>
+    /// <param name="timeout">
+    /// timeout per file, in nanoseconds. Allowed are values between
+    ///     one second (#GST_SECOND) and one hour (3600 * #GST_SECOND)
+    /// </param>
     /// <returns>
     /// The new #GstDiscoverer.
     /// If an error occurred when creating the discoverer, @err will be set
@@ -90,7 +93,7 @@ public unsafe partial class Discoverer : Gst.GObject.Object
     /// afterwards.
     /// </para>
     /// </remarks>
-    /// <param name="uri">The <c>uri</c> argument.</param>
+    /// <param name="uri">The URI to run on.</param>
     /// <returns>
     /// the result of the scanning. Can be %NULL if an
     /// error occurred.
@@ -126,7 +129,7 @@ public unsafe partial class Discoverer : Gst.GObject.Object
     /// afterwards.
     /// </para>
     /// </remarks>
-    /// <param name="uri">The <c>uri</c> argument.</param>
+    /// <param name="uri">the URI to add.</param>
     /// <returns>
     /// %TRUE if the @uri was successfully appended to the list of pending
     /// uris, else %FALSE

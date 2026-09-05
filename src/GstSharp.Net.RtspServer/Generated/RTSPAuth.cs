@@ -53,8 +53,8 @@ public unsafe partial class RTSPAuth : Gst.GObject.Object
     /// Add a basic token for the default authentication algorithm that
     /// enables the client with privileges listed in @token.
     /// </summary>
-    /// <param name="basic">The <c>basic</c> argument.</param>
-    /// <param name="token">The <c>token</c> argument.</param>
+    /// <param name="basic">the basic token</param>
+    /// <param name="token">authorisation token</param>
     public void AddBasic(string basic, Gst.RtspServer.RTSPToken token)
     {
         ArgumentNullException.ThrowIfNull(basic);
@@ -70,9 +70,9 @@ public unsafe partial class RTSPAuth : Gst.GObject.Object
     /// Add a digest @user and @pass for the default authentication algorithm that
     /// enables the client with privileges listed in @token.
     /// </summary>
-    /// <param name="user">The <c>user</c> argument.</param>
-    /// <param name="pass">The <c>pass</c> argument.</param>
-    /// <param name="token">The <c>token</c> argument.</param>
+    /// <param name="user">the digest user name</param>
+    /// <param name="pass">the digest password</param>
+    /// <param name="token">authorisation token</param>
     public void AddDigest(string user, string pass, Gst.RtspServer.RTSPToken token)
     {
         ArgumentNullException.ThrowIfNull(user);
@@ -155,8 +155,8 @@ public unsafe partial class RTSPAuth : Gst.GObject.Object
     /// as output by the `htdigest` command.
     /// </para>
     /// </remarks>
-    /// <param name="path">The <c>path</c> argument.</param>
-    /// <param name="token">The <c>token</c> argument.</param>
+    /// <param name="path">Path to the htdigest file</param>
+    /// <param name="token">authorisation token</param>
     /// <returns>%TRUE if the file was successfully parsed, %FALSE otherwise.</returns>
     public bool ParseHtdigest(string path, Gst.RtspServer.RTSPToken token)
     {
@@ -171,7 +171,7 @@ public unsafe partial class RTSPAuth : Gst.GObject.Object
     }
 
     /// <summary>Removes @basic authentication token.</summary>
-    /// <param name="basic">The <c>basic</c> argument.</param>
+    /// <param name="basic">the basic token</param>
     public void RemoveBasic(string basic)
     {
         ArgumentNullException.ThrowIfNull(basic);
@@ -182,7 +182,7 @@ public unsafe partial class RTSPAuth : Gst.GObject.Object
     }
 
     /// <summary>Removes a digest user.</summary>
-    /// <param name="user">The <c>user</c> argument.</param>
+    /// <param name="user">the digest user name</param>
     public void RemoveDigest(string user)
     {
         ArgumentNullException.ThrowIfNull(user);
@@ -196,7 +196,7 @@ public unsafe partial class RTSPAuth : Gst.GObject.Object
     /// Set the default #GstRTSPToken to @token in @auth. The default token will
     /// be used for unauthenticated users.
     /// </summary>
-    /// <param name="token">The <c>token</c> argument.</param>
+    /// <param name="token">a #GstRTSPToken</param>
     public void SetDefaultToken(Gst.RtspServer.RTSPToken? token)
     {
         GstRtspAuthSetDefaultToken(Handle, token is null ? 0 : token.Handle);
@@ -205,7 +205,7 @@ public unsafe partial class RTSPAuth : Gst.GObject.Object
     }
 
     /// <summary>Set the @realm of @auth</summary>
-    /// <param name="realm">The <c>realm</c> argument.</param>
+    /// <param name="realm">The realm to set</param>
     public void SetRealm(string? realm)
     {
         System.Span<byte> realmBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
@@ -215,7 +215,7 @@ public unsafe partial class RTSPAuth : Gst.GObject.Object
     }
 
     /// <summary>Sets the supported authentication @methods for @auth.</summary>
-    /// <param name="methods">The <c>methods</c> argument.</param>
+    /// <param name="methods">supported methods</param>
     public void SetSupportedMethods(Gst.Rtsp.RTSPAuthMethod methods)
     {
         GstRtspAuthSetSupportedMethods(Handle, (int)methods);
@@ -226,7 +226,7 @@ public unsafe partial class RTSPAuth : Gst.GObject.Object
     /// Set the TLS certificate for the auth. Client connections will only
     /// be accepted when TLS is negotiated.
     /// </summary>
-    /// <param name="cert">The <c>cert</c> argument.</param>
+    /// <param name="cert">a #GTlsCertificate</param>
     public void SetTlsCertificate(Gst.Gio.TlsCertificate? cert)
     {
         GstRtspAuthSetTlsCertificate(Handle, cert is null ? 0 : cert.Handle);
@@ -239,7 +239,7 @@ public unsafe partial class RTSPAuth : Gst.GObject.Object
     /// If set to %NULL (the default), then peer certificate validation will always
     /// set the %G_TLS_CERTIFICATE_UNKNOWN_CA error.
     /// </summary>
-    /// <param name="database">The <c>database</c> argument.</param>
+    /// <param name="database">a #GTlsDatabase</param>
     public void SetTlsDatabase(Gst.Gio.TlsDatabase? database)
     {
         GstRtspAuthSetTlsDatabase(Handle, database is null ? 0 : database.Handle);
@@ -248,7 +248,7 @@ public unsafe partial class RTSPAuth : Gst.GObject.Object
     }
 
     /// <summary>Check if @check is allowed in the current context.</summary>
-    /// <param name="check">The <c>check</c> argument.</param>
+    /// <param name="check">the item to check</param>
     /// <returns>FALSE if check failed.</returns>
     public static bool Check(string check)
     {
@@ -260,8 +260,8 @@ public unsafe partial class RTSPAuth : Gst.GObject.Object
     }
 
     /// <summary>Construct a Basic authorisation token from @user and @pass.</summary>
-    /// <param name="user">The <c>user</c> argument.</param>
-    /// <param name="pass">The <c>pass</c> argument.</param>
+    /// <param name="user">a userid</param>
+    /// <param name="pass">a password</param>
     /// <returns>
     /// the base64 encoding of the string @user:@pass.
     /// g_free() after usage.

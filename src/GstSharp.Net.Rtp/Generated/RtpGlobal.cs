@@ -12,7 +12,7 @@ namespace Gst.Rtp;
 public static unsafe partial class RtpGlobal
 {
     /// <summary>Find the #GstRTPSourceMeta on @buffer.</summary>
-    /// <param name="buffer">The <c>buffer</c> argument.</param>
+    /// <param name="buffer">a #GstBuffer</param>
     /// <returns>
     /// the #GstRTPSourceMeta or %NULL when there
     /// is no such metadata on @buffer.
@@ -31,7 +31,7 @@ public static unsafe partial class RtpGlobal
     /// number of seconds since 1900 and, in the lower 32 bits, the fractional
     /// seconds. The resulting value will be the number of nanoseconds since 1970.
     /// </summary>
-    /// <param name="ntptime">The <c>ntptime</c> argument.</param>
+    /// <param name="ntptime">an NTP timestamp</param>
     /// <returns>the UNIX time for @ntptime in nanoseconds.</returns>
     public static ulong RtcpNtpToUnix(ulong ntptime)
     {
@@ -43,7 +43,7 @@ public static unsafe partial class RtpGlobal
     /// Convert @name into a @GstRTCPSDESType. @name is typically a key in a
     /// #GstStructure containing SDES items.
     /// </summary>
-    /// <param name="name">The <c>name</c> argument.</param>
+    /// <param name="name">a SDES name</param>
     /// <returns>
     /// the #GstRTCPSDESType for @name or #GST_RTCP_SDES_PRIV when @name
     /// is a private sdes item.
@@ -61,7 +61,7 @@ public static unsafe partial class RtpGlobal
     /// Converts @type to the string equivalent. The string is typically used as a
     /// key in a #GstStructure containing SDES items.
     /// </summary>
-    /// <param name="type">The <c>type</c> argument.</param>
+    /// <param name="type">a #GstRTCPSDESType</param>
     /// <returns>the string equivalent of @type</returns>
     public static string? RtcpSdesTypeToName(Gst.Rtp.RTCPSDESType type)
     {
@@ -76,7 +76,7 @@ public static unsafe partial class RtpGlobal
     /// bits, the fractional seconds. The resulting value can be used as an ntptime
     /// for constructing SR RTCP packets.
     /// </summary>
-    /// <param name="unixtime">The <c>unixtime</c> argument.</param>
+    /// <param name="unixtime">an UNIX timestamp in nanoseconds</param>
     /// <returns>the NTP time for @unixtime.</returns>
     public static ulong RtcpUnixToNtp(ulong unixtime)
     {
@@ -114,7 +114,7 @@ public static unsafe partial class RtpGlobal
     /// result in @ntptime.
     /// </summary>
     /// <param name="data">the data to read from</param>
-    /// <param name="ntptime">The <c>ntptime</c> argument.</param>
+    /// <param name="ntptime">the result NTP time</param>
     /// <returns>%TRUE on success.</returns>
     public static bool RtpHdrextGetNtp56(System.Span<byte> data, out ulong ntptime)
     {
@@ -132,7 +132,7 @@ public static unsafe partial class RtpGlobal
     /// result in @ntptime.
     /// </summary>
     /// <param name="data">the data to read from</param>
-    /// <param name="ntptime">The <c>ntptime</c> argument.</param>
+    /// <param name="ntptime">the result NTP time</param>
     /// <returns>%TRUE on success.</returns>
     public static bool RtpHdrextGetNtp64(System.Span<byte> data, out ulong ntptime)
     {

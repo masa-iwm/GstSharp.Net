@@ -199,10 +199,10 @@ public abstract unsafe partial class BaseParse : Gst.Element
     /// whether the stream is (upstream) seekable, another entry is already "close"
     /// to the new entry, etc.
     /// </summary>
-    /// <param name="offset">The <c>offset</c> argument.</param>
-    /// <param name="ts">The <c>ts</c> argument.</param>
-    /// <param name="key">The <c>key</c> argument.</param>
-    /// <param name="force">The <c>force</c> argument.</param>
+    /// <param name="offset">offset of entry</param>
+    /// <param name="ts">timestamp associated with offset</param>
+    /// <param name="key">whether entry refers to keyframe</param>
+    /// <param name="force">add entry disregarding sanity checks</param>
     /// <returns>#gboolean indicating whether entry was added</returns>
     public bool AddIndexEntry(ulong offset, Gst.ClockTime ts, bool key, bool force)
     {
@@ -212,10 +212,10 @@ public abstract unsafe partial class BaseParse : Gst.Element
     }
 
     /// <summary>Default implementation of #GstBaseParseClass::convert.</summary>
-    /// <param name="srcFormat">The <c>srcFormat</c> argument.</param>
-    /// <param name="srcValue">The <c>srcValue</c> argument.</param>
-    /// <param name="destFormat">The <c>destFormat</c> argument.</param>
-    /// <param name="destValue">The <c>destValue</c> argument.</param>
+    /// <param name="srcFormat">#GstFormat describing the source format.</param>
+    /// <param name="srcValue">Source value to be converted.</param>
+    /// <param name="destFormat">#GstFormat defining the converted format.</param>
+    /// <param name="destValue">Pointer where the conversion result will be put.</param>
     /// <returns>%TRUE if conversion was successful.</returns>
     public bool ConvertDefault(Gst.Format srcFormat, long srcValue, Gst.Format destFormat, out long destValue)
     {
@@ -258,8 +258,8 @@ public abstract unsafe partial class BaseParse : Gst.Element
     /// caller retains ownership of @frame.
     /// </para>
     /// </remarks>
-    /// <param name="frame">The <c>frame</c> argument.</param>
-    /// <param name="size">The <c>size</c> argument.</param>
+    /// <param name="frame">a #GstBaseParseFrame</param>
+    /// <param name="size">consumed input data represented by frame</param>
     /// <returns>a #GstFlowReturn that should be escalated to caller (of caller)</returns>
     public Gst.FlowReturn FinishFrame(Gst.Base.BaseParseFrame frame, int size)
     {
@@ -281,8 +281,11 @@ public abstract unsafe partial class BaseParse : Gst.Element
     /// not required to use this and can still do tag handling on its own.
     /// </para>
     /// </remarks>
-    /// <param name="tags">The <c>tags</c> argument.</param>
-    /// <param name="mode">The <c>mode</c> argument.</param>
+    /// <param name="tags">
+    /// a #GstTagList to merge, or NULL to unset
+    ///     previously-set tags
+    /// </param>
+    /// <param name="mode">the #GstTagMergeMode to use, usually #GST_TAG_MERGE_REPLACE</param>
     public void MergeTags(Gst.TagList? tags, Gst.TagMergeMode mode)
     {
         GstBaseParseMergeTags(Handle, tags is null ? 0 : tags.Handle, (int)mode);
@@ -298,7 +301,7 @@ public abstract unsafe partial class BaseParse : Gst.Element
     /// <remarks>
     /// <para>This must be called with sinkpad STREAM_LOCK held.</para>
     /// </remarks>
-    /// <param name="frame">The <c>frame</c> argument.</param>
+    /// <param name="frame">a #GstBaseParseFrame</param>
     /// <returns>#GstFlowReturn</returns>
     public Gst.FlowReturn PushFrame(Gst.Base.BaseParseFrame frame)
     {
@@ -325,7 +328,7 @@ public abstract unsafe partial class BaseParse : Gst.Element
     /// call this function from #GstBaseParseClass::start if they want to set a static value.
     /// </para>
     /// </remarks>
-    /// <param name="bitrate">The <c>bitrate</c> argument.</param>
+    /// <param name="bitrate">average bitrate in bits/second</param>
     public void SetAverageBitrate(uint bitrate)
     {
         GstBaseParseSetAverageBitrate(Handle, bitrate);
@@ -345,9 +348,9 @@ public abstract unsafe partial class BaseParse : Gst.Element
     /// call this function from #GstBaseParseClass::start if they want to set a static value.
     /// </para>
     /// </remarks>
-    /// <param name="fmt">The <c>fmt</c> argument.</param>
-    /// <param name="duration">The <c>duration</c> argument.</param>
-    /// <param name="interval">The <c>interval</c> argument.</param>
+    /// <param name="fmt">#GstFormat.</param>
+    /// <param name="duration">duration value.</param>
+    /// <param name="interval">how often to update the duration estimate based on bitrate, or 0.</param>
     public void SetDuration(Gst.Format fmt, long duration, int interval)
     {
         GstBaseParseSetDuration(Handle, (int)fmt, duration, interval);
@@ -367,10 +370,10 @@ public abstract unsafe partial class BaseParse : Gst.Element
     /// call this function from #GstBaseParseClass::start if they want to set a static value.
     /// </para>
     /// </remarks>
-    /// <param name="fpsNum">The <c>fpsNum</c> argument.</param>
-    /// <param name="fpsDen">The <c>fpsDen</c> argument.</param>
-    /// <param name="leadIn">The <c>leadIn</c> argument.</param>
-    /// <param name="leadOut">The <c>leadOut</c> argument.</param>
+    /// <param name="fpsNum">frames per second (numerator).</param>
+    /// <param name="fpsDen">frames per second (denominator).</param>
+    /// <param name="leadIn">frames needed before a segment for subsequent decode</param>
+    /// <param name="leadOut">frames needed after a segment</param>
     public void SetFrameRate(uint fpsNum, uint fpsDen, uint leadIn, uint leadOut)
     {
         GstBaseParseSetFrameRate(Handle, fpsNum, fpsDen, leadIn, leadOut);
@@ -388,7 +391,7 @@ public abstract unsafe partial class BaseParse : Gst.Element
     /// call this function from #GstBaseParseClass::start if they want to set a static value.
     /// </para>
     /// </remarks>
-    /// <param name="hasTiming">The <c>hasTiming</c> argument.</param>
+    /// <param name="hasTiming">whether frames carry timing information</param>
     public void SetHasTimingInfo(bool hasTiming)
     {
         GstBaseParseSetHasTimingInfo(Handle, hasTiming ? 1 : 0);
@@ -407,7 +410,7 @@ public abstract unsafe partial class BaseParse : Gst.Element
     /// can call this function from their instance init function.
     /// </para>
     /// </remarks>
-    /// <param name="inferTs">The <c>inferTs</c> argument.</param>
+    /// <param name="inferTs">%TRUE if parser should infer DTS/PTS from each other</param>
     public void SetInferTs(bool inferTs)
     {
         GstBaseParseSetInferTs(Handle, inferTs ? 1 : 0);
@@ -430,8 +433,8 @@ public abstract unsafe partial class BaseParse : Gst.Element
     /// can call this function from their instance init function.
     /// </para>
     /// </remarks>
-    /// <param name="minLatency">The <c>minLatency</c> argument.</param>
-    /// <param name="maxLatency">The <c>maxLatency</c> argument.</param>
+    /// <param name="minLatency">minimum parse latency</param>
+    /// <param name="maxLatency">maximum parse latency</param>
     public void SetLatency(Gst.ClockTime minLatency, Gst.ClockTime maxLatency)
     {
         GstBaseParseSetLatency(Handle, minLatency.Nanoseconds, maxLatency.Nanoseconds);
@@ -448,7 +451,10 @@ public abstract unsafe partial class BaseParse : Gst.Element
     /// call this function from #GstBaseParseClass::start if they want to set a static value.
     /// </para>
     /// </remarks>
-    /// <param name="minSize">The <c>minSize</c> argument.</param>
+    /// <param name="minSize">
+    /// Minimum size in bytes of the data that this base class should
+    ///       give to subclass.
+    /// </param>
     public void SetMinFrameSize(uint minSize)
     {
         GstBaseParseSetMinFrameSize(Handle, minSize);
@@ -470,7 +476,7 @@ public abstract unsafe partial class BaseParse : Gst.Element
     /// call this function from #GstBaseParseClass::start if they want to set a static value.
     /// </para>
     /// </remarks>
-    /// <param name="passthrough">The <c>passthrough</c> argument.</param>
+    /// <param name="passthrough">%TRUE if parser should run in passthrough mode</param>
     public void SetPassthrough(bool passthrough)
     {
         GstBaseParseSetPassthrough(Handle, passthrough ? 1 : 0);
@@ -489,7 +495,7 @@ public abstract unsafe partial class BaseParse : Gst.Element
     /// can call this function from their instance init function.
     /// </para>
     /// </remarks>
-    /// <param name="ptsInterpolate">The <c>ptsInterpolate</c> argument.</param>
+    /// <param name="ptsInterpolate">%TRUE if parser should interpolate PTS timestamps</param>
     public void SetPtsInterpolation(bool ptsInterpolate)
     {
         GstBaseParseSetPtsInterpolation(Handle, ptsInterpolate ? 1 : 0);
@@ -507,7 +513,7 @@ public abstract unsafe partial class BaseParse : Gst.Element
     /// call this function from #GstBaseParseClass::start if they want to set a static value.
     /// </para>
     /// </remarks>
-    /// <param name="syncable">The <c>syncable</c> argument.</param>
+    /// <param name="syncable">set if frame starts can be identified</param>
     public void SetSyncable(bool syncable)
     {
         GstBaseParseSetSyncable(Handle, syncable ? 1 : 0);
@@ -525,7 +531,7 @@ public abstract unsafe partial class BaseParse : Gst.Element
     /// into the frame data that the picture starts.
     /// </para>
     /// </remarks>
-    /// <param name="offset">The <c>offset</c> argument.</param>
+    /// <param name="offset">offset into current buffer</param>
     public void SetTsAtOffset(nuint offset)
     {
         GstBaseParseSetTsAtOffset(Handle, offset);

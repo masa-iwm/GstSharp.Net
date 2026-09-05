@@ -74,7 +74,7 @@ public unsafe partial class Effect : GES.BaseEffect, GES.IExtractable, GES.IMeta
     /// #ges_asset_request (GES_TYPE_EFFECT, "audio your ! bin ! description", NULL);
     /// and extract that asset to be in full control.
     /// </summary>
-    /// <param name="binDescription">The <c>binDescription</c> argument.</param>
+    /// <param name="binDescription">The gst-launch like bin description of the effect</param>
     /// <returns>
     /// a newly created #GESEffect, or %NULL if something went
     /// wrong.

@@ -41,10 +41,13 @@ public unsafe partial class EncodingContainerProfile : Gst.Pbutils.EncodingProfi
     }
 
     /// <summary>Creates a new #GstEncodingContainerProfile.</summary>
-    /// <param name="name">The <c>name</c> argument.</param>
-    /// <param name="description">The <c>description</c> argument.</param>
-    /// <param name="format">The <c>format</c> argument.</param>
-    /// <param name="preset">The <c>preset</c> argument.</param>
+    /// <param name="name">The name of the container profile, can be %NULL</param>
+    /// <param name="description">
+    /// The description of the container profile,
+    ///     can be %NULL
+    /// </param>
+    /// <param name="format">The format to use for this profile</param>
+    /// <param name="preset">The preset to use for this profile.</param>
     /// <returns>The newly created #GstEncodingContainerProfile.</returns>
     public static Gst.Pbutils.EncodingContainerProfile New(string? name, string? description, Gst.Caps format, string? preset)
     {
@@ -65,7 +68,7 @@ public unsafe partial class EncodingContainerProfile : Gst.Pbutils.EncodingProfi
     /// Checks if @container contains a #GstEncodingProfile identical to
     /// @profile.
     /// </summary>
-    /// <param name="profile">The <c>profile</c> argument.</param>
+    /// <param name="profile">a #GstEncodingProfile</param>
     /// <returns>
     /// %TRUE if @container contains a #GstEncodingProfile identical
     /// to @profile, else %FALSE.

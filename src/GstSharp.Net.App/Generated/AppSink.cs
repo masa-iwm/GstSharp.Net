@@ -316,7 +316,7 @@ public unsafe partial class AppSink : Gst.Base.BaseSink, Gst.IURIHandler
     /// to indicate that they will be able to handle buffer lists.
     /// </para>
     /// </remarks>
-    /// <param name="enableLists">The <c>enableLists</c> argument.</param>
+    /// <param name="enableLists">enable or disable buffer list support</param>
     public void SetBufferListSupport(bool enableLists)
     {
         GstAppSinkSetBufferListSupport(Handle, enableLists ? 1 : 0);
@@ -329,7 +329,7 @@ public unsafe partial class AppSink : Gst.Base.BaseSink, Gst.IURIHandler
     /// accept caps that match @caps. If @caps is non-fixed, or incomplete,
     /// you must check the caps on the samples to get the actual used caps.
     /// </summary>
-    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <param name="caps">caps to set</param>
     public void SetCaps(Gst.Caps? caps)
     {
         GstAppSinkSetCaps(Handle, caps is null ? 0 : caps.Handle);
@@ -341,7 +341,7 @@ public unsafe partial class AppSink : Gst.Base.BaseSink, Gst.IURIHandler
     /// Instruct @appsink to drop old buffers when the maximum amount of queued
     /// data is reached, that is, when any configured limit is hit (max-buffers, max-time or max-bytes).
     /// </summary>
-    /// <param name="drop">The <c>drop</c> argument.</param>
+    /// <param name="drop">the new state</param>
     [Obsolete("Use gst_app_src_get_leaky_type() instead. (deprecated since 1.28)")]
     public void SetDrop(bool drop)
     {
@@ -354,7 +354,7 @@ public unsafe partial class AppSink : Gst.Base.BaseSink, Gst.IURIHandler
     /// by default disabled because signal emission is expensive and unneeded when
     /// the application prefers to operate in pull mode.
     /// </summary>
-    /// <param name="emit">The <c>emit</c> argument.</param>
+    /// <param name="emit">the new state</param>
     public void SetEmitSignals(bool emit)
     {
         GstAppSinkSetEmitSignals(Handle, emit ? 1 : 0);
@@ -370,7 +370,7 @@ public unsafe partial class AppSink : Gst.Base.BaseSink, Gst.IURIHandler
     /// <remarks>
     /// <para>Available since GStreamer 1.28.</para>
     /// </remarks>
-    /// <param name="leaky">The <c>leaky</c> argument.</param>
+    /// <param name="leaky">the #GstAppLeakyType</param>
     public void SetLeakyType(Gst.App.AppLeakyType leaky)
     {
         GstAppSinkSetLeakyType(Handle, (int)leaky);
@@ -383,7 +383,7 @@ public unsafe partial class AppSink : Gst.Base.BaseSink, Gst.IURIHandler
     /// elements until a sample is pulled from @appsink, unless 'drop' is set, in which
     /// case new buffers will be discarded.
     /// </summary>
-    /// <param name="max">The <c>max</c> argument.</param>
+    /// <param name="max">the maximum number of buffers to queue</param>
     public void SetMaxBuffers(uint max)
     {
         GstAppSinkSetMaxBuffers(Handle, max);
@@ -396,7 +396,7 @@ public unsafe partial class AppSink : Gst.Base.BaseSink, Gst.IURIHandler
     /// elements until a sample is pulled from @appsink, unless 'drop' is set, in which
     /// case new buffers will be discarded.
     /// </summary>
-    /// <param name="max">The <c>max</c> argument.</param>
+    /// <param name="max">the maximum total size of buffers to queue, in bytes</param>
     public void SetMaxBytes(ulong max)
     {
         GstAppSinkSetMaxBytes(Handle, max);
@@ -409,7 +409,7 @@ public unsafe partial class AppSink : Gst.Base.BaseSink, Gst.IURIHandler
     /// elements until a sample is pulled from @appsink, unless 'drop' is set, in which
     /// case new buffers will be discarded.
     /// </summary>
-    /// <param name="max">The <c>max</c> argument.</param>
+    /// <param name="max">the maximum total duration to queue</param>
     public void SetMaxTime(Gst.ClockTime max)
     {
         GstAppSinkSetMaxTime(Handle, max.Nanoseconds);
@@ -417,7 +417,7 @@ public unsafe partial class AppSink : Gst.Base.BaseSink, Gst.IURIHandler
     }
 
     /// <summary>Instruct @appsink to wait for all buffers to be consumed when an EOS is received.</summary>
-    /// <param name="wait">The <c>wait</c> argument.</param>
+    /// <param name="wait">the new state</param>
     public void SetWaitOnEos(bool wait)
     {
         GstAppSinkSetWaitOnEos(Handle, wait ? 1 : 0);
@@ -452,7 +452,7 @@ public unsafe partial class AppSink : Gst.Base.BaseSink, Gst.IURIHandler
     /// element is set to the READY/NULL state, or the timeout expires.
     /// </para>
     /// </remarks>
-    /// <param name="timeout">The <c>timeout</c> argument.</param>
+    /// <param name="timeout">the maximum amount of time to wait for the preroll sample</param>
     /// <returns>
     /// a #GstSample or NULL when the appsink is stopped or EOS or the timeout expires.
     ///          Call gst_sample_unref() after usage.
@@ -482,7 +482,7 @@ public unsafe partial class AppSink : Gst.Base.BaseSink, Gst.IURIHandler
     /// condition.
     /// </para>
     /// </remarks>
-    /// <param name="timeout">The <c>timeout</c> argument.</param>
+    /// <param name="timeout">the maximum amount of time to wait for a sample</param>
     /// <returns>
     /// a #GstSample or NULL when the appsink is stopped or EOS or the timeout expires.
     ///          Call gst_sample_unref() after usage.

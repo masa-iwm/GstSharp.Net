@@ -41,7 +41,7 @@ public abstract unsafe partial class WebRTCICEStream : Gst.Object
     }
 
     /// <summary>The <c>gst_webrtc_ice_stream_find_transport</c> function.</summary>
-    /// <param name="component">The <c>component</c> argument.</param>
+    /// <param name="component">The #GstWebRTCICEComponent</param>
     /// <returns>the #GstWebRTCICETransport, or %NULL</returns>
     public Gst.WebRTC.WebRTCICETransport? FindTransport(Gst.WebRTC.WebRTCICEComponent component)
     {

@@ -63,8 +63,8 @@ public unsafe partial class GhostPad : Gst.ProxyPad
     /// <remarks>
     /// <para>Will ref the target.</para>
     /// </remarks>
-    /// <param name="name">The <c>name</c> argument.</param>
-    /// <param name="target">The <c>target</c> argument.</param>
+    /// <param name="name">the name of the new pad, or %NULL to assign a default name</param>
+    /// <param name="target">the pad to ghost.</param>
     /// <returns>
     /// a new #GstPad, or %NULL in
     /// case of an error.
@@ -86,9 +86,9 @@ public unsafe partial class GhostPad : Gst.ProxyPad
     /// <remarks>
     /// <para>Will ref the target.</para>
     /// </remarks>
-    /// <param name="name">The <c>name</c> argument.</param>
-    /// <param name="target">The <c>target</c> argument.</param>
-    /// <param name="templ">The <c>templ</c> argument.</param>
+    /// <param name="name">the name of the new pad, or %NULL to assign a default name.</param>
+    /// <param name="target">the pad to ghost.</param>
+    /// <param name="templ">the #GstPadTemplate to use on the ghostpad.</param>
     /// <returns>
     /// a new #GstPad, or %NULL in
     /// case of an error.
@@ -113,8 +113,8 @@ public unsafe partial class GhostPad : Gst.ProxyPad
     /// <remarks>
     /// <para>The created ghostpad will not have a padtemplate.</para>
     /// </remarks>
-    /// <param name="name">The <c>name</c> argument.</param>
-    /// <param name="dir">The <c>dir</c> argument.</param>
+    /// <param name="name">the name of the new pad, or %NULL to assign a default name.</param>
+    /// <param name="dir">the direction of the ghostpad</param>
     /// <returns>
     /// a new #GstPad, or %NULL in
     /// case of an error.
@@ -131,8 +131,8 @@ public unsafe partial class GhostPad : Gst.ProxyPad
     /// Create a new ghostpad based on @templ, without setting a target. The
     /// direction will be taken from the @templ.
     /// </summary>
-    /// <param name="name">The <c>name</c> argument.</param>
-    /// <param name="templ">The <c>templ</c> argument.</param>
+    /// <param name="name">the name of the new pad, or %NULL to assign a default name</param>
+    /// <param name="templ">the #GstPadTemplate to create the ghostpad from.</param>
     /// <returns>
     /// a new #GstPad, or %NULL in
     /// case of an error.
@@ -183,7 +183,7 @@ public unsafe partial class GhostPad : Gst.ProxyPad
     /// is unlinked and links to the new target are established. if @newtarget is
     /// %NULL the target will be cleared.
     /// </summary>
-    /// <param name="newtarget">The <c>newtarget</c> argument.</param>
+    /// <param name="newtarget">the new pad target</param>
     /// <returns>
     /// %TRUE if the new target could be set. This function
     ///     can return %FALSE when the internal pads could not be linked.
@@ -197,10 +197,10 @@ public unsafe partial class GhostPad : Gst.ProxyPad
     }
 
     /// <summary>Invoke the default activate mode function of a ghost pad.</summary>
-    /// <param name="pad">The <c>pad</c> argument.</param>
-    /// <param name="parent">The <c>parent</c> argument.</param>
-    /// <param name="mode">The <c>mode</c> argument.</param>
-    /// <param name="active">The <c>active</c> argument.</param>
+    /// <param name="pad">the #GstPad to activate or deactivate.</param>
+    /// <param name="parent">the parent of @pad or %NULL</param>
+    /// <param name="mode">the requested activation mode</param>
+    /// <param name="active">whether the pad should be active or not.</param>
     /// <returns>%TRUE if the operation was successful.</returns>
     public static bool ActivateModeDefault(Gst.Pad pad, Gst.Object? parent, Gst.PadMode mode, bool active)
     {
@@ -215,10 +215,10 @@ public unsafe partial class GhostPad : Gst.ProxyPad
     /// Invoke the default activate mode function of a proxy pad that is
     /// owned by a ghost pad.
     /// </summary>
-    /// <param name="pad">The <c>pad</c> argument.</param>
-    /// <param name="parent">The <c>parent</c> argument.</param>
-    /// <param name="mode">The <c>mode</c> argument.</param>
-    /// <param name="active">The <c>active</c> argument.</param>
+    /// <param name="pad">the #GstPad to activate or deactivate.</param>
+    /// <param name="parent">the parent of @pad or %NULL</param>
+    /// <param name="mode">the requested activation mode</param>
+    /// <param name="active">whether the pad should be active or not.</param>
     /// <returns>%TRUE if the operation was successful.</returns>
     public static bool InternalActivateModeDefault(Gst.Pad pad, Gst.Object? parent, Gst.PadMode mode, bool active)
     {

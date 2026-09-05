@@ -54,13 +54,20 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
     /// strings will be broken down into their elements. All strings should not be
     /// escaped except where indicated.
     /// </summary>
-    /// <param name="scheme">The <c>scheme</c> argument.</param>
-    /// <param name="userinfo">The <c>userinfo</c> argument.</param>
-    /// <param name="host">The <c>host</c> argument.</param>
-    /// <param name="port">The <c>port</c> argument.</param>
-    /// <param name="path">The <c>path</c> argument.</param>
-    /// <param name="query">The <c>query</c> argument.</param>
-    /// <param name="fragment">The <c>fragment</c> argument.</param>
+    /// <param name="scheme">The scheme for the new URI.</param>
+    /// <param name="userinfo">The user-info for the new URI.</param>
+    /// <param name="host">The host name for the new URI.</param>
+    /// <param name="port">The port number for the new URI or %GST_URI_NO_PORT.</param>
+    /// <param name="path">
+    /// The path for the new URI with '/' separating path
+    ///                      elements.
+    /// </param>
+    /// <param name="query">
+    /// The query string for the new URI with '&amp;' separating
+    ///                       query elements. Elements containing '&amp;' characters
+    ///                       should encode them as "&amp;percnt;26".
+    /// </param>
+    /// <param name="fragment">The fragment name for the new URI.</param>
     /// <returns>A new #GstUri object.</returns>
     public static Gst.Uri New(string? scheme, string? userinfo, string? host, uint port, string? path, string? query, string? fragment)
     {
@@ -85,7 +92,7 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
     /// Append a path onto the end of the path in the URI. The path is not
     /// normalized, call #gst_uri_normalize() to normalize the path.
     /// </summary>
-    /// <param name="relativePath">The <c>relativePath</c> argument.</param>
+    /// <param name="relativePath">Relative path to append to the end of the current path.</param>
     /// <returns>%TRUE if the path was appended successfully.</returns>
     public bool AppendPath(string? relativePath)
     {
@@ -97,7 +104,7 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
     }
 
     /// <summary>Append a single path segment onto the end of the URI path.</summary>
-    /// <param name="pathSegment">The <c>pathSegment</c> argument.</param>
+    /// <param name="pathSegment">The path segment string to append to the URI path.</param>
     /// <returns>%TRUE if the path was appended successfully.</returns>
     public bool AppendPathSegment(string? pathSegment)
     {
@@ -128,7 +135,7 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
     /// Compares two #GstUri objects to see if they represent the same normalized
     /// URI.
     /// </summary>
-    /// <param name="second">The <c>second</c> argument.</param>
+    /// <param name="second">Second #GstUri to compare.</param>
     /// <returns>%TRUE if the normalized versions of the two URI's would be equal.</returns>
     public bool Equal(Gst.Uri second)
     {
@@ -140,7 +147,7 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
     }
 
     /// <summary>Like gst_uri_from_string() but also joins with a base URI.</summary>
-    /// <param name="uri">The <c>uri</c> argument.</param>
+    /// <param name="uri">The URI string to parse.</param>
     /// <returns>A new #GstUri object.</returns>
     public Gst.Uri? FromStringWithBase(string uri)
     {
@@ -277,7 +284,8 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
     /// example.
     /// </summary>
     /// <param name="keys">
-    /// The <c>keys</c> argument.
+    /// A GList containing the
+    ///   query argument key strings.
     /// The call reads the list while it runs and copies whatever it keeps. A
     /// temporary native list is built for the call and released when it returns,
     /// and an empty sequence is passed as the null pointer, which is how C spells
@@ -302,7 +310,7 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
     /// use gst_uri_query_has_key() to determine if a key is present in the URI
     /// query.
     /// </summary>
-    /// <param name="queryKey">The <c>queryKey</c> argument.</param>
+    /// <param name="queryKey">The key to lookup.</param>
     /// <returns>The value for the given key, or %NULL if not found.</returns>
     public string? GetQueryValue(string queryKey)
     {
@@ -374,7 +382,10 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
     /// If either URI is %NULL then the other URI will be returned with the ref count
     /// increased.
     /// </summary>
-    /// <param name="refUri">The <c>refUri</c> argument.</param>
+    /// <param name="refUri">
+    /// The reference URI to join onto the
+    ///                                       base URI.
+    /// </param>
     /// <returns>
     /// A #GstUri which represents the base
     ///                                      with the reference URI joined on.
@@ -427,13 +438,20 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
     }
 
     /// <summary>Like gst_uri_new(), but joins the new URI onto a base URI.</summary>
-    /// <param name="scheme">The <c>scheme</c> argument.</param>
-    /// <param name="userinfo">The <c>userinfo</c> argument.</param>
-    /// <param name="host">The <c>host</c> argument.</param>
-    /// <param name="port">The <c>port</c> argument.</param>
-    /// <param name="path">The <c>path</c> argument.</param>
-    /// <param name="query">The <c>query</c> argument.</param>
-    /// <param name="fragment">The <c>fragment</c> argument.</param>
+    /// <param name="scheme">The scheme for the new URI.</param>
+    /// <param name="userinfo">The user-info for the new URI.</param>
+    /// <param name="host">The host name for the new URI.</param>
+    /// <param name="port">The port number for the new URI or %GST_URI_NO_PORT.</param>
+    /// <param name="path">
+    /// The path for the new URI with '/' separating path
+    ///                      elements.
+    /// </param>
+    /// <param name="query">
+    /// The query string for the new URI with '&amp;' separating
+    ///                       query elements. Elements containing '&amp;' characters
+    ///                       should encode them as "&amp;percnt;26".
+    /// </param>
+    /// <param name="fragment">The fragment name for the new URI.</param>
     /// <returns>The new URI joined onto @base.</returns>
     public Gst.Uri NewWithBase(string? scheme, string? userinfo, string? host, uint port, string? path, string? query, string? fragment)
     {
@@ -475,7 +493,7 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
     }
 
     /// <summary>Check if there is a query table entry for the @query_key key.</summary>
-    /// <param name="queryKey">The <c>queryKey</c> argument.</param>
+    /// <param name="queryKey">The key to lookup.</param>
     /// <returns>%TRUE if @query_key exists in the URI query table.</returns>
     public bool QueryHasKey(string queryKey)
     {
@@ -488,7 +506,7 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
     }
 
     /// <summary>Remove an entry from the query table by key.</summary>
-    /// <param name="queryKey">The <c>queryKey</c> argument.</param>
+    /// <param name="queryKey">The key to remove.</param>
     /// <returns>%TRUE if the key existed in the table and was removed.</returns>
     public bool RemoveQueryKey(string queryKey)
     {
@@ -504,7 +522,7 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
     /// Sets the fragment string in the URI. Use a value of %NULL in @fragment to
     /// unset the fragment string.
     /// </summary>
-    /// <param name="fragment">The <c>fragment</c> argument.</param>
+    /// <param name="fragment">The fragment string to set.</param>
     /// <returns>%TRUE if the fragment was set/unset successfully.</returns>
     public bool SetFragment(string? fragment)
     {
@@ -516,7 +534,7 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
     }
 
     /// <summary>Set or unset the host for the URI.</summary>
-    /// <param name="host">The <c>host</c> argument.</param>
+    /// <param name="host">The new host string to set or %NULL to unset.</param>
     /// <returns>%TRUE if the host was set/unset successfully.</returns>
     public bool SetHost(string host)
     {
@@ -529,7 +547,10 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
     }
 
     /// <summary>Sets or unsets the path in the URI.</summary>
-    /// <param name="path">The <c>path</c> argument.</param>
+    /// <param name="path">
+    /// The new path to set with path segments separated by '/', or use %NULL
+    ///        to unset the path.
+    /// </param>
     /// <returns>%TRUE if the path was set successfully.</returns>
     public bool SetPath(string? path)
     {
@@ -549,7 +570,8 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
     /// </para>
     /// </remarks>
     /// <param name="pathSegments">
-    /// The <c>pathSegments</c> argument.
+    /// The new
+    ///                 path list to set.
     /// The call takes the list over. The binding hands it a native list of its own
     /// and one reference per element, and releases neither afterwards - the callee
     /// owns both from the moment the call is made, including when it answers false.
@@ -566,7 +588,10 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
     }
 
     /// <summary>Sets or unsets the path in the URI.</summary>
-    /// <param name="path">The <c>path</c> argument.</param>
+    /// <param name="path">
+    /// The new percent encoded path to set with path segments separated by
+    /// '/', or use %NULL to unset the path.
+    /// </param>
     /// <returns>%TRUE if the path was set successfully.</returns>
     public bool SetPathString(string path)
     {
@@ -579,7 +604,7 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
     }
 
     /// <summary>Set or unset the port number for the URI.</summary>
-    /// <param name="port">The <c>port</c> argument.</param>
+    /// <param name="port">The new port number to set or %GST_URI_NO_PORT to unset.</param>
     /// <returns>%TRUE if the port number was set/unset successfully.</returns>
     public bool SetPort(uint port)
     {
@@ -589,7 +614,10 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
     }
 
     /// <summary>Sets or unsets the query table in the URI.</summary>
-    /// <param name="query">The <c>query</c> argument.</param>
+    /// <param name="query">
+    /// The new percent encoded query string to use to populate the query
+    ///        table, or use %NULL to unset the query table.
+    /// </param>
     /// <returns>%TRUE if the query table was set successfully.</returns>
     public bool SetQueryString(string? query)
     {
@@ -605,8 +633,8 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
     /// indicates that the key has no associated value, but will still be present in
     /// the query string.
     /// </summary>
-    /// <param name="queryKey">The <c>queryKey</c> argument.</param>
-    /// <param name="queryValue">The <c>queryValue</c> argument.</param>
+    /// <param name="queryKey">The key for the query entry.</param>
+    /// <param name="queryValue">The value for the key.</param>
     /// <returns>%TRUE if the query table was successfully updated.</returns>
     public bool SetQueryValue(string queryKey, string? queryValue)
     {
@@ -621,7 +649,7 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
     }
 
     /// <summary>Set or unset the scheme for the URI.</summary>
-    /// <param name="scheme">The <c>scheme</c> argument.</param>
+    /// <param name="scheme">The new scheme to set or %NULL to unset the scheme.</param>
     /// <returns>%TRUE if the scheme was set/unset successfully.</returns>
     public bool SetScheme(string scheme)
     {
@@ -634,7 +662,7 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
     }
 
     /// <summary>Set or unset the user information for the URI.</summary>
-    /// <param name="userinfo">The <c>userinfo</c> argument.</param>
+    /// <param name="userinfo">The new user-information string to set or %NULL to unset.</param>
     /// <returns>%TRUE if the user information was set/unset successfully.</returns>
     public bool SetUserinfo(string userinfo)
     {
@@ -679,7 +707,8 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
     /// </para>
     /// </remarks>
     /// <param name="keys">
-    /// The <c>keys</c> argument.
+    /// A GList containing
+    ///   the query argument key strings.
     /// The call reads the list while it runs and copies whatever it keeps. A
     /// temporary native list is built for the call and released when it returns,
     /// and an empty sequence is passed as the null pointer, which is how C spells
@@ -699,8 +728,8 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
     /// <remarks>
     /// <para>Free-function: g_free</para>
     /// </remarks>
-    /// <param name="protocol">The <c>protocol</c> argument.</param>
-    /// <param name="location">The <c>location</c> argument.</param>
+    /// <param name="protocol">Protocol for URI</param>
+    /// <param name="location">Location for URI</param>
     /// <returns>a new string for this URI.</returns>
     [Obsolete("Use GstURI instead.")]
     public static string Construct(string protocol, string location)
@@ -720,7 +749,7 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
     /// Parses a URI string into a new #GstUri object. Will return NULL if the URI
     /// cannot be parsed.
     /// </summary>
-    /// <param name="uri">The <c>uri</c> argument.</param>
+    /// <param name="uri">The URI string to parse.</param>
     /// <returns>A new #GstUri object, or NULL.</returns>
     public static Gst.Uri? FromString(string uri)
     {
@@ -750,7 +779,7 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
     /// https://example.com/path#fragment which may contain a URI-escaped '#'.
     /// </para>
     /// </remarks>
-    /// <param name="uri">The <c>uri</c> argument.</param>
+    /// <param name="uri">The URI string to parse.</param>
     /// <returns>A new #GstUri object, or NULL.</returns>
     public static Gst.Uri? FromStringEscaped(string uri)
     {
@@ -770,7 +799,7 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
     /// <remarks>
     /// <para>Free-function: g_free</para>
     /// </remarks>
-    /// <param name="uri">The <c>uri</c> argument.</param>
+    /// <param name="uri">A URI string</param>
     /// <returns>
     /// the location for this URI. Returns
     ///     %NULL if the URI isn't valid. If the URI does not contain a location, an
@@ -789,7 +818,7 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
     /// Extracts the protocol out of a given valid URI. The returned string must be
     /// freed using g_free().
     /// </summary>
-    /// <param name="uri">The <c>uri</c> argument.</param>
+    /// <param name="uri">A URI string</param>
     /// <returns>The protocol for this URI.</returns>
     public static string? GetProtocol(string uri)
     {
@@ -801,8 +830,8 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
     }
 
     /// <summary>Checks if the protocol of a given valid URI matches @protocol.</summary>
-    /// <param name="uri">The <c>uri</c> argument.</param>
-    /// <param name="protocol">The <c>protocol</c> argument.</param>
+    /// <param name="uri">a URI string</param>
+    /// <param name="protocol">a protocol string (e.g. "http")</param>
     /// <returns>%TRUE if the protocol matches.</returns>
     public static bool HasProtocol(string uri, string protocol)
     {
@@ -820,7 +849,7 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
     /// Tests if the given string is a valid URI identifier. URIs start with a valid
     /// scheme followed by ":" and maybe a string identifying the location.
     /// </summary>
-    /// <param name="uri">The <c>uri</c> argument.</param>
+    /// <param name="uri">A URI string</param>
     /// <returns>%TRUE if the string is a valid URI</returns>
     public static bool IsValid(string uri)
     {
@@ -835,8 +864,8 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
     /// This is a convenience function to join two URI strings and return the result.
     /// The returned string should be g_free()'d after use.
     /// </summary>
-    /// <param name="baseUri">The <c>baseUri</c> argument.</param>
-    /// <param name="refUri">The <c>refUri</c> argument.</param>
+    /// <param name="baseUri">The percent-encoded base URI.</param>
+    /// <param name="refUri">The percent-encoded reference URI to join to the @base_uri.</param>
     /// <returns>
     /// A string representing the percent-encoded join of
     ///          the two URIs.
@@ -858,8 +887,8 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
     /// that a positive return value does not imply that a subsequent call to
     /// gst_element_make_from_uri() is guaranteed to work.
     /// </summary>
-    /// <param name="type">The <c>type</c> argument.</param>
-    /// <param name="protocol">The <c>protocol</c> argument.</param>
+    /// <param name="type">Whether to check for a source or a sink</param>
+    /// <param name="protocol">Protocol that should be checked for (e.g. "http" or "smb")</param>
     /// <returns>%TRUE</returns>
     public static bool ProtocolIsSupported(Gst.URIType type, string protocol)
     {
@@ -875,7 +904,7 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
     /// must consist of alphanumeric characters, '+', '-' and '.' and must
     /// start with a alphabetic character. See RFC 3986 Section 3.1.
     /// </summary>
-    /// <param name="protocol">The <c>protocol</c> argument.</param>
+    /// <param name="protocol">A string</param>
     /// <returns>%TRUE if the string is a valid protocol identifier, %FALSE otherwise.</returns>
     public static bool ProtocolIsValid(string protocol)
     {

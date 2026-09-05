@@ -307,7 +307,7 @@ public static unsafe partial class VideoOverlayExtensions
     /// <para>This function should only be used by video overlay plugin developers.</para>
     /// </remarks>
     /// <param name="overlay">a #GstVideoOverlay which got a window</param>
-    /// <param name="handle">The <c>handle</c> argument.</param>
+    /// <param name="handle">a platform-specific handle referencing the window</param>
     public static void GotWindowHandle(this Gst.Video.IVideoOverlay overlay, nuint handle)
     {
         ArgumentNullException.ThrowIfNull(overlay);
@@ -323,7 +323,7 @@ public static unsafe partial class VideoOverlayExtensions
     /// from the #GstVideoOverlay.
     /// </summary>
     /// <param name="overlay">a #GstVideoOverlay to expose.</param>
-    /// <param name="handleEvents">The <c>handleEvents</c> argument.</param>
+    /// <param name="handleEvents">a #gboolean indicating if events should be handled or not.</param>
     public static void HandleEvents(this Gst.Video.IVideoOverlay overlay, bool handleEvents)
     {
         ArgumentNullException.ThrowIfNull(overlay);
@@ -364,10 +364,10 @@ public static unsafe partial class VideoOverlayExtensions
     /// </para>
     /// </remarks>
     /// <param name="overlay">a #GstVideoOverlay</param>
-    /// <param name="x">The <c>x</c> argument.</param>
-    /// <param name="y">The <c>y</c> argument.</param>
-    /// <param name="width">The <c>width</c> argument.</param>
-    /// <param name="height">The <c>height</c> argument.</param>
+    /// <param name="x">the horizontal offset of the render area inside the window</param>
+    /// <param name="y">the vertical offset of the render area inside the window</param>
+    /// <param name="width">the width of the render area inside the window</param>
+    /// <param name="height">the height of the render area inside the window</param>
     /// <returns>%FALSE if not supported by the sink.</returns>
     public static bool SetRenderRectangle(this Gst.Video.IVideoOverlay overlay, int x, int y, int width, int height)
     {
@@ -384,7 +384,7 @@ public static unsafe partial class VideoOverlayExtensions
     /// tell the overlay to stop using that window and create an internal one.
     /// </summary>
     /// <param name="overlay">a #GstVideoOverlay to set the window on.</param>
-    /// <param name="handle">The <c>handle</c> argument.</param>
+    /// <param name="handle">a handle referencing the window.</param>
     public static void SetWindowHandle(this Gst.Video.IVideoOverlay overlay, nuint handle)
     {
         ArgumentNullException.ThrowIfNull(overlay);
@@ -398,11 +398,11 @@ public static unsafe partial class VideoOverlayExtensions
     /// properties. This helper will parse and set the render rectangle calling
     /// gst_video_overlay_set_render_rectangle().
     /// </summary>
-    /// <param name="object">The <c>@object</c> argument.</param>
-    /// <param name="lastPropId">The <c>lastPropId</c> argument.</param>
-    /// <param name="propertyId">The <c>propertyId</c> argument.</param>
+    /// <param name="object">The instance on which the property is set</param>
+    /// <param name="lastPropId">The highest property ID.</param>
+    /// <param name="propertyId">The property ID</param>
     /// <param name="value">
-    /// The <c>value</c> argument.
+    /// The #GValue to be set
     /// The callee copies what it keeps, so the caller keeps ownership of
     /// <paramref name="value"/> and still disposes it.
     /// </param>

@@ -95,7 +95,7 @@ public unsafe partial class AudioCdSrc : Gst.Base.PushSrc, Gst.IURIHandler
     /// should allocate @track on the stack, the base source will do a shallow
     /// copy of the structure (and take ownership of the taglist if there is one).
     /// </summary>
-    /// <param name="track">The <c>track</c> argument.</param>
+    /// <param name="track">address of #GstAudioCdSrcTrack to add</param>
     /// <returns>FALSE on error, otherwise TRUE.</returns>
     public bool AddTrack(Gst.Audio.AudioCdSrcTrack track)
     {

@@ -59,7 +59,7 @@ public unsafe partial class DiscovererManager : Gst.GObject.Object
     }
 
     /// <summary>Sets the timeout to use for the discoverer</summary>
-    /// <param name="timeout">The <c>timeout</c> argument.</param>
+    /// <param name="timeout">The timeout to set</param>
     public void SetTimeout(Gst.ClockTime timeout)
     {
         GesDiscovererManagerSetTimeout(Handle, timeout.Nanoseconds);
@@ -67,7 +67,7 @@ public unsafe partial class DiscovererManager : Gst.GObject.Object
     }
 
     /// <summary>Sets whether to use the cache or not</summary>
-    /// <param name="useCache">The <c>useCache</c> argument.</param>
+    /// <param name="useCache">Whether to use the cache</param>
     public void SetUseCache(bool useCache)
     {
         GesDiscovererManagerSetUseCache(Handle, useCache ? 1 : 0);

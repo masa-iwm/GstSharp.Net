@@ -12,7 +12,7 @@ namespace Gst.Audio;
 public static unsafe partial class DsdFormatExtensions
 {
     /// <summary>Convert the DSD format string @str to its #GstDsdFormat.</summary>
-    /// <param name="str">The <c>str</c> argument.</param>
+    /// <param name="str">a DSD format string</param>
     /// <returns>
     /// the #GstDsdFormat for @format or GST_DSD_FORMAT_UNKNOWN when the
     /// string is not a known format.
@@ -27,7 +27,7 @@ public static unsafe partial class DsdFormatExtensions
     }
 
     /// <summary>The <c>gst_dsd_format_get_width</c> function.</summary>
-    /// <param name="format">The <c>format</c> argument.</param>
+    /// <param name="format">a #GstDsdFormat</param>
     /// <returns>Number of bytes in this DSD grouping format.</returns>
     public static uint GetWidth(Gst.Audio.DsdFormat format)
     {
@@ -39,7 +39,7 @@ public static unsafe partial class DsdFormatExtensions
     /// Returns a string containing a descriptive name for
     /// the #GstDsdFormat if there is one, or NULL otherwise.
     /// </summary>
-    /// <param name="format">The <c>format</c> argument.</param>
+    /// <param name="format">a #GstDsdFormat</param>
     /// <returns>the name corresponding to @format</returns>
     public static string ToString(Gst.Audio.DsdFormat format)
     {

@@ -43,7 +43,7 @@ public sealed unsafe partial class AudioResampler
     /// Get the number of input frames that would currently be needed
     /// to produce @out_frames from @resampler.
     /// </summary>
-    /// <param name="outFrames">The <c>outFrames</c> argument.</param>
+    /// <param name="outFrames">number of input frames</param>
     /// <returns>
     /// The number of input frames needed for producing
     /// @out_frames of data from @resampler.
@@ -74,7 +74,7 @@ public sealed unsafe partial class AudioResampler
     /// Get the number of output frames that would be currently available when
     /// @in_frames are given to @resampler.
     /// </summary>
-    /// <param name="inFrames">The <c>inFrames</c> argument.</param>
+    /// <param name="inFrames">number of input frames</param>
     /// <returns>
     /// The number of frames that would be available after giving
     /// @in_frames as input to @resampler.
@@ -107,10 +107,10 @@ public sealed unsafe partial class AudioResampler
     /// are matching and @in and @out point to enough memory.
     /// </para>
     /// </remarks>
-    /// <param name="in">The <c>@in</c> argument.</param>
-    /// <param name="inFrames">The <c>inFrames</c> argument.</param>
-    /// <param name="out">The <c>@out</c> argument.</param>
-    /// <param name="outFrames">The <c>outFrames</c> argument.</param>
+    /// <param name="in">input samples</param>
+    /// <param name="inFrames">number of input frames</param>
+    /// <param name="out">output samples</param>
+    /// <param name="outFrames">number of output frames</param>
     public void Resample(nint @in, nuint inFrames, nint @out, nuint outFrames)
     {
         GstAudioResamplerResample(Handle, @in, inFrames, @out, outFrames);
@@ -135,9 +135,9 @@ public sealed unsafe partial class AudioResampler
     /// <para>When @in_rate or @out_rate is 0, its value is unchanged.</para>
     /// <para>When @options is %NULL, the previously configured options are reused.</para>
     /// </remarks>
-    /// <param name="inRate">The <c>inRate</c> argument.</param>
-    /// <param name="outRate">The <c>outRate</c> argument.</param>
-    /// <param name="options">The <c>options</c> argument.</param>
+    /// <param name="inRate">new input rate</param>
+    /// <param name="outRate">new output rate</param>
+    /// <param name="options">new options or %NULL</param>
     /// <returns>%TRUE if the new parameters could be set</returns>
     public bool Update(int inRate, int outRate, Gst.Structure options)
     {
@@ -149,13 +149,13 @@ public sealed unsafe partial class AudioResampler
     }
 
     /// <summary>Make a new resampler.</summary>
-    /// <param name="method">The <c>method</c> argument.</param>
-    /// <param name="flags">The <c>flags</c> argument.</param>
-    /// <param name="format">The <c>format</c> argument.</param>
-    /// <param name="channels">The <c>channels</c> argument.</param>
-    /// <param name="inRate">The <c>inRate</c> argument.</param>
-    /// <param name="outRate">The <c>outRate</c> argument.</param>
-    /// <param name="options">The <c>options</c> argument.</param>
+    /// <param name="method">a #GstAudioResamplerMethod</param>
+    /// <param name="flags">#GstAudioResamplerFlags</param>
+    /// <param name="format">the #GstAudioFormat</param>
+    /// <param name="channels">the number of channels</param>
+    /// <param name="inRate">input rate</param>
+    /// <param name="outRate">output rate</param>
+    /// <param name="options">extra options</param>
     /// <returns>The new #GstAudioResampler.</returns>
     public static Gst.Audio.AudioResampler New(Gst.Audio.AudioResamplerMethod method, Gst.Audio.AudioResamplerFlags flags, Gst.Audio.AudioFormat format, int channels, int inRate, int outRate, Gst.Structure options)
     {
@@ -170,11 +170,11 @@ public sealed unsafe partial class AudioResampler
     /// Set the parameters for resampling from @in_rate to @out_rate using @method
     /// for @quality in @options.
     /// </summary>
-    /// <param name="method">The <c>method</c> argument.</param>
-    /// <param name="quality">The <c>quality</c> argument.</param>
-    /// <param name="inRate">The <c>inRate</c> argument.</param>
-    /// <param name="outRate">The <c>outRate</c> argument.</param>
-    /// <param name="options">The <c>options</c> argument.</param>
+    /// <param name="method">a #GstAudioResamplerMethod</param>
+    /// <param name="quality">the quality</param>
+    /// <param name="inRate">the input rate</param>
+    /// <param name="outRate">the output rate</param>
+    /// <param name="options">a #GstStructure</param>
     public static void OptionsSetQuality(Gst.Audio.AudioResamplerMethod method, uint quality, int inRate, int outRate, Gst.Structure options)
     {
         ArgumentNullException.ThrowIfNull(options);

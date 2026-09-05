@@ -58,7 +58,7 @@ public sealed unsafe partial class RTSPToken : Gst.MiniObject
     }
 
     /// <summary>Get the string value of @field in @token.</summary>
-    /// <param name="field">The <c>field</c> argument.</param>
+    /// <param name="field">a field name</param>
     /// <returns>
     /// the string value of @field in
     /// @token or %NULL when @field is not defined in @token. The string
@@ -92,7 +92,7 @@ public sealed unsafe partial class RTSPToken : Gst.MiniObject
     }
 
     /// <summary>Check if @token has a boolean @field and if it is set to %TRUE.</summary>
-    /// <param name="field">The <c>field</c> argument.</param>
+    /// <param name="field">a field name</param>
     /// <returns>%TRUE if @token has a boolean field named @field set to %TRUE.</returns>
     public bool IsAllowed(string field)
     {
@@ -105,8 +105,8 @@ public sealed unsafe partial class RTSPToken : Gst.MiniObject
     }
 
     /// <summary>Sets a boolean value on @token.</summary>
-    /// <param name="field">The <c>field</c> argument.</param>
-    /// <param name="boolValue">The <c>boolValue</c> argument.</param>
+    /// <param name="field">field to set</param>
+    /// <param name="boolValue">boolean value to set</param>
     public void SetBool(string field, bool boolValue)
     {
         ArgumentNullException.ThrowIfNull(field);
@@ -117,8 +117,8 @@ public sealed unsafe partial class RTSPToken : Gst.MiniObject
     }
 
     /// <summary>Sets a string value on @token.</summary>
-    /// <param name="field">The <c>field</c> argument.</param>
-    /// <param name="stringValue">The <c>stringValue</c> argument.</param>
+    /// <param name="field">field to set</param>
+    /// <param name="stringValue">string value to set</param>
     public void SetString(string field, string stringValue)
     {
         ArgumentNullException.ThrowIfNull(field);

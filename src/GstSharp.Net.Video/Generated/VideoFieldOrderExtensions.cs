@@ -12,7 +12,7 @@ namespace Gst.Video;
 public static unsafe partial class VideoFieldOrderExtensions
 {
     /// <summary>Convert @order to a #GstVideoFieldOrder</summary>
-    /// <param name="order">The <c>order</c> argument.</param>
+    /// <param name="order">a field order</param>
     /// <returns>
     /// the #GstVideoFieldOrder of @order or
     ///    #GST_VIDEO_FIELD_ORDER_UNKNOWN when @order is not a valid
@@ -28,7 +28,7 @@ public static unsafe partial class VideoFieldOrderExtensions
     }
 
     /// <summary>Convert @order to its string representation.</summary>
-    /// <param name="order">The <c>order</c> argument.</param>
+    /// <param name="order">a #GstVideoFieldOrder</param>
     /// <returns>@order as a string.</returns>
     public static string ToString(Gst.Video.VideoFieldOrder order)
     {

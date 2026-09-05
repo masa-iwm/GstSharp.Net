@@ -48,10 +48,10 @@ public unsafe partial class VideoSink : Gst.Base.BaseSink
     }
 
     /// <summary>The <c>gst_video_sink_center_rect</c> function.</summary>
-    /// <param name="src">The <c>src</c> argument.</param>
-    /// <param name="dst">The <c>dst</c> argument.</param>
-    /// <param name="result">The <c>result</c> argument.</param>
-    /// <param name="scaling">The <c>scaling</c> argument.</param>
+    /// <param name="src">the #GstVideoRectangle describing the source area</param>
+    /// <param name="dst">the #GstVideoRectangle describing the destination area</param>
+    /// <param name="result">a pointer to a #GstVideoRectangle which will receive the result area</param>
+    /// <param name="scaling">a #gboolean indicating if scaling should be applied or not</param>
     [Obsolete("Use gst_video_center_rect() instead. (deprecated since 1.20)")]
     public static void CenterRect(Gst.Video.VideoRectangle src, Gst.Video.VideoRectangle dst, out Gst.Video.VideoRectangle result, bool scaling)
     {

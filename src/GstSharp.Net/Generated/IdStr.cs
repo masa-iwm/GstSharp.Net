@@ -118,7 +118,7 @@ public sealed unsafe partial class IdStr : Gst.GObject.Boxed
     /// <remarks>
     /// <para>Available since GStreamer 1.26.</para>
     /// </remarks>
-    /// <param name="s">The <c>s</c> argument.</param>
+    /// <param name="s">The source %GstIdStr</param>
     public void CopyInto(Gst.IdStr s)
     {
         ArgumentNullException.ThrowIfNull(s);
@@ -159,7 +159,7 @@ public sealed unsafe partial class IdStr : Gst.GObject.Boxed
     /// <remarks>
     /// <para>Available since GStreamer 1.26.</para>
     /// </remarks>
-    /// <param name="s2">The <c>s2</c> argument.</param>
+    /// <param name="s2">A %GstIdStr</param>
     /// <returns>%TRUE if @s1 and @s2 are equal.</returns>
     public bool IsEqual(Gst.IdStr s2)
     {
@@ -174,7 +174,7 @@ public sealed unsafe partial class IdStr : Gst.GObject.Boxed
     /// <remarks>
     /// <para>Available since GStreamer 1.26.</para>
     /// </remarks>
-    /// <param name="s2">The <c>s2</c> argument.</param>
+    /// <param name="s2">A string</param>
     /// <returns>%TRUE if @s1 and @s2 are equal.</returns>
     public bool IsEqualToStr(string s2)
     {
@@ -197,8 +197,8 @@ public sealed unsafe partial class IdStr : Gst.GObject.Boxed
     /// </para>
     /// <para>Available since GStreamer 1.26.</para>
     /// </remarks>
-    /// <param name="s2">The <c>s2</c> argument.</param>
-    /// <param name="len">The <c>len</c> argument.</param>
+    /// <param name="s2">A string</param>
+    /// <param name="len">Length of @s2.</param>
     /// <returns>%TRUE if @s1 and @s2 are equal.</returns>
     public bool IsEqualToStrWithLen(string s2, nuint len)
     {
@@ -214,7 +214,7 @@ public sealed unsafe partial class IdStr : Gst.GObject.Boxed
     /// <remarks>
     /// <para>Available since GStreamer 1.26.</para>
     /// </remarks>
-    /// <param name="s">The <c>s</c> argument.</param>
+    /// <param name="s">The source %GstIdStr</param>
     public void Move(Gst.IdStr s)
     {
         ArgumentNullException.ThrowIfNull(s);
@@ -227,7 +227,7 @@ public sealed unsafe partial class IdStr : Gst.GObject.Boxed
     /// <remarks>
     /// <para>Available since GStreamer 1.26.</para>
     /// </remarks>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="value">A NUL-terminated string</param>
     public void Set(string value)
     {
         ArgumentNullException.ThrowIfNull(value);
@@ -244,8 +244,8 @@ public sealed unsafe partial class IdStr : Gst.GObject.Boxed
     /// <remarks>
     /// <para>Available since GStreamer 1.26.</para>
     /// </remarks>
-    /// <param name="value">The <c>value</c> argument.</param>
-    /// <param name="len">The <c>len</c> argument.</param>
+    /// <param name="value">A string</param>
+    /// <param name="len">Length of the string</param>
     public void SetWithLen(string value, nuint len)
     {
         ArgumentNullException.ThrowIfNull(value);

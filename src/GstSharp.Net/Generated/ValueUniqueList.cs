@@ -31,13 +31,13 @@ public static unsafe partial class ValueUniqueList
     /// <para>Available since GStreamer 1.28.</para>
     /// </remarks>
     /// <param name="value">
-    /// The <c>value</c> argument.
+    /// a #GValue of type #GST_TYPE_UNIQUE_LIST
     /// The value has to be initialized with the type the call expects before
     /// the call; like the C API, the call raises a warning and does nothing
     /// otherwise.
     /// </param>
     /// <param name="appendValue">
-    /// The <c>appendValue</c> argument.
+    /// the value to append
     /// The callee copies what it keeps, so the caller keeps ownership of
     /// <paramref name="appendValue"/> and still disposes it.
     /// </param>
@@ -70,17 +70,17 @@ public static unsafe partial class ValueUniqueList
     /// <para>Available since GStreamer 1.28.</para>
     /// </remarks>
     /// <param name="dest">
-    /// The <c>dest</c> argument.
+    /// an uninitialized #GValue to take the result
     /// On success the caller owns the contents and disposes the value; on
     /// failure it is left empty, and disposing an empty value does nothing.
     /// </param>
     /// <param name="value1">
-    /// The <c>value1</c> argument.
+    /// a #GValue
     /// The callee copies what it keeps, so the caller keeps ownership of
     /// <paramref name="value1"/> and still disposes it.
     /// </param>
     /// <param name="value2">
-    /// The <c>value2</c> argument.
+    /// a #GValue
     /// The callee copies what it keeps, so the caller keeps ownership of
     /// <paramref name="value2"/> and still disposes it.
     /// </param>
@@ -122,7 +122,7 @@ public static unsafe partial class ValueUniqueList
     /// <para>Available since GStreamer 1.28.</para>
     /// </remarks>
     /// <param name="value">
-    /// The <c>value</c> argument.
+    /// a #GValue of type #GST_TYPE_UNIQUE_LIST
     /// The callee copies what it keeps, so the caller keeps ownership of
     /// <paramref name="value"/> and still disposes it.
     /// </param>
@@ -157,11 +157,11 @@ public static unsafe partial class ValueUniqueList
     /// <para>Available since GStreamer 1.28.</para>
     /// </remarks>
     /// <param name="value">
-    /// The <c>value</c> argument.
+    /// a #GValue of type #GST_TYPE_UNIQUE_LIST
     /// The callee copies what it keeps, so the caller keeps ownership of
     /// <paramref name="value"/> and still disposes it.
     /// </param>
-    /// <param name="index">The <c>index</c> argument.</param>
+    /// <param name="index">index of value to get from the set</param>
     /// <returns>
     /// the value at the given index
     /// The value is a copy the caller owns: dispose it. It is empty when the

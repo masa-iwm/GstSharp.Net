@@ -130,7 +130,7 @@ public unsafe partial class RTSPSessionPool : Gst.GObject.Object
     /// Find the session with @sessionid in @pool. The access time of the session
     /// will be updated with gst_rtsp_session_touch().
     /// </summary>
-    /// <param name="sessionid">The <c>sessionid</c> argument.</param>
+    /// <param name="sessionid">the session id</param>
     /// <returns>
     /// the #GstRTSPSession with @sessionid
     /// or %NULL when the session did not exist. g_object_unref() after usage.
@@ -167,7 +167,7 @@ public unsafe partial class RTSPSessionPool : Gst.GObject.Object
     }
 
     /// <summary>Remove @sess from @pool, releasing the ref that the pool has on @sess.</summary>
-    /// <param name="sess">The <c>sess</c> argument.</param>
+    /// <param name="sess">a #GstRTSPSession</param>
     /// <returns>%TRUE if the session was found and removed.</returns>
     public bool Remove(Gst.RtspServer.RTSPSession sess)
     {
@@ -182,7 +182,7 @@ public unsafe partial class RTSPSessionPool : Gst.GObject.Object
     /// Configure the maximum allowed number of sessions in @pool to @max.
     /// A value of 0 means an unlimited amount of sessions.
     /// </summary>
-    /// <param name="max">The <c>max</c> argument.</param>
+    /// <param name="max">the maximum number of sessions</param>
     public void SetMaxSessions(uint max)
     {
         GstRtspSessionPoolSetMaxSessions(Handle, max);

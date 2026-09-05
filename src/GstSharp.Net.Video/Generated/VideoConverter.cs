@@ -37,8 +37,8 @@ public sealed unsafe partial class VideoConverter
     /// gst_video_converter_frame_finish().
     /// </para>
     /// </remarks>
-    /// <param name="src">The <c>src</c> argument.</param>
-    /// <param name="dest">The <c>dest</c> argument.</param>
+    /// <param name="src">a #GstVideoFrame</param>
+    /// <param name="dest">a #GstVideoFrame</param>
     public void Frame(Gst.Video.VideoFrame src, Gst.Video.VideoFrame dest)
     {
         ArgumentNullException.ThrowIfNull(src);
@@ -133,7 +133,7 @@ public sealed unsafe partial class VideoConverter
     /// </para>
     /// </remarks>
     /// <param name="config">
-    /// The <c>config</c> argument.
+    /// a #GstStructure
     /// The call consumes it: <paramref name="config"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// </param>
@@ -161,8 +161,8 @@ public sealed unsafe partial class VideoConverter
     /// <remarks>
     /// <para>Available since GStreamer 1.28.</para>
     /// </remarks>
-    /// <param name="src">The <c>src</c> argument.</param>
-    /// <param name="dest">The <c>dest</c> argument.</param>
+    /// <param name="src">a #GstBuffer</param>
+    /// <param name="dest">a writable #GstBuffer</param>
     /// <returns>TRUE if any meta was copied</returns>
     public bool TransformMetas(Gst.Buffer src, Gst.Buffer dest)
     {

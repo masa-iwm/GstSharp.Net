@@ -77,8 +77,8 @@ public abstract unsafe partial class Allocator : Gst.Object
     /// use an alignment of 7.
     /// </para>
     /// </remarks>
-    /// <param name="size">The <c>size</c> argument.</param>
-    /// <param name="params">The <c>@params</c> argument.</param>
+    /// <param name="size">size of the visible memory area</param>
+    /// <param name="params">optional parameters</param>
     /// <returns>a new #GstMemory.</returns>
     public Gst.Memory? Alloc(nuint size, Gst.AllocationParams? @params)
     {
@@ -92,7 +92,7 @@ public abstract unsafe partial class Allocator : Gst.Object
     /// Find a previously registered allocator with @name. When @name is %NULL, the
     /// default allocator will be returned.
     /// </summary>
-    /// <param name="name">The <c>name</c> argument.</param>
+    /// <param name="name">the name of the allocator</param>
     /// <returns>
     /// a #GstAllocator or %NULL when
     /// the allocator with @name was not registered.
@@ -118,9 +118,9 @@ public abstract unsafe partial class Allocator : Gst.Object
     /// declaration around the argument stays correct.
     /// </para>
     /// </remarks>
-    /// <param name="name">The <c>name</c> argument.</param>
+    /// <param name="name">the name of the allocator</param>
     /// <param name="allocator">
-    /// The <c>allocator</c> argument.
+    /// #GstAllocator
     /// The call consumes it: <paramref name="allocator"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// </param>

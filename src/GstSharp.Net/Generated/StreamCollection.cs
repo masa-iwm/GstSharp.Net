@@ -60,7 +60,7 @@ public unsafe partial class StreamCollection : Gst.Object
     }
 
     /// <summary>Create a new #GstStreamCollection.</summary>
-    /// <param name="upstreamId">The <c>upstreamId</c> argument.</param>
+    /// <param name="upstreamId">The stream id of the parent stream</param>
     /// <returns>The new #GstStreamCollection.</returns>
     public static Gst.StreamCollection New(string? upstreamId)
     {
@@ -85,7 +85,7 @@ public unsafe partial class StreamCollection : Gst.Object
     /// </para>
     /// </remarks>
     /// <param name="stream">
-    /// The <c>stream</c> argument.
+    /// the #GstStream to add
     /// The call consumes it: <paramref name="stream"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// </param>
@@ -121,7 +121,7 @@ public unsafe partial class StreamCollection : Gst.Object
     /// <remarks>
     /// <para>The caller should not modify the returned #GstStream</para>
     /// </remarks>
-    /// <param name="index">The <c>index</c> argument.</param>
+    /// <param name="index">Index of the stream to retrieve</param>
     /// <returns>A #GstStream</returns>
     public Gst.Stream? GetStream(uint index)
     {

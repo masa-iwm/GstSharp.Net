@@ -15,7 +15,7 @@ public static unsafe partial class StateExtensions
     /// <remarks>
     /// <para>Available since GStreamer 1.28.</para>
     /// </remarks>
-    /// <param name="state">The <c>state</c> argument.</param>
+    /// <param name="state">a #GstState to get the name of.</param>
     /// <returns>a string with the name of the state.</returns>
     public static string GetName(Gst.State state)
     {

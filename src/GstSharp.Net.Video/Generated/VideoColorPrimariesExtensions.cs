@@ -17,7 +17,7 @@ public static unsafe partial class VideoColorPrimariesExtensions
     /// defined by "ISO/IEC 23001-8 Section 7.1 Table 2" and "ITU-T H.273 Table 2".
     /// "H.264 Table E-3" and "H.265 Table E.3" share the identical values.
     /// </summary>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="value">a ITU-T H.273 colour primaries value</param>
     /// <returns>the matched #GstVideoColorPrimaries</returns>
     public static Gst.Video.VideoColorPrimaries FromIso(uint value)
     {
@@ -26,8 +26,8 @@ public static unsafe partial class VideoColorPrimariesExtensions
     }
 
     /// <summary>Checks whether @primaries and @other are functionally equivalent</summary>
-    /// <param name="primaries">The <c>primaries</c> argument.</param>
-    /// <param name="other">The <c>other</c> argument.</param>
+    /// <param name="primaries">a #GstVideoColorPrimaries</param>
+    /// <param name="other">another #GstVideoColorPrimaries</param>
     /// <returns>TRUE if @primaries and @other can be considered equivalent.</returns>
     public static bool IsEquivalent(Gst.Video.VideoColorPrimaries primaries, Gst.Video.VideoColorPrimaries other)
     {
@@ -41,7 +41,7 @@ public static unsafe partial class VideoColorPrimariesExtensions
     /// and "ITU-T H.273 Table 2".
     /// "H.264 Table E-3" and "H.265 Table E.3" share the identical values.
     /// </summary>
-    /// <param name="primaries">The <c>primaries</c> argument.</param>
+    /// <param name="primaries">a #GstVideoColorPrimaries</param>
     /// <returns>The value of ISO/IEC 23001-8 colour primaries.</returns>
     public static uint ToIso(Gst.Video.VideoColorPrimaries primaries)
     {

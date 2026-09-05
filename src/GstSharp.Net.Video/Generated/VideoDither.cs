@@ -43,10 +43,10 @@ public sealed unsafe partial class VideoDither
     /// <remarks>
     /// <para>@y is the line number of @line in the output image.</para>
     /// </remarks>
-    /// <param name="line">The <c>line</c> argument.</param>
-    /// <param name="x">The <c>x</c> argument.</param>
-    /// <param name="y">The <c>y</c> argument.</param>
-    /// <param name="width">The <c>width</c> argument.</param>
+    /// <param name="line">pointer to the pixels of the line</param>
+    /// <param name="x">x coordinate</param>
+    /// <param name="y">y coordinate</param>
+    /// <param name="width">the width</param>
     public void Line(nint line, uint x, uint y, uint width)
     {
         GstVideoDitherLine(Handle, line, x, y, width);

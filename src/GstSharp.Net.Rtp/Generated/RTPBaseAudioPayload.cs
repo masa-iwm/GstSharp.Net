@@ -83,8 +83,8 @@ public unsafe partial class RTPBaseAudioPayload : Gst.Rtp.RTPBasePayload
     /// -1, the timestamp will be calculated automatically.
     /// </para>
     /// </remarks>
-    /// <param name="payloadLen">The <c>payloadLen</c> argument.</param>
-    /// <param name="timestamp">The <c>timestamp</c> argument.</param>
+    /// <param name="payloadLen">length of payload</param>
+    /// <param name="timestamp">a #GstClockTime</param>
     /// <returns>a #GstFlowReturn</returns>
     public Gst.FlowReturn Flush(uint payloadLen, Gst.ClockTime timestamp)
     {
@@ -109,7 +109,7 @@ public unsafe partial class RTPBaseAudioPayload : Gst.Rtp.RTPBasePayload
     /// the buffer downstream.
     /// </summary>
     /// <param name="data">data to set as payload</param>
-    /// <param name="timestamp">The <c>timestamp</c> argument.</param>
+    /// <param name="timestamp">a #GstClockTime</param>
     /// <returns>a #GstFlowReturn</returns>
     public Gst.FlowReturn Push(System.ReadOnlySpan<byte> data, Gst.ClockTime timestamp)
     {
@@ -132,8 +132,8 @@ public unsafe partial class RTPBaseAudioPayload : Gst.Rtp.RTPBasePayload
     }
 
     /// <summary>Sets the options for frame based audio codecs.</summary>
-    /// <param name="frameDuration">The <c>frameDuration</c> argument.</param>
-    /// <param name="frameSize">The <c>frameSize</c> argument.</param>
+    /// <param name="frameDuration">The duraction of an audio frame in milliseconds.</param>
+    /// <param name="frameSize">The size of an audio frame in bytes.</param>
     public void SetFrameOptions(int frameDuration, int frameSize)
     {
         GstRtpBaseAudioPayloadSetFrameOptions(Handle, frameDuration, frameSize);
@@ -151,7 +151,7 @@ public unsafe partial class RTPBaseAudioPayload : Gst.Rtp.RTPBasePayload
     }
 
     /// <summary>Sets the options for sample based audio codecs.</summary>
-    /// <param name="sampleSize">The <c>sampleSize</c> argument.</param>
+    /// <param name="sampleSize">Size per sample in bytes.</param>
     public void SetSampleOptions(int sampleSize)
     {
         GstRtpBaseAudioPayloadSetSampleOptions(Handle, sampleSize);
@@ -159,7 +159,7 @@ public unsafe partial class RTPBaseAudioPayload : Gst.Rtp.RTPBasePayload
     }
 
     /// <summary>Sets the options for sample based audio codecs.</summary>
-    /// <param name="sampleSize">The <c>sampleSize</c> argument.</param>
+    /// <param name="sampleSize">Size per sample in bits.</param>
     public void SetSamplebitsOptions(int sampleSize)
     {
         GstRtpBaseAudioPayloadSetSamplebitsOptions(Handle, sampleSize);

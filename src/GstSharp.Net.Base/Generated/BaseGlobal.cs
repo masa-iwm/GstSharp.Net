@@ -15,8 +15,8 @@ public static unsafe partial class BaseGlobal
     /// <remarks>
     /// <para>Free-function: gst_caps_unref</para>
     /// </remarks>
-    /// <param name="src">The <c>src</c> argument.</param>
-    /// <param name="size">The <c>size</c> argument.</param>
+    /// <param name="src">A source #GstPad</param>
+    /// <param name="size">The length in bytes</param>
     /// <returns>
     /// the #GstCaps corresponding to the data
     ///     stream.  Returns %NULL if no #GstCaps matches the data stream.
@@ -45,9 +45,12 @@ public static unsafe partial class BaseGlobal
     /// </para>
     /// <para>Free-function: gst_caps_unref</para>
     /// </remarks>
-    /// <param name="obj">The <c>obj</c> argument.</param>
-    /// <param name="buf">The <c>buf</c> argument.</param>
-    /// <param name="prob">The <c>prob</c> argument.</param>
+    /// <param name="obj">object doing the typefinding, or %NULL (used for logging)</param>
+    /// <param name="buf">a #GstBuffer with data to typefind</param>
+    /// <param name="prob">
+    /// location to store the probability of the found
+    ///     caps, or %NULL
+    /// </param>
     /// <returns>
     /// the #GstCaps corresponding to the data,
     ///     or %NULL if no type could be found. The caller should free the caps
@@ -82,10 +85,13 @@ public static unsafe partial class BaseGlobal
     /// </para>
     /// <para>Free-function: gst_caps_unref</para>
     /// </remarks>
-    /// <param name="obj">The <c>obj</c> argument.</param>
-    /// <param name="buf">The <c>buf</c> argument.</param>
-    /// <param name="caps">The <c>caps</c> argument.</param>
-    /// <param name="prob">The <c>prob</c> argument.</param>
+    /// <param name="obj">object doing the typefinding, or %NULL (used for logging)</param>
+    /// <param name="buf">a #GstBuffer with data to typefind</param>
+    /// <param name="caps">caps of the media</param>
+    /// <param name="prob">
+    /// location to store the probability of the found
+    ///     caps, or %NULL
+    /// </param>
     /// <returns>
     /// the #GstCaps corresponding to the data,
     ///     or %NULL if no type could be found. The caller should free the caps
@@ -125,10 +131,13 @@ public static unsafe partial class BaseGlobal
     /// </para>
     /// <para>Free-function: gst_caps_unref</para>
     /// </remarks>
-    /// <param name="obj">The <c>obj</c> argument.</param>
-    /// <param name="buf">The <c>buf</c> argument.</param>
-    /// <param name="extension">The <c>extension</c> argument.</param>
-    /// <param name="prob">The <c>prob</c> argument.</param>
+    /// <param name="obj">object doing the typefinding, or %NULL (used for logging)</param>
+    /// <param name="buf">a #GstBuffer with data to typefind</param>
+    /// <param name="extension">extension of the media, or %NULL</param>
+    /// <param name="prob">
+    /// location to store the probability of the found
+    ///     caps, or %NULL
+    /// </param>
     /// <returns>
     /// the #GstCaps corresponding to the data,
     ///     or %NULL if no type could be found. The caller should free the caps
@@ -163,9 +172,12 @@ public static unsafe partial class BaseGlobal
     /// </para>
     /// <para>Free-function: gst_caps_unref</para>
     /// </remarks>
-    /// <param name="obj">The <c>obj</c> argument.</param>
+    /// <param name="obj">object doing the typefinding, or %NULL (used for logging)</param>
     /// <param name="data">* a pointer with data to typefind</param>
-    /// <param name="prob">The <c>prob</c> argument.</param>
+    /// <param name="prob">
+    /// location to store the probability of the found
+    ///     caps, or %NULL
+    /// </param>
     /// <returns>
     /// the #GstCaps corresponding to the data,
     ///     or %NULL if no type could be found. The caller should free the caps
@@ -196,10 +208,13 @@ public static unsafe partial class BaseGlobal
     /// </para>
     /// <para>Free-function: gst_caps_unref</para>
     /// </remarks>
-    /// <param name="obj">The <c>obj</c> argument.</param>
+    /// <param name="obj">object doing the typefinding, or %NULL (used for logging)</param>
     /// <param name="data">a pointer with data to typefind</param>
-    /// <param name="caps">The <c>caps</c> argument.</param>
-    /// <param name="prob">The <c>prob</c> argument.</param>
+    /// <param name="caps">caps of the media</param>
+    /// <param name="prob">
+    /// location to store the probability of the found
+    ///     caps, or %NULL
+    /// </param>
     /// <returns>
     /// the #GstCaps corresponding to the data,
     ///     or %NULL if no type could be found. The caller should free the caps
@@ -240,10 +255,13 @@ public static unsafe partial class BaseGlobal
     /// </para>
     /// <para>Free-function: gst_caps_unref</para>
     /// </remarks>
-    /// <param name="obj">The <c>obj</c> argument.</param>
+    /// <param name="obj">object doing the typefinding, or %NULL (used for logging)</param>
     /// <param name="data">* a pointer with data to typefind</param>
-    /// <param name="extension">The <c>extension</c> argument.</param>
-    /// <param name="prob">The <c>prob</c> argument.</param>
+    /// <param name="extension">extension of the media, or %NULL</param>
+    /// <param name="prob">
+    /// location to store the probability of the found
+    ///     caps, or %NULL
+    /// </param>
     /// <returns>
     /// the #GstCaps corresponding to the data,
     ///     or %NULL if no type could be found. The caller should free the caps
@@ -272,8 +290,8 @@ public static unsafe partial class BaseGlobal
     /// </para>
     /// <para>Free-function: gst_caps_unref</para>
     /// </remarks>
-    /// <param name="obj">The <c>obj</c> argument.</param>
-    /// <param name="extension">The <c>extension</c> argument.</param>
+    /// <param name="obj">object doing the typefinding, or %NULL (used for logging)</param>
+    /// <param name="extension">an extension</param>
     /// <returns>
     /// the #GstCaps corresponding to
     ///     @extension, or %NULL if no type could be found. The caller should free
@@ -294,8 +312,8 @@ public static unsafe partial class BaseGlobal
     /// <para>The typefinder that can handle @caps will be returned.</para>
     /// <para>Free-function: g_list_free</para>
     /// </remarks>
-    /// <param name="obj">The <c>obj</c> argument.</param>
-    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <param name="obj">object doing the typefinding, or %NULL (used for logging)</param>
+    /// <param name="caps">caps of the media</param>
     /// <returns>
     /// the list of #GstTypeFindFactory
     ///          corresponding to @caps, or %NULL if no typefinder could be

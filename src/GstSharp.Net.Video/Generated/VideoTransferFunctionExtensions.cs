@@ -30,8 +30,8 @@ public static unsafe partial class VideoTransferFunctionExtensions
     /// encode a linear segment in the lower range.
     /// </para>
     /// </remarks>
-    /// <param name="func">The <c>func</c> argument.</param>
-    /// <param name="val">The <c>val</c> argument.</param>
+    /// <param name="func">a #GstVideoTransferFunction</param>
+    /// <param name="val">a value</param>
     /// <returns>the gamma decoded value of @val</returns>
     public static double Decode(Gst.Video.VideoTransferFunction func, double val)
     {
@@ -55,8 +55,8 @@ public static unsafe partial class VideoTransferFunctionExtensions
     /// encode a linear segment in the lower range.
     /// </para>
     /// </remarks>
-    /// <param name="func">The <c>func</c> argument.</param>
-    /// <param name="val">The <c>val</c> argument.</param>
+    /// <param name="func">a #GstVideoTransferFunction</param>
+    /// <param name="val">a value</param>
     /// <returns>the gamma encoded value of @val</returns>
     public static double Encode(Gst.Video.VideoTransferFunction func, double val)
     {
@@ -71,7 +71,7 @@ public static unsafe partial class VideoTransferFunctionExtensions
     /// and "ITU-T H.273 Table 3".
     /// "H.264 Table E-4" and "H.265 Table E.4" share the identical values.
     /// </summary>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="value">a ITU-T H.273 transfer characteristics value</param>
     /// <returns>the matched #GstVideoTransferFunction</returns>
     public static Gst.Video.VideoTransferFunction FromIso(uint value)
     {
@@ -86,10 +86,10 @@ public static unsafe partial class VideoTransferFunctionExtensions
     /// as equivalent. Also, BT2020_12 is the same as the aforementioned three for
     /// less than 12 bits per pixel.
     /// </summary>
-    /// <param name="fromFunc">The <c>fromFunc</c> argument.</param>
-    /// <param name="fromBpp">The <c>fromBpp</c> argument.</param>
-    /// <param name="toFunc">The <c>toFunc</c> argument.</param>
-    /// <param name="toBpp">The <c>toBpp</c> argument.</param>
+    /// <param name="fromFunc">#GstVideoTransferFunction to convert from</param>
+    /// <param name="fromBpp">bits per pixel to convert from</param>
+    /// <param name="toFunc">#GstVideoTransferFunction to convert into</param>
+    /// <param name="toBpp">bits per pixel to convert into</param>
     /// <returns>TRUE if @from_func and @to_func can be considered equivalent.</returns>
     public static bool IsEquivalent(Gst.Video.VideoTransferFunction fromFunc, uint fromBpp, Gst.Video.VideoTransferFunction toFunc, uint toBpp)
     {
@@ -103,7 +103,7 @@ public static unsafe partial class VideoTransferFunctionExtensions
     /// and "ITU-T H.273 Table 3".
     /// "H.264 Table E-4" and "H.265 Table E.4" share the identical values.
     /// </summary>
-    /// <param name="func">The <c>func</c> argument.</param>
+    /// <param name="func">a #GstVideoTransferFunction</param>
     /// <returns>The value of ISO/IEC 23001-8 transfer characteristics.</returns>
     public static uint ToIso(Gst.Video.VideoTransferFunction func)
     {

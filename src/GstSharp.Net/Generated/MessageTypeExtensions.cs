@@ -12,7 +12,7 @@ namespace Gst;
 public static unsafe partial class MessageTypeExtensions
 {
     /// <summary>Get a printable name for the given message type. Do not modify or free.</summary>
-    /// <param name="type">The <c>type</c> argument.</param>
+    /// <param name="type">the message type</param>
     /// <returns>a reference to the static name of the message.</returns>
     public static string GetName(Gst.MessageType type)
     {
@@ -22,7 +22,7 @@ public static unsafe partial class MessageTypeExtensions
     }
 
     /// <summary>Get the unique quark for the given message type.</summary>
-    /// <param name="type">The <c>type</c> argument.</param>
+    /// <param name="type">the message type</param>
     /// <returns>the quark associated with the message type</returns>
     public static Gst.GLib.Quark ToQuark(Gst.MessageType type)
     {

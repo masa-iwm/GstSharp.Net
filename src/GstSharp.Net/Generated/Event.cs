@@ -134,10 +134,10 @@ public sealed unsafe partial class Event : Gst.MiniObject
     /// <remarks>
     /// <para>When the @async flag is set, a thread boundary is preferred.</para>
     /// </remarks>
-    /// <param name="format">The <c>format</c> argument.</param>
-    /// <param name="minsize">The <c>minsize</c> argument.</param>
-    /// <param name="maxsize">The <c>maxsize</c> argument.</param>
-    /// <param name="async">The <c>async</c> argument.</param>
+    /// <param name="format">buffer format</param>
+    /// <param name="minsize">minimum buffer size</param>
+    /// <param name="maxsize">maximum buffer size</param>
+    /// <param name="async">thread behavior</param>
     /// <returns>a new #GstEvent</returns>
     public static Gst.Event NewBufferSize(Gst.Format format, long minsize, long maxsize, bool async)
     {
@@ -151,7 +151,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
     /// synchronized with the buffer flow and contains the format of the buffers
     /// that will follow after the event.
     /// </summary>
-    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <param name="caps">a #GstCaps</param>
     /// <returns>the new CAPS event.</returns>
     public static Gst.Event NewCaps(Gst.Caps caps)
     {
@@ -233,7 +233,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
     /// dataflow.
     /// </para>
     /// </remarks>
-    /// <param name="resetTime">The <c>resetTime</c> argument.</param>
+    /// <param name="resetTime">if time should be reset</param>
     /// <returns>a new flush stop event.</returns>
     public static Gst.Event NewFlushStop(bool resetTime)
     {
@@ -249,8 +249,8 @@ public sealed unsafe partial class Event : Gst.MiniObject
     /// which may wait for data, such as muxers or mixers or overlays, especially
     /// for sparse streams such as subtitle streams.
     /// </summary>
-    /// <param name="timestamp">The <c>timestamp</c> argument.</param>
-    /// <param name="duration">The <c>duration</c> argument.</param>
+    /// <param name="timestamp">the start time (pts) of the gap</param>
+    /// <param name="duration">the duration of the gap</param>
     /// <returns>the new GAP event.</returns>
     public static Gst.Event NewGap(Gst.ClockTime timestamp, Gst.ClockTime duration)
     {
@@ -273,8 +273,8 @@ public sealed unsafe partial class Event : Gst.MiniObject
     /// are ignored and not transferred in the event.
     /// </para>
     /// </remarks>
-    /// <param name="rateMultiplier">The <c>rateMultiplier</c> argument.</param>
-    /// <param name="newFlags">The <c>newFlags</c> argument.</param>
+    /// <param name="rateMultiplier">the multiplier to be applied to the playback rate</param>
+    /// <param name="newFlags">A new subset of segment flags to replace in segments</param>
     /// <returns>the new instant-rate-change event.</returns>
     public static Gst.Event NewInstantRateChange(double rateMultiplier, Gst.SegmentFlags newFlags)
     {
@@ -300,9 +300,12 @@ public sealed unsafe partial class Event : Gst.MiniObject
     /// different to the one indicated in the playback segments.
     /// </para>
     /// </remarks>
-    /// <param name="rateMultiplier">The <c>rateMultiplier</c> argument.</param>
-    /// <param name="runningTime">The <c>runningTime</c> argument.</param>
-    /// <param name="upstreamRunningTime">The <c>upstreamRunningTime</c> argument.</param>
+    /// <param name="rateMultiplier">the new playback rate multiplier to be applied</param>
+    /// <param name="runningTime">Running time when the rate change should be applied</param>
+    /// <param name="upstreamRunningTime">
+    /// The upstream-centric running-time when the
+    ///    rate change should be applied.
+    /// </param>
     /// <returns>the new instant-rate-sync-time event.</returns>
     public static Gst.Event NewInstantRateSyncTime(double rateMultiplier, Gst.ClockTime runningTime, Gst.ClockTime upstreamRunningTime)
     {
@@ -322,7 +325,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
     /// the time format.
     /// </para>
     /// </remarks>
-    /// <param name="latency">The <c>latency</c> argument.</param>
+    /// <param name="latency">the new latency value</param>
     /// <returns>a new #GstEvent</returns>
     public static Gst.Event NewLatency(Gst.ClockTime latency)
     {
@@ -343,7 +346,9 @@ public sealed unsafe partial class Event : Gst.MiniObject
     /// </para>
     /// </remarks>
     /// <param name="structure">
-    /// The <c>structure</c> argument.
+    /// description of the event. The event will take
+    ///     ownership of the structure. See #GstNavigation for more specific
+    ///     constructors.
     /// The call consumes it: <paramref name="structure"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// </param>
@@ -403,9 +408,19 @@ public sealed unsafe partial class Event : Gst.MiniObject
     /// be stuck to the output pad of the sending element.
     /// </para>
     /// </remarks>
-    /// <param name="systemId">The <c>systemId</c> argument.</param>
-    /// <param name="data">The <c>data</c> argument.</param>
-    /// <param name="origin">The <c>origin</c> argument.</param>
+    /// <param name="systemId">
+    /// a string holding a UUID that uniquely
+    /// identifies a protection system.
+    /// </param>
+    /// <param name="data">
+    /// a #GstBuffer holding protection system specific
+    /// information. The reference count of the buffer will be incremented by one.
+    /// </param>
+    /// <param name="origin">
+    /// a string indicating where the protection
+    /// information carried in the event was extracted from. The allowed values
+    /// of this string will depend upon the protection scheme.
+    /// </param>
     /// <returns>a #GST_EVENT_PROTECTION event.</returns>
     public static Gst.Event NewProtection(string systemId, Gst.Buffer data, string origin)
     {
@@ -474,10 +489,10 @@ public sealed unsafe partial class Event : Gst.MiniObject
     /// event and implement custom application specific QoS handling.
     /// </para>
     /// </remarks>
-    /// <param name="type">The <c>type</c> argument.</param>
-    /// <param name="proportion">The <c>proportion</c> argument.</param>
-    /// <param name="diff">The <c>diff</c> argument.</param>
-    /// <param name="timestamp">The <c>timestamp</c> argument.</param>
+    /// <param name="type">the QoS type</param>
+    /// <param name="proportion">the proportion of the qos message</param>
+    /// <param name="diff">The time difference of the last Clock sync</param>
+    /// <param name="timestamp">The timestamp of the buffer</param>
     /// <returns>a new QOS event.</returns>
     public static Gst.Event NewQos(Gst.QOSType type, double proportion, long diff, Gst.ClockTime timestamp)
     {
@@ -540,13 +555,13 @@ public sealed unsafe partial class Event : Gst.MiniObject
     /// #GST_SEEK_TYPE_SET to the desired position.
     /// </para>
     /// </remarks>
-    /// <param name="rate">The <c>rate</c> argument.</param>
-    /// <param name="format">The <c>format</c> argument.</param>
-    /// <param name="flags">The <c>flags</c> argument.</param>
-    /// <param name="startType">The <c>startType</c> argument.</param>
-    /// <param name="start">The <c>start</c> argument.</param>
-    /// <param name="stopType">The <c>stopType</c> argument.</param>
-    /// <param name="stop">The <c>stop</c> argument.</param>
+    /// <param name="rate">The new playback rate</param>
+    /// <param name="format">The format of the seek values</param>
+    /// <param name="flags">The optional seek flags</param>
+    /// <param name="startType">The type and flags for the new start position</param>
+    /// <param name="start">The value of the new start position</param>
+    /// <param name="stopType">The type and flags for the new stop position</param>
+    /// <param name="stop">The value of the new stop position</param>
     /// <returns>a new seek event.</returns>
     public static Gst.Event NewSeek(double rate, Gst.Format format, Gst.SeekFlags flags, Gst.SeekType startType, long start, Gst.SeekType stopType, long stop)
     {
@@ -592,7 +607,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
     /// <para>After a segment event, the buffer stream time is calculated with:</para>
     /// <para>  time + (TIMESTAMP(buf) - start) * ABS (rate * applied_rate)</para>
     /// </remarks>
-    /// <param name="segment">The <c>segment</c> argument.</param>
+    /// <param name="segment">a #GstSegment</param>
     /// <returns>the new SEGMENT event.</returns>
     public static Gst.Event NewSegment(Gst.Segment segment)
     {
@@ -607,8 +622,8 @@ public sealed unsafe partial class Event : Gst.MiniObject
     /// Create a new segment-done event. This event is sent by elements that
     /// finish playback of a segment as a result of a segment seek.
     /// </summary>
-    /// <param name="format">The <c>format</c> argument.</param>
-    /// <param name="position">The <c>position</c> argument.</param>
+    /// <param name="format">The format of the position being done</param>
+    /// <param name="position">The position of the segment being done</param>
     /// <returns>a new #GstEvent</returns>
     public static Gst.Event NewSegmentDone(Gst.Format format, long position)
     {
@@ -625,8 +640,8 @@ public sealed unsafe partial class Event : Gst.MiniObject
     /// <remarks>
     /// <para>@name is used to store multiple sticky events on one pad.</para>
     /// </remarks>
-    /// <param name="name">The <c>name</c> argument.</param>
-    /// <param name="msg">The <c>msg</c> argument.</param>
+    /// <param name="name">a name for the event</param>
+    /// <param name="msg">the #GstMessage to be posted</param>
     /// <returns>a new #GstEvent</returns>
     public static Gst.Event NewSinkMessage(string name, Gst.Message msg)
     {
@@ -660,11 +675,11 @@ public sealed unsafe partial class Event : Gst.MiniObject
     /// part of a larger step operation.
     /// </para>
     /// </remarks>
-    /// <param name="format">The <c>format</c> argument.</param>
-    /// <param name="amount">The <c>amount</c> argument.</param>
-    /// <param name="rate">The <c>rate</c> argument.</param>
-    /// <param name="flush">The <c>flush</c> argument.</param>
-    /// <param name="intermediate">The <c>intermediate</c> argument.</param>
+    /// <param name="format">the format of @amount</param>
+    /// <param name="amount">the amount of data to step</param>
+    /// <param name="rate">the step rate</param>
+    /// <param name="flush">flushing steps</param>
+    /// <param name="intermediate">intermediate steps</param>
     /// <returns>a new #GstEvent</returns>
     public static Gst.Event NewStep(Gst.Format format, ulong amount, double rate, bool flush, bool intermediate)
     {
@@ -686,7 +701,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
     /// data flow.
     /// </para>
     /// </remarks>
-    /// <param name="collection">The <c>collection</c> argument.</param>
+    /// <param name="collection">Active collection for this data flow</param>
     /// <returns>the new STREAM_COLLECTION event.</returns>
     public static Gst.Event NewStreamCollection(Gst.StreamCollection collection)
     {
@@ -711,7 +726,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
     /// new pads can be exposed before sending EOS on the existing pads.
     /// </para>
     /// </remarks>
-    /// <param name="groupId">The <c>groupId</c> argument.</param>
+    /// <param name="groupId">the group id of the stream group which is ending</param>
     /// <returns>the new stream-group-done event.</returns>
     public static Gst.Event NewStreamGroupDone(uint groupId)
     {
@@ -747,7 +762,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
     /// stream flags).
     /// </para>
     /// </remarks>
-    /// <param name="streamId">The <c>streamId</c> argument.</param>
+    /// <param name="streamId">Identifier for this stream</param>
     /// <returns>the new STREAM_START event.</returns>
     public static Gst.Event NewStreamStart(string streamId)
     {
@@ -777,7 +792,8 @@ public sealed unsafe partial class Event : Gst.MiniObject
     /// </para>
     /// </remarks>
     /// <param name="taglist">
-    /// The <c>taglist</c> argument.
+    /// metadata list. The event will take ownership
+    ///     of the taglist.
     /// The call consumes it: <paramref name="taglist"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// </param>
@@ -803,8 +819,8 @@ public sealed unsafe partial class Event : Gst.MiniObject
     /// Generate a TOC event from the given @toc. The purpose of the TOC event is to
     /// inform elements that some kind of the TOC was found.
     /// </summary>
-    /// <param name="toc">The <c>toc</c> argument.</param>
-    /// <param name="updated">The <c>updated</c> argument.</param>
+    /// <param name="toc">#GstToc structure.</param>
+    /// <param name="updated">whether @toc was updated or not.</param>
     /// <returns>a new #GstEvent.</returns>
     public static Gst.Event NewToc(Gst.Toc toc, bool updated)
     {
@@ -820,7 +836,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
     /// TOC select event is to start playback based on the TOC's entry with the
     /// given @uid.
     /// </summary>
-    /// <param name="uid">The <c>uid</c> argument.</param>
+    /// <param name="uid">UID in the TOC to start playback from.</param>
     /// <returns>a new #GstEvent.</returns>
     public static Gst.Event NewTocSelect(string uid)
     {
@@ -836,7 +852,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
     /// Parses a segment @event and copies the #GstSegment into the location
     /// given by @segment.
     /// </summary>
-    /// <param name="segment">The <c>segment</c> argument.</param>
+    /// <param name="segment">a pointer to a #GstSegment</param>
     public void CopySegment(Gst.Segment segment)
     {
         ArgumentNullException.ThrowIfNull(segment);
@@ -910,7 +926,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
     /// Checks if @event has the given @name. This function is usually used to
     /// check the name of a custom event.
     /// </summary>
-    /// <param name="name">The <c>name</c> argument.</param>
+    /// <param name="name">name to check</param>
     /// <returns>%TRUE if @name matches the name of the event structure.</returns>
     public bool HasName(string name)
     {
@@ -926,7 +942,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
     /// Checks if @event has the given @name. This function is usually used to
     /// check the name of a custom event.
     /// </summary>
-    /// <param name="name">The <c>name</c> argument.</param>
+    /// <param name="name">name to check as a GQuark</param>
     /// <returns>%TRUE if @name matches the name of the event structure.</returns>
     [Obsolete("Use gst_event_has_name(). (deprecated since 1.26)")]
     public bool HasNameId(Gst.GLib.Quark name)
@@ -989,10 +1005,10 @@ public sealed unsafe partial class Event : Gst.MiniObject
     }
 
     /// <summary>Get the format, minsize, maxsize and async-flag in the buffersize event.</summary>
-    /// <param name="format">The <c>format</c> argument.</param>
-    /// <param name="minsize">The <c>minsize</c> argument.</param>
-    /// <param name="maxsize">The <c>maxsize</c> argument.</param>
-    /// <param name="async">The <c>async</c> argument.</param>
+    /// <param name="format">A pointer to store the format in</param>
+    /// <param name="minsize">A pointer to store the minsize in</param>
+    /// <param name="maxsize">A pointer to store the maxsize in</param>
+    /// <param name="async">A pointer to store the async-flag in</param>
     public void ParseBufferSize(out Gst.Format format, out long minsize, out long maxsize, out bool async)
     {
         int formatNative = default;
@@ -1011,7 +1027,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
     /// Get the caps from @event. The caps remains valid as long as @event remains
     /// valid.
     /// </summary>
-    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <param name="caps">A pointer to the caps</param>
     public void ParseCaps(out Gst.Caps? caps)
     {
         nint capsNative = default;
@@ -1021,7 +1037,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
     }
 
     /// <summary>Parse the FLUSH_STOP event and retrieve the @reset_time member.</summary>
-    /// <param name="resetTime">The <c>resetTime</c> argument.</param>
+    /// <param name="resetTime">if time should be reset</param>
     public void ParseFlushStop(out bool resetTime)
     {
         int resetTimeNative = default;
@@ -1031,8 +1047,14 @@ public sealed unsafe partial class Event : Gst.MiniObject
     }
 
     /// <summary>Extract timestamp and duration from a new GAP event.</summary>
-    /// <param name="timestamp">The <c>timestamp</c> argument.</param>
-    /// <param name="duration">The <c>duration</c> argument.</param>
+    /// <param name="timestamp">
+    /// location where to store the
+    ///     start time (pts) of the gap, or %NULL
+    /// </param>
+    /// <param name="duration">
+    /// location where to store the duration of
+    ///     the gap, or %NULL
+    /// </param>
     public void ParseGap(out Gst.ClockTime timestamp, out Gst.ClockTime duration)
     {
         ulong timestampNative = default;
@@ -1047,7 +1069,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
     /// Retrieve the gap flags that may have been set on a gap event with
     /// gst_event_set_gap_flags().
     /// </summary>
-    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <param name="flags">a #GstGapFlags or %NULL</param>
     public void ParseGapFlags(out Gst.GapFlags flags)
     {
         int flagsNative = default;
@@ -1057,7 +1079,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
     }
 
     /// <summary>The <c>gst_event_parse_group_id</c> function.</summary>
-    /// <param name="groupId">The <c>groupId</c> argument.</param>
+    /// <param name="groupId">address of variable where to store the group id</param>
     /// <returns>
     /// %TRUE if a group id was set on the event and could be parsed,
     ///   %FALSE otherwise.
@@ -1072,8 +1094,14 @@ public sealed unsafe partial class Event : Gst.MiniObject
     }
 
     /// <summary>Extract rate and flags from an instant-rate-change event.</summary>
-    /// <param name="rateMultiplier">The <c>rateMultiplier</c> argument.</param>
-    /// <param name="newFlags">The <c>newFlags</c> argument.</param>
+    /// <param name="rateMultiplier">
+    /// location in which to store the rate
+    ///     multiplier of the instant-rate-change event, or %NULL
+    /// </param>
+    /// <param name="newFlags">
+    /// location in which to store the new
+    ///     segment flags of the instant-rate-change event, or %NULL
+    /// </param>
     public void ParseInstantRateChange(out double rateMultiplier, out Gst.SegmentFlags newFlags)
     {
         double rateMultiplierNative = default;
@@ -1085,9 +1113,18 @@ public sealed unsafe partial class Event : Gst.MiniObject
     }
 
     /// <summary>Extract the rate multiplier and running times from an instant-rate-sync-time event.</summary>
-    /// <param name="rateMultiplier">The <c>rateMultiplier</c> argument.</param>
-    /// <param name="runningTime">The <c>runningTime</c> argument.</param>
-    /// <param name="upstreamRunningTime">The <c>upstreamRunningTime</c> argument.</param>
+    /// <param name="rateMultiplier">
+    /// location where to store the rate of
+    ///     the instant-rate-sync-time event, or %NULL
+    /// </param>
+    /// <param name="runningTime">
+    /// location in which to store the running time
+    ///     of the instant-rate-sync-time event, or %NULL
+    /// </param>
+    /// <param name="upstreamRunningTime">
+    /// location in which to store the
+    ///     upstream running time of the instant-rate-sync-time event, or %NULL
+    /// </param>
     public void ParseInstantRateSyncTime(out double rateMultiplier, out Gst.ClockTime runningTime, out Gst.ClockTime upstreamRunningTime)
     {
         double rateMultiplierNative = default;
@@ -1101,7 +1138,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
     }
 
     /// <summary>Get the latency in the latency event.</summary>
-    /// <param name="latency">The <c>latency</c> argument.</param>
+    /// <param name="latency">A pointer to store the latency in.</param>
     public void ParseLatency(out Gst.ClockTime latency)
     {
         ulong latencyNative = default;
@@ -1115,9 +1152,19 @@ public sealed unsafe partial class Event : Gst.MiniObject
     /// the results in @system_id, @data and @origin. The data stored in @system_id,
     /// @origin and @data are valid until @event is released.
     /// </summary>
-    /// <param name="systemId">The <c>systemId</c> argument.</param>
-    /// <param name="data">The <c>data</c> argument.</param>
-    /// <param name="origin">The <c>origin</c> argument.</param>
+    /// <param name="systemId">
+    /// pointer to store the UUID
+    /// string uniquely identifying a content protection system.
+    /// </param>
+    /// <param name="data">
+    /// pointer to store a #GstBuffer
+    /// holding protection system specific information.
+    /// </param>
+    /// <param name="origin">
+    /// pointer to store a value that
+    /// indicates where the protection information carried by @event was extracted
+    /// from.
+    /// </param>
     public void ParseProtection(out string? systemId, out Gst.Buffer? data, out string? origin)
     {
         nint systemIdNative = default;
@@ -1137,10 +1184,10 @@ public sealed unsafe partial class Event : Gst.MiniObject
     /// <remarks>
     /// <para>@timestamp will be adjusted for any pad offsets of pads it was passing through.</para>
     /// </remarks>
-    /// <param name="type">The <c>type</c> argument.</param>
-    /// <param name="proportion">The <c>proportion</c> argument.</param>
-    /// <param name="diff">The <c>diff</c> argument.</param>
-    /// <param name="timestamp">The <c>timestamp</c> argument.</param>
+    /// <param name="type">A pointer to store the QoS type in</param>
+    /// <param name="proportion">A pointer to store the proportion in</param>
+    /// <param name="diff">A pointer to store the diff in</param>
+    /// <param name="timestamp">A pointer to store the timestamp in</param>
     public void ParseQos(out Gst.QOSType type, out double proportion, out long diff, out Gst.ClockTime timestamp)
     {
         int typeNative = default;
@@ -1156,13 +1203,13 @@ public sealed unsafe partial class Event : Gst.MiniObject
     }
 
     /// <summary>Parses a seek @event and stores the results in the given result locations.</summary>
-    /// <param name="rate">The <c>rate</c> argument.</param>
-    /// <param name="format">The <c>format</c> argument.</param>
-    /// <param name="flags">The <c>flags</c> argument.</param>
-    /// <param name="startType">The <c>startType</c> argument.</param>
-    /// <param name="start">The <c>start</c> argument.</param>
-    /// <param name="stopType">The <c>stopType</c> argument.</param>
-    /// <param name="stop">The <c>stop</c> argument.</param>
+    /// <param name="rate">result location for the rate</param>
+    /// <param name="format">result location for the stream format</param>
+    /// <param name="flags">result location for the #GstSeekFlags</param>
+    /// <param name="startType">result location for the #GstSeekType of the start position</param>
+    /// <param name="start">result location for the start position expressed in @format</param>
+    /// <param name="stopType">result location for the #GstSeekType of the stop position</param>
+    /// <param name="stop">result location for the stop position expressed in @format</param>
     public void ParseSeek(out double rate, out Gst.Format format, out Gst.SeekFlags flags, out Gst.SeekType startType, out long start, out Gst.SeekType stopType, out long stop)
     {
         double rateNative = default;
@@ -1187,7 +1234,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
     /// Retrieve the trickmode interval that may have been set on a
     /// seek event with gst_event_set_seek_trickmode_interval().
     /// </summary>
-    /// <param name="interval">The <c>interval</c> argument.</param>
+    /// <param name="interval">interval</param>
     public void ParseSeekTrickmodeInterval(out Gst.ClockTime interval)
     {
         ulong intervalNative = default;
@@ -1201,7 +1248,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
     /// @segment remains valid only until the @event is freed. Don't modify the segment
     /// and make a copy if you want to modify it or store it for later use.
     /// </summary>
-    /// <param name="segment">The <c>segment</c> argument.</param>
+    /// <param name="segment">a pointer to a #GstSegment</param>
     public void ParseSegment(out Gst.Segment? segment)
     {
         nint segmentNative = default;
@@ -1211,8 +1258,8 @@ public sealed unsafe partial class Event : Gst.MiniObject
     }
 
     /// <summary>Extracts the position and format from the segment done message.</summary>
-    /// <param name="format">The <c>format</c> argument.</param>
-    /// <param name="position">The <c>position</c> argument.</param>
+    /// <param name="format">Result location for the format, or %NULL</param>
+    /// <param name="position">Result location for the position, or %NULL</param>
     public void ParseSegmentDone(out Gst.Format format, out long position)
     {
         int formatNative = default;
@@ -1224,7 +1271,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
     }
 
     /// <summary>Parse the sink-message event. Unref @msg after usage.</summary>
-    /// <param name="msg">The <c>msg</c> argument.</param>
+    /// <param name="msg">a pointer to store the #GstMessage in.</param>
     public void ParseSinkMessage(out Gst.Message? msg)
     {
         nint msgNative = default;
@@ -1234,11 +1281,14 @@ public sealed unsafe partial class Event : Gst.MiniObject
     }
 
     /// <summary>Parse the step event.</summary>
-    /// <param name="format">The <c>format</c> argument.</param>
-    /// <param name="amount">The <c>amount</c> argument.</param>
-    /// <param name="rate">The <c>rate</c> argument.</param>
-    /// <param name="flush">The <c>flush</c> argument.</param>
-    /// <param name="intermediate">The <c>intermediate</c> argument.</param>
+    /// <param name="format">a pointer to store the format in</param>
+    /// <param name="amount">a pointer to store the amount in</param>
+    /// <param name="rate">a pointer to store the rate in</param>
+    /// <param name="flush">a pointer to store the flush boolean in</param>
+    /// <param name="intermediate">
+    /// a pointer to store the intermediate
+    ///     boolean in
+    /// </param>
     public void ParseStep(out Gst.Format format, out ulong amount, out double rate, out bool flush, out bool intermediate)
     {
         int formatNative = default;
@@ -1256,7 +1306,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
     }
 
     /// <summary>Parse a stream-start @event and extract the #GstStream from it.</summary>
-    /// <param name="stream">The <c>stream</c> argument.</param>
+    /// <param name="stream">address of variable to store the stream</param>
     public void ParseStream(out Gst.Stream? stream)
     {
         nint streamNative = default;
@@ -1266,7 +1316,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
     }
 
     /// <summary>Retrieve new #GstStreamCollection from STREAM_COLLECTION event @event.</summary>
-    /// <param name="collection">The <c>collection</c> argument.</param>
+    /// <param name="collection">pointer to store the collection.</param>
     public void ParseStreamCollection(out Gst.StreamCollection? collection)
     {
         nint collectionNative = default;
@@ -1276,7 +1326,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
     }
 
     /// <summary>The <c>gst_event_parse_stream_flags</c> function.</summary>
-    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <param name="flags">address of variable where to store the stream flags</param>
     public void ParseStreamFlags(out Gst.StreamFlags flags)
     {
         int flagsNative = default;
@@ -1289,7 +1339,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
     /// Parse a stream-group-done @event and store the result in the given
     /// @group_id location.
     /// </summary>
-    /// <param name="groupId">The <c>groupId</c> argument.</param>
+    /// <param name="groupId">address of variable to store the group id into</param>
     public void ParseStreamGroupDone(out uint groupId)
     {
         uint groupIdNative = default;
@@ -1304,7 +1354,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
     /// remain valid only until @event gets freed. Make a copy if you want to
     /// modify it or store it for later use.
     /// </summary>
-    /// <param name="streamId">The <c>streamId</c> argument.</param>
+    /// <param name="streamId">pointer to store the stream-id</param>
     public void ParseStreamStart(out string? streamId)
     {
         nint streamIdNative = default;
@@ -1319,7 +1369,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
     /// the @event is freed. Don't modify or free the taglist, make a copy if you
     /// want to modify it or store it for later use.
     /// </summary>
-    /// <param name="taglist">The <c>taglist</c> argument.</param>
+    /// <param name="taglist">pointer to metadata list</param>
     public void ParseTag(out Gst.TagList? taglist)
     {
         nint taglistNative = default;
@@ -1329,8 +1379,8 @@ public sealed unsafe partial class Event : Gst.MiniObject
     }
 
     /// <summary>Parse a TOC @event and store the results in the given @toc and @updated locations.</summary>
-    /// <param name="toc">The <c>toc</c> argument.</param>
-    /// <param name="updated">The <c>updated</c> argument.</param>
+    /// <param name="toc">pointer to #GstToc structure.</param>
+    /// <param name="updated">pointer to store TOC updated flag.</param>
     public void ParseToc(out Gst.Toc? toc, out bool updated)
     {
         nint tocNative = default;
@@ -1342,7 +1392,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
     }
 
     /// <summary>Parse a TOC select @event and store the results in the given @uid location.</summary>
-    /// <param name="uid">The <c>uid</c> argument.</param>
+    /// <param name="uid">storage for the selection UID.</param>
     public void ParseTocSelect(out string? uid)
     {
         nint uidNative = default;
@@ -1355,7 +1405,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
     /// Sets @flags on @event to give additional information about the reason for
     /// the #GST_EVENT_GAP.
     /// </summary>
-    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <param name="flags">a #GstGapFlags</param>
     public void SetGapFlags(Gst.GapFlags flags)
     {
         GstEventSetGapFlags(Handle, (int)flags);
@@ -1372,7 +1422,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
     /// <remarks>
     /// <para>Use gst_util_group_id_next() to get a new group id.</para>
     /// </remarks>
-    /// <param name="groupId">The <c>groupId</c> argument.</param>
+    /// <param name="groupId">the group id to set</param>
     public void SetGroupId(uint groupId)
     {
         GstEventSetGroupId(Handle, groupId);
@@ -1386,7 +1436,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
     /// <remarks>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="offset">The <c>offset</c> argument.</param>
+    /// <param name="offset">A the new running time offset</param>
     public void SetRunningTimeOffset(long offset)
     {
         GstEventSetRunningTimeOffset(Handle, offset);
@@ -1414,7 +1464,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
     /// </para>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="seqnum">The <c>seqnum</c> argument.</param>
+    /// <param name="seqnum">A sequence number.</param>
     public void SetSeqnum(uint seqnum)
     {
         GstEventSetSeqnum(Handle, seqnum);
@@ -1422,7 +1472,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
     }
 
     /// <summary>Set the @stream on the stream-start @event</summary>
-    /// <param name="stream">The <c>stream</c> argument.</param>
+    /// <param name="stream">the stream object to set</param>
     public void SetStream(Gst.Stream stream)
     {
         ArgumentNullException.ThrowIfNull(stream);
@@ -1432,7 +1482,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
     }
 
     /// <summary>The <c>gst_event_set_stream_flags</c> function.</summary>
-    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <param name="flags">the stream flags to set</param>
     public void SetStreamFlags(Gst.StreamFlags flags)
     {
         GstEventSetStreamFlags(Handle, (int)flags);

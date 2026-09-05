@@ -12,7 +12,7 @@ namespace Gst.Play;
 public static unsafe partial class PlayMessageExtensions
 {
     /// <summary>The <c>gst_play_message_get_name</c> function.</summary>
-    /// <param name="messageType">The <c>messageType</c> argument.</param>
+    /// <param name="messageType">a #GstPlayMessage</param>
     /// <returns>a string with the name of the message.</returns>
     public static string GetName(Gst.Play.PlayMessage messageType)
     {
@@ -25,7 +25,7 @@ public static unsafe partial class PlayMessageExtensions
     /// <remarks>
     /// <para>Available since GStreamer 1.26.</para>
     /// </remarks>
-    /// <param name="msg">The <c>msg</c> argument.</param>
+    /// <param name="msg">A #GstMessage</param>
     /// <returns>The stream ID this message applies to</returns>
     public static string? GetStreamId(Gst.Message msg)
     {
@@ -39,7 +39,7 @@ public static unsafe partial class PlayMessageExtensions
     /// <remarks>
     /// <para>Available since GStreamer 1.26.</para>
     /// </remarks>
-    /// <param name="msg">The <c>msg</c> argument.</param>
+    /// <param name="msg">A #GstMessage</param>
     /// <returns>The URI this message applies to</returns>
     public static string? GetUri(Gst.Message msg)
     {
@@ -53,8 +53,8 @@ public static unsafe partial class PlayMessageExtensions
     /// <remarks>
     /// <para>Available since GStreamer 1.26.</para>
     /// </remarks>
-    /// <param name="msg">The <c>msg</c> argument.</param>
-    /// <param name="percent">The <c>percent</c> argument.</param>
+    /// <param name="msg">A #GstMessage</param>
+    /// <param name="percent">the resulting buffering percent</param>
     public static void ParseBuffering(Gst.Message msg, out uint percent)
     {
         ArgumentNullException.ThrowIfNull(msg);
@@ -65,8 +65,8 @@ public static unsafe partial class PlayMessageExtensions
     }
 
     /// <summary>Parse the given buffering @msg and extract the corresponding value</summary>
-    /// <param name="msg">The <c>msg</c> argument.</param>
-    /// <param name="percent">The <c>percent</c> argument.</param>
+    /// <param name="msg">A #GstMessage</param>
+    /// <param name="percent">the resulting buffering percent</param>
     [Obsolete("Use gst_play_message_parse_buffering(). (deprecated since 1.26)")]
     public static void ParseBufferingPercent(Gst.Message msg, out uint percent)
     {
@@ -81,8 +81,8 @@ public static unsafe partial class PlayMessageExtensions
     /// <remarks>
     /// <para>Available since GStreamer 1.26.</para>
     /// </remarks>
-    /// <param name="msg">The <c>msg</c> argument.</param>
-    /// <param name="duration">The <c>duration</c> argument.</param>
+    /// <param name="msg">A #GstMessage</param>
+    /// <param name="duration">the resulting duration</param>
     public static void ParseDurationChanged(Gst.Message msg, out Gst.ClockTime duration)
     {
         ArgumentNullException.ThrowIfNull(msg);
@@ -93,8 +93,8 @@ public static unsafe partial class PlayMessageExtensions
     }
 
     /// <summary>Parse the given duration-changed @msg and extract the corresponding #GstClockTime</summary>
-    /// <param name="msg">The <c>msg</c> argument.</param>
-    /// <param name="duration">The <c>duration</c> argument.</param>
+    /// <param name="msg">A #GstMessage</param>
+    /// <param name="duration">the resulting duration</param>
     [Obsolete("Use gst_play_message_parse_duration_changed(). (deprecated since 1.26)")]
     public static void ParseDurationUpdated(Gst.Message msg, out Gst.ClockTime duration)
     {
@@ -106,8 +106,8 @@ public static unsafe partial class PlayMessageExtensions
     }
 
     /// <summary>Parse the given media-info-updated @msg and extract the corresponding media information</summary>
-    /// <param name="msg">The <c>msg</c> argument.</param>
-    /// <param name="info">The <c>info</c> argument.</param>
+    /// <param name="msg">A #GstMessage</param>
+    /// <param name="info">the resulting media info</param>
     public static void ParseMediaInfoUpdated(Gst.Message msg, out Gst.Play.PlayMediaInfo? info)
     {
         ArgumentNullException.ThrowIfNull(msg);
@@ -118,8 +118,8 @@ public static unsafe partial class PlayMessageExtensions
     }
 
     /// <summary>Parse the given mute-changed @msg and extract the corresponding audio muted state</summary>
-    /// <param name="msg">The <c>msg</c> argument.</param>
-    /// <param name="muted">The <c>muted</c> argument.</param>
+    /// <param name="msg">A #GstMessage</param>
+    /// <param name="muted">the resulting audio muted state</param>
     public static void ParseMutedChanged(Gst.Message msg, out bool muted)
     {
         ArgumentNullException.ThrowIfNull(msg);
@@ -130,8 +130,8 @@ public static unsafe partial class PlayMessageExtensions
     }
 
     /// <summary>Parse the given position-updated @msg and extract the corresponding #GstClockTime</summary>
-    /// <param name="msg">The <c>msg</c> argument.</param>
-    /// <param name="position">The <c>position</c> argument.</param>
+    /// <param name="msg">A #GstMessage</param>
+    /// <param name="position">the resulting position</param>
     public static void ParsePositionUpdated(Gst.Message msg, out Gst.ClockTime position)
     {
         ArgumentNullException.ThrowIfNull(msg);
@@ -145,8 +145,8 @@ public static unsafe partial class PlayMessageExtensions
     /// <remarks>
     /// <para>Available since GStreamer 1.26.</para>
     /// </remarks>
-    /// <param name="msg">The <c>msg</c> argument.</param>
-    /// <param name="position">The <c>position</c> argument.</param>
+    /// <param name="msg">A #GstMessage</param>
+    /// <param name="position">the resulting position</param>
     public static void ParseSeekDone(Gst.Message msg, out Gst.ClockTime position)
     {
         ArgumentNullException.ThrowIfNull(msg);
@@ -157,8 +157,8 @@ public static unsafe partial class PlayMessageExtensions
     }
 
     /// <summary>Parse the given state-changed @msg and extract the corresponding #GstPlayState</summary>
-    /// <param name="msg">The <c>msg</c> argument.</param>
-    /// <param name="state">The <c>state</c> argument.</param>
+    /// <param name="msg">A #GstMessage</param>
+    /// <param name="state">the resulting play state</param>
     public static void ParseStateChanged(Gst.Message msg, out Gst.Play.PlayState state)
     {
         ArgumentNullException.ThrowIfNull(msg);
@@ -169,8 +169,8 @@ public static unsafe partial class PlayMessageExtensions
     }
 
     /// <summary>Parse the given @msg and extract its #GstPlayMessage type.</summary>
-    /// <param name="msg">The <c>msg</c> argument.</param>
-    /// <param name="type">The <c>type</c> argument.</param>
+    /// <param name="msg">A #GstMessage</param>
+    /// <param name="type">the resulting message type</param>
     public static void ParseType(Gst.Message msg, out Gst.Play.PlayMessage type)
     {
         ArgumentNullException.ThrowIfNull(msg);
@@ -184,8 +184,8 @@ public static unsafe partial class PlayMessageExtensions
     /// <remarks>
     /// <para>Available since GStreamer 1.26.</para>
     /// </remarks>
-    /// <param name="msg">The <c>msg</c> argument.</param>
-    /// <param name="uri">The <c>uri</c> argument.</param>
+    /// <param name="msg">A #GstMessage</param>
+    /// <param name="uri">the resulting URI</param>
     public static void ParseUriLoaded(Gst.Message msg, out string? uri)
     {
         ArgumentNullException.ThrowIfNull(msg);
@@ -198,9 +198,9 @@ public static unsafe partial class PlayMessageExtensions
     /// <summary>
     /// Parse the given video-dimensions-changed @msg and extract the corresponding video dimensions
     /// </summary>
-    /// <param name="msg">The <c>msg</c> argument.</param>
-    /// <param name="width">The <c>width</c> argument.</param>
-    /// <param name="height">The <c>height</c> argument.</param>
+    /// <param name="msg">A #GstMessage</param>
+    /// <param name="width">the resulting video width</param>
+    /// <param name="height">the resulting video height</param>
     public static void ParseVideoDimensionsChanged(Gst.Message msg, out uint width, out uint height)
     {
         ArgumentNullException.ThrowIfNull(msg);
@@ -213,8 +213,8 @@ public static unsafe partial class PlayMessageExtensions
     }
 
     /// <summary>Parse the given volume-changed @msg and extract the corresponding audio volume</summary>
-    /// <param name="msg">The <c>msg</c> argument.</param>
-    /// <param name="volume">The <c>volume</c> argument.</param>
+    /// <param name="msg">A #GstMessage</param>
+    /// <param name="volume">the resulting audio volume</param>
     public static void ParseVolumeChanged(Gst.Message msg, out double volume)
     {
         ArgumentNullException.ThrowIfNull(msg);

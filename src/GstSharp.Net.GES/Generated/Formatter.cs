@@ -41,8 +41,8 @@ public abstract unsafe partial class Formatter : Gst.GObject.InitiallyUnowned, G
     }
 
     /// <summary>Load data from the given URI into timeline.</summary>
-    /// <param name="timeline">The <c>timeline</c> argument.</param>
-    /// <param name="uri">The <c>uri</c> argument.</param>
+    /// <param name="timeline">a #GESTimeline</param>
+    /// <param name="uri">a #gchar * pointing to a URI</param>
     /// <returns>
     /// TRUE if the timeline data was successfully loaded from the URI,
     /// else FALSE.
@@ -64,9 +64,9 @@ public abstract unsafe partial class Formatter : Gst.GObject.InitiallyUnowned, G
     }
 
     /// <summary>Save data from timeline to the given URI.</summary>
-    /// <param name="timeline">The <c>timeline</c> argument.</param>
-    /// <param name="uri">The <c>uri</c> argument.</param>
-    /// <param name="overwrite">The <c>overwrite</c> argument.</param>
+    /// <param name="timeline">a #GESTimeline</param>
+    /// <param name="uri">a #gchar * pointing to a URI</param>
+    /// <param name="overwrite">%TRUE to overwrite file if it exists</param>
     /// <returns>
     /// TRUE if the timeline data was successfully saved to the URI
     /// else FALSE.
@@ -91,7 +91,7 @@ public abstract unsafe partial class Formatter : Gst.GObject.InitiallyUnowned, G
     /// Checks if there is a #GESFormatter available which can load a #GESTimeline
     /// from the given URI.
     /// </summary>
-    /// <param name="uri">The <c>uri</c> argument.</param>
+    /// <param name="uri">a #gchar * pointing to the URI</param>
     /// <returns>
     /// TRUE if there is a #GESFormatter that can support the given uri
     /// or FALSE if not.
@@ -112,7 +112,7 @@ public abstract unsafe partial class Formatter : Gst.GObject.InitiallyUnowned, G
     /// Returns TRUE if there is a #GESFormatter available which can save a
     /// #GESTimeline to the given URI.
     /// </summary>
-    /// <param name="uri">The <c>uri</c> argument.</param>
+    /// <param name="uri">a #gchar * pointing to a URI</param>
     /// <returns>TRUE if the given @uri is supported, else FALSE.</returns>
     /// <exception cref="Gst.GLib.GException">The native call failed.</exception>
     public static bool CanSaveUri(string uri)

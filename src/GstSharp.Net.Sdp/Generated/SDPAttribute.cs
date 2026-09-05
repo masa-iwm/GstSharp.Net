@@ -75,8 +75,8 @@ public sealed unsafe partial class SDPAttribute
     }
 
     /// <summary>Set the attribute with @key and @value.</summary>
-    /// <param name="key">The <c>key</c> argument.</param>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="key">the key</param>
+    /// <param name="value">the value</param>
     /// <returns>@GST_SDP_OK.</returns>
     public Gst.Sdp.SDPResult Set(string key, string? value)
     {

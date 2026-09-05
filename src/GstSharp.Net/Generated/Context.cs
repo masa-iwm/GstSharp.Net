@@ -83,8 +83,8 @@ public sealed unsafe partial class Context : Gst.MiniObject
         handle == 0 ? null : new(handle, transfer);
 
     /// <summary>Creates a new context.</summary>
-    /// <param name="contextType">The <c>contextType</c> argument.</param>
-    /// <param name="persistent">The <c>persistent</c> argument.</param>
+    /// <param name="contextType">Context type</param>
+    /// <param name="persistent">Persistent context</param>
     /// <returns>The new context.</returns>
     public static Gst.Context New(string contextType, bool persistent)
     {
@@ -137,7 +137,7 @@ public sealed unsafe partial class Context : Gst.MiniObject
     /// <remarks>
     /// <para>Available since GStreamer 1.28.</para>
     /// </remarks>
-    /// <param name="pool">The <c>pool</c> argument.</param>
+    /// <param name="pool">a #GstTaskPool</param>
     /// <returns>%TRUE if a task pool was set on @context</returns>
     public bool GetTaskPool(out Gst.TaskPool? pool)
     {
@@ -149,7 +149,7 @@ public sealed unsafe partial class Context : Gst.MiniObject
     }
 
     /// <summary>Checks if @context has @context_type.</summary>
-    /// <param name="contextType">The <c>contextType</c> argument.</param>
+    /// <param name="contextType">Context type to check.</param>
     /// <returns>%TRUE if @context has @context_type.</returns>
     public bool HasContextType(string contextType)
     {
@@ -230,7 +230,7 @@ public sealed unsafe partial class Context : Gst.MiniObject
     /// <remarks>
     /// <para>Available since GStreamer 1.28.</para>
     /// </remarks>
-    /// <param name="pool">The <c>pool</c> argument.</param>
+    /// <param name="pool">a #GstTaskPool or %NULL to unset</param>
     public void SetTaskPool(Gst.TaskPool? pool)
     {
         GstContextSetTaskPool(Handle, pool is null ? 0 : pool.Handle);

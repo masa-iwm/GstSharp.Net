@@ -75,13 +75,13 @@ public unsafe partial struct RTCPPacket
     /// property.
     /// </para>
     /// </remarks>
-    /// <param name="ssrc">The <c>ssrc</c> argument.</param>
-    /// <param name="fractionlost">The <c>fractionlost</c> argument.</param>
-    /// <param name="packetslost">The <c>packetslost</c> argument.</param>
-    /// <param name="exthighestseq">The <c>exthighestseq</c> argument.</param>
-    /// <param name="jitter">The <c>jitter</c> argument.</param>
-    /// <param name="lsr">The <c>lsr</c> argument.</param>
-    /// <param name="dlsr">The <c>dlsr</c> argument.</param>
+    /// <param name="ssrc">data source being reported</param>
+    /// <param name="fractionlost">fraction lost since last SR/RR</param>
+    /// <param name="packetslost">the cumululative number of packets lost</param>
+    /// <param name="exthighestseq">the extended last sequence number received</param>
+    /// <param name="jitter">the interarrival jitter</param>
+    /// <param name="lsr">the last SR packet from this source</param>
+    /// <param name="dlsr">the delay since last SR packet</param>
     /// <returns>
     /// %TRUE if the packet was created. This function can return %FALSE if
     /// the max MTU is exceeded or the number of report blocks is greater than
@@ -160,7 +160,7 @@ public unsafe partial struct RTCPPacket
     /// property.
     /// </para>
     /// </remarks>
-    /// <param name="wordlen">The <c>wordlen</c> argument.</param>
+    /// <param name="wordlen">Length of the data in 32-bit words</param>
     /// <returns>
     /// %TRUE if there was enough space in the packet to add this much
     /// data.
@@ -181,7 +181,7 @@ public unsafe partial struct RTCPPacket
     /// property.
     /// </para>
     /// </remarks>
-    /// <param name="ssrc">The <c>ssrc</c> argument.</param>
+    /// <param name="ssrc">SSRC/CSRC of the packet</param>
     public void AppSetSsrc(uint ssrc)
     {
         fixed (Gst.Rtp.RTCPPacket* self = &this)
@@ -197,7 +197,7 @@ public unsafe partial struct RTCPPacket
     /// property.
     /// </para>
     /// </remarks>
-    /// <param name="subtype">The <c>subtype</c> argument.</param>
+    /// <param name="subtype">subtype of the packet</param>
     public void AppSetSubtype(byte subtype)
     {
         fixed (Gst.Rtp.RTCPPacket* self = &this)
@@ -213,7 +213,7 @@ public unsafe partial struct RTCPPacket
     /// property.
     /// </para>
     /// </remarks>
-    /// <param name="ssrc">The <c>ssrc</c> argument.</param>
+    /// <param name="ssrc">an SSRC to add</param>
     /// <returns>
     /// %TRUE if the ssrc was added. This function can return %FALSE if
     /// the max MTU is exceeded or the number of sources blocks is greater than
@@ -260,7 +260,7 @@ public unsafe partial struct RTCPPacket
     /// property.
     /// </para>
     /// </remarks>
-    /// <param name="nth">The <c>nth</c> argument.</param>
+    /// <param name="nth">the nth SSRC to get</param>
     /// <returns>The @nth SSRC of @packet.</returns>
     public uint ByeGetNthSsrc(uint nth)
     {
@@ -335,7 +335,7 @@ public unsafe partial struct RTCPPacket
     /// property.
     /// </para>
     /// </remarks>
-    /// <param name="reason">The <c>reason</c> argument.</param>
+    /// <param name="reason">a reason string</param>
     /// <returns>TRUE if the string could be set.</returns>
     public bool ByeSetReason(string reason)
     {
@@ -460,7 +460,7 @@ public unsafe partial struct RTCPPacket
     /// property.
     /// </para>
     /// </remarks>
-    /// <param name="wordlen">The <c>wordlen</c> argument.</param>
+    /// <param name="wordlen">Length of the FCI in 32-bit words</param>
     /// <returns>%TRUE if there was enough space in the packet to add this much FCI</returns>
     public bool FbSetFciLength(ushort wordlen)
     {
@@ -478,7 +478,7 @@ public unsafe partial struct RTCPPacket
     /// property.
     /// </para>
     /// </remarks>
-    /// <param name="ssrc">The <c>ssrc</c> argument.</param>
+    /// <param name="ssrc">a media SSRC</param>
     public void FbSetMediaSsrc(uint ssrc)
     {
         fixed (Gst.Rtp.RTCPPacket* self = &this)
@@ -494,7 +494,7 @@ public unsafe partial struct RTCPPacket
     /// property.
     /// </para>
     /// </remarks>
-    /// <param name="ssrc">The <c>ssrc</c> argument.</param>
+    /// <param name="ssrc">a sender SSRC</param>
     public void FbSetSenderSsrc(uint ssrc)
     {
         fixed (Gst.Rtp.RTCPPacket* self = &this)
@@ -510,7 +510,7 @@ public unsafe partial struct RTCPPacket
     /// property.
     /// </para>
     /// </remarks>
-    /// <param name="type">The <c>type</c> argument.</param>
+    /// <param name="type">the #GstRTCPFBType to set</param>
     public void FbSetType(Gst.Rtp.RTCPFBType type)
     {
         fixed (Gst.Rtp.RTCPPacket* self = &this)
@@ -632,14 +632,14 @@ public unsafe partial struct RTCPPacket
     /// property.
     /// </para>
     /// </remarks>
-    /// <param name="nth">The <c>nth</c> argument.</param>
-    /// <param name="ssrc">The <c>ssrc</c> argument.</param>
-    /// <param name="fractionlost">The <c>fractionlost</c> argument.</param>
-    /// <param name="packetslost">The <c>packetslost</c> argument.</param>
-    /// <param name="exthighestseq">The <c>exthighestseq</c> argument.</param>
-    /// <param name="jitter">The <c>jitter</c> argument.</param>
-    /// <param name="lsr">The <c>lsr</c> argument.</param>
-    /// <param name="dlsr">The <c>dlsr</c> argument.</param>
+    /// <param name="nth">the nth report block in @packet</param>
+    /// <param name="ssrc">result for data source being reported</param>
+    /// <param name="fractionlost">result for fraction lost since last SR/RR</param>
+    /// <param name="packetslost">result for the cumululative number of packets lost</param>
+    /// <param name="exthighestseq">result for the extended last sequence number received</param>
+    /// <param name="jitter">result for the interarrival jitter</param>
+    /// <param name="lsr">result for the last SR packet from this source</param>
+    /// <param name="dlsr">result for the delay since last SR packet</param>
     public void GetRb(uint nth, out uint ssrc, out byte fractionlost, out int packetslost, out uint exthighestseq, out uint jitter, out uint lsr, out uint dlsr)
     {
         uint ssrcNative = default;
@@ -766,7 +766,7 @@ public unsafe partial struct RTCPPacket
     /// property.
     /// </para>
     /// </remarks>
-    /// <param name="ssrc">The <c>ssrc</c> argument.</param>
+    /// <param name="ssrc">the SSRC to set</param>
     public void RrSetSsrc(uint ssrc)
     {
         fixed (Gst.Rtp.RTCPPacket* self = &this)
@@ -782,7 +782,7 @@ public unsafe partial struct RTCPPacket
     /// property.
     /// </para>
     /// </remarks>
-    /// <param name="type">The <c>type</c> argument.</param>
+    /// <param name="type">the #GstRTCPSDESType of the SDES entry</param>
     /// <param name="data">the data</param>
     /// <returns>
     /// %TRUE if the item could be added, %FALSE if the MTU has been
@@ -816,7 +816,7 @@ public unsafe partial struct RTCPPacket
     /// property.
     /// </para>
     /// </remarks>
-    /// <param name="ssrc">The <c>ssrc</c> argument.</param>
+    /// <param name="ssrc">the SSRC of the new item to add</param>
     /// <returns>
     /// %TRUE if the item could be added, %FALSE if the maximum amount of
     /// items has been exceeded for the SDES packet or the MTU has been reached.
@@ -840,7 +840,7 @@ public unsafe partial struct RTCPPacket
     /// property.
     /// </para>
     /// </remarks>
-    /// <param name="type">The <c>type</c> argument.</param>
+    /// <param name="type">result of the entry type</param>
     /// <param name="data">result entry data</param>
     /// <returns>%TRUE if there was valid data.</returns>
     public bool SdesCopyEntry(out Gst.Rtp.RTCPSDESType type, out byte[]? data)
@@ -913,7 +913,7 @@ public unsafe partial struct RTCPPacket
     /// property.
     /// </para>
     /// </remarks>
-    /// <param name="type">The <c>type</c> argument.</param>
+    /// <param name="type">result of the entry type</param>
     /// <param name="data">result entry data</param>
     /// <returns>%TRUE if there was valid data.</returns>
     public bool SdesGetEntry(out Gst.Rtp.RTCPSDESType type, out byte[]? data)
@@ -1011,14 +1011,14 @@ public unsafe partial struct RTCPPacket
     /// property.
     /// </para>
     /// </remarks>
-    /// <param name="nth">The <c>nth</c> argument.</param>
-    /// <param name="ssrc">The <c>ssrc</c> argument.</param>
-    /// <param name="fractionlost">The <c>fractionlost</c> argument.</param>
-    /// <param name="packetslost">The <c>packetslost</c> argument.</param>
-    /// <param name="exthighestseq">The <c>exthighestseq</c> argument.</param>
-    /// <param name="jitter">The <c>jitter</c> argument.</param>
-    /// <param name="lsr">The <c>lsr</c> argument.</param>
-    /// <param name="dlsr">The <c>dlsr</c> argument.</param>
+    /// <param name="nth">the nth report block to set</param>
+    /// <param name="ssrc">data source being reported</param>
+    /// <param name="fractionlost">fraction lost since last SR/RR</param>
+    /// <param name="packetslost">the cumululative number of packets lost</param>
+    /// <param name="exthighestseq">the extended last sequence number received</param>
+    /// <param name="jitter">the interarrival jitter</param>
+    /// <param name="lsr">the last SR packet from this source</param>
+    /// <param name="dlsr">the delay since last SR packet</param>
     public void SetRb(uint nth, uint ssrc, byte fractionlost, int packetslost, uint exthighestseq, uint jitter, uint lsr, uint dlsr)
     {
         fixed (Gst.Rtp.RTCPPacket* self = &this)
@@ -1034,11 +1034,11 @@ public unsafe partial struct RTCPPacket
     /// property.
     /// </para>
     /// </remarks>
-    /// <param name="ssrc">The <c>ssrc</c> argument.</param>
-    /// <param name="ntptime">The <c>ntptime</c> argument.</param>
-    /// <param name="rtptime">The <c>rtptime</c> argument.</param>
-    /// <param name="packetCount">The <c>packetCount</c> argument.</param>
-    /// <param name="octetCount">The <c>octetCount</c> argument.</param>
+    /// <param name="ssrc">result SSRC</param>
+    /// <param name="ntptime">result NTP time</param>
+    /// <param name="rtptime">result RTP time</param>
+    /// <param name="packetCount">result packet count</param>
+    /// <param name="octetCount">result octet count</param>
     public void SrGetSenderInfo(out uint ssrc, out ulong ntptime, out uint rtptime, out uint packetCount, out uint octetCount)
     {
         uint ssrcNative = default;
@@ -1064,11 +1064,11 @@ public unsafe partial struct RTCPPacket
     /// property.
     /// </para>
     /// </remarks>
-    /// <param name="ssrc">The <c>ssrc</c> argument.</param>
-    /// <param name="ntptime">The <c>ntptime</c> argument.</param>
-    /// <param name="rtptime">The <c>rtptime</c> argument.</param>
-    /// <param name="packetCount">The <c>packetCount</c> argument.</param>
-    /// <param name="octetCount">The <c>octetCount</c> argument.</param>
+    /// <param name="ssrc">the SSRC</param>
+    /// <param name="ntptime">the NTP time</param>
+    /// <param name="rtptime">the RTP time</param>
+    /// <param name="packetCount">the packet count</param>
+    /// <param name="octetCount">the octet count</param>
     public void SrSetSenderInfo(uint ssrc, ulong ntptime, uint rtptime, uint packetCount, uint octetCount)
     {
         fixed (Gst.Rtp.RTCPPacket* self = &this)
@@ -1138,10 +1138,10 @@ public unsafe partial struct RTCPPacket
     /// property.
     /// </para>
     /// </remarks>
-    /// <param name="nth">The <c>nth</c> argument.</param>
-    /// <param name="ssrc">The <c>ssrc</c> argument.</param>
-    /// <param name="lastRr">The <c>lastRr</c> argument.</param>
-    /// <param name="delay">The <c>delay</c> argument.</param>
+    /// <param name="nth">the index of sub-block to retrieve.</param>
+    /// <param name="ssrc">the SSRC of the receiver.</param>
+    /// <param name="lastRr">the last receiver reference timestamp of @ssrc.</param>
+    /// <param name="delay">the delay since @last_rr.</param>
     /// <returns>%TRUE if the report block is correctly parsed.</returns>
     public bool XrGetDlrrBlock(uint nth, out uint ssrc, out uint lastRr, out uint delay)
     {
@@ -1165,8 +1165,8 @@ public unsafe partial struct RTCPPacket
     /// property.
     /// </para>
     /// </remarks>
-    /// <param name="seq">The <c>seq</c> argument.</param>
-    /// <param name="receiptTime">The <c>receiptTime</c> argument.</param>
+    /// <param name="seq">the sequence to retrieve the time.</param>
+    /// <param name="receiptTime">the packet receipt time of @seq.</param>
     /// <returns>%TRUE if the report block returns the receipt time correctly.</returns>
     public bool XrGetPrtBySeq(ushort seq, out uint receiptTime)
     {
@@ -1186,10 +1186,10 @@ public unsafe partial struct RTCPPacket
     /// property.
     /// </para>
     /// </remarks>
-    /// <param name="ssrc">The <c>ssrc</c> argument.</param>
-    /// <param name="thinning">The <c>thinning</c> argument.</param>
-    /// <param name="beginSeq">The <c>beginSeq</c> argument.</param>
-    /// <param name="endSeq">The <c>endSeq</c> argument.</param>
+    /// <param name="ssrc">the SSRC of the RTP data packet source being reported upon by this report block.</param>
+    /// <param name="thinning">the amount of thinning performed on the sequence number space.</param>
+    /// <param name="beginSeq">the first sequence number that this block reports on.</param>
+    /// <param name="endSeq">the last sequence number that this block reports on plus one.</param>
     /// <returns>%TRUE if the report block is correctly parsed.</returns>
     public bool XrGetPrtInfo(out uint ssrc, out byte thinning, out ushort beginSeq, out ushort endSeq)
     {
@@ -1215,11 +1215,11 @@ public unsafe partial struct RTCPPacket
     /// property.
     /// </para>
     /// </remarks>
-    /// <param name="ssrc">The <c>ssrc</c> argument.</param>
-    /// <param name="thinning">The <c>thinning</c> argument.</param>
-    /// <param name="beginSeq">The <c>beginSeq</c> argument.</param>
-    /// <param name="endSeq">The <c>endSeq</c> argument.</param>
-    /// <param name="chunkCount">The <c>chunkCount</c> argument.</param>
+    /// <param name="ssrc">the SSRC of the RTP data packet source being reported upon by this report block.</param>
+    /// <param name="thinning">the amount of thinning performed on the sequence number space.</param>
+    /// <param name="beginSeq">the first sequence number that this block reports on.</param>
+    /// <param name="endSeq">the last sequence number that this block reports on plus one.</param>
+    /// <param name="chunkCount">the number of chunks calculated by block length.</param>
     /// <returns>%TRUE if the report block is correctly parsed.</returns>
     public bool XrGetRleInfo(out uint ssrc, out byte thinning, out ushort beginSeq, out ushort endSeq, out uint chunkCount)
     {
@@ -1247,8 +1247,8 @@ public unsafe partial struct RTCPPacket
     /// property.
     /// </para>
     /// </remarks>
-    /// <param name="nth">The <c>nth</c> argument.</param>
-    /// <param name="chunk">The <c>chunk</c> argument.</param>
+    /// <param name="nth">the index of chunk to retrieve.</param>
+    /// <param name="chunk">the @nth chunk.</param>
     /// <returns>%TRUE if the report block returns chunk correctly.</returns>
     public bool XrGetRleNthChunk(uint nth, out ushort chunk)
     {
@@ -1268,7 +1268,7 @@ public unsafe partial struct RTCPPacket
     /// property.
     /// </para>
     /// </remarks>
-    /// <param name="timestamp">The <c>timestamp</c> argument.</param>
+    /// <param name="timestamp">NTP timestamp</param>
     /// <returns>%TRUE if the report block returns the reference time correctly.</returns>
     public bool XrGetRrt(out ulong timestamp)
     {
@@ -1305,9 +1305,9 @@ public unsafe partial struct RTCPPacket
     /// property.
     /// </para>
     /// </remarks>
-    /// <param name="ssrc">The <c>ssrc</c> argument.</param>
-    /// <param name="beginSeq">The <c>beginSeq</c> argument.</param>
-    /// <param name="endSeq">The <c>endSeq</c> argument.</param>
+    /// <param name="ssrc">the SSRC of the source.</param>
+    /// <param name="beginSeq">the first sequence number that this block reports on.</param>
+    /// <param name="endSeq">the last sequence number that this block reports on plus one.</param>
     /// <returns>%TRUE if the report block is correctly parsed.</returns>
     public bool XrGetSummaryInfo(out uint ssrc, out ushort beginSeq, out ushort endSeq)
     {
@@ -1334,10 +1334,10 @@ public unsafe partial struct RTCPPacket
     /// property.
     /// </para>
     /// </remarks>
-    /// <param name="minJitter">The <c>minJitter</c> argument.</param>
-    /// <param name="maxJitter">The <c>maxJitter</c> argument.</param>
-    /// <param name="meanJitter">The <c>meanJitter</c> argument.</param>
-    /// <param name="devJitter">The <c>devJitter</c> argument.</param>
+    /// <param name="minJitter">the minimum relative transit time between two sequences.</param>
+    /// <param name="maxJitter">the maximum relative transit time between two sequences.</param>
+    /// <param name="meanJitter">the mean relative transit time between two sequences.</param>
+    /// <param name="devJitter">the standard deviation of the relative transit time between two sequences.</param>
     /// <returns>%TRUE if the report block is correctly parsed.</returns>
     public bool XrGetSummaryJitter(out uint minJitter, out uint maxJitter, out uint meanJitter, out uint devJitter)
     {
@@ -1366,8 +1366,8 @@ public unsafe partial struct RTCPPacket
     /// property.
     /// </para>
     /// </remarks>
-    /// <param name="lostPackets">The <c>lostPackets</c> argument.</param>
-    /// <param name="dupPackets">The <c>dupPackets</c> argument.</param>
+    /// <param name="lostPackets">the number of lost packets between begin_seq and end_seq.</param>
+    /// <param name="dupPackets">the number of duplicate packets between begin_seq and end_seq.</param>
     /// <returns>%TRUE if the report block is correctly parsed.</returns>
     public bool XrGetSummaryPkt(out uint lostPackets, out uint dupPackets)
     {
@@ -1389,11 +1389,13 @@ public unsafe partial struct RTCPPacket
     /// property.
     /// </para>
     /// </remarks>
-    /// <param name="isIpv4">The <c>isIpv4</c> argument.</param>
-    /// <param name="minTtl">The <c>minTtl</c> argument.</param>
-    /// <param name="maxTtl">The <c>maxTtl</c> argument.</param>
-    /// <param name="meanTtl">The <c>meanTtl</c> argument.</param>
-    /// <param name="devTtl">The <c>devTtl</c> argument.</param>
+    /// <param name="isIpv4">the flag to indicate that the return values are ipv4 ttl or ipv6 hop limits.</param>
+    /// <param name="minTtl">the minimum TTL or Hop Limit value of data packets between two sequences.</param>
+    /// <param name="maxTtl">the maximum TTL or Hop Limit value of data packets between two sequences.</param>
+    /// <param name="meanTtl">the mean TTL or Hop Limit value of data packets between two sequences.</param>
+    /// <param name="devTtl">
+    /// the standard deviation of the TTL or Hop Limit value of data packets between two sequences.
+    /// </param>
     /// <returns>%TRUE if the report block is correctly parsed.</returns>
     public bool XrGetSummaryTtl(out bool isIpv4, out byte minTtl, out byte maxTtl, out byte meanTtl, out byte devTtl)
     {
@@ -1421,10 +1423,10 @@ public unsafe partial struct RTCPPacket
     /// property.
     /// </para>
     /// </remarks>
-    /// <param name="burstDensity">The <c>burstDensity</c> argument.</param>
-    /// <param name="gapDensity">The <c>gapDensity</c> argument.</param>
-    /// <param name="burstDuration">The <c>burstDuration</c> argument.</param>
-    /// <param name="gapDuration">The <c>gapDuration</c> argument.</param>
+    /// <param name="burstDensity">the fraction of RTP data packets within burst periods.</param>
+    /// <param name="gapDensity">the fraction of RTP data packets within inter-burst gaps.</param>
+    /// <param name="burstDuration">the mean duration(ms) of the burst periods.</param>
+    /// <param name="gapDuration">the mean duration(ms) of the gap periods.</param>
     /// <returns>%TRUE if the report block is correctly parsed.</returns>
     public bool XrGetVoipBurstMetrics(out byte burstDensity, out byte gapDensity, out ushort burstDuration, out ushort gapDuration)
     {
@@ -1450,8 +1452,8 @@ public unsafe partial struct RTCPPacket
     /// property.
     /// </para>
     /// </remarks>
-    /// <param name="gmin">The <c>gmin</c> argument.</param>
-    /// <param name="rxConfig">The <c>rxConfig</c> argument.</param>
+    /// <param name="gmin">the gap threshold.</param>
+    /// <param name="rxConfig">the receiver configuration byte.</param>
     /// <returns>%TRUE if the report block is correctly parsed.</returns>
     public bool XrGetVoipConfigurationParams(out byte gmin, out byte rxConfig)
     {
@@ -1473,8 +1475,8 @@ public unsafe partial struct RTCPPacket
     /// property.
     /// </para>
     /// </remarks>
-    /// <param name="roundtripDelay">The <c>roundtripDelay</c> argument.</param>
-    /// <param name="endSystemDelay">The <c>endSystemDelay</c> argument.</param>
+    /// <param name="roundtripDelay">the most recently calculated round trip time between RTP interfaces(ms)</param>
+    /// <param name="endSystemDelay">the most recently estimated end system delay(ms)</param>
     /// <returns>%TRUE if the report block is correctly parsed.</returns>
     public bool XrGetVoipDelayMetrics(out ushort roundtripDelay, out ushort endSystemDelay)
     {
@@ -1496,9 +1498,9 @@ public unsafe partial struct RTCPPacket
     /// property.
     /// </para>
     /// </remarks>
-    /// <param name="jbNominal">The <c>jbNominal</c> argument.</param>
-    /// <param name="jbMaximum">The <c>jbMaximum</c> argument.</param>
-    /// <param name="jbAbsMax">The <c>jbAbsMax</c> argument.</param>
+    /// <param name="jbNominal">the current nominal jitter buffer delay(ms)</param>
+    /// <param name="jbMaximum">the current maximum jitter buffer delay(ms)</param>
+    /// <param name="jbAbsMax">the absolute maximum delay(ms)</param>
     /// <returns>%TRUE if the report block is correctly parsed.</returns>
     public bool XrGetVoipJitterBufferParams(out ushort jbNominal, out ushort jbMaximum, out ushort jbAbsMax)
     {
@@ -1522,7 +1524,7 @@ public unsafe partial struct RTCPPacket
     /// property.
     /// </para>
     /// </remarks>
-    /// <param name="ssrc">The <c>ssrc</c> argument.</param>
+    /// <param name="ssrc">the SSRC of source</param>
     /// <returns>%TRUE if the report block is correctly parsed.</returns>
     public bool XrGetVoipMetricsSsrc(out uint ssrc)
     {
@@ -1542,8 +1544,8 @@ public unsafe partial struct RTCPPacket
     /// property.
     /// </para>
     /// </remarks>
-    /// <param name="lossRate">The <c>lossRate</c> argument.</param>
-    /// <param name="discardRate">The <c>discardRate</c> argument.</param>
+    /// <param name="lossRate">the fraction of RTP data packets from the source lost.</param>
+    /// <param name="discardRate">the fraction of RTP data packets from the source that have been discarded.</param>
     /// <returns>%TRUE if the report block is correctly parsed.</returns>
     public bool XrGetVoipPacketMetrics(out byte lossRate, out byte discardRate)
     {
@@ -1565,10 +1567,10 @@ public unsafe partial struct RTCPPacket
     /// property.
     /// </para>
     /// </remarks>
-    /// <param name="rFactor">The <c>rFactor</c> argument.</param>
-    /// <param name="extRFactor">The <c>extRFactor</c> argument.</param>
-    /// <param name="mosLq">The <c>mosLq</c> argument.</param>
-    /// <param name="mosCq">The <c>mosCq</c> argument.</param>
+    /// <param name="rFactor">the R factor is a voice quality metric describing the segment of the call.</param>
+    /// <param name="extRFactor">the external R factor is a voice quality metric.</param>
+    /// <param name="mosLq">the estimated mean opinion score for listening quality.</param>
+    /// <param name="mosCq">the estimated mean opinion score for conversational quality.</param>
     /// <returns>%TRUE if the report block is correctly parsed.</returns>
     public bool XrGetVoipQualityMetrics(out byte rFactor, out byte extRFactor, out byte mosLq, out byte mosCq)
     {
@@ -1594,10 +1596,10 @@ public unsafe partial struct RTCPPacket
     /// property.
     /// </para>
     /// </remarks>
-    /// <param name="signalLevel">The <c>signalLevel</c> argument.</param>
-    /// <param name="noiseLevel">The <c>noiseLevel</c> argument.</param>
-    /// <param name="rerl">The <c>rerl</c> argument.</param>
-    /// <param name="gmin">The <c>gmin</c> argument.</param>
+    /// <param name="signalLevel">the ratio of the signal level to a 0 dBm reference.</param>
+    /// <param name="noiseLevel">the ratio of the silent period background noise level to a 0 dBm reference.</param>
+    /// <param name="rerl">the residual echo return loss value.</param>
+    /// <param name="gmin">the gap threshold.</param>
     /// <returns>%TRUE if the report block is correctly parsed.</returns>
     public bool XrGetVoipSignalMetrics(out byte signalLevel, out byte noiseLevel, out byte rerl, out byte gmin)
     {

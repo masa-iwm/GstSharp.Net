@@ -1796,7 +1796,42 @@ internal sealed class MarshalPlanner
         };
     }
 
+    /// <summary>
+    /// Plans one parameter of a callable and gives it back with the
+    /// documentation the gir wrote for it.
+    /// </summary>
+    /// <param name="callable">The callable the parameter belongs to.</param>
+    /// <param name="parameter">The gir parameter.</param>
+    /// <param name="index">Its position among the parameters of the gir.</param>
+    /// <param name="context">The module and namespace being planned.</param>
+    /// <param name="offset">How many arguments precede the parameters.</param>
+    /// <returns>The plan, or <see langword="null"/> when the parameter cannot be bound.</returns>
+    /// <remarks>
+    /// The shapes that build a plan of their own - a fixed size block, a
+    /// counted array, a string vector - already carry the gir parameter with
+    /// them, and a callback argument carries its documentation. Everything
+    /// else, which is every scalar, enumeration, string, structure and handle
+    /// the planner sees, is built without either, so the renderer had nothing
+    /// to write but the name of the argument back at the reader. Attaching the
+    /// documentation here, at the single point every parameter of a callable
+    /// passes through, is what makes the gir sentence the one that is emitted.
+    /// It is the documentation that is attached and not the parameter: the
+    /// parameter is a back reference other rules read, and a sentence cannot
+    /// change anything but a documentation line.
+    /// </remarks>
     private ArgumentPlan? PlanParameter(
+        GirCallable callable,
+        GirParameter parameter,
+        int index,
+        PlanningContext context,
+        int offset) =>
+        PlanParameterCore(callable, parameter, index, context, offset) switch
+        {
+            { Source: null, Doc: null } plan => plan with { Doc = parameter.Doc },
+            var plan => plan,
+        };
+
+    private ArgumentPlan? PlanParameterCore(
         GirCallable callable,
         GirParameter parameter,
         int index,

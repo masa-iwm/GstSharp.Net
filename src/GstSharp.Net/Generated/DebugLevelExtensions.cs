@@ -12,7 +12,7 @@ namespace Gst;
 public static unsafe partial class DebugLevelExtensions
 {
     /// <summary>Get the string representation of a debugging level</summary>
-    /// <param name="level">The <c>level</c> argument.</param>
+    /// <param name="level">the level to get the name for</param>
     /// <returns>the name</returns>
     public static string GetName(Gst.DebugLevel level)
     {

@@ -93,10 +93,10 @@ public sealed unsafe partial class VideoTimeCodeInterval : Gst.GObject.Boxed
         handle == 0 ? null : new(handle, transfer);
 
     /// <summary>The <c>gst_video_time_code_interval_new</c> function.</summary>
-    /// <param name="hours">The <c>hours</c> argument.</param>
-    /// <param name="minutes">The <c>minutes</c> argument.</param>
-    /// <param name="seconds">The <c>seconds</c> argument.</param>
-    /// <param name="frames">The <c>frames</c> argument.</param>
+    /// <param name="hours">the hours field of #GstVideoTimeCodeInterval</param>
+    /// <param name="minutes">the minutes field of #GstVideoTimeCodeInterval</param>
+    /// <param name="seconds">the seconds field of #GstVideoTimeCodeInterval</param>
+    /// <param name="frames">the frames field of #GstVideoTimeCodeInterval</param>
     /// <returns>a new #GstVideoTimeCodeInterval with the given values.</returns>
     public static Gst.Video.VideoTimeCodeInterval New(uint hours, uint minutes, uint seconds, uint frames)
     {
@@ -106,7 +106,7 @@ public sealed unsafe partial class VideoTimeCodeInterval : Gst.GObject.Boxed
     }
 
     /// <summary>@tc_inter_str must only have ":" as separators.</summary>
-    /// <param name="tcInterStr">The <c>tcInterStr</c> argument.</param>
+    /// <param name="tcInterStr">The string that represents the #GstVideoTimeCodeInterval</param>
     /// <returns>
     /// a new #GstVideoTimeCodeInterval from the given string
     ///   or %NULL if the string could not be passed.
@@ -138,10 +138,10 @@ public sealed unsafe partial class VideoTimeCodeInterval : Gst.GObject.Boxed
     }
 
     /// <summary>Initializes @tc with the given values.</summary>
-    /// <param name="hours">The <c>hours</c> argument.</param>
-    /// <param name="minutes">The <c>minutes</c> argument.</param>
-    /// <param name="seconds">The <c>seconds</c> argument.</param>
-    /// <param name="frames">The <c>frames</c> argument.</param>
+    /// <param name="hours">the hours field of #GstVideoTimeCodeInterval</param>
+    /// <param name="minutes">the minutes field of #GstVideoTimeCodeInterval</param>
+    /// <param name="seconds">the seconds field of #GstVideoTimeCodeInterval</param>
+    /// <param name="frames">the frames field of #GstVideoTimeCodeInterval</param>
     public void Init(uint hours, uint minutes, uint seconds, uint frames)
     {
         GstVideoTimeCodeIntervalInit(Handle, hours, minutes, seconds, frames);

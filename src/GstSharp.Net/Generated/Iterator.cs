@@ -132,9 +132,9 @@ public sealed unsafe partial class Iterator : Gst.GObject.Boxed
     /// a single object has to be considered. This happens often
     /// for the #GstPadIterIntLinkFunction.
     /// </summary>
-    /// <param name="type">The <c>type</c> argument.</param>
+    /// <param name="type">#GType of the passed object</param>
     /// <param name="object">
-    /// The <c>@object</c> argument.
+    /// object that this iterator should return
     /// The callee copies what it keeps, so the caller keeps ownership of
     /// <paramref name="object"/> and still disposes it.
     /// </param>
@@ -205,7 +205,7 @@ public sealed unsafe partial class Iterator : Gst.GObject.Boxed
     /// </remarks>
     /// <param name="func">the fold function</param>
     /// <param name="ret">
-    /// The <c>ret</c> argument.
+    /// the seed value passed to the fold function
     /// The value has to be initialized with the type the function writes
     /// before the call. The call itself never reads or writes it: it hands it to
     /// the function as it stands, and a setter on an uninitialized value throws
@@ -289,7 +289,7 @@ public sealed unsafe partial class Iterator : Gst.GObject.Boxed
     /// </para>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="other">The <c>other</c> argument.</param>
+    /// <param name="other">The #GstIterator to push</param>
     public void Push(Gst.Iterator other)
     {
         ArgumentNullException.ThrowIfNull(other);

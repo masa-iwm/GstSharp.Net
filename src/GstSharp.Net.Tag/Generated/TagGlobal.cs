@@ -20,7 +20,7 @@ public static unsafe partial class TagGlobal
     /// #GST_TAG_LANGUAGE_NAME tag instead).
     /// </para>
     /// </remarks>
-    /// <param name="langCode">The <c>langCode</c> argument.</param>
+    /// <param name="langCode">ISO-639 language code (e.g. "deu" or "ger" or "de")</param>
     /// <returns>
     /// TRUE if the two- or three-letter language code in @lang_code
     ///     is a valid ISO-639 language code.
@@ -59,7 +59,7 @@ public static unsafe partial class TagGlobal
     }
 
     /// <summary>Looks up the GStreamer tag for a ID3v2 tag.</summary>
-    /// <param name="id3Tag">The <c>id3Tag</c> argument.</param>
+    /// <param name="id3Tag">ID3v2 tag to convert to GStreamer tag</param>
     /// <returns>The corresponding GStreamer tag or NULL if none exists.</returns>
     public static string? TagFromId3Tag(string id3Tag)
     {
@@ -74,8 +74,8 @@ public static unsafe partial class TagGlobal
     /// Looks up the GStreamer tag for an ID3v2 user tag (e.g. description in
     /// TXXX frame or owner in UFID frame).
     /// </summary>
-    /// <param name="type">The <c>type</c> argument.</param>
-    /// <param name="id3UserTag">The <c>id3UserTag</c> argument.</param>
+    /// <param name="type">the type of ID3v2 user tag (e.g. "TXXX" or "UDIF")</param>
+    /// <param name="id3UserTag">ID3v2 user tag to convert to GStreamer tag</param>
     /// <returns>The corresponding GStreamer tag or NULL if none exists.</returns>
     public static string? TagFromId3UserTag(string type, string id3UserTag)
     {
@@ -90,7 +90,7 @@ public static unsafe partial class TagGlobal
     }
 
     /// <summary>Looks up the GStreamer tag for a vorbiscomment tag.</summary>
-    /// <param name="vorbisTag">The <c>vorbisTag</c> argument.</param>
+    /// <param name="vorbisTag">vorbiscomment tag to convert to GStreamer tag</param>
     /// <returns>The corresponding GStreamer tag or NULL if none exists.</returns>
     public static string? TagFromVorbisTag(string vorbisTag)
     {
@@ -105,7 +105,7 @@ public static unsafe partial class TagGlobal
     /// Determines size of an ID3v2 tag on buffer containing at least ID3v2 header,
     /// i.e. at least #GST_TAG_ID3V2_HEADER_SIZE (10) bytes;
     /// </summary>
-    /// <param name="buffer">The <c>buffer</c> argument.</param>
+    /// <param name="buffer">buffer holding ID3v2 tag (or at least the start of one)</param>
     /// <returns>Size of tag, or 0 if header is invalid or too small.</returns>
     public static uint TagGetId3v2TagSize(Gst.Buffer buffer)
     {
@@ -123,7 +123,7 @@ public static unsafe partial class TagGlobal
     /// <remarks>
     /// <para>Language codes are case-sensitive and expected to be lower case.</para>
     /// </remarks>
-    /// <param name="langCode">The <c>langCode</c> argument.</param>
+    /// <param name="langCode">ISO-639 language code (e.g. "deu" or "ger" or "de")</param>
     /// <returns>
     /// two-letter ISO-639-1 language code string that maps to @lang_code,
     ///     or NULL if no mapping is known. The returned string must not be
@@ -151,7 +151,7 @@ public static unsafe partial class TagGlobal
     /// </para>
     /// <para>Language codes are case-sensitive and expected to be lower case.</para>
     /// </remarks>
-    /// <param name="langCode">The <c>langCode</c> argument.</param>
+    /// <param name="langCode">ISO-639 language code (e.g. "deu" or "ger" or "de")</param>
     /// <returns>
     /// three-letter ISO-639-2 language code string that maps to @lang_code,
     ///     or NULL if no mapping is known. The returned string must not be
@@ -179,7 +179,7 @@ public static unsafe partial class TagGlobal
     /// </para>
     /// <para>Language codes are case-sensitive and expected to be lower case.</para>
     /// </remarks>
-    /// <param name="langCode">The <c>langCode</c> argument.</param>
+    /// <param name="langCode">ISO-639 language code (e.g. "deu" or "ger" or "de")</param>
     /// <returns>
     /// three-letter ISO-639-2 language code string that maps to @lang_code,
     ///     or NULL if no mapping is known. The returned string must not be
@@ -219,7 +219,7 @@ public static unsafe partial class TagGlobal
     /// <remarks>
     /// <para>Language codes are case-sensitive and expected to be lower case.</para>
     /// </remarks>
-    /// <param name="languageCode">The <c>languageCode</c> argument.</param>
+    /// <param name="languageCode">two or three-letter ISO-639 language code</param>
     /// <returns>
     /// language name in UTF-8 format, or NULL if @language_code could
     ///     not be mapped to a language name. The returned string must not be
@@ -239,7 +239,10 @@ public static unsafe partial class TagGlobal
     /// Get the description of a license, which is a translated description
     /// of the license's main features.
     /// </summary>
-    /// <param name="licenseRef">The <c>licenseRef</c> argument.</param>
+    /// <param name="licenseRef">
+    /// a license reference string in form of a URI,
+    ///     e.g. "http://creativecommons.org/licenses/by-nc-nd/2.0/"
+    /// </param>
     /// <returns>
     /// the description of the license, or NULL if the license is unknown
     ///    or a description is not available.
@@ -257,7 +260,10 @@ public static unsafe partial class TagGlobal
     /// Get the flags of a license, which describe most of the features of
     /// a license in their most general form.
     /// </summary>
-    /// <param name="licenseRef">The <c>licenseRef</c> argument.</param>
+    /// <param name="licenseRef">
+    /// a license reference string in form of a URI,
+    ///     e.g. "http://creativecommons.org/licenses/by-nc-nd/2.0/"
+    /// </param>
     /// <returns>the flags of the license, or 0 if the license is unknown</returns>
     public static Gst.Tag.TagLicenseFlags TagGetLicenseFlags(string licenseRef)
     {
@@ -280,7 +286,10 @@ public static unsafe partial class TagGlobal
     /// pt, scotland, se, si, tw, uk, us, za.
     /// </para>
     /// </remarks>
-    /// <param name="licenseRef">The <c>licenseRef</c> argument.</param>
+    /// <param name="licenseRef">
+    /// a license reference string in form of a URI,
+    ///     e.g. "http://creativecommons.org/licenses/by-nc-nd/2.0/"
+    /// </param>
     /// <returns>
     /// the jurisdiction code of the license, or NULL if the license is
     ///    unknown or is not specific to a particular jurisdiction.
@@ -298,7 +307,10 @@ public static unsafe partial class TagGlobal
     /// Get the nick name of a license, which is a short (untranslated) string
     /// such as e.g. "CC BY-NC-ND 2.0 UK".
     /// </summary>
-    /// <param name="licenseRef">The <c>licenseRef</c> argument.</param>
+    /// <param name="licenseRef">
+    /// a license reference string in form of a URI,
+    ///     e.g. "http://creativecommons.org/licenses/by-nc-nd/2.0/"
+    /// </param>
     /// <returns>the nick name of the license, or NULL if the license is unknown</returns>
     public static string? TagGetLicenseNick(string licenseRef)
     {
@@ -313,7 +325,10 @@ public static unsafe partial class TagGlobal
     /// Get the title of a license, which is a short translated description
     /// of the license's features (generally not very pretty though).
     /// </summary>
-    /// <param name="licenseRef">The <c>licenseRef</c> argument.</param>
+    /// <param name="licenseRef">
+    /// a license reference string in form of a URI,
+    ///     e.g. "http://creativecommons.org/licenses/by-nc-nd/2.0/"
+    /// </param>
     /// <returns>
     /// the title of the license, or NULL if the license is unknown or
     ///    no title is available.
@@ -328,7 +343,10 @@ public static unsafe partial class TagGlobal
     }
 
     /// <summary>Get the version of a license.</summary>
-    /// <param name="licenseRef">The <c>licenseRef</c> argument.</param>
+    /// <param name="licenseRef">
+    /// a license reference string in form of a URI,
+    ///     e.g. "http://creativecommons.org/licenses/by-nc-nd/2.0/"
+    /// </param>
     /// <returns>
     /// the version of the license, or NULL if the license is not known or
     ///    has no version
@@ -370,7 +388,7 @@ public static unsafe partial class TagGlobal
     }
 
     /// <summary>Gets the ID3v1 genre name for a given ID.</summary>
-    /// <param name="id">The <c>id</c> argument.</param>
+    /// <param name="id">ID of genre to query</param>
     /// <returns>the genre or NULL if no genre is associated with that ID.</returns>
     public static string? TagId3GenreGet(uint id)
     {
@@ -408,7 +426,11 @@ public static unsafe partial class TagGlobal
     /// </para>
     /// </remarks>
     /// <param name="imageData">the (encoded) image</param>
-    /// <param name="imageType">The <c>imageType</c> argument.</param>
+    /// <param name="imageType">
+    /// type of the image, or #GST_TAG_IMAGE_TYPE_UNDEFINED. Pass
+    ///     #GST_TAG_IMAGE_TYPE_NONE if no image type should be set at all (e.g.
+    ///     for preview images)
+    /// </param>
     /// <returns>a newly-allocated image sample for use in tag lists, or NULL</returns>
     public static Gst.Sample? TagImageDataToImageSample(System.ReadOnlySpan<byte> imageData, Gst.Tag.TagImageType imageType)
     {
@@ -424,9 +446,12 @@ public static unsafe partial class TagGlobal
     /// to the given tag list. Also see gst_tag_image_data_to_image_sample() for
     /// more information on image tags in GStreamer.
     /// </summary>
-    /// <param name="tagList">The <c>tagList</c> argument.</param>
+    /// <param name="tagList">a tag list</param>
     /// <param name="imageData">the (encoded) image</param>
-    /// <param name="id3PictureType">The <c>id3PictureType</c> argument.</param>
+    /// <param name="id3PictureType">
+    /// picture type as per the ID3 (v2.4.0) specification for
+    ///    the APIC frame (0 = unknown/other)
+    /// </param>
     /// <returns>%TRUE if the image was processed, otherwise %FALSE</returns>
     public static bool TagListAddId3Image(Gst.TagList tagList, System.ReadOnlySpan<byte> imageData, uint id3PictureType)
     {
@@ -445,9 +470,9 @@ public static unsafe partial class TagGlobal
     /// the tag entries and be able to get the offset relative to the buffer
     /// start
     /// </summary>
-    /// <param name="buffer">The <c>buffer</c> argument.</param>
-    /// <param name="byteOrder">The <c>byteOrder</c> argument.</param>
-    /// <param name="baseOffset">The <c>baseOffset</c> argument.</param>
+    /// <param name="buffer">The exif buffer</param>
+    /// <param name="byteOrder">byte order of the data</param>
+    /// <param name="baseOffset">Offset from the tiff header to this buffer</param>
     /// <returns>The parsed taglist</returns>
     public static Gst.TagList? TagListFromExifBuffer(Gst.Buffer buffer, int byteOrder, uint baseOffset)
     {
@@ -458,7 +483,7 @@ public static unsafe partial class TagGlobal
     }
 
     /// <summary>Parses the exif tags starting with a tiff header structure.</summary>
-    /// <param name="buffer">The <c>buffer</c> argument.</param>
+    /// <param name="buffer">The exif buffer</param>
     /// <returns>The taglist</returns>
     public static Gst.TagList? TagListFromExifBufferWithTiffHeader(Gst.Buffer buffer)
     {
@@ -472,7 +497,7 @@ public static unsafe partial class TagGlobal
     /// Creates a new tag list that contains the information parsed out of a
     /// ID3 tag.
     /// </summary>
-    /// <param name="buffer">The <c>buffer</c> argument.</param>
+    /// <param name="buffer">buffer to convert</param>
     /// <returns>
     /// A new #GstTagList with all tags that could be extracted from the
     ///          given vorbiscomment buffer or NULL on error.
@@ -491,7 +516,10 @@ public static unsafe partial class TagGlobal
     /// </summary>
     /// <param name="data">data to convert</param>
     /// <param name="idData">identification data at start of stream</param>
-    /// <param name="vendorString">The <c>vendorString</c> argument.</param>
+    /// <param name="vendorString">
+    /// pointer to a string that should take the
+    ///     vendor string of this vorbis comment or NULL if you don't need it.
+    /// </param>
     /// <returns>
     /// A new #GstTagList with all tags that could be extracted from the
     ///          given vorbiscomment buffer or NULL on error.
@@ -514,9 +542,12 @@ public static unsafe partial class TagGlobal
     /// Creates a new tag list that contains the information parsed out of a
     /// vorbiscomment packet.
     /// </summary>
-    /// <param name="buffer">The <c>buffer</c> argument.</param>
+    /// <param name="buffer">buffer to convert</param>
     /// <param name="idData">identification data at start of stream</param>
-    /// <param name="vendorString">The <c>vendorString</c> argument.</param>
+    /// <param name="vendorString">
+    /// pointer to a string that should take the
+    ///     vendor string of this vorbis comment or NULL if you don't need it.
+    /// </param>
     /// <returns>
     /// A new #GstTagList with all tags that could be extracted from the
     ///          given vorbiscomment buffer or NULL on error.
@@ -535,7 +566,7 @@ public static unsafe partial class TagGlobal
     }
 
     /// <summary>Parse a xmp packet into a taglist.</summary>
-    /// <param name="buffer">The <c>buffer</c> argument.</param>
+    /// <param name="buffer">buffer</param>
     /// <returns>new taglist or %NULL, free the list when done</returns>
     public static Gst.TagList? TagListFromXmpBuffer(Gst.Buffer buffer)
     {
@@ -576,9 +607,9 @@ public static unsafe partial class TagGlobal
     /// Formats the tags in taglist on exif format. The resulting buffer contains
     /// the tags IFD and is followed by the data pointed by the tag entries.
     /// </summary>
-    /// <param name="taglist">The <c>taglist</c> argument.</param>
-    /// <param name="byteOrder">The <c>byteOrder</c> argument.</param>
-    /// <param name="baseOffset">The <c>baseOffset</c> argument.</param>
+    /// <param name="taglist">The taglist</param>
+    /// <param name="byteOrder">byte order used in writing (G_LITTLE_ENDIAN or G_BIG_ENDIAN)</param>
+    /// <param name="baseOffset">Offset from the tiff header first byte</param>
     /// <returns>A GstBuffer containing the tag entries followed by the tag data</returns>
     public static Gst.Buffer? TagListToExifBuffer(Gst.TagList taglist, int byteOrder, uint baseOffset)
     {
@@ -592,7 +623,7 @@ public static unsafe partial class TagGlobal
     /// Formats the tags in taglist into exif structure, a tiff header
     /// is put in the beginning of the buffer.
     /// </summary>
-    /// <param name="taglist">The <c>taglist</c> argument.</param>
+    /// <param name="taglist">The taglist</param>
     /// <returns>A GstBuffer containing the data</returns>
     public static Gst.Buffer? TagListToExifBufferWithTiffHeader(Gst.TagList taglist)
     {
@@ -603,9 +634,9 @@ public static unsafe partial class TagGlobal
     }
 
     /// <summary>Creates a new vorbiscomment buffer from a tag list.</summary>
-    /// <param name="list">The <c>list</c> argument.</param>
+    /// <param name="list">tag list to convert</param>
     /// <param name="idData">identification data at start of stream</param>
-    /// <param name="vendorString">The <c>vendorString</c> argument.</param>
+    /// <param name="vendorString">string that describes the vendor string or NULL</param>
     /// <returns>
     /// A new #GstBuffer containing a vorbiscomment buffer with all tags
     ///          that could be converted from the given tag list.
@@ -629,8 +660,8 @@ public static unsafe partial class TagGlobal
     /// schemas. An empty list (%NULL) means that all schemas should
     /// be used
     /// </summary>
-    /// <param name="list">The <c>list</c> argument.</param>
-    /// <param name="readOnly">The <c>readOnly</c> argument.</param>
+    /// <param name="list">tags</param>
+    /// <param name="readOnly">does the container forbid inplace editing</param>
     /// <param name="schemas">    %NULL terminated array of schemas to be used on serialization</param>
     /// <returns>new buffer or %NULL, unref the buffer when done</returns>
     public static Gst.Buffer? TagListToXmpBuffer(Gst.TagList list, bool readOnly, string[]? schemas)
@@ -654,11 +685,11 @@ public static unsafe partial class TagGlobal
     /// code in the extended comment string.
     /// </para>
     /// </remarks>
-    /// <param name="extComment">The <c>extComment</c> argument.</param>
-    /// <param name="key">The <c>key</c> argument.</param>
-    /// <param name="lang">The <c>lang</c> argument.</param>
-    /// <param name="value">The <c>value</c> argument.</param>
-    /// <param name="failIfNoKey">The <c>failIfNoKey</c> argument.</param>
+    /// <param name="extComment">an extended comment string, see #GST_TAG_EXTENDED_COMMENT</param>
+    /// <param name="key">    return location for the comment description key, or NULL</param>
+    /// <param name="lang">    return location for the comment ISO-639 language code, or NULL</param>
+    /// <param name="value">return location for the actual comment string, or NULL</param>
+    /// <param name="failIfNoKey">whether to fail if strings are not in key=value form</param>
     /// <returns>TRUE if the string could be parsed, otherwise FALSE</returns>
     public static bool TagParseExtendedComment(string extComment, out string? key, out string? lang, out string? value, bool failIfNoKey)
     {
@@ -686,7 +717,7 @@ public static unsafe partial class TagGlobal
     }
 
     /// <summary>Looks up the ID3v2 tag for a GStreamer tag.</summary>
-    /// <param name="gstTag">The <c>gstTag</c> argument.</param>
+    /// <param name="gstTag">GStreamer tag to convert to vorbiscomment tag</param>
     /// <returns>The corresponding ID3v2 tag or NULL if none exists.</returns>
     public static string? TagToId3Tag(string gstTag)
     {
@@ -701,8 +732,8 @@ public static unsafe partial class TagGlobal
     /// Creates a new tag list that contains the information parsed out of a
     /// vorbiscomment packet.
     /// </summary>
-    /// <param name="list">The <c>list</c> argument.</param>
-    /// <param name="tag">The <c>tag</c> argument.</param>
+    /// <param name="list">a #GstTagList</param>
+    /// <param name="tag">a GStreamer tag identifier, such as #GST_TAG_ARTIST</param>
     /// <returns>
     /// A #GList of newly-allocated
     ///     key=value strings. Free with g_list_foreach (list, (GFunc) g_free, NULL)
@@ -730,7 +761,7 @@ public static unsafe partial class TagGlobal
     }
 
     /// <summary>Looks up the vorbiscomment tag for a GStreamer tag.</summary>
-    /// <param name="gstTag">The <c>gstTag</c> argument.</param>
+    /// <param name="gstTag">GStreamer tag to convert to vorbiscomment tag</param>
     /// <returns>The corresponding vorbiscomment tag or NULL if none exists.</returns>
     public static string? TagToVorbisTag(string gstTag)
     {
@@ -763,9 +794,9 @@ public static unsafe partial class TagGlobal
     /// of a #GST_TAG_EXTENDED_COMMENT.
     /// </para>
     /// </remarks>
-    /// <param name="list">The <c>list</c> argument.</param>
-    /// <param name="tag">The <c>tag</c> argument.</param>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="list">a #GstTagList</param>
+    /// <param name="tag">a vorbiscomment tag string (key in key=value), must be valid UTF-8</param>
+    /// <param name="value">a vorbiscomment value string (value in key=value), must be valid UTF-8</param>
     public static void VorbisTagAdd(Gst.TagList list, string tag, string value)
     {
         ArgumentNullException.ThrowIfNull(list);

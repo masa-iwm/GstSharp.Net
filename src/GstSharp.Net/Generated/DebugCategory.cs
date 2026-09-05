@@ -102,7 +102,7 @@ public sealed unsafe partial class DebugCategory
     /// &gt; change the threshold of categories as side effect. It is however a nice
     /// &gt; function to use when debugging (even from gdb).
     /// </summary>
-    /// <param name="level">The <c>level</c> argument.</param>
+    /// <param name="level">the #GstDebugLevel threshold to set.</param>
     public void SetThreshold(Gst.DebugLevel level)
     {
         GstDebugCategorySetThreshold(Handle, (int)level);

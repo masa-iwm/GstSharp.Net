@@ -273,7 +273,7 @@ public sealed unsafe partial class RTSPTransport
     /// Get the media type of @transport. This media type is typically
     /// used to generate #GstCaps events.
     /// </summary>
-    /// <param name="mediaType">The <c>mediaType</c> argument.</param>
+    /// <param name="mediaType">media type of @transport</param>
     /// <returns>#GST_RTSP_OK.</returns>
     public Gst.Rtsp.RTSPResult GetMediaType(out string? mediaType)
     {
@@ -295,9 +295,9 @@ public sealed unsafe partial class RTSPTransport
     /// needed/available for @trans.
     /// </para>
     /// </remarks>
-    /// <param name="trans">The <c>trans</c> argument.</param>
-    /// <param name="manager">The <c>manager</c> argument.</param>
-    /// <param name="option">The <c>option</c> argument.</param>
+    /// <param name="trans">a #GstRTSPTransMode</param>
+    /// <param name="manager">location to hold the result</param>
+    /// <param name="option">option index.</param>
     /// <returns>#GST_RTSP_OK.</returns>
     public static Gst.Rtsp.RTSPResult GetManager(Gst.Rtsp.RTSPTransMode trans, out string? manager, uint option)
     {
@@ -311,8 +311,8 @@ public sealed unsafe partial class RTSPTransport
     /// Get the mime type of the transport mode @trans. This mime type is typically
     /// used to generate #GstCaps events.
     /// </summary>
-    /// <param name="trans">The <c>trans</c> argument.</param>
-    /// <param name="mime">The <c>mime</c> argument.</param>
+    /// <param name="trans">a #GstRTSPTransMode</param>
+    /// <param name="mime">location to hold the result</param>
     /// <returns>#GST_RTSP_OK.</returns>
     [Obsolete("This functions only deals with the GstRTSPTransMode and only returns the mime type for #GST_RTSP_PROFILE_AVP. Use gst_rtsp_transport_get_media_type() instead.")]
     public static Gst.Rtsp.RTSPResult GetMime(Gst.Rtsp.RTSPTransMode trans, out string? mime)
@@ -327,7 +327,7 @@ public sealed unsafe partial class RTSPTransport
     /// Allocate a new initialized #GstRTSPTransport. Use gst_rtsp_transport_free()
     /// after usage.
     /// </summary>
-    /// <param name="transport">The <c>transport</c> argument.</param>
+    /// <param name="transport">location to hold the new #GstRTSPTransport</param>
     /// <returns>a #GstRTSPResult.</returns>
     public static Gst.Rtsp.RTSPResult New(out Gst.Rtsp.RTSPTransport? transport)
     {

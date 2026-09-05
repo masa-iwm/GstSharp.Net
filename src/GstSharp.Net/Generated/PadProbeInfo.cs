@@ -196,7 +196,7 @@ public sealed unsafe partial class PadProbeInfo
     /// <para>Available since GStreamer 1.28.</para>
     /// </remarks>
     /// <param name="buffer">
-    /// The <c>buffer</c> argument.
+    /// a #GstBuffer
     /// The call consumes it: <paramref name="buffer"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// It may be <see langword="null"/>, which is the absence of a payload and leaves
@@ -227,7 +227,7 @@ public sealed unsafe partial class PadProbeInfo
     /// <para>Available since GStreamer 1.28.</para>
     /// </remarks>
     /// <param name="list">
-    /// The <c>list</c> argument.
+    /// a #GstBufferList
     /// The call consumes it: <paramref name="list"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// It may be <see langword="null"/>, which is the absence of a payload and leaves
@@ -258,7 +258,7 @@ public sealed unsafe partial class PadProbeInfo
     /// <para>Available since GStreamer 1.28.</para>
     /// </remarks>
     /// <param name="event">
-    /// The <c>@event</c> argument.
+    /// a #GstEvent
     /// The call consumes it: <paramref name="event"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// It may be <see langword="null"/>, which is the absence of a payload and leaves
@@ -281,7 +281,7 @@ public sealed unsafe partial class PadProbeInfo
     /// <remarks>
     /// <para>Available since GStreamer 1.28.</para>
     /// </remarks>
-    /// <param name="flowRet">The <c>flowRet</c> argument.</param>
+    /// <param name="flowRet">A #GstFlowReturn</param>
     public void SetFlowReturn(Gst.FlowReturn flowRet)
     {
         GstPadProbeInfoSetFlowReturn(Handle, (int)flowRet);

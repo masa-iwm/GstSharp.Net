@@ -119,7 +119,7 @@ public unsafe partial class AudioBaseSink : Gst.Base.BaseSink
     }
 
     /// <summary>Controls the sink's alignment threshold.</summary>
-    /// <param name="alignmentThreshold">The <c>alignmentThreshold</c> argument.</param>
+    /// <param name="alignmentThreshold">the new alignment threshold in nanoseconds</param>
     public void SetAlignmentThreshold(Gst.ClockTime alignmentThreshold)
     {
         GstAudioBaseSinkSetAlignmentThreshold(Handle, alignmentThreshold.Nanoseconds);
@@ -127,7 +127,7 @@ public unsafe partial class AudioBaseSink : Gst.Base.BaseSink
     }
 
     /// <summary>Controls how long the sink will wait before creating a discontinuity.</summary>
-    /// <param name="discontWait">The <c>discontWait</c> argument.</param>
+    /// <param name="discontWait">the new discont wait in nanoseconds</param>
     public void SetDiscontWait(Gst.ClockTime discontWait)
     {
         GstAudioBaseSinkSetDiscontWait(Handle, discontWait.Nanoseconds);
@@ -135,7 +135,7 @@ public unsafe partial class AudioBaseSink : Gst.Base.BaseSink
     }
 
     /// <summary>Controls the sink's drift tolerance.</summary>
-    /// <param name="driftTolerance">The <c>driftTolerance</c> argument.</param>
+    /// <param name="driftTolerance">the new drift tolerance in microseconds</param>
     public void SetDriftTolerance(long driftTolerance)
     {
         GstAudioBaseSinkSetDriftTolerance(Handle, driftTolerance);
@@ -148,7 +148,7 @@ public unsafe partial class AudioBaseSink : Gst.Base.BaseSink
     /// of @sink. If @provide is %FALSE, gst_element_provide_clock() will return
     /// NULL.
     /// </summary>
-    /// <param name="provide">The <c>provide</c> argument.</param>
+    /// <param name="provide">new state</param>
     public void SetProvideClock(bool provide)
     {
         GstAudioBaseSinkSetProvideClock(Handle, provide ? 1 : 0);
@@ -156,7 +156,7 @@ public unsafe partial class AudioBaseSink : Gst.Base.BaseSink
     }
 
     /// <summary>Controls how clock slaving will be performed in @sink.</summary>
-    /// <param name="method">The <c>method</c> argument.</param>
+    /// <param name="method">the new slave method</param>
     public void SetSlaveMethod(Gst.Audio.AudioBaseSinkSlaveMethod method)
     {
         GstAudioBaseSinkSetSlaveMethod(Handle, (int)method);

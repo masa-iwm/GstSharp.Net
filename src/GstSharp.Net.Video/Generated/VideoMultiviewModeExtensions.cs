@@ -12,7 +12,7 @@ namespace Gst.Video;
 public static unsafe partial class VideoMultiviewModeExtensions
 {
     /// <summary>The <c>gst_video_multiview_mode_from_caps_string</c> function.</summary>
-    /// <param name="capsMviewMode">The <c>capsMviewMode</c> argument.</param>
+    /// <param name="capsMviewMode">multiview-mode field string from caps</param>
     /// <returns>The #GstVideoMultiviewMode value</returns>
     public static Gst.Video.VideoMultiviewMode FromCapsString(string capsMviewMode)
     {
@@ -27,7 +27,7 @@ public static unsafe partial class VideoMultiviewModeExtensions
     /// Given a #GstVideoMultiviewMode returns the multiview-mode caps string
     /// for insertion into a caps structure
     /// </summary>
-    /// <param name="mviewMode">The <c>mviewMode</c> argument.</param>
+    /// <param name="mviewMode">A #GstVideoMultiviewMode value</param>
     /// <returns>The caps string representation of the mode, or NULL if invalid.</returns>
     public static string? ToCapsString(Gst.Video.VideoMultiviewMode mviewMode)
     {

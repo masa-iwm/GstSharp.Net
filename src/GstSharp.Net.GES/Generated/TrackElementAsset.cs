@@ -41,8 +41,8 @@ public unsafe partial class TrackElementAsset : GES.Asset, GES.IMetaContainer
     }
 
     /// <summary>Result: %TRUE if @self has a natural framerate %FALSE otherwise</summary>
-    /// <param name="framerateN">The <c>framerateN</c> argument.</param>
-    /// <param name="framerateD">The <c>framerateD</c> argument.</param>
+    /// <param name="framerateN">The framerate numerator</param>
+    /// <param name="framerateD">The framerate denominator</param>
     /// <returns>The result of <c>ges_track_element_asset_get_natural_framerate</c>.</returns>
     public bool GetNaturalFramerate(out int framerateN, out int framerateD)
     {
@@ -71,7 +71,7 @@ public unsafe partial class TrackElementAsset : GES.Asset, GES.IMetaContainer
     /// Set the #GESTrackType the #GESTrackElement extracted from @self
     /// should get into
     /// </summary>
-    /// <param name="type">The <c>type</c> argument.</param>
+    /// <param name="type">A #GESTrackType</param>
     public void SetTrackType(GES.TrackType type)
     {
         GesTrackElementAssetSetTrackType(Handle, (int)type);

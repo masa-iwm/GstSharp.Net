@@ -79,7 +79,7 @@ public unsafe partial class SystemClock : Gst.Clock
     /// </para>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="newClock">The <c>newClock</c> argument.</param>
+    /// <param name="newClock">a #GstClock</param>
     public static void SetDefault(Gst.Clock? newClock)
     {
         GstSystemClockSetDefault(newClock is null ? 0 : newClock.Handle);

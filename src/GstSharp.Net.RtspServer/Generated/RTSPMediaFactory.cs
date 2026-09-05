@@ -82,7 +82,7 @@ public unsafe partial class RTSPMediaFactory : Gst.GObject.Object
     /// </para>
     /// <para>The returned media will be locked and must be unlocked afterwards.</para>
     /// </remarks>
-    /// <param name="url">The <c>url</c> argument.</param>
+    /// <param name="url">the url used</param>
     /// <returns>a new #GstRTSPMedia if the media could be prepared.</returns>
     public Gst.RtspServer.RTSPMedia? Construct(Gst.Rtsp.RTSPUrl url)
     {
@@ -104,7 +104,7 @@ public unsafe partial class RTSPMediaFactory : Gst.GObject.Object
     /// launch parameter.
     /// </para>
     /// </remarks>
-    /// <param name="url">The <c>url</c> argument.</param>
+    /// <param name="url">the url used</param>
     /// <returns>a new #GstElement.</returns>
     public Gst.Element? CreateElement(Gst.Rtsp.RTSPUrl url)
     {
@@ -356,7 +356,7 @@ public unsafe partial class RTSPMediaFactory : Gst.GObject.Object
     }
 
     /// <summary>configure @pool to be used as the address pool of @factory.</summary>
-    /// <param name="pool">The <c>pool</c> argument.</param>
+    /// <param name="pool">a #GstRTSPAddressPool</param>
     public void SetAddressPool(Gst.RtspServer.RTSPAddressPool? pool)
     {
         GstRtspMediaFactorySetAddressPool(Handle, pool is null ? 0 : pool.Handle);
@@ -368,7 +368,7 @@ public unsafe partial class RTSPMediaFactory : Gst.GObject.Object
     /// Decide whether the multicast socket should be bound to a multicast address or
     /// INADDR_ANY.
     /// </summary>
-    /// <param name="bindMcastAddr">The <c>bindMcastAddr</c> argument.</param>
+    /// <param name="bindMcastAddr">the new value</param>
     public void SetBindMcastAddress(bool bindMcastAddr)
     {
         GstRtspMediaFactorySetBindMcastAddress(Handle, bindMcastAddr ? 1 : 0);
@@ -376,7 +376,7 @@ public unsafe partial class RTSPMediaFactory : Gst.GObject.Object
     }
 
     /// <summary>Set the kernel UDP buffer size.</summary>
-    /// <param name="size">The <c>size</c> argument.</param>
+    /// <param name="size">the new value</param>
     public void SetBufferSize(uint size)
     {
         GstRtspMediaFactorySetBufferSize(Handle, size);
@@ -387,7 +387,7 @@ public unsafe partial class RTSPMediaFactory : Gst.GObject.Object
     /// Configures a specific clock to be used by the pipelines
     /// of all medias created from this factory.
     /// </summary>
-    /// <param name="clock">The <c>clock</c> argument.</param>
+    /// <param name="clock">the clock to be used by the media factory</param>
     public void SetClock(Gst.Clock? clock)
     {
         GstRtspMediaFactorySetClock(Handle, clock is null ? 0 : clock.Handle);
@@ -407,7 +407,7 @@ public unsafe partial class RTSPMediaFactory : Gst.GObject.Object
     }
 
     /// <summary>Configure the media dscp qos to @dscp_qos.</summary>
-    /// <param name="dscpQos">The <c>dscpQos</c> argument.</param>
+    /// <param name="dscpQos">a new dscp qos value (0-63, or -1 to disable)</param>
     public void SetDscpQos(int dscpQos)
     {
         GstRtspMediaFactorySetDscpQos(Handle, dscpQos);
@@ -415,7 +415,7 @@ public unsafe partial class RTSPMediaFactory : Gst.GObject.Object
     }
 
     /// <summary>Decide whether the created media should send and receive RTCP</summary>
-    /// <param name="enable">The <c>enable</c> argument.</param>
+    /// <param name="enable">the new value</param>
     public void SetEnableRtcp(bool enable)
     {
         GstRtspMediaFactorySetEnableRtcp(Handle, enable ? 1 : 0);
@@ -423,7 +423,7 @@ public unsafe partial class RTSPMediaFactory : Gst.GObject.Object
     }
 
     /// <summary>If media from this factory should ensure a key unit when a client connects.</summary>
-    /// <param name="ensureKeyunitOnStart">The <c>ensureKeyunitOnStart</c> argument.</param>
+    /// <param name="ensureKeyunitOnStart">the new value</param>
     public void SetEnsureKeyunitOnStart(bool ensureKeyunitOnStart)
     {
         GstRtspMediaFactorySetEnsureKeyunitOnStart(Handle, ensureKeyunitOnStart ? 1 : 0);
@@ -434,7 +434,7 @@ public unsafe partial class RTSPMediaFactory : Gst.GObject.Object
     /// Configures medias from this factory to consider keyunits older than timeout
     /// to be expired. Expired keyunits will be discarded.
     /// </summary>
-    /// <param name="timeout">The <c>timeout</c> argument.</param>
+    /// <param name="timeout">the new value</param>
     public void SetEnsureKeyunitOnStartTimeout(uint timeout)
     {
         GstRtspMediaFactorySetEnsureKeyunitOnStartTimeout(Handle, timeout);
@@ -445,7 +445,7 @@ public unsafe partial class RTSPMediaFactory : Gst.GObject.Object
     /// Configure if media created from this factory will have an EOS sent to the
     /// pipeline before shutdown.
     /// </summary>
-    /// <param name="eosShutdown">The <c>eosShutdown</c> argument.</param>
+    /// <param name="eosShutdown">the new value</param>
     public void SetEosShutdown(bool eosShutdown)
     {
         GstRtspMediaFactorySetEosShutdown(Handle, eosShutdown ? 1 : 0);
@@ -453,7 +453,7 @@ public unsafe partial class RTSPMediaFactory : Gst.GObject.Object
     }
 
     /// <summary>Configure the latency used for receiving media</summary>
-    /// <param name="latency">The <c>latency</c> argument.</param>
+    /// <param name="latency">latency in milliseconds</param>
     public void SetLatency(uint latency)
     {
         GstRtspMediaFactorySetLatency(Handle, latency);
@@ -475,7 +475,7 @@ public unsafe partial class RTSPMediaFactory : Gst.GObject.Object
     /// etc.. Each of the payloaders will result in a stream.
     /// </para>
     /// </remarks>
-    /// <param name="launch">The <c>launch</c> argument.</param>
+    /// <param name="launch">the launch description</param>
     public void SetLaunch(string launch)
     {
         ArgumentNullException.ThrowIfNull(launch);
@@ -486,7 +486,7 @@ public unsafe partial class RTSPMediaFactory : Gst.GObject.Object
     }
 
     /// <summary>Set the maximum time-to-live value of outgoing multicast packets.</summary>
-    /// <param name="ttl">The <c>ttl</c> argument.</param>
+    /// <param name="ttl">the new multicast ttl value</param>
     /// <returns>%TRUE if the requested ttl has been set successfully.</returns>
     public bool SetMaxMcastTtl(uint ttl)
     {
@@ -500,7 +500,7 @@ public unsafe partial class RTSPMediaFactory : Gst.GObject.Object
     /// create (by default, overridden construct vmethods
     /// may of course do something different)
     /// </summary>
-    /// <param name="mediaGtype">The <c>mediaGtype</c> argument.</param>
+    /// <param name="mediaGtype">the GType of the class to create</param>
     public void SetMediaGtype(Gst.GObject.GType mediaGtype)
     {
         GstRtspMediaFactorySetMediaGtype(Handle, mediaGtype.Value);
@@ -508,7 +508,7 @@ public unsafe partial class RTSPMediaFactory : Gst.GObject.Object
     }
 
     /// <summary>configure @multicast_iface to be used for @factory.</summary>
-    /// <param name="multicastIface">The <c>multicastIface</c> argument.</param>
+    /// <param name="multicastIface">a multicast interface name</param>
     public void SetMulticastIface(string? multicastIface)
     {
         System.Span<byte> multicastIfaceBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
@@ -518,7 +518,7 @@ public unsafe partial class RTSPMediaFactory : Gst.GObject.Object
     }
 
     /// <summary>Set @permissions on @factory.</summary>
-    /// <param name="permissions">The <c>permissions</c> argument.</param>
+    /// <param name="permissions">a #GstRTSPPermissions</param>
     public void SetPermissions(Gst.RtspServer.RTSPPermissions? permissions)
     {
         GstRtspMediaFactorySetPermissions(Handle, permissions is null ? 0 : permissions.Handle);
@@ -527,7 +527,7 @@ public unsafe partial class RTSPMediaFactory : Gst.GObject.Object
     }
 
     /// <summary>Configure the allowed profiles for @factory.</summary>
-    /// <param name="profiles">The <c>profiles</c> argument.</param>
+    /// <param name="profiles">the new flags</param>
     public void SetProfiles(Gst.Rtsp.RTSPProfile profiles)
     {
         GstRtspMediaFactorySetProfiles(Handle, (int)profiles);
@@ -535,7 +535,7 @@ public unsafe partial class RTSPMediaFactory : Gst.GObject.Object
     }
 
     /// <summary>Configure the allowed lower transport for @factory.</summary>
-    /// <param name="protocols">The <c>protocols</c> argument.</param>
+    /// <param name="protocols">the new flags</param>
     public void SetProtocols(Gst.Rtsp.RTSPLowerTrans protocols)
     {
         GstRtspMediaFactorySetProtocols(Handle, (int)protocols);
@@ -543,7 +543,7 @@ public unsafe partial class RTSPMediaFactory : Gst.GObject.Object
     }
 
     /// <summary>Sets if and how the media clock should be published according to RFC7273.</summary>
-    /// <param name="mode">The <c>mode</c> argument.</param>
+    /// <param name="mode">the clock publish mode</param>
     public void SetPublishClockMode(Gst.RtspServer.RTSPPublishClockMode mode)
     {
         GstRtspMediaFactorySetPublishClockMode(Handle, (int)mode);
@@ -551,7 +551,7 @@ public unsafe partial class RTSPMediaFactory : Gst.GObject.Object
     }
 
     /// <summary>Configure the time to store for possible retransmission</summary>
-    /// <param name="time">The <c>time</c> argument.</param>
+    /// <param name="time">a #GstClockTime</param>
     public void SetRetransmissionTime(Gst.ClockTime time)
     {
         GstRtspMediaFactorySetRetransmissionTime(Handle, time.Nanoseconds);
@@ -559,7 +559,7 @@ public unsafe partial class RTSPMediaFactory : Gst.GObject.Object
     }
 
     /// <summary>Configure if media created from this factory can be shared between clients.</summary>
-    /// <param name="shared">The <c>shared</c> argument.</param>
+    /// <param name="shared">the new value</param>
     public void SetShared(bool shared)
     {
         GstRtspMediaFactorySetShared(Handle, shared ? 1 : 0);
@@ -570,7 +570,7 @@ public unsafe partial class RTSPMediaFactory : Gst.GObject.Object
     /// Configure if media created from this factory should be stopped
     /// when a client disconnects without sending TEARDOWN.
     /// </summary>
-    /// <param name="stopOnDisconnect">The <c>stopOnDisconnect</c> argument.</param>
+    /// <param name="stopOnDisconnect">the new value</param>
     public void SetStopOnDisconnect(bool stopOnDisconnect)
     {
         GstRtspMediaFactorySetStopOnDisconnect(Handle, stopOnDisconnect ? 1 : 0);
@@ -578,7 +578,7 @@ public unsafe partial class RTSPMediaFactory : Gst.GObject.Object
     }
 
     /// <summary>Configure how media created from this factory will be suspended.</summary>
-    /// <param name="mode">The <c>mode</c> argument.</param>
+    /// <param name="mode">the new #GstRTSPSuspendMode</param>
     public void SetSuspendMode(Gst.RtspServer.RTSPSuspendMode mode)
     {
         GstRtspMediaFactorySetSuspendMode(Handle, (int)mode);
@@ -586,7 +586,7 @@ public unsafe partial class RTSPMediaFactory : Gst.GObject.Object
     }
 
     /// <summary>Configure if this factory creates media for PLAY or RECORD modes.</summary>
-    /// <param name="mode">The <c>mode</c> argument.</param>
+    /// <param name="mode">the new value</param>
     public void SetTransportMode(Gst.RtspServer.RTSPTransportMode mode)
     {
         GstRtspMediaFactorySetTransportMode(Handle, (int)mode);

@@ -12,7 +12,7 @@ namespace Gst.Rtsp;
 public static unsafe partial class RTSPVersionExtensions
 {
     /// <summary>Convert @version to a string.</summary>
-    /// <param name="version">The <c>version</c> argument.</param>
+    /// <param name="version">a #GstRTSPVersion</param>
     /// <returns>a string representation of @version.</returns>
     public static string AsText(Gst.Rtsp.RTSPVersion version)
     {

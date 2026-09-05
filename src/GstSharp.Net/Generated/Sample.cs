@@ -60,11 +60,11 @@ public sealed unsafe partial class Sample : Gst.MiniObject
     /// <c>using</c> declaration around the argument stays correct.
     /// </para>
     /// </remarks>
-    /// <param name="buffer">The <c>buffer</c> argument.</param>
-    /// <param name="caps">The <c>caps</c> argument.</param>
-    /// <param name="segment">The <c>segment</c> argument.</param>
+    /// <param name="buffer">a #GstBuffer, or %NULL</param>
+    /// <param name="caps">a #GstCaps, or %NULL</param>
+    /// <param name="segment">a #GstSegment, or %NULL</param>
     /// <param name="info">
-    /// The <c>info</c> argument.
+    /// a #GstStructure, or %NULL
     /// The call consumes it: <paramref name="info"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// It may be <see langword="null"/>, which is the absence of a payload and leaves
@@ -238,7 +238,7 @@ public sealed unsafe partial class Sample : Gst.MiniObject
     }
 
     /// <summary>Set the buffer associated with @sample. @sample must be writable.</summary>
-    /// <param name="buffer">The <c>buffer</c> argument.</param>
+    /// <param name="buffer">A #GstBuffer</param>
     public void SetBuffer(Gst.Buffer buffer)
     {
         ArgumentNullException.ThrowIfNull(buffer);
@@ -248,7 +248,7 @@ public sealed unsafe partial class Sample : Gst.MiniObject
     }
 
     /// <summary>Set the buffer list associated with @sample. @sample must be writable.</summary>
-    /// <param name="bufferList">The <c>bufferList</c> argument.</param>
+    /// <param name="bufferList">a #GstBufferList</param>
     public void SetBufferList(Gst.BufferList bufferList)
     {
         ArgumentNullException.ThrowIfNull(bufferList);
@@ -258,7 +258,7 @@ public sealed unsafe partial class Sample : Gst.MiniObject
     }
 
     /// <summary>Set the caps associated with @sample. @sample must be writable.</summary>
-    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <param name="caps">A #GstCaps</param>
     public void SetCaps(Gst.Caps caps)
     {
         ArgumentNullException.ThrowIfNull(caps);
@@ -282,7 +282,7 @@ public sealed unsafe partial class Sample : Gst.MiniObject
     /// </para>
     /// </remarks>
     /// <param name="info">
-    /// The <c>info</c> argument.
+    /// A #GstStructure
     /// The call consumes it: <paramref name="info"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// </param>
@@ -307,7 +307,7 @@ public sealed unsafe partial class Sample : Gst.MiniObject
     }
 
     /// <summary>Set the segment associated with @sample. @sample must be writable.</summary>
-    /// <param name="segment">The <c>segment</c> argument.</param>
+    /// <param name="segment">A #GstSegment</param>
     public void SetSegment(Gst.Segment segment)
     {
         ArgumentNullException.ThrowIfNull(segment);

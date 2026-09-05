@@ -125,7 +125,10 @@ public abstract unsafe partial class BaseEffect : GES.Operation, GES.IExtractabl
     /// #GESTrackElement:has-internal-source set to %TRUE.
     /// </para>
     /// </remarks>
-    /// <param name="childPropertyName">The <c>childPropertyName</c> argument.</param>
+    /// <param name="childPropertyName">
+    /// The name of the child property to register as
+    /// a time property
+    /// </param>
     /// <returns>%TRUE if the child property was found and newly registered.</returns>
     public bool RegisterTimeProperty(string childPropertyName)
     {

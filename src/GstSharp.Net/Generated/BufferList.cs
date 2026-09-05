@@ -69,7 +69,7 @@ public sealed unsafe partial class BufferList : Gst.MiniObject
     /// Creates a new, empty #GstBufferList. The list will have @size space
     /// preallocated so that memory reallocations can be avoided.
     /// </summary>
-    /// <param name="size">The <c>size</c> argument.</param>
+    /// <param name="size">an initial reserved size</param>
     /// <returns>the new #GstBufferList.</returns>
     public static Gst.BufferList NewSized(uint size)
     {
@@ -110,7 +110,7 @@ public sealed unsafe partial class BufferList : Gst.MiniObject
     /// buffers available.
     /// </para>
     /// </remarks>
-    /// <param name="idx">The <c>idx</c> argument.</param>
+    /// <param name="idx">the index</param>
     /// <returns>
     /// the buffer at @idx in @group.
     ///     The returned buffer remains valid as long as @list is valid and
@@ -134,7 +134,7 @@ public sealed unsafe partial class BufferList : Gst.MiniObject
     /// buffers available.
     /// </para>
     /// </remarks>
-    /// <param name="idx">The <c>idx</c> argument.</param>
+    /// <param name="idx">the index</param>
     /// <returns>
     /// the buffer at @idx in @group.
     ///     The returned buffer remains valid as long as @list is valid and
@@ -165,9 +165,9 @@ public sealed unsafe partial class BufferList : Gst.MiniObject
     /// declaration around the argument stays correct.
     /// </para>
     /// </remarks>
-    /// <param name="idx">The <c>idx</c> argument.</param>
+    /// <param name="idx">the index</param>
     /// <param name="buffer">
-    /// The <c>buffer</c> argument.
+    /// a #GstBuffer
     /// The call consumes it: <paramref name="buffer"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// </param>
@@ -253,8 +253,8 @@ public sealed unsafe partial class BufferList : Gst.MiniObject
     /// Removes @length buffers starting from @idx in @list. The following buffers
     /// are moved to close the gap.
     /// </summary>
-    /// <param name="idx">The <c>idx</c> argument.</param>
-    /// <param name="length">The <c>length</c> argument.</param>
+    /// <param name="idx">the index</param>
+    /// <param name="length">the amount to remove</param>
     public void Remove(uint idx, uint length)
     {
         GstBufferListRemove(Handle, idx, length);

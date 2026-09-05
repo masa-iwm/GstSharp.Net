@@ -84,8 +84,8 @@ public unsafe partial class PtpClock : Gst.SystemClock
     /// gst_clock_is_synced().
     /// </para>
     /// </remarks>
-    /// <param name="name">The <c>name</c> argument.</param>
-    /// <param name="domain">The <c>domain</c> argument.</param>
+    /// <param name="name">Name of the clock</param>
+    /// <param name="domain">PTP domain</param>
     /// <returns>A new #GstClock</returns>
     public static Gst.Net.PtpClock? New(string? name, uint domain)
     {

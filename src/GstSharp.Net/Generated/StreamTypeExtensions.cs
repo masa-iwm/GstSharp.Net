@@ -12,7 +12,7 @@ namespace Gst;
 public static unsafe partial class StreamTypeExtensions
 {
     /// <summary>Get a descriptive string for a given #GstStreamType</summary>
-    /// <param name="stype">The <c>stype</c> argument.</param>
+    /// <param name="stype">a #GstStreamType</param>
     /// <returns>A string describing the stream type</returns>
     public static string GetName(Gst.StreamType stype)
     {

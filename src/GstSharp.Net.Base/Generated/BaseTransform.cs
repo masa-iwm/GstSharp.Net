@@ -164,9 +164,12 @@ public abstract unsafe partial class BaseTransform : Gst.Element
     /// <remarks>
     /// <para>Unref the @allocator after use.</para>
     /// </remarks>
-    /// <param name="allocator">The <c>allocator</c> argument.</param>
+    /// <param name="allocator">
+    /// the #GstAllocator
+    /// used
+    /// </param>
     /// <param name="params">
-    /// The <c>@params</c> argument.
+    /// the #GstAllocationParams of @allocator
     /// The binding allocates the storage; on return the caller owns
     /// <paramref name="params"/> and disposes it.
     /// </param>
@@ -283,7 +286,7 @@ public abstract unsafe partial class BaseTransform : Gst.Element
     /// </para>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="gapAware">The <c>gapAware</c> argument.</param>
+    /// <param name="gapAware">New state</param>
     public void SetGapAware(bool gapAware)
     {
         GstBaseTransformSetGapAware(Handle, gapAware ? 1 : 0);
@@ -301,7 +304,10 @@ public abstract unsafe partial class BaseTransform : Gst.Element
     /// </para>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="inPlace">The <c>inPlace</c> argument.</param>
+    /// <param name="inPlace">
+    /// Boolean value indicating that we would like to operate
+    /// on in_place buffers.
+    /// </param>
     public void SetInPlace(bool inPlace)
     {
         GstBaseTransformSetInPlace(Handle, inPlace ? 1 : 0);
@@ -319,7 +325,7 @@ public abstract unsafe partial class BaseTransform : Gst.Element
     /// </para>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="passthrough">The <c>passthrough</c> argument.</param>
+    /// <param name="passthrough">boolean indicating passthrough mode.</param>
     public void SetPassthrough(bool passthrough)
     {
         GstBaseTransformSetPassthrough(Handle, passthrough ? 1 : 0);
@@ -341,7 +347,7 @@ public abstract unsafe partial class BaseTransform : Gst.Element
     /// </para>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="preferPassthrough">The <c>preferPassthrough</c> argument.</param>
+    /// <param name="preferPassthrough">New state</param>
     public void SetPreferPassthrough(bool preferPassthrough)
     {
         GstBaseTransformSetPreferPassthrough(Handle, preferPassthrough ? 1 : 0);
@@ -352,7 +358,7 @@ public abstract unsafe partial class BaseTransform : Gst.Element
     /// <remarks>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="enabled">The <c>enabled</c> argument.</param>
+    /// <param name="enabled">new state</param>
     public void SetQosEnabled(bool enabled)
     {
         GstBaseTransformSetQosEnabled(Handle, enabled ? 1 : 0);
@@ -367,9 +373,12 @@ public abstract unsafe partial class BaseTransform : Gst.Element
     /// <remarks>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="proportion">The <c>proportion</c> argument.</param>
-    /// <param name="diff">The <c>diff</c> argument.</param>
-    /// <param name="timestamp">The <c>timestamp</c> argument.</param>
+    /// <param name="proportion">the proportion</param>
+    /// <param name="diff">the diff against the clock</param>
+    /// <param name="timestamp">
+    /// the timestamp of the buffer generating the QoS expressed in
+    /// running_time.
+    /// </param>
     public void UpdateQos(double proportion, long diff, Gst.ClockTime timestamp)
     {
         GstBaseTransformUpdateQos(Handle, proportion, diff, timestamp.Nanoseconds);
@@ -383,7 +392,10 @@ public abstract unsafe partial class BaseTransform : Gst.Element
     /// they can notify downstream about that change without losing any
     /// buffer.
     /// </summary>
-    /// <param name="updatedCaps">The <c>updatedCaps</c> argument.</param>
+    /// <param name="updatedCaps">
+    /// An updated version of the srcpad caps to be pushed
+    /// downstream
+    /// </param>
     /// <returns>%TRUE if the caps could be sent downstream %FALSE otherwise</returns>
     public bool UpdateSrcCaps(Gst.Caps updatedCaps)
     {

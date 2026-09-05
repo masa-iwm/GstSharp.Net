@@ -50,7 +50,7 @@ public unsafe partial class MarkerList : Gst.GObject.Object
     }
 
     /// <summary>The <c>ges_marker_list_add</c> function.</summary>
-    /// <param name="position">The <c>position</c> argument.</param>
+    /// <param name="position">The position of the new marker</param>
     /// <returns>
     /// The newly-added marker, the list keeps ownership
     /// of the marker

@@ -49,8 +49,8 @@ public sealed unsafe partial class VideoVBIParser : Gst.GObject.Boxed
         handle == 0 ? null : new(handle, transfer);
 
     /// <summary>Create a new #GstVideoVBIParser for the specified @format and @pixel_width.</summary>
-    /// <param name="format">The <c>format</c> argument.</param>
-    /// <param name="pixelWidth">The <c>pixelWidth</c> argument.</param>
+    /// <param name="format">a #GstVideoFormat</param>
+    /// <param name="pixelWidth">The width in pixel to use</param>
     /// <returns>
     /// The new #GstVideoVBIParser or %NULL if the @format and/or @pixel_width
     /// is not supported.
@@ -72,7 +72,7 @@ public sealed unsafe partial class VideoVBIParser : Gst.GObject.Boxed
     }
 
     /// <summary>Parse the line provided previously by gst_video_vbi_parser_add_line().</summary>
-    /// <param name="anc">The <c>anc</c> argument.</param>
+    /// <param name="anc">a #GstVideoAncillary to start the eventual ancillary data</param>
     /// <returns>
     /// %GST_VIDEO_VBI_PARSER_RESULT_OK if ancillary data was found and
     /// @anc was filled. %GST_VIDEO_VBI_PARSER_RESULT_DONE if there wasn't any

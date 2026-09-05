@@ -70,7 +70,7 @@ public unsafe partial class RTSPServer : Gst.GObject.Object
     /// gst_rtsp_server_create_source() and attach it to @context manually.
     /// </para>
     /// </remarks>
-    /// <param name="context">The <c>context</c> argument.</param>
+    /// <param name="context">a #GMainContext</param>
     /// <returns>the ID (greater than 0) for the source within the GMainContext.</returns>
     public uint Attach(Gst.GLib.MainContext? context)
     {
@@ -134,7 +134,7 @@ public unsafe partial class RTSPServer : Gst.GObject.Object
     /// Create a #GSocket for @server. The socket will listen on the
     /// configured service.
     /// </summary>
-    /// <param name="cancellable">The <c>cancellable</c> argument.</param>
+    /// <param name="cancellable">a #GCancellable</param>
     /// <returns>
     /// the #GSocket for @server or %NULL when an error
     /// occurred.
@@ -255,7 +255,7 @@ public unsafe partial class RTSPServer : Gst.GObject.Object
     /// <remarks>
     /// <para>This function must be called before the server is bound.</para>
     /// </remarks>
-    /// <param name="address">The <c>address</c> argument.</param>
+    /// <param name="address">the address</param>
     public void SetAddress(string address)
     {
         ArgumentNullException.ThrowIfNull(address);
@@ -266,7 +266,7 @@ public unsafe partial class RTSPServer : Gst.GObject.Object
     }
 
     /// <summary>configure @auth to be used as the authentication manager of @server.</summary>
-    /// <param name="auth">The <c>auth</c> argument.</param>
+    /// <param name="auth">a #GstRTSPAuth</param>
     public void SetAuth(Gst.RtspServer.RTSPAuth? auth)
     {
         GstRtspServerSetAuth(Handle, auth is null ? 0 : auth.Handle);
@@ -281,7 +281,7 @@ public unsafe partial class RTSPServer : Gst.GObject.Object
     /// <remarks>
     /// <para>This function must be called before the server is bound.</para>
     /// </remarks>
-    /// <param name="backlog">The <c>backlog</c> argument.</param>
+    /// <param name="backlog">the backlog</param>
     public void SetBacklog(int backlog)
     {
         GstRtspServerSetBacklog(Handle, backlog);
@@ -300,7 +300,7 @@ public unsafe partial class RTSPServer : Gst.GObject.Object
     }
 
     /// <summary>configure @mounts to be used as the mount points of @server.</summary>
-    /// <param name="mounts">The <c>mounts</c> argument.</param>
+    /// <param name="mounts">a #GstRTSPMountPoints</param>
     public void SetMountPoints(Gst.RtspServer.RTSPMountPoints? mounts)
     {
         GstRtspServerSetMountPoints(Handle, mounts is null ? 0 : mounts.Handle);
@@ -321,7 +321,7 @@ public unsafe partial class RTSPServer : Gst.GObject.Object
     /// </para>
     /// <para>This function must be called before the server is bound.</para>
     /// </remarks>
-    /// <param name="service">The <c>service</c> argument.</param>
+    /// <param name="service">the service</param>
     public void SetService(string service)
     {
         ArgumentNullException.ThrowIfNull(service);
@@ -332,7 +332,7 @@ public unsafe partial class RTSPServer : Gst.GObject.Object
     }
 
     /// <summary>configure @pool to be used as the session pool of @server.</summary>
-    /// <param name="pool">The <c>pool</c> argument.</param>
+    /// <param name="pool">a #GstRTSPSessionPool</param>
     public void SetSessionPool(Gst.RtspServer.RTSPSessionPool? pool)
     {
         GstRtspServerSetSessionPool(Handle, pool is null ? 0 : pool.Handle);
@@ -341,7 +341,7 @@ public unsafe partial class RTSPServer : Gst.GObject.Object
     }
 
     /// <summary>configure @pool to be used as the thread pool of @server.</summary>
-    /// <param name="pool">The <c>pool</c> argument.</param>
+    /// <param name="pool">a #GstRTSPThreadPool</param>
     public void SetThreadPool(Gst.RtspServer.RTSPThreadPool? pool)
     {
         GstRtspServerSetThreadPool(Handle, pool is null ? 0 : pool.Handle);
@@ -368,13 +368,13 @@ public unsafe partial class RTSPServer : Gst.GObject.Object
     /// </para>
     /// </remarks>
     /// <param name="socket">
-    /// The <c>socket</c> argument.
+    /// a network socket
     /// The call consumes it: <paramref name="socket"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// </param>
-    /// <param name="ip">The <c>ip</c> argument.</param>
-    /// <param name="port">The <c>port</c> argument.</param>
-    /// <param name="initialBuffer">The <c>initialBuffer</c> argument.</param>
+    /// <param name="ip">the IP address of the remote client</param>
+    /// <param name="port">the port used by the other end</param>
+    /// <param name="initialBuffer">any initial data that was already read from the socket</param>
     /// <returns>TRUE if all was ok, FALSE if an error occurred.</returns>
     /// <exception cref="ArgumentNullException">
     /// <paramref name="socket"/> is <see langword="null"/>.

@@ -46,7 +46,7 @@ public abstract unsafe partial class ControlBinding : Gst.Object
     }
 
     /// <summary>Gets the value for the given controlled property at the requested time.</summary>
-    /// <param name="timestamp">The <c>timestamp</c> argument.</param>
+    /// <param name="timestamp">the time the control-change should be read from</param>
     /// <returns>
     /// the GValue of the property at the given time,
     /// or %NULL if the property isn't controlled.
@@ -73,7 +73,10 @@ public abstract unsafe partial class ControlBinding : Gst.Object
     /// This function is used to disable a control binding for some time, i.e.
     /// gst_object_sync_values() will do nothing.
     /// </summary>
-    /// <param name="disabled">The <c>disabled</c> argument.</param>
+    /// <param name="disabled">
+    /// boolean that specifies whether to disable the controller
+    /// or not.
+    /// </param>
     public void SetDisabled(bool disabled)
     {
         GstControlBindingSetDisabled(Handle, disabled ? 1 : 0);
@@ -90,9 +93,9 @@ public abstract unsafe partial class ControlBinding : Gst.Object
     /// Most probably the control sources are not setup correctly.
     /// </para>
     /// </remarks>
-    /// <param name="object">The <c>@object</c> argument.</param>
-    /// <param name="timestamp">The <c>timestamp</c> argument.</param>
-    /// <param name="lastSync">The <c>lastSync</c> argument.</param>
+    /// <param name="object">the object that has controlled properties</param>
+    /// <param name="timestamp">the time that should be processed</param>
+    /// <param name="lastSync">the last time this was called</param>
     /// <returns>
     /// %TRUE if the controller value could be applied to the object
     /// property, %FALSE otherwise

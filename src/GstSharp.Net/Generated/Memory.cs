@@ -177,8 +177,8 @@ public sealed unsafe partial class Memory : Gst.MiniObject
     /// guaranteed to be writable. @size can be set to -1 to return a copy
     /// from @offset to the end of the memory region.
     /// </summary>
-    /// <param name="offset">The <c>offset</c> argument.</param>
-    /// <param name="size">The <c>size</c> argument.</param>
+    /// <param name="offset">offset to copy from</param>
+    /// <param name="size">size to copy, or -1 to copy to the end of the memory region</param>
     /// <returns>a new copy of @mem if the copy succeeded, %NULL otherwise.</returns>
     public Gst.Memory? Copy(nint offset, nint size)
     {
@@ -188,8 +188,8 @@ public sealed unsafe partial class Memory : Gst.MiniObject
     }
 
     /// <summary>Get the current @size, @offset and @maxsize of @mem.</summary>
-    /// <param name="offset">The <c>offset</c> argument.</param>
-    /// <param name="maxsize">The <c>maxsize</c> argument.</param>
+    /// <param name="offset">pointer to offset</param>
+    /// <param name="maxsize">pointer to maxsize</param>
     /// <returns>the current size of @mem</returns>
     public nuint GetSizes(out nuint offset, out nuint maxsize)
     {
@@ -213,8 +213,8 @@ public sealed unsafe partial class Memory : Gst.MiniObject
     /// the returned @offset.
     /// </para>
     /// </remarks>
-    /// <param name="mem2">The <c>mem2</c> argument.</param>
-    /// <param name="offset">The <c>offset</c> argument.</param>
+    /// <param name="mem2">a #GstMemory</param>
+    /// <param name="offset">a pointer to a result offset</param>
     /// <returns>%TRUE if the memory is contiguous and of a common parent.</returns>
     public bool IsSpan(Gst.Memory mem2, out nuint offset)
     {
@@ -228,7 +228,7 @@ public sealed unsafe partial class Memory : Gst.MiniObject
     }
 
     /// <summary>Check if @mem if allocated with an allocator for @mem_type.</summary>
-    /// <param name="memType">The <c>memType</c> argument.</param>
+    /// <param name="memType">a memory type</param>
     /// <returns>%TRUE if @mem was allocated from an allocator for @mem_type.</returns>
     public bool IsType(string memType)
     {
@@ -272,8 +272,8 @@ public sealed unsafe partial class Memory : Gst.MiniObject
     /// this wrapper keeps its own.
     /// </para>
     /// </remarks>
-    /// <param name="info">The <c>info</c> argument.</param>
-    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <param name="info">pointer for info</param>
+    /// <param name="flags">mapping flags</param>
     /// <returns>
     /// a #GstMemory object mapped
     /// with @flags or %NULL when a mapping is not possible.
@@ -360,8 +360,8 @@ public sealed unsafe partial class Memory : Gst.MiniObject
     /// should be done.
     /// </para>
     /// </remarks>
-    /// <param name="info">The <c>info</c> argument.</param>
-    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <param name="info">pointer for info</param>
+    /// <param name="flags">mapping flags</param>
     /// <returns>%TRUE if the map operation was successful.</returns>
     public bool Map(out Gst.MapInfo info, Gst.MapFlags flags)
     {
@@ -382,8 +382,8 @@ public sealed unsafe partial class Memory : Gst.MiniObject
     /// cleared when offset or padding is increased respectively.
     /// </para>
     /// </remarks>
-    /// <param name="offset">The <c>offset</c> argument.</param>
-    /// <param name="size">The <c>size</c> argument.</param>
+    /// <param name="offset">a new offset</param>
+    /// <param name="size">a new size</param>
     public void Resize(nint offset, nuint size)
     {
         GstMemoryResize(Handle, offset, size);
@@ -396,8 +396,8 @@ public sealed unsafe partial class Memory : Gst.MiniObject
     /// is guaranteed to be non-writable. @size can be set to -1 to return a shared
     /// copy from @offset to the end of the memory region.
     /// </summary>
-    /// <param name="offset">The <c>offset</c> argument.</param>
-    /// <param name="size">The <c>size</c> argument.</param>
+    /// <param name="offset">offset to share from</param>
+    /// <param name="size">size to share, or -1 to share to the end of the memory region</param>
     /// <returns>a new #GstMemory.</returns>
     public Gst.Memory Share(nint offset, nint size)
     {
@@ -408,7 +408,7 @@ public sealed unsafe partial class Memory : Gst.MiniObject
     }
 
     /// <summary>Release the memory obtained with gst_memory_map()</summary>
-    /// <param name="info">The <c>info</c> argument.</param>
+    /// <param name="info">a #GstMapInfo</param>
     public void Unmap(Gst.MapInfo info)
     {
         Gst.MapInfo infoNative = info;

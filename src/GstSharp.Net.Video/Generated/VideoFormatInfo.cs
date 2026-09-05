@@ -341,7 +341,7 @@ public sealed unsafe partial class VideoFormatInfo
     /// for the format @info. A value of -1 in @components indicates that no more
     /// components are packed in the plane.
     /// </summary>
-    /// <param name="plane">The <c>plane</c> argument.</param>
+    /// <param name="plane">a plane number</param>
     /// <param name="components">array used to store component numbers</param>
     public void Component(uint plane, out Gst.Video.VideoFormatInfo.ComponentsArray components)
     {
@@ -355,8 +355,8 @@ public sealed unsafe partial class VideoFormatInfo
     /// Extrapolate @plane stride from the first stride of an image. This helper is
     /// useful to support legacy API were only one stride is supported.
     /// </summary>
-    /// <param name="plane">The <c>plane</c> argument.</param>
-    /// <param name="stride">The <c>stride</c> argument.</param>
+    /// <param name="plane">a plane number</param>
+    /// <param name="stride">The fist plane stride</param>
     /// <returns>The extrapolated stride for @plane</returns>
     public int ExtrapolateStride(int plane, int stride)
     {

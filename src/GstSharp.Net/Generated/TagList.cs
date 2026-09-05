@@ -64,7 +64,7 @@ public sealed unsafe partial class TagList : Gst.MiniObject
     }
 
     /// <summary>Deserializes a tag list.</summary>
-    /// <param name="str">The <c>str</c> argument.</param>
+    /// <param name="str">a string created with gst_tag_list_to_string()</param>
     /// <returns>
     /// a new #GstTagList, or %NULL in case of an
     /// error.
@@ -125,8 +125,8 @@ public sealed unsafe partial class TagList : Gst.MiniObject
     /// Copies the contents for the given tag into the value, merging multiple values
     /// into one if multiple values are associated with the tag.
     /// </summary>
-    /// <param name="tag">The <c>tag</c> argument.</param>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="tag">tag to read out</param>
+    /// <param name="value">location for the result</param>
     /// <returns>
     /// %TRUE, if a value was copied, %FALSE if the tag didn't exist in the
     ///              given list.
@@ -147,9 +147,9 @@ public sealed unsafe partial class TagList : Gst.MiniObject
     /// Gets the value that is at the given index for the given tag in the given
     /// list.
     /// </summary>
-    /// <param name="tag">The <c>tag</c> argument.</param>
-    /// <param name="index">The <c>index</c> argument.</param>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="tag">tag to read out</param>
+    /// <param name="index">number of entry to read out</param>
+    /// <param name="value">location for the result</param>
     /// <returns>
     /// %TRUE, if a value was copied, %FALSE if the tag didn't exist in the
     ///              given list.
@@ -174,9 +174,10 @@ public sealed unsafe partial class TagList : Gst.MiniObject
     /// <remarks>
     /// <para>Free-function: g_date_free</para>
     /// </remarks>
-    /// <param name="tag">The <c>tag</c> argument.</param>
+    /// <param name="tag">tag to read out</param>
     /// <param name="value">
-    /// The <c>value</c> argument.
+    /// address of a GDate pointer
+    ///     variable to store the result into
     /// The date the call produced, or <see langword="null"/> when it produced
     /// none. A false answer always leaves it null, and on a generic value — a
     /// field of a structure or of a meta container — a true one may as well:
@@ -208,10 +209,10 @@ public sealed unsafe partial class TagList : Gst.MiniObject
     /// <remarks>
     /// <para>Free-function: g_date_free</para>
     /// </remarks>
-    /// <param name="tag">The <c>tag</c> argument.</param>
-    /// <param name="index">The <c>index</c> argument.</param>
+    /// <param name="tag">tag to read out</param>
+    /// <param name="index">number of entry to read out</param>
     /// <param name="value">
-    /// The <c>value</c> argument.
+    /// location for the result
     /// The date the call produced, or <see langword="null"/> when it produced
     /// none. A false answer always leaves it null, and on a generic value — a
     /// field of a structure or of a meta container — a true one may as well:
@@ -243,8 +244,11 @@ public sealed unsafe partial class TagList : Gst.MiniObject
     /// <remarks>
     /// <para>Free-function: gst_date_time_unref</para>
     /// </remarks>
-    /// <param name="tag">The <c>tag</c> argument.</param>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="tag">tag to read out</param>
+    /// <param name="value">
+    /// address of a #GstDateTime
+    ///     pointer variable to store the result into
+    /// </param>
     /// <returns>
     /// %TRUE, if a datetime was copied, %FALSE if the tag didn't exist in
     ///              the given list or if it was %NULL.
@@ -269,9 +273,9 @@ public sealed unsafe partial class TagList : Gst.MiniObject
     /// <remarks>
     /// <para>Free-function: gst_date_time_unref</para>
     /// </remarks>
-    /// <param name="tag">The <c>tag</c> argument.</param>
-    /// <param name="index">The <c>index</c> argument.</param>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="tag">tag to read out</param>
+    /// <param name="index">number of entry to read out</param>
+    /// <param name="value">location for the result</param>
     /// <returns>
     /// %TRUE, if a value was copied, %FALSE if the tag didn't exist in the
     ///              given list or if it was %NULL.
@@ -292,8 +296,8 @@ public sealed unsafe partial class TagList : Gst.MiniObject
     /// Copies the contents for the given tag into the value, merging multiple values
     /// into one if multiple values are associated with the tag.
     /// </summary>
-    /// <param name="tag">The <c>tag</c> argument.</param>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="tag">tag to read out</param>
+    /// <param name="value">location for the result</param>
     /// <returns>
     /// %TRUE, if a value was copied, %FALSE if the tag didn't exist in the
     ///              given list.
@@ -314,9 +318,9 @@ public sealed unsafe partial class TagList : Gst.MiniObject
     /// Gets the value that is at the given index for the given tag in the given
     /// list.
     /// </summary>
-    /// <param name="tag">The <c>tag</c> argument.</param>
-    /// <param name="index">The <c>index</c> argument.</param>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="tag">tag to read out</param>
+    /// <param name="index">number of entry to read out</param>
+    /// <param name="value">location for the result</param>
     /// <returns>
     /// %TRUE, if a value was copied, %FALSE if the tag didn't exist in the
     ///              given list.
@@ -337,8 +341,8 @@ public sealed unsafe partial class TagList : Gst.MiniObject
     /// Copies the contents for the given tag into the value, merging multiple values
     /// into one if multiple values are associated with the tag.
     /// </summary>
-    /// <param name="tag">The <c>tag</c> argument.</param>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="tag">tag to read out</param>
+    /// <param name="value">location for the result</param>
     /// <returns>
     /// %TRUE, if a value was copied, %FALSE if the tag didn't exist in the
     ///              given list.
@@ -359,9 +363,9 @@ public sealed unsafe partial class TagList : Gst.MiniObject
     /// Gets the value that is at the given index for the given tag in the given
     /// list.
     /// </summary>
-    /// <param name="tag">The <c>tag</c> argument.</param>
-    /// <param name="index">The <c>index</c> argument.</param>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="tag">tag to read out</param>
+    /// <param name="index">number of entry to read out</param>
+    /// <param name="value">location for the result</param>
     /// <returns>
     /// %TRUE, if a value was copied, %FALSE if the tag didn't exist in the
     ///              given list.
@@ -382,8 +386,8 @@ public sealed unsafe partial class TagList : Gst.MiniObject
     /// Copies the contents for the given tag into the value, merging multiple values
     /// into one if multiple values are associated with the tag.
     /// </summary>
-    /// <param name="tag">The <c>tag</c> argument.</param>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="tag">tag to read out</param>
+    /// <param name="value">location for the result</param>
     /// <returns>
     /// %TRUE, if a value was copied, %FALSE if the tag didn't exist in the
     ///              given list.
@@ -404,8 +408,8 @@ public sealed unsafe partial class TagList : Gst.MiniObject
     /// Copies the contents for the given tag into the value, merging multiple values
     /// into one if multiple values are associated with the tag.
     /// </summary>
-    /// <param name="tag">The <c>tag</c> argument.</param>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="tag">tag to read out</param>
+    /// <param name="value">location for the result</param>
     /// <returns>
     /// %TRUE, if a value was copied, %FALSE if the tag didn't exist in the
     ///              given list.
@@ -426,9 +430,9 @@ public sealed unsafe partial class TagList : Gst.MiniObject
     /// Gets the value that is at the given index for the given tag in the given
     /// list.
     /// </summary>
-    /// <param name="tag">The <c>tag</c> argument.</param>
-    /// <param name="index">The <c>index</c> argument.</param>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="tag">tag to read out</param>
+    /// <param name="index">number of entry to read out</param>
+    /// <param name="value">location for the result</param>
     /// <returns>
     /// %TRUE, if a value was copied, %FALSE if the tag didn't exist in the
     ///              given list.
@@ -449,9 +453,9 @@ public sealed unsafe partial class TagList : Gst.MiniObject
     /// Gets the value that is at the given index for the given tag in the given
     /// list.
     /// </summary>
-    /// <param name="tag">The <c>tag</c> argument.</param>
-    /// <param name="index">The <c>index</c> argument.</param>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="tag">tag to read out</param>
+    /// <param name="index">number of entry to read out</param>
+    /// <param name="value">location for the result</param>
     /// <returns>
     /// %TRUE, if a value was copied, %FALSE if the tag didn't exist in the
     ///              given list.
@@ -472,8 +476,8 @@ public sealed unsafe partial class TagList : Gst.MiniObject
     /// Copies the contents for the given tag into the value, merging multiple values
     /// into one if multiple values are associated with the tag.
     /// </summary>
-    /// <param name="tag">The <c>tag</c> argument.</param>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="tag">tag to read out</param>
+    /// <param name="value">location for the result</param>
     /// <returns>
     /// %TRUE, if a value was copied, %FALSE if the tag didn't exist in the
     ///              given list.
@@ -494,9 +498,9 @@ public sealed unsafe partial class TagList : Gst.MiniObject
     /// Gets the value that is at the given index for the given tag in the given
     /// list.
     /// </summary>
-    /// <param name="tag">The <c>tag</c> argument.</param>
-    /// <param name="index">The <c>index</c> argument.</param>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="tag">tag to read out</param>
+    /// <param name="index">number of entry to read out</param>
+    /// <param name="value">location for the result</param>
     /// <returns>
     /// %TRUE, if a value was copied, %FALSE if the tag didn't exist in the
     ///              given list.
@@ -523,8 +527,11 @@ public sealed unsafe partial class TagList : Gst.MiniObject
     /// <remarks>
     /// <para>Free-function: gst_sample_unref</para>
     /// </remarks>
-    /// <param name="tag">The <c>tag</c> argument.</param>
-    /// <param name="sample">The <c>sample</c> argument.</param>
+    /// <param name="tag">tag to read out</param>
+    /// <param name="sample">
+    /// address of a GstSample
+    ///     pointer variable to store the result into
+    /// </param>
     /// <returns>
     /// %TRUE, if a sample was returned, %FALSE if the tag didn't exist in
     ///              the given list or if it was %NULL.
@@ -551,9 +558,12 @@ public sealed unsafe partial class TagList : Gst.MiniObject
     /// <remarks>
     /// <para>Free-function: gst_sample_unref</para>
     /// </remarks>
-    /// <param name="tag">The <c>tag</c> argument.</param>
-    /// <param name="index">The <c>index</c> argument.</param>
-    /// <param name="sample">The <c>sample</c> argument.</param>
+    /// <param name="tag">tag to read out</param>
+    /// <param name="index">number of entry to read out</param>
+    /// <param name="sample">
+    /// address of a GstSample
+    ///     pointer variable to store the result into
+    /// </param>
     /// <returns>
     /// %TRUE, if a sample was copied, %FALSE if the tag didn't exist in the
     ///              given list or if it was %NULL.
@@ -595,8 +605,8 @@ public sealed unsafe partial class TagList : Gst.MiniObject
     /// </para>
     /// <para>Free-function: g_free</para>
     /// </remarks>
-    /// <param name="tag">The <c>tag</c> argument.</param>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="tag">tag to read out</param>
+    /// <param name="value">location for the result</param>
     /// <returns>
     /// %TRUE, if a value was copied, %FALSE if the tag didn't exist in the
     ///              given list.
@@ -625,9 +635,9 @@ public sealed unsafe partial class TagList : Gst.MiniObject
     /// </para>
     /// <para>Free-function: g_free</para>
     /// </remarks>
-    /// <param name="tag">The <c>tag</c> argument.</param>
-    /// <param name="index">The <c>index</c> argument.</param>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="tag">tag to read out</param>
+    /// <param name="index">number of entry to read out</param>
+    /// <param name="value">location for the result</param>
     /// <returns>
     /// %TRUE, if a value was copied, %FALSE if the tag didn't exist in the
     ///              given list.
@@ -645,7 +655,7 @@ public sealed unsafe partial class TagList : Gst.MiniObject
     }
 
     /// <summary>Checks how many value are stored in this tag list for the given tag.</summary>
-    /// <param name="tag">The <c>tag</c> argument.</param>
+    /// <param name="tag">the tag to query</param>
     /// <returns>The number of tags stored</returns>
     public uint GetTagSize(string tag)
     {
@@ -661,8 +671,8 @@ public sealed unsafe partial class TagList : Gst.MiniObject
     /// Copies the contents for the given tag into the value, merging multiple values
     /// into one if multiple values are associated with the tag.
     /// </summary>
-    /// <param name="tag">The <c>tag</c> argument.</param>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="tag">tag to read out</param>
+    /// <param name="value">location for the result</param>
     /// <returns>
     /// %TRUE, if a value was copied, %FALSE if the tag didn't exist in the
     ///              given list.
@@ -683,8 +693,8 @@ public sealed unsafe partial class TagList : Gst.MiniObject
     /// Copies the contents for the given tag into the value, merging multiple values
     /// into one if multiple values are associated with the tag.
     /// </summary>
-    /// <param name="tag">The <c>tag</c> argument.</param>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="tag">tag to read out</param>
+    /// <param name="value">location for the result</param>
     /// <returns>
     /// %TRUE, if a value was copied, %FALSE if the tag didn't exist in the
     ///              given list.
@@ -705,9 +715,9 @@ public sealed unsafe partial class TagList : Gst.MiniObject
     /// Gets the value that is at the given index for the given tag in the given
     /// list.
     /// </summary>
-    /// <param name="tag">The <c>tag</c> argument.</param>
-    /// <param name="index">The <c>index</c> argument.</param>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="tag">tag to read out</param>
+    /// <param name="index">number of entry to read out</param>
+    /// <param name="value">location for the result</param>
     /// <returns>
     /// %TRUE, if a value was copied, %FALSE if the tag didn't exist in the
     ///              given list.
@@ -728,9 +738,9 @@ public sealed unsafe partial class TagList : Gst.MiniObject
     /// Gets the value that is at the given index for the given tag in the given
     /// list.
     /// </summary>
-    /// <param name="tag">The <c>tag</c> argument.</param>
-    /// <param name="index">The <c>index</c> argument.</param>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="tag">tag to read out</param>
+    /// <param name="index">number of entry to read out</param>
+    /// <param name="value">location for the result</param>
     /// <returns>
     /// %TRUE, if a value was copied, %FALSE if the tag didn't exist in the
     ///              given list.
@@ -748,8 +758,8 @@ public sealed unsafe partial class TagList : Gst.MiniObject
     }
 
     /// <summary>Inserts the tags of the @from list into the first list using the given mode.</summary>
-    /// <param name="from">The <c>from</c> argument.</param>
-    /// <param name="mode">The <c>mode</c> argument.</param>
+    /// <param name="from">list to merge from</param>
+    /// <param name="mode">the mode to use</param>
     public void Insert(Gst.TagList from, Gst.TagMergeMode mode)
     {
         ArgumentNullException.ThrowIfNull(from);
@@ -768,7 +778,7 @@ public sealed unsafe partial class TagList : Gst.MiniObject
     }
 
     /// <summary>Checks if the two given taglists are equal.</summary>
-    /// <param name="list2">The <c>list2</c> argument.</param>
+    /// <param name="list2">a #GstTagList.</param>
     /// <returns>%TRUE if the taglists are equal, otherwise %FALSE</returns>
     public bool IsEqual(Gst.TagList list2)
     {
@@ -838,8 +848,8 @@ public sealed unsafe partial class TagList : Gst.MiniObject
     /// <remarks>
     /// <para>Free-function: gst_tag_list_unref</para>
     /// </remarks>
-    /// <param name="list2">The <c>list2</c> argument.</param>
-    /// <param name="mode">The <c>mode</c> argument.</param>
+    /// <param name="list2">second list to merge</param>
+    /// <param name="mode">the mode to use</param>
     /// <returns>the new list</returns>
     public Gst.TagList? Merge(Gst.TagList? list2, Gst.TagMergeMode mode)
     {
@@ -859,7 +869,7 @@ public sealed unsafe partial class TagList : Gst.MiniObject
     }
 
     /// <summary>Get the name of the tag in @list at @index.</summary>
-    /// <param name="index">The <c>index</c> argument.</param>
+    /// <param name="index">the index</param>
     /// <returns>The name of the tag at @index.</returns>
     public string NthTagName(uint index)
     {
@@ -880,9 +890,9 @@ public sealed unsafe partial class TagList : Gst.MiniObject
     /// be non-%NULL and non-empty.
     /// </para>
     /// </remarks>
-    /// <param name="tag">The <c>tag</c> argument.</param>
-    /// <param name="index">The <c>index</c> argument.</param>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="tag">tag to read out</param>
+    /// <param name="index">number of entry to read out</param>
+    /// <param name="value">location for the result</param>
     /// <returns>
     /// %TRUE, if a value was set, %FALSE if the tag didn't exist in the
     ///              given list.
@@ -900,7 +910,7 @@ public sealed unsafe partial class TagList : Gst.MiniObject
     }
 
     /// <summary>Removes the given tag from the taglist.</summary>
-    /// <param name="tag">The <c>tag</c> argument.</param>
+    /// <param name="tag">tag to remove</param>
     public void RemoveTag(string tag)
     {
         ArgumentNullException.ThrowIfNull(tag);
@@ -914,7 +924,7 @@ public sealed unsafe partial class TagList : Gst.MiniObject
     /// Sets the scope of @list to @scope. By default the scope
     /// of a taglist is stream scope.
     /// </summary>
-    /// <param name="scope">The <c>scope</c> argument.</param>
+    /// <param name="scope">new scope for @list</param>
     public void SetScope(Gst.TagScope scope)
     {
         GstTagListSetScope(Handle, (int)scope);

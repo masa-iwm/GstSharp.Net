@@ -23,7 +23,7 @@ public static unsafe partial class VideoGlobal
     /// Adds a new #GstAncillaryMeta to the @buffer. The caller is responsible for setting the appropriate
     /// fields.
     /// </summary>
-    /// <param name="buffer">The <c>buffer</c> argument.</param>
+    /// <param name="buffer">A #GstBuffer</param>
     /// <returns>A new #GstAncillaryMeta, or %NULL if an error happened.</returns>
     public static Gst.Video.AncillaryMeta BufferAddAncillaryMeta(Gst.Buffer buffer)
     {
@@ -38,10 +38,10 @@ public static unsafe partial class VideoGlobal
     /// Attaches #GstVideoAFDMeta metadata to @buffer with the given
     /// parameters.
     /// </summary>
-    /// <param name="buffer">The <c>buffer</c> argument.</param>
-    /// <param name="field">The <c>field</c> argument.</param>
-    /// <param name="spec">The <c>spec</c> argument.</param>
-    /// <param name="afd">The <c>afd</c> argument.</param>
+    /// <param name="buffer">a #GstBuffer</param>
+    /// <param name="field">0 for progressive or field 1 and 1 for field 2</param>
+    /// <param name="spec">#GstVideoAFDSpec that applies to AFD value</param>
+    /// <param name="afd">#GstVideoAFDValue AFD enumeration</param>
     /// <returns>the #GstVideoAFDMeta on @buffer.</returns>
     public static Gst.Video.VideoAFDMeta BufferAddVideoAfdMeta(Gst.Buffer buffer, byte field, Gst.Video.VideoAFDSpec spec, Gst.Video.VideoAFDValue afd)
     {
@@ -56,7 +56,7 @@ public static unsafe partial class VideoGlobal
     /// Attaches GstVideoAffineTransformationMeta metadata to @buffer with
     /// the given parameters.
     /// </summary>
-    /// <param name="buffer">The <c>buffer</c> argument.</param>
+    /// <param name="buffer">a #GstBuffer</param>
     /// <returns>the #GstVideoAffineTransformationMeta on @buffer.</returns>
     public static Gst.Video.VideoAffineTransformationMeta BufferAddVideoAffineTransformationMeta(Gst.Buffer buffer)
     {
@@ -71,11 +71,21 @@ public static unsafe partial class VideoGlobal
     /// Attaches #GstVideoBarMeta metadata to @buffer with the given
     /// parameters.
     /// </summary>
-    /// <param name="buffer">The <c>buffer</c> argument.</param>
-    /// <param name="field">The <c>field</c> argument.</param>
-    /// <param name="isLetterbox">The <c>isLetterbox</c> argument.</param>
-    /// <param name="barData1">The <c>barData1</c> argument.</param>
-    /// <param name="barData2">The <c>barData2</c> argument.</param>
+    /// <param name="buffer">a #GstBuffer</param>
+    /// <param name="field">0 for progressive or field 1 and 1 for field 2</param>
+    /// <param name="isLetterbox">if true then bar data specifies letterbox, otherwise pillarbox</param>
+    /// <param name="barData1">
+    /// If @is_letterbox is true, then the value specifies the
+    ///      last line of a horizontal letterbox bar area at top of reconstructed frame.
+    ///      Otherwise, it specifies the last horizontal luminance sample of a vertical pillarbox
+    ///      bar area at the left side of the reconstructed frame
+    /// </param>
+    /// <param name="barData2">
+    /// If @is_letterbox is true, then the value specifies the
+    ///      first line of a horizontal letterbox bar area at bottom of reconstructed frame.
+    ///      Otherwise, it specifies the first horizontal
+    ///      luminance sample of a vertical pillarbox bar area at the right side of the reconstructed frame.
+    /// </param>
     /// <returns>the #GstVideoBarMeta on @buffer.</returns>
     public static Gst.Video.VideoBarMeta BufferAddVideoBarMeta(Gst.Buffer buffer, byte field, bool isLetterbox, uint barData1, uint barData2)
     {
@@ -90,8 +100,8 @@ public static unsafe partial class VideoGlobal
     /// Attaches #GstVideoCaptionMeta metadata to @buffer with the given
     /// parameters.
     /// </summary>
-    /// <param name="buffer">The <c>buffer</c> argument.</param>
-    /// <param name="captionType">The <c>captionType</c> argument.</param>
+    /// <param name="buffer">a #GstBuffer</param>
+    /// <param name="captionType">The type of Closed Caption to add</param>
     /// <param name="data">The Closed Caption data</param>
     /// <returns>the #GstVideoCaptionMeta on @buffer.</returns>
     public static Gst.Video.VideoCaptionMeta BufferAddVideoCaptionMeta(Gst.Buffer buffer, Gst.Video.VideoCaptionType captionType, System.ReadOnlySpan<byte> data)
@@ -119,9 +129,9 @@ public static unsafe partial class VideoGlobal
     /// declaration around the argument stays correct.
     /// </para>
     /// </remarks>
-    /// <param name="buffer">The <c>buffer</c> argument.</param>
+    /// <param name="buffer">a #GstBuffer</param>
     /// <param name="alphaBuffer">
-    /// The <c>alphaBuffer</c> argument.
+    /// a #GstBuffer
     /// The call consumes it: <paramref name="alphaBuffer"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// </param>
@@ -156,11 +166,11 @@ public static unsafe partial class VideoGlobal
     /// gst_buffer_add_video_meta_full() with them.
     /// </para>
     /// </remarks>
-    /// <param name="buffer">The <c>buffer</c> argument.</param>
-    /// <param name="flags">The <c>flags</c> argument.</param>
-    /// <param name="format">The <c>format</c> argument.</param>
-    /// <param name="width">The <c>width</c> argument.</param>
-    /// <param name="height">The <c>height</c> argument.</param>
+    /// <param name="buffer">a #GstBuffer</param>
+    /// <param name="flags">#GstVideoFrameFlags</param>
+    /// <param name="format">a #GstVideoFormat</param>
+    /// <param name="width">the width</param>
+    /// <param name="height">the height</param>
     /// <returns>the #GstVideoMeta on @buffer.</returns>
     public static Gst.Video.VideoMeta? BufferAddVideoMeta(Gst.Buffer buffer, Gst.Video.VideoFrameFlags flags, Gst.Video.VideoFormat format, uint width, uint height)
     {
@@ -171,12 +181,12 @@ public static unsafe partial class VideoGlobal
     }
 
     /// <summary>Attaches GstVideoMeta metadata to @buffer with the given parameters.</summary>
-    /// <param name="buffer">The <c>buffer</c> argument.</param>
-    /// <param name="flags">The <c>flags</c> argument.</param>
-    /// <param name="format">The <c>format</c> argument.</param>
-    /// <param name="width">The <c>width</c> argument.</param>
-    /// <param name="height">The <c>height</c> argument.</param>
-    /// <param name="nPlanes">The <c>nPlanes</c> argument.</param>
+    /// <param name="buffer">a #GstBuffer</param>
+    /// <param name="flags">#GstVideoFrameFlags</param>
+    /// <param name="format">a #GstVideoFormat</param>
+    /// <param name="width">the width</param>
+    /// <param name="height">the height</param>
+    /// <param name="nPlanes">number of planes</param>
     /// <param name="offset">
     /// offset of each plane
     /// The C declaration sizes this buffer at 4 elements; pass exactly 4.
@@ -223,8 +233,8 @@ public static unsafe partial class VideoGlobal
     /// reference to the composition, meaning this function does not take ownership
     /// of @comp.
     /// </summary>
-    /// <param name="buf">The <c>buf</c> argument.</param>
-    /// <param name="comp">The <c>comp</c> argument.</param>
+    /// <param name="buf">a #GstBuffer</param>
+    /// <param name="comp">a #GstVideoOverlayComposition</param>
     /// <returns>a #GstVideoOverlayCompositionMeta</returns>
     public static Gst.Video.VideoOverlayCompositionMeta BufferAddVideoOverlayCompositionMeta(Gst.Buffer buf, Gst.Video.VideoOverlayComposition? comp)
     {
@@ -240,12 +250,12 @@ public static unsafe partial class VideoGlobal
     /// Attaches #GstVideoRegionOfInterestMeta metadata to @buffer with the given
     /// parameters.
     /// </summary>
-    /// <param name="buffer">The <c>buffer</c> argument.</param>
-    /// <param name="roiType">The <c>roiType</c> argument.</param>
-    /// <param name="x">The <c>x</c> argument.</param>
-    /// <param name="y">The <c>y</c> argument.</param>
-    /// <param name="w">The <c>w</c> argument.</param>
-    /// <param name="h">The <c>h</c> argument.</param>
+    /// <param name="buffer">a #GstBuffer</param>
+    /// <param name="roiType">Type of the region of interest (e.g. "face")</param>
+    /// <param name="x">X position</param>
+    /// <param name="y">Y position</param>
+    /// <param name="w">width</param>
+    /// <param name="h">height</param>
     /// <returns>the #GstVideoRegionOfInterestMeta on @buffer.</returns>
     public static Gst.Video.VideoRegionOfInterestMeta BufferAddVideoRegionOfInterestMeta(Gst.Buffer buffer, string roiType, uint x, uint y, uint w, uint h)
     {
@@ -263,12 +273,12 @@ public static unsafe partial class VideoGlobal
     /// Attaches #GstVideoRegionOfInterestMeta metadata to @buffer with the given
     /// parameters.
     /// </summary>
-    /// <param name="buffer">The <c>buffer</c> argument.</param>
-    /// <param name="roiType">The <c>roiType</c> argument.</param>
-    /// <param name="x">The <c>x</c> argument.</param>
-    /// <param name="y">The <c>y</c> argument.</param>
-    /// <param name="w">The <c>w</c> argument.</param>
-    /// <param name="h">The <c>h</c> argument.</param>
+    /// <param name="buffer">a #GstBuffer</param>
+    /// <param name="roiType">Type of the region of interest (e.g. "face")</param>
+    /// <param name="x">X position</param>
+    /// <param name="y">Y position</param>
+    /// <param name="w">width</param>
+    /// <param name="h">height</param>
     /// <returns>the #GstVideoRegionOfInterestMeta on @buffer.</returns>
     public static Gst.Video.VideoRegionOfInterestMeta BufferAddVideoRegionOfInterestMetaId(Gst.Buffer buffer, Gst.GLib.Quark roiType, uint x, uint y, uint w, uint h)
     {
@@ -283,7 +293,7 @@ public static unsafe partial class VideoGlobal
     /// Attaches #GstVideoSEIUserDataUnregisteredMeta metadata to @buffer with the given
     /// parameters.
     /// </summary>
-    /// <param name="buffer">The <c>buffer</c> argument.</param>
+    /// <param name="buffer">a #GstBuffer</param>
     /// <param name="uuid">
     /// User Data Unregistered UUID
     /// The C declaration sizes this buffer at 16 elements; pass exactly 16.
@@ -318,8 +328,8 @@ public static unsafe partial class VideoGlobal
     /// Attaches #GstVideoTimeCodeMeta metadata to @buffer with the given
     /// parameters.
     /// </summary>
-    /// <param name="buffer">The <c>buffer</c> argument.</param>
-    /// <param name="tc">The <c>tc</c> argument.</param>
+    /// <param name="buffer">a #GstBuffer</param>
+    /// <param name="tc">a #GstVideoTimeCode</param>
     /// <returns>
     /// the #GstVideoTimeCodeMeta on @buffer, or
     /// (since 1.16) %NULL if the timecode was invalid.
@@ -338,16 +348,16 @@ public static unsafe partial class VideoGlobal
     /// Attaches #GstVideoTimeCodeMeta metadata to @buffer with the given
     /// parameters.
     /// </summary>
-    /// <param name="buffer">The <c>buffer</c> argument.</param>
-    /// <param name="fpsN">The <c>fpsN</c> argument.</param>
-    /// <param name="fpsD">The <c>fpsD</c> argument.</param>
-    /// <param name="latestDailyJam">The <c>latestDailyJam</c> argument.</param>
-    /// <param name="flags">The <c>flags</c> argument.</param>
-    /// <param name="hours">The <c>hours</c> argument.</param>
-    /// <param name="minutes">The <c>minutes</c> argument.</param>
-    /// <param name="seconds">The <c>seconds</c> argument.</param>
-    /// <param name="frames">The <c>frames</c> argument.</param>
-    /// <param name="fieldCount">The <c>fieldCount</c> argument.</param>
+    /// <param name="buffer">a #GstBuffer</param>
+    /// <param name="fpsN">framerate numerator</param>
+    /// <param name="fpsD">framerate denominator</param>
+    /// <param name="latestDailyJam">a #GDateTime for the latest daily jam</param>
+    /// <param name="flags">a #GstVideoTimeCodeFlags</param>
+    /// <param name="hours">hours since the daily jam</param>
+    /// <param name="minutes">minutes since the daily jam</param>
+    /// <param name="seconds">seconds since the daily jam</param>
+    /// <param name="frames">frames since the daily jam</param>
+    /// <param name="fieldCount">fields since the daily jam</param>
     /// <returns>
     /// the #GstVideoTimeCodeMeta on @buffer, or
     /// (since 1.16) %NULL if the timecode was invalid.
@@ -368,7 +378,7 @@ public static unsafe partial class VideoGlobal
     /// multiview buffers.
     /// </para>
     /// </remarks>
-    /// <param name="buffer">The <c>buffer</c> argument.</param>
+    /// <param name="buffer">a #GstBuffer</param>
     /// <returns>
     /// the #GstVideoMeta with lowest id (usually 0) or %NULL when there
     /// is no such metadata on @buffer.
@@ -388,8 +398,8 @@ public static unsafe partial class VideoGlobal
     /// multiview buffers.
     /// </para>
     /// </remarks>
-    /// <param name="buffer">The <c>buffer</c> argument.</param>
-    /// <param name="id">The <c>id</c> argument.</param>
+    /// <param name="buffer">a #GstBuffer</param>
+    /// <param name="id">a metadata id</param>
     /// <returns>
     /// the #GstVideoMeta with @id or %NULL when there is no such metadata
     /// on @buffer.
@@ -409,8 +419,8 @@ public static unsafe partial class VideoGlobal
     /// multiple regions of interests are marked on a frame.
     /// </para>
     /// </remarks>
-    /// <param name="buffer">The <c>buffer</c> argument.</param>
-    /// <param name="id">The <c>id</c> argument.</param>
+    /// <param name="buffer">a #GstBuffer</param>
+    /// <param name="id">a metadata id</param>
     /// <returns>
     /// the #GstVideoRegionOfInterestMeta with @id or %NULL when there is
     /// no such metadata on @buffer.
@@ -427,8 +437,8 @@ public static unsafe partial class VideoGlobal
     /// Get the video alignment from the bufferpool configuration @config in
     /// in @align
     /// </summary>
-    /// <param name="config">The <c>config</c> argument.</param>
-    /// <param name="align">The <c>align</c> argument.</param>
+    /// <param name="config">a #GstStructure</param>
+    /// <param name="align">a #GstVideoAlignment</param>
     /// <returns>%TRUE if @config could be parsed correctly.</returns>
     public static bool BufferPoolConfigGetVideoAlignment(Gst.Structure config, out Gst.Video.VideoAlignment align)
     {
@@ -444,8 +454,8 @@ public static unsafe partial class VideoGlobal
     /// Set the video alignment in @align to the bufferpool configuration
     /// @config
     /// </summary>
-    /// <param name="config">The <c>config</c> argument.</param>
-    /// <param name="align">The <c>align</c> argument.</param>
+    /// <param name="config">a #GstStructure</param>
+    /// <param name="align">a #GstVideoAlignment</param>
     public static void BufferPoolConfigSetVideoAlignment(Gst.Structure config, Gst.Video.VideoAlignment align)
     {
         ArgumentNullException.ThrowIfNull(config);
@@ -458,7 +468,7 @@ public static unsafe partial class VideoGlobal
     /// Convenience function to check if the given message is a
     /// "prepare-window-handle" message from a #GstVideoOverlay.
     /// </summary>
-    /// <param name="msg">The <c>msg</c> argument.</param>
+    /// <param name="msg">a #GstMessage</param>
     /// <returns>whether @msg is a "prepare-window-handle" message</returns>
     public static bool IsVideoOverlayPrepareWindowHandleMessage(Gst.Message msg)
     {
@@ -493,11 +503,14 @@ public static unsafe partial class VideoGlobal
     }
 
     /// <summary>Lets you blend the @src image into the @dest image</summary>
-    /// <param name="dest">The <c>dest</c> argument.</param>
-    /// <param name="src">The <c>src</c> argument.</param>
-    /// <param name="x">The <c>x</c> argument.</param>
-    /// <param name="y">The <c>y</c> argument.</param>
-    /// <param name="globalAlpha">The <c>globalAlpha</c> argument.</param>
+    /// <param name="dest">The #GstVideoFrame where to blend @src in</param>
+    /// <param name="src">the #GstVideoFrame that we want to blend into</param>
+    /// <param name="x">The x offset in pixel where the @src image should be blended</param>
+    /// <param name="y">the y offset in pixel where the @src image should be blended</param>
+    /// <param name="globalAlpha">
+    /// the global_alpha each per-pixel alpha value is multiplied
+    ///                with
+    /// </param>
     /// <returns>The result of <c>gst_video_blend</c>.</returns>
     public static bool VideoBlend(Gst.Video.VideoFrame dest, Gst.Video.VideoFrame src, int x, int y, float globalAlpha)
     {
@@ -514,14 +527,14 @@ public static unsafe partial class VideoGlobal
     /// pixel aspect ratio of the intended display device, calculates the actual
     /// display ratio the video will be rendered with.
     /// </summary>
-    /// <param name="darN">The <c>darN</c> argument.</param>
-    /// <param name="darD">The <c>darD</c> argument.</param>
-    /// <param name="videoWidth">The <c>videoWidth</c> argument.</param>
-    /// <param name="videoHeight">The <c>videoHeight</c> argument.</param>
-    /// <param name="videoParN">The <c>videoParN</c> argument.</param>
-    /// <param name="videoParD">The <c>videoParD</c> argument.</param>
-    /// <param name="displayParN">The <c>displayParN</c> argument.</param>
-    /// <param name="displayParD">The <c>displayParD</c> argument.</param>
+    /// <param name="darN">Numerator of the calculated display_ratio</param>
+    /// <param name="darD">Denominator of the calculated display_ratio</param>
+    /// <param name="videoWidth">Width of the video frame in pixels</param>
+    /// <param name="videoHeight">Height of the video frame in pixels</param>
+    /// <param name="videoParN">Numerator of the pixel aspect ratio of the input video.</param>
+    /// <param name="videoParD">Denominator of the pixel aspect ratio of the input video.</param>
+    /// <param name="displayParN">Numerator of the pixel aspect ratio of the display device</param>
+    /// <param name="displayParD">Denominator of the pixel aspect ratio of the display device</param>
     /// <returns>
     /// A boolean indicating success and a calculated Display Ratio in the
     /// dar_n and dar_d parameters.
@@ -550,10 +563,10 @@ public static unsafe partial class VideoGlobal
     /// without @scaling. It handles clipping if the @src rectangle is bigger than
     /// the @dst one and @scaling is set to FALSE.
     /// </summary>
-    /// <param name="src">The <c>src</c> argument.</param>
-    /// <param name="dst">The <c>dst</c> argument.</param>
-    /// <param name="result">The <c>result</c> argument.</param>
-    /// <param name="scaling">The <c>scaling</c> argument.</param>
+    /// <param name="src">a pointer to #GstVideoRectangle describing the source area</param>
+    /// <param name="dst">a pointer to #GstVideoRectangle describing the destination area</param>
+    /// <param name="result">a pointer to a #GstVideoRectangle which will receive the result area</param>
+    /// <param name="scaling">a #gboolean indicating if scaling should be applied or not</param>
     public static void VideoCenterRect(Gst.Video.VideoRectangle src, Gst.Video.VideoRectangle dst, out Gst.Video.VideoRectangle result, bool scaling)
     {
         Gst.Video.VideoRectangle srcNative = src;
@@ -564,7 +577,7 @@ public static unsafe partial class VideoGlobal
     }
 
     /// <summary>Convert @s to a #GstVideoChromaSite</summary>
-    /// <param name="s">The <c>s</c> argument.</param>
+    /// <param name="s">a chromasite string</param>
     /// <returns>
     /// a #GstVideoChromaSite or %GST_VIDEO_CHROMA_SITE_UNKNOWN when @s does
     /// not contain a valid chroma description.
@@ -580,9 +593,9 @@ public static unsafe partial class VideoGlobal
     }
 
     /// <summary>Perform resampling of @width chroma pixels in @lines.</summary>
-    /// <param name="resample">The <c>resample</c> argument.</param>
-    /// <param name="lines">The <c>lines</c> argument.</param>
-    /// <param name="width">The <c>width</c> argument.</param>
+    /// <param name="resample">a #GstVideoChromaResample</param>
+    /// <param name="lines">pixel lines</param>
+    /// <param name="width">the number of pixels on one line</param>
     public static void VideoChromaResample(Gst.Video.VideoChromaResample resample, nint lines, int width)
     {
         ArgumentNullException.ThrowIfNull(resample);
@@ -591,7 +604,7 @@ public static unsafe partial class VideoGlobal
     }
 
     /// <summary>Converts @site to its string representation.</summary>
-    /// <param name="site">The <c>site</c> argument.</param>
+    /// <param name="site">a #GstVideoChromaSite</param>
     /// <returns>a string describing @site.</returns>
     [Obsolete("Use gst_video_chroma_site_to_string() instead. (deprecated since 1.20)")]
     public static string VideoChromaToString(Gst.Video.VideoChromaSite site)
@@ -610,8 +623,8 @@ public static unsafe partial class VideoGlobal
     }
 
     /// <summary>The <c>gst_video_color_transfer_decode</c> function.</summary>
-    /// <param name="func">The <c>func</c> argument.</param>
-    /// <param name="val">The <c>val</c> argument.</param>
+    /// <param name="func">a #GstVideoTransferFunction</param>
+    /// <param name="val">a value</param>
     /// <returns>The result of <c>gst_video_color_transfer_decode</c>.</returns>
     [Obsolete("Use gst_video_transfer_function_decode() instead. (deprecated since 1.20)")]
     public static double VideoColorTransferDecode(Gst.Video.VideoTransferFunction func, double val)
@@ -621,8 +634,8 @@ public static unsafe partial class VideoGlobal
     }
 
     /// <summary>The <c>gst_video_color_transfer_encode</c> function.</summary>
-    /// <param name="func">The <c>func</c> argument.</param>
-    /// <param name="val">The <c>val</c> argument.</param>
+    /// <param name="func">a #GstVideoTransferFunction</param>
+    /// <param name="val">a value</param>
     /// <returns>The result of <c>gst_video_color_transfer_encode</c>.</returns>
     [Obsolete("Use gst_video_transfer_function_encode() instead. (deprecated since 1.20)")]
     public static double VideoColorTransferEncode(Gst.Video.VideoTransferFunction func, double val)
@@ -636,9 +649,9 @@ public static unsafe partial class VideoGlobal
     /// <para>The output caps can be any raw video formats or any image formats (jpeg, png, ...).</para>
     /// <para>The width, height and pixel-aspect-ratio can also be specified in the output caps.</para>
     /// </remarks>
-    /// <param name="sample">The <c>sample</c> argument.</param>
-    /// <param name="toCaps">The <c>toCaps</c> argument.</param>
-    /// <param name="timeout">The <c>timeout</c> argument.</param>
+    /// <param name="sample">a #GstSample</param>
+    /// <param name="toCaps">the #GstCaps to convert to</param>
+    /// <param name="timeout">the maximum amount of time allowed for the processing.</param>
     /// <returns>
     /// The converted #GstSample, or %NULL if an error happened (in which case @err
     /// will point to the #GError).
@@ -678,8 +691,8 @@ public static unsafe partial class VideoGlobal
     /// <remarks>
     /// <para>Available since GStreamer 1.26.</para>
     /// </remarks>
-    /// <param name="format">The <c>format</c> argument.</param>
-    /// <param name="modifier">The <c>modifier</c> argument.</param>
+    /// <param name="format">a #GstVideoFormat</param>
+    /// <param name="modifier">return location for the modifier</param>
     /// <returns>the DRM_FORMAT_* corresponding to @format.</returns>
     public static uint VideoDmaDrmFormatFromGstFormat(Gst.Video.VideoFormat format, out ulong modifier)
     {
@@ -696,8 +709,8 @@ public static unsafe partial class VideoGlobal
     /// <remarks>
     /// <para>Available since GStreamer 1.26.</para>
     /// </remarks>
-    /// <param name="fourcc">The <c>fourcc</c> argument.</param>
-    /// <param name="modifier">The <c>modifier</c> argument.</param>
+    /// <param name="fourcc">the dma drm fourcc value.</param>
+    /// <param name="modifier">the dma drm modifier.</param>
     /// <returns>
     /// the GST_VIDEO_FORMAT_* corresponding to the @fourcc and @modifier
     ///          pair.
@@ -712,7 +725,7 @@ public static unsafe partial class VideoGlobal
     /// Converting the video format into dma drm fourcc. If no
     /// matching fourcc found, then DRM_FORMAT_INVALID is returned.
     /// </summary>
-    /// <param name="format">The <c>format</c> argument.</param>
+    /// <param name="format">a #GstVideoFormat</param>
     /// <returns>the DRM_FORMAT_* corresponding to the @format.</returns>
     public static uint VideoDmaDrmFourccFromFormat(Gst.Video.VideoFormat format)
     {
@@ -725,8 +738,11 @@ public static unsafe partial class VideoGlobal
     /// also parsed if we want. Please note that the @format_str should follow the
     /// fourcc:modifier kind style, such as NV12:0x0100000000000002
     /// </summary>
-    /// <param name="formatStr">The <c>formatStr</c> argument.</param>
-    /// <param name="modifier">The <c>modifier</c> argument.</param>
+    /// <param name="formatStr">a drm format string</param>
+    /// <param name="modifier">
+    /// Return the modifier in @format or %NULL
+    /// to ignore.
+    /// </param>
     /// <returns>
     /// The drm fourcc value or DRM_FORMAT_INVALID if @format_str is
     /// invalid.
@@ -746,7 +762,7 @@ public static unsafe partial class VideoGlobal
     /// Converting a dma drm fourcc into the video format. If no matching
     /// video format found, then GST_VIDEO_FORMAT_UNKNOWN is returned.
     /// </summary>
-    /// <param name="fourcc">The <c>fourcc</c> argument.</param>
+    /// <param name="fourcc">the dma drm value.</param>
     /// <returns>the GST_VIDEO_FORMAT_* corresponding to the @fourcc.</returns>
     public static Gst.Video.VideoFormat VideoDmaDrmFourccToFormat(uint fourcc)
     {
@@ -758,8 +774,8 @@ public static unsafe partial class VideoGlobal
     /// Returns a string containing drm kind format, such as
     /// NV12:0x0100000000000002, or NULL otherwise.
     /// </summary>
-    /// <param name="fourcc">The <c>fourcc</c> argument.</param>
-    /// <param name="modifier">The <c>modifier</c> argument.</param>
+    /// <param name="fourcc">a drm fourcc value.</param>
+    /// <param name="modifier">the associated modifier value.</param>
     /// <returns>
     /// the drm kind string composed
     ///   of to @fourcc and @modifier.
@@ -774,7 +790,7 @@ public static unsafe partial class VideoGlobal
     /// Checks if an event is a force key unit event. Returns true for both upstream
     /// and downstream force key unit events.
     /// </summary>
-    /// <param name="event">The <c>@event</c> argument.</param>
+    /// <param name="event">A #GstEvent to check</param>
     /// <returns>%TRUE if the event is a valid force key unit event</returns>
     public static bool VideoEventIsForceKeyUnit(Gst.Event @event)
     {
@@ -797,11 +813,11 @@ public static unsafe partial class VideoGlobal
     /// gst_video_event_parse_downstream_force_key_unit().
     /// </para>
     /// </remarks>
-    /// <param name="timestamp">The <c>timestamp</c> argument.</param>
-    /// <param name="streamTime">The <c>streamTime</c> argument.</param>
-    /// <param name="runningTime">The <c>runningTime</c> argument.</param>
-    /// <param name="allHeaders">The <c>allHeaders</c> argument.</param>
-    /// <param name="count">The <c>count</c> argument.</param>
+    /// <param name="timestamp">the timestamp of the buffer that starts a new key unit</param>
+    /// <param name="streamTime">the stream_time of the buffer that starts a new key unit</param>
+    /// <param name="runningTime">the running_time of the buffer that starts a new key unit</param>
+    /// <param name="allHeaders">%TRUE to produce headers when starting a new key unit</param>
+    /// <param name="count">integer that can be used to number key units</param>
     /// <returns>The new GstEvent</returns>
     public static Gst.Event VideoEventNewDownstreamForceKeyUnit(Gst.ClockTime timestamp, Gst.ClockTime streamTime, Gst.ClockTime runningTime, bool allHeaders, uint count)
     {
@@ -821,7 +837,7 @@ public static unsafe partial class VideoGlobal
     /// gst_video_event_parse_still_frame().
     /// </para>
     /// </remarks>
-    /// <param name="inStill">The <c>inStill</c> argument.</param>
+    /// <param name="inStill">boolean value for the still-frame state of the event.</param>
     /// <returns>The new GstEvent</returns>
     public static Gst.Event VideoEventNewStillFrame(bool inStill)
     {
@@ -845,9 +861,9 @@ public static unsafe partial class VideoGlobal
     /// gst_video_event_parse_downstream_force_key_unit().
     /// </para>
     /// </remarks>
-    /// <param name="runningTime">The <c>runningTime</c> argument.</param>
-    /// <param name="allHeaders">The <c>allHeaders</c> argument.</param>
-    /// <param name="count">The <c>count</c> argument.</param>
+    /// <param name="runningTime">the running_time at which a new key unit should be produced</param>
+    /// <param name="allHeaders">%TRUE to produce headers when starting a new key unit</param>
+    /// <param name="count">integer that can be used to number key units</param>
     /// <returns>The new GstEvent</returns>
     public static Gst.Event VideoEventNewUpstreamForceKeyUnit(Gst.ClockTime runningTime, bool allHeaders, uint count)
     {
@@ -864,12 +880,12 @@ public static unsafe partial class VideoGlobal
     /// <remarks>
     /// <para>@running_time will be adjusted for any pad offsets of pads it was passing through.</para>
     /// </remarks>
-    /// <param name="event">The <c>@event</c> argument.</param>
-    /// <param name="timestamp">The <c>timestamp</c> argument.</param>
-    /// <param name="streamTime">The <c>streamTime</c> argument.</param>
-    /// <param name="runningTime">The <c>runningTime</c> argument.</param>
-    /// <param name="allHeaders">The <c>allHeaders</c> argument.</param>
-    /// <param name="count">The <c>count</c> argument.</param>
+    /// <param name="event">A #GstEvent to parse</param>
+    /// <param name="timestamp">A pointer to the timestamp in the event</param>
+    /// <param name="streamTime">A pointer to the stream-time in the event</param>
+    /// <param name="runningTime">A pointer to the running-time in the event</param>
+    /// <param name="allHeaders">A pointer to the all_headers flag in the event</param>
+    /// <param name="count">A pointer to the count field of the event</param>
     /// <returns>%TRUE if the event is a valid downstream force key unit event.</returns>
     public static bool VideoEventParseDownstreamForceKeyUnit(Gst.Event @event, out Gst.ClockTime timestamp, out Gst.ClockTime streamTime, out Gst.ClockTime runningTime, out bool allHeaders, out uint count)
     {
@@ -900,8 +916,8 @@ public static unsafe partial class VideoGlobal
     /// <remarks>
     /// <para>Create a still frame event using gst_video_event_new_still_frame()</para>
     /// </remarks>
-    /// <param name="event">The <c>@event</c> argument.</param>
-    /// <param name="inStill">The <c>inStill</c> argument.</param>
+    /// <param name="event">A #GstEvent to parse</param>
+    /// <param name="inStill">    A boolean to receive the still-frame status from the event, or NULL</param>
     /// <returns>%TRUE if the event is a valid still-frame event. %FALSE if not</returns>
     public static bool VideoEventParseStillFrame(Gst.Event @event, out bool inStill)
     {
@@ -924,10 +940,10 @@ public static unsafe partial class VideoGlobal
     /// </para>
     /// <para>@running_time will be adjusted for any pad offsets of pads it was passing through.</para>
     /// </remarks>
-    /// <param name="event">The <c>@event</c> argument.</param>
-    /// <param name="runningTime">The <c>runningTime</c> argument.</param>
-    /// <param name="allHeaders">The <c>allHeaders</c> argument.</param>
-    /// <param name="count">The <c>count</c> argument.</param>
+    /// <param name="event">A #GstEvent to parse</param>
+    /// <param name="runningTime">A pointer to the running_time in the event</param>
+    /// <param name="allHeaders">A pointer to the all_headers flag in the event</param>
+    /// <param name="count">A pointer to the count field in the event</param>
     /// <returns>%TRUE if the event is a valid upstream force-key-unit event. %FALSE if not</returns>
     public static bool VideoEventParseUpstreamForceKeyUnit(Gst.Event @event, out Gst.ClockTime runningTime, out bool allHeaders, out uint count)
     {
@@ -998,9 +1014,9 @@ public static unsafe partial class VideoGlobal
     /// </para>
     /// <para>It returns %FALSE if a duration of 0 is passed.</para>
     /// </remarks>
-    /// <param name="duration">The <c>duration</c> argument.</param>
-    /// <param name="destN">The <c>destN</c> argument.</param>
-    /// <param name="destD">The <c>destD</c> argument.</param>
+    /// <param name="duration">Nominal duration of one frame</param>
+    /// <param name="destN">Numerator of the calculated framerate</param>
+    /// <param name="destD">Denominator of the calculated framerate</param>
     /// <returns>
     /// %TRUE if a close "standard" framerate was
     /// recognised, and %FALSE otherwise.
@@ -1020,10 +1036,10 @@ public static unsafe partial class VideoGlobal
     /// calculate the frame's aspect ratio and compare it against a set of
     /// common well-known "standard" aspect ratios.
     /// </summary>
-    /// <param name="width">The <c>width</c> argument.</param>
-    /// <param name="height">The <c>height</c> argument.</param>
-    /// <param name="parN">The <c>parN</c> argument.</param>
-    /// <param name="parD">The <c>parD</c> argument.</param>
+    /// <param name="width">Width of the video frame</param>
+    /// <param name="height">Height of the video frame</param>
+    /// <param name="parN">Pixel aspect ratio numerator</param>
+    /// <param name="parD">Pixel aspect ratio denominator</param>
     /// <returns>
     /// %TRUE if a known "standard" aspect ratio was
     /// recognised, and %FALSE otherwise.
@@ -1038,7 +1054,7 @@ public static unsafe partial class VideoGlobal
     /// Check whether the @caps is a dma drm kind caps. Please note that
     /// the caps should be fixed.
     /// </summary>
-    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <param name="caps">a #GstCaps</param>
     /// <returns>%TRUE if the caps is a dma drm caps.</returns>
     public static bool VideoIsDmaDrmCaps(Gst.Caps caps)
     {
@@ -1083,7 +1099,7 @@ public static unsafe partial class VideoGlobal
     /// </remarks>
     /// <param name="formats">an array of raw #GstVideoFormat, or %NULL</param>
     /// <param name="features">
-    /// The <c>features</c> argument.
+    /// the #GstCapsFeatures to set on the caps
     /// The call consumes it: <paramref name="features"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// It may be <see langword="null"/>, which is the absence of a payload and leaves
@@ -1176,11 +1192,11 @@ public static unsafe partial class VideoGlobal
     }
 
     /// <summary>The <c>gst_video_multiview_guess_half_aspect</c> function.</summary>
-    /// <param name="mvMode">The <c>mvMode</c> argument.</param>
-    /// <param name="width">The <c>width</c> argument.</param>
-    /// <param name="height">The <c>height</c> argument.</param>
-    /// <param name="parN">The <c>parN</c> argument.</param>
-    /// <param name="parD">The <c>parD</c> argument.</param>
+    /// <param name="mvMode">A #GstVideoMultiviewMode</param>
+    /// <param name="width">Video frame width in pixels</param>
+    /// <param name="height">Video frame height in pixels</param>
+    /// <param name="parN">Numerator of the video pixel-aspect-ratio</param>
+    /// <param name="parD">Denominator of the video pixel-aspect-ratio</param>
     /// <returns>
     /// A boolean indicating whether the
     ///   #GST_VIDEO_MULTIVIEW_FLAGS_HALF_ASPECT flag should be set.
@@ -1196,9 +1212,9 @@ public static unsafe partial class VideoGlobal
     /// and multiview mode and flags of a #GstVideoInfo into
     /// the requested mode.
     /// </summary>
-    /// <param name="info">The <c>info</c> argument.</param>
-    /// <param name="outMviewMode">The <c>outMviewMode</c> argument.</param>
-    /// <param name="outMviewFlags">The <c>outMviewFlags</c> argument.</param>
+    /// <param name="info">A #GstVideoInfo structure to operate on</param>
+    /// <param name="outMviewMode">A #GstVideoMultiviewMode value</param>
+    /// <param name="outMviewFlags">A set of #GstVideoMultiviewFlags</param>
     public static void VideoMultiviewVideoInfoChangeMode(Gst.Video.VideoInfo info, Gst.Video.VideoMultiviewMode outMviewMode, Gst.Video.VideoMultiviewFlags outMviewFlags)
     {
         ArgumentNullException.ThrowIfNull(info);
@@ -1233,9 +1249,9 @@ public static unsafe partial class VideoGlobal
     /// <summary>
     /// Parses and returns the Precision Time Stamp (ST 0604) from the SEI User Data Unregistered buffer
     /// </summary>
-    /// <param name="userData">The <c>userData</c> argument.</param>
-    /// <param name="status">The <c>status</c> argument.</param>
-    /// <param name="precisionTimeStamp">The <c>precisionTimeStamp</c> argument.</param>
+    /// <param name="userData">a #GstVideoSEIUserDataUnregisteredMeta</param>
+    /// <param name="status">User Data Unregistered UUID</param>
+    /// <param name="precisionTimeStamp">The parsed Precision Time Stamp SEI</param>
     /// <returns>True if data is a Precision Time Stamp and it was parsed correctly</returns>
     public static bool VideoSeiUserDataUnregisteredParsePrecisionTimeStamp(Gst.Video.VideoSEIUserDataUnregisteredMeta userData, out byte status, out ulong precisionTimeStamp)
     {
@@ -1256,11 +1272,11 @@ public static unsafe partial class VideoGlobal
     /// <remarks>
     /// <para>Use this method when @mode is of type %GST_VIDEO_TILE_TYPE_INDEXED.</para>
     /// </remarks>
-    /// <param name="mode">The <c>mode</c> argument.</param>
-    /// <param name="x">The <c>x</c> argument.</param>
-    /// <param name="y">The <c>y</c> argument.</param>
-    /// <param name="xTiles">The <c>xTiles</c> argument.</param>
-    /// <param name="yTiles">The <c>yTiles</c> argument.</param>
+    /// <param name="mode">a #GstVideoTileMode</param>
+    /// <param name="x">x coordinate</param>
+    /// <param name="y">y coordinate</param>
+    /// <param name="xTiles">number of horizintal tiles</param>
+    /// <param name="yTiles">number of vertical tiles</param>
     /// <returns>
     /// the index of the tile at @x and @y in the tiled image of
     ///   @x_tiles by @y_tiles.

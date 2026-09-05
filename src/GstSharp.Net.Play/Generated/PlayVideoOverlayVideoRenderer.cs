@@ -54,10 +54,10 @@ public unsafe partial class PlayVideoOverlayVideoRenderer : Gst.GObject.Object, 
     /// Return the currently configured render rectangle. See gst_play_video_overlay_video_renderer_set_render_rectangle()
     /// for details.
     /// </summary>
-    /// <param name="x">The <c>x</c> argument.</param>
-    /// <param name="y">The <c>y</c> argument.</param>
-    /// <param name="width">The <c>width</c> argument.</param>
-    /// <param name="height">The <c>height</c> argument.</param>
+    /// <param name="x">the horizontal offset of the render area inside the window</param>
+    /// <param name="y">the vertical offset of the render area inside the window</param>
+    /// <param name="width">the width of the render area inside the window</param>
+    /// <param name="height">the height of the render area inside the window</param>
     public void GetRenderRectangle(out int x, out int y, out int width, out int height)
     {
         int xNative = default;
@@ -99,10 +99,10 @@ public unsafe partial class PlayVideoOverlayVideoRenderer : Gst.GObject.Object, 
     /// do not support subwindows.
     /// </para>
     /// </remarks>
-    /// <param name="x">The <c>x</c> argument.</param>
-    /// <param name="y">The <c>y</c> argument.</param>
-    /// <param name="width">The <c>width</c> argument.</param>
-    /// <param name="height">The <c>height</c> argument.</param>
+    /// <param name="x">the horizontal offset of the render area inside the window</param>
+    /// <param name="y">the vertical offset of the render area inside the window</param>
+    /// <param name="width">the width of the render area inside the window</param>
+    /// <param name="height">the height of the render area inside the window</param>
     public void SetRenderRectangle(int x, int y, int width, int height)
     {
         GstPlayVideoOverlayVideoRendererSetRenderRectangle(Handle, x, y, width, height);
@@ -113,7 +113,7 @@ public unsafe partial class PlayVideoOverlayVideoRenderer : Gst.GObject.Object, 
     /// Sets the platform specific window handle into which the video
     /// should be rendered
     /// </summary>
-    /// <param name="windowHandle">The <c>windowHandle</c> argument.</param>
+    /// <param name="windowHandle">handle referencing to the platform specific window</param>
     public void SetWindowHandle(nint windowHandle)
     {
         GstPlayVideoOverlayVideoRendererSetWindowHandle(Handle, windowHandle);

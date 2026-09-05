@@ -86,7 +86,7 @@ public sealed unsafe partial class Meta
     /// Meta sequence number compare function. Can be used as #GCompareFunc
     /// or a #GCompareDataFunc.
     /// </summary>
-    /// <param name="meta2">The <c>meta2</c> argument.</param>
+    /// <param name="meta2">a #GstMeta</param>
     /// <returns>
     /// a negative number if @meta1 comes before @meta2, 0 if both metas
     ///   have an equal sequence number, or a positive integer if @meta1 comes
@@ -129,7 +129,7 @@ public sealed unsafe partial class Meta
     /// to remember the size of previous data to preallocate the next.
     /// </para>
     /// </remarks>
-    /// <param name="data">The <c>data</c> argument.</param>
+    /// <param name="data">#GstByteArrayInterface to append serialization data</param>
     /// <returns>%TRUE on success, %FALSE otherwise.</returns>
     public bool Serialize(Gst.ByteArrayInterface data)
     {
@@ -141,7 +141,7 @@ public sealed unsafe partial class Meta
     }
 
     /// <summary>The <c>gst_meta_api_type_get_tags</c> function.</summary>
-    /// <param name="api">The <c>api</c> argument.</param>
+    /// <param name="api">an API</param>
     /// <returns>an array of tags as strings.</returns>
     public static string[]? ApiTypeGetTags(Gst.GObject.GType api)
     {
@@ -150,8 +150,8 @@ public sealed unsafe partial class Meta
     }
 
     /// <summary>Check if @api was registered with @tag.</summary>
-    /// <param name="api">The <c>api</c> argument.</param>
-    /// <param name="tag">The <c>tag</c> argument.</param>
+    /// <param name="api">an API</param>
+    /// <param name="tag">the tag to check</param>
     /// <returns>%TRUE if @api was registered with @tag.</returns>
     public static bool ApiTypeHasTag(Gst.GObject.GType api, Gst.GLib.Quark tag)
     {
@@ -163,7 +163,7 @@ public sealed unsafe partial class Meta
     /// Register and return a GType for the @api and associate it with
     /// @tags.
     /// </summary>
-    /// <param name="api">The <c>api</c> argument.</param>
+    /// <param name="api">an API to register</param>
     /// <param name="tags">tags for @api</param>
     /// <returns>a unique GType for @api.</returns>
     public static Gst.GObject.GType ApiTypeRegister(string api, string[] tags)
@@ -181,7 +181,7 @@ public sealed unsafe partial class Meta
     /// <remarks>
     /// <para>Available since GStreamer 1.28.</para>
     /// </remarks>
-    /// <param name="api">The <c>api</c> argument.</param>
+    /// <param name="api">an API</param>
     /// <param name="validTags">a list of valid tags</param>
     /// <returns>%TRUE if @api only contains tags from @valid_tags.</returns>
     public static bool ApiTypeTagsContainOnly(Gst.GObject.GType api, string[] validTags)
@@ -207,9 +207,9 @@ public sealed unsafe partial class Meta
     /// not allow to determine that size, @consumed is set to 0.
     /// </para>
     /// </remarks>
-    /// <param name="buffer">The <c>buffer</c> argument.</param>
+    /// <param name="buffer">a #GstBuffer</param>
     /// <param name="data">serialization data obtained from gst_meta_serialize()</param>
-    /// <param name="consumed">The <c>consumed</c> argument.</param>
+    /// <param name="consumed">total size used by this meta, could be less than @size</param>
     /// <returns>the metadata owned by @buffer, or %NULL.</returns>
     public static Gst.Meta? Deserialize(Gst.Buffer buffer, System.ReadOnlySpan<byte> data, out uint consumed)
     {
@@ -228,7 +228,7 @@ public sealed unsafe partial class Meta
     /// Lookup a previously registered meta info structure by its implementation name
     /// @impl.
     /// </summary>
-    /// <param name="impl">The <c>impl</c> argument.</param>
+    /// <param name="impl">the name</param>
     /// <returns>
     /// a #GstMetaInfo with @impl, or
     /// %NULL when no such metainfo exists.
@@ -246,7 +246,7 @@ public sealed unsafe partial class Meta
     /// Simplified version of gst_meta_register_custom(), with no tags and no
     /// transform function.
     /// </summary>
-    /// <param name="name">The <c>name</c> argument.</param>
+    /// <param name="name">the name of the #GstMeta implementation</param>
     /// <returns>a #GstMetaInfo that can be used to access metadata.</returns>
     public static Gst.MetaInfo RegisterCustomSimple(string name)
     {

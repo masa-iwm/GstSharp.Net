@@ -57,7 +57,7 @@ public abstract unsafe partial class AudioRingBuffer : Gst.Object
     /// in the data pointer of the ring buffer with a valid #GstBuffer
     /// to which samples can be written.
     /// </summary>
-    /// <param name="spec">The <c>spec</c> argument.</param>
+    /// <param name="spec">the specs of the buffer</param>
     /// <returns>TRUE if the device could be acquired, FALSE on error.</returns>
     public bool Acquire(Gst.Audio.AudioRingBufferSpec spec)
     {
@@ -72,7 +72,7 @@ public abstract unsafe partial class AudioRingBuffer : Gst.Object
     /// <remarks>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="active">The <c>active</c> argument.</param>
+    /// <param name="active">the new mode</param>
     /// <returns>
     /// TRUE if the device could be activated in the requested mode,
     /// FALSE on error.
@@ -91,7 +91,7 @@ public abstract unsafe partial class AudioRingBuffer : Gst.Object
     /// <remarks>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="advance">The <c>advance</c> argument.</param>
+    /// <param name="advance">the number of segments written</param>
     public void Advance(uint advance)
     {
         GstAudioRingBufferAdvance(Handle, advance);
@@ -105,7 +105,7 @@ public abstract unsafe partial class AudioRingBuffer : Gst.Object
     /// <remarks>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="segment">The <c>segment</c> argument.</param>
+    /// <param name="segment">the segment to clear</param>
     public void Clear(int segment)
     {
         GstAudioRingBufferClear(Handle, segment);
@@ -138,10 +138,10 @@ public abstract unsafe partial class AudioRingBuffer : Gst.Object
     /// Convert @src_val in @src_fmt to the equivalent value in @dest_fmt. The result
     /// will be put in @dest_val.
     /// </summary>
-    /// <param name="srcFmt">The <c>srcFmt</c> argument.</param>
-    /// <param name="srcVal">The <c>srcVal</c> argument.</param>
-    /// <param name="destFmt">The <c>destFmt</c> argument.</param>
-    /// <param name="destVal">The <c>destVal</c> argument.</param>
+    /// <param name="srcFmt">the source format</param>
+    /// <param name="srcVal">the source value</param>
+    /// <param name="destFmt">the destination format</param>
+    /// <param name="destVal">a location to store the converted value</param>
     /// <returns>TRUE if the conversion succeeded.</returns>
     public bool Convert(Gst.Format srcFmt, long srcVal, Gst.Format destFmt, out long destVal)
     {
@@ -251,7 +251,7 @@ public abstract unsafe partial class AudioRingBuffer : Gst.Object
     /// <remarks>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="allowed">The <c>allowed</c> argument.</param>
+    /// <param name="allowed">the new value</param>
     public void MayStart(bool allowed)
     {
         GstAudioRingBufferMayStart(Handle, allowed ? 1 : 0);
@@ -284,7 +284,7 @@ public abstract unsafe partial class AudioRingBuffer : Gst.Object
     /// Returns a pointer to memory where the data from segment @segment
     /// can be found. This function is mostly used by subclasses.
     /// </summary>
-    /// <param name="segment">The <c>segment</c> argument.</param>
+    /// <param name="segment">the segment to read</param>
     /// <param name="readptr">    the pointer to the memory where samples can be read</param>
     /// <returns>FALSE if the buffer is not started.</returns>
     public bool PrepareRead(out int segment, out byte[]? readptr)
@@ -340,7 +340,7 @@ public abstract unsafe partial class AudioRingBuffer : Gst.Object
     /// <remarks>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="flushing">The <c>flushing</c> argument.</param>
+    /// <param name="flushing">the new mode</param>
     public void SetFlushing(bool flushing)
     {
         GstAudioRingBufferSetFlushing(Handle, flushing ? 1 : 0);
@@ -357,7 +357,7 @@ public abstract unsafe partial class AudioRingBuffer : Gst.Object
     /// <para>This function will also clear the buffer with silence.</para>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="sample">The <c>sample</c> argument.</param>
+    /// <param name="sample">the sample number to set</param>
     public void SetSample(ulong sample)
     {
         GstAudioRingBufferSetSample(Handle, sample);
@@ -369,7 +369,7 @@ public abstract unsafe partial class AudioRingBuffer : Gst.Object
     /// <para>MT safe.</para>
     /// <para>Available since GStreamer 1.26.</para>
     /// </remarks>
-    /// <param name="segdone">The <c>segdone</c> argument.</param>
+    /// <param name="segdone">the segment number to set</param>
     public void SetSegdone(ulong segdone)
     {
         GstAudioRingBufferSetSegdone(Handle, segdone);
@@ -404,7 +404,7 @@ public abstract unsafe partial class AudioRingBuffer : Gst.Object
     }
 
     /// <summary>Print debug info about the buffer sized in @spec to the debug log.</summary>
-    /// <param name="spec">The <c>spec</c> argument.</param>
+    /// <param name="spec">the spec to debug</param>
     public static void DebugSpecBuff(Gst.Audio.AudioRingBufferSpec spec)
     {
         ArgumentNullException.ThrowIfNull(spec);
@@ -413,7 +413,7 @@ public abstract unsafe partial class AudioRingBuffer : Gst.Object
     }
 
     /// <summary>Print debug info about the parsed caps in @spec to the debug log.</summary>
-    /// <param name="spec">The <c>spec</c> argument.</param>
+    /// <param name="spec">the spec to debug</param>
     public static void DebugSpecCaps(Gst.Audio.AudioRingBufferSpec spec)
     {
         ArgumentNullException.ThrowIfNull(spec);
@@ -422,8 +422,8 @@ public abstract unsafe partial class AudioRingBuffer : Gst.Object
     }
 
     /// <summary>Parse @caps into @spec.</summary>
-    /// <param name="spec">The <c>spec</c> argument.</param>
-    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <param name="spec">a spec</param>
+    /// <param name="caps">a #GstCaps</param>
     /// <returns>TRUE if the caps could be parsed.</returns>
     public static bool ParseCaps(Gst.Audio.AudioRingBufferSpec spec, Gst.Caps caps)
     {

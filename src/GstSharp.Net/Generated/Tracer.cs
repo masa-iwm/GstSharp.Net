@@ -49,9 +49,9 @@ public abstract unsafe partial class Tracer : Gst.Object
     /// Create a new tracer-factory  capable of instantiating objects of the
     /// @type and add the factory to @plugin.
     /// </summary>
-    /// <param name="plugin">The <c>plugin</c> argument.</param>
-    /// <param name="name">The <c>name</c> argument.</param>
-    /// <param name="type">The <c>type</c> argument.</param>
+    /// <param name="plugin">A #GstPlugin, or %NULL for a static typefind function</param>
+    /// <param name="name">The name for registering</param>
+    /// <param name="type">GType of tracer to register</param>
     /// <returns>%TRUE, if the registering succeeded, %FALSE on error</returns>
     public static bool Register(Gst.Plugin? plugin, string name, Gst.GObject.GType type)
     {

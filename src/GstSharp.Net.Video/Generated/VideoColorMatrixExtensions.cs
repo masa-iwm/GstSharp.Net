@@ -18,7 +18,7 @@ public static unsafe partial class VideoColorMatrixExtensions
     /// and "ITU-T H.273 Table 4".
     /// "H.264 Table E-5" and "H.265 Table E.5" share the identical values.
     /// </summary>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="value">a ITU-T H.273 matrix coefficients value</param>
     /// <returns>the matched #GstVideoColorMatrix</returns>
     public static Gst.Video.VideoColorMatrix FromIso(uint value)
     {
@@ -52,9 +52,9 @@ public static unsafe partial class VideoColorMatrixExtensions
     /// ]|
     /// </para>
     /// </remarks>
-    /// <param name="matrix">The <c>matrix</c> argument.</param>
-    /// <param name="kr">The <c>kr</c> argument.</param>
-    /// <param name="kb">The <c>kb</c> argument.</param>
+    /// <param name="matrix">a #GstVideoColorMatrix</param>
+    /// <param name="kr">result red channel coefficient</param>
+    /// <param name="kb">result blue channel coefficient</param>
     /// <returns>
     /// TRUE if @matrix was a YUV color format and @Kr and @Kb contain valid
     ///    values.
@@ -75,7 +75,7 @@ public static unsafe partial class VideoColorMatrixExtensions
     /// and "ITU-T H.273 Table 4".
     /// "H.264 Table E-5" and "H.265 Table E.5" share the identical values.
     /// </summary>
-    /// <param name="matrix">The <c>matrix</c> argument.</param>
+    /// <param name="matrix">a #GstVideoColorMatrix</param>
     /// <returns>The value of ISO/IEC 23001-8 matrix coefficients.</returns>
     public static uint ToIso(Gst.Video.VideoColorMatrix matrix)
     {

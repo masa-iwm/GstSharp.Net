@@ -54,7 +54,10 @@ public abstract unsafe partial class Device : Gst.Object
     /// Creates the element with all of the required parameters set to use
     /// this device.
     /// </summary>
-    /// <param name="name">The <c>name</c> argument.</param>
+    /// <param name="name">
+    /// name of new element, or %NULL to automatically
+    /// create a unique name.
+    /// </param>
     /// <returns>
     /// a new #GstElement configured to use
     /// this device
@@ -117,7 +120,10 @@ public abstract unsafe partial class Device : Gst.Object
     }
 
     /// <summary>Check if @device matches all of the given classes</summary>
-    /// <param name="classes">The <c>classes</c> argument.</param>
+    /// <param name="classes">
+    /// a "/"-separated list of device classes to match, only match if
+    ///  all classes are matched
+    /// </param>
     /// <returns>%TRUE if @device matches.</returns>
     public bool HasClasses(string classes)
     {
@@ -154,7 +160,7 @@ public abstract unsafe partial class Device : Gst.Object
     /// device in the PLAYING state.
     /// </para>
     /// </remarks>
-    /// <param name="element">The <c>element</c> argument.</param>
+    /// <param name="element">a #GstElement</param>
     /// <returns>
     /// %TRUE if the element could be reconfigured to use this device,
     /// %FALSE otherwise.

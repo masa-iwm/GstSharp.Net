@@ -440,7 +440,7 @@ public unsafe partial struct RTSPContext
     /// property.
     /// </para>
     /// </remarks>
-    /// <param name="token">The <c>token</c> argument.</param>
+    /// <param name="token">a #GstRTSPToken</param>
     public void SetToken(Gst.RtspServer.RTSPToken token)
     {
         ArgumentNullException.ThrowIfNull(token);

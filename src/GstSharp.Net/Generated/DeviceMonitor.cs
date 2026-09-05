@@ -135,8 +135,8 @@ public unsafe partial class DeviceMonitor : Gst.Object
     /// </para>
     /// <para>Filters must be added before the #GstDeviceMonitor is started.</para>
     /// </remarks>
-    /// <param name="classes">The <c>classes</c> argument.</param>
-    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <param name="classes">device classes to use as filter or %NULL for any class</param>
+    /// <param name="caps">the #GstCaps to filter or %NULL for ANY</param>
     /// <returns>
     /// The id of the new filter or 0 if no provider matched the filter's
     ///  classes.
@@ -223,7 +223,7 @@ public unsafe partial class DeviceMonitor : Gst.Object
     /// Removes a filter from the #GstDeviceMonitor using the id that was returned
     /// by gst_device_monitor_add_filter().
     /// </summary>
-    /// <param name="filterId">The <c>filterId</c> argument.</param>
+    /// <param name="filterId">the id of the filter</param>
     /// <returns>%TRUE of the filter id was valid, %FALSE otherwise</returns>
     public bool RemoveFilter(uint filterId)
     {
@@ -236,7 +236,7 @@ public unsafe partial class DeviceMonitor : Gst.Object
     /// Set if all devices should be visible, even those devices from hidden
     /// providers. Setting @show_all to true might show some devices multiple times.
     /// </summary>
-    /// <param name="showAll">The <c>showAll</c> argument.</param>
+    /// <param name="showAll">show all devices</param>
     public void SetShowAllDevices(bool showAll)
     {
         GstDeviceMonitorSetShowAllDevices(Handle, showAll ? 1 : 0);

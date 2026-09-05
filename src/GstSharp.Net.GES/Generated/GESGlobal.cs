@@ -25,7 +25,7 @@ public static unsafe partial class GESGlobal
     }
 
     /// <summary>Attaches positioning metadata to a #GstBuffer.</summary>
-    /// <param name="buffer">The <c>buffer</c> argument.</param>
+    /// <param name="buffer">#GstBuffer to which protection metadata should be added.</param>
     /// <returns>a pointer to the added #GESFrameCompositionMeta.</returns>
     public static GES.FrameCompositionMeta BufferAddFrameCompositionMeta(Gst.Buffer buffer)
     {
@@ -115,7 +115,7 @@ public static unsafe partial class GESGlobal
     /// the current cache.
     /// </para>
     /// </remarks>
-    /// <param name="filter">The <c>filter</c> argument.</param>
+    /// <param name="filter">The type of object that can be extracted from the asset</param>
     /// <returns>
     /// A list of all
     /// #GESAsset-s currently in the cache whose #GESAsset:extractable-type is
@@ -138,8 +138,8 @@ public static unsafe partial class GESGlobal
     }
 
     /// <summary>Get the last buffer @playsink showed</summary>
-    /// <param name="playsink">The <c>playsink</c> argument.</param>
-    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <param name="playsink">The playsink to get last frame from</param>
+    /// <param name="caps">The caps defining the format the return value will have</param>
     /// <returns>
     /// A #GstSample containing the last frame from
     /// @playsink in the format defined by the @caps
@@ -183,10 +183,10 @@ public static unsafe partial class GESGlobal
     }
 
     /// <summary>Gets the version number of the GStreamer Editing Services library.</summary>
-    /// <param name="major">The <c>major</c> argument.</param>
-    /// <param name="minor">The <c>minor</c> argument.</param>
-    /// <param name="micro">The <c>micro</c> argument.</param>
-    /// <param name="nano">The <c>nano</c> argument.</param>
+    /// <param name="major">pointer to a guint to store the major version number</param>
+    /// <param name="minor">pointer to a guint to store the minor version number</param>
+    /// <param name="micro">pointer to a guint to store the micro version number</param>
+    /// <param name="nano">pointer to a guint to store the nano version number</param>
     public static void Version(out uint major, out uint minor, out uint micro, out uint nano)
     {
         uint majorNative = default;

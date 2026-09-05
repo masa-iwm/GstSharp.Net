@@ -207,7 +207,7 @@ public sealed unsafe partial class RTSPUrl : Gst.GObject.Boxed
     }
 
     /// <summary>Get the port number of @url.</summary>
-    /// <param name="port">The <c>port</c> argument.</param>
+    /// <param name="port">location to hold the port</param>
     /// <returns>#GST_RTSP_OK.</returns>
     public Gst.Rtsp.RTSPResult GetPort(out ushort port)
     {
@@ -232,7 +232,7 @@ public sealed unsafe partial class RTSPUrl : Gst.GObject.Boxed
     /// Get a newly allocated string describing the request URI for @url
     /// combined with the control path for @control_path
     /// </summary>
-    /// <param name="controlPath">The <c>controlPath</c> argument.</param>
+    /// <param name="controlPath">an RTSP aggregate control path</param>
     /// <returns>
     /// a string with the request URI combined with the control path.
     /// g_free() after usage.
@@ -249,7 +249,7 @@ public sealed unsafe partial class RTSPUrl : Gst.GObject.Boxed
     }
 
     /// <summary>Set the port number in @url to @port.</summary>
-    /// <param name="port">The <c>port</c> argument.</param>
+    /// <param name="port">the port</param>
     /// <returns>#GST_RTSP_OK.</returns>
     public Gst.Rtsp.RTSPResult SetPort(ushort port)
     {
@@ -262,8 +262,8 @@ public sealed unsafe partial class RTSPUrl : Gst.GObject.Boxed
     /// Parse the RTSP @urlstr into a newly allocated #GstRTSPUrl. Free after usage
     /// with gst_rtsp_url_free().
     /// </summary>
-    /// <param name="urlstr">The <c>urlstr</c> argument.</param>
-    /// <param name="url">The <c>url</c> argument.</param>
+    /// <param name="urlstr">the url string to parse</param>
+    /// <param name="url">location to hold the result.</param>
     /// <returns>a #GstRTSPResult.</returns>
     public static Gst.Rtsp.RTSPResult Parse(string urlstr, out Gst.Rtsp.RTSPUrl? url)
     {

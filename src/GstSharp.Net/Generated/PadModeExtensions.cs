@@ -12,7 +12,7 @@ namespace Gst;
 public static unsafe partial class PadModeExtensions
 {
     /// <summary>Return the name of a pad mode, for use in debug messages mostly.</summary>
-    /// <param name="mode">The <c>mode</c> argument.</param>
+    /// <param name="mode">the pad mode</param>
     /// <returns>short mnemonic for pad mode @mode</returns>
     public static string GetName(Gst.PadMode mode)
     {

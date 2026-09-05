@@ -12,7 +12,7 @@ namespace GES;
 public static unsafe partial class EditModeExtensions
 {
     /// <summary>Return a string representation of @mode.</summary>
-    /// <param name="mode">The <c>mode</c> argument.</param>
+    /// <param name="mode">a #GESEditMode</param>
     /// <returns>a string representation of @mode.</returns>
     public static string Name(GES.EditMode mode)
     {

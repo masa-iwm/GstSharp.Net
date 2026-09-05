@@ -95,7 +95,7 @@ public unsafe partial class Project : GES.Asset, GES.IMetaContainer
     /// other locations, it will never be updated again and the first valid URI is
     /// the URI it will keep refering to.
     /// </summary>
-    /// <param name="uri">The <c>uri</c> argument.</param>
+    /// <param name="uri">The uri to be set after creating the project.</param>
     /// <returns>A newly created #GESProject</returns>
     public static GES.Project New(string? uri)
     {
@@ -110,7 +110,7 @@ public unsafe partial class Project : GES.Asset, GES.IMetaContainer
     /// Adds a #GESAsset to @project, the project will keep a reference on
     /// @asset.
     /// </summary>
-    /// <param name="asset">The <c>asset</c> argument.</param>
+    /// <param name="asset">A #GESAsset to add to @project</param>
     /// <returns>
     /// %TRUE if the asset could be added %FALSE it was already
     /// in the project.
@@ -129,7 +129,10 @@ public unsafe partial class Project : GES.Asset, GES.IMetaContainer
     /// the project will be rendered and keep a reference to those formats.
     /// Also, those formats will be saved to the project file when possible.
     /// </summary>
-    /// <param name="profile">The <c>profile</c> argument.</param>
+    /// <param name="profile">
+    /// A #GstEncodingProfile to add to the project. If a profile with
+    /// the same name already exists, it will be replaced.
+    /// </param>
     /// <returns>%TRUE if @profile could be added, %FALSE otherwise</returns>
     public bool AddEncodingProfile(Gst.Pbutils.EncodingProfile profile)
     {
@@ -141,7 +144,7 @@ public unsafe partial class Project : GES.Asset, GES.IMetaContainer
     }
 
     /// <summary>Adds a formatter to be used to load @project</summary>
-    /// <param name="formatter">The <c>formatter</c> argument.</param>
+    /// <param name="formatter">A formatter used by @project</param>
     public void AddFormatter(GES.Formatter formatter)
     {
         ArgumentNullException.ThrowIfNull(formatter);
@@ -155,8 +158,8 @@ public unsafe partial class Project : GES.Asset, GES.IMetaContainer
     /// "asset-added" signal to get the asset when it finally gets added to
     /// @project
     /// </summary>
-    /// <param name="id">The <c>id</c> argument.</param>
-    /// <param name="extractableType">The <c>extractableType</c> argument.</param>
+    /// <param name="id">The id of the asset to create and add to @project</param>
+    /// <param name="extractableType">The #GType of the asset to create</param>
     /// <returns>
     /// %TRUE if the asset was added and started loading, %FALSE it was
     /// already in the project.
@@ -175,8 +178,8 @@ public unsafe partial class Project : GES.Asset, GES.IMetaContainer
     /// "asset-added" signal to get the asset when it finally gets added to
     /// @project
     /// </summary>
-    /// <param name="id">The <c>id</c> argument.</param>
-    /// <param name="extractableType">The <c>extractableType</c> argument.</param>
+    /// <param name="id">The id of the asset to create and add to @project</param>
+    /// <param name="extractableType">The #GType of the asset to create</param>
     /// <returns>The newly created #GESAsset or %NULL.</returns>
     /// <exception cref="Gst.GLib.GException">The native call failed.</exception>
     public GES.Asset? CreateAssetSync(string? id, Gst.GObject.GType extractableType)
@@ -197,8 +200,11 @@ public unsafe partial class Project : GES.Asset, GES.IMetaContainer
     }
 
     /// <summary>The <c>ges_project_get_asset</c> function.</summary>
-    /// <param name="id">The <c>id</c> argument.</param>
-    /// <param name="extractableType">The <c>extractableType</c> argument.</param>
+    /// <param name="id">The id of the asset to retrieve</param>
+    /// <param name="extractableType">
+    /// The extractable_type of the asset
+    /// to retrieve from @object
+    /// </param>
     /// <returns>
     /// The #GESAsset with
     /// @id or %NULL if no asset with @id as an ID
@@ -250,7 +256,10 @@ public unsafe partial class Project : GES.Asset, GES.IMetaContainer
     /// as defined by @filter. It copies the asset and thus will not be updated
     /// in time.
     /// </summary>
-    /// <param name="filter">The <c>filter</c> argument.</param>
+    /// <param name="filter">
+    /// Type of assets to list, `GES_TYPE_EXTRACTABLE` will list
+    /// all assets
+    /// </param>
     /// <returns>
     /// The list of
     /// #GESAsset the object contains
@@ -298,7 +307,7 @@ public unsafe partial class Project : GES.Asset, GES.IMetaContainer
     }
 
     /// <summary>Loads @project into @timeline</summary>
-    /// <param name="timeline">The <c>timeline</c> argument.</param>
+    /// <param name="timeline">A blank timeline to load @project into</param>
     /// <returns>%TRUE if the project could be loaded %FALSE otherwise.</returns>
     /// <exception cref="Gst.GLib.GException">The native call failed.</exception>
     public bool Load(GES.Timeline timeline)
@@ -313,7 +322,7 @@ public unsafe partial class Project : GES.Asset, GES.IMetaContainer
     }
 
     /// <summary>Remove @asset from @project.</summary>
-    /// <param name="asset">The <c>asset</c> argument.</param>
+    /// <param name="asset">A #GESAsset to remove from @project</param>
     /// <returns>%TRUE if the asset could be removed %FALSE otherwise</returns>
     public bool RemoveAsset(GES.Asset asset)
     {
@@ -341,16 +350,19 @@ public unsafe partial class Project : GES.Asset, GES.IMetaContainer
     /// declaration around the argument stays correct.
     /// </para>
     /// </remarks>
-    /// <param name="timeline">The <c>timeline</c> argument.</param>
-    /// <param name="uri">The <c>uri</c> argument.</param>
+    /// <param name="timeline">The #GESTimeline to save, it must have been extracted from @project</param>
+    /// <param name="uri">The uri where to save @project and @timeline</param>
     /// <param name="formatterAsset">
-    /// The <c>formatterAsset</c> argument.
+    /// The formatter asset to
+    /// use or %NULL. If %NULL, will try to save in the same format as the one
+    /// from which the timeline as been loaded or default to the best formatter
+    /// as defined in #ges_find_formatter_for_uri
     /// The call consumes it: <paramref name="formatterAsset"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// It may be <see langword="null"/>, which is the absence of a payload and leaves
     /// nothing to consume.
     /// </param>
-    /// <param name="overwrite">The <c>overwrite</c> argument.</param>
+    /// <param name="overwrite">%TRUE to overwrite file if it exists</param>
     /// <returns>%TRUE if the project could be save, %FALSE otherwise</returns>
     /// <exception cref="ObjectDisposedException">
     /// This wrapper or <paramref name="formatterAsset"/> was disposed.

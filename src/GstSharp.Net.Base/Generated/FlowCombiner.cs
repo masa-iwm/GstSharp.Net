@@ -93,7 +93,7 @@ public sealed unsafe partial class FlowCombiner : Gst.GObject.Boxed
     }
 
     /// <summary>Adds a new #GstPad to the #GstFlowCombiner.</summary>
-    /// <param name="pad">The <c>pad</c> argument.</param>
+    /// <param name="pad">the #GstPad that is being added</param>
     public void AddPad(Gst.Pad pad)
     {
         ArgumentNullException.ThrowIfNull(pad);
@@ -110,7 +110,7 @@ public sealed unsafe partial class FlowCombiner : Gst.GObject.Boxed
     }
 
     /// <summary>Removes a #GstPad from the #GstFlowCombiner.</summary>
-    /// <param name="pad">The <c>pad</c> argument.</param>
+    /// <param name="pad">the #GstPad to remove</param>
     public void RemovePad(Gst.Pad pad)
     {
         ArgumentNullException.ThrowIfNull(pad);
@@ -135,7 +135,7 @@ public sealed unsafe partial class FlowCombiner : Gst.GObject.Boxed
     /// return is the same as the latest obtained #GstFlowReturn.
     /// </para>
     /// </remarks>
-    /// <param name="fret">The <c>fret</c> argument.</param>
+    /// <param name="fret">the latest #GstFlowReturn received for a pad in this #GstFlowCombiner</param>
     /// <returns>The combined #GstFlowReturn</returns>
     public Gst.FlowReturn UpdateFlow(Gst.FlowReturn fret)
     {
@@ -156,8 +156,8 @@ public sealed unsafe partial class FlowCombiner : Gst.GObject.Boxed
     /// return is the same as the latest obtained #GstFlowReturn.
     /// </para>
     /// </remarks>
-    /// <param name="pad">The <c>pad</c> argument.</param>
-    /// <param name="fret">The <c>fret</c> argument.</param>
+    /// <param name="pad">the #GstPad whose #GstFlowReturn to update</param>
+    /// <param name="fret">the latest #GstFlowReturn received for a pad in this #GstFlowCombiner</param>
     /// <returns>The combined #GstFlowReturn</returns>
     public Gst.FlowReturn UpdatePadFlow(Gst.Pad pad, Gst.FlowReturn fret)
     {

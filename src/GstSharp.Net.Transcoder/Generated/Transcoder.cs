@@ -41,9 +41,13 @@ public unsafe partial class Transcoder : Gst.Object
     }
 
     /// <summary>The <c>gst_transcoder_new</c> function.</summary>
-    /// <param name="sourceUri">The <c>sourceUri</c> argument.</param>
-    /// <param name="destUri">The <c>destUri</c> argument.</param>
-    /// <param name="encodingProfile">The <c>encodingProfile</c> argument.</param>
+    /// <param name="sourceUri">The URI of the media stream to transcode</param>
+    /// <param name="destUri">The URI of the destination of the transcoded stream</param>
+    /// <param name="encodingProfile">
+    /// The serialized #GstEncodingProfile defining the output
+    /// format. Have a look at the #GstEncodingProfile documentation to find more
+    /// about the serialization format.
+    /// </param>
     /// <returns>a new #GstTranscoder instance</returns>
     public static Gst.Transcoder.Transcoder New(string sourceUri, string destUri, string encodingProfile)
     {
@@ -62,9 +66,13 @@ public unsafe partial class Transcoder : Gst.Object
     }
 
     /// <summary>The <c>gst_transcoder_new_full</c> function.</summary>
-    /// <param name="sourceUri">The <c>sourceUri</c> argument.</param>
-    /// <param name="destUri">The <c>destUri</c> argument.</param>
-    /// <param name="profile">The <c>profile</c> argument.</param>
+    /// <param name="sourceUri">The URI of the media stream to transcode</param>
+    /// <param name="destUri">The URI of the destination of the transcoded stream</param>
+    /// <param name="profile">
+    /// The #GstEncodingProfile defining the output format
+    /// have a look at the #GstEncodingProfile documentation to find more
+    /// about the serialization format.
+    /// </param>
     /// <returns>a new #GstTranscoder instance</returns>
     public static Gst.Transcoder.Transcoder NewFull(string sourceUri, string destUri, Gst.Pbutils.EncodingProfile profile)
     {
@@ -182,7 +190,11 @@ public unsafe partial class Transcoder : Gst.Object
     /// adapter until it is destroyed, at which point, a new one can be attached the
     /// same way.
     /// </summary>
-    /// <param name="context">The <c>context</c> argument.</param>
+    /// <param name="context">
+    /// A #GMainContext on which the main-loop will process
+    ///                       transcoder bus messages on. Can be NULL (thread-default
+    ///                       context will be used then).
+    /// </param>
     /// <returns>
     /// The #GstTranscoderSignalAdapter to
     /// connect signal handlers to.
@@ -253,7 +265,10 @@ public unsafe partial class Transcoder : Gst.Object
     }
 
     /// <summary>The <c>gst_transcoder_set_avoid_reencoding</c> function.</summary>
-    /// <param name="avoidReencoding">The <c>avoidReencoding</c> argument.</param>
+    /// <param name="avoidReencoding">
+    /// %TRUE if the transcoder should try to avoid reencoding
+    /// streams where * reencoding is not strictly needed, %FALSE otherwise.
+    /// </param>
     public void SetAvoidReencoding(bool avoidReencoding)
     {
         GstTranscoderSetAvoidReencoding(Handle, avoidReencoding ? 1 : 0);
@@ -265,7 +280,10 @@ public unsafe partial class Transcoder : Gst.Object
     /// transcoding task. It will modulate the transcoding speed to reach that target
     /// usage.
     /// </summary>
-    /// <param name="cpuUsage">The <c>cpuUsage</c> argument.</param>
+    /// <param name="cpuUsage">
+    /// The percentage of the CPU the process running the transcoder
+    /// should try to use. It takes into account the number of cores available.
+    /// </param>
     public void SetCpuUsage(int cpuUsage)
     {
         GstTranscoderSetCpuUsage(Handle, cpuUsage);
@@ -276,7 +294,7 @@ public unsafe partial class Transcoder : Gst.Object
     /// Set interval in milliseconds between two position-updated signals.
     /// Pass 0 to stop updating the position.
     /// </summary>
-    /// <param name="interval">The <c>interval</c> argument.</param>
+    /// <param name="interval">interval in ms</param>
     public void SetPositionUpdateInterval(uint interval)
     {
         GstTranscoderSetPositionUpdateInterval(Handle, interval);
@@ -284,7 +302,7 @@ public unsafe partial class Transcoder : Gst.Object
     }
 
     /// <summary>The <c>gst_transcoder_is_transcoder_message</c> function.</summary>
-    /// <param name="msg">The <c>msg</c> argument.</param>
+    /// <param name="msg">A #GstMessage</param>
     /// <returns>
     /// A #gboolean indicating whether the passes message represents a #GstTranscoder message or not.
     /// </returns>

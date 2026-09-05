@@ -12,7 +12,7 @@ namespace Gst.Play;
 public static unsafe partial class PlayStateExtensions
 {
     /// <summary>Gets a string representing the given state.</summary>
-    /// <param name="state">The <c>state</c> argument.</param>
+    /// <param name="state">a #GstPlayState</param>
     /// <returns>a string with the name of the state.</returns>
     public static string GetName(Gst.Play.PlayState state)
     {

@@ -325,11 +325,11 @@ public sealed unsafe partial class Segment : Gst.GObject.Boxed
     /// segment. Depending on the use case, this may or may not be what you want.
     /// </para>
     /// </remarks>
-    /// <param name="format">The <c>format</c> argument.</param>
-    /// <param name="start">The <c>start</c> argument.</param>
-    /// <param name="stop">The <c>stop</c> argument.</param>
-    /// <param name="clipStart">The <c>clipStart</c> argument.</param>
-    /// <param name="clipStop">The <c>clipStop</c> argument.</param>
+    /// <param name="format">the format of the segment.</param>
+    /// <param name="start">the start position in the segment</param>
+    /// <param name="stop">the stop position in the segment</param>
+    /// <param name="clipStart">the clipped start position in the segment</param>
+    /// <param name="clipStop">the clipped stop position in the segment</param>
     /// <returns>
     /// %TRUE if the given @start and @stop times fall partially or
     ///     completely in @segment, %FALSE if the values are completely outside
@@ -360,7 +360,7 @@ public sealed unsafe partial class Segment : Gst.GObject.Boxed
     }
 
     /// <summary>Copy the contents of @src into @dest.</summary>
-    /// <param name="dest">The <c>dest</c> argument.</param>
+    /// <param name="dest">a #GstSegment</param>
     public void CopyInto(Gst.Segment dest)
     {
         ArgumentNullException.ThrowIfNull(dest);
@@ -405,14 +405,14 @@ public sealed unsafe partial class Segment : Gst.GObject.Boxed
     /// has been changed but not the playback position.
     /// </para>
     /// </remarks>
-    /// <param name="rate">The <c>rate</c> argument.</param>
-    /// <param name="format">The <c>format</c> argument.</param>
-    /// <param name="flags">The <c>flags</c> argument.</param>
-    /// <param name="startType">The <c>startType</c> argument.</param>
-    /// <param name="start">The <c>start</c> argument.</param>
-    /// <param name="stopType">The <c>stopType</c> argument.</param>
-    /// <param name="stop">The <c>stop</c> argument.</param>
-    /// <param name="update">The <c>update</c> argument.</param>
+    /// <param name="rate">the rate of the segment.</param>
+    /// <param name="format">the format of the segment.</param>
+    /// <param name="flags">the segment flags for the segment</param>
+    /// <param name="startType">the seek method</param>
+    /// <param name="start">the seek start value</param>
+    /// <param name="stopType">the seek method</param>
+    /// <param name="stop">the seek stop value</param>
+    /// <param name="update">boolean holding whether position was updated.</param>
     /// <returns>%TRUE if the seek could be performed.</returns>
     public bool DoSeek(double rate, Gst.Format format, Gst.SeekFlags flags, Gst.SeekType startType, ulong start, Gst.SeekType stopType, ulong stop, out bool update)
     {
@@ -431,7 +431,7 @@ public sealed unsafe partial class Segment : Gst.GObject.Boxed
     /// <remarks>
     /// <para>Initialize @segment to its default values.</para>
     /// </remarks>
-    /// <param name="format">The <c>format</c> argument.</param>
+    /// <param name="format">the format of the segment.</param>
     public void Init(Gst.Format format)
     {
         GstSegmentInit(Handle, (int)format);
@@ -442,7 +442,7 @@ public sealed unsafe partial class Segment : Gst.GObject.Boxed
     /// Checks for two segments being equal. Equality here is defined
     /// as perfect equality, including floating point values.
     /// </summary>
-    /// <param name="s1">The <c>s1</c> argument.</param>
+    /// <param name="s1">a #GstSegment structure.</param>
     /// <returns>%TRUE if the segments are equal, %FALSE otherwise.</returns>
     public bool IsEqual(Gst.Segment s1)
     {
@@ -457,8 +457,8 @@ public sealed unsafe partial class Segment : Gst.GObject.Boxed
     /// Adjust the values in @segment so that @offset is applied to all
     /// future running-time calculations.
     /// </summary>
-    /// <param name="format">The <c>format</c> argument.</param>
-    /// <param name="offset">The <c>offset</c> argument.</param>
+    /// <param name="format">the format of the segment.</param>
+    /// <param name="offset">the offset to apply in the segment</param>
     /// <returns>
     /// %TRUE if the segment could be updated successfully. If %FALSE is
     /// returned, @offset is not in @segment.
@@ -474,8 +474,8 @@ public sealed unsafe partial class Segment : Gst.GObject.Boxed
     /// Convert @running_time into a position in the segment so that
     /// gst_segment_to_running_time() with that position returns @running_time.
     /// </summary>
-    /// <param name="format">The <c>format</c> argument.</param>
-    /// <param name="runningTime">The <c>runningTime</c> argument.</param>
+    /// <param name="format">the format of the segment.</param>
+    /// <param name="runningTime">the running_time in the segment</param>
     /// <returns>
     /// the position in the segment for @running_time. This function returns
     /// -1 when @running_time is -1 or when it is not inside @segment.
@@ -511,9 +511,9 @@ public sealed unsafe partial class Segment : Gst.GObject.Boxed
     /// position.
     /// </para>
     /// </remarks>
-    /// <param name="format">The <c>format</c> argument.</param>
-    /// <param name="runningTime">The <c>runningTime</c> argument.</param>
-    /// <param name="position">The <c>position</c> argument.</param>
+    /// <param name="format">the format of the segment.</param>
+    /// <param name="runningTime">the running-time</param>
+    /// <param name="position">the resulting position in the segment</param>
     /// <returns>a 1 or -1 on success, 0 on failure.</returns>
     public int PositionFromRunningTimeFull(Gst.Format format, ulong runningTime, out ulong position)
     {
@@ -528,8 +528,8 @@ public sealed unsafe partial class Segment : Gst.GObject.Boxed
     /// Convert @stream_time into a position in the segment so that
     /// gst_segment_to_stream_time() with that position returns @stream_time.
     /// </summary>
-    /// <param name="format">The <c>format</c> argument.</param>
-    /// <param name="streamTime">The <c>streamTime</c> argument.</param>
+    /// <param name="format">the format of the segment.</param>
+    /// <param name="streamTime">the stream_time in the segment</param>
     /// <returns>
     /// the position in the segment for @stream_time. This function returns
     /// -1 when @stream_time is -1 or when it is not inside @segment.
@@ -564,9 +564,9 @@ public sealed unsafe partial class Segment : Gst.GObject.Boxed
     /// to get the real negative segment position.
     /// </para>
     /// </remarks>
-    /// <param name="format">The <c>format</c> argument.</param>
-    /// <param name="streamTime">The <c>streamTime</c> argument.</param>
-    /// <param name="position">The <c>position</c> argument.</param>
+    /// <param name="format">the format of the segment.</param>
+    /// <param name="streamTime">the stream-time</param>
+    /// <param name="position">the resulting position in the segment</param>
     /// <returns>a 1 or -1 on success, 0 on failure.</returns>
     public int PositionFromStreamTimeFull(Gst.Format format, ulong streamTime, out ulong position)
     {
@@ -581,8 +581,8 @@ public sealed unsafe partial class Segment : Gst.GObject.Boxed
     /// Adjust the start/stop and base values of @segment such that the next valid
     /// buffer will be one with @running_time.
     /// </summary>
-    /// <param name="format">The <c>format</c> argument.</param>
-    /// <param name="runningTime">The <c>runningTime</c> argument.</param>
+    /// <param name="format">the format of the segment.</param>
+    /// <param name="runningTime">the running_time in the segment</param>
     /// <returns>
     /// %TRUE if the segment could be updated successfully. If %FALSE is
     /// returned, @running_time is -1 or not in @segment.
@@ -598,8 +598,8 @@ public sealed unsafe partial class Segment : Gst.GObject.Boxed
     /// Convert @running_time into a position in the segment so that
     /// gst_segment_to_running_time() with that position returns @running_time.
     /// </summary>
-    /// <param name="format">The <c>format</c> argument.</param>
-    /// <param name="runningTime">The <c>runningTime</c> argument.</param>
+    /// <param name="format">the format of the segment.</param>
+    /// <param name="runningTime">the running_time in the segment</param>
     /// <returns>
     /// the position in the segment for @running_time. This function returns
     /// -1 when @running_time is -1 or when it is not inside @segment.
@@ -625,8 +625,8 @@ public sealed unsafe partial class Segment : Gst.GObject.Boxed
     /// </para>
     /// <para>This function returns -1 if the position is outside of @segment start and stop.</para>
     /// </remarks>
-    /// <param name="format">The <c>format</c> argument.</param>
-    /// <param name="position">The <c>position</c> argument.</param>
+    /// <param name="format">the format of the segment.</param>
+    /// <param name="position">the position in the segment</param>
     /// <returns>
     /// the position as the total running time or -1 when an invalid position
     /// was given.
@@ -661,9 +661,9 @@ public sealed unsafe partial class Segment : Gst.GObject.Boxed
     /// to get the real negative running time.
     /// </para>
     /// </remarks>
-    /// <param name="format">The <c>format</c> argument.</param>
-    /// <param name="position">The <c>position</c> argument.</param>
-    /// <param name="runningTime">The <c>runningTime</c> argument.</param>
+    /// <param name="format">the format of the segment.</param>
+    /// <param name="position">the position in the segment</param>
+    /// <param name="runningTime">result running-time</param>
     /// <returns>a 1 or -1 on success, 0 on failure.</returns>
     public int ToRunningTimeFull(Gst.Format format, ulong position, out ulong runningTime)
     {
@@ -689,8 +689,8 @@ public sealed unsafe partial class Segment : Gst.GObject.Boxed
     /// media stream.
     /// </para>
     /// </remarks>
-    /// <param name="format">The <c>format</c> argument.</param>
-    /// <param name="position">The <c>position</c> argument.</param>
+    /// <param name="format">the format of the segment.</param>
+    /// <param name="position">the position in the segment</param>
     /// <returns>
     /// the position in stream_time or -1 when an invalid position
     /// was given.
@@ -725,9 +725,9 @@ public sealed unsafe partial class Segment : Gst.GObject.Boxed
     /// to get the real negative stream time.
     /// </para>
     /// </remarks>
-    /// <param name="format">The <c>format</c> argument.</param>
-    /// <param name="position">The <c>position</c> argument.</param>
-    /// <param name="streamTime">The <c>streamTime</c> argument.</param>
+    /// <param name="format">the format of the segment.</param>
+    /// <param name="position">the position in the segment</param>
+    /// <param name="streamTime">result stream-time</param>
     /// <returns>a 1 or -1 on success, 0 on failure.</returns>
     public int ToStreamTimeFull(Gst.Format format, ulong position, out ulong streamTime)
     {

@@ -81,7 +81,7 @@ public unsafe partial class DeviceProviderFactory : Gst.PluginFeature
     }
 
     /// <summary>Get the metadata on @factory with @key.</summary>
-    /// <param name="key">The <c>key</c> argument.</param>
+    /// <param name="key">a key</param>
     /// <returns>
     /// the metadata with @key on @factory or %NULL
     /// when there was no metadata with the given @key.
@@ -109,7 +109,10 @@ public unsafe partial class DeviceProviderFactory : Gst.PluginFeature
     }
 
     /// <summary>Check if @factory matches all of the given @classes</summary>
-    /// <param name="classes">The <c>classes</c> argument.</param>
+    /// <param name="classes">
+    /// a "/" separate list of classes to match, only match
+    ///     if all classes are matched
+    /// </param>
     /// <returns>%TRUE if @factory matches or if @classes is %NULL.</returns>
     public bool HasClasses(string? classes)
     {
@@ -138,7 +141,7 @@ public unsafe partial class DeviceProviderFactory : Gst.PluginFeature
     /// Search for an device provider factory of the given name. Refs the returned
     /// device provider factory; caller is responsible for unreffing.
     /// </summary>
-    /// <param name="name">The <c>name</c> argument.</param>
+    /// <param name="name">name of factory to find</param>
     /// <returns>
     /// #GstDeviceProviderFactory if
     /// found, %NULL otherwise
@@ -156,7 +159,7 @@ public unsafe partial class DeviceProviderFactory : Gst.PluginFeature
     /// Returns the device provider of the type defined by the given device
     /// provider factory.
     /// </summary>
-    /// <param name="factoryname">The <c>factoryname</c> argument.</param>
+    /// <param name="factoryname">a named factory to instantiate</param>
     /// <returns>
     /// a #GstDeviceProvider or %NULL
     /// if unable to create device provider
@@ -174,7 +177,7 @@ public unsafe partial class DeviceProviderFactory : Gst.PluginFeature
     /// Get a list of factories with a rank greater or equal to @minrank.
     /// The list of factories is returned by decreasing rank.
     /// </summary>
-    /// <param name="minrank">The <c>minrank</c> argument.</param>
+    /// <param name="minrank">Minimum rank</param>
     /// <returns>
     /// a #GList of #GstDeviceProviderFactory device providers. Use
     /// gst_plugin_feature_list_free() after usage.

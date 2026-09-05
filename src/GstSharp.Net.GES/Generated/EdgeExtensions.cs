@@ -12,7 +12,7 @@ namespace GES;
 public static unsafe partial class EdgeExtensions
 {
     /// <summary>The <c>ges_edge_name</c> function.</summary>
-    /// <param name="edge">The <c>edge</c> argument.</param>
+    /// <param name="edge">The #GESEdge to get the name of</param>
     /// <returns>A human friendly name for @edge</returns>
     public static string Name(GES.Edge edge)
     {

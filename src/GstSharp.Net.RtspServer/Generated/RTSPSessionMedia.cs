@@ -57,9 +57,9 @@ public unsafe partial class RTSPSessionMedia : Gst.GObject.Object
     /// declaration around the argument stays correct.
     /// </para>
     /// </remarks>
-    /// <param name="path">The <c>path</c> argument.</param>
+    /// <param name="path">the path</param>
     /// <param name="media">
-    /// The <c>media</c> argument.
+    /// the #GstRTSPMedia
     /// The call consumes it: <paramref name="media"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// </param>
@@ -88,7 +88,7 @@ public unsafe partial class RTSPSessionMedia : Gst.GObject.Object
     /// Fill @range with the next available min and max channels for
     /// interleaved transport.
     /// </summary>
-    /// <param name="range">The <c>range</c> argument.</param>
+    /// <param name="range">a #GstRTSPRange</param>
     /// <returns>%TRUE on success.</returns>
     public bool AllocChannels(out Gst.Rtsp.RTSPRange range)
     {
@@ -145,7 +145,7 @@ public unsafe partial class RTSPSessionMedia : Gst.GObject.Object
     }
 
     /// <summary>Get a previously created #GstRTSPStreamTransport for the stream at @idx.</summary>
-    /// <param name="idx">The <c>idx</c> argument.</param>
+    /// <param name="idx">the stream index</param>
     /// <returns>
     /// a #GstRTSPStreamTransport that is
     /// valid until the session of @media is unreffed.
@@ -161,8 +161,8 @@ public unsafe partial class RTSPSessionMedia : Gst.GObject.Object
     /// Check if the path of @media matches @path. It @path matches, the amount of
     /// matched characters is returned in @matched.
     /// </summary>
-    /// <param name="path">The <c>path</c> argument.</param>
-    /// <param name="matched">The <c>matched</c> argument.</param>
+    /// <param name="path">a path</param>
+    /// <param name="matched">the amount of matched characters of @path</param>
     /// <returns>%TRUE when @path matches the path of @media.</returns>
     public bool Matches(string path, out int matched)
     {
@@ -177,7 +177,7 @@ public unsafe partial class RTSPSessionMedia : Gst.GObject.Object
     }
 
     /// <summary>Set the RTSP state of @media to @state.</summary>
-    /// <param name="state">The <c>state</c> argument.</param>
+    /// <param name="state">a #GstRTSPState</param>
     public void SetRtspState(Gst.Rtsp.RTSPState state)
     {
         GstRtspSessionMediaSetRtspState(Handle, (int)state);
@@ -185,7 +185,7 @@ public unsafe partial class RTSPSessionMedia : Gst.GObject.Object
     }
 
     /// <summary>Tell the media object @media to change to @state.</summary>
-    /// <param name="state">The <c>state</c> argument.</param>
+    /// <param name="state">the new state</param>
     /// <returns>%TRUE on success.</returns>
     public bool SetState(Gst.State state)
     {

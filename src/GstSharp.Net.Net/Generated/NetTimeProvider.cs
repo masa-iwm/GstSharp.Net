@@ -52,9 +52,12 @@ public unsafe partial class NetTimeProvider : Gst.Object
     }
 
     /// <summary>Allows network clients to get the current time of @clock.</summary>
-    /// <param name="clock">The <c>clock</c> argument.</param>
-    /// <param name="address">The <c>address</c> argument.</param>
-    /// <param name="port">The <c>port</c> argument.</param>
+    /// <param name="clock">a #GstClock to export over the network</param>
+    /// <param name="address">
+    /// an address to bind on as a dotted quad
+    ///           (xxx.xxx.xxx.xxx), IPv6 address, or NULL to bind to all addresses
+    /// </param>
+    /// <param name="port">a port to bind on, or 0 to let the kernel choose</param>
     /// <returns>the new #GstNetTimeProvider, or NULL on error</returns>
     public static Gst.Net.NetTimeProvider? New(Gst.Clock clock, string? address, int port)
     {

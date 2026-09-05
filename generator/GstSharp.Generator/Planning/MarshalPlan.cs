@@ -336,7 +336,15 @@ internal sealed record BoxedStorageFactory(string EntryPoint, string NativeName,
 /// <summary>
 /// One argument of a planned callable, visible or hidden.
 /// </summary>
-internal sealed class ArgumentPlan
+/// <remarks>
+/// A record rather than a class, so that a planner can hand a finished plan
+/// back with one part restated: the gir documentation of a parameter is
+/// attached that way, once, at the tail of <c>PlanParameter</c>, instead of by
+/// every branch that builds a plan. Identity still decides which argument an
+/// array length belongs to, and every place that asks reads it through
+/// <c>ReferenceEquals</c>.
+/// </remarks>
+internal sealed record ArgumentPlan
 {
     /// <summary>Gets the gir parameter, or <see langword="null"/> for the instance.</summary>
     internal GirParameter? Source { get; init; }

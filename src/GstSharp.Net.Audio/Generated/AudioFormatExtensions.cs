@@ -12,10 +12,10 @@ namespace Gst.Audio;
 public static unsafe partial class AudioFormatExtensions
 {
     /// <summary>Construct a #GstAudioFormat with given parameters.</summary>
-    /// <param name="sign">The <c>sign</c> argument.</param>
-    /// <param name="endianness">The <c>endianness</c> argument.</param>
-    /// <param name="width">The <c>width</c> argument.</param>
-    /// <param name="depth">The <c>depth</c> argument.</param>
+    /// <param name="sign">signed or unsigned format</param>
+    /// <param name="endianness">G_LITTLE_ENDIAN or G_BIG_ENDIAN</param>
+    /// <param name="width">amount of bits used per sample</param>
+    /// <param name="depth">amount of used bits in @width</param>
     /// <returns>
     /// a #GstAudioFormat or GST_AUDIO_FORMAT_UNKNOWN when no audio format
     /// exists with the given parameters.
@@ -27,7 +27,7 @@ public static unsafe partial class AudioFormatExtensions
     }
 
     /// <summary>Fill @length bytes in @dest with silence samples for @info.</summary>
-    /// <param name="info">The <c>info</c> argument.</param>
+    /// <param name="info">a #GstAudioFormatInfo</param>
     /// <param name="dest">
     /// a destination
     ///   to fill
@@ -44,7 +44,7 @@ public static unsafe partial class AudioFormatExtensions
     }
 
     /// <summary>Convert the @format string to its #GstAudioFormat.</summary>
-    /// <param name="format">The <c>format</c> argument.</param>
+    /// <param name="format">a format string</param>
     /// <returns>
     /// the #GstAudioFormat for @format or GST_AUDIO_FORMAT_UNKNOWN when the
     /// string is not a known format.
@@ -59,7 +59,7 @@ public static unsafe partial class AudioFormatExtensions
     }
 
     /// <summary>Get the #GstAudioFormatInfo for @format</summary>
-    /// <param name="format">The <c>format</c> argument.</param>
+    /// <param name="format">a #GstAudioFormat</param>
     /// <returns>The #GstAudioFormatInfo for @format.</returns>
     public static Gst.Audio.AudioFormatInfo GetInfo(Gst.Audio.AudioFormat format)
     {
@@ -75,7 +75,7 @@ public static unsafe partial class AudioFormatExtensions
     /// versions were printing a critical warning and returned %NULL.
     /// </para>
     /// </remarks>
-    /// <param name="format">The <c>format</c> argument.</param>
+    /// <param name="format">a #GstAudioFormat audio format</param>
     /// <returns>the name corresponding to @format</returns>
     public static string ToString(Gst.Audio.AudioFormat format)
     {

@@ -53,7 +53,7 @@ public static unsafe partial class StreamVolumeExtensions
 
     /// <summary>The <c>gst_stream_volume_get_volume</c> function.</summary>
     /// <param name="volume">#GstStreamVolume that should be used</param>
-    /// <param name="format">The <c>format</c> argument.</param>
+    /// <param name="format">#GstStreamVolumeFormat which should be returned</param>
     /// <returns>The current stream volume as linear factor</returns>
     public static double GetVolume(this Gst.Audio.IStreamVolume volume, Gst.Audio.StreamVolumeFormat format)
     {
@@ -65,7 +65,7 @@ public static unsafe partial class StreamVolumeExtensions
 
     /// <summary>The <c>gst_stream_volume_set_mute</c> function.</summary>
     /// <param name="volume">#GstStreamVolume that should be used</param>
-    /// <param name="mute">The <c>mute</c> argument.</param>
+    /// <param name="mute">Mute state that should be set</param>
     public static void SetMute(this Gst.Audio.IStreamVolume volume, bool mute)
     {
         ArgumentNullException.ThrowIfNull(volume);
@@ -75,8 +75,8 @@ public static unsafe partial class StreamVolumeExtensions
 
     /// <summary>The <c>gst_stream_volume_set_volume</c> function.</summary>
     /// <param name="volume">#GstStreamVolume that should be used</param>
-    /// <param name="format">The <c>format</c> argument.</param>
-    /// <param name="val">The <c>val</c> argument.</param>
+    /// <param name="format">#GstStreamVolumeFormat of @val</param>
+    /// <param name="val">Linear volume factor that should be set</param>
     public static void SetVolume(this Gst.Audio.IStreamVolume volume, Gst.Audio.StreamVolumeFormat format, double val)
     {
         ArgumentNullException.ThrowIfNull(volume);
@@ -85,9 +85,9 @@ public static unsafe partial class StreamVolumeExtensions
     }
 
     /// <summary>The <c>gst_stream_volume_convert_volume</c> function.</summary>
-    /// <param name="from">The <c>from</c> argument.</param>
-    /// <param name="to">The <c>to</c> argument.</param>
-    /// <param name="val">The <c>val</c> argument.</param>
+    /// <param name="from">#GstStreamVolumeFormat to convert from</param>
+    /// <param name="to">#GstStreamVolumeFormat to convert to</param>
+    /// <param name="val">Volume in @from format that should be converted</param>
     /// <returns>the converted volume</returns>
     public static double ConvertVolume(Gst.Audio.StreamVolumeFormat from, Gst.Audio.StreamVolumeFormat to, double val)
     {

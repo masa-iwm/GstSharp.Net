@@ -79,8 +79,8 @@ public sealed unsafe partial class SDPZone
     }
 
     /// <summary>Set zone information in @zone.</summary>
-    /// <param name="adjTime">The <c>adjTime</c> argument.</param>
-    /// <param name="typedTime">The <c>typedTime</c> argument.</param>
+    /// <param name="adjTime">the NTP time that a time zone adjustment happens</param>
+    /// <param name="typedTime">the offset from the time when the session was first scheduled</param>
     /// <returns>a #GstSDPResult.</returns>
     public Gst.Sdp.SDPResult Set(string adjTime, string typedTime)
     {

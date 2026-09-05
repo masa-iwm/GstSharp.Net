@@ -106,8 +106,8 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// means that the element has no clock interaction and thus doesn't care about
     /// the running_time of the pipeline.
     /// </summary>
-    /// <param name="src">The <c>src</c> argument.</param>
-    /// <param name="runningTime">The <c>runningTime</c> argument.</param>
+    /// <param name="src">The object originating the message.</param>
+    /// <param name="runningTime">the desired running_time</param>
     /// <returns>The new async_done message.</returns>
     public static Gst.Message NewAsyncDone(Gst.Object? src, Gst.ClockTime runningTime)
     {
@@ -118,7 +118,7 @@ public sealed unsafe partial class Message : Gst.MiniObject
     }
 
     /// <summary>This message is posted by elements when they start an ASYNC state change.</summary>
-    /// <param name="src">The <c>src</c> argument.</param>
+    /// <param name="src">The object originating the message.</param>
     /// <returns>The new async_start message.</returns>
     public static Gst.Message NewAsyncStart(Gst.Object? src)
     {
@@ -144,8 +144,8 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// </para>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="src">The <c>src</c> argument.</param>
-    /// <param name="percent">The <c>percent</c> argument.</param>
+    /// <param name="src">The object originating the message.</param>
+    /// <param name="percent">The buffering percent</param>
     /// <returns>The new buffering message.</returns>
     public static Gst.Message NewBuffering(Gst.Object? src, int percent)
     {
@@ -166,8 +166,8 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// be needed to set the pipeline to PAUSED and PLAYING again.
     /// </para>
     /// </remarks>
-    /// <param name="src">The <c>src</c> argument.</param>
-    /// <param name="clock">The <c>clock</c> argument.</param>
+    /// <param name="src">The object originating the message.</param>
+    /// <param name="clock">the clock that was lost</param>
     /// <returns>The new clock lost message.</returns>
     public static Gst.Message NewClockLost(Gst.Object? src, Gst.Clock clock)
     {
@@ -190,9 +190,9 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// selection.
     /// </para>
     /// </remarks>
-    /// <param name="src">The <c>src</c> argument.</param>
-    /// <param name="clock">The <c>clock</c> argument.</param>
-    /// <param name="ready">The <c>ready</c> argument.</param>
+    /// <param name="src">The object originating the message.</param>
+    /// <param name="clock">the clock it provides</param>
+    /// <param name="ready">%TRUE if the sender can provide a clock</param>
     /// <returns>the new provide clock message.</returns>
     public static Gst.Message NewClockProvide(Gst.Object? src, Gst.Clock clock, bool ready)
     {
@@ -209,8 +209,8 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// #GstDeviceProvider or a #GstDeviceMonitor. They announce the appearance
     /// of monitored devices.
     /// </summary>
-    /// <param name="src">The <c>src</c> argument.</param>
-    /// <param name="device">The <c>device</c> argument.</param>
+    /// <param name="src">The #GstObject that created the message</param>
+    /// <param name="device">The new #GstDevice</param>
     /// <returns>a newly allocated #GstMessage</returns>
     public static Gst.Message NewDeviceAdded(Gst.Object? src, Gst.Device device)
     {
@@ -227,9 +227,12 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// by #GstDeviceProvider or a #GstDeviceMonitor. They announce that a device
     /// properties has changed and @device represent the new modified version of @changed_device.
     /// </summary>
-    /// <param name="src">The <c>src</c> argument.</param>
-    /// <param name="device">The <c>device</c> argument.</param>
-    /// <param name="changedDevice">The <c>changedDevice</c> argument.</param>
+    /// <param name="src">The #GstObject that created the message</param>
+    /// <param name="device">
+    /// The newly created device representing @changed_device
+    ///         with its new configuration.
+    /// </param>
+    /// <param name="changedDevice">The old version of the device.</param>
     /// <returns>a newly allocated #GstMessage</returns>
     public static Gst.Message NewDeviceChanged(Gst.Object? src, Gst.Device device, Gst.Device changedDevice)
     {
@@ -253,8 +256,8 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// <remarks>
     /// <para>Available since GStreamer 1.28.</para>
     /// </remarks>
-    /// <param name="src">The <c>src</c> argument.</param>
-    /// <param name="success">The <c>success</c> argument.</param>
+    /// <param name="src">The #GstObject that created the message</param>
+    /// <param name="success">Whether the monitor was started successfully</param>
     /// <returns>a newly allocated #GstMessage</returns>
     public static Gst.Message NewDeviceMonitorStarted(Gst.Object? src, bool success)
     {
@@ -269,8 +272,8 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// by #GstDeviceProvider or a #GstDeviceMonitor. They announce the
     /// disappearance of monitored devices.
     /// </summary>
-    /// <param name="src">The <c>src</c> argument.</param>
-    /// <param name="device">The <c>device</c> argument.</param>
+    /// <param name="src">The #GstObject that created the message</param>
+    /// <param name="device">The removed #GstDevice</param>
     /// <returns>a newly allocated #GstMessage</returns>
     public static Gst.Message NewDeviceRemoved(Gst.Object? src, Gst.Device device)
     {
@@ -288,7 +291,7 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// is received by bins and is used to calculate the total duration of a
     /// pipeline.
     /// </summary>
-    /// <param name="src">The <c>src</c> argument.</param>
+    /// <param name="src">The object originating the message.</param>
     /// <returns>The new duration-changed message.</returns>
     public static Gst.Message NewDurationChanged(Gst.Object? src)
     {
@@ -314,9 +317,10 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// <c>using</c> declaration around the argument stays correct.
     /// </para>
     /// </remarks>
-    /// <param name="src">The <c>src</c> argument.</param>
+    /// <param name="src">The object originating the message.</param>
     /// <param name="structure">
-    /// The <c>structure</c> argument.
+    /// The structure for the
+    ///     message. The message will take ownership of the structure.
     /// The call consumes it: <paramref name="structure"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// </param>
@@ -346,7 +350,7 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// the sink elements of a GstBin. The bin will only forward the EOS
     /// message to the application if all sinks have posted an EOS message.
     /// </summary>
-    /// <param name="src">The <c>src</c> argument.</param>
+    /// <param name="src">The object originating the message.</param>
     /// <returns>The new eos message.</returns>
     public static Gst.Message NewEos(Gst.Object? src)
     {
@@ -362,16 +366,16 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// occurred. The pipeline will probably (partially) stop. The application
     /// receiving this message should stop the pipeline.
     /// </summary>
-    /// <param name="src">The <c>src</c> argument.</param>
+    /// <param name="src">The object originating the message.</param>
     /// <param name="error">
-    /// The <c>error</c> argument.
+    /// The GError for this message.
     /// The call is handed a temporary native error built from this value and
     /// releases it again when the call returns. The library copies whatever it
     /// keeps, so the exception object itself is never retained. It needs a
     /// registered error domain: an exception created without one — every
     /// constructor but <c>GException(Quark, int, string)</c> — is rejected.
     /// </param>
-    /// <param name="debug">The <c>debug</c> argument.</param>
+    /// <param name="debug">A debugging string.</param>
     /// <returns>the new error message.</returns>
     /// <exception cref="ArgumentException">
     /// <paramref name="error"/> carries no error domain, no message, or a message with an embedded null.
@@ -405,18 +409,18 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// <c>using</c> declaration around the argument stays correct.
     /// </para>
     /// </remarks>
-    /// <param name="src">The <c>src</c> argument.</param>
+    /// <param name="src">The object originating the message.</param>
     /// <param name="error">
-    /// The <c>error</c> argument.
+    /// The GError for this message.
     /// The call is handed a temporary native error built from this value and
     /// releases it again when the call returns. The library copies whatever it
     /// keeps, so the exception object itself is never retained. It needs a
     /// registered error domain: an exception created without one — every
     /// constructor but <c>GException(Quark, int, string)</c> — is rejected.
     /// </param>
-    /// <param name="debug">The <c>debug</c> argument.</param>
+    /// <param name="debug">A debugging string.</param>
     /// <param name="details">
-    /// The <c>details</c> argument.
+    /// A GstStructure with details
     /// The call consumes it: <paramref name="details"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// It may be <see langword="null"/>, which is the absence of a payload and leaves
@@ -457,9 +461,9 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// declaration around the argument stays correct.
     /// </para>
     /// </remarks>
-    /// <param name="src">The <c>src</c> argument.</param>
+    /// <param name="src">The object originating the message.</param>
     /// <param name="context">
-    /// The <c>context</c> argument.
+    /// the context
     /// The call consumes it: <paramref name="context"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// </param>
@@ -487,16 +491,16 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// Create a new info message. The message will make copies of @error and
     /// @debug.
     /// </summary>
-    /// <param name="src">The <c>src</c> argument.</param>
+    /// <param name="src">The object originating the message.</param>
     /// <param name="error">
-    /// The <c>error</c> argument.
+    /// The GError for this message.
     /// The call is handed a temporary native error built from this value and
     /// releases it again when the call returns. The library copies whatever it
     /// keeps, so the exception object itself is never retained. It needs a
     /// registered error domain: an exception created without one — every
     /// constructor but <c>GException(Quark, int, string)</c> — is rejected.
     /// </param>
-    /// <param name="debug">The <c>debug</c> argument.</param>
+    /// <param name="debug">A debugging string.</param>
     /// <returns>the new info message.</returns>
     /// <exception cref="ArgumentException">
     /// <paramref name="error"/> carries no error domain, no message, or a message with an embedded null.
@@ -528,18 +532,18 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// <c>using</c> declaration around the argument stays correct.
     /// </para>
     /// </remarks>
-    /// <param name="src">The <c>src</c> argument.</param>
+    /// <param name="src">The object originating the message.</param>
     /// <param name="error">
-    /// The <c>error</c> argument.
+    /// The GError for this message.
     /// The call is handed a temporary native error built from this value and
     /// releases it again when the call returns. The library copies whatever it
     /// keeps, so the exception object itself is never retained. It needs a
     /// registered error domain: an exception created without one — every
     /// constructor but <c>GException(Quark, int, string)</c> — is rejected.
     /// </param>
-    /// <param name="debug">The <c>debug</c> argument.</param>
+    /// <param name="debug">A debugging string.</param>
     /// <param name="details">
-    /// The <c>details</c> argument.
+    /// A GstStructure with details
     /// The call consumes it: <paramref name="details"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// It may be <see langword="null"/>, which is the absence of a payload and leaves
@@ -578,8 +582,8 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// @GST_EVENT_INSTANT_RATE_SYNC_TIME event to notify the elements
     /// in the pipeline.
     /// </summary>
-    /// <param name="src">The <c>src</c> argument.</param>
-    /// <param name="rateMultiplier">The <c>rateMultiplier</c> argument.</param>
+    /// <param name="src">The #GstObject that posted the message</param>
+    /// <param name="rateMultiplier">the rate multiplier factor that should be applied</param>
     /// <returns>a newly allocated #GstMessage</returns>
     public static Gst.Message NewInstantRateRequest(Gst.Object? src, double rateMultiplier)
     {
@@ -593,7 +597,7 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// This message can be posted by elements when their latency requirements have
     /// changed.
     /// </summary>
-    /// <param name="src">The <c>src</c> argument.</param>
+    /// <param name="src">The object originating the message.</param>
     /// <returns>The new latency message.</returns>
     public static Gst.Message NewLatency(Gst.Object? src)
     {
@@ -604,8 +608,8 @@ public sealed unsafe partial class Message : Gst.MiniObject
     }
 
     /// <summary>This message is posted when an element needs a specific #GstContext.</summary>
-    /// <param name="src">The <c>src</c> argument.</param>
-    /// <param name="contextType">The <c>contextType</c> argument.</param>
+    /// <param name="src">The object originating the message.</param>
+    /// <param name="contextType">The context type that is needed</param>
     /// <returns>The new need-context message.</returns>
     public static Gst.Message NewNeedContext(Gst.Object? src, string contextType)
     {
@@ -622,8 +626,8 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// Create a new clock message. This message is posted whenever the
     /// pipeline selects a new clock for the pipeline.
     /// </summary>
-    /// <param name="src">The <c>src</c> argument.</param>
-    /// <param name="clock">The <c>clock</c> argument.</param>
+    /// <param name="src">The object originating the message.</param>
+    /// <param name="clock">the new selected clock</param>
     /// <returns>The new new clock message.</returns>
     public static Gst.Message NewNewClock(Gst.Object? src, Gst.Clock clock)
     {
@@ -645,10 +649,10 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// @text should contain a user visible string detailing the current action.
     /// </para>
     /// </remarks>
-    /// <param name="src">The <c>src</c> argument.</param>
-    /// <param name="type">The <c>type</c> argument.</param>
-    /// <param name="code">The <c>code</c> argument.</param>
-    /// <param name="text">The <c>text</c> argument.</param>
+    /// <param name="src">The object originating the message.</param>
+    /// <param name="type">a #GstProgressType</param>
+    /// <param name="code">a progress code</param>
+    /// <param name="text">free, user visible text describing the progress</param>
     /// <returns>The new qos message.</returns>
     public static Gst.Message NewProgress(Gst.Object? src, Gst.ProgressType type, string code, string text)
     {
@@ -683,12 +687,12 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// GST_CLOCK_TIME_NONE when unknown.
     /// </para>
     /// </remarks>
-    /// <param name="src">The <c>src</c> argument.</param>
-    /// <param name="live">The <c>live</c> argument.</param>
-    /// <param name="runningTime">The <c>runningTime</c> argument.</param>
-    /// <param name="streamTime">The <c>streamTime</c> argument.</param>
-    /// <param name="timestamp">The <c>timestamp</c> argument.</param>
-    /// <param name="duration">The <c>duration</c> argument.</param>
+    /// <param name="src">The object originating the message.</param>
+    /// <param name="live">if the message was generated by a live element</param>
+    /// <param name="runningTime">the running time of the buffer that generated the message</param>
+    /// <param name="streamTime">the stream time of the buffer that generated the message</param>
+    /// <param name="timestamp">the timestamps of the buffer that generated the message</param>
+    /// <param name="duration">the duration of the buffer that generated the message</param>
     /// <returns>The new qos message.</returns>
     public static Gst.Message NewQos(Gst.Object? src, bool live, ulong runningTime, ulong streamTime, ulong timestamp, ulong duration)
     {
@@ -746,17 +750,17 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// <c>using</c> declaration around the argument stays correct.
     /// </para>
     /// </remarks>
-    /// <param name="src">The <c>src</c> argument.</param>
-    /// <param name="location">The <c>location</c> argument.</param>
+    /// <param name="src">The #GstObject whose property changed (may or may not be a #GstElement)</param>
+    /// <param name="location">location string for the new entry</param>
     /// <param name="tagList">
-    /// The <c>tagList</c> argument.
+    /// tag list for the new entry
     /// The call consumes it: <paramref name="tagList"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// It may be <see langword="null"/>, which is the absence of a payload and leaves
     /// nothing to consume.
     /// </param>
     /// <param name="entryStruct">
-    /// The <c>entryStruct</c> argument.
+    /// structure for the new entry
     /// The call consumes it: <paramref name="entryStruct"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// It may be <see langword="null"/>, which is the absence of a payload and leaves
@@ -790,8 +794,8 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// changed. A typical use case would be an audio server that wants to pause the
     /// pipeline because a higher priority stream is being played.
     /// </summary>
-    /// <param name="src">The <c>src</c> argument.</param>
-    /// <param name="state">The <c>state</c> argument.</param>
+    /// <param name="src">The object originating the message.</param>
+    /// <param name="state">The new requested state</param>
     /// <returns>the new request state message.</returns>
     public static Gst.Message NewRequestState(Gst.Object? src, Gst.State state)
     {
@@ -805,8 +809,8 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// This message is posted when the pipeline running-time should be reset to
     /// @running_time, like after a flushing seek.
     /// </summary>
-    /// <param name="src">The <c>src</c> argument.</param>
-    /// <param name="runningTime">The <c>runningTime</c> argument.</param>
+    /// <param name="src">The object originating the message.</param>
+    /// <param name="runningTime">the requested running-time</param>
     /// <returns>The new reset_time message.</returns>
     public static Gst.Message NewResetTime(Gst.Object? src, Gst.ClockTime runningTime)
     {
@@ -822,9 +826,9 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// is received by the application after all elements that posted a segment_start
     /// have posted the segment_done.
     /// </summary>
-    /// <param name="src">The <c>src</c> argument.</param>
-    /// <param name="format">The <c>format</c> argument.</param>
-    /// <param name="position">The <c>position</c> argument.</param>
+    /// <param name="src">The object originating the message.</param>
+    /// <param name="format">The format of the position being done</param>
+    /// <param name="position">The position of the segment being done</param>
     /// <returns>the new segment done message.</returns>
     public static Gst.Message NewSegmentDone(Gst.Object? src, Gst.Format format, long position)
     {
@@ -840,9 +844,9 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// is not received by the application but is used for maintenance reasons in
     /// container elements.
     /// </summary>
-    /// <param name="src">The <c>src</c> argument.</param>
-    /// <param name="format">The <c>format</c> argument.</param>
-    /// <param name="position">The <c>position</c> argument.</param>
+    /// <param name="src">The object originating the message.</param>
+    /// <param name="format">The format of the position being played</param>
+    /// <param name="position">The position of the segment being played</param>
     /// <returns>the new segment start message.</returns>
     public static Gst.Message NewSegmentStart(Gst.Object? src, Gst.Format format, long position)
     {
@@ -856,10 +860,10 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// Create a state change message. This message is posted whenever an element
     /// changed its state.
     /// </summary>
-    /// <param name="src">The <c>src</c> argument.</param>
-    /// <param name="oldstate">The <c>oldstate</c> argument.</param>
-    /// <param name="newstate">The <c>newstate</c> argument.</param>
-    /// <param name="pending">The <c>pending</c> argument.</param>
+    /// <param name="src">The object originating the message.</param>
+    /// <param name="oldstate">the previous state</param>
+    /// <param name="newstate">the new (current) state</param>
+    /// <param name="pending">the pending (target) state</param>
     /// <returns>the new state change message.</returns>
     public static Gst.Message NewStateChanged(Gst.Object? src, Gst.State oldstate, Gst.State newstate, Gst.State pending)
     {
@@ -874,7 +878,7 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// changed its state asynchronously and is used internally to update the
     /// states of container objects.
     /// </summary>
-    /// <param name="src">The <c>src</c> argument.</param>
+    /// <param name="src">The object originating the message</param>
     /// <returns>the new state dirty message.</returns>
     public static Gst.Message NewStateDirty(Gst.Object? src)
     {
@@ -894,14 +898,14 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// @amount of media in format @format.
     /// </para>
     /// </remarks>
-    /// <param name="src">The <c>src</c> argument.</param>
-    /// <param name="format">The <c>format</c> argument.</param>
-    /// <param name="amount">The <c>amount</c> argument.</param>
-    /// <param name="rate">The <c>rate</c> argument.</param>
-    /// <param name="flush">The <c>flush</c> argument.</param>
-    /// <param name="intermediate">The <c>intermediate</c> argument.</param>
-    /// <param name="duration">The <c>duration</c> argument.</param>
-    /// <param name="eos">The <c>eos</c> argument.</param>
+    /// <param name="src">The object originating the message.</param>
+    /// <param name="format">the format of @amount</param>
+    /// <param name="amount">the amount of stepped data</param>
+    /// <param name="rate">the rate of the stepped amount</param>
+    /// <param name="flush">is this an flushing step</param>
+    /// <param name="intermediate">is this an intermediate step</param>
+    /// <param name="duration">the duration of the data</param>
+    /// <param name="eos">the step caused EOS</param>
     /// <returns>the new step_done message.</returns>
     public static Gst.Message NewStepDone(Gst.Object? src, Gst.Format format, ulong amount, double rate, bool flush, bool intermediate, ulong duration, bool eos)
     {
@@ -927,13 +931,13 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// element.
     /// </para>
     /// </remarks>
-    /// <param name="src">The <c>src</c> argument.</param>
-    /// <param name="active">The <c>active</c> argument.</param>
-    /// <param name="format">The <c>format</c> argument.</param>
-    /// <param name="amount">The <c>amount</c> argument.</param>
-    /// <param name="rate">The <c>rate</c> argument.</param>
-    /// <param name="flush">The <c>flush</c> argument.</param>
-    /// <param name="intermediate">The <c>intermediate</c> argument.</param>
+    /// <param name="src">The object originating the message.</param>
+    /// <param name="active">if the step is active or queued</param>
+    /// <param name="format">the format of @amount</param>
+    /// <param name="amount">the amount of stepped data</param>
+    /// <param name="rate">the rate of the stepped amount</param>
+    /// <param name="flush">is this an flushing step</param>
+    /// <param name="intermediate">is this an intermediate step</param>
     /// <returns>The new step_start message.</returns>
     public static Gst.Message NewStepStart(Gst.Object? src, bool active, Gst.Format format, ulong amount, double rate, bool flush, bool intermediate)
     {
@@ -947,8 +951,8 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// Creates a new stream-collection message. The message is used to announce new
     /// #GstStreamCollection
     /// </summary>
-    /// <param name="src">The <c>src</c> argument.</param>
-    /// <param name="collection">The <c>collection</c> argument.</param>
+    /// <param name="src">The #GstObject that created the message</param>
+    /// <param name="collection">The #GstStreamCollection</param>
     /// <returns>a newly allocated #GstMessage</returns>
     public static Gst.Message NewStreamCollection(Gst.Object? src, Gst.StreamCollection collection)
     {
@@ -965,7 +969,7 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// the sink elements of a GstBin. The bin will only forward the STREAM_START
     /// message to the application if all sinks have posted an STREAM_START message.
     /// </summary>
-    /// <param name="src">The <c>src</c> argument.</param>
+    /// <param name="src">The object originating the message.</param>
     /// <returns>The new stream_start message.</returns>
     public static Gst.Message NewStreamStart(Gst.Object? src)
     {
@@ -979,9 +983,9 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// Create a new stream status message. This message is posted when a streaming
     /// thread is created/destroyed or when the state changed.
     /// </summary>
-    /// <param name="src">The <c>src</c> argument.</param>
-    /// <param name="type">The <c>type</c> argument.</param>
-    /// <param name="owner">The <c>owner</c> argument.</param>
+    /// <param name="src">The object originating the message.</param>
+    /// <param name="type">The stream status type.</param>
+    /// <param name="owner">the owner element of @src.</param>
     /// <returns>the new stream status message.</returns>
     public static Gst.Message NewStreamStatus(Gst.Object? src, Gst.StreamStatusType type, Gst.Element owner)
     {
@@ -1009,8 +1013,8 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// gst_message_streams_selected_add().
     /// </para>
     /// </remarks>
-    /// <param name="src">The <c>src</c> argument.</param>
-    /// <param name="collection">The <c>collection</c> argument.</param>
+    /// <param name="src">The #GstObject that created the message</param>
+    /// <param name="collection">The #GstStreamCollection</param>
     /// <returns>a newly allocated #GstMessage</returns>
     public static Gst.Message NewStreamsSelected(Gst.Object? src, Gst.StreamCollection collection)
     {
@@ -1030,10 +1034,10 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// <remarks>
     /// <para>@src should be the sinkpad that unlinked or linked.</para>
     /// </remarks>
-    /// <param name="src">The <c>src</c> argument.</param>
-    /// <param name="type">The <c>type</c> argument.</param>
-    /// <param name="owner">The <c>owner</c> argument.</param>
-    /// <param name="busy">The <c>busy</c> argument.</param>
+    /// <param name="src">The object originating the message.</param>
+    /// <param name="type">The change type.</param>
+    /// <param name="owner">The owner element of @src.</param>
+    /// <param name="busy">Whether the structure change is busy.</param>
     /// <returns>the new structure change message.</returns>
     public static Gst.Message NewStructureChange(Gst.Object? src, Gst.StructureChangeType type, Gst.Element owner, bool busy)
     {
@@ -1058,9 +1062,9 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// declaration around the argument stays correct.
     /// </para>
     /// </remarks>
-    /// <param name="src">The <c>src</c> argument.</param>
+    /// <param name="src">The object originating the message.</param>
     /// <param name="tagList">
-    /// The <c>tagList</c> argument.
+    /// the tag list for the message.
     /// The call consumes it: <paramref name="tagList"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// </param>
@@ -1088,9 +1092,9 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// Create a new TOC message. The message is posted by elements
     /// that discovered or updated a TOC.
     /// </summary>
-    /// <param name="src">The <c>src</c> argument.</param>
-    /// <param name="toc">The <c>toc</c> argument.</param>
-    /// <param name="updated">The <c>updated</c> argument.</param>
+    /// <param name="src">the object originating the message.</param>
+    /// <param name="toc">#GstToc structure for the message.</param>
+    /// <param name="updated">whether TOC was updated or not.</param>
     /// <returns>a new TOC message.</returns>
     public static Gst.Message NewToc(Gst.Object? src, Gst.Toc toc, bool updated)
     {
@@ -1106,16 +1110,16 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// Create a new warning message. The message will make copies of @error and
     /// @debug.
     /// </summary>
-    /// <param name="src">The <c>src</c> argument.</param>
+    /// <param name="src">The object originating the message.</param>
     /// <param name="error">
-    /// The <c>error</c> argument.
+    /// The GError for this message.
     /// The call is handed a temporary native error built from this value and
     /// releases it again when the call returns. The library copies whatever it
     /// keeps, so the exception object itself is never retained. It needs a
     /// registered error domain: an exception created without one — every
     /// constructor but <c>GException(Quark, int, string)</c> — is rejected.
     /// </param>
-    /// <param name="debug">The <c>debug</c> argument.</param>
+    /// <param name="debug">A debugging string.</param>
     /// <returns>the new warning message.</returns>
     /// <exception cref="ArgumentException">
     /// <paramref name="error"/> carries no error domain, no message, or a message with an embedded null.
@@ -1147,18 +1151,18 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// <c>using</c> declaration around the argument stays correct.
     /// </para>
     /// </remarks>
-    /// <param name="src">The <c>src</c> argument.</param>
+    /// <param name="src">The object originating the message.</param>
     /// <param name="error">
-    /// The <c>error</c> argument.
+    /// The GError for this message.
     /// The call is handed a temporary native error built from this value and
     /// releases it again when the call returns. The library copies whatever it
     /// keeps, so the exception object itself is never retained. It needs a
     /// registered error domain: an exception created without one — every
     /// constructor but <c>GException(Quark, int, string)</c> — is rejected.
     /// </param>
-    /// <param name="debug">The <c>debug</c> argument.</param>
+    /// <param name="debug">A debugging string.</param>
     /// <param name="details">
-    /// The <c>details</c> argument.
+    /// A GstStructure with details
     /// The call consumes it: <paramref name="details"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// It may be <see langword="null"/>, which is the absence of a payload and leaves
@@ -1211,16 +1215,16 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// <c>using</c> declaration around the argument stays correct.
     /// </para>
     /// </remarks>
-    /// <param name="location">The <c>location</c> argument.</param>
+    /// <param name="location">location string for the new entry</param>
     /// <param name="tagList">
-    /// The <c>tagList</c> argument.
+    /// tag list for the new entry
     /// The call consumes it: <paramref name="tagList"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// It may be <see langword="null"/>, which is the absence of a payload and leaves
     /// nothing to consume.
     /// </param>
     /// <param name="entryStruct">
-    /// The <c>entryStruct</c> argument.
+    /// structure for the new entry
     /// The call consumes it: <paramref name="entryStruct"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// It may be <see langword="null"/>, which is the absence of a payload and leaves
@@ -1333,7 +1337,7 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// Checks if @message has the given @name. This function is usually used to
     /// check the name of a custom message.
     /// </summary>
-    /// <param name="name">The <c>name</c> argument.</param>
+    /// <param name="name">name to check</param>
     /// <returns>%TRUE if @name matches the name of the message structure.</returns>
     public bool HasName(string name)
     {
@@ -1401,7 +1405,7 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// <remarks>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="runningTime">The <c>runningTime</c> argument.</param>
+    /// <param name="runningTime">Result location for the running_time or %NULL</param>
     public void ParseAsyncDone(out Gst.ClockTime runningTime)
     {
         ulong runningTimeNative = default;
@@ -1417,7 +1421,7 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// <remarks>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="percent">The <c>percent</c> argument.</param>
+    /// <param name="percent">Return location for the percent.</param>
     public void ParseBuffering(out int percent)
     {
         int percentNative = default;
@@ -1427,10 +1431,13 @@ public sealed unsafe partial class Message : Gst.MiniObject
     }
 
     /// <summary>Extracts the buffering stats values from @message.</summary>
-    /// <param name="mode">The <c>mode</c> argument.</param>
-    /// <param name="avgIn">The <c>avgIn</c> argument.</param>
-    /// <param name="avgOut">The <c>avgOut</c> argument.</param>
-    /// <param name="bufferingLeft">The <c>bufferingLeft</c> argument.</param>
+    /// <param name="mode">a buffering mode, or %NULL</param>
+    /// <param name="avgIn">the average input rate, or %NULL</param>
+    /// <param name="avgOut">the average output rate, or %NULL</param>
+    /// <param name="bufferingLeft">
+    /// amount of buffering time left in
+    ///     milliseconds, or %NULL
+    /// </param>
     public void ParseBufferingStats(out Gst.BufferingMode mode, out int avgIn, out int avgOut, out long bufferingLeft)
     {
         int modeNative = default;
@@ -1452,7 +1459,7 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// <remarks>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="clock">The <c>clock</c> argument.</param>
+    /// <param name="clock">a pointer to hold the lost clock</param>
     public void ParseClockLost(out Gst.Clock? clock)
     {
         nint clockNative = default;
@@ -1468,8 +1475,11 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// <remarks>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="clock">The <c>clock</c> argument.</param>
-    /// <param name="ready">The <c>ready</c> argument.</param>
+    /// <param name="clock">
+    /// a pointer to  hold a clock
+    ///     object, or %NULL
+    /// </param>
+    /// <param name="ready">a pointer to hold the ready flag, or %NULL</param>
     public void ParseClockProvide(out Gst.Clock? clock, out bool ready)
     {
         nint clockNative = default;
@@ -1481,7 +1491,7 @@ public sealed unsafe partial class Message : Gst.MiniObject
     }
 
     /// <summary>Parse a context type from an existing GST_MESSAGE_NEED_CONTEXT message.</summary>
-    /// <param name="contextType">The <c>contextType</c> argument.</param>
+    /// <param name="contextType">the context type, or %NULL</param>
     /// <returns>a #gboolean indicating if the parsing succeeded.</returns>
     public bool ParseContextType(out string? contextType)
     {
@@ -1497,7 +1507,10 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// #GstDeviceProvider or a #GstDeviceMonitor. It announces the appearance
     /// of monitored devices.
     /// </summary>
-    /// <param name="device">The <c>device</c> argument.</param>
+    /// <param name="device">
+    /// A location where to store a
+    ///  pointer to the new #GstDevice, or %NULL
+    /// </param>
     public void ParseDeviceAdded(out Gst.Device? device)
     {
         nint deviceNative = default;
@@ -1512,8 +1525,14 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// disappearance of monitored devices. * It announce that a device properties has
     /// changed and @device represents the new modified version of @changed_device.
     /// </summary>
-    /// <param name="device">The <c>device</c> argument.</param>
-    /// <param name="changedDevice">The <c>changedDevice</c> argument.</param>
+    /// <param name="device">
+    /// A location where to store a
+    ///  pointer to the updated version of the #GstDevice, or %NULL
+    /// </param>
+    /// <param name="changedDevice">
+    /// A location where to store a
+    ///  pointer to the old version of the #GstDevice, or %NULL
+    /// </param>
     public void ParseDeviceChanged(out Gst.Device? device, out Gst.Device? changedDevice)
     {
         nint deviceNative = default;
@@ -1532,7 +1551,10 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// <remarks>
     /// <para>Available since GStreamer 1.28.</para>
     /// </remarks>
-    /// <param name="success">The <c>success</c> argument.</param>
+    /// <param name="success">
+    /// Result location for whether the #GstDeviceMonitor was
+    ///  successfully started
+    /// </param>
     public void ParseDeviceMonitorStarted(out bool success)
     {
         int successNative = default;
@@ -1546,7 +1568,10 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// #GstDeviceProvider or a #GstDeviceMonitor. It announces the
     /// disappearance of monitored devices.
     /// </summary>
-    /// <param name="device">The <c>device</c> argument.</param>
+    /// <param name="device">
+    /// A location where to store a
+    ///  pointer to the removed #GstDevice, or %NULL
+    /// </param>
     public void ParseDeviceRemoved(out Gst.Device? device)
     {
         nint deviceNative = default;
@@ -1559,7 +1584,7 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// Returns the optional details structure, may be NULL if none.
     /// The returned structure must not be freed.
     /// </summary>
-    /// <param name="structure">The <c>structure</c> argument.</param>
+    /// <param name="structure">A pointer to the returned details</param>
     public void ParseErrorDetails(out Gst.Structure? structure)
     {
         nint structureNative = default;
@@ -1575,7 +1600,7 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// <remarks>
     /// <para>Available since GStreamer 1.26.</para>
     /// </remarks>
-    /// <param name="structure">The <c>structure</c> argument.</param>
+    /// <param name="structure">A pointer to the returned details</param>
     public void ParseErrorWritableDetails(out Gst.Structure? structure)
     {
         nint structureNative = default;
@@ -1585,7 +1610,10 @@ public sealed unsafe partial class Message : Gst.MiniObject
     }
 
     /// <summary>Extract the group from the STREAM_START message.</summary>
-    /// <param name="groupId">The <c>groupId</c> argument.</param>
+    /// <param name="groupId">
+    /// Result location for the group id or
+    ///      %NULL
+    /// </param>
     /// <returns>%TRUE if the message had a group id set, %FALSE otherwise</returns>
     public bool ParseGroupId(out uint groupId)
     {
@@ -1600,7 +1628,10 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// <remarks>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="context">The <c>context</c> argument.</param>
+    /// <param name="context">
+    /// Result location for the
+    ///      context or %NULL
+    /// </param>
     public void ParseHaveContext(out Gst.Context? context)
     {
         nint contextNative = default;
@@ -1613,7 +1644,7 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// Returns the optional details structure, may be NULL if none
     /// The returned structure must not be freed.
     /// </summary>
-    /// <param name="structure">The <c>structure</c> argument.</param>
+    /// <param name="structure">A pointer to the returned details</param>
     public void ParseInfoDetails(out Gst.Structure? structure)
     {
         nint structureNative = default;
@@ -1629,7 +1660,7 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// <remarks>
     /// <para>Available since GStreamer 1.26.</para>
     /// </remarks>
-    /// <param name="structure">The <c>structure</c> argument.</param>
+    /// <param name="structure">A pointer to the returned details</param>
     public void ParseInfoWritableDetails(out Gst.Structure? structure)
     {
         nint structureNative = default;
@@ -1639,7 +1670,7 @@ public sealed unsafe partial class Message : Gst.MiniObject
     }
 
     /// <summary>Parses the rate_multiplier from the instant-rate-request message.</summary>
-    /// <param name="rateMultiplier">The <c>rateMultiplier</c> argument.</param>
+    /// <param name="rateMultiplier">return location for the rate, or %NULL</param>
     public void ParseInstantRateRequest(out double rateMultiplier)
     {
         double rateMultiplierNative = default;
@@ -1655,7 +1686,10 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// <remarks>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="clock">The <c>clock</c> argument.</param>
+    /// <param name="clock">
+    /// a pointer to hold the selected
+    ///     new clock
+    /// </param>
     public void ParseNewClock(out Gst.Clock? clock)
     {
         nint clockNative = default;
@@ -1665,9 +1699,9 @@ public sealed unsafe partial class Message : Gst.MiniObject
     }
 
     /// <summary>Parses the progress @type, @code and @text.</summary>
-    /// <param name="type">The <c>type</c> argument.</param>
-    /// <param name="code">The <c>code</c> argument.</param>
-    /// <param name="text">The <c>text</c> argument.</param>
+    /// <param name="type">location for the type</param>
+    /// <param name="code">location for the code</param>
+    /// <param name="text">location for the text</param>
     public void ParseProgress(out Gst.ProgressType type, out string? code, out string? text)
     {
         int typeNative = default;
@@ -1689,11 +1723,23 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// </para>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="live">The <c>live</c> argument.</param>
-    /// <param name="runningTime">The <c>runningTime</c> argument.</param>
-    /// <param name="streamTime">The <c>streamTime</c> argument.</param>
-    /// <param name="timestamp">The <c>timestamp</c> argument.</param>
-    /// <param name="duration">The <c>duration</c> argument.</param>
+    /// <param name="live">if the message was generated by a live element</param>
+    /// <param name="runningTime">
+    /// the running time of the buffer that
+    ///     generated the message
+    /// </param>
+    /// <param name="streamTime">
+    /// the stream time of the buffer that
+    ///     generated the message
+    /// </param>
+    /// <param name="timestamp">
+    /// the timestamps of the buffer that
+    ///     generated the message
+    /// </param>
+    /// <param name="duration">
+    /// the duration of the buffer that
+    ///     generated the message
+    /// </param>
     public void ParseQos(out bool live, out ulong runningTime, out ulong streamTime, out ulong timestamp, out ulong duration)
     {
         int liveNative = default;
@@ -1721,9 +1767,20 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// </para>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="format">The <c>format</c> argument.</param>
-    /// <param name="processed">The <c>processed</c> argument.</param>
-    /// <param name="dropped">The <c>dropped</c> argument.</param>
+    /// <param name="format">
+    /// Units of the 'processed' and 'dropped' fields.
+    ///     Video sinks and video filters will use GST_FORMAT_BUFFERS (frames).
+    ///     Audio sinks and audio filters will likely use GST_FORMAT_DEFAULT
+    ///     (samples).
+    /// </param>
+    /// <param name="processed">
+    /// Total number of units correctly processed
+    ///     since the last state change to READY or a flushing operation.
+    /// </param>
+    /// <param name="dropped">
+    /// Total number of units dropped since the last
+    ///     state change to READY or a flushing operation.
+    /// </param>
     public void ParseQosStats(out Gst.Format format, out ulong processed, out ulong dropped)
     {
         int formatNative = default;
@@ -1740,9 +1797,19 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// <remarks>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="jitter">The <c>jitter</c> argument.</param>
-    /// <param name="proportion">The <c>proportion</c> argument.</param>
-    /// <param name="quality">The <c>quality</c> argument.</param>
+    /// <param name="jitter">
+    /// The difference of the running-time against
+    ///     the deadline.
+    /// </param>
+    /// <param name="proportion">
+    /// Long term prediction of the ideal rate
+    ///     relative to normal rate to get optimal quality.
+    /// </param>
+    /// <param name="quality">
+    /// An element dependent integer value that
+    ///     specifies the current quality level of the element. The default
+    ///     maximum quality is 1000000.
+    /// </param>
     public void ParseQosValues(out long jitter, out double proportion, out int quality)
     {
         long jitterNative = default;
@@ -1760,10 +1827,19 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// The index must be between 0 and gst_message_get_num_redirect_entries() - 1.
     /// Returned pointers are valid for as long as this message exists.
     /// </summary>
-    /// <param name="entryIndex">The <c>entryIndex</c> argument.</param>
-    /// <param name="location">The <c>location</c> argument.</param>
-    /// <param name="tagList">The <c>tagList</c> argument.</param>
-    /// <param name="entryStruct">The <c>entryStruct</c> argument.</param>
+    /// <param name="entryIndex">index of the entry to parse</param>
+    /// <param name="location">
+    /// return location for
+    ///     the pointer to the entry's location string, or %NULL
+    /// </param>
+    /// <param name="tagList">
+    /// return location for
+    ///     the pointer to the entry's tag list, or %NULL
+    /// </param>
+    /// <param name="entryStruct">
+    /// return location
+    ///     for the pointer to the entry's structure, or %NULL
+    /// </param>
     public void ParseRedirectEntry(nuint entryIndex, out string? location, out Gst.TagList? tagList, out Gst.Structure? entryStruct)
     {
         nint locationNative = default;
@@ -1780,7 +1856,7 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// <remarks>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="state">The <c>state</c> argument.</param>
+    /// <param name="state">Result location for the requested state or %NULL</param>
     public void ParseRequestState(out Gst.State state)
     {
         int stateNative = default;
@@ -1793,7 +1869,10 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// <remarks>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="runningTime">The <c>runningTime</c> argument.</param>
+    /// <param name="runningTime">
+    /// Result location for the running_time or
+    ///      %NULL
+    /// </param>
     public void ParseResetTime(out Gst.ClockTime runningTime)
     {
         ulong runningTimeNative = default;
@@ -1806,8 +1885,8 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// <remarks>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="format">The <c>format</c> argument.</param>
-    /// <param name="position">The <c>position</c> argument.</param>
+    /// <param name="format">Result location for the format, or %NULL</param>
+    /// <param name="position">Result location for the position, or %NULL</param>
     public void ParseSegmentDone(out Gst.Format format, out long position)
     {
         int formatNative = default;
@@ -1822,8 +1901,8 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// <remarks>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="format">The <c>format</c> argument.</param>
-    /// <param name="position">The <c>position</c> argument.</param>
+    /// <param name="format">Result location for the format, or %NULL</param>
+    /// <param name="position">Result location for the position, or %NULL</param>
     public void ParseSegmentStart(out Gst.Format format, out long position)
     {
         int formatNative = default;
@@ -1859,9 +1938,9 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// </para>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="oldstate">The <c>oldstate</c> argument.</param>
-    /// <param name="newstate">The <c>newstate</c> argument.</param>
-    /// <param name="pending">The <c>pending</c> argument.</param>
+    /// <param name="oldstate">the previous state, or %NULL</param>
+    /// <param name="newstate">the new (current) state, or %NULL</param>
+    /// <param name="pending">the pending (target) state, or %NULL</param>
     public void ParseStateChanged(out Gst.State oldstate, out Gst.State newstate, out Gst.State pending)
     {
         int oldstateNative = default;
@@ -1878,13 +1957,13 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// <remarks>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="format">The <c>format</c> argument.</param>
-    /// <param name="amount">The <c>amount</c> argument.</param>
-    /// <param name="rate">The <c>rate</c> argument.</param>
-    /// <param name="flush">The <c>flush</c> argument.</param>
-    /// <param name="intermediate">The <c>intermediate</c> argument.</param>
-    /// <param name="duration">The <c>duration</c> argument.</param>
-    /// <param name="eos">The <c>eos</c> argument.</param>
+    /// <param name="format">result location for the format</param>
+    /// <param name="amount">result location for the amount</param>
+    /// <param name="rate">result location for the rate</param>
+    /// <param name="flush">result location for the flush flag</param>
+    /// <param name="intermediate">result location for the intermediate flag</param>
+    /// <param name="duration">result location for the duration</param>
+    /// <param name="eos">result location for the EOS flag</param>
     public void ParseStepDone(out Gst.Format format, out ulong amount, out double rate, out bool flush, out bool intermediate, out ulong duration, out bool eos)
     {
         int formatNative = default;
@@ -1909,12 +1988,12 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// <remarks>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="active">The <c>active</c> argument.</param>
-    /// <param name="format">The <c>format</c> argument.</param>
-    /// <param name="amount">The <c>amount</c> argument.</param>
-    /// <param name="rate">The <c>rate</c> argument.</param>
-    /// <param name="flush">The <c>flush</c> argument.</param>
-    /// <param name="intermediate">The <c>intermediate</c> argument.</param>
+    /// <param name="active">result location for the active flag</param>
+    /// <param name="format">result location for the format</param>
+    /// <param name="amount">result location for the amount</param>
+    /// <param name="rate">result location for the rate</param>
+    /// <param name="flush">result location for the flush flag</param>
+    /// <param name="intermediate">result location for the intermediate flag</param>
     public void ParseStepStart(out bool active, out Gst.Format format, out ulong amount, out double rate, out bool flush, out bool intermediate)
     {
         int activeNative = default;
@@ -1934,7 +2013,10 @@ public sealed unsafe partial class Message : Gst.MiniObject
     }
 
     /// <summary>Parses a stream-collection message.</summary>
-    /// <param name="collection">The <c>collection</c> argument.</param>
+    /// <param name="collection">
+    /// A location where to store a
+    ///  pointer to the #GstStreamCollection, or %NULL
+    /// </param>
     public void ParseStreamCollection(out Gst.StreamCollection? collection)
     {
         nint collectionNative = default;
@@ -1951,8 +2033,8 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// <remarks>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="type">The <c>type</c> argument.</param>
-    /// <param name="owner">The <c>owner</c> argument.</param>
+    /// <param name="type">A pointer to hold the status type</param>
+    /// <param name="owner">The owner element of the message source</param>
     public void ParseStreamStatus(out Gst.StreamStatusType type, out Gst.Element? owner)
     {
         int typeNative = default;
@@ -1964,7 +2046,10 @@ public sealed unsafe partial class Message : Gst.MiniObject
     }
 
     /// <summary>Parses a streams-selected message.</summary>
-    /// <param name="collection">The <c>collection</c> argument.</param>
+    /// <param name="collection">
+    /// A location where to store a
+    ///  pointer to the #GstStreamCollection, or %NULL
+    /// </param>
     public void ParseStreamsSelected(out Gst.StreamCollection? collection)
     {
         nint collectionNative = default;
@@ -1977,9 +2062,15 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// <remarks>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="type">The <c>type</c> argument.</param>
-    /// <param name="owner">The <c>owner</c> argument.</param>
-    /// <param name="busy">The <c>busy</c> argument.</param>
+    /// <param name="type">A pointer to hold the change type</param>
+    /// <param name="owner">
+    /// The owner element of the
+    ///     message source
+    /// </param>
+    /// <param name="busy">
+    /// a pointer to hold whether the change is in
+    ///     progress or has been completed
+    /// </param>
     public void ParseStructureChange(out Gst.StructureChangeType type, out Gst.Element? owner, out bool busy)
     {
         int typeNative = default;
@@ -2019,7 +2110,7 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// </para>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="tagList">The <c>tagList</c> argument.</param>
+    /// <param name="tagList">return location for the tag-list.</param>
     public void ParseTag(out Gst.TagList? tagList)
     {
         nint tagListNative = default;
@@ -2036,8 +2127,8 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// <remarks>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="toc">The <c>toc</c> argument.</param>
-    /// <param name="updated">The <c>updated</c> argument.</param>
+    /// <param name="toc">return location for the TOC.</param>
+    /// <param name="updated">return location for the updated flag.</param>
     public void ParseToc(out Gst.Toc? toc, out bool updated)
     {
         nint tocNative = default;
@@ -2052,7 +2143,7 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// Returns the optional details structure, may be NULL if none
     /// The returned structure must not be freed.
     /// </summary>
-    /// <param name="structure">The <c>structure</c> argument.</param>
+    /// <param name="structure">A pointer to the returned details</param>
     public void ParseWarningDetails(out Gst.Structure? structure)
     {
         nint structureNative = default;
@@ -2068,7 +2159,7 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// <remarks>
     /// <para>Available since GStreamer 1.26.</para>
     /// </remarks>
-    /// <param name="structure">The <c>structure</c> argument.</param>
+    /// <param name="structure">A pointer to the returned details</param>
     public void ParseWarningWritableDetails(out Gst.Structure? structure)
     {
         nint structureNative = default;
@@ -2078,10 +2169,10 @@ public sealed unsafe partial class Message : Gst.MiniObject
     }
 
     /// <summary>Configures the buffering stats values in @message.</summary>
-    /// <param name="mode">The <c>mode</c> argument.</param>
-    /// <param name="avgIn">The <c>avgIn</c> argument.</param>
-    /// <param name="avgOut">The <c>avgOut</c> argument.</param>
-    /// <param name="bufferingLeft">The <c>bufferingLeft</c> argument.</param>
+    /// <param name="mode">a buffering mode</param>
+    /// <param name="avgIn">the average input rate</param>
+    /// <param name="avgOut">the average output rate</param>
+    /// <param name="bufferingLeft">amount of buffering time left in milliseconds</param>
     public void SetBufferingStats(Gst.BufferingMode mode, int avgIn, int avgOut, long bufferingLeft)
     {
         GstMessageSetBufferingStats(Handle, (int)mode, avgIn, avgOut, bufferingLeft);
@@ -2104,7 +2195,7 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// <para>Available since GStreamer 1.26.</para>
     /// </remarks>
     /// <param name="details">
-    /// The <c>details</c> argument.
+    /// A GstStructure with details
     /// The call consumes it: <paramref name="details"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// It may be <see langword="null"/>, which is the absence of a payload and leaves
@@ -2135,7 +2226,7 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// </para>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="groupId">The <c>groupId</c> argument.</param>
+    /// <param name="groupId">the group id</param>
     public void SetGroupId(uint groupId)
     {
         GstMessageSetGroupId(Handle, groupId);
@@ -2153,9 +2244,19 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// </para>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="format">The <c>format</c> argument.</param>
-    /// <param name="processed">The <c>processed</c> argument.</param>
-    /// <param name="dropped">The <c>dropped</c> argument.</param>
+    /// <param name="format">
+    /// Units of the 'processed' and 'dropped' fields. Video sinks and video
+    /// filters will use GST_FORMAT_BUFFERS (frames). Audio sinks and audio filters
+    /// will likely use GST_FORMAT_DEFAULT (samples).
+    /// </param>
+    /// <param name="processed">
+    /// Total number of units correctly processed since the last state
+    /// change to READY or a flushing operation.
+    /// </param>
+    /// <param name="dropped">
+    /// Total number of units dropped since the last state change to READY
+    /// or a flushing operation.
+    /// </param>
     public void SetQosStats(Gst.Format format, ulong processed, ulong dropped)
     {
         GstMessageSetQosStats(Handle, (int)format, processed, dropped);
@@ -2166,9 +2267,15 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// <remarks>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="jitter">The <c>jitter</c> argument.</param>
-    /// <param name="proportion">The <c>proportion</c> argument.</param>
-    /// <param name="quality">The <c>quality</c> argument.</param>
+    /// <param name="jitter">The difference of the running-time against the deadline.</param>
+    /// <param name="proportion">
+    /// Long term prediction of the ideal rate relative to normal rate
+    /// to get optimal quality.
+    /// </param>
+    /// <param name="quality">
+    /// An element dependent integer value that specifies the current
+    /// quality level of the element. The default maximum quality is 1000000.
+    /// </param>
     public void SetQosValues(long jitter, double proportion, int quality)
     {
         GstMessageSetQosValues(Handle, jitter, proportion, quality);
@@ -2184,7 +2291,7 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// </para>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="seqnum">The <c>seqnum</c> argument.</param>
+    /// <param name="seqnum">A sequence number.</param>
     public void SetSeqnum(uint seqnum)
     {
         GstMessageSetSeqnum(Handle, seqnum);
@@ -2196,7 +2303,7 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// GstTask object but other objects might be added in the future.
     /// </summary>
     /// <param name="object">
-    /// The <c>@object</c> argument.
+    /// the object controlling the streaming
     /// The callee copies what it keeps, so the caller keeps ownership of
     /// <paramref name="object"/> and still disposes it.
     /// </param>
@@ -2219,7 +2326,7 @@ public sealed unsafe partial class Message : Gst.MiniObject
     }
 
     /// <summary>Adds the @stream to the @message.</summary>
-    /// <param name="stream">The <c>stream</c> argument.</param>
+    /// <param name="stream">a #GstStream to add to @message</param>
     public void StreamsSelectedAdd(Gst.Stream stream)
     {
         ArgumentNullException.ThrowIfNull(stream);
@@ -2238,7 +2345,7 @@ public sealed unsafe partial class Message : Gst.MiniObject
     }
 
     /// <summary>Retrieves the #GstStream with index @index from the @message.</summary>
-    /// <param name="idx">The <c>idx</c> argument.</param>
+    /// <param name="idx">Index of the stream to retrieve</param>
     /// <returns>A #GstStream</returns>
     public Gst.Stream? StreamsSelectedGetStream(uint idx)
     {

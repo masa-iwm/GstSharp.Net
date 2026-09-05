@@ -143,7 +143,7 @@ public abstract unsafe partial class AudioDecoder : Gst.Element
     /// Helper function that allocates a buffer to hold an audio frame
     /// for @dec's current output format.
     /// </summary>
-    /// <param name="size">The <c>size</c> argument.</param>
+    /// <param name="size">size of the buffer</param>
     /// <returns>allocated buffer</returns>
     public Gst.Buffer AllocateOutputBuffer(nuint size)
     {
@@ -175,13 +175,13 @@ public abstract unsafe partial class AudioDecoder : Gst.Element
     /// </para>
     /// </remarks>
     /// <param name="buf">
-    /// The <c>buf</c> argument.
+    /// decoded data
     /// The call consumes it: <paramref name="buf"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// It may be <see langword="null"/>, which is the absence of a payload and leaves
     /// nothing to consume.
     /// </param>
-    /// <param name="frames">The <c>frames</c> argument.</param>
+    /// <param name="frames">number of decoded frames represented by decoded data</param>
     /// <returns>a #GstFlowReturn that should be escalated to caller (of caller)</returns>
     /// <exception cref="ObjectDisposedException">
     /// This wrapper or <paramref name="buf"/> was disposed.
@@ -225,7 +225,7 @@ public abstract unsafe partial class AudioDecoder : Gst.Element
     /// </para>
     /// </remarks>
     /// <param name="buf">
-    /// The <c>buf</c> argument.
+    /// decoded data
     /// The call consumes it: <paramref name="buf"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// It may be <see langword="null"/>, which is the absence of a payload and leaves
@@ -253,9 +253,13 @@ public abstract unsafe partial class AudioDecoder : Gst.Element
     /// <remarks>
     /// <para>Unref the @allocator after use it.</para>
     /// </remarks>
-    /// <param name="allocator">The <c>allocator</c> argument.</param>
+    /// <param name="allocator">
+    /// the #GstAllocator
+    /// used
+    /// </param>
     /// <param name="params">
-    /// The <c>@params</c> argument.
+    /// the
+    /// #GstAllocationParams of @allocator
     /// The binding allocates the storage; on return the caller owns
     /// <paramref name="params"/> and disposes it.
     /// </param>
@@ -317,8 +321,8 @@ public abstract unsafe partial class AudioDecoder : Gst.Element
     /// Sets the variables pointed to by @min and @max to the currently configured
     /// latency.
     /// </summary>
-    /// <param name="min">The <c>min</c> argument.</param>
-    /// <param name="max">The <c>max</c> argument.</param>
+    /// <param name="min">a pointer to storage to hold minimum latency</param>
+    /// <param name="max">a pointer to storage to hold maximum latency</param>
     public void GetLatency(out Gst.ClockTime min, out Gst.ClockTime max)
     {
         ulong minNative = default;
@@ -357,8 +361,8 @@ public abstract unsafe partial class AudioDecoder : Gst.Element
     }
 
     /// <summary>Return current parsing (sync and eos) state.</summary>
-    /// <param name="sync">The <c>sync</c> argument.</param>
-    /// <param name="eos">The <c>eos</c> argument.</param>
+    /// <param name="sync">a pointer to a variable to hold the current sync state</param>
+    /// <param name="eos">a pointer to a variable to hold the current eos state</param>
     public void GetParseState(out bool sync, out bool eos)
     {
         int syncNative = default;
@@ -407,8 +411,8 @@ public abstract unsafe partial class AudioDecoder : Gst.Element
     /// not required to use this and can still do tag handling on its own.
     /// </para>
     /// </remarks>
-    /// <param name="tags">The <c>tags</c> argument.</param>
-    /// <param name="mode">The <c>mode</c> argument.</param>
+    /// <param name="tags">a #GstTagList to merge, or NULL</param>
+    /// <param name="mode">the #GstTagMergeMode to use, usually #GST_TAG_MERGE_REPLACE</param>
     public void MergeTags(Gst.TagList? tags, Gst.TagMergeMode mode)
     {
         GstAudioDecoderMergeTags(Handle, tags is null ? 0 : tags.Handle, (int)mode);
@@ -434,8 +438,8 @@ public abstract unsafe partial class AudioDecoder : Gst.Element
     /// restricted to rate/channels/... combinations supported by downstream
     /// elements.
     /// </summary>
-    /// <param name="caps">The <c>caps</c> argument.</param>
-    /// <param name="filter">The <c>filter</c> argument.</param>
+    /// <param name="caps">initial caps</param>
+    /// <param name="filter">filter caps</param>
     /// <returns>a #GstCaps owned by caller</returns>
     public Gst.Caps ProxyGetcaps(Gst.Caps? caps, Gst.Caps? filter)
     {
@@ -453,7 +457,7 @@ public abstract unsafe partial class AudioDecoder : Gst.Element
     /// gst_audio_decoder_negotiate(). Setting to %NULL the allocation
     /// query will use the caps from the pad.
     /// </summary>
-    /// <param name="allocationCaps">The <c>allocationCaps</c> argument.</param>
+    /// <param name="allocationCaps">a #GstCaps or %NULL</param>
     public void SetAllocationCaps(Gst.Caps? allocationCaps)
     {
         GstAudioDecoderSetAllocationCaps(Handle, allocationCaps is null ? 0 : allocationCaps.Handle);
@@ -470,7 +474,7 @@ public abstract unsafe partial class AudioDecoder : Gst.Element
     /// <remarks>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="enabled">The <c>enabled</c> argument.</param>
+    /// <param name="enabled">new state</param>
     public void SetDrainable(bool enabled)
     {
         GstAudioDecoderSetDrainable(Handle, enabled ? 1 : 0);
@@ -478,7 +482,7 @@ public abstract unsafe partial class AudioDecoder : Gst.Element
     }
 
     /// <summary>Allows baseclass to perform byte to time estimated conversion.</summary>
-    /// <param name="enabled">The <c>enabled</c> argument.</param>
+    /// <param name="enabled">whether to enable byte to time conversion</param>
     public void SetEstimateRate(bool enabled)
     {
         GstAudioDecoderSetEstimateRate(Handle, enabled ? 1 : 0);
@@ -490,8 +494,8 @@ public abstract unsafe partial class AudioDecoder : Gst.Element
     /// previously provided ones, this will also post a LATENCY message on the bus
     /// so the pipeline can reconfigure its global latency.
     /// </summary>
-    /// <param name="min">The <c>min</c> argument.</param>
-    /// <param name="max">The <c>max</c> argument.</param>
+    /// <param name="min">minimum latency</param>
+    /// <param name="max">maximum latency</param>
     public void SetLatency(Gst.ClockTime min, Gst.ClockTime max)
     {
         GstAudioDecoderSetLatency(Handle, min.Nanoseconds, max.Nanoseconds);
@@ -504,7 +508,7 @@ public abstract unsafe partial class AudioDecoder : Gst.Element
     /// -1 for never returning fatal errors. Default is set to
     /// GST_AUDIO_DECODER_MAX_ERRORS.
     /// </summary>
-    /// <param name="num">The <c>num</c> argument.</param>
+    /// <param name="num">max tolerated errors</param>
     public void SetMaxErrors(int num)
     {
         GstAudioDecoderSetMaxErrors(Handle, num);
@@ -515,7 +519,7 @@ public abstract unsafe partial class AudioDecoder : Gst.Element
     /// <remarks>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="num">The <c>num</c> argument.</param>
+    /// <param name="num">new minimum latency</param>
     public void SetMinLatency(Gst.ClockTime num)
     {
         GstAudioDecoderSetMinLatency(Handle, num.Nanoseconds);
@@ -533,7 +537,7 @@ public abstract unsafe partial class AudioDecoder : Gst.Element
     /// <remarks>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="enabled">The <c>enabled</c> argument.</param>
+    /// <param name="enabled">new state</param>
     public void SetNeedsFormat(bool enabled)
     {
         GstAudioDecoderSetNeedsFormat(Handle, enabled ? 1 : 0);
@@ -546,7 +550,7 @@ public abstract unsafe partial class AudioDecoder : Gst.Element
     /// output caps that can't be expressed via #GstAudioInfo e.g. caps that have
     /// caps features.
     /// </summary>
-    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <param name="caps">(fixed) #GstCaps</param>
     /// <returns>%TRUE on success.</returns>
     public bool SetOutputCaps(Gst.Caps caps)
     {
@@ -558,7 +562,7 @@ public abstract unsafe partial class AudioDecoder : Gst.Element
     }
 
     /// <summary>Configure output info on the srcpad of @dec.</summary>
-    /// <param name="info">The <c>info</c> argument.</param>
+    /// <param name="info">#GstAudioInfo</param>
     /// <returns>%TRUE on success.</returns>
     public bool SetOutputFormat(Gst.Audio.AudioInfo info)
     {
@@ -576,7 +580,7 @@ public abstract unsafe partial class AudioDecoder : Gst.Element
     /// <remarks>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="enabled">The <c>enabled</c> argument.</param>
+    /// <param name="enabled">new state</param>
     public void SetPlc(bool enabled)
     {
         GstAudioDecoderSetPlc(Handle, enabled ? 1 : 0);
@@ -584,7 +588,7 @@ public abstract unsafe partial class AudioDecoder : Gst.Element
     }
 
     /// <summary>Indicates whether or not subclass handles packet loss concealment (plc).</summary>
-    /// <param name="plc">The <c>plc</c> argument.</param>
+    /// <param name="plc">new plc state</param>
     public void SetPlcAware(bool plc)
     {
         GstAudioDecoderSetPlcAware(Handle, plc ? 1 : 0);
@@ -595,7 +599,7 @@ public abstract unsafe partial class AudioDecoder : Gst.Element
     /// <remarks>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="tolerance">The <c>tolerance</c> argument.</param>
+    /// <param name="tolerance">new tolerance</param>
     public void SetTolerance(Gst.ClockTime tolerance)
     {
         GstAudioDecoderSetTolerance(Handle, tolerance.Nanoseconds);
@@ -613,7 +617,7 @@ public abstract unsafe partial class AudioDecoder : Gst.Element
     /// %GST_PAD_SET_ACCEPT_TEMPLATE
     /// </para>
     /// </remarks>
-    /// <param name="use">The <c>use</c> argument.</param>
+    /// <param name="use">if the default pad accept-caps query handling should be used</param>
     public void SetUseDefaultPadAcceptcaps(bool use)
     {
         GstAudioDecoderSetUseDefaultPadAcceptcaps(Handle, use ? 1 : 0);

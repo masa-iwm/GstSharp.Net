@@ -129,7 +129,7 @@ public sealed unsafe partial class VideoRegionOfInterestMeta
     /// </para>
     /// </remarks>
     /// <param name="s">
-    /// The <c>s</c> argument.
+    /// a #GstStructure
     /// The call consumes it: <paramref name="s"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// </param>
@@ -155,7 +155,7 @@ public sealed unsafe partial class VideoRegionOfInterestMeta
     /// Retrieve the parameter for @meta having @name as structure name,
     /// or %NULL if there is none.
     /// </summary>
-    /// <param name="name">The <c>name</c> argument.</param>
+    /// <param name="name">a name.</param>
     /// <returns>
     /// a #GstStructure
     /// The wrapper owns a reference of its own, which is a copy for a boxed type:

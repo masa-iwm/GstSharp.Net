@@ -251,11 +251,11 @@ public sealed unsafe partial class VideoMeta
     /// Map the video plane with index @plane in @meta and return a pointer to the
     /// first byte of the plane and the stride of the plane.
     /// </summary>
-    /// <param name="plane">The <c>plane</c> argument.</param>
-    /// <param name="info">The <c>info</c> argument.</param>
-    /// <param name="data">The <c>data</c> argument.</param>
-    /// <param name="stride">The <c>stride</c> argument.</param>
-    /// <param name="flags">The <c>flags</c> argument.</param>
+    /// <param name="plane">a plane</param>
+    /// <param name="info">a #GstMapInfo</param>
+    /// <param name="data">the data of @plane</param>
+    /// <param name="stride">the stride of @plane</param>
+    /// <param name="flags">@GstMapFlags</param>
     /// <returns>TRUE if the map operation was successful.</returns>
     public bool Map(uint plane, out Gst.MapInfo info, out nint data, out int stride, Gst.MapFlags flags)
     {
@@ -275,7 +275,7 @@ public sealed unsafe partial class VideoMeta
     /// the paddings defined in @alignment are compatible with the strides
     /// defined in @meta and will fail to update if they are not.
     /// </summary>
-    /// <param name="alignment">The <c>alignment</c> argument.</param>
+    /// <param name="alignment">a #GstVideoAlignment</param>
     /// <returns>%TRUE if @alignment's meta has been updated, %FALSE if not</returns>
     [Obsolete("Use gst_video_meta_set_alignment_full() instead (deprecated since 1.28)")]
     public bool SetAlignment(Gst.Video.VideoAlignment alignment)
@@ -293,7 +293,7 @@ public sealed unsafe partial class VideoMeta
     /// <remarks>
     /// <para>Available since GStreamer 1.28.</para>
     /// </remarks>
-    /// <param name="alignment">The <c>alignment</c> argument.</param>
+    /// <param name="alignment">a #GstVideoAlignment</param>
     /// <returns>%TRUE if @alignment's meta has been updated, %FALSE if not</returns>
     public bool SetAlignmentFull(Gst.Video.VideoAlignment alignment)
     {
@@ -304,8 +304,8 @@ public sealed unsafe partial class VideoMeta
     }
 
     /// <summary>Unmap a previously mapped plane with gst_video_meta_map().</summary>
-    /// <param name="plane">The <c>plane</c> argument.</param>
-    /// <param name="info">The <c>info</c> argument.</param>
+    /// <param name="plane">a plane</param>
+    /// <param name="info">a #GstMapInfo</param>
     /// <returns>TRUE if the memory was successfully unmapped.</returns>
     public bool Unmap(uint plane, ref Gst.MapInfo info)
     {

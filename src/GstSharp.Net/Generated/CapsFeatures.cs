@@ -91,7 +91,7 @@ public sealed unsafe partial class CapsFeatures : Gst.GObject.Boxed
     }
 
     /// <summary>Creates a new #GstCapsFeatures with a single feature.</summary>
-    /// <param name="feature">The <c>feature</c> argument.</param>
+    /// <param name="feature">The feature</param>
     /// <returns>a new #GstCapsFeatures</returns>
     public static Gst.CapsFeatures NewSingle(string feature)
     {
@@ -104,7 +104,7 @@ public sealed unsafe partial class CapsFeatures : Gst.GObject.Boxed
     }
 
     /// <summary>Adds @feature to @features.</summary>
-    /// <param name="feature">The <c>feature</c> argument.</param>
+    /// <param name="feature">a feature.</param>
     public void Add(string feature)
     {
         ArgumentNullException.ThrowIfNull(feature);
@@ -115,7 +115,7 @@ public sealed unsafe partial class CapsFeatures : Gst.GObject.Boxed
     }
 
     /// <summary>Adds @feature to @features.</summary>
-    /// <param name="feature">The <c>feature</c> argument.</param>
+    /// <param name="feature">a feature.</param>
     [Obsolete("Use gst_caps_features_add_id_str(). (deprecated since 1.26)")]
     public void AddId(Gst.GLib.Quark feature)
     {
@@ -127,7 +127,7 @@ public sealed unsafe partial class CapsFeatures : Gst.GObject.Boxed
     /// <remarks>
     /// <para>Available since GStreamer 1.26.</para>
     /// </remarks>
-    /// <param name="feature">The <c>feature</c> argument.</param>
+    /// <param name="feature">a feature.</param>
     public void AddIdStr(Gst.IdStr feature)
     {
         ArgumentNullException.ThrowIfNull(feature);
@@ -137,7 +137,7 @@ public sealed unsafe partial class CapsFeatures : Gst.GObject.Boxed
     }
 
     /// <summary>Checks if @features contains @feature.</summary>
-    /// <param name="feature">The <c>feature</c> argument.</param>
+    /// <param name="feature">a feature</param>
     /// <returns>%TRUE if @features contains @feature.</returns>
     public bool Contains(string feature)
     {
@@ -150,7 +150,7 @@ public sealed unsafe partial class CapsFeatures : Gst.GObject.Boxed
     }
 
     /// <summary>Checks if @features contains @feature.</summary>
-    /// <param name="feature">The <c>feature</c> argument.</param>
+    /// <param name="feature">a feature</param>
     /// <returns>%TRUE if @features contains @feature.</returns>
     [Obsolete("Use gst_caps_features_contains_id_str(). (deprecated since 1.26)")]
     public bool ContainsId(Gst.GLib.Quark feature)
@@ -164,7 +164,7 @@ public sealed unsafe partial class CapsFeatures : Gst.GObject.Boxed
     /// <remarks>
     /// <para>Available since GStreamer 1.26.</para>
     /// </remarks>
-    /// <param name="feature">The <c>feature</c> argument.</param>
+    /// <param name="feature">a feature</param>
     /// <returns>%TRUE if @features contains @feature.</returns>
     public bool ContainsIdStr(Gst.IdStr feature)
     {
@@ -186,7 +186,7 @@ public sealed unsafe partial class CapsFeatures : Gst.GObject.Boxed
     }
 
     /// <summary>Returns the @i-th feature of @features.</summary>
-    /// <param name="i">The <c>i</c> argument.</param>
+    /// <param name="i">index of the feature</param>
     /// <returns>The @i-th feature of @features.</returns>
     public string? GetNth(uint i)
     {
@@ -196,7 +196,7 @@ public sealed unsafe partial class CapsFeatures : Gst.GObject.Boxed
     }
 
     /// <summary>Returns the @i-th feature of @features.</summary>
-    /// <param name="i">The <c>i</c> argument.</param>
+    /// <param name="i">index of the feature</param>
     /// <returns>The @i-th feature of @features.</returns>
     [Obsolete("Use gst_caps_features_get_nth_id_str(). (deprecated since 1.26)")]
     public Gst.GLib.Quark GetNthId(uint i)
@@ -210,7 +210,7 @@ public sealed unsafe partial class CapsFeatures : Gst.GObject.Boxed
     /// <remarks>
     /// <para>Available since GStreamer 1.26.</para>
     /// </remarks>
-    /// <param name="i">The <c>i</c> argument.</param>
+    /// <param name="i">index of the feature</param>
     /// <returns>
     /// The @i-th feature of @features.
     /// The wrapper owns a reference of its own, which is a copy for a boxed type:
@@ -244,7 +244,7 @@ public sealed unsafe partial class CapsFeatures : Gst.GObject.Boxed
     }
 
     /// <summary>Checks if @features1 and @features2 are equal.</summary>
-    /// <param name="features2">The <c>features2</c> argument.</param>
+    /// <param name="features2">a #GstCapsFeatures.</param>
     /// <returns>%TRUE if @features1 and @features2 are equal.</returns>
     public bool IsEqual(Gst.CapsFeatures features2)
     {
@@ -256,7 +256,7 @@ public sealed unsafe partial class CapsFeatures : Gst.GObject.Boxed
     }
 
     /// <summary>Removes @feature from @features.</summary>
-    /// <param name="feature">The <c>feature</c> argument.</param>
+    /// <param name="feature">a feature.</param>
     public void Remove(string feature)
     {
         ArgumentNullException.ThrowIfNull(feature);
@@ -267,7 +267,7 @@ public sealed unsafe partial class CapsFeatures : Gst.GObject.Boxed
     }
 
     /// <summary>Removes @feature from @features.</summary>
-    /// <param name="feature">The <c>feature</c> argument.</param>
+    /// <param name="feature">a feature.</param>
     [Obsolete("Use gst_caps_features_remove_id_str(). (deprecated since 1.26)")]
     public void RemoveId(Gst.GLib.Quark feature)
     {
@@ -279,7 +279,7 @@ public sealed unsafe partial class CapsFeatures : Gst.GObject.Boxed
     /// <remarks>
     /// <para>Available since GStreamer 1.26.</para>
     /// </remarks>
-    /// <param name="feature">The <c>feature</c> argument.</param>
+    /// <param name="feature">a feature.</param>
     public void RemoveIdStr(Gst.IdStr feature)
     {
         ArgumentNullException.ThrowIfNull(feature);
@@ -308,7 +308,7 @@ public sealed unsafe partial class CapsFeatures : Gst.GObject.Boxed
     }
 
     /// <summary>Creates a #GstCapsFeatures from a string representation.</summary>
-    /// <param name="features">The <c>features</c> argument.</param>
+    /// <param name="features">a string representation of a #GstCapsFeatures.</param>
     /// <returns>
     /// a new #GstCapsFeatures or
     ///     %NULL when the string could not be parsed.

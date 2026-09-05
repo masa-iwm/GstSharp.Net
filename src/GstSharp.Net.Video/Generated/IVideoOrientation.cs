@@ -23,7 +23,7 @@ public static unsafe partial class VideoOrientationExtensions
 {
     /// <summary>Get the horizontal centering offset from the given object.</summary>
     /// <param name="videoOrientation">#GstVideoOrientation interface of a #GstElement</param>
-    /// <param name="center">The <c>center</c> argument.</param>
+    /// <param name="center">return location for the result</param>
     /// <returns>%TRUE in case the element supports centering</returns>
     public static bool GetHcenter(this Gst.Video.IVideoOrientation videoOrientation, out int center)
     {
@@ -37,7 +37,7 @@ public static unsafe partial class VideoOrientationExtensions
 
     /// <summary>Get the horizontal flipping state (%TRUE for flipped) from the given object.</summary>
     /// <param name="videoOrientation">#GstVideoOrientation interface of a #GstElement</param>
-    /// <param name="flip">The <c>flip</c> argument.</param>
+    /// <param name="flip">return location for the result</param>
     /// <returns>%TRUE in case the element supports flipping</returns>
     public static bool GetHflip(this Gst.Video.IVideoOrientation videoOrientation, out bool flip)
     {
@@ -51,7 +51,7 @@ public static unsafe partial class VideoOrientationExtensions
 
     /// <summary>Get the vertical centering offset from the given object.</summary>
     /// <param name="videoOrientation">#GstVideoOrientation interface of a #GstElement</param>
-    /// <param name="center">The <c>center</c> argument.</param>
+    /// <param name="center">return location for the result</param>
     /// <returns>%TRUE in case the element supports centering</returns>
     public static bool GetVcenter(this Gst.Video.IVideoOrientation videoOrientation, out int center)
     {
@@ -65,7 +65,7 @@ public static unsafe partial class VideoOrientationExtensions
 
     /// <summary>Get the vertical flipping state (%TRUE for flipped) from the given object.</summary>
     /// <param name="videoOrientation">#GstVideoOrientation interface of a #GstElement</param>
-    /// <param name="flip">The <c>flip</c> argument.</param>
+    /// <param name="flip">return location for the result</param>
     /// <returns>%TRUE in case the element supports flipping</returns>
     public static bool GetVflip(this Gst.Video.IVideoOrientation videoOrientation, out bool flip)
     {
@@ -79,7 +79,7 @@ public static unsafe partial class VideoOrientationExtensions
 
     /// <summary>Set the horizontal centering offset for the given object.</summary>
     /// <param name="videoOrientation">#GstVideoOrientation interface of a #GstElement</param>
-    /// <param name="center">The <c>center</c> argument.</param>
+    /// <param name="center">centering offset</param>
     /// <returns>%TRUE in case the element supports centering</returns>
     public static bool SetHcenter(this Gst.Video.IVideoOrientation videoOrientation, int center)
     {
@@ -91,7 +91,7 @@ public static unsafe partial class VideoOrientationExtensions
 
     /// <summary>Set the horizontal flipping state (%TRUE for flipped) for the given object.</summary>
     /// <param name="videoOrientation">#GstVideoOrientation interface of a #GstElement</param>
-    /// <param name="flip">The <c>flip</c> argument.</param>
+    /// <param name="flip">use flipping</param>
     /// <returns>%TRUE in case the element supports flipping</returns>
     public static bool SetHflip(this Gst.Video.IVideoOrientation videoOrientation, bool flip)
     {
@@ -103,7 +103,7 @@ public static unsafe partial class VideoOrientationExtensions
 
     /// <summary>Set the vertical centering offset for the given object.</summary>
     /// <param name="videoOrientation">#GstVideoOrientation interface of a #GstElement</param>
-    /// <param name="center">The <c>center</c> argument.</param>
+    /// <param name="center">centering offset</param>
     /// <returns>%TRUE in case the element supports centering</returns>
     public static bool SetVcenter(this Gst.Video.IVideoOrientation videoOrientation, int center)
     {
@@ -115,7 +115,7 @@ public static unsafe partial class VideoOrientationExtensions
 
     /// <summary>Set the vertical flipping state (%TRUE for flipped) for the given object.</summary>
     /// <param name="videoOrientation">#GstVideoOrientation interface of a #GstElement</param>
-    /// <param name="flip">The <c>flip</c> argument.</param>
+    /// <param name="flip">use flipping</param>
     /// <returns>%TRUE in case the element supports flipping</returns>
     public static bool SetVflip(this Gst.Video.IVideoOrientation videoOrientation, bool flip)
     {
@@ -129,8 +129,8 @@ public static unsafe partial class VideoOrientationExtensions
     /// Parses the "image-orientation" tag and transforms it into the
     /// #GstVideoOrientationMethod enum.
     /// </summary>
-    /// <param name="taglist">The <c>taglist</c> argument.</param>
-    /// <param name="method">The <c>method</c> argument.</param>
+    /// <param name="taglist">A #GstTagList</param>
+    /// <param name="method">The location where to return the orientation.</param>
     /// <returns>TRUE if there was a valid "image-orientation" tag in the taglist.</returns>
     public static bool FromTag(Gst.TagList taglist, out Gst.Video.VideoOrientationMethod method)
     {

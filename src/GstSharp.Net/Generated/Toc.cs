@@ -100,7 +100,7 @@ public sealed unsafe partial class Toc : Gst.GObject.Boxed
         handle == 0 ? null : new(handle, transfer);
 
     /// <summary>Create a new #GstToc structure.</summary>
-    /// <param name="scope">The <c>scope</c> argument.</param>
+    /// <param name="scope">scope of this TOC</param>
     /// <returns>
     /// newly allocated #GstToc structure, free it
     ///     with gst_toc_unref().
@@ -120,7 +120,7 @@ public sealed unsafe partial class Toc : Gst.GObject.Boxed
     }
 
     /// <summary>Find #GstTocEntry with given @uid in the @toc.</summary>
-    /// <param name="uid">The <c>uid</c> argument.</param>
+    /// <param name="uid">UID to find #GstTocEntry with.</param>
     /// <returns>
     /// #GstTocEntry with specified
     /// @uid from the @toc, or %NULL if not found.
@@ -181,8 +181,8 @@ public sealed unsafe partial class Toc : Gst.GObject.Boxed
     }
 
     /// <summary>Merge @tags into the existing tags of @toc using @mode.</summary>
-    /// <param name="tags">The <c>tags</c> argument.</param>
-    /// <param name="mode">The <c>mode</c> argument.</param>
+    /// <param name="tags">A #GstTagList or %NULL</param>
+    /// <param name="mode">A #GstTagMergeMode</param>
     public void MergeTags(Gst.TagList? tags, Gst.TagMergeMode mode)
     {
         GstTocMergeTags(Handle, tags is null ? 0 : tags.Handle, (int)mode);
@@ -201,7 +201,7 @@ public sealed unsafe partial class Toc : Gst.GObject.Boxed
     /// </para>
     /// </remarks>
     /// <param name="tags">
-    /// The <c>tags</c> argument.
+    /// A #GstTagList or %NULL
     /// The call consumes it: <paramref name="tags"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// It may be <see langword="null"/>, which is the absence of a payload and leaves

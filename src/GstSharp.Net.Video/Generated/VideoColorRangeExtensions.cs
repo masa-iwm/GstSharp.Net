@@ -24,8 +24,8 @@ public static unsafe partial class VideoColorRangeExtensions
     /// @info and @range.
     /// </para>
     /// </remarks>
-    /// <param name="range">The <c>range</c> argument.</param>
-    /// <param name="info">The <c>info</c> argument.</param>
+    /// <param name="range">a #GstVideoColorRange</param>
+    /// <param name="info">a #GstVideoFormatInfo</param>
     /// <param name="offset">output offsets</param>
     /// <param name="scale">output scale</param>
     public static void Offsets(Gst.Video.VideoColorRange range, Gst.Video.VideoFormatInfo info, out Gst.Video.VideoColorRangeExtensions.OffsetArray offset, out Gst.Video.VideoColorRangeExtensions.ScaleArray scale)

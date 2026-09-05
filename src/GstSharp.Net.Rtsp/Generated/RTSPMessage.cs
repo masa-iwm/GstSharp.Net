@@ -60,8 +60,8 @@ public sealed unsafe partial class RTSPMessage : Gst.GObject.Boxed
     /// Add a header with key @field and @value to @msg. This function takes a copy
     /// of @value.
     /// </summary>
-    /// <param name="field">The <c>field</c> argument.</param>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="field">a #GstRTSPHeaderField</param>
+    /// <param name="value">the value of the header</param>
     /// <returns>a #GstRTSPResult.</returns>
     public Gst.Rtsp.RTSPResult AddHeader(Gst.Rtsp.RTSPHeaderField field, string value)
     {
@@ -77,8 +77,8 @@ public sealed unsafe partial class RTSPMessage : Gst.GObject.Boxed
     /// Add a header with key @header and @value to @msg. This function takes a copy
     /// of @value.
     /// </summary>
-    /// <param name="header">The <c>header</c> argument.</param>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="header">header string</param>
+    /// <param name="value">the value of the header</param>
     /// <returns>a #GstRTSPResult.</returns>
     public Gst.Rtsp.RTSPResult AddHeaderByName(string header, string value)
     {
@@ -97,7 +97,7 @@ public sealed unsafe partial class RTSPMessage : Gst.GObject.Boxed
     /// Allocate a new copy of @msg and store the result in @copy. The value in
     /// @copy should be release with gst_rtsp_message_free function.
     /// </summary>
-    /// <param name="copy">The <c>copy</c> argument.</param>
+    /// <param name="copy">pointer to new #GstRTSPMessage</param>
     /// <returns>a #GstRTSPResult</returns>
     public Gst.Rtsp.RTSPResult Copy(out Gst.Rtsp.RTSPMessage? copy)
     {
@@ -156,7 +156,7 @@ public sealed unsafe partial class RTSPMessage : Gst.GObject.Boxed
     /// calling gst_rtsp_message_has_body_buffer().
     /// </para>
     /// </remarks>
-    /// <param name="buffer">The <c>buffer</c> argument.</param>
+    /// <param name="buffer">location for the buffer</param>
     /// <returns>#GST_RTSP_OK.</returns>
     public Gst.Rtsp.RTSPResult GetBodyBuffer(out Gst.Buffer? buffer)
     {
@@ -171,9 +171,9 @@ public sealed unsafe partial class RTSPMessage : Gst.GObject.Boxed
     /// Get the @indx header value with key @field from @msg. The result in @value
     /// stays valid as long as it remains present in @msg.
     /// </summary>
-    /// <param name="field">The <c>field</c> argument.</param>
-    /// <param name="value">The <c>value</c> argument.</param>
-    /// <param name="indx">The <c>indx</c> argument.</param>
+    /// <param name="field">a #GstRTSPHeaderField</param>
+    /// <param name="value">pointer to hold the result</param>
+    /// <param name="indx">the index of the header</param>
     /// <returns>
     /// #GST_RTSP_OK when @field was found, #GST_RTSP_ENOTIMPL if the key
     /// was not found.
@@ -191,9 +191,9 @@ public sealed unsafe partial class RTSPMessage : Gst.GObject.Boxed
     /// Get the @index header value with key @header from @msg. The result in @value
     /// stays valid as long as it remains present in @msg.
     /// </summary>
-    /// <param name="header">The <c>header</c> argument.</param>
-    /// <param name="value">The <c>value</c> argument.</param>
-    /// <param name="index">The <c>index</c> argument.</param>
+    /// <param name="header">a #GstRTSPHeaderField</param>
+    /// <param name="value">pointer to hold the result</param>
+    /// <param name="index">the index of the header</param>
     /// <returns>
     /// #GST_RTSP_OK when @field was found, #GST_RTSP_ENOTIMPL if the key
     /// was not found.
@@ -244,7 +244,7 @@ public sealed unsafe partial class RTSPMessage : Gst.GObject.Boxed
     }
 
     /// <summary>Initialize a new data #GstRTSPMessage for @channel.</summary>
-    /// <param name="channel">The <c>channel</c> argument.</param>
+    /// <param name="channel">a channel</param>
     /// <returns>a #GstRTSPResult.</returns>
     public Gst.Rtsp.RTSPResult InitData(byte channel)
     {
@@ -257,8 +257,8 @@ public sealed unsafe partial class RTSPMessage : Gst.GObject.Boxed
     /// Initialize @msg as a request message with @method and @uri. To clear @msg
     /// again, use gst_rtsp_message_unset().
     /// </summary>
-    /// <param name="method">The <c>method</c> argument.</param>
-    /// <param name="uri">The <c>uri</c> argument.</param>
+    /// <param name="method">the request method to use</param>
+    /// <param name="uri">the uri of the request</param>
     /// <returns>a #GstRTSPResult.</returns>
     public Gst.Rtsp.RTSPResult InitRequest(Gst.Rtsp.RTSPMethod method, string uri)
     {
@@ -278,9 +278,9 @@ public sealed unsafe partial class RTSPMessage : Gst.GObject.Boxed
     /// response message.
     /// </para>
     /// </remarks>
-    /// <param name="code">The <c>code</c> argument.</param>
-    /// <param name="reason">The <c>reason</c> argument.</param>
-    /// <param name="request">The <c>request</c> argument.</param>
+    /// <param name="code">the status code</param>
+    /// <param name="reason">the status reason or %NULL</param>
+    /// <param name="request">the request that triggered the response or %NULL</param>
     /// <returns>a #GstRTSPResult.</returns>
     public Gst.Rtsp.RTSPResult InitResponse(Gst.Rtsp.RTSPStatusCode code, string? reason, Gst.Rtsp.RTSPMessage? request)
     {
@@ -293,7 +293,7 @@ public sealed unsafe partial class RTSPMessage : Gst.GObject.Boxed
     }
 
     /// <summary>Parse the data message @msg and store the channel in @channel.</summary>
-    /// <param name="channel">The <c>channel</c> argument.</param>
+    /// <param name="channel">location to hold the channel</param>
     /// <returns>a #GstRTSPResult.</returns>
     public Gst.Rtsp.RTSPResult ParseData(out byte channel)
     {
@@ -312,9 +312,9 @@ public sealed unsafe partial class RTSPMessage : Gst.GObject.Boxed
     /// <remarks>
     /// <para>@uri remains valid for as long as @msg is valid and unchanged.</para>
     /// </remarks>
-    /// <param name="method">The <c>method</c> argument.</param>
-    /// <param name="uri">The <c>uri</c> argument.</param>
-    /// <param name="version">The <c>version</c> argument.</param>
+    /// <param name="method">location to hold the method</param>
+    /// <param name="uri">location to hold the uri</param>
+    /// <param name="version">location to hold the version</param>
     /// <returns>a #GstRTSPResult.</returns>
     public Gst.Rtsp.RTSPResult ParseRequest(out Gst.Rtsp.RTSPMethod method, out string? uri, out Gst.Rtsp.RTSPVersion version)
     {
@@ -337,9 +337,9 @@ public sealed unsafe partial class RTSPMessage : Gst.GObject.Boxed
     /// <remarks>
     /// <para>@reason remains valid for as long as @msg is valid and unchanged.</para>
     /// </remarks>
-    /// <param name="code">The <c>code</c> argument.</param>
-    /// <param name="reason">The <c>reason</c> argument.</param>
-    /// <param name="version">The <c>version</c> argument.</param>
+    /// <param name="code">location to hold the status code</param>
+    /// <param name="reason">location to hold the status reason</param>
+    /// <param name="version">location to hold the version</param>
     /// <returns>a #GstRTSPResult.</returns>
     public Gst.Rtsp.RTSPResult ParseResponse(out Gst.Rtsp.RTSPStatusCode code, out string? reason, out Gst.Rtsp.RTSPVersion version)
     {
@@ -358,8 +358,8 @@ public sealed unsafe partial class RTSPMessage : Gst.GObject.Boxed
     /// Remove the @indx header with key @field from @msg. If @indx equals -1, all
     /// headers will be removed.
     /// </summary>
-    /// <param name="field">The <c>field</c> argument.</param>
-    /// <param name="indx">The <c>indx</c> argument.</param>
+    /// <param name="field">a #GstRTSPHeaderField</param>
+    /// <param name="indx">the index of the header</param>
     /// <returns>a #GstRTSPResult.</returns>
     public Gst.Rtsp.RTSPResult RemoveHeader(Gst.Rtsp.RTSPHeaderField field, int indx)
     {
@@ -372,8 +372,8 @@ public sealed unsafe partial class RTSPMessage : Gst.GObject.Boxed
     /// Remove the @index header with key @header from @msg. If @index equals -1,
     /// all matching headers will be removed.
     /// </summary>
-    /// <param name="header">The <c>header</c> argument.</param>
-    /// <param name="index">The <c>index</c> argument.</param>
+    /// <param name="header">the header string</param>
+    /// <param name="index">the index of the header</param>
     /// <returns>a #GstRTSPResult</returns>
     public Gst.Rtsp.RTSPResult RemoveHeaderByName(string header, int index)
     {
@@ -405,7 +405,7 @@ public sealed unsafe partial class RTSPMessage : Gst.GObject.Boxed
     /// Set the body of @msg to @buffer. Any existing body or body buffer
     /// will be replaced by the new body.
     /// </summary>
-    /// <param name="buffer">The <c>buffer</c> argument.</param>
+    /// <param name="buffer">a #GstBuffer</param>
     /// <returns>#GST_RTSP_OK.</returns>
     public Gst.Rtsp.RTSPResult SetBodyBuffer(Gst.Buffer buffer)
     {
@@ -449,7 +449,7 @@ public sealed unsafe partial class RTSPMessage : Gst.GObject.Boxed
     /// calling gst_rtsp_message_has_body_buffer().
     /// </para>
     /// </remarks>
-    /// <param name="buffer">The <c>buffer</c> argument.</param>
+    /// <param name="buffer">location for the buffer</param>
     /// <returns>#GST_RTSP_OK.</returns>
     public Gst.Rtsp.RTSPResult StealBodyBuffer(out Gst.Buffer? buffer)
     {
@@ -474,7 +474,7 @@ public sealed unsafe partial class RTSPMessage : Gst.GObject.Boxed
     /// </para>
     /// </remarks>
     /// <param name="buffer">
-    /// The <c>buffer</c> argument.
+    /// a #GstBuffer
     /// The call consumes it: <paramref name="buffer"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// </param>
@@ -501,8 +501,8 @@ public sealed unsafe partial class RTSPMessage : Gst.GObject.Boxed
     /// Add a header with key @field and @value to @msg. This function takes
     /// ownership of @value.
     /// </summary>
-    /// <param name="field">The <c>field</c> argument.</param>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="field">a #GstRTSPHeaderField</param>
+    /// <param name="value">the value of the header</param>
     /// <returns>a #GstRTSPResult.</returns>
     public Gst.Rtsp.RTSPResult TakeHeader(Gst.Rtsp.RTSPHeaderField field, string value)
     {
@@ -518,8 +518,8 @@ public sealed unsafe partial class RTSPMessage : Gst.GObject.Boxed
     /// Add a header with key @header and @value to @msg. This function takes
     /// ownership of @value, but not of @header.
     /// </summary>
-    /// <param name="header">The <c>header</c> argument.</param>
-    /// <param name="value">The <c>value</c> argument.</param>
+    /// <param name="header">a header string</param>
+    /// <param name="value">the value of the header</param>
     /// <returns>a #GstRTSPResult.</returns>
     public Gst.Rtsp.RTSPResult TakeHeaderByName(string header, string value)
     {

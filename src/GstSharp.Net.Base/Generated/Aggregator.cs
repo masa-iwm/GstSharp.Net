@@ -128,7 +128,7 @@ public abstract unsafe partial class Aggregator : Gst.Element
     /// </para>
     /// </remarks>
     /// <param name="buffer">
-    /// The <c>buffer</c> argument.
+    /// the #GstBuffer to push.
     /// The call consumes it: <paramref name="buffer"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// </param>
@@ -166,7 +166,7 @@ public abstract unsafe partial class Aggregator : Gst.Element
     /// </para>
     /// </remarks>
     /// <param name="bufferlist">
-    /// The <c>bufferlist</c> argument.
+    /// the #GstBufferList to push.
     /// The call consumes it: <paramref name="bufferlist"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// </param>
@@ -196,9 +196,13 @@ public abstract unsafe partial class Aggregator : Gst.Element
     /// <remarks>
     /// <para>Unref the @allocator after use it.</para>
     /// </remarks>
-    /// <param name="allocator">The <c>allocator</c> argument.</param>
+    /// <param name="allocator">
+    /// the #GstAllocator
+    /// used
+    /// </param>
     /// <param name="params">
-    /// The <c>@params</c> argument.
+    /// the
+    /// #GstAllocationParams of @allocator
     /// The binding allocates the storage; on return the caller owns
     /// <paramref name="params"/> and disposes it.
     /// </param>
@@ -318,7 +322,7 @@ public abstract unsafe partial class Aggregator : Gst.Element
     /// <para>Available since GStreamer 1.26.</para>
     /// </remarks>
     /// <param name="event">
-    /// The <c>@event</c> argument.
+    /// the #GstEvent to push.
     /// The call consumes it: <paramref name="event"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// </param>
@@ -358,10 +362,10 @@ public abstract unsafe partial class Aggregator : Gst.Element
     /// function.
     /// </para>
     /// </remarks>
-    /// <param name="pts">The <c>pts</c> argument.</param>
-    /// <param name="dts">The <c>dts</c> argument.</param>
-    /// <param name="duration">The <c>duration</c> argument.</param>
-    /// <param name="info">The <c>info</c> argument.</param>
+    /// <param name="pts">The presentation timestamp of the next output buffer</param>
+    /// <param name="dts">The decoding timestamp of the next output buffer</param>
+    /// <param name="duration">The duration of the next output buffer</param>
+    /// <param name="info">a #GstStructure containing additional information</param>
     public void SelectedSamples(Gst.ClockTime pts, Gst.ClockTime dts, Gst.ClockTime duration, Gst.Structure? info)
     {
         GstAggregatorSelectedSamples(Handle, pts.Nanoseconds, dts.Nanoseconds, duration.Nanoseconds, info is null ? 0 : info.Handle);
@@ -373,7 +377,7 @@ public abstract unsafe partial class Aggregator : Gst.Element
     /// Subclasses should call this at construction time in order for @self to
     /// aggregate on a timeout even when no live source is connected.
     /// </summary>
-    /// <param name="forceLive">The <c>forceLive</c> argument.</param>
+    /// <param name="forceLive">The new value</param>
     public void SetForceLive(bool forceLive)
     {
         GstAggregatorSetForceLive(Handle, forceLive ? 1 : 0);
@@ -391,7 +395,7 @@ public abstract unsafe partial class Aggregator : Gst.Element
     /// sure upstream has had a fair chance to start up.
     /// </para>
     /// </remarks>
-    /// <param name="ignore">The <c>ignore</c> argument.</param>
+    /// <param name="ignore">whether inactive pads should not be waited on</param>
     public void SetIgnoreInactivePads(bool ignore)
     {
         GstAggregatorSetIgnoreInactivePads(Handle, ignore ? 1 : 0);
@@ -403,8 +407,8 @@ public abstract unsafe partial class Aggregator : Gst.Element
     /// latency is. Will also post a LATENCY message on the bus so the pipeline
     /// can reconfigure its global latency if the values changed.
     /// </summary>
-    /// <param name="minLatency">The <c>minLatency</c> argument.</param>
-    /// <param name="maxLatency">The <c>maxLatency</c> argument.</param>
+    /// <param name="minLatency">minimum latency</param>
+    /// <param name="maxLatency">maximum latency</param>
     public void SetLatency(Gst.ClockTime minLatency, Gst.ClockTime maxLatency)
     {
         GstAggregatorSetLatency(Handle, minLatency.Nanoseconds, maxLatency.Nanoseconds);
@@ -412,7 +416,7 @@ public abstract unsafe partial class Aggregator : Gst.Element
     }
 
     /// <summary>Sets the caps to be used on the src pad.</summary>
-    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <param name="caps">The #GstCaps to set on the src pad.</param>
     public void SetSrcCaps(Gst.Caps caps)
     {
         ArgumentNullException.ThrowIfNull(caps);
@@ -451,7 +455,7 @@ public abstract unsafe partial class Aggregator : Gst.Element
     /// if it is used at all.
     /// </para>
     /// </remarks>
-    /// <param name="segment">The <c>segment</c> argument.</param>
+    /// <param name="segment">The new #GstSegment</param>
     public void UpdateSegment(Gst.Segment segment)
     {
         ArgumentNullException.ThrowIfNull(segment);

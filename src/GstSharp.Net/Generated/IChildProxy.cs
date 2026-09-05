@@ -38,8 +38,8 @@ public static unsafe partial class ChildProxyExtensions
 {
     /// <summary>Emits the #GstChildProxy::child-added signal.</summary>
     /// <param name="parent">the parent object</param>
-    /// <param name="child">The <c>child</c> argument.</param>
-    /// <param name="name">The <c>name</c> argument.</param>
+    /// <param name="child">the newly added child</param>
+    /// <param name="name">the name of the new child</param>
     public static void ChildAdded(this Gst.IChildProxy parent, Gst.GObject.Object child, string name)
     {
         ArgumentNullException.ThrowIfNull(parent);
@@ -54,8 +54,8 @@ public static unsafe partial class ChildProxyExtensions
 
     /// <summary>Emits the #GstChildProxy::child-removed signal.</summary>
     /// <param name="parent">the parent object</param>
-    /// <param name="child">The <c>child</c> argument.</param>
-    /// <param name="name">The <c>name</c> argument.</param>
+    /// <param name="child">the removed child</param>
+    /// <param name="name">the name of the old child</param>
     public static void ChildRemoved(this Gst.IChildProxy parent, Gst.GObject.Object child, string name)
     {
         ArgumentNullException.ThrowIfNull(parent);
@@ -70,7 +70,7 @@ public static unsafe partial class ChildProxyExtensions
 
     /// <summary>Fetches a child by its number.</summary>
     /// <param name="parent">the parent object to get the child from</param>
-    /// <param name="index">The <c>index</c> argument.</param>
+    /// <param name="index">the child's position in the child list</param>
     /// <returns>
     /// the child object or %NULL if
     ///     not found (index too high).
@@ -92,7 +92,7 @@ public static unsafe partial class ChildProxyExtensions
     /// </para>
     /// </remarks>
     /// <param name="parent">the parent object to get the child from</param>
-    /// <param name="name">The <c>name</c> argument.</param>
+    /// <param name="name">the child's name</param>
     /// <returns>
     /// the child object or %NULL if
     ///     not found.
@@ -120,7 +120,7 @@ public static unsafe partial class ChildProxyExtensions
     /// </para>
     /// </remarks>
     /// <param name="childProxy">the parent object to get the child from</param>
-    /// <param name="name">The <c>name</c> argument.</param>
+    /// <param name="name">the full-path child's name</param>
     /// <returns>
     /// the child object or %NULL if
     ///     not found.
@@ -152,9 +152,9 @@ public static unsafe partial class ChildProxyExtensions
     /// You are responsible for freeing it by calling g_value_unset()
     /// </summary>
     /// <param name="object">object to query</param>
-    /// <param name="name">The <c>name</c> argument.</param>
+    /// <param name="name">name of the property</param>
     /// <param name="value">
-    /// The <c>value</c> argument.
+    /// a #GValue that should take the result.
     /// On success the caller owns the contents and disposes the value; on
     /// failure it is left empty, and disposing an empty value does nothing.
     /// </param>
@@ -174,9 +174,15 @@ public static unsafe partial class ChildProxyExtensions
 
     /// <summary>Looks up which object and #GParamSpec would be effected by the given @name.</summary>
     /// <param name="object">child proxy object to lookup the property in</param>
-    /// <param name="name">The <c>name</c> argument.</param>
-    /// <param name="target">The <c>target</c> argument.</param>
-    /// <param name="pspec">The <c>pspec</c> argument.</param>
+    /// <param name="name">name of the property to look up</param>
+    /// <param name="target">
+    /// pointer to a #GObject that
+    ///     takes the real object to set property on
+    /// </param>
+    /// <param name="pspec">
+    /// pointer to take the #GParamSpec
+    ///     describing the property
+    /// </param>
     /// <returns>
     /// %TRUE if @target and @pspec could be found. %FALSE otherwise. In that
     /// case the values for @pspec and @target are not modified. Unref @target after
@@ -199,9 +205,9 @@ public static unsafe partial class ChildProxyExtensions
 
     /// <summary>Sets a single property using the GstChildProxy mechanism.</summary>
     /// <param name="object">the parent object</param>
-    /// <param name="name">The <c>name</c> argument.</param>
+    /// <param name="name">name of the property to set</param>
     /// <param name="value">
-    /// The <c>value</c> argument.
+    /// new #GValue for the property
     /// The callee copies what it keeps, so the caller keeps ownership of
     /// <paramref name="value"/> and still disposes it.
     /// </param>

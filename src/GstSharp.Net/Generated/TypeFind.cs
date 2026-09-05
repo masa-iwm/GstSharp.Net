@@ -48,8 +48,8 @@ public sealed unsafe partial class TypeFind
     /// in one call.
     /// It is up to the caller of the #GstTypeFindFunction to interpret these values.
     /// </summary>
-    /// <param name="probability">The <c>probability</c> argument.</param>
-    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <param name="probability">The probability in percent that the suggestion is right</param>
+    /// <param name="caps">The fixed #GstCaps to suggest</param>
     public void Suggest(uint probability, Gst.Caps caps)
     {
         ArgumentNullException.ThrowIfNull(caps);
@@ -68,8 +68,8 @@ public sealed unsafe partial class TypeFind
     /// a #GstCaps with no fields.
     /// </para>
     /// </remarks>
-    /// <param name="probability">The <c>probability</c> argument.</param>
-    /// <param name="mediaType">The <c>mediaType</c> argument.</param>
+    /// <param name="probability">The probability in percent that the suggestion is right</param>
+    /// <param name="mediaType">the media type of the suggested caps</param>
     public void SuggestEmptySimple(uint probability, string mediaType)
     {
         ArgumentNullException.ThrowIfNull(mediaType);
@@ -84,12 +84,18 @@ public sealed unsafe partial class TypeFind
     /// registering this function will be available for typefinding.
     /// This function is typically called during an element's plugin initialization.
     /// </summary>
-    /// <param name="plugin">The <c>plugin</c> argument.</param>
-    /// <param name="name">The <c>name</c> argument.</param>
-    /// <param name="rank">The <c>rank</c> argument.</param>
+    /// <param name="plugin">A #GstPlugin, or %NULL for a static typefind function</param>
+    /// <param name="name">The name for registering</param>
+    /// <param name="rank">The rank (or importance) of this typefind function</param>
     /// <param name="func">The #GstTypeFindFunction to use</param>
-    /// <param name="extensions">The <c>extensions</c> argument.</param>
-    /// <param name="possibleCaps">The <c>possibleCaps</c> argument.</param>
+    /// <param name="extensions">
+    /// Optional comma-separated list of extensions
+    ///     that could belong to this type
+    /// </param>
+    /// <param name="possibleCaps">
+    /// Optionally the caps that could be returned when typefinding
+    ///                 succeeds
+    /// </param>
     /// <returns>%TRUE on success, %FALSE otherwise</returns>
     public static bool Register(Gst.Plugin? plugin, string name, uint rank, Gst.TypeFindFunction func, string? extensions, Gst.Caps? possibleCaps)
     {

@@ -203,7 +203,7 @@ public unsafe partial class Task : Gst.Object
     /// <remarks>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="pool">The <c>pool</c> argument.</param>
+    /// <param name="pool">a #GstTaskPool</param>
     public void SetPool(Gst.TaskPool pool)
     {
         ArgumentNullException.ThrowIfNull(pool);
@@ -221,7 +221,7 @@ public unsafe partial class Task : Gst.Object
     /// </para>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="state">The <c>state</c> argument.</param>
+    /// <param name="state">the new task state</param>
     /// <returns>%TRUE if the state could be changed.</returns>
     public bool SetState(Gst.TaskState state)
     {

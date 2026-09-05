@@ -141,8 +141,8 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
     /// registered on @self.
     /// </para>
     /// </remarks>
-    /// <param name="pspec">The <c>pspec</c> argument.</param>
-    /// <param name="child">The <c>child</c> argument.</param>
+    /// <param name="pspec">The specification for the property to add</param>
+    /// <param name="child">The #GstObject who the property belongs to</param>
     /// <returns>%TRUE if the property was successfully registered.</returns>
     public bool AddChildProperty(Gst.GObject.ParamSpec pspec, Gst.GObject.Object child)
     {
@@ -173,7 +173,7 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
     /// single paste operation.
     /// </para>
     /// </remarks>
-    /// <param name="deep">The <c>deep</c> argument.</param>
+    /// <param name="deep">Whether the copy is needed for pasting</param>
     /// <returns>The newly create element, copied from @self.</returns>
     public GES.TimelineElement Copy(bool deep)
     {
@@ -198,16 +198,24 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
     /// </para>
     /// </remarks>
     /// <param name="layers">
-    /// The <c>layers</c> argument.
+    /// A whitelist of layers
+    /// where the edit can be performed, %NULL allows all layers in the
+    /// timeline.
     /// The call reads the list while it runs and copies whatever it keeps. A
     /// temporary native list is built for the call and released when it returns,
     /// and an empty sequence is passed as the null pointer, which is how C spells
     /// the empty list.
     /// </param>
-    /// <param name="newLayerPriority">The <c>newLayerPriority</c> argument.</param>
-    /// <param name="mode">The <c>mode</c> argument.</param>
-    /// <param name="edge">The <c>edge</c> argument.</param>
-    /// <param name="position">The <c>position</c> argument.</param>
+    /// <param name="newLayerPriority">
+    /// The priority/index of the layer @self should be
+    /// moved to. -1 means no move
+    /// </param>
+    /// <param name="mode">The edit mode</param>
+    /// <param name="edge">The edge of @self where the edit should occur</param>
+    /// <param name="position">
+    /// The edit position: a new location for the edge of @self
+    /// (in nanoseconds) in the timeline coordinates
+    /// </param>
     /// <returns>%TRUE if the edit of @self completed, %FALSE on failure.</returns>
     public bool Edit(System.Collections.Generic.IEnumerable<GES.Layer>? layers, long newLayerPriority, GES.EditMode mode, GES.Edge edge, ulong position)
     {
@@ -246,10 +254,16 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
     /// timeline.
     /// </para>
     /// </remarks>
-    /// <param name="newLayerPriority">The <c>newLayerPriority</c> argument.</param>
-    /// <param name="mode">The <c>mode</c> argument.</param>
-    /// <param name="edge">The <c>edge</c> argument.</param>
-    /// <param name="position">The <c>position</c> argument.</param>
+    /// <param name="newLayerPriority">
+    /// The priority/index of the layer @self should be
+    /// moved to. -1 means no move
+    /// </param>
+    /// <param name="mode">The edit mode</param>
+    /// <param name="edge">The edge of @self where the edit should occur</param>
+    /// <param name="position">
+    /// The edit position: a new location for the edge of @self
+    /// (in nanoseconds) in the timeline coordinates
+    /// </param>
     /// <returns>%TRUE if the edit of @self completed, %FALSE on failure.</returns>
     /// <exception cref="Gst.GLib.GException">The native call failed.</exception>
     public bool EditFull(long newLayerPriority, GES.EditMode mode, GES.Edge edge, ulong position)
@@ -266,9 +280,9 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
     /// corresponding to the @pspec used in
     /// ges_timeline_element_add_child_property() is copied into @value.
     /// </summary>
-    /// <param name="pspec">The <c>pspec</c> argument.</param>
+    /// <param name="pspec">The specification of a registered child property to get</param>
     /// <param name="value">
-    /// The <c>value</c> argument.
+    /// The return location for the value
     /// On success the caller owns the contents and disposes the value; on
     /// failure it is left empty, and disposing an empty value does nothing.
     /// </param>
@@ -351,8 +365,8 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
     /// #GESVideoUriSource.
     /// </para>
     /// </remarks>
-    /// <param name="framerateN">The <c>framerateN</c> argument.</param>
-    /// <param name="framerateD">The <c>framerateD</c> argument.</param>
+    /// <param name="framerateN">The framerate numerator</param>
+    /// <param name="framerateD">The framerate denominator</param>
     /// <returns>
     /// Whether @self has a natural framerate or not, @framerate_n
     /// and @framerate_d will be set to, respectively, 0 and -1 if it is
@@ -450,9 +464,15 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
     /// registered specification of this property will be passed to @pspec.
     /// </para>
     /// </remarks>
-    /// <param name="propName">The <c>propName</c> argument.</param>
-    /// <param name="child">The <c>child</c> argument.</param>
-    /// <param name="pspec">The <c>pspec</c> argument.</param>
+    /// <param name="propName">The name of a child property</param>
+    /// <param name="child">
+    /// The return location for the
+    /// found child
+    /// </param>
+    /// <param name="pspec">
+    /// The return location for the
+    /// specification of the child property
+    /// </param>
     /// <returns>
     /// %TRUE if a child corresponding to the property was found, in
     /// which case @child and @pspec are set.
@@ -493,7 +513,10 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
     /// </para>
     /// <para>See also ges_timeline_paste_element().</para>
     /// </remarks>
-    /// <param name="pastePosition">The <c>pastePosition</c> argument.</param>
+    /// <param name="pastePosition">
+    /// The position in the timeline @element should be pasted
+    /// to, i.e. the #GESTimelineElement:start value for the pasted element.
+    /// </param>
     /// <returns>
     /// The newly created element, or
     /// %NULL if pasting fails.
@@ -511,7 +534,7 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
     /// ges_timeline_element_add_child_property(). The corresponding property
     /// will no longer be registered as a child property for the element.
     /// </summary>
-    /// <param name="pspec">The <c>pspec</c> argument.</param>
+    /// <param name="pspec">The specification for the property to remove</param>
     /// <returns>%TRUE if the property was successfully un-registered for @self.</returns>
     public bool RemoveChildProperty(Gst.GObject.ParamSpec pspec)
     {
@@ -527,7 +550,7 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
     /// See ges_timeline_element_edit() with #GES_EDIT_MODE_RIPPLE and
     /// #GES_EDGE_NONE.
     /// </summary>
-    /// <param name="start">The <c>start</c> argument.</param>
+    /// <param name="start">The new start time of @self in ripple mode</param>
     /// <returns>
     /// %TRUE if the ripple edit of @self completed, %FALSE on
     /// failure.
@@ -544,7 +567,7 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
     /// See ges_timeline_element_edit() with #GES_EDIT_MODE_RIPPLE and
     /// #GES_EDGE_END.
     /// </summary>
-    /// <param name="end">The <c>end</c> argument.</param>
+    /// <param name="end">The new end time of @self in ripple mode</param>
     /// <returns>
     /// %TRUE if the ripple edit of @self completed, %FALSE on
     /// failure.
@@ -561,7 +584,7 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
     /// See ges_timeline_element_edit() with #GES_EDIT_MODE_ROLL and
     /// #GES_EDGE_END.
     /// </summary>
-    /// <param name="end">The <c>end</c> argument.</param>
+    /// <param name="end">The new end time of @self in roll mode</param>
     /// <returns>%TRUE if the roll edit of @self completed, %FALSE on failure.</returns>
     public bool RollEnd(Gst.ClockTime end)
     {
@@ -575,7 +598,7 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
     /// See ges_timeline_element_edit() with #GES_EDIT_MODE_ROLL and
     /// #GES_EDGE_START.
     /// </summary>
-    /// <param name="start">The <c>start</c> argument.</param>
+    /// <param name="start">The new start time of @self in roll mode</param>
     /// <returns>%TRUE if the roll edit of @self completed, %FALSE on failure.</returns>
     public bool RollStart(Gst.ClockTime start)
     {
@@ -589,9 +612,9 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
     /// corresponding to the @pspec used in
     /// ges_timeline_element_add_child_property() is set to @value.
     /// </summary>
-    /// <param name="pspec">The <c>pspec</c> argument.</param>
+    /// <param name="pspec">The specification of a registered child property to set</param>
     /// <param name="value">
-    /// The <c>value</c> argument.
+    /// The value to set the property to
     /// The callee copies what it keeps, so the caller keeps ownership of
     /// <paramref name="value"/> and still disposes it.
     /// </param>
@@ -633,9 +656,9 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
     /// property name (and type name) are left unchanged!
     /// </para>
     /// </remarks>
-    /// <param name="propertyName">The <c>propertyName</c> argument.</param>
+    /// <param name="propertyName">The name of the child property to set</param>
     /// <param name="value">
-    /// The <c>value</c> argument.
+    /// The value to set the property to
     /// The callee copies what it keeps, so the caller keeps ownership of
     /// <paramref name="value"/> and still disposes it.
     /// </param>
@@ -678,7 +701,7 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
     /// last the desired duration.
     /// </para>
     /// </remarks>
-    /// <param name="duration">The <c>duration</c> argument.</param>
+    /// <param name="duration">The desired duration in its timeline</param>
     /// <returns>%TRUE if @duration could be set for @self.</returns>
     public bool SetDuration(Gst.ClockTime duration)
     {
@@ -692,7 +715,7 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
     /// is above the current #GESTimelineElement:max-duration of the element,
     /// this method will fail.
     /// </summary>
-    /// <param name="inpoint">The <c>inpoint</c> argument.</param>
+    /// <param name="inpoint">The in-point, in internal time coordinates</param>
     /// <returns>%TRUE if @inpoint could be set for @self.</returns>
     public bool SetInpoint(Gst.ClockTime inpoint)
     {
@@ -706,7 +729,7 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
     /// maximum duration is below the current #GESTimelineElement:in-point of
     /// the element, this method will fail.
     /// </summary>
-    /// <param name="maxduration">The <c>maxduration</c> argument.</param>
+    /// <param name="maxduration">The maximum duration, in internal time coordinates</param>
     /// <returns>%TRUE if @maxduration could be set for @self.</returns>
     public bool SetMaxDuration(Gst.ClockTime maxduration)
     {
@@ -738,7 +761,7 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
     /// guaranteed.
     /// </para>
     /// </remarks>
-    /// <param name="name">The <c>name</c> argument.</param>
+    /// <param name="name">The name @self should take</param>
     /// <returns>%TRUE if @name or a generated name for @self could be set.</returns>
     public bool SetName(string? name)
     {
@@ -779,7 +802,7 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
     }
 
     /// <summary>Sets the priority of the element within the containing layer.</summary>
-    /// <param name="priority">The <c>priority</c> argument.</param>
+    /// <param name="priority">The priority</param>
     /// <returns>%TRUE if @priority could be set for @self.</returns>
     [Obsolete("All priority management is done by GES itself now. To set #GESEffect priorities #ges_clip_set_top_effect_index should be used. (deprecated since 1.10)")]
     public bool SetPriority(uint priority)
@@ -803,7 +826,7 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
     /// would place the timeline in an unsupported configuration.
     /// </para>
     /// </remarks>
-    /// <param name="start">The <c>start</c> argument.</param>
+    /// <param name="start">The desired start position of the element in its timeline</param>
     /// <returns>%TRUE if @start could be set for @self.</returns>
     public bool SetStart(Gst.ClockTime start)
     {
@@ -846,7 +869,7 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
     /// See ges_timeline_element_edit() with #GES_EDIT_MODE_TRIM and
     /// #GES_EDGE_START.
     /// </summary>
-    /// <param name="start">The <c>start</c> argument.</param>
+    /// <param name="start">The new start time of @self in trim mode</param>
     /// <returns>%TRUE if the trim edit of @self completed, %FALSE on failure.</returns>
     public bool Trim(Gst.ClockTime start)
     {

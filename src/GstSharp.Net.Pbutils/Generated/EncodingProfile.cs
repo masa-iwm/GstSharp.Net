@@ -209,7 +209,7 @@ public unsafe partial class EncodingProfile : Gst.GObject.Object
     }
 
     /// <summary>Checks whether the two #GstEncodingProfile are equal</summary>
-    /// <param name="b">The <c>b</c> argument.</param>
+    /// <param name="b">a #GstEncodingProfile</param>
     /// <returns>%TRUE if @a and @b are equal, else %FALSE.</returns>
     public bool IsEqual(Gst.Pbutils.EncodingProfile b)
     {
@@ -224,7 +224,10 @@ public unsafe partial class EncodingProfile : Gst.GObject.Object
     /// Sets whether the format that has been negotiated in at some point can be renegotiated
     /// later during the encoding.
     /// </summary>
-    /// <param name="allowDynamicOutput">The <c>allowDynamicOutput</c> argument.</param>
+    /// <param name="allowDynamicOutput">
+    /// Whether the format that has been negotiated first can be renegotiated
+    /// during the encoding
+    /// </param>
     public void SetAllowDynamicOutput(bool allowDynamicOutput)
     {
         GstEncodingProfileSetAllowDynamicOutput(Handle, allowDynamicOutput ? 1 : 0);
@@ -235,7 +238,7 @@ public unsafe partial class EncodingProfile : Gst.GObject.Object
     /// Set @description as the given description for the @profile. A copy of
     /// @description will be made internally.
     /// </summary>
-    /// <param name="description">The <c>description</c> argument.</param>
+    /// <param name="description">the description to set on the profile</param>
     public void SetDescription(string? description)
     {
         System.Span<byte> descriptionBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
@@ -271,7 +274,8 @@ public unsafe partial class EncodingProfile : Gst.GObject.Object
     /// </para>
     /// </remarks>
     /// <param name="elementProperties">
-    /// The <c>elementProperties</c> argument.
+    /// A #GstStructure defining the properties
+    /// to be set to the element the profile represents.
     /// The call consumes it: <paramref name="elementProperties"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// </param>
@@ -294,7 +298,7 @@ public unsafe partial class EncodingProfile : Gst.GObject.Object
     }
 
     /// <summary>Set whether the profile should be used or not.</summary>
-    /// <param name="enabled">The <c>enabled</c> argument.</param>
+    /// <param name="enabled">%FALSE to disable @profile, %TRUE to enable it</param>
     public void SetEnabled(bool enabled)
     {
         GstEncodingProfileSetEnabled(Handle, enabled ? 1 : 0);
@@ -302,7 +306,7 @@ public unsafe partial class EncodingProfile : Gst.GObject.Object
     }
 
     /// <summary>Sets the media format used in the profile.</summary>
-    /// <param name="format">The <c>format</c> argument.</param>
+    /// <param name="format">the media format to use in the profile.</param>
     public void SetFormat(Gst.Caps format)
     {
         ArgumentNullException.ThrowIfNull(format);
@@ -315,7 +319,7 @@ public unsafe partial class EncodingProfile : Gst.GObject.Object
     /// Set @name as the given name for the @profile. A copy of @name will be made
     /// internally.
     /// </summary>
-    /// <param name="name">The <c>name</c> argument.</param>
+    /// <param name="name">the name to set on the profile</param>
     public void SetName(string? name)
     {
         System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
@@ -328,7 +332,7 @@ public unsafe partial class EncodingProfile : Gst.GObject.Object
     /// Set the number of time the profile is used in its parent
     /// container profile. If 0, it is not a mandatory stream
     /// </summary>
-    /// <param name="presence">The <c>presence</c> argument.</param>
+    /// <param name="presence">the number of time the profile can be used</param>
     public void SetPresence(uint presence)
     {
         GstEncodingProfileSetPresence(Handle, presence);
@@ -360,7 +364,7 @@ public unsafe partial class EncodingProfile : Gst.GObject.Object
     /// </para>
     /// <para> }</para>
     /// </remarks>
-    /// <param name="preset">The <c>preset</c> argument.</param>
+    /// <param name="preset">the element preset to use</param>
     public void SetPreset(string? preset)
     {
         System.Span<byte> presetBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
@@ -374,7 +378,7 @@ public unsafe partial class EncodingProfile : Gst.GObject.Object
     /// is the name of the **element factory** that implements the #GstPreset interface not
     /// the name of the preset itself (see #gst_encoding_profile_set_preset).
     /// </summary>
-    /// <param name="presetName">The <c>presetName</c> argument.</param>
+    /// <param name="presetName">The name of the element factory to use in this @profile.</param>
     public void SetPresetName(string? presetName)
     {
         System.Span<byte> presetNameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
@@ -398,7 +402,7 @@ public unsafe partial class EncodingProfile : Gst.GObject.Object
     /// </para>
     /// </remarks>
     /// <param name="restriction">
-    /// The <c>restriction</c> argument.
+    /// the restriction to apply
     /// The call consumes it: <paramref name="restriction"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// It may be <see langword="null"/>, which is the absence of a payload and leaves
@@ -427,7 +431,10 @@ public unsafe partial class EncodingProfile : Gst.GObject.Object
     /// &gt; #encodebin:avoid-reencoding
     /// </para>
     /// </remarks>
-    /// <param name="singleSegment">The <c>singleSegment</c> argument.</param>
+    /// <param name="singleSegment">
+    /// #TRUE if the stream represented by @profile should use a
+    /// single segment before the encoder, #FALSE otherwise.
+    /// </param>
     public void SetSingleSegment(bool singleSegment)
     {
         GstEncodingProfileSetSingleSegment(Handle, singleSegment ? 1 : 0);
@@ -451,9 +458,12 @@ public unsafe partial class EncodingProfile : Gst.GObject.Object
     }
 
     /// <summary>Find the #GstEncodingProfile with the specified name and category.</summary>
-    /// <param name="targetname">The <c>targetname</c> argument.</param>
-    /// <param name="profilename">The <c>profilename</c> argument.</param>
-    /// <param name="category">The <c>category</c> argument.</param>
+    /// <param name="targetname">The name of the target</param>
+    /// <param name="profilename">
+    /// The name of the profile, if %NULL
+    /// provided, it will default to the encoding profile called `default`.
+    /// </param>
+    /// <param name="category">The target category. Can be %NULL</param>
     /// <returns>The matching #GstEncodingProfile or %NULL.</returns>
     public static Gst.Pbutils.EncodingProfile? Find(string targetname, string? profilename, string? category)
     {
@@ -473,7 +483,7 @@ public unsafe partial class EncodingProfile : Gst.GObject.Object
     /// #GstDiscovererInfo. Streams other than audio or video (eg,
     /// subtitles), are currently ignored.
     /// </summary>
-    /// <param name="info">The <c>info</c> argument.</param>
+    /// <param name="info">The #GstDiscovererInfo to read from</param>
     /// <returns>The new #GstEncodingProfile or %NULL.</returns>
     public static Gst.Pbutils.EncodingProfile? FromDiscoverer(Gst.Pbutils.DiscovererInfo info)
     {
@@ -491,7 +501,7 @@ public unsafe partial class EncodingProfile : Gst.GObject.Object
     /// <remarks>
     /// <para>Available since GStreamer 1.26.</para>
     /// </remarks>
-    /// <param name="string">The <c>@string</c> argument.</param>
+    /// <param name="string">The string to convert into a GstEncodingProfile.</param>
     /// <returns>
     /// A newly created GstEncodingProfile or NULL if the
     /// input string is not a valid encoding profile serialization format.

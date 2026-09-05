@@ -42,7 +42,7 @@ public unsafe partial struct VideoContentLightLevel
     /// and writes nothing otherwise.
     /// </para>
     /// </remarks>
-    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <param name="caps">a #GstCaps</param>
     /// <returns>%TRUE if @linfo was successfully set to @caps</returns>
     public readonly bool AddToCaps(Gst.Caps caps)
     {
@@ -68,7 +68,7 @@ public unsafe partial struct VideoContentLightLevel
     /// got. Read it only after the call answered <see langword="true"/>.
     /// </para>
     /// </remarks>
-    /// <param name="caps">The <c>caps</c> argument.</param>
+    /// <param name="caps">a #GstCaps</param>
     /// <returns>if @caps has #GstVideoContentLightLevel and could be parsed</returns>
     public bool FromCaps(Gst.Caps caps)
     {
@@ -95,7 +95,7 @@ public unsafe partial struct VideoContentLightLevel
     /// this instance zeroed.
     /// </para>
     /// </remarks>
-    /// <param name="level">The <c>level</c> argument.</param>
+    /// <param name="level">a content-light-level string from caps</param>
     /// <returns>%TRUE if @linfo points to valid #GstVideoContentLightLevel.</returns>
     public bool FromString(string level)
     {
@@ -125,7 +125,7 @@ public unsafe partial struct VideoContentLightLevel
     }
 
     /// <summary>Checks equality between @linfo and @other.</summary>
-    /// <param name="other">The <c>other</c> argument.</param>
+    /// <param name="other">a #GstVideoContentLightLevel</param>
     /// <returns>%TRUE if @linfo and @other are equal.</returns>
     public readonly bool IsEqual(Gst.Video.VideoContentLightLevel other)
     {

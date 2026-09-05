@@ -131,10 +131,10 @@ public unsafe partial class CollectPads : Gst.Object
     /// negative. G_MININT64 is used to indicate invalid value.
     /// </para>
     /// </remarks>
-    /// <param name="cdata">The <c>cdata</c> argument.</param>
-    /// <param name="buf">The <c>buf</c> argument.</param>
-    /// <param name="outbuf">The <c>outbuf</c> argument.</param>
-    /// <param name="userData">The <c>userData</c> argument.</param>
+    /// <param name="cdata">collect data of corresponding pad</param>
+    /// <param name="buf">buffer being clipped</param>
+    /// <param name="outbuf">output buffer with running time, or NULL if clipped</param>
+    /// <param name="userData">user data (unused)</param>
     /// <returns>The result of <c>gst_collect_pads_clip_running_time</c>.</returns>
     public Gst.FlowReturn ClipRunningTime(Gst.Base.CollectData cdata, Gst.Buffer buf, out Gst.Buffer? outbuf, nint userData)
     {
@@ -154,9 +154,9 @@ public unsafe partial class CollectPads : Gst.Object
     /// chain up to to ensure proper operation.  Element might however indicate
     /// event should not be forwarded downstream.
     /// </summary>
-    /// <param name="data">The <c>data</c> argument.</param>
-    /// <param name="event">The <c>@event</c> argument.</param>
-    /// <param name="discard">The <c>discard</c> argument.</param>
+    /// <param name="data">collect data of corresponding pad</param>
+    /// <param name="event">event being processed</param>
+    /// <param name="discard">process but do not send event downstream</param>
     /// <returns>The result of <c>gst_collect_pads_event_default</c>.</returns>
     public bool EventDefault(Gst.Base.CollectData data, Gst.Event @event, bool discard)
     {
@@ -177,8 +177,8 @@ public unsafe partial class CollectPads : Gst.Object
     /// </para>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="data">The <c>data</c> argument.</param>
-    /// <param name="size">The <c>size</c> argument.</param>
+    /// <param name="data">the data to use</param>
+    /// <param name="size">the number of bytes to flush</param>
     /// <returns>
     /// The number of bytes flushed This can be less than @size and
     /// is 0 if the pad was end-of-stream.
@@ -200,7 +200,7 @@ public unsafe partial class CollectPads : Gst.Object
     /// <remarks>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="data">The <c>data</c> argument.</param>
+    /// <param name="data">the data to use</param>
     /// <returns>
     /// The buffer in @data or %NULL if no
     /// buffer is queued. should unref the buffer after usage.
@@ -222,7 +222,7 @@ public unsafe partial class CollectPads : Gst.Object
     /// <remarks>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="data">The <c>data</c> argument.</param>
+    /// <param name="data">the data to use</param>
     /// <returns>
     /// The buffer in @data or %NULL if no
     /// buffer was queued. You should unref the buffer after usage.
@@ -241,9 +241,9 @@ public unsafe partial class CollectPads : Gst.Object
     /// chain up to to ensure proper operation.  Element might however indicate
     /// query should not be forwarded downstream.
     /// </summary>
-    /// <param name="data">The <c>data</c> argument.</param>
-    /// <param name="query">The <c>query</c> argument.</param>
-    /// <param name="discard">The <c>discard</c> argument.</param>
+    /// <param name="data">collect data of corresponding pad</param>
+    /// <param name="query">query being processed</param>
+    /// <param name="discard">process but do not send event downstream</param>
     /// <returns>The result of <c>gst_collect_pads_query_default</c>.</returns>
     public bool QueryDefault(Gst.Base.CollectData data, Gst.Query query, bool discard)
     {
@@ -264,8 +264,8 @@ public unsafe partial class CollectPads : Gst.Object
     /// </para>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="data">The <c>data</c> argument.</param>
-    /// <param name="size">The <c>size</c> argument.</param>
+    /// <param name="data">the data to use</param>
+    /// <param name="size">the number of bytes to read</param>
     /// <returns>
     /// A sub buffer. The size of the buffer can
     /// be less that requested. A return of %NULL signals that the pad is
@@ -289,7 +289,7 @@ public unsafe partial class CollectPads : Gst.Object
     /// <para>The pad will be deactivated automatically when @pads is stopped.</para>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="pad">The <c>pad</c> argument.</param>
+    /// <param name="pad">the pad to remove</param>
     /// <returns>%TRUE if the pad could be removed.</returns>
     public bool RemovePad(Gst.Pad pad)
     {
@@ -457,7 +457,7 @@ public unsafe partial class CollectPads : Gst.Object
     /// <remarks>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="flushing">The <c>flushing</c> argument.</param>
+    /// <param name="flushing">desired state of the pads</param>
     public void SetFlushing(bool flushing)
     {
         GstCollectPadsSetFlushing(Handle, flushing ? 1 : 0);
@@ -545,8 +545,11 @@ public unsafe partial class CollectPads : Gst.Object
     /// </para>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="data">The <c>data</c> argument.</param>
-    /// <param name="waiting">The <c>waiting</c> argument.</param>
+    /// <param name="data">the data to use</param>
+    /// <param name="waiting">
+    /// boolean indicating whether this pad should operate
+    ///           in waiting or non-waiting mode
+    /// </param>
     public void SetWaiting(Gst.Base.CollectData data, bool waiting)
     {
         ArgumentNullException.ThrowIfNull(data);
@@ -560,8 +563,8 @@ public unsafe partial class CollectPads : Gst.Object
     /// Elements can chain up to this to let flushing seek event handling
     /// be done by #GstCollectPads.
     /// </summary>
-    /// <param name="pad">The <c>pad</c> argument.</param>
-    /// <param name="event">The <c>@event</c> argument.</param>
+    /// <param name="pad">src #GstPad that received the event</param>
+    /// <param name="event">event being processed</param>
     /// <returns>The result of <c>gst_collect_pads_src_event_default</c>.</returns>
     public bool SrcEventDefault(Gst.Pad pad, Gst.Event @event)
     {
@@ -608,8 +611,8 @@ public unsafe partial class CollectPads : Gst.Object
     /// </para>
     /// <para>MT safe.</para>
     /// </remarks>
-    /// <param name="data">The <c>data</c> argument.</param>
-    /// <param name="size">The <c>size</c> argument.</param>
+    /// <param name="data">the data to use</param>
+    /// <param name="size">the number of bytes to read</param>
     /// <returns>
     /// A sub buffer. The size of the buffer can
     /// be less that requested. A return of %NULL signals that the pad is

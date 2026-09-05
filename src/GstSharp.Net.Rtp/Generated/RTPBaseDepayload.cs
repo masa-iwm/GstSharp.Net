@@ -146,7 +146,7 @@ public abstract unsafe partial class RTPBaseDepayload : Gst.Element
     /// </para>
     /// <para>Must be called with the stream lock held.</para>
     /// </remarks>
-    /// <param name="keepCurrent">The <c>keepCurrent</c> argument.</param>
+    /// <param name="keepCurrent">if the current RTP buffer shall be kept</param>
     public void Flush(bool keepCurrent)
     {
         GstRtpBaseDepayloadFlush(Handle, keepCurrent ? 1 : 0);
@@ -189,7 +189,7 @@ public abstract unsafe partial class RTPBaseDepayload : Gst.Element
     /// </para>
     /// </remarks>
     /// <param name="outBuf">
-    /// The <c>outBuf</c> argument.
+    /// a #GstBuffer
     /// The call consumes it: <paramref name="outBuf"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// </param>
@@ -226,7 +226,7 @@ public abstract unsafe partial class RTPBaseDepayload : Gst.Element
     /// </para>
     /// </remarks>
     /// <param name="outList">
-    /// The <c>outList</c> argument.
+    /// a #GstBufferList
     /// The call consumes it: <paramref name="outList"/> is disposed when this
     /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
     /// </param>
@@ -250,7 +250,7 @@ public abstract unsafe partial class RTPBaseDepayload : Gst.Element
     }
 
     /// <summary>Enable or disable aggregating header extensions.</summary>
-    /// <param name="enable">The <c>enable</c> argument.</param>
+    /// <param name="enable">whether to aggregate header extensions per output buffer</param>
     public void SetAggregateHdrextEnabled(bool enable)
     {
         GstRtpBaseDepayloadSetAggregateHdrextEnabled(Handle, enable ? 1 : 0);
@@ -258,7 +258,7 @@ public abstract unsafe partial class RTPBaseDepayload : Gst.Element
     }
 
     /// <summary>Enable or disable adding #GstRTPSourceMeta to depayloaded buffers.</summary>
-    /// <param name="enable">The <c>enable</c> argument.</param>
+    /// <param name="enable">whether to add meta about RTP sources to buffer</param>
     public void SetSourceInfoEnabled(bool enable)
     {
         GstRtpBaseDepayloadSetSourceInfoEnabled(Handle, enable ? 1 : 0);

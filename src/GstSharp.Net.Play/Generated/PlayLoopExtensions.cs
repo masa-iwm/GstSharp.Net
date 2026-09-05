@@ -15,7 +15,7 @@ public static unsafe partial class PlayLoopExtensions
     /// <remarks>
     /// <para>Available since GStreamer 1.28.</para>
     /// </remarks>
-    /// <param name="loop">The <c>loop</c> argument.</param>
+    /// <param name="loop">a #GstPlayLoop</param>
     /// <returns>a string with the name of the loop.</returns>
     public static string GetName(Gst.Play.PlayLoop loop)
     {
