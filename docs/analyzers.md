@@ -14,8 +14,10 @@ subclassing contract, the factory that adopts an instance GStreamer created —
 see [subclassing](subclassing.md).
 
 The repository holds itself to the rules: every project under `samples/` and
-`tests/` builds with the analyzers applied, so a sample or a test that uses the
-binding the way the rules forbid fails the build like any other warning does.
+`tests/` builds with the analyzers applied, bar two - `GstSharp.Analyzers.Tests`,
+which references the analyzer as a library, and `GstSharp.Generator.Tests`, which
+does not use the binding at all - so a sample or a test that uses the binding the
+way the rules forbid fails the build like any other warning does.
 
 ## GST0001
 
