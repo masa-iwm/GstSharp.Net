@@ -442,6 +442,9 @@ internal sealed class MarshalPlanner
     /// <summary>The keys of the documentation notes this run has attached.</summary>
     private readonly HashSet<string> _consumedDocNotes;
 
+    /// <summary>The sibling argument keys this run has matched, shared for the same reason.</summary>
+    private readonly HashSet<string> _consumedSiblingArguments;
+
     /// <summary>
     /// The callback uses the callable that is being planned has claimed, and
     /// the scope each of them claimed it under. Claiming a use decides how the
@@ -486,6 +489,10 @@ internal sealed class MarshalPlanner
     /// The set the documentation notes that were attached are recorded in,
     /// shared for the same reason.
     /// </param>
+    /// <param name="consumedSiblingArguments">
+    /// The set the sibling argument entries that matched a parameter of the
+    /// shape they describe are recorded in, shared for the same reason.
+    /// </param>
     internal MarshalPlanner(
         Repository repository,
         Classifier classifier,
@@ -497,7 +504,8 @@ internal sealed class MarshalPlanner
         HashSet<string>? consumedArrayOverrides = null,
         HashSet<string>? consumedAnnotationOverrides = null,
         HashSet<string>? consumedInstanceKeyedCallbacks = null,
-        HashSet<string>? consumedDocNotes = null)
+        HashSet<string>? consumedDocNotes = null,
+        HashSet<string>? consumedSiblingArguments = null)
     {
         _repository = repository;
         _classifier = classifier;
@@ -512,6 +520,8 @@ internal sealed class MarshalPlanner
         _consumedInstanceKeyedCallbacks =
             consumedInstanceKeyedCallbacks ?? new HashSet<string>(StringComparer.Ordinal);
         _consumedDocNotes = consumedDocNotes ?? new HashSet<string>(StringComparer.Ordinal);
+        _consumedSiblingArguments =
+            consumedSiblingArguments ?? new HashSet<string>(StringComparer.Ordinal);
     }
 
     /// <summary>
@@ -4808,6 +4818,20 @@ internal sealed class MarshalPlanner
         }
 
         bool identity = _overlays.IsIdentityBuffer(overlayKey + "#" + parameter.Name);
+
+        // The entry is only consumed when it names the shape it describes: a
+        // GObject the slot is lent. A key that names a parameter of any other
+        // shape stays unconsumed and is reported at the end of the run, exactly
+        // as one that names no parameter at all is.
+        bool sibling = _overlays.IsSiblingArgument(overlayKey + "#" + parameter.Name)
+            && direction == ArgumentDirection.In
+            && transfer == GirTransfer.None
+            && mapped.Kind == MarshalKind.GObject;
+
+        if (sibling)
+        {
+            _ = _consumedSiblingArguments.Add(overlayKey + "#" + parameter.Name);
+        }
         if (direction != ArgumentDirection.In)
         {
             return PlanProducedArgument(
@@ -4828,6 +4852,12 @@ internal sealed class MarshalPlanner
                     : null,
             ArgumentKind.Handle => argument.Flavor switch
             {
+                // An object the base class has just created and hands the slot
+                // may still be floating, and settling that reference into a
+                // wrapper would steal the one the caller still means to drop.
+                // Nothing in the gir says which parameters those are, so the
+                // overlays name them.
+                HandleFlavor.GObject when sibling => VfuncBucket.SiblingGObject,
                 HandleFlavor.GObject => VfuncBucket.BorrowGObject,
 
                 // A mini object the slot only borrows is handed over without a

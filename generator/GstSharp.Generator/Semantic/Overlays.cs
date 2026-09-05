@@ -414,6 +414,7 @@ internal sealed class Overlays
     private readonly Dictionary<string, string> _vfuncNonNullReturns;
     private readonly Dictionary<string, string> _vfuncDocNotes;
     private readonly HashSet<string> _vfuncSpans;
+    private readonly HashSet<string> _vfuncSiblingArguments;
     private readonly Dictionary<string, string> _vfuncFailureValues;
     private readonly Dictionary<string, string> _instanceKeyedCallbacks;
     private readonly Dictionary<string, string> _docNotes;
@@ -436,6 +437,7 @@ internal sealed class Overlays
         Dictionary<string, string> vfuncNonNullReturns,
         Dictionary<string, string> vfuncDocNotes,
         HashSet<string> vfuncSpans,
+        HashSet<string> vfuncSiblingArguments,
         Dictionary<string, string> vfuncFailureValues,
         Dictionary<string, string> instanceKeyedCallbacks,
         Dictionary<string, string> docNotes)
@@ -457,6 +459,7 @@ internal sealed class Overlays
         _vfuncNonNullReturns = vfuncNonNullReturns;
         _vfuncDocNotes = vfuncDocNotes;
         _vfuncSpans = vfuncSpans;
+        _vfuncSiblingArguments = vfuncSiblingArguments;
         _vfuncFailureValues = vfuncFailureValues;
         _instanceKeyedCallbacks = instanceKeyedCallbacks;
         _docNotes = docNotes;
@@ -480,6 +483,7 @@ internal sealed class Overlays
         new HashSet<string>(StringComparer.Ordinal),
         new Dictionary<string, string>(StringComparer.Ordinal),
         new Dictionary<string, string>(StringComparer.Ordinal),
+        new HashSet<string>(StringComparer.Ordinal),
         new HashSet<string>(StringComparer.Ordinal),
         new Dictionary<string, string>(StringComparer.Ordinal),
         new Dictionary<string, string>(StringComparer.Ordinal),
@@ -556,6 +560,12 @@ internal sealed class Overlays
 
     /// <summary>Gets the block parameters the slot behind them only reads.</summary>
     internal IReadOnlyCollection<string> VfuncSpanKeys => _vfuncSpans;
+
+    /// <summary>
+    /// Gets the parameters that hand a slot an instance of the type the slot's
+    /// own instance has.
+    /// </summary>
+    internal IReadOnlyCollection<string> VfuncSiblingArgumentKeys => _vfuncSiblingArguments;
 
     /// <summary>Gets the slots that answer their own value when an override threw.</summary>
     internal IReadOnlyCollection<string> VfuncFailureValueKeys => _vfuncFailureValues.Keys;
@@ -675,6 +685,12 @@ internal sealed class Overlays
             vfuncSpans.Add(key);
         }
 
+        HashSet<string> vfuncSiblingArguments = new(StringComparer.Ordinal);
+        foreach (string key in fixups.VfuncSiblingArguments ?? [])
+        {
+            vfuncSiblingArguments.Add(key);
+        }
+
         Dictionary<string, string> vfuncFailureValues = new(StringComparer.Ordinal);
         foreach (KeyValuePair<string, string> entry in fixups.VfuncFailureValues ?? [])
         {
@@ -717,6 +733,7 @@ internal sealed class Overlays
             vfuncNonNullReturns,
             vfuncDocNotes,
             vfuncSpans,
+            vfuncSiblingArguments,
             vfuncFailureValues,
             instanceKeyedCallbacks,
             docNotes);
@@ -869,6 +886,21 @@ internal sealed class Overlays
     internal bool IsReadOnlySpan(string key) => _vfuncSpans.Contains(key);
 
     /// <summary>
+    /// Tests whether a parameter hands the slot an instance of the type the
+    /// instance of the slot has.
+    /// </summary>
+    /// <param name="key">The parameter, as <c>GES.TimelineElement::deep_copy#copy</c>.</param>
+    /// <returns><see langword="true"/> when the parameter is listed.</returns>
+    /// <remarks>
+    /// Nothing in the gir says that the object a slot is handed is a second
+    /// instance of the very type the slot runs for, and the difference is one
+    /// of ownership rather than of type: the base class has just created it and
+    /// still means to drop the reference it holds, so the wrapper must be
+    /// resolved without settling anything.
+    /// </remarks>
+    internal bool IsSiblingArgument(string key) => _vfuncSiblingArguments.Contains(key);
+
+    /// <summary>
     /// Looks up what a trampoline answers when the managed override threw, for
     /// a slot whose caller reads more into the zero of the return type than
     /// "it failed".
@@ -971,6 +1003,8 @@ internal sealed class Overlays
         public Dictionary<string, string>? VfuncDocNotes { get; set; }
 
         public List<string>? VfuncSpans { get; set; }
+
+        public List<string>? VfuncSiblingArguments { get; set; }
 
         public Dictionary<string, string>? VfuncFailureValues { get; set; }
 

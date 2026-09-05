@@ -989,8 +989,9 @@ internal sealed class VfuncEmitter
         writer.WriteLine("GC.KeepAlive(this);");
         foreach (VfuncArgument argument in plan.Arguments)
         {
-            if (argument.Bucket is VfuncBucket.BorrowGObject or VfuncBucket.BorrowMiniObject
-                or VfuncBucket.BorrowBoxed or VfuncBucket.BorrowWrapper or VfuncBucket.BorrowOpaque)
+            if (argument.Bucket is VfuncBucket.BorrowGObject or VfuncBucket.SiblingGObject
+                or VfuncBucket.BorrowMiniObject or VfuncBucket.BorrowBoxed
+                or VfuncBucket.BorrowWrapper or VfuncBucket.BorrowOpaque)
             {
                 writer.WriteLine("GC.KeepAlive(" + argument.Argument.Name + ");");
             }
@@ -1232,6 +1233,38 @@ internal sealed class VfuncEmitter
         writer.WriteLine(
             "if (Gst.GObject.Object.TryGetOrFabricate(" + plan.InstanceName + ") is not " + type + " managed)");
         writer.OpenBlock();
+        WriteChainUpFallback(writer, plan);
+        writer.CloseBlock();
+        writer.WriteLine();
+        WriteTrampolineBody(writer, plan);
+        writer.CloseBlock();
+        writer.WriteLine("catch (Exception exception)");
+        writer.OpenBlock();
+        writer.WriteLine("Gst.Interop.ExceptionTrap.Report(exception);");
+        if (!plan.Return.IsVoid)
+        {
+            writer.WriteLine("return " + FailureValue(plan) + ";");
+        }
+
+        writer.CloseBlock();
+        writer.CloseBlock();
+    }
+
+    /// <summary>
+    /// Writes what the trampoline does when it has no managed instance to call:
+    /// it hands the arguments it was given straight to the implementation below
+    /// the trampoline, so that the C side still runs.
+    /// </summary>
+    /// <param name="writer">The target writer.</param>
+    /// <param name="plan">The slot.</param>
+    private static void WriteChainUpFallback(CodeWriter writer, VirtualMethodPlan plan)
+    {
+        List<string> forward = [plan.InstanceName];
+        foreach (VfuncArgument argument in plan.Arguments)
+        {
+            forward.Add(argument.Argument.Name);
+        }
+
         string fallback = "ChainUp" + plan.Name + "(" + string.Join(", ", forward) + ")";
         if (plan.Return.IsVoid)
         {
@@ -1249,21 +1282,6 @@ internal sealed class VfuncEmitter
         {
             WriteAnswer(writer, plan, fallback, "chained");
         }
-
-        writer.CloseBlock();
-        writer.WriteLine();
-        WriteTrampolineBody(writer, plan);
-        writer.CloseBlock();
-        writer.WriteLine("catch (Exception exception)");
-        writer.OpenBlock();
-        writer.WriteLine("Gst.Interop.ExceptionTrap.Report(exception);");
-        if (!plan.Return.IsVoid)
-        {
-            writer.WriteLine("return " + FailureValue(plan) + ";");
-        }
-
-        writer.CloseBlock();
-        writer.CloseBlock();
     }
 
     private static void WriteTrampolineBody(CodeWriter writer, VirtualMethodPlan plan)
@@ -1284,6 +1302,22 @@ internal sealed class VfuncEmitter
                         Nullable(value.PublicType) + " " + local + " = Gst.GObject.Object.FromNative<"
                         + Bare(value.PublicType) + ">(" + value.Name + ", Gst.Interop.Transfer.None);");
                     call.Add(NullAssert(value, local));
+                    break;
+                case VfuncBucket.SiblingGObject:
+                    // The instance is resolved the way the instance of the slot
+                    // itself is: the interned wrapper when there is one, a
+                    // fabricated one otherwise, and no reference settled either
+                    // way. A type defined without a wrapper factory has no
+                    // fabrication to offer, and the slot then runs the way it
+                    // runs for an instance the binding cannot resolve at all.
+                    writer.WriteLine(
+                        "if (Gst.GObject.Object.TryGetOrFabricate(" + value.Name + ") is not "
+                        + Bare(value.PublicType) + " " + local + ")");
+                    writer.OpenBlock();
+                    WriteChainUpFallback(writer, plan);
+                    writer.CloseBlock();
+                    writer.WriteLine();
+                    call.Add(local);
                     break;
                 case VfuncBucket.BorrowMiniObject:
                 case VfuncBucket.BorrowBoxed:
@@ -1693,6 +1727,16 @@ internal sealed class VfuncEmitter
                 note.Add("The element lends this for the duration of the call. Keeping the wrapper is");
                 note.Add("safe: a GObject wrapper is interned and its reference outlives the call.");
                 break;
+            // A second instance of the type the slot runs for, which the base
+            // class has just created and may still hold floating. The wrapper
+            // takes no part in that: it is the interned one, or one fabricated
+            // for the call, and it settles nothing, so the reference the caller
+            // still means to drop stays the caller's.
+            case VfuncBucket.SiblingGObject:
+                note.Add("The caller has just created this and still owns it. The wrapper takes no");
+                note.Add("reference of the caller's: keep nothing beyond the call, and hand the value");
+                note.Add("to nothing that would take it over.");
+                break;
             case VfuncBucket.BorrowMiniObject:
             case VfuncBucket.BorrowWrapper:
                 note.Add("The element lends this for the duration of the call; keep a copy to retain it.");
@@ -1817,8 +1861,9 @@ internal sealed class VfuncEmitter
     };
 
     private static bool NeedsNullCheck(VfuncArgument argument) =>
-        argument.Bucket is VfuncBucket.Adopt or VfuncBucket.BorrowGObject or VfuncBucket.BorrowMiniObject
-            or VfuncBucket.BorrowBoxed or VfuncBucket.BorrowWrapper or VfuncBucket.BorrowOpaque
+        argument.Bucket is VfuncBucket.Adopt or VfuncBucket.BorrowGObject or VfuncBucket.SiblingGObject
+            or VfuncBucket.BorrowMiniObject or VfuncBucket.BorrowBoxed or VfuncBucket.BorrowWrapper
+            or VfuncBucket.BorrowOpaque
         && !argument.Argument.PublicType.EndsWith('?');
 
     private static string FunctionPointerType(VirtualMethodPlan plan)
@@ -1838,8 +1883,8 @@ internal sealed class VfuncEmitter
         ArgumentPlan value = argument.Argument;
         return argument.Bucket switch
         {
-            VfuncBucket.BorrowGObject or VfuncBucket.BorrowMiniObject or VfuncBucket.BorrowBoxed
-                or VfuncBucket.BorrowWrapper or VfuncBucket.BorrowOpaque =>
+            VfuncBucket.BorrowGObject or VfuncBucket.SiblingGObject or VfuncBucket.BorrowMiniObject
+                or VfuncBucket.BorrowBoxed or VfuncBucket.BorrowWrapper or VfuncBucket.BorrowOpaque =>
                 value.PublicType.EndsWith('?')
                     ? value.Name + " is null ? nint.Zero : " + value.Name + ".Handle"
                     : value.Name + ".Handle",

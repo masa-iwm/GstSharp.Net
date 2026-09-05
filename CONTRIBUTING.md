@@ -210,10 +210,10 @@ or only the default, and one that states both are reported as `GEN0026`.
 ## The overlay keys of the subclassing surface
 
 `girs/overlays/fixups.json` steers what a subclassable class emits through
-eight keys, each documented by a `$comment-` entry beside it. `subclassable`
+nine keys, each documented by a `$comment-` entry beside it. `subclassable`
 is the allowlist itself: a class named there gets a class struct mirror, one
 `OnX` member per bindable slot and a registration, and its whole parent chain
-gets mirrors as well. The other seven address a single slot, keyed
+gets mirrors as well. The other eight address a single slot, keyed
 `Ns.Class::vfunc`, or a single parameter of one, keyed
 `Ns.Class::vfunc#param`:
 
@@ -238,6 +238,18 @@ gets mirrors as well. The other seven address a single slot, keyed
 * `vfuncFailureValues` — what a trampoline answers when the exception trap
   caught an override, for a slot whose caller reads something other than a
   failure into the zero of the return type.
+* `vfuncSiblingArguments` — a parameter that hands the slot a second instance
+  of the type the slot itself runs for, which the base class has just created
+  and may still hold floating. Its wrapper is resolved the way the wrapper of
+  the instance is and settles no reference, so the one the caller means to
+  drop stays the caller's. An entry that names no parameter of a slot, or one
+  of another shape, is reported as `GEN0044`.
+
+The `rename` table of the same file reaches a slot as well, under that same
+`Ns.Class::vfunc` key: a slot whose derived name is one an inherited member of
+another return type already carries has no managed spelling of its own, and
+the entry gives it one. `GstAudio.AudioSink::stop` is the one such slot, and
+it is emitted as `OnStopDevice`.
 
 Two more keys address a callback type and a member rather than a slot:
 
@@ -255,8 +267,8 @@ Two more keys address a callback type and a member rather than a slot:
 
 Every entry cites the C file and line its claim rests on in a `$comment` or in
 the `$comment-` block of the key. An entry that names no slot or no parameter
-of the emitted surface is reported as `GEN0029` through `GEN0031` and
-`GEN0036` through `GEN0039`. A slot whose managed member would hide an
+of the emitted surface is reported as `GEN0029` through `GEN0031`,
+`GEN0036` through `GEN0039` and `GEN0044`. A slot whose managed member would hide an
 inherited one of the same name and the same parameters while answering another
 type is `GEN0040`, an error: C# accepts such a pair and the override that runs
 then depends on the static type the caller holds, so the slot needs a

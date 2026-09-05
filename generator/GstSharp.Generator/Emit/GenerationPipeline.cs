@@ -99,6 +99,7 @@ internal static class GenerationPipeline
         HashSet<string> consumedAnnotationOverrides = new(StringComparer.Ordinal);
         HashSet<string> consumedInstanceKeyedCallbacks = new(StringComparer.Ordinal);
         HashSet<string> consumedDocNotes = new(StringComparer.Ordinal);
+        HashSet<string> consumedSiblingArguments = new(StringComparer.Ordinal);
 
         List<GeneratedFile> files = [];
         foreach (ModuleInfo module in ModuleMap.Modules)
@@ -133,6 +134,7 @@ internal static class GenerationPipeline
                     consumedAnnotationOverrides,
                     consumedInstanceKeyedCallbacks,
                     consumedDocNotes,
+                    consumedSiblingArguments,
                     subclasses,
                     emittedVirtuals),
                 module,
@@ -220,6 +222,29 @@ internal static class GenerationPipeline
             diagnostics.Warn(
                 "GEN0042",
                 $"The documentation note '{key}' names no planned callable; the entry is stale.");
+        }
+
+        // A sibling argument entry is only consumed where it named the shape it
+        // describes: a GObject a slot is lent. One that named no parameter of a
+        // slot at all, or one whose parameter turned out to be of another
+        // shape, would silently leave that parameter on the borrowing bucket,
+        // which is the very projection the entry exists to replace.
+        List<string> staleSiblings = [];
+        foreach (string key in overlays.VfuncSiblingArgumentKeys)
+        {
+            if (!consumedSiblingArguments.Contains(key))
+            {
+                staleSiblings.Add(key);
+            }
+        }
+
+        staleSiblings.Sort(StringComparer.Ordinal);
+        foreach (string key in staleSiblings)
+        {
+            diagnostics.Warn(
+                "GEN0044",
+                $"The sibling argument '{key}' names no parameter of a slot that is lent a GObject; "
+                + "the entry is stale.");
         }
 
         // A field skip the run never matched names a field that no longer
@@ -326,7 +351,8 @@ internal static class GenerationPipeline
             shared.ConsumedArrayOverrides,
             shared.ConsumedAnnotationOverrides,
             shared.ConsumedInstanceKeyedCallbacks,
-            shared.ConsumedDocNotes);
+            shared.ConsumedDocNotes,
+            shared.ConsumedSiblingArguments);
 
         SurfaceBuilder surfaces = new(
             planner,
@@ -451,6 +477,10 @@ internal static class GenerationPipeline
     /// The keys of the documentation notes the run has attached, shared for
     /// the same reason.
     /// </param>
+    /// <param name="ConsumedSiblingArguments">
+    /// The keys of the sibling argument entries the run has matched, shared
+    /// for the same reason.
+    /// </param>
     private sealed record ModuleEmitters(
         Repository Repository,
         Classifier Classifier,
@@ -466,6 +496,7 @@ internal static class GenerationPipeline
         HashSet<string> ConsumedAnnotationOverrides,
         HashSet<string> ConsumedInstanceKeyedCallbacks,
         HashSet<string> ConsumedDocNotes,
+        HashSet<string> ConsumedSiblingArguments,
         SubclassModel Subclasses,
         Dictionary<string, HashSet<string>> EmittedVirtuals);
 

@@ -19,6 +19,15 @@ internal enum VfuncBucket
     BorrowGObject,
 
     /// <summary>
+    /// An instance of the same managed type the slot's own instance has, handed
+    /// to the slot by the base class that just created it and may still hold it
+    /// floating. It is resolved the way the instance is - interned wrapper or
+    /// fabricated one, no reference sunk - so the reference the caller still
+    /// means to drop stays its own.
+    /// </summary>
+    SiblingGObject,
+
+    /// <summary>
     /// A mini object the call lends, wrapped by a true borrow that takes no
     /// reference (<c>Gst.Interop.Borrowed</c>), because an override may have to
     /// write to what it was given.

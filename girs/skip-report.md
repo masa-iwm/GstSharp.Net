@@ -1234,7 +1234,7 @@ disappears shows up here as an added line.
 - `gst_webrtc_ice_get_local_candidates`
 - `gst_webrtc_ice_get_remote_candidates`
 
-## Virtuals (21)
+## Virtuals (20)
 
 The class struct slots of a subclassable class that carry no `OnX` member, with
 the reason. `UnsupportedSignature` is the planner refusing a shape and
@@ -1243,12 +1243,11 @@ method to pair it with; every other reason is the statement of an overlay
 entry. The mirror still lays every slot out, so what is listed here is the
 managed surface and not the ABI.
 
-### GES (14)
+### GES (13)
 
 - `GES.AudioSource::create_source` — OpaqueSlot
 - `GES.Clip::create_track_elements` — the slot answers a GList whose container the caller takes, which the reverse planner has no bucket for; the C default implementation wraps create_track_element (ges-clip.c:2796-2808), so a managed clip that implements create_track_element already behaves the way this slot would make it behave
 - `GES.Container::group` — OpaqueSlot
-- `GES.TimelineElement::deep_copy` — the copy the slot is handed arrives floating, and FromNative(copy, None) settles that reference into the wrapper, while GESContainer::_deep_copy (ges-container.c:332) adopts the very same reference by a plain store and unrefs it in _free_mapping: a managed clip deep copied inside a native group would lose the reference its wrapper owns. Temporary, until a floating vfunc argument can be borrowed without settling it; state that is worth copying belongs in an installed property, which ges_timeline_element_copy copies by itself
 - `GES.TimelineElement::list_children_properties` — UnsupportedSignature
 - `GES.TimelineElement::lookup_child` — UnsupportedSignature
 - `GES.TimelineElement::set_child_property` — UnsupportedSignature

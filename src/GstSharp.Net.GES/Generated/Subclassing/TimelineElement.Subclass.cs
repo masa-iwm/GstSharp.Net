@@ -122,6 +122,15 @@ public unsafe partial class TimelineElement
         (nint)(delegate* unmanaged[Cdecl]<nint, ulong, int>)&TrimTrampoline);
 
     /// <summary>
+    /// Gets the declaration of <c>GESTimelineElement.deep_copy</c>, for a subclass that
+    /// overrides <see cref="OnDeepCopy"/>.
+    /// </summary>
+    public static Gst.GObject.VfuncOverride DeepCopyOverride { get; } = new(
+        &GetGType,
+        GES.TimelineElementClassRaw.DeepCopyOffset,
+        (nint)(delegate* unmanaged[Cdecl]<nint, nint, void>)&DeepCopyTrampoline);
+
+    /// <summary>
     /// Gets the declaration of <c>GESTimelineElement.paste</c>, for a subclass that
     /// overrides <see cref="OnPaste"/>.
     /// </summary>
@@ -427,6 +436,34 @@ public unsafe partial class TimelineElement
         ChainUpTrim(start);
 
     /// <summary>
+    /// Prepare @copy for pasting as a copy of @self. At least by
+    /// copying the children properties of @self into @copy.
+    /// </summary>
+    /// <remarks>
+    /// <para>The copy is a fresh instance of the same managed type this element has, and it already
+    /// carries every readable and writable property of the class that is neither construct-only
+    /// nor parent, timeline or name - the ones a managed type installed included - because
+    /// ges_timeline_element_copy copies them before it reaches this slot
+    /// (ges-timeline-element.c:1672, 1677-1691). What belongs here is the state that lives
+    /// outside properties; chain up first, then copy it. The copy arrives floating and stays
+    /// floating: the caller still holds the only reference and drops it without ever sinking
+    /// it, so an override must not add it to a container or a layer, must not paste it, and
+    /// should not keep its wrapper beyond the call - a kept wrapper defers the finalize of the
+    /// copy and buys nothing. A subclass defined without a wrapper factory - the non-generic
+    /// DefineSubclass, which registers no IManagedSubclass&lt;TSelf&gt; - has no fabrication
+    /// for the copy, so no OnDeepCopy call is made at all for it and the base class makes the
+    /// copy alone.</para>
+    /// </remarks>
+    /// <param name="copy">
+    /// The <c>copy</c> argument.
+    /// The caller has just created this and still owns it. The wrapper takes no
+    /// reference of the caller's: keep nothing beyond the call, and hand the value
+    /// to nothing that would take it over.
+    /// </param>
+    protected virtual void OnDeepCopy(GES.TimelineElement copy) =>
+        ChainUpDeepCopy(copy);
+
+    /// <summary>
     /// Paste @self, which is the @copy prepared by @deep_copy, into
     /// the timeline at the given @paste_position, with @ref_element as a
     /// reference, which is the @self that was passed to @deep_copy.
@@ -627,6 +664,36 @@ public unsafe partial class TimelineElement
         bool result = ChainUpTrim(Handle, start);
         GC.KeepAlive(this);
         return result;
+    }
+
+    /// <summary>Runs the implementation of <c>deep_copy</c> below the managed override.</summary>
+    /// <remarks>
+    /// <para>The copy is a fresh instance of the same managed type this element has, and it already
+    /// carries every readable and writable property of the class that is neither construct-only
+    /// nor parent, timeline or name - the ones a managed type installed included - because
+    /// ges_timeline_element_copy copies them before it reaches this slot
+    /// (ges-timeline-element.c:1672, 1677-1691). What belongs here is the state that lives
+    /// outside properties; chain up first, then copy it. The copy arrives floating and stays
+    /// floating: the caller still holds the only reference and drops it without ever sinking
+    /// it, so an override must not add it to a container or a layer, must not paste it, and
+    /// should not keep its wrapper beyond the call - a kept wrapper defers the finalize of the
+    /// copy and buys nothing. A subclass defined without a wrapper factory - the non-generic
+    /// DefineSubclass, which registers no IManagedSubclass&lt;TSelf&gt; - has no fabrication
+    /// for the copy, so no OnDeepCopy call is made at all for it and the base class makes the
+    /// copy alone.</para>
+    /// </remarks>
+    /// <param name="copy">
+    /// The <c>copy</c> argument.
+    /// The caller has just created this and still owns it. The wrapper takes no
+    /// reference of the caller's: keep nothing beyond the call, and hand the value
+    /// to nothing that would take it over.
+    /// </param>
+    protected void ChainUpDeepCopy(GES.TimelineElement copy)
+    {
+        ArgumentNullException.ThrowIfNull(copy);
+        ChainUpDeepCopy(Handle, copy.Handle);
+        GC.KeepAlive(this);
+        GC.KeepAlive(copy);
     }
 
     /// <summary>Runs the implementation of <c>paste</c> below the managed override.</summary>
@@ -844,6 +911,19 @@ public unsafe partial class TimelineElement
         }
 
         return slot(self, start) != 0;
+    }
+
+    private static void ChainUpDeepCopy(nint self, nint copy)
+    {
+        delegate* unmanaged[Cdecl]<nint, nint, void> slot =
+            (delegate* unmanaged[Cdecl]<nint, nint, void>)ParentClassOf(self)->DeepCopy;
+
+        if (slot is null)
+        {
+            return;
+        }
+
+        slot(self, copy);
     }
 
     private static nint ChainUpPaste(nint self, nint refElement, ulong pastePosition)
@@ -1120,6 +1200,31 @@ public unsafe partial class TimelineElement
         {
             Gst.Interop.ExceptionTrap.Report(exception);
             return default;
+        }
+    }
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static void DeepCopyTrampoline(nint self, nint copy)
+    {
+        try
+        {
+            if (Gst.GObject.Object.TryGetOrFabricate(self) is not TimelineElement managed)
+            {
+                ChainUpDeepCopy(self, copy);
+                return;
+            }
+
+            if (Gst.GObject.Object.TryGetOrFabricate(copy) is not GES.TimelineElement copyValue)
+            {
+                ChainUpDeepCopy(self, copy);
+                return;
+            }
+
+            managed.OnDeepCopy(copyValue);
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
         }
     }
 

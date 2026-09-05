@@ -1421,11 +1421,24 @@ A managed `GES.VideoSource` answers the element behind it from
   `CONSTRUCT` property and is written inside `g_object_new`, before the name
   is, so this one override — and only this one — runs on an instance whose
   `Name` is still `null`. The wrapper is fabricated by that dispatch (§5.4).
-* **Copied state belongs in an installed property.** `deep_copy` is not bound,
-  and `ges_timeline_element_copy` copies every readable and writable property
-  of the class before it hands the copy back, the ones a managed type
-  installed (§5.5) included. That is how state reaches the clip a split
-  produced.
+* **Copied state belongs in an installed property.**
+  `ges_timeline_element_copy` copies every readable and writable property of
+  the class that is neither construct-only nor `parent`, `timeline` or `name`
+  before it hands the copy back, the ones a managed type installed (§5.5)
+  included. That is how state reaches the clip a split produced, and it is
+  still the recommended carrier.
+* **`OnDeepCopy` is for the state that lives outside properties.** The slot
+  runs after those properties were copied, so an override chains up first and
+  then copies whatever a property does not hold. The `copy` it is handed is a
+  fresh instance of the same managed type, and it is **not** an ordinary
+  borrowed object: the base class created it, it is still floating, and the
+  caller drops that reference without ever sinking it. The wrapper therefore
+  takes no reference of its own, and the three must-nots follow — do not add
+  the copy to a container or a layer, do not paste it, and do not keep its
+  wrapper beyond the call, which only defers the copy's finalize. A subclass
+  defined with the non-generic `DefineSubclass`, which registers no wrapper
+  factory, gets no `OnDeepCopy` call at all: the copy has no wrapper to
+  fabricate, and the base class makes the copy alone.
 * **The class data fields are inherited, not configured.** The mirrors lay the
   unions of these class structs out by value, but the data fields of the class
   structs, in the unions and beside them — `nleobject_factorytype`,
