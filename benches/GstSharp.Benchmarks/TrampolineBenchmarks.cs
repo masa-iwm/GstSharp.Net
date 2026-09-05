@@ -7,18 +7,29 @@ namespace GstSharp.Benchmarks;
 /// What a managed vfunc costs against the native element it replaces.
 /// </summary>
 /// <remarks>
-/// Both pipelines are <c>videotestsrc num-buffers=300 ! X ! fakesink
-/// sync=false</c> and differ only in <c>X</c>: a native <c>identity</c> in the
-/// baseline, a <see cref="ManagedIdentityTransform"/> in the variant. One
-/// operation is one run of the pipeline from <see cref="State.Null"/> to the
-/// end of the stream, so the difference between the two rows is 300 crossings
-/// of the <c>transform_ip</c> trampoline plus the state cycle both share.
+/// <para>
+/// Both pipelines are <c>fakesrc num-buffers=N sizetype=fixed sizemax=64 ! X !
+/// fakesink sync=false</c> and differ only in <c>X</c>: a native
+/// <c>identity</c> in the baseline, a <see cref="ManagedIdentityTransform"/> in
+/// the variant. One operation is one run of the pipeline from
+/// <see cref="State.Null"/> to the end of the stream, so the difference between
+/// the two rows is <see cref="Buffers"/> crossings of the <c>transform_ip</c>
+/// trampoline plus the state cycle both share.
+/// </para>
+/// <para>
+/// The source paints nothing and the buffers are 64 bytes, because anything a
+/// source has to produce is work both rows do and the trampoline does not:
+/// under <c>videotestsrc</c> at 320x240 the per buffer dispatch disappears
+/// below the rendering. <c>signal-handoffs</c> is turned off on the native
+/// <c>identity</c>, where it is on by default, so that the baseline does not
+/// emit a signal per buffer that the managed filter has no counterpart for.
+/// </para>
 /// </remarks>
 [MemoryDiagnoser]
 public class TrampolineBenchmarks
 {
     /// <summary>How many buffers one run of a pipeline carries.</summary>
-    public const int Buffers = 300;
+    public const int Buffers = 20000;
 
     private static readonly ClockTime BusTimeout = ClockTime.FromSeconds(30);
 
@@ -40,6 +51,11 @@ public class TrampolineBenchmarks
         GstRuntime.EnsureInitialised();
 
         this.nativeFilter = GstRuntime.NewElement("identity", "filter");
+
+        // On by default: identity emits a handoff signal per buffer, which the
+        // managed filter has nothing equivalent to. Off, the baseline is the
+        // native transform_ip and nothing else.
+        this.nativeFilter.SetProperty("signal-handoffs", false);
         this.nativePipeline = BuildPipeline("native-identity", this.nativeFilter);
 
         this.managedFilter = new ManagedIdentityTransform();
@@ -73,12 +89,20 @@ public class TrampolineBenchmarks
     private static Pipeline BuildPipeline(string name, Element filter)
     {
         Pipeline pipeline = Pipeline.New(name);
-        Element source = GstRuntime.NewElement("videotestsrc", "source");
+        Element source = GstRuntime.NewElement("fakesrc", "source");
         Element sink = GstRuntime.NewElement("fakesink", "sink");
 
         // num-buffers bounds the run; sync=false lets it run as fast as the
         // machine can, so the number below is dispatch and not the clock.
         source.SetProperty("num-buffers", Buffers);
+
+        // 2 is "fixed" in GstFakeSrcSizeType: every buffer carries sizemax
+        // bytes. The default, "empty", pushes buffers with no memory at all;
+        // 64 bytes is small enough that the source is not what is measured and
+        // real enough that the buffers carry something.
+        source.SetProperty("sizetype", 2);
+        source.SetProperty("sizemax", 64);
+
         sink.SetProperty("sync", false);
 
         if (!pipeline.AddMany(source, filter, sink) || !source.Link(filter) || !filter.Link(sink))
