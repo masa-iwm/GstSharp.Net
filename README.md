@@ -331,9 +331,11 @@ The gaps worth naming here:
   `GstVideo` sinks, filters and codecs — override the vfuncs of the class and be
   called back through the native vtable. A type that also states how its wrapper
   is built can be registered with `gst_element_register` and made by
-  `gst_element_factory_make` or named in a pipeline description. What is not
-  there yet: properties, signals and interfaces on managed types, and the GES
-  classes. See
+  `gst_element_factory_make` or named in a pipeline description. It can install
+  properties, define signals and implement `GstURIHandler`, so
+  `gst_element_make_from_uri` finds it. What is not there yet: construct
+  properties, interfaces other than `GstURIHandler`, defining a new interface
+  from managed code, and the GES classes. See
   [`docs/subclassing.md`](https://github.com/masa-iwm/GstSharp.Net/blob/main/docs/subclassing.md#11-using-it).
 * **Writing GValue-typed structures is incomplete.** Reading is covered —
   `Value.GetBoxed<T>()` for a boxed value and `Value.GetMiniObject<T>()` for a

@@ -62,8 +62,8 @@ design's stage 3 lands is instantiate a *managed* element by type name
   interaction with the toggle-ref lifecycle is not resolvable in general.
   Subclasses that need teardown use the `change_state` NULL transition or a
   future explicit hook.
-* **Defining new GObject interfaces** from managed code. (Implementing
-  existing ones is a late stage, see §9.)
+* **Defining new GObject interfaces** from managed code. (Implementing an
+  existing one landed in stage 3b, see §5.7.)
 * **Dynamic types** (`g_type_register_dynamic`, `GTypeModule`) and full
   GStreamer plugin authoring (`gst_plugin_register_static`,
   `gst_element_register` making the type constructible by factory name).
@@ -706,6 +706,85 @@ runtime keeps one long-lived wrapper per installed specification so the property
 slots have something to hand out without leaking a reference per call. The
 wrapper the caller built is theirs to dispose.
 
+### 5.7 Interfaces a subclass implements (stage 3b, landed)
+
+An interface is declared when the type is defined and nowhere else:
+
+```csharp
+private static readonly SubclassType Definition = DefineSubclass<FeedSrc>(
+    "FeedSrc",
+    ConfigureClass,
+    new SubclassOptions { Interfaces = [URIHandlerImplementation.For<FeedSrc>()] },
+    CreateOverride);
+```
+
+**Define time is the only window.** `g_type_add_interface_static` refuses a
+type whose class initialisation has begun — the refusal starts the moment
+`type_class_init_Wm` assigns `class.class`, which is before the first
+`base_init` and long before the class initialiser of the type runs — so a call
+from inside `configureClass` is a `g_critical` and nothing else. The
+registration therefore attaches every declared interface between
+`g_type_register_static` and `g_type_class_ref`, which is the one moment the
+type exists and its class does not. GLib copies the `GInterfaceInfo`, so a
+stack value is enough, and it fills the vtable in `interface_init`, which runs
+*after* the class initialiser, on the thread that registered the subclass, over
+memory that is never freed. The class-init rules apply there too: filling a
+vtable writes function pointers and creates no wrapper.
+
+`InterfaceImplementation` cannot be derived from outside the binding. The
+binding hands out one ready made implementation per interface it supports, and
+`GstURIHandler` is the first:
+
+```csharp
+internal sealed class FeedSrc : PushSrc, IManagedSubclass<FeedSrc>, IURIHandlerImplementation
+{
+    public static URIType UriType => URIType.Src;
+
+    public static IReadOnlyList<string> Protocols => ["feed"];
+
+    public string? GetUri() => _uri;
+
+    public bool SetUri(string uri, out GException? error)
+    {
+        error = null;
+        _uri = uri;
+        return true;
+    }
+}
+```
+
+Three facts of the C interface show through:
+
+* **The protocol list is pinned for the life of the process.** The element
+  factory deep-copies it during registration, but
+  `gst_uri_handler_get_protocols` hands the array of the *type* straight to its
+  callers without copying, so it has to stay valid for as long as anyone can
+  ask. `URIHandlerImplementation.For<TSelf>()` reads `Protocols` once, copies it
+  into unmanaged memory and never releases it — the type is equally permanent.
+  Nothing else reads the property.
+* **A refusal always carries an error.** `gst_uri_handler_set_uri` synthesises
+  none of its own, and `gst_element_make_from_uri` reads the message of the
+  error of every candidate that refused — a null one is a crash there whenever
+  GStreamer debugging is on. So a `SetUri` that answers `false` and leaves
+  `error` null gets a `GST_URI_ERROR_BAD_URI` naming the type, and so does one
+  that throws: the exception is reported to the trap, and the caller is told
+  the URI was refused.
+* **`GetUri` and `SetUri` run on the caller's thread**, whichever that is.
+  `uridecodebin` asks on its autoplug thread, a pipeline description asks on
+  the thread that parsed it, and `gst_element_make_from_uri` asks before the
+  element is in a pipeline. Store the URI; do not open anything.
+
+The two remaining slots, `get_type` and `get_protocols`, are asked about a
+`GType` rather than about an instance: they answer out of the registration
+table and never fabricate a wrapper, which is what lets `gst_element_register`
+interrogate the type while no instance exists. That registration also refuses a
+type without metadata, so a URI handler still calls `ClassConfig.SetMetadata`.
+
+An interface an ancestor already implements is refused. GLib would allow it and
+hand the subclass a copy of the ancestor's slots, but a managed implementation
+has no way to chain up through those, so what would look like an override would
+silently be a replacement.
+
 ---
 
 ## 6. Class-struct ABI: layout source, validation, versioning
@@ -923,12 +1002,13 @@ document spells it out because the failure modes are subtle:
    IL/AOT warnings stays a gate.
 8. **GType name policy** (§3.5): explicit-only vs. derived default —
    decide when the registration API is reviewed.
-9. **Interfaces**: custom URI-addressable sources need `GstURIHandler`
-   (`<interface name="URIHandler" glib:type-struct="URIHandlerInterface">`),
-   the first concrete consumer of `g_type_add_interface_static` +
-   `GInterfaceInfo.interface_init`. `InterfaceEmitter` binds no vfuncs
-   today; interface implementation is stage 3 and follows the same
-   patch-declared-slots pattern on the interface vtable.
+9. **Interfaces**: settled in stage 3b and landed. `GstURIHandler` is the
+   first concrete consumer of `g_type_add_interface_static` +
+   `GInterfaceInfo.interface_init`, and it follows the same
+   patch-declared-slots pattern on the interface vtable — but only at Define
+   time, for the reason given in §5.7. `InterfaceEmitter` still binds no vfuncs
+   of its own: what a managed type implements is a hand-written
+   `InterfaceImplementation` per interface, not generated code.
 10. **Properties on managed types**: settled in stage 3b and landed, on
     `ObjectClassConfig` rather than only on `ClassConfig` —
     `InstallProperty` (`g_object_class_install_property` inside `ClassInit`)
@@ -1384,6 +1464,11 @@ classes do not, and the registration says so before it takes the type name:
   everything else: `InstallProperty` and `AddSignal` live on
   `ObjectClassConfig`, which is what the class initialiser of `Gst.Pad` and
   `GstBase.AggregatorPad` is given, so a pad type is not a special case here.
+* **An interface can only be declared when the type is defined**, and only
+  one the binding provides an implementation of — `GstURIHandler` today. There
+  is no way to add one from the class initialiser or afterwards: GObject
+  refuses it (§5.7). Defining a new interface from managed code stays out
+  entirely.
 * **No `dispose` or `finalize` override**, by design (§1): teardown belongs in
   the `READY` to `NULL` transition of `OnChangeState`, or in `OnStop`.
 * **Disposing a managed element that GStreamer still drives** does not crash,
