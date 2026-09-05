@@ -353,6 +353,36 @@ public sealed class AbiProbeTests
         Assert.Equal(32, GObjectClassRaw.GetPropertyOffset);
     }
 
+    /// <summary>
+    /// The vtable of <c>GstURIHandler</c>, which a managed element fills in.
+    /// It is not a class struct, so the generated mirror table does not cover
+    /// it and it needs a fact of its own.
+    /// </summary>
+    [Fact]
+    public unsafe void UriHandlerInterfaceRawMatchesTheHeaderLayout()
+    {
+        GstURIHandlerInterfaceRaw raw = default;
+
+        _output.WriteLine(Format("GstURIHandlerInterfaceRaw", Unsafe.SizeOf<GstURIHandlerInterfaceRaw>()));
+        _output.WriteLine(Format("GstURIHandlerInterfaceRaw.get_type", GstURIHandlerInterfaceRaw.GetUriTypeOffset));
+        _output.WriteLine(
+            Format("GstURIHandlerInterfaceRaw.get_protocols", GstURIHandlerInterfaceRaw.GetProtocolsOffset));
+        _output.WriteLine(Format("GstURIHandlerInterfaceRaw.get_uri", GstURIHandlerInterfaceRaw.GetUriOffset));
+        _output.WriteLine(Format("GstURIHandlerInterfaceRaw.set_uri", GstURIHandlerInterfaceRaw.SetUriOffset));
+
+        Assert.Equal(48, Unsafe.SizeOf<GstURIHandlerInterfaceRaw>());
+        Assert.Equal(16, Unsafe.SizeOf<GTypeInterfaceRaw>());
+        Assert.Equal(0L, Offset(&raw, &raw.Parent));
+        Assert.Equal(16L, Offset(&raw, &raw.GetUriType));
+        Assert.Equal(24L, Offset(&raw, &raw.GetProtocols));
+        Assert.Equal(32L, Offset(&raw, &raw.GetUri));
+        Assert.Equal(40L, Offset(&raw, &raw.SetUri));
+        Assert.Equal(16, GstURIHandlerInterfaceRaw.GetUriTypeOffset);
+        Assert.Equal(24, GstURIHandlerInterfaceRaw.GetProtocolsOffset);
+        Assert.Equal(32, GstURIHandlerInterfaceRaw.GetUriOffset);
+        Assert.Equal(40, GstURIHandlerInterfaceRaw.SetUriOffset);
+    }
+
     [Fact]
     public unsafe void ElementClassRawMatchesTheHeaderLayout()
     {
