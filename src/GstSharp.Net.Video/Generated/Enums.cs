@@ -1016,7 +1016,7 @@ public enum VideoFlags
 /// <summary>Enum value describing the most common video formats.</summary>
 /// <remarks>
 /// <para>
-/// See the [GStreamer raw video format design document](https://gstreamer.freedesktop.org/documentation/additional/design/mediatype-video-raw.html#formats)
+/// See the <a href="https://gstreamer.freedesktop.org/documentation/additional/design/mediatype-video-raw.html#formats">GStreamer raw video format design document</a>
 /// for details about the layout and packing of these formats in memory.
 /// </para>
 /// </remarks>

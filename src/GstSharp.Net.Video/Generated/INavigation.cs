@@ -458,8 +458,8 @@ public static unsafe partial class NavigationExtensions
 
     /// <summary>
     /// Note: Modifier keys (as defined in #GstNavigationModifierType)
-    /// [press](GST_NAVIGATION_EVENT_KEY_PRESS) and
-    /// [release](GST_NAVIGATION_KEY_PRESS) events are generated even if those states are
+    /// press (<c>GST_NAVIGATION_EVENT_KEY_PRESS</c>) and
+    /// release (<c>GST_NAVIGATION_KEY_PRESS</c>) events are generated even if those states are
     /// present on all other related events
     /// </summary>
     /// <param name="event">A #GstEvent to inspect.</param>

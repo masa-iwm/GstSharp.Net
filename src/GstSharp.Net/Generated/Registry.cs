@@ -37,7 +37,7 @@ namespace Gst;
 ///   Those default locations are:
 ///   `$XDG_DATA_HOME/gstreamer-$GST_API_VERSION/plugins/`
 ///   and `$prefix/libs/gstreamer-$GST_API_VERSION/`.
-///   [$XDG_DATA_HOME](http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html) defaults to
+///   <a href="http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html">$XDG_DATA_HOME</a> defaults to
 ///   `$HOME/.local/share`.
 /// </para>
 /// <para>

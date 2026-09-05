@@ -178,8 +178,8 @@ public enum Edge
 /// </para>
 /// <para>
 /// You can also find more explanation about the behaviour of those modes at:
-/// [trim, ripple and roll](http://pitivi.org/manual/trimming.html)
-/// and [clip management](http://pitivi.org/manual/usingclips.html).
+/// <a href="http://pitivi.org/manual/trimming.html">trim, ripple and roll</a>
+/// and <a href="http://pitivi.org/manual/usingclips.html">clip management</a>.
 /// </para>
 /// </remarks>
 public enum EditMode

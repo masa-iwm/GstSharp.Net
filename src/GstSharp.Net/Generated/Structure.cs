@@ -89,15 +89,15 @@ namespace Gst;
 /// </para>
 /// <para>Some types have special delimiters:</para>
 /// <para>
-/// - [GstValueArray](GST_TYPE_ARRAY) are inside "less and greater than" (`&lt;` and
+/// - GstValueArray (<c>GST_TYPE_ARRAY</c>) are inside "less and greater than" (`&lt;` and
 ///   `&gt;`). For example `a-structure, array=&lt;1, 2, 3&gt;
 /// - Ranges are inside brackets (`[` and `]`). For example `a-structure,
 ///   range=[1, 6, 2]` 1 being the min value, 6 the maximum and 2 the step. To
 ///   specify a #GST_TYPE_INT64_RANGE you need to explicitly specify it like:
 ///   `a-structure, a-int64-range=(gint64) [1, 5]`
-/// - [GstValueList](GST_TYPE_LIST) are inside curly brackets (`{` and `}`).
+/// - GstValueList (<c>GST_TYPE_LIST</c>) are inside curly brackets (`{` and `}`).
 ///   For example `a-structure, list={1, 2, 3}`
-/// - [GStrv](G_TYPE_STRV) are inside "less and greater than" (`&lt;` and
+/// - GStrv (<c>G_TYPE_STRV</c>) are inside "less and greater than" (`&lt;` and
 ///   `&gt;`) and each string is double-quoted.
 ///   For example `a-structure, strv=(GStrv)&lt;"foo", "bar"&gt;`. Since 1.26.0.
 /// </para>

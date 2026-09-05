@@ -322,9 +322,9 @@ public unsafe partial class Timeline : Gst.Bin, GES.IExtractable, GES.IMetaConta
 
     /// <summary>
     /// WARNING: When using that mode, GES won't guarantee the coherence of the
-    /// timeline. You need to ensure that the rules described in the [Overlaps and
-    /// auto transitions](#overlaps-and-autotransitions) section are respected any time
-    /// the timeline is [commited](ges_timeline_commit) (otherwise playback will most
+    /// timeline. You need to ensure that the rules described in the Overlaps and
+    /// auto transitions section are respected any time
+    /// the timeline is commited (<c>ges_timeline_commit</c>) (otherwise playback will most
     /// probably fail in different ways).
     /// </summary>
     /// <remarks>

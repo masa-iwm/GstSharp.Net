@@ -145,7 +145,7 @@ public enum RTCPType
 
 /// <summary>
 /// Types of RTCP Extended Reports, those are defined in RFC 3611 and other RFCs
-/// according to the [IANA registry](https://www.iana.org/assignments/rtcp-xr-block-types/rtcp-xr-block-types.xhtml).
+/// according to the <a href="https://www.iana.org/assignments/rtcp-xr-block-types/rtcp-xr-block-types.xhtml">IANA registry</a>.
 /// </summary>
 public enum RTCPXRType
 {

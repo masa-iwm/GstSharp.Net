@@ -209,7 +209,7 @@ public unsafe partial class Pipeline : Gst.Pipeline, Gst.IChildProxy, Gst.Video.
     /// after calling this.
     /// </para>
     /// <para>
-    /// &gt; **NOTE**: [Rendering settings](ges_pipeline_set_render_settings) need to be
+    /// &gt; **NOTE**: Rendering settings (<c>ges_pipeline_set_render_settings</c>) need to be
     /// &gt; set before setting @mode to #GES_PIPELINE_MODE_RENDER or
     /// &gt; #GES_PIPELINE_MODE_SMART_RENDER, the call to this method will fail
     /// &gt; otherwise.

@@ -119,7 +119,7 @@ public sealed unsafe partial class InstallPluginsContext : Gst.GObject.Boxed
     /// </para>
     /// <para>
     /// Startup notification IDs are defined in the
-    /// [FreeDesktop.Org Startup Notifications standard](http://standards.freedesktop.org/startup-notification-spec/startup-notification-latest.txt).
+    /// <a href="http://standards.freedesktop.org/startup-notification-spec/startup-notification-latest.txt">FreeDesktop.Org Startup Notifications standard</a>.
     /// </para>
     /// <para>
     /// If set, the ID will be passed to the installer via a

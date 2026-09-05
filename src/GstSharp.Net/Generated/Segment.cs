@@ -111,14 +111,14 @@ public sealed unsafe partial class Segment : Gst.GObject.Boxed
     /// <summary>
     /// the playback rate of the segment is set in response to a seek
     ///                event and, without any seek, the value should be `1.0`. This
-    ///                value is used by elements that synchronize buffer [running
-    ///                times](additional/design/synchronisation.md#running-time) on
+    ///                value is used by elements that synchronize buffer <a href="https://gstreamer.freedesktop.org/documentation/additional/design/synchronisation.html#running-time">running
+    ///                times</a> on
     ///                the clock (usually the sink elements), leading to consuming
     ///                buffers faster (for a value `&gt; 1.0`) or slower (for `0.0 &lt;
     ///                value &lt; 1.0`) than normal playback speed. The rate also
     ///                defines the playback direction, meaning that when the value is
     ///                lower than `0.0`, the playback happens in reverse, and the
-    ///                [stream-time](additional/design/synchronisation.md#stream-time)
+    ///                <a href="https://gstreamer.freedesktop.org/documentation/additional/design/synchronisation.html#stream-time">stream-time</a>
     ///                is going backward. The `rate` value should never be `0.0`.
     /// </summary>
     public double Rate
@@ -168,7 +168,7 @@ public sealed unsafe partial class Segment : Gst.GObject.Boxed
 
     /// <summary>
     /// the running time (plus elapsed time, see offset) of the
-    ///                segment [start](GstSegment.start) ([stop](GstSegment.stop) if
+    ///                segment start (<c>GstSegment.start</c>) (stop (<c>GstSegment.stop</c>) if
     ///                rate &lt; 0.0).
     /// </summary>
     public ulong Base
@@ -199,10 +199,10 @@ public sealed unsafe partial class Segment : Gst.GObject.Boxed
 
     /// <summary>
     /// the start time of the segment (in buffer timestamps)
-    ///                [(PTS)](GstBuffer.pts), that is the timestamp of the first
+    ///                (PTS) (<c>GstBuffer.pts</c>), that is the timestamp of the first
     ///                buffer to output inside the segment (last one during
     ///                reverse playback). For example decoders will
-    ///                [clip](gst_segment_clip) out the buffers before the start
+    ///                clip (<c>gst_segment_clip</c>) out the buffers before the start
     ///                time.
     /// </summary>
     public ulong Start
@@ -217,10 +217,10 @@ public sealed unsafe partial class Segment : Gst.GObject.Boxed
 
     /// <summary>
     /// the stop time of the segment (in buffer timestamps)
-    ///                [(PTS)](GstBuffer.pts), that is the timestamp of the last
+    ///                (PTS) (<c>GstBuffer.pts</c>), that is the timestamp of the last
     ///                buffer to output inside the segment (first one during
     ///                reverse playback). For example decoders will
-    ///                [clip](gst_segment_clip) out buffers after the stop time.
+    ///                clip (<c>gst_segment_clip</c>) out buffers after the stop time.
     /// </summary>
     public ulong Stop
     {
@@ -233,8 +233,8 @@ public sealed unsafe partial class Segment : Gst.GObject.Boxed
     }
 
     /// <summary>
-    /// the stream time of the segment [start](GstSegment.start)
-    ///                ([stop](GstSegment.stop) if rate &lt; 0.0).
+    /// the stream time of the segment start (<c>GstSegment.start</c>)
+    ///                (stop (<c>GstSegment.stop</c>) if rate &lt; 0.0).
     /// </summary>
     public ulong Time
     {
@@ -250,10 +250,10 @@ public sealed unsafe partial class Segment : Gst.GObject.Boxed
     /// the buffer timestamp position in the segment is supposed to be
     ///                updated by elements such as sources, demuxers or parsers to
     ///                track progress by setting it to the last pushed buffer' end time
-    ///                ([timestamp](GstBuffer.pts) + #GstBuffer.duration) for that
+    ///                (timestamp (<c>GstBuffer.pts</c>) + #GstBuffer.duration) for that
     ///                specific segment. The position is used when reconfiguring the
     ///                segment with #gst_segment_do_seek when the seek is only
-    ///                updating the segment (see [offset](GstSegment.offset)).
+    ///                updating the segment (see offset (<c>GstSegment.offset</c>)).
     /// </summary>
     public ulong Position
     {

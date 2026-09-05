@@ -10,8 +10,8 @@ namespace GES;
 
 /// <summary>
 /// Any GStreamer filter can be used as effects in GES. The only restriction we
-/// have is that effects element should have a single [sinkpad](GST_PAD_SINK)
-/// (which will be requested if necessary) and a single [srcpad](GST_PAD_SRC).
+/// have is that effects element should have a single sinkpad (<c>GST_PAD_SINK</c>)
+/// (which will be requested if necessary) and a single srcpad (<c>GST_PAD_SRC</c>).
 /// </summary>
 /// <remarks>
 /// <para>
@@ -23,7 +23,7 @@ namespace GES;
 /// * **`gesvideoscale`**: GES implements a specific scaling bin that allows
 ///   specifying where scaling will happen inside the chain of effects. By
 ///   default scaling can happen either in the source (if the source doesn't have
-///   a specific size, like `videotestsrc` or [mixing](ges_track_set_mixing) has
+///   a specific size, like `videotestsrc` or mixing (<c>ges_track_set_mixing</c>) has
 ///   been disabled) or in the mixing element otherwise, when adding that element
 ///   as an effect, GES guarantees that the scaling will happen in it. This can
 ///   be useful for example if you want to crop the video before scaling or apply

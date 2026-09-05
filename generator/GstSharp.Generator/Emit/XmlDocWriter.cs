@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Text;
 using GstSharp.Generator.GirParsing.Model;
@@ -194,6 +195,174 @@ internal static class XmlDocWriter
         writer.WriteLine("[Obsolete(\"" + message.Replace("\\", "\\\\", StringComparison.Ordinal)
             .Replace("\"", "\\\"", StringComparison.Ordinal) + "\")]");
 
+    /// <summary>
+    /// Rewrites the Markdown links of a piece of gir prose and escapes
+    /// everything around them.
+    /// </summary>
+    /// <param name="text">The raw text, which may span several lines.</param>
+    /// <returns>The text as it is written into the documentation.</returns>
+    /// <remarks>
+    /// <para>
+    /// A gir writes its cross references the way gi-docgen renders them,
+    /// <c>[text](target)</c>, and the target is a page of the GStreamer
+    /// documentation or a C name that has no page of its own here. Written out
+    /// as it stands, the link is read as a relative file link by the
+    /// documentation build, which then reports every one of them as broken. So
+    /// each link is turned into what it means: a web address becomes an
+    /// anchor, a page below <c>additional/</c> becomes the address that page
+    /// is published under, an anchor into the same page loses the link and
+    /// keeps its text, and a C name is written as the name it is, in code
+    /// font, beside the text the gir chose for it.
+    /// </para>
+    /// <para>
+    /// Only a link the gir wrote whole is rewritten: brackets inside the text,
+    /// whitespace or parentheses inside the target, or a closing parenthesis
+    /// that never arrives leave the text exactly as the gir wrote it, because
+    /// a guess about what it meant would be worse than the sentence itself. A
+    /// link the gir broke across lines is one link all the same - the prose of
+    /// a paragraph is rewritten as one piece for that reason - and the line
+    /// break inside its text is kept, so a paragraph comes out with the lines
+    /// it went in with.
+    /// </para>
+    /// </remarks>
+    internal static string EscapeProse(string text)
+    {
+        StringBuilder builder = new(text.Length + 16);
+        int plain = 0;
+        int i = 0;
+        while (i < text.Length)
+        {
+            if (text[i] != '[' || !TryReadLink(text, i, out string? label, out string? target, out int end))
+            {
+                i++;
+                continue;
+            }
+
+            builder.Append(Escape(text[plain..i]));
+            AppendLink(builder, label, target);
+            i = end;
+            plain = end;
+        }
+
+        builder.Append(Escape(text[plain..]));
+        return builder.ToString();
+    }
+
+    /// <summary>Reads one whole Markdown link.</summary>
+    /// <param name="text">The text being scanned.</param>
+    /// <param name="start">The position of the opening bracket.</param>
+    /// <param name="label">The text of the link.</param>
+    /// <param name="target">What it points at.</param>
+    /// <param name="end">The position after the closing parenthesis.</param>
+    /// <returns><see langword="true"/> when a link starts at <paramref name="start"/>.</returns>
+    private static bool TryReadLink(
+        string text,
+        int start,
+        [NotNullWhen(true)] out string? label,
+        [NotNullWhen(true)] out string? target,
+        out int end)
+    {
+        label = null;
+        target = null;
+        end = start;
+
+        int close = -1;
+        for (int i = start + 1; i < text.Length; i++)
+        {
+            if (text[i] == '[')
+            {
+                return false;
+            }
+
+            if (text[i] == ']')
+            {
+                close = i;
+                break;
+            }
+        }
+
+        if (close < 0 || close == start + 1 || close + 1 >= text.Length || text[close + 1] != '(')
+        {
+            return false;
+        }
+
+        int last = -1;
+        for (int i = close + 2; i < text.Length; i++)
+        {
+            char c = text[i];
+            if (c == '(' || char.IsWhiteSpace(c))
+            {
+                return false;
+            }
+
+            if (c == ')')
+            {
+                last = i;
+                break;
+            }
+        }
+
+        if (last < 0 || last == close + 2)
+        {
+            return false;
+        }
+
+        label = text[(start + 1)..close];
+        target = text[(close + 2)..last];
+        end = last + 1;
+        return true;
+    }
+
+    /// <summary>Writes one link as the documentation carries it.</summary>
+    /// <param name="builder">The text being built.</param>
+    /// <param name="label">The text of the link.</param>
+    /// <param name="target">What it points at.</param>
+    private static void AppendLink(StringBuilder builder, string label, string target)
+    {
+        if (target.StartsWith("http://", StringComparison.Ordinal)
+            || target.StartsWith("https://", StringComparison.Ordinal))
+        {
+            builder.Append("<a href=\"").Append(Escape(target)).Append("\">")
+                .Append(Escape(label)).Append("</a>");
+            return;
+        }
+
+        if (target.StartsWith("additional/", StringComparison.Ordinal))
+        {
+            int anchor = target.IndexOf('#', StringComparison.Ordinal);
+            string page = anchor < 0 ? target : target[..anchor];
+            if (page.EndsWith(".md", StringComparison.Ordinal))
+            {
+                page = page[..^3] + ".html";
+            }
+
+            builder.Append("<a href=\"https://gstreamer.freedesktop.org/documentation/")
+                .Append(Escape(page))
+                .Append(anchor < 0 ? string.Empty : Escape(target[anchor..]))
+                .Append("\">")
+                .Append(Escape(label))
+                .Append("</a>");
+            return;
+        }
+
+        // An anchor into a page of the GStreamer documentation that this
+        // documentation is not part of. The text is what the sentence needs;
+        // the anchor would point at nothing here.
+        if (target.StartsWith('#'))
+        {
+            builder.Append(Escape(label));
+            return;
+        }
+
+        if (string.Equals(label, target, StringComparison.Ordinal))
+        {
+            builder.Append("<c>").Append(Escape(target)).Append("</c>");
+            return;
+        }
+
+        builder.Append(Escape(label)).Append(" (<c>").Append(Escape(target)).Append("</c>)");
+    }
+
     /// <summary>Escapes the characters that are special in XML.</summary>
     /// <param name="text">The raw text.</param>
     /// <returns>The escaped text.</returns>
@@ -289,7 +458,7 @@ internal static class XmlDocWriter
         DocUnit first = paragraphs[0];
         if (note is null && !first.IsFence && first.Lines.Count == 1 && first.Lines[0].Length <= InlineLimit)
         {
-            writer.WriteLine("/// <" + openTag + ">" + Escape(first.Lines[0]) + "</" + closeTag + ">");
+            writer.WriteLine("/// <" + openTag + ">" + EscapeProse(first.Lines[0]) + "</" + closeTag + ">");
             return;
         }
 
@@ -344,7 +513,7 @@ internal static class XmlDocWriter
     {
         if (!paragraph.IsFence && paragraph.Lines.Count == 1 && paragraph.Lines[0].Length <= InlineLimit)
         {
-            writer.WriteLine("/// <summary>" + Escape(paragraph.Lines[0]) + "</summary>");
+            writer.WriteLine("/// <summary>" + EscapeProse(paragraph.Lines[0]) + "</summary>");
             return;
         }
 
@@ -357,7 +526,7 @@ internal static class XmlDocWriter
     {
         if (!paragraph.IsFence && paragraph.Lines.Count == 1 && paragraph.Lines[0].Length <= InlineLimit)
         {
-            writer.WriteLine("/// <para>" + Escape(paragraph.Lines[0]) + "</para>");
+            writer.WriteLine("/// <para>" + EscapeProse(paragraph.Lines[0]) + "</para>");
             return;
         }
 
@@ -376,28 +545,32 @@ internal static class XmlDocWriter
     /// The fence lines themselves are gone by now; what is left is the sample
     /// as the gir wrote it, indentation and blank lines included, so that it
     /// can be read and copied. Only the characters that are special in XML are
-    /// translated.
+    /// translated there: a sample is program text, and a pair of brackets in it
+    /// is an index and not a link. Prose is rewritten as one piece, because a
+    /// link the gir broke across two lines is one link.
     /// </remarks>
     private static void WriteUnit(CodeWriter writer, DocUnit unit)
     {
         if (unit.IsFence)
         {
             writer.WriteLine("/// <code>");
+            foreach (string line in unit.Lines)
+            {
+                WriteTextLine(writer, Escape(line));
+            }
+
+            writer.WriteLine("/// </code>");
+            return;
         }
 
-        foreach (string line in unit.Lines)
+        foreach (string line in EscapeProse(string.Join('\n', unit.Lines)).Split('\n'))
         {
             WriteTextLine(writer, line);
-        }
-
-        if (unit.IsFence)
-        {
-            writer.WriteLine("/// </code>");
         }
     }
 
     private static void WriteTextLine(CodeWriter writer, string line) =>
-        writer.WriteLine(line.Length == 0 ? "///" : "/// " + Escape(line));
+        writer.WriteLine(line.Length == 0 ? "///" : "/// " + line);
 
     /// <summary>
     /// Splits gir documentation into the units that a summary and remarks are
