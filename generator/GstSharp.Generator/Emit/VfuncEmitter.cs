@@ -449,16 +449,16 @@ internal sealed class VfuncEmitter
             required.Add((name, slot.Reason));
         }
 
-        WriteDefineSubclassDoc(writer, cName, rule, mandatory, generic: false);
+        WriteDefineSubclassDoc(writer, cName, rule, mandatory, generic: false, options: false);
         writer.WriteLine(
             "public static " + (hides ? "new " : string.Empty) + "Gst.GObject.SubclassType DefineSubclass(");
         writer.WriteLine("    string typeName,");
         writer.WriteLine("    " + configure + " configureClass,");
         writer.WriteLine("    params Gst.GObject.VfuncOverride[] overrides) =>");
-        writer.WriteLine("    DefineSubclassCore(typeName, configureClass, overrides, null);");
+        writer.WriteLine("    DefineSubclassCore(typeName, configureClass, overrides, null, null);");
 
         writer.WriteLine();
-        WriteDefineSubclassDoc(writer, cName, rule, mandatory, generic: true);
+        WriteDefineSubclassDoc(writer, cName, rule, mandatory, generic: true, options: false);
         writer.WriteLine(
             "public static " + (hides ? "new " : string.Empty) + "Gst.GObject.SubclassType DefineSubclass<TSelf>(");
         writer.WriteLine("    string typeName,");
@@ -466,14 +466,34 @@ internal sealed class VfuncEmitter
         writer.WriteLine("    params Gst.GObject.VfuncOverride[] overrides)");
         writer.WriteLine("    where TSelf : " + type + ", Gst.GObject.IManagedSubclass<TSelf> =>");
         writer.WriteLine(
-            "    DefineSubclassCore(typeName, configureClass, overrides, static args => TSelf.CreateWrapper(args));");
+            "    DefineSubclassCore(typeName, configureClass, overrides, static args => TSelf.CreateWrapper(args),"
+            + " null);");
+
+        writer.WriteLine();
+        WriteDefineSubclassDoc(writer, cName, rule, mandatory, generic: true, options: true);
+        writer.WriteLine(
+            "public static " + (hides ? "new " : string.Empty) + "Gst.GObject.SubclassType DefineSubclass<TSelf>(");
+        writer.WriteLine("    string typeName,");
+        writer.WriteLine("    " + configure + " configureClass,");
+        writer.WriteLine("    Gst.GObject.SubclassOptions options,");
+        writer.WriteLine("    params Gst.GObject.VfuncOverride[] overrides)");
+        writer.WriteLine("    where TSelf : " + type + ", Gst.GObject.IManagedSubclass<TSelf>");
+        writer.OpenBlock();
+        writer.WriteLine("ArgumentNullException.ThrowIfNull(options);");
+        writer.WriteLine();
+        writer.WriteLine(
+            "return DefineSubclassCore(");
+        writer.WriteLine(
+            "    typeName, configureClass, overrides, static args => TSelf.CreateWrapper(args), options);");
+        writer.CloseBlock();
 
         writer.WriteLine();
         writer.WriteLine("private static Gst.GObject.SubclassType DefineSubclassCore(");
         writer.WriteLine("    string typeName,");
         writer.WriteLine("    " + configure + " configureClass,");
         writer.WriteLine("    Gst.GObject.VfuncOverride[] overrides,");
-        writer.WriteLine("    Func<Gst.GObject.SubclassCtorArgs, Gst.GObject.Object>? wrapFactory)");
+        writer.WriteLine("    Func<Gst.GObject.SubclassCtorArgs, Gst.GObject.Object>? wrapFactory,");
+        writer.WriteLine("    Gst.GObject.SubclassOptions? options)");
         writer.OpenBlock();
         if (mandatory)
         {
@@ -514,7 +534,8 @@ internal sealed class VfuncEmitter
         }
 
         writer.WriteLine("Gst.GObject.SubclassType type = Gst.GObject.SubclassType.Define(");
-        writer.WriteLine("    new Gst.GObject.GType(GetGType()), typeName, configureClass, overrides, wrapFactory);");
+        writer.WriteLine(
+            "    new Gst.GObject.GType(GetGType()), typeName, configureClass, overrides, wrapFactory, options);");
         foreach (string template in rule?.PadTemplates ?? [])
         {
             writer.WriteLine("type.RequirePadTemplate(\"" + template + "\");");
@@ -532,12 +553,14 @@ internal sealed class VfuncEmitter
     /// <param name="rule">The per class facts of the class, or null.</param>
     /// <param name="mandatory">Whether the class initialiser is required.</param>
     /// <param name="generic">Whether the overload takes the subclass itself.</param>
+    /// <param name="options">Whether the overload takes the optional parts of the registration.</param>
     private static void WriteDefineSubclassDoc(
         CodeWriter writer,
         string cName,
         SubclassBaseRule? rule,
         bool mandatory,
-        bool generic)
+        bool generic,
+        bool options)
     {
         writer.WriteLine("/// <summary>Registers a managed subclass of <c>" + cName + "</c> with GObject.</summary>");
         if (generic)
@@ -557,6 +580,16 @@ internal sealed class VfuncEmitter
         }
 
         writer.WriteLine("/// </param>");
+        if (options)
+        {
+            writer.WriteLine("/// <param name=\"options\">");
+            writer.WriteLine("/// The optional parts of the registration, the interfaces the subclass");
+            writer.WriteLine("/// implements above all. Interfaces can be declared here and nowhere else:");
+            writer.WriteLine("/// GObject refuses to attach one once the class of the type is being");
+            writer.WriteLine("/// initialised.");
+            writer.WriteLine("/// </param>");
+        }
+
         writer.WriteLine("/// <param name=\"overrides\">The slots the subclass takes over.</param>");
         writer.WriteLine("/// <returns>The registration.</returns>");
         if (generic)
