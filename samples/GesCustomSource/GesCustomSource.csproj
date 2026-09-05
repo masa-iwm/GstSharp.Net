@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>GstSharp.Samples.GesCustomSource</RootNamespace>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/GstSharp.Net/GstSharp.Net.csproj" />
+
+    <!-- The editing services: the timeline, its layers and tracks, the two
+         classes this sample derives from and the pipeline that plays it. -->
+    <ProjectReference Include="../../src/GstSharp.Net.GES/GstSharp.Net.GES.csproj" />
+  </ItemGroup>
+
+</Project>
