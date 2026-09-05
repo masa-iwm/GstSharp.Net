@@ -1,4 +1,4 @@
-﻿using GstSharp.Generator.GirParsing.Model;
+using GstSharp.Generator.GirParsing.Model;
 using GstSharp.Generator.Semantic;
 
 namespace GstSharp.Generator.Emit;

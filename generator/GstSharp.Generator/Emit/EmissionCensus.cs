@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using GstSharp.Generator.Semantic;
 
 namespace GstSharp.Generator.Emit;
