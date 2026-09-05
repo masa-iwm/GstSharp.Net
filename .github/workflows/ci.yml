@@ -429,7 +429,7 @@ jobs:
           dotnet run --project samples/GstInspect --no-restore -- fakesink
 
       # The gate the sample exists for: the page it prints has to be the page
-      # the real tool prints, byte for byte. What is compared, why these four
+      # the real tool prints, byte for byte. What is compared, why these six
       # elements, and why the diff is skipped rather than failed on a leg whose
       # gst-inspect-1.0 predates the 1.28.3 page format the port reproduces is
       # written down in the script, which the three native legs share. In

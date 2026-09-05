@@ -42,15 +42,6 @@
 //     member name in lower case with dashes. Both halves are verified against
 //     the real tool on a stereo and on a 5.1 file. See Discovery.Printing.cs.
 //
-//   * --print-cache-dir prints g_get_user_cache_dir() joined with
-//     "gstreamer-1.0/discoverer" and stops there, as the C tool does. The
-//     first part is a GLib rule -- XDG_CACHE_HOME or ~/.cache on Unix, the
-//     internet cache folder on Windows -- that .NET has no equivalent of, and
-//     Gst.GLib.UserDirectories.CacheDir is the call itself rather than a
-//     re-implementation of the rule. Like the C tool, the option is read after
-//     the check for a URI, so it needs one on the command line and looks at
-//     none of them.
-//
 //   * The usage line prints "GstDiscoverer" where the C tool prints argv[0],
 //     which is the full path of the executable.
 //
