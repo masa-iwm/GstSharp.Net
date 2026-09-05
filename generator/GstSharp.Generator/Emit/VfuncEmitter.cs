@@ -1294,6 +1294,36 @@ internal sealed class VfuncEmitter
         // the caller. It is forgotten when the call returns, whatever the
         // override did with the wrapper.
         List<VfuncArgument> lent = [];
+
+        // A sibling argument is resolved before anything else is built. The
+        // fallback it writes returns from the middle of the trampoline, before
+        // the try/finally that detaches the lent wrappers is opened, so a slot
+        // that is both lent a record and handed a sibling would leave that
+        // wrapper attached past the call if the two were emitted in the order
+        // of the parameters.
+        foreach (VfuncArgument argument in plan.Arguments)
+        {
+            if (argument.Bucket != VfuncBucket.SiblingGObject)
+            {
+                continue;
+            }
+
+            // The instance is resolved the way the instance of the slot itself
+            // is: the interned wrapper when there is one, a fabricated one
+            // otherwise, and no reference settled either way. A type defined
+            // without a wrapper factory has no fabrication to offer, and the
+            // slot then runs the way it runs for an instance the binding cannot
+            // resolve at all.
+            ArgumentPlan sibling = argument.Argument;
+            writer.WriteLine(
+                "if (Gst.GObject.Object.TryGetOrFabricate(" + sibling.Name + ") is not "
+                + Bare(sibling.PublicType) + " " + sibling.Name + "Value)");
+            writer.OpenBlock();
+            WriteChainUpFallback(writer, plan);
+            writer.CloseBlock();
+            writer.WriteLine();
+        }
+
         foreach (VfuncArgument argument in plan.Arguments)
         {
             ArgumentPlan value = argument.Argument;
@@ -1310,19 +1340,8 @@ internal sealed class VfuncEmitter
                     call.Add(NullAssert(value, local));
                     break;
                 case VfuncBucket.SiblingGObject:
-                    // The instance is resolved the way the instance of the slot
-                    // itself is: the interned wrapper when there is one, a
-                    // fabricated one otherwise, and no reference settled either
-                    // way. A type defined without a wrapper factory has no
-                    // fabrication to offer, and the slot then runs the way it
-                    // runs for an instance the binding cannot resolve at all.
-                    writer.WriteLine(
-                        "if (Gst.GObject.Object.TryGetOrFabricate(" + value.Name + ") is not "
-                        + Bare(value.PublicType) + " " + local + ")");
-                    writer.OpenBlock();
-                    WriteChainUpFallback(writer, plan);
-                    writer.CloseBlock();
-                    writer.WriteLine();
+                    // Already resolved above, by the pre-pass that keeps the
+                    // fallback ahead of every wrapper the call has to undo.
                     call.Add(local);
                     break;
                 case VfuncBucket.BorrowMiniObject:
