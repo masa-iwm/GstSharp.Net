@@ -20,13 +20,15 @@ public static class Program
     {
         // In process, because the default toolchain writes a generated child
         // project underneath this repository, where it would inherit
-        // Directory.Build.props and its TreatWarningsAsErrors. Short runs,
-        // because these benchmarks drive a native library and a full run buys
-        // precision nobody reads. Both are the default job rather than a
-        // command line flag, so `dotnet run` reproduces what the table in
-        // benches/README.md was made from.
+        // Directory.Build.props and its TreatWarningsAsErrors. Otherwise the
+        // standard job: these benchmarks drive a native library whose variance
+        // three iterations cannot see through, and a harness that exists to
+        // catch a regression has to settle before it is worth reading. The
+        // toolchain is the default job rather than a command line flag, so
+        // `dotnet run` reproduces what the tables in benches/README.md were
+        // made from.
         IConfig config = DefaultConfig.Instance
-            .AddJob(Job.ShortRun.WithToolchain(InProcessEmitToolchain.Instance).AsDefault());
+            .AddJob(Job.Default.WithToolchain(InProcessEmitToolchain.Instance).AsDefault());
 
         IEnumerable<Summary> summaries =
             BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly).Run(args, config);
