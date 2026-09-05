@@ -459,6 +459,7 @@ The API reference and these guides are published as a site at
 | `src/` | Shipping libraries: the bindings, the hand-written runtime under `src/GstSharp.Net/Core/`, and the Roslyn analyzers. |
 | `samples/` | Runnable samples, including the NativeAOT smoke test and, under `samples/tutorials/`, the official GStreamer tutorials ported onto the binding. |
 | `tests/` | Generator unit tests, analyzer tests, and integration tests that need a native GStreamer. |
+| `benches/` | A BenchmarkDotNet harness for the dispatch, property, mapping and interning paths. Every CI job builds it, none runs it. See `benches/README.md`. |
 
 ## Building
 

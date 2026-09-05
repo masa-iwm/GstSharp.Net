@@ -121,6 +121,11 @@ All of these must pass before a change is merged:
    `/p:ApiCompatGenerateSuppressionFile=true`, which the error message offers —
    a suppression file would make the promise unenforced rather than kept.
 
+The benchmarks under `benches/` are not one of these gates: every CI job builds
+them with the solution, no CI job runs them, and the numbers in
+`benches/README.md` come from a local run on a machine whose owner can vouch
+for it.
+
 ## When the census tests fail
 
 Quality gate 3 is the one a first pull request usually trips. The census is a

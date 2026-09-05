@@ -178,6 +178,19 @@ solution-level run is what a development machine does; here the per-project
 steps keep a failure attributable in the job log, and they let a native job skip
 a suite that does not belong on it.
 
+`benches/GstSharp.Benchmarks` is the one project on the solution that every job
+builds and no job runs, and it is deliberate. `dotnet build GstSharp.Net.slnx`
+compiles it in all five jobs, so the harness cannot rot against the binding it
+measures; nothing invokes it, because a benchmark is a measurement of the
+machine it ran on and a hosted runner would only publish the noise of whatever
+else that runner was doing. The two habits that keep it out of the way of the
+other gates are `IsPackable=false`, which is what stops the solution-wide
+`dotnet pack` of the `verify` job from packing it, and the per-project shape of
+the test steps above, which is what stops any `dotnet test` from reaching a
+console project that is not a test project. A project that is built but never
+run is a real category in this repository, and this is the precedent for it:
+compilation is the gate, execution is a local matter.
+
 ## The NativeAOT gates
 
 `eng/aot-gate.ps1` publishes, asserts a clean publish, and runs the result:
