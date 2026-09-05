@@ -929,11 +929,11 @@ document spells it out because the failure modes are subtle:
    `GInterfaceInfo.interface_init`. `InterfaceEmitter` binds no vfuncs
    today; interface implementation is stage 3 and follows the same
    patch-declared-slots pattern on the interface vtable.
-10. **Properties on managed types**: GES effect/source configuration may
-    eventually require installable properties (`g_object_class_install_property`
-    inside `ClassInit` + `get_property`/`set_property` vfunc overrides).
-    Deliberately out of stage 0–2; the `ClassConfig` facade is the natural
-    future home.
+10. **Properties on managed types**: settled in stage 3b and landed, on
+    `ObjectClassConfig` rather than only on `ClassConfig` —
+    `InstallProperty` (`g_object_class_install_property` inside `ClassInit`)
+    and the `set_property`/`get_property` overrides of §5.6. What stays out is
+    construct properties, for the reason given there.
 
 ---
 
