@@ -1151,7 +1151,7 @@ construction-property overload a `GstPad` needs, because `direction` is
 construct only; `ObjectClassConfig` arrived as the base of `ClassConfig` (§5.5);
 `Gst.Pad` and `GstBase.AggregatorPad` joined the allowlist, which is what
 un-skipped `Aggregator::create_new_pad`. Twenty eight classes are
-subclassable, with thirty class struct mirrors and 241 slots.
+subclassable, with thirty class struct mirrors and 242 slots.
 
 **Stage 3b — properties, signals and interfaces (landed).** `g_param_spec_*`
 construction (twenty `New` factories for the GObject kinds, plus the

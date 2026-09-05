@@ -94,12 +94,17 @@ public sealed unsafe class GesDeepCopyTests
     }
 
     /// <summary>
-    /// The hazard the slot was left out for: a managed clip inside a native
+    /// The hazard the slot was left out for: two managed clips inside a native
     /// group, the group deep copied and the copy released. The group stores the
-    /// copy of the clip by a plain assignment and unreferences it in its own
+    /// copy of each child by a plain assignment and unreferences it in its own
     /// free path, so a wrapper that had sunk the floating reference would lose
     /// the one it owns.
     /// </summary>
+    /// <remarks>
+    /// Two clips, because <c>ges_container_group</c> answers the one container
+    /// it was given when the list holds a single one: a group is only built for
+    /// two or more.
+    /// </remarks>
     [Fact]
     public void AManagedClipInsideANativeGroupSurvivesTheGroupBeingCopied()
     {
@@ -109,36 +114,51 @@ public sealed unsafe class GesDeepCopyTests
         using Timeline timeline = Timeline.NewAudioVideo();
         using Layer layer = timeline.AppendLayer();
 
-        DeepCopyProbeClip clip = DeepCopyProbeClip.New();
+        DeepCopyProbeClip first = DeepCopyProbeClip.New();
+        DeepCopyProbeClip second = DeepCopyProbeClip.New();
 
-        using (clip)
+        using (first)
+        using (second)
         {
-            Prepare(clip);
-            clip.SetProperty("probe-tag", "grouped");
-            Assert.True(layer.AddClip(clip));
+            Prepare(first);
+            Prepare(second, ClockTime.FromSeconds(4));
+            first.SetProperty("probe-tag", "first");
+            second.SetProperty("probe-tag", "second");
+            Assert.True(layer.AddClip(first));
+            Assert.True(layer.AddClip(second));
 
-            Container grouped = Container.Group([clip])
-                ?? throw new InvalidOperationException("The clip could not be grouped.");
+            Container grouped = Container.Group([first, second])
+                ?? throw new InvalidOperationException("The clips could not be grouped.");
 
-            using (grouped)
+            // A real GESGroup, not one of the two clips handed back.
+            Group group = Assert.IsType<Group>(grouped);
+
+            using (group)
             {
-                TimelineElement copied = grouped.Copy(deep: true);
+                TimelineElement copied = group.Copy(deep: true);
 
-                // The managed clip inside the group was deep copied too.
-                DeepCopyObservation seen = Assert.Single(DeepCopyProbeClip.Observations);
-                Assert.True(seen.CopyIsManaged);
-                Assert.True(seen.IsFloating);
+                // Both managed clips inside the group were deep copied, each
+                // through its own override.
+                Assert.Equal(2, DeepCopyProbeClip.Observations.Count);
+                Assert.All(DeepCopyProbeClip.Observations, static seen =>
+                {
+                    Assert.True(seen.CopyIsManaged);
+                    Assert.True(seen.IsFloating);
+                });
 
                 // Releasing the copy of the group releases its mapping, which
-                // unreferences the copy of the clip by hand.
+                // unreferences the copy of each clip by hand. That reference is
+                // the copy's own floating one and nothing the wrapper owns.
                 copied.Dispose();
-
-                // The original clip and its wrapper are untouched by all of
-                // it: the unreference the mapping made was of the copy's own
-                // floating reference and of nothing the wrapper owns.
-                Assert.Equal("grouped", clip.GetProperty<string>("probe-tag"));
-                Assert.Equal(Length, clip.Duration);
             }
+
+            _output.WriteLine(FormattableString.Invariant(
+                $"observations: {DeepCopyProbeClip.Observations.Count}"));
+
+            // The originals and their wrappers are untouched by all of it.
+            Assert.Equal("first", first.GetProperty<string>("probe-tag"));
+            Assert.Equal("second", second.GetProperty<string>("probe-tag"));
+            Assert.Equal(Length, first.Duration);
         }
     }
 
@@ -180,10 +200,12 @@ public sealed unsafe class GesDeepCopyTests
 
     private static uint RefCountOf(nint handle) => *(uint*)(handle + sizeof(nint));
 
-    private static void Prepare(Clip clip)
+    private static void Prepare(Clip clip) => Prepare(clip, ClockTime.Zero);
+
+    private static void Prepare(Clip clip, ClockTime start)
     {
         clip.SupportedFormats = TrackType.Video;
-        Assert.True(clip.SetStart(ClockTime.Zero));
+        Assert.True(clip.SetStart(start));
         Assert.True(clip.SetDuration(Length));
     }
 }
