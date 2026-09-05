@@ -251,9 +251,20 @@ internal static class Launcher
 
         Console.WriteLine($"Saving project to {uri}");
 
-        if (!project.Save(timeline, uri, null, true))
+        // A refusal comes back as false, a failure as a GException; an
+        // unwritable destination is the second one.
+        try
         {
-            Console.Error.WriteLine($"GesLaunch: the project was not saved to {uri}.");
+            if (!project.Save(timeline, uri, null, true))
+            {
+                Console.Error.WriteLine($"GesLaunch: the project was not saved to {uri}.");
+                return false;
+            }
+        }
+        catch (GException exception)
+        {
+            Console.Error.WriteLine(
+                $"GesLaunch: the project was not saved to {uri}: {exception.Message}");
             return false;
         }
 
@@ -1032,8 +1043,8 @@ internal static class Launcher
             Console.WriteLine();
             Console.WriteLine("        space  pause/unpause");
             Console.WriteLine("     q or ESC  quit");
-            Console.WriteLine("            >  seek forward");
-            Console.WriteLine("            <  seek backward");
+            Console.WriteLine("  right arrow  seek forward");
+            Console.WriteLine("   left arrow  seek backward");
             Console.WriteLine("            +  increase playback rate");
             Console.WriteLine("            -  decrease playback rate");
             Console.WriteLine("            t  enable/disable trick modes");
